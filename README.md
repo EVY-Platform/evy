@@ -1,6 +1,17 @@
 # frodo
 One platform to rule them all - Feature as a service platform
 
+## Tools
+- RustFMT
+`rustup component add rustfmt`
+(VSCode Rust Analyzer)[https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer]
+```
+"[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
+}
+```
+
 ## Devops commands
 ```
 cargo watch -x run
