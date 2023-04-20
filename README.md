@@ -1,18 +1,12 @@
 # frodo
 One platform to rule them all - Feature as a service platform
 
-## Tools
-- RustFMT  
-Install with `rustup component add rustfmt`  
-On VSCode can be used with [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) and the following config:
-```
-"[rust]": {
-    "editor.defaultFormatter": "rust-lang.rust-analyzer",
-    "editor.formatOnSave": true
-}
-```
+## Setup
+#### k3s
+[https://k3d.io/v5.4.9/#installation](https://k3d.io/v5.4.9/#installation)
 
-## Devops commands
+## Tools and commands
+#### Devops
 ```
 cargo watch -x run
 docker build -t frodo -f Dockerfile .
@@ -21,7 +15,7 @@ docker run --rm --pull always -p 8000:8000 surrealdb/surrealdb:latest start
 docker run --rm -p 8000:8000 -v surrealdb:/database.db surrealdb/surrealdb:latest start --log trace --user root --pass root file:database.db
 ```
 
-## SurrealQL commands
+#### SurrealQL
 ```
 REMOVE TABLE service;
 
@@ -51,4 +45,15 @@ SELECT * FROM service;
 UPDATE service:orc0k1kjgukg6za8loa2 SET description = "Book a ride directly from SAM";
 
 SELECT * FROM service;
+```
+
+#### Rando
+- RustFMT  
+Install with `rustup component add rustfmt`  
+On VSCode can be used with [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) and the following config:
+```
+"[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
+}
 ```
