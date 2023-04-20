@@ -2,9 +2,9 @@
 One platform to rule them all - Feature as a service platform
 
 ## Tools
-- RustFMT
-`rustup component add rustfmt`
-(VSCode Rust Analyzer)[https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer]
+- RustFMT  
+Install with `rustup component add rustfmt`  
+On VSCode can be used with [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) and the following config:
 ```
 "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer",
