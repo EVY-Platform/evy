@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	})
 	.await?;
 
-	DB.use_ns("namespace").use_db("database").await?;
+	DB.use_ns("ns").use_db("sam").await?;
 
 	HttpServer::new(|| {
 		App::new()
