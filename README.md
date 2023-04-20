@@ -2,8 +2,7 @@
 One platform to rule them all - Feature as a service platform
 
 ## Setup
-#### k3s
-[https://k3d.io/v5.4.9/#installation](https://k3d.io/v5.4.9/#installation)
+#### TODO
 
 ## Tools and commands
 #### Devops
