@@ -22,6 +22,7 @@ docker run --rm -p 8000:8000 -v surrealdb:/database.db surrealdb/surrealdb:lates
 ```
 
 ## SurrealQL commands
+```
 REMOVE TABLE service;
 
 DEFINE TABLE service SCHEMAFULL;
@@ -50,3 +51,4 @@ SELECT * FROM service;
 UPDATE service:orc0k1kjgukg6za8loa2 SET description = "Book a ride directly from SAM";
 
 SELECT * FROM service;
+```
