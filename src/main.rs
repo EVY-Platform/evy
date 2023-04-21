@@ -27,20 +27,17 @@ pub async fn health() -> Result<HttpResponse> {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let conf: Configuration = read_env_vars();
 
-    DB.connect::<Ws>(format!(
-        "{}:{}",
-        conf.frodo_surrealdb_host, conf.frodo_surrealdb_port
-    ))
-    .await?;
+    DB.connect::<Ws>(format!("{}:{}", conf.surrealdb_host, conf.surrealdb_port))
+        .await?;
 
     DB.signin(Root {
-        username: &conf.frodo_surrealdb_username,
-        password: &conf.frodo_surrealdb_password,
+        username: &conf.surrealdb_username,
+        password: &conf.surrealdb_password,
     })
     .await?;
 
-    DB.use_ns(&conf.frodo_surrealdb_namespace)
-        .use_db(&conf.frodo_surrealdb_database)
+    DB.use_ns(&conf.surrealdb_namespace)
+        .use_db(&conf.surrealdb_database)
         .await?;
 
     HttpServer::new(|| {
@@ -52,7 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .service(service::delete)
             .service(service::list)
     })
-    .bind((conf.frodo_api_host, conf.frodo_api_port))?
+    .bind((conf.api_host, conf.api_port))?
     .run()
     .await?;
 
