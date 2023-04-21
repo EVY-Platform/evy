@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  api:
+    restart: always
+    build:
+      context: .
+      args:
+        FRODO_SURREALDB_HOST: "surreal"
+    ports:
+      - "8080:8080"
+    depends_on:
+      surreal:
+        condition: service_started
+  surreal:
+    image: "surrealdb/surrealdb:latest"
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    command:
+      - start
+      - --user=root
+      - --pass=root
+      - file:/data/database.db
