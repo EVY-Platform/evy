@@ -10,7 +10,7 @@ services:
       - "8080:8080"
     depends_on:
       surreal:
-        condition: service_started
+        condition: service_healthy
   surreal:
     image: "surrealdb/surrealdb:latest"
     restart: always
@@ -18,8 +18,16 @@ services:
       - "8000:8000"
     volumes:
       - ./data:/data
-    command:
-      - start
-      - --user=root
-      - --pass=root
-      - file:/data/database.db
+    environment:
+      SURREAL_LOG: warn
+      SURREAL_USER: root
+      SURREAL_PASS: root
+      SURREAL_PATH: file:///data/database.db
+      SURREAL_NO_BANNER: "1"
+    command: start
+    healthcheck:
+      test: [ "CMD", "/surreal", "isready" ]
+      interval: 10s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
