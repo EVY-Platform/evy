@@ -21,7 +21,7 @@ docker run --rm -p 8000:8000 -v surrealdb:/database.db surrealdb/surrealdb:lates
 docker build -t frodo .
 docker run -p 8080:8080 --rm --name frodo -e FRODO_SURREALDB_HOST="host.docker.internal" frodo
 ```
-- `cargo watch -x run` to dev frodo manually
+- `cargo watch -d 0 -x run` to dev frodo manually
 
 #### SurrealQL
 Useful commands for generating data or doing queries
