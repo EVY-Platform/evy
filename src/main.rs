@@ -69,9 +69,12 @@ async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, E
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
-    info!("starting HTTP server at http://localhost:8080");
-
     let conf: Configuration = read_env_vars();
+
+    info!(
+        "Connecting to SurrealDB at {:?}:{:?}",
+        conf.surrealdb_host, conf.surrealdb_port
+    );
 
     DB.connect::<Ws>(format!("{}:{}", conf.surrealdb_host, conf.surrealdb_port))
         .await?;
@@ -85,6 +88,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     DB.use_ns(&conf.surrealdb_namespace)
         .use_db(&conf.surrealdb_database)
         .await?;
+
+    info!(
+        "Starting HTTP server at {:?}:{:?}",
+        conf.api_host, conf.api_port
+    );
 
     HttpServer::new(|| {
         App::new()
