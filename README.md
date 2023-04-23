@@ -2,7 +2,14 @@
 One platform to rule them all - Feature as a service platform
 
 ## Setup
-#### TODO
+1. Setup Rust
+2. Setup Docker
+You're good to go.
+
+## WIP
+- Better crates caching with docker & docker-compose
+- Healthcheck the api server
+- Potentially set up docker for dev-ing (currently not practical due to 1. build tooling necessary within docker, 2. un-tree shaken code and dependencies is several gigs, 3. much worse perf for compiling within docker compared to local)
 
 ## Tools and commands
 #### Devops
