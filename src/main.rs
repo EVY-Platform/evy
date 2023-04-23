@@ -4,6 +4,7 @@ use actix_web_actors::ws;
 use configuration::read_env_vars;
 use configuration::Configuration;
 use serde::Deserialize;
+use serde_json::{from_str, Value};
 use surrealdb::engine::remote::ws::Client;
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::opt::auth::Root;
@@ -12,6 +13,23 @@ use surrealdb::Surreal;
 mod configuration;
 mod error;
 mod service;
+
+/**
+ * Structs and definitions
+ */
+#[derive(Deserialize, Debug)]
+enum WSQueryMethod {
+    GET,
+    POST,
+    PUT,
+    DEL,
+}
+
+#[derive(Deserialize)]
+struct WSQuery {
+    method: WSQueryMethod,
+    data: Value,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct WSParams {
@@ -41,6 +59,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
         match msg {
             Ok(ws::Message::Text(text)) => {
                 println!("received {:?}", text);
+                let query: WSQuery = from_str(&text).unwrap();
+                println!("received method {:?}", query.method);
+                println!("received data {:?}", query.data);
                 ctx.text(text)
             }
             _ => (),

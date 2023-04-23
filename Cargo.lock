@@ -867,6 +867,7 @@ dependencies = [
  "actix-web-actors",
  "envy",
  "serde",
+ "serde_json",
  "surrealdb",
  "thiserror",
 ]
