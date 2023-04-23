@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  api:
+    restart: always
+    command: sh -c "cargo watch -x run"
+    volumes:
+      - .:/frodo
+    build:
+      context: .
+      target: dev
+      args:
+        FRODO_SURREALDB_HOST: "surreal"
+    ports:
+      - "8080:8080"
+    depends_on:
+      surreal:
+        condition: service_started
+  surreal:
+    image: "surrealdb/surrealdb:latest"
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      SURREAL_LOG: warn
+      SURREAL_USER: root
+      SURREAL_PASS: root
+      SURREAL_PATH: file:///data/database.db
+      SURREAL_NO_BANNER: "1"
+    command: start

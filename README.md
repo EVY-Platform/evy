@@ -6,15 +6,18 @@ One platform to rule them all - Feature as a service platform
 
 ## Tools and commands
 #### Devops
+- `docker compose up --build` to build frodo in release mode along with a surrealDB instance  
+- If you want to run them separately:  
 ```
-cargo watch -x run
-docker build -t frodo -f Dockerfile .
-docker run -p 8080:8080 --rm --name frodo frodo
-docker run --rm --pull always -p 8000:8000 surrealdb/surrealdb:latest start
 docker run --rm -p 8000:8000 -v surrealdb:/database.db surrealdb/surrealdb:latest start --log trace --user root --pass root file:database.db
+
+docker build -t frodo .
+docker run -p 8080:8080 --rm --name frodo -e FRODO_SURREALDB_HOST="host.docker.internal" frodo
 ```
+- `cargo watch -x run` to dev frodo manually
 
 #### SurrealQL
+Useful commands for generating data or doing queries
 ```
 REMOVE TABLE service;
 

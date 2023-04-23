@@ -1,7 +1,7 @@
 ####################################################################################################
-## Builder
+## Base
 ####################################################################################################
-FROM rust:latest AS builder
+FROM rust:slim AS base
 
 RUN rustup target add x86_64-unknown-linux-musl
 RUN apt update && apt install -y musl-tools musl-dev
@@ -24,28 +24,31 @@ RUN adduser \
 RUN cargo new --bin frodo
 WORKDIR /frodo
 
-# copy over your manifests
+# Copy specs, install dependencies and thus cache them
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
 
-# this build step will cache your dependencies
 RUN cargo build --target x86_64-unknown-linux-musl --release
 RUN rm src/*.rs
+RUN rm ./target/x86_64-unknown-linux-musl/release/deps/frodo*
 
-# copy your source tree
+####################################################################################################
+## Builder
+####################################################################################################
+FROM base AS builder
+
 COPY ./src ./src
 
-RUN rm ./target/x86_64-unknown-linux-musl/release/deps/frodo*
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 ####################################################################################################
-## Final image
+## Production Image
 ####################################################################################################
 FROM scratch
 
 # Import from builder.
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
+COPY --from=base /etc/passwd /etc/passwd
+COPY --from=base /etc/group /etc/group
 
 WORKDIR /frodo
 
