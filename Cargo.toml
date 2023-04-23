@@ -7,7 +7,9 @@ edition = "2021"
 actix = "0.13"
 actix-web = { version = "4.3", features = ["macros"] }
 actix-web-actors = "4.2"
+env_logger = "0.10"
 envy = "0.4"
+log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 surrealdb = { git = "https://github.com/surrealdb/surrealdb" }
 thiserror = "1"

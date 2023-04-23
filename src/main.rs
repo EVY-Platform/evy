@@ -1,8 +1,10 @@
 use actix::{Actor, StreamHandler};
-use actix_web::{get, web, App, Error, HttpRequest, HttpResponse, HttpServer, Result};
+use actix_web::{get, middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer, Result};
 use actix_web_actors::ws;
 use configuration::read_env_vars;
 use configuration::Configuration;
+use log;
+use log::info;
 use serde::Deserialize;
 use surrealdb::engine::remote::ws::Client;
 use surrealdb::engine::remote::ws::Ws;
@@ -40,7 +42,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Text(text)) => {
-                println!("received {:?}", text);
+                info!("received {:?}", text);
                 ctx.text(text)
             }
             _ => (),
@@ -54,7 +56,7 @@ async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, E
             token: String::from("token"),
         }));
     let token = &params.token;
-    println!("req token: {:?}", token);
+    info!("req token: {:?}", token);
     // Here we need to validate the token with the DB. If it is not recognized, fail
 
     ws::start(MyWs {}, &req, stream)
@@ -65,6 +67,10 @@ async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, E
  **/
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
+
+    info!("starting HTTP server at http://localhost:8080");
+
     let conf: Configuration = read_env_vars();
 
     DB.connect::<Ws>(format!("{}:{}", conf.surrealdb_host, conf.surrealdb_port))
@@ -89,6 +95,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .service(service::update)
             .service(service::delete)
             .service(service::list)
+            .wrap(middleware::Logger::default())
     })
     .bind((conf.api_host, conf.api_port))?
     .run()
