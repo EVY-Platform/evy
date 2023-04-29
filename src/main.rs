@@ -3,6 +3,7 @@ use actix_web::{get, web, App, Error, HttpRequest, HttpResponse, HttpServer, Res
 use actix_web_actors::ws;
 use configuration::read_env_vars;
 use configuration::Configuration;
+use models::api::Api;
 use serde::Deserialize;
 use serde_json::{from_str, Value};
 use surrealdb::engine::remote::ws::Client;
@@ -12,6 +13,7 @@ use surrealdb::Surreal;
 
 mod configuration;
 mod error;
+mod models;
 mod service;
 
 /**
@@ -50,7 +52,7 @@ static DB: Surreal<Client> = Surreal::init();
  **/
 #[get("/health")]
 pub async fn health() -> Result<HttpResponse> {
-    Ok(HttpResponse::Ok().body("success".to_string()))
+    Ok(HttpResponse::Ok().body("OK".to_string()))
 }
 
 /// Handler for ws::Message message
@@ -87,6 +89,17 @@ async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, E
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let conf: Configuration = read_env_vars();
+
+    let api: Api = Api {
+        id: "xxxx".to_string(),
+        base_url: "xxxx".to_string(),
+        created_at: "abc".to_string(),
+        updated_at: "abc".to_string(),
+        name: "abc".to_string(),
+        service_provider_id: "abc".to_string(),
+        headers: None
+    };
+    println!("Api: {:?}", api);
 
     println!(
         "Connecting to SurrealDB at {:?}:{:?}",

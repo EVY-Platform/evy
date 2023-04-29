@@ -3,8 +3,7 @@ use crate::DB;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::{delete, get, post, put};
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 const SERVICE: &str = "service";
 
