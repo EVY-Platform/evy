@@ -66,3 +66,4 @@ On VSCode can be used with [Rust Analyzer](https://marketplace.visualstudio.com/
     "editor.formatOnSave": true
 }
 ```
+Notes: https://rust-lang.github.io/api-guidelines/naming.html
