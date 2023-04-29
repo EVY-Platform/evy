@@ -4,8 +4,8 @@ auth_token="find token in network requests from https://sam-test.stoplight.io/do
 
 base_url="https://stoplight.io/api/v1/projects/sam-test/sam/nodes/models/"
 device_data_models=("BillingAddress" "ListItem" "Order" "Quote" "ServicePreference" "User" "UserAddress" "UserId" "UserPaymentCard" "UserPhone")
-public_data_models=("API" "Device" "Endpoint" "Member" "Organization" "Service" "ServiceProvider" "Transaction" "TransactionUpdate")
-ui_builder_models=("UIElement" "UIProposal" "UIServiceElement" "UIVariable")
+public_data_models=("Api" "Device" "Endpoint" "Member" "Organization" "Service" "ServiceProvider" "Transaction" "TransactionUpdate")
+ui_builder_models=("UiElement" "UiProposal" "UiServiceElement" "UiVariable")
 
 for model in "${device_data_models[@]}"
 do
@@ -31,6 +31,11 @@ done
 all_models=( "${device_data_models[@]}" "${public_data_models[@]}" "${ui_builder_models[@]}" )
 for model in "${all_models[@]}"
 do
-  echo "Processing ${model}"
-  quicktype -s schema models/${model}.json -o ../src/models/${model}.rs
+  if [[ "$OSTYPE" =~ ^darwin ]]; then
+    new_model=$(echo "${model}" | gsed 's/\([A-Z]\)/_\L\1/g;s/^_//')
+  else
+    new_model=$(echo "${model}" | sed 's/\([A-Z]\)/_\L\1/g;s/^_//')
+  fi
+  echo "Processing ${model}.json to ${new_model}.rs"
+  quicktype -s schema models/${model}.json -o ../src/models/${new_model}.rs
 done
