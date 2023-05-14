@@ -1,23 +1,26 @@
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("database error")]
-    Db,
+    #[error("DB Error")]
+    DBError,
 }
 
 impl ResponseError for Error {
-    fn error_response(&self) -> HttpResponse {
+    fn status_code(&self) -> StatusCode {
         match self {
-            Error::Db => HttpResponse::InternalServerError().body(self.to_string()),
+            Error::DBError => StatusCode::INTERNAL_SERVER_ERROR,
         }
+    }
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code()).body(self.to_string())
     }
 }
 
 impl From<surrealdb::Error> for Error {
     fn from(error: surrealdb::Error) -> Self {
         eprintln!("{error}");
-        Self::Db
+        Self::DBError
     }
 }

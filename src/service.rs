@@ -1,9 +1,8 @@
 use crate::error::Error;
-use crate::DB;
 use actix_web::web::Json;
 use actix_web::web::Path;
 use actix_web::{delete, get, post, put};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 const SERVICE: &str = "service";
 

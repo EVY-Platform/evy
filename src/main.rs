@@ -1,86 +1,50 @@
-use actix::{Actor, StreamHandler};
-use actix_web::{get, web, App, Error, HttpRequest, HttpResponse, HttpServer, Result};
+mod configuration;
+mod database;
+mod error;
+mod models;
+mod websocket;
+
+use actix::{Actor, Addr};
+use actix_web::{
+    get, web, web::Data, web::Query, App, Error, HttpRequest, HttpResponse, HttpServer, Result,
+};
 use actix_web_actors::ws;
 use configuration::read_env_vars;
 use configuration::Configuration;
-use models::api::Api;
+use database::db::DB;
 use serde::Deserialize;
-use serde_json::{from_str, Value};
-use surrealdb::engine::remote::ws::Client;
-use surrealdb::engine::remote::ws::Ws;
-use surrealdb::opt::auth::Root;
-use surrealdb::Surreal;
-
-mod configuration;
-mod error;
-mod models;
-mod service;
+use websocket::ws::WsConn;
+use websocket::wsserver::WSServer;
 
 /**
- * Structs and definitions
+ * Structs
  */
-#[derive(Deserialize, Debug)]
-enum WSQueryMethod {
-    GET,
-    POST,
-    PUT,
-    DEL,
-}
-
-#[derive(Deserialize)]
-struct WSQuery {
-    method: WSQueryMethod,
-    data: Value,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct WSParams {
     token: String,
 }
-
-/// Define HTTP actor
-struct MyWs;
-
-impl Actor for MyWs {
-    type Context = ws::WebsocketContext<Self>;
-}
-
-static DB: Surreal<Client> = Surreal::init();
 
 /**
  * Endpoints
  **/
 #[get("/health")]
 pub async fn health() -> Result<HttpResponse> {
+    println!("/health");
     Ok(HttpResponse::Ok().body("OK".to_string()))
 }
 
-/// Handler for ws::Message message
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            Ok(ws::Message::Text(text)) => {
-                println!("received {:?}", text);
-                let query: WSQuery = from_str(&text).unwrap();
-                println!("received method {:?}", query.method);
-                println!("received data {:?}", query.data);
-                ctx.text(text)
-            }
-            _ => (),
-        }
-    }
-}
+#[get("/ws")]
+pub async fn wsroute(
+    req: HttpRequest,
+    stream: web::Payload,
+    ws_server: web::Data<Addr<WSServer>>,
+) -> Result<HttpResponse, Error> {
+    println!("/ws");
 
-async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    let params =
-        web::Query::<WSParams>::from_query(req.query_string()).unwrap_or(web::Query(WSParams {
-            token: String::from("token"),
-        }));
-    let token = &params.token;
-    println!("req token: {:?}", token);
-    // Here we need to validate the token with the DB. If it is not recognized, fail
+    let params = Query::<WSParams>::from_query(req.query_string()).unwrap();
+    let ws = WsConn::new(params.token.clone(), ws_server.get_ref().clone());
 
-    ws::start(MyWs {}, &req, stream)
+    Ok(ws::start(ws, &req, stream)?)
 }
 
 /**
@@ -90,49 +54,30 @@ async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, E
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let conf: Configuration = read_env_vars();
 
-    let api: Api = Api {
-        id: "xxxx".to_string(),
-        base_url: "xxxx".to_string(),
-        created_at: "abc".to_string(),
-        updated_at: "abc".to_string(),
-        name: "abc".to_string(),
-        service_provider_id: "abc".to_string(),
-        headers: None
-    };
-    println!("Api: {:?}", api);
+    let db_data = DB::init(
+        conf.surrealdb_host,
+        conf.surrealdb_port,
+        conf.surrealdb_username,
+        conf.surrealdb_password,
+        conf.surrealdb_database,
+        conf.surrealdb_namespace,
+    )
+    .await
+    .expect("Error connecting to SurrealDB!");
 
     println!(
-        "Connecting to SurrealDB at {:?}:{:?}",
-        conf.surrealdb_host, conf.surrealdb_port
-    );
-
-    DB.connect::<Ws>(format!("{}:{}", conf.surrealdb_host, conf.surrealdb_port))
-        .await?;
-
-    DB.signin(Root {
-        username: &conf.surrealdb_username,
-        password: &conf.surrealdb_password,
-    })
-    .await?;
-
-    DB.use_ns(&conf.surrealdb_namespace)
-        .use_db(&conf.surrealdb_database)
-        .await?;
-
-    println!(
-        "Starting HTTP server at {:?}:{:?}",
+        "\nStarting HTTP server at {:?}:{:?}\n",
         conf.api_host, conf.api_port
     );
 
-    HttpServer::new(|| {
+    let ws_server = WSServer::default().start();
+
+    HttpServer::new(move || {
         App::new()
-            .service(web::resource("/ws").to(index))
+            .app_data(Data::new(db_data.clone()))
+            .app_data(Data::new(ws_server.clone()))
             .service(health)
-            .service(service::create)
-            .service(service::read)
-            .service(service::update)
-            .service(service::delete)
-            .service(service::list)
+            .service(wsroute)
     })
     .bind((conf.api_host, conf.api_port))?
     .run()
