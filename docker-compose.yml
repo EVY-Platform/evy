@@ -5,6 +5,7 @@ services:
     build:
       context: .
       args:
+        FRODO_API_HOST: "0.0.0.0"
         FRODO_API_PORT: 8080
         FRODO_SURREALDB_HOST: "surreal"
         FRODO_SURREALDB_PORT: 8000

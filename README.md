@@ -8,12 +8,10 @@ You're good to go.
 
 ## Tools and commands
 #### Devops
-- `docker compose up --build` to build frodo in release mode along with a surrealDB instance  
-- If you want to run them separately:  
+- To build & run frodo api with SurrealDB: `docker compose up --build`
+- To build & run them separately:
 ```
 docker run --rm -p 8000:8000 -v surrealdb:/database.db surrealdb/surrealdb:latest start --log trace --user root --pass root file:database.db
-
-docker build -t frodo .
-docker run -p 8080:8080 --rm --name frodo -e FRODO_SURREALDB_HOST="host.docker.internal" frodo
+docker build -t frodo . && docker run -p 8080:8080 --rm --name frodo frodo
 ```
-- `yarn watch` to dev frodo manually
+- To build & run frodo api manually with watch: `yarn watch`
