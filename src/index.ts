@@ -1,40 +1,36 @@
 import 'dotenv/config';
-import { findUser, updateUser, createUser } from './db.js';
+
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import Fastify, { FastifyInstance } from 'fastify';
+import autoLoad from '@fastify/autoload';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 const HOST: string | undefined = process.env.FRODO_API_HOST;
 const PORT: string | undefined = process.env.FRODO_API_PORT;
 if (!HOST || !PORT) throw new Error('Missing SurrealDB environment variables');
 
-const fastify: FastifyInstance = Fastify({
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const app: FastifyInstance = Fastify({
     logger: true
+}).withTypeProvider<TypeBoxTypeProvider>();
+
+app.register(autoLoad, {
+    dir: join(__dirname, 'plugins'),
+    forceESM: true
+});
+app.register(autoLoad, {
+    dir: join(__dirname, 'routes'),
+    forceESM: true
 });
 
-fastify.get('/', async (request, reply) =>
-{
-    return findUser();
-});
-
-fastify.put('/', async (request, reply) =>
-{
-    return updateUser();
-});
-
-fastify.post('/', async (request, reply) =>
-{
-    return createUser();
-});
-
-fastify.get('/health', async (request, reply) =>
-{
-    return 'OK';
-});
-
-fastify.listen({ host: HOST, port: parseInt(PORT) }, (err, address) =>
+app.listen({ host: HOST, port: parseInt(PORT) }, (err) =>
 {
     if (err)
     {
-        fastify.log.error(err);
+        app.log.error(err);
         process.exit(1);
     }
 });
