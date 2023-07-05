@@ -1,5 +1,4 @@
 import 'dotenv/config';
-
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import Fastify, { FastifyInstance } from 'fastify';
 import autoLoad from '@fastify/autoload';
