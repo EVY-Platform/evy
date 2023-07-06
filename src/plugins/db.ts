@@ -21,9 +21,15 @@ const client = new Surreal(URL, {
     ns: NS, db: DB
 });
 
+// const test = await client.create("token", {
+//     created: new Date()
+// });
+// console.log(test);
+
 async function validateToken(token: string): Promise<boolean>
 {
-    return !!await client.select<Token>(`token:${token}`);
+    const res = await client.select<Token>(`token:${token}`);
+    return res.length > 0;
 }
 
 export default fp(async (app: FastifyInstance) =>

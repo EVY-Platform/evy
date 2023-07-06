@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin';
-import { FastifyInstance } from 'fastify';
-import websocket from '@fastify/websocket';
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import websocket, { SocketStream } from '@fastify/websocket';
 import WebSocket from 'ws';
 
 type WSClientMap = {
@@ -13,31 +13,32 @@ async function ws(app: FastifyInstance)
     app.decorate('WS_CLIENTS', wsClients);
 
     app.register(websocket);
-    app.register(async function (fastify)
+    app.register(async function (fastify: any)
     {
-        fastify.addHook('preValidation', async (request, reply) =>
+        fastify.addHook('preValidation', async (req: FastifyRequest, rep: FastifyReply) =>
         {
-            if (!request.headers["token"])
+            const token: string | undefined = req.headers["token"]?.toString();
+            if (!token || wsClients[token])
             {
-                reply.code(401).send("Authentication required");
+                rep.code(401).send("Authentication required");
             }
-            else if (['test'].indexOf(request.headers["token"].toString()) > -1)
+            else if (!await fastify.validateToken(token.toString()))
             {
-                reply.code(403).send("Authentication invalid");
+                rep.code(403).send("Authentication invalid");
             }
         });
 
-        fastify.get('/ws', { websocket: true }, (connection, req) =>
+        fastify.get('/ws', { websocket: true }, (conn: SocketStream, req: FastifyRequest) =>
         {
             const token = String(req.headers["token"]);
-            wsClients[token] = connection.socket;
+            wsClients[token] = conn.socket;
 
-            connection.socket.on('message', message =>
+            conn.socket.on('message', message =>
             {
                 sendMessage(message.toString());
             });
 
-            connection.socket.on('close', () =>
+            conn.socket.on('close', () =>
             {
                 delete wsClients[token];
             });
