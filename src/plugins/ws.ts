@@ -13,7 +13,7 @@ async function ws(app: FastifyInstance)
     app.decorate('WS_CLIENTS', wsClients);
 
     app.register(websocket);
-    app.register(async function (fastify: any)
+    app.register(async function (fastify: any) // Have to use any because of decorators not being TS friendly
     {
         fastify.addHook('preValidation', async (req: FastifyRequest, rep: FastifyReply) =>
         {

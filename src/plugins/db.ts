@@ -16,7 +16,7 @@ type Token = {
     id: string;
 };
 
-const client = new Surreal(URL, {
+const client: Surreal = new Surreal(URL, {
     auth: { user: USER, pass: PASS },
     ns: NS, db: DB
 });
