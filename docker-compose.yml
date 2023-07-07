@@ -5,35 +5,32 @@ services:
     build:
       context: .
       args:
-        FRODO_API_HOST: "0.0.0.0"
-        FRODO_API_PORT: 8080
-        FRODO_SURREALDB_URL: "http://surreal:8000/rpc"
-        FRODO_SURREALDB_USERNAME: "root"
-        FRODO_SURREALDB_PASSWORD: "root"
-        FRODO_SURREALDB_NAMESPACE: "ns"
-        FRODO_SURREALDB_DATABASE: "sam"
+        API_HOST: "127.0.0.1"
+        API_PORT: 8000
+        DATABASE_URL: "postgresql://sam:sam@db:5432/sam?schema=public"
     ports:
-      - "8080:8080"
+      - 8000:8000
     depends_on:
-      surreal:
+      db:
         condition: service_healthy
-  surreal:
-    image: "surrealdb/surrealdb:latest"
+  db:
+    image: "postgres"
     restart: always
     ports:
-      - "8000:8000"
-    volumes:
-      - ./data:/data
+      - 5432:5432
     environment:
-      SURREAL_LOG: warn
-      SURREAL_USER: root
-      SURREAL_PASS: root
-      SURREAL_PATH: file:///data/database.db
-      SURREAL_NO_BANNER: "1"
-    command: start
+      PGUSER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sam
     healthcheck:
-      test: [ "CMD", "/surreal", "isready" ]
+      test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
-      timeout: 1s
-      retries: 3
-      start_period: 1s
+      timeout: 5s
+      retries: 5
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - db

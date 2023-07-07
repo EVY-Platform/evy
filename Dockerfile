@@ -1,34 +1,33 @@
-#build
-FROM node:18-alpine AS builder
+#build deps
+FROM node:18-alpine AS dep_builder
+WORKDIR /app
+COPY package.json .
+COPY yarn.lock .
+RUN yarn install
+
+#build code
+FROM node:18-alpine AS code_builder
 WORKDIR /app
 COPY . .
-RUN yarn install
-RUN yarn build
+COPY --from=dep_builder ./app/node_modules ./node_modules
+RUN yarn build:prod
 
 #final
 FROM node:18-buster-slim AS final
 WORKDIR /app
-COPY --from=builder ./app/dist ./dist
+COPY --from=code_builder ./app/dist ./dist
 COPY package.json .
 COPY yarn.lock .
 RUN yarn install --production
 
-ARG FRODO_API_HOST="0.0.0.0"
-ARG FRODO_API_PORT=8080
-ARG FRODO_SURREALDB_URL="http://host.docker.internal:8000/rpc"
-ARG FRODO_SURREALDB_USERNAME="root"
-ARG FRODO_SURREALDB_PASSWORD="root"
-ARG FRODO_SURREALDB_NAMESPACE="ns"
-ARG FRODO_SURREALDB_DATABASE="sam"
+ARG API_HOST="0.0.0.0"
+ARG API_PORT=8000
+ARG DATABASE_URL="postgresql://sam:sam@localhost:5432/sam?schema=public"
 
-ENV FRODO_API_HOST=$FRODO_API_HOST
-ENV FRODO_API_PORT=$FRODO_API_PORT
-ENV FRODO_SURREALDB_URL=$FRODO_SURREALDB_URL
-ENV FRODO_SURREALDB_USERNAME=$FRODO_SURREALDB_USERNAME
-ENV FRODO_SURREALDB_PASSWORD=$FRODO_SURREALDB_PASSWORD
-ENV FRODO_SURREALDB_NAMESPACE=$FRODO_SURREALDB_NAMESPACE
-ENV FRODO_SURREALDB_DATABASE=$FRODO_SURREALDB_DATABASE
+ENV API_HOST=$API_HOST
+ENV API_PORT=$API_PORT
+ENV DATABASE_URL=$DATABASE_URL
 
-EXPOSE $FRODO_API_PORT
+EXPOSE $API_PORT
 
-CMD [ "yarn", "start" ]
+CMD [ "node", "." ]
