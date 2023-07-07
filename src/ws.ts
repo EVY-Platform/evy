@@ -5,20 +5,22 @@ export interface IRPCMethodParams
     [x: string]: any;
 }
 
+const HOST: string | undefined = process.env.API_HOST;
+const PORT: string | undefined = process.env.API_PORT;
+if (!HOST || !PORT) throw new Error('Missing API environment variables');
+
 interface WSServerOptions
 {
-    host: string;
-    port: number;
     namespace: string;
     authHandler: (params: IRPCMethodParams) => boolean;
 }
 
 function initServer(options: WSServerOptions): Promise<void>
 {
-    const { host, port, namespace, authHandler } = options;
+    const { namespace, authHandler } = options;
     return new Promise<Server>((resolve, reject) =>
     {
-        const server = new Server({ host, port, namespace });
+        const server = new Server({ host: HOST, port: Number(PORT), namespace });
 
         server.on("listening", () => resolve(server));
         server.on("error", (error) => reject(error));
@@ -26,7 +28,7 @@ function initServer(options: WSServerOptions): Promise<void>
     {
         server.setAuth(authHandler);
 
-        console.info(`${namespace} server listening on ${host}:${port}`);
+        console.info(`${namespace} server listening on ${HOST}:${PORT}`);
     });
 }
 
