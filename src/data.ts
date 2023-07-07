@@ -15,7 +15,7 @@ async function primeDevicesCache(): Promise<void>
 }
 async function registerDevice(token: string, os: string): Promise<void>
 {
-    const newDevice: Device = await prisma.device.create({
+    await prisma.device.create({
         data: {
             id: uuidv4(),
             token,
