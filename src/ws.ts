@@ -27,24 +27,7 @@ function initServer(options: WSServerOptions): Promise<void>
         server.setAuth(authHandler);
 
         console.info(`${namespace} server listening on ${host}:${port}`);
-
-        // const ns = server.of(namespace);
-        // console.log(ns.clients());
     });
 }
-
-// server.register('sum', params =>
-// {
-//     return params[0] + params[1];
-// });
-
-// // create an event
-// server.event('feedUpdated');
-
-// // get events
-// console.log(server.eventList());
-
-// // emit an event to subscribers
-// server.emit('feedUpdated');
 
 export { initServer };
