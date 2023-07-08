@@ -1,5 +1,4 @@
 version: "3.3"
-name: frodo
 services:
   api:
     image: "ghcr.io/glesage/frodo:dev"
