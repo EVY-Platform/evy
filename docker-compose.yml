@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   api:
-    image: "frodo-api"
+    image: "ghcr.io/glesage/frodo:dev"
     restart: always
     ports:
       - 8000:8000
