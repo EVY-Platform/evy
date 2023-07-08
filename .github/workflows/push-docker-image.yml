@@ -41,3 +41,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
         env:
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
+
+      - name: Docker Compose Remote Deploy
+        uses: chaplyk/docker-compose-remote-action@v1.1
+        with:
+          service: api
+          ssh_host: 170.64.254.41
+          ssh_user: sam
+          ssh_key: ${{ secrets.DO_SSH_KEY }}
+          compose_file: docker-compose.yml
