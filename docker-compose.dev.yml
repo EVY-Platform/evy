@@ -1,14 +1,15 @@
 version: "3.9"
 services:
   api:
-    image: "frodo-api"
     restart: always
+    build:
+      context: .
+      args:
+        API_HOST: $API_HOST
+        API_PORT: $API_PORT
+        DATABASE_URL: $DATABASE_URL
     ports:
       - 8000:8000
-    environment:
-      API_HOST: $API_HOST
-      API_PORT: $API_PORT
-      DATABASE_URL: $DATABASE_URL
     depends_on:
       db:
         condition: service_healthy
@@ -17,8 +18,11 @@ services:
     restart: always
     ports:
       - 5432:5432
+    environment:
+      POSTGRES_USER: $PG_USER
+      POSTGRES_PASSWORD: $PG_PASS
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $PG_USER"]
-      interval: 10s
-      timeout: 5s
+      interval: 1s
+      timeout: 1s
       retries: 3
