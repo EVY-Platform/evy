@@ -23,8 +23,8 @@ COPY yarn.lock .
 RUN yarn install --production
 RUN rm ./yarn.lock
 
-ARG API_HOST
-ARG API_PORT
+ARG API_HOST="0.0.0.0"
+ARG API_PORT="8000"
 ARG DATABASE_URL
 
 ENV API_HOST=$API_HOST
