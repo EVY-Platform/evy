@@ -49,7 +49,6 @@ jobs:
           ssh_host: 170.64.163.217
           ssh_user: sam
           ssh_key: ${{ secrets.DO_SSH_KEY }}
-          compose_file: docker-compose.yml
           pull: true
         env:
           PG_USER: ${{ secrets.PG_USER }}
