@@ -53,4 +53,5 @@ jobs:
           pull: true
         env:
           PG_USER: ${{ secrets.PG_USER }}
+          PG_PASS: ${{ secrets.PG_PASS }}
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
