@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const deviceTokens: string[] = [];
+export const deviceTokens: string[] = [];
 
 const validOSes: string[] = ['ios', 'android'];
 
@@ -35,7 +35,10 @@ export function validateAuth(token: string, os: string): boolean
     {
         // Yes this is odd, but rpc-json isn't async
         // so we just have to trigger this and hope it works
-        registerDevice(token, os);
+        registerDevice(token, os).catch(e =>
+        {
+            // TODO - Need to handle failed registration
+        });
     }
 
     return true;

@@ -10,13 +10,18 @@
 		"prestart": "yarn run build",
 		"start": "node .",
 		"dev": "nodemon --watch src -e ts,ejs --exec yarn run start",
-		"build:prod": "tsc"
+		"build:prod": "tsc",
+		"test": "yarn build && mocha tests/*.spec.js"
 	},
 	"license": "GPL-3.0-only",
 	"devDependencies": {
+		"@types/chai": "^4.3.5",
+		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.11.9",
 		"@types/uuid": "^9.0.2",
 		"@types/ws": "^8.5.5",
+		"chai": "^4.3.7",
+		"mocha": "^10.2.0",
 		"nodemon": "^2.0.22",
 		"prisma": "^4.16.2",
 		"tslint": "^6.1.3",

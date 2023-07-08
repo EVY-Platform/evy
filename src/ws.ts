@@ -15,7 +15,7 @@ interface WSServerOptions
     authHandler: (params: IRPCMethodParams) => boolean;
 }
 
-function initServer(options: WSServerOptions): Promise<void>
+function initServer(options: WSServerOptions): Promise<Server>
 {
     const { namespace, authHandler } = options;
     return new Promise<Server>((resolve, reject) =>
@@ -29,6 +29,8 @@ function initServer(options: WSServerOptions): Promise<void>
         server.setAuth(authHandler);
 
         console.info(`${namespace} server listening on ${HOST}:${PORT}`);
+
+        return server;
     });
 }
 
