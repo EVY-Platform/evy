@@ -50,6 +50,7 @@ jobs:
           ssh_user: sam
           ssh_key: ${{ secrets.DO_SSH_KEY }}
           compose_file: docker-compose.yml
+          pull: true
         env:
           PG_USER: ${{ secrets.PG_USER }}
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
