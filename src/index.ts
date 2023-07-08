@@ -11,6 +11,7 @@ function authHandler(params: IRPCMethodParams): boolean
 
 async function main()
 {
+    console.log('Checking that the action worked!');
     await initServer({ namespace: 'admin', authHandler });
 }
 
