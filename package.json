@@ -5,12 +5,11 @@
 	"type": "module",
 	"main": "dist/index.js",
 	"scripts": {
-		"prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
+		"lint": "tslint -c tslint.json -p tsconfig.json --fix",
+		"prisma": "npx prisma generate",
 		"build": "tsc",
-		"prestart": "yarn run build",
 		"start": "node .",
-		"dev": "nodemon --watch src -e ts,ejs --exec yarn run start",
-		"build:prod": "tsc",
+		"dev": "nodemon --watch src -e ts,ejs --exec 'yarn build && yarn start'",
 		"test": "yarn build && mocha tests/*.spec.js"
 	},
 	"license": "GPL-3.0-only",

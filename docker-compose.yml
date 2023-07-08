@@ -4,10 +4,6 @@ services:
     restart: always
     build:
       context: .
-      args:
-        API_HOST: "127.0.0.1"
-        API_PORT: 8000
-        DATABASE_URL: "postgresql://sam:sam@db:5432/sam?schema=public"
     ports:
       - 8000:8000
     depends_on:
@@ -18,12 +14,8 @@ services:
     restart: always
     ports:
       - 5432:5432
-    environment:
-      PGUSER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: sam
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U sam"]
+      interval: 1s
+      timeout: 1s
+      retries: 3
