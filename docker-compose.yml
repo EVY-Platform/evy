@@ -14,6 +14,9 @@ services:
     restart: always
     ports:
       - 5432:5432
+    environment:
+      POSTGRES_USER: $PG_USER
+      POSTGRES_PASSWORD: $PG_PASS
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $PG_USER"]
       interval: 1s
