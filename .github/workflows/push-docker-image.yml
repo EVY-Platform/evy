@@ -43,12 +43,14 @@ jobs:
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
 
       - name: Docker Compose Remote Deploy
-        uses: chaplyk/docker-compose-remote-action@v1.1
+        uses: glesage/docker-compose-remote-action@v1.3
         with:
           service: api
+          project_name: frodo
           ssh_host: 170.64.163.217
           ssh_user: sam
           ssh_key: ${{ secrets.DO_SSH_KEY }}
+          known_host_key: ${{ secrets.DO_HOST_KEY }}
           pull: true
         env:
           PG_USER: ${{ secrets.PG_USER }}
