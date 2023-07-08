@@ -6,9 +6,10 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"lint": "tslint -c tslint.json -p tsconfig.json --fix",
-		"prisma": "prisma migrate deploy",
+		"prisma": "prisma generate",
+		"migrate": "prisma migrate deploy",
 		"build": "tsc",
-		"start": "node .",
+		"start": "yarn migrate && node .",
 		"dev": "nodemon --watch src -e ts,ejs --exec 'yarn build && yarn start'",
 		"test": "yarn build && mocha tests/*.spec.js"
 	},
