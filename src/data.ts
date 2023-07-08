@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
+import type { Device } from '@prisma/client';
 
 const prisma = new PrismaClient();
 export const deviceTokens: string[] = [];
@@ -9,7 +10,7 @@ const validOSes: string[] = ['ios', 'android'];
 async function primeDevicesCache(): Promise<void>
 {
     const dbDevices = await prisma.device.findMany();
-    deviceTokens.push(...dbDevices.map(d => d.token));
+    deviceTokens.push(...dbDevices.map((d: Device) => d.token));
 
     console.info(`Primed cache with ${deviceTokens.length} device tokens`);
 }
