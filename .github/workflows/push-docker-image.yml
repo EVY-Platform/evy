@@ -43,7 +43,7 @@ jobs:
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
 
       - name: Docker Compose Remote Deploy
-        uses: glesage/docker-compose-remote-action@v1.3
+        uses: glesage/docker-compose-remote-action@v1.4
         with:
           service: api
           project_name: frodo
