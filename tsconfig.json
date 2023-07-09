@@ -2,8 +2,6 @@
   "compilerOptions": {
     "target": "es6",
     "moduleResolution": "nodenext",
-    // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
-    // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
     "resolveJsonModule": true,
     "outDir": "./dist",
     "esModuleInterop": true,
@@ -14,7 +12,11 @@
       "*": [
         "./node_modules/*"
       ]
-    }
+    },
+    "typeRoots": [
+      "./src/types.d.ts",
+      "./node_modules/@types/"
+    ]
   },
   "include": [
     "src/**/*"
