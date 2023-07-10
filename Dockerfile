@@ -16,7 +16,6 @@ RUN yarn build
 #final - We need alpine and not buster-slim because of libSSL
 FROM node:18-alpine AS final
 WORKDIR /app
-COPY --from=code_builder ./app/dist ./dist
 COPY --from=code_builder ./app/prisma ./prisma
 COPY package.json .
 COPY yarn.lock .
