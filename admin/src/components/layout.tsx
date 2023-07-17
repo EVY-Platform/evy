@@ -4,8 +4,9 @@ import styles from './layout.module.css'
 import utilStyles from '../styles/utils.module.css'
 import Link from 'next/link'
 
-const name = '[Your Name]'
-export const siteTitle = 'Next.js Sample Website'
+export const siteTitle = 'Frodo Admin Portal'
+const siteName = 'One platform to rule them all'
+const logoImageUrl = 'https://funko.com/dw/image/v2/BGTS_PRD/on/demandware.static/-/Sites-funko-master-catalog/default/dw250569fc/images/funko/13551-PX-1TM-1.png?sw=800&sh=800'
 
 export default function Layout({
   children,
@@ -20,13 +21,11 @@ export default function Layout({
         <link rel="icon" href="/favicon.ico" />
         <meta
           name="description"
-          content="Learn how to build a personal website using Next.js"
+          content={siteName}
         />
         <meta
           property="og:image"
-          content={`https://og-image.vercel.app/${encodeURI(
-            siteTitle
-          )}.png?theme=light&md=0&fontSize=75px&images=https%3A%2F%2Fassets.zeit.co%2Fimage%2Fupload%2Ffront%2Fassets%2Fdesign%2Fnextjs-black-logo.svg`}
+          content={logoImageUrl}
         />
         <meta name="og:title" content={siteTitle} />
         <meta name="twitter:card" content="summary_large_image" />
@@ -36,29 +35,29 @@ export default function Layout({
           <>
             <Image
               priority
-              src="https://img.freepik.com/vecteurs-libre/vecteur-degrade-logo-colore-oiseau_343694-1365.jpg"
+              src={logoImageUrl}
               className={utilStyles.borderCircle}
               height={144}
               width={144}
-              alt={name}
+              alt={siteName}
             />
-            <h1 className={utilStyles.heading2Xl}>{name}</h1>
+            <h1 className={utilStyles.heading2Xl}>{siteName}</h1>
           </>
         ) : (
           <>
             <Link href="/">
               <Image
                 priority
-                src="https://img.freepik.com/vecteurs-libre/vecteur-degrade-logo-colore-oiseau_343694-1365.jpg"
+                src={logoImageUrl}
                 className={utilStyles.borderCircle}
                 height={108}
                 width={108}
-                alt={name}
+                alt={siteName}
               />
             </Link>
             <h2 className={utilStyles.headingLg}>
               <Link href="/" className={utilStyles.colorInherit}>
-                {name}
+                {siteName}
               </Link>
             </h2>
           </>

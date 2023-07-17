@@ -7,7 +7,7 @@ module.exports = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'img.freepik.com',
+        hostname: 'funko.com',
         port: '',
       },
     ],
