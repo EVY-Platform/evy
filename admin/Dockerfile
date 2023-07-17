@@ -1,40 +1,24 @@
-#build deps
-FROM node:18-alpine AS dep_builder
+#deps
+FROM node:alpine AS deps
 WORKDIR /app
-COPY package.json .
-COPY yarn.lock .
-RUN yarn install
+COPY package.json yarn.lock .
+RUN  yarn install --production
 
-#build code
-FROM node:18-alpine AS code_builder
+#code
+FROM node:alpine AS builder
 WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-COPY --from=dep_builder ./app/node_modules ./node_modules
-RUN yarn build
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV production
+RUN yarn export
 
-#final - We need alpine and not buster-slim because of libSSL
-FROM node:18-alpine AS final
-WORKDIR /app
-COPY --from=code_builder ./app/dist ./dist
-COPY package.json .
-COPY yarn.lock .
-RUN yarn install --production
-RUN rm ./yarn.lock
+#server
+FROM nginx:alpine as runner
+RUN rm -rf /usr/share/nginx/html/*
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-ARG APP_SCHEME="http"
-ARG APP_HOST="0.0.0.0"
-ARG APP_PORT=8001
-ARG API_SCHEME="http"
-ARG API_HOST="0.0.0.0"
-ARG API_PORT=8000
+EXPOSE 80
 
-ENV APP_SCHEME=$APP_SCHEME
-ENV APP_HOST=$APP_HOST
-ENV APP_PORT=$APP_PORT
-ENV API_SCHEME=$API_SCHEME
-ENV API_HOST=$API_HOST
-ENV API_PORT=$API_PORT
-
-EXPOSE $APP_PORT
-
-CMD [ "yarn", "start" ]
+CMD ["nginx", "-g", "daemon off;"]
