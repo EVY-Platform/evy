@@ -1,0 +1,8 @@
+dist/
+node_modules/
+data/
+.env
+.DS_Store
+yarn-debug.log*
+yarn-error.log*
+history.txt
