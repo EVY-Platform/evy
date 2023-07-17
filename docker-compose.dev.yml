@@ -1,9 +1,17 @@
 version: "3.9"
 services:
+  admin:
+    restart: always
+    build:
+      context: admin/.
+    ports:
+      - 80:80
+    depends_on:
+      - api
   api:
     restart: always
     build:
-      context: .
+      context: api/.
       args:
         DATABASE_URL: $DATABASE_URL
     ports:

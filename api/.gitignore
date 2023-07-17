@@ -2,7 +2,6 @@ dist/
 node_modules/
 data/
 .env
-.next
 .DS_Store
 yarn-debug.log*
 yarn-error.log*

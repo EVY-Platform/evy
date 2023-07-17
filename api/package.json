@@ -1,7 +1,7 @@
 {
 	"name": "frodo",
 	"version": "0.0.1",
-	"description": "One platform to rule them all",
+	"description": "Frodo api",
 	"type": "module",
 	"main": "dist/index.js",
 	"scripts": {
@@ -10,7 +10,7 @@
 		"migrate": "prisma migrate deploy",
 		"build": "tsc",
 		"start": "yarn migrate && node .",
-		"dev": "nodemon --watch src -e ts,ejs --exec 'yarn build && yarn start'",
+		"dev": "nodemon --watch src -e ts --exec 'yarn build && yarn start'",
 		"test": "yarn build && mocha tests/*.spec.js"
 	},
 	"license": "GPL-3.0-only",

@@ -32,17 +32,25 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build and push Docker image
+      - name: Build and push api Docker image
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
-          context: .
+          context: api/
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}-api
           labels: ${{ steps.meta.outputs.labels }}
         env:
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
 
-      - name: Docker Compose Remote Deploy
+      - name: Build and push admin Docker image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: admin/
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}-admin
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Docker Compose Remote Deploy api
         uses: glesage/docker-compose-remote-action@v1.4
         with:
           service: api
@@ -56,3 +64,14 @@ jobs:
           PG_USER: ${{ secrets.PG_USER }}
           PG_PASS: ${{ secrets.PG_PASS }}
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
+
+      - name: Docker Compose Remote Deploy admin
+        uses: glesage/docker-compose-remote-action@v1.4
+        with:
+          service: admin
+          project_name: frodo
+          ssh_host: 170.64.163.217
+          ssh_user: sam
+          ssh_key: ${{ secrets.DO_SSH_KEY }}
+          known_host_key: ${{ secrets.DO_HOST_KEY }}
+          pull: true
