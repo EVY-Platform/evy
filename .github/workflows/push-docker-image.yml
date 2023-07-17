@@ -37,7 +37,7 @@ jobs:
         with:
           context: api/
           push: true
-          tags: ${{ steps.meta.outputs.tags }}-api
+          tags: ghcr.io/glesage/frodo-api:latest
           labels: ${{ steps.meta.outputs.labels }}
         env:
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
@@ -47,7 +47,7 @@ jobs:
         with:
           context: admin/
           push: true
-          tags: ${{ steps.meta.outputs.tags }}-admin
+          tags: ghcr.io/glesage/frodo-admin:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Docker Compose Remote Deploy api

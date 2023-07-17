@@ -1,14 +1,14 @@
 version: "3.3"
 services:
   admin:
-    image: "ghcr.io/glesage/frodo-admin:dev"
+    image: "ghcr.io/glesage/frodo-admin:latest"
     restart: always
     ports:
       - 80:80
     depends_on:
       - api
   api:
-    image: "ghcr.io/glesage/frodo-api:dev"
+    image: "ghcr.io/glesage/frodo-api:latest"
     restart: always
     ports:
       - 8000:8000
