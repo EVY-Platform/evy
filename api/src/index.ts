@@ -11,7 +11,7 @@ function authHandler(params: WSParams): boolean
 
 async function main()
 {
-    await initServer({ namespace: 'admin', authHandler });
+    await initServer(authHandler);
 }
 
 main();

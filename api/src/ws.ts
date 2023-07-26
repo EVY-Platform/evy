@@ -8,18 +8,11 @@ const HOST: string | undefined = process.env.API_HOST;
 const PORT: string | undefined = process.env.API_PORT;
 if (!HOST || !PORT) throw new Error('Missing API environment variables');
 
-interface WSServerOptions
+function initServer(authHandler: (params: WSParams) => boolean): Promise<WSServer>
 {
-    namespace: string;
-    authHandler: (params: WSParams) => boolean;
-}
-
-function initServer(options: WSServerOptions): Promise<WSServer>
-{
-    const { namespace, authHandler } = options;
     return new Promise<WSServer>((resolve, reject) =>
     {
-        const server = new Server({ host: HOST, port: Number(PORT), namespace });
+        const server = new Server({ host: HOST, port: Number(PORT) });
 
         server.on("listening", () => resolve(server));
         server.on("error", (error: WSError) => reject(error));
@@ -27,7 +20,7 @@ function initServer(options: WSServerOptions): Promise<WSServer>
     {
         server.setAuth(authHandler);
 
-        console.info(`${namespace} server listening on ${HOST}:${PORT}`);
+        console.info(`WS server listening on ${HOST}:${PORT}`);
 
         return server;
     });
