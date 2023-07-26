@@ -1,0 +1,23 @@
+{
+  "pins" : [
+    {
+      "identity" : "contextcodable.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tesseract-one/ContextCodable.swift.git",
+      "state" : {
+        "revision" : "c80b0f83752590ea88f5b4e2946da04c3acb12de",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "jsonrpc.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tesseract-one/JsonRPC.swift.git",
+      "state" : {
+        "revision" : "5300c7246f96f770930a830638de6389d1a2565b",
+        "version" : "0.2.1"
+      }
+    }
+  ],
+  "version" : 2
+}
