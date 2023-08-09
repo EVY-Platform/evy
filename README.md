@@ -1,10 +1,10 @@
 # frodo
 One platform to rule them all - Plaform to enable Features as a Service
 
-[api README](/api/README.md)  
-[admin README](/admin/README.md)  
-[iOS README](/ios/README.md)  
-[Android README](/android/README.md)  
+* [api](/api/README.md)  
+* [admin](/admin/README.md)  
+* [iOS](/ios/README.md)  
+* [Android](/android/README.md)  
 
 ## Setup
 1. Setup NodeJS  
