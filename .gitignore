@@ -1,6 +1,8 @@
 # Typescript
 dist/
 node_modules/
+traefik/
+letsencrypt/
 data/
 .env
 .next
