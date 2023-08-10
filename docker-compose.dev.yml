@@ -53,7 +53,7 @@ services:
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443
       - --providers.docker=true
-      - --providers.file.filename=/letsencrypt/dynamic.yml
+      - --providers.file.filename=/traefik/dynamic.yml
       - --api=true
       - --certificatesresolvers.le.acme.tlschallenge=true
       - --certificatesresolvers.le.acme.httpchallenge=true
@@ -81,7 +81,7 @@ services:
       - traefik
     volumes:
       - ~/letsencrypt:/letsencrypt
-      - ~/traefik/dynamic.yml:/dynamic.yml:ro
+      - ~/traefik/dynamic.yml:/traefik/dynamic.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   whoami:
