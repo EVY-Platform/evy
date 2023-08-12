@@ -8,7 +8,6 @@
 import Foundation
 
 struct FDevice: Codable {
-    let id: UUID
     let token: String
     let os: FOS
     let created_at: String

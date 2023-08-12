@@ -8,11 +8,8 @@ datasource db {
 }
 
 model Device {
-  id         String   @id @db.Uuid
-  token      String   @db.VarChar(256)
+  token      String   @id @db.VarChar(256)
   os         String   @db.VarChar(7)
-  created_at DateTime @db.Date
-  updated_at DateTime @db.Date
-
-  @@index([token], map: "device_token_idx")
+  created_at DateTime @db.Timestamp(3)
+  updated_at DateTime @db.Timestamp(3)
 }

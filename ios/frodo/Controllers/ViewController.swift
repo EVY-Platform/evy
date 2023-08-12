@@ -19,7 +19,7 @@ final class ViewController: UIViewController {
     }
     
     func message() {
-        let auth = FLoginParams(token: "clem", os: FOS.android)
+        let auth = FLoginParams(token: "geo", os: FOS.ios)
 
         Task {
             do {

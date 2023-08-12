@@ -10,7 +10,9 @@ FROM node:18-alpine AS code_builder
 WORKDIR /app
 COPY . .
 COPY --from=dep_builder ./app/node_modules ./node_modules
-RUN yarn prisma
+RUN yarn prisma_generate
+RUN yarn prisma_migration
+RUN yarn prisma_migrate
 RUN yarn build
 
 #final - We need alpine and not buster-slim because of libSSL

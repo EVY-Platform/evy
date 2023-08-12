@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
 import type { Device } from '@prisma/client';
 
@@ -18,7 +17,6 @@ async function registerDevice(token: string, os: string): Promise<void>
 {
     await prisma.device.create({
         data: {
-            id: uuidv4(),
             token,
             os,
             created_at: new Date(),
