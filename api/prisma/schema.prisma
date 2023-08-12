@@ -7,9 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum OS {
+  ios
+  android
+}
+
 model Device {
   token      String   @id @db.VarChar(256)
-  os         String   @db.VarChar(7)
+  os         OS
   created_at DateTime @db.Timestamp(3)
   updated_at DateTime @db.Timestamp(3)
 }
