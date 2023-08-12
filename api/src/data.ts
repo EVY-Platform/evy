@@ -3,7 +3,6 @@ import type { Device } from '@prisma/client';
 import { OS } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const validOSes: string[] = ['ios', 'android'];
 
 async function findOrCreateDevice(token: string, os: OS): Promise<Device|null>
 {
