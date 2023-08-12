@@ -9,9 +9,9 @@ describe("WS helper test suite", () =>
 {
     it(`should start a websocket server`, () =>
     {
-        return initServer({ namespace: '/admin', mockAuthHandler }).then((server) =>
+        return initServer(mockAuthHandler).then((server) =>
         {
-            var client = new Client(`ws://${process.env.API_HOST}:${process.env.API_PORT}`);
+            var client = new Client(`ws://localhost:${process.env.API_PORT}`);
 
             return new Promise((resolve, reject) =>
             {
