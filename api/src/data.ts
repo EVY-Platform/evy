@@ -1,46 +1,35 @@
 import { PrismaClient } from '@prisma/client';
-import type { Device } from '@prisma/client';
+import type { Device, OS } from '@prisma/client';
 
 const prisma = new PrismaClient();
-export const deviceTokens: string[] = [];
+export const activeDeviceTokens: string[] = [];
 
 const validOSes: string[] = ['ios', 'android'];
 
-async function primeDevicesCache(): Promise<void>
+async function findOrCreateDevice(token: string, os: OS): Promise<Device|null>
 {
-    const dbDevices = await prisma.device.findMany();
-    deviceTokens.push(...dbDevices.map((d: Device) => d.token));
-
-    console.info(`Primed cache with ${deviceTokens.length} device tokens`);
-}
-async function registerDevice(token: string, os: string): Promise<void>
-{
-    await prisma.device.create({
-        data: {
+    return prisma.device.upsert({
+        where: {
+            token: token
+        },
+        create: {
             token,
             os,
             created_at: new Date(),
             updated_at: new Date()
-        }
+        },
+        update: {}
     });
-    deviceTokens.push(token);
 }
-export function validateAuth(token: string, os: string): boolean
+
+export async function validateAuth(token: string, os: OS): Promise<boolean>
 {
     if (!token || token.length < 1) return false;
     if (!os || !validOSes.includes(os)) return false;
 
-    if (!deviceTokens.includes(token))
-    {
-        // Yes this is odd, but rpc-json isn't async
-        // so we just have to trigger this and hope it works
-        registerDevice(token, os).catch(e =>
-        {
-            // TODO - Need to handle failed registration
-        });
-    }
+    const device = await findOrCreateDevice(token, os).catch(() => false);
+    if (!device) return false
 
+    activeDeviceTokens.push(token);
     return true;
 }
-
-primeDevicesCache();

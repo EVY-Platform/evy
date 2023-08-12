@@ -4,7 +4,7 @@ dotenv.config();
 import { validateAuth } from './data.js';
 import { initServer, WSParams } from './ws.js';
 
-function authHandler(params: WSParams): boolean
+function authHandler(params: WSParams): Promise<boolean>
 {
     return validateAuth(params.token, params.os);
 }
