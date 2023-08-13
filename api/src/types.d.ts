@@ -1,2 +1,2 @@
-declare module 'uuid';
-declare module 'rpc-websockets';
+declare module "uuid";
+declare module "rpc-websockets";
