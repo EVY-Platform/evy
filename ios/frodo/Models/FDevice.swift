@@ -12,7 +12,6 @@ struct FDevice: Codable {
     let token: String
     let os: FOS
     let created_at: String
-    let updated_at: String
 }
 
 enum FOS: String, Codable {

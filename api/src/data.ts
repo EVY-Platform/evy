@@ -17,7 +17,6 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 				token,
 				os,
 				created_at: new Date(),
-				updated_at: new Date(),
 			},
 			update: {},
 		})
