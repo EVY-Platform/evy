@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7353FDB92A889A1C003259D3 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 7353FDB82A889A1C003259D3 /* SQLite */; };
+		7353FDBB2A889D8C003259D3 /* FService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7353FDBA2A889D8C003259D3 /* FService.swift */; };
+		7353FDBD2A889DDC003259D3 /* FOrganization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7353FDBC2A889DDC003259D3 /* FOrganization.swift */; };
+		7353FDBF2A889DFB003259D3 /* FServiceProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7353FDBE2A889DFB003259D3 /* FServiceProvider.swift */; };
+		7353FDC12A88A430003259D3 /* FManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7353FDC02A88A430003259D3 /* FManager.swift */; };
 		7362FFB42A71A0D7001BCACF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7362FFB32A71A0D7001BCACF /* AppDelegate.swift */; };
 		7362FFB62A71A0D7001BCACF /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7362FFB52A71A0D7001BCACF /* SceneDelegate.swift */; };
 		7362FFB82A71A0D7001BCACF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7362FFB72A71A0D7001BCACF /* ViewController.swift */; };
@@ -15,10 +20,13 @@
 		73F703F32A71A21D009AC9AF /* FDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F703F22A71A21D009AC9AF /* FDevice.swift */; };
 		73F703FC2A71A3C8009AC9AF /* FWebsocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F703FB2A71A3C8009AC9AF /* FWebsocket.swift */; };
 		73F703FF2A71ACD6009AC9AF /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 73F703FE2A71ACD6009AC9AF /* JsonRPC */; };
-		73F704022A71C1EB009AC9AF /* FLoginParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F704012A71C1EB009AC9AF /* FLoginParams.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7353FDBA2A889D8C003259D3 /* FService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FService.swift; sourceTree = "<group>"; };
+		7353FDBC2A889DDC003259D3 /* FOrganization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FOrganization.swift; sourceTree = "<group>"; };
+		7353FDBE2A889DFB003259D3 /* FServiceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FServiceProvider.swift; sourceTree = "<group>"; };
+		7353FDC02A88A430003259D3 /* FManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FManager.swift; sourceTree = "<group>"; };
 		7362FFB02A71A0D7001BCACF /* frodo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = frodo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7362FFB32A71A0D7001BCACF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7362FFB52A71A0D7001BCACF /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -28,7 +36,6 @@
 		7362FFC12A71A0D8001BCACF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		73F703F22A71A21D009AC9AF /* FDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FDevice.swift; sourceTree = "<group>"; };
 		73F703FB2A71A3C8009AC9AF /* FWebsocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FWebsocket.swift; sourceTree = "<group>"; };
-		73F704012A71C1EB009AC9AF /* FLoginParams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLoginParams.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,6 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7353FDB92A889A1C003259D3 /* SQLite in Frameworks */,
 				73F703FF2A71ACD6009AC9AF /* JsonRPC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -69,17 +77,9 @@
 				73F703ED2A71A154009AC9AF /* Models */,
 				73F704002A71C1D2009AC9AF /* Types */,
 				73F703EC2A71A14B009AC9AF /* ViewModels */,
-				73F703EB2A71A13D009AC9AF /* Managers */,
 				7362FFC12A71A0D8001BCACF /* Info.plist */,
 			);
 			path = frodo;
-			sourceTree = "<group>";
-		};
-		73F703EB2A71A13D009AC9AF /* Managers */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Managers;
 			sourceTree = "<group>";
 		};
 		73F703EC2A71A14B009AC9AF /* ViewModels */ = {
@@ -93,6 +93,9 @@
 			isa = PBXGroup;
 			children = (
 				73F703F22A71A21D009AC9AF /* FDevice.swift */,
+				7353FDBA2A889D8C003259D3 /* FService.swift */,
+				7353FDBC2A889DDC003259D3 /* FOrganization.swift */,
+				7353FDBE2A889DFB003259D3 /* FServiceProvider.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -127,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				73F703FB2A71A3C8009AC9AF /* FWebsocket.swift */,
+				7353FDC02A88A430003259D3 /* FManager.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -134,7 +138,6 @@
 		73F704002A71C1D2009AC9AF /* Types */ = {
 			isa = PBXGroup;
 			children = (
-				73F704012A71C1EB009AC9AF /* FLoginParams.swift */,
 			);
 			path = Types;
 			sourceTree = "<group>";
@@ -157,6 +160,7 @@
 			name = frodo;
 			packageProductDependencies = (
 				73F703FE2A71ACD6009AC9AF /* JsonRPC */,
+				7353FDB82A889A1C003259D3 /* SQLite */,
 			);
 			productName = frodo;
 			productReference = 7362FFB02A71A0D7001BCACF /* frodo.app */;
@@ -188,6 +192,7 @@
 			mainGroup = 7362FFA72A71A0D7001BCACF;
 			packageReferences = (
 				73F703FD2A71ACD6009AC9AF /* XCRemoteSwiftPackageReference "JsonRPC.swift" */,
+				7353FDB72A889A1C003259D3 /* XCRemoteSwiftPackageReference "SQLite.swift" */,
 			);
 			productRefGroup = 7362FFB12A71A0D7001BCACF /* Products */;
 			projectDirPath = "";
@@ -216,10 +221,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				7362FFB82A71A0D7001BCACF /* ViewController.swift in Sources */,
+				7353FDBD2A889DDC003259D3 /* FOrganization.swift in Sources */,
 				7362FFB42A71A0D7001BCACF /* AppDelegate.swift in Sources */,
 				73F703FC2A71A3C8009AC9AF /* FWebsocket.swift in Sources */,
+				7353FDBF2A889DFB003259D3 /* FServiceProvider.swift in Sources */,
 				73F703F32A71A21D009AC9AF /* FDevice.swift in Sources */,
-				73F704022A71C1EB009AC9AF /* FLoginParams.swift in Sources */,
+				7353FDBB2A889D8C003259D3 /* FService.swift in Sources */,
+				7353FDC12A88A430003259D3 /* FManager.swift in Sources */,
 				7362FFB62A71A0D7001BCACF /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -432,6 +440,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		7353FDB72A889A1C003259D3 /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stephencelis/SQLite.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.14.1;
+			};
+		};
 		73F703FD2A71ACD6009AC9AF /* XCRemoteSwiftPackageReference "JsonRPC.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tesseract-one/JsonRPC.swift.git";
@@ -443,6 +459,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		7353FDB82A889A1C003259D3 /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7353FDB72A889A1C003259D3 /* XCRemoteSwiftPackageReference "SQLite.swift" */;
+			productName = SQLite;
+		};
 		73F703FE2A71ACD6009AC9AF /* JsonRPC */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 73F703FD2A71ACD6009AC9AF /* XCRemoteSwiftPackageReference "JsonRPC.swift" */;

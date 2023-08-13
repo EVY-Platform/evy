@@ -15,21 +15,29 @@ final class ViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        message()
+        
+        Task {
+            await setup()
+            await loadData()
+        }
     }
     
-    func message() {
-        let auth = FLoginParams(token: "geo", os: FOS.ios)
-
-        Task {
-            do {
-                let res = try await FWebsocket.shared(auth: auth).callAPI(method: "sum", params: nil, expecting: String.self)
-                print(res)
-            } catch (FWSError.loginError) {
-                print("Could not log in")
-            } catch {
-                print("Unexpected error: \(error).")
-            }
+    func setup() async {
+        do {
+            try await FManager.shared.setup()
+        } catch (FWSError.loginError) {
+            print("Could not log in")
+        } catch {
+            print("Unexpected error: \(error).")
+        }
+    }
+    
+    func loadData() async {
+        do {
+            let data = try await FManager.shared.fetchServicesData()
+            print(data)
+        } catch {
+            print("Unexpected error: \(error).")
         }
     }
 }

@@ -7,15 +7,11 @@
 
 import Foundation
 
-struct FDevice: Codable {
+struct FService: Codable {
     let id: UUID
-    let token: String
-    let os: FOS
+    let name: String
+    let description: String
     let created_at: String
     let updated_at: String
-}
-
-enum FOS: String, Codable {
-    case ios = "ios"
-    case android = "android"
+    let providers: Array<FServiceProvider>?
 }

@@ -12,35 +12,44 @@ enum FWSError: Error {
     case loginError
 }
 
-let API_HOST = ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:8000"
-let WS_RPC = JsonRpc(.ws(url: URL(string: "ws://\(API_HOST)")!), queue: .main)
+struct FLoginParams: Encodable {
+    let token: String
+    let os: FOS
+}
 
-final actor FWebsocket {
-    static private var task: Task<FWebsocket, Error>?
-    static public func shared(auth: FLoginParams) async throws -> FWebsocket {
-        if let task {
-            return try await task.value
-        }
-        let task = Task { try await FWebsocket(auth: auth) }
-        self.task = task
-        return try await task.value
+final class FWebsocket {
+    var rpc: Service<ServiceCore<WsConnectionFactory.Connection, WsConnectionFactory.Delegate>>
+    
+    init(host: String) {
+        rpc = JsonRpc(.ws(url: URL(string: "ws://\(host)")!), queue: .main)
     }
-    private init(auth: FLoginParams) async throws {
-        guard try await self.login(auth: auth) else {
+    
+    public func connect(token: String, os: FOS) async throws {
+        guard try await self.login(token: token, os: os) else {
             throw FWSError.loginError
         }
     }
     
-    private func login(auth: FLoginParams) async throws -> Bool {
-        try await self.callAPI(method: "rpc.login", params: Params(auth).first, expecting: Bool.self)
+    public func fetchServicesData(lastSyncTime: Double) async throws -> Array<FService> {
+        try await callAPI(method: "fetchServicesData",
+                          params: lastSyncTime,
+                          expecting: Array<FService>.self)
     }
     
-    // Main messaging helper
-    public func callAPI<T: Codable>(
+    private func login(token: String, os: FOS) async throws -> Bool {
+        try await self.callAPI(method: "rpc.login",
+                               params: FLoginParams(token: token, os: os),
+                               expecting: Bool.self)
+    }
+    
+    private func callAPI<T: Codable>(
         method: String,
-        params: AnyEncodable?,
+        params: Encodable,
         expecting type: T.Type
     ) async throws -> T {
-        try await WS_RPC.call(method: method, params: params, T.self, String.self)
+        try await rpc.call(method: method,
+                           params: Params(params).first,
+                           T.self,
+                           String.self)
     }
 }
