@@ -17,11 +17,13 @@ model Device {
   os         OS
   created_at DateTime @db.Timestamp(3)
   updated_at DateTime @db.Timestamp(3)
+
+  @@unique([token, os])
 }
 
 model Service {
   id          String   @id @db.Uuid
-  name        String   @db.VarChar(50)
+  name        String   @db.VarChar(50)  @unique
   description String   @db.Text
   created_at  DateTime @db.Timestamp(3)
   updated_at  DateTime @db.Timestamp(3)
@@ -30,7 +32,7 @@ model Service {
 
 model Organization {
   id            String   @id @db.Uuid
-  name          String   @db.VarChar(100)
+  name          String   @db.VarChar(100) @unique
   description   String   @db.Text
   logo          String   @db.Uuid
   url           String   @db.VarChar(50)
@@ -44,12 +46,15 @@ model ServiceProvider {
   id                  String        @id @db.Uuid
   fk_service_id       String        @db.Uuid
   fk_organization_id  String        @db.Uuid
-  name                String        @db.VarChar(100)
+  name                String        @db.VarChar(100)  @unique
   description         String        @db.Text
   logo                String        @db.Uuid
   url                 String        @db.VarChar(50)
   created_at          DateTime      @db.Timestamp(3)
   updated_at          DateTime      @db.Timestamp(3)
+  retired             Boolean       @default(false)
   service             Service       @relation(fields: [fk_service_id], references: [id])
   organization        Organization  @relation(fields: [fk_organization_id], references: [id])
+
+  @@unique([fk_service_id, fk_organization_id])
 }
