@@ -18,3 +18,38 @@ model Device {
   created_at DateTime @db.Timestamp(3)
   updated_at DateTime @db.Timestamp(3)
 }
+
+model Service {
+  id          String   @id @db.Uuid
+  name        String   @db.VarChar(50)
+  description String   @db.Text
+  created_at  DateTime @db.Timestamp(3)
+  updated_at  DateTime @db.Timestamp(3)
+  providers   ServiceProvider[]
+}
+
+model Organization {
+  id            String   @id @db.Uuid
+  name          String   @db.VarChar(100)
+  description   String   @db.Text
+  logo          String   @db.Uuid
+  url           String   @db.VarChar(50)
+  support_email String   @db.VarChar(50)
+  created_at    DateTime @db.Timestamp(3)
+  updated_at    DateTime @db.Timestamp(3)
+  providers     ServiceProvider[]
+}
+
+model ServiceProvider {
+  id                  String        @id @db.Uuid
+  fk_service_id       String        @db.Uuid
+  fk_organization_id  String        @db.Uuid
+  name                String        @db.VarChar(100)
+  description         String        @db.Text
+  logo                String        @db.Uuid
+  url                 String        @db.VarChar(50)
+  created_at          DateTime      @db.Timestamp(3)
+  updated_at          DateTime      @db.Timestamp(3)
+  service             Service       @relation(fields: [fk_service_id], references: [id])
+  organization        Organization  @relation(fields: [fk_organization_id], references: [id])
+}
