@@ -10,8 +10,8 @@
 		"prisma_migration": "prisma migrate dev",
 		"prisma_migrate": "prisma migrate deploy",
 		"build": "tsc",
-		"start": "node .",
-		"dev": "nodemon --watch src -e ts --exec 'yarn build && yarn start'",
+		"start": "yarn prisma_migration && yarn prisma_migrate && node .",
+		"dev": "nodemon --watch src -e ts --exec 'yarn build && node .'",
 		"test": "yarn build && mocha tests/*.spec.js"
 	},
 	"license": "GPL-3.0-only",
