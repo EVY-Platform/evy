@@ -1,33 +1,25 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import {
-	validateAuth,
-	createService,
-	createOrganization,
-	createServiceProvider,
-	fetchServicesData,
-} from "./data.js";
+import { validateAuth, getNewDataSince, crud } from "./data.js";
 import { initServer, WSParams } from "./ws.js";
-import { isCorrectDate } from "./utils.js";
 
-function authHandler(params: WSParams): Promise<boolean> {
-	return validateAuth(params.token, params.os);
+function authHandler(data: WSParams): Promise<boolean> {
+	return validateAuth(data.token, data.os);
 }
 
 async function main() {
 	const server = await initServer(authHandler);
 
-	server.register("createService", createService).protected();
-	server.register("createOrganization", createOrganization).protected();
-	server.register("createServiceProvider", createServiceProvider).protected();
+	server
+		.register("getNewDataSince", async (data: WSParams) => {
+			return getNewDataSince(data.model, data.since);
+		})
+		.protected();
 
 	server
-		.register("fetchServicesData", async (since?: number) => {
-			const hasValidSince = since && isCorrectDate(new Date(since));
-			return fetchServicesData(
-				hasValidSince ? new Date(since) : undefined,
-			);
+		.register("crud", async (data: WSParams) => {
+			return crud(data.method, data.model, data.filter, data.data);
 		})
 		.protected();
 }

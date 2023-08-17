@@ -2,10 +2,31 @@ import { v4 as uuidv4 } from "uuid";
 import { Prisma, PrismaClient, OS } from "@prisma/client";
 import type { Service, Organization, ServiceProvider } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import { isCorrectDate } from "./utils.js";
+import { prismaCRUD } from "./prismaCRUD.js";
+
+type Model = Service | Organization | ServiceProvider;
+type AnyData = {
+	[key: string]: AnyData | string | number | boolean | Date;
+};
+enum CRUD {
+	find = "find",
+	create = "create",
+	update = "update",
+	delete = "delete",
+}
+
+const prisma = new PrismaClient({
+	log: ["query", "info", "warn", "error"],
+});
+const lowerCaseModels = Object.keys(Prisma.ModelName).map((n) =>
+	n.toLowerCase(),
+);
 
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
-	if (!token || token.length < 1) return false;
+	if (!token || token.length < 1) throw new Error("No token provided");
+	if (!os || os.length < 1) throw new Error("No os provided");
+
 	if (!Object.values(OS).includes(os)) return false;
 
 	return !!(await prisma.device
@@ -23,80 +44,66 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 		.catch(() => false));
 }
 
-export async function createService(service: Service): Promise<Service> {
-	return prisma.service
-		.create({
+export async function crud(
+	method: CRUD,
+	model: string,
+	filter?: AnyData,
+	data?: AnyData,
+): Promise<Model[] | boolean | undefined> {
+	if (!method || !(method in CRUD)) throw new Error("Invalid CRUD method");
+	if (!lowerCaseModels.find((m) => m === model)) {
+		throw new Error("Invalid model provided");
+	}
+	if (!data || Object.keys(data).length < 1) {
+		if (method === CRUD.create) throw new Error("No data provided");
+		if (method === CRUD.update) throw new Error("No data provided");
+	}
+	if (!filter || Object.keys(filter).length < 1) {
+		if (method === CRUD.find) throw new Error("No filter provided");
+		if (method === CRUD.update) throw new Error("No filter provided");
+		if (method === CRUD.delete) throw new Error("No filter provided");
+	}
+
+	let promise;
+	if (method === CRUD.find) {
+		promise = prismaCRUD(prisma, model, "findMany", { where: filter });
+	} else if (method === CRUD.create) {
+		promise = prismaCRUD(prisma, model, method, {
 			data: {
 				id: uuidv4(),
-				name: service.name,
-				description: service.description,
+				...data,
 				created_at: new Date(),
 				updated_at: new Date(),
 			},
-		})
-		.catch((e) => {
-			throw new Error(e.code);
 		});
-}
-export async function createOrganization(
-	organization: Organization,
-): Promise<Organization> {
-	return prisma.organization
-		.create({
-			data: {
-				id: uuidv4(),
-				name: organization.name,
-				description: organization.description,
-				logo: organization.logo,
-				url: organization.url,
-				support_email: organization.support_email,
-				created_at: new Date(),
-				updated_at: new Date(),
-			},
-		})
-		.catch((e) => {
-			throw new Error(e.code);
+	} else if (method === CRUD.update) {
+		promise = prismaCRUD(prisma, model, method, {
+			where: filter,
+			data: { ...data, updated_at: new Date() },
 		});
-}
-export async function createServiceProvider(
-	serviceProvider: ServiceProvider,
-): Promise<ServiceProvider> {
-	return prisma.serviceProvider
-		.create({
-			data: {
-				id: uuidv4(),
-				fk_service_id: serviceProvider.fk_service_id,
-				fk_organization_id: serviceProvider.fk_organization_id,
-				name: serviceProvider.name,
-				description: serviceProvider.description,
-				logo: serviceProvider.logo,
-				url: serviceProvider.url,
-				created_at: new Date(),
-				updated_at: new Date(),
-			},
-		})
-		.catch((e) => {
-			throw new Error(e.code);
+	} else if (method === CRUD.delete) {
+		promise = prismaCRUD(prisma, model, method, {
+			where: filter,
 		});
+	}
+
+	return await promise;
 }
 
-export async function fetchServicesData(since?: Date): Promise<Service[]> {
-	return await prisma.service
-		.findMany({
-			...(since && {
-				where: {
-					updated_at: { gt: since },
-				},
-			}),
-			include: {
-				providers: {
-					include: {
-						organization: true,
-					},
-				},
+export async function getNewDataSince(
+	model: string,
+	since?: Date,
+): Promise<Model[]> {
+	if (!lowerCaseModels.find((m) => m === model)) {
+		throw new Error("Invalid model provided");
+	}
+
+	const hasValidSince = since && isCorrectDate(new Date(since));
+	return await prismaCRUD(prisma, model, "findMany", {
+		...(hasValidSince && {
+			where: {
+				updated_at: { gt: new Date(since) },
 			},
-		})
-		.catch((e) => {
-			throw new Error(e.code);
-		});
+		}),
+	});
 }
