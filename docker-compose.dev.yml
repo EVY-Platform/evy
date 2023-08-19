@@ -6,13 +6,6 @@ services:
       context: admin/.
     ports:
       - 8001:8001
-    labels:
-      - traefik.enable=true
-      - traefik.port=80
-      - traefik.http.routers.admin.rule=Host(`admin.${DOMAIN}`)
-      - traefik.http.routers.admin.entrypoints=https
-      - traefik.http.routers.admin.tls=true
-      - traefik.http.routers.admin.tls.certresolver=${CERT_RESOLVER}
     depends_on:
       - api
   api:
@@ -24,13 +17,6 @@ services:
         API_PORT: $API_PORT
     ports:
       - $API_PORT:$API_PORT
-    labels:
-      - traefik.enable=true
-      - traefik.port=80
-      - traefik.http.routers.api.rule=Host(`api.${DOMAIN}`)
-      - traefik.http.routers.api.entrypoints=https
-      - traefik.http.routers.api.tls=true
-      - traefik.http.routers.api.tls.certresolver=${CERT_RESOLVER}
     depends_on:
       - db
   db:
@@ -47,50 +33,3 @@ services:
       interval: 1s
       timeout: 1s
       retries: 3
-  traefik:
-    image: traefik:v2.10
-    command:
-      - --entrypoints.http.address=:80
-      - --entrypoints.https.address=:443
-      - --providers.docker=true
-      - --providers.file.filename=/traefik/dynamic.yml
-      - --api=true
-      - --certificatesresolvers.le.acme.tlschallenge=true
-      - --certificatesresolvers.le.acme.httpchallenge=true
-      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=http
-      - --certificatesresolvers.le.acme.email=${EMAIL}
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.to-https.rule=HostRegexp(`{host:.+}`)
-      - traefik.http.routers.to-https.entrypoints=http
-      - traefik.http.routers.to-https.middlewares=to-https
-      - traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)
-      - traefik.http.routers.traefik.entrypoints=https
-      - traefik.http.routers.traefik.middlewares=auth
-      - traefik.http.routers.traefik.service=api@internal
-      - traefik.http.routers.traefik.tls=true
-      - traefik.http.routers.traefik.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.middlewares.to-https.redirectscheme.scheme=https
-      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD_HASH}"
-    ports:
-      - 80:80
-      - 443:443
-    restart: unless-stopped
-    networks:
-      - traefik
-    volumes:
-      - ~/letsencrypt:/letsencrypt
-      - ~/traefik/dynamic.yml:/traefik/dynamic.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-
-  whoami:
-    image: containous/whoami
-    labels:
-      - traefik.http.routers.https.rule=Host(`${DOMAIN}`)
-      - traefik.http.routers.https.entrypoints=https
-      - traefik.http.routers.https.tls=true
-      - traefik.http.routers.https.tls.certresolver=${CERT_RESOLVER}
-networks:
-  traefik:
-    external: true
