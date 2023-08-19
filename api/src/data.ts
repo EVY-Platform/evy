@@ -49,7 +49,7 @@ export async function crud(
 	model: string,
 	filter?: AnyData,
 	data?: AnyData,
-): Promise<Model[] | boolean | undefined> {
+): Promise<Model[]> {
 	if (!method || !(method in CRUD)) throw new Error("Invalid CRUD method");
 	if (!lowerCaseModels.find((m) => m === model)) {
 		throw new Error("Invalid model provided");
