@@ -30,10 +30,10 @@ final class FWebsocket {
         }
     }
     
-    public func fetchServicesData(lastSyncTime: Double) async throws -> Array<FService> {
-        try await callAPI(method: "fetchServicesData",
-                          params: lastSyncTime,
-                          expecting: Array<FService>.self)
+    public func fetchServicesData(lastSyncTime: Int) async throws -> [String: Array<FService>] {
+        try await callAPI(method: "getNewDataSince",
+                          params: ["since": lastSyncTime],
+                          expecting: [String: Array<FService>].self)
     }
     
     private func login(token: String, os: FOS) async throws -> Bool {

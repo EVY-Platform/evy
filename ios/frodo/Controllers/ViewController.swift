@@ -18,7 +18,6 @@ final class ViewController: UIViewController {
         
         Task {
             await setup()
-            await loadData()
         }
     }
     
@@ -27,15 +26,6 @@ final class ViewController: UIViewController {
             try await FManager.shared.setup()
         } catch (FWSError.loginError) {
             print("Could not log in")
-        } catch {
-            print("Unexpected error: \(error).")
-        }
-    }
-    
-    func loadData() async {
-        do {
-            let data = try await FManager.shared.fetchServicesData()
-            print(data)
         } catch {
             print("Unexpected error: \(error).")
         }
