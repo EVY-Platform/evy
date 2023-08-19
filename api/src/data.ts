@@ -6,6 +6,9 @@ import { isCorrectDate } from "./utils.js";
 import { prismaCRUD } from "./prismaCRUD.js";
 
 type Model = Service | Organization | ServiceProvider;
+type ModelsDictionary = {
+	[key: string]: Model[];
+};
 type AnyData = {
 	[key: string]: AnyData | string | number | boolean | Date;
 };
@@ -19,9 +22,9 @@ enum CRUD {
 const prisma = new PrismaClient({
 	log: ["query", "info", "warn", "error"],
 });
-const lowerCaseModels = Object.keys(Prisma.ModelName).map((n) =>
-	n.toLowerCase(),
-);
+const lastTableDataUpdates: {
+	[key: string]: Date;
+} = {};
 
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	if (!token || token.length < 1) throw new Error("No token provided");
@@ -51,7 +54,7 @@ export async function crud(
 	data?: AnyData,
 ): Promise<Model[]> {
 	if (!method || !(method in CRUD)) throw new Error("Invalid CRUD method");
-	if (!lowerCaseModels.find((m) => m === model)) {
+	if (!lastTableDataUpdates[model]) {
 		throw new Error("Invalid model provided");
 	}
 	if (!data || Object.keys(data).length < 1) {
@@ -90,20 +93,53 @@ export async function crud(
 	return await promise;
 }
 
-export async function getNewDataSince(
-	model: string,
-	since?: Date,
-): Promise<Model[]> {
-	if (!lowerCaseModels.find((m) => m === model)) {
-		throw new Error("Invalid model provided");
-	}
-
+export async function getNewDataSince(since?: Date): Promise<ModelsDictionary> {
 	const hasValidSince = since && isCorrectDate(new Date(since));
-	return await prismaCRUD(prisma, model, "findMany", {
-		...(hasValidSince && {
-			where: {
-				updated_at: { gt: new Date(since) },
-			},
+	const relevantTables = Object.keys(lastTableDataUpdates).filter(
+		(model: string) => {
+			if (!hasValidSince) return true;
+			return lastTableDataUpdates[model] > since;
+		},
+	);
+
+	return Promise.all(
+		relevantTables.map(async (model: string) => {
+			return prismaCRUD(prisma, model, "findMany", {
+				...(hasValidSince && {
+					where: {
+						updated_at: { gt: new Date(since) },
+					},
+				}),
+			});
 		}),
+	).then((res: Model[][]) => {
+		return relevantTables.reduce((obj, tableName, index) => {
+			obj[tableName] = res[index];
+			return obj;
+		}, {} as ModelsDictionary);
 	});
+}
+
+export async function primeData() {
+	await Promise.all(
+		Object.keys(Prisma.ModelName)
+			.filter((model: string) => model !== "Device")
+			.map(async (model: string) => {
+				const lastUpdatedAt = await prismaCRUD(
+					prisma,
+					model,
+					"findFirst",
+					{
+						select: {
+							updated_at: true,
+						},
+						orderBy: {
+							updated_at: "desc",
+						},
+						take: 1,
+					},
+				);
+				lastTableDataUpdates[model] = lastUpdatedAt["updated_at"];
+			}),
+	);
 }
