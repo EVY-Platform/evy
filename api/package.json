@@ -11,18 +11,13 @@
 		"prisma_migrate": "prisma migrate deploy",
 		"build": "tsc",
 		"start": "yarn prisma_migration && yarn prisma_migrate && node .",
-		"dev": "nodemon --watch src -e ts --exec 'yarn build && node .'",
-		"test": "yarn build && mocha tests/*.spec.js"
+		"dev": "nodemon --watch src -e ts --exec 'yarn build && node .'"
 	},
 	"license": "GPL-3.0-only",
 	"devDependencies": {
-		"@types/chai": "^4.3.5",
-		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.11.9",
 		"@types/uuid": "^9.0.2",
 		"@types/ws": "^8.5.5",
-		"chai": "^4.3.7",
-		"mocha": "^10.2.0",
 		"nodemon": "^2.0.22",
 		"prettier": "^3.0.1",
 		"prisma": "^5.1.1",
