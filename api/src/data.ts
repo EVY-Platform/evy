@@ -125,7 +125,7 @@ export async function primeData() {
 		Object.keys(Prisma.ModelName)
 			.filter((model: string) => model !== "Device")
 			.map(async (model: string) => {
-				const lastUpdatedAt = await prismaCRUD(
+				const lastUpdate = await prismaCRUD(
 					prisma,
 					model,
 					"findFirst",
@@ -139,7 +139,8 @@ export async function primeData() {
 						take: 1,
 					},
 				);
-				lastTableDataUpdates[model] = lastUpdatedAt["updated_at"];
+				lastTableDataUpdates[model] =
+					lastUpdate && lastUpdate["updated_at"];
 			}),
 	);
 }
