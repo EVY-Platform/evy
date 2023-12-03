@@ -6,7 +6,7 @@
 {
 	"item_id": x,
 	"timeslot": 1700894934,
-	"buyer_id": a,
+	"buyer_id": a
 }
 ```
 
@@ -29,11 +29,11 @@
     ],
 	"price": {
 		"currency": "AUD",
-		"value": 250,
+		"value": 250
 	},
 	"seller": {
 		"fidelity_rate": 0.88,
-		"items_sold": 4,
+		"items_sold": 4
 	},
 	"address": {
 		"street": "x",
@@ -43,7 +43,7 @@
 		"country": "Australia",
 		"location": {
 			"latitude": 45.323124,
-			"longitude": -3.424233,
+			"longitude": -3.424233
 		}
 	},
 	"created_timestamp": 1701471377,
@@ -51,13 +51,13 @@
 		"pickup": {
 			"timeslots": [
 				{
-					"timeslot": 1700894934,
+					"timeslot": 1700894934
 				},
 				{
-					"timeslot": 17008944234,
+					"timeslot": 17008944234
 				},
 				{
-					"timeslot": 1800894934,
+					"timeslot": 1800894934
 				}
 			]
 		},
@@ -65,13 +65,13 @@
 			"fee": 50.0,
 			"timeslots": [
 				{
-					"timeslot": 1700894934,
+					"timeslot": 1700894934
 				},
 				{
-					"timeslot": 17008944234,
+					"timeslot": 17008944234
 				},
 				{
-					"timeslot": 1800894934,
+					"timeslot": 1800894934
 				}
 			]
 		},
@@ -82,8 +82,8 @@
 				"name": "Australia Post",
 				"logo": "image_id",
 				"eta": "2-5 days once deposited",
-				"fee": 25.0,
-			},
+				"fee": 25.0
+			}
 		}
 	},
 	"description":
@@ -93,14 +93,14 @@
 	"dimension": {
 		"width": 500,
 		"height": 1600,
-		"length": 600,
+		"length": 600
 	},
 	"tags": {
 		"id": "ta",
-		"id": "tb",
+		"id": "tb"
 	},
-	"payment_methods": ["card", "cash"],
-};
+	"payment_methods": ["card", "cash"]
+}
 ```
 
 #### What the app would receive from the backend to display for a view item page
@@ -110,7 +110,7 @@
 	{
 		"type": "Carousel",
 		"content": {
-			"photo_ids": ["b", "a", "c"],
+			"photo_ids": ["b", "a", "c"]
 		}
 	},
 	{
@@ -119,7 +119,7 @@
 			"title": "Amazing Fridge",
 			"title_detail": "$250",
 			"subtitle_1": ":star_doc: 88% - 4 items sold",
-			"subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th",
+			"subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
 		}
 	},
 	{
@@ -137,19 +137,19 @@
 							"timeslots": [
 								{
 									"timeslot": 1700894934,
-									"available": true,
+									"available": true
 								},
 								{
 									"timeslot": 17008944234,
-									"available": false,
+									"available": false
 								},
 								{
 									"timeslot": 1800894934,
-									"available": true,
-								},
-							],
-						},
-					},
+									"available": true
+								}
+							]
+						}
+					}
 				},
 				{
 					"title": "Deliver",
@@ -162,19 +162,19 @@
 							"timeslots": [
 								{
 									"timeslot": 1700894934,
-									"available": true,
+									"available": true
 								},
 								{
 									"timeslot": 17008944234,
-									"available": false,
+									"available": false
 								},
 								{
 									"timeslot": 1800894934,
-									"available": true,
-								},
-							],
-						},
-					},
+									"available": true
+								}
+							]
+						}
+					}
 				},
 				{
 					"title": "Ship",
@@ -186,11 +186,11 @@
 							"subtitle": "2-5 days once deposited",
 							"details": "$25.00",
 							"disclaimer":
-								":lock: Your money will be held until Australia Post confirms delivery ",
-						},
-					},
+								":lock: Your money will be held until Australia Post confirms delivery "
+						}
+					}
 				}
-			],
+			]
 		}
 	},
 	{
@@ -198,7 +198,7 @@
 		"content": {
 			"title": "Description",
 			"content":
-				"Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place.",
+				"Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place."
 		}
 	},
 	{
@@ -206,7 +206,7 @@
 		"content": {
 			"icon": ":paper:",
 			"title": "Selling reason",
-			"subtitle": "Moving out",
+			"subtitle": "Moving out"
 		}
 	},
 	{
@@ -214,7 +214,7 @@
 		"content": {
 			"icon": ":ruler:",
 			"title": "Dimensions",
-			"subtitle": "250 (w) x 120 (h) x 250 (l)",
+			"subtitle": "250 (w) x 120 (h) x 250 (l)"
 		}
 	},
 	{
@@ -222,7 +222,7 @@
 		"content": {
 			"icon": ":alert:",
 			"title": "Condition",
-			"subtitle": "Like new",
+			"subtitle": "Like new"
 		}
 	},
 	{
@@ -233,8 +233,8 @@
 			"line_2": "2018 Rosebery, NSW",
 			"location": {
 				"latitude": 45.323124,
-				"longitude": -3.424233,
-			},
+				"longitude": -3.424233
+			}
 		}
 	},
 	{
@@ -245,12 +245,12 @@
 				{
 					"icon": ":visa:",
 					"label": "Card",
-					"disclaimer": ":lock: Benefit from EVY buyer protection",
+					"disclaimer": ":lock: Benefit from EVY buyer protection"
 				},
 				{
 					"icon": ":dollar:",
 					"label": "Cash",
-					"disclaimer": "",
+					"disclaimer": ""
 				}
 			]
 		}
@@ -266,7 +266,7 @@
 	{
 		"type": "Carousel",
 		"content": {
-			"photo_ids": "{item.photos[].id}",
+			"photo_ids": "{item.photos[].id}"
 		}
 	},
 	{
@@ -277,7 +277,7 @@
 			"subtitle_1":
 				":star_doc:{item.seller.fidelity_rating}% - {item.seller.items_sold} items sold",
 			"subtitle_2":
-				"{item.address.city}, {item.address.state} -  Posted on {formatTimestamp(item.created_timestamp, 'MM DD')}",
+				"{item.address.city}, {item.address.state} -  Posted on {formatTimestamp(item.created_timestamp, 'MM DD')}"
 		}
 	},
 	{
@@ -298,7 +298,7 @@
 							"subtitle": "Meet at the pickup location",
 							"timeslots": "{item.transfer_option.pickup.timeslots}",
 						},
-					},
+					}
 				},
 				{
 					"title": "Deliver",
@@ -314,7 +314,7 @@
 							"subtitle": "Delivered at your door",
 							"timeslots": "{item.transfer_option.delivery.timeslots}",
 						},
-					},
+					}
 				},
 				{
 					"title": "Ship",
@@ -333,16 +333,16 @@
 							"disclaimer":
 								":lock: Your money will be held until {transfer_provider.name} confirms delivery ",
 						},
-					},
+					}
 				}
-			],
+			]
 		}
 	},
 	{
 		"type": "ContentShort",
 		"content": {
 			"title": "Description",
-			"content": "{item.description}",
+			"content": "{item.description}"
 		}
 	},
 	{
@@ -350,7 +350,7 @@
 		"content": {
 			"icon": ":alert:",
 			"title": "Condition",
-			"subtitle": "{item.condition}",
+			"subtitle": "{item.condition}"
 		}
 	},
 	{
@@ -358,7 +358,7 @@
 		"content": {
 			"icon": ":paper:",
 			"title": "Selling reason",
-			"subtitle": "{item.selling_reason}",
+			"subtitle": "{item.selling_reason}"
 		}
 	},
 	{
@@ -367,7 +367,7 @@
 			"icon": ":ruler:",
 			"title": "Dimensions",
 			"subtitle":
-				"{item.dimension.width} (w) x {item.dimension.height} (h) x {item.dimension.length} (l)",
+				"{item.dimension.width} (w) x {item.dimension.height} (h) x {item.dimension.length} (l)"
 		}
 	},
 	{
@@ -389,18 +389,18 @@
 					"icon": ":visa:",
 					"label": "Card",
 					"details": ":lock: Benefit from EVY buyer protection",
-					enabled: "{item.payment_methods.find('card')}",
+					enabled: "{item.payment_methods.find('card')}"
 				},
 				{
 					"icon": ":bank:",
 					"label": "Bank",
 					"details": ":lock: Benefit from EVY buyer protection",
-					"enabled": "{item.payment_methods.find('bank')}",
+					"enabled": "{item.payment_methods.find('bank')}"
 				},
 				{
 					"icon": ":dollar:",
 					"label": "Cash",
-					"enabled": "{item.payment_methods.find('cash')}",
+					"enabled": "{item.payment_methods.find('cash')}"
 				}
 			]
 		}

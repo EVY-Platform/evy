@@ -7,7 +7,7 @@ See [types](./types.md) for custom types and definitions used below
 ```
 {
 	type: "string",
-	content: "object",
+	content: "object"
 }
 ```
 
@@ -17,8 +17,8 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "Carousel",
     "content": {
-        "photo_ids": "string[]",
-    },
+        "photo_ids": "string[]"
+    }
 }
 ```
 
@@ -29,8 +29,8 @@ See [types](./types.md) for custom types and definitions used below
         "title": "string",
         "title_detail": "string",
         "subtitle_1": "string",
-        "subtitle_2": "string",
-    },
+        "subtitle_2": "string"
+    }
 }
 ```
 
@@ -47,7 +47,7 @@ See [types](./types.md) for custom types and definitions used below
                 "available": "boolean",
             },
         ],
-    },
+    }
 }
 ```
 
@@ -61,7 +61,7 @@ See [types](./types.md) for custom types and definitions used below
                 "child": "ROW",
             },
         ],
-    },
+    }
 }
 ```
 
@@ -70,8 +70,8 @@ See [types](./types.md) for custom types and definitions used below
     "type": "ContentShort",
     "content": {
         "title": "string",
-        "content": "string",
-    },
+        "content": "string"
+    }
 }
 ```
 
@@ -83,8 +83,8 @@ See [types](./types.md) for custom types and definitions used below
         "logo": "image",
         "subtitle": "string",
         "detail": "string",
-        "disclaimer": "string",
-    },
+        "disclaimer": "string"
+    }
 }
 ```
 
@@ -94,8 +94,8 @@ See [types](./types.md) for custom types and definitions used below
     "content": {
         "icon": "icon",
         "title": "string",
-        "subtitle": "string",
-    },
+        "subtitle": "string"
+    }
 }
 ```
 
@@ -106,8 +106,8 @@ See [types](./types.md) for custom types and definitions used below
         "title": "string",
         "line_1": "string",
         "line_2": "string",
-        "location": "location",
-    },
+        "location": "location"
+    }
 }
 ```
 
@@ -123,6 +123,6 @@ See [types](./types.md) for custom types and definitions used below
                 "disclaimer": "string",
             },
         ],
-    },
+    }
 }
 ```
