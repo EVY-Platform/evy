@@ -1,8 +1,7 @@
-# Custom marketplace types
+# Data motels
 
-See [types](./types.md) for custom types and definitions used below
-
-### Base model that all data models inherit from":
+See [types](./types.md) for custom types and definitions used below  
+Base model that all data models inherit from:
 
 ```
 {
@@ -11,6 +10,53 @@ See [types](./types.md) for custom types and definitions used below
     "updated_timestamp": "timestamp"
 }
 ```
+
+## EVY
+
+#### device
+
+```
+{
+    "os": "os",
+    "token": "string"
+}
+```
+
+#### organisation
+
+```
+{
+    "name": "string",
+    "description": "string",
+    "logo": "image",
+    "url": "string",
+    "support_email": "string"
+}
+```
+
+#### service
+
+```
+{
+    "name": "string",
+    "description": "string"
+}
+```
+
+#### service_provider
+
+```
+{
+    "service_id": "service.id",
+    "organisation_id": "organisation.id",
+    "name": "string",
+    "description": "string",
+    "logo": "image",
+    "url": "string",
+}
+```
+
+## Marketplace
 
 #### timeslot
 
