@@ -19,6 +19,24 @@
       }
     },
     {
+      "identity" : "kingfisher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/onevcat/Kingfisher.git",
+      "state" : {
+        "revision" : "277f1ab2c6664b19b4a412e32b094b201e2d5757",
+        "version" : "7.10.0"
+      }
+    },
+    {
+      "identity" : "serializable.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tesseract-one/Serializable.swift.git",
+      "state" : {
+        "revision" : "55b6a16213627d20b2943f6969c2f61c8b1066ec",
+        "version" : "0.3.1"
+      }
+    },
+    {
       "identity" : "sqlite.swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stephencelis/SQLite.swift.git",

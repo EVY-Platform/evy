@@ -17,6 +17,11 @@
 		7362FFB82A71A0D7001BCACF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7362FFB72A71A0D7001BCACF /* ViewController.swift */; };
 		7362FFBD2A71A0D8001BCACF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7362FFBC2A71A0D8001BCACF /* Assets.xcassets */; };
 		7362FFC02A71A0D8001BCACF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7362FFBE2A71A0D8001BCACF /* LaunchScreen.storyboard */; };
+		73CE7D722B20652900E0BA1E /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 73CE7D712B20652900E0BA1E /* Serializable */; };
+		73CE7D762B206FE900E0BA1E /* FCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CE7D752B206FE900E0BA1E /* FCarousel.swift */; };
+		73CE7D782B207DBF00E0BA1E /* FImageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CE7D772B207DBF00E0BA1E /* FImageOverlay.swift */; };
+		73CE7D7B2B20822500E0BA1E /* ZoomableContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CE7D7A2B20822500E0BA1E /* ZoomableContainer.swift */; };
+		73CE7D7E2B208FDD00E0BA1E /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 73CE7D7D2B208FDD00E0BA1E /* Kingfisher */; };
 		73F703F32A71A21D009AC9AF /* FDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F703F22A71A21D009AC9AF /* FDevice.swift */; };
 		73F703FC2A71A3C8009AC9AF /* FWebsocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F703FB2A71A3C8009AC9AF /* FWebsocket.swift */; };
 		73F703FF2A71ACD6009AC9AF /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 73F703FE2A71ACD6009AC9AF /* JsonRPC */; };
@@ -34,6 +39,9 @@
 		7362FFBC2A71A0D8001BCACF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7362FFBF2A71A0D8001BCACF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		7362FFC12A71A0D8001BCACF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		73CE7D752B206FE900E0BA1E /* FCarousel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FCarousel.swift; sourceTree = "<group>"; };
+		73CE7D772B207DBF00E0BA1E /* FImageOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FImageOverlay.swift; sourceTree = "<group>"; };
+		73CE7D7A2B20822500E0BA1E /* ZoomableContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableContainer.swift; sourceTree = "<group>"; };
 		73F703F22A71A21D009AC9AF /* FDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FDevice.swift; sourceTree = "<group>"; };
 		73F703FB2A71A3C8009AC9AF /* FWebsocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FWebsocket.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -43,7 +51,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73CE7D7E2B208FDD00E0BA1E /* Kingfisher in Frameworks */,
 				7353FDB92A889A1C003259D3 /* SQLite in Frameworks */,
+				73CE7D722B20652900E0BA1E /* Serializable in Frameworks */,
 				73F703FF2A71ACD6009AC9AF /* JsonRPC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -77,9 +87,18 @@
 				73F703ED2A71A154009AC9AF /* Models */,
 				73F704002A71C1D2009AC9AF /* Types */,
 				73F703EC2A71A14B009AC9AF /* ViewModels */,
+				73CE7D792B20820C00E0BA1E /* ViewModifiers */,
 				7362FFC12A71A0D8001BCACF /* Info.plist */,
 			);
 			path = frodo;
+			sourceTree = "<group>";
+		};
+		73CE7D792B20820C00E0BA1E /* ViewModifiers */ = {
+			isa = PBXGroup;
+			children = (
+				73CE7D7A2B20822500E0BA1E /* ZoomableContainer.swift */,
+			);
+			path = ViewModifiers;
 			sourceTree = "<group>";
 		};
 		73F703EC2A71A14B009AC9AF /* ViewModels */ = {
@@ -103,6 +122,8 @@
 		73F703EE2A71A162009AC9AF /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				73CE7D752B206FE900E0BA1E /* FCarousel.swift */,
+				73CE7D772B207DBF00E0BA1E /* FImageOverlay.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -161,6 +182,8 @@
 			packageProductDependencies = (
 				73F703FE2A71ACD6009AC9AF /* JsonRPC */,
 				7353FDB82A889A1C003259D3 /* SQLite */,
+				73CE7D712B20652900E0BA1E /* Serializable */,
+				73CE7D7D2B208FDD00E0BA1E /* Kingfisher */,
 			);
 			productName = frodo;
 			productReference = 7362FFB02A71A0D7001BCACF /* frodo.app */;
@@ -193,6 +216,8 @@
 			packageReferences = (
 				73F703FD2A71ACD6009AC9AF /* XCRemoteSwiftPackageReference "JsonRPC.swift" */,
 				7353FDB72A889A1C003259D3 /* XCRemoteSwiftPackageReference "SQLite.swift" */,
+				73CE7D702B20652900E0BA1E /* XCRemoteSwiftPackageReference "Serializable.swift" */,
+				73CE7D7C2B208FDD00E0BA1E /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			productRefGroup = 7362FFB12A71A0D7001BCACF /* Products */;
 			projectDirPath = "";
@@ -220,10 +245,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73CE7D762B206FE900E0BA1E /* FCarousel.swift in Sources */,
 				7362FFB82A71A0D7001BCACF /* ViewController.swift in Sources */,
+				73CE7D7B2B20822500E0BA1E /* ZoomableContainer.swift in Sources */,
 				7353FDBD2A889DDC003259D3 /* FOrganization.swift in Sources */,
 				7362FFB42A71A0D7001BCACF /* AppDelegate.swift in Sources */,
 				73F703FC2A71A3C8009AC9AF /* FWebsocket.swift in Sources */,
+				73CE7D782B207DBF00E0BA1E /* FImageOverlay.swift in Sources */,
 				7353FDBF2A889DFB003259D3 /* FServiceProvider.swift in Sources */,
 				73F703F32A71A21D009AC9AF /* FDevice.swift in Sources */,
 				7353FDBB2A889D8C003259D3 /* FService.swift in Sources */,
@@ -296,7 +324,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -350,7 +378,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -374,7 +402,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -402,7 +430,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -448,6 +476,22 @@
 				minimumVersion = 0.14.1;
 			};
 		};
+		73CE7D702B20652900E0BA1E /* XCRemoteSwiftPackageReference "Serializable.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/tesseract-one/Serializable.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.1;
+			};
+		};
+		73CE7D7C2B208FDD00E0BA1E /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.10.0;
+			};
+		};
 		73F703FD2A71ACD6009AC9AF /* XCRemoteSwiftPackageReference "JsonRPC.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tesseract-one/JsonRPC.swift.git";
@@ -463,6 +507,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7353FDB72A889A1C003259D3 /* XCRemoteSwiftPackageReference "SQLite.swift" */;
 			productName = SQLite;
+		};
+		73CE7D712B20652900E0BA1E /* Serializable */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 73CE7D702B20652900E0BA1E /* XCRemoteSwiftPackageReference "Serializable.swift" */;
+			productName = Serializable;
+		};
+		73CE7D7D2B208FDD00E0BA1E /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 73CE7D7C2B208FDD00E0BA1E /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 		73F703FE2A71ACD6009AC9AF /* JsonRPC */ = {
 			isa = XCSwiftPackageProductDependency;
