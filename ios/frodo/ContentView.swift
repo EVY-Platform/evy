@@ -8,14 +8,15 @@
 import SwiftUI
 
 struct EVYRowData {
-  let id: String
-  let images: [String]
+    let id: String
+    let images: [String]
+    let type: String
 }
 
 struct ContentView: View {
     let rows = [
-        EVYRowData(id: "first", images: ["printer_logo","printer"]),
-        EVYRowData(id: "second", images: ["printer"])
+        EVYRowData(id: "first", images: ["printer_logo","printer"], type: "carousel"),
+        EVYRowData(id: "second", images: ["printer"], type: "carousel")
     ]
     
     var body: some View {
@@ -24,7 +25,6 @@ struct ContentView: View {
                 .frame(height: 250)
                 .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
         }
-        .frame( maxWidth: .infinity)
         .listStyle(PlainListStyle())
     }
 }

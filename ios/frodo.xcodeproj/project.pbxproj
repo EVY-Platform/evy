@@ -76,7 +76,7 @@
 				737C6AA52B2706890093D00C /* frodoApp.swift */,
 				737C6AA72B2706890093D00C /* ContentView.swift */,
 				737C6AA92B27068A0093D00C /* Assets.xcassets */,
-				737C6AB72B2707490093D00C /* Views */,
+				737C6AB72B2707490093D00C /* Rows */,
 				737C6ABC2B2707510093D00C /* ViewModifiers */,
 				737C6ABF2B270AAE0093D00C /* Models */,
 				737C6AC82B270AD90093D00C /* API */,
@@ -93,14 +93,14 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		737C6AB72B2707490093D00C /* Views */ = {
+		737C6AB72B2707490093D00C /* Rows */ = {
 			isa = PBXGroup;
 			children = (
 				737C6AB82B2707490093D00C /* EVYImageOverlay.swift */,
 				737C6AB92B2707490093D00C /* EVYCarousel.swift */,
 			);
-			name = Views;
-			path = "../../../../frodo-backup/frodo/Views";
+			name = Rows;
+			path = "../../../../frodo-backup/frodo/Rows";
 			sourceTree = "<group>";
 		};
 		737C6ABC2B2707510093D00C /* ViewModifiers */ = {
