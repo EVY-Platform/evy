@@ -7,12 +7,9 @@
 
 import SwiftUI
 
-//struct EVYCarouselRowData: Decodable {
-//    let type: String
-//    struct content: Decodable {
-//        let photo_ids: [String]
-//    }
-//}
+struct EVYCarouselRowContent: Decodable {
+    let photo_ids: [String]
+}
 
 struct EVYCarouselRow: View {
     let imageNames: [String]

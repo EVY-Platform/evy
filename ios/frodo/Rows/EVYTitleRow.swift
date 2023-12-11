@@ -7,15 +7,12 @@
 
 import SwiftUI
 
-//struct EVYTitleRowData: Decodable {
-//    let type: String
-//    struct content: Decodable {
-//        let title: String
-//        let titleDetail: String
-//        let subtitle1: String
-//        let subtitle2: String
-//    }
-//}
+struct EVYTitleRowContent: Decodable {
+    let title: String
+    let title_detail: String
+    let subtitle_1: String
+    let subtitle_2: String
+}
 
 struct EVYTitleRow: View {
     let title: String

@@ -9,50 +9,23 @@ import SwiftUI
 import Foundation
 import Serializable
 
-struct EVYRowData {
-    let id: String
-    let images: [String]
-    let type: String
-}
-
-//protocol EVYRow: Decodable {
-//    var type: String { get }
-//}
-
-//{
-//    "title": "Amazing Fridge",
-//    "title_detail": "$250",
-//    "subtitle_1": ":star_doc: 88% - 4 items sold",
-//    "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
-//}
-
 struct ContentView: View {
-//    let rows = try! JSONDecoder().decode([EVYRowData].self, from: json)
-    
-    let rows = [
-        EVYRowData(id: "carousel", images: ["printer_logo","printer"], type: "carousel"),
-        EVYRowData(id: "title", images: ["printer"], type: "carousel")
-    ]
+    @State private var rows = try! JSONDecoder().decode([EVYRow].self, from: json)
     
     var body: some View {
-//        let row = rows[0]
-//        
-//        EVYCarouselRow(imageNames: row.content.photo_ids)
-//            .frame(height: 250)
-//            .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-        
-        
-        List(rows, id: \.id) { row in
-            if (row.id == "carousel") {
-                EVYCarouselRow(imageNames: row.images)
+        List(rows, id: \.type) { row in
+            switch row.type {
+            case "Carousel":
+                EVYCarouselRow(imageNames: ["printer_logo"])
                     .frame(height: 250)
                     .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-            }
-            else {
+            case "Title":
                 EVYTitleRow(title: "Amazing fridge",
                             titleDetail: "Details",
                             subtitle1: "sub 1",
                             subtitle2: "sub 2")
+            default:
+                fatalError("Unknown type of content.")
             }
         }
         .listStyle(PlainListStyle())
