@@ -24,6 +24,7 @@
 		73CDCABB2B271ACC00D4E82A /* EVYCarouselRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAB92B271ACC00D4E82A /* EVYCarouselRow.swift */; };
 		73CDCABC2B271ACC00D4E82A /* EVYTitleRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCABA2B271ACC00D4E82A /* EVYTitleRow.swift */; };
 		73CDCABF2B271AF300D4E82A /* ZoomableContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCABE2B271AF300D4E82A /* ZoomableContainer.swift */; };
+		73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAC12B272E0C00D4E82A /* EVYRow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		73CDCAB92B271ACC00D4E82A /* EVYCarouselRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYCarouselRow.swift; sourceTree = "<group>"; };
 		73CDCABA2B271ACC00D4E82A /* EVYTitleRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYTitleRow.swift; sourceTree = "<group>"; };
 		73CDCABE2B271AF300D4E82A /* ZoomableContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZoomableContainer.swift; sourceTree = "<group>"; };
+		73CDCAC12B272E0C00D4E82A /* EVYRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +142,7 @@
 			children = (
 				73CDCAB92B271ACC00D4E82A /* EVYCarouselRow.swift */,
 				73CDCABA2B271ACC00D4E82A /* EVYTitleRow.swift */,
+				73CDCAC12B272E0C00D4E82A /* EVYRow.swift */,
 			);
 			path = Rows;
 			sourceTree = "<group>";
@@ -232,6 +235,7 @@
 				737C6AC72B270AAE0093D00C /* EVYServiceProvider.swift in Sources */,
 				73CDCABB2B271ACC00D4E82A /* EVYCarouselRow.swift in Sources */,
 				737C6AC52B270AAE0093D00C /* EVYService.swift in Sources */,
+				73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */,
 				2E8EEC3A2B2730B0003DF2DC /* AppConstants.swift in Sources */,
 				737C6AC42B270AAE0093D00C /* EVYDevice.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
