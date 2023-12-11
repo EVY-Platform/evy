@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct FImageOverlay: View {
+struct EVYImageOverlay: View {
     let imageName: String
     
     var body: some View {
@@ -20,5 +20,5 @@ struct FImageOverlay: View {
 }
 
 #Preview {
-    FImageOverlay(imageName: "printer")
+    EVYImageOverlay(imageName: "printer")
 }

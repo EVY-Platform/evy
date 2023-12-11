@@ -11,8 +11,7 @@
 		737C6AA82B2706890093D00C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA72B2706890093D00C /* ContentView.swift */; };
 		737C6AAA2B27068A0093D00C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 737C6AA92B27068A0093D00C /* Assets.xcassets */; };
 		737C6AAD2B27068A0093D00C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 737C6AAC2B27068A0093D00C /* Preview Assets.xcassets */; };
-		737C6ABA2B2707490093D00C /* EVYImageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AB82B2707490093D00C /* EVYImageOverlay.swift */; };
-		737C6ABB2B2707490093D00C /* EVYCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AB92B2707490093D00C /* EVYCarousel.swift */; };
+		737C6ABB2B2707490093D00C /* EVYCarouselRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AB92B2707490093D00C /* EVYCarouselRow.swift */; };
 		737C6ABE2B2707520093D00C /* ZoomableContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6ABD2B2707520093D00C /* ZoomableContainer.swift */; };
 		737C6AC42B270AAE0093D00C /* EVYDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AC02B270AAE0093D00C /* EVYDevice.swift */; };
 		737C6AC52B270AAE0093D00C /* EVYService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AC12B270AAE0093D00C /* EVYService.swift */; };
@@ -22,6 +21,8 @@
 		737C6ACC2B270AD90093D00C /* EVYManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6ACA2B270AD90093D00C /* EVYManager.swift */; };
 		737C6ACF2B270B6C0093D00C /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 737C6ACE2B270B6C0093D00C /* JsonRPC */; };
 		737C6AD22B270B7D0093D00C /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 737C6AD12B270B7D0093D00C /* Serializable */; };
+		73CDCAB22B27122E00D4E82A /* EVYTitleRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAB12B27122E00D4E82A /* EVYTitleRow.swift */; };
+		73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,8 +31,7 @@
 		737C6AA72B2706890093D00C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		737C6AA92B27068A0093D00C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		737C6AAC2B27068A0093D00C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		737C6AB82B2707490093D00C /* EVYImageOverlay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYImageOverlay.swift; sourceTree = "<group>"; };
-		737C6AB92B2707490093D00C /* EVYCarousel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYCarousel.swift; sourceTree = "<group>"; };
+		737C6AB92B2707490093D00C /* EVYCarouselRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYCarouselRow.swift; sourceTree = "<group>"; };
 		737C6ABD2B2707520093D00C /* ZoomableContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZoomableContainer.swift; sourceTree = "<group>"; };
 		737C6AC02B270AAE0093D00C /* EVYDevice.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYDevice.swift; sourceTree = "<group>"; };
 		737C6AC12B270AAE0093D00C /* EVYService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYService.swift; sourceTree = "<group>"; };
@@ -39,6 +39,8 @@
 		737C6AC32B270AAE0093D00C /* EVYServiceProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYServiceProvider.swift; sourceTree = "<group>"; };
 		737C6AC92B270AD90093D00C /* EVYWebsocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYWebsocket.swift; sourceTree = "<group>"; };
 		737C6ACA2B270AD90093D00C /* EVYManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYManager.swift; sourceTree = "<group>"; };
+		73CDCAB12B27122E00D4E82A /* EVYTitleRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTitleRow.swift; sourceTree = "<group>"; };
+		73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYImageOverlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +79,7 @@
 				737C6AA72B2706890093D00C /* ContentView.swift */,
 				737C6AA92B27068A0093D00C /* Assets.xcassets */,
 				737C6AB72B2707490093D00C /* Rows */,
+				73CDCAB42B27176700D4E82A /* Views */,
 				737C6ABC2B2707510093D00C /* ViewModifiers */,
 				737C6ABF2B270AAE0093D00C /* Models */,
 				737C6AC82B270AD90093D00C /* API */,
@@ -96,8 +99,8 @@
 		737C6AB72B2707490093D00C /* Rows */ = {
 			isa = PBXGroup;
 			children = (
-				737C6AB82B2707490093D00C /* EVYImageOverlay.swift */,
-				737C6AB92B2707490093D00C /* EVYCarousel.swift */,
+				73CDCAB12B27122E00D4E82A /* EVYTitleRow.swift */,
+				737C6AB92B2707490093D00C /* EVYCarouselRow.swift */,
 			);
 			name = Rows;
 			path = "../../../../frodo-backup/frodo/Rows";
@@ -130,6 +133,14 @@
 				737C6ACA2B270AD90093D00C /* EVYManager.swift */,
 			);
 			path = API;
+			sourceTree = "<group>";
+		};
+		73CDCAB42B27176700D4E82A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -216,11 +227,12 @@
 				737C6ACC2B270AD90093D00C /* EVYManager.swift in Sources */,
 				737C6AA62B2706890093D00C /* frodoApp.swift in Sources */,
 				737C6ABE2B2707520093D00C /* ZoomableContainer.swift in Sources */,
+				73CDCAB22B27122E00D4E82A /* EVYTitleRow.swift in Sources */,
 				737C6AC72B270AAE0093D00C /* EVYServiceProvider.swift in Sources */,
-				737C6ABB2B2707490093D00C /* EVYCarousel.swift in Sources */,
+				737C6ABB2B2707490093D00C /* EVYCarouselRow.swift in Sources */,
 				737C6AC52B270AAE0093D00C /* EVYService.swift in Sources */,
 				737C6AC42B270AAE0093D00C /* EVYDevice.swift in Sources */,
-				737C6ABA2B2707490093D00C /* EVYImageOverlay.swift in Sources */,
+				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
