@@ -46,7 +46,6 @@ struct ContentView: View {
             if (row.id == "carousel") {
                 EVYCarouselRow(imageNames: row.images)
                     .frame(height: 250)
-                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
             }
             else {
                 EVYTitleRow(title: "Amazing fridge",
