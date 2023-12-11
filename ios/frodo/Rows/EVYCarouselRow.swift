@@ -46,6 +46,7 @@ struct EVYCarouselRow: View {
         .sheet(isPresented: $showFullScreen) {
             EVYImageOverlay(imageName: "\(imageNames[selectedImageIndex])")
         }
+        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
 }
 

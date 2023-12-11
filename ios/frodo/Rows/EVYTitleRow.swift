@@ -21,20 +21,35 @@ struct EVYTitleRow: View {
     let subtitle2: String
     
     var body: some View {
-        HStack {
-            Text(title)
-            Text(titleDetail)
+        VStack{
+            HStack {
+                Text(title)
+                    .font(.titleFont)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(titleDetail)
+                    .font(.detailFont)
+            }
+            .padding(.bottom, 15)
+
             Text(subtitle1)
+                .font(.regularFont)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 1)
             Text(subtitle2)
+                .foregroundStyle(.gray)
+                .font(.regularFont)
+                .frame(maxWidth: .infinity, alignment: .leading)
+               
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding()
+        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
 }
 
 #Preview {
-    EVYTitleRow(title: "Title",
-                titleDetail: "Title Detail",
-                subtitle1: "Subtitle 1",
-                subtitle2: "Subtitle 2")
+    EVYTitleRow(title: "Amazing fridge 20423",
+                titleDetail: "$250",
+                subtitle1: ":icon: 88% - 4 items sold",
+                subtitle2: "Rosebery, NSW - Posted on Nov 8th")
 }
