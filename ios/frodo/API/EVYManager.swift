@@ -7,21 +7,21 @@
 
 import Foundation
 
-enum FManagerError: Error {
+enum EVYManagerError: Error {
     case loginError
 }
 
 let API_HOST = ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:8000"
 let userDefault = UserDefaults.standard
 
-final class FManager {
-    private var rpcWS = FWebsocket.init(host: API_HOST)
-    static var shared = FManager()
+final class EVYManager {
+    private var rpcWS = EVYWebsocket.init(host: API_HOST)
+    static var shared = EVYManager()
     
     private init() {}
     
     public func setup() async throws {
-        try await rpcWS.connect(token: "Geo", os: FOS.ios)
+        try await rpcWS.connect(token: "Geo", os: EVYOS.ios)
         try await syncServices()
     }
     

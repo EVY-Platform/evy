@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct FServiceProvider: Codable {
+struct EVYServiceProvider: Codable {
     let id: UUID
     let fk_service_id: UUID
     let fk_organization_id: UUID
@@ -17,6 +17,6 @@ struct FServiceProvider: Codable {
     let url: String
     let created_at: String
     let updated_at: String
-    let service: FService?
-    let organization: FOrganization?
+    let service: EVYService?
+    let organization: EVYOrganization?
 }

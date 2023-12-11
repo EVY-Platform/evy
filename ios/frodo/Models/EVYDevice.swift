@@ -7,14 +7,14 @@
 
 import Foundation
 
-struct FDevice: Codable {
+struct EVYDevice: Codable {
     let id: UUID
     let token: String
-    let os: FOS
+    let os: EVYOS
     let created_at: String
 }
 
-enum FOS: String, Codable {
+enum EVYOS: String, Codable {
     case ios = "ios"
     case android = "android"
 }

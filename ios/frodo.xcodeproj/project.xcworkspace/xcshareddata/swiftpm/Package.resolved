@@ -14,17 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tesseract-one/JsonRPC.swift.git",
       "state" : {
-        "revision" : "5300c7246f96f770930a830638de6389d1a2565b",
-        "version" : "0.2.1"
-      }
-    },
-    {
-      "identity" : "kingfisher",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/onevcat/Kingfisher.git",
-      "state" : {
-        "revision" : "277f1ab2c6664b19b4a412e32b094b201e2d5757",
-        "version" : "7.10.0"
+        "revision" : "d9df3ff3afaefa82cc7d8ca813a1795755197079",
+        "version" : "0.2.3"
       }
     },
     {
@@ -37,12 +28,12 @@
       }
     },
     {
-      "identity" : "sqlite.swift",
+      "identity" : "tuples.swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/stephencelis/SQLite.swift.git",
+      "location" : "https://github.com/tesseract-one/Tuples.swift.git",
       "state" : {
-        "revision" : "7a2e3cd27de56f6d396e84f63beefd0267b55ccb",
-        "version" : "0.14.1"
+        "revision" : "4d2cf7c64443cdf4df833d0bedd767bf9dbc49d9",
+        "version" : "0.1.3"
       }
     }
   ],

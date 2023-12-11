@@ -8,37 +8,37 @@
 import Foundation
 import JsonRPC
 
-enum FWSError: Error {
+enum EVYWSError: Error {
     case loginError
 }
 
-struct FLoginParams: Encodable {
+struct EVYLoginParams: Encodable {
     let token: String
-    let os: FOS
+    let os: EVYOS
 }
 
-final class FWebsocket {
+final class EVYWebsocket {
     var rpc: Service<ServiceCore<WsConnectionFactory.Connection, WsConnectionFactory.Delegate>>
     
     init(host: String) {
         rpc = JsonRpc(.ws(url: URL(string: "ws://\(host)")!), queue: .main)
     }
     
-    public func connect(token: String, os: FOS) async throws {
+    public func connect(token: String, os: EVYOS) async throws {
         guard try await self.login(token: token, os: os) else {
-            throw FWSError.loginError
+            throw EVYWSError.loginError
         }
     }
     
-    public func fetchServicesData(lastSyncTime: Int) async throws -> [String: Array<FService>] {
+    public func fetchServicesData(lastSyncTime: Int) async throws -> [String: Array<EVYService>] {
         try await callAPI(method: "getNewDataSince",
                           params: ["since": lastSyncTime],
-                          expecting: [String: Array<FService>].self)
+                          expecting: [String: Array<EVYService>].self)
     }
     
-    private func login(token: String, os: FOS) async throws -> Bool {
+    private func login(token: String, os: EVYOS) async throws -> Bool {
         try await self.callAPI(method: "rpc.login",
-                               params: FLoginParams(token: token, os: os),
+                               params: EVYLoginParams(token: token, os: os),
                                expecting: Bool.self)
     }
     
@@ -48,7 +48,7 @@ final class FWebsocket {
         expecting type: T.Type
     ) async throws -> T {
         try await rpc.call(method: method,
-                           params: Params(params).first,
+                           params: "", //Params(params).first,
                            T.self,
                            String.self)
     }

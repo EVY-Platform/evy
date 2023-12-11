@@ -7,14 +7,11 @@
 
 import Foundation
 
-struct FOrganization: Codable {
+struct EVYService: Codable {
     let id: UUID
     let name: String
     let description: String
-    let logo: String
-    let url: String
-    let support_email: String
     let created_at: String
     let updated_at: String
-    let providers: Array<FServiceProvider>?
+    let providers: Array<EVYServiceProvider>?
 }

@@ -8,26 +8,25 @@
 import SwiftUI
 
 struct FCarousel: View {
-    var imageNames: [String] = ["printer_logo","printer"]
+    let imageNames: [String]
     @State private var selectedImageIndex: Int = 0
-    @State var showFullScreen = false
+    @State private var showFullScreen = false
     
     var body: some View {
         NavigationView {
-            ZStack {
-                TabView(selection: $selectedImageIndex) {
-                    ForEach(0..<imageNames.count, id: \.self) { index in
-                        Image("\(imageNames[index])")
-                            .resizable()
-                            .tag(index)
-                            .aspectRatio(contentMode: .fill)
-                            .onTapGesture {
-                                showFullScreen = true
-                            }
-                    }
+            TabView(selection: $selectedImageIndex) {
+                ForEach(0..<imageNames.count, id: \.self) { index in
+                    Image("\(imageNames[index])")
+                        .resizable()
+                        .tag(index)
+                        .aspectRatio(contentMode: .fill)
+                        .onTapGesture {
+                            showFullScreen = true
+                        }
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-
+            }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            .overlay {
                 HStack {
                     ForEach(0..<imageNames.count, id: \.self) { index in
                         Capsule()
@@ -37,8 +36,9 @@ struct FCarousel: View {
                                 selectedImageIndex = index
                             }
                     }
-                    .offset(y: 130)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .padding()
             }
         }
         .sheet(isPresented: $showFullScreen) {
@@ -48,5 +48,5 @@ struct FCarousel: View {
 }
 
 #Preview {
-    FCarousel()
+    FCarousel(imageNames: ["printer_logo","printer"])
 }
