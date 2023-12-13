@@ -10,10 +10,12 @@ import Foundation
 enum Content {
     case carousel(EVYCarouselRowContent)
     case title(EVYTitleRowContent)
+    case contentShort(EVYContentShortRowContent)
 }
 struct EVYRow: Decodable {
-    let type: String
-    let content: Content
+    var id: String = UUID().uuidString
+    var type: String
+    var content: Content
 }
 extension EVYRow {
     private enum CodingKeys: String, CodingKey {
@@ -32,6 +34,9 @@ extension EVYRow {
         case "Title":
             let title = try container.decode(EVYTitleRowContent.self, forKey:.content)
             self.content = .title(title)
+        case "ContentShort":
+            let title = try container.decode(EVYContentShortRowContent.self, forKey:.content)
+            self.content = .contentShort(title)
         default:
             fatalError("Unknown type of content.")
         }

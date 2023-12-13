@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2E8EEC3A2B2730B0003DF2DC /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8EEC392B2730B0003DF2DC /* AppConstants.swift */; };
+		2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8EEC392B2730B0003DF2DC /* Constants.swift */; };
+		730D008B2B29A0E800B5BCB6 /* EVYContentShortRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008A2B29A0E800B5BCB6 /* EVYContentShortRow.swift */; };
 		737C6AA62B2706890093D00C /* frodoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA52B2706890093D00C /* frodoApp.swift */; };
 		737C6AA82B2706890093D00C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA72B2706890093D00C /* ContentView.swift */; };
 		737C6AAA2B27068A0093D00C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 737C6AA92B27068A0093D00C /* Assets.xcassets */; };
@@ -28,7 +29,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2E8EEC392B2730B0003DF2DC /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
+		2E8EEC392B2730B0003DF2DC /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		730D008A2B29A0E800B5BCB6 /* EVYContentShortRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYContentShortRow.swift; sourceTree = "<group>"; };
 		737C6AA22B2706890093D00C /* frodo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = frodo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		737C6AA52B2706890093D00C /* frodoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = frodoApp.swift; sourceTree = "<group>"; };
 		737C6AA72B2706890093D00C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -60,14 +62,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2E8EEC3B2B2730CA003DF2DC /* Utils */ = {
-			isa = PBXGroup;
-			children = (
-				2E8EEC392B2730B0003DF2DC /* AppConstants.swift */,
-			);
-			path = Utils;
-			sourceTree = "<group>";
-		};
 		737C6A992B2706890093D00C = {
 			isa = PBXGroup;
 			children = (
@@ -87,9 +81,9 @@
 		737C6AA42B2706890093D00C /* frodo */ = {
 			isa = PBXGroup;
 			children = (
-				2E8EEC3B2B2730CA003DF2DC /* Utils */,
 				737C6AA52B2706890093D00C /* frodoApp.swift */,
 				737C6AA72B2706890093D00C /* ContentView.swift */,
+				2E8EEC392B2730B0003DF2DC /* Constants.swift */,
 				737C6AA92B27068A0093D00C /* Assets.xcassets */,
 				73CDCABD2B271AD000D4E82A /* Rows */,
 				73CDCAB42B27176700D4E82A /* Views */,
@@ -142,6 +136,7 @@
 			children = (
 				73CDCAB92B271ACC00D4E82A /* EVYCarouselRow.swift */,
 				73CDCABA2B271ACC00D4E82A /* EVYTitleRow.swift */,
+				730D008A2B29A0E800B5BCB6 /* EVYContentShortRow.swift */,
 				73CDCAC12B272E0C00D4E82A /* EVYRow.swift */,
 			);
 			path = Rows;
@@ -234,9 +229,10 @@
 				73CDCABF2B271AF300D4E82A /* ZoomableContainer.swift in Sources */,
 				737C6AC72B270AAE0093D00C /* EVYServiceProvider.swift in Sources */,
 				73CDCABB2B271ACC00D4E82A /* EVYCarouselRow.swift in Sources */,
+				730D008B2B29A0E800B5BCB6 /* EVYContentShortRow.swift in Sources */,
 				737C6AC52B270AAE0093D00C /* EVYService.swift in Sources */,
 				73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */,
-				2E8EEC3A2B2730B0003DF2DC /* AppConstants.swift in Sources */,
+				2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */,
 				737C6AC42B270AAE0093D00C /* EVYDevice.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
 			);

@@ -13,17 +13,20 @@ struct ContentView: View {
     @State private var rows = try! JSONDecoder().decode([EVYRow].self, from: json)
     
     var body: some View {
-        List(rows, id: \.type) { row in
-            switch row.type {
-            case "Carousel":
-                EVYCarouselRow(imageNames: ["printer_logo"])
+        List(rows, id: \.id) { row in
+            switch row.content {
+            case .carousel(let carousel):
+                EVYCarouselRow(imageNames: carousel.photo_ids)
                     .frame(height: 250)
                     .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-            case "Title":
-                EVYTitleRow(title: "Amazing fridge",
-                            titleDetail: "Details",
-                            subtitle1: "sub 1",
-                            subtitle2: "sub 2")
+            case .title(let title):
+                EVYTitleRow(title: title.title,
+                            titleDetail: title.title_detail,
+                            subtitle1: title.subtitle_1,
+                            subtitle2: title.subtitle_2)
+            case .contentShort(let contentShort):
+                EVYContentShortRow(title: contentShort.title,
+                                   content: contentShort.content)
             default:
                 fatalError("Unknown type of content.")
             }
@@ -52,7 +55,15 @@ let json = """
             "subtitle_1": ":star_doc: 88% - 4 items sold",
             "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
         }
-    }
+    },
+    {
+        "type": "ContentShort",
+        "content": {
+            "title": "Description",
+            "content":
+                "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place."
+        }
+    },
 ]
 """.data(using: .utf8)!
 
