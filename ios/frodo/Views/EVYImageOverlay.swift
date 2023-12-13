@@ -8,14 +8,25 @@
 import SwiftUI
 
 struct EVYImageOverlay: View {
+    @Environment(\.dismiss) var dismiss
+    
     let imageName: String
     
     var body: some View {
-        ZoomableContainer{
-            Image(imageName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-        }.background(Color.black)
+        ZStack {
+            ZoomableContainer{
+                Image(imageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            }.background(Color.black)
+            Button(action: { dismiss()} ) {
+                Label("", systemImage: "xmark")
+                    .foregroundColor(.white)
+                    .font(.buttonFont)
+            }
+            .padding(Constants.buttonCornerPadding)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
     }
 }
 

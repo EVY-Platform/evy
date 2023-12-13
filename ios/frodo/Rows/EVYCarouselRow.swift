@@ -43,9 +43,9 @@ struct EVYCarouselRow: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             .padding()
         }
-        .sheet(isPresented: $showFullScreen) {
-            EVYImageOverlay(imageName: "\(imageNames[selectedImageIndex])")
-        }
+        .fullScreenCover(isPresented: $showFullScreen,
+                         onDismiss: { showFullScreen = false },
+                         content: { EVYImageOverlay(imageName: "\(imageNames[selectedImageIndex])") })
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
 }
