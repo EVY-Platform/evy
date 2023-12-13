@@ -14,7 +14,7 @@ struct EVYImageOverlay: View {
     
     var body: some View {
         ZStack {
-            ZoomableContainer{
+            EVYZoomableContainer{
                 Image(imageName)
                     .resizable()
                     .aspectRatio(contentMode: .fit)

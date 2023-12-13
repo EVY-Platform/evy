@@ -2,7 +2,7 @@ import SwiftUI
 
 fileprivate let maxAllowedScale = 4.0
 
-struct ZoomableContainer<Content: View>: View {
+struct EVYZoomableContainer<Content: View>: View {
     let content: Content
 
     @State private var currentScale: CGFloat = 1.0
