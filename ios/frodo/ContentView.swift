@@ -32,6 +32,7 @@ struct ContentView: View {
             }
         }
         .listStyle(PlainListStyle())
+        .ignoresSafeArea()
     }
 }
 
