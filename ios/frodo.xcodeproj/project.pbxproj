@@ -10,6 +10,7 @@
 		2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8EEC392B2730B0003DF2DC /* Constants.swift */; };
 		730D008B2B29A0E800B5BCB6 /* EVYContentShortRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008A2B29A0E800B5BCB6 /* EVYContentShortRow.swift */; };
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
+		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
 		737C6AA62B2706890093D00C /* frodoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA52B2706890093D00C /* frodoApp.swift */; };
 		737C6AA82B2706890093D00C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA72B2706890093D00C /* ContentView.swift */; };
 		737C6AAA2B27068A0093D00C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 737C6AA92B27068A0093D00C /* Assets.xcassets */; };
@@ -33,6 +34,7 @@
 		2E8EEC392B2730B0003DF2DC /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		730D008A2B29A0E800B5BCB6 /* EVYContentShortRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYContentShortRow.swift; sourceTree = "<group>"; };
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
+		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
 		737C6AA22B2706890093D00C /* frodo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = frodo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		737C6AA52B2706890093D00C /* frodoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = frodoApp.swift; sourceTree = "<group>"; };
 		737C6AA72B2706890093D00C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -64,6 +66,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		730D008E2B29D91200B5BCB6 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
 		737C6A992B2706890093D00C = {
 			isa = PBXGroup;
 			children = (
@@ -93,6 +103,7 @@
 				737C6ABF2B270AAE0093D00C /* Models */,
 				737C6AC82B270AD90093D00C /* API */,
 				737C6AAB2B27068A0093D00C /* Preview Content */,
+				730D008E2B29D91200B5BCB6 /* Utils */,
 			);
 			path = frodo;
 			sourceTree = "<group>";
@@ -223,6 +234,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */,
 				737C6AA82B2706890093D00C /* ContentView.swift in Sources */,
 				737C6AC62B270AAE0093D00C /* EVYOrganization.swift in Sources */,
 				737C6ACB2B270AD90093D00C /* EVYWebsocket.swift in Sources */,

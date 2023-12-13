@@ -45,8 +45,8 @@ struct EVYCarouselRow: View {
         }
         .fullScreenCover(isPresented: $showFullScreen,
                          onDismiss: { showFullScreen = false },
-                         content: {EVYCarouselOverlay(_imageNames: imageNames,
-                                                      _selectedIndex: selectedImageIndex)})
+                         content: {EVYCarouselOverlay(imageNames: imageNames,
+                                                      selectedIndex: selectedImageIndex)})
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
 }

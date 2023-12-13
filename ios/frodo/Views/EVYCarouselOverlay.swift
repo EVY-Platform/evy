@@ -11,11 +11,18 @@ struct EVYCarouselOverlay: View {
     @Environment(\.dismiss) var dismiss
     
     let imageNames: [String]
+    private var topPadding: CGFloat
     @State private var selectedIndex: Int = 0
     
-    init(_imageNames: [String], _selectedIndex: Int) {
-        self.imageNames = _imageNames
-        selectedIndex = _selectedIndex
+    init(imageNames: [String], selectedIndex: Int) {
+        self.imageNames = imageNames
+        self.topPadding = Constants.buttonCornerPadding*2
+        
+        if (UIDevice.current.hasDynamicIsland) {
+            self.topPadding *= 2
+        }
+        
+        _selectedIndex = State(initialValue: selectedIndex)
     }
     
     var body: some View {
@@ -36,7 +43,7 @@ struct EVYCarouselOverlay: View {
                         .foregroundColor(.white)
                         .font(.buttonFont)
                 }
-                .padding(EdgeInsets(top: Constants.buttonCornerPadding*2,
+                .padding(EdgeInsets(top: self.topPadding,
                                     leading: Constants.buttonCornerPadding,
                                     bottom: 0,
                                     trailing: 0))
@@ -62,5 +69,5 @@ struct EVYCarouselOverlay: View {
 }
 
 #Preview {
-    EVYCarouselOverlay(_imageNames: ["printer", "printer"], _selectedIndex: 0)
+    EVYCarouselOverlay(imageNames: ["printer", "printer"], selectedIndex: 0)
 }
