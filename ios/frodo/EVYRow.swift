@@ -23,13 +23,13 @@ struct EVYRow: View, Decodable {
         
         switch self.type {
         case EVYCarouselRow.JSONType:
-            self.content = try EVYCarouselRow(from: decoder)
+            self.content = try EVYCarouselRow(container: container)
             
         case EVYTitleRow.JSONType:
-            self.content = try EVYTitleRow(from: decoder)
+            self.content = try EVYTitleRow(container: container)
             
         case EVYContentShortRow.JSONType:
-            self.content = try EVYContentShortRow(from: decoder)
+            self.content = try EVYContentShortRow(container: container)
             
         default:
             fatalError("Unknown type of content.")

@@ -7,17 +7,22 @@
 
 import SwiftUI
 
-struct EVYTitleRow: View, Decodable {
+struct EVYTitleRow: View {
     public static var JSONType = "Title"
+    private struct JSON: Decodable {
+        let title: String
+        let title_detail: String
+        let subtitle_1: String
+        let subtitle_2: String
+    }
     
     let title: String
     let title_detail: String
     let subtitle_1: String
     let subtitle_2: String
     
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let parsedData = try container.decode(Self.self, forKey:.content)
+    init(container: KeyedDecodingContainer<CodingKeys>) throws {
+        let parsedData = try container.decode(JSON.self, forKey:.content)
         self.title = parsedData.title
         self.title_detail = parsedData.title_detail
         self.subtitle_1 = parsedData.subtitle_1
@@ -63,5 +68,5 @@ struct EVYTitleRow: View, Decodable {
         }
     }
     """.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYTitleRow.self, from: json)
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

@@ -7,15 +7,18 @@
 
 import SwiftUI
 
-struct EVYContentShortRow: View, Decodable {
+struct EVYContentShortRow: View {
     public static var JSONType = "ContentShort"
+    private struct JSON: Decodable {
+        let title: String
+        let content: String
+    }
     
     let title: String
     let content: String
     
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let parsedData = try container.decode(Self.self, forKey:.content)
+    init(container: KeyedDecodingContainer<CodingKeys>) throws {
+        let parsedData = try container.decode(JSON.self, forKey:.content)
         self.title = parsedData.title
         self.content = parsedData.content
     }
@@ -50,5 +53,5 @@ struct EVYContentShortRow: View, Decodable {
         }
     }
     """.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYContentShortRow.self, from: json)
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
 }
