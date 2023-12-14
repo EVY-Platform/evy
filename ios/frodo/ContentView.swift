@@ -10,26 +10,11 @@ import Foundation
 import Serializable
 
 struct ContentView: View {
-    @State private var rows = try! JSONDecoder().decode([EVYRow].self, from: json)
+    @State private var rowDatas = try! JSONDecoder().decode([EVYRowData].self, from: json)
     
     var body: some View {
-        List(rows, id: \.id) { row in
-            switch row.content {
-            case .carousel(let carousel):
-                EVYCarouselRow(imageNames: carousel.photo_ids)
-                    .frame(height: 250)
-                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-            case .title(let title):
-                EVYTitleRow(title: title.title,
-                            titleDetail: title.title_detail,
-                            subtitle1: title.subtitle_1,
-                            subtitle2: title.subtitle_2)
-            case .contentShort(let contentShort):
-                EVYContentShortRow(title: contentShort.title,
-                                   content: contentShort.content)
-            default:
-                fatalError("Unknown type of content.")
-            }
+        List(rowDatas, id: \.id) { rowData in
+            EVYRow(rowData: rowData)
         }
         .listStyle(PlainListStyle())
         .ignoresSafeArea()

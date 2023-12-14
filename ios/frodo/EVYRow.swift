@@ -5,6 +5,7 @@
 //  Created by Geoffroy Lesage on 11/12/2023.
 //
 
+import SwiftUI
 import Foundation
 
 enum Content {
@@ -12,12 +13,12 @@ enum Content {
     case title(EVYTitleRowContent)
     case contentShort(EVYContentShortRowContent)
 }
-struct EVYRow: Decodable {
+struct EVYRowData: Decodable {
     var id: String = UUID().uuidString
     var type: String
     var content: Content
 }
-extension EVYRow {
+extension EVYRowData {
     private enum CodingKeys: String, CodingKey {
         case type = "type"
         case content = "content"
@@ -37,6 +38,30 @@ extension EVYRow {
         case "ContentShort":
             let title = try container.decode(EVYContentShortRowContent.self, forKey:.content)
             self.content = .contentShort(title)
+        default:
+            fatalError("Unknown type of content.")
+        }
+    }
+}
+
+struct EVYRow: View {
+    var id: String = UUID().uuidString
+    let rowData: EVYRowData
+    
+    var body: some View {
+        switch rowData.content {
+        case .carousel(let carousel):
+            EVYCarouselRow(imageNames: carousel.photo_ids)
+                .frame(height: 250)
+                .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+        case .title(let title):
+            EVYTitleRow(title: title.title,
+                        titleDetail: title.title_detail,
+                        subtitle1: title.subtitle_1,
+                        subtitle2: title.subtitle_2)
+        case .contentShort(let contentShort):
+            EVYContentShortRow(title: contentShort.title,
+                               content: contentShort.content)
         default:
             fatalError("Unknown type of content.")
         }
