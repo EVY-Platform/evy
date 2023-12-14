@@ -9,20 +9,20 @@ import SwiftUI
 
 struct EVYTitleRow: View {
     public static var JSONType = "Title"
-    private struct JSON: Decodable {
+    private struct JSONData: Decodable {
         let title: String
         let title_detail: String
         let subtitle_1: String
         let subtitle_2: String
     }
     
-    let title: String
-    let titleDetail: String
-    let subtitle1: String
-    let subtitle2: String
+    private let title: String
+    private let titleDetail: String
+    private let subtitle1: String
+    private let subtitle2: String
     
     init(container: KeyedDecodingContainer<CodingKeys>) throws {
-        let parsedData = try container.decode(JSON.self, forKey:.content)
+        let parsedData = try container.decode(JSONData.self, forKey:.content)
         self.title = parsedData.title
         self.titleDetail = parsedData.title_detail
         self.subtitle1 = parsedData.subtitle_1

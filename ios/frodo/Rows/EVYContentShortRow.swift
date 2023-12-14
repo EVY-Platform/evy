@@ -9,16 +9,16 @@ import SwiftUI
 
 struct EVYContentShortRow: View {
     public static var JSONType = "ContentShort"
-    private struct JSON: Decodable {
+    private struct JSONData: Decodable {
         let title: String
         let content: String
     }
     
-    let title: String
-    let content: String
+    private let title: String
+    private let content: String
     
     init(container: KeyedDecodingContainer<CodingKeys>) throws {
-        let parsedData = try container.decode(JSON.self, forKey:.content)
+        let parsedData = try container.decode(JSONData.self, forKey:.content)
         self.title = parsedData.title
         self.content = parsedData.content
     }

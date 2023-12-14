@@ -9,18 +9,17 @@ import SwiftUI
 
 struct EVYCarouselRow: View {
     public static var JSONType = "Carousel"
-    
-    private struct JSON: Decodable {
+    private struct JSONData: Decodable {
         let photo_ids: [String]
     }
     
-    let imageNames: [String]
+    private let imageNames: [String]
     
     @State private var selectedImageIndex: Int = 0
     @State private var showFullScreen = false
     
     init(container: KeyedDecodingContainer<CodingKeys>) throws {
-        let parsedData = try container.decode(JSON.self, forKey:.content)
+        let parsedData = try container.decode(JSONData.self, forKey:.content)
         self.imageNames = parsedData.photo_ids
     }
     
