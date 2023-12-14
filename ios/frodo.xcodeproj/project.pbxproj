@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8EEC392B2730B0003DF2DC /* Constants.swift */; };
-		73054F462B2B1F9E004C57B0 /* EVYSegmentedControlRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73054F452B2B1F9E004C57B0 /* EVYSegmentedControlRow.swift */; };
 		730D008B2B29A0E800B5BCB6 /* EVYContentShortRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008A2B29A0E800B5BCB6 /* EVYContentShortRow.swift */; };
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
@@ -33,7 +32,6 @@
 
 /* Begin PBXFileReference section */
 		2E8EEC392B2730B0003DF2DC /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
-		73054F452B2B1F9E004C57B0 /* EVYSegmentedControlRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSegmentedControlRow.swift; sourceTree = "<group>"; };
 		730D008A2B29A0E800B5BCB6 /* EVYContentShortRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYContentShortRow.swift; sourceTree = "<group>"; };
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
@@ -153,7 +151,6 @@
 			children = (
 				73CDCAB92B271ACC00D4E82A /* EVYCarouselRow.swift */,
 				73CDCABA2B271ACC00D4E82A /* EVYTitleRow.swift */,
-				73054F452B2B1F9E004C57B0 /* EVYSegmentedControlRow.swift */,
 				730D008A2B29A0E800B5BCB6 /* EVYContentShortRow.swift */,
 			);
 			path = Rows;
@@ -241,7 +238,6 @@
 				737C6AA82B2706890093D00C /* ContentView.swift in Sources */,
 				737C6AC62B270AAE0093D00C /* EVYOrganization.swift in Sources */,
 				737C6ACB2B270AD90093D00C /* EVYWebsocket.swift in Sources */,
-				73054F462B2B1F9E004C57B0 /* EVYSegmentedControlRow.swift in Sources */,
 				737C6ACC2B270AD90093D00C /* EVYManager.swift in Sources */,
 				737C6AA62B2706890093D00C /* frodoApp.swift in Sources */,
 				73CDCABC2B271ACC00D4E82A /* EVYTitleRow.swift in Sources */,
