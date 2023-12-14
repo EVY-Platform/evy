@@ -7,18 +7,22 @@
 
 import SwiftUI
 
-struct EVYTitleRowContent: Decodable {
+struct EVYTitleRow: View, Decodable {
+    public static var JSONType = "Title"
+    
     let title: String
     let title_detail: String
     let subtitle_1: String
     let subtitle_2: String
-}
-
-struct EVYTitleRow: View {
-    let title: String
-    let titleDetail: String
-    let subtitle1: String
-    let subtitle2: String
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let parsedData = try container.decode(Self.self, forKey:.content)
+        self.title = parsedData.title
+        self.title_detail = parsedData.title_detail
+        self.subtitle_1 = parsedData.subtitle_1
+        self.subtitle_2 = parsedData.subtitle_2
+    }
     
     var body: some View {
         VStack{
@@ -26,16 +30,16 @@ struct EVYTitleRow: View {
                 Text(title)
                     .font(.titleFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(titleDetail)
+                Text(title_detail)
                     .font(.detailFont)
             }
             .padding(.bottom, Constants.textHeadingLinePadding)
 
-            Text(subtitle1)
+            Text(subtitle_1)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePaddingMin)
-            Text(subtitle2)
+            Text(subtitle_2)
                 .foregroundStyle(.gray)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -48,8 +52,16 @@ struct EVYTitleRow: View {
 }
 
 #Preview {
-    EVYTitleRow(title: "Amazing fridge 20423",
-                titleDetail: "$250",
-                subtitle1: ":icon: 88% - 4 items sold",
-                subtitle2: "Rosebery, NSW - Posted on Nov 8th")
+    let json = """
+    {
+        "type": "Title",
+        "content": {
+            "title": "Amazing Fridge",
+            "title_detail": "$250",
+            "subtitle_1": ":star_doc: 88% - 4 items sold",
+            "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
+        }
+    }
+    """.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYTitleRow.self, from: json)
 }

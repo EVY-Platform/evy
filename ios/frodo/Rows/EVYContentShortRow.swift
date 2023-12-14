@@ -7,14 +7,18 @@
 
 import SwiftUI
 
-struct EVYContentShortRowContent: Decodable {
+struct EVYContentShortRow: View, Decodable {
+    public static var JSONType = "ContentShort"
+    
     let title: String
     let content: String
-}
-
-struct EVYContentShortRow: View {
-    let title: String
-    let content: String
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let parsedData = try container.decode(Self.self, forKey:.content)
+        self.title = parsedData.title
+        self.content = parsedData.content
+    }
     
     var body: some View {
         VStack{
@@ -36,8 +40,15 @@ struct EVYContentShortRow: View {
 }
 
 #Preview {
-    EVYContentShortRow(
-        title: "Amazing fridge 20423",
-        content: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-    )
+    let json = """
+    {
+        "type": "ContentShort",
+        "content": {
+            "title": "Description",
+            "content":
+                "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place."
+        }
+    }
+    """.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYContentShortRow.self, from: json)
 }

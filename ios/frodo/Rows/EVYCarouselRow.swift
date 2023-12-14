@@ -7,19 +7,24 @@
 
 import SwiftUI
 
-struct EVYCarouselRowContent: Decodable {
+struct EVYCarouselRow: View, Decodable {
+    public static var JSONType = "Carousel"
+    
     let photo_ids: [String]
-}
-
-struct EVYCarouselRow: View {
-    let imageNames: [String]
+    
     @State private var selectedImageIndex: Int = 0
     @State private var showFullScreen = false
     
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let parsedData = try container.decode(Self.self, forKey:.content)
+        self.photo_ids = parsedData.photo_ids
+    }
+    
     var body: some View {
         TabView(selection: $selectedImageIndex) {
-            ForEach(0..<imageNames.count, id: \.self) { index in
-                Image("\(imageNames[index])")
+            ForEach(0..<photo_ids.count, id: \.self) { index in
+                Image("\(photo_ids[index])")
                     .resizable()
                     .tag(index)
                     .aspectRatio(contentMode: .fill)
@@ -31,7 +36,7 @@ struct EVYCarouselRow: View {
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
         .overlay {
             HStack {
-                ForEach(0..<imageNames.count, id: \.self) { index in
+                ForEach(0..<photo_ids.count, id: \.self) { index in
                     Capsule()
                         .fill(Color.white.opacity(selectedImageIndex == index ? 1 : 0.33))
                         .frame(width: 35, height: 8)
@@ -45,12 +50,20 @@ struct EVYCarouselRow: View {
         }
         .fullScreenCover(isPresented: $showFullScreen,
                          onDismiss: { showFullScreen = false },
-                         content: {EVYCarouselOverlay(imageNames: imageNames,
+                         content: {EVYCarouselOverlay(imageNames: photo_ids,
                                                       selectedIndex: selectedImageIndex)})
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
 }
 
 #Preview {
-    EVYCarouselRow(imageNames: ["printer_logo","printer"])
+    let json = """
+    {
+        "type": "Carousel",
+        "content": {
+            "photo_ids": ["printer_logo", "printer"]
+        }
+    }
+    """.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYCarouselRow.self, from: json)
 }

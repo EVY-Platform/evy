@@ -12,48 +12,90 @@ struct Child {
     let child: EVYTitleRow
 }
 
-struct EVYSegmentedControlRowContent: Decodable {
-    struct ChildContent: Decodable {
-        let title: String
-        let child: EVYTitleRowContent
-    }
-    let children: [ChildContent]
-}
-
-struct EVYSegmentedControlRow: View {
-    let children: [Child]
-    @State private var selection = 0
-    
-    var body: some View {
-        VStack {
-            Picker("Choose", selection: $selection) {
-                ForEach(0..<children.count, id: \.self) { index in
-                    Text(children[index].title).tag(index)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding()
-            children[selection].child
-        }
-    }
-}
-
-#Preview {
-    let titleRow1 = EVYTitleRow(title: "Amazing fridge 20423",
-                                titleDetail: "$250",
-                                subtitle1: ":icon: 88% - 4 items sold",
-                                subtitle2: "Rosebery, NSW - Posted on Nov 8th")
-    let titleRow2 = EVYTitleRow(title: "Amazing 2",
-                                titleDetail: "$250",
-                                subtitle1: ":icon: 88% - 4 items sold",
-                                subtitle2: "Rosebery, NSW - Posted on Nov 8th")
-    let titleRow3 = EVYTitleRow(title: "Amazing 3",
-                                titleDetail: "$250",
-                                subtitle1: ":icon: 88% - 4 items sold",
-                                subtitle2: "Rosebery, NSW - Posted on Nov 8th")
-    
-    return EVYSegmentedControlRow(children: [
-        Child(title: "child1", child: titleRow1),
-        Child(title: "child2", child: titleRow2),
-        Child(title: "child3", child: titleRow3)])
-}
+//struct EVYSegmentedControlRowContent: Decodable {
+//    struct ChildContent: Decodable {
+//        let title: String
+//        let child: EVYTitleRowContent
+//    }
+//    let children: [ChildContent]
+//}
+//
+//struct EVYSegmentedControlRow: View, Decodable {
+//    public static var JSONType = "SegmentedControl"
+//    
+//    let children: [Child]
+//    @State private var selection = 0
+//    
+//    init(from decoder: Decoder) throws {
+//        let container = try decoder.container(keyedBy: CodingKeys.self)
+//        let parsedData = try container.decode(Self.self, forKey:.content)
+//        self.children = parsedData.children
+//    }
+//    
+//    var body: some View {
+//        VStack {
+//            Picker("Choose", selection: $selection) {
+//                ForEach(0..<children.count, id: \.self) { index in
+//                    Text(children[index].title).tag(index)
+//                }
+//            }
+//            .pickerStyle(.segmented)
+//            .padding()
+//            children[selection].child
+//        }
+//    }
+//}
+//
+//#Preview {
+//    let json = """
+//    [
+//        {
+//            "type": "Title",
+//            "content": {
+//                "title": "Amazing Fridge",
+//                "title_detail": "$250",
+//                "subtitle_1": ":star_doc: 88% - 4 items sold",
+//                "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
+//            }
+//        },
+//        {
+//            "type": "Title",
+//            "content": {
+//                "title": "Amazing 2",
+//                "title_detail": "$250",
+//                "subtitle_1": ":star_doc: 88% - 4 items sold",
+//                "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
+//            }
+//        },
+//        {
+//            "type": "Title",
+//            "content": {
+//                "title": "Amazing 3",
+//                "title_detail": "$250",
+//                "subtitle_1": ":star_doc: 88% - 4 items sold",
+//                "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
+//            }
+//        }
+//    ]
+//    """.data(using: .utf8)!
+//    let titleRows = try! JSONDecoder().decode([EVYTitleRow].self, from: json)
+//    
+//    var children: [Child] = []
+//    titleRows.forEach { titleRow in
+//        children.append(Child(title: "child1", child: titleRow))
+//    }
+//    return EVYSegmentedControlRow(children: children)
+//    
+//    let json = """
+//    {
+//        "type": "Title",
+//        "content": {
+//            "title": "Amazing Fridge",
+//            "title_detail": "$250",
+//            "subtitle_1": ":star_doc: 88% - 4 items sold",
+//            "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
+//        }
+//    }
+//    """.data(using: .utf8)!
+//    return try! JSONDecoder().decode(EVYTitleRow.self, from: json)
+//}
