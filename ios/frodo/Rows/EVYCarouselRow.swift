@@ -14,20 +14,20 @@ struct EVYCarouselRow: View {
         let photo_ids: [String]
     }
     
-    let photo_ids: [String]
+    let imageNames: [String]
     
     @State private var selectedImageIndex: Int = 0
     @State private var showFullScreen = false
     
     init(container: KeyedDecodingContainer<CodingKeys>) throws {
         let parsedData = try container.decode(JSON.self, forKey:.content)
-        self.photo_ids = parsedData.photo_ids
+        self.imageNames = parsedData.photo_ids
     }
     
     var body: some View {
         TabView(selection: $selectedImageIndex) {
-            ForEach(0..<photo_ids.count, id: \.self) { index in
-                Image("\(photo_ids[index])")
+            ForEach(0..<imageNames.count, id: \.self) { index in
+                Image("\(imageNames[index])")
                     .resizable()
                     .tag(index)
                     .aspectRatio(contentMode: .fill)
@@ -39,7 +39,7 @@ struct EVYCarouselRow: View {
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
         .overlay {
             HStack {
-                ForEach(0..<photo_ids.count, id: \.self) { index in
+                ForEach(0..<imageNames.count, id: \.self) { index in
                     Capsule()
                         .fill(Color.white.opacity(selectedImageIndex == index ? 1 : 0.33))
                         .frame(width: 35, height: 8)
@@ -53,7 +53,7 @@ struct EVYCarouselRow: View {
         }
         .fullScreenCover(isPresented: $showFullScreen,
                          onDismiss: { showFullScreen = false },
-                         content: {EVYCarouselOverlay(imageNames: photo_ids,
+                         content: {EVYCarouselOverlay(imageNames: imageNames,
                                                       selectedIndex: selectedImageIndex)})
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
     }

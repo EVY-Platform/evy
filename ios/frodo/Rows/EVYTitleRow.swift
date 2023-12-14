@@ -17,16 +17,16 @@ struct EVYTitleRow: View {
     }
     
     let title: String
-    let title_detail: String
-    let subtitle_1: String
-    let subtitle_2: String
+    let titleDetail: String
+    let subtitle1: String
+    let subtitle2: String
     
     init(container: KeyedDecodingContainer<CodingKeys>) throws {
         let parsedData = try container.decode(JSON.self, forKey:.content)
         self.title = parsedData.title
-        self.title_detail = parsedData.title_detail
-        self.subtitle_1 = parsedData.subtitle_1
-        self.subtitle_2 = parsedData.subtitle_2
+        self.titleDetail = parsedData.title_detail
+        self.subtitle1 = parsedData.subtitle_1
+        self.subtitle2 = parsedData.subtitle_2
     }
     
     var body: some View {
@@ -35,16 +35,16 @@ struct EVYTitleRow: View {
                 Text(title)
                     .font(.titleFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(title_detail)
+                Text(titleDetail)
                     .font(.detailFont)
             }
             .padding(.bottom, Constants.textHeadingLinePadding)
 
-            Text(subtitle_1)
+            Text(subtitle1)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePaddingMin)
-            Text(subtitle_2)
+            Text(subtitle2)
                 .foregroundStyle(.gray)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
