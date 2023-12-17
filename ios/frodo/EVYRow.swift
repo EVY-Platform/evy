@@ -1,6 +1,6 @@
 //
 //  EVYRow.swift
-//  frodo
+//  EVY
 //
 //  Created by Geoffroy Lesage on 11/12/2023.
 //
@@ -32,6 +32,9 @@ struct EVYRow: View, Decodable {
             
         case EVYTimeslotPickerRow.JSONType:
             self.content = try EVYTimeslotPickerRow(container: container)
+            
+        case EVYDetailRow.JSONType:
+            self.content = try EVYDetailRow(container: container)
             
         default:
             self.content = Text("Could not parse row")

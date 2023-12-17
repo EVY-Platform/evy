@@ -1,6 +1,6 @@
 //
-//  FImageFullScreen.swift
-//  frodo
+//  EVYImageOverlay.swift
+//  EVY
 //
 //  Created by Geoffroy Lesage on 6/12/2023.
 //

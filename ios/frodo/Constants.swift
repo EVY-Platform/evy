@@ -1,6 +1,6 @@
 //
 //  AppConstants.swift
-//  frodo
+//  EVY
 //
 //  Created by Clemence Chalot on 11/12/2023.
 //
@@ -23,4 +23,5 @@ struct Constants {
     
     static let buttonColor: Color = Color(#colorLiteral(red: 0.4745, green: 0.898, blue: 0.9569, alpha: 1))
     static let buttonDisabledColor: Color = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
+    static let textButtonColor: Color = .blue
 }

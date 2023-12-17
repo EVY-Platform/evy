@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8EEC392B2730B0003DF2DC /* Constants.swift */; };
+		2EB1B0F12B2E889100D9334E /* EVYDetailRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB1B0F02B2E889100D9334E /* EVYDetailRow.swift */; };
 		730D008B2B29A0E800B5BCB6 /* EVYTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008A2B29A0E800B5BCB6 /* EVYTextRow.swift */; };
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
@@ -35,6 +36,7 @@
 
 /* Begin PBXFileReference section */
 		2E8EEC392B2730B0003DF2DC /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		2EB1B0F02B2E889100D9334E /* EVYDetailRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDetailRow.swift; sourceTree = "<group>"; };
 		730D008A2B29A0E800B5BCB6 /* EVYTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextRow.swift; sourceTree = "<group>"; };
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
@@ -161,6 +163,7 @@
 				73CDCABA2B271ACC00D4E82A /* EVYTitleRow.swift */,
 				73884AC12B2E897600BC8726 /* EVYTimeslotPickerRow.swift */,
 				730D008A2B29A0E800B5BCB6 /* EVYTextRow.swift */,
+				2EB1B0F02B2E889100D9334E /* EVYDetailRow.swift */,
 			);
 			path = Rows;
 			sourceTree = "<group>";
@@ -243,6 +246,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2EB1B0F12B2E889100D9334E /* EVYDetailRow.swift in Sources */,
 				730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */,
 				737C6AA82B2706890093D00C /* ContentView.swift in Sources */,
 				73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */,
