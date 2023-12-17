@@ -33,6 +33,9 @@ struct EVYRow: View, Decodable {
         case EVYDetailRow.JSONType:
             self.content = try EVYDetailRow(container: container)
             
+        case EVYDisclaimerRow.JSONType:
+            self.content = try EVYDisclaimerRow(container: container)
+            
         default:
             fatalError("Unknown type of content.")
         }
