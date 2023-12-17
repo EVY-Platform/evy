@@ -12,13 +12,7 @@ struct ContentView: View {
     
     var body: some View {
         List(rows.indices, id: \.self) { index in
-            if index == 0 {
-                rows[index]
-                    .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-            } else {
-                rows[index]
-            }
-            
+            rows[index]
         }
         .listStyle(PlainListStyle())
         .ignoresSafeArea()
