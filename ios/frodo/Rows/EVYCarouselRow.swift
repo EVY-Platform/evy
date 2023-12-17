@@ -37,15 +37,10 @@ struct EVYCarouselRow: View {
         }
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
         .overlay {
-            HStack {
-                ForEach(0..<imageNames.count, id: \.self) { index in
-                    Capsule()
-                        .fill(Color.white.opacity(selectedImageIndex == index ? 1 : 0.33))
-                        .frame(width: 35, height: 8)
-                }
-            }
+            EVYCarouselIndicator(indices: (0...imageNames.count-1),
+                                 selectionIndex: selectedImageIndex,
+                                 color: .white)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-            .padding()
         }
         .fullScreenCover(isPresented: $showFullScreen,
                          onDismiss: { showFullScreen = false },

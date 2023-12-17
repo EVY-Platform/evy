@@ -44,9 +44,10 @@ struct EVYTimeslotPickerRow: View {
             }
             .padding()
             .padding(.top, .zero)
+
             EVYTimeslotPicker(timeslotDates: datesWithTimeslots)
         }
-        .frame(height: 310)
+        .frame(height: 240)
     }
 }
 
