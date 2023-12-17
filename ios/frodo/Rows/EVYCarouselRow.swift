@@ -47,7 +47,7 @@ struct EVYCarouselRow: View {
                          content: {EVYCarouselOverlay(imageNames: imageNames,
                                                       selectedIndex: selectedImageIndex)})
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-        .frame(height: 250)
+        .frame(height: 300)
     }
 }
 

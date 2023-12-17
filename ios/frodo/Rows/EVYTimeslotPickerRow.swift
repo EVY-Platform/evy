@@ -42,6 +42,9 @@ struct EVYTimeslotPickerRow: View {
                     .font(.detailFont)
                     .frame(alignment: .trailing)
             }
+            .padding()
+            .padding(.top, .zero)
+
             EVYTimeslotPicker(timeslotDates: datesWithTimeslots)
         }
         .frame(height: 240)
