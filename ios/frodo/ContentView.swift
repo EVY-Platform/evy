@@ -45,7 +45,7 @@ struct ContentView: View {
             }
         },
         {
-            "type": "ContentShort",
+            "type": "Text",
             "content": {
                 "title": "Description",
                 "content":

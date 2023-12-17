@@ -36,7 +36,7 @@ let json = """
         }
     },
     {
-        "type": "ContentShort",
+        "type": "Text",
         "content": {
             "title": "Description",
             "content":
@@ -136,7 +136,7 @@ let json = """
 //        }
 //    },
 //    {
-//        "type": "ContentShort",
+//        "type": "Text",
 //        "content": {
 //            "title": "Description",
 //            "content":

@@ -58,7 +58,7 @@ See [types](./types.md) for custom types and definitions used below
         "children": [
             {
                 "title": "string",
-                "child": "ROW",
+                "children": "ROW[]",
             },
         ],
     }
@@ -67,7 +67,7 @@ See [types](./types.md) for custom types and definitions used below
 
 ```
 {
-    "type": "ContentShort",
+    "type": "Text",
     "content": {
         "title": "string",
         "content": "string"
@@ -77,20 +77,19 @@ See [types](./types.md) for custom types and definitions used below
 
 ```
 {
-    "type": "ContentLong",
+    "type": "Detail",
     "content": {
         "title": "string",
         "logo": "image",
         "subtitle": "string",
-        "detail": "string",
-        "disclaimer": "string"
+        "detail": "string"
     }
 }
 ```
 
 ```
 {
-    "type": "Condition",
+    "type": "Disclaimer",
     "content": {
         "icon": "icon",
         "title": "string",
@@ -120,7 +119,6 @@ See [types](./types.md) for custom types and definitions used below
             {
                 "icon": "icon",
                 "label": "string",
-                "disclaimer": "string",
             },
         ],
     }
