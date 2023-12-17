@@ -50,9 +50,8 @@ struct EVYTitleRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding()
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+        .padding()
     }
 }
 

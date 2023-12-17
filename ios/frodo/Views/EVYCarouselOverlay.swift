@@ -54,9 +54,6 @@ struct EVYCarouselOverlay: View {
                         Capsule()
                             .fill(Color.white.opacity(selectedIndex == index ? 1 : 0.33))
                             .frame(width: 35, height: 8)
-                            .onTapGesture {
-                                selectedIndex = index
-                            }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)

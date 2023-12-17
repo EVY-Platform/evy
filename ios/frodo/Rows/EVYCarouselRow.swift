@@ -42,9 +42,6 @@ struct EVYCarouselRow: View {
                     Capsule()
                         .fill(Color.white.opacity(selectedImageIndex == index ? 1 : 0.33))
                         .frame(width: 35, height: 8)
-                        .onTapGesture {
-                            selectedImageIndex = index
-                        }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
