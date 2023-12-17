@@ -27,7 +27,7 @@ struct EVYTimeslotColumn: View {
     private let timeslotRowWidth: CGFloat = 70
     private let timeslotRowHeight: CGFloat = 45
     private let timeslowRectangleCornerRadius: CGFloat = 10
-    private let numberOfTimeslotsPerDay: Int = 3
+    private let numberOfTimeslotsPerDay: Int = 2
     
     var body: some View {
         VStack() {
@@ -68,21 +68,16 @@ struct EVYTimeslotPicker: View {
                         HStack {
                             ForEach(groupedDays[index], id: \.date) { timeslotDate in
                                 EVYTimeslotColumn(timeslotDate: timeslotDate)
+                                    .padding(Constants.paddingColumns)
                             }
                         }
                     }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             
-            HStack {
-                ForEach(groupedDays.indices, id: \.self) { index in
-                    Capsule()
-                        .fill(Color.black.opacity(selectedGroupIndex == index ? 1 : 0.33))
-                        .frame(width: 35, height: 8)
-                }
-            }
-            .frame(alignment: .bottom)
-            .padding()
+            EVYCarouselIndicator(indices: (0...groupedDays.count-1),
+                                 selectionIndex: selectedGroupIndex,
+                                 color: .black)
         }
     }
 }

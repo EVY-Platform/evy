@@ -49,15 +49,9 @@ struct EVYCarouselOverlay: View {
                                     trailing: 0))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 
-                HStack {
-                    ForEach(0..<imageNames.count, id: \.self) { index in
-                        Capsule()
-                            .fill(Color.white.opacity(selectedIndex == index ? 1 : 0.33))
-                            .frame(width: 35, height: 8)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .padding()
+                EVYCarouselIndicator(indices: (0...imageNames.count-1),
+                                     selectionIndex: selectedIndex,
+                                     color: .white)
             }
         }
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
