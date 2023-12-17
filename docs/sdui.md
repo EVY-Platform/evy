@@ -70,7 +70,8 @@ See [types](./types.md) for custom types and definitions used below
     "type": "Text",
     "content": {
         "title": "string",
-        "content": "string"
+        "content": "string",
+        "maxLines": "string"
     }
 }
 ```

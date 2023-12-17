@@ -13,11 +13,12 @@ struct EVYTextRow: View {
     private struct JSONData: Decodable {
         let title: String
         let content: String
+        let maxLines: String
     }
     
     private let title: String
     private let content: String
-    let lineLimit: Int
+    private let maxLines: Int
     
     @State private var expanded: Bool = false
     @State private var truncated: Bool = false
@@ -26,8 +27,7 @@ struct EVYTextRow: View {
         let parsedData = try container.decode(JSONData.self, forKey:.content)
         self.title = parsedData.title
         self.content = parsedData.content
-        self.lineLimit = 2
-        
+        self.maxLines = Int(parsedData.maxLines) ?? 2
     }
     private var moreLessText: String {
         if !truncated {
@@ -47,33 +47,31 @@ struct EVYTextRow: View {
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
-                .lineLimit(expanded ? nil : lineLimit)
+                .lineLimit(expanded ? nil : maxLines)
             Text(moreLessText)
-                .onTapGesture {
-                    self.expanded.toggle()
-                }
                 .foregroundStyle(.blue)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
-                    Text(content).lineLimit(lineLimit)
+                    Text(content).lineLimit(maxLines)
                         .background(GeometryReader { visibleTextGeometry in
-                            ZStack { //large size zstack to contain any size of text
-                                Text(self.content)
-                                    .background(GeometryReader { fullTextGeometry in
-                                        Color.clear.onAppear {
-                                            self.truncated = fullTextGeometry.size.height > visibleTextGeometry.size.height
-                                        }
-                                    })
-                            }
+                            Text(self.content)
+                                .background(GeometryReader { fullTextGeometry in
+                                    Color.clear.onAppear {
+                                        self.truncated = fullTextGeometry.size.height > visibleTextGeometry.size.height
+                                    }
+                                })
                             .frame(height: .greatestFiniteMagnitude)
                         })
-                        .hidden() //keep hidden
+                        .hidden()
                 )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding()
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+        .onTapGesture {
+            self.expanded.toggle()
+        }
     }
 }
 
@@ -83,6 +81,7 @@ struct EVYTextRow: View {
     {
         "type": "Text",
         "content": {
+            "maxLines": "30",
             "title": "Description",
             "content":
                 "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. "
