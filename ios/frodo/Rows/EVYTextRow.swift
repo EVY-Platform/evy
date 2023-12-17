@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct EVYContentShortRow: View {
-    public static var JSONType = "ContentShort"
+struct EVYTextRow: View {
+    public static var JSONType = "Text"
     private struct JSONData: Decodable {
         let title: String
         let content: String
@@ -45,7 +45,7 @@ struct EVYContentShortRow: View {
 #Preview {
     let json = """
     {
-        "type": "ContentShort",
+        "type": "Text",
         "content": {
             "title": "Description",
             "content":

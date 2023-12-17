@@ -128,7 +128,7 @@
 			"children": [
 				{
 					"title": "Pickup",
-					"child": {
+					"children": [{
 						"type": "TimeslotPicker",
 						"content": {
 							"icon": ":pickup:",
@@ -149,11 +149,11 @@
 								}
 							]
 						}
-					}
+					}]
 				},
 				{
 					"title": "Deliver",
-					"child": {
+					"children": [{
 						"type": "TimeslotPicker",
 						"content": {
 							"icon": ":car:",
@@ -174,27 +174,33 @@
 								}
 							]
 						}
-					}
+					}]
 				},
 				{
 					"title": "Ship",
-					"child": {
-						"type": "ContentLong",
+					"children": [{
+						"type": "Detail",
 						"content": {
 							"title": "Australia Post",
 							"logo": "image_id",
 							"subtitle": "2-5 days once deposited",
-							"details": "$25.00",
-							"disclaimer":
-								":lock: Your money will be held until Australia Post confirms delivery "
+							"details": "$25.00"
 						}
-					}
+					},
+					{
+						"type": "Disclaimer",
+						"content": {
+							"icon": ":lock:",
+							"title": "EVY Protection",
+							"subtitle": "Your money will be held until Australia Post confirms delivery"
+						}
+					}]
 				}
 			]
 		}
 	},
 	{
-		"type": "ContentShort",
+		"type": "Text",
 		"content": {
 			"title": "Description",
 			"content":
@@ -202,27 +208,30 @@
 		}
 	},
 	{
-		"type": "Condition",
+		"type": "Detail",
 		"content": {
-			"icon": ":paper:",
+			"logo": ":paper:",
 			"title": "Selling reason",
-			"subtitle": "Moving out"
+			"subtitle": "Moving out",
+			"detail": ""
 		}
 	},
 	{
-		"type": "Condition",
+		"type": "Detail",
 		"content": {
-			"icon": ":ruler:",
+			"logo": ":ruler:",
 			"title": "Dimensions",
-			"subtitle": "250 (w) x 120 (h) x 250 (l)"
+			"subtitle": "250 (w) x 120 (h) x 250 (l)",
+			"detail": ""
 		}
 	},
 	{
-		"type": "Condition",
+		"type": "Detail",
 		"content": {
-			"icon": ":alert:",
+			"logo": ":alert:",
 			"title": "Condition",
-			"subtitle": "Like new"
+			"subtitle": "Like new",
+			"detail": ""
 		}
 	},
 	{
@@ -321,53 +330,62 @@
 					"enabled": "{item.transfer_option.ship.transfer_provider}",
 					"hide_if_empty": "{true}",
 					"empty_message": "Option not available",
-					"child": {
-						"type": "ContentLong",
+					"children": [{
+						"type": "Detail",
 						"content": {
 							// This is usually fetched from API
 							"title": "{transfer_provider.name}",
 							"logo": "{transfer_provider.logo}",
 							"subtitle": "{transfer_provider.eta}",
 							"details":
-								"{formatCurrency(item.transfer_option.ship.fee + transfer_provider.fee)}",
-							"disclaimer":
-								":lock: Your money will be held until {transfer_provider.name} confirms delivery ",
-						},
-					}
+								"{formatCurrency(item.transfer_option.ship.fee + transfer_provider.fee)}"
+						}
+					},
+					{
+						"type": "Disclaimer",
+						"content": {
+							"icon": ":lock:",
+							"title": "EVY Protection",
+							"subtitle": "Your money will be held until {transfer_provider.name} confirms delivery"
+						}
+					}]
 				}
 			]
 		}
 	},
 	{
-		"type": "ContentShort",
+		"type": "Text",
 		"content": {
 			"title": "Description",
 			"content": "{item.description}"
 		}
 	},
 	{
-		"type": "Condition",
+		"type": "Detail",
 		"content": {
-			"icon": ":alert:",
+			"logo": ":alert:",
 			"title": "Condition",
-			"subtitle": "{item.condition}"
+			"subtitle": "{item.condition}",
+			"detail": ""	
 		}
 	},
 	{
-		"type": "Condition",
+		"type": "Detail",
 		"content": {
-			"icon": ":paper:",
+			"logo": ":paper:",
 			"title": "Selling reason",
-			"subtitle": "{item.selling_reason}"
+			"subtitle": "{item.selling_reason}",
+			"detail": ""
 		}
 	},
 	{
-		"type": "Condition",
+		"type": "Detail",
 		"content": {
-			"icon": ":ruler:",
+			"logo": ":ruler:",
 			"title": "Dimensions",
 			"subtitle":
-				"{item.dimension.width} (w) x {item.dimension.height} (h) x {item.dimension.length} (l)"
+				"{item.dimension.width} (w) x {item.dimension.height} (h) x {item.dimension.length} (l)",
+			"detail": ""
 		}
 	},
 	{
