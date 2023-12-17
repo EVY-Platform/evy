@@ -52,6 +52,33 @@ struct ContentView: View {
                     "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place."
             }
         },
+        {
+            "type": "Detail",
+            "content": {
+                "logo": ":alert:",
+                "title": "Condition",
+                "subtitle": "Like new",
+                "detail": ""
+            }
+        },
+        {
+            "type": "Detail",
+            "content": {
+                "logo": ":alert:",
+                "title": "Condition",
+                "subtitle": "Like new",
+                "detail": ""
+            }
+        },
+        {
+            "type": "Detail",
+            "content": {
+                "logo": ":alert:",
+                "title": "Condition",
+                "subtitle": "Like new",
+                "detail": ""
+            }
+        }
     ]
     """.data(using: .utf8)!
     var rows = try! JSONDecoder().decode([EVYRow].self, from: json)
