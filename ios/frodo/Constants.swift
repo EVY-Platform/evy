@@ -19,9 +19,8 @@ extension Font {
 struct Constants {
     static let textLinePadding: CGFloat = 4
     static let textLinePaddingMin: CGFloat = 1
-    static let textHeadingLinePadding: CGFloat = 16
-    static let buttonCornerPadding: CGFloat = 16
-    static let paddingColumns: CGFloat = 4
+    static let majorPadding: CGFloat = 16
+    static let columnPadding: CGFloat = 4
     
     static let mainCornerRadius: CGFloat = 10
 

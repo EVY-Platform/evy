@@ -38,7 +38,7 @@ struct EVYTitleRow: View {
                 Text(titleDetail)
                     .font(.detailFont)
             }
-            .padding(.bottom, Constants.textHeadingLinePadding)
+            .padding(.bottom, Constants.majorPadding)
 
             Text(subtitle1)
                 .font(.regularFont)

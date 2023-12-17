@@ -24,7 +24,7 @@ struct EVYImageOverlay: View {
                     .foregroundColor(.white)
                     .font(.buttonFont)
             }
-            .padding(Constants.buttonCornerPadding)
+            .padding(Constants.majorPadding)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }

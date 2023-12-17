@@ -69,7 +69,7 @@ struct EVYTimeslotPicker: View {
                         HStack {
                             ForEach(groupedDays[index], id: \.date) { timeslotDate in
                                 EVYTimeslotColumn(timeslotDate: timeslotDate)
-                                    .padding(Constants.paddingColumns)
+                                    .padding(Constants.columnPadding)
                             }
                         }
                     }

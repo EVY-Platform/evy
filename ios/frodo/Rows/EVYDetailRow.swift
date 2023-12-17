@@ -41,7 +41,7 @@ struct EVYDetailRow: View {
                     Text(detail)
                         .font(.detailFont)
                         .frame(maxWidth: .infinity, alignment: .trailing)
-                }            .padding(.bottom, Constants.textHeadingLinePadding)
+                }            .padding(.bottom, Constants.majorPadding)
                 
                 Text(subtitle)
                     .foregroundStyle(.gray)
