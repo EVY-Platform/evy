@@ -24,16 +24,15 @@ public struct EVYTimeslotDate: Decodable {
 struct EVYTimeslotColumn: View {
     let timeslotDate: EVYTimeslotDate
     
+    private let timeslotRowWidth: CGFloat = 70
     private let timeslotRowHeight: CGFloat = 45
     private let timeslowRectangleCornerRadius: CGFloat = 10
     private let numberOfTimeslotsPerDay: Int = 3
     
     var body: some View {
         VStack() {
-            Text(timeslotDate.header)
-                .font(.titleFont)
-            Text(timeslotDate.date)
-                .font(.regularFont)
+            Text(timeslotDate.header).font(.titleFont)
+            Text(timeslotDate.date).font(.regularFont)
             ForEach((0...(numberOfTimeslotsPerDay-1)), id: \.self) { timeslotIndex in
                 if timeslotDate.timeslots.count-1 < timeslotIndex {
                     Text("-").frame(height: timeslotRowHeight)
@@ -51,7 +50,7 @@ struct EVYTimeslotColumn: View {
                 }
             }
         }
-        .frame(width: 70)
+        .frame(width: timeslotRowWidth)
     }
 }
 
@@ -62,17 +61,19 @@ struct EVYTimeslotPicker: View {
     
     var body: some View {
         let groupedDays = timeslotDates.chunked(with: 4)
-        
-        TabView(selection:$selectedGroupIndex) {
-            ForEach(groupedDays.indices, id: \.self) { index in
-                HStack {
-                    ForEach(groupedDays[index], id: \.date) { timeslotDate in
-                        EVYTimeslotColumn(timeslotDate: timeslotDate)
+
+        VStack {
+            TabView(selection:$selectedGroupIndex) {
+                    ForEach(groupedDays.indices, id: \.self) { index in
+                        HStack {
+                            ForEach(groupedDays[index], id: \.date) { timeslotDate in
+                                EVYTimeslotColumn(timeslotDate: timeslotDate)
+                            }
+                        }
                     }
-                }
             }
-        }
-        .overlay {
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            
             HStack {
                 ForEach(groupedDays.indices, id: \.self) { index in
                     Capsule()
@@ -80,11 +81,9 @@ struct EVYTimeslotPicker: View {
                         .frame(width: 35, height: 8)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            .frame(alignment: .bottom)
             .padding()
         }
-        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
 }
 
@@ -122,7 +121,8 @@ struct EVYTimeslotPicker: View {
                     "available": true
                 }
             ]
-        },{
+        },
+        {
             "header": "Fri",
             "date": "10 nov.",
             "timeslots": [
@@ -139,7 +139,8 @@ struct EVYTimeslotPicker: View {
                     "available": true
                 }
             ]
-        },{
+        },
+        {
             "header": "Sat",
             "date": "11 nov.",
             "timeslots": [
@@ -156,7 +157,62 @@ struct EVYTimeslotPicker: View {
                     "available": true
                 }
             ]
-        },{
+        },
+        {
+            "header": "Sun",
+            "date": "12 nov.",
+            "timeslots": [
+                {
+                    "timeslot": "10:30",
+                    "available": true
+                },
+                {
+                    "timeslot": "11:30",
+                    "available": true
+                },
+                {
+                    "timeslot": "12:00",
+                    "available": true
+                }
+            ]
+        },
+        {
+            "header": "Sun",
+            "date": "12 nov.",
+            "timeslots": [
+                {
+                    "timeslot": "10:30",
+                    "available": true
+                },
+                {
+                    "timeslot": "11:30",
+                    "available": true
+                },
+                {
+                    "timeslot": "12:00",
+                    "available": true
+                }
+            ]
+        },
+        {
+            "header": "Sun",
+            "date": "12 nov.",
+            "timeslots": [
+                {
+                    "timeslot": "10:30",
+                    "available": true
+                },
+                {
+                    "timeslot": "11:30",
+                    "available": true
+                },
+                {
+                    "timeslot": "12:00",
+                    "available": true
+                }
+            ]
+        },
+        {
             "header": "Sun",
             "date": "12 nov.",
             "timeslots": [

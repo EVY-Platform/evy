@@ -11,72 +11,195 @@ private struct JSONData: Decodable {
     let icon: String
     let subtitle: String
     let details: String
-//    let timeslots: [EVYTimeslot]
+    let dates_with_timeslots: [EVYTimeslotDate]
 }
 
 struct EVYTimeslotPickerRow: View {
-//    public static var JSONType = "TimeslotPicker"
-//    
-//    private let icon: String
-//    private let subtitle: String
-//    private let details: String
-//    private let timeslots: [EVYTimeslot]
-//    
-//    init(container: KeyedDecodingContainer<CodingKeys>) throws {
-//        let parsedData = try container.decode(JSONData.self, forKey:.content)
-//        self.icon = parsedData.icon
-//        self.subtitle = parsedData.subtitle
-//        self.details = parsedData.details
-//        self.timeslots = parsedData.timeslots
-//    }
-//    
+    public static var JSONType = "TimeslotPicker"
+    
+    private let icon: String
+    private let subtitle: String
+    private let details: String
+    private let datesWithTimeslots: [EVYTimeslotDate]
+    
+    init(container: KeyedDecodingContainer<CodingKeys>) throws {
+        let parsedData = try container.decode(JSONData.self, forKey:.content)
+        self.icon = parsedData.icon
+        self.subtitle = parsedData.subtitle
+        self.details = parsedData.details
+        self.datesWithTimeslots = parsedData.dates_with_timeslots
+    }
+
     var body: some View {
-//        VStack{
-//            HStack {
-//                Image(systemName: icon)
-//                    .font(.regularFont)
-//                Text(subtitle)
-//                    .font(.regularFont)
-//                    .frame(maxWidth: .infinity, alignment: .leading)
-//                Text(details)
-//                    .font(.detailFont)
-//                    .frame(alignment: .trailing)
-//            }
-//            .padding(.bottom, Constants.textHeadingLinePadding)
-//
-////            EVYTimeslotPicker(timeslots: timeslots)
-//        }
-//        .frame(height: 200)
-//        .padding()
-//        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-        Text("Hello")
+        VStack{
+            HStack {
+                Image(systemName: icon)
+                    .font(.regularFont)
+                Text(subtitle)
+                    .font(.regularFont)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(details)
+                    .font(.detailFont)
+                    .frame(alignment: .trailing)
+            }.padding(.top, 10)
+            EVYTimeslotPicker(timeslotDates: datesWithTimeslots)
+        }
+        .frame(height: 310)
     }
 }
 
-//#Preview {
-//    let json = """
-//    {
-//        "type": "TimeslotPicker",
-//        "content": {
-//            "icon": "truck.box.badge.clock",
-//            "subtitle": "Meet at the pickup address",
-//            "details": "+ $5.50",
-//            "timeslots": [
-//                {
-//                    "timeslot": 1700894934,
-//                    "available": true
-//                },
-//                {
-//                    "timeslot": 17008944234,
-//                    "available": false
-//                },
-//                {
-//                    "timeslot": 1800894934,
-//                    "available": true
-//                }
-//            ]
-//        }
-//    }
-//    """.data(using: .utf8)!
-//    return try! JSONDecoder().decode(EVYRow.self, from: json)
-//}
+#Preview {
+    let json = """
+    {
+        "type": "TimeslotPicker",
+        "content": {
+            "icon": "truck.box.badge.clock",
+            "subtitle": "Meet at the pickup address",
+            "details": "+ $5.50",
+            "dates_with_timeslots": [
+                {
+                    "header": "Wed",
+                    "date": "8 nov.",
+                    "timeslots": [
+                        {
+                            "timeslot": "11:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "12:00",
+                            "available": true
+                        }
+                    ]
+                },
+                {
+                    "header": "Thu",
+                    "date": "9 nov.",
+                    "timeslots": [
+                        {
+                            "timeslot": "10:30",
+                            "available": false
+                        },
+                        {
+                            "timeslot": "11:00",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "12:00",
+                            "available": true
+                        }
+                    ]
+                },
+                {
+                    "header": "Fri",
+                    "date": "10 nov.",
+                    "timeslots": [
+                        {
+                            "timeslot": "10:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "12:00",
+                            "available": false
+                        },
+                        {
+                            "timeslot": "12:30",
+                            "available": true
+                        }
+                    ]
+                },
+                {
+                    "header": "Sat",
+                    "date": "11 nov.",
+                    "timeslots": [
+                        {
+                            "timeslot": "11:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "12:00",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "13:00",
+                            "available": true
+                        }
+                    ]
+                },
+                {
+                    "header": "Sun",
+                    "date": "12 nov.",
+                    "timeslots": [
+                        {
+                            "timeslot": "10:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "11:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "12:00",
+                            "available": true
+                        }
+                    ]
+                },
+                {
+                    "header": "Sun",
+                    "date": "12 nov.",
+                    "timeslots": [
+                        {
+                            "timeslot": "10:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "11:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "12:00",
+                            "available": true
+                        }
+                    ]
+                },
+                {
+                    "header": "Sun",
+                    "date": "12 nov.",
+                    "timeslots": [
+                        {
+                            "timeslot": "10:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "11:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "12:00",
+                            "available": true
+                        }
+                    ]
+                },
+                {
+                    "header": "Sun",
+                    "date": "12 nov.",
+                    "timeslots": [
+                        {
+                            "timeslot": "10:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "11:30",
+                            "available": true
+                        },
+                        {
+                            "timeslot": "12:00",
+                            "available": true
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    """.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
+}
