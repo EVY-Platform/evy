@@ -32,6 +32,7 @@
 		73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */; };
 		73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAC12B272E0C00D4E82A /* EVYRow.swift */; };
 		73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D878E72B2ECD6900A1F9C2 /* chunked.swift */; };
+		73D878EC2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D878EB2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +60,7 @@
 		73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYZoomableContainer.swift; sourceTree = "<group>"; };
 		73CDCAC12B272E0C00D4E82A /* EVYRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRow.swift; sourceTree = "<group>"; };
 		73D878E72B2ECD6900A1F9C2 /* chunked.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = chunked.swift; sourceTree = "<group>"; };
+		73D878EB2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EVYSegmentedControlRow.swift; path = frodo/EVYSegmentedControlRow.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -159,6 +161,7 @@
 		73CDCABD2B271AD000D4E82A /* Rows */ = {
 			isa = PBXGroup;
 			children = (
+				73D878EB2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift */,
 				73CDCAB92B271ACC00D4E82A /* EVYCarouselRow.swift */,
 				73CDCABA2B271ACC00D4E82A /* EVYTitleRow.swift */,
 				73884AC12B2E897600BC8726 /* EVYTimeslotPickerRow.swift */,
@@ -256,6 +259,7 @@
 				737C6ACC2B270AD90093D00C /* EVYManager.swift in Sources */,
 				737C6AA62B2706890093D00C /* frodoApp.swift in Sources */,
 				73884AC22B2E897600BC8726 /* EVYTimeslotPickerRow.swift in Sources */,
+				73D878EC2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift in Sources */,
 				73CDCABC2B271ACC00D4E82A /* EVYTitleRow.swift in Sources */,
 				730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */,
 				73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */,
