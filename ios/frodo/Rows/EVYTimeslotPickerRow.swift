@@ -1,43 +1,55 @@
 //
-//  EVYApp.swift
-//  EVY
+//  EVYTimeslotPickerRow.swift
+//  frodo
 //
 //  Created by Geoffroy Lesage on 11/12/2023.
 //
 
 import SwiftUI
 
-@main
-struct frodoApp: App {
-    @State private var rows = try! JSONDecoder().decode([EVYRow].self, from: json)
+private struct JSONData: Decodable {
+    let icon: String
+    let subtitle: String
+    let details: String
+    let dates_with_timeslots: [EVYTimeslotDate]
+}
+
+struct EVYTimeslotPickerRow: View {
+    public static var JSONType = "TimeslotPicker"
     
-    var body: some Scene {
-        WindowGroup {
-            ContentView(rows: rows)
+    private let icon: String
+    private let subtitle: String
+    private let details: String
+    private let datesWithTimeslots: [EVYTimeslotDate]
+    
+    init(container: KeyedDecodingContainer<CodingKeys>) throws {
+        let parsedData = try container.decode(JSONData.self, forKey:.content)
+        self.icon = parsedData.icon
+        self.subtitle = parsedData.subtitle
+        self.details = parsedData.details
+        self.datesWithTimeslots = parsedData.dates_with_timeslots
+    }
+
+    var body: some View {
+        VStack{
+            HStack {
+                Image(systemName: icon)
+                    .font(.regularFont)
+                Text(subtitle)
+                    .font(.regularFont)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(details)
+                    .font(.detailFont)
+                    .frame(alignment: .trailing)
+            }.padding(.top, 10)
+            EVYTimeslotPicker(timeslotDates: datesWithTimeslots)
         }
+        .frame(height: 310)
     }
 }
 
-let json = """
-[
-    {
-        "type": "Carousel",
-        "content": {
-            "photo_ids": [
-                "printer_logo",
-                "printer"
-            ]
-        }
-    },
-    {
-        "type": "Title",
-        "content": {
-            "title": "Amazing Fridge",
-            "title_detail": "$250",
-            "subtitle_1": ":star_doc: 88% - 4 items sold",
-            "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
-        }
-    },
+#Preview {
+    let json = """
     {
         "type": "TimeslotPicker",
         "content": {
@@ -133,7 +145,7 @@ let json = """
                 },
                 {
                     "header": "Sun",
-                    "date": "13 nov.",
+                    "date": "12 nov.",
                     "timeslots": [
                         {
                             "timeslot": "10:30",
@@ -151,7 +163,7 @@ let json = """
                 },
                 {
                     "header": "Sun",
-                    "date": "14 nov.",
+                    "date": "12 nov.",
                     "timeslots": [
                         {
                             "timeslot": "10:30",
@@ -169,7 +181,7 @@ let json = """
                 },
                 {
                     "header": "Sun",
-                    "date": "15 nov.",
+                    "date": "12 nov.",
                     "timeslots": [
                         {
                             "timeslot": "10:30",
@@ -187,41 +199,7 @@ let json = """
                 }
             ]
         }
-    },
-    {
-        "type": "Text",
-        "content": {
-            "title": "Description",
-            "content": "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. ",
-            "maxLines": "2"
-        }
-    },
-    {
-        "type": "Detail",
-        "content": {
-            "logo": ":alert:",
-            "title": "Condition",
-            "subtitle": "Like new",
-            "detail": ""
-        }
-    },
-    {
-        "type": "Detail",
-        "content": {
-            "logo": ":paper:",
-            "title": "Selling reason",
-            "subtitle": "Moving out",
-            "detail": ""
-        }
-    },
-    {
-        "type": "Detail",
-        "content": {
-            "logo": ":ruler:",
-            "title": "Dimensions",
-            "subtitle": "250 (w) x 120 (h) x 250 (l)",
-            "detail": ""
-        }
     }
-]
-""".data(using: .utf8)!
+    """.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
+}

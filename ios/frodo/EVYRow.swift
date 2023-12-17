@@ -30,6 +30,9 @@ struct EVYRow: View, Decodable {
         case EVYTextRow.JSONType:
             self.content = try EVYTextRow(container: container)
             
+        case EVYTimeslotPickerRow.JSONType:
+            self.content = try EVYTimeslotPickerRow(container: container)
+            
         case EVYDetailRow.JSONType:
             self.content = try EVYDetailRow(container: container)
             
@@ -37,7 +40,7 @@ struct EVYRow: View, Decodable {
             self.content = try EVYDisclaimerRow(container: container)
             
         default:
-            fatalError("Unknown type of content.")
+            self.content = Text("Could not parse row")
         }
     }
     

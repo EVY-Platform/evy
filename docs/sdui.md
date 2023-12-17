@@ -41,12 +41,32 @@ See [types](./types.md) for custom types and definitions used below
         "icon": "icon",
         "subtitle": "string",
         "details": "string",
-        "timeslots": [
+        "dates_with_timeslots": [
             {
-                "timeslot": "number",
-                "available": "boolean",
+                "header": "Wed",
+                "date": "8 nov.",
+                "timeslots": [
+                    {
+                        "timeslot": "11:30",
+                        "available": true
+                    }
+                ]
             },
-        ],
+            {
+                "header": "Thu",
+                "date": "9 nov.",
+                "timeslots": [
+                    {
+                        "timeslot": "10:30",
+                        "available": false
+                    },
+                    {
+                        "timeslot": "11:00",
+                        "available": true
+                    }
+                ]
+            }
+        ]
     }
 }
 ```
@@ -70,7 +90,8 @@ See [types](./types.md) for custom types and definitions used below
     "type": "Text",
     "content": {
         "title": "string",
-        "content": "string"
+        "content": "string",
+        "maxLines": "string"
     }
 }
 ```

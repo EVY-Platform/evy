@@ -134,20 +134,32 @@
 							"icon": ":pickup:",
 							"subtitle": "Meet at the pickup address",
 							"details": "",
-							"timeslots": [
-								{
-									"timeslot": 1700894934,
-									"available": true
-								},
-								{
-									"timeslot": 17008944234,
-									"available": false
-								},
-								{
-									"timeslot": 1800894934,
-									"available": true
-								}
-							]
+							"dates_with_timeslots": [
+				                {
+				                    "header": "Wed",
+				                    "date": "8 nov.",
+				                    "timeslots": [
+				                        {
+				                            "timeslot": "11:30",
+				                            "available": true
+				                        }
+				                    ]
+				                },
+				                {
+				                    "header": "Thu",
+				                    "date": "9 nov.",
+				                    "timeslots": [
+				                        {
+				                            "timeslot": "10:30",
+				                            "available": false
+				                        },
+				                        {
+				                            "timeslot": "11:00",
+				                            "available": true
+				                        }
+				                    ]
+				                }
+				            ]
 						}
 					}]
 				},
@@ -159,20 +171,32 @@
 							"icon": ":car:",
 							"subtitle": "Delivered at your door",
 							"details": "+ $5.00",
-							"timeslots": [
-								{
-									"timeslot": 1700894934,
-									"available": true
-								},
-								{
-									"timeslot": 17008944234,
-									"available": false
-								},
-								{
-									"timeslot": 1800894934,
-									"available": true
-								}
-							]
+							"dates_with_timeslots": [
+				                {
+				                    "header": "Wed",
+				                    "date": "8 nov.",
+				                    "timeslots": [
+				                        {
+				                            "timeslot": "11:30",
+				                            "available": true
+				                        }
+				                    ]
+				                },
+				                {
+				                    "header": "Thu",
+				                    "date": "9 nov.",
+				                    "timeslots": [
+				                        {
+				                            "timeslot": "10:30",
+				                            "available": false
+				                        },
+				                        {
+				                            "timeslot": "11:00",
+				                            "available": true
+				                        }
+				                    ]
+				                }
+				            ]
 						}
 					}]
 				},
@@ -204,7 +228,8 @@
 		"content": {
 			"title": "Description",
 			"content":
-				"Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place."
+				"Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place.",
+			"maxLines": "2"
 		}
 	},
 	{
@@ -296,7 +321,7 @@
 				{
 					"title": "Pickup",
 					"enabled":
-						"{item.transfer_option.pickup.timeslots && item.transfer_option.pickup.timeslots.length > 0}",
+						"{item.transfer_option.pickup && item.transfer_option.pickup.dates_with_timeslots.length > 0}",
 					"hide_if_empty": "{true}",
 					"empty_message": "Option not available",
 					"child": {
@@ -305,14 +330,14 @@
 							"icon": ":pickup:",
 							"details": "",
 							"subtitle": "Meet at the pickup location",
-							"timeslots": "{item.transfer_option.pickup.timeslots}",
+							"timeslots": "{item.transfer_option.pickup.dates_with_timeslots}",
 						},
 					}
 				},
 				{
 					"title": "Deliver",
 					"enabled":
-						"{item.transfer_option.delivery && item.transfer_option.delivery.timeslots.length > 0}",
+						"{item.transfer_option.delivery && item.transfer_option.delivery.dates_with_timeslots.length > 0}",
 					"hide_if_empty": "{true}",
 					"empty_message": "Option not available",
 					"child": {
@@ -321,7 +346,7 @@
 							"icon": ":car:",
 							"details": "+ formatCurrency(item.transfer_option.delivery.fee)",
 							"subtitle": "Delivered at your door",
-							"timeslots": "{item.transfer_option.delivery.timeslots}",
+							"timeslots": "{item.transfer_option.delivery.dates_with_timeslots}",
 						},
 					}
 				},
@@ -357,7 +382,8 @@
 		"type": "Text",
 		"content": {
 			"title": "Description",
-			"content": "{item.description}"
+			"content": "{item.description}",
+			"maxLines": "2",
 		}
 	},
 	{
