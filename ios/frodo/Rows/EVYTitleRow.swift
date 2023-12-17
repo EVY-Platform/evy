@@ -1,6 +1,6 @@
 //
-//  FImageFullScreen.swift
-//  frodo
+//  EVYTitleRow.swift
+//  EVY
 //
 //  Created by Geoffroy Lesage on 11/12/2023.
 //
@@ -48,7 +48,6 @@ struct EVYTitleRow: View {
                 .foregroundStyle(.gray)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
-               
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding()
