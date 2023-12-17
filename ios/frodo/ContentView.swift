@@ -14,7 +14,6 @@ struct ContentView: View {
         List(rows.indices, id: \.self) { index in
             if index == 0 {
                 rows[index]
-                    .frame(height: 250)
                     .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
             } else {
                 rows[index]
