@@ -1,43 +1,49 @@
 //
-//  EVYApp.swift
-//  EVY
+//  EVYSegmentedControlRow.swift
+//  frodo
 //
 //  Created by Geoffroy Lesage on 11/12/2023.
 //
 
 import SwiftUI
 
-@main
-struct frodoApp: App {
-    @State private var rows = try! JSONDecoder().decode([EVYRow].self, from: json)
-    
-    var body: some Scene {
-        WindowGroup {
-            ContentView(rows: rows)
+struct Child: Decodable {
+    let title: String
+    let children: [EVYRow]
+}
+
+struct EVYSegmentedControlRow: View {
+    public static var JSONType = "SegmentedControl"
+    private struct JSONData: Decodable {
+        let children: [Child]
+    }
+
+    let children: [Child]
+    @State private var selection = 0
+
+    init(container: KeyedDecodingContainer<CodingKeys>) throws {
+        let parsedData = try container.decode(JSONData.self, forKey:.content)
+        self.children = parsedData.children
+    }
+
+    var body: some View {
+        VStack {
+            Picker("Choose", selection: $selection) {
+                ForEach(0..<children.count, id: \.self) { index in
+                    Text(children[index].title).tag(index)
+                }
+            }
+            .pickerStyle(.segmented)
+            
+            ForEach(children[selection].children.indices, id: \.self) { index in
+                children[selection].children[index]
+            }
         }
     }
 }
 
-let json = """
-[
-    {
-        "type": "Carousel",
-        "content": {
-            "photo_ids": [
-                "printer_logo",
-                "printer"
-            ]
-        }
-    },
-    {
-        "type": "Title",
-        "content": {
-            "title": "Amazing Fridge",
-            "title_detail": "$250",
-            "subtitle_1": ":star_doc: 88% - 4 items sold",
-            "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
-        }
-    },
+#Preview {
+    let json = """
     {
         "type": "SegmentedControl",
         "content": {
@@ -346,41 +352,7 @@ let json = """
                 }
             ]
         }
-    },
-    {
-        "type": "Text",
-        "content": {
-            "title": "Description",
-            "content": "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. ",
-            "maxLines": "2"
-        }
-    },
-    {
-        "type": "Detail",
-        "content": {
-            "logo": ":alert:",
-            "title": "Condition",
-            "subtitle": "Like new",
-            "detail": ""
-        }
-    },
-    {
-        "type": "Detail",
-        "content": {
-            "logo": ":paper:",
-            "title": "Selling reason",
-            "subtitle": "Moving out",
-            "detail": ""
-        }
-    },
-    {
-        "type": "Detail",
-        "content": {
-            "logo": ":ruler:",
-            "title": "Dimensions",
-            "subtitle": "250 (w) x 120 (h) x 250 (l)",
-            "detail": ""
-        }
     }
-]
-""".data(using: .utf8)!
+    """.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
+}
