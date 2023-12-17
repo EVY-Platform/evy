@@ -44,7 +44,7 @@ struct EVYTextRow: View {
                 .padding(.bottom, Constants.textLinePadding)
                 .lineLimit(expanded ? nil : maxLines)
             Text(moreLessText)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Constants.textButtonColor)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
