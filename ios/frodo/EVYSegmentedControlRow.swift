@@ -34,7 +34,7 @@ struct EVYSegmentedControlRow: View {
                 }
             }
             .pickerStyle(.segmented)
-            .padding()
+            
             ForEach(children[selection].children.indices, id: \.self) { index in
                 children[selection].children[index]
             }
