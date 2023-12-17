@@ -40,8 +40,35 @@ let json = """
         "content": {
             "title": "Description",
             "content":
-                "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place."
+                "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. "
         }
     },
+    {
+        "type": "Detail",
+        "content": {
+            "logo": ":alert:",
+            "title": "Condition",
+            "subtitle": "Like new",
+            "detail": ""
+        }
+    },
+    {
+        "type": "Detail",
+        "content": {
+            "logo": ":paper:",
+            "title": "Selling reason",
+            "subtitle": "Moving out",
+            "detail": ""
+        }
+    },
+    {
+        "type": "Detail",
+        "content": {
+            "logo": ":ruler:",
+            "title": "Dimensions",
+            "subtitle": "250 (w) x 120 (h) x 250 (l)",
+            "detail": ""
+        }
+    }
 ]
 """.data(using: .utf8)!
