@@ -21,7 +21,6 @@ struct EVYTextRow: View {
     private let maxLines: Int
     
     @State private var expanded: Bool = false
-    @State private var truncated: Bool = false
     
     init(container: KeyedDecodingContainer<CodingKeys>) throws {
         let parsedData = try container.decode(JSONData.self, forKey:.content)
@@ -30,13 +29,9 @@ struct EVYTextRow: View {
         self.maxLines = Int(parsedData.maxLines) ?? 2
     }
     private var moreLessText: String {
-        if !truncated {
-            return ""
-        } else {
-            return self.expanded ? "Read less" : "Read more"
-        }
+        return self.expanded ? "Read less" : "Read more"
     }
-        
+    
     var body: some View {
         VStack {
             Text(title)
@@ -52,19 +47,6 @@ struct EVYTextRow: View {
                 .foregroundStyle(.blue)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    Text(content).lineLimit(maxLines)
-                        .background(GeometryReader { visibleTextGeometry in
-                            Text(self.content)
-                                .background(GeometryReader { fullTextGeometry in
-                                    Color.clear.onAppear {
-                                        self.truncated = fullTextGeometry.size.height > visibleTextGeometry.size.height
-                                    }
-                                })
-                            .frame(height: .greatestFiniteMagnitude)
-                        })
-                        .hidden()
-                )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding()
@@ -76,15 +58,16 @@ struct EVYTextRow: View {
 }
 
 
+
 #Preview {
     let json = """
     {
         "type": "Text",
         "content": {
-            "maxLines": "2",
             "title": "Description",
             "content":
-                "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place. "
+                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
+            "maxLines": "2"
         }
     }
     """.data(using: .utf8)!
