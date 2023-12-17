@@ -20,8 +20,10 @@ struct Constants {
     static let textLinePaddingMin: CGFloat = 1
     static let textHeadingLinePadding: CGFloat = 16
     static let buttonCornerPadding: CGFloat = 16
-    
+    static let mainCornerRadius: CGFloat = 10
+
     static let buttonColor: Color = Color(#colorLiteral(red: 0.4745, green: 0.898, blue: 0.9569, alpha: 1))
     static let buttonDisabledColor: Color = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
     static let textButtonColor: Color = .blue
+    static let inactiveBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
 }
