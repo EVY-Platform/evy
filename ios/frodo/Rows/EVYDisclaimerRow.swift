@@ -34,7 +34,7 @@ struct EVYDisclaimerRow: View {
                     .padding(.bottom, Constants.textLinePadding)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 HStack{
-                    Text(icon)
+                    Image(systemName: icon)
                     Text(subtitle)
                         .foregroundStyle(.gray)
                         .font(.regularFont)
@@ -54,7 +54,7 @@ struct EVYDisclaimerRow: View {
     {
         "type": "Disclaimer",
         "content": {
-            "icon": ":lock:",
+            "icon": "lock",
             "title": "EVY Protection",
             "subtitle": "Your money will be held until Australia Post confirms delivery"
         }
