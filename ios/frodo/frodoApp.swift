@@ -47,7 +47,7 @@ let json = """
                     "children": [{
                         "type": "TimeslotPicker",
                         "content": {
-                            "icon": "truck.box.badge.clock",
+                            "icon": "pickup",
                             "subtitle": "Meet at the pickup address",
                             "details": "+ $5.50",
                             "dates_with_timeslots": [
@@ -200,7 +200,7 @@ let json = """
                     "children": [{
                         "type": "TimeslotPicker",
                         "content": {
-                            "icon": "truck.box.badge.clock",
+                            "icon": "delivery",
                             "subtitle": "Delivered at your door",
                             "details": "+ $10",
                             "dates_with_timeslots": [
@@ -358,7 +358,7 @@ let json = """
     {
         "type": "Detail",
         "content": {
-            "logo": ":alert:",
+            "icon": "condition",
             "title": "Condition",
             "subtitle": "Like new",
             "detail": ""
@@ -367,7 +367,7 @@ let json = """
     {
         "type": "Detail",
         "content": {
-            "logo": ":paper:",
+            "icon": "reason",
             "title": "Selling reason",
             "subtitle": "Moving out",
             "detail": ""
@@ -376,7 +376,7 @@ let json = """
     {
         "type": "Detail",
         "content": {
-            "logo": ":ruler:",
+            "icon": "dimensions",
             "title": "Dimensions",
             "subtitle": "250 (w) x 120 (h) x 250 (l)",
             "detail": ""

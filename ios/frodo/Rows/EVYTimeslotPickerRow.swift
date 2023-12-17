@@ -33,8 +33,12 @@ struct EVYTimeslotPickerRow: View {
     var body: some View {
         VStack{
             HStack {
-                Image(systemName: icon)
-                    .font(.regularFont)
+                Image(icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: Constants.regularIconSize)
+                    .padding(.leading, .zero)
+                    .padding(.trailing, Constants.minorPadding)
                 Text(subtitle)
                     .font(.regularFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -47,7 +51,7 @@ struct EVYTimeslotPickerRow: View {
 
             EVYTimeslotPicker(timeslotDates: datesWithTimeslots)
         }
-        .frame(height: 250)
+        .frame(height: 280)
     }
 }
 
@@ -56,7 +60,7 @@ struct EVYTimeslotPickerRow: View {
     {
         "type": "TimeslotPicker",
         "content": {
-            "icon": "truck.box.badge.clock",
+            "icon": "pickup",
             "subtitle": "Meet at the pickup address",
             "details": "+ $5.50",
             "dates_with_timeslots": [

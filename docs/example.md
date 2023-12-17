@@ -80,7 +80,7 @@
 			"transfer_provider": {
 				// This is usually fetched from API
 				"name": "Australia Post",
-				"logo": "image_id",
+				"logo": "_image_id_",
 				"eta": "2-5 days once deposited",
 				"fee": 25.0
 			}
@@ -131,7 +131,7 @@
 					"children": [{
 						"type": "TimeslotPicker",
 						"content": {
-							"icon": ":pickup:",
+							"icon": "_image_id_",
 							"subtitle": "Meet at the pickup address",
 							"details": "",
 							"dates_with_timeslots": [
@@ -168,7 +168,7 @@
 					"children": [{
 						"type": "TimeslotPicker",
 						"content": {
-							"icon": ":car:",
+							"icon": "_image_id_",
 							"subtitle": "Delivered at your door",
 							"details": "+ $5.00",
 							"dates_with_timeslots": [
@@ -206,7 +206,7 @@
 						"type": "Detail",
 						"content": {
 							"title": "Australia Post",
-							"logo": "image_id",
+							"icon": "_image_id_",
 							"subtitle": "2-5 days once deposited",
 							"details": "$25.00"
 						}
@@ -214,7 +214,7 @@
 					{
 						"type": "Disclaimer",
 						"content": {
-							"icon": ":lock:",
+							"icon": "_image_id_",
 							"title": "EVY Protection",
 							"subtitle": "Your money will be held until Australia Post confirms delivery"
 						}
@@ -277,12 +277,12 @@
 			"title": "Payment methods accepted",
 			"options": [
 				{
-					"icon": ":visa:",
+					"icon": "_image_id_",
 					"label": "Card",
 					"disclaimer": ":lock: Benefit from EVY buyer protection"
 				},
 				{
-					"icon": ":dollar:",
+					"icon": "_image_id_",
 					"label": "Cash",
 					"disclaimer": ""
 				}
@@ -327,7 +327,7 @@
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
-							"icon": ":pickup:",
+							"icon": "_image_id_",
 							"details": "",
 							"subtitle": "Meet at the pickup location",
 							"timeslots": "{item.transfer_option.pickup.dates_with_timeslots}",
@@ -343,7 +343,7 @@
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
-							"icon": ":car:",
+							"icon": "_image_id_",
 							"details": "+ formatCurrency(item.transfer_option.delivery.fee)",
 							"subtitle": "Delivered at your door",
 							"timeslots": "{item.transfer_option.delivery.dates_with_timeslots}",
@@ -369,7 +369,7 @@
 					{
 						"type": "Disclaimer",
 						"content": {
-							"icon": ":lock:",
+							"icon": "_image_id_",
 							"title": "EVY Protection",
 							"subtitle": "Your money will be held until {transfer_provider.name} confirms delivery"
 						}
@@ -430,19 +430,19 @@
 			"title": "Payment methods accepted",
 			"options": [
 				{
-					"icon": ":visa:",
+					"icon": "_image_id_",
 					"label": "Card",
 					"details": ":lock: Benefit from EVY buyer protection",
 					enabled: "{item.payment_methods.find('card')}"
 				},
 				{
-					"icon": ":bank:",
+					"icon": "_image_id_",
 					"label": "Bank",
 					"details": ":lock: Benefit from EVY buyer protection",
 					"enabled": "{item.payment_methods.find('bank')}"
 				},
 				{
-					"icon": ":dollar:",
+					"icon": "_image_id_",
 					"label": "Cash",
 					"enabled": "{item.payment_methods.find('cash')}"
 				}

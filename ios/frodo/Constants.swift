@@ -19,10 +19,17 @@ extension Font {
 struct Constants {
     static let textLinePadding: CGFloat = 4
     static let textLinePaddingMin: CGFloat = 1
+    
     static let majorPadding: CGFloat = 16
+    static let minorPadding: CGFloat = 8
+    
     static let columnPadding: CGFloat = 4
     
     static let mainCornerRadius: CGFloat = 10
+    
+    static let bigIconSize: CGFloat = 50
+    static let regularIconSize: CGFloat = 30
+    static let smallIconSize: CGFloat = 20
 
     static let buttonColor: Color = Color(#colorLiteral(red: 0.4745, green: 0.898, blue: 0.9569, alpha: 1))
     static let buttonDisabledColor: Color = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))

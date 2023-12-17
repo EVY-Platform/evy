@@ -11,27 +11,30 @@ struct EVYDetailRow: View {
     public static var JSONType = "Detail"
     private struct JSONData: Decodable {
         let title: String
-        let logo: String
+        let icon: String
         let subtitle: String
         let detail: String
     }
     
     private let title: String
-    private let logo: String
+    private let icon: String
     private let subtitle: String
     private let detail: String
     
     init(container: KeyedDecodingContainer<CodingKeys>) throws {
         let parsedData = try container.decode(JSONData.self, forKey:.content)
         self.title = parsedData.title
-        self.logo = parsedData.logo
+        self.icon = parsedData.icon
         self.subtitle = parsedData.subtitle
         self.detail = parsedData.detail
     }
     
     var body: some View {
         HStack{
-            Text(logo)
+            Image(icon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: Constants.smallIconSize)
                 .padding()
             VStack{
                 HStack {
@@ -48,10 +51,10 @@ struct EVYDetailRow: View {
                     .font(.regularFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+        .padding()
     }
 }
 
@@ -61,7 +64,7 @@ struct EVYDetailRow: View {
     {
         "type": "Detail",
         "content": {
-            "logo": ":alert:",
+            "icon": "condition",
             "title": "Condition",
             "subtitle": "Like new",
             "detail": ""

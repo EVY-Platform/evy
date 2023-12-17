@@ -34,7 +34,12 @@ struct EVYDisclaimerRow: View {
                     .padding(.bottom, Constants.textLinePadding)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 HStack{
-                    Image(systemName: icon)
+                    Image(icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: Constants.smallIconSize)
+                        .padding(.leading, .zero)
+                        .padding(.trailing, Constants.minorPadding)
                     Text(subtitle)
                         .foregroundStyle(.gray)
                         .font(.regularFont)

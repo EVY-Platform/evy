@@ -38,7 +38,7 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "TimeslotPicker",
     "content": {
-        "icon": "icon",
+        "icon": "string",
         "subtitle": "string",
         "details": "string",
         "dates_with_timeslots": [
@@ -101,7 +101,7 @@ See [types](./types.md) for custom types and definitions used below
     "type": "Detail",
     "content": {
         "title": "string",
-        "logo": "image",
+        "icon": "string",
         "subtitle": "string",
         "detail": "string"
     }
@@ -112,7 +112,7 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "Disclaimer",
     "content": {
-        "icon": "icon",
+        "icon": "string",
         "title": "string",
         "subtitle": "string"
     }
@@ -138,7 +138,7 @@ See [types](./types.md) for custom types and definitions used below
         "title": "string",
         "options": [
             {
-                "icon": "icon",
+                "icon": "string",
                 "label": "string",
             },
         ],
