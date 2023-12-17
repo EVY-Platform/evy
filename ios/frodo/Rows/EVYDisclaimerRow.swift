@@ -38,13 +38,11 @@ struct EVYDisclaimerRow: View {
                     Text(subtitle)
                         .foregroundStyle(.gray)
                         .font(.regularFont)
-                    //                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .frame(maxHeight: .none)
-            .padding(9)
-            .background(Constants.disclaimerBackground)
-            .cornerRadius(10)
+            .padding()
+            .background(Constants.inactiveBackground)
+            .cornerRadius(Constants.mainCornerRadius)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding()

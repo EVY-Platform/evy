@@ -20,7 +20,7 @@ struct Constants {
     static let textLinePaddingMin: CGFloat = 1
     static let textHeadingLinePadding: CGFloat = 16
     static let buttonCornerPadding: CGFloat = 16
-    
-    static let disclaimerBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
+    static let mainCornerRadius: CGFloat = 10
 
+    static let inactiveBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
 }
