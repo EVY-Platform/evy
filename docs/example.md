@@ -80,7 +80,7 @@
 			"transfer_provider": {
 				// This is usually fetched from API
 				"name": "Australia Post",
-				"logo": "image_id",
+				"icon": "_image_id_",
 				"eta": "2-5 days once deposited",
 				"fee": 25.0
 			}
@@ -118,7 +118,7 @@
 		"content": {
 			"title": "Amazing Fridge",
 			"title_detail": "$250",
-			"subtitle_1": ":star_doc: 88% - 4 items sold",
+			"subtitle_1": "::star_doc:: 88% - 4 items sold",
 			"subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
 		}
 	},
@@ -131,7 +131,7 @@
 					"children": [{
 						"type": "TimeslotPicker",
 						"content": {
-							"icon": ":pickup:",
+							"icon": "_image_id_",
 							"subtitle": "Meet at the pickup address",
 							"details": "",
 							"dates_with_timeslots": [
@@ -168,7 +168,7 @@
 					"children": [{
 						"type": "TimeslotPicker",
 						"content": {
-							"icon": ":car:",
+							"icon": "_image_id_",
 							"subtitle": "Delivered at your door",
 							"details": "+ $5.00",
 							"dates_with_timeslots": [
@@ -206,7 +206,7 @@
 						"type": "Detail",
 						"content": {
 							"title": "Australia Post",
-							"logo": "image_id",
+							"icon": "_image_id_",
 							"subtitle": "2-5 days once deposited",
 							"details": "$25.00"
 						}
@@ -214,7 +214,7 @@
 					{
 						"type": "Disclaimer",
 						"content": {
-							"icon": ":lock:",
+							"icon": "_image_id_",
 							"title": "EVY Protection",
 							"subtitle": "Your money will be held until Australia Post confirms delivery"
 						}
@@ -235,7 +235,7 @@
 	{
 		"type": "Detail",
 		"content": {
-			"logo": ":paper:",
+			"icon": "_image_id_",
 			"title": "Selling reason",
 			"subtitle": "Moving out",
 			"detail": ""
@@ -244,7 +244,7 @@
 	{
 		"type": "Detail",
 		"content": {
-			"logo": ":ruler:",
+			"icon": "_image_id_",
 			"title": "Dimensions",
 			"subtitle": "250 (w) x 120 (h) x 250 (l)",
 			"detail": ""
@@ -253,7 +253,7 @@
 	{
 		"type": "Detail",
 		"content": {
-			"logo": ":alert:",
+			"icon": "_image_id_",
 			"title": "Condition",
 			"subtitle": "Like new",
 			"detail": ""
@@ -277,14 +277,13 @@
 			"title": "Payment methods accepted",
 			"options": [
 				{
-					"icon": ":visa:",
+					"icon": "_image_id_",
 					"label": "Card",
-					"disclaimer": ":lock: Benefit from EVY buyer protection"
+					"disclaimer": ":lock Benefit from EVY buyer protection"
 				},
 				{
-					"icon": ":dollar:",
-					"label": "Cash",
-					"disclaimer": ""
+					"icon": "_image_id_",
+					"label": "Cash"
 				}
 			]
 		}
@@ -309,7 +308,7 @@
 			"title": "{item.title}",
 			"title_detail": "{formatCurrency(item.price)}",
 			"subtitle_1":
-				":star_doc:{item.seller.fidelity_rating}% - {item.seller.items_sold} items sold",
+				"::star_doc::{item.seller.fidelity_rating}% - {item.seller.items_sold} items sold",
 			"subtitle_2":
 				"{item.address.city}, {item.address.state} -  Posted on {formatTimestamp(item.created_timestamp, 'MM DD')}"
 		}
@@ -327,7 +326,7 @@
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
-							"icon": ":pickup:",
+							"icon": "_image_id_",
 							"details": "",
 							"subtitle": "Meet at the pickup location",
 							"timeslots": "{item.transfer_option.pickup.dates_with_timeslots}",
@@ -343,7 +342,7 @@
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
-							"icon": ":car:",
+							"icon": "_image_id_",
 							"details": "+ formatCurrency(item.transfer_option.delivery.fee)",
 							"subtitle": "Delivered at your door",
 							"timeslots": "{item.transfer_option.delivery.dates_with_timeslots}",
@@ -360,7 +359,7 @@
 						"content": {
 							// This is usually fetched from API
 							"title": "{transfer_provider.name}",
-							"logo": "{transfer_provider.logo}",
+							"icon": "{transfer_provider.logo}",
 							"subtitle": "{transfer_provider.eta}",
 							"details":
 								"{formatCurrency(item.transfer_option.ship.fee + transfer_provider.fee)}"
@@ -369,7 +368,7 @@
 					{
 						"type": "Disclaimer",
 						"content": {
-							"icon": ":lock:",
+							"icon": "_image_id_",
 							"title": "EVY Protection",
 							"subtitle": "Your money will be held until {transfer_provider.name} confirms delivery"
 						}
@@ -389,7 +388,7 @@
 	{
 		"type": "Detail",
 		"content": {
-			"logo": ":alert:",
+			"icon": "_image_id_",
 			"title": "Condition",
 			"subtitle": "{item.condition}",
 			"detail": ""	
@@ -398,7 +397,7 @@
 	{
 		"type": "Detail",
 		"content": {
-			"logo": ":paper:",
+			"icon": "_image_id_",
 			"title": "Selling reason",
 			"subtitle": "{item.selling_reason}",
 			"detail": ""
@@ -407,7 +406,7 @@
 	{
 		"type": "Detail",
 		"content": {
-			"logo": ":ruler:",
+			"icon": "_image_id_",
 			"title": "Dimensions",
 			"subtitle":
 				"{item.dimension.width} (w) x {item.dimension.height} (h) x {item.dimension.length} (l)",
@@ -430,19 +429,19 @@
 			"title": "Payment methods accepted",
 			"options": [
 				{
-					"icon": ":visa:",
+					"icon": "_image_id_",
 					"label": "Card",
-					"details": ":lock: Benefit from EVY buyer protection",
+					"disclaimer": "::lock:: Benefit from EVY buyer protection",
 					enabled: "{item.payment_methods.find('card')}"
 				},
 				{
-					"icon": ":bank:",
+					"icon": "_image_id_",
 					"label": "Bank",
-					"details": ":lock: Benefit from EVY buyer protection",
+					"disclaimer": "::lock:: Benefit from EVY buyer protection",
 					"enabled": "{item.payment_methods.find('bank')}"
 				},
 				{
-					"icon": ":dollar:",
+					"icon": "_image_id_",
 					"label": "Cash",
 					"enabled": "{item.payment_methods.find('cash')}"
 				}

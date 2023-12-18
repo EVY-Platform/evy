@@ -38,31 +38,17 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "TimeslotPicker",
     "content": {
-        "icon": "icon",
+        "icon": "string",
         "subtitle": "string",
         "details": "string",
         "dates_with_timeslots": [
             {
-                "header": "Wed",
-                "date": "8 nov.",
+                "header": "string",
+                "date": "string",
                 "timeslots": [
                     {
-                        "timeslot": "11:30",
-                        "available": true
-                    }
-                ]
-            },
-            {
-                "header": "Thu",
-                "date": "9 nov.",
-                "timeslots": [
-                    {
-                        "timeslot": "10:30",
-                        "available": false
-                    },
-                    {
-                        "timeslot": "11:00",
-                        "available": true
+                        "timeslot": "string",
+                        "available": "boolean"
                     }
                 ]
             }
@@ -91,7 +77,7 @@ See [types](./types.md) for custom types and definitions used below
     "content": {
         "title": "string",
         "content": "string",
-        "maxLines": "string"
+        "maxLines": "number"
     }
 }
 ```
@@ -101,7 +87,7 @@ See [types](./types.md) for custom types and definitions used below
     "type": "Detail",
     "content": {
         "title": "string",
-        "logo": "image",
+        "icon": "string",
         "subtitle": "string",
         "detail": "string"
     }
@@ -112,7 +98,7 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "Disclaimer",
     "content": {
-        "icon": "icon",
+        "icon": "string",
         "title": "string",
         "subtitle": "string"
     }
@@ -138,7 +124,7 @@ See [types](./types.md) for custom types and definitions used below
         "title": "string",
         "options": [
             {
-                "icon": "icon",
+                "icon": "string",
                 "label": "string",
             },
         ],

@@ -53,7 +53,7 @@ struct EVYSegmentedControlRow: View {
                     "children": [{
                         "type": "TimeslotPicker",
                         "content": {
-                            "icon": "truck.box.badge.clock",
+                            "icon": "pickup",
                             "subtitle": "Meet at the pickup address",
                             "details": "+ $5.50",
                             "dates_with_timeslots": [
@@ -206,7 +206,7 @@ struct EVYSegmentedControlRow: View {
                     "children": [{
                         "type": "TimeslotPicker",
                         "content": {
-                            "icon": "truck.box.badge.clock",
+                            "icon": "delivery",
                             "subtitle": "Delivered at your door",
                             "details": "+ $10",
                             "dates_with_timeslots": [
