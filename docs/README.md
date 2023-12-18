@@ -9,5 +9,5 @@ The following docs are available:
 
 All strings can include:
 -   **variables** surrounded with curley braces: "Hello {name}, how are you?"
--   **icons** when surrounded with double colons: "EVY ::evy_icon:: is the best!"
--   **emojis** when prefixed with a colon: "I like :dog a lot"
+-   **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
+-   **emojis** prefixed with a colon: "I like :dog a lot"
