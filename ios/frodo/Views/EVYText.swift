@@ -30,16 +30,15 @@ struct EVYText: View {
     private var views: [EVYTextContent] = []
     
     init(_ input: String) {
-        let separator = "::"
-        let splitInput = input.components(separatedBy:  separator)
-            .flatMap { [$0, separator] }
+        let splitInput = input.components(separatedBy:  Constants.iconSeparator)
+            .flatMap { [$0, Constants.iconSeparator] }
             .dropLast()
             .filter { $0 != "" }
         
         if (splitInput.count > 1) {
             var iconSeparator: Bool = false
             for index in 0...splitInput.count-1 {
-                if (splitInput[index] == separator) {
+                if (splitInput[index] == Constants.iconSeparator) {
                     iconSeparator = !iconSeparator
                 } else {
                     let stringInput = String(splitInput[index])
