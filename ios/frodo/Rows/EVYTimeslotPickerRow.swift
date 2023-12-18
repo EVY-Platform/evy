@@ -39,10 +39,10 @@ struct EVYTimeslotPickerRow: View {
                     .frame(width: Constants.regularIconSize)
                     .padding(.leading, .zero)
                     .padding(.trailing, Constants.minorPadding)
-                Text(subtitle)
+                EVYText(subtitle)
                     .font(.regularFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(details)
+                EVYText(details)
                     .font(.detailFont)
                     .frame(alignment: .trailing)
             }

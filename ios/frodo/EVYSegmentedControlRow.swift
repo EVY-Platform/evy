@@ -30,7 +30,7 @@ struct EVYSegmentedControlRow: View {
         VStack {
             Picker("Choose", selection: $selection) {
                 ForEach(0..<children.count, id: \.self) { index in
-                    Text(children[index].title).tag(index)
+                    EVYText(children[index].title).tag(index)
                 }
             }
             .pickerStyle(.segmented)

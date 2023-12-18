@@ -29,7 +29,7 @@ struct EVYDisclaimerRow: View {
     var body: some View {
         VStack{
             VStack{
-                Text(title)
+                EVYText(title)
                     .font(.detailFont)
                     .padding(.bottom, Constants.textLinePadding)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -40,7 +40,7 @@ struct EVYDisclaimerRow: View {
                         .frame(width: Constants.smallIconSize)
                         .padding(.leading, .zero)
                         .padding(.trailing, Constants.minorPadding)
-                    Text(subtitle)
+                    EVYText(subtitle)
                         .foregroundStyle(.gray)
                         .font(.regularFont)
                 }
