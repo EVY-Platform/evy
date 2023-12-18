@@ -23,7 +23,7 @@ let json = """
     {
         "type": "Carousel",
         "content": {
-            "photo_ids": [
+            "image_ids": [
                 "printer_logo",
                 "printer"
             ]

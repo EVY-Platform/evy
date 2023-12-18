@@ -10,7 +10,7 @@ import SwiftUI
 struct EVYCarouselRow: View {
     public static var JSONType = "Carousel"
     private struct JSONData: Decodable {
-        let photo_ids: [String]
+        let image_ids: [String]
     }
     
     private let imageNames: [String]
@@ -20,7 +20,7 @@ struct EVYCarouselRow: View {
     
     init(container: KeyedDecodingContainer<CodingKeys>) throws {
         let parsedData = try container.decode(JSONData.self, forKey:.content)
-        self.imageNames = parsedData.photo_ids
+        self.imageNames = parsedData.image_ids
     }
     
     var body: some View {
@@ -56,7 +56,7 @@ struct EVYCarouselRow: View {
     {
         "type": "Carousel",
         "content": {
-            "photo_ids": ["printer_logo", "printer"]
+            "image_ids": ["printer_logo", "printer"]
         }
     }
     """.data(using: .utf8)!

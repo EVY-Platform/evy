@@ -4,9 +4,9 @@
 
 ```
 {
-	"item_id": x,
-	"timeslot": 1700894934,
-	"buyer_id": a
+	"item_id": "x",
+	"timeslot": "1700894934",
+	"buyer_id": "a"
 }
 ```
 
@@ -16,25 +16,16 @@
 {
 	"id": "a9e9feba-d1ba-4f78-ab3c-3ce7cc108989",
 	"title": "Amazing Fridge",
-	"photos": [
-        {
-            "id": "04b34671-4eeb-4f1c-8435-5e029a0e455c"
-        },
-        {
-            "id": "97a953eb-0206-4560-8716-d58c8cd94a62"
-        },
-        {
-            "id": "d7b2efd7-3be6-49b7-9dad-0569c3ad4572"
-        }
+	"photo_ids": [
+		"04b34671-4eeb-4f1c-8435-5e029a0e455c",
+		"97a953eb-0206-4560-8716-d58c8cd94a62",
+		"d7b2efd7-3be6-49b7-9dad-0569c3ad4572"
     ],
 	"price": {
 		"currency": "AUD",
 		"value": 250
 	},
-	"seller": {
-		"fidelity_rate": 0.88,
-		"items_sold": 4
-	},
+	"seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
 	"address": {
 		"street": "x",
 		"city": "Rosebery",
@@ -46,43 +37,52 @@
 			"longitude": -3.424233
 		}
 	},
-	"created_timestamp": 1701471377,
+	"created_timestamp": "1701471377",
 	"transfer_option": {
 		"pickup": {
 			"timeslots": [
 				{
-					"timeslot": 1700894934
+					"timeslot": "1700894934"
 				},
 				{
-					"timeslot": 17008944234
+					"timeslot": "17008944234"
 				},
 				{
-					"timeslot": 1800894934
+					"timeslot": "1800894934"
 				}
 			]
 		},
 		"delivery": {
-			"fee": 50.0,
+			"fee": {
+				"currency": "AUD",
+				"value": 5.00
+			},
 			"timeslots": [
 				{
-					"timeslot": 1700894934
+					"timeslot": "1700894934"
 				},
 				{
-					"timeslot": 17008944234
+					"timeslot": "17008944234"
 				},
 				{
-					"timeslot": 1800894934
+					"timeslot": "1800894934"
 				}
 			]
 		},
 		"ship": {
-			"fee": 5.0,
+			"fee": {
+				"currency": "AUD",
+				"value": 10.00
+			},
 			"transfer_provider": {
 				// This is usually fetched from API
 				"name": "Australia Post",
-				"icon": "_image_id_",
+				"logo_id": "_image_id_",
 				"eta": "2-5 days once deposited",
-				"fee": 25.0
+				"cost": {
+					"currency": "AUD",
+					"value": 15.00
+				},
 			}
 		}
 	},
@@ -95,11 +95,14 @@
 		"height": 1600,
 		"length": 600
 	},
-	"tags": {
-		"id": "ta",
-		"id": "tb"
-	},
-	"payment_methods": ["card", "cash"]
+	"tag_ids": [
+		"04b34671-4eeb-4f1c-8435-5e029a0e455c",
+		"04b34671-4eeb-4f1c-8435-5e029a0e455c"
+	],
+	"payment_method_ids": [
+		"04b34671-4eeb-4f1c-8435-5e029a0e455c",
+		"04b34671-4eeb-4f1c-8435-5e029a0e455c"
+	]
 }
 ```
 
@@ -110,7 +113,7 @@
 	{
 		"type": "Carousel",
 		"content": {
-			"photo_ids": ["b", "a", "c"]
+			"image_ids": ["_image_id_", "_image_id_"],
 		}
 	},
 	{
@@ -299,7 +302,7 @@
 	{
 		"type": "Carousel",
 		"content": {
-			"photo_ids": "{item.photos[].id}"
+			"image_ids": "{item.photo_ids}"
 		}
 	},
 	{
@@ -321,8 +324,6 @@
 					"title": "Pickup",
 					"enabled":
 						"{item.transfer_option.pickup && item.transfer_option.pickup.dates_with_timeslots.length > 0}",
-					"hide_if_empty": "{true}",
-					"empty_message": "Option not available",
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
@@ -337,8 +338,6 @@
 					"title": "Deliver",
 					"enabled":
 						"{item.transfer_option.delivery && item.transfer_option.delivery.dates_with_timeslots.length > 0}",
-					"hide_if_empty": "{true}",
-					"empty_message": "Option not available",
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
@@ -352,14 +351,12 @@
 				{
 					"title": "Ship",
 					"enabled": "{item.transfer_option.ship.transfer_provider}",
-					"hide_if_empty": "{true}",
-					"empty_message": "Option not available",
 					"children": [{
 						"type": "Detail",
 						"content": {
 							// This is usually fetched from API
 							"title": "{transfer_provider.name}",
-							"icon": "{transfer_provider.logo}",
+							"icon": "{transfer_provider.logo_id}",
 							"subtitle": "{transfer_provider.eta}",
 							"details":
 								"{formatCurrency(item.transfer_option.ship.fee + transfer_provider.fee)}"

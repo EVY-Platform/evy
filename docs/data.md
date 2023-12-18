@@ -28,7 +28,7 @@ Base model that all data models inherit from:
 {
     "name": "string",
     "description": "string",
-    "logo": "image",
+    "logo_id": "uuid",
     "url": "string",
     "support_email": "string"
 }
@@ -51,7 +51,7 @@ Base model that all data models inherit from:
     "organisation_id": "organisation.id",
     "name": "string",
     "description": "string",
-    "logo": "image",
+    "logo_id": "uuid",
     "url": "string",
 }
 ```
@@ -59,11 +59,9 @@ Base model that all data models inherit from:
 ## Marketplace
 
 #### timeslot
-
 ```
 {
-    "timeslot": "timestamp",
-    "available": "boolean"
+    "timeslot": "string"
 }
 ```
 
@@ -89,14 +87,6 @@ Base model that all data models inherit from:
 }
 ```
 
-#### image
-
-```
-{
-    // Just base model
-}
-```
-
 #### price
 
 ```
@@ -110,8 +100,8 @@ Base model that all data models inherit from:
 
 ```
 {
-    "reliability_rate": "number",
-    "items_sold": "number"
+    "reliability_rate": "float",
+    "items_sold": "int"
 }
 ```
 
@@ -120,7 +110,7 @@ Base model that all data models inherit from:
 ```
 {
     "name": "string",
-    "logo": "image",
+    "logo_id": "uuid",
     "eta": "string",
     "fee": "price"
 }
@@ -138,8 +128,8 @@ Base model that all data models inherit from:
         "timeslots": "timeslot[]"
     },
     "ship": {
-        "fee": "price",
-        "transfer_provider": "transfer_provider"
+        "cost": "price",
+        "transfer_provider_id": "uuid"
     }
 }
 ```
@@ -152,25 +142,31 @@ Base model that all data models inherit from:
 }
 ```
 
+#### dimension
+
+```
+{
+    "width": "int",
+    "height": "int",
+    "length": "int",
+}
+```
+
 #### item
 
 ```
 {
     "title": "string",
-    "photos": "image[]",
+    "photo_ids": "uuid[]",
     "price": "price",
-    "seller": "seller",
+    "seller_id": "uuid",
     "address": "address",
-    "transfer_option": "transfer_option[]",
+    "transfer_options": "transfer_option[]",
     "description": "string",
     "condition": "string",
     "selling_reason": "string",
-    "dimension": {
-        "width": "number",
-        "height": "number",
-        "length": "number",
-    },
-    "tags": "tag[]",
-    "payment_methods": "payment_method[]"
+    "dimension": "dimension",
+    "tag_ids": "uuid[]",
+    "payment_method_ids": "uuid[]"
 }
 ```

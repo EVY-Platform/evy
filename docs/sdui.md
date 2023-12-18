@@ -2,6 +2,10 @@
 
 See [types](./types.md) for custom types and definitions used below
 
+### Missing or empty values
+- Empty strings will be displayed as empty strings (they will NOT be ignored, but will essentially not be visible to the user)
+- Missing keys will not be allowed (all keys/properties of a row are required)
+
 ### Base schema template:
 
 ```
@@ -17,7 +21,7 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "Carousel",
     "content": {
-        "photo_ids": "string[]"
+        "image_ids": "string[]"
     }
 }
 ```
