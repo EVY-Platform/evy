@@ -383,6 +383,18 @@ let json = """
         }
     },
     {
+        "type": "Address",
+        "content": {
+            "title": "Pickup location",
+            "line_1": "23-25 Rosebery Avenue",
+            "line_2": "2018 Rosebery, NSW",
+            "location": {
+                "latitude": -33.91514116915074,
+                "longitude": 151.20676069630827
+            }
+        }
+    },
+    {
         "type": "PaymentOptions",
         "content": {
             "title": "Payment methods accepted",
@@ -403,7 +415,6 @@ let json = """
                     "disclaimer": "",
                 }
             ]
-        }
     }
 ]
 """.data(using: .utf8)!

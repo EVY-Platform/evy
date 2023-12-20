@@ -10,6 +10,8 @@
 		2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8EEC392B2730B0003DF2DC /* Constants.swift */; };
 		2EB1B0F12B2E889100D9334E /* EVYDetailRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB1B0F02B2E889100D9334E /* EVYDetailRow.swift */; };
 		2EB1B0F52B2EBD2100D9334E /* EVYDisclaimerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB1B0F42B2EBD2100D9334E /* EVYDisclaimerRow.swift */; };
+		2ECD348B2B2EFA0400BA13AE /* EVYAddressRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ECD348A2B2EFA0400BA13AE /* EVYAddressRow.swift */; };
+		2ED04EF62B3308C400881DC4 /* EVYMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED04EF52B3308C400881DC4 /* EVYMapView.swift */; };
 		730D008B2B29A0E800B5BCB6 /* EVYTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008A2B29A0E800B5BCB6 /* EVYTextRow.swift */; };
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
@@ -44,6 +46,8 @@
 		2E8EEC392B2730B0003DF2DC /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		2EB1B0F02B2E889100D9334E /* EVYDetailRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDetailRow.swift; sourceTree = "<group>"; };
 		2EB1B0F42B2EBD2100D9334E /* EVYDisclaimerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDisclaimerRow.swift; sourceTree = "<group>"; };
+		2ECD348A2B2EFA0400BA13AE /* EVYAddressRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAddressRow.swift; sourceTree = "<group>"; };
+		2ED04EF52B3308C400881DC4 /* EVYMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMapView.swift; sourceTree = "<group>"; };
 		730D008A2B29A0E800B5BCB6 /* EVYTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextRow.swift; sourceTree = "<group>"; };
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
@@ -167,6 +171,7 @@
 				73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */,
 				7360EEB42B304EE300C4B10B /* EVYText.swift */,
 				73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */,
+				2ED04EF52B3308C400881DC4 /* EVYMapView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -182,6 +187,7 @@
 				2EB1B0F02B2E889100D9334E /* EVYDetailRow.swift */,
 				2EB1B0F42B2EBD2100D9334E /* EVYDisclaimerRow.swift */,
 				73D5B4182B3302820005E495 /* EVYPaymentOptionsRow.swift */,
+				2ECD348A2B2EFA0400BA13AE /* EVYAddressRow.swift */,
 			);
 			path = Rows;
 			sourceTree = "<group>";
@@ -271,6 +277,7 @@
 				7360EEB52B304EE300C4B10B /* EVYText.swift in Sources */,
 				73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */,
 				73884AC42B2E9AE500BC8726 /* EVYTimeslotPicker.swift in Sources */,
+				2ED04EF62B3308C400881DC4 /* EVYMapView.swift in Sources */,
 				737C6AC62B270AAE0093D00C /* EVYOrganization.swift in Sources */,
 				737C6ACB2B270AD90093D00C /* EVYWebsocket.swift in Sources */,
 				737C6ACC2B270AD90093D00C /* EVYManager.swift in Sources */,
@@ -280,6 +287,7 @@
 				73D878EC2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift in Sources */,
 				73CDCABC2B271ACC00D4E82A /* EVYTitleRow.swift in Sources */,
 				730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */,
+				2ECD348B2B2EFA0400BA13AE /* EVYAddressRow.swift in Sources */,
 				73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */,
 				737C6AC72B270AAE0093D00C /* EVYServiceProvider.swift in Sources */,
 				73D878EE2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift in Sources */,

@@ -45,6 +45,9 @@ struct EVYRow: View, Decodable {
         case EVYPaymentOptionsRow.JSONType:
             self.content = try EVYPaymentOptionsRow(container: container)
             
+        case EVYAddressRow.JSONType:
+            self.content = try EVYAddressRow(container: container)
+            
         default:
             self.content = Text("Could not parse row")
         }
