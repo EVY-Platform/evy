@@ -390,12 +390,12 @@ let json = """
                 {
                     "icon": "creditcard",
                     "label": "Card",
-                    "disclaimer": "::lock:: Benefit from EVY buyer protection",
+                    "disclaimer": "::lock:: EVY buyer protection",
                 },
                 {
                     "icon": "building.columns",
                     "label": "Bank",
-                    "disclaimer": "::lock:: Benefit from EVY buyer protection",
+                    "disclaimer": "::lock:: EVY buyer protection",
                 },
                 {
                     "icon": "dollarsign.square",

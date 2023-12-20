@@ -9,17 +9,14 @@ import SwiftUI
 
 struct EVYGreyedBackgound: View {
     let content: any View
-    
-    init(_ content: any View) {
-        self.content = content
-    }
+    let padding: CGFloat
     
     var body: some View {
         VStack{
             VStack{
                 AnyView(content)
             }
-            .padding()
+            .padding(padding)
             .background(Constants.inactiveBackground)
             .cornerRadius(Constants.mainCornerRadius)
         }
@@ -40,5 +37,5 @@ struct EVYGreyedBackgound: View {
     """.data(using: .utf8)!
     let myview = try! JSONDecoder().decode(EVYRow.self, from: json)
     
-    return EVYGreyedBackgound(myview)
+    return EVYGreyedBackgound(content: myview, padding: Constants.minorPadding)
 }

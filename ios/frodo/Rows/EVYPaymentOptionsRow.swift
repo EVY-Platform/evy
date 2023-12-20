@@ -28,17 +28,17 @@ struct EVYPaymentOptionView: View {
             HStack {
                 Image(systemName: option.icon)
                 EVYText(option.label)
-                EVYGreyedBackgound(HStack {
+                EVYGreyedBackgound(content: HStack {
                     EVYText(option.disclaimer)
                     Spacer()
-                })
+                }, padding: Constants.minorPadding)
             }
         default:
             HStack {
                 Image(systemName: option.icon)
                 EVYText(option.label)
                 Spacer()
-            }
+            }.padding(.top, Constants.minorPadding)
         }
     }
 }
@@ -87,12 +87,12 @@ struct EVYPaymentOptionsRow: View {
                 {
                     "icon": "creditcard",
                     "label": "Card",
-                    "disclaimer": "::lock:: Benefit from EVY buyer protection",
+                    "disclaimer": "::lock:: EVY buyer protection",
                 },
                 {
                     "icon": "building.columns",
                     "label": "Bank",
-                    "disclaimer": "::lock:: Benefit from EVY buyer protection",
+                    "disclaimer": "::lock:: EVY buyer protection",
                 },
                 {
                     "icon": "dollarsign.square",
