@@ -32,19 +32,19 @@ struct EVYTitleRow: View {
     var body: some View {
         VStack{
             HStack {
-                Text(title)
+                EVYText(title)
                     .font(.titleFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(titleDetail)
+                EVYText(titleDetail)
                     .font(.detailFont)
             }
             .padding(.bottom, Constants.majorPadding)
 
-            Text(subtitle1)
+            EVYText(subtitle1)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePaddingMin)
-            Text(subtitle2)
+            EVYText(subtitle2)
                 .foregroundStyle(.gray)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -61,7 +61,7 @@ struct EVYTitleRow: View {
         "content": {
             "title": "Amazing Fridge",
             "title_detail": "$250",
-            "subtitle_1": ":star_doc: 88% - 4 items sold",
+            "subtitle_1": "::star.square.on.square.fill:: 88% - 4 items sold",
             "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
         }
     }

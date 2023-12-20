@@ -34,16 +34,16 @@ struct EVYTextRow: View {
     
     var body: some View {
         VStack {
-            Text(title)
+            EVYText(title)
                 .font(.titleFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
-            Text(content)
+            EVYText(content)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
                 .lineLimit(expanded ? nil : maxLines)
-            Text(moreLessText)
+            EVYText(moreLessText)
                 .foregroundStyle(Constants.textButtonColor)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)

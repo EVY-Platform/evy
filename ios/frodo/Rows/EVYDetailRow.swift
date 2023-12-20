@@ -38,15 +38,15 @@ struct EVYDetailRow: View {
                 .padding()
             VStack{
                 HStack {
-                    Text(title)
+                    EVYText(title)
                         .font(.detailFont)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(detail)
+                    EVYText(detail)
                         .font(.detailFont)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 }            .padding(.bottom, Constants.majorPadding)
                 
-                Text(subtitle)
+                EVYText(subtitle)
                     .foregroundStyle(.gray)
                     .font(.regularFont)
                     .frame(maxWidth: .infinity, alignment: .leading)

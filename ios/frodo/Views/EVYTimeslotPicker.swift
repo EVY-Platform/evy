@@ -31,11 +31,11 @@ struct EVYTimeslotColumn: View {
     
     var body: some View {
         VStack() {
-            Text(timeslotDate.header).font(.detailFont)
-            Text(timeslotDate.date).font(.smallFont)
+            EVYText(timeslotDate.header).font(.detailFont)
+            EVYText(timeslotDate.date).font(.smallFont)
             ForEach((0...(numberOfTimeslotsPerDay-1)), id: \.self) { timeslotIndex in
                 if timeslotDate.timeslots.count-1 < timeslotIndex {
-                    Text("-").frame(height: timeslotRowHeight)
+                    EVYText("-").frame(height: timeslotRowHeight)
                 }
                 else {
                     let t = timeslotDate.timeslots[timeslotIndex]
@@ -45,7 +45,7 @@ struct EVYTimeslotColumn: View {
                                   Constants.buttonColor : Constants.buttonDisabledColor)
                             .opacity(0.8)
                             .frame(height: timeslotRowHeight)
-                        Text(t.timeslot)
+                        EVYText(t.timeslot)
                             .font(.smallFont)
                     }
                 }

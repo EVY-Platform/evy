@@ -17,6 +17,8 @@ extension Font {
 }
 
 struct Constants {
+    static let iconSeparator: String = "::"
+    
     static let textLinePadding: CGFloat = 4
     static let textLinePaddingMin: CGFloat = 1
     
