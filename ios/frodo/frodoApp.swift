@@ -381,6 +381,29 @@ let json = """
             "subtitle": "250 (w) x 120 (h) x 250 (l)",
             "detail": ""
         }
+    },
+    {
+        "type": "PaymentOptions",
+        "content": {
+            "title": "Payment methods accepted",
+            "options": [
+                {
+                    "icon": "creditcard",
+                    "label": "Card",
+                    "disclaimer": "::lock:: Benefit from EVY buyer protection",
+                },
+                {
+                    "icon": "building.columns",
+                    "label": "Bank",
+                    "disclaimer": "::lock:: Benefit from EVY buyer protection",
+                },
+                {
+                    "icon": "dollarsign.square",
+                    "label": "Cash",
+                    "disclaimer": "",
+                }
+            ]
+        }
     }
 ]
 """.data(using: .utf8)!
