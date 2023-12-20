@@ -393,6 +393,29 @@ let json = """
                 "longitude": 151.20676069630827
             }
         }
+    },
+    {
+        "type": "PaymentOptions",
+        "content": {
+            "title": "Payment methods accepted",
+            "options": [
+                {
+                    "icon": "creditcard",
+                    "label": "Card",
+                    "disclaimer": "::lock:: EVY buyer protection",
+                },
+                {
+                    "icon": "building.columns",
+                    "label": "Bank",
+                    "disclaimer": "::lock:: EVY buyer protection",
+                },
+                {
+                    "icon": "dollarsign.square",
+                    "label": "Cash",
+                    "disclaimer": "",
+                }
+            ]
+        }
     }
 ]
 """.data(using: .utf8)!
