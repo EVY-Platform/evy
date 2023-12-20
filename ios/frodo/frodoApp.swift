@@ -381,6 +381,18 @@ let json = """
             "subtitle": "250 (w) x 120 (h) x 250 (l)",
             "detail": ""
         }
+    },
+    {
+        "type": "Address",
+        "content": {
+            "title": "Pickup location",
+            "line_1": "23-25 Rosebery Avenue",
+            "line_2": "2018 Rosebery, NSW",
+            "location": {
+                "latitude": -33.91514116915074,
+                "longitude": 151.20676069630827
+            }
+        }
     }
 ]
 """.data(using: .utf8)!
