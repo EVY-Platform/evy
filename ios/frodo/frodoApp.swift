@@ -415,6 +415,7 @@ let json = """
                     "disclaimer": "",
                 }
             ]
+        }
     }
 ]
 """.data(using: .utf8)!
