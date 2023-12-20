@@ -32,7 +32,7 @@ let json = """
     {
         "type": "Title",
         "content": {
-            "title": "Amazing Fridge",
+            "title": "Amazing 😊 Fridge",
             "title_detail": "$250",
             "subtitle_1": "::star.square.on.square.fill:: 88% - 4 items sold",
             "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
