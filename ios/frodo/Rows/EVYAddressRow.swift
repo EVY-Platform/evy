@@ -9,8 +9,12 @@ import SwiftUI
 import MapKit
 
 public struct EVYLocation: Decodable {
-    let latitude: Float
-    let longitude: Float
+    let latitude: CLLocationDegrees
+    let longitude: CLLocationDegrees
+    
+    func coordinates2d() -> CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
 }
 
 struct EVYAddressRow: View {
@@ -40,7 +44,8 @@ struct EVYAddressRow: View {
                 .font(.titleFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
-            EVYMapView(location: CLLocationCoordinate2D(latitude: CLLocationDegrees(location.latitude), longitude: CLLocationDegrees(location.longitude)))
+            EVYMapView(location: location.coordinates2d(), markerLabel: line1)
+                .padding(.bottom, Constants.majorPadding)
                 .frame(height: 180)
             EVYText(line1)
                 .foregroundStyle(.gray)
