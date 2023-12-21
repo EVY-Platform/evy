@@ -43,11 +43,8 @@ struct EVYTimeslotPickerRow: View {
                 EVYText(details)
                     .font(.detailFont)
                     .frame(alignment: .trailing)
-            }
-            .padding(.top, Constants.minorPadding)
-
-            EVYTimeslotPicker(timeslotDates: datesWithTimeslots)
-                .frame(height: 190)
+            }.padding(.top, Constants.minorPadding)
+            EVYTimeslotPicker(datesWithTimeslots)
         }
         .frame(height: 250)
     }
@@ -87,10 +84,6 @@ struct EVYTimeslotPickerRow: View {
                         {
                             "timeslot": "11:00",
                             "available": true
-                        },
-                        {
-                            "timeslot": "12:00",
-                            "available": true
                         }
                     ]
                 },
@@ -100,14 +93,6 @@ struct EVYTimeslotPickerRow: View {
                     "timeslots": [
                         {
                             "timeslot": "10:30",
-                            "available": true
-                        },
-                        {
-                            "timeslot": "12:00",
-                            "available": false
-                        },
-                        {
-                            "timeslot": "12:30",
                             "available": true
                         }
                     ]
@@ -123,9 +108,15 @@ struct EVYTimeslotPickerRow: View {
                         {
                             "timeslot": "12:00",
                             "available": true
-                        },
+                        }
+                    ]
+                },
+                {
+                    "header": "Sun",
+                    "date": "12 nov.",
+                    "timeslots": [
                         {
-                            "timeslot": "13:00",
+                            "timeslot": "10:30",
                             "available": true
                         }
                     ]
@@ -137,14 +128,6 @@ struct EVYTimeslotPickerRow: View {
                         {
                             "timeslot": "10:30",
                             "available": true
-                        },
-                        {
-                            "timeslot": "11:30",
-                            "available": true
-                        },
-                        {
-                            "timeslot": "12:00",
-                            "available": true
                         }
                     ]
                 },
@@ -155,14 +138,6 @@ struct EVYTimeslotPickerRow: View {
                         {
                             "timeslot": "10:30",
                             "available": true
-                        },
-                        {
-                            "timeslot": "11:30",
-                            "available": true
-                        },
-                        {
-                            "timeslot": "12:00",
-                            "available": true
                         }
                     ]
                 },
@@ -172,32 +147,6 @@ struct EVYTimeslotPickerRow: View {
                     "timeslots": [
                         {
                             "timeslot": "10:30",
-                            "available": true
-                        },
-                        {
-                            "timeslot": "11:30",
-                            "available": true
-                        },
-                        {
-                            "timeslot": "12:00",
-                            "available": true
-                        }
-                    ]
-                },
-                {
-                    "header": "Sun",
-                    "date": "12 nov.",
-                    "timeslots": [
-                        {
-                            "timeslot": "10:30",
-                            "available": true
-                        },
-                        {
-                            "timeslot": "11:30",
-                            "available": true
-                        },
-                        {
-                            "timeslot": "12:00",
                             "available": true
                         }
                     ]

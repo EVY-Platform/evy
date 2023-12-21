@@ -23,11 +23,11 @@ public struct EVYTimeslotDate: Decodable {
 
 struct EVYTimeslotColumn: View {
     let timeslotDate: EVYTimeslotDate
+    let numberOfTimeslotsPerDay: Int
     
     private let timeslotRowWidth: CGFloat = 70
     private let timeslotRowHeight: CGFloat = 40
     private let timeslowRectangleCornerRadius: CGFloat = 10
-    private let numberOfTimeslotsPerDay: Int = 2
     
     var body: some View {
         VStack() {
@@ -57,8 +57,18 @@ struct EVYTimeslotColumn: View {
 
 struct EVYTimeslotPicker: View {
     @State private var selectedGroupIndex: Int = 0
+    private var numberOfTimeslotsPerDay: Int = 0
     
     let timeslotDates: [EVYTimeslotDate]
+    
+    init(_ timeslotDates: [EVYTimeslotDate]) {
+        self.timeslotDates = timeslotDates
+        for index in 0...timeslotDates.count-1 {
+            if timeslotDates[index].timeslots.count > self.numberOfTimeslotsPerDay {
+                self.numberOfTimeslotsPerDay = timeslotDates[index].timeslots.count
+            }
+        }
+    }
     
     var body: some View {
         let groupedDays = timeslotDates.chunked(with: 4)
@@ -68,7 +78,8 @@ struct EVYTimeslotPicker: View {
                     ForEach(groupedDays.indices, id: \.self) { index in
                         HStack {
                             ForEach(groupedDays[index], id: \.date) { timeslotDate in
-                                EVYTimeslotColumn(timeslotDate: timeslotDate)
+                                EVYTimeslotColumn(timeslotDate: timeslotDate,
+                                                  numberOfTimeslotsPerDay: numberOfTimeslotsPerDay)
                                     .padding(Constants.columnPadding)
                             }
                         }
@@ -231,5 +242,5 @@ struct EVYTimeslotPicker: View {
     
     let timeslotDates = try! JSONDecoder().decode([EVYTimeslotDate].self, from: json)
 
-    return EVYTimeslotPicker(timeslotDates: timeslotDates)
+    return EVYTimeslotPicker(timeslotDates)
 }
