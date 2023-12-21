@@ -13,6 +13,8 @@ struct ContentView: View {
     var body: some View {
         List(rows.indices, id: \.self) { index in
             rows[index]
+                .padding(.bottom, Constants.majorPadding)
+                .listRowSeparator(.hidden)
         }
         .listStyle(PlainListStyle())
         .ignoresSafeArea()

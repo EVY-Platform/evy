@@ -419,3 +419,8 @@ let json = """
     }
 ]
 """.data(using: .utf8)!
+
+#Preview {
+    let rows = try! JSONDecoder().decode([EVYRow].self, from: json)
+    return ContentView(rows: rows)
+}

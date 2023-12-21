@@ -36,9 +36,7 @@ struct EVYTimeslotPickerRow: View {
                 Image(icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: Constants.regularIconSize)
-                    .padding(.leading, .zero)
-                    .padding(.trailing, Constants.minorPadding)
+                    .frame(width: Constants.largeIconSize)
                 EVYText(subtitle)
                     .font(.regularFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -46,12 +44,12 @@ struct EVYTimeslotPickerRow: View {
                     .font(.detailFont)
                     .frame(alignment: .trailing)
             }
-            .padding()
-            .padding(.top, .zero)
+            .padding(.top, Constants.minorPadding)
 
             EVYTimeslotPicker(timeslotDates: datesWithTimeslots)
+                .frame(height: 190)
         }
-        .frame(height: 280)
+        .frame(height: 250)
     }
 }
 

@@ -179,9 +179,9 @@
 		73CDCABD2B271AD000D4E82A /* Rows */ = {
 			isa = PBXGroup;
 			children = (
-				73D878EB2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift */,
 				73CDCAB92B271ACC00D4E82A /* EVYCarouselRow.swift */,
 				73CDCABA2B271ACC00D4E82A /* EVYTitleRow.swift */,
+				73D878EB2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift */,
 				73884AC12B2E897600BC8726 /* EVYTimeslotPickerRow.swift */,
 				730D008A2B29A0E800B5BCB6 /* EVYTextRow.swift */,
 				2EB1B0F02B2E889100D9334E /* EVYDetailRow.swift */,
