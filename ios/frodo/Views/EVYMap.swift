@@ -8,7 +8,7 @@
 import SwiftUI
 import MapKit
 
-struct EVYMapView: View {
+struct EVYMap: View {
     let location: CLLocationCoordinate2D
     let markerLabel: String
 
@@ -26,5 +26,5 @@ struct EVYMapView: View {
 #Preview {
     let testLocation = CLLocationCoordinate2D(latitude: -33.91514116915074,
                                               longitude: 151.20676069630827)
-    return EVYMapView(location: testLocation, markerLabel: "Rosebery")
+    return EVYMap(location: testLocation, markerLabel: "Rosebery")
 }

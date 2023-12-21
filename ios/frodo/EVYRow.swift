@@ -36,6 +36,9 @@ struct EVYRow: View, Decodable {
         case EVYDetailRow.JSONType:
             self.content = try EVYDetailRow(container: container)
             
+        case EVYContainerListRow.JSONType:
+            self.content = try EVYContainerListRow(container: container)
+            
         case EVYSegmentedControlRow.JSONType:
             self.content = try EVYSegmentedControlRow(container: container)
             
@@ -49,7 +52,7 @@ struct EVYRow: View, Decodable {
             self.content = try EVYAddressRow(container: container)
             
         default:
-            self.content = Text("Could not parse row")
+            self.content = Spacer()
         }
     }
     

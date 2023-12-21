@@ -356,30 +356,37 @@ let json = """
         }
     },
     {
-        "type": "Detail",
+        "type": "ContainerList",
         "content": {
-            "icon": "condition",
-            "title": "Condition",
-            "subtitle": "Like new",
-            "detail": ""
-        }
-    },
-    {
-        "type": "Detail",
-        "content": {
-            "icon": "reason",
-            "title": "Selling reason",
-            "subtitle": "Moving out",
-            "detail": ""
-        }
-    },
-    {
-        "type": "Detail",
-        "content": {
-            "icon": "dimensions",
-            "title": "Dimensions",
-            "subtitle": "250 (w) x 120 (h) x 250 (l)",
-            "detail": ""
+            "children": [
+                {
+                    "type": "Detail",
+                    "content": {
+                        "icon": "condition",
+                        "title": "Condition",
+                        "subtitle": "Like new",
+                        "detail": ""
+                    }
+                },
+                {
+                    "type": "Detail",
+                    "content": {
+                        "icon": "reason",
+                        "title": "Selling reason",
+                        "subtitle": "Moving out",
+                        "detail": ""
+                    }
+                },
+                {
+                    "type": "Detail",
+                    "content": {
+                        "icon": "dimensions",
+                        "title": "Dimensions",
+                        "subtitle": "250 (w) x 120 (h) x 250 (l)",
+                        "detail": ""
+                    }
+                }
+            ]
         }
     },
     {

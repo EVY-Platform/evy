@@ -236,30 +236,37 @@
 		}
 	},
 	{
-		"type": "Detail",
+		"type": "ContainerList",
 		"content": {
-			"icon": "_image_id_",
-			"title": "Selling reason",
-			"subtitle": "Moving out",
-			"detail": ""
-		}
-	},
-	{
-		"type": "Detail",
-		"content": {
-			"icon": "_image_id_",
-			"title": "Dimensions",
-			"subtitle": "250 (w) x 120 (h) x 250 (l)",
-			"detail": ""
-		}
-	},
-	{
-		"type": "Detail",
-		"content": {
-			"icon": "_image_id_",
-			"title": "Condition",
-			"subtitle": "Like new",
-			"detail": ""
+			"children": [
+				{
+					"type": "Detail",
+					"content": {
+						"icon": "_image_id_",
+						"title": "Selling reason",
+						"subtitle": "Moving out",
+						"detail": ""
+					}
+				},
+				{
+					"type": "Detail",
+					"content": {
+						"icon": "_image_id_",
+						"title": "Dimensions",
+						"subtitle": "250 (w) x 120 (h) x 250 (l)",
+						"detail": ""
+					}
+				},
+				{
+					"type": "Detail",
+					"content": {
+						"icon": "_image_id_",
+						"title": "Condition",
+						"subtitle": "Like new",
+						"detail": ""
+					}
+				}
+			]
 		}
 	},
 	{
@@ -383,31 +390,38 @@
 		}
 	},
 	{
-		"type": "Detail",
+		"type": "ContainerList",
 		"content": {
-			"icon": "_image_id_",
-			"title": "Condition",
-			"subtitle": "{item.condition}",
-			"detail": ""	
-		}
-	},
-	{
-		"type": "Detail",
-		"content": {
-			"icon": "_image_id_",
-			"title": "Selling reason",
-			"subtitle": "{item.selling_reason}",
-			"detail": ""
-		}
-	},
-	{
-		"type": "Detail",
-		"content": {
-			"icon": "_image_id_",
-			"title": "Dimensions",
-			"subtitle":
-				"{item.dimension.width} (w) x {item.dimension.height} (h) x {item.dimension.length} (l)",
-			"detail": ""
+			"children": [
+				{
+					"type": "Detail",
+					"content": {
+						"icon": "_image_id_",
+						"title": "Condition",
+						"subtitle": "{item.condition}",
+						"detail": ""	
+					}
+				},
+				{
+					"type": "Detail",
+					"content": {
+						"icon": "_image_id_",
+						"title": "Selling reason",
+						"subtitle": "{item.selling_reason}",
+						"detail": ""
+					}
+				},
+				{
+					"type": "Detail",
+					"content": {
+						"icon": "_image_id_",
+						"title": "Dimensions",
+						"subtitle":
+							"{item.dimension.width} (w) x {item.dimension.height} (h) x {item.dimension.length} (l)",
+						"detail": ""
+					}
+				},
+			]	
 		}
 	},
 	{

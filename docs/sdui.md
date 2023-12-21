@@ -63,20 +63,6 @@ See [types](./types.md) for custom types and definitions used below
 
 ```
 {
-    "type": "SegmentedControl",
-    "content": {
-        "children": [
-            {
-                "title": "string",
-                "children": "ROW[]",
-            },
-        ],
-    }
-}
-```
-
-```
-{
     "type": "Text",
     "content": {
         "title": "string",
@@ -132,6 +118,29 @@ See [types](./types.md) for custom types and definitions used below
                 "label": "string",
             },
         ],
+    }
+}
+```
+
+```
+{
+    "type": "SegmentedControl",
+    "content": {
+        "children": [
+            {
+                "title": "string",
+                "children": "ROW[]",
+            },
+        ],
+    }
+}
+```
+
+```
+{
+    "type": "ContainerList",
+    "content": {
+        "children": "ROW[]"
     }
 }
 ```

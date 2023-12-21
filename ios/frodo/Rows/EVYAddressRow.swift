@@ -44,7 +44,7 @@ struct EVYAddressRow: View {
                 .font(.titleFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
-            EVYMapView(location: location.coordinates2d(), markerLabel: line1)
+            EVYMap(location: location.coordinates2d(), markerLabel: line1)
                 .padding(.bottom, Constants.majorPadding)
                 .frame(height: 180)
             EVYText(line1)
