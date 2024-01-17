@@ -1,5 +1,5 @@
 //
-//  EVYDetailRow.swift
+//  EVYContainerListRow.swift
 //  EVY
 //
 //  Created by Geoffroy Lesage on 21/12/2023.
