@@ -1,16 +1,66 @@
 # Data example for the view item page
 
-#### Booking as it would be stored in the database
+#### Sample conditions as stored in the database
 
 ```
 {
-	"item_id": "x",
-	"timeslot": "1700894934",
-	"buyer_id": "a"
+	"id": "1",
+	"value": "For parts",
 }
 ```
 
-#### Item as it would be stored in the database
+```
+{
+	"id": "2",
+	"value": "New",
+}
+```
+
+```
+{
+	"id": "3",
+	"value": "Used - like new",
+}
+```
+
+```
+{
+	"id": "4",
+	"value": "Used - good",
+}
+```
+
+```
+{
+	"id": "5",
+	"value": "Used - fair",
+}
+```
+
+#### Sample selling reason as stored in the database
+
+```
+{
+	"id": "1",
+	"value": "No longer used",
+}
+```
+
+```
+{
+	"id": "2",
+	"value": "Moving out",
+}
+```
+
+```
+{
+	"id": "3",
+	"value": "Doesn't fit",
+}
+```
+
+#### Sample Provider as stored in the database
 
 ```
 {
@@ -24,6 +74,19 @@
 	},
 }
 ```
+
+#### Booking as it would be stored in the database
+
+```
+{
+	"item_id": "x",
+	"timeslot": "1700894934",
+	"buyer_id": "a"
+}
+```
+
+#### Item as it would be stored in the database
+
 ```
 {
 	"id": "a9e9feba-d1ba-4f78-ab3c-3ce7cc108989",
