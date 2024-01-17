@@ -1,5 +1,80 @@
 # Data example for the view item page
 
+#### Sample conditions as stored in the database
+
+```
+{
+	"id": "1",
+	"value": "For parts",
+}
+```
+
+```
+{
+	"id": "2",
+	"value": "New",
+}
+```
+
+```
+{
+	"id": "3",
+	"value": "Used - like new",
+}
+```
+
+```
+{
+	"id": "4",
+	"value": "Used - good",
+}
+```
+
+```
+{
+	"id": "5",
+	"value": "Used - fair",
+}
+```
+
+#### Sample selling reason as stored in the database
+
+```
+{
+	"id": "1",
+	"value": "No longer used",
+}
+```
+
+```
+{
+	"id": "2",
+	"value": "Moving out",
+}
+```
+
+```
+{
+	"id": "3",
+	"value": "Doesn't fit",
+}
+```
+
+#### Sample Provider as stored in the database
+
+```
+{
+	"id": "post_office_id",
+	"name": "Australia Post",
+	"logo_id": "_image_id_",
+	"eta": "2-5 days once deposited",
+	"cost": {
+		"currency": "AUD",
+		"value": 15.00
+	},
+}
+```
+
 #### Booking as it would be stored in the database
 
 ```
@@ -16,10 +91,16 @@
 {
 	"id": "a9e9feba-d1ba-4f78-ab3c-3ce7cc108989",
 	"title": "Amazing Fridge",
-	"photo_ids": [
-		"04b34671-4eeb-4f1c-8435-5e029a0e455c",
-		"97a953eb-0206-4560-8716-d58c8cd94a62",
-		"d7b2efd7-3be6-49b7-9dad-0569c3ad4572"
+	"photos": [
+		{
+			"id": 04b34671-4eeb-4f1c-8435-5e029a0e455c"
+		},
+		{
+			"id": 97a953eb-0206-4560-8716-d58c8cd94a62"
+		},
+		{
+			"id": d7b2efd7-3be6-49b7-9dad-0569c3ad4572"
+		}
     ],
 	"price": {
 		"currency": "AUD",
@@ -74,22 +155,13 @@
 				"currency": "AUD",
 				"value": 10.00
 			},
-			"transfer_provider": {
-				// This is usually fetched from API
-				"name": "Australia Post",
-				"logo_id": "_image_id_",
-				"eta": "2-5 days once deposited",
-				"cost": {
-					"currency": "AUD",
-					"value": 15.00
-				},
-			}
+			"transfer_provider_id": "post_office_id" 
 		}
 	},
 	"description":
 		"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-	"condition": "Used - Like New",
-	"selling_reason": "moving out",
+	"condition_id": 1,
+	"selling_reason_id": 1,
 	"dimension": {
 		"width": 500,
 		"height": 1600,
@@ -309,7 +381,7 @@
 	{
 		"type": "Carousel",
 		"content": {
-			"image_ids": "{item.photo_ids}"
+			"image_ids": "{item.photos[].id}"
 		}
 	},
 	{
@@ -398,7 +470,7 @@
 					"content": {
 						"icon": "_image_id_",
 						"title": "Condition",
-						"subtitle": "{item.condition}",
+						"subtitle": "{item.condition.value}",
 						"detail": ""	
 					}
 				},
@@ -407,7 +479,7 @@
 					"content": {
 						"icon": "_image_id_",
 						"title": "Selling reason",
-						"subtitle": "{item.selling_reason}",
+						"subtitle": "{item.selling_reason.value}",
 						"detail": ""
 					}
 				},

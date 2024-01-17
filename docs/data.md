@@ -7,7 +7,8 @@ Base model that all data models inherit from:
 {
     "id": "uuid",
     "created_timestamp": "timestamp",
-    "updated_timestamp": "timestamp"
+    "updated_timestamp": "timestamp",
+    "archived_timestamp": "timestamp"
 }
 ```
 
@@ -47,8 +48,8 @@ Base model that all data models inherit from:
 
 ```
 {
-    "service_id": "service.id",
-    "organisation_id": "organisation.id",
+    "service_id": "uuid",
+    "organisation_id": "uuid",
     "name": "string",
     "description": "string",
     "logo_id": "uuid",
@@ -152,21 +153,60 @@ Base model that all data models inherit from:
 }
 ```
 
+#### condition
+
+```
+{
+    "value": "string"
+}
+```
+
+#### selling_reason
+
+```
+{
+    "value": "string"
+}
+```
+
+#### photo
+
+```
+{}
+```
+
+#### logo
+
+```
+{}
+```
+
+#### payment_method
+
+```
+{
+    "name": "string"
+}
+```
+
 #### item
 
 ```
 {
     "title": "string",
-    "photo_ids": "uuid[]",
-    "price": "price",
-    "seller_id": "uuid",
-    "address": "address",
-    "transfer_options": "transfer_option[]",
     "description": "string",
-    "condition": "string",
-    "selling_reason": "string",
-    "dimension": "dimension",
+
+    "seller_id": "uuid",
+    "condition_id": "uuid",
+    "selling_reason_id": "uuid",
+
     "tag_ids": "uuid[]",
-    "payment_method_ids": "uuid[]"
+    "payment_method_ids": "uuid[]",
+
+    "photos": "photo[]",
+    "address": "address",
+    "price": "price",
+    "dimension": "dimension",
+    "transfer_option": "transfer_option"
 }
 ```
