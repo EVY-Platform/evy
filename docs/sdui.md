@@ -144,3 +144,64 @@ See [types](./types.md) for custom types and definitions used below
     }
 }
 ```
+
+```
+{
+    "type": "PhotoUpload",
+    "content": {
+        "icon": "string",
+        "subtitle": "string",
+        "content": "string"
+    },
+    "action": {
+        "output_variable": "string"
+    }
+}
+```
+
+```
+{
+    "type": "TextInput",
+    "content": {
+        "fields": [{
+            "placeholder": "string"
+        },{
+            "placeholder": "string"
+        },{
+            "placeholder": "string"
+        }]
+    },
+    "action": {
+        "fields": [{
+            "output_variable": "string"
+        },{
+            "output_variable": "string"
+        },{
+            "output_variable": "string"
+        }]
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string",
+    }],
+}
+```
+
+```
+{
+    "type": "Dropdown",
+    "content": {
+        "placeholder": "string",
+    },
+    "action": {
+        "output_variable": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string",
+    }],
+    "data": {
+        "source": "string",
+    }
+}
+```
