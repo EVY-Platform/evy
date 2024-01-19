@@ -45,6 +45,8 @@ formatAddressLine2(_variable_type_address_)
 Variable: { ... see above ...}
 Outputs: 2018 Rosebery NSW
 ```
+
+### Methods
 ```
 count({_variable_type_list_})
 Variable: [image1, image2]
