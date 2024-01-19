@@ -1,6 +1,7 @@
 # Functions in EVY
 
-Functions are defined server-side and sent to the clients dynamically using JSON configuration (see below). We do NOT define the formatting functions on the clients however the clients have built in formatting functions to parse the JSON configurations
+Functions are used to convert an input into a different output. For example formatting a date.
+Some default functions are available server-side and client-side (eg `formatDecimal`) and some are composed using those built in functions, and sent via JSON config to the clients. We need to avoid defining custom coded formatting functions in mobile clients as much as possible due to the constraints of mobile release cycles
 
 ## Methods
 These are methods available to the user to compute data
