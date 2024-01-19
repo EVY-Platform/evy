@@ -6,6 +6,7 @@ Functions are used to convert an input into a different output. For example form
 
 ## Methods
 These are methods available to the user to compute data
+**count**
 ```
 count({_variable_type_list_})
 Variable: [image1, image2]
@@ -17,23 +18,28 @@ These are functions that do 3 things:
 1. Decide on which mobile keyboard to show
 2. Format text from data
 3. Format text as the user is typing
+Some of them are dynamic and some are built in (see following section)
 
-#### Available to the user
+#### All formatting available today
+**formatCurrency**
 ```
 formatCurrency(_variable_type_price_)
 Variable: { "currency": "AUD", "value": "13.23" }
 Outputs: $13.23
 ```
+**formatDate**
 ```
 formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
 Variable: 1705651372
 Outputs: 19/01/2024
 ```
+**formatDimension**
 ```
 formatDimension(_variable_type_mm_) --> Depending on user config for metric or imperial
 Variable: 2309
 Outputs: 23.09cm
 ```
+**formatAddress**
 ```
 formatAddress(_variable_type_address_)
 Variable: {
@@ -47,19 +53,21 @@ Variable: {
 }
 Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
 ```
+**formatAddressLine1**
 ```
 formatAddressLine1(_variable_type_address_)
 Variable: { ... see above ...}
 Outputs: 23-25 Rosebery Avenue
 ```
+**formatAddressLine2**
 ```
 formatAddressLine2(_variable_type_address_)
 Variable: { ... see above ...}
 Outputs: 2018 Rosebery NSW
 ```
 
-#### Build in configs
-These are formats that do have to be built into each client
+#### Built in configs
+These are the formatting functions that are built directly into clients and the server
 ```
 formatDate
 formatDecimal
