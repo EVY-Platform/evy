@@ -6,41 +6,6 @@ See [types](./types.md) for custom types and definitions used below
 - Empty strings will be displayed as empty strings (they will NOT be ignored, but will essentially not be visible to the user)
 - Missing keys will not be allowed (all keys/properties of a row are required)
 
-### Formatting funtions
-```
-formatCurrency(_variable_type_price_)
-Variable: { "currency": "AUD", "value": "13.23" }
-Outputs: $13.23
-```
-```
-formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
-Variable: 1705651372
-Outputs: 19/01/2024
-```
-```
-formatAddress(_variable_type_address_)
-Variable: {
-    "unit": "23-25"
-    "street": "Rosebery Avenue",
-    "city": "Rosebery",
-    "postcode": "2018",
-    "state": "NSW",
-    "country": "Australia",
-    "location": ...
-}
-Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
-```
-```
-formatAddressLine1(_variable_type_address_)
-Variable: { ... see above ...}
-Outputs: 23-25 Rosebery Avenue
-```
-```
-formatAddressLine2(_variable_type_address_)
-Variable: { ... see above ...}
-Outputs: 2018 Rosebery NSW
-```
-
 ### Base schema template:
 
 ```
@@ -50,7 +15,7 @@ Outputs: 2018 Rosebery NSW
 }
 ```
 
-### Rows
+### Display Rows
 
 ```
 {
@@ -176,6 +141,68 @@ Outputs: 2018 Rosebery NSW
     "type": "ContainerList",
     "content": {
         "children": "ROW[]"
+    }
+}
+```
+
+### Container rows
+```
+{
+    "type": "ColumnContainer",
+    "content": {
+        children: "ROW[]"
+    }
+}
+```
+
+### Editable rows
+
+```
+{
+    "type": "PhotoUpload",
+    "content": {
+        "icon": "string",
+        "subtitle": "string",
+        "content": "string"
+    },
+    "formatting": [],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "TextInput",
+    "content": {
+        "placeholder": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "Dropdown",
+    "content": {
+        "placeholder": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
     }
 }
 ```

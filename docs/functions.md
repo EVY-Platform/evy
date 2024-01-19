@@ -1,0 +1,117 @@
+# Functions in EVY
+
+Functions are defined server-side and sent to the clients dynamically using JSON configuration (see below). We do NOT define the formatting functions on the clients however the clients have built in formatting functions to parse the JSON configurations
+
+## Methods
+These are methods available to the user to compute data
+```
+count({_variable_type_list_})
+Variable: [image1, image2]
+Output: 2
+```
+
+## Formatting funtions
+These are functions that do 3 things:
+1. Decide on which mobile keyboard to show
+2. Format text from data
+3. Format text as the user is typing
+
+#### Available to the user
+```
+formatCurrency(_variable_type_price_)
+Variable: { "currency": "AUD", "value": "13.23" }
+Outputs: $13.23
+```
+```
+formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
+Variable: 1705651372
+Outputs: 19/01/2024
+```
+```
+formatDimension(_variable_type_mm_) --> Depending on user config for metric or imperial
+Variable: 2309
+Outputs: 23.09cm
+```
+```
+formatAddress(_variable_type_address_)
+Variable: {
+    "unit": "23-25"
+    "street": "Rosebery Avenue",
+    "city": "Rosebery",
+    "postcode": "2018",
+    "state": "NSW",
+    "country": "Australia",
+    "location": ...
+}
+Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
+```
+```
+formatAddressLine1(_variable_type_address_)
+Variable: { ... see above ...}
+Outputs: 23-25 Rosebery Avenue
+```
+```
+formatAddressLine2(_variable_type_address_)
+Variable: { ... see above ...}
+Outputs: 2018 Rosebery NSW
+```
+
+#### Build in configs
+These are formats that do have to be built into each client
+```
+formatDate
+formatDecimal
+formatMetricLength
+formatImperialLength
+```
+
+#### Dynamic configs
+These are formats that are configured by passing dynamic JSON
+```
+{
+    "formatCurrency": {
+        "input_type": "price",
+        "keyboard": "numeric_detailed",
+        "formatting_config": "{input.currency}",
+        "formatting": {
+            "aud": "$ {formatDecimal(input.value, 2)}",
+            "eur": "€ {formatDecimal(input.value, 2)}"
+        }
+    },
+    "formatDimension": {
+        "input_type": "int",
+        "keyboard": "numeric_detailed",
+        "formatting_config": "{user.dimensions_system}",
+        "formatting": {
+            "metric": "{formatMetricLength(input)}",
+            "imperial": "{formatImperialLength(input)}"
+        }
+    },
+    "formatAddress": {
+        "input_type": "address",
+        "keyboard": "text",
+        "formatting_config": "{input.country}",
+        "formatting": {
+            "au": "{input.unit} {input.street}, {input.city} {input.postcode} {input.state}",
+            "us": "{input.unit} {input.street}, {input.city} {input.state} {input.postcode}"
+        }
+    },
+    "formatAddressLine1": {
+        "input_type": "address",
+        "keyboard": "text",
+        "formatting_config": "{input.country}",
+        "formatting": {
+            "au": "{input.unit} {input.street}",
+            "us": "{input.unit} {input.street}"
+        }
+    },
+    "formatAddressLine2": {
+        "input_type": "address",
+        "keyboard": "text",
+        "formatting_config": "{input.country}",
+        "formatting": {
+            "au": "{input.city} {input.postcode} {input.state}",
+            "us": "{input.city} {input.state} {input.postcode}"
+        }
+    }
+}

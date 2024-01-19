@@ -532,3 +532,246 @@
 	}
 ]
 ```
+
+### What would the first page of creating an item look like in the database
+```
+[
+	{
+	    "type": "PhotoUpload",
+	    "content": {
+	        "icon": "::image_upload::",
+	        "subtitle": "Add photos",
+	        "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first."
+	    },
+	    "formatting": [],
+	    "data": {
+	        "source": "{item.photos}"
+	        "destination": "{item.photos}"
+	    }
+	},
+	{
+	    "type": "TextInput",
+	    "content": {
+	    	"placeholder": "Title"
+	    },
+	    "formatting": [],
+	    "data": {
+	        "source": "{item.title}",
+	        "destination": "{item.title}"
+	    }
+	},
+	{
+	    "type": "TextInput",
+	    "content": {
+	    	"placeholder": "Price"
+	    },
+	    "formatting": [{
+	        "content": "placeholder",
+	        "format": "{formatCurrency(item.price)}"
+	    }],
+	    "data": {
+	        "source": "{item.price}",
+	        "destination": "{item.price}"
+	    }
+	},
+	{
+	    "type": "Dropdown",
+	    "content": {
+	        "placeholder": "Condition"
+	    },
+	    "formatting": [{
+	        "content": "placeholder",
+	        "format": "{item.condition.value}"
+	    }],
+	    "data": {
+	        "source": "{conditions}",
+	        "destination": "{item.condition}"
+	    }
+	},
+	{
+	    "type": "Dropdown",
+	    "content": {
+	        "placeholder": "Selling reason"
+	    },
+	    "formatting": [{
+	        "content": "placeholder",
+	        "format": "{item.selling_reason.value}"
+	    }],
+	    "data": {
+	        "source": "{selling_reasons}",
+	        "destination": "{item.selling_reason}"
+	    }
+	},
+	{
+	    "type": "ColumnContainer",
+	    "content": {
+	    	children: [
+	    		{
+				    "type": "TextInput",
+				    "content": {
+				    	"placeholder": "Width"
+				    },
+				    "formatting": [{
+				        "content": "placeholder",
+				        "format": "{formatDimension(item.dimension.width)}"
+				    }],
+				    "data": {
+				    	"source": "{item.dimension.width}",
+				    	"destination": "{item.dimension.width}"
+				    }
+				},
+	    		{
+				    "type": "TextInput",
+				    "content": {
+				    	"placeholder": "Height"
+				    },
+				    "formatting": [{
+				        "content": "placeholder",
+				        "format": "{formatDimension(item.dimension.height)}"
+				    }],
+				    "data": {
+				    	"source": "{item.dimension.height}",
+				    	"destination": "{item.dimension.height}"
+				    }
+				},
+	    		{
+				    "type": "TextInput",
+				    "content": {
+				    	"placeholder": "Length"
+				    },
+				    "formatting": [{
+				        "content": "placeholder",
+				        "format": "{formatDimension(item.dimension.length)}"
+				    }],
+				    "data": {
+				    	"source": "{item.dimension.length}",
+				    	"destination": "{item.dimension.length}"
+				    }
+				},
+	    	]
+	    },
+	},
+]
+```
+
+### What would the first page of creating an item look like for the app
+NB: An item would be attached along with the page which would include all the data for the rows... ?
+```
+[
+	{
+	    "type": "PhotoUpload",
+	    "content": {
+	        "icon": "::image_upload::",
+	        "subtitle": "Add photos",
+	        "content": "Photos: 2/10 - Chose your listing’s main photo first."
+	    },
+	    "formatting": [],
+	    "data": {
+	        "source": "{item.photos}"
+	        "destination": "{item.photos}"
+	    }
+	},
+	{
+	    "type": "TextInput",
+	    "content": {
+	    	"placeholder": "Title"
+	    },
+	    "formatting": [],
+	    "data": {
+	        "source": "{item.title}",
+	        "destination": "{item.title}"
+	    }
+	},
+	{
+	    "type": "TextInput",
+	    "content": {
+	    	"placeholder": "Price"
+	    },
+	    "formatting": [{
+	        "content": "placeholder",
+	        "format": "{formatCurrency(item.price)}"
+	    }],
+	    "data": {
+	        "source": "{item.price}",
+	        "destination": "{item.price}"
+	    }
+	},
+	{
+	    "type": "Dropdown",
+	    "content": {
+	        "placeholder": "Condition"
+	    },
+	    "formatting": [{
+	        "content": "placeholder",
+	        "format": "{item.condition.value}"
+	    }],
+	    "data": {
+	        "source": "{conditions}",
+	        "destination": "{item.condition}"
+	    }
+	},
+	{
+	    "type": "Dropdown",
+	    "content": {
+	        "placeholder": "Selling reason"
+	    },
+	    "formatting": [{
+	        "content": "placeholder",
+	        "format": "{item.selling_reason.value}"
+	    }],
+	    "data": {
+	        "source": "{selling_reasons}",
+	        "destination": "{item.selling_reason}"
+	    }
+	},
+	{
+	    "type": "ColumnContainer",
+	    "content": {
+	    	children: [
+	    		{
+				    "type": "TextInput",
+				    "content": {
+				    	"placeholder": "Width"
+				    },
+				    "formatting": [{
+				        "content": "placeholder",
+				        "format": "{formatDimension(item.dimension.width)}"
+				    }],
+				    "data": {
+				    	"source": "{item.dimension.width}",
+				    	"destination": "{item.dimension.width}"
+				    }
+				},
+	    		{
+				    "type": "TextInput",
+				    "content": {
+				    	"placeholder": "Height"
+				    },
+				    "formatting": [{
+				        "content": "placeholder",
+				        "format": "{formatDimension(item.dimension.height)}"
+				    }],
+				    "data": {
+				    	"source": "{item.dimension.height}",
+				    	"destination": "{item.dimension.height}"
+				    }
+				},
+	    		{
+				    "type": "TextInput",
+				    "content": {
+				    	"placeholder": "Length"
+				    },
+				    "formatting": [{
+				        "content": "placeholder",
+				        "format": "{formatDimension(item.dimension.length)}"
+				    }],
+				    "data": {
+				    	"source": "{item.dimension.length}",
+				    	"destination": "{item.dimension.length}"
+				    }
+				},
+	    	]
+	    },
+	},
+]
+```
