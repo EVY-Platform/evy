@@ -655,6 +655,7 @@
 ```
 
 ### What would the first page of creating an item look like for the app
+NB: An item would be attached along with the page which would include all the data for the rows... ?
 ```
 [
 	{
