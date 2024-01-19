@@ -79,6 +79,7 @@ Base model that all data models inherit from:
 
 ```
 {
+    "unit": "string",
     "street": "string",
     "city": "string",
     "postcode": "string",
