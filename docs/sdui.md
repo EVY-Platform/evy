@@ -18,6 +18,11 @@ Variable: 1705651372
 Outputs: 19/01/2024
 ```
 ```
+formatDimension(_variable_type_mm_) --> Depending on user config for metric or imperial
+Variable: 2309
+Outputs: 23.09cm
+```
+```
 formatAddress(_variable_type_address_)
 Variable: {
     "unit": "23-25"
@@ -40,6 +45,11 @@ formatAddressLine2(_variable_type_address_)
 Variable: { ... see above ...}
 Outputs: 2018 Rosebery NSW
 ```
+```
+count({_variable_type_list_})
+Variable: [image1, image2]
+Output: 2
+```
 
 ### Base schema template:
 
@@ -50,7 +60,7 @@ Outputs: 2018 Rosebery NSW
 }
 ```
 
-### Rows
+### Display Rows
 
 ```
 {
@@ -180,6 +190,18 @@ Outputs: 2018 Rosebery NSW
 }
 ```
 
+### Container rows
+```
+{
+    "type": "ColumnContainer",
+    "content": {
+        children: "ROW[]"
+    }
+}
+```
+
+### Editable rows
+
 ```
 {
     "type": "PhotoUpload",
@@ -188,8 +210,10 @@ Outputs: 2018 Rosebery NSW
         "subtitle": "string",
         "content": "string"
     },
-    "action": {
-        "output_variable": "string"
+    "formatting": [],
+    "data": {
+        "source": "string",
+        "destination": "string"
     }
 }
 ```
@@ -198,27 +222,16 @@ Outputs: 2018 Rosebery NSW
 {
     "type": "TextInput",
     "content": {
-        "fields": [{
-            "placeholder": "string"
-        },{
-            "placeholder": "string"
-        },{
-            "placeholder": "string"
-        }]
-    },
-    "action": {
-        "fields": [{
-            "output_variable": "string"
-        },{
-            "output_variable": "string"
-        },{
-            "output_variable": "string"
-        }]
+        "placeholder": "string"
     },
     "formatting": [{
         "content": "string",
-        "format": "string",
+        "format": "string"
     }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
 }
 ```
 
@@ -226,17 +239,15 @@ Outputs: 2018 Rosebery NSW
 {
     "type": "Dropdown",
     "content": {
-        "placeholder": "string",
-    },
-    "action": {
-        "output_variable": "string"
+        "placeholder": "string"
     },
     "formatting": [{
         "content": "string",
-        "format": "string",
+        "format": "string"
     }],
     "data": {
         "source": "string",
+        "destination": "string"
     }
 }
 ```
