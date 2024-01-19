@@ -108,7 +108,8 @@
 	},
 	"seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
 	"address": {
-		"street": "x",
+		"unit": "23-25",
+		"street": "Rosebery Avenue",
 		"city": "Rosebery",
 		"postcode": "2018",
 		"state": "NSW",
@@ -500,10 +501,8 @@
 		"type": "Address",
 		"content": {
 			"title": "Pickup location",
-			"line_1": "{item.address.street}",
-			"line_2":
-				"{item.address.zipcode} {item.address.city}, {item.address.state}",
-			"location": "{item.address.location}"
+			"line_1": "{formatAddressLine1(item.address)}",
+			"line_2": "{formatAddressLine2(item.address)}"
 		}
 	},
 	{
