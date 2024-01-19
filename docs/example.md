@@ -101,7 +101,7 @@
 		{
 			"id": d7b2efd7-3be6-49b7-9dad-0569c3ad4572"
 		}
-    ],
+	],
 	"price": {
 		"currency": "AUD",
 		"value": 250
