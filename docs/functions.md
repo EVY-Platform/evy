@@ -33,6 +33,12 @@ formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
 Variable: 1705651372
 Outputs: 19/01/2024
 ```
+**formatDuration**
+```
+formatDuration(_variable_type_number_)
+Variable: 900000
+Outputs: 15 minutes
+```
 **formatDimension**
 ```
 formatDimension(_variable_type_mm_) --> Depending on user config for metric or imperial
@@ -70,6 +76,7 @@ Outputs: 2018 Rosebery NSW
 These are the formatting functions that are built directly into clients and the server
 ```
 formatDate
+formatDuration
 formatDecimal
 formatMetricLength
 formatImperialLength

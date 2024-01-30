@@ -680,6 +680,20 @@
 	        "source": "",
 	        "destination": "{item.address}"
 	    }
+	},
+	{
+	    "type": "Wheel",
+	    "content": {
+			"value": "{formatDuration(timeslot_duration)}"
+	    },
+		"formatting": [{
+	        "content": "value",
+	        "format": "{formatDuration(timeslot_duration)}"
+	    }],
+	    "data": {
+	        "source": "{timeslot_durations}",
+	        "destination": "{timeslot_duration}"
+	    }
 	}
 ]
 ```
@@ -831,6 +845,20 @@ NB: An item would be attached along with the page which would include all the da
 	    "data": {
 	        "source": "",
 	        "destination": "{item.address}"
+	    }
+	},
+	{
+	    "type": "Wheel",
+	    "content": {
+			"value": "{15 minutes}"
+	    },
+		"formatting": [{
+	        "content": "value",
+	        "format": "{formatDuration(timeslot_duration)}"
+	    }],
+	    "data": {
+	        "source": "{timeslot_durations}",
+	        "destination": "{timeslot_duration}"
 	    }
 	}
 ]

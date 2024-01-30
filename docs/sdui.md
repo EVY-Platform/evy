@@ -242,3 +242,20 @@ See [types](./types.md) for custom types and definitions used below
     }
 }
 ```
+
+```
+{
+    "type": "Wheel",
+    "content": {
+        "value": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
