@@ -714,6 +714,35 @@
 			"source": "{item.transfer_option}",
 			"destination": "{item.transfer_option}"
 		}
+	},
+	{
+	    "type": "Search",
+	    "content": {
+	    	"title": "Address",
+			"value": "{formatAddress(item.address)}",
+	    	"placeholder": "Type address"
+	    },
+		"formatting": [{
+	        "content": "value",
+	        "format": "{formatAddress(item.address)}"
+	    }],
+	    "data": {
+	        "source": "{places_search}",
+	        "destination": "{item.address}"
+	    }
+	},
+	{
+	    "type": "SearchMulti",
+	    "content": {
+	    	"title": "Tags",
+			"values": "{item.tags[].value}",
+	    	"placeholder": "Outdoor, Furniture, etc"
+	    },
+		"formatting": [],
+	    "data": {
+	        "source": "",
+	        "destination": "{item.tags}"
+	    }
 	}
 ]
 ```
@@ -927,6 +956,35 @@ NB: An item would be attached along with the page which would include all the da
 			"source": "{item.transfer_option}",
 			"destination": "{item.transfer_option}"
 		}
+	},
+	{
+	    "type": "Search",
+	    "content": {
+	    	"title": "Address",
+			"value": "23-25 Rosebery Avenue, 2018 NSW",
+	    	"placeholder": "Type address"
+	    },
+		"formatting": [{
+	        "content": "value",
+	        "format": "{formatAddress(item.address)}"
+	    }],
+	    "data": {
+	        "source": "{places_search}",
+	        "destination": "{item.address}"
+	    }
+	},
+	{
+	    "type": "SearchMulti",
+	    "content": {
+	    	"title": "Tags",
+			"values": "Furniture, Chair",
+	    	"placeholder": "Outdoor, Furniture, etc"
+	    },
+		"formatting": [],
+	    "data": {
+	        "source": "",
+	        "destination": "{item.tags}"
+	    }
 	}
 ]
 ```

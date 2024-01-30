@@ -231,6 +231,44 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
 
 ```
 {
+    "type": "Search",
+    "content": {
+        "title": "string",
+        "value": "string",
+        "placeholder": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "SearchMulti",
+    "content": {
+        "title": "string",
+        "values": "string[]",
+        "placeholder": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
     "type": "AddressInput",
     "content": {
         "title": "string",
