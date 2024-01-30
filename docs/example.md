@@ -679,7 +679,11 @@
 	    "data": {
 	        "source": "",
 	        "destination": "{item.address}"
-	    }
+	    },
+		"fading_placeholder": {
+			"value": "Enter an address for pickup",
+			"condition": "{item.address}"
+		}
 	},
 	{
 	    "type": "Wheel",
@@ -845,7 +849,11 @@ NB: An item would be attached along with the page which would include all the da
 	    "data": {
 	        "source": "",
 	        "destination": "{item.address}"
-	    }
+	    },
+		"fading_placeholder": {
+			"value": "Enter an address for pickup",
+			"condition": "{item.address}"
+		}
 	},
 	{
 	    "type": "Wheel",

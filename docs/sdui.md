@@ -11,9 +11,14 @@ See [types](./types.md) for custom types and definitions used below
 ```
 {
 	type: "string",
-	content: "object"
+	content: "object",
+    "fading_placeholder": {
+        "value": "string",
+        "condition": "string"
+    }
 }
 ```
+NB: Fading placeholder is a special prop that shows a placeholder text on a row instead of it's content, until a condition is met  
 
 ### Display Rows
 
