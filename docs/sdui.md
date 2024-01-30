@@ -150,12 +150,58 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "ColumnContainer",
     "content": {
-        children: "ROW[]"
+        "title": "string",
+        "children": "ROW[]"
     }
 }
 ```
 
 ### Editable rows
+
+```
+{
+    "type": "Info",
+    "content": {
+        "title": "string"
+    }
+}
+```
+
+```
+{
+    "type": "Input",
+    "content": {
+        "title": "string",
+        "placeholder": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "AddressInput",
+    "content": {
+        "title": "string",
+        "action_title": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
 
 ```
 {
@@ -166,23 +212,6 @@ See [types](./types.md) for custom types and definitions used below
         "content": "string"
     },
     "formatting": [],
-    "data": {
-        "source": "string",
-        "destination": "string"
-    }
-}
-```
-
-```
-{
-    "type": "TextInput",
-    "content": {
-        "placeholder": "string"
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
     "data": {
         "source": "string",
         "destination": "string"

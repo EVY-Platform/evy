@@ -550,9 +550,10 @@
 	    }
 	},
 	{
-	    "type": "TextInput",
+	    "type": "Input",
 	    "content": {
-	    	"placeholder": "Title"
+	    	"title": "Title",
+	    	"placeholder": "My iPhone 20"
 	    },
 	    "formatting": [],
 	    "data": {
@@ -561,9 +562,10 @@
 	    }
 	},
 	{
-	    "type": "TextInput",
+	    "type": "Input",
 	    "content": {
-	    	"placeholder": "Price"
+	    	"title": "Price",
+	    	"placeholder": "$20.00"
 	    },
 	    "formatting": [{
 	        "content": "placeholder",
@@ -604,11 +606,13 @@
 	},
 	{
 	    "type": "ColumnContainer",
+		"title": "Dimensions",
 	    "content": {
 	    	children: [
 	    		{
-				    "type": "TextInput",
+				    "type": "Input",
 				    "content": {
+						"title": "",
 				    	"placeholder": "Width"
 				    },
 				    "formatting": [{
@@ -621,8 +625,9 @@
 				    }
 				},
 	    		{
-				    "type": "TextInput",
+				    "type": "Input",
 				    "content": {
+						"title": "",
 				    	"placeholder": "Height"
 				    },
 				    "formatting": [{
@@ -635,8 +640,9 @@
 				    }
 				},
 	    		{
-				    "type": "TextInput",
+				    "type": "Input",
 				    "content": {
+						"title": "",
 				    	"placeholder": "Length"
 				    },
 				    "formatting": [{
@@ -672,9 +678,10 @@ NB: An item would be attached along with the page which would include all the da
 	    }
 	},
 	{
-	    "type": "TextInput",
+	    "type": "Input",
 	    "content": {
-	    	"placeholder": "Title"
+        	"title": "Title",
+	    	"placeholder": "My iPhone 20"
 	    },
 	    "formatting": [],
 	    "data": {
@@ -683,9 +690,10 @@ NB: An item would be attached along with the page which would include all the da
 	    }
 	},
 	{
-	    "type": "TextInput",
+	    "type": "Input",
 	    "content": {
-	    	"placeholder": "Price"
+        	"title": "Price",
+	    	"placeholder": "$20.00"
 	    },
 	    "formatting": [{
 	        "content": "placeholder",
@@ -727,11 +735,13 @@ NB: An item would be attached along with the page which would include all the da
 	{
 	    "type": "ColumnContainer",
 	    "content": {
+			"title": "Dimensions",
 	    	children: [
 	    		{
-				    "type": "TextInput",
+				    "type": "Input",
 				    "content": {
-				    	"placeholder": "Width"
+						"title": "",
+						"placeholder": "Width"
 				    },
 				    "formatting": [{
 				        "content": "placeholder",
@@ -743,8 +753,9 @@ NB: An item would be attached along with the page which would include all the da
 				    }
 				},
 	    		{
-				    "type": "TextInput",
+				    "type": "Input",
 				    "content": {
+						"title": "",
 				    	"placeholder": "Height"
 				    },
 				    "formatting": [{
@@ -757,8 +768,9 @@ NB: An item would be attached along with the page which would include all the da
 				    }
 				},
 	    		{
-				    "type": "TextInput",
+				    "type": "Input",
 				    "content": {
+						"title": "",
 				    	"placeholder": "Length"
 				    },
 				    "formatting": [{
