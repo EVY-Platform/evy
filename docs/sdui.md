@@ -227,7 +227,7 @@ See [types](./types.md) for custom types and definitions used below
 
 ```
 {
-    "type": "Dropdown",
+    "type": "Select",
     "content": {
         "placeholder": "string",
         "value": "string"

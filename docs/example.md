@@ -580,7 +580,7 @@
 	    }
 	},
 	{
-	    "type": "Dropdown",
+	    "type": "Select",
 	    "content": {
 	        "placeholder": "Condition",
 			"value": "item.condition.value"
@@ -595,7 +595,7 @@
 	    }
 	},
 	{
-	    "type": "Dropdown",
+	    "type": "Select",
 	    "content": {
 	        "placeholder": "Selling reason",
 			"value": "{item.selling_reason.value}"
@@ -735,7 +735,7 @@ NB: An item would be attached along with the page which would include all the da
 	    }
 	},
 	{
-	    "type": "Dropdown",
+	    "type": "Select",
 	    "content": {
 	        "placeholder": "Condition",
 			"value": "Used - Like New"
@@ -750,7 +750,7 @@ NB: An item would be attached along with the page which would include all the da
 	    }
 	},
 	{
-	    "type": "Dropdown",
+	    "type": "Select",
 	    "content": {
 	        "placeholder": "Selling reason",
 			"value": "No longer used"
