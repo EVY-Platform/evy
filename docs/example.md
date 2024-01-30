@@ -545,7 +545,7 @@
 	    },
 	    "formatting": [],
 	    "data": {
-	        "source": "{item.photos}"
+	        "source": ""
 	        "destination": "{item.photos}"
 	    }
 	},
@@ -556,7 +556,7 @@
 	    },
 	    "formatting": [],
 	    "data": {
-	        "source": "{item.title}",
+	        "source": "",
 	        "destination": "{item.title}"
 	    }
 	},
@@ -570,7 +570,7 @@
 	        "format": "{formatCurrency(item.price)}"
 	    }],
 	    "data": {
-	        "source": "{item.price}",
+	        "source": "",
 	        "destination": "{item.price}"
 	    }
 	},
@@ -616,7 +616,7 @@
 				        "format": "{formatDimension(item.dimension.width)}"
 				    }],
 				    "data": {
-				    	"source": "{item.dimension.width}",
+				    	"source": "",
 				    	"destination": "{item.dimension.width}"
 				    }
 				},
@@ -630,7 +630,7 @@
 				        "format": "{formatDimension(item.dimension.height)}"
 				    }],
 				    "data": {
-				    	"source": "{item.dimension.height}",
+				    	"source": "",
 				    	"destination": "{item.dimension.height}"
 				    }
 				},
@@ -644,7 +644,7 @@
 				        "format": "{formatDimension(item.dimension.length)}"
 				    }],
 				    "data": {
-				    	"source": "{item.dimension.length}",
+				    	"source": "",
 				    	"destination": "{item.dimension.length}"
 				    }
 				},
@@ -667,7 +667,7 @@ NB: An item would be attached along with the page which would include all the da
 	    },
 	    "formatting": [],
 	    "data": {
-	        "source": "{item.photos}"
+	        "source": ""
 	        "destination": "{item.photos}"
 	    }
 	},
@@ -678,7 +678,7 @@ NB: An item would be attached along with the page which would include all the da
 	    },
 	    "formatting": [],
 	    "data": {
-	        "source": "{item.title}",
+	        "source": "",
 	        "destination": "{item.title}"
 	    }
 	},
@@ -692,7 +692,7 @@ NB: An item would be attached along with the page which would include all the da
 	        "format": "{formatCurrency(item.price)}"
 	    }],
 	    "data": {
-	        "source": "{item.price}",
+	        "source": "",
 	        "destination": "{item.price}"
 	    }
 	},
@@ -738,7 +738,7 @@ NB: An item would be attached along with the page which would include all the da
 				        "format": "{formatDimension(item.dimension.width)}"
 				    }],
 				    "data": {
-				    	"source": "{item.dimension.width}",
+				    	"source": "",
 				    	"destination": "{item.dimension.width}"
 				    }
 				},
@@ -752,7 +752,7 @@ NB: An item would be attached along with the page which would include all the da
 				        "format": "{formatDimension(item.dimension.height)}"
 				    }],
 				    "data": {
-				    	"source": "{item.dimension.height}",
+				    	"source": "",
 				    	"destination": "{item.dimension.height}"
 				    }
 				},
@@ -766,7 +766,7 @@ NB: An item would be attached along with the page which would include all the da
 				        "format": "{formatDimension(item.dimension.length)}"
 				    }],
 				    "data": {
-				    	"source": "{item.dimension.length}",
+				    	"source": "",
 				    	"destination": "{item.dimension.length}"
 				    }
 				},
