@@ -62,7 +62,10 @@ Base model that all data models inherit from:
 #### timeslot
 ```
 {
-    "timeslot": "string"
+    "start_timestamp": "string",
+    "end_timestamp": "string",
+    "available": "boolean",
+    "type": "string"
 }
 ```
 

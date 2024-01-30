@@ -15,7 +15,12 @@ See [types](./types.md) for custom types and definitions used below
     "fading_placeholder": {
         "value": "string",
         "condition": "string"
+    },
+    "data": {
+        "source": "string",
+        "destination": "string"
     }
+
 }
 ```
 NB: Fading placeholder is a special prop that shows a placeholder text on a row instead of it's content, until a condition is met  
@@ -56,12 +61,45 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
                 "date": "string",
                 "timeslots": [
                     {
-                        "timeslot": "string",
+                        "timestamp": "string",
                         "available": "boolean"
                     }
                 ]
             }
         ]
+    },
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "Calendar",
+    "content": {
+        "dates_with_timeslots": [
+            {
+                "header": "string",
+                "date": "string",
+                "timeslots": [
+                    {
+                        "start_timestamp": "string",
+                        "end_timestamp": "string",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
     }
 }
 ```

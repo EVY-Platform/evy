@@ -124,13 +124,19 @@
 		"pickup": {
 			"timeslots": [
 				{
-					"timeslot": "1700894934"
+					"start_timestamp": "1700894934",
+					"end_timestamp": "1700895934",
+					"available": true
 				},
 				{
-					"timeslot": "17008944234"
+					"start_timestamp": "1700894934",
+					"end_timestamp": "1700895934",
+					"available": false
 				},
 				{
-					"timeslot": "1800894934"
+					"start_timestamp": "1700894934",
+					"end_timestamp": "1700895934",
+					"available": true
 				}
 			]
 		},
@@ -141,13 +147,9 @@
 			},
 			"timeslots": [
 				{
-					"timeslot": "1700894934"
-				},
-				{
-					"timeslot": "17008944234"
-				},
-				{
-					"timeslot": "1800894934"
+					"start_timestamp": "1700894934",
+					"end_timestamp": "1700895934",
+					"available": true
 				}
 			]
 		},
@@ -403,29 +405,35 @@
 				{
 					"title": "Pickup",
 					"enabled":
-						"{item.transfer_option.pickup && item.transfer_option.pickup.dates_with_timeslots.length > 0}",
+						"{count(item.transfer_option.pickup && item.transfer_option.pickup.dates_with_timeslots) > 0}",
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
 							"icon": "_image_id_",
 							"details": "",
-							"subtitle": "Meet at the pickup location",
-							"timeslots": "{item.transfer_option.pickup.dates_with_timeslots}",
+							"subtitle": "Meet at the pickup location"
 						},
+						"data": {
+							"source": "{item.transfer_option.pickup.timeslots}",
+							"destination": ""
+						}
 					}
 				},
 				{
 					"title": "Deliver",
 					"enabled":
-						"{item.transfer_option.delivery && item.transfer_option.delivery.dates_with_timeslots.length > 0}",
+						"{count(item.transfer_option.delivery && item.transfer_option.delivery.dates_with_timeslots) > 0}",
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
 							"icon": "_image_id_",
 							"details": "+ formatCurrency(item.transfer_option.delivery.fee)",
-							"subtitle": "Delivered at your door",
-							"timeslots": "{item.transfer_option.delivery.dates_with_timeslots}",
+							"subtitle": "Delivered at your door"
 						},
+						"data": {
+							"source": "{item.transfer_option.delivery.timeslots}",
+							"destination": ""
+						}
 					}
 				},
 				{
@@ -698,6 +706,14 @@
 	        "source": "{timeslot_durations}",
 	        "destination": "{timeslot_duration}"
 	    }
+	},
+	{
+		"type": "Calendar",
+		"content": {},
+		"data": {
+			"source": "{item.transfer_option}",
+			"destination": "{item.transfer_option}"
+		}
 	}
 ]
 ```
@@ -868,6 +884,49 @@ NB: An item would be attached along with the page which would include all the da
 	        "source": "{timeslot_durations}",
 	        "destination": "{timeslot_duration}"
 	    }
+	},
+	{
+		"type": "Calendar",
+		"content": {
+			"dates_with_timeslots": [
+				{
+					"header": "Wed",
+					"date": "8 nov.",
+					"timeslots": [
+						{
+							"start_timestamp": "1700894934",
+							"end_timestamp": "1700895934",
+							"type": "pickup"
+						},
+						{
+							"start_timestamp": "1700895934",
+							"end_timestamp": "1700896934",
+							"type": "delivery"
+						},
+						{
+							"start_timestamp": "1700884934",
+							"end_timestamp": "1700899934",
+							"type": "pickup"
+						}
+					]
+				},
+				{
+					"header": "Thu",
+					"date": "9 nov.",
+					"timeslots": [
+						{
+							"start_timestamp": "1700894934",
+							"end_timestamp": "1700895934",
+							"type": "pickup"
+						}
+					]
+				}
+			]
+		},
+		"data": {
+			"source": "{item.transfer_option}",
+			"destination": "{item.transfer_option}"
+		}
 	}
 ]
 ```
