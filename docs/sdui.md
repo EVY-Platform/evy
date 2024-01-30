@@ -172,6 +172,7 @@ See [types](./types.md) for custom types and definitions used below
     "type": "Input",
     "content": {
         "title": "string",
+        "value": "string",
         "placeholder": "string"
     },
     "formatting": [{
@@ -190,6 +191,7 @@ See [types](./types.md) for custom types and definitions used below
     "type": "AddressInput",
     "content": {
         "title": "string",
+        "value": "string",
         "action_title": "string"
     },
     "formatting": [{
@@ -209,9 +211,13 @@ See [types](./types.md) for custom types and definitions used below
     "content": {
         "icon": "string",
         "subtitle": "string",
-        "content": "string"
+        "content": "string",
+        "image_ids": "string",
     },
-    "formatting": [],
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
     "data": {
         "source": "string",
         "destination": "string"
@@ -223,7 +229,8 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "Dropdown",
     "content": {
-        "placeholder": "string"
+        "placeholder": "string",
+        "value": "string"
     },
     "formatting": [{
         "content": "string",

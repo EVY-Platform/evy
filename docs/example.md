@@ -541,11 +541,12 @@
 	    "content": {
 	        "icon": "::image_upload::",
 	        "subtitle": "Add photos",
-	        "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first."
+	        "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
+			"image_ids": "{item.photos[].id}"
 	    },
-	    "formatting": [],
+		"formatting": [],
 	    "data": {
-	        "source": ""
+	        "source": "",
 	        "destination": "{item.photos}"
 	    }
 	},
@@ -553,9 +554,10 @@
 	    "type": "Input",
 	    "content": {
 	    	"title": "Title",
+			"value": "{item.title}",
 	    	"placeholder": "My iPhone 20"
 	    },
-	    "formatting": [],
+		"formatting": [],
 	    "data": {
 	        "source": "",
 	        "destination": "{item.title}"
@@ -565,12 +567,13 @@
 	    "type": "Input",
 	    "content": {
 	    	"title": "Price",
+			"value": "{formatCurrency(item.price)}",
 	    	"placeholder": "$20.00"
 	    },
-	    "formatting": [{
-	        "content": "placeholder",
-	        "format": "{formatCurrency(item.price)}"
-	    }],
+		"formatting": [{
+			"content": "value",
+			"format": "{formatCurrency(item.price)}"
+		}],
 	    "data": {
 	        "source": "",
 	        "destination": "{item.price}"
@@ -579,9 +582,10 @@
 	{
 	    "type": "Dropdown",
 	    "content": {
-	        "placeholder": "Condition"
+	        "placeholder": "Condition",
+			"value": "item.condition.value"
 	    },
-	    "formatting": [{
+		"formatting": [{
 	        "content": "placeholder",
 	        "format": "{item.condition.value}"
 	    }],
@@ -593,9 +597,10 @@
 	{
 	    "type": "Dropdown",
 	    "content": {
-	        "placeholder": "Selling reason"
+	        "placeholder": "Selling reason",
+			"value": "{item.selling_reason.value}"
 	    },
-	    "formatting": [{
+		"formatting": [{
 	        "content": "placeholder",
 	        "format": "{item.selling_reason.value}"
 	    }],
@@ -608,14 +613,15 @@
 	    "type": "ColumnContainer",
 		"title": "Dimensions",
 	    "content": {
-	    	children: [
+	    	"children": [
 	    		{
 				    "type": "Input",
 				    "content": {
 						"title": "",
-				    	"placeholder": "Width"
+				    	"placeholder": "Width",
+						"value": "{formatDimension(item.dimension.width)}"
 				    },
-				    "formatting": [{
+					"formatting": [{
 				        "content": "placeholder",
 				        "format": "{formatDimension(item.dimension.width)}"
 				    }],
@@ -628,9 +634,10 @@
 				    "type": "Input",
 				    "content": {
 						"title": "",
-				    	"placeholder": "Height"
+				    	"placeholder": "Height",
+						"value": "{formatDimension(item.dimension.height)}"
 				    },
-				    "formatting": [{
+					"formatting": [{
 				        "content": "placeholder",
 				        "format": "{formatDimension(item.dimension.height)}"
 				    }],
@@ -643,9 +650,10 @@
 				    "type": "Input",
 				    "content": {
 						"title": "",
-				    	"placeholder": "Length"
+				    	"placeholder": "Length",
+						"value": "{formatDimension(item.dimension.length)}"
 				    },
-				    "formatting": [{
+					"formatting": [{
 				        "content": "placeholder",
 				        "format": "{formatDimension(item.dimension.length)}"
 				    }],
@@ -653,10 +661,26 @@
 				    	"source": "",
 				    	"destination": "{item.dimension.length}"
 				    }
-				},
+				}
 	    	]
-	    },
+	    }
 	},
+	{
+	    "type": "AddressInput",
+	    "content": {
+	    	"title": "Where",
+			"value": "{formatAddress(item.address)}",
+	    	"action_title": "Change"
+	    },
+		"formatting": [{
+	        "content": "value",
+	        "format": "{formatAddress(item.address)}"
+	    }],
+	    "data": {
+	        "source": "",
+	        "destination": "{item.address}"
+	    }
+	}
 ]
 ```
 
@@ -669,11 +693,12 @@ NB: An item would be attached along with the page which would include all the da
 	    "content": {
 	        "icon": "::image_upload::",
 	        "subtitle": "Add photos",
-	        "content": "Photos: 2/10 - Chose your listing’s main photo first."
+	        "content": "Photos: 2/10 - Chose your listing’s main photo first.",
+			"image_ids": ["_image_id_", "_image_id_"]
 	    },
-	    "formatting": [],
+		"formatting": [],
 	    "data": {
-	        "source": ""
+	        "source": "",
 	        "destination": "{item.photos}"
 	    }
 	},
@@ -681,9 +706,13 @@ NB: An item would be attached along with the page which would include all the da
 	    "type": "Input",
 	    "content": {
         	"title": "Title",
-	    	"placeholder": "My iPhone 20"
+	    	"placeholder": "My iPhone 20",
+			"value": "Best fridge"
 	    },
-	    "formatting": [],
+		"formatting": [{
+	        "content": "placeholder",
+	        "format": "{formatCurrency(item.price)}"
+	    }],
 	    "data": {
 	        "source": "",
 	        "destination": "{item.title}"
@@ -693,11 +722,12 @@ NB: An item would be attached along with the page which would include all the da
 	    "type": "Input",
 	    "content": {
         	"title": "Price",
-	    	"placeholder": "$20.00"
+	    	"placeholder": "$20.00",
+			"value": "$15.00"
 	    },
-	    "formatting": [{
+		"formatting": [{
 	        "content": "placeholder",
-	        "format": "{formatCurrency(item.price)}"
+	        "format": "{item.condition.value}"
 	    }],
 	    "data": {
 	        "source": "",
@@ -707,11 +737,12 @@ NB: An item would be attached along with the page which would include all the da
 	{
 	    "type": "Dropdown",
 	    "content": {
-	        "placeholder": "Condition"
+	        "placeholder": "Condition",
+			"value": "Used - Like New"
 	    },
-	    "formatting": [{
+		"formatting": [{
 	        "content": "placeholder",
-	        "format": "{item.condition.value}"
+	        "format": "{item.selling_reason.value}"
 	    }],
 	    "data": {
 	        "source": "{conditions}",
@@ -721,12 +752,10 @@ NB: An item would be attached along with the page which would include all the da
 	{
 	    "type": "Dropdown",
 	    "content": {
-	        "placeholder": "Selling reason"
+	        "placeholder": "Selling reason",
+			"value": "No longer used"
 	    },
-	    "formatting": [{
-	        "content": "placeholder",
-	        "format": "{item.selling_reason.value}"
-	    }],
+		"formatting": [],
 	    "data": {
 	        "source": "{selling_reasons}",
 	        "destination": "{item.selling_reason}"
@@ -736,14 +765,15 @@ NB: An item would be attached along with the page which would include all the da
 	    "type": "ColumnContainer",
 	    "content": {
 			"title": "Dimensions",
-	    	children: [
+	    	"children": [
 	    		{
 				    "type": "Input",
 				    "content": {
 						"title": "",
-						"placeholder": "Width"
+						"placeholder": "Width",
+						"value": "5"
 				    },
-				    "formatting": [{
+					"formatting": [{
 				        "content": "placeholder",
 				        "format": "{formatDimension(item.dimension.width)}"
 				    }],
@@ -756,9 +786,10 @@ NB: An item would be attached along with the page which would include all the da
 				    "type": "Input",
 				    "content": {
 						"title": "",
-				    	"placeholder": "Height"
+				    	"placeholder": "Height",
+						"value": "10"
 				    },
-				    "formatting": [{
+					"formatting": [{
 				        "content": "placeholder",
 				        "format": "{formatDimension(item.dimension.height)}"
 				    }],
@@ -771,9 +802,10 @@ NB: An item would be attached along with the page which would include all the da
 				    "type": "Input",
 				    "content": {
 						"title": "",
-				    	"placeholder": "Length"
+				    	"placeholder": "Length",
+						"value": "20"
 				    },
-				    "formatting": [{
+					"formatting": [{
 				        "content": "placeholder",
 				        "format": "{formatDimension(item.dimension.length)}"
 				    }],
@@ -781,9 +813,25 @@ NB: An item would be attached along with the page which would include all the da
 				    	"source": "",
 				    	"destination": "{item.dimension.length}"
 				    }
-				},
+				}
 	    	]
-	    },
+	    }
 	},
+	{
+	    "type": "AddressInput",
+	    "content": {
+	    	"title": "Where",
+			"value": "23-25 Rosebery Avenue, 2018 NSW}",
+	    	"action_title": "Change"
+	    },
+		"formatting": [{
+	        "content": "value",
+	        "format": "{formatAddress(item.address)}"
+	    }],
+	    "data": {
+	        "source": "",
+	        "destination": "{item.address}"
+	    }
+	}
 ]
 ```
