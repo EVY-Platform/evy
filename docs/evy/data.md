@@ -1,4 +1,4 @@
-# Data motels
+# Data models
 
 See [types](./types.md) for custom types and definitions used below  
 Base model that all data models inherit from:
@@ -57,15 +57,6 @@ Base model that all data models inherit from:
 }
 ```
 
-## Marketplace
-
-#### timeslot
-```
-{
-    "timeslot": "string"
-}
-```
-
 #### location
 
 ```
@@ -98,71 +89,7 @@ Base model that all data models inherit from:
 }
 ```
 
-#### seller
-
-```
-{
-    "reliability_rate": "float",
-    "items_sold": "int"
-}
-```
-
-#### transfer_provider
-
-```
-{
-    "name": "string",
-    "logo_id": "uuid",
-    "eta": "string",
-    "fee": "price"
-}
-```
-
-#### transfer_option
-
-```
-{
-    "pickup: {
-        "timeslots": "timeslot[]"
-    },
-    "delivery": {
-        fee": "price",
-        "timeslots": "timeslot[]"
-    },
-    "ship": {
-        "cost": "price",
-        "transfer_provider_id": "uuid"
-    }
-}
-```
-
 #### tag
-
-```
-{
-    "value": "string"
-}
-```
-
-#### dimension
-
-```
-{
-    "width": "int",
-    "height": "int",
-    "length": "int",
-}
-```
-
-#### condition
-
-```
-{
-    "value": "string"
-}
-```
-
-#### selling_reason
 
 ```
 {
@@ -187,27 +114,5 @@ Base model that all data models inherit from:
 ```
 {
     "name": "string"
-}
-```
-
-#### item
-
-```
-{
-    "title": "string",
-    "description": "string",
-
-    "seller_id": "uuid",
-    "condition_id": "uuid",
-    "selling_reason_id": "uuid",
-
-    "tag_ids": "uuid[]",
-    "payment_method_ids": "uuid[]",
-
-    "photos": "photo[]",
-    "address": "address",
-    "price": "price",
-    "dimension": "dimension",
-    "transfer_option": "transfer_option"
 }
 ```

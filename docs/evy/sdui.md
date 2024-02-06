@@ -11,9 +11,19 @@ See [types](./types.md) for custom types and definitions used below
 ```
 {
 	type: "string",
-	content: "object"
+	content: "object",
+    "fading_placeholder": {
+        "value": "string",
+        "condition": "string"
+    },
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+
 }
 ```
+NB: Fading placeholder is a special prop that shows a placeholder text on a row instead of it's content, until a condition is met  
 
 ### Display Rows
 
@@ -51,12 +61,45 @@ See [types](./types.md) for custom types and definitions used below
                 "date": "string",
                 "timeslots": [
                     {
-                        "timeslot": "string",
+                        "timestamp": "string",
                         "available": "boolean"
                     }
                 ]
             }
         ]
+    },
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "Calendar",
+    "content": {
+        "dates_with_timeslots": [
+            {
+                "header": "string",
+                "date": "string",
+                "timeslots": [
+                    {
+                        "start_timestamp": "string",
+                        "end_timestamp": "string",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
     }
 }
 ```
@@ -150,7 +193,8 @@ See [types](./types.md) for custom types and definitions used below
 {
     "type": "ColumnContainer",
     "content": {
-        children: "ROW[]"
+        "title": "string",
+        "children": "ROW[]"
     }
 }
 ```
@@ -159,24 +203,19 @@ See [types](./types.md) for custom types and definitions used below
 
 ```
 {
-    "type": "PhotoUpload",
+    "type": "Info",
     "content": {
-        "icon": "string",
-        "subtitle": "string",
-        "content": "string"
-    },
-    "formatting": [],
-    "data": {
-        "source": "string",
-        "destination": "string"
+        "title": "string"
     }
 }
 ```
 
 ```
 {
-    "type": "TextInput",
+    "type": "Input",
     "content": {
+        "title": "string",
+        "value": "string",
         "placeholder": "string"
     },
     "formatting": [{
@@ -192,9 +231,104 @@ See [types](./types.md) for custom types and definitions used below
 
 ```
 {
-    "type": "Dropdown",
+    "type": "Search",
     "content": {
+        "title": "string",
+        "value": "string",
         "placeholder": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "SearchMulti",
+    "content": {
+        "title": "string",
+        "values": "string[]",
+        "placeholder": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "AddressInput",
+    "content": {
+        "title": "string",
+        "value": "string",
+        "action_title": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "PhotoUpload",
+    "content": {
+        "icon": "string",
+        "subtitle": "string",
+        "content": "string",
+        "image_ids": "string",
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "Select",
+    "content": {
+        "placeholder": "string",
+        "value": "string"
+    },
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }],
+    "data": {
+        "source": "string",
+        "destination": "string"
+    }
+}
+```
+
+```
+{
+    "type": "Wheel",
+    "content": {
+        "value": "string"
     },
     "formatting": [{
         "content": "string",

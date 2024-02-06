@@ -1,14 +1,14 @@
-# frodo Docs
+# EVY Docs
 
-The following docs are available:
+### Docs
+Documentation is available at the global EVY level as well as per services provided on the platform
 
--   [Data models Docs](./data.md)
--   [Type definitions Docs](./types.md)
--   [Server Driven UI Docs](./sdui.md)
--   [Functions Docs](./functions.md)
--   [Example data for view item page](./example.md)
-
-All strings can include:
--   **variables** surrounded with curley braces: "Hello {name}, how are you?"
--   **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
--   **emojis** prefixed with a colon: "I like :dog a lot"
+* EVY
+    * [Types Docs](./evy/types.md)
+    * [Data models Docs](./evy/data.md)
+    * [Functions Docs](./evy/functions.md)
+    * [Server Driven UI Docs](./evy/sdui.md)
+* Marketplace
+    * [Data models Docs](./services/marketplace/data.md)
+    * [Server Driven UI Docs](./services/marketplace/sdui.md)
+    * [Example data for view item page](./services/marketplace/example.md)

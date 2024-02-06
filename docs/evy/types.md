@@ -1,7 +1,12 @@
-# Type definitions
+# Data types
+
+### Strings for SDUI
+All strings can include:
+-   **variables** surrounded with curley braces: "Hello {name}, how are you?"
+-   **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
+-   **emojis** prefixed with a colon: "I like :dog a lot"
 
 ### Built in types used on EVY
-
 ```
 uuid
 string
