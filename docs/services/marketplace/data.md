@@ -1,7 +1,6 @@
 # Data models
 
 #### seller
-
 ```
 {
     "reliability_rate": "float",
@@ -10,7 +9,6 @@
 ```
 
 #### transfer_provider
-
 ```
 {
     "name": "string",
@@ -21,7 +19,6 @@
 ```
 
 #### transfer_option
-
 ```
 {
     "pickup: {
@@ -39,7 +36,6 @@
 ```
 
 #### dimension
-
 ```
 {
     "width": "int",
@@ -49,7 +45,6 @@
 ```
 
 #### condition
-
 ```
 {
     "value": "string"
@@ -57,7 +52,6 @@
 ```
 
 #### selling_reason
-
 ```
 {
     "value": "string"
@@ -65,7 +59,6 @@
 ```
 
 #### item
-
 ```
 {
     "title": "string",

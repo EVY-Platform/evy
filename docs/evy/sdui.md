@@ -8,27 +8,49 @@
     * **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
     * **emojis** prefixed with a colon: "I like :dog a lot"
 
-### Base schema template:
-
+### Base schema that all rows inherit from:
 ```
 {
+    // The type of row that it is, see below
 	type: "string",
-	content: "object",
+
+    // Each key/value pair represents a line of content shown on a row
+    // the key is the name, the value is what the content is or where it's from
+	content: {
+        "label": "value"
+    }
+
+    // Special prop that defines a placeholder text shown on a row instead
+    // of it's content, which disapears/fades out when a condition is met
     "fading_placeholder": {
         "value": "string",
         "condition": "string"
     },
-    "data": {
-        "source": "string",
-        "destination": "string"
-    }
+
+    // Format certain content props on user input
+    "formatting": [{
+        "content": "string",
+        "format": "string"
+    }]
+
+    // Where the input data get sent for storage
+    "destination": "string"
 
 }
 ```
-NB: Fading placeholder is a special prop that shows a placeholder text on a row instead of it's content, until a condition is met  
+
+### Container rows
+```
+{
+    "type": "ColumnContainer",
+    "content": {
+        "title": "string",
+        "children": "ROW[]"
+    }
+}
+```
 
 ### Display Rows
-
 ```
 {
     "type": "Carousel",
@@ -37,7 +59,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "Title",
@@ -49,7 +70,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "TimeslotPicker",
@@ -69,14 +89,9 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
                 ]
             }
         ]
-    },
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
-
 ```
 {
     "type": "Calendar",
@@ -94,18 +109,9 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
                 ]
             }
         ]
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
-
 ```
 {
     "type": "Text",
@@ -116,7 +122,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "Detail",
@@ -128,7 +133,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "Disclaimer",
@@ -139,7 +143,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "Address",
@@ -151,7 +154,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "PaymentOptions",
@@ -166,7 +168,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "SegmentedControl",
@@ -180,7 +181,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "ContainerList",
@@ -190,19 +190,7 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
 }
 ```
 
-### Container rows
-```
-{
-    "type": "ColumnContainer",
-    "content": {
-        "title": "string",
-        "children": "ROW[]"
-    }
-}
-```
-
 ### Editable rows
-
 ```
 {
     "type": "Info",
@@ -211,7 +199,6 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
     }
 }
 ```
-
 ```
 {
     "type": "Input",
@@ -219,18 +206,9 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
         "title": "string",
         "value": "string",
         "placeholder": "string"
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
-
 ```
 {
     "type": "Search",
@@ -238,18 +216,9 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
         "title": "string",
         "value": "string",
         "placeholder": "string"
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
-
 ```
 {
     "type": "SearchMulti",
@@ -257,18 +226,9 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
         "title": "string",
         "values": "string[]",
         "placeholder": "string"
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
-
 ```
 {
     "type": "AddressInput",
@@ -276,18 +236,9 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
         "title": "string",
         "value": "string",
         "action_title": "string"
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
-
 ```
 {
     "type": "PhotoUpload",
@@ -296,49 +247,23 @@ NB: Fading placeholder is a special prop that shows a placeholder text on a row 
         "subtitle": "string",
         "content": "string",
         "image_ids": "string",
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
-
 ```
 {
     "type": "Select",
     "content": {
         "placeholder": "string",
         "value": "string"
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
-
 ```
 {
     "type": "Wheel",
     "content": {
         "value": "string"
-    },
-    "formatting": [{
-        "content": "string",
-        "format": "string"
-    }],
-    "data": {
-        "source": "string",
-        "destination": "string"
     }
 }
 ```
