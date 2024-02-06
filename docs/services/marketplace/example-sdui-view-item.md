@@ -1,4 +1,4 @@
-# SDUI example for create item page
+# SDUI example for view item page
 
 ### In the database
 ```
