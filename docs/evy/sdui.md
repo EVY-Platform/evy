@@ -1,10 +1,12 @@
 # SDUI Rows
 
-See [types](./types.md) for custom types and definitions used below
-
-### Missing or empty values
-- Empty strings will be displayed as empty strings (they will NOT be ignored, but will essentially not be visible to the user)
-- Missing keys will not be allowed (all keys/properties of a row are required)
+### Base rules
+* Empty strings will be displayed and will NOT be ignored, but will essentially not be visible to the user
+* Missing keys will not be allowed, all keys/properties of a row are required)
+* All strings can include:
+    * **variables** surrounded with curley braces: "Hello {name}, how are you?"
+    * **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
+    * **emojis** prefixed with a colon: "I like :dog a lot"
 
 ### Base schema template:
 
