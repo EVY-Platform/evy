@@ -4,6 +4,7 @@ One platform to rule them all - Plaform to enable Features as a Service
 
 -   [docs](/docs/README.md)
 -   [api](/api/README.md)
+-   [App builder](/app-builder/README.md)
 -   [iOS](/ios/README.md)
 -   [Android](/android/README.md)
 
