@@ -13,7 +13,7 @@ Variable: [image1, image2]
 Output: 2
 ```
 
-## Formatting funtions
+## Formatting functions
 These are functions that do 3 things:
 1. Decide on which mobile keyboard to show
 2. Format text from data

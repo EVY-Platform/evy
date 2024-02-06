@@ -1,8 +1,6 @@
 # Data models
 
-See [types](./types.md) for custom types and definitions used below  
-Base model that all data models inherit from:
-
+### Base model that all others inherit from:
 ```
 {
     "id": "uuid",
@@ -12,9 +10,7 @@ Base model that all data models inherit from:
 }
 ```
 
-## EVY
-
-#### device
+### device
 
 ```
 {
@@ -23,7 +19,7 @@ Base model that all data models inherit from:
 }
 ```
 
-#### organisation
+### organisation
 
 ```
 {
@@ -35,7 +31,7 @@ Base model that all data models inherit from:
 }
 ```
 
-#### service
+### service
 
 ```
 {
@@ -44,7 +40,7 @@ Base model that all data models inherit from:
 }
 ```
 
-#### service_provider
+### service_provider
 
 ```
 {
@@ -57,7 +53,7 @@ Base model that all data models inherit from:
 }
 ```
 
-#### location
+### location
 
 ```
 {
@@ -66,7 +62,7 @@ Base model that all data models inherit from:
 }
 ```
 
-#### address
+### address
 
 ```
 {
@@ -80,7 +76,7 @@ Base model that all data models inherit from:
 }
 ```
 
-#### price
+### price
 
 ```
 {
@@ -89,7 +85,7 @@ Base model that all data models inherit from:
 }
 ```
 
-#### tag
+### tag
 
 ```
 {
@@ -97,19 +93,19 @@ Base model that all data models inherit from:
 }
 ```
 
-#### photo
+### photo
 
 ```
 {}
 ```
 
-#### logo
+### logo
 
 ```
 {}
 ```
 
-#### payment_method
+### payment_method
 
 ```
 {
