@@ -92,7 +92,7 @@
                 "date": "string",
                 "timeslots": [
                     {
-                        "timestamp": "string",
+                        "timeslot": "string",
                         "available": "boolean"
                     }
                 ]
