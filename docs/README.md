@@ -10,5 +10,4 @@ Documentation is available at the global EVY level as well as per services provi
     * [Server Driven UI Docs](./evy/sdui.md)
 * Marketplace
     * [Data models Docs](./services/marketplace/data.md)
-    * [Server Driven UI Docs](./services/marketplace/sdui.md)
     * [Example data for view item page](./services/marketplace/example.md)
