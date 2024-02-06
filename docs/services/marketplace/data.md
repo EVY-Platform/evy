@@ -1,15 +1,5 @@
 # Data models
 
-#### timeslot
-```
-{
-    "start_timestamp": "string",
-    "end_timestamp": "string",
-    "available": "boolean",
-    "type": "string"
-}
-```
-
 #### seller
 
 ```
