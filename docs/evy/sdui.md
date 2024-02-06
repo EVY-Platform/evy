@@ -55,7 +55,16 @@
 {
     "type": "Carousel",
     "content": {
-        "image_ids": "string[]"
+        "child_rows": "ROW[]",
+        "child_data": "string"
+    }
+}
+```
+```
+{
+    "type": "Image",
+    "content": {
+        "image_id": "string"
     }
 }
 ```
