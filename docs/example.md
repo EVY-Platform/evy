@@ -405,7 +405,7 @@
 				{
 					"title": "Pickup",
 					"enabled":
-						"{count(item.transfer_option.pickup && item.transfer_option.pickup.dates_with_timeslots) > 0}",
+						"{item.transfer_option.pickup && count(item.transfer_option.pickup.dates_with_timeslots) > 0}",
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
@@ -422,7 +422,7 @@
 				{
 					"title": "Deliver",
 					"enabled":
-						"{count(item.transfer_option.delivery && item.transfer_option.delivery.dates_with_timeslots) > 0}",
+						"{item.transfer_option.delivery && count(item.transfer_option.delivery.dates_with_timeslots) > 0}",
 					"child": {
 						"type": "TimeslotPicker",
 						"content": {
