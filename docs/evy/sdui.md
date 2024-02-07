@@ -82,7 +82,7 @@
     "type": "Image",
     "view": {
         "content": {
-            "image_id": "string"
+            "photo": "photo"
         }
     }
 }
