@@ -69,6 +69,7 @@
     "type": "ContainerList", // Shows children in a list
     "view": {
         "content": {
+            "title": "string",
             "children": "[ROW]"
         }
     }
@@ -135,6 +136,18 @@
             "title_detail": "string",
             "subtitle_1": "string",
             "subtitle_2": "string"
+        }
+    }
+}
+```
+```
+{
+    "type": "TitleShort",
+    "view": {
+        "content": {
+            "icon": "string",
+            "title": "string",
+            "disclaimer": "string"
         }
     }
 }
@@ -208,21 +221,6 @@
             "line_1": "string",
             "line_2": "string",
             "location": "location"
-        }
-    }
-}
-```
-```
-{
-    "type": "PaymentOptions",
-    "view": {
-        "content": {
-            "title": "string",
-            "options": [{
-                "icon": "string",
-                "label": "string",
-                "disclaimer": "string"
-            }],
         }
     }
 }

@@ -107,6 +107,7 @@
 		"type": "ContainerList",
 		"view": {
 			"content": {
+				"title": "",
 				"children": [{
 					"type": "Detail",
 					"view": {
@@ -155,26 +156,39 @@
 		}
 	},
 	{
-		"type": "PaymentOptions",
+		"type": "ContainerList",
 		"view": {
 			"content": {
 				"title": "Payment methods accepted",
-				"options": [{
-					"icon": "_image_id_",
-					"label": "Card",
-					"disclaimer": "::lock:: Benefit from EVY buyer protection",
-					"enabled": "{item.payment_methods.find('card')}"
+				"children": [{
+					"type": "TitleShort",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Card",
+							"disclaimer": "::lock:: Benefit from EVY buyer protection"
+						}
+					}
 				},
 				{
-					"icon": "_image_id_",
-					"label": "Bank",
-					"disclaimer": "::lock:: Benefit from EVY buyer protection",
-					"enabled": "{item.payment_methods.find('bank')}"
+					"type": "TitleShort",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Bank",
+							"disclaimer": "::lock:: Benefit from EVY buyer protection"
+						}
+					}
 				},
 				{
-					"icon": "_image_id_",
-					"label": "Cash",
-					"enabled": "{item.payment_methods.find('cash')}"
+					"type": "TitleShort",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Cash",
+							"disclaimer": ""
+						}
+					}
 				}]
 			}
 		}
@@ -341,6 +355,7 @@
 		"type": "ContainerList",
 		"view": {
 			"content": {
+				"title": "",
 				"children": [{
 					"type": "Detail",
 					"view": {
@@ -392,23 +407,41 @@
 		}
 	},
 	{
-		"type": "PaymentOptions",
+		"type": "ContainerList",
 		"view": {
 			"content": {
 				"title": "Payment methods accepted",
-				"options": [
-					{
-						"icon": "_image_id_",
-						"label": "Card",
-						"disclaimer": ":lock Benefit from EVY buyer protection"
-					},
-					{
-						"icon": "_image_id_",
-						"label": "Cash"
+				"children": [{
+					"type": "TitleShort",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Card",
+							"disclaimer": "::lock:: Benefit from EVY buyer protection"
+						}
 					}
-				]
+				},
+				{
+					"type": "TitleShort",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Bank",
+							"disclaimer": "::lock:: Benefit from EVY buyer protection"
+						}
+					}
+				},
+				{
+					"type": "TitleShort",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Cash",
+							"disclaimer": ""
+						}
+					}
+				}]
 			}
 		}
-	}
 ]
 ```
