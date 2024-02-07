@@ -21,13 +21,8 @@ These are functions that do 3 things:
 
 Some of them are dynamic and some are built in (see following section)
 
-#### All formatting available today
-**formatCurrency**
-```
-formatCurrency(_variable_type_price_)
-Variable: { "currency": "AUD", "value": "13.23" }
-Outputs: $13.23
-```
+#### Formatting functions built in
+Meaning they are hard coded into the server and clients
 **formatDate**
 ```
 formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
@@ -39,6 +34,15 @@ Outputs: 19/01/2024
 formatDuration(_variable_type_number_)
 Variable: 900000
 Outputs: 15 minutes
+```
+
+#### Dynamic formatting functions
+These are formats that are configured by passing dynamic JSON
+**formatCurrency**
+```
+formatCurrency(_variable_type_price_)
+Variable: { "currency": "AUD", "value": "13.23" }
+Outputs: $13.23
 ```
 **formatDimension**
 ```
@@ -73,18 +77,7 @@ Variable: { ... see above ...}
 Outputs: 2018 Rosebery NSW
 ```
 
-#### Built in configs
-These are the formatting functions that are built directly into clients and the server
-```
-formatDate
-formatDuration
-formatDecimal
-formatMetricLength
-formatImperialLength
-```
-
-#### Dynamic configs
-These are formats that are configured by passing dynamic JSON
+**Sample code:**
 ```
 {
     "formatCurrency": {
