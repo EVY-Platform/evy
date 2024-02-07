@@ -42,7 +42,7 @@
             "format": "string"
         }
 
-        // Where the input data get sent for storage
+        // Where the input data is stored
         "destination": "string"   
     }
 
