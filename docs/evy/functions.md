@@ -17,7 +17,8 @@ Output: 2
 These are functions that do 3 things:
 1. Decide on which mobile keyboard to show
 2. Format text from data
-3. Format text as the user is typing  
+3. Format text as the user is typing
+
 Some of them are dynamic and some are built in (see following section)
 
 #### All formatting available today
