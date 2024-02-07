@@ -5,201 +5,226 @@
 [
 	{
 	    "type": "PhotoUpload",
-	    "content": {
-	        "icon": "::image_upload::",
-	        "subtitle": "Add photos",
-	        "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
-			"image_ids": "{item.photos[].id}"
+	    "view": {
+			"content": {
+	        	"icon": "::image_upload::",
+	        	"subtitle": "Add photos",
+	        	"content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
+				"photos": "{item.photos}"
+			}
 	    },
-		"formatting": [],
-	    "data": {
-	        "source": "",
-	        "destination": "{item.photos}"
+		"edit": {
+	    	"destination": "{item.photos}"
 	    }
 	},
 	{
 	    "type": "Input",
-	    "content": {
-	    	"title": "Title",
-			"value": "{item.title}",
-	    	"placeholder": "My iPhone 20"
+	    "view": {
+			"content": {
+	    		"title": "Title",
+				"value": "{item.title}",
+	    		"placeholder": "My iPhone 20"
+			}
 	    },
-		"formatting": [],
-	    "data": {
-	        "source": "",
+		"edit": {
+			"formatting": {
+				"data": "{item.title}",
+				"format": "{input}"
+			},
 	        "destination": "{item.title}"
 	    }
 	},
 	{
 	    "type": "Input",
-	    "content": {
-	    	"title": "Price",
-			"value": "{formatCurrency(item.price)}",
-	    	"placeholder": "$20.00"
+	    "view": {
+			"content": {
+	    		"title": "Price",
+				"value": "{formatCurrency(item.price)}",
+	    		"placeholder": "$20.00"
+			}
 	    },
-		"formatting": [{
-			"content": "value",
-			"format": "{formatCurrency(item.price)}"
-		}],
-	    "data": {
-	        "source": "",
+		"edit": {
+			"formatting": {
+				"data": "{item.price}",
+				"format": "{formatCurrency(input)}"
+			},
 	        "destination": "{item.price}"
 	    }
 	},
 	{
 	    "type": "Select",
-	    "content": {
-	        "placeholder": "Condition",
-			"value": "item.condition.value"
-	    },
-		"formatting": [{
-	        "content": "placeholder",
-	        "format": "{item.condition.value}"
-	    }],
-	    "data": {
-	        "source": "{conditions}",
+	    "view": {
+			"content": {
+	        	"placeholder": "Condition",
+				"value": "{item.condition.value}",
+				"options": "{conditions}"
+	    	}
+		},
+		"edit": {
+			"formatting": {
+				"data": "{item.condition}",
+				"format": "{input.value}"
+			},
 	        "destination": "{item.condition}"
 	    }
 	},
 	{
 	    "type": "Select",
-	    "content": {
-	        "placeholder": "Selling reason",
-			"value": "{item.selling_reason.value}"
-	    },
-		"formatting": [{
-	        "content": "placeholder",
-	        "format": "{item.selling_reason.value}"
-	    }],
-	    "data": {
-	        "source": "{selling_reasons}",
+	    "view": {
+			"content": {
+	        	"placeholder": "Selling reason",
+				"value": "{item.selling_reason.value}",
+				"options": "{selling_reasons}"
+	    	}
+		},
+		"edit": {
+			"formatting": {
+				"data": "{item.selling_reason}",
+				"format": "{input.value}"
+			},
 	        "destination": "{item.selling_reason}"
 	    }
 	},
 	{
 	    "type": "ColumnContainer",
 		"title": "Dimensions",
-	    "content": {
-	    	"children": [
-	    		{
-				    "type": "Input",
-				    "content": {
-						"title": "",
-				    	"placeholder": "Width",
-						"value": "{formatDimension(item.dimension.width)}"
-				    },
-					"formatting": [{
-				        "content": "placeholder",
-				        "format": "{formatDimension(item.dimension.width)}"
-				    }],
-				    "data": {
-				    	"source": "",
-				    	"destination": "{item.dimension.width}"
-				    }
+		"view": {
+			"content": {
+				"children": [{
+					"type": "Input",
+					"view": {
+						"content": {
+							"title": "",
+							"placeholder": "Width",
+							"value": "{formatDimension(item.dimension.width)}"
+						}
+					},
+					"edit": {
+						"formatting": {
+							"data": "{item.dimension.width}",
+							"format": "{formatDimension(input)}"
+						},
+						"destination": "{item.dimension.width}"
+					}
 				},
-	    		{
-				    "type": "Input",
-				    "content": {
-						"title": "",
-				    	"placeholder": "Height",
-						"value": "{formatDimension(item.dimension.height)}"
-				    },
-					"formatting": [{
-				        "content": "placeholder",
-				        "format": "{formatDimension(item.dimension.height)}"
-				    }],
-				    "data": {
-				    	"source": "",
-				    	"destination": "{item.dimension.height}"
-				    }
+				{
+					"type": "Input",
+					"view": {
+						"content": {
+							"title": "",
+							"placeholder": "Height",
+							"value": "{formatDimension(item.dimension.height)}"
+						}
+					},
+					"edit": {
+						"formatting": {
+							"data": "{item.dimension.height}",
+							"format": "{formatDimension(input)}"
+						},
+						"destination": "{item.dimension.height}"
+					}
 				},
-	    		{
-				    "type": "Input",
-				    "content": {
-						"title": "",
-				    	"placeholder": "Length",
-						"value": "{formatDimension(item.dimension.length)}"
-				    },
-					"formatting": [{
-				        "content": "placeholder",
-				        "format": "{formatDimension(item.dimension.length)}"
-				    }],
-				    "data": {
-				    	"source": "",
-				    	"destination": "{item.dimension.length}"
-				    }
-				}
-	    	]
-	    }
-	},
-	{
-	    "type": "AddressInput",
-	    "content": {
-	    	"title": "Where",
-			"value": "{formatAddress(item.address)}",
-	    	"action_title": "Change"
-	    },
-		"formatting": [{
-	        "content": "value",
-	        "format": "{formatAddress(item.address)}"
-	    }],
-	    "data": {
-	        "source": "",
-	        "destination": "{item.address}"
-	    },
-		"fading_placeholder": {
-			"value": "Enter an address for pickup",
-			"condition": "{item.address}"
+				{
+					"type": "Input",
+					"view": {
+						"content": {
+							"title": "",
+							"placeholder": "Length",
+							"value": "{formatDimension(item.dimension.length)}"
+						}
+					},
+					"edit": {
+						"formatting": {
+							"data": "{item.dimension.length}",
+							"format": "{formatDimension(input)}"
+						},
+						"destination": "{item.dimension.length}"
+					}
+				}]
+			}
 		}
 	},
 	{
-	    "type": "Wheel",
-	    "content": {
-			"value": "{formatDuration(timeslot_duration)}"
+	    "type": "ActionRow",
+	    "view": {
+			"content": {
+				"title": "Where",
+				"value": "{formatAddress(item.address)}",
+				"action_title": "Change"
+			},
+			"placeholder": {
+				"value": "Enter an address for pickup",
+				"condition": "{item.address}"
+			}
 	    },
-		"formatting": [{
-	        "content": "value",
-	        "format": "{formatDuration(timeslot_duration)}"
-	    }],
-	    "data": {
-	        "source": "{timeslot_durations}",
+		"edit": {
+			"formatting": {
+				"data": "{item.address}",
+				"format": "{formatAddress(input)}"
+			},
+	        "destination": "{item.address}"
+	    }
+	},
+	{
+	    "type": "Wheel",
+	    "view": {
+			"content": {
+				"value": "{formatDuration(timeslot_duration)}",
+				"options": "{timeslot_durations}"
+			}
+	    },
+		"edit": {
+			"formatting": {
+				"data": "{timeslot_duration}",
+				"format": "{formatDuration(input)}"
+			},
 	        "destination": "{timeslot_duration}"
 	    }
 	},
 	{
 		"type": "Calendar",
-		"content": {},
-		"data": {
-			"source": "{item.transfer_option}",
-			"destination": "{item.transfer_option}"
+		"view": {
+			"content": {
+				"transfer_options": "{item.transfer_options}",
+			}
+		},
+		"edit": {
+			"destination": "{item.transfer_options}"
 		}
 	},
 	{
 	    "type": "Search",
-	    "content": {
-	    	"title": "Address",
-			"value": "{formatAddress(item.address)}",
-	    	"placeholder": "Type address"
+	    "view": {
+			"content": {
+				"title": "Address",
+				"value": "{formatAddress(item.address)}",
+				"placeholder": "Type address",
+				"data": "{api_address_search}",
+			}
 	    },
-		"formatting": [{
-	        "content": "value",
-	        "format": "{formatAddress(item.address)}"
-	    }],
-	    "data": {
-	        "source": "{places_search}",
+		"edit": {
+			"formatting": {
+				"data": "{item.address}",
+				"format": "{formatAddress(input)}"
+			},
 	        "destination": "{item.address}"
 	    }
 	},
 	{
 	    "type": "SearchMulti",
-	    "content": {
-	    	"title": "Tags",
-			"values": "{item.tags[].value}",
-	    	"placeholder": "Outdoor, Furniture, etc"
+	    "view": {
+			"content": {
+				"title": "Tags",
+				"values": "{item.tags[].value}",
+				"placeholder": "Outdoor, Furniture, etc",
+				"data": "{tags}"
+			}
 	    },
-		"formatting": [],
-	    "data": {
-	        "source": "",
+		"edit": {
+			"formatting": {
+				"data": "{item.tags}",
+				"format": "{input.value}"
+			},
 	        "destination": "{item.tags}"
 	    }
 	}
@@ -207,241 +232,274 @@
 ```
 
 ### Sent to the app
-NB: An item would be attached along with the page which would include all the data for the rows... ?
 ```
 [
 	{
 	    "type": "PhotoUpload",
-	    "content": {
-	        "icon": "::image_upload::",
-	        "subtitle": "Add photos",
-	        "content": "Photos: 2/10 - Chose your listing’s main photo first.",
-			"image_ids": ["_image_id_", "_image_id_"]
-	    },
-		"formatting": [],
-	    "data": {
-	        "source": "",
+	    "view": {
+			"content": {
+				"icon": "::image_upload::",
+				"subtitle": "Add photos",
+				"content": "Photos: 2/10 - Chose your listing’s main photo first.",
+				"photos": "[{"id": "_image_id_"}, {"id": "_image_id_"}]"
+			}
+		},
+	    "edit":{
 	        "destination": "{item.photos}"
 	    }
 	},
 	{
 	    "type": "Input",
-	    "content": {
-        	"title": "Title",
-	    	"placeholder": "My iPhone 20",
-			"value": "Best fridge"
-	    },
-		"formatting": [{
-	        "content": "placeholder",
-	        "format": "{formatCurrency(item.price)}"
-	    }],
-	    "data": {
-	        "source": "",
+	    "view": {
+			"content": {
+				"title": "Title",
+				"placeholder": "My iPhone 20",
+				"value": "Best fridge"
+			}
+		},
+	    "edit": {
+			"formatting": {
+				"data": "{item.title}",
+				"format": "{input}"
+			},
 	        "destination": "{item.title}"
 	    }
 	},
 	{
 	    "type": "Input",
-	    "content": {
-        	"title": "Price",
-	    	"placeholder": "$20.00",
-			"value": "$15.00"
-	    },
-		"formatting": [{
-	        "content": "placeholder",
-	        "format": "{item.condition.value}"
-	    }],
-	    "data": {
-	        "source": "",
+	    "view": {
+			"content": {
+        		"title": "Price",
+				"placeholder": "$20.00",
+				"value": "$15.00"
+			}
+		},
+	    "edit": {
+			"formatting": {
+				"data": "{item.price}",
+				"format": "{formatCurrency(input)}"
+			},
 	        "destination": "{item.price}"
 	    }
 	},
 	{
 	    "type": "Select",
-	    "content": {
-	        "placeholder": "Condition",
-			"value": "Used - Like New"
-	    },
-		"formatting": [{
-	        "content": "placeholder",
-	        "format": "{item.selling_reason.value}"
-	    }],
-	    "data": {
-	        "source": "{conditions}",
+	    "view": {
+			"content": {
+				"placeholder": "Condition",
+				"value": "Used - Like New",
+				"options": "{conditions}"
+			}
+		},
+	    "edit": {
+			"formatting": {
+				"data": "{item.condition}",
+				"format": "{input.value}"
+			},
 	        "destination": "{item.condition}"
 	    }
 	},
 	{
 	    "type": "Select",
-	    "content": {
-	        "placeholder": "Selling reason",
-			"value": "No longer used"
-	    },
-		"formatting": [],
-	    "data": {
-	        "source": "{selling_reasons}",
+	    "view": {
+			"content": {
+				"placeholder": "Selling reason",
+				"value": "No longer used",
+				"options": "{selling_reasons}"
+			}
+		},
+	    "edit": {
+			"formatting": {
+				"data": "{item.selling_reason}",
+				"format": "{input.value}"
+			},
 	        "destination": "{item.selling_reason}"
 	    }
 	},
 	{
 	    "type": "ColumnContainer",
-	    "content": {
-			"title": "Dimensions",
-	    	"children": [
-	    		{
-				    "type": "Input",
-				    "content": {
-						"title": "",
-						"placeholder": "Width",
-						"value": "5"
-				    },
-					"formatting": [{
-				        "content": "placeholder",
-				        "format": "{formatDimension(item.dimension.width)}"
-				    }],
-				    "data": {
-				    	"source": "",
-				    	"destination": "{item.dimension.width}"
-				    }
+	    "view": {
+			"content": {
+				"title": "Dimensions",
+				"children": [{
+					"type": "Input",
+					"view": {
+						"content": {
+							"title": "",
+							"placeholder": "Width",
+							"value": "5"
+						}
+					},
+					"edit": {
+						"formatting": {
+							"data": "{item.dimension.width}",
+							"format": "{formatDimension(input)}"
+						},
+						"destination": "{item.dimension.width}"
+					}
 				},
-	    		{
-				    "type": "Input",
-				    "content": {
-						"title": "",
-				    	"placeholder": "Height",
-						"value": "10"
-				    },
-					"formatting": [{
-				        "content": "placeholder",
-				        "format": "{formatDimension(item.dimension.height)}"
-				    }],
-				    "data": {
-				    	"source": "",
-				    	"destination": "{item.dimension.height}"
-				    }
+				{
+					"type": "Input",
+					"view": {
+						"content": {
+							"title": "",
+							"placeholder": "Height",
+							"value": "10"
+						}
+					},
+					"edit": {
+						"formatting": {
+							"data": "{item.dimension.height}",
+							"format": "{formatDimension(input)}"
+						},
+						"destination": "{item.dimension.height}"
+					}
 				},
-	    		{
-				    "type": "Input",
-				    "content": {
-						"title": "",
-				    	"placeholder": "Length",
-						"value": "20"
-				    },
-					"formatting": [{
-				        "content": "placeholder",
-				        "format": "{formatDimension(item.dimension.length)}"
-				    }],
-				    "data": {
-				    	"source": "",
-				    	"destination": "{item.dimension.length}"
-				    }
-				}
-	    	]
-	    }
-	},
-	{
-	    "type": "AddressInput",
-	    "content": {
-	    	"title": "Where",
-			"value": "23-25 Rosebery Avenue, 2018 NSW}",
-	    	"action_title": "Change"
-	    },
-		"formatting": [{
-	        "content": "value",
-	        "format": "{formatAddress(item.address)}"
-	    }],
-	    "data": {
-	        "source": "",
-	        "destination": "{item.address}"
-	    },
-		"fading_placeholder": {
-			"value": "Enter an address for pickup",
-			"condition": "{item.address}"
+				{
+					"type": "Input",
+					"view": {
+						"content": {
+							"title": "",
+							"placeholder": "Length",
+							"value": "20"
+						}
+					},
+					"edit": {
+						"formatting": {
+							"data": "{item.dimension.length}",
+							"format": "{formatDimension(input)}"
+						},
+						"destination": "{item.dimension.length}"
+					}
+				}]
+			}
 		}
 	},
 	{
+	    "type": "ActionRow",
+	    "view": {
+			"content": {
+				"title": "Where",
+				"value": "23-25 Rosebery Avenue, 2018 NSW",
+				"action_title": "Change"
+			},
+			"placeholder": {
+				"value": "Enter an address for pickup",
+				"condition": "{item.address}"
+			}
+		},
+	    "edit": {
+			"formatting": {
+				"data": "{item.address}",
+				"format": "{formatAddress(input)}"
+			},
+	        "destination": "{item.address}"
+	    }
+	},
+	{
 	    "type": "Wheel",
-	    "content": {
-			"value": "{15 minutes}"
-	    },
-		"formatting": [{
-	        "content": "value",
-	        "format": "{formatDuration(timeslot_duration)}"
-	    }],
-	    "data": {
-	        "source": "{timeslot_durations}",
+	    "view": {
+			"content": {
+				"value": "{15 minutes}"
+	        	"options": "{timeslot_durations}",
+			}
+		},
+	    "edit": {
+			"formatting": {
+				"data": "{timeslot_duration}",
+				"format": "{formatDuration(input)}"
+			},
 	        "destination": "{timeslot_duration}"
 	    }
 	},
 	{
 		"type": "Calendar",
-		"content": {
-			"dates_with_timeslots": [
-				{
-					"header": "Wed",
-					"date": "8 nov.",
-					"timeslots": [
-						{
-							"start_timestamp": "1700894934",
-							"end_timestamp": "1700895934",
-							"type": "pickup"
+		"view": {
+			"content": {
+				"transfer_options": {
+					"pickup": {
+						"timeslots": [
+							{
+								"start_timestamp": "1700894934",
+								"end_timestamp": "1700895934",
+								"available": true,
+								"type": "pickup"
+							},
+							{
+								"start_timestamp": "1700894934",
+								"end_timestamp": "1700895934",
+								"available": false,
+								"type": "pickup"
+							},
+							{
+								"start_timestamp": "1700894934",
+								"end_timestamp": "1700895934",
+								"available": true,
+								"type": "pickup"
+							}
+						]
+					},
+					"delivery": {
+						"fee": {
+							"currency": "AUD",
+							"value": 5.00
 						},
-						{
-							"start_timestamp": "1700895934",
-							"end_timestamp": "1700896934",
-							"type": "delivery"
+						"timeslots": [
+							{
+								"start_timestamp": "1700894934",
+								"end_timestamp": "1700895934",
+								"available": true,
+								"type": "delivery"
+							}
+						]
+					},
+					"ship": {
+						"fee": {
+							"currency": "AUD",
+							"value": 10.00
 						},
-						{
-							"start_timestamp": "1700884934",
-							"end_timestamp": "1700899934",
-							"type": "pickup"
-						}
-					]
-				},
-				{
-					"header": "Thu",
-					"date": "9 nov.",
-					"timeslots": [
-						{
-							"start_timestamp": "1700894934",
-							"end_timestamp": "1700895934",
-							"type": "pickup"
-						}
-					]
+						"transfer_provider_id": "post_office_id" 
+					}
 				}
-			]
+			}
 		},
-		"data": {
-			"source": "{item.transfer_option}",
-			"destination": "{item.transfer_option}"
+		"edit": {
+			"destination": "{item.transfer_options}"
 		}
 	},
 	{
 	    "type": "Search",
-	    "content": {
-	    	"title": "Address",
-			"value": "23-25 Rosebery Avenue, 2018 NSW",
-	    	"placeholder": "Type address"
-	    },
-		"formatting": [{
-	        "content": "value",
-	        "format": "{formatAddress(item.address)}"
-	    }],
-	    "data": {
-	        "source": "{places_search}",
+	    "view": {
+			"content": {
+				"title": "Address",
+				"value": "23-25 Rosebery Avenue, 2018 NSW",
+				"placeholder": "Type address",
+	        	"data": "{api_address_search}"
+			}
+		},
+	    "edit": {
+			"formatting": {
+				"data": "{item.address}",
+				"format": "{formatAddress(input)}"
+			},
 	        "destination": "{item.address}"
 	    }
 	},
 	{
 	    "type": "SearchMulti",
-	    "content": {
-	    	"title": "Tags",
-			"values": "Furniture, Chair",
-	    	"placeholder": "Outdoor, Furniture, etc"
-	    },
-		"formatting": [],
-	    "data": {
-	        "source": "",
+	    "view": {
+			"content": {
+				"title": "Tags",
+				"values": "Furniture, Chair",
+				"placeholder": "Outdoor, Furniture, etc",
+				"data": "[{"id": "a", "value": "Furniture"}, {"id": "b", "value": "Chair"}]"
+			}
+		},
+	    "edit": {
+			"formatting": {
+				"data": "{item.tags}",
+				"format": "{input.value}"
+			},
 	        "destination": "{item.tags}"
 	    }
 	}

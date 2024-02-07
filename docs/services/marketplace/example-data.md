@@ -109,7 +109,7 @@
 		}
 	},
 	"created_timestamp": "1701471377",
-	"transfer_option": {
+	"transfer_options": {
 		"pickup": {
 			"timeslots": [
 				{

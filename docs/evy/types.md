@@ -9,8 +9,6 @@ int
 float
 boolean
 timestamp
-[] // denotes an array variable, used as such: string[] or int[]
-? // denotes an optional variable, used as such: string? or int?
 
 // Custom shared enums
 payment_method (card|cash|bank)
