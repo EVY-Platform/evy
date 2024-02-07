@@ -149,7 +149,8 @@
 			"content": {
 				"title": "Pickup location",
 				"line_1": "{formatAddressLine1(item.address)}",
-				"line_2": "{formatAddressLine2(item.address)}"
+				"line_2": "{formatAddressLine2(item.address)}",
+				"location": "{item.address.location}"
 			}
 		}
 	},
@@ -340,39 +341,40 @@
 		"type": "ContainerList",
 		"view": {
 			"content": {
-			"children": [{
-				"type": "Detail",
-				"view": {
-					"content": {
-						"icon": "_image_id_",
-						"title": "Selling reason",
-						"subtitle": "Moving out",
-						"detail": ""
+				"children": [{
+					"type": "Detail",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Selling reason",
+							"subtitle": "Moving out",
+							"detail": ""
+						}
 					}
-				}
-			},
-			{
-				"type": "Detail",
-				"view": {
-					"content": {
-						"icon": "_image_id_",
-						"title": "Dimensions",
-						"subtitle": "250 (w) x 120 (h) x 250 (l)",
-						"detail": ""
+				},
+				{
+					"type": "Detail",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Dimensions",
+							"subtitle": "250 (w) x 120 (h) x 250 (l)",
+							"detail": ""
+						}
 					}
-				}
-			},
-			{
-				"type": "Detail",
-				"view": {
-					"content": {
-						"icon": "_image_id_",
-						"title": "Condition",
-						"subtitle": "Like new",
-						"detail": ""
+				},
+				{
+					"type": "Detail",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
+							"title": "Condition",
+							"subtitle": "Like new",
+							"detail": ""
+						}
 					}
-				}
-			}]
+				}]
+			}
 		}
 	},
 	{

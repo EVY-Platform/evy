@@ -11,6 +11,8 @@
 * Content inside of row.view (see below)
     * Empty strings will be displayed and will NOT be ignored, but will essentially not be visible to the user
     * Missing keys will not be allowed, all keys/properties of a row content are required
+* Nested rows, rows within rows
+    * "ROW" denotes the type of a row, meaning that that prop expects more rows
 
 ### Base schema that all rows inherit from:
 ```
@@ -57,7 +59,7 @@
     "view": {
         "content": {
             "title": "string",
-            "children": "ROW[]"
+            "children": "[ROW]"
         }
     }
 }
@@ -69,7 +71,7 @@
     "type": "Carousel",
     "view": {
         "content": {
-            "children": "ROW[]",
+            "children": "[ROW]",
 
             // Which data to use to decide how many children rows to show,
             // for example seller.pictures[]
@@ -109,14 +111,7 @@
             "icon": "string",
             "subtitle": "string",
             "details": "string",
-            "dates_with_timeslots": [{
-                "header": "string",
-                "date": "string",
-                "timeslots": [{
-                    "timeslot": "string",
-                    "available": "boolean"
-                }]
-            }]
+            "timeslots": "[timeslot]"
         }
     }
 }
@@ -189,7 +184,8 @@
             "title": "string",
             "options": [{
                 "icon": "string",
-                "label": "string"
+                "label": "string",
+                "disclaimer": "string"
             }],
         }
     }
@@ -202,7 +198,7 @@
         "content": {
             "children": [{
                 "title": "string",
-                "children": "ROW[]"
+                "children": "[ROW]"
             }],
         }
     }
@@ -213,7 +209,7 @@
     "type": "ContainerList",
     "view": {
         "content": {
-            "children": "ROW[]"
+            "children": "[ROW]"
         }
     }
 }
