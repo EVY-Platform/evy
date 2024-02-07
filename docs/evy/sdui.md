@@ -71,7 +71,7 @@
         "content": {
             "children": "ROW[]",
 
-            // Which data to use to decide how many children rows,
+            // Which data to use to decide how many children rows to show,
             // for example seller.pictures[]
             "children_data": "string"
         }
