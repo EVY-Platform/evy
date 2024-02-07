@@ -75,7 +75,7 @@ Base model with no extra props
 
 ### payment_method
 ```
-name: string
+name: payment_method
 ```
 
 #### timeslot
