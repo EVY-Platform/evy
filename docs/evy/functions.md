@@ -22,7 +22,8 @@ These are functions that do 3 things:
 Some of them are dynamic and some are built in (see following section)
 
 #### Formatting functions built in
-Meaning they are hard coded into the server and clients
+Meaning they are hard coded into the server and clients  
+
 **formatDate**
 ```
 formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
@@ -37,7 +38,8 @@ Outputs: 15 minutes
 ```
 
 #### Dynamic formatting functions
-These are formats that are configured by passing dynamic JSON
+These are formats that are configured by passing dynamic JSON  
+
 **formatCurrency**
 ```
 formatCurrency(_variable_type_price_)
