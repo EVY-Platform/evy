@@ -39,6 +39,7 @@
             "data": "string",
 
             // This has an automatic "input" variable passed to it which represents the prop
+            // for example "formatDuration(input)"
             "format": "string"
         }
 
