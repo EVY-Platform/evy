@@ -24,11 +24,23 @@ Some of them are dynamic and some are built in (see following section)
 #### Formatting functions built in
 Meaning they are hard coded into the server and clients  
 
-**formatDate**
+**formatDecimal**
 ```
-formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
-Variable: 1705651372
-Outputs: 19/01/2024
+formatDecimal(_variable_type_number_, 2)
+Variable: 20.0423
+Outputs: 20.04
+```
+**formatMetricLength**
+```
+formatMetricLength(_variable_type_number_) // Takes milimeters
+Variable: 23240
+Outputs: 23.24m
+```
+**formatImperialLength**
+```
+formatImperialLength(_variable_type_number_) // Takes milimeters
+Variable: 4231
+Outputs: 13.88ft
 ```
 **formatDuration**
 ```
@@ -36,21 +48,21 @@ formatDuration(_variable_type_number_)
 Variable: 900000
 Outputs: 15 minutes
 ```
+**formatDate**
+```
+formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
+Variable: 1705651372
+Outputs: 19/01/2024
+```
 
 #### Dynamic formatting functions
-These are formats that are configured by passing dynamic JSON  
+These are formats that are configured by passing dynamic JSON, and using region or device configs  
 
 **formatCurrency**
 ```
 formatCurrency(_variable_type_price_)
 Variable: { "currency": "AUD", "value": "13.23" }
 Outputs: $13.23
-```
-**formatDimension**
-```
-formatDimension(_variable_type_mm_) --> Depending on user config for metric or imperial
-Variable: 2309
-Outputs: 23.09cm
 ```
 **formatAddress**
 ```
@@ -65,18 +77,6 @@ Variable: {
     "location": ...
 }
 Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
-```
-**formatAddressLine1**
-```
-formatAddressLine1(_variable_type_address_)
-Variable: { ... see above ...}
-Outputs: 23-25 Rosebery Avenue
-```
-**formatAddressLine2**
-```
-formatAddressLine2(_variable_type_address_)
-Variable: { ... see above ...}
-Outputs: 2018 Rosebery NSW
 ```
 
 **Sample code:**
