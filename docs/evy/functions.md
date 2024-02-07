@@ -92,7 +92,7 @@ Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
         }
     },
     "formatDimension": {
-        "input_type": "int",
+        "input_type": "number",
         "keyboard": "numeric_detailed",
         "formatting_config": "{user.dimensions_system}",
         "formatting": {
