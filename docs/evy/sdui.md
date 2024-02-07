@@ -16,7 +16,7 @@
 ```
 {
     // The type of row that it is, see below
-	type: "string",
+    type: "string",
 
     "view": {
         // Each key/value pair represents a line of content shown on a row
