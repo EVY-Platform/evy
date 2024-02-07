@@ -8,7 +8,7 @@
 * []
     * Denotes an array variable, used as such: string[] or int[]
     * Can have no type which denotes "any"
-* row view content
+* Content inside of row.view (see below)
     * Empty strings will be displayed and will NOT be ignored, but will essentially not be visible to the user
     * Missing keys will not be allowed, all keys/properties of a row content are required
 
