@@ -55,7 +55,7 @@
 ### Container rows
 ```
 {
-    "type": "ColumnContainer",
+    "type": "ColumnContainer", // Shows childre in columns
     "view": {
         "content": {
             "title": "string",
@@ -64,11 +64,32 @@
     }
 }
 ```
-
-### Display Rows
 ```
 {
-    "type": "Carousel",
+    "type": "ContainerList", // Shows children in a list
+    "view": {
+        "content": {
+            "children": "[ROW]"
+        }
+    }
+}
+```
+```
+{
+    "type": "SegmentedControl", // Shows children under a segmented control
+    "view": {
+        "content": {
+            "children": [{
+                "title": "string",
+                "children": "[ROW]"
+            }],
+        }
+    }
+}
+```
+```
+{
+    "type": "Carousel", // Shows children in a carousel
     "view": {
         "content": {
             "children": "[ROW]",
@@ -80,6 +101,21 @@
     }
 }
 ```
+```
+{
+    "type": "SheetRow", // Shows a sheet with children when the row is tapped
+    "view": {
+        "content": {
+            "title": "string",
+            "value": "string",
+            "action_title": "string",
+            "children": "[ROW]"
+        }
+    }
+}
+```
+
+### Display Rows
 ```
 {
     "type": "Image",
@@ -191,41 +227,8 @@
     }
 }
 ```
-```
-{
-    "type": "SegmentedControl",
-    "view": {
-        "content": {
-            "children": [{
-                "title": "string",
-                "children": "[ROW]"
-            }],
-        }
-    }
-}
-```
-```
-{
-    "type": "ContainerList",
-    "view": {
-        "content": {
-            "children": "[ROW]"
-        }
-    }
-}
-```
 
 ### Editable rows
-```
-{
-    "type": "Info",
-    "view": {
-        "content": {
-            "title": "string"
-        }
-    }
-}
-```
 ```
 {
     "type": "Input",
@@ -266,25 +269,13 @@
 ```
 ```
 {
-    "type": "ActionRow",
-    "view": {
-        "content": {
-            "title": "string",
-            "value": "string",
-            "action_title": "string"
-        }
-    }
-}
-```
-```
-{
     "type": "PhotoUpload",
     "view": {
         "content": {
             "icon": "string",
             "subtitle": "string",
             "content": "string",
-            "photos": "photo[]"
+            "photos": "[photo]"
         }
     }
 }

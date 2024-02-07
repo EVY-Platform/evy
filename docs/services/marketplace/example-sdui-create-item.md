@@ -145,7 +145,7 @@
 		}
 	},
 	{
-	    "type": "ActionRow",
+	    "type": "SheetRow",
 	    "view": {
 			"content": {
 				"title": "Where",
@@ -376,7 +376,7 @@
 		}
 	},
 	{
-	    "type": "ActionRow",
+	    "type": "SheetRow",
 	    "view": {
 			"content": {
 				"title": "Where",
