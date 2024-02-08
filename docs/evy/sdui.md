@@ -110,11 +110,7 @@
             "action_title": "string",
 
             // These props will show on the sheet
-            "children_header": "string",
-            "children": [{
-                "title": "string",
-                "child": "ROW"
-            }]
+            "children_header": "string"
         }
     }
 }
