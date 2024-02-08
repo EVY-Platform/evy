@@ -20,12 +20,16 @@
     // The type of row that it is, see below
     type: "string",
 
+    // Prop that defines when the row is visible
+    // for example {count(item.transfer_option.pickup.dates_with_timeslots) > 0}
+    "visible": "string"
+
     "view": {
         // Each key/value pair represents a line of content shown on a row
         // the key is the name, the value is what the content is or where it's from
         content: {
             "label": "value"
-        }
+        },
 
         // Special prop that defines a placeholder text shown on a row instead
         // of it's content, which disapears/fades out when a condition is met
@@ -52,54 +56,47 @@
 }
 ```
 
-### Container rows
+### Base schema that container rows inherit from:
 ```
 {
-    "type": "ColumnContainer", // Shows childre in columns
+    "type": "string",
     "view": {
         "content": {
             "title": "string",
-            "children": "[ROW]"
+            "children": [{
+                // Whether to show a title to the row, column, etc...
+                "title": "string",
+                "child": "ROW"
+            }],
+
+            // Whether to use data to iterate over for example seller.pictures[]
+            // This makes the "input" variable available to each child,
+            //   which is the current child in the iteration
+            "children_data": "string"
         }
     }
+}
+```
+
+### Container rows
+```
+{
+    "type": "ColumnContainer", // Shows children in columns
 }
 ```
 ```
 {
     "type": "ContainerList", // Shows children in a list
-    "view": {
-        "content": {
-            "title": "string",
-            "children": "[ROW]"
-        }
-    }
 }
 ```
 ```
 {
     "type": "SegmentedControl", // Shows children under a segmented control
-    "view": {
-        "content": {
-            "children": [{
-                "title": "string",
-                "children": "[ROW]"
-            }],
-        }
-    }
 }
 ```
 ```
 {
     "type": "Carousel", // Shows children in a carousel
-    "view": {
-        "content": {
-            "children": "[ROW]",
-
-            // Which data to use to decide how many children rows to show,
-            // for example seller.pictures[]
-            "children_data": "string"
-        }
-    }
 }
 ```
 ```
@@ -107,10 +104,17 @@
     "type": "SheetRow", // Shows a sheet with children when the row is tapped
     "view": {
         "content": {
+            // These props will show on the row itself
             "title": "string",
             "value": "string",
             "action_title": "string",
-            "children": "[ROW]"
+
+            // These props will show on the sheet
+            "children_header": "string",
+            "children": [{
+                "title": "string",
+                "child": "ROW"
+            }]
         }
     }
 }
