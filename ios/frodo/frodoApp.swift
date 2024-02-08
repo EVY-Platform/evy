@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct frodoApp: App {
+struct evyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

@@ -1,6 +1,6 @@
 //
 //  EVYCarouselIndicator.swift
-//  frodo
+//  evy
 //
 //  Created by Geoffroy Lesage on 17/12/2023.
 //

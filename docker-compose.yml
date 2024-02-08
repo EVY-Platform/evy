@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   admin:
-    image: "ghcr.io/glesage/frodo-admin:latest"
+    image: "ghcr.io/glesage/evy-admin:latest"
     restart: always
     ports:
       - 8001:8001
@@ -15,7 +15,7 @@ services:
     depends_on:
       - api
   api:
-    image: "ghcr.io/glesage/frodo-api:latest"
+    image: "ghcr.io/glesage/evy-api:latest"
     restart: always
     ports:
       - $API_PORT:$API_PORT

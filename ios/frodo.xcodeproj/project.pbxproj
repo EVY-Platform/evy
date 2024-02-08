@@ -16,7 +16,7 @@
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
 		7360EEB52B304EE300C4B10B /* EVYText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7360EEB42B304EE300C4B10B /* EVYText.swift */; };
-		737C6AA62B2706890093D00C /* frodoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA52B2706890093D00C /* frodoApp.swift */; };
+		737C6AA62B2706890093D00C /* evyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA52B2706890093D00C /* evyApp.swift */; };
 		737C6AA82B2706890093D00C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA72B2706890093D00C /* ContentView.swift */; };
 		737C6AAA2B27068A0093D00C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 737C6AA92B27068A0093D00C /* Assets.xcassets */; };
 		737C6AAD2B27068A0093D00C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 737C6AAC2B27068A0093D00C /* Preview Assets.xcassets */; };
@@ -54,8 +54,8 @@
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
 		7360EEB42B304EE300C4B10B /* EVYText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYText.swift; sourceTree = "<group>"; };
-		737C6AA22B2706890093D00C /* frodo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = frodo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		737C6AA52B2706890093D00C /* frodoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = frodoApp.swift; sourceTree = "<group>"; };
+		737C6AA22B2706890093D00C /* evy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = evy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		737C6AA52B2706890093D00C /* evyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = evyApp.swift; sourceTree = "<group>"; };
 		737C6AA72B2706890093D00C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		737C6AA92B27068A0093D00C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		737C6AAC2B27068A0093D00C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -78,7 +78,7 @@
 		73D5B4182B3302820005E495 /* EVYPaymentOptionsRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYPaymentOptionsRow.swift; sourceTree = "<group>"; };
 		73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYGreyedBackgound.swift; sourceTree = "<group>"; };
 		73D878E72B2ECD6900A1F9C2 /* chunked.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = chunked.swift; sourceTree = "<group>"; };
-		73D878EB2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EVYSegmentedControlRow.swift; path = frodo/EVYSegmentedControlRow.swift; sourceTree = SOURCE_ROOT; };
+		73D878EB2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EVYSegmentedControlRow.swift; path = evy/EVYSegmentedControlRow.swift; sourceTree = SOURCE_ROOT; };
 		73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselIndicator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -107,7 +107,7 @@
 		737C6A992B2706890093D00C = {
 			isa = PBXGroup;
 			children = (
-				737C6AA42B2706890093D00C /* frodo */,
+				737C6AA42B2706890093D00C /* evy */,
 				737C6AA32B2706890093D00C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -115,16 +115,16 @@
 		737C6AA32B2706890093D00C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				737C6AA22B2706890093D00C /* frodo.app */,
+				737C6AA22B2706890093D00C /* evy.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		737C6AA42B2706890093D00C /* frodo */ = {
+		737C6AA42B2706890093D00C /* evy */ = {
 			isa = PBXGroup;
 			children = (
 				737F00EA2B342DEF00C35772 /* Info.plist */,
-				737C6AA52B2706890093D00C /* frodoApp.swift */,
+				737C6AA52B2706890093D00C /* evyApp.swift */,
 				737C6AA72B2706890093D00C /* ContentView.swift */,
 				2E8EEC392B2730B0003DF2DC /* Constants.swift */,
 				73CDCAC12B272E0C00D4E82A /* EVYRow.swift */,
@@ -137,7 +137,7 @@
 				737C6AAB2B27068A0093D00C /* Preview Content */,
 				730D008E2B29D91200B5BCB6 /* Utils */,
 			);
-			path = frodo;
+			path = evy;
 			sourceTree = "<group>";
 		};
 		737C6AAB2B27068A0093D00C /* Preview Content */ = {
@@ -203,9 +203,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		737C6AA12B2706890093D00C /* frodo */ = {
+		737C6AA12B2706890093D00C /* evy */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 737C6AB02B27068A0093D00C /* Build configuration list for PBXNativeTarget "frodo" */;
+			buildConfigurationList = 737C6AB02B27068A0093D00C /* Build configuration list for PBXNativeTarget "evy" */;
 			buildPhases = (
 				737C6A9E2B2706890093D00C /* Sources */,
 				737C6A9F2B2706890093D00C /* Frameworks */,
@@ -215,13 +215,13 @@
 			);
 			dependencies = (
 			);
-			name = frodo;
+			name = evy;
 			packageProductDependencies = (
 				737C6ACE2B270B6C0093D00C /* JsonRPC */,
 				737C6AD12B270B7D0093D00C /* Serializable */,
 			);
-			productName = frodo;
-			productReference = 737C6AA22B2706890093D00C /* frodo.app */;
+			productName = evy;
+			productReference = 737C6AA22B2706890093D00C /* evy.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -239,7 +239,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 737C6A9D2B2706890093D00C /* Build configuration list for PBXProject "frodo" */;
+			buildConfigurationList = 737C6A9D2B2706890093D00C /* Build configuration list for PBXProject "evy" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -256,7 +256,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				737C6AA12B2706890093D00C /* frodo */,
+				737C6AA12B2706890093D00C /* evy */,
 			);
 		};
 /* End PBXProject section */
@@ -290,7 +290,7 @@
 				737C6AC62B270AAE0093D00C /* EVYOrganization.swift in Sources */,
 				737C6ACB2B270AD90093D00C /* EVYWebsocket.swift in Sources */,
 				737C6ACC2B270AD90093D00C /* EVYManager.swift in Sources */,
-				737C6AA62B2706890093D00C /* frodoApp.swift in Sources */,
+				737C6AA62B2706890093D00C /* evyApp.swift in Sources */,
 				73884AC22B2E897600BC8726 /* EVYTimeslotPickerRow.swift in Sources */,
 				73D5B41B2B3307590005E495 /* EVYGreyedBackgound.swift in Sources */,
 				73D878EC2B2EE9F900A1F9C2 /* EVYSegmentedControlRow.swift in Sources */,
@@ -442,11 +442,11 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"frodo/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"evy/Preview Content\"";
 				DEVELOPMENT_TEAM = 995A4BQX6K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = frodo/Info.plist;
+				INFOPLIST_FILE = evy/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
@@ -457,7 +457,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = frodo.frodo;
+				PRODUCT_BUNDLE_IDENTIFIER = evy.evy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -473,11 +473,11 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"frodo/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"evy/Preview Content\"";
 				DEVELOPMENT_TEAM = 995A4BQX6K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = frodo/Info.plist;
+				INFOPLIST_FILE = evy/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
@@ -488,7 +488,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = frodo.frodo;
+				PRODUCT_BUNDLE_IDENTIFIER = evy.evy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -499,7 +499,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		737C6A9D2B2706890093D00C /* Build configuration list for PBXProject "frodo" */ = {
+		737C6A9D2B2706890093D00C /* Build configuration list for PBXProject "evy" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				737C6AAE2B27068A0093D00C /* Debug */,
@@ -508,7 +508,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		737C6AB02B27068A0093D00C /* Build configuration list for PBXNativeTarget "frodo" */ = {
+		737C6AB02B27068A0093D00C /* Build configuration list for PBXNativeTarget "evy" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				737C6AB12B27068A0093D00C /* Debug */,

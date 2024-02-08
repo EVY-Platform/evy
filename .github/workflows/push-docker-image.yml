@@ -37,7 +37,7 @@ jobs:
         with:
           context: api/
           push: true
-          tags: ghcr.io/glesage/frodo-api:latest
+          tags: ghcr.io/glesage/evy-api:latest
           labels: ${{ steps.meta.outputs.labels }}
         env:
           DATABASE_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/sam
@@ -47,14 +47,14 @@ jobs:
         with:
           context: admin/
           push: true
-          tags: ghcr.io/glesage/frodo-admin:latest
+          tags: ghcr.io/glesage/evy-admin:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Docker Compose Remote Deploy api
         uses: glesage/docker-compose-remote-action@v1.4
         with:
           service: api
-          project_name: frodo
+          project_name: evy
           ssh_host: 170.64.163.217
           ssh_user: sam
           ssh_key: ${{ secrets.DO_SSH_KEY }}
@@ -69,7 +69,7 @@ jobs:
         uses: glesage/docker-compose-remote-action@v1.4
         with:
           service: admin
-          project_name: frodo
+          project_name: evy
           ssh_host: 170.64.163.217
           ssh_user: sam
           ssh_key: ${{ secrets.DO_SSH_KEY }}
