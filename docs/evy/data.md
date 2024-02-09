@@ -78,7 +78,7 @@ Base model with no extra props
 name: payment_method
 ```
 
-#### timeslot
+### timeslot
 ```
 start_timestamp: string
 end_timestamp: string
@@ -86,15 +86,13 @@ available: boolean
 type: string
 ```
 
-#### transfer_provider
+### transfer_provider
 ```
 name: string
 logo_id: uuid
-eta: string
-fee: price
 ```
 
-#### transfer_options
+### transfer_options
 ```
 pickup: {
     timeslots: [timeslot]
