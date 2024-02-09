@@ -58,7 +58,6 @@
 	"id": "post_office_id",
 	"name": "Australia Post",
 	"logo_id": "_image_id_",
-	"eta": "2-5 days once deposited",
 	"cost": {
 		"currency": "AUD",
 		"value": 15.00
