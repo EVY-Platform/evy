@@ -39,16 +39,6 @@
         },
     }
     "edit": {
-        // Format for the user input
-        "formatting": {
-            // What is the data being formatted
-            "data": "string",
-
-            // This has an automatic "input" variable passed to it which represents the prop
-            // for example "formatDuration(input)"
-            "format": "string"
-        }
-
         // Where the input data is stored
         "destination": "string"   
     }

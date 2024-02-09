@@ -10,7 +10,7 @@
 	        	"icon": "::image_upload::",
 	        	"subtitle": "Add photos",
 	        	"content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
-				"photos": "{item.photos}"
+				"photos": "{item.photos[]}"
 			}
 	    },
 		"edit": {
@@ -27,10 +27,6 @@
 			}
 	    },
 		"edit": {
-			"formatting": {
-				"data": "{item.title}",
-				"format": "{input}"
-			},
 	        "destination": "{item.title}"
 	    }
 	},
@@ -44,10 +40,6 @@
 			}
 	    },
 		"edit": {
-			"formatting": {
-				"data": "{item.price}",
-				"format": "{formatCurrency(input)}"
-			},
 	        "destination": "{item.price}"
 	    }
 	},
@@ -61,10 +53,6 @@
 	    	}
 		},
 		"edit": {
-			"formatting": {
-				"data": "{item.condition}",
-				"format": "{input.value}"
-			},
 	        "destination": "{item.condition}"
 	    }
 	},
@@ -78,10 +66,6 @@
 	    	}
 		},
 		"edit": {
-			"formatting": {
-				"data": "{item.selling_reason}",
-				"format": "{input.value}"
-			},
 	        "destination": "{item.selling_reason}"
 	    }
 	},
@@ -100,10 +84,6 @@
 						}
 					},
 					"edit": {
-						"formatting": {
-							"data": "{item.dimension.width}",
-							"format": "{formatDimension(input)}"
-						},
 						"destination": "{item.dimension.width}"
 					}
 				},
@@ -117,10 +97,6 @@
 						}
 					},
 					"edit": {
-						"formatting": {
-							"data": "{item.dimension.height}",
-							"format": "{formatDimension(input)}"
-						},
 						"destination": "{item.dimension.height}"
 					}
 				},
@@ -134,10 +110,6 @@
 						}
 					},
 					"edit": {
-						"formatting": {
-							"data": "{item.dimension.length}",
-							"format": "{formatDimension(input)}"
-						},
 						"destination": "{item.dimension.length}"
 					}
 				}]
@@ -158,10 +130,6 @@
 			}
 	    },
 		"edit": {
-			"formatting": {
-				"data": "{item.address}",
-				"format": "{formatAddress(input)}"
-			},
 	        "destination": "{item.address}"
 	    }
 	},
@@ -174,10 +142,6 @@
 			}
 	    },
 		"edit": {
-			"formatting": {
-				"data": "{timeslot_duration}",
-				"format": "{formatDuration(input)}"
-			},
 	        "destination": "{timeslot_duration}"
 	    }
 	},
@@ -185,7 +149,7 @@
 		"type": "Calendar",
 		"view": {
 			"content": {
-				"transfer_options": "{item.transfer_options}",
+				"transfer_options": "{item.transfer_options}"
 			}
 		},
 		"edit": {
@@ -203,10 +167,6 @@
 			}
 	    },
 		"edit": {
-			"formatting": {
-				"data": "{item.address}",
-				"format": "{formatAddress(input)}"
-			},
 	        "destination": "{item.address}"
 	    }
 	},
@@ -221,10 +181,6 @@
 			}
 	    },
 		"edit": {
-			"formatting": {
-				"data": "{item.tags}",
-				"format": "{input.value}"
-			},
 	        "destination": "{item.tags}"
 	    }
 	}
@@ -241,7 +197,7 @@
 				"icon": "::image_upload::",
 				"subtitle": "Add photos",
 				"content": "Photos: 2/10 - Chose your listing’s main photo first.",
-				"photos": "[{"id": "_image_id_"}, {"id": "_image_id_"}]"
+				"photos": "{item.photos[]}"
 			}
 		},
 	    "edit":{
@@ -254,14 +210,10 @@
 			"content": {
 				"title": "Title",
 				"placeholder": "My iPhone 20",
-				"value": "Best fridge"
+				"value": "{item.title}"
 			}
 		},
 	    "edit": {
-			"formatting": {
-				"data": "{item.title}",
-				"format": "{input}"
-			},
 	        "destination": "{item.title}"
 	    }
 	},
@@ -271,14 +223,10 @@
 			"content": {
         		"title": "Price",
 				"placeholder": "$20.00",
-				"value": "$15.00"
+				"value": "formatCurrency(item.price)"
 			}
 		},
 	    "edit": {
-			"formatting": {
-				"data": "{item.price}",
-				"format": "{formatCurrency(input)}"
-			},
 	        "destination": "{item.price}"
 	    }
 	},
@@ -287,15 +235,11 @@
 	    "view": {
 			"content": {
 				"placeholder": "Condition",
-				"value": "Used - Like New",
+				"value": "item.condition.value",
 				"options": "{conditions}"
 			}
 		},
 	    "edit": {
-			"formatting": {
-				"data": "{item.condition}",
-				"format": "{input.value}"
-			},
 	        "destination": "{item.condition}"
 	    }
 	},
@@ -304,15 +248,11 @@
 	    "view": {
 			"content": {
 				"placeholder": "Selling reason",
-				"value": "No longer used",
+				"value": "{item.selling_reason.value}",
 				"options": "{selling_reasons}"
 			}
 		},
 	    "edit": {
-			"formatting": {
-				"data": "{item.selling_reason}",
-				"format": "{input.value}"
-			},
 	        "destination": "{item.selling_reason}"
 	    }
 	},
@@ -327,14 +267,10 @@
 						"content": {
 							"title": "",
 							"placeholder": "Width",
-							"value": "5"
+							"value": "formatDimension(item.dimension.width)"
 						}
 					},
 					"edit": {
-						"formatting": {
-							"data": "{item.dimension.width}",
-							"format": "{formatDimension(input)}"
-						},
 						"destination": "{item.dimension.width}"
 					}
 				},
@@ -344,14 +280,10 @@
 						"content": {
 							"title": "",
 							"placeholder": "Height",
-							"value": "10"
+							"value": "formatDimension(item.dimension.height)"
 						}
 					},
 					"edit": {
-						"formatting": {
-							"data": "{item.dimension.height}",
-							"format": "{formatDimension(input)}"
-						},
 						"destination": "{item.dimension.height}"
 					}
 				},
@@ -361,14 +293,10 @@
 						"content": {
 							"title": "",
 							"placeholder": "Length",
-							"value": "20"
+							"value": "formatDimension(item.dimension.length)"
 						}
 					},
 					"edit": {
-						"formatting": {
-							"data": "{item.dimension.length}",
-							"format": "{formatDimension(input)}"
-						},
 						"destination": "{item.dimension.length}"
 					}
 				}]
@@ -380,7 +308,7 @@
 	    "view": {
 			"content": {
 				"title": "Where",
-				"value": "23-25 Rosebery Avenue, 2018 NSW",
+				"value": "formatAddress(item.address)",
 				"action_title": "Change"
 			},
 			"placeholder": {
@@ -389,10 +317,6 @@
 			}
 		},
 	    "edit": {
-			"formatting": {
-				"data": "{item.address}",
-				"format": "{formatAddress(input)}"
-			},
 	        "destination": "{item.address}"
 	    }
 	},
@@ -400,15 +324,11 @@
 	    "type": "Wheel",
 	    "view": {
 			"content": {
-				"value": "{15 minutes}"
+				"value": "formatDuration(timeslot_duration)"
 	        	"options": "{timeslot_durations}",
 			}
 		},
 	    "edit": {
-			"formatting": {
-				"data": "{timeslot_duration}",
-				"format": "{formatDuration(input)}"
-			},
 	        "destination": "{timeslot_duration}"
 	    }
 	},
@@ -416,51 +336,7 @@
 		"type": "Calendar",
 		"view": {
 			"content": {
-				"transfer_options": {
-					"pickup": {
-						"timeslots": [
-							{
-								"start_timestamp": "1700894934",
-								"end_timestamp": "1700895934",
-								"available": true,
-								"type": "pickup"
-							},
-							{
-								"start_timestamp": "1700894934",
-								"end_timestamp": "1700895934",
-								"available": false,
-								"type": "pickup"
-							},
-							{
-								"start_timestamp": "1700894934",
-								"end_timestamp": "1700895934",
-								"available": true,
-								"type": "pickup"
-							}
-						]
-					},
-					"delivery": {
-						"fee": {
-							"currency": "AUD",
-							"value": 5.00
-						},
-						"timeslots": [
-							{
-								"start_timestamp": "1700894934",
-								"end_timestamp": "1700895934",
-								"available": true,
-								"type": "delivery"
-							}
-						]
-					},
-					"ship": {
-						"fee": {
-							"currency": "AUD",
-							"value": 10.00
-						},
-						"transfer_provider_id": "post_office_id" 
-					}
-				}
+				"transfer_options": "{item.transfer_options}"
 			}
 		},
 		"edit": {
@@ -472,16 +348,12 @@
 	    "view": {
 			"content": {
 				"title": "Address",
-				"value": "23-25 Rosebery Avenue, 2018 NSW",
+				"value": "formatAddress(item.address)",
 				"placeholder": "Type address",
 	        	"data": "{api_address_search}"
 			}
 		},
 	    "edit": {
-			"formatting": {
-				"data": "{item.address}",
-				"format": "{formatAddress(input)}"
-			},
 	        "destination": "{item.address}"
 	    }
 	},
@@ -490,16 +362,12 @@
 	    "view": {
 			"content": {
 				"title": "Tags",
-				"values": "Furniture, Chair",
+				"values": "{item.tags.value}",
 				"placeholder": "Outdoor, Furniture, etc",
 				"data": "[{"id": "a", "value": "Furniture"}, {"id": "b", "value": "Chair"}]"
 			}
 		},
 	    "edit": {
-			"formatting": {
-				"data": "{item.tags}",
-				"format": "{input.value}"
-			},
 	        "destination": "{item.tags}"
 	    }
 	}

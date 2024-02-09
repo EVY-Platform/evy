@@ -207,14 +207,14 @@
 					"type": "Image",
 					"view": {
 						"content": {
-							"image_id": "_image_id_1_"
+							"image_id": "{item.photos[0].id}"
 						}
 					}
 				},{
 					"type": "Image",
 					"view": {
 						"content": {
-							"image_id": "_image_id_2_"
+							"image_id": "{item.photos[1].id}"
 						}
 					}
 				}]
@@ -225,10 +225,10 @@
 		"type": "Title",
 		"view": {
 			"content": {
-				"title": "Amazing Fridge",
-				"title_detail": "$250",
-				"subtitle_1": "::star_doc:: 88% - 4 items sold",
-				"subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
+				"title": "{item.title}",
+				"title_detail": "{formatCurrency(item.price)}",
+				"subtitle_1": "::star_doc::{item.seller.fidelity_rating}% - {item.seller.items_sold} items sold",
+				"subtitle_2": "{item.address.city}, {item.address.state} -  Posted on {formatTimestamp(item.created_timestamp, 'MM DD')}"
 			}
 		}
 	},
@@ -346,7 +346,7 @@
 		"view": {
 			"content": {
 				"title": "Description",
-				"content": "Great fridge, barely used. I have to get ride of it because there is already a fridge in my new place.",
+				"content": "{item.description}",
 				"maxLines": "2"
 			}
 		}
@@ -361,8 +361,19 @@
 					"view": {
 						"content": {
 							"icon": "_image_id_",
+							"title": "Condition",
+							"subtitle": "{item.condition.value}",
+							"detail": ""	
+						}
+					}
+				},
+				{
+					"type": "Detail",
+					"view": {
+						"content": {
+							"icon": "_image_id_",
 							"title": "Selling reason",
-							"subtitle": "Moving out",
+							"subtitle": "{item.selling_reason.value}",
 							"detail": ""
 						}
 					}
@@ -373,18 +384,7 @@
 						"content": {
 							"icon": "_image_id_",
 							"title": "Dimensions",
-							"subtitle": "250 (w) x 120 (h) x 250 (l)",
-							"detail": ""
-						}
-					}
-				},
-				{
-					"type": "Detail",
-					"view": {
-						"content": {
-							"icon": "_image_id_",
-							"title": "Condition",
-							"subtitle": "Like new",
+							"subtitle": "{item.dimension.width} (w) x {item.dimension.height} (h) x {item.dimension.length} (l)",
 							"detail": ""
 						}
 					}
@@ -397,12 +397,9 @@
 		"view": {
 			"content": {
 				"title": "Pickup location",
-				"line_1": "23-25 Rosebery Avenue",
-				"line_2": "2018 Rosebery, NSW",
-				"location": {
-					"latitude": 45.323124,
-					"longitude": -3.424233
-				}
+				"line_1": "{formatAddressLine1(item.address)}",
+				"line_2": "{formatAddressLine2(item.address)}",
+				"location": "{item.address.location}"
 			}
 		}
 	},
@@ -443,5 +440,6 @@
 				}]
 			}
 		}
+	}
 ]
 ```
