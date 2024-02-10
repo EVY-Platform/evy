@@ -12,6 +12,24 @@ count({_variable_type_list_})
 Variable: [image1, image2]
 Output: 2
 ```
+**for**
+In order to use arrays and output string values for parsing in the SDUI system, we need a special loop system (which acts like a mapper + string concatenator in typical programming languages)
+It's a bit hard to read because it has to be inline and cannot be on multiple lines
+```
+for(input in timeslots)(formatDate(input.start_timestamp, 'HH:mm'))(',')
+
+Variable: [{start_timestamp: 987491276381},{start_timestamp: 987491276381},{start_timestamp: 987491276381}]
+
+Ouput: 10:30, 11:00, 13:30
+```
+And a bit more complex one
+```
+for((input, index) in timeslots)(input.id':'formatDate(input.start_timestamp, 'HH:mm'))(';')
+
+Variable: [{id: aaa, start_timestamp: 987491276381},{id: bbb, start_timestamp: 987491276381},{id: ccc, start_timestamp: 987491276381}]
+
+Ouput: aaa: 10:30; bbb:11:00; ccc: 13:30
+```
 
 ## Formatting functions
 These are functions that do 3 things:

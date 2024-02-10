@@ -1,46 +1,52 @@
 # SDUI Rows
 
 ### Base features
+* All values are strings, there are no types as this is dynamic on the apps
+    * eg: "title": "My title", could also be "title": "{item.title}"
 * All strings can include:
     * **variables** surrounded with curley braces: "Hello {name}, how are you?"
     * **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
     * **emojis** prefixed with a colon: "I like :dog a lot"
-* []
-    * Denotes an array variable, used as such: string[] or int[]
-    * Can have no type which denotes "any"
+* [x]
+    * Denotes a type array of x
 * Content inside of row.view (see below)
     * Empty strings will be displayed and will NOT be ignored, but will essentially not be visible to the user
     * Missing keys will not be allowed, all keys/properties of a row content are required
 * Nested rows, rows within rows
     * "ROW" denotes the type of a row, meaning that that prop expects more rows
+* Array values
+    * When array values are passed into a prop of content, they are parsed as arrays by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
 
 ### Base schema that all rows inherit from:
 ```
 {
     // The type of row that it is, see below
-    type: "string",
+    "type",
 
     // Prop that defines when the row is visible
     // for example {count(item.transfer_option.pickup.dates_with_timeslots) > 0}
-    "visible": "string"
+    "visible"
 
     "view": {
-        // Each key/value pair represents a line of content shown on a row
-        // the key is the name, the value is what the content is or where it's from
         content: {
-            "label": "value"
+            // Represents the header of the row, if empty string then no header will be shown
+            "title",
+
+            // Each subsequent key/value pair represents a line of content shown on a row
+            // the key is the name, the value is what the content is or where it's from
+            //eg "subtitle": "My great subtitle"
         },
 
         // Special prop that defines a placeholder text shown on a row instead
         // of it's content, which disapears/fades out when a condition is met
         "placeholder": {
-            "value": "string",
-            "condition": "string"
+            "value",
+            "condition"
         },
     }
     "edit": {
         // Where the input data is stored
-        "destination": "string"   
+        "destination"   
     }
 
 }
@@ -49,20 +55,19 @@
 ### Base schema that container rows inherit from:
 ```
 {
-    "type": "string",
+    "type",
     "view": {
         "content": {
-            "title": "string",
             "children": [{
                 // Whether to show a title to the row, column, etc...
-                "title": "string",
+                "title",
                 "child": "ROW"
             }],
 
-            // Whether to use data to iterate over for example seller.pictures[]
+            // Whether to use data to iterate over for example seller.pictures
             // This makes the "input" variable available to each child,
             //   which is the current child in the iteration
-            "children_data": "string"
+            "children_data"
         }
     }
 }
@@ -76,31 +81,26 @@
 ```
 ```
 {
-    "type": "ContainerList", // Shows children in a list
+    "type": "ListContainer", // Shows children in a list
 }
 ```
 ```
 {
-    "type": "SegmentedControl", // Shows children under a segmented control
+    "type": "SelectContainer", // Shows children under a segmented control
 }
 ```
 ```
 {
-    "type": "Carousel", // Shows children in a carousel
+    "type": "CarouselContainer", // Shows children in a carousel
 }
 ```
 ```
 {
-    "type": "SheetRow", // Shows a sheet with children when the row is tapped
+    "type": "SheetContainer", // Shows a sheet with children when the row is tapped
     "view": {
         "content": {
-            // These props will show on the row itself
-            "title": "string",
-            "value": "string",
-            "action_title": "string",
-
-            // These props will show on the sheet
-            "children_header": "string"
+            // What row to show for the action
+            "child": "ROW"
         }
     }
 }
@@ -112,7 +112,7 @@
     "type": "Image",
     "view": {
         "content": {
-            "photo": "photo"
+            "photo_id"
         }
     }
 }
@@ -122,10 +122,9 @@
     "type": "Title",
     "view": {
         "content": {
-            "title": "string",
-            "title_detail": "string",
-            "subtitle_1": "string",
-            "subtitle_2": "string"
+            "title_detail",
+            "line_1",
+            "line_2"
         }
     }
 }
@@ -135,9 +134,9 @@
     "type": "TitleShort",
     "view": {
         "content": {
-            "icon": "string",
-            "title": "string",
-            "disclaimer": "string"
+            "icon",
+            "detail",
+            "disclaimer"
         }
     }
 }
@@ -147,10 +146,13 @@
     "type": "TimeslotPicker",
     "view": {
         "content": {
-            "icon": "string",
-            "subtitle": "string",
-            "details": "string",
-            "timeslots": "[timeslot]"
+            "icon",
+            "subtitle",
+            "detail",
+            "timeslots": [{
+                "id",
+                "value"
+            }]
         }
     }
 }
@@ -160,7 +162,15 @@
     "type": "Calendar",
     "view": {
         "content": {
-            "transfer_options": "transfer_options"
+            "layers": [{
+                "primary",
+                "visible",
+                "timeslots":[{
+                    "id",
+                    "start_timestamp",
+                    "end_timestamp"
+                }]
+            }]
         }
     }
 }
@@ -170,10 +180,9 @@
     "type": "Text",
     "view": {
         "content": {
-            "title": "string",
-            "content": "string",
-            "maxLines": "number"
-        }
+            "text"
+        },
+        "max_lines"
     }
 }
 ```
@@ -182,10 +191,10 @@
     "type": "Detail",
     "view": {
         "content": {
-            "title": "string",
-            "icon": "string",
-            "subtitle": "string",
-            "detail": "string"
+            "icon",
+            "line_1",
+            "line_2",
+            "detail"
         }
     }
 }
@@ -195,9 +204,8 @@
     "type": "Disclaimer",
     "view": {
         "content": {
-            "icon": "string",
-            "title": "string",
-            "subtitle": "string"
+            "icon",
+            "disclaimer"
         }
     }
 }
@@ -207,10 +215,12 @@
     "type": "Address",
     "view": {
         "content": {
-            "title": "string",
-            "line_1": "string",
-            "line_2": "string",
-            "location": "location"
+            "line_1",
+            "line_2",
+            "location": {
+                "latitude"
+                "longitude"
+            }
         }
     }
 }
@@ -222,9 +232,8 @@
     "type": "Input",
     "view": {
         "content": {
-            "title": "string",
-            "value": "string",
-            "placeholder": "string"
+            "value",
+            "placeholder"
         }
     }
 }
@@ -234,37 +243,11 @@
     "type": "Search",
     "view": {
         "content": {
-            "title": "string",
-            "value": "string",
-            "placeholder": "string",
-            "data": "string"
-        }
-    }
-}
-```
-```
-{
-    "type": "SearchMulti",
-    "view": {
-        "content": {
-            "title": "string",
-            "values": "string[]",
-            "placeholder": "string",
-            "data": "string"
-        }
-    }
-}
-```
-```
-{
-    "type": "PhotoUpload",
-    "view": {
-        "content": {
-            "icon": "string",
-            "subtitle": "string",
-            "content": "string",
-            "photos": "[photo]"
-        }
+            "value",
+            "placeholder"
+        },
+        "multi",
+        "data"
     }
 }
 ```
@@ -273,10 +256,11 @@
     "type": "Select",
     "view": {
         "content": {
-            "placeholder": "string",
-            "value": "string",
-            "options": "[]"
-        }
+            "value",
+            "placeholder"
+        },
+        "multi",
+        "data"
     }
 }
 ```
@@ -285,9 +269,24 @@
     "type": "Wheel",
     "view": {
         "content": {
-            "value": "string",
-            "options": "[]"
-        }
+            "value"
+        },
+        "multi",
+        "data"
+    }
+}
+```
+```
+{
+    "type": "PhotoUpload",
+    "view": {
+        "content": {
+            "icon",
+            "subtitle",
+            "content",
+            "photo_ids"
+        },
+        "data"
     }
 }
 ```
