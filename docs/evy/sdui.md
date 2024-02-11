@@ -312,7 +312,8 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
             "timeslots":[{
                 "id",
                 "start_timestamp",
-                "end_timestamp"
+                "end_timestamp",
+                "available"
             }]
         }
     }
