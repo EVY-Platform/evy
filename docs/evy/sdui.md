@@ -34,7 +34,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     * **variables** surrounded with curley braces: "Hello {name}, how are you?"
     * **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
     * **emojis** prefixed with a colon: "I like :dog a lot"
-* [x]
+* [ x ]
     * Denotes a type array of x
 * Content inside of row.view (see below)
     * Empty strings will be displayed and will NOT be ignored, but will essentially not be visible to the user
