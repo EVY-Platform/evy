@@ -26,7 +26,7 @@
 
     // Prop that defines when the row is visible
     // for example {count(item.transfer_option.pickup.dates_with_timeslots) > 0}
-    "visible"
+    "visible",
 
     "view": {
         content: {
@@ -44,10 +44,19 @@
             "value",
             "condition"
         },
-    }
+    },
     "edit": {
         // Where the input data is stored
         "destination"
+    },
+
+    "action": {
+
+        // When submitting, the page contains the information that it should be submitting.
+        // In the case of navigate, the target prop is used.
+        // Anchors are used when scrolling or navigating to specific sections of a page
+        "type": "navigate | submit",
+        "target": "page_id:anchor_id"
     }
 
 }
@@ -280,7 +289,7 @@
 ```
 ```
 {
-    "type": "PhotoUpload",
+    "type": "SelectPhoto",
     "view": {
         "content": {
             "icon",
@@ -289,6 +298,18 @@
             "photo_ids"
         },
         "data"
+    }
+}
+```
+
+### Button rows
+```
+{
+    "type": "Button",
+    "view": {
+        "content": {
+            "label"
+        }
     }
 }
 ```
