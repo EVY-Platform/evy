@@ -36,10 +36,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     * **emojis** prefixed with a colon: "I like :dog a lot"
 * [ x ]
     * Denotes a type array of x
-* Content inside of row.view (see below)
-    * Empty strings will be displayed and will NOT be ignored, but will essentially not be visible to the user
-    * Missing keys will not be allowed, all keys/properties of a row content are required
-* Nested rows, rows within rows
+* Nested rows (rows within rows)
     * "ROW" denotes the type of a row, meaning that that prop expects more rows
 * Objects and arrays
     * When objects or arrays are passed into a prop of content, they are parsed fully by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
