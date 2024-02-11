@@ -258,8 +258,8 @@
     "type": "Select",
     "view": {
         "content": {
-            "value",
-            "placeholder"
+            "header",
+            "value"
         },
         "multi",
         "data"

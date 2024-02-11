@@ -3,11 +3,11 @@
 ```
 [
 	{
-	    "type": "PhotoUpload",
+	    "type": "SelectPhoto",
 	    "view": {
 			"content": {
 				"title": "",
-	        	"icon": "::image_upload::",
+	        	"icon": "::image_something::",
 	        	"subtitle": "Add photos",
 	        	"content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
 				"photo_ids": "{item.photos}"
