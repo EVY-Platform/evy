@@ -17,26 +17,26 @@ public enum RowCodingKeys: String, CodingKey {
 
 // MARK: JSON Base structures
 public class EVYSDUIJSON {
-    public class Action: Decodable {
+    public struct Action: Decodable {
         let type: String
         let target: String
     }
-    public class Edit: Decodable {
+    public struct Edit: Decodable {
         let destination: String
         let required: String
     }
-    public class Placeholder: Decodable {
+    public struct Placeholder: Decodable {
         let value: String
         let condition: String
     }
     public class Content: Decodable {
         let title: String
     }
-    public class View: Decodable {
+    public struct View: Decodable {
         var content: Content
         var placeholder: Placeholder
     }
-    public class Row: Decodable {
+    public struct Row: Decodable {
         let type: String
         let visible: String
         let view: View
@@ -44,9 +44,22 @@ public class EVYSDUIJSON {
         let action: Action
     }
     
-    public class ContainerChildren: Decodable {
+    private enum ContainerChildCodingKeys: String, CodingKey {
+        case title = "title"
+        case child = "child"
+    }
+    public struct ContainerChild: Decodable {
         let title: String
         let child: EVYRow
+        let id: UUID
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: ContainerChildCodingKeys.self)
+            self.title = try container.decode(String.self, forKey: .title)
+            self.child = try container.decode(EVYRow.self, forKey: .child)
+            
+            self.id = UUID()
+        }
     }
     private enum ContainerContentCodingKeys: String, CodingKey {
         case title = "title"
@@ -54,16 +67,20 @@ public class EVYSDUIJSON {
         case children_data = "children_data"
     }
     public class ContainerContent: Content {
-        let children: ContainerChildren
-        let children_data: String
+        let children: [ContainerChild]
+        let children_data: String?
         
         required init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: ContainerContentCodingKeys.self)
-            self.children = try container.decode(ContainerChildren.self, forKey: .children)
-            self.children_data = try container.decode(String.self, forKey: .children_data)
+            self.children = try container.decode([ContainerChild].self, forKey: .children)
+            self.children_data = try? container.decode(String.self, forKey: .children_data)
             
             try super.init(from: decoder)
         }
+    }
+    public struct ContainerView: Decodable {
+        let content: ContainerContent
+        var placeholder: Placeholder?
     }
 }
 
@@ -79,6 +96,9 @@ struct EVYRow: View, Decodable {
         switch self.type {
         case EVYTextRow.JSONType:
             self.view = try EVYTextRow(container: container)
+            
+        case EVYColumnContainer.JSONType:
+            self.view = try EVYColumnContainer(container: container)
             
         default:
             self.view = Text("I am a row")

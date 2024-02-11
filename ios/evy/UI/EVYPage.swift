@@ -27,9 +27,7 @@ struct EVYPage: View, Decodable {
     
     var body: some View {
         List(rows.indices, id: \.self) { index in
-            rows[index]
-                .padding(.bottom, Constants.majorPadding)
-                .listRowSeparator(.hidden)
+            rows[index].listRowSeparator(.hidden)
         }
         .listStyle(PlainListStyle())
         .ignoresSafeArea()
