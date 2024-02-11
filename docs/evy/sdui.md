@@ -150,10 +150,14 @@
             "icon",
             "subtitle",
             "detail",
-            "timeslots": [{
-                "id",
-                "value"
-            }]
+            "data": {
+                "header": [{
+                    "id",
+                    "value",
+                    "header",
+                    "sub_header"
+                }]
+            }
         }
     }
 }

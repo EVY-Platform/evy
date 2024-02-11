@@ -47,7 +47,7 @@
 								"icon": "_image_id_",
 								"subtitle": "Meet at the pickup location",
 								"details": "",
-								"timeslots": "{
+								"data": "{
 									group(
 										map(item.transfer_option.pickup.timeslots)({
 											'id':'{input.id}',
@@ -72,7 +72,7 @@
 								"icon": "_image_id_",
 								"details": "+ formatCurrency(item.transfer_option.delivery.fee)",
 								"subtitle": "Delivered at your door",
-								"timeslots": "{
+								"data": "{
 									group(
 										map(item.transfer_option.delivery.timeslots)({
 											'id':'{input.id}',
