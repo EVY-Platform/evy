@@ -14,8 +14,9 @@
     * Missing keys will not be allowed, all keys/properties of a row content are required
 * Nested rows, rows within rows
     * "ROW" denotes the type of a row, meaning that that prop expects more rows
-* Array values
-    * When array values are passed into a prop of content, they are parsed as arrays by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
+* Objects and arrays
+    * When objects or arrays are passed into a prop of content, they are parsed fully by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
+    * If transformations need to be done on the data, the **map** or **transform** functions needs to be used
 
 ### Base schema that all rows inherit from:
 ```

@@ -12,23 +12,81 @@ count({_variable_type_list_})
 Variable: [image1, image2]
 Output: 2
 ```
-**for**
-In order to use arrays and output string values for parsing in the SDUI system, we need a special loop system (which acts like a mapper + string concatenator in typical programming languages)
-It's a bit hard to read because it has to be inline and cannot be on multiple lines
+**map**
+In order to transform data from arrays, EVY has a simple function which iterates over a list and allows applying transformations, as well as use the index. Note that single quotes are used for strings inside functions, and that additional strings need to have their single quotes escaped.
 ```
-for(input in timeslots)(formatDate(input.start_timestamp, 'HH:mm'))(',')
-
-Variable: [{start_timestamp: 987491276381},{start_timestamp: 987491276381},{start_timestamp: 987491276381}]
-
-Ouput: 10:30, 11:00, 13:30
+timeslots = [
+    {"id": "aaa", "start_timestamp": "987491276381"},
+    {"id": "bbb", "start_timestamp": "987491276381"},
+    {"id": "ccc", "start_timestamp": "987491276381"}
+]
 ```
-And a bit more complex one
 ```
-for((input, index) in timeslots)(input.id':'formatDate(input.start_timestamp, 'HH:mm'))(';')
+map(timeslots)({'timeslot': '{formatDate(input.start_timestamp, \'HH:mm\')}'})
+Ouput: [
+    {"timeslot": "10:30"},
+    {"timeslot": "11:00"},
+    {"timeslot": "13:30"}
+]
+```
+Also made available is the index of
+```
+map(timeslots)({'{index}': '{input.id}'})
+Ouput: [
+    {"1": "aaa"},
+    {"2": "bbb"},
+    {"3": "ccc"}
+]
+```
 
-Variable: [{id: aaa, start_timestamp: 987491276381},{id: bbb, start_timestamp: 987491276381},{id: ccc, start_timestamp: 987491276381}]
-
-Ouput: aaa: 10:30; bbb:11:00; ccc: 13:30
+**transform**
+In order to transform data from objects, EVY has a simple function which allows adding keys or replacing any value. Note that single quotes are used for strings inside functions, and that additional strings need to have their single quotes escaped.
+```
+address = {
+    "unit": "23-25",
+    "street": "Rosebery Avenue",
+    "city": "Rosebery",
+    "postcode": "2018",
+    "state": "NSW",
+    "country": "Australia",
+    "location": {
+        "latitude": 45.323124,
+        "longitude": -3.424233
+    }
+}
+```
+Adding
+```
+transform(address)({'street_and_unit': '{address.unit} {address.street}'})
+Ouput: {
+    "unit": "23-25",
+    "street": "Rosebery Avenue",
+    "city": "Rosebery",
+    "postcode": "2018",
+    "state": "NSW",
+    "country": "Australia",
+    "location": {
+        "latitude": 45.323124,
+        "longitude": -3.424233
+    },
+    "street_and_unit": "23-25 Rosebery Avenue"
+}
+```
+Replacing
+```
+transform(address)({'street': '{address.unit} {address.street}'})
+Ouput: {
+    "unit": "23-25",
+    "street": "23-25 Rosebery Avenue",
+    "city": "Rosebery",
+    "postcode": "2018",
+    "state": "NSW",
+    "country": "Australia",
+    "location": {
+        "latitude": 45.323124,
+        "longitude": -3.424233
+    }
+}
 ```
 
 ## Formatting functions
