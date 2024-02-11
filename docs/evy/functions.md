@@ -6,13 +6,13 @@ Functions are used to convert an input into a different output. For example form
 
 ## Methods
 These are methods available to the user to compute data
-**count**
+#### count
 ```
 count({_variable_type_list_})
 Variable: [image1, image2]
 Output: 2
 ```
-**map**
+#### map
 In order to transform data from arrays, EVY has a simple function which iterates over a list and allows applying transformations, as well as use the index. Note that single quotes are used for strings inside functions, and that additional strings need to have their single quotes escaped.
 ```
 timeslots = [
@@ -38,8 +38,7 @@ Ouput: [
     {"3": "ccc"}
 ]
 ```
-
-**transform**
+#### transform
 In order to transform data from objects, EVY has a simple function which allows adding keys or replacing any value. Note that single quotes are used for strings inside functions, and that additional strings need to have their single quotes escaped.
 ```
 address = {
@@ -97,50 +96,50 @@ These are functions that do 3 things:
 
 Some of them are dynamic and some are built in (see following section)
 
-#### Formatting functions built in
+### Formatting functions built in
 Meaning they are hard coded into the server and clients  
 
-**formatDecimal**
+#### formatDecimal
 ```
 formatDecimal(_variable_type_number_, 2)
 Variable: 20.0423
 Outputs: 20.04
 ```
-**formatMetricLength**
+#### formatMetricLength
 ```
 formatMetricLength(_variable_type_number_) // Takes milimeters
 Variable: 23240
 Outputs: 23.24m
 ```
-**formatImperialLength**
+#### formatImperialLength
 ```
 formatImperialLength(_variable_type_number_) // Takes milimeters
 Variable: 4231
 Outputs: 13.88ft
 ```
-**formatDuration**
+#### formatDuration
 ```
 formatDuration(_variable_type_number_)
 Variable: 900000
 Outputs: 15 minutes
 ```
-**formatDate**
+#### formatDate
 ```
 formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
 Variable: 1705651372
 Outputs: 19/01/2024
 ```
 
-#### Dynamic formatting functions
+### Dynamic formatting functions
 These are formats that are configured by passing dynamic JSON, and using region or device configs  
 
-**formatCurrency**
+#### formatCurrency
 ```
 formatCurrency(_variable_type_price_)
 Variable: { "currency": "AUD", "value": "13.23" }
 Outputs: $13.23
 ```
-**formatAddress**
+#### formatAddress
 ```
 formatAddress(_variable_type_address_)
 Variable: {
@@ -155,7 +154,7 @@ Variable: {
 Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
 ```
 
-**Sample code:**
+#### Sample code:
 ```
 {
     "formatCurrency": {
