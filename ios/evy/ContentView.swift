@@ -11,7 +11,7 @@ struct ContentView: View {
     @State private var flows = try! JSONDecoder().decode([EVYFlow].self, from: json)
     
     var body: some View {
-        flows[0].ignoresSafeArea()
+        flows[0]
     }
 }
 

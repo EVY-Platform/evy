@@ -10,43 +10,34 @@ import SwiftUI
 struct EVYTextRow: View {
     
     public static var JSONType = "Text"
-    private struct JSONContentData: Decodable {
+    private struct ContentData: Decodable {
         let title: String
         let text: String
     }
-    private struct JSONData: Decodable {
-        let content: JSONContentData
-        let maxLines: String
+    private struct Data: Decodable {
+        let content: ContentData
+        let max_lines: String
     }
-    
-    private let title: String
-    private let text: String
-    private let maxLines: Int
     
     @State private var expanded: Bool = false
+    private let data: Data
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        let parsedData = try container.decode(JSONData.self, forKey:.view)
-        self.title = parsedData.content.title
-        self.text = parsedData.content.text
-        self.maxLines = Int(parsedData.maxLines) ?? 2
-    }
-    private var moreLessText: String {
-        return self.expanded ? "Read less" : "Read more"
+        self.data = try container.decode(Data.self, forKey:.view)
     }
     
     var body: some View {
         VStack {
-            EVYText(title)
+            EVYText(data.content.title)
                 .font(.titleFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
-            EVYText(text)
+            EVYText(data.content.text)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
-                .lineLimit(expanded ? nil : maxLines)
-            EVYText(moreLessText)
+                .lineLimit(expanded ? nil : Int(data.max_lines) ?? 2)
+            EVYText(self.expanded ? "Read less" : "Read more")
                 .foregroundStyle(Constants.textButtonColor)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
