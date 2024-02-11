@@ -335,7 +335,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
         }
     },
     "edit": {
-		"minimum_number"
+        "minimum_number"
     }
 }
 ```
