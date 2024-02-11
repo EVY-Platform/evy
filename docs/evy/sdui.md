@@ -1,8 +1,8 @@
 # SDUI
 
 ## Flow
-Flows are not visually used in the UI but represent a full user journey (eg: creating an item)
-They are needed in order to submit all fields of all pages of a flow at the end upon clicking a single button on a page
+Flows are not visually used in the UI but represent a full user journey (eg: creating an item)  
+They are needed in order to submit all fields of all pages of a flow at the end upon clicking a single button on a page  
 ```
 {
     "name"
