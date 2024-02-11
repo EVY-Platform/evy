@@ -7,30 +7,33 @@
 
 import SwiftUI
 
-public enum CodingKeys: String, CodingKey {
+public enum RowCodingKeys: String, CodingKey {
     case type = "type"
-    case content = "content"
+    case visible = "visible"
+    case view = "view"
+    case edit = "edit"
+    case action = "action"
 }
 
 struct EVYRow: View, Decodable {
     public var type: String
-    var content: any View
+    var view: any View
 
     init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let container = try decoder.container(keyedBy: RowCodingKeys.self)
         self.type = try container.decode(String.self, forKey: .type)
         
         switch self.type {
-        case EVYSelectContainer.JSONType:
-            self.content = try EVYSelectContainer(container: container)
+        case EVYTextRow.JSONType:
+            self.view = try EVYTextRow(container: container)
             
         default:
-            self.content = Text("I am a row")
+            self.view = Text("I am a row")
         }
     }
     
     var body: some View {
-        AnyView(content)
+        AnyView(view)
     }
 }
 
