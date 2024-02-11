@@ -21,8 +21,8 @@ struct EVYRow: View, Decodable {
         self.type = try container.decode(String.self, forKey: .type)
         
         switch self.type {
-        case EVYSegmentedControlRow.JSONType:
-            self.content = try EVYSegmentedControlRow(container: container)
+        case EVYSelectContainer.JSONType:
+            self.content = try EVYSelectContainer(container: container)
             
         default:
             self.content = Spacer()
