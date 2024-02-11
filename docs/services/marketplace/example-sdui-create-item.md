@@ -44,31 +44,67 @@
 	    }
 	},
 	{
-	    "type": "Select",
+	    "type": "SheetContainer",
 	    "view": {
 			"content": {
-				"value": "{item.condition.value}",
-	        	"placeholder": "Condition"
-	    	},
-			"multi": "{false}",
-			"data": "{conditions}"
-		},
-		"edit": {
-	        "destination": "{item.condition}"
+				"title": "Condition",
+				"child": {
+					"type": "Input",
+					"view": {
+						"content": {
+							"title": "",
+							"placeholder": "Chose one",
+							"value": "{item.condition.value}"
+						}
+					}
+				},
+				"children": [{
+					"type": "Select",
+					"view": {
+						"content": {
+							"value": "{item.condition.value}",
+							"placeholder": "Condition"
+						},
+						"multi": "{false}",
+						"data": "{conditions}"
+					},
+					"edit": {
+						"destination": "{item.condition}"
+					}
+				}]
+			}
 	    }
 	},
 	{
-	    "type": "Select",
+	    "type": "SheetContainer",
 	    "view": {
 			"content": {
-				"value": "{item.selling_reason.value}",
-	        	"placeholder": "Selling reason"
-	    	},
-			"multi": "{false}",
-			"data": "{selling_reasons}"
-		},
-		"edit": {
-	        "destination": "{item.selling_reason}"
+				"title": "Selling reason",
+				"child": {
+					"type": "Input",
+					"view": {
+						"content": {
+							"title": "",
+							"placeholder": "Chose one",
+							"value": "{item.selling_reason.value}"
+						}
+					}
+				},
+				"children": [{
+					"type": "Select",
+					"view": {
+						"content": {
+							"value": "{item.selling_reason.value}",
+							"placeholder": "Condition"
+						},
+						"multi": "{false}",
+						"data": "{selling_reasons}"
+					},
+					"edit": {
+						"destination": "{item.selling_reason}"
+					}
+				}]
+			}
 	    }
 	},
 	{
