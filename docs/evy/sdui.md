@@ -40,7 +40,6 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     * "ROW" denotes the type of a row, meaning that that prop expects more rows
 * Objects and arrays
     * When objects or arrays are passed into a prop of content, they are parsed fully by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
-    * If transformations need to be done on the data, the **map** or **transform** functions needs to be used
 
 ### Base schema that all rows inherit from:
 ```
