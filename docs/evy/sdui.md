@@ -1,4 +1,31 @@
-# SDUI Rows
+# SDUI
+
+## Flow
+Flows are not visually used in the UI but represent a full user journey (eg: creating an item)
+They are needed in order to submit all fields of all pages of a flow at the end upon clicking a single button on a page
+```
+{
+    "name"
+}
+```
+
+## Page
+Pages are put into flows
+```
+{
+    // Shown in the navbar
+    "title",
+    
+    "flow_id",
+
+    // Action button on the right on the navbar
+    "action": "edit | delete | close | info",
+    "tooltip": "This is used by the info action as popup data",
+}
+```
+
+## Row
+Rows are what are put into pages. They are the building block of the EVY SDUI framework  
 
 ### Base features
 * All values are strings, there are no types as this is dynamic on the apps
@@ -47,15 +74,18 @@
     },
     "edit": {
         // Where the input data is stored
-        "destination"
+        "destination",
+
+        // Required for form validation for submissions
+        "required"
     },
 
     "action": {
-        // When submitting, the page contains the information that it should be submitting.
-        // In the case of navigate, the target prop is used.
-        // Anchors are used when scrolling or navigating to specific sections of a page
+        // 2 types of actions that can be taken by a button
+        // 1. Navigate: Goes to the specified page (and anchor if specified, used to scroll or navigate to specific sections of a page)
+        // 2. Submit: Calls the API to submit the specified data
         "type": "navigate | submit",
-        "target": "page_id:anchor_id"
+        "target": "{page_id:anchor_id | data}"
     }
 
 }
@@ -152,41 +182,6 @@
 ```
 ```
 {
-    "type": "TimeslotPicker",
-    "view": {
-        "content": {
-            "icon",
-            "subtitle",
-            "detail",
-            "timeslots":[{
-                "id",
-                "start_timestamp",
-                "end_timestamp"
-            }]
-        }
-    }
-}
-```
-```
-{
-    "type": "Calendar",
-    "view": {
-        "content": {
-            "layers": [{
-                "primary",
-                "visible",
-                "timeslots":[{
-                    "id",
-                    "start_timestamp",
-                    "end_timestamp"
-                }]
-            }]
-        }
-    }
-}
-```
-```
-{
     "type": "Text",
     "view": {
         "content": {
@@ -245,6 +240,10 @@
             "value",
             "placeholder"
         }
+    },
+    "edit": {
+        "minimum_characters",
+        "minimum_number"
     }
 }
 ```
@@ -258,6 +257,9 @@
         },
         "multi",
         "data"
+    },
+    "edit": {
+		"minimum_number"
     }
 }
 ```
@@ -297,6 +299,47 @@
             "photo_ids"
         },
         "data"
+    },
+    "edit": {
+        "minimum_number"
+    }
+}
+```
+```
+{
+    "type": "TimeslotPicker",
+    "view": {
+        "content": {
+            "icon",
+            "subtitle",
+            "detail",
+            "timeslots":[{
+                "id",
+                "start_timestamp",
+                "end_timestamp"
+            }]
+        }
+    }
+}
+```
+```
+{
+    "type": "Calendar",
+    "view": {
+        "content": {
+            "layers": [{
+                "primary",
+                "visible",
+                "timeslots":[{
+                    "id",
+                    "start_timestamp",
+                    "end_timestamp"
+                }]
+            }]
+        }
+    },
+    "edit": {
+		"minimum_number"
     }
 }
 ```

@@ -14,7 +14,8 @@
 			}
 	    },
 		"edit": {
-	    	"destination": "{item.photos}"
+	    	"destination": "{item.photos}",
+			"minimum_amount": "1"
 	    }
 	},
 	{
@@ -27,7 +28,8 @@
 			}
 	    },
 		"edit": {
-	        "destination": "{item.title}"
+	        "destination": "{item.title}",
+			"minimum_characters": "6"
 	    }
 	},
 	{
@@ -40,7 +42,8 @@
 			}
 	    },
 		"edit": {
-	        "destination": "{item.price}"
+	        "destination": "{item.price}",
+			"minimum_number": "1"
 	    }
 	},
 	{
@@ -124,7 +127,8 @@
 							}
 						},
 						"edit": {
-							"destination": "{item.dimension.width}"
+							"destination": "{item.dimension.width}",
+							"minimum_number": "1"
 						}
 					}
 				},
@@ -140,7 +144,8 @@
 							}
 						},
 						"edit": {
-							"destination": "{item.dimension.height}"
+							"destination": "{item.dimension.height}",
+							"minimum_number": "1"
 						}
 					}
 				},
@@ -156,7 +161,8 @@
 							}
 						},
 						"edit": {
-							"destination": "{item.dimension.length}"
+							"destination": "{item.dimension.length}",
+							"minimum_number": "1"
 						}
 					}
 				}]
@@ -254,7 +260,8 @@
 							}
 						},
 						"edit": {
-							"destination": "{item.transfer_options.pickup}"
+							"destination": "{item.transfer_options.pickup}",
+							"minimum_number": "1"
 						}
 					}
 				},{
@@ -275,7 +282,8 @@
 							}
 						},
 						"edit": {
-							"destination": "{item.transfer_options.delivery}"
+							"destination": "{item.transfer_options.delivery}",
+							"minimum_number": "1"
 						}
 					}
 				},
@@ -321,7 +329,8 @@
 			"multi": "{true}"
 	    },
 		"edit": {
-	        "destination": "{item.tags}"
+	        "destination": "{item.tags}",
+			"minimum_number": "1"
 	    }
 	}
 ]
