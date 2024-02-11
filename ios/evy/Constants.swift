@@ -39,3 +39,29 @@ struct Constants {
     static let textButtonColor: Color = .blue
     static let inactiveBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
 }
+
+struct DataConstants {
+    static let flows = "[\(flow)]"
+    static let flow = """
+    {
+        "id": "a",
+        "name": "Test",
+        "pages": \(pages)
+    }
+    """
+    
+    static let pages = "[\(page)]"
+    static let page = """
+    {
+        "id": "b",
+        "name": "Test",
+        "flow_id": "a",
+        "rows": \(rows)
+    }
+    """
+    
+    static let rows = "[\(testRow)]"
+    static let testRow = """
+        {"type": "test"}
+    """
+}

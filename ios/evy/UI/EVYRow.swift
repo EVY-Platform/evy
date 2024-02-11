@@ -25,11 +25,16 @@ struct EVYRow: View, Decodable {
             self.content = try EVYSelectContainer(container: container)
             
         default:
-            self.content = Spacer()
+            self.content = Text("I am a row")
         }
     }
     
     var body: some View {
         AnyView(content)
     }
+}
+
+#Preview {
+    let json =  DataConstants.testRow.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

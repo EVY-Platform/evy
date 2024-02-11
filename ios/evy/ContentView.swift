@@ -8,45 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var rows = try! JSONDecoder().decode([EVYRow].self, from: json)
+    @State private var flows = try! JSONDecoder().decode([EVYFlow].self, from: json)
     
     var body: some View {
-        List(rows.indices, id: \.self) { index in
-            rows[index]
-                .padding(.bottom, Constants.majorPadding)
-                .listRowSeparator(.hidden)
-        }
-        .listStyle(PlainListStyle())
-        .ignoresSafeArea()
+        flows[0].ignoresSafeArea()
     }
 }
 
-let json = """
-[
-    {
-        "type": "SegmentedControl",
-        "content": {
-            "children": [
-                {
-                    "title": "Pickup",
-                    "children": [{
-                        "type": "TimeslotPicker",
-                        "content": {}
-                    }]
-                },
-                {
-                    "title": "Deliver",
-                    "children": [{
-                        "type": "TimeslotPicker",
-                        "content": {}
-                    }]
-                }
-            ]
-        }
-    }
-]
-""".data(using: .utf8)!
-
+let json = DataConstants.flows.data(using: .utf8)!
 #Preview {
     return ContentView()
 }
