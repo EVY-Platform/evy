@@ -51,7 +51,6 @@
     },
 
     "action": {
-
         // When submitting, the page contains the information that it should be submitting.
         // In the case of navigate, the target prop is used.
         // Anchors are used when scrolling or navigating to specific sections of a page
