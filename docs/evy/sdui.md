@@ -16,11 +16,7 @@ Pages are put into flows
     // Shown in the navbar
     "title",
     
-    "flow_id",
-
-    // Action button on the right on the navbar
-    "action": "edit | delete | close | info",
-    "tooltip": "This is used by the info action as popup data",
+    "flow_id"
 }
 ```
 

@@ -39,3 +39,81 @@ struct Constants {
     static let textButtonColor: Color = .blue
     static let inactiveBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
 }
+
+struct DataConstants {
+    static let flows = "[\(flow)]"
+    static let flow = """
+        {
+            "id": "a",
+            "name": "Test",
+            "pages": \(pages)
+        }
+    """
+    
+    static let pages = "[\(page)]"
+    static let page = """
+        {
+            "id": "b",
+            "name": "Test",
+            "rows": \(rows)
+        }
+    """
+    
+    static let rows = "[\(testRow), \(textRow), \(columnContainerRow)]"
+    static let testRow = """
+        {"type": "test"}
+    """
+    static let textRow = """
+        {
+            "type": "Text",
+            "view": {
+                "content": {
+                    "title": "Description",
+                    "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+                },
+                "max_lines": "2"
+            }
+        }
+    """
+    static let columnContainerRow = """
+        {
+            "type": "ColumnContainer",
+            "view": {
+                "content": {
+                    "title": "Column Container",
+                    "children": [\(columnContainerChild), \(columnContainerChild2)]
+                }
+            }
+        }
+    """
+    static let columnContainerChild = """
+        {
+            "title": "",
+            "child": {
+                "type": "Text",
+                "view": {
+                    "content": {
+                        "title": "Text Row 1",
+                        "text": "ONE Lorem Ipsum is simply dummy text of the printing and typesetting industry"
+                    },
+                    "max_lines": "2"
+                }
+            }
+        }
+    """
+    static let columnContainerChild2 = """
+        {
+            "title": "",
+            "child": {
+                "type": "Text",
+                "view": {
+                    "content": {
+                        "title": "Text Row 2",
+                        "text": "TWO Lorem Ipsum is simply dummy text of the printing and typesetting industry"
+                    },
+                    "max_lines": "2"
+                }
+            }
+        }
+    """
+}

@@ -1,0 +1,58 @@
+//
+//  EVYTextRow.swift
+//  EVY
+//
+//  Created by Geoffroy Lesage on 13/12/2023.
+//
+
+import SwiftUI
+
+struct EVYTextRow: View {
+    
+    public static var JSONType = "Text"
+    private struct ContentData: Decodable {
+        let title: String
+        let text: String
+    }
+    private struct Data: Decodable {
+        let content: ContentData
+        let max_lines: String
+    }
+    
+    @State private var expanded: Bool = false
+    private let data: Data
+    
+    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
+        self.data = try container.decode(Data.self, forKey:.view)
+    }
+    
+    var body: some View {
+        VStack {
+            EVYText(data.content.title)
+                .font(.titleFont)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, Constants.textLinePadding)
+            EVYText(data.content.text)
+                .font(.regularFont)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, Constants.textLinePadding)
+                .lineLimit(expanded ? nil : Int(data.max_lines) ?? 2)
+            EVYText(self.expanded ? "Read less" : "Read more")
+                .foregroundStyle(Constants.textButtonColor)
+                .font(.regularFont)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding()
+        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+        .onTapGesture {
+            self.expanded.toggle()
+        }
+    }
+}
+
+
+
+#Preview {
+    let json = DataConstants.textRow.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
+}
