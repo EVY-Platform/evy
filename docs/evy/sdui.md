@@ -47,7 +47,7 @@
     }
     "edit": {
         // Where the input data is stored
-        "destination"   
+        "destination"
     }
 
 }
