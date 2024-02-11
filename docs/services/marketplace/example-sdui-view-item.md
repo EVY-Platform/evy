@@ -47,16 +47,7 @@
 								"icon": "_image_id_",
 								"subtitle": "Meet at the pickup location",
 								"details": "",
-								"data": "{
-									group(
-										map(item.transfer_option.pickup.timeslots)({
-											'id':'{input.id}',
-											'value': '{formatDate(input.start_timestamp, \'HH:mm\')}',
-											'header': '{formatDate(input.start_timestamp, \'ddd\')}',
-											'sub_header': '{formatDate(input.start_timestamp, \'D MMM\')}'
-										})
-									)({input.sub_header})
-								}
+								"timeslots": "{item.transfer_option.pickup.timeslots}"
 							}
 						}
 					}
@@ -72,16 +63,7 @@
 								"icon": "_image_id_",
 								"details": "+ formatCurrency(item.transfer_option.delivery.fee)",
 								"subtitle": "Delivered at your door",
-								"data": "{
-									group(
-										map(item.transfer_option.delivery.timeslots)({
-											'id':'{input.id}',
-											'value': '{formatDate(input.start_timestamp, \'HH:mm\')}',
-											'header': '{formatDate(input.start_timestamp, \'ddd\')}',
-											'sub_header': '{formatDate(input.start_timestamp, \'D MMM\')}'
-										})
-									)({input.sub_header})
-								}
+								"timeslots": "{item.transfer_option.delivery.timeslots}"
 							}
 						}
 					}
