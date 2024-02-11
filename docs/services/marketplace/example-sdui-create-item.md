@@ -250,11 +250,9 @@
 							"content": {
 								"layers": [{
 									"primary": "{selected_transfer_option === 'pickup'}",
-									"visible": "{item.transfer_options.pickup}",
 									"timeslots": "{item.transfer_option.pickup.timeslots}"
 								},{
 									"primary": "{selected_transfer_option === 'delivery'}",
-									"visible": "{item.transfer_options.delivery}",
 									"timeslots": "{item.transfer_option.delivery.timeslots}"
 								}]
 							}
@@ -272,11 +270,9 @@
 							"content": {
 								"layers": [{
 									"primary": "{selected_transfer_option === 'delivery'}",
-									"visible": "{item.transfer_options.delivery}",
 									"timeslots": "{item.transfer_option.delivery.timeslots}"
 								},{
 									"primary": "{selected_transfer_option === 'pickup'}",
-									"visible": "{item.transfer_options.pickup}",
 									"timeslots": "{item.transfer_option.pickup.timeslots}"
 								}]
 							}
