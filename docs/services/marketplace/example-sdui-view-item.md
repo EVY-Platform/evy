@@ -40,14 +40,23 @@
 					"title": "Pickup",
 					"child": {
 						"type": "TimeslotPicker",
-						"visible": "{item.transfer_option.pickup && count(item.transfer_option.pickup.dates_with_timeslots) > 0}",
+						"visible": "{count(item.transfer_option.pickup.dates_with_timeslots) > 0}",
 						"view": {
 							"content": {
 								"title": "",
 								"icon": "_image_id_",
 								"subtitle": "Meet at the pickup location",
 								"details": "",
-								"timeslots": "map(item.transfer_option.pickup.timeslots)({'{input.id}':'{formatDate(input.start_timestamp, \'HH:mm\')}'})
+								"timeslots": "{
+									group(
+										map(item.transfer_option.pickup.timeslots)({
+											'id':'{input.id}',
+											'value': '{formatDate(input.start_timestamp, \'HH:mm\')}',
+											'header': '{formatDate(input.start_timestamp, \'ddd\')}',
+											'sub_header': '{formatDate(input.start_timestamp, \'D MMM\')}'
+										})
+									)({input.sub_header})
+								}
 							}
 						}
 					}
@@ -57,13 +66,22 @@
 					"child": {
 						"type": "TimeslotPicker",
 						"view": {
-							"visible": "{item.transfer_option.delivery && count(item.transfer_option.delivery.dates_with_timeslots) > 0}",
+							"visible": "{count(item.transfer_option.delivery.dates_with_timeslots) > 0}",
 							"content": {
 								"title": "",
 								"icon": "_image_id_",
 								"details": "+ formatCurrency(item.transfer_option.delivery.fee)",
 								"subtitle": "Delivered at your door",
-								"timeslots": "map(item.transfer_option.delivery.timeslots)({'{input.id}':'{formatDate(input.start_timestamp, \'HH:mm\')}'})"
+								"timeslots": "{
+									group(
+										map(item.transfer_option.delivery.timeslots)({
+											'id':'{input.id}',
+											'value': '{formatDate(input.start_timestamp, \'HH:mm\')}',
+											'header': '{formatDate(input.start_timestamp, \'ddd\')}',
+											'sub_header': '{formatDate(input.start_timestamp, \'D MMM\')}'
+										})
+									)({input.sub_header})
+								}
 							}
 						}
 					}

@@ -16,9 +16,9 @@ Output: 2
 In order to transform data from arrays, EVY has a simple function which iterates over a list and allows applying transformations, as well as use the index. Note that single quotes are used for strings inside functions, and that additional strings need to have their single quotes escaped.
 ```
 timeslots = [
-    {"id": "aaa", "start_timestamp": "987491276381"},
-    {"id": "bbb", "start_timestamp": "987491276381"},
-    {"id": "ccc", "start_timestamp": "987491276381"}
+    {"id": "x", "start_timestamp": "987491276381"},
+    {"id": "y", "start_timestamp": "987491276381"},
+    {"id": "z", "start_timestamp": "987491276381"}
 ]
 ```
 ```
@@ -33,9 +33,9 @@ Also made available is the index of
 ```
 map(timeslots)({'{index}': '{input.id}'})
 Ouput: [
-    {"1": "aaa"},
-    {"2": "bbb"},
-    {"3": "ccc"}
+    {"1": "x"},
+    {"2": "y"},
+    {"3": "z"}
 ]
 ```
 #### transform
@@ -85,6 +85,26 @@ Ouput: {
         "latitude": 45.323124,
         "longitude": -3.424233
     }
+}
+```
+#### group
+```
+timeslots = [
+    {"id": "x", "start_timestamp": "987491276381"},
+    {"id": "y", "start_timestamp": "987491276381"},
+    {"id": "z", "start_timestamp": "987491276381"}
+]
+```
+```
+group(timeslots)({formatDate(input.start_timestamp, \'DD/MM/YYYY\')})
+Ouput: {
+    '01/01/2024': [
+        {"id": "x", "start_timestamp": "987491276381"},
+        {"id": "y", "start_timestamp": "987491276381"}
+    ],
+    '01/02/2024': [
+        {"id": "z", "start_timestamp": "987491276381"}
+    ]
 }
 ```
 
