@@ -73,7 +73,10 @@ struct DataConstants {
             "view": {
                 "content": {
                     "title": "Column Container",
-                    "children": [\(textRow), \(textRow)]
+                    "children": [
+                        {"title": "test text", "child": \(textRow)},
+                        {"title": "test text", "child": \(textRow)}
+                    ]
                 }
             }
         }
