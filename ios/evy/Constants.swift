@@ -73,37 +73,7 @@ struct DataConstants {
             "view": {
                 "content": {
                     "title": "Column Container",
-                    "children": [\(columnContainerChild), \(columnContainerChild2)]
-                }
-            }
-        }
-    """
-    static let columnContainerChild = """
-        {
-            "title": "",
-            "child": {
-                "type": "Text",
-                "view": {
-                    "content": {
-                        "title": "Text Row 1",
-                        "text": "ONE Lorem Ipsum is simply dummy text of the printing and typesetting industry"
-                    },
-                    "max_lines": "2"
-                }
-            }
-        }
-    """
-    static let columnContainerChild2 = """
-        {
-            "title": "",
-            "child": {
-                "type": "Text",
-                "view": {
-                    "content": {
-                        "title": "Text Row 2",
-                        "text": "TWO Lorem Ipsum is simply dummy text of the printing and typesetting industry"
-                    },
-                    "max_lines": "2"
+                    "children": [\(textRow), \(textRow)]
                 }
             }
         }
