@@ -15,6 +15,8 @@
 		736D10572B78C4C500503C4D /* EVYPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10562B78C4C500503C4D /* EVYPage.swift */; };
 		736D105F2B78CDDB00503C4D /* EVYTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D105E2B78CDDB00503C4D /* EVYTextRow.swift */; };
 		736D10612B7905CA00503C4D /* EVYColumnContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10602B7905CA00503C4D /* EVYColumnContainer.swift */; };
+		737334F92B7B5F1800D2E1CF /* EVYInputRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */; };
+		737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737334FA2B7B671100D2E1CF /* EVYTextField.swift */; };
 		737C6AA62B2706890093D00C /* evyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA52B2706890093D00C /* evyApp.swift */; };
 		737C6AA82B2706890093D00C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA72B2706890093D00C /* ContentView.swift */; };
 		737C6AAA2B27068A0093D00C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 737C6AA92B27068A0093D00C /* Assets.xcassets */; };
@@ -46,6 +48,8 @@
 		736D10562B78C4C500503C4D /* EVYPage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYPage.swift; sourceTree = "<group>"; };
 		736D105E2B78CDDB00503C4D /* EVYTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextRow.swift; sourceTree = "<group>"; };
 		736D10602B7905CA00503C4D /* EVYColumnContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYColumnContainer.swift; sourceTree = "<group>"; };
+		737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYInputRow.swift; sourceTree = "<group>"; };
+		737334FA2B7B671100D2E1CF /* EVYTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYTextField.swift; sourceTree = "<group>"; };
 		737C6AA22B2706890093D00C /* evy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = evy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		737C6AA52B2706890093D00C /* evyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = evyApp.swift; sourceTree = "<group>"; };
 		737C6AA72B2706890093D00C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -94,6 +98,7 @@
 			isa = PBXGroup;
 			children = (
 				736D10602B7905CA00503C4D /* EVYColumnContainer.swift */,
+				737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */,
 				736D105E2B78CDDB00503C4D /* EVYTextRow.swift */,
 			);
 			path = Rows;
@@ -179,6 +184,7 @@
 				730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */,
 				73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */,
 				73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */,
+				737334FA2B7B671100D2E1CF /* EVYTextField.swift */,
 				2ED04EF52B3308C400881DC4 /* EVYMap.swift */,
 				7360EEB42B304EE300C4B10B /* EVYText.swift */,
 				73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */,
@@ -274,9 +280,11 @@
 				73884AC42B2E9AE500BC8726 /* EVYTimeslotPicker.swift in Sources */,
 				2ED04EF62B3308C400881DC4 /* EVYMap.swift in Sources */,
 				737C6AC62B270AAE0093D00C /* EVYOrganization.swift in Sources */,
+				737334F92B7B5F1800D2E1CF /* EVYInputRow.swift in Sources */,
 				737C6ACB2B270AD90093D00C /* EVYWebsocket.swift in Sources */,
 				737C6ACC2B270AD90093D00C /* EVYManager.swift in Sources */,
 				737C6AA62B2706890093D00C /* evyApp.swift in Sources */,
+				737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */,
 				73D5B41B2B3307590005E495 /* EVYGreyedBackgound.swift in Sources */,
 				730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */,
 				73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */,

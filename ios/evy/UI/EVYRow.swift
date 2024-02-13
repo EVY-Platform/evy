@@ -94,14 +94,21 @@ struct EVYRow: View, Decodable {
         self.type = try container.decode(String.self, forKey: .type)
         
         switch self.type {
-        case EVYTextRow.JSONType:
-            self.view = try EVYTextRow(container: container)
             
-        case EVYColumnContainer.JSONType:
-            self.view = try EVYColumnContainer(container: container)
-            
-        default:
-            self.view = Text("I am a row")
+            // Container rows
+            case EVYColumnContainer.JSONType:
+                self.view = try EVYColumnContainer(container: container)
+        
+            // Display rows
+            case EVYTextRow.JSONType:
+                self.view = try EVYTextRow(container: container)
+
+            // Editable rows
+            case EVYInputRow.JSONType:
+                self.view = try EVYInputRow(container: container)
+                
+            default:
+                self.view = Text("I am a row")
         }
     }
     

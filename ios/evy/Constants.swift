@@ -30,6 +30,8 @@ struct Constants {
     
     static let mainCornerRadius: CGFloat = 10
     
+    static let smallCornerRadius: CGFloat = 4
+    
     static let largeIconSize: CGFloat = 40
     static let regularIconSize: CGFloat = 30
     static let smallIconSize: CGFloat = 20
@@ -38,6 +40,7 @@ struct Constants {
     static let buttonDisabledColor: Color = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
     static let textButtonColor: Color = .blue
     static let inactiveBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
+    static let fieldBorderColor: Color = Color(#colorLiteral(red: 0.2352934182, green: 0.2352946103, blue: 0.2610042691, alpha: 0.3))
 }
 
 struct DataConstants {
@@ -51,7 +54,7 @@ struct DataConstants {
         }
     """
     
-    static let rows = "[\(testRow), \(textRow), \(columnContainerRow)]"
+    static let rows = "[\(testRow), \(textRow), \(columnContainerRow), \(inputRow)]"
     static let testRow = """
         {"type": "test"}
     """
@@ -78,6 +81,22 @@ struct DataConstants {
                         {"title": "test text", "child": \(textRow)}
                     ]
                 }
+            }
+        }
+    """
+    static let inputRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "My great title",
+                    "value": "{item.title}",
+                    "placeholder": "My iPhone 20"
+                }
+            },
+            "edit": {
+                "destination": "{item.title}",
+                "minimum_characters": "6"
             }
         }
     """
