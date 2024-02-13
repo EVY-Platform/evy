@@ -41,19 +41,11 @@ struct Constants {
 }
 
 struct DataConstants {
-    static let flows = "[\(flow)]"
-    static let flow = """
-        {
-            "id": "a",
-            "name": "Test",
-            "pages": \(pages)
-        }
-    """
-    
     static let pages = "[\(page)]"
     static let page = """
         {
             "id": "b",
+            "flow_id": "create_item_id",
             "name": "Test",
             "rows": \(rows)
         }

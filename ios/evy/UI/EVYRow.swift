@@ -8,11 +8,11 @@
 import SwiftUI
 
 public enum RowCodingKeys: String, CodingKey {
-    case type = "type"
-    case visible = "visible"
-    case view = "view"
-    case edit = "edit"
-    case action = "action"
+    case type
+    case visible
+    case view
+    case edit
+    case action
 }
 
 // MARK: JSON Base structures
@@ -45,8 +45,8 @@ public class EVYSDUIJSON {
     }
     
     private enum ContainerChildCodingKeys: String, CodingKey {
-        case title = "title"
-        case child = "child"
+        case title
+        case child
     }
     public struct ContainerChild: Decodable {
         let title: String
@@ -62,9 +62,9 @@ public class EVYSDUIJSON {
         }
     }
     private enum ContainerContentCodingKeys: String, CodingKey {
-        case title = "title"
-        case children = "children"
-        case children_data = "children_data"
+        case title
+        case children
+        case children_data
     }
     public class ContainerContent: Content {
         let children: [ContainerChild]
@@ -80,14 +80,14 @@ public class EVYSDUIJSON {
     }
     public struct ContainerView: Decodable {
         let content: ContainerContent
-        var placeholder: Placeholder?
+        let placeholder: Placeholder?
     }
 }
 
 // MARK: EVY Row parsing
 struct EVYRow: View, Decodable {
     public var type: String
-    var view: any View
+    let view: any View
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: RowCodingKeys.self)

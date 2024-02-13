@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var flows = try! JSONDecoder().decode([EVYFlow].self, from: json)
+    @State private var pages = try! JSONDecoder().decode([EVYPage].self, from: json)
     
     var body: some View {
-        flows[0]
+        pages[0]
     }
 }
 
-let json = DataConstants.flows.data(using: .utf8)!
+let json = DataConstants.pages.data(using: .utf8)!
 #Preview {
     return ContentView()
 }

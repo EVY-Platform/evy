@@ -7,36 +7,37 @@
 
 import SwiftUI
 
-struct EVYTextRow: View {
+struct EVYTextRowView: Decodable {
+    let content: ContentData
+    let max_lines: String
     
-    public static var JSONType = "Text"
-    private struct ContentData: Decodable {
+    struct ContentData: Decodable {
         let title: String
         let text: String
     }
-    private struct Data: Decodable {
-        let content: ContentData
-        let max_lines: String
+}
+    
+struct EVYTextRow: View {
+    public static var JSONType = "Text"
+    
+    private let view: EVYTextRowView
+    
+    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
+        self.view = try container.decode(EVYTextRowView.self, forKey:.view)
     }
     
     @State private var expanded: Bool = false
-    private let data: Data
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.data = try container.decode(Data.self, forKey:.view)
-    }
-    
     var body: some View {
         VStack {
-            EVYText(data.content.title)
+            EVYText(view.content.title)
                 .font(.titleFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
-            EVYText(data.content.text)
+            EVYText(view.content.text)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
-                .lineLimit(expanded ? nil : Int(data.max_lines) ?? 2)
+                .lineLimit(expanded ? nil : Int(view.max_lines) ?? 2)
             EVYText(self.expanded ? "Read less" : "Read more")
                 .foregroundStyle(Constants.textButtonColor)
                 .font(.regularFont)
@@ -53,6 +54,6 @@ struct EVYTextRow: View {
 
 
 #Preview {
-    let json = DataConstants.textRow.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYRow.self, from: json)
+    let json =  DataConstants.textRow.data(using: .utf8)!
+    return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

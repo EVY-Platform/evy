@@ -7,23 +7,11 @@
 
 import SwiftUI
 
-public enum PageCodingKeys: String, CodingKey {
-    case id = "id"
-    case title = "name"
-    case rows = "rows"
-}
-
 struct EVYPage: View, Decodable {
-    public var id: String
-    public var title: String
-    public var rows: [EVYRow]
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: PageCodingKeys.self)
-        self.id = try container.decode(String.self, forKey: .id)
-        self.title = try container.decode(String.self, forKey: .title)
-        self.rows = try container.decode([EVYRow].self, forKey: .rows)
-    }
+    let id: String
+    let flow_id: String
+    let name: String
+    let rows: [EVYRow]
     
     var body: some View {
         List(rows.indices, id: \.self) { index in
