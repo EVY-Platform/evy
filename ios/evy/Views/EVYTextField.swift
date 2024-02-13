@@ -13,8 +13,8 @@ struct EVYTextField: View {
     let placeholder: String
     
     var body: some View {
-        TextField(text: $value, prompt: Text(placeholder), label: {
-            Text(label)
+        TextField(text: $value, prompt: EVYText(placeholder), label: {
+            EVYText(label)
         })
         .padding(EdgeInsets(top: Constants.majorPadding,
                             leading: Constants.minorPadding,
@@ -28,5 +28,9 @@ struct EVYTextField: View {
 }
 
 #Preview {
-    EVYTextField(value: .constant("Sample Text"), label: "title", placeholder: "Item title")
+    VStack {
+        EVYTextField(value: .constant(""), label: "title", placeholder: "Sample placeholder")
+        EVYTextField(value: .constant(""), label: "title", placeholder: "Sample ::star.square.on.square.fill:: placeholder")
+        EVYTextField(value: .constant("Sample Text"), label: "title", placeholder: "Sample placeholder")
+    }
 }
