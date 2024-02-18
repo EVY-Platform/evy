@@ -26,6 +26,6 @@ struct EVYColumnContainer: View {
 }
 
 #Preview {
-    let json = DataConstants.columnContainerRow.data(using: .utf8)!
+    let json = SDUIConstants.columnContainerRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

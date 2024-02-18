@@ -23,6 +23,6 @@ struct EVYPage: View, Decodable {
 }
 
 #Preview {
-    let json =  DataConstants.page.data(using: .utf8)!
+    let json =  SDUIConstants.page.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYPage.self, from: json)
 }
