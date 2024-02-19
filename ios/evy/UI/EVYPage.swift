@@ -18,7 +18,6 @@ struct EVYPage: View, Decodable {
             rows[index].listRowSeparator(.hidden)
         }
         .listStyle(PlainListStyle())
-        .ignoresSafeArea()
     }
 }
 

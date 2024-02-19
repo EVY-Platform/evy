@@ -42,6 +42,10 @@ struct Constants {
 }
 
 struct SDUIConstants {
+    static let testRow = """
+        {"type": "test"}
+    """
+    
     static let pages = "[\(page)]"
     static let page = """
         {
@@ -52,10 +56,7 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(testRow), \(textRow), \(columnContainerRow), \(inputRow)]"
-    static let testRow = """
-        {"type": "test"}
-    """
+    static let rows = "[\(textRow), \(columnContainerRow), \(inputRow)]"
     static let textRow = """
         {
             "type": "Text",
