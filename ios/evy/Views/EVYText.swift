@@ -44,8 +44,7 @@ func EVYText(_ input: String) -> Text {
         
         let range = Range(variableMatch!.range(at: 1), in: input)
         let start = variableMatchIdx > 0 ? Text(String(input[...matchStartIndex])) : Text("")
-//        let variable = Text(try! data.parse(String(input[range!])))
-        let variable = Text("variable")
+        let variable = Text(try! data.parse(String(input[range!])))
         let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
         
         return start + variable + end
@@ -78,11 +77,16 @@ func firstVariableMatch(_ input: String) -> NSTextCheckingResult? {
     
 
 #Preview {
-    VStack {
+    let data = EVYData.shared
+    
+    let item = DataConstants.item.data(using: .utf8)!
+    try! data.setJSON(name: "item", data: item)
+    
+    return VStack {
         EVYText("::star.square.on.square.fill::")
         EVYText("Just text")
         EVYText("::star.square.on.square.fill:: 88% - ::star.square.on.square.fill:: 4 items sold")
-        EVYText("{variable}")
-        EVYText("{variable} ::star.square.on.square.fill::")
+        EVYText("{item.title}")
+        EVYText("{item.title} ::star.square.on.square.fill::")
     }
 }
