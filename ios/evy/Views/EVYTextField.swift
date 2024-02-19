@@ -22,7 +22,7 @@ struct EVYTextField: View {
                             trailing: Constants.minorPadding))
         .background(
             RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                .strokeBorder(Constants.fieldBorderColor, lineWidth: 1)
+                .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
         )
     }
 }
