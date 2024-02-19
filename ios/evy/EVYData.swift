@@ -101,7 +101,7 @@ class EVYData {
             return try! parseProp(props: variables[1...], data: data)
         } else if (variables.count == 1) {
             guard let data = store[input] else {
-                throw EVYDataParseError.unknownVariable
+                return "{\(input)}"
             }
             return try! data.stringified
         }
