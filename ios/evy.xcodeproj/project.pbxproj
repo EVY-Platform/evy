@@ -11,7 +11,6 @@
 		2ED04EF62B3308C400881DC4 /* EVYMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED04EF52B3308C400881DC4 /* EVYMap.swift */; };
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
-		733CE1FF2B816832003D13C8 /* EVYData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733CE1FE2B816832003D13C8 /* EVYData.swift */; };
 		7360EEB52B304EE300C4B10B /* EVYText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7360EEB42B304EE300C4B10B /* EVYText.swift */; };
 		736D10572B78C4C500503C4D /* EVYPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10562B78C4C500503C4D /* EVYPage.swift */; };
 		736D105F2B78CDDB00503C4D /* EVYTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D105E2B78CDDB00503C4D /* EVYTextRow.swift */; };
@@ -45,7 +44,6 @@
 		2ED04EF52B3308C400881DC4 /* EVYMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMap.swift; sourceTree = "<group>"; };
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
-		733CE1FE2B816832003D13C8 /* EVYData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYData.swift; sourceTree = "<group>"; };
 		7360EEB42B304EE300C4B10B /* EVYText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYText.swift; sourceTree = "<group>"; };
 		736D10562B78C4C500503C4D /* EVYPage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYPage.swift; sourceTree = "<group>"; };
 		736D105E2B78CDDB00503C4D /* EVYTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextRow.swift; sourceTree = "<group>"; };
@@ -96,10 +94,9 @@
 			path = Utils;
 			sourceTree = "<group>";
 		};
-		733CE1FD2B81681D003D13C8 /* Data */ = {
+		73515F7E2B8372A200DCF4A9 /* Data */ = {
 			isa = PBXGroup;
 			children = (
-				733CE1FE2B816832003D13C8 /* EVYData.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -152,8 +149,8 @@
 				736D104F2B78C4A100503C4D /* Rows */,
 				73CDCAB42B27176700D4E82A /* Views */,
 				730D008E2B29D91200B5BCB6 /* Utils */,
+				73515F7E2B8372A200DCF4A9 /* Data */,
 				737C6ABF2B270AAE0093D00C /* Models */,
-				733CE1FD2B81681D003D13C8 /* Data */,
 				737C6AC82B270AD90093D00C /* API */,
 				737C6AAB2B27068A0093D00C /* Preview Content */,
 			);
@@ -289,7 +286,6 @@
 				7360EEB52B304EE300C4B10B /* EVYText.swift in Sources */,
 				73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */,
 				73884AC42B2E9AE500BC8726 /* EVYTimeslotPicker.swift in Sources */,
-				733CE1FF2B816832003D13C8 /* EVYData.swift in Sources */,
 				2ED04EF62B3308C400881DC4 /* EVYMap.swift in Sources */,
 				737C6AC62B270AAE0093D00C /* EVYOrganization.swift in Sources */,
 				737334F92B7B5F1800D2E1CF /* EVYInputRow.swift in Sources */,
