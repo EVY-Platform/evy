@@ -52,6 +52,6 @@ struct EVYTextRow: View {
 
 
 #Preview {
-    let json =  DataConstants.textRow.data(using: .utf8)!
+    let json =  SDUIConstants.textRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }
