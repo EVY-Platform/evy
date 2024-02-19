@@ -145,6 +145,10 @@ struct DataConstants {
             },
         }
     """
+    static let items = """
+        [\(item),\(item)]
+    """
+    
     static let item = """
         {
             "id": "a9e9feba-d1ba-4f78-ab3c-3ce7cc108989",
@@ -162,7 +166,7 @@ struct DataConstants {
             ],
             "price": {
                 "currency": "AUD",
-                "value": 250
+                "value": "250"
             },
             "seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
             "address": {
@@ -173,8 +177,8 @@ struct DataConstants {
                 "state": "NSW",
                 "country": "Australia",
                 "location": {
-                    "latitude": 45.323124,
-                    "longitude": -3.424233
+                    "latitude": "45.323124",
+                    "longitude": "-3.424233"
                 }
             },
             "created_timestamp": "1701471377",
@@ -184,19 +188,19 @@ struct DataConstants {
                         {
                             "start_timestamp": "1700894934",
                             "end_timestamp": "1700895934",
-                            "available": true,
+                            "available": "true",
                             "type": "pickup"
                         },
                         {
                             "start_timestamp": "1700894934",
                             "end_timestamp": "1700895934",
-                            "available": false,
+                            "available": "false",
                             "type": "pickup"
                         },
                         {
                             "start_timestamp": "1700894934",
                             "end_timestamp": "1700895934",
-                            "available": true,
+                            "available": "true",
                             "type": "pickup"
                         }
                     ]
@@ -204,13 +208,13 @@ struct DataConstants {
                 "delivery": {
                     "fee": {
                         "currency": "AUD",
-                        "value": 5.00
+                        "value": "5.00"
                     },
                     "timeslots": [
                         {
                             "start_timestamp": "1700894934",
                             "end_timestamp": "1700895934",
-                            "available": true,
+                            "available": "true",
                             "type": "delivery"
                         }
                     ]
@@ -218,19 +222,19 @@ struct DataConstants {
                 "ship": {
                     "fee": {
                         "currency": "AUD",
-                        "value": 10.00
+                        "value": "10.00"
                     },
                     "transfer_provider_id": "40041bb4-a6a1-468f-8864-972dba544793"
                 }
             },
             "description":
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-            "condition_id": 1,
-            "selling_reason_id": 1,
+            "condition_id": "1",
+            "selling_reason_id": "1",
             "dimension": {
-                "width": 500,
-                "height": 1600,
-                "length": 600
+                "width": "500",
+                "height": "1600",
+                "length": "600"
             },
             "tag_ids": [
                 "04b34671-4eeb-4f1c-8435-5e029a0e455c",

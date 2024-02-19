@@ -80,7 +80,7 @@ func firstVariableMatch(_ input: String) -> NSTextCheckingResult? {
     let data = EVYData.shared
     
     let item = DataConstants.item.data(using: .utf8)!
-    try! data.setJSON(name: "item", data: item)
+    try! data.set(name: "item", data: item)
     
     return VStack {
         EVYText("::star.square.on.square.fill::")
