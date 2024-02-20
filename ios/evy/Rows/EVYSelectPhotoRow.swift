@@ -70,6 +70,6 @@ struct EVYSelectPhotoRow: View {
 
 
 #Preview {
-    let json =  DataConstants.selectPhotoRow.data(using: .utf8)!
+    let json =  SDUIConstants.selectPhotoRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }
