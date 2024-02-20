@@ -33,37 +33,35 @@ struct EVYSelectPhotoRow: View {
     @State private var title: String = ""
     
     var body: some View {
-        GeometryReader { geometry in
-            VStack {
-                if (view.content.title.count > 0) {
-                    EVYText(view.content.title)
-                        .font(.titleFont)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.bottom, Constants.textLinePadding)
-                };
-                VStack {
-                    EVYText(view.content.icon)
-                        .font(.titleFont)
-                        .foregroundColor(Constants.placeholderColor)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, Constants.majorPadding)
-                    EVYText(view.content.subtitle)
-                        .font(.titleFont)
-                        .foregroundColor(Constants.placeholderColor)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.bottom, Constants.majorPadding)
-                }
-                .padding(.vertical, geometry.size.height * 0.07)
-                .background(
-                    RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                        .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
-                
-                EVYText(view.content.content)
-                    .font(.detailFont)
-                    .foregroundColor(Constants.placeholderColor)
+        VStack {
+            if (view.content.title.count > 0) {
+                EVYText(view.content.title)
+                    .font(.titleFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.bottom, Constants.textLinePadding)
+            };
+            VStack {
+                EVYText(view.content.icon)
+                    .font(.titleFont)
+                    .foregroundColor(Constants.placeholderColor)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, Constants.majorPadding)
+                EVYText(view.content.subtitle)
+                    .font(.titleFont)
+                    .foregroundColor(Constants.placeholderColor)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, Constants.majorPadding)
             }
+            .padding(.vertical, 50)
+            .background(
+                RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
+                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
+            
+            EVYText(view.content.content)
+                .font(.detailFont)
+                .foregroundColor(Constants.placeholderColor)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, Constants.textLinePadding)
         }
     }
 }
