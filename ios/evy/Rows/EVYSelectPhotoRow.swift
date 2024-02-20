@@ -28,7 +28,6 @@ struct EVYSelectPhotoRow: View {
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
-        _title = State(initialValue: self.view.content.icon)
     }
     
     @State private var title: String = ""
