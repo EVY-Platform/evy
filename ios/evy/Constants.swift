@@ -58,7 +58,7 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(textRow), \(columnContainerRow), \(inputRow), \(selectPhotoRow)]"
+    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(inputRow)]"
 
     static let textRow = """
         {
