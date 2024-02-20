@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-
 extension Font {
     static let titleFont = Font.system(size: 20)
     static let detailFont = Font.system(size: 16)
@@ -26,8 +25,9 @@ struct Constants {
     
     static let columnPadding: CGFloat = 4
     
-    static let mainCornerRadius: CGFloat = 10
+    static let borderWidth: CGFloat = 1.0
     
+    static let mainCornerRadius: CGFloat = 10
     static let smallCornerRadius: CGFloat = 4
     
     static let largeIconSize: CGFloat = 40
@@ -39,6 +39,8 @@ struct Constants {
     static let textButtonColor: Color = .blue
     static let inactiveBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
     static let fieldBorderColor: Color = Color(#colorLiteral(red: 0.2352934182, green: 0.2352946103, blue: 0.2610042691, alpha: 0.3))
+    
+    static let placeholderColor: Color = Color.gray
 }
 
 struct SDUIConstants {
@@ -56,7 +58,8 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(textRow), \(columnContainerRow), \(inputRow)]"
+    static let rows = "[\(textRow), \(columnContainerRow), \(inputRow), \(selectPhotoRow)]"
+
     static let textRow = """
         {
             "type": "Text",
@@ -96,6 +99,24 @@ struct SDUIConstants {
             "edit": {
                 "destination": "{item.title}",
                 "minimum_characters": "6"
+            }
+        }
+    """
+    static let selectPhotoRow = """
+        {
+            "type": "SelectPhoto",
+            "view": {
+                "content": {
+                    "title": "",
+                    "icon": "::photo.badge.plus.fill::",
+                    "subtitle": "Add photos",
+                    "content": "Photos: {variable}/10 - Chose your listing’s main photo first.",
+                    "photo_ids": "{variable}"
+                }
+            },
+            "edit": {
+                "destination": "{variable}",
+                "minimum_amount": "1"
             }
         }
     """
