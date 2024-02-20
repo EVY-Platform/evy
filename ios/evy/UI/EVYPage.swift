@@ -18,11 +18,10 @@ struct EVYPage: View, Decodable {
             rows[index].listRowSeparator(.hidden)
         }
         .listStyle(PlainListStyle())
-        .ignoresSafeArea()
     }
 }
 
 #Preview {
-    let json =  DataConstants.page.data(using: .utf8)!
+    let json =  SDUIConstants.page.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYPage.self, from: json)
 }

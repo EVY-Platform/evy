@@ -43,7 +43,11 @@ struct Constants {
     static let placeholderColor: Color = Color.gray
 }
 
-struct DataConstants {
+struct SDUIConstants {
+    static let testRow = """
+        {"type": "test"}
+    """
+    
     static let pages = "[\(page)]"
     static let page = """
         {
@@ -54,10 +58,8 @@ struct DataConstants {
         }
     """
     
-    static let rows = "[\(testRow), \(textRow), \(columnContainerRow), \(inputRow), \(selectPhotoRow)]"
-    static let testRow = """
-        {"type": "test"}
-    """
+    static let rows = "[\(textRow), \(columnContainerRow), \(inputRow), \(selectPhotoRow)]"
+
     static let textRow = """
         {
             "type": "Text",
@@ -116,6 +118,154 @@ struct DataConstants {
                 "destination": "{item.photos}",
                 "minimum_amount": "1"
             }
+        }
+    """
+}
+
+struct DataConstants {
+    static let selling_reason = """
+        {
+            "id": "c1b91ec6-4ff2-4ad0-b196-292fe510ac33",
+            "value": "No longer used",
+        }
+    """
+    static let selling_reasons = """
+        [\(selling_reason),{
+            "id": "76d781c6-7ab1-4b5e-99d5-60d417e3c385",
+            "value": "Moving out",
+        },{
+            "id": "47e8131a-41ff-4f31-9da3-2bf2a09cd818",
+            "value": "Doesn't fit",
+        }]
+    """
+    static let conditions = """
+        [{
+            "id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+            "value": "For parts",
+        },{
+            "id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+            "value": "New",
+        },{
+            "id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+            "value": "Used - like new",
+        },{
+            "id": "69f25102-822c-436c-a6c1-3b49f887355e",
+            "value": "Used - good",
+        },{
+            "id": "1e17474f-80d1-4081-8a64-79ebb3f60ab7",
+            "value": "Used - fair",
+        }]
+    """
+    static let provider = """
+        {
+            "id": "40041bb4-a6a1-468f-8864-972dba544793",
+            "name": "Australia Post",
+            "logo_id": "_image_id_",
+            "cost": {
+                "currency": "AUD",
+                "value": 15.00
+            },
+        }
+    """
+    static let items = """
+        [\(item),\(item)]
+    """
+    
+    static let item = """
+        {
+            "id": "a9e9feba-d1ba-4f78-ab3c-3ce7cc108989",
+            "title": "Amazing Fridge",
+            "photos": [
+                {
+                    "id": "04b34671-4eeb-4f1c-8435-5e029a0e455c"
+                },
+                {
+                    "id": "97a953eb-0206-4560-8716-d58c8cd94a62"
+                },
+                {
+                    "id": "d7b2efd7-3be6-49b7-9dad-0569c3ad4572"
+                }
+            ],
+            "price": {
+                "currency": "AUD",
+                "value": "250"
+            },
+            "seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
+            "address": {
+                "unit": "23-25",
+                "street": "Rosebery Avenue",
+                "city": "Rosebery",
+                "postcode": "2018",
+                "state": "NSW",
+                "country": "Australia",
+                "location": {
+                    "latitude": "45.323124",
+                    "longitude": "-3.424233"
+                }
+            },
+            "created_timestamp": "1701471377",
+            "transfer_options": {
+                "pickup": {
+                    "timeslots": [
+                        {
+                            "start_timestamp": "1700894934",
+                            "end_timestamp": "1700895934",
+                            "available": "true",
+                            "type": "pickup"
+                        },
+                        {
+                            "start_timestamp": "1700894934",
+                            "end_timestamp": "1700895934",
+                            "available": "false",
+                            "type": "pickup"
+                        },
+                        {
+                            "start_timestamp": "1700894934",
+                            "end_timestamp": "1700895934",
+                            "available": "true",
+                            "type": "pickup"
+                        }
+                    ]
+                },
+                "delivery": {
+                    "fee": {
+                        "currency": "AUD",
+                        "value": "5.00"
+                    },
+                    "timeslots": [
+                        {
+                            "start_timestamp": "1700894934",
+                            "end_timestamp": "1700895934",
+                            "available": "true",
+                            "type": "delivery"
+                        }
+                    ]
+                },
+                "ship": {
+                    "fee": {
+                        "currency": "AUD",
+                        "value": "10.00"
+                    },
+                    "transfer_provider_id": "40041bb4-a6a1-468f-8864-972dba544793"
+                }
+            },
+            "description":
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
+            "condition_id": "1",
+            "selling_reason_id": "1",
+            "dimension": {
+                "width": "500",
+                "height": "1600",
+                "length": "600"
+            },
+            "tag_ids": [
+                "04b34671-4eeb-4f1c-8435-5e029a0e455c",
+                "04b34671-4eeb-4f1c-8435-5e029a0e455c"
+            ],
+            "payment_method_ids": [
+                "04b34671-4eeb-4f1c-8435-5e029a0e455c",
+                "04b34671-4eeb-4f1c-8435-5e029a0e455c"
+            ]
         }
     """
 }

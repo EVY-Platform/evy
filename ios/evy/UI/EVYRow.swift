@@ -121,6 +121,6 @@ struct EVYRow: View, Decodable {
 }
 
 #Preview {
-    let json =  DataConstants.testRow.data(using: .utf8)!
+    let json =  SDUIConstants.testRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

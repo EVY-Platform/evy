@@ -8,17 +8,19 @@
 import SwiftUI
 
 let iconPattern = "::([^::]*)::"
-let dataPattern = "\\{([^}]*)\\}"
+let variablePattern = "\\{([^}]*)\\}"
 
 func EVYText(_ input: String) -> Text {
+    let data = EVYData.shared
+    
     let iconMatch = firstIconMatch(input)
-    let dataMatch = firstDataMatch(input)
+    let variableMatch = firstVariableMatch(input)
     
     let iconMatchIdx = iconMatch?.range.location ?? -1
-    let dataMatchIdx = dataMatch?.range.location ?? -1
+    let variableMatchIdx = variableMatch?.range.location ?? -1
     
-    let hasIconfirst = iconMatch != nil && (iconMatchIdx < dataMatchIdx || dataMatch == nil)
-    let hasDataFirst = dataMatch != nil && (dataMatchIdx < iconMatchIdx || iconMatch == nil)
+    let hasIconfirst = iconMatch != nil && (iconMatchIdx < variableMatchIdx || variableMatch == nil)
+    let hasVariableFirst = variableMatch != nil && (variableMatchIdx < iconMatchIdx || iconMatch == nil)
     
     if (hasIconfirst) {
         let matchUpperBound = iconMatch!.range.upperBound
@@ -34,18 +36,18 @@ func EVYText(_ input: String) -> Text {
         return start + icon + end
     }
     
-    if (hasDataFirst) {
-        let matchUpperBound = dataMatch!.range.upperBound
-        let matchLowerBound = dataMatch!.range.lowerBound > 0 ? dataMatch!.range.lowerBound-1 : 0
+    if (hasVariableFirst) {
+        let matchUpperBound = variableMatch!.range.upperBound
+        let matchLowerBound = variableMatch!.range.lowerBound > 0 ? variableMatch!.range.lowerBound-1 : 0
         let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
         let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
         
-        let range = Range(dataMatch!.range(at: 1), in: input)
-        let start = dataMatchIdx > 0 ? Text(String(input[...matchStartIndex])) : Text("")
-        let data = Text("{variable}")
+        let range = Range(variableMatch!.range(at: 1), in: input)
+        let start = variableMatchIdx > 0 ? Text(String(input[...matchStartIndex])) : Text("")
+        let variable = Text(try! data.parse(String(input[range!])))
         let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
         
-        return start + data + end
+        return start + variable + end
     }
     
     return Text(input)
@@ -62,9 +64,9 @@ func firstIconMatch(_ input: String) -> NSTextCheckingResult? {
     return nil
 }
 
-func firstDataMatch(_ input: String) -> NSTextCheckingResult? {
+func firstVariableMatch(_ input: String) -> NSTextCheckingResult? {
     do {
-        let regex = try NSRegularExpression(pattern: dataPattern)
+        let regex = try NSRegularExpression(pattern: variablePattern)
         if let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..., in: input)) {
             return match
         }
@@ -75,11 +77,16 @@ func firstDataMatch(_ input: String) -> NSTextCheckingResult? {
     
 
 #Preview {
-    VStack {
+    let data = EVYData.shared
+    
+    let item = DataConstants.item.data(using: .utf8)!
+    try! data.set(name: "item", data: item)
+    
+    return VStack {
         EVYText("::star.square.on.square.fill::")
         EVYText("Just text")
         EVYText("::star.square.on.square.fill:: 88% - ::star.square.on.square.fill:: 4 items sold")
-        EVYText("{variable}")
-        EVYText("{variable} ::star.square.on.square.fill::")
+        EVYText("{item.title}")
+        EVYText("{item.title} ::star.square.on.square.fill::")
     }
 }

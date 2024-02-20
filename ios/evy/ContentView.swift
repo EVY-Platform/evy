@@ -15,7 +15,7 @@ struct ContentView: View {
     }
 }
 
-let json = DataConstants.pages.data(using: .utf8)!
+let json = SDUIConstants.pages.data(using: .utf8)!
 #Preview {
     return ContentView()
 }
