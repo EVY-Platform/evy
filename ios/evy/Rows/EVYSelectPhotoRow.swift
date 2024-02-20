@@ -29,9 +29,7 @@ struct EVYSelectPhotoRow: View {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
     }
-    
-    @State private var title: String = ""
-    
+        
     var body: some View {
         VStack {
             if (view.content.title.count > 0) {
@@ -44,15 +42,12 @@ struct EVYSelectPhotoRow: View {
                 EVYText(view.content.icon)
                     .font(.titleFont)
                     .foregroundColor(Constants.placeholderColor)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, Constants.majorPadding)
                 EVYText(view.content.subtitle)
                     .font(.titleFont)
                     .foregroundColor(Constants.placeholderColor)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.bottom, Constants.majorPadding)
             }
-            .padding(.vertical, 50)
+            .padding(.vertical, 80)
+            .frame(maxWidth: .infinity, alignment: .center)
             .background(
                 RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
                     .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
@@ -61,7 +56,6 @@ struct EVYSelectPhotoRow: View {
                 .font(.detailFont)
                 .foregroundColor(Constants.placeholderColor)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, Constants.textLinePadding)
         }
     }
 }
