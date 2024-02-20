@@ -10,47 +10,54 @@ import SwiftUI
 let iconPattern = "::([^::]*)::"
 let variablePattern = "\\{([^}]*)\\}"
 
-func EVYText(_ input: String) -> Text {
-    let data = EVYData.shared
-    
-    let iconMatch = firstIconMatch(input)
-    let variableMatch = firstVariableMatch(input)
-    
-    let iconMatchIdx = iconMatch?.range.location ?? -1
-    let variableMatchIdx = variableMatch?.range.location ?? -1
-    
-    let hasIconfirst = iconMatch != nil && (iconMatchIdx < variableMatchIdx || variableMatch == nil)
-    let hasVariableFirst = variableMatch != nil && (variableMatchIdx < iconMatchIdx || iconMatch == nil)
-    
-    if (hasIconfirst) {
-        let matchUpperBound = iconMatch!.range.upperBound
-        let matchLowerBound = iconMatch!.range.lowerBound > 0 ? iconMatch!.range.lowerBound-1 : 0
-        let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
-        let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
+extension String {
+    var evyText: String {
+        let data = EVYData.shared
         
-        let range = Range(iconMatch!.range(at: 1), in: input)
-        let start = iconMatchIdx > 0 ? Text(String(input[...matchStartIndex])) : Text("")
-        let icon = Text("\(Image(systemName: String(input[range!])))")
-        let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
+        let variableMatch = firstVariableMatch(self)
+        let variableMatchIdx = variableMatch?.range.location ?? -1
         
-        return start + icon + end
-    }
-    
-    if (hasVariableFirst) {
+        if (variableMatch == nil) {
+            return self
+        }
+            
         let matchUpperBound = variableMatch!.range.upperBound
         let matchLowerBound = variableMatch!.range.lowerBound > 0 ? variableMatch!.range.lowerBound-1 : 0
-        let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
-        let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
+        let matchStartIndex = self.index(self.startIndex, offsetBy: matchLowerBound)
+        let remainingIndex = self.index(self.startIndex, offsetBy: matchUpperBound)
         
-        let range = Range(variableMatch!.range(at: 1), in: input)
-        let start = variableMatchIdx > 0 ? Text(String(input[...matchStartIndex])) : Text("")
-        let variable = Text(try! data.parse(String(input[range!])))
-        let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
+        let range = Range(variableMatch!.range(at: 1), in: self)
+        var variable = String(self[range!])
+        do {
+            variable = try data.parse(variable)
+        } catch {}
+        
+        let start = variableMatchIdx > 0 ? String(self[...matchStartIndex]) : ""
+        let end = matchUpperBound < self.count ? String(self[remainingIndex...]) : ""
         
         return start + variable + end
     }
+}
+
+func EVYText(_ input: String) -> Text {
+    let iconMatch = firstIconMatch(input)
+    let iconMatchIdx = iconMatch?.range.location ?? -1
     
-    return Text(input)
+    if (iconMatch == nil) {
+        return Text(input.evyText)
+    }
+    
+    let matchUpperBound = iconMatch!.range.upperBound
+    let matchLowerBound = iconMatch!.range.lowerBound > 0 ? iconMatch!.range.lowerBound-1 : 0
+    let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
+    let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
+    
+    let range = Range(iconMatch!.range(at: 1), in: input)
+    let start = iconMatchIdx > 0 ? EVYText(String(input[...matchStartIndex])) : Text("")
+    let icon = Text("\(Image(systemName: String(input[range!])))")
+    let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
+    
+    return start + icon + end
 }
 
 func firstIconMatch(_ input: String) -> NSTextCheckingResult? {
@@ -85,8 +92,9 @@ func firstVariableMatch(_ input: String) -> NSTextCheckingResult? {
     return VStack {
         EVYText("::star.square.on.square.fill::")
         EVYText("Just text")
-        EVYText("::star.square.on.square.fill:: 88% - ::star.square.on.square.fill:: 4 items sold")
+        EVYText("::star.square.on.square.fill:: 88% - {item.title} 4 items sold")
         EVYText("{item.title}")
         EVYText("{item.title} ::star.square.on.square.fill::")
+        Text("{item.title}".evyText)
     }
 }

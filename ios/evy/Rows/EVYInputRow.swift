@@ -24,7 +24,7 @@ struct EVYInputRow: View {
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
-        _title = State(initialValue: self.view.content.value)
+        _title = State(initialValue: self.view.content.value.evyText)
     }
     
     @State private var title: String = ""
@@ -47,6 +47,9 @@ struct EVYInputRow: View {
 
 
 #Preview {
+    let data = EVYData.shared
+    let item = DataConstants.item.data(using: .utf8)!
+    try! data.set(name: "item", data: item)
     let json =  SDUIConstants.inputRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

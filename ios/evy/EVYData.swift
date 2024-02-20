@@ -133,9 +133,7 @@ class EVYData {
 
 #Preview {
     let data = EVYData.shared
-    
     let item = DataConstants.item.data(using: .utf8)!
-    
     try! data.set(name: "item", data: item)
     let string = try! data.parse("item.photos")
     return Text(string)
