@@ -7,9 +7,6 @@
 
 import SwiftUI
 
-let iconPattern = "::([^::]*)::"
-let variablePattern = "\\{([^}]*)\\}"
-
 extension String {
     var evyText: String {
         if let match = firstVariableMatch(self) {
@@ -57,7 +54,7 @@ func EVYText(_ input: String) -> Text {
 
 func firstIconMatch(_ input: String) -> NSTextCheckingResult? {
     do {
-        let regex = try NSRegularExpression(pattern: iconPattern)
+        let regex = try NSRegularExpression(pattern: "::([^::]*)::")
         if let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..., in: input)) {
             return match
         }
@@ -68,7 +65,7 @@ func firstIconMatch(_ input: String) -> NSTextCheckingResult? {
 
 func firstVariableMatch(_ input: String) -> NSTextCheckingResult? {
     do {
-        let regex = try NSRegularExpression(pattern: variablePattern)
+        let regex = try NSRegularExpression(pattern: "\\{([^}]*)\\}")
         if let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..., in: input)) {
             return match
         }
