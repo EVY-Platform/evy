@@ -12,52 +12,47 @@ let variablePattern = "\\{([^}]*)\\}"
 
 extension String {
     var evyText: String {
-        let data = EVYData.shared
-        
-        let variableMatch = firstVariableMatch(self)
-        let variableMatchIdx = variableMatch?.range.location ?? -1
-        
-        if (variableMatch == nil) {
+        if let match = firstVariableMatch(self) {
+            let matchIdx = match.range.location
+
+            let matchUpperBound = match.range.upperBound
+            let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
+            let matchStartIndex = self.index(self.startIndex, offsetBy: matchLowerBound)
+            let remainingIndex = self.index(self.startIndex, offsetBy: matchUpperBound)
+            
+            let range = Range(match.range(at: 1), in: self)
+            var variable = String(self[range!])
+            do {
+                variable = try EVYData.shared.parse(variable)
+            } catch {}
+            
+            let start = matchIdx > 0 ? String(self[...matchStartIndex]).evyText : ""
+            let end = matchUpperBound < self.count ? String(self[remainingIndex...]).evyText : ""
+            return start + variable + end
+        } else {
             return self
         }
-            
-        let matchUpperBound = variableMatch!.range.upperBound
-        let matchLowerBound = variableMatch!.range.lowerBound > 0 ? variableMatch!.range.lowerBound-1 : 0
-        let matchStartIndex = self.index(self.startIndex, offsetBy: matchLowerBound)
-        let remainingIndex = self.index(self.startIndex, offsetBy: matchUpperBound)
-        
-        let range = Range(variableMatch!.range(at: 1), in: self)
-        var variable = String(self[range!])
-        do {
-            variable = try data.parse(variable)
-        } catch {}
-        
-        let start = variableMatchIdx > 0 ? String(self[...matchStartIndex]) : ""
-        let end = matchUpperBound < self.count ? String(self[remainingIndex...]) : ""
-        
-        return start + variable + end
     }
 }
 
 func EVYText(_ input: String) -> Text {
-    let iconMatch = firstIconMatch(input)
-    let iconMatchIdx = iconMatch?.range.location ?? -1
-    
-    if (iconMatch == nil) {
+    if let match = firstIconMatch(input) {
+        let matchIdx = match.range.location
+        
+        let matchUpperBound = match.range.upperBound
+        let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
+        let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
+        let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
+        
+        let range = Range(match.range(at: 1), in: input)
+        let start = matchIdx > 0 ? EVYText(String(input[...matchStartIndex])) : Text("")
+        let icon = Text("\(Image(systemName: String(input[range!])))")
+        let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
+        
+        return start + icon + end
+    } else {
         return Text(input.evyText)
     }
-    
-    let matchUpperBound = iconMatch!.range.upperBound
-    let matchLowerBound = iconMatch!.range.lowerBound > 0 ? iconMatch!.range.lowerBound-1 : 0
-    let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
-    let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
-    
-    let range = Range(iconMatch!.range(at: 1), in: input)
-    let start = iconMatchIdx > 0 ? EVYText(String(input[...matchStartIndex])) : Text("")
-    let icon = Text("\(Image(systemName: String(input[range!])))")
-    let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
-    
-    return start + icon + end
 }
 
 func firstIconMatch(_ input: String) -> NSTextCheckingResult? {
