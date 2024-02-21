@@ -7,31 +7,6 @@
 
 import SwiftUI
 
-extension String {
-    var evyText: String {
-        if let match = firstVariableMatch(self) {
-            let matchIdx = match.range.location
-
-            let matchUpperBound = match.range.upperBound
-            let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
-            let matchStartIndex = self.index(self.startIndex, offsetBy: matchLowerBound)
-            let remainingIndex = self.index(self.startIndex, offsetBy: matchUpperBound)
-            
-            let range = Range(match.range(at: 1), in: self)
-            var variable = String(self[range!])
-            do {
-                variable = try EVYData.shared.parse(variable)
-            } catch {}
-            
-            let start = matchIdx > 0 ? String(self[...matchStartIndex]).evyText : ""
-            let end = matchUpperBound < self.count ? String(self[remainingIndex...]).evyText : ""
-            return start + variable + end
-        } else {
-            return self
-        }
-    }
-}
-
 func EVYText(_ input: String) -> Text {
     if let match = firstIconMatch(input) {
         let matchIdx = match.range.location
@@ -48,24 +23,13 @@ func EVYText(_ input: String) -> Text {
         
         return start + icon + end
     } else {
-        return Text(input.evyText)
+        return Text(parseEVYData(input))
     }
 }
 
 func firstIconMatch(_ input: String) -> NSTextCheckingResult? {
     do {
         let regex = try NSRegularExpression(pattern: "::([^::]*)::")
-        if let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..., in: input)) {
-            return match
-        }
-    } catch {}
-    
-    return nil
-}
-
-func firstVariableMatch(_ input: String) -> NSTextCheckingResult? {
-    do {
-        let regex = try NSRegularExpression(pattern: "\\{([^}]*)\\}")
         if let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..., in: input)) {
             return match
         }
@@ -87,6 +51,6 @@ func firstVariableMatch(_ input: String) -> NSTextCheckingResult? {
         EVYText("::star.square.on.square.fill:: 88% - {item.title} 4 items sold")
         EVYText("{item.title}")
         EVYText("{item.title} ::star.square.on.square.fill::")
-        Text("{item.title}".evyText)
+        EVYText("{count(item.photos)}")
     }
 }
