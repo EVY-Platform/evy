@@ -20,7 +20,7 @@ struct EVYSelectPhotoRowView: Decodable {
         let photos: String
     }
 }
-    
+
 struct EVYSelectPhotoRow: View {
     public static var JSONType = "SelectPhoto"
     
