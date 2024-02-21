@@ -17,7 +17,7 @@ struct EVYSelectPhotoRowView: Decodable {
         let icon: String
         let subtitle: String
         let content: String
-        let photo_ids: String
+        let photos: String
     }
 }
     

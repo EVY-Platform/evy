@@ -111,7 +111,7 @@ struct SDUIConstants {
                     "icon": "::photo.badge.plus.fill::",
                     "subtitle": "Add photos",
                     "content": "Photos: {variable}/10 - Chose your listing’s main photo first.",
-                    "photo_ids": "{variable}"
+                    "photos": "{variable}"
                 }
             },
             "edit": {
