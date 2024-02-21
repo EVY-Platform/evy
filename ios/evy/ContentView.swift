@@ -8,14 +8,23 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var pages = try! JSONDecoder().decode([EVYPage].self, from: json)
+    @State private var pages: [EVYPage]
+    
+    init() {
+        let json = SDUIConstants.pages.data(using: .utf8)!
+
+        let data = EVYData.shared
+        let item = DataConstants.item.data(using: .utf8)!
+        try! data.set(name: "item", data: item)
+        
+        self.pages = try! JSONDecoder().decode([EVYPage].self, from: json)
+    }
     
     var body: some View {
         pages[0]
     }
 }
 
-let json = SDUIConstants.pages.data(using: .utf8)!
 #Preview {
     return ContentView()
 }

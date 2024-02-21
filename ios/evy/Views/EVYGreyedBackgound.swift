@@ -24,18 +24,5 @@ struct EVYGreyedBackgound: View {
 }
 
 #Preview {
-    let json = """
-    {
-        "type": "Title",
-        "content": {
-            "title": "Amazing Fridge",
-            "title_detail": "$250",
-            "subtitle_1": "::star.square.on.square.fill:: 88% - 4 items sold",
-            "subtitle_2": "Rosebery, NSW  -  Posted on Nov 8th"
-        }
-    }
-    """.data(using: .utf8)!
-    let myview = try! JSONDecoder().decode(EVYRow.self, from: json)
-    
-    return EVYGreyedBackgound(content: myview, padding: Constants.minorPadding)
+    return EVYGreyedBackgound(content: Text("I am some content"), padding: Constants.minorPadding)
 }
