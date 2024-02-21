@@ -37,7 +37,7 @@ struct EVYSelectPhotoRow: View {
                     .font(.titleFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.bottom, Constants.textLinePadding)
-            };
+            }
             VStack {
                 EVYText(view.content.icon)
                     .font(.titleFont)
