@@ -177,13 +177,10 @@ struct DataConstants {
             "title": "Amazing Fridge",
             "photos": [
                 {
-                    "id": "04b34671-4eeb-4f1c-8435-5e029a0e455c"
+                    "id": "printer"
                 },
                 {
-                    "id": "97a953eb-0206-4560-8716-d58c8cd94a62"
-                },
-                {
-                    "id": "d7b2efd7-3be6-49b7-9dad-0569c3ad4572"
+                    "id": "printer_logo"
                 }
             ],
             "price": {
