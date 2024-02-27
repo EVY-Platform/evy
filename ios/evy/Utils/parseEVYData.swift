@@ -6,28 +6,20 @@
 //
 
 import Foundation
+import SwiftUI
 
-func parseEVYData(_ input: String) -> String {
+func parseEVYData(_ input: String) -> (NSTextCheckingResult, String)? {
     if let match = firstDataMatch(input) {
-        let matchIdx = match.range.location
-
-        let matchUpperBound = match.range.upperBound
-        let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
-        let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
-        let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
-        
         let range = Range(match.range(at: 1), in: input)
-        var variable = String(input[range!])
         do {
-            variable = try EVYData.shared.parse(variable)
-        } catch {}
-        
-        let start = matchIdx > 0 ? parseEVYData(String(input[...matchStartIndex])) : ""
-        let end = matchUpperBound < input.count ? parseEVYData(String(input[remainingIndex...])) : ""
-        return start + variable + end
-    } else {
-        return input
+            let variable = try EVYData.shared.parse(String(input[range!]))
+            return (match, variable)
+        } catch {
+            return (match, String(input[range!]))
+        }
     }
+    
+    return nil
 }
 
 private func firstDataMatch(_ self: String) -> NSTextCheckingResult? {
@@ -39,4 +31,17 @@ private func firstDataMatch(_ self: String) -> NSTextCheckingResult? {
     } catch {}
     
     return nil
+}
+
+#Preview {
+    let data = EVYData.shared
+    
+    let item = DataConstants.item.data(using: .utf8)!
+    try! data.set(name: "item", data: item)
+
+    if let (_, data) = parseEVYData("{item.title}") {
+        return Text(data)
+    }
+    
+    return Text("Error")
 }

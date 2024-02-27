@@ -8,7 +8,9 @@
 import SwiftUI
 
 func EVYText(_ input: String) -> Text {
-    if let match = firstIconMatch(input) {
+    if let result = parseEVYFunction(input) {
+        return EVYText(result)
+    } else if let (match, data) = parseEVYData(input) {
         let matchIdx = match.range.location
         
         let matchUpperBound = match.range.upperBound
@@ -16,28 +18,49 @@ func EVYText(_ input: String) -> Text {
         let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
         let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
         
-        let range = Range(match.range(at: 1), in: input)
         let start = matchIdx > 0 ? EVYText(String(input[...matchStartIndex])) : Text("")
-        let icon = Text("\(Image(systemName: String(input[range!])))")
+        let middle = EVYText(data)
         let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
         
-        return start + icon + end
-    } else {
-        return Text(parseEVYData(input))
+        return start + middle + end
+    } else if let (match, image) = parseEVYImage(input) {
+        let matchIdx = match.range.location
+        
+        let matchUpperBound = match.range.upperBound
+        let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
+        let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
+        let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
+        
+        let start = matchIdx > 0 ? EVYText(String(input[...matchStartIndex])) : Text("")
+        let middle = Text("\(image)")
+        let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
+        
+        return start + middle + end
     }
+    
+    return Text(input)
 }
 
-func firstIconMatch(_ input: String) -> NSTextCheckingResult? {
-    do {
-        let regex = try NSRegularExpression(pattern: "::([^::]*)::")
-        if let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..., in: input)) {
-            return match
-        }
-    } catch {}
+func parseEVYText(_ input: String) -> String {
+    if let result = parseEVYFunction(input) {
+        return parseEVYText(result)
+    } else if let (match, data) = parseEVYData(input) {
+        let matchIdx = match.range.location
+        
+        let matchUpperBound = match.range.upperBound
+        let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
+        let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
+        let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
+        
+        let start = matchIdx > 0 ? parseEVYText(String(input[...matchStartIndex])) : ""
+        let middle = parseEVYText(data)
+        let end = matchUpperBound < input.count ? parseEVYText(String(input[remainingIndex...])) : ""
+        
+        return start + middle + end
+    }
     
-    return nil
+    return input
 }
-    
 
 #Preview {
     let data = EVYData.shared
@@ -52,5 +75,6 @@ func firstIconMatch(_ input: String) -> NSTextCheckingResult? {
         EVYText("{item.title}")
         EVYText("{item.title} ::star.square.on.square.fill::")
         EVYText("{count(item.photos)}")
+        EVYText("{item.title} stuff {count(item.photos)}")
     }
 }

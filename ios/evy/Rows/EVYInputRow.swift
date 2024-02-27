@@ -24,7 +24,7 @@ struct EVYInputRow: View {
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
-        _title = State(initialValue: parseEVYData(self.view.content.value))
+        _title = State(initialValue: parseEVYText(self.view.content.value))
     }
     
     @State private var title: String = ""

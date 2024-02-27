@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 func parseEVYFunction(_ input: String) -> String? {
     if let match = firstFunctionMatch(input) {
@@ -13,8 +14,8 @@ func parseEVYFunction(_ input: String) -> String? {
         let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
         let functionName = String(input[...matchStartIndex])
         
-        if functionName == "count" {
-            return evyCount(input: input, match: match)
+        if functionName == "count", let count = evyCount(input: input, match: match) {
+            return count
         }
     }
     
@@ -26,7 +27,7 @@ private func evyCount(input: String, match: NSTextCheckingResult) -> String? {
     do {
         let test = String(input[range!])
         let data = try EVYData.shared.parse(test).data(using: .utf8)!
-        let array = try! JSONDecoder().decode(EVYJsonArray.self, from: data)
+        let array = try JSONDecoder().decode(EVYJsonArray.self, from: data)
         return String(array.count)
     } catch {}
     
@@ -42,4 +43,14 @@ private func firstFunctionMatch(_ self: String) -> NSTextCheckingResult? {
     } catch {}
     
     return nil
+}
+
+#Preview {
+    let data = EVYData.shared
+    
+    let item = DataConstants.item.data(using: .utf8)!
+    try! data.set(name: "item", data: item)
+    
+    let val = parseEVYFunction("count(item.photos)")
+    return Text(val ?? "Error")
 }
