@@ -71,10 +71,7 @@ func parseEVYText(_ input: String) -> String {
     return VStack {
         EVYText("::star.square.on.square.fill::")
         EVYText("Just text")
-        EVYText("::star.square.on.square.fill:: 88% - {item.title} 4 items sold")
         EVYText("{item.title}")
-        EVYText("{item.title} ::star.square.on.square.fill::")
-        EVYText("{count(item.photos)}")
-        EVYText("{item.title} stuff {count(item.photos)}")
+        EVYText("{item.title} has {count(item.photos)} photos ::star.square.on.square.fill::")
     }
 }
