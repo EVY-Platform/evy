@@ -48,17 +48,17 @@ struct SDUIConstants {
         {"type": "test"}
     """
     
-    static let pages = "[\(page)]"
+    static let pages = "[\(page), \(page2)]"
     static let page = """
         {
-            "id": "b",
-            "flow_id": "create_item_id",
-            "name": "Test",
+            "id": "create_item_step_1",
+            "flow_id": "create_item",
+            "title": "Step 1",
             "rows": \(rows)
         }
     """
     
-    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(inputRow)]"
+    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(inputRow), \(navigateButtonRow)]"
 
     static let textRow = """
         {
@@ -117,6 +117,50 @@ struct SDUIConstants {
             "edit": {
                 "destination": "{item.photos}",
                 "minimum_amount": "1"
+            }
+        }
+    """
+    
+    static let navigateButtonRow = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Next"
+                }
+            },
+            "edit": {},
+            "action": {
+                "type": "navigate",
+                "target": "create_item_step_2"
+            }
+        }
+    """
+    
+    static let page2 = """
+        {
+            "id": "create_item_step_2",
+            "flow_id": "create_item",
+            "title": "Step 2",
+            "rows": \(rows2)
+        }
+    """
+    static let rows2 = "[\(textRow), \(submitButtonRow)]"
+    
+    static let submitButtonRow = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Submit"
+                }
+            },
+            "edit": {},
+            "action": {
+                "type": "submit",
+                "target": "item"
             }
         }
     """

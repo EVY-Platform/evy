@@ -109,6 +109,9 @@ struct EVYRow: View, Decodable {
             
             case EVYSelectPhotoRow.JSONType:
                 self.view = try EVYSelectPhotoRow(container: container)
+            
+            case EVYButtonRow.JSONType:
+                self.view = try EVYButtonRow(container: container)
                 
             default:
                 self.view = Text("I am a row")

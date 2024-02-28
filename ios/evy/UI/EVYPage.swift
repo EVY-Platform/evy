@@ -10,9 +10,9 @@ import SwiftUI
 struct EVYPage: View, Decodable {
     let id: String
     let flow_id: String
-    let name: String
+    let title: String
     let rows: [EVYRow]
-    
+
     var body: some View {
         List(rows.indices, id: \.self) { index in
             rows[index].listRowSeparator(.hidden)

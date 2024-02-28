@@ -38,13 +38,13 @@ struct EVYTextRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, Constants.textLinePadding)
                 .lineLimit(expanded ? nil : Int(view.max_lines) ?? 2)
-            EVYText(self.expanded ? "Read less" : "Read more")
+            EVYText(expanded ? "Read less" : "Read more")
                 .foregroundStyle(Constants.textButtonColor)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .onTapGesture {
-            self.expanded.toggle()
+            expanded.toggle()
         }
     }
 }
