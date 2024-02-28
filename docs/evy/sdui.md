@@ -13,7 +13,6 @@ They are needed in order to submit all fields of all pages of a flow at the end 
 Pages are put into flows
 ```
 {
-    "id",
     "title", // Shown in the navbar
     "flow_id",
     "rows": [ROW]
