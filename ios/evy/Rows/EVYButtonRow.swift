@@ -28,9 +28,7 @@ struct EVYButtonRow: View {
     }
     
     var body: some View {
-        EVYButton(label: self.view.content.label,
-                  type: self.action.type,
-                  target: self.action.target)
+        EVYButton(label: self.view.content.label, target: self.action.target)
             .frame(maxWidth: .infinity, alignment: .center)
     }
 }

@@ -34,10 +34,10 @@ private func evyCount(input: String, match: NSTextCheckingResult) -> String? {
     return nil
 }
 
-private func firstFunctionMatch(_ self: String) -> NSTextCheckingResult? {
+private func firstFunctionMatch(_ input: String) -> NSTextCheckingResult? {
     do {
         let regex = try NSRegularExpression(pattern: "\\(([^)]*)\\)")
-        if let match = regex.firstMatch(in: self, range: NSRange(self.startIndex..., in: self)) {
+        if let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..., in: input)) {
             return match
         }
     } catch {}

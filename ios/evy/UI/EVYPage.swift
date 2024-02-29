@@ -9,7 +9,6 @@ import SwiftUI
 
 struct EVYPage: View, Decodable {
     let id: String
-    let flow_id: String
     let title: String
     let rows: [EVYRow]
 

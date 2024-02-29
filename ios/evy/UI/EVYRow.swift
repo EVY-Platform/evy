@@ -18,7 +18,6 @@ public enum RowCodingKeys: String, CodingKey {
 // MARK: JSON Base structures
 public class EVYSDUIJSON {
     public struct Action: Decodable {
-        let type: String
         let target: String
     }
     public struct Edit: Decodable {

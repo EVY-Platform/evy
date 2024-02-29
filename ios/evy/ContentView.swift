@@ -26,32 +26,41 @@ extension View {
 }
 
 struct ContentView: View {
-    private let pages: [EVYPage]
-    @State private var selectedPageId: String?
+    private let flows: [EVYFlow]
+    private let startPage: EVYPage
+    
+    @State private var currentFlowId: String?
+    @State private var currentPageId: String?
     
     init() {
-        let json = SDUIConstants.pages.data(using: .utf8)!
+        let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
+        let jsonPage = SDUIConstants.testPage.data(using: .utf8)!
 
         let data = EVYData.shared
         let item = DataConstants.item.data(using: .utf8)!
         try! data.set(name: "item", data: item)
         
-        self.pages = try! JSONDecoder().decode([EVYPage].self, from: json)
-        
-        _selectedPageId = State(initialValue: pages[0].id)
+        self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
+        self.startPage = try! JSONDecoder().decode(EVYPage.self, from: jsonPage)
     }
     
     var body: some View {
-        let selectedPageIndex = pages.firstIndex(where: {$0.id == selectedPageId})!
-        pages[selectedPageIndex].onReceive(.navigateEVYPage) { notification in
+        var page = startPage
+        if currentFlowId != nil && currentPageId != nil {
+            let flow = flows.first(where: {$0.id == currentFlowId})!
+            page = flow.getPageById(currentPageId!)
+        }
+        
+        return page.onReceive(.navigateEVYPage) { notification in
             let userInfo = notification.userInfo!
-            let type = userInfo["type"] as! String
             let target = userInfo["target"] as! String
             
-            if type == "navigate" {
-                selectedPageId = target
-            } else if type == "submit" {
-                print("submit")
+            currentFlowId = target.components(separatedBy: ":")[0]
+            currentPageId = target.components(separatedBy: ":")[1]
+            
+            if currentPageId != "submit" {
+                let flow = flows.first(where: {$0.id == currentFlowId})!
+                print(flow.id)
             }
         }
     }

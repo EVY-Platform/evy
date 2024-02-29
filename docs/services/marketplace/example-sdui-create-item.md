@@ -2,8 +2,17 @@
 
 ```
 {
+	"id": "create_item",
+	"name": "Create item",
+	"pages": [PAGE],
+	"start_page": "page_id",
+	"redirect": "page_id"
+}
+```
+
+```
+{
 	"id": "create_item_step_1",
-	"flow_id": "create_item",
 	"title": "Step 1",
 	"rows": [
 		{
@@ -342,17 +351,16 @@
 			},
 			"edit": {},
 			"action": {
-				"type": "navigate",
-				"target": "create_item_step_2"
+				"target": "create_item:create_item_step_2"
 			}
 		}
 	]
 }
 ```
+
 ```
 {
 	"id": "create_item_step_2",
-	"flow_id": "create_item",
 	"title": "Step 2",
 	"rows": [
 		{
@@ -378,8 +386,7 @@
 			},
 			"edit": {},
 			"action": {
-				"type": "submit",
-				"target": "item"
+				"target": "create_item:submit"
 			}
 		}
 	]

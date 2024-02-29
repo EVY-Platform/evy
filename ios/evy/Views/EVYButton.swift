@@ -9,14 +9,13 @@ import SwiftUI
 
 struct EVYButton: View {
     let label: String
-    let type: String
     let target: String
     
     var body: some View {
         Button(action: {
             NotificationCenter.default.post(name: .navigateEVYPage,
                                             object: nil,
-                                            userInfo: ["target": target, "type": type])
+                                            userInfo: ["target": target])
         }) {
             EVYText(label).foregroundColor(.white)
         }
@@ -31,7 +30,5 @@ struct EVYButton: View {
 }
 
 #Preview {
-    EVYButton(label: "Submit",
-              type: "navigate",
-              target: "create_item_step_2")
+    EVYButton(label: "Submit", target: "create_item_step_2")
 }

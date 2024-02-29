@@ -22,10 +22,10 @@ func parseEVYData(_ input: String) -> (NSTextCheckingResult, String)? {
     return nil
 }
 
-private func firstDataMatch(_ self: String) -> NSTextCheckingResult? {
+private func firstDataMatch(_ input: String) -> NSTextCheckingResult? {
     do {
         let regex = try NSRegularExpression(pattern: "\\{([^}]*)\\}")
-        if let match = regex.firstMatch(in: self, range: NSRange(self.startIndex..., in: self)) {
+        if let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..., in: input)) {
             return match
         }
     } catch {}

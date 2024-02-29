@@ -47,12 +47,43 @@ struct SDUIConstants {
     static let testRow = """
         {"type": "test"}
     """
+    static let testButton = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Start item creation"
+                }
+            },
+            "action": {
+                "target": "create_item:create_item_step_1"
+            }
+        }
+    """
+    static let testPage = """
+        {
+            "id": "testPage",
+            "title": "Home",
+            "rows": [\(testRow), \(testButton)]
+        }
+    """
+    
+    static let flows = "[\(flow), \(flow)]"
+    static let flow = """
+        {
+            "id": "create_item",
+            "name": "Create item",
+            "pages": \(pages),
+            "start_page": "create_item_step_1",
+            "redirect": "testPage"
+        }
+    """
     
     static let pages = "[\(page), \(page2)]"
     static let page = """
         {
             "id": "create_item_step_1",
-            "flow_id": "create_item",
             "title": "Step 1",
             "rows": \(rows)
         }
@@ -132,8 +163,7 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "type": "navigate",
-                "target": "create_item_step_2"
+                "target": "create_item:create_item_step_2"
             }
         }
     """
@@ -141,7 +171,6 @@ struct SDUIConstants {
     static let page2 = """
         {
             "id": "create_item_step_2",
-            "flow_id": "create_item",
             "title": "Step 2",
             "rows": \(rows2)
         }
@@ -159,8 +188,7 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "type": "submit",
-                "target": "item"
+                "target": "create_item:submit"
             }
         }
     """
