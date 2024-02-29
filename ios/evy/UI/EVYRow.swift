@@ -84,7 +84,9 @@ public class EVYSDUIJSON {
 }
 
 // MARK: EVY Row parsing
-struct EVYRow: View, Decodable {
+struct EVYRow: View, Decodable, Identifiable {
+    let id = UUID()
+    
     public var type: String
     let view: any View
 
@@ -100,11 +102,11 @@ struct EVYRow: View, Decodable {
         
             // Display rows
             case EVYTextRow.JSONType:
-                self.view = try EVYTextRow(container: container)
+                self.view = try EVYTextRow(container: container).padding()
 
             // Editable rows
             case EVYInputRow.JSONType:
-                self.view = try EVYInputRow(container: container)
+                self.view = try EVYInputRow(container: container).padding()
             
             case EVYSelectPhotoRow.JSONType:
                 self.view = try EVYSelectPhotoRow(container: container)

@@ -13,10 +13,11 @@ struct EVYPage: View, Decodable {
     let rows: [EVYRow]
 
     var body: some View {
-        List(rows.indices, id: \.self) { index in
-            rows[index].listRowSeparator(.hidden)
+        ScrollView {
+            ForEach(rows) { row in
+                row
+            }
         }
-        .listStyle(PlainListStyle())
     }
 }
 
