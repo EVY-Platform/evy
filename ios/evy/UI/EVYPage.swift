@@ -15,7 +15,7 @@ struct EVYPage: View, Decodable {
     
     var body: some View {
         List(rows.indices, id: \.self) { index in
-            rows[index]/*.listRowSeparator(.hidden)*/
+            rows[index].listRowSeparator(.hidden)
         }
         .listStyle(PlainListStyle())
     }
