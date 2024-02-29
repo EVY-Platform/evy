@@ -5,7 +5,15 @@ Flows are not visually used in the UI but represent a full user journey (eg: cre
 They are needed in order to submit all fields of all pages of a flow at the end upon clicking a single button on a page  
 ```
 {
-    "name"
+    "name",
+
+    // The entity that is being viewed, or created. eg: "item"
+    "target": "data",
+
+    "start_page": "page_id",
+    
+    // Where to direct the user at the end of the flow
+    "redirect": "page_id"
 }
 ```
 
@@ -13,10 +21,8 @@ They are needed in order to submit all fields of all pages of a flow at the end 
 Pages are put into flows
 ```
 {
-    // Shown in the navbar
-    "title",
-    
-    "flow_id"
+    "title", // Shown in the navbar
+    "rows": [ROW]
 }
 ```
 
@@ -73,11 +79,9 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     },
 
     "action": {
-        // 2 types of actions that can be taken by a button
-        // 1. Navigate: Goes to the specified page (and anchor if specified, used to scroll or navigate to specific sections of a page)
-        // 2. Submit: Calls the API to submit the specified data
-        "type": "navigate | submit",
-        "target": "{page_id:anchor_id | data}"
+        // A button always navigates somewhere, but sometimes can also submit the flow
+        // The target will either be the next page, or submit which triggers the flow to submit
+        "target": "flow_id:submit | flow_id:page_id:anchor_id"
     }
 
 }
@@ -288,7 +292,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
             "icon",
             "subtitle",
             "content",
-            "photo_ids"
+            "photos"
         },
         "data"
     },

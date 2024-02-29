@@ -47,25 +47,56 @@ struct SDUIConstants {
     static let testRow = """
         {"type": "test"}
     """
+    static let testButton = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Start item creation"
+                }
+            },
+            "action": {
+                "target": "create_item:create_item_step_1"
+            }
+        }
+    """
+    static let testPage = """
+        {
+            "id": "testPage",
+            "title": "Home",
+            "rows": [\(testRow), \(testButton)]
+        }
+    """
     
-    static let pages = "[\(page)]"
+    static let flows = "[\(flow), \(flow)]"
+    static let flow = """
+        {
+            "id": "create_item",
+            "name": "Create item",
+            "pages": \(pages),
+            "start_page": "create_item_step_1",
+            "redirect": "testPage"
+        }
+    """
+    
+    static let pages = "[\(page), \(page2)]"
     static let page = """
         {
-            "id": "b",
-            "flow_id": "create_item_id",
-            "name": "Test",
+            "id": "create_item_step_1",
+            "title": "Step 1",
             "rows": \(rows)
         }
     """
     
-    static let rows = "[\(textRow), \(columnContainerRow), \(inputRow), \(selectPhotoRow)]"
+    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(inputRow), \(navigateButtonRow)]"
 
     static let textRow = """
         {
             "type": "Text",
             "view": {
                 "content": {
-                    "title": "{variable}",
+                    "title": "{item.title}",
                     "text": "Lorem Ipsum is simply ::star.square.on.square.fill:: dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
                 },
                 "max_lines": "2"
@@ -110,13 +141,54 @@ struct SDUIConstants {
                     "title": "",
                     "icon": "::photo.badge.plus.fill::",
                     "subtitle": "Add photos",
-                    "content": "Photos: {variable}/10 - Chose your listing’s main photo first.",
-                    "photo_ids": "{variable}"
+                    "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
+                    "photos": "{item.photos}"
                 }
             },
             "edit": {
-                "destination": "{variable}",
+                "destination": "{item.photos}",
                 "minimum_amount": "1"
+            }
+        }
+    """
+    
+    static let navigateButtonRow = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Next"
+                }
+            },
+            "edit": {},
+            "action": {
+                "target": "create_item:create_item_step_2"
+            }
+        }
+    """
+    
+    static let page2 = """
+        {
+            "id": "create_item_step_2",
+            "title": "Step 2",
+            "rows": \(rows2)
+        }
+    """
+    static let rows2 = "[\(textRow), \(submitButtonRow)]"
+    
+    static let submitButtonRow = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Submit"
+                }
+            },
+            "edit": {},
+            "action": {
+                "target": "create_item:submit"
             }
         }
     """
@@ -177,13 +249,10 @@ struct DataConstants {
             "title": "Amazing Fridge",
             "photos": [
                 {
-                    "id": "04b34671-4eeb-4f1c-8435-5e029a0e455c"
+                    "id": "printer"
                 },
                 {
-                    "id": "97a953eb-0206-4560-8716-d58c8cd94a62"
-                },
-                {
-                    "id": "d7b2efd7-3be6-49b7-9dad-0569c3ad4572"
+                    "id": "printer_logo"
                 }
             ],
             "price": {

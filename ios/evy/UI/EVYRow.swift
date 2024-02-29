@@ -18,7 +18,6 @@ public enum RowCodingKeys: String, CodingKey {
 // MARK: JSON Base structures
 public class EVYSDUIJSON {
     public struct Action: Decodable {
-        let type: String
         let target: String
     }
     public struct Edit: Decodable {
@@ -109,6 +108,9 @@ struct EVYRow: View, Decodable {
             
             case EVYSelectPhotoRow.JSONType:
                 self.view = try EVYSelectPhotoRow(container: container)
+            
+            case EVYButtonRow.JSONType:
+                self.view = try EVYButtonRow(container: container)
                 
             default:
                 self.view = Text("I am a row")
