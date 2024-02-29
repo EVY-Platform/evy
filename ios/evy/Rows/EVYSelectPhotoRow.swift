@@ -6,8 +6,8 @@
 //
 
 
-
 import SwiftUI
+import PhotosUI
 
 var carouselElementSize: CGFloat = 150.0
 
@@ -31,8 +31,15 @@ struct EVYSelectPhotoRow: View {
     public static var JSONType = "SelectPhoto"
     
     private let view: EVYSelectPhotoRowView
-    private var photos: [String] = []
+    private var fm = FileManager.default
+    private var cacheDir: URL {
+        let urls = fm.urls(for: .cachesDirectory,
+                                            in: .userDomainMask)
+        return urls[0]
+     }
     
+    @State var photos: [String] = []
+
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
         
@@ -40,10 +47,10 @@ struct EVYSelectPhotoRow: View {
             let (_, data) = parseEVYData(self.view.content.photos)!
             let photosData = data.data(using: .utf8)!
             let photoObjects = try JSONDecoder().decode([EVYPhoto].self, from:photosData)
-            self.photos = photoObjects.map { $0.id }
+            self.photos.append(contentsOf: photoObjects.map { $0.id })
         } catch {}
     }
-        
+
     var body: some View {
         VStack {
             if view.content.title.count > 0 {
@@ -52,19 +59,22 @@ struct EVYSelectPhotoRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.bottom, Constants.textLinePadding)
             }
+
             if photos.count > 0 {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
                         EVYSelectPhotoCarousel(imageNames: photos)
                         EVYSelectPhotoButton(fullScreen: false,
                                              icon: view.content.icon,
-                                             subtitle: view.content.subtitle)
+                                             subtitle: view.content.subtitle,
+                                             photos: $photos)
                     }
                 }
             } else {
                 EVYSelectPhotoButton(fullScreen: true,
                                      icon: view.content.icon,
-                                     subtitle: view.content.subtitle)
+                                     subtitle: view.content.subtitle,
+                                     photos: $photos)
             }
             
             EVYText(view.content.content)
@@ -72,6 +82,7 @@ struct EVYSelectPhotoRow: View {
                 .foregroundColor(Constants.placeholderColor)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding()
     }
 }
 
@@ -80,28 +91,53 @@ struct EVYSelectPhotoButton: View {
     let icon: String
     let subtitle: String
     
+    @State private var selectedItem: PhotosPickerItem?
+    @Binding var photos: [String]
+    
     var body: some View {
-        let stack = VStack {
-            EVYText(icon)
-                .font(.titleFont)
-                .foregroundColor(Constants.placeholderColor)
-            EVYText(subtitle)
-                .font(.titleFont)
-                .foregroundColor(Constants.placeholderColor)
-        }
-        if fullScreen {
-            stack
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 80)
-            .background(
-                RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
-        } else {
-            stack
-            .frame(width: carouselElementSize, height: carouselElementSize)
-            .background(
-                RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
+        
+        HStack {
+            PhotosPicker(
+                selection: $selectedItem,
+                label: {
+                    let stack = VStack {
+                        EVYText(icon)
+                            .font(.titleFont)
+                            .foregroundColor(Constants.placeholderColor)
+                        EVYText(subtitle)
+                            .font(.titleFont)
+                            .foregroundColor(Constants.placeholderColor)
+                    }
+                    if fullScreen {
+                        stack
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 80)
+                            .background(
+                                RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
+                                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
+                    } else {
+                        stack
+                            .frame(width: carouselElementSize, height: carouselElementSize)
+                            .background(
+                                RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
+                                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
+                    }
+                }
+            )
+            .onChange(of: selectedItem) {
+                Task {
+                    do {
+                        if let data = try await selectedItem?.loadTransferable(type: Data.self) {
+                            let id = try! UUID().stringified
+                            ImageManager().writeImage(name: id,
+                                                      uiImage: UIImage(data: data)!)
+                            photos.append(id)
+                        }
+                    } catch {
+                        print("Failed to load the image")
+                    }
+                }
+            }
         }
     }
 }
@@ -111,13 +147,43 @@ struct EVYSelectPhotoCarousel: View {
     
     var body: some View {
         ForEach(0..<imageNames.count, id: \.self) { index in
-            Image("\(imageNames[index])")
+            ImageManager().getImage(name: imageNames[index])!
                 .resizable()
                 .scaledToFill()
                 .frame(width: carouselElementSize, height: carouselElementSize)
                 .clipShape(RoundedRectangle(cornerRadius: Constants.mainCornerRadius))
                 .padding(.horizontal, Constants.minPadding)
         }
+    }
+}
+
+class ImageManager {
+    static var shared = ImageManager()
+    var fm = FileManager.default
+    var cachesDirectoryUrl: URL {
+        let urls = fm.urls(for: .cachesDirectory, in: .userDomainMask)
+        return urls[0]
+    }
+    
+    init() {
+        print(cachesDirectoryUrl)
+    }
+    
+    func getImage(name: String) -> Image? {
+        let fileUrl = cachesDirectoryUrl.appendingPathComponent("\(name).png")
+        let filePath = fileUrl.path
+        if fm.fileExists(atPath: filePath),
+           let data = try? Data(contentsOf: fileUrl){
+            return Image(uiImage: UIImage(data: data)!)
+        }
+        return nil
+    }
+    
+    func writeImage(name: String, uiImage: UIImage) {
+        let data = uiImage.pngData()
+        let fileUrl = cachesDirectoryUrl.appendingPathComponent("\(name).png")
+        let filePath = fileUrl.path
+        fm.createFile(atPath: filePath, contents: data)
     }
 }
 
