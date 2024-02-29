@@ -58,9 +58,9 @@ struct ContentView: View {
             currentFlowId = target.components(separatedBy: ":")[0]
             currentPageId = target.components(separatedBy: ":")[1]
             
-            if currentPageId != "submit" {
+            if currentPageId == "submit" {
                 let flow = flows.first(where: {$0.id == currentFlowId})!
-                print(flow.id)
+                currentPageId = flow.start_page
             }
         }
     }

@@ -11,6 +11,8 @@ import PhotosUI
 
 var carouselElementSize: CGFloat = 150.0
 
+var carouselElementSize: CGFloat = 150.0
+
 struct EVYSelectPhotoRowView: Decodable {
     let content: ContentData
     

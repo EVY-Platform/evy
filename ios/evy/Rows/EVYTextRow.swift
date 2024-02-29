@@ -28,15 +28,13 @@ struct EVYTextRow: View {
     
     @State private var expanded: Bool = false
     var body: some View {
-        VStack {
+        VStack(spacing: Constants.textLinePadding) {
             EVYText(view.content.title)
                 .font(.titleFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, Constants.textLinePadding)
             EVYText(view.content.text)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, Constants.textLinePadding)
                 .lineLimit(expanded ? nil : Int(view.max_lines) ?? 2)
             EVYText(expanded ? "Read less" : "Read more")
                 .foregroundStyle(Constants.textButtonColor)
@@ -46,6 +44,7 @@ struct EVYTextRow: View {
         .onTapGesture {
             expanded.toggle()
         }
+        .padding(.zero)
     }
 }
 
