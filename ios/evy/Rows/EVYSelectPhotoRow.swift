@@ -52,12 +52,11 @@ struct EVYSelectPhotoRow: View {
     }
 
     var body: some View {
-        VStack {
+        VStack(spacing: Constants.textLinePadding) {
             if view.content.title.count > 0 {
                 EVYText(view.content.title)
                     .font(.titleFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, Constants.textLinePadding)
             }
 
             if photos.count > 0 {
@@ -81,8 +80,8 @@ struct EVYSelectPhotoRow: View {
                 .font(.detailFont)
                 .foregroundColor(Constants.placeholderColor)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, Constants.majorPadding)
         }
-        .padding()
     }
 }
 
@@ -115,6 +114,7 @@ struct EVYSelectPhotoButton: View {
                             .background(
                                 RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
                                     .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
+                            .padding(.horizontal, Constants.majorPadding)
                     } else {
                         stack
                             .frame(width: carouselElementSize, height: carouselElementSize)
