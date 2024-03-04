@@ -4,6 +4,7 @@
 {
 	"id": "create_item",
 	"name": "Create item",
+	"type": "create",
 	"pages": [PAGE]
 }
 ```
@@ -360,7 +361,6 @@
 {
 	"id": "create_item_step_2",
 	"title": "Step 2",
-	"submit": "item",
 	"rows": [
 		{
 			"type": "Input",
@@ -385,7 +385,7 @@
 			},
 			"edit": {},
 			"action": {
-				"target": "create_item:submit"
+				"target": "home:home"
 			}
 		}
 	]
