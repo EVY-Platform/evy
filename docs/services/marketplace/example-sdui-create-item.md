@@ -4,9 +4,7 @@
 {
 	"id": "create_item",
 	"name": "Create item",
-	"pages": [PAGE],
-	"start_page": "page_id",
-	"redirect": "page_id"
+	"pages": [PAGE]
 }
 ```
 
@@ -362,6 +360,7 @@
 {
 	"id": "create_item_step_2",
 	"title": "Step 2",
+	"submit": "item",
 	"rows": [
 		{
 			"type": "Input",

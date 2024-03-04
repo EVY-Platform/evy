@@ -27,25 +27,24 @@ extension View {
 
 struct ContentView: View {
     private let flows: [EVYFlow]
-    private let startPage: EVYPage
     
+    @State private var homePage: EVYPage
     @State private var currentFlowId: String?
     @State private var currentPageId: String?
     
     init() {
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
-        let jsonPage = SDUIConstants.testPage.data(using: .utf8)!
 
         let data = EVYData.shared
         let item = DataConstants.item.data(using: .utf8)!
         try! data.set(name: "item", data: item)
         
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
-        self.startPage = try! JSONDecoder().decode(EVYPage.self, from: jsonPage)
+        self.homePage = (flows.first(where: {$0.id == "home"})?.pages.first)!
     }
     
     var body: some View {
-        var page = startPage
+        var page = homePage
         if currentFlowId != nil && currentPageId != nil {
             let flow = flows.first(where: {$0.id == currentFlowId})!
             page = flow.getPageById(currentPageId!)
@@ -55,12 +54,12 @@ struct ContentView: View {
             let userInfo = notification.userInfo!
             let target = userInfo["target"] as! String
             
-            currentFlowId = target.components(separatedBy: ":")[0]
+            let newFlowId = target.components(separatedBy: ":")[0]
             currentPageId = target.components(separatedBy: ":")[1]
-            
-            if currentPageId == "submit" {
-                let flow = flows.first(where: {$0.id == currentFlowId})!
-                currentPageId = flow.start_page
+
+            if newFlowId != currentFlowId {
+                // submit or read or start draft
+                currentFlowId = newFlowId
             }
         }
     }

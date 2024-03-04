@@ -63,20 +63,25 @@ struct SDUIConstants {
     """
     static let testPage = """
         {
-            "id": "testPage",
+            "id": "home",
             "title": "Home",
             "rows": [\(testRow), \(testButton)]
         }
     """
+    static let homeFlow = """
+        {
+            "id": "home",
+            "name": "Home",
+            "pages": [\(testPage)]
+        }
+    """
     
-    static let flows = "[\(flow), \(flow)]"
-    static let flow = """
+    static let flows = "[\(homeFlow), \(createItemFlow)]"
+    static let createItemFlow = """
         {
             "id": "create_item",
             "name": "Create item",
-            "pages": \(pages),
-            "start_page": "create_item_step_1",
-            "redirect": "testPage"
+            "pages": \(pages)
         }
     """
     
@@ -188,7 +193,7 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "target": "create_item:submit"
+                "target": "home:home"
             }
         }
     """
