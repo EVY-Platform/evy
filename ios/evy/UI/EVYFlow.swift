@@ -7,9 +7,17 @@
 
 import SwiftUI
 
+public enum EVYFlowType: String, Decodable {
+    case create
+    case read
+    case update
+    case delete
+}
+
 struct EVYFlow: Decodable {
     let id: String
     let name: String
+    let type: EVYFlowType
     let pages: [EVYPage]
     
     func getPageById(_ id: String) -> EVYPage {
