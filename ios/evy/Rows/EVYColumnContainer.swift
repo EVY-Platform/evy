@@ -15,11 +15,21 @@ struct EVYColumnContainer: View {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSDUIJSON.ContainerView.self, forKey:.view)
     }
+   
+    @State private var title: String = ""
     
     var body: some View {
-        HStack {
-            ForEach(view.content.children, id: \.id) { child in
-                child.child
+        VStack(spacing: Constants.textLinePadding) {
+            if (view.content.title.count > 0) {
+                EVYText(view.content.title)
+                    .font(.titleFont)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+            }
+            HStack {
+                ForEach(view.content.children, id: \.id) { child in
+                    child.child
+                }
             }
         }
     }
