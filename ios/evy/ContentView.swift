@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 extension Notification.Name {
     static let navigateEVYPage = Notification.Name("navigateEVYPage")
@@ -34,10 +35,6 @@ struct ContentView: View {
     
     init() {
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
-
-        let data = EVYData.shared
-        let item = DataConstants.item.data(using: .utf8)!
-        try! data.set(name: "item", data: item)
         
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
         self.homePage = (flows.first(where: {$0.id == "home"})?.pages.first)!
@@ -66,5 +63,11 @@ struct ContentView: View {
 }
 
 #Preview {
-    return ContentView()
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: EVYData.self, configurations: config)
+    
+    let item = DataConstants.item.data(using: .utf8)!
+    container.mainContext.insert(EVYData(id: "item", data: item))
+    
+    return ContentView().modelContainer(container)
 }

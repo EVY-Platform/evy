@@ -43,12 +43,12 @@ struct EVYSelectPhotoRow: View {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
         
-        do {
-            let (_, data) = parseEVYData(self.view.content.photos)!
-            let photosData = data.data(using: .utf8)!
-            let photoObjects = try JSONDecoder().decode([EVYPhoto].self, from:photosData)
-            self.photos.append(contentsOf: photoObjects.map { $0.id })
-        } catch {}
+//        do {
+//            let (_, data) = EVYParser.instance.parseData(self.view.content.photos)!
+//            let photosData = data.data(using: .utf8)!
+//            let photoObjects = try JSONDecoder().decode([EVYPhoto].self, from:photosData)
+//            self.photos.append(contentsOf: photoObjects.map { $0.id })
+//        } catch {}
     }
 
     var body: some View {
@@ -128,7 +128,7 @@ struct EVYSelectPhotoButton: View {
                 Task {
                     do {
                         if let data = try await selectedItem?.loadTransferable(type: Data.self) {
-                            let id = try! UUID().stringified
+                            let id = UUID().description
                             ImageManager().writeImage(name: id,
                                                       uiImage: UIImage(data: data)!)
                             photos.append(id)
@@ -188,9 +188,11 @@ class ImageManager {
 }
 
 #Preview {
-    let data = EVYData.shared
-    let item = DataConstants.item.data(using: .utf8)!
-    try! data.set(name: "item", data: item)
-    let json =  SDUIConstants.selectPhotoRow.data(using: .utf8)!
-    return try? JSONDecoder().decode(EVYRow.self, from: json)
+//    let data = EVYData.shared
+//    let item = DataConstants.item.data(using: .utf8)!
+//    try! data.set(name: "item", data: item)
+//    let json =  SDUIConstants.selectPhotoRow.data(using: .utf8)!
+//    return try? JSONDecoder().decode(EVYRow.self, from: json)
+    
+    return Text("test")
 }
