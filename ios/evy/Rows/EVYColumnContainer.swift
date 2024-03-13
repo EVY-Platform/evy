@@ -26,11 +26,9 @@ struct EVYColumnContainer: View {
 }
 
 #Preview {
-//    let data = EVYData.shared
-//    let item = DataConstants.item.data(using: .utf8)!
-//    try! data.set(name: "item", data: item)
-//    let json = SDUIConstants.columnContainerRow.data(using: .utf8)!
-//    return try! JSONDecoder().decode(EVYRow.self, from: json)
+    let item = DataConstants.item.data(using: .utf8)!
+    EVYParser.instance.create(id: "item", data: item)
     
-    return Text("test")
+    let json = SDUIConstants.columnContainerRow.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

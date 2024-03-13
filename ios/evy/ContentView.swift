@@ -63,11 +63,8 @@ struct ContentView: View {
 }
 
 #Preview {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: EVYData.self, configurations: config)
-    
     let item = DataConstants.item.data(using: .utf8)!
-    container.mainContext.insert(EVYData(id: "item", data: item))
+    EVYParser.instance.create(id: "item", data: item)
     
-    return ContentView().modelContainer(container)
+    return ContentView()
 }

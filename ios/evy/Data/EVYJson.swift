@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 public typealias EVYJsonString = String
 public typealias EVYJsonArray = [EVYJson]
@@ -52,15 +53,20 @@ public indirect enum EVYJson: Codable {
     }
     
     public func toString() -> String {
+        let encoder = JSONEncoder()
+        
         switch self {
         case .string(let stringValue):
             return stringValue
         case .array(let arrayValue):
-            return arrayValue.description
+            guard let data = try? encoder.encode(arrayValue) else {
+                return arrayValue.description
+            }
+            guard let string = String(data: data, encoding: .utf8) else {
+                return arrayValue.description
+            }
+            return string
         case .dictionary(let dictValue):
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            
             guard let data = try? encoder.encode(dictValue) else {
                 return dictValue.description
             }

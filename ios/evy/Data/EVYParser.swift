@@ -95,45 +95,11 @@ struct EVYParser {
         }
     }
     
-    func parseText(_ input: String) -> String {
-        return "parseText"
-//        if let result = parseFunction(input) {
-//            return "parseText"
-////            return parseText(result)
-//        } else if let (match, data) = parseData(input) {
-//            let matchIdx = match.range.location
-//            
-//            let matchUpperBound = match.range.upperBound
-//            let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
-//            let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
-//            let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
-//            
-//            let start = matchIdx > 0 ? parseText(String(input[...matchStartIndex])) : ""
-//            let middle = parseText(data)
-//            let end = matchUpperBound < input.count ? parseText(String(input[remainingIndex...])) : ""
-//            
-//            return start + middle + end
-//        }
-//        
-//        return input
-    }
-    
     func parseData(_ input: String) -> (RegexMatch, String)? {
-        if let match = firstMatch(input, pattern: "\\{([^}]*)\\}") {
-            
+        if let match = firstMatch(input, pattern: "\\{(?!\")[^}^\"]*(?!\")\\}") {
             // Remove leading and trailing curly braces
             return (match, String(match.0.dropFirst().dropLast()))
         }
-        
-        return nil
-    }
-    
-    func parseImage(_ input: String) -> (RegexMatch, Image)? {
-//        if let match = firstMatch(input, pattern: "::([^::]*)::") {
-//            let range = Range(match.range(at: 1), in: input)
-//            return (match, Image(systemName: String(input[range!])))
-//        }
-        
         return nil
     }
     
@@ -169,33 +135,4 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
     } catch {}
     
     return nil
-}
-
-struct EVYParserView: View {
-    @State var text: String = "Loading"
-    
-    var body: some View {
-        Text(text).onAppear {
-            EVYParser.instance.parse("Hello {item.photos} {count(item.photos)}") { value in
-                text = value
-            }
-        }
-    }
-}
-
-#Preview {
-//    return VStack {
-//        EVYText("::star.square.on.square.fill::")
-//        EVYText("Just text")
-//        EVYText("{item.title}")
-//        EVYText("{count(item.photos)}")
-//        EVYText("{item.title} has {count(item.photos)} photos ::star.square.on.square.fill::")
-//    }.modelContainer(container)
-    
-//    return Text(EVYParser.instance.parse("Hello {count(item.photos)}"))
-    
-    let item = DataConstants.item.data(using: .utf8)!
-    EVYParser.instance.create(id: "item", data: item)
-    
-    return EVYParserView()
 }

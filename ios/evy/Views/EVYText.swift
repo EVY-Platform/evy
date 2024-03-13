@@ -8,52 +8,67 @@
 import SwiftUI
 import SwiftData
 
+struct EVYTextView: View {
+    @State private var text: String
+    let input: String
+    
+    init(_ input: String) {
+        self.input = input
+        _text = State(initialValue: "Loading...")
+    }
+    
+    var body: some View {
+        EVYText(text).onAppear {
+            EVYParser.instance.parse(input) { value in
+                text = value
+            }
+        }
+    }
+}
+
 func EVYText(_ input: String) -> Text {
-//    if let result = EVYParser.instance.parseFunction(input) {
-//        return EVYText(result)
-//    } else if let (match, data) = EVYParser.instance.parseData(input) {
-//        let matchIdx = match.range.location
-//        
-//        let matchUpperBound = match.range.upperBound
-//        let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
-//        let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
-//        let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
-//        
-//        let start = matchIdx > 0 ? EVYText(String(input[...matchStartIndex])) : Text("")
-//        let middle = EVYText(data)
-//        let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
-//        
-//        return start + middle + end
-//    } else if let (match, image) = EVYParser.instance.parseImage(input) {
-//        let matchIdx = match.range.location
-//        
-//        let matchUpperBound = match.range.upperBound
-//        let matchLowerBound = match.range.lowerBound > 0 ? match.range.lowerBound-1 : 0
-//        let matchStartIndex = input.index(input.startIndex, offsetBy: matchLowerBound)
-//        let remainingIndex = input.index(input.startIndex, offsetBy: matchUpperBound)
-//        
-//        let start = matchIdx > 0 ? EVYText(String(input[...matchStartIndex])) : Text("")
-//        let middle = Text("\(image)")
-//        let end = matchUpperBound < input.count ? EVYText(String(input[remainingIndex...])) : Text("")
-//        
-//        return start + middle + end
-//    }
+    if input.count < 1 {
+        return Text(input)
+    }
+
+    let regex = try! Regex("::[a-zA-Z.]+::")
+        if let match = input.firstMatch(of: regex) {
+        let imageStart = match.range.lowerBound
+        let imageEnd = match.range.upperBound
+        
+        let imageName = match.0.trimmingCharacters(in: CharacterSet(charactersIn: ":"))
+        let imageText = Text("\(Image(systemName: imageName))")
+        
+        let hasPrefix = imageStart > input.startIndex
+        let hasSuffix = imageEnd < input.endIndex
+        
+        if hasPrefix && hasSuffix {
+            let start = String(input.prefix(upTo: imageStart))
+            let end = String(input.suffix(from: imageEnd))
+            return EVYText(start) + imageText + EVYText(end)
+        } else if hasPrefix {
+            let start = String(input.prefix(upTo: imageStart))
+            return EVYText(start) + imageText
+        } else if hasSuffix {
+            let end = String(input.suffix(from: imageEnd))
+            return imageText + EVYText(end)
+        } else {
+            return imageText
+        }
+    }
     
     return Text(input)
 }
 
 #Preview {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: EVYData.self, configurations: config)
-    
     let item = DataConstants.item.data(using: .utf8)!
-    container.mainContext.insert(EVYData(id: "item", data: item))
+    EVYParser.instance.create(id: "item", data: item)
     
     return VStack {
-        EVYText("::star.square.on.square.fill::")
-        EVYText("Just text")
-        EVYText("{item.title}")
-        EVYText("{count(item.photos)}")
-        EVYText("{item.title} has {count(item.photos)} photos ::star.square.on.square.fill::")
-    }.modelContainer(container)
+        EVYTextView("::star.square.on.square.fill::")
+        EVYTextView("Just text")
+        EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
+        EVYTextView("count: {count(item.photos)}")
+        EVYTextView("{item.title} has {count(item.photos)} photos ::star.square.on.square.fill::")
+    }
 }

@@ -36,20 +36,17 @@ struct EVYButtonRow: View {
 
 
 #Preview {
-//    let data = EVYData.shared
-//    let item = DataConstants.item.data(using: .utf8)!
-//    try! data.set(name: "item", data: item)
-//    
-//    let navigateJson =  SDUIConstants.navigateButtonRow.data(using: .utf8)!
-//    let navigate = try? JSONDecoder().decode(EVYRow.self, from: navigateJson)
-//    
-//    let submitJson =  SDUIConstants.submitButtonRow.data(using: .utf8)!
-//    let submit = try? JSONDecoder().decode(EVYRow.self, from: submitJson)
-//    
-//    return VStack {
-//        navigate
-//        submit
-//    }
+    let item = DataConstants.item.data(using: .utf8)!
+    EVYParser.instance.create(id: "item", data: item)
+
+    let navigateJson =  SDUIConstants.navigateButtonRow.data(using: .utf8)!
+    let navigate = try? JSONDecoder().decode(EVYRow.self, from: navigateJson)
     
-    return Text("test")
+    let submitJson =  SDUIConstants.submitButtonRow.data(using: .utf8)!
+    let submit = try? JSONDecoder().decode(EVYRow.self, from: submitJson)
+    
+    return VStack {
+        navigate
+        submit
+    }
 }

@@ -129,7 +129,7 @@ struct SDUIConstants {
             "type": "Input",
             "view": {
                 "content": {
-                    "title": "My great ::star.square.on.square.fill:: title",
+                    "title": "A row title ::star.square.on.square.fill::",
                     "value": "{item.title}",
                     "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
                 }

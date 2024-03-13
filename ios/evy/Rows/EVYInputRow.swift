@@ -24,7 +24,6 @@ struct EVYInputRow: View {
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
-        _title = State(initialValue: EVYParser.instance.parseText(self.view.content.value))
     }
     
     @State private var title: String = ""
@@ -32,12 +31,12 @@ struct EVYInputRow: View {
     var body: some View {
         VStack(spacing: Constants.textLinePadding) {
             if (view.content.title.count > 0) {
-                EVYText(view.content.title)
+                EVYTextView(view.content.title)
                     .font(.titleFont)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             EVYTextField(value: $title,
-                         label: view.content.title,
+                         label: view.content.value,
                          placeholder: view.content.placeholder)
         }
     }
@@ -46,10 +45,9 @@ struct EVYInputRow: View {
 
 
 #Preview {
-//    let data = EVYData.shared
-//    let item = DataConstants.item.data(using: .utf8)!
-//    try! data.set(name: "item", data: item)
-//    let json =  SDUIConstants.inputRow.data(using: .utf8)!
-//    return try? JSONDecoder().decode(EVYRow.self, from: json)
-    return Text("test")
+    let item = DataConstants.item.data(using: .utf8)!
+    EVYParser.instance.create(id: "item", data: item)
+    
+    let json =  SDUIConstants.inputRow.data(using: .utf8)!
+    return try? JSONDecoder().decode(EVYRow.self, from: json)
 }
