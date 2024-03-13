@@ -13,7 +13,7 @@ public typealias EVYJsonString = String
 public typealias EVYJsonArray = [EVYJson]
 public typealias EVYJsonDict = [String: EVYJson]
 
-public indirect enum EVYJson: Codable {
+public indirect enum EVYJson: Codable, Hashable {
     case string(EVYJsonString)
     case dictionary(EVYJsonDict)
     case array(EVYJsonArray)

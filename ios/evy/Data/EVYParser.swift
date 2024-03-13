@@ -75,57 +75,67 @@ struct EVYParser {
             }
         }
     }
+}
     
-    func parseProp(props: [String].SubSequence, data: EVYJson) throws -> EVYJson {
-        switch data {
-        case .dictionary(let dictValue):
-            if props.count >= 1 {
-                guard let firstVariable = props.first else {
-                    throw EVYDataParseError.unknownVariable
-                }
-                guard let subData = dictValue[firstVariable] else {
-                    throw EVYDataParseError.invalidVariable
-                }
-                return try parseProp(props: props[1...], data: subData)
-            } else {
-                throw EVYDataParseError.invalidVariable
-            }
-        default:
-            return data
-        }
+func parsePropsWithData(_ input: String, data: EVYJson) -> String {
+    let variables = input.components(separatedBy: ".")
+    
+    if variables.count > 0 {
+        return try! parseProp(props: variables[0...], data: data).toString()
     }
     
-    func parseData(_ input: String) -> (RegexMatch, String)? {
-        if let match = firstMatch(input, pattern: "\\{(?!\")[^}^\"]*(?!\")\\}") {
-            // Remove leading and trailing curly braces
-            return (match, String(match.0.dropFirst().dropLast()))
+    return input
+}
+
+func parseProp(props: [String].SubSequence, data: EVYJson) throws -> EVYJson {
+    switch data {
+    case .dictionary(let dictValue):
+        if props.count >= 1 {
+            guard let firstVariable = props.first else {
+                throw EVYDataParseError.unknownVariable
+            }
+            guard let subData = dictValue[firstVariable] else {
+                throw EVYDataParseError.invalidVariable
+            }
+            return try parseProp(props: props[1...], data: subData)
+        } else {
+            throw EVYDataParseError.invalidVariable
         }
+    default:
+        return data
+    }
+}
+
+func parseData(_ input: String) -> (RegexMatch, String)? {
+    if let match = firstMatch(input, pattern: "\\{(?!\")[^}^\"]*(?!\")\\}") {
+        // Remove leading and trailing curly braces
+        return (match, String(match.0.dropFirst().dropLast()))
+    }
+    return nil
+}
+
+func parseFunction(_ input: String) -> (match: RegexMatch,
+                                        functionName: String,
+                                        functionArgs: String)?
+{
+    guard let match = firstMatch(input, pattern: "\\{[a-zA-Z]+\\(([^)]*)\\)\\}") else {
         return nil
     }
     
-    func parseFunction(_ input: String) -> (match: RegexMatch,
-                                            functionName: String,
-                                            functionArgs: String)?
-    {
-        guard let match = firstMatch(input, pattern: "\\{[a-zA-Z]+\\(([^)]*)\\)\\}") else {
-            return nil
-        }
-        
-        // Remove opening { from match
-        let functionCall = String(match.0.description.dropFirst())
-        guard let argsAndParenthesisMatch = firstMatch(functionCall, pattern: "\\(([^)]*)\\)") else {
-            return nil
-        }
-        
-        let parenthesisStartIndex = argsAndParenthesisMatch.range.lowerBound
-        let functionNameEndIndex = functionCall.index(before: parenthesisStartIndex)
-        let functionName = functionCall[functionCall.startIndex...functionNameEndIndex]
-        
-        let argsAndParenthesis = argsAndParenthesisMatch.0.description
-        let functionArgs = argsAndParenthesis.dropFirst().dropLast()
-
-        return (match, String(functionName), String(functionArgs))
+    // Remove opening { from match
+    let functionCall = String(match.0.description.dropFirst())
+    guard let argsAndParenthesisMatch = firstMatch(functionCall, pattern: "\\(([^)]*)\\)") else {
+        return nil
     }
+    
+    let parenthesisStartIndex = argsAndParenthesisMatch.range.lowerBound
+    let functionNameEndIndex = functionCall.index(before: parenthesisStartIndex)
+    let functionName = functionCall[functionCall.startIndex...functionNameEndIndex]
+    
+    let argsAndParenthesis = argsAndParenthesisMatch.0.description
+    let functionArgs = argsAndParenthesis.dropFirst().dropLast()
+
+    return (match, String(functionName), String(functionArgs))
 }
 
 private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
@@ -135,4 +145,23 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
     } catch {}
     
     return nil
+}
+
+#Preview {
+    let conditions = DataConstants.conditions.data(using: .utf8)!
+    EVYParser.instance.create(id: "conditions", data: conditions)
+    
+    let conditionsObject = EVYData(id: "conditions", data: conditions).decoded()
+    
+    switch conditionsObject {
+    case .array(let arrayValue):
+        return ScrollView {
+            ForEach(arrayValue, id: \.self) { item in
+                let parsed = parsePropsWithData("value", data: item)
+                Text(parsed).padding()
+            }
+        }
+    default:
+        return Text(conditionsObject.toString())
+    }
 }
