@@ -3,7 +3,6 @@ dist/
 node_modules/
 traefik/
 letsencrypt/
-data/
 .env
 .next
 .DS_Store
