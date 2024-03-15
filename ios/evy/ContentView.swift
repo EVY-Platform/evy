@@ -45,14 +45,6 @@ struct ContentView: View {
         if currentFlowId != nil && currentPageId != nil {
             let flow = flows.first(where: {$0.id == currentFlowId})!
             page = flow.getPageById(currentPageId!)
-            
-//            let flowModel = flow.data
-//            let draft = """
-//            {
-//                id: \(UUID())
-//            """
-//            let item = "{}".data(using: .utf8)!
-//            try! EVYDataFactory.create(item)
         }
         
         return page.onReceive(.navigateEVYPage) { notification in
