@@ -92,7 +92,8 @@ public enum EVYJson: Codable {
     }
 }
 
-@Model class EVYData {
+@Model
+class EVYData {
     var id: String
     var data: Data
     
@@ -106,45 +107,9 @@ public enum EVYJson: Codable {
     }
 }
 
-struct EVYDataFactory {
-    public static func create(_ data: Data) throws -> [EVYData] {
-        let objects = try! createFromData(data: data)
-        for object in objects {
-            EVYDataManager.i.create(object)
-        }
-        return objects
-    }
-    
-    private static func createFromData(data: Data) throws -> [EVYData] {
-        let json = try! JSONDecoder().decode(EVYJson.self, from: data)
-        switch json {
-        case .string(_):
-            throw EVYDataModelError.dataIsAString
-        case .array(let arrayValue):
-            var response: [EVYData] = []
-            let encoder = JSONEncoder()
-            for val in arrayValue {
-                guard let valEncoded = try? encoder.encode(val) else {
-                    throw EVYDataModelError.unprocessableValue
-                }
-                response.append(contentsOf: try! createFromData(data: valEncoded))
-            }
-            return response
-        case .dictionary(let dictValue):
-            let res = try! EVYJson.getValueAtProp(data: dictValue, prop: "id")
-            switch res {
-            case .string(let stringValue):
-                return [EVYData(id: stringValue, data: data)]
-            default:
-                throw EVYDataModelError.idIsNotAString
-            }
-        }
-    }
-}
-
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    let items = try! EVYDataFactory.create(item)
+    let items = try! EVYDataManager.i.create(item)
     return VStack {
         ForEach(items) { i in
             Text(i.id)

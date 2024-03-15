@@ -30,8 +30,38 @@ struct EVYDataManager {
         context = ModelContext(container)
     }
     
-    func create(_ object: EVYData) {
-        context!.insert(object)
+    public func create(_ data: Data) -> [EVYData] {
+        let objects = try! createFromData(data: data)
+        for object in objects {
+            context!.insert(object)
+        }
+        return objects
+    }
+    
+    private func createFromData(data: Data) throws -> [EVYData] {
+        let json = try! JSONDecoder().decode(EVYJson.self, from: data)
+        switch json {
+        case .string(_):
+            throw EVYDataModelError.dataIsAString
+        case .array(let arrayValue):
+            var response: [EVYData] = []
+            let encoder = JSONEncoder()
+            for val in arrayValue {
+                guard let valEncoded = try? encoder.encode(val) else {
+                    throw EVYDataModelError.unprocessableValue
+                }
+                response.append(contentsOf: try! createFromData(data: valEncoded))
+            }
+            return response
+        case .dictionary(let dictValue):
+            let res = try! EVYJson.getValueAtProp(data: dictValue, prop: "id")
+            switch res {
+            case .string(let stringValue):
+                return [EVYData(id: stringValue, data: data)]
+            default:
+                throw EVYDataModelError.idIsNotAString
+            }
+        }
     }
     
     func getDataById(id: String, onCompletion: (_ data: EVYData) -> Void) throws {
@@ -149,7 +179,7 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 
 #Preview {
     let conditions = DataConstants.conditions.data(using: .utf8)!
-    let conditionsObjects = try! EVYDataFactory.create(conditions)
+    let conditionsObjects = try! EVYDataManager.i.create(conditions)
     
     return ScrollView {
         ForEach(conditionsObjects, id: \.self) { condition in

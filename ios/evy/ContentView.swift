@@ -72,7 +72,7 @@ struct ContentView: View {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    let _ = try! EVYDataFactory.create(item)
+    let _ = try! EVYDataManager.i.create(item)
     
     return ContentView()
 }
