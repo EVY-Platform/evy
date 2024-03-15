@@ -20,10 +20,10 @@ public enum EVYDataParseError: Error {
 
 let config = ModelConfiguration(isStoredInMemoryOnly: true)
 
-struct EVYParser {
-    static let instance = EVYParser()
+struct EVYDataManager {
+    static let i = EVYDataManager()
     
-    private let container = try! ModelContainer(for: EVYData.self, configurations: config)
+    private let container = try! ModelContainer(for: EVYDataModel.self, configurations: config)
     private var context: ModelContext?
     
     init(){
@@ -31,11 +31,11 @@ struct EVYParser {
     }
     
     func create(id: String, data: Data) {
-        context!.insert(EVYData(id: id, data: data))
+        context!.insert(EVYDataModel(id: id, data: data))
     }
     
-    func getDataById(id: String, onCompletion: (_ data: EVYData) -> Void) throws {
-        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.id == id })
+    func getDataById(id: String, onCompletion: (_ data: EVYDataModel) -> Void) throws {
+        let descriptor = FetchDescriptor<EVYDataModel>(predicate: #Predicate { $0.id == id })
         onCompletion(try context!.fetch(descriptor).first!)
     }
     
@@ -70,7 +70,7 @@ struct EVYParser {
         } else {
             let firstVariable = variables.first!
             
-            try! EVYParser.instance.getDataById(id: firstVariable) { data in
+            try! EVYDataManager.i.getDataById(id: firstVariable) { data in
                 onCompletion(try! parseProp(props: variables[1...], data: data.decoded()))
             }
         }
@@ -149,9 +149,9 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 
 #Preview {
     let conditions = DataConstants.conditions.data(using: .utf8)!
-    EVYParser.instance.create(id: "conditions", data: conditions)
+    EVYDataManager.i.create(id: "conditions", data: conditions)
     
-    let conditionsObject = EVYData(id: "conditions", data: conditions).decoded()
+    let conditionsObject = EVYDataModel(id: "conditions", data: conditions).decoded()
     
     switch conditionsObject {
     case .array(let arrayValue):

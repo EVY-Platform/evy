@@ -11,7 +11,7 @@ import SwiftUI
 struct evyApp: App {
     init() {
         let item = DataConstants.item.data(using: .utf8)!
-        EVYParser.instance.create(id: "item", data: item)
+        EVYDataManager.i.create(id: "item", data: item)
     }
     
     var body: some Scene {

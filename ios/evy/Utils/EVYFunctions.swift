@@ -9,7 +9,7 @@ import Foundation
 
 func evyCount(_ args: String, _ onCompletion: (String) -> Void) {
     do {
-        try EVYParser.instance.parseProps(args) { res in
+        try EVYDataManager.i.parseProps(args) { res in
             switch res {
             case .array(let arrayValue):
                 onCompletion(String(arrayValue.count))

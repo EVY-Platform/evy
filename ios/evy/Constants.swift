@@ -73,6 +73,7 @@ struct SDUIConstants {
             "id": "home",
             "name": "Home",
             "type": "read",
+            "data": "item",
             "pages": [\(testPage)]
         }
     """
@@ -83,6 +84,7 @@ struct SDUIConstants {
             "id": "create_item",
             "name": "Create item",
             "type": "create",
+            "data": "item",
             "pages": \(pages)
         }
     """

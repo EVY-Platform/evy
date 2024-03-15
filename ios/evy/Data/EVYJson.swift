@@ -79,7 +79,7 @@ public indirect enum EVYJson: Codable, Hashable {
 }
 
 @Model
-class EVYData {
+class EVYDataModel {
     var id: String
     var data: Data
     

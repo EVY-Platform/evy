@@ -19,7 +19,7 @@ struct EVYTextView: View {
     
     var body: some View {
         EVYText(text).onAppear {
-            EVYParser.instance.parse(input) { value in
+            EVYDataManager.i.parse(input) { value in
                 text = value
             }
         }
@@ -62,7 +62,7 @@ func EVYText(_ input: String) -> Text {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    EVYParser.instance.create(id: "item", data: item)
+    EVYDataManager.i.create(id: "item", data: item)
     
     return VStack {
         EVYTextView("::star.square.on.square.fill::")

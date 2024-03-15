@@ -18,6 +18,7 @@ struct EVYFlow: Decodable {
     let id: String
     let name: String
     let type: EVYFlowType
+    let data: String
     let pages: [EVYPage]
     
     func getPageById(_ id: String) -> EVYPage {
