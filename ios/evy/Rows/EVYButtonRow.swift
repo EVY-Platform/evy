@@ -37,7 +37,7 @@ struct EVYButtonRow: View {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    let _ = try! EVYData.create(item)
+    let _ = try! EVYDataManager.i.create(item)
 
     let navigateJson =  SDUIConstants.navigateButtonRow.data(using: .utf8)!
     let navigate = try? JSONDecoder().decode(EVYRow.self, from: navigateJson)

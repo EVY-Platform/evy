@@ -38,8 +38,34 @@ struct EVYDataManager {
         context = ModelContext(container)
     }
     
-    func create(_ object: EVYData) {
-        context!.insert(object)
+    func create(_ data: Data) throws -> [EVYData] {
+        let object = try! JSONDecoder().decode(EVYJson.self, from: data)
+        let objects = try! createFromJSON(data: object)
+        for object in objects {
+            context!.insert(object)
+        }
+        return objects
+    }
+    
+    private func createFromJSON(data: EVYJson) throws -> [EVYData] {
+        switch data {
+        case .string(_):
+            throw EVYDataModelError.dataIsAString
+        case .array(let arrayValue):
+            var response: [EVYData] = []
+            for val in arrayValue {
+                response.append(contentsOf: try! createFromJSON(data: val))
+            }
+            return response
+        case .dictionary(let dictValue):
+            let res = try! EVYJson.getValueAtProp(data: dictValue, prop: "id")
+            switch res {
+            case .string(let stringValue):
+                return [EVYData(id: stringValue, data: data)]
+            default:
+                throw EVYDataModelError.idIsNotAString
+            }
+        }
     }
     
     func getDataById(id: String, onCompletion: (_ data: EVYData) -> Void) throws {
@@ -157,7 +183,7 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 
 #Preview {
     let conditions = DataConstants.conditions.data(using: .utf8)!
-    let conditionsObjects = try! EVYData.create(conditions)
+    let conditionsObjects = try! EVYDataManager.i.create(conditions)
     
     return ScrollView {
         ForEach(conditionsObjects, id: \.self) { condition in
