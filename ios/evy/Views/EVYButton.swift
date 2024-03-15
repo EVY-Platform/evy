@@ -31,7 +31,7 @@ struct EVYButton: View {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    EVYDataManager.i.create(id: "item", data: item)
+    let _ = try! EVYDataManager.i.create(item)
     
     return EVYButton(label: "Submit", target: "create_item_step_2")
 }

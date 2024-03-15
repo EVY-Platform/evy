@@ -13,7 +13,14 @@ public typealias EVYJsonString = String
 public typealias EVYJsonArray = [EVYJson]
 public typealias EVYJsonDict = [String: EVYJson]
 
-public indirect enum EVYJson: Codable, Hashable {
+public enum EVYDataModelError: Error {
+    case idIsNotAString
+    case propertyNotFound
+    case dataIsAString
+    case unprocessableValue
+}
+
+public enum EVYJson: Codable {
     case string(EVYJsonString)
     case dictionary(EVYJsonDict)
     case array(EVYJsonArray)
@@ -76,10 +83,17 @@ public indirect enum EVYJson: Codable, Hashable {
             return string
         }
     }
+    
+    public static func getValueAtProp(data: EVYJsonDict, prop: String) throws -> EVYJson {
+        guard let subData = data[prop] else {
+            throw EVYDataModelError.propertyNotFound
+        }
+        return subData
+    }
 }
 
 @Model
-class EVYDataModel {
+class EVYData {
     var id: String
     var data: Data
     
@@ -92,3 +106,14 @@ class EVYDataModel {
         return try! JSONDecoder().decode(EVYJson.self, from: self.data)
     }
 }
+
+#Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    let items = try! EVYDataManager.i.create(item)
+    return VStack {
+        ForEach(items) { i in
+            Text(i.id)
+        }
+    }
+}
+
