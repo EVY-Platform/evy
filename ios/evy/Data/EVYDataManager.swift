@@ -30,7 +30,7 @@ struct EVYDataManager {
         context = ModelContext(container)
     }
     
-    public func create(_ data: Data) -> [EVYData] {
+    public func create(_ data: Data) throws -> [EVYData] {
         let objects = try! createFromData(data: data)
         for object in objects {
             context!.insert(object)
