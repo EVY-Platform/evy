@@ -96,8 +96,8 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(inputRow), \(navigateButtonRow)]"
-
+    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(selectRow), \(inputRow), \(navigateButtonRow)]"
+    
     static let textRow = """
         {
             "type": "Text",
@@ -124,6 +124,24 @@ struct SDUIConstants {
             }
         }
     """
+    static let selectRow = """
+        {
+            "type": "Select",
+            "view": {
+                "content": {
+                    "title": "Selling Reason",
+                    "value": "{item.selling_reason.value}",
+                    "placeholder": ""
+                },
+                "multi": "{false}",
+                "data": "{selling_reasons}"
+            },
+            "edit": {
+                "destination": "{item.selling_reason}"
+            }
+        }
+    """
+
     static let inputRow = """
         {
             "type": "Input",
