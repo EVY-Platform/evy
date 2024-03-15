@@ -254,7 +254,7 @@ struct DataConstants {
     
     static let item = """
         {
-            "id": "a9e9feba-d1ba-4f78-ab3c-3ce7cc108989",
+            "id": "item",
             "title": "Amazing Fridge",
             "photos": [
                 {
