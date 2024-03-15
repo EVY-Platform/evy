@@ -62,7 +62,7 @@ func EVYText(_ input: String) -> Text {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    EVYDataManager.i.create(id: "item", data: item)
+    let _ = try! EVYDataFactory.create(item)
     
     return VStack {
         EVYTextView("::star.square.on.square.fill::")

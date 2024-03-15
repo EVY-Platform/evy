@@ -13,7 +13,14 @@ public typealias EVYJsonString = String
 public typealias EVYJsonArray = [EVYJson]
 public typealias EVYJsonDict = [String: EVYJson]
 
-public indirect enum EVYJson: Codable, Hashable {
+public enum EVYDataModelError: Error {
+    case idIsNotAString
+    case propertyNotFound
+    case dataIsAString
+    case unprocessableValue
+}
+
+public enum EVYJson: Codable {
     case string(EVYJsonString)
     case dictionary(EVYJsonDict)
     case array(EVYJsonArray)
@@ -76,10 +83,16 @@ public indirect enum EVYJson: Codable, Hashable {
             return string
         }
     }
+    
+    public static func getValueAtProp(data: EVYJsonDict, prop: String) throws -> EVYJson {
+        guard let subData = data[prop] else {
+            throw EVYDataModelError.propertyNotFound
+        }
+        return subData
+    }
 }
 
-@Model
-class EVYDataModel {
+@Model class EVYData {
     var id: String
     var data: Data
     
@@ -92,3 +105,50 @@ class EVYDataModel {
         return try! JSONDecoder().decode(EVYJson.self, from: self.data)
     }
 }
+
+struct EVYDataFactory {
+    public static func create(_ data: Data) throws -> [EVYData] {
+        let objects = try! createFromData(data: data)
+        for object in objects {
+            EVYDataManager.i.create(object)
+        }
+        return objects
+    }
+    
+    private static func createFromData(data: Data) throws -> [EVYData] {
+        let json = try! JSONDecoder().decode(EVYJson.self, from: data)
+        switch json {
+        case .string(_):
+            throw EVYDataModelError.dataIsAString
+        case .array(let arrayValue):
+            var response: [EVYData] = []
+            let encoder = JSONEncoder()
+            for val in arrayValue {
+                guard let valEncoded = try? encoder.encode(val) else {
+                    throw EVYDataModelError.unprocessableValue
+                }
+                response.append(contentsOf: try! createFromData(data: valEncoded))
+            }
+            return response
+        case .dictionary(let dictValue):
+            let res = try! EVYJson.getValueAtProp(data: dictValue, prop: "id")
+            switch res {
+            case .string(let stringValue):
+                return [EVYData(id: stringValue, data: data)]
+            default:
+                throw EVYDataModelError.idIsNotAString
+            }
+        }
+    }
+}
+
+#Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    let items = try! EVYDataFactory.create(item)
+    return VStack {
+        ForEach(items) { i in
+            Text(i.id)
+        }
+    }
+}
+

@@ -23,19 +23,19 @@ let config = ModelConfiguration(isStoredInMemoryOnly: true)
 struct EVYDataManager {
     static let i = EVYDataManager()
     
-    private let container = try! ModelContainer(for: EVYDataModel.self, configurations: config)
+    private let container = try! ModelContainer(for: EVYData.self, configurations: config)
     private var context: ModelContext?
     
     init(){
         context = ModelContext(container)
     }
     
-    func create(id: String, data: Data) {
-        context!.insert(EVYDataModel(id: id, data: data))
+    func create(_ object: EVYData) {
+        context!.insert(object)
     }
     
-    func getDataById(id: String, onCompletion: (_ data: EVYDataModel) -> Void) throws {
-        let descriptor = FetchDescriptor<EVYDataModel>(predicate: #Predicate { $0.id == id })
+    func getDataById(id: String, onCompletion: (_ data: EVYData) -> Void) throws {
+        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.id == id })
         onCompletion(try context!.fetch(descriptor).first!)
     }
     
@@ -149,19 +149,11 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 
 #Preview {
     let conditions = DataConstants.conditions.data(using: .utf8)!
-    EVYDataManager.i.create(id: "conditions", data: conditions)
+    let conditionsObjects = try! EVYDataFactory.create(conditions)
     
-    let conditionsObject = EVYDataModel(id: "conditions", data: conditions).decoded()
-    
-    switch conditionsObject {
-    case .array(let arrayValue):
-        return ScrollView {
-            ForEach(arrayValue, id: \.self) { item in
-                let parsed = parsePropsWithData("value", data: item)
-                Text(parsed).padding()
-            }
+    return ScrollView {
+        ForEach(conditionsObjects, id: \.self) { condition in
+            Text(condition.id).padding()
         }
-    default:
-        return Text(conditionsObject.toString())
     }
 }
