@@ -124,6 +124,42 @@ struct SDUIConstants {
             }
         }
     """
+
+    static let sheetContainerRow = """
+        {
+           "type": "SheetContainer",
+           "view": {
+               "content": {
+                   "title": "Condition",
+                   "child": {
+                       "type": "Input",
+                       "view": {
+                           "content": {
+                               "title": "",
+                               "placeholder": "Chose one",
+                               "value": "{item.condition.value}"
+                           }
+                       }
+                   },
+                   "children": [{
+                       "type": "Select",
+                       "view": {
+                           "content": {
+                               "value": "{item.condition.value}",
+                               "placeholder": "Condition"
+                           },
+                           "multi": "{false}",
+                           "data": "{conditions}"
+                       },
+                       "edit": {
+                           "destination": "{item.condition}"
+                       }
+                   }]
+               }
+           }
+        }
+    """
+   
     static let selectRow = """
         {
             "type": "Select",
@@ -362,4 +398,9 @@ struct DataConstants {
             ]
         }
     """
+}
+
+#Preview {
+    let json =  SDUIConstants.page.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYPage.self, from: json)
 }

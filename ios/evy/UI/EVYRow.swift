@@ -114,6 +114,9 @@ struct EVYRow: View, Decodable, Identifiable {
             case EVYButtonRow.JSONType:
                 self.view = try EVYButtonRow(container: container)
             
+            case EVYSheetContainer.JSONType:
+                self.view = try EVYSheetContainer(container: container)
+            
             case EVYSelectRow.JSONType:
                 self.view = try EVYSelectRow(container: container)
                 
