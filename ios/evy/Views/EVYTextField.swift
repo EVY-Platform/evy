@@ -29,7 +29,7 @@ struct EVYTextField: View {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    let _ = try! EVYDataFactory.create(item)
+    let _ = try! EVYData.create(item)
     
     return VStack {
         EVYTextField(value: .constant(""), label: "title", placeholder: "Sample placeholder")

@@ -52,7 +52,7 @@ struct ContentView: View {
 //                id: \(UUID())
 //            """
 //            let item = "{}".data(using: .utf8)!
-//            try! EVYDataFactory.create(item)
+//            try! EVYData.create(item)
         }
         
         return page.onReceive(.navigateEVYPage) { notification in
@@ -72,7 +72,7 @@ struct ContentView: View {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    let _ = try! EVYDataFactory.create(item)
+    let _ = try! EVYData.create(item)
     
     return ContentView()
 }

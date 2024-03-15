@@ -20,10 +20,18 @@ public enum EVYDataParseError: Error {
 
 let config = ModelConfiguration(isStoredInMemoryOnly: true)
 
+@Model class Test {
+    var id: String
+    
+    init(id: String) {
+        self.id = id
+    }
+}
+
 struct EVYDataManager {
     static let i = EVYDataManager()
     
-    private let container = try! ModelContainer(for: EVYData.self, configurations: config)
+    private let container = try! ModelContainer(for: Test.self, configurations: config)
     private var context: ModelContext?
     
     init(){
@@ -71,7 +79,7 @@ struct EVYDataManager {
             let firstVariable = variables.first!
             
             try! EVYDataManager.i.getDataById(id: firstVariable) { data in
-                onCompletion(try! parseProp(props: variables[1...], data: data.decoded()))
+                onCompletion(try! parseProp(props: variables[1...], data: data.data))
             }
         }
     }
@@ -149,7 +157,7 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 
 #Preview {
     let conditions = DataConstants.conditions.data(using: .utf8)!
-    let conditionsObjects = try! EVYDataFactory.create(conditions)
+    let conditionsObjects = try! EVYData.create(conditions)
     
     return ScrollView {
         ForEach(conditionsObjects, id: \.self) { condition in

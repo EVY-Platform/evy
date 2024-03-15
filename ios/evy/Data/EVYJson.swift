@@ -17,7 +17,6 @@ public enum EVYDataModelError: Error {
     case idIsNotAString
     case propertyNotFound
     case dataIsAString
-    case unprocessableValue
 }
 
 public enum EVYJson: Codable {
@@ -94,40 +93,30 @@ public enum EVYJson: Codable {
 
 @Model class EVYData {
     var id: String
-    var data: Data
+    var data: EVYJson
     
-    init(id: String, data: Data) {
-        self.id = id
-        self.data = data
-    }
-    
-    func decoded() -> EVYJson {
-        return try! JSONDecoder().decode(EVYJson.self, from: self.data)
-    }
-}
-
-struct EVYDataFactory {
     public static func create(_ data: Data) throws -> [EVYData] {
-        let objects = try! createFromData(data: data)
+        let object = try! JSONDecoder().decode(EVYJson.self, from: data)
+        let objects = try! createFromJSON(data: object)
         for object in objects {
             EVYDataManager.i.create(object)
         }
         return objects
     }
     
-    private static func createFromData(data: Data) throws -> [EVYData] {
-        let json = try! JSONDecoder().decode(EVYJson.self, from: data)
-        switch json {
+    private init(id: String, data: EVYJson) {
+        self.id = id
+        self.data = data
+    }
+    
+    private static func createFromJSON(data: EVYJson) throws -> [EVYData] {
+        switch data {
         case .string(_):
             throw EVYDataModelError.dataIsAString
         case .array(let arrayValue):
             var response: [EVYData] = []
-            let encoder = JSONEncoder()
             for val in arrayValue {
-                guard let valEncoded = try? encoder.encode(val) else {
-                    throw EVYDataModelError.unprocessableValue
-                }
-                response.append(contentsOf: try! createFromData(data: valEncoded))
+                response.append(contentsOf: try! createFromJSON(data: val))
             }
             return response
         case .dictionary(let dictValue):
@@ -144,7 +133,7 @@ struct EVYDataFactory {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    let items = try! EVYDataFactory.create(item)
+    let items = try! EVYData.create(item)
     return VStack {
         ForEach(items) { i in
             Text(i.id)
