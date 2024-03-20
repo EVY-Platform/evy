@@ -92,7 +92,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     "action": {
         // A button always navigates somewhere, but sometimes can also submit the flow
         // The target will either be the next page, or submit which triggers the flow to submit
-        "target": "flow_id:submit | flow_id:page_id:anchor_id"
+        "target": "[submit:]flow_id:page_id:anchor_id"
     }
 
 }
