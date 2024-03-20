@@ -41,22 +41,32 @@ struct ContentView: View {
     }
     
     var body: some View {
-        var page = homePage
-        if currentFlowId != nil && currentPageId != nil {
+        var page: EVYPage
+        
+        if currentFlowId == nil || currentPageId == nil {
+            page = homePage
+        } else {
             let flow = flows.first(where: {$0.id == currentFlowId})!
             page = flow.getPageById(currentPageId!)
+            
+            if flow.type == .create {
+                let item = DataConstants.item.data(using: .utf8)!
+                try! EVYDataManager.i.create(item)
+            }
         }
         
         return page.onReceive(.navigateEVYPage) { notification in
             let userInfo = notification.userInfo!
             let target = userInfo["target"] as! String
+            let components = target.components(separatedBy: ":")
             
-            let newFlowId = target.components(separatedBy: ":")[0]
-            currentPageId = target.components(separatedBy: ":")[1]
-
-            if newFlowId != currentFlowId {
-                // submit or read or start draft
-                currentFlowId = newFlowId
+            if target.components(separatedBy: ":")[0] == "submit" {
+                currentFlowId = components[1]
+                currentPageId = components[2]
+            }
+            else {
+                currentFlowId = components[0]
+                currentPageId = components[1]
             }
         }
     }

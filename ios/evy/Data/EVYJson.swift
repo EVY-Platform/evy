@@ -94,11 +94,11 @@ public enum EVYJson: Codable {
 
 @Model
 class EVYData {
-    var id: String
+    var dataId: String
     var data: Data
     
     init(id: String, data: Data) {
-        self.id = id
+        self.dataId = id
         self.data = data
     }
     
@@ -112,7 +112,7 @@ class EVYData {
     let items = try! EVYDataManager.i.create(item)
     return VStack {
         ForEach(items) { i in
-            Text(i.id)
+            Text(i.dataId)
         }
     }
 }

@@ -65,7 +65,7 @@ struct EVYDataManager {
     }
     
     func getDataById(id: String, onCompletion: (_ data: EVYData) -> Void) throws {
-        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.id == id })
+        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.dataId == id })
         onCompletion(try context!.fetch(descriptor).first!)
     }
     
@@ -183,7 +183,7 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
     
     return ScrollView {
         ForEach(conditionsObjects, id: \.self) { condition in
-            Text(condition.id).padding()
+            Text(condition.dataId).padding()
         }
     }
 }
