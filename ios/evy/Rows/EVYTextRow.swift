@@ -33,6 +33,7 @@ struct EVYTextRow: View {
                 EVYTextView(view.content.title)
                     .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, Constants.minPading)
             }
             EVYTextView(view.content.text)
                 .frame(maxWidth: .infinity, alignment: .leading)

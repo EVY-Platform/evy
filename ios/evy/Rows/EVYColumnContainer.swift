@@ -24,7 +24,7 @@ struct EVYColumnContainer: View {
                 EVYText(view.content.title)
                     .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, Constants.minorPadding)
+                    .padding(.vertical, Constants.minPading)
             }
             HStack(alignment: .top) {
                 ForEach(view.content.children, id: \.id) { child in
