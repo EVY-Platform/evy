@@ -29,11 +29,12 @@ struct EVYInputRow: View {
     @State private var title: String = ""
     
     var body: some View {
-        VStack(spacing: Constants.textLinePadding) {
+        VStack {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .font(.titleFont)
+                    .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, Constants.minorPadding)
             }
             EVYTextField(value: $title,
                          label: view.content.value,

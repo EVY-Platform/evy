@@ -41,7 +41,7 @@ struct EVYCarouselOverlay: View {
                 Button(action: { dismiss()} ) {
                     Label("", systemImage: "xmark")
                         .foregroundColor(.white)
-                        .font(.buttonFont)
+                        .font(.button)
                 }
                 .padding(EdgeInsets(top: self.topPadding,
                                     leading: Constants.majorPadding,

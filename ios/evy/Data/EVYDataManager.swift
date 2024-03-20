@@ -183,7 +183,7 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
     
     return ScrollView {
         ForEach(conditionsObjects, id: \.self) { condition in
-            Text(condition.dataId).padding()
+            Text(condition.dataId)
         }
     }
 }

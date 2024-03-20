@@ -19,12 +19,12 @@ struct EVYColumnContainer: View {
     @State private var title: String = ""
     
     var body: some View {
-        VStack(spacing: Constants.textLinePadding) {
+        VStack {
             if (view.content.title.count > 0) {
                 EVYText(view.content.title)
-                    .font(.titleFont)
+                    .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
+                    .padding(.vertical, Constants.minorPadding)
             }
             HStack {
                 ForEach(view.content.children, id: \.id) { child in

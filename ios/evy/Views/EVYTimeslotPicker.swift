@@ -30,9 +30,9 @@ struct EVYTimeslotColumn: View {
     private let timeslowRectangleCornerRadius: CGFloat = 10
     
     var body: some View {
-        VStack() {
-            EVYTextView(timeslotDate.header).font(.detailFont)
-            EVYTextView(timeslotDate.date).font(.smallFont)
+        VStack {
+            EVYTextView(timeslotDate.header)
+            EVYTextView(timeslotDate.date)
             ForEach((0...(numberOfTimeslotsPerDay-1)), id: \.self) { timeslotIndex in
                 if timeslotDate.timeslots.count-1 < timeslotIndex {
                     EVYTextView("-").frame(height: timeslotRowHeight)
@@ -46,7 +46,6 @@ struct EVYTimeslotColumn: View {
                             .opacity(0.8)
                             .frame(height: timeslotRowHeight)
                         EVYTextView(t.timeslot)
-                            .font(.smallFont)
                     }
                 }
             }
@@ -80,7 +79,7 @@ struct EVYTimeslotPicker: View {
                             ForEach(groupedDays[index], id: \.date) { timeslotDate in
                                 EVYTimeslotColumn(timeslotDate: timeslotDate,
                                                   numberOfTimeslotsPerDay: numberOfTimeslotsPerDay)
-                                    .padding(Constants.columnPadding)
+                                .padding(.horizontal, Constants.spacing)
                             }
                         }
                     }

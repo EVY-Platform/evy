@@ -23,6 +23,7 @@ struct EVYTextView: View {
                 text = value
             }
         }
+        .lineSpacing(Constants.spacing)
     }
 }
 
@@ -57,7 +58,7 @@ func EVYText(_ input: String) -> Text {
         }
     }
     
-    return Text(input)
+    return Text(input).font(.evy)
 }
 
 #Preview {

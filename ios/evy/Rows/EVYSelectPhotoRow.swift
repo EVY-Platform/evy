@@ -52,10 +52,10 @@ struct EVYSelectPhotoRow: View {
     }
 
     var body: some View {
-        VStack(spacing: Constants.textLinePadding) {
+        VStack {
             if view.content.title.count > 0 {
                 EVYTextView(view.content.title)
-                    .font(.titleFont)
+                    .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
@@ -77,10 +77,9 @@ struct EVYSelectPhotoRow: View {
             }
             
             EVYTextView(view.content.content)
-                .font(.detailFont)
                 .foregroundColor(Constants.placeholderColor)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, Constants.majorPadding)
+                .padding(.vertical, Constants.minPading)
         }
     }
 }
@@ -101,10 +100,10 @@ struct EVYSelectPhotoButton: View {
                 label: {
                     let stack = VStack {
                         EVYTextView(icon)
-                            .font(.titleFont)
+                            .font(.evy)
                             .foregroundColor(Constants.placeholderColor)
                         EVYTextView(subtitle)
-                            .font(.titleFont)
+                            .font(.evy)
                             .foregroundColor(Constants.placeholderColor)
                     }
                     if fullScreen {
@@ -114,7 +113,6 @@ struct EVYSelectPhotoButton: View {
                             .background(
                                 RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
                                     .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
-                            .padding(.horizontal, Constants.majorPadding)
                     } else {
                         stack
                             .frame(width: carouselElementSize, height: carouselElementSize)
@@ -152,7 +150,7 @@ struct EVYSelectPhotoCarousel: View {
                 .scaledToFill()
                 .frame(width: carouselElementSize, height: carouselElementSize)
                 .clipShape(RoundedRectangle(cornerRadius: Constants.mainCornerRadius))
-                .padding(.horizontal, Constants.minPadding)
+                .padding(.horizontal, 2)
         }
     }
 }
