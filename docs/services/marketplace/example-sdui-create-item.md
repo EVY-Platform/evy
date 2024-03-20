@@ -4,9 +4,8 @@
 {
 	"id": "create_item",
 	"name": "Create item",
-	"pages": [PAGE],
-	"start_page": "page_id",
-	"redirect": "page_id"
+	"type": "create",
+	"pages": [PAGE]
 }
 ```
 
@@ -386,7 +385,7 @@
 			},
 			"edit": {},
 			"action": {
-				"target": "create_item:submit"
+				"target": "home:home"
 			}
 		}
 	]

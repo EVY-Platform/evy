@@ -1,5 +1,5 @@
 //
-//  EVYText.swift
+//  EVYTextField.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 18/12/2023.
@@ -14,7 +14,7 @@ struct EVYTextField: View {
     
     var body: some View {
         TextField(text: $value, prompt: EVYText(placeholder), label: {
-            EVYText(label)
+            EVYTextView(label)
         })
         .padding(EdgeInsets(top: Constants.majorPadding,
                             leading: Constants.minorPadding,
@@ -28,7 +28,10 @@ struct EVYTextField: View {
 }
 
 #Preview {
-    VStack {
+    let item = DataConstants.item.data(using: .utf8)!
+    let _ = try! EVYDataManager.i.create(item)
+    
+    return VStack {
         EVYTextField(value: .constant(""), label: "title", placeholder: "Sample placeholder")
         EVYTextField(value: .constant(""), label: "title", placeholder: "Sample ::star.square.on.square.fill:: placeholder")
         EVYTextField(value: .constant("Sample Text"), label: "title", placeholder: "Sample placeholder")

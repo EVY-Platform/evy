@@ -29,14 +29,14 @@ struct EVYTextRow: View {
     @State private var expanded: Bool = false
     var body: some View {
         VStack(spacing: Constants.textLinePadding) {
-            EVYText(view.content.title)
+            EVYTextView(view.content.title)
                 .font(.titleFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            EVYText(view.content.text)
+            EVYTextView(view.content.text)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(expanded ? nil : Int(view.max_lines) ?? 2)
-            EVYText(expanded ? "Read less" : "Read more")
+            EVYTextView(expanded ? "Read less" : "Read more")
                 .foregroundStyle(Constants.textButtonColor)
                 .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -51,9 +51,9 @@ struct EVYTextRow: View {
 
 
 #Preview {
-    let data = EVYData.shared
     let item = DataConstants.item.data(using: .utf8)!
-    try! data.set(name: "item", data: item)
+    let _ = try! EVYDataManager.i.create(item)
+    
     let json =  SDUIConstants.textRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

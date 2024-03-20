@@ -1,49 +1,60 @@
 # SDUI
 
 ## Flow
+
 Flows are not visually used in the UI but represent a full user journey (eg: creating an item)  
-They are needed in order to submit all fields of all pages of a flow at the end upon clicking a single button on a page  
+They are needed in order to submit all fields of all pages of a flow at the end upon clicking a single button on a page
+
 ```
 {
     "name",
 
-    // The entity that is being viewed, or created. eg: "item"
-    "target": "data",
+    // Which service the flow belongs to, eg "marketplace"
+    // This is not used on the client apps, only server-side
+    "service",
 
-    "start_page": "page_id",
-    
-    // Where to direct the user at the end of the flow
-    "redirect": "page_id"
+    // The type of flow that it is: Create, Read, Update, Delete
+    "type",
+
+    // What is the data that the page is acting on, eg "item"
+    "data": "model_name"
 }
 ```
 
 ## Page
+
 Pages are put into flows
+
 ```
 {
-    "title", // Shown in the navbar
+    // Shown in the navbar
+    "title",
+
     "rows": [ROW]
 }
 ```
 
 ## Row
-Rows are what are put into pages. They are the building block of the EVY SDUI framework  
+
+Rows are what are put into pages. They are the building block of the EVY SDUI framework
 
 ### Base features
-* All values are strings, there are no types as this is dynamic on the apps
-    * eg: "title": "My title", could also be "title": "{item.title}"
-* All strings can include:
-    * **variables** surrounded with curley braces: "Hello {name}, how are you?"
-    * **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
-    * **emojis** prefixed with a colon: "I like :dog a lot"
-* [ x ]
-    * Denotes a type array of x
-* Nested rows (rows within rows)
-    * "ROW" denotes the type of a row, meaning that that prop expects more rows
-* Objects and arrays
-    * When objects or arrays are passed into a prop of content, they are parsed fully by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
+
+-   All values are strings, there are no types as this is dynamic on the apps
+    -   eg: "title": "My title", could also be "title": "{item.title}"
+-   All strings can include:
+    -   **variables** surrounded with curley braces: "Hello {name}, how are you?"
+    -   **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
+    -   **emojis** prefixed with a colon: "I like :dog a lot"
+-   [ x ]
+    -   Denotes a type array of x
+-   Nested rows (rows within rows)
+    -   "ROW" denotes the type of a row, meaning that that prop expects more rows
+-   Objects and arrays
+    -   When objects or arrays are passed into a prop of content, they are parsed fully by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
 
 ### Base schema that all rows inherit from:
+
 ```
 {
     // The type of row that it is, see below
@@ -81,13 +92,14 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     "action": {
         // A button always navigates somewhere, but sometimes can also submit the flow
         // The target will either be the next page, or submit which triggers the flow to submit
-        "target": "flow_id:submit | flow_id:page_id:anchor_id"
+        "target": "[submit:]flow_id:page_id:anchor_id"
     }
 
 }
 ```
 
 ### Base schema that container rows inherit from:
+
 ```
 {
     "type",
@@ -109,26 +121,31 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 ```
 
 ### Container rows
+
 ```
 {
     "type": "ColumnContainer", // Shows children in columns
 }
 ```
+
 ```
 {
     "type": "ListContainer", // Shows children in a list
 }
 ```
+
 ```
 {
     "type": "SelectContainer", // Shows children under a segmented control
 }
 ```
+
 ```
 {
     "type": "CarouselContainer", // Shows children in a carousel
 }
 ```
+
 ```
 {
     "type": "SheetContainer", // Shows a sheet with children when the row is tapped
@@ -142,6 +159,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 ```
 
 ### Display Rows
+
 ```
 {
     "type": "Image",
@@ -152,6 +170,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Title",
@@ -164,6 +183,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "TitleShort",
@@ -176,6 +196,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Text",
@@ -187,6 +208,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Detail",
@@ -200,6 +222,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Disclaimer",
@@ -211,6 +234,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Address",
@@ -228,6 +252,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 ```
 
 ### Editable rows
+
 ```
 {
     "type": "Input",
@@ -243,6 +268,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Search",
@@ -259,6 +285,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Select",
@@ -272,6 +299,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Wheel",
@@ -284,6 +312,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "SelectPhoto",
@@ -301,6 +330,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "TimeslotPicker",
@@ -319,6 +349,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "Calendar",
@@ -341,6 +372,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 ```
 
 ### Button rows
+
 ```
 {
     "type": "Button",

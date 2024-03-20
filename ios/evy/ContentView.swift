@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 extension Notification.Name {
     static let navigateEVYPage = Notification.Name("navigateEVYPage")
@@ -27,45 +28,53 @@ extension View {
 
 struct ContentView: View {
     private let flows: [EVYFlow]
-    private let startPage: EVYPage
     
+    @State private var homePage: EVYPage
     @State private var currentFlowId: String?
     @State private var currentPageId: String?
     
     init() {
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
-        let jsonPage = SDUIConstants.testPage.data(using: .utf8)!
-
-        let data = EVYData.shared
-        let item = DataConstants.item.data(using: .utf8)!
-        try! data.set(name: "item", data: item)
         
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
-        self.startPage = try! JSONDecoder().decode(EVYPage.self, from: jsonPage)
+        self.homePage = (flows.first(where: {$0.id == "home"})?.pages.first)!
     }
     
     var body: some View {
-        var page = startPage
-        if currentFlowId != nil && currentPageId != nil {
+        var page: EVYPage
+        
+        if currentFlowId == nil || currentPageId == nil {
+            page = homePage
+        } else {
             let flow = flows.first(where: {$0.id == currentFlowId})!
             page = flow.getPageById(currentPageId!)
+            
+            if flow.type == .create {
+                let item = DataConstants.item.data(using: .utf8)!
+                try! EVYDataManager.i.create(item)
+            }
         }
         
         return page.onReceive(.navigateEVYPage) { notification in
             let userInfo = notification.userInfo!
             let target = userInfo["target"] as! String
+            let components = target.components(separatedBy: ":")
             
-            currentFlowId = target.components(separatedBy: ":")[0]
-            currentPageId = target.components(separatedBy: ":")[1]
-            
-            if currentPageId == "submit" {
-                let flow = flows.first(where: {$0.id == currentFlowId})!
-                currentPageId = flow.start_page
+            if target.components(separatedBy: ":")[0] == "submit" {
+                currentFlowId = components[1]
+                currentPageId = components[2]
+            }
+            else {
+                currentFlowId = components[0]
+                currentPageId = components[1]
             }
         }
     }
 }
 
 #Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    let _ = try! EVYDataManager.i.create(item)
+    
     return ContentView()
 }

@@ -7,11 +7,18 @@
 
 import SwiftUI
 
+public enum EVYFlowType: String, Decodable {
+    case create
+    case read
+    case update
+    case delete
+}
+
 struct EVYFlow: Decodable {
     let id: String
     let name: String
-    let start_page: String
-    let redirect: String
+    let type: EVYFlowType
+    let data: String
     let pages: [EVYPage]
     
     func getPageById(_ id: String) -> EVYPage {
@@ -20,7 +27,7 @@ struct EVYFlow: Decodable {
 }
 
 #Preview {
-    let json =  SDUIConstants.flow.data(using: .utf8)!
+    let json =  SDUIConstants.homeFlow.data(using: .utf8)!
     let flow = try! JSONDecoder().decode(EVYFlow.self, from: json)
-    return flow.getPageById("create_item_step_1")
+    return flow.getPageById("home")
 }

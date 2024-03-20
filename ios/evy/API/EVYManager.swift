@@ -27,7 +27,7 @@ final class EVYManager {
     
     private func syncServices() async throws {
         let lastSyncTime = userDefault.integer(forKey: "lastSyncTime")
-        let remoteServices = try await rpcWS.fetchServicesData(lastSyncTime: lastSyncTime)
+        let _ = try await rpcWS.fetchServicesData(lastSyncTime: lastSyncTime)
         userDefault.set(Int(Date().timeIntervalSince1970*1000), forKey: "lastSyncTime")
     }
 }

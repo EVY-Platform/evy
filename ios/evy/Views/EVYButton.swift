@@ -1,5 +1,5 @@
 //
-//  EVYText.swift
+//  EVYButton.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 18/12/2023.
@@ -17,7 +17,7 @@ struct EVYButton: View {
                                             object: nil,
                                             userInfo: ["target": target])
         }) {
-            EVYText(label).foregroundColor(.white)
+            EVYTextView(label).foregroundColor(.white)
         }
         .padding(EdgeInsets(top: Constants.majorPadding,
                             leading: Constants.majorPadding,
@@ -30,5 +30,8 @@ struct EVYButton: View {
 }
 
 #Preview {
-    EVYButton(label: "Submit", target: "create_item_step_2")
+    let item = DataConstants.item.data(using: .utf8)!
+    let _ = try! EVYDataManager.i.create(item)
+    
+    return EVYButton(label: "Submit", target: "create_item_step_2")
 }

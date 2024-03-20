@@ -63,20 +63,29 @@ struct SDUIConstants {
     """
     static let testPage = """
         {
-            "id": "testPage",
+            "id": "home",
             "title": "Home",
             "rows": [\(testRow), \(testButton)]
         }
     """
+    static let homeFlow = """
+        {
+            "id": "home",
+            "name": "Home",
+            "type": "read",
+            "data": "item",
+            "pages": [\(testPage)]
+        }
+    """
     
-    static let flows = "[\(flow), \(flow)]"
-    static let flow = """
+    static let flows = "[\(homeFlow), \(createItemFlow)]"
+    static let createItemFlow = """
         {
             "id": "create_item",
             "name": "Create item",
-            "pages": \(pages),
-            "start_page": "create_item_step_1",
-            "redirect": "testPage"
+            "type": "create",
+            "data": "item",
+            "pages": \(pages)
         }
     """
     
@@ -141,7 +150,7 @@ struct SDUIConstants {
             "type": "Input",
             "view": {
                 "content": {
-                    "title": "Title",
+                    "title": "A row title ::star.square.on.square.fill::",
                     "value": "{item.title}",
                     "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
                 }
@@ -273,7 +282,7 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "target": "create_item:submit"
+                "target": "submit:home:home"
             }
         }
     """
@@ -330,7 +339,7 @@ struct DataConstants {
     
     static let item = """
         {
-            "id": "a9e9feba-d1ba-4f78-ab3c-3ce7cc108989",
+            "id": "item",
             "title": "Amazing Fridge",
             "photos": [
                 {
