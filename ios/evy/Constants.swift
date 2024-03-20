@@ -98,8 +98,27 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(inputRow), \(navigateButtonRow)]"
+    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
 
+    static let selectPhotoRow = """
+        {
+            "type": "SelectPhoto",
+            "view": {
+                "content": {
+                    "title": "",
+                    "icon": "::photo.badge.plus.fill::",
+                    "subtitle": "Add photos",
+                    "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
+                    "photos": "{item.photos}"
+                }
+            },
+            "edit": {
+                "destination": "{item.photos}",
+                "minimum_amount": "1"
+            }
+        }
+    """
+    
     static let textRow = """
         {
             "type": "Text",
@@ -117,7 +136,7 @@ struct SDUIConstants {
             "type": "ColumnContainer",
             "view": {
                 "content": {
-                    "title": "Column Container",
+                    "title": "",
                     "children": [
                         {"title": "test text", "child": \(textRow)},
                         {"title": "test text", "child": \(textRow)}
@@ -142,21 +161,87 @@ struct SDUIConstants {
             }
         }
     """
-    static let selectPhotoRow = """
+    
+    static let inputPriceRow = """
         {
-            "type": "SelectPhoto",
+            "type": "Input",
             "view": {
                 "content": {
-                    "title": "",
-                    "icon": "::photo.badge.plus.fill::",
-                    "subtitle": "Add photos",
-                    "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
-                    "photos": "{item.photos}"
+                    "title": "Price",
+                    "value": "{item.price}",
+                    "placeholder": "$ 50.00"
                 }
             },
             "edit": {
-                "destination": "{item.photos}",
-                "minimum_amount": "1"
+                "destination": "{item.price}",
+                "minimum_characters": "1"
+            }
+        }
+    """
+    
+    static let columnContainerDimensionsRow = """
+        {
+            "type": "ColumnContainer",
+            "view": {
+                "content": {
+                    "title": "Dimensions",
+                    "children": [
+                        {"title": "test text", "child": \(inputWidthRow)},
+                        {"title": "test text", "child": \(inputHeightRow)},
+                        {"title": "test text", "child": \(inputLengthRow)}
+                    ]
+                }
+            }
+        }
+    """
+    
+    static let inputWidthRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "",
+                    "value": "{formatDimension(item.dimension.width)}",
+                    "placeholder": "Width"
+                }
+            },
+            "edit": {
+                "destination": "{item.dimension.width}",
+                "minimum_characters": "1"
+            }
+        }
+    """
+    
+    static let inputHeightRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "",
+                    "value": "{formatDimension(item.dimension.height)}",
+                    "placeholder": "Height"
+                }
+            },
+            "edit": {
+                "destination": "{item.dimension.height}",
+                "minimum_characters": "1"
+            }
+        }
+    """
+    
+    static let inputLengthRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "",
+                    "value": "{formatDimension(item.dimension.length)}",
+                    "placeholder": "Length"
+                }
+            },
+            "edit": {
+                "destination": "{item.dimension.length}",
+                "minimum_characters": "2"
             }
         }
     """
@@ -346,4 +431,10 @@ struct DataConstants {
             ]
         }
     """
+}
+
+
+#Preview {
+    let json =  SDUIConstants.page.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYPage.self, from: json)
 }

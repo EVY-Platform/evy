@@ -12,6 +12,8 @@
 		2ED04EF62B3308C400881DC4 /* EVYMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED04EF52B3308C400881DC4 /* EVYMap.swift */; };
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
+		731E3CFE2BAAE17100C922AB /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 731E3CFD2BAAE17100C922AB /* Serializable */; };
+		731E3D012BAAE17500C922AB /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 731E3D002BAAE17500C922AB /* JsonRPC */; };
 		7360EEB52B304EE300C4B10B /* EVYText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7360EEB42B304EE300C4B10B /* EVYText.swift */; };
 		736495BF2B972E1800729129 /* EVYDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736495BE2B972E1800729129 /* EVYDataManager.swift */; };
 		736D10572B78C4C500503C4D /* EVYPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10562B78C4C500503C4D /* EVYPage.swift */; };
@@ -91,8 +93,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				73E5A3192BA12685006C21E2 /* JsonRPC in Frameworks */,
-				73E5A31C2BA12689006C21E2 /* Serializable in Frameworks */,
+				731E3D012BAAE17500C922AB /* JsonRPC in Frameworks */,
+				731E3CFE2BAAE17100C922AB /* Serializable in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,8 +241,8 @@
 			);
 			name = evy;
 			packageProductDependencies = (
-				73E5A3182BA12685006C21E2 /* JsonRPC */,
-				73E5A31B2BA12689006C21E2 /* Serializable */,
+				731E3CFD2BAAE17100C922AB /* Serializable */,
+				731E3D002BAAE17500C922AB /* JsonRPC */,
 			);
 			productName = evy;
 			productReference = 737C6AA22B2706890093D00C /* evy.app */;
@@ -271,8 +273,8 @@
 			);
 			mainGroup = 737C6A992B2706890093D00C;
 			packageReferences = (
-				73E5A3172BA12685006C21E2 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */,
-				73E5A31A2BA12689006C21E2 /* XCRemoteSwiftPackageReference "Serializable.swift" */,
+				731E3CFC2BAAE17100C922AB /* XCRemoteSwiftPackageReference "Serializable.swift" */,
+				731E3CFF2BAAE17500C922AB /* XCRemoteSwiftPackageReference "JsonRPC.swift" */,
 			);
 			productRefGroup = 737C6AA32B2706890093D00C /* Products */;
 			projectDirPath = "";
@@ -544,15 +546,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		73E5A3172BA12685006C21E2 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/tesseract-one/JsonRPC.swift.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.3;
-			};
-		};
-		73E5A31A2BA12689006C21E2 /* XCRemoteSwiftPackageReference "Serializable.swift" */ = {
+		731E3CFC2BAAE17100C922AB /* XCRemoteSwiftPackageReference "Serializable.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tesseract-one/Serializable.swift.git";
 			requirement = {
@@ -560,18 +554,26 @@
 				minimumVersion = 0.3.1;
 			};
 		};
+		731E3CFF2BAAE17500C922AB /* XCRemoteSwiftPackageReference "JsonRPC.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/tesseract-one/JsonRPC.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.2.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		73E5A3182BA12685006C21E2 /* JsonRPC */ = {
+		731E3CFD2BAAE17100C922AB /* Serializable */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 73E5A3172BA12685006C21E2 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */;
-			productName = JsonRPC;
-		};
-		73E5A31B2BA12689006C21E2 /* Serializable */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 73E5A31A2BA12689006C21E2 /* XCRemoteSwiftPackageReference "Serializable.swift" */;
+			package = 731E3CFC2BAAE17100C922AB /* XCRemoteSwiftPackageReference "Serializable.swift" */;
 			productName = Serializable;
+		};
+		731E3D002BAAE17500C922AB /* JsonRPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 731E3CFF2BAAE17500C922AB /* XCRemoteSwiftPackageReference "JsonRPC.swift" */;
+			productName = JsonRPC;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
