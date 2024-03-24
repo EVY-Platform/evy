@@ -64,15 +64,18 @@ public class EVYSDUIJSON {
         case title
         case children
         case children_data
+        case child
     }
     public class ContainerContent: Content {
         let children: [ContainerChild]
         let children_data: String?
+        let child: EVYRow?
         
         required init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: ContainerContentCodingKeys.self)
             self.children = try container.decode([ContainerChild].self, forKey: .children)
             self.children_data = try? container.decode(String.self, forKey: .children_data)
+            self.child = try? container.decode(EVYRow.self, forKey: .child)
             
             try super.init(from: decoder)
         }
@@ -114,8 +117,8 @@ struct EVYRow: View, Decodable, Identifiable {
             case EVYButtonRow.JSONType:
                 self.view = try EVYButtonRow(container: container)
             
-            case EVYSheetContainer.JSONType:
-                self.view = try EVYSheetContainer(container: container)
+            case EVYSheetContainerRow.JSONType:
+                self.view = try EVYSheetContainerRow(container: container)
             
             case EVYSelectRow.JSONType:
                 self.view = try EVYSelectRow(container: container)
