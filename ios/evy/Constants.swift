@@ -89,7 +89,7 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(sheetContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
+    static let rows = "[\(selectPhotoRow), \(dropdownRow), \(textRow), \(columnContainerRow), \(sheetContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
     
     static let sheetContainerRow = """
         {
@@ -103,7 +103,24 @@ struct SDUIConstants {
            }
         }
     """
-
+    
+    static let dropdownRow = """
+        {
+           "type": "Dropdown",
+           "view": {
+               "content": {
+                   "title": "Selling Reason",
+                   "value": "",
+                   "placeholder": "Choose one"
+               },
+                "data": "{selling_reasons}"
+           },
+            "edit": {
+                "destination": "{item.selling_reason}"
+            }
+        }
+    """
+    
     static let selectPhotoRow = """
         {
             "type": "SelectPhoto",
