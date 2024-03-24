@@ -166,6 +166,9 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 }
 
 #Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "item", data: item)
+    
     let json =  SDUIConstants.inputPriceRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }
