@@ -89,7 +89,40 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
+    static let sheetContainerRow = """
+        {
+           "type": "SheetContainer",
+           "view": {
+               "content": {
+                   "title": "Condition",
+                   "child": \(inputRow),
+                   "children": [
+                        {"title": "test text", "child": \(selectRow)}
+                   ]
+               }
+           }
+        }
+    """
+   
+    static let selectRow = """
+        {
+            "type": "Select",
+            "view": {
+                "content": {
+                    "title": "Selling Reason",
+                    "value": "{item.selling_reason.value}",
+                    "placeholder": ""
+                },
+                "multi": "{false}",
+                "data": "{selling_reasons}"
+            },
+            "edit": {
+                "destination": "{item.selling_reason}"
+            }
+        }
+    """
+
+    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(selectRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
 
     static let selectPhotoRow = """
         {
@@ -436,7 +469,6 @@ struct DataConstants {
         }
     """
 }
-
 
 #Preview {
     let json =  SDUIConstants.page.data(using: .utf8)!
