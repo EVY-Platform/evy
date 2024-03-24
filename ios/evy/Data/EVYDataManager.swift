@@ -12,10 +12,13 @@ import SwiftUI
 typealias RegexMatch = Regex<AnyRegexOutput>.Match
 
 public enum EVYDataParseError: Error {
-    case unknownVariable
-    case emptyVariable
-    case unstringifiableVariable
+    case invalidProps
     case invalidVariable
+}
+
+public enum EVYDataError: Error {
+    case keyAlreadyExists
+    case keyNotFound
 }
 
 let config = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -26,16 +29,36 @@ struct EVYDataManager {
     
     private var context: ModelContext = ModelContext(container)
     
-    public func create(_ data: Data) throws -> Void {
-        let objects = try EVYJson.createFromData(data: data)
-        for object in objects {
-            context.insert(object)
+    public func create(key: String, data: Data) throws -> Void {
+        if getDataByKey(key) != nil {
+            throw EVYDataError.keyAlreadyExists
+        }
+        context.insert(EVYData(key: key, data: data))
+    }
+    
+    public func update(key: String, data: Data) throws -> Void {
+        if let existing = getDataByKey(key) {
+            existing.data = data
+        } else {
+            throw EVYDataError.keyNotFound
         }
     }
     
-    func getDataById(id: String) throws -> EVYData {
-        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.dataId == id })
-        return try context.fetch(descriptor).first!
+    public func delete(key: String) throws -> Void {
+        if let existing = getDataByKey(key) {
+            context.delete(existing)
+        } else {
+            throw EVYDataError.keyNotFound
+        }
+    }
+    
+    func getDataByKey(_ key: String) -> EVYData? {
+        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
+        do {
+            return try context.fetch(descriptor).first
+        } catch {
+            return nil
+        }
     }
     
     func parseText(_ input: String) -> String {
@@ -69,8 +92,10 @@ struct EVYDataManager {
         if variables.count > 0 {
             let firstVariable = variables.first!
             
-            let data = try getDataById(id: firstVariable)
-            return try parseProp(props: Array(variables[1...]), data: data.decoded())
+            if let data = getDataByKey(firstVariable) {
+                let temp = data.decoded()
+                return try parseProp(props: Array(variables[1...]), data: temp)
+            }
         }
         return nil
     }
@@ -92,7 +117,7 @@ private func parseProp(props: [String], data: EVYJson) throws -> EVYJson {
             return data
         }
         guard let firstVariable = props.first else {
-            throw EVYDataParseError.unknownVariable
+            throw EVYDataParseError.invalidProps
         }
         guard let subData = dictValue[firstVariable] else {
             throw EVYDataParseError.invalidVariable
@@ -141,9 +166,6 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(item)
-    
     let json =  SDUIConstants.inputPriceRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

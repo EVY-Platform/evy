@@ -9,11 +9,6 @@ import SwiftUI
 
 @main
 struct evyApp: App {
-    init() {
-        let item = DataConstants.item.data(using: .utf8)!
-        try! EVYDataManager.i.create(item)
-    }
-    
     var body: some Scene {
         WindowGroup {
             ContentView()

@@ -10,11 +10,11 @@ import SwiftData
 
 @Model
 class EVYData {
-    var dataId: String
+    var key: String
     var data: Data
     
-    init(id: String, data: Data) {
-        self.dataId = id
+    init(key: String, data: Data) {
+        self.key = key
         self.data = data
     }
     

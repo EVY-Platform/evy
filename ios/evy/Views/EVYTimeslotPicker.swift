@@ -94,9 +94,6 @@ struct EVYTimeslotPicker: View {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(item)
-    
     let json = """
     [
         {

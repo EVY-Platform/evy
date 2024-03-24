@@ -27,53 +27,51 @@ extension View {
 
 struct ContentView: View {
     private let flows: [EVYFlow]
-    
-    @State private var homePage: EVYPage
-    @State private var currentFlowId: String?
-    @State private var currentPageId: String?
+
+    @State private var currentFlowId: String
+    @State private var page: EVYPage
     
     init() {
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
         
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
-        self.homePage = (flows.first(where: {$0.id == "home"})?.pages.first)!
+        
+        let homeFlow = flows.first(where: {$0.id == "home"})!
+        _currentFlowId = State(initialValue: homeFlow.id)
+        _page = State(initialValue: homeFlow.pages.first!)
     }
     
     var body: some View {
-        var page: EVYPage
-        
-        if currentFlowId == nil || currentPageId == nil {
-            page = homePage
-        } else {
-            let flow = flows.first(where: {$0.id == currentFlowId})!
-            page = flow.getPageById(currentPageId!)
-            
-            if flow.type == .create {
-                let item = DataConstants.item.data(using: .utf8)!
-                try! EVYDataManager.i.create(item)
-            }
-        }
-        
         return page.onReceive(.navigateEVYPage) { notification in
             let userInfo = notification.userInfo!
             let target = userInfo["target"] as! String
             let components = target.components(separatedBy: ":")
             
-            if target.components(separatedBy: ":")[0] == "submit" {
-                currentFlowId = components[1]
-                currentPageId = components[2]
+            let newFlowId = components[0]
+            let newPageId = components[1]
+            
+            let newFlow = flows.first(where: {$0.id == newFlowId})!
+            let currentFlow = flows.first(where: {$0.id == currentFlowId})!
+            
+            if newFlowId != currentFlowId {
+                if currentFlow.type == .create {
+                    try! EVYDataManager.i.delete(key: currentFlow.data)
+                }
+                if newFlow.type == .create {
+                    let item = DataConstants.item.data(using: .utf8)!
+                    try! EVYDataManager.i.create(key: newFlow.data, data: item)
+                }
+            } else if currentFlow.type == .create {
+                let item = DataConstants.item.data(using: .utf8)!
+                try! EVYDataManager.i.update(key: currentFlow.data, data: item)
             }
-            else {
-                currentFlowId = components[0]
-                currentPageId = components[1]
-            }
+            
+            currentFlowId = newFlowId
+            page = newFlow.getPageById(newPageId)
         }
     }
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(item)
-    
     return ContentView()
 }

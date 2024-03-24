@@ -308,7 +308,7 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "target": "submit:home:home"
+                "target": "home:home"
             }
         }
     """
