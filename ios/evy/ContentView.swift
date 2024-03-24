@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 extension Notification.Name {
     static let navigateEVYPage = Notification.Name("navigateEVYPage")

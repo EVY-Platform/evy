@@ -36,12 +36,12 @@ struct EVYSelectRow: View {
     
     var body: some View {
         VStack {
-            EVYText(view.content.title)
+            EVYTextView(view.content.title)
                 .frame(maxWidth: .infinity, alignment: .leading)
             List(selection: $selection) {
                 ForEach(reasons, id: \.self) { value in
                     HStack {
-                        EVYText(value)
+                        EVYTextView(value)
                         Spacer()
                         EVYRadioButton(isSelected: value == selection)
                     }

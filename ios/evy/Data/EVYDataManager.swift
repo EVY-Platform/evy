@@ -19,65 +19,61 @@ public enum EVYDataParseError: Error {
 }
 
 let config = ModelConfiguration(isStoredInMemoryOnly: true)
+let container = try! ModelContainer(for: EVYData.self, configurations: config)
 
 struct EVYDataManager {
     static let i = EVYDataManager()
     
-    private let container = try! ModelContainer(for: EVYData.self, configurations: config)
-    private var context: ModelContext?
-    
-    init(){
-        context = ModelContext(container)
-    }
+    private var context: ModelContext = ModelContext(container)
     
     public func create(_ data: Data) throws -> [EVYData] {
-        let objects = try! EVYJson.createFromData(data: data)
+        let objects = try EVYJson.createFromData(data: data)
         for object in objects {
-            context!.insert(object)
+            context.insert(object)
         }
         return objects
     }
     
-    func getDataById(id: String, onCompletion: (_ data: EVYData) -> Void) throws {
+    func getDataById(id: String) throws -> EVYData {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.dataId == id })
-        onCompletion(try context!.fetch(descriptor).first!)
+        return try context.fetch(descriptor).first!
     }
     
-    func parseText(_ input: String, onCompletion: (_ value: String) -> Void) {
-        if (input.count < 1) { onCompletion(input) }
-        
+    func parseText(_ input: String) -> String {
+        if (input.count < 1) {
+            return input
+        }
         else if let (match, functionName, functionArgs) = getFunctionFromText(input) {
             if functionName == "count" {
-                evyCount(functionArgs) { count in
-                    
-                    let parsedInput = input.replacingOccurrences(of: match.0.description, with: count)
-                    parseText(parsedInput, onCompletion: onCompletion)
-                }
+                let count = evyCount(functionArgs)
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: count)
+                return parseText(parsedInput)
+            }
+            else if functionName == "formatCurrency" {
+                let currencyAmount = evyFormatCurrency(functionArgs)
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: currencyAmount)
+                return parseText(parsedInput)
             }
         } else if let (match, props) = EVYDataManager.getPropsFromText(input) {
-            try! parseProps(props) { data in
-                if let parsedData = data?.toString() {
-                    let parsedInput = input.replacingOccurrences(of: match.0.description, with: parsedData)
-                    parseText(parsedInput, onCompletion: onCompletion)
-                }
+            let data = try! parseProps(props)
+            if let parsedData = data?.toString() {
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: parsedData)
+                return parseText(parsedInput)
             }
         }
         
-        else { onCompletion(input) }
+        return input
     }
     
-    func parseProps(_ input: String, onCompletion: (EVYJson?) -> Void) throws {
+    func parseProps(_ input: String) throws -> EVYJson? {
         let variables = input.components(separatedBy: ".")
-        
-        if variables.count < 1 {
-            onCompletion(nil)
-        } else {
+        if variables.count > 0 {
             let firstVariable = variables.first!
             
-            try! getDataById(id: firstVariable) { data in
-                onCompletion(try! parseProp(props: variables[1...], data: data.decoded()))
-            }
+            let data = try getDataById(id: firstVariable)
+            return try parseProp(props: Array(variables[1...]), data: data.decoded())
         }
+        return nil
     }
     
     static func getPropsFromText(_ input: String) -> (RegexMatch, String)? {
@@ -90,20 +86,23 @@ struct EVYDataManager {
 
 }
 
-private func parseProp(props: [String].SubSequence, data: EVYJson) throws -> EVYJson {
+private func parseProp(props: [String], data: EVYJson) throws -> EVYJson {
     switch data {
     case .dictionary(let dictValue):
-        if props.count >= 1 {
-            guard let firstVariable = props.first else {
-                throw EVYDataParseError.unknownVariable
-            }
-            guard let subData = dictValue[firstVariable] else {
-                throw EVYDataParseError.invalidVariable
-            }
-            return try parseProp(props: props[1...], data: subData)
-        } else {
+        if props.count < 1 {
+            return data
+        }
+        guard let firstVariable = props.first else {
+            throw EVYDataParseError.unknownVariable
+        }
+        guard let subData = dictValue[firstVariable] else {
             throw EVYDataParseError.invalidVariable
         }
+        if props.count == 1 {
+            return subData
+        }
+        
+        return try parseProp(props: Array(props[1...]), data: subData)
     default:
         return data
     }
@@ -143,12 +142,9 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 }
 
 #Preview {
-    let conditions = DataConstants.conditions.data(using: .utf8)!
-    let conditionsObjects = try! EVYDataManager.i.create(conditions)
+    let item = DataConstants.item.data(using: .utf8)!
+    let _ = try! EVYDataManager.i.create(item)
     
-    return ScrollView {
-        ForEach(conditionsObjects, id: \.self) { condition in
-            Text(condition.dataId)
-        }
-    }
+    let json =  SDUIConstants.inputPriceRow.data(using: .utf8)!
+    return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

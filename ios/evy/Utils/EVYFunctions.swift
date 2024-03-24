@@ -7,17 +7,33 @@
 
 import Foundation
 
-func evyCount(_ args: String, _ onCompletion: (String) -> Void) {
+func evyCount(_ args: String) -> String {
     do {
-        try EVYDataManager.i.parseProps(args) { res in
-            switch res {
-            case .array(let arrayValue):
-                onCompletion(String(arrayValue.count))
-            default:
-                onCompletion(args)
-            }
+        let res = try EVYDataManager.i.parseProps(args)
+        switch res {
+        case .array(let arrayValue):
+            return String(arrayValue.count)
+        default:
+            return args
         }
     } catch {
-        onCompletion(args)
+        return args
+    }
+}
+
+func evyFormatCurrency(_ args: String) -> String {
+    do {
+        let res = try EVYDataManager.i.parseProps(args)
+        switch res {
+        case .dictionary(let dictValue):
+            guard let value = dictValue["value"] else {
+                return args
+            }
+            return "$\(value.toString())"
+        default:
+            return args
+        }
+    } catch {
+        return args
     }
 }

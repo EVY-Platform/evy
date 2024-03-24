@@ -200,8 +200,8 @@ struct SDUIConstants {
             "view": {
                 "content": {
                     "title": "Price",
-                    "value": "{item.price}",
-                    "placeholder": "$ 50.00"
+                    "value": "{formatCurrency(item.price)}",
+                    "placeholder": "{formatCurrency(item.price)}"
                 }
             },
             "edit": {

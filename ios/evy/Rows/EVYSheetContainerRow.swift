@@ -27,7 +27,7 @@ struct EVYSheetContainerRow: View {
             }
             .sheet(isPresented: $showSheet, content: {
                 VStack {
-                    EVYText(view.content.title)
+                    EVYTextView(view.content.title)
                     ForEach(view.content.children, id: \.id) { child in
                         child.padding(.horizontal)
                     }

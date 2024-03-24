@@ -82,7 +82,7 @@ public enum EVYJson: Codable {
     }
     
     static func createFromData(data: Data) throws -> [EVYData] {
-        let json = try! JSONDecoder().decode(EVYJson.self, from: data)
+        let json = try JSONDecoder().decode(EVYJson.self, from: data)
         switch json {
         case .string(_):
             throw EVYDataModelError.dataIsAString
@@ -93,11 +93,11 @@ public enum EVYJson: Codable {
                 guard let valEncoded = try? encoder.encode(val) else {
                     throw EVYDataModelError.unprocessableValue
                 }
-                response.append(contentsOf: try! createFromData(data: valEncoded))
+                response.append(contentsOf: try createFromData(data: valEncoded))
             }
             return response
         case .dictionary(let dictValue):
-            let res = try! getValueAtKey(data: dictValue, prop: "id")
+            let res = try getValueAtKey(data: dictValue, prop: "id")
             switch res {
             case .string(let stringValue):
                 return [EVYData(id: stringValue, data: data)]

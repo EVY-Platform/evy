@@ -6,24 +6,16 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct EVYTextView: View {
-    @State private var text: String
-    let input: String
+    let text: String
     
-    init(_ input: String) {
-        self.input = input
-        _text = State(initialValue: "Loading...")
+    init(_ text: String) {
+        self.text = EVYDataManager.i.parseText(text)
     }
     
     var body: some View {
-        EVYText(text).onAppear {
-            EVYDataManager.i.parseText(input) { value in
-                text = value
-            }
-        }
-        .lineSpacing(Constants.spacing)
+        EVYText(text).lineSpacing(Constants.spacing)
     }
 }
 
@@ -58,7 +50,7 @@ func EVYText(_ input: String) -> Text {
         }
     }
     
-    return Text(input).font(.evy)
+    return Text(EVYDataManager.i.parseText(input)).font(.evy)
 }
 
 #Preview {
