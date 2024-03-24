@@ -37,13 +37,13 @@ struct EVYSelectRow: View {
     var body: some View {
         VStack {
             EVYText(view.content.title)
-                .font(.titleFont)
+                .font(.evy)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
             List(selection: $selection) {
                 ForEach(reasons, id: \.self) { value in
                     HStack {
-                        Text(value).font(.detailFont)
+                        Text(value).font(.evy)
                         Spacer()
                         EVYRadioButton(isSelected: value == selection)
                     }
@@ -59,9 +59,8 @@ struct EVYSelectRow: View {
 
 
 #Preview {
-    let data = EVYData.shared
     let item = DataConstants.item.data(using: .utf8)!
-    try! data.set(name: "item", data: item)
+    let _ = try! EVYDataManager.i.create(item)
     let json =  SDUIConstants.selectRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }
