@@ -23,14 +23,3 @@ class EVYData {
         return try! JSONDecoder().decode(EVYJson.self, from: self.data)
     }
 }
-
-#Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    let items = try! EVYDataManager.i.create(item)
-    return VStack {
-        ForEach(items) { i in
-            Text(i.dataId)
-        }
-    }
-}
-

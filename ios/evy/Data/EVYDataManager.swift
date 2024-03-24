@@ -26,12 +26,11 @@ struct EVYDataManager {
     
     private var context: ModelContext = ModelContext(container)
     
-    public func create(_ data: Data) throws -> [EVYData] {
+    public func create(_ data: Data) throws -> Void {
         let objects = try EVYJson.createFromData(data: data)
         for object in objects {
             context.insert(object)
         }
-        return objects
     }
     
     func getDataById(id: String) throws -> EVYData {
@@ -143,7 +142,7 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    let _ = try! EVYDataManager.i.create(item)
+    try! EVYDataManager.i.create(item)
     
     let json =  SDUIConstants.inputPriceRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)

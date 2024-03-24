@@ -41,9 +41,9 @@ struct EVYSheetContainerRow: View {
 }
 
 
-#Preview {
+#Preview {  
     let item = DataConstants.selling_reason.data(using: .utf8)!
-    let _ = try! EVYDataManager.i.create(item)
+    try! EVYDataManager.i.create(item)
     
     let json = SDUIConstants.sheetContainerRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
