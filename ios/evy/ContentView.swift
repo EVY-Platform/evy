@@ -42,7 +42,7 @@ struct ContentView: View {
     }
     
     var body: some View {
-        return page.onReceive(.navigateEVYPage) { notification in
+        page.onReceive(.navigateEVYPage) { notification in
             let userInfo = notification.userInfo!
             let target = userInfo["target"] as! String
             let components = target.components(separatedBy: ":")
@@ -53,14 +53,21 @@ struct ContentView: View {
             let newFlow = flows.first(where: {$0.id == newFlowId})!
             let currentFlow = flows.first(where: {$0.id == currentFlowId})!
             
+            // If the flow is changing
             if newFlowId != currentFlowId {
+                
+                // Submit the current draft
                 if currentFlow.type == .create {
-                    try! EVYDataManager.i.delete(key: currentFlow.data)
+                    try! EVYDataManager.i.submit(key: currentFlow.data)
                 }
+                
+                // Create a new draft
                 if newFlow.type == .create {
                     let item = DataConstants.item.data(using: .utf8)!
                     try! EVYDataManager.i.create(key: newFlow.data, data: item)
                 }
+                
+            // Update the existing draft
             } else if currentFlow.type == .create {
                 let item = DataConstants.item.data(using: .utf8)!
                 try! EVYDataManager.i.update(key: currentFlow.data, data: item)

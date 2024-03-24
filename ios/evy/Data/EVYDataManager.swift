@@ -52,6 +52,15 @@ struct EVYDataManager {
         }
     }
     
+    public func submit(key: String) throws -> Void {
+        if let existing = getDataByKey(key) {
+            existing.key = UUID().uuidString
+            // TODO: Send to API
+        } else {
+            throw EVYDataError.keyNotFound
+        }
+    }
+    
     func getDataByKey(_ key: String) -> EVYData? {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
         do {
