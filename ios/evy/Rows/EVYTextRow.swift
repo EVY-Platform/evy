@@ -28,32 +28,33 @@ struct EVYTextRow: View {
     
     @State private var expanded: Bool = false
     var body: some View {
-        VStack(spacing: Constants.textLinePadding) {
-            EVYText(view.content.title)
-                .font(.titleFont)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            EVYText(view.content.text)
-                .font(.regularFont)
+        VStack {
+            if (view.content.title.count > 0) {
+                EVYTextView(view.content.title)
+                    .font(.evy)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, Constants.minPading)
+            }
+            EVYTextView(view.content.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(expanded ? nil : Int(view.max_lines) ?? 2)
-            EVYText(expanded ? "Read less" : "Read more")
+            EVYTextView(expanded ? "Read less" : "Read more")
                 .foregroundStyle(Constants.textButtonColor)
-                .font(.regularFont)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, Constants.minPading)
         }
         .onTapGesture {
             expanded.toggle()
         }
-        .padding(.zero)
     }
 }
 
 
 
 #Preview {
-    let data = EVYData.shared
     let item = DataConstants.item.data(using: .utf8)!
-    try! data.set(name: "item", data: item)
+    let _ = try! EVYDataManager.i.create(item)
+    
     let json =  SDUIConstants.textRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

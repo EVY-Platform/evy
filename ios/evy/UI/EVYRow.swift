@@ -105,11 +105,11 @@ struct EVYRow: View, Decodable, Identifiable {
         
             // Display rows
             case EVYTextRow.JSONType:
-                self.view = try EVYTextRow(container: container).padding()
+                self.view = try EVYTextRow(container: container)
 
             // Editable rows
             case EVYInputRow.JSONType:
-                self.view = try EVYInputRow(container: container).padding()
+                self.view = try EVYInputRow(container: container)
             
             case EVYSelectPhotoRow.JSONType:
                 self.view = try EVYSelectPhotoRow(container: container)
@@ -134,6 +134,6 @@ struct EVYRow: View, Decodable, Identifiable {
 }
 
 #Preview {
-    let json =  SDUIConstants.testRow.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYRow.self, from: json)
+    let json =  SDUIConstants.page.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYPage.self, from: json)
 }

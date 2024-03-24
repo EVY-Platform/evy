@@ -30,12 +30,12 @@ struct EVYTimeslotColumn: View {
     private let timeslowRectangleCornerRadius: CGFloat = 10
     
     var body: some View {
-        VStack() {
-            EVYText(timeslotDate.header).font(.detailFont)
-            EVYText(timeslotDate.date).font(.smallFont)
+        VStack {
+            EVYTextView(timeslotDate.header)
+            EVYTextView(timeslotDate.date)
             ForEach((0...(numberOfTimeslotsPerDay-1)), id: \.self) { timeslotIndex in
                 if timeslotDate.timeslots.count-1 < timeslotIndex {
-                    EVYText("-").frame(height: timeslotRowHeight)
+                    EVYTextView("-").frame(height: timeslotRowHeight)
                 }
                 else {
                     let t = timeslotDate.timeslots[timeslotIndex]
@@ -45,8 +45,7 @@ struct EVYTimeslotColumn: View {
                                   Constants.buttonColor : Constants.buttonDisabledColor)
                             .opacity(0.8)
                             .frame(height: timeslotRowHeight)
-                        EVYText(t.timeslot)
-                            .font(.smallFont)
+                        EVYTextView(t.timeslot)
                     }
                 }
             }
@@ -80,7 +79,7 @@ struct EVYTimeslotPicker: View {
                             ForEach(groupedDays[index], id: \.date) { timeslotDate in
                                 EVYTimeslotColumn(timeslotDate: timeslotDate,
                                                   numberOfTimeslotsPerDay: numberOfTimeslotsPerDay)
-                                    .padding(Constants.columnPadding)
+                                .padding(.horizontal, Constants.spacing)
                             }
                         }
                     }
@@ -95,6 +94,9 @@ struct EVYTimeslotPicker: View {
 }
 
 #Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    let _ = try! EVYDataManager.i.create(item)
+    
     let json = """
     [
         {

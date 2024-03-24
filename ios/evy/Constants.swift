@@ -8,31 +8,22 @@
 import SwiftUI
 
 extension Font {
-    static let titleFont = Font.system(size: 20)
-    static let detailFont = Font.system(size: 16)
-    static let regularFont = Font.system(size: 16)
-    static let smallFont = Font.system(size: 14)
-    static let buttonFont = Font.system(size: 24)
+    static let evy = Font.custom("SF Pro", size: 15)
+    static let button = Font.custom("SF Pro", size: 24)
 }
 
 struct Constants {
-    static let textLinePadding: CGFloat = 8
-    static let textLinePaddingMin: CGFloat = 1
+    static let spacing = 4.0
+    static let padding = 4.0
     
     static let majorPadding: CGFloat = 16
     static let minorPadding: CGFloat = 8
-    static let minPadding: CGFloat = 2
-    
-    static let columnPadding: CGFloat = 4
+    static let minPading: CGFloat = 4
     
     static let borderWidth: CGFloat = 1.0
     
     static let mainCornerRadius: CGFloat = 10
     static let smallCornerRadius: CGFloat = 4
-    
-    static let largeIconSize: CGFloat = 40
-    static let regularIconSize: CGFloat = 30
-    static let smallIconSize: CGFloat = 20
 
     static let buttonColor: Color = Color(#colorLiteral(red: 0.4745, green: 0.898, blue: 0.9569, alpha: 1))
     static let buttonDisabledColor: Color = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
@@ -73,6 +64,7 @@ struct SDUIConstants {
             "id": "home",
             "name": "Home",
             "type": "read",
+            "data": "item",
             "pages": [\(testPage)]
         }
     """
@@ -83,6 +75,7 @@ struct SDUIConstants {
             "id": "create_item",
             "name": "Create item",
             "type": "create",
+            "data": "item",
             "pages": \(pages)
         }
     """
@@ -93,36 +86,6 @@ struct SDUIConstants {
             "id": "create_item_step_1",
             "title": "Step 1",
             "rows": \(rows)
-        }
-    """
-    
-    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(selectRow), \(inputRow), \(navigateButtonRow)]"
-    
-    static let textRow = """
-        {
-            "type": "Text",
-            "view": {
-                "content": {
-                    "title": "{item.title}",
-                    "text": "Lorem Ipsum is simply ::star.square.on.square.fill:: dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-                },
-                "max_lines": "2"
-            }
-        }
-    """
-
-    static let columnContainerRow = """
-        {
-            "type": "ColumnContainer",
-            "view": {
-                "content": {
-                    "title": "Column Container",
-                    "children": [
-                        {"title": "test text", "child": \(textRow)},
-                        {"title": "test text", "child": \(textRow)}
-                    ]
-                }
-            }
         }
     """
     
@@ -159,22 +122,8 @@ struct SDUIConstants {
         }
     """
 
-    static let inputRow = """
-        {
-            "type": "Input",
-            "view": {
-                "content": {
-                    "title": "My great ::star.square.on.square.fill:: title",
-                    "value": "{item.title}",
-                    "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
-                }
-            },
-            "edit": {
-                "destination": "{item.title}",
-                "minimum_characters": "6"
-            }
-        }
-    """
+    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(selectRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
+
     static let selectPhotoRow = """
         {
             "type": "SelectPhoto",
@@ -190,6 +139,146 @@ struct SDUIConstants {
             "edit": {
                 "destination": "{item.photos}",
                 "minimum_amount": "1"
+            }
+        }
+    """
+    
+    static let textRow = """
+        {
+            "type": "Text",
+            "view": {
+                "content": {
+                    "title": "{item.title}",
+                    "text": "Lorem Ipsum is simply ::star.square.on.square.fill:: dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+                },
+                "max_lines": "2"
+            }
+        }
+    """
+    
+    static let textRowNoTitle = """
+        {
+            "type": "Text",
+            "view": {
+                "content": {
+                    "title": "",
+                    "text": "Lorem Ipsum is simply ::star.square.on.square.fill:: dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+                },
+                "max_lines": "2"
+            }
+        }
+    """
+    static let columnContainerRow = """
+        {
+            "type": "ColumnContainer",
+            "view": {
+                "content": {
+                    "title": "Hello",
+                    "children": [
+                        {"title": "test text", "child": \(textRowNoTitle)},
+                        {"title": "test text", "child": \(textRowNoTitle)}
+                    ]
+                }
+            }
+        }
+    """
+    static let inputRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "A row title ::star.square.on.square.fill::",
+                    "value": "{item.title}",
+                    "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
+                }
+            },
+            "edit": {
+                "destination": "{item.title}",
+                "minimum_characters": "6"
+            }
+        }
+    """
+    
+    static let inputPriceRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "Price",
+                    "value": "{item.price}",
+                    "placeholder": "$ 50.00"
+                }
+            },
+            "edit": {
+                "destination": "{item.price}",
+                "minimum_characters": "1"
+            }
+        }
+    """
+    
+    static let columnContainerDimensionsRow = """
+        {
+            "type": "ColumnContainer",
+            "view": {
+                "content": {
+                    "title": "Dimensions",
+                    "children": [
+                        {"title": "test text", "child": \(inputWidthRow)},
+                        {"title": "test text", "child": \(inputHeightRow)},
+                        {"title": "test text", "child": \(inputLengthRow)}
+                    ]
+                }
+            }
+        }
+    """
+    
+    static let inputWidthRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "",
+                    "value": "{formatDimension(item.dimension.width)}",
+                    "placeholder": "Width"
+                }
+            },
+            "edit": {
+                "destination": "{item.dimension.width}",
+                "minimum_characters": "1"
+            }
+        }
+    """
+    
+    static let inputHeightRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "",
+                    "value": "{formatDimension(item.dimension.height)}",
+                    "placeholder": "Height"
+                }
+            },
+            "edit": {
+                "destination": "{item.dimension.height}",
+                "minimum_characters": "1"
+            }
+        }
+    """
+    
+    static let inputLengthRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "",
+                    "value": "{formatDimension(item.dimension.length)}",
+                    "placeholder": "Length"
+                }
+            },
+            "edit": {
+                "destination": "{item.dimension.length}",
+                "minimum_characters": "2"
             }
         }
     """
@@ -230,7 +319,7 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "target": "home:home"
+                "target": "submit:home:home"
             }
         }
     """
@@ -287,7 +376,7 @@ struct DataConstants {
     
     static let item = """
         {
-            "id": "a9e9feba-d1ba-4f78-ab3c-3ce7cc108989",
+            "id": "item",
             "title": "Amazing Fridge",
             "photos": [
                 {

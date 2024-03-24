@@ -16,6 +16,8 @@ struct EVYPage: View, Decodable {
         ScrollView {
             ForEach(rows) { row in
                 row
+                    .padding(.horizontal, Constants.majorPadding)
+                    .padding(.vertical, Constants.minorPadding)
             }
         }
     }

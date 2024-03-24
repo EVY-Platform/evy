@@ -44,7 +44,7 @@ struct EVYSelectPhotoRow: View {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
         
         do {
-            let (_, data) = parseEVYData(self.view.content.photos)!
+            let (_, data) = EVYDataManager.getPropsFromText(self.view.content.photos)!
             let photosData = data.data(using: .utf8)!
             let photoObjects = try JSONDecoder().decode([EVYPhoto].self, from:photosData)
             self.photos.append(contentsOf: photoObjects.map { $0.id })
@@ -52,10 +52,10 @@ struct EVYSelectPhotoRow: View {
     }
 
     var body: some View {
-        VStack(spacing: Constants.textLinePadding) {
+        VStack {
             if view.content.title.count > 0 {
-                EVYText(view.content.title)
-                    .font(.titleFont)
+                EVYTextView(view.content.title)
+                    .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
@@ -76,11 +76,10 @@ struct EVYSelectPhotoRow: View {
                                      photos: $photos)
             }
             
-            EVYText(view.content.content)
-                .font(.detailFont)
+            EVYTextView(view.content.content)
                 .foregroundColor(Constants.placeholderColor)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, Constants.majorPadding)
+                .padding(.vertical, Constants.minPading)
         }
     }
 }
@@ -100,11 +99,11 @@ struct EVYSelectPhotoButton: View {
                 selection: $selectedItem,
                 label: {
                     let stack = VStack {
-                        EVYText(icon)
-                            .font(.titleFont)
+                        EVYTextView(icon)
+                            .font(.evy)
                             .foregroundColor(Constants.placeholderColor)
-                        EVYText(subtitle)
-                            .font(.titleFont)
+                        EVYTextView(subtitle)
+                            .font(.evy)
                             .foregroundColor(Constants.placeholderColor)
                     }
                     if fullScreen {
@@ -114,7 +113,6 @@ struct EVYSelectPhotoButton: View {
                             .background(
                                 RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
                                     .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
-                            .padding(.horizontal, Constants.majorPadding)
                     } else {
                         stack
                             .frame(width: carouselElementSize, height: carouselElementSize)
@@ -128,7 +126,7 @@ struct EVYSelectPhotoButton: View {
                 Task {
                     do {
                         if let data = try await selectedItem?.loadTransferable(type: Data.self) {
-                            let id = try! UUID().stringified
+                            let id = UUID().description
                             ImageManager().writeImage(name: id,
                                                       uiImage: UIImage(data: data)!)
                             photos.append(id)
@@ -152,7 +150,7 @@ struct EVYSelectPhotoCarousel: View {
                 .scaledToFill()
                 .frame(width: carouselElementSize, height: carouselElementSize)
                 .clipShape(RoundedRectangle(cornerRadius: Constants.mainCornerRadius))
-                .padding(.horizontal, Constants.minPadding)
+                .padding(.horizontal, 2)
         }
     }
 }
@@ -188,9 +186,9 @@ class ImageManager {
 }
 
 #Preview {
-    let data = EVYData.shared
     let item = DataConstants.item.data(using: .utf8)!
-    try! data.set(name: "item", data: item)
+    let _ = try! EVYDataManager.i.create(item)
+    
     let json =  SDUIConstants.selectPhotoRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

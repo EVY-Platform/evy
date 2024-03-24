@@ -15,20 +15,30 @@ struct EVYColumnContainer: View {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSDUIJSON.ContainerView.self, forKey:.view)
     }
+   
+    @State private var title: String = ""
     
     var body: some View {
-        HStack {
-            ForEach(view.content.children, id: \.id) { child in
-                child.child
+        VStack {
+            if (view.content.title.count > 0) {
+                EVYText(view.content.title)
+                    .font(.evy)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, Constants.minPading)
+            }
+            HStack(alignment: .top) {
+                ForEach(view.content.children, id: \.id) { child in
+                    child.child
+                }
             }
         }
     }
 }
 
 #Preview {
-    let data = EVYData.shared
     let item = DataConstants.item.data(using: .utf8)!
-    try! data.set(name: "item", data: item)
+    let _ = try! EVYDataManager.i.create(item)
+    
     let json = SDUIConstants.columnContainerRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }
