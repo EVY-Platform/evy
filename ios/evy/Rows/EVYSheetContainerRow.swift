@@ -21,26 +21,30 @@ struct EVYSheetContainerRow: View {
     @State private var showSheet = false
     
     var body: some View {
-
         self.view.content.child?
             .onTapGesture {
                 showSheet.toggle()
             }
             .sheet(isPresented: $showSheet, content: {
                 VStack {
+                    EVYText(view.content.title)
                     ForEach(view.content.children, id: \.id) { child in
-                        child.child
+                        child.padding(.horizontal)
                     }
-                    .padding(.top, 30)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
                 }
+                .frame(maxHeight: .infinity, alignment: .top)
+                .padding(.top, 30)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             })
     }
 }
 
 
 #Preview {
+    let item = DataConstants.selling_reason.data(using: .utf8)!
+    let _ = try! EVYDataManager.i.create(item)
+    
     let json = SDUIConstants.sheetContainerRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

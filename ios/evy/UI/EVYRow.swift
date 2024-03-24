@@ -43,23 +43,6 @@ public class EVYSDUIJSON {
         let action: Action
     }
     
-    private enum ContainerChildCodingKeys: String, CodingKey {
-        case title
-        case child
-    }
-    public struct ContainerChild: Decodable {
-        let title: String
-        let child: EVYRow
-        let id: UUID
-        
-        public init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: ContainerChildCodingKeys.self)
-            self.title = try container.decode(String.self, forKey: .title)
-            self.child = try container.decode(EVYRow.self, forKey: .child)
-            
-            self.id = UUID()
-        }
-    }
     private enum ContainerContentCodingKeys: String, CodingKey {
         case title
         case children
@@ -67,13 +50,13 @@ public class EVYSDUIJSON {
         case child
     }
     public class ContainerContent: Content {
-        let children: [ContainerChild]
+        let children: [EVYRow]
         let children_data: String?
         let child: EVYRow?
         
         required init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: ContainerContentCodingKeys.self)
-            self.children = try container.decode([ContainerChild].self, forKey: .children)
+            self.children = try container.decode([EVYRow].self, forKey: .children)
             self.children_data = try? container.decode(String.self, forKey: .children_data)
             self.child = try? container.decode(EVYRow.self, forKey: .child)
             

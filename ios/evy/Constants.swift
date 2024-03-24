@@ -94,11 +94,9 @@ struct SDUIConstants {
            "type": "SheetContainer",
            "view": {
                "content": {
-                   "title": "Condition",
+                   "title": "Selling reasons",
                    "child": \(inputRow),
-                   "children": [
-                        {"title": "test text", "child": \(selectRow)}
-                   ]
+                   "children": [\(selectRow)]
                }
            }
         }
@@ -109,7 +107,7 @@ struct SDUIConstants {
             "type": "Select",
             "view": {
                 "content": {
-                    "title": "Selling Reason",
+                    "title": "",
                     "value": "{item.selling_reason.value}",
                     "placeholder": ""
                 },
@@ -174,10 +172,7 @@ struct SDUIConstants {
             "view": {
                 "content": {
                     "title": "Hello",
-                    "children": [
-                        {"title": "test text", "child": \(textRowNoTitle)},
-                        {"title": "test text", "child": \(textRowNoTitle)}
-                    ]
+                    "children": [\(textRowNoTitle), \(textRowNoTitle)]
                 }
             }
         }
@@ -222,11 +217,7 @@ struct SDUIConstants {
             "view": {
                 "content": {
                     "title": "Dimensions",
-                    "children": [
-                        {"title": "test text", "child": \(inputWidthRow)},
-                        {"title": "test text", "child": \(inputHeightRow)},
-                        {"title": "test text", "child": \(inputLengthRow)}
-                    ]
+                    "children": [\(inputWidthRow), \(inputHeightRow), \(inputLengthRow)]
                 }
             }
         }
@@ -328,7 +319,7 @@ struct SDUIConstants {
 struct DataConstants {
     static let selling_reason = """
         {
-            "id": "c1b91ec6-4ff2-4ad0-b196-292fe510ac33",
+            "id": "selling_reason",
             "value": "No longer used",
         }
     """

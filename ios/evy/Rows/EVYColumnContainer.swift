@@ -28,7 +28,7 @@ struct EVYColumnContainer: View {
             }
             HStack(alignment: .top) {
                 ForEach(view.content.children, id: \.id) { child in
-                    child.child
+                    child
                 }
             }
         }
