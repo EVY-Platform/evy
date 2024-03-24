@@ -89,38 +89,20 @@ struct SDUIConstants {
         }
     """
     
+    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(sheetContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
+    
     static let sheetContainerRow = """
         {
            "type": "SheetContainer",
            "view": {
                "content": {
-                   "title": "Selling reasons",
-                   "child": \(inputRow),
-                   "children": [\(selectRow)]
+                   "title": "Address row",
+                   "child": \(triggersSheetRow),
+                   "children": [\(inputRow)]
                }
            }
         }
     """
-   
-    static let selectRow = """
-        {
-            "type": "Select",
-            "view": {
-                "content": {
-                    "title": "",
-                    "value": "{item.selling_reason.value}",
-                    "placeholder": ""
-                },
-                "multi": "{false}",
-                "data": "{selling_reasons}"
-            },
-            "edit": {
-                "destination": "{item.selling_reason}"
-            }
-        }
-    """
-
-    static let rows = "[\(selectPhotoRow),\(textRow), \(columnContainerRow), \(selectRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
 
     static let selectPhotoRow = """
         {
@@ -183,6 +165,22 @@ struct SDUIConstants {
             "view": {
                 "content": {
                     "title": "A row title ::star.square.on.square.fill::",
+                    "value": "{item.title}",
+                    "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
+                }
+            },
+            "edit": {
+                "destination": "{item.title}",
+                "minimum_characters": "6"
+            }
+        }
+    """
+    static let triggersSheetRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "Click me to open sheet",
                     "value": "{item.title}",
                     "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
                 }

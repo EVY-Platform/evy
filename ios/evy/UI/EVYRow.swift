@@ -102,9 +102,6 @@ struct EVYRow: View, Decodable, Identifiable {
             
             case EVYSheetContainerRow.JSONType:
                 self.view = try EVYSheetContainerRow(container: container)
-            
-            case EVYSelectRow.JSONType:
-                self.view = try EVYSelectRow(container: container)
                 
             default:
                 self.view = Text("I am a row")
