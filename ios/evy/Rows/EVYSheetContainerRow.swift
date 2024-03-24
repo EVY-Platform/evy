@@ -20,8 +20,6 @@ struct EVYSheetContainerRow: View {
     
     @State private var showSheet = false
     
-
-    
     var body: some View {
 
         self.view.content.child?
@@ -38,8 +36,6 @@ struct EVYSheetContainerRow: View {
                     .presentationDragIndicator(.visible)
                 }
             })
-
-
     }
 }
 
