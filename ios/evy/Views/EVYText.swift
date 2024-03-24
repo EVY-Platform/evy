@@ -19,7 +19,7 @@ struct EVYTextView: View {
     
     var body: some View {
         EVYText(text).onAppear {
-            EVYDataManager.i.parse(input) { value in
+            EVYDataManager.i.parseText(input) { value in
                 text = value
             }
         }

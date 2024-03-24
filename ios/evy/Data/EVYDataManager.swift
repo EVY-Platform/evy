@@ -31,37 +31,11 @@ struct EVYDataManager {
     }
     
     public func create(_ data: Data) throws -> [EVYData] {
-        let objects = try! createFromData(data: data)
+        let objects = try! EVYJson.createFromData(data: data)
         for object in objects {
             context!.insert(object)
         }
         return objects
-    }
-    
-    private func createFromData(data: Data) throws -> [EVYData] {
-        let json = try! JSONDecoder().decode(EVYJson.self, from: data)
-        switch json {
-        case .string(_):
-            throw EVYDataModelError.dataIsAString
-        case .array(let arrayValue):
-            var response: [EVYData] = []
-            let encoder = JSONEncoder()
-            for val in arrayValue {
-                guard let valEncoded = try? encoder.encode(val) else {
-                    throw EVYDataModelError.unprocessableValue
-                }
-                response.append(contentsOf: try! createFromData(data: valEncoded))
-            }
-            return response
-        case .dictionary(let dictValue):
-            let res = try! EVYJson.getValueAtProp(data: dictValue, prop: "id")
-            switch res {
-            case .string(let stringValue):
-                return [EVYData(id: stringValue, data: data)]
-            default:
-                throw EVYDataModelError.idIsNotAString
-            }
-        }
     }
     
     func getDataById(id: String, onCompletion: (_ data: EVYData) -> Void) throws {
@@ -69,22 +43,22 @@ struct EVYDataManager {
         onCompletion(try context!.fetch(descriptor).first!)
     }
     
-    func parse(_ input: String, onCompletion: (_ value: String) -> Void) {
+    func parseText(_ input: String, onCompletion: (_ value: String) -> Void) {
         if (input.count < 1) { onCompletion(input) }
         
-        else if let (match, functionName, functionArgs) = parseFunction(input) {
+        else if let (match, functionName, functionArgs) = getFunctionFromText(input) {
             if functionName == "count" {
                 evyCount(functionArgs) { count in
                     
                     let parsedInput = input.replacingOccurrences(of: match.0.description, with: count)
-                    parse(parsedInput, onCompletion: onCompletion)
+                    parseText(parsedInput, onCompletion: onCompletion)
                 }
             }
-        } else if let (match, props) = parseData(input) {
+        } else if let (match, props) = EVYDataManager.getPropsFromText(input) {
             try! parseProps(props) { data in
                 if let parsedData = data?.toString() {
                     let parsedInput = input.replacingOccurrences(of: match.0.description, with: parsedData)
-                    parse(parsedInput, onCompletion: onCompletion)
+                    parseText(parsedInput, onCompletion: onCompletion)
                 }
             }
         }
@@ -100,24 +74,23 @@ struct EVYDataManager {
         } else {
             let firstVariable = variables.first!
             
-            try! EVYDataManager.i.getDataById(id: firstVariable) { data in
+            try! getDataById(id: firstVariable) { data in
                 onCompletion(try! parseProp(props: variables[1...], data: data.decoded()))
             }
         }
     }
-}
     
-func parsePropsWithData(_ input: String, data: EVYJson) -> String {
-    let variables = input.components(separatedBy: ".")
-    
-    if variables.count > 0 {
-        return try! parseProp(props: variables[0...], data: data).toString()
+    static func getPropsFromText(_ input: String) -> (RegexMatch, String)? {
+        if let match = firstMatch(input, pattern: "\\{(?!\")[^}^\"]*(?!\")\\}") {
+            // Remove leading and trailing curly braces
+            return (match, String(match.0.dropFirst().dropLast()))
+        }
+        return nil
     }
-    
-    return input
+
 }
 
-func parseProp(props: [String].SubSequence, data: EVYJson) throws -> EVYJson {
+private func parseProp(props: [String].SubSequence, data: EVYJson) throws -> EVYJson {
     switch data {
     case .dictionary(let dictValue):
         if props.count >= 1 {
@@ -136,15 +109,7 @@ func parseProp(props: [String].SubSequence, data: EVYJson) throws -> EVYJson {
     }
 }
 
-func parseData(_ input: String) -> (RegexMatch, String)? {
-    if let match = firstMatch(input, pattern: "\\{(?!\")[^}^\"]*(?!\")\\}") {
-        // Remove leading and trailing curly braces
-        return (match, String(match.0.dropFirst().dropLast()))
-    }
-    return nil
-}
-
-func parseFunction(_ input: String) -> (match: RegexMatch,
+private func getFunctionFromText(_ input: String) -> (match: RegexMatch,
                                         functionName: String,
                                         functionArgs: String)?
 {
