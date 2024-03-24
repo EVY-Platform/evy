@@ -47,15 +47,17 @@ struct EVYDropdownRow: View {
                 HStack {
                     EVYTextView(view.content.placeholder)
                         .font(.evy)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Constants.placeholderColor)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, Constants.minorPadding)
                     Spacer()
                     EVYText("::chevron.down::")
+                        .foregroundColor(.black)
                 }
                 .padding()
-                .border(Color.gray)
-                .cornerRadius(/*@START_MENU_TOKEN@*/3.0/*@END_MENU_TOKEN@*/)
+                .background(
+                    RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
+                        .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
             }
         }
         .sheet(isPresented: $showSheet, content: {
