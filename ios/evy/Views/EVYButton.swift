@@ -17,7 +17,9 @@ struct EVYButton: View {
         Button(action: {
             navigate(target)
         }) {
-            EVYTextView(label).foregroundColor(.white)
+            EVYTextView(label)
+                .frame(maxWidth: .infinity)
+                .foregroundColor(.white)
         }
         .padding(EdgeInsets(top: Constants.majorPadding,
                             leading: Constants.majorPadding,
