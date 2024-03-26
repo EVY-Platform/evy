@@ -48,7 +48,7 @@ struct SDUIConstants {
                 }
             },
             "action": {
-                "target": "create_item:create_item_step_1"
+                "target": "create_item:step_1"
             }
         }
     """
@@ -83,7 +83,7 @@ struct SDUIConstants {
     static let pages = "[\(page), \(page2)]"
     static let page = """
         {
-            "id": "create_item_step_1",
+            "id": "step_1",
             "title": "Step 1",
             "rows": \(rows)
         }
@@ -300,14 +300,14 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "target": "create_item:create_item_step_2"
+                "target": "create_item:step_2"
             }
         }
     """
     
     static let page2 = """
         {
-            "id": "create_item_step_2",
+            "id": "step_2",
             "title": "Step 2",
             "rows": \(rows2)
         }
