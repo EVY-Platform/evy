@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+public enum EVYRowError: Error {
+    case invalidTarget
+}
+
 public enum RowCodingKeys: String, CodingKey {
     case type
     case visible
@@ -18,7 +22,24 @@ public enum RowCodingKeys: String, CodingKey {
 // MARK: JSON Base structures
 public class EVYSDUIJSON {
     public struct Action: Decodable {
-        let target: String
+        let target: Route
+        
+        private enum ActionCodingKeys: String, CodingKey {
+            case target
+        }
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: ActionCodingKeys.self)
+            let targetString = try container.decode(String.self, forKey: .target)
+            let targetSplit = targetString.split(separator: ":")
+            if targetSplit.count < 2 {
+                throw EVYRowError.invalidTarget
+            }
+            self.target = Route(
+                flowId: String(targetSplit[0]),
+                pageId: String(targetSplit[1])
+            )
+        }
     }
     public struct Edit: Decodable {
         let destination: String

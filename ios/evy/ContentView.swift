@@ -7,74 +7,76 @@
 
 import SwiftUI
 
-extension Notification.Name {
-    static let navigateEVYPage = Notification.Name("navigateEVYPage")
+struct Route: Hashable {
+    let flowId: String
+    let pageId: String
 }
 
-extension View {
-    func onReceive(
-        _ name: Notification.Name,
-        center: NotificationCenter = .default,
-        object: AnyObject? = nil,
-        perform action: @escaping (Notification) -> Void
-    ) -> some View {
-        onReceive(
-            center.publisher(for: name, object: object),
-            perform: action
-        )
+struct NavigateEnvironmentKey: EnvironmentKey {
+    static var defaultValue: (Route) -> Void = { _ in }
+}
+
+extension EnvironmentValues {
+    var navigate: (Route) -> Void {
+        get { self[NavigateEnvironmentKey.self] }
+        set { self[NavigateEnvironmentKey.self] = newValue }
     }
 }
 
 struct ContentView: View {
     private let flows: [EVYFlow]
-
-    @State private var currentFlowId: String
-    @State private var page: EVYPage
+    @State private var routes: [Route] = []
     
     init() {
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
-        
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
-        
-        let homeFlow = flows.first(where: {$0.id == "home"})!
-        _currentFlowId = State(initialValue: homeFlow.id)
-        _page = State(initialValue: homeFlow.pages.first!)
     }
     
     var body: some View {
-        page.onReceive(.navigateEVYPage) { notification in
-            let userInfo = notification.userInfo!
-            let target = userInfo["target"] as! String
-            let components = target.components(separatedBy: ":")
-            
-            let newFlowId = components[0]
-            let newPageId = components[1]
-            
-            let newFlow = flows.first(where: {$0.id == newFlowId})!
-            let currentFlow = flows.first(where: {$0.id == currentFlowId})!
-            
-            // If the flow is changing
-            if newFlowId != currentFlowId {
-                
-                // Submit the current draft
-                if currentFlow.type == .create {
-                    try! EVYDataManager.i.submit(key: currentFlow.data)
+        NavigationStack(path: $routes) {
+            VStack(spacing: 40) {
+                Button("View Item") {
+                    routes.append(Route(flowId: "view_item", pageId: "view"))
                 }
-                
-                // Create a new draft
-                if newFlow.type == .create {
-                    let item = DataConstants.item.data(using: .utf8)!
-                    try! EVYDataManager.i.create(key: newFlow.data, data: item)
+                Button("Create Item") {
+                    routes.append(Route(flowId: "create_item", pageId: "step_1"))
                 }
-                
-            // Update the existing draft
-            } else if currentFlow.type == .create {
-                let item = DataConstants.item.data(using: .utf8)!
-                try! EVYDataManager.i.update(key: currentFlow.data, data: item)
+                .navigationDestination(for: Route.self) { route in
+                    let flow = flows.first(where: {$0.id == route.flowId})!
+                    
+                    flow.getPageById(route.pageId)!
+                        .environment(\.navigate) { route in
+//                            if flow.id != route.flowId {
+//                                // If the old flow was for creation, submit the draft
+//                                if flow.type == .create {
+//                                    try! EVYDataManager.i.submit(key: flow.data)
+//                                }
+//                                
+//                                if route.flowId != "home" {
+//                                    // If the new flow is for creation, start a draft
+//                                    let newFlow = flows.first(where: {$0.id == route.flowId})!
+//                                    if newFlow.type == .create {
+//                                        let item = DataConstants.item.data(using: .utf8)!
+//                                        try! EVYDataManager.i.create(key: newFlow.data, data: item)
+//                                    }
+//                                }
+//                            // If we are in the same create flow, update the draft
+//                            } else if flow.type == .create {
+//                                let item = DataConstants.item.data(using: .utf8)!
+//                                try! EVYDataManager.i.update(key: flow.data, data: item)
+//                            }
+                            if route.flowId == "home" {
+                                routes.removeAll()
+                            }
+                            else if let existing = routes.lastIndex(of: route) {
+                                routes.removeSubrange(existing...)
+                            }
+                            else {
+                                routes.append(route)
+                            }
+                        }
+                }
             }
-            
-            currentFlowId = newFlowId
-            page = newFlow.getPageById(newPageId)
         }
     }
 }
