@@ -44,7 +44,7 @@ struct EVYSelectPhotoRow: View {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
         
         do {
-            let (_, data) = EVYDataManager.getPropsFromText(self.view.content.photos)!
+            let (_, data) = EVYTextView.propsFromText(self.view.content.photos)!
             let photosData = data.data(using: .utf8)!
             let photoObjects = try JSONDecoder().decode([EVYPhoto].self, from:photosData)
             self.photos.append(contentsOf: photoObjects.map { $0.id })

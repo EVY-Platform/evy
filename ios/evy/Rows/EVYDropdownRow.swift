@@ -51,7 +51,7 @@ struct EVYDropdownRow: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, Constants.minorPadding)
                     Spacer()
-                    EVYText("::chevron.down::")
+                    EVYTextView.parsedText("::chevron.down::")
                         .foregroundColor(.black)
                 }
                 .padding()
