@@ -65,7 +65,7 @@ struct EVYTextView: View {
         if variables.count > 0 {
             let firstVariable = variables.first!
             
-            if let data = EVYDataManager.i.getDataByKey(firstVariable) {
+            if let data = EVYDataManager.i.get(key: firstVariable) {
                 let temp = data.decoded()
                 return try parseProp(props: Array(variables[1...]), data: temp)
             }

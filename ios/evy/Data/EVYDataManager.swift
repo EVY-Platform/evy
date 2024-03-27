@@ -28,15 +28,24 @@ struct EVYDataManager {
     
     private var context: ModelContext = ModelContext(container)
     
+    func get(key: String) -> EVYData? {
+        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
+        do {
+            return try context.fetch(descriptor).first
+        } catch {
+            return nil
+        }
+    }
+    
     public func create(key: String, data: Data) throws -> Void {
-        if getDataByKey(key) != nil {
+        if get(key: key) != nil {
             throw EVYDataError.keyAlreadyExists
         }
         context.insert(EVYData(key: key, data: data))
     }
     
     public func update(key: String, data: Data) throws -> Void {
-        if let existing = getDataByKey(key) {
+        if let existing = get(key: key) {
             existing.data = data
         } else {
             throw EVYDataError.keyNotFound
@@ -44,7 +53,7 @@ struct EVYDataManager {
     }
     
     public func delete(key: String) throws -> Void {
-        if let existing = getDataByKey(key) {
+        if let existing = get(key: key) {
             context.delete(existing)
         } else {
             throw EVYDataError.keyNotFound
@@ -52,20 +61,11 @@ struct EVYDataManager {
     }
     
     public func submit(key: String) throws -> Void {
-        if let existing = getDataByKey(key) {
+        if let existing = get(key: key) {
             existing.key = UUID().uuidString
             // TODO: Send to API
         } else {
             throw EVYDataError.keyNotFound
-        }
-    }
-    
-    func getDataByKey(_ key: String) -> EVYData? {
-        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
-        do {
-            return try context.fetch(descriptor).first
-        } catch {
-            return nil
         }
     }
 }
