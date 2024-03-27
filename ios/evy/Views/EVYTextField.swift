@@ -13,7 +13,7 @@ struct EVYTextField: View {
     let placeholder: String
     
     var body: some View {
-        TextField(text: $value, prompt: EVYText(placeholder), label: {
+        TextField(text: $value, prompt: EVYTextView.parsedText(placeholder), label: {
             EVYTextView(label)
         })
         .padding(EdgeInsets(top: Constants.majorPadding,

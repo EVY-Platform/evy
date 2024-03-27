@@ -21,13 +21,13 @@ struct EVYFlow: Decodable {
     let data: String
     let pages: [EVYPage]
     
-    func getPageById(_ id: String) -> EVYPage {
-        pages.first(where: {$0.id == id})!
+    func getPageById(_ id: String) -> EVYPage? {
+        pages.first(where: {$0.id == id})
     }
 }
 
 #Preview {
-    let json =  SDUIConstants.homeFlow.data(using: .utf8)!
+    let json =  SDUIConstants.viewItemFlow.data(using: .utf8)!
     let flow = try! JSONDecoder().decode(EVYFlow.self, from: json)
-    return flow.getPageById("home")
+    return flow.getPageById("view")
 }

@@ -8,16 +8,18 @@
 import SwiftUI
 
 struct EVYButton: View {
+    @Environment(\.navigate) private var navigate
+    
     let label: String
-    let target: String
+    let target: Route
     
     var body: some View {
         Button(action: {
-            NotificationCenter.default.post(name: .navigateEVYPage,
-                                            object: nil,
-                                            userInfo: ["target": target])
+            navigate(target)
         }) {
-            EVYTextView(label).foregroundColor(.white)
+            EVYTextView(label)
+                .frame(maxWidth: .infinity)
+                .foregroundColor(.white)
         }
         .padding(EdgeInsets(top: Constants.majorPadding,
                             leading: Constants.majorPadding,
@@ -30,5 +32,5 @@ struct EVYButton: View {
 }
 
 #Preview {
-    return EVYButton(label: "Submit", target: "create_item_step_2")
+    return EVYButton(label: "Submit", target: Route(flowId: "test", pageId: "test"))
 }
