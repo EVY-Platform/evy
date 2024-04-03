@@ -363,7 +363,7 @@
 	"title": "Step 2",
 	"rows": [
 		{
-			"type": "Input",
+			"type": "TextArea",
 			"view": {
 				"content": {
 					"title": "",

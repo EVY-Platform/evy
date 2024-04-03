@@ -268,6 +268,21 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+```
+{
+    "type": "TextArea",
+    "view": {
+        "content": {
+            "value",
+            "placeholder"
+        }
+    },
+    "edit": {
+        "minimum_characters",
+        "minimum_number"
+    }
+}
+```
 
 ```
 {
