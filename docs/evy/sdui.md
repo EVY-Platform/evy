@@ -83,10 +83,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     },
     "edit": {
         // Where the input data is stored
-        "destination",
-
-        // Required for form validation for submissions
-        "required"
+        "destination"
     },
 
     "action": {

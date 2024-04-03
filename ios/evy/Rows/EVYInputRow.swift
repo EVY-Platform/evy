@@ -21,12 +21,15 @@ struct EVYInputRow: View {
     public static var JSONType = "Input"
     
     private let view: EVYInputRowView
+    private let edit: EVYSDUIJSON.Edit
     
-    @State private var value: String = ""
+    @State private var value: String
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
-        _value = State(initialValue: EVYTextView.parseText(self.view.content.value))
+        self.edit = try container.decode(EVYSDUIJSON.Edit.self, forKey:.edit)
+        
+        _value = State(initialValue: self.view.content.value)
     }
     
     var body: some View {
@@ -40,6 +43,9 @@ struct EVYInputRow: View {
             EVYTextField(value: $value,
                          label: view.content.value,
                          placeholder: view.content.placeholder)
+            .onChange(of: value) { oldValue, newValue in
+                try! EVYDataManager.i.updateValue(newValue, at: edit.destination)
+            }
         }
     }
 }

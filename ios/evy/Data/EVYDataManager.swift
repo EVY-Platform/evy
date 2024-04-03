@@ -68,4 +68,53 @@ struct EVYDataManager {
             throw EVYDataError.keyNotFound
         }
     }
+    
+    public func updateValue(_ value: String, at: String) throws -> Void {
+        guard let (_, props) = EVYTextView.propsFromText(at) else {
+            throw EVYDataParseError.invalidProps
+        }
+            
+        let variables = props.components(separatedBy: ".")
+        if variables.count > 1 {
+            guard let modelData = get(key: variables.first!) else {
+                throw EVYDataError.keyNotFound
+            }
+            do {
+                let valueAsData = "\"\(value)\"".data(using: .utf8)!
+                let valueAsJson = try! JSONDecoder().decode(EVYJson.self, from: valueAsData)
+                let updatedData = try getUpdatedData(props: Array(variables[1...]),
+                                                     data: modelData.decoded(),
+                                                     value: valueAsJson)
+                
+                let newData = try JSONEncoder().encode(updatedData)
+                try! update(key: variables.first!, data: newData)
+            } catch {}
+        }
+    }
+    
+    private func getUpdatedData(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {
+        if props.count < 1 {
+            return data
+        }
+        
+        switch data {
+        case .dictionary(var dictValue):
+            guard let firstVariable = props.first else {
+                throw EVYDataParseError.invalidProps
+            }
+            guard let subData = dictValue[firstVariable] else {
+                throw EVYDataParseError.invalidVariable
+            }
+            if props.count == 1 {
+                dictValue[firstVariable] = value
+                let dictAsData = try JSONEncoder().encode(dictValue)
+                return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
+            }
+            
+            return try getUpdatedData(props: Array(props[1...]), data: subData, value: value)
+        default:
+            return data
+        }
+    }
 }
+

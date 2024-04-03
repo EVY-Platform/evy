@@ -101,11 +101,12 @@ struct EVYTextView: View {
 }
 
 private func parseProp(props: [String], data: EVYJson) throws -> EVYJson {
+    if props.count < 1 {
+        return data
+    }
+    
     switch data {
     case .dictionary(let dictValue):
-        if props.count < 1 {
-            return data
-        }
         guard let firstVariable = props.first else {
             throw EVYDataParseError.invalidProps
         }

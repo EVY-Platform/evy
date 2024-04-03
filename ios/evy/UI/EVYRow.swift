@@ -43,7 +43,6 @@ public class EVYSDUIJSON {
     }
     public struct Edit: Decodable {
         let destination: String
-        let required: String
     }
     public struct Placeholder: Decodable {
         let value: String

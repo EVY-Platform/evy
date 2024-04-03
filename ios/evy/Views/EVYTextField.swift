@@ -24,6 +24,9 @@ struct EVYTextField: View {
             RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
                 .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
         )
+        .onAppear(perform: {
+            value = EVYTextView.parseText(value)
+        })
     }
 }
 
