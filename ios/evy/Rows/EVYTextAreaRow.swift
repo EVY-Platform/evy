@@ -22,7 +22,7 @@ struct EVYTextAreaRow: View {
     
     private let view: EVYTextAreaRowView
     
-    @State private var value = ""
+    @State private var value: String
     @FocusState private var isFocused: Bool
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
