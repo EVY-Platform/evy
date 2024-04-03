@@ -33,26 +33,6 @@ struct ContentView: View {
     }
     
     private func handleNavigationData(route: Route, flow: EVYFlow?) {
-//        if flow.id != route.flowId {
-//            // If the old flow was for creation, submit the draft
-//            if flow.type == .create {
-//                try! EVYDataManager.i.submit(key: flow.data)
-//            }
-//
-//            if route.flowId != "home" {
-//                // If the new flow is for creation, start a draft
-//                let newFlow = flows.first(where: {$0.id == route.flowId})!
-//                if newFlow.type == .create {
-//                    let item = DataConstants.item.data(using: .utf8)!
-//                    try! EVYDataManager.i.create(key: newFlow.data, data: item)
-//                }
-//            }
-//            // If we are in the same create flow, update the draft
-//        } else if flow.type == .create {
-//            let item = DataConstants.item.data(using: .utf8)!
-//            try! EVYDataManager.i.update(key: flow.data, data: item)
-//        }
-                                    
         if route.flowId == "home" {
             routes.removeAll()
         }
