@@ -31,9 +31,9 @@ func evyFormatCurrency(_ args: String) -> String {
             }
             return "$\(value.toString())"
         default:
-            return args
+            return "Could not calculate price"
         }
     } catch {
-        return args
+        return "Could not calculate price"
     }
 }
