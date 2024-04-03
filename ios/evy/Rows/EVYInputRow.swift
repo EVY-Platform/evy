@@ -25,6 +25,8 @@ struct EVYInputRow: View {
     
     @State private var value: String
     
+    @State private var value: String = ""
+    
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
         self.edit = try container.decode(EVYSDUIJSON.Edit.self, forKey:.edit)
