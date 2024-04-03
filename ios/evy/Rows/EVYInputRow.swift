@@ -49,7 +49,7 @@ struct EVYInputRow: View {
                 }
             }
             .onAppear(perform: {
-                value = EVYTextView.parseText(value)
+                value = EVYTextView.parseText(self.view.content.value)
             })
         }
     }
