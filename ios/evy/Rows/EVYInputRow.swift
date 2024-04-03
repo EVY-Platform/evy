@@ -44,8 +44,13 @@ struct EVYInputRow: View {
                          label: view.content.value,
                          placeholder: view.content.placeholder)
             .onChange(of: value) { oldValue, newValue in
-                try! EVYDataManager.i.updateValue(newValue, at: edit.destination)
+                if oldValue != self.view.content.value {
+                    try! EVYDataManager.i.updateValue(newValue, at: edit.destination)
+                }
             }
+            .onAppear(perform: {
+                value = EVYTextView.parseText(value)
+            })
         }
     }
 }
