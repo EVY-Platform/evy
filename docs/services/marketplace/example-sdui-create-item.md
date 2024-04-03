@@ -74,13 +74,12 @@
 						}
 					},
 					"children": [{
-						"type": "Select",
+						"type": "Dropdown",
 						"view": {
 							"content": {
 								"value": "{item.condition.value}",
-								"placeholder": "Condition"
+								"placeholder": "Choose one"
 							},
-							"multi": "{false}",
 							"data": "{conditions}"
 						},
 						"edit": {
@@ -106,13 +105,13 @@
 						}
 					},
 					"children": [{
-						"type": "Select",
+						"type": "Dropdown",
 						"view": {
 							"content": {
+								"title": "Selling Reason",
 								"value": "{item.selling_reason.value}",
-								"placeholder": "Condition"
+								"placeholder": "Choose one"
 							},
-							"multi": "{false}",
 							"data": "{selling_reasons}"
 						},
 						"edit": {
