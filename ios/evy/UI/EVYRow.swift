@@ -106,6 +106,9 @@ struct EVYRow: View, Decodable, Identifiable {
             // Container rows
             case EVYColumnContainer.JSONType:
                 self.view = try EVYColumnContainer(container: container)
+            
+            case EVYSheetContainerRow.JSONType:
+                self.view = try EVYSheetContainerRow(container: container)
         
             // Display rows
             case EVYTextRow.JSONType:
@@ -121,12 +124,12 @@ struct EVYRow: View, Decodable, Identifiable {
             case EVYButtonRow.JSONType:
                 self.view = try EVYButtonRow(container: container)
             
-            case EVYSheetContainerRow.JSONType:
-                self.view = try EVYSheetContainerRow(container: container)
-            
             case EVYDropdownRow.JSONType:
                 self.view = try EVYDropdownRow(container: container)
-                
+            
+            case EVYTextAreaRow.JSONType:
+                self.view = try EVYTextAreaRow(container: container)
+                    
             default:
                 self.view = Text("I am a row")
         }

@@ -63,7 +63,7 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(selectPhotoRow), \(dropdownRow), \(textRow), \(columnContainerRow), \(sheetContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
+    static let rows = "[\(selectPhotoRow), \(dropdownRow), \(textAreaRow), \(textRow), \(columnContainerRow), \(sheetContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
     
     static let sheetContainerRow = """
         {
@@ -300,6 +300,19 @@ struct SDUIConstants {
             "edit": {},
             "action": {
                 "target": "home:home"
+            }
+        }
+    """
+    
+    static let textAreaRow = """
+        {
+            "type": "TextArea",
+            "view": {
+                "content": {
+                   "title": "Describe item",
+                   "value": "{item.description}",
+                   "placeholder": "Write a short description of your product"
+                }
             }
         }
     """

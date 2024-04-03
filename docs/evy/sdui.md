@@ -105,11 +105,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     "type",
     "view": {
         "content": {
-            "children": [{
-                // Whether to show a title to the row, column, etc...
-                "title",
-                "child": "ROW"
-            }],
+            "children": [ROW],
 
             // Whether to use data to iterate over for example seller.pictures
             // This makes the "input" variable available to each child,
@@ -136,13 +132,21 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 
 ```
 {
-    "type": "SelectContainer", // Shows children under a segmented control
+    "type": "CarouselContainer", // Shows children in a carousel
 }
 ```
 
 ```
 {
-    "type": "CarouselContainer", // Shows children in a carousel
+    "type": "SelectContainer", // Shows children under a segmented control
+    "view": {
+        "content": {
+            "children": [{
+                "title", // What is the name of the selection
+                "child": "ROW"
+            }]
+        }
+    }
 }
 ```
 
@@ -268,6 +272,21 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+```
+{
+    "type": "TextArea",
+    "view": {
+        "content": {
+            "value",
+            "placeholder"
+        }
+    },
+    "edit": {
+        "minimum_characters",
+        "minimum_number"
+    }
+}
+```
 
 ```
 {
@@ -370,6 +389,20 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
+```
+{
+    "type": "DropdownRow",
+    "view": {
+        "content": {
+            "value",
+            "placeholder"
+        },
+        "data"
+    }
+}
+```
+
 
 ### Button rows
 

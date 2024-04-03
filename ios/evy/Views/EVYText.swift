@@ -11,7 +11,7 @@ struct EVYTextView: View {
     let text: String
     
     init(_ text: String) {
-        self.text = parseText(text)
+        self.text = EVYTextView.parseText(text)
     }
     
     var body: some View {
@@ -72,32 +72,32 @@ struct EVYTextView: View {
         }
         return nil
     }
-}
-
-private func parseText(_ input: String) -> String {
-    if (input.count < 1) {
+    
+    static func parseText(_ input: String) -> String {
+        if (input.count < 1) {
+            return input
+        }
+        else if let (match, functionName, functionArgs) = parseFunctionFromText(input) {
+            if functionName == "count" {
+                let count = evyCount(functionArgs)
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: count)
+                return parseText(parsedInput)
+            }
+            else if functionName == "formatCurrency" {
+                let currencyAmount = evyFormatCurrency(functionArgs)
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: currencyAmount)
+                return parseText(parsedInput)
+            }
+        } else if let (match, props) = EVYTextView.propsFromText(input) {
+            let data = try! EVYTextView.parseProps(props)
+            if let parsedData = data?.toString() {
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: parsedData)
+                return parseText(parsedInput)
+            }
+        }
+        
         return input
     }
-    else if let (match, functionName, functionArgs) = parseFunctionFromText(input) {
-        if functionName == "count" {
-            let count = evyCount(functionArgs)
-            let parsedInput = input.replacingOccurrences(of: match.0.description, with: count)
-            return parseText(parsedInput)
-        }
-        else if functionName == "formatCurrency" {
-            let currencyAmount = evyFormatCurrency(functionArgs)
-            let parsedInput = input.replacingOccurrences(of: match.0.description, with: currencyAmount)
-            return parseText(parsedInput)
-        }
-    } else if let (match, props) = EVYTextView.propsFromText(input) {
-        let data = try! EVYTextView.parseProps(props)
-        if let parsedData = data?.toString() {
-            let parsedInput = input.replacingOccurrences(of: match.0.description, with: parsedData)
-            return parseText(parsedInput)
-        }
-    }
-    
-    return input
 }
 
 private func parseProp(props: [String], data: EVYJson) throws -> EVYJson {

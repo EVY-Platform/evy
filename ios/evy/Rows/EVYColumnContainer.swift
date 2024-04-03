@@ -15,8 +15,6 @@ struct EVYColumnContainer: View {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSDUIJSON.ContainerView.self, forKey:.view)
     }
-   
-    @State private var title: String = ""
     
     var body: some View {
         VStack {

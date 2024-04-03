@@ -22,11 +22,12 @@ struct EVYInputRow: View {
     
     private let view: EVYInputRowView
     
+    @State private var value: String = ""
+    
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
+        _value = State(initialValue: EVYTextView.parseText(self.view.content.value))
     }
-    
-    @State private var title: String = ""
     
     var body: some View {
         VStack {
@@ -36,7 +37,7 @@ struct EVYInputRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
-            EVYTextField(value: $title,
+            EVYTextField(value: $value,
                          label: view.content.value,
                          placeholder: view.content.placeholder)
         }

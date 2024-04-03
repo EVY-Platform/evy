@@ -74,13 +74,12 @@
 						}
 					},
 					"children": [{
-						"type": "Select",
+						"type": "Dropdown",
 						"view": {
 							"content": {
 								"value": "{item.condition.value}",
-								"placeholder": "Condition"
+								"placeholder": "Choose one"
 							},
-							"multi": "{false}",
 							"data": "{conditions}"
 						},
 						"edit": {
@@ -106,13 +105,13 @@
 						}
 					},
 					"children": [{
-						"type": "Select",
+						"type": "Dropdown",
 						"view": {
 							"content": {
+								"title": "Selling Reason",
 								"value": "{item.selling_reason.value}",
-								"placeholder": "Condition"
+								"placeholder": "Choose one"
 							},
-							"multi": "{false}",
 							"data": "{selling_reasons}"
 						},
 						"edit": {
@@ -128,54 +127,45 @@
 			"view": {
 				"content": {
 					"children": [{
-						"title": "",
-						"child": {
-							"type": "Input",
-							"view": {
-								"content": {
-									"title": "",
-									"placeholder": "Width",
-									"value": "{formatDimension(item.dimension.width)}"
-								}
-							},
-							"edit": {
-								"destination": "{item.dimension.width}",
-								"minimum_number": "1"
+						"type": "Input",
+						"view": {
+							"content": {
+								"title": "",
+								"placeholder": "Width",
+								"value": "{formatDimension(item.dimension.width)}"
 							}
+						},
+						"edit": {
+							"destination": "{item.dimension.width}",
+							"minimum_number": "1"
 						}
 					},
 					{
-						"title": "",
-						"child": {
-							"type": "Input",
-							"view": {
-								"content": {
-									"title": "",
-									"placeholder": "Height",
-									"value": "{formatDimension(item.dimension.height)}"
-								}
-							},
-							"edit": {
-								"destination": "{item.dimension.height}",
-								"minimum_number": "1"
+						"type": "Input",
+						"view": {
+							"content": {
+								"title": "",
+								"placeholder": "Height",
+								"value": "{formatDimension(item.dimension.height)}"
 							}
+						},
+						"edit": {
+							"destination": "{item.dimension.height}",
+							"minimum_number": "1"
 						}
 					},
 					{
-						"title": "",
-						"child": {
-							"type": "Input",
-							"view": {
-								"content": {
-									"title": "",
-									"placeholder": "Length",
-									"value": "{formatDimension(item.dimension.length)}"
-								}
-							},
-							"edit": {
-								"destination": "{item.dimension.length}",
-								"minimum_number": "1"
+						"type": "Input",
+						"view": {
+							"content": {
+								"title": "",
+								"placeholder": "Length",
+								"value": "{formatDimension(item.dimension.length)}"
 							}
+						},
+						"edit": {
+							"destination": "{item.dimension.length}",
+							"minimum_number": "1"
 						}
 					}]
 				}
@@ -202,37 +192,31 @@
 						}
 					}
 					"children": [{
-						"title": "Where",
-						"child": {
-							"type": "Search",
-							"view": {
-								"content": {
-									"title": "",
-									"value": "formatAddress(item.address)",
-									"placeholder": "Type your address"
-								},
-								"multi": "{false}"
-								"data": "google_place_api"
+						"type": "Search",
+						"view": {
+							"content": {
+								"title": "",
+								"value": "formatAddress(item.address)",
+								"placeholder": "Type your address"
 							},
-							"edit": {
-								"destination": "{item.address}"
-							}
+							"multi": "{false}"
+							"data": "google_place_api"
+						},
+						"edit": {
+							"destination": "{item.address}"
 						}
 					},
 					{
-						"title": "",
-						"child": {
-							"type": "Input",
-							"view": {
-								"content": {
-									"title": "Additional Information",
-									"placeholder": "Buzz code, Take the elevator, etc",
-									"value": "{item.address.instructions}"
-								}
-							},
-							"edit": {
-								"destination": "{item.address.instructions}"
+						"type": "Input",
+						"view": {
+							"content": {
+								"title": "Additional Information",
+								"placeholder": "Buzz code, Take the elevator, etc",
+								"value": "{item.address.instructions}"
 							}
+						},
+						"edit": {
+							"destination": "{item.address.instructions}"
 						}
 					}]
 				}
@@ -363,7 +347,7 @@
 	"title": "Step 2",
 	"rows": [
 		{
-			"type": "Input",
+			"type": "TextArea",
 			"view": {
 				"content": {
 					"title": "",
