@@ -22,13 +22,14 @@ struct EVYTextAreaRow: View {
     
     private let view: EVYTextAreaRowView
     
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYTextAreaRowView.self, forKey:.view)
-    }
-    
-    @State private var note = ""
+    @State private var value = ""
     @FocusState private var isFocused: Bool
     
+    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
+        self.view = try container.decode(EVYTextAreaRowView.self, forKey:.view)
+        _value = State(initialValue: EVYDataManager.i.parseText(self.view.content.value))
+    }
+
     var body: some View {
         VStack {
             if (view.content.title.count > 0) {
@@ -37,7 +38,7 @@ struct EVYTextAreaRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
-            TextField("Write a short description of your product", text: $note, axis: .vertical)
+            TextField(view.content.placeholder, text: $value, axis: .vertical)
                 .lineLimit(10...)
                 .focused($isFocused)
                 .font(.evy)
