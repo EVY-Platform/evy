@@ -9,7 +9,7 @@ import Foundation
 
 func evyCount(_ args: String) -> String {
     do {
-        let res = try EVYDataManager.i.parseProps(args)
+        let res = try EVYTextView.parseProps(args)
         switch res {
         case .array(let arrayValue):
             return String(arrayValue.count)
@@ -23,7 +23,7 @@ func evyCount(_ args: String) -> String {
 
 func evyFormatCurrency(_ args: String) -> String {
     do {
-        let res = try EVYDataManager.i.parseProps(args)
+        let res = try EVYTextView.parseProps(args)
         switch res {
         case .dictionary(let dictValue):
             guard let value = dictValue["value"] else {
@@ -31,9 +31,9 @@ func evyFormatCurrency(_ args: String) -> String {
             }
             return "$\(value.toString())"
         default:
-            return args
+            return "Could not calculate price"
         }
     } catch {
-        return args
+        return "Could not calculate price"
     }
 }

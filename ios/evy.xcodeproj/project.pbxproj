@@ -25,6 +25,7 @@
 		736D10572B78C4C500503C4D /* EVYPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10562B78C4C500503C4D /* EVYPage.swift */; };
 		736D105F2B78CDDB00503C4D /* EVYTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D105E2B78CDDB00503C4D /* EVYTextRow.swift */; };
 		736D10612B7905CA00503C4D /* EVYColumnContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10602B7905CA00503C4D /* EVYColumnContainer.swift */; };
+		7372A7E82BB2EA4D0020E4C6 /* EVYHome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7372A7E72BB2EA4D0020E4C6 /* EVYHome.swift */; };
 		737334F92B7B5F1800D2E1CF /* EVYInputRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */; };
 		737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737334FA2B7B671100D2E1CF /* EVYTextField.swift */; };
 		737C6AA62B2706890093D00C /* evyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA52B2706890093D00C /* evyApp.swift */; };
@@ -41,6 +42,7 @@
 		737F00EC2B342EE600C35772 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */; };
 		73884AC42B2E9AE500BC8726 /* EVYTimeslotPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */; };
 		738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B4AED2B95DC3F005FF527 /* EVYData.swift */; };
+		738CEC402BB2E0E600E44230 /* TestingJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */; };
 		73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BDF82B85F75800C8F882 /* EVYFunctions.swift */; };
 		73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */; };
 		73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */; };
@@ -69,6 +71,7 @@
 		736D10562B78C4C500503C4D /* EVYPage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYPage.swift; sourceTree = "<group>"; };
 		736D105E2B78CDDB00503C4D /* EVYTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextRow.swift; sourceTree = "<group>"; };
 		736D10602B7905CA00503C4D /* EVYColumnContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYColumnContainer.swift; sourceTree = "<group>"; };
+		7372A7E72BB2EA4D0020E4C6 /* EVYHome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYHome.swift; sourceTree = "<group>"; };
 		737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYInputRow.swift; sourceTree = "<group>"; };
 		737334FA2B7B671100D2E1CF /* EVYTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYTextField.swift; sourceTree = "<group>"; };
 		737C6AA22B2706890093D00C /* evy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = evy.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,6 +90,7 @@
 		737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTimeslotPicker.swift; sourceTree = "<group>"; };
 		738B4AED2B95DC3F005FF527 /* EVYData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYData.swift; sourceTree = "<group>"; };
+		738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingJSON.swift; sourceTree = "<group>"; };
 		73A6BDF82B85F75800C8F882 /* EVYFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYFunctions.swift; sourceTree = "<group>"; };
 		73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYImageOverlay.swift; sourceTree = "<group>"; };
 		73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYZoomableContainer.swift; sourceTree = "<group>"; };
@@ -151,6 +155,7 @@
 				737EFA362B90694000DFA0CE /* EVYFlow.swift */,
 				736D10562B78C4C500503C4D /* EVYPage.swift */,
 				73CDCAC12B272E0C00D4E82A /* EVYRow.swift */,
+				7372A7E72BB2EA4D0020E4C6 /* EVYHome.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -178,6 +183,7 @@
 				737C6AA52B2706890093D00C /* evyApp.swift */,
 				737C6AA72B2706890093D00C /* ContentView.swift */,
 				2E8EEC392B2730B0003DF2DC /* Constants.swift */,
+				738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */,
 				737F00EA2B342DEF00C35772 /* Info.plist */,
 				737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */,
 				2E0056102B908CC500D81297 /* Data */,
@@ -322,6 +328,7 @@
 				736D10612B7905CA00503C4D /* EVYColumnContainer.swift in Sources */,
 				730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */,
 				737C6AA82B2706890093D00C /* ContentView.swift in Sources */,
+				7372A7E82BB2EA4D0020E4C6 /* EVYHome.swift in Sources */,
 				7360EEB52B304EE300C4B10B /* EVYText.swift in Sources */,
 				735436532BAFBFC50087F7B3 /* EVYJson.swift in Sources */,
 				73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */,
@@ -356,6 +363,7 @@
 				2EE4E27B2B99CDB300CEF112 /* EVYSheetContainerRow.swift in Sources */,
 				2E5F4DBD2BB2C5D900D3A3FB /* EVYTextAreaRow.swift in Sources */,
 				73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */,
+				738CEC402BB2E0E600E44230 /* TestingJSON.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
