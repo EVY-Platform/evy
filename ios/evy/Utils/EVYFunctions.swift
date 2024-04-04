@@ -37,3 +37,35 @@ func evyFormatCurrency(_ args: String) -> String {
         return "Could not calculate price"
     }
 }
+
+func evyFormatDimension(_ args: String) -> String {
+    do {
+        let res = try EVYTextView.parseProps(args)
+        switch res {
+        case .string(let stringValue):
+            let floatValue = Float(stringValue)!
+            if floatValue > 1000 {
+                let meters = floatValue/1000
+                if meters.truncatingRemainder(dividingBy: 1) == 0 {
+                    return "\(Int(meters))m"
+                }
+                return "\(meters)m"
+            }
+            if floatValue > 100 {
+                let cm = floatValue/10
+                if cm.truncatingRemainder(dividingBy: 1) == 0 {
+                    return "\(Int(cm))cm"
+                }
+                return "\(cm)cm"
+            }
+            if floatValue.truncatingRemainder(dividingBy: 1) == 0 {
+                return "\(Int(floatValue))mm"
+            }
+            return "\(floatValue)mm"
+        default:
+            return args
+        }
+    } catch {
+        return args
+    }
+}
