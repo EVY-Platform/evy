@@ -11,11 +11,18 @@ struct EVYButton: View {
     @Environment(\.navigate) private var navigate
     
     let label: String
-    let target: Route
+    let action: EVYSDUIJSON.Action
     
     var body: some View {
         Button(action: {
-            navigate(target)
+            switch action {
+            case .navigate(let route):
+                navigate(NavOperation.navigate(route))
+            case .submit:
+                navigate(NavOperation.submit)
+            case .close:
+                navigate(NavOperation.close)
+            }
         }) {
             EVYTextView(label)
                 .frame(maxWidth: .infinity)
@@ -29,8 +36,4 @@ struct EVYButton: View {
         .background(Color.blue)
         .cornerRadius(Constants.smallCornerRadius)
     }
-}
-
-#Preview {
-    return EVYButton(label: "Submit", target: Route(flowId: "test", pageId: "test"))
 }

@@ -36,9 +36,7 @@ struct SDUIConstants {
                             "label": "Go home"
                         }
                     },
-                    "action": {
-                        "target": "home:home"
-                    }
+                    "action": "close"
                 }]
             }]
         }
@@ -273,9 +271,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {},
-            "action": {
-                "target": "create_item:step_2"
-            }
+            "action": "navigate:create_item:step_2"
         }
     """
     
@@ -298,9 +294,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {},
-            "action": {
-                "target": "home:home"
-            }
+            "action": "submit:item"
         }
     """
     
