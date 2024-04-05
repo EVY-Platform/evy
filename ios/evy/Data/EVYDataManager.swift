@@ -92,6 +92,18 @@ struct EVYDataManager {
         }
     }
     
+    public func parseProps(_ input: String) throws -> EVYJson? {
+        let variables = input.components(separatedBy: ".")
+        if variables.count > 0 {
+            let firstVariable = variables.first!
+            
+            if let data = self.get(key: firstVariable) {
+                return try data.decoded().parseProp(props: Array(variables[1...]))
+            }
+        }
+        return nil
+    }
+    
     private func getUpdatedData(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {
         if props.count < 1 {
             return data

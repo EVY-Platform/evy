@@ -9,7 +9,7 @@ import Foundation
 
 func evyCount(_ args: String) -> String {
     do {
-        let res = try EVYTextView.parseProps(args)
+        let res = try EVYDataManager.i.parseProps(args)
         switch res {
         case .array(let arrayValue):
             return String(arrayValue.count)
@@ -23,7 +23,7 @@ func evyCount(_ args: String) -> String {
 
 func evyFormatCurrency(_ args: String) -> String {
     do {
-        let res = try EVYTextView.parseProps(args)
+        let res = try EVYDataManager.i.parseProps(args)
         switch res {
         case .dictionary(let dictValue):
             guard let value = dictValue["value"] else {
@@ -40,7 +40,7 @@ func evyFormatCurrency(_ args: String) -> String {
 
 func evyFormatDimension(_ args: String) -> String {
     do {
-        let res = try EVYTextView.parseProps(args)
+        let res = try EVYDataManager.i.parseProps(args)
         switch res {
         case .string(let stringValue):
             let floatValue = Float(stringValue)!

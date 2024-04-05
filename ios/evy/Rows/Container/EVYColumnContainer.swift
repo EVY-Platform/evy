@@ -10,10 +10,10 @@ import SwiftUI
 struct EVYColumnContainer: View {
     public static var JSONType = "ColumnContainer"
     
-    private let view: EVYSDUIJSON.ContainerView
+    private let view: SDUI.ContainerView
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYSDUIJSON.ContainerView.self, forKey:.view)
+        self.view = try container.decode(SDUI.ContainerView.self, forKey:.view)
     }
     
     var body: some View {

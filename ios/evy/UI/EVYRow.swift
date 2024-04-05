@@ -7,10 +7,6 @@
 
 import SwiftUI
 
-public enum EVYRowError: Error {
-    case invalidAction
-}
-
 public enum RowCodingKeys: String, CodingKey {
     case type
     case visible
@@ -19,88 +15,6 @@ public enum RowCodingKeys: String, CodingKey {
     case action
 }
 
-// MARK: JSON Base structures
-public class EVYSDUIJSON {
-    public enum Action: Decodable {
-        case navigate(Route)
-        case submit
-        case close
-        
-        public init(from decoder: Decoder) throws {
-            let container = try decoder.singleValueContainer()
-            
-            guard let value = try? container.decode(String.self) else {
-                throw EVYRowError.invalidAction
-            }
-            
-            let valueSplit = value.split(separator: ":")
-            if valueSplit.count < 1, valueSplit.count > 3 {
-                throw EVYRowError.invalidAction
-            }
-            switch valueSplit.first {
-            case "navigate":
-                self = .navigate(Route(
-                    flowId: String(valueSplit[1]),
-                    pageId: String(valueSplit[2])
-                ))
-            case "submit":
-                self = .submit
-            case "close":
-                self = .close
-            default:
-                throw EVYRowError.invalidAction
-            }
-        }
-    }
-    public struct Edit: Decodable {
-        let destination: String
-    }
-    public struct Placeholder: Decodable {
-        let value: String
-        let condition: String
-    }
-    public class Content: Decodable {
-        let title: String
-    }
-    public struct View: Decodable {
-        var content: Content
-        var placeholder: Placeholder
-    }
-    public struct Row: Decodable {
-        let type: String
-        let visible: String
-        let view: View
-        let edit: Edit
-        let action: Action
-    }
-    
-    private enum ContainerContentCodingKeys: String, CodingKey {
-        case title
-        case children
-        case children_data
-        case child
-    }
-    public class ContainerContent: Content {
-        let children: [EVYRow]
-        let children_data: String?
-        let child: EVYRow?
-        
-        required init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: ContainerContentCodingKeys.self)
-            self.children = try container.decode([EVYRow].self, forKey: .children)
-            self.children_data = try? container.decode(String.self, forKey: .children_data)
-            self.child = try? container.decode(EVYRow.self, forKey: .child)
-            
-            try super.init(from: decoder)
-        }
-    }
-    public struct ContainerView: Decodable {
-        let content: ContainerContent
-        let placeholder: Placeholder?
-    }
-}
-
-// MARK: EVY Row parsing
 struct EVYRow: View, Decodable, Identifiable {
     let id = UUID()
     

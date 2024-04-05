@@ -11,7 +11,7 @@ struct EVYButton: View {
     @Environment(\.navigate) private var navigate
     
     let label: String
-    let action: EVYSDUIJSON.Action
+    let action: SDUI.Action
     
     var body: some View {
         Button(action: {

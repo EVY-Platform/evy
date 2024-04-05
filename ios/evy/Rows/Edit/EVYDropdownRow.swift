@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+public enum EVYDropdownError: Error {
+    case invalidOptions
+    case invalidOption
+}
+
 struct EVYDropdownRowView: Decodable {
     let content: ContentData
     let data: String
@@ -22,9 +27,27 @@ struct EVYDropdownRow: View {
     public static var JSONType = "Dropdown"
     
     private let view: EVYDropdownRowView
+    private let edit: SDUI.Edit
+    private let options: EVYJsonArray
+    
+    @State private var selection: EVYJson?
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
+        self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
+        
+        guard let (_, props) = EVYTextView.propsFromText(view.data) else {
+            throw EVYDropdownError.invalidOptions
+        }
+        let parsedOptions = try EVYDataManager.i.parseProps(props)!
+        
+        switch parsedOptions {
+        case .array(let arrayValue):
+            _selection = State(initialValue: arrayValue.first)
+            self.options = arrayValue
+        default:
+            throw EVYDropdownError.invalidOptions
+        }
     }
     
     @State private var showSheet = false
@@ -38,18 +61,16 @@ struct EVYDropdownRow: View {
                     .padding(.vertical, Constants.minorPadding)
             }
             Button(action: { showSheet.toggle() }) {
-                if (view.content.value.count > 0) {
-                    EVYTextView(view.content.value)
-                        .font(.evy)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, Constants.minorPadding)
-                }
                 HStack {
-                    EVYTextView(view.content.placeholder)
-                        .font(.evy)
-                        .foregroundColor(Constants.placeholderColor)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, Constants.minorPadding)
+                    if let value = selection?.displayValue() {
+                        EVYTextView(value).foregroundColor(.black)
+                    } else {
+                        EVYTextView(view.content.placeholder)
+                            .font(.evy)
+                            .foregroundColor(Constants.placeholderColor)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, Constants.minorPadding)
+                    }
                     Spacer()
                     EVYTextView.parsedText("::chevron.down::")
                         .foregroundColor(.black)
@@ -68,12 +89,14 @@ struct EVYDropdownRow: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 30)
                 }
-                EVYSelect(options: ["No longer used",
-                                    "Moving out",
-                                    "Doesn't fit"])
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-                
+                EVYSelect(selection: $selection, options: options)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                    .onChange(of: selection) { oldValue, newValue in
+                        if let key = newValue?.identifierValue() {
+                            try! EVYDataManager.i.updateValue(key, at: edit.destination)
+                        }
+                    }
             }
         })
     }
@@ -81,6 +104,12 @@ struct EVYDropdownRow: View {
 
 
 #Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "item", data: item)
+    
+    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
+    
     let json =  SDUIConstants.dropdownRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

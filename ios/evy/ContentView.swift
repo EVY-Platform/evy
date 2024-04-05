@@ -39,6 +39,9 @@ struct ContentView: View {
     @State private var currentFlowId: String
     
     init() {
+        let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
+        try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
+        
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
         

@@ -18,7 +18,7 @@ public enum EVYDataModelError: Error {
     case unprocessableValue
 }
 
-public enum EVYJson: Codable {
+public enum EVYJson: Codable, Hashable {
     case string(EVYJsonString)
     case dictionary(EVYJsonDict)
     case array(EVYJsonArray)
@@ -42,6 +42,10 @@ public enum EVYJson: Codable {
         }
 
         throw EVYDataModelError.unprocessableValue
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.identifierValue())
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -78,6 +82,55 @@ public enum EVYJson: Codable {
                 return dictValue.description
             }
             return string
+        }
+    }
+    
+    public func displayValue() -> String {
+        switch self {
+        case .dictionary(_):
+            do {
+                return try self.parseProp(props: ["value"]).toString()
+            } catch {
+                return self.toString()
+            }
+        default:
+            return self.toString()
+        }
+    }
+    
+    public func identifierValue() -> String {
+        switch self {
+        case .dictionary(_):
+            do {
+                return try self.parseProp(props: ["id"]).toString()
+            } catch {
+                return self.toString()
+            }
+        default:
+            return self.toString()
+        }
+    }
+    
+    public func parseProp(props: [String]) throws -> EVYJson {
+        if props.count < 1 {
+            return self
+        }
+        
+        switch self {
+        case .dictionary(let dictValue):
+            guard let firstVariable = props.first else {
+                return self
+            }
+            guard let subData = dictValue[firstVariable] else {
+                throw EVYDataModelError.propertyNotFound
+            }
+            if props.count == 1 {
+                return subData
+            }
+            
+            return try subData.parseProp(props: Array(props[1...]))
+        default:
+            return self
         }
     }
 }

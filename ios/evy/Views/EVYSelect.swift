@@ -7,23 +7,20 @@
 
 import SwiftUI
 
-struct EVYSelect: View {
-    let options: [String]
-    
-    @State private var selection: String?
+public enum EVYSelectError: Error {
+    case invalidOptions
+}
 
-    init(options: [String]) {
-        self.options = options
-        
-        _selection = State(initialValue: options[0])
-    }
+struct EVYSelect: View {
+    @Binding var selection: EVYJson?
+    let options: EVYJsonArray
     
     var body: some View {
         VStack {
             List(selection: $selection) {
                 ForEach(options, id: \.self) { value in
                     HStack {
-                        EVYTextView(value)
+                        EVYTextView(value.displayValue())
                         Spacer()
                         EVYRadioButton(isSelected: value == selection)
                     }
@@ -39,10 +36,15 @@ struct EVYSelect: View {
 
 
 #Preview {
-    let options = [
-        "No longer used",
-        "Moving out",
-        "Doesn't fit"
-    ]
-    return EVYSelect(options: options)
+    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
+    
+    let options = try! EVYDataManager.i.parseProps("selling_reasons")!
+    switch options {
+    case .array(let arrayValue):
+        @State var selection = arrayValue.first
+        return EVYSelect(selection: $selection, options: arrayValue)
+    default:
+        return Text("error")
+    }
 }

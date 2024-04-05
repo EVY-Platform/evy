@@ -25,6 +25,7 @@ struct Constants {
     static let mainCornerRadius: CGFloat = 10
     static let smallCornerRadius: CGFloat = 4
 
+    static let textColor = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
     static let buttonColor: Color = Color(#colorLiteral(red: 0.4745, green: 0.898, blue: 0.9569, alpha: 1))
     static let buttonDisabledColor: Color = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
     static let textButtonColor: Color = .blue

@@ -60,19 +60,6 @@ struct EVYTextView: View {
         return Text(parseText(input)).font(.evy)
     }
     
-    static func parseProps(_ input: String) throws -> EVYJson? {
-        let variables = input.components(separatedBy: ".")
-        if variables.count > 0 {
-            let firstVariable = variables.first!
-            
-            if let data = EVYDataManager.i.get(key: firstVariable) {
-                let temp = data.decoded()
-                return try parseProp(props: Array(variables[1...]), data: temp)
-            }
-        }
-        return nil
-    }
-    
     static func parseText(_ input: String) -> String {
         if (input.count < 1) {
             return input
@@ -94,7 +81,7 @@ struct EVYTextView: View {
                 return parseText(parsedInput)
             }
         } else if let (match, props) = EVYTextView.propsFromText(input) {
-            let data = try! EVYTextView.parseProps(props)
+            let data = try! EVYDataManager.i.parseProps(props)
             if let parsedData = data?.toString() {
                 let parsedInput = input.replacingOccurrences(of: match.0.description, with: parsedData)
                 return parseText(parsedInput)
@@ -102,29 +89,6 @@ struct EVYTextView: View {
         }
         
         return input
-    }
-}
-
-private func parseProp(props: [String], data: EVYJson) throws -> EVYJson {
-    if props.count < 1 {
-        return data
-    }
-    
-    switch data {
-    case .dictionary(let dictValue):
-        guard let firstVariable = props.first else {
-            throw EVYDataParseError.invalidProps
-        }
-        guard let subData = dictValue[firstVariable] else {
-            throw EVYDataParseError.invalidVariable
-        }
-        if props.count == 1 {
-            return subData
-        }
-        
-        return try parseProp(props: Array(props[1...]), data: subData)
-    default:
-        return data
     }
 }
 

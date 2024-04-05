@@ -307,6 +307,9 @@ struct SDUIConstants {
                    "value": "{item.description}",
                    "placeholder": "Write a short description of your product"
                 }
+            },
+            "edit": {
+                "destination": "{item.desription}"
             }
         }
     """

@@ -20,11 +20,11 @@ struct EVYButtonRow: View {
     public static var JSONType = "Button"
     
     private let view: EVYButtonRowView
-    private let action: EVYSDUIJSON.Action
+    private let action: SDUI.Action
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYButtonRowView.self, forKey:.view)
-        self.action = try container.decode(EVYSDUIJSON.Action.self, forKey:.action)
+        self.action = try container.decode(SDUI.Action.self, forKey:.action)
     }
     
     var body: some View {

@@ -12,10 +12,10 @@ import SwiftUI
 struct EVYSheetContainerRow: View {
     public static var JSONType = "SheetContainer"
 
-    private let view: EVYSDUIJSON.ContainerView
+    private let view: SDUI.ContainerView
 
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYSDUIJSON.ContainerView.self, forKey:.view)
+        self.view = try container.decode(SDUI.ContainerView.self, forKey:.view)
     }
     
     @State private var showSheet = false

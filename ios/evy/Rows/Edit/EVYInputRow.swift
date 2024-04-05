@@ -21,13 +21,13 @@ struct EVYInputRow: View {
     public static var JSONType = "Input"
     
     private let view: EVYInputRowView
-    private let edit: EVYSDUIJSON.Edit
+    private let edit: SDUI.Edit
     
     @State private var value: String
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
-        self.edit = try container.decode(EVYSDUIJSON.Edit.self, forKey:.edit)
+        self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
         _value = State(initialValue: self.view.content.value)
     }
@@ -58,6 +58,9 @@ struct EVYInputRow: View {
 
 
 #Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "item", data: item)
+    
     let json =  SDUIConstants.inputRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

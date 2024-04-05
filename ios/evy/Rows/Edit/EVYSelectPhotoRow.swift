@@ -31,6 +31,8 @@ struct EVYSelectPhotoRow: View {
     public static var JSONType = "SelectPhoto"
     
     private let view: EVYSelectPhotoRowView
+    private let edit: SDUI.Edit
+    
     private var fm = FileManager.default
     private var cacheDir: URL {
         let urls = fm.urls(for: .cachesDirectory,
@@ -42,6 +44,7 @@ struct EVYSelectPhotoRow: View {
 
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
+        self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
         do {
             let (_, data) = EVYTextView.propsFromText(self.view.content.photos)!
