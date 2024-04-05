@@ -88,6 +88,11 @@ struct EVYTextView: View {
                 let parsedInput = input.replacingOccurrences(of: match.0.description, with: currencyAmount)
                 return parseText(parsedInput)
             }
+            else if functionName == "formatDimension" {
+                let dimension = evyFormatDimension(functionArgs)
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: dimension)
+                return parseText(parsedInput)
+            }
         } else if let (match, props) = EVYTextView.propsFromText(input) {
             let data = try! EVYTextView.parseProps(props)
             if let parsedData = data?.toString() {
