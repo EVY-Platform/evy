@@ -43,7 +43,6 @@ struct EVYDropdownRow: View {
         
         switch parsedOptions {
         case .array(let arrayValue):
-            _selection = State(initialValue: arrayValue.first)
             self.options = arrayValue
         default:
             throw EVYDropdownError.invalidOptions
