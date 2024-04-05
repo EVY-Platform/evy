@@ -10,18 +10,15 @@ import SwiftUI
 struct EVYHome: View {
     @Environment(\.navigate) private var navigate
     
-    init() {
-        let item = DataConstants.item.data(using: .utf8)!
-        try! EVYDataManager.i.create(key: "item", data: item)
-    }
+    init() {}
     
     var body: some View {
         VStack(spacing: 40) {
             Button("View Item") {
-                navigate(Route(flowId: "view_item", pageId: "view"))
+                navigate(NavOperation.navigate(Route(flowId: "view_item", pageId: "view")))
             }
             Button("Create Item") {
-                navigate(Route(flowId: "create_item", pageId: "step_1"))
+                navigate(NavOperation.navigate(Route(flowId: "create_item", pageId: "step_1")))
             }
         }
     }

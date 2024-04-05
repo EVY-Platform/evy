@@ -8,7 +8,7 @@
 import SwiftUI
 
 public enum EVYRowError: Error {
-    case invalidTarget
+    case invalidAction
 }
 
 public enum RowCodingKeys: String, CodingKey {
@@ -21,24 +21,35 @@ public enum RowCodingKeys: String, CodingKey {
 
 // MARK: JSON Base structures
 public class EVYSDUIJSON {
-    public struct Action: Decodable {
-        let target: Route
-        
-        private enum ActionCodingKeys: String, CodingKey {
-            case target
-        }
+    public enum Action: Decodable {
+        case navigate(Route)
+        case submit
+        case close
         
         public init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: ActionCodingKeys.self)
-            let targetString = try container.decode(String.self, forKey: .target)
-            let targetSplit = targetString.split(separator: ":")
-            if targetSplit.count < 2 {
-                throw EVYRowError.invalidTarget
+            let container = try decoder.singleValueContainer()
+            
+            guard let value = try? container.decode(String.self) else {
+                throw EVYRowError.invalidAction
             }
-            self.target = Route(
-                flowId: String(targetSplit[0]),
-                pageId: String(targetSplit[1])
-            )
+            
+            let valueSplit = value.split(separator: ":")
+            if valueSplit.count < 1, valueSplit.count > 3 {
+                throw EVYRowError.invalidAction
+            }
+            switch valueSplit.first {
+            case "navigate":
+                self = .navigate(Route(
+                    flowId: String(valueSplit[1]),
+                    pageId: String(valueSplit[2])
+                ))
+            case "submit":
+                self = .submit
+            case "close":
+                self = .close
+            default:
+                throw EVYRowError.invalidAction
+            }
         }
     }
     public struct Edit: Decodable {
