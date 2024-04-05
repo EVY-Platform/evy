@@ -309,7 +309,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.desription}"
+                "destination": "{item.description}"
             }
         }
     """

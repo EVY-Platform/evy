@@ -23,14 +23,9 @@ struct EVYTextAreaRow: View {
     private let view: EVYTextAreaRowView
     private let edit: SDUI.Edit
     
-    @State private var value: String
-    @FocusState private var isFocused: Bool
-    
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYTextAreaRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        
-        _value = State(initialValue: EVYTextView.parseText(self.view.content.value))
     }
 
     var body: some View {
@@ -41,31 +36,10 @@ struct EVYTextAreaRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
-            TextField(view.content.placeholder, text: $value, axis: .vertical)
-                .lineLimit(10...)
-                .focused($isFocused)
-                .font(.evy)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                        .stroke(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
-                )
-                .onChange(of: value) { oldValue, newValue in
-                    if oldValue != self.view.content.value {
-                        try! EVYDataManager.i.updateValue(newValue, at: edit.destination)
-                    }
-                }
-                .onAppear(perform: {
-                    value = EVYTextView.parseText(self.view.content.value)
-                })
-        }
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") {
-                        isFocused = false
-                }
-            }
+            EVYTextField(value: view.content.value,
+                         destination: edit.destination,
+                         placeholder: view.content.placeholder,
+                         multiLine: true)
         }
     }
 }

@@ -23,13 +23,9 @@ struct EVYInputRow: View {
     private let view: EVYInputRowView
     private let edit: SDUI.Edit
     
-    @State private var value: String
-    
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        
-        _value = State(initialValue: self.view.content.value)
     }
     
     var body: some View {
@@ -40,17 +36,9 @@ struct EVYInputRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
-            EVYTextField(value: $value,
-                         label: view.content.value,
+            EVYTextField(value: view.content.value,
+                         destination: edit.destination,
                          placeholder: view.content.placeholder)
-            .onChange(of: value) { oldValue, newValue in
-                if oldValue != self.view.content.value {
-                    try! EVYDataManager.i.updateValue(newValue, at: edit.destination)
-                }
-            }
-            .onAppear(perform: {
-                value = EVYTextView.parseText(self.view.content.value)
-            })
         }
     }
 }

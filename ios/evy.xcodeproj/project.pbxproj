@@ -271,12 +271,12 @@
 				73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */,
 				73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */,
 				2ED04EF52B3308C400881DC4 /* EVYMap.swift */,
+				2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */,
 				2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */,
 				7360EEB42B304EE300C4B10B /* EVYText.swift */,
 				737334FA2B7B671100D2E1CF /* EVYTextField.swift */,
 				73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */,
 				73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */,
-				2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
