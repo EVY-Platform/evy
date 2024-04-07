@@ -45,6 +45,7 @@
 		738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B4AED2B95DC3F005FF527 /* EVYData.swift */; };
 		738CEC402BB2E0E600E44230 /* TestingJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */; };
 		73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BDF82B85F75800C8F882 /* EVYFunctions.swift */; };
+		73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73AC529C2BC27913004204A2 /* EVYAPI.swift */; };
 		73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */; };
 		73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */; };
 		73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAC12B272E0C00D4E82A /* EVYRow.swift */; };
@@ -94,6 +95,7 @@
 		738B4AED2B95DC3F005FF527 /* EVYData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYData.swift; sourceTree = "<group>"; };
 		738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingJSON.swift; sourceTree = "<group>"; };
 		73A6BDF82B85F75800C8F882 /* EVYFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYFunctions.swift; sourceTree = "<group>"; };
+		73AC529C2BC27913004204A2 /* EVYAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAPI.swift; sourceTree = "<group>"; };
 		73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYImageOverlay.swift; sourceTree = "<group>"; };
 		73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYZoomableContainer.swift; sourceTree = "<group>"; };
 		73CDCAC12B272E0C00D4E82A /* EVYRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRow.swift; sourceTree = "<group>"; };
@@ -258,6 +260,7 @@
 			children = (
 				737C6AC92B270AD90093D00C /* EVYWebsocket.swift */,
 				737C6ACA2B270AD90093D00C /* EVYManager.swift */,
+				73AC529C2BC27913004204A2 /* EVYAPI.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -399,6 +402,7 @@
 				2EE4E27B2B99CDB300CEF112 /* EVYSheetContainerRow.swift in Sources */,
 				2E5F4DBD2BB2C5D900D3A3FB /* EVYTextAreaRow.swift in Sources */,
 				73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */,
+				73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */,
 				738CEC402BB2E0E600E44230 /* TestingJSON.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
 			);

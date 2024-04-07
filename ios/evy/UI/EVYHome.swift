@@ -10,8 +10,6 @@ import SwiftUI
 struct EVYHome: View {
     @Environment(\.navigate) private var navigate
     
-    init() {}
-    
     var body: some View {
         VStack(spacing: 40) {
             Button("View Item") {
