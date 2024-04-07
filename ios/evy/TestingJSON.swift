@@ -461,6 +461,9 @@ struct DataConstants {
 }
 
 #Preview {
+    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
+    
     let json =  SDUIConstants.page.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYPage.self, from: json)
 }
