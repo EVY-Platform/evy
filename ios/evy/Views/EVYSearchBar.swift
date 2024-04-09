@@ -18,7 +18,7 @@ struct EVYSearchBar: View {
                 Image(systemName: "magnifyingglass")
                 TextField(placeholder, text: $searchFieldValue)
             }
-            .padding(7)
+            .padding(Constants.minorPadding)
             .background(Color(.systemFill))
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
