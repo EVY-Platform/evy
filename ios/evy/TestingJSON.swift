@@ -67,7 +67,7 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "Address row",
-                   "child": \(tagsInputRow),
+                   "child": \(triggersSheetRow),
                    "children": [\(inputRow)]
                }
            }
