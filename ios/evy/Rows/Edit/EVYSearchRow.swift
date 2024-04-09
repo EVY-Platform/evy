@@ -1,8 +1,8 @@
 //
-//  EVYDropdownRow.swift
+//  EVYSearchRow.swift
 //  evy
 //
-//  Created by Clemence Chalot on 24/03/2024.
+//  Created by Geoffroy Lesage on 09/04/2024.
 //
 
 import SwiftUI
