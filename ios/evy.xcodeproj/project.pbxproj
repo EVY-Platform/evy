@@ -229,7 +229,6 @@
 		737C6AA42B2706890093D00C /* evy */ = {
 			isa = PBXGroup;
 			children = (
-				73C78AFB2BC564E30026F39D /* Assets */,
 				737C6AA92B27068A0093D00C /* Assets.xcassets */,
 				737C6AA52B2706890093D00C /* evyApp.swift */,
 				737C6AA72B2706890093D00C /* ContentView.swift */,
@@ -244,6 +243,7 @@
 				730D008E2B29D91200B5BCB6 /* Utils */,
 				737C6ABF2B270AAE0093D00C /* Models */,
 				737C6AC82B270AD90093D00C /* API */,
+				73C78AFB2BC564E30026F39D /* Assets */,
 				737C6AAB2B27068A0093D00C /* Preview Content */,
 			);
 			path = evy;
