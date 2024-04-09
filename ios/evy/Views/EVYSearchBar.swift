@@ -17,6 +17,7 @@ struct EVYSearchBar: View {
             HStack {
                 Image(systemName: "magnifyingglass")
                 TextField(placeholder, text: $searchFieldValue)
+                    .font(.evy)
             }
             .padding(Constants.minorPadding)
             .background(Color(.systemFill))
