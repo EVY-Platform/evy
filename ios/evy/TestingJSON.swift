@@ -61,15 +61,13 @@ struct SDUIConstants {
         }
     """
     
-    static let rows = "[\(selectPhotoRow), \(dropdownRow), \(textAreaRow), \(textRow), \(columnContainerRow), \(sheetContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
-    
     static let sheetContainerRow = """
         {
            "type": "SheetContainer",
            "view": {
                "content": {
                    "title": "Address row",
-                   "child": \(triggersSheetRow),
+                   "child": \(tagsInputRow),
                    "children": [\(inputRow)]
                }
            }
@@ -89,6 +87,53 @@ struct SDUIConstants {
            },
             "edit": {
                 "destination": "{item.selling_reason}"
+            }
+        }
+    """
+    
+    static let searchRow = """
+        {
+           "type": "Search",
+           "view": {
+               "content": {
+                   "title": "",
+                   "value": "{tags[].value}",
+                   "placeholder": "Search for tags"
+               },
+                "data": "api:tags"
+           },
+            "edit": {
+                "destination": "{item.tag_ids}"
+            }
+        }
+    """
+    
+    static let tagsInputRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "Tags",
+                    "placeholder": "Search for tags",
+                    "value": "{item.tag_ids}"
+                }
+            },
+            "edit": {
+                "destination": "{item.title}",
+                "minimum_characters": "6"
+            }
+        }
+    """
+    
+    static let tagsRow = """
+        {
+            "type": "SheetContainer",
+            "view": {
+                "content": {
+                    "title": "Tags",
+                    "child": \(tagsInputRow),
+                    "children": [\(searchRow)]
+                }
             }
         }
     """
@@ -274,6 +319,8 @@ struct SDUIConstants {
             "action": "navigate:create_item:step_2"
         }
     """
+    
+    static let rows = "[\(selectPhotoRow), \(dropdownRow), \(textAreaRow), \(textRow), \(columnContainerRow), \(sheetContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(tagsRow), \(navigateButtonRow)]"
     
     static let page2 = """
         {
@@ -461,9 +508,6 @@ struct DataConstants {
 }
 
 #Preview {
-    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
-    
     let json =  SDUIConstants.page.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYPage.self, from: json)
 }

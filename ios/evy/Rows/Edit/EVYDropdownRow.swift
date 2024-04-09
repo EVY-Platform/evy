@@ -28,7 +28,7 @@ struct EVYDropdownRow: View {
     
     private let view: EVYDropdownRowView
     private let edit: SDUI.Edit
-    private let options: EVYJsonArray
+    private var options: EVYJsonArray = []
     
     @State private var selection: EVYJson?
     
@@ -36,16 +36,10 @@ struct EVYDropdownRow: View {
         self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
-        guard let (_, props) = EVYTextView.propsFromText(view.data) else {
-            throw EVYDropdownError.invalidOptions
-        }
-        let parsedOptions = try EVYDataManager.i.parseProps(props)!
-        
-        switch parsedOptions {
-        case .array(let arrayValue):
-            self.options = arrayValue
-        default:
-            throw EVYDropdownError.invalidOptions
+        if let (_, props) = EVYTextView.propsFromText(view.data),
+           let parsedOptions = try EVYDataManager.i.parseProps(props),
+           case let .array(arrayValue) = parsedOptions {
+            self.options.append(contentsOf: arrayValue)
         }
     }
     
@@ -55,7 +49,6 @@ struct EVYDropdownRow: View {
         VStack {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
@@ -65,7 +58,6 @@ struct EVYDropdownRow: View {
                         EVYTextView(value).foregroundColor(.black)
                     } else {
                         EVYTextView(view.content.placeholder)
-                            .font(.evy)
                             .foregroundColor(Constants.placeholderColor)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, Constants.minorPadding)
@@ -84,7 +76,6 @@ struct EVYDropdownRow: View {
             VStack {
                 if (view.content.title.count > 0) {
                     EVYTextView(view.content.title)
-                        .font(.evy)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 30)
                 }
@@ -103,12 +94,6 @@ struct EVYDropdownRow: View {
 
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "item", data: item)
-    
-    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
-    
     let json =  SDUIConstants.dropdownRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

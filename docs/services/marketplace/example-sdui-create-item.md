@@ -310,21 +310,38 @@
 			}
 		},
 		{
-			"type": "Search",
+			"type": "SheetContainer",
 			"view": {
 				"content": {
 					"title": "Tags",
-					"value": "{item.tags}",
-					"placeholder": "Outdoor, Furniture, etc"
-				},
-				"data": "{tags}",
-				"multi": "{true}"
-			},
-			"edit": {
-				"destination": "{item.tags}",
-				"minimum_number": "1"
+					"child": {
+						"type": "Input",
+						"view": {
+							"content": {
+								"title": "",
+								"placeholder": "Search for tags",
+								"value": "{item.tag_ids}"
+							}
+						}
+					},
+					"children": [{
+						"type": "Search",
+						"view": {
+							"content": {
+								"title": "Tags",
+								"value": "{tag[].value}",
+								"placeholder": "Search for tags"
+							},
+							"data": "{api:tags}"
+						},
+						"edit": {
+							"destination": "{item.tag_ids}"
+						}
+					}]
+				}
 			}
-		},{
+		},
+		{
 			"type": "Button",
 			"view": {
 				"content": {

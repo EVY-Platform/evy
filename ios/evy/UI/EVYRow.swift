@@ -53,9 +53,12 @@ struct EVYRow: View, Decodable, Identifiable {
             
             case EVYTextAreaRow.JSONType:
                 self.view = try EVYTextAreaRow(container: container)
+            
+            case EVYSearchRow.JSONType:
+                self.view = try EVYSearchRow(container: container)
                     
             default:
-                self.view = Text("I am a row")
+                self.view = EVYTextView("I am a row")
         }
     }
     

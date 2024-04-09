@@ -7,53 +7,68 @@
 
 import Foundation
 
-struct MovieResponse: Decodable {
-    let movies: [Movie]
+struct ResultResponse: Decodable {
+    let results: [Result]
     
     private enum CodingKeys: String, CodingKey {
-        case movies = "Search"
+        case results = "Search"
     }
 }
 
-struct Movie: Decodable {
-    let imdbID: String
+struct Result: Decodable {
+    let id: String
     let title: String
     
     private enum CodingKeys: String, CodingKey {
-        case imdbID = "imdbID"
+        case id = "imdbID"
         case title = "Title"
     }
     
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        
+        let title = try container.decode(String.self, forKey: .title)
+        let components = title.components(separatedBy: " ")
+        self.title = components.randomElement()!
+    }
+}
+
+struct ResultViewModel {
+    let result: Result
+    
+    var id: String {
+        result.id
+    }
+    var title: String {
+        result.title
+    }
 }
 
 @MainActor
-class MovieListViewModel: ObservableObject {
+class EVYSearchAPI: ObservableObject {
     
-    @Published var movies: [MovieViewModel] = []
+    @Published var results: [ResultViewModel] = []
+    @Published var selected: [ResultViewModel] = []
     
     func search(name: String) async {
         do {
-            let movies = try await EVYAPI().getMovies(searchTerm: name)
-            self.movies = movies.map(MovieViewModel.init)
+            let results = try await EVYMovieAPI().getResults(searchTerm: name)
+            self.results = results.map(ResultViewModel.init)
             
         } catch {
             print(error)
         }
     }
     
-}
-
-
-struct MovieViewModel {
-    
-    let movie: Movie
-    
-    var imdbId: String {
-        movie.imdbID
+    func select(_ element: ResultViewModel) {
+        selected.append(element)
+        results.removeAll(where: { $0.id == element.id })
     }
     
-    var title: String {
-        movie.title
+    func unselect(_ element: ResultViewModel) {
+        results.insert(element, at: 0)
+        selected.removeAll(where: { $0.id == element.id })
     }
 }
 
@@ -62,8 +77,8 @@ enum NetworkError: Error {
     case badID
 }
 
-class EVYAPI {
-    func getMovies(searchTerm: String) async throws -> [Movie] {
+class EVYMovieAPI {
+    func getResults(searchTerm: String) async throws -> [Result] {
         var components = URLComponents()
         components.scheme = "https"
         components.host = "omdbapi.com"
@@ -82,40 +97,7 @@ class EVYAPI {
             throw NetworkError.badID
         }
         
-        let movieResponse = try? JSONDecoder().decode(MovieResponse.self, from: data)
-        return movieResponse?.movies ?? []
-    }
-}
-
-import SwiftUI
-
-struct TestView: View {
-    
-    @StateObject private var movieListVM = MovieListViewModel()
-    @State private var searchText: String = ""
-    
-    var body: some View {
-        NavigationView {
-            List(movieListVM.movies, id: \.imdbId) { movie in
-                Text(movie.title)
-            }
-            .listStyle(.plain)
-            .searchable(text: $searchText)
-            .onChange(of: searchText) { oldValue, newValue in
-                Task.init(operation: {
-                    if !newValue.isEmpty &&  newValue.count > 3 {
-                        await movieListVM.search(name: newValue)
-                    } else {
-                        movieListVM.movies.removeAll()
-                    }
-                })
-            }
-        }
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        TestView()
+        let resultResponse = try? JSONDecoder().decode(ResultResponse.self, from: data)
+        return resultResponse?.results ?? []
     }
 }
