@@ -48,35 +48,52 @@ struct SDUIConstants {
             "name": "Create item",
             "type": "create",
             "data": "item",
-            "pages": \(pages)
+            "pages": [\(createItemStep1), \(createItemStep2)]
         }
     """
     
-    static let pages = "[\(page), \(page2)]"
-    static let page = """
+    static let createItemStep1 = """
         {
             "id": "step_1",
             "title": "Step 1",
-            "rows": \(rows)
+            "rows": [
+                \(selectPhotoRow),
+                \(inputRow),
+                \(inputPriceRow),
+                \(condition),
+                \(sellingReason),
+                \(columnContainerDimensionsRow),
+                \(tagsRow),
+                \(navigateButtonRow)
+            ]
+        }
+    """
+    static let createItemStep2 = """
+        {
+            "id": "step_2",
+            "title": "Step 2",
+            "rows": [\(textRow), \(submitButtonRow)]
         }
     """
     
-    static let rows = "[\(selectPhotoRow), \(dropdownRow), \(textAreaRow), \(textRow), \(columnContainerRow), \(sheetContainerRow), \(inputRow), \(inputPriceRow), \(columnContainerDimensionsRow), \(navigateButtonRow)]"
-    
-    static let sheetContainerRow = """
+    static let condition = """
         {
-           "type": "SheetContainer",
+           "type": "Dropdown",
            "view": {
                "content": {
-                   "title": "Address row",
-                   "child": \(triggersSheetRow),
-                   "children": [\(inputRow)]
-               }
-           }
+                   "title": "Condition",
+                   "value": "",
+                   "placeholder": "Choose one"
+               },
+                "data": "{conditions}"
+           },
+            "edit": {
+                "destination": "{item.condition}"
+            }
         }
     """
     
-    static let dropdownRow = """
+    static let sellingReason = """
         {
            "type": "Dropdown",
            "view": {
@@ -89,6 +106,53 @@ struct SDUIConstants {
            },
             "edit": {
                 "destination": "{item.selling_reason}"
+            }
+        }
+    """
+    
+    static let searchRow = """
+        {
+           "type": "Search",
+           "view": {
+               "content": {
+                   "title": "",
+                   "value": "{tags[].value}",
+                   "placeholder": "Search for tags"
+               },
+                "data": "api:tags"
+           },
+            "edit": {
+                "destination": "{item.tag_ids}"
+            }
+        }
+    """
+    
+    static let tagsInputRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "Tags",
+                    "placeholder": "Search for tags",
+                    "value": "{item.tag_ids}"
+                }
+            },
+            "edit": {
+                "destination": "{item.title}",
+                "minimum_characters": "6"
+            }
+        }
+    """
+    
+    static let tagsRow = """
+        {
+            "type": "SheetContainer",
+            "view": {
+                "content": {
+                    "title": "Tags",
+                    "child": \(tagsInputRow),
+                    "children": [\(searchRow)]
+                }
             }
         }
     """
@@ -111,65 +175,12 @@ struct SDUIConstants {
             }
         }
     """
-    
-    static let textRow = """
-        {
-            "type": "Text",
-            "view": {
-                "content": {
-                    "title": "{item.title}",
-                    "text": "Lorem Ipsum is simply ::star.square.on.square.fill:: dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-                },
-                "max_lines": "2"
-            }
-        }
-    """
-    
-    static let textRowNoTitle = """
-        {
-            "type": "Text",
-            "view": {
-                "content": {
-                    "title": "",
-                    "text": "Lorem Ipsum is simply ::star.square.on.square.fill:: dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-                },
-                "max_lines": "2"
-            }
-        }
-    """
-    static let columnContainerRow = """
-        {
-            "type": "ColumnContainer",
-            "view": {
-                "content": {
-                    "title": "Hello",
-                    "children": [\(textRowNoTitle), \(textRowNoTitle)]
-                }
-            }
-        }
-    """
     static let inputRow = """
         {
             "type": "Input",
             "view": {
                 "content": {
                     "title": "A row title ::star.square.on.square.fill::",
-                    "value": "{item.title}",
-                    "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
-                }
-            },
-            "edit": {
-                "destination": "{item.title}",
-                "minimum_characters": "6"
-            }
-        }
-    """
-    static let triggersSheetRow = """
-        {
-            "type": "Input",
-            "view": {
-                "content": {
-                    "title": "Click me to open sheet",
                     "value": "{item.title}",
                     "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
                 }
@@ -275,14 +286,73 @@ struct SDUIConstants {
         }
     """
     
-    static let page2 = """
+    
+    
+    static let sheetContainerRow = """
         {
-            "id": "step_2",
-            "title": "Step 2",
-            "rows": \(rows2)
+           "type": "SheetContainer",
+           "view": {
+               "content": {
+                   "title": "Address row",
+                   "child": \(triggersSheetRow),
+                   "children": [\(inputRow)]
+               }
+           }
         }
     """
-    static let rows2 = "[\(textRow), \(submitButtonRow)]"
+    
+    static let textRow = """
+        {
+            "type": "Text",
+            "view": {
+                "content": {
+                    "title": "{item.title}",
+                    "text": "Lorem Ipsum is simply ::star.square.on.square.fill:: dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+                },
+                "max_lines": "2"
+            }
+        }
+    """
+    
+    static let textRowNoTitle = """
+        {
+            "type": "Text",
+            "view": {
+                "content": {
+                    "title": "",
+                    "text": "Lorem Ipsum is simply ::star.square.on.square.fill:: dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+                },
+                "max_lines": "2"
+            }
+        }
+    """
+    static let columnContainerRow = """
+        {
+            "type": "ColumnContainer",
+            "view": {
+                "content": {
+                    "title": "Hello",
+                    "children": [\(textRowNoTitle), \(textRowNoTitle)]
+                }
+            }
+        }
+    """
+    static let triggersSheetRow = """
+        {
+            "type": "Input",
+            "view": {
+                "content": {
+                    "title": "Click me to open sheet",
+                    "value": "{item.title}",
+                    "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
+                }
+            },
+            "edit": {
+                "destination": "{item.title}",
+                "minimum_characters": "6"
+            }
+        }
+    """
     
     static let submitButtonRow = """
         {
@@ -316,14 +386,11 @@ struct SDUIConstants {
 }
 
 struct DataConstants {
-    static let selling_reason = """
-        {
-            "id": "selling_reason",
-            "value": "No longer used",
-        }
-    """
     static let selling_reasons = """
-        [\(selling_reason),{
+        [{
+            "id": "76d781c6-7ab1-4b5e-99d5-60d417e3c382",
+            "value": "No longer used",
+        },{
             "id": "76d781c6-7ab1-4b5e-99d5-60d417e3c385",
             "value": "Moving out",
         },{
@@ -458,12 +525,4 @@ struct DataConstants {
             ]
         }
     """
-}
-
-#Preview {
-    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
-    
-    let json =  SDUIConstants.page.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYPage.self, from: json)
 }

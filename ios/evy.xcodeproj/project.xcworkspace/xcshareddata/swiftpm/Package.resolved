@@ -1,4 +1,5 @@
 {
+  "originHash" : "23f278c9369d41b4b73cc2b50c9da62bfb012c2479225f832f6d50a8e630300e",
   "pins" : [
     {
       "identity" : "contextcodable.swift",
@@ -37,5 +38,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

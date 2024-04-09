@@ -51,14 +51,7 @@ struct EVYTextField: View {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "item", data: item)
-    
     return VStack {
-        EVYTextField(value: "{item.title}",
-                     destination: "{item.title}",
-                     placeholder: "Sample placeholder")
-                     
         EVYTextField(value: "{item.title}",
                      destination: "{item.title}",
                      placeholder: "Sample ::star.square.on.square.fill:: placeholder")

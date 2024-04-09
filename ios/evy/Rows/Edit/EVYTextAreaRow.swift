@@ -32,7 +32,6 @@ struct EVYTextAreaRow: View {
         VStack {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
@@ -45,9 +44,6 @@ struct EVYTextAreaRow: View {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "item", data: item)
-    
     let json =  SDUIConstants.textAreaRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

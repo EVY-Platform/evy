@@ -7,15 +7,22 @@
 
 import SwiftUI
 
+public enum EVYTextStyle: String {
+    case body
+    case title
+}
+
 struct EVYTextView: View {
     let text: String
+    var style: EVYTextStyle = .body
     
-    init(_ text: String) {
+    init(_ text: String, style: EVYTextStyle = .body) {
         self.text = EVYTextView.parseText(text)
+        self.style = style
     }
     
     var body: some View {
-        EVYTextView.parsedText(text).lineSpacing(Constants.spacing)
+        EVYTextView.parsedText(text, style).lineSpacing(Constants.spacing)
     }
     
     static func propsFromText(_ input: String) -> (RegexMatch, String)? {
@@ -26,7 +33,7 @@ struct EVYTextView: View {
         return nil
     }
     
-    static func parsedText(_ input: String) -> Text {
+    static func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text {
         if input.count < 1 {
             return Text(input)
         }
@@ -45,19 +52,24 @@ struct EVYTextView: View {
             if hasPrefix && hasSuffix {
                 let start = String(input.prefix(upTo: imageStart))
                 let end = String(input.suffix(from: imageEnd))
-                return self.parsedText(start) + imageText + self.parsedText(end)
+                return self.parsedText(start, style) + imageText + self.parsedText(end, style)
             } else if hasPrefix {
                 let start = String(input.prefix(upTo: imageStart))
-                return self.parsedText(start) + imageText
+                return self.parsedText(start, style) + imageText
             } else if hasSuffix {
                 let end = String(input.suffix(from: imageEnd))
-                return imageText + self.parsedText(end)
+                return imageText + self.parsedText(end, style)
             } else {
                 return imageText
             }
         }
         
-        return Text(parseText(input)).font(.evy)
+        switch style {
+        case .title:
+            return Text(parseText(input)).font(.evyTitle)
+        default:
+            return Text(parseText(input)).font(.evy)
+        }
     }
     
     static func parseText(_ input: String) -> String {
@@ -128,7 +140,7 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 #Preview {
     return VStack {
         EVYTextView("::star.square.on.square.fill::")
-        EVYTextView("Just text")
+        EVYTextView("Just text", style: EVYTextStyle.title)
         EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
         EVYTextView("count: {count(item.photos)}")
         EVYTextView("{item.title} has {count(item.photos)} photos ::star.square.on.square.fill::")

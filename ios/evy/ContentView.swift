@@ -41,6 +41,8 @@ struct ContentView: View {
     init() {
         let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
         try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
+        let conditions = DataConstants.conditions.data(using: .utf8)!
+        try! EVYDataManager.i.create(key: "conditions", data: conditions)
         
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)

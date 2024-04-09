@@ -32,7 +32,6 @@ struct EVYInputRow: View {
         VStack {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }

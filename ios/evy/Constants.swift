@@ -8,8 +8,9 @@
 import SwiftUI
 
 extension Font {
-    static let evy = Font.custom("SF Pro", size: 15)
-    static let button = Font.custom("SF Pro", size: 24)
+    static let evy = Font.custom("SFProText-Regular", size: 15)
+    static let evyTitle = Font.custom("SFProText-Bold", size: 20)
+    static let button = Font.custom("SFProText-Regular", size: 24)
 }
 
 struct Constants {

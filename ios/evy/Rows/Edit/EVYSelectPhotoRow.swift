@@ -58,7 +58,6 @@ struct EVYSelectPhotoRow: View {
         VStack {
             if view.content.title.count > 0 {
                 EVYTextView(view.content.title)
-                    .font(.evy)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
@@ -103,10 +102,8 @@ struct EVYSelectPhotoButton: View {
                 label: {
                     let stack = VStack {
                         EVYTextView(icon)
-                            .font(.evy)
                             .foregroundColor(Constants.placeholderColor)
                         EVYTextView(subtitle)
-                            .font(.evy)
                             .foregroundColor(Constants.placeholderColor)
                     }
                     if fullScreen {
