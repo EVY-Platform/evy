@@ -22,8 +22,3 @@ struct EVYPage: View, Decodable {
         }
     }
 }
-
-#Preview {
-    let json =  SDUIConstants.page.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYPage.self, from: json)
-}

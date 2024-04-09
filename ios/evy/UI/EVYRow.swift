@@ -66,8 +66,3 @@ struct EVYRow: View, Decodable, Identifiable {
         AnyView(view)
     }
 }
-
-#Preview {
-    let json =  SDUIConstants.page.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYPage.self, from: json)
-}

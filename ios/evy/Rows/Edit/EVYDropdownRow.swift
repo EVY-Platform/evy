@@ -94,6 +94,6 @@ struct EVYDropdownRow: View {
 
 
 #Preview {
-    let json =  SDUIConstants.dropdownRow.data(using: .utf8)!
+    let json =  SDUIConstants.condition.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

@@ -50,7 +50,6 @@
 		73C78AEE2BC54DFE0026F39D /* EVYSearchRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */; };
 		73C78AF02BC551880026F39D /* EVYSearchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AEF2BC551880026F39D /* EVYSearchBar.swift */; };
 		73C78AF22BC552150026F39D /* EVYHorizontalSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AF12BC552150026F39D /* EVYHorizontalSelection.swift */; };
-		73C78AFA2BC564340026F39D /* Storyboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 73C78AF92BC564340026F39D /* Storyboard.storyboard */; };
 		73C78AFE2BC564F10026F39D /* SF-Pro-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 73C78AFC2BC564F00026F39D /* SF-Pro-Text-Regular.otf */; };
 		73C78AFF2BC564F10026F39D /* SF-Pro-Text-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 73C78AFD2BC564F10026F39D /* SF-Pro-Text-Bold.otf */; };
 		73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */; };
@@ -107,7 +106,6 @@
 		73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYSearchRow.swift; sourceTree = "<group>"; };
 		73C78AEF2BC551880026F39D /* EVYSearchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchBar.swift; sourceTree = "<group>"; };
 		73C78AF12BC552150026F39D /* EVYHorizontalSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYHorizontalSelection.swift; sourceTree = "<group>"; };
-		73C78AF92BC564340026F39D /* Storyboard.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Storyboard.storyboard; sourceTree = "<group>"; };
 		73C78AFC2BC564F00026F39D /* SF-Pro-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Pro-Text-Regular.otf"; sourceTree = "<group>"; };
 		73C78AFD2BC564F10026F39D /* SF-Pro-Text-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Pro-Text-Bold.otf"; sourceTree = "<group>"; };
 		73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYImageOverlay.swift; sourceTree = "<group>"; };
@@ -237,7 +235,6 @@
 				737C6AA72B2706890093D00C /* ContentView.swift */,
 				2E8EEC392B2730B0003DF2DC /* Constants.swift */,
 				738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */,
-				73C78AF92BC564340026F39D /* Storyboard.storyboard */,
 				737F00EA2B342DEF00C35772 /* Info.plist */,
 				737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */,
 				2E0056102B908CC500D81297 /* Data */,
@@ -384,7 +381,6 @@
 				73C78AFF2BC564F10026F39D /* SF-Pro-Text-Bold.otf in Resources */,
 				737C6AAD2B27068A0093D00C /* Preview Assets.xcassets in Resources */,
 				737C6AAA2B27068A0093D00C /* Assets.xcassets in Resources */,
-				73C78AFA2BC564340026F39D /* Storyboard.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
