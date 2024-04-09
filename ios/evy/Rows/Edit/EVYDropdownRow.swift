@@ -2,7 +2,7 @@
 //  EVYDropdownRow.swift
 //  evy
 //
-//  Created by Clemence Chalot on 24/03/2024.
+//  Created by Clemence Chalot on 24/3/2024.
 //
 
 import SwiftUI

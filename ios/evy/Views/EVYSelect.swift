@@ -2,7 +2,7 @@
 //  EVYSelectRow.swift
 //  evy
 //
-//  Created by Clemence Chalot on 07/03/2024.
+//  Created by Clemence Chalot on 7/3/2024.
 //
 
 import SwiftUI

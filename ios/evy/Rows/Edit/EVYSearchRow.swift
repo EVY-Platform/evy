@@ -2,7 +2,7 @@
 //  EVYSearchRow.swift
 //  evy
 //
-//  Created by Geoffroy Lesage on 09/04/2024.
+//  Created by Geoffroy Lesage on 9/4/2024.
 //
 
 import SwiftUI
