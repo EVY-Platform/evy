@@ -35,7 +35,7 @@ extension EnvironmentValues {
 struct ContentView: View {
     private let flows: [EVYFlow]
     @State private var routes: [Route] = []
-    @State private var currentFlowId: String
+    @State private var currentFlowId: String = "home"
     @State private var title: String?
     
     init() {
@@ -46,8 +46,6 @@ struct ContentView: View {
         
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
-        
-        _currentFlowId = State(initialValue: "home")
     }
     
     private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) throws {
