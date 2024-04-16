@@ -36,7 +36,6 @@ struct ContentView: View {
     private let flows: [EVYFlow]
     @State private var routes: [Route] = []
     @State private var currentFlowId: String = "home"
-    @State private var title: String?
     
     init() {
         let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
@@ -117,9 +116,7 @@ struct ContentView: View {
                 }
                 .navigationDestination(for: Route.self) { route in
                     let flow = flows.first(where: {$0.id == route.flowId})!
-                    let page = flow.getPageById(route.pageId)!
-                    page
-                        .navigationTitle(page.title)
+                    flow.getPageById(route.pageId)!
                         .environment(\.navigate) { navOperation in
                             try! handleNavigationData(navOperation, currentFlowId)
                         }

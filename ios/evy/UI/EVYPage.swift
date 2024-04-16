@@ -19,6 +19,6 @@ struct EVYPage: View, Decodable {
                     .padding(.horizontal, Constants.majorPadding)
                     .padding(.vertical, Constants.minorPadding)
             }
-        }
+        }.navigationTitle(title)
     }
 }
