@@ -48,7 +48,7 @@ struct SDUIConstants {
             "name": "Create item",
             "type": "create",
             "data": "item",
-            "pages": [\(createItemStep1), \(createItemStep2), \(createItemStep3)]
+            "pages": [\(createItemStep1), \(createItemStep2), \(createItemStep3), \(createItemStep4), \(createItemStep5)]
         }
     """
     
@@ -79,7 +79,21 @@ struct SDUIConstants {
         {
             "id": "step_3",
             "title": "Pickup & delivery",
-            "rows": [\(textRow), \(submitButtonRow)]
+            "rows": [\(textRow), \(navigate3ButtonRow)]
+        }
+    """
+    static let createItemStep4 = """
+        {
+            "id": "step_4",
+            "title": "Payment options",
+            "rows": [\(textRow), \(navigate4ButtonRow)]
+        }
+    """
+    static let createItemStep5 = """
+        {
+            "id": "step_5",
+            "title": "Sharing data publicly",
+            "rows": [\(piiRow), \(submitButtonRow)]
         }
     """
     
@@ -307,6 +321,34 @@ struct SDUIConstants {
         }
     """
     
+    static let navigate3ButtonRow = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Next"
+                }
+            },
+            "edit": {},
+            "action": "navigate:create_item:step_4"
+        }
+    """
+    
+    static let navigate4ButtonRow = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Next"
+                }
+            },
+            "edit": {},
+            "action": "navigate:create_item:step_5"
+        }
+    """
+    
     
     
     static let sheetContainerRow = """
@@ -334,6 +376,19 @@ struct SDUIConstants {
             }
         }
     """
+    
+    static let piiRow = #"""
+        {
+            "type": "Text",
+            "view": {
+                "content": {
+                    "title": "",
+                    "text": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule"
+                },
+                "max_lines": "20"
+            }
+        }
+    """#
     
     static let textRowNoTitle = """
         {
