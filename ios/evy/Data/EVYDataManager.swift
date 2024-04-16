@@ -75,21 +75,22 @@ struct EVYDataManager {
         }
             
         let variables = props.components(separatedBy: ".")
-        if variables.count > 1 {
-            guard let modelData = get(key: variables.first!) else {
-                throw EVYDataError.keyNotFound
-            }
-            do {
-                let valueAsData = "\"\(value)\"".data(using: .utf8)!
-                let valueAsJson = try! JSONDecoder().decode(EVYJson.self, from: valueAsData)
-                let updatedData = try getUpdatedData(props: Array(variables[1...]),
-                                                     data: modelData.decoded(),
-                                                     value: valueAsJson)
-                
-                let newData = try JSONEncoder().encode(updatedData)
-                try! update(key: variables.first!, data: newData)
-            } catch {}
+        guard variables.count > 1 else {
+            throw EVYDataParseError.invalidProps
         }
+        
+        guard let modelData = get(key: variables.first!) else {
+            throw EVYDataError.keyNotFound
+        }
+        
+        let valueAsData = "\"\(value)\"".data(using: .utf8)!
+        let valueAsJson = try! JSONDecoder().decode(EVYJson.self, from: valueAsData)
+        let updatedData = try getUpdatedData(props: Array(variables[1...]),
+                                             data: modelData.decoded(),
+                                             value: valueAsJson)
+        
+        let newData = try JSONEncoder().encode(updatedData)
+        try update(key: variables.first!, data: newData)
     }
     
     public func parseProps(_ input: String) throws -> EVYJson? {
