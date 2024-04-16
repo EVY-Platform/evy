@@ -72,7 +72,7 @@ struct SDUIConstants {
         {
             "id": "step_2",
             "title": "Step 2",
-            "rows": [\(textRow), \(submitButtonRow)]
+            "rows": [\(textAreaRow), \(submitButtonRow)]
         }
     """
     
