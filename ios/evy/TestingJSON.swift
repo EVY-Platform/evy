@@ -48,7 +48,7 @@ struct SDUIConstants {
             "name": "Create item",
             "type": "create",
             "data": "item",
-            "pages": [\(createItemStep1), \(createItemStep2)]
+            "pages": [\(createItemStep1), \(createItemStep2), \(createItemStep3)]
         }
     """
     
@@ -64,7 +64,7 @@ struct SDUIConstants {
                 \(sellingReason),
                 \(columnContainerDimensionsRow),
                 \(tagsRow),
-                \(navigateButtonRow)
+                \(navigate1ButtonRow)
             ]
         }
     """
@@ -72,7 +72,14 @@ struct SDUIConstants {
         {
             "id": "step_2",
             "title": "Describe item",
-            "rows": [\(textAreaRow), \(submitButtonRow)]
+            "rows": [\(textAreaRow), \(navigate2ButtonRow)]
+        }
+    """
+    static let createItemStep3 = """
+        {
+            "id": "step_3",
+            "title": "Pickup & delivery",
+            "rows": [\(textRow), \(submitButtonRow)]
         }
     """
     
@@ -272,7 +279,7 @@ struct SDUIConstants {
         }
     """
     
-    static let navigateButtonRow = """
+    static let navigate1ButtonRow = """
         {
             "type": "Button",
             "view": {
@@ -283,6 +290,20 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": "navigate:create_item:step_2"
+        }
+    """
+    
+    static let navigate2ButtonRow = """
+        {
+            "type": "Button",
+            "view": {
+                "content": {
+                    "title": "",
+                    "label": "Next"
+                }
+            },
+            "edit": {},
+            "action": "navigate:create_item:step_3"
         }
     """
     
