@@ -134,6 +134,8 @@
 		2E0056102B908CC500D81297 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				737C6AC82B270AD90093D00C /* API */,
+				737C6ABF2B270AAE0093D00C /* Models */,
 				736495BE2B972E1800729129 /* EVYDataManager.swift */,
 				735436522BAFBFC50087F7B3 /* EVYJson.swift */,
 			);
@@ -169,6 +171,9 @@
 				73CDCAC12B272E0C00D4E82A /* EVYRow.swift */,
 				736E123F2BBFE06000D100E4 /* EVYSDUI.swift */,
 				7372A7E72BB2EA4D0020E4C6 /* EVYHome.swift */,
+				73C78AFB2BC564E30026F39D /* Assets */,
+				736D104F2B78C4A100503C4D /* Rows */,
+				73CDCAB42B27176700D4E82A /* Views */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -236,15 +241,10 @@
 				737F00EA2B342DEF00C35772 /* Info.plist */,
 				737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */,
 				738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */,
-				737C6AC82B270AD90093D00C /* API */,
-				73C78AFB2BC564E30026F39D /* Assets */,
 				2E0056102B908CC500D81297 /* Data */,
-				737C6ABF2B270AAE0093D00C /* Models */,
 				737C6AAB2B27068A0093D00C /* Preview Content */,
-				736D104F2B78C4A100503C4D /* Rows */,
 				736D10552B78C4C500503C4D /* UI */,
 				730D008E2B29D91200B5BCB6 /* Utils */,
-				73CDCAB42B27176700D4E82A /* Views */,
 			);
 			path = evy;
 			sourceTree = "<group>";

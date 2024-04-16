@@ -55,7 +55,7 @@ struct SDUIConstants {
     static let createItemStep1 = """
         {
             "id": "step_1",
-            "title": "Step 1",
+            "title": "Create listing",
             "rows": [
                 \(selectPhotoRow),
                 \(inputRow),
@@ -71,7 +71,7 @@ struct SDUIConstants {
     static let createItemStep2 = """
         {
             "id": "step_2",
-            "title": "Step 2",
+            "title": "Describe item",
             "rows": [\(textAreaRow), \(submitButtonRow)]
         }
     """
@@ -373,7 +373,7 @@ struct SDUIConstants {
             "type": "TextArea",
             "view": {
                 "content": {
-                   "title": "Describe item",
+                   "title": "",
                    "value": "{item.description}",
                    "placeholder": "Write a short description of your product"
                 }

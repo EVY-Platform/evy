@@ -35,8 +35,8 @@ extension EnvironmentValues {
 struct ContentView: View {
     private let flows: [EVYFlow]
     @State private var routes: [Route] = []
-    
     @State private var currentFlowId: String
+    @State private var title: String?
     
     init() {
         let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
@@ -119,12 +119,15 @@ struct ContentView: View {
                 }
                 .navigationDestination(for: Route.self) { route in
                     let flow = flows.first(where: {$0.id == route.flowId})!
-                    flow.getPageById(route.pageId)!
+                    let page = flow.getPageById(route.pageId)!
+                    page
+                        .navigationTitle(page.title)
                         .environment(\.navigate) { navOperation in
                             try! handleNavigationData(navOperation, currentFlowId)
                         }
                 }
-        }.onChange(of: routes) { oldValue, newValue in
+        }
+        .onChange(of: routes) { oldValue, newValue in
             let newFlowId = routes.last?.flowId ?? "home"
             
             // To be safe, we remove any existing data if the flow has changed
