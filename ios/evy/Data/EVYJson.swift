@@ -134,10 +134,3 @@ public enum EVYJson: Codable, Hashable {
         }
     }
 }
-
-private func getValueAtKey(data: EVYJsonDict, prop: String) throws -> EVYJson {
-    guard let subData = data[prop] else {
-        throw EVYDataModelError.propertyNotFound
-    }
-    return subData
-}
