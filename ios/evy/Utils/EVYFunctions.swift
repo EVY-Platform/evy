@@ -6,11 +6,14 @@
 //
 
 import Foundation
+import SwiftUI
 
 func evyCount(_ args: String) -> String {
     do {
         let res = try EVYDataManager.i.parseProps(args)
         switch res {
+        case .string(let stringValue):
+            return String(stringValue.count)
         case .array(let arrayValue):
             return String(arrayValue.count)
         default:
@@ -67,5 +70,38 @@ func evyFormatDimension(_ args: String) -> String {
         }
     } catch {
         return args
+    }
+}
+
+func evyComparison(_ comparisonOperator: String, left: String, right: String) -> Bool {
+    switch comparisonOperator {
+    case "==":
+        return left == right
+    case "!=":
+        return left != right
+    case "<":
+        return left < right
+    case ">":
+        return left > right
+    default:
+        return false
+    }
+}
+
+#Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "item", data: item)
+    
+    return VStack {
+        EVYTextView("{a == a}")
+        EVYTextView("{a == b}")
+        EVYTextView("{1 == 2}")
+        EVYTextView("{1 == 1}")
+        EVYTextView("{1 != 1}")
+        EVYTextView("{item.title == Amazing}")
+        EVYTextView("{item.title == Amazing Fridge}")
+        EVYTextView("{count(item.title) == 13}")
+        EVYTextView("{count(item.title) == 14}")
+        EVYTextView("{count(item.title) > 0}")
     }
 }

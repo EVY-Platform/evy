@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+private let comparisonBasePattern = "[a-zA-Z0-9.\\(\\) ]+"
+private let comparisonOperatorPattern = "(>|<|==|!=)"
+private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
+private let functionParamsPattern = "\\(([^)]*)\\)"
+private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
+
 public enum EVYTextStyle: String {
     case body
     case title
@@ -26,7 +32,7 @@ struct EVYTextView: View {
     }
     
     static func propsFromText(_ input: String) -> (RegexMatch, String)? {
-        if let match = firstMatch(input, pattern: "\\{(?!\")[^}^\"]*(?!\")\\}") {
+        if let match = firstMatch(input, pattern: propsPattern) {
             // Remove leading and trailing curly braces
             return (match, String(match.0.dropFirst().dropLast()))
         }
@@ -76,7 +82,36 @@ struct EVYTextView: View {
         if (input.count < 1) {
             return input
         }
-        else if let (match, functionName, functionArgs) = parseFunctionFromText(input) {
+        else if let (match, comparisonOperator, left, right) = parseComparisonFromText(input) {
+            let leftData = try! EVYDataManager.i.parseProps(left)
+            let parsedLeft = leftData?.toString() ?? left
+            
+            let rightData = try! EVYDataManager.i.parseProps(right)
+            let parsedRight = rightData?.toString() ?? right
+            
+            let comparisonResult = evyComparison(comparisonOperator,
+                                                 left: parseText(parsedLeft),
+                                                 right: parseText(parsedRight))
+            let parsedInput = input.replacingOccurrences(of: match.0.description,
+                                                         with: comparisonResult ? "true" : "false")
+            return parseText(parsedInput)
+        } else if let (match, functionName, functionArgs) = parseFunctionFromText(input) {
+            if functionName == "count" {
+                let count = evyCount(functionArgs)
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: count)
+                return parseText(parsedInput)
+            }
+            else if functionName == "formatCurrency" {
+                let currencyAmount = evyFormatCurrency(functionArgs)
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: currencyAmount)
+                return parseText(parsedInput)
+            }
+            else if functionName == "formatDimension" {
+                let dimension = evyFormatDimension(functionArgs)
+                let parsedInput = input.replacingOccurrences(of: match.0.description, with: dimension)
+                return parseText(parsedInput)
+            }
+        } else if let (match, functionName, functionArgs) = parseFunctionInText(input) {
             if functionName == "count" {
                 let count = evyCount(functionArgs)
                 let parsedInput = input.replacingOccurrences(of: match.0.description, with: count)
@@ -104,17 +139,63 @@ struct EVYTextView: View {
     }
 }
 
-private func parseFunctionFromText(_ input: String) -> (match: RegexMatch,
-                                        functionName: String,
-                                        functionArgs: String)?
+private func parseComparisonFromText(_ input: String) -> (match: RegexMatch,
+                                                          comparisonOperator: String,
+                                                          left: String,
+                                                          right: String)?
 {
-    guard let match = firstMatch(input, pattern: "\\{[a-zA-Z]+\\(([^)]*)\\)\\}") else {
+    guard let match = firstMatch(input,
+                                 pattern: "\\{\(comparisonBasePattern) \(comparisonOperatorPattern) \(comparisonBasePattern)\\}") else {
         return nil
     }
     
     // Remove opening { from match
-    let functionCall = String(match.0.description.dropFirst())
-    guard let argsAndParenthesisMatch = firstMatch(functionCall, pattern: "\\(([^)]*)\\)") else {
+    let comparison = String(match.0.description)
+    guard let leftMatch = firstMatch(comparison, pattern: "\\{\(comparisonBasePattern)") else {
+        return nil
+    }
+    guard let rightMatch = firstMatch(comparison, pattern: "\(comparisonBasePattern)\\}") else {
+        return nil
+    }
+    guard let operatorMatch = firstMatch(comparison, pattern: comparisonOperatorPattern) else {
+        return nil
+    }
+    
+    let leftMatchWithBracket = leftMatch.0.description.trimmingCharacters(in: .whitespacesAndNewlines)
+    let left = leftMatchWithBracket.dropFirst()
+    let rightMatchWithBracket = rightMatch.0.description.trimmingCharacters(in: .whitespacesAndNewlines)
+    let right = rightMatchWithBracket.dropLast()
+    let comparisonOperator = operatorMatch.0.description.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    return (match, comparisonOperator, String(left), String(right))
+}
+
+private func parseFunctionFromText(_ input: String) -> (match: RegexMatch,
+                                                        functionName: String,
+                                                        functionArgs: String)?
+{
+    guard let match = firstMatch(input, pattern: "\\{\(functionPattern)\\}") else {
+        return nil
+    }
+    
+    guard let (subMatch, functionName, functionArgs) = parseFunctionInText(input) else {
+        return nil
+    }
+
+    return (match, functionName, functionArgs)
+}
+
+private func parseFunctionInText(_ input: String) -> (match: RegexMatch,
+                                                      functionName: String,
+                                                      functionArgs: String)?
+{
+    guard let match = firstMatch(input, pattern: functionPattern) else {
+        return nil
+    }
+    
+    // Remove opening { from match
+    let functionCall = match.0.description
+    guard let argsAndParenthesisMatch = firstMatch(functionCall, pattern: functionParamsPattern) else {
         return nil
     }
     
@@ -144,5 +225,6 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
         EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
         EVYTextView("count: {count(item.photos)}")
         EVYTextView("{item.title} has {count(item.photos)} photos ::star.square.on.square.fill::")
+        EVYTextView("{a == b}")
     }
 }
