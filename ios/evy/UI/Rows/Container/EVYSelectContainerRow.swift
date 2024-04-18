@@ -15,13 +15,11 @@ public struct SelectContainerChild: Decodable {
 public class SelectContainerContent: SDUI.Content {
     let children: [SelectContainerChild]
     let children_data: String?
-    let child: EVYRow?
     
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: SDUI.ContainerContentCodingKeys.self)
         self.children = try container.decode([SelectContainerChild].self, forKey: .children)
         self.children_data = try? container.decode(String.self, forKey: .children_data)
-        self.child = try? container.decode(EVYRow.self, forKey: .child)
         
         try super.init(from: decoder)
     }
@@ -43,16 +41,15 @@ struct EVYSelectContainerRow: View {
     }
 
     var body: some View {
-        self.view.content.child
-            Picker("Select an option", selection: $selected) {
-                ForEach(view.content.children, id: \.child.id) { child in
-                    EVYTextView(child.title).tag(child.title)
-                }
+        Picker("", selection: $selected) {
+            ForEach(view.content.children, id: \.child.id) { child in
+                EVYTextView(child.title).tag(child.title)
             }
-            .pickerStyle(.segmented)
-            .padding(.bottom, Constants.majorPadding)
-            view.content.children.first(where: {$0.title == selected})?.child
-            Spacer()
+        }
+        .pickerStyle(.segmented)
+        .padding(.bottom, Constants.majorPadding)
+        view.content.children.first(where: {$0.title == selected})?.child
+        Spacer()
     }
 }
 
