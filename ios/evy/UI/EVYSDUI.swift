@@ -14,7 +14,11 @@ public class SDUI {
         case toomanyKeywords
     }
     
-    public enum Action: Decodable {
+    public struct Action: Decodable {
+        let target: ActionTarget
+        let condition: String?
+    }
+    public enum ActionTarget: Decodable {
         case navigate(Route)
         case submit
         case close
@@ -64,7 +68,6 @@ public class SDUI {
     }
     public struct Row: Decodable {
         let type: String
-        let visible: String
         let view: View
         let edit: Edit
         let action: Action
