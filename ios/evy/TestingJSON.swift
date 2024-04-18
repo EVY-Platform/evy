@@ -79,7 +79,7 @@ struct SDUIConstants {
         {
             "id": "step_3",
             "title": "Pickup & delivery",
-            "rows": [\(textRow), \(navigate3ButtonRow)]
+            "rows": [\(selectContainerRow), \(navigate3ButtonRow)]
         }
     """
     static let createItemStep4 = """
@@ -456,6 +456,65 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.description}"
+            }
+        }
+    """
+    
+    static let selectContainerRow = """
+        {
+            "type": "SelectContainer",
+            "view": {
+                "content": {
+                    "title": "Shipping",
+                    "children": [{
+                        "title": "Pickup",
+                        "child": {
+                            "type": "Input",
+                            "view": {
+                                "content": {
+                                    "title": "Select 1",
+                                    "value": "",
+                                    "placeholder": "This is select container page 1"
+                                }
+                            },
+                            "edit": {
+                                "destination": "{item.title}"
+                            }
+                        }
+                    },
+                    {
+                        "title": "Delivery",
+                        "child": {
+                            "type": "TextArea",
+                            "view": {
+                                "content": {
+                                   "title": "",
+                                   "value": "{item.description}",
+                                   "placeholder": "Write a short description of your product"
+                                }
+                            },
+                            "edit": {
+                                "destination": "{item.description}"
+                            }
+                        }
+                    },
+                    {
+                        "title": "Shipping",
+                        "child": {
+                            "type": "Input",
+                            "view": {
+                                "content": {
+                                    "title": "Select 3",
+                                    "value": "Hello",
+                                    "placeholder": "This is select container page 3"
+                                }
+                            },
+                            "edit": {
+                                "destination": "{item.title}"
+                            }
+                        }
+                    }]
+                }
             }
         }
     """
