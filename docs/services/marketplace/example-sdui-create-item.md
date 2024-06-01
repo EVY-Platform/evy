@@ -21,12 +21,12 @@
 					"title": "",
 					"icon": "::image_something::",
 					"subtitle": "Add photos",
-					"content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
-					"photos": "{item.photos}"
+					"content": "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
+					"photos": "{item.photo_ids}"
 				}
 			},
 			"edit": {
-				"destination": "{item.photos}",
+				"destination": "{item.photo_ids}",
 				"minimum_amount": "1"
 			}
 		},

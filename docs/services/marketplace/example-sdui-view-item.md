@@ -17,7 +17,7 @@
 						}
 					}
 				}],
-				"children_data": "{item.photos}"
+				"children_data": "{item.photo_ids}"
 			}
 		}
 	},

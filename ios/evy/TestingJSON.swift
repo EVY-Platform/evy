@@ -126,7 +126,7 @@ struct SDUIConstants {
                 "data": "{selling_reasons}"
            },
             "edit": {
-                "destination": "{item.selling_reason}"
+                "destination": "{item.selling_reason_id}"
             }
         }
     """
@@ -186,12 +186,12 @@ struct SDUIConstants {
                     "title": "",
                     "icon": "::photo.badge.plus.fill::",
                     "subtitle": "Add photos",
-                    "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
-                    "photos": "{item.photos}"
+                    "content": "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
+                    "photos": "{item.photo_ids}"
                 }
             },
             "edit": {
-                "destination": "{item.photos}",
+                "destination": "{item.photo_ids}",
                 "minimum_amount": "1"
             }
         }
@@ -570,14 +570,7 @@ struct DataConstants {
         {
             "id": "item",
             "title": "Amazing Fridge",
-            "photos": [
-                {
-                    "id": "printer"
-                },
-                {
-                    "id": "printer_logo"
-                }
-            ],
+            "photo_ids": ["printer","printer_logo"],
             "price": {
                 "currency": "AUD",
                 "value": "250"

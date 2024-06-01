@@ -81,7 +81,7 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
         EVYTextView("::star.square.on.square.fill::")
         EVYTextView("Just text", style: EVYTextStyle.title)
         EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
-        EVYTextView("count: {count(item.photos)}")
-        EVYTextView("{item.title} has {count(item.photos)} photos ::star.square.on.square.fill::")
+        EVYTextView("count: {count(item.photo_ids)}")
+        EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star.square.on.square.fill::")
     }
 }

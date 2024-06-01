@@ -23,10 +23,6 @@ struct EVYSelectPhotoRowView: Decodable {
     }
 }
 
-struct EVYPhoto: Decodable {
-    let id: String
-}
-
 struct EVYSelectPhotoRow: View {
     public static var JSONType = "SelectPhoto"
     
@@ -49,8 +45,8 @@ struct EVYSelectPhotoRow: View {
         do {
             let (_, data) = EVYValue(self.view.content.photos).props!
             let photosData = data.data(using: .utf8)!
-            let photoObjects = try JSONDecoder().decode([EVYPhoto].self, from:photosData)
-            self.photos.append(contentsOf: photoObjects.map { $0.id })
+            let photoObjects = try JSONDecoder().decode([String].self, from:photosData)
+            self.photos.append(contentsOf: photoObjects.map { $0 })
         } catch {}
     }
 
