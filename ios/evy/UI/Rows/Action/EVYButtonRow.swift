@@ -27,11 +27,8 @@ struct EVYButtonRow: View {
         self.view = try container.decode(EVYButtonRowView.self, forKey:.view)
         self.action = try container.decode(SDUI.Action.self, forKey:.action)
         
-        if let condition = action.condition,
-           let (_, props) = EVYTextView.propsFromText(condition),
-           let parsedValue = try EVYDataManager.i.parseProps(props),
-           case let .string(stringValue) = parsedValue {
-            self.disabled = stringValue == "false"
+        if let condition = action.condition {
+            self.disabled = EVYValue(condition).value == "false"
         } else {
             self.disabled = false
         }
