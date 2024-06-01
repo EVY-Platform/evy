@@ -70,7 +70,7 @@ struct EVYDataManager {
     }
     
     public func updateValue(_ value: String, at: String) throws -> Void {
-        guard let (_, props) = EVYTextView.propsFromText(at) else {
+        guard let (_, props) = EVYValue(at).props else {
             throw EVYDataParseError.invalidProps
         }
             
@@ -123,8 +123,13 @@ struct EVYDataManager {
                 let dictAsData = try JSONEncoder().encode(dictValue)
                 return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
             }
-            
-            return try getUpdatedData(props: Array(props[1...]), data: subData, value: value)
+            let updatedData = try getUpdatedData(props: Array(props[1...]), data: subData, value: value)
+            if (props.count > 1) {
+                dictValue[firstVariable] = updatedData
+                let dictAsData = try JSONEncoder().encode(dictValue)
+                return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
+            }
+            return updatedData
         default:
             return data
         }

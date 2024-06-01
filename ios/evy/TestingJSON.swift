@@ -224,7 +224,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.price}",
+                "destination": "{item.price.value}",
                 "minimum_characters": "1"
             }
         }
