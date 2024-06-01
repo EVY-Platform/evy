@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 public typealias EVYFunctionOutput = (value: String, prefix: String?, suffix: String?)
 
@@ -13,6 +14,8 @@ func evyCount(_ args: String) -> EVYFunctionOutput {
     do {
         let res = try EVYDataManager.i.parseProps(args)
         switch res {
+        case .string(let stringValue):
+            return (String(stringValue.count), nil, nil)
         case .array(let arrayValue):
             return (String(arrayValue.count), nil, nil)
         default:
@@ -73,5 +76,38 @@ func evyFormatDimension(_ args: String) -> EVYFunctionOutput {
         }
     } catch {
         return ("Could not format dimension", nil, nil)
+    }
+}
+
+func evyComparison(_ comparisonOperator: String, left: String, right: String) -> Bool {
+    switch comparisonOperator {
+    case "==":
+        return left == right
+    case "!=":
+        return left != right
+    case "<":
+        return left < right
+    case ">":
+        return left > right
+    default:
+        return false
+    }
+}
+
+#Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "item", data: item)
+
+    return VStack {
+        EVYTextView("a == a: {a == a}")
+        EVYTextView("a == b: {a == b}")
+        EVYTextView("1 == 2: {1 == 2}")
+        EVYTextView("1 == 1: {1 == 1}")
+        EVYTextView("1 != 1: {1 != 1}")
+        EVYTextView("item.title == Amazing: {item.title == Amazing}")
+        EVYTextView("item.title == Amazing Fridge: {item.title == Amazing Fridge}")
+        EVYTextView("count(item.title) == 13: {count(item.title) == 13}")
+        EVYTextView("count(item.title) == 14: {count(item.title) == 14}")
+        EVYTextView("count(item.title) > 0: {count(item.title) > 0}")
     }
 }
