@@ -36,7 +36,9 @@ struct SDUIConstants {
                             "label": "Go home"
                         }
                     },
-                    "action": "close"
+                    "action": {
+                        "target": "close"
+                    }
                 }]
             }]
         }
@@ -303,7 +305,9 @@ struct SDUIConstants {
                 }
             },
             "edit": {},
-            "action": "navigate:create_item:step_2"
+            "action": {
+                "target": "navigate:create_item:step_2"
+            }
         }
     """
     
@@ -317,7 +321,9 @@ struct SDUIConstants {
                 }
             },
             "edit": {},
-            "action": "navigate:create_item:step_3"
+            "action": {
+                "target": "navigate:create_item:step_3"
+            }
         }
     """
     
@@ -331,7 +337,10 @@ struct SDUIConstants {
                 }
             },
             "edit": {},
-            "action": "navigate:create_item:step_4"
+            "action": {
+                "target": "navigate:create_item:step_4",
+                "condition": "{count(item.title) > 0}"
+            }
         }
     """
     
@@ -345,7 +354,9 @@ struct SDUIConstants {
                 }
             },
             "edit": {},
-            "action": "navigate:create_item:step_5"
+            "action": {
+                "target": "navigate:create_item:step_5"
+            }
         }
     """
     
@@ -440,7 +451,9 @@ struct SDUIConstants {
                 }
             },
             "edit": {},
-            "action": "submit:item"
+            "action": {
+                "target": "submit:item"
+            }
         }
     """
     

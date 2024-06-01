@@ -9,7 +9,6 @@ import SwiftUI
 
 public enum RowCodingKeys: String, CodingKey {
     case type
-    case visible
     case view
     case edit
     case action

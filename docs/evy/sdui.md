@@ -60,11 +60,11 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     // The type of row that it is, see below
     "type",
 
-    // Prop that defines when the row is visible
-    // for example {count(item.transfer_option.pickup.dates_with_timeslots) > 0}
-    "visible",
-
     "view": {
+        // Prop that defines when the row is visible
+        // for example {count(item.transfer_option.pickup.dates_with_timeslots) > 0}
+        "visible",
+
         content: {
             // Represents the header of the row, if empty string then no header will be shown
             "title",
@@ -86,10 +86,12 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
         "destination"
     },
 
-    "action" // What action should be taken when tapping the button, values can be:
-    // "navigate:flow_id:page_id"
-    // "submit"
-    // "close"
+    // What action should be taken when tapping the button
+    "action": {
+        "target": "navigate:flow_id:page_id|submit|close",
+        "condition", // Optional condition that must be met to make the button enabled
+
+    }
     }
 
 }

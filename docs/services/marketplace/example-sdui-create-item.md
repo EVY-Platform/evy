@@ -351,7 +351,7 @@
 			},
 			"edit": {},
 			"action": {
-				"target": "create_item:create_item_step_2"
+				"target": "navigate:create_item:create_item_step_2"
 			}
 		}
 	]
@@ -386,7 +386,7 @@
 			},
 			"edit": {},
 			"action": {
-				"target": "home:home"
+				"target": "submit:item"
 			}
 		}
 	]

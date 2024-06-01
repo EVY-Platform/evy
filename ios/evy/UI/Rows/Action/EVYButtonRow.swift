@@ -21,14 +21,26 @@ struct EVYButtonRow: View {
     
     private let view: EVYButtonRowView
     private let action: SDUI.Action
+    @State private var disabled: Bool
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYButtonRowView.self, forKey:.view)
         self.action = try container.decode(SDUI.Action.self, forKey:.action)
+        
+        if let condition = action.condition,
+           let (_, props) = EVYTextView.propsFromText(condition),
+           let parsedValue = try EVYDataManager.i.parseProps(props),
+           case let .string(stringValue) = parsedValue {
+            self.disabled = stringValue == "false"
+        } else {
+            self.disabled = false
+        }
     }
     
     var body: some View {
-        EVYButton(label: self.view.content.label, action: self.action)
+        EVYButton(label: view.content.label,
+                  target: action.target,
+                  disabled: $disabled)
             .frame(maxWidth: .infinity, alignment: .center)
     }
 }
@@ -36,14 +48,8 @@ struct EVYButtonRow: View {
 
 
 #Preview {
-    let navigateJson =  SDUIConstants.navigate1ButtonRow.data(using: .utf8)!
-    let navigate = try? JSONDecoder().decode(EVYRow.self, from: navigateJson)
+    let json =  SDUIConstants.navigate3ButtonRow.data(using: .utf8)!
+    let button = try? JSONDecoder().decode(EVYRow.self, from: json)
     
-    let submitJson =  SDUIConstants.submitButtonRow.data(using: .utf8)!
-    let submit = try? JSONDecoder().decode(EVYRow.self, from: submitJson)
-    
-    return VStack {
-        navigate
-        submit
-    }
+    return button
 }
