@@ -35,7 +35,7 @@ struct EVYInputRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
-            EVYTextField(value: view.content.value,
+            EVYTextField(input: view.content.value,
                          destination: edit.destination,
                          placeholder: view.content.placeholder)
         }
@@ -48,6 +48,6 @@ struct EVYInputRow: View {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVYDataManager.i.create(key: "item", data: item)
     
-    let json =  SDUIConstants.inputRow.data(using: .utf8)!
+    let json =  SDUIConstants.inputWidthRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

@@ -73,7 +73,7 @@ public class SDUI {
         let action: Action
     }
     
-    private enum ContainerContentCodingKeys: String, CodingKey {
+    public enum ContainerContentCodingKeys: String, CodingKey {
         case title
         case children
         case children_data

@@ -36,7 +36,7 @@ struct EVYDropdownRow: View {
         self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
-        if let (_, props) = EVYTextView.propsFromText(view.data),
+        if let (_, props) = EVYValue(view.data).props,
            let parsedOptions = try EVYDataManager.i.parseProps(props),
            case let .array(arrayValue) = parsedOptions {
             self.options.append(contentsOf: arrayValue)
@@ -63,7 +63,7 @@ struct EVYDropdownRow: View {
                             .padding(.vertical, Constants.minorPadding)
                     }
                     Spacer()
-                    EVYTextView.parsedText("::chevron.down::")
+                    EVYTextView("::chevron.down::")
                         .foregroundColor(.black)
                 }
                 .padding()
@@ -94,6 +94,12 @@ struct EVYDropdownRow: View {
 
 
 #Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "item", data: item)
+    
+    let conditions = DataConstants.conditions.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "conditions", data: conditions)
+    
     let json =  SDUIConstants.condition.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

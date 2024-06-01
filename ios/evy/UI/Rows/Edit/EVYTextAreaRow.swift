@@ -35,7 +35,7 @@ struct EVYTextAreaRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
-            EVYTextField(value: view.content.value,
+            EVYTextField(input: view.content.value,
                          destination: edit.destination,
                          placeholder: view.content.placeholder,
                          multiLine: true)

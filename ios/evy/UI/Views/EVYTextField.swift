@@ -12,51 +12,101 @@ struct EVYTextField: View {
     let placeholder: String
     let multiLine: Bool
     
-    @State private var value: String
+    @State private var input: String
     
-    init(value: String, destination: String, placeholder: String, multiLine: Bool) {
+    @State private var value: String
+    @State private var prefix: String
+    @State private var suffix: String
+    
+    @FocusState private var focused: Bool
+    @State private var editing: Bool = false
+    
+    init(input: String, destination: String, placeholder: String, multiLine: Bool) {
         self.placeholder = placeholder
         self.destination = destination
         self.multiLine = multiLine
-        self.value = EVYTextView.parseText(value)
+        
+        self.input = input
+        
+        (self.value, self.prefix, self.suffix) = resetValues(input)
     }
     
-    init(value: String, destination: String, placeholder: String) {
-        self.init(value: value, destination: destination, placeholder: placeholder, multiLine: false)
+    init(input: String, destination: String, placeholder: String) {
+        self.init(input: input, destination: destination, placeholder: placeholder, multiLine: false)
     }
     
     var body: some View {
-        TextField(text: $value,
-                  prompt: EVYTextView.parsedText(placeholder),
-                  axis: multiLine ? .vertical : .horizontal,
-                  label: {})
-        .lineLimit(multiLine ? 10... : 1...)
+        HStack(alignment: .top, spacing: .zero, content: {
+            let showPrefix = !multiLine && prefix.count > 0
+            let showSuffix = !multiLine && suffix.count > 0
+            if (!editing) {
+                Group {
+                    if (showPrefix) {
+                        Text(prefix)
+                    }
+                    Text(value)
+                        .frame(maxWidth: showSuffix ? nil : .infinity, alignment: .leading)
+                    if (showSuffix) {
+                        Text(suffix)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }.onTapGesture {
+                    editing = true
+                    focused = true
+                }
+                .padding(.bottom, 1)
+                .padding(.top, 1)
+            } else {
+                TextField(text: $value,
+                          prompt: EVYTextView(placeholder).toText(),
+                          axis: multiLine ? .vertical : .horizontal,
+                          label: {})
+                .lineLimit(multiLine ? 10... : 1...)
+                .focused($focused)
+                .onChange(of: focused, { oldValue, newValue in
+                    if (oldValue == true && newValue == false) {
+                        editing = false
+                    }
+                })
+                .onSubmit {
+                    try! EVYDataManager.i.updateValue(value, at: destination)
+                    (self.value, self.prefix, self.suffix) = resetValues(self.input)
+                    editing = false
+                    focused = false
+                }
+            }
+        })
         .font(.evy)
         .padding(EdgeInsets(top: Constants.majorPadding,
                             leading: Constants.minorPadding,
                             bottom: Constants.majorPadding,
                             trailing: Constants.minorPadding))
-        .overlay(
-            RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                .stroke(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
-        )
         .background(
             RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
                 .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
         )
-        .onSubmit {
-            try! EVYDataManager.i.updateValue(value, at: destination)
-        }
     }
 }
 
+private func resetValues(_ input: String)-> (value: String, prefix: String, suffix: String) {
+    let parsedInput = EVYValue(input)
+    return (parsedInput.value, parsedInput.prefix ?? "", parsedInput.suffix ?? "")
+}
+
 #Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVYDataManager.i.create(key: "item", data: item)
+    
     return VStack {
-        EVYTextField(value: "{item.title}",
-                     destination: "{item.title}",
-                     placeholder: "Sample ::star.square.on.square.fill:: placeholder")
+        EVYTextField(input: "{formatDimension(item.dimension.width)}",
+                     destination: "{item.dimension.width}",
+                     placeholder: "10")
+        
+        EVYTextField(input: "{formatCurrency(item.price)}",
+                     destination: "{item.price}",
+                     placeholder: "10")
                      
-        EVYTextField(value: "{item.title}",
+        EVYTextField(input: "{item.title}",
                      destination: "{item.title}",
                      placeholder: "Sample placeholder", multiLine: true)
     }

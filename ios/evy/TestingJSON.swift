@@ -81,7 +81,7 @@ struct SDUIConstants {
         {
             "id": "step_3",
             "title": "Pickup & delivery",
-            "rows": [\(textRow), \(navigate3ButtonRow)]
+            "rows": [\(selectContainerRow), \(navigate3ButtonRow)]
         }
     """
     static let createItemStep4 = """
@@ -128,7 +128,7 @@ struct SDUIConstants {
                 "data": "{selling_reasons}"
            },
             "edit": {
-                "destination": "{item.selling_reason}"
+                "destination": "{item.selling_reason_id}"
             }
         }
     """
@@ -188,12 +188,12 @@ struct SDUIConstants {
                     "title": "",
                     "icon": "::photo.badge.plus.fill::",
                     "subtitle": "Add photos",
-                    "content": "Photos: {count(item.photos)}/10 - Chose your listing’s main photo first.",
-                    "photos": "{item.photos}"
+                    "content": "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
+                    "photos": "{item.photo_ids}"
                 }
             },
             "edit": {
-                "destination": "{item.photos}",
+                "destination": "{item.photo_ids}",
                 "minimum_amount": "1"
             }
         }
@@ -226,7 +226,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.price}",
+                "destination": "{item.price.value}",
                 "minimum_characters": "1"
             }
         }
@@ -472,6 +472,65 @@ struct SDUIConstants {
             }
         }
     """
+    
+    static let selectContainerRow = """
+        {
+            "type": "SelectContainer",
+            "view": {
+                "content": {
+                    "title": "Shipping",
+                    "children": [{
+                        "title": "Pickup",
+                        "child": {
+                            "type": "Input",
+                            "view": {
+                                "content": {
+                                    "title": "Select 1",
+                                    "value": "",
+                                    "placeholder": "This is select container page 1"
+                                }
+                            },
+                            "edit": {
+                                "destination": "{item.title}"
+                            }
+                        }
+                    },
+                    {
+                        "title": "Delivery",
+                        "child": {
+                            "type": "TextArea",
+                            "view": {
+                                "content": {
+                                   "title": "",
+                                   "value": "{item.description}",
+                                   "placeholder": "Write a short description of your product"
+                                }
+                            },
+                            "edit": {
+                                "destination": "{item.description}"
+                            }
+                        }
+                    },
+                    {
+                        "title": "Shipping",
+                        "child": {
+                            "type": "Input",
+                            "view": {
+                                "content": {
+                                    "title": "Select 3",
+                                    "value": "Hello",
+                                    "placeholder": "This is select container page 3"
+                                }
+                            },
+                            "edit": {
+                                "destination": "{item.title}"
+                            }
+                        }
+                    }]
+                }
+            }
+        }
+    """
 }
 
 struct DataConstants {
@@ -524,14 +583,7 @@ struct DataConstants {
         {
             "id": "item",
             "title": "Amazing Fridge",
-            "photos": [
-                {
-                    "id": "printer"
-                },
-                {
-                    "id": "printer_logo"
-                }
-            ],
+            "photo_ids": ["printer","printer_logo"],
             "price": {
                 "currency": "AUD",
                 "value": "250"
