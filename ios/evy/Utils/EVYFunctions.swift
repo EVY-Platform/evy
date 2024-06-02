@@ -106,8 +106,8 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
         EVYTextView("1 != 1: {1 != 1}")
         EVYTextView("item.title == Amazing: {item.title == Amazing}")
         EVYTextView("item.title == Amazing Fridge: {item.title == Amazing Fridge}")
-        EVYTextView("count(item.title) == 13: {count(item.title) == 13}")
-        EVYTextView("count(item.title) == 14: {count(item.title) == 14}")
-        EVYTextView("count(item.title) > 0: {count(item.title) > 0}")
+        EVYTextView("count (item.title) == 13: {count(item.title) == 13}")
+        EVYTextView("count (item.title) == 14: {count(item.title) == 14}")
+        EVYTextView("count (item.title) > 0: {count(item.title) > 0}")
     }
 }

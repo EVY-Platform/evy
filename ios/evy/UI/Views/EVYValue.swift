@@ -167,7 +167,7 @@ private func parseFunctionFromText(_ input: String) -> (match: RegexMatch,
         return nil
     }
 
-    guard let (subMatch, functionName, functionArgs) = parseFunctionInText(input) else {
+    guard let (_, functionName, functionArgs) = parseFunctionInText(input) else {
         return nil
     }
 
