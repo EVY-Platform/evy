@@ -142,6 +142,7 @@
 				737C6ABF2B270AAE0093D00C /* Models */,
 				736495BE2B972E1800729129 /* EVYDataManager.swift */,
 				735436522BAFBFC50087F7B3 /* EVYJson.swift */,
+				73C5D23F2C0AFD200024FF11 /* EVYValue.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -304,7 +305,6 @@
 				2ED04EF52B3308C400881DC4 /* EVYMap.swift */,
 				2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */,
 				2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */,
-				73C5D23F2C0AFD200024FF11 /* EVYValue.swift */,
 				73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */,
 				737334FA2B7B671100D2E1CF /* EVYTextField.swift */,
 				73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */,
