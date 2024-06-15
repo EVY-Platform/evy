@@ -28,11 +28,7 @@ class EVYData {
             return self.decoded()
         }
         
-        do {
-            return try self.decoded().parseProp(props: Array(variables[1...]))
-        } catch {
-            return self.decoded()
-        }
+        return self.decoded().parseProp(props: Array(variables[1...]))
     }
 }
 
@@ -41,9 +37,6 @@ public typealias EVYJsonArray = [EVYJson]
 public typealias EVYJsonDict = [String: EVYJson]
 
 private enum EVYDataModelError: Error {
-    case idIsNotAString
-    case propertyNotFound
-    case dataIsAString
     case unprocessableValue
 }
 
@@ -117,11 +110,7 @@ public enum EVYJson: Codable, Hashable {
     public func displayValue() -> String {
         switch self {
         case .dictionary(_):
-            do {
-                return try self.parseProp(props: ["value"]).toString()
-            } catch {
-                return self.toString()
-            }
+            return self.parseProp(props: ["value"]).toString()
         default:
             return self.toString()
         }
@@ -130,17 +119,13 @@ public enum EVYJson: Codable, Hashable {
     public func identifierValue() -> String {
         switch self {
         case .dictionary(_):
-            do {
-                return try self.parseProp(props: ["id"]).toString()
-            } catch {
-                return self.toString()
-            }
+            return self.parseProp(props: ["id"]).toString()
         default:
             return self.toString()
         }
     }
     
-    public func parseProp(props: [String]) throws -> EVYJson {
+    public func parseProp(props: [String]) -> EVYJson {
         if props.count < 1 {
             return self
         }
@@ -151,13 +136,13 @@ public enum EVYJson: Codable, Hashable {
                 return self
             }
             guard let subData = dictValue[firstVariable] else {
-                throw EVYDataModelError.propertyNotFound
+                return self
             }
             if props.count == 1 {
                 return subData
             }
             
-            return try subData.parseProp(props: Array(props[1...]))
+            return subData.parseProp(props: Array(props[1...]))
         default:
             return self
         }

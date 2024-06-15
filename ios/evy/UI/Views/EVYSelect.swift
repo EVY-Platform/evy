@@ -7,10 +7,6 @@
 
 import SwiftUI
 
-public enum EVYSelectError: Error {
-    case invalidOptions
-}
-
 struct EVYSelect: View {
     @Binding var selection: EVYJson?
     let options: EVYJsonArray

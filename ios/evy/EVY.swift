@@ -41,7 +41,7 @@ struct EVY {
         
         let firstVariable = variables.first!
         let data = try data.get(key: firstVariable)
-        return try data.decoded().parseProp(props: Array(variables[1...]))
+        return data.decoded().parseProp(props: Array(variables[1...]))
     }
     
     private static func getUpdatedData(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {

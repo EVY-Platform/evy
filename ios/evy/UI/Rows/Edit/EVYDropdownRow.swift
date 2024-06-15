@@ -7,11 +7,6 @@
 
 import SwiftUI
 
-public enum EVYDropdownError: Error {
-    case invalidOptions
-    case invalidOption
-}
-
 struct EVYDropdownRowView: Decodable {
     let content: ContentData
     let data: String
