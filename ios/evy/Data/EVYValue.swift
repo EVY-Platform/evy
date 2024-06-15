@@ -1,5 +1,5 @@
 //
-//  EVYText.swift
+//  EVYValue.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 18/12/2023.
@@ -14,13 +14,23 @@ private let functionParamsPattern = "\\(([^)]*)\\)"
 private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
 
 struct EVYValue {
+    let input: String
+    let data: EVYData?
+    
     let value: String
     let prefix: String?
     let suffix: String?
-    let props: (match: RegexMatch, props: String)?
     
     init(_ input: String) {
-        self.props = parseProps(input)
+        self.input = input
+        
+        let props = splitProps(input)
+        do {
+            self.data = try EVY.data.get(key: props.first!)
+        } catch {
+            self.data = nil
+        }
+        
         do {
             (self.value, self.prefix, self.suffix) = try parseText(input, nil, nil)
         } catch {
@@ -30,9 +40,20 @@ struct EVYValue {
         }
     }
     
+    func props() -> [String] {
+        guard let (_, props) = parseProps(input) else {
+            return []
+        }
+        return splitProps(props)
+    }
+    
     func toString() -> String {
         return "\(prefix ?? "")\(value)\(suffix ?? "")"
     }
+}
+
+private func splitProps(_ props: String) -> [String] {
+    return props.components(separatedBy: ".")
 }
 
 private func parseProps(_ input: String) -> (RegexMatch, String)? {
@@ -51,11 +72,18 @@ private func parseText(_ input: String,
     }
     
     if let (match, comparisonOperator, left, right) = parseComparisonFromText(input) {
-        let leftData = try EVY.getDataAt(input: left)
-        let parsedLeft = leftData.toString()
+        var parsedLeft = left
+        var parsedRight = right
         
-        let rightData = try EVY.getDataAt(input: right)
-        let parsedRight = rightData.toString()
+        do {
+            let leftData = try EVY.getDataAt(input: left)
+            parsedLeft = leftData.toString()
+        } catch {}
+        
+        do {
+            let rightData = try EVY.getDataAt(input: left)
+            parsedRight = rightData.toString()
+        } catch {}
         
         let comparisonResult = evyComparison(comparisonOperator,
                                              left: try parseText(parsedLeft, prefix, suffix).value,

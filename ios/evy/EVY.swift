@@ -17,24 +17,20 @@ struct EVY {
     }
     
     static func updateValue(_ value: String, at: String) throws -> Void {
-        guard let (_, props) = EVYValue(at).props else {
-            throw EVYDataParseError.invalidProps
-        }
-            
-        let variables = props.components(separatedBy: ".")
-        guard variables.count > 1 else {
+        let props = EVYValue(at).props()
+        if props.count < 1 {
             throw EVYDataParseError.invalidProps
         }
         
-        let modelData = try data.get(key: variables.first!)
+        let modelData = try data.get(key: props.first!)
         let valueAsData = "\"\(value)\"".data(using: .utf8)!
         let valueAsJson = try! JSONDecoder().decode(EVYJson.self, from: valueAsData)
-        let updatedData = try getUpdatedData(props: Array(variables[1...]),
+        let updatedData = try getUpdatedData(props: Array(props[1...]),
                                              data: modelData.decoded(),
                                              value: valueAsJson)
         
         let newData = try JSONEncoder().encode(updatedData)
-        try data.update(key: variables.first!, data: newData)
+        try data.update(key: props.first!, data: newData)
     }
     
     static func getDataAt(input: String) throws -> EVYJson {

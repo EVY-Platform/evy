@@ -21,6 +21,19 @@ class EVYData {
     func decoded() -> EVYJson {
         return try! JSONDecoder().decode(EVYJson.self, from: self.data)
     }
+    
+    func getDataAt(_ input: String) -> EVYJson {
+        let variables = input.components(separatedBy: ".")
+        if variables.count < 1 {
+            return self.decoded()
+        }
+        
+        do {
+            return try self.decoded().parseProp(props: Array(variables[1...]))
+        } catch {
+            return self.decoded()
+        }
+    }
 }
 
 public typealias EVYJsonString = String

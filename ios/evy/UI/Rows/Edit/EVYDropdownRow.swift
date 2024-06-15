@@ -36,12 +36,9 @@ struct EVYDropdownRow: View {
         self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
-        guard let (_, props) = EVYValue(view.data).props else {
-            throw EVYDropdownError.invalidOptions
-        }
-        
-        let parsedOptions = try EVY.getDataAt(input: props)
-        if case let .array(arrayValue) = parsedOptions {
+        let value = EVYValue(view.data)
+        if let data = value.data?.decoded(),
+           case let .array(arrayValue) = data {
             self.options.append(contentsOf: arrayValue)
         }
     }

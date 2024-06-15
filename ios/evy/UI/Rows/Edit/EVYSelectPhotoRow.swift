@@ -36,17 +36,17 @@ struct EVYSelectPhotoRow: View {
         return urls[0]
      }
     
-    @State var photos: [String] = []
+    @State private var photos: [String] = []
 
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
         do {
-            let (_, data) = EVYValue(self.view.content.photos).props!
-            let photosData = data.data(using: .utf8)!
+            let props = EVYValue(self.view.content.photos).value
+            let photosData = props.data(using: .utf8)!
             let photoObjects = try JSONDecoder().decode([String].self, from:photosData)
-            self.photos.append(contentsOf: photoObjects.map { $0 })
+            _photos = State(initialValue: photoObjects)
         } catch {}
     }
 
@@ -170,7 +170,7 @@ class ImageManager {
            let data = try? Data(contentsOf: fileUrl){
             return Image(uiImage: UIImage(data: data)!)
         }
-        return nil
+        return Image(uiImage: UIImage(named: "\(name).png")!)
     }
     
     func writeImage(name: String, uiImage: UIImage) {
