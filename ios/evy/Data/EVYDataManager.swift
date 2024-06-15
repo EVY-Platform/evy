@@ -1,5 +1,5 @@
 //
-//  EVYJson.swift
+//  EVYDataManager.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 4/3/2024.
