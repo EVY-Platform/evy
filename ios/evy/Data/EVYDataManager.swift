@@ -37,11 +37,7 @@ struct EVYDataManager {
     
     func get(key: String) throws -> EVYData? {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
-        do {
-            return try context.fetch(descriptor).first
-        } catch {
-            return nil
-        }
+        return try context.fetch(descriptor).first
     }
     
     public func create(key: String, data: Data) throws -> Void {
