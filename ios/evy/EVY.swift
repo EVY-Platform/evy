@@ -11,7 +11,7 @@ struct EVY {
     static let data = EVYDataManager()
     
     static func submit(key: String) throws -> Void {
-        if let existing = data.get(key: key) {
+        if let existing = try data.get(key: key) {
             existing.key = UUID().uuidString
             // TODO: Send to API
         } else {
@@ -29,7 +29,7 @@ struct EVY {
             throw EVYDataParseError.invalidProps
         }
         
-        guard let modelData = data.get(key: variables.first!) else {
+        guard let modelData = try data.get(key: variables.first!) else {
             throw EVYDataError.keyNotFound
         }
         
@@ -48,7 +48,7 @@ struct EVY {
         if variables.count > 0 {
             let firstVariable = variables.first!
             
-            if let data = data.get(key: firstVariable) {
+            if let data = try data.get(key: firstVariable) {
                 return try data.decoded().parseProp(props: Array(variables[1...]))
             }
         }

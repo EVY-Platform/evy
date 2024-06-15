@@ -26,7 +26,7 @@ let container = try! ModelContainer(for: EVYData.self, configurations: config)
 struct EVYDataManager {
     private var context: ModelContext = ModelContext(container)
     
-    func get(key: String) -> EVYData? {
+    func get(key: String) throws -> EVYData? {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
         do {
             return try context.fetch(descriptor).first
@@ -36,14 +36,14 @@ struct EVYDataManager {
     }
     
     public func create(key: String, data: Data) throws -> Void {
-        if get(key: key) != nil {
+        if try get(key: key) != nil {
             throw EVYDataError.keyAlreadyExists
         }
         context.insert(EVYData(key: key, data: data))
     }
     
     public func update(key: String, data: Data) throws -> Void {
-        if let existing = get(key: key) {
+        if let existing = try get(key: key) {
             existing.data = data
         } else {
             throw EVYDataError.keyNotFound
@@ -51,7 +51,7 @@ struct EVYDataManager {
     }
     
     public func delete(key: String) throws -> Void {
-        if let existing = get(key: key) {
+        if let existing = try get(key: key) {
             context.delete(existing)
         } else {
             throw EVYDataError.keyNotFound
