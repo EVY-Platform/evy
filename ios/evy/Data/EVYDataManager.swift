@@ -26,6 +26,15 @@ let container = try! ModelContainer(for: EVYData.self, configurations: config)
 struct EVYDataManager {
     private var context: ModelContext = ModelContext(container)
     
+    func exists(key: String) -> Bool {
+        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
+        do {
+            return try context.fetchCount(descriptor) > 0
+        } catch {
+            return false
+        }
+    }
+    
     func get(key: String) throws -> EVYData? {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
         do {
@@ -36,7 +45,7 @@ struct EVYDataManager {
     }
     
     public func create(key: String, data: Data) throws -> Void {
-        if try get(key: key) != nil {
+        if exists(key: key) {
             throw EVYDataError.keyAlreadyExists
         }
         context.insert(EVYData(key: key, data: data))
