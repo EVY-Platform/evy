@@ -26,7 +26,7 @@ let container = try! ModelContainer(for: EVYData.self, configurations: config)
 struct EVYDataManager {
     private var context: ModelContext = ModelContext(container)
     
-    func exists(key: String) -> Bool {
+    private func exists(key: String) -> Bool {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
         do {
             return try context.fetchCount(descriptor) > 0
@@ -35,32 +35,29 @@ struct EVYDataManager {
         }
     }
     
-    func get(key: String) throws -> EVYData? {
+    func get(key: String) throws -> EVYData {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
-        return try context.fetch(descriptor).first
+        guard let first = try context.fetch(descriptor).first else {
+            throw EVYDataError.keyNotFound
+        }
+        return first
     }
     
-    public func create(key: String, data: Data) throws -> Void {
+    func create(key: String, data: Data) throws -> Void {
         if exists(key: key) {
             throw EVYDataError.keyAlreadyExists
         }
         context.insert(EVYData(key: key, data: data))
     }
     
-    public func update(key: String, data: Data) throws -> Void {
-        if let existing = try get(key: key) {
-            existing.data = data
-        } else {
-            throw EVYDataError.keyNotFound
-        }
+    func update(key: String, data: Data) throws -> Void {
+        let existing = try get(key: key)
+        existing.data = data
     }
     
-    public func delete(key: String) throws -> Void {
-        if let existing = try get(key: key) {
-            context.delete(existing)
-        } else {
-            throw EVYDataError.keyNotFound
-        }
+    func delete(key: String) throws -> Void {
+        let existing = try get(key: key)
+        context.delete(existing)
     }
 }
 

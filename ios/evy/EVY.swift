@@ -11,12 +11,9 @@ struct EVY {
     static let data = EVYDataManager()
     
     static func submit(key: String) throws -> Void {
-        if let existing = try data.get(key: key) {
-            existing.key = UUID().uuidString
-            // TODO: Send to API
-        } else {
-            throw EVYDataError.keyNotFound
-        }
+        let existing = try data.get(key: key)
+        existing.key = UUID().uuidString
+        // TODO: Send to API
     }
     
     static func updateValue(_ value: String, at: String) throws -> Void {
@@ -29,10 +26,7 @@ struct EVY {
             throw EVYDataParseError.invalidProps
         }
         
-        guard let modelData = try data.get(key: variables.first!) else {
-            throw EVYDataError.keyNotFound
-        }
-        
+        let modelData = try data.get(key: variables.first!)
         let valueAsData = "\"\(value)\"".data(using: .utf8)!
         let valueAsJson = try! JSONDecoder().decode(EVYJson.self, from: valueAsData)
         let updatedData = try getUpdatedData(props: Array(variables[1...]),
@@ -43,16 +37,15 @@ struct EVY {
         try data.update(key: variables.first!, data: newData)
     }
     
-    static func parseProps(_ input: String) throws -> EVYJson? {
+    static func getDataAt(input: String) throws -> EVYJson {
         let variables = input.components(separatedBy: ".")
-        if variables.count > 0 {
-            let firstVariable = variables.first!
-            
-            if let data = try data.get(key: firstVariable) {
-                return try data.decoded().parseProp(props: Array(variables[1...]))
-            }
+        guard variables.count > 0 else {
+            throw EVYDataParseError.invalidProps
         }
-        return nil
+        
+        let firstVariable = variables.first!
+        let data = try data.get(key: firstVariable)
+        return try data.decoded().parseProp(props: Array(variables[1...]))
     }
     
     private static func getUpdatedData(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {

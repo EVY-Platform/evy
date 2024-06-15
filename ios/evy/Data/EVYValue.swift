@@ -21,7 +21,13 @@ struct EVYValue {
     
     init(_ input: String) {
         self.props = parseProps(input)
-        (self.value, self.prefix, self.suffix) = parseText(input, nil, nil)
+        do {
+            (self.value, self.prefix, self.suffix) = try parseText(input, nil, nil)
+        } catch {
+            self.value = ""
+            self.prefix = nil
+            self.suffix = nil
+        }
     }
     
     func toString() -> String {
@@ -37,24 +43,26 @@ private func parseProps(_ input: String) -> (RegexMatch, String)? {
     return nil
 }
 
-private func parseText(_ input: String, _ prefix: String?, _ suffix: String?) -> EVYFunctionOutput {
+private func parseText(_ input: String,
+                       _ prefix: String?,
+                       _ suffix: String?) throws -> EVYFunctionOutput {
     if (input.count < 1) {
         return (input, prefix, suffix)
     }
     
     if let (match, comparisonOperator, left, right) = parseComparisonFromText(input) {
-        let leftData = try! EVY.parseProps(left)
-        let parsedLeft = leftData?.toString() ?? left
+        let leftData = try EVY.getDataAt(input: left)
+        let parsedLeft = leftData.toString()
         
-        let rightData = try! EVY.parseProps(right)
-        let parsedRight = rightData?.toString() ?? right
+        let rightData = try EVY.getDataAt(input: right)
+        let parsedRight = rightData.toString()
         
         let comparisonResult = evyComparison(comparisonOperator,
-                                             left: parseText(parsedLeft, prefix, suffix).value,
-                                             right: parseText(parsedRight, prefix, suffix).value)
+                                             left: try parseText(parsedLeft, prefix, suffix).value,
+                                             right: try parseText(parsedRight, prefix, suffix).value)
         let parsedInput = input.replacingOccurrences(of: match.0.description,
                                                      with: comparisonResult ? "true" : "false")
-        return parseText(parsedInput, prefix, suffix)
+        return try parseText(parsedInput, prefix, suffix)
     }
     
     if let (match, functionName, functionArgs) = parseFunctionFromText(input) {
@@ -79,10 +87,9 @@ private func parseText(_ input: String, _ prefix: String?, _ suffix: String?) ->
                 of: match.0.description,
                 with: "\(returnPrefix ? "" : value!.prefix ?? "")\(value!.value)"
             )
-            return (
-                parseText(parsedInput,
-                          returnPrefix ? value!.prefix : prefix,
-                          returnSuffix ? value!.suffix : suffix)
+            return (try parseText(parsedInput,
+                                  returnPrefix ? value!.prefix : prefix,
+                                  returnSuffix ? value!.suffix : suffix)
             )
         }
     }
@@ -109,20 +116,18 @@ private func parseText(_ input: String, _ prefix: String?, _ suffix: String?) ->
                 of: match.0.description,
                 with: "\(returnPrefix ? "" : value!.prefix ?? "")\(value!.value)"
             )
-            return (
-                parseText(parsedInput,
-                          returnPrefix ? value!.prefix : prefix,
-                          returnSuffix ? value!.suffix : suffix)
+            return (try parseText(parsedInput,
+                                  returnPrefix ? value!.prefix : prefix,
+                                  returnSuffix ? value!.suffix : suffix)
             )
         }
     }
     
     if let (match, props) = parseProps(input) {
-        let data = try! EVY.parseProps(props)
-        if let parsedData = data?.toString() {
-            let parsedInput = input.replacingOccurrences(of: match.0.description, with: parsedData)
-            return parseText(parsedInput, prefix, suffix)
-        }
+        let data = try EVY.getDataAt(input: props)
+        let parsedInput = input.replacingOccurrences(of: match.0.description,
+                                                     with: data.toString())
+        return try parseText(parsedInput, prefix, suffix)
     }
     
     return (input, prefix, suffix)

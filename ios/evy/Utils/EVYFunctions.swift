@@ -12,7 +12,7 @@ public typealias EVYFunctionOutput = (value: String, prefix: String?, suffix: St
 
 func evyCount(_ args: String) -> EVYFunctionOutput {
     do {
-        let res = try EVY.parseProps(args)
+        let res = try EVY.getDataAt(input: args)
         switch res {
         case .string(let stringValue):
             return (String(stringValue.count), nil, nil)
@@ -28,7 +28,7 @@ func evyCount(_ args: String) -> EVYFunctionOutput {
 
 func evyFormatCurrency(_ args: String) -> EVYFunctionOutput {
     do {
-        let res = try EVY.parseProps(args)
+        let res = try EVY.getDataAt(input: args)
         switch res {
         case .dictionary(let dictValue):
             guard let value = dictValue["value"] else {
@@ -49,7 +49,7 @@ func evyFormatCurrency(_ args: String) -> EVYFunctionOutput {
 
 func evyFormatDimension(_ args: String) -> EVYFunctionOutput {
     do {
-        let res = try EVY.parseProps(args)
+        let res = try EVY.getDataAt(input: args)
         switch res {
         case .string(let stringValue):
             let floatValue = Float(stringValue)!
