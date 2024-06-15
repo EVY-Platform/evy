@@ -38,6 +38,7 @@ struct ContentView: View {
     @State private var currentFlowId: String = "home"
     
     init() {
+        // Sample data for testing
         let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
         try! EVY.data.create(key: "selling_reasons", data: selling_reasons)
         let conditions = DataConstants.conditions.data(using: .utf8)!
