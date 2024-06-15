@@ -37,9 +37,9 @@ struct EVYSelect: View {
 
 #Preview {
     let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
+    try! EVY.data.create(key: "selling_reasons", data: selling_reasons)
     
-    let options = try! EVYDataManager.i.parseProps("selling_reasons")!
+    let options = try! EVY.parseProps("selling_reasons")!
     switch options {
     case .array(let arrayValue):
         @State var selection = arrayValue.first

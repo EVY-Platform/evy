@@ -46,7 +46,7 @@ struct EVYInputRow: View {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "item", data: item)
+    try! EVY.data.create(key: "item", data: item)
     
     let json =  SDUIConstants.inputWidthRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)

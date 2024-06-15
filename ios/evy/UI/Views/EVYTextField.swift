@@ -69,7 +69,7 @@ struct EVYTextField: View {
                     }
                 })
                 .onSubmit {
-                    try! EVYDataManager.i.updateValue(value, at: destination)
+                    try! EVY.updateValue(value, at: destination)
                     (self.value, self.prefix, self.suffix) = resetValues(self.input)
                     editing = false
                     focused = false
@@ -95,7 +95,7 @@ private func resetValues(_ input: String)-> (value: String, prefix: String, suff
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "item", data: item)
+    try! EVY.data.create(key: "item", data: item)
     
     return VStack {
         EVYTextField(input: "{formatDimension(item.dimension.width)}",

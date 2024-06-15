@@ -39,9 +39,9 @@ struct ContentView: View {
     
     init() {
         let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-        try! EVYDataManager.i.create(key: "selling_reasons", data: selling_reasons)
+        try! EVY.data.create(key: "selling_reasons", data: selling_reasons)
         let conditions = DataConstants.conditions.data(using: .utf8)!
-        try! EVYDataManager.i.create(key: "conditions", data: conditions)
+        try! EVY.data.create(key: "conditions", data: conditions)
         
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
@@ -67,7 +67,7 @@ struct ContentView: View {
             if newFlow.type == .create {
                 let item = DataConstants.item.data(using: .utf8)!
                 let key: String? = newFlow.data
-                try! EVYDataManager.i.create(key: key!, data: item)
+                try! EVY.data.create(key: key!, data: item)
             }
             
         case .submit:
@@ -78,7 +78,7 @@ struct ContentView: View {
             }
             // Otherwise, submit the data
             let key: String? = currentFlow?.data
-            try! EVYDataManager.i.submit(key: key!)
+            try! EVY.submit(key: key!)
             
             // Then, remove the current flow from navigation
             if let existing = routes.firstIndex(where: { route in
@@ -95,7 +95,7 @@ struct ContentView: View {
             let currentFlow: EVYFlow? = flows.first(where: {$0.id == currentFlowId})
             if currentFlow?.type == .create {
                 let key: String? = currentFlow?.data
-                try! EVYDataManager.i.delete(key: key!)
+                try! EVY.data.delete(key: key!)
             }
             
             if let existing = routes.firstIndex(where: { route in
@@ -130,7 +130,7 @@ struct ContentView: View {
                let currentFlow = flows.first(where: {$0.id == currentFlowId}),
                currentFlow.type == .create {
                 do {
-                    try EVYDataManager.i.delete(key: currentFlow.data)
+                    try EVY.data.delete(key: currentFlow.data)
                 } catch {}
             }
             

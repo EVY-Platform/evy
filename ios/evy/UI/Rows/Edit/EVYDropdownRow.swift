@@ -37,7 +37,7 @@ struct EVYDropdownRow: View {
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
         if let (_, props) = EVYValue(view.data).props,
-           let parsedOptions = try EVYDataManager.i.parseProps(props),
+           let parsedOptions = try EVY.parseProps(props),
            case let .array(arrayValue) = parsedOptions {
             self.options.append(contentsOf: arrayValue)
         }
@@ -84,7 +84,7 @@ struct EVYDropdownRow: View {
                     .presentationDragIndicator(.visible)
                     .onChange(of: selection) { oldValue, newValue in
                         if let key = newValue?.identifierValue() {
-                            try! EVYDataManager.i.updateValue(key, at: edit.destination)
+                            try! EVY.updateValue(key, at: edit.destination)
                         }
                     }
             }
@@ -95,10 +95,10 @@ struct EVYDropdownRow: View {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "item", data: item)
+    try! EVY.data.create(key: "item", data: item)
     
     let conditions = DataConstants.conditions.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "conditions", data: conditions)
+    try! EVY.data.create(key: "conditions", data: conditions)
     
     let json =  SDUIConstants.condition.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)

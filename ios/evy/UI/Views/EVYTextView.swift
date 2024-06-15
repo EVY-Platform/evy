@@ -75,7 +75,7 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "item", data: item)
+    try! EVY.data.create(key: "item", data: item)
     
     return VStack {
         EVYTextView("::star.square.on.square.fill::")

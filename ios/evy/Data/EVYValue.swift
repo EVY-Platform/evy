@@ -43,10 +43,10 @@ private func parseText(_ input: String, _ prefix: String?, _ suffix: String?) ->
     }
     
     if let (match, comparisonOperator, left, right) = parseComparisonFromText(input) {
-        let leftData = try! EVYDataManager.i.parseProps(left)
+        let leftData = try! EVY.parseProps(left)
         let parsedLeft = leftData?.toString() ?? left
         
-        let rightData = try! EVYDataManager.i.parseProps(right)
+        let rightData = try! EVY.parseProps(right)
         let parsedRight = rightData?.toString() ?? right
         
         let comparisonResult = evyComparison(comparisonOperator,
@@ -118,7 +118,7 @@ private func parseText(_ input: String, _ prefix: String?, _ suffix: String?) ->
     }
     
     if let (match, props) = parseProps(input) {
-        let data = try! EVYDataManager.i.parseProps(props)
+        let data = try! EVY.parseProps(props)
         if let parsedData = data?.toString() {
             let parsedInput = input.replacingOccurrences(of: match.0.description, with: parsedData)
             return parseText(parsedInput, prefix, suffix)
@@ -209,7 +209,7 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
 
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
-    try! EVYDataManager.i.create(key: "item", data: item)
+    try! EVY.data.create(key: "item", data: item)
     
     let bare = "test"
     let data = "{item.title}"
