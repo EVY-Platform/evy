@@ -111,7 +111,7 @@ struct SDUIConstants {
                 "data": "{conditions}"
            },
             "edit": {
-                "destination": "{item.condition}"
+                "destination": "{item.condition_id}"
             }
         }
     """

@@ -15,7 +15,7 @@ private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
 
 struct EVYValue {
     let input: String
-    let data: EVYData?
+    var datas: [EVYData] = []
     
     let value: String
     let prefix: String?
@@ -24,12 +24,17 @@ struct EVYValue {
     init(_ input: String) {
         self.input = input
         
-        let props = splitProps(input)
         do {
-            self.data = try EVY.data.get(key: props.first!)
-        } catch {
-            self.data = nil
-        }
+            if let (_, propsMatch) = parseProps(input) {
+                let props = splitProps(propsMatch)
+                let data = try EVY.data.get(key: props.first!)
+                self.datas.append(data)
+            } else {
+                let props = splitProps(input)
+                let data = try EVY.data.get(key: props.first!)
+                self.datas.append(data)
+            }
+        } catch {}
         
         do {
             (self.value, self.prefix, self.suffix) = try parseText(input, nil, nil)
