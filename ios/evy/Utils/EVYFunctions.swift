@@ -11,7 +11,7 @@ import SwiftUI
 public typealias EVYFunctionOutput = (value: String, prefix: String?, suffix: String?)
 
 func evyCount(_ args: String) -> EVYFunctionOutput {
-    let res = EVYValue(args).datas.first?.getDataAt(args)
+    let res = EVYValue(args).datas.first?.getNestedDataAt(args)
     switch res {
     case .string(let stringValue):
         return (String(stringValue.count), nil, nil)
@@ -23,7 +23,7 @@ func evyCount(_ args: String) -> EVYFunctionOutput {
 }
 
 func evyFormatCurrency(_ args: String) -> EVYFunctionOutput {
-    let res = EVYValue(args).datas.first?.getDataAt(args)
+    let res = EVYValue(args).datas.first?.getNestedDataAt(args)
     switch res {
     case .dictionary(let dictValue):
         guard let value = dictValue["value"] else {
@@ -40,7 +40,7 @@ func evyFormatCurrency(_ args: String) -> EVYFunctionOutput {
 }
 
 func evyFormatDimension(_ args: String) -> EVYFunctionOutput {
-    let res = EVYValue(args).datas.first?.getDataAt(args)
+    let res = EVYValue(args).datas.first?.getNestedDataAt(args)
     switch res {
     case .string(let stringValue):
         let floatValue = Float(stringValue)!

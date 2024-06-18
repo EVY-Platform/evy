@@ -22,7 +22,7 @@ class EVYData {
         return try! JSONDecoder().decode(EVYJson.self, from: self.data)
     }
     
-    func getDataAt(_ input: String) -> EVYJson {
+    func getNestedDataAt(_ input: String) -> EVYJson {
         let variables = input.components(separatedBy: ".")
         if variables.count < 1 {
             return self.decoded()
