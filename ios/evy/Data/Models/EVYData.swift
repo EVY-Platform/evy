@@ -37,15 +37,6 @@ class EVYData {
     func decoded() -> EVYJson {
         return try! JSONDecoder().decode(EVYJson.self, from: self.data)
     }
-    
-    func getNestedDataAt(_ input: String) -> EVYJson {
-        let variables = EVYInterpreter.splitPropsFromText(input)
-        if variables.count < 1 {
-            return self.decoded()
-        }
-        
-        return self.decoded().parseProp(props: Array(variables[1...]))
-    }
 }
 
 public typealias EVYJsonString = String

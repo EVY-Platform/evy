@@ -53,13 +53,15 @@ private func parseText(_ input: String,
         var parsedRight = right
         
         do {
-            let leftData = try EVY.getDataAt(input: left)
-            parsedLeft = leftData.toString()
+            if let leftData = try EVY.getDataFrom(input: left) {
+                parsedLeft = leftData.toString()
+            }
         } catch {}
         
         do {
-            let rightData = try EVY.getDataAt(input: left)
-            parsedRight = rightData.toString()
+            if let rightData = try EVY.getDataFrom(input: left) {
+                parsedRight = rightData.toString()
+            }
         } catch {}
         
         let comparisonResult = evyComparison(comparisonOperator,
@@ -78,11 +80,11 @@ private func parseText(_ input: String,
         
         switch functionName {
         case "count":
-            value = evyCount(functionArgs)
+            value = try evyCount(functionArgs)
         case "formatCurrency":
-            value = evyFormatCurrency(functionArgs)
+            value = try evyFormatCurrency(functionArgs)
         case "formatDimension":
-            value = evyFormatDimension(functionArgs)
+            value = try evyFormatDimension(functionArgs)
         default:
             value = nil
         }
@@ -107,11 +109,11 @@ private func parseText(_ input: String,
         
         switch functionName {
         case "count":
-            value = evyCount(functionArgs)
+            value = try evyCount(functionArgs)
         case "formatCurrency":
-            value = evyFormatCurrency(functionArgs)
+            value = try evyFormatCurrency(functionArgs)
         case "formatDimension":
-            value = evyFormatDimension(functionArgs)
+            value = try evyFormatDimension(functionArgs)
         default:
             value = nil
         }
@@ -129,7 +131,7 @@ private func parseText(_ input: String,
     }
     
     if let (match, props) = parseProps(input) {
-        let data = try EVY.getDataAt(input: props)
+        let data = try EVY.getDataAt(props: props)
         let parsedInput = input.replacingOccurrences(of: match.0.description,
                                                      with: data.toString())
         return try parseText(parsedInput, prefix, suffix)

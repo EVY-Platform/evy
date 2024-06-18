@@ -13,26 +13,25 @@ struct EVY {
     /**
      * Methods to get data from various sources and inputs
      */
-    static func getDataAt(input: String) throws -> EVYJson {
-        let variables = EVYInterpreter.splitPropsFromText(input)
-        guard variables.count > 0 else {
-            throw EVYDataParseError.invalidProps
-        }
-        
-        let firstVariable = variables.first!
-        let data = try data.get(key: firstVariable)
-        return data.decoded().parseProp(props: Array(variables[1...]))
-    }
-    
-    static func getDataFromText(_ input: String) -> EVYData? {
+    static func getDataFrom(input: String) throws -> EVYJson? {
         let props = EVYInterpreter.parsePropsFromText(input)
         guard props.count > 0 else {
             return nil
         }
-        return getDataFromProps(props)
+        return try getDataAt(props: props)
+    }
+    static func getDataAt(props: String) throws -> EVYJson {
+        let splitProps = EVYInterpreter.splitPropsFromText(props)
+        guard splitProps.count > 0 else {
+            throw EVYDataParseError.invalidProps
+        }
+        
+        let firstVariable = splitProps.first!
+        let data = try data.get(key: firstVariable)
+        return data.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
-    static func getDataFromProps(_ props: String) -> EVYData? {
+    static func getDataAtRootOf(_ props: String) -> EVYData? {
         let props = EVYInterpreter.splitPropsFromText(props)
         guard props.count > 0 else {
             return nil
@@ -45,6 +44,14 @@ struct EVY {
         } catch {}
         
         return nil
+    }
+    
+    static func getDataFromText(_ input: String) -> EVYData? {
+        let props = EVYInterpreter.parsePropsFromText(input)
+        guard props.count > 0 else {
+            return nil
+        }
+        return getDataAtRootOf(props)
     }
     
     static func parseText(_ input: String) -> EVYValue {
