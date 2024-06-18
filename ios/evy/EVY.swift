@@ -15,7 +15,7 @@ struct EVY {
      */
     static func getDataFrom(input: String) throws -> EVYJson? {
         let props = EVYInterpreter.parsePropsFromText(input)
-        guard props.count > 0 else {
+        if props.count < 1 {
             return nil
         }
         return try getDataAt(props: props)
@@ -23,7 +23,7 @@ struct EVY {
     
     static func getDataAt(props: String) throws -> EVYJson {
         let splitProps = EVYInterpreter.splitPropsFromText(props)
-        guard splitProps.count > 0 else {
+        if splitProps.count < 1 {
             throw EVYDataParseError.invalidProps
         }
         
@@ -34,7 +34,7 @@ struct EVY {
     
     static func getDataAtRootOf(_ props: String) -> EVYData? {
         let props = EVYInterpreter.splitPropsFromText(props)
-        guard props.count > 0 else {
+        if props.count < 1 {
             return nil
         }
         guard let firstProp = props.first else {
@@ -49,7 +49,7 @@ struct EVY {
     
     static func getDataFromText(_ input: String) -> EVYData? {
         let props = EVYInterpreter.parsePropsFromText(input)
-        guard props.count > 0 else {
+        if props.count < 1 {
             return nil
         }
         return getDataAtRootOf(props)
@@ -74,11 +74,11 @@ struct EVY {
      */
     static func updateValue(_ value: String, at: String) throws -> Void {
         let props = EVYInterpreter.parsePropsFromText(at)
-        guard props.count > 0 else {
+        if props.count < 1 {
             return
         }
         let splitProps = EVYInterpreter.splitPropsFromText(props)
-        guard splitProps.count > 0 else {
+        if splitProps.count < 1 {
             return
         }
         guard let modelData = getDataFromText(at) else {
