@@ -37,6 +37,49 @@ class EVYData {
     func decoded() -> EVYJson {
         return try! JSONDecoder().decode(EVYJson.self, from: self.data)
     }
+    
+    func updateValueInData(_ value: String, props: [String]) throws -> Void {
+        let currentDataAsJson = self.decoded()
+        if props.count < 1 {
+            return
+        }
+        
+        let newValueAsData = "\"\(value)\"".data(using: .utf8)!
+        let newValueAsJson = try! JSONDecoder().decode(EVYJson.self, from: newValueAsData)
+        
+        let newJson = try getUpdatedJson(props: props, data: currentDataAsJson, value: newValueAsJson)
+        self.data = try JSONEncoder().encode(newJson)
+    }
+    
+    private func getUpdatedJson(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {
+        if props.count < 1 {
+            return data
+        }
+        
+        switch data {
+        case .dictionary(var dictValue):
+            guard let firstVariable = props.first else {
+                throw EVYDataParseError.invalidProps
+            }
+            guard let subData = dictValue[firstVariable] else {
+                throw EVYDataParseError.invalidVariable
+            }
+            if props.count == 1 {
+                dictValue[firstVariable] = value
+                let dictAsData = try JSONEncoder().encode(dictValue)
+                return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
+            }
+            let updatedData = try getUpdatedJson(props: Array(props[1...]), data: subData, value: value)
+            if (props.count > 1) {
+                dictValue[firstVariable] = updatedData
+                let dictAsData = try JSONEncoder().encode(dictValue)
+                return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
+            }
+            return updatedData
+        default:
+            return data
+        }
+    }
 }
 
 public typealias EVYJsonString = String

@@ -20,6 +20,7 @@ struct EVY {
         }
         return try getDataAt(props: props)
     }
+    
     static func getDataAt(props: String) throws -> EVYJson {
         let splitProps = EVYInterpreter.splitPropsFromText(props)
         guard splitProps.count > 0 else {
@@ -69,7 +70,7 @@ struct EVY {
     }
     
     /**
-     * Updating a nested value in an object by using a set of props
+     * Updating a nested value in an object by using props
      */
     static func updateValue(_ value: String, at: String) throws -> Void {
         let props = EVYInterpreter.parsePropsFromText(at)
@@ -83,44 +84,7 @@ struct EVY {
         guard let modelData = getDataFromText(at) else {
             return
         }
-        let valueAsData = "\"\(value)\"".data(using: .utf8)!
-        let valueAsJson = try! JSONDecoder().decode(EVYJson.self, from: valueAsData)
-        let updatedData = try getUpdatedData(props: Array(splitProps[1...]),
-                                             data: modelData.decoded(),
-                                             value: valueAsJson)
-        
-        let newData = try JSONEncoder().encode(updatedData)
-        try data.update(key: splitProps.first!, data: newData)
-    }
-    
-    private static func getUpdatedData(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {
-        if props.count < 1 {
-            return data
-        }
-        
-        switch data {
-        case .dictionary(var dictValue):
-            guard let firstVariable = props.first else {
-                throw EVYDataParseError.invalidProps
-            }
-            guard let subData = dictValue[firstVariable] else {
-                throw EVYDataParseError.invalidVariable
-            }
-            if props.count == 1 {
-                dictValue[firstVariable] = value
-                let dictAsData = try JSONEncoder().encode(dictValue)
-                return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
-            }
-            let updatedData = try getUpdatedData(props: Array(props[1...]), data: subData, value: value)
-            if (props.count > 1) {
-                dictValue[firstVariable] = updatedData
-                let dictAsData = try JSONEncoder().encode(dictValue)
-                return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
-            }
-            return updatedData
-        default:
-            return data
-        }
+        try modelData.updateValueInData(value, props: Array(splitProps[1...]))
     }
 }
 
