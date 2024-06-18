@@ -1,5 +1,5 @@
 //
-//  EVYValue.swift
+//  EVYInterpreter.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 18/12/2023.
@@ -12,61 +12,33 @@ private let comparisonOperatorPattern = "(>|<|==|!=)"
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
 private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
+private let propSeparator = "."
 
-struct EVYValue {
-    let input: String
-    var datas: [EVYData] = []
-    
-    let value: String
-    let prefix: String?
-    let suffix: String?
-    
-    init(_ input: String) {
-        self.input = input
+struct EVYInterpreter {
+    public static func parsePropsFromText(_ input: String) -> String {
+        guard let match = firstMatch(input, pattern: propsPattern) else {
+            return input
+        }
         
+        // Remove leading and trailing curly braces
+        return String(match.0.dropFirst().dropLast())
+    }
+    
+    public static func splitPropsFromText(_ input: String) -> [String] {
+        return input.components(separatedBy: propSeparator)
+    }
+    
+    public static func parseTextFromText(_ input: String) -> (value: String,
+                                                              prefix: String?,
+                                                              suffix: String?)
+    {
         do {
-            if let (_, propsMatch) = parseProps(input) {
-                let props = splitProps(propsMatch)
-                let data = try EVY.data.get(key: props.first!)
-                self.datas.append(data)
-            } else {
-                let props = splitProps(input)
-                let data = try EVY.data.get(key: props.first!)
-                self.datas.append(data)
-            }
+            let match = try parseText(input, nil, nil)
+            return (match.value, match.prefix, match.suffix)
         } catch {}
         
-        do {
-            (self.value, self.prefix, self.suffix) = try parseText(input, nil, nil)
-        } catch {
-            self.value = ""
-            self.prefix = nil
-            self.suffix = nil
-        }
+        return (input, nil, nil)
     }
-    
-    func props() -> [String] {
-        guard let (_, props) = parseProps(input) else {
-            return []
-        }
-        return splitProps(props)
-    }
-    
-    func toString() -> String {
-        return "\(prefix ?? "")\(value)\(suffix ?? "")"
-    }
-}
-
-private func splitProps(_ props: String) -> [String] {
-    return props.components(separatedBy: ".")
-}
-
-private func parseProps(_ input: String) -> (RegexMatch, String)? {
-    if let match = firstMatch(input, pattern: propsPattern) {
-        // Remove leading and trailing curly braces
-        return (match, String(match.0.dropFirst().dropLast()))
-    }
-    return nil
 }
 
 private func parseText(_ input: String,
@@ -166,6 +138,15 @@ private func parseText(_ input: String,
     return (input, prefix, suffix)
 }
 
+private func parseProps(_ input: String) -> (RegexMatch, String)? {
+    if let match = firstMatch(input, pattern: propsPattern) {
+        // Remove leading and trailing curly braces
+        return (match, String(match.0.dropFirst().dropLast()))
+    }
+    return nil
+}
+
+
 private func parseComparisonFromText(_ input: String) -> (match: RegexMatch,
                                                           comparisonOperator: String,
                                                           left: String,
@@ -251,15 +232,26 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
     
     let bare = "test"
     let data = "{item.title}"
+    let parsedData = EVYInterpreter.parseTextFromText(data)
+    let value = EVYValue(parsedData.value, parsedData.prefix, parsedData.suffix)
+    
     let dataWithPrefix = "{formatCurrency(item.price)}"
+    let parsedDataWithPrefix = EVYInterpreter.parseTextFromText(dataWithPrefix)
+    let valueWithPrefix = EVYValue(parsedDataWithPrefix.value,
+                                   parsedDataWithPrefix.prefix,
+                                   parsedDataWithPrefix.suffix)
+
     let dataWithSuffix = "{formatDimension(item.dimension.width)}"
+    let parsedDataWithSuffix = EVYInterpreter.parseTextFromText(dataWithSuffix)
+    let valueWithSuffix = EVYValue(parsedDataWithSuffix.value,
+                                   parsedDataWithSuffix.prefix,
+                                   parsedDataWithSuffix.suffix)
     
     return VStack {
-        Text(EVYValue(bare).value)
-        Text(EVYValue(data).value)
-        Text(EVYValue(dataWithPrefix).toString())
-        Text(EVYValue(dataWithSuffix).toString())
-        Text(EVYValue("{a == a}").toString())
-        Text(EVYValue("{a == b}").toString())
+        Text(EVYInterpreter.parsePropsFromText(bare))
+        Text(EVYInterpreter.parsePropsFromText(data))
+        Text(value.toString())
+        Text(valueWithPrefix.toString())
+        Text(valueWithSuffix.toString())
     }
 }

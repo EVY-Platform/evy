@@ -31,8 +31,7 @@ struct EVYDropdownRow: View {
         self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
-        let value = EVYValue(view.data)
-        if let data = value.datas.first?.decoded(),
+        if let data = EVY.getDataFromText(view.data)?.decoded(),
            case let .array(arrayValue) = data {
             self.options.append(contentsOf: arrayValue)
         }

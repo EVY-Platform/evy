@@ -21,6 +21,7 @@
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
+		735795D32C21AF6100ADB49D /* EVYInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735795D22C21AF6100ADB49D /* EVYInterpreter.swift */; };
 		736495BF2B972E1800729129 /* EVYDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736495BE2B972E1800729129 /* EVYDataManager.swift */; };
 		736D10572B78C4C500503C4D /* EVYPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10562B78C4C500503C4D /* EVYPage.swift */; };
 		736D105F2B78CDDB00503C4D /* EVYTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D105E2B78CDDB00503C4D /* EVYTextRow.swift */; };
@@ -47,7 +48,6 @@
 		73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BDF82B85F75800C8F882 /* EVYFunctions.swift */; };
 		73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73AC529C2BC27913004204A2 /* EVYAPI.swift */; };
 		73C5D23E2C0AF1030024FF11 /* EVYTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */; };
-		73C5D2402C0AFD200024FF11 /* EVYValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C5D23F2C0AFD200024FF11 /* EVYValue.swift */; };
 		73C78AEA2BC549840026F39D /* EVYSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AE92BC549840026F39D /* EVYSearch.swift */; };
 		73C78AEE2BC54DFE0026F39D /* EVYSearchRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */; };
 		73C78AF02BC551880026F39D /* EVYSearchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AEF2BC551880026F39D /* EVYSearchBar.swift */; };
@@ -77,6 +77,7 @@
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
 		732A50812C1D6AE80036B98B /* EVY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVY.swift; sourceTree = "<group>"; };
+		735795D22C21AF6100ADB49D /* EVYInterpreter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInterpreter.swift; sourceTree = "<group>"; };
 		736495BE2B972E1800729129 /* EVYDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYDataManager.swift; sourceTree = "<group>"; };
 		736D10562B78C4C500503C4D /* EVYPage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYPage.swift; sourceTree = "<group>"; };
 		736D105E2B78CDDB00503C4D /* EVYTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextRow.swift; sourceTree = "<group>"; };
@@ -105,7 +106,6 @@
 		73A6BDF82B85F75800C8F882 /* EVYFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYFunctions.swift; sourceTree = "<group>"; };
 		73AC529C2BC27913004204A2 /* EVYAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAPI.swift; sourceTree = "<group>"; };
 		73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextView.swift; sourceTree = "<group>"; };
-		73C5D23F2C0AFD200024FF11 /* EVYValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYValue.swift; sourceTree = "<group>"; };
 		73C78AE92BC549840026F39D /* EVYSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearch.swift; sourceTree = "<group>"; };
 		73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYSearchRow.swift; sourceTree = "<group>"; };
 		73C78AEF2BC551880026F39D /* EVYSearchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchBar.swift; sourceTree = "<group>"; };
@@ -141,7 +141,6 @@
 				737C6AC82B270AD90093D00C /* API */,
 				737C6ABF2B270AAE0093D00C /* Models */,
 				736495BE2B972E1800729129 /* EVYDataManager.swift */,
-				73C5D23F2C0AFD200024FF11 /* EVYValue.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -152,6 +151,7 @@
 				73D878E72B2ECD6900A1F9C2 /* chunked.swift */,
 				730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */,
 				73A6BDF82B85F75800C8F882 /* EVYFunctions.swift */,
+				735795D22C21AF6100ADB49D /* EVYInterpreter.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -416,6 +416,7 @@
 				2E0B20F22B816AFA002C86A3 /* EVYSelectPhotoRow.swift in Sources */,
 				737C6ACC2B270AD90093D00C /* EVYManager.swift in Sources */,
 				737C6AA62B2706890093D00C /* evyApp.swift in Sources */,
+				735795D32C21AF6100ADB49D /* EVYInterpreter.swift in Sources */,
 				737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */,
 				73D5B41B2B3307590005E495 /* EVYGreyedBackgound.swift in Sources */,
 				2E69A8C12BD133100068647D /* EVYSelectContainerRow.swift in Sources */,
@@ -439,7 +440,6 @@
 				737C6AC42B270AAE0093D00C /* EVYDevice.swift in Sources */,
 				2E00BD4B2BA1A99D00C09A1D /* EVYRadioButton.swift in Sources */,
 				2EE4E27B2B99CDB300CEF112 /* EVYSheetContainerRow.swift in Sources */,
-				73C5D2402C0AFD200024FF11 /* EVYValue.swift in Sources */,
 				2E5F4DBD2BB2C5D900D3A3FB /* EVYTextAreaRow.swift in Sources */,
 				73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */,
 				73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */,

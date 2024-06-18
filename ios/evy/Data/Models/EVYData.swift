@@ -8,6 +8,22 @@
 import Foundation
 import SwiftData
 
+struct EVYValue {
+    let value: String
+    let prefix: String?
+    let suffix: String?
+    
+    init(_ value: String, _ prefix: String?, _ suffix: String?) {
+        self.value = value
+        self.prefix = prefix
+        self.suffix = suffix
+    }
+    
+    func toString() -> String {
+        return "\(prefix ?? "")\(value)\(suffix ?? "")"
+    }
+}
+
 @Model
 class EVYData {
     var key: String
@@ -23,7 +39,7 @@ class EVYData {
     }
     
     func getNestedDataAt(_ input: String) -> EVYJson {
-        let variables = input.components(separatedBy: ".")
+        let variables = EVYInterpreter.splitPropsFromText(input)
         if variables.count < 1 {
             return self.decoded()
         }
