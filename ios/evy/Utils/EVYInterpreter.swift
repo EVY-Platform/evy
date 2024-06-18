@@ -53,13 +53,13 @@ private func parseText(_ input: String,
         var parsedRight = right
         
         do {
-            if let leftData = try EVY.getDataFrom(input: left) {
+            if let leftData = try EVY.getDataNestedFromText(left) {
                 parsedLeft = leftData.toString()
             }
         } catch {}
         
         do {
-            if let rightData = try EVY.getDataFrom(input: left) {
+            if let rightData = try EVY.getDataNestedFromText(left) {
                 parsedRight = rightData.toString()
             }
         } catch {}
@@ -131,7 +131,7 @@ private func parseText(_ input: String,
     }
     
     if let (match, props) = parseProps(input) {
-        let data = try EVY.getDataAt(props: props)
+        let data = try EVY.getDataNestedFromProps(props)
         let parsedInput = input.replacingOccurrences(of: match.0.description,
                                                      with: data.toString())
         return try parseText(parsedInput, prefix, suffix)
