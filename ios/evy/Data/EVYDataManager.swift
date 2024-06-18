@@ -10,11 +10,6 @@ import SwiftData
 
 typealias RegexMatch = Regex<AnyRegexOutput>.Match
 
-public enum EVYDataParseError: Error {
-    case invalidProps
-    case invalidVariable
-}
-
 public enum EVYDataError: Error {
     case keyAlreadyExists
     case keyNotFound

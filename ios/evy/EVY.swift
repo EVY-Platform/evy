@@ -7,6 +7,10 @@
 
 import Foundation
 
+public enum EVYParamError: Error {
+    case invalidProps
+}
+
 struct EVY {
     static let data = EVYDataManager()
     
@@ -24,7 +28,7 @@ struct EVY {
     static func getDataNestedFromProps(_ input: String) throws -> EVYJson {
         let props = EVYInterpreter.splitPropsFromText(input)
         if props.count < 1 {
-            throw EVYDataParseError.invalidProps
+            throw EVYParamError.invalidProps
         }
         
         let firstVariable = props.first!

@@ -8,6 +8,12 @@
 import Foundation
 import SwiftData
 
+public enum EVYDataParseError: Error {
+    case invalidProps
+    case invalidVariable
+    case unprocessableValue
+}
+
 struct EVYValue {
     let value: String
     let prefix: String?
@@ -58,20 +64,20 @@ class EVYData {
         
         switch data {
         case .dictionary(var dictValue):
-            guard let firstVariable = props.first else {
+            guard let firstProp = props.first else {
                 throw EVYDataParseError.invalidProps
             }
-            guard let subData = dictValue[firstVariable] else {
-                throw EVYDataParseError.invalidVariable
+            guard let subData = dictValue[firstProp] else {
+                throw EVYDataParseError.invalidProps
             }
             if props.count == 1 {
-                dictValue[firstVariable] = value
+                dictValue[firstProp] = value
                 let dictAsData = try JSONEncoder().encode(dictValue)
                 return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
             }
             let updatedData = try getUpdatedJson(props: Array(props[1...]), data: subData, value: value)
             if (props.count > 1) {
-                dictValue[firstVariable] = updatedData
+                dictValue[firstProp] = updatedData
                 let dictAsData = try JSONEncoder().encode(dictValue)
                 return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
             }
@@ -85,10 +91,6 @@ class EVYData {
 public typealias EVYJsonString = String
 public typealias EVYJsonArray = [EVYJson]
 public typealias EVYJsonDict = [String: EVYJson]
-
-private enum EVYDataModelError: Error {
-    case unprocessableValue
-}
 
 public enum EVYJson: Codable, Hashable {
     case string(EVYJsonString)
@@ -113,7 +115,7 @@ public enum EVYJson: Codable, Hashable {
             return
         }
 
-        throw EVYDataModelError.unprocessableValue
+        throw EVYDataParseError.unprocessableValue
     }
     
     public func hash(into hasher: inout Hasher) {
