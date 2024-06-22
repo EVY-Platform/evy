@@ -31,10 +31,12 @@ struct EVYDropdownRow: View {
         self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
-        if let data = EVY.getDataAtRootFromText(view.data),
-           case let .array(arrayValue) = data {
-            self.options.append(contentsOf: arrayValue)
-        }
+        do {
+            let data = try EVY.getDataNestedFromText(view.data)
+            if case let .array(arrayValue) = data {
+                self.options.append(contentsOf: arrayValue)
+            }
+           } catch {}
     }
     
     @State private var showSheet = false

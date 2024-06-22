@@ -15,6 +15,11 @@ private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
 private let propSeparator = "."
 
 struct EVYInterpreter {
+    /**
+     * Takes a string from the SDUI API
+     * - extracts the 1st instance of props from it, stripping out brackets
+     * - returns that props string
+     */
     public static func parsePropsFromText(_ input: String) -> String {
         guard let match = firstMatch(input, pattern: propsPattern) else {
             return input
@@ -24,10 +29,19 @@ struct EVYInterpreter {
         return String(match.0.dropFirst().dropLast())
     }
     
+    /**
+     * Takes a props string
+     * - returns those props as a list
+     */
     public static func splitPropsFromText(_ input: String) -> [String] {
         return input.components(separatedBy: propSeparator)
     }
     
+    /**
+     * Takes a string from the SDUI API
+     * - parses all data, functions and formatting
+     * - returns a string ready for display to the user
+     */
     public static func parseTextFromText(_ input: String) -> (value: String,
                                                               prefix: String?,
                                                               suffix: String?)
@@ -41,6 +55,10 @@ struct EVYInterpreter {
     }
 }
 
+/**
+ * Primary text parsing utility
+ * Recursively parses everything inside, including data, comparisons, and formatting
+ */
 private func parseText(_ input: String,
                        _ prefix: String?,
                        _ suffix: String?) throws -> EVYFunctionOutput {
@@ -49,26 +67,21 @@ private func parseText(_ input: String,
     }
     
     if let (match, comparisonOperator, left, right) = parseComparisonFromText(input) {
-        let leftProps = EVYInterpreter.parsePropsFromText(left)
-        let rightProps = EVYInterpreter.parsePropsFromText(right)
-        var parsedLeft = left
-        var parsedRight = right
+        let parsedLeftText = EVYInterpreter.parseTextFromText(left)
+        let parsedLeftValue = EVYValue(parsedLeftText.value,
+                                       parsedLeftText.prefix,
+                                       parsedLeftText.suffix)
         
-        if leftProps.count > 0 {
-            do {
-                parsedLeft = try EVY.getDataNestedFromProps(leftProps).toString()
-            } catch {}
-        }
+        let parsedRightText = EVYInterpreter.parseTextFromText(right)
+        let parsedRightValue = EVYValue(parsedRightText.value,
+                                       parsedRightText.prefix,
+                                       parsedRightText.suffix)
         
-        if rightProps.count > 0 {
-            do {
-                parsedRight = try EVY.getDataNestedFromProps(rightProps).toString()
-            } catch {}
-        }
-        
+        let leftValue = try parseText(parsedLeftValue.toString(), prefix, suffix).value
+        let rightValue = try parseText(parsedRightValue.toString(), prefix, suffix).value
         let comparisonResult = evyComparison(comparisonOperator,
-                                             left: try parseText(parsedLeft, prefix, suffix).value,
-                                             right: try parseText(parsedRight, prefix, suffix).value)
+                                             left: leftValue,
+                                             right: rightValue)
         let parsedInput = input.replacingOccurrences(of: match.0.description,
                                                      with: comparisonResult ? "true" : "false")
         return try parseText(parsedInput, prefix, suffix)
@@ -141,9 +154,17 @@ private func parseText(_ input: String,
     }
     
     if let (match, props) = parseProps(input) {
-        let data = try EVY.getDataNestedFromProps(props)
+        let splitProps = EVYInterpreter.splitPropsFromText(props)
+        if splitProps.count < 1 {
+            throw EVYParamError.invalidProps
+        }
+        
+        let firstVariable = splitProps.first!
+        let data = try EVY.data.get(key: firstVariable)
+        let decodedData = data.decoded().parseProp(props: Array(splitProps[1...]))
+        
         let parsedInput = input.replacingOccurrences(of: match.0.description,
-                                                     with: data.toString())
+                                                     with: decodedData.toString())
         return try parseText(parsedInput, prefix, suffix)
     }
     
@@ -191,8 +212,8 @@ private func parseComparisonFromText(_ input: String) -> (match: RegexMatch,
 }
 
 private func parseFunctionFromText(_ input: String) -> (match: RegexMatch,
-                                        functionName: String,
-                                        functionArgs: String)?
+                                                        functionName: String,
+                                                        functionArgs: String)?
 {
     guard let match = firstMatch(input, pattern: "\\{\(functionPattern)\\}") else {
         return nil
@@ -206,8 +227,8 @@ private func parseFunctionFromText(_ input: String) -> (match: RegexMatch,
 }
 
 private func parseFunctionInText(_ input: String) -> (match: RegexMatch,
-                                                          functionName: String,
-                                                          functionArgs: String)?
+                                                      functionName: String,
+                                                      functionArgs: String)?
 {
     guard let match = firstMatch(input, pattern: functionPattern) else {
         return nil
@@ -242,6 +263,9 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVY.data.create(key: "item", data: item)
     
+    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
+    try! EVY.data.create(key: "selling_reasons", data: selling_reasons)
+    
     let bare = "test"
     let data = "{item.title}"
     let parsedData = EVYInterpreter.parseTextFromText(data)
@@ -265,6 +289,12 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
                                    parsedDataWithSuffixAndRight.prefix,
                                    parsedDataWithSuffixAndRight.suffix)
     
+    let dataWithComparison = "{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
+    let parsedDataWithComparison = EVYInterpreter.parseTextFromText(dataWithComparison)
+    let valueWithComparison = EVYValue(parsedDataWithComparison.value,
+                                       parsedDataWithComparison.prefix,
+                                       parsedDataWithComparison.suffix)
+    
     return VStack {
         Text(EVYInterpreter.parsePropsFromText(bare))
         Text(EVYInterpreter.parsePropsFromText(data))
@@ -272,5 +302,6 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
         Text(valueWithPrefix.toString())
         Text(valueWithSuffix.toString())
         Text(valueWithSuffixAndRight.toString())
+        Text(valueWithComparison.toString())
     }
 }
