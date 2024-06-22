@@ -162,14 +162,9 @@ private func parseText(_ input: String,
     }
     
     if let (match, props) = parseProps(input) {
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        
-        let firstVariable = splitProps.first!
-        let data = try EVY.data.get(key: firstVariable)
-        let decodedData = data.decoded().parseProp(props: Array(splitProps[1...]))
-        
+        let data = try EVY.getDataFromProps(props)
         let parsedInput = input.replacingOccurrences(of: match.0.description,
-                                                     with: decodedData.toString())
+                                                     with: data.toString())
         return try parseText(parsedInput, prefix, suffix)
     }
     
