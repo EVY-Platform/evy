@@ -49,20 +49,22 @@ private func parseText(_ input: String,
     }
     
     if let (match, comparisonOperator, left, right) = parseComparisonFromText(input) {
+        let leftProps = EVYInterpreter.parsePropsFromText(left)
+        let rightProps = EVYInterpreter.parsePropsFromText(right)
         var parsedLeft = left
         var parsedRight = right
         
-        do {
-            if let leftData = try EVY.getDataNestedFromText(left) {
-                parsedLeft = leftData.toString()
-            }
-        } catch {}
+        if leftProps.count > 0 {
+            do {
+                parsedLeft = try EVY.getDataNestedFromProps(leftProps).toString()
+            } catch {}
+        }
         
-        do {
-            if let rightData = try EVY.getDataNestedFromText(left) {
-                parsedRight = rightData.toString()
-            }
-        } catch {}
+        if rightProps.count > 0 {
+            do {
+                parsedRight = try EVY.getDataNestedFromProps(rightProps).toString()
+            } catch {}
+        }
         
         let comparisonResult = evyComparison(comparisonOperator,
                                              left: try parseText(parsedLeft, prefix, suffix).value,
@@ -90,14 +92,18 @@ private func parseText(_ input: String,
         }
         
         if (value != nil) {
+            let returnValuesToJoin = [
+                returnPrefix ? "" : value!.prefix ?? "",
+                value!.value,
+                returnSuffix ? "" : value!.suffix ?? ""
+            ]
             let parsedInput = input.replacingOccurrences(
                 of: match.0.description,
-                with: "\(returnPrefix ? "" : value!.prefix ?? "")\(value!.value)"
+                with: returnValuesToJoin.joined()
             )
-            return (try parseText(parsedInput,
-                                  returnPrefix ? value!.prefix : prefix,
-                                  returnSuffix ? value!.suffix : suffix)
-            )
+            return try parseText(parsedInput,
+                                 returnPrefix ? value!.prefix : prefix,
+                                 returnSuffix ? value!.suffix : suffix)
         }
     }
     
@@ -119,14 +125,18 @@ private func parseText(_ input: String,
         }
         
         if (value != nil) {
+            let returnValuesToJoin = [
+                returnPrefix ? "" : value!.prefix ?? "",
+                value!.value,
+                returnSuffix ? "" : value!.suffix ?? ""
+            ]
             let parsedInput = input.replacingOccurrences(
                 of: match.0.description,
-                with: "\(returnPrefix ? "" : value!.prefix ?? "")\(value!.value)"
+                with: returnValuesToJoin.joined()
             )
-            return (try parseText(parsedInput,
-                                  returnPrefix ? value!.prefix : prefix,
-                                  returnSuffix ? value!.suffix : suffix)
-            )
+            return try parseText(parsedInput,
+                                 returnPrefix ? value!.prefix : prefix,
+                                 returnSuffix ? value!.suffix : suffix)
         }
     }
     
@@ -249,11 +259,18 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
                                    parsedDataWithSuffix.prefix,
                                    parsedDataWithSuffix.suffix)
     
+    let dataWithSuffixAndRight = "{formatDimension(item.dimension.width)} - {item.title}"
+    let parsedDataWithSuffixAndRight = EVYInterpreter.parseTextFromText(dataWithSuffixAndRight)
+    let valueWithSuffixAndRight = EVYValue(parsedDataWithSuffixAndRight.value,
+                                   parsedDataWithSuffixAndRight.prefix,
+                                   parsedDataWithSuffixAndRight.suffix)
+    
     return VStack {
         Text(EVYInterpreter.parsePropsFromText(bare))
         Text(EVYInterpreter.parsePropsFromText(data))
         Text(value.toString())
         Text(valueWithPrefix.toString())
         Text(valueWithSuffix.toString())
+        Text(valueWithSuffixAndRight.toString())
     }
 }

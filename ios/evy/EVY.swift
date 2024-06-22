@@ -17,14 +17,6 @@ struct EVY {
     /**
      * Methods to get data from various sources and inputs
      */
-    static func getDataNestedFromText(_ input: String) throws -> EVYJson? {
-        let props = EVYInterpreter.parsePropsFromText(input)
-        if props.count < 1 {
-            return nil
-        }
-        return try getDataNestedFromProps(props)
-    }
-    
     static func getDataNestedFromProps(_ input: String) throws -> EVYJson {
         let props = EVYInterpreter.splitPropsFromText(input)
         if props.count < 1 {
