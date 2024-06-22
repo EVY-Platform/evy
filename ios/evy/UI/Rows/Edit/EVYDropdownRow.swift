@@ -48,8 +48,8 @@ struct EVYDropdownRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
-            Button(action: { showSheet.toggle() }) {
-                HStack {
+            HStack {
+                Button(action: { showSheet.toggle() }) {
                     if let value = selection?.displayValue() {
                         EVYTextView(value).foregroundColor(.black)
                     } else {
@@ -57,15 +57,18 @@ struct EVYDropdownRow: View {
                             .foregroundColor(Constants.placeholderColor)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    Spacer()
-                    EVYTextView("::chevron.down::")
-                        .foregroundColor(.black)
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                        .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
+                Spacer()
+                EVYTextView("::chevron.down::")
+                    .foregroundColor(.black)
             }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
+                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
+            )
+            .contentShape(Rectangle())
+            .onTapGesture { showSheet.toggle() }
         }
         .sheet(isPresented: $showSheet, content: {
             VStack {
