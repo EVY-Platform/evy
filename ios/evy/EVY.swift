@@ -71,7 +71,7 @@ struct EVY {
             return nil
         }
         
-        let splitProps = EVYInterpreter.splitPropsFromText(input)
+        let splitProps = EVYInterpreter.splitPropsFromText(props)
         if splitProps.count < 1 {
             return nil
         }
