@@ -17,20 +17,20 @@ struct EVY {
     /**
      * Methods to get data from various sources and inputs
      */
-    static func getDataNestedFromText(_ input: String) throws -> EVYJson {
+    static func getDataFromText(_ input: String) throws -> EVYJson {
         let props = EVYInterpreter.parsePropsFromText(input)
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
         let data = try data.get(key: splitProps.first!)
         return data.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
-   static func getDataNestedFromProps(_ props: String) throws -> EVYJson {
+   static func getDataFromProps(_ props: String) throws -> EVYJson {
        let splitProps = try EVYInterpreter.splitPropsFromText(props)
        let data = try data.get(key: splitProps.first!)
        return data.decoded().parseProp(props: Array(splitProps[1...]))
    }
     
-    static func parseText(_ input: String) -> EVYValue {
+    static func getValueFromText(_ input: String) -> EVYValue {
         let parsed = EVYInterpreter.parseTextFromText(input)
         return EVYValue(parsed.value, parsed.prefix, parsed.suffix)
     }

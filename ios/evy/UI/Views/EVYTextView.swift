@@ -17,7 +17,7 @@ struct EVYTextView: View {
     var style: EVYTextStyle = .body
     
     init(_ text: String, style: EVYTextStyle = .body) {
-        self.text = EVY.parseText(text)
+        self.text = EVY.getValueFromText(text)
         self.style = style
     }
     

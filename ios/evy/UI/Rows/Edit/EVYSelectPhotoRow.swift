@@ -43,7 +43,7 @@ struct EVYSelectPhotoRow: View {
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
         do {
-            let props = EVY.parseText(self.view.content.photos)
+            let props = EVY.getValueFromText(self.view.content.photos)
             if let photosData = props.value.data(using: .utf8) {
                 let photoObjects = try JSONDecoder().decode([String].self, from:photosData)
                 _photos = State(initialValue: photoObjects)

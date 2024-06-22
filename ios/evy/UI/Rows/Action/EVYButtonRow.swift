@@ -28,7 +28,7 @@ struct EVYButtonRow: View {
         self.action = try container.decode(SDUI.Action.self, forKey:.action)
         
         if let condition = action.condition {
-            self.disabled = EVY.parseText(condition).value == "false"
+            self.disabled = EVY.getValueFromText(condition).value == "false"
         } else {
             self.disabled = false
         }

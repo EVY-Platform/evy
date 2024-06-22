@@ -89,7 +89,7 @@ struct EVYTextField: View {
 }
 
 private func resetValues(_ input: String)-> (value: String, prefix: String, suffix: String) {
-    let parsedInput = EVY.parseText(input)
+    let parsedInput = EVY.getValueFromText(input)
     return (parsedInput.value, parsedInput.prefix ?? "", parsedInput.suffix ?? "")
 }
 
