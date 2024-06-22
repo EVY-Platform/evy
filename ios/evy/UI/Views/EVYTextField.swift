@@ -50,9 +50,6 @@ struct EVYTextField: View {
                         Text(suffix)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                }.onTapGesture {
-                    editing = true
-                    focused = true
                 }
                 .padding(.bottom, 1)
                 .padding(.top, 1)
@@ -85,6 +82,12 @@ struct EVYTextField: View {
             RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
                 .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
         )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editing.toggle()
+            focused.toggle()
+        }
+        
     }
 }
 
