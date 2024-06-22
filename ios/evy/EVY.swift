@@ -31,8 +31,12 @@ struct EVY {
    }
     
     static func getValueFromText(_ input: String) -> EVYValue {
-        let parsed = EVYInterpreter.parseTextFromText(input)
-        return EVYValue(parsed.value, parsed.prefix, parsed.suffix)
+        do {
+            let match = try EVYInterpreter.parseTextFromText(input, nil, nil)
+            return EVYValue(match.value, match.prefix, match.suffix)
+        } catch {}
+        
+        return EVYValue(input, nil, nil)
     }
     
     /**

@@ -47,128 +47,69 @@ struct EVYInterpreter {
     
     /**
      * Takes a string from the SDUI API
-     * - parses all data, functions and formatting
+     * - recursively parses all data, functions and formatting
      * - returns a string ready for display to the user
      */
-    public static func parseTextFromText(_ input: String) -> (value: String,
-                                                              prefix: String?,
-                                                              suffix: String?)
-    {
-        do {
-            let match = try parseText(input, nil, nil)
-            return (match.value, match.prefix, match.suffix)
-        } catch {}
-        
-        return (input, nil, nil)
-    }
-}
-
-/**
- * Primary text parsing utility
- * Recursively parses everything inside, including data, comparisons, and formatting
- */
-private func parseText(_ input: String,
-                       _ prefix: String?,
-                       _ suffix: String?) throws -> EVYFunctionOutput {
-    if (input.count < 1) {
-        return (input, prefix, suffix)
-    }
-    
-    if let (match, comparisonOperator, left, right) = parseComparisonFromText(input) {
-        let parsedLeftText = EVYInterpreter.parseTextFromText(left)
-        let parsedLeftValue = EVYValue(parsedLeftText.value,
-                                       parsedLeftText.prefix,
-                                       parsedLeftText.suffix)
-        
-        let parsedRightText = EVYInterpreter.parseTextFromText(right)
-        let parsedRightValue = EVYValue(parsedRightText.value,
-                                       parsedRightText.prefix,
-                                       parsedRightText.suffix)
-        
-        let leftValue = try parseText(parsedLeftValue.toString(), prefix, suffix).value
-        let rightValue = try parseText(parsedRightValue.toString(), prefix, suffix).value
-        let comparisonResult = evyComparison(comparisonOperator,
-                                             left: leftValue,
-                                             right: rightValue)
-        let parsedInput = input.replacingOccurrences(of: match.0.description,
-                                                     with: comparisonResult ? "true" : "false")
-        return try parseText(parsedInput, prefix, suffix)
-    }
-    
-    if let (match, functionName, functionArgs) = parseFunctionFromText(input) {
-        let returnPrefix = match.startIndex == 0
-        let returnSuffix = match.range.upperBound.utf16Offset(in: input) == input.count
-        
-        var value: EVYFunctionOutput?
-        
-        switch functionName {
-        case "count":
-            value = try evyCount(functionArgs)
-        case "formatCurrency":
-            value = try evyFormatCurrency(functionArgs)
-        case "formatDimension":
-            value = try evyFormatDimension(functionArgs)
-        default:
-            value = nil
+    public static func parseTextFromText(_ input: String,
+                                         _ prefix: String?,
+                                         _ suffix: String?) throws -> EVYValue {
+        if (input.count < 1) {
+            return EVYValue(input, prefix, suffix)
         }
         
-        if (value != nil) {
-            let returnValuesToJoin = [
-                returnPrefix ? "" : value!.prefix ?? "",
-                value!.value,
-                returnSuffix ? "" : value!.suffix ?? ""
-            ]
-            let parsedInput = input.replacingOccurrences(
-                of: match.0.description,
-                with: returnValuesToJoin.joined()
-            )
-            return try parseText(parsedInput,
-                                 returnPrefix ? value!.prefix : prefix,
-                                 returnSuffix ? value!.suffix : suffix)
+        if let (match, comparisonOperator, left, right) = parseComparisonFromText(input) {
+            let parsedLeft = try parseTextFromText(left, prefix, suffix)
+            let parsedRight = try parseTextFromText(right, prefix, suffix)
+            let comparisonResult = evyComparison(comparisonOperator,
+                                                 left: parsedLeft.value,
+                                                 right: parsedRight.value)
+            let parsedInput = input.replacingOccurrences(of: match.0.description,
+                                                         with: comparisonResult ? "true" : "false")
+            return try parseTextFromText(parsedInput, prefix, suffix)
         }
-    }
-    
-    if let (match, functionName, functionArgs) = parseFunctionInText(input) {
-        let returnPrefix = match.startIndex == 0
-        let returnSuffix = match.range.upperBound.utf16Offset(in: input) == input.count
-        
-        var value: EVYFunctionOutput?
-        
-        switch functionName {
-        case "count":
-            value = try evyCount(functionArgs)
-        case "formatCurrency":
-            value = try evyFormatCurrency(functionArgs)
-        case "formatDimension":
-            value = try evyFormatDimension(functionArgs)
-        default:
-            value = nil
+ 
+        if let (match, funcName, funcArgs) = parseFunctionFromText(input) ?? parseFunctionInText(input) {
+            let returnPrefix = match.startIndex == 0
+            let returnSuffix = match.range.upperBound.utf16Offset(in: input) == input.count
+            
+            var value: EVYFunctionOutput?
+            
+            switch funcName {
+            case "count":
+                value = try evyCount(funcArgs)
+            case "formatCurrency":
+                value = try evyFormatCurrency(funcArgs)
+            case "formatDimension":
+                value = try evyFormatDimension(funcArgs)
+            default:
+                value = nil
+            }
+            
+            if (value != nil) {
+                let returnValuesToJoin = [
+                    returnPrefix ? "" : value!.prefix ?? "",
+                    value!.value,
+                    returnSuffix ? "" : value!.suffix ?? ""
+                ]
+                let parsedInput = input.replacingOccurrences(
+                    of: match.0.description,
+                    with: returnValuesToJoin.joined()
+                )
+                return try parseTextFromText(parsedInput,
+                                             returnPrefix ? value!.prefix : prefix,
+                                             returnSuffix ? value!.suffix : suffix)
+            }
         }
         
-        if (value != nil) {
-            let returnValuesToJoin = [
-                returnPrefix ? "" : value!.prefix ?? "",
-                value!.value,
-                returnSuffix ? "" : value!.suffix ?? ""
-            ]
-            let parsedInput = input.replacingOccurrences(
-                of: match.0.description,
-                with: returnValuesToJoin.joined()
-            )
-            return try parseText(parsedInput,
-                                 returnPrefix ? value!.prefix : prefix,
-                                 returnSuffix ? value!.suffix : suffix)
+        if let (match, props) = parseProps(input) {
+            let data = try EVY.getDataFromProps(props)
+            let parsedInput = input.replacingOccurrences(of: match.0.description,
+                                                         with: data.toString())
+            return try parseTextFromText(parsedInput, prefix, suffix)
         }
+        
+        return EVYValue(input, prefix, suffix)
     }
-    
-    if let (match, props) = parseProps(input) {
-        let data = try EVY.getDataFromProps(props)
-        let parsedInput = input.replacingOccurrences(of: match.0.description,
-                                                     with: data.toString())
-        return try parseText(parsedInput, prefix, suffix)
-    }
-    
-    return (input, prefix, suffix)
 }
 
 private func parseProps(_ input: String) -> (RegexMatch, String)? {
@@ -268,40 +209,32 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
     
     let bare = "test"
     let data = "{item.title}"
-    let parsedData = EVYInterpreter.parseTextFromText(data)
-    let value = EVYValue(parsedData.value, parsedData.prefix, parsedData.suffix)
     
-    let dataWithPrefix = "{formatCurrency(item.price)}"
-    let parsedDataWithPrefix = EVYInterpreter.parseTextFromText(dataWithPrefix)
-    let valueWithPrefix = EVYValue(parsedDataWithPrefix.value,
-                                   parsedDataWithPrefix.prefix,
-                                   parsedDataWithPrefix.suffix)
-
-    let dataWithSuffix = "{formatDimension(item.dimension.width)}"
-    let parsedDataWithSuffix = EVYInterpreter.parseTextFromText(dataWithSuffix)
-    let valueWithSuffix = EVYValue(parsedDataWithSuffix.value,
-                                   parsedDataWithSuffix.prefix,
-                                   parsedDataWithSuffix.suffix)
-    
-    let dataWithSuffixAndRight = "{formatDimension(item.dimension.width)} - {item.title}"
-    let parsedDataWithSuffixAndRight = EVYInterpreter.parseTextFromText(dataWithSuffixAndRight)
-    let valueWithSuffixAndRight = EVYValue(parsedDataWithSuffixAndRight.value,
-                                   parsedDataWithSuffixAndRight.prefix,
-                                   parsedDataWithSuffixAndRight.suffix)
-    
-    let dataWithComparison = "{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
-    let parsedDataWithComparison = EVYInterpreter.parseTextFromText(dataWithComparison)
-    let valueWithComparison = EVYValue(parsedDataWithComparison.value,
-                                       parsedDataWithComparison.prefix,
-                                       parsedDataWithComparison.suffix)
+    let parsedData = try! EVYInterpreter.parseTextFromText(
+        data, nil, nil
+    )
+    let withPrefix = try! EVYInterpreter.parseTextFromText(
+        "{formatCurrency(item.price)}", nil, nil
+    )
+    let withSuffix = try! EVYInterpreter.parseTextFromText(
+        "{formatDimension(item.dimension.width)}", nil, nil
+    )
+    let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
+        "{formatDimension(item.dimension.width)} - {item.title}",
+        nil, nil
+    )
+    let withComparison = try! EVYInterpreter.parseTextFromText(
+        "{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}",
+        nil, nil
+    )
     
     return VStack {
-        Text(EVYInterpreter.parsePropsFromText(bare))
-        Text(EVYInterpreter.parsePropsFromText(data))
-        Text(value.toString())
-        Text(valueWithPrefix.toString())
-        Text(valueWithSuffix.toString())
-        Text(valueWithSuffixAndRight.toString())
-        Text(valueWithComparison.toString())
+        Text("parseProps but no props: " + EVYInterpreter.parsePropsFromText(bare))
+        Text("parseProps with props: " + EVYInterpreter.parsePropsFromText(data))
+        Text(parsedData.toString())
+        Text(withPrefix.toString())
+        Text(withSuffix.toString())
+        Text(WithSuffixAndRight.toString())
+        Text(withComparison.toString())
     }
 }
