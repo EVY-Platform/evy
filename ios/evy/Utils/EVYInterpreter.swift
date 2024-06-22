@@ -33,8 +33,16 @@ struct EVYInterpreter {
      * Takes a props string
      * - returns those props as a list
      */
-    public static func splitPropsFromText(_ input: String) -> [String] {
-        return input.components(separatedBy: propSeparator)
+    public static func splitPropsFromText(_ props: String) throws -> [String] {
+        if props.count < 1 {
+            throw EVYParamError.invalidProps
+        }
+        
+        let splitProps = props.components(separatedBy: propSeparator)
+        if splitProps.count < 1 {
+            throw EVYParamError.invalidProps
+        }
+        return splitProps
     }
     
     /**
@@ -154,10 +162,7 @@ private func parseText(_ input: String,
     }
     
     if let (match, props) = parseProps(input) {
-        let splitProps = EVYInterpreter.splitPropsFromText(props)
-        if splitProps.count < 1 {
-            throw EVYParamError.invalidProps
-        }
+        let splitProps = try EVYInterpreter.splitPropsFromText(props)
         
         let firstVariable = splitProps.first!
         let data = try EVY.data.get(key: firstVariable)

@@ -18,13 +18,16 @@ struct EVY {
      * Methods to get data from various sources and inputs
      */
     static func getDataNestedFromText(_ input: String) throws -> EVYJson {
-        let (props, data) = try getRawDataNestedFromText(input)
-        return data.decoded().parseProp(props: Array(props[1...]))
+        let props = EVYInterpreter.parsePropsFromText(input)
+        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        let data = try data.get(key: splitProps.first!)
+        return data.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
-   static func getDataNestedFromProps(_ input: String) throws -> EVYJson {
-       let (props, data) = try getRawDataNestedFromProps(input)
-       return data.decoded().parseProp(props: Array(props[1...]))
+   static func getDataNestedFromProps(_ props: String) throws -> EVYJson {
+       let splitProps = try EVYInterpreter.splitPropsFromText(props)
+       let data = try data.get(key: splitProps.first!)
+       return data.decoded().parseProp(props: Array(splitProps[1...]))
    }
     
     static func parseText(_ input: String) -> EVYValue {
@@ -45,28 +48,9 @@ struct EVY {
      * Updating a nested value in an object by using props
      */
     static func updateValue(_ value: String, at: String) throws -> Void {
-        let (props, data) = try getRawDataNestedFromText(at)
-        try data.updateValueInData(value, props: Array(props[1...]))
-    }
-    
-    /**
-     * Private utilities for accessing data
-     */
-    private static func getRawDataNestedFromText(_ input: String) throws -> (props: [String], EVYData) {
-        let props = EVYInterpreter.parsePropsFromText(input)
-        return try getRawDataNestedFromProps(props)
-    }
-    
-    private static func getRawDataNestedFromProps(_ props: String) throws -> (props: [String], EVYData) {
-        if props.count < 1 {
-            throw EVYParamError.invalidProps
-        }
-        
-        let splitProps = EVYInterpreter.splitPropsFromText(props)
-        if splitProps.count < 1 {
-            throw EVYParamError.invalidProps
-        }
-        
-        return (splitProps, try data.get(key: splitProps.first!))
+        let props = EVYInterpreter.parsePropsFromText(at)
+        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        let data = try data.get(key: splitProps.first!)
+        try data.updateValueInData(value, props: Array(splitProps[1...]))
     }
 }
