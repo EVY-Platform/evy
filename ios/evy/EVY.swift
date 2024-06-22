@@ -36,21 +36,6 @@ struct EVY {
         return data.decoded().parseProp(props: Array(props[1...]))
     }
     
-    static func getDataAtRootFromProps(_ input: String) -> EVYData? {
-        let props = EVYInterpreter.splitPropsFromText(input)
-        if props.count < 1 {
-            return nil
-        }
-        guard let firstProp = props.first else {
-            return nil
-        }
-        do {
-            return try EVY.data.get(key: firstProp)
-        } catch {}
-        
-        return nil
-    }
-    
     static func getDataAtRootFromText(_ input: String) -> EVYJson? {
         let data = getRawDataAtRootFromProps(input)
         return data?.decoded()
@@ -93,7 +78,20 @@ struct EVY {
         if props.count < 1 {
             return nil
         }
-        return getDataAtRootFromProps(props)
+        
+        let splitProps = EVYInterpreter.splitPropsFromText(input)
+        if splitProps.count < 1 {
+            return nil
+        }
+        
+        guard let firstProp = splitProps.first else {
+            return nil
+        }
+        do {
+            return try EVY.data.get(key: firstProp)
+        } catch {}
+        
+        return nil
     }
 }
 
