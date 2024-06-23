@@ -1,5 +1,5 @@
 //
-//  EVYTextRow.swift
+//  EVYButtonRow.swift
 //  EVY
 //
 //  Created by Geoffroy Lesage on 13/12/2023.
