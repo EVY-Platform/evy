@@ -41,7 +41,12 @@ struct EVYButton: View {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVY.data.create(key: "item", data: item)
     
-    return EVYButton(label: "Button", condition: "{count(item.title) > 20}", action: {
-        print("clicked button")
-    })
+    return VStack {
+        EVYButton(label: "Button", condition: "{count(item.title) > 10}", action: {
+            print("clicked button")
+        })
+        EVYButton(label: "Button", condition: "{count(item.title) > 20}", action: {
+            print("clicked button")
+        })
+    }
 }
