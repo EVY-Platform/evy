@@ -39,6 +39,11 @@ struct EVY {
         return EVYValue(input, nil, nil)
     }
     
+    static func evaluateFromText(_ input: String) throws -> Bool {
+        let match = try EVYInterpreter.parseTextFromText(input, nil, nil)
+        return match.value == "true"
+    }
+    
     /**
      * Submitting a new entity to the API
      */
