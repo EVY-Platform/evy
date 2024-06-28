@@ -8,23 +8,13 @@
 import SwiftUI
 
 struct EVYButton: View {
-    @Environment(\.navigate) private var navigate
-    
     let label: String
-    let target: SDUI.ActionTarget
+    let action: () -> Void
+    
     @Binding var disabled: Bool
     
     var body: some View {
-        Button(action: {
-            switch target {
-            case .navigate(let route):
-                navigate(NavOperation.navigate(route))
-            case .submit:
-                navigate(NavOperation.submit)
-            case .close:
-                navigate(NavOperation.close)
-            }
-        }) {
+        Button(action: action) {
             EVYTextView(label)
                 .frame(maxWidth: .infinity)
                 .foregroundColor(.white)

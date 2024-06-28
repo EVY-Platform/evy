@@ -17,6 +17,8 @@ struct EVYButtonRowView: Decodable {
 }
     
 struct EVYButtonRow: View {
+    @Environment(\.navigate) private var navigate
+    
     public static var JSONType = "Button"
     
     private let view: EVYButtonRowView
@@ -34,11 +36,22 @@ struct EVYButtonRow: View {
         }
     }
     
+    private func performAction() -> Void {
+        switch action.target {
+        case .navigate(let route):
+            navigate(NavOperation.navigate(route))
+        case .submit:
+            navigate(NavOperation.submit)
+        case .close:
+            navigate(NavOperation.close)
+        }
+    }
+    
     var body: some View {
         EVYButton(label: view.content.label,
-                  target: action.target,
+                  action: performAction,
                   disabled: $disabled)
-            .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 
