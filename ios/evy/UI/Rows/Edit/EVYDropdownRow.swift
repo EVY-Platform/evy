@@ -23,70 +23,17 @@ struct EVYDropdownRow: View {
     
     private let view: EVYDropdownRowView
     private let edit: SDUI.Edit
-    private var options: EVYJsonArray = []
-    
-    @State private var selection: EVYJson?
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        
-        do {
-            let data = try EVY.getDataFromText(view.data)
-            if case let .array(arrayValue) = data {
-                self.options.append(contentsOf: arrayValue)
-            }
-           } catch {}
     }
     
-    @State private var showSheet = false
-    
     var body: some View {
-        VStack {
-            if (view.content.title.count > 0) {
-                EVYTextView(view.content.title)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, Constants.minorPadding)
-            }
-            HStack {
-                Button(action: { showSheet.toggle() }) {
-                    if let value = selection?.displayValue() {
-                        EVYTextView(value).foregroundColor(.black)
-                    } else {
-                        EVYTextView(view.content.placeholder)
-                            .foregroundColor(Constants.placeholderColor)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                Spacer()
-                EVYTextView("::chevron.down::")
-                    .foregroundColor(.black)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
-            )
-            .contentShape(Rectangle())
-            .onTapGesture { showSheet.toggle() }
-        }
-        .sheet(isPresented: $showSheet, content: {
-            VStack {
-                if (view.content.title.count > 0) {
-                    EVYTextView(view.content.title)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 30)
-                }
-                EVYSelect(selection: $selection, options: options)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-                    .onChange(of: selection) { oldValue, newValue in
-                        if let key = newValue?.identifierValue() {
-                            try! EVY.updateValue(key, at: edit.destination)
-                        }
-                    }
-            }
-        })
+        EVYDropdown(title: view.content.title,
+                    placeholder: view.content.placeholder,
+                    data: view.data,
+                    destination: edit.destination)
     }
 }
 
