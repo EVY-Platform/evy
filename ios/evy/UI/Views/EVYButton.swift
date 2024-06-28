@@ -38,8 +38,10 @@ struct EVYButton: View {
 }
 
 #Preview {
-    let json =  SDUIConstants.navigate3ButtonRow.data(using: .utf8)!
-    let button = try? JSONDecoder().decode(EVYRow.self, from: json)
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVY.data.create(key: "item", data: item)
     
-    return button
+    return EVYButton(label: "Button", condition: "{count(item.title) > 20}", action: {
+        print("clicked button")
+    })
 }
