@@ -35,7 +35,7 @@ struct EVYDropdown: View {
     
     var body: some View {
         VStack {
-            if (hasTitle) {
+            if hasTitle {
                 EVYTextView(title!)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
@@ -64,7 +64,7 @@ struct EVYDropdown: View {
         }
         .sheet(isPresented: $showSheet, content: {
             VStack {
-                if (hasTitle) {
+                if hasTitle {
                     EVYTextView(title!)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 30)
