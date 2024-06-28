@@ -43,6 +43,9 @@ struct EVYSelectPhotoRow: View {
 }
 
 #Preview {
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVY.data.create(key: "item", data: item)
+    
     let json =  SDUIConstants.selectPhotoRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }
