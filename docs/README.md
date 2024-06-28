@@ -15,5 +15,5 @@ Documentation is available at the global EVY level as well as per services provi
     * [Example sdui for create item page](./services/marketplace/example-sdui-create-item.md)
 
 
- ### iOS Architecture
- ![ios_architecture](https://github.com/EVY-Platform/evy/assets/711580/f65fd809-b41b-4a0a-b3b3-a91265ff3361)
+ ### iOS
+ * [iOS docs](../ios/README.md)
