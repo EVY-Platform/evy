@@ -23,17 +23,10 @@ struct EVYButtonRow: View {
     
     private let view: EVYButtonRowView
     private let action: SDUI.Action
-    @State private var disabled: Bool
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYButtonRowView.self, forKey:.view)
         self.action = try container.decode(SDUI.Action.self, forKey:.action)
-        
-        if let condition = action.condition {
-            self.disabled = EVY.getValueFromText(condition).value == "false"
-        } else {
-            self.disabled = false
-        }
     }
     
     private func performAction() -> Void {
@@ -49,8 +42,8 @@ struct EVYButtonRow: View {
     
     var body: some View {
         EVYButton(label: view.content.label,
-                  action: performAction,
-                  disabled: $disabled)
+                  condition: action.condition,
+                  action: performAction)
         .frame(maxWidth: .infinity, alignment: .center)
     }
 }

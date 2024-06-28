@@ -11,7 +11,14 @@ struct EVYButton: View {
     let label: String
     let action: () -> Void
     
-    @Binding var disabled: Bool
+    @State var disabled: Bool
+    
+    init(label: String, condition: String?, action: @escaping () -> Void) {
+        self.label = label
+        self.action = action
+        self.disabled = (condition != nil) ?
+            EVY.getValueFromText(condition!).value == "false" : false
+    }
     
     var body: some View {
         Button(action: action) {
