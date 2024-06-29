@@ -17,10 +17,9 @@ struct EVYColumnContainer: View {
     }
     
     var body: some View {
-        VStack {
+        VStack(alignment:.leading) {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minPading)
             }
             HStack(alignment: .top) {

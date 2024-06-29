@@ -34,10 +34,9 @@ struct EVYDropdown: View {
     }
     
     var body: some View {
-        VStack {
+        VStack(alignment:.leading) {
             if hasTitle {
                 EVYTextView(title!)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minorPadding)
             }
             HStack {
@@ -47,7 +46,6 @@ struct EVYDropdown: View {
                     } else {
                         EVYTextView(placeholder ?? "")
                             .foregroundColor(Constants.placeholderColor)
-                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 Spacer()
@@ -65,9 +63,7 @@ struct EVYDropdown: View {
         .sheet(isPresented: $showSheet, content: {
             VStack {
                 if hasTitle {
-                    EVYTextView(title!)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 30)
+                    EVYTextView(title!).padding(.top, 30)
                 }
                 EVYSelect(selection: $selection, options: options)
                     .presentationDetents([.medium, .large])

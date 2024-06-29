@@ -28,10 +28,9 @@ struct EVYTextRow: View {
     
     @State private var expanded: Bool = false
     var body: some View {
-        VStack {
+        VStack(alignment:.leading) {
             if view.content.title.count > 0 {
                 EVYTextView(view.content.title)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minPading)
             }
             EVYTextView(view.content.text)
@@ -40,7 +39,6 @@ struct EVYTextRow: View {
             if view.max_lines.count > 0 {
                 EVYTextView(expanded ? "Read less" : "Read more")
                     .foregroundStyle(Constants.textButtonColor)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minPading)
             }
         }

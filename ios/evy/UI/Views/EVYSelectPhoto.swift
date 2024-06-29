@@ -54,10 +54,9 @@ struct EVYSelectPhoto: View {
     }
 
     var body: some View {
-        VStack {
+        VStack(alignment:.leading) {
             if self.title?.count ?? 0 > 0 {
                 EVYTextView(title!)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if photos.count > 0 {
@@ -79,7 +78,6 @@ struct EVYSelectPhoto: View {
             
             EVYTextView(content)
                 .foregroundColor(Constants.placeholderColor)
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, Constants.minPading)
         }
     }
