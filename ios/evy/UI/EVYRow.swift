@@ -47,6 +47,9 @@ struct EVYRow: View, Decodable, Identifiable {
             case EVYInputRow.JSONType:
                 self.view = try EVYInputRow(container: container)
             
+            case EVYTextActionRow.JSONType:
+                self.view = try EVYTextActionRow(container: container)
+            
             case EVYSelectPhotoRow.JSONType:
                 self.view = try EVYSelectPhotoRow(container: container)
             

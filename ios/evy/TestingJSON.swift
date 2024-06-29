@@ -261,6 +261,40 @@ struct SDUIConstants {
         }
     """
     
+    static let addressRow = """
+        {
+            "type": "TextAction",
+            "view": {
+                "content": {
+                    "title": "Where",
+                    "text": "{formatAddress(item.address)}",
+                    "placeholder": "Enter pick up address",
+                    "action": "Change"
+                }
+            },
+            "edit": {
+                "destination": "{item.address}"
+            }
+        }
+    """
+    
+    static let addressRowMissing = """
+        {
+            "type": "TextAction",
+            "view": {
+                "content": {
+                    "title": "Where",
+                    "text": "{formatAddress(item.conditions)}",
+                    "placeholder": "Enter pick up address",
+                    "action": "Change"
+                }
+            },
+            "edit": {
+                "destination": "{item.address}"
+            }
+        }
+    """
+    
     static let inputHeightRow = """
         {
             "type": "Input",

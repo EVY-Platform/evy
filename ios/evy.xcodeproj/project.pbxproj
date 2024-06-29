@@ -21,6 +21,7 @@
 		731988822C271BBD0035E094 /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 731988812C271BBD0035E094 /* JsonRPC */; };
 		731988852C271BC40035E094 /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 731988842C271BC40035E094 /* Serializable */; };
 		7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */; };
+		7320F59A2C300B8B00297C48 /* EVYTextActionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */; };
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
 		734F5A222C2EBB2B00C0FD0A /* EVYDropdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */; };
 		734F5A242C2ED3BD00C0FD0A /* EVYSelectPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */; };
@@ -80,6 +81,7 @@
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
 		7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInfoRow.swift; sourceTree = "<group>"; };
+		7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextActionRow.swift; sourceTree = "<group>"; };
 		732A50812C1D6AE80036B98B /* EVY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVY.swift; sourceTree = "<group>"; };
 		734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDropdown.swift; sourceTree = "<group>"; };
 		734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectPhoto.swift; sourceTree = "<group>"; };
@@ -215,6 +217,7 @@
 			children = (
 				736D105E2B78CDDB00503C4D /* EVYTextRow.swift */,
 				7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */,
+				7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -416,6 +419,7 @@
 				2ED04EF62B3308C400881DC4 /* EVYMap.swift in Sources */,
 				73C78AEA2BC549840026F39D /* EVYSearch.swift in Sources */,
 				73EDC87F2B8F387500304DD8 /* EVYButton.swift in Sources */,
+				7320F59A2C300B8B00297C48 /* EVYTextActionRow.swift in Sources */,
 				73C78AF22BC552150026F39D /* EVYHorizontalSelection.swift in Sources */,
 				732A50822C1D6AE80036B98B /* EVY.swift in Sources */,
 				73C78AEE2BC54DFE0026F39D /* EVYSearchRow.swift in Sources */,
