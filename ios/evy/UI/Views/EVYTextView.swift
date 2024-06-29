@@ -10,6 +10,7 @@ import SwiftUI
 public enum EVYTextStyle: String {
     case body
     case title
+    case info
 }
 
 struct EVYTextView: View {
@@ -68,6 +69,10 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
     switch style {
     case .title:
         return Text(input).font(.evyTitle)
+    case .info:
+        return Text(input)
+            .font(.evy)
+            .foregroundStyle(.gray)
     default:
         return Text(input).font(.evy)
     }
@@ -79,6 +84,8 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
     
     return VStack {
         EVYTextView("::star.square.on.square.fill::")
+        EVYTextView("Just text", style: EVYTextStyle.body)
+        EVYTextView("Just text", style: EVYTextStyle.info)
         EVYTextView("Just text", style: EVYTextStyle.title)
         EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
         EVYTextView("count: {count(item.photo_ids)}")
