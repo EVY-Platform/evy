@@ -3,5 +3,6 @@ iOS consumer app
 Minimum iOS version supported: 13.0
 
 ### Architecture
- ![image](https://github.com/EVY-Platform/evy/assets/711580/0d4c9078-5d66-4220-8ee1-6410c303519d)
+ ![image](https://github.com/EVY-Platform/evy/assets/711580/cec8f386-3996-453f-a1b9-8d6d1180dfce)
+
 
