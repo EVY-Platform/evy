@@ -388,6 +388,17 @@ struct SDUIConstants {
         }
     """
     
+    static let infoRow = """
+        {
+            "type": "Info",
+            "view": {
+                "content": {
+                    "text": "Allow buyers to pick up the item"
+                }
+            }
+        }
+    """
+    
     static let piiRow = #"""
         {
             "type": "Text",
