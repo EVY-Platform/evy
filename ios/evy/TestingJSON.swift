@@ -722,16 +722,7 @@ struct SDUIConstants {
                                 "text": "HERE SHOULD BE A WHEEL"
                             }
                         }
-                    }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "Dimensions (width x height x depth)",
-                                "text": "What is the size of the package"
-                            }
-                        }
-                    },
-                    \(columnContainerDimensionsRow), {
+                    }, \(columnContainerDimensionsRow), {
                         "type": "Input",
                         "view": {
                             "content": {

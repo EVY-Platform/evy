@@ -42,12 +42,17 @@ struct EVYTextField: View {
             if (!editing) {
                 Group {
                     if (showPrefix) {
-                        Text(prefix)
+                        EVYTextView(prefix)
                     }
-                    Text(value)
-                        .frame(maxWidth: showSuffix ? nil : .infinity, alignment: .leading)
+                    if value.count > 0 {
+                        EVYTextView(value)
+                            .frame(maxWidth: showSuffix ? nil : .infinity, alignment: .leading)
+                    } else {
+                        EVYTextView(placeholder, style: .info)
+                            .frame(maxWidth: showSuffix ? nil : .infinity, alignment: .leading)
+                    }
                     if (showSuffix) {
-                        Text(suffix)
+                        EVYTextView(suffix)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
