@@ -388,16 +388,52 @@ struct SDUIConstants {
         }
     """
     
-    
-    
     static let sheetContainerRow = """
         {
            "type": "SheetContainer",
            "view": {
                "content": {
-                   "title": "Address row",
-                   "child": \(triggersSheetRow),
-                   "children": [\(inputRow)]
+                   "title": "Where",
+                   "child": {
+                        "type": "TextAction",
+                        "view": {
+                            "content": {
+                                "title": "Where",
+                                "text": "{formatAddress(item.address)}",
+                                "placeholder": "Enter pick up address",
+                                "action": "Change"
+                            }
+                        },
+                        "edit": {
+                            "destination": "{item.address}"
+                        }
+                    },
+                   "children": [{
+                       "type": "Search",
+                       "view": {
+                           "content": {
+                               "title": "",
+                               "value": "{tags[].value}",
+                               "placeholder": "Search for tags"
+                           },
+                            "data": "api:tags"
+                       },
+                        "edit": {
+                            "destination": "{item.tag_ids}"
+                        }
+                    },{
+                        "type": "Input",
+                        "view": {
+                            "content": {
+                                "title": "Additional information",
+                                "placeholder": "Buzz 2023",
+                                "value": "{item.address.instructions}"
+                            }
+                        },
+                        "edit": {
+                            "destination": "{item.address.instructions}"
+                        }
+                    }]
                }
            }
         }
@@ -500,21 +536,6 @@ struct SDUIConstants {
             }
         }
     """
-    static let triggersSheetRow = """
-        {
-            "type": "Input",
-            "view": {
-                "content": {
-                    "title": "Click me to open sheet",
-                    "value": "{item.title}",
-                    "placeholder": "My iPhone ::star.square.on.square.fill:: 20"
-                }
-            },
-            "edit": {
-                "destination": "{item.title}"
-            }
-        }
-    """
     
     static let submitButtonRow = """
         {
@@ -563,20 +584,7 @@ struct SDUIConstants {
                                 "text": "Allow buyers to pick up the item"
                             }
                         }
-                    }, {
-                        "type": "TextAction",
-                        "view": {
-                            "content": {
-                                "title": "Where",
-                                "text": "{formatAddress(item.address)}",
-                                "placeholder": "Enter pick up address",
-                                "action": "Change"
-                            }
-                        },
-                        "edit": {
-                            "destination": "{item.address}"
-                        }
-                    }, {
+                    }, \(sheetContainerRow), {
                         "type": "Info",
                         "view": {
                             "content": {
@@ -830,7 +838,8 @@ struct DataConstants {
                 "location": {
                     "latitude": "45.323124",
                     "longitude": "-3.424233"
-                }
+                },
+                "instructions": ""
             },
             "created_timestamp": "1701471377",
             "transfer_options": {
