@@ -339,21 +339,21 @@
 					}]
 				}
 			}
-		},
-		{
-			"type": "Button",
-			"view": {
-				"content": {
-					"title": "",
-					"label": "Next"
-				}
-			},
-			"edit": {},
-			"action": {
-				"target": "navigate:create_item:create_item_step_2"
-			}
 		}
-	]
+	],
+	"footer": {
+		"type": "Button",
+		"view": {
+			"content": {
+				"title": "",
+				"label": "Next"
+			}
+		},
+		"edit": {},
+		"action": {
+			"target": "navigate:create_item:create_item_step_2"
+		}
+	}
 }
 ```
 
@@ -374,19 +374,20 @@
 			"edit": {
 				"destination": "{item.description}",
 			}
-		},{
-			"type": "Button",
-			"view": {
-				"content": {
-					"title": "",
-					"label": "Next"
-				}
-			},
-			"edit": {},
-			"action": {
-				"target": "submit:item"
-			}
 		}
-	]
+	],
+	"footer": {
+		"type": "Button",
+		"view": {
+			"content": {
+				"title": "",
+				"label": "Next"
+			}
+		},
+		"edit": {},
+		"action": {
+			"target": "submit:item"
+		}
+	}
 }
 ```

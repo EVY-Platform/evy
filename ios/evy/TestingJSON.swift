@@ -28,7 +28,8 @@ struct SDUIConstants {
                         },
                         "max_lines": ""
                     }
-                }, {
+                }],
+                "footer": {
                     "type": "Button",
                     "view": {
                         "content": {
@@ -39,7 +40,7 @@ struct SDUIConstants {
                     "action": {
                         "target": "close"
                     }
-                }]
+                }
             }]
         }
     """
@@ -65,37 +66,41 @@ struct SDUIConstants {
                 \(condition),
                 \(sellingReason),
                 \(columnContainerDimensionsRow),
-                \(tagsRow),
-                \(navigate1ButtonRow)
-            ]
+                \(tagsRow)
+            ],
+            "footer": \(navigate1ButtonRow)
         }
     """
     static let createItemStep2 = """
         {
             "id": "step_2",
             "title": "Describe item",
-            "rows": [\(textAreaRow), \(navigate2ButtonRow)]
+            "rows": [\(textAreaRow)],
+            "footer": \(navigate2ButtonRow)
         }
     """
     static let createItemStep3 = """
         {
             "id": "step_3",
             "title": "Pickup & delivery",
-            "rows": [\(selectContainerRow), \(navigate3ButtonRow)]
+            "rows": [\(selectContainerRow)],
+            "footer": \(navigate3ButtonRow)
         }
     """
     static let createItemStep4 = """
         {
             "id": "step_4",
             "title": "Payment options",
-            "rows": [\(textRow), \(navigate4ButtonRow)]
+            "rows": [\(textRow)],
+            "footer": \(navigate4ButtonRow)
         }
     """
     static let createItemStep5 = """
         {
             "id": "step_5",
             "title": "Sharing data publicly",
-            "rows": [\(piiRow), \(submitButtonRow)]
+            "rows": [\(piiRow)],
+            "footer": \(submitButtonRow)
         }
     """
     

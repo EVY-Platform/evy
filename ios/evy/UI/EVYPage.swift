@@ -11,6 +11,7 @@ struct EVYPage: View, Decodable {
     let id: String
     let title: String
     let rows: [EVYRow]
+    let footer: EVYRow
 
     var body: some View {
         ScrollView {
@@ -20,5 +21,6 @@ struct EVYPage: View, Decodable {
                     .padding(.vertical, Constants.minorPadding)
             }
         }.navigationTitle(title)
+        footer
     }
 }

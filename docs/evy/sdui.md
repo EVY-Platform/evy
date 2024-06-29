@@ -30,7 +30,11 @@ Pages are put into flows
     // Shown in the navbar
     "title",
 
-    "rows": [ROW]
+    // The rows that are on the page
+    "rows": [ROW],
+
+    // Shown as sticky footer
+    "footer": ROW
 }
 ```
 
@@ -82,11 +86,8 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     // What action should be taken when tapping the button
     "action": {
         "target": "navigate:flow_id:page_id|submit|close",
-        "condition", // Optional condition that must be met to make the button enabled
-
+        "condition", // Optional condition that defines whether the button is enabled or not
     }
-    }
-
 }
 ```
 
