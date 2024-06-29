@@ -26,7 +26,7 @@ struct SDUIConstants {
                             "title": "My item is called",
                             "text": "{item.title}"
                         },
-                        "max_lines": "2"
+                        "max_lines": ""
                     }
                 }, {
                     "type": "Button",

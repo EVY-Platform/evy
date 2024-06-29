@@ -29,7 +29,7 @@ struct EVYTextRow: View {
     @State private var expanded: Bool = false
     var body: some View {
         VStack {
-            if (view.content.title.count > 0) {
+            if view.content.title.count > 0 {
                 EVYTextView(view.content.title)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Constants.minPading)
@@ -37,10 +37,12 @@ struct EVYTextRow: View {
             EVYTextView(view.content.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(expanded ? nil : Int(view.max_lines) ?? 2)
-            EVYTextView(expanded ? "Read less" : "Read more")
-                .foregroundStyle(Constants.textButtonColor)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, Constants.minPading)
+            if view.max_lines.count > 0 {
+                EVYTextView(expanded ? "Read less" : "Read more")
+                    .foregroundStyle(Constants.textButtonColor)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, Constants.minPading)
+            }
         }
         .onTapGesture {
             expanded.toggle()
@@ -52,5 +54,9 @@ struct EVYTextRow: View {
 
 #Preview {
     let json =  SDUIConstants.textRow.data(using: .utf8)!
-    return try? JSONDecoder().decode(EVYRow.self, from: json)
+    let json2 =  SDUIConstants.textRowShort.data(using: .utf8)!
+    return VStack {
+        try? JSONDecoder().decode(EVYRow.self, from: json)
+        try? JSONDecoder().decode(EVYRow.self, from: json2)
+    }
 }
