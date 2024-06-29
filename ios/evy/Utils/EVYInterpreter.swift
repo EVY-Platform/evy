@@ -81,6 +81,8 @@ struct EVYInterpreter {
                 value = try evyFormatCurrency(funcArgs)
             case "formatDimension":
                 value = try evyFormatDimension(funcArgs)
+            case "formatAddress":
+                value = try evyFormatAddress(funcArgs)
             default:
                 value = nil
             }

@@ -67,6 +67,30 @@ func evyFormatDimension(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
+func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
+    let res = try EVY.getDataFromProps(args)
+    switch res {
+    case .dictionary(let dictValue):
+        guard let unit = dictValue["unit"],
+              let street = dictValue["street"],
+              let city = dictValue["city"],
+              let postcode = dictValue["postcode"],
+              let state = dictValue["state"]
+        else {
+            return (args, nil, nil)
+        }
+
+        return (String(format: "%@ %@, %@\n%@, %@",
+                       unit.toString(),
+                       street.toString(),
+                       postcode.toString(),
+                       city.toString(),
+                       state.toString()), nil, nil)
+    default:
+        return ("Invalid address data", nil, nil)
+    }
+}
+
 func evyComparison(_ comparisonOperator: String, left: String, right: String) -> Bool {
     switch comparisonOperator {
     case "==":
@@ -97,5 +121,6 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
         EVYTextView("count (item.title) == 13: {count(item.title) == 13}")
         EVYTextView("count (item.title) == 14: {count(item.title) == 14}")
         EVYTextView("count (item.title) > 0: {count(item.title) > 0}")
+        EVYTextView("{formatAddress(item.address)}")
     }
 }
