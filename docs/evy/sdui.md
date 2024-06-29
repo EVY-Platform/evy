@@ -73,13 +73,6 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
             // the key is the name, the value is what the content is or where it's from
             //eg "subtitle": "My great subtitle"
         },
-
-        // Special prop that defines a placeholder text shown on a row instead
-        // of it's content, which disapears/fades out when a condition is met
-        "placeholder": {
-            "value",
-            "condition"
-        },
     },
     "edit": {
         // Where the input data is stored
@@ -271,6 +264,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
+
 ```
 {
     "type": "TextArea",
@@ -401,7 +395,6 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     }
 }
 ```
-
 
 ### Button rows
 
