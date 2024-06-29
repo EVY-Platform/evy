@@ -16,7 +16,7 @@ struct EVYHome: View {
                 navigate(NavOperation.navigate(Route(flowId: "view_item", pageId: "view")))
             }.font(.evyTitle)
             Button("Create Item") {
-                navigate(NavOperation.navigate(Route(flowId: "create_item", pageId: "step_3")))
+                navigate(NavOperation.navigate(Route(flowId: "create_item", pageId: "step_1")))
             }.font(.evyTitle)
         }
     }
