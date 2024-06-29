@@ -339,7 +339,7 @@ struct SDUIConstants {
             "edit": {},
             "action": {
                 "target": "navigate:create_item:step_4",
-                "condition": "{count(item.title) > 20}"
+                "condition": "{count(item.title) > 10}"
             }
         }
     """
