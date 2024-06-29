@@ -440,6 +440,19 @@ struct SDUIConstants {
             "type": "Info",
             "view": {
                 "content": {
+                    "title": "",
+                    "text": "Allow buyers to pick up the item"
+                }
+            }
+        }
+    """
+    
+    static let infoRowWithTitle = """
+        {
+            "type": "Info",
+            "view": {
+                "content": {
+                    "title": "A title",
                     "text": "Allow buyers to pick up the item"
                 }
             }

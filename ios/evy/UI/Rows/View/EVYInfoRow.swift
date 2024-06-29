@@ -11,6 +11,7 @@ struct EVYInfoRowView: Decodable {
     let content: ContentData
     
     struct ContentData: Decodable {
+        let title: String
         let text: String
     }
 }
@@ -25,8 +26,14 @@ struct EVYInfoRow: View {
     }
     
     var body: some View {
-        EVYTextView(view.content.text, style: .info)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment:.leading) {
+            if view.content.title.count > 0 {
+                EVYTextView(view.content.title)
+                    .padding(.vertical, Constants.minPading)
+            }
+            EVYTextView(view.content.text, style: .info)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 
@@ -34,5 +41,10 @@ struct EVYInfoRow: View {
 
 #Preview {
     let json =  SDUIConstants.infoRow.data(using: .utf8)!
-    return try? JSONDecoder().decode(EVYRow.self, from: json)
+    let json2 =  SDUIConstants.infoRowWithTitle.data(using: .utf8)!
+    
+    return VStack {
+        try? JSONDecoder().decode(EVYRow.self, from: json)
+        try? JSONDecoder().decode(EVYRow.self, from: json2)
+    }
 }
