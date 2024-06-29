@@ -409,6 +409,19 @@ struct SDUIConstants {
         }
     """
     
+    static let textRowShort = """
+        {
+            "type": "Text",
+            "view": {
+                "content": {
+                    "title": "{item.title}",
+                    "text": "Lorem Ipsum is simply ::star.square.on.square.fill::"
+                },
+                "max_lines": ""
+            }
+        }
+    """
+    
     static let textRow = """
         {
             "type": "Text",
@@ -469,6 +482,17 @@ struct SDUIConstants {
             }
         }
     """
+    static let listContainerRow = """
+        {
+            "type": "ListContainer",
+            "view": {
+                "content": {
+                    "title": "Hello",
+                    "children": [\(textRowShort), \(textRowShort)]
+                }
+            }
+        }
+    """
     static let triggersSheetRow = """
         {
             "type": "Input",
@@ -523,20 +547,61 @@ struct SDUIConstants {
             "type": "SelectContainer",
             "view": {
                 "content": {
-                    "title": "Shipping",
+                    "title": "Pickup",
                     "children": [{
                         "title": "Pickup",
                         "child": {
-                            "type": "Input",
+                            "type": "ListContainer",
                             "view": {
                                 "content": {
-                                    "title": "Select 1",
-                                    "value": "",
-                                    "placeholder": "This is select container page 1"
+                                    "title": "",
+                                    "children": [
+                                    {
+                                        "type": "Info",
+                                        "view": {
+                                            "content": {
+                                                "text": "Allow buyers to pick up the item"
+                                            }
+                                        }
+                                    }, {
+                                        "type": "TextAction",
+                                        "view": {
+                                            "content": {
+                                                "title": "Where",
+                                                "text": "{formatAddress(item.address)}",
+                                                "placeholder": "Enter pick up address",
+                                                "action": "Change"
+                                            }
+                                        },
+                                        "edit": {
+                                            "destination": "{item.address}"
+                                        }
+                                    }, {
+                                        "type": "Text",
+                                        "view": {
+                                            "content": {
+                                                "title": "How long",
+                                                "text": "How much time would a meeting take for a buyer to look and buy this item"
+                                            },
+                                            "max_lines": ""
+                                        },
+                                        "edit": {
+                                            "destination": "{item.address}"
+                                        }
+                                    }, {
+                                        "type": "Text",
+                                        "view": {
+                                            "content": {
+                                                "title": "When",
+                                                "text": "When are you available for buyers to inspect or pick up this item"
+                                            },
+                                            "max_lines": ""
+                                        },
+                                        "edit": {
+                                            "destination": "{item.address}"
+                                        }
+                                    }]
                                 }
-                            },
-                            "edit": {
-                                "destination": "{item.title}"
                             }
                         }
                     },
