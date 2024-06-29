@@ -81,6 +81,8 @@ struct EVYInterpreter {
                 value = try evyFormatCurrency(funcArgs)
             case "formatDimension":
                 value = try evyFormatDimension(funcArgs)
+            case "formatWeight":
+                value = try evyFormatWeight(funcArgs)
             case "formatAddress":
                 value = try evyFormatAddress(funcArgs)
             default:
@@ -230,6 +232,10 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
         nil, nil
     )
     
+    let weight = try! EVYInterpreter.parseTextFromText(
+        "{formatWeight(item.dimension.weight)}", nil, nil
+    )
+    
     return VStack {
         Text("parseProps but no props: " + EVYInterpreter.parsePropsFromText(bare))
         Text("parseProps with props: " + EVYInterpreter.parsePropsFromText(data))
@@ -238,5 +244,6 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
         Text(withSuffix.toString())
         Text(WithSuffixAndRight.toString())
         Text(withComparison.toString())
+        Text(weight.toString())
     }
 }

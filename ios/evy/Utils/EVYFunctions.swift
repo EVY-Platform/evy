@@ -67,6 +67,17 @@ func evyFormatDimension(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
+func evyFormatWeight(_ args: String) throws -> EVYFunctionOutput {
+    let res = try EVY.getDataFromProps(args)
+    switch res {
+    case .string(let stringValue):
+        let floatValue = Float(stringValue)!
+        return ("\(floatValue)", nil, "kg")
+    default:
+        return ("Could not format weight", nil, nil)
+    }
+}
+
 func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {

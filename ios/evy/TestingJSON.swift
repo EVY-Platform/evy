@@ -161,8 +161,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.title}",
-                "minimum_characters": "6"
+                "destination": "{item.title}"
             }
         }
     """
@@ -209,8 +208,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.title}",
-                "minimum_characters": "6"
+                "destination": "{item.title}"
             }
         }
     """
@@ -226,8 +224,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.price.value}",
-                "minimum_characters": "1"
+                "destination": "{item.price.value}"
             }
         }
     """
@@ -237,7 +234,7 @@ struct SDUIConstants {
             "type": "ColumnContainer",
             "view": {
                 "content": {
-                    "title": "Dimensions",
+                    "title": "Dimensions (width x height x depth)",
                     "children": [\(inputWidthRow), \(inputHeightRow), \(inputLengthRow)]
                 }
             }
@@ -255,8 +252,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.dimension.width}",
-                "minimum_characters": "1"
+                "destination": "{item.dimension.width}"
             }
         }
     """
@@ -306,8 +302,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.dimension.height}",
-                "minimum_characters": "1"
+                "destination": "{item.dimension.height}"
             }
         }
     """
@@ -323,8 +318,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.dimension.length}",
-                "minimum_characters": "2"
+                "destination": "{item.dimension.length}"
             }
         }
     """
@@ -517,8 +511,7 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.title}",
-                "minimum_characters": "6"
+                "destination": "{item.title}"
             }
         }
     """
@@ -555,6 +548,207 @@ struct SDUIConstants {
         }
     """
     
+    static let pickupContainer = """
+        {
+            "type": "ListContainer",
+            "view": {
+                "content": {
+                    "title": "",
+                    "children": [
+                    {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "Allow buyers to pick up the item"
+                            }
+                        }
+                    }, {
+                        "type": "TextAction",
+                        "view": {
+                            "content": {
+                                "title": "Where",
+                                "text": "{formatAddress(item.address)}",
+                                "placeholder": "Enter pick up address",
+                                "action": "Change"
+                            }
+                        },
+                        "edit": {
+                            "destination": "{item.address}"
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "How long",
+                                "text": "How much time would a meeting take for a buyer to look and buy this item"
+                            }
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "HERE SHOULD BE A WHEEL"
+                            }
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "When",
+                                "text": "When are you available for buyers to inspect or pick up this item"
+                            }
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "HERE SHOULD BE A CALENDAR"
+                            }
+                        }
+                    }]
+                }
+            }
+        }
+    """
+    
+    static let deliveryContainer = """
+        {
+            "type": "ListContainer",
+            "view": {
+                "content": {
+                    "title": "",
+                    "children": [
+                    {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "Deliver directly to the buyer"
+                            }
+                        }
+                    }, {
+                        "type": "Input",
+                        "view": {
+                            "content": {
+                                "title": "Surcharge",
+                                "value": "{formatCurrency(item.price)}",
+                                "placeholder": "Do you want to charge for delivery?"
+                            }
+                        },
+                        "edit": {
+                            "destination": "{item.price.value}"
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "How far",
+                                "text": "How long can you travel to deliver this item"
+                            }
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "HERE SHOULD BE A WHEEL"
+                            }
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "When",
+                                "text": "When are you available to deliver this item"
+                            }
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "HERE SHOULD BE A CALENDAR"
+                            }
+                        }
+                    }]
+                }
+            }
+        }
+    """
+    
+    static let shippingContainer = """
+        {
+            "type": "ListContainer",
+            "view": {
+                "content": {
+                    "title": "",
+                    "children": [
+                    {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "Postal shipping at the buyer’s expense"
+                            }
+                        }
+                    }, {
+                        "type": "Input",
+                        "view": {
+                            "content": {
+                                "title": "Where from",
+                                "value": "",
+                                "placeholder": "Enter the postal code you will be shipping from"
+                            }
+                        },
+                        "edit": {
+                            "destination": ""
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "Where to",
+                                "text": "Select how far you are willing to ship"
+                            }
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "HERE SHOULD BE A WHEEL"
+                            }
+                        }
+                    }, {
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "Dimensions (width x height x depth)",
+                                "text": "What is the size of the package"
+                            }
+                        }
+                    },
+                    \(columnContainerDimensionsRow), {
+                        "type": "Input",
+                        "view": {
+                            "content": {
+                                "title": "Weight (kg)",
+                                "value": "{formatWeight(item.dimension.weight)}",
+                                "placeholder": "Wight"
+                            }
+                        },
+                        "edit": {
+                            "destination": "{item.dimension.weight}"
+                        }
+                    }]
+                }
+            }
+        }
+    """
+    
     static let selectContainerRow = """
         {
             "type": "SelectContainer",
@@ -563,92 +757,15 @@ struct SDUIConstants {
                     "title": "Pickup",
                     "children": [{
                         "title": "Pickup",
-                        "child": {
-                            "type": "ListContainer",
-                            "view": {
-                                "content": {
-                                    "title": "",
-                                    "children": [
-                                    {
-                                        "type": "Info",
-                                        "view": {
-                                            "content": {
-                                                "text": "Allow buyers to pick up the item"
-                                            }
-                                        }
-                                    }, {
-                                        "type": "TextAction",
-                                        "view": {
-                                            "content": {
-                                                "title": "Where",
-                                                "text": "{formatAddress(item.address)}",
-                                                "placeholder": "Enter pick up address",
-                                                "action": "Change"
-                                            }
-                                        },
-                                        "edit": {
-                                            "destination": "{item.address}"
-                                        }
-                                    }, {
-                                        "type": "Text",
-                                        "view": {
-                                            "content": {
-                                                "title": "How long",
-                                                "text": "How much time would a meeting take for a buyer to look and buy this item"
-                                            },
-                                            "max_lines": ""
-                                        },
-                                        "edit": {
-                                            "destination": "{item.address}"
-                                        }
-                                    }, {
-                                        "type": "Text",
-                                        "view": {
-                                            "content": {
-                                                "title": "When",
-                                                "text": "When are you available for buyers to inspect or pick up this item"
-                                            },
-                                            "max_lines": ""
-                                        },
-                                        "edit": {
-                                            "destination": "{item.address}"
-                                        }
-                                    }]
-                                }
-                            }
-                        }
+                        "child": \(pickupContainer)
                     },
                     {
                         "title": "Delivery",
-                        "child": {
-                            "type": "TextArea",
-                            "view": {
-                                "content": {
-                                   "title": "",
-                                   "value": "{item.description}",
-                                   "placeholder": "Write a short description of your product"
-                                }
-                            },
-                            "edit": {
-                                "destination": "{item.description}"
-                            }
-                        }
+                        "child": \(deliveryContainer)
                     },
                     {
                         "title": "Shipping",
-                        "child": {
-                            "type": "Input",
-                            "view": {
-                                "content": {
-                                    "title": "Select 3",
-                                    "value": "Hello",
-                                    "placeholder": "This is select container page 3"
-                                }
-                            },
-                            "edit": {
-                                "destination": "{item.title}"
-                            }
-                        }
+                        "child": \(shippingContainer)
                     }]
                 }
             }
@@ -777,7 +894,8 @@ struct DataConstants {
             "dimension": {
                 "width": "500",
                 "height": "1600",
-                "length": "600"
+                "length": "600",
+                "weight": "10"
             },
             "tag_ids": [
                 "04b34671-4eeb-4f1c-8435-5e029a0e455c",

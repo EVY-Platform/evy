@@ -40,8 +40,7 @@
 				}
 			},
 			"edit": {
-				"destination": "{item.title}",
-				"minimum_characters": "6"
+				"destination": "{item.title}"
 			}
 		},
 		{
@@ -374,7 +373,6 @@
 			},
 			"edit": {
 				"destination": "{item.description}",
-				"minimum_characters": "10"
 			}
 		},{
 			"type": "Button",
