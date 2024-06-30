@@ -1,31 +1,30 @@
 //
-//  EVYDropdownRow.swift
+//  EVYInlinePickerRow.swift
 //  evy
 //
-//  Created by Clemence Chalot on 24/03/2024.
+//  Created by Geoffroy Lesage on 30/6/2024.
 //
 
 import SwiftUI
 
-struct EVYDropdownRowView: Decodable {
+struct EVYInlinePickerRowView: Decodable {
     let content: ContentData
     let data: String
     
     struct ContentData: Decodable {
         let title: String
         let value: String
-        let placeholder: String
     }
 }
     
-struct EVYDropdownRow: View {
-    public static var JSONType = "Dropdown"
+struct EVYInlinePickerRow: View {
+    public static var JSONType = "InlinePicker"
     
-    private let view: EVYDropdownRowView
+    private let view: EVYInlinePickerRowView
     private let edit: SDUI.Edit
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
+        self.view = try container.decode(EVYInlinePickerRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
     
@@ -35,10 +34,10 @@ struct EVYDropdownRow: View {
                 EVYTextView(view.content.title)
                     .padding(.vertical, Constants.minorPadding)
             }
-            EVYDropdown(title: view.content.title,
-                        placeholder: view.content.placeholder,
-                        data: view.data,
-                        destination: edit.destination)
+            EVYInlinePicker(title: view.content.title,
+                            value: view.content.value,
+                            data: view.data,
+                            destination: edit.destination)
         }
     }
 }
@@ -48,9 +47,9 @@ struct EVYDropdownRow: View {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVY.data.create(key: "item", data: item)
     
-    let conditions = DataConstants.conditions.data(using: .utf8)!
-    try! EVY.data.create(key: "conditions", data: conditions)
+    let durations = DataConstants.durations.data(using: .utf8)!
+    try! EVY.data.create(key: "durations", data: durations)
     
-    let json =  SDUIConstants.condition.data(using: .utf8)!
+    let json =  SDUIConstants.durationPickerRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

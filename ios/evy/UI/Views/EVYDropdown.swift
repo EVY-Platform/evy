@@ -13,7 +13,6 @@ struct EVYDropdown: View {
     var placeholder: String?
     
     private var options: EVYJsonArray = []
-    private var hasTitle: Bool = false
     
     @State private var selection: EVYJson?
     @State private var showSheet = false
@@ -22,8 +21,6 @@ struct EVYDropdown: View {
         self.title = title
         self.placeholder = placeholder
         self.destination = destination
-        
-        self.hasTitle = self.title?.count ?? 0 > 0
         
         do {
             let data = try EVY.getDataFromText(data)
@@ -34,35 +31,29 @@ struct EVYDropdown: View {
     }
     
     var body: some View {
-        VStack(alignment:.leading) {
-            if hasTitle {
-                EVYTextView(title!)
-                    .padding(.vertical, Constants.minorPadding)
-            }
-            HStack {
-                Button(action: { showSheet.toggle() }) {
-                    if let value = selection?.displayValue() {
-                        EVYTextView(value).foregroundColor(.black)
-                    } else {
-                        EVYTextView(placeholder ?? "")
-                            .foregroundColor(Constants.placeholderColor)
-                    }
+        HStack {
+            Button(action: { showSheet.toggle() }) {
+                if let value = selection?.displayValue() {
+                    EVYTextView(value).foregroundColor(.black)
+                } else {
+                    EVYTextView(placeholder ?? "")
+                        .foregroundColor(Constants.placeholderColor)
                 }
-                Spacer()
-                EVYTextView("::chevron.down::")
-                    .foregroundColor(.black)
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
-            )
-            .contentShape(Rectangle())
-            .onTapGesture { showSheet.toggle() }
+            Spacer()
+            EVYTextView("::chevron.down::")
+                .foregroundColor(.black)
         }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
+                .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
+        )
+        .contentShape(Rectangle())
+        .onTapGesture { showSheet.toggle() }
         .sheet(isPresented: $showSheet, content: {
             VStack {
-                if hasTitle {
+                if self.title?.count ?? 0 > 0 {
                     EVYTextView(title!).padding(.top, 30)
                 }
                 EVYSelect(selection: $selection, options: options)

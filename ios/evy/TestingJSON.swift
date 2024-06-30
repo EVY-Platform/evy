@@ -138,6 +138,54 @@ struct SDUIConstants {
         }
     """
     
+    static let durationPickerRow = """
+        {
+           "type": "InlinePicker",
+           "view": {
+               "content": {
+                   "title": "",
+                   "value": "{duration}"
+               },
+                "data": "{durations}"
+           },
+            "edit": {
+                "destination": "{duration}"
+            }
+        }
+    """
+    
+    static let distancePickerRow = """
+        {
+           "type": "InlinePicker",
+           "view": {
+               "content": {
+                   "title": "",
+                   "value": "{distance}"
+               },
+                "data": "{durations}"
+           },
+            "edit": {
+                "destination": "{distance}"
+            }
+        }
+    """
+    
+    static let areaPickerRow = """
+        {
+           "type": "InlinePicker",
+           "view": {
+               "content": {
+                   "title": "",
+                   "value": "{area}"
+               },
+                "data": "{areas}"
+           },
+            "edit": {
+                "destination": "{area}"
+            }
+        }
+    """
+    
     static let searchRow = """
         {
            "type": "Search",
@@ -597,15 +645,7 @@ struct SDUIConstants {
                                 "text": "How much time would a meeting take for a buyer to look and buy this item"
                             }
                         }
-                    }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "HERE SHOULD BE A WHEEL"
-                            }
-                        }
-                    }, {
+                    }, \(durationPickerRow), {
                         "type": "Info",
                         "view": {
                             "content": {
@@ -662,15 +702,7 @@ struct SDUIConstants {
                                 "text": "How long can you travel to deliver this item"
                             }
                         }
-                    }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "HERE SHOULD BE A WHEEL"
-                            }
-                        }
-                    }, {
+                    }, \(durationPickerRow), {
                         "type": "Info",
                         "view": {
                             "content": {
@@ -727,15 +759,7 @@ struct SDUIConstants {
                                 "text": "Select how far you are willing to ship"
                             }
                         }
-                    }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "HERE SHOULD BE A WHEEL"
-                            }
-                        }
-                    }, \(columnContainerDimensionsRow), {
+                    }, \(areaPickerRow), \(columnContainerDimensionsRow), {
                         "type": "Input",
                         "view": {
                             "content": {
@@ -806,6 +830,36 @@ struct DataConstants {
         },{
             "id": "1e17474f-80d1-4081-8a64-79ebb3f60ab7",
             "value": "Used - fair",
+        }]
+    """
+    static let durations = """
+        [{
+            "id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+            "value": "5 min",
+        },{
+            "id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+            "value": "10 min",
+        },{
+            "id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+            "value": "15 min",
+        },{
+            "id": "69f25102-822c-436c-a6c1-3b49f887355e",
+            "value": "30 min",
+        }]
+    """
+    static let areas = """
+        [{
+            "id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+            "value": "City",
+        },{
+            "id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+            "value": "State",
+        },{
+            "id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+            "value": "Country",
+        },{
+            "id": "69f25102-822c-436c-a6c1-3b49f887355e",
+            "value": "World",
         }]
     """
     static let provider = """

@@ -25,32 +25,21 @@ struct EVYTimeslotColumn: View {
     let timeslotDate: EVYTimeslotDate
     let numberOfTimeslotsPerDay: Int
     
-    private let timeslotRowWidth: CGFloat = 70
-    private let timeslotRowHeight: CGFloat = 40
-    private let timeslowRectangleCornerRadius: CGFloat = 10
-    
     var body: some View {
         VStack {
             EVYTextView(timeslotDate.header)
             EVYTextView(timeslotDate.date)
             ForEach((0...(numberOfTimeslotsPerDay-1)), id: \.self) { timeslotIndex in
                 if timeslotDate.timeslots.count-1 < timeslotIndex {
-                    EVYTextView("-").frame(height: timeslotRowHeight)
+                    EVYInlineButton(value: "-", style: .clear)
                 }
                 else {
                     let t = timeslotDate.timeslots[timeslotIndex]
-                    ZStack() {
-                        RoundedRectangle(cornerRadius: timeslowRectangleCornerRadius)
-                            .fill(t.available ?
-                                  Constants.buttonColor : Constants.buttonDisabledColor)
-                            .opacity(0.8)
-                            .frame(height: timeslotRowHeight)
-                        EVYTextView(t.timeslot)
-                    }
+                    EVYInlineButton(value: t.timeslot,
+                                    style: t.available ? .primary : .secondary)
                 }
             }
         }
-        .frame(width: timeslotRowWidth)
     }
 }
 

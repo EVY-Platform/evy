@@ -59,7 +59,14 @@ struct EVY {
     static func updateValue(_ value: String, at: String) throws -> Void {
         let props = EVYInterpreter.parsePropsFromText(at)
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        let data = try data.get(key: splitProps.first!)
-        try data.updateValueInData(value, props: Array(splitProps[1...]))
+        let firstProp = splitProps.first!
+        
+        if data.exists(key: firstProp) {
+            let data = try data.get(key: splitProps.first!)
+            try data.updateValueInData(value, props: Array(splitProps[1...]))
+        } else {
+            let valueAsData = try JSONEncoder().encode(value)
+            try data.create(key: firstProp, data: valueAsData)
+        }
     }
 }

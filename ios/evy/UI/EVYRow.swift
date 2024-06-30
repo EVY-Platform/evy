@@ -33,40 +33,44 @@ struct EVYRow: View, Decodable, Identifiable {
             case EVYListContainer.JSONType:
                 self.view = try EVYListContainer(container: container)
             
-            case EVYSheetContainerRow.JSONType:
-                self.view = try EVYSheetContainerRow(container: container)
-            
             case EVYSelectContainerRow.JSONType:
                 self.view = try EVYSelectContainerRow(container: container)
+            
+            case EVYSheetContainerRow.JSONType:
+                self.view = try EVYSheetContainerRow(container: container)
         
             // Display rows
+            case EVYInfoRow.JSONType:
+                self.view = try EVYInfoRow(container: container)
+            
             case EVYTextRow.JSONType:
                 self.view = try EVYTextRow(container: container)
             
-            case EVYInfoRow.JSONType:
-                self.view = try EVYInfoRow(container: container)
+            case EVYTextActionRow.JSONType:
+                self.view = try EVYTextActionRow(container: container)
 
             // Editable rows
+            case EVYDropdownRow.JSONType:
+                self.view = try EVYDropdownRow(container: container)
+            
+            case EVYInlinePickerRow.JSONType:
+                self.view = try EVYInlinePickerRow(container: container)
+            
             case EVYInputRow.JSONType:
                 self.view = try EVYInputRow(container: container)
             
-            case EVYTextActionRow.JSONType:
-                self.view = try EVYTextActionRow(container: container)
+            case EVYSearchRow.JSONType:
+                self.view = try EVYSearchRow(container: container)
             
             case EVYSelectPhotoRow.JSONType:
                 self.view = try EVYSelectPhotoRow(container: container)
             
-            case EVYButtonRow.JSONType:
-                self.view = try EVYButtonRow(container: container)
-            
-            case EVYDropdownRow.JSONType:
-                self.view = try EVYDropdownRow(container: container)
-            
             case EVYTextAreaRow.JSONType:
                 self.view = try EVYTextAreaRow(container: container)
             
-            case EVYSearchRow.JSONType:
-                self.view = try EVYSearchRow(container: container)
+            // Action rows
+            case EVYButtonRow.JSONType:
+                self.view = try EVYButtonRow(container: container)
                     
             default:
                 self.view = EVYTextView("I am a row")

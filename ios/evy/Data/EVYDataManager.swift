@@ -21,7 +21,7 @@ let container = try! ModelContainer(for: EVYData.self, configurations: config)
 struct EVYDataManager {
     private var context: ModelContext = ModelContext(container)
     
-    private func exists(key: String) -> Bool {
+    func exists(key: String) -> Bool {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
         do {
             return try context.fetchCount(descriptor) > 0

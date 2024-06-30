@@ -65,6 +65,9 @@
 		73D5B41B2B3307590005E495 /* EVYGreyedBackgound.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */; };
 		73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D878E72B2ECD6900A1F9C2 /* chunked.swift */; };
 		73D878EE2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */; };
+		73E77C9B2C3113D400A53363 /* EVYInlineButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */; };
+		73E77C9D2C3118C100A53363 /* EVYInlinePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */; };
+		73E77C9F2C3118D100A53363 /* EVYInlinePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E77C9E2C3118D100A53363 /* EVYInlinePickerRow.swift */; };
 		73EDC87D2B8F37E800304DD8 /* EVYButtonRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73EDC87C2B8F37E800304DD8 /* EVYButtonRow.swift */; };
 		73EDC87F2B8F387500304DD8 /* EVYButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73EDC87E2B8F387500304DD8 /* EVYButton.swift */; };
 /* End PBXBuildFile section */
@@ -128,6 +131,9 @@
 		73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYGreyedBackgound.swift; sourceTree = "<group>"; };
 		73D878E72B2ECD6900A1F9C2 /* chunked.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = chunked.swift; sourceTree = "<group>"; };
 		73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselIndicator.swift; sourceTree = "<group>"; };
+		73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInlineButton.swift; sourceTree = "<group>"; };
+		73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInlinePicker.swift; sourceTree = "<group>"; };
+		73E77C9E2C3118D100A53363 /* EVYInlinePickerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInlinePickerRow.swift; sourceTree = "<group>"; };
 		73EDC87C2B8F37E800304DD8 /* EVYButtonRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYButtonRow.swift; sourceTree = "<group>"; };
 		73EDC87E2B8F387500304DD8 /* EVYButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -195,10 +201,11 @@
 		736E12412BBFE37B00D100E4 /* Edit */ = {
 			isa = PBXGroup;
 			children = (
-				737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */,
-				2E0B20F12B816AFA002C86A3 /* EVYSelectPhotoRow.swift */,
-				73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */,
 				2E5F4DBA2BB01A1200D3A3FB /* EVYDropdownRow.swift */,
+				737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */,
+				73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */,
+				2E0B20F12B816AFA002C86A3 /* EVYSelectPhotoRow.swift */,
+				73E77C9E2C3118D100A53363 /* EVYInlinePickerRow.swift */,
 				2E5F4DBC2BB2C5D900D3A3FB /* EVYTextAreaRow.swift */,
 			);
 			path = Edit;
@@ -209,8 +216,8 @@
 			children = (
 				736D10602B7905CA00503C4D /* EVYColumnContainer.swift */,
 				7320F5912C2FFB6700297C48 /* EVYListContainer.swift */,
-				2EE4E27A2B99CDB300CEF112 /* EVYSheetContainerRow.swift */,
 				2E69A8C02BD133100068647D /* EVYSelectContainerRow.swift */,
+				2EE4E27A2B99CDB300CEF112 /* EVYSheetContainerRow.swift */,
 			);
 			path = Container;
 			sourceTree = "<group>";
@@ -218,9 +225,9 @@
 		736E12432BBFE38E00D100E4 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				736D105E2B78CDDB00503C4D /* EVYTextRow.swift */,
 				7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */,
 				7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */,
+				736D105E2B78CDDB00503C4D /* EVYTextRow.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -317,12 +324,14 @@
 				73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */,
 				73C78AF12BC552150026F39D /* EVYHorizontalSelection.swift */,
 				73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */,
+				73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */,
 				2ED04EF52B3308C400881DC4 /* EVYMap.swift */,
-				734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */,
+				73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */,
 				2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */,
 				73C78AE92BC549840026F39D /* EVYSearch.swift */,
 				73C78AEF2BC551880026F39D /* EVYSearchBar.swift */,
 				2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */,
+				734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */,
 				737334FA2B7B671100D2E1CF /* EVYTextField.swift */,
 				73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */,
 				73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */,
@@ -440,6 +449,7 @@
 				738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */,
 				730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */,
 				73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */,
+				73E77C9F2C3118D100A53363 /* EVYInlinePickerRow.swift in Sources */,
 				736D10572B78C4C500503C4D /* EVYPage.swift in Sources */,
 				2EE4E27D2B99D7F300CEF112 /* EVYSelect.swift in Sources */,
 				73C78AF02BC551880026F39D /* EVYSearchBar.swift in Sources */,
@@ -460,11 +470,13 @@
 				2E00BD4B2BA1A99D00C09A1D /* EVYRadioButton.swift in Sources */,
 				2EE4E27B2B99CDB300CEF112 /* EVYSheetContainerRow.swift in Sources */,
 				2E5F4DBD2BB2C5D900D3A3FB /* EVYTextAreaRow.swift in Sources */,
+				73E77C9D2C3118C100A53363 /* EVYInlinePicker.swift in Sources */,
 				734F5A242C2ED3BD00C0FD0A /* EVYSelectPhoto.swift in Sources */,
 				73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */,
 				73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */,
 				738CEC402BB2E0E600E44230 /* TestingJSON.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
+				73E77C9B2C3113D400A53363 /* EVYInlineButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
