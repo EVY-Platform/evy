@@ -222,9 +222,10 @@
 			}
 		},
 		{
-			"type": "Wheel",
+			"type": "InlinePicker",
 			"view": {
 				"content": {
+					"title": "",
 					"value": "{formatDuration(timeslot_duration)}"
 				},
 				"data": "{timeslot_durations}"
