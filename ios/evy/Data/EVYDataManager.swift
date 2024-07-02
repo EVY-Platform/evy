@@ -19,7 +19,7 @@ let config = ModelConfiguration(isStoredInMemoryOnly: true)
 let container = try! ModelContainer(for: EVYData.self, configurations: config)
 
 struct EVYDataManager {
-    private var context: ModelContext = ModelContext(container)
+    private let context: ModelContext = ModelContext(container)
     
     func exists(key: String) -> Bool {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })

@@ -19,7 +19,7 @@ struct EVYSearchRowView: Decodable {
 }
     
 struct EVYSearchRow: View {
-    public static var JSONType = "Search"
+    public static let JSONType = "Search"
     
     private let view: EVYSearchRowView
     private let edit: SDUI.Edit

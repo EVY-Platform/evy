@@ -19,7 +19,7 @@ struct EVYButtonRowView: Decodable {
 struct EVYButtonRow: View {
     @Environment(\.navigate) private var navigate
     
-    public static var JSONType = "Button"
+    public static let JSONType = "Button"
     
     private let view: EVYButtonRowView
     private let action: SDUI.Action

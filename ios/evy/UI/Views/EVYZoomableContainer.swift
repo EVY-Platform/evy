@@ -25,7 +25,7 @@ struct EVYZoomableContainer<Content: View>: View {
     }
 
     fileprivate struct ZoomableScrollView<Content: View>: UIViewRepresentable {
-        private var content: Content
+        private let content: Content
         @Binding private var currentScale: CGFloat
         @Binding private var tapLocation: CGPoint
 
@@ -93,7 +93,7 @@ struct EVYZoomableContainer<Content: View>: View {
         // MARK: - Coordinator
 
         class Coordinator: NSObject, UIScrollViewDelegate {
-            var hostingController: UIHostingController<Content>
+            let hostingController: UIHostingController<Content>
             @Binding var currentScale: CGFloat
 
             init(hostingController: UIHostingController<Content>, scale: Binding<CGFloat>) {

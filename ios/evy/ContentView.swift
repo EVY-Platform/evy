@@ -22,7 +22,7 @@ public enum NavOperation: Hashable {
 }
 
 struct NavigateEnvironmentKey: EnvironmentKey {
-    static var defaultValue: (NavOperation) -> Void = { _  in }
+    static let defaultValue: (NavOperation) -> Void = { _  in }
 }
 
 extension EnvironmentValues {

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EVYListContainer: View {
-    public static var JSONType = "ListContainer"
+    public static let JSONType = "ListContainer"
     
     private let view: SDUI.ContainerView
     

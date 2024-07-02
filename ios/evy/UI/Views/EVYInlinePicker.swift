@@ -8,9 +8,9 @@
 import SwiftUI
     
 struct EVYInlinePicker: View {
-    var title: String
-    var value: String
-    var destination: String
+    let title: String
+    let value: String
+    let destination: String
     
     private var options: EVYJsonArray = []
     

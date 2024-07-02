@@ -63,8 +63,8 @@ public class SDUI {
         let title: String
     }
     public struct View: Decodable {
-        var content: Content
-        var placeholder: Placeholder
+        let content: Content
+        let placeholder: Placeholder
     }
     public struct Row: Decodable {
         let type: String

@@ -15,8 +15,8 @@ let API_HOST = ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:800
 let userDefault = UserDefaults.standard
 
 final class EVYManager {
-    private var rpcWS = EVYWebsocket.init(host: API_HOST)
-    static var shared = EVYManager()
+    private let rpcWS = EVYWebsocket.init(host: API_HOST)
+    static let shared = EVYManager()
     
     private init() {}
     

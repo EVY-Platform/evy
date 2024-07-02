@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EVYColumnContainer: View {
-    public static var JSONType = "ColumnContainer"
+    public static let JSONType = "ColumnContainer"
     
     private let view: SDUI.ContainerView
     

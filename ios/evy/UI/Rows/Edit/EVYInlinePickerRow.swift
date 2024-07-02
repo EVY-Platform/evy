@@ -18,7 +18,7 @@ struct EVYInlinePickerRowView: Decodable {
 }
     
 struct EVYInlinePickerRow: View {
-    public static var JSONType = "InlinePicker"
+    public static let JSONType = "InlinePicker"
     
     private let view: EVYInlinePickerRowView
     private let edit: SDUI.Edit

@@ -17,7 +17,7 @@ public enum RowCodingKeys: String, CodingKey {
 struct EVYRow: View, Decodable, Identifiable {
     let id = UUID()
     
-    public var type: String
+    let type: String
     let view: any View
 
     init(from decoder: Decoder) throws {

@@ -18,7 +18,7 @@ struct EVYLoginParams: Encodable {
 }
 
 final class EVYWebsocket {
-    var rpc: Service<ServiceCore<WsConnectionFactory.Connection, WsConnectionFactory.Delegate>>
+    let rpc: Service<ServiceCore<WsConnectionFactory.Connection, WsConnectionFactory.Delegate>>
     
     init(host: String) {
         rpc = JsonRpc(.ws(url: URL(string: "ws://\(host)")!), queue: .main)

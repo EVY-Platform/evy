@@ -72,7 +72,7 @@ struct EVYInterpreter {
             let returnPrefix = match.startIndex == 0
             let returnSuffix = match.range.upperBound.utf16Offset(in: input) == input.count
             
-            var value: EVYFunctionOutput?
+            let value: EVYFunctionOutput?
             
             switch funcName {
             case "count":

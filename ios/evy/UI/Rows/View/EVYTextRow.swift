@@ -18,7 +18,7 @@ struct EVYTextRowView: Decodable {
 }
 
 struct EVYTextRow: View {
-    public static var JSONType = "Text"
+    public static let JSONType = "Text"
     
     private let view: EVYTextRowView
     

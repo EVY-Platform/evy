@@ -18,7 +18,7 @@ struct EVYTextAreaRowView: Decodable {
 }
     
 struct EVYTextAreaRow: View {
-    public static var JSONType = "TextArea"
+    public static let JSONType = "TextArea"
     
     private let view: EVYTextAreaRowView
     private let edit: SDUI.Edit

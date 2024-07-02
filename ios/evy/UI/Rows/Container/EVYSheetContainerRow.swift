@@ -10,7 +10,7 @@
 import SwiftUI
 
 struct EVYSheetContainerRow: View {
-    public static var JSONType = "SheetContainer"
+    public static let JSONType = "SheetContainer"
 
     private let view: SDUI.ContainerView
 

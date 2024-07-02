@@ -18,7 +18,7 @@ struct EVYInputRowView: Decodable {
 }
     
 struct EVYInputRow: View {
-    public static var JSONType = "Input"
+    public static let JSONType = "Input"
     
     private let view: EVYInputRowView
     private let edit: SDUI.Edit

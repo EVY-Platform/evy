@@ -22,7 +22,7 @@ struct EVYSelectPhotoRowView: Decodable {
 }
 
 struct EVYSelectPhotoRow: View {
-    public static var JSONType = "SelectPhoto"
+    public static let JSONType = "SelectPhoto"
     
     private let view: EVYSelectPhotoRowView
     private let edit: SDUI.Edit

@@ -13,17 +13,17 @@ var carouselElementSize: CGFloat = 150.0
 
 struct EVYSelectPhoto: View {
     var title: String?
-    var subtitle: String
-    var icon: String
-    var content: String
-    var destination: String
+    let subtitle: String
+    let icon: String
+    let content: String
+    let destination: String
     
     private var options: EVYJsonArray = []
     
     @State private var selection: EVYJson?
     @State private var showSheet = false
     
-    private var fm = FileManager.default
+    private let fm = FileManager.default
     private var cacheDir: URL {
         return fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
      }
@@ -153,8 +153,8 @@ struct EVYSelectPhotoCarousel: View {
 }
 
 class ImageManager {
-    static var shared = ImageManager()
-    var fm = FileManager.default
+    static let shared = ImageManager()
+    let fm = FileManager.default
     var cachesDirectoryUrl: URL {
         let urls = fm.urls(for: .cachesDirectory, in: .userDomainMask)
         return urls[0]

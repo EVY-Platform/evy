@@ -19,7 +19,7 @@ struct EVYDropdownRowView: Decodable {
 }
     
 struct EVYDropdownRow: View {
-    public static var JSONType = "Dropdown"
+    public static let JSONType = "Dropdown"
     
     private let view: EVYDropdownRowView
     private let edit: SDUI.Edit

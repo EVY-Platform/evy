@@ -8,9 +8,9 @@
 import SwiftUI
     
 struct EVYDropdown: View {
-    var title: String?
-    var destination: String
-    var placeholder: String?
+    let title: String?
+    let destination: String
+    let placeholder: String?
     
     private var options: EVYJsonArray = []
     

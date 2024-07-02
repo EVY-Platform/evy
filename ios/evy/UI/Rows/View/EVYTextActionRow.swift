@@ -19,7 +19,7 @@ struct EVYTextActionRowView: Decodable {
 }
 
 struct EVYTextActionRow: View {
-    public static var JSONType = "TextAction"
+    public static let JSONType = "TextAction"
     
     private let view: EVYTextActionRowView
     private let edit: SDUI.Edit

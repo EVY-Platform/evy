@@ -30,7 +30,7 @@ public struct SelectContainerView: Decodable {
 }
 
 struct EVYSelectContainerRow: View {
-    public static var JSONType = "SelectContainer"
+    public static let JSONType = "SelectContainer"
     
     private let view: SelectContainerView
     @State private var selected: String
