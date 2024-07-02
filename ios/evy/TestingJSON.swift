@@ -702,7 +702,7 @@ struct SDUIConstants {
                                 "text": "How long can you travel to deliver this item"
                             }
                         }
-                    }, \(durationPickerRow), {
+                    }, \(distancePickerRow), {
                         "type": "Info",
                         "view": {
                             "content": {
@@ -745,7 +745,7 @@ struct SDUIConstants {
                             "content": {
                                 "title": "Where from",
                                 "value": "",
-                                "placeholder": "Enter the postal code you will be shipping from"
+                                "placeholder": "Postal code you will be shipping from"
                             }
                         },
                         "edit": {

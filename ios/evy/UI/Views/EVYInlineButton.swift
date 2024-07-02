@@ -14,17 +14,20 @@ public enum EVYInlineButtonStyle: String {
 }
     
 struct EVYInlineButton: View {
-    var value: String
+    let value: String
+    let action: () -> Void
     
-    private var textColor: Color
-    private var buttonFill: Color
+    private let textColor: Color
+    private let buttonFill: Color
     
     private let width: CGFloat = 70
     private let height: CGFloat = 40
     private let radius: CGFloat = 10
     
-    init(value: String, style: EVYInlineButtonStyle) {
+    init(value: String, style: EVYInlineButtonStyle, action: @escaping () -> Void) {
         self.value = value
+        self.action = action
+        
         switch style {
         case .primary:
             textColor = .white
@@ -39,12 +42,13 @@ struct EVYInlineButton: View {
     }
     
     var body: some View {
-        ZStack() {
-            RoundedRectangle(cornerRadius: radius)
-                .fill(buttonFill)
-                .frame(height: height)
-            EVYTextView(value)
-                .foregroundColor(textColor)
+        Button(action: action) {
+            ZStack() {
+                RoundedRectangle(cornerRadius: radius)
+                    .fill(buttonFill)
+                    .frame(height: height)
+                EVYTextView(value).foregroundColor(textColor)
+            }
         }.frame(width: width)
     }
 }
@@ -52,9 +56,9 @@ struct EVYInlineButton: View {
 
 #Preview {
     VStack {
-        EVYInlineButton(value: "test", style: .primary)
-        EVYInlineButton(value: "test", style: .secondary)
-        EVYInlineButton(value: "test", style: .clear)
+        EVYInlineButton(value: "test", style: .primary, action: { print("test") })
+        EVYInlineButton(value: "test", style: .secondary, action: { print("test") })
+        EVYInlineButton(value: "test", style: .clear, action: { print("test") })
     }
 }
 

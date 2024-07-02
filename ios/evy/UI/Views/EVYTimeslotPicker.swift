@@ -24,6 +24,7 @@ public struct EVYTimeslotDate: Decodable {
 struct EVYTimeslotColumn: View {
     let timeslotDate: EVYTimeslotDate
     let numberOfTimeslotsPerDay: Int
+    let action: () -> Void
     
     var body: some View {
         VStack {
@@ -31,12 +32,13 @@ struct EVYTimeslotColumn: View {
             EVYTextView(timeslotDate.date)
             ForEach((0...(numberOfTimeslotsPerDay-1)), id: \.self) { timeslotIndex in
                 if timeslotDate.timeslots.count-1 < timeslotIndex {
-                    EVYInlineButton(value: "-", style: .clear)
+                    EVYInlineButton(value: "-", style: .clear, action: action)
                 }
                 else {
                     let t = timeslotDate.timeslots[timeslotIndex]
                     EVYInlineButton(value: t.timeslot,
-                                    style: t.available ? .primary : .secondary)
+                                    style: t.available ? .primary : .secondary,
+                                    action: action)
                 }
             }
         }
@@ -67,7 +69,8 @@ struct EVYTimeslotPicker: View {
                         HStack {
                             ForEach(groupedDays[index], id: \.date) { timeslotDate in
                                 EVYTimeslotColumn(timeslotDate: timeslotDate,
-                                                  numberOfTimeslotsPerDay: numberOfTimeslotsPerDay)
+                                                  numberOfTimeslotsPerDay: numberOfTimeslotsPerDay,
+                                                  action: { print("test") })
                                 .padding(.horizontal, Constants.spacing)
                             }
                         }

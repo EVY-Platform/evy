@@ -43,12 +43,19 @@ struct EVYInlinePicker: View {
         } catch {}
     }
     
+    private func performAction(option: EVYJson) -> Void {
+        selection = option
+        
+        try! EVY.updateValue(option.identifierValue(), at: destination)
+    }
+    
     var body: some View {
         HStack {
             ForEach(options, id: \.self) { option in
                 let isSelected = option.identifierValue() == selection.identifierValue()
                 EVYInlineButton(value: option.displayValue(),
-                                style: isSelected ? .primary : .secondary)
+                                style: isSelected ? .primary : .secondary,
+                                action: { performAction(option: option) })
             }
         }
     }
