@@ -12,7 +12,7 @@ public enum EVYInlineButtonStyle: String {
     case secondary
     case clear
 }
-    
+
 struct EVYInlineButton: View {
     let value: String
     let action: () -> Void
@@ -22,7 +22,6 @@ struct EVYInlineButton: View {
     
     private let width: CGFloat = 70
     private let height: CGFloat = 40
-    private let radius: CGFloat = 10
     
     init(value: String, style: EVYInlineButtonStyle, action: @escaping () -> Void) {
         self.value = value
@@ -43,13 +42,14 @@ struct EVYInlineButton: View {
     
     var body: some View {
         Button(action: action) {
-            ZStack() {
-                RoundedRectangle(cornerRadius: radius)
+            ZStack {
+                RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
                     .fill(buttonFill)
                     .frame(height: height)
+                    .frame(width: width)
                 EVYTextView(value).foregroundColor(textColor)
             }
-        }.frame(width: width)
+        }
     }
 }
 
