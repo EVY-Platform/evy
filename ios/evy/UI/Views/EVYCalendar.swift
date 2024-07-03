@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+private let dividerWidth: CGFloat = 0.5
+private let dividerOpacity: CGFloat = 0.5
+private let columnWidth: CGFloat = 80
+private let rowHeight: CGFloat = 50
+
 private extension Sequence {
     func toDictionary<Key: Hashable>(with selectKey: (Element) -> Key) -> [Key: Element] {
         reduce(into: [:]) { $0[selectKey($1)] = $1 }
@@ -43,18 +48,21 @@ enum EVYCalendarTimeslotStyle: String {
     case none
 }
 
-private let labelWidth: CGFloat = 60
-private let columnWidth: CGFloat = 80
-private let rowHeight: CGFloat = 50
-
 struct EVYCalendarTimeslotView: View {
+    let identifier: String
     let start: Int
     let end: Int
     let action: () -> Void
     
     private let fillColor: Color
     
-    init(start: Int, end: Int, style: EVYCalendarTimeslotStyle, action: @escaping () -> Void) {
+    init(identifier: String,
+         start: Int,
+         end: Int,
+         style: EVYCalendarTimeslotStyle,
+         action: @escaping () -> Void)
+    {
+        self.identifier = identifier
         self.start = start
         self.end = end
         self.action = action
@@ -72,32 +80,35 @@ struct EVYCalendarTimeslotView: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: .zero) {
-                Divider().background(Constants.inactiveBackground)
+                Divider()
+                    .background(Constants.inactiveBackground)
+                    .opacity(dividerOpacity)
                 Rectangle().fill(fillColor)
             }
         }
         .frame(height: rowHeight)
         .frame(width: columnWidth)
+        .id(identifier)
     }
 }
 
 struct EVYCalendarTimeslotColumn: View {
-    let header: String
+    let identifier: String
     let timeslots: [EVYCalendarTimeslotView]
     
     var body: some View {
-        VStack(spacing: .zero) {
-            EVYTextView(header).padding(Constants.minPading)
+        VStack(alignment: .leading, spacing: 0) {
             ForEach(timeslots, id: \.start)  { timeslot in
                 timeslot
             }
         }.overlay( Divider()
-            .frame(maxWidth: 0.5, maxHeight: .infinity)
+            .opacity(dividerOpacity)
+            .frame(maxWidth: dividerWidth, maxHeight: .infinity)
             .background(Constants.inactiveBackground), alignment: .leading )
     }
 }
 
-struct EVYCalendarLabelColumn: View {
+struct EVYCalendarYAxixLabels: View {
     let labels: [String]
     
     var body: some View {
@@ -106,15 +117,45 @@ struct EVYCalendarLabelColumn: View {
             ForEach(labels, id: \.self)  { label in
                 EVYTextView(label, style: .info)
                     .frame(height: rowHeight)
-                    .frame(width: labelWidth)
+                    .frame(width: columnWidth)
             }
         }
     }
 }
 
+struct EVYCalendarXAxixLabels: View {
+    let labels: [String]
+    
+    var body: some View {
+        HStack(spacing: .zero) {
+            EVYTextView("").padding(Constants.minPading)
+            ForEach(labels, id: \.self)  { label in
+                EVYTextView(label, style: .info)
+                    .frame(height: rowHeight)
+                    .frame(width: columnWidth)
+            }
+        }
+    }
+}
+
+struct ViewOffsetKey: PreferenceKey {
+    typealias Value = CGPoint
+    static var defaultValue = CGPoint.zero
+    static func reduce(value: inout Value, nextValue: () -> Value) {
+        value.x += nextValue().x
+        value.y += nextValue().y
+    }
+}
+
 struct EVYCalendar: View {
-    private let labelsColumn: EVYCalendarLabelColumn
+    let columnsNum = 20
+    let rows = 30
+    
+    private let yAxis: EVYCalendarYAxixLabels
+    private let xAxis: EVYCalendarXAxixLabels
     private var columns: [EVYCalendarTimeslotColumn] = []
+    
+    @State private var offset = CGPoint.zero
     
     init(_ timeslots: [EVYCalendarTimeslot]) {
         var numberOfTimeslotsPerDay: Int
@@ -128,17 +169,22 @@ struct EVYCalendar: View {
             numberOfTimeslotsPerDay = 24
         }
         
-        var labels: [String] = []
+        var yLabels: [String] = []
         for timeslotIndex in 0...numberOfTimeslotsPerDay-1 {
-            labels.append("\(timeslotIndex+1):00")
+            yLabels.append("\(timeslotIndex+1):00")
         }
-        labelsColumn = EVYCalendarLabelColumn(labels: labels)
+        yAxis = EVYCalendarYAxixLabels(labels: yLabels)
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "EEE d"
         
+        var xLabels: [String] = []
         let timeslotsByDate = timeslots.groupedBy([.year, .month, .day])
-        for date in timeslotsByDate.keys.sorted() {
+        let sortedDates = timeslotsByDate.keys.sorted()
+        for dateIndex in sortedDates.indices {
+            let date = sortedDates[dateIndex]
+            let formatedDate = dateFormatter.string(from:date)
+            xLabels.append(formatedDate)
             let dateTimeslots = timeslotsByDate[date]!
             let timeslotsByTimeslotIndex = dateTimeslots.toDictionary {
                 return Calendar.current.component(.hour, from: $0.start)
@@ -146,14 +192,17 @@ struct EVYCalendar: View {
             
             var timeslotViews: [EVYCalendarTimeslotView] = []
             for timeslotIndex in 0...numberOfTimeslotsPerDay-1 {
+                let identifier = "\(dateIndex)_\(timeslotIndex)"
                 if let timeslot = timeslotsByTimeslotIndex[timeslotIndex] {
-                    timeslotViews.append(EVYCalendarTimeslotView(start: timeslotIndex,
+                    timeslotViews.append(EVYCalendarTimeslotView(identifier: identifier,
+                                                                 start: timeslotIndex,
                                                                  end: timeslotIndex+1,
                                                                  style: timeslot.available ? .primary : .secondary,
                                                                  action: { print("test")}))
                     
                 } else {
-                    timeslotViews.append(EVYCalendarTimeslotView(start: timeslotIndex,
+                    timeslotViews.append(EVYCalendarTimeslotView(identifier: identifier,
+                                                                 start: timeslotIndex,
                                                                  end: timeslotIndex+1,
                                                                  style: .none,
                                                                  action: { print("test")}))
@@ -161,23 +210,57 @@ struct EVYCalendar: View {
             }
             
             self.columns.append(
-                EVYCalendarTimeslotColumn(header: dateFormatter.string(from:date),
+                EVYCalendarTimeslotColumn(identifier: formatedDate,
                                           timeslots: timeslotViews)
             )
         }
+        
+        xAxis = EVYCalendarXAxixLabels(labels: xLabels)
     }
     
     var body: some View {
-        ScrollView(.horizontal, content: {
-            ScrollView(.vertical, content: {
-                HStack(spacing: .zero) {
-                    labelsColumn
-                    ForEach(columns, id: \.header) { column in
-                        column
+        HStack(spacing: .zero) {
+            VStack(spacing: .zero) {
+                // empty corner
+                Color.clear.frame(width: .zero, height: rowHeight)
+                
+                // Y Axis
+                ScrollView([.vertical]) {
+                    yAxis.offset(y: offset.y-(columnWidth*0.2))
+                }.disabled(true)
+            }
+            VStack(spacing: .zero) {
+                // X Axis
+                ScrollView([.horizontal]) {
+                    xAxis.offset(x: offset.x-(rowHeight*0.2))
+                }.disabled(true)
+                
+                // Content
+                ScrollViewReader { cellProxy in
+                    ScrollView([.vertical, .horizontal]) {
+                        HStack(alignment: .top, spacing: 0) {
+                            ForEach(columns, id: \.identifier) { column in
+                                column
+                            }
+                        }
+                        .background( GeometryReader { geo in
+                            Color.clear
+                                .preference(key: ViewOffsetKey.self,
+                                            value: geo.frame(in: .named("scroll")).origin)
+                        })
+                        .onPreferenceChange(ViewOffsetKey.self) { value in
+                            offset = value
+                        }
+                        .onAppear {
+                            // Scroll on open to middle of day on the calendar
+                            let y = Float(rows)*0.6
+                            cellProxy.scrollTo("0_\(Int(y))")
+                        }
                     }
                 }
-            })
-        })
+                .coordinateSpace(name: "scroll")
+            }
+        }
     }
 }
 
@@ -213,6 +296,5 @@ struct EVYCalendar: View {
         EVYCalendarTimeslot(start: now3DaysPlus1, end: now3DaysPlus2, available: true),
         EVYCalendarTimeslot(start: now4Days, end: now4DaysPlus1, available: true),
         EVYCalendarTimeslot(start: now5Days, end: now5DaysPlus1, available: true),
-        
     ])
 }
