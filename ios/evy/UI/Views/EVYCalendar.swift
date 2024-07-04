@@ -345,6 +345,48 @@ struct EVYCalendar: View {
             "end_label": "",
             "style": "secondary"
         },{
+            "x": 0,
+            "y": 19,
+            "header": "Wed 18",
+            "start_label": "16:00",
+            "end_label": "",
+            "style": "secondary"
+        },{
+            "x": 0,
+            "y": 20,
+            "header": "Wed 18",
+            "start_label": "",
+            "end_label": "",
+            "style": "secondary"
+        },{
+            "x": 0,
+            "y": 21,
+            "header": "Wed 18",
+            "start_label": "17:00",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 0,
+            "y": 22,
+            "header": "Wed 18",
+            "start_label": "",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 0,
+            "y": 23,
+            "header": "Wed 18",
+            "start_label": "18:00",
+            "end_label": "",
+            "style": "secondary"
+        },{
+            "x": 0,
+            "y": 24,
+            "header": "Wed 18",
+            "start_label": "",
+            "end_label": "19:00",
+            "style": "secondary"
+        },{
             "x": 1,
             "y": 0,
             "header": "Thu 19",
@@ -471,6 +513,48 @@ struct EVYCalendar: View {
             "end_label": "",
             "style": "secondary"
         },{
+            "x": 1,
+            "y": 19,
+            "header": "Thu 19",
+            "start_label": "16:00",
+            "end_label": "",
+            "style": "secondary"
+        },{
+            "x": 1,
+            "y": 20,
+            "header": "Thu 19",
+            "start_label": "",
+            "end_label": "",
+            "style": "secondary"
+        },{
+            "x": 1,
+            "y": 21,
+            "header": "Thu 19",
+            "start_label": "17:00",
+            "end_label": "",
+            "style": "none"
+        },{
+            "x": 1,
+            "y": 22,
+            "header": "Thu 19",
+            "start_label": "",
+            "end_label": "",
+            "style": "none"
+        },{
+            "x": 1,
+            "y": 23,
+            "header": "Thu 19",
+            "start_label": "18:00",
+            "end_label": "",
+            "style": "none"
+        },{
+            "x": 1,
+            "y": 24,
+            "header": "Thu 19",
+            "start_label": "",
+            "end_label": "19:00",
+            "style": "none"
+        },{
             "x": 2,
             "y": 0,
             "header": "Fri 20",
@@ -597,6 +681,48 @@ struct EVYCalendar: View {
             "end_label": "",
             "style": "primary"
         },{
+            "x": 2,
+            "y": 19,
+            "header": "Fri 20",
+            "start_label": "16:00",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 2,
+            "y": 20,
+            "header": "Fri 20",
+            "start_label": "",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 2,
+            "y": 21,
+            "header": "Fri 20",
+            "start_label": "17:00",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 2,
+            "y": 22,
+            "header": "Fri 20",
+            "start_label": "",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 2,
+            "y": 23,
+            "header": "Fri 20",
+            "start_label": "18:00",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 2,
+            "y": 24,
+            "header": "Fri 20",
+            "start_label": "",
+            "end_label": "19:00",
+            "style": "primary"
+        },{
             "x": 3,
             "y": 0,
             "header": "Sat 21",
@@ -720,8 +846,50 @@ struct EVYCalendar: View {
             "y": 18,
             "header": "Sat 21",
             "start_label": "",
-            "end_label": "16:00",
+            "end_label": "",
             "style": "primary"
+        },{
+            "x": 3,
+            "y": 19,
+            "header": "Sat 21",
+            "start_label": "16:00",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 3,
+            "y": 20,
+            "header": "Sat 21",
+            "start_label": "",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 3,
+            "y": 21,
+            "header": "Sat 21",
+            "start_label": "17:00",
+            "end_label": "",
+            "style": "none"
+        },{
+            "x": 3,
+            "y": 22,
+            "header": "Sat 21",
+            "start_label": "",
+            "end_label": "",
+            "style": "primary"
+        },{
+            "x": 3,
+            "y": 23,
+            "header": "Sat 21",
+            "start_label": "18:00",
+            "end_label": "",
+            "style": "none"
+        },{
+            "x": 3,
+            "y": 24,
+            "header": "Sat 21",
+            "start_label": "",
+            "end_label": "19:00",
+            "style": "none"
         }
     ]
     """.data(using: .utf8)!
