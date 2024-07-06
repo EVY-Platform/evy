@@ -193,7 +193,7 @@ struct EVYCalendar: View {
     }
     
     func updateTimeslot(x: Int, y: Int) -> Void {
-        primaryTimeslots[x][y].selected = !primaryTimeslots[x][y].selected
+//        primaryTimeslots[x][y].selected = !primaryTimeslots[x][y].selected
     }
     
     var body: some View {
