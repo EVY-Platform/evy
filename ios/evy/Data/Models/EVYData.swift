@@ -82,6 +82,26 @@ class EVYData {
                 return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
             }
             return updatedData
+        case .array(var arrayValue):
+            guard let firstProp = props.first else {
+                throw EVYDataParseError.invalidProps
+            }
+            guard let index = Int(firstProp) else {
+                throw EVYDataParseError.invalidProps
+            }
+            let subData = arrayValue[index]
+            if props.count == 1 {
+                arrayValue[index] = value
+                let arrayAsData = try JSONEncoder().encode(arrayValue)
+                return try JSONDecoder().decode(EVYJson.self, from: arrayAsData)
+            }
+            let updatedData = try getUpdatedJson(props: Array(props[1...]), data: subData, value: value)
+            if (props.count > 1) {
+                arrayValue[index] = updatedData
+                let arrayAsData = try JSONEncoder().encode(arrayValue)
+                return try JSONDecoder().decode(EVYJson.self, from: arrayAsData)
+            }
+            return updatedData
         default:
             return data
         }
@@ -216,6 +236,19 @@ public enum EVYJson: Codable, Hashable {
                 return subData
             }
             
+            return subData.parseProp(props: Array(props[1...]))
+        case .array(let arrayValue):
+            guard let firstVariable = props.first else {
+                return self
+            }
+            guard let index = Int(firstVariable) else {
+                return self
+            }
+            
+            let subData = arrayValue[index]
+            if props.count == 1 {
+                return subData
+            }
             return subData.parseProp(props: Array(props[1...]))
         default:
             return self

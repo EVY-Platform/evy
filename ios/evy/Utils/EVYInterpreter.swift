@@ -12,6 +12,7 @@ private let comparisonOperatorPattern = "(>|<|==|!=)"
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
 private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
+private let arrayPattern = "\\[([\\d]*)\\]"
 private let propSeparator = "."
 
 struct EVYInterpreter {
@@ -38,9 +39,19 @@ struct EVYInterpreter {
             throw EVYParamError.invalidProps
         }
         
-        let splitProps = props.components(separatedBy: propSeparator)
+        var splitProps = props.components(separatedBy: propSeparator)
         if splitProps.count < 1 {
             throw EVYParamError.invalidProps
+        }
+        for i in splitProps.indices {
+            if let matchArray = firstMatch(splitProps[i],
+                                           pattern: arrayPattern)
+            {
+                splitProps[i].removeSubrange(matchArray.range)
+                
+                let matchIndex = String(matchArray.0.dropFirst().dropLast())
+                splitProps.insert(matchIndex, at: i+1)
+            }
         }
         return splitProps
     }
@@ -124,6 +135,13 @@ private func parseProps(_ input: String) -> (RegexMatch, String)? {
     return nil
 }
 
+private func parseArrayFromProps(_ input: String) -> (RegexMatch, String)? {
+    if let match = firstMatch(input, pattern: arrayPattern) {
+        // Remove leading and trailing curly braces
+        return (match, String(match.0))
+    }
+    return nil
+}
 
 private func parseComparisonFromText(_ input: String) -> (match: RegexMatch,
                                                           comparisonOperator: String,
@@ -236,6 +254,8 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
         "{formatWeight(item.dimension.weight)}", nil, nil
     )
     
+    let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
+    
     return VStack {
         Text("parseProps but no props: " + EVYInterpreter.parsePropsFromText(bare))
         Text("parseProps with props: " + EVYInterpreter.parsePropsFromText(data))
@@ -245,5 +265,6 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
         Text(WithSuffixAndRight.toString())
         Text(withComparison.toString())
         Text(weight.toString())
+        Text(firstSellingReason.toString())
     }
 }

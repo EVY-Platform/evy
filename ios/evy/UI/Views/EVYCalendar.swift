@@ -45,14 +45,14 @@ public struct EVYCalendarTimeslot: Decodable {
 struct EVYCalendarTimeslotView: View {
     let id: String
     let hasSecondary: Bool
-    let action: () -> Void
+    let action: (_ value: Bool) -> Void
     
     @State private var selected: Bool
     
     init(id: String,
          selected: Bool,
          hasSecondary: Bool,
-         action: @escaping () -> Void)
+         action: @escaping (_ value: Bool) -> Void)
     {
         self.id = id
         self.hasSecondary = hasSecondary
@@ -62,8 +62,8 @@ struct EVYCalendarTimeslotView: View {
         
     
     public func performAction() -> Void {
-        action()
         selected.toggle()
+        action(selected)
     }
     
     var body: some View {
@@ -192,8 +192,10 @@ struct EVYCalendar: View {
                     EVYCalendarTimeslotView(id: "\(x)_\(y)",
                                             selected: primarySelected,
                                             hasSecondary: secondarySelected,
-                                            action: {
-                                                print("test")
+                                            action: { value in
+                                                let valueString = value ? "true" : "false"
+                                                let props = "{pickupTimeslots[\(relevantIndex)}"
+                                                try! EVY.updateValue(valueString, at: props)
                                             })
                 )
             }
