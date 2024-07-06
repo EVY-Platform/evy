@@ -44,16 +44,30 @@ public struct EVYCalendarTimeslot: Decodable {
  */
 struct EVYCalendarTimeslotView: View {
     let id: String
-    @State var selected: Bool
     let hasSecondary: Bool
     let action: () -> Void
     
-    public func toggleSelected() -> Void {
+    @State private var selected: Bool
+    
+    init(id: String,
+         selected: Bool,
+         hasSecondary: Bool,
+         action: @escaping () -> Void)
+    {
+        self.id = id
+        self.hasSecondary = hasSecondary
+        self.action = action
+        self.selected = selected
+    }
+        
+    
+    public func performAction() -> Void {
+        action()
         selected.toggle()
     }
     
     var body: some View {
-        Button(action: action) {
+        Button(action: performAction) {
             VStack(spacing: .zero) {
                 Rectangle()
                     .fill(selected ? Constants.buttonColor :
@@ -127,6 +141,7 @@ struct ViewOffsetKey: PreferenceKey {
 struct EVYCalendar: View {
     private let yAxis: EVYCalendarYAxisLabels
     private let xAxis: EVYCalendarXAxisLabels
+    private let columns: [EVYCalendarTimeslotColumn]
     private let primaryTimeslots: [EVYCalendarTimeslot]
     private let secondaryTimeslots: [EVYCalendarTimeslot]
     
@@ -163,37 +178,30 @@ struct EVYCalendar: View {
         
         xAxis = EVYCalendarXAxisLabels(labels: xLabels)
         yAxis = EVYCalendarYAxisLabels(labels: yLabels)
-    }
-    
-    func buildColumns() -> [EVYCalendarTimeslotColumn] {
-        let numberOfTimeslotsPerDay = yAxis.labels.count-1
-        let numberOfDays = xAxis.labels.count
         
+        let numberOfTimeslotsPerDay = yLabels.count-1
+        let numberOfDays = xLabels.count
         var columns: [EVYCalendarTimeslotColumn] = []
-        
         for x in (0..<numberOfDays) {
             var currentTimeslots: [EVYCalendarTimeslotView] = []
             for y in (0..<numberOfTimeslotsPerDay) {
                 let relevantIndex = y+(x*numberOfTimeslotsPerDay)
                 let primarySelected = primaryTimeslots[relevantIndex].selected
                 let secondarySelected = secondaryTimeslots[relevantIndex].selected
-                
                 currentTimeslots.append(
                     EVYCalendarTimeslotView(id: "\(x)_\(y)",
                                             selected: primarySelected,
                                             hasSecondary: secondarySelected,
-                                            action: { print("test") }))
+                                            action: {
+                                                print("test")
+                                            })
+                )
             }
             columns.append(
                 EVYCalendarTimeslotColumn(identifier: x, timeslots: currentTimeslots)
             )
         }
-        
-        return columns
-    }
-    
-    func updateTimeslot(x: Int, y: Int) -> Void {
-//        primaryTimeslots[x][y].selected = !primaryTimeslots[x][y].selected
+        self.columns = columns
     }
     
     var body: some View {
@@ -218,7 +226,6 @@ struct EVYCalendar: View {
                 ScrollViewReader { cellProxy in
                     ScrollView([.vertical, .horizontal]) {
                         HStack(alignment: .top, spacing: 0) {
-                            let columns = buildColumns()
                             ForEach(columns, id: \.identifier) { column in
                                 column
                             }
