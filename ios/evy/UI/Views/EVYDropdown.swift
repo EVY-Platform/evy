@@ -27,7 +27,7 @@ struct EVYDropdown: View {
             if case let .array(arrayValue) = data {
                 self.options.append(contentsOf: arrayValue)
             }
-           } catch {}
+        } catch {}
     }
     
     var body: some View {

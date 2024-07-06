@@ -30,19 +30,13 @@ public extension Sequence {
 /**
  * SDUI Data types
  */
-enum EVYCalendarTimeslotStyle: String, Decodable {
-    case primary
-    case secondary
-    case none
-}
-
 public struct EVYCalendarTimeslot: Decodable {
     let x: Int
     let y: Int
     let header: String
     let start_label: String
     let end_label: String
-    let style: EVYCalendarTimeslotStyle
+    let selected: Bool
 }
 
 /**
@@ -50,32 +44,21 @@ public struct EVYCalendarTimeslot: Decodable {
  */
 struct EVYCalendarTimeslotView: View {
     let id: String
+    @State var selected: Bool
+    let hasSecondary: Bool
     let action: () -> Void
     
-    private let fillColor: Color
-    
-    init(id: String,
-         style: EVYCalendarTimeslotStyle,
-         action: @escaping () -> Void)
-    {
-        self.id = id
-        self.action = action
-        
-        switch style {
-        case .primary:
-            fillColor = Constants.buttonColor
-        case .secondary:
-            fillColor = Constants.inactiveBackground
-        default:
-            fillColor = .clear
-        }
+    public func toggleSelected() -> Void {
+        selected.toggle()
     }
     
     var body: some View {
         Button(action: action) {
             VStack(spacing: .zero) {
                 Rectangle()
-                    .fill(fillColor)
+                    .fill(selected ? Constants.buttonColor :
+                            (hasSecondary ? Constants.inactiveBackground : .clear)
+                    )
                     .opacity(timeslotOpactity)
             }
         }
@@ -144,33 +127,73 @@ struct ViewOffsetKey: PreferenceKey {
 struct EVYCalendar: View {
     private let yAxis: EVYCalendarYAxisLabels
     private let xAxis: EVYCalendarXAxisLabels
-    private var columns: [EVYCalendarTimeslotColumn] = []
+    private let primaryTimeslots: [EVYCalendarTimeslot]
+    private let secondaryTimeslots: [EVYCalendarTimeslot]
     
     @State private var offset = CGPoint.zero
     
-    init(_ timeslots: [EVYCalendarTimeslot]) {
-        var yLabels: [String] = timeslots
-            .filter({ $0.x == 0})
-            .map({ $0.start_label })
-        yLabels.append(timeslots.last!.end_label)
-        yAxis = EVYCalendarYAxisLabels(labels: yLabels)
+    init(primary: String, secondary: String) {
+        var xLabels: [String] = []
+        var yLabels: [String] = []
         
-        let xLabels: [String] = timeslots
-            .filter({ $0.y == 0})
-            .map({ String($0.header) })
+        do {
+            let timeslotsJSON = try EVY.getDataFromText(primary)
+            primaryTimeslots = try! JSONDecoder().decode(
+                [EVYCalendarTimeslot].self, from: timeslotsJSON.toString().data(using: .utf8)!
+            )
+            xLabels = primaryTimeslots
+                .filter({ $0.y == 0})
+                .map({ String($0.header) })
+            yLabels = primaryTimeslots
+                .filter({ $0.x == 0})
+                .map({ $0.start_label })
+            yLabels.append(primaryTimeslots.last!.end_label)
+        } catch {
+            primaryTimeslots = []
+        }
+        
+        do {
+            let timeslotsJSON = try EVY.getDataFromText(secondary)
+            secondaryTimeslots = try! JSONDecoder().decode(
+                [EVYCalendarTimeslot].self, from: timeslotsJSON.toString().data(using: .utf8)!
+            )
+        } catch {
+            secondaryTimeslots = []
+        }
+        
         xAxis = EVYCalendarXAxisLabels(labels: xLabels)
+        yAxis = EVYCalendarYAxisLabels(labels: yLabels)
+    }
+    
+    func buildColumns() -> [EVYCalendarTimeslotColumn] {
+        let numberOfTimeslotsPerDay = yAxis.labels.count-1
+        let numberOfDays = xAxis.labels.count
         
-        let timeslotsByX = timeslots.group(by: { $0.x })
-        for x in timeslotsByX.keys.sorted() {
-            let timeslotsForX = timeslotsByX[x]!.map({
-                EVYCalendarTimeslotView(id: "\($0.x)_\($0.y)",
-                                        style: $0.style,
-                                        action: { print("test") })
-            })
-            self.columns.append(
-                EVYCalendarTimeslotColumn(identifier: x, timeslots: timeslotsForX)
+        var columns: [EVYCalendarTimeslotColumn] = []
+        
+        for x in (0..<numberOfDays) {
+            var currentTimeslots: [EVYCalendarTimeslotView] = []
+            for y in (0..<numberOfTimeslotsPerDay) {
+                let relevantIndex = y+(x*numberOfTimeslotsPerDay)
+                let primarySelected = primaryTimeslots[relevantIndex].selected
+                let secondarySelected = secondaryTimeslots[relevantIndex].selected
+                
+                currentTimeslots.append(
+                    EVYCalendarTimeslotView(id: "\(x)_\(y)",
+                                            selected: primarySelected,
+                                            hasSecondary: secondarySelected,
+                                            action: { print("test") }))
+            }
+            columns.append(
+                EVYCalendarTimeslotColumn(identifier: x, timeslots: currentTimeslots)
             )
         }
+        
+        return columns
+    }
+    
+    func updateTimeslot(x: Int, y: Int) -> Void {
+        primaryTimeslots[x][y].selected = !primaryTimeslots[x][y].selected
     }
     
     var body: some View {
@@ -195,6 +218,7 @@ struct EVYCalendar: View {
                 ScrollViewReader { cellProxy in
                     ScrollView([.vertical, .horizontal]) {
                         HStack(alignment: .top, spacing: 0) {
+                            let columns = buildColumns()
                             ForEach(columns, id: \.identifier) { column in
                                 column
                             }
@@ -216,685 +240,11 @@ struct EVYCalendar: View {
 }
 
 #Preview {
-    let json = """
-    [
-        {
-            "x": 0,
-            "y": 0,
-            "header": "Wed 18",
-            "start_label": "7:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 0,
-            "y": 1,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 0,
-            "y": 2,
-            "header": "Wed 18",
-            "start_label": "8:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 0,
-            "y": 3,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 0,
-            "y": 4,
-            "header": "Wed 18",
-            "start_label": "9:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 0,
-            "y": 5,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 0,
-            "y": 6,
-            "header": "Wed 18",
-            "start_label": "10:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 0,
-            "y": 7,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 0,
-            "y": 8,
-            "header": "Wed 18",
-            "start_label": "11:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 0,
-            "y": 9,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 0,
-            "y": 10,
-            "header": "Wed 18",
-            "start_label": "12:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 0,
-            "y": 11,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 0,
-            "y": 12,
-            "header": "Wed 18",
-            "start_label": "13:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 0,
-            "y": 14,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 0,
-            "y": 15,
-            "header": "Wed 18",
-            "start_label": "14:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 0,
-            "y": 16,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 0,
-            "y": 17,
-            "header": "Wed 18",
-            "start_label": "15:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 0,
-            "y": 18,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 0,
-            "y": 19,
-            "header": "Wed 18",
-            "start_label": "16:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 0,
-            "y": 20,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 0,
-            "y": 21,
-            "header": "Wed 18",
-            "start_label": "17:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 0,
-            "y": 22,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 0,
-            "y": 23,
-            "header": "Wed 18",
-            "start_label": "18:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 0,
-            "y": 24,
-            "header": "Wed 18",
-            "start_label": "",
-            "end_label": "19:00",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 0,
-            "header": "Thu 19",
-            "start_label": "7:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 1,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 2,
-            "header": "Thu 19",
-            "start_label": "8:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 1,
-            "y": 3,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 1,
-            "y": 4,
-            "header": "Thu 19",
-            "start_label": "9:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 5,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 6,
-            "header": "Thu 19",
-            "start_label": "10:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 7,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 8,
-            "header": "Thu 19",
-            "start_label": "11:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 1,
-            "y": 9,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 1,
-            "y": 10,
-            "header": "Thu 19",
-            "start_label": "12:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 11,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 12,
-            "header": "Thu 19",
-            "start_label": "13:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 14,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 15,
-            "header": "Thu 19",
-            "start_label": "14:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 1,
-            "y": 16,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 1,
-            "y": 17,
-            "header": "Thu 19",
-            "start_label": "15:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 18,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 19,
-            "header": "Thu 19",
-            "start_label": "16:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 20,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 1,
-            "y": 21,
-            "header": "Thu 19",
-            "start_label": "17:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 22,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 23,
-            "header": "Thu 19",
-            "start_label": "18:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 1,
-            "y": 24,
-            "header": "Thu 19",
-            "start_label": "",
-            "end_label": "19:00",
-            "style": "none"
-        },{
-            "x": 2,
-            "y": 0,
-            "header": "Fri 20",
-            "start_label": "7:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 2,
-            "y": 1,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 2,
-            "y": 2,
-            "header": "Fri 20",
-            "start_label": "8:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 2,
-            "y": 3,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 2,
-            "y": 4,
-            "header": "Fri 20",
-            "start_label": "9:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 2,
-            "y": 5,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 2,
-            "y": 6,
-            "header": "Fri 20",
-            "start_label": "10:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 7,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 8,
-            "header": "Fri 20",
-            "start_label": "11:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 9,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 10,
-            "header": "Fri 20",
-            "start_label": "12:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 2,
-            "y": 11,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 2,
-            "y": 12,
-            "header": "Fri 20",
-            "start_label": "13:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 2,
-            "y": 14,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 15,
-            "header": "Fri 20",
-            "start_label": "14:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 16,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 2,
-            "y": 17,
-            "header": "Fri 20",
-            "start_label": "15:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 18,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 19,
-            "header": "Fri 20",
-            "start_label": "16:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 20,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 21,
-            "header": "Fri 20",
-            "start_label": "17:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 22,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 23,
-            "header": "Fri 20",
-            "start_label": "18:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 2,
-            "y": 24,
-            "header": "Fri 20",
-            "start_label": "",
-            "end_label": "19:00",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 0,
-            "header": "Sat 21",
-            "start_label": "7:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 1,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 2,
-            "header": "Sat 21",
-            "start_label": "8:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 3,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 4,
-            "header": "Sat 21",
-            "start_label": "9:00",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 3,
-            "y": 5,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 3,
-            "y": 6,
-            "header": "Sat 21",
-            "start_label": "10:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 7,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "secondary"
-        },{
-            "x": 3,
-            "y": 8,
-            "header": "Sat 21",
-            "start_label": "11:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 9,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 10,
-            "header": "Sat 21",
-            "start_label": "12:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 11,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 12,
-            "header": "Sat 21",
-            "start_label": "13:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 14,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 15,
-            "header": "Sat 21",
-            "start_label": "14:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 16,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 17,
-            "header": "Sat 21",
-            "start_label": "15:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 18,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 19,
-            "header": "Sat 21",
-            "start_label": "16:00",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 20,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 21,
-            "header": "Sat 21",
-            "start_label": "17:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 22,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "",
-            "style": "primary"
-        },{
-            "x": 3,
-            "y": 23,
-            "header": "Sat 21",
-            "start_label": "18:00",
-            "end_label": "",
-            "style": "none"
-        },{
-            "x": 3,
-            "y": 24,
-            "header": "Sat 21",
-            "start_label": "",
-            "end_label": "19:00",
-            "style": "none"
-        }
-    ]
-    """.data(using: .utf8)!
+    let pickup = DataConstants.pickupTimeslots.data(using: .utf8)!
+    try! EVY.data.create(key: "pickupTimeslots", data: pickup)
     
-    let timeslots = try! JSONDecoder().decode([EVYCalendarTimeslot].self, from: json)
+    let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!
+    try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
 
-    return EVYCalendar(timeslots)
+    return EVYCalendar(primary: "pickupTimeslots", secondary: "deliveryTimeslots")
 }

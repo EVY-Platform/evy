@@ -89,19 +89,33 @@ class EVYData {
 }
 
 public typealias EVYJsonString = String
+public typealias EVYJsonInt = Int
+public typealias EVYJsonBool = Bool
 public typealias EVYJsonArray = [EVYJson]
 public typealias EVYJsonDict = [String: EVYJson]
 
 public enum EVYJson: Codable, Hashable {
     case string(EVYJsonString)
+    case int(EVYJsonInt)
+    case bool(EVYJsonBool)
     case dictionary(EVYJsonDict)
     case array(EVYJsonArray)
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-
+        
         if let stringValue = try? container.decode(EVYJsonString.self) {
             self = .string(stringValue)
+            return
+        }
+        
+        if let intValue = try? container.decode(EVYJsonInt.self) {
+            self = .int(intValue)
+            return
+        }
+        
+        if let boolValue = try? container.decode(EVYJsonBool.self) {
+            self = .bool(boolValue)
             return
         }
 
@@ -127,6 +141,10 @@ public enum EVYJson: Codable, Hashable {
         switch self {
         case .string(let jsonData):
             try container.encode(jsonData)
+        case .int(let jsonData):
+            try container.encode(jsonData)
+        case .bool(let jsonData):
+            try container.encode(jsonData)
         case .dictionary(let jsonData):
             try container.encode(jsonData)
         case .array(let jsonData):
@@ -140,6 +158,10 @@ public enum EVYJson: Codable, Hashable {
         switch self {
         case .string(let stringValue):
             return stringValue
+        case .int(let intValue):
+            return "\(intValue)"
+        case .bool(let boolValue):
+            return boolValue ? "true" : "false"
         case .array(let arrayValue):
             guard let data = try? encoder.encode(arrayValue) else {
                 return arrayValue.description
