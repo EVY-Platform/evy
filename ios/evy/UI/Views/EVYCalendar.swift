@@ -318,18 +318,24 @@ struct EVYCalendar: View {
             })
             // find the next empty slot on the day
             var index = identifier.y
-            while (index < yLabels.count-1) {
+            var datasourceIndex: Int?
+            while (datasourceIndex == nil && index < yLabels.count-1) {
                 if timeslots[identifier.x][index].isSelected {
                     index += 1
                 } else {
                     timeslots[identifier.x][index].isSelected = true
-                    break
+                    datasourceIndex = timeslots[identifier.x][index].datasourceIndex
                 }
             }
-            NotificationCenter.default.post(
-                name: Notification.Name.calendarTimeslotSelect,
-                object: CGPoint(x:identifier.x, y:index)
-            )
+            if datasourceIndex != nil {
+                NotificationCenter.default.post(
+                    name: Notification.Name.calendarTimeslotSelect,
+                    object: CGPoint(x:identifier.x, y:index)
+                )
+                
+                let props = "{pickupTimeslots[\(datasourceIndex!)}"
+                try! EVY.updateValue("true", at: props)
+            }
         case .delete(let tapped):
             withAnimation(.easeOut(duration: fadeDuration), {
                 showDeleteButton = false
