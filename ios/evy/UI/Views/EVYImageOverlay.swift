@@ -22,7 +22,7 @@ struct EVYImageOverlay: View {
             Button(action: { dismiss()} ) {
                 Label("", systemImage: "xmark")
                     .foregroundColor(.white)
-                    .font(.button)
+                    .font(.evyButton)
             }
             .padding(Constants.majorPadding)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

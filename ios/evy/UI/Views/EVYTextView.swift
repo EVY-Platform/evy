@@ -11,6 +11,7 @@ public enum EVYTextStyle: String {
     case body
     case title
     case info
+    case button
 }
 
 struct EVYTextView: View {
@@ -68,11 +69,15 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
     
     switch style {
     case .title:
-        return Text(input).font(.evyTitle)
+        return Text(input)
+            .font(.evyTitle)
     case .info:
         return Text(input)
             .font(.evy)
             .foregroundStyle(.gray)
+    case .button:
+        return Text(input)
+            .font(.evyButton)
     default:
         return Text(input).font(.evy)
     }

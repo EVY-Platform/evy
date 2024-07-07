@@ -13,6 +13,43 @@ private let dividerOpacity: CGFloat = 0.5
 private let timeslotOpactity: CGFloat = 0.7
 private let columnWidth: CGFloat = 80
 private let rowHeight: CGFloat = 30
+private let fadeDuration: CGFloat = 0.2
+private let deleteButtonDuration: CGFloat = 2
+
+/**
+ * Calendar operations system
+ */
+public struct CalendarTimeslotIdentifier: Hashable {
+    let x: Int
+    let y: Int
+    let datasourceIndex: Int
+}
+
+public enum CalendarOperation: Hashable {
+    case extend(identifier: CalendarTimeslotIdentifier)
+    case delete(tapped: Bool)
+    case selectRow(y: Int)
+    case selectColumn(x: Int)
+}
+
+struct CalendarOperationKey: EnvironmentKey {
+    static let defaultValue: (CalendarOperation) -> Void = { _  in }
+}
+
+extension EnvironmentValues {
+    var operate: (CalendarOperation) -> Void {
+        get { self[CalendarOperationKey.self] }
+        set { self[CalendarOperationKey.self] = newValue }
+    }
+}
+
+/**
+ * Calendar event system
+ */
+extension Notification.Name {
+    static let calendarTimeslotSelect = Notification.Name("EVYCalendarTimeslotSelect")
+    static let calendarTimeslotDeselect = Notification.Name("EVYCalendarTimeslotDeselect")
+}
 
 /**
  * SDUI Data types
@@ -29,49 +66,37 @@ public struct EVYCalendarTimeslotData: Decodable {
 /**
  * Util structs
  */
-public struct EVYCalendarTimeslot {
-    let id: String
+extension CGPoint : Hashable {
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(x)
+    hasher.combine(y)
+  }
+}
+public struct EVYCalendarTimeslot: Hashable {
     let x: Int
     let y: Int
     let datasourceIndex: Int
-    let isSelected: Bool
-    let hasSecondary: Bool
-    
-    init(x: Int, y: Int, datasourceIndex: Int, isSelected: Bool, hasSecondary: Bool) {
-        self.id = "\(x)_\(y)"
-        self.x = x
-        self.y = y
-        self.datasourceIndex = datasourceIndex
-        self.isSelected = isSelected
-        self.hasSecondary = hasSecondary
-    }
+    var isSelected: Bool
+    var hasSecondary: Bool
 }
 
 /**
  * Calendar subviews
  */
 struct EVYCalendarTimeslotView: View {
-    let id: String
-    let hasSecondary: Bool
-    let action: (_ value: Bool) -> Void
+    @Environment(\.operate) private var operate
     
-    @State private var selected: Bool
-    
-    init(id: String,
-         selected: Bool,
-         hasSecondary: Bool,
-         action: @escaping (_ value: Bool) -> Void)
-    {
-        self.id = id
-        self.hasSecondary = hasSecondary
-        self.action = action
-        self.selected = selected
-    }
-        
+    let id: CalendarTimeslotIdentifier
+    @State public var selected: Bool
+    public var hasSecondary: Bool
     
     public func performAction() -> Void {
-        selected.toggle()
-        action(selected)
+        if !selected {
+            withAnimation(.easeOut(duration: fadeDuration), {
+                selected = true
+            })
+        }
+        operate(CalendarOperation.extend(identifier: id))
     }
     
     var body: some View {
@@ -83,32 +108,79 @@ struct EVYCalendarTimeslotView: View {
                     )
                     .opacity(timeslotOpactity)
             }
+            .foregroundColor(.clear)
         }
         .frame(height: rowHeight)
         .frame(width: columnWidth)
+        .onReceive(NotificationCenter.default.publisher(
+            for: Notification.Name.calendarTimeslotDeselect)
+        ) { notif in
+            if let point = notif.object as? CGPoint,
+               Int(point.x) == id.x,
+               Int(point.y) == id.y
+            {
+                selected = false
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: Notification.Name.calendarTimeslotSelect)
+        ) { notif in
+            if let point = notif.object as? CGPoint,
+               Int(point.x) == id.x,
+               Int(point.y) == id.y
+            {
+                selected = true
+            }
+        }
         .id(id)
+    }
+}
+
+struct EVYCalendarDeleteButton: View {
+    @Environment(\.operate) private var operate
+    @State var alreadyTapped: Bool = false
+
+    var body: some View {
+        Button(action: {
+            alreadyTapped = true
+            operate(CalendarOperation.delete(tapped: true))
+        }) {
+            Circle()
+                .fill(.white)
+                .strokeBorder(Constants.fieldBorderColor,
+                              lineWidth: Constants.borderWidth)
+                .overlay(EVYTextView("::trash::", style: .button))
+        }
+        .frame(height: columnWidth/2)
+        .frame(width: columnWidth/2)
+        .onAppear {
+            alreadyTapped = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + deleteButtonDuration) {
+                if !alreadyTapped {
+                    operate(CalendarOperation.delete(tapped: false))
+                }
+            }
+        }
+        .padding()
     }
 }
 
 struct EVYCalendarContentView: View {
     let numberOfDays: Int
     let numberOfTimeslotsPerDay: Int
-    let timeslots: [[Int]: EVYCalendarTimeslot]
+    let timeslots: [[EVYCalendarTimeslot]]
     
     var body: some View {
         HStack(spacing: .zero) {
-            ForEach((0..<numberOfDays), id: \.self) { x in
+            ForEach(timeslots.indices, id: \.self) { x in
                 VStack(alignment: .leading, spacing: 0) {
-                    ForEach((0..<numberOfTimeslotsPerDay), id: \.self) { y in
-                        let timeslot = timeslots[[x,y]]!
-                        EVYCalendarTimeslotView(id: timeslot.id,
+                    ForEach(timeslots[x].indices, id: \.self) { y in
+                        let timeslot = timeslots[x][y]
+                        let id = CalendarTimeslotIdentifier(x: x, y: y,
+                                                            datasourceIndex: timeslot.datasourceIndex)
+                        EVYCalendarTimeslotView(id: id,
                                                 selected: timeslot.isSelected,
-                                                hasSecondary: timeslot.hasSecondary,
-                                                action:{ value in
-                            let valueString = value ? "true" : "false"
-                            let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
-                            try! EVY.updateValue(valueString, at: props)
-                        })
+                                                hasSecondary: timeslot.hasSecondary)
                     }
                 }
                 .overlay(
@@ -123,6 +195,8 @@ struct EVYCalendarContentView: View {
 }
 
 struct EVYCalendarYAxisView: View {
+    @Environment(\.operate) private var operate
+    
     let labels: [String]
     @Binding var offset: CGPoint
     
@@ -133,10 +207,15 @@ struct EVYCalendarYAxisView: View {
             ScrollView([.vertical]) {
                 // Offset based on scroll position but also add to center correctly
                 VStack(spacing: .zero) {
-                    ForEach(labels, id: \.self)  { label in
-                        EVYTextView(label, style: .info)
-                            .frame(height: rowHeight)
-                            .frame(width: columnWidth)
+                    ForEach(labels.indices, id: \.self)  { y in
+                        Button(action: {
+                            operate(CalendarOperation.selectRow(y: y))
+                        }, label: {
+                            let label = labels[y].count > 0 ? labels[y] : "-"
+                            EVYTextView(label, style: .info)
+                        })
+                        .frame(height: rowHeight)
+                        .frame(width: columnWidth)
                     }
                 }.offset(y: offset.y-spaceForFirstLabel)
             }.scrollDisabled(true)
@@ -145,16 +224,22 @@ struct EVYCalendarYAxisView: View {
 }
 
 struct EVYCalendarXAxisView: View {
+    @Environment(\.operate) private var operate
+    
     let labels: [String]
     @Binding var offset: CGPoint
     
     var body: some View {
         ScrollView([.horizontal]) {
             HStack(spacing: .zero) {
-                ForEach(labels, id: \.self)  { label in
-                    EVYTextView(label, style: .info)
-                        .frame(height: rowHeight)
-                        .frame(width: columnWidth)
+                ForEach(labels.indices, id: \.self)  { x in
+                    Button(action: {
+                        operate(CalendarOperation.selectColumn(x: x))
+                    }, label: {
+                        EVYTextView(labels[x], style: .info)
+                    })
+                    .frame(height: rowHeight)
+                    .frame(width: columnWidth)
                 }
             }.offset(x: offset.x)
         }.scrollDisabled(true)
@@ -173,9 +258,11 @@ struct ViewOffsetKey: PreferenceKey {
 struct EVYCalendar: View {
     private var yLabels: [String] = []
     private var xLabels: [String] = []
-    private var timeslots: [[Int]: EVYCalendarTimeslot] = [:]
+    @State private var timeslots: [[EVYCalendarTimeslot]]
     
     @State private var offset = CGPoint.zero
+    @State private var showDeleteButton: Bool = false
+    @State private var lastButtonKey: (Int, Int)?
     
     init(primary: String, secondary: String) {
         var primaryTimeslots: [EVYCalendarTimeslotData] = []
@@ -204,16 +291,76 @@ struct EVYCalendar: View {
         
         let numberOfTimeslotsPerDay = yLabels.count-1
         let numberOfDays = xLabels.count
+        var xValues: [[EVYCalendarTimeslot]] = []
         for x in (0..<numberOfDays) {
+            var yValues: [EVYCalendarTimeslot] = []
             for y in (0..<numberOfTimeslotsPerDay) {
                 let relevantIndex = y+(x*numberOfTimeslotsPerDay)
                 let primarySelected = primaryTimeslots[relevantIndex].selected
                 let secondarySelected = secondaryTimeslots[relevantIndex].selected
-                timeslots[[x,y]] = EVYCalendarTimeslot(x: x, y: y,
-                                                       datasourceIndex: relevantIndex,
-                                                       isSelected: primarySelected,
-                                                       hasSecondary: secondarySelected)
+                let timeslot = EVYCalendarTimeslot(x: x, y: y,
+                                                   datasourceIndex: relevantIndex,
+                                                   isSelected: primarySelected,
+                                                   hasSecondary: secondarySelected)
+                yValues.append(timeslot)
             }
+            xValues.append(yValues)
+        }
+        self.timeslots = xValues
+    }
+    
+    private func handleOperation(_ operation: CalendarOperation) {
+        switch operation {
+        case .extend(let identifier):
+            lastButtonKey = (identifier.x, identifier.y)
+            withAnimation(.easeOut(duration: fadeDuration), {
+                showDeleteButton = true
+            })
+            // find the next empty slot on the day
+            var index = identifier.y
+            while (index < yLabels.count-1) {
+                if timeslots[identifier.x][index].isSelected {
+                    index += 1
+                } else {
+                    timeslots[identifier.x][index].isSelected = true
+                    break
+                }
+            }
+            NotificationCenter.default.post(
+                name: Notification.Name.calendarTimeslotSelect,
+                object: CGPoint(x:identifier.x, y:index)
+            )
+        case .delete(let tapped):
+            withAnimation(.easeOut(duration: fadeDuration), {
+                showDeleteButton = false
+            })
+            
+            if tapped, lastButtonKey != nil {
+                let x = lastButtonKey!.0
+                let y = lastButtonKey!.1
+    
+                NotificationCenter.default.post(
+                    name: Notification.Name.calendarTimeslotDeselect,
+                    object: CGPoint(x:x, y:y)
+                )
+            }
+            
+        case .selectRow(let y):
+            timeslots.forEach({ column in
+                let x = column.first!.x
+                NotificationCenter.default.post(
+                    name: Notification.Name.calendarTimeslotSelect,
+                    object: CGPoint(x:x, y:timeslots[x][y].y)
+                )
+            })
+        
+        case .selectColumn(let x):
+            timeslots[x].forEach({ column in
+                NotificationCenter.default.post(
+                    name: Notification.Name.calendarTimeslotSelect,
+                    object: CGPoint(x:x, y:column.y)
+                )
+            })
         }
     }
     
@@ -239,6 +386,10 @@ struct EVYCalendar: View {
                 }
                 .coordinateSpace(name: "scroll")
             }
+        }
+        .overlay(showDeleteButton ? EVYCalendarDeleteButton() : nil, alignment: .bottom)
+        .environment(\.operate) { calendarOperation in
+            handleOperation(calendarOperation)
         }
     }
 }
