@@ -14,20 +14,27 @@ private let timeslotOpactity: CGFloat = 0.7
 private let columnWidth: CGFloat = 80
 private let rowHeight: CGFloat = 30
 private let fadeDuration: CGFloat = 0.2
-private let deleteButtonDuration: CGFloat = 2
+private let undoButtonDuration: CGFloat = 2
 
 /**
  * Calendar operations system
  */
-public struct CalendarTimeslotIdentifier: Hashable {
+struct CalendarTimeslotIdentifier: Hashable {
     let x: Int
     let y: Int
     let datasourceIndex: Int
 }
 
-public enum CalendarOperation: Hashable {
+enum CalendarSelectionMode: Hashable {
+    case enter
+    case exit
+}
+
+enum CalendarOperation: Hashable {
     case extend(identifier: CalendarTimeslotIdentifier)
-    case delete(tapped: Bool)
+    case delete(identifier: CalendarTimeslotIdentifier)
+    case undo(tapped: Bool)
+    case selection(mode: CalendarSelectionMode)
     case selectRow(y: Int)
     case selectColumn(x: Int)
 }
@@ -44,17 +51,49 @@ extension EnvironmentValues {
 }
 
 /**
+ * Util views
+ */
+struct WiggleAnimation<Content: View>: View {
+    var content: Content
+    @Binding var animate: Bool
+    @State private var wave = true
+
+    var body: some View {
+        content
+        .id(animate)
+        .onChange(of: animate) { oldValue, newValue in
+            if newValue {
+                let baseAnimation = Animation.linear(duration: 0.15)
+                withAnimation(baseAnimation.repeatForever(autoreverses: true)) {
+                    wave.toggle()
+                }
+            }
+        }
+        .rotationEffect(.degrees(animate ? (wave ? 2.5 : -2.5) : 0.0),
+                        anchor: .center)
+    }
+
+    init(animate: Binding<Bool>,
+         @ViewBuilder content: @escaping () -> Content) {
+        self.content = content()
+        self._animate = animate
+    }
+}
+
+/**
  * Calendar event system
  */
 extension Notification.Name {
     static let calendarTimeslotSelect = Notification.Name("EVYCalendarTimeslotSelect")
     static let calendarTimeslotDeselect = Notification.Name("EVYCalendarTimeslotDeselect")
+    static let calendarTimeslotPrepare = Notification.Name("calendarTimeslotPrepare")
+    static let calendarTimeslotUnprepare = Notification.Name("calendarTimeslotUnprepare")
 }
 
 /**
  * SDUI Data types
  */
-public struct EVYCalendarTimeslotData: Decodable {
+struct EVYCalendarTimeslotData: Decodable {
     let x: Int
     let y: Int
     let header: String
@@ -72,7 +111,7 @@ extension CGPoint : Hashable {
     hasher.combine(y)
   }
 }
-public struct EVYCalendarTimeslot: Hashable {
+struct EVYCalendarTimeslot: Hashable {
     let x: Int
     let y: Int
     let datasourceIndex: Int
@@ -89,27 +128,51 @@ struct EVYCalendarTimeslotView: View {
     let id: CalendarTimeslotIdentifier
     @State public var selected: Bool
     public var hasSecondary: Bool
+    @State private var inDeleteMode: Bool = false
     
-    public func performAction() -> Void {
-        if !selected {
+    public func performAction(hold: Bool) -> Void {
+        if !inDeleteMode && hold {
+            operate(CalendarOperation.selection(mode: .enter))
+        } else if inDeleteMode && selected {
             withAnimation(.easeOut(duration: fadeDuration), {
-                selected = true
+                selected = false
             })
+            operate(CalendarOperation.delete(identifier: id))
+        } else if !inDeleteMode {
+            if !selected {
+                withAnimation(.easeOut(duration: fadeDuration), {
+                    selected = true
+                })
+            }
+            operate(CalendarOperation.extend(identifier: id))
         }
-        operate(CalendarOperation.extend(identifier: id))
     }
     
     var body: some View {
-        Button(action: performAction) {
-            VStack(spacing: .zero) {
-                Rectangle()
-                    .fill(selected ? Constants.buttonColor :
-                            (hasSecondary ? Constants.inactiveBackground : .clear)
-                    )
-                    .opacity(timeslotOpactity)
+        WiggleAnimation(animate: $inDeleteMode, content: {
+            Button(action: {}) {
+                VStack(spacing: .zero) {
+                    Rectangle()
+                        .fill(selected ? Constants.buttonColor :
+                                (hasSecondary ? Constants.inactiveBackground : .clear)
+                        )
+                        .opacity(timeslotOpactity)
+                }
+                .foregroundColor(.clear)
             }
-            .foregroundColor(.clear)
-        }
+            .simultaneousGesture(
+                LongPressGesture()
+                    .onEnded { _ in
+                        performAction(hold: true)
+                    }
+            )
+            .highPriorityGesture(
+                TapGesture()
+                    .onEnded { _ in
+                        performAction(hold: false)
+                    }
+            )
+        })
         .frame(height: rowHeight)
         .frame(width: columnWidth)
         .onReceive(NotificationCenter.default.publisher(
@@ -120,6 +183,7 @@ struct EVYCalendarTimeslotView: View {
                Int(point.y) == id.y
             {
                 selected = false
+                inDeleteMode = false
             }
         }
         .onReceive(NotificationCenter.default.publisher(
@@ -132,35 +196,47 @@ struct EVYCalendarTimeslotView: View {
                 selected = true
             }
         }
+        .onReceive(NotificationCenter.default.publisher(
+            for: Notification.Name.calendarTimeslotPrepare)
+        ) { _ in
+            inDeleteMode = true
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: Notification.Name.calendarTimeslotUnprepare)
+        ) { notif in
+            inDeleteMode = false
+        }
         .id(id)
     }
 }
 
-struct EVYCalendarDeleteButton: View {
+enum EVYCalendarButtonMode: Hashable {
+    case undo
+    case done
+}
+
+struct EVYCalendarButton: View {
     @Environment(\.operate) private var operate
-    @State var alreadyTapped: Bool = false
+    let mode: EVYCalendarButtonMode
 
     var body: some View {
         Button(action: {
-            alreadyTapped = true
-            operate(CalendarOperation.delete(tapped: true))
+            if mode == .undo {
+                operate(CalendarOperation.undo(tapped: true))
+            } else {
+                operate(CalendarOperation.selection(mode: .exit))
+            }
+                
         }) {
             Circle()
                 .fill(.white)
                 .strokeBorder(Constants.fieldBorderColor,
                               lineWidth: Constants.borderWidth)
-                .overlay(EVYTextView("::trash::", style: .button))
+                .overlay(EVYTextView(mode == .undo ? "::arrow.uturn.backward::" : "::checkmark::",
+                                     style: .button))
         }
         .frame(height: columnWidth/2)
         .frame(width: columnWidth/2)
-        .onAppear {
-            alreadyTapped = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + deleteButtonDuration) {
-                if !alreadyTapped {
-                    operate(CalendarOperation.delete(tapped: false))
-                }
-            }
-        }
         .padding()
     }
 }
@@ -261,8 +337,10 @@ struct EVYCalendar: View {
     @State private var timeslots: [[EVYCalendarTimeslot]]
     
     @State private var offset = CGPoint.zero
-    @State private var showDeleteButton: Bool = false
-    @State private var lastButtonKey: (Int, Int)?
+    @State private var showUndoButton: Bool = false
+    @State private var showDoneButton: Bool = false
+    
+    @State private var lifoQueue: [[CalendarTimeslotIdentifier]] = []
     
     init(primary: String, secondary: String) {
         var primaryTimeslots: [EVYCalendarTimeslotData] = []
@@ -309,63 +387,164 @@ struct EVYCalendar: View {
         self.timeslots = xValues
     }
     
+    private func nextAvailableSlot(x: Int, y: Int, max: Int) -> Int? {
+        var index = y
+        while (index < max) {
+            if timeslots[x][index].isSelected {
+                index += 1
+            } else {
+                return index
+            }
+        }
+        return nil
+    }
+    
+    private func lastBlockSlot(x: Int, y: Int, max: Int) -> Int {
+        var index = y
+        while (index < max) {
+            if timeslots[x][index].isSelected {
+                index += 1
+            } else {
+                return index-1
+            }
+        }
+        return max
+    }
+    
+    private func firstBlockSlot(x: Int, y: Int) -> Int {
+        var index = y
+        while (index > 0) {
+            if timeslots[x][index].isSelected {
+                index -= 1
+            } else {
+                return index+1
+            }
+        }
+        return y
+    }
+    
     private func handleOperation(_ operation: CalendarOperation) {
         switch operation {
         case .extend(let identifier):
-            lastButtonKey = (identifier.x, identifier.y)
             withAnimation(.easeOut(duration: fadeDuration), {
-                showDeleteButton = true
+                showDoneButton = false
+                showUndoButton = true
             })
-            // find the next empty slot on the day
-            var index = identifier.y
-            var datasourceIndex: Int?
-            while (datasourceIndex == nil && index < yLabels.count-1) {
-                if timeslots[identifier.x][index].isSelected {
-                    index += 1
-                } else {
-                    timeslots[identifier.x][index].isSelected = true
-                    datasourceIndex = timeslots[identifier.x][index].datasourceIndex
-                }
-            }
-            if datasourceIndex != nil {
+            let x = identifier.x
+            let slotY: Int? = nextAvailableSlot(x: x, y: identifier.y,
+                                                max: yLabels.count-1)
+            if slotY != nil {
+                timeslots[x][slotY!].isSelected = true
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotSelect,
-                    object: CGPoint(x:identifier.x, y:index)
+                    object: CGPoint(x:x, y:slotY!)
                 )
                 
-                let props = "{pickupTimeslots[\(datasourceIndex!)}"
+                let datasourceIndex = timeslots[x][slotY!].datasourceIndex
+                lifoQueue.append([CalendarTimeslotIdentifier(x: x,
+                                                             y: slotY!,
+                                                             datasourceIndex: datasourceIndex)])
+                let props = "{pickupTimeslots[\(datasourceIndex)}"
                 try! EVY.updateValue("true", at: props)
             }
-        case .delete(let tapped):
-            withAnimation(.easeOut(duration: fadeDuration), {
-                showDeleteButton = false
-            })
             
-            if tapped, lastButtonKey != nil {
-                let x = lastButtonKey!.0
-                let y = lastButtonKey!.1
-    
+        case .delete(let identifier):
+            let x = identifier.x
+            let y = identifier.y
+            
+            timeslots[x][y].isSelected = false
+            
+            NotificationCenter.default.post(
+                name: Notification.Name.calendarTimeslotDeselect,
+                object: CGPoint(x:x, y:y)
+            )
+            
+            let props = "{pickupTimeslots[\(identifier.datasourceIndex)}"
+            try! EVY.updateValue("false", at: props)
+            
+        case .undo(let tapped):
+            let lastSlots = lifoQueue.popLast()!
+            lastSlots.forEach({ lastSlot in
+                timeslots[lastSlot.x][lastSlot.y].isSelected = false
+                
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotDeselect,
-                    object: CGPoint(x:x, y:y)
+                    object: CGPoint(x:lastSlot.x, y:lastSlot.y)
                 )
+                
+                let props = "{pickupTimeslots[\(lastSlot.datasourceIndex)}"
+                try! EVY.updateValue("false", at: props)
+            })
+            
+        case .selection(let mode):
+            if mode == .enter {
+                lifoQueue.removeAll()
+                withAnimation(.easeOut(duration: fadeDuration), {
+                    showUndoButton = false
+                    showDoneButton = true
+                })
+                NotificationCenter.default.post(
+                    name: Notification.Name.calendarTimeslotPrepare,
+                    object: nil)
+            } else {
+                NotificationCenter.default.post(
+                    name: Notification.Name.calendarTimeslotUnprepare,
+                    object: nil)
+                withAnimation(.easeOut(duration: fadeDuration), {
+                    showDoneButton = false
+                })
             }
             
         case .selectRow(let y):
+            var slots: [CalendarTimeslotIdentifier] = []
             timeslots.forEach({ column in
                 let x = column.first!.x
+                let slot = timeslots[x][y]
+                if slot.isSelected {
+                    return
+                }
+                slots.append(
+                    CalendarTimeslotIdentifier(x: x, y: y,
+                                               datasourceIndex: slot.datasourceIndex)
+                )
+                let props = "{pickupTimeslots[\(slot.datasourceIndex)}"
+                try! EVY.updateValue("true", at: props)
+                
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotSelect,
-                    object: CGPoint(x:x, y:timeslots[x][y].y)
+                    object: CGPoint(x:x, y:y)
                 )
             })
+            lifoQueue.append(slots)
         
         case .selectColumn(let x):
-            timeslots[x].forEach({ column in
+            var slots: [CalendarTimeslotIdentifier] = []
+            timeslots[x].forEach({ slot in
+                if slot.isSelected {
+                    return
+                }
+                slots.append(
+                    CalendarTimeslotIdentifier(x: x, y: slot.y,
+                                               datasourceIndex: slot.datasourceIndex)
+                )
+                
+                let props = "{pickupTimeslots[\(slot.datasourceIndex)}"
+                try! EVY.updateValue("true", at: props)
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotSelect,
-                    object: CGPoint(x:x, y:column.y)
+                    object: CGPoint(x:x, y:slot.y)
                 )
+            })
+            lifoQueue.append(slots)
+        }
+        
+        if lifoQueue.count > 0 {
+            withAnimation(.easeOut(duration: fadeDuration), {
+                showUndoButton = true
+            })
+        } else {
+            withAnimation(.easeOut(duration: fadeDuration), {
+                showUndoButton = false
             })
         }
     }
@@ -393,7 +572,10 @@ struct EVYCalendar: View {
                 .coordinateSpace(name: "scroll")
             }
         }
-        .overlay(showDeleteButton ? EVYCalendarDeleteButton() : nil, alignment: .bottom)
+        .overlay(showUndoButton ? EVYCalendarButton(mode: .undo) : nil,
+                 alignment: .bottom)
+        .overlay(showDoneButton ? EVYCalendarButton(mode: .done) : nil,
+                 alignment: .bottom)
         .environment(\.operate) { calendarOperation in
             handleOperation(calendarOperation)
         }
