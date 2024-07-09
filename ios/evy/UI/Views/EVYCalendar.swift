@@ -183,7 +183,6 @@ struct EVYCalendarTimeslotView: View {
                Int(point.y) == id.y
             {
                 selected = false
-                inDeleteMode = false
             }
         }
         .onReceive(NotificationCenter.default.publisher(
@@ -337,8 +336,8 @@ struct EVYCalendar: View {
     @State private var timeslots: [[EVYCalendarTimeslot]]
     
     @State private var offset = CGPoint.zero
-    @State private var showUndoButton: Bool = false
-    @State private var showDoneButton: Bool = false
+    @State private var inUndoMode: Bool = false
+    @State private var inDeleteMode: Bool = false
     
     @State private var lifoQueue: [[CalendarTimeslotIdentifier]] = []
     
@@ -427,8 +426,8 @@ struct EVYCalendar: View {
         switch operation {
         case .extend(let identifier):
             withAnimation(.easeOut(duration: fadeDuration), {
-                showDoneButton = false
-                showUndoButton = true
+                inDeleteMode = false
+                inUndoMode = true
             })
             let x = identifier.x
             let slotY: Int? = nextAvailableSlot(x: x, y: identifier.y,
@@ -480,8 +479,8 @@ struct EVYCalendar: View {
             if mode == .enter {
                 lifoQueue.removeAll()
                 withAnimation(.easeOut(duration: fadeDuration), {
-                    showUndoButton = false
-                    showDoneButton = true
+                    inUndoMode = false
+                    inDeleteMode = true
                 })
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotPrepare,
@@ -491,7 +490,7 @@ struct EVYCalendar: View {
                     name: Notification.Name.calendarTimeslotUnprepare,
                     object: nil)
                 withAnimation(.easeOut(duration: fadeDuration), {
-                    showDoneButton = false
+                    inDeleteMode = false
                 })
             }
             
@@ -500,51 +499,70 @@ struct EVYCalendar: View {
             timeslots.forEach({ column in
                 let x = column.first!.x
                 let slot = timeslots[x][y]
-                if slot.isSelected {
+                if slot.isSelected != inDeleteMode {
                     return
                 }
-                slots.append(
-                    CalendarTimeslotIdentifier(x: x, y: y,
-                                               datasourceIndex: slot.datasourceIndex)
-                )
+                timeslots[slot.x][slot.y].isSelected = !inDeleteMode
+                if !inDeleteMode {
+                    slots.append(
+                        CalendarTimeslotIdentifier(x: x, y: y,
+                                                   datasourceIndex: slot.datasourceIndex)
+                    )
+                    NotificationCenter.default.post(
+                        name: Notification.Name.calendarTimeslotSelect,
+                        object: CGPoint(x:x, y:y)
+                    )
+                } else {
+                    NotificationCenter.default.post(
+                        name: Notification.Name.calendarTimeslotDeselect,
+                        object: CGPoint(x:x, y:y)
+                    )
+                }
                 let props = "{pickupTimeslots[\(slot.datasourceIndex)}"
-                try! EVY.updateValue("true", at: props)
-                
-                NotificationCenter.default.post(
-                    name: Notification.Name.calendarTimeslotSelect,
-                    object: CGPoint(x:x, y:y)
-                )
+                try! EVY.updateValue(inDeleteMode ? "false" : "true", at: props)
             })
-            lifoQueue.append(slots)
+            if slots.count > 0 {
+                lifoQueue.append(slots)
+            }
         
         case .selectColumn(let x):
             var slots: [CalendarTimeslotIdentifier] = []
             timeslots[x].forEach({ slot in
-                if slot.isSelected {
+                if slot.isSelected != inDeleteMode {
                     return
                 }
-                slots.append(
-                    CalendarTimeslotIdentifier(x: x, y: slot.y,
-                                               datasourceIndex: slot.datasourceIndex)
-                )
+                timeslots[slot.x][slot.y].isSelected = !inDeleteMode
+                if !inDeleteMode {
+                    slots.append(
+                        CalendarTimeslotIdentifier(x: x, y: slot.y,
+                                                   datasourceIndex: slot.datasourceIndex)
+                    )
+                    NotificationCenter.default.post(
+                        name: Notification.Name.calendarTimeslotSelect,
+                        object: CGPoint(x:x, y:slot.y)
+                    )
+                } else {
+                    NotificationCenter.default.post(
+                        name: Notification.Name.calendarTimeslotDeselect,
+                        object: CGPoint(x:x, y:slot.y)
+                    )
+                }
                 
                 let props = "{pickupTimeslots[\(slot.datasourceIndex)}"
-                try! EVY.updateValue("true", at: props)
-                NotificationCenter.default.post(
-                    name: Notification.Name.calendarTimeslotSelect,
-                    object: CGPoint(x:x, y:slot.y)
-                )
+                try! EVY.updateValue(inDeleteMode ? "false" : "true", at: props)
             })
-            lifoQueue.append(slots)
+            if slots.count > 0 {
+                lifoQueue.append(slots)
+            }
         }
         
         if lifoQueue.count > 0 {
             withAnimation(.easeOut(duration: fadeDuration), {
-                showUndoButton = true
+                inUndoMode = true
             })
         } else {
             withAnimation(.easeOut(duration: fadeDuration), {
-                showUndoButton = false
+                inUndoMode = false
             })
         }
     }
@@ -572,9 +590,9 @@ struct EVYCalendar: View {
                 .coordinateSpace(name: "scroll")
             }
         }
-        .overlay(showUndoButton ? EVYCalendarButton(mode: .undo) : nil,
+        .overlay(inUndoMode ? EVYCalendarButton(mode: .undo) : nil,
                  alignment: .bottom)
-        .overlay(showDoneButton ? EVYCalendarButton(mode: .done) : nil,
+        .overlay(inDeleteMode ? EVYCalendarButton(mode: .done) : nil,
                  alignment: .bottom)
         .environment(\.operate) { calendarOperation in
             handleOperation(calendarOperation)
