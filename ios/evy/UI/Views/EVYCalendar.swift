@@ -179,7 +179,8 @@ struct EVYCalendar: View {
         do {
             let timeslotsJSON = try EVY.getDataFromText(primary)
             primaryTimeslotsData = try JSONDecoder().decode(
-                [EVYCalendarTimeslotData].self,from: timeslotsJSON.toString().data(using: .utf8)!
+                [EVYCalendarTimeslotData].self,
+                from: timeslotsJSON.toString().data(using: .utf8)!
             )
             xLabels = primaryTimeslotsData
                 .filter({ $0.y == 0})
@@ -193,7 +194,8 @@ struct EVYCalendar: View {
         do {
             let timeslotsJSON = try EVY.getDataFromText(secondary)
             secondaryTimeslotsData = try JSONDecoder().decode(
-                [EVYCalendarTimeslotData].self, from: timeslotsJSON.toString().data(using: .utf8)!
+                [EVYCalendarTimeslotData].self,
+                from: timeslotsJSON.toString().data(using: .utf8)!
             )
         } catch {}
         
