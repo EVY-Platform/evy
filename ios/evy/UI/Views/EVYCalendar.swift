@@ -32,8 +32,8 @@ enum EVYCalendarDeleteMode {
     case exit
 }
 enum EVYCalendarOperation {
-    case extend(identifier: EVYCalendarTimeslot)
-    case delete(identifier: EVYCalendarTimeslot)
+    case extend(timeslot: EVYCalendarTimeslot)
+    case delete(timeslot: EVYCalendarTimeslot)
     case undo(tapped: Bool)
     case deleteMode(mode: EVYCalendarDeleteMode)
     case selectRow(y: Int)
@@ -79,11 +79,11 @@ struct EVYCalendarContentView: View {
                         let secondary = secondaryTimeslots[x][y]
                         ZStack {
                             if secondary.selected {
-                                EVYCalendarTimeslotView.secondary(id: secondary,
+                                EVYCalendarTimeslotView.secondary(timeslot: secondary,
                                                                   width: columnWidth,
                                                                   height: rowHeight)
                             }
-                            EVYCalendarTimeslotView.primary(id: primary,
+                            EVYCalendarTimeslotView.primary(timeslot: primary,
                                                             width: columnWidth,
                                                             height: rowHeight)
                         }
@@ -227,10 +227,10 @@ struct EVYCalendar: View {
         self.secondaryTimeslots = secondaryTimeslots
     }
     
-    private func nextAvailableSlot(x: Int, y: Int, max: Int) -> Int? {
-        var index = y
+    private func nextAvailableSlot(from: EVYCalendarTimeslot, max: Int) -> Int? {
+        var index = from.y
         while (index < max) {
-            if primaryTimeslots[x][index].selected {
+            if primaryTimeslots[from.x][index].selected {
                 index += 1
             } else {
                 return index
@@ -241,32 +241,28 @@ struct EVYCalendar: View {
     
     private func handleOperation(_ operation: EVYCalendarOperation) {
         switch operation {
-        case .extend(let identifier):
+        case .extend(let timeslot):
             withAnimation(.easeOut(duration: fadeDuration), {
                 inDeleteMode = false
                 inUndoMode = true
             })
-            let x = identifier.x
-            let slotY: Int? = nextAvailableSlot(x: x, y: identifier.y,
+            let slotY: Int? = nextAvailableSlot(from: timeslot,
                                                 max: yLabels.count-1)
             if slotY != nil {
-                primaryTimeslots[x][slotY!].selected = true
+                primaryTimeslots[timeslot.x][slotY!].selected = true
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotSelect,
-                    object: CGPoint(x:x, y:slotY!)
+                    object: CGPoint(x:timeslot.x, y:slotY!)
                 )
-                undoQueue.append([primaryTimeslots[x][slotY!]])
+                undoQueue.append([primaryTimeslots[timeslot.x][slotY!]])
             }
             
-        case .delete(let identifier):
-            let x = identifier.x
-            let y = identifier.y
-            
-            primaryTimeslots[x][y].selected = false
+        case .delete(let timeslot):
+            primaryTimeslots[timeslot.x][timeslot.y].selected = false
             
             NotificationCenter.default.post(
                 name: Notification.Name.calendarTimeslotDeselect,
-                object: CGPoint(x:x, y:y)
+                object: CGPoint(x:timeslot.x, y:timeslot.y)
             )
             
         case .undo(_):

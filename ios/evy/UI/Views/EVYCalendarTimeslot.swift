@@ -46,7 +46,7 @@ private enum EVYCalendarTimeslotViewStyle {
 struct EVYCalendarTimeslotView: View {
     @Environment(\.operate) private var operate
     
-    private let id: EVYCalendarTimeslot
+    private let timeslot: EVYCalendarTimeslot
     private let style: EVYCalendarTimeslotViewStyle
     private let width: CGFloat
     private let height: CGFloat
@@ -54,44 +54,41 @@ struct EVYCalendarTimeslotView: View {
     @State private var selected: Bool
     @State private var inDeleteMode: Bool = false
     
-    public static func secondary(id: EVYCalendarTimeslot,
+    public static func secondary(timeslot: EVYCalendarTimeslot,
                                  width: CGFloat,
                                  height: CGFloat) -> EVYCalendarTimeslotView
     {
-        return EVYCalendarTimeslotView(id: id,
+        return EVYCalendarTimeslotView(timeslot: timeslot,
                                        style: .secondary,
-                                       selected: false,
                                        width: width,
                                        height: height)
     }
     
-    public static func primary(id: EVYCalendarTimeslot,
+    public static func primary(timeslot: EVYCalendarTimeslot,
                                width: CGFloat,
                                height: CGFloat) -> EVYCalendarTimeslotView
     {
-        return EVYCalendarTimeslotView(id: id,
+        return EVYCalendarTimeslotView(timeslot: timeslot,
                                        style: .primary,
-                                       selected: id.selected,
                                        width: width,
                                        height: height)
     }
     
-    private init(id: EVYCalendarTimeslot,
-         style: EVYCalendarTimeslotViewStyle,
-         selected: Bool,
-         width: CGFloat,
-         height: CGFloat)
+    private init(timeslot: EVYCalendarTimeslot,
+                 style: EVYCalendarTimeslotViewStyle,
+                 width: CGFloat,
+                 height: CGFloat)
     {
-        self.id = id
+        self.timeslot = timeslot
         self.style = style
-        self.selected = selected
+        self.selected = style == .primary && timeslot.selected
         self.width = width
         self.height = height
     }
     
     private func select() -> Void {
         if !selected {
-            let props = "{pickupTimeslots[\(id.datasourceIndex)}"
+            let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
             try! EVY.updateValue("true", at: props)
             withAnimation(.easeOut(duration: fadeDuration), {
                 selected = true
@@ -101,7 +98,7 @@ struct EVYCalendarTimeslotView: View {
     
     private func deselect() -> Void {
         if (selected) {
-            let props = "{pickupTimeslots[\(id.datasourceIndex)}"
+            let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
             try! EVY.updateValue("false", at: props)
             withAnimation(.easeOut(duration: fadeDuration), {
                 selected = false
@@ -131,9 +128,9 @@ struct EVYCalendarTimeslotView: View {
             .highPriorityGesture(TapGesture()
                 .onEnded { _ in
                     if inDeleteMode && selected {
-                        operate(EVYCalendarOperation.delete(identifier: id))
+                        operate(EVYCalendarOperation.delete(timeslot: timeslot))
                     } else if !inDeleteMode {
-                        operate(EVYCalendarOperation.extend(identifier: id))
+                        operate(EVYCalendarOperation.extend(timeslot: timeslot))
                     }
                 }
             )
@@ -145,8 +142,8 @@ struct EVYCalendarTimeslotView: View {
         ) { notif in
             if style == .primary,
                let point = notif.object as? CGPoint,
-               Int(point.x) == id.x,
-               Int(point.y) == id.y
+               Int(point.x) == timeslot.x,
+               Int(point.y) == timeslot.y
             {
                 deselect()
             }
@@ -156,8 +153,8 @@ struct EVYCalendarTimeslotView: View {
         ) { notif in
             if style == .primary,
                let point = notif.object as? CGPoint,
-               Int(point.x) == id.x,
-               Int(point.y) == id.y
+               Int(point.x) == timeslot.x,
+               Int(point.y) == timeslot.y
             {
                 select()
             }
