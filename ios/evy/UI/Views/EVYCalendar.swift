@@ -52,37 +52,7 @@ extension EnvironmentValues {
 }
 
 /**
- * Util views
- */
-struct WiggleAnimation<Content: View>: View {
-    var content: Content
-    @Binding var animate: Bool
-    @State private var wave = true
-
-    var body: some View {
-        content
-        .id(animate)
-        .onChange(of: animate) { oldValue, newValue in
-            if newValue {
-                let baseAnimation = Animation.linear(duration: 0.15)
-                withAnimation(baseAnimation.repeatForever(autoreverses: true)) {
-                    wave.toggle()
-                }
-            }
-        }
-        .rotationEffect(.degrees(animate ? (wave ? 2.5 : -2.5) : 0.0),
-                        anchor: .center)
-    }
-
-    init(animate: Binding<Bool>,
-         @ViewBuilder content: @escaping () -> Content) {
-        self.content = content()
-        self._animate = animate
-    }
-}
-
-/**
- * Calendar event system
+ * Calendar timeslot event system
  */
 extension Notification.Name {
     static let calendarTimeslotSelect = Notification.Name("EVYCalendarTimeslotSelect")
@@ -103,7 +73,7 @@ struct EVYCalendarContentView: View {
     var body: some View {
         HStack(spacing: .zero) {
             ForEach(primaryTimeslots.indices, id: \.self) { x in
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: .zero) {
                     ForEach(primaryTimeslots[x].indices, id: \.self) { y in
                         let primary = primaryTimeslots[x][y]
                         let secondary = secondaryTimeslots[x][y]
@@ -200,7 +170,7 @@ struct EVYCalendar: View {
     @State private var scrollOffset = CGPoint.zero
     @State private var inUndoMode: Bool = false
     @State private var inDeleteMode: Bool = false
-    @State private var lifoQueue: [[EVYCalendarTimeslot]] = []
+    @State private var undoQueue: [[EVYCalendarTimeslot]] = []
     
     init(primary: String, secondary: String) {
         var primaryTimeslotsData: [EVYCalendarTimeslotData] = []
@@ -283,7 +253,7 @@ struct EVYCalendar: View {
                     name: Notification.Name.calendarTimeslotSelect,
                     object: CGPoint(x:x, y:slotY!)
                 )
-                lifoQueue.append([primaryTimeslots[x][slotY!]])
+                undoQueue.append([primaryTimeslots[x][slotY!]])
             }
             
         case .delete(let identifier):
@@ -298,7 +268,7 @@ struct EVYCalendar: View {
             )
             
         case .undo(_):
-            let lastSlots = lifoQueue.popLast()!
+            let lastSlots = undoQueue.popLast()!
             lastSlots.forEach({ lastSlot in
                 primaryTimeslots[lastSlot.x][lastSlot.y].selected = false
                 
@@ -310,7 +280,7 @@ struct EVYCalendar: View {
             
         case .deleteMode(let mode):
             if mode == .enter {
-                lifoQueue.removeAll()
+                undoQueue.removeAll()
                 withAnimation(.easeOut(duration: fadeDuration), {
                     inUndoMode = false
                     inDeleteMode = true
@@ -348,7 +318,7 @@ struct EVYCalendar: View {
                 }
             })
             if slots.count > 0 {
-                lifoQueue.append(slots)
+                undoQueue.append(slots)
             }
         
         case .selectColumn(let x):
@@ -372,11 +342,11 @@ struct EVYCalendar: View {
                 }
             })
             if slots.count > 0 {
-                lifoQueue.append(slots)
+                undoQueue.append(slots)
             }
         }
         
-        if lifoQueue.count > 0 {
+        if undoQueue.count > 0 {
             withAnimation(.easeOut(duration: fadeDuration), {
                 inUndoMode = true
             })

@@ -9,6 +9,34 @@ import SwiftUI
 
 private let fadeDuration: CGFloat = 0.05
 private let timeslotOpactity: CGFloat = 0.7
+private let animationDuration: CGFloat = 0.15
+
+private struct WiggleAnimation<Content: View>: View {
+    var content: Content
+    @Binding var animate: Bool
+    @State private var wave = true
+
+    var body: some View {
+        content
+        .id(animate)
+        .onChange(of: animate) { oldValue, newValue in
+            if newValue {
+                let baseAnimation = Animation.linear(duration: animationDuration)
+                withAnimation(baseAnimation.repeatForever(autoreverses: true)) {
+                    wave.toggle()
+                }
+            }
+        }
+        .rotationEffect(.degrees(animate ? (wave ? 2.5 : -2.5) : 0.0),
+                        anchor: .center)
+    }
+
+    init(animate: Binding<Bool>,
+         @ViewBuilder content: @escaping () -> Content) {
+        self.content = content()
+        self._animate = animate
+    }
+}
 
 private enum EVYCalendarTimeslotViewStyle {
     case primary
