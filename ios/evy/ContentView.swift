@@ -47,6 +47,10 @@ struct ContentView: View {
         try! EVY.data.create(key: "durations", data: durations)
         let areas = DataConstants.areas.data(using: .utf8)!
         try! EVY.data.create(key: "areas", data: areas)
+        let pickup = DataConstants.pickupTimeslots.data(using: .utf8)!
+        try! EVY.data.create(key: "pickupTimeslots", data: pickup)
+        let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!
+        try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
         
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
         self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
