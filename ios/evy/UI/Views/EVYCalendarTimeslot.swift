@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-private let fadeDuration: CGFloat = 0.05
 private let timeslotOpactity: CGFloat = 0.7
 private let animationDuration: CGFloat = 0.15
 
@@ -90,9 +89,7 @@ struct EVYCalendarTimeslotView: View {
         if !selected {
             let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
             try! EVY.updateValue("true", at: props)
-            withAnimation(.easeOut(duration: fadeDuration), {
-                selected = true
-            })
+            selected = true
         }
     }
     
@@ -100,9 +97,7 @@ struct EVYCalendarTimeslotView: View {
         if (selected) {
             let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
             try! EVY.updateValue("false", at: props)
-            withAnimation(.easeOut(duration: fadeDuration), {
-                selected = false
-            })
+            selected = false
         }
     }
     

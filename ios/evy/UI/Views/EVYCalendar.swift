@@ -12,7 +12,6 @@ private let dividerWidth: CGFloat = 0.5
 private let dividerOpacity: CGFloat = 0.5
 private let columnWidth: CGFloat = 80
 private let rowHeight: CGFloat = 30
-private let fadeDuration: CGFloat = 0.2
 
 /**
  * Shared calendar timeslot struct
@@ -242,10 +241,6 @@ struct EVYCalendar: View {
     private func handleOperation(_ operation: EVYCalendarOperation) {
         switch operation {
         case .extend(let timeslot):
-            withAnimation(.easeOut(duration: fadeDuration), {
-                inDeleteMode = false
-                inUndoMode = true
-            })
             let slotY: Int? = nextAvailableSlot(from: timeslot,
                                                 max: yLabels.count-1)
             if slotY != nil {
@@ -279,10 +274,8 @@ struct EVYCalendar: View {
         case .deleteMode(let mode):
             if mode == .enter {
                 undoQueue.removeAll()
-                withAnimation(.easeOut(duration: fadeDuration), {
-                    inUndoMode = false
-                    inDeleteMode = true
-                })
+                inUndoMode = false
+                inDeleteMode = true
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotPrepare,
                     object: nil)
@@ -290,9 +283,7 @@ struct EVYCalendar: View {
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotUnprepare,
                     object: nil)
-                withAnimation(.easeOut(duration: fadeDuration), {
-                    inDeleteMode = false
-                })
+                inDeleteMode = false
             }
             
         case .selectRow(let y):
@@ -344,15 +335,7 @@ struct EVYCalendar: View {
             }
         }
         
-        if undoQueue.count > 0 {
-            withAnimation(.easeOut(duration: fadeDuration), {
-                inUndoMode = true
-            })
-        } else {
-            withAnimation(.easeOut(duration: fadeDuration), {
-                inUndoMode = false
-            })
-        }
+        inUndoMode = undoQueue.count > 0 && !inDeleteMode
     }
     
     var body: some View {
