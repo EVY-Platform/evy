@@ -327,7 +327,6 @@
 			isa = PBXGroup;
 			children = (
 				73EDC87E2B8F387500304DD8 /* EVYButton.swift */,
-				7303B31B2C3EBBFB00796123 /* EVYHoveringButton.swift */,
 				734FD96C2C343C0100ACE8B7 /* EVYCalendar.swift */,
 				7303B3172C3EB27900796123 /* EVYCalendarTimeslot.swift */,
 				73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */,
@@ -335,6 +334,7 @@
 				734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */,
 				73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */,
 				73C78AF12BC552150026F39D /* EVYHorizontalSelection.swift */,
+				7303B31B2C3EBBFB00796123 /* EVYHoveringButton.swift */,
 				73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */,
 				73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */,
 				73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */,

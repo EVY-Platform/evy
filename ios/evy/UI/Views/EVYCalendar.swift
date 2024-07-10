@@ -15,7 +15,7 @@ private let rowHeight: CGFloat = 30
 private let fadeDuration: CGFloat = 0.2
 
 /**
- * Calendar operations system
+ * Shared calendar timeslot struct
  */
 struct EVYCalendarTimeslot: Hashable {
     let x: Int
@@ -24,6 +24,9 @@ struct EVYCalendarTimeslot: Hashable {
     var selected: Bool
 }
 
+/**
+ * Calendar operations system
+ */
 enum EVYCalendarDeleteMode: Hashable {
     case enter
     case exit
