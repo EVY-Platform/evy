@@ -27,11 +27,11 @@ struct EVYCalendarTimeslot: Hashable {
 /**
  * Calendar operations system
  */
-enum EVYCalendarDeleteMode: Hashable {
+enum EVYCalendarDeleteMode {
     case enter
     case exit
 }
-enum EVYCalendarOperation: Hashable {
+enum EVYCalendarOperation {
     case extend(identifier: EVYCalendarTimeslot)
     case delete(identifier: EVYCalendarTimeslot)
     case undo(tapped: Bool)
