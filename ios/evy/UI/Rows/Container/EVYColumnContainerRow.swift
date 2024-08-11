@@ -1,5 +1,5 @@
 //
-//  EVYColumnContainer.swift
+//  EVYColumnContainerRow.swift
 //  EVY
 //
 //  Created by Geoffroy Lesage on 13/12/2023.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct EVYColumnContainer: View {
+struct EVYColumnContainerRow: View {
     public static let JSONType = "ColumnContainer"
     
     private let view: SDUI.ContainerView

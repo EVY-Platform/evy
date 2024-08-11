@@ -1,5 +1,5 @@
 //
-//  EVYListContainer.swift
+//  EVYListContainerRow.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 29/6/2024.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct EVYListContainer: View {
+struct EVYListContainerRow: View {
     public static let JSONType = "ListContainer"
     
     private let view: SDUI.ContainerView
