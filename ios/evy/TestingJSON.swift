@@ -138,22 +138,6 @@ struct SDUIConstants {
         }
     """
     
-    static let durationPickerRow = """
-        {
-           "type": "InlinePicker",
-           "view": {
-               "content": {
-                   "title": "",
-                   "value": "{duration}"
-               },
-                "data": "{durations}"
-           },
-            "edit": {
-                "destination": "{duration}"
-            }
-        }
-    """
-    
     static let distancePickerRow = """
         {
            "type": "InlinePicker",
@@ -670,14 +654,6 @@ struct SDUIConstants {
                             }
                         }
                     }, \(sheetContainerRow), {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "How long",
-                                "text": "How much time would a meeting take for a buyer to look and buy this item"
-                            }
-                        }
-                    }, \(durationPickerRow), {
                         "type": "Info",
                         "view": {
                             "content": {
