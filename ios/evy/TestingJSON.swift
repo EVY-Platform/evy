@@ -186,6 +186,38 @@ struct SDUIConstants {
         }
     """
     
+    static let pickupCalendarRow = """
+        {
+           "type": "Calendar",
+           "view": {
+               "content": {
+                   "title": "",
+                   "primary": "{pickupTimeslots}",
+                   "secondary": "{deliveryTimeslots}"
+               }
+           },
+            "edit": {
+                "destination": "{pickupTimeslots}"
+            }
+        }
+    """
+    
+    static let deliveryCalendarRow = """
+        {
+           "type": "Calendar",
+           "view": {
+               "content": {
+                   "title": "",
+                   "primary": "{deliveryTimeslots}",
+                   "secondary": "{pickupTimeslots}"
+               }
+           },
+            "edit": {
+                "destination": "{deliveryTimeslots}"
+            }
+        }
+    """
+    
     static let searchRow = """
         {
            "type": "Search",
@@ -653,15 +685,7 @@ struct SDUIConstants {
                                 "text": "When are you available for buyers to inspect or pick up this item"
                             }
                         }
-                    }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "HERE SHOULD BE A CALENDAR"
-                            }
-                        }
-                    }]
+                    }, \(pickupCalendarRow)]
                 }
             }
         }
@@ -710,15 +734,7 @@ struct SDUIConstants {
                                 "text": "When are you available to deliver this item"
                             }
                         }
-                    }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "HERE SHOULD BE A CALENDAR"
-                            }
-                        }
-                    }]
+                    }, \(deliveryCalendarRow)]
                 }
             }
         }
