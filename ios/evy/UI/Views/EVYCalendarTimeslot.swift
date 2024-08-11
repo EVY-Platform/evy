@@ -8,34 +8,8 @@
 import SwiftUI
 
 private let timeslotOpactity: CGFloat = 0.7
-private let animationDuration: CGFloat = 0.15
-
-private struct WiggleAnimation<Content: View>: View {
-    var content: Content
-    @Binding var animate: Bool
-    @State private var wave = true
-
-    var body: some View {
-        content
-        .id(animate)
-        .onChange(of: animate) { oldValue, newValue in
-            if newValue {
-                let baseAnimation = Animation.linear(duration: animationDuration)
-                withAnimation(baseAnimation.repeatForever(autoreverses: true)) {
-                    wave.toggle()
-                }
-            }
-        }
-        .rotationEffect(.degrees(animate ? (wave ? 2.5 : -2.5) : 0.0),
-                        anchor: .center)
-    }
-
-    init(animate: Binding<Bool>,
-         @ViewBuilder content: @escaping () -> Content) {
-        self.content = content()
-        self._animate = animate
-    }
-}
+private let animationDuration: CGFloat = 0.1
+private let tappableClearColor: Color = Color.black.opacity(0.0001)
 
 private enum EVYCalendarTimeslotViewStyle {
     case primary
@@ -87,83 +61,60 @@ struct EVYCalendarTimeslotView: View {
     
     private func select() -> Void {
         if !selected {
+            withAnimation(.linear(duration: animationDuration)) {
+                selected = true
+            }
             let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
             try! EVY.updateValue("true", at: props)
-            selected = true
         }
     }
     
     private func deselect() -> Void {
         if (selected) {
+            withAnimation(.linear(duration: animationDuration)) {
+                selected = false
+            }
             let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
             try! EVY.updateValue("false", at: props)
-            selected = false
         }
     }
     
     var body: some View {
-        WiggleAnimation(animate: $inDeleteMode, content: {
-            Button(action: {}) {
-                VStack(spacing: .zero) {
-                    Rectangle()
-                        .fill(selected ? Constants.buttonColor :
-                                (style == .secondary ? Constants.inactiveBackground : .clear)
-                        )
-                        .opacity(timeslotOpactity)
-                }
-                .foregroundColor(.clear)
-            }
-            .simultaneousGesture(LongPressGesture()
-                .onEnded { _ in
-                    if !inDeleteMode {
-                        operate(EVYCalendarOperation.deleteMode(mode: .enter))
-                    }
-                }
+        Rectangle()
+            .fill(selected ? Constants.buttonColor :
+                    (style == .secondary ? Constants.inactiveBackground : tappableClearColor)
             )
-            .highPriorityGesture(TapGesture()
-                .onEnded { _ in
-                    if inDeleteMode && selected {
-                        operate(EVYCalendarOperation.delete(timeslot: timeslot))
-                    } else if !inDeleteMode {
-                        operate(EVYCalendarOperation.extend(timeslot: timeslot))
-                    }
+            .frame(height: height)
+            .frame(width: width)
+            .onTapGesture {
+                if selected {
+                    operate(EVYCalendarOperation.delete(timeslot: timeslot))
+                } else {
+                    operate(EVYCalendarOperation.add(timeslot: timeslot))
                 }
-            )
-        })
-        .frame(height: height)
-        .frame(width: width)
-        .onReceive(NotificationCenter.default.publisher(
-            for: Notification.Name.calendarTimeslotDeselect)
-        ) { notif in
-            if style == .primary,
-               let point = notif.object as? CGPoint,
-               Int(point.x) == timeslot.x,
-               Int(point.y) == timeslot.y
-            {
-                deselect()
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(
-            for: Notification.Name.calendarTimeslotSelect)
-        ) { notif in
-            if style == .primary,
-               let point = notif.object as? CGPoint,
-               Int(point.x) == timeslot.x,
-               Int(point.y) == timeslot.y
-            {
-                select()
+            .onReceive(NotificationCenter.default.publisher(
+                for: Notification.Name.calendarTimeslotDeselect)
+            ) { notif in
+                if style == .primary,
+                   let point = notif.object as? CGPoint,
+                   Int(point.x) == timeslot.x,
+                   Int(point.y) == timeslot.y
+                {
+                    deselect()
+                }
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(
-            for: Notification.Name.calendarTimeslotPrepare)
-        ) { _ in
-            inDeleteMode = style == .primary
-        }
-        .onReceive(NotificationCenter.default.publisher(
-            for: Notification.Name.calendarTimeslotUnprepare)
-        ) { notif in
-            inDeleteMode = false
-        }
+            .onReceive(NotificationCenter.default.publisher(
+                for: Notification.Name.calendarTimeslotSelect)
+            ) { notif in
+                if style == .primary,
+                   let point = notif.object as? CGPoint,
+                   Int(point.x) == timeslot.x,
+                   Int(point.y) == timeslot.y
+                {
+                    select()
+                }
+            }
     }
 }
 

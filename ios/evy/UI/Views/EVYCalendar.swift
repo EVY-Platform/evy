@@ -31,10 +31,8 @@ enum EVYCalendarDeleteMode {
     case exit
 }
 enum EVYCalendarOperation {
-    case extend(timeslot: EVYCalendarTimeslot)
+    case add(timeslot: EVYCalendarTimeslot)
     case delete(timeslot: EVYCalendarTimeslot)
-    case undo(tapped: Bool)
-    case deleteMode(mode: EVYCalendarDeleteMode)
     case selectRow(y: Int)
     case selectColumn(x: Int)
 }
@@ -167,9 +165,6 @@ struct EVYCalendar: View {
     @State private var primaryTimeslots: [[EVYCalendarTimeslot]]
     @State private var secondaryTimeslots: [[EVYCalendarTimeslot]]
     @State private var scrollOffset = CGPoint.zero
-    @State private var inUndoMode: Bool = false
-    @State private var inDeleteMode: Bool = false
-    @State private var undoQueue: [[EVYCalendarTimeslot]] = []
     
     init(primary: String, secondary: String) {
         var primaryTimeslotsData: [EVYCalendarTimeslotData] = []
@@ -240,16 +235,13 @@ struct EVYCalendar: View {
     
     private func handleOperation(_ operation: EVYCalendarOperation) {
         switch operation {
-        case .extend(let timeslot):
-            let slotY: Int? = nextAvailableSlot(from: timeslot,
-                                                max: yLabels.count-1)
-            if slotY != nil {
-                primaryTimeslots[timeslot.x][slotY!].selected = true
+        case .add(let timeslot):
+            if !timeslot.selected {
+                primaryTimeslots[timeslot.x][timeslot.y].selected = true
                 NotificationCenter.default.post(
                     name: Notification.Name.calendarTimeslotSelect,
-                    object: CGPoint(x:timeslot.x, y:slotY!)
+                    object: CGPoint(x:timeslot.x, y:timeslot.y)
                 )
-                undoQueue.append([primaryTimeslots[timeslot.x][slotY!]])
             }
             
         case .delete(let timeslot):
@@ -260,94 +252,34 @@ struct EVYCalendar: View {
                 object: CGPoint(x:timeslot.x, y:timeslot.y)
             )
             
-        case .undo(_):
-            if undoQueue.count > 0 {
-                let lastSlots = undoQueue.popLast()!
-                lastSlots.forEach({ lastSlot in
-                    primaryTimeslots[lastSlot.x][lastSlot.y].selected = false
-                    
-                    NotificationCenter.default.post(
-                        name: Notification.Name.calendarTimeslotDeselect,
-                        object: CGPoint(x:lastSlot.x, y:lastSlot.y)
-                    )
-                })
-            }
-            
-        case .deleteMode(let mode):
-            if mode == .enter {
-                undoQueue.removeAll()
-                inUndoMode = false
-                inDeleteMode = true
-                NotificationCenter.default.post(
-                    name: Notification.Name.calendarTimeslotPrepare,
-                    object: nil)
-            } else {
-                NotificationCenter.default.post(
-                    name: Notification.Name.calendarTimeslotUnprepare,
-                    object: nil)
-                inDeleteMode = false
-            }
-            
         case .selectRow(let y):
-            var slots: [EVYCalendarTimeslot] = []
+            let rowCanBeSelected = primaryTimeslots.contains {
+                !primaryTimeslots[$0.first!.x][y].selected
+            }
             primaryTimeslots.forEach({ column in
                 let x = column.first!.x
-                
-                if !inDeleteMode && !primaryTimeslots[x][y].selected {
-                    primaryTimeslots[x][y].selected = true
-                    slots.append(primaryTimeslots[x][y])
-                    NotificationCenter.default.post(
-                        name: Notification.Name.calendarTimeslotSelect,
-                        object: CGPoint(x:x, y:y)
-                    )
-                } else if inDeleteMode && primaryTimeslots[x][y].selected {
-                    primaryTimeslots[x][y].selected = false
-                    NotificationCenter.default.post(
-                        name: Notification.Name.calendarTimeslotDeselect,
-                        object: CGPoint(x:x, y:y)
-                    )
+                if rowCanBeSelected {
+                    handleOperation(.add(timeslot: primaryTimeslots[x][y]))
+                } else {
+                    handleOperation(.delete(timeslot: primaryTimeslots[x][y]))
                 }
             })
-            if slots.count > 0 {
-                undoQueue.append(slots)
-            }
         
         case .selectColumn(let x):
-            var slots: [EVYCalendarTimeslot] = []
+            let columnCanBeSelected = primaryTimeslots[x].contains {
+                !$0.selected
+            }
             primaryTimeslots[x].forEach({ slot in
-                let y = slot.y
-                
-                if !inDeleteMode && !primaryTimeslots[x][y].selected {
-                    primaryTimeslots[x][y].selected = true
-                    slots.append(primaryTimeslots[x][y])
-                    NotificationCenter.default.post(
-                        name: Notification.Name.calendarTimeslotSelect,
-                        object: CGPoint(x:x, y:y)
-                    )
-                } else if inDeleteMode && primaryTimeslots[x][y].selected {
-                    primaryTimeslots[x][y].selected = false
-                    NotificationCenter.default.post(
-                        name: Notification.Name.calendarTimeslotDeselect,
-                        object: CGPoint(x:x, y:y)
-                    )
+                if columnCanBeSelected {
+                    handleOperation(.add(timeslot: slot))
+                } else {
+                    handleOperation(.delete(timeslot: slot))
                 }
             })
-            if slots.count > 0 {
-                undoQueue.append(slots)
-            }
         }
-        
-        inUndoMode = undoQueue.count > 0 && !inDeleteMode
     }
     
     var body: some View {
-        let undoButton = EVYHoveringButton(action: {
-            handleOperation(EVYCalendarOperation.undo(tapped: true))
-        }, icon: "arrow.uturn.backward")
-        let doneButton = EVYHoveringButton(action: {
-            handleOperation(EVYCalendarOperation.deleteMode(mode: .exit))
-        }, icon: "checkmark")
-        
         HStack(spacing: .zero) {
             EVYCalendarYAxisView(labels: yLabels, offset: $scrollOffset)
             VStack(spacing: .zero) {
@@ -367,12 +299,11 @@ struct EVYCalendar: View {
                             scrollOffset = value
                         }
                     }
+                    .scrollIndicators(.hidden)
                 }
                 .coordinateSpace(name: "scroll")
             }
         }
-        .overlay(inUndoMode ? undoButton : nil, alignment: .bottom)
-        .overlay(inDeleteMode ? doneButton : nil, alignment: .bottom)
         .environment(\.operate) { calendarOperation in
             handleOperation(calendarOperation)
         }
