@@ -61,10 +61,6 @@ struct EVYTextActionRow: View {
     try! EVY.data.create(key: "item", data: item)
     
     let json =  SDUIConstants.addressRow.data(using: .utf8)!
-    let json2 =  SDUIConstants.addressRowMissing.data(using: .utf8)!
     
-    return VStack {
-        try? JSONDecoder().decode(EVYRow.self, from: json)
-        try? JSONDecoder().decode(EVYRow.self, from: json2)
-    }
+    return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

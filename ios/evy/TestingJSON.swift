@@ -342,23 +342,7 @@ struct SDUIConstants {
             }
         }
     """
-    
-    static let addressRowMissing = """
-        {
-            "type": "TextAction",
-            "view": {
-                "content": {
-                    "title": "Where",
-                    "text": "{formatAddress(item.conditions)}",
-                    "placeholder": "Enter pick up address",
-                    "action": "Change"
-                }
-            },
-            "edit": {
-                "destination": "{item.address}"
-            }
-        }
-    """
+
     
     static let inputHeightRow = """
         {
@@ -463,20 +447,7 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "Where",
-                   "child": {
-                        "type": "TextAction",
-                        "view": {
-                            "content": {
-                                "title": "Where",
-                                "text": "{formatAddress(item.address)}",
-                                "placeholder": "Enter pick up address",
-                                "action": "Change"
-                            }
-                        },
-                        "edit": {
-                            "destination": "{item.address}"
-                        }
-                    },
+                   "child": \(addressRow),
                    "children": [{
                        "type": "Search",
                        "view": {
