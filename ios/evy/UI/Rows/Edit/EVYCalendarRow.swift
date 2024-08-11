@@ -37,24 +37,12 @@ struct EVYCalendarRow: View {
 
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
     let pickup = DataConstants.pickupTimeslots.data(using: .utf8)!
     try! EVY.data.create(key: "pickupTimeslots", data: pickup)
     
     let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!
     try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
     
-    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-    try! EVY.data.create(key: "selling_reasons", data: selling_reasons)
-    let conditions = DataConstants.conditions.data(using: .utf8)!
-    try! EVY.data.create(key: "conditions", data: conditions)
-    let durations = DataConstants.durations.data(using: .utf8)!
-    try! EVY.data.create(key: "durations", data: durations)
-    let areas = DataConstants.areas.data(using: .utf8)!
-    try! EVY.data.create(key: "areas", data: areas)
-    
-    let json =  SDUIConstants.createItemStep3.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYPage.self, from: json)
+    let json =  SDUIConstants.pickupCalendarRow.data(using: .utf8)!
+    return try! JSONDecoder().decode(EVYRow.self, from: json)
 }
