@@ -261,15 +261,17 @@ struct EVYCalendar: View {
             )
             
         case .undo(_):
-            let lastSlots = undoQueue.popLast()!
-            lastSlots.forEach({ lastSlot in
-                primaryTimeslots[lastSlot.x][lastSlot.y].selected = false
-                
-                NotificationCenter.default.post(
-                    name: Notification.Name.calendarTimeslotDeselect,
-                    object: CGPoint(x:lastSlot.x, y:lastSlot.y)
-                )
-            })
+            if undoQueue.count > 0 {
+                let lastSlots = undoQueue.popLast()!
+                lastSlots.forEach({ lastSlot in
+                    primaryTimeslots[lastSlot.x][lastSlot.y].selected = false
+                    
+                    NotificationCenter.default.post(
+                        name: Notification.Name.calendarTimeslotDeselect,
+                        object: CGPoint(x:lastSlot.x, y:lastSlot.y)
+                    )
+                })
+            }
             
         case .deleteMode(let mode):
             if mode == .enter {
