@@ -33,7 +33,7 @@
 		}
 	},
 	{
-		"type": "SelectContainer",
+		"type": "SelectSegmentContainer",
 		"view": {
 			"content": {
 				"children": [{
@@ -122,7 +122,7 @@
 								"icon": "_image_id_",
 								"line_1": "Condition",
 								"line_2": "{item.condition.value}",
-								"detail": ""	
+								"detail": ""
 							}
 						}
 					}

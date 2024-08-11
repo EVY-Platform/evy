@@ -235,7 +235,7 @@
 			}
 		},
 		{
-			"type": "SelectContainer",
+			"type": "SelectSegmentContainer",
 			"view": {
 				"content": {
 					"children": [{

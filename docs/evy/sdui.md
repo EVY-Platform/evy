@@ -131,7 +131,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 
 ```
 {
-    "type": "SelectContainer", // Shows children under a segmented control
+    "type": "SelectSegmentContainer", // Shows children under a segmented control
     "view": {
         "content": {
             "children": [{

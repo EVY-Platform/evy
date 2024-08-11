@@ -83,7 +83,7 @@ struct SDUIConstants {
         {
             "id": "step_3",
             "title": "Pickup & delivery",
-            "rows": [\(selectContainerRow)],
+            "rows": [\(selectSegmentContainerRow)],
             "footer": \(navigate3ButtonRow)
         }
     """
@@ -740,9 +740,9 @@ struct SDUIConstants {
         }
     """
     
-    static let selectContainerRow = """
+    static let selectSegmentContainerRow = """
         {
-            "type": "SelectContainer",
+            "type": "SelectSegmentContainer",
             "view": {
                 "content": {
                     "title": "Pickup",
