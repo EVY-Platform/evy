@@ -22,5 +22,11 @@ struct EVYPage: View, Decodable {
             }
         }.navigationTitle(title)
         footer
+            .overlay(alignment: .top, content: {
+                Rectangle()
+                    .fill(Constants.fieldBorderColor)
+                    .frame(height: 1)
+                    .padding(.top, -Constants.minorPadding)
+            })
     }
 }

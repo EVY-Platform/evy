@@ -45,6 +45,8 @@ struct EVYButtonRow: View {
                   condition: action.condition,
                   action: performAction)
         .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.top, Constants.minorPadding)
+        .padding(.bottom, Constants.majorPadding)
     }
 }
 
