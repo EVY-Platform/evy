@@ -461,18 +461,6 @@ struct SDUIConstants {
                         "edit": {
                             "destination": "{item.tag_ids}"
                         }
-                    },{
-                        "type": "Input",
-                        "view": {
-                            "content": {
-                                "title": "Additional information",
-                                "placeholder": "Buzz 2023",
-                                "value": "{item.address.instructions}"
-                            }
-                        },
-                        "edit": {
-                            "destination": "{item.address.instructions}"
-                        }
                     }]
                }
            }
@@ -624,7 +612,19 @@ struct SDUIConstants {
                                 "text": "Allow buyers to pick up the item"
                             }
                         }
-                    }, \(sheetContainerRow), {
+                    }, \(sheetContainerRow),{
+                        "type": "Input",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "placeholder": "Additional information",
+                                "value": "{item.address.instructions}"
+                            }
+                        },
+                        "edit": {
+                            "destination": "{item.address.instructions}"
+                        }
+                    }, {
                         "type": "Info",
                         "view": {
                             "content": {
