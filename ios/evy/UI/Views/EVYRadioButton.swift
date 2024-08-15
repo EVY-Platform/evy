@@ -7,28 +7,46 @@
 
 import SwiftUI
 
+public enum EVYRadioStyle: String {
+    case single
+    case multi
+}
+
 struct EVYRadioButton: View {
     let isSelected: Bool
+    let style: EVYRadioStyle
     var body: some View {
-        circleView
+        buttonView
     }
 }
 
 private extension EVYRadioButton {
-  @ViewBuilder var circleView: some View {
-     Circle()
-       .fill(innerCircleColor) // Inner circle color
-       .padding(4)
-       .overlay(
-          Circle()
-            .stroke(outlineColor, lineWidth: 1)
-        )
-       .frame(width: 20, height: 20)
-  }
+    @ViewBuilder var buttonView: some View {
+        switch style {
+        case .single:
+            Circle()
+                .fill(innerColor)
+                .padding(4)
+                .overlay(
+                    Circle()
+                        .stroke(outlineColor, lineWidth: 1)
+                )
+                .frame(width: 20, height: 20)
+        case .multi:
+            RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
+                .fill(innerColor)
+                .padding(4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
+                        .stroke(outlineColor, lineWidth: 1)
+                )
+                .frame(width: 20, height: 20)
+        }
+    }
 }
 
 private extension EVYRadioButton {
-   var innerCircleColor: Color {
+   var innerColor: Color {
       guard isSelected else { return Color.clear }
       if !isSelected { return Color.gray.opacity(0.6) }
       return Color.blue
@@ -42,7 +60,9 @@ private extension EVYRadioButton {
 
 #Preview {
     VStack {
-        EVYRadioButton(isSelected: true)
-        EVYRadioButton(isSelected: false)
+        EVYRadioButton(isSelected: true, style: .single)
+        EVYRadioButton(isSelected: false, style: .single)
+        EVYRadioButton(isSelected: true, style: .multi)
+        EVYRadioButton(isSelected: false, style: .multi)
     }
 }

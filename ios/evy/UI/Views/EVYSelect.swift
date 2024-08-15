@@ -18,7 +18,7 @@ struct EVYSelect: View {
                     HStack {
                         EVYTextView(value.displayValue())
                         Spacer()
-                        EVYRadioButton(isSelected: value == selection)
+                        EVYRadioButton(isSelected: value == selection, style: .single)
                     }
                 }
                 .listRowSeparator(.hidden)

@@ -91,7 +91,17 @@ struct SDUIConstants {
         {
             "id": "step_4",
             "title": "Payment options",
-            "rows": [\(textRow)],
+            "rows": [{
+                        "type": "Info",
+                        "view": {
+                            "content": {
+                                "title": "",
+                                "text": "Payment will be made by the buyers on pickup"
+                            }
+                        }
+                    },
+                    \(paymentCashRow),
+                    \(paymentAppRow)],
             "footer": \(navigate4ButtonRow)
         }
     """
@@ -339,6 +349,36 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.address}"
+            }
+        }
+    """
+    
+    static let paymentCashRow = """
+        {
+            "type": "TextSelect",
+            "view": {
+                "content": {
+                    "title": "Accept cash",
+                    "text": "Let buyers know you will accept cash on pickup"
+                }
+            },
+            "edit": {
+                "destination": "{item.payment_methods.cash}"
+            }
+        }
+    """
+    
+    static let paymentAppRow = """
+        {
+            "type": "TextSelect",
+            "view": {
+                "content": {
+                    "title": "Accept app payments",
+                    "text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n \u{2022} Cards are verified before the purchase\\n \u{2022} Payment is transferred immediately when both buyer and seller confirm using a temporary code"
+                }
+            },
+            "edit": {
+                "destination": "{item.payment_methods.app}"
             }
         }
     """
@@ -923,10 +963,10 @@ struct DataConstants {
                 "04b34671-4eeb-4f1c-8435-5e029a0e455c",
                 "04b34671-4eeb-4f1c-8435-5e029a0e455c"
             ],
-            "payment_method_ids": [
-                "04b34671-4eeb-4f1c-8435-5e029a0e455c",
-                "04b34671-4eeb-4f1c-8435-5e029a0e455c"
-            ]
+            "payment_methods": {
+                "cash": false,
+                "app": false
+            }
         }
     """
     
