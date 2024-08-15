@@ -32,7 +32,7 @@ struct EVYTextAreaRow: View {
         VStack(alignment:.leading) {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minorPadding)
+                    .padding(.vertical, Constants.minPading)
             }
             EVYTextField(input: view.content.value,
                          destination: edit.destination,

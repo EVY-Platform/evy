@@ -79,13 +79,14 @@ struct EVYTextField: View {
             }
         })
         .font(.evy)
-        .padding(EdgeInsets(top: Constants.majorPadding,
+        .padding(EdgeInsets(top: Constants.fieldPadding,
                             leading: Constants.minorPadding,
-                            bottom: Constants.majorPadding,
+                            bottom: Constants.fieldPadding,
                             trailing: Constants.minorPadding))
         .background(
             RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
                 .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
+                .opacity(Constants.fieldBorderOpacity)
         )
         .contentShape(Rectangle())
         .onTapGesture {

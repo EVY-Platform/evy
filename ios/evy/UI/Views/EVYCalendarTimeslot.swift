@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-private let timeslotOpactity: CGFloat = 0.7
 private let animationDuration: CGFloat = 0.1
 private let tappableClearColor: Color = Color.black.opacity(0.0001)
 

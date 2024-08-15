@@ -33,7 +33,7 @@ struct EVYTextSelectRow: View {
     }
     
     var body: some View {
-        HStack(spacing: Constants.majorPadding) {
+        HStack {
             VStack(alignment:.leading) {
                 if view.content.title.count > 0 {
                     EVYTextView(view.content.title)

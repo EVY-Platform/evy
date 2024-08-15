@@ -44,10 +44,14 @@ struct EVYDropdown: View {
             EVYTextView("::chevron.down::")
                 .foregroundColor(.black)
         }
-        .padding()
+        .padding(EdgeInsets(top: Constants.fieldPadding,
+                            leading: Constants.minorPadding,
+                            bottom: Constants.fieldPadding,
+                            trailing: Constants.minorPadding))
         .background(
             RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
                 .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
+                .opacity(Constants.fieldBorderOpacity)
         )
         .contentShape(Rectangle())
         .onTapGesture { showSheet.toggle() }

@@ -30,10 +30,7 @@ struct EVYButton: View {
                 .frame(maxWidth: .infinity)
                 .foregroundColor(.white)
         }
-        .padding(EdgeInsets(top: Constants.majorPadding,
-                            leading: Constants.majorPadding,
-                            bottom: Constants.majorPadding,
-                            trailing: Constants.majorPadding))
+        .padding(Constants.majorPadding)
         .frame(maxWidth: 150)
         .background(disabled ? Color.gray : Color.blue)
         .cornerRadius(Constants.smallCornerRadius)

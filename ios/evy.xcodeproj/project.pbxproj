@@ -17,7 +17,6 @@
 		2EE4E27D2B99D7F300CEF112 /* EVYSelect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */; };
 		7303B3182C3EB27900796123 /* EVYCalendarTimeslot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7303B3172C3EB27900796123 /* EVYCalendarTimeslot.swift */; };
 		7303B31A2C3EB8A000796123 /* EVYCalendarTimeslotData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7303B3192C3EB8A000796123 /* EVYCalendarTimeslotData.swift */; };
-		7303B31C2C3EBBFB00796123 /* EVYHoveringButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7303B31B2C3EBBFB00796123 /* EVYHoveringButton.swift */; };
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
 		731988822C271BBD0035E094 /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 731988812C271BBD0035E094 /* JsonRPC */; };
@@ -89,7 +88,6 @@
 		2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelect.swift; sourceTree = "<group>"; };
 		7303B3172C3EB27900796123 /* EVYCalendarTimeslot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarTimeslot.swift; sourceTree = "<group>"; };
 		7303B3192C3EB8A000796123 /* EVYCalendarTimeslotData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarTimeslotData.swift; sourceTree = "<group>"; };
-		7303B31B2C3EBBFB00796123 /* EVYHoveringButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYHoveringButton.swift; sourceTree = "<group>"; };
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
 		7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInfoRow.swift; sourceTree = "<group>"; };
@@ -340,7 +338,6 @@
 				734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */,
 				73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */,
 				73C78AF12BC552150026F39D /* EVYHorizontalSelection.swift */,
-				7303B31B2C3EBBFB00796123 /* EVYHoveringButton.swift */,
 				73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */,
 				73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */,
 				73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */,
@@ -451,7 +448,6 @@
 				2ED04EF62B3308C400881DC4 /* EVYMap.swift in Sources */,
 				73C78AEA2BC549840026F39D /* EVYSearch.swift in Sources */,
 				73EDC87F2B8F387500304DD8 /* EVYButton.swift in Sources */,
-				7303B31C2C3EBBFB00796123 /* EVYHoveringButton.swift in Sources */,
 				7320F59A2C300B8B00297C48 /* EVYTextActionRow.swift in Sources */,
 				73C78AF22BC552150026F39D /* EVYHorizontalSelection.swift in Sources */,
 				732A50822C1D6AE80036B98B /* EVY.swift in Sources */,

@@ -42,7 +42,7 @@ struct EVYTextActionRow: View {
             }
             HStack {
                 if hasAddress {
-                    EVYTextView(view.content.text)
+                    EVYTextView(view.content.text, style: .info)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     EVYTextView(view.content.placeholder, style: .info)

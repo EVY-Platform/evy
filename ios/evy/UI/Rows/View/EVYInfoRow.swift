@@ -26,13 +26,16 @@ struct EVYInfoRow: View {
     }
     
     var body: some View {
-        VStack(alignment:.leading) {
-            if view.content.title.count > 0 {
+        if view.content.title.count > 0 {
+            VStack(alignment:.leading) {
                 EVYTextView(view.content.title)
                     .padding(.vertical, Constants.minPading)
+                EVYTextView(view.content.text, style: .info)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+        } else {
             EVYTextView(view.content.text, style: .info)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 }
