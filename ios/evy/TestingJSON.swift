@@ -559,13 +559,12 @@ struct SDUIConstants {
     
     static let piiRow = #"""
         {
-            "type": "Text",
+            "type": "Info",
             "view": {
                 "content": {
                     "title": "",
                     "text": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule"
-                },
-                "max_lines": "20"
+                }
             }
         }
     """#
