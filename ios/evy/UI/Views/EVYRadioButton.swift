@@ -48,13 +48,13 @@ private extension EVYRadioButton {
 private extension EVYRadioButton {
    var innerColor: Color {
       guard isSelected else { return Color.clear }
-      if !isSelected { return Color.gray.opacity(0.6) }
-      return Color.blue
+      if !isSelected { return Constants.fieldBorderColor.opacity(0.6) }
+      return Constants.actionColor
    }
 
    var outlineColor: Color {
-      if !isSelected { return Color.gray.opacity(0.6) }
-      return isSelected ? Color.blue : Color.gray
+      if !isSelected { return Constants.fieldBorderColor.opacity(0.6) }
+      return isSelected ? Constants.actionColor : Constants.fieldBorderColor
    }
 }
 

@@ -37,7 +37,7 @@ struct EVYDropdown: View {
                     EVYTextView(value).foregroundColor(.black)
                 } else {
                     EVYTextView(placeholder ?? "")
-                        .foregroundColor(Constants.placeholderColor)
+                        .foregroundColor(Constants.textColor)
                 }
             }
             Spacer()

@@ -19,9 +19,16 @@ struct EVYSearchBar: View {
                 TextField(placeholder, text: $searchFieldValue)
                     .font(.evy)
             }
-            .padding(Constants.minorPadding)
-            .background(Color(.systemFill))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(EdgeInsets(top: Constants.fieldPadding,
+                                leading: Constants.minorPadding,
+                                bottom: Constants.fieldPadding,
+                                trailing: Constants.minorPadding))
+            .background(
+                RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
+                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
+                    .opacity(Constants.fieldBorderOpacity)
+            )
+            .contentShape(Rectangle())
         }
         .onChange(of: searchFieldValue) { oldValue, newValue in
             Task.init(operation: {
@@ -33,4 +40,9 @@ struct EVYSearchBar: View {
             })
         }
     }
+}
+
+#Preview {
+    @ObservedObject var searchController = EVYSearchAPI()
+    return EVYSearchBar(searchController: searchController, placeholder: "Search")
 }

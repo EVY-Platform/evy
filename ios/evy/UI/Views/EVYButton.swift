@@ -32,7 +32,7 @@ struct EVYButton: View {
         }
         .padding(Constants.majorPadding)
         .frame(maxWidth: 150)
-        .background(disabled ? Color.gray : Color.blue)
+        .background(disabled ? Constants.buttonDisabledColor : Constants.buttonColor)
         .cornerRadius(Constants.smallCornerRadius)
         .disabled(disabled)
     }

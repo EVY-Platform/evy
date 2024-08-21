@@ -38,7 +38,7 @@ struct EVYTextRow: View {
                 .lineLimit(expanded ? nil : Int(view.max_lines) ?? 2)
             if view.max_lines.count > 0 {
                 EVYTextView(expanded ? "Read less" : "Read more")
-                    .foregroundStyle(Constants.textButtonColor)
+                    .foregroundStyle(Constants.actionColor)
                     .padding(.vertical, Constants.minPading)
             }
         }

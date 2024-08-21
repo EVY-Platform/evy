@@ -14,20 +14,16 @@ struct EVYHorizontalSelection: View {
         ScrollView(.horizontal, content: {
             HStack {
                 ForEach(searchController.selected, id: \.id) { result in
-                    EVYTextView("::checkmark:: \(result.title)")
-                        .padding(Constants.minorPadding)
-                        .background(Color(.gray).opacity(0.3),
-                                    in: RoundedRectangle(cornerRadius: 5.0, style: .continuous))
-                        .onTapGesture {
-                            searchController.unselect(result)
-                        }
+                    EVYRectangle(value: result.title, style: .primary, width: .fit)
+                        .onTapGesture { searchController.unselect(result) }
                 }
             }
         })
+        .scrollIndicators(.hidden)
     }
 }
 
 #Preview {
     @ObservedObject var searchController = EVYSearchAPI()
-    return EVYHorizontalSelection(searchController: searchController)
+    return EVYSearch(searchController: searchController, placeholder: "Search")
 }

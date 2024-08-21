@@ -74,7 +74,7 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
     case .info:
         return Text(input)
             .font(.evy)
-            .foregroundStyle(.gray)
+            .foregroundStyle(Constants.textColor)
     case .button:
         return Text(input)
             .font(.evyButton)
@@ -90,7 +90,7 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
     return VStack {
         EVYTextView("::star.square.on.square.fill::")
         EVYTextView("Just text", style: EVYTextStyle.body)
-        EVYTextView("Just text", style: EVYTextStyle.info)
+        EVYTextView("Just text info", style: EVYTextStyle.info)
         EVYTextView("Just text", style: EVYTextStyle.title)
         EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
         EVYTextView("count: {count(item.photo_ids)}")
