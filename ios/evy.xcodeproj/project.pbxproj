@@ -63,6 +63,7 @@
 		73C78AF22BC552150026F39D /* EVYHorizontalSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AF12BC552150026F39D /* EVYHorizontalSelection.swift */; };
 		73C78AFE2BC564F10026F39D /* SF-Pro-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 73C78AFC2BC564F00026F39D /* SF-Pro-Text-Regular.otf */; };
 		73C78AFF2BC564F10026F39D /* SF-Pro-Text-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 73C78AFD2BC564F10026F39D /* SF-Pro-Text-Bold.otf */; };
+		73CB09522C7608A7008F7D2C /* EVYRectangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CB09512C7608A7008F7D2C /* EVYRectangle.swift */; };
 		73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */; };
 		73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */; };
 		73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAC12B272E0C00D4E82A /* EVYRow.swift */; };
@@ -134,6 +135,7 @@
 		73C78AF12BC552150026F39D /* EVYHorizontalSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYHorizontalSelection.swift; sourceTree = "<group>"; };
 		73C78AFC2BC564F00026F39D /* SF-Pro-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Pro-Text-Regular.otf"; sourceTree = "<group>"; };
 		73C78AFD2BC564F10026F39D /* SF-Pro-Text-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Pro-Text-Bold.otf"; sourceTree = "<group>"; };
+		73CB09512C7608A7008F7D2C /* EVYRectangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRectangle.swift; sourceTree = "<group>"; };
 		73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYImageOverlay.swift; sourceTree = "<group>"; };
 		73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYZoomableContainer.swift; sourceTree = "<group>"; };
 		73CDCAC12B272E0C00D4E82A /* EVYRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRow.swift; sourceTree = "<group>"; };
@@ -340,6 +342,7 @@
 				73C78AF12BC552150026F39D /* EVYHorizontalSelection.swift */,
 				73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */,
 				73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */,
+				73CB09512C7608A7008F7D2C /* EVYRectangle.swift */,
 				73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */,
 				2ED04EF52B3308C400881DC4 /* EVYMap.swift */,
 				2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */,
@@ -437,6 +440,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				73C5D23E2C0AF1030024FF11 /* EVYTextView.swift in Sources */,
+				73CB09522C7608A7008F7D2C /* EVYRectangle.swift in Sources */,
 				730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */,
 				737C6AA82B2706890093D00C /* ContentView.swift in Sources */,
 				7372A7E82BB2EA4D0020E4C6 /* EVYHome.swift in Sources */,

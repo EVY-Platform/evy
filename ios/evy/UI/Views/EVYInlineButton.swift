@@ -7,48 +7,20 @@
 
 import SwiftUI
 
-public enum EVYInlineButtonStyle: String {
-    case primary
-    case secondary
-    case clear
-}
-
 struct EVYInlineButton: View {
-    let value: String
+    let rectangle: EVYRectangle
     let action: () -> Void
     
-    private let textColor: Color
-    private let buttonFill: Color
-    
-    private let width: CGFloat = 70
-    private let height: CGFloat = 40
-    
-    init(value: String, style: EVYInlineButtonStyle, action: @escaping () -> Void) {
-        self.value = value
+    init(value: String, style: EVYRectangleStyle, action: @escaping () -> Void) {
+        self.rectangle = EVYRectangle(value: value,
+                                      style: style,
+                                      width: .fixed)
         self.action = action
-        
-        switch style {
-        case .primary:
-            textColor = .white
-            buttonFill = Constants.buttonColor
-        case .secondary:
-            textColor = .black
-            buttonFill = Constants.inactiveBackground
-        default:
-            textColor = .black
-            buttonFill = .clear
-        }
     }
     
     var body: some View {
         Button(action: action) {
-            ZStack {
-                RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                    .fill(buttonFill)
-                    .frame(height: height)
-                    .frame(width: width)
-                EVYTextView(value).foregroundColor(textColor)
-            }
+            rectangle
         }
     }
 }
