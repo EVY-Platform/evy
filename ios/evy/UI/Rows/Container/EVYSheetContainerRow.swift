@@ -22,11 +22,7 @@ struct EVYSheetContainerRow: View {
     
     var body: some View {
         self.view.content.child
-            .overlay {
-                Rectangle()
-                    .fill(Constants.tappableClearColor)
-                    .onTapGesture { showSheet.toggle() }
-            }
+            .onTapGesture { showSheet.toggle() }
             .sheet(isPresented: $showSheet, content: {
                 VStack {
                     EVYTextView(view.content.title, style: .title)

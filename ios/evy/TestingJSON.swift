@@ -229,18 +229,15 @@ struct SDUIConstants {
         }
     """
     
-    static let tagsInputRow = """
+    static let tagsInputListRow = """
         {
-            "type": "Input",
+            "type": "InputList",
             "view": {
                 "content": {
                     "title": "Tags",
                     "placeholder": "Search for tags",
                     "value": "{item.tag_ids}"
                 }
-            },
-            "edit": {
-                "destination": "{item.title}"
             }
         }
     """
@@ -251,7 +248,7 @@ struct SDUIConstants {
             "view": {
                 "content": {
                     "title": "Tags",
-                    "child": \(tagsInputRow),
+                    "child": \(tagsInputListRow),
                     "children": [\(searchRow)]
                 }
             }
@@ -849,6 +846,21 @@ struct DataConstants {
             "value": "30 min",
         }]
     """
+    static let tags = """
+        [{
+            "id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+            "value": "Tag A",
+        },{
+            "id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+            "value": "Tag B with extras",
+        },{
+            "id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+            "value": "Tag C",
+        },{
+            "id": "69f25102-822c-436c-a6c1-3b49f887355e",
+            "value": "Tag D",
+        }]
+    """
     static let areas = """
         [{
             "id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
@@ -959,9 +971,12 @@ struct DataConstants {
                 "weight": "10"
             },
             "tag_ids": [
-                "04b34671-4eeb-4f1c-8435-5e029a0e455c",
-                "04b34671-4eeb-4f1c-8435-5e029a0e455c"
+                "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+                "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+                "1eedac33-eb0b-4796-9853-50ad4036179f",
+                "69f25102-822c-436c-a6c1-3b49f887355e"
             ],
+            "tag_id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
             "payment_methods": {
                 "cash": false,
                 "app": false

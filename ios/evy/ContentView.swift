@@ -47,6 +47,8 @@ struct ContentView: View {
         try! EVY.data.create(key: "durations", data: durations)
         let areas = DataConstants.areas.data(using: .utf8)!
         try! EVY.data.create(key: "areas", data: areas)
+        let tags = DataConstants.tags.data(using: .utf8)!
+        try! EVY.data.create(key: "tags", data: tags)
         let pickup = DataConstants.pickupTimeslots.data(using: .utf8)!
         try! EVY.data.create(key: "pickupTimeslots", data: pickup)
         let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!

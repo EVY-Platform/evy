@@ -12,9 +12,7 @@ struct EVYInlineButton: View {
     let action: () -> Void
     
     init(value: String, style: EVYRectangleStyle, action: @escaping () -> Void) {
-        self.rectangle = EVYRectangle(value: value,
-                                      style: style,
-                                      width: .fixed)
+        self.rectangle = EVYRectangle(value: value, style: style, width: .fixed)
         self.action = action
     }
     

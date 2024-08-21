@@ -48,6 +48,9 @@ struct EVYRow: View, Decodable, Identifiable {
             
             case EVYTextActionRow.JSONType:
                 self.view = try EVYTextActionRow(container: container)
+            
+            case EVYInputListRow.JSONType:
+                self.view = try EVYInputListRow(container: container)
 
             // Editable rows
             case EVYDropdownRow.JSONType:
