@@ -233,7 +233,7 @@ public enum EVYJson: Codable, Hashable {
                 return self
             }
             if props.count == 1 {
-                return subData
+                return parseIdOrIds(props: props, value: subData)
             }
             
             return subData.parseProp(props: Array(props[1...]))
@@ -247,11 +247,58 @@ public enum EVYJson: Codable, Hashable {
             
             let subData = arrayValue[index]
             if props.count == 1 {
-                return subData
+                return parseIdOrIds(props: props, value: subData)
             }
             return subData.parseProp(props: Array(props[1...]))
         default:
-            return self
+            return parseIdOrIds(props: props, value: self)
         }
+    }
+    
+    private func parseIdOrIds(props: [String], value: EVYJson) -> EVYJson {
+        var key = props.first!
+        
+        if (!key.hasSuffix("_id") && !key.hasSuffix("_ids")) {
+            return value
+        }
+        
+        var inputValues: [String] = []
+        if case let .array(arrayValue) = value {
+            inputValues.append(contentsOf: arrayValue.map({$0.toString()}))
+        } else if case .string(_) = value {
+            inputValues.append(value.toString())
+        }
+        
+        if inputValues.isEmpty {
+            return value
+        }
+        
+        do {
+            if key.hasSuffix("_ids") {
+                let data = try EVY.getDataFromProps(String(key.dropLast(4) + "s"))
+                if case let .array(arrayValue) = data {
+                    let filteredValues = arrayValue.filter({
+                        return inputValues.contains($0.identifierValue())
+                    })
+                    if filteredValues.count > 0 {
+                        let data = try JSONEncoder().encode(filteredValues)
+                        return try JSONDecoder().decode(EVYJson.self, from: data)
+                    }
+                }
+            }
+            if key.hasSuffix("_id") {
+                let data = try EVY.getDataFromProps(String(key.dropLast(3) + "s"))
+                if case let .array(arrayValue) = data {
+                    let matchingValue = arrayValue.first(where: {
+                        return inputValues.contains($0.identifierValue())
+                    })
+                    if matchingValue != nil {
+                        return matchingValue!
+                    }
+                }
+            }
+        } catch {}
+        
+        return value
     }
 }
