@@ -21,9 +21,11 @@ struct EVYSheetContainerRow: View {
     @State private var showSheet = false
     
     var body: some View {
-        self.view.content.child?
-            .onTapGesture {
-                showSheet.toggle()
+        self.view.content.child
+            .overlay {
+                Rectangle()
+                    .fill(Constants.tappableClearColor)
+                    .onTapGesture { showSheet.toggle() }
             }
             .sheet(isPresented: $showSheet, content: {
                 VStack {

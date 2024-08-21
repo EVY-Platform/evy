@@ -30,6 +30,7 @@ struct Constants {
     static let textColor = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
     static let buttonColor: Color = Color(#colorLiteral(red: 0.04612181336, green: 0.5415666699, blue: 1, alpha: 1))
     static let buttonDisabledColor: Color = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
+    static let tappableClearColor: Color = Color.black.opacity(0.0001)
     static let textButtonColor: Color = .blue
     static let inactiveBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
     static let fieldBorderColor: Color = Color(#colorLiteral(red: 0.725489974, green: 0.7254903913, blue: 0.7340979576, alpha: 1))

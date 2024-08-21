@@ -8,7 +8,6 @@
 import SwiftUI
 
 private let animationDuration: CGFloat = 0.1
-private let tappableClearColor: Color = Color.black.opacity(0.0001)
 
 private enum EVYCalendarTimeslotViewStyle {
     case primary
@@ -81,7 +80,8 @@ struct EVYCalendarTimeslotView: View {
     var body: some View {
         Rectangle()
             .fill(selected ? Constants.buttonColor :
-                    (style == .secondary ? Constants.inactiveBackground : tappableClearColor)
+                    (style == .secondary ?
+                     Constants.inactiveBackground : Constants.tappableClearColor)
             )
             .frame(height: height)
             .frame(width: width)
