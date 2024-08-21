@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+private typealias RegexMatch = Regex<AnyRegexOutput>.Match
+
 private let comparisonBasePattern = "[a-zA-Z0-9.\\(\\) ]+"
 private let comparisonOperatorPattern = "(>|<|==|!=)"
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"

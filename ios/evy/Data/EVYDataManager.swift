@@ -8,8 +8,6 @@
 import Foundation
 import SwiftData
 
-typealias RegexMatch = Regex<AnyRegexOutput>.Match
-
 public enum EVYDataError: Error {
     case keyAlreadyExists
     case keyNotFound
