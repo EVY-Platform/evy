@@ -212,7 +212,7 @@ struct SDUIConstants {
         }
     """
     
-    static let searchRow = """
+    static let searchTagsRow = """
         {
            "type": "Search",
            "view": {
@@ -221,7 +221,7 @@ struct SDUIConstants {
                    "value": "{tags[].value}",
                    "placeholder": "Search for tags"
                },
-                "data": "api:tags"
+                "data": "{tags}"
            },
             "edit": {
                 "destination": "{item.tag_ids}"
@@ -249,7 +249,7 @@ struct SDUIConstants {
                 "content": {
                     "title": "Tags",
                     "child": \(tagsInputListRow),
-                    "children": [\(searchRow)]
+                    "children": [\(searchTagsRow)]
                 }
             }
         }
@@ -490,13 +490,13 @@ struct SDUIConstants {
                        "view": {
                            "content": {
                                "title": "",
-                               "value": "{tags[].value}",
-                               "placeholder": "Search for tags"
+                               "value": "{address[].value}",
+                               "placeholder": "Search address"
                            },
-                            "data": "api:tags"
+                            "data": "api:address"
                        },
                         "edit": {
-                            "destination": "{item.tag_ids}"
+                            "destination": "{item.address}"
                         }
                     }]
                }

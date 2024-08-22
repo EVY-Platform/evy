@@ -24,7 +24,7 @@ struct EVYSearchRow: View {
     private let view: EVYSearchRowView
     private let edit: SDUI.Edit
     
-    @ObservedObject var searchController = EVYSearchAPI()
+    @ObservedObject var searchController = EVYSearchController(source: .remote)
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSearchRowView.self, forKey:.view)
@@ -47,6 +47,6 @@ struct EVYSearchRow: View {
 
 
 #Preview {
-    let json =  SDUIConstants.searchRow.data(using: .utf8)!
+    let json =  SDUIConstants.searchTagsRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

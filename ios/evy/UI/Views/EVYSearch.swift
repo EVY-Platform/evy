@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EVYSearch: View {
-    @ObservedObject var searchController: EVYSearchAPI
+    @ObservedObject var searchController: EVYSearchController
     let placeholder: String
     
     var body: some View {
@@ -19,7 +19,7 @@ struct EVYSearch: View {
             }
             List {
                 ForEach(searchController.results, id: \.id) { result in
-                    EVYTextView(result.title).onTapGesture {
+                    EVYTextView(result.value).onTapGesture {
                         searchController.select(result)
                     }
                 }
@@ -31,6 +31,6 @@ struct EVYSearch: View {
 }
 
 #Preview {
-    @ObservedObject var searchController = EVYSearchAPI()
+    @ObservedObject var searchController = EVYSearchController(source: .remote)
     return EVYSearch(searchController: searchController, placeholder: "Search")
 }

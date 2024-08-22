@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EVYSearchBar: View {
-    @ObservedObject var searchController: EVYSearchAPI
+    @ObservedObject var searchController: EVYSearchController
     @State var searchFieldValue = ""
     let placeholder: String
     
@@ -43,6 +43,6 @@ struct EVYSearchBar: View {
 }
 
 #Preview {
-    @ObservedObject var searchController = EVYSearchAPI()
+    @ObservedObject var searchController = EVYSearchController(source: .remote)
     return EVYSearchBar(searchController: searchController, placeholder: "Search")
 }

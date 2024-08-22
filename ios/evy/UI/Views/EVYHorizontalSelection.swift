@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct EVYHorizontalSelection: View {
-    @ObservedObject var searchController: EVYSearchAPI
+    @ObservedObject var searchController: EVYSearchController
     
     var body: some View {
         ScrollView(.horizontal, content: {
             HStack {
                 ForEach(searchController.selected, id: \.id) { result in
-                    EVYRectangle(value: result.title, style: .primary, width: .fit)
+                    EVYRectangle(value: result.value, style: .primary, width: .fit)
                         .onTapGesture { searchController.unselect(result) }
                 }
             }
@@ -24,6 +24,6 @@ struct EVYHorizontalSelection: View {
 }
 
 #Preview {
-    @ObservedObject var searchController = EVYSearchAPI()
+    @ObservedObject var searchController = EVYSearchController(source: .remote)
     return EVYSearch(searchController: searchController, placeholder: "Search")
 }
