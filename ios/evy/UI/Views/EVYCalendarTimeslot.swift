@@ -79,7 +79,7 @@ struct EVYCalendarTimeslotView: View {
     
     var body: some View {
         Rectangle()
-            .fill(selected ? Constants.buttonColor :
+            .fill(selected ? Constants.actionColor :
                     (style == .secondary ?
                      Constants.inactiveBackground : Constants.tappableClearColor)
             )
