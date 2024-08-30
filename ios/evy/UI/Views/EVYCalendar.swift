@@ -54,8 +54,6 @@ extension EnvironmentValues {
 extension Notification.Name {
     static let calendarTimeslotSelect = Notification.Name("EVYCalendarTimeslotSelect")
     static let calendarTimeslotDeselect = Notification.Name("EVYCalendarTimeslotDeselect")
-    static let calendarTimeslotPrepare = Notification.Name("calendarTimeslotPrepare")
-    static let calendarTimeslotUnprepare = Notification.Name("calendarTimeslotUnprepare")
 }
 
 /**
