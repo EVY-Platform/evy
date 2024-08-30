@@ -315,12 +315,12 @@
 				"content": {
 					"title": "Tags",
 					"child": {
-						"type": "Input",
+						"type": "InputList",
 						"view": {
 							"content": {
-								"title": "",
+								"title": "Tags",
 								"placeholder": "Search for tags",
-								"value": "{item.tag_ids}"
+								"value": "{item.tags}"
 							}
 						}
 					},
@@ -328,14 +328,14 @@
 						"type": "Search",
 						"view": {
 							"content": {
-								"title": "Tags",
+								"title": "",
 								"value": "{tag[].value}",
 								"placeholder": "Search for tags"
 							},
 							"data": "{api:tags}"
 						},
 						"edit": {
-							"destination": "{item.tag_ids}"
+							"destination": "{item.tags}"
 						}
 					}]
 				}

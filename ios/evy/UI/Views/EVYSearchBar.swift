@@ -43,6 +43,7 @@ struct EVYSearchBar: View {
 }
 
 #Preview {
-    @ObservedObject var searchController = EVYSearchController(source: .remote)
+    @ObservedObject var searchController = EVYSearchController(source: "{api:movies}",
+                                                               destination: "{item.tags}")
     return EVYSearchBar(searchController: searchController, placeholder: "Search")
 }

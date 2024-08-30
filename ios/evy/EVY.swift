@@ -63,10 +63,27 @@ struct EVY {
         
         if data.exists(key: firstProp) {
             let data = try data.get(key: splitProps.first!)
-            try data.updateValueInData(value, props: Array(splitProps[1...]))
+            let newValueAsData = "\"\(value)\"".data(using: .utf8)!
+            try data.updateDataWithData(newValueAsData, props: Array(splitProps[1...]))
         } else {
             let valueAsData = try JSONEncoder().encode(value)
             try data.create(key: firstProp, data: valueAsData)
+        }
+    }
+    
+    /**
+     * Updating a nested values in an object by using props
+     */
+    static func updateValues(_ values: Data, at: String) throws -> Void {
+        let props = EVYInterpreter.parsePropsFromText(at)
+        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        let firstProp = splitProps.first!
+        
+        if data.exists(key: firstProp) {
+            let data = try data.get(key: splitProps.first!)
+            try data.updateDataWithData(values, props: Array(splitProps[1...]))
+        } else {
+            try data.create(key: firstProp, data: values)
         }
     }
 }

@@ -13,8 +13,8 @@ struct EVYHorizontalSelection: View {
     var body: some View {
         ScrollView(.horizontal, content: {
             HStack {
-                ForEach(searchController.selected, id: \.id) { result in
-                    EVYRectangle(value: result.value, style: .primary, width: .fit)
+                ForEach(searchController.selected, id: \.self) { result in
+                    EVYRectangle(value: result.displayValue(), style: .primary, width: .fit)
                         .onTapGesture { searchController.unselect(result) }
                 }
             }
@@ -24,6 +24,7 @@ struct EVYHorizontalSelection: View {
 }
 
 #Preview {
-    @ObservedObject var searchController = EVYSearchController(source: .remote)
+    @ObservedObject var searchController = EVYSearchController(source: "{api:movies}",
+                                                               destination: "{item.tags}")
     return EVYSearch(searchController: searchController, placeholder: "Search")
 }

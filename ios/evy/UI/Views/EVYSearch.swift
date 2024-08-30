@@ -18,8 +18,8 @@ struct EVYSearch: View {
                 EVYHorizontalSelection(searchController: searchController).padding()
             }
             List {
-                ForEach(searchController.results, id: \.id) { result in
-                    EVYTextView(result.value).onTapGesture {
+                ForEach(searchController.results, id: \.self) { result in
+                    EVYTextView(result.displayValue()).onTapGesture {
                         searchController.select(result)
                     }
                 }
@@ -31,6 +31,10 @@ struct EVYSearch: View {
 }
 
 #Preview {
-    @ObservedObject var searchController = EVYSearchController(source: .remote)
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVY.data.create(key: "item", data: item)
+    
+    @ObservedObject var searchController = EVYSearchController(source: "{api:movies}",
+                                                               destination: "{item.tags}")
     return EVYSearch(searchController: searchController, placeholder: "Search")
 }

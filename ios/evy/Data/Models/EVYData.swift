@@ -44,17 +44,16 @@ class EVYData {
         return try! JSONDecoder().decode(EVYJson.self, from: self.data)
     }
     
-    func updateValueInData(_ value: String, props: [String]) throws -> Void {
-        let currentDataAsJson = self.decoded()
+    func updateDataWithData(_ data: Data, props: [String]) throws -> Void {
         if props.count < 1 {
             return
         }
         
-        let newValueAsData = "\"\(value)\"".data(using: .utf8)!
-        let newValueAsJson = try! JSONDecoder().decode(EVYJson.self, from: newValueAsData)
+        let currentDataAsJson = self.decoded()
+        let newDataAsJson = try! JSONDecoder().decode(EVYJson.self, from: data)
         
-        let newJson = try getUpdatedJson(props: props, data: currentDataAsJson, value: newValueAsJson)
-        self.data = try JSONEncoder().encode(newJson)
+        let updatedJson = try getUpdatedJson(props: props, data: currentDataAsJson, value: newDataAsJson)
+        self.data = try JSONEncoder().encode(updatedJson)
     }
     
     private func getUpdatedJson(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {
@@ -210,6 +209,15 @@ public enum EVYJson: Codable, Hashable {
         }
     }
     
+    public func displayValues() -> [String] {
+        switch self {
+        case .array(let arrayValue):
+            return arrayValue.map({ $0.displayValue() })
+        default:
+            return [self.toString()]
+        }
+    }
+    
     public func identifierValue() -> String {
         switch self {
         case .dictionary(_):
@@ -256,7 +264,7 @@ public enum EVYJson: Codable, Hashable {
     }
     
     private func parseIdOrIds(props: [String], value: EVYJson) -> EVYJson {
-        var key = props.first!
+        let key = props.first!
         
         if (!key.hasSuffix("_id") && !key.hasSuffix("_ids")) {
             return value

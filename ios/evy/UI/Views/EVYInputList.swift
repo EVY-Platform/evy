@@ -16,12 +16,10 @@ struct EVYInputList: View {
         
         do {
             let data = try EVY.getDataFromText(input)
-            if case let .array(arrayValue) = data {
-                self.values.append(contentsOf: arrayValue.map({ $0.displayValue() }))
-            } else if case let .dictionary(dictionaryValue) = data {
+            if case .array(_) = data {
+                self.values = data.displayValues()
+            } else {
                 self.values.append(data.displayValue())
-            } else if case let .string(stringValue) = data {
-                self.values.append(stringValue)
             }
         } catch {}
     }
@@ -50,10 +48,7 @@ struct EVYInputList: View {
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVY.data.create(key: "item", data: item)
-        
-    let tags = DataConstants.tags.data(using: .utf8)!
-    try! EVY.data.create(key: "tags", data: tags)
     
-    return EVYInputList(input: "{item.tag_ids}",
+    return EVYInputList(input: "{item.tags}",
                         placeholder: "Add tags to improve search")
 }

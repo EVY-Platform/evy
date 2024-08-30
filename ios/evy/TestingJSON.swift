@@ -224,7 +224,7 @@ struct SDUIConstants {
                 "data": "{tags}"
            },
             "edit": {
-                "destination": "{item.tag_ids}"
+                "destination": "{item.tags}"
             }
         }
     """
@@ -236,7 +236,7 @@ struct SDUIConstants {
                 "content": {
                     "title": "Tags",
                     "placeholder": "Search for tags",
-                    "value": "{item.tag_ids}"
+                    "value": "{item.tags}"
                 }
             }
         }
@@ -846,21 +846,6 @@ struct DataConstants {
             "value": "30 min",
         }]
     """
-    static let tags = """
-        [{
-            "id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
-            "value": "Tag A",
-        },{
-            "id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
-            "value": "Tag B with extras",
-        },{
-            "id": "1eedac33-eb0b-4796-9853-50ad4036179f",
-            "value": "Tag C",
-        },{
-            "id": "69f25102-822c-436c-a6c1-3b49f887355e",
-            "value": "Tag D",
-        }]
-    """
     static let areas = """
         [{
             "id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
@@ -970,13 +955,19 @@ struct DataConstants {
                 "length": "600",
                 "weight": "10"
             },
-            "tag_ids": [
-                "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
-                "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
-                "1eedac33-eb0b-4796-9853-50ad4036179f",
-                "69f25102-822c-436c-a6c1-3b49f887355e"
-            ],
-            "tag_id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+            "tags": [{
+                "id": "tt0076759",
+                "value": "Episode",
+            },{
+                "id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+                "value": "Tag B with extras",
+            },{
+                "id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+                "value": "Tag C",
+            },{
+                "id": "69f25102-822c-436c-a6c1-3b49f887355e",
+                "value": "Tag D",
+            }],
             "payment_methods": {
                 "cash": false,
                 "app": false

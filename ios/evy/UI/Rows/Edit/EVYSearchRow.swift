@@ -24,11 +24,14 @@ struct EVYSearchRow: View {
     private let view: EVYSearchRowView
     private let edit: SDUI.Edit
     
-    @ObservedObject var searchController = EVYSearchController(source: .remote)
+    @ObservedObject var searchController: EVYSearchController
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSearchRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
+        
+        self.searchController = EVYSearchController(source: view.data,
+                                                    destination: edit.destination)
     }
     
     @State private var showSheet = false
@@ -41,7 +44,9 @@ struct EVYSearchRow: View {
             }
             EVYSearch(searchController: searchController,
                       placeholder: view.content.placeholder)
-        }
+        }.onAppear(perform: {
+            searchController.refresh()
+        })
     }
 }
 
