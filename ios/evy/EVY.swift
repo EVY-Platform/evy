@@ -11,6 +11,14 @@ public enum EVYParamError: Error {
     case invalidProps
 }
 
+extension String {
+    var isNumber: Bool {
+        let digitsCharacters = CharacterSet(charactersIn: "0123456789")
+        return CharacterSet(charactersIn: self).isSubset(of: digitsCharacters)
+    }
+}
+
+
 struct EVY {
     static let data = EVYDataManager()
     
@@ -62,8 +70,20 @@ struct EVY {
         let firstProp = splitProps.first!
         
         if data.exists(key: firstProp) {
-            let data = try data.get(key: splitProps.first!)
-            let newValueAsData = "\"\(value)\"".data(using: .utf8)!
+            let data = try data.get(key: firstProp)
+            let newValueAsData =
+                switch value {
+                case "true":
+                    "\(value)".data(using: .utf8)!
+                case "false":
+                    "\(value)".data(using: .utf8)!
+                default:
+                    if value.isNumber {
+                        "\(value)".data(using: .utf8)!
+                    } else {
+                        "\"\(value)\"".data(using: .utf8)!
+                    }
+                }
             try data.updateDataWithData(newValueAsData, props: Array(splitProps[1...]))
         } else {
             let valueAsData = try JSONEncoder().encode(value)
