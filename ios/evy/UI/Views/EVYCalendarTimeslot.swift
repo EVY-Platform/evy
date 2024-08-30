@@ -62,7 +62,7 @@ struct EVYCalendarTimeslotView: View {
             withAnimation(.linear(duration: animationDuration)) {
                 selected = true
             }
-            let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
+            let props = "{pickupTimeslots[\(timeslot.datasourceIndex)].selected}"
             try! EVY.updateValue("true", at: props)
         }
     }
@@ -72,7 +72,7 @@ struct EVYCalendarTimeslotView: View {
             withAnimation(.linear(duration: animationDuration)) {
                 selected = false
             }
-            let props = "{pickupTimeslots[\(timeslot.datasourceIndex)}"
+            let props = "{pickupTimeslots[\(timeslot.datasourceIndex)].selected}"
             try! EVY.updateValue("false", at: props)
         }
     }
