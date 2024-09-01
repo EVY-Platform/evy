@@ -52,6 +52,9 @@ struct EVYSearchRow: View {
 
 
 #Preview {
-    let json =  SDUIConstants.searchTagsRow.data(using: .utf8)!
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVY.data.create(key: "item", data: item)
+    
+    let json = SDUIConstants.tagsRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }
