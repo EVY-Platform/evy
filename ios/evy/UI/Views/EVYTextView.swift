@@ -12,6 +12,7 @@ public enum EVYTextStyle: String {
     case title
     case info
     case button
+    case action
 }
 
 struct EVYTextView: View {
@@ -78,6 +79,10 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
     case .button:
         return Text(input)
             .font(.evyButton)
+    case .action:
+        return Text(input)
+            .font(.evy)
+            .foregroundStyle(Constants.actionColor)
     default:
         return Text(input).font(.evy)
     }
@@ -92,6 +97,8 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
         EVYTextView("Just text", style: EVYTextStyle.body)
         EVYTextView("Just text info", style: EVYTextStyle.info)
         EVYTextView("Just text", style: EVYTextStyle.title)
+        EVYTextView("Button", style: EVYTextStyle.button)
+        EVYTextView("action", style: EVYTextStyle.action)
         EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
         EVYTextView("count: {count(item.photo_ids)}")
         EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star.square.on.square.fill::")
