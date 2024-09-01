@@ -578,28 +578,6 @@ struct SDUIConstants {
             }
         }
     """
-    static let columnContainerRow = """
-        {
-            "type": "ColumnContainer",
-            "view": {
-                "content": {
-                    "title": "Hello",
-                    "children": [\(textRowNoTitle), \(textRowNoTitle)]
-                }
-            }
-        }
-    """
-    static let listContainerRow = """
-        {
-            "type": "ListContainer",
-            "view": {
-                "content": {
-                    "title": "Hello",
-                    "children": [\(textRowShort), \(textRowShort)]
-                }
-            }
-        }
-    """
     
     static let submitButtonRow = """
         {

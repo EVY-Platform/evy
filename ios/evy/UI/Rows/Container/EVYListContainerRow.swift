@@ -32,7 +32,10 @@ struct EVYListContainerRow: View {
 }
 
 #Preview {
-    let json = SDUIConstants.listContainerRow.data(using: .utf8)!
+    let item = DataConstants.item.data(using: .utf8)!
+    try! EVY.data.create(key: "item", data: item)
+    
+    let json = SDUIConstants.pickupContainer.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }
 
