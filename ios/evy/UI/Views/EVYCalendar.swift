@@ -229,7 +229,7 @@ struct EVYCalendar: View {
     }
     
     private func handleOperation(_ operation: EVYCalendarOperation) {
-        let sourceProps = try! EVY.getPropsFromText(primarySource)
+        let sourceProps = EVY.parsePropsFromText(primarySource)
         switch operation {
         case .select(let index):
             let props = "{\(sourceProps)[\(index)].selected}"

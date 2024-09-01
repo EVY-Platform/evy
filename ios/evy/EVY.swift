@@ -47,7 +47,7 @@ struct EVY {
         return EVYValue(input, nil, nil)
     }
     
-    static func getPropsFromText(_ input: String) throws -> String {
+    static func parsePropsFromText(_ input: String) -> String {
         return EVYInterpreter.parsePropsFromText(input)
     }
     
@@ -74,7 +74,7 @@ struct EVY {
         let firstProp = splitProps.first!
         
         if data.exists(key: firstProp) {
-            let data = try data.get(key: firstProp)
+            let dataObj = try data.get(key: firstProp)
             let newValueAsData =
                 switch value {
                 case "true":
@@ -88,7 +88,8 @@ struct EVY {
                         "\"\(value)\"".data(using: .utf8)!
                     }
                 }
-            try data.updateDataWithData(newValueAsData, props: Array(splitProps[1...]))
+            try dataObj.updateDataWithData(newValueAsData, props: Array(splitProps[1...]))
+            try data.update(key: firstProp, data: dataObj.data)
         } else {
             let valueAsData = try JSONEncoder().encode(value)
             try data.create(key: firstProp, data: valueAsData)
@@ -104,8 +105,9 @@ struct EVY {
         let firstProp = splitProps.first!
         
         if data.exists(key: firstProp) {
-            let data = try data.get(key: splitProps.first!)
-            try data.updateDataWithData(values, props: Array(splitProps[1...]))
+            let dataObj = try data.get(key: splitProps.first!)
+            try dataObj.updateDataWithData(values, props: Array(splitProps[1...]))
+            try data.update(key: firstProp, data: dataObj.data)
         } else {
             try data.create(key: firstProp, data: values)
         }
