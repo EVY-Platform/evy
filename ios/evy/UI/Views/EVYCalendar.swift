@@ -229,39 +229,40 @@ struct EVYCalendar: View {
     }
     
     private func handleOperation(_ operation: EVYCalendarOperation) {
+        let sourceProps = try! EVY.getPropsFromText(primarySource)
         switch operation {
         case .select(let index):
-            let props = "{\(primarySource)[\(index)].selected}"
+            let props = "{\(sourceProps)[\(index)].selected}"
             try! EVY.updateValue("true", at: props)
 
         case .unselect(let index):
-            let props = "{\(primarySource)[\(index)].selected}"
+            let props = "{\(sourceProps)[\(index)].selected}"
             try! EVY.updateValue("false", at: props)
 
         case .selectRow(let y):
             for x in 0..<xLabels.count {
                 let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count-1)
-                let props = "{\(primarySource)[\(relevantIndex)].selected}"
+                let props = "{\(sourceProps)[\(relevantIndex)].selected}"
                 try! EVY.updateValue("true", at: props)
             }
         case .unselectRow(let y):
             for x in 0..<xLabels.count {
                 let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count-1)
-                let props = "{\(primarySource)[\(relevantIndex)].selected}"
+                let props = "{\(sourceProps)[\(relevantIndex)].selected}"
                 try! EVY.updateValue("false", at: props)
             }
             
         case .selectColumn(let x):
             for y in 0..<yLabels.count-1 {
                 let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count-1)
-                let props = "{\(primarySource)[\(relevantIndex)].selected}"
+                let props = "{\(sourceProps)[\(relevantIndex)].selected}"
                 try! EVY.updateValue("true", at: props)
             }
             
         case .unselectColumn(let x):
             for y in 0..<yLabels.count-1 {
                 let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count-1)
-                let props = "{\(primarySource)[\(relevantIndex)].selected}"
+                let props = "{\(sourceProps)[\(relevantIndex)].selected}"
                 try! EVY.updateValue("false", at: props)
             }
         }
@@ -322,5 +323,5 @@ private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
     let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!
     try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
 
-    return EVYCalendar(primary: "pickupTimeslots", secondary: "deliveryTimeslots")
+    return EVYCalendar(primary: "{pickupTimeslots}", secondary: "{deliveryTimeslots}")
 }

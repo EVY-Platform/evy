@@ -47,6 +47,10 @@ struct EVY {
         return EVYValue(input, nil, nil)
     }
     
+    static func getPropsFromText(_ input: String) throws -> String {
+        return EVYInterpreter.parsePropsFromText(input)
+    }
+    
     static func evaluateFromText(_ input: String) throws -> Bool {
         let match = try EVYInterpreter.parseTextFromText(input, nil, nil)
         return match.value == "true"
