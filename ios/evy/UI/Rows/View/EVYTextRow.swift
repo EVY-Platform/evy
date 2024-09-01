@@ -42,6 +42,7 @@ struct EVYTextRow: View {
                     .padding(.vertical, Constants.minPading)
             }
         }
+        .contentShape(Rectangle())
         .onTapGesture {
             expanded.toggle()
         }
