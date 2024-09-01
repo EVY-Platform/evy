@@ -14,8 +14,9 @@ struct EVYSearch: View {
     var body: some View {
         VStack {
             EVYSearchBar(searchController: searchController, placeholder: placeholder)
+                .padding(.horizontal, Constants.majorPadding)
             if searchController.selected.count > 0 {
-                EVYHorizontalSelection(searchController: searchController).padding()
+                EVYHorizontalSelection(searchController: searchController)
             }
             List {
                 ForEach(searchController.results, id: \.self) { result in

@@ -27,8 +27,10 @@ struct EVYInputList: View {
     var body: some View {
         if (values.isEmpty) {
             EVYTextField(input: "", destination: "", placeholder: placeholder)
+                .disabled(true)
         } else {
             EVYTextField(input: "", destination: "", placeholder: "")
+                .disabled(true)
                 .overlay {
                     ScrollView(.horizontal, content: {
                         HStack(spacing: Constants.majorPadding) {

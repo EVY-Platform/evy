@@ -22,12 +22,13 @@ struct EVYSheetContainerRow: View {
     
     var body: some View {
         self.view.content.child
+            .contentShape(Rectangle())
             .onTapGesture { showSheet.toggle() }
             .sheet(isPresented: $showSheet, content: {
                 VStack {
                     EVYTextView(view.content.title, style: .title)
                     ForEach(view.content.children, id: \.id) { child in
-                        child.padding(.horizontal)
+                        child
                     }
                 }
                 .frame(maxHeight: .infinity, alignment: .top)
