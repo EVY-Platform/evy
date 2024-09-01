@@ -74,8 +74,8 @@ class EVYSearchController: ObservableObject {
     
     func unselect(_ element: EVYJson) {
         do {
-            try EVY.updateValues(try JSONEncoder().encode(selected), at: self.destination)
             selected.removeAll(where: { $0.identifierValue() == element.identifierValue() })
+            try EVY.updateValues(try JSONEncoder().encode(selected), at: self.destination)
         } catch {
             results.removeAll(where: { $0.identifierValue() == element.identifierValue() })
         }
