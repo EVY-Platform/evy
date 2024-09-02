@@ -8,24 +8,19 @@
 import SwiftUI
 
 struct EVYInputList: View {
-    let placeholder: String
-    private var values: [String] = []
+    let input: String
+    var placeholder: String
+    @ObservedObject private var values: EVYState<[String]>
     
     init(input: String, placeholder: String) {
+        self.input = input
         self.placeholder = placeholder
         
-        do {
-            let data = try EVY.getDataFromText(input)
-            if case .array(_) = data {
-                self.values = data.displayValues()
-            } else {
-                self.values.append(data.displayValue())
-            }
-        } catch {}
+        self.values = EVYState(watch: input, setter: parseInputToValues)
     }
     
     var body: some View {
-        if (values.isEmpty) {
+        if (values.value.isEmpty) {
             EVYTextField(input: "", destination: "", placeholder: placeholder)
                 .disabled(true)
         } else {
@@ -34,7 +29,7 @@ struct EVYInputList: View {
                 .overlay {
                     ScrollView(.horizontal, content: {
                         HStack(spacing: Constants.majorPadding) {
-                            ForEach(values, id: \.self) { value in
+                            ForEach(values.value, id: \.self) { value in
                                 EVYRectangle(value: value, style: .primary, width: .fit)
                             }
                         }
@@ -45,6 +40,19 @@ struct EVYInputList: View {
                 }
         }
     }
+}
+
+private func parseInputToValues(input: String) -> [String] {
+    do {
+        let data = try EVY.getDataFromText(input)
+        if case .array(_) = data {
+            return data.displayValues()
+        } else {
+            return [data.displayValue()]
+        }
+    } catch {}
+    
+    return []
 }
 
 #Preview {

@@ -12,47 +12,49 @@ struct EVYTextField: View {
     let placeholder: String
     let multiLine: Bool
     
-    @State private var input: String
+    @ObservedObject private var i: EVYState<EVYValue>
     
     @State private var value: String
-    @State private var prefix: String
-    @State private var suffix: String
     
     @FocusState private var focused: Bool
     @State private var editing: Bool = false
     
     init(input: String, destination: String, placeholder: String, multiLine: Bool) {
+        let i = EVYState(watch: input, setter: EVY.getValueFromText)
+        
         self.placeholder = placeholder
         self.destination = destination
         self.multiLine = multiLine
         
-        self.input = input
-        
-        (self.value, self.prefix, self.suffix) = resetValues(input)
+        self.i = i
+        self.value = i.value.value
     }
     
     init(input: String, destination: String, placeholder: String) {
-        self.init(input: input, destination: destination, placeholder: placeholder, multiLine: false)
+        self.init(input: input,
+                  destination: destination,
+                  placeholder: placeholder,
+                  multiLine: false)
     }
     
     var body: some View {
         HStack(alignment: .top, spacing: .zero, content: {
-            let showPrefix = !multiLine && prefix.count > 0
-            let showSuffix = !multiLine && suffix.count > 0
+            let showPrefix = !multiLine && !(i.value.prefix ?? "").isEmpty
+            let showSuffix = !multiLine && !(i.value.suffix ?? "").isEmpty
             if (!editing) {
                 Group {
                     if (showPrefix) {
-                        EVYTextView(prefix)
+                        EVYTextView(i.value.prefix!)
                     }
-                    if value.count > 0 {
-                        EVYTextView(value)
+                    if i.value.value.count > 0 {
+                        EVYTextView(i.value.value)
                             .frame(maxWidth: showSuffix ? nil : .infinity, alignment: .leading)
                     } else {
                         EVYTextView(placeholder, style: .info)
                             .frame(maxWidth: showSuffix ? nil : .infinity, alignment: .leading)
                     }
                     if (showSuffix) {
-                        EVYTextView(suffix)
+                        EVYTextView(i.value.suffix!)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -68,11 +70,14 @@ struct EVYTextField: View {
                 .onChange(of: focused, { oldValue, newValue in
                     if (oldValue == true && newValue == false) {
                         editing = false
+                    } else {
+                        value = i.value.value
                     }
                 })
+                .onChange(of: value, { oldValue, newValue in
+                    try! EVY.updateValue(newValue, at: destination)
+                })
                 .onSubmit {
-                    try! EVY.updateValue(value, at: destination)
-                    (self.value, self.prefix, self.suffix) = resetValues(self.input)
                     editing = false
                     focused = false
                 }
@@ -97,11 +102,6 @@ struct EVYTextField: View {
     }
 }
 
-private func resetValues(_ input: String)-> (value: String, prefix: String, suffix: String) {
-    let parsedInput = EVY.getValueFromText(input)
-    return (parsedInput.value, parsedInput.prefix ?? "", parsedInput.suffix ?? "")
-}
-
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVY.data.create(key: "item", data: item)
@@ -117,6 +117,11 @@ private func resetValues(_ input: String)-> (value: String, prefix: String, suff
                      
         EVYTextField(input: "{item.title}",
                      destination: "{item.title}",
-                     placeholder: "Sample placeholder", multiLine: true)
+                     placeholder: "Sample placeholder",
+                     multiLine: true)
+        
+        EVYTextField(input: "{item.title}",
+                     destination: "{item.title}",
+                     placeholder: "Sample placeholder")
     }
 }

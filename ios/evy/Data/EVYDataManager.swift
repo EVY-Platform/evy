@@ -13,6 +13,29 @@ public enum EVYDataError: Error {
     case keyNotFound
 }
 
+extension Notification.Name {
+    static let evyDataUpdated = Notification.Name("EVYDataUpdated")
+}
+
+class EVYState<T>: ObservableObject {
+    @Published var value: T
+    
+    init(watch: String, setter: @escaping (_ input: String) -> T) {
+        self.value = setter(watch)
+        
+        NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
+                            object: nil,
+                            queue: nil,
+                            using: { notif in
+            if let notifProp = notif.object as? String,
+               watch.contains(notifProp)
+            {
+                self.value = setter(watch)
+            }
+        })
+    }
+}
+
 let config = ModelConfiguration(isStoredInMemoryOnly: true)
 let container = try! ModelContainer(for: EVYData.self, configurations: config)
 
@@ -41,16 +64,25 @@ struct EVYDataManager {
             throw EVYDataError.keyAlreadyExists
         }
         context.insert(EVYData(key: key, data: data))
+        
+        NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
+                                        object: key)
     }
     
     func update(key: String, data: Data) throws -> Void {
         let existing = try get(key: key)
         existing.data = data
+        
+        NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
+                                        object: key)
     }
     
     func delete(key: String) throws -> Void {
         let existing = try get(key: key)
         context.delete(existing)
+        
+        NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
+                                        object: key)
     }
 }
 

@@ -62,6 +62,7 @@ struct SDUIConstants {
             "rows": [
                 \(selectPhotoRow),
                 \(inputRow),
+                \(inputRow),
                 \(inputPriceRow),
                 \(condition),
                 \(sellingReason),

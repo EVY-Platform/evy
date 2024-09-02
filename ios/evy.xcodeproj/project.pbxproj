@@ -244,10 +244,10 @@
 			isa = PBXGroup;
 			children = (
 				7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */,
-				7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */,
-				73DE512A2C68BF3D00998024 /* EVYTextSelectRow.swift */,
-				736D105E2B78CDDB00503C4D /* EVYTextRow.swift */,
 				73CB09532C7609E5008F7D2C /* EVYInputListRow.swift */,
+				7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */,
+				736D105E2B78CDDB00503C4D /* EVYTextRow.swift */,
+				73DE512A2C68BF3D00998024 /* EVYTextSelectRow.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
