@@ -493,10 +493,10 @@ struct SDUIConstants {
                            "content": {
                                "title": "",
                                "resultKey": "address",
-                               "resultFormat": "{formatAddress(address)}}",
+                               "resultFormat": "{address.unit} {address.street}, {address.city} {address.state} {address.postcode}",
                                "placeholder": "Search address"
                            },
-                            "data": "api:address"
+                            "data": "local:address"
                        },
                         "edit": {
                             "destination": "{item.address}"
@@ -786,6 +786,21 @@ struct DataConstants {
         {
             "unit": "23-25",
             "street": "Rosebery Avenue",
+            "city": "Rosebery",
+            "postcode": "2018",
+            "state": "NSW",
+            "country": "Australia",
+            "location": {
+                "latitude": "45.323124",
+                "longitude": "-3.424233"
+            },
+            "instructions": ""
+        }
+    """
+    static let address2 = """
+        {
+            "unit": "100",
+            "street": "Main Street",
             "city": "Rosebery",
             "postcode": "2018",
             "state": "NSW",

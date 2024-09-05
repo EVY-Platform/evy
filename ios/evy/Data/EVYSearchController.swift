@@ -34,6 +34,9 @@ class EVYSearchController: ObservableObject {
         if sourceProps.hasPrefix("api:") {
             self.sourceType = .api
             self.source = String(source.dropFirst(4))
+        } else if sourceProps.hasPrefix("local:") {
+            self.sourceType = .local
+            self.source = String(source.dropFirst(6))
         } else {
             self.sourceType = .local
             self.source = source
@@ -43,7 +46,7 @@ class EVYSearchController: ObservableObject {
     func search(name: String) async {
         switch(sourceType) {
         case .local:
-            let address = DataConstants.address.data(using: .utf8)!
+            let address = DataConstants.address2.data(using: .utf8)!
             let id = UUID()
             try! EVY.data.create(key: id.uuidString, data: address)
             let json = try! EVY.getDataFromProps(id.uuidString)

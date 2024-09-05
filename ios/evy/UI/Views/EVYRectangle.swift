@@ -47,17 +47,19 @@ struct EVYRectangle: View {
     }
     
     var body: some View {
-        ZStack {
-            EVYTextView(value)
-                .padding(Constants.majorPadding)
-                .frame(height: height)
-                .frame(width: fixedWidth ? width : nil)
-                .overlay(content: {
-                    RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                        .fill(buttonFill)
-                })
-            EVYTextView(value).foregroundColor(textColor)
-        }
+        ScrollView(.horizontal) {
+            ZStack {
+                EVYTextView(value)
+                    .padding(Constants.majorPadding)
+                    .frame(height: height)
+                    .frame(width: fixedWidth ? width : nil)
+                    .overlay(content: {
+                        RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
+                            .fill(buttonFill)
+                    })
+                EVYTextView(value).foregroundColor(textColor)
+            }
+        }.scrollDisabled(true)
     }
 }
 

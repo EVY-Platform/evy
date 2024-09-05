@@ -66,7 +66,11 @@ struct EVYSearch: View {
     
     func select(_ element: EVYSearchResult) {
         do {
-            selected.append(element)
+            if canSelectMultiple {
+                selected.append(element)
+            } else {
+                selected = [element]
+            }
             let encoded = try JSONEncoder().encode(selected.map({ $0.data }))
             try EVY.updateValues(encoded, at: destination)
             searchController.results.removeAll(where: {
