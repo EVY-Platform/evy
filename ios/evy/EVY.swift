@@ -75,19 +75,7 @@ struct EVY {
         
         if data.exists(key: firstProp) {
             let dataObj = try data.get(key: firstProp)
-            let newValueAsData =
-                switch value {
-                case "true":
-                    "\(value)".data(using: .utf8)!
-                case "false":
-                    "\(value)".data(using: .utf8)!
-                default:
-                    if value.isNumber {
-                        "\(value)".data(using: .utf8)!
-                    } else {
-                        "\"\(value)\"".data(using: .utf8)!
-                    }
-                }
+            let newValueAsData = "\"\(value)\"".data(using: .utf8)!
             try dataObj.updateDataWithData(newValueAsData, props: Array(splitProps[1...]))
             try data.update(key: firstProp, data: dataObj.data)
         } else {
