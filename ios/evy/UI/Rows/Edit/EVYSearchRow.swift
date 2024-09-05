@@ -13,7 +13,8 @@ struct EVYSearchRowView: Decodable {
     
     struct ContentData: Decodable {
         let title: String
-        let value: String
+        let resultKey: String
+        let resultFormat: String
         let placeholder: String
     }
 }
@@ -24,14 +25,9 @@ struct EVYSearchRow: View {
     private let view: EVYSearchRowView
     private let edit: SDUI.Edit
     
-    @ObservedObject var searchController: EVYSearchController
-    
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSearchRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        
-        self.searchController = EVYSearchController(source: view.data,
-                                                    destination: edit.destination)
     }
     
     @State private var showSheet = false
@@ -42,11 +38,12 @@ struct EVYSearchRow: View {
                 EVYTextView(view.content.title)
                     .padding(.vertical, Constants.minPading)
             }
-            EVYSearch(searchController: searchController,
-                      placeholder: view.content.placeholder)
-        }.onAppear(perform: {
-            searchController.refresh()
-        })
+            EVYSearch(source: view.data,
+                      destination: edit.destination,
+                      placeholder: view.content.placeholder,
+                      resultKey: view.content.resultKey,
+                      resultFormat: view.content.resultFormat)
+        }
     }
 }
 

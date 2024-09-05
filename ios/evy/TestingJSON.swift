@@ -219,10 +219,11 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "",
-                   "value": "{tags[].value}",
+                   "resultKey": "tag",
+                   "resultFormat": "{tag.value}",
                    "placeholder": "Search for tags"
                },
-                "data": "{tags}"
+                "data": "{api:tags}"
            },
             "edit": {
                 "destination": "{item.tags}"
@@ -491,7 +492,8 @@ struct SDUIConstants {
                        "view": {
                            "content": {
                                "title": "",
-                               "value": "{address[].value}",
+                               "resultKey": "address",
+                               "resultFormat": "{formatAddress(address)}}",
                                "placeholder": "Search address"
                            },
                             "data": "api:address"
@@ -780,6 +782,21 @@ struct SDUIConstants {
 }
 
 struct DataConstants {
+    static let address = """
+        {
+            "unit": "23-25",
+            "street": "Rosebery Avenue",
+            "city": "Rosebery",
+            "postcode": "2018",
+            "state": "NSW",
+            "country": "Australia",
+            "location": {
+                "latitude": "45.323124",
+                "longitude": "-3.424233"
+            },
+            "instructions": ""
+        }
+    """
     static let selling_reasons = """
         [{
             "id": "76d781c6-7ab1-4b5e-99d5-60d417e3c382",
@@ -865,19 +882,7 @@ struct DataConstants {
                 "value": "250"
             },
             "seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
-            "address": {
-                "unit": "23-25",
-                "street": "Rosebery Avenue",
-                "city": "Rosebery",
-                "postcode": "2018",
-                "state": "NSW",
-                "country": "Australia",
-                "location": {
-                    "latitude": "45.323124",
-                    "longitude": "-3.424233"
-                },
-                "instructions": ""
-            },
+            "address": \(address),
             "created_timestamp": "1701471377",
             "transfer_options": {
                 "pickup": {
