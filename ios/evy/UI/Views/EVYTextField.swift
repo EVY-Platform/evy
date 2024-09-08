@@ -39,29 +39,26 @@ struct EVYTextField: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: .zero, content: {
-            let showPrefix = !multiLine && !(i.value.prefix ?? "").isEmpty
-            let showSuffix = !multiLine && !(i.value.suffix ?? "").isEmpty
             if (!editing) {
                 Group {
-                    if (showPrefix) {
-                        EVYTextView(i.value.prefix!)
-                    }
                     if i.value.value.count > 0 {
+                        EVYTextView(i.value.prefix ?? "")
                         EVYTextView(i.value.value)
-                            .frame(maxWidth: showSuffix ? nil : .infinity, alignment: .leading)
+                        EVYTextView(i.value.suffix ?? "")
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         EVYTextView(placeholder, style: .info)
-                            .frame(maxWidth: showSuffix ? nil : .infinity, alignment: .leading)
-                    }
-                    if (showSuffix) {
-                        EVYTextView(i.value.suffix!)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 .padding(.bottom, 1)
                 .padding(.top, 1)
             } else {
-                TextField(text: $value,
+                let valueBinding = Binding(
+                    get: { i.value.value },
+                    set: { value = $0 }
+                )
+                TextField(text: valueBinding,
                           prompt: EVYTextView(placeholder).toText(),
                           axis: multiLine ? .vertical : .horizontal,
                           label: {})
@@ -70,8 +67,6 @@ struct EVYTextField: View {
                 .onChange(of: focused, { oldValue, newValue in
                     if (oldValue == true && newValue == false) {
                         editing = false
-                    } else {
-                        value = i.value.value
                     }
                 })
                 .onChange(of: value, { oldValue, newValue in
@@ -109,7 +104,8 @@ struct EVYTextField: View {
     return VStack {
         EVYTextField(input: "{formatDimension(item.dimension.width)}",
                      destination: "{item.dimension.width}",
-                     placeholder: "10")
+                     placeholder: "10",
+                     multiLine: true)
         
         EVYTextField(input: "{formatCurrency(item.price)}",
                      destination: "{item.price}",
@@ -122,6 +118,10 @@ struct EVYTextField: View {
         
         EVYTextField(input: "{item.title}",
                      destination: "{item.title}",
+                     placeholder: "Sample placeholder")
+        
+        EVYTextField(input: "",
+                     destination: "",
                      placeholder: "Sample placeholder")
     }
 }
