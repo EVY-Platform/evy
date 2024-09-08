@@ -16,16 +16,23 @@ public enum EVYTextStyle: String {
 }
 
 struct EVYTextView: View {
-    let text: EVYValue
-    var style: EVYTextStyle = .body
+    @ObservedObject var text: EVYState<EVYValue>
+    let style: EVYTextStyle
     
     init(_ text: String, style: EVYTextStyle = .body) {
-        self.text = EVY.getValueFromText(text)
         self.style = style
+        
+        self.text = EVYState(watch: text, setter: {
+            EVY.getValueFromText($0)
+        })
     }
     
     var body: some View {
-        parsedText(text.value, style).lineSpacing(Constants.spacing)
+        HStack(alignment: .top, spacing: .zero, content: {
+            parsedText(text.value.prefix ?? "", style)
+            parsedText(text.value.value, style)
+            parsedText(text.value.suffix ?? "", style)
+        })
     }
     
     func toText() -> Text {
@@ -33,7 +40,7 @@ struct EVYTextView: View {
     }
     
     func toString() -> String {
-        return text.toString()
+        return text.value.toString()
     }
 }
 

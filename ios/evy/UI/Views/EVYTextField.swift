@@ -11,8 +11,9 @@ struct EVYTextField: View {
     let destination: String
     let placeholder: String
     let multiLine: Bool
+    let input: String
     
-    @ObservedObject private var i: EVYState<EVYValue>
+    @ObservedObject private var editableValue: EVYState<EVYValue>
     
     @State private var value: String
     
@@ -20,14 +21,16 @@ struct EVYTextField: View {
     @State private var editing: Bool = false
     
     init(input: String, destination: String, placeholder: String, multiLine: Bool) {
-        let i = EVYState(watch: input, setter: EVY.getValueFromText)
-        
+        self.input = input
         self.placeholder = placeholder
         self.destination = destination
         self.multiLine = multiLine
         
-        self.i = i
-        self.value = i.value.value
+        let editableValue = EVYState(watch: input, setter: {
+            EVY.getValueFromText($0, editing: true)
+        })
+        self.editableValue = editableValue
+        self.value = editableValue.value.value
     }
     
     init(input: String, destination: String, placeholder: String) {
@@ -38,24 +41,19 @@ struct EVYTextField: View {
     }
     
     var body: some View {
-        HStack(alignment: .top, spacing: .zero, content: {
+        Group {
             if (!editing) {
-                Group {
-                    if i.value.value.count > 0 {
-                        EVYTextView(i.value.prefix ?? "")
-                        EVYTextView(i.value.value)
-                        EVYTextView(i.value.suffix ?? "")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    } else {
-                        EVYTextView(placeholder, style: .info)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                let display = EVYTextView(input)
+                let placeholder = EVYTextView(placeholder, style: .info)
+                
+                if (display.text.value.value.count > 0) {
+                    display.frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    placeholder.frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.bottom, 1)
-                .padding(.top, 1)
             } else {
                 let valueBinding = Binding(
-                    get: { i.value.value },
+                    get: { editableValue.value.value },
                     set: { value = $0 }
                 )
                 TextField(text: valueBinding,
@@ -77,8 +75,7 @@ struct EVYTextField: View {
                     focused = false
                 }
             }
-        })
-        .font(.evy)
+        }
         .padding(EdgeInsets(top: Constants.fieldPadding,
                             leading: Constants.minorPadding,
                             bottom: Constants.fieldPadding,
@@ -108,7 +105,7 @@ struct EVYTextField: View {
                      multiLine: true)
         
         EVYTextField(input: "{formatCurrency(item.price)}",
-                     destination: "{item.price}",
+                     destination: "{item.price.value}",
                      placeholder: "10")
                      
         EVYTextField(input: "{item.title}",

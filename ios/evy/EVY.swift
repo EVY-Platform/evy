@@ -32,15 +32,15 @@ struct EVY {
         return data.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
-   static func getDataFromProps(_ props: String) throws -> EVYJson {
-       let splitProps = try EVYInterpreter.splitPropsFromText(props)
-       let data = try data.get(key: splitProps.first!)
-       return data.decoded().parseProp(props: Array(splitProps[1...]))
-   }
+    static func getDataFromProps(_ props: String) throws -> EVYJson {
+        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        let data = try data.get(key: splitProps.first!)
+        return data.decoded().parseProp(props: Array(splitProps[1...]))
+    }
     
-    static func getValueFromText(_ input: String) -> EVYValue {
+    static func getValueFromText(_ input: String, editing: Bool = false) -> EVYValue {
         do {
-            let match = try EVYInterpreter.parseTextFromText(input, nil, nil)
+            let match = try EVYInterpreter.parseTextFromText(input, editing)
             return EVYValue(match.value, match.prefix, match.suffix)
         } catch {}
         
@@ -52,7 +52,7 @@ struct EVY {
     }
     
     static func evaluateFromText(_ input: String) throws -> Bool {
-        let match = try EVYInterpreter.parseTextFromText(input, nil, nil)
+        let match = try EVYInterpreter.parseTextFromText(input)
         return match.value == "true"
     }
     

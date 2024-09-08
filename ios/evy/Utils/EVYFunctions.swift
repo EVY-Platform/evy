@@ -22,16 +22,19 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
-func evyFormatCurrency(_ args: String) throws -> EVYFunctionOutput {
+func evyFormatCurrency(_ args: String,
+                       _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
     case .dictionary(let dictValue):
         guard let value = dictValue["value"] else {
-            return (args, nil, nil)
+            return ("", nil, nil)
         }
-        
+        if editing {
+            return ("\(value.toString())", nil, nil)
+        }
         guard let number = NumberFormatter().number(from: value.toString()) else {
-            return (args, nil, nil)
+            return ("", nil, nil)
         }
         return (String(format: "%.2f", CGFloat(truncating: number)), "$", nil)
     default:
@@ -39,40 +42,76 @@ func evyFormatCurrency(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
-func evyFormatDimension(_ args: String) throws -> EVYFunctionOutput {
+func evyFormatDimension(_ args: String,
+                        _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
     case .string(let stringValue):
-        let floatValue = Float(stringValue)!
-        if floatValue > 1000 {
-            let meters = floatValue/1000
-            if meters.truncatingRemainder(dividingBy: 1) == 0 {
-                return ("\(Int(meters))", nil, "m")
+        if editing {
+            return (stringValue, nil, nil)
+        }
+        guard let mm = Decimal(string: stringValue) else {
+            return ("", nil, nil)
+        }
+        if mm > 1000 {
+            let meters = mm/1000
+            let truncatedMeters = NSDecimalNumber(decimal: meters).intValue
+            if meters == Decimal(integerLiteral: truncatedMeters) {
+                return ("\(truncatedMeters)", nil, "m")
             }
             return ("\(meters)", nil, "m")
         }
-        if floatValue > 100 {
-            let cm = floatValue/10
-            if cm.truncatingRemainder(dividingBy: 1) == 0 {
-                return ("\(Int(cm))", nil, "cm")
+        if mm > 100 {
+            let cm = mm/10
+            let truncatedCM = NSDecimalNumber(decimal: cm).intValue
+            if cm == Decimal(integerLiteral: truncatedCM) {
+                return ("\(truncatedCM)", nil, "cm")
             }
             return ("\(cm)", nil, "cm")
         }
-        if floatValue.truncatingRemainder(dividingBy: 1) == 0 {
-            return ("\(Int(floatValue))", nil, "mm")
+        
+        let truncatedMM = NSDecimalNumber(decimal: mm).intValue
+        if mm == Decimal(integerLiteral: truncatedMM) {
+            return ("\(truncatedMM)", nil, "mm")
         }
-        return ("\(floatValue)", nil, "mm")
+        return ("\(mm)", nil, "mm")
     default:
         return ("Could not format dimension", nil, nil)
     }
 }
 
-func evyFormatWeight(_ args: String) throws -> EVYFunctionOutput {
+func evyFormatWeight(_ args: String,
+                     _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
     case .string(let stringValue):
-        let floatValue = Float(stringValue)!
-        return ("\(floatValue)", nil, "kg")
+        if editing {
+            return (stringValue, nil, nil)
+        }
+        guard let mg = Decimal(string: stringValue) else {
+            return ("", nil, nil)
+        }
+        if mg > 1000000 {
+            let kg = mg/1000000
+            let truncatedKG = NSDecimalNumber(decimal: kg).intValue
+            if kg == Decimal(integerLiteral: truncatedKG) {
+                return ("\(truncatedKG)", nil, "kg")
+            }
+            return ("\(kg)", nil, "kg")
+        }
+        if mg > 1000 {
+            let gram = mg/1000
+            let truncatedGram = NSDecimalNumber(decimal: gram).intValue
+            if gram == Decimal(integerLiteral: truncatedGram) {
+                return ("\(truncatedGram)", nil, "g")
+            }
+            return ("\(gram)", nil, "g")
+        }
+        let truncatedMG = NSDecimalNumber(decimal: mg).intValue
+        if mg == Decimal(integerLiteral: truncatedMG) {
+            return ("\(truncatedMG)", nil, "mg")
+        }
+        return ("\(mg)", nil, "mg")
     default:
         return ("Could not format weight", nil, nil)
     }
