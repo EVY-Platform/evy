@@ -20,12 +20,12 @@ struct EVYSelect: View {
                         Spacer()
                         EVYRadioButton(isSelected: value == selection, style: .single)
                     }
+                    .frame(height: 48)
                 }
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             }
         }
-        .environment(\.defaultMinListRowHeight, 70)
         .listStyle(.inset)
     }
 }
