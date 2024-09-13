@@ -29,9 +29,13 @@ struct EVYTextView: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: .zero, content: {
-            parsedText(text.value.prefix ?? "", style)
+            if text.value.prefix != nil {
+                parsedText(text.value.prefix!, style)
+            }
             parsedText(text.value.value, style)
-            parsedText(text.value.suffix ?? "", style)
+            if text.value.suffix != nil {
+                parsedText(text.value.suffix!, style)
+            }
         })
     }
     
