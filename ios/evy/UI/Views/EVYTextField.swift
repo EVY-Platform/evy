@@ -60,6 +60,7 @@ struct EVYTextField: View {
                           prompt: EVYTextView(placeholder).toText(),
                           axis: multiLine ? .vertical : .horizontal,
                           label: {})
+                .font(.evy)
                 .lineLimit(multiLine ? 10... : 1...)
                 .focused($focused)
                 .onChange(of: focused, { oldValue, newValue in
