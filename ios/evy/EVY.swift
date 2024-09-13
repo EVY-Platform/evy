@@ -91,18 +91,20 @@ struct EVY {
      * Updating a nested value in an object by using props
      */
     static func updateValue(_ value: String, at: String) throws -> Void {
+        try updateData("\"\(value)\"".data(using: .utf8)!, at: at)
+    }
+    
+    static func updateData(_ newData: Data, at: String) throws -> Void {
         let props = EVYInterpreter.parsePropsFromText(at)
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
         let firstProp = splitProps.first!
         
         if data.exists(key: firstProp) {
             let dataObj = try data.get(key: firstProp)
-            let newValueAsData = "\"\(value)\"".data(using: .utf8)!
-            try dataObj.updateDataWithData(newValueAsData, props: Array(splitProps[1...]))
+            try dataObj.updateDataWithData(newData, props: Array(splitProps[1...]))
             try data.update(key: firstProp, data: dataObj.data)
         } else {
-            let valueAsData = try JSONEncoder().encode(value)
-            try data.create(key: firstProp, data: valueAsData)
+            try data.create(key: firstProp, data: newData)
         }
     }
     
