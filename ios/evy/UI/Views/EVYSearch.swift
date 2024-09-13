@@ -72,7 +72,7 @@ struct EVYSearch: View {
                 selected = [element]
             }
             let encoded = try JSONEncoder().encode(selected.map({ $0.data }))
-            try EVY.updateValues(encoded, at: destination)
+            try EVY.updateData(encoded, at: destination)
             searchController.results.removeAll(where: {
                 return $0.value == element.value
             })
@@ -84,8 +84,8 @@ struct EVYSearch: View {
     func unselect(_ element: EVYSearchResult) {
         do {
             selected.removeAll(where: { $0.value == element.value })
-            try EVY.updateValues(try JSONEncoder().encode(selected.map({ $0.data })),
-                                 at: destination)
+            try EVY.updateData(try JSONEncoder().encode(selected.map({ $0.data })),
+                               at: destination)
         } catch {
             searchController.results.removeAll(where: { $0.value == element.value })
         }

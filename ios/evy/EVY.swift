@@ -107,21 +107,4 @@ struct EVY {
             try data.create(key: firstProp, data: newData)
         }
     }
-    
-    /**
-     * Updating a nested values in an object by using props
-     */
-    static func updateValues(_ values: Data, at: String) throws -> Void {
-        let props = EVYInterpreter.parsePropsFromText(at)
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        let firstProp = splitProps.first!
-        
-        if data.exists(key: firstProp) {
-            let dataObj = try data.get(key: splitProps.first!)
-            try dataObj.updateDataWithData(values, props: Array(splitProps[1...]))
-            try data.update(key: firstProp, data: dataObj.data)
-        } else {
-            try data.create(key: firstProp, data: values)
-        }
-    }
 }
