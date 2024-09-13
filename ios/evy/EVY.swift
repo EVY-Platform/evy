@@ -102,7 +102,7 @@ struct EVY {
         if data.exists(key: firstProp) {
             let dataObj = try data.get(key: firstProp)
             try dataObj.updateDataWithData(newData, props: Array(splitProps[1...]))
-            try data.update(key: firstProp, data: dataObj.data)
+            try data.update(props: splitProps, data: dataObj.data)
         } else {
             try data.create(key: firstProp, data: newData)
         }

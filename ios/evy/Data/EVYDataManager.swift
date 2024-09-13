@@ -69,12 +69,20 @@ struct EVYDataManager {
                                         object: key)
     }
     
-    func update(key: String, data: Data) throws -> Void {
-        let existing = try get(key: key)
+    func update(props: [String], data: Data) throws -> Void {
+        let existing = try get(key: props.first!)
         existing.data = data
         
+        var propsForNotification = props
+        
+        let firstIndexWithANumber = props.firstIndex { $0.isNumber }
+        if firstIndexWithANumber != nil {
+            propsForNotification.removeLast(props.count - firstIndexWithANumber!)
+        }
+        
+        let notifKey = propsForNotification.joined(separator: PROP_SEPARATOR)
         NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
-                                        object: key)
+                                        object: notifKey)
     }
     
     func delete(key: String) throws -> Void {

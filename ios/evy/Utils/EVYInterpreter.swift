@@ -15,7 +15,7 @@ private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
 private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
-private let propSeparator = "."
+public let PROP_SEPARATOR = "."
 
 struct EVYInterpreter {
     /**
@@ -41,7 +41,7 @@ struct EVYInterpreter {
             throw EVYParamError.invalidProps
         }
         
-        var splitProps = props.components(separatedBy: propSeparator)
+        var splitProps = props.components(separatedBy: PROP_SEPARATOR)
         if splitProps.count < 1 {
             throw EVYParamError.invalidProps
         }
