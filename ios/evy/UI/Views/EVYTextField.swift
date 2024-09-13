@@ -42,7 +42,7 @@ struct EVYTextField: View {
     
     var body: some View {
         Group {
-            if (!editing) {
+            if (!editing || destination.isEmpty) {
                 let display = EVYTextView(input)
                 let placeholder = EVYTextView(placeholder, style: .info)
                 
