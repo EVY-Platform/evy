@@ -51,7 +51,7 @@ class EVYSearchController: ObservableObject {
             try! EVY.data.create(key: id.uuidString, data: address)
             let json = try! EVY.getDataFromProps(id.uuidString)
             let jsonFormatted = EVY.formatData(json: json, format: resultFormat, key: resultKey)
-            results.append(EVYSearchResult(data: json, value: jsonFormatted))
+            results = [EVYSearchResult(data: json, value: jsonFormatted)]
         default:
             do {
                 let data = try await EVYMovieAPI().search(term: name)
