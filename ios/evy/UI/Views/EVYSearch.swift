@@ -153,7 +153,7 @@ struct EVYSearch: View {
             .listStyle(.plain)
             .listRowSpacing(20)
         }
-        .onAppear(perform: { refresh() })
+        .onAppear { refresh() }
     }
 }
 

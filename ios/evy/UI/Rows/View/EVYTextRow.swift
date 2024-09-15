@@ -21,12 +21,13 @@ struct EVYTextRow: View {
     public static let JSONType = "Text"
     
     private let view: EVYTextRowView
+    @State private var showSheet = false
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYTextRowView.self, forKey:.view)
     }
     
-    @State private var expanded: Bool = false
+    @State private var canBeExpanded: Bool = false
     var body: some View {
         VStack(alignment:.leading) {
             if view.content.title.count > 0 {
@@ -35,16 +36,32 @@ struct EVYTextRow: View {
             }
             EVYTextView(view.content.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(expanded ? nil : Int(view.max_lines) ?? 2)
-            if view.max_lines.count > 0 {
-                EVYTextView(expanded ? "Read less" : "Read more")
+                .lineLimit(Int(view.max_lines) ?? 2)
+                .background {
+                    ViewThatFits(in: .vertical) {
+                        EVYTextView(view.content.text).hidden()
+                        Color.clear.onAppear {
+                            canBeExpanded = true
+                        }
+                    }
+                }
+                .sheet(isPresented: $showSheet, content: {
+                    EVYTextView(view.content.text)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .padding(.top, Constants.majorPadding)
+                    .presentationDragIndicator(.visible)
+                })
+            if canBeExpanded {
+                EVYTextView("Read more")
                     .foregroundStyle(Constants.actionColor)
                     .padding(.vertical, Constants.minPading)
             }
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            expanded.toggle()
+            if canBeExpanded {
+                showSheet.toggle()
+            }
         }
     }
 }

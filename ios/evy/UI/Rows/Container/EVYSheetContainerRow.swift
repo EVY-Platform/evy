@@ -32,7 +32,7 @@ struct EVYSheetContainerRow: View {
                     }
                 }
                 .frame(maxHeight: .infinity, alignment: .top)
-                .padding(.top, 30)
+                .padding(.top, Constants.majorPadding)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             })

@@ -58,7 +58,7 @@ struct EVYDropdown: View {
         .sheet(isPresented: $showSheet, content: {
             VStack {
                 if self.title?.count ?? 0 > 0 {
-                    EVYTextView(title!).padding(.top, 30)
+                    EVYTextView(title!).padding(.top, Constants.majorPadding)
                 }
                 EVYSelect(selection: $selection, options: options)
                     .presentationDetents([.medium, .large])
