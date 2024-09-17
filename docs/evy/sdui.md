@@ -125,12 +125,6 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 
 ```
 {
-    "type": "CarouselContainer", // Shows children in a carousel
-}
-```
-
-```
-{
     "type": "SelectSegmentContainer", // Shows children under a segmented control
     "view": {
         "content": {
@@ -281,27 +275,12 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     "type": "Search",
     "view": {
         "content": {
-            "value",
+            "format",
             "placeholder"
         },
-        "multi",
         "data"
     },
     "edit": {}
-}
-```
-
-```
-{
-    "type": "Select",
-    "view": {
-        "content": {
-            "header",
-            "value"
-        },
-        "multi",
-        "data"
-    }
 }
 ```
 
@@ -311,9 +290,8 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     "view": {
         "content": {
             "title",
-            "value"
+            "format"
         },
-        "multi",
         "data"
     }
 }
@@ -361,32 +339,39 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     "type": "Calendar",
     "view": {
         "content": {
-            "layers": [{
-                "primary",
-                "timeslots":[{
-                    "id",
-                    "start_timestamp",
-                    "end_timestamp"
-                }]
+            "primary": [{
+                "x",
+                "y",
+                "header",
+                "start_label",
+                "end_label",
+                "selected"
+            }],
+            "secondary": [{
+                "x",
+                "y",
+                "header",
+                "start_label",
+                "end_label",
+                "selected"
             }]
         }
     },
-    "edit": {
-        "minimum_number"
-    }
+    "edit": {}
 }
 ```
 
 ```
 {
-    "type": "DropdownRow",
+    "type": "Dropdown",
     "view": {
         "content": {
-            "value",
+            "format",
             "placeholder"
         },
         "data"
-    }
+    },
+    "edit": {}
 }
 ```
 
@@ -399,6 +384,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
         "content": {
             "label"
         }
-    }
+    },
+    "edit": {}
 }
 ```
