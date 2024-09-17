@@ -13,7 +13,7 @@ struct EVYInlinePickerRowView: Decodable {
     
     struct ContentData: Decodable {
         let title: String
-        let value: String
+        let format: String
     }
 }
     
@@ -35,8 +35,8 @@ struct EVYInlinePickerRow: View {
                     .padding(.vertical, Constants.padding)
             }
             EVYInlinePicker(title: view.content.title,
-                            value: view.content.value,
                             data: view.data,
+                            format: view.content.format,
                             destination: edit.destination)
         }
     }

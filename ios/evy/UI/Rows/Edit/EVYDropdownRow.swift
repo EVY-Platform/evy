@@ -13,7 +13,7 @@ struct EVYDropdownRowView: Decodable {
     
     struct ContentData: Decodable {
         let title: String
-        let value: String
+        let format: String
         let placeholder: String
     }
 }
@@ -38,6 +38,7 @@ struct EVYDropdownRow: View {
             EVYDropdown(title: view.content.title,
                         placeholder: view.content.placeholder,
                         data: view.data,
+                        format: view.content.format,
                         destination: edit.destination)
         }
     }

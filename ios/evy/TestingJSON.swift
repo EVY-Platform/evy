@@ -121,7 +121,7 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "Condition",
-                   "value": "",
+                   "format": "{$0.value}",
                    "placeholder": "Choose one"
                },
                 "data": "{conditions}"
@@ -134,15 +134,15 @@ struct SDUIConstants {
     
     static let sellingReason = """
         {
-           "type": "Dropdown",
-           "view": {
-               "content": {
-                   "title": "Selling Reason",
-                   "value": "",
-                   "placeholder": "Choose one"
-               },
+            "type": "Dropdown",
+            "view": {
+                "content": {
+                    "title": "Selling Reason",
+                    "format": "{$0.value}",
+                    "placeholder": "Choose one"
+                },
                 "data": "{selling_reasons}"
-           },
+            },
             "edit": {
                 "destination": "{item.selling_reason_id}"
             }
@@ -155,7 +155,7 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "",
-                   "value": "{distance}"
+                   "format": "{$0.value}"
                },
                 "data": "{durations}"
            },
@@ -171,7 +171,7 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "",
-                   "value": "{area}"
+                   "format": "{$0.value}"
                },
                 "data": "{areas}"
            },
@@ -219,8 +219,7 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "",
-                   "resultKey": "tag",
-                   "resultFormat": "{tag.value}",
+                   "format": "{$0.value}",
                    "placeholder": "Search for tags"
                },
                 "data": "{api:tags}"
@@ -238,8 +237,9 @@ struct SDUIConstants {
                 "content": {
                     "title": "Tags",
                     "placeholder": "Search for tags",
-                    "value": "{item.tags}"
-                }
+                    "format": "{$0.value}"
+                },
+                "data": "{item.tags}"
             }
         }
     """
@@ -492,8 +492,7 @@ struct SDUIConstants {
                        "view": {
                            "content": {
                                "title": "",
-                               "resultKey": "address",
-                               "resultFormat": "{address.unit} {address.street}, {address.city} {address.state} {address.postcode}",
+                               "format": "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}",
                                "placeholder": "Search address"
                            },
                             "data": "local:address"

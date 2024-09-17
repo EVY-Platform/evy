@@ -96,6 +96,5 @@ struct EVYSearchSingle: View {
     return EVYSearch(source: "{local:address}",
                      destination: "{item.address}",
                      placeholder: "Search",
-                     resultKey: "address",
-                     resultFormat: "{address.unit} {address.street}, {address.city} {address.state} {address.postcode}")
+                     format: "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}")
 }

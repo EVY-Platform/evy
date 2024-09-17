@@ -13,8 +13,7 @@ struct EVYSearchRowView: Decodable {
     
     struct ContentData: Decodable {
         let title: String
-        let resultKey: String
-        let resultFormat: String
+        let format: String
         let placeholder: String
     }
 }
@@ -41,8 +40,7 @@ struct EVYSearchRow: View {
             EVYSearch(source: view.data,
                       destination: edit.destination,
                       placeholder: view.content.placeholder,
-                      resultKey: view.content.resultKey,
-                      resultFormat: view.content.resultFormat)
+                      format: view.content.format)
         }
     }
 }

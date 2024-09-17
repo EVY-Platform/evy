@@ -56,15 +56,15 @@ struct EVY {
         return match.value == "true"
     }
     
-    static func formatData(json: EVYJson, format: String, key: String) -> String {
+    static func formatData(json: EVYJson, format: String) -> String {
         let temporaryId = UUID().uuidString
         let formatWithNewData = format
-            .replacingOccurrences(of: "\(key).", with: "\(temporaryId).")
-            .replacingOccurrences(of: ".\(key)", with: ".\(temporaryId)")
-            .replacingOccurrences(of: "(\(key))", with: "(\(temporaryId))")
+            .replacingOccurrences(of: "$0.", with: "\(temporaryId).")
+            .replacingOccurrences(of: ".$0", with: ".\(temporaryId)")
+            .replacingOccurrences(of: "($0)", with: "(\(temporaryId))")
         
         if formatWithNewData.isEmpty {
-            return json.displayValue()
+            return json.toString()
         }
         
         do {
@@ -74,7 +74,7 @@ struct EVY {
             try data.delete(key: temporaryId)
             return returnText.toString()
         } catch {
-            return json.displayValue()
+            return json.toString()
         }
     }
     

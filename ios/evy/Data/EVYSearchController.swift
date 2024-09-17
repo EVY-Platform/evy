@@ -21,14 +21,12 @@ public struct EVYSearchResult: Equatable {
 class EVYSearchController: ObservableObject {
     private let sourceType: EVYSearchSourceType
     private let source: String
-    private let resultKey: String
-    private let resultFormat: String
+    private let format: String
     
     @Published var results: [EVYSearchResult] = []
     
-    init (source: String, resultKey: String, resultFormat: String) {
-        self.resultKey = resultKey
-        self.resultFormat = resultFormat
+    init (source: String, format: String) {
+        self.format = format
         
         let sourceProps = EVY.parsePropsFromText(source)
         if sourceProps.hasPrefix("api:") {
@@ -50,14 +48,14 @@ class EVYSearchController: ObservableObject {
             let id = UUID()
             try! EVY.data.create(key: id.uuidString, data: address)
             let json = try! EVY.getDataFromProps(id.uuidString)
-            let jsonFormatted = EVY.formatData(json: json, format: resultFormat, key: resultKey)
+            let jsonFormatted = EVY.formatData(json: json, format: format)
             results = [EVYSearchResult(data: json, value: jsonFormatted)]
         default:
             do {
                 let data = try await EVYMovieAPI().search(term: name)
                 let response = try JSONDecoder().decode([EVYJson].self, from: data)
                 for res in response {
-                    let resFormatted = EVY.formatData(json: res, format: resultFormat, key: resultKey)
+                    let resFormatted = EVY.formatData(json: res, format: format)
                     self.results.append(EVYSearchResult(data: res, value: resFormatted))
                 }
             } catch {
@@ -74,6 +72,5 @@ class EVYSearchController: ObservableObject {
     return EVYSearch(source: "{api:movies}",
                      destination: "{item.tags}",
                      placeholder: "Search",
-                     resultKey: "tag",
-                     resultFormat: "{tag.value}")
+                     format: "{$0.value}")
 }

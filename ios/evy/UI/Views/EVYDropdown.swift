@@ -10,6 +10,7 @@ import SwiftUI
 struct EVYDropdown: View {
     let title: String?
     let destination: String
+    let format: String
     let placeholder: String?
     
     private var options: EVYJsonArray = []
@@ -17,10 +18,16 @@ struct EVYDropdown: View {
     @State private var selection: EVYJson?
     @State private var showSheet = false
     
-    init(title: String?, placeholder: String?, data: String, destination: String) {
+    init(title: String?,
+         placeholder: String?,
+         data: String,
+         format: String,
+         destination: String)
+    {
         self.title = title
-        self.placeholder = placeholder
         self.destination = destination
+        self.format = format
+        self.placeholder = placeholder
         
         do {
             let data = try EVY.getDataFromText(data)
@@ -33,16 +40,15 @@ struct EVYDropdown: View {
     var body: some View {
         HStack {
             Button(action: { showSheet.toggle() }) {
-                if let value = selection?.displayValue() {
-                    EVYTextView(value).foregroundColor(.black)
+                if selection != nil {
+                    EVYTextView(EVY.formatData(json: selection!, format: format))
+                        .foregroundColor(.black)
                 } else {
-                    EVYTextView(placeholder ?? "")
-                        .foregroundColor(Constants.textColor)
+                    EVYTextView(placeholder ?? "").foregroundColor(Constants.textColor)
                 }
             }
             Spacer()
-            EVYTextView("::chevron.down::")
-                .foregroundColor(.black)
+            EVYTextView("::chevron.down::").foregroundColor(.black)
         }
         .padding(EdgeInsets(top: Constants.fieldPadding,
                             leading: Constants.minorPadding,
@@ -60,7 +66,7 @@ struct EVYDropdown: View {
                 if self.title?.count ?? 0 > 0 {
                     EVYTextView(title!).padding(.top, Constants.majorPadding)
                 }
-                EVYSelect(selection: $selection, options: options)
+                EVYSelect(selection: $selection, options: options, format: format)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
                     .onChange(of: selection) { oldValue, newValue in
@@ -84,5 +90,6 @@ struct EVYDropdown: View {
     return EVYDropdown(title: "Dropdown",
                        placeholder: "A placeholder",
                        data: "{conditions}",
+                       format: "{$0.id}",
                        destination: "{item.condition_id}")
 }

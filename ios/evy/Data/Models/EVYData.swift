@@ -200,24 +200,6 @@ public enum EVYJson: Codable, Hashable {
         }
     }
     
-    public func displayValue() -> String {
-        switch self {
-        case .dictionary(_):
-            return self.parseProp(props: ["value"]).toString()
-        default:
-            return self.toString()
-        }
-    }
-    
-    public func displayValues() -> [String] {
-        switch self {
-        case .array(let arrayValue):
-            return arrayValue.map({ $0.displayValue() })
-        default:
-            return [self.toString()]
-        }
-    }
-    
     public func identifierValue() -> String {
         switch self {
         case .dictionary(_):

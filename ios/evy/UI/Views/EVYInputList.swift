@@ -8,15 +8,28 @@
 import SwiftUI
 
 struct EVYInputList: View {
-    let input: String
+    let data: String
+    let format: String
     var placeholder: String
     @ObservedObject private var values: EVYState<[String]>
     
-    init(input: String, placeholder: String) {
-        self.input = input
+    init(data: String, format: String, placeholder: String) {
+        self.data = data
+        self.format = format
         self.placeholder = placeholder
         
-        self.values = EVYState(watch: input, setter: parseInputToValues)
+        self.values = EVYState(watch: data, setter: {
+            do {
+                let data = try EVY.getDataFromText($0)
+                if case .array(let arrayValue) = data {
+                    return arrayValue.map({ EVY.formatData(json: $0, format: format) })
+                } else {
+                    return [EVY.formatData(json: data, format: format)]
+                }
+            } catch {}
+            
+            return []
+        })
     }
     
     var body: some View {
@@ -39,23 +52,11 @@ struct EVYInputList: View {
     }
 }
 
-private func parseInputToValues(input: String) -> [String] {
-    do {
-        let data = try EVY.getDataFromText(input)
-        if case .array(_) = data {
-            return data.displayValues()
-        } else {
-            return [data.displayValue()]
-        }
-    } catch {}
-    
-    return []
-}
-
 #Preview {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVY.data.create(key: "item", data: item)
     
-    return EVYInputList(input: "{item.tags}",
+    return EVYInputList(data: "{item.tags}",
+                        format: "{$0.value}",
                         placeholder: "Add tags to improve search")
 }

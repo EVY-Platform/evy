@@ -14,8 +14,7 @@ struct EVYSearchMultiple: View {
     @ObservedObject var searchController: EVYSearchController
     let destination: String
     let placeholder: String
-    let resultKey: String
-    let resultFormat: String
+    let format: String
     
     func refresh() {
         do {
@@ -25,7 +24,7 @@ struct EVYSearchMultiple: View {
             }
             
             for value in arrayValue {
-                let formattedValue = EVY.formatData(json: value, format: resultFormat, key: resultKey)
+                let formattedValue = EVY.formatData(json: value, format: format)
                 let alreadySelected = selected.contains { return $0.value == formattedValue }
                 if !alreadySelected {
                     selected.append(EVYSearchResult(data: value, value: formattedValue))
@@ -128,6 +127,5 @@ struct EVYSearchMultiple: View {
     return EVYSearch(source: "{api:tags}",
                      destination: "{item.tags}",
                      placeholder: "Search",
-                     resultKey: "tag",
-                     resultFormat: "{tag.value}")
+                     format: "{$0.value}")
 }

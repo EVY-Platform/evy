@@ -9,10 +9,11 @@ import SwiftUI
 
 struct EVYInputListRowView: Decodable {
     let content: ContentData
+    let data: String
     
     struct ContentData: Decodable {
         let title: String
-        let value: String
+        let format: String
         let placeholder: String
     }
 }
@@ -32,7 +33,8 @@ struct EVYInputListRow: View {
                 EVYTextView(view.content.title)
                     .padding(.vertical, Constants.padding)
             }
-            EVYInputList(input: view.content.value,
+            EVYInputList(data: view.data,
+                         format: view.content.format,
                          placeholder: view.content.placeholder)
         }
     }

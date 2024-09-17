@@ -14,20 +14,17 @@ struct EVYSearch: View {
     let source: String
     let destination: String
     let placeholder: String
-    let resultKey: String
-    let resultFormat: String
+    let format: String
     
     init(source: String,
          destination: String,
          placeholder: String,
-         resultKey: String,
-         resultFormat: String)
+         format: String)
     {
         self.source = source
         self.destination = destination
         self.placeholder = placeholder
-        self.resultKey = resultKey
-        self.resultFormat = resultFormat
+        self.format = format
         
         do {
             let data = try EVY.getDataFromText(destination)
@@ -36,9 +33,7 @@ struct EVYSearch: View {
             }
         } catch {}
         
-        self.searchController = EVYSearchController(source: source,
-                                                    resultKey: resultKey,
-                                                    resultFormat: resultFormat)
+        self.searchController = EVYSearchController(source: source, format: format)
     }
     
     var body: some View {
@@ -46,8 +41,7 @@ struct EVYSearch: View {
             EVYSearchMultiple(searchController: searchController,
                               destination: destination,
                               placeholder: placeholder,
-                              resultKey: resultKey,
-                              resultFormat: resultFormat)
+                              format: format)
         } else {
             EVYSearchSingle(searchController: searchController,
                             destination: destination,

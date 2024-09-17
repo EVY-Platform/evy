@@ -9,16 +9,16 @@ import SwiftUI
     
 struct EVYInlinePicker: View {
     let title: String
-    let value: String
+    let format: String
     let destination: String
     
     private var options: EVYJsonArray = []
     
     @State private var selection: EVYJson
     
-    init(title: String, value: String, data: String, destination: String) {
+    init(title: String, data: String, format: String, destination: String) {
         self.title = title
-        self.value = value
+        self.format = format
         self.destination = destination
         
         do {
@@ -31,7 +31,7 @@ struct EVYInlinePicker: View {
         _selection = State(initialValue: self.options.first!)
         
         do {
-            let selected = try EVY.getDataFromText(value)
+            let selected = try EVY.getDataFromText(destination)
             if case let .string(stringValue) = selected {
                 let matching = self.options.first { option in
                     return option.identifierValue() == stringValue
@@ -56,7 +56,8 @@ struct EVYInlinePicker: View {
                 Button(action: {
                     performAction(option: option)
                 }) {
-                    EVYRectangle.fitWidth(content: EVYTextView(option.displayValue()),
+                    let textView = EVYTextView(EVY.formatData(json: option, format: format))
+                    EVYRectangle.fitWidth(content: textView,
                                             style: isSelected ? .primary : .secondary)
                 }
             }
@@ -79,8 +80,8 @@ struct EVYInlinePicker: View {
     
     return VStack {
         EVYInlinePicker(title: "Dropdown",
-                        value: "{duration}",
                         data: "{durations}",
+                        format: "{$0.value}",
                         destination: "{duration}")
     }
 }
