@@ -30,7 +30,7 @@ struct EVYInputListRow: View {
         VStack(alignment:.leading) {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
             }
             EVYInputList(input: view.content.value,
                          placeholder: view.content.placeholder)

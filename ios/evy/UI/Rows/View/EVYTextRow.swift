@@ -32,11 +32,11 @@ struct EVYTextRow: View {
         VStack(alignment:.leading) {
             if view.content.title.count > 0 {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
             }
             EVYTextView(view.content.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(Int(view.max_lines) ?? 2)
+                .lineLimit(Int(view.max_lines) ?? 1)
                 .background {
                     ViewThatFits(in: .vertical) {
                         EVYTextView(view.content.text).hidden()
@@ -54,7 +54,7 @@ struct EVYTextRow: View {
             if canBeExpanded {
                 EVYTextView("Read more")
                     .foregroundStyle(Constants.actionColor)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
             }
         }
         .contentShape(Rectangle())

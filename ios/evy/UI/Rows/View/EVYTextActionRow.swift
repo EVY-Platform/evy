@@ -35,7 +35,7 @@ struct EVYTextActionRow: View {
         VStack(alignment:.leading) {
             if view.content.title.count > 0 {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
             }
             HStack {
                 EVYTextView(usePlaceholder ? view.content.placeholder :

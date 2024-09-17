@@ -71,7 +71,7 @@ struct EVYTimeslotPicker: View {
                                 EVYTimeslotColumn(timeslotDate: timeslotDate,
                                                   numberOfTimeslotsPerDay: numberOfTimeslotsPerDay,
                                                   action: { print("test") })
-                                .padding(.horizontal, Constants.spacing)
+                                .padding(.horizontal, Constants.padding)
                             }
                         }
                     }

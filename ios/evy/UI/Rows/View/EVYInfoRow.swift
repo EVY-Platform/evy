@@ -29,7 +29,7 @@ struct EVYInfoRow: View {
         if view.content.title.count > 0 {
             VStack(alignment:.leading) {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
                 EVYTextView(view.content.text, style: .info)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

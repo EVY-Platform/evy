@@ -78,7 +78,7 @@ struct EVYSelectPhoto: View {
             
             EVYTextView(content)
                 .foregroundColor(Constants.textColor)
-                .padding(.vertical, Constants.minPading)
+                .padding(.vertical, Constants.padding)
         }
     }
 }

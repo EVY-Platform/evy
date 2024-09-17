@@ -27,9 +27,6 @@ struct EVYTextSelectRow: View {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYTextSelectRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        
-        let isSelected = EVY.getValueFromText(edit.destination).value == "true"
-        _selected = State(initialValue: isSelected)
     }
     
     var body: some View {
@@ -37,7 +34,7 @@ struct EVYTextSelectRow: View {
             VStack(alignment:.leading) {
                 if view.content.title.count > 0 {
                     EVYTextView(view.content.title)
-                        .padding(.vertical, Constants.minPading)
+                        .padding(.vertical, Constants.padding)
                 }
                 EVYTextView(view.content.text, style: .info)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -47,6 +44,11 @@ struct EVYTextSelectRow: View {
         .contentShape(Rectangle())
         .onTapGesture {
             selected.toggle()
+        }
+        .onAppear {
+            do {
+                selected = try EVY.evaluateFromText(edit.destination)
+            } catch {}
         }
     }
 }

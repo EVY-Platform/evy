@@ -36,7 +36,7 @@ struct EVYSearchRow: View {
         VStack(alignment:.leading) {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
             }
             EVYSearch(source: view.data,
                       destination: edit.destination,

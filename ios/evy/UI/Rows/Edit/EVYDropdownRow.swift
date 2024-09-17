@@ -33,7 +33,7 @@ struct EVYDropdownRow: View {
         VStack(alignment:.leading) {
             if view.content.title.count > 0 {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
             }
             EVYDropdown(title: view.content.title,
                         placeholder: view.content.placeholder,

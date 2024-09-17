@@ -20,7 +20,7 @@ struct EVYColumnContainerRow: View {
         VStack(alignment:.leading) {
             if (view.content.title.count > 0) {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
             }
             HStack(alignment: .top) {
                 ForEach(view.content.children, id: \.id) { child in

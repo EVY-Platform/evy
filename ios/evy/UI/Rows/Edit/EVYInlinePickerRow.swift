@@ -32,7 +32,7 @@ struct EVYInlinePickerRow: View {
         VStack(alignment:.leading) {
             if view.content.title.count > 0 {
                 EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.minPading)
+                    .padding(.vertical, Constants.padding)
             }
             EVYInlinePicker(title: view.content.title,
                             value: view.content.value,
