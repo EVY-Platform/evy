@@ -68,12 +68,10 @@
 		73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */; };
 		73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */; };
 		73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAC12B272E0C00D4E82A /* EVYRow.swift */; };
-		73D5B41B2B3307590005E495 /* EVYGreyedBackgound.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */; };
 		73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D878E72B2ECD6900A1F9C2 /* chunked.swift */; };
 		73D878EE2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */; };
 		73DAEC0C2C7729F8003A0A29 /* EVYSearchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DAEC0B2C7729F8003A0A29 /* EVYSearchController.swift */; };
 		73DE512B2C68BF3D00998024 /* EVYTextSelectRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DE512A2C68BF3D00998024 /* EVYTextSelectRow.swift */; };
-		73E77C9B2C3113D400A53363 /* EVYInlineButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */; };
 		73E77C9D2C3118C100A53363 /* EVYInlinePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */; };
 		73E77C9F2C3118D100A53363 /* EVYInlinePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E77C9E2C3118D100A53363 /* EVYInlinePickerRow.swift */; };
 		73EDC87D2B8F37E800304DD8 /* EVYButtonRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73EDC87C2B8F37E800304DD8 /* EVYButtonRow.swift */; };
@@ -142,12 +140,10 @@
 		73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYImageOverlay.swift; sourceTree = "<group>"; };
 		73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYZoomableContainer.swift; sourceTree = "<group>"; };
 		73CDCAC12B272E0C00D4E82A /* EVYRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRow.swift; sourceTree = "<group>"; };
-		73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYGreyedBackgound.swift; sourceTree = "<group>"; };
 		73D878E72B2ECD6900A1F9C2 /* chunked.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = chunked.swift; sourceTree = "<group>"; };
 		73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselIndicator.swift; sourceTree = "<group>"; };
 		73DAEC0B2C7729F8003A0A29 /* EVYSearchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchController.swift; sourceTree = "<group>"; };
 		73DE512A2C68BF3D00998024 /* EVYTextSelectRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextSelectRow.swift; sourceTree = "<group>"; };
-		73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInlineButton.swift; sourceTree = "<group>"; };
 		73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInlinePicker.swift; sourceTree = "<group>"; };
 		73E77C9E2C3118D100A53363 /* EVYInlinePickerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInlinePickerRow.swift; sourceTree = "<group>"; };
 		73EDC87C2B8F37E800304DD8 /* EVYButtonRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYButtonRow.swift; sourceTree = "<group>"; };
@@ -211,6 +207,7 @@
 				73C78AFB2BC564E30026F39D /* Assets */,
 				736D104F2B78C4A100503C4D /* Rows */,
 				73CDCAB42B27176700D4E82A /* Views */,
+				73A2AB572C99A09800307E37 /* Atoms */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -326,6 +323,17 @@
 			path = API;
 			sourceTree = "<group>";
 		};
+		73A2AB572C99A09800307E37 /* Atoms */ = {
+			isa = PBXGroup;
+			children = (
+				73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */,
+				73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */,
+				2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */,
+				73CB09512C7608A7008F7D2C /* EVYRectangle.swift */,
+			);
+			path = Atoms;
+			sourceTree = "<group>";
+		};
 		73C78AFB2BC564E30026F39D /* Assets */ = {
 			isa = PBXGroup;
 			children = (
@@ -340,24 +348,18 @@
 			children = (
 				73EDC87E2B8F387500304DD8 /* EVYButton.swift */,
 				734FD96C2C343C0100ACE8B7 /* EVYCalendar.swift */,
-				73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */,
 				730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */,
 				734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */,
-				73D5B41A2B3307590005E495 /* EVYGreyedBackgound.swift */,
 				73CDCAB72B27176700D4E82A /* EVYImageOverlay.swift */,
-				73E77C9A2C3113D400A53363 /* EVYInlineButton.swift */,
 				73E77C9C2C3118C100A53363 /* EVYInlinePicker.swift */,
 				73CB094F2C760597008F7D2C /* EVYInputList.swift */,
 				2ED04EF52B3308C400881DC4 /* EVYMap.swift */,
-				2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */,
-				73CB09512C7608A7008F7D2C /* EVYRectangle.swift */,
 				73C78AE92BC549840026F39D /* EVYSearch.swift */,
 				73A401EB2C96F76C00ADA1A4 /* EVYSearchSingle.swift */,
+				737334FA2B7B671100D2E1CF /* EVYTextField.swift */,
 				73A401ED2C96F78500ADA1A4 /* EVYSearchMultiple.swift */,
 				2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */,
 				734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */,
-				737334FA2B7B671100D2E1CF /* EVYTextField.swift */,
-				73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */,
 				73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */,
 				73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */,
 			);
@@ -475,7 +477,6 @@
 				73B3CF872C68AD2200FD333A /* EVYListContainerRow.swift in Sources */,
 				735795D32C21AF6100ADB49D /* EVYInterpreter.swift in Sources */,
 				737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */,
-				73D5B41B2B3307590005E495 /* EVYGreyedBackgound.swift in Sources */,
 				738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */,
 				730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */,
 				73CDCABF2B271AF300D4E82A /* EVYZoomableContainer.swift in Sources */,
@@ -508,7 +509,6 @@
 				738CEC402BB2E0E600E44230 /* TestingJSON.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
 				73B3CF862C68AD2200FD333A /* EVYColumnContainerRow.swift in Sources */,
-				73E77C9B2C3113D400A53363 /* EVYInlineButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

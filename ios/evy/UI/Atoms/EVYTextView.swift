@@ -105,11 +105,11 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
     
     return VStack {
         EVYTextView("::star.square.on.square.fill::")
-        EVYTextView("Just text", style: EVYTextStyle.body)
-        EVYTextView("Just text info", style: EVYTextStyle.info)
-        EVYTextView("Just text", style: EVYTextStyle.title)
+        EVYTextView("Body style", style: EVYTextStyle.body)
+        EVYTextView("Info style", style: EVYTextStyle.info)
+        EVYTextView("Title style", style: EVYTextStyle.title)
         EVYTextView("Button", style: EVYTextStyle.button)
-        EVYTextView("action", style: EVYTextStyle.action)
+        EVYTextView("Action", style: EVYTextStyle.action)
         EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
         EVYTextView("count: {count(item.photo_ids)}")
         EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star.square.on.square.fill::")

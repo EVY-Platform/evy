@@ -24,7 +24,7 @@ struct EVYPage: View, Decodable {
         footer
             .overlay(alignment: .top, content: {
                 Rectangle()
-                    .fill(Constants.fieldBorderColor)
+                    .fill(Constants.borderColor)
                     .frame(height: 1)
                     .padding(.top, -Constants.minorPadding)
             })

@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+let timeslotWidth: CGFloat = Constants.base*18
+
 public struct EVYTimeslot: Decodable, Hashable {
     let timeslot: String
     let available: Bool
@@ -32,13 +34,19 @@ struct EVYTimeslotColumn: View {
             EVYTextView(timeslotDate.date)
             ForEach((0...(numberOfTimeslotsPerDay-1)), id: \.self) { timeslotIndex in
                 if timeslotDate.timeslots.count-1 < timeslotIndex {
-                    EVYInlineButton(value: "-", style: .clear, action: action)
+                    Button(action: action) {
+                        EVYRectangle.fixedWidth(content: EVYTextView("-"),
+                                                style: .clear,
+                                                width: timeslotWidth)
+                    }
                 }
                 else {
                     let t = timeslotDate.timeslots[timeslotIndex]
-                    EVYInlineButton(value: t.timeslot,
-                                    style: t.available ? .primary : .secondary,
-                                    action: action)
+                    Button(action: action) {
+                        EVYRectangle.fixedWidth(content: EVYTextView(t.timeslot),
+                                                style: t.available ? .primary : .secondary,
+                                                width: timeslotWidth)
+                    }
                 }
             }
         }

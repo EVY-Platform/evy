@@ -50,8 +50,8 @@ struct EVYDropdown: View {
                             trailing: Constants.minorPadding))
         .background(
             RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth)
-                .opacity(Constants.fieldBorderOpacity)
+                .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth)
+                .opacity(Constants.borderOpacity)
         )
         .contentShape(Rectangle())
         .onTapGesture { showSheet.toggle() }

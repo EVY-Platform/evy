@@ -10,8 +10,6 @@ import SwiftUI
 private let spaceForFirstLabel: CGFloat = 6
 private let columnWidth: CGFloat = 80
 private let rowHeight: CGFloat = 30
-private let dividerWidth: CGFloat = 0.5
-private let dividerOpacity: CGFloat = 0.5
 private let animationDuration: CGFloat = 0.1
 
 private let falseAsData = "false".data(using: .utf8)!
@@ -77,8 +75,8 @@ struct EVYCalendarTimeslots: View {
                     }
                 }.overlay(
                     Divider()
-                        .opacity(dividerOpacity)
-                        .frame(maxWidth: dividerWidth, maxHeight: .infinity)
+                        .opacity(Constants.borderOpacity)
+                        .frame(maxWidth: Constants.thinBorderWidth, maxHeight: .infinity)
                         .background(Constants.inactiveBackground), alignment: .leading
                 )
             }

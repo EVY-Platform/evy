@@ -53,9 +53,12 @@ struct EVYInlinePicker: View {
         HStack {
             ForEach(options, id: \.self) { option in
                 let isSelected = option.identifierValue() == selection.identifierValue()
-                EVYInlineButton(value: option.displayValue(),
-                                style: isSelected ? .primary : .secondary,
-                                action: { performAction(option: option) })
+                Button(action: {
+                    performAction(option: option)
+                }) {
+                    EVYRectangle.fitWidth(content: EVYTextView(option.displayValue()),
+                                            style: isSelected ? .primary : .secondary)
+                }
             }
         }
     }
@@ -75,7 +78,6 @@ struct EVYInlinePicker: View {
     try! EVY.data.create(key: "duration", data: duration)
     
     return VStack {
-        Text("test")
         EVYInlinePicker(title: "Dropdown",
                         value: "{duration}",
                         data: "{durations}",

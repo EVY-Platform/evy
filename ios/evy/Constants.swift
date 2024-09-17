@@ -14,14 +14,12 @@ extension Font {
 }
 
 struct Constants {
-    static private let base = 4.0
+    static let base = 4.0
     
     static let padding = base
-    
     static let fieldPadding: CGFloat = base*6
     static let majorPadding: CGFloat = base*4
     static let minorPadding: CGFloat = base*2
-    
     
     static let mainCornerRadius: CGFloat = 10
     static let smallCornerRadius: CGFloat = base
@@ -34,6 +32,7 @@ struct Constants {
     static let inactiveBackground: Color = Color(#colorLiteral(red: 0.9621850848, green: 0.9621850848, blue: 0.9621850848, alpha: 1))
     
     static let borderWidth: CGFloat = 1.0
-    static let fieldBorderColor: Color = Color(#colorLiteral(red: 0.725489974, green: 0.7254903913, blue: 0.7340979576, alpha: 1))
-    static let fieldBorderOpacity: CGFloat = 0.5
+    static let thinBorderWidth: CGFloat = 0.5
+    static let borderColor: Color = Color(#colorLiteral(red: 0.725489974, green: 0.7254903913, blue: 0.7340979576, alpha: 1))
+    static let borderOpacity: CGFloat = 0.5
 }

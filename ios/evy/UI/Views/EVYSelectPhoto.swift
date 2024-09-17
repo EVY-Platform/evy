@@ -109,13 +109,13 @@ struct EVYSelectPhotoButton: View {
                             .padding(.vertical, 80)
                             .background(
                                 RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
+                                    .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
                     } else {
                         stack
                             .frame(width: carouselElementSize, height: carouselElementSize)
                             .background(
                                 RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                                    .strokeBorder(Constants.fieldBorderColor, lineWidth: Constants.borderWidth))
+                                    .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
                     }
                 }
             )

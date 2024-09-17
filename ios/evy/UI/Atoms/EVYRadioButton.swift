@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+let radioSize: CGFloat = Constants.base*5
+
 public enum EVYRadioStyle: String {
     case single
     case multi
@@ -26,35 +28,31 @@ private extension EVYRadioButton {
         case .single:
             Circle()
                 .fill(innerColor)
-                .padding(4)
+                .padding(Constants.padding)
                 .overlay(
-                    Circle()
-                        .stroke(outlineColor, lineWidth: 1)
+                    Circle().stroke(outlineColor, lineWidth: Constants.borderWidth)
                 )
-                .frame(width: 20, height: 20)
+                .frame(width: radioSize, height: radioSize)
         case .multi:
             RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
                 .fill(innerColor)
-                .padding(4)
+                .padding(Constants.padding)
                 .overlay(
                     RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-                        .stroke(outlineColor, lineWidth: 1)
+                        .stroke(outlineColor, lineWidth: Constants.borderWidth)
                 )
-                .frame(width: 20, height: 20)
+                .frame(width: radioSize, height: radioSize)
         }
     }
 }
 
 private extension EVYRadioButton {
    var innerColor: Color {
-      guard isSelected else { return Color.clear }
-      if !isSelected { return Constants.fieldBorderColor.opacity(0.6) }
-      return Constants.actionColor
+       return isSelected ? Constants.actionColor : Color.clear
    }
 
    var outlineColor: Color {
-      if !isSelected { return Constants.fieldBorderColor.opacity(0.6) }
-      return isSelected ? Constants.actionColor : Constants.fieldBorderColor
+      return isSelected ? Constants.actionColor : Constants.borderColor
    }
 }
 
