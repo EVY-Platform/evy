@@ -14,7 +14,7 @@
 		2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8EEC392B2730B0003DF2DC /* Constants.swift */; };
 		2ED04EF62B3308C400881DC4 /* EVYMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED04EF52B3308C400881DC4 /* EVYMap.swift */; };
 		2EE4E27B2B99CDB300CEF112 /* EVYSheetContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE4E27A2B99CDB300CEF112 /* EVYSheetContainerRow.swift */; };
-		2EE4E27D2B99D7F300CEF112 /* EVYSelect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */; };
+		2EE4E27D2B99D7F300CEF112 /* EVYSelectList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */; };
 		7303B31A2C3EB8A000796123 /* EVYCalendarTimeslotData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7303B3192C3EB8A000796123 /* EVYCalendarTimeslotData.swift */; };
 		730D008D2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */; };
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
@@ -23,6 +23,7 @@
 		7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */; };
 		7320F59A2C300B8B00297C48 /* EVYTextActionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */; };
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
+		7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */; };
 		734F5A222C2EBB2B00C0FD0A /* EVYDropdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */; };
 		734F5A242C2ED3BD00C0FD0A /* EVYSelectPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */; };
 		734FD96D2C343C0100ACE8B7 /* EVYCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734FD96C2C343C0100ACE8B7 /* EVYCalendar.swift */; };
@@ -86,13 +87,14 @@
 		2E8EEC392B2730B0003DF2DC /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		2ED04EF52B3308C400881DC4 /* EVYMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMap.swift; sourceTree = "<group>"; };
 		2EE4E27A2B99CDB300CEF112 /* EVYSheetContainerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSheetContainerRow.swift; sourceTree = "<group>"; };
-		2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelect.swift; sourceTree = "<group>"; };
+		2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectList.swift; sourceTree = "<group>"; };
 		7303B3192C3EB8A000796123 /* EVYCalendarTimeslotData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarTimeslotData.swift; sourceTree = "<group>"; };
 		730D008C2B29AC4000B5BCB6 /* EVYCarouselOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselOverlay.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
 		7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInfoRow.swift; sourceTree = "<group>"; };
 		7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextActionRow.swift; sourceTree = "<group>"; };
 		732A50812C1D6AE80036B98B /* EVY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVY.swift; sourceTree = "<group>"; };
+		7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectItem.swift; sourceTree = "<group>"; };
 		734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDropdown.swift; sourceTree = "<group>"; };
 		734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectPhoto.swift; sourceTree = "<group>"; };
 		734FD96C2C343C0100ACE8B7 /* EVYCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendar.swift; sourceTree = "<group>"; };
@@ -358,7 +360,8 @@
 				73A401EB2C96F76C00ADA1A4 /* EVYSearchSingle.swift */,
 				737334FA2B7B671100D2E1CF /* EVYTextField.swift */,
 				73A401ED2C96F78500ADA1A4 /* EVYSearchMultiple.swift */,
-				2EE4E27C2B99D7F300CEF112 /* EVYSelect.swift */,
+				2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */,
+				7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */,
 				734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */,
 				73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */,
 				73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */,
@@ -483,7 +486,7 @@
 				73E77C9F2C3118D100A53363 /* EVYInlinePickerRow.swift in Sources */,
 				736D10572B78C4C500503C4D /* EVYPage.swift in Sources */,
 				73A401EC2C96F76C00ADA1A4 /* EVYSearchSingle.swift in Sources */,
-				2EE4E27D2B99D7F300CEF112 /* EVYSelect.swift in Sources */,
+				2EE4E27D2B99D7F300CEF112 /* EVYSelectList.swift in Sources */,
 				737EFA372B90694000DFA0CE /* EVYFlow.swift in Sources */,
 				737C6AC72B270AAE0093D00C /* EVYServiceProvider.swift in Sources */,
 				73DE512B2C68BF3D00998024 /* EVYTextSelectRow.swift in Sources */,
@@ -502,6 +505,7 @@
 				2E00BD4B2BA1A99D00C09A1D /* EVYRadioButton.swift in Sources */,
 				2EE4E27B2B99CDB300CEF112 /* EVYSheetContainerRow.swift in Sources */,
 				2E5F4DBD2BB2C5D900D3A3FB /* EVYTextAreaRow.swift in Sources */,
+				7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */,
 				73E77C9D2C3118C100A53363 /* EVYInlinePicker.swift in Sources */,
 				734F5A242C2ED3BD00C0FD0A /* EVYSelectPhoto.swift in Sources */,
 				73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */,

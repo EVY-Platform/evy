@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct EVYSearch: View {
-    @ObservedObject var searchController: EVYSearchController
-    private var canSelectMultiple = false
+    private let canSelectMultiple: Bool
     
     let source: String
     let destination: String
@@ -30,20 +29,23 @@ struct EVYSearch: View {
             let data = try EVY.getDataFromText(destination)
             if case .array(_) = data {
                 self.canSelectMultiple = true
+            } else {
+                self.canSelectMultiple = false
             }
-        } catch {}
-        
-        self.searchController = EVYSearchController(source: source, format: format)
+        } catch {
+            self.canSelectMultiple = false
+        }
     }
     
     var body: some View {
         if canSelectMultiple {
-            EVYSearchMultiple(searchController: searchController,
+            EVYSearchMultiple(source: source,
+                              format: format,
                               destination: destination,
-                              placeholder: placeholder,
-                              format: format)
+                              placeholder: placeholder)
         } else {
-            EVYSearchSingle(searchController: searchController,
+            EVYSearchSingle(source: source,
+                            format: format,
                             destination: destination,
                             placeholder: placeholder)
         }

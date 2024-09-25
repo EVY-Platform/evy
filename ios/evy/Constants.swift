@@ -21,7 +21,7 @@ struct Constants {
     static let majorPadding: CGFloat = base*4
     static let minorPadding: CGFloat = base*2
     
-    static let mainCornerRadius: CGFloat = 10
+    static let mainCornerRadius: CGFloat = base*2
     static let smallCornerRadius: CGFloat = base
 
     static let textColor = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
@@ -35,4 +35,6 @@ struct Constants {
     static let thinBorderWidth: CGFloat = 0.5
     static let borderColor: Color = Color(#colorLiteral(red: 0.725489974, green: 0.7254903913, blue: 0.7340979576, alpha: 1))
     static let borderOpacity: CGFloat = 0.5
+	
+	static let listRowHeight: CGFloat = base*12
 }

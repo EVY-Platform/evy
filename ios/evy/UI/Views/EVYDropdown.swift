@@ -15,7 +15,7 @@ struct EVYDropdown: View {
     
     private var options: EVYJsonArray = []
     
-    @State private var selection: EVYJson?
+    @ObservedObject private var selection: EVYState<String>
     @State private var showSheet = false
     
     init(title: String?,
@@ -32,17 +32,25 @@ struct EVYDropdown: View {
         do {
             let data = try EVY.getDataFromText(data)
             if case let .array(arrayValue) = data {
-                self.options.append(contentsOf: arrayValue)
+                self.options = arrayValue
             }
         } catch {}
+        
+        self.selection = EVYState(watch: destination, setter: {
+            do {
+                let value = try EVY.getDataFromText($0)
+                return EVY.formatData(json: value, format: format)
+            } catch {
+                return ""
+            }
+        })
     }
     
     var body: some View {
         HStack {
             Button(action: { showSheet.toggle() }) {
-                if selection != nil {
-                    EVYTextView(EVY.formatData(json: selection!, format: format))
-                        .foregroundColor(.black)
+                if selection.value.count > 0 {
+                    EVYTextView(selection.value).foregroundColor(.black)
                 } else {
                     EVYTextView(placeholder ?? "").foregroundColor(Constants.textColor)
                 }
@@ -66,14 +74,11 @@ struct EVYDropdown: View {
                 if self.title?.count ?? 0 > 0 {
                     EVYTextView(title!).padding(.top, Constants.majorPadding)
                 }
-                EVYSelect(selection: $selection, options: options, format: format)
+                EVYSelectList(options: options,
+                              format: format,
+                              destination: destination)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
-                    .onChange(of: selection) { oldValue, newValue in
-                        if let key = newValue?.identifierValue() {
-                            try! EVY.updateValue(key, at: destination)
-                        }
-                    }
             }
         })
     }
@@ -90,6 +95,6 @@ struct EVYDropdown: View {
     return EVYDropdown(title: "Dropdown",
                        placeholder: "A placeholder",
                        data: "{conditions}",
-                       format: "{$0.id}",
+                       format: "{$0.value}",
                        destination: "{item.condition_id}")
 }

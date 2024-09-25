@@ -160,10 +160,6 @@ class ImageManager {
         return urls[0]
     }
     
-    init() {
-        print(cachesDirectoryUrl)
-    }
-    
     func getImage(name: String) -> Image? {
         let fileUrl = cachesDirectoryUrl.appendingPathComponent("\(name).png")
         let filePath = fileUrl.path

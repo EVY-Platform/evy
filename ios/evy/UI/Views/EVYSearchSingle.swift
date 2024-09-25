@@ -10,10 +10,21 @@ import SwiftUI
 struct EVYSearchSingle: View {
     @State private var selected: String = ""
     @State private var value: String = ""
+    @ObservedObject private var searchController: EVYSearchController
     
-    @ObservedObject var searchController: EVYSearchController
     let destination: String
     let placeholder: String
+    
+    init(source: String,
+         format: String,
+         destination: String,
+         placeholder: String)
+    {
+        self.destination = destination
+        self.placeholder = placeholder
+        
+        self.searchController = EVYSearchController(source: source, format: format)
+    }
     
     func select(_ element: EVYSearchResult) {
         do {

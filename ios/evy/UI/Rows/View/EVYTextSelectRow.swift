@@ -21,34 +21,40 @@ struct EVYTextSelectRow: View {
     
     private let view: EVYTextSelectRowView
     private let edit: SDUI.Edit
+    private let value: EVYJson
     
-    @State private var selected = false
+    @ObservedObject private var selected: EVYState<Bool>
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYTextSelectRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
+        
+        self.selected = EVYState(watch: edit.destination, setter: {
+            do {
+                return try EVY.evaluateFromText($0)
+            } catch {}
+            
+            return false
+        })
+        
+        let temporaryId = UUID().uuidString
+        try EVY.updateValue(view.content.text, at: temporaryId)
+        self.value = try EVY.data.get(key: temporaryId).decoded()
     }
     
     var body: some View {
-        HStack {
-            VStack(alignment:.leading) {
-                if view.content.title.count > 0 {
-                    EVYTextView(view.content.title)
-                        .padding(.vertical, Constants.padding)
-                }
-                EVYTextView(view.content.text, style: .info)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment:.leading) {
+            if view.content.title.count > 0 {
+                EVYTextView(view.content.title)
+                    .padding(.vertical, Constants.padding)
             }
-            EVYRadioButton(isSelected: selected, style: .multi)
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            selected.toggle()
-        }
-        .onAppear {
-            do {
-                selected = try EVY.evaluateFromText(edit.destination)
-            } catch {}
+            EVYSelectItem(destination: edit.destination,
+                          value: value,
+                          format: "",
+                          selectionStyle: .multi,
+                          target: .single_bool,
+                          textStyle: .info)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

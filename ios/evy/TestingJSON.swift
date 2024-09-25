@@ -373,7 +373,7 @@ struct SDUIConstants {
             "view": {
                 "content": {
                     "title": "Accept app payments",
-                    "text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n \u{2022} Cards are verified before the purchase\\n \u{2022} Payment is transferred immediately when both buyer and seller confirm using a temporary code"
+                    "text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\\\n \u{2022} Cards are verified before the purchase\\\\n \u{2022} Payment is transferred immediately when both buyer and seller confirm using a temporary code"
                 }
             },
             "edit": {

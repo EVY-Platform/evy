@@ -10,11 +10,25 @@ import SwiftUI
 struct EVYSearchMultiple: View {
     @State private var selected: [EVYSearchResult] = []
     @State private var searchFieldValue = ""
+    @ObservedObject private var searchController: EVYSearchController
     
-    @ObservedObject var searchController: EVYSearchController
+    let source: String
     let destination: String
     let placeholder: String
     let format: String
+    
+    init(source: String,
+         format: String,
+         destination: String,
+         placeholder: String)
+    {
+        self.source = source
+        self.format = format
+        self.destination = destination
+        self.placeholder = placeholder
+        
+        self.searchController = EVYSearchController(source: source, format: format)
+    }
     
     func refresh() {
         do {
