@@ -48,8 +48,8 @@ struct EVYSelectSegmentContainerRow: View {
         }
         .pickerStyle(.segmented)
         .padding(.bottom, Constants.majorPadding)
-        view.content.children.first(where: {$0.title == selected})?.child
-        Spacer()
+        
+		view.content.children.first(where: {$0.title == selected})?.child
     }
 }
 
