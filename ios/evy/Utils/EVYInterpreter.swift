@@ -9,7 +9,7 @@ import SwiftUI
 
 private typealias RegexMatch = Regex<AnyRegexOutput>.Match
 
-private let comparisonBasePattern = "[a-zA-Z0-9.\\(\\) ]+"
+private let comparisonBasePattern = "[a-zA-Z0-9.\\(\\){} ]+"
 private let comparisonOperatorPattern = "(>|<|==|!=)"
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
@@ -178,7 +178,7 @@ private func parseComparisonFromText(_ input: String) -> (match: RegexMatch,
     guard let leftMatch = firstMatch(comparison, pattern: "\\{\(comparisonBasePattern)") else {
         return nil
     }
-    guard let rightMatch = firstMatch(comparison, pattern: "\(comparisonBasePattern)\\}") else {
+    guard let rightMatch = lastMatch(comparison, pattern: "\(comparisonBasePattern)\\}") else {
         return nil
     }
     guard let operatorMatch = firstMatch(comparison, pattern: comparisonOperatorPattern) else {
@@ -242,6 +242,14 @@ private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
     } catch {}
     
     return nil
+}
+private func lastMatch(_ input: String, pattern: String) -> RegexMatch? {
+	do {
+		let regex = try Regex(pattern)
+		return input.matches(of: regex).last
+	} catch {}
+	
+	return nil
 }
 
 #Preview {
