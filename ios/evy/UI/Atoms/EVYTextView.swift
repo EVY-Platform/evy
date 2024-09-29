@@ -19,11 +19,22 @@ struct EVYTextView: View {
     @ObservedObject var text: EVYState<EVYValue>
     let style: EVYTextStyle
     
-    init(_ text: String, style: EVYTextStyle = .body) {
+	init(_ text: String, placeholder: String = "", style: EVYTextStyle = .body) {
         self.style = style
+		
+		let props = EVY.parsePropsFromText(text)
+		let placeholderVal = EVYValue(placeholder, nil, nil)
         
         self.text = EVYState(watch: text, setter: {
-            EVY.getValueFromText($0)
+			let value = EVY.getValueFromText($0)
+			
+			if props == $0 {
+				return value
+			}
+			if $0.contains(value.value) {
+				return placeholderVal
+			}
+			return value
         })
     }
     
