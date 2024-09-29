@@ -1,5 +1,36 @@
 # SDUI
 
+## Data
+
+Whenever flows are sent to a client app, any static data that is necessary is also passed. For example, the values of "10 min, 20 min, 30 min" for the distance that someone is willing to travel to to deliver an item is passed in along with the flows for items, along with a UUID which identifies that data within the UI data.
+
+```
+{
+    _flow1_
+        _pages_
+            _rows_
+    _flow2_
+        _pages_
+            _rows_
+    ...
+    _data_: {
+        "254190d9-0a99-43d0-a3c2-f222bdec1893": [{
+            "id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+            "value": "5 min",
+        },{
+            "id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+            "value": "10 min",
+        },{
+            "id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+            "value": "15 min",
+        },{
+            "id": "69f25102-822c-436c-a6c1-3b49f887355e",
+            "value": "30 min",
+        }]
+    }
+}
+```
+
 ## Flow
 
 Flows are not visually used in the UI but represent a full user journey (eg: creating an item)  
