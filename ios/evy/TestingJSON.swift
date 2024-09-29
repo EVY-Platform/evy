@@ -426,7 +426,8 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "target": "navigate:create_item:step_2"
+                "target": "navigate:create_item:step_2",
+                "condition": "{{count(item.title)} > 0}"
             }
         }
     """
