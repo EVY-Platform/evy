@@ -11,7 +11,7 @@ public class SDUI {
     private enum EVYActionError: Error {
         case invalid
         case missingKeywords
-        case toomanyKeywords
+        case tooManyKeywords
     }
     
     public struct Action: Decodable {
@@ -35,7 +35,7 @@ public class SDUI {
                 throw EVYActionError.missingKeywords
             }
             if valueSplit.count > 3 {
-                throw EVYActionError.toomanyKeywords
+                throw EVYActionError.tooManyKeywords
             }
             switch valueSplit.first {
             case "navigate":
