@@ -25,7 +25,7 @@ struct EVYSelectItem: View {
     let target: EVYSelectItemTarget
     let textStyle: EVYTextStyle
     
-    @ObservedObject private var selected: EVYState<Bool>
+    private var selected: EVYState<Bool>
     
     init(destination: String,
          value: EVYJson,

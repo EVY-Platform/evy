@@ -17,8 +17,8 @@ extension Notification.Name {
     static let evyDataUpdated = Notification.Name("EVYDataUpdated")
 }
 
-class EVYState<T>: ObservableObject {
-    @Published var value: T
+@Observable class EVYState<T> {
+    var value: T
     
     init(watch: String, setter: @escaping (_ input: String) -> T) {
         self.value = setter(watch)
@@ -34,6 +34,10 @@ class EVYState<T>: ObservableObject {
             }
         })
     }
+	
+	init(staticString: T) {
+		self.value = staticString
+	}
 }
 
 let config = ModelConfiguration(isStoredInMemoryOnly: true)

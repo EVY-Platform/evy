@@ -16,26 +16,35 @@ public enum EVYTextStyle: String {
 }
 
 struct EVYTextView: View {
-    @ObservedObject var text: EVYState<EVYValue>
+	var text: EVYState<EVYValue>
     let style: EVYTextStyle
     
 	init(_ text: String, placeholder: String = "", style: EVYTextStyle = .body) {
         self.style = style
 		
 		let props = EVY.parsePropsFromText(text)
-		let placeholderVal = EVYValue(placeholder, nil, nil)
-        
-        self.text = EVYState(watch: text, setter: {
-			let value = EVY.getValueFromText($0)
+		
+		// If the props don't include any data and are just plain text
+		// instanciate a simple version of state without any watching
+		if props == text {
+			self.text = EVYState(staticString: EVYValue(text, nil, nil))
 			
-			if props == $0 {
+		// Otherwise, go all out
+		} else {
+			let placeholderVal = EVYValue(placeholder, nil, nil)
+			
+			self.text = EVYState(watch: text, setter: {
+				let value = EVY.getValueFromText($0)
+				
+				if props == $0 {
+					return value
+				}
+				if $0.contains(value.value) {
+					return placeholderVal
+				}
 				return value
-			}
-			if $0.contains(value.value) {
-				return placeholderVal
-			}
-			return value
-        })
+			})
+		}
     }
     
     var body: some View {

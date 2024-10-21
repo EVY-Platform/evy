@@ -23,7 +23,7 @@ struct EVYTextSelectRow: View {
     private let edit: SDUI.Edit
     private let value: EVYJson
     
-    @ObservedObject private var selected: EVYState<Bool>
+    private var selected: EVYState<Bool>
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYTextSelectRowView.self, forKey:.view)

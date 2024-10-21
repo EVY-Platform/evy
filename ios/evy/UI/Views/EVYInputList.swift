@@ -11,7 +11,7 @@ struct EVYInputList: View {
     let data: String
     let format: String
     var placeholder: String
-    @ObservedObject private var values: EVYState<[String]>
+    private var values: EVYState<[String]>
     
     init(data: String, format: String, placeholder: String) {
         self.data = data

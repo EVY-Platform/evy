@@ -13,8 +13,7 @@ struct EVYTextField: View {
     let multiLine: Bool
     let input: String
     
-    @ObservedObject private var editableValue: EVYState<EVYValue>
-    
+    private var editableValue: EVYState<EVYValue>
     @State private var value: String
     
     @FocusState private var focused: Bool

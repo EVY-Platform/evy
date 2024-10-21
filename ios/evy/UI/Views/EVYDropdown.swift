@@ -14,8 +14,7 @@ struct EVYDropdown: View {
     let placeholder: String?
     
     private var options: EVYJsonArray = []
-    
-    @ObservedObject private var selection: EVYState<String>
+    private var selection: EVYState<String>
     @State private var showSheet = false
     
     init(title: String?,
