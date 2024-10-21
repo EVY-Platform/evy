@@ -17,17 +17,21 @@ struct EVYTextRowView: Decodable {
     }
 }
 
-struct EVYTextRow: View {
+struct EVYTextRow: View, EVYRowProtocol {
     public static let JSONType = "Text"
     
     private let view: EVYTextRowView
     @State private var showSheet = false
+	@State private var canBeExpanded: Bool = false
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYTextRowView.self, forKey:.view)
     }
+	
+	func complete() -> Bool {
+		return true
+	}
     
-    @State private var canBeExpanded: Bool = false
     var body: some View {
         VStack(alignment:.leading) {
             if view.content.title.count > 0 {

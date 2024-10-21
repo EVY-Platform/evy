@@ -17,7 +17,7 @@ struct EVYInputRowView: Decodable {
     }
 }
     
-struct EVYInputRow: View {
+struct EVYInputRow: View, EVYRowProtocol {
     public static let JSONType = "Input"
     
     private let view: EVYInputRowView
@@ -27,6 +27,10 @@ struct EVYInputRow: View {
         self.view = try container.decode(EVYInputRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
+	
+	func complete() -> Bool {
+		view.content.value.count > 0
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

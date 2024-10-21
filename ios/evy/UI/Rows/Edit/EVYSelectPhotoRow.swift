@@ -21,7 +21,7 @@ struct EVYSelectPhotoRowView: Decodable {
     }
 }
 
-struct EVYSelectPhotoRow: View {
+struct EVYSelectPhotoRow: View, EVYRowProtocol {
     public static let JSONType = "SelectPhoto"
     
     private let view: EVYSelectPhotoRowView
@@ -31,6 +31,10 @@ struct EVYSelectPhotoRow: View {
         self.view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
+	
+	func complete() -> Bool {
+		view.content.photos.count > 0
+	}
 
     var body: some View {
         EVYSelectPhoto(title: view.content.title,

@@ -12,6 +12,10 @@ struct EVYPage: View, Decodable {
     let title: String
     let rows: [EVYRow]
     let footer: EVYRow
+	
+	func complete() -> Bool {
+		return rows.allSatisfy({ $0.complete() })
+	}
 
     var body: some View {
         ScrollView {

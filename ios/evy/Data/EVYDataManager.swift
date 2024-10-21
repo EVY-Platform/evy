@@ -19,6 +19,17 @@ extension Notification.Name {
 
 @Observable class EVYState<T> {
     var value: T
+	
+	init(setter: @escaping () -> T) {
+		self.value = setter()
+		
+		NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
+											   object: nil,
+											   queue: nil,
+											   using: { _ in
+			self.value = setter()
+		})
+	}
     
     init(watch: String, setter: @escaping (_ input: String) -> T) {
         self.value = setter(watch)

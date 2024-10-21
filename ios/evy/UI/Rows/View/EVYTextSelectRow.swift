@@ -16,7 +16,7 @@ struct EVYTextSelectRowView: Decodable {
     }
 }
 
-struct EVYTextSelectRow: View {
+struct EVYTextSelectRow: View, EVYRowProtocol {
     public static let JSONType = "TextSelect"
     
     private let view: EVYTextSelectRowView
@@ -41,6 +41,10 @@ struct EVYTextSelectRow: View {
         try EVY.updateValue(view.content.text, at: temporaryId)
         self.value = try EVY.data.get(key: temporaryId).decoded()
     }
+	
+	func complete() -> Bool {
+		return true
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

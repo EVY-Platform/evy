@@ -18,18 +18,27 @@ struct EVYSearchRowView: Decodable {
     }
 }
     
-struct EVYSearchRow: View {
+struct EVYSearchRow: View, EVYRowProtocol {
     public static let JSONType = "Search"
     
     private let view: EVYSearchRowView
     private let edit: SDUI.Edit
+	
+	@State private var showSheet = false
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYSearchRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
-    
-    @State private var showSheet = false
+	
+	func complete() -> Bool {
+		do {
+			let value = try EVY.getDataFromText(edit.destination)
+			return value.toString().count > 0
+		} catch {
+			return false
+		}
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

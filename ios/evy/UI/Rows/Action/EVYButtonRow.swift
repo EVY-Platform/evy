@@ -16,7 +16,7 @@ struct EVYButtonRowView: Decodable {
     }
 }
     
-struct EVYButtonRow: View {
+struct EVYButtonRow: View, EVYRowProtocol {
     @Environment(\.navigate) private var navigate
     
     public static let JSONType = "Button"
@@ -28,6 +28,10 @@ struct EVYButtonRow: View {
         self.view = try container.decode(EVYButtonRowView.self, forKey:.view)
         self.action = try container.decode(SDUI.Action.self, forKey:.action)
     }
+	
+	func complete() -> Bool {
+		return true
+	}
     
     private func performAction() -> Void {
         switch action.target {

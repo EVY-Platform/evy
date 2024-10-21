@@ -17,7 +17,7 @@ struct EVYCalendarRowView: Decodable {
     }
 }
     
-struct EVYCalendarRow: View {
+struct EVYCalendarRow: View, EVYRowProtocol {
     public static let JSONType = "Calendar"
     
     private let view: EVYCalendarRowView
@@ -27,6 +27,15 @@ struct EVYCalendarRow: View {
         self.view = try container.decode(EVYCalendarRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
+	
+	func complete() -> Bool {
+		do {
+			let value = try EVY.getDataFromText(edit.destination)
+			return value.toString().count > 0
+		} catch {
+			return false
+		}
+	}
     
     var body: some View {
         EVYCalendar(primary: view.content.primary,

@@ -36,6 +36,8 @@ struct ContentView: View {
     private let flows: [EVYFlow]
     @State private var routes: [Route] = []
     @State private var currentFlowId: String = "home"
+	@State private var showingAlert = false
+	@State private var alertMessage = ""
     
     init() {
         // Sample data for testing
@@ -63,9 +65,16 @@ struct ContentView: View {
             // go back to it instead of adding more to the stack
             if let existing = routes.lastIndex(of: route) {
                 routes.removeSubrange(existing...)
-            } else {
-                routes.append(route)
-            }
+			} else {
+				let currentFlow = flows.first(where: {$0.id == currentFlowId})
+				let allPagesComplete = currentFlow?.pages.allSatisfy({ $0.complete() }) ?? false
+				if currentFlow?.type == .create, !allPagesComplete {
+					alertMessage = "Incomplete page"
+					showingAlert = true
+					break
+				}
+				routes.append(route)
+			}
             
             if currentFlowId == route.flowId {
                 break
@@ -131,6 +140,9 @@ struct ContentView: View {
                         }
                 }
         }
+		.alert(alertMessage, isPresented: $showingAlert) {
+			Button("OK", role: .cancel) { }
+		}
         .onChange(of: routes) { oldValue, newValue in
             let newFlowId = routes.last?.flowId ?? "home"
             

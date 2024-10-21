@@ -18,7 +18,7 @@ struct EVYDropdownRowView: Decodable {
     }
 }
     
-struct EVYDropdownRow: View {
+struct EVYDropdownRow: View, EVYRowProtocol {
     public static let JSONType = "Dropdown"
     
     private let view: EVYDropdownRowView
@@ -28,6 +28,15 @@ struct EVYDropdownRow: View {
         self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
+	
+	func complete() -> Bool {
+		do {
+			let value = try EVY.getDataFromText(edit.destination)
+			return value.toString().count > 0
+		} catch {
+			return false
+		}
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct EVYListContainerRow: View {
+struct EVYListContainerRow: View, EVYRowProtocol {
     public static let JSONType = "ListContainer"
     
     private let view: SDUI.ContainerView
@@ -15,6 +15,10 @@ struct EVYListContainerRow: View {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(SDUI.ContainerView.self, forKey:.view)
     }
+	
+	func complete() -> Bool {
+		view.content.children.allSatisfy({ $0.complete() })
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

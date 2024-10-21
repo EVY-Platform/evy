@@ -14,11 +14,20 @@ public enum RowCodingKeys: String, CodingKey {
     case action
 }
 
+public enum EVYRowError: Error {
+	case cannotParseRow
+}
+
+protocol EVYRowProtocol: View {
+	static var JSONType: String { get }
+	func complete() -> Bool
+}
+
 struct EVYRow: View, Decodable, Identifiable {
     let id = UUID()
     
     let type: String
-    let view: any View
+	let view: any EVYRowProtocol
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: RowCodingKeys.self)
@@ -26,7 +35,7 @@ struct EVYRow: View, Decodable, Identifiable {
         
         switch self.type {
             
-            // Container rows
+			// Container rows
             case EVYColumnContainerRow.JSONType:
                 self.view = try EVYColumnContainerRow(container: container)
             
@@ -82,9 +91,13 @@ struct EVYRow: View, Decodable, Identifiable {
                 self.view = try EVYTextSelectRow(container: container)
                     
             default:
-                self.view = EVYTextView("I am a row")
+				throw EVYRowError.cannotParseRow
         }
     }
+	
+	func complete() -> Bool {
+		view.complete()
+	}
     
     var body: some View {
         AnyView(view)

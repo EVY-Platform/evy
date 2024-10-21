@@ -9,16 +9,19 @@
 
 import SwiftUI
 
-struct EVYSheetContainerRow: View {
+struct EVYSheetContainerRow: View, EVYRowProtocol {
     public static let JSONType = "SheetContainer"
 
     private let view: SDUI.ContainerView
+	@State private var showSheet = false
 
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(SDUI.ContainerView.self, forKey:.view)
     }
-    
-    @State private var showSheet = false
+	
+	func complete() -> Bool {
+		view.content.child?.complete() ?? false
+	}
     
     var body: some View {
         self.view.content.child

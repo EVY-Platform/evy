@@ -18,7 +18,7 @@ struct EVYInputListRowView: Decodable {
     }
 }
     
-struct EVYInputListRow: View {
+struct EVYInputListRow: View, EVYRowProtocol {
     public static let JSONType = "InputList"
     
     private let view: EVYInputListRowView
@@ -26,6 +26,10 @@ struct EVYInputListRow: View {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputListRowView.self, forKey:.view)
     }
+	
+	func complete() -> Bool {
+		return true
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

@@ -29,7 +29,7 @@ public struct SelectSegmentContainerView: Decodable {
     let placeholder: SDUI.Placeholder?
 }
 
-struct EVYSelectSegmentContainerRow: View {
+struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
     public static let JSONType = "SelectSegmentContainer"
     
     private let view: SelectSegmentContainerView
@@ -39,6 +39,10 @@ struct EVYSelectSegmentContainerRow: View {
         self.view = try container.decode(SelectSegmentContainerView.self, forKey:.view)
         selected = self.view.content.children.first!.title
     }
+	
+	func complete() -> Bool {
+		view.content.children.contains(where: ({ $0.child.complete() }))
+	}
 
     var body: some View {
         Picker("", selection: $selected) {

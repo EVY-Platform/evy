@@ -946,8 +946,8 @@ struct DataConstants {
             },
             "description":
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-            "condition_id": "1",
-            "selling_reason_id": "1",
+            "condition_id": "",
+            "selling_reason_id": "",
             "dimension": {
                 "width": "500",
                 "height": "1600",

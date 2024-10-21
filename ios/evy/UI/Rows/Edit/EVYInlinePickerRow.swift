@@ -17,7 +17,7 @@ struct EVYInlinePickerRowView: Decodable {
     }
 }
     
-struct EVYInlinePickerRow: View {
+struct EVYInlinePickerRow: View, EVYRowProtocol {
     public static let JSONType = "InlinePicker"
     
     private let view: EVYInlinePickerRowView
@@ -27,6 +27,10 @@ struct EVYInlinePickerRow: View {
         self.view = try container.decode(EVYInlinePickerRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
+	
+	func complete() -> Bool {
+		return true
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

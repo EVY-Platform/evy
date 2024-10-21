@@ -17,7 +17,7 @@ struct EVYTextAreaRowView: Decodable {
     }
 }
     
-struct EVYTextAreaRow: View {
+struct EVYTextAreaRow: View, EVYRowProtocol {
     public static let JSONType = "TextArea"
     
     private let view: EVYTextAreaRowView
@@ -27,6 +27,10 @@ struct EVYTextAreaRow: View {
         self.view = try container.decode(EVYTextAreaRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
+	
+	func complete() -> Bool {
+		view.content.value.count > 0
+	}
 
     var body: some View {
         VStack(alignment:.leading) {
