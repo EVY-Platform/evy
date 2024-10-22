@@ -183,10 +183,6 @@
 								"line_1": "{formatAddress(item.address)}",
 								"line_2": "",
 								"title_detail": "Change"
-							},
-							"placeholder": {
-								"value": "Enter an address for pickup",
-								"condition": "{item.address}"
 							}
 						}
 					}
@@ -284,7 +280,6 @@
 						"children": [{
 							"type": "Detail",
 							"view": {
-								"visible": "{item.transfer_option.shipping.transfer_provider}",
 								"content": {
 									"title": "",
 									// This is usually fetched from API

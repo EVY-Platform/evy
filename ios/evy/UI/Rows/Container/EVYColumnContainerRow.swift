@@ -17,18 +17,21 @@ struct EVYColumnContainerRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		view.content.children.allSatisfy({ $0.complete() })
+		let completeChildren = view.content.children.filter({
+			$0.child.complete()
+		})
+		return completeChildren.count >= Int(view.content.required_children) ?? 0
 	}
     
     var body: some View {
         VStack(alignment:.leading) {
-            if (view.content.title.count > 0) {
-                EVYTextView(view.content.title)
+			if (view.content.children.first!.title.count > 0) {
+				EVYTextView(view.content.children.first!.title)
                     .padding(.vertical, Constants.padding)
             }
             HStack(alignment: .top) {
-                ForEach(view.content.children, id: \.id) { child in
-                    child
+				ForEach(view.content.children, id: \.child.id) { child in
+					child.child
                 }
             }
         }

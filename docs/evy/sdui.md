@@ -96,10 +96,6 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     "type",
 
     "view": {
-        // Prop that defines when the row is visible
-        // for example {count(item.transfer_option.pickup.dates_with_timeslots) > 0}
-        "visible",
-
         content: {
             // Represents the header of the row, if empty string then no header will be shown
             "title",
@@ -117,7 +113,6 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     // What action should be taken when tapping the button
     "action": {
         "target": "navigate:flow_id:page_id|submit|close",
-        "condition", // Optional condition that defines whether the button is enabled or not
     }
 }
 ```
@@ -129,7 +124,14 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     "type",
     "view": {
         "content": {
-            "children": [ROW],
+            "children": [{
+                "title", // What is the name, title or header of the child
+                "child": "ROW"
+            }],
+
+            // Number of children required to be complete to
+            // consider the container complete
+            "required_children",
 
             // Whether to use data to iterate over for example seller.pictures
             // This makes the "input" variable available to each child,
@@ -157,14 +159,6 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 ```
 {
     "type": "SelectSegmentContainer", // Shows children under a segmented control
-    "view": {
-        "content": {
-            "children": [{
-                "title", // What is the name of the selection
-                "child": "ROW"
-            }]
-        }
-    }
 }
 ```
 

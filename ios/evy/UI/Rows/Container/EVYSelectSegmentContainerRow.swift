@@ -7,40 +7,22 @@
 
 import SwiftUI
 
-public struct SelectSegmentContainerChild: Decodable {
-    let title: String
-    let child: EVYRow
-}
-
-public class SelectSegmentContainerContent: SDUI.Content {
-    let children: [SelectSegmentContainerChild]
-    let children_data: String?
-    
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: SDUI.ContainerContentCodingKeys.self)
-        self.children = try container.decode([SelectSegmentContainerChild].self, forKey: .children)
-        self.children_data = try? container.decode(String.self, forKey: .children_data)
-        
-        try super.init(from: decoder)
-    }
-}
-public struct SelectSegmentContainerView: Decodable {
-    let content: SelectSegmentContainerContent
-}
-
 struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
     public static let JSONType = "SelectSegmentContainer"
     
-    private let view: SelectSegmentContainerView
+	private let view: SDUI.ContainerView
     @State private var selected: String
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(SelectSegmentContainerView.self, forKey:.view)
+        self.view = try container.decode(SDUI.ContainerView.self, forKey:.view)
         selected = self.view.content.children.first!.title
     }
 	
 	func complete() -> Bool {
-		view.content.children.contains(where: ({ $0.child.complete() }))
+		let completeChildren = view.content.children.filter({
+			$0.child.complete()
+		})
+		return completeChildren.count >= Int(view.content.required_children) ?? 0
 	}
 
     var body: some View {

@@ -67,25 +67,15 @@ public class SDUI {
         let action: Action
     }
     
-    public enum ContainerContentCodingKeys: String, CodingKey {
-        case title
-        case children
-        case children_data
-        case child
-    }
-    public class ContainerContent: Content {
-        let children: [EVYRow]
+	public struct ContainerChild: Decodable {
+		let title: String
+		let child: EVYRow
+	}
+    public class ContainerContent: Decodable {
+        let children: [ContainerChild]
+		let required_children: String
         let children_data: String?
         let child: EVYRow?
-        
-        required init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: ContainerContentCodingKeys.self)
-            self.children = try container.decode([EVYRow].self, forKey: .children)
-            self.children_data = try? container.decode(String.self, forKey: .children_data)
-            self.child = try? container.decode(EVYRow.self, forKey: .child)
-            
-            try super.init(from: decoder)
-        }
     }
     public struct ContainerView: Decodable {
         let content: ContainerContent

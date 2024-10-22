@@ -20,7 +20,7 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		view.content.child?.complete() ?? false
+		view.content.child!.complete()
 	}
     
     var body: some View {
@@ -29,9 +29,11 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
             .onTapGesture { showSheet.toggle() }
             .sheet(isPresented: $showSheet, content: {
                 VStack {
-                    EVYTextView(view.content.title, style: .title)
-                    ForEach(view.content.children, id: \.id) { child in
-                        child
+					if (view.content.children.first!.title.count > 0) {
+						EVYTextView(view.content.children.first!.title)
+					}
+					ForEach(view.content.children, id: \.child.id) { child in
+						child.child
                     }
                 }
                 .frame(maxHeight: .infinity, alignment: .top)

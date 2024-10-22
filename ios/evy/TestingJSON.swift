@@ -249,9 +249,12 @@ struct SDUIConstants {
             "type": "SheetContainer",
             "view": {
                 "content": {
-                    "title": "Tags",
                     "child": \(tagsInputListRow),
-                    "children": [\(searchTagsRow)]
+                    "children": [{
+                        "title": "",
+                        "child": \(searchTagsRow)
+                    }],
+                    "required_children": "1"
                 }
             }
         }
@@ -312,8 +315,17 @@ struct SDUIConstants {
             "type": "ColumnContainer",
             "view": {
                 "content": {
-                    "title": "Dimensions (width x height x depth)",
-                    "children": [\(inputWidthRow), \(inputHeightRow), \(inputLengthRow)]
+                    "children": [{
+                        "title": "Dimensions (width x height x depth)",
+                        "child": \(inputWidthRow)
+                    },{
+                        "title": "",
+                        "child": \(inputHeightRow)
+                    },{
+                        "title": "",
+                        "child": \(inputLengthRow)
+                    }],
+                    "required_children": "3"
                 }
             }
         }
@@ -481,27 +493,30 @@ struct SDUIConstants {
     
     static let sheetContainerRow = """
         {
-           "type": "SheetContainer",
-           "view": {
-               "content": {
-                   "title": "Where",
-                   "child": \(addressRow),
-                   "children": [{
-                       "type": "Search",
-                       "view": {
-                           "content": {
-                               "title": "",
-                               "format": "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}",
-                               "placeholder": "Search address"
-                           },
-                            "data": "local:address"
-                       },
-                        "edit": {
-                            "destination": "{item.address}"
+            "type": "SheetContainer",
+            "view": {
+                "content": {
+                    "child": \(addressRow),
+                    "children": [{
+                        "title": "",
+                        "child": {
+                            "type": "Search",
+                            "view": {
+                                "content": {
+                                    "title": "",
+                                    "format": "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}",
+                                    "placeholder": "Search address"
+                                },
+                                "data": "local:address"
+                            },
+                            "edit": {
+                                "destination": "{item.address}"
+                            }
                         }
-                    }]
-               }
-           }
+                    }],
+                    "required_children": "1"
+                }
+            }
         }
     """
     
@@ -617,37 +632,51 @@ struct SDUIConstants {
             "type": "ListContainer",
             "view": {
                 "content": {
-                    "title": "",
-                    "children": [
-                    {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "Allow buyers to pick up the item"
+                    "children": [{
+                        "title": "",
+                        "child": {
+                            "type": "Info",
+                            "view": {
+                                "content": {
+                                    "title": "",
+                                    "text": "Allow buyers to pick up the item"
+                                }
                             }
-                        }
-                    }, \(sheetContainerRow),{
-                        "type": "Input",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "placeholder": "Additional information",
-                                "value": "{item.address.instructions}"
-                            }
-                        },
-                        "edit": {
-                            "destination": "{item.address.instructions}"
                         }
                     }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "When",
-                                "text": "When are you available for buyers to inspect or pick up this item"
+                        "title": "",
+                        "child": \(sheetContainerRow)
+                    }, {
+                        "title": "",
+                        "child": {
+                            "type": "Input",
+                            "view": {
+                                 "content": {
+                                    "title": "",
+                                    "placeholder": "Additional information",
+                                    "value": "{item.address.instructions}"
+                                 }
+                            },
+                            "edit": {
+                                "destination": "{item.address.instructions}"
                             }
                         }
-                    }, \(pickupCalendarRow)]
+                    }, {
+                        "title": "",
+                        "child": {
+                            "type": "Info",
+                            "view": {
+                                "content": {
+                                    "title": "When",
+                                    "text": "When are you available for buyers to inspect or pick up this item"
+                                }
+                            }
+                        }
+                    }, {
+                        "title": "",
+                        "child": \(pickupCalendarRow)
+                    }],
+                    "required_children": "5"
                 }
             }
         }
@@ -658,45 +687,62 @@ struct SDUIConstants {
             "type": "ListContainer",
             "view": {
                 "content": {
-                    "title": "",
-                    "children": [
-                    {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "Deliver directly to the buyer"
+                    "children": [{
+                        "title": "",
+                        "child": {
+                            "type": "Info",
+                            "view": {
+                                "content": {
+                                    "title": "",
+                                    "text": "Deliver directly to the buyer"
+                                }
                             }
                         }
                     }, {
-                        "type": "Input",
-                        "view": {
-                            "content": {
-                                "title": "Surcharge",
-                                "value": "{formatCurrency(item.price)}",
-                                "placeholder": "Do you want to charge for delivery?"
+                        "title": "",
+                        "child": {
+                            "type": "Input",
+                            "view": {
+                                "content": {
+                                    "title": "Surcharge",
+                                    "value": "{formatCurrency(item.price)}",
+                                    "placeholder": "Do you want to charge for delivery?"
+                                }
+                            },
+                            "edit": {
+                                "destination": "{item.price.value}"
                             }
-                        },
-                        "edit": {
-                            "destination": "{item.price.value}"
                         }
                     }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "How far",
-                                "text": "How long can you travel to deliver this item"
+                        "title": "",
+                        "child": {
+                            "type": "Info",
+                            "view": {
+                                "content": {
+                                    "title": "How far",
+                                    "text": "How long can you travel to deliver this item"
+                                }
                             }
                         }
-                    }, \(distancePickerRow), {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "When",
-                                "text": "When are you available to deliver this item"
+                    }, {
+                        "title": "",
+                        "child": \(distancePickerRow),
+                    }, {
+                        "title": "",
+                        "child": {
+                            "type": "Info",
+                            "view": {
+                                "content": {
+                                    "title": "When",
+                                    "text": "When are you available to deliver this item"
+                                }
                             }
                         }
-                    }, \(deliveryCalendarRow)]
+                    }, {
+                        "title": "",
+                        "child": \(deliveryCalendarRow)
+                    }],
+                    "required_children": "6"
                 }
             }
         }
@@ -707,49 +753,66 @@ struct SDUIConstants {
             "type": "ListContainer",
             "view": {
                 "content": {
-                    "title": "",
-                    "children": [
-                    {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "Postal shipping at the buyer’s expense"
-                            }
+                    "children": [{
+                        "title": "",
+                        "child": {
+                            "type": "Info",
+                            "view": {
+                        		"content": {
+                        			"title": "",
+                        			"text": "Postal shipping at the buyer’s expense"
+                        		}
+                        	}
                         }
                     }, {
-                        "type": "Input",
-                        "view": {
-                            "content": {
-                                "title": "Where from",
-                                "value": "",
-                                "placeholder": "Postal code you will be shipping from"
-                            }
-                        },
-                        "edit": {
-                            "destination": ""
+                        "title": "",
+                        "child": {
+                        	"type": "Input",
+                        	"view": {
+                        		"content": {
+                        			"title": "Where from",
+                        			"value": "",
+                        			"placeholder": "Postal code you will be shipping from"
+                        		}
+                        	},
+                        	"edit": {
+                        		"destination": ""
+                        	}
                         }
                     }, {
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "Where to",
-                                "text": "Select how far you are willing to ship"
-                            }
+                        "title": "",
+                        "child": {
+                        	"type": "Info",
+                        	"view": {
+                        		"content": {
+                        			"title": "Where to",
+                        			"text": "Select how far you are willing to ship"
+                        		}
+                        	}
                         }
-                    }, \(areaPickerRow), \(columnContainerDimensionsRow), {
-                        "type": "Input",
-                        "view": {
-                            "content": {
-                                "title": "Weight (kg)",
-                                "value": "{formatWeight(item.dimension.weight)}",
-                                "placeholder": "Weight"
-                            }
-                        },
-                        "edit": {
-                            "destination": "{item.dimension.weight}"
+                    }, {
+                        "title": "",
+                        "child": \(areaPickerRow),
+                    }, {
+                        "title": "",
+                        "child": \(columnContainerDimensionsRow)
+                    }, {
+                        "title": "",
+                        "child": {
+                        	"type": "Input",
+                        	"view": {
+                        		"content": {
+                        			"title": "Weight (kg)",
+                        			"value": "{formatWeight(item.dimension.weight)}",
+                        			"placeholder": "Weight"
+                        		}
+                        	},
+                        	"edit": {
+                        		"destination": "{item.dimension.weight}"
+                        	}
                         }
-                    }]
+                    }],
+                    "required_children": "6"
                 }
             }
         }
@@ -760,7 +823,6 @@ struct SDUIConstants {
             "type": "SelectSegmentContainer",
             "view": {
                 "content": {
-                    "title": "Pickup",
                     "children": [{
                         "title": "Pickup",
                         "child": \(pickupContainer)
@@ -772,7 +834,8 @@ struct SDUIConstants {
                     {
                         "title": "Shipping",
                         "child": \(shippingContainer)
-                    }]
+                    }],
+                    "required_children": "1"
                 }
             }
         }

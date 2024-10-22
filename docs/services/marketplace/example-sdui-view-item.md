@@ -40,7 +40,6 @@
 					"title": "Pickup",
 					"child": {
 						"type": "TimeslotPicker",
-						"visible": "{count(item.transfer_option.pickup.dates_with_timeslots) > 0}",
 						"view": {
 							"content": {
 								"title": "",
@@ -57,7 +56,6 @@
 					"child": {
 						"type": "TimeslotPicker",
 						"view": {
-							"visible": "{count(item.transfer_option.delivery.dates_with_timeslots) > 0}",
 							"content": {
 								"title": "",
 								"icon": "_image_id_",
@@ -73,7 +71,6 @@
 					"children": [{
 						"type": "Detail",
 						"view": {
-							"visible": "{item.transfer_option.shipping.transfer_provider}",
 							"content": {
 								"title": "",
 								// This is usually fetched from API
