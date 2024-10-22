@@ -29,7 +29,11 @@ struct EVYInputRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		view.content.value.count > 0
+		if !edit.required {
+			return true
+		}
+		
+		return view.content.value.count > 0
 	}
     
     var body: some View {

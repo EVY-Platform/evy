@@ -51,8 +51,20 @@ public class SDUI {
             }
         }
     }
+	
+	private enum EditCodingKeys: String, CodingKey {
+		case destination
+		case required
+	}
     public struct Edit: Decodable {
         let destination: String
+		let required: Bool
+		
+		public init(from decoder: Decoder) throws {
+			let container = try decoder.container(keyedBy: EditCodingKeys.self)
+			self.destination = try container.decode(String.self, forKey: .destination)
+			self.required = try container.decode(String.self, forKey: .required) == "true"
+		}
     }
     public class Content: Decodable {
         let title: String

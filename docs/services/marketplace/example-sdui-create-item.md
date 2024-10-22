@@ -26,8 +26,7 @@
 				}
 			},
 			"edit": {
-				"destination": "{item.photo_ids}",
-				"minimum_amount": "1"
+				"destination": "{item.photo_ids}"
 			}
 		},
 		{

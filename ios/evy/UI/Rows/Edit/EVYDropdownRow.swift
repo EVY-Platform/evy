@@ -30,6 +30,10 @@ struct EVYDropdownRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
+		if !edit.required {
+			return true
+		}
+		
 		do {
 			let value = try EVY.getDataFromText(edit.destination)
 			return value.toString().count > 0

@@ -29,7 +29,16 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		return true
+		if !edit.required {
+			return true
+		}
+		
+		do {
+			let value = try EVY.getDataFromText(edit.destination)
+			return value.toString().count > 0
+		} catch {
+			return false
+		}
 	}
     
     var body: some View {

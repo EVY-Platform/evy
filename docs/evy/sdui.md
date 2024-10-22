@@ -107,7 +107,11 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     },
     "edit": {
         // Where the input data is stored
-        "destination"
+        "destination",
+
+        // Whether this row is required for a page to be considered complete
+        "required"
+
     },
 
     // What action should be taken when tapping the button

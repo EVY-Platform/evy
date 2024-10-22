@@ -127,7 +127,8 @@ struct SDUIConstants {
                 "data": "{conditions}"
            },
             "edit": {
-                "destination": "{item.condition_id}"
+                "destination": "{item.condition_id}",
+                "required": "true"
             }
         }
     """
@@ -144,7 +145,8 @@ struct SDUIConstants {
                 "data": "{selling_reasons}"
             },
             "edit": {
-                "destination": "{item.selling_reason_id}"
+                "destination": "{item.selling_reason_id}",
+                "required": "true"
             }
         }
     """
@@ -160,7 +162,8 @@ struct SDUIConstants {
                 "data": "{durations}"
            },
             "edit": {
-                "destination": "{distance}"
+                "destination": "{distance}",
+                "required": "true"
             }
         }
     """
@@ -176,7 +179,8 @@ struct SDUIConstants {
                 "data": "{areas}"
            },
             "edit": {
-                "destination": "{area}"
+                "destination": "{area}",
+                "required": "true"
             }
         }
     """
@@ -192,7 +196,8 @@ struct SDUIConstants {
                }
            },
             "edit": {
-                "destination": "{pickupTimeslots}"
+                "destination": "{pickupTimeslots}",
+                "required": "true"
             }
         }
     """
@@ -208,7 +213,8 @@ struct SDUIConstants {
                }
            },
             "edit": {
-                "destination": "{deliveryTimeslots}"
+                "destination": "{deliveryTimeslots}",
+                "required": "true"
             }
         }
     """
@@ -225,7 +231,8 @@ struct SDUIConstants {
                 "data": "{api:tags}"
            },
             "edit": {
-                "destination": "{item.tags}"
+                "destination": "{item.tags}",
+                "required": "false"
             }
         }
     """
@@ -274,7 +281,7 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.photo_ids}",
-                "minimum_amount": "1"
+                "required": "true"
             }
         }
     """
@@ -289,7 +296,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.title}"
+                "destination": "{item.title}",
+                "required": "true"
             }
         }
     """
@@ -305,7 +313,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.price.value}"
+                "destination": "{item.price.value}",
+                "required": "true"
             }
         }
     """
@@ -342,7 +351,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.dimension.width}"
+                "destination": "{item.dimension.width}",
+                "required": "true"
             }
         }
     """
@@ -359,7 +369,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.address}"
+                "destination": "{item.address}",
+                "required": "true"
             }
         }
     """
@@ -374,7 +385,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.payment_methods.cash}"
+                "destination": "{item.payment_methods.cash}",
+                "required": "false"
             }
         }
     """
@@ -389,7 +401,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.payment_methods.app}"
+                "destination": "{item.payment_methods.app}",
+                "required": "false"
             }
         }
     """
@@ -406,7 +419,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.dimension.height}"
+                "destination": "{item.dimension.height}",
+                "required": "true"
             }
         }
     """
@@ -422,7 +436,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.dimension.length}"
+                "destination": "{item.dimension.length}",
+                "required": "true"
             }
         }
     """
@@ -510,7 +525,8 @@ struct SDUIConstants {
                                 "data": "local:address"
                             },
                             "edit": {
-                                "destination": "{item.address}"
+                                "destination": "{item.address}",
+                                "required": "false"
                             }
                         }
                     }],
@@ -622,7 +638,8 @@ struct SDUIConstants {
                 }
             },
             "edit": {
-                "destination": "{item.description}"
+                "destination": "{item.description}",
+                "required": "true"
             }
         }
     """
@@ -658,7 +675,8 @@ struct SDUIConstants {
                                  }
                             },
                             "edit": {
-                                "destination": "{item.address.instructions}"
+                                "destination": "{item.address.instructions}",
+                                "required": "false"
                             }
                         }
                     }, {
@@ -710,7 +728,8 @@ struct SDUIConstants {
                                 }
                             },
                             "edit": {
-                                "destination": "{item.price.value}"
+                                "destination": "{item.price.value}",
+                                "required": "false"
                             }
                         }
                     }, {
@@ -776,7 +795,8 @@ struct SDUIConstants {
                         		}
                         	},
                         	"edit": {
-                        		"destination": ""
+                        		"destination": "",
+                                "required": "false"
                         	}
                         }
                     }, {
@@ -808,7 +828,8 @@ struct SDUIConstants {
                         		}
                         	},
                         	"edit": {
-                        		"destination": "{item.dimension.weight}"
+                        		"destination": "{item.dimension.weight}",
+                                "required": "true"
                         	}
                         }
                     }],

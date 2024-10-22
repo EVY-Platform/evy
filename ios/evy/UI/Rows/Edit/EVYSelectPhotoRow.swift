@@ -33,7 +33,11 @@ struct EVYSelectPhotoRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		view.content.photos.count > 0
+		if !edit.required {
+			return true
+		}
+		
+		return view.content.photos.count > 0
 	}
 
     var body: some View {
