@@ -426,8 +426,7 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "target": "navigate:create_item:step_2",
-                "condition": "{{count(item.title)} > 0}"
+                "target": "navigate:create_item:step_2"
             }
         }
     """
@@ -459,8 +458,7 @@ struct SDUIConstants {
             },
             "edit": {},
             "action": {
-                "target": "navigate:create_item:step_4",
-                "condition": "{count(item.title) > 10}"
+                "target": "navigate:create_item:step_4"
             }
         }
     """
@@ -745,7 +743,7 @@ struct SDUIConstants {
                             "content": {
                                 "title": "Weight (kg)",
                                 "value": "{formatWeight(item.dimension.weight)}",
-                                "placeholder": "Wight"
+                                "placeholder": "Weight"
                             }
                         },
                         "edit": {

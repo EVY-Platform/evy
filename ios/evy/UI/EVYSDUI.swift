@@ -16,7 +16,6 @@ public class SDUI {
     
     public struct Action: Decodable {
         let target: ActionTarget
-        let condition: String?
     }
     public enum ActionTarget: Decodable {
         case navigate(Route)
@@ -55,16 +54,11 @@ public class SDUI {
     public struct Edit: Decodable {
         let destination: String
     }
-    public struct Placeholder: Decodable {
-        let value: String
-        let condition: String
-    }
     public class Content: Decodable {
         let title: String
     }
     public struct View: Decodable {
         let content: Content
-        let placeholder: Placeholder
     }
     public struct Row: Decodable {
         let type: String
@@ -95,6 +89,5 @@ public class SDUI {
     }
     public struct ContainerView: Decodable {
         let content: ContainerContent
-        let placeholder: Placeholder?
     }
 }

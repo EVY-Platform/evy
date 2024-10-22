@@ -11,17 +11,9 @@ struct EVYButton: View {
     let label: String
     let action: () -> Void
     
-    @State var disabled: Bool
-    
-    init(label: String, condition: String?, action: @escaping () -> Void) {
+    init(label: String, action: @escaping () -> Void) {
         self.label = label
         self.action = action
-        do {
-            self.disabled = (condition != nil) ?
-                try !EVY.evaluateFromText(condition!) : false
-        } catch {
-            self.disabled = false
-        }
     }
     
     var body: some View {
@@ -32,9 +24,8 @@ struct EVYButton: View {
         }
         .padding(Constants.majorPadding)
         .frame(maxWidth: 150)
-        .background(disabled ? Constants.buttonDisabledColor : Constants.buttonColor)
+        .background(Constants.buttonColor)
         .cornerRadius(Constants.smallCornerRadius)
-        .disabled(disabled)
     }
 }
 
@@ -43,10 +34,10 @@ struct EVYButton: View {
     try! EVY.data.create(key: "item", data: item)
     
     return VStack {
-        EVYButton(label: "Button", condition: "{count(item.title) > 10}", action: {
+        EVYButton(label: "Button", action: {
             print("clicked button")
         })
-        EVYButton(label: "Button", condition: "{count(item.title) > 20}", action: {
+        EVYButton(label: "Button", action: {
             print("clicked button")
         })
     }

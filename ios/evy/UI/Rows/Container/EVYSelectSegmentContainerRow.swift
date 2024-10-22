@@ -26,7 +26,6 @@ public class SelectSegmentContainerContent: SDUI.Content {
 }
 public struct SelectSegmentContainerView: Decodable {
     let content: SelectSegmentContainerContent
-    let placeholder: SDUI.Placeholder?
 }
 
 struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {

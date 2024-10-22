@@ -45,9 +45,7 @@ struct EVYButtonRow: View, EVYRowProtocol {
     }
     
     var body: some View {
-        EVYButton(label: view.content.label,
-                  condition: action.condition,
-                  action: performAction)
+        EVYButton(label: view.content.label, action: performAction)
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.top, Constants.minorPadding)
         .padding(.bottom, Constants.majorPadding)
