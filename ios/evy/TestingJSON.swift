@@ -93,16 +93,28 @@ struct SDUIConstants {
             "id": "step_4",
             "title": "Payment options",
             "rows": [{
-                        "type": "Info",
-                        "view": {
-                            "content": {
-                                "title": "",
-                                "text": "Payment will be made by the buyers on pickup"
-                            }
-                        }
-                    },
-                    \(paymentCashRow),
-                    \(paymentAppRow)],
+                "type": "Info",
+                "view": {
+                    "content": {
+                        "title": "",
+                        "text": "Payment will be made by the buyers on pickup"
+                    }
+                }
+            }, {
+                "type": "ListContainer",
+                "view": {
+                    "content": {
+                        "children": [{
+                            "title": "",
+                            "child": \(paymentCashRow)
+                        }, {
+                            "title": "",
+                            "child": \(paymentAppRow)
+                        }],
+                        "required_children": "1"
+                    }
+                }
+            }],
             "footer": \(navigate4ButtonRow)
         }
     """
@@ -386,7 +398,7 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.payment_methods.cash}",
-                "required": "false"
+                "required": "true"
             }
         }
     """
@@ -402,7 +414,7 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.payment_methods.app}",
-                "required": "false"
+                "required": "true"
             }
         }
     """
@@ -790,13 +802,13 @@ struct SDUIConstants {
                         	"view": {
                         		"content": {
                         			"title": "Where from",
-                        			"value": "",
+                        			"value": "{item.title}",
                         			"placeholder": "Postal code you will be shipping from"
                         		}
                         	},
                         	"edit": {
-                        		"destination": "",
-                                "required": "false"
+                        		"destination": "{item.title}",
+                                "required": "true"
                         	}
                         }
                     }, {

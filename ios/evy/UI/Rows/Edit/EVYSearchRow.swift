@@ -37,8 +37,8 @@ struct EVYSearchRow: View, EVYRowProtocol {
 		}
 		
 		do {
-			let value = try EVY.getDataFromText(edit.destination)
-			return value.toString().count > 0
+			let storedValue = try EVY.getDataFromText(edit.destination)
+			return storedValue.toString().count > 0
 		} catch {
 			return false
 		}

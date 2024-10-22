@@ -43,7 +43,16 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		return true
+		if !edit.required {
+			return true
+		}
+		
+		do {
+			let storedValue = try EVY.getDataFromText(edit.destination)
+			return storedValue.toString() == "true"
+		} catch {
+			return false
+		}
 	}
     
     var body: some View {

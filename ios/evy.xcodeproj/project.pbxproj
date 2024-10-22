@@ -224,6 +224,7 @@
 				73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */,
 				2E0B20F12B816AFA002C86A3 /* EVYSelectPhotoRow.swift */,
 				2E5F4DBC2BB2C5D900D3A3FB /* EVYTextAreaRow.swift */,
+				73DE512A2C68BF3D00998024 /* EVYTextSelectRow.swift */,
 			);
 			path = Edit;
 			sourceTree = "<group>";
@@ -246,7 +247,6 @@
 				73CB09532C7609E5008F7D2C /* EVYInputListRow.swift */,
 				7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */,
 				736D105E2B78CDDB00503C4D /* EVYTextRow.swift */,
-				73DE512A2C68BF3D00998024 /* EVYTextSelectRow.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";

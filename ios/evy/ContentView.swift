@@ -67,11 +67,16 @@ struct ContentView: View {
                 routes.removeSubrange(existing...)
 			} else {
 				let currentFlow = flows.first(where: {$0.id == currentFlowId})
-				let allPagesComplete = currentFlow?.pages.allSatisfy({ $0.complete() }) ?? false
-				if currentFlow?.type == .create, !allPagesComplete {
-					alertMessage = "Incomplete page"
-					showingAlert = true
-					break
+				if !routes.isEmpty {
+					let currentPageId = routes.last!.pageId
+					let currentPage = currentFlow!.pages.first(where: {
+						$0.id == currentPageId
+					})!
+					if currentFlow?.type == .create, !currentPage.complete() {
+						alertMessage = "Incomplete page"
+						showingAlert = true
+						break
+					}
 				}
 				routes.append(route)
 			}
@@ -90,13 +95,20 @@ struct ContentView: View {
             
         case .submit:
             // Make sure the flow was for creation, otherwise error out
-            let currentFlow: EVYFlow? = flows.first(where: {$0.id == currentFlowId})
-            if currentFlow?.type != .create {
+            let currentFlow: EVYFlow = flows.first(where: {$0.id == currentFlowId})!
+            if currentFlow.type != .create {
                 throw EVYNavigationError.cannotSubmit
             }
+			
+			let allPagesComplete = currentFlow.pages.allSatisfy({ $0.complete() })
+			if !allPagesComplete {
+				alertMessage = "Incomplete flow"
+				showingAlert = true
+				break
+			}
+			
             // Otherwise, submit the data
-            let key: String? = currentFlow?.data
-            try! EVY.submit(key: key!)
+            try! EVY.submit(key: currentFlow.data)
             
             // Then, remove the current flow from navigation
             if let existing = routes.firstIndex(where: { route in
