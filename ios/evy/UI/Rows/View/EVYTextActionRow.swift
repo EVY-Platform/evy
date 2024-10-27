@@ -28,10 +28,6 @@ struct EVYTextActionRow: View, EVYRowProtocol {
         self.view = try container.decode(EVYTextActionRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
-	
-	func complete() -> Bool {
-		return true
-	}
     
     var body: some View {
         VStack(alignment:.leading) {

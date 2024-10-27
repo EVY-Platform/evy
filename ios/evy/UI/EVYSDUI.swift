@@ -52,19 +52,48 @@ public class SDUI {
         }
     }
 	
-	private enum EditCodingKeys: String, CodingKey {
-		case destination
+	private enum ValidationCodingKeys: String, CodingKey {
 		case required
+		case message
+		case minAmount
+		case minValue
+		case minCharacters
+	}
+	public struct Validation: Decodable {
+		let required: Bool
+		let message: String?
+		let minAmount: Int?
+		let minValue: Int?
+		let minCharacters: Int?
+		
+		public init(from decoder: Decoder) throws {
+			let container = try decoder.container(keyedBy: ValidationCodingKeys.self)
+			self.required = try container.decode(String.self, forKey: .required) == "true"
+			do {
+				self.message = try container.decode(String.self, forKey: .message)
+			} catch {
+				self.message = nil
+			}
+			do {
+				self.minAmount = Int(try container.decode(String.self, forKey: .minAmount))!
+			} catch {
+				self.minAmount = nil
+			}
+			do {
+				self.minValue = Int(try container.decode(String.self, forKey: .minValue))!
+			} catch {
+				self.minValue = nil
+			}
+			do {
+				self.minCharacters = Int(try container.decode(String.self, forKey: .minCharacters))!
+			} catch {
+				self.minCharacters = nil
+			}
+		}
 	}
     public struct Edit: Decodable {
         let destination: String
-		let required: Bool
-		
-		public init(from decoder: Decoder) throws {
-			let container = try decoder.container(keyedBy: EditCodingKeys.self)
-			self.destination = try container.decode(String.self, forKey: .destination)
-			self.required = try container.decode(String.self, forKey: .required) == "true"
-		}
+		let validation: Validation
     }
     public class Content: Decodable {
         let title: String

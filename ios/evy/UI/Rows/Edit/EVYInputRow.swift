@@ -29,11 +29,23 @@ struct EVYInputRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		if !edit.required {
+		if !edit.validation.required {
 			return true
 		}
 		
-		return view.content.value.count > 0
+		do {
+			let storedValue = try EVY.getDataFromText(edit.destination)
+			if edit.validation.minValue != nil {
+				return Int(storedValue.toString()) ?? 0 > edit.validation.minValue!
+			}
+			return storedValue.toString().count > edit.validation.minCharacters ?? 0
+		} catch {
+			return false
+		}
+	}
+	
+	func incompleteMessages() -> [String] {
+		edit.validation.message != nil ? [edit.validation.message!] : []
 	}
     
     var body: some View {

@@ -29,11 +29,15 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		if !edit.required {
+		if !edit.validation.required {
 			return true
 		}
 		
 		return view.content.value.count > 0
+	}
+	
+	func incompleteMessages() -> [String] {
+		edit.validation.message != nil ? [edit.validation.message!] : []
 	}
 
     var body: some View {

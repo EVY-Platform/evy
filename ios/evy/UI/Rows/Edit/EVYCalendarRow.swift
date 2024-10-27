@@ -29,16 +29,30 @@ struct EVYCalendarRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		if !edit.required {
+		if !edit.validation.required {
 			return true
 		}
 
 		do {
 			let storedValue = try EVY.getDataFromText(edit.destination)
-			return storedValue.toString().count > 0
+			let min = edit.validation.minAmount ?? 0
+			switch storedValue {
+			case .array(let timeslots):
+				return timeslots.count > min
+			default:
+				return storedValue.toString().count > min
+			}
 		} catch {
 			return false
 		}
+	}
+	
+	func incompleteMessage() -> String? {
+		return edit.validation.message
+	}
+	
+	func incompleteMessages() -> [String] {
+		edit.validation.message != nil ? [edit.validation.message!] : []
 	}
     
     var body: some View {

@@ -32,7 +32,7 @@ struct EVYSearchRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		if !edit.required {
+		if !edit.validation.required {
 			return true
 		}
 		
@@ -42,6 +42,10 @@ struct EVYSearchRow: View, EVYRowProtocol {
 		} catch {
 			return false
 		}
+	}
+	
+	func incompleteMessages() -> [String] {
+		edit.validation.message != nil ? [edit.validation.message!] : []
 	}
     
     var body: some View {

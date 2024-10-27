@@ -22,6 +22,13 @@ struct EVYListContainerRow: View, EVYRowProtocol {
 		})
 		return completeChildren.count >= Int(view.content.required_children) ?? 0
 	}
+	
+	func incompleteMessages() -> [String] {
+		return view.content.children
+			.filter({ $0.child.view.complete() == false })
+			.map({ $0.child.view.incompleteMessages() })
+			.flatMap(\.self)
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

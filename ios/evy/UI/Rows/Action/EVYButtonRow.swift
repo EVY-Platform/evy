@@ -28,10 +28,6 @@ struct EVYButtonRow: View, EVYRowProtocol {
         self.view = try container.decode(EVYButtonRowView.self, forKey:.view)
         self.action = try container.decode(SDUI.Action.self, forKey:.action)
     }
-	
-	func complete() -> Bool {
-		return true
-	}
     
     private func performAction() -> Void {
         switch action.target {

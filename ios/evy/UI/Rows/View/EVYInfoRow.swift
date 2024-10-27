@@ -24,10 +24,6 @@ struct EVYInfoRow: View, EVYRowProtocol {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInfoRowView.self, forKey:.view)
     }
-	
-	func complete() -> Bool {
-		return true
-	}
     
     var body: some View {
         if view.content.title.count > 0 {

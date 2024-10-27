@@ -33,11 +33,15 @@ struct EVYSelectPhotoRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		if !edit.required {
+		if !edit.validation.required {
 			return true
 		}
 		
-		return view.content.photos.count > 0
+		return view.content.photos.count > edit.validation.minAmount ?? 0
+	}
+	
+	func incompleteMessages() -> [String] {
+		edit.validation.message != nil ? [edit.validation.message!] : []
 	}
 
     var body: some View {

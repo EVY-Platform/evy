@@ -73,7 +73,7 @@ struct ContentView: View {
 						$0.id == currentPageId
 					})!
 					if currentFlow?.type == .create, !currentPage.complete() {
-						alertMessage = "Incomplete page"
+						alertMessage = currentPage.incompleteMessages().joined(separator: "\n")
 						showingAlert = true
 						break
 					}
@@ -152,8 +152,10 @@ struct ContentView: View {
                         }
                 }
         }
-		.alert(alertMessage, isPresented: $showingAlert) {
-			Button("OK", role: .cancel) { }
+		.alert(isPresented: $showingAlert) {
+			Alert(title: Text("Incomplete form"),
+				  message: Text(alertMessage),
+				  dismissButton: .default(Text("Ok")))
 		}
         .onChange(of: routes) { oldValue, newValue in
             let newFlowId = routes.last?.flowId ?? "home"

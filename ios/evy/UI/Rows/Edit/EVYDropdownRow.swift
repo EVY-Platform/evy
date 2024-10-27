@@ -30,16 +30,26 @@ struct EVYDropdownRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		if !edit.required {
+		if !edit.validation.required {
 			return true
 		}
-		
+
 		do {
 			let storedValue = try EVY.getDataFromText(edit.destination)
-			return storedValue.toString().count > 0
+			let min = edit.validation.minAmount ?? 0
+			switch storedValue {
+			case .array(let arrayValue):
+				return arrayValue.count > min
+			default:
+				return storedValue.toString().count > min
+			}
 		} catch {
 			return false
 		}
+	}
+	
+	func incompleteMessages() -> [String] {
+		edit.validation.message != nil ? [edit.validation.message!] : []
 	}
     
     var body: some View {

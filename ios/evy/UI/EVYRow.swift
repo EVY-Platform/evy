@@ -21,6 +21,12 @@ public enum EVYRowError: Error {
 protocol EVYRowProtocol: View {
 	static var JSONType: String { get }
 	func complete() -> Bool
+	func incompleteMessages() -> [String]
+}
+
+extension EVYRowProtocol {
+	func complete() -> Bool { return true }
+	func incompleteMessages() -> [String] { [] }
 }
 
 struct EVYRow: View, Decodable, Identifiable {

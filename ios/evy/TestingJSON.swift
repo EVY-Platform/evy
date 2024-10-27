@@ -140,7 +140,10 @@ struct SDUIConstants {
            },
             "edit": {
                 "destination": "{item.condition_id}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Is the item used, new, etc?"
+                }
             }
         }
     """
@@ -158,7 +161,10 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.selling_reason_id}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Why are you selling?"
+                }
             }
         }
     """
@@ -175,7 +181,10 @@ struct SDUIConstants {
            },
             "edit": {
                 "destination": "{distance}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "How far can you deliver?"
+                }
             }
         }
     """
@@ -192,7 +201,10 @@ struct SDUIConstants {
            },
             "edit": {
                 "destination": "{area}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "How far can you ship?"
+                }
             }
         }
     """
@@ -209,7 +221,11 @@ struct SDUIConstants {
            },
             "edit": {
                 "destination": "{pickupTimeslots}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "What times can you pickup?",
+                    "minAmount": "1"
+                }
             }
         }
     """
@@ -226,7 +242,11 @@ struct SDUIConstants {
            },
             "edit": {
                 "destination": "{deliveryTimeslots}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "What times can you delivery?",
+                    "minAmount": "1"
+                }
             }
         }
     """
@@ -244,7 +264,9 @@ struct SDUIConstants {
            },
             "edit": {
                 "destination": "{item.tags}",
-                "required": "false"
+                "validation": {
+                    "required": "false"
+                }
             }
         }
     """
@@ -293,7 +315,11 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.photo_ids}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Photos of the item",
+                    "minAmount": "3"
+                }
             }
         }
     """
@@ -309,7 +335,10 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.title}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Test input"
+                }
             }
         }
     """
@@ -326,7 +355,11 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.price.value}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "How much are you selling it for?",
+                    "minAmount": "1"
+                }
             }
         }
     """
@@ -364,7 +397,10 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.dimension.width}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Width"
+                }
             }
         }
     """
@@ -382,7 +418,10 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.address}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Where can the item be picked up?"
+                }
             }
         }
     """
@@ -398,7 +437,10 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.payment_methods.cash}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Do you accept cash?"
+                }
             }
         }
     """
@@ -414,7 +456,10 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.payment_methods.app}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Do you accept in-app payment?"
+                }
             }
         }
     """
@@ -432,7 +477,10 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.dimension.height}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Height"
+                }
             }
         }
     """
@@ -449,7 +497,11 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.dimension.length}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "Length",
+                    "minValue": "1"
+                }
             }
         }
     """
@@ -538,7 +590,9 @@ struct SDUIConstants {
                             },
                             "edit": {
                                 "destination": "{item.address}",
-                                "required": "false"
+                                "validation": {
+                                    "required": "false"
+                                }
                             }
                         }
                     }],
@@ -651,7 +705,10 @@ struct SDUIConstants {
             },
             "edit": {
                 "destination": "{item.description}",
-                "required": "true"
+                "validation": {
+                    "required": "true",
+                    "message": "A short description"
+                }
             }
         }
     """
@@ -688,7 +745,9 @@ struct SDUIConstants {
                             },
                             "edit": {
                                 "destination": "{item.address.instructions}",
-                                "required": "false"
+                                "validation": {
+                                    "required": "false"
+                                }
                             }
                         }
                     }, {
@@ -741,7 +800,9 @@ struct SDUIConstants {
                             },
                             "edit": {
                                 "destination": "{item.price.value}",
-                                "required": "false"
+                                "validation": {
+                                    "required": "false"
+                                }
                             }
                         }
                     }, {
@@ -808,7 +869,10 @@ struct SDUIConstants {
                         	},
                         	"edit": {
                         		"destination": "{item.title}",
-                                "required": "true"
+                                "validation": {
+                                    "required": "true",
+                                    "message": "Postal code you will be shipping from"
+                                }
                         	}
                         }
                     }, {
@@ -841,7 +905,11 @@ struct SDUIConstants {
                         	},
                         	"edit": {
                         		"destination": "{item.dimension.weight}",
-                                "required": "true"
+                                "validation": {
+                                    "required": "true",
+                                    "message": "Weight",
+                                    "minValue": "1"
+                                }
                         	}
                         }
                     }],

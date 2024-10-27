@@ -26,10 +26,6 @@ struct EVYInputListRow: View, EVYRowProtocol {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(EVYInputListRowView.self, forKey:.view)
     }
-	
-	func complete() -> Bool {
-		return true
-	}
     
     var body: some View {
         VStack(alignment:.leading) {
