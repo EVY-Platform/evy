@@ -35,13 +35,13 @@ struct EVYDropdownRow: View, EVYRowProtocol {
 		}
 
 		do {
-			let storedValue = try EVY.getDataFromText(edit.destination)
-			let min = edit.validation.minAmount ?? 0
+			let storedValue = try EVY.getDataFromText(edit.destination!)
+			let min = edit.validation.minAmount ?? 1
 			switch storedValue {
 			case .array(let arrayValue):
-				return arrayValue.count > min
+				return arrayValue.count >= min
 			default:
-				return storedValue.toString().count > min
+				return storedValue.toString().count >= min
 			}
 		} catch {
 			return false
@@ -62,7 +62,7 @@ struct EVYDropdownRow: View, EVYRowProtocol {
                         placeholder: view.content.placeholder,
                         data: view.data,
                         format: view.content.format,
-                        destination: edit.destination)
+                        destination: edit.destination!)
         }
     }
 }

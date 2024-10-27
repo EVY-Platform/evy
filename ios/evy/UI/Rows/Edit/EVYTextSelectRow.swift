@@ -29,7 +29,7 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
         self.view = try container.decode(EVYTextSelectRowView.self, forKey:.view)
         self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
-        self.selected = EVYState(watch: edit.destination, setter: {
+        self.selected = EVYState(watch: edit.destination!, setter: {
             do {
                 return try EVY.evaluateFromText($0)
             } catch {}
@@ -48,7 +48,7 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 		}
 		
 		do {
-			let storedValue = try EVY.getDataFromText(edit.destination)
+			let storedValue = try EVY.getDataFromText(edit.destination!)
 			return storedValue.toString() == "true"
 		} catch {
 			return false
@@ -65,7 +65,7 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
                 EVYTextView(view.content.title)
                     .padding(.vertical, Constants.padding)
             }
-            EVYSelectItem(destination: edit.destination,
+            EVYSelectItem(destination: edit.destination!,
                           value: value,
                           format: "",
                           selectionStyle: .multi,

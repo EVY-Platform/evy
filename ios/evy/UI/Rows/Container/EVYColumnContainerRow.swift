@@ -11,16 +11,18 @@ struct EVYColumnContainerRow: View, EVYRowProtocol {
     public static let JSONType = "ColumnContainer"
     
     private let view: SDUI.ContainerView
+	private let edit: SDUI.Edit
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         self.view = try container.decode(SDUI.ContainerView.self, forKey:.view)
+		self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
 	
 	func complete() -> Bool {
 		let completeChildren = view.content.children.filter({
 			$0.child.complete()
 		})
-		return completeChildren.count >= Int(view.content.required_children) ?? 0
+		return completeChildren.count >= Int(edit.validation.minAmount ?? 1)
 	}
 	
 	func incompleteMessages() -> [String] {

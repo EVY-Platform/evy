@@ -33,7 +33,10 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
 			return true
 		}
 		
-		return view.content.value.count > 0
+		if edit.validation.minValue != nil {
+			return Int(view.content.value) ?? 0 >= edit.validation.minValue!
+		}
+		return view.content.value.count >= edit.validation.minCharacters ?? 1
 	}
 	
 	func incompleteMessages() -> [String] {
@@ -47,7 +50,7 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
                     .padding(.vertical, Constants.padding)
             }
             EVYTextField(input: view.content.value,
-                         destination: edit.destination,
+                         destination: edit.destination!,
                          placeholder: view.content.placeholder,
                          multiLine: true)
         }

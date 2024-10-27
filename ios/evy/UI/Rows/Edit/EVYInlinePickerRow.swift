@@ -34,7 +34,7 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
 		}
 		
 		do {
-			let storedValue = try EVY.getDataFromText(edit.destination)
+			let storedValue = try EVY.getDataFromText(edit.destination!)
 			return storedValue.toString().count > 0
 		} catch {
 			return false
@@ -54,7 +54,7 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
             EVYInlinePicker(title: view.content.title,
                             data: view.data,
                             format: view.content.format,
-                            destination: edit.destination)
+                            destination: edit.destination!)
         }
     }
 }

@@ -37,7 +37,7 @@ struct EVYSearchRow: View, EVYRowProtocol {
 		}
 		
 		do {
-			let storedValue = try EVY.getDataFromText(edit.destination)
+			let storedValue = try EVY.getDataFromText(edit.destination!)
 			return storedValue.toString().count > 0
 		} catch {
 			return false
@@ -55,7 +55,7 @@ struct EVYSearchRow: View, EVYRowProtocol {
                     .padding(.vertical, Constants.padding)
             }
             EVYSearch(source: view.data,
-                      destination: edit.destination,
+                      destination: edit.destination!,
                       placeholder: view.content.placeholder,
                       format: view.content.format)
         }

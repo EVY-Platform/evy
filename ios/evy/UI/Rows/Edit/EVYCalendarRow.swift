@@ -34,13 +34,13 @@ struct EVYCalendarRow: View, EVYRowProtocol {
 		}
 
 		do {
-			let storedValue = try EVY.getDataFromText(edit.destination)
-			let min = edit.validation.minAmount ?? 0
+			let storedValue = try EVY.getDataFromText(edit.destination!)
+			let min = edit.validation.minAmount ?? 1
 			switch storedValue {
 			case .array(let timeslots):
-				return timeslots.count > min
+				return timeslots.count >= min
 			default:
-				return storedValue.toString().count > min
+				return storedValue.toString().count >= min
 			}
 		} catch {
 			return false

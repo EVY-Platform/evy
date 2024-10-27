@@ -92,7 +92,7 @@ public class SDUI {
 		}
 	}
     public struct Edit: Decodable {
-        let destination: String
+        let destination: String?
 		let validation: Validation
     }
     public class Content: Decodable {
@@ -114,7 +114,6 @@ public class SDUI {
 	}
     public class ContainerContent: Decodable {
         let children: [ContainerChild]
-		let required_children: String
         let children_data: String?
         let child: EVYRow?
     }

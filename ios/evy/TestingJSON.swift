@@ -110,8 +110,13 @@ struct SDUIConstants {
                         }, {
                             "title": "",
                             "child": \(paymentAppRow)
-                        }],
-                        "required_children": "1"
+                        }]
+                    }
+                },
+                "edit": {
+                    "validation": {
+                        "required": "true",
+                        "minAmount": "1"
                     }
                 }
             }],
@@ -294,8 +299,12 @@ struct SDUIConstants {
                     "children": [{
                         "title": "",
                         "child": \(searchTagsRow)
-                    }],
-                    "required_children": "1"
+                    }]
+                }
+            },
+            "edit": {
+                "validation": {
+                    "required": "false"
                 }
             }
         }
@@ -378,8 +387,13 @@ struct SDUIConstants {
                     },{
                         "title": "",
                         "child": \(inputLengthRow)
-                    }],
-                    "required_children": "3"
+                    }]
+                }
+            },
+            "edit": {
+                "validation": {
+                    "required": "true",
+                    "minAmount": "3"
                 }
             }
         }
@@ -596,7 +610,12 @@ struct SDUIConstants {
                             }
                         }
                     }],
-                    "required_children": "1"
+                }
+            },
+            "edit": {
+                "validation": {
+                    "required": "true",
+                    "message": "Test sheet"
                 }
             }
         }
@@ -764,8 +783,14 @@ struct SDUIConstants {
                     }, {
                         "title": "",
                         "child": \(pickupCalendarRow)
-                    }],
-                    "required_children": "5"
+                    }]
+                }
+            },
+            "edit": {
+                "validation": {
+                    "required": "true",
+                    "message": "Can you pick up the item?",
+                    "minAmount": "5"
                 }
             }
         }
@@ -833,8 +858,14 @@ struct SDUIConstants {
                     }, {
                         "title": "",
                         "child": \(deliveryCalendarRow)
-                    }],
-                    "required_children": "6"
+                    }]
+                }
+            },
+            "edit": {
+                "validation": {
+                    "required": "true",
+                    "message": "Can you deliver the item?",
+                    "minAmount": "6"
                 }
             }
         }
@@ -912,8 +943,14 @@ struct SDUIConstants {
                                 }
                         	}
                         }
-                    }],
-                    "required_children": "6"
+                    }]
+                }
+            },
+            "edit": {
+                "validation": {
+                    "required": "true",
+                    "message": "Can you ship the item?",
+                    "minAmount": "6"
                 }
             }
         }
@@ -935,8 +972,13 @@ struct SDUIConstants {
                     {
                         "title": "Shipping",
                         "child": \(shippingContainer)
-                    }],
-                    "required_children": "1"
+                    }]
+                }
+            },
+            "edit": {
+                "validation": {
+                    "required": "true",
+                    "minAmount": "1"
                 }
             }
         }

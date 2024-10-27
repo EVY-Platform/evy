@@ -37,7 +37,7 @@ struct EVYSelectPhotoRow: View, EVYRowProtocol {
 			return true
 		}
 		
-		return view.content.photos.count > edit.validation.minAmount ?? 0
+		return view.content.photos.count >= edit.validation.minAmount ?? 1
 	}
 	
 	func incompleteMessages() -> [String] {
@@ -50,7 +50,7 @@ struct EVYSelectPhotoRow: View, EVYRowProtocol {
                        icon: view.content.icon,
                        content: view.content.content,
                        data: view.content.photos,
-                       destination: edit.destination)
+                       destination: edit.destination!)
     }
 }
 

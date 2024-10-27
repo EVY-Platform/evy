@@ -34,11 +34,11 @@ struct EVYInputRow: View, EVYRowProtocol {
 		}
 		
 		do {
-			let storedValue = try EVY.getDataFromText(edit.destination)
+			let storedValue = try EVY.getDataFromText(edit.destination!)
 			if edit.validation.minValue != nil {
-				return Int(storedValue.toString()) ?? 0 > edit.validation.minValue!
+				return Int(storedValue.toString()) ?? 0 >= edit.validation.minValue!
 			}
-			return storedValue.toString().count > edit.validation.minCharacters ?? 0
+			return storedValue.toString().count >= edit.validation.minCharacters ?? 1
 		} catch {
 			return false
 		}
@@ -55,7 +55,7 @@ struct EVYInputRow: View, EVYRowProtocol {
                     .padding(.vertical, Constants.padding)
             }
             EVYTextField(input: view.content.value,
-                         destination: edit.destination,
+                         destination: edit.destination!,
                          placeholder: view.content.placeholder)
         }
     }
