@@ -44,7 +44,7 @@ class EVYData {
         try! JSONDecoder().decode(EVYJson.self, from: data)
     }
     
-    func updateDataWithData(_ data: Data, props: [String]) throws -> Void {
+    func updateDataWithData(_ data: Data, props: [String]) throws {
         if props.count < 1 {
             return
         }

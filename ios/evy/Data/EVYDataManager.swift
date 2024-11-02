@@ -74,7 +74,7 @@ struct EVYDataManager {
         return first
     }
     
-    func create(key: String, data: Data) throws -> Void {
+    func create(key: String, data: Data) throws {
         if exists(key: key) {
             throw EVYDataError.keyAlreadyExists
         }
@@ -84,7 +84,7 @@ struct EVYDataManager {
                                         object: key)
     }
     
-    func update(props: [String], data: Data) throws -> Void {
+    func update(props: [String], data: Data) throws {
         let existing = try get(key: props.first!)
         existing.data = data
         
@@ -100,7 +100,7 @@ struct EVYDataManager {
                                         object: notifKey)
     }
     
-    func delete(key: String) throws -> Void {
+    func delete(key: String) throws {
         let existing = try get(key: key)
         context.delete(existing)
         

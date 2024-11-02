@@ -29,7 +29,7 @@ struct EVYButtonRow: View, EVYRowProtocol {
         action = try container.decode(SDUI.Action.self, forKey:.action)
     }
     
-    private func performAction() -> Void {
+    private func performAction() {
         switch action.target {
         case let .navigate(route):
             navigate(NavOperation.navigate(route))

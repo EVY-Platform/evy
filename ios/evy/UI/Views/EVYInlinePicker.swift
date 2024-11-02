@@ -43,7 +43,7 @@ struct EVYInlinePicker: View {
         } catch {}
     }
     
-    private func performAction(option: EVYJson) -> Void {
+    private func performAction(option: EVYJson) {
         selection = option
         
         try! EVY.updateValue(option.identifierValue(), at: destination)

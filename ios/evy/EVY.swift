@@ -85,7 +85,7 @@ struct EVY {
     /**
      * Submitting a new entity to the API
      */
-    static func submit(key: String) throws -> Void {
+    static func submit(key: String) throws {
         let existing = try data.get(key: key)
         existing.key = UUID().uuidString
         // TODO: Send to API
@@ -94,11 +94,11 @@ struct EVY {
     /**
      * Updating a nested value in an object by using props
      */
-    static func updateValue(_ value: String, at: String) throws -> Void {
+    static func updateValue(_ value: String, at: String) throws {
         try updateData("\"\(value)\"".data(using: .utf8)!, at: at)
     }
     
-    static func updateData(_ newData: Data, at: String) throws -> Void {
+    static func updateData(_ newData: Data, at: String) throws {
         let props = EVYInterpreter.parsePropsFromText(at)
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
         let firstProp = splitProps.first!
