@@ -36,7 +36,7 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
             .onTapGesture { showSheet.toggle() }
             .sheet(isPresented: $showSheet, content: {
                 VStack {
-					if (view.content.children.first!.title.count > 0) {
+					if view.content.children.first!.title.count > 0 {
 						EVYTextView(view.content.children.first!.title)
 					}
 					ForEach(view.content.children, id: \.child.id) { child in

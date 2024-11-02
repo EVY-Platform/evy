@@ -18,7 +18,7 @@ struct EVYCarouselOverlay: View {
         self.imageNames = imageNames
         topPadding = Constants.majorPadding*2
         
-        if (UIDevice.current.hasDynamicIsland) {
+        if UIDevice.current.hasDynamicIsland {
             topPadding *= 2
         }
         

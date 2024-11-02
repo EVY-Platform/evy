@@ -75,7 +75,7 @@ class EVYData {
                 return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
             }
             let updatedData = try getUpdatedJson(props: Array(props[1...]), data: subData, value: value)
-            if (props.count > 1) {
+            if props.count > 1 {
                 dictValue[firstProp] = updatedData
                 let dictAsData = try JSONEncoder().encode(dictValue)
                 return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
@@ -95,7 +95,7 @@ class EVYData {
                 return try JSONDecoder().decode(EVYJson.self, from: arrayAsData)
             }
             let updatedData = try getUpdatedJson(props: Array(props[1...]), data: subData, value: value)
-            if (props.count > 1) {
+            if props.count > 1 {
                 arrayValue[index] = updatedData
                 let arrayAsData = try JSONEncoder().encode(arrayValue)
                 return try JSONDecoder().decode(EVYJson.self, from: arrayAsData)
@@ -248,7 +248,7 @@ public enum EVYJson: Codable, Hashable {
     private func parseIdOrIds(props: [String], value: EVYJson) -> EVYJson {
         let key = props.first!
         
-        if (!key.hasSuffix("_id") && !key.hasSuffix("_ids")) {
+        if !key.hasSuffix("_id") && !key.hasSuffix("_ids") {
             return value
         }
         

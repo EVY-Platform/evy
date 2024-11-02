@@ -34,7 +34,7 @@ struct EVYColumnContainerRow: View, EVYRowProtocol {
     
     var body: some View {
         VStack(alignment:.leading) {
-			if (view.content.children.first!.title.count > 0) {
+			if view.content.children.first!.title.count > 0 {
 				EVYTextView(view.content.children.first!.title)
                     .padding(.vertical, Constants.padding)
             }

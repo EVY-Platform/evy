@@ -72,7 +72,7 @@ struct EVYInterpreter {
     private static func parseText(_ input: EVYValue,
                                   _ editing: Bool) throws -> EVYValue
     {
-        if (input.value.isEmpty) {
+        if input.value.isEmpty {
             return input
         }
         
@@ -118,7 +118,7 @@ struct EVYInterpreter {
                 value = nil
             }
             
-            if (value != nil) {
+            if value != nil {
                 let returnValuesToJoin = [
                     returnPrefix ? "" : value!.prefix ?? "",
                     value!.value,

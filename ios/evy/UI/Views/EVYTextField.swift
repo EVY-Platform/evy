@@ -41,11 +41,11 @@ struct EVYTextField: View {
     
     var body: some View {
         Group {
-            if (!editing || destination.isEmpty) {
+            if !editing || destination.isEmpty {
                 let display = EVYTextView(input)
                 let placeholder = EVYTextView(placeholder, style: .info)
                 
-                if (display.text.value.value.count > 0) {
+                if display.text.value.value.count > 0 {
                     display.frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     placeholder.frame(maxWidth: .infinity, alignment: .leading)
@@ -63,7 +63,7 @@ struct EVYTextField: View {
                 .lineLimit(multiLine ? 10... : 1...)
                 .focused($focused)
                 .onChange(of: focused, { oldValue, newValue in
-                    if (oldValue == true && newValue == false) {
+                    if oldValue == true && newValue == false {
                         editing = false
                     }
                 })
