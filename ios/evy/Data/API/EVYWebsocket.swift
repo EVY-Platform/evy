@@ -30,10 +30,10 @@ final class EVYWebsocket {
         }
     }
     
-    public func fetchServicesData(lastSyncTime: Int) async throws -> [String: Array<EVYService>] {
+    public func fetchServicesData(lastSyncTime: Int) async throws -> [String: [EVYService]] {
         try await callAPI(method: "getNewDataSince",
                           params: ["since": lastSyncTime],
-                          expecting: [String: Array<EVYService>].self)
+                          expecting: [String: [EVYService]].self)
     }
     
     private func login(token: String, os: EVYOS) async throws -> Bool {
@@ -45,7 +45,7 @@ final class EVYWebsocket {
     private func callAPI<T: Codable>(
         method: String,
         params: Encodable,
-        expecting type: T.Type
+        expecting _: T.Type
     ) async throws -> T {
         try await rpc.call(method: method,
                            params: "", //Params(params).first,

@@ -13,5 +13,5 @@ struct EVYService: Codable {
     let description: String
     let created_at: String
     let updated_at: String
-    let providers: Array<EVYServiceProvider>?
+    let providers: [EVYServiceProvider]?
 }

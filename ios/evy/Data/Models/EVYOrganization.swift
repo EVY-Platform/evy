@@ -16,5 +16,5 @@ struct EVYOrganization: Codable {
     let support_email: String
     let created_at: String
     let updated_at: String
-    let providers: Array<EVYServiceProvider>?
+    let providers: [EVYServiceProvider]?
 }
