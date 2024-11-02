@@ -38,7 +38,7 @@ struct EVYDropdownRow: View, EVYRowProtocol {
 			let storedValue = try EVY.getDataFromText(edit.destination!)
 			let min = edit.validation.minAmount ?? 1
 			switch storedValue {
-			case .array(let arrayValue):
+			case let .array(arrayValue):
 				return arrayValue.count >= min
 			default:
 				return storedValue.toString().count >= min

@@ -36,7 +36,7 @@ struct EVYSelectList: View {
     
     let options = try! EVY.getDataFromText("{selling_reasons}")
     switch options {
-    case .array(let arrayValue):
+    case let .array(arrayValue):
         return EVYSelectList(options: arrayValue,
                              format: "{$0.value}",
                              destination: "{item.selling_reason_id}")

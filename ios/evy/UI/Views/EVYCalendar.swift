@@ -235,35 +235,35 @@ struct EVYCalendar: View {
     private func handleOperation(_ operation: EVYCalendarOperation) {
         let sourceProps = EVY.parsePropsFromText(primarySource)
         switch operation {
-        case .select(let index):
+        case let .select(index):
             let props = "{\(sourceProps)[\(index)].selected}"
             try! EVY.updateData(trueAsData, at: props)
 
-        case .unselect(let index):
+        case let .unselect(index):
             let props = "{\(sourceProps)[\(index)].selected}"
             try! EVY.updateData(falseAsData, at: props)
 
-        case .selectRow(let y):
+        case let .selectRow(y):
             for x in 0..<xLabels.count {
                 let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count-1)
                 let props = "{\(sourceProps)[\(relevantIndex)].selected}"
                 try! EVY.updateData(trueAsData, at: props)
             }
-        case .unselectRow(let y):
+        case let .unselectRow(y):
             for x in 0..<xLabels.count {
                 let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count-1)
                 let props = "{\(sourceProps)[\(relevantIndex)].selected}"
                 try! EVY.updateData(falseAsData, at: props)
             }
             
-        case .selectColumn(let x):
+        case let .selectColumn(x):
             for y in 0..<yLabels.count-1 {
                 let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count-1)
                 let props = "{\(sourceProps)[\(relevantIndex)].selected}"
                 try! EVY.updateData(trueAsData, at: props)
             }
             
-        case .unselectColumn(let x):
+        case let .unselectColumn(x):
             for y in 0..<yLabels.count-1 {
                 let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count-1)
                 let props = "{\(sourceProps)[\(relevantIndex)].selected}"

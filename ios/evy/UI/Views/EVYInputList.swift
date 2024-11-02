@@ -21,7 +21,7 @@ struct EVYInputList: View {
         values = EVYState(watch: data, setter: {
             do {
                 let data = try EVY.getDataFromText($0)
-                if case .array(let arrayValue) = data {
+                if case let .array(arrayValue) = data {
                     return arrayValue.map { EVY.formatData(json: $0, format: format) }
                 } else {
                     return [EVY.formatData(json: data, format: format)]

@@ -31,7 +31,7 @@ struct EVYButtonRow: View, EVYRowProtocol {
     
     private func performAction() -> Void {
         switch action.target {
-        case .navigate(let route):
+        case let .navigate(route):
             navigate(NavOperation.navigate(route))
         case .submit:
             navigate(NavOperation.submit)

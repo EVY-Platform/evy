@@ -37,7 +37,7 @@ struct EVYCalendarRow: View, EVYRowProtocol {
 			let storedValue = try EVY.getDataFromText(edit.destination!)
 			let min = edit.validation.minAmount ?? 1
 			switch storedValue {
-			case .array(let timeslots):
+			case let .array(timeslots):
 				return timeslots.count >= min
 			default:
 				return storedValue.toString().count >= min

@@ -13,9 +13,9 @@ public typealias EVYFunctionOutput = (value: String, prefix: String?, suffix: St
 func evyCount(_ args: String) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
-    case .string(let stringValue):
+    case let .string(stringValue):
         return (String(stringValue.count), nil, nil)
-    case .array(let arrayValue):
+    case let .array(arrayValue):
         return (String(arrayValue.count), nil, nil)
     default:
         return (args, nil, nil)
@@ -26,7 +26,7 @@ func evyFormatCurrency(_ args: String,
                        _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
-    case .dictionary(let dictValue):
+    case let .dictionary(dictValue):
         guard let value = dictValue["value"] else {
             return ("", nil, nil)
         }
@@ -46,7 +46,7 @@ func evyFormatDimension(_ args: String,
                         _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
-    case .string(let stringValue):
+    case let .string(stringValue):
         if editing {
             return (stringValue, nil, nil)
         }
@@ -84,7 +84,7 @@ func evyFormatWeight(_ args: String,
                      _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
-    case .string(let stringValue):
+    case let .string(stringValue):
         if editing {
             return (stringValue, nil, nil)
         }
@@ -120,7 +120,7 @@ func evyFormatWeight(_ args: String,
 func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
-    case .dictionary(let dictValue):
+    case let .dictionary(dictValue):
         guard let unit = dictValue["unit"],
               let street = dictValue["street"],
               let city = dictValue["city"],

@@ -62,7 +62,7 @@ class EVYData {
         }
         
         switch data {
-        case .dictionary(var dictValue):
+        case var .dictionary(dictValue):
             guard let firstProp = props.first else {
                 throw EVYDataParseError.invalidProps
             }
@@ -81,7 +81,7 @@ class EVYData {
                 return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
             }
             return updatedData
-        case .array(var arrayValue):
+        case var .array(arrayValue):
             guard let firstProp = props.first else {
                 throw EVYDataParseError.invalidProps
             }
@@ -158,15 +158,15 @@ public enum EVYJson: Codable, Hashable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
-        case .string(let jsonData):
+        case let .string(jsonData):
             try container.encode(jsonData)
-        case .int(let jsonData):
+        case let .int(jsonData):
             try container.encode(jsonData)
-        case .bool(let jsonData):
+        case let .bool(jsonData):
             try container.encode(jsonData)
-        case .dictionary(let jsonData):
+        case let .dictionary(jsonData):
             try container.encode(jsonData)
-        case .array(let jsonData):
+        case let .array(jsonData):
             try container.encode(jsonData)
         }
     }
@@ -175,13 +175,13 @@ public enum EVYJson: Codable, Hashable {
         let encoder = JSONEncoder()
         
         switch self {
-        case .string(let stringValue):
+        case let .string(stringValue):
             return stringValue
-        case .int(let intValue):
+        case let .int(intValue):
             return "\(intValue)"
-        case .bool(let boolValue):
+        case let .bool(boolValue):
             return boolValue ? "true" : "false"
-        case .array(let arrayValue):
+        case let .array(arrayValue):
             guard let data = try? encoder.encode(arrayValue) else {
                 return arrayValue.description
             }
@@ -189,7 +189,7 @@ public enum EVYJson: Codable, Hashable {
                 return arrayValue.description
             }
             return string
-        case .dictionary(let dictValue):
+        case let .dictionary(dictValue):
             guard let data = try? encoder.encode(dictValue) else {
                 return dictValue.description
             }
@@ -215,7 +215,7 @@ public enum EVYJson: Codable, Hashable {
         }
         
         switch self {
-        case .dictionary(let dictValue):
+        case let .dictionary(dictValue):
             guard let firstVariable = props.first else {
                 return self
             }
@@ -227,7 +227,7 @@ public enum EVYJson: Codable, Hashable {
             }
             
             return subData.parseProp(props: Array(props[1...]))
-        case .array(let arrayValue):
+        case let .array(arrayValue):
             guard let firstVariable = props.first else {
                 return self
             }
