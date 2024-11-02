@@ -37,64 +37,64 @@ struct EVYRow: View, Decodable, Identifiable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: RowCodingKeys.self)
-        self.type = try container.decode(String.self, forKey: .type)
+        type = try container.decode(String.self, forKey: .type)
         
-        switch self.type {
+        switch type {
             
 			// Container rows
             case EVYColumnContainerRow.JSONType:
-                self.view = try EVYColumnContainerRow(container: container)
+                view = try EVYColumnContainerRow(container: container)
             
             case EVYListContainerRow.JSONType:
-                self.view = try EVYListContainerRow(container: container)
+                view = try EVYListContainerRow(container: container)
             
             case EVYSelectSegmentContainerRow.JSONType:
-                self.view = try EVYSelectSegmentContainerRow(container: container)
+                view = try EVYSelectSegmentContainerRow(container: container)
             
             case EVYSheetContainerRow.JSONType:
-                self.view = try EVYSheetContainerRow(container: container)
+                view = try EVYSheetContainerRow(container: container)
         
             // Display rows
             case EVYInfoRow.JSONType:
-                self.view = try EVYInfoRow(container: container)
+                view = try EVYInfoRow(container: container)
             
             case EVYTextRow.JSONType:
-                self.view = try EVYTextRow(container: container)
+                view = try EVYTextRow(container: container)
             
             case EVYTextActionRow.JSONType:
-                self.view = try EVYTextActionRow(container: container)
+                view = try EVYTextActionRow(container: container)
             
             case EVYInputListRow.JSONType:
-                self.view = try EVYInputListRow(container: container)
+                view = try EVYInputListRow(container: container)
 
             // Editable rows
             case EVYDropdownRow.JSONType:
-                self.view = try EVYDropdownRow(container: container)
+                view = try EVYDropdownRow(container: container)
             
             case EVYInlinePickerRow.JSONType:
-                self.view = try EVYInlinePickerRow(container: container)
+                view = try EVYInlinePickerRow(container: container)
             
             case EVYInputRow.JSONType:
-                self.view = try EVYInputRow(container: container)
+                view = try EVYInputRow(container: container)
             
             case EVYSearchRow.JSONType:
-                self.view = try EVYSearchRow(container: container)
+                view = try EVYSearchRow(container: container)
             
             case EVYSelectPhotoRow.JSONType:
-                self.view = try EVYSelectPhotoRow(container: container)
+                view = try EVYSelectPhotoRow(container: container)
             
             case EVYTextAreaRow.JSONType:
-                self.view = try EVYTextAreaRow(container: container)
+                view = try EVYTextAreaRow(container: container)
             
             case EVYCalendarRow.JSONType:
-                self.view = try EVYCalendarRow(container: container)
+                view = try EVYCalendarRow(container: container)
             
             // Action rows
             case EVYButtonRow.JSONType:
-                self.view = try EVYButtonRow(container: container)
+                view = try EVYButtonRow(container: container)
             
             case EVYTextSelectRow.JSONType:
-                self.view = try EVYTextSelectRow(container: container)
+                view = try EVYTextSelectRow(container: container)
                     
             default:
 				throw EVYRowError.cannotParseRow

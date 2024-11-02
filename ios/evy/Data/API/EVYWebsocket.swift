@@ -25,7 +25,7 @@ final class EVYWebsocket {
     }
     
     public func connect(token: String, os: EVYOS) async throws {
-        guard try await self.login(token: token, os: os) else {
+        guard try await login(token: token, os: os) else {
             throw EVYWSError.loginError
         }
     }
@@ -37,7 +37,7 @@ final class EVYWebsocket {
     }
     
     private func login(token: String, os: EVYOS) async throws -> Bool {
-        try await self.callAPI(method: "rpc.login",
+        try await callAPI(method: "rpc.login",
                                params: EVYLoginParams(token: token, os: os),
                                expecting: Bool.self)
     }

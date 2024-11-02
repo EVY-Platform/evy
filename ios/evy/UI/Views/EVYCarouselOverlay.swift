@@ -16,10 +16,10 @@ struct EVYCarouselOverlay: View {
     
     init(imageNames: [String], selectedIndex: Int) {
         self.imageNames = imageNames
-        self.topPadding = Constants.majorPadding*2
+        topPadding = Constants.majorPadding*2
         
         if (UIDevice.current.hasDynamicIsland) {
-            self.topPadding *= 2
+            topPadding *= 2
         }
         
         _selectedIndex = State(initialValue: selectedIndex)
@@ -43,7 +43,7 @@ struct EVYCarouselOverlay: View {
                         .foregroundColor(.white)
                         .font(.evyButton)
                 }
-                .padding(EdgeInsets(top: self.topPadding,
+                .padding(EdgeInsets(top: topPadding,
                                     leading: Constants.majorPadding,
                                     bottom: 0,
                                     trailing: 0))

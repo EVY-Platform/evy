@@ -25,8 +25,8 @@ struct EVYDropdownRow: View, EVYRowProtocol {
     private let edit: SDUI.Edit
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYDropdownRowView.self, forKey:.view)
-        self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
+        view = try container.decode(EVYDropdownRowView.self, forKey:.view)
+        edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
 	
 	func complete() -> Bool {

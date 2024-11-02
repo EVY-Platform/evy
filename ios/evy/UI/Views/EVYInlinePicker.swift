@@ -24,16 +24,16 @@ struct EVYInlinePicker: View {
         do {
             let data = try EVY.getDataFromText(data)
             if case let .array(arrayValue) = data {
-                self.options.append(contentsOf: arrayValue)
+                options.append(contentsOf: arrayValue)
             }
         } catch {}
         
-        _selection = State(initialValue: self.options.first!)
+        _selection = State(initialValue: options.first!)
         
         do {
             let selected = try EVY.getDataFromText(destination)
             if case let .string(stringValue) = selected {
-                let matching = self.options.first { option in
+                let matching = options.first { option in
                     return option.identifierValue() == stringValue
                 }
                 if matching != nil {

@@ -21,7 +21,7 @@ extension Notification.Name {
     var value: T
 	
 	init(setter: @escaping () -> T) {
-		self.value = setter()
+		value = setter()
 		
 		NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
 											   object: nil,
@@ -32,7 +32,7 @@ extension Notification.Name {
 	}
     
     init(watch: String, setter: @escaping (_ input: String) -> T) {
-        self.value = setter(watch)
+        value = setter(watch)
         
         NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
                             object: nil,
@@ -41,13 +41,13 @@ extension Notification.Name {
             if let notifProp = notif.object as? String,
                watch.contains(notifProp)
             {
-                self.value = setter(watch)
+				self.value = setter(watch)
             }
         })
     }
 	
 	init(staticString: T) {
-		self.value = staticString
+		value = staticString
 	}
 }
 

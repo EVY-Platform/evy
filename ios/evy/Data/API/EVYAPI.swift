@@ -31,11 +31,11 @@ struct Result: Decodable, Encodable {
     
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
-        self.id = try container.decode(String.self, forKey: .id)
+        id = try container.decode(String.self, forKey: .id)
         
-        let value = try container.decode(String.self, forKey: .value)
-        let components = value.components(separatedBy: " ")
-        self.value = components.randomElement()!
+        let decodedValue = try container.decode(String.self, forKey: .value)
+        let components = decodedValue.components(separatedBy: " ")
+        value = components.randomElement()!
     }
     
     func encode(to encoder: Encoder) throws {

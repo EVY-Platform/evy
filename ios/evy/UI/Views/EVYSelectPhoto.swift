@@ -55,7 +55,7 @@ struct EVYSelectPhoto: View {
 
     var body: some View {
         VStack(alignment:.leading) {
-            if self.title?.count ?? 0 > 0 {
+            if title?.count ?? 0 > 0 {
                 EVYTextView(title!)
             }
 

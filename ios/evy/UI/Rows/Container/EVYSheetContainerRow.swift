@@ -16,7 +16,7 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 	@State private var showSheet = false
 
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(SDUI.ContainerView.self, forKey:.view)
+        view = try container.decode(SDUI.ContainerView.self, forKey:.view)
     }
 	
 	func complete() -> Bool {
@@ -31,7 +31,7 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 	}
     
     var body: some View {
-        self.view.content.child
+        view.content.child
             .contentShape(Rectangle())
             .onTapGesture { showSheet.toggle() }
             .sheet(isPresented: $showSheet, content: {

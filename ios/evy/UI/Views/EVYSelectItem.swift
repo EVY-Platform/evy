@@ -41,7 +41,7 @@ struct EVYSelectItem: View {
         self.target = target
         self.textStyle = textStyle
         
-        self.selected = EVYState(watch: destination, setter: {
+        selected = EVYState(watch: destination, setter: {
             do {
                 if target == .single_identifier {
                     let sourceId = value.identifierValue()

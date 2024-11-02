@@ -31,11 +31,11 @@ struct EVYDropdown: View {
         do {
             let data = try EVY.getDataFromText(data)
             if case let .array(arrayValue) = data {
-                self.options = arrayValue
+                options = arrayValue
             }
         } catch {}
         
-        self.selection = EVYState(watch: destination, setter: {
+        selection = EVYState(watch: destination, setter: {
             do {
                 let value = try EVY.getDataFromText($0)
                 return EVY.formatData(json: value, format: format)
@@ -70,7 +70,7 @@ struct EVYDropdown: View {
         .onTapGesture { showSheet.toggle() }
         .sheet(isPresented: $showSheet, content: {
             VStack {
-                if self.title?.count ?? 0 > 0 {
+                if title?.count ?? 0 > 0 {
                     EVYTextView(title!).padding(.top, Constants.majorPadding)
                 }
                 EVYSelectList(options: options,

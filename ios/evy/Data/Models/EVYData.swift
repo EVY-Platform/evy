@@ -41,7 +41,7 @@ class EVYData {
     }
     
     func decoded() -> EVYJson {
-        return try! JSONDecoder().decode(EVYJson.self, from: self.data)
+        return try! JSONDecoder().decode(EVYJson.self, from: data)
     }
     
     func updateDataWithData(_ data: Data, props: [String]) throws -> Void {
@@ -49,7 +49,7 @@ class EVYData {
             return
         }
         
-        let currentDataAsJson = self.decoded()
+        let currentDataAsJson = decoded()
         let newDataAsJson = try! JSONDecoder().decode(EVYJson.self, from: data)
         
         let updatedJson = try getUpdatedJson(props: props, data: currentDataAsJson, value: newDataAsJson)
@@ -152,7 +152,7 @@ public enum EVYJson: Codable, Hashable {
     }
     
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(self.identifierValue())
+        hasher.combine(identifierValue())
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -203,9 +203,9 @@ public enum EVYJson: Codable, Hashable {
     public func identifierValue() -> String {
         switch self {
         case .dictionary(_):
-            return self.parseProp(props: ["id"]).toString()
+            return parseProp(props: ["id"]).toString()
         default:
-            return self.toString()
+            return toString()
         }
     }
     

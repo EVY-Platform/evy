@@ -62,8 +62,8 @@ struct EVYTimeslotPicker: View {
     init(_ timeslotDates: [EVYTimeslotDate]) {
         self.timeslotDates = timeslotDates
         for index in 0...timeslotDates.count-1 {
-            if timeslotDates[index].timeslots.count > self.numberOfTimeslotsPerDay {
-                self.numberOfTimeslotsPerDay = timeslotDates[index].timeslots.count
+            if timeslotDates[index].timeslots.count > numberOfTimeslotsPerDay {
+                numberOfTimeslotsPerDay = timeslotDates[index].timeslots.count
             }
         }
     }

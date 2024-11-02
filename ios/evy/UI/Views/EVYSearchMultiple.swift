@@ -27,7 +27,7 @@ struct EVYSearchMultiple: View {
         self.destination = destination
         self.placeholder = placeholder
         
-        self.searchController = EVYSearchController(source: source, format: format)
+        searchController = EVYSearchController(source: source, format: format)
     }
     
     func refresh() {

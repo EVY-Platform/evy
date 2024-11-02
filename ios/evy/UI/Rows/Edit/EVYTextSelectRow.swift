@@ -26,10 +26,10 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
     private var selected: EVYState<Bool>
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYTextSelectRowView.self, forKey:.view)
-        self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
+        view = try container.decode(EVYTextSelectRowView.self, forKey:.view)
+        edit = try container.decode(SDUI.Edit.self, forKey:.edit)
         
-        self.selected = EVYState(watch: edit.destination!, setter: {
+        selected = EVYState(watch: edit.destination!, setter: {
             do {
                 return try EVY.evaluateFromText($0)
             } catch {}
@@ -39,7 +39,7 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
         
         let temporaryId = UUID().uuidString
         try EVY.updateValue(view.content.text, at: temporaryId)
-        self.value = try EVY.data.get(key: temporaryId).decoded()
+        value = try EVY.data.get(key: temporaryId).decoded()
     }
 	
 	func complete() -> Bool {

@@ -15,9 +15,9 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
     @State private var selected: String
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(SDUI.ContainerView.self, forKey:.view)
-		self.edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        selected = self.view.content.children.first!.title
+        view = try container.decode(SDUI.ContainerView.self, forKey:.view)
+		edit = try container.decode(SDUI.Edit.self, forKey:.edit)
+        selected = view.content.children.first!.title
     }
 	
 	func complete() -> Bool {

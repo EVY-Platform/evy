@@ -23,7 +23,7 @@ struct EVYSearchSingle: View {
         self.destination = destination
         self.placeholder = placeholder
         
-        self.searchController = EVYSearchController(source: source, format: format)
+        searchController = EVYSearchController(source: source, format: format)
     }
     
     func select(_ element: EVYSearchResult) {

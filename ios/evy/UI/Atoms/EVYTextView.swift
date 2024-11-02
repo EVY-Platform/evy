@@ -60,7 +60,7 @@ struct EVYTextView: View {
     }
     
     func toText() -> Text {
-        return parsedText(self.toString(), style)
+        return parsedText(toString(), style)
     }
     
     func toString() -> String {

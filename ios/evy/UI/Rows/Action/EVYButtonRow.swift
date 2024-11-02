@@ -25,8 +25,8 @@ struct EVYButtonRow: View, EVYRowProtocol {
     private let action: SDUI.Action
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYButtonRowView.self, forKey:.view)
-        self.action = try container.decode(SDUI.Action.self, forKey:.action)
+        view = try container.decode(EVYButtonRowView.self, forKey:.view)
+        action = try container.decode(SDUI.Action.self, forKey:.action)
     }
     
     private func performAction() -> Void {

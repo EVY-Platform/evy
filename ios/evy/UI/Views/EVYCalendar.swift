@@ -180,8 +180,8 @@ struct EVYCalendar: View {
     @State private var calendarTimeslots: EVYCalendarTimeslots
     
     init(primary: String, secondary: String) {
-        self.primarySource = primary
-        self.secondaryTimeslotsData = getTimeslotsData(secondary)
+        primarySource = primary
+        secondaryTimeslotsData = getTimeslotsData(secondary)
 
         let primaryTimeslotsData = getTimeslotsData(primary)
         
@@ -226,7 +226,7 @@ struct EVYCalendar: View {
         }
         
         // Build the initial calendar timeslots to display
-        self.calendarTimeslots = EVYCalendarTimeslots(rows: yLabels.count-1,
+        calendarTimeslots = EVYCalendarTimeslots(rows: yLabels.count-1,
                                                       columns: xLabels.count,
                                                       primaryTimeslotsData: primaryTimeslotsData,
                                                       secondaryTimeslotsData: secondaryTimeslotsData)

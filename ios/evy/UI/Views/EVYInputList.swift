@@ -18,7 +18,7 @@ struct EVYInputList: View {
         self.format = format
         self.placeholder = placeholder
         
-        self.values = EVYState(watch: data, setter: {
+        values = EVYState(watch: data, setter: {
             do {
                 let data = try EVY.getDataFromText($0)
                 if case .array(let arrayValue) = data {

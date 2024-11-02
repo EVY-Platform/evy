@@ -68,26 +68,26 @@ public class SDUI {
 		
 		public init(from decoder: Decoder) throws {
 			let container = try decoder.container(keyedBy: ValidationCodingKeys.self)
-			self.required = try container.decode(String.self, forKey: .required) == "true"
+			required = try container.decode(String.self, forKey: .required) == "true"
 			do {
-				self.message = try container.decode(String.self, forKey: .message)
+				message = try container.decode(String.self, forKey: .message)
 			} catch {
-				self.message = nil
+				message = nil
 			}
 			do {
-				self.minAmount = Int(try container.decode(String.self, forKey: .minAmount))!
+				minAmount = Int(try container.decode(String.self, forKey: .minAmount))!
 			} catch {
-				self.minAmount = nil
+				minAmount = nil
 			}
 			do {
-				self.minValue = Int(try container.decode(String.self, forKey: .minValue))!
+				minValue = Int(try container.decode(String.self, forKey: .minValue))!
 			} catch {
-				self.minValue = nil
+				minValue = nil
 			}
 			do {
-				self.minCharacters = Int(try container.decode(String.self, forKey: .minCharacters))!
+				minCharacters = Int(try container.decode(String.self, forKey: .minCharacters))!
 			} catch {
-				self.minCharacters = nil
+				minCharacters = nil
 			}
 		}
 	}

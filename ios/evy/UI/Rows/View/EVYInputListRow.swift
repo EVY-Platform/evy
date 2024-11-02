@@ -24,7 +24,7 @@ struct EVYInputListRow: View, EVYRowProtocol {
     private let view: EVYInputListRowView
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYInputListRowView.self, forKey:.view)
+        view = try container.decode(EVYInputListRowView.self, forKey:.view)
     }
     
     var body: some View {

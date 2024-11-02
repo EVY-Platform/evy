@@ -28,12 +28,12 @@ struct EVYSearch: View {
         do {
             let data = try EVY.getDataFromText(destination)
             if case .array(_) = data {
-                self.canSelectMultiple = true
+                canSelectMultiple = true
             } else {
-                self.canSelectMultiple = false
+                canSelectMultiple = false
             }
         } catch {
-            self.canSelectMultiple = false
+            canSelectMultiple = false
         }
     }
     

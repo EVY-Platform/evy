@@ -30,13 +30,13 @@ class EVYSearchController: ObservableObject {
         
         let sourceProps = EVY.parsePropsFromText(source)
         if sourceProps.hasPrefix("api:") {
-            self.sourceType = .api
+            sourceType = .api
             self.source = String(source.dropFirst(4))
         } else if sourceProps.hasPrefix("local:") {
-            self.sourceType = .local
+            sourceType = .local
             self.source = String(source.dropFirst(6))
         } else {
-            self.sourceType = .local
+            sourceType = .local
             self.source = source
         }
     }
@@ -56,7 +56,7 @@ class EVYSearchController: ObservableObject {
                 let response = try JSONDecoder().decode([EVYJson].self, from: data)
                 for res in response {
                     let resFormatted = EVY.formatData(json: res, format: format)
-                    self.results.append(EVYSearchResult(data: res, value: resFormatted))
+                    results.append(EVYSearchResult(data: res, value: resFormatted))
                 }
             } catch {
                 results = []

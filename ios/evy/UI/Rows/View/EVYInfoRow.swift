@@ -22,7 +22,7 @@ struct EVYInfoRow: View, EVYRowProtocol {
     private let view: EVYInfoRowView
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYInfoRowView.self, forKey:.view)
+        view = try container.decode(EVYInfoRowView.self, forKey:.view)
     }
     
     var body: some View {

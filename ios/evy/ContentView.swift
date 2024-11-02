@@ -55,7 +55,7 @@ struct ContentView: View {
         try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
         
         let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
-        self.flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
+        flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
     }
     
     private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) throws {

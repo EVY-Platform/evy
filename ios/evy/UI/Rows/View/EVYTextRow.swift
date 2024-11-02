@@ -25,7 +25,7 @@ struct EVYTextRow: View, EVYRowProtocol {
 	@State private var canBeExpanded: Bool = false
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        self.view = try container.decode(EVYTextRowView.self, forKey:.view)
+        view = try container.decode(EVYTextRowView.self, forKey:.view)
     }
     
     var body: some View {
