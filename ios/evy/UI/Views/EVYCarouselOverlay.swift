@@ -38,7 +38,7 @@ struct EVYCarouselOverlay: View {
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
         .overlay {
             VStack {
-                Button(action: { dismiss()} ) {
+                Button(action: { dismiss() }) {
                     Label("", systemImage: "xmark")
                         .foregroundColor(.white)
                         .font(.evyButton)

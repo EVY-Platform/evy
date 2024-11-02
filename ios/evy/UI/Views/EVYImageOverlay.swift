@@ -19,7 +19,7 @@ struct EVYImageOverlay: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             }.background(Color.black)
-            Button(action: { dismiss()} ) {
+            Button(action: { dismiss() }) {
                 Label("", systemImage: "xmark")
                     .foregroundColor(.white)
                     .font(.evyButton)
