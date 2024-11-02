@@ -205,7 +205,7 @@ struct SDUIConstants {
                 "data": "{areas}"
            },
             "edit": {
-                "destination": "{area}",
+                "destination": "{item.transfer_options.ship.areas}",
                 "validation": {
                     "required": "true",
                     "message": "How far can you ship?"
@@ -220,12 +220,12 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "",
-                   "primary": "{pickupTimeslots}",
-                   "secondary": "{deliveryTimeslots}"
+                   "primary": "{item.transfer_options.pickup.timeslots}",
+                   "secondary": "{item.transfer_options.delivery.timeslots}"
                }
            },
             "edit": {
-                "destination": "{pickupTimeslots}",
+                "destination": "{item.transfer_options.pickup.timeslots}",
                 "validation": {
                     "required": "true",
                     "message": "What times can you pickup?",
@@ -241,12 +241,12 @@ struct SDUIConstants {
            "view": {
                "content": {
                    "title": "",
-                   "primary": "{deliveryTimeslots}",
-                   "secondary": "{pickupTimeslots}"
+                   "primary": "{item.transfer_options.delivery.timeslots}",
+                   "secondary": "{item.transfer_options.pickup.timeslots}"
                }
            },
             "edit": {
-                "destination": "{deliveryTimeslots}",
+                "destination": "{item.transfer_options.delivery.timeslots}",
                 "validation": {
                     "required": "true",
                     "message": "What times can you delivery?",
@@ -425,13 +425,13 @@ struct SDUIConstants {
             "view": {
                 "content": {
                     "title": "Where",
-                    "text": "{formatAddress(item.address)}",
+                    "text": "{formatAddress(item.transfer_options.pickup.address)}",
                     "placeholder": "Enter pick up address",
                     "action": "Change"
                 }
             },
             "edit": {
-                "destination": "{item.address}",
+                "destination": "{item.transfer_options.pickup.address}",
                 "validation": {
                     "required": "true",
                     "message": "Where can the item be picked up?"
@@ -584,7 +584,7 @@ struct SDUIConstants {
         }
     """
     
-    static let sheetContainerRow = """
+    static let pickupAddressRow = """
         {
             "type": "SheetContainer",
             "view": {
@@ -614,8 +614,7 @@ struct SDUIConstants {
             },
             "edit": {
                 "validation": {
-                    "required": "true",
-                    "message": "Test sheet"
+                    "required": "true"
                 }
             }
         }
@@ -750,7 +749,7 @@ struct SDUIConstants {
                         }
                     }, {
                         "title": "",
-                        "child": \(sheetContainerRow)
+                        "child": \(pickupAddressRow)
                     }, {
                         "title": "",
                         "child": {
@@ -819,12 +818,12 @@ struct SDUIConstants {
                             "view": {
                                 "content": {
                                     "title": "Surcharge",
-                                    "value": "{formatCurrency(item.price)}",
+                                    "value": "{formatCurrency(item.transfer_options.delivery.fee)}",
                                     "placeholder": "Do you want to charge for delivery?"
                                 }
                             },
                             "edit": {
-                                "destination": "{item.price.value}",
+                                "destination": "{item.transfer_options.delivery.fee.value}",
                                 "validation": {
                                     "required": "false"
                                 }
@@ -894,12 +893,12 @@ struct SDUIConstants {
                         	"view": {
                         		"content": {
                         			"title": "Where from",
-                        			"value": "{item.title}",
+                        			"value": "{item.transfer_options.ship.postal_code}",
                         			"placeholder": "Postal code you will be shipping from"
                         		}
                         	},
                         	"edit": {
-                        		"destination": "{item.title}",
+                        		"destination": "{item.transfer_options.ship.postal_code}",
                                 "validation": {
                                     "required": "true",
                                     "message": "Postal code you will be shipping from"
@@ -1105,47 +1104,16 @@ struct DataConstants {
             "created_timestamp": "1701471377",
             "transfer_options": {
                 "pickup": {
-                    "timeslots": [
-                        {
-                            "start_timestamp": "1700894934",
-                            "end_timestamp": "1700895934",
-                            "available": "true",
-                            "type": "pickup"
-                        },
-                        {
-                            "start_timestamp": "1700894934",
-                            "end_timestamp": "1700895934",
-                            "available": "false",
-                            "type": "pickup"
-                        },
-                        {
-                            "start_timestamp": "1700894934",
-                            "end_timestamp": "1700895934",
-                            "available": "true",
-                            "type": "pickup"
-                        }
-                    ]
+                    "timeslots": \(pickupTimeslots),
+                    "address": {}
                 },
                 "delivery": {
-                    "fee": {
-                        "currency": "AUD",
-                        "value": "5.00"
-                    },
-                    "timeslots": [
-                        {
-                            "start_timestamp": "1700894934",
-                            "end_timestamp": "1700895934",
-                            "available": "true",
-                            "type": "delivery"
-                        }
-                    ]
+                    "timeslots": \(deliveryTimeslots),
+                    "fee": {}
                 },
                 "ship": {
-                    "fee": {
-                        "currency": "AUD",
-                        "value": "10.00"
-                    },
-                    "transfer_provider_id": "40041bb4-a6a1-468f-8864-972dba544793"
+                    "postal_code": "",
+                    "areas": ""
                 }
             },
             "description":
@@ -1200,14 +1168,14 @@ struct DataConstants {
             "header": "Wed 18",
             "start_label": "8:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 3,
             "header": "Wed 18",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 4,
@@ -1326,28 +1294,28 @@ struct DataConstants {
             "header": "Wed 18",
             "start_label": "17:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 22,
             "header": "Wed 18",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 23,
             "header": "Wed 18",
             "start_label": "18:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 24,
             "header": "Wed 18",
             "start_label": "",
             "end_label": "19:00",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 0,
@@ -1368,14 +1336,14 @@ struct DataConstants {
             "header": "Thu 19",
             "start_label": "8:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 3,
             "header": "Thu 19",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 4,
@@ -1424,14 +1392,14 @@ struct DataConstants {
             "header": "Thu 19",
             "start_label": "12:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 11,
             "header": "Thu 19",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 12,
@@ -1494,28 +1462,28 @@ struct DataConstants {
             "header": "Thu 19",
             "start_label": "17:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 22,
             "header": "Thu 19",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 23,
             "header": "Thu 19",
             "start_label": "18:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 24,
             "header": "Thu 19",
             "start_label": "",
             "end_label": "19:00",
-            "selected": true
+            "selected": false
         },{
             "x": 2,
             "y": 0,
@@ -1592,14 +1560,14 @@ struct DataConstants {
             "header": "Fri 20",
             "start_label": "12:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 2,
             "y": 11,
             "header": "Fri 20",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 2,
             "y": 12,
@@ -1718,133 +1686,133 @@ struct DataConstants {
             "header": "Sat 21",
             "start_label": "9:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 5,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 6,
             "header": "Sat 21",
             "start_label": "10:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 7,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 8,
             "header": "Sat 21",
             "start_label": "11:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 9,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 10,
             "header": "Sat 21",
             "start_label": "12:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 11,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 12,
             "header": "Sat 21",
             "start_label": "13:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 14,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 15,
             "header": "Sat 21",
             "start_label": "14:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 16,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 17,
             "header": "Sat 21",
             "start_label": "15:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 18,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 19,
             "header": "Sat 21",
             "start_label": "16:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 20,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 21,
             "header": "Sat 21",
             "start_label": "17:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 22,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 23,
             "header": "Sat 21",
             "start_label": "18:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 24,
@@ -1864,14 +1832,14 @@ struct DataConstants {
             "header": "Wed 18",
             "start_label": "7:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 1,
             "header": "Wed 18",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 2,
@@ -1934,14 +1902,14 @@ struct DataConstants {
             "header": "Wed 18",
             "start_label": "12:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 11,
             "header": "Wed 18",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 0,
             "y": 12,
@@ -2032,14 +2000,14 @@ struct DataConstants {
             "header": "Thu 19",
             "start_label": "7:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 1,
             "header": "Thu 19",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 2,
@@ -2102,14 +2070,14 @@ struct DataConstants {
             "header": "Thu 19",
             "start_label": "12:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 11,
             "header": "Thu 19",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 1,
             "y": 12,
@@ -2200,14 +2168,14 @@ struct DataConstants {
             "header": "Fri 20",
             "start_label": "7:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 2,
             "y": 1,
             "header": "Fri 20",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 2,
             "y": 2,
@@ -2270,14 +2238,14 @@ struct DataConstants {
             "header": "Fri 20",
             "start_label": "12:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 2,
             "y": 11,
             "header": "Fri 20",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 2,
             "y": 12,
@@ -2368,14 +2336,14 @@ struct DataConstants {
             "header": "Sat 21",
             "start_label": "7:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 1,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 2,
@@ -2438,14 +2406,14 @@ struct DataConstants {
             "header": "Sat 21",
             "start_label": "12:00",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 11,
             "header": "Sat 21",
             "start_label": "",
             "end_label": "",
-            "selected": true
+            "selected": false
         },{
             "x": 3,
             "y": 12,

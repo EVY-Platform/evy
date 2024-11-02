@@ -56,6 +56,6 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVY.data.create(key: "item", data: item)
     
-    let json = SDUIConstants.sheetContainerRow.data(using: .utf8)!
+	let json = SDUIConstants.pickupAddressRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }
