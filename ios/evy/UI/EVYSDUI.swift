@@ -114,7 +114,6 @@ public class SDUI {
 	}
     public class ContainerContent: Decodable {
         let children: [ContainerChild]
-        let children_data: String?
         let child: EVYRow?
     }
     public struct ContainerView: Decodable {
