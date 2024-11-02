@@ -44,11 +44,11 @@ struct EVYRectangle: View {
     }
     
     static func fixedWidth(content: any View, style: EVYRectangleStyle, width: CGFloat) -> EVYRectangle {
-        return EVYRectangle.init(content: content, style: style, width: width)
+        return EVYRectangle(content: content, style: style, width: width)
     }
     
     static func fitWidth(content: any View, style: EVYRectangleStyle) -> EVYRectangle {
-        return EVYRectangle.init(content: content, style: style, width: nil)
+        return EVYRectangle(content: content, style: style, width: nil)
     }
     
     var body: some View {

@@ -91,7 +91,7 @@ struct EVYSearchMultiple: View {
             .contentShape(Rectangle())
             .padding(.horizontal, Constants.majorPadding)
             .onChange(of: searchFieldValue) { _, newValue in
-                Task.init(operation: {
+                Task(operation: {
                     if !newValue.isEmpty &&  newValue.count > 3 {
                         await searchController.search(name: newValue)
                     } else {

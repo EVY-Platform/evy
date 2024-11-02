@@ -15,7 +15,7 @@ let API_HOST = ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:800
 let userDefault = UserDefaults.standard
 
 final class EVYManager {
-    private let rpcWS = EVYWebsocket.init(host: API_HOST)
+    private let rpcWS = EVYWebsocket(host: API_HOST)
     static let shared = EVYManager()
     
     private init() {}
@@ -27,7 +27,7 @@ final class EVYManager {
     
     private func syncServices() async throws {
         let lastSyncTime = userDefault.integer(forKey: "lastSyncTime")
-        let _ = try await rpcWS.fetchServicesData(lastSyncTime: lastSyncTime)
+        _ = try await rpcWS.fetchServicesData(lastSyncTime: lastSyncTime)
         userDefault.set(Int(Date().timeIntervalSince1970*1000), forKey: "lastSyncTime")
     }
 }
