@@ -15,6 +15,6 @@ struct EVYDevice: Codable {
 }
 
 enum EVYOS: String, Codable {
-    case ios = "ios"
-    case android = "android"
+    case ios
+    case android
 }
