@@ -67,7 +67,7 @@ struct EVYTextField: View {
                         editing = false
                     }
                 })
-                .onChange(of: value, { oldValue, newValue in
+                .onChange(of: value, { _, newValue in
                     try! EVY.updateValue(newValue, at: destination)
                 })
                 .onSubmit {

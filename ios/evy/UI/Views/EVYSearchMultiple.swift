@@ -51,7 +51,7 @@ struct EVYSearchMultiple: View {
         do {
             selected.append(element)
             
-            let encoded = try JSONEncoder().encode(selected.map({ $0.data }))
+            let encoded = try JSONEncoder().encode(selected.map { $0.data })
             try EVY.updateData(encoded, at: destination)
             searchController.results.removeAll(where: {
                 return $0.value == element.value
@@ -64,10 +64,10 @@ struct EVYSearchMultiple: View {
     func unselect(_ element: EVYSearchResult) {
         do {
             selected.removeAll(where: { $0.value == element.value })
-            try EVY.updateData(try JSONEncoder().encode(selected.map({ $0.data })),
+            try EVY.updateData(try JSONEncoder().encode(selected.map { $0.data }),
                                at: destination)
         } catch {
-            searchController.results.removeAll(where: { $0.value == element.value })
+            searchController.results.removeAll { $0.value == element.value }
         }
     }
     
@@ -90,7 +90,7 @@ struct EVYSearchMultiple: View {
             )
             .contentShape(Rectangle())
             .padding(.horizontal, Constants.majorPadding)
-            .onChange(of: searchFieldValue) { oldValue, newValue in
+            .onChange(of: searchFieldValue) { _, newValue in
                 Task.init(operation: {
                     if !newValue.isEmpty &&  newValue.count > 3 {
                         await searchController.search(name: newValue)
@@ -121,7 +121,7 @@ struct EVYSearchMultiple: View {
                     EVYTextView(result.value)
                         .onTapGesture { select(result) }
                 }
-                .onChange(of: searchController.results) { oldValue, newValue in
+                .onChange(of: searchController.results) { _, _ in
                     searchController.results.removeAll { r in
                         return selected.contains { $0.value == r.value }
                     }

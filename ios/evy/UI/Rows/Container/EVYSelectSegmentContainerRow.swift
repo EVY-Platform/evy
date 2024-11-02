@@ -21,16 +21,16 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
     }
 	
 	func complete() -> Bool {
-		let completeChildren = view.content.children.filter({
+		let completeChildren = view.content.children.filter {
 			$0.child.complete()
-		})
+		}
 		return completeChildren.count >= Int(edit.validation.minAmount ?? 1)
 	}
 	
 	func incompleteMessages() -> [String] {
 		return view.content.children
-			.filter({ $0.child.view.complete() == false })
-			.map({ $0.child.view.incompleteMessages() })
+			.filter { $0.child.view.complete() == false }
+			.map { $0.child.view.incompleteMessages() }
 			.flatMap(\.self)
 	}
 

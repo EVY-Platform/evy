@@ -25,8 +25,8 @@ struct Result: Decodable, Encodable {
     }
     
     private enum EncodingKeys: String, CodingKey {
-        case id = "id"
-        case value = "value"
+        case id
+        case value
     }
     
     init(from decoder: any Decoder) throws {

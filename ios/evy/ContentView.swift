@@ -22,7 +22,7 @@ public enum NavOperation: Hashable {
 }
 
 struct NavigateEnvironmentKey: EnvironmentKey {
-    static let defaultValue: (NavOperation) -> Void = { _  in }
+    static let defaultValue: (NavOperation) -> Void = { _ in }
 }
 
 extension EnvironmentValues {
@@ -66,12 +66,10 @@ struct ContentView: View {
             if let existing = routes.lastIndex(of: route) {
                 routes.removeSubrange(existing...)
 			} else {
-				let currentFlow = flows.first(where: {$0.id == currentFlowId})
+				let currentFlow = flows.first { $0.id == currentFlowId }
 				if !routes.isEmpty {
 					let currentPageId = routes.last!.pageId
-					let currentPage = currentFlow!.pages.first(where: {
-						$0.id == currentPageId
-					})!
+					let currentPage = currentFlow!.pages.first { $0.id == currentPageId }!
 					if currentFlow?.type == .create, !currentPage.complete() {
 						alertMessage = currentPage.incompleteMessages().joined(separator: "\n")
 						showingAlert = true
@@ -86,7 +84,7 @@ struct ContentView: View {
             }
             
             // If the new flow is for creation, start a draft
-            let newFlow = flows.first(where: {$0.id == route.flowId})!
+            let newFlow = flows.first { $0.id == route.flowId }!
             if newFlow.type == .create {
                 let item = DataConstants.item.data(using: .utf8)!
                 let key: String? = newFlow.data
@@ -95,12 +93,12 @@ struct ContentView: View {
             
         case .submit:
             // Make sure the flow was for creation, otherwise error out
-            let currentFlow: EVYFlow = flows.first(where: {$0.id == currentFlowId})!
+            let currentFlow: EVYFlow = flows.first { $0.id == currentFlowId }!
             if currentFlow.type != .create {
                 throw EVYNavigationError.cannotSubmit
             }
 			
-			let allPagesComplete = currentFlow.pages.allSatisfy({ $0.complete() })
+			let allPagesComplete = currentFlow.pages.allSatisfy { $0.complete() }
 			if !allPagesComplete {
 				alertMessage = "Incomplete flow"
 				showingAlert = true
@@ -111,9 +109,9 @@ struct ContentView: View {
             try! EVY.submit(key: currentFlow.data)
             
             // Then, remove the current flow from navigation
-            if let existing = routes.firstIndex(where: { route in
-                route.flowId == currentFlowId
-            }) {
+			if let existing = routes.firstIndex(where: { route in
+				route.flowId == currentFlowId
+			}) {
                 routes.removeSubrange(existing...)
             } else {
                 // But if something is wrong, we exit back home
@@ -122,15 +120,15 @@ struct ContentView: View {
             
         case .close:
             // If the flow was for creation, delete the draft
-            let currentFlow: EVYFlow? = flows.first(where: {$0.id == currentFlowId})
+            let currentFlow: EVYFlow? = flows.first { $0.id == currentFlowId }
             if currentFlow?.type == .create {
                 let key: String? = currentFlow?.data
                 try! EVY.data.delete(key: key!)
             }
             
-            if let existing = routes.firstIndex(where: { route in
-                route.flowId == currentFlowId
-            }) {
+			if let existing = routes.firstIndex(where: { route in
+				route.flowId == currentFlowId
+			}) {
                 routes.removeSubrange(existing...)
             } else {
                 routes.removeAll()
@@ -145,7 +143,7 @@ struct ContentView: View {
                     try! handleNavigationData(navOperation, currentFlowId)
                 }
                 .navigationDestination(for: Route.self) { route in
-                    let flow = flows.first(where: {$0.id == route.flowId})!
+                    let flow = flows.first { $0.id == route.flowId }!
                     flow.getPageById(route.pageId)!
                         .environment(\.navigate) { navOperation in
                             try! handleNavigationData(navOperation, currentFlowId)
@@ -157,13 +155,16 @@ struct ContentView: View {
 				  message: Text(alertMessage),
 				  dismissButton: .default(Text("Ok")))
 		}
-        .onChange(of: routes) { oldValue, newValue in
+        .onChange(of: routes) { _, _ in
             let newFlowId = routes.last?.flowId ?? "home"
             
             // To be safe, we remove any existing data if the flow has changed
             if newFlowId != currentFlowId,
-               let currentFlow = flows.first(where: {$0.id == currentFlowId}),
-               currentFlow.type == .create {
+			   let currentFlow = flows.first(where: {
+				   $0.id == currentFlowId
+			   }),
+               currentFlow.type == .create
+			{
                 do {
                     try EVY.data.delete(key: currentFlow.data)
                 } catch {}

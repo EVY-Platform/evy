@@ -14,13 +14,13 @@ struct EVYPage: View, Decodable {
     let footer: EVYRow
 	
 	func complete() -> Bool {
-		return rows.allSatisfy({ $0.complete() })
+		return rows.allSatisfy { $0.complete() }
 	}
 	
 	func incompleteMessages() -> [String] {
 		return rows
-			.filter({ $0.view.complete() == false })
-			.map({ $0.view.incompleteMessages() })
+			.filter { $0.view.complete() == false }
+			.map { $0.view.incompleteMessages() }
 			.flatMap(\.self)
 	}
 

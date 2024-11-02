@@ -72,7 +72,7 @@ struct EVYSearchSingle: View {
             )
             .contentShape(Rectangle())
             .padding(.horizontal, Constants.majorPadding)
-            .onChange(of: value) { oldValue, newValue in
+            .onChange(of: value) { _, newValue in
                 Task.init(operation: {
                     if newValue.isEmpty {
                         return

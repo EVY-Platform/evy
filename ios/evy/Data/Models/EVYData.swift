@@ -254,7 +254,7 @@ public enum EVYJson: Codable, Hashable {
         
         var inputValues: [String] = []
         if case let .array(arrayValue) = value {
-            inputValues.append(contentsOf: arrayValue.map({$0.toString()}))
+            inputValues.append(contentsOf: arrayValue.map { $0.toString() })
         } else if case .string(_) = value {
             inputValues.append(value.toString())
         }
@@ -267,9 +267,9 @@ public enum EVYJson: Codable, Hashable {
             if key.hasSuffix("_ids") {
                 let data = try EVY.getDataFromProps(String(key.dropLast(4) + "s"))
                 if case let .array(arrayValue) = data {
-                    let filteredValues = arrayValue.filter({
+                    let filteredValues = arrayValue.filter {
                         return inputValues.contains($0.identifierValue())
-                    })
+                    }
                     if filteredValues.count > 0 {
                         let data = try JSONEncoder().encode(filteredValues)
                         return try JSONDecoder().decode(EVYJson.self, from: data)

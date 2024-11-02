@@ -27,7 +27,7 @@ enum EVYCalendarOperation {
 }
 
 struct EVYCalendarOperationKey: EnvironmentKey {
-    static let defaultValue: (EVYCalendarOperation) -> Void = { _  in }
+    static let defaultValue: (EVYCalendarOperation) -> Void = { _ in }
 }
 
 extension EnvironmentValues {
@@ -187,18 +187,22 @@ struct EVYCalendar: View {
         
         // Build the initial axis labels
         xLabels = primaryTimeslotsData
-            .filter({ $0.y == 0})
-            .map({ EVYCalendarLabel(value: String($0.header),
-                                    full: false) })
+            .filter { $0.y == 0 }
+			.map {
+				EVYCalendarLabel(value: String($0.header),
+								 full: false)
+			}
         yLabels = primaryTimeslotsData
-            .filter({ $0.x == 0})
-            .map({ EVYCalendarLabel(value: String($0.start_label),
-                                    full: false) })
+            .filter { $0.x == 0 }
+			.map {
+				EVYCalendarLabel(value: String($0.start_label),
+								 full: false)
+			}
         
         // Mark the axis labels as full if needed
         for x in 0..<xLabels.count {
             let selectedInColumn = primaryTimeslotsData
-                .filter({ $0.x == x && $0.selected})
+                .filter { $0.x == x && $0.selected }
             guard selectedInColumn.count == yLabels.count else {
                 continue
             }
@@ -206,7 +210,7 @@ struct EVYCalendar: View {
         }
         for y in 0..<yLabels.count {
             let selectedInColumn = primaryTimeslotsData
-                .filter({ $0.y == y && $0.selected})
+                .filter { $0.y == y && $0.selected }
             guard selectedInColumn.count == xLabels.count else {
                 continue
             }
