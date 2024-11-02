@@ -1,6 +1,6 @@
 import SwiftUI
 
-fileprivate let maxAllowedScale = 4.0
+private let maxAllowedScale = 4.0
 
 struct EVYZoomableContainer<Content: View>: View {
     let content: Content

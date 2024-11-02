@@ -1,5 +1,5 @@
 //
-//  EVYMapView.swift
+//  EVYMap.swift
 //  evy
 //
 //  Created by Clemence Chalot on 20/12/2023.

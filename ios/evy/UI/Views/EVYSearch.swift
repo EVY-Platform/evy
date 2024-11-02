@@ -1,5 +1,5 @@
 //
-//  EVYSearchView.swift
+//  EVYSearch.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 9/4/2024.

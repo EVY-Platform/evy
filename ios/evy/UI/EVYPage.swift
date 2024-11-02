@@ -1,5 +1,5 @@
 //
-//  EVYRow.swift
+//  EVYPage.swift
 //  EVY
 //
 //  Created by Geoffroy Lesage on 11/12/2023.

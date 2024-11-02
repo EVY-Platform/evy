@@ -1,5 +1,5 @@
 //
-//  AppConstants.swift
+//  Constants.swift
 //  EVY
 //
 //  Created by Clemence Chalot on 11/12/2023.
