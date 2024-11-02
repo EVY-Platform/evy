@@ -25,7 +25,7 @@ struct EVYSelectPhoto: View {
     
     private let fm = FileManager.default
     private var cacheDir: URL {
-        return fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
      }
     
     @State private var photos: [String] = []
@@ -156,16 +156,15 @@ class ImageManager {
     static let shared = ImageManager()
     let fm = FileManager.default
     var cachesDirectoryUrl: URL {
-        let urls = fm.urls(for: .cachesDirectory, in: .userDomainMask)
-        return urls[0]
+		fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
     }
     
     func getImage(name: String) -> Image? {
         let fileUrl = cachesDirectoryUrl.appendingPathComponent("\(name).png")
         let filePath = fileUrl.path
-        if fm.fileExists(atPath: filePath),
-           let data = try? Data(contentsOf: fileUrl){
-            return Image(uiImage: UIImage(data: data)!)
+        if fm.fileExists(atPath: filePath), let data = try? Data(contentsOf: fileUrl)
+		{
+			return Image(uiImage: UIImage(data: data)!)
         }
         return Image(uiImage: UIImage(named: "\(name).png")!)
     }

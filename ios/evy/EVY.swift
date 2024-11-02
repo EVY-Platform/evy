@@ -48,7 +48,7 @@ struct EVY {
     }
     
     static func parsePropsFromText(_ input: String) -> String {
-        return EVYInterpreter.parsePropsFromText(input)
+        EVYInterpreter.parsePropsFromText(input)
     }
     
     static func evaluateFromText(_ input: String) throws -> Bool {

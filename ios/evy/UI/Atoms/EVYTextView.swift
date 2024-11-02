@@ -60,11 +60,11 @@ struct EVYTextView: View {
     }
     
     func toText() -> Text {
-        return parsedText(toString(), style)
+        parsedText(toString(), style)
     }
     
     func toString() -> String {
-        return text.value.toString()
+        text.value.toString()
     }
 }
 

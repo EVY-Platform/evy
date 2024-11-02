@@ -24,7 +24,7 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 	}
 	
 	func incompleteMessages() -> [String] {
-		return view.content.children
+		view.content.children
 			.filter { $0.child.view.complete() == false }
 			.map { $0.child.view.incompleteMessages() }
 			.flatMap(\.self)

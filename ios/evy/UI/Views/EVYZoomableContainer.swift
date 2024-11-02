@@ -58,7 +58,7 @@ struct EVYZoomableContainer<Content: View>: View {
         }
 
         func makeCoordinator() -> Coordinator {
-            return Coordinator(hostingController: UIHostingController(rootView: content), scale: $currentScale)
+            Coordinator(hostingController: UIHostingController(rootView: content), scale: $currentScale)
         }
 
         func updateUIView(_ uiView: UIScrollView, context: Context) {
@@ -102,7 +102,7 @@ struct EVYZoomableContainer<Content: View>: View {
             }
 
             func viewForZooming(in scrollView: UIScrollView) -> UIView? {
-                return hostingController.view
+                hostingController.view
             }
 
             func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {

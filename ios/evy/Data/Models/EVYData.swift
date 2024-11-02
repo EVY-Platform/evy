@@ -41,7 +41,7 @@ class EVYData {
     }
     
     func decoded() -> EVYJson {
-        return try! JSONDecoder().decode(EVYJson.self, from: data)
+        try! JSONDecoder().decode(EVYJson.self, from: data)
     }
     
     func updateDataWithData(_ data: Data, props: [String]) throws -> Void {
@@ -268,7 +268,7 @@ public enum EVYJson: Codable, Hashable {
                 let data = try EVY.getDataFromProps(String(key.dropLast(4) + "s"))
                 if case let .array(arrayValue) = data {
                     let filteredValues = arrayValue.filter {
-                        return inputValues.contains($0.identifierValue())
+                        inputValues.contains($0.identifierValue())
                     }
                     if filteredValues.count > 0 {
                         let data = try JSONEncoder().encode(filteredValues)
@@ -279,9 +279,9 @@ public enum EVYJson: Codable, Hashable {
             if key.hasSuffix("_id") {
                 let data = try EVY.getDataFromProps(String(key.dropLast(3) + "s"))
                 if case let .array(arrayValue) = data {
-                    let matchingValue = arrayValue.first(where: {
-                        return inputValues.contains($0.identifierValue())
-                    })
+                    let matchingValue = arrayValue.first {
+                        inputValues.contains($0.identifierValue())
+                    }
                     if matchingValue != nil {
                         return matchingValue!
                     }

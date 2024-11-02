@@ -48,7 +48,7 @@ struct EVYCalendarRow: View, EVYRowProtocol {
 	}
 	
 	func incompleteMessage() -> String? {
-		return edit.validation.message
+		edit.validation.message
 	}
 	
 	func incompleteMessages() -> [String] {

@@ -39,7 +39,7 @@ struct EVYSearchMultiple: View {
             
             for value in arrayValue {
                 let formattedValue = EVY.formatData(json: value, format: format)
-                let alreadySelected = selected.contains { return $0.value == formattedValue }
+                let alreadySelected = selected.contains { $0.value == formattedValue }
                 if !alreadySelected {
                     selected.append(EVYSearchResult(data: value, value: formattedValue))
                 }
@@ -53,11 +53,9 @@ struct EVYSearchMultiple: View {
             
             let encoded = try JSONEncoder().encode(selected.map { $0.data })
             try EVY.updateData(encoded, at: destination)
-            searchController.results.removeAll(where: {
-                return $0.value == element.value
-            })
+            searchController.results.removeAll { $0.value == element.value }
         } catch {
-            selected.removeAll(where: { $0.value == element.value })
+            selected.removeAll { $0.value == element.value }
         }
     }
     

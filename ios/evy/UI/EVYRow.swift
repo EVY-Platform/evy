@@ -25,7 +25,7 @@ protocol EVYRowProtocol: View {
 }
 
 extension EVYRowProtocol {
-	func complete() -> Bool { return true }
+	func complete() -> Bool { true }
 	func incompleteMessages() -> [String] { [] }
 }
 

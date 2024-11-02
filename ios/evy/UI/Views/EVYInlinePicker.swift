@@ -34,7 +34,7 @@ struct EVYInlinePicker: View {
             let selected = try EVY.getDataFromText(destination)
             if case let .string(stringValue) = selected {
                 let matching = options.first { option in
-                    return option.identifierValue() == stringValue
+                    option.identifierValue() == stringValue
                 }
                 if matching != nil {
                     _selection = State(initialValue: matching!)

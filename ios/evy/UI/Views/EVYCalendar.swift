@@ -305,7 +305,7 @@ struct EVYCalendar: View {
 }
 
 private func calculateIndex(x: Int, y: Int, numberOfRows: Int) -> Int {
-    return y+(x*(numberOfRows))
+    y+(x*(numberOfRows))
 }
 
 private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {

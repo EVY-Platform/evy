@@ -66,7 +66,7 @@ struct EVYInterpreter {
     public static func parseTextFromText(_ input: String,
                                          _ editing: Bool = false) throws -> EVYValue
     {
-        return try parseText(EVYValue(input, nil, nil), editing)
+        try parseText(EVYValue(input, nil, nil), editing)
     }
     
     private static func parseText(_ input: EVYValue,

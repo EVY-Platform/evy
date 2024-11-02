@@ -62,27 +62,21 @@ struct EVYSelectItem: View {
                         return false
                     }
                     let valueId = value.identifierValue()
-                    return arrayValue.contains {
-                        $0.identifierValue() == valueId
-                    }
+                    return arrayValue.contains { $0.identifierValue() == valueId }
                 } else if target == .multi_value {
                     let existingData = try EVY.getDataFromText(destination)
                     guard case let .array(arrayValue) = existingData else {
                         return false
                     }
                     let valueString = value.toString()
-                    return arrayValue.contains {
-                        $0.toString() == valueString
-                    }
+                    return arrayValue.contains { $0.toString() == valueString }
                 } else if target == .multi_object {
                     let existingData = try EVY.getDataFromText(destination)
                     guard case let .array(arrayValue) = existingData else {
                         return false
                     }
                     let valueId = value.identifierValue()
-                    return arrayValue.contains {
-                        $0.identifierValue() == valueId
-                    }
+                    return arrayValue.contains { $0.identifierValue() == valueId }
                 }
             } catch {}
             
