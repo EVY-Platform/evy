@@ -42,7 +42,7 @@ class EVYSearchController: ObservableObject {
     }
     
     func search(name: String) async {
-        switch(sourceType) {
+        switch sourceType {
         case .local:
             let address = DataConstants.address2.data(using: .utf8)!
             let id = UUID()
