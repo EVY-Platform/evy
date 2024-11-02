@@ -43,7 +43,7 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
         .pickerStyle(.segmented)
         .padding(.bottom, Constants.majorPadding)
         
-		view.content.children.first(where: {$0.title == selected})?.child
+		view.content.children.first { $0.title == selected }?.child
     }
 }
 

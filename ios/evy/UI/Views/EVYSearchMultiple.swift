@@ -61,7 +61,7 @@ struct EVYSearchMultiple: View {
     
     func unselect(_ element: EVYSearchResult) {
         do {
-            selected.removeAll(where: { $0.value == element.value })
+            selected.removeAll { $0.value == element.value }
             try EVY.updateData(try JSONEncoder().encode(selected.map { $0.data }),
                                at: destination)
         } catch {

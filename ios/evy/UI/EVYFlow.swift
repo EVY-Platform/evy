@@ -22,7 +22,7 @@ struct EVYFlow: Decodable {
     let pages: [EVYPage]
     
     func getPageById(_ id: String) -> EVYPage? {
-        pages.first(where: {$0.id == id})
+        pages.first { $0.id == id }
     }
 }
 
