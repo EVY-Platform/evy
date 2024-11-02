@@ -43,7 +43,7 @@ struct EVYInfoRow: View, EVYRowProtocol {
 
 
 #Preview {
-    let json =  SDUIConstants.infoRow.data(using: .utf8)!
+    let json = SDUIConstants.infoRow.data(using: .utf8)!
     let json2 =  SDUIConstants.infoRowWithTitle.data(using: .utf8)!
     
     return VStack {

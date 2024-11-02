@@ -67,6 +67,6 @@ struct EVYInputRow: View, EVYRowProtocol {
     let item = DataConstants.item.data(using: .utf8)!
     try! EVY.data.create(key: "item", data: item)
     
-    let json =  SDUIConstants.inputWidthRow.data(using: .utf8)!
+    let json = SDUIConstants.inputWidthRow.data(using: .utf8)!
     return try? JSONDecoder().decode(EVYRow.self, from: json)
 }

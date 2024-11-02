@@ -75,6 +75,6 @@ struct EVYDropdownRow: View, EVYRowProtocol {
     let conditions = DataConstants.conditions.data(using: .utf8)!
     try! EVY.data.create(key: "conditions", data: conditions)
     
-    let json =  SDUIConstants.condition.data(using: .utf8)!
+    let json = SDUIConstants.condition.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

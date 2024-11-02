@@ -69,7 +69,7 @@ struct EVYTextRow: View, EVYRowProtocol {
 
 
 #Preview {
-    let json =  SDUIConstants.textRow.data(using: .utf8)!
+    let json = SDUIConstants.textRow.data(using: .utf8)!
     let json2 =  SDUIConstants.textRowShort.data(using: .utf8)!
     return VStack {
         try? JSONDecoder().decode(EVYRow.self, from: json)

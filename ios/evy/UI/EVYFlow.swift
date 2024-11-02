@@ -27,7 +27,7 @@ struct EVYFlow: Decodable {
 }
 
 #Preview {
-    let json =  SDUIConstants.viewItemFlow.data(using: .utf8)!
+    let json = SDUIConstants.viewItemFlow.data(using: .utf8)!
     let flow = try! JSONDecoder().decode(EVYFlow.self, from: json)
     return flow.getPageById("view")
 }

@@ -70,6 +70,6 @@ struct EVYCalendarRow: View, EVYRowProtocol {
     let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!
     try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
     
-    let json =  SDUIConstants.pickupCalendarRow.data(using: .utf8)!
+    let json = SDUIConstants.pickupCalendarRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

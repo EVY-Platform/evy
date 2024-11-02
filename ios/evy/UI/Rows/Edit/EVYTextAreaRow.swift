@@ -58,6 +58,6 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
 }
 
 #Preview {
-    let json =  SDUIConstants.textAreaRow.data(using: .utf8)!
+    let json = SDUIConstants.textAreaRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

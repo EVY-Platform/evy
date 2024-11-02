@@ -67,6 +67,6 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
     let durations = DataConstants.durations.data(using: .utf8)!
     try! EVY.data.create(key: "durations", data: durations)
     
-    let json =  SDUIConstants.distancePickerRow.data(using: .utf8)!
+    let json = SDUIConstants.distancePickerRow.data(using: .utf8)!
     return try! JSONDecoder().decode(EVYRow.self, from: json)
 }

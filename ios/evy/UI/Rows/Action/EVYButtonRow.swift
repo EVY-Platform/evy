@@ -51,7 +51,7 @@ struct EVYButtonRow: View, EVYRowProtocol {
 
 
 #Preview {
-    let json =  SDUIConstants.navigate3ButtonRow.data(using: .utf8)!
+    let json = SDUIConstants.navigate3ButtonRow.data(using: .utf8)!
     let button = try? JSONDecoder().decode(EVYRow.self, from: json)
     
     return button
