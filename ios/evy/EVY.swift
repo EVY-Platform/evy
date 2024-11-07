@@ -33,12 +33,15 @@ struct EVY {
 											 expecting: [EVYFlow].self)
 	}
 	
-	static func createItem() async throws {
+	static func getItemData() async throws -> Data {
 		let itemData = try await EVYAPIManager.shared.fetch(method: "getData",
 															params: "",
 															expecting: EVYJson.self)
-		let item = try JSONEncoder().encode(itemData.parseProp(props: ["item"]))
-		try! EVY.data.create(key: "item", data: item)
+		return try JSONEncoder().encode(itemData.parseProp(props: ["item"]))
+	}
+	
+	static func createItem() async throws {
+		try! EVY.data.create(key: "item", data: await getItemData())
 	}
 	
 	static func syncData() async throws {

@@ -253,48 +253,49 @@ private func lastMatch(_ input: String, pattern: String) -> RegexMatch? {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-    try! EVY.data.create(key: "selling_reasons", data: selling_reasons)
-    
-    let bare = "test"
-    let data = "{item.title}"
-    
-    let parsedData = try! EVYInterpreter.parseTextFromText(data)
-    let withPrefix = try! EVYInterpreter.parseTextFromText(
-        "{formatCurrency(item.price)}"
-    )
-    let withSuffix = try! EVYInterpreter.parseTextFromText(
-        "{formatDimension(item.dimension.width)}"
-    )
-    let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
-        "{formatDimension(item.dimension.width)} - {item.title}"
-    )
-    let withComparison = try! EVYInterpreter.parseTextFromText(
-        "{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
-    )
-    
-    let weight = try! EVYInterpreter.parseTextFromText(
-        "{formatWeight(item.dimension.weight)}"
-    )
-    
-    let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
-    
-    return VStack {
-        Text("parseProps but no props: " + EVYInterpreter.parsePropsFromText(bare))
-        Text("parseProps with props: " + EVYInterpreter.parsePropsFromText(data))
-        Text(parsedData.toString())
-        Text(withPrefix.toString())
-        Text(withSuffix.toString())
-        Text(WithSuffixAndRight.toString())
-        Text(withComparison.toString())
-        Text(weight.toString())
-        Text(firstSellingReason.toString())
-        
-        EVYTextField(input: "{formatCurrency(item.price)}",
-                     destination: "{item.price.value}",
-                     placeholder: "Editing price")
-    }
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.syncData()
+		try! await EVY.createItem()
+		
+		let bare = "test"
+		let data = "{item.title}"
+		
+		let parsedData = try! EVYInterpreter.parseTextFromText(data)
+		let withPrefix = try! EVYInterpreter.parseTextFromText(
+			"{formatCurrency(item.price)}"
+		)
+		let withSuffix = try! EVYInterpreter.parseTextFromText(
+			"{formatDimension(item.dimension.width)}"
+		)
+		let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
+			"{formatDimension(item.dimension.width)} - {item.title}"
+		)
+		let withComparison = try! EVYInterpreter.parseTextFromText(
+			"{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
+		)
+		
+		let weight = try! EVYInterpreter.parseTextFromText(
+			"{formatWeight(item.dimension.weight)}"
+		)
+		
+		let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
+		
+		return VStack {
+			Text("parseProps but no props: " + EVYInterpreter.parsePropsFromText(bare))
+			Text("parseProps with props: " + EVYInterpreter.parsePropsFromText(data))
+			Text(parsedData.toString())
+			Text(withPrefix.toString())
+			Text(withSuffix.toString())
+			Text(WithSuffixAndRight.toString())
+			Text(withComparison.toString())
+			Text(weight.toString())
+			Text(firstSellingReason.toString())
+			
+			EVYTextField(input: "{formatCurrency(item.price)}",
+						 destination: "{item.price.value}",
+						 placeholder: "Editing price")
+		}
+	}
 }

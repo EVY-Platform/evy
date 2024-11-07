@@ -39,6 +39,7 @@ struct ContentView: View {
 	@State private var showingAlert = false
 	@State private var alertMessage = ""
 	@State private var loading = true
+	@State private var itemData: Data? // Temporary to avoid making navigation async
     
     private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) throws {
         switch navOperation {
@@ -68,9 +69,8 @@ struct ContentView: View {
             // If the new flow is for creation, start a draft
             let newFlow = flows.first { $0.id == route.flowId }!
             if newFlow.type == .create {
-                let item = DataConstants.item.data(using: .utf8)!
                 let key: String? = newFlow.data
-                try! EVY.data.create(key: key!, data: item)
+                try! EVY.data.create(key: key!, data: itemData!)
             }
             
         case .submit:
@@ -124,6 +124,7 @@ struct ContentView: View {
 				.task {
 					do {
 						try await EVY.syncData()
+						itemData = try await EVY.getItemData()
 						flows = try await EVY.getSDUIFlows()
 					} catch {
 						alertMessage = "Could not load flows"

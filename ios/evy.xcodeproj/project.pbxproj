@@ -49,7 +49,6 @@
 		737F00EC2B342EE600C35772 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */; };
 		73884AC42B2E9AE500BC8726 /* EVYTimeslotPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */; };
 		738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B4AED2B95DC3F005FF527 /* EVYData.swift */; };
-		738CEC402BB2E0E600E44230 /* TestingJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */; };
 		739EC4E22CD6552300E1B469 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = 739EC4E02CD6552300E1B469 /* data.json */; };
 		739EC4E32CD6552300E1B469 /* sdui.json in Resources */ = {isa = PBXBuildFile; fileRef = 739EC4E12CD6552300E1B469 /* sdui.json */; };
 		73A401EC2C96F76C00ADA1A4 /* EVYSearchSingle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A401EB2C96F76C00ADA1A4 /* EVYSearchSingle.swift */; };
@@ -124,7 +123,6 @@
 		737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTimeslotPicker.swift; sourceTree = "<group>"; };
 		738B4AED2B95DC3F005FF527 /* EVYData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYData.swift; sourceTree = "<group>"; };
-		738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingJSON.swift; sourceTree = "<group>"; };
 		739EC4E02CD6552300E1B469 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = data.json; path = ../docs/services/marketplace/data.json; sourceTree = SOURCE_ROOT; };
 		739EC4E12CD6552300E1B469 /* sdui.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = sdui.json; path = ../docs/services/marketplace/sdui.json; sourceTree = SOURCE_ROOT; };
 		73A401EB2C96F76C00ADA1A4 /* EVYSearchSingle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchSingle.swift; sourceTree = "<group>"; };
@@ -290,7 +288,6 @@
 				732A50812C1D6AE80036B98B /* EVY.swift */,
 				737F00EA2B342DEF00C35772 /* Info.plist */,
 				737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */,
-				738CEC3F2BB2E0E600E44230 /* TestingJSON.swift */,
 				739EC4DF2CD6551400E1B469 /* Testing Data */,
 				2E0056102B908CC500D81297 /* Data */,
 				737C6AAB2B27068A0093D00C /* Preview Content */,
@@ -526,7 +523,6 @@
 				734F5A242C2ED3BD00C0FD0A /* EVYSelectPhoto.swift in Sources */,
 				73A6BDFB2B85F75800C8F882 /* EVYFunctions.swift in Sources */,
 				73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */,
-				738CEC402BB2E0E600E44230 /* TestingJSON.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
 				73B3CF862C68AD2200FD333A /* EVYColumnContainerRow.swift in Sources */,
 			);

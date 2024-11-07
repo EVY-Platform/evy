@@ -159,21 +159,22 @@ struct EVYSelectItem: View {
     }
 }
 
-
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-    try! EVY.data.create(key: "selling_reasons", data: selling_reasons)
-    
-    let options = try! EVY.getDataFromText("{selling_reasons}")
-    switch options {
-    case let .array(arrayValue):
-        return EVYSelectList(options: arrayValue,
-                             format: "{$0.value}",
-                             destination: "{item.selling_reason_id}")
-    default:
-        return Text("error")
-    }
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.syncData()
+		try! await EVY.createItem()
+		return Group {
+			let options = try! EVY.getDataFromText("{selling_reasons}")
+			switch options {
+			case let .array(arrayValue):
+				EVYSelectList(options: arrayValue,
+									 format: "{$0.value}",
+									 destination: "{item.selling_reason_id}")
+			default:
+				Text("error")
+			}
+		}
+	}
 }

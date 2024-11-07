@@ -53,10 +53,14 @@ struct EVYInputList: View {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    return EVYInputList(data: "{item.tags}",
-                        format: "{$0.value}",
-                        placeholder: "Add tags to improve search")
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.createItem()
+		return Group {
+			EVYInputList(data: "{item.tags}",
+						 format: "{$0.value}",
+						 placeholder: "Add tags to improve search")
+		}
+	}
 }

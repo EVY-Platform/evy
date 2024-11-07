@@ -83,17 +83,18 @@ struct EVYDropdown: View {
     }
 }
 
-
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    let conditions = DataConstants.conditions.data(using: .utf8)!
-    try! EVY.data.create(key: "conditions", data: conditions)
-    
-    return EVYDropdown(title: "Dropdown",
-                       placeholder: "A placeholder",
-                       data: "{conditions}",
-                       format: "{$0.value}",
-                       destination: "{item.condition_id}")
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.syncData()
+		try! await EVY.createItem()
+		return Group {
+			EVYDropdown(title: "Dropdown",
+						placeholder: "A placeholder",
+						data: "{conditions}",
+						format: "{$0.value}",
+						destination: "{item.condition_id}")
+		}
+	}
 }

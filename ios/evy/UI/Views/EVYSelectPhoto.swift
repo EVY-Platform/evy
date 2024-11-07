@@ -178,13 +178,15 @@ class ImageManager {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    return EVYSelectPhoto(title: "Photos Title",
-                          subtitle: "A great subtitle",
-                          icon: "::photo.badge.plus.fill::",
-                          content: "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
-                          data: "{item.photo_ids}",
-                          destination: "{item.photo_ids}")
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.createItem()
+		return EVYSelectPhoto(title: "Photos Title",
+							  subtitle: "A great subtitle",
+							  icon: "::photo.badge.plus.fill::",
+							  content: "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
+							  data: "{item.photo_ids}",
+							  destination: "{item.photo_ids}")
+	}
 }

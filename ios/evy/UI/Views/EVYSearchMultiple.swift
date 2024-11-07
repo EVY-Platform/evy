@@ -133,11 +133,13 @@ struct EVYSearchMultiple: View {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    return EVYSearch(source: "{api:tags}",
-                     destination: "{item.tags}",
-                     placeholder: "Search",
-                     format: "{$0.value}")
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.createItem()
+		return EVYSearch(source: "{api:tags}",
+						 destination: "{item.tags}",
+						 placeholder: "Search",
+						 format: "{$0.value}")
+	}
 }

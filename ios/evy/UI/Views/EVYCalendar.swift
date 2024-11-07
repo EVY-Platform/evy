@@ -321,11 +321,12 @@ private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
 }
 
 #Preview {
-    let pickup = DataConstants.pickupTimeslots.data(using: .utf8)!
-    try! EVY.data.create(key: "pickupTimeslots", data: pickup)
-    
-    let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!
-    try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
-
-    return EVYCalendar(primary: "{pickupTimeslots}", secondary: "{deliveryTimeslots}")
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.createItem()
+		
+		return EVYCalendar(primary: "{item.transfer_options.pickup.timeslots}",
+						   secondary: "{item.transfer_options.delivery.timeslots}")
+	}
 }

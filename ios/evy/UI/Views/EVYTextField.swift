@@ -95,30 +95,32 @@ struct EVYTextField: View {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    return VStack {
-        EVYTextField(input: "{formatDimension(item.dimension.width)}",
-                     destination: "{item.dimension.width}",
-                     placeholder: "10",
-                     multiLine: true)
-        
-        EVYTextField(input: "{formatCurrency(item.price)}",
-                     destination: "{item.price.value}",
-                     placeholder: "10")
-                     
-        EVYTextField(input: "{item.title}",
-                     destination: "{item.title}",
-                     placeholder: "Sample placeholder",
-                     multiLine: true)
-        
-        EVYTextField(input: "{item.title}",
-                     destination: "{item.title}",
-                     placeholder: "Sample placeholder")
-        
-        EVYTextField(input: "",
-                     destination: "",
-                     placeholder: "Sample placeholder")
-    }
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.createItem()
+		return VStack {
+			EVYTextField(input: "{formatDimension(item.dimension.width)}",
+						 destination: "{item.dimension.width}",
+						 placeholder: "10",
+						 multiLine: true)
+			
+			EVYTextField(input: "{formatCurrency(item.price)}",
+						 destination: "{item.price.value}",
+						 placeholder: "10")
+						 
+			EVYTextField(input: "{item.title}",
+						 destination: "{item.title}",
+						 placeholder: "Sample placeholder",
+						 multiLine: true)
+			
+			EVYTextField(input: "{item.title}",
+						 destination: "{item.title}",
+						 placeholder: "Sample placeholder")
+			
+			EVYTextField(input: "",
+						 destination: "",
+						 placeholder: "Sample placeholder")
+		}
+	}
 }

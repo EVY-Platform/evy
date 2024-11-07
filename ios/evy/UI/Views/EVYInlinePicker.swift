@@ -65,23 +65,17 @@ struct EVYInlinePicker: View {
     }
 }
 
-
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    let durations = DataConstants.durations.data(using: .utf8)!
-    try! EVY.data.create(key: "durations", data: durations)
-    
-    let durationJson = """
-        "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe"
-    """
-    let duration = durationJson.data(using: .utf8)!
-    try! EVY.data.create(key: "duration", data: duration)
-    
-    return VStack {
-        EVYInlinePicker(title: "Dropdown",
-                        data: "{durations}",
-                        format: "{$0.value}",
-                        destination: "{duration}")
-    }
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.syncData()
+		try! await EVY.createItem()
+		return Group {
+			EVYInlinePicker(title: "Dropdown",
+							data: "{durations}",
+							format: "{$0.value}",
+							destination: "{duration}")
+		}
+	}
 }

@@ -44,7 +44,21 @@ class EVYSearchController: ObservableObject {
     func search(name: String) async {
         switch sourceType {
         case .local:
-            let address = DataConstants.address2.data(using: .utf8)!
+			let address = """
+				{
+					"unit": "100",
+					"street": "Main Street",
+					"city": "Rosebery",
+					"postcode": "2018",
+					"state": "NSW",
+					"country": "Australia",
+					"location": {
+						"latitude": "45.323124",
+						"longitude": "-3.424233"
+					},
+					"instructions": ""
+				}
+			""".data(using: .utf8)!
             let id = UUID()
             try! EVY.data.create(key: id.uuidString, data: address)
             let json = try! EVY.getDataFromProps(id.uuidString)
@@ -66,11 +80,14 @@ class EVYSearchController: ObservableObject {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-
-    return EVYSearch(source: "{api:movies}",
-                     destination: "{item.tags}",
-                     placeholder: "Search",
-                     format: "{$0.value}")
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.createItem()
+		
+		return EVYSearch(source: "{api:movies}",
+						 destination: "{item.tags}",
+						 placeholder: "Search",
+						 format: "{$0.value}")
+	}
 }

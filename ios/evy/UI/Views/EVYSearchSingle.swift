@@ -99,13 +99,16 @@ struct EVYSearchSingle: View {
         }
     }
 }
-
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    return EVYSearch(source: "{local:address}",
-                     destination: "{item.address}",
-                     placeholder: "Search",
-                     format: "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}")
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.createItem()
+		return Group {
+			EVYSearch(source: "{local:address}",
+					  destination: "{item.address}",
+					  placeholder: "Search",
+					  format: "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}")
+		}
+	}
 }

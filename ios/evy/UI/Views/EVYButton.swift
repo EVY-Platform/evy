@@ -30,15 +30,7 @@ struct EVYButton: View {
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    return VStack {
-        EVYButton(label: "Button", action: {
-            print("clicked button")
-        })
-        EVYButton(label: "Button", action: {
-            print("clicked button")
-        })
-    }
+	EVYButton(label: "Button", action: {
+		print("clicked button")
+	})
 }

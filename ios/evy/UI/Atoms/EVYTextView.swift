@@ -120,18 +120,20 @@ private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text 
 }
 
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    return VStack {
-        EVYTextView("::star.square.on.square.fill::")
-        EVYTextView("Body style", style: EVYTextStyle.body)
-        EVYTextView("Info style", style: EVYTextStyle.info)
-        EVYTextView("Title style", style: EVYTextStyle.title)
-        EVYTextView("Button", style: EVYTextStyle.button)
-        EVYTextView("Action", style: EVYTextStyle.action)
-        EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
-        EVYTextView("count: {count(item.photo_ids)}")
-        EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star.square.on.square.fill::")
-    }
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.createItem()
+		return VStack {
+			EVYTextView("::star.square.on.square.fill::")
+			EVYTextView("Body style", style: EVYTextStyle.body)
+			EVYTextView("Info style", style: EVYTextStyle.info)
+			EVYTextView("Title style", style: EVYTextStyle.title)
+			EVYTextView("Button", style: EVYTextStyle.button)
+			EVYTextView("Action", style: EVYTextStyle.action)
+			EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
+			EVYTextView("count: {count(item.photo_ids)}")
+			EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star.square.on.square.fill::")
+		}
+	}
 }
