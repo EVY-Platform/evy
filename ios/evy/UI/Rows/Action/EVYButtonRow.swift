@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-struct EVYButtonRowView: Decodable {
+struct EVYButtonRowView: Codable {
     let content: ContentData
     
-    struct ContentData: Decodable {
+    struct ContentData: Codable {
         let title: String
         let label: String
     }
@@ -28,6 +28,17 @@ struct EVYButtonRow: View, EVYRowProtocol {
         view = try container.decode(EVYButtonRowView.self, forKey:.view)
         action = try container.decode(SDUI.Action.self, forKey:.action)
     }
+	
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: RowCodingKeys.self)
+		try self.init(container: container)
+	}
+	
+	func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: RowCodingKeys.self)
+		try container.encode(view, forKey: .view)
+		try container.encode(action, forKey: .action)
+	}
     
     private func performAction() {
         switch action.target {

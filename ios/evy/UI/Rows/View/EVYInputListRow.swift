@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-struct EVYInputListRowView: Decodable {
+struct EVYInputListRowView: Codable {
     let content: ContentData
     let data: String
     
-    struct ContentData: Decodable {
+    struct ContentData: Codable {
         let title: String
         let format: String
         let placeholder: String

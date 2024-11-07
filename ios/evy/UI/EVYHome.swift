@@ -9,19 +9,30 @@ import SwiftUI
 
 struct EVYHome: View {
     @Environment(\.navigate) private var navigate
+	@Binding var loading: Bool
     
     var body: some View {
-        VStack(spacing: 40) {
-            Button("View Item") {
-                navigate(NavOperation.navigate(Route(flowId: "view_item", pageId: "view")))
-            }.font(.evyTitle)
-            Button("Create Item") {
-                navigate(NavOperation.navigate(Route(flowId: "create_item", pageId: "step_1")))
-            }.font(.evyTitle)
-        }
+		if loading {
+			ProgressView().controlSize(.large)
+		} else {
+			VStack(spacing: 40) {
+				Button("View Item") {
+					navigate(NavOperation.navigate(Route(flowId: "view_item", pageId: "view")))
+				}.font(.evyTitle)
+				Button("Create Item") {
+					navigate(NavOperation.navigate(Route(flowId: "create_item", pageId: "step_1")))
+				}.font(.evyTitle)
+			}
+		}
     }
 }
 
 #Preview {
-    EVYHome()
+	@Previewable @State var loading: Bool = true
+	EVYHome(loading: $loading).onAppear {
+		Task { @MainActor in
+			try await Task.sleep(for: .seconds(1))
+			loading = false
+		}
+	}
 }

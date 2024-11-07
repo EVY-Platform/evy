@@ -14,10 +14,10 @@ public class SDUI {
         case tooManyKeywords
     }
     
-    public struct Action: Decodable {
+    public struct Action: Codable {
         let target: ActionTarget
     }
-    public enum ActionTarget: Decodable {
+    public enum ActionTarget: Codable {
         case navigate(Route)
         case submit
         case close
@@ -59,7 +59,7 @@ public class SDUI {
 		case minValue
 		case minCharacters
 	}
-	public struct Validation: Decodable {
+	public struct Validation: Codable {
 		let required: Bool
 		let message: String?
 		let minAmount: Int?
@@ -91,7 +91,7 @@ public class SDUI {
 			}
 		}
 	}
-    public struct Edit: Decodable {
+    public struct Edit: Codable {
         let destination: String?
 		let validation: Validation
     }
@@ -108,15 +108,15 @@ public class SDUI {
         let action: Action
     }
     
-	public struct ContainerChild: Decodable {
+	public struct ContainerChild: Codable {
 		let title: String
 		let child: EVYRow
 	}
-    public class ContainerContent: Decodable {
+    public class ContainerContent: Codable {
         let children: [ContainerChild]
         let child: EVYRow?
     }
-    public struct ContainerView: Decodable {
+    public struct ContainerView: Codable {
         let content: ContainerContent
     }
 }

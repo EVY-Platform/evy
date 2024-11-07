@@ -8,6 +8,17 @@
 import SwiftUI
 
 struct SDUIConstants {
+	static let services = """
+		[{
+			"id": "fe1b1ddc-415c-4392-9144-5c7a28220aa9",
+			"name": "marketplace",
+			"description": "marketplace",
+			"created_at": "",
+			"updated_at": "",
+			"providers": []
+		}]
+	"""
+
     static let flows = "[\(viewItemFlow), \(createItemFlow)]"
     
     static let viewItemFlow = """

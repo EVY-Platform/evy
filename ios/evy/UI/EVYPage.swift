@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct EVYPage: View, Decodable {
+struct EVYPage: View, Codable {
     let id: String
     let title: String
     let rows: [EVYRow]

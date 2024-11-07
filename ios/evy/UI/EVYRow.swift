@@ -18,7 +18,7 @@ public enum EVYRowError: Error {
 	case cannotParseRow
 }
 
-protocol EVYRowProtocol: View {
+protocol EVYRowProtocol: View, Codable {
 	static var JSONType: String { get }
 	func complete() -> Bool
 	func incompleteMessages() -> [String]
@@ -29,7 +29,7 @@ extension EVYRowProtocol {
 	func incompleteMessages() -> [String] { [] }
 }
 
-struct EVYRow: View, Decodable, Identifiable {
+struct EVYRow: View, Codable, Identifiable {
     let id = UUID()
     
     let type: String
@@ -100,6 +100,12 @@ struct EVYRow: View, Decodable, Identifiable {
 				throw EVYRowError.cannotParseRow
         }
     }
+	
+	func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: RowCodingKeys.self)
+		try container.encode(type, forKey: .type)
+		try container.encode(view, forKey: .view)
+	}
 	
 	func complete() -> Bool {
 		view.complete()

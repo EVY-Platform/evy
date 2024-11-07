@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-struct EVYSearchRowView: Decodable {
+struct EVYSearchRowView: Codable {
     let content: ContentData
     let data: String
     
-    struct ContentData: Decodable {
+    struct ContentData: Codable {
         let title: String
         let format: String
         let placeholder: String
@@ -30,6 +30,17 @@ struct EVYSearchRow: View, EVYRowProtocol {
         view = try container.decode(EVYSearchRowView.self, forKey:.view)
         edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
+	
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: RowCodingKeys.self)
+		try self.init(container: container)
+	}
+	
+	func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: RowCodingKeys.self)
+		try container.encode(view, forKey: .view)
+		try container.encode(edit, forKey: .edit)
+	}
 	
 	func complete() -> Bool {
 		if !edit.validation.required {

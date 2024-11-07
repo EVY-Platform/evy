@@ -20,6 +20,17 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
         selected = view.content.children.first!.title
     }
 	
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: RowCodingKeys.self)
+		try self.init(container: container)
+	}
+	
+	func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: RowCodingKeys.self)
+		try container.encode(view, forKey: .view)
+		try container.encode(edit, forKey: .edit)
+	}
+	
 	func complete() -> Bool {
 		let completeChildren = view.content.children.filter {
 			$0.child.complete()

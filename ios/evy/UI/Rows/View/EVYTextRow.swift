@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-struct EVYTextRowView: Decodable {
+struct EVYTextRowView: Codable {
     let content: ContentData
     let max_lines: String
     
-    struct ContentData: Decodable {
+    struct ContentData: Codable {
         let title: String
         let text: String
     }
@@ -27,6 +27,16 @@ struct EVYTextRow: View, EVYRowProtocol {
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         view = try container.decode(EVYTextRowView.self, forKey:.view)
     }
+	
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: RowCodingKeys.self)
+		try self.init(container: container)
+	}
+	
+	func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: RowCodingKeys.self)
+		try container.encode(view, forKey: .view)
+	}
     
     var body: some View {
         VStack(alignment:.leading) {

@@ -10,10 +10,8 @@ Documentation is available at the global EVY level as well as per services provi
     * [Server Driven UI Docs](./evy/sdui.md)
 * Marketplace
     * [Data models Docs](./services/marketplace/data.md)
-    * [Example data](./services/marketplace/example-data.md)
-    * [Example sdui for view item page](./services/marketplace/example-sdui-view-item.md)
-    * [Example sdui for create item page](./services/marketplace/example-sdui-create-item.md)
-
+    * [Example data](./services/marketplace/data.json)
+    * [Example sdui for view & create item pages](./services/marketplace/sdui.json)
 
  ### iOS
  * [iOS docs](../ios/README.md)

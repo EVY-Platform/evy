@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-struct EVYInfoRowView: Decodable {
+struct EVYInfoRowView: Codable {
     let content: ContentData
     
-    struct ContentData: Decodable {
+    struct ContentData: Codable {
         let title: String
         let text: String
     }

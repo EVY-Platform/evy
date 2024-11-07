@@ -9,10 +9,10 @@
 import SwiftUI
 import PhotosUI
 
-struct EVYSelectPhotoRowView: Decodable {
+struct EVYSelectPhotoRowView: Codable {
     let content: ContentData
     
-    struct ContentData: Decodable {
+    struct ContentData: Codable {
         let title: String
         let icon: String
         let subtitle: String

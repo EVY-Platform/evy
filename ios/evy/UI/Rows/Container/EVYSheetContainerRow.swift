@@ -13,11 +13,21 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
     public static let JSONType = "SheetContainer"
 
     private let view: SDUI.ContainerView
-	@State private var showSheet = false
+	@State private var showSheet: Bool = false
 
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         view = try container.decode(SDUI.ContainerView.self, forKey:.view)
     }
+	
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: RowCodingKeys.self)
+		try self.init(container: container)
+	}
+	
+	func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: RowCodingKeys.self)
+		try container.encode(view, forKey: .view)
+	}
 	
 	func complete() -> Bool {
 		view.content.child!.complete()

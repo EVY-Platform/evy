@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-struct EVYCalendarRowView: Decodable {
+struct EVYCalendarRowView: Codable {
     let content: ContentData
     
-    struct ContentData: Decodable {
+    struct ContentData: Codable {
         let title: String
         let primary: String
         let secondary: String

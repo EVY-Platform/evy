@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-public enum EVYFlowType: String, Decodable {
+public enum EVYFlowType: String, Codable {
     case create
     case read
     case update
     case delete
 }
 
-struct EVYFlow: Decodable {
+struct EVYFlow: Decodable, Encodable {
     let id: String
     let name: String
     let type: EVYFlowType

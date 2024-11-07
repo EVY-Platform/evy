@@ -21,6 +21,30 @@ extension String {
 
 struct EVY {
     static let data = EVYDataManager()
+	
+	/**
+	 * Methods to get SDUI data
+	 */
+	static func getSDUIFlows() async throws -> [EVYFlow] {
+		try await EVYAPIManager.shared.fetch(method: "getFlows",
+											 params: "",
+											 expecting: [EVYFlow].self)
+	}
+	
+	static func syncData() async throws {
+		let data = try await EVYAPIManager.shared.fetch(method: "getData",
+														params: "",
+														expecting: EVYJson.self)
+		
+		let sellingReasons = try JSONEncoder().encode(data.parseProp(props: ["selling_reasons"]))
+		try! EVY.data.create(key: "selling_reasons", data: sellingReasons)
+		let conditions = try JSONEncoder().encode(data.parseProp(props: ["conditions"]))
+		try! EVY.data.create(key: "conditions", data: conditions)
+		let durations = try JSONEncoder().encode(data.parseProp(props: ["durations"]))
+		try! EVY.data.create(key: "durations", data: durations)
+		let areas = try JSONEncoder().encode(data.parseProp(props: ["areas"]))
+		try! EVY.data.create(key: "areas", data: areas)
+	}
     
     /**
      * Methods to get data from various sources and inputs

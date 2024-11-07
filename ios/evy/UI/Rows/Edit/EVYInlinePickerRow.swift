@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-struct EVYInlinePickerRowView: Decodable {
+struct EVYInlinePickerRowView: Codable {
     let content: ContentData
     let data: String
     
-    struct ContentData: Decodable {
+    struct ContentData: Codable {
         let title: String
         let format: String
     }

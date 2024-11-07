@@ -11,7 +11,7 @@ public enum EVYNavigationError: Error {
     case cannotSubmit
 }
 
-public struct Route: Hashable {
+public struct Route: Hashable, Codable {
     let flowId: String
     let pageId: String
 }
@@ -33,30 +33,12 @@ extension EnvironmentValues {
 }
 
 struct ContentView: View {
-    private let flows: [EVYFlow]
+    @State private var flows: [EVYFlow] = []
     @State private var routes: [Route] = []
     @State private var currentFlowId: String = "home"
 	@State private var showingAlert = false
 	@State private var alertMessage = ""
-    
-    init() {
-        // Sample data for testing
-        let selling_reasons = DataConstants.selling_reasons.data(using: .utf8)!
-        try! EVY.data.create(key: "selling_reasons", data: selling_reasons)
-        let conditions = DataConstants.conditions.data(using: .utf8)!
-        try! EVY.data.create(key: "conditions", data: conditions)
-        let durations = DataConstants.durations.data(using: .utf8)!
-        try! EVY.data.create(key: "durations", data: durations)
-        let areas = DataConstants.areas.data(using: .utf8)!
-        try! EVY.data.create(key: "areas", data: areas)
-        let pickup = DataConstants.pickupTimeslots.data(using: .utf8)!
-        try! EVY.data.create(key: "pickupTimeslots", data: pickup)
-        let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!
-        try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
-        
-        let jsonFlow = SDUIConstants.flows.data(using: .utf8)!
-        flows = try! JSONDecoder().decode([EVYFlow].self, from: jsonFlow)
-    }
+	@State private var loading = true
     
     private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) throws {
         switch navOperation {
@@ -138,7 +120,17 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack(path: $routes) {
-            EVYHome()
+			EVYHome(loading: $loading)
+				.task {
+					do {
+						try await EVY.syncData()
+						flows = try await EVY.getSDUIFlows()
+					} catch {
+						alertMessage = "Could not load flows"
+						showingAlert = true
+					}
+					loading = false
+				}
                 .environment(\.navigate) { navOperation in
                     try! handleNavigationData(navOperation, currentFlowId)
                 }
