@@ -76,13 +76,18 @@ struct EVYTextRow: View, EVYRowProtocol {
     }
 }
 
-
+#Preview {
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["0","pages","0","rows", "0"])
+	}
+}
 
 #Preview {
-    let json = SDUIConstants.textRow.data(using: .utf8)!
-    let json2 =  SDUIConstants.textRowShort.data(using: .utf8)!
-    return VStack {
-        try? JSONDecoder().decode(EVYRow.self, from: json)
-        try? JSONDecoder().decode(EVYRow.self, from: json2)
-    }
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["0","pages","0","rows", "0"])
+	}
 }

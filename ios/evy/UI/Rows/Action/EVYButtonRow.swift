@@ -59,11 +59,10 @@ struct EVYButtonRow: View, EVYRowProtocol {
     }
 }
 
-
-
 #Preview {
-    let json = SDUIConstants.navigate3ButtonRow.data(using: .utf8)!
-    let button = try? JSONDecoder().decode(EVYRow.self, from: json)
-    
-    return button
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["1","pages","1","footer"])
+	}
 }

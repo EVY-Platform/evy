@@ -59,14 +59,10 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
     }
 }
 
-
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    let durations = DataConstants.durations.data(using: .utf8)!
-    try! EVY.data.create(key: "durations", data: durations)
-    
-    let json = SDUIConstants.distancePickerRow.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYRow.self, from: json)
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["1","pages","2","rows", "0", "view", "content", "children", "1", "child", "view", "content", "children", "3", "child"])
+	}
 }

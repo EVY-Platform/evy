@@ -40,14 +40,10 @@ struct EVYInfoRow: View, EVYRowProtocol {
     }
 }
 
-
-
 #Preview {
-    let json = SDUIConstants.infoRow.data(using: .utf8)!
-    let json2 =  SDUIConstants.infoRowWithTitle.data(using: .utf8)!
-    
-    return VStack {
-        try? JSONDecoder().decode(EVYRow.self, from: json)
-        try? JSONDecoder().decode(EVYRow.self, from: json2)
-    }
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["1","pages","4","rows", "0"])
+	}
 }

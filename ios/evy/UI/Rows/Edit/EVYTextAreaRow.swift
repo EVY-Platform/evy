@@ -58,6 +58,9 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
 }
 
 #Preview {
-    let json = SDUIConstants.textAreaRow.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYRow.self, from: json)
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["1","pages","1","rows", "0"])
+	}
 }

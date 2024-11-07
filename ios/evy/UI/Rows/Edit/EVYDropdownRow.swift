@@ -67,14 +67,10 @@ struct EVYDropdownRow: View, EVYRowProtocol {
     }
 }
 
-
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    let conditions = DataConstants.conditions.data(using: .utf8)!
-    try! EVY.data.create(key: "conditions", data: conditions)
-    
-    let json = SDUIConstants.condition.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYRow.self, from: json)
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["1","pages","0","rows", "3"])
+	}
 }

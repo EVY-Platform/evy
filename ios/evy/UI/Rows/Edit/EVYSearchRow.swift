@@ -73,11 +73,10 @@ struct EVYSearchRow: View, EVYRowProtocol {
     }
 }
 
-
 #Preview {
-    let item = DataConstants.item.data(using: .utf8)!
-    try! EVY.data.create(key: "item", data: item)
-    
-    let json = SDUIConstants.tagsRow.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYRow.self, from: json)
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["1","pages","0","rows", "6", "view", "content", "children", "0", "child"])
+	}
 }

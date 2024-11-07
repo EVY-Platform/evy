@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 public enum EVYParamError: Error {
     case invalidProps
@@ -24,11 +25,20 @@ struct EVY {
 	
 	/**
 	 * Methods to get SDUI data
+	 * TODO: These are really just for debugging/deving so some tweaking needs to happen
 	 */
 	static func getSDUIFlows() async throws -> [EVYFlow] {
 		try await EVYAPIManager.shared.fetch(method: "getFlows",
 											 params: "",
 											 expecting: [EVYFlow].self)
+	}
+	
+	static func createItem() async throws {
+		let itemData = try await EVYAPIManager.shared.fetch(method: "getData",
+															params: "",
+															expecting: EVYJson.self)
+		let item = try JSONEncoder().encode(itemData.parseProp(props: ["item"]))
+		try! EVY.data.create(key: "item", data: item)
 	}
 	
 	static func syncData() async throws {
@@ -44,6 +54,17 @@ struct EVY {
 		try! EVY.data.create(key: "durations", data: durations)
 		let areas = try JSONEncoder().encode(data.parseProp(props: ["areas"]))
 		try! EVY.data.create(key: "areas", data: areas)
+	}
+	
+	static func getRow(_ props: [String]) async throws -> EVYRow {
+		try await syncData()
+		try await createItem()
+		
+		let flowData = try await EVYAPIManager.shared.fetch(method: "getFlows",
+															params: "",
+															expecting: EVYJson.self)
+		let row = try JSONEncoder().encode(flowData.parseProp(props: props))
+		return try JSONDecoder().decode(EVYRow.self, from: row)
 	}
     
     /**
@@ -135,4 +156,34 @@ struct EVY {
             try data.create(key: firstProp, data: newData)
         }
     }
+}
+
+struct AsyncPreview<VisualContent: View, ViewData>: View {
+	var viewBuilder: (ViewData) -> VisualContent
+	var view: () async throws -> ViewData?
+	
+	@State private var viewData: ViewData?
+	@State private var error: Error?
+	
+	var body: some View {
+		safeView.task {
+			do {
+				self.viewData = try await view()
+			} catch {
+				self.error = error
+			}
+		}
+	}
+	
+	@ViewBuilder
+	private var safeView: some View {
+		if let viewData {
+			viewBuilder(viewData)
+		} else if let error {
+			Text(error.localizedDescription)
+				.foregroundStyle(Color.red)
+		} else {
+			Text("Building view...")
+		}
+	}
 }

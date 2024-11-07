@@ -61,15 +61,10 @@ struct EVYCalendarRow: View, EVYRowProtocol {
     }
 }
 
-
-
 #Preview {
-    let pickup = DataConstants.pickupTimeslots.data(using: .utf8)!
-    try! EVY.data.create(key: "pickupTimeslots", data: pickup)
-    
-    let delivery = DataConstants.deliveryTimeslots.data(using: .utf8)!
-    try! EVY.data.create(key: "deliveryTimeslots", data: delivery)
-    
-    let json = SDUIConstants.pickupCalendarRow.data(using: .utf8)!
-    return try! JSONDecoder().decode(EVYRow.self, from: json)
+	AsyncPreview { asyncView in
+		asyncView
+	} view: {
+		try! await EVY.getRow(["1","pages","2","rows", "0", "view", "content", "children", "0", "child", "view", "content", "children", "4", "child"])
+	}
 }
