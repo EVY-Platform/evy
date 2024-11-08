@@ -38,7 +38,10 @@ struct EVYCalendarRow: View, EVYRowProtocol {
 			let min = edit.validation.minAmount ?? 1
 			switch storedValue {
 			case let .array(timeslots):
-				return timeslots.count >= min
+				let selectedTimeslots = timeslots.filter {
+					$0.parseProp(props: ["selected"]).toString() == "true"
+				}
+				return selectedTimeslots.count >= min
 			default:
 				return storedValue.toString().count >= min
 			}

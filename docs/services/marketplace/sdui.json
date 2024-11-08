@@ -669,7 +669,7 @@
 												"validation": {
 													"required": "true",
 													"message": "Can you ship the item?",
-													"minAmount": "6"
+													"minAmount": "5"
 												}
 											}
 										}
