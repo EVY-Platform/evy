@@ -184,7 +184,6 @@ struct AsyncPreview<VisualContent: View, ViewData>: View {
 			viewBuilder(viewData)
 		} else if let error {
 			Text(error.localizedDescription)
-				.foregroundStyle(Color.red)
 		} else {
 			Text("Building view...")
 		}

@@ -40,8 +40,7 @@ struct EVYTextActionRow: View, EVYRowProtocol {
 							placeholder: view.content.placeholder,
 							style: .info)
 				.frame(maxWidth: .infinity, alignment: .leading)
-                EVYTextView(view.content.action)
-					.foregroundColor(Constants.actionColor)
+				EVYTextView(view.content.action, style: .action)
             }
         }
     }

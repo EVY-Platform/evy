@@ -62,8 +62,7 @@ struct EVYTextRow: View, EVYRowProtocol {
                     .presentationDragIndicator(.visible)
                 })
             if canBeExpanded {
-                EVYTextView("Read more")
-                    .foregroundStyle(Constants.actionColor)
+				EVYTextView("Read more", style: .action)
                     .padding(.vertical, Constants.padding)
             }
         }

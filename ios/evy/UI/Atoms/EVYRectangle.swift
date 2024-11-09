@@ -19,29 +19,13 @@ public enum EVYRectangleWidth: String {
 }
 
 struct EVYRectangle: View {
+	@Environment(\.colorScheme) var colorScheme
+	
     let content: any View
+	let style: EVYRectangleStyle
     let width: CGFloat?
     
     private let height: CGFloat = 40
-    private let textColor: Color
-    private let buttonFill: Color
-    
-    private init(content: any View, style: EVYRectangleStyle, width: CGFloat?) {
-        self.content = content
-        self.width = width
-        
-        switch style {
-        case .primary:
-            textColor = .white
-            buttonFill = Constants.buttonColor
-        case .secondary:
-            textColor = .black
-            buttonFill = Constants.inactiveBackground
-        default:
-            textColor = .black
-            buttonFill = .clear
-        }
-    }
     
     static func fixedWidth(content: any View,
 						   style: EVYRectangleStyle,
@@ -57,7 +41,21 @@ struct EVYRectangle: View {
     }
     
     var body: some View {
-        AnyView(content)
+		var textColor: Color
+		var buttonFill: Color
+		switch style {
+		case .primary:
+			textColor =  (colorScheme == .light ? .white : .black)
+			buttonFill = (colorScheme == .light ? Constants.buttonColor : .white)
+		case .secondary:
+			textColor = (colorScheme == .light ? .black : .white)
+			buttonFill = (colorScheme == .light ? Constants.inactiveBackground : Constants.buttonDisabledColor)
+		default:
+			textColor = (colorScheme == .light ? .black : .white)
+			buttonFill = .clear
+		}
+		
+        return AnyView(content)
             .foregroundColor(textColor)
             .padding(Constants.majorPadding)
             .frame(width: width, height: height)

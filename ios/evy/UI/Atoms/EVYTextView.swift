@@ -16,6 +16,8 @@ public enum EVYTextStyle: String {
 }
 
 struct EVYTextView: View {
+	@Environment(\.colorScheme) var colorScheme
+	
 	var text: EVYState<EVYValue>
     let style: EVYTextStyle
     
@@ -66,57 +68,57 @@ struct EVYTextView: View {
     func toString() -> String {
         text.value.toString()
     }
-}
+	
+	private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text {
+		if input.count < 1 {
+			return Text(input)
+		}
 
-private func parsedText(_ input: String, _ style: EVYTextStyle = .body) -> Text {
-    if input.count < 1 {
-        return Text(input)
-    }
-
-    let regex = try! Regex("::[a-zA-Z.]+::")
-        if let match = input.firstMatch(of: regex) {
-        let imageStart = match.range.lowerBound
-        let imageEnd = match.range.upperBound
-        
-        let imageName = match.0.trimmingCharacters(in: CharacterSet(charactersIn: ":"))
-        let imageText = Text("\(Image(systemName: imageName))")
-        
-        let hasPrefix = imageStart > input.startIndex
-        let hasSuffix = imageEnd < input.endIndex
-        
-        if hasPrefix && hasSuffix {
-            let start = String(input.prefix(upTo: imageStart))
-            let end = String(input.suffix(from: imageEnd))
-            return parsedText(start, style) + imageText + parsedText(end, style)
-        } else if hasPrefix {
-            let start = String(input.prefix(upTo: imageStart))
-            return parsedText(start, style) + imageText
-        } else if hasSuffix {
-            let end = String(input.suffix(from: imageEnd))
-            return imageText + parsedText(end, style)
-        } else {
-            return imageText
-        }
-    }
-    
-    switch style {
-    case .title:
-        return Text(input)
-            .font(.evyTitle)
-    case .info:
-        return Text(input)
-            .font(.evy)
-            .foregroundStyle(Constants.textColor)
-    case .button:
-        return Text(input)
-            .font(.evyButton)
-    case .action:
-        return Text(input)
-            .font(.evy)
-            .foregroundStyle(Constants.actionColor)
-    default:
-        return Text(input).font(.evy)
-    }
+		let regex = try! Regex("::[a-zA-Z.]+::")
+			if let match = input.firstMatch(of: regex) {
+			let imageStart = match.range.lowerBound
+			let imageEnd = match.range.upperBound
+			
+			let imageName = match.0.trimmingCharacters(in: CharacterSet(charactersIn: ":"))
+			let imageText = Text("\(Image(systemName: imageName))")
+			
+			let hasPrefix = imageStart > input.startIndex
+			let hasSuffix = imageEnd < input.endIndex
+			
+			if hasPrefix && hasSuffix {
+				let start = String(input.prefix(upTo: imageStart))
+				let end = String(input.suffix(from: imageEnd))
+				return parsedText(start, style) + imageText + parsedText(end, style)
+			} else if hasPrefix {
+				let start = String(input.prefix(upTo: imageStart))
+				return parsedText(start, style) + imageText
+			} else if hasSuffix {
+				let end = String(input.suffix(from: imageEnd))
+				return imageText + parsedText(end, style)
+			} else {
+				return imageText
+			}
+		}
+		
+		switch style {
+		case .title:
+			return Text(input)
+				.font(.evyTitle)
+		case .info:
+			return Text(input)
+				.font(.evy)
+				.foregroundStyle(Constants.textColor)
+		case .button:
+			return Text(input)
+				.font(.evyButton)
+		case .action:
+			return Text(input)
+				.font(.evy)
+				.foregroundStyle(colorScheme == .light ? Constants.actionColor : .white)
+		default:
+			return Text(input).font(.evy)
+		}
+	}
 }
 
 #Preview {

@@ -76,8 +76,7 @@ struct EVYSelectPhoto: View {
                                      photos: $photos)
             }
             
-            EVYTextView(content)
-                .foregroundColor(Constants.textColor)
+			EVYTextView(content, style: .info)
                 .padding(.vertical, Constants.padding)
         }
     }
@@ -99,9 +98,7 @@ struct EVYSelectPhotoButton: View {
                 label: {
                     let stack = VStack {
                         EVYTextView(icon)
-                            .foregroundColor(Constants.textColor)
                         EVYTextView(subtitle)
-                            .foregroundColor(Constants.textColor)
                     }
                     if fullScreen {
                         stack
@@ -119,6 +116,7 @@ struct EVYSelectPhotoButton: View {
                     }
                 }
             )
+			.buttonStyle(.plain)
             .onChange(of: selectedItem) {
                 Task {
                     do {

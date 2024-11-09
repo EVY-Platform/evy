@@ -42,6 +42,7 @@ extension EnvironmentValues {
  */
 struct EVYCalendarTimeslots: View {
     @Environment(\.operate) private var operate
+	@Environment(\.colorScheme) var colorScheme
     
     let rows: Int
     let columns: Int
@@ -50,13 +51,14 @@ struct EVYCalendarTimeslots: View {
     let secondaryTimeslotsData: [EVYCalendarTimeslotData]
     
     var body: some View {
+		let actionColor = colorScheme == .light ? Constants.actionColor : .white
         HStack(spacing: .zero) {
             ForEach(0..<columns, id: \.self) { x in
                 VStack(alignment: .leading, spacing: .zero) {
                     ForEach(0..<rows, id: \.self) { y in
                         let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: rows)
-                        let fill: Color = primaryTimeslotsData[relevantIndex].selected ?
-                            Constants.actionColor :
+						let fill: Color = primaryTimeslotsData[relevantIndex].selected ?
+							actionColor :
                                 (secondaryTimeslotsData[relevantIndex].selected ?
                                  Constants.inactiveBackground :
                                     Constants.tappableClearColor

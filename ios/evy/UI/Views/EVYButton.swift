@@ -18,10 +18,9 @@ struct EVYButton: View {
     
     var body: some View {
         Button(action: action) {
-            EVYTextView(label)
-                .frame(maxWidth: .infinity)
-                .foregroundColor(.white)
+            EVYTextView(label).frame(maxWidth: .infinity)
         }
+		.buttonStyle(.plain)
         .padding(Constants.majorPadding)
         .frame(maxWidth: 150)
         .background(Constants.buttonColor)

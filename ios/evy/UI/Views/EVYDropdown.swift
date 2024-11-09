@@ -49,14 +49,15 @@ struct EVYDropdown: View {
         HStack {
             Button(action: { showSheet.toggle() }) {
                 if selection.value.count > 0 {
-                    EVYTextView(selection.value).foregroundColor(.black)
+                    EVYTextView(selection.value)
                 } else {
-                    EVYTextView(placeholder ?? "").foregroundColor(Constants.textColor)
+					EVYTextView(placeholder ?? "", style: .info)
                 }
             }
             Spacer()
-            EVYTextView("::chevron.down::").foregroundColor(.black)
+            EVYTextView("::chevron.down::")
         }
+		.buttonStyle(.plain)
         .padding(EdgeInsets(top: Constants.fieldPadding,
                             leading: Constants.minorPadding,
                             bottom: Constants.fieldPadding,
