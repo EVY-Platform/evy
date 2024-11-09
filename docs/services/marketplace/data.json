@@ -97,15 +97,6 @@
 			"value": "World"
 		}
 	],
-	"provider": {
-		"id": "40041bb4-a6a1-468f-8864-972dba544793",
-		"name": "Australia Post",
-		"logo_id": "_image_id_",
-		"cost": {
-			"currency": "AUD",
-			"value": 15.0
-		}
-	},
 	"item": {
 		"id": "item",
 		"title": "Amazing Fridge",
