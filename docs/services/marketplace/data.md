@@ -36,12 +36,6 @@ id: uuid
 value: string
 ```
 
-#### tag
-```
-id: uuid
-value: string
-```
-
 #### timeslot
 ```
 x: int
@@ -50,27 +44,6 @@ header: string
 start_label: string
 end_label: string
 selected: boolean
-```
-
-#### price
-```
-currency: string
-value: string
-```
-
-#### address
-```
-unit: string
-street: string
-city: string
-postcode: string
-state: string
-country: string
-location: {
-    latitude: string
-    longitude: string
-}
-instructions: string
 ```
 
 #### item

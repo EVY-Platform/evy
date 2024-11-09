@@ -41,11 +41,17 @@ url: string
 
 ### location
 ```
-latitude: float
-longitude: float
+latitude: decimal
+longitude: decimal
 ```
 
-### address
+#### price
+```
+currency: string
+value: decimal
+```
+
+#### address
 ```
 unit: string
 street: string
@@ -54,15 +60,10 @@ postcode: string
 state: string
 country: string
 location: location
+instructions: string
 ```
 
-### price
-```
-currency: string
-value: float
-```
-
-### tag
+#### tag
 ```
 value: string
 ```
