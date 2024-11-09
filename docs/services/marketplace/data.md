@@ -1,12 +1,14 @@
 # Data models
 
 #### seller
+
 ```
 reliability_rate: float
 items_sold: int
 ```
 
 #### dimension
+
 ```
 width: int
 height: int
@@ -15,28 +17,33 @@ weight: int
 ```
 
 #### condition
+
 ```
 value: string
 ```
 
 #### selling_reason
+
 ```
 value: string
 ```
 
 #### area
+
 ```
 id: uuid
 value: string
 ```
 
 #### duration
+
 ```
-id: uuid 
+id: uuid
 value: string
 ```
 
 #### timeslot
+
 ```
 x: int
 y: int
@@ -47,6 +54,7 @@ selected: boolean
 ```
 
 #### item
+
 ```
 title: string
 description: string

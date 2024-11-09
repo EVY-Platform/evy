@@ -1,12 +1,16 @@
 # Functions in EVY
 
-Functions are used to convert an input into a different output. For example formatting a date.  
-* Some default functions are available server-side and client-side (eg `formatDecimal`) and some are composed using those built in functions, and sent via JSON config to the clients.  
-* We need to avoid defining custom coded formatting functions in mobile clients as much as possible due to the constraints of mobile release cycles
+Functions are used to convert an input into a different output. For example formatting a date.
+
+-   Some default functions are available server-side and client-side (eg `formatDecimal`) and some are composed using those built in functions, and sent via JSON config to the clients.
+-   We need to avoid defining custom coded formatting functions in mobile clients as much as possible due to the constraints of mobile release cycles
 
 ## Methods
+
 These are methods available to the user to compute data
+
 #### count
+
 ```
 count({_variable_type_list_})
 Variable: [image1, image2]
@@ -14,41 +18,53 @@ Output: 2
 ```
 
 ## Formatting functions
+
 These are functions that do 3 things:
+
 1. Decide on which mobile keyboard to show
 2. Format text from data
-3. Format text as the user is typing  
+3. Format text as the user is typing
 
 Some of them are dynamic and some are built in (see following section)
 
 ### Formatting functions built in
-Meaning they are hard coded into the server and clients  
+
+Meaning they are hard coded into the server and clients
 
 #### formatDecimal
+
 ```
 formatDecimal(_variable_type_number_, 2)
 Variable: 20.0423
 Outputs: 20.04
 ```
+
 #### formatMetricLength
+
 ```
 formatMetricLength(_variable_type_number_) // Takes milimeters
 Variable: 23240
 Outputs: 23.24m
 ```
+
 #### formatImperialLength
+
 ```
 formatImperialLength(_variable_type_number_) // Takes milimeters
 Variable: 4231
 Outputs: 13.88ft
 ```
+
 #### formatDuration
+
 ```
 formatDuration(_variable_type_number_)
 Variable: 900000
 Outputs: 15 minutes
 ```
+
 #### formatDate
+
 ```
 formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
 Variable: 1705651372
@@ -56,15 +72,19 @@ Outputs: 19/01/2024
 ```
 
 ### Dynamic formatting functions
-These are formats that are configured by passing dynamic JSON, and using region or device configs  
+
+These are formats that are configured by passing dynamic JSON, and using region or device configs
 
 #### formatCurrency
+
 ```
 formatCurrency(_variable_type_price_)
 Variable: { "currency": "AUD", "value": "13.23" }
 Outputs: $13.23
 ```
+
 #### formatAddress
+
 ```
 formatAddress(_variable_type_address_)
 Variable: {
@@ -80,6 +100,7 @@ Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
 ```
 
 #### Sample code:
+
 ```
 {
     "formatCurrency": {
@@ -128,3 +149,4 @@ Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
         }
     }
 }
+```
