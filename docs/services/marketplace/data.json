@@ -7,8 +7,8 @@
 		"state": "NSW",
 		"country": "Australia",
 		"location": {
-			"latitude": "45.323124",
-			"longitude": "-3.424233"
+			"latitude": 45.323124,
+			"longitude": -3.424233
 		},
 		"instructions": ""
 	},
@@ -20,8 +20,8 @@
 		"state": "NSW",
 		"country": "Australia",
 		"location": {
-			"latitude": "45.323124",
-			"longitude": "-3.424233"
+			"latitude": 45.323124,
+			"longitude": -3.424233
 		},
 		"instructions": ""
 	},
@@ -103,7 +103,7 @@
 		"photo_ids": ["printer", "printer_logo"],
 		"price": {
 			"currency": "AUD",
-			"value": "250"
+			"value": 250
 		},
 		"seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
 		"address": {},
@@ -1663,11 +1663,11 @@
 		"description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
 		"condition_id": "",
 		"selling_reason_id": "",
-		"dimension": {
-			"width": "500",
-			"height": "1600",
-			"length": "600",
-			"weight": "10"
+		"dimensions": {
+			"width": 500,
+			"height": 1600,
+			"length": 600,
+			"weight": 10
 		},
 		"tags": [
 			{

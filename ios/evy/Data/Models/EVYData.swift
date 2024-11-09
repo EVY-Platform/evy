@@ -109,6 +109,7 @@ class EVYData {
 
 public typealias EVYJsonString = String
 public typealias EVYJsonInt = Int
+public typealias EVYJsonDecimal = Decimal
 public typealias EVYJsonBool = Bool
 public typealias EVYJsonArray = [EVYJson]
 public typealias EVYJsonDict = [String: EVYJson]
@@ -116,6 +117,7 @@ public typealias EVYJsonDict = [String: EVYJson]
 public enum EVYJson: Codable, Hashable {
     case string(EVYJsonString)
     case int(EVYJsonInt)
+	case decimal(EVYJsonDecimal)
     case bool(EVYJsonBool)
     case dictionary(EVYJsonDict)
     case array(EVYJsonArray)
@@ -132,6 +134,11 @@ public enum EVYJson: Codable, Hashable {
             self = .int(intValue)
             return
         }
+		
+		if let decimalValue = try? container.decode(EVYJsonDecimal.self) {
+			self = .decimal(decimalValue)
+			return
+		}
         
         if let boolValue = try? container.decode(EVYJsonBool.self) {
             self = .bool(boolValue)
@@ -160,8 +167,10 @@ public enum EVYJson: Codable, Hashable {
         switch self {
         case let .string(jsonData):
             try container.encode(jsonData)
-        case let .int(jsonData):
-            try container.encode(jsonData)
+		case let .int(jsonData):
+			try container.encode(jsonData)
+		case let .decimal(jsonData):
+			try container.encode(jsonData)
         case let .bool(jsonData):
             try container.encode(jsonData)
         case let .dictionary(jsonData):
@@ -179,6 +188,8 @@ public enum EVYJson: Codable, Hashable {
             return stringValue
         case let .int(intValue):
             return "\(intValue)"
+		case let .decimal(decimalValue):
+			return "\(decimalValue)"
         case let .bool(boolValue):
             return boolValue ? "true" : "false"
         case let .array(arrayValue):

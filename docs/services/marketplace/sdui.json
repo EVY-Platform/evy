@@ -148,12 +148,12 @@
 											"view": {
 												"content": {
 													"title": "",
-													"value": "{formatDimension(item.dimension.width)}",
+													"value": "{formatDimension(item.dimensions.width)}",
 													"placeholder": "Width"
 												}
 											},
 											"edit": {
-												"destination": "{item.dimension.width}",
+												"destination": "{item.dimensions.width}",
 												"validation": {
 													"required": "true",
 													"message": "Width"
@@ -168,12 +168,12 @@
 											"view": {
 												"content": {
 													"title": "",
-													"value": "{formatDimension(item.dimension.height)}",
+													"value": "{formatDimension(item.dimensions.height)}",
 													"placeholder": "Height"
 												}
 											},
 											"edit": {
-												"destination": "{item.dimension.height}",
+												"destination": "{item.dimensions.height}",
 												"validation": {
 													"required": "true",
 													"message": "Height"
@@ -188,12 +188,12 @@
 											"view": {
 												"content": {
 													"title": "",
-													"value": "{formatDimension(item.dimension.length)}",
+													"value": "{formatDimension(item.dimensions.length)}",
 													"placeholder": "Length"
 												}
 											},
 											"edit": {
-												"destination": "{item.dimension.length}",
+												"destination": "{item.dimensions.length}",
 												"validation": {
 													"required": "true",
 													"message": "Length",
@@ -648,12 +648,12 @@
 																"view": {
 																	"content": {
 																		"title": "Weight (kg)",
-																		"value": "{formatWeight(item.dimension.weight)}",
+																		"value": "{formatWeight(item.dimensions.weight)}",
 																		"placeholder": "Weight"
 																	}
 																},
 																"edit": {
-																	"destination": "{item.dimension.weight}",
+																	"destination": "{item.dimensions.weight}",
 																	"validation": {
 																		"required": "true",
 																		"message": "Weight",

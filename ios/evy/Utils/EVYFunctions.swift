@@ -46,15 +46,12 @@ func evyFormatDimension(_ args: String,
                         _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
-    case let .string(stringValue):
+	case let .int(mm):
         if editing {
-            return (stringValue, nil, nil)
-        }
-        guard let mm = Decimal(string: stringValue) else {
-            return ("", nil, nil)
+            return ("\(mm)", nil, nil)
         }
         if mm > 1000 {
-            let meters = mm/1000
+            let meters = Decimal(mm/1000)
             let truncatedMeters = NSDecimalNumber(decimal: meters).intValue
             if meters == Decimal(integerLiteral: truncatedMeters) {
                 return ("\(truncatedMeters)", nil, "m")
@@ -62,7 +59,7 @@ func evyFormatDimension(_ args: String,
             return ("\(meters)", nil, "m")
         }
         if mm > 100 {
-            let cm = mm/10
+            let cm = Decimal(mm/10)
             let truncatedCM = NSDecimalNumber(decimal: cm).intValue
             if cm == Decimal(integerLiteral: truncatedCM) {
                 return ("\(truncatedCM)", nil, "cm")
@@ -70,8 +67,8 @@ func evyFormatDimension(_ args: String,
             return ("\(cm)", nil, "cm")
         }
         
-        let truncatedMM = NSDecimalNumber(decimal: mm).intValue
-        if mm == Decimal(integerLiteral: truncatedMM) {
+		let truncatedMM = NSDecimalNumber(integerLiteral: mm).intValue
+        if mm == truncatedMM {
             return ("\(truncatedMM)", nil, "mm")
         }
         return ("\(mm)", nil, "mm")
@@ -163,6 +160,7 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
 		try! await EVY.createItem()
 		
 		return VStack {
+			EVYTextView("{formatDimension(item.dimensions.width)}")
 			EVYTextView("a == a: {a == a}")
 			EVYTextView("a == b: {a == b}")
 			EVYTextView("1 == 2: {1 == 2}")

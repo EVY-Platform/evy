@@ -1,20 +1,5 @@
 # Data models
 
-#### address
-```
-unit: string
-street: string
-city: string
-postcode: string
-state: string
-country: string
-location: {
-    latitude: string
-    longitude: string
-}
-instructions: string
-```
-
 #### seller
 ```
 reliability_rate: float
@@ -71,6 +56,21 @@ selected: boolean
 ```
 currency: string
 value: string
+```
+
+#### address
+```
+unit: string
+street: string
+city: string
+postcode: string
+state: string
+country: string
+location: {
+    latitude: string
+    longitude: string
+}
+instructions: string
 ```
 
 #### item
