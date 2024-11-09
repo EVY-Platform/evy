@@ -18,10 +18,14 @@ struct EVYHome: View {
 			VStack(spacing: 40) {
 				Button("View Item") {
 					navigate(NavOperation.navigate(Route(flowId: "view_item", pageId: "view")))
-				}.font(.evyTitle)
+				}
+				.font(.evyTitle)
+				.buttonStyle(.plain)
 				Button("Create Item") {
 					navigate(NavOperation.navigate(Route(flowId: "create_item", pageId: "step_1")))
-				}.font(.evyTitle)
+				}
+				.font(.evyTitle)
+				.buttonStyle(.plain)
 			}
 		}
     }
