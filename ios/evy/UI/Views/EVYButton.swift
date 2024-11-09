@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct EVYButton: View {
+	@Environment(\.colorScheme) var colorScheme
+	
     let label: String
     let action: () -> Void
     
@@ -18,12 +20,12 @@ struct EVYButton: View {
     
     var body: some View {
         Button(action: action) {
-            EVYTextView(label).frame(maxWidth: .infinity)
+			EVYTextView(label, style: .button).frame(maxWidth: .infinity)
         }
 		.buttonStyle(.plain)
         .padding(Constants.majorPadding)
         .frame(maxWidth: 150)
-        .background(Constants.buttonColor)
+		.background(colorScheme == .light ? Constants.buttonColor : .white)
         .cornerRadius(Constants.smallCornerRadius)
     }
 }

@@ -110,7 +110,8 @@ struct EVYTextView: View {
 				.foregroundStyle(Constants.textColor)
 		case .button:
 			return Text(input)
-				.font(.evyButton)
+				.font(.evy)
+				.foregroundStyle(colorScheme == .light ? .white : .black)
 		case .action:
 			return Text(input)
 				.font(.evy)
@@ -131,7 +132,7 @@ struct EVYTextView: View {
 			EVYTextView("Body style", style: EVYTextStyle.body)
 			EVYTextView("Info style", style: EVYTextStyle.info)
 			EVYTextView("Title style", style: EVYTextStyle.title)
-			EVYTextView("Button", style: EVYTextStyle.button)
+			EVYButton(label: "button", action: {})
 			EVYTextView("Action", style: EVYTextStyle.action)
 			EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
 			EVYTextView("count: {count(item.photo_ids)}")
