@@ -50,13 +50,21 @@ struct EVY {
 														expecting: EVYJson.self)
 		
 		let sellingReasons = try JSONEncoder().encode(data.parseProp(props: ["selling_reasons"]))
-		try! EVY.data.create(key: "selling_reasons", data: sellingReasons)
-		let conditions = try JSONEncoder().encode(data.parseProp(props: ["conditions"]))
-		try! EVY.data.create(key: "conditions", data: conditions)
-		let durations = try JSONEncoder().encode(data.parseProp(props: ["durations"]))
-		try! EVY.data.create(key: "durations", data: durations)
-		let areas = try JSONEncoder().encode(data.parseProp(props: ["areas"]))
-		try! EVY.data.create(key: "areas", data: areas)
+		do {
+			try EVY.data.create(key: "selling_reasons", data: sellingReasons)
+		} catch {}
+		do {
+			let conditions = try JSONEncoder().encode(data.parseProp(props: ["conditions"]))
+			try EVY.data.create(key: "conditions", data: conditions)
+		} catch {}
+		do {
+			let durations = try JSONEncoder().encode(data.parseProp(props: ["durations"]))
+			try EVY.data.create(key: "durations", data: durations)
+		} catch {}
+		do {
+			let areas = try JSONEncoder().encode(data.parseProp(props: ["areas"]))
+			try EVY.data.create(key: "areas", data: areas)
+		} catch {}
 	}
 	
 	static func getRow(_ props: [String]) async throws -> EVYRow {
