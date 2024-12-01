@@ -1,4 +1,4 @@
-# evy
+# EVY
 
 One platform to rule them all - Plaform to enable Features as a Service
 
