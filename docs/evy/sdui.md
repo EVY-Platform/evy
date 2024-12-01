@@ -38,6 +38,7 @@ They are needed in order to submit all fields of all pages of a flow at the end 
 
 ```
 {
+    "id",
     "name",
 
     // Which service the flow belongs to, eg "marketplace"
@@ -49,6 +50,8 @@ They are needed in order to submit all fields of all pages of a flow at the end 
 
     // What is the data that the page is acting on, eg "item"
     "data": "model_name"
+
+    "pages": [PAGE]
 }
 ```
 
@@ -146,274 +149,166 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 }
 ```
 
-### Container rows
+### Rows
 
-```
-{
-    "type": "ColumnContainer", // Shows children in columns
-}
-```
+### Container Rows
 
-```
-{
-    "type": "ListContainer", // Shows children in a list
-}
-```
+#### ColumnContainer
 
-```
-{
-    "type": "SelectSegmentContainer", // Shows children under a segmented control
-}
-```
+Shows children in columns
 
-```
-{
-    "type": "SheetContainer", // Shows a sheet with children when the row is tapped
-    "view": {
-        "content": {
-            // What row to show for the action
-            "child": "ROW"
-        }
-    }
-}
-```
+-   type: "ColumnContainer"
+
+#### ListContainer
+
+Shows children in a list
+
+-   type: "ListContainer"
+
+#### SelectSegmentContainer
+
+Shows children under a segmented control
+
+-   type: "SelectSegmentContainer"
+
+#### SheetContainer
+
+Shows a sheet with children when tapped (does not implement edit behavior)
+
+-   type: "SheetContainer"
+-   view.content.child: Child row to show
 
 ### Display Rows
 
-```
-{
-    "type": "Image",
-    "view": {
-        "content": {
-            "photo_id"
-        }
-    }
-}
-```
+#### Calendar
 
-```
-{
-    "type": "Title",
-    "view": {
-        "content": {
-            "title_detail",
-            "line_1",
-            "line_2"
-        }
-    }
-}
-```
+Displays a calendar view
 
-```
-{
-    "type": "TitleShort",
-    "view": {
-        "content": {
-            "icon",
-            "detail",
-            "disclaimer"
-        }
-    }
-}
-```
+-   type: "Calendar"
+-   view.content.primary: Array of primary calendar items
+-   view.content.secondary: Array of secondary calendar items
+-   Calendar items contain:
+    -   x: X position
+    -   y: Y position
+    -   header: Header text
+    -   start_label: Start time label
+    -   end_label: End time label
+    -   selected: Whether item is selected
 
-```
-{
-    "type": "Text",
-    "view": {
-        "content": {
-            "text"
-        },
-        "max_lines"
-    }
-}
-```
+#### Dropdown
 
-```
-{
-    "type": "Detail",
-    "view": {
-        "content": {
-            "icon",
-            "line_1",
-            "line_2",
-            "detail"
-        }
-    }
-}
-```
+Displays a dropdown selector
 
-```
-{
-    "type": "Disclaimer",
-    "view": {
-        "content": {
-            "icon",
-            "disclaimer"
-        }
-    }
-}
-```
+-   type: "Dropdown"
+-   view.content.format: Format of dropdown
+-   view.content.placeholder: Placeholder text
+-   view.data: Data for dropdown options
+-   edit.destination: Where selection is stored
+-   edit.required: Whether selection is required
 
-```
-{
-    "type": "Address",
-    "view": {
-        "content": {
-            "line_1",
-            "line_2",
-            "location": {
-                "latitude"
-                "longitude"
-            }
-        }
-    }
-}
-```
+#### InlinePicker
 
-### Editable rows
+Inline selection picker
 
-```
-{
-    "type": "Input",
-    "view": {
-        "content": {
-            "value",
-            "placeholder"
-        }
-    },
-    "edit": {}
-}
-```
+-   type: "InlinePicker"
+-   view.content.options: Array of selectable options
+-   view.content.placeholder: Placeholder text
+-   edit.destination: Where selection is stored
+-   edit.required: Whether selection is required
 
-```
-{
-    "type": "TextArea",
-    "view": {
-        "content": {
-            "value",
-            "placeholder"
-        }
-    },
-    "edit": {}
-}
-```
+#### Input
 
-```
-{
-    "type": "Search",
-    "view": {
-        "content": {
-            "format",
-            "placeholder"
-        },
-        "data"
-    },
-    "edit": {}
-}
-```
+Single-line text input field
 
-```
-{
-    "type": "InlinePicker",
-    "view": {
-        "content": {
-            "title",
-            "format"
-        },
-        "data"
-    }
-}
-```
+-   type: "Input"
+-   view.content.placeholder: Placeholder text
+-   view.content.keyboard_type: Type of keyboard to show (text, number, email, etc)
+-   edit.destination: Where input is stored
+-   edit.required: Whether input is required
 
-```
-{
-    "type": "SelectPhoto",
-    "view": {
-        "content": {
-            "icon",
-            "subtitle",
-            "content",
-            "photos"
-        },
-        "data"
-    },
-    "edit": {
-        "minimum_number"
-    }
-}
-```
+#### Search
 
-```
-{
-    "type": "TimeslotPicker",
-    "view": {
-        "content": {
-            "icon",
-            "subtitle",
-            "detail",
-            "timeslots":[{
-                "id",
-                "start_timestamp",
-                "end_timestamp",
-                "available"
-            }]
-        }
-    }
-}
-```
+Displays a search input field
 
-```
-{
-    "type": "Calendar",
-    "view": {
-        "content": {
-            "primary": [{
-                "x",
-                "y",
-                "header",
-                "start_label",
-                "end_label",
-                "selected"
-            }],
-            "secondary": [{
-                "x",
-                "y",
-                "header",
-                "start_label",
-                "end_label",
-                "selected"
-            }]
-        }
-    },
-    "edit": {}
-}
-```
+-   type: "Search"
+-   view.content.placeholder: Placeholder text
+-   view.content.scope: Search scope/context
+-   edit.destination: Where search query is stored
+-   action.target: Action to perform on search submit
 
-```
-{
-    "type": "Dropdown",
-    "view": {
-        "content": {
-            "format",
-            "placeholder"
-        },
-        "data"
-    },
-    "edit": {}
-}
-```
+#### SelectPhoto
 
-### Button rows
+Displays a photo selector
 
-```
-{
-    "type": "Button",
-    "view": {
-        "content": {
-            "label"
-        }
-    },
-    "edit": {}
-}
-```
+-   type: "SelectPhoto"
+-   view.content.placeholder: Placeholder text/image
+-   view.content.max_photos: Maximum number of photos allowed
+-   edit.destination: Where selected photo IDs are stored
+-   edit.required: Whether photo selection is required
+
+#### TextArea
+
+Multi-line text input
+
+-   type: "TextArea"
+-   view.content.placeholder: Placeholder text
+-   edit.destination: Where input is stored
+-   edit.required: Whether input is required
+
+#### TextSelect
+
+Displays selectable text options
+
+-   type: "TextSelect"
+-   view.content.options: Array of text options
+-   view.content.multi_select: Whether multiple selections are allowed
+-   edit.destination: Where selection(s) are stored
+-   edit.required: Whether selection is required
+
+### Display Rows
+
+#### Info
+
+Displays informational text
+
+-   type: "Info"
+-   view.content.text: Info text to display
+-   view.content.style: Text style formatting
+
+#### InputList
+
+List of text input fields
+
+-   type: "InputList"
+-   view.content.inputs: Array of input configurations
+-   view.content.placeholder: Default placeholder text
+-   edit.destination: Where inputs are stored
+-   edit.required: Whether inputs are required
+
+#### TextAction
+
+Displays text with an associated action
+
+-   type: "TextAction"
+-   view.content.text: Text to display
+-   view.content.style: Text style formatting
+-   action.target: Action to perform when text is tapped
+
+#### Text
+
+Displays text content
+
+-   type: "Text"
+-   view.content.text: Text to display
+-   view.content.style: Text style formatting
+
+### Action Rows
+
+#### Button
+
+Displays a button
+
+-   type: "Button"
+-   view.content.label: Button label text
+-   edit: Button edit options
+-   action.target: Button tap action (navigate/submit/close)

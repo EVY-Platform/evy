@@ -10,10 +10,6 @@ int
 float
 boolean
 timestamp
-
-// Custom shared enums
-payment_method (card|cash|bank)
-os (ios|android)
 ```
 
 ### Types have strict validation at the database level

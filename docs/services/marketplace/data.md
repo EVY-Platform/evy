@@ -28,13 +28,6 @@ value: string
 value: string
 ```
 
-#### area
-
-```
-id: uuid
-value: string
-```
-
 #### duration
 
 ```
@@ -71,18 +64,5 @@ photo_ids: [string]
 address: address
 price: price
 dimension: dimension
-transfer_options: {
-    pickup: {
-        timeslots: [timeslot]
-        address: address
-    }
-    delivery: {
-        timeslots: [timeslot]
-        fee: price
-    }
-    shipping: {
-        postal_code: string
-        areas: [area]
-    }
-}
+transfer_options: transfer_options
 ```

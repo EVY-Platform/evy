@@ -71,6 +71,13 @@ location: location
 instructions: string
 ```
 
+#### area
+
+```
+id: uuid
+value: string
+```
+
 #### tag
 
 ```
@@ -85,12 +92,6 @@ Base model with no extra props
 
 Base model with no extra props
 
-### payment_method
-
-```
-name: payment_method
-```
-
 ### timeslot
 
 ```
@@ -100,25 +101,19 @@ available: boolean
 type: string
 ```
 
-### transfer_provider
-
-```
-name: string
-logo_id: uuid
-```
-
 ### transfer_options
 
 ```
 pickup: {
     timeslots: [timeslot]
+    address: address
 }
 delivery: {
     fee: price
     timeslots: [timeslot]
 }
 ship: {
-    cost: price
-    transfer_provider_id: uuid
+    postal_code: string
+    areas: [area]
 }
 ```
