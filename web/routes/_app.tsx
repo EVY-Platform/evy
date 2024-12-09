@@ -12,7 +12,11 @@ export default function App({ Component }: PageProps) {
 					name="viewport"
 					content="width=device-width, initial-scale=1.0"
 				/>
-				<title>EVY</title>
+				<title>EVY App builder</title>
+				<meta
+					name="description"
+					content="The EVY App builder is a tool that allows you to build apps for EVY"
+				/>
 				<link rel="stylesheet" href="/styles.css" />
 			</head>
 			<body f-client-nav>
