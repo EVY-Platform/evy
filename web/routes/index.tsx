@@ -1,8 +1,17 @@
+import Panel from "../components/Panel.tsx";
+import Canva from "../components/Canva.tsx";
+
 export default function Home() {
 	return (
-		<div class="px-4 py-8">
-			<div class="max-w-screen-md mx-auto flex flex-col items-center justify-center">
-				<h1 class="text-4xl font-bold">App builder</h1>
+		<div class="flex">
+			<div class="w-48">
+				<Panel></Panel>
+			</div>
+			<div class="mx-auto">
+				<Canva></Canva>
+			</div>
+			<div class="w-48">
+				<Panel></Panel>
 			</div>
 		</div>
 	);
