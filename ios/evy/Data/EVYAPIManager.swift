@@ -13,7 +13,7 @@ enum EVYAPIManagerError: Error {
 }
 
 let DEFAULT_HOST = "localhost"
-let DEFAULT_PORT = 8000
+let DEFAULT_PORT = 3000
 
 let API_HOST = ProcessInfo.processInfo.environment["API_HOST"] ?? "\(DEFAULT_HOST):\(DEFAULT_PORT)"
 let userDefault = UserDefaults.standard

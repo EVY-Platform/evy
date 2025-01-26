@@ -14,7 +14,13 @@ async function main() {
 	primeData();
 
 	server
-		.register("getNewDataSince", async (data: WSParams) => {
+		.register("getData", async (data: WSParams) => {
+			return getNewDataSince(data.since);
+		})
+		.protected();
+
+	server
+		.register("getFlows", async (data: WSParams) => {
 			return getNewDataSince(data.since);
 		})
 		.protected();

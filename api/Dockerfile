@@ -23,7 +23,7 @@ COPY yarn.lock .
 RUN yarn install --production
 RUN rm ./yarn.lock
 
-ARG API_PORT="8001"
+ARG API_PORT="3000"
 ARG DATABASE_URL
 
 ENV API_PORT=$API_PORT
