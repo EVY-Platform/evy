@@ -1,13 +1,29 @@
-# EVY Web app-builder
+# EVY Web
 
-### Usage
+## Getting Started
 
-Make sure to install Deno: https://deno.land/manual/getting_started/installation
+### Installing Dependencies
 
-Then start the project:
-
-```
-deno task start
+```bash
+deno install
 ```
 
-This will watch the project directory and restart as necessary.
+## Running the App
+
+### Locally
+
+```bash
+deno run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### In Docker
+
+```bash
+docker compose up -d
+```
+
+## License
+
+Apache 2.0, see [LICENSE](LICENSE) for more details.
