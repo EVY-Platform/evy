@@ -29,8 +29,6 @@ const scrollContainerStyles = xcss({
 const rowListStyles = xcss({
 	boxSizing: "border-box",
 	minHeight: "100%",
-	padding: "space.100",
-	gap: "space.100",
 });
 
 export type PageData = {
@@ -109,7 +107,7 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 			>
 				<Stack xcss={stackStyles} ref={pageInnerRef}>
 					<Box xcss={scrollContainerStyles} ref={scrollableRef}>
-						<Stack xcss={rowListStyles} space="space.100">
+						<Stack xcss={rowListStyles}>
 							{page.rows.map((row) => (
 								<Row row={row} key={row.rowId} />
 							))}

@@ -20,7 +20,7 @@ import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/el
 
 export type RowType = {
 	rowId: string;
-	name: string;
+	row: React.ReactNode;
 };
 
 type State =
@@ -33,9 +33,7 @@ const draggingState: State = { type: "dragging" };
 
 const baseStyles = xcss({
 	width: "100%",
-	padding: "space.100",
 	backgroundColor: "elevation.surface",
-	borderRadius: "border.radius.200",
 	position: "relative",
 	":hover": {
 		backgroundColor: "elevation.surface.hovered",
@@ -65,8 +63,6 @@ type RowPrimitiveProps = {
 
 const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 	function RowPrimitive({ closestEdge, row, state }, ref) {
-		const { name } = row;
-
 		return (
 			<Grid
 				ref={ref}
@@ -76,7 +72,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				xcss={[baseStyles, stateStyles[state.type]]}
 			>
 				<Stack space="space.050" grow="fill">
-					{name}
+					{row.row}
 				</Stack>
 
 				{closestEdge && <DropIndicator edge={closestEdge} />}

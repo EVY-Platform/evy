@@ -19,149 +19,69 @@ import TextAreaRow from "../rows/Edit/textAreaRow.tsx";
 import TextSelectRow from "../rows/Edit/textSelectRow.tsx";
 
 export function getBasePages() {
-	// const rows = [
-	// 	InfoRow,
-	// 	TextRow,
-	// 	InputListRow,
-
-	// 	ButtonRow,
-	// 	TextActionRow,
-
-	// 	CalendarRow,
-	// 	DropdownRow,
-	// 	InlinePickerRow,
-	// 	InputRow,
-	// 	SearchRow,
-	// 	SelectPhotoRow,
-	// 	TextAreaRow,
-	// 	TextSelectRow,
-	// ];
-
 	return {
 		rows: [
 			{
-				rowId: "TextRowSource",
-				name: "TextRow",
+				rowId: "InfoRow",
+				row: <InfoRow />,
 			},
 			{
-				rowId: "InfoRowSource",
-				name: "InfoRow",
+				rowId: "TextRow",
+				row: <TextRow />,
 			},
 			{
-				rowId: "ButtonRowSource",
-				name: "ButtonRow",
+				rowId: "InputListRow",
+				row: <InputListRow />,
 			},
 			{
-				rowId: "ListRowSource",
-				name: "ListRow",
+				rowId: "ButtonRow",
+				row: <ButtonRow />,
 			},
 			{
-				rowId: "CalendarRowSource",
-				name: "CalendarRow",
+				rowId: "TextActionRow",
+				row: <TextActionRow />,
 			},
 			{
-				rowId: "DropdownRowSource",
-				name: "DropdownRow",
+				rowId: "CalendarRow",
+				row: <CalendarRow />,
 			},
 			{
-				rowId: "TextRowSource2",
-				name: "TextRow2",
+				rowId: "DropdownRow",
+				row: <DropdownRow />,
 			},
 			{
-				rowId: "InfoRowSource2",
-				name: "InfoRow2",
+				rowId: "InlinePickerRow",
+				row: <InlinePickerRow />,
 			},
 			{
-				rowId: "ButtonRowSource2",
-				name: "ButtonRow2",
+				rowId: "InputRow",
+				row: <InputRow />,
 			},
 			{
-				rowId: "ListRowSource2",
-				name: "ListRow2",
+				rowId: "SearchRow",
+				row: <SearchRow />,
 			},
 			{
-				rowId: "CalendarRowSource2",
-				name: "CalendarRow2",
+				rowId: "SelectPhotoRow",
+				row: <SelectPhotoRow />,
 			},
 			{
-				rowId: "DropdownRowSource2",
-				name: "DropdownRow2",
+				rowId: "TextAreaRow",
+				row: <TextAreaRow />,
 			},
 			{
-				rowId: "TextRowSource3",
-				name: "TextRow3",
-			},
-			{
-				rowId: "InfoRowSource3",
-				name: "InfoRow3",
-			},
-			{
-				rowId: "ButtonRowSource3",
-				name: "ButtonRow3",
-			},
-			{
-				rowId: "ListRowSource3",
-				name: "ListRow3",
-			},
-			{
-				rowId: "CalendarRowSource3",
-				name: "CalendarRow3",
-			},
-			{
-				rowId: "DropdownRowSource3",
-				name: "DropdownRow3",
-			},
-			{
-				rowId: "TextRowSource4",
-				name: "TextRow4",
-			},
-			{
-				rowId: "InfoRowSource4",
-				name: "InfoRow4",
-			},
-			{
-				rowId: "ButtonRowSource4",
-				name: "ButtonRow4",
-			},
-			{
-				rowId: "ListRowSource4",
-				name: "ListRow4",
-			},
-			{
-				rowId: "CalendarRowSource4",
-				name: "CalendarRow4",
-			},
-			{
-				rowId: "DropdownRowSource4",
-				name: "DropdownRow4",
+				rowId: "TextSelectRow",
+				row: <TextSelectRow />,
 			},
 		],
 		pagesData: {
 			"Step 1": {
 				pageId: "Step 1",
-				rows: [
-					{
-						rowId: "TextRow",
-						name: "TextRow",
-					},
-					{
-						rowId: "InfoRow",
-						name: "InfoRow",
-					},
-				],
+				rows: [],
 			},
 			"Step 2": {
 				pageId: "Step 2",
-				rows: [
-					{
-						rowId: "ButtonRow",
-						name: "ButtonRow",
-					},
-					{
-						rowId: "ListRow",
-						name: "ListRow",
-					},
-				],
+				rows: [],
 			},
 		},
 		pagesOrder: ["Step 1", "Step 2"],

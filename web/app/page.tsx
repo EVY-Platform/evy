@@ -15,13 +15,13 @@ import { type PagesData } from "./components/shared/page.tsx";
 import { RowType } from "./components/shared/row.tsx";
 import { Sidebar } from "./components/shared/sidebar.tsx";
 
-import sampleData from "./sample_data.json";
+import { getBasePages } from "./components/shared/registry.tsx";
 
 const panelWidth = "280px";
 
 export default function Index() {
 	const [data, setData] = useState<PagesData>(() => {
-		return sampleData;
+		return getBasePages();
 	});
 
 	const reorderRow = useCallback(
