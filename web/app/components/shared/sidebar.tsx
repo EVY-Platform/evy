@@ -62,13 +62,13 @@ export const Sidebar = memo(function Sidebar({ page }: { page: PageData }) {
 		);
 	}, [pageId]);
 
-	const stableItems = useRef(page.items);
+	const stableItems = useRef(page.rows);
 	useEffect(() => {
-		stableItems.current = page.items;
-	}, [page.items]);
+		stableItems.current = page.rows;
+	}, [page.rows]);
 
 	const getRowIndex = useCallback((rowId: string) => {
-		return stableItems.current.findIndex((item) => item.rowId === rowId);
+		return stableItems.current.findIndex((row) => row.rowId === rowId);
 	}, []);
 
 	const getNumRows = useCallback(() => {
@@ -84,8 +84,8 @@ export const Sidebar = memo(function Sidebar({ page }: { page: PageData }) {
 			<Flex xcss={[sidebarStyles, stateStyles[state.type]]}>
 				<Stack xcss={stackStyles} ref={pageInnerRef}>
 					<Stack xcss={rowListStyles} space="space.100">
-						{page.items.map((item) => (
-							<Row item={item} key={item.rowId} />
+						{page.rows.map((row) => (
+							<Row row={row} key={row.rowId} />
 						))}
 					</Stack>
 				</Stack>

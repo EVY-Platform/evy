@@ -42,7 +42,7 @@ export default function Index() {
 			setData((data) => {
 				const sourcePage = data.pagesData[pageId];
 				const updatedItems = reorder({
-					list: sourcePage.items,
+					list: sourcePage.rows,
 					startIndex,
 					finishIndex,
 				});
@@ -53,7 +53,7 @@ export default function Index() {
 						...data.pagesData,
 						[pageId]: {
 							...sourcePage,
-							items: updatedItems,
+							rows: updatedItems,
 						},
 					},
 				};
@@ -66,23 +66,23 @@ export default function Index() {
 		({
 			startPageId,
 			finishPageId,
-			itemIndexInStartPage,
-			itemIndexInFinishPage,
+			rowIndexInStartPage,
+			rowIndexInFinishPage,
 		}: {
 			startPageId: string;
 			finishPageId: string;
-			itemIndexInStartPage: number;
-			itemIndexInFinishPage?: number;
+			rowIndexInStartPage: number;
+			rowIndexInFinishPage?: number;
 		}) => {
 			setData((data) => {
 				const sourcePage = data.pagesData[startPageId];
 				const destinationPage = data.pagesData[finishPageId];
-				const item: RowType = sourcePage.items[itemIndexInStartPage];
+				const row: RowType = sourcePage.rows[rowIndexInStartPage];
 
-				const destinationItems = Array.from(destinationPage.items);
+				const destinationItems = Array.from(destinationPage.rows);
 				const newIndexInDestination =
-					itemIndexInFinishPage ?? destinationItems.length;
-				destinationItems.splice(newIndexInDestination, 0, item);
+					rowIndexInFinishPage ?? destinationItems.length;
+				destinationItems.splice(newIndexInDestination, 0, row);
 
 				return {
 					...data,
@@ -90,13 +90,13 @@ export default function Index() {
 						...data.pagesData,
 						[startPageId]: {
 							...sourcePage,
-							items: (sourcePage?.items || data.rows).filter(
-								(i) => i.rowId !== item.rowId
+							rows: (sourcePage?.rows || data.rows).filter(
+								(i) => i.rowId !== row.rowId
 							),
 						},
 						[finishPageId]: {
 							...destinationPage,
-							items: destinationItems,
+							rows: destinationItems,
 						},
 					},
 				};
@@ -109,7 +109,7 @@ export default function Index() {
 		({ pageId, index }: { pageId: string; index: number }) => {
 			setData((data) => {
 				const sourcePage = data.pagesData[pageId];
-				const item: RowType = sourcePage.items[index];
+				const row: RowType = sourcePage.rows[index];
 
 				return {
 					...data,
@@ -117,8 +117,8 @@ export default function Index() {
 						...data.pagesData,
 						[pageId]: {
 							...sourcePage,
-							items: sourcePage.items.filter(
-								(i) => i.rowId !== item.rowId
+							rows: sourcePage.rows.filter(
+								(i) => i.rowId !== row.rowId
 							),
 						},
 					},
@@ -131,24 +131,24 @@ export default function Index() {
 	const addRow = useCallback(
 		({
 			pageId,
-			itemIndexAtStartPage,
-			itemIndexInFinishPage,
+			rowIndexAtStartPage,
+			rowIndexInFinishPage,
 		}: {
 			pageId: string;
-			itemIndexAtStartPage: number;
-			itemIndexInFinishPage: number;
+			rowIndexAtStartPage: number;
+			rowIndexInFinishPage: number;
 		}) => {
 			setData((data) => {
 				const sourcePage = data.pagesData[pageId];
-				const item: RowType = {
-					...data.rows[itemIndexAtStartPage],
+				const row: RowType = {
+					...data.rows[rowIndexAtStartPage],
 					rowId: crypto.randomUUID(),
 				};
 
 				const updatedItems = [
-					...sourcePage.items.slice(0, itemIndexInFinishPage),
-					item,
-					...sourcePage.items.slice(itemIndexInFinishPage),
+					...sourcePage.rows.slice(0, rowIndexInFinishPage),
+					row,
+					...sourcePage.rows.slice(rowIndexInFinishPage),
 				];
 
 				return {
@@ -157,7 +157,7 @@ export default function Index() {
 						...data.pagesData,
 						[pageId]: {
 							...sourcePage,
-							items: updatedItems,
+							rows: updatedItems,
 						},
 					},
 				};
@@ -182,8 +182,8 @@ export default function Index() {
 				invariant(typeof sourceId === "string");
 
 				const sourcePage = data.pagesData[sourceId];
-				const itemIndex = (sourcePage?.items || data.rows).findIndex(
-					(item) => item.rowId === rowId
+				const rowIndex = (sourcePage?.rows || data.rows).findIndex(
+					(row) => row.rowId === rowId
 				);
 
 				// If the row was dropped on top of another row,
@@ -202,12 +202,12 @@ export default function Index() {
 
 				const indexOfTarget = destinationRowRecord
 					? // If the row was dropped on another row, find it's index
-					  destinationPage?.items.findIndex(
-							(item) =>
-								item.rowId === destinationRowRecord.data.rowId
+					  destinationPage?.rows.findIndex(
+							(row) =>
+								row.rowId === destinationRowRecord.data.rowId
 					  )
 					: // Otherwise fallback to end of the list
-					  destinationPage?.items.length + 1;
+					  destinationPage?.rows.length + 1;
 
 				const closestEdgeOfTarget: Edge | null = destinationRowRecord
 					? extractClosestEdge(destinationRowRecord.data)
@@ -217,7 +217,7 @@ export default function Index() {
 					if (sourceId === destinationPageId) return;
 					removeRow({
 						pageId: sourcePage.pageId,
-						index: itemIndex,
+						index: rowIndex,
 					});
 				} else if (sourceId === "rows") {
 					const destinationIndex =
@@ -226,19 +226,19 @@ export default function Index() {
 							: indexOfTarget;
 					addRow({
 						pageId: destinationPage.pageId,
-						itemIndexAtStartPage: itemIndex,
-						itemIndexInFinishPage: destinationIndex,
+						rowIndexAtStartPage: rowIndex,
+						rowIndexInFinishPage: destinationIndex,
 					});
 				} else if (sourceId === destinationPageId) {
 					const destinationIndex = getReorderDestinationIndex({
-						startIndex: itemIndex,
+						startIndex: rowIndex,
 						indexOfTarget,
 						closestEdgeOfTarget,
 						axis: "vertical",
 					});
 					reorderRow({
 						pageId: sourcePage.pageId,
-						startIndex: itemIndex,
+						startIndex: rowIndex,
 						finishIndex: destinationIndex,
 					});
 				} else {
@@ -248,10 +248,10 @@ export default function Index() {
 							: indexOfTarget;
 
 					moveRow({
-						itemIndexInStartPage: itemIndex,
+						rowIndexInStartPage: rowIndex,
 						startPageId: sourcePage.pageId,
 						finishPageId: destinationPage.pageId,
-						itemIndexInFinishPage: destinationIndex,
+						rowIndexInFinishPage: destinationIndex,
 					});
 				}
 			},
@@ -268,7 +268,7 @@ export default function Index() {
 				<Sidebar
 					page={{
 						pageId: "rows",
-						items: data.rows,
+						rows: data.rows,
 					}}
 					key="rows"
 				/>

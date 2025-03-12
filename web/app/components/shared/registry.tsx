@@ -139,7 +139,7 @@ export function getBasePages() {
 		pagesData: {
 			"Step 1": {
 				pageId: "Step 1",
-				items: [
+				rows: [
 					{
 						rowId: "TextRow",
 						name: "TextRow",
@@ -152,7 +152,7 @@ export function getBasePages() {
 			},
 			"Step 2": {
 				pageId: "Step 2",
-				items: [
+				rows: [
 					{
 						rowId: "ButtonRow",
 						name: "ButtonRow",

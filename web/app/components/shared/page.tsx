@@ -35,7 +35,7 @@ const rowListStyles = xcss({
 
 export type PageData = {
 	pageId: string;
-	items: RowType[];
+	rows: RowType[];
 };
 export type PagesData = {
 	rows: RowType[];
@@ -84,13 +84,13 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 		);
 	}, [pageId]);
 
-	const stableItems = useRef(page.items);
+	const stableItems = useRef(page.rows);
 	useEffect(() => {
-		stableItems.current = page.items;
-	}, [page.items]);
+		stableItems.current = page.rows;
+	}, [page.rows]);
 
 	const getRowIndex = useCallback((rowId: string) => {
-		return stableItems.current.findIndex((item) => item.rowId === rowId);
+		return stableItems.current.findIndex((row) => row.rowId === rowId);
 	}, []);
 
 	const getNumRows = useCallback(() => {
@@ -110,8 +110,8 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 				<Stack xcss={stackStyles} ref={pageInnerRef}>
 					<Box xcss={scrollContainerStyles} ref={scrollableRef}>
 						<Stack xcss={rowListStyles} space="space.100">
-							{page.items.map((item) => (
-								<Row item={item} key={item.rowId} />
+							{page.rows.map((row) => (
+								<Row row={row} key={row.rowId} />
 							))}
 						</Stack>
 					</Box>

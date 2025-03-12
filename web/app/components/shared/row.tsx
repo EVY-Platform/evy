@@ -59,13 +59,13 @@ const stateStyles: {
 
 type RowPrimitiveProps = {
 	closestEdge: Edge | null;
-	item: RowType;
+	row: RowType;
 	state: State;
 };
 
 const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
-	function RowPrimitive({ closestEdge, item, state }, ref) {
-		const { name } = item;
+	function RowPrimitive({ closestEdge, row, state }, ref) {
+		const { name } = row;
 
 		return (
 			<Grid
@@ -85,9 +85,9 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 	}
 );
 
-export const Row = memo(function Row({ item }: { item: RowType }) {
+export const Row = memo(function Row({ row }: { row: RowType }) {
 	const ref = useRef<HTMLDivElement | null>(null);
-	const { rowId } = item;
+	const { rowId } = row;
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 	const [state, setState] = useState<State>(idleState);
 
@@ -162,7 +162,7 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 		<Fragment>
 			<RowPrimitive
 				ref={ref}
-				item={item}
+				row={row}
 				state={state}
 				closestEdge={closestEdge}
 			/>
@@ -176,7 +176,7 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 						}}
 					>
 						<RowPrimitive
-							item={item}
+							row={row}
 							state={state}
 							closestEdge={null}
 						/>

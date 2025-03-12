@@ -100,11 +100,11 @@
 	"pagesData": {
 		"Step 1": {
 			"pageId": "Step 1",
-			"items": []
+			"rows": []
 		},
 		"Step 2": {
 			"pageId": "Step 2",
-			"items": []
+			"rows": []
 		}
 	},
 	"pagesOrder": ["Step 1", "Step 2"]
