@@ -100,29 +100,11 @@
 	"pagesData": {
 		"Step 1": {
 			"pageId": "Step 1",
-			"items": [
-				{
-					"rowId": "TextRow",
-					"name": "TextRow"
-				},
-				{
-					"rowId": "InfoRow",
-					"name": "InfoRow"
-				}
-			]
+			"items": []
 		},
 		"Step 2": {
 			"pageId": "Step 2",
-			"items": [
-				{
-					"rowId": "ButtonRow",
-					"name": "ButtonRow"
-				},
-				{
-					"rowId": "ListRow",
-					"name": "ListRow"
-				}
-			]
+			"items": []
 		}
 	},
 	"pagesOrder": ["Step 1", "Step 2"]

@@ -97,10 +97,7 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 		return combine(
 			draggable({
 				element: element,
-				getInitialData: () => ({
-					type: "row",
-					itemId: rowId,
-				}),
+				getInitialData: () => ({ rowId }),
 				onGenerateDragPreview: ({
 					location,
 					source,
@@ -129,26 +126,25 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 			}),
 			dropTargetForElements({
 				element: element,
-				canDrop: ({ source }) => {
-					return source.data.type === "row";
-				},
+				canDrop: () => true,
 				getIsSticky: () => true,
 				getData: ({ input, element }) => {
-					const data = { type: "row", itemId: rowId };
-
-					return attachClosestEdge(data, {
-						input,
-						element,
-						allowedEdges: ["top", "bottom"],
-					});
+					return attachClosestEdge(
+						{ rowId },
+						{
+							input,
+							element,
+							allowedEdges: ["top", "bottom"],
+						}
+					);
 				},
 				onDragEnter: (args) => {
-					if (args.source.data.itemId !== rowId) {
+					if (args.source.data.rowId !== rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
 				onDrag: (args) => {
-					if (args.source.data.itemId !== rowId) {
+					if (args.source.data.rowId !== rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
@@ -160,7 +156,7 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 				},
 			})
 		);
-	}, [item, rowId]);
+	}, [rowId]);
 
 	return (
 		<Fragment>

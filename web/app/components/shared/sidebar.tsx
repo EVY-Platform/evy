@@ -53,10 +53,7 @@ export const Sidebar = memo(function Sidebar({ page }: { page: PageData }) {
 			dropTargetForElements({
 				element: pageInnerRef.current,
 				getData: () => ({ pageId }),
-				canDrop: ({ source }) => {
-					return source.data.type === "row";
-				},
-				getIsSticky: () => true,
+				canDrop: () => true,
 				onDragEnter: () => setState(isRowOver),
 				onDragLeave: () => setState(idle),
 				onDragStart: () => setState(isRowOver),

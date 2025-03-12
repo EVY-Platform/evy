@@ -171,8 +171,8 @@ export default function Index() {
 					return;
 				}
 
-				const itemId = source.data.itemId;
-				invariant(typeof itemId === "string");
+				const rowId = source.data.rowId;
+				invariant(typeof rowId === "string");
 
 				const [, startPageRecord] = location.initial.dropTargets;
 				const sourceId = startPageRecord.data.pageId;
@@ -180,7 +180,7 @@ export default function Index() {
 
 				const sourcePage = data.pagesData[sourceId];
 				const itemIndex = (sourcePage?.items || data.rows).findIndex(
-					(item) => item.rowId === itemId
+					(item) => item.rowId === rowId
 				);
 
 				// If the row was dropped on top of another row,
@@ -201,7 +201,7 @@ export default function Index() {
 					? // If the row was dropped on another row, find it's index
 					  destinationPage?.items.findIndex(
 							(item) =>
-								item.rowId === destinationRowRecord.data.itemId
+								item.rowId === destinationRowRecord.data.rowId
 					  )
 					: // Otherwise fallback to end of the list
 					  destinationPage?.items.length + 1;

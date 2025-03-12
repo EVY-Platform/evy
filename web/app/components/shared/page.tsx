@@ -71,10 +71,7 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 			dropTargetForElements({
 				element: pageInnerRef.current,
 				getData: () => ({ pageId }),
-				canDrop: ({ source }) => {
-					return source.data.type === "row";
-				},
-				getIsSticky: () => true,
+				canDrop: () => true,
 				onDragEnter: () => setState(isRowOver),
 				onDragLeave: () => setState(idle),
 				onDragStart: () => setState(isRowOver),
@@ -82,7 +79,7 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 			}),
 			autoScrollForElements({
 				element: scrollableRef.current,
-				canScroll: ({ source }) => source.data.type === "row",
+				canScroll: () => true,
 			})
 		);
 	}, [pageId]);
