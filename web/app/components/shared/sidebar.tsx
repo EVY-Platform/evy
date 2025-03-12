@@ -23,6 +23,8 @@ const stackStyles = xcss({
 const rowListStyles = xcss({
 	boxSizing: "border-box",
 	minHeight: "100%",
+	padding: "space.100",
+	gap: "space.100",
 });
 
 type State = { type: "idle" } | { type: "is-row-over" };

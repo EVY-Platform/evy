@@ -36,7 +36,7 @@ const baseStyles = xcss({
 	backgroundColor: "elevation.surface",
 	position: "relative",
 	":hover": {
-		backgroundColor: "elevation.surface.hovered",
+		backgroundColor: "color.background.selected.hovered",
 	},
 });
 
