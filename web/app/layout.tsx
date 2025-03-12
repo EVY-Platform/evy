@@ -1,7 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 
-import Logo from "./components/shared/logo.tsx";
+import Logo from "./components/logo.tsx";
 
 import "./globals.css";
 

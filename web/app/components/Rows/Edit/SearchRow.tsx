@@ -1,5 +1,5 @@
 import React from "react";
-import Input from "../../shared/input.tsx";
+import Input from "../../input.tsx";
 
 // import { dragging, configuration } from "../../Draggable.tsx";
 

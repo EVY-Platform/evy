@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { Box, Flex, Stack, xcss } from "@atlaskit/primitives";
@@ -6,19 +6,11 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { PageContext, type PageContextProps } from "./page-context.tsx";
-import { Row } from "./row.tsx";
-import { RowType } from "./row.tsx";
+import { Row, type RowType } from "./row.tsx";
 
 const pageStyles = xcss({
 	width: "250px",
 	backgroundColor: "elevation.surface.sunken",
-	borderRadius: "border.radius.300",
-});
-
-const stackStyles = xcss({
-	minHeight: "0", // allow the container to be shrunk by a parent height
-	flexGrow: 1,
 });
 
 const scrollContainerStyles = xcss({
@@ -31,7 +23,7 @@ const rowListStyles = xcss({
 	minHeight: "100%",
 });
 
-export type PageData = {
+type PageData = {
 	pageId: string;
 	rows: RowType[];
 };
@@ -58,16 +50,14 @@ const stateStyles: {
 
 export const Page = memo(function Page({ page }: { page: PageData }) {
 	const pageId = page.pageId;
-	const pageInnerRef = useRef<HTMLDivElement | null>(null);
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
 	useEffect(() => {
-		invariant(pageInnerRef.current);
 		invariant(scrollableRef.current);
 		return combine(
 			dropTargetForElements({
-				element: pageInnerRef.current,
+				element: scrollableRef.current,
 				getData: () => ({ pageId }),
 				canDrop: () => true,
 				onDragEnter: () => setState(isRowOver),
@@ -82,39 +72,15 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 		);
 	}, [pageId]);
 
-	const stableItems = useRef(page.rows);
-	useEffect(() => {
-		stableItems.current = page.rows;
-	}, [page.rows]);
-
-	const getRowIndex = useCallback((rowId: string) => {
-		return stableItems.current.findIndex((row) => row.rowId === rowId);
-	}, []);
-
-	const getNumRows = useCallback(() => {
-		return stableItems.current.length;
-	}, []);
-
-	const contextValue: PageContextProps = useMemo(() => {
-		return { pageId, getRowIndex, getNumRows };
-	}, [pageId, getRowIndex, getNumRows]);
-
 	return (
-		<PageContext.Provider value={contextValue}>
-			<Flex
-				direction="column"
-				xcss={[pageStyles, stateStyles[state.type]]}
-			>
-				<Stack xcss={stackStyles} ref={pageInnerRef}>
-					<Box xcss={scrollContainerStyles} ref={scrollableRef}>
-						<Stack xcss={rowListStyles}>
-							{page.rows.map((row) => (
-								<Row row={row} key={row.rowId} />
-							))}
-						</Stack>
-					</Box>
+		<Flex direction="column" xcss={[pageStyles, stateStyles[state.type]]}>
+			<Box xcss={scrollContainerStyles} ref={scrollableRef}>
+				<Stack xcss={rowListStyles}>
+					{page.rows.map((row) => (
+						<Row row={row} key={row.rowId} />
+					))}
 				</Stack>
-			</Flex>
-		</PageContext.Provider>
+			</Box>
+		</Flex>
 	);
 });

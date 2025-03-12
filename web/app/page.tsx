@@ -10,12 +10,12 @@ import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hi
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { reorder } from "@atlaskit/pragmatic-drag-and-drop/reorder";
 
-import { Page } from "./components/shared/page.tsx";
-import { type PagesData } from "./components/shared/page.tsx";
-import { RowType } from "./components/shared/row.tsx";
-import { Sidebar } from "./components/shared/sidebar.tsx";
+import { Page } from "./components/page.tsx";
+import { type PagesData } from "./components/page.tsx";
+import { RowType } from "./components/row.tsx";
+import { Sidebar } from "./components/sidebar.tsx";
 
-import { getBasePages } from "./components/shared/registry.tsx";
+import { getBasePages } from "./registry.tsx";
 
 const panelWidth = "280px";
 
@@ -260,13 +260,7 @@ export default function Index() {
 				style={{ width: panelWidth }}
 			>
 				<div className="p-4 text-xl font-bold text-center">Rows</div>
-				<Sidebar
-					page={{
-						pageId: "rows",
-						rows: data.rows,
-					}}
-					key="rows"
-				/>
+				<Sidebar rows={data.rows} key="rows" />
 			</div>
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
 				{data.pagesOrder.map((pageId) => {
