@@ -259,7 +259,7 @@ export default function Index() {
 				style={{ width: panelWidth }}
 			>
 				<div className="p-4 text-xl font-bold text-center">Rows</div>
-				<Sidebar rowsData={data.rowsData} key="rows" />
+				<Sidebar key="rows" rowsData={data.rowsData} />
 			</div>
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
 				{data.pagesOrder.map((pageId) => {
@@ -269,7 +269,6 @@ export default function Index() {
 								{pageId}
 							</div>
 							<Page
-								key={pageId}
 								pageId={pageId}
 								rowsData={data.pagesData[pageId].rowsData}
 							/>
