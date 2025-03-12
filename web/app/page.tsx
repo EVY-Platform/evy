@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import invariant from "tiny-invariant";
 
@@ -140,7 +140,10 @@ export default function Index() {
 		}) => {
 			setData((data) => {
 				const sourcePage = data.pagesData[pageId];
-				const item: RowType = data.rows[itemIndexAtStartPage];
+				const item: RowType = {
+					...data.rows[itemIndexAtStartPage],
+					rowId: crypto.randomUUID(),
+				};
 
 				const updatedItems = [
 					...sourcePage.items.slice(0, itemIndexInFinishPage),
