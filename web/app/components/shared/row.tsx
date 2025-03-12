@@ -82,12 +82,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 					{name}
 				</Stack>
 
-				{closestEdge && (
-					<DropIndicator
-						edge={closestEdge}
-						gap={token("space.100", "0")}
-					/>
-				)}
+				{closestEdge && <DropIndicator edge={closestEdge} />}
 			</Grid>
 		);
 	}
