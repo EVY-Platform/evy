@@ -5,7 +5,7 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import { Flex, Stack, xcss } from "@atlaskit/primitives";
 import invariant from "tiny-invariant";
 
-import { Row, type RowType } from "./row.tsx";
+import { Row, type RowData } from "./row.tsx";
 
 const sidebarStyles = xcss({
 	width: "100%",
@@ -34,7 +34,11 @@ const stateStyles: {
 	}),
 };
 
-export const Sidebar = memo(function Sidebar({ rows }: { rows: RowType[] }) {
+export const Sidebar = memo(function Sidebar({
+	rowsData,
+}: {
+	rowsData: RowData[];
+}) {
 	const pageInnerRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
@@ -57,8 +61,10 @@ export const Sidebar = memo(function Sidebar({ rows }: { rows: RowType[] }) {
 		<Flex xcss={[sidebarStyles, stateStyles[state.type]]}>
 			<Stack ref={pageInnerRef}>
 				<Stack xcss={rowListStyles} space="space.100">
-					{rows.map((row) => (
-						<Row row={row} key={row.rowId} />
+					{rowsData.map((rowData) => (
+						<Row key={rowData.rowId} rowId={rowData.rowId}>
+							{rowData.row}
+						</Row>
 					))}
 				</Stack>
 			</Stack>

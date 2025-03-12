@@ -11,7 +11,7 @@ import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/ad
 import { reorder } from "@atlaskit/pragmatic-drag-and-drop/reorder";
 
 import { Page } from "./components/page.tsx";
-import { RowType } from "./components/row.tsx";
+import { RowData } from "./components/row.tsx";
 import { Sidebar } from "./components/sidebar.tsx";
 
 import { getBasePages } from "./registry.tsx";
@@ -34,7 +34,7 @@ export default function Index() {
 			setData((data) => {
 				const sourcePage = data.pagesData[pageId];
 				const updatedItems = reorder({
-					list: sourcePage.rows,
+					list: sourcePage.rowsData,
 					startIndex,
 					finishIndex,
 				});
@@ -45,7 +45,7 @@ export default function Index() {
 						...data.pagesData,
 						[pageId]: {
 							...sourcePage,
-							rows: updatedItems,
+							rowsData: updatedItems,
 						},
 					},
 				};
@@ -69,12 +69,13 @@ export default function Index() {
 			setData((data) => {
 				const sourcePage = data.pagesData[startPageId];
 				const destinationPage = data.pagesData[finishPageId];
-				const row: RowType = sourcePage.rows[rowIndexInStartPage];
+				const rowData: RowData =
+					sourcePage.rowsData[rowIndexInStartPage];
 
-				const destinationItems = Array.from(destinationPage.rows);
+				const destinationItems = Array.from(destinationPage.rowsData);
 				const newIndexInDestination =
 					rowIndexInFinishPage ?? destinationItems.length;
-				destinationItems.splice(newIndexInDestination, 0, row);
+				destinationItems.splice(newIndexInDestination, 0, rowData);
 
 				return {
 					...data,
@@ -82,13 +83,13 @@ export default function Index() {
 						...data.pagesData,
 						[startPageId]: {
 							...sourcePage,
-							rows: (sourcePage?.rows || data.rows).filter(
-								(i) => i.rowId !== row.rowId
-							),
+							rowsData: (
+								sourcePage?.rowsData || data.rowsData
+							).filter((rd) => rd.rowId !== rowData.rowId),
 						},
 						[finishPageId]: {
 							...destinationPage,
-							rows: destinationItems,
+							rowsData: destinationItems,
 						},
 					},
 				};
@@ -101,7 +102,7 @@ export default function Index() {
 		({ pageId, index }: { pageId: string; index: number }) => {
 			setData((data) => {
 				const sourcePage = data.pagesData[pageId];
-				const row: RowType = sourcePage.rows[index];
+				const rowData: RowData = sourcePage.rowsData[index];
 
 				return {
 					...data,
@@ -109,8 +110,8 @@ export default function Index() {
 						...data.pagesData,
 						[pageId]: {
 							...sourcePage,
-							rows: sourcePage.rows.filter(
-								(i) => i.rowId !== row.rowId
+							rowsData: sourcePage.rowsData.filter(
+								(rd) => rd.rowId !== rowData.rowId
 							),
 						},
 					},
@@ -132,15 +133,15 @@ export default function Index() {
 		}) => {
 			setData((data) => {
 				const sourcePage = data.pagesData[pageId];
-				const row: RowType = {
-					...data.rows[rowIndexAtStartPage],
+				const rowData: RowData = {
+					...data.rowsData[rowIndexAtStartPage],
 					rowId: crypto.randomUUID(),
 				};
 
 				const updatedItems = [
-					...sourcePage.rows.slice(0, rowIndexInFinishPage),
-					row,
-					...sourcePage.rows.slice(rowIndexInFinishPage),
+					...sourcePage.rowsData.slice(0, rowIndexInFinishPage),
+					rowData,
+					...sourcePage.rowsData.slice(rowIndexInFinishPage),
 				];
 
 				return {
@@ -149,7 +150,7 @@ export default function Index() {
 						...data.pagesData,
 						[pageId]: {
 							...sourcePage,
-							rows: updatedItems,
+							rowsData: updatedItems,
 						},
 					},
 				};
@@ -174,9 +175,9 @@ export default function Index() {
 				invariant(typeof sourceId === "string");
 
 				const sourcePage = data.pagesData[sourceId];
-				const rowIndex = (sourcePage?.rows || data.rows).findIndex(
-					(row) => row.rowId === rowId
-				);
+				const rowIndex = (
+					sourcePage?.rowsData || data.rowsData
+				).findIndex((rowData) => rowData.rowId === rowId);
 
 				// If the row was dropped on top of another row,
 				// dropTargets is an array with [row, page]
@@ -194,12 +195,13 @@ export default function Index() {
 
 				const indexOfTarget = destinationRowRecord
 					? // If the row was dropped on another row, find it's index
-					  destinationPage?.rows.findIndex(
-							(row) =>
-								row.rowId === destinationRowRecord.data.rowId
+					  destinationPage?.rowsData.findIndex(
+							(rowData) =>
+								rowData.rowId ===
+								destinationRowRecord.data.rowId
 					  )
 					: // Otherwise fallback to end of the list
-					  destinationPage?.rows.length + 1;
+					  destinationPage?.rowsData.length + 1;
 
 				const closestEdgeOfTarget: Edge | null = destinationRowRecord
 					? extractClosestEdge(destinationRowRecord.data)
@@ -257,7 +259,7 @@ export default function Index() {
 				style={{ width: panelWidth }}
 			>
 				<div className="p-4 text-xl font-bold text-center">Rows</div>
-				<Sidebar rows={data.rows} key="rows" />
+				<Sidebar rowsData={data.rowsData} key="rows" />
 			</div>
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
 				{data.pagesOrder.map((pageId) => {
@@ -266,7 +268,11 @@ export default function Index() {
 							<div className="p-4 text-xl font-bold text-center capitalize">
 								{pageId}
 							</div>
-							<Page page={data.pagesData[pageId]} key={pageId} />
+							<Page
+								key={pageId}
+								pageId={pageId}
+								rowsData={data.pagesData[pageId].rowsData}
+							/>
 						</div>
 					);
 				})}

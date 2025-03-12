@@ -18,7 +18,7 @@ import TextSelectRow from "./components/rows/Edit/textSelectRow.tsx";
 
 export function getBasePages(): PagesData {
 	return {
-		rows: [
+		rowsData: [
 			{
 				rowId: "InfoRow",
 				row: <InfoRow />,
@@ -75,11 +75,11 @@ export function getBasePages(): PagesData {
 		pagesData: {
 			"Step 1": {
 				pageId: "Step 1",
-				rows: [],
+				rowsData: [],
 			},
 			"Step 2": {
 				pageId: "Step 2",
-				rows: [],
+				rowsData: [],
 			},
 		},
 		pagesOrder: ["Step 1", "Step 2"],

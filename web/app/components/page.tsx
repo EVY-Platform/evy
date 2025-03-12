@@ -6,7 +6,7 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { Row, type RowType } from "./row.tsx";
+import { Row, type RowData } from "./row.tsx";
 
 const pageStyles = xcss({
 	width: "250px",
@@ -23,13 +23,14 @@ const rowListStyles = xcss({
 	minHeight: "100%",
 });
 
-type PageData = {
-	pageId: string;
-	rows: RowType[];
-};
 export type PagesData = {
-	rows: RowType[];
-	pagesData: { [pageId: string]: PageData };
+	rowsData: RowData[];
+	pagesData: {
+		[pageId: string]: {
+			pageId: string;
+			rowsData: RowData[];
+		};
+	};
 	pagesOrder: string[];
 };
 
@@ -48,7 +49,13 @@ const stateStyles: {
 	}),
 };
 
-export const Page = memo(function Page({ page }: { page: PageData }) {
+export const Page = memo(function Page({
+	pageId,
+	rowsData,
+}: {
+	pageId: string;
+	rowsData: RowData[];
+}) {
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
@@ -57,7 +64,7 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 		return combine(
 			dropTargetForElements({
 				element: scrollableRef.current,
-				getData: () => ({ pageId: page.pageId }),
+				getData: () => ({ pageId }),
 				canDrop: () => true,
 				onDragEnter: () => setState(isRowOver),
 				onDragLeave: () => setState(idle),
@@ -69,14 +76,16 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 				canScroll: () => true,
 			})
 		);
-	}, [page.pageId]);
+	}, [pageId]);
 
 	return (
 		<Flex direction="column" xcss={[pageStyles, stateStyles[state.type]]}>
 			<Box xcss={scrollContainerStyles} ref={scrollableRef}>
 				<Stack xcss={rowListStyles}>
-					{page.rows.map((row) => (
-						<Row row={row} key={row.rowId} />
+					{rowsData.map((rowData) => (
+						<Row key={rowData.rowId} rowId={rowData.rowId}>
+							{rowData.row}
+						</Row>
 					))}
 				</Stack>
 			</Box>

@@ -18,7 +18,7 @@ import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/externa
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 
-export type RowType = {
+export type RowData = {
 	rowId: string;
 	row: React.ReactNode;
 };
@@ -57,12 +57,12 @@ const stateStyles: {
 
 type RowPrimitiveProps = {
 	closestEdge: Edge | null;
-	row: RowType;
+	children: React.ReactNode;
 	state: State;
 };
 
 const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
-	function RowPrimitive({ closestEdge, row, state }, ref) {
+	function RowPrimitive({ closestEdge, children, state }, ref) {
 		return (
 			<Grid
 				ref={ref}
@@ -72,7 +72,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				xcss={[baseStyles, stateStyles[state.type]]}
 			>
 				<Stack space="space.050" grow="fill">
-					{row.row}
+					{children}
 				</Stack>
 
 				{closestEdge && <DropIndicator edge={closestEdge} />}
@@ -81,7 +81,13 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 	}
 );
 
-export const Row = memo(function Row({ row }: { row: RowType }) {
+export const Row = memo(function Row({
+	rowId,
+	children,
+}: {
+	rowId: string;
+	children: React.ReactNode;
+}) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 	const [state, setState] = useState<State>(idleState);
@@ -92,7 +98,7 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 		return combine(
 			draggable({
 				element: element,
-				getInitialData: () => ({ rowId: row.rowId }),
+				getInitialData: () => ({ rowId: rowId }),
 				onGenerateDragPreview: ({
 					location,
 					source,
@@ -125,7 +131,7 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 				getIsSticky: () => true,
 				getData: ({ input, element }) => {
 					return attachClosestEdge(
-						{ rowId: row.rowId },
+						{ rowId: rowId },
 						{
 							input,
 							element,
@@ -134,12 +140,12 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 					);
 				},
 				onDragEnter: (args) => {
-					if (args.source.data.rowId !== row.rowId) {
+					if (args.source.data.rowId !== rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
 				onDrag: (args) => {
-					if (args.source.data.rowId !== row.rowId) {
+					if (args.source.data.rowId !== rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
@@ -151,16 +157,13 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 				},
 			})
 		);
-	}, [row.rowId]);
+	}, [rowId]);
 
 	return (
 		<Fragment>
-			<RowPrimitive
-				ref={ref}
-				row={row}
-				state={state}
-				closestEdge={closestEdge}
-			/>
+			<RowPrimitive ref={ref} state={state} closestEdge={closestEdge}>
+				{children}
+			</RowPrimitive>
 			{state.type === "preview" &&
 				ReactDOM.createPortal(
 					<Box
@@ -170,11 +173,9 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 							height: state.rect.height,
 						}}
 					>
-						<RowPrimitive
-							row={row}
-							state={state}
-							closestEdge={null}
-						/>
+						<RowPrimitive state={state} closestEdge={null}>
+							{children}
+						</RowPrimitive>
 					</Box>,
 					state.container
 				)}
