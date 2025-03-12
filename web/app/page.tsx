@@ -11,7 +11,6 @@ import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/ad
 import { reorder } from "@atlaskit/pragmatic-drag-and-drop/reorder";
 
 import { Page } from "./components/page.tsx";
-import { type PagesData } from "./components/page.tsx";
 import { RowType } from "./components/row.tsx";
 import { Sidebar } from "./components/sidebar.tsx";
 
@@ -20,9 +19,7 @@ import { getBasePages } from "./registry.tsx";
 const panelWidth = "280px";
 
 export default function Index() {
-	const [data, setData] = useState<PagesData>(() => {
-		return getBasePages();
-	});
+	const [data, setData] = useState(getBasePages);
 
 	const reorderRow = useCallback(
 		({

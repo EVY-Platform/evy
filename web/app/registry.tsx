@@ -1,14 +1,12 @@
 "use client";
 
-import { RowType } from "./components/row.tsx";
+import { PagesData } from "./components/page.tsx";
 
 import InfoRow from "./components/rows/View/infoRow.tsx";
 import InputListRow from "./components/rows/View/inputListRow.tsx";
 import TextRow from "./components/rows/View/textRow.tsx";
-
 import ButtonRow from "./components/rows/Action/buttonRow.tsx";
 import TextActionRow from "./components/rows/Action/textActionRow.tsx";
-
 import CalendarRow from "./components/rows/Edit/calendarRow.tsx";
 import DropdownRow from "./components/rows/Edit/dropdownRow.tsx";
 import InlinePickerRow from "./components/rows/Edit/inlinePickerRow.tsx";
@@ -18,7 +16,7 @@ import SelectPhotoRow from "./components/rows/Edit/selectPhotoRow.tsx";
 import TextAreaRow from "./components/rows/Edit/textAreaRow.tsx";
 import TextSelectRow from "./components/rows/Edit/textSelectRow.tsx";
 
-export function getBasePages() {
+export function getBasePages(): PagesData {
 	return {
 		rows: [
 			{
