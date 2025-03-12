@@ -49,7 +49,6 @@ const stateStyles: {
 };
 
 export const Page = memo(function Page({ page }: { page: PageData }) {
-	const pageId = page.pageId;
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
@@ -58,7 +57,7 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 		return combine(
 			dropTargetForElements({
 				element: scrollableRef.current,
-				getData: () => ({ pageId }),
+				getData: () => ({ pageId: page.pageId }),
 				canDrop: () => true,
 				onDragEnter: () => setState(isRowOver),
 				onDragLeave: () => setState(idle),
@@ -70,7 +69,7 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 				canScroll: () => true,
 			})
 		);
-	}, [pageId]);
+	}, [page.pageId]);
 
 	return (
 		<Flex direction="column" xcss={[pageStyles, stateStyles[state.type]]}>

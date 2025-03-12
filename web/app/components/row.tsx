@@ -83,7 +83,6 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 export const Row = memo(function Row({ row }: { row: RowType }) {
 	const ref = useRef<HTMLDivElement | null>(null);
-	const { rowId } = row;
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 	const [state, setState] = useState<State>(idleState);
 
@@ -93,7 +92,7 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 		return combine(
 			draggable({
 				element: element,
-				getInitialData: () => ({ rowId }),
+				getInitialData: () => ({ rowId: row.rowId }),
 				onGenerateDragPreview: ({
 					location,
 					source,
@@ -126,7 +125,7 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 				getIsSticky: () => true,
 				getData: ({ input, element }) => {
 					return attachClosestEdge(
-						{ rowId },
+						{ rowId: row.rowId },
 						{
 							input,
 							element,
@@ -135,12 +134,12 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 					);
 				},
 				onDragEnter: (args) => {
-					if (args.source.data.rowId !== rowId) {
+					if (args.source.data.rowId !== row.rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
 				onDrag: (args) => {
-					if (args.source.data.rowId !== rowId) {
+					if (args.source.data.rowId !== row.rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
@@ -152,7 +151,7 @@ export const Row = memo(function Row({ row }: { row: RowType }) {
 				},
 			})
 		);
-	}, [rowId]);
+	}, [row.rowId]);
 
 	return (
 		<Fragment>
