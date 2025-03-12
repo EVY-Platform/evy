@@ -17,9 +17,6 @@ import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indi
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
-import { token } from "@atlaskit/tokens";
-
-import { useEditorContext } from "./editor-context.tsx";
 
 export type RowType = {
 	rowId: string;
@@ -94,17 +91,6 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 	const [state, setState] = useState<State>(idleState);
 
-	const { instanceId, registerRow } = useEditorContext();
-	useEffect(() => {
-		invariant(ref.current);
-		return registerRow({
-			rowId: rowId,
-			rowEntry: {
-				element: ref.current,
-			},
-		});
-	}, [registerRow, rowId]);
-
 	useEffect(() => {
 		const element = ref.current;
 		invariant(element);
@@ -114,7 +100,6 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 				getInitialData: () => ({
 					type: "row",
 					itemId: rowId,
-					instanceId,
 				}),
 				onGenerateDragPreview: ({
 					location,
@@ -145,10 +130,7 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 			dropTargetForElements({
 				element: element,
 				canDrop: ({ source }) => {
-					return (
-						source.data.instanceId === instanceId &&
-						source.data.type === "row"
-					);
+					return source.data.type === "row";
 				},
 				getIsSticky: () => true,
 				getData: ({ input, element }) => {
@@ -178,7 +160,7 @@ export const Row = memo(function Row({ item }: { item: RowType }) {
 				},
 			})
 		);
-	}, [instanceId, item, rowId]);
+	}, [item, rowId]);
 
 	return (
 		<Fragment>

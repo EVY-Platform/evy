@@ -7,8 +7,7 @@ import invariant from "tiny-invariant";
 
 import { PageContext, type PageContextProps } from "./page-context.tsx";
 import { Row } from "./row.tsx";
-import { type PageData } from "./registry.tsx";
-import { useEditorContext } from "./editor-context.tsx";
+import { type PageData } from "./page.tsx";
 
 const sidebarStyles = xcss({
 	width: "100%",
@@ -48,8 +47,6 @@ export const Sidebar = memo(function Sidebar({ page }: { page: PageData }) {
 	const pageInnerRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
-	const { instanceId } = useEditorContext();
-
 	useEffect(() => {
 		invariant(pageInnerRef.current);
 		return combine(
@@ -57,10 +54,7 @@ export const Sidebar = memo(function Sidebar({ page }: { page: PageData }) {
 				element: pageInnerRef.current,
 				getData: () => ({ pageId }),
 				canDrop: ({ source }) => {
-					return (
-						source.data.instanceId === instanceId &&
-						source.data.type === "row"
-					);
+					return source.data.type === "row";
 				},
 				getIsSticky: () => true,
 				onDragEnter: () => setState(isRowOver),
@@ -69,7 +63,7 @@ export const Sidebar = memo(function Sidebar({ page }: { page: PageData }) {
 				onDrop: () => setState(idle),
 			})
 		);
-	}, [pageId, instanceId]);
+	}, [pageId]);
 
 	const stableItems = useRef(page.items);
 	useEffect(() => {

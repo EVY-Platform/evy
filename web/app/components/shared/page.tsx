@@ -8,8 +8,7 @@ import invariant from "tiny-invariant";
 
 import { PageContext, type PageContextProps } from "./page-context.tsx";
 import { Row } from "./row.tsx";
-import { type PageData } from "./registry.tsx";
-import { useEditorContext } from "./editor-context.tsx";
+import { RowType } from "./row.tsx";
 
 const pageStyles = xcss({
 	width: "250px",
@@ -34,6 +33,16 @@ const rowListStyles = xcss({
 	gap: "space.100",
 });
 
+export type PageData = {
+	pageId: string;
+	items: RowType[];
+};
+export type PagesData = {
+	rows: RowType[];
+	pagesData: { [pageId: string]: PageData };
+	pagesOrder: string[];
+};
+
 type State = { type: "idle" } | { type: "is-row-over" };
 
 // preventing re-renders with stable state objects
@@ -55,8 +64,6 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
-	const { instanceId } = useEditorContext();
-
 	useEffect(() => {
 		invariant(pageInnerRef.current);
 		invariant(scrollableRef.current);
@@ -65,10 +72,7 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 				element: pageInnerRef.current,
 				getData: () => ({ pageId }),
 				canDrop: ({ source }) => {
-					return (
-						source.data.instanceId === instanceId &&
-						source.data.type === "row"
-					);
+					return source.data.type === "row";
 				},
 				getIsSticky: () => true,
 				onDragEnter: () => setState(isRowOver),
@@ -78,12 +82,10 @@ export const Page = memo(function Page({ page }: { page: PageData }) {
 			}),
 			autoScrollForElements({
 				element: scrollableRef.current,
-				canScroll: ({ source }) =>
-					source.data.instanceId === instanceId &&
-					source.data.type === "row",
+				canScroll: ({ source }) => source.data.type === "row",
 			})
 		);
-	}, [pageId, instanceId]);
+	}, [pageId]);
 
 	const stableItems = useRef(page.items);
 	useEffect(() => {

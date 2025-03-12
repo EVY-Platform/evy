@@ -18,28 +18,6 @@ import SelectPhotoRow from "../rows/Edit/selectPhotoRow.tsx";
 import TextAreaRow from "../rows/Edit/textAreaRow.tsx";
 import TextSelectRow from "../rows/Edit/textSelectRow.tsx";
 
-type RowEntry = {
-	element: HTMLElement;
-};
-
-export type RegisterRowArgs = {
-	rowId: string;
-	rowEntry: RowEntry;
-};
-export type Registry = {
-	registerRow: (args: RegisterRowArgs) => () => void;
-};
-
-export type PageData = {
-	pageId: string;
-	items: RowType[];
-};
-export type PagesData = {
-	rows: RowType[];
-	pagesData: { [pageId: string]: PageData };
-	pagesOrder: string[];
-};
-
 export function getBasePages() {
 	// const rows = [
 	// 	InfoRow,
@@ -188,17 +166,4 @@ export function getBasePages() {
 		},
 		pagesOrder: ["Step 1", "Step 2"],
 	};
-}
-
-export default function createRegistry(): Registry {
-	const rows = new Map<string, RowEntry>();
-
-	function registerRow({ rowId, rowEntry }: RegisterRowArgs): () => void {
-		rows.set(rowId, rowEntry);
-		return function cleanup() {
-			rows.delete(rowId);
-		};
-	}
-
-	return { registerRow };
 }
