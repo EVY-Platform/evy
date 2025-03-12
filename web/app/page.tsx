@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import invariant from "tiny-invariant";
 
@@ -23,11 +23,6 @@ export default function Index() {
 	const [data, setData] = useState<PagesData>(() => {
 		return sampleData;
 	});
-
-	const stableData = useRef(data);
-	useEffect(() => {
-		stableData.current = data;
-	}, [data]);
 
 	const reorderRow = useCallback(
 		({
