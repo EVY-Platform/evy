@@ -33,12 +33,12 @@ export const CancelOverlay = memo(function CancelOverlay() {
 	return (
 		<Fragment>
 			<div
-				className="flex absolute w-full h-full opacity-50"
+				className="flex absolute w-full h-full opacity-60"
 				style={{
 					backgroundColor:
 						state.type === idle.type
-							? "var(--color-evy-gray)"
-							: "var(--color-evy-blue)",
+							? "var(--color-evy-editor-hover)"
+							: "var(--color-evy-gray)",
 				}}
 			/>
 			<div

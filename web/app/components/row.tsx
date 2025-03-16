@@ -24,8 +24,8 @@ export type RowData = {
 
 type State =
 	| { type: "idle" }
-	| { type: "preview"; container: HTMLElement | null; rect: DOMRect | null }
-	| { type: "dragging" };
+	| { type: "dragging" }
+	| { type: "preview"; container: HTMLElement | null; rect: DOMRect | null };
 
 const idleState: State = { type: "idle" };
 const draggingState: State = { type: "dragging" };
@@ -39,12 +39,6 @@ type RowPrimitiveProps = {
 
 const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 	function RowPrimitive({ closestEdge, children, state }, ref) {
-		const opacity = {
-			[previewState.type]: "0.8",
-			[draggingState.type]: "0.4",
-			[idleState.type]: "1",
-		}[state.type];
-
 		const cursor = {
 			[previewState.type]: "pointer",
 			[draggingState.type]: "pointer",
@@ -53,8 +47,8 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		return (
 			<div
-				className="flex flex-col w-full bg-white relative hover:bg-evy-blue"
-				style={{ cursor, opacity }}
+				className="flex flex-col w-full bg-white relative hover:bg-evy-editor-hover"
+				style={{ cursor }}
 				ref={ref}
 			>
 				{children}
