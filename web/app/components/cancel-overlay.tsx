@@ -1,7 +1,6 @@
 import { Fragment, memo, useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
-import { Box, xcss } from "@atlaskit/primitives";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
@@ -9,34 +8,6 @@ type State = { type: "idle" } | { type: "hovered" };
 
 const idleState: State = { type: "idle" };
 const hoveredState: State = { type: "hovered" };
-
-const baseStyles = xcss({
-	position: "absolute",
-	width: "100%",
-	height: "100%",
-	opacity: 0.8,
-});
-
-const imageContainerStyles = xcss({
-	position: "absolute",
-	width: "100%",
-	height: "100%",
-	display: "flex",
-	alignItems: "start",
-	justifyContent: "center",
-	paddingTop: "space.1000",
-});
-
-const stateStyles: {
-	[Key in State["type"]]: ReturnType<typeof xcss> | undefined;
-} = {
-	idle: xcss({
-		backgroundColor: "color.background.disabled",
-	}),
-	hovered: xcss({
-		backgroundColor: "color.background.selected.hovered",
-	}),
-};
 
 export const CancelOverlay = memo(function CancelOverlay() {
 	const ref = useRef<HTMLDivElement | null>(null);
@@ -61,10 +32,21 @@ export const CancelOverlay = memo(function CancelOverlay() {
 
 	return (
 		<Fragment>
-			<Box xcss={[baseStyles, stateStyles[state.type]]} />
-			<Box xcss={imageContainerStyles} ref={ref}>
-				<img className="h-32" src="/bin.svg" alt="Delete" />
-			</Box>
+			<div
+				className="flex absolute w-full h-full opacity-50"
+				style={{
+					backgroundColor:
+						state === idleState
+							? "var(--color-evy-gray)"
+							: "var(--color-evy-blue)",
+				}}
+			/>
+			<div
+				className="flex absolute w-full h-full items-start justify-center pt-32"
+				ref={ref}
+			>
+				<img className="h-48" src="/bin.svg" alt="Delete" />
+			</div>
 		</Fragment>
 	);
 });
