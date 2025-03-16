@@ -6,12 +6,12 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 
 type State = { type: "idle" } | { type: "hovered" };
 
-const idleState: State = { type: "idle" };
-const hoveredState: State = { type: "hovered" };
+const idle: State = { type: "idle" };
+const hovered: State = { type: "hovered" };
 
 export const CancelOverlay = memo(function CancelOverlay() {
 	const ref = useRef<HTMLDivElement | null>(null);
-	const [state, setState] = useState<State>(idleState);
+	const [state, setState] = useState<State>(idle);
 
 	useEffect(() => {
 		const element = ref.current;
@@ -21,10 +21,10 @@ export const CancelOverlay = memo(function CancelOverlay() {
 				element: element,
 				canDrop: () => true,
 				onDragEnter: () => {
-					setState(hoveredState);
+					setState(hovered);
 				},
 				onDragLeave: () => {
-					setState(idleState);
+					setState(idle);
 				},
 			})
 		);
@@ -36,7 +36,7 @@ export const CancelOverlay = memo(function CancelOverlay() {
 				className="flex absolute w-full h-full opacity-50"
 				style={{
 					backgroundColor:
-						state === idleState
+						state === idle
 							? "var(--color-evy-gray)"
 							: "var(--color-evy-blue)",
 				}}
