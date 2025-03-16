@@ -20,6 +20,7 @@ const panelWidth = "280px";
 
 export default function Index() {
 	const [data, setData] = useState(getBasePages);
+	const [dragging, setDragging] = useState<boolean>(false);
 
 	const reorderRow = useCallback(
 		({
@@ -258,8 +259,12 @@ export default function Index() {
 				className="border-r overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
-				<div className="p-4 text-xl font-bold text-center">Rows</div>
-				<Sidebar key="rows" rowsData={data.rowsData} />
+				<Sidebar
+					key="rows"
+					rowsData={data.rowsData}
+					dragging={dragging}
+					onDrag={setDragging}
+				/>
 			</div>
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
 				{data.pagesOrder.map((pageId) => {
@@ -271,6 +276,7 @@ export default function Index() {
 							<Page
 								pageId={pageId}
 								rowsData={data.pagesData[pageId].rowsData}
+								onDrag={setDragging}
 							/>
 						</div>
 					);

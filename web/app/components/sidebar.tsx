@@ -1,13 +1,15 @@
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef } from "react";
 
+import { Box, Flex, Stack, xcss } from "@atlaskit/primitives";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { Flex, Stack, xcss } from "@atlaskit/primitives";
 import invariant from "tiny-invariant";
 
 import { Row, type RowData } from "./row.tsx";
+import { CancelOverlay } from "./cancel-overlay.tsx";
 
 const sidebarStyles = xcss({
+	position: "relative",
 	width: "100%",
 	backgroundColor: "elevation.surface.sunken",
 });
@@ -19,28 +21,22 @@ const rowListStyles = xcss({
 	gap: "space.100",
 });
 
-type State = { type: "idle" } | { type: "is-row-over" };
-
-// preventing re-renders with stable state objects
-const idle: State = { type: "idle" };
-const isRowOver: State = { type: "is-row-over" };
-
-const stateStyles: {
-	[key in State["type"]]: ReturnType<typeof xcss> | undefined;
-} = {
-	idle: xcss({}),
-	"is-row-over": xcss({
-		backgroundColor: "color.background.selected.hovered",
-	}),
-};
+const overlayStyles = xcss({
+	position: "absolute",
+	width: "100%",
+	height: "100%",
+});
 
 export const Sidebar = memo(function Sidebar({
 	rowsData,
+	dragging,
+	onDrag,
 }: {
 	rowsData: RowData[];
+	dragging: boolean;
+	onDrag: (dragging: boolean) => void;
 }) {
 	const pageInnerRef = useRef<HTMLDivElement | null>(null);
-	const [state, setState] = useState<State>(idle);
 
 	useEffect(() => {
 		invariant(pageInnerRef.current);
@@ -49,17 +45,16 @@ export const Sidebar = memo(function Sidebar({
 				element: pageInnerRef.current,
 				getData: () => ({ pageId: "rows" }),
 				canDrop: () => true,
-				onDragEnter: () => setState(isRowOver),
-				onDragLeave: () => setState(idle),
-				onDragStart: () => setState(isRowOver),
-				onDrop: () => setState(idle),
+				onDragStart: () => onDrag(true),
+				onDrop: () => onDrag(false),
 			})
 		);
 	}, []);
 
 	return (
-		<Flex xcss={[sidebarStyles, stateStyles[state.type]]}>
+		<Flex xcss={sidebarStyles}>
 			<Stack ref={pageInnerRef}>
+				<div className="p-4 text-xl font-bold text-center">Rows</div>
 				<Stack xcss={rowListStyles} space="space.100">
 					{rowsData.map((rowData) => (
 						<Row key={rowData.rowId} rowId={rowData.rowId}>
@@ -67,6 +62,11 @@ export const Sidebar = memo(function Sidebar({
 						</Row>
 					))}
 				</Stack>
+				{dragging && (
+					<Box xcss={overlayStyles}>
+						<CancelOverlay />
+					</Box>
+				)}
 			</Stack>
 		</Flex>
 	);

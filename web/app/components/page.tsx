@@ -52,9 +52,11 @@ const stateStyles: {
 export const Page = memo(function Page({
 	pageId,
 	rowsData,
+	onDrag,
 }: {
 	pageId: string;
 	rowsData: RowData[];
+	onDrag: (dragging: boolean) => void;
 }) {
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
@@ -68,8 +70,14 @@ export const Page = memo(function Page({
 				canDrop: () => true,
 				onDragEnter: () => setState(isRowOver),
 				onDragLeave: () => setState(idle),
-				onDragStart: () => setState(isRowOver),
-				onDrop: () => setState(idle),
+				onDragStart: () => {
+					setState(isRowOver);
+					onDrag(true);
+				},
+				onDrop: () => {
+					setState(idle);
+					onDrag(false);
+				},
 			}),
 			autoScrollForElements({
 				element: scrollableRef.current,
