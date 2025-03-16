@@ -12,7 +12,7 @@ export default function InlinePickerRow() {
 			<div className="p-2 flex gap-2">
 				<button
 					type="button"
-					className={`${sharedStyles} bg-evy-light-gray text-black`}
+					className={`${sharedStyles} bg-evy-gray-light text-black`}
 				>
 					1 min
 				</button>
@@ -24,7 +24,7 @@ export default function InlinePickerRow() {
 				</button>
 				<button
 					type="button"
-					className={`${sharedStyles} bg-evy-light-gray text-black`}
+					className={`${sharedStyles} bg-evy-gray-light text-black`}
 				>
 					5 min
 				</button>

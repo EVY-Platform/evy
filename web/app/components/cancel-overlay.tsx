@@ -36,7 +36,7 @@ export const CancelOverlay = memo(function CancelOverlay() {
 				className="flex absolute w-full h-full opacity-50"
 				style={{
 					backgroundColor:
-						state === idle
+						state.type === idle.type
 							? "var(--color-evy-gray)"
 							: "var(--color-evy-blue)",
 				}}

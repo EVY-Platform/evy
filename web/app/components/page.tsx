@@ -1,27 +1,11 @@
 import { memo, useEffect, useRef, useState } from "react";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import { Box, Flex, Stack, xcss } from "@atlaskit/primitives";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
 import { Row, type RowData } from "./row.tsx";
-
-const pageStyles = xcss({
-	width: "250px",
-	backgroundColor: "elevation.surface.sunken",
-});
-
-const scrollContainerStyles = xcss({
-	height: "480px",
-	overflowY: "auto",
-});
-
-const rowListStyles = xcss({
-	boxSizing: "border-box",
-	minHeight: "100%",
-});
 
 export type PagesData = {
 	rowsData: RowData[];
@@ -36,18 +20,8 @@ export type PagesData = {
 
 type State = { type: "idle" } | { type: "is-row-over" };
 
-// preventing re-renders with stable state objects
 const idle: State = { type: "idle" };
 const isRowOver: State = { type: "is-row-over" };
-
-const stateStyles: {
-	[key in State["type"]]: ReturnType<typeof xcss> | undefined;
-} = {
-	idle: xcss({}),
-	"is-row-over": xcss({
-		backgroundColor: "color.background.selected.hovered",
-	}),
-};
 
 export const Page = memo(function Page({
 	pageId,
@@ -87,16 +61,23 @@ export const Page = memo(function Page({
 	}, [pageId]);
 
 	return (
-		<Flex direction="column" xcss={[pageStyles, stateStyles[state.type]]}>
-			<Box xcss={scrollContainerStyles} ref={scrollableRef}>
-				<Stack xcss={rowListStyles}>
-					{rowsData.map((rowData) => (
-						<Row key={rowData.rowId} rowId={rowData.rowId}>
-							{rowData.row}
-						</Row>
-					))}
-				</Stack>
-			</Box>
-		</Flex>
+		<div
+			className="flex flex-col w-62"
+			style={{
+				backgroundColor:
+					state.type === idle.type
+						? "var(--color-evy-gray-light)"
+						: "var(--color-evy-blue)",
+				opacity: state.type === idle.type ? "1" : "0.5",
+			}}
+		>
+			<div className="flex flex-col h-120" ref={scrollableRef}>
+				{rowsData.map((rowData) => (
+					<Row key={rowData.rowId} rowId={rowData.rowId}>
+						{rowData.row}
+					</Row>
+				))}
+			</div>
+		</div>
 	);
 });
