@@ -7,7 +7,6 @@ import {
 	type Edge,
 	extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import { Box, Grid, Stack, xcss } from "@atlaskit/primitives";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
 	draggable,
@@ -25,35 +24,12 @@ export type RowData = {
 
 type State =
 	| { type: "idle" }
-	| { type: "preview"; container: HTMLElement; rect: DOMRect }
+	| { type: "preview"; container: HTMLElement | null; rect: DOMRect | null }
 	| { type: "dragging" };
 
 const idleState: State = { type: "idle" };
 const draggingState: State = { type: "dragging" };
-
-const baseStyles = xcss({
-	width: "100%",
-	backgroundColor: "elevation.surface",
-	position: "relative",
-	":hover": {
-		backgroundColor: "color.background.selected.hovered",
-	},
-});
-
-const stateStyles: {
-	[Key in State["type"]]: ReturnType<typeof xcss> | undefined;
-} = {
-	idle: xcss({
-		cursor: "grab",
-		boxShadow: "elevation.shadow.raised",
-	}),
-	dragging: xcss({
-		opacity: 0.4,
-		boxShadow: "elevation.shadow.raised",
-	}),
-	// no shadow for preview - the platform will add it's own drop shadow
-	preview: undefined,
-};
+const previewState: State = { type: "preview", container: null, rect: null };
 
 type RowPrimitiveProps = {
 	closestEdge: Edge | null;
@@ -63,20 +39,27 @@ type RowPrimitiveProps = {
 
 const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 	function RowPrimitive({ closestEdge, children, state }, ref) {
-		return (
-			<Grid
-				ref={ref}
-				templateColumns="auto 1fr auto"
-				columnGap="space.100"
-				alignItems="center"
-				xcss={[baseStyles, stateStyles[state.type]]}
-			>
-				<Stack space="space.050" grow="fill">
-					{children}
-				</Stack>
+		const opacity = {
+			[previewState.type]: "0.8",
+			[draggingState.type]: "0.4",
+			[idleState.type]: "1",
+		}[state.type];
 
+		const cursor = {
+			[previewState.type]: "pointer",
+			[draggingState.type]: "pointer",
+			[idleState.type]: "grab",
+		}[state.type];
+
+		return (
+			<div
+				className="flex flex-col w-full bg-white relative hover:bg-evy-blue"
+				style={{ cursor, opacity }}
+				ref={ref}
+			>
+				{children}
 				{closestEdge && <DropIndicator edge={closestEdge} />}
-			</Grid>
+			</div>
 		);
 	}
 );
@@ -165,10 +148,12 @@ export const Row = memo(function Row({
 				{children}
 			</RowPrimitive>
 			{state.type === "preview" &&
+				state.rect &&
+				state.container &&
 				ReactDOM.createPortal(
-					<Box
+					<div
+						className="flex flex-col"
 						style={{
-							boxSizing: "border-box",
 							width: state.rect.width,
 							height: state.rect.height,
 						}}
@@ -176,7 +161,7 @@ export const Row = memo(function Row({
 						<RowPrimitive state={state} closestEdge={null}>
 							{children}
 						</RowPrimitive>
-					</Box>,
+					</div>,
 					state.container
 				)}
 		</Fragment>
