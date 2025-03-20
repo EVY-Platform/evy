@@ -5,7 +5,7 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { Row, type RowData } from "./row.tsx";
+import { Row, type RowData, type RowConfig } from "./row.tsx";
 
 export type PagesData = {
 	rowsData: RowData[];
@@ -27,10 +27,12 @@ export const Page = memo(function Page({
 	pageId,
 	rowsData,
 	onDrag,
+	selectRow,
 }: {
 	pageId: string;
 	rowsData: RowData[];
 	onDrag: (dragging: boolean) => void;
+	selectRow: (configuration: RowConfig) => void;
 }) {
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
@@ -73,7 +75,13 @@ export const Page = memo(function Page({
 				}}
 			>
 				{rowsData.map((rowData) => (
-					<Row key={rowData.rowId} rowId={rowData.rowId}>
+					<Row
+						key={rowData.rowId}
+						rowId={rowData.rowId}
+						selectRow={() => {
+							selectRow(rowData.config);
+						}}
+					>
 						{rowData.row}
 					</Row>
 				))}

@@ -1,5 +1,6 @@
 import React from "react";
 import Input from "../../input.tsx";
+import { RowConfig } from "../../row.tsx";
 
 export default function InputListRow() {
 	return (
@@ -10,7 +11,7 @@ export default function InputListRow() {
 	);
 }
 
-export const config = [
+export const config: RowConfig = [
 	{
 		id: "title",
 		type: "text",

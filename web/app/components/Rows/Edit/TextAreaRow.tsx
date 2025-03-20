@@ -1,4 +1,5 @@
 import React from "react";
+import { RowConfig } from "../../row";
 
 export default function TextAreaRow() {
 	return (
@@ -14,7 +15,7 @@ export default function TextAreaRow() {
 	);
 }
 
-export const config = [
+export const config: RowConfig = [
 	{
 		id: "title",
 		type: "text",

@@ -1,4 +1,5 @@
 import React from "react";
+import { RowConfig } from "../../row";
 
 export default function InlinePickerRow() {
 	const sharedStyles = "rounded-md text-sm px-3 py-3";
@@ -29,7 +30,7 @@ export default function InlinePickerRow() {
 	);
 }
 
-export const config = [
+export const config: RowConfig = [
 	{
 		id: "title",
 		type: "text",

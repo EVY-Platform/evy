@@ -1,4 +1,5 @@
 import React from "react";
+import { RowConfig } from "../../row";
 
 export default function ButtonRow() {
 	return (
@@ -13,7 +14,7 @@ export default function ButtonRow() {
 	);
 }
 
-export const config = [
+export const config: RowConfig = [
 	{
 		id: "text",
 		type: "text",

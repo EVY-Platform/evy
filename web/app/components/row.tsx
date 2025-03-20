@@ -17,9 +17,16 @@ import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/externa
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 
+export type RowConfig = {
+	id: string;
+	type: string;
+	value?: string;
+}[];
+
 export type RowData = {
 	rowId: string;
 	row: React.ReactNode;
+	config: RowConfig;
 };
 
 type State =
@@ -35,10 +42,11 @@ type RowPrimitiveProps = {
 	closestEdge: Edge | null;
 	children: React.ReactNode;
 	state: State;
+	selectRow?: () => void;
 };
 
 const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
-	function RowPrimitive({ closestEdge, children, state }, ref) {
+	function RowPrimitive({ closestEdge, children, state, selectRow }, ref) {
 		const cursor = {
 			[previewState.type]: "pointer",
 			[draggingState.type]: "pointer",
@@ -50,6 +58,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				className="flex flex-col w-full bg-white relative hover:bg-evy-editor-hover"
 				style={{ cursor }}
 				ref={ref}
+				onClick={() => selectRow && selectRow()}
 			>
 				{children}
 				{closestEdge && <DropIndicator edge={closestEdge} />}
@@ -61,9 +70,11 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 export const Row = memo(function Row({
 	rowId,
 	children,
+	selectRow,
 }: {
 	rowId: string;
 	children: React.ReactNode;
+	selectRow: () => void;
 }) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
@@ -138,7 +149,12 @@ export const Row = memo(function Row({
 
 	return (
 		<Fragment>
-			<RowPrimitive ref={ref} state={state} closestEdge={closestEdge}>
+			<RowPrimitive
+				ref={ref}
+				state={state}
+				closestEdge={closestEdge}
+				selectRow={selectRow}
+			>
 				{children}
 			</RowPrimitive>
 			{state.type === "preview" &&

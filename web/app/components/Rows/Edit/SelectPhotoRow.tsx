@@ -1,4 +1,5 @@
 import React from "react";
+import { RowConfig } from "../../row";
 
 export default function SelectPhotoRow() {
 	return (
@@ -15,7 +16,7 @@ export default function SelectPhotoRow() {
 	);
 }
 
-export const config = [
+export const config: RowConfig = [
 	{
 		id: "content",
 		type: "text",

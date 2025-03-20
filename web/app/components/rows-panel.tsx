@@ -7,7 +7,7 @@ import invariant from "tiny-invariant";
 import { Row, type RowData } from "./row.tsx";
 import { CancelOverlay } from "./cancel-overlay.tsx";
 
-export const Sidebar = memo(function Sidebar({
+export const RowsPanel = memo(function RowsPanel({
 	rowsData,
 	dragging,
 	onDrag,

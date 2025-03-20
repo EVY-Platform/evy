@@ -10,9 +10,10 @@ import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hi
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { reorder } from "@atlaskit/pragmatic-drag-and-drop/reorder";
 
+import { ConfigurationPanel } from "./components/configuration-panel.tsx";
 import { Page } from "./components/page.tsx";
-import { RowData } from "./components/row.tsx";
-import { Sidebar } from "./components/sidebar.tsx";
+import { RowData, RowConfig } from "./components/row.tsx";
+import { RowsPanel } from "./components/rows-panel.tsx";
 
 import { getBasePages } from "./registry.tsx";
 
@@ -21,6 +22,9 @@ const panelWidth = "280px";
 export default function Index() {
 	const [data, setData] = useState(getBasePages);
 	const [dragging, setDragging] = useState<boolean>(false);
+	const [activeConfiguration, setActiveConfiguration] = useState<
+		RowConfig | undefined
+	>();
 
 	const reorderRow = useCallback(
 		({
@@ -137,6 +141,7 @@ export default function Index() {
 				const rowData: RowData = {
 					...data.rowsData[rowIndexAtStartPage],
 					rowId: crypto.randomUUID(),
+					config: data.rowsData[rowIndexAtStartPage].config,
 				};
 
 				const updatedItems = [
@@ -251,7 +256,7 @@ export default function Index() {
 				}
 			},
 		});
-	}, [data, moveRow, reorderRow]);
+	}, [data]);
 
 	return (
 		<>
@@ -259,7 +264,7 @@ export default function Index() {
 				className="border-r overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
-				<Sidebar
+				<RowsPanel
 					key="rows"
 					rowsData={data.rowsData}
 					dragging={dragging}
@@ -278,6 +283,7 @@ export default function Index() {
 								pageId={pageId}
 								rowsData={data.pagesData[pageId].rowsData}
 								onDrag={setDragging}
+								selectRow={setActiveConfiguration}
 							/>
 						</div>
 					);
@@ -287,9 +293,10 @@ export default function Index() {
 				className="border-l overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
-				<div className="p-4 text-xl font-bold text-center">
-					Configuration
-				</div>
+				<ConfigurationPanel
+					key="configuration"
+					configuration={activeConfiguration}
+				/>
 			</div>
 		</>
 	);
