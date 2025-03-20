@@ -9,7 +9,11 @@ type State = { type: "idle" } | { type: "hovered" };
 const idle: State = { type: "idle" };
 const hovered: State = { type: "hovered" };
 
-export const CancelOverlay = memo(function CancelOverlay() {
+export const CancelOverlay = memo(function CancelOverlay({
+	dismiss,
+}: {
+	dismiss: () => void;
+}) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
@@ -44,6 +48,7 @@ export const CancelOverlay = memo(function CancelOverlay() {
 			<div
 				className="flex absolute w-full h-full items-start justify-center pt-32"
 				ref={ref}
+				onClick={dismiss}
 			>
 				<img className="h-48" src="/bin.svg" alt="Delete" />
 			</div>

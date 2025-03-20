@@ -264,6 +264,7 @@ export default function Index() {
 					rowsData={data.rowsData}
 					dragging={dragging}
 					onDrag={setDragging}
+					dismiss={() => setDragging(false)}
 				/>
 			</div>
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">

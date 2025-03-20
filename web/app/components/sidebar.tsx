@@ -11,10 +11,12 @@ export const Sidebar = memo(function Sidebar({
 	rowsData,
 	dragging,
 	onDrag,
+	dismiss,
 }: {
 	rowsData: RowData[];
 	dragging: boolean;
 	onDrag: (dragging: boolean) => void;
+	dismiss: () => void;
 }) {
 	const pageInnerRef = useRef<HTMLDivElement | null>(null);
 
@@ -42,7 +44,7 @@ export const Sidebar = memo(function Sidebar({
 						</Row>
 					))}
 				</div>
-				{dragging && <CancelOverlay />}
+				{dragging && <CancelOverlay dismiss={dismiss} />}
 			</div>
 		</div>
 	);
