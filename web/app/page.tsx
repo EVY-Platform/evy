@@ -269,10 +269,10 @@ export default function Index() {
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
 				{data.pagesOrder.map((pageId) => {
 					return (
-						<div key={pageId}>
-							<div className="p-4 text-xl font-bold text-center capitalize">
-								{pageId}
-							</div>
+						<div
+							key={pageId}
+							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-84 h-205"
+						>
 							<Page
 								pageId={pageId}
 								rowsData={data.pagesData[pageId].rowsData}

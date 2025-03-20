@@ -61,21 +61,23 @@ export const Page = memo(function Page({
 	}, [pageId]);
 
 	return (
-		<div
-			className="flex flex-col w-62 h-120 overflow-scroll"
-			ref={scrollableRef}
-			style={{
-				backgroundColor:
-					state.type === idle.type
-						? "var(--color-evy-gray-light)"
-						: "var(--color-evy-editor-hover)",
-			}}
-		>
-			{rowsData.map((rowData) => (
-				<Row key={rowData.rowId} rowId={rowData.rowId}>
-					{rowData.row}
-				</Row>
-			))}
+		<div className="overflow-hidden h-165 p-7 pt-18">
+			<div
+				className="overflow-scroll h-full rounded-b-[2.4rem]"
+				ref={scrollableRef}
+				style={{
+					backgroundColor:
+						state.type === idle.type
+							? "white"
+							: "var(--color-evy-editor-hover)",
+				}}
+			>
+				{rowsData.map((rowData) => (
+					<Row key={rowData.rowId} rowId={rowData.rowId}>
+						{rowData.row}
+					</Row>
+				))}
+			</div>
 		</div>
 	);
 });
