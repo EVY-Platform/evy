@@ -1,10 +1,6 @@
 import React from "react";
-// import { dragging, configuration } from "../../Draggable.tsx";
 
 export default function InlinePickerRow() {
-	// if (dragging.value === "InlinePickerRow") {
-	// 	configuration.value = [{ id: "title", type: "text" }];
-	// }
 	const sharedStyles = "rounded-md text-sm px-3 py-3";
 	return (
 		<div className="p-2">
@@ -32,3 +28,10 @@ export default function InlinePickerRow() {
 		</div>
 	);
 }
+
+export const config = [
+	{
+		id: "title",
+		type: "text",
+	},
+];

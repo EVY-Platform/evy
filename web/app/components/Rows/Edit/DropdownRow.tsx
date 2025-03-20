@@ -1,12 +1,7 @@
 import React from "react";
 import Input from "../../input.tsx";
 
-// import { dragging, configuration } from "../../Draggable.tsx";
-
 export default function DropdownRow() {
-	// if (dragging.value === "DropdownRow") {
-	// 	configuration.value = [{ id: "title", type: "text" }];
-	// }
 	return (
 		<div className="p-2">
 			<p className="pb-2">Dropdown row</p>
@@ -19,3 +14,10 @@ export default function DropdownRow() {
 		</div>
 	);
 }
+
+export const config = [
+	{
+		id: "title",
+		type: "text",
+	},
+];

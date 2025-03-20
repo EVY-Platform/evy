@@ -1,15 +1,7 @@
 import React from "react";
 import Input from "../../input.tsx";
 
-// import { dragging, configuration } from "../../Draggable.tsx";
-
 export default function SearchRow() {
-	// if (dragging.value === "SearchRow") {
-	// 	configuration.value = [
-	// 		{ id: "title", type: "text" },
-	// 		{ id: "placeholder", type: "text" },
-	// 	];
-	// }
 	return (
 		<div className="p-2">
 			<p className="pb-2">Search row</p>
@@ -22,3 +14,14 @@ export default function SearchRow() {
 		</div>
 	);
 }
+
+export const config = [
+	{
+		id: "title",
+		type: "text",
+	},
+	{
+		id: "placeholder",
+		type: "text",
+	},
+];

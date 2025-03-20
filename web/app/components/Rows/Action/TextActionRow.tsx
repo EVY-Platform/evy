@@ -1,14 +1,6 @@
 import React from "react";
-// import { dragging, configuration } from "../../Draggable.tsx";
 
 export default function TextActionRow() {
-	// if (dragging.value === "TextActionRow") {
-	// 	configuration.value = [
-	// 		{ id: "title", type: "text" },
-	// 		{ id: "placeholder", type: "text" },
-	// 		{ id: "action", type: "text" },
-	// 	];
-	// }
 	return (
 		<div className="p-2">
 			<p className="pb-2">Text action row title</p>
@@ -21,3 +13,18 @@ export default function TextActionRow() {
 		</div>
 	);
 }
+
+export const config = [
+	{
+		id: "title",
+		type: "text",
+	},
+	{
+		id: "placeholder",
+		type: "text",
+	},
+	{
+		id: "action",
+		type: "text",
+	},
+];

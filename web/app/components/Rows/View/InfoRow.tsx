@@ -1,14 +1,6 @@
 import React from "react";
-// import { dragging, configuration } from "../../Draggable.tsx";
 
 export default function InfoRow() {
-	// if (dragging.value === "InfoRow") {
-	// 	configuration.value = [
-	// 		{ id: "title", type: "text" },
-	// 		{ id: "info", type: "text" },
-	// 	];
-	// }
-
 	return (
 		<div className="p-2">
 			<p className="pb-2">Info row title</p>
@@ -19,3 +11,14 @@ export default function InfoRow() {
 		</div>
 	);
 }
+
+export const config = [
+	{
+		id: "title",
+		type: "text",
+	},
+	{
+		id: "info",
+		type: "text",
+	},
+];

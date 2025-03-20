@@ -1,9 +1,6 @@
 import React from "react";
 
 export default function ButtonRow() {
-	// if (dragging.value === "ButtonRow") {
-	// 	configuration.value = [{ id: "text", type: "text" }];
-	// }
 	return (
 		<div className="p-2 flex justify-center">
 			<button
@@ -15,3 +12,10 @@ export default function ButtonRow() {
 		</div>
 	);
 }
+
+export const config = [
+	{
+		id: "text",
+		type: "text",
+	},
+];
