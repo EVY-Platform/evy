@@ -82,6 +82,8 @@ export default function Index() {
 					rowIndexInFinishPage ?? destinationItems.length;
 				destinationItems.splice(newIndexInDestination, 0, rowData);
 
+				setActiveConfiguration(rowData.config);
+
 				return {
 					...data,
 					pagesData: {
@@ -149,6 +151,8 @@ export default function Index() {
 					rowData,
 					...sourcePage.rowsData.slice(rowIndexInFinishPage),
 				];
+
+				setActiveConfiguration(rowData.config);
 
 				return {
 					...data,
