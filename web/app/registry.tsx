@@ -1,7 +1,7 @@
 "use client";
 
-import { PagesData } from "./components/page.tsx";
-import { RowData, RowConfig } from "./components/row.tsx";
+import { PageData } from "./components/page.tsx";
+import { RowData } from "./components/row.tsx";
 
 import InfoRow, {
 	config as InfoRowConfig,
@@ -43,20 +43,17 @@ import TextSelectRow, {
 	config as TextSelectRowConfig,
 } from "./components/rows/Edit/textSelectRow.tsx";
 
-export function getPages(): PagesData {
-	return {
-		pagesData: {
-			"Step 1": {
-				pageId: "Step 1",
-				rowsData: [],
-			},
-			"Step 2": {
-				pageId: "Step 2",
-				rowsData: [],
-			},
+export function getPages(): PageData[] {
+	return [
+		{
+			pageId: "Step 1",
+			rowsData: [],
 		},
-		pagesOrder: ["Step 1", "Step 2"],
-	};
+		{
+			pageId: "Step 2",
+			rowsData: [],
+		},
+	];
 }
 
 export function getBaseRows(): RowData[] {

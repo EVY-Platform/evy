@@ -7,14 +7,9 @@ import invariant from "tiny-invariant";
 
 import { Row, type RowData, type RowConfig } from "./row.tsx";
 
-export type PagesData = {
-	pagesData: {
-		[pageId: string]: {
-			pageId: string;
-			rowsData: RowData[];
-		};
-	};
-	pagesOrder: string[];
+export type PageData = {
+	pageId: string;
+	rowsData: RowData[];
 };
 
 type State = { type: "idle" } | { type: "is-row-over" };
