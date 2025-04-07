@@ -16,7 +16,7 @@ export const ConfigurationPanel = memo(function ConfigurationPanel({
 				{configuration?.map((c) => {
 					if (c.type === "text") {
 						return (
-							<form className="grid">
+							<form className="grid" key={c.id}>
 								<label htmlFor={c.id}>{c.id}</label>
 								<input
 									id={c.id}
