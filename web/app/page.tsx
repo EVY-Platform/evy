@@ -20,8 +20,8 @@ import { getPages, getBaseRows } from "./registry.tsx";
 const panelWidth = "280px";
 
 export default function Index() {
-	const [data, setData] = useState(getPages);
-	const [baseRows, setBaseRows] = useState(getBaseRows);
+	const [pages, setPages] = useState(getPages);
+	const [baseRows, _] = useState(getBaseRows);
 	const [dragging, setDragging] = useState<boolean>(false);
 	const [activeConfiguration, setActiveConfiguration] = useState<
 		RowConfig | undefined
@@ -37,8 +37,8 @@ export default function Index() {
 			startIndex: number;
 			finishIndex: number;
 		}) => {
-			setData((data) => {
-				const sourcePage = data.pagesData[pageId];
+			setPages((pages) => {
+				const sourcePage = pages.pagesData[pageId];
 				const updatedItems = reorder({
 					list: sourcePage.rowsData,
 					startIndex,
@@ -46,9 +46,9 @@ export default function Index() {
 				});
 
 				return {
-					...data,
+					...pages,
 					pagesData: {
-						...data.pagesData,
+						...pages.pagesData,
 						[pageId]: {
 							...sourcePage,
 							rowsData: updatedItems,
@@ -72,9 +72,9 @@ export default function Index() {
 			rowIndexInStartPage: number;
 			rowIndexInFinishPage?: number;
 		}) => {
-			setData((data) => {
-				const sourcePage = data.pagesData[startPageId];
-				const destinationPage = data.pagesData[finishPageId];
+			setPages((pages) => {
+				const sourcePage = pages.pagesData[startPageId];
+				const destinationPage = pages.pagesData[finishPageId];
 				const rowData: RowData =
 					sourcePage.rowsData[rowIndexInStartPage];
 
@@ -86,9 +86,9 @@ export default function Index() {
 				setActiveConfiguration(rowData.config);
 
 				return {
-					...data,
+					...pages,
 					pagesData: {
-						...data.pagesData,
+						...pages.pagesData,
 						[startPageId]: {
 							...sourcePage,
 							rowsData: (sourcePage?.rowsData || baseRows).filter(
@@ -108,14 +108,14 @@ export default function Index() {
 
 	const removeRow = useCallback(
 		({ pageId, index }: { pageId: string; index: number }) => {
-			setData((data) => {
-				const sourcePage = data.pagesData[pageId];
+			setPages((pages) => {
+				const sourcePage = pages.pagesData[pageId];
 				const rowData: RowData = sourcePage.rowsData[index];
 
 				return {
-					...data,
+					...pages,
 					pagesData: {
-						...data.pagesData,
+						...pages.pagesData,
 						[pageId]: {
 							...sourcePage,
 							rowsData: sourcePage.rowsData.filter(
@@ -139,8 +139,8 @@ export default function Index() {
 			rowIndexAtStartPage: number;
 			rowIndexInFinishPage: number;
 		}) => {
-			setData((data) => {
-				const sourcePage = data.pagesData[pageId];
+			setPages((pages) => {
+				const sourcePage = pages.pagesData[pageId];
 				const rowData: RowData = {
 					...baseRows[rowIndexAtStartPage],
 					rowId: crypto.randomUUID(),
@@ -156,9 +156,9 @@ export default function Index() {
 				setActiveConfiguration(rowData.config);
 
 				return {
-					...data,
+					...pages,
 					pagesData: {
-						...data.pagesData,
+						...pages.pagesData,
 						[pageId]: {
 							...sourcePage,
 							rowsData: updatedItems,
@@ -185,7 +185,7 @@ export default function Index() {
 				const sourceId = startPageRecord.data.pageId;
 				invariant(typeof sourceId === "string");
 
-				const sourcePage = data.pagesData[sourceId];
+				const sourcePage = pages.pagesData[sourceId];
 				const rowIndex = (sourcePage?.rowsData || baseRows).findIndex(
 					(rowData) => rowData.rowId === rowId
 				);
@@ -202,7 +202,7 @@ export default function Index() {
 
 				const destinationPageId = destinationPageRecord.data
 					.pageId as string;
-				const destinationPage = data.pagesData[destinationPageId];
+				const destinationPage = pages.pagesData[destinationPageId];
 
 				const indexOfTarget = destinationRowRecord
 					? // If the row was dropped on another row, find it's index
@@ -261,7 +261,7 @@ export default function Index() {
 				}
 			},
 		});
-	}, [data]);
+	}, [pages]);
 
 	return (
 		<>
@@ -278,7 +278,7 @@ export default function Index() {
 				/>
 			</div>
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
-				{data.pagesOrder.map((pageId) => {
+				{pages.pagesOrder.map((pageId) => {
 					return (
 						<div
 							key={pageId}
@@ -286,7 +286,7 @@ export default function Index() {
 						>
 							<Page
 								pageId={pageId}
-								rowsData={data.pagesData[pageId].rowsData}
+								rowsData={pages.pagesData[pageId].rowsData}
 								onDrag={setDragging}
 								selectRow={setActiveConfiguration}
 							/>
