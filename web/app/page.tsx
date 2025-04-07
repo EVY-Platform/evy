@@ -38,27 +38,15 @@ export default function Index() {
 			startIndex: number;
 			finishIndex: number;
 		}) => {
-			setPages((pages) => {
-				const sourcePage = pages.pagesData[pageId];
-				const updatedItems = reorder({
-					list: sourcePage.rowsData,
-					startIndex,
-					finishIndex,
-				});
-
-				return {
-					...pages,
-					pagesData: {
-						...pages.pagesData,
-						[pageId]: {
-							...sourcePage,
-							rowsData: updatedItems,
-						},
-					},
-				};
+			pages.pagesData[pageId].rowsData = reorder({
+				list: pages.pagesData[pageId].rowsData,
+				startIndex,
+				finishIndex,
 			});
+
+			setPages(pages);
 		},
-		[]
+		[pages]
 	);
 
 	const moveRow = useCallback(
@@ -73,61 +61,36 @@ export default function Index() {
 			rowIndexInStartPage: number;
 			rowIndexInFinishPage?: number;
 		}) => {
-			setPages((pages) => {
-				const sourcePage = pages.pagesData[startPageId];
-				const destinationPage = pages.pagesData[finishPageId];
-				const rowData: RowData =
-					sourcePage.rowsData[rowIndexInStartPage];
+			const sourcePage = pages.pagesData[startPageId];
+			const destinationPage = pages.pagesData[finishPageId];
+			const rowData: RowData = sourcePage.rowsData[rowIndexInStartPage];
 
-				const destinationItems = Array.from(destinationPage.rowsData);
-				const newIndexInDestination =
-					rowIndexInFinishPage ?? destinationItems.length;
-				destinationItems.splice(newIndexInDestination, 0, rowData);
+			const destinationItems = Array.from(destinationPage.rowsData);
+			const newIndexInDestination =
+				rowIndexInFinishPage ?? destinationItems.length;
+			destinationItems.splice(newIndexInDestination, 0, rowData);
 
-				setActiveConfiguration(rowData.config);
+			pages.pagesData[startPageId].rowsData = pages.pagesData[
+				startPageId
+			].rowsData = pages.pagesData[startPageId].rowsData.filter(
+				(_, idx) => idx !== rowIndexInStartPage
+			);
+			pages.pagesData[finishPageId].rowsData = destinationItems;
 
-				return {
-					...pages,
-					pagesData: {
-						...pages.pagesData,
-						[startPageId]: {
-							...sourcePage,
-							rowsData: (sourcePage?.rowsData || baseRows).filter(
-								(rd) => rd.rowId !== rowData.rowId
-							),
-						},
-						[finishPageId]: {
-							...destinationPage,
-							rowsData: destinationItems,
-						},
-					},
-				};
-			});
+			setActiveConfiguration(rowData.config);
+			setPages(pages);
 		},
-		[]
+		[pages]
 	);
 
 	const removeRow = useCallback(
 		({ pageId, index }: { pageId: string; index: number }) => {
-			setPages((pages) => {
-				const sourcePage = pages.pagesData[pageId];
-				const rowData: RowData = sourcePage.rowsData[index];
-
-				return {
-					...pages,
-					pagesData: {
-						...pages.pagesData,
-						[pageId]: {
-							...sourcePage,
-							rowsData: sourcePage.rowsData.filter(
-								(rd) => rd.rowId !== rowData.rowId
-							),
-						},
-					},
-				};
-			});
+			pages.pagesData[pageId].rowsData = pages.pagesData[
+				pageId
+			].rowsData.filter((_, idx) => idx !== index);
+			setPages(pages);
 		},
-		[]
+		[pages]
 	);
 
 	const addRow = useCallback(
@@ -140,35 +103,23 @@ export default function Index() {
 			rowIndexAtStartPage: number;
 			rowIndexInFinishPage: number;
 		}) => {
-			setPages((pages) => {
-				const sourcePage = pages.pagesData[pageId];
-				const rowData: RowData = {
-					...baseRows[rowIndexAtStartPage],
-					rowId: crypto.randomUUID(),
-					config: baseRows[rowIndexAtStartPage].config,
-				};
+			const sourcePage = pages.pagesData[pageId];
+			const rowData: RowData = {
+				...baseRows[rowIndexAtStartPage],
+				rowId: crypto.randomUUID(),
+				config: baseRows[rowIndexAtStartPage].config,
+			};
 
-				const updatedItems = [
-					...sourcePage.rowsData.slice(0, rowIndexInFinishPage),
-					rowData,
-					...sourcePage.rowsData.slice(rowIndexInFinishPage),
-				];
+			pages.pagesData[pageId].rowsData = [
+				...sourcePage.rowsData.slice(0, rowIndexInFinishPage),
+				rowData,
+				...sourcePage.rowsData.slice(rowIndexInFinishPage),
+			];
 
-				setActiveConfiguration(rowData.config);
-
-				return {
-					...pages,
-					pagesData: {
-						...pages.pagesData,
-						[pageId]: {
-							...sourcePage,
-							rowsData: updatedItems,
-						},
-					},
-				};
-			});
+			setActiveConfiguration(rowData.config);
+			setPages(pages);
 		},
-		[]
+		[pages]
 	);
 
 	useEffect(() => {
