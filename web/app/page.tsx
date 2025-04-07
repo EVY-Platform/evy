@@ -22,7 +22,7 @@ const panelWidth = "280px";
 export default function Index() {
 	const baseRows = useMemo(() => getBaseRows(), []);
 
-	const [pages, setPages] = useState(getPages);
+	const [pages, setPages] = useState(getPages());
 	const [dragging, setDragging] = useState<boolean>(false);
 	const [activeConfiguration, setActiveConfiguration] = useState<
 		RowConfig | undefined
