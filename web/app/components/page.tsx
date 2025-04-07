@@ -8,7 +8,6 @@ import invariant from "tiny-invariant";
 import { Row, type RowData, type RowConfig } from "./row.tsx";
 
 export type PagesData = {
-	rowsData: RowData[];
 	pagesData: {
 		[pageId: string]: {
 			pageId: string;

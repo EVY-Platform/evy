@@ -15,12 +15,13 @@ import { Page } from "./components/page.tsx";
 import { RowData, RowConfig } from "./components/row.tsx";
 import { RowsPanel } from "./components/rows-panel.tsx";
 
-import { getBasePages } from "./registry.tsx";
+import { getPages, getBaseRows } from "./registry.tsx";
 
 const panelWidth = "280px";
 
 export default function Index() {
-	const [data, setData] = useState(getBasePages);
+	const [data, setData] = useState(getPages);
+	const [baseRows, setBaseRows] = useState(getBaseRows);
 	const [dragging, setDragging] = useState<boolean>(false);
 	const [activeConfiguration, setActiveConfiguration] = useState<
 		RowConfig | undefined
@@ -90,9 +91,9 @@ export default function Index() {
 						...data.pagesData,
 						[startPageId]: {
 							...sourcePage,
-							rowsData: (
-								sourcePage?.rowsData || data.rowsData
-							).filter((rd) => rd.rowId !== rowData.rowId),
+							rowsData: (sourcePage?.rowsData || baseRows).filter(
+								(rd) => rd.rowId !== rowData.rowId
+							),
 						},
 						[finishPageId]: {
 							...destinationPage,
@@ -141,9 +142,9 @@ export default function Index() {
 			setData((data) => {
 				const sourcePage = data.pagesData[pageId];
 				const rowData: RowData = {
-					...data.rowsData[rowIndexAtStartPage],
+					...baseRows[rowIndexAtStartPage],
 					rowId: crypto.randomUUID(),
-					config: data.rowsData[rowIndexAtStartPage].config,
+					config: baseRows[rowIndexAtStartPage].config,
 				};
 
 				const updatedItems = [
@@ -185,9 +186,9 @@ export default function Index() {
 				invariant(typeof sourceId === "string");
 
 				const sourcePage = data.pagesData[sourceId];
-				const rowIndex = (
-					sourcePage?.rowsData || data.rowsData
-				).findIndex((rowData) => rowData.rowId === rowId);
+				const rowIndex = (sourcePage?.rowsData || baseRows).findIndex(
+					(rowData) => rowData.rowId === rowId
+				);
 
 				// If the row was dropped on top of another row,
 				// dropTargets is an array with [row, page]
@@ -270,7 +271,7 @@ export default function Index() {
 			>
 				<RowsPanel
 					key="rows"
-					rowsData={data.rowsData}
+					rowsData={baseRows}
 					dragging={dragging}
 					onDrag={setDragging}
 					dismiss={() => setDragging(false)}

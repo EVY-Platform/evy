@@ -1,6 +1,7 @@
 "use client";
 
 import { PagesData } from "./components/page.tsx";
+import { RowData, RowConfig } from "./components/row.tsx";
 
 import InfoRow, {
 	config as InfoRowConfig,
@@ -42,75 +43,8 @@ import TextSelectRow, {
 	config as TextSelectRowConfig,
 } from "./components/rows/Edit/textSelectRow.tsx";
 
-export function getBasePages(): PagesData {
+export function getPages(): PagesData {
 	return {
-		rowsData: [
-			{
-				rowId: "InfoRow",
-				row: <InfoRow />,
-				config: InfoRowConfig,
-			},
-			{
-				rowId: "TextRow",
-				row: <TextRow />,
-				config: TextRowConfig,
-			},
-			{
-				rowId: "InputListRow",
-				row: <InputListRow />,
-				config: InputListRowConfig,
-			},
-			{
-				rowId: "ButtonRow",
-				row: <ButtonRow />,
-				config: ButtonRowConfig,
-			},
-			{
-				rowId: "TextActionRow",
-				row: <TextActionRow />,
-				config: TextActionRowConfig,
-			},
-			{
-				rowId: "CalendarRow",
-				row: <CalendarRow />,
-				config: CalendarRowConfig,
-			},
-			{
-				rowId: "DropdownRow",
-				row: <DropdownRow />,
-				config: DropdownRowConfig,
-			},
-			{
-				rowId: "InlinePickerRow",
-				row: <InlinePickerRow />,
-				config: InlinePickerRowConfig,
-			},
-			{
-				rowId: "InputRow",
-				row: <InputRow />,
-				config: InputRowConfig,
-			},
-			{
-				rowId: "SearchRow",
-				row: <SearchRow />,
-				config: SearchRowConfig,
-			},
-			{
-				rowId: "SelectPhotoRow",
-				row: <SelectPhotoRow />,
-				config: SelectPhotoRowConfig,
-			},
-			{
-				rowId: "TextAreaRow",
-				row: <TextAreaRow />,
-				config: TextAreaRowConfig,
-			},
-			{
-				rowId: "TextSelectRow",
-				row: <TextSelectRow />,
-				config: TextSelectRowConfig,
-			},
-		],
 		pagesData: {
 			"Step 1": {
 				pageId: "Step 1",
@@ -123,4 +57,74 @@ export function getBasePages(): PagesData {
 		},
 		pagesOrder: ["Step 1", "Step 2"],
 	};
+}
+
+export function getBaseRows(): RowData[] {
+	return [
+		{
+			rowId: "InfoRow",
+			row: <InfoRow />,
+			config: InfoRowConfig,
+		},
+		{
+			rowId: "TextRow",
+			row: <TextRow />,
+			config: TextRowConfig,
+		},
+		{
+			rowId: "InputListRow",
+			row: <InputListRow />,
+			config: InputListRowConfig,
+		},
+		{
+			rowId: "ButtonRow",
+			row: <ButtonRow />,
+			config: ButtonRowConfig,
+		},
+		{
+			rowId: "TextActionRow",
+			row: <TextActionRow />,
+			config: TextActionRowConfig,
+		},
+		{
+			rowId: "CalendarRow",
+			row: <CalendarRow />,
+			config: CalendarRowConfig,
+		},
+		{
+			rowId: "DropdownRow",
+			row: <DropdownRow />,
+			config: DropdownRowConfig,
+		},
+		{
+			rowId: "InlinePickerRow",
+			row: <InlinePickerRow />,
+			config: InlinePickerRowConfig,
+		},
+		{
+			rowId: "InputRow",
+			row: <InputRow />,
+			config: InputRowConfig,
+		},
+		{
+			rowId: "SearchRow",
+			row: <SearchRow />,
+			config: SearchRowConfig,
+		},
+		{
+			rowId: "SelectPhotoRow",
+			row: <SelectPhotoRow />,
+			config: SelectPhotoRowConfig,
+		},
+		{
+			rowId: "TextAreaRow",
+			row: <TextAreaRow />,
+			config: TextAreaRowConfig,
+		},
+		{
+			rowId: "TextSelectRow",
+			row: <TextSelectRow />,
+			config: TextSelectRowConfig,
+		},
+	];
 }
