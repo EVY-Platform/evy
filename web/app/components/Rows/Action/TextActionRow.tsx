@@ -19,11 +19,11 @@ export default function TextActionRow({ rowId }: { rowId: string }) {
 			<div className="flex justify-between">
 				<p className="text-evy-light">
 					{row?.config.find((c) => c.id === "placeholder")?.value ??
-						"Text action row placeholder"}
+						"Placeholder"}
 				</p>
 				<button type="button" className="text-evy-blue">
 					{row?.config.find((c) => c.id === "action")?.value ??
-						"Text action row action"}
+						"Action"}
 				</button>
 			</div>
 		</div>
@@ -39,11 +39,11 @@ export const config: RowConfig = [
 	{
 		id: "placeholder",
 		type: "text",
-		value: "Text action row placeholder",
+		value: "Placeholder",
 	},
 	{
 		id: "action",
 		type: "text",
-		value: "Text action row action",
+		value: "Action",
 	},
 ];
