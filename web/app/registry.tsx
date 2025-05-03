@@ -1,7 +1,15 @@
 "use client";
 
+import {
+	ReactNode,
+	Dispatch,
+	useReducer,
+	createContext,
+	createElement,
+} from "react";
+
 import { PageData } from "./components/page.tsx";
-import { RowData } from "./components/row.tsx";
+import { RowBaseData, RowData } from "./components/row.tsx";
 
 import InfoRow, {
 	config as InfoRowConfig,
@@ -43,8 +51,276 @@ import TextSelectRow, {
 	config as TextSelectRowConfig,
 } from "./components/rows/Edit/textSelectRow.tsx";
 
-export function getPages(): PageData[] {
-	return [
+export const baseRows: RowBaseData[] = [
+	{
+		rowId: "InfoRow",
+		row: InfoRow,
+		config: InfoRowConfig,
+	},
+	{
+		rowId: "TextRow",
+		row: TextRow,
+		config: TextRowConfig,
+	},
+	{
+		rowId: "InputListRow",
+		row: InputListRow,
+		config: InputListRowConfig,
+	},
+	{
+		rowId: "ButtonRow",
+		row: ButtonRow,
+		config: ButtonRowConfig,
+	},
+	{
+		rowId: "TextActionRow",
+		row: TextActionRow,
+		config: TextActionRowConfig,
+	},
+	{
+		rowId: "CalendarRow",
+		row: CalendarRow,
+		config: CalendarRowConfig,
+	},
+	{
+		rowId: "DropdownRow",
+		row: DropdownRow,
+		config: DropdownRowConfig,
+	},
+	{
+		rowId: "InlinePickerRow",
+		row: InlinePickerRow,
+		config: InlinePickerRowConfig,
+	},
+	{
+		rowId: "InputRow",
+		row: InputRow,
+		config: InputRowConfig,
+	},
+	{
+		rowId: "SearchRow",
+		row: SearchRow,
+		config: SearchRowConfig,
+	},
+	{
+		rowId: "SelectPhotoRow",
+		row: SelectPhotoRow,
+		config: SelectPhotoRowConfig,
+	},
+	{
+		rowId: "TextAreaRow",
+		row: TextAreaRow,
+		config: TextAreaRowConfig,
+	},
+	{
+		rowId: "TextSelectRow",
+		row: TextSelectRow,
+		config: TextSelectRowConfig,
+	},
+];
+
+type PagesState = PageData[];
+type PagesAction =
+	| {
+			type: "ADD_ROW_TO_PAGE";
+			pageId: string;
+			rowId: string;
+			rowIndexInBase: number;
+			rowIndexInFinishPage: number;
+	  }
+	| {
+			type: "MOVE_ROW_ON_PAGE";
+			startPageId: string;
+			finishPageId: string;
+			rowIndexInStartPage: number;
+			rowIndexInFinishPage: number;
+	  }
+	| {
+			type: "MOVE_ROW_TO_PAGE";
+			startPageId: string;
+			finishPageId: string;
+			rowIndexInStartPage: number;
+			rowIndexInFinishPage: number;
+	  }
+	| {
+			type: "REMOVE_ROW_FROM_PAGE";
+			pageId: string;
+			rowIndex: number;
+	  }
+	| {
+			type: "UPDATE_ROW_CONTENT";
+			pageId: string;
+			rowId: string;
+			configId: string;
+			configValue: string;
+	  };
+const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
+	switch (action.type) {
+		case "ADD_ROW_TO_PAGE":
+			const pageIndexToAdd = state.findIndex(
+				(page) => page.pageId === action.pageId
+			);
+			const baseRow = baseRows[action.rowIndexInBase];
+
+			const rowDataAdd: RowData = {
+				...baseRow,
+				rowId: action.rowId,
+				config: baseRow.config,
+				row: createElement(baseRow.row, { rowId: action.rowId }),
+			};
+
+			const newRowsDataAdd = [
+				...state[pageIndexToAdd].rowsData.slice(
+					0,
+					action.rowIndexInFinishPage
+				),
+				rowDataAdd,
+				...state[pageIndexToAdd].rowsData.slice(
+					action.rowIndexInFinishPage
+				),
+			];
+
+			return state.map((page, idx) =>
+				idx === pageIndexToAdd
+					? { ...page, rowsData: newRowsDataAdd }
+					: page
+			);
+		case "MOVE_ROW_ON_PAGE":
+			const pageIndexMove = state.findIndex(
+				(page) => page.pageId === action.startPageId
+			);
+			const newRowsData = [...state[pageIndexMove].rowsData];
+			const [movedItem] = newRowsData.splice(
+				action.rowIndexInStartPage,
+				1
+			);
+			newRowsData.splice(action.rowIndexInFinishPage, 0, movedItem);
+
+			return state.map((page, idx) =>
+				idx === pageIndexMove
+					? { ...page, rowsData: newRowsData }
+					: page
+			);
+		case "MOVE_ROW_TO_PAGE":
+			const sourcePageIndex = state.findIndex(
+				(page) => page.pageId === action.startPageId
+			);
+			const destinationPageIndex = state.findIndex(
+				(page) => page.pageId === action.finishPageId
+			);
+			const rowData =
+				state[sourcePageIndex].rowsData[action.rowIndexInStartPage];
+
+			const destinationItems = [...state[destinationPageIndex].rowsData];
+			const newIndexInDestination = action.rowIndexInFinishPage;
+			destinationItems.splice(newIndexInDestination, 0, rowData);
+
+			return state.map((page, idx) => {
+				if (idx === sourcePageIndex) {
+					return {
+						...page,
+						rowsData: page.rowsData.filter(
+							(_, i) => i !== action.rowIndexInStartPage
+						),
+					};
+				}
+				if (idx === destinationPageIndex) {
+					return {
+						...page,
+						rowsData: destinationItems,
+					};
+				}
+				return page;
+			});
+		case "REMOVE_ROW_FROM_PAGE":
+			const pageIndex = state.findIndex(
+				(page) => page.pageId === action.pageId
+			);
+			const newRowsDataRemoved = state[pageIndex].rowsData.filter(
+				(_, idx) => idx !== action.rowIndex
+			);
+			return state.map((page, idx) =>
+				idx === pageIndex
+					? { ...page, rowsData: newRowsDataRemoved }
+					: page
+			);
+		case "UPDATE_ROW_CONTENT":
+			const pageIndexUpdate = state.findIndex(
+				(page) => page.pageId === action.pageId
+			);
+			const relevantRow = state[pageIndexUpdate].rowsData.find(
+				(row) => row.rowId === action.rowId
+			);
+			if (!relevantRow) return state;
+
+			const newConfig = relevantRow?.config.map((config) =>
+				config.id === action.configId
+					? { ...config, value: action.configValue }
+					: config
+			);
+			const newRowsDataUpdated = state[pageIndexUpdate].rowsData.map(
+				(row) =>
+					row.rowId === action.rowId
+						? { ...row, config: newConfig }
+						: row
+			);
+			return state.map((page, idx) =>
+				idx === pageIndexUpdate
+					? { ...page, rowsData: newRowsDataUpdated }
+					: page
+			);
+		default:
+			return state;
+	}
+};
+
+type ActiveRowState =
+	| {
+			pageId: string;
+			rowId: string;
+	  }
+	| undefined;
+type ActiveRowAction =
+	| {
+			type: "ACTIVATE_ROW";
+			pageId: string;
+			rowId: string;
+	  }
+	| {
+			type: "DEACTIVATE_ROW";
+	  };
+const activeRowReducer = (
+	state: ActiveRowState,
+	action: ActiveRowAction
+): ActiveRowState => {
+	console.log(action.type);
+	switch (action.type) {
+		case "ACTIVATE_ROW":
+			return {
+				pageId: action.pageId,
+				rowId: action.rowId,
+			};
+		case "DEACTIVATE_ROW":
+			return undefined;
+		default:
+			return state;
+	}
+};
+
+export const AppContext = createContext<{
+	pages: PagesState;
+	activeRow: ActiveRowState;
+	dispatchPages: Dispatch<PagesAction>;
+	dispatchActiveRow: Dispatch<ActiveRowAction>;
+}>({
+	pages: [],
+	activeRow: undefined,
+	dispatchPages: () => {},
+	dispatchActiveRow: () => {},
+});
+
+export function AppProvider({ children }: { children: ReactNode }) {
+	const [pages, dispatchPages] = useReducer(pagesReducer, [
 		{
 			pageId: "Step 1",
 			rowsData: [],
@@ -53,75 +329,17 @@ export function getPages(): PageData[] {
 			pageId: "Step 2",
 			rowsData: [],
 		},
-	];
-}
+	]);
+	const [activeRow, dispatchActiveRow] = useReducer(
+		activeRowReducer,
+		undefined
+	);
 
-export function getBaseRows(): RowData[] {
-	return [
-		{
-			rowId: "InfoRow",
-			row: <InfoRow />,
-			config: InfoRowConfig,
-		},
-		{
-			rowId: "TextRow",
-			row: <TextRow />,
-			config: TextRowConfig,
-		},
-		{
-			rowId: "InputListRow",
-			row: <InputListRow />,
-			config: InputListRowConfig,
-		},
-		{
-			rowId: "ButtonRow",
-			row: <ButtonRow />,
-			config: ButtonRowConfig,
-		},
-		{
-			rowId: "TextActionRow",
-			row: <TextActionRow />,
-			config: TextActionRowConfig,
-		},
-		{
-			rowId: "CalendarRow",
-			row: <CalendarRow />,
-			config: CalendarRowConfig,
-		},
-		{
-			rowId: "DropdownRow",
-			row: <DropdownRow />,
-			config: DropdownRowConfig,
-		},
-		{
-			rowId: "InlinePickerRow",
-			row: <InlinePickerRow />,
-			config: InlinePickerRowConfig,
-		},
-		{
-			rowId: "InputRow",
-			row: <InputRow />,
-			config: InputRowConfig,
-		},
-		{
-			rowId: "SearchRow",
-			row: <SearchRow />,
-			config: SearchRowConfig,
-		},
-		{
-			rowId: "SelectPhotoRow",
-			row: <SelectPhotoRow />,
-			config: SelectPhotoRowConfig,
-		},
-		{
-			rowId: "TextAreaRow",
-			row: <TextAreaRow />,
-			config: TextAreaRowConfig,
-		},
-		{
-			rowId: "TextSelectRow",
-			row: <TextSelectRow />,
-			config: TextSelectRowConfig,
-		},
-	];
+	return (
+		<AppContext.Provider
+			value={{ pages, activeRow, dispatchPages, dispatchActiveRow }}
+		>
+			{children}
+		</AppContext.Provider>
+	);
 }

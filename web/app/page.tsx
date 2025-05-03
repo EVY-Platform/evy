@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 
 import invariant from "tiny-invariant";
 
@@ -8,131 +8,25 @@ import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/clo
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/types";
 import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { reorder } from "@atlaskit/pragmatic-drag-and-drop/reorder";
 
 import { ConfigurationPanel } from "./components/configuration-panel.tsx";
 import { Page } from "./components/page.tsx";
-import { RowData, RowConfig } from "./components/row.tsx";
 import { RowsPanel } from "./components/rows-panel.tsx";
 
-import { getPages, getBaseRows } from "./registry.tsx";
+import { baseRows, AppProvider, AppContext } from "./registry.tsx";
 
 const panelWidth = "280px";
 
 export default function Index() {
-	const baseRows = getBaseRows();
-
-	const [pages, setPages] = useState(getPages());
+	return (
+		<AppProvider>
+			<PageContent />
+		</AppProvider>
+	);
+}
+function PageContent() {
+	const { pages, dispatchPages, dispatchActiveRow } = useContext(AppContext);
 	const [dragging, setDragging] = useState<boolean>(false);
-	const [activeConfiguration, setActiveConfiguration] = useState<
-		RowConfig | undefined
-	>();
-
-	const reorderRow = useCallback(
-		({
-			pageId,
-			startIndex,
-			finishIndex,
-		}: {
-			pageId: string;
-			startIndex: number;
-			finishIndex: number;
-		}) => {
-			const pageIndex = pages.findIndex((page) => page.pageId === pageId);
-			pages[pageIndex].rowsData = reorder({
-				list: pages[pageIndex].rowsData,
-				startIndex,
-				finishIndex,
-			});
-
-			setPages(pages);
-		},
-		[pages]
-	);
-
-	const moveRow = useCallback(
-		({
-			startPageId,
-			finishPageId,
-			rowIndexInStartPage,
-			rowIndexInFinishPage,
-		}: {
-			startPageId: string;
-			finishPageId: string;
-			rowIndexInStartPage: number;
-			rowIndexInFinishPage?: number;
-		}) => {
-			const sourcePageIndex = pages.findIndex(
-				(page) => page.pageId === startPageId
-			);
-			const destinationPageIndex = pages.findIndex(
-				(page) => page.pageId === finishPageId
-			);
-			const rowData: RowData =
-				pages[sourcePageIndex].rowsData[rowIndexInStartPage];
-
-			const destinationItems = Array.from(
-				pages[destinationPageIndex].rowsData
-			);
-			const newIndexInDestination =
-				rowIndexInFinishPage ?? destinationItems.length;
-			destinationItems.splice(newIndexInDestination, 0, rowData);
-
-			pages[sourcePageIndex].rowsData = pages[
-				sourcePageIndex
-			].rowsData.filter((_, idx) => idx !== rowIndexInStartPage);
-			pages[destinationPageIndex].rowsData = destinationItems;
-
-			setActiveConfiguration(rowData.config);
-			setPages(pages);
-		},
-		[pages]
-	);
-
-	const removeRow = useCallback(
-		({ pageId, index }: { pageId: string; index: number }) => {
-			const pageIndex = pages.findIndex((page) => page.pageId === pageId);
-			pages[pageIndex].rowsData = pages[pageIndex].rowsData.filter(
-				(_, idx) => idx !== index
-			);
-			setPages(pages);
-		},
-		[pages]
-	);
-
-	const addRow = useCallback(
-		({
-			pageId,
-			rowIndexAtStartPage,
-			rowIndexInFinishPage,
-		}: {
-			pageId: string;
-			rowIndexAtStartPage: number;
-			rowIndexInFinishPage: number;
-		}) => {
-			const sourcePageIndex = pages.findIndex(
-				(page) => page.pageId === pageId
-			);
-			const rowData: RowData = {
-				...baseRows[rowIndexAtStartPage],
-				rowId: crypto.randomUUID(),
-				config: baseRows[rowIndexAtStartPage].config,
-			};
-
-			pages[sourcePageIndex].rowsData = [
-				...pages[sourcePageIndex].rowsData.slice(
-					0,
-					rowIndexInFinishPage
-				),
-				rowData,
-				...pages[sourcePageIndex].rowsData.slice(rowIndexInFinishPage),
-			];
-
-			setActiveConfiguration(rowData.config);
-			setPages(pages);
-		},
-		[pages]
-	);
 
 	useEffect(() => {
 		return monitorForElements({
@@ -188,19 +82,28 @@ export default function Index() {
 
 				if (destinationPageId === "rows") {
 					if (sourcePageId === destinationPageId) return;
-					removeRow({
+					dispatchPages({
+						type: "REMOVE_ROW_FROM_PAGE",
 						pageId: sourcePageId,
-						index: rowIndex,
+						rowIndex,
 					});
 				} else if (sourcePageId === "rows") {
 					const destinationIndex =
 						closestEdgeOfTarget === "bottom"
 							? indexOfTarget + 1
 							: indexOfTarget;
-					addRow({
+					const newRowId = crypto.randomUUID();
+					dispatchPages({
+						type: "ADD_ROW_TO_PAGE",
 						pageId: destinationPageId,
-						rowIndexAtStartPage: rowIndex,
+						rowId: newRowId,
+						rowIndexInBase: rowIndex,
 						rowIndexInFinishPage: destinationIndex,
+					});
+					dispatchActiveRow({
+						type: "ACTIVATE_ROW",
+						pageId: destinationPageId,
+						rowId: newRowId,
 					});
 				} else if (sourcePageId === destinationPageId) {
 					const destinationIndex = getReorderDestinationIndex({
@@ -209,10 +112,17 @@ export default function Index() {
 						closestEdgeOfTarget,
 						axis: "vertical",
 					});
-					reorderRow({
+					dispatchPages({
+						type: "MOVE_ROW_ON_PAGE",
+						startPageId: sourcePageId,
+						finishPageId: sourcePageId,
+						rowIndexInStartPage: rowIndex,
+						rowIndexInFinishPage: destinationIndex,
+					});
+					dispatchActiveRow({
+						type: "ACTIVATE_ROW",
 						pageId: sourcePageId,
-						startIndex: rowIndex,
-						finishIndex: destinationIndex,
+						rowId: rowId,
 					});
 				} else {
 					const destinationIndex =
@@ -220,16 +130,24 @@ export default function Index() {
 							? indexOfTarget + 1
 							: indexOfTarget;
 
-					moveRow({
-						rowIndexInStartPage: rowIndex,
+					dispatchPages({
+						type: "MOVE_ROW_TO_PAGE",
 						startPageId: sourcePageId,
-						finishPageId: pages[destinationPageIndex].pageId,
+						finishPageId: destinationPageId,
+						rowIndexInStartPage: rowIndex,
 						rowIndexInFinishPage: destinationIndex,
+					});
+					dispatchActiveRow({
+						type: "ACTIVATE_ROW",
+						pageId: destinationPageId,
+						rowId: rowId,
 					});
 				}
 			},
 		});
-	}, [pages]);
+	}, [pages, dispatchPages, dispatchActiveRow]);
+
+	console.log("final");
 
 	return (
 		<>
@@ -242,7 +160,7 @@ export default function Index() {
 					rowsData={baseRows}
 					dragging={dragging}
 					onDrag={setDragging}
-					dismiss={() => setDragging(false)}
+					cancel={() => setDragging(false)}
 				/>
 			</div>
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
@@ -256,7 +174,6 @@ export default function Index() {
 								pageId={page.pageId}
 								rowsData={page.rowsData}
 								onDrag={setDragging}
-								selectRow={setActiveConfiguration}
 							/>
 						</div>
 					);
@@ -266,10 +183,7 @@ export default function Index() {
 				className="border-l overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
-				<ConfigurationPanel
-					key="configuration"
-					configuration={activeConfiguration}
-				/>
+				<ConfigurationPanel key="configuration" />
 			</div>
 		</>
 	);

@@ -1,4 +1,4 @@
-import { Fragment, memo, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -9,11 +9,7 @@ type State = { type: "idle" } | { type: "hovered" };
 const idle: State = { type: "idle" };
 const hovered: State = { type: "hovered" };
 
-export const CancelOverlay = memo(function CancelOverlay({
-	dismiss,
-}: {
-	dismiss: () => void;
-}) {
+export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
@@ -54,4 +50,4 @@ export const CancelOverlay = memo(function CancelOverlay({
 			</div>
 		</Fragment>
 	);
-});
+}

@@ -1,13 +1,24 @@
-import React from "react";
-import { RowConfig } from "../../row";
+import React, { useContext } from "react";
 
-export default function TextRow() {
+import { AppContext } from "@/app/registry.tsx";
+
+import { RowConfig } from "../../row.tsx";
+
+export default function TextRow({ rowId }: { rowId: string }) {
+	const { pages } = useContext(AppContext);
+	const row = pages
+		.flatMap((page) => page.rowsData)
+		.find((r) => r.rowId === rowId);
+
 	return (
 		<div className="p-2">
-			<p className="pb-2">Text row title</p>
+			<p className="pb-2">
+				{row?.config.find((c) => c.id === "title")?.value ??
+					"Text row title"}
+			</p>
 			<p>
-				Lorem Ipsum is simply dummy text of the printing and typesetting
-				industry.
+				{row?.config.find((c) => c.id === "placeholder")?.value ??
+					"Text row placeholder"}
 			</p>
 		</div>
 	);
@@ -17,9 +28,11 @@ export const config: RowConfig = [
 	{
 		id: "title",
 		type: "text",
+		value: "Text row title",
 	},
 	{
 		id: "placeholder",
 		type: "text",
+		value: "Text row placeholder",
 	},
 ];

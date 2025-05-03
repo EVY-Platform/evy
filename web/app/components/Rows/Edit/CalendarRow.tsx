@@ -1,10 +1,20 @@
-import React from "react";
-import { RowConfig } from "../../row";
+import React, { useContext } from "react";
 
-export default function CalendarRow() {
+import { AppContext } from "@/app/registry.tsx";
+
+import { RowConfig } from "../../row.tsx";
+
+export default function CalendarRow({ rowId }: { rowId: string }) {
+	const { pages } = useContext(AppContext);
+	const row = pages
+		.flatMap((page) => page.rowsData)
+		.find((r) => r.rowId === rowId);
 	return (
 		<div className="p-2">
-			<p className="pb-2">Calendar row title</p>
+			<p className="pb-2">
+				{row?.config.find((c) => c.id === "title")?.value ??
+					"Calendar row title"}
+			</p>
 			<img
 				src="/calendar.png"
 				alt="calendar"
@@ -18,5 +28,6 @@ export const config: RowConfig = [
 	{
 		id: "title",
 		type: "text",
+		value: "Calendar row title",
 	},
 ];

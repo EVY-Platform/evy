@@ -1,11 +1,21 @@
-import React from "react";
-import { RowConfig } from "../../row";
+import React, { useContext } from "react";
 
-export default function InlinePickerRow() {
+import { AppContext } from "@/app/registry.tsx";
+
+import { RowConfig } from "../../row.tsx";
+
+export default function InlinePickerRow({ rowId }: { rowId: string }) {
+	const { pages } = useContext(AppContext);
+	const row = pages
+		.flatMap((page) => page.rowsData)
+		.find((r) => r.rowId === rowId);
 	const sharedStyles = "rounded-md text-sm px-3 py-3";
 	return (
 		<div className="p-2">
-			<p className="pb-2">Inline picker row</p>
+			<p className="pb-2">
+				{row?.config.find((c) => c.id === "title")?.value ??
+					"Inline picker row title"}
+			</p>
 			<div className="p-2 flex gap-2">
 				<button
 					type="button"
@@ -34,5 +44,6 @@ export const config: RowConfig = [
 	{
 		id: "title",
 		type: "text",
+		value: "Inline picker row title",
 	},
 ];

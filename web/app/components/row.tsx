@@ -1,4 +1,4 @@
-import { forwardRef, Fragment, memo, useEffect, useRef, useState } from "react";
+import { forwardRef, Fragment, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import invariant from "tiny-invariant";
 
@@ -20,8 +20,14 @@ import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/el
 export type RowConfig = {
 	id: string;
 	type: string;
-	value?: string;
+	value: string;
 }[];
+
+export type RowBaseData = {
+	rowId: string;
+	row: React.ComponentType<any>;
+	config: RowConfig;
+};
 
 export type RowData = {
 	rowId: string;
@@ -67,14 +73,14 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 	}
 );
 
-export const Row = memo(function Row({
+export function Row({
 	rowId,
 	children,
 	selectRow,
 }: {
 	rowId: string;
 	children: React.ReactNode;
-	selectRow: () => void;
+	selectRow?: () => void;
 }) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
@@ -176,4 +182,4 @@ export const Row = memo(function Row({
 				)}
 		</Fragment>
 	);
-});
+}

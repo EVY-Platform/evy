@@ -1,11 +1,12 @@
-import { memo, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { Row, type RowData, type RowConfig } from "./row.tsx";
+import { Row, type RowData } from "./row.tsx";
+import { AppContext } from "../registry.tsx";
 
 export type PageData = {
 	pageId: string;
@@ -17,17 +18,17 @@ type State = { type: "idle" } | { type: "is-row-over" };
 const idle: State = { type: "idle" };
 const isRowOver: State = { type: "is-row-over" };
 
-export const Page = memo(function Page({
+export function Page({
 	pageId,
 	rowsData,
 	onDrag,
-	selectRow,
 }: {
 	pageId: string;
 	rowsData: RowData[];
 	onDrag: (dragging: boolean) => void;
-	selectRow: (configuration: RowConfig) => void;
 }) {
+	const { dispatchActiveRow } = useContext(AppContext);
+
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
@@ -73,7 +74,11 @@ export const Page = memo(function Page({
 						key={rowData.rowId}
 						rowId={rowData.rowId}
 						selectRow={() => {
-							selectRow(rowData.config);
+							dispatchActiveRow({
+								type: "ACTIVATE_ROW",
+								pageId: pageId,
+								rowId: rowData.rowId,
+							});
 						}}
 					>
 						{rowData.row}
@@ -82,4 +87,4 @@ export const Page = memo(function Page({
 			</div>
 		</div>
 	);
-});
+}
