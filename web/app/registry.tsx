@@ -10,39 +10,39 @@ import {
 
 import { RowBaseData, RowData } from "./components/row.tsx";
 
-import InfoRow, { config as InfoRowConfig } from "./rows/View/infoRow.tsx";
+import InfoRow, { config as InfoRowConfig } from "./rows/view/infoRow.tsx";
 import InputListRow, {
 	config as InputListRowConfig,
-} from "./rows/View/inputListRow.tsx";
-import TextRow, { config as TextRowConfig } from "./rows/View/textRow.tsx";
+} from "./rows/view/inputListRow.tsx";
+import TextRow, { config as TextRowConfig } from "./rows/view/textRow.tsx";
 import ButtonRow, {
 	config as ButtonRowConfig,
-} from "./rows/Action/buttonRow.tsx";
+} from "./rows/action/buttonRow.tsx";
 import TextActionRow, {
 	config as TextActionRowConfig,
-} from "./rows/Action/textActionRow.tsx";
+} from "./rows/action/textActionRow.tsx";
 import CalendarRow, {
 	config as CalendarRowConfig,
-} from "./rows/Edit/calendarRow.tsx";
+} from "./rows/edit/calendarRow.tsx";
 import DropdownRow, {
 	config as DropdownRowConfig,
-} from "./rows/Edit/dropdownRow.tsx";
+} from "./rows/edit/dropdownRow.tsx";
 import InlinePickerRow, {
 	config as InlinePickerRowConfig,
-} from "./rows/Edit/inlinePickerRow.tsx";
-import InputRow, { config as InputRowConfig } from "./rows/Edit/inputRow.tsx";
+} from "./rows/edit/inlinePickerRow.tsx";
+import InputRow, { config as InputRowConfig } from "./rows/edit/inputRow.tsx";
 import SearchRow, {
 	config as SearchRowConfig,
-} from "./rows/Edit/searchRow.tsx";
+} from "./rows/edit/searchRow.tsx";
 import SelectPhotoRow, {
 	config as SelectPhotoRowConfig,
-} from "./rows/Edit/selectPhotoRow.tsx";
+} from "./rows/edit/selectPhotoRow.tsx";
 import TextAreaRow, {
 	config as TextAreaRowConfig,
-} from "./rows/Edit/textAreaRow.tsx";
+} from "./rows/edit/textAreaRow.tsx";
 import TextSelectRow, {
 	config as TextSelectRowConfig,
-} from "./rows/Edit/textSelectRow.tsx";
+} from "./rows/edit/textSelectRow.tsx";
 
 export const baseRows: RowBaseData[] = [
 	{
