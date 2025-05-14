@@ -1,6 +1,6 @@
 import Button from "@/app/rows/design-system/Button";
 import { AppContext } from "@/app/registry.tsx";
-import { RowConfig } from "@/app/components/Row";
+import { RowConfig } from "@/app/components/DraggableRowContainer";
 import { EVYRow } from "../EVYRow";
 
 export default class ButtonRow extends EVYRow {

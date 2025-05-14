@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { RowConfig } from "@/app/components/Row";
+import { RowConfig } from "@/app/components/DraggableRowContainer";
 
 export abstract class EVYRow extends React.Component<{
 	rowId: string;

@@ -8,7 +8,7 @@ import {
 	createElement,
 } from "react";
 
-import { RowBaseData, RowData } from "./components/Row.tsx";
+import { RowBaseData, RowData } from "./components/DraggableRowContainer.tsx";
 
 import InfoRow from "./rows/view/InfoRow.tsx";
 import InputListRow from "./rows/view/InputListRow.tsx";

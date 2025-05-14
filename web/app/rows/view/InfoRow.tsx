@@ -1,5 +1,5 @@
 import { AppContext } from "@/app/registry.tsx";
-import { RowConfig } from "@/app/components/Row";
+import { RowConfig } from "@/app/components/DraggableRowContainer";
 import { EVYRow } from "../EVYRow";
 
 export default class InfoRow extends EVYRow {

@@ -7,7 +7,10 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { Row, type RowData } from "./Row.tsx";
+import {
+	DraggableRowContainer,
+	type RowData,
+} from "./DraggableRowContainer.tsx";
 import { AppContext } from "../registry.tsx";
 
 type State = { type: "idle" } | { type: "is-row-over" };
@@ -67,7 +70,7 @@ export function EVYPage({
 				}}
 			>
 				{rowsData.map((rowData) => (
-					<Row
+					<DraggableRowContainer
 						key={rowData.rowId}
 						rowId={rowData.rowId}
 						selectRow={() => {
@@ -79,7 +82,7 @@ export function EVYPage({
 						}}
 					>
 						{rowData.row}
-					</Row>
+					</DraggableRowContainer>
 				))}
 			</div>
 		</div>

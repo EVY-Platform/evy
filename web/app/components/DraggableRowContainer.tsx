@@ -71,7 +71,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 	}
 );
 
-export function Row({
+export function DraggableRowContainer({
 	rowId,
 	children,
 	selectRow,

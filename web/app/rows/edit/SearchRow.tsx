@@ -1,5 +1,5 @@
 import { AppContext } from "@/app/registry.tsx";
-import { RowConfig } from "@/app/components/Row";
+import { RowConfig } from "@/app/components/DraggableRowContainer";
 import { EVYRow } from "../EVYRow";
 import Input from "@/app/rows/design-system/Input";
 import InlineIcon from "@/app/rows/design-system/InlineIcon";
