@@ -8,8 +8,6 @@ import {
 	createElement,
 } from "react";
 
-import { RowBaseData, RowData } from "./components/DraggableRowContainer.tsx";
-
 import InfoRow from "./rows/view/InfoRow.tsx";
 import InputListRow from "./rows/view/InputListRow.tsx";
 import TextRow from "./rows/view/TextRow.tsx";
@@ -23,6 +21,15 @@ import SearchRow from "./rows/edit/SearchRow.tsx";
 import SelectPhotoRow from "./rows/edit/SelectPhotoRow.tsx";
 import TextAreaRow from "./rows/edit/TextAreaRow.tsx";
 import TextSelectRow from "./rows/edit/TextSelectRow.tsx";
+import { RowConfig } from "./rows/EVYRow.tsx";
+
+export type RowBaseData = React.ComponentType<any> & { config: RowConfig };
+
+export type RowData = {
+	rowId: string;
+	row: React.ReactNode;
+	config: RowConfig;
+};
 
 export const baseRows: RowBaseData[] = [
 	InfoRow,

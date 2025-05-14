@@ -1,5 +1,10 @@
 import React, { ReactNode } from "react";
-import { RowConfig } from "@/app/components/DraggableRowContainer";
+
+export type RowConfig = {
+	id: string;
+	type: string;
+	value: string;
+}[];
 
 export abstract class EVYRow extends React.Component<{
 	rowId: string;

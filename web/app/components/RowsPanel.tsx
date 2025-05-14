@@ -6,10 +6,8 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import {
-	DraggableRowContainer,
-	type RowBaseData,
-} from "./DraggableRowContainer.tsx";
+import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
+import { type RowBaseData } from "../registry.tsx";
 import { CancelOverlay } from "./CancelOverlay.tsx";
 
 export function RowsPanel({

@@ -7,10 +7,8 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import {
-	DraggableRowContainer,
-	type RowData,
-} from "./DraggableRowContainer.tsx";
+import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
+import { type RowData } from "../registry.tsx";
 import { AppContext } from "../registry.tsx";
 
 type State = { type: "idle" } | { type: "is-row-over" };

@@ -19,20 +19,6 @@ import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/externa
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 
-export type RowConfig = {
-	id: string;
-	type: string;
-	value: string;
-}[];
-
-export type RowBaseData = React.ComponentType<any> & { config: RowConfig };
-
-export type RowData = {
-	rowId: string;
-	row: React.ReactNode;
-	config: RowConfig;
-};
-
 type State =
 	| { type: "idle" }
 	| { type: "dragging" }
