@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
+import TextArea from "@/app/design-system/text-area";
 
 export default function TextAreaRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);
@@ -15,15 +16,16 @@ export default function TextAreaRow({ rowId }: { rowId: string }) {
 				{row?.config.find((c) => c.id === "title")?.value ??
 					"Text area row title"}
 			</p>
-			<textarea
-				id="message"
-				rows={4}
-				className="block p-2 w-full text-sm rounded-sm border border-evy-border border-opacity-50 focus-visible:outline-none resize-none"
+			<TextArea
 				placeholder={
 					row?.config.find((c) => c.id === "placeholder")?.value ??
 					"Text area row placeholder"
 				}
-			></textarea>
+				value={
+					row?.config.find((c) => c.id === "value")?.value ??
+					"Text area row value"
+				}
+			/>
 		</div>
 	);
 }
@@ -38,5 +40,10 @@ export const config: RowConfig = [
 		id: "placeholder",
 		type: "text",
 		value: "Text area row placeholder",
+	},
+	{
+		id: "value",
+		type: "text",
+		value: "Text area row value",
 	},
 ];

@@ -16,7 +16,16 @@ export default function InputRow({ rowId }: { rowId: string }) {
 				{row?.config.find((c) => c.id === "title")?.value ??
 					"Input row title"}
 			</p>
-			<Input />
+			<Input
+				value={
+					row?.config.find((c) => c.id === "value")?.value ??
+					"Input row value"
+				}
+				placeholder={
+					row?.config.find((c) => c.id === "placeholder")?.value ??
+					"Input row placeholder"
+				}
+			/>
 		</div>
 	);
 }
@@ -31,5 +40,10 @@ export const config: RowConfig = [
 		id: "placeholder",
 		type: "text",
 		value: "Input row placeholder",
+	},
+	{
+		id: "value",
+		type: "text",
+		value: "Input row value",
 	},
 ];

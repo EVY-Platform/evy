@@ -1,12 +1,17 @@
+import InlineIcon from "./inline-icon";
 import Input from "./input";
 
-export default function Dropdown() {
+export default function Dropdown({
+	value,
+	placeholder,
+}: {
+	value: string;
+	placeholder: string;
+}) {
 	return (
 		<div className="relative">
-			<Input />
-			<div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-				<img className="h-4" src="/arrow_down.svg" alt="Select" />
-			</div>
+			<Input value={value} placeholder={placeholder} offset="left" />
+			<InlineIcon icon="/arrow_down.svg" alt="Select" />
 		</div>
 	);
 }

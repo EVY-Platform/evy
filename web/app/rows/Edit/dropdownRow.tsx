@@ -16,7 +16,16 @@ export default function DropdownRow({ rowId }: { rowId: string }) {
 				{row?.config.find((c) => c.id === "title")?.value ??
 					"Dropdown row title"}
 			</p>
-			<Dropdown />
+			<Dropdown
+				value={
+					row?.config.find((c) => c.id === "value")?.value ??
+					"Dropdown row value"
+				}
+				placeholder={
+					row?.config.find((c) => c.id === "placeholder")?.value ??
+					"Dropdown row placeholder"
+				}
+			/>
 		</div>
 	);
 }
@@ -26,5 +35,15 @@ export const config: RowConfig = [
 		id: "title",
 		type: "text",
 		value: "Dropdown row title",
+	},
+	{
+		id: "placeholder",
+		type: "text",
+		value: "Dropdown row placeholder",
+	},
+	{
+		id: "value",
+		type: "text",
+		value: "Dropdown row value",
 	},
 ];

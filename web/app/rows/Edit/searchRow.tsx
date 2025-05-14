@@ -3,6 +3,7 @@ import React, { useContext } from "react";
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
 import Input from "@/app/design-system/input.tsx";
+import InlineIcon from "@/app/design-system/inline-icon";
 
 export default function SearchRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);
@@ -17,10 +18,18 @@ export default function SearchRow({ rowId }: { rowId: string }) {
 					"Search row title"}
 			</p>
 			<div className="relative">
-				<div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-					<img className="h-4" src="/search.svg" alt="Search" />
-				</div>
-				<Input />
+				<InlineIcon icon="/search.svg" alt="Search" />
+				<Input
+					value={
+						row?.config.find((c) => c.id === "value")?.value ??
+						"Search row value"
+					}
+					placeholder={
+						row?.config.find((c) => c.id === "placeholder")
+							?.value ?? "Search row placeholder"
+					}
+					offset="left"
+				/>
 			</div>
 		</div>
 	);
@@ -36,5 +45,10 @@ export const config: RowConfig = [
 		id: "placeholder",
 		type: "text",
 		value: "Search row placeholder",
+	},
+	{
+		id: "value",
+		type: "text",
+		value: "Search row value",
 	},
 ];

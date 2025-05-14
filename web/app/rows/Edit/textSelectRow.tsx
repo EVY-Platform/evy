@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
+import Checkbox from "@/app/design-system/checkbox";
 
 export default function TextSelectRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);
@@ -20,12 +21,7 @@ export default function TextSelectRow({ rowId }: { rowId: string }) {
 					{row?.config.find((c) => c.id === "placeholder")?.value ??
 						"Text select row placeholder"}
 				</p>
-				<input
-					id="checkbox"
-					type="checkbox"
-					value=""
-					className="w-4 h-4 bg-evy-gray border-evy-gray rounded"
-				/>
+				<Checkbox checked={false} />
 			</div>
 		</div>
 	);

@@ -1,9 +1,23 @@
-export default function Input() {
+import { border } from "./border";
+
+export default function Input({
+	value,
+	placeholder,
+	offset = "none",
+}: {
+	value: string;
+	placeholder: string;
+	offset?: "none" | "left" | "right";
+}) {
+	const offsetClass =
+		offset === "left" ? "pl-8" : offset === "right" ? "pr-8" : "";
 	return (
 		<input
 			type="text"
-			className="w-full text-sm rounded p-2 border border-opacity-50 focus-visible:outline-none"
+			className={`w-full text-sm ${border} focus-visible:outline-none ${offsetClass}`}
 			required
+			value={value}
+			placeholder={placeholder}
 		/>
 	);
 }
