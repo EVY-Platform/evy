@@ -25,58 +25,19 @@ import TextAreaRow from "./rows/edit/TextAreaRow.tsx";
 import TextSelectRow from "./rows/edit/TextSelectRow.tsx";
 
 export const baseRows: RowBaseData[] = [
-	{
-		rowId: "InfoRow",
-		row: InfoRow,
-	},
-	{
-		rowId: "TextRow",
-		row: TextRow,
-	},
-	{
-		rowId: "InputListRow",
-		row: InputListRow,
-	},
-	{
-		rowId: "ButtonRow",
-		row: ButtonRow,
-	},
-	{
-		rowId: "TextActionRow",
-		row: TextActionRow,
-	},
-	{
-		rowId: "CalendarRow",
-		row: CalendarRow,
-	},
-	{
-		rowId: "DropdownRow",
-		row: DropdownRow,
-	},
-	{
-		rowId: "InlinePickerRow",
-		row: InlinePickerRow,
-	},
-	{
-		rowId: "InputRow",
-		row: InputRow,
-	},
-	{
-		rowId: "SearchRow",
-		row: SearchRow,
-	},
-	{
-		rowId: "SelectPhotoRow",
-		row: SelectPhotoRow,
-	},
-	{
-		rowId: "TextAreaRow",
-		row: TextAreaRow,
-	},
-	{
-		rowId: "TextSelectRow",
-		row: TextSelectRow,
-	},
+	InfoRow,
+	TextRow,
+	InputListRow,
+	ButtonRow,
+	TextActionRow,
+	CalendarRow,
+	DropdownRow,
+	InlinePickerRow,
+	InputRow,
+	SearchRow,
+	SelectPhotoRow,
+	TextAreaRow,
+	TextSelectRow,
 ];
 
 type PagesState = {
@@ -128,8 +89,8 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 			const rowDataAdd: RowData = {
 				...baseRow,
 				rowId: action.rowId,
-				config: baseRow.row.config,
-				row: createElement(baseRow.row, { rowId: action.rowId }),
+				config: baseRow.config,
+				row: createElement(baseRow, { rowId: action.rowId }),
 			};
 
 			const newRowsDataAdd = [

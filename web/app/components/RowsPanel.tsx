@@ -42,13 +42,14 @@ export function RowsPanel({
 				<div className="flex flex-col min-h-full p-2 gap-2">
 					{rowsData.map((rowData) => {
 						const props = Object.fromEntries(
-							rowData.row.config.map((c) => [c.id, c.value])
+							rowData.config.map((c) => [c.id, c.value])
 						);
+						const RowComponent = rowData;
 						return (
-							<Row key={rowData.rowId} rowId={rowData.rowId}>
-								<rowData.row
-									key={rowData.rowId}
-									rowId={rowData.rowId}
+							<Row key={rowData.name} rowId={rowData.name}>
+								<RowComponent
+									key={rowData.name}
+									rowId={rowData.name}
 									{...props}
 								/>
 							</Row>

@@ -48,7 +48,10 @@ function PageContent() {
 				);
 				const rowIndex = (
 					pages[sourcePageIndex]?.rowsData || baseRows
-				).findIndex((rowData) => rowData.rowId === rowId);
+				).findIndex((rowData) => {
+					if (!rowData || typeof rowData !== "function") return false;
+					return (rowData as { name: string }).name === rowId;
+				});
 
 				// If the row was dropped on top of another row,
 				// dropTargets is an array with [row, page]
