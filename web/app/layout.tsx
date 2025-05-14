@@ -21,7 +21,9 @@ export default function RootLayout({
 			<body>
 				<div className="h-screen flex flex-col overflow-hidden">
 					<div className="border-b p-4">
-						<Logo />
+						<a href="/">
+							<img className="h-4" src="/logo.svg" alt="EVY" />
+						</a>
 					</div>
 					<div className="flex flex-1 overflow-hidden">
 						{children}

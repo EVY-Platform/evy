@@ -10,45 +10,39 @@ import {
 
 import { RowBaseData, RowData } from "./components/row.tsx";
 
-import InfoRow, {
-	config as InfoRowConfig,
-} from "./components/rows/View/infoRow.tsx";
+import InfoRow, { config as InfoRowConfig } from "./rows/View/infoRow.tsx";
 import InputListRow, {
 	config as InputListRowConfig,
-} from "./components/rows/View/inputListRow.tsx";
-import TextRow, {
-	config as TextRowConfig,
-} from "./components/rows/View/textRow.tsx";
+} from "./rows/View/inputListRow.tsx";
+import TextRow, { config as TextRowConfig } from "./rows/View/textRow.tsx";
 import ButtonRow, {
 	config as ButtonRowConfig,
-} from "./components/rows/Action/buttonRow.tsx";
+} from "./rows/Action/buttonRow.tsx";
 import TextActionRow, {
 	config as TextActionRowConfig,
-} from "./components/rows/Action/textActionRow.tsx";
+} from "./rows/Action/textActionRow.tsx";
 import CalendarRow, {
 	config as CalendarRowConfig,
-} from "./components/rows/Edit/calendarRow.tsx";
+} from "./rows/Edit/calendarRow.tsx";
 import DropdownRow, {
 	config as DropdownRowConfig,
-} from "./components/rows/Edit/dropdownRow.tsx";
+} from "./rows/Edit/dropdownRow.tsx";
 import InlinePickerRow, {
 	config as InlinePickerRowConfig,
-} from "./components/rows/Edit/inlinePickerRow.tsx";
-import InputRow, {
-	config as InputRowConfig,
-} from "./components/rows/Edit/inputRow.tsx";
+} from "./rows/Edit/inlinePickerRow.tsx";
+import InputRow, { config as InputRowConfig } from "./rows/Edit/inputRow.tsx";
 import SearchRow, {
 	config as SearchRowConfig,
-} from "./components/rows/Edit/searchRow.tsx";
+} from "./rows/Edit/searchRow.tsx";
 import SelectPhotoRow, {
 	config as SelectPhotoRowConfig,
-} from "./components/rows/Edit/selectPhotoRow.tsx";
+} from "./rows/Edit/selectPhotoRow.tsx";
 import TextAreaRow, {
 	config as TextAreaRowConfig,
-} from "./components/rows/Edit/textAreaRow.tsx";
+} from "./rows/Edit/textAreaRow.tsx";
 import TextSelectRow, {
 	config as TextSelectRowConfig,
-} from "./components/rows/Edit/textSelectRow.tsx";
+} from "./rows/Edit/textSelectRow.tsx";
 
 export const baseRows: RowBaseData[] = [
 	{

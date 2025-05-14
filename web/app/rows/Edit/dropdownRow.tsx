@@ -1,11 +1,10 @@
 import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
-import Input from "@/app/design-system/input.tsx";
+import { RowConfig } from "@/app/components/row.tsx";
+import Dropdown from "@/app/design-system/dropdown";
 
-import { RowConfig } from "../../row.tsx";
-
-export default function InputRow({ rowId }: { rowId: string }) {
+export default function DropdownRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);
 	const row = pages
 		.flatMap((page) => page.rowsData)
@@ -15,9 +14,9 @@ export default function InputRow({ rowId }: { rowId: string }) {
 		<div className="p-2">
 			<p className="pb-2">
 				{row?.config.find((c) => c.id === "title")?.value ??
-					"Input row title"}
+					"Dropdown row title"}
 			</p>
-			<Input />
+			<Dropdown />
 		</div>
 	);
 }
@@ -26,11 +25,6 @@ export const config: RowConfig = [
 	{
 		id: "title",
 		type: "text",
-		value: "Input row title",
-	},
-	{
-		id: "placeholder",
-		type: "text",
-		value: "Input row placeholder",
+		value: "Dropdown row title",
 	},
 ];

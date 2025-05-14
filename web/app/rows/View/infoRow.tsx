@@ -1,10 +1,9 @@
 import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
+import { RowConfig } from "@/app/components/row.tsx";
 
-import { RowConfig } from "../../row.tsx";
-
-export default function TextRow({ rowId }: { rowId: string }) {
+export default function InfoRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);
 	const row = pages
 		.flatMap((page) => page.rowsData)
@@ -14,11 +13,11 @@ export default function TextRow({ rowId }: { rowId: string }) {
 		<div className="p-2">
 			<p className="pb-2">
 				{row?.config.find((c) => c.id === "title")?.value ??
-					"Text row title"}
+					"Info row title"}
 			</p>
-			<p>
-				{row?.config.find((c) => c.id === "placeholder")?.value ??
-					"Text row placeholder"}
+			<p className="text-evy-light">
+				{row?.config.find((c) => c.id === "info")?.value ??
+					"Info row info"}
 			</p>
 		</div>
 	);
@@ -28,11 +27,11 @@ export const config: RowConfig = [
 	{
 		id: "title",
 		type: "text",
-		value: "Text row title",
+		value: "Info row title",
 	},
 	{
-		id: "placeholder",
+		id: "info",
 		type: "text",
-		value: "Text row placeholder",
+		value: "Info row info",
 	},
 ];

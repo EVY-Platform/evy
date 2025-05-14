@@ -1,8 +1,7 @@
 import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
-
-import { RowConfig } from "../../row.tsx";
+import { RowConfig } from "@/app/components/row.tsx";
 
 export default function TextActionRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);
@@ -21,7 +20,7 @@ export default function TextActionRow({ rowId }: { rowId: string }) {
 					{row?.config.find((c) => c.id === "placeholder")?.value ??
 						"Placeholder"}
 				</p>
-				<button type="button" className="text-evy-blue">
+				<button className="text-evy-blue">
 					{row?.config.find((c) => c.id === "action")?.value ??
 						"Action"}
 				</button>

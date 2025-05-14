@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 
 import Button from "@/app/design-system/button.tsx";
 import { AppContext } from "@/app/registry.tsx";
-import { RowConfig } from "../../row.tsx";
+import { RowConfig } from "@/app/components/row.tsx";
 
 export default function ButtonRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);

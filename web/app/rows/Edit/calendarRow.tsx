@@ -1,8 +1,7 @@
 import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
-
-import { RowConfig } from "../../row.tsx";
+import { RowConfig } from "@/app/components/row.tsx";
 
 export default function CalendarRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);
