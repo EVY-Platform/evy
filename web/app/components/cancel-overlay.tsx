@@ -1,3 +1,5 @@
+"use client";
+
 import { Fragment, useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 

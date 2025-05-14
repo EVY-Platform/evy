@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef } from "react";
 
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";

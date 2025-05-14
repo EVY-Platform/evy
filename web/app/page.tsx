@@ -10,7 +10,7 @@ import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hi
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 import { ConfigurationPanel } from "./components/configuration-panel.tsx";
-import { Page } from "./components/page.tsx";
+import { EVYPage } from "./components/evy-page.tsx";
 import { RowsPanel } from "./components/rows-panel.tsx";
 
 import { baseRows, AppProvider, AppContext } from "./registry.tsx";
@@ -170,7 +170,7 @@ function PageContent() {
 							key={page.pageId}
 							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-84 h-205"
 						>
-							<Page
+							<EVYPage
 								pageId={page.pageId}
 								rowsData={page.rowsData}
 								onDrag={setDragging}

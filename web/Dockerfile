@@ -1,4 +1,4 @@
-FROM denoland/deno:2.2.2 AS base
+FROM denoland/deno:2.3.1 AS base
 
 # Rebuild the source code only when needed
 FROM base AS builder

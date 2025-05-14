@@ -1,3 +1,5 @@
+"use client";
+
 import { useContext, useEffect, useRef, useState } from "react";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
@@ -8,17 +10,12 @@ import invariant from "tiny-invariant";
 import { Row, type RowData } from "./row.tsx";
 import { AppContext } from "../registry.tsx";
 
-export type PageData = {
-	pageId: string;
-	rowsData: RowData[];
-};
-
 type State = { type: "idle" } | { type: "is-row-over" };
 
 const idle: State = { type: "idle" };
 const isRowOver: State = { type: "is-row-over" };
 
-export function Page({
+export function EVYPage({
 	pageId,
 	rowsData,
 	onDrag,

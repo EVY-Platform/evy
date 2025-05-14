@@ -8,7 +8,6 @@ import {
 	createElement,
 } from "react";
 
-import { PageData } from "./components/page.tsx";
 import { RowBaseData, RowData } from "./components/row.tsx";
 
 import InfoRow, {
@@ -119,7 +118,10 @@ export const baseRows: RowBaseData[] = [
 	},
 ];
 
-type PagesState = PageData[];
+type PagesState = {
+	pageId: string;
+	rowsData: RowData[];
+}[];
 type PagesAction =
 	| {
 			type: "ADD_ROW_TO_PAGE";
