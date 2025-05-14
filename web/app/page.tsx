@@ -147,8 +147,6 @@ function PageContent() {
 		});
 	}, [pages, dispatchPages, dispatchActiveRow]);
 
-	console.log("final");
-
 	return (
 		<>
 			<div
