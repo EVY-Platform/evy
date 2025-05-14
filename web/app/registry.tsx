@@ -10,105 +10,85 @@ import {
 
 import { RowBaseData, RowData } from "./components/Row.tsx";
 
-import InfoRow, { config as InfoRowConfig } from "./rows/view/InfoRow.tsx";
-import InputListRow, {
-	config as InputListRowConfig,
-} from "./rows/view/InputListRow.tsx";
-import TextRow, { config as TextRowConfig } from "./rows/view/TextRow.tsx";
-import ButtonRow, {
-	config as ButtonRowConfig,
-} from "./rows/action/ButtonRow.tsx";
-import TextActionRow, {
-	config as TextActionRowConfig,
-} from "./rows/action/TextActionRow.tsx";
-import CalendarRow, {
-	config as CalendarRowConfig,
-} from "./rows/edit/CalendarRow.tsx";
-import DropdownRow, {
-	config as DropdownRowConfig,
-} from "./rows/edit/DropdownRow.tsx";
-import InlinePickerRow, {
-	config as InlinePickerRowConfig,
-} from "./rows/edit/InlinePickerRow.tsx";
-import InputRow, { config as InputRowConfig } from "./rows/edit/InputRow.tsx";
-import SearchRow, {
-	config as SearchRowConfig,
-} from "./rows/edit/SearchRow.tsx";
-import SelectPhotoRow, {
-	config as SelectPhotoRowConfig,
-} from "./rows/edit/SelectPhotoRow.tsx";
-import TextAreaRow, {
-	config as TextAreaRowConfig,
-} from "./rows/edit/TextAreaRow.tsx";
-import TextSelectRow, {
-	config as TextSelectRowConfig,
-} from "./rows/edit/TextSelectRow.tsx";
+import InfoRow from "./rows/view/InfoRow.tsx";
+import InputListRow from "./rows/view/InputListRow.tsx";
+import TextRow from "./rows/view/TextRow.tsx";
+import ButtonRow from "./rows/action/ButtonRow.tsx";
+import TextActionRow from "./rows/action/TextActionRow.tsx";
+import CalendarRow from "./rows/edit/CalendarRow.tsx";
+import DropdownRow from "./rows/edit/DropdownRow.tsx";
+import InlinePickerRow from "./rows/edit/InlinePickerRow.tsx";
+import InputRow from "./rows/edit/InputRow.tsx";
+import SearchRow from "./rows/edit/SearchRow.tsx";
+import SelectPhotoRow from "./rows/edit/SelectPhotoRow.tsx";
+import TextAreaRow from "./rows/edit/TextAreaRow.tsx";
+import TextSelectRow from "./rows/edit/TextSelectRow.tsx";
 
 export const baseRows: RowBaseData[] = [
 	{
 		rowId: "InfoRow",
 		row: InfoRow,
-		config: InfoRowConfig,
+		config: InfoRow.config,
 	},
 	{
 		rowId: "TextRow",
 		row: TextRow,
-		config: TextRowConfig,
+		config: TextRow.config,
 	},
 	{
 		rowId: "InputListRow",
 		row: InputListRow,
-		config: InputListRowConfig,
+		config: InputListRow.config,
 	},
 	{
 		rowId: "ButtonRow",
 		row: ButtonRow,
-		config: ButtonRowConfig,
+		config: ButtonRow.config,
 	},
 	{
 		rowId: "TextActionRow",
 		row: TextActionRow,
-		config: TextActionRowConfig,
+		config: TextActionRow.config,
 	},
 	{
 		rowId: "CalendarRow",
 		row: CalendarRow,
-		config: CalendarRowConfig,
+		config: CalendarRow.config,
 	},
 	{
 		rowId: "DropdownRow",
 		row: DropdownRow,
-		config: DropdownRowConfig,
+		config: DropdownRow.config,
 	},
 	{
 		rowId: "InlinePickerRow",
 		row: InlinePickerRow,
-		config: InlinePickerRowConfig,
+		config: InlinePickerRow.config,
 	},
 	{
 		rowId: "InputRow",
 		row: InputRow,
-		config: InputRowConfig,
+		config: InputRow.config,
 	},
 	{
 		rowId: "SearchRow",
 		row: SearchRow,
-		config: SearchRowConfig,
+		config: SearchRow.config,
 	},
 	{
 		rowId: "SelectPhotoRow",
 		row: SelectPhotoRow,
-		config: SelectPhotoRowConfig,
+		config: SelectPhotoRow.config,
 	},
 	{
 		rowId: "TextAreaRow",
 		row: TextAreaRow,
-		config: TextAreaRowConfig,
+		config: TextAreaRow.config,
 	},
 	{
 		rowId: "TextSelectRow",
 		row: TextSelectRow,
-		config: TextSelectRowConfig,
+		config: TextSelectRow.config,
 	},
 ];
 
