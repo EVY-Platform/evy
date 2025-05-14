@@ -256,7 +256,6 @@ const activeRowReducer = (
 	state: ActiveRowState,
 	action: ActiveRowAction
 ): ActiveRowState => {
-	console.log(action.type);
 	switch (action.type) {
 		case "ACTIVATE_ROW":
 			return {
