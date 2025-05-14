@@ -27,8 +27,7 @@ export type RowConfig = {
 
 export type RowBaseData = {
 	rowId: string;
-	row: React.ComponentType<any>;
-	config: RowConfig;
+	row: React.ComponentType<any> & { config: RowConfig };
 };
 
 export type RowData = {

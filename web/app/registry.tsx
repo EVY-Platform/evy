@@ -28,67 +28,54 @@ export const baseRows: RowBaseData[] = [
 	{
 		rowId: "InfoRow",
 		row: InfoRow,
-		config: InfoRow.config,
 	},
 	{
 		rowId: "TextRow",
 		row: TextRow,
-		config: TextRow.config,
 	},
 	{
 		rowId: "InputListRow",
 		row: InputListRow,
-		config: InputListRow.config,
 	},
 	{
 		rowId: "ButtonRow",
 		row: ButtonRow,
-		config: ButtonRow.config,
 	},
 	{
 		rowId: "TextActionRow",
 		row: TextActionRow,
-		config: TextActionRow.config,
 	},
 	{
 		rowId: "CalendarRow",
 		row: CalendarRow,
-		config: CalendarRow.config,
 	},
 	{
 		rowId: "DropdownRow",
 		row: DropdownRow,
-		config: DropdownRow.config,
 	},
 	{
 		rowId: "InlinePickerRow",
 		row: InlinePickerRow,
-		config: InlinePickerRow.config,
 	},
 	{
 		rowId: "InputRow",
 		row: InputRow,
-		config: InputRow.config,
 	},
 	{
 		rowId: "SearchRow",
 		row: SearchRow,
-		config: SearchRow.config,
 	},
 	{
 		rowId: "SelectPhotoRow",
 		row: SelectPhotoRow,
-		config: SelectPhotoRow.config,
 	},
 	{
 		rowId: "TextAreaRow",
 		row: TextAreaRow,
-		config: TextAreaRow.config,
 	},
 	{
 		rowId: "TextSelectRow",
 		row: TextSelectRow,
-		config: TextSelectRow.config,
 	},
 ];
 
@@ -141,7 +128,7 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 			const rowDataAdd: RowData = {
 				...baseRow,
 				rowId: action.rowId,
-				config: baseRow.config,
+				config: baseRow.row.config,
 				row: createElement(baseRow.row, { rowId: action.rowId }),
 			};
 

@@ -42,7 +42,7 @@ export function RowsPanel({
 				<div className="flex flex-col min-h-full p-2 gap-2">
 					{rowsData.map((rowData) => {
 						const props = Object.fromEntries(
-							rowData.config.map((c) => [c.id, c.value])
+							rowData.row.config.map((c) => [c.id, c.value])
 						);
 						return (
 							<Row key={rowData.rowId} rowId={rowData.rowId}>
