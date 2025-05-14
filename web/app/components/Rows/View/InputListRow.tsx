@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
+import Input from "@/app/design-system/input.tsx";
 
-import Input from "../../input.tsx";
 import { RowConfig } from "../../row.tsx";
 
 export default function InputListRow({ rowId }: { rowId: string }) {

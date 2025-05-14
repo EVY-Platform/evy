@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 
+import Button from "@/app/design-system/button.tsx";
 import { AppContext } from "@/app/registry.tsx";
-
 import { RowConfig } from "../../row.tsx";
 
 export default function ButtonRow({ rowId }: { rowId: string }) {
@@ -12,13 +12,12 @@ export default function ButtonRow({ rowId }: { rowId: string }) {
 
 	return (
 		<div className="p-2 flex justify-center">
-			<button
-				type="button"
-				className="rounded-sm text-sm px-3 py-3 text-white bg-evy-gray hover:bg-black"
-			>
-				{row?.config.find((c) => c.id === "text")?.value ??
-					"Button row text"}
-			</button>
+			<Button
+				label={
+					row?.config.find((c) => c.id === "text")?.value ??
+					"Button row text"
+				}
+			/>
 		</div>
 	);
 }
