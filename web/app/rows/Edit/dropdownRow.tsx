@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
-import Dropdown from "@/app/design-system/dropdown";
+import Dropdown from "@/app/rows/design-system/dropdown";
 
 export default function DropdownRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);

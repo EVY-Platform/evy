@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
-import RadioButton from "@/app/design-system/radio-button";
+import RadioButton from "@/app/rows/design-system/radio-button";
 
 export default function InlinePickerRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);

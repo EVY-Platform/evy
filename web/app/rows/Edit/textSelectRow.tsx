@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
-import Checkbox from "@/app/design-system/checkbox";
+import Checkbox from "@/app/rows/design-system/checkbox";
 
 export default function TextSelectRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);

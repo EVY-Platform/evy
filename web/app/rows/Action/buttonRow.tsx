@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 
-import Button from "@/app/design-system/button.tsx";
+import Button from "@/app/rows/design-system/button";
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
 

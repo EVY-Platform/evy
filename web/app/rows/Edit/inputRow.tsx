@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
-import Input from "@/app/design-system/input.tsx";
+import Input from "@/app/rows/design-system/input";
 
 export default function InputRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);

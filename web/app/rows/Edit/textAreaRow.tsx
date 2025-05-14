@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 
 import { AppContext } from "@/app/registry.tsx";
 import { RowConfig } from "@/app/components/row.tsx";
-import TextArea from "@/app/design-system/text-area";
+import TextArea from "@/app/rows/design-system/text-area";
 
 export default function TextAreaRow({ rowId }: { rowId: string }) {
 	const { pages } = useContext(AppContext);
