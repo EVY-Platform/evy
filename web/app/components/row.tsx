@@ -66,7 +66,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				className="flex flex-col w-full bg-white relative hover:bg-evy-editor-hover"
 				style={{ cursor }}
 				ref={ref}
-				onClick={() => selectRow && selectRow()}
+				onClick={selectRow}
 			>
 				{children}
 				{closestEdge && <DropIndicator edge={closestEdge} />}
