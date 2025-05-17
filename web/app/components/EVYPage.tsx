@@ -8,8 +8,7 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import invariant from "tiny-invariant";
 
 import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
-import { type RowData } from "../registry.tsx";
-import { AppContext } from "../registry.tsx";
+import { AppContext, type RowData } from "../registry.tsx";
 
 type State = { type: "idle" } | { type: "is-row-over" };
 

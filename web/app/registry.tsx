@@ -21,7 +21,7 @@ import SearchRow from "./rows/edit/SearchRow.tsx";
 import SelectPhotoRow from "./rows/edit/SelectPhotoRow.tsx";
 import TextAreaRow from "./rows/edit/TextAreaRow.tsx";
 import TextSelectRow from "./rows/edit/TextSelectRow.tsx";
-import { RowConfig } from "./rows/EVYRow.tsx";
+import { type RowConfig } from "./rows/EVYRow.tsx";
 
 export type RowBaseData = React.ComponentType<any> & { config: RowConfig };
 
