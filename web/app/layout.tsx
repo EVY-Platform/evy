@@ -1,8 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
 
-import Logo from "./components/logo.tsx";
-
 import "./globals.css";
 
 export const metadata: Metadata = {
