@@ -168,7 +168,6 @@ function PageContent() {
 						>
 							<EVYPage
 								pageId={page.pageId}
-								rowsData={page.rowsData}
 								onDrag={setDragging}
 							/>
 						</div>

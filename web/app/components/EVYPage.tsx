@@ -8,7 +8,7 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import invariant from "tiny-invariant";
 
 import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
-import { AppContext, type RowData } from "../registry.tsx";
+import { AppContext } from "../registry.tsx";
 
 type State = { type: "idle" } | { type: "is-row-over" };
 
@@ -17,17 +17,18 @@ const isRowOver: State = { type: "is-row-over" };
 
 export function EVYPage({
 	pageId,
-	rowsData,
 	onDrag,
 }: {
 	pageId: string;
-	rowsData: RowData[];
 	onDrag: (dragging: boolean) => void;
 }) {
-	const { dispatchActiveRow } = useContext(AppContext);
+	const { pages, dispatchActiveRow } = useContext(AppContext);
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
+
+	const rowsData = pages.find((p) => p.pageId === pageId)?.rowsData;
+	if (!rowsData) return undefined;
 
 	useEffect(() => {
 		invariant(scrollableRef.current);

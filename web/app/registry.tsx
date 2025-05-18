@@ -23,7 +23,7 @@ import TextAreaRow from "./rows/edit/TextAreaRow.tsx";
 import TextSelectRow from "./rows/edit/TextSelectRow.tsx";
 import { type RowConfig } from "./rows/EVYRow.tsx";
 
-export type RowData = {
+type RowData = {
 	rowId: string;
 	row: React.ReactNode;
 	config: RowConfig;
