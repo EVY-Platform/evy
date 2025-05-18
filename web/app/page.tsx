@@ -1,29 +1,122 @@
 "use client";
 
-import { useEffect, useContext } from "react";
+import {
+	useEffect,
+	useContext,
+	useRef,
+	useState,
+	useCallback,
+	useMemo,
+} from "react";
 import invariant from "tiny-invariant";
 
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/types";
 import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
+import { DraggableRowContainer } from "./components/DraggableRowContainer.tsx";
 import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
-import { EVYPage } from "./components/EVYPage.tsx";
 import { RowsPanel } from "./components/RowsPanel.tsx";
 
 import { AppProvider, AppContext } from "./registry.tsx";
 
 const panelWidth = "280px";
 
+type State = { type: "idle" } | { type: "is-row-over" };
+
+const idle: State = { type: "idle" };
+const isRowOver: State = { type: "is-row-over" };
+
 export default function Index() {
 	return (
 		<AppProvider>
-			<PageContent />
+			<AppContent />
 		</AppProvider>
 	);
 }
-function PageContent() {
+
+function PageContent({ pageId }: { pageId: string }) {
+	const { pages, dispatchActiveRow, dispatchDragging } =
+		useContext(AppContext);
+
+	const scrollableRef = useRef<HTMLDivElement | null>(null);
+	const [state, setState] = useState<State>(idle);
+
+	const rowsData = pages.find((p) => p.pageId === pageId)?.rowsData;
+	if (!rowsData) return undefined;
+
+	useEffect(() => {
+		invariant(scrollableRef.current);
+		return combine(
+			dropTargetForElements({
+				element: scrollableRef.current,
+				getData: () => ({ pageId }),
+				canDrop: () => true,
+				onDragEnter: () => setState(isRowOver),
+				onDragLeave: () => setState(idle),
+				onDragStart: () => {
+					setState(isRowOver);
+					dispatchDragging({ type: "SET_DRAGGING", dragging: true });
+				},
+				onDrop: () => {
+					setState(idle);
+					dispatchDragging({ type: "SET_DRAGGING", dragging: false });
+				},
+			}),
+			autoScrollForElements({
+				element: scrollableRef.current,
+				canScroll: () => true,
+			})
+		);
+	}, [pageId, dispatchActiveRow, dispatchDragging, rowsData]);
+
+	const selectRow = useCallback(
+		(rowId: string) =>
+			dispatchActiveRow({
+				type: "ACTIVATE_ROW",
+				pageId: pageId,
+				rowId: rowId,
+			}),
+		[pageId, dispatchActiveRow]
+	);
+
+	const rows = useMemo(
+		() =>
+			rowsData.map((rowData) => (
+				<DraggableRowContainer
+					key={rowData.rowId}
+					rowId={rowData.rowId}
+					selectRow={() => selectRow(rowData.rowId)}
+				>
+					{rowData.row}
+				</DraggableRowContainer>
+			)),
+		[rowsData]
+	);
+
+	return (
+		<div className="overflow-hidden h-165 p-7 pt-18">
+			<div
+				className="overflow-scroll h-full rounded-b-[2.4rem]"
+				ref={scrollableRef}
+				style={{
+					backgroundColor:
+						state.type === idle.type
+							? "white"
+							: "var(--color-evy-editor-hover)",
+				}}
+			>
+				{rows}
+			</div>
+		</div>
+	);
+}
+
+function AppContent() {
 	const { pages, dispatchPages, dispatchActiveRow } = useContext(AppContext);
 
 	useEffect(() => {
@@ -160,7 +253,7 @@ function PageContent() {
 							key={page.pageId}
 							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-84 h-205"
 						>
-							<EVYPage pageId={page.pageId} />
+							<PageContent pageId={page.pageId} />
 						</div>
 					);
 				})}
