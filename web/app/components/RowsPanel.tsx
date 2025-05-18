@@ -34,23 +34,14 @@ export function RowsPanel() {
 			<div className="flex flex-col" ref={pageInnerRef}>
 				<div className="p-4 text-xl font-bold text-center">Rows</div>
 				<div className="flex flex-col min-h-full p-2 gap-2">
-					{rows.map((Row) => {
-						const props = Object.fromEntries(
-							Row.config.map((c) => [c.id, c.value])
-						);
-						return (
-							<DraggableRowContainer
-								key={Row.name}
-								rowId={Row.name}
-							>
-								<Row
-									key={Row.name}
-									rowId={Row.name}
-									{...props}
-								/>
-							</DraggableRowContainer>
-						);
-					})}
+					{rows.map((row) => (
+						<DraggableRowContainer
+							key={row.rowId}
+							rowId={row.rowId}
+						>
+							{row.row}
+						</DraggableRowContainer>
+					))}
 				</div>
 				{dragging && (
 					<CancelOverlay

@@ -29,23 +29,6 @@ type RowData = {
 	config: RowConfig;
 };
 
-type RowsState = (React.ComponentType<any> & { config: RowConfig })[];
-const rows: RowsState = [
-	InfoRow,
-	TextRow,
-	InputListRow,
-	ButtonRow,
-	TextActionRow,
-	CalendarRow,
-	DropdownRow,
-	InlinePickerRow,
-	InputRow,
-	SearchRow,
-	SelectPhotoRow,
-	TextAreaRow,
-	TextSelectRow,
-];
-
 type PagesState = {
 	pageId: string;
 	rowsData: RowData[];
@@ -84,13 +67,30 @@ type PagesAction =
 			configId: string;
 			configValue: string;
 	  };
+
+const baseRows = [
+	InfoRow,
+	TextRow,
+	InputListRow,
+	ButtonRow,
+	TextActionRow,
+	CalendarRow,
+	DropdownRow,
+	InlinePickerRow,
+	InputRow,
+	SearchRow,
+	SelectPhotoRow,
+	TextAreaRow,
+	TextSelectRow,
+];
+
 const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 	switch (action.type) {
 		case "ADD_ROW_TO_PAGE":
 			const pageIndexToAdd = state.findIndex(
 				(page) => page.pageId === action.pageId
 			);
-			const baseRow = rows.find((row) => {
+			const baseRow = baseRows.find((row) => {
 				if (!row || typeof row !== "function") return false;
 				return (row as { name: string }).name === action.rowIdInBase;
 			})!;
@@ -257,7 +257,7 @@ const draggingReducer = (
 };
 
 export const AppContext = createContext<{
-	rows: RowsState;
+	rows: RowData[];
 	pages: PagesState;
 	activeRow: ActiveRowState;
 	dragging: DraggingState;
@@ -275,6 +275,11 @@ export const AppContext = createContext<{
 });
 
 export function AppProvider({ children }: { children: ReactNode }) {
+	const rows = baseRows.map((row) => ({
+		rowId: row.name,
+		row: createElement(row, { rowId: row.name }),
+		config: row.config,
+	}));
 	const [pages, dispatchPages] = useReducer(pagesReducer, [
 		{
 			pageId: "Step 1",
