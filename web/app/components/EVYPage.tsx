@@ -1,6 +1,13 @@
 "use client";
 
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -48,7 +55,31 @@ export function EVYPage({ pageId }: { pageId: string }) {
 				canScroll: () => true,
 			})
 		);
-	}, [pageId]);
+	}, [pageId, dispatchActiveRow, dispatchDragging, rowsData]);
+
+	const selectRow = useCallback(
+		(rowId: string) =>
+			dispatchActiveRow({
+				type: "ACTIVATE_ROW",
+				pageId: pageId,
+				rowId: rowId,
+			}),
+		[pageId, dispatchActiveRow]
+	);
+
+	const rows = useMemo(
+		() =>
+			rowsData.map((rowData) => (
+				<DraggableRowContainer
+					key={rowData.rowId}
+					rowId={rowData.rowId}
+					selectRow={() => selectRow(rowData.rowId)}
+				>
+					{rowData.row}
+				</DraggableRowContainer>
+			)),
+		[rowsData]
+	);
 
 	return (
 		<div className="overflow-hidden h-165 p-7 pt-18">
@@ -62,21 +93,7 @@ export function EVYPage({ pageId }: { pageId: string }) {
 							: "var(--color-evy-editor-hover)",
 				}}
 			>
-				{rowsData.map((rowData) => (
-					<DraggableRowContainer
-						key={rowData.rowId}
-						rowId={rowData.rowId}
-						selectRow={() => {
-							dispatchActiveRow({
-								type: "ACTIVATE_ROW",
-								pageId: pageId,
-								rowId: rowData.rowId,
-							});
-						}}
-					>
-						{rowData.row}
-					</DraggableRowContainer>
-				))}
+				{rows}
 			</div>
 		</div>
 	);
