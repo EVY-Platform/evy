@@ -1,25 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
 import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
-import { baseRows } from "../registry.tsx";
+import { AppContext, baseRows } from "../registry.tsx";
 import { CancelOverlay } from "./CancelOverlay.tsx";
 
-export function RowsPanel({
-	dragging,
-	onDrag,
-	cancel,
-}: {
-	dragging: boolean;
-	onDrag: (dragging: boolean) => void;
-	cancel: () => void;
-}) {
+export function RowsPanel() {
 	const pageInnerRef = useRef<HTMLDivElement | null>(null);
+	const { dragging, dispatchDragging } = useContext(AppContext);
 
 	useEffect(() => {
 		invariant(pageInnerRef.current);
@@ -28,8 +21,10 @@ export function RowsPanel({
 				element: pageInnerRef.current,
 				getData: () => ({ pageId: "rows" }),
 				canDrop: () => true,
-				onDragStart: () => onDrag(true),
-				onDrop: () => onDrag(false),
+				onDragStart: () =>
+					dispatchDragging({ type: "SET_DRAGGING", dragging: true }),
+				onDrop: () =>
+					dispatchDragging({ type: "SET_DRAGGING", dragging: false }),
 			})
 		);
 	}, []);
@@ -57,7 +52,16 @@ export function RowsPanel({
 						);
 					})}
 				</div>
-				{dragging && <CancelOverlay dismiss={cancel} />}
+				{dragging && (
+					<CancelOverlay
+						dismiss={() =>
+							dispatchDragging({
+								type: "SET_DRAGGING",
+								dragging: false,
+							})
+						}
+					/>
+				)}
 			</div>
 		</div>
 	);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useContext } from "react";
 import invariant from "tiny-invariant";
 
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
@@ -25,7 +25,6 @@ export default function Index() {
 }
 function PageContent() {
 	const { pages, dispatchPages, dispatchActiveRow } = useContext(AppContext);
-	const [dragging, setDragging] = useState<boolean>(false);
 
 	useEffect(() => {
 		return monitorForElements({
@@ -152,12 +151,7 @@ function PageContent() {
 				className="border-r overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
-				<RowsPanel
-					key="rows"
-					dragging={dragging}
-					onDrag={setDragging}
-					cancel={() => setDragging(false)}
-				/>
+				<RowsPanel key="rows" />
 			</div>
 			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
 				{pages.map((page) => {
@@ -166,10 +160,7 @@ function PageContent() {
 							key={page.pageId}
 							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-84 h-205"
 						>
-							<EVYPage
-								pageId={page.pageId}
-								onDrag={setDragging}
-							/>
+							<EVYPage pageId={page.pageId} />
 						</div>
 					);
 				})}

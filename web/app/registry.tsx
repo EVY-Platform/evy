@@ -240,16 +240,37 @@ const activeRowReducer = (
 	}
 };
 
+type DraggingState = boolean;
+type DraggingAction = {
+	type: "SET_DRAGGING";
+	dragging: boolean;
+};
+const draggingReducer = (
+	state: DraggingState,
+	action: DraggingAction
+): DraggingState => {
+	switch (action.type) {
+		case "SET_DRAGGING":
+			return action.dragging;
+		default:
+			return state;
+	}
+};
+
 export const AppContext = createContext<{
 	pages: PagesState;
 	activeRow: ActiveRowState;
+	dragging: DraggingState;
 	dispatchPages: Dispatch<PagesAction>;
 	dispatchActiveRow: Dispatch<ActiveRowAction>;
+	dispatchDragging: Dispatch<DraggingAction>;
 }>({
 	pages: [],
 	activeRow: undefined,
+	dragging: false,
 	dispatchPages: () => {},
 	dispatchActiveRow: () => {},
+	dispatchDragging: () => {},
 });
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -267,10 +288,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 		activeRowReducer,
 		undefined
 	);
+	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
 
 	return (
 		<AppContext.Provider
-			value={{ pages, activeRow, dispatchPages, dispatchActiveRow }}
+			value={{
+				pages,
+				activeRow,
+				dragging,
+				dispatchPages,
+				dispatchActiveRow,
+				dispatchDragging,
+			}}
 		>
 			{children}
 		</AppContext.Provider>

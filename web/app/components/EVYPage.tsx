@@ -15,14 +15,9 @@ type State = { type: "idle" } | { type: "is-row-over" };
 const idle: State = { type: "idle" };
 const isRowOver: State = { type: "is-row-over" };
 
-export function EVYPage({
-	pageId,
-	onDrag,
-}: {
-	pageId: string;
-	onDrag: (dragging: boolean) => void;
-}) {
-	const { pages, dispatchActiveRow } = useContext(AppContext);
+export function EVYPage({ pageId }: { pageId: string }) {
+	const { pages, dispatchActiveRow, dispatchDragging } =
+		useContext(AppContext);
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
@@ -41,11 +36,11 @@ export function EVYPage({
 				onDragLeave: () => setState(idle),
 				onDragStart: () => {
 					setState(isRowOver);
-					onDrag(true);
+					dispatchDragging({ type: "SET_DRAGGING", dragging: true });
 				},
 				onDrop: () => {
 					setState(idle);
-					onDrag(false);
+					dispatchDragging({ type: "SET_DRAGGING", dragging: false });
 				},
 			}),
 			autoScrollForElements({
