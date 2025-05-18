@@ -29,7 +29,8 @@ type RowData = {
 	config: RowConfig;
 };
 
-export const baseRows: (React.ComponentType<any> & { config: RowConfig })[] = [
+type RowsState = (React.ComponentType<any> & { config: RowConfig })[];
+const rows: RowsState = [
 	InfoRow,
 	TextRow,
 	InputListRow,
@@ -89,11 +90,9 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 			const pageIndexToAdd = state.findIndex(
 				(page) => page.pageId === action.pageId
 			);
-			const baseRow = baseRows.find((rowData) => {
-				if (!rowData || typeof rowData !== "function") return false;
-				return (
-					(rowData as { name: string }).name === action.rowIdInBase
-				);
+			const baseRow = rows.find((row) => {
+				if (!row || typeof row !== "function") return false;
+				return (row as { name: string }).name === action.rowIdInBase;
 			})!;
 
 			const rowDataAdd: RowData = {
@@ -258,6 +257,7 @@ const draggingReducer = (
 };
 
 export const AppContext = createContext<{
+	rows: RowsState;
 	pages: PagesState;
 	activeRow: ActiveRowState;
 	dragging: DraggingState;
@@ -265,6 +265,7 @@ export const AppContext = createContext<{
 	dispatchActiveRow: Dispatch<ActiveRowAction>;
 	dispatchDragging: Dispatch<DraggingAction>;
 }>({
+	rows: [],
 	pages: [],
 	activeRow: undefined,
 	dragging: false,
@@ -293,6 +294,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 	return (
 		<AppContext.Provider
 			value={{
+				rows,
 				pages,
 				activeRow,
 				dragging,
