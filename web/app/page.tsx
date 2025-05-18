@@ -45,12 +45,9 @@ function PageContent() {
 				const sourcePageIndex = pages.findIndex(
 					(page) => page.pageId === sourcePageId
 				);
-				const rowIndex = (
-					pages[sourcePageIndex]?.rowsData || baseRows
-				).findIndex((rowData) => {
-					if (!rowData || typeof rowData !== "function") return false;
-					return (rowData as { name: string }).name === rowId;
-				});
+				const rowIndex = pages[sourcePageIndex]?.rowsData.findIndex(
+					(rowData) => rowData.rowId === rowId
+				);
 
 				// If the row was dropped on top of another row,
 				// dropTargets is an array with [row, page]
@@ -99,7 +96,7 @@ function PageContent() {
 						type: "ADD_ROW_TO_PAGE",
 						pageId: destinationPageId,
 						rowId: newRowId,
-						rowIndexInBase: rowIndex,
+						rowIdInBase: rowId,
 						rowIndexInFinishPage: destinationIndex,
 					});
 					dispatchActiveRow({

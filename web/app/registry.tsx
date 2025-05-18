@@ -56,7 +56,7 @@ type PagesAction =
 			type: "ADD_ROW_TO_PAGE";
 			pageId: string;
 			rowId: string;
-			rowIndexInBase: number;
+			rowIdInBase: string;
 			rowIndexInFinishPage: number;
 	  }
 	| {
@@ -91,7 +91,12 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 			const pageIndexToAdd = state.findIndex(
 				(page) => page.pageId === action.pageId
 			);
-			const baseRow = baseRows[action.rowIndexInBase];
+			const baseRow = baseRows.find((rowData) => {
+				if (!rowData || typeof rowData !== "function") return false;
+				return (
+					(rowData as { name: string }).name === action.rowIdInBase
+				);
+			})!;
 
 			const rowDataAdd: RowData = {
 				...baseRow,
