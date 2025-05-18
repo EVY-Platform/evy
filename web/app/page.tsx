@@ -12,7 +12,7 @@ import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
 import { EVYPage } from "./components/EVYPage.tsx";
 import { RowsPanel } from "./components/RowsPanel.tsx";
 
-import { baseRows, AppProvider, AppContext } from "./registry.tsx";
+import { AppProvider, AppContext } from "./registry.tsx";
 
 const panelWidth = "280px";
 
@@ -154,7 +154,6 @@ function PageContent() {
 			>
 				<RowsPanel
 					key="rows"
-					rowsData={baseRows}
 					dragging={dragging}
 					onDrag={setDragging}
 					cancel={() => setDragging(false)}

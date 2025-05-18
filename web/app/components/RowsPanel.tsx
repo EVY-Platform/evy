@@ -7,16 +7,14 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import invariant from "tiny-invariant";
 
 import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
-import { type RowBaseData } from "../registry.tsx";
+import { baseRows } from "../registry.tsx";
 import { CancelOverlay } from "./CancelOverlay.tsx";
 
 export function RowsPanel({
-	rowsData,
 	dragging,
 	onDrag,
 	cancel,
 }: {
-	rowsData: RowBaseData[];
 	dragging: boolean;
 	onDrag: (dragging: boolean) => void;
 	cancel: () => void;
@@ -41,7 +39,7 @@ export function RowsPanel({
 			<div className="flex flex-col" ref={pageInnerRef}>
 				<div className="p-4 text-xl font-bold text-center">Rows</div>
 				<div className="flex flex-col min-h-full p-2 gap-2">
-					{rowsData.map((Row) => {
+					{baseRows.map((Row) => {
 						const props = Object.fromEntries(
 							Row.config.map((c) => [c.id, c.value])
 						);
