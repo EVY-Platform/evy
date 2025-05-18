@@ -55,7 +55,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				canScroll: () => true,
 			})
 		);
-	}, [pageId, dispatchActiveRow, dispatchDragging, rowsData]);
+	}, [scrollableRef, pageId, dispatchDragging]);
 
 	const selectRow = useCallback(
 		(rowId: string) =>

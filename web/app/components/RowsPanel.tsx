@@ -27,7 +27,7 @@ export function RowsPanel() {
 					dispatchDragging({ type: "SET_DRAGGING", dragging: false }),
 			})
 		);
-	}, []);
+	}, [pageInnerRef, dispatchDragging]);
 
 	return (
 		<div className="flex relative w-full bg-evy-light-gray">
