@@ -1,0 +1,8 @@
+{
+	"name": "evy-app-builder-tests",
+	"version": "1.0.0",
+	"description": "Playwright tests for EVY App Builder",
+	"devDependencies": {
+		"@playwright/test": "^1.40.0"
+	}
+}

@@ -33,6 +33,18 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 docker compose up -d
 ```
 
+## Testing
+
+This project includes comprehensive end-to-end tests using Playwright.
+
+### Running Tests
+
+```bash
+deno task test
+deno task test:ui
+deno task test:debug
+```
+
 ## Architecture
 
 -   **Build System**: Uses Deno's built-in capabilities to create a JavaScript bundle

@@ -4,19 +4,20 @@ import { AppContext } from "../registry";
 
 export function ConfigurationPanel() {
 	const { pages, activeRow, dispatchPages } = useContext(AppContext);
-	if (!activeRow) return undefined;
 
 	const row = useMemo(
 		() =>
-			pages
-				.flatMap((page) => page.rowsData)
-				.find((r) => r.rowId === activeRow.rowId),
+			activeRow
+				? pages
+						.flatMap((page) => page.rowsData)
+						.find((r) => r.rowId === activeRow.rowId)
+				: undefined,
 		[pages, activeRow]
 	);
-	if (!row) return undefined;
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string) => {
+			if (!activeRow) return;
 			dispatchPages({
 				type: "UPDATE_ROW_CONTENT",
 				pageId: activeRow.pageId,
@@ -25,12 +26,12 @@ export function ConfigurationPanel() {
 				configValue,
 			});
 		},
-		[activeRow.pageId, activeRow.rowId, dispatchPages]
+		[activeRow, dispatchPages]
 	);
 
 	const configurationElements = useMemo(
 		() =>
-			row.config.map((c) => {
+			row?.config.map((c) => {
 				if (c.type === "text") {
 					return (
 						<form className="grid" key={c.id}>
@@ -50,8 +51,8 @@ export function ConfigurationPanel() {
 				} else {
 					return <div key={c.id}>{c.type}</div>;
 				}
-			}),
-		[row.config, activeRow.pageId, activeRow.rowId, dispatchPages]
+			}) || [],
+		[row?.config, activeRow, dispatchPages]
 	);
 
 	return (
