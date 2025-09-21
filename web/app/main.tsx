@@ -21,7 +21,7 @@ function AppContent() {
 					return (
 						<div
 							key={page.pageId}
-							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-84 h-205"
+							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-[336px] h-[662px]"
 						>
 							<AppPage pageId={page.pageId} />
 						</div>

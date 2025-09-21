@@ -81,7 +81,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	);
 
 	return (
-		<div className="overflow-hidden h-165 p-7 pt-18">
+		<div className="overflow-hidden p-[30px] pt-16 h-full w-full">
 			<div
 				className="overflow-scroll h-full rounded-b-[2.4rem]"
 				ref={scrollableRef}
