@@ -1,5 +1,3 @@
-"use client";
-
 import {
 	useEffect,
 	useContext,
@@ -14,14 +12,15 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
-import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
-import { AppContext } from "../registry.tsx";
+import { DraggableRowContainer } from "./DraggableRowContainer";
+import { AppContext } from "../registry";
 
 type State = { type: "idle" } | { type: "is-row-over" };
 
 const idle: State = { type: "idle" };
 const isRowOver: State = { type: "is-row-over" };
 
+// AppPage component for rendering individual pages
 export default function AppPage({ pageId }: { pageId: string }) {
 	const { pages, dispatchActiveRow, dispatchDragging } =
 		useContext(AppContext);

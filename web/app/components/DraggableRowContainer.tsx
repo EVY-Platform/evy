@@ -1,12 +1,15 @@
-"use client";
-
-import { forwardRef, Fragment, useEffect, useRef, useState } from "react";
+import React, {
+	forwardRef,
+	Fragment,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import ReactDOM from "react-dom";
 import invariant from "tiny-invariant";
 
 import {
 	attachClosestEdge,
-	type Edge,
 	extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -14,11 +17,17 @@ import {
 	draggable,
 	dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
+import DropIndicatorModule from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 
+type Edge = "top" | "right" | "bottom" | "left";
+
+// Properly typed DropIndicator component for React 19 compatibility
+const DropIndicator: React.FC<{ edge: Edge }> = (props) => {
+	return DropIndicatorModule(props) as React.ReactElement;
+};
 type State =
 	| { type: "idle" }
 	| { type: "dragging" }
@@ -81,7 +90,7 @@ export function DraggableRowContainer({
 					location,
 					source,
 					nativeSetDragImage,
-				}) => {
+				}: any) => {
 					const rect = source.element.getBoundingClientRect();
 
 					setCustomNativeDragPreview({
@@ -90,7 +99,7 @@ export function DraggableRowContainer({
 							element,
 							input: location.current.input,
 						}),
-						render({ container }) {
+						render({ container }: any) {
 							setState({ type: "preview", container, rect });
 							return () => setState(draggingState);
 						},
@@ -107,7 +116,7 @@ export function DraggableRowContainer({
 				element: element,
 				canDrop: () => true,
 				getIsSticky: () => true,
-				getData: ({ input, element }) => {
+				getData: ({ input, element }: any) => {
 					return attachClosestEdge(
 						{ rowId: rowId },
 						{
@@ -117,12 +126,12 @@ export function DraggableRowContainer({
 						}
 					);
 				},
-				onDragEnter: (args) => {
+				onDragEnter: (args: any) => {
 					if (args.source.data.rowId !== rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
-				onDrag: (args) => {
+				onDrag: (args: any) => {
 					if (args.source.data.rowId !== rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}

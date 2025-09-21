@@ -1,9 +1,29 @@
-@import "tailwindcss";
-
-@theme {
+:root {
 	--color-evy-light: oklch(62.34% 0 0);
 	--color-evy-blue: oklch(60.04% 0.2013 261.37);
 	--color-evy-gray: oklch(35.84% 0.0103 285.87);
 	--color-evy-gray-light: oklch(97.02% 0 0);
 	--color-evy-editor-hover: oklch(82.79% 0.0035 291.24);
+}
+
+.bg-evy-light-gray {
+	background-color: var(--color-evy-gray-light);
+}
+.bg-evy-gray-light {
+	background-color: var(--color-evy-gray-light);
+}
+.bg-evy-editor-hover {
+	background-color: var(--color-evy-editor-hover);
+}
+.bg-evy-gray {
+	background-color: var(--color-evy-gray);
+}
+.text-evy-light {
+	color: var(--color-evy-light);
+}
+.text-evy-blue {
+	color: var(--color-evy-blue);
+}
+.border-evy-border {
+	border-color: var(--color-evy-gray);
 }

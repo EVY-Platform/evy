@@ -1,5 +1,3 @@
-"use client";
-
 import {
 	ReactNode,
 	Dispatch,
@@ -8,20 +6,20 @@ import {
 	createElement,
 } from "react";
 
-import InfoRow from "./rows/view/InfoRow.tsx";
-import InputListRow from "./rows/view/InputListRow.tsx";
-import TextRow from "./rows/view/TextRow.tsx";
-import ButtonRow from "./rows/action/ButtonRow.tsx";
-import TextActionRow from "./rows/action/TextActionRow.tsx";
-import CalendarRow from "./rows/edit/CalendarRow.tsx";
-import DropdownRow from "./rows/edit/DropdownRow.tsx";
-import InlinePickerRow from "./rows/edit/InlinePickerRow.tsx";
-import InputRow from "./rows/edit/InputRow.tsx";
-import SearchRow from "./rows/edit/SearchRow.tsx";
-import SelectPhotoRow from "./rows/edit/SelectPhotoRow.tsx";
-import TextAreaRow from "./rows/edit/TextAreaRow.tsx";
-import TextSelectRow from "./rows/edit/TextSelectRow.tsx";
-import { type RowConfig } from "./rows/EVYRow.tsx";
+import InfoRow from "./rows/view/InfoRow";
+import InputListRow from "./rows/view/InputListRow";
+import TextRow from "./rows/view/TextRow";
+import ButtonRow from "./rows/action/ButtonRow";
+import TextActionRow from "./rows/action/TextActionRow";
+import CalendarRow from "./rows/edit/CalendarRow";
+import DropdownRow from "./rows/edit/DropdownRow";
+import InlinePickerRow from "./rows/edit/InlinePickerRow";
+import InputRow from "./rows/edit/InputRow";
+import SearchRow from "./rows/edit/SearchRow";
+import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
+import TextAreaRow from "./rows/edit/TextAreaRow";
+import TextSelectRow from "./rows/edit/TextSelectRow";
+import { type RowConfig } from "./rows/EVYRow";
 
 type RowData = {
 	rowId: string;

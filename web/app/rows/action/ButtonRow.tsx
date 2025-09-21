@@ -1,9 +1,9 @@
-import Button from "@/app/rows/design-system/Button";
-import { AppContext } from "@/app/registry.tsx";
+import Button from "../design-system/Button";
+import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
 
 export default class ButtonRow extends EVYRow {
-	static config: RowConfig = [
+	static override config: RowConfig = [
 		{
 			id: "text",
 			type: "text",

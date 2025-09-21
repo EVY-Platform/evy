@@ -1,9 +1,9 @@
-import { AppContext } from "@/app/registry.tsx";
+import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
-import RadioButton from "@/app/rows/design-system/RadioButton";
+import RadioButton from "../design-system/RadioButton";
 
 export default class InlinePickerRow extends EVYRow {
-	static config: RowConfig = [
+	static override config: RowConfig = [
 		{
 			id: "title",
 			type: "text",

@@ -1,14 +1,12 @@
-"use client";
-
 import { useContext, useEffect, useRef } from "react";
 
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
-import { AppContext } from "../registry.tsx";
-import { CancelOverlay } from "./CancelOverlay.tsx";
+import { DraggableRowContainer } from "./DraggableRowContainer";
+import { AppContext } from "../registry";
+import { CancelOverlay } from "./CancelOverlay";
 
 export function RowsPanel() {
 	const pageInnerRef = useRef<HTMLDivElement | null>(null);
