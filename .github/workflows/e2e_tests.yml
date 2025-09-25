@@ -1,0 +1,60 @@
+name: E2E Tests
+
+on:
+    pull_request:
+        branches: [dev]
+        paths: "web/**"
+
+jobs:
+    web:
+        defaults:
+            run:
+                working-directory: web
+
+        timeout-minutes: 5
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+
+            - name: Cache Deno dependencies
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cache/deno
+                      ~/.deno
+                  key: ${{ runner.os }}-deno-${{ hashFiles('deno.lock') }}
+                  restore-keys: ${{ runner.os }}-deno-
+
+            - name: Setup Deno
+              uses: denoland/setup-deno@v2
+              with:
+                  deno-version: v2.x
+
+            - name: Cache Playwright browsers
+              id: cache-playwright
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: ${{ runner.os }}-playwright-browsers-${{ hashFiles('deno.lock') }}
+                  restore-keys: ${{ runner.os }}-playwright-browsers-
+
+            - name: Install dependencies
+              run: deno install --no-lock
+
+            - if: steps.cache-playwright.outputs.cache-hit != 'true'
+              run: deno task test:setup
+
+            - name: Build application
+              run: deno task build
+
+            - name: Run E2E Tests
+              run: deno task test
+
+            - name: Upload test results
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 1
