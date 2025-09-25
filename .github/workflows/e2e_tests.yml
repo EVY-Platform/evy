@@ -1,28 +1,31 @@
-name: Tests
+name: E2E Tests
 
 on:
-    push:
-        branches: [main, dev]
     pull_request:
         branches: [main, dev]
+        paths: 'web/**'
 
 jobs:
-    test:
+    web:
+        defaults:
+            run:
+                working-directory: web
+
         timeout-minutes: 3
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Deno
               uses: denoland/setup-deno@v2
               with:
-                  deno-version: v1.x
+                  deno-version: v2.x
 
             - name: Setup Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v5
               with:
-                  node-version: "22.14.0"
+                  node-version: "24.8.0"
 
             - name: Cache Deno dependencies
               uses: actions/cache@v4
@@ -62,4 +65,4 @@ jobs:
               with:
                   name: playwright-report
                   path: playwright-report/
-                  retention-days: 30
+                  retention-days: 1
