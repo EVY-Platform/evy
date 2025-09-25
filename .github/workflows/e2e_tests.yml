@@ -30,19 +30,12 @@ jobs:
               uses: denoland/setup-deno@v2
               with:
                   deno-version: v2.x
-
-            - name: Cache Playwright browsers
-              id: cache-playwright
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cache/ms-playwright
-                  key: ${{ runner.os }}-playwright-browsers-${{ hashFiles('deno.lock') }}
-                  restore-keys: ${{ runner.os }}-playwright-browsers-
+                  cache: true
 
             - name: Install dependencies
               run: deno install --no-lock
 
-            - if: steps.cache-playwright.outputs.cache-hit != 'true'
+            - name: Setup playwright
               run: deno task test:setup
 
             - name: Build application
