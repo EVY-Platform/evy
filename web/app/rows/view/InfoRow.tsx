@@ -31,7 +31,7 @@ export default class InfoRow extends EVYRow {
 								{row?.config.find((c) => c.id === "title")
 									?.value ?? "Info row title"}
 							</p>
-							<p className="text-evy-light">
+							<p>
 								{row?.config.find((c) => c.id === "info")
 									?.value ?? "Info row info"}
 							</p>

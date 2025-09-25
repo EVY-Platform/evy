@@ -43,7 +43,7 @@ export function ConfigurationPanel() {
 								onChange={(e) => {
 									updateRowContent(c.id, e.target.value);
 								}}
-								className="w-full text-sm rounded p-2 border border-opacity-50 focus-visible:outline-none"
+								className="w-full text-sm rounded p-2 border focus-visible:outline-none"
 								required
 							/>
 						</form>

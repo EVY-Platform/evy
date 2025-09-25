@@ -1,29 +1,30 @@
 :root {
-	--color-evy-light: oklch(62.34% 0 0);
+	--color-evy-light: oklch(97.02% 0 0);
 	--color-evy-blue: oklch(60.04% 0.2013 261.37);
-	--color-evy-gray: oklch(35.84% 0.0103 285.87);
-	--color-evy-gray-light: oklch(97.02% 0 0);
-	--color-evy-editor-hover: oklch(82.79% 0.0035 291.24);
+	--color-evy-gray: oklch(62.34% 0 0);
+	--color-evy-gray-light: oklch(92.494% 0.00011 271.152);
+	--color-evy-gray-dark: oklch(35.84% 0.0103 285.87);
 }
-
-.bg-evy-light-gray {
-	background-color: var(--color-evy-gray-light);
-}
-.bg-evy-gray-light {
-	background-color: var(--color-evy-gray-light);
-}
-.bg-evy-editor-hover {
-	background-color: var(--color-evy-editor-hover);
-}
-.bg-evy-gray {
+.bg-gray {
 	background-color: var(--color-evy-gray);
 }
-.text-evy-light {
-	color: var(--color-evy-light);
+.bg-gray-light {
+	background-color: var(--color-evy-gray-light);
 }
-.text-evy-blue {
+.bg-gray-dark {
+	background-color: var(--color-evy-gray-dark);
+}
+
+.hover\:bg-gray:hover {
+	background-color: var(--color-evy-gray);
+}
+.hover\:bg-gray-light:hover {
+	background-color: var(--color-evy-gray-light);
+}
+
+.text-blue {
 	color: var(--color-evy-blue);
 }
-.border-evy-border {
+.border-gray {
 	border-color: var(--color-evy-gray);
 }

@@ -89,7 +89,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					backgroundColor:
 						state.type === idle.type
 							? "white"
-							: "var(--color-evy-editor-hover)",
+							: "var(--color-evy-gray-light)",
 				}}
 			>
 				{rows}

@@ -11,7 +11,7 @@ function AppContent() {
 	return (
 		<>
 			<div
-				className="border-r overflow-y-auto"
+				className="border-r border-gray overflow-y-auto"
 				style={{ width: "280px" }}
 			>
 				<RowsPanel key="rows" />
@@ -29,7 +29,7 @@ function AppContent() {
 				})}
 			</div>
 			<div
-				className="border-l overflow-y-auto"
+				className="border-l border-gray overflow-y-auto"
 				style={{ width: "280px" }}
 			>
 				<ConfigurationPanel key="configuration" />
@@ -42,7 +42,7 @@ function App() {
 	return (
 		<AppProvider>
 			<div className="h-screen flex flex-col overflow-hidden">
-				<div className="border-b p-4">
+				<div className="border-b border-gray p-4">
 					<a href="/">
 						<img className="h-4" src="/logo.svg" alt="EVY" />
 					</a>

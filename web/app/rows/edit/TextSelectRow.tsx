@@ -33,7 +33,7 @@ export default class TextSelectRow extends EVYRow {
 									?.value ?? "Text select row title"}
 							</p>
 							<div className="flex justify-between">
-								<p className="text-evy-light">
+								<p>
 									{row?.config.find(
 										(c) => c.id === "placeholder"
 									)?.value ?? "Text select row placeholder"}
