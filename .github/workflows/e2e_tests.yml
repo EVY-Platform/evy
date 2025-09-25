@@ -2,8 +2,8 @@ name: E2E Tests
 
 on:
     pull_request:
-        branches: [main, dev]
-        paths: 'web/**'
+        branches: [dev]
+        paths: "web/**"
 
 jobs:
     web:
@@ -21,9 +21,10 @@ jobs:
               uses: denoland/setup-deno@v2
               with:
                   deno-version: v2.x
+                  cache: true
 
             - name: Install dependencies
-              run: deno install
+              run: deno install --no-lock
 
             - name: Setup application
               run: deno task test:setup
