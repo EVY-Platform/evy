@@ -27,36 +27,17 @@ jobs:
               with:
                   node-version: "24.8.0"
 
-            - name: Cache Deno dependencies
-              uses: actions/cache@v4
-              with:
-                  path: |
-                      ~/.cache/deno
-                      ~/.deno
-                  key: ${{ runner.os }}-deno-${{ hashFiles('deno.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-deno-
-
-            - name: Cache Node modules
-              uses: actions/cache@v4
-              with:
-                  path: node_modules
-                  key: ${{ runner.os }}-node-${{ hashFiles('package.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-node-
-
             - name: Install dependencies
               run: |
                   deno install
-                  npm ci
 
-            - name: Install Playwright Browsers
+            - name: Setup application
               run: deno task test:setup
 
             - name: Build application
               run: deno task build
 
-            - name: Run Playwright tests
+            - name: Run E2E Tests
               run: deno task test
 
             - name: Upload test results
