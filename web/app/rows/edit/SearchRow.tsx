@@ -1,10 +1,10 @@
-import { AppContext } from "@/app/registry.tsx";
+import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
-import Input from "@/app/rows/design-system/Input";
-import InlineIcon from "@/app/rows/design-system/InlineIcon";
+import Input from "../design-system/Input";
+import InlineIcon from "../design-system/InlineIcon";
 
 export default class SearchRow extends EVYRow {
-	static config: RowConfig = [
+	static override config: RowConfig = [
 		{
 			id: "title",
 			type: "text",

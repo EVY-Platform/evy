@@ -1,5 +1,3 @@
-"use client";
-
 import { Fragment, useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
@@ -39,7 +37,7 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 				style={{
 					backgroundColor:
 						state.type === idle.type
-							? "var(--color-evy-editor-hover)"
+							? "var(--color-evy-gray-light)"
 							: "var(--color-evy-gray)",
 				}}
 			/>

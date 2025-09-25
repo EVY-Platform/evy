@@ -1,5 +1,3 @@
-"use client";
-
 import {
 	useEffect,
 	useContext,
@@ -14,14 +12,15 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
-import { DraggableRowContainer } from "./DraggableRowContainer.tsx";
-import { AppContext } from "../registry.tsx";
+import { DraggableRowContainer } from "./DraggableRowContainer";
+import { AppContext } from "../registry";
 
 type State = { type: "idle" } | { type: "is-row-over" };
 
 const idle: State = { type: "idle" };
 const isRowOver: State = { type: "is-row-over" };
 
+// AppPage component for rendering individual pages
 export default function AppPage({ pageId }: { pageId: string }) {
 	const { pages, dispatchActiveRow, dispatchDragging } =
 		useContext(AppContext);
@@ -82,7 +81,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	);
 
 	return (
-		<div className="overflow-hidden h-165 p-7 pt-18">
+		<div className="overflow-hidden p-[30px] pt-16 h-full w-full">
 			<div
 				className="overflow-scroll h-full rounded-b-[2.4rem]"
 				ref={scrollableRef}
@@ -90,7 +89,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					backgroundColor:
 						state.type === idle.type
 							? "white"
-							: "var(--color-evy-editor-hover)",
+							: "var(--color-evy-gray-light)",
 				}}
 			>
 				{rows}

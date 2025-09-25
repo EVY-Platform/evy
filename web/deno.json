@@ -1,0 +1,40 @@
+{
+	"compilerOptions": {
+		"lib": ["deno.window", "dom"],
+		"strict": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "react",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"skipLibCheck": true
+	},
+	"imports": {
+		"react": "https://esm.sh/react@19.1.0?target=es2022",
+		"react-dom": "https://esm.sh/react-dom@19.1.0?target=es2022",
+		"react-dom/client": "https://esm.sh/react-dom@19.1.0/client?target=es2022",
+		"react/jsx-runtime": "https://esm.sh/react@19.1.0/jsx-runtime?target=es2022",
+		"tiny-invariant": "https://esm.sh/tiny-invariant@1.3.3?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop-auto-scroll": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop-auto-scroll@2.1.2?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop-auto-scroll/element": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop-auto-scroll@2.1.2/element?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop/combine": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop@1.7.7/combine?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop/element/adapter": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop@1.7.7/element/adapter?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop@1.7.7/element/preserve-offset-on-source?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop@1.7.7/element/set-custom-native-drag-preview?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop/external/adapter": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop@1.7.7/external/adapter?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop-hitbox@1.0.3/closest-edge?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop-hitbox@1.0.3/util/get-reorder-destination-index?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop-hitbox/types": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop-hitbox@1.0.3/types?target=es2022",
+		"@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop-react-drop-indicator@3.2.7/box?target=es2022",
+		"@atlaskit/primitives": "https://esm.sh/@atlaskit/primitives@14.1.3?target=es2022"
+	},
+	"tasks": {
+		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
+		"build": "deno bundle --platform browser --no-check --output dist/bundle.js app/main.tsx",
+		"dev": "deno task setup && deno task build && deno run --allow-net --allow-read --allow-write --allow-run dev/server.ts",
+		"prod": "deno run --allow-net --allow-read jsr:@std/http/file-server ./dist --port 3000",
+		"test:setup": "npx playwright install",
+		"test": "npx playwright test",
+		"test:ui": "npx playwright test --ui",
+		"test:debug": "npx playwright test --debug"
+	}
+}

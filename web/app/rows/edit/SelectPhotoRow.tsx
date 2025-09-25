@@ -1,8 +1,8 @@
-import { AppContext } from "@/app/registry.tsx";
+import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
 
 export default class SelectPhotoRow extends EVYRow {
-	static config: RowConfig = [
+	static override config: RowConfig = [
 		{
 			id: "content",
 			type: "text",
@@ -28,7 +28,7 @@ export default class SelectPhotoRow extends EVYRow {
 					return (
 						<div className="p-2">
 							<p className="pb-2">Select photo row</p>
-							<div className="rounded-md px-8 py-8 border border-evy-border border-opacity-50 text-sm">
+							<div className="rounded-md px-8 py-8 border text-sm">
 								<div className="flex justify-center text-center flex-col">
 									<img
 										className="h-4"
@@ -42,7 +42,7 @@ export default class SelectPhotoRow extends EVYRow {
 									</p>
 								</div>
 							</div>
-							<p className="text-evy-light text-sm">
+							<p className="text-sm">
 								{row?.config.find((c) => c.id === "subtitle")
 									?.value ?? "Select photo row subtitle"}
 							</p>

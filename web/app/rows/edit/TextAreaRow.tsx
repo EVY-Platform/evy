@@ -1,9 +1,9 @@
-import { AppContext } from "@/app/registry.tsx";
+import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
-import TextArea from "@/app/rows/design-system/TextArea";
+import TextArea from "../design-system/TextArea";
 
 export default class TextAreaRow extends EVYRow {
-	static config: RowConfig = [
+	static override config: RowConfig = [
 		{
 			id: "title",
 			type: "text",

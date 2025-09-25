@@ -1,8 +1,8 @@
-import { AppContext } from "@/app/registry.tsx";
+import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
 
 export default class TextActionRow extends EVYRow {
-	static config: RowConfig = [
+	static override config: RowConfig = [
 		{
 			id: "title",
 			type: "text",
@@ -37,12 +37,12 @@ export default class TextActionRow extends EVYRow {
 									?.value ?? "Text action row title"}
 							</p>
 							<div className="flex justify-between">
-								<p className="text-evy-light">
+								<p>
 									{row?.config.find(
 										(c) => c.id === "placeholder"
 									)?.value ?? "Placeholder"}
 								</p>
-								<button className="text-evy-blue">
+								<button className="text-blue hover:text-black">
 									{row?.config.find((c) => c.id === "action")
 										?.value ?? "Action"}
 								</button>

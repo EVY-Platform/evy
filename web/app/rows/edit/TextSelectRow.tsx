@@ -1,9 +1,9 @@
-import { AppContext } from "@/app/registry.tsx";
+import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
-import Checkbox from "@/app/rows/design-system/Checkbox";
+import Checkbox from "../design-system/Checkbox";
 
 export default class TextSelectRow extends EVYRow {
-	static config: RowConfig = [
+	static override config: RowConfig = [
 		{
 			id: "title",
 			type: "text",
@@ -33,7 +33,7 @@ export default class TextSelectRow extends EVYRow {
 									?.value ?? "Text select row title"}
 							</p>
 							<div className="flex justify-between">
-								<p className="text-evy-light">
+								<p>
 									{row?.config.find(
 										(c) => c.id === "placeholder"
 									)?.value ?? "Text select row placeholder"}

@@ -1,9 +1,9 @@
-import { AppContext } from "@/app/registry.tsx";
+import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
-import Dropdown from "@/app/rows/design-system/Dropdown";
+import Dropdown from "../design-system/Dropdown";
 
 export default class DropdownRow extends EVYRow {
-	static config: RowConfig = [
+	static override config: RowConfig = [
 		{
 			id: "title",
 			type: "text",

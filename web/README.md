@@ -1,19 +1,28 @@
 # EVY Web
 
+A React-based app builder built with Deno and served using std/http/file-server.
+
 ## Getting Started
 
-### Installing Dependencies
+### Prerequisites
+
+-   [Deno](https://deno.land/) installed on your system
+
+### Running the App
+
+#### Development Mode
 
 ```bash
-deno install
+deno task dev
 ```
 
-## Running the App
+This will build the application and start the server.
 
-### Locally
+#### Production Mode
 
 ```bash
-deno run dev
+deno task build
+deno task start
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -23,6 +32,25 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ```bash
 docker compose up -d
 ```
+
+## Testing
+
+This project includes comprehensive end-to-end tests using Playwright.
+
+### Running Tests
+
+```bash
+deno task test
+deno task test:ui
+deno task test:debug
+```
+
+## Architecture
+
+-   **Build System**: Uses Deno's built-in capabilities to create a JavaScript bundle
+-   **Server**: Uses Deno's std/http/file-server to serve static files
+-   **Frontend**: React 19 with Tailwind CSS loaded from CDN
+-   **No Node.js**: Completely runs on Deno runtime
 
 ## License
 

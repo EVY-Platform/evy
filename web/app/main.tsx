@@ -1,35 +1,24 @@
-"use client";
-
-import { useEffect, useContext } from "react";
-import invariant from "tiny-invariant";
-
+import { createRoot } from "react-dom/client";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/types";
 import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { useContext, useEffect } from "react";
+import invariant from "tiny-invariant";
 
+import { AppProvider, AppContext } from "./registry.tsx";
 import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
 import { RowsPanel } from "./components/RowsPanel.tsx";
 import AppPage from "./components/AppPage.tsx";
-
-import { AppProvider, AppContext } from "./registry.tsx";
+import type { Edge } from "./components/DraggableRowContainer.tsx";
 
 const panelWidth = "280px";
-
-export default function Index() {
-	return (
-		<AppProvider>
-			<AppContent />
-		</AppProvider>
-	);
-}
 
 function AppContent() {
 	const { pages, dispatchPages, dispatchActiveRow } = useContext(AppContext);
 
 	useEffect(() => {
 		return monitorForElements({
-			onDrop(args) {
+			onDrop(args: any) {
 				const { location, source } = args;
 				if (!location.current.dropTargets.length) {
 					return;
@@ -149,7 +138,7 @@ function AppContent() {
 	return (
 		<>
 			<div
-				className="border-r overflow-y-auto"
+				className="border-r border-gray overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
 				<RowsPanel key="rows" />
@@ -159,7 +148,7 @@ function AppContent() {
 					return (
 						<div
 							key={page.pageId}
-							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-84 h-205"
+							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-[336px] h-[662px]"
 						>
 							<AppPage pageId={page.pageId} />
 						</div>
@@ -167,11 +156,34 @@ function AppContent() {
 				})}
 			</div>
 			<div
-				className="border-l overflow-y-auto"
+				className="border-l border-gray overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
 				<ConfigurationPanel key="configuration" />
 			</div>
 		</>
 	);
+}
+
+function App() {
+	return (
+		<AppProvider>
+			<div className="h-screen flex flex-col overflow-hidden">
+				<div className="border-b border-gray p-4">
+					<a href="/">
+						<img className="h-4" src="/logo.svg" alt="EVY" />
+					</a>
+				</div>
+				<div className="flex flex-1 overflow-hidden">
+					<AppContent />
+				</div>
+			</div>
+		</AppProvider>
+	);
+}
+
+const container = document.getElementById("root");
+if (container) {
+	const root = createRoot(container);
+	root.render(<App />);
 }

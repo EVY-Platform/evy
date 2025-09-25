@@ -1,5 +1,3 @@
-"use client";
-
 import {
 	ReactNode,
 	Dispatch,
@@ -8,20 +6,20 @@ import {
 	createElement,
 } from "react";
 
-import InfoRow from "./rows/view/InfoRow.tsx";
-import InputListRow from "./rows/view/InputListRow.tsx";
-import TextRow from "./rows/view/TextRow.tsx";
-import ButtonRow from "./rows/action/ButtonRow.tsx";
-import TextActionRow from "./rows/action/TextActionRow.tsx";
-import CalendarRow from "./rows/edit/CalendarRow.tsx";
-import DropdownRow from "./rows/edit/DropdownRow.tsx";
-import InlinePickerRow from "./rows/edit/InlinePickerRow.tsx";
-import InputRow from "./rows/edit/InputRow.tsx";
-import SearchRow from "./rows/edit/SearchRow.tsx";
-import SelectPhotoRow from "./rows/edit/SelectPhotoRow.tsx";
-import TextAreaRow from "./rows/edit/TextAreaRow.tsx";
-import TextSelectRow from "./rows/edit/TextSelectRow.tsx";
-import { type RowConfig } from "./rows/EVYRow.tsx";
+import InfoRow from "./rows/view/InfoRow";
+import InputListRow from "./rows/view/InputListRow";
+import TextRow from "./rows/view/TextRow";
+import ButtonRow from "./rows/action/ButtonRow";
+import TextActionRow from "./rows/action/TextActionRow";
+import CalendarRow from "./rows/edit/CalendarRow";
+import DropdownRow from "./rows/edit/DropdownRow";
+import InlinePickerRow from "./rows/edit/InlinePickerRow";
+import InputRow from "./rows/edit/InputRow";
+import SearchRow from "./rows/edit/SearchRow";
+import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
+import TextAreaRow from "./rows/edit/TextAreaRow";
+import TextSelectRow from "./rows/edit/TextSelectRow";
+import { type RowConfig } from "./rows/EVYRow";
 
 type RowData = {
 	rowId: string;
@@ -86,7 +84,7 @@ const baseRows = [
 
 const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 	switch (action.type) {
-		case "ADD_ROW_TO_PAGE":
+		case "ADD_ROW_TO_PAGE": {
 			const pageIndexToAdd = state.findIndex(
 				(page) => page.pageId === action.pageId
 			);
@@ -118,7 +116,8 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 					? { ...page, rowsData: newRowsDataAdd }
 					: page
 			);
-		case "MOVE_ROW_ON_PAGE":
+		}
+		case "MOVE_ROW_ON_PAGE": {
 			const pageIndexMove = state.findIndex(
 				(page) => page.pageId === action.startPageId
 			);
@@ -134,7 +133,8 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 					? { ...page, rowsData: newRowsData }
 					: page
 			);
-		case "MOVE_ROW_TO_PAGE":
+		}
+		case "MOVE_ROW_TO_PAGE": {
 			const sourcePageIndex = state.findIndex(
 				(page) => page.pageId === action.startPageId
 			);
@@ -165,7 +165,8 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 				}
 				return page;
 			});
-		case "REMOVE_ROW_FROM_PAGE":
+		}
+		case "REMOVE_ROW_FROM_PAGE": {
 			const pageIndex = state.findIndex(
 				(page) => page.pageId === action.pageId
 			);
@@ -177,7 +178,8 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 					? { ...page, rowsData: newRowsDataRemoved }
 					: page
 			);
-		case "UPDATE_ROW_CONTENT":
+		}
+		case "UPDATE_ROW_CONTENT": {
 			const pageIndexUpdate = state.findIndex(
 				(page) => page.pageId === action.pageId
 			);
@@ -202,6 +204,7 @@ const pagesReducer = (state: PagesState, action: PagesAction): PagesState => {
 					? { ...page, rowsData: newRowsDataUpdated }
 					: page
 			);
+		}
 		default:
 			return state;
 	}

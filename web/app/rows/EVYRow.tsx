@@ -13,7 +13,7 @@ export abstract class EVYRow extends React.Component<{
 
 	abstract renderContent(): ReactNode;
 
-	render() {
+	override render() {
 		return this.renderContent();
 	}
 }
