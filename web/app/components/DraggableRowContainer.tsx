@@ -22,7 +22,7 @@ import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/externa
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 
-type Edge = "top" | "right" | "bottom" | "left";
+export type Edge = "top" | "right" | "bottom" | "left";
 
 // Properly typed DropIndicator component for React 19 compatibility
 const DropIndicator: React.FC<{ edge: Edge }> = (props) => {

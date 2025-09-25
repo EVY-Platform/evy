@@ -52,7 +52,7 @@ export function ConfigurationPanel() {
 					return <div key={c.id}>{c.type}</div>;
 				}
 			}) || [],
-		[row?.config, activeRow, dispatchPages]
+		[row?.config]
 	);
 
 	return (
