@@ -45,13 +45,6 @@ deno task test:ui
 deno task test:debug
 ```
 
-## Architecture
-
--   **Build System**: Uses Deno's built-in capabilities to create a JavaScript bundle
--   **Server**: Uses Deno's std/http/file-server to serve static files
--   **Frontend**: React 19 with Tailwind CSS loaded from CDN
--   **No Node.js**: Completely runs on Deno runtime
-
 ## License
 
 Apache 2.0, see [LICENSE](LICENSE) for more details.
