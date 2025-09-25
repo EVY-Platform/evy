@@ -22,11 +22,6 @@ jobs:
               with:
                   deno-version: v2.x
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v5
-              with:
-                  node-version: "24.8.0"
-
             - name: Install dependencies
               run: deno install
 
