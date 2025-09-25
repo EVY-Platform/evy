@@ -28,8 +28,7 @@ jobs:
                   node-version: "24.8.0"
 
             - name: Install dependencies
-              run: |
-                  deno install
+              run: deno install
 
             - name: Setup application
               run: deno task test:setup
