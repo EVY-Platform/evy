@@ -11,7 +11,7 @@ jobs:
             run:
                 working-directory: web
 
-        timeout-minutes: 3
+        timeout-minutes: 5
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -22,9 +22,7 @@ jobs:
               with:
                   path: |
                       ~/.cache/deno
-                      ~/.cache/ms-playwright
                       ~/.deno
-                      ~/.npm
                   key: ${{ runner.os }}-deno-${{ hashFiles('deno.lock') }}
                   restore-keys: ${{ runner.os }}-deno-
 
@@ -33,10 +31,18 @@ jobs:
               with:
                   deno-version: v2.x
 
+            - name: Cache Playwright browsers
+              id: cache-playwright
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: ${{ runner.os }}-playwright-browsers-${{ hashFiles('deno.lock') }}
+                  restore-keys: ${{ runner.os }}-playwright-browsers-
+
             - name: Install dependencies
               run: deno install --no-lock
 
-            - name: Setup application
+            - if: steps.cache-playwright.outputs.cache-hit != 'true'
               run: deno task test:setup
 
             - name: Build application
