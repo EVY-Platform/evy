@@ -4,10 +4,7 @@ type WSServer = typeof Server;
 type WSError = typeof IRPCError;
 export type WSParams = typeof IRPCMethodParams;
 
-if (!process.env.API_PORT) {
-	throw new Error("Missing API_PORT environment variable");
-}
-const PORT: number = parseInt(process.env.API_PORT);
+const PORT: number = parseInt(process.env.API_PORT || "8000");
 const HOST: string = "0.0.0.0";
 
 function initServer(

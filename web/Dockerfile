@@ -7,7 +7,7 @@ ENV DENO_DIR=./.deno_cache
 
 WORKDIR /app
 
-# Copy package.json and lockfile
+# Copy deno.json and lockfile
 COPY deno.json deno.lock ./
 
 # Install dependencies
@@ -21,7 +21,6 @@ RUN deno task build
 # Production image, copy all the files and run the app
 FROM base AS runner
 
-ENV NODE_ENV=production
 ENV DENO_DIR=./.deno_cache
 
 WORKDIR /app
@@ -35,10 +34,9 @@ COPY --from=builder --chown=deno:deno /app/ ./
 
 USER deno
 
-EXPOSE 3000
-
-ENV HOSTNAME="0.0.0.0"
-ENV PORT=3000
+ARG WEB_PORT="3000"
+ENV WEB_PORT=$WEB_PORT
+EXPOSE $WEB_PORT
 
 # Start the application
-CMD ["deno", "task", "start"]
+CMD ["deno", "task", "prod"]

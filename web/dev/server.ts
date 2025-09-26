@@ -1,6 +1,6 @@
 import { serveDir } from "https://deno.land/std@0.208.0/http/file_server.ts";
 
-const PORT = 3000;
+const PORT = Deno.env.get("WEB_PORT") || "3000";
 const PROJECT_ROOT = new URL("..", import.meta.url).pathname;
 const DIST_DIR = `${PROJECT_ROOT}/dist`;
 
