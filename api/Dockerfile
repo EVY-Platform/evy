@@ -1,33 +1,40 @@
-#build deps
-FROM node:18-alpine AS dep_builder
+FROM node:24-alpine AS base
+
+FROM base AS builder
 WORKDIR /app
-COPY package.json .
-COPY yarn.lock .
+
+# Copy package.json and lockfile
+COPY package.json yarn.lock ./
+
+# Install dependencies
 RUN yarn install
 
-#build code
-FROM node:18-alpine AS code_builder
+# Build code
+FROM node:24-alpine AS code_builder
+
 WORKDIR /app
 COPY . .
-COPY --from=dep_builder ./app/node_modules ./node_modules
+
 RUN yarn prisma_generate
 RUN yarn build
 
-#final - We need alpine and not buster-slim because of libSSL
-FROM node:18-alpine AS final
+# We need alpine and not buster-slim because of libSSL
+FROM node:24-alpine AS runner
+
 WORKDIR /app
+
 COPY --from=code_builder ./app/dist ./dist
 COPY --from=code_builder ./app/prisma ./prisma
-COPY package.json .
-COPY yarn.lock .
+COPY package.json yarn.lock ./
+
 RUN yarn install --production
 RUN rm ./yarn.lock
 
-ARG API_PORT="3000"
-ARG DATABASE_URL
+ARG API_PORT="8000"
+ARG DB_URL
 
 ENV API_PORT=$API_PORT
-ENV DATABASE_URL=$DATABASE_URL
+ENV DB_URL=$DB_URL
 
 EXPOSE $API_PORT
 

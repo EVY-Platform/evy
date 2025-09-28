@@ -1,17 +1,19 @@
 version: "3.9"
 services:
-  admin:
-    image: "ghcr.io/glesage/evy-admin:latest"
+  web:
+    image: "ghcr.io/glesage/evy-web:latest"
     restart: always
     ports:
-      - 8001:8001
+      - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
+    environment:
+      - WEB_PORT=${WEB_PORT:-3000}
     labels:
       - traefik.enable=true
       - traefik.port=80
-      - traefik.http.routers.admin.rule=Host(`admin.${DOMAIN}`)
-      - traefik.http.routers.admin.entrypoints=https
-      - traefik.http.routers.admin.tls=true
-      - traefik.http.routers.admin.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.web.rule=Host(`web.${DOMAIN}`)
+      - traefik.http.routers.web.entrypoints=https
+      - traefik.http.routers.web.tls=true
+      - traefik.http.routers.web.tls.certresolver=${CERT_RESOLVER}
     depends_on:
       - api
   api:
@@ -20,7 +22,8 @@ services:
     ports:
       - $API_PORT:$API_PORT
     environment:
-      DATABASE_URL: $DATABASE_URL
+      - DB_URL=postgresql://${DB_USER}:${DB_PASS}@postgres:${DB_PORT}/${DB_DATABASE}
+      - ${API_PORT:-8000}=${API_PORT:-8000}
     labels:
       - traefik.enable=true
       - traefik.port=80
@@ -34,13 +37,13 @@ services:
     image: "postgres"
     restart: always
     ports:
-      - $PG_PORT:$PG_PORT
+      - ${DB_PORT:-5432}:5432
     environment:
-      POSTGRES_USER: $PG_USER
-      POSTGRES_PASSWORD: $PG_PASS
-      POSTGRES_PORT: $PG_PORT
+      POSTGRES_USER: ${DB_USER:-evy}
+      POSTGRES_PASSWORD: ${DB_PASS:-evy}
+      POSTGRES_DATABASE: ${DB_DATABASE:-evy}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $PG_USER"]
+      test: ["CMD-SHELL", "pg_isready -U $DB_USER"]
       interval: 1s
       timeout: 1s
       retries: 3

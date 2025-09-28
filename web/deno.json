@@ -30,8 +30,8 @@
 	"tasks": {
 		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
 		"build": "deno bundle --platform browser --no-check --output dist/bundle.js app/main.tsx",
-		"dev": "deno task setup && deno task build && deno run --allow-net --allow-read --allow-write --allow-run dev/server.ts",
-		"prod": "deno run --allow-net --allow-read jsr:@std/http/file-server ./dist --port 3000",
+		"dev": "deno task setup && deno task build && deno run --allow-net --allow-env --allow-read --allow-write --allow-run dev/server.ts",
+		"prod": "deno run --allow-net --allow-env --allow-read jsr:@std/http/file-server ./dist --port 3000",
 		"test:setup": "npx playwright install --with-deps",
 		"test": "npx playwright test",
 		"test:ui": "npx playwright test --ui",
