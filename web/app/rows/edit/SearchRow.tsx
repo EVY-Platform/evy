@@ -33,12 +33,12 @@ export default class SearchRow extends EVYRow {
 						.find((r) => r.rowId === rowId);
 
 					return (
-						<div className="p-2">
-							<p className="pb-2">
+						<div className="evy-p-2">
+							<p className="evy-pb-2">
 								{row?.config.find((c) => c.id === "title")
 									?.value ?? "Search row title"}
 							</p>
-							<div className="relative">
+							<div className="evy-relative">
 								<InlineIcon icon="/search.svg" alt="Search" />
 								<Input
 									value={

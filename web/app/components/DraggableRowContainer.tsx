@@ -54,7 +54,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		return (
 			<div
-				className="flex flex-col w-full relative hover:bg-gray-light"
+				className="evy-flex evy-flex-col evy-w-full evy-relative evy-hover\:bg-gray-light "
 				style={{ cursor }}
 				ref={ref}
 				onClick={selectRow}
@@ -161,7 +161,7 @@ export function DraggableRowContainer({
 				state.container &&
 				ReactDOM.createPortal(
 					<div
-						className="flex flex-col bg-gray-light"
+						className="evy-flex evy-flex-col evy-bg-gray-light"
 						style={{
 							width: state.rect.width,
 							height: state.rect.height,

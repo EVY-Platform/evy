@@ -34,7 +34,7 @@ export function ConfigurationPanel() {
 			row?.config.map((c) => {
 				if (c.type === "text") {
 					return (
-						<form className="grid" key={c.id}>
+						<form className="evy-grid" key={c.id}>
 							<label htmlFor={c.id}>{c.id}</label>
 							<input
 								id={c.id}
@@ -43,7 +43,7 @@ export function ConfigurationPanel() {
 								onChange={(e) => {
 									updateRowContent(c.id, e.target.value);
 								}}
-								className="w-full text-sm rounded p-2 border focus-visible:outline-none"
+								className="evy-box-sizing-border evy-text-sm evy-rounded evy-p-2 evy-border evy-focus-visible\:outline-none"
 								required
 							/>
 						</form>
@@ -56,11 +56,11 @@ export function ConfigurationPanel() {
 	);
 
 	return (
-		<div className="flex flex-col">
-			<div className="p-4 text-xl font-bold text-center">
+		<div className="evy-flex evy-flex-col">
+			<div className="evy-p-4 evy-text-xl evy-font-bold evy-text-center">
 				Configuration
 			</div>
-			<div className="flex flex-col min-h-full p-2 gap-2 overflow-scroll">
+			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-2 evy-gap-2 evy-overflow-scroll">
 				{configurationElements}
 			</div>
 		</div>

@@ -10,11 +10,11 @@ export default function Input({
 	offset?: "none" | "left" | "right";
 }) {
 	const offsetClass =
-		offset === "left" ? "pl-8" : offset === "right" ? "pr-8" : "";
+		offset === "left" ? "evy-pl-8" : offset === "right" ? "evy-pr-8" : "";
 	return (
 		<input
 			type="text"
-			className={`w-full text-sm ${border} focus-visible:outline-none ${offsetClass}`}
+			className={`evy-w-full evy-box-sizing-border evy-text-sm ${border} evy-focus-visible\:outline-none ${offsetClass}`}
 			required
 			value={value}
 			placeholder={placeholder}

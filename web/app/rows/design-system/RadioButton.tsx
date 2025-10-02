@@ -8,10 +8,10 @@ export default function RadioButton({
 	return (
 		<button
 			type="button"
-			className={`rounded-md text-sm px-3 py-3 ${
+			className={`evy-rounded-md evy-text-sm evy-px-3 evy-py-3 evy-border-none ${
 				selected
-					? "bg-gray-light text-black hover:bg-gray"
-					: "bg-gray-dark text-white hover:bg-gray"
+					? "evy-bg-gray-light evy-text-black evy-hover:bg-gray"
+					: "evy-bg-gray-dark evy-text-white evy-hover:bg-gray"
 			}`}
 		>
 			{label}

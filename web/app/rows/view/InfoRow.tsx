@@ -26,8 +26,8 @@ export default class InfoRow extends EVYRow {
 						.find((r) => r.rowId === rowId);
 
 					return (
-						<div className="p-2">
-							<p className="pb-2">
+						<div className="evy-p-2">
+							<p className="evy-pb-2">
 								{row?.config.find((c) => c.id === "title")
 									?.value ?? "Info row title"}
 							</p>

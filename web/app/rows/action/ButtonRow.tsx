@@ -22,7 +22,7 @@ export default class ButtonRow extends EVYRow {
 						.find((r) => r.rowId === rowId);
 
 					return (
-						<div className="p-2 flex justify-center">
+						<div className="evy-p-2 evy-flex evy-justify-center">
 							<Button
 								label={
 									row?.config.find((c) => c.id === "text")

@@ -33,7 +33,7 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 	return (
 		<Fragment>
 			<div
-				className="flex absolute w-full h-full opacity-60"
+				className="evy-flex evy-absolute evy-w-full evy-h-full evy-opacity-60"
 				style={{
 					backgroundColor:
 						state.type === idle.type
@@ -42,11 +42,11 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 				}}
 			/>
 			<div
-				className="flex absolute w-full h-full items-start justify-center pt-32"
+				className="evy-flex evy-absolute evy-w-full evy-h-full evy-justify-center evy-pt-32"
 				ref={ref}
 				onClick={dismiss}
 			>
-				<img className="h-48" src="/bin.svg" alt="Delete" />
+				<img className="evy-h-48" src="/bin.svg" alt="Delete" />
 			</div>
 		</Fragment>
 	);

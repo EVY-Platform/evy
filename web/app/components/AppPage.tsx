@@ -81,9 +81,9 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	);
 
 	return (
-		<div className="overflow-hidden p-[30px] pt-16 h-full w-full">
+		<div className="evy-overflow-hidden evy-p-30px evy-pt-16 evy-h-full evy-w-full evy-box-sizing-border">
 			<div
-				className="overflow-scroll h-full rounded-b-[2.4rem]"
+				className="evy-overflow-scroll evy-h-full evy-rounded-b-24"
 				ref={scrollableRef}
 				style={{
 					backgroundColor:

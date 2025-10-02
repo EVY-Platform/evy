@@ -21,9 +21,7 @@ test.describe("EVY App Builder", () => {
 
 		// Check that there are two empty pages by looking for the phone background images
 		// We can identify phone containers by looking for elements with phone background class
-		const phoneContainers = page.locator(
-			"div[class*=\"bg-[url('/phone.svg')]\"]"
-		);
+		const phoneContainers = page.locator('div[class*="evy-bg-phone"]');
 		await expect(phoneContainers).toHaveCount(2);
 
 		// Check that the configuration panel content is empty initially (no forms visible)
