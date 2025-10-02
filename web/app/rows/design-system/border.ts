@@ -1,1 +1,1 @@
-export const border = "rounded p-2 border border-gray";
+export const border = "evy-rounded evy-p-2 evy-border evy-border-gray-light";

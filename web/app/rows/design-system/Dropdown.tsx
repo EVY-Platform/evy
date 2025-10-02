@@ -9,7 +9,7 @@ export default function Dropdown({
 	placeholder: string;
 }) {
 	return (
-		<div className="relative">
+		<div className="evy-relative">
 			<Input value={value} placeholder={placeholder} offset="left" />
 			<InlineIcon icon="/arrow_down.svg" alt="Select" />
 		</div>

@@ -26,12 +26,12 @@ export default class SelectPhotoRow extends EVYRow {
 						.find((r) => r.rowId === rowId);
 
 					return (
-						<div className="p-2">
-							<p className="pb-2">Select photo row</p>
-							<div className="rounded-md px-8 py-8 border text-sm">
-								<div className="flex justify-center text-center flex-col">
+						<div className="evy-p-2">
+							<p className="evy-pb-2">Select photo row</p>
+							<div className="evy-rounded-md evy-px-8 evy-py-8 evy-border evy-text-sm">
+								<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
 									<img
-										className="h-4"
+										className="evy-h-4"
 										src="/add_photo.svg"
 										alt="Add photo"
 									/>
@@ -42,7 +42,7 @@ export default class SelectPhotoRow extends EVYRow {
 									</p>
 								</div>
 							</div>
-							<p className="text-sm">
+							<p className="evy-text-sm">
 								{row?.config.find((c) => c.id === "subtitle")
 									?.value ?? "Select photo row subtitle"}
 							</p>

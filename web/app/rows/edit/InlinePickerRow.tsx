@@ -22,12 +22,12 @@ export default class InlinePickerRow extends EVYRow {
 						.find((r) => r.rowId === rowId);
 
 					return (
-						<div className="p-2">
-							<p className="pb-2">
+						<div className="evy-p-2">
+							<p className="evy-pb-2">
 								{row?.config.find((c) => c.id === "title")
 									?.value ?? "Inline picker row title"}
 							</p>
-							<div className="p-2 flex gap-2">
+							<div className="evy-p-2 evy-flex evy-gap-2">
 								<RadioButton label="1 min" selected={false} />
 								<RadioButton label="2 mins" selected={true} />
 								<RadioButton label="5 mins" selected={false} />

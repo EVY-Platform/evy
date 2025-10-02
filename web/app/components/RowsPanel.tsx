@@ -28,10 +28,12 @@ export function RowsPanel() {
 	}, [pageInnerRef, dispatchDragging]);
 
 	return (
-		<div className="flex relative w-full">
-			<div className="flex flex-col" ref={pageInnerRef}>
-				<div className="p-4 text-xl font-bold text-center">Rows</div>
-				<div className="flex flex-col min-h-full p-2 gap-2">
+		<div className="evy-flex evy-relative evy-w-full">
+			<div className="evy-flex evy-flex-col" ref={pageInnerRef}>
+				<div className="evy-p-4 evy-text-xl evy-font-bold evy-text-center">
+					Rows
+				</div>
+				<div className="evy-flex evy-flex-col evy-min-h-full evy-p-2 evy-gap-2">
 					{rows.map((row) => (
 						<DraggableRowContainer
 							key={row.rowId}

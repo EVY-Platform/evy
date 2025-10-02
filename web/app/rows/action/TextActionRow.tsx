@@ -31,18 +31,18 @@ export default class TextActionRow extends EVYRow {
 						.find((r) => r.rowId === rowId);
 
 					return (
-						<div className="p-2">
-							<p className="pb-2">
+						<div className="evy-p-2">
+							<p className="evy-pb-2">
 								{row?.config.find((c) => c.id === "title")
 									?.value ?? "Text action row title"}
 							</p>
-							<div className="flex justify-between">
+							<div className="evy-flex evy-justify-between">
 								<p>
 									{row?.config.find(
 										(c) => c.id === "placeholder"
 									)?.value ?? "Placeholder"}
 								</p>
-								<button className="text-blue hover:text-black">
+								<button className="evy-text-blue evy-text-sm evy-hover\:text-black evy-bg-transparent evy-border-none">
 									{row?.config.find((c) => c.id === "action")
 										?.value ?? "Action"}
 								</button>

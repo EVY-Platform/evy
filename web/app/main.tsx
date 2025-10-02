@@ -138,17 +138,17 @@ function AppContent() {
 	return (
 		<>
 			<div
-				className="border-r border-gray overflow-y-auto"
+				className="evy-border-r evy-border-gray evy-overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
 				<RowsPanel key="rows" />
 			</div>
-			<div className="flex flex-1 overflow-y-auto flex-row gap-2">
+			<div className="evy-flex evy-flex-1 evy-overflow-y-auto evy-flex-row evy-gap-2 evy-justify-center">
 				{pages.map((page) => {
 					return (
 						<div
 							key={page.pageId}
-							className="bg-[url('/phone.svg')] bg-no-repeat bg-contain w-[336px] h-[662px]"
+							className="evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662"
 						>
 							<AppPage pageId={page.pageId} />
 						</div>
@@ -156,7 +156,7 @@ function AppContent() {
 				})}
 			</div>
 			<div
-				className="border-l border-gray overflow-y-auto"
+				className="evy-border-l evy-border-gray evy-overflow-y-auto"
 				style={{ width: panelWidth }}
 			>
 				<ConfigurationPanel key="configuration" />
@@ -168,13 +168,13 @@ function AppContent() {
 function App() {
 	return (
 		<AppProvider>
-			<div className="h-screen flex flex-col overflow-hidden">
-				<div className="border-b border-gray p-4">
+			<div className="evy-h-screen evy-flex evy-flex-col evy-overflow-hidden">
+				<div className="evy-border-b evy-border-gray evy-p-4 evy-line-height-1">
 					<a href="/">
-						<img className="h-4" src="/logo.svg" alt="EVY" />
+						<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 					</a>
 				</div>
-				<div className="flex flex-1 overflow-hidden">
+				<div className="evy-flex evy-flex-1 evy-overflow-hidden">
 					<AppContent />
 				</div>
 			</div>

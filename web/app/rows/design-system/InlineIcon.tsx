@@ -6,8 +6,8 @@ export default function InlineIcon({
 	alt: string;
 }) {
 	return (
-		<div className="absolute inset-y-0 start-0 flex items-center ps-2 pointer-events-none">
-			<img className="h-4" src={icon} alt={alt} />
+		<div className="evy-absolute evy-inset-y-0 evy-start-0 evy-flex evy-items-center evy-ps-2 evy-pointer-events-none">
+			<img className="evy-h-4" src={icon} alt={alt} />
 		</div>
 	);
 }
