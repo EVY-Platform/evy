@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext } from "react";
 
 import { AppContext } from "../registry";
 
@@ -19,32 +19,29 @@ export function ConfigurationPanel() {
 		[activeRowId, dispatchRow]
 	);
 
-	const configurationElements = useMemo(() => {
-		const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
-		const row = pages
-			.flatMap((page) => page.rowsData)
-			.find((r) => r.rowId === activeRowId);
+	const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
+	const row = pages
+		.flatMap((page) => page.rows)
+		.find((r) => r.rowId === activeRowId);
 
-		return (
-			Object.keys(row?.config.view.content || {}).map((key) => {
-				return (
-					<form className="evy-grid" key={key}>
-						<label htmlFor={key}>{key}</label>
-						<input
-							id={key}
-							type="text"
-							value={row?.config.view.content[key]}
-							onChange={(e) => {
-								updateRowContent(key, e.target.value);
-							}}
-							className="evy-box-sizing-border evy-text-sm evy-rounded evy-p-2 evy-border evy-focus-visible\:outline-none"
-							required
-						/>
-					</form>
-				);
-			}) || []
-		);
-	}, [flows, activeFlowId, activeRowId, updateRowContent]);
+	const configurationElements =
+		Object.keys(row?.config.view.content || {}).map((key) => {
+			return (
+				<form className="evy-grid" key={key}>
+					<label htmlFor={key}>{key}</label>
+					<input
+						id={key}
+						type="text"
+						value={row?.config.view.content[key]}
+						onChange={(e) => {
+							updateRowContent(key, e.target.value);
+						}}
+						className="evy-box-sizing-border evy-text-sm evy-rounded evy-p-2 evy-border evy-focus-visible\:outline-none"
+						required
+					/>
+				</form>
+			);
+		}) || [];
 
 	return (
 		<div className="evy-flex evy-flex-col">

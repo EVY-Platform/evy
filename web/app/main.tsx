@@ -67,8 +67,8 @@ function AppContent() {
 				const sourcePageIndex = pages.findIndex(
 					(page) => page.id === sourcePageId
 				);
-				const rowIndex = pages[sourcePageIndex]?.rowsData.findIndex(
-					(rowData) => rowData.rowId === rowId
+				const rowIndex = pages[sourcePageIndex]?.rows.findIndex(
+					(row) => row.rowId === rowId
 				);
 
 				// If the row was dropped on top of another row,
@@ -89,13 +89,12 @@ function AppContent() {
 
 				const indexOfTarget = destinationRowRecord
 					? // If the row was dropped on another row, find it's index
-					  pages[destinationPageIndex]?.rowsData.findIndex(
-							(rowData) =>
-								rowData.rowId ===
-								destinationRowRecord.data.rowId
+					  pages[destinationPageIndex]?.rows.findIndex(
+							(row) =>
+								row.rowId === destinationRowRecord.data.rowId
 					  )
 					: // Otherwise fallback to end of the list
-					  pages[destinationPageIndex]?.rowsData.length + 1;
+					  pages[destinationPageIndex]?.rows.length + 1;
 
 				const closestEdgeOfTarget: Edge | null = destinationRowRecord
 					? extractClosestEdge(destinationRowRecord.data)

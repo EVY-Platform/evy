@@ -29,7 +29,9 @@ type Row = {
 
 type Page = {
 	id: string;
+	title: string;
 	rows: Row[];
+	footer?: Row;
 };
 
 type Flow = {
@@ -348,11 +350,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 				data: "",
 				pages: [
 					{
-						id: "Step 1",
+						id: "step_1",
+						title: "Step 1",
 						rows: [],
 					},
 					{
-						id: "Step 2",
+						id: "step_2",
+						title: "Step 2",
 						rows: [],
 					},
 				],
@@ -364,7 +368,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 				data: "",
 				pages: [
 					{
-						id: "Step 1",
+						id: "step_2_1",
+						title: "Step 1",
 						rows: [],
 					},
 				],
