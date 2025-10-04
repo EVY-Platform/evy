@@ -24,6 +24,39 @@ import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/el
 
 export type Edge = "top" | "right" | "bottom" | "left";
 
+interface DragPreviewEvent {
+	location: {
+		current: {
+			input: {
+				clientX: number;
+				clientY: number;
+			};
+		};
+	};
+	source: {
+		element: HTMLElement;
+		data: { rowId: string };
+	};
+	nativeSetDragImage: (
+		image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
+		x: number,
+		y: number
+	) => void;
+}
+
+interface DragEvent {
+	source: { data: { rowId: string } };
+	self: { data: { rowId: string } };
+}
+
+interface DropTargetEvent {
+	input: {
+		clientX: number;
+		clientY: number;
+	};
+	element: HTMLElement;
+}
+
 // Properly typed DropIndicator component for React 19 compatibility
 const DropIndicator: React.FC<{ edge: Edge }> = (props) => {
 	return DropIndicatorModule(props) as React.ReactElement;
@@ -90,7 +123,7 @@ export function DraggableRowContainer({
 					location,
 					source,
 					nativeSetDragImage,
-				}: any) => {
+				}: DragPreviewEvent) => {
 					const rect = source.element.getBoundingClientRect();
 
 					setCustomNativeDragPreview({
@@ -99,7 +132,7 @@ export function DraggableRowContainer({
 							element,
 							input: location.current.input,
 						}),
-						render({ container }: any) {
+						render({ container }: { container: HTMLElement }) {
 							setState({ type: "preview", container, rect });
 							return () => setState(draggingState);
 						},
@@ -116,7 +149,7 @@ export function DraggableRowContainer({
 				element: element,
 				canDrop: () => true,
 				getIsSticky: () => true,
-				getData: ({ input, element }: any) => {
+				getData: ({ input, element }: DropTargetEvent) => {
 					return attachClosestEdge(
 						{ rowId: rowId },
 						{
@@ -126,12 +159,12 @@ export function DraggableRowContainer({
 						}
 					);
 				},
-				onDragEnter: (args: any) => {
+				onDragEnter: (args: DragEvent) => {
 					if (args.source.data.rowId !== rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
-				onDrag: (args: any) => {
+				onDrag: (args: DragEvent) => {
 					if (args.source.data.rowId !== rowId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
