@@ -6,13 +6,6 @@ export function ConfigurationPanel() {
 	const { flows, activeFlowId, activeRowId, dispatchRow } =
 		useContext(AppContext);
 
-	if (!activeRowId) return;
-
-	const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
-	const row = pages
-		.flatMap((page) => page.rowsData)
-		.find((r) => r.rowId === activeRowId);
-
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string) => {
 			if (!activeRowId) return;
@@ -26,8 +19,13 @@ export function ConfigurationPanel() {
 		[activeRowId, dispatchRow]
 	);
 
-	const configurationElements = useMemo(
-		() =>
+	const configurationElements = useMemo(() => {
+		const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
+		const row = pages
+			.flatMap((page) => page.rowsData)
+			.find((r) => r.rowId === activeRowId);
+
+		return (
 			row?.config.map((c) => {
 				if (c.type === "text") {
 					return (
@@ -48,9 +46,9 @@ export function ConfigurationPanel() {
 				} else {
 					return <div key={c.id}>{c.type}</div>;
 				}
-			}) || [],
-		[row?.config]
-	);
+			}) || []
+		);
+	}, [flows, activeFlowId, activeRowId, dispatchRow]);
 
 	return (
 		<div className="evy-flex evy-flex-col">
