@@ -10,7 +10,7 @@ export default class InlinePickerRow extends EVYRow {
 				title: "Inline picker row title",
 				format: "{$0.value}",
 			},
-			data: "{durations}",
+			data: "",
 		},
 		edit: {
 			destination: "{distance}",

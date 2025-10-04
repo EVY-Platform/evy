@@ -8,10 +8,10 @@ export default class DropdownRow extends EVYRow {
 		view: {
 			content: {
 				title: "Dropdown row title",
-				placeholder: "Dropdown row placeholder",
+				placeholder: "placeholder",
 				format: "{$0.value}",
 			},
-			data: "Dropdown row value",
+			data: "",
 		},
 		edit: {
 			destination: "{item.condition_id}",

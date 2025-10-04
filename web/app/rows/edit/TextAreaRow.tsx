@@ -8,8 +8,8 @@ export default class TextAreaRow extends EVYRow {
 		view: {
 			content: {
 				title: "Text area row title",
-				value: "Text area row value",
-				placeholder: "Text area row placeholder",
+				value: "",
+				placeholder: "placeholder",
 			},
 		},
 		edit: {

@@ -11,7 +11,7 @@ export default class InputListRow extends EVYRow {
 				placeholder: "Search for tags",
 				format: "{$0.value}",
 			},
-			data: "{item.tags}",
+			data: "",
 		},
 	};
 

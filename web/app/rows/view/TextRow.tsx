@@ -7,7 +7,7 @@ export default class TextRow extends EVYRow {
 		view: {
 			content: {
 				title: "Text row title",
-				text: "Text row placeholder",
+				text: "placeholder",
 			},
 			max_lines: "",
 		},

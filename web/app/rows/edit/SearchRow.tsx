@@ -10,9 +10,9 @@ export default class SearchRow extends EVYRow {
 			content: {
 				title: "Search row title",
 				format: "{$0.value}",
-				placeholder: "Search row placeholder",
+				placeholder: "placeholder",
 			},
-			data: "local:address",
+			data: "",
 		},
 		edit: {
 			destination: "{item.address}",

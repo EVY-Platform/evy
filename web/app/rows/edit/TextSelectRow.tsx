@@ -8,7 +8,7 @@ export default class TextSelectRow extends EVYRow {
 		view: {
 			content: {
 				title: "Text select row title",
-				text: "Text select row placeholder",
+				text: "placeholder",
 			},
 		},
 		edit: {

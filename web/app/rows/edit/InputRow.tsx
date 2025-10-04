@@ -8,8 +8,8 @@ export default class InputRow extends EVYRow {
 		view: {
 			content: {
 				title: "Input row title",
-				placeholder: "Input row placeholder",
-				value: "Input row value",
+				placeholder: "placeholder",
+				value: "",
 			},
 		},
 		edit: {
