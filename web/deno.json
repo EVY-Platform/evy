@@ -44,6 +44,7 @@
 		"test:setup": "npx playwright install --with-deps",
 		"test": "npx playwright test",
 		"test:ui": "npx playwright test --ui",
-		"test:debug": "npx playwright test --debug"
+		"test:debug": "npx playwright test --debug",
+		"lint": "deno lint"
 	}
 }
