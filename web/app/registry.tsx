@@ -29,7 +29,7 @@ type Row = {
 
 type Page = {
 	id: string;
-	rowsData: Row[];
+	rows: Row[];
 };
 
 type Flow = {
@@ -157,15 +157,13 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				idx === pageIndex
 					? {
 							...page,
-							rowsData: [
-								...page.rowsData.slice(
+							rows: [
+								...page.rows.slice(
 									0,
 									action.rowIndexInFinishPage
 								),
 								rowDataAdd,
-								...page.rowsData.slice(
-									action.rowIndexInFinishPage
-								),
+								...page.rows.slice(action.rowIndexInFinishPage),
 							],
 					  }
 					: page
@@ -180,18 +178,14 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			let rowId: string | undefined;
 			const newPages = flow.pages.map((page) => {
 				if (page.id === action.startPageId) {
-					const newRowsData = [...page.rowsData];
-					const [movedItem] = newRowsData.splice(
+					const newRows = [...page.rows];
+					const [movedItem] = newRows.splice(
 						action.rowIndexInStartPage,
 						1
 					);
-					newRowsData.splice(
-						action.rowIndexInFinishPage,
-						0,
-						movedItem
-					);
+					newRows.splice(action.rowIndexInFinishPage, 0, movedItem);
 					rowId = movedItem.rowId;
-					return { ...page, rowsData: newRowsData };
+					return { ...page, rows: newRows };
 				}
 				return page;
 			});
@@ -211,29 +205,27 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			if (sourcePageIndex === -1 || destinationPageIndex === -1)
 				return state;
 
-			const rowData =
-				flow.pages[sourcePageIndex].rowsData[
-					action.rowIndexInStartPage
-				];
-			const rowId = rowData.rowId;
+			const row =
+				flow.pages[sourcePageIndex].rows[action.rowIndexInStartPage];
+			const rowId = row.rowId;
 
 			const newPages = flow.pages.map((page, idx) => {
 				if (idx === sourcePageIndex) {
 					return {
 						...page,
-						rowsData: page.rowsData.filter(
+						rows: page.rows.filter(
 							(_, i) => i !== action.rowIndexInStartPage
 						),
 					};
 				}
 				if (idx === destinationPageIndex) {
-					const destinationItems = [...page.rowsData];
+					const destinationItems = [...page.rows];
 					destinationItems.splice(
 						action.rowIndexInFinishPage,
 						0,
-						rowData
+						row
 					);
-					return { ...page, rowsData: destinationItems };
+					return { ...page, rows: destinationItems };
 				}
 				return page;
 			});
@@ -253,7 +245,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				idx === pageIndex
 					? {
 							...page,
-							rowsData: page.rowsData.filter(
+							rows: page.rows.filter(
 								(_, i) => i !== action.rowIndex
 							),
 					  }
@@ -263,13 +255,13 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "UPDATE_ROW_CONTENT": {
 			const pageIndex = flow.pages.findIndex((page) =>
-				page.rowsData.find((r) => r.rowId === action.rowId)
+				page.rows.find((r) => r.rowId === action.rowId)
 			);
 			if (pageIndex === -1) return state;
 
 			const newPages = flow.pages.map((page, idx) => {
 				if (idx === pageIndex) {
-					const newRowsData = page.rowsData.map((row) => {
+					const newRows = page.rows.map((row) => {
 						if (row.rowId === action.rowId) {
 							return {
 								...row,
@@ -288,7 +280,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						}
 						return row;
 					});
-					return { ...page, rowsData: newRowsData };
+					return { ...page, rows: newRows };
 				}
 				return page;
 			});
@@ -357,11 +349,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 				pages: [
 					{
 						id: "Step 1",
-						rowsData: [],
+						rows: [],
 					},
 					{
 						id: "Step 2",
-						rowsData: [],
+						rows: [],
 					},
 				],
 			},
@@ -373,7 +365,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 				pages: [
 					{
 						id: "Step 1",
-						rowsData: [],
+						rows: [],
 					},
 				],
 			},
