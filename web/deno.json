@@ -6,11 +6,11 @@
 		"jsxImportSource": "react",
 		"module": "esnext",
 		"moduleResolution": "bundler",
-		"skipLibCheck": true
+		"skipLibCheck": false
 	},
 	"lint": {
 		"rules": {
-			"no-sloppy-imports": "off"
+			"exclude": ["no-sloppy-imports"]
 		}
 	},
 	"imports": {
