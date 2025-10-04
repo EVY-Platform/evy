@@ -42,12 +42,11 @@ type Flow = {
 	pages: Page[];
 };
 
-type ServerPage = Omit<Page, "rows" | "footer"> & {
-	rows: RowConfig[];
-	footer?: RowConfig;
-};
 type ServerFlow = Omit<Flow, "pages"> & {
-	pages: ServerPage[];
+	pages: Omit<Page, "rows" | "footer"> & {
+		rows: RowConfig[];
+		footer?: RowConfig;
+	};
 };
 
 type RowAction =
