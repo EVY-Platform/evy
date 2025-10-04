@@ -22,13 +22,15 @@ const isRowOver: State = { type: "is-row-over" };
 
 // AppPage component for rendering individual pages
 export default function AppPage({ pageId }: { pageId: string }) {
-	const { pages, dispatchActiveRow, dispatchDragging } =
+	const { flows, activeFlowId, dispatchRow, dispatchDragging } =
 		useContext(AppContext);
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
-	const rowsData = pages.find((p) => p.pageId === pageId)?.rowsData;
+	const rowsData = flows
+		.find((f) => f.id === activeFlowId)
+		?.pages.find((p) => p.pageId === pageId)?.rowsData;
 	if (!rowsData) return undefined;
 
 	useEffect(() => {
@@ -58,12 +60,12 @@ export default function AppPage({ pageId }: { pageId: string }) {
 
 	const selectRow = useCallback(
 		(rowId: string) =>
-			dispatchActiveRow({
-				type: "ACTIVATE_ROW",
+			dispatchRow({
+				type: "SET_ACTIVE_ROW",
 				pageId: pageId,
 				rowId: rowId,
 			}),
-		[pageId, dispatchActiveRow]
+		[pageId, dispatchRow]
 	);
 
 	const rows = useMemo(

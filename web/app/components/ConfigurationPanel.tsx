@@ -3,34 +3,29 @@ import { useCallback, useContext, useMemo } from "react";
 import { AppContext } from "../registry";
 
 export function ConfigurationPanel() {
-	const { pages, activeRow, dispatchPages } = useContext(AppContext);
-
-	const row = useMemo(
-		() =>
-			activeRow
-				? pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === activeRow.rowId)
-				: undefined,
-		[pages, activeRow]
-	);
+	const { flows, activeFlowId, activeRowId, dispatchRow } =
+		useContext(AppContext);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string) => {
-			if (!activeRow) return;
-			dispatchPages({
+			if (!activeRowId) return;
+			dispatchRow({
 				type: "UPDATE_ROW_CONTENT",
-				pageId: activeRow.pageId,
-				rowId: activeRow.rowId,
+				rowId: activeRowId,
 				configId,
 				configValue,
 			});
 		},
-		[activeRow, dispatchPages]
+		[activeRowId, dispatchRow]
 	);
 
-	const configurationElements = useMemo(
-		() =>
+	const configurationElements = useMemo(() => {
+		const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
+		const row = pages
+			.flatMap((page) => page.rowsData)
+			.find((r) => r.rowId === activeRowId);
+
+		return (
 			row?.config.map((c) => {
 				if (c.type === "text") {
 					return (
@@ -51,9 +46,9 @@ export function ConfigurationPanel() {
 				} else {
 					return <div key={c.id}>{c.type}</div>;
 				}
-			}) || [],
-		[row?.config]
-	);
+			}) || []
+		);
+	}, [flows, activeFlowId, activeRowId, dispatchRow]);
 
 	return (
 		<div className="evy-flex evy-flex-col">

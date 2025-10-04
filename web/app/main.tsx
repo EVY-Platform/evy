@@ -8,13 +8,16 @@ import invariant from "tiny-invariant";
 import { AppProvider, AppContext } from "./registry.tsx";
 import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
 import { RowsPanel } from "./components/RowsPanel.tsx";
+import { FlowSelector } from "./components/FlowSelector.tsx";
 import AppPage from "./components/AppPage.tsx";
 import type { Edge } from "./components/DraggableRowContainer.tsx";
 
 const panelWidth = "280px";
 
 function AppContent() {
-	const { pages, dispatchPages, dispatchActiveRow } = useContext(AppContext);
+	const { flows, activeFlowId, dispatchRow } = useContext(AppContext);
+
+	const pages = flows.find((flow) => flow.id === activeFlowId)?.pages || [];
 
 	useEffect(() => {
 		return monitorForElements({
@@ -70,7 +73,7 @@ function AppContent() {
 
 				if (destinationPageId === "rows") {
 					if (sourcePageId === destinationPageId) return;
-					dispatchPages({
+					dispatchRow({
 						type: "REMOVE_ROW_FROM_PAGE",
 						pageId: sourcePageId,
 						rowIndex,
@@ -81,17 +84,12 @@ function AppContent() {
 							? indexOfTarget + 1
 							: indexOfTarget;
 					const newRowId = crypto.randomUUID();
-					dispatchPages({
+					dispatchRow({
 						type: "ADD_ROW_TO_PAGE",
 						pageId: destinationPageId,
 						rowId: newRowId,
 						rowIdInBase: rowId,
 						rowIndexInFinishPage: destinationIndex,
-					});
-					dispatchActiveRow({
-						type: "ACTIVATE_ROW",
-						pageId: destinationPageId,
-						rowId: newRowId,
 					});
 				} else if (sourcePageId === destinationPageId) {
 					const destinationIndex = getReorderDestinationIndex({
@@ -100,17 +98,12 @@ function AppContent() {
 						closestEdgeOfTarget,
 						axis: "vertical",
 					});
-					dispatchPages({
+					dispatchRow({
 						type: "MOVE_ROW_ON_PAGE",
 						startPageId: sourcePageId,
 						finishPageId: sourcePageId,
 						rowIndexInStartPage: rowIndex,
 						rowIndexInFinishPage: destinationIndex,
-					});
-					dispatchActiveRow({
-						type: "ACTIVATE_ROW",
-						pageId: sourcePageId,
-						rowId: rowId,
 					});
 				} else {
 					const destinationIndex =
@@ -118,22 +111,17 @@ function AppContent() {
 							? indexOfTarget + 1
 							: indexOfTarget;
 
-					dispatchPages({
+					dispatchRow({
 						type: "MOVE_ROW_TO_PAGE",
 						startPageId: sourcePageId,
 						finishPageId: destinationPageId,
 						rowIndexInStartPage: rowIndex,
 						rowIndexInFinishPage: destinationIndex,
 					});
-					dispatchActiveRow({
-						type: "ACTIVATE_ROW",
-						pageId: destinationPageId,
-						rowId: rowId,
-					});
 				}
 			},
 		});
-	}, [pages, dispatchPages, dispatchActiveRow]);
+	}, [pages, dispatchRow]);
 
 	return (
 		<>
@@ -169,10 +157,11 @@ function App() {
 	return (
 		<AppProvider>
 			<div className="evy-h-screen evy-flex evy-flex-col evy-overflow-hidden">
-				<div className="evy-border-b evy-border-gray evy-p-4 evy-line-height-1">
+				<div className="evy-border-b evy-border-gray evy-p-4 evy-line-height-1 evy-flex evy-justify-between evy-items-center">
 					<a href="/">
 						<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 					</a>
+					<FlowSelector />
 				</div>
 				<div className="evy-flex evy-flex-1 evy-overflow-hidden">
 					<AppContent />
