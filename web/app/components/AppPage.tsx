@@ -30,7 +30,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 
 	const rowsData = flows
 		.find((f) => f.id === activeFlowId)
-		?.pages.find((p) => p.pageId === pageId)?.rowsData;
+		?.pages.find((p) => p.id === pageId)?.rowsData;
 	if (!rowsData) return undefined;
 
 	useEffect(() => {

@@ -65,7 +65,7 @@ function AppContent() {
 				invariant(typeof sourcePageId === "string");
 
 				const sourcePageIndex = pages.findIndex(
-					(page) => page.pageId === sourcePageId
+					(page) => page.id === sourcePageId
 				);
 				const rowIndex = pages[sourcePageIndex]?.rowsData.findIndex(
 					(rowData) => rowData.rowId === rowId
@@ -84,7 +84,7 @@ function AppContent() {
 				const destinationPageId = destinationPageRecord.data
 					.pageId as string;
 				const destinationPageIndex = pages.findIndex(
-					(page) => page.pageId === destinationPageId
+					(page) => page.id === destinationPageId
 				);
 
 				const indexOfTarget = destinationRowRecord
@@ -165,10 +165,10 @@ function AppContent() {
 				{pages.map((page) => {
 					return (
 						<div
-							key={page.pageId}
+							key={page.id}
 							className="evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662"
 						>
-							<AppPage pageId={page.pageId} />
+							<AppPage pageId={page.id} />
 						</div>
 					);
 				})}
