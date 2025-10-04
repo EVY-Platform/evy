@@ -6,7 +6,7 @@ export default class CalendarRow extends EVYRow {
 		type: "Calendar",
 		view: {
 			content: {
-				title: "",
+				title: "Calendar row title",
 				primary: "{item.transfer_options.pickup.timeslots}",
 				secondary: "{item.transfer_options.delivery.timeslots}",
 			},

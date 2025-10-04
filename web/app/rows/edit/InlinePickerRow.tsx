@@ -7,7 +7,7 @@ export default class InlinePickerRow extends EVYRow {
 		type: "InlinePicker",
 		view: {
 			content: {
-				title: "",
+				title: "Inline picker row title",
 				format: "{$0.value}",
 			},
 			data: "{durations}",

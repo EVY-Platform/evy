@@ -7,7 +7,7 @@ export default class TextAreaRow extends EVYRow {
 		type: "TextArea",
 		view: {
 			content: {
-				title: "",
+				title: "Text area row title",
 				value: "Text area row value",
 				placeholder: "Text area row placeholder",
 			},

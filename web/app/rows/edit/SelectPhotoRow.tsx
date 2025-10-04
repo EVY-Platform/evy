@@ -6,7 +6,7 @@ export default class SelectPhotoRow extends EVYRow {
 		type: "SelectPhoto",
 		view: {
 			content: {
-				title: "",
+				title: "Select photo row title",
 				subtitle:
 					"Photos: {count(item.photo_ids)}/10 - Chose your listing's main photo first.",
 				icon: "::photo.badge.plus.fill::",

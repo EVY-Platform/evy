@@ -8,7 +8,7 @@ export default class SearchRow extends EVYRow {
 		type: "Search",
 		view: {
 			content: {
-				title: "",
+				title: "Search row title",
 				format: "{$0.value}",
 				placeholder: "Search row placeholder",
 			},

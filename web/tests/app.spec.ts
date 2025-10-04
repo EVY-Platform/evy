@@ -54,7 +54,7 @@ test.describe("EVY App Builder", () => {
 			"Inline picker row title",
 			"Input row title",
 			"Search row title",
-			"Select photo row", // This appears as a paragraph with pb-2 class
+			"Select photo row title",
 			"Text area row title",
 			"Text select row title",
 		];
