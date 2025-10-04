@@ -19,13 +19,14 @@ import SearchRow from "./rows/edit/SearchRow";
 import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
 import TextAreaRow from "./rows/edit/TextAreaRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
-import { type RowConfig, UnknownRow } from "./rows/EVYRow";
-
-type Row = {
-	rowId: string;
-	row: React.ReactNode;
-	config: RowConfig;
-};
+import {
+	type RowConfig,
+	type Row,
+	type RowChild,
+	type RowView,
+	type RowContent,
+	UnknownRow,
+} from "./rows/EVYRow";
 
 type Page = {
 	id: string;
@@ -42,11 +43,30 @@ type Flow = {
 	pages: Page[];
 };
 
-type ServerFlow = Omit<Flow, "pages"> & {
-	pages: Omit<Page, "rows" | "footer"> & {
-		rows: RowConfig[];
-		footer?: RowConfig;
+// Server types necessary to ingest the raw flows
+// since in client-side type we need to have the concrete
+// row instances
+type ServerRowChild = Omit<RowChild, "child" | "title"> & {
+	title: string;
+	child: ServerRow;
+};
+type ServerRowContent = {
+	title?: string;
+	children?: ServerRowChild[];
+	child?: ServerRow;
+	[key: string]: string | ServerRowChild[] | ServerRow | undefined;
+};
+type ServerRow = Omit<RowConfig, "view"> & {
+	view: Omit<RowView, "content"> & {
+		content: ServerRowContent;
 	};
+};
+type ServerPage = Omit<Page, "rows" | "footer"> & {
+	rows: ServerRow[];
+	footer?: ServerRow;
+};
+type ServerFlow = Omit<Flow, "pages"> & {
+	pages: ServerPage[];
 };
 
 type RowAction =
@@ -341,7 +361,7 @@ export const AppContext = createContext<{
 	dispatchDragging: () => {},
 });
 
-function decodeRow(row: RowConfig): Row {
+function decodeRow(row: ServerRow): Row {
 	const rowId = crypto.randomUUID();
 	const rowType = baseRows.find(
 		(baseRow) => row.type === baseRow.config.type
@@ -356,7 +376,25 @@ function decodeRow(row: RowConfig): Row {
 		return {
 			rowId,
 			row: createElement(rowType, { rowId }),
-			config: row,
+			config: {
+				...row,
+				view: {
+					...row.view,
+					content: {
+						...row.view.content,
+						title: row.view.content.title as string,
+						children: row.view.content.children?.map(
+							(child: ServerRowChild) => ({
+								...child,
+								child: decodeRow(child.child),
+							})
+						),
+						child: row.view.content.child
+							? decodeRow(row.view.content.child)
+							: undefined,
+					},
+				},
+			},
 		};
 	}
 }
@@ -364,7 +402,7 @@ function decodeRow(row: RowConfig): Row {
 const decodeFlows = (flows: ServerFlow[]): Flow[] => {
 	return flows.map((flow) => ({
 		...flow,
-		pages: flow.pages.map((page) => ({
+		pages: flow.pages.map((page: ServerPage) => ({
 			...page,
 			rows: page.rows.map(decodeRow),
 			footer: page.footer ? decodeRow(page.footer) : undefined,
@@ -388,8 +426,227 @@ export function AppProvider({ children }: { children: ReactNode }) {
 			pages: [
 				{
 					id: "step_1",
-					title: "Step 1",
-					rows: [],
+					title: "Create listing",
+					rows: [
+						{
+							type: "SelectPhoto",
+							view: {
+								content: {
+									title: "",
+									subtitle:
+										"Photos: {count(item.photo_ids)}/10 - Chose your listing's main photo first.",
+									icon: "::photo.badge.plus.fill::",
+									content: "Add photos",
+									photos: "{item.photo_ids}",
+								},
+							},
+							edit: {
+								destination: "{item.photo_ids}",
+								validation: {
+									required: "true",
+									message: "Photos of the item",
+									minAmount: "3",
+								},
+							},
+						},
+						{
+							type: "Input",
+							view: {
+								content: {
+									title: "A row title ::star.square.on.square.fill::",
+									value: "{item.title}",
+									placeholder:
+										"My iPhone ::star.square.on.square.fill:: 20",
+								},
+							},
+							edit: {
+								destination: "{item.title}",
+								validation: {
+									required: "true",
+									message: "Test input",
+								},
+							},
+						},
+						{
+							type: "Input",
+							view: {
+								content: {
+									title: "Price",
+									value: "{formatCurrency(item.price)}",
+									placeholder: "{formatCurrency(item.price)}",
+								},
+							},
+							edit: {
+								destination: "{item.price.value}",
+								validation: {
+									required: "true",
+									message: "How much are you selling it for?",
+									minAmount: "1",
+								},
+							},
+						},
+						{
+							type: "Dropdown",
+							view: {
+								content: {
+									title: "Condition",
+									format: "{$0.value}",
+									placeholder: "Choose one",
+								},
+								data: "{conditions}",
+							},
+							edit: {
+								destination: "{item.condition_id}",
+								validation: {
+									required: "true",
+									message: "Is the item used, new, etc?",
+								},
+							},
+						},
+						{
+							type: "Dropdown",
+							view: {
+								content: {
+									title: "Selling Reason",
+									format: "{$0.value}",
+									placeholder: "Choose one",
+								},
+								data: "{selling_reasons}",
+							},
+							edit: {
+								destination: "{item.selling_reason_id}",
+								validation: {
+									required: "true",
+									message: "Why are you selling?",
+								},
+							},
+						},
+						{
+							type: "ColumnContainer",
+							view: {
+								content: {
+									children: [
+										{
+											title: "Dimensions (width x height x depth)",
+											child: {
+												type: "Input",
+												view: {
+													content: {
+														title: "",
+														value: "{formatDimension(item.dimensions.width)}",
+														placeholder: "Width",
+													},
+												},
+												edit: {
+													destination:
+														"{item.dimensions.width}",
+													validation: {
+														required: "true",
+														message: "Width",
+													},
+												},
+											},
+										},
+										{
+											title: "",
+											child: {
+												type: "Input",
+												view: {
+													content: {
+														title: "",
+														value: "{formatDimension(item.dimensions.height)}",
+														placeholder: "Height",
+													},
+												},
+												edit: {
+													destination:
+														"{item.dimensions.height}",
+													validation: {
+														required: "true",
+														message: "Height",
+													},
+												},
+											},
+										},
+										{
+											title: "",
+											child: {
+												type: "Input",
+												view: {
+													content: {
+														title: "",
+														value: "{formatDimension(item.dimensions.length)}",
+														placeholder: "Length",
+													},
+												},
+												edit: {
+													destination:
+														"{item.dimensions.length}",
+													validation: {
+														required: "true",
+														message: "Length",
+														minValue: "1",
+													},
+												},
+											},
+										},
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
+							},
+						},
+						{
+							type: "SheetContainer",
+							view: {
+								content: {
+									child: {
+										type: "InputList",
+										view: {
+											content: {
+												title: "Tags",
+												placeholder: "Search for tags",
+												format: "{$0.value}",
+											},
+											data: "{item.tags}",
+										},
+									},
+									children: [
+										{
+											title: "",
+											child: {
+												type: "Search",
+												view: {
+													content: {
+														title: "",
+														format: "{$0.value}",
+														placeholder:
+															"Search for tags",
+													},
+													data: "{api:tags}",
+												},
+												edit: {
+													destination: "{item.tags}",
+													validation: {
+														required: "false",
+													},
+												},
+											},
+										},
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "false",
+								},
+							},
+						},
+					],
 				},
 				{
 					id: "step_2",

@@ -1,6 +1,11 @@
 import React, { ReactNode } from "react";
 import { AppContext } from "../registry";
 
+export type Row = {
+	rowId: string;
+	row: React.ReactNode;
+	config: RowConfig;
+};
 export interface RowValidation {
 	required?: string;
 	message?: string;
@@ -17,9 +22,16 @@ export interface RowEdit {
 export interface RowAction {
 	target: string;
 }
+export interface RowChild {
+	title: string;
+	child: Row;
+}
 
 export interface RowContent {
-	[key: string]: string;
+	title: string;
+	children?: RowChild[];
+	child?: Row;
+	[key: string]: string | RowChild[] | Row[] | RowConfig[] | Row | undefined;
 }
 
 export interface RowView {
