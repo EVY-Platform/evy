@@ -1,7 +1,69 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/assert@0.208": "0.208.0",
+    "jsr:@std/async@0.208": "0.208.0",
+    "jsr:@std/cli@0.208": "0.208.0",
+    "jsr:@std/collections@0.208": "0.208.0",
+    "jsr:@std/encoding@0.208": "0.208.0",
+    "jsr:@std/fmt@0.208": "0.208.0",
+    "jsr:@std/http@0.208.0": "0.208.0",
+    "jsr:@std/media-types@0.208": "0.208.0",
+    "jsr:@std/path@0.208": "0.208.0",
+    "jsr:@std/streams@0.208": "0.208.0",
     "npm:@playwright/test@^1.40.0": "1.52.0"
+  },
+  "jsr": {
+    "@std/assert@0.208.0": {
+      "integrity": "1aa06be08916efe062e40c0948e95034cea4627355dcb32a5e1d4e52786ace7c"
+    },
+    "@std/async@0.208.0": {
+      "integrity": "8ed9790389b8fcef907703693dd785f0610fb0adb45964f03c8386b7551f4fc7"
+    },
+    "@std/cli@0.208.0": {
+      "integrity": "4cf9f03e9731fd9b7a886108e67342e64594ed658d9948c7d91955a082ba03d0",
+      "dependencies": [
+        "jsr:@std/assert"
+      ]
+    },
+    "@std/collections@0.208.0": {
+      "integrity": "0a204e0add91db112a7c1389bfe20760bc4fad44310d82eeea4127dde0f2e34c"
+    },
+    "@std/encoding@0.208.0": {
+      "integrity": "d8fe681f0ce000477aecea9e45160d09ed560109b421a46e026605daac7bbe9d"
+    },
+    "@std/fmt@0.208.0": {
+      "integrity": "06584c97a1a7b934e8de185c45a595d8234c5312e51e61cb05650af4cb8eb65f"
+    },
+    "@std/http@0.208.0": {
+      "integrity": "d5bc39144b3bd59db58411993a6e1b6886f792e08202dc1a4f27826346145385",
+      "dependencies": [
+        "jsr:@std/assert",
+        "jsr:@std/async",
+        "jsr:@std/cli",
+        "jsr:@std/collections",
+        "jsr:@std/encoding",
+        "jsr:@std/fmt",
+        "jsr:@std/media-types",
+        "jsr:@std/path",
+        "jsr:@std/streams"
+      ]
+    },
+    "@std/media-types@0.208.0": {
+      "integrity": "bd036ae8f2fc11abbaa8b3c5c5e9a33163a19b66bb840ba82428a933f583d7ee"
+    },
+    "@std/path@0.208.0": {
+      "integrity": "e94075bef12bfffcdae2e88c2acfbc29dbd91882f1ebe3596e5fda20c3025ab6",
+      "dependencies": [
+        "jsr:@std/assert"
+      ]
+    },
+    "@std/streams@0.208.0": {
+      "integrity": "1a713e49f675274a0b510311747cdb56479f3b2691b02a49c4b5b3928f878d1e",
+      "dependencies": [
+        "jsr:@std/assert"
+      ]
+    }
   },
   "npm": {
     "@playwright/test@1.52.0": {
@@ -279,6 +341,9 @@
     "https://esm.sh/use-memo-one@^1.1.1?target=es2022": "d119c20d4e4863cf90d65cbc3ba0b5219717ab563a3aa260111492faa06a6074"
   },
   "workspace": {
+    "dependencies": [
+      "jsr:@std/http@0.208.0"
+    ],
     "packageJson": {
       "dependencies": [
         "npm:@playwright/test@^1.40.0"

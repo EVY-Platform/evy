@@ -1,3 +1,5 @@
+import process from "node:process";
+
 module.exports = {
 	testDir: "./tests",
 	timeout: 1000,

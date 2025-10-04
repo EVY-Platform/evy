@@ -35,7 +35,8 @@
 		"https://esm.sh/react@^19.1.1?target=es2022": "https://esm.sh/react@19.2.0?target=es2022",
 		"https://esm.sh/react@^19.1.0?target=es2022": "https://esm.sh/react@19.2.0?target=es2022",
 		"@compiled/react": "https://esm.sh/@compiled/react@0.18.3?target=es2022",
-		"@compiled/react/runtime": "https://esm.sh/@compiled/react@0.18.3/runtime?target=es2022"
+		"@compiled/react/runtime": "https://esm.sh/@compiled/react@0.18.3/runtime?target=es2022",
+		"@std/http": "jsr:@std/http@0.208.0"
 	},
 	"tasks": {
 		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
