@@ -1,4 +1,5 @@
 import React, { ReactNode } from "react";
+import { AppContext } from "../registry";
 
 export interface RowValidation {
 	required?: string;
@@ -43,5 +44,38 @@ export abstract class EVYRow extends React.Component<{
 
 	override render() {
 		return this.renderContent();
+	}
+}
+
+export class UnknownRow extends EVYRow {
+	static override config: RowConfig = {
+		type: "Unknown",
+		view: {
+			content: {
+				title: "Unknown row",
+			},
+		},
+	};
+
+	renderContent() {
+		return (
+			<AppContext.Consumer>
+				{({ flows, activeFlowId }) => {
+					const pages =
+						flows.find((f) => f.id === activeFlowId)?.pages || [];
+					const row =
+						pages
+							.flatMap((page) => page.rows)
+							.find((r) => r.rowId === this.props.rowId) ??
+						UnknownRow;
+
+					return (
+						<div className="evy-p-2">
+							<p>{row.config.view.content.title}</p>
+						</div>
+					);
+				}}
+			</AppContext.Consumer>
+		);
 	}
 }

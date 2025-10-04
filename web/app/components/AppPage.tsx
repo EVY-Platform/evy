@@ -1,11 +1,4 @@
-import {
-	useEffect,
-	useContext,
-	useRef,
-	useState,
-	useCallback,
-	useMemo,
-} from "react";
+import { useEffect, useContext, useRef, useState, useCallback } from "react";
 import invariant from "tiny-invariant";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
@@ -28,10 +21,10 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
-	const rowsData = flows
+	const rows = flows
 		.find((f) => f.id === activeFlowId)
-		?.pages.find((p) => p.id === pageId)?.rowsData;
-	if (!rowsData) return undefined;
+		?.pages.find((p) => p.id === pageId)?.rows;
+	if (!rows) return undefined;
 
 	useEffect(() => {
 		invariant(scrollableRef.current);
@@ -68,19 +61,15 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow]
 	);
 
-	const rows = useMemo(
-		() =>
-			rowsData.map((rowData) => (
-				<DraggableRowContainer
-					key={rowData.rowId}
-					rowId={rowData.rowId}
-					selectRow={() => selectRow(rowData.rowId)}
-				>
-					{rowData.row}
-				</DraggableRowContainer>
-			)),
-		[rowsData]
-	);
+	const rowElements = rows.map((row) => (
+		<DraggableRowContainer
+			key={row.rowId}
+			rowId={row.rowId}
+			selectRow={() => selectRow(row.rowId)}
+		>
+			{row.row}
+		</DraggableRowContainer>
+	));
 
 	return (
 		<div className="evy-overflow-hidden evy-p-30px evy-pt-16 evy-h-full evy-w-full evy-box-sizing-border">
@@ -94,7 +83,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 							: "var(--color-evy-gray-light)",
 				}}
 			>
-				{rows}
+				{rowElements}
 			</div>
 		</div>
 	);

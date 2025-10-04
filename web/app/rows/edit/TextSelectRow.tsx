@@ -28,7 +28,7 @@ export default class TextSelectRow extends EVYRow {
 						flows.find((f) => f.id === activeFlowId)?.pages || [];
 					const row =
 						pages
-							.flatMap((page) => page.rowsData)
+							.flatMap((page) => page.rows)
 							.find((r) => r.rowId === this.props.rowId) ??
 						TextSelectRow;
 
