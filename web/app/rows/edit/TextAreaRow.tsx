@@ -3,51 +3,43 @@ import { EVYRow, RowConfig } from "../EVYRow";
 import TextArea from "../design-system/TextArea";
 
 export default class TextAreaRow extends EVYRow {
-	static override config: RowConfig = [
-		{
-			id: "title",
-			type: "text",
-			value: "Text area row title",
+	static override config: RowConfig = {
+		type: "TextArea",
+		view: {
+			content: {
+				title: "",
+				value: "Text area row value",
+				placeholder: "Text area row placeholder",
+			},
 		},
-		{
-			id: "placeholder",
-			type: "text",
-			value: "Text area row placeholder",
+		edit: {
+			destination: "{item.description}",
+			validation: {
+				required: "true",
+				message: "Please provide a description",
+			},
 		},
-		{
-			id: "value",
-			type: "text",
-			value: "Text area row value",
-		},
-	];
+	};
 
 	renderContent() {
-		const rowId = this.props.rowId;
-
 		return (
 			<AppContext.Consumer>
 				{({ flows, activeFlowId }) => {
 					const pages =
 						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row = pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === rowId);
+					const row =
+						pages
+							.flatMap((page) => page.rowsData)
+							.find((r) => r.rowId === this.props.rowId) ??
+						TextAreaRow;
 
 					return (
 						<div className="evy-p-2">
-							<p className="evy-pb-2">
-								{row?.config.find((c) => c.id === "title")
-									?.value ?? "Text area row title"}
-							</p>
+							<p>{row.config.view.content.title}</p>
 							<TextArea
+								value={row.config.view.content.value}
 								placeholder={
-									row?.config.find(
-										(c) => c.id === "placeholder"
-									)?.value ?? "Text area row placeholder"
-								}
-								value={
-									row?.config.find((c) => c.id === "value")
-										?.value ?? "Text area row value"
+									row.config.view.content.placeholder
 								}
 							/>
 						</div>

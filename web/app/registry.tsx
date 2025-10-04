@@ -271,12 +271,20 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				if (idx === pageIndex) {
 					const newRowsData = page.rowsData.map((row) => {
 						if (row.rowId === action.rowId) {
-							const newConfig = row.config.map((config) =>
-								config.id === action.configId
-									? { ...config, value: action.configValue }
-									: config
-							);
-							return { ...row, config: newConfig };
+							return {
+								...row,
+								config: {
+									...row.config,
+									view: {
+										...row.config.view,
+										content: {
+											...row.config.view.content,
+											[action.configId]:
+												action.configValue,
+										},
+									},
+								},
+							};
 						}
 						return row;
 					});

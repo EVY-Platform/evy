@@ -3,51 +3,43 @@ import { EVYRow, RowConfig } from "../EVYRow";
 import Input from "../design-system/Input";
 
 export default class InputRow extends EVYRow {
-	static override config: RowConfig = [
-		{
-			id: "title",
-			type: "text",
-			value: "Input row title",
+	static override config: RowConfig = {
+		type: "Input",
+		view: {
+			content: {
+				title: "Input row title",
+				placeholder: "Input row placeholder",
+				value: "Input row value",
+			},
 		},
-		{
-			id: "placeholder",
-			type: "text",
-			value: "Input row placeholder",
+		edit: {
+			destination: "{item.title}",
+			validation: {
+				required: "true",
+				message: "This field is required",
+			},
 		},
-		{
-			id: "value",
-			type: "text",
-			value: "Input row value",
-		},
-	];
+	};
 
 	renderContent() {
-		const rowId = this.props.rowId;
-
 		return (
 			<AppContext.Consumer>
 				{({ flows, activeFlowId }) => {
 					const pages =
 						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row = pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === rowId);
+					const row =
+						pages
+							.flatMap((page) => page.rowsData)
+							.find((r) => r.rowId === this.props.rowId) ??
+						InputRow;
 
 					return (
 						<div className="evy-p-2">
-							<p className="evy-pb-2">
-								{row?.config.find((c) => c.id === "title")
-									?.value ?? "Input row title"}
-							</p>
+							<p>{row.config.view.content.title}</p>
 							<Input
-								value={
-									row?.config.find((c) => c.id === "value")
-										?.value ?? "Input row value"
-								}
+								value={row.config.view.content.value}
 								placeholder={
-									row?.config.find(
-										(c) => c.id === "placeholder"
-									)?.value ?? "Input row placeholder"
+									row.config.view.content.placeholder
 								}
 							/>
 						</div>

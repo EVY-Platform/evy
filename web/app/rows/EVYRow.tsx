@@ -1,10 +1,38 @@
 import React, { ReactNode } from "react";
 
-export type RowConfig = {
-	id: string;
+export interface RowValidation {
+	required?: string;
+	message?: string;
+	minAmount?: string;
+	minValue?: string;
+	minCharacters?: string;
+}
+
+export interface RowEdit {
+	destination?: string;
+	validation?: RowValidation;
+}
+
+export interface RowAction {
+	target: string;
+}
+
+export interface RowContent {
+	[key: string]: string;
+}
+
+export interface RowView {
+	content: RowContent;
+	data?: string;
+	max_lines?: string;
+}
+
+export interface RowConfig {
 	type: string;
-	value: string;
-}[];
+	view: RowView;
+	edit?: RowEdit;
+	action?: RowAction;
+}
 
 export abstract class EVYRow extends React.Component<{
 	rowId: string;

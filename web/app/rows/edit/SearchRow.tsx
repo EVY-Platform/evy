@@ -4,54 +4,45 @@ import Input from "../design-system/Input";
 import InlineIcon from "../design-system/InlineIcon";
 
 export default class SearchRow extends EVYRow {
-	static override config: RowConfig = [
-		{
-			id: "title",
-			type: "text",
-			value: "Search row title",
+	static override config: RowConfig = {
+		type: "Search",
+		view: {
+			content: {
+				title: "",
+				format: "{$0.value}",
+				placeholder: "Search row placeholder",
+			},
+			data: "local:address",
 		},
-		{
-			id: "placeholder",
-			type: "text",
-			value: "Search row placeholder",
+		edit: {
+			destination: "{item.address}",
+			validation: {
+				required: "false",
+			},
 		},
-		{
-			id: "value",
-			type: "text",
-			value: "Search row value",
-		},
-	];
+	};
 
 	renderContent() {
-		const rowId = this.props.rowId;
-
 		return (
 			<AppContext.Consumer>
 				{({ flows, activeFlowId }) => {
 					const pages =
 						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row = pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === rowId);
+					const row =
+						pages
+							.flatMap((page) => page.rowsData)
+							.find((r) => r.rowId === this.props.rowId) ??
+						SearchRow;
 
 					return (
 						<div className="evy-p-2">
-							<p className="evy-pb-2">
-								{row?.config.find((c) => c.id === "title")
-									?.value ?? "Search row title"}
-							</p>
+							<p>{row.config.view.content.title}</p>
 							<div className="evy-relative">
 								<InlineIcon icon="/search.svg" alt="Search" />
 								<Input
-									value={
-										row?.config.find(
-											(c) => c.id === "value"
-										)?.value ?? "Search row value"
-									}
+									value={row.config.view.data!}
 									placeholder={
-										row?.config.find(
-											(c) => c.id === "placeholder"
-										)?.value ?? "Search row placeholder"
+										row.config.view.content.placeholder
 									}
 									offset="left"
 								/>

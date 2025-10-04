@@ -2,41 +2,33 @@ import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
 
 export default class TextRow extends EVYRow {
-	static override config: RowConfig = [
-		{
-			id: "title",
-			type: "text",
-			value: "Text row title",
+	static override config: RowConfig = {
+		type: "Text",
+		view: {
+			content: {
+				title: "Text row title",
+				text: "Text row placeholder",
+			},
+			max_lines: "",
 		},
-		{
-			id: "placeholder",
-			type: "text",
-			value: "Text row placeholder",
-		},
-	];
+	};
 
 	renderContent() {
-		const rowId = this.props.rowId;
-
 		return (
 			<AppContext.Consumer>
 				{({ flows, activeFlowId }) => {
 					const pages =
 						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row = pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === rowId);
+					const row =
+						pages
+							.flatMap((page) => page.rowsData)
+							.find((r) => r.rowId === this.props.rowId) ??
+						TextRow;
 
 					return (
 						<div className="evy-p-2">
-							<p className="evy-pb-2">
-								{row?.config.find((c) => c.id === "title")
-									?.value ?? "Text row title"}
-							</p>
-							<p>
-								{row?.config.find((c) => c.id === "placeholder")
-									?.value ?? "Text row placeholder"}
-							</p>
+							<p>{row.config.view.content.title}</p>
+							<p>{row.config.view.content.text}</p>
 						</div>
 					);
 				}}
