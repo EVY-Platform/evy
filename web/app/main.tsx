@@ -112,11 +112,10 @@ function AppContent() {
 						closestEdgeOfTarget === "bottom"
 							? indexOfTarget + 1
 							: indexOfTarget;
-					const newRowId = crypto.randomUUID();
 					dispatchRow({
 						type: "ADD_ROW_TO_PAGE",
 						pageId: destinationPageId,
-						rowId: newRowId,
+						rowId: crypto.randomUUID(),
 						rowIdInBase: rowId,
 						rowIndexInFinishPage: destinationIndex,
 					});

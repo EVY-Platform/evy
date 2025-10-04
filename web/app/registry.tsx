@@ -19,7 +19,7 @@ import SearchRow from "./rows/edit/SearchRow";
 import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
 import TextAreaRow from "./rows/edit/TextAreaRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
-import { type RowConfig } from "./rows/EVYRow";
+import { type RowConfig, UnknownRow } from "./rows/EVYRow";
 
 type Row = {
 	rowId: string;
@@ -40,6 +40,14 @@ type Flow = {
 	type: "read" | "write";
 	data: string;
 	pages: Page[];
+};
+
+type ServerPage = Omit<Page, "rows" | "footer"> & {
+	rows: RowConfig[];
+	footer?: RowConfig;
+};
+type ServerFlow = Omit<Flow, "pages"> & {
+	pages: ServerPage[];
 };
 
 type RowAction =
@@ -334,6 +342,37 @@ export const AppContext = createContext<{
 	dispatchDragging: () => {},
 });
 
+function decodeRow(row: RowConfig): Row {
+	const rowId = crypto.randomUUID();
+	const rowType = baseRows.find(
+		(baseRow) => row.type === baseRow.config.type
+	);
+	if (!rowType) {
+		return {
+			rowId,
+			row: createElement(UnknownRow, { rowId }),
+			config: UnknownRow.config,
+		};
+	} else {
+		return {
+			rowId,
+			row: createElement(rowType, { rowId }),
+			config: row,
+		};
+	}
+}
+
+const decodeFlows = (flows: ServerFlow[]): Flow[] => {
+	return flows.map((flow) => ({
+		...flow,
+		pages: flow.pages.map((page) => ({
+			...page,
+			rows: page.rows.map(decodeRow),
+			footer: page.footer ? decodeRow(page.footer) : undefined,
+		})),
+	}));
+};
+
 export function AppProvider({ children }: { children: ReactNode }) {
 	const rows = baseRows.map((row) => ({
 		rowId: row.name,
@@ -341,40 +380,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
 		config: row.config,
 	}));
 
+	const flows: ServerFlow[] = [
+		{
+			id: "flow-1",
+			name: "First flow!",
+			type: "write",
+			data: "",
+			pages: [
+				{
+					id: "step_1",
+					title: "Step 1",
+					rows: [],
+				},
+				{
+					id: "step_2",
+					title: "Step 2",
+					rows: [],
+				},
+			],
+		},
+		{
+			id: "flow-2",
+			name: "Second flow",
+			type: "write",
+			data: "",
+			pages: [
+				{
+					id: "step_2_1",
+					title: "Step 1",
+					rows: [],
+				},
+			],
+		},
+	];
+
 	const [appState, dispatchRow] = useReducer(pageReducer, {
-		flows: [
-			{
-				id: "flow-1",
-				name: "First flow!",
-				type: "write",
-				data: "",
-				pages: [
-					{
-						id: "step_1",
-						title: "Step 1",
-						rows: [],
-					},
-					{
-						id: "step_2",
-						title: "Step 2",
-						rows: [],
-					},
-				],
-			},
-			{
-				id: "flow-2",
-				name: "Second flow",
-				type: "write",
-				data: "",
-				pages: [
-					{
-						id: "step_2_1",
-						title: "Step 1",
-						rows: [],
-					},
-				],
-			},
-		],
+		flows: decodeFlows(flows),
 		activeRowId: null,
 		activeFlowId: "flow-1",
 	});
