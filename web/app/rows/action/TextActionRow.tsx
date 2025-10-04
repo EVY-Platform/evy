@@ -44,7 +44,10 @@ export default class TextActionRow extends EVYRow {
 										(c) => c.id === "placeholder"
 									)?.value ?? "Placeholder"}
 								</p>
-								<button className="evy-text-blue evy-text-sm evy-hover\:text-black evy-bg-transparent evy-border-none">
+								<button
+									type="button"
+									className="evy-text-blue evy-text-sm evy-hover\:text-black evy-bg-transparent evy-border-none"
+								>
 									{row?.config.find((c) => c.id === "action")
 										?.value ?? "Action"}
 								</button>

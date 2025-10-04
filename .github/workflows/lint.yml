@@ -1,0 +1,47 @@
+name: lint
+
+on:
+    pull_request:
+        branches: [dev]
+        paths: "web/**"
+
+jobs:
+    web:
+        defaults:
+            run:
+                working-directory: web
+
+        timeout-minutes: 1
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+
+            - name: Cache Deno dependencies
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cache/deno
+                      ~/.deno
+                  key: ${{ runner.os }}-deno-${{ hashFiles('deno.lock') }}
+                  restore-keys: ${{ runner.os }}-deno-
+
+            - name: Setup Deno
+              uses: denoland/setup-deno@v2
+              with:
+                  deno-version: v2.x
+                  cache: true
+
+            - name: Install dependencies
+              run: deno install --no-lock
+
+            - name: Run lint
+              run: deno task lint
+
+            - name: Upload test results
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: lint-report
+                  path: lint-report/
+                  retention-days: 1

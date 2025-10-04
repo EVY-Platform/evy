@@ -48,7 +48,7 @@ export function ConfigurationPanel() {
 				}
 			}) || []
 		);
-	}, [flows, activeFlowId, activeRowId, dispatchRow]);
+	}, [flows, activeFlowId, activeRowId, updateRowContent]);
 
 	return (
 		<div className="evy-flex evy-flex-col">

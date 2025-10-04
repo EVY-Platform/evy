@@ -12,6 +12,36 @@ import { FlowSelector } from "./components/FlowSelector.tsx";
 import AppPage from "./components/AppPage.tsx";
 import type { Edge } from "./components/DraggableRowContainer.tsx";
 
+interface DropLocation {
+	current: {
+		dropTargets: Array<{
+			data: {
+				pageId: string;
+				rowId?: string;
+			};
+		}>;
+	};
+	initial: {
+		dropTargets: Array<{
+			data: {
+				pageId: string;
+				rowId?: string;
+			};
+		}>;
+	};
+}
+
+interface DropSource {
+	data: {
+		rowId: string;
+	};
+}
+
+interface DropEvent {
+	location: DropLocation;
+	source: DropSource;
+}
+
 const panelWidth = "280px";
 
 function AppContent() {
@@ -21,7 +51,7 @@ function AppContent() {
 
 	useEffect(() => {
 		return monitorForElements({
-			onDrop(args: any) {
+			onDrop(args: DropEvent) {
 				const { location, source } = args;
 				if (!location.current.dropTargets.length) {
 					return;
