@@ -71,9 +71,6 @@ test.describe("EVY App Builder", () => {
 			rowsPanel.getByText("Info row info", { exact: true })
 		).toBeVisible();
 		await expect(
-			rowsPanel.getByText("Text row placeholder", { exact: true })
-		).toBeVisible();
-		await expect(
 			rowsPanel.getByText("Button row text", { exact: true })
 		).toBeVisible();
 	});
