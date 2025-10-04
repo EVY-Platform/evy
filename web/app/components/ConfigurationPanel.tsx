@@ -3,30 +3,27 @@ import { useCallback, useContext, useMemo } from "react";
 import { AppContext } from "../registry";
 
 export function ConfigurationPanel() {
-	const { pages, activeRow, dispatchPages } = useContext(AppContext);
+	const { flows, activeFlowId, activeRowId, dispatchRow } =
+		useContext(AppContext);
 
-	const row = useMemo(
-		() =>
-			activeRow
-				? pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === activeRow.rowId)
-				: undefined,
-		[pages, activeRow]
-	);
+	if (!activeRowId) return;
+
+	const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
+	const row = pages
+		.flatMap((page) => page.rowsData)
+		.find((r) => r.rowId === activeRowId);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string) => {
-			if (!activeRow) return;
-			dispatchPages({
+			if (!activeRowId) return;
+			dispatchRow({
 				type: "UPDATE_ROW_CONTENT",
-				pageId: activeRow.pageId,
-				rowId: activeRow.rowId,
+				rowId: activeRowId,
 				configId,
 				configValue,
 			});
 		},
-		[activeRow, dispatchPages]
+		[activeRowId, dispatchRow]
 	);
 
 	const configurationElements = useMemo(

@@ -25,7 +25,9 @@ export default class TextActionRow extends EVYRow {
 
 		return (
 			<AppContext.Consumer>
-				{({ pages }) => {
+				{({ flows, activeFlowId }) => {
+					const pages =
+						flows.find((f) => f.id === activeFlowId)?.pages || [];
 					const row = pages
 						.flatMap((page) => page.rowsData)
 						.find((r) => r.rowId === rowId);
