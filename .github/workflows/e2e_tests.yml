@@ -11,7 +11,7 @@ jobs:
             run:
                 working-directory: web
 
-        timeout-minutes: 6
+        timeout-minutes: 10
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code

@@ -2,34 +2,42 @@ import { AppContext } from "../../registry";
 import { EVYRow, RowConfig } from "../EVYRow";
 
 export default class SelectPhotoRow extends EVYRow {
-	static override config: RowConfig = [
-		{
-			id: "content",
-			type: "text",
-			value: "Select photo row content",
+	static override config: RowConfig = {
+		type: "SelectPhoto",
+		view: {
+			content: {
+				title: "Select photo row title",
+				subtitle: "Photos: 0/10",
+				icon: "::photo.badge.plus.fill::",
+				content: "Add photos",
+				photos: "{item.photo_ids}",
+			},
 		},
-		{
-			id: "subtitle",
-			type: "text",
-			value: "Select photo row subtitle",
+		edit: {
+			destination: "{item.photo_ids}",
+			validation: {
+				required: "true",
+				message: "Photos of the item",
+				minAmount: "3",
+			},
 		},
-	];
+	};
 
 	renderContent() {
-		const rowId = this.props.rowId;
-
 		return (
 			<AppContext.Consumer>
 				{({ flows, activeFlowId }) => {
 					const pages =
 						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row = pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === rowId);
+					const row =
+						pages
+							.flatMap((page) => page.rowsData)
+							.find((r) => r.rowId === this.props.rowId) ??
+						SelectPhotoRow;
 
 					return (
 						<div className="evy-p-2">
-							<p className="evy-pb-2">Select photo row</p>
+							<p>{row.config.view.content.title}</p>
 							<div className="evy-rounded-md evy-px-8 evy-py-8 evy-border evy-text-sm">
 								<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
 									<img
@@ -37,16 +45,11 @@ export default class SelectPhotoRow extends EVYRow {
 										src="/add_photo.svg"
 										alt="Add photo"
 									/>
-									<p>
-										{row?.config.find(
-											(c) => c.id === "content"
-										)?.value ?? "Select photo row content"}
-									</p>
+									<p>{row.config.view.content.content}</p>
 								</div>
 							</div>
 							<p className="evy-text-sm">
-								{row?.config.find((c) => c.id === "subtitle")
-									?.value ?? "Select photo row subtitle"}
+								{row.config.view.content.subtitle}
 							</p>
 						</div>
 					);

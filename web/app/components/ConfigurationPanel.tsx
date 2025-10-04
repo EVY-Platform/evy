@@ -26,26 +26,22 @@ export function ConfigurationPanel() {
 			.find((r) => r.rowId === activeRowId);
 
 		return (
-			row?.config.map((c) => {
-				if (c.type === "text") {
-					return (
-						<form className="evy-grid" key={c.id}>
-							<label htmlFor={c.id}>{c.id}</label>
-							<input
-								id={c.id}
-								type="text"
-								value={c.value}
-								onChange={(e) => {
-									updateRowContent(c.id, e.target.value);
-								}}
-								className="evy-box-sizing-border evy-text-sm evy-rounded evy-p-2 evy-border evy-focus-visible\:outline-none"
-								required
-							/>
-						</form>
-					);
-				} else {
-					return <div key={c.id}>{c.type}</div>;
-				}
+			Object.keys(row?.config.view.content || {}).map((key) => {
+				return (
+					<form className="evy-grid" key={key}>
+						<label htmlFor={key}>{key}</label>
+						<input
+							id={key}
+							type="text"
+							value={row?.config.view.content[key]}
+							onChange={(e) => {
+								updateRowContent(key, e.target.value);
+							}}
+							className="evy-box-sizing-border evy-text-sm evy-rounded evy-p-2 evy-border evy-focus-visible\:outline-none"
+							required
+						/>
+					</form>
+				);
 			}) || []
 		);
 	}, [flows, activeFlowId, activeRowId, updateRowContent]);

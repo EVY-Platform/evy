@@ -28,7 +28,7 @@ type Row = {
 };
 
 type Page = {
-	pageId: string;
+	id: string;
 	rowsData: Row[];
 };
 
@@ -137,7 +137,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 	switch (action.type) {
 		case "ADD_ROW_TO_PAGE": {
 			const pageIndex = flow.pages.findIndex(
-				(page) => page.pageId === action.pageId
+				(page) => page.id === action.pageId
 			);
 			if (pageIndex === -1) return state;
 
@@ -179,7 +179,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 		case "MOVE_ROW_ON_PAGE": {
 			let rowId: string | undefined;
 			const newPages = flow.pages.map((page) => {
-				if (page.pageId === action.startPageId) {
+				if (page.id === action.startPageId) {
 					const newRowsData = [...page.rowsData];
 					const [movedItem] = newRowsData.splice(
 						action.rowIndexInStartPage,
@@ -202,10 +202,10 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "MOVE_ROW_TO_PAGE": {
 			const sourcePageIndex = flow.pages.findIndex(
-				(page) => page.pageId === action.startPageId
+				(page) => page.id === action.startPageId
 			);
 			const destinationPageIndex = flow.pages.findIndex(
-				(page) => page.pageId === action.finishPageId
+				(page) => page.id === action.finishPageId
 			);
 
 			if (sourcePageIndex === -1 || destinationPageIndex === -1)
@@ -245,7 +245,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "REMOVE_ROW_FROM_PAGE": {
 			const pageIndex = flow.pages.findIndex(
-				(page) => page.pageId === action.pageId
+				(page) => page.id === action.pageId
 			);
 			if (pageIndex === -1) return state;
 
@@ -271,12 +271,20 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				if (idx === pageIndex) {
 					const newRowsData = page.rowsData.map((row) => {
 						if (row.rowId === action.rowId) {
-							const newConfig = row.config.map((config) =>
-								config.id === action.configId
-									? { ...config, value: action.configValue }
-									: config
-							);
-							return { ...row, config: newConfig };
+							return {
+								...row,
+								config: {
+									...row.config,
+									view: {
+										...row.config.view,
+										content: {
+											...row.config.view.content,
+											[action.configId]:
+												action.configValue,
+										},
+									},
+								},
+							};
 						}
 						return row;
 					});
@@ -348,11 +356,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 				data: "",
 				pages: [
 					{
-						pageId: "Step 1",
+						id: "Step 1",
 						rowsData: [],
 					},
 					{
-						pageId: "Step 2",
+						id: "Step 2",
 						rowsData: [],
 					},
 				],
@@ -364,7 +372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 				data: "",
 				pages: [
 					{
-						pageId: "Step 1",
+						id: "Step 1",
 						rowsData: [],
 					},
 				],

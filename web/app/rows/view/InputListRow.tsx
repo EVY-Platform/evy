@@ -3,51 +3,37 @@ import { EVYRow, RowConfig } from "../EVYRow";
 import Input from "../design-system/Input";
 
 export default class InputListRow extends EVYRow {
-	static override config: RowConfig = [
-		{
-			id: "title",
-			type: "text",
-			value: "Input list row title",
+	static override config: RowConfig = {
+		type: "InputList",
+		view: {
+			content: {
+				title: "Input list row title",
+				placeholder: "Search for tags",
+				format: "{$0.value}",
+			},
+			data: "",
 		},
-		{
-			id: "placeholder",
-			type: "text",
-			value: "Input placeholder",
-		},
-		{
-			id: "value",
-			type: "text",
-			value: "Input value",
-		},
-	];
+	};
 
 	renderContent() {
-		const rowId = this.props.rowId;
-
 		return (
 			<AppContext.Consumer>
 				{({ flows, activeFlowId }) => {
 					const pages =
 						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row = pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === rowId);
+					const row =
+						pages
+							.flatMap((page) => page.rowsData)
+							.find((r) => r.rowId === this.props.rowId) ??
+						InputListRow;
 
 					return (
 						<div className="evy-p-2">
-							<p className="evy-pb-2">
-								{row?.config.find((c) => c.id === "title")
-									?.value ?? "Input list row title"}
-							</p>
+							<p>{row.config.view.content.title}</p>
 							<Input
-								value={
-									row?.config.find((c) => c.id === "value")
-										?.value ?? "Input list row value"
-								}
+								value={row.config.view.data!}
 								placeholder={
-									row?.config.find(
-										(c) => c.id === "placeholder"
-									)?.value ?? "Input list row placeholder"
+									row.config.view.content.placeholder
 								}
 							/>
 						</div>

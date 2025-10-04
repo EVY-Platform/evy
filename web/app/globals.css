@@ -139,9 +139,6 @@
 .evy-pt-32 {
 	padding-top: var(--spacing-32);
 }
-.evy-pb-2 {
-	padding-bottom: var(--spacing-2);
-}
 .evy-ps-2 {
 	padding-inline-start: var(--spacing-2);
 }

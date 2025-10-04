@@ -3,43 +3,40 @@ import { EVYRow, RowConfig } from "../EVYRow";
 import Checkbox from "../design-system/Checkbox";
 
 export default class TextSelectRow extends EVYRow {
-	static override config: RowConfig = [
-		{
-			id: "title",
-			type: "text",
-			value: "Text select row title",
+	static override config: RowConfig = {
+		type: "TextSelect",
+		view: {
+			content: {
+				title: "Text select row title",
+				text: "placeholder",
+			},
 		},
-		{
-			id: "placeholder",
-			type: "text",
-			value: "Text select row placeholder",
+		edit: {
+			destination: "{item.payment_methods.cash}",
+			validation: {
+				required: "true",
+				message: "Please make a selection",
+			},
 		},
-	];
+	};
 
 	renderContent() {
-		const rowId = this.props.rowId;
-
 		return (
 			<AppContext.Consumer>
 				{({ flows, activeFlowId }) => {
 					const pages =
 						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row = pages
-						.flatMap((page) => page.rowsData)
-						.find((r) => r.rowId === rowId);
+					const row =
+						pages
+							.flatMap((page) => page.rowsData)
+							.find((r) => r.rowId === this.props.rowId) ??
+						TextSelectRow;
 
 					return (
 						<div className="evy-p-2">
-							<p className="evy-pb-2">
-								{row?.config.find((c) => c.id === "title")
-									?.value ?? "Text select row title"}
-							</p>
+							<p>{row.config.view.content.title}</p>
 							<div className="evy-flex evy-justify-between">
-								<p>
-									{row?.config.find(
-										(c) => c.id === "placeholder"
-									)?.value ?? "Text select row placeholder"}
-								</p>
+								<p>{row.config.view.content.text}</p>
 								<Checkbox checked={false} />
 							</div>
 						</div>
