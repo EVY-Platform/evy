@@ -36,7 +36,9 @@ export default class SearchRow extends EVYRow {
 
 					return (
 						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
+							<p className="evy-text-md">
+								{row.config.view.content.title}
+							</p>
 							<div className="evy-relative">
 								<InlineIcon icon="/search.svg" alt="Search" />
 								<Input

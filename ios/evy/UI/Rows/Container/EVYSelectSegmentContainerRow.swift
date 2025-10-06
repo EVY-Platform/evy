@@ -48,15 +48,20 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
 	}
 
     var body: some View {
-        Picker("", selection: $selected) {
-            ForEach(view.content.children, id: \.child.id) { child in
-                EVYTextView(child.title).tag(child.title)
-            }
-        }
-        .pickerStyle(.segmented)
-        .padding(.bottom, Constants.majorPadding)
-        
-		view.content.children.first { $0.title == selected }?.child
+		VStack(alignment:.leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+			}
+			Picker("", selection: $selected) {
+				ForEach(view.content.children, id: \.child.id) { child in
+					EVYTextView(child.title).tag(child.title)
+				}
+			}
+			.pickerStyle(.segmented)
+			.padding(.bottom, Constants.majorPadding)
+			
+			view.content.children.first { $0.title == selected }?.child
+		}
     }
 }
 

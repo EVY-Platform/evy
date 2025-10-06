@@ -35,7 +35,9 @@ export default class TextAreaRow extends EVYRow {
 
 					return (
 						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
+							<p className="evy-text-md">
+								{row.config.view.content.title}
+							</p>
 							<TextArea
 								value={row.config.view.content.value}
 								placeholder={

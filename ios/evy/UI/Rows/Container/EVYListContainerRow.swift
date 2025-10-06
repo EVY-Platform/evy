@@ -36,15 +36,17 @@ struct EVYListContainerRow: View, EVYRowProtocol {
     
     var body: some View {
         VStack(alignment:.leading) {
-			if view.content.children.first!.title.count > 0 {
-				EVYTextView(view.content.children.first!.title)
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-            VStack(alignment: .leading) {
-				ForEach(view.content.children, id: \.child.id) { child in
-					child.child
-                }
-            }
+			ForEach(view.content.children, id: \.child.id) { child in
+				if child.title.count > 0 {
+					EVYTextView(child.title)
+						.padding(.vertical, Constants.padding)
+				}
+				child.child
+			}
         }
     }
 }

@@ -26,8 +26,12 @@ export default class InfoRow extends EVYRow {
 
 					return (
 						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
-							<p>{row.config.view.content.text}</p>
+							<p className="evy-text-md">
+								{row.config.view.content.title}
+							</p>
+							<p className="evy-text-sm">
+								{row.config.view.content.text}
+							</p>
 						</div>
 					);
 				}}

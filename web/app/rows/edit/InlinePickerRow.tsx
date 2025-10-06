@@ -35,7 +35,9 @@ export default class InlinePickerRow extends EVYRow {
 
 					return (
 						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
+							<p className="evy-text-md">
+								{row.config.view.content.title}
+							</p>
 							<div className="evy-p-2 evy-flex evy-gap-2">
 								<RadioButton label="1 min" selected={false} />
 								<RadioButton label="2 mins" selected />

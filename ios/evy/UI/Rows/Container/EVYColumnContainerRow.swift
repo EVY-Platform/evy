@@ -36,13 +36,20 @@ struct EVYColumnContainerRow: View, EVYRowProtocol {
     
     var body: some View {
         VStack(alignment:.leading) {
-			if view.content.children.first!.title.count > 0 {
-				EVYTextView(view.content.children.first!.title)
-                    .padding(.vertical, Constants.padding)
-            }
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+					.padding(.vertical, Constants.padding)
+			}
             HStack(alignment: .top) {
+				let atLeastOneTitle = !view.content.children.allSatisfy(\.title.isEmpty)
 				ForEach(view.content.children, id: \.child.id) { child in
-					child.child
+					VStack(alignment:.leading) {
+						if atLeastOneTitle {
+							EVYTextView(child.title)
+								.padding(.vertical, Constants.padding)
+						}
+						child.child
+					}
                 }
             }
         }

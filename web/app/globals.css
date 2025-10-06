@@ -29,8 +29,9 @@
 	--radius-2-4: 2.4rem; /* 38.4px */
 
 	/* Font sizes */
-	--text-sm: 0.875rem; /* 14px */
-	--text-xl: 1.25rem; /* 20px */
+	--text-sm: 0.75rem; /* 12px */
+	--text-md: 0.875rem; /* 14px */
+	--text-xl: 1rem; /* 16px */
 
 	/* Font weights */
 	--font-bold: 700;
@@ -117,17 +118,17 @@
 .evy-p-30px {
 	padding: var(--spacing-30px);
 }
-.evy-px-3 {
-	padding-left: var(--spacing-3);
-	padding-right: var(--spacing-3);
+.evy-px-2 {
+	padding-left: var(--spacing-2);
+	padding-right: var(--spacing-2);
 }
 .evy-px-8 {
 	padding-left: var(--spacing-8);
 	padding-right: var(--spacing-8);
 }
-.evy-py-3 {
-	padding-top: var(--spacing-3);
-	padding-bottom: var(--spacing-3);
+.evy-py-2 {
+	padding-top: var(--spacing-2);
+	padding-bottom: var(--spacing-2);
 }
 .evy-py-8 {
 	padding-top: var(--spacing-8);
@@ -208,6 +209,9 @@
 /* Text utilities */
 .evy-text-sm {
 	font-size: var(--text-sm);
+}
+.evy-text-md {
+	font-size: var(--text-md);
 }
 .evy-text-xl {
 	font-size: var(--text-xl);

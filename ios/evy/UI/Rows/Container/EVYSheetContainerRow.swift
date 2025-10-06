@@ -41,23 +41,28 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 	}
     
     var body: some View {
-        view.content.child
-            .contentShape(Rectangle())
-            .onTapGesture { showSheet.toggle() }
-            .sheet(isPresented: $showSheet, content: {
-                VStack {
-					if view.content.children.first!.title.count > 0 {
-						EVYTextView(view.content.children.first!.title)
+		VStack(alignment:.leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+			}
+			view.content.child
+				.contentShape(Rectangle())
+				.onTapGesture { showSheet.toggle() }
+				.sheet(isPresented: $showSheet, content: {
+					VStack {
+						ForEach(view.content.children, id: \.child.id) { child in
+							if child.title.count > 0 {
+								EVYTextView(view.content.children.first!.title)
+							}
+							child.child
+						}
 					}
-					ForEach(view.content.children, id: \.child.id) { child in
-						child.child
-                    }
-                }
-                .frame(maxHeight: .infinity, alignment: .top)
-                .padding(.top, Constants.majorPadding)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-            })
+					.frame(maxHeight: .infinity, alignment: .top)
+					.padding(.top, Constants.majorPadding)
+					.presentationDetents([.medium, .large])
+					.presentationDragIndicator(.visible)
+				})
+		}
     }
 }
 

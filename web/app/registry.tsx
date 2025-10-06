@@ -6,25 +6,26 @@ import {
 	createElement,
 } from "react";
 
-import InfoRow from "./rows/view/InfoRow";
-import InputListRow from "./rows/view/InputListRow";
-import TextRow from "./rows/view/TextRow";
 import ButtonRow from "./rows/action/ButtonRow";
-import TextActionRow from "./rows/action/TextActionRow";
 import CalendarRow from "./rows/edit/CalendarRow";
+import ColumnContainerRow from "./rows/container/ColumnContainerRow";
 import DropdownRow from "./rows/edit/DropdownRow";
+import InfoRow from "./rows/view/InfoRow";
 import InlinePickerRow from "./rows/edit/InlinePickerRow";
+import InputListRow from "./rows/view/InputListRow";
 import InputRow from "./rows/edit/InputRow";
 import SearchRow from "./rows/edit/SearchRow";
 import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
+import TextActionRow from "./rows/action/TextActionRow";
 import TextAreaRow from "./rows/edit/TextAreaRow";
+import TextRow from "./rows/view/TextRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
+
 import {
 	type RowConfig,
 	type Row,
 	type RowChild,
 	type RowView,
-	type RowContent,
 	UnknownRow,
 } from "./rows/EVYRow";
 
@@ -113,18 +114,19 @@ type RowAction =
 	  };
 
 const baseRows = [
-	InfoRow,
-	TextRow,
-	InputListRow,
 	ButtonRow,
-	TextActionRow,
 	CalendarRow,
+	ColumnContainerRow,
 	DropdownRow,
+	InfoRow,
 	InlinePickerRow,
+	InputListRow,
 	InputRow,
 	SearchRow,
 	SelectPhotoRow,
+	TextActionRow,
 	TextAreaRow,
+	TextRow,
 	TextSelectRow,
 ];
 
@@ -450,89 +452,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 							},
 						},
 						{
-							type: "Input",
-							view: {
-								content: {
-									title: "A row title ::star.square.on.square.fill::",
-									value: "{item.title}",
-									placeholder:
-										"My iPhone ::star.square.on.square.fill:: 20",
-								},
-							},
-							edit: {
-								destination: "{item.title}",
-								validation: {
-									required: "true",
-									message: "Test input",
-								},
-							},
-						},
-						{
-							type: "Input",
-							view: {
-								content: {
-									title: "Price",
-									value: "{formatCurrency(item.price)}",
-									placeholder: "{formatCurrency(item.price)}",
-								},
-							},
-							edit: {
-								destination: "{item.price.value}",
-								validation: {
-									required: "true",
-									message: "How much are you selling it for?",
-									minAmount: "1",
-								},
-							},
-						},
-						{
-							type: "Dropdown",
-							view: {
-								content: {
-									title: "Condition",
-									format: "{$0.value}",
-									placeholder: "Choose one",
-								},
-								data: "{conditions}",
-							},
-							edit: {
-								destination: "{item.condition_id}",
-								validation: {
-									required: "true",
-									message: "Is the item used, new, etc?",
-								},
-							},
-						},
-						{
-							type: "Dropdown",
-							view: {
-								content: {
-									title: "Selling Reason",
-									format: "{$0.value}",
-									placeholder: "Choose one",
-								},
-								data: "{selling_reasons}",
-							},
-							edit: {
-								destination: "{item.selling_reason_id}",
-								validation: {
-									required: "true",
-									message: "Why are you selling?",
-								},
-							},
-						},
-						{
 							type: "ColumnContainer",
 							view: {
 								content: {
+									title: "Dimensions (width x height x depth)",
 									children: [
 										{
-											title: "Dimensions (width x height x depth)",
+											title: "1",
 											child: {
 												type: "Input",
 												view: {
 													content: {
-														title: "",
+														title: "2",
 														value: "{formatDimension(item.dimensions.width)}",
 														placeholder: "Width",
 													},
@@ -604,6 +535,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 							type: "SheetContainer",
 							view: {
 								content: {
+									title: "Tags",
 									child: {
 										type: "InputList",
 										view: {

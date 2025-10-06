@@ -113,6 +113,7 @@ public class SDUI {
 		let child: EVYRow
 	}
     public class ContainerContent: Codable {
+        let title: String
         let children: [ContainerChild]
         let child: EVYRow?
     }
