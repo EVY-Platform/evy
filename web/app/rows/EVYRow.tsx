@@ -29,9 +29,9 @@ export interface RowChild {
 
 export interface RowContent {
 	title: string;
-	children?: RowChild[];
+	children?: Row[];
 	child?: Row;
-	[key: string]: string | RowChild[] | Row[] | RowConfig[] | Row | undefined;
+	[key: string]: string | Row[] | RowConfig[] | Row | undefined;
 }
 
 export interface RowView {

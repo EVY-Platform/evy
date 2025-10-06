@@ -8,6 +8,7 @@ import {
 
 import ButtonRow from "./rows/action/ButtonRow";
 import CalendarRow from "./rows/edit/CalendarRow";
+import ContainerRow from "./rows/container/ContainerRow";
 import ColumnContainerRow from "./rows/container/ColumnContainerRow";
 import DropdownRow from "./rows/edit/DropdownRow";
 import InfoRow from "./rows/view/InfoRow";
@@ -47,15 +48,11 @@ type Flow = {
 // Server types necessary to ingest the raw flows
 // since in client-side type we need to have the concrete
 // row instances
-type ServerRowChild = Omit<RowChild, "child" | "title"> & {
-	title: string;
-	child: ServerRow;
-};
 type ServerRowContent = {
 	title?: string;
-	children?: ServerRowChild[];
+	children?: ServerRow[];
 	child?: ServerRow;
-	[key: string]: string | ServerRowChild[] | ServerRow | undefined;
+	[key: string]: string | ServerRow[] | ServerRow | undefined;
 };
 type ServerRow = Omit<RowConfig, "view"> & {
 	view: Omit<RowView, "content"> & {
@@ -116,6 +113,7 @@ type RowAction =
 const baseRows = [
 	ButtonRow,
 	CalendarRow,
+	ContainerRow,
 	ColumnContainerRow,
 	DropdownRow,
 	InfoRow,
@@ -386,10 +384,7 @@ function decodeRow(row: ServerRow): Row {
 						...row.view.content,
 						title: row.view.content.title as string,
 						children: row.view.content.children?.map(
-							(child: ServerRowChild) => ({
-								...child,
-								child: decodeRow(child.child),
-							})
+							(child: ServerRow) => decodeRow(child)
 						),
 						child: row.view.content.child
 							? decodeRow(row.view.content.child)
@@ -458,66 +453,105 @@ export function AppProvider({ children }: { children: ReactNode }) {
 									title: "Dimensions (width x height x depth)",
 									children: [
 										{
-											title: "1",
-											child: {
-												type: "Input",
-												view: {
-													content: {
-														title: "2",
-														value: "{formatDimension(item.dimensions.width)}",
-														placeholder: "Width",
+											type: "Container",
+											view: {
+												content: {
+													title: "",
+													child: {
+														type: "Input",
+														view: {
+															content: {
+																title: "",
+																value: "{formatDimension(item.dimensions.width)}",
+																placeholder:
+																	"Width",
+															},
+														},
+														edit: {
+															destination:
+																"{item.dimensions.width}",
+															validation: {
+																required:
+																	"true",
+																message:
+																	"Width",
+															},
+														},
 													},
 												},
-												edit: {
-													destination:
-														"{item.dimensions.width}",
-													validation: {
-														required: "true",
-														message: "Width",
-													},
+											},
+											edit: {
+												validation: {
+													required: "true",
 												},
 											},
 										},
 										{
-											title: "",
-											child: {
-												type: "Input",
-												view: {
-													content: {
-														title: "",
-														value: "{formatDimension(item.dimensions.height)}",
-														placeholder: "Height",
+											type: "Container",
+											view: {
+												content: {
+													title: "",
+													child: {
+														type: "Input",
+														view: {
+															content: {
+																title: "",
+																value: "{formatDimension(item.dimensions.height)}",
+																placeholder:
+																	"Height",
+															},
+														},
+														edit: {
+															destination:
+																"{item.dimensions.height}",
+															validation: {
+																required:
+																	"true",
+																message:
+																	"Height",
+															},
+														},
 													},
 												},
-												edit: {
-													destination:
-														"{item.dimensions.height}",
-													validation: {
-														required: "true",
-														message: "Height",
-													},
+											},
+											edit: {
+												validation: {
+													required: "true",
 												},
 											},
 										},
 										{
-											title: "",
-											child: {
-												type: "Input",
-												view: {
-													content: {
-														title: "",
-														value: "{formatDimension(item.dimensions.length)}",
-														placeholder: "Length",
+											type: "Container",
+											view: {
+												content: {
+													title: "",
+													child: {
+														type: "Input",
+														view: {
+															content: {
+																title: "",
+																value: "{formatDimension(item.dimensions.length)}",
+																placeholder:
+																	"Length",
+															},
+														},
+														edit: {
+															destination:
+																"{item.dimensions.length}",
+															validation: {
+																required:
+																	"true",
+																message:
+																	"Length",
+																minValue: "1",
+															},
+														},
 													},
 												},
-												edit: {
-													destination:
-														"{item.dimensions.length}",
-													validation: {
-														required: "true",
-														message: "Length",
-														minValue: "1",
-													},
+											},
+											edit: {
+												validation: {
+													required: "true",
 												},
 											},
 										},
@@ -535,7 +569,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 							type: "SheetContainer",
 							view: {
 								content: {
-									title: "Tags",
+									title: "Sheet",
 									child: {
 										type: "InputList",
 										view: {
@@ -549,23 +583,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
 									},
 									children: [
 										{
-											title: "",
-											child: {
-												type: "Search",
-												view: {
-													content: {
-														title: "",
-														format: "{$0.value}",
-														placeholder:
-															"Search for tags",
+											type: "Container",
+											view: {
+												content: {
+													title: "",
+													child: {
+														type: "Search",
+														view: {
+															content: {
+																title: "",
+																format: "{$0.value}",
+																placeholder:
+																	"Search for tags",
+															},
+															data: "{api:tags}",
+														},
+														edit: {
+															destination:
+																"{item.tags}",
+															validation: {
+																required:
+																	"false",
+															},
+														},
 													},
-													data: "{api:tags}",
 												},
-												edit: {
-													destination: "{item.tags}",
-													validation: {
-														required: "false",
-													},
+											},
+											edit: {
+												validation: {
+													required: "true",
 												},
 											},
 										},
