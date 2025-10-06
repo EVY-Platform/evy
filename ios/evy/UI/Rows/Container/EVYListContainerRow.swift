@@ -22,15 +22,15 @@ struct EVYListContainerRow: View, EVYRowProtocol {
 		if edit.validation.minAmount == nil { return true }
 		
 		let completeChildren = view.content.children.filter {
-			$0.child.complete()
+			$0.complete()
 		}
 		return completeChildren.count >= edit.validation.minAmount!
 	}
 	
 	func incompleteMessages() -> [String] {
 		view.content.children
-			.filter { $0.child.view.complete() == false }
-			.map { $0.child.view.incompleteMessages() }
+			.filter { $0.complete() == false }
+			.map { $0.incompleteMessages() }
 			.flatMap(\.self)
 	}
     
@@ -40,12 +40,8 @@ struct EVYListContainerRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			ForEach(view.content.children, id: \.child.id) { child in
-				if child.title.count > 0 {
-					EVYTextView(child.title)
-						.padding(.vertical, Constants.padding)
-				}
-				child.child
+			ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, child in
+				child
 			}
         }
     }
@@ -55,6 +51,6 @@ struct EVYListContainerRow: View, EVYRowProtocol {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.getRow(["1","pages","2","rows", "0", "views", "content", "children", "0", "child"])
+		try! await EVY.getRow(["1","pages","0","rows", "5", "view", "content", "children", "0", "view", "content", "child"])
 	}
 }

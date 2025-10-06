@@ -42,8 +42,11 @@ struct EVYRow: View, Codable, Identifiable {
         switch type {
             
 			// Container rows
-            case EVYColumnContainerRow.JSONType:
-                view = try EVYColumnContainerRow(container: container)
+            case EVYContainerRow.JSONType:
+                view = try EVYContainerRow(container: container)
+			
+			case EVYColumnContainerRow.JSONType:
+				view = try EVYColumnContainerRow(container: container)
             
             case EVYListContainerRow.JSONType:
                 view = try EVYListContainerRow(container: container)

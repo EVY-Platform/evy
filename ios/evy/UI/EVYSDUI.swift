@@ -108,13 +108,9 @@ public class SDUI {
         let action: Action
     }
     
-	public struct ContainerChild: Codable {
-		let title: String
-		let child: EVYRow
-	}
     public class ContainerContent: Codable {
         let title: String
-        let children: [ContainerChild]
+        let children: [EVYContainerRow]
         let child: EVYRow?
     }
     public struct ContainerView: Codable {

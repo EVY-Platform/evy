@@ -35,8 +35,8 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 	
 	func incompleteMessages() -> [String] {
 		view.content.children
-			.filter { $0.child.view.complete() == false }
-			.map { $0.child.view.incompleteMessages() }
+			.filter { $0.complete() == false }
+			.map { $0.incompleteMessages() }
 			.flatMap(\.self)
 	}
     
@@ -50,11 +50,8 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 				.onTapGesture { showSheet.toggle() }
 				.sheet(isPresented: $showSheet, content: {
 					VStack {
-						ForEach(view.content.children, id: \.child.id) { child in
-							if child.title.count > 0 {
-								EVYTextView(view.content.children.first!.title)
-							}
-							child.child
+						ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, child in
+							child
 						}
 					}
 					.frame(maxHeight: .infinity, alignment: .top)

@@ -12,12 +12,11 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
     
 	private let view: SDUI.ContainerView
 	private let edit: SDUI.Edit
-    @State private var selected: String
+	@State private var selected: Int = 0
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
         view = try container.decode(SDUI.ContainerView.self, forKey:.view)
 		edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        selected = view.content.children.first!.title
     }
 	
 	init(from decoder: Decoder) throws {
@@ -35,15 +34,15 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
 		if edit.validation.minAmount == nil { return true }
 		
 		let completeChildren = view.content.children.filter {
-			$0.child.complete()
+			$0.complete()
 		}
 		return completeChildren.count >= edit.validation.minAmount!
 	}
 	
 	func incompleteMessages() -> [String] {
 		view.content.children
-			.filter { $0.child.view.complete() == false }
-			.map { $0.child.view.incompleteMessages() }
+			.filter { $0.complete() == false }
+			.map { $0.incompleteMessages() }
 			.flatMap(\.self)
 	}
 
@@ -53,14 +52,14 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 			}
 			Picker("", selection: $selected) {
-				ForEach(view.content.children, id: \.child.id) { child in
-					EVYTextView(child.title).tag(child.title)
+				ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, child in
+					EVYTextView(child.view.content.title).tag(index)
 				}
 			}
 			.pickerStyle(.segmented)
 			.padding(.bottom, Constants.majorPadding)
 			
-			view.content.children.first { $0.title == selected }?.child
+			view.content.children[selected]
 		}
     }
 }

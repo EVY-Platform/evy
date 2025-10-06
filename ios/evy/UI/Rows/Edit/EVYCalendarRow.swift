@@ -16,7 +16,7 @@ struct EVYCalendarRowView: Codable {
         let secondary: String
     }
 }
-    
+
 struct EVYCalendarRow: View, EVYRowProtocol {
     public static let JSONType = "Calendar"
     
