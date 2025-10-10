@@ -32,9 +32,12 @@ export default class ColumnContainerRow extends EVYRow {
 									(child) => (
 										<div className="evy-flex-1">
 											<p className="evy-text-md">
-												{child.title}
+												{
+													child.config.view.content
+														.title
+												}
 											</p>
-											{child.child.row}
+											{child.row}
 										</div>
 									)
 								)}
