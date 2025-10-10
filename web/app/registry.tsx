@@ -462,7 +462,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 														view: {
 															content: {
 																title: "",
-																value: "{formatDimension(item.dimensions.width)}",
+																value: "width value",
 																placeholder:
 																	"Width",
 															},
@@ -496,14 +496,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 														view: {
 															content: {
 																title: "",
-																value: "{formatDimension(item.dimensions.height)}",
+																value: "height value",
 																placeholder:
 																	"Height",
 															},
 														},
 														edit: {
 															destination:
-																"{item.dimensions.height}",
+																"height value",
 															validation: {
 																required:
 																	"true",
@@ -530,7 +530,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 														view: {
 															content: {
 																title: "",
-																value: "{formatDimension(item.dimensions.length)}",
+																value: "length value",
 																placeholder:
 																	"Length",
 															},
