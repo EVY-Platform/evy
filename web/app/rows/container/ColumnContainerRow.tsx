@@ -1,5 +1,4 @@
-import { AppContext } from "../../registry";
-import { EVYRow, RowConfig } from "../EVYRow";
+import { EVYRow, Row, RowConfig } from "../EVYRow";
 
 export default class ColumnContainerRow extends EVYRow {
 	static override config: RowConfig = {
@@ -12,40 +11,16 @@ export default class ColumnContainerRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						ColumnContainerRow;
-
-					return (
-						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
-							<div className="evy-flex">
-								{row.config.view.content.children?.map(
-									(child) => (
-										<div className="evy-flex-1">
-											<p className="evy-text-md">
-												{
-													child.config.view.content
-														.title
-												}
-											</p>
-											{child.row}
-										</div>
-									)
-								)}
-							</div>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p>{row.config.view.content.title}</p>
+				<div className="evy-flex evy-gap-2">
+					{row.config.view.content.children?.map(
+						(child) => child.row
+					)}
+				</div>
+			</div>
 		);
 	}
 }

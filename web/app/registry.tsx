@@ -25,10 +25,10 @@ import TextSelectRow from "./rows/edit/TextSelectRow";
 import {
 	type RowConfig,
 	type Row,
-	type RowChild,
 	type RowView,
 	UnknownRow,
 } from "./rows/EVYRow";
+import { removeUndefined } from "./removeUndefined";
 
 type Page = {
 	id: string;
@@ -376,7 +376,7 @@ function decodeRow(row: ServerRow): Row {
 		return {
 			rowId,
 			row: createElement(rowType, { rowId }),
-			config: {
+			config: removeUndefined({
 				...row,
 				view: {
 					...row.view,
@@ -391,7 +391,7 @@ function decodeRow(row: ServerRow): Row {
 							: undefined,
 					},
 				},
-			},
+			}),
 		};
 	}
 }
@@ -462,7 +462,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 														view: {
 															content: {
 																title: "",
-																value: "width value",
+																value: "width",
 																placeholder:
 																	"Width",
 															},
@@ -496,14 +496,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 														view: {
 															content: {
 																title: "",
-																value: "height value",
+																value: "height",
 																placeholder:
 																	"Height",
 															},
 														},
 														edit: {
 															destination:
-																"height value",
+																"height",
 															validation: {
 																required:
 																	"true",
@@ -530,7 +530,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 														view: {
 															content: {
 																title: "",
-																value: "length value",
+																value: "length",
 																placeholder:
 																	"Length",
 															},

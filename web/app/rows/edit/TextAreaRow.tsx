@@ -1,5 +1,4 @@
-import { AppContext } from "../../registry";
-import { EVYRow, RowConfig } from "../EVYRow";
+import { EVYRow, Row, RowConfig } from "../EVYRow";
 import TextArea from "../design-system/TextArea";
 
 export default class TextAreaRow extends EVYRow {
@@ -21,33 +20,15 @@ export default class TextAreaRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						TextAreaRow;
-
-					return (
-						<div className="evy-p-2">
-							<p className="evy-text-md">
-								{row.config.view.content.title}
-							</p>
-							<TextArea
-								value={row.config.view.content.value}
-								placeholder={
-									row.config.view.content.placeholder
-								}
-							/>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p className="evy-text-md">{row.config.view.content.title}</p>
+				<TextArea
+					value={row.config.view.content.value}
+					placeholder={row.config.view.content.placeholder}
+				/>
+			</div>
 		);
 	}
 }

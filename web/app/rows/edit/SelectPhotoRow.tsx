@@ -1,5 +1,4 @@
-import { AppContext } from "../../registry";
-import { EVYRow, RowConfig } from "../EVYRow";
+import { EVYRow, Row, RowConfig } from "../EVYRow";
 
 export default class SelectPhotoRow extends EVYRow {
 	static override config: RowConfig = {
@@ -23,42 +22,26 @@ export default class SelectPhotoRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						SelectPhotoRow;
-
-					return (
-						<div className="evy-p-2">
-							<p className="evy-text-md">
-								{row.config.view.content.title}
-							</p>
-							<div className="evy-rounded-md evy-px-8 evy-py-8 evy-border evy-text-sm">
-								<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
-									<img
-										className="evy-h-4"
-										src="/add_photo.svg"
-										alt="Add photo"
-									/>
-									<p className="evy-text-sm">
-										{row.config.view.content.content}
-									</p>
-								</div>
-							</div>
-							<p className="evy-text-sm">
-								{row.config.view.content.subtitle}
-							</p>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p className="evy-text-md">{row.config.view.content.title}</p>
+				<div className="evy-rounded-md evy-px-8 evy-py-8 evy-border evy-text-sm">
+					<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
+						<img
+							className="evy-h-4"
+							src="/add_photo.svg"
+							alt="Add photo"
+						/>
+						<p className="evy-text-sm">
+							{row.config.view.content.content}
+						</p>
+					</div>
+				</div>
+				<p className="evy-text-sm">
+					{row.config.view.content.subtitle}
+				</p>
+			</div>
 		);
 	}
 }

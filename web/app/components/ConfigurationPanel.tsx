@@ -29,16 +29,26 @@ export function ConfigurationPanel() {
 			return (
 				<form className="evy-grid" key={key}>
 					<label htmlFor={key}>{key}</label>
-					<input
-						id={key}
-						type="text"
-						value={row?.config.view.content[key]}
-						onChange={(e) => {
-							updateRowContent(key, e.target.value);
-						}}
-						className="evy-box-sizing-border evy-text-sm evy-rounded evy-p-2 evy-border evy-focus-visible\:outline-none"
-						required
-					/>
+					{key === "child" || key === "children" ? (
+						<p className="evy-box-sizing-border evy-text-sm evy-rounded evy-p-2 evy-border evy-focus-visible\:outline-none">
+							-
+						</p>
+					) : (
+						<input
+							id={key}
+							type="text"
+							value={
+								row?.config.view.content[
+									key
+								] as unknown as string
+							}
+							onChange={(e) => {
+								updateRowContent(key, e.target.value);
+							}}
+							className="evy-box-sizing-border evy-text-sm evy-rounded evy-p-2 evy-border evy-focus-visible\:outline-none"
+							required
+						/>
+					)}
 				</form>
 			);
 		}) || [];
