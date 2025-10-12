@@ -52,8 +52,8 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 			}
 			Picker("", selection: $selected) {
-				ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, child in
-					EVYTextView(child.view.content.title).tag(index)
+				ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, _ in
+					Text("Option \(index + 1)").tag(index)
 				}
 			}
 			.pickerStyle(.segmented)

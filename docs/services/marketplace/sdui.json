@@ -306,7 +306,7 @@
 						"type": "SelectSegmentContainer",
 						"view": {
 							"content": {
-								"title": "Select Segment",
+								"title": "",
 								"children": [
 									{
 										"type": "ListContainer",

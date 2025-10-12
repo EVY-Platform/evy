@@ -42,9 +42,6 @@ struct EVYRow: View, Codable, Identifiable {
         switch type {
             
 			// Container rows
-            case EVYContainerRow.JSONType:
-                view = try EVYContainerRow(container: container)
-			
 			case EVYColumnContainerRow.JSONType:
 				view = try EVYColumnContainerRow(container: container)
             
@@ -112,6 +109,10 @@ struct EVYRow: View, Codable, Identifiable {
 	
 	func complete() -> Bool {
 		view.complete()
+	}
+	
+	func incompleteMessages() -> [String] {
+		view.incompleteMessages()
 	}
     
     var body: some View {
