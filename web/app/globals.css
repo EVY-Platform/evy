@@ -241,9 +241,15 @@
 	border-right-width: 1px;
 	border-right-style: solid;
 }
+.evy-border-no-r {
+	border-right-width: 0px;
+}
 .evy-border-l {
 	border-left-width: 1px;
 	border-left-style: solid;
+}
+.evy-border-no-l {
+	border-left-width: 0px;
 }
 .evy-border-b {
 	border-bottom-width: 1px;
@@ -257,9 +263,6 @@
 }
 
 /* Border radius utilities */
-.evy-rounded {
-	border-radius: var(--radius-sm);
-}
 .evy-rounded-sm {
 	border-radius: var(--radius-sm);
 }
@@ -269,6 +272,14 @@
 .evy-rounded-b-24 {
 	border-bottom-left-radius: var(--radius-2-4);
 	border-bottom-right-radius: var(--radius-2-4);
+}
+.evy-rounded-left-md {
+	border-top-left-radius: var(--radius-md);
+	border-bottom-left-radius: var(--radius-md);
+}
+.evy-rounded-right-md {
+	border-top-right-radius: var(--radius-md);
+	border-bottom-right-radius: var(--radius-md);
 }
 
 /* Position utilities */

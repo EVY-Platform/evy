@@ -143,93 +143,54 @@
 								"title": "Dimensions (width x height x depth)",
 								"children": [
 									{
-										"type": "Container",
+										"type": "Input",
 										"view": {
 											"content": {
 												"title": "",
-												"child": {
-													"type": "Input",
-													"view": {
-														"content": {
-															"title": "",
-															"value": "{formatDimension(item.dimensions.width)}",
-															"placeholder": "Width"
-														}
-													},
-													"edit": {
-														"destination": "{item.dimensions.width}",
-														"validation": {
-															"required": "true",
-															"message": "Width"
-														}
-													}
-												}
+												"value": "{formatDimension(item.dimensions.width)}",
+												"placeholder": "Width"
 											}
 										},
 										"edit": {
+											"destination": "{item.dimensions.width}",
 											"validation": {
-												"required": "true"
+												"required": "true",
+												"message": "Width"
 											}
 										}
 									},
 									{
-										"type": "Container",
+										"type": "Input",
 										"view": {
 											"content": {
 												"title": "",
-												"child": {
-													"type": "Input",
-													"view": {
-														"content": {
-															"title": "",
-															"value": "{formatDimension(item.dimensions.height)}",
-															"placeholder": "Height"
-														}
-													},
-													"edit": {
-														"destination": "{item.dimensions.height}",
-														"validation": {
-															"required": "true",
-															"message": "Height"
-														}
-													}
-												}
+												"value": "{formatDimension(item.dimensions.height)}",
+												"placeholder": "Height"
 											}
 										},
 										"edit": {
+											"destination": "{item.dimensions.height}",
 											"validation": {
-												"required": "true"
+												"required": "true",
+												"message": "Height"
 											}
 										}
 									},
 									{
-										"type": "Container",
+										"type": "Input",
 										"view": {
 											"content": {
 												"title": "",
-												"child": {
-													"type": "Input",
-													"view": {
-														"content": {
-															"title": "",
-															"value": "{formatDimension(item.dimensions.length)}",
-															"placeholder": "Length"
-														}
-													},
-													"edit": {
-														"destination": "{item.dimensions.length}",
-														"validation": {
-															"required": "true",
-															"message": "Length",
-															"minValue": "1"
-														}
-													}
-												}
+												"value": "{formatDimension(item.dimensions.length)}",
+												"placeholder": "Length"
 											}
 										},
 										"edit": {
+											"destination": "{item.dimensions.length}",
 											"validation": {
-												"required": "true"
+												"required": "true",
+												"message": "Length",
+												"minValue": "1"
 											}
 										}
 									}
@@ -261,32 +222,19 @@
 								},
 								"children": [
 									{
-										"type": "Container",
+										"type": "Search",
 										"view": {
 											"content": {
 												"title": "",
-												"child": {
-													"type": "Search",
-													"view": {
-														"content": {
-															"title": "",
-															"format": "{$0.value}",
-															"placeholder": "Search for tags"
-														},
-														"data": "{api:tags}"
-													},
-													"edit": {
-														"destination": "{item.tags}",
-														"validation": {
-															"required": "false"
-														}
-													}
-												}
-											}
+												"format": "{$0.value}",
+												"placeholder": "Search for tags"
+											},
+											"data": "{api:tags}"
 										},
 										"edit": {
+											"destination": "{item.tags}",
 											"validation": {
-												"required": "true"
+												"required": "false"
 											}
 										}
 									}
@@ -361,576 +309,308 @@
 								"title": "Select Segment",
 								"children": [
 									{
-										"type": "Container",
+										"type": "ListContainer",
 										"view": {
 											"content": {
 												"title": "Pickup",
-												"child": {
-													"type": "ListContainer",
-													"view": {
-														"content": {
-															"title": "List",
-															"children": [
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Info",
-																				"view": {
-																					"content": {
-																						"title": "",
-																						"text": "Allow buyers to pick up the item"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "SheetContainer",
-																				"view": {
-																					"content": {
-																						"title": "Sheet",
-																						"child": {
-																							"type": "Container",
-																							"view": {
-																								"content": {
-																									"title": "",
-																									"child": {
-																										"type": "TextAction",
-																										"view": {
-																											"content": {
-																												"title": "Where",
-																												"text": "{formatAddress(item.transfer_options.pickup.address)}",
-																												"placeholder": "Enter pick up address",
-																												"action": "Change"
-																											}
-																										},
-																										"edit": {
-																											"destination": "{item.transfer_options.pickup.address}",
-																											"validation": {
-																												"required": "true",
-																												"message": "Where can the item be picked up?"
-																											}
-																										}
-																									}
-																								}
-																							},
-																							"edit": {
-																								"validation": {
-																									"required": "true"
-																								}
-																							}
-																						},
-																						"children": [
-																							{
-																								"type": "Container",
-																								"view": {
-																									"content": {
-																										"title": "",
-																										"child": {
-																											"type": "Search",
-																											"view": {
-																												"content": {
-																													"title": "",
-																													"format": "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}",
-																													"placeholder": "Search address"
-																												},
-																												"data": "local:address"
-																											},
-																											"edit": {
-																												"destination": "{item.address}",
-																												"validation": {
-																													"required": "false"
-																												}
-																											}
-																										}
-																									}
-																								},
-																								"edit": {
-																									"validation": {
-																										"required": "true"
-																									}
-																								}
-																							}
-																						]
-																					}
-																				},
-																				"edit": {
-																					"validation": {
-																						"required": "true"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Input",
-																				"view": {
-																					"content": {
-																						"title": "",
-																						"placeholder": "Additional information",
-																						"value": "{item.address.instructions}"
-																					}
-																				},
-																				"edit": {
-																					"destination": "{item.address.instructions}",
-																					"validation": {
-																						"required": "false"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Info",
-																				"view": {
-																					"content": {
-																						"title": "When",
-																						"text": "When are you available for buyers to inspect or pick up this item"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Calendar",
-																				"view": {
-																					"content": {
-																						"title": "",
-																						"primary": "{item.transfer_options.pickup.timeslots}",
-																						"secondary": "{item.transfer_options.delivery.timeslots}"
-																					}
-																				},
-																				"edit": {
-																					"destination": "{item.transfer_options.pickup.timeslots}",
-																					"validation": {
-																						"required": "true",
-																						"message": "What times can you pickup?",
-																						"minAmount": "1"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																}
-															]
+												"children": [
+													{
+														"type": "Info",
+														"view": {
+															"content": {
+																"title": "",
+																"text": "Allow buyers to pick up the item"
+															}
 														}
 													},
-													"edit": {
-														"validation": {
-															"required": "true",
-															"message": "Can you pick up the item?",
-															"minAmount": "5"
+													{
+														"type": "SheetContainer",
+														"view": {
+															"content": {
+																"title": "Sheet",
+																"child": {
+																	"type": "TextAction",
+																	"view": {
+																		"content": {
+																			"title": "Where",
+																			"text": "{formatAddress(item.transfer_options.pickup.address)}",
+																			"placeholder": "Enter pick up address",
+																			"action": "Change"
+																		}
+																	},
+																	"edit": {
+																		"destination": "{item.transfer_options.pickup.address}",
+																		"validation": {
+																			"required": "true",
+																			"message": "Where can the item be picked up?"
+																		}
+																	}
+																},
+																"children": [
+																	{
+																		"type": "Search",
+																		"view": {
+																			"content": {
+																				"title": "",
+																				"format": "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}",
+																				"placeholder": "Search address"
+																			},
+																			"data": "local:address"
+																		},
+																		"edit": {
+																			"destination": "{item.address}",
+																			"validation": {
+																				"required": "false"
+																			}
+																		}
+																	}
+																]
+															}
+														},
+														"edit": {
+															"validation": {
+																"required": "true"
+															}
+														}
+													},
+													{
+														"type": "Input",
+														"view": {
+															"content": {
+																"title": "",
+																"placeholder": "Additional information",
+																"value": "{item.address.instructions}"
+															}
+														},
+														"edit": {
+															"destination": "{item.address.instructions}",
+															"validation": {
+																"required": "false"
+															}
+														}
+													},
+													{
+														"type": "Info",
+														"view": {
+															"content": {
+																"title": "When",
+																"text": "When are you available for buyers to inspect or pick up this item"
+															}
+														},
+														"edit": {
+															"validation": {
+																"required": "true"
+															}
+														}
+													},
+													{
+														"type": "Calendar",
+														"view": {
+															"content": {
+																"title": "",
+																"primary": "{item.transfer_options.pickup.timeslots}",
+																"secondary": "{item.transfer_options.delivery.timeslots}"
+															}
+														},
+														"edit": {
+															"destination": "{item.transfer_options.pickup.timeslots}",
+															"validation": {
+																"required": "true",
+																"message": "What times can you pickup?",
+																"minAmount": "1"
+															}
 														}
 													}
-												}
+												]
 											}
 										},
 										"edit": {
 											"validation": {
-												"required": "true"
+												"required": "true",
+												"message": "Can you pick up the item?",
+												"minAmount": "5"
 											}
 										}
 									},
 									{
-										"type": "Container",
+										"type": "ListContainer",
 										"view": {
 											"content": {
 												"title": "Delivery",
-												"child": {
-													"type": "ListContainer",
-													"view": {
-														"content": {
-															"title": "List",
-															"children": [
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Info",
-																				"view": {
-																					"content": {
-																						"title": "",
-																						"text": "Deliver directly to the buyer"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Input",
-																				"view": {
-																					"content": {
-																						"title": "Surcharge",
-																						"value": "{formatCurrency(item.transfer_options.delivery.fee)}",
-																						"placeholder": "Do you want to charge for delivery?"
-																					}
-																				},
-																				"edit": {
-																					"destination": "{item.transfer_options.delivery.fee.value}",
-																					"validation": {
-																						"required": "false"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Info",
-																				"view": {
-																					"content": {
-																						"title": "How far",
-																						"text": "How long can you travel to deliver this item"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "InlinePicker",
-																				"view": {
-																					"content": {
-																						"title": "",
-																						"format": "{$0.value}"
-																					},
-																					"data": "{durations}"
-																				},
-																				"edit": {
-																					"destination": "{distance}",
-																					"validation": {
-																						"required": "true",
-																						"message": "How far can you deliver?"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Info",
-																				"view": {
-																					"content": {
-																						"title": "When",
-																						"text": "When are you available to deliver this item"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Calendar",
-																				"view": {
-																					"content": {
-																						"title": "",
-																						"primary": "{item.transfer_options.delivery.timeslots}",
-																						"secondary": "{item.transfer_options.pickup.timeslots}"
-																					}
-																				},
-																				"edit": {
-																					"destination": "{item.transfer_options.delivery.timeslots}",
-																					"validation": {
-																						"required": "true",
-																						"message": "What times can you delivery?",
-																						"minAmount": "1"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																}
-															]
+												"children": [
+													{
+														"type": "Info",
+														"view": {
+															"content": {
+																"title": "",
+																"text": "Deliver directly to the buyer"
+															}
 														}
 													},
-													"edit": {
-														"validation": {
-															"required": "true",
-															"message": "Can you deliver the item?",
-															"minAmount": "6"
+													{
+														"type": "Input",
+														"view": {
+															"content": {
+																"title": "Surcharge",
+																"value": "{formatCurrency(item.transfer_options.delivery.fee)}",
+																"placeholder": "Do you want to charge for delivery?"
+															}
+														},
+														"edit": {
+															"destination": "{item.transfer_options.delivery.fee.value}",
+															"validation": {
+																"required": "false"
+															}
+														}
+													},
+													{
+														"type": "Info",
+														"view": {
+															"content": {
+																"title": "How far",
+																"text": "How long can you travel to deliver this item"
+															}
+														}
+													},
+													{
+														"type": "InlinePicker",
+														"view": {
+															"content": {
+																"title": "",
+																"format": "{$0.value}"
+															},
+															"data": "{durations}"
+														},
+														"edit": {
+															"destination": "{distance}",
+															"validation": {
+																"required": "true",
+																"message": "How far can you deliver?"
+															}
+														}
+													},
+													{
+														"type": "Info",
+														"view": {
+															"content": {
+																"title": "When",
+																"text": "When are you available to deliver this item"
+															}
+														}
+													},
+													{
+														"type": "Calendar",
+														"view": {
+															"content": {
+																"title": "",
+																"primary": "{item.transfer_options.delivery.timeslots}",
+																"secondary": "{item.transfer_options.pickup.timeslots}"
+															}
+														},
+														"edit": {
+															"destination": "{item.transfer_options.delivery.timeslots}",
+															"validation": {
+																"required": "true",
+																"message": "What times can you delivery?",
+																"minAmount": "1"
+															}
 														}
 													}
-												}
+												]
 											}
 										},
 										"edit": {
 											"validation": {
-												"required": "true"
+												"required": "true",
+												"message": "Can you deliver the item?",
+												"minAmount": "6"
 											}
 										}
 									},
 									{
-										"type": "Container",
+										"type": "ListContainer",
 										"view": {
 											"content": {
 												"title": "Shipping",
-												"child": {
-													"type": "ListContainer",
-													"view": {
-														"content": {
-															"title": "List",
-															"children": [
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Info",
-																				"view": {
-																					"content": {
-																						"title": "",
-																						"text": "Postal shipping at the buyer's expense"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Input",
-																				"view": {
-																					"content": {
-																						"title": "Where from",
-																						"value": "{item.transfer_options.ship.postal_code}",
-																						"placeholder": "Postal code you will be shipping from"
-																					}
-																				},
-																				"edit": {
-																					"destination": "{item.transfer_options.ship.postal_code}",
-																					"validation": {
-																						"required": "true",
-																						"message": "Postal code you will be shipping from"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Info",
-																				"view": {
-																					"content": {
-																						"title": "Where to",
-																						"text": "Select how far you are willing to ship"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "InlinePicker",
-																				"view": {
-																					"content": {
-																						"title": "",
-																						"format": "{$0.value}"
-																					},
-																					"data": "{areas}"
-																				},
-																				"edit": {
-																					"destination": "{item.transfer_options.ship.areas}",
-																					"validation": {
-																						"required": "true",
-																						"message": "How far can you ship?"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																},
-																{
-																	"type": "Container",
-																	"view": {
-																		"content": {
-																			"title": "",
-																			"child": {
-																				"type": "Input",
-																				"view": {
-																					"content": {
-																						"title": "Weight (kg)",
-																						"value": "{formatWeight(item.dimensions.weight)}",
-																						"placeholder": "Weight"
-																					}
-																				},
-																				"edit": {
-																					"destination": "{item.dimensions.weight}",
-																					"validation": {
-																						"required": "true",
-																						"message": "Weight",
-																						"minValue": "1"
-																					}
-																				}
-																			}
-																		}
-																	},
-																	"edit": {
-																		"validation": {
-																			"required": "true"
-																		}
-																	}
-																}
-															]
+												"children": [
+													{
+														"type": "Info",
+														"view": {
+															"content": {
+																"title": "",
+																"text": "Postal shipping at the buyer's expense"
+															}
 														}
 													},
-													"edit": {
-														"validation": {
-															"required": "true",
-															"message": "Can you ship the item?",
-															"minAmount": "5"
+													{
+														"type": "Input",
+														"view": {
+															"content": {
+																"title": "Where from",
+																"value": "{item.transfer_options.ship.postal_code}",
+																"placeholder": "Postal code you will be shipping from"
+															}
+														},
+														"edit": {
+															"destination": "{item.transfer_options.ship.postal_code}",
+															"validation": {
+																"required": "true",
+																"message": "Postal code you will be shipping from"
+															}
+														}
+													},
+													{
+														"type": "Info",
+														"view": {
+															"content": {
+																"title": "Where to",
+																"text": "Select how far you are willing to ship"
+															}
+														}
+													},
+													{
+														"type": "InlinePicker",
+														"view": {
+															"content": {
+																"title": "",
+																"format": "{$0.value}"
+															},
+															"data": "{areas}"
+														},
+														"edit": {
+															"destination": "{item.transfer_options.ship.areas}",
+															"validation": {
+																"required": "true",
+																"message": "How far can you ship?"
+															}
+														}
+													},
+													{
+														"type": "Input",
+														"view": {
+															"content": {
+																"title": "Weight (kg)",
+																"value": "{formatWeight(item.dimensions.weight)}",
+																"placeholder": "Weight"
+															}
+														},
+														"edit": {
+															"destination": "{item.dimensions.weight}",
+															"validation": {
+																"required": "true",
+																"message": "Weight",
+																"minValue": "1"
+															}
 														}
 													}
-												}
+												]
 											}
 										},
 										"edit": {
 											"validation": {
-												"required": "true"
+												"required": "true",
+												"message": "Can you ship the item?",
+												"minAmount": "5"
 											}
 										}
 									}
@@ -979,60 +659,34 @@
 								"title": "List",
 								"children": [
 									{
-										"type": "Container",
+										"type": "TextSelect",
 										"view": {
 											"content": {
-												"title": "",
-												"child": {
-													"type": "TextSelect",
-													"view": {
-														"content": {
-															"title": "Accept cash",
-															"text": "Let buyers know you will accept cash on pickup"
-														}
-													},
-													"edit": {
-														"destination": "{item.payment_methods.cash}",
-														"validation": {
-															"required": "true",
-															"message": "Do you accept cash?"
-														}
-													}
-												}
+												"title": "Accept cash",
+												"text": "Let buyers know you will accept cash on pickup"
 											}
 										},
 										"edit": {
+											"destination": "{item.payment_methods.cash}",
 											"validation": {
-												"required": "true"
+												"required": "true",
+												"message": "Do you accept cash?"
 											}
 										}
 									},
 									{
-										"type": "Container",
+										"type": "TextSelect",
 										"view": {
 											"content": {
-												"title": "",
-												"child": {
-													"type": "TextSelect",
-													"view": {
-														"content": {
-															"title": "Accept app payments",
-															"text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n- Cards are verified before the purchase\\n- Payment is transferred immediately when both buyer and seller confirm using a temporary code"
-														}
-													},
-													"edit": {
-														"destination": "{item.payment_methods.app}",
-														"validation": {
-															"required": "true",
-															"message": "Do you accept in-app payment?"
-														}
-													}
-												}
+												"title": "Accept app payments",
+												"text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n- Cards are verified before the purchase\\n- Payment is transferred immediately when both buyer and seller confirm using a temporary code"
 											}
 										},
 										"edit": {
+											"destination": "{item.payment_methods.app}",
 											"validation": {
-												"required": "true"
+												"required": "true",
+												"message": "Do you accept in-app payment?"
 											}
 										}
 									}

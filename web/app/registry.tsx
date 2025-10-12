@@ -8,15 +8,17 @@ import {
 
 import ButtonRow from "./rows/action/ButtonRow";
 import CalendarRow from "./rows/edit/CalendarRow";
-import ContainerRow from "./rows/container/ContainerRow";
 import ColumnContainerRow from "./rows/container/ColumnContainerRow";
 import DropdownRow from "./rows/edit/DropdownRow";
 import InfoRow from "./rows/view/InfoRow";
 import InlinePickerRow from "./rows/edit/InlinePickerRow";
 import InputListRow from "./rows/view/InputListRow";
 import InputRow from "./rows/edit/InputRow";
+import ListContainerRow from "./rows/container/ListContainerRow";
 import SearchRow from "./rows/edit/SearchRow";
 import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
+import SelectSegmentContainerRow from "./rows/container/SelectSegmentContainerRow";
+import SheetContainerRow from "./rows/container/SheetContainerRow";
 import TextActionRow from "./rows/action/TextActionRow";
 import TextAreaRow from "./rows/edit/TextAreaRow";
 import TextRow from "./rows/view/TextRow";
@@ -113,15 +115,17 @@ type RowAction =
 const baseRows = [
 	ButtonRow,
 	CalendarRow,
-	ContainerRow,
 	ColumnContainerRow,
 	DropdownRow,
 	InfoRow,
 	InlinePickerRow,
 	InputListRow,
 	InputRow,
+	ListContainerRow,
 	SearchRow,
 	SelectPhotoRow,
+	SelectSegmentContainerRow,
+	SheetContainerRow,
 	TextActionRow,
 	TextAreaRow,
 	TextRow,
@@ -426,132 +430,62 @@ export function AppProvider({ children }: { children: ReactNode }) {
 					title: "Create listing",
 					rows: [
 						{
-							type: "SelectPhoto",
-							view: {
-								content: {
-									title: "",
-									subtitle:
-										"Photos: {count(item.photo_ids)}/10 - Chose your listing's main photo first.",
-									icon: "::photo.badge.plus.fill::",
-									content: "Add photos",
-									photos: "{item.photo_ids}",
-								},
-							},
-							edit: {
-								destination: "{item.photo_ids}",
-								validation: {
-									required: "true",
-									message: "Photos of the item",
-									minAmount: "3",
-								},
-							},
-						},
-						{
 							type: "ColumnContainer",
 							view: {
 								content: {
 									title: "Dimensions (width x height x depth)",
 									children: [
 										{
-											type: "Container",
+											type: "Input",
 											view: {
 												content: {
 													title: "",
-													child: {
-														type: "Input",
-														view: {
-															content: {
-																title: "",
-																value: "width",
-																placeholder:
-																	"Width",
-															},
-														},
-														edit: {
-															destination:
-																"{item.dimensions.width}",
-															validation: {
-																required:
-																	"true",
-																message:
-																	"Width",
-															},
-														},
-													},
+													value: "width",
+													placeholder: "Width",
 												},
 											},
 											edit: {
+												destination:
+													"{item.dimensions.width}",
 												validation: {
 													required: "true",
+													message: "Width",
 												},
 											},
 										},
 										{
-											type: "Container",
+											type: "Input",
 											view: {
 												content: {
 													title: "",
-													child: {
-														type: "Input",
-														view: {
-															content: {
-																title: "",
-																value: "height",
-																placeholder:
-																	"Height",
-															},
-														},
-														edit: {
-															destination:
-																"height",
-															validation: {
-																required:
-																	"true",
-																message:
-																	"Height",
-															},
-														},
-													},
+													value: "height",
+													placeholder: "Height",
 												},
 											},
 											edit: {
+												destination: "height",
 												validation: {
 													required: "true",
+													message: "Height",
 												},
 											},
 										},
 										{
-											type: "Container",
+											type: "Input",
 											view: {
 												content: {
 													title: "",
-													child: {
-														type: "Input",
-														view: {
-															content: {
-																title: "",
-																value: "length",
-																placeholder:
-																	"Length",
-															},
-														},
-														edit: {
-															destination:
-																"{item.dimensions.length}",
-															validation: {
-																required:
-																	"true",
-																message:
-																	"Length",
-																minValue: "1",
-															},
-														},
-													},
+													value: "length",
+													placeholder: "Length",
 												},
 											},
 											edit: {
+												destination:
+													"{item.dimensions.length}",
 												validation: {
 													required: "true",
+													message: "Length",
+													minValue: "1",
 												},
 											},
 										},
@@ -566,52 +500,62 @@ export function AppProvider({ children }: { children: ReactNode }) {
 							},
 						},
 						{
-							type: "SheetContainer",
+							type: "ListContainer",
 							view: {
 								content: {
-									title: "Sheet",
-									child: {
-										type: "InputList",
-										view: {
-											content: {
-												title: "Tags",
-												placeholder: "Search for tags",
-												format: "{$0.value}",
-											},
-											data: "{item.tags}",
-										},
-									},
+									title: "Dimensions (width x height x depth)",
 									children: [
 										{
-											type: "Container",
+											type: "Input",
 											view: {
 												content: {
 													title: "",
-													child: {
-														type: "Search",
-														view: {
-															content: {
-																title: "",
-																format: "{$0.value}",
-																placeholder:
-																	"Search for tags",
-															},
-															data: "{api:tags}",
-														},
-														edit: {
-															destination:
-																"{item.tags}",
-															validation: {
-																required:
-																	"false",
-															},
-														},
-													},
+													value: "width",
+													placeholder: "Width",
 												},
 											},
 											edit: {
+												destination:
+													"{item.dimensions.width}",
 												validation: {
 													required: "true",
+													message: "Width",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "",
+													value: "height",
+													placeholder: "Height",
+												},
+											},
+											edit: {
+												destination: "height",
+												validation: {
+													required: "true",
+													message: "Height",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "",
+													value: "length",
+													placeholder: "Length",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.length}",
+												validation: {
+													required: "true",
+													message: "Length",
+													minValue: "1",
 												},
 											},
 										},
@@ -620,7 +564,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 							},
 							edit: {
 								validation: {
-									required: "false",
+									required: "true",
+									minAmount: "3",
 								},
 							},
 						},
@@ -629,7 +574,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
 				{
 					id: "step_2",
 					title: "Step 2",
-					rows: [],
+					rows: [
+						{
+							type: "SelectSegmentContainer",
+							view: {
+								content: {
+									title: "",
+									children: [
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Width",
+													value: "width",
+													placeholder: "Width",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.width}",
+												validation: {
+													required: "true",
+													message: "Width",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Height",
+													value: "height",
+													placeholder: "Height",
+												},
+											},
+											edit: {
+												destination: "height",
+												validation: {
+													required: "true",
+													message: "Height",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Length",
+													value: "length",
+													placeholder: "Length",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.length}",
+												validation: {
+													required: "true",
+													message: "Length",
+													minValue: "1",
+												},
+											},
+										},
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
+							},
+						},
+					],
 				},
 			],
 		},
