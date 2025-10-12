@@ -1,9 +1,12 @@
-export function removeUndefined(obj: any): any {
+export function removeUndefined<T>(obj: T): T {
 	if (obj === null || obj === undefined) return obj;
-	if (Array.isArray(obj)) return obj.map(removeUndefined);
+	if (Array.isArray(obj)) return obj.map(removeUndefined) as T;
 	if (typeof obj === "object") {
-		const cleaned: any = {};
-		for (const [key, value] of Object.entries(obj)) {
+		const cleaned: T = {} as T;
+		for (const [key, value] of Object.entries(obj) as [
+			keyof T,
+			T[keyof T]
+		][]) {
 			if (value !== undefined) {
 				cleaned[key] = removeUndefined(value);
 			}
