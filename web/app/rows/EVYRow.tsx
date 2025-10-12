@@ -1,6 +1,5 @@
 import React, { ReactNode } from "react";
 import { AppContext } from "../registry";
-import { RowsPanel } from "../components/RowsPanel.tsx";
 
 export type Row = {
 	rowId: string;
