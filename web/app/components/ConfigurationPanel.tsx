@@ -49,7 +49,7 @@ export function ConfigurationPanel() {
 								return (
 									<div
 										key={child.rowId}
-										className="evy-p-4 evy-bg-gray-light evy-border evy-border-gray"
+										className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
 									>
 										<p className="evy-text-lg evy-font-semibold evy-mb-4">
 											Child {index + 1}
@@ -64,7 +64,7 @@ export function ConfigurationPanel() {
 					return (
 						<div
 							key={uniqueId}
-							className="evy-mt-4 evy-mb-4 evy-p-4 evy-bg-gray-light evy-border evy-border-gray"
+							className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
 						>
 							<p className="evy-text-lg evy-font-semibold evy-mb-4">
 								Child
@@ -74,13 +74,8 @@ export function ConfigurationPanel() {
 					);
 				} else {
 					return (
-						<div className="evy-mb-4" key={uniqueId}>
-							<label
-								htmlFor={uniqueId}
-								className="evy-mb-2 evy-block"
-							>
-								{key}
-							</label>
+						<div className="evy-mb-2" key={uniqueId}>
+							<label htmlFor={uniqueId}>{key}</label>
 							<input
 								id={uniqueId}
 								type="text"
@@ -107,7 +102,7 @@ export function ConfigurationPanel() {
 
 	return (
 		<div className="evy-flex evy-flex-col evy-h-full">
-			<div className="evy-p-4 evy-py-6 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
+			<div className="evy-p-4 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
 				Configuration
 			</div>
 			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll evy-pt-6">

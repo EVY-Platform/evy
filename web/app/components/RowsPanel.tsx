@@ -33,7 +33,7 @@ export function RowsPanel() {
 				className="evy-flex evy-flex-col evy-w-full"
 				ref={pageInnerRef}
 			>
-				<div className="evy-p-4 evy-py-6 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
+				<div className="evy-p-4 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
 					Rows
 				</div>
 				<div className="evy-flex evy-flex-col evy-min-h-full evy-gap-2">
