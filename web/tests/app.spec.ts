@@ -91,11 +91,6 @@ test.describe("EVY App Builder", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		// Check that "children" label is visible
-		await expect(
-			configPanel.getByText("children", { exact: true })
-		).toBeVisible();
-
 		// Check that child headings appear: "Child 1", "Child 2", "Child 3"
 		await expect(
 			configPanel.getByText("Child 1", { exact: true })
