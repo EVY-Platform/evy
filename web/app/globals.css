@@ -13,9 +13,7 @@
 	--spacing-2: 0.5rem; /* 8px */
 	--spacing-3: 0.75rem; /* 12px */
 	--spacing-4: 1rem; /* 16px */
-	--spacing-6: 1.5rem; /* 24px */
 	--spacing-8: 2rem; /* 32px */
-	--spacing-16: 4rem; /* 64px */
 	--spacing-32: 8rem; /* 128px */
 	--spacing-30px: 30px;
 
@@ -67,14 +65,8 @@ body {
 }
 
 /* Layout utilities */
-.evy-line-height-1 {
-	line-height: 1;
-}
 .evy-flex {
 	display: flex;
-}
-.evy-grid {
-	display: grid;
 }
 .evy-block {
 	display: block;
