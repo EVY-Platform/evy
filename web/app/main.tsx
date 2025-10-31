@@ -42,7 +42,7 @@ interface DropEvent {
 	source: DropSource;
 }
 
-const panelWidth = "280px";
+const panelWidth = "300px";
 
 function AppContent() {
 	const { flows, activeFlowId, dispatchRow } = useContext(AppContext);
@@ -154,12 +154,12 @@ function AppContent() {
 	return (
 		<>
 			<div
-				className="evy-border-r evy-border-gray evy-overflow-y-auto"
+				className="evy-border-r evy-border-gray evy-overflow-y-auto evy-bg-white evy-shadow-subtle"
 				style={{ width: panelWidth }}
 			>
 				<RowsPanel key="rows" />
 			</div>
-			<div className="evy-flex evy-flex-1 evy-overflow-y-auto evy-flex-row evy-gap-2 evy-justify-center">
+			<div className="evy-flex evy-flex-1 evy-overflow-y-auto evy-flex-row evy-gap-4 evy-justify-center">
 				{pages.map((page) => {
 					return (
 						<div
@@ -172,7 +172,7 @@ function AppContent() {
 				})}
 			</div>
 			<div
-				className="evy-border-l evy-border-gray evy-overflow-y-auto"
+				className="evy-border-l evy-border-gray evy-overflow-y-auto evy-bg-white evy-shadow-subtle"
 				style={{ width: panelWidth }}
 			>
 				<ConfigurationPanel key="configuration" />
@@ -185,13 +185,13 @@ function App() {
 	return (
 		<AppProvider>
 			<div className="evy-h-screen evy-flex evy-flex-col evy-overflow-hidden">
-				<div className="evy-border-b evy-border-gray evy-p-4 evy-line-height-1 evy-flex evy-justify-between evy-items-center">
+				<div className="evy-border-b evy-border-gray evy-p-4 evy-bg-white evy-flex evy-justify-between evy-items-center">
 					<a href="/">
 						<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 					</a>
 					<FlowSelector />
 				</div>
-				<div className="evy-flex evy-flex-1 evy-overflow-hidden">
+				<div className="evy-flex evy-flex-1 evy-overflow-hidden evy-bg-gray-light">
 					<AppContent />
 				</div>
 			</div>

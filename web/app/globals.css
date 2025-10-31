@@ -7,13 +7,13 @@
 	--color-evy-gray-dark: oklch(35.84% 0.0103 285.87);
 	--color-white: #ffffff;
 	--color-black: #000000;
+	--color-gray-border: oklch(85% 0 0);
 
 	/* Spacing */
 	--spacing-2: 0.5rem; /* 8px */
 	--spacing-3: 0.75rem; /* 12px */
 	--spacing-4: 1rem; /* 16px */
 	--spacing-8: 2rem; /* 32px */
-	--spacing-16: 4rem; /* 64px */
 	--spacing-32: 8rem; /* 128px */
 	--spacing-30px: 30px;
 
@@ -24,8 +24,8 @@
 	--size-662: 662px;
 
 	/* Border radius */
-	--radius-sm: 0.125rem; /* 2px */
-	--radius-md: 0.375rem; /* 6px */
+	--radius-sm: 0.25rem; /* 4px */
+	--radius-md: 0.5rem; /* 8px */
 	--radius-2-4: 2.4rem; /* 38.4px */
 
 	/* Font sizes */
@@ -35,10 +35,18 @@
 	--text-xl: 1rem; /* 16px */
 
 	/* Font weights */
+	--font-medium: 500;
+	--font-semibold: 600;
 	--font-bold: 700;
 
 	/* Opacity */
 	--opacity-60: 0.6;
+
+	/* Shadows */
+	--shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+
+	/* Transitions */
+	--transition: 150ms ease-in-out;
 }
 
 * {
@@ -46,17 +54,19 @@
 		"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 	line-height: 1.5;
 	margin: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background-color: var(--color-evy-light);
+	color: var(--color-black);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 /* Layout utilities */
-.evy-line-height-1 {
-	line-height: 1;
-}
 .evy-flex {
 	display: flex;
-}
-.evy-grid {
-	display: grid;
 }
 .evy-block {
 	display: block;
@@ -135,8 +145,8 @@
 	padding-top: var(--spacing-8);
 	padding-bottom: var(--spacing-8);
 }
-.evy-pt-16 {
-	padding-top: var(--spacing-16);
+.evy-pt-4 {
+	padding-top: var(--spacing-4);
 }
 .evy-pt-32 {
 	padding-top: var(--spacing-32);
@@ -149,11 +159,17 @@
 .evy-gap-2 {
 	gap: var(--spacing-2);
 }
+.evy-gap-4 {
+	gap: var(--spacing-4);
+}
 .evy-mt-2 {
 	margin-top: var(--spacing-2);
 }
 .evy-mb-2 {
 	margin-bottom: var(--spacing-2);
+}
+.evy-mb-4 {
+	margin-bottom: var(--spacing-4);
 }
 
 /* Width utilities */
@@ -235,6 +251,15 @@
 .evy-text-black {
 	color: var(--color-black);
 }
+.evy-text-gray {
+	color: var(--color-evy-gray);
+}
+.evy-font-medium {
+	font-weight: var(--font-medium);
+}
+.evy-font-semibold {
+	font-weight: var(--font-semibold);
+}
 .evy-font-bold {
 	font-weight: var(--font-bold);
 }
@@ -266,7 +291,7 @@
 	border-bottom-style: solid;
 }
 .evy-border-gray {
-	border-color: var(--color-evy-gray);
+	border-color: var(--color-gray-border);
 }
 .evy-border-gray-light {
 	border-color: var(--color-evy-gray-light);
@@ -279,7 +304,9 @@
 .evy-rounded-md {
 	border-radius: var(--radius-md);
 }
-.evy-rounded-b-24 {
+.evy-rounded-24 {
+	border-top-left-radius: var(--radius-2-4);
+	border-top-right-radius: var(--radius-2-4);
 	border-bottom-left-radius: var(--radius-2-4);
 	border-bottom-right-radius: var(--radius-2-4);
 }
@@ -316,6 +343,11 @@
 	outline: none;
 }
 
+/* Shadow utilities */
+.evy-shadow-subtle {
+	box-shadow: var(--shadow-subtle);
+}
+
 /* Hover utilities */
 .evy-hover\:bg-gray:hover {
 	background-color: var(--color-evy-gray);
@@ -330,4 +362,55 @@
 /* Resize utilities */
 .evy-resize-none {
 	resize: none;
+}
+
+/* Form element styling */
+select,
+input[type="text"],
+input[type="email"],
+input[type="number"],
+textarea {
+	font-size: var(--text-sm);
+	font-family: inherit;
+	color: var(--color-black);
+	background-color: var(--color-white);
+	border: 1px solid var(--color-gray-border);
+	border-radius: var(--radius-sm);
+	padding: var(--spacing-2) var(--spacing-3);
+	transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+select:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+	outline: none;
+	border-color: var(--color-evy-blue);
+	box-shadow: 0 0 0 3px rgba(60, 60, 100, 0.1);
+}
+
+select:hover,
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="number"]:hover,
+textarea:hover {
+	border-color: var(--color-evy-gray);
+}
+
+select {
+	cursor: pointer;
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23000' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right var(--spacing-2) center;
+	padding-right: calc(var(--spacing-3) + var(--spacing-4));
+}
+
+label {
+	font-size: var(--text-sm);
+	font-weight: var(--font-medium);
+	color: var(--color-black);
+	margin-bottom: var(--spacing-2);
+	display: block;
 }

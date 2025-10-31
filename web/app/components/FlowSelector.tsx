@@ -18,7 +18,7 @@ export function FlowSelector() {
 				id="flow-select"
 				value={activeFlowId || "Select a flow"}
 				onChange={handleFlowChange}
-				className="evy-text-sm evy-rounded-sm evy-p-2 evy-border-gray"
+				className="evy-text-sm evy-font-medium"
 			>
 				{flows.map((flow) => (
 					<option key={flow.id} value={flow.id}>
