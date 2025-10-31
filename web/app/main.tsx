@@ -42,7 +42,7 @@ interface DropEvent {
 	source: DropSource;
 }
 
-const panelWidth = "280px";
+const panelWidth = "300px";
 
 function AppContent() {
 	const { flows, activeFlowId, dispatchRow } = useContext(AppContext);
