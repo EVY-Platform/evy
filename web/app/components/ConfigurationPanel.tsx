@@ -78,7 +78,7 @@ export function ConfigurationPanel() {
 										configRow.rowId
 									);
 								}}
-								className="evy-box-sizing-border evy-text-sm evy-rounded-sm evy-p-2 evy-border evy-focus-visible\:outline-none"
+								className="evy-box-sizing-border evy-text-sm evy-rounded-sm evy-p-2 evy-border evy-focus-visible:outline-none"
 								required
 							/>
 						</form>

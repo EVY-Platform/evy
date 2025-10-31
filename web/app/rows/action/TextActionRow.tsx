@@ -30,7 +30,7 @@ export default class TextActionRow extends EVYRow {
 					</p>
 					<button
 						type="button"
-						className="evy-text-blue evy-text-sm evy-hover\:text-black evy-bg-transparent evy-border-none"
+						className="evy-text-blue evy-text-sm evy-hover:text-black evy-bg-transparent evy-border-none"
 					>
 						{row.config.view.content.action}
 					</button>
