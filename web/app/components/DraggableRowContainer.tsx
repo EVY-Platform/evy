@@ -87,7 +87,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		return (
 			<div
-				className="evy-flex evy-flex-col evy-w-full evy-relative evy-hover\:bg-gray-light "
+				className="evy-flex evy-flex-col evy-w-full evy-relative evy-hover:bg-gray-light"
 				style={{ cursor }}
 				ref={ref}
 				onClick={selectRow}

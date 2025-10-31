@@ -41,16 +41,20 @@ export function ConfigurationPanel() {
 				if (key === "children") {
 					const children = content[key] as Row[];
 					return (
-						<div key={uniqueId} className="evy-flex evy-flex-col">
+						<div
+							key={uniqueId}
+							className="evy-flex evy-flex-col evy-gap-4"
+						>
 							{children.map((child, index) => {
 								return (
-									<div key={child.rowId}>
-										<div className="evy-mt-2 evy-mb-2">
-											<p className="evy-text-lg evy-font-bold">
-												Child {index + 1}
-											</p>
-											{renderConfiguration(child)}
-										</div>
+									<div
+										key={child.rowId}
+										className="evy-p-4 evy-bg-gray-light evy-border evy-border-gray"
+									>
+										<p className="evy-text-lg evy-font-semibold evy-mb-4">
+											Child {index + 1}
+										</p>
+										{renderConfiguration(child)}
 									</div>
 								);
 							})}
@@ -58,15 +62,25 @@ export function ConfigurationPanel() {
 					);
 				} else if (key === "child") {
 					return (
-						<div key={uniqueId} className="evy-mt-2 evy-mb-2">
-							<p className="evy-text-lg evy-font-bold">Child</p>
+						<div
+							key={uniqueId}
+							className="evy-mt-4 evy-mb-4 evy-p-4 evy-bg-gray-light evy-border evy-border-gray"
+						>
+							<p className="evy-text-lg evy-font-semibold evy-mb-4">
+								Child
+							</p>
 							{renderConfiguration(content[key] as Row)}
 						</div>
 					);
 				} else {
 					return (
-						<form className="evy-grid" key={uniqueId}>
-							<label htmlFor={uniqueId}>{key}</label>
+						<div className="evy-mb-4" key={uniqueId}>
+							<label
+								htmlFor={uniqueId}
+								className="evy-mb-2 evy-block"
+							>
+								{key}
+							</label>
 							<input
 								id={uniqueId}
 								type="text"
@@ -78,10 +92,10 @@ export function ConfigurationPanel() {
 										configRow.rowId
 									);
 								}}
-								className="evy-box-sizing-border evy-text-sm evy-rounded-sm evy-p-2 evy-border evy-focus-visible:outline-none"
+								className="evy-w-full evy-focus-visible:outline-none"
 								required
 							/>
-						</form>
+						</div>
 					);
 				}
 			});
@@ -92,12 +106,18 @@ export function ConfigurationPanel() {
 	const configurationElements = row ? renderConfiguration(row) : [];
 
 	return (
-		<div className="evy-flex evy-flex-col">
-			<div className="evy-p-4 evy-text-xl evy-font-bold evy-text-center">
+		<div className="evy-flex evy-flex-col evy-h-full">
+			<div className="evy-p-4 evy-py-6 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
 				Configuration
 			</div>
-			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-2 evy-gap-2 evy-overflow-scroll">
-				{configurationElements}
+			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll evy-pt-6">
+				{configurationElements.length > 0 ? (
+					configurationElements
+				) : (
+					<div className="evy-text-sm evy-text-gray evy-text-center evy-mt-8">
+						Select a row to configure
+					</div>
+				)}
 			</div>
 		</div>
 	);
