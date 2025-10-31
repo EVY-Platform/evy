@@ -38,9 +38,9 @@ export function ConfigurationPanel() {
 							id={key}
 							type="text"
 							value={
-								row?.config.view.content[
-									key
-								] as unknown as string
+								row?.config.view.content[key] !== undefined
+									? String(row?.config.view.content[key])
+									: "Unknown value"
 							}
 							onChange={(e) => {
 								updateRowContent(key, e.target.value);

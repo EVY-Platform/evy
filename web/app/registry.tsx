@@ -386,7 +386,10 @@ function decodeRow(row: ServerRow): Row {
 					...row.view,
 					content: {
 						...row.view.content,
-						title: row.view.content.title as string,
+						title:
+							typeof row.view.content.title === "string"
+								? row.view.content.title
+								: "Invalid title",
 						children: row.view.content.children?.map(
 							(child: ServerRow) => decodeRow(child)
 						),

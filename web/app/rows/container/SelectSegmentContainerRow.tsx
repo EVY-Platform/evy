@@ -33,18 +33,18 @@ export default class SelectSegmentContainerRow extends EVYRow {
 				<div className="evy-rounded-full evy-flex evy-gap-0">
 					{children.map((child, index) => (
 						<button
-							key={index}
+							key={child.rowId}
 							type="button"
 							onClick={() =>
 								this.setState({ selectedTab: index })
 							}
 							className={`evy-flex-1 evy-border ${
 								index === 0
-									? "evy-rounded-left-md evy-border-no-r"
+									? "evy-rounded-left-md evy-border-r-0"
 									: ""
 							} ${
 								index === children.length - 1
-									? "evy-rounded-right-md evy-border-no-l"
+									? "evy-rounded-right-md evy-border-l-0"
 									: ""
 							} ${
 								this.state.selectedTab === index
