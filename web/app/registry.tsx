@@ -322,14 +322,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						);
 					const childUpdated = updatedChildren.some(
 						(child, index) =>
-							child.rowId !==
-								row.config.view.content.children?.[index]
-									.rowId ||
-							(child.config.view.content[configId] !==
-								undefined &&
-								row.config.view.content.children?.[index].config
-									.view.content[configId] !==
-									child.config.view.content[configId])
+							child !== row.config.view.content.children?.[index]
 					);
 					if (childUpdated) {
 						return {
