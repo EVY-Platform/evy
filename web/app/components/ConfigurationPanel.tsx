@@ -105,7 +105,7 @@ export function ConfigurationPanel() {
 			<div className="evy-p-4 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
 				Configuration
 			</div>
-			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll evy-pt-6">
+			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll">
 				{configurationElements.length > 0 ? (
 					configurationElements
 				) : (
