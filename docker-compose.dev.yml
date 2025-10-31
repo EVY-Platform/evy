@@ -1,7 +1,6 @@
 services:
   postgres:
     image: "postgres:18"
-    restart: always
     ports:
       - ${DB_PORT:-5432}:5432
     environment:
@@ -20,7 +19,6 @@ services:
     build:
       context: api/.
       dockerfile: Dockerfile
-    restart: always
     ports:
       - ${API_PORT:-8000}:${API_PORT:-8000}
     environment:
@@ -39,7 +37,6 @@ services:
     build:
       context: web/.
       dockerfile: Dockerfile
-    restart: always
     ports:
       - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
     environment:

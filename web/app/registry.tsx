@@ -6,26 +6,31 @@ import {
 	createElement,
 } from "react";
 
-import InfoRow from "./rows/view/InfoRow";
-import InputListRow from "./rows/view/InputListRow";
-import TextRow from "./rows/view/TextRow";
 import ButtonRow from "./rows/action/ButtonRow";
-import TextActionRow from "./rows/action/TextActionRow";
 import CalendarRow from "./rows/edit/CalendarRow";
+import ColumnContainerRow from "./rows/container/ColumnContainerRow";
 import DropdownRow from "./rows/edit/DropdownRow";
+import InfoRow from "./rows/view/InfoRow";
 import InlinePickerRow from "./rows/edit/InlinePickerRow";
+import InputListRow from "./rows/view/InputListRow";
 import InputRow from "./rows/edit/InputRow";
+import ListContainerRow from "./rows/container/ListContainerRow";
 import SearchRow from "./rows/edit/SearchRow";
 import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
+import SelectSegmentContainerRow from "./rows/container/SelectSegmentContainerRow";
+import SheetContainerRow from "./rows/container/SheetContainerRow";
+import TextActionRow from "./rows/action/TextActionRow";
 import TextAreaRow from "./rows/edit/TextAreaRow";
+import TextRow from "./rows/view/TextRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
-import { type RowConfig, UnknownRow } from "./rows/EVYRow";
 
-type Row = {
-	rowId: string;
-	row: React.ReactNode;
-	config: RowConfig;
-};
+import {
+	type RowConfig,
+	type Row,
+	type RowView,
+	UnknownRow,
+} from "./rows/EVYRow";
+import { removeUndefined } from "./removeUndefined";
 
 type Page = {
 	id: string;
@@ -42,11 +47,26 @@ type Flow = {
 	pages: Page[];
 };
 
-type ServerFlow = Omit<Flow, "pages"> & {
-	pages: Omit<Page, "rows" | "footer"> & {
-		rows: RowConfig[];
-		footer?: RowConfig;
+// Server types necessary to ingest the raw flows
+// since in client-side type we need to have the concrete
+// row instances
+type ServerRowContent = {
+	title?: string;
+	children?: ServerRow[];
+	child?: ServerRow;
+	[key: string]: string | ServerRow[] | ServerRow | undefined;
+};
+type ServerRow = Omit<RowConfig, "view"> & {
+	view: Omit<RowView, "content"> & {
+		content: ServerRowContent;
 	};
+};
+type ServerPage = Omit<Page, "rows" | "footer"> & {
+	rows: ServerRow[];
+	footer?: ServerRow;
+};
+type ServerFlow = Omit<Flow, "pages"> & {
+	pages: ServerPage[];
 };
 
 type RowAction =
@@ -93,18 +113,22 @@ type RowAction =
 	  };
 
 const baseRows = [
-	InfoRow,
-	TextRow,
-	InputListRow,
 	ButtonRow,
-	TextActionRow,
 	CalendarRow,
+	ColumnContainerRow,
 	DropdownRow,
+	InfoRow,
 	InlinePickerRow,
+	InputListRow,
 	InputRow,
+	ListContainerRow,
 	SearchRow,
 	SelectPhotoRow,
+	SelectSegmentContainerRow,
+	SheetContainerRow,
+	TextActionRow,
 	TextAreaRow,
+	TextRow,
 	TextSelectRow,
 ];
 
@@ -263,13 +287,92 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return updateState({ updatedPages: newPages });
 		}
 		case "UPDATE_ROW_CONTENT": {
-			const pageIndex = flow.pages.findIndex((page) =>
-				page.rows.find((r) => r.rowId === action.rowId)
-			);
-			if (pageIndex === -1) return state;
+			const updateRowInChildren = (
+				row: Row,
+				targetRowId: string,
+				configId: string,
+				configValue: string
+			): Row | null => {
+				if (row.rowId === targetRowId) {
+					return {
+						...row,
+						config: {
+							...row.config,
+							view: {
+								...row.config.view,
+								content: {
+									...row.config.view.content,
+									[configId]: configValue,
+								},
+							},
+						},
+					};
+				}
 
-			const newPages = flow.pages.map((page, idx) => {
-				if (idx === pageIndex) {
+				if (row.config.view.content.children) {
+					const updatedChildren =
+						row.config.view.content.children.map(
+							(child) =>
+								updateRowInChildren(
+									child,
+									targetRowId,
+									configId,
+									configValue
+								) || child
+						);
+					const childUpdated = updatedChildren.some(
+						(child, index) =>
+							child !== row.config.view.content.children?.[index]
+					);
+					if (childUpdated) {
+						return {
+							...row,
+							config: {
+								...row.config,
+								view: {
+									...row.config.view,
+									content: {
+										...row.config.view.content,
+										children: updatedChildren,
+									},
+								},
+							},
+						};
+					}
+				}
+
+				if (row.config.view.content.child) {
+					const updatedChild = updateRowInChildren(
+						row.config.view.content.child,
+						targetRowId,
+						configId,
+						configValue
+					);
+					if (updatedChild) {
+						return {
+							...row,
+							config: {
+								...row.config,
+								view: {
+									...row.config.view,
+									content: {
+										...row.config.view.content,
+										child: updatedChild,
+									},
+								},
+							},
+						};
+					}
+				}
+
+				return null;
+			};
+
+			const newPages = flow.pages.map((page) => {
+				const topLevelRowIndex = page.rows.findIndex(
+					(r) => r.rowId === action.rowId
+				);
+				if (topLevelRowIndex >= 0) {
 					const newRows = page.rows.map((row) => {
 						if (row.rowId === action.rowId) {
 							return {
@@ -291,7 +394,18 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 					});
 					return { ...page, rows: newRows };
 				}
-				return page;
+
+				// If not found as top-level, search recursively in children
+				const newRows = page.rows.map((row) => {
+					const updated = updateRowInChildren(
+						row,
+						action.rowId,
+						action.configId,
+						action.configValue
+					);
+					return updated || row;
+				});
+				return { ...page, rows: newRows };
 			});
 			return updateState({ updatedPages: newPages });
 		}
@@ -341,7 +455,7 @@ export const AppContext = createContext<{
 	dispatchDragging: () => {},
 });
 
-function decodeRow(row: RowConfig): Row {
+function decodeRow(row: ServerRow): Row {
 	const rowId = crypto.randomUUID();
 	const rowType = baseRows.find(
 		(baseRow) => row.type === baseRow.config.type
@@ -356,7 +470,25 @@ function decodeRow(row: RowConfig): Row {
 		return {
 			rowId,
 			row: createElement(rowType, { rowId }),
-			config: row,
+			config: removeUndefined({
+				...row,
+				view: {
+					...row.view,
+					content: {
+						...row.view.content,
+						title:
+							typeof row.view.content.title === "string"
+								? row.view.content.title
+								: "Invalid title",
+						children: row.view.content.children?.map(
+							(child: ServerRow) => decodeRow(child)
+						),
+						child: row.view.content.child
+							? decodeRow(row.view.content.child)
+							: undefined,
+					},
+				},
+			}),
 		};
 	}
 }
@@ -364,7 +496,7 @@ function decodeRow(row: RowConfig): Row {
 const decodeFlows = (flows: ServerFlow[]): Flow[] => {
 	return flows.map((flow) => ({
 		...flow,
-		pages: flow.pages.map((page) => ({
+		pages: flow.pages.map((page: ServerPage) => ({
 			...page,
 			rows: page.rows.map(decodeRow),
 			footer: page.footer ? decodeRow(page.footer) : undefined,
@@ -388,13 +520,225 @@ export function AppProvider({ children }: { children: ReactNode }) {
 			pages: [
 				{
 					id: "step_1",
-					title: "Step 1",
-					rows: [],
+					title: "Create listing",
+					rows: [
+						{
+							type: "ColumnContainer",
+							view: {
+								content: {
+									title: "Dimensions (width x height x depth)",
+									children: [
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "",
+													value: "width",
+													placeholder: "Width",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.width}",
+												validation: {
+													required: "true",
+													message: "Width",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "",
+													value: "height",
+													placeholder: "Height",
+												},
+											},
+											edit: {
+												destination: "height",
+												validation: {
+													required: "true",
+													message: "Height",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "",
+													value: "length",
+													placeholder: "Length",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.length}",
+												validation: {
+													required: "true",
+													message: "Length",
+													minValue: "1",
+												},
+											},
+										},
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
+							},
+						},
+						{
+							type: "ListContainer",
+							view: {
+								content: {
+									title: "Dimensions (width x height x depth)",
+									children: [
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "",
+													value: "width",
+													placeholder: "Width",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.width}",
+												validation: {
+													required: "true",
+													message: "Width",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "",
+													value: "height",
+													placeholder: "Height",
+												},
+											},
+											edit: {
+												destination: "height",
+												validation: {
+													required: "true",
+													message: "Height",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "",
+													value: "length",
+													placeholder: "Length",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.length}",
+												validation: {
+													required: "true",
+													message: "Length",
+													minValue: "1",
+												},
+											},
+										},
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
+							},
+						},
+					],
 				},
 				{
 					id: "step_2",
 					title: "Step 2",
-					rows: [],
+					rows: [
+						{
+							type: "SelectSegmentContainer",
+							view: {
+								content: {
+									title: "",
+									children: [
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Width",
+													value: "width",
+													placeholder: "Width",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.width}",
+												validation: {
+													required: "true",
+													message: "Width",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Height",
+													value: "height",
+													placeholder: "Height",
+												},
+											},
+											edit: {
+												destination: "height",
+												validation: {
+													required: "true",
+													message: "Height",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Length",
+													value: "length",
+													placeholder: "Length",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.length}",
+												validation: {
+													required: "true",
+													message: "Length",
+													minValue: "1",
+												},
+											},
+										},
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
+							},
+						},
+					],
 				},
 			],
 		},

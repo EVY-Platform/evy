@@ -1,5 +1,4 @@
-import { AppContext } from "../../registry";
-import { EVYRow, RowConfig } from "../EVYRow";
+import { EVYRow, Row, RowConfig } from "../EVYRow";
 import Input from "../design-system/Input";
 
 export default class InputRow extends EVYRow {
@@ -21,31 +20,17 @@ export default class InputRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						InputRow;
-
-					return (
-						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
-							<Input
-								value={row.config.view.content.value}
-								placeholder={
-									row.config.view.content.placeholder
-								}
-							/>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p className="evy-text-md">{row.config.view.content.title}</p>
+				<Input
+					value={row.config.view.content.value?.toString() ?? ""}
+					placeholder={
+						row.config.view.content.placeholder?.toString() ?? ""
+					}
+				/>
+			</div>
 		);
 	}
 }

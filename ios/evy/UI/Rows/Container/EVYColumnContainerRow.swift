@@ -22,29 +22,29 @@ struct EVYColumnContainerRow: View, EVYRowProtocol {
 		if edit.validation.minAmount == nil { return true }
 		
 		let completeChildren = view.content.children.filter {
-			$0.child.complete()
+			$0.complete()
 		}
 		return completeChildren.count >= edit.validation.minAmount!
 	}
 	
 	func incompleteMessages() -> [String] {
 		view.content.children
-			.filter { $0.child.view.complete() == false }
-			.map { $0.child.view.incompleteMessages() }
+			.filter { $0.complete() == false }
+			.map { $0.incompleteMessages() }
 			.flatMap(\.self)
 	}
     
     var body: some View {
         VStack(alignment:.leading) {
-			if view.content.children.first!.title.count > 0 {
-				EVYTextView(view.content.children.first!.title)
-                    .padding(.vertical, Constants.padding)
-            }
-            HStack(alignment: .top) {
-				ForEach(view.content.children, id: \.child.id) { child in
-					child.child
-                }
-            }
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+					.padding(.vertical, Constants.padding)
+			}
+			HStack(alignment: .top) {
+				ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, child in
+					child
+				}
+			}
         }
     }
 }

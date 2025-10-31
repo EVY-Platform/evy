@@ -35,29 +35,31 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 	
 	func incompleteMessages() -> [String] {
 		view.content.children
-			.filter { $0.child.view.complete() == false }
-			.map { $0.child.view.incompleteMessages() }
+			.filter { $0.complete() == false }
+			.map { $0.incompleteMessages() }
 			.flatMap(\.self)
 	}
     
     var body: some View {
-        view.content.child
-            .contentShape(Rectangle())
-            .onTapGesture { showSheet.toggle() }
-            .sheet(isPresented: $showSheet, content: {
-                VStack {
-					if view.content.children.first!.title.count > 0 {
-						EVYTextView(view.content.children.first!.title)
+		VStack(alignment:.leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+			}
+			view.content.child
+				.contentShape(Rectangle())
+				.onTapGesture { showSheet.toggle() }
+				.sheet(isPresented: $showSheet, content: {
+					VStack {
+						ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, child in
+							child
+						}
 					}
-					ForEach(view.content.children, id: \.child.id) { child in
-						child.child
-                    }
-                }
-                .frame(maxHeight: .infinity, alignment: .top)
-                .padding(.top, Constants.majorPadding)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-            })
+					.frame(maxHeight: .infinity, alignment: .top)
+					.padding(.top, Constants.majorPadding)
+					.presentationDetents([.medium, .large])
+					.presentationDragIndicator(.visible)
+				})
+		}
     }
 }
 

@@ -1,5 +1,4 @@
-import { AppContext } from "../../registry";
-import { EVYRow, RowConfig } from "../EVYRow";
+import { EVYRow, Row, RowConfig } from "../EVYRow";
 import RadioButton from "../design-system/RadioButton";
 
 export default class InlinePickerRow extends EVYRow {
@@ -21,30 +20,16 @@ export default class InlinePickerRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						InlinePickerRow;
-
-					return (
-						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
-							<div className="evy-p-2 evy-flex evy-gap-2">
-								<RadioButton label="1 min" selected={false} />
-								<RadioButton label="2 mins" selected />
-								<RadioButton label="5 mins" selected={false} />
-							</div>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p className="evy-text-md">{row.config.view.content.title}</p>
+				<div className="evy-p-2 evy-flex evy-gap-2">
+					<RadioButton label="1 min" selected={false} />
+					<RadioButton label="2 mins" selected />
+					<RadioButton label="5 mins" selected={false} />
+				</div>
+			</div>
 		);
 	}
 }

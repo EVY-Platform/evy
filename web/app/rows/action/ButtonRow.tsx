@@ -1,13 +1,12 @@
 import Button from "../design-system/Button";
-import { AppContext } from "../../registry";
-import { EVYRow, RowConfig } from "../EVYRow";
+import { EVYRow, Row, RowConfig } from "../EVYRow";
 
 export default class ButtonRow extends EVYRow {
 	static override config: RowConfig = {
 		type: "Button",
 		view: {
 			content: {
-				title: "Button row title",
+				title: "",
 				label: "Button row text",
 			},
 		},
@@ -16,28 +15,14 @@ export default class ButtonRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						ButtonRow;
-
-					return (
-						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
-							<div className="evy-p-2 evy-flex evy-justify-center">
-								<Button label={row.config.view.content.label} />
-							</div>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p className="evy-text-md">{row.config.view.content.title}</p>
+				<div className="evy-p-2 evy-flex evy-justify-center">
+					<Button label={row.config.view.content.label} />
+				</div>
+			</div>
 		);
 	}
 }

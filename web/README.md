@@ -41,6 +41,11 @@ This project includes comprehensive end-to-end tests using Playwright.
 
 ```bash
 deno task test
+```
+
+To run the tests and see the runs to debug and develop
+
+```bash
 deno task test:ui
 deno task test:debug
 ```

@@ -1,6 +1,11 @@
 import React, { ReactNode } from "react";
 import { AppContext } from "../registry";
 
+export type Row = {
+	rowId: string;
+	row: React.ReactNode;
+	config: RowConfig;
+};
 export interface RowValidation {
 	required?: string;
 	message?: string;
@@ -19,7 +24,10 @@ export interface RowAction {
 }
 
 export interface RowContent {
-	[key: string]: string;
+	title: string;
+	children?: Row[];
+	child?: Row;
+	[key: string]: string | Row[] | Row | undefined;
 }
 
 export interface RowView {
@@ -40,10 +48,47 @@ export abstract class EVYRow extends React.Component<{
 }> {
 	static config: RowConfig;
 
-	abstract renderContent(): ReactNode;
+	abstract renderContent(row: Row): ReactNode;
+
+	static getRowsRecursive(row: Row): Row[] {
+		return [
+			row,
+			...(row.config.view.content.child
+				? EVYRow.getRowsRecursive(row.config.view.content.child)
+				: []),
+			...(row.config.view.content.children
+				? row.config.view.content.children.flatMap(
+						EVYRow.getRowsRecursive
+				  )
+				: []),
+		].filter((row) => row !== undefined);
+	}
 
 	override render() {
-		return this.renderContent();
+		return (
+			<AppContext.Consumer>
+				{({ rows, flows, activeFlowId }) => {
+					const baseRow = rows.find(
+						(r) => r.rowId === this.props.rowId
+					);
+					if (baseRow) return this.renderContent(baseRow);
+
+					const pages =
+						flows.find((f) => f.id === activeFlowId)?.pages || [];
+					const row = pages
+						.flatMap((page) => page.rows)
+						.flatMap(EVYRow.getRowsRecursive)
+						.find((r) => r.rowId === this.props.rowId);
+					if (row) return this.renderContent(row);
+
+					return (
+						<div className="evy-p-2">
+							<p>Unknown row</p>
+						</div>
+					);
+				}}
+			</AppContext.Consumer>
+		);
 	}
 }
 
@@ -57,25 +102,11 @@ export class UnknownRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						UnknownRow;
-
-					return (
-						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p>{row.config.view.content.title}</p>
+			</div>
 		);
 	}
 }

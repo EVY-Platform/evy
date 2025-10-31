@@ -1,5 +1,4 @@
-import { AppContext } from "../../registry";
-import { EVYRow, RowConfig } from "../EVYRow";
+import { EVYRow, Row, RowConfig } from "../EVYRow";
 
 export default class TextActionRow extends EVYRow {
 	static override config: RowConfig = {
@@ -21,34 +20,22 @@ export default class TextActionRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						TextActionRow;
-
-					return (
-						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
-							<div className="evy-flex evy-justify-between">
-								<p>{row.config.view.content.text}</p>
-								<button
-									type="button"
-									className="evy-text-blue evy-text-sm evy-hover\:text-black evy-bg-transparent evy-border-none"
-								>
-									{row.config.view.content.action}
-								</button>
-							</div>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p>{row.config.view.content.title}</p>
+				<div className="evy-flex evy-justify-between">
+					<p className="evy-text-md">
+						{row.config.view.content.text}
+					</p>
+					<button
+						type="button"
+						className="evy-text-blue evy-text-sm evy-hover:text-black evy-bg-transparent evy-border-none"
+					>
+						{row.config.view.content.action}
+					</button>
+				</div>
+			</div>
 		);
 	}
 }

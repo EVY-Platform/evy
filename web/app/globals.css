@@ -29,8 +29,10 @@
 	--radius-2-4: 2.4rem; /* 38.4px */
 
 	/* Font sizes */
-	--text-sm: 0.875rem; /* 14px */
-	--text-xl: 1.25rem; /* 20px */
+	--text-sm: 0.75rem; /* 12px */
+	--text-md: 0.875rem; /* 14px */
+	--text-l: 0.9375rem; /* 15px */
+	--text-xl: 1rem; /* 16px */
 
 	/* Font weights */
 	--font-bold: 700;
@@ -117,17 +119,17 @@
 .evy-p-30px {
 	padding: var(--spacing-30px);
 }
-.evy-px-3 {
-	padding-left: var(--spacing-3);
-	padding-right: var(--spacing-3);
+.evy-px-2 {
+	padding-left: var(--spacing-2);
+	padding-right: var(--spacing-2);
 }
 .evy-px-8 {
 	padding-left: var(--spacing-8);
 	padding-right: var(--spacing-8);
 }
-.evy-py-3 {
-	padding-top: var(--spacing-3);
-	padding-bottom: var(--spacing-3);
+.evy-py-2 {
+	padding-top: var(--spacing-2);
+	padding-bottom: var(--spacing-2);
 }
 .evy-py-8 {
 	padding-top: var(--spacing-8);
@@ -146,6 +148,12 @@
 /* Margin utilities */
 .evy-gap-2 {
 	gap: var(--spacing-2);
+}
+.evy-mt-2 {
+	margin-top: var(--spacing-2);
+}
+.evy-mb-2 {
+	margin-bottom: var(--spacing-2);
 }
 
 /* Width utilities */
@@ -209,6 +217,12 @@
 .evy-text-sm {
 	font-size: var(--text-sm);
 }
+.evy-text-md {
+	font-size: var(--text-md);
+}
+.evy-text-lg {
+	font-size: var(--text-l);
+}
 .evy-text-xl {
 	font-size: var(--text-xl);
 }
@@ -237,9 +251,15 @@
 	border-right-width: 1px;
 	border-right-style: solid;
 }
+.evy-border-r-0 {
+	border-right-width: 0px;
+}
 .evy-border-l {
 	border-left-width: 1px;
 	border-left-style: solid;
+}
+.evy-border-l-0 {
+	border-left-width: 0px;
 }
 .evy-border-b {
 	border-bottom-width: 1px;
@@ -253,9 +273,6 @@
 }
 
 /* Border radius utilities */
-.evy-rounded {
-	border-radius: var(--radius-sm);
-}
 .evy-rounded-sm {
 	border-radius: var(--radius-sm);
 }
@@ -265,6 +282,14 @@
 .evy-rounded-b-24 {
 	border-bottom-left-radius: var(--radius-2-4);
 	border-bottom-right-radius: var(--radius-2-4);
+}
+.evy-rounded-left-md {
+	border-top-left-radius: var(--radius-md);
+	border-bottom-left-radius: var(--radius-md);
+}
+.evy-rounded-right-md {
+	border-top-right-radius: var(--radius-md);
+	border-bottom-right-radius: var(--radius-md);
 }
 
 /* Position utilities */

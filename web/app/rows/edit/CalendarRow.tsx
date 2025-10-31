@@ -1,5 +1,4 @@
-import { AppContext } from "../../registry";
-import { EVYRow, RowConfig } from "../EVYRow";
+import { EVYRow, Row, RowConfig } from "../EVYRow";
 
 export default class CalendarRow extends EVYRow {
 	static override config: RowConfig = {
@@ -21,30 +20,16 @@ export default class CalendarRow extends EVYRow {
 		},
 	};
 
-	renderContent() {
+	renderContent(row: Row) {
 		return (
-			<AppContext.Consumer>
-				{({ flows, activeFlowId }) => {
-					const pages =
-						flows.find((f) => f.id === activeFlowId)?.pages || [];
-					const row =
-						pages
-							.flatMap((page) => page.rows)
-							.find((r) => r.rowId === this.props.rowId) ??
-						CalendarRow;
-
-					return (
-						<div className="evy-p-2">
-							<p>{row.config.view.content.title}</p>
-							<img
-								src="/calendar.png"
-								alt="calendar"
-								className="evy-max-w-100 evy-block evy-pointer-events-none"
-							/>
-						</div>
-					);
-				}}
-			</AppContext.Consumer>
+			<div className="evy-p-2">
+				<p className="evy-text-md">{row.config.view.content.title}</p>
+				<img
+					src="/calendar.png"
+					alt="calendar"
+					className="evy-max-w-100 evy-block evy-pointer-events-none"
+				/>
+			</div>
 		);
 	}
 }
