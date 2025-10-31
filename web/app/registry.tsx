@@ -287,13 +287,99 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return updateState({ updatedPages: newPages });
 		}
 		case "UPDATE_ROW_CONTENT": {
-			const pageIndex = flow.pages.findIndex((page) =>
-				page.rows.find((r) => r.rowId === action.rowId)
-			);
-			if (pageIndex === -1) return state;
+			const updateRowInChildren = (
+				row: Row,
+				targetRowId: string,
+				configId: string,
+				configValue: string
+			): Row | null => {
+				if (row.rowId === targetRowId) {
+					return {
+						...row,
+						config: {
+							...row.config,
+							view: {
+								...row.config.view,
+								content: {
+									...row.config.view.content,
+									[configId]: configValue,
+								},
+							},
+						},
+					};
+				}
 
-			const newPages = flow.pages.map((page, idx) => {
-				if (idx === pageIndex) {
+				if (row.config.view.content.children) {
+					const updatedChildren =
+						row.config.view.content.children.map(
+							(child) =>
+								updateRowInChildren(
+									child,
+									targetRowId,
+									configId,
+									configValue
+								) || child
+						);
+					const childUpdated = updatedChildren.some(
+						(child, index) =>
+							child.rowId !==
+								row.config.view.content.children?.[index]
+									.rowId ||
+							(child.config.view.content[configId] !==
+								undefined &&
+								row.config.view.content.children?.[index].config
+									.view.content[configId] !==
+									child.config.view.content[configId])
+					);
+					if (childUpdated) {
+						return {
+							...row,
+							config: {
+								...row.config,
+								view: {
+									...row.config.view,
+									content: {
+										...row.config.view.content,
+										children: updatedChildren,
+									},
+								},
+							},
+						};
+					}
+				}
+
+				if (row.config.view.content.child) {
+					const updatedChild = updateRowInChildren(
+						row.config.view.content.child,
+						targetRowId,
+						configId,
+						configValue
+					);
+					if (updatedChild) {
+						return {
+							...row,
+							config: {
+								...row.config,
+								view: {
+									...row.config.view,
+									content: {
+										...row.config.view.content,
+										child: updatedChild,
+									},
+								},
+							},
+						};
+					}
+				}
+
+				return null;
+			};
+
+			const newPages = flow.pages.map((page) => {
+				const topLevelRowIndex = page.rows.findIndex(
+					(r) => r.rowId === action.rowId
+				);
+				if (topLevelRowIndex >= 0) {
 					const newRows = page.rows.map((row) => {
 						if (row.rowId === action.rowId) {
 							return {
@@ -315,7 +401,18 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 					});
 					return { ...page, rows: newRows };
 				}
-				return page;
+
+				// If not found as top-level, search recursively in children
+				const newRows = page.rows.map((row) => {
+					const updated = updateRowInChildren(
+						row,
+						action.rowId,
+						action.configId,
+						action.configValue
+					);
+					return updated || row;
+				});
+				return { ...page, rows: newRows };
 			});
 			return updateState({ updatedPages: newPages });
 		}

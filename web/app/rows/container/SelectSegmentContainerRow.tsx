@@ -56,7 +56,7 @@ export default class SelectSegmentContainerRow extends EVYRow {
 						</button>
 					))}
 				</div>
-				<div className="evy-flex evy-flex-col evy-gap-2 evy-mt-4">
+				<div className="evy-flex evy-flex-col evy-gap-2 evy-mt-2">
 					{children[this.state.selectedTab]?.row}
 				</div>
 			</div>

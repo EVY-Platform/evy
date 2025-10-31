@@ -1,17 +1,19 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 
 import { AppContext } from "../registry";
+import { Row, EVYRow } from "../rows/EVYRow";
 
 export function ConfigurationPanel() {
 	const { flows, activeFlowId, activeRowId, dispatchRow } =
 		useContext(AppContext);
 
 	const updateRowContent = useCallback(
-		(configId: string, configValue: string) => {
-			if (!activeRowId) return;
+		(configId: string, configValue: string, targetRowId?: string) => {
+			const rowId = targetRowId || activeRowId;
+			if (!rowId) return;
 			dispatchRow({
 				type: "UPDATE_ROW_CONTENT",
-				rowId: activeRowId,
+				rowId,
 				configId,
 				configValue,
 			});
@@ -20,38 +22,74 @@ export function ConfigurationPanel() {
 	);
 
 	const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
-	const row = pages
-		.flatMap((page) => page.rows)
-		.find((r) => r.rowId === activeRowId);
+	const row = useMemo(
+		() =>
+			pages
+				.flatMap((page) => page.rows)
+				.flatMap(EVYRow.getRowsRecursive)
+				.find((r) => r.rowId === activeRowId),
+		[pages, activeRowId]
+	);
 
-	const configurationElements =
-		Object.keys(row?.config.view.content || {}).map((key) => {
-			return (
-				<form className="evy-grid" key={key}>
-					<label htmlFor={key}>{key}</label>
-					{key === "child" || key === "children" ? (
-						<p className="evy-box-sizing-border evy-text-sm evy-rounded-sm evy-p-2 evy-border evy-focus-visible\:outline-none">
-							-
-						</p>
-					) : (
-						<input
-							id={key}
-							type="text"
-							value={
-								row?.config.view.content[key] !== undefined
-									? String(row?.config.view.content[key])
-									: "Unknown value"
-							}
-							onChange={(e) => {
-								updateRowContent(key, e.target.value);
-							}}
-							className="evy-box-sizing-border evy-text-sm evy-rounded-sm evy-p-2 evy-border evy-focus-visible\:outline-none"
-							required
-						/>
-					)}
-				</form>
-			);
-		}) || [];
+	const renderConfiguration = useCallback(
+		(configRow: Row): React.ReactNode[] => {
+			const content = configRow.config.view.content;
+
+			return Object.keys(content).map((key) => {
+				const uniqueId = `${configRow.rowId}-${key}`;
+
+				if (key === "children") {
+					const children = content[key] as Row[];
+					return (
+						<div key={uniqueId} className="evy-flex evy-flex-col">
+							{children.map((child, index) => {
+								return (
+									<div key={child.rowId}>
+										<div className="evy-mt-2 evy-mb-2">
+											<p className="evy-text-lg evy-font-bold">
+												Child {index + 1}
+											</p>
+											{renderConfiguration(child)}
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					);
+				} else if (key === "child") {
+					return (
+						<div key={uniqueId} className="evy-mt-2 evy-mb-2">
+							<p className="evy-text-lg evy-font-bold">Child</p>
+							{renderConfiguration(content[key] as Row)}
+						</div>
+					);
+				} else {
+					return (
+						<form className="evy-grid" key={uniqueId}>
+							<label htmlFor={uniqueId}>{key}</label>
+							<input
+								id={uniqueId}
+								type="text"
+								value={String(content[key])}
+								onChange={(e) => {
+									updateRowContent(
+										key,
+										e.target.value,
+										configRow.rowId
+									);
+								}}
+								className="evy-box-sizing-border evy-text-sm evy-rounded-sm evy-p-2 evy-border evy-focus-visible\:outline-none"
+								required
+							/>
+						</form>
+					);
+				}
+			});
+		},
+		[updateRowContent]
+	);
+
+	const configurationElements = row ? renderConfiguration(row) : [];
 
 	return (
 		<div className="evy-flex evy-flex-col">
