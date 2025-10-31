@@ -22,10 +22,6 @@ export interface RowEdit {
 export interface RowAction {
 	target: string;
 }
-export interface RowChild {
-	title: string;
-	child: Row;
-}
 
 export interface RowContent {
 	title: string;
