@@ -5,7 +5,7 @@ interface SelectSegmentContainerState {
 }
 
 export default class SelectSegmentContainerRow extends EVYRow {
-	override state: SelectSegmentContainerState;
+	override state: SelectSegmentContainerState = { selectedTab: 0 };
 
 	static override config: RowConfig = {
 		type: "SelectSegmentContainer",
@@ -16,13 +16,6 @@ export default class SelectSegmentContainerRow extends EVYRow {
 			},
 		},
 	};
-
-	constructor(props: { rowId: string }) {
-		super(props);
-		this.state = {
-			selectedTab: 0,
-		};
-	}
 
 	renderContent(row: Row) {
 		const children = row.config.view.content.children || [];
