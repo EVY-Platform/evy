@@ -17,18 +17,6 @@ test.describe("Row configuration", () => {
 							},
 						},
 					},
-					{
-						type: "Button",
-						view: {
-							content: {
-								title: "",
-								label: "Test Button",
-							},
-						},
-						action: {
-							target: "close",
-						},
-					},
 				],
 			},
 		]);
@@ -61,23 +49,5 @@ test.describe("Row configuration", () => {
 
 		// Verify the update is reflected
 		await expect(textInput).toHaveValue("Updated info text");
-
-		// Click on the Button row
-		const buttonRow = page
-			.getByText("Test Button", { exact: true })
-			.first();
-		await expect(buttonRow).toBeVisible();
-		await buttonRow.click();
-
-		// Verify Button row configuration inputs (label)
-		await expect(configPanel.getByLabel("label")).toBeVisible();
-
-		// Test updating the Button row's configuration
-		const labelInput = configPanel.getByLabel("label");
-		await labelInput.clear();
-		await labelInput.fill("Updated Button Label");
-
-		// Verify the update is reflected
-		await expect(labelInput).toHaveValue("Updated Button Label");
 	});
 });

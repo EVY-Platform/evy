@@ -7,12 +7,12 @@ test.describe("Drag & Drop UX", () => {
 			{
 				id: "step_1",
 				title: "Page 1",
-				rows: [], // Empty for drag and drop tests
+				rows: [],
 			},
 			{
 				id: "step_2",
 				title: "Page 2",
-				rows: [], // Empty for drag and drop tests
+				rows: [],
 			},
 		]);
 		await page.goto("/");
