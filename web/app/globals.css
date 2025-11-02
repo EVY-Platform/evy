@@ -19,6 +19,7 @@
 
 	/* Sizes */
 	--size-4: 1rem; /* 16px */
+	--size-8: 2rem; /* 32px */
 	--size-48: 12rem; /* 192px */
 	--size-336: 336px;
 	--size-662: 662px;
@@ -40,6 +41,7 @@
 	--font-bold: 700;
 
 	/* Opacity */
+	--opacity-30: 0.3;
 	--opacity-60: 0.6;
 
 	/* Shadows */
@@ -165,11 +167,17 @@ body {
 .evy-mt-2 {
 	margin-top: var(--spacing-2);
 }
+.evy-mt-8 {
+	margin-top: var(--spacing-8);
+}
 .evy-mb-2 {
 	margin-bottom: var(--spacing-2);
 }
 .evy-mb-4 {
 	margin-bottom: var(--spacing-4);
+}
+.evy-mb-8 {
+	margin-bottom: var(--spacing-8);
 }
 
 /* Width utilities */
@@ -186,6 +194,9 @@ body {
 /* Height utilities */
 .evy-h-4 {
 	height: var(--size-4);
+}
+.evy-h-8 {
+	height: var(--size-8);
 }
 .evy-h-48 {
 	height: var(--size-48);
@@ -212,6 +223,9 @@ body {
 }
 .evy-bg-gray-dark {
 	background-color: var(--color-evy-gray-dark);
+}
+.evy-bg-blue {
+	background-color: var(--color-evy-blue);
 }
 .evy-bg-white {
 	background-color: var(--color-white);
@@ -331,6 +345,9 @@ body {
 /* Opacity utilities */
 .evy-opacity-60 {
 	opacity: var(--opacity-60);
+}
+.evy-opacity-30 {
+	opacity: var(--opacity-30);
 }
 
 /* Pointer events */
