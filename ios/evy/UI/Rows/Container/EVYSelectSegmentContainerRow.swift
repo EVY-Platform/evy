@@ -7,15 +7,24 @@
 
 import SwiftUI
 
+private class SelectSegmentContainerContent: Codable {
+	let title: String
+	let children: [EVYRow]
+	let segments: [String]
+}
+private struct SelectSegmentContainerView: Codable {
+	let content: SelectSegmentContainerContent
+}
+
 struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
     public static let JSONType = "SelectSegmentContainer"
     
-	private let view: SDUI.ContainerView
+	private let view: SelectSegmentContainerView
 	private let edit: SDUI.Edit
 	@State private var selected: Int = 0
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(SDUI.ContainerView.self, forKey:.view)
+        view = try container.decode(SelectSegmentContainerView.self, forKey:.view)
 		edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
 	
@@ -52,8 +61,8 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 			}
 			Picker("", selection: $selected) {
-				ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, _ in
-					Text("Option \(index + 1)").tag(index)
+				ForEach(Array(view.content.segments.enumerated()), id: \.offset) { index, segment in
+					Text(segment).tag(index)
 				}
 			}
 			.pickerStyle(.segmented)

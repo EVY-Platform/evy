@@ -107,13 +107,4 @@ public class SDUI {
         let edit: Edit
         let action: Action
     }
-    
-    public class ContainerContent: Codable {
-        let title: String
-        let children: [EVYRow]
-        let child: EVYRow?
-    }
-    public struct ContainerView: Codable {
-        let content: ContainerContent
-    }
 }

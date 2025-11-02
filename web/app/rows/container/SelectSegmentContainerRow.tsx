@@ -12,21 +12,23 @@ export default class SelectSegmentContainerRow extends EVYRow {
 		view: {
 			content: {
 				title: "Select segment container row title",
+				segments: ["X", "Y", "Z"],
 				children: [],
 			},
 		},
 	};
 
 	renderContent(row: Row) {
-		const children = row.config.view.content.children || [];
+		const segments = row.config.view.content.segments as string[];
+		const children = row.config.view.content.children as Row[];
 
 		return (
 			<div className="evy-p-2">
 				<p>{row.config.view.content.title}</p>
 				<div className="evy-rounded-full evy-flex evy-gap-0">
-					{children.map((child, index) => (
+					{segments.map((segment, index) => (
 						<button
-							key={child.rowId}
+							key={segment}
 							type="button"
 							onClick={() =>
 								this.setState({ selectedTab: index })
@@ -36,7 +38,7 @@ export default class SelectSegmentContainerRow extends EVYRow {
 									? "evy-rounded-left-md evy-border-r-0"
 									: ""
 							} ${
-								index === children.length - 1
+								index === segments.length - 1
 									? "evy-rounded-right-md evy-border-l-0"
 									: ""
 							} ${
@@ -45,12 +47,13 @@ export default class SelectSegmentContainerRow extends EVYRow {
 									: "evy-bg-white"
 							}`}
 						>
-							{child.config.view.content.title}
+							{segment}
 						</button>
 					))}
 				</div>
 				<div className="evy-flex evy-flex-col evy-gap-2 evy-mt-2">
-					{children[this.state.selectedTab]?.row}
+					{segments.length === children.length &&
+						children[this.state.selectedTab]?.row}
 				</div>
 			</div>
 		);

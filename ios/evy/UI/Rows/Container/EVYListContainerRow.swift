@@ -7,14 +7,22 @@
 
 import SwiftUI
 
+private class ListContainerContent: Codable {
+	let title: String
+	let children: [EVYRow]
+}
+private struct ListContainerView: Codable {
+	let content: ListContainerContent
+}
+
 struct EVYListContainerRow: View, EVYRowProtocol {
     public static let JSONType = "ListContainer"
     
-    private let view: SDUI.ContainerView
+    private let view: ListContainerView
 	private let edit: SDUI.Edit
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(SDUI.ContainerView.self, forKey:.view)
+        view = try container.decode(ListContainerView.self, forKey:.view)
 		edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
 	

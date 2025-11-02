@@ -307,12 +307,13 @@
 						"view": {
 							"content": {
 								"title": "",
+								"segments": ["Pickup", "Delivery", "Shipping"],
 								"children": [
 									{
 										"type": "ListContainer",
 										"view": {
 											"content": {
-												"title": "Pickup",
+												"title": "",
 												"children": [
 													{
 														"type": "Info",
@@ -436,7 +437,7 @@
 										"type": "ListContainer",
 										"view": {
 											"content": {
-												"title": "Delivery",
+												"title": "",
 												"children": [
 													{
 														"type": "Info",
@@ -531,7 +532,7 @@
 										"type": "ListContainer",
 										"view": {
 											"content": {
-												"title": "Shipping",
+												"title": "",
 												"children": [
 													{
 														"type": "Info",
