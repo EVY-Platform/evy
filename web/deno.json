@@ -33,7 +33,7 @@
 		"@atlaskit/primitives": "https://esm.sh/@atlaskit/primitives@14.1.3?target=browser",
 		"@compiled/react": "https://esm.sh/@compiled/react@0.18.3?target=browser",
 		"@compiled/react/runtime": "https://esm.sh/@compiled/react@0.18.3/runtime?target=browser",
-		"@std/http": "jsr:@std/http@0.208.0",
+		"@std/http": "jsr:@std/http@1.0.21",
 		"node:process": "https://esm.sh/process@0.11.10/browser"
 	},
 	"tasks": {
