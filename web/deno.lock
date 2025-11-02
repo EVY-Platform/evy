@@ -1,68 +1,66 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@std/assert@0.208": "0.208.0",
-    "jsr:@std/async@0.208": "0.208.0",
-    "jsr:@std/cli@0.208": "0.208.0",
-    "jsr:@std/collections@0.208": "0.208.0",
-    "jsr:@std/encoding@0.208": "0.208.0",
-    "jsr:@std/fmt@0.208": "0.208.0",
-    "jsr:@std/http@0.208.0": "0.208.0",
-    "jsr:@std/media-types@0.208": "0.208.0",
-    "jsr:@std/path@0.208": "0.208.0",
-    "jsr:@std/streams@0.208": "0.208.0",
-    "npm:@playwright/test@^1.40.0": "1.56.1"
+    "jsr:@std/cli@^1.0.23": "1.0.23",
+    "jsr:@std/encoding@^1.0.10": "1.0.10",
+    "jsr:@std/fmt@^1.0.8": "1.0.8",
+    "jsr:@std/fs@^1.0.19": "1.0.19",
+    "jsr:@std/html@^1.0.5": "1.0.5",
+    "jsr:@std/http@1.0.21": "1.0.21",
+    "jsr:@std/internal@^1.0.10": "1.0.12",
+    "jsr:@std/media-types@^1.1.0": "1.1.0",
+    "jsr:@std/net@^1.0.6": "1.0.6",
+    "jsr:@std/path@^1.1.2": "1.1.2",
+    "jsr:@std/streams@^1.0.13": "1.0.13",
+    "npm:@playwright/test@^1.56.1": "1.56.1"
   },
   "jsr": {
-    "@std/assert@0.208.0": {
-      "integrity": "1aa06be08916efe062e40c0948e95034cea4627355dcb32a5e1d4e52786ace7c"
+    "@std/cli@1.0.23": {
+      "integrity": "bf95b7a9425ba2af1ae5a6359daf58c508f2decf711a76ed2993cd352498ccca"
     },
-    "@std/async@0.208.0": {
-      "integrity": "8ed9790389b8fcef907703693dd785f0610fb0adb45964f03c8386b7551f4fc7"
+    "@std/encoding@1.0.10": {
+      "integrity": "8783c6384a2d13abd5e9e87a7ae0520a30e9f56aeeaa3bdf910a3eaaf5c811a1"
     },
-    "@std/cli@0.208.0": {
-      "integrity": "4cf9f03e9731fd9b7a886108e67342e64594ed658d9948c7d91955a082ba03d0",
+    "@std/fmt@1.0.8": {
+      "integrity": "71e1fc498787e4434d213647a6e43e794af4fd393ef8f52062246e06f7e372b7"
+    },
+    "@std/fs@1.0.19": {
+      "integrity": "051968c2b1eae4d2ea9f79a08a3845740ef6af10356aff43d3e2ef11ed09fb06"
+    },
+    "@std/html@1.0.5": {
+      "integrity": "4e2d693f474cae8c16a920fa5e15a3b72267b94b84667f11a50c6dd1cb18d35e"
+    },
+    "@std/http@1.0.21": {
+      "integrity": "abb5c747651ee6e3ea6139858fd9b1810d2c97f53a5e6722f3b6d27a6d263edc",
       "dependencies": [
-        "jsr:@std/assert"
-      ]
-    },
-    "@std/collections@0.208.0": {
-      "integrity": "0a204e0add91db112a7c1389bfe20760bc4fad44310d82eeea4127dde0f2e34c"
-    },
-    "@std/encoding@0.208.0": {
-      "integrity": "d8fe681f0ce000477aecea9e45160d09ed560109b421a46e026605daac7bbe9d"
-    },
-    "@std/fmt@0.208.0": {
-      "integrity": "06584c97a1a7b934e8de185c45a595d8234c5312e51e61cb05650af4cb8eb65f"
-    },
-    "@std/http@0.208.0": {
-      "integrity": "d5bc39144b3bd59db58411993a6e1b6886f792e08202dc1a4f27826346145385",
-      "dependencies": [
-        "jsr:@std/assert",
-        "jsr:@std/async",
         "jsr:@std/cli",
-        "jsr:@std/collections",
         "jsr:@std/encoding",
         "jsr:@std/fmt",
+        "jsr:@std/fs",
+        "jsr:@std/html",
         "jsr:@std/media-types",
+        "jsr:@std/net",
         "jsr:@std/path",
         "jsr:@std/streams"
       ]
     },
-    "@std/media-types@0.208.0": {
-      "integrity": "bd036ae8f2fc11abbaa8b3c5c5e9a33163a19b66bb840ba82428a933f583d7ee"
+    "@std/internal@1.0.12": {
+      "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
     },
-    "@std/path@0.208.0": {
-      "integrity": "e94075bef12bfffcdae2e88c2acfbc29dbd91882f1ebe3596e5fda20c3025ab6",
+    "@std/media-types@1.1.0": {
+      "integrity": "c9d093f0c05c3512932b330e3cc1fe1d627b301db33a4c2c2185c02471d6eaa4"
+    },
+    "@std/net@1.0.6": {
+      "integrity": "110735f93e95bb9feb95790a8b1d1bf69ec0dc74f3f97a00a76ea5efea25500c"
+    },
+    "@std/path@1.1.2": {
+      "integrity": "c0b13b97dfe06546d5e16bf3966b1cadf92e1cc83e56ba5476ad8b498d9e3038",
       "dependencies": [
-        "jsr:@std/assert"
+        "jsr:@std/internal"
       ]
     },
-    "@std/streams@0.208.0": {
-      "integrity": "1a713e49f675274a0b510311747cdb56479f3b2691b02a49c4b5b3928f878d1e",
-      "dependencies": [
-        "jsr:@std/assert"
-      ]
+    "@std/streams@1.0.13": {
+      "integrity": "772d208cd0d3e5dac7c1d9e6cdb25842846d136eea4a41a62e44ed4ab0c8dd9e"
     }
   },
   "npm": {
@@ -328,11 +326,11 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/http@0.208.0"
+      "jsr:@std/http@1.0.21"
     ],
     "packageJson": {
       "dependencies": [
-        "npm:@playwright/test@^1.40.0"
+        "npm:@playwright/test@^1.56.1"
       ]
     }
   }
