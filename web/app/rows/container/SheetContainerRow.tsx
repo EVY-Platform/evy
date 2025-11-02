@@ -6,7 +6,6 @@ export default class SheetContainerRow extends EVYRow {
 		view: {
 			content: {
 				title: "Sheet container row title",
-				child: undefined,
 				children: [],
 			},
 		},
