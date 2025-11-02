@@ -541,4 +541,80 @@ test.describe("Drag & Drop UX", () => {
 			containerRow.getByText("Info row title", { exact: true })
 		).not.toBeVisible();
 	});
+
+	test("should drag and drop every single row type into a page", async ({
+		page,
+	}) => {
+		const rowsPanel = page
+			.getByText("Rows", { exact: true })
+			.first()
+			.locator("..");
+
+		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
+		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
+
+		// All available row types with their identifying text
+		const allRowTypes = [
+			"Info row title",
+			"Text row title",
+			"Input list row title",
+			"Button row text",
+			"Text action row title",
+			"Calendar row title",
+			"Dropdown row title",
+			"Inline picker row title",
+			"Input row title",
+			"Search row title",
+			"Select photo row title",
+			"Text area row title",
+			"Text select row title",
+			"Column container row title",
+			"List container row title",
+			"Select segment container row title",
+			"Sheet container row title",
+		];
+
+		// Count initial rows on the page
+		const initialRowCount = await pageContent
+			.locator(
+				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
+			)
+			.count();
+
+		// Drag and drop each row type
+		for (const rowText of allRowTypes) {
+			// Get the row from the sidebar
+			const sidebarRow = rowsPanel
+				.getByText(rowText, { exact: true })
+				.locator("..");
+
+			// Verify the row exists in the sidebar
+			await expect(
+				sidebarRow.getByText(rowText, { exact: true })
+			).toBeVisible();
+
+			// Drag the row to the page
+			await sidebarRow.dragTo(pageContent);
+
+			// Verify the row was added to the page by checking it's visible
+			await expect(
+				firstPage.getByText(rowText, { exact: true })
+			).toBeVisible();
+		}
+
+		// Verify all rows were added to the page
+		const finalRowCount = await pageContent
+			.locator(
+				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
+			)
+			.count();
+		expect(finalRowCount).toBe(initialRowCount + allRowTypes.length);
+
+		// Verify each row is still visible on the page
+		for (const rowText of allRowTypes) {
+			await expect(
+				firstPage.getByText(rowText, { exact: true })
+			).toBeVisible();
+		}
+	});
 });
