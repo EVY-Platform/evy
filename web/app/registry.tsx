@@ -24,6 +24,7 @@ import TextAreaRow from "./rows/edit/TextAreaRow";
 import TextRow from "./rows/view/TextRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
 
+import { debugFlows } from "../tests/utils.tsx"; // Temporary as we build out EVY
 import {
 	type RowConfig,
 	type Row,
@@ -65,7 +66,7 @@ type ServerPage = Omit<Page, "rows" | "footer"> & {
 	rows: ServerRow[];
 	footer?: ServerRow;
 };
-type ServerFlow = Omit<Flow, "pages"> & {
+export type ServerFlow = Omit<Flow, "pages"> & {
 	pages: ServerPage[];
 };
 
@@ -504,264 +505,25 @@ const decodeFlows = (flows: ServerFlow[]): Flow[] => {
 	}));
 };
 
-export function AppProvider({ children }: { children: ReactNode }) {
+export function AppProvider({
+	children,
+	initialFlows,
+}: {
+	children: ReactNode;
+	initialFlows?: ServerFlow[];
+}) {
 	const rows = baseRows.map((row) => ({
 		rowId: row.name,
 		row: createElement(row, { rowId: row.name }),
 		config: row.config,
 	}));
 
-	const flows: ServerFlow[] = [
-		{
-			id: "flow-1",
-			name: "First flow!",
-			type: "write",
-			data: "",
-			pages: [
-				{
-					id: "step_1",
-					title: "Create listing",
-					rows: [
-						{
-							type: "ColumnContainer",
-							view: {
-								content: {
-									title: "Dimensions (width x height x depth)",
-									children: [
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "width",
-													placeholder: "Width",
-												},
-											},
-											edit: {
-												destination:
-													"{item.dimensions.width}",
-												validation: {
-													required: "true",
-													message: "Width",
-												},
-											},
-										},
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "height",
-													placeholder: "Height",
-												},
-											},
-											edit: {
-												destination: "height",
-												validation: {
-													required: "true",
-													message: "Height",
-												},
-											},
-										},
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "length",
-													placeholder: "Length",
-												},
-											},
-											edit: {
-												destination:
-													"{item.dimensions.length}",
-												validation: {
-													required: "true",
-													message: "Length",
-													minValue: "1",
-												},
-											},
-										},
-									],
-								},
-							},
-							edit: {
-								validation: {
-									required: "true",
-									minAmount: "3",
-								},
-							},
-						},
-						{
-							type: "ListContainer",
-							view: {
-								content: {
-									title: "Dimensions (width x height x depth)",
-									children: [
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "width",
-													placeholder: "Width",
-												},
-											},
-											edit: {
-												destination:
-													"{item.dimensions.width}",
-												validation: {
-													required: "true",
-													message: "Width",
-												},
-											},
-										},
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "height",
-													placeholder: "Height",
-												},
-											},
-											edit: {
-												destination: "height",
-												validation: {
-													required: "true",
-													message: "Height",
-												},
-											},
-										},
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "length",
-													placeholder: "Length",
-												},
-											},
-											edit: {
-												destination:
-													"{item.dimensions.length}",
-												validation: {
-													required: "true",
-													message: "Length",
-													minValue: "1",
-												},
-											},
-										},
-									],
-								},
-							},
-							edit: {
-								validation: {
-									required: "true",
-									minAmount: "3",
-								},
-							},
-						},
-					],
-				},
-				{
-					id: "step_2",
-					title: "Step 2",
-					rows: [
-						{
-							type: "SelectSegmentContainer",
-							view: {
-								content: {
-									title: "",
-									segments: ["Width", "Height", "Length"],
-									children: [
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "width",
-													placeholder: "Width",
-												},
-											},
-											edit: {
-												destination:
-													"{item.dimensions.width}",
-												validation: {
-													required: "true",
-													message: "Width",
-												},
-											},
-										},
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "height",
-													placeholder: "Height",
-												},
-											},
-											edit: {
-												destination: "height",
-												validation: {
-													required: "true",
-													message: "Height",
-												},
-											},
-										},
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "",
-													value: "length",
-													placeholder: "Length",
-												},
-											},
-											edit: {
-												destination:
-													"{item.dimensions.length}",
-												validation: {
-													required: "true",
-													message: "Length",
-													minValue: "1",
-												},
-											},
-										},
-									],
-								},
-							},
-							edit: {
-								validation: {
-									required: "true",
-									minAmount: "3",
-								},
-							},
-						},
-					],
-				},
-			],
-		},
-		{
-			id: "flow-2",
-			name: "Second flow",
-			type: "write",
-			data: "",
-			pages: [
-				{
-					id: "step_2_1",
-					title: "Step 1",
-					rows: [],
-				},
-			],
-		},
-	];
+	const flows: ServerFlow[] = initialFlows ?? debugFlows; // Temporary as we build out EVY
 
 	const [appState, dispatchRow] = useReducer(pageReducer, {
 		flows: decodeFlows(flows),
 		activeRowId: null,
-		activeFlowId: "flow-1",
+		activeFlowId: flows[0]?.id ? flows[0].id : null,
 	});
 
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);

@@ -5,7 +5,7 @@ import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/ad
 import { useContext, useEffect } from "react";
 import invariant from "tiny-invariant";
 
-import { AppProvider, AppContext } from "./registry.tsx";
+import { AppProvider, AppContext, type ServerFlow } from "./registry.tsx";
 import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
 import { RowsPanel } from "./components/RowsPanel.tsx";
 import { FlowSelector } from "./components/FlowSelector.tsx";
@@ -182,8 +182,10 @@ function AppContent() {
 }
 
 function App() {
+	const win = window as { __TEST_FLOWS__?: ServerFlow[] };
+
 	return (
-		<AppProvider>
+		<AppProvider initialFlows={win?.__TEST_FLOWS__}>
 			<div className="evy-h-screen evy-flex evy-flex-col evy-overflow-hidden">
 				<div className="evy-border-b evy-border-gray evy-p-4 evy-bg-white evy-flex evy-justify-between evy-items-center">
 					<a href="/">
