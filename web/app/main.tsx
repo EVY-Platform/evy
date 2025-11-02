@@ -182,14 +182,10 @@ function AppContent() {
 }
 
 function App() {
-	const testFlows =
-		typeof window !== "undefined" &&
-		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__
-			? (window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__
-			: undefined;
+	const win = window as { __TEST_FLOWS__?: ServerFlow[] };
 
 	return (
-		<AppProvider initialFlows={testFlows}>
+		<AppProvider initialFlows={win?.__TEST_FLOWS__}>
 			<div className="evy-h-screen evy-flex evy-flex-col evy-overflow-hidden">
 				<div className="evy-border-b evy-border-gray evy-p-4 evy-bg-white evy-flex evy-justify-between evy-items-center">
 					<a href="/">
