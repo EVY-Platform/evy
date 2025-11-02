@@ -386,7 +386,7 @@ input[type="email"]:focus,
 input[type="number"]:focus,
 textarea:focus {
 	outline: none;
-	border-color: var(--color-evy-blue);
+	border-color: var(--color-evy-gray);
 	box-shadow: 0 0 0 3px rgba(60, 60, 100, 0.1);
 }
 
@@ -413,4 +413,25 @@ label {
 	color: var(--color-black);
 	margin-bottom: var(--spacing-2);
 	display: block;
+}
+
+/* Drop indicator utilities */
+[class^="evy-drop-indicator-"] {
+	position: absolute;
+	background-color: var(--color-evy-blue);
+	height: 2px;
+	width: 100%;
+
+	&.evy-drop-indicator-top {
+		top: 0;
+	}
+	&.evy-drop-indicator-right {
+		right: 0;
+	}
+	&.evy-drop-indicator-bottom {
+		bottom: 0;
+	}
+	&.evy-drop-indicator-left {
+		left: 0;
+	}
 }
