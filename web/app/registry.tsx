@@ -177,20 +177,8 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			const baseRow = baseRows.find((row) => {
 				if (!row || typeof row !== "function") return false;
-				const rowName = (row as { name: string }).name;
-				// Match by class name or config type
-				return (
-					rowName === action.rowIdInBase ||
-					row.config.type === action.rowIdInBase
-				);
-			});
-
-			if (!baseRow) {
-				console.warn(
-					`Could not find baseRow for rowIdInBase: ${action.rowIdInBase}`
-				);
-				return state;
-			}
+				return (row as { name: string }).name === action.rowIdInBase;
+			})!;
 
 			const rowDataAdd: Row = {
 				...baseRow,
