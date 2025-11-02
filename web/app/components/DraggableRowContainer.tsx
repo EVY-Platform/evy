@@ -17,7 +17,6 @@ import {
 	draggable,
 	dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import DropIndicatorModule from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
@@ -57,10 +56,6 @@ interface DropTargetEvent {
 	element: HTMLElement;
 }
 
-// Properly typed DropIndicator component for React 19 compatibility
-const DropIndicator: React.FC<{ edge: Edge }> = (props) => {
-	return DropIndicatorModule(props) as React.ReactElement;
-};
 type State =
 	| { type: "idle" }
 	| { type: "dragging" }
@@ -93,7 +88,9 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				onClick={selectRow}
 			>
 				{children}
-				{closestEdge && <DropIndicator edge={closestEdge} />}
+				{closestEdge && (
+					<div className={`evy-drop-indicator-${closestEdge}`} />
+				)}
 			</div>
 		);
 	}
