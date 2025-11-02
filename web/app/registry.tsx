@@ -24,7 +24,7 @@ import TextAreaRow from "./rows/edit/TextAreaRow";
 import TextRow from "./rows/view/TextRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
 
-import { debugFlows } from "../tests/utils.tsx";
+import { debugFlows } from "../tests/utils.tsx"; // Temporary as we build out EVY
 import {
 	type RowConfig,
 	type Row,
@@ -518,7 +518,7 @@ export function AppProvider({
 		config: row.config,
 	}));
 
-	const flows: ServerFlow[] = initialFlows ?? debugFlows;
+	const flows: ServerFlow[] = initialFlows ?? debugFlows; // Temporary as we build out EVY
 
 	const [appState, dispatchRow] = useReducer(pageReducer, {
 		flows: decodeFlows(flows),
