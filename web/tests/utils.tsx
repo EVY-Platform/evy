@@ -7,7 +7,7 @@ type TestPage = {
 	rows?: ServerFlow["pages"][number]["rows"];
 };
 
-export function createTestFlows(pages: TestPage[]): ServerFlow[] {
+function createTestFlows(pages: TestPage[]): ServerFlow[] {
 	return [
 		{
 			id: "test-flow",
