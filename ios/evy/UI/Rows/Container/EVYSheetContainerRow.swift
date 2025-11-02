@@ -9,14 +9,23 @@
 
 import SwiftUI
 
+private class SheetContainerContent: Codable {
+	let title: String
+	let child: EVYRow
+	let children: [EVYRow]
+}
+private struct SheetContainerView: Codable {
+	let content: SheetContainerContent
+}
+
 struct EVYSheetContainerRow: View, EVYRowProtocol {
     public static let JSONType = "SheetContainer"
 
-    private let view: SDUI.ContainerView
+    private let view: SheetContainerView
 	@State private var showSheet: Bool = false
 
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(SDUI.ContainerView.self, forKey:.view)
+        view = try container.decode(SheetContainerView.self, forKey:.view)
     }
 	
 	init(from decoder: Decoder) throws {
@@ -30,7 +39,7 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 	}
 	
 	func complete() -> Bool {
-		view.content.child!.complete()
+		view.content.child.complete()
 	}
 	
 	func incompleteMessages() -> [String] {

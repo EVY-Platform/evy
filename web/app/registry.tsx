@@ -54,7 +54,7 @@ type ServerRowContent = {
 	title?: string;
 	children?: ServerRow[];
 	child?: ServerRow;
-	[key: string]: string | ServerRow[] | ServerRow | undefined;
+	[key: string]: string | string[] | ServerRow[] | ServerRow | undefined;
 };
 type ServerRow = Omit<RowConfig, "view"> & {
 	view: Omit<RowView, "content"> & {
@@ -673,12 +673,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 							view: {
 								content: {
 									title: "",
+									segments: ["Width", "Height", "Length"],
 									children: [
 										{
 											type: "Input",
 											view: {
 												content: {
-													title: "Width",
+													title: "",
 													value: "width",
 													placeholder: "Width",
 												},
@@ -696,7 +697,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 											type: "Input",
 											view: {
 												content: {
-													title: "Height",
+													title: "",
 													value: "height",
 													placeholder: "Height",
 												},
@@ -713,7 +714,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 											type: "Input",
 											view: {
 												content: {
-													title: "Length",
+													title: "",
 													value: "length",
 													placeholder: "Length",
 												},

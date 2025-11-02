@@ -7,14 +7,22 @@
 
 import SwiftUI
 
+private class ColumnContainerContent: Codable {
+	let title: String
+	let children: [EVYRow]
+}
+private struct ColumnContainerView: Codable {
+	let content: ColumnContainerContent
+}
+
 struct EVYColumnContainerRow: View, EVYRowProtocol {
     public static let JSONType = "ColumnContainer"
     
-    private let view: SDUI.ContainerView
+    private let view: ColumnContainerView
 	private let edit: SDUI.Edit
     
     init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(SDUI.ContainerView.self, forKey:.view)
+        view = try container.decode(ColumnContainerView.self, forKey:.view)
 		edit = try container.decode(SDUI.Edit.self, forKey:.edit)
     }
 	
