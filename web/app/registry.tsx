@@ -523,7 +523,7 @@ export function AppProvider({
 	const [appState, dispatchRow] = useReducer(pageReducer, {
 		flows: decodeFlows(flows),
 		activeRowId: null,
-		activeFlowId: flows[0]?.id ?? null,
+		activeFlowId: flows[0]?.id ? flows[0].id : null,
 	});
 
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
