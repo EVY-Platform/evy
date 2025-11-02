@@ -1,6 +1,7 @@
 import React, {
 	forwardRef,
 	Fragment,
+	useContext,
 	useEffect,
 	useRef,
 	useState,
@@ -20,6 +21,8 @@ import {
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
+
+import { AppContext } from "../registry";
 
 export type Edge = "top" | "right" | "bottom" | "left";
 
@@ -70,10 +73,14 @@ type RowPrimitiveProps = {
 	children: React.ReactNode;
 	state: State;
 	selectRow?: () => void;
+	showIndicator: boolean;
 };
 
 const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
-	function RowPrimitive({ closestEdge, children, state, selectRow }, ref) {
+	function RowPrimitive(
+		{ closestEdge, children, state, selectRow, showIndicator },
+		ref
+	) {
 		const cursor = {
 			[previewState.type]: "pointer",
 			[draggingState.type]: "pointer",
@@ -87,9 +94,19 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				ref={ref}
 				onClick={selectRow}
 			>
+				{showIndicator && closestEdge === "top" && (
+					<div className="evy-h-8 evy-w-full evy-bg-blue evy-opacity-30" />
+				)}
 				{children}
 				{closestEdge && (
-					<div className={`evy-drop-indicator-${closestEdge}`} />
+					<div
+						className={`evy-drop-indicator-${closestEdge} evy-m${closestEdge.charAt(
+							0
+						)}-8`}
+					/>
+				)}
+				{showIndicator && closestEdge === "bottom" && (
+					<div className="evy-h-8 evy-w-full evy-bg-blue evy-opacity-30" />
 				)}
 			</div>
 		);
@@ -105,9 +122,11 @@ export function DraggableRowContainer({
 	children: React.ReactNode;
 	selectRow?: () => void;
 }) {
+	const { dragging } = useContext(AppContext);
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 	const [state, setState] = useState<State>(idleState);
+	const [showIndicator, setShowIndicator] = useState(false);
 
 	useEffect(() => {
 		const element = ref.current;
@@ -158,23 +177,39 @@ export function DraggableRowContainer({
 				},
 				onDragEnter: (args: DragEvent) => {
 					if (args.source.data.rowId !== rowId) {
-						setClosestEdge(extractClosestEdge(args.self.data));
+						const edge = extractClosestEdge(args.self.data);
+						setClosestEdge(edge);
+						if (edge) {
+							setShowIndicator(true);
+						}
 					}
 				},
 				onDrag: (args: DragEvent) => {
 					if (args.source.data.rowId !== rowId) {
-						setClosestEdge(extractClosestEdge(args.self.data));
+						const edge = extractClosestEdge(args.self.data);
+						setClosestEdge(edge);
+						if (edge) {
+							setShowIndicator(true);
+						}
 					}
 				},
 				onDragLeave: () => {
 					setClosestEdge(null);
+					setShowIndicator(false);
 				},
 				onDrop: () => {
 					setClosestEdge(null);
+					setShowIndicator(false);
 				},
 			})
 		);
 	}, [rowId]);
+
+	useEffect(() => {
+		if (!dragging) {
+			setShowIndicator(false);
+		}
+	}, [dragging]);
 
 	return (
 		<Fragment>
@@ -183,6 +218,7 @@ export function DraggableRowContainer({
 				state={state}
 				closestEdge={closestEdge}
 				selectRow={selectRow}
+				showIndicator={showIndicator && dragging}
 			>
 				{children}
 			</RowPrimitive>
@@ -197,7 +233,11 @@ export function DraggableRowContainer({
 							height: state.rect.height,
 						}}
 					>
-						<RowPrimitive state={state} closestEdge={null}>
+						<RowPrimitive
+							state={state}
+							closestEdge={null}
+							showIndicator={false}
+						>
 							{children}
 						</RowPrimitive>
 					</div>,
