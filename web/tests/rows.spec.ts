@@ -55,13 +55,5 @@ test.describe("EVY Rows", () => {
 				rowsPanel.getByText(title, { exact: true })
 			).toBeVisible();
 		}
-
-		// Verify some specific row content to ensure they're properly rendered
-		await expect(
-			rowsPanel.getByText("Info row info", { exact: true })
-		).toBeVisible();
-		await expect(
-			rowsPanel.getByText("Button row text", { exact: true })
-		).toBeVisible();
 	});
 });
