@@ -13,19 +13,17 @@ export function FlowSelector() {
 	};
 
 	return (
-		<div className="evy-flex">
-			<select
-				id="flow-select"
-				value={activeFlowId || "Select a flow"}
-				onChange={handleFlowChange}
-				className="evy-text-sm evy-font-medium"
-			>
-				{flows.map((flow) => (
-					<option key={flow.id} value={flow.id}>
-						{flow.name}
-					</option>
-				))}
-			</select>
-		</div>
+		<select
+			id="flow-select"
+			value={activeFlowId || "Select a flow"}
+			onChange={handleFlowChange}
+			className="evy-text-sm evy-font-medium"
+		>
+			{flows.map((flow) => (
+				<option key={flow.id} value={flow.id}>
+					{flow.name}
+				</option>
+			))}
+		</select>
 	);
 }

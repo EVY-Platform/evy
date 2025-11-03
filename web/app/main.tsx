@@ -109,7 +109,8 @@ function AppContent() {
 					});
 				} else if (sourcePageId === "rows") {
 					const destinationIndex =
-						closestEdgeOfTarget === "bottom"
+						closestEdgeOfTarget === "bottom" ||
+						closestEdgeOfTarget === "right"
 							? indexOfTarget + 1
 							: indexOfTarget;
 					dispatchRow({
@@ -135,7 +136,8 @@ function AppContent() {
 					});
 				} else {
 					const destinationIndex =
-						closestEdgeOfTarget === "bottom"
+						closestEdgeOfTarget === "bottom" ||
+						closestEdgeOfTarget === "right"
 							? indexOfTarget + 1
 							: indexOfTarget;
 
@@ -186,7 +188,7 @@ function App() {
 
 	return (
 		<AppProvider initialFlows={win?.__TEST_FLOWS__}>
-			<div className="evy-h-screen evy-flex evy-flex-col evy-overflow-hidden">
+			<div className="evy-h-screen evy-overflow-hidden">
 				<div className="evy-border-b evy-border-gray evy-p-4 evy-bg-white evy-flex evy-justify-between evy-items-center">
 					<a href="/">
 						<img className="evy-h-4" src="/logo.svg" alt="EVY" />

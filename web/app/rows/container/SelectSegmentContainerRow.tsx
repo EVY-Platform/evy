@@ -1,4 +1,5 @@
 import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { DraggableRowContainer } from "../../components/DraggableRowContainer";
 
 interface SelectSegmentContainerState {
 	selectedTab: number;
@@ -25,7 +26,7 @@ export default class SelectSegmentContainerRow extends EVYRow {
 		return (
 			<div className="evy-p-2">
 				<p>{row.config.view.content.title}</p>
-				<div className="evy-rounded-full evy-flex evy-gap-0">
+				<div className="evy-rounded-full evy-flex evy-mb-2">
 					{segments.map((segment, index) => (
 						<button
 							key={segment}
@@ -51,10 +52,17 @@ export default class SelectSegmentContainerRow extends EVYRow {
 						</button>
 					))}
 				</div>
-				<div className="evy-flex evy-flex-col evy-gap-2 evy-mt-2">
-					{segments.length === children.length &&
-						children[this.state.selectedTab]?.row}
-				</div>
+				{segments.length === children.length &&
+					children[this.state.selectedTab] && (
+						<DraggableRowContainer
+							rowId={children[this.state.selectedTab].rowId}
+							orientation="horizontal"
+							showDropzoneBefore={this.state.selectedTab === 0}
+							showDropzoneAfter
+						>
+							{children[this.state.selectedTab].row}
+						</DraggableRowContainer>
+					)}
 			</div>
 		);
 	}

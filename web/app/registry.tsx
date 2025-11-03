@@ -25,6 +25,7 @@ import TextRow from "./rows/view/TextRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
 
 import { debugFlows } from "../tests/utils.tsx"; // Temporary as we build out EVY
+import { Edge } from "./components/DraggableRowContainer";
 import {
 	type RowConfig,
 	type Row,
@@ -52,7 +53,7 @@ type Flow = {
 // since in client-side type we need to have the concrete
 // row instances
 type ServerRowContent = {
-	title?: string;
+	title: string;
 	children?: ServerRow[];
 	child?: ServerRow;
 	[key: string]: string | string[] | ServerRow[] | ServerRow | undefined;
@@ -438,30 +439,69 @@ const draggingReducer = (
 	}
 };
 
+type DropIndicatorState = {
+	activeRowId: string | null;
+	edge: Edge | null;
+} | null;
+
+type DropIndicatorAction =
+	| {
+			type: "SET_ACTIVE_INDICATOR";
+			rowId: string | null;
+			edge: Edge | null;
+	  }
+	| {
+			type: "CLEAR_INDICATOR";
+	  };
+
+const dropIndicatorReducer = (
+	state: DropIndicatorState,
+	action: DropIndicatorAction
+): DropIndicatorState => {
+	switch (action.type) {
+		case "SET_ACTIVE_INDICATOR":
+			if (action.rowId === null) {
+				return null;
+			}
+			return {
+				activeRowId: action.rowId,
+				edge: action.edge,
+			};
+		case "CLEAR_INDICATOR":
+			return null;
+		default:
+			return state;
+	}
+};
+
 export const AppContext = createContext<{
 	rows: Row[];
 	flows: Flow[];
 	activeFlowId: string | null;
 	activeRowId: string | null;
 	dragging: DraggingState;
+	dropIndicator: DropIndicatorState;
 	dispatchRow: Dispatch<RowAction>;
 	dispatchDragging: Dispatch<DraggingAction>;
+	dispatchDropIndicator: Dispatch<DropIndicatorAction>;
 }>({
 	rows: [],
 	flows: [],
 	activeFlowId: null,
 	activeRowId: null,
 	dragging: false,
+	dropIndicator: null,
 	dispatchRow: () => {},
 	dispatchDragging: () => {},
+	dispatchDropIndicator: () => {},
 });
 
 function decodeRow(row: ServerRow): Row {
 	const rowId = crypto.randomUUID();
-	const rowType = baseRows.find(
+	const baseRow = baseRows.find(
 		(baseRow) => row.type === baseRow.config.type
 	);
-	if (!rowType) {
+	if (!baseRow) {
 		return {
 			rowId,
 			row: createElement(UnknownRow, { rowId }),
@@ -470,7 +510,7 @@ function decodeRow(row: ServerRow): Row {
 	} else {
 		return {
 			rowId,
-			row: createElement(rowType, { rowId }),
+			row: createElement(baseRow, { rowId }),
 			config: removeUndefined({
 				...row,
 				view: {
@@ -527,6 +567,10 @@ export function AppProvider({
 	});
 
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
+	const [dropIndicator, dispatchDropIndicator] = useReducer(
+		dropIndicatorReducer,
+		null
+	);
 
 	return (
 		<AppContext.Provider
@@ -536,8 +580,10 @@ export function AppProvider({
 				activeFlowId: appState.activeFlowId,
 				activeRowId: appState.activeRowId,
 				dragging,
+				dropIndicator,
 				dispatchRow,
 				dispatchDragging,
+				dispatchDropIndicator,
 			}}
 		>
 			{children}

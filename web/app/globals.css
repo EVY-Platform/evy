@@ -184,6 +184,9 @@ body {
 .evy-w-full {
 	width: 100%;
 }
+.evy-w-4 {
+	width: var(--spacing-4);
+}
 .evy-w-336 {
 	width: var(--size-336);
 }
@@ -393,7 +396,6 @@ textarea {
 	background-color: var(--color-white);
 	border: 1px solid var(--color-gray-border);
 	border-radius: var(--radius-sm);
-	padding: var(--spacing-2) var(--spacing-3);
 	transition: border-color var(--transition), box-shadow var(--transition);
 }
 
@@ -436,19 +438,25 @@ label {
 [class^="evy-drop-indicator-"] {
 	position: absolute;
 	background-color: var(--color-evy-blue);
-	height: 2px;
-	width: 100%;
 
 	&.evy-drop-indicator-top {
 		top: 0;
+		height: 2px;
+		width: 100%;
 	}
 	&.evy-drop-indicator-right {
 		right: 0;
+		width: 2px;
+		height: 100%;
 	}
 	&.evy-drop-indicator-bottom {
 		bottom: 0;
+		height: 2px;
+		width: 100%;
 	}
 	&.evy-drop-indicator-left {
 		left: 0;
+		width: 2px;
+		height: 100%;
 	}
 }

@@ -256,6 +256,112 @@ export const debugFlows: ServerFlow[] = [
 							},
 						},
 					},
+					{
+						type: "SelectSegmentContainer",
+						view: {
+							content: {
+								title: "",
+								segments: ["List", "Info"],
+								children: [
+									{
+										type: "ListContainer",
+										view: {
+											content: {
+												title: "Dimensions (width x height x depth)",
+												children: [
+													{
+														type: "Input",
+														view: {
+															content: {
+																title: "",
+																value: "width",
+																placeholder:
+																	"Width",
+															},
+														},
+														edit: {
+															destination:
+																"{item.dimensions.width}",
+															validation: {
+																required:
+																	"true",
+																message:
+																	"Width",
+															},
+														},
+													},
+													{
+														type: "Input",
+														view: {
+															content: {
+																title: "",
+																value: "height",
+																placeholder:
+																	"Height",
+															},
+														},
+														edit: {
+															destination:
+																"height",
+															validation: {
+																required:
+																	"true",
+																message:
+																	"Height",
+															},
+														},
+													},
+													{
+														type: "Input",
+														view: {
+															content: {
+																title: "",
+																value: "length",
+																placeholder:
+																	"Length",
+															},
+														},
+														edit: {
+															destination:
+																"{item.dimensions.length}",
+															validation: {
+																required:
+																	"true",
+																message:
+																	"Length",
+																minValue: "1",
+															},
+														},
+													},
+												],
+											},
+										},
+										edit: {
+											validation: {
+												required: "true",
+												minAmount: "3",
+											},
+										},
+									},
+									{
+										type: "Info",
+										view: {
+											content: {
+												title: "Info row title",
+												text: "Info row info",
+											},
+										},
+									},
+								],
+							},
+						},
+						edit: {
+							validation: {
+								required: "true",
+								minAmount: "3",
+							},
+						},
+					},
 				],
 			},
 		],

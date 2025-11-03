@@ -61,11 +61,13 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow]
 	);
 
-	const rowElements = rows.map((row) => (
+	const rowElements = rows.map((row, index) => (
 		<DraggableRowContainer
 			key={row.rowId}
 			rowId={row.rowId}
 			selectRow={() => selectRow(row.rowId)}
+			showDropzoneBefore={index === 0}
+			showDropzoneAfter
 		>
 			{row.row}
 		</DraggableRowContainer>

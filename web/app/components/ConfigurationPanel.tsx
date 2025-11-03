@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext } from "react";
 
 import { AppContext } from "../registry";
 import { Row, EVYRow } from "../rows/EVYRow";
@@ -21,15 +21,11 @@ export function ConfigurationPanel() {
 		[activeRowId, dispatchRow]
 	);
 
-	const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
-	const row = useMemo(
-		() =>
-			pages
-				.flatMap((page) => page.rows)
-				.flatMap(EVYRow.getRowsRecursive)
-				.find((r) => r.rowId === activeRowId),
-		[pages, activeRowId]
-	);
+	const row = flows
+		.find((f) => f.id === activeFlowId)
+		?.pages.flatMap((page) => page.rows)
+		.flatMap(EVYRow.getRowsRecursive)
+		.find((r) => r.rowId === activeRowId);
 
 	const renderConfiguration = useCallback(
 		(configRow: Row): React.ReactNode[] => {

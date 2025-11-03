@@ -1,4 +1,5 @@
 import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { DraggableRowContainer } from "../../components/DraggableRowContainer";
 
 export default class ListContainerRow extends EVYRow {
 	static override config: RowConfig = {
@@ -16,9 +17,16 @@ export default class ListContainerRow extends EVYRow {
 			<div className="evy-p-2">
 				<p>{row.config.view.content.title}</p>
 				<div className="evy-flex evy-flex-col">
-					{row.config.view.content.children?.map(
-						(child) => child.row
-					)}
+					{row.config.view.content.children?.map((child, index) => (
+						<DraggableRowContainer
+							key={child.rowId}
+							rowId={child.rowId}
+							showDropzoneBefore={index === 0}
+							showDropzoneAfter
+						>
+							{child.row}
+						</DraggableRowContainer>
+					))}
 				</div>
 			</div>
 		);
