@@ -101,22 +101,38 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 		},
 		ref
 	) {
-		const cursor = {
-			[previewState.type]: "pointer",
-			[draggingState.type]: "pointer",
-			[idleState.type]: "grab",
-		}[state.type];
+		const cursor = useMemo(() => {
+			return {
+				[previewState.type]: "pointer",
+				[draggingState.type]: "pointer",
+				[idleState.type]: "grab",
+			}[state.type];
+		}, [state.type]);
 
 		const dropzoneClass = useMemo(() => {
 			return orientation === "vertical"
-				? "evy-h-4 evy-w-full evy-bg-gray-dark evy-opacity-30"
-				: "evy-w-4 evy-min-h-full evy-mt-2 evy-mb-2 evy-bg-gray-dark evy-opacity-30";
+				? "evy-h-6 evy-w-full evy-border-dashed-blue evy-rounded-sm"
+				: "evy-w-6 evy-min-h-full evy-mt-2 evy-mb-2 evy-border-dashed-blue evy-rounded-sm";
 		}, [orientation]);
+
+		const indicatorBeforeClass = useMemo(() => {
+			if (!showIndicator) return;
+			if (closestEdge !== "top" && closestEdge !== "left") return;
+			return "evy-bg-blue";
+		}, [showIndicator, closestEdge]);
+
+		const indicatorAfterClass = useMemo(() => {
+			if (!showIndicator) return;
+			if (closestEdge !== "bottom" && closestEdge !== "right") return;
+			return "evy-bg-blue";
+		}, [showIndicator, closestEdge]);
 
 		return (
 			<>
 				{showDropzone && showDropzoneBefore && (
-					<div className={dropzoneClass} />
+					<div
+						className={`${dropzoneClass} ${indicatorBeforeClass}`}
+					/>
 				)}
 				<div
 					className="evy-flex evy-flex-col evy-w-full evy-relative evy-hover:bg-gray-light"
@@ -125,12 +141,11 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 					onClick={selectRow}
 				>
 					{children}
-					{showIndicator && closestEdge && (
-						<div className={`evy-drop-indicator-${closestEdge}`} />
-					)}
 				</div>
 				{showDropzone && showDropzoneAfter && (
-					<div className={dropzoneClass} />
+					<div
+						className={`${dropzoneClass} ${indicatorAfterClass}`}
+					/>
 				)}
 			</>
 		);

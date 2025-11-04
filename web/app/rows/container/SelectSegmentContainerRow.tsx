@@ -56,7 +56,6 @@ export default class SelectSegmentContainerRow extends EVYRow {
 					children[this.state.selectedTab] && (
 						<DraggableRowContainer
 							rowId={children[this.state.selectedTab].rowId}
-							orientation="horizontal"
 							showDropzoneBefore={this.state.selectedTab === 0}
 							showDropzoneAfter
 						>

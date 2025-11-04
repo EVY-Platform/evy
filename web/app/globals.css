@@ -19,7 +19,7 @@
 
 	/* Sizes */
 	--size-4: 1rem; /* 16px */
-	--size-8: 2rem; /* 32px */
+	--size-6: 2rem; /* 32px */
 	--size-48: 12rem; /* 192px */
 	--size-336: 336px;
 	--size-662: 662px;
@@ -41,7 +41,6 @@
 	--font-bold: 700;
 
 	/* Opacity */
-	--opacity-30: 0.3;
 	--opacity-60: 0.6;
 
 	/* Shadows */
@@ -184,8 +183,8 @@ body {
 .evy-w-full {
 	width: 100%;
 }
-.evy-w-4 {
-	width: var(--spacing-4);
+.evy-w-6 {
+	width: var(--size-6);
 }
 .evy-w-336 {
 	width: var(--size-336);
@@ -198,8 +197,8 @@ body {
 .evy-h-4 {
 	height: var(--size-4);
 }
-.evy-h-8 {
-	height: var(--size-8);
+.evy-h-6 {
+	height: var(--size-6);
 }
 .evy-h-48 {
 	height: var(--size-48);
@@ -229,6 +228,7 @@ body {
 }
 .evy-bg-blue {
 	background-color: var(--color-evy-blue);
+	opacity: var(--opacity-60);
 }
 .evy-bg-white {
 	background-color: var(--color-white);
@@ -313,6 +313,10 @@ body {
 .evy-border-gray-light {
 	border-color: var(--color-evy-gray-light);
 }
+.evy-border-dashed-blue {
+	border-style: dashed;
+	border-color: var(--color-evy-blue);
+}
 
 /* Border radius utilities */
 .evy-rounded-sm {
@@ -348,9 +352,6 @@ body {
 /* Opacity utilities */
 .evy-opacity-60 {
 	opacity: var(--opacity-60);
-}
-.evy-opacity-30 {
-	opacity: var(--opacity-30);
 }
 
 /* Pointer events */
