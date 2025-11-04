@@ -1,10 +1,12 @@
 import React, {
 	forwardRef,
 	Fragment,
+	useMemo,
 	useContext,
 	useEffect,
 	useRef,
 	useState,
+	useCallback,
 } from "react";
 import ReactDOM from "react-dom";
 import invariant from "tiny-invariant";
@@ -105,10 +107,11 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			[idleState.type]: "grab",
 		}[state.type];
 
-		const dropzoneClass =
-			orientation === "vertical"
+		const dropzoneClass = useMemo(() => {
+			return orientation === "vertical"
 				? "evy-h-4 evy-w-full evy-bg-gray-dark evy-opacity-30"
 				: "evy-w-4 evy-min-h-full evy-mt-2 evy-mb-2 evy-bg-gray-dark evy-opacity-30";
+		}, [orientation]);
 
 		return (
 			<>
@@ -159,38 +162,46 @@ export function DraggableRowContainer({
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idleState);
 
-	const shouldShowIndicator =
-		dropIndicator?.activeRowId === rowId && dragging;
-	const allowedEdges = orientation === "horizontal" ? columnEdges : rowEdges;
+	const shouldShowIndicator = useMemo(() => {
+		return dropIndicator?.activeRowId === rowId && dragging;
+	}, [dropIndicator, rowId, dragging]);
 
-	const activeRowPage =
-		dragging &&
-		dropIndicator?.activeRowId &&
-		flows
+	const allowedEdges = useMemo(() => {
+		return orientation === "horizontal" ? columnEdges : rowEdges;
+	}, [orientation]);
+
+	const activeRowPage = useMemo(() => {
+		if (!dropIndicator?.activeRowId || !activeFlowId) return;
+
+		return flows
 			.find((f) => f.id === activeFlowId)
 			?.pages.find((page) =>
 				page.rows
 					.flatMap(EVYRow.getRowsRecursive)
 					.find((r) => r.rowId === dropIndicator?.activeRowId)
 			);
-	const currentRowPage =
-		dragging &&
-		dropIndicator?.activeRowId &&
-		flows
+	}, [flows, activeFlowId, dropIndicator]);
+
+	const currentRowPage = useMemo(() => {
+		if (!rowId || !activeFlowId) return;
+
+		return flows
 			.find((f) => f.id === activeFlowId)
 			?.pages.find((page) =>
 				page.rows
 					.flatMap(EVYRow.getRowsRecursive)
 					.find((r) => r.rowId === rowId)
 			);
-	const shouldShowDropzone =
-		dragging &&
-		currentRowPage &&
-		activeRowPage &&
-		currentRowPage === activeRowPage;
+	}, [flows, activeFlowId, rowId]);
 
-	// Helper function to calculate DOM depth
-	function getElementDepth(element: HTMLElement): number {
+	const shouldShowDropzone = useMemo(() => {
+		if (!dragging) return false;
+		if (!currentRowPage || !activeRowPage) return false;
+
+		return currentRowPage === activeRowPage;
+	}, [dragging, currentRowPage, activeRowPage]);
+
+	const getElementDepth = useCallback((element: HTMLElement): number => {
 		let depth = 0;
 		let current: HTMLElement | null = element;
 		while (current) {
@@ -198,22 +209,22 @@ export function DraggableRowContainer({
 			current = current.parentElement;
 		}
 		return depth;
-	}
+	}, []);
 
-	// Clear indicator when dragging stops
 	useEffect(() => {
-		if (!dragging) {
-			dispatchDropIndicator({
-				type: "CLEAR_INDICATOR",
-			});
-		}
+		if (dragging) return;
+		dispatchDropIndicator({
+			type: "CLEAR_INDICATOR",
+		});
 	}, [dragging, dispatchDropIndicator]);
 
 	useEffect(() => {
 		const element = ref.current;
 		invariant(element);
-		// Set data attribute for finding the element later
+
+		// Set data attribute for UI tests
 		element.setAttribute("data-row-id", rowId);
+
 		return combine(
 			draggable({
 				element: element,

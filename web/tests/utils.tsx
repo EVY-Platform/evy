@@ -37,7 +37,7 @@ export const debugFlows: ServerFlow[] = [
 		pages: [
 			{
 				id: "step_1",
-				title: "Create listing",
+				title: "Step 1",
 				rows: [
 					{
 						type: "ColumnContainer",
