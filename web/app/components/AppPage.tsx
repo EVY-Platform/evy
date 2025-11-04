@@ -8,7 +8,6 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { AppContext } from "../registry";
 
-// AppPage component for rendering individual pages
 export default function AppPage({ pageId }: { pageId: string }) {
 	const { flows, activeFlowId, dispatchRow, dispatchDragging } =
 		useContext(AppContext);
