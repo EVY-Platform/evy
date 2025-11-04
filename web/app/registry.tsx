@@ -289,6 +289,8 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return updateState({ updatedPages: newPages });
 		}
 		case "UPDATE_ROW_CONTENT": {
+			const splitValue = action.configValue.split(",");
+
 			const updateRowInChildren = (
 				row: Row,
 				targetRowId: string,
@@ -304,7 +306,10 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 								...row.config.view,
 								content: {
 									...row.config.view.content,
-									[configId]: configValue,
+									[configId]:
+										splitValue.length > 1
+											? splitValue
+											: configValue,
 								},
 							},
 						},
@@ -386,7 +391,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 										content: {
 											...row.config.view.content,
 											[action.configId]:
-												action.configValue,
+												splitValue.length > 1
+													? splitValue
+													: action.configValue,
 										},
 									},
 								},

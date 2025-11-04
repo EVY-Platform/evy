@@ -52,16 +52,15 @@ export default class SelectSegmentContainerRow extends EVYRow {
 						</button>
 					))}
 				</div>
-				{segments.length === children.length &&
-					children[this.state.selectedTab] && (
-						<DraggableRowContainer
-							rowId={children[this.state.selectedTab].rowId}
-							showDropzoneBefore={this.state.selectedTab === 0}
-							showDropzoneAfter
-						>
-							{children[this.state.selectedTab].row}
-						</DraggableRowContainer>
-					)}
+				{children[this.state.selectedTab] && (
+					<DraggableRowContainer
+						rowId={children[this.state.selectedTab].rowId}
+						showDropzoneBefore={this.state.selectedTab === 0}
+						showDropzoneAfter
+					>
+						{children[this.state.selectedTab].row}
+					</DraggableRowContainer>
+				)}
 			</div>
 		);
 	}
