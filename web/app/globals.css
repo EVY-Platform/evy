@@ -19,7 +19,6 @@
 
 	/* Sizes */
 	--size-4: 1rem; /* 16px */
-	--size-6: 2rem; /* 32px */
 	--size-48: 12rem; /* 192px */
 	--size-336: 336px;
 	--size-662: 662px;
@@ -183,8 +182,8 @@ body {
 .evy-w-full {
 	width: 100%;
 }
-.evy-w-6 {
-	width: var(--size-6);
+.evy-w-4 {
+	width: var(--size-4);
 }
 .evy-w-336 {
 	width: var(--size-336);
@@ -196,9 +195,6 @@ body {
 /* Height utilities */
 .evy-h-4 {
 	height: var(--size-4);
-}
-.evy-h-6 {
-	height: var(--size-6);
 }
 .evy-h-48 {
 	height: var(--size-48);

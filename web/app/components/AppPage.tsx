@@ -1,4 +1,4 @@
-import { useEffect, useContext, useRef, useState, useCallback } from "react";
+import { useEffect, useContext, useRef, useCallback, useMemo } from "react";
 import invariant from "tiny-invariant";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
@@ -8,23 +8,12 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { AppContext } from "../registry";
 
-type State = { type: "idle" } | { type: "is-row-over" };
-
-const idle: State = { type: "idle" };
-const isRowOver: State = { type: "is-row-over" };
-
 // AppPage component for rendering individual pages
 export default function AppPage({ pageId }: { pageId: string }) {
 	const { flows, activeFlowId, dispatchRow, dispatchDragging } =
 		useContext(AppContext);
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
-	const [state, setState] = useState<State>(idle);
-
-	const rows = flows
-		.find((f) => f.id === activeFlowId)
-		?.pages.find((p) => p.id === pageId)?.rows;
-	if (!rows) return undefined;
 
 	useEffect(() => {
 		invariant(scrollableRef.current);
@@ -33,14 +22,10 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				element: scrollableRef.current,
 				getData: () => ({ pageId }),
 				canDrop: () => true,
-				onDragEnter: () => setState(isRowOver),
-				onDragLeave: () => setState(idle),
 				onDragStart: () => {
-					setState(isRowOver);
 					dispatchDragging({ type: "SET_DRAGGING", dragging: true });
 				},
 				onDrop: () => {
-					setState(idle);
 					dispatchDragging({ type: "SET_DRAGGING", dragging: false });
 				},
 			}),
@@ -61,29 +46,30 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow]
 	);
 
-	const rowElements = rows.map((row, index) => (
-		<DraggableRowContainer
-			key={row.rowId}
-			rowId={row.rowId}
-			selectRow={() => selectRow(row.rowId)}
-			showDropzoneBefore={index === 0}
-			showDropzoneAfter
-		>
-			{row.row}
-		</DraggableRowContainer>
-	));
+	const rowElements = useMemo(
+		() =>
+			flows
+				.find((f) => f.id === activeFlowId)
+				?.pages.find((p) => p.id === pageId)
+				?.rows?.map((row, index) => (
+					<DraggableRowContainer
+						key={row.rowId}
+						rowId={row.rowId}
+						selectRow={() => selectRow(row.rowId)}
+						showDropzoneBefore={index === 0}
+						showDropzoneAfter
+					>
+						{row.row}
+					</DraggableRowContainer>
+				)),
+		[flows, activeFlowId, pageId, selectRow]
+	);
 
 	return (
 		<div className="evy-overflow-hidden evy-p-30px evy-h-full evy-w-full evy-box-sizing-border">
 			<div
-				className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4"
+				className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4 evy-bg-white"
 				ref={scrollableRef}
-				style={{
-					backgroundColor:
-						state.type === idle.type
-							? "white"
-							: "var(--color-evy-gray-light)",
-				}}
 			>
 				{rowElements}
 			</div>

@@ -111,8 +111,8 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		const dropzoneClass = useMemo(() => {
 			return orientation === "vertical"
-				? "evy-h-6 evy-w-full evy-border-dashed-blue evy-rounded-sm"
-				: "evy-w-6 evy-min-h-full evy-mt-2 evy-mb-2 evy-border-dashed-blue evy-rounded-sm";
+				? "evy-h-4 evy-w-full evy-border-dashed-blue evy-rounded-sm"
+				: "evy-w-4 evy-min-h-full evy-mt-2 evy-mb-2 evy-border-dashed-blue evy-rounded-sm";
 		}, [orientation]);
 
 		const indicatorBeforeClass = useMemo(() => {
