@@ -75,28 +75,28 @@ const draggingState: State = { type: "dragging" };
 const previewState: State = { type: "preview", container: null, rect: null };
 
 type RowPrimitiveProps = {
-	closestEdge: Edge | null;
 	children: React.ReactNode;
 	state: State;
+	closestEdge?: Edge;
 	selectRow?: () => void;
-	showIndicator: boolean;
-	showDropzone: boolean;
-	showDropzoneBefore: boolean;
-	showDropzoneAfter: boolean;
+	showIndicator?: boolean;
+	showDropzone?: boolean;
+	showDropzoneBefore?: boolean;
+	showDropzoneAfter?: boolean;
 	orientation?: "horizontal" | "vertical";
 };
 
 const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 	function RowPrimitive(
 		{
-			closestEdge,
 			children,
 			state,
+			closestEdge,
 			selectRow,
-			showIndicator,
-			showDropzone,
-			showDropzoneBefore,
-			showDropzoneAfter,
+			showIndicator = false,
+			showDropzone = false,
+			showDropzoneBefore = false,
+			showDropzoneAfter = false,
 			orientation = "vertical",
 		},
 		ref
@@ -385,7 +385,7 @@ export function DraggableRowContainer({
 			<RowPrimitive
 				ref={ref}
 				state={state}
-				closestEdge={dropIndicator?.edge || null}
+				closestEdge={dropIndicator?.edge || undefined}
 				selectRow={selectRow}
 				showIndicator={shouldShowIndicator}
 				showDropzone={shouldShowDropzone}
@@ -400,22 +400,13 @@ export function DraggableRowContainer({
 				state.container &&
 				ReactDOM.createPortal(
 					<div
-						className="evy-bg-gray-light"
+						className="evy-bg-white"
 						style={{
 							width: state.rect.width,
 							height: state.rect.height,
 						}}
 					>
-						<RowPrimitive
-							state={state}
-							closestEdge={null}
-							showIndicator={false}
-							showDropzone={false}
-							showDropzoneBefore={false}
-							showDropzoneAfter={false}
-						>
-							{children}
-						</RowPrimitive>
+						<RowPrimitive state={state}>{children}</RowPrimitive>
 					</div>,
 					state.container
 				)}
