@@ -5,6 +5,7 @@ import {
 	createContext,
 	createElement,
 } from "react";
+import invariant from "tiny-invariant";
 
 import ButtonRow from "./rows/action/ButtonRow";
 import CalendarRow from "./rows/edit/CalendarRow";
@@ -73,45 +74,40 @@ export type ServerFlow = Omit<Flow, "pages"> & {
 
 type RowAction =
 	| {
-			type: "ADD_ROW_TO_PAGE";
+			type: "ADD_ROW";
+			newRowId: string;
+			oldRowId: string;
+			destinationPageId: string;
+			destinationIndex: number;
+			destinationRow?: Row;
+	  }
+	| {
+			type: "MOVE_ROW";
+			rowId: string;
+			originPageId: string;
+			destinationPageId: string;
+			destinationIndex: number;
+			destinationRow?: Row;
+	  }
+	| {
+			type: "REMOVE_ROW";
 			pageId: string;
 			rowId: string;
-			rowIdInBase: string;
-			rowIndexInFinishPage: number;
 	  }
 	| {
-			type: "MOVE_ROW_ON_PAGE";
-			startPageId: string;
-			finishPageId: string;
-			rowIndexInStartPage: number;
-			rowIndexInFinishPage: number;
-	  }
-	| {
-			type: "MOVE_ROW_TO_PAGE";
-			startPageId: string;
-			finishPageId: string;
-			rowIndexInStartPage: number;
-			rowIndexInFinishPage: number;
-	  }
-	| {
-			type: "REMOVE_ROW_FROM_PAGE";
-			pageId: string;
-			rowIndex: number;
-	  }
-	| {
-			type: "UPDATE_ROW_CONTENT";
+			type: "UPDATE_ROW";
 			rowId: string;
 			configId: string;
 			configValue: string;
 	  }
 	| {
+			type: "SET_ACTIVE_FLOW";
+			flowId: string;
+	  }
+	| {
 			type: "SET_ACTIVE_ROW";
 			pageId: string;
 			rowId: string;
-	  }
-	| {
-			type: "SET_ACTIVE_FLOW";
-			flowId: string;
 	  };
 
 const baseRows = [
@@ -136,69 +132,66 @@ const baseRows = [
 
 type AppState = {
 	flows: Flow[];
-	activeRowId: string | null;
-	activeFlowId: string | null;
+	activeRowId?: string;
+	activeFlowId?: string;
 };
 
 const pageReducer = (state: AppState, action: RowAction): AppState => {
-	const flowIndex = state.flows.findIndex(
-		(flow) => flow.id === state.activeFlowId
-	);
-	if (flowIndex === -1) return state;
-
-	const flow = state.flows[flowIndex];
+	const flow = state.flows.find((f) => f.id === state.activeFlowId);
+	if (!flow) return state;
 
 	const updateState = ({
 		updatedPages,
-		activeRowId,
 		activeFlowId,
+		activeRowId,
 	}: {
 		updatedPages?: Page[];
-		activeRowId?: string;
 		activeFlowId?: string;
+		activeRowId?: string;
 	}): AppState => {
 		return {
 			...state,
-			activeFlowId: activeFlowId || state.activeFlowId,
-			activeRowId: activeRowId || state.activeRowId,
-			flows: updatedPages
-				? state.flows.map((f, idx) =>
-						idx === flowIndex ? { ...f, pages: updatedPages } : f
-				  )
-				: state.flows,
+			...(updatedPages
+				? {
+						flows: state.flows.map((f) =>
+							f.id === state.activeFlowId
+								? { ...f, pages: updatedPages }
+								: f
+						),
+				  }
+				: {}),
+			...(activeFlowId && activeFlowId !== state.activeFlowId
+				? { activeFlowId }
+				: {}),
+			...(activeRowId && activeRowId !== state.activeRowId
+				? { activeRowId }
+				: {}),
 		};
 	};
 
 	switch (action.type) {
-		case "ADD_ROW_TO_PAGE": {
-			const pageIndex = flow.pages.findIndex(
-				(page) => page.id === action.pageId
-			);
-			if (pageIndex === -1) return state;
-
+		case "ADD_ROW": {
 			const baseRow = baseRows.find((row) => {
 				if (!row || typeof row !== "function") return false;
-				return (row as { name: string }).name === action.rowIdInBase;
+				return (row as { name: string }).name === action.oldRowId;
 			})!;
 
 			const rowDataAdd: Row = {
 				...baseRow,
-				rowId: action.rowId,
+				rowId: action.newRowId,
 				config: baseRow.config,
-				row: createElement(baseRow, { rowId: action.rowId }),
+				row: createElement(baseRow, { rowId: action.newRowId }),
 			};
 
-			const newPages = flow.pages.map((page, idx) =>
-				idx === pageIndex
+			// TODO: Use containerId to find the container row and add the row to the container
+			const newPages = flow.pages.map((page) =>
+				page.id === action.destinationPageId
 					? {
 							...page,
 							rows: [
-								...page.rows.slice(
-									0,
-									action.rowIndexInFinishPage
-								),
+								...page.rows.slice(0, action.destinationIndex),
 								rowDataAdd,
-								...page.rows.slice(action.rowIndexInFinishPage),
+								...page.rows.slice(action.destinationIndex),
 							],
 					  }
 					: page
@@ -206,60 +199,38 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			return updateState({
 				updatedPages: newPages,
-				activeRowId: action.rowId,
+				activeRowId: action.newRowId,
 			});
 		}
-		case "MOVE_ROW_ON_PAGE": {
-			let rowId: string | undefined;
+		case "MOVE_ROW": {
+			const row = flow.pages
+				.find((page) => page.id === action.originPageId)
+				?.rows.find((r) => r.rowId === action.rowId);
+			invariant(row);
+
 			const newPages = flow.pages.map((page) => {
-				if (page.id === action.startPageId) {
-					const newRows = [...page.rows];
-					const [movedItem] = newRows.splice(
-						action.rowIndexInStartPage,
-						1
-					);
-					newRows.splice(action.rowIndexInFinishPage, 0, movedItem);
-					rowId = movedItem.rowId;
-					return { ...page, rows: newRows };
-				}
-				return page;
-			});
-			return updateState({
-				updatedPages: newPages,
-				activeRowId: rowId,
-			});
-		}
-		case "MOVE_ROW_TO_PAGE": {
-			const sourcePageIndex = flow.pages.findIndex(
-				(page) => page.id === action.startPageId
-			);
-			const destinationPageIndex = flow.pages.findIndex(
-				(page) => page.id === action.finishPageId
-			);
-
-			if (sourcePageIndex === -1 || destinationPageIndex === -1)
-				return state;
-
-			const row =
-				flow.pages[sourcePageIndex].rows[action.rowIndexInStartPage];
-			const rowId = row.rowId;
-
-			const newPages = flow.pages.map((page, idx) => {
-				if (idx === sourcePageIndex) {
+				if (
+					page.id === action.originPageId &&
+					page.id === action.destinationPageId
+				) {
+					const destinationItems = [
+						...page.rows.filter((r) => r.rowId !== action.rowId),
+					];
+					destinationItems.splice(action.destinationIndex, 0, row);
 					return {
 						...page,
-						rows: page.rows.filter(
-							(_, i) => i !== action.rowIndexInStartPage
-						),
+						rows: destinationItems,
 					};
 				}
-				if (idx === destinationPageIndex) {
+				if (page.id === action.originPageId) {
+					return {
+						...page,
+						rows: page.rows.filter((r) => r.rowId !== action.rowId),
+					};
+				}
+				if (page.id === action.destinationPageId) {
 					const destinationItems = [...page.rows];
-					destinationItems.splice(
-						action.rowIndexInFinishPage,
-						0,
-						row
-					);
+					destinationItems.splice(action.destinationIndex, 0, row);
 					return { ...page, rows: destinationItems };
 				}
 				return page;
@@ -267,28 +238,23 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			return updateState({
 				updatedPages: newPages,
-				activeRowId: rowId,
+				activeRowId: action.rowId,
 			});
 		}
-		case "REMOVE_ROW_FROM_PAGE": {
-			const pageIndex = flow.pages.findIndex(
-				(page) => page.id === action.pageId
-			);
-			if (pageIndex === -1) return state;
-
-			const newPages = flow.pages.map((page, idx) =>
-				idx === pageIndex
+		case "REMOVE_ROW": {
+			const newPages = flow.pages.map((page) =>
+				page.id === action.pageId
 					? {
 							...page,
 							rows: page.rows.filter(
-								(_, i) => i !== action.rowIndex
+								(r) => r.rowId !== action.rowId
 							),
 					  }
 					: page
 			);
 			return updateState({ updatedPages: newPages });
 		}
-		case "UPDATE_ROW_CONTENT": {
+		case "UPDATE_ROW": {
 			const splitValue = action.configValue.split(",");
 
 			const updateRowInChildren = (
@@ -376,10 +342,10 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 
 			const newPages = flow.pages.map((page) => {
-				const topLevelRowIndex = page.rows.findIndex(
+				const hasAtTopLevel = page.rows.some(
 					(r) => r.rowId === action.rowId
 				);
-				if (topLevelRowIndex >= 0) {
+				if (hasAtTopLevel) {
 					const newRows = page.rows.map((row) => {
 						if (row.rowId === action.rowId) {
 							return {
@@ -405,24 +371,34 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				}
 
 				// If not found as top-level, search recursively in children
-				const newRows = page.rows.map((row) => {
-					const updated = updateRowInChildren(
-						row,
-						action.rowId,
-						action.configId,
-						action.configValue
-					);
-					return updated || row;
-				});
+				const newRows = page.rows.map(
+					(row) =>
+						updateRowInChildren(
+							row,
+							action.rowId,
+							action.configId,
+							action.configValue
+						) || row
+				);
 				return { ...page, rows: newRows };
 			});
 			return updateState({ updatedPages: newPages });
 		}
-		case "SET_ACTIVE_ROW": {
-			return updateState({ activeRowId: action.rowId });
-		}
 		case "SET_ACTIVE_FLOW": {
-			return updateState({ activeFlowId: action.flowId });
+			return updateState({
+				activeFlowId: action.flowId,
+				activeRowId: undefined,
+			});
+		}
+		case "SET_ACTIVE_ROW": {
+			const page = flow.pages.find((page) =>
+				page.rows.some((row) => row.rowId === action.rowId)
+			);
+			invariant(page, `Page not found for row ${action.rowId}`);
+
+			return updateState({
+				activeRowId: action.rowId,
+			});
 		}
 		default:
 			return state;
@@ -484,8 +460,8 @@ const dropIndicatorReducer = (
 export const AppContext = createContext<{
 	rows: Row[];
 	flows: Flow[];
-	activeFlowId: string | null;
-	activeRowId: string | null;
+	activeFlowId?: string;
+	activeRowId?: string;
 	dragging: DraggingState;
 	dropIndicator: DropIndicatorState;
 	dispatchRow: Dispatch<RowAction>;
@@ -494,8 +470,6 @@ export const AppContext = createContext<{
 }>({
 	rows: [],
 	flows: [],
-	activeFlowId: null,
-	activeRowId: null,
 	dragging: false,
 	dropIndicator: null,
 	dispatchRow: () => {},
@@ -569,8 +543,7 @@ export function AppProvider({
 
 	const [appState, dispatchRow] = useReducer(pageReducer, {
 		flows: decodeFlows(flows),
-		activeRowId: null,
-		activeFlowId: flows[0]?.id ? flows[0].id : null,
+		activeFlowId: flows[0]?.id,
 	});
 
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);

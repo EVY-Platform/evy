@@ -227,13 +227,6 @@ export function DraggableRowContainer({
 	}, []);
 
 	useEffect(() => {
-		if (dragging) return;
-		dispatchDropIndicator({
-			type: "CLEAR_INDICATOR",
-		});
-	}, [dragging, dispatchDropIndicator]);
-
-	useEffect(() => {
 		const element = ref.current;
 		invariant(element);
 
@@ -364,17 +357,11 @@ export function DraggableRowContainer({
 					}
 				},
 				onDragLeave: () => {
-					// Only clear if this is the active indicator
 					if (dropIndicator?.activeRowId === rowId) {
 						dispatchDropIndicator({
 							type: "CLEAR_INDICATOR",
 						});
 					}
-				},
-				onDrop: () => {
-					dispatchDropIndicator({
-						type: "CLEAR_INDICATOR",
-					});
 				},
 			})
 		);

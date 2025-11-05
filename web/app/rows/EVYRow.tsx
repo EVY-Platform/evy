@@ -64,6 +64,23 @@ export abstract class EVYRow extends React.Component<{
 		].filter((row) => row !== undefined);
 	}
 
+	static findRowContainer(targetRowId: string, rows: Row[]): Row | null {
+		for (const row of rows) {
+			const childrenMatch = row.config.view.content.children?.some(
+				(r) => r.rowId === targetRowId
+			);
+			if (childrenMatch && row.config.view.content.children) {
+				return row;
+			}
+
+			return EVYRow.findRowContainer(
+				targetRowId,
+				row.config.view.content.children ?? []
+			);
+		}
+		return null;
+	}
+
 	override render() {
 		return (
 			<AppContext.Consumer>

@@ -1,9 +1,10 @@
 import { createRoot } from "react-dom/client";
+import { useContext, useEffect, useMemo } from "react";
+import invariant from "tiny-invariant";
+
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { useContext, useEffect } from "react";
-import invariant from "tiny-invariant";
 
 import { AppProvider, AppContext, type ServerFlow } from "./registry.tsx";
 import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
@@ -11,13 +12,14 @@ import { RowsPanel } from "./components/RowsPanel.tsx";
 import { FlowSelector } from "./components/FlowSelector.tsx";
 import AppPage from "./components/AppPage.tsx";
 import type { Edge } from "./components/DraggableRowContainer.tsx";
+import { EVYRow } from "./rows/EVYRow.tsx";
 
 interface DropLocation {
 	current: {
 		dropTargets: Array<{
 			data: {
 				pageId: string;
-				rowId?: string;
+				rowId: string;
 			};
 		}>;
 	};
@@ -25,7 +27,6 @@ interface DropLocation {
 		dropTargets: Array<{
 			data: {
 				pageId: string;
-				rowId?: string;
 			};
 		}>;
 	};
@@ -47,7 +48,10 @@ const panelWidth = "300px";
 function AppContent() {
 	const { flows, activeFlowId, dispatchRow } = useContext(AppContext);
 
-	const pages = flows.find((flow) => flow.id === activeFlowId)?.pages || [];
+	const pages = useMemo(
+		() => flows.find((flow) => flow.id === activeFlowId)?.pages || [],
+		[flows, activeFlowId]
+	);
 
 	useEffect(() => {
 		return monitorForElements({
@@ -60,93 +64,117 @@ function AppContent() {
 				const rowId = source.data.rowId;
 				invariant(typeof rowId === "string");
 
-				const [, startPageRecord] = location.initial.dropTargets;
-				const sourcePageId = startPageRecord.data.pageId;
+				const sourcePageId =
+					location.initial.dropTargets[
+						location.initial.dropTargets.length - 1
+					].data.pageId;
 				invariant(typeof sourcePageId === "string");
 
-				const sourcePageIndex = pages.findIndex(
-					(page) => page.id === sourcePageId
-				);
-				const rowIndex = pages[sourcePageIndex]?.rows.findIndex(
-					(row) => row.rowId === rowId
-				);
-
 				// If the row was dropped on top of another row,
-				// dropTargets is an array with [row, page]
+				// dropTargets is an array with [row, ..., page]
 				// Otherwise it is [page]
-				// Therefore we extract the destinationPageRecord no matter what
-				const [destinationRowRecord, destinationPageRecord] =
-					location.current.dropTargets.length > 1
-						? location.current.dropTargets
-						: [null, ...location.current.dropTargets];
+				const destinationPageRecord =
+					location.current.dropTargets[
+						location.current.dropTargets.length - 1
+					];
 				invariant(destinationPageRecord);
 
 				const destinationPageId = destinationPageRecord.data
 					.pageId as string;
-				const destinationPageIndex = pages.findIndex(
-					(page) => page.id === destinationPageId
-				);
-
-				const indexOfTarget = destinationRowRecord
-					? // If the row was dropped on another row, find it's index
-					  pages[destinationPageIndex]?.rows.findIndex(
-							(row) =>
-								row.rowId === destinationRowRecord.data.rowId
-					  )
-					: // Otherwise fallback to end of the list
-					  pages[destinationPageIndex]?.rows.length + 1;
-
-				const closestEdgeOfTarget: Edge | null = destinationRowRecord
-					? extractClosestEdge(destinationRowRecord.data)
-					: null;
+				if (destinationPageId === "rows" && sourcePageId === "rows") {
+					return;
+				}
 
 				if (destinationPageId === "rows") {
-					if (sourcePageId === destinationPageId) return;
 					dispatchRow({
-						type: "REMOVE_ROW_FROM_PAGE",
+						type: "REMOVE_ROW",
 						pageId: sourcePageId,
-						rowIndex,
+						rowId,
 					});
-				} else if (sourcePageId === "rows") {
+					return;
+				}
+
+				const destinationPage = pages.find(
+					(page) => page.id === destinationPageId
+				);
+				invariant(destinationPage);
+
+				// If the row was dropped on top of another row,
+				// dropTargets is an array with [row, ..., page]
+				// Otherwise it is [page]
+				const destinationRow =
+					location.current.dropTargets.length > 1
+						? location.current.dropTargets[0]
+						: null;
+
+				const destinationContainer =
+					destinationRow &&
+					EVYRow.findRowContainer(
+						destinationRow.data.rowId,
+						destinationPage.rows
+					);
+
+				let indexOfTarget =
+					destinationContainer?.config.view.content.children?.findIndex(
+						(r) => r.rowId === destinationRow?.data.rowId
+					);
+				if (
+					(indexOfTarget === undefined || indexOfTarget < 0) &&
+					destinationContainer &&
+					destinationRow &&
+					destinationContainer?.config.view.content.child?.rowId ===
+						destinationRow?.data.rowId
+				) {
+					indexOfTarget = 0;
+				}
+
+				const closestEdgeOfTarget: Edge | null = destinationRow
+					? extractClosestEdge(destinationRow.data)
+					: null;
+
+				if (sourcePageId === "rows") {
 					const destinationIndex =
 						closestEdgeOfTarget === "bottom" ||
 						closestEdgeOfTarget === "right"
-							? indexOfTarget + 1
-							: indexOfTarget;
+							? (indexOfTarget ?? destinationPage.rows.length) + 1
+							: indexOfTarget ?? destinationPage.rows.length;
 					dispatchRow({
-						type: "ADD_ROW_TO_PAGE",
-						pageId: destinationPageId,
-						rowId: crypto.randomUUID(),
-						rowIdInBase: rowId,
-						rowIndexInFinishPage: destinationIndex,
+						type: "ADD_ROW",
+						newRowId: crypto.randomUUID(),
+						oldRowId: rowId,
+						destinationPageId: destinationPageId,
+						destinationIndex: destinationIndex,
+						destinationRow: destinationContainer ?? undefined,
 					});
 				} else if (sourcePageId === destinationPageId) {
-					const destinationIndex = getReorderDestinationIndex({
-						startIndex: rowIndex,
-						indexOfTarget,
-						closestEdgeOfTarget,
-						axis: "vertical",
-					});
-					dispatchRow({
-						type: "MOVE_ROW_ON_PAGE",
-						startPageId: sourcePageId,
-						finishPageId: sourcePageId,
-						rowIndexInStartPage: rowIndex,
-						rowIndexInFinishPage: destinationIndex,
-					});
-				} else {
 					const destinationIndex =
 						closestEdgeOfTarget === "bottom" ||
 						closestEdgeOfTarget === "right"
-							? indexOfTarget + 1
-							: indexOfTarget;
+							? (indexOfTarget ?? destinationPage.rows.length) - 1
+							: indexOfTarget ?? 0;
 
 					dispatchRow({
-						type: "MOVE_ROW_TO_PAGE",
-						startPageId: sourcePageId,
-						finishPageId: destinationPageId,
-						rowIndexInStartPage: rowIndex,
-						rowIndexInFinishPage: destinationIndex,
+						type: "MOVE_ROW",
+						rowId,
+						originPageId: sourcePageId,
+						destinationPageId: sourcePageId,
+						destinationIndex: destinationIndex,
+						destinationRow: destinationContainer ?? undefined,
+					});
+				} else if (destinationPageId !== sourcePageId) {
+					const destinationIndex =
+						closestEdgeOfTarget === "top" ||
+						closestEdgeOfTarget === "left"
+							? indexOfTarget ?? 0
+							: indexOfTarget ?? destinationPage.rows.length;
+
+					dispatchRow({
+						type: "MOVE_ROW",
+						rowId,
+						originPageId: sourcePageId,
+						destinationPageId: destinationPageId,
+						destinationIndex: destinationIndex,
+						destinationRow: destinationContainer ?? undefined,
 					});
 				}
 			},
