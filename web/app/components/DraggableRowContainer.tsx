@@ -111,20 +111,24 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		const dropzoneClass = useMemo(() => {
 			return orientation === "vertical"
-				? "evy-h-1 evy-w-full evy-bg-gray evy-rounded-sm"
-				: "evy-w-1 evy-min-h-full evy-mt-2 evy-mb-2 evy-bg-gray evy-rounded-sm";
+				? "evy-h-1px evy-w-full evy-bg-gray evy-rounded-sm"
+				: "evy-w-1px evy-min-h-full evy-mt-2 evy-mb-2 evy-bg-gray evy-rounded-sm";
 		}, [orientation]);
 
 		const indicatorBeforeClass = useMemo(() => {
 			if (!showIndicator) return;
 			if (closestEdge !== "top" && closestEdge !== "left") return;
-			return "evy-bg-blue";
+			return orientation === "vertical"
+				? "evy-bg-blue evy-h-8"
+				: "evy-bg-blue evy-w-8";
 		}, [showIndicator, closestEdge]);
 
 		const indicatorAfterClass = useMemo(() => {
 			if (!showIndicator) return;
 			if (closestEdge !== "bottom" && closestEdge !== "right") return;
-			return "evy-bg-blue";
+			return orientation === "vertical"
+				? "evy-bg-blue evy-h-8"
+				: "evy-bg-blue evy-w-8";
 		}, [showIndicator, closestEdge]);
 
 		return (
@@ -268,6 +272,7 @@ export function DraggableRowContainer({
 						}
 					),
 				onDragEnter: (args: DragEvent) => {
+					console.log("onDragEnter", args.source.data.rowId);
 					if (args.source.data.rowId === rowId) return;
 
 					const edge = extractClosestEdge(args.self.data);
@@ -306,10 +311,12 @@ export function DraggableRowContainer({
 				},
 				onDrag: (args: DragEvent) => {
 					if (args.source.data.rowId === rowId) return;
+					console.log("onDrag");
 
 					const edge = extractClosestEdge(args.self.data);
 					if (edge) {
 						// Check if this row is deeper than the current active indicator
+						// by checking if the current active indicator's element contains this element
 						const otherElement = document.querySelector(
 							`[data-row-id="${dropIndicator?.rowId || ""}"]`
 						) as HTMLElement | null;
