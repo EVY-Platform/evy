@@ -246,7 +246,7 @@ function App() {
 	return (
 		<AppProvider initialFlows={win?.__TEST_FLOWS__}>
 			<div className="evy-h-screen evy-overflow-hidden">
-				<div className="evy-border-b evy-border-gray evy-p-4 evy-bg-white evy-flex evy-justify-between evy-items-center">
+				<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-justify-between evy-items-center">
 					<a href="/">
 						<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 					</a>
