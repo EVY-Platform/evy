@@ -188,7 +188,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const page = flow.pages.find(
 				(p) => p.id === action.destinationPageId
 			)!;
-			if (!page) throw new Error("Page not found");
+			invariant(page, "PageReducer addRow: page is not defined");
 
 			if (action.destinationContainer) {
 				const stepsToDestinationContainer = page.rows
@@ -204,11 +204,10 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 					})
 					.find((s) => s !== undefined);
 
-				if (!stepsToDestinationContainer?.length) {
-					throw new Error(
-						"Could not find steps to destination container"
-					);
-				}
+				invariant(
+					stepsToDestinationContainer?.length,
+					"PageReducer addRow: stepsToDestinationContainer is not defined"
+				);
 
 				let path = page.rows[stepsToDestinationContainer[0] as number];
 				if (stepsToDestinationContainer.length > 1) {
@@ -245,7 +244,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const row = flow.pages
 				.find((page) => page.id === action.originPageId)
 				?.rows.find((r) => r.rowId === action.rowId);
-			invariant(row);
+			invariant(row, "PageReducer moveRow: row is not defined");
 
 			const newPages = flow.pages.map((page) => {
 				if (
@@ -462,18 +461,26 @@ const draggingReducer = (
 };
 
 type DropIndicatorState = {
-	activeRowId: string | null;
-	edge: Edge | null;
+	rowId?: string;
+	pageId?: string;
+	edge?: Edge;
 } | null;
 
 type DropIndicatorAction =
 	| {
-			type: "SET_ACTIVE_INDICATOR";
-			rowId: string | null;
-			edge: Edge | null;
+			type: "SET_INDICATOR_ROW";
+			rowId: string;
+			edge: Edge;
 	  }
 	| {
-			type: "CLEAR_INDICATOR";
+			type: "UNSET_INDICATOR_ROW";
+	  }
+	| {
+			type: "SET_INDICATOR_PAGE";
+			pageId: string;
+	  }
+	| {
+			type: "UNSET_INDICATOR_PAGE";
 	  };
 
 const dropIndicatorReducer = (
@@ -481,16 +488,28 @@ const dropIndicatorReducer = (
 	action: DropIndicatorAction
 ): DropIndicatorState => {
 	switch (action.type) {
-		case "SET_ACTIVE_INDICATOR":
-			if (action.rowId === null) {
-				return null;
-			}
+		case "SET_INDICATOR_ROW":
 			return {
-				activeRowId: action.rowId,
+				...state,
+				rowId: action.rowId,
 				edge: action.edge,
 			};
-		case "CLEAR_INDICATOR":
-			return null;
+		case "UNSET_INDICATOR_ROW":
+			return {
+				...state,
+				rowId: undefined,
+				edge: undefined,
+			};
+		case "SET_INDICATOR_PAGE":
+			return {
+				...state,
+				pageId: action.pageId,
+			};
+		case "UNSET_INDICATOR_PAGE":
+			return {
+				...state,
+				pageId: undefined,
+			};
 		default:
 			return state;
 	}

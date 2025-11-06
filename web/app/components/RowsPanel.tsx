@@ -13,7 +13,10 @@ export function RowsPanel() {
 	const { rows, dragging, dispatchDragging } = useContext(AppContext);
 
 	useEffect(() => {
-		invariant(pageInnerRef.current);
+		invariant(
+			pageInnerRef.current,
+			"RowsPanel useEffect: pageInnerRef.current is not defined"
+		);
 		return combine(
 			dropTargetForElements({
 				element: pageInnerRef.current,

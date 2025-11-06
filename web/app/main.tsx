@@ -3,7 +3,6 @@ import { useContext, useEffect, useMemo } from "react";
 import invariant from "tiny-invariant";
 
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 import { AppProvider, AppContext, type ServerFlow } from "./registry.tsx";
@@ -62,13 +61,19 @@ function AppContent() {
 				}
 
 				const rowId = source.data.rowId;
-				invariant(typeof rowId === "string");
+				invariant(
+					typeof rowId === "string",
+					"AppContent monitor for elements onDrop: rowId is not a string"
+				);
 
 				const sourcePageId =
 					location.initial.dropTargets[
 						location.initial.dropTargets.length - 1
 					].data.pageId;
-				invariant(typeof sourcePageId === "string");
+				invariant(
+					typeof sourcePageId === "string",
+					"AppContent monitor for elements onDrop: sourcePageId is not a string"
+				);
 
 				// If the row was dropped on top of another row,
 				// dropTargets is an array with [row, ..., page]
@@ -77,7 +82,10 @@ function AppContent() {
 					location.current.dropTargets[
 						location.current.dropTargets.length - 1
 					];
-				invariant(destinationPageRecord);
+				invariant(
+					destinationPageRecord,
+					"AppContent monitor for elements onDrop: destinationPageRecord is not defined"
+				);
 
 				const destinationPageId = destinationPageRecord.data
 					.pageId as string;
@@ -97,7 +105,10 @@ function AppContent() {
 				const destinationPage = pages.find(
 					(page) => page.id === destinationPageId
 				);
-				invariant(destinationPage);
+				invariant(
+					destinationPage,
+					"AppContent monitor for elements onDrop: destinationPage is not defined"
+				);
 
 				// If the row was dropped on top of another row,
 				// dropTargets is an array with [row, ..., page]

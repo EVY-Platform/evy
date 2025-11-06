@@ -9,31 +9,46 @@ import { DraggableRowContainer } from "./DraggableRowContainer";
 import { AppContext } from "../registry";
 
 export default function AppPage({ pageId }: { pageId: string }) {
-	const { flows, activeFlowId, dispatchRow, dispatchDragging } =
-		useContext(AppContext);
+	const {
+		flows,
+		activeFlowId,
+		dispatchRow,
+		dispatchDragging,
+		dispatchDropIndicator,
+	} = useContext(AppContext);
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
-		invariant(scrollableRef.current);
+		invariant(
+			scrollableRef.current,
+			"AppPage useEffect: scrollableRef.current is not defined"
+		);
 		return combine(
 			dropTargetForElements({
 				element: scrollableRef.current,
 				getData: () => ({ pageId }),
 				canDrop: () => true,
-				onDragStart: () => {
-					dispatchDragging({ type: "SET_DRAGGING", dragging: true });
-				},
 				onDrop: () => {
+					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" });
 					dispatchDragging({ type: "SET_DRAGGING", dragging: false });
 				},
+				onDragEnter: () =>
+					dispatchDropIndicator({
+						type: "SET_INDICATOR_PAGE",
+						pageId: pageId,
+					}),
+				onDragLeave: () =>
+					dispatchDropIndicator({
+						type: "UNSET_INDICATOR_PAGE",
+					}),
 			}),
 			autoScrollForElements({
 				element: scrollableRef.current,
 				canScroll: () => true,
 			})
 		);
-	}, [scrollableRef, pageId, dispatchDragging]);
+	}, [scrollableRef, pageId, dispatchDropIndicator]);
 
 	const selectRow = useCallback(
 		(rowId: string) =>

@@ -178,26 +178,14 @@ export function DraggableRowContainer({
 	const [state, setState] = useState<State>(idleState);
 
 	const shouldShowIndicator = useMemo(() => {
-		return dropIndicator?.activeRowId === rowId && dragging;
+		return dropIndicator?.rowId === rowId && dragging;
 	}, [dropIndicator, rowId, dragging]);
 
 	const allowedEdges = useMemo(() => {
 		return orientation === "horizontal" ? columnEdges : rowEdges;
 	}, [orientation]);
 
-	const activeRowPage = useMemo(() => {
-		if (!dropIndicator?.activeRowId || !activeFlowId) return;
-
-		return flows
-			.find((f) => f.id === activeFlowId)
-			?.pages.find((page) =>
-				page.rows
-					.flatMap(EVYRow.getRowsRecursive)
-					.find((r) => r.rowId === dropIndicator?.activeRowId)
-			);
-	}, [flows, activeFlowId, dropIndicator]);
-
-	const currentRowPage = useMemo(() => {
+	const currentRowPageId = useMemo(() => {
 		if (!rowId || !activeFlowId) return;
 
 		return flows
@@ -206,15 +194,15 @@ export function DraggableRowContainer({
 				page.rows
 					.flatMap(EVYRow.getRowsRecursive)
 					.find((r) => r.rowId === rowId)
-			);
+			)?.id;
 	}, [flows, activeFlowId, rowId]);
 
 	const shouldShowDropzone = useMemo(() => {
 		if (!dragging) return false;
-		if (!currentRowPage || !activeRowPage) return false;
+		if (!currentRowPageId || !dropIndicator?.pageId) return false;
 
-		return currentRowPage === activeRowPage;
-	}, [dragging, currentRowPage, activeRowPage]);
+		return currentRowPageId === dropIndicator?.pageId;
+	}, [dragging, currentRowPageId, dropIndicator?.pageId]);
 
 	const getElementDepth = useCallback((element: HTMLElement): number => {
 		let depth = 0;
@@ -228,7 +216,10 @@ export function DraggableRowContainer({
 
 	useEffect(() => {
 		const element = ref.current;
-		invariant(element);
+		invariant(
+			element,
+			"DraggableRowContainer useEffect: ref.current is not defined"
+		);
 
 		// Set data attribute for UI tests
 		element.setAttribute("data-row-id", rowId);
@@ -267,101 +258,94 @@ export function DraggableRowContainer({
 				element: element,
 				canDrop: () => true,
 				getIsSticky: () => true,
-				getData: ({ input, element }: DropTargetEvent) => {
-					return attachClosestEdge(
+				getData: ({ input, element }: DropTargetEvent) =>
+					attachClosestEdge(
 						{ rowId },
 						{
 							input,
 							element,
 							allowedEdges,
 						}
-					);
-				},
+					),
 				onDragEnter: (args: DragEvent) => {
-					if (args.source.data.rowId !== rowId) {
-						const edge = extractClosestEdge(args.self.data);
-						if (edge) {
-							// Check if this row is deeper than the current active indicator
-							// by checking if the current active indicator's element contains this element
-							const otherElement = document.querySelector(
-								`[data-row-id="${
-									dropIndicator?.activeRowId || ""
-								}"]`
-							) as HTMLElement | null;
+					if (args.source.data.rowId === rowId) return;
 
-							let shouldUpdate = false;
-							if (!dropIndicator?.activeRowId || !otherElement) {
-								// No active indicator, or can't find the element, so update
-								shouldUpdate = true;
-							} else if (otherElement.contains(element)) {
-								// Current element is inside the other element, so it's deeper
-								shouldUpdate = true;
-							} else if (element.contains(otherElement)) {
-								// Other element is inside current element, so other is deeper, don't update
-								shouldUpdate = false;
-							} else {
-								// Neither contains the other, check DOM depth
-								const currentDepth = getElementDepth(element);
-								const otherDepth =
-									getElementDepth(otherElement);
-								shouldUpdate = currentDepth > otherDepth;
-							}
+					const edge = extractClosestEdge(args.self.data);
+					if (edge) {
+						// Check if this row is deeper than the current active indicator
+						// by checking if the current active indicator's element contains this element
+						const otherElement = document.querySelector(
+							`[data-row-id="${dropIndicator?.rowId || ""}"]`
+						) as HTMLElement | null;
 
-							if (shouldUpdate) {
-								dispatchDropIndicator({
-									type: "SET_ACTIVE_INDICATOR",
-									rowId: rowId,
-									edge: edge,
-								});
-							}
+						let shouldUpdate = false;
+						if (!dropIndicator?.rowId || !otherElement) {
+							// No active indicator, or can't find the element, so update
+							shouldUpdate = true;
+						} else if (otherElement.contains(element)) {
+							// Current element is inside the other element, so it's deeper
+							shouldUpdate = true;
+						} else if (element.contains(otherElement)) {
+							// Other element is inside current element, so other is deeper, don't update
+							shouldUpdate = false;
+						} else {
+							// Neither contains the other, check DOM depth
+							const currentDepth = getElementDepth(element);
+							const otherDepth = getElementDepth(otherElement);
+							shouldUpdate = currentDepth > otherDepth;
+						}
+
+						if (shouldUpdate) {
+							dispatchDropIndicator({
+								type: "SET_INDICATOR_ROW",
+								rowId: rowId,
+								edge: edge,
+							});
 						}
 					}
 				},
 				onDrag: (args: DragEvent) => {
-					if (args.source.data.rowId !== rowId) {
-						const edge = extractClosestEdge(args.self.data);
-						if (edge) {
-							// Check if this row is deeper than the current active indicator
-							const otherElement = document.querySelector(
-								`[data-row-id="${
-									dropIndicator?.activeRowId || ""
-								}"]`
-							) as HTMLElement | null;
+					if (args.source.data.rowId === rowId) return;
 
-							let shouldUpdate = false;
-							if (!dropIndicator?.activeRowId || !otherElement) {
-								// No active indicator, or can't find the element, so update
-								shouldUpdate = true;
-							} else if (otherElement.contains(element)) {
-								// Current element is inside the other element, so it's deeper
-								shouldUpdate = true;
-							} else if (element.contains(otherElement)) {
-								// Other element is inside current element, so other is deeper, don't update
-								shouldUpdate = false;
-							} else {
-								// Neither contains the other, check DOM depth
-								const currentDepth = getElementDepth(element);
-								const otherDepth =
-									getElementDepth(otherElement);
-								shouldUpdate = currentDepth > otherDepth;
-							}
+					const edge = extractClosestEdge(args.self.data);
+					if (edge) {
+						// Check if this row is deeper than the current active indicator
+						const otherElement = document.querySelector(
+							`[data-row-id="${dropIndicator?.rowId || ""}"]`
+						) as HTMLElement | null;
 
-							if (shouldUpdate) {
-								dispatchDropIndicator({
-									type: "SET_ACTIVE_INDICATOR",
-									rowId: rowId,
-									edge: edge,
-								});
-							}
+						let shouldUpdate = false;
+						if (!dropIndicator?.rowId || !otherElement) {
+							// No active indicator, or can't find the element, so update
+							shouldUpdate = true;
+						} else if (otherElement.contains(element)) {
+							// Current element is inside the other element, so it's deeper
+							shouldUpdate = true;
+						} else if (element.contains(otherElement)) {
+							// Other element is inside current element, so other is deeper, don't update
+							shouldUpdate = false;
+						} else {
+							// Neither contains the other, check DOM depth
+							const currentDepth = getElementDepth(element);
+							const otherDepth = getElementDepth(otherElement);
+							shouldUpdate = currentDepth > otherDepth;
+						}
+
+						if (shouldUpdate) {
+							dispatchDropIndicator({
+								type: "SET_INDICATOR_ROW",
+								rowId: rowId,
+								edge: edge,
+							});
 						}
 					}
 				},
 				onDragLeave: () => {
-					if (dropIndicator?.activeRowId === rowId) {
-						dispatchDropIndicator({
-							type: "CLEAR_INDICATOR",
-						});
-					}
+					if (dropIndicator?.rowId !== rowId) return;
+
+					dispatchDropIndicator({
+						type: "UNSET_INDICATOR_ROW",
+					});
 				},
 			})
 		);
