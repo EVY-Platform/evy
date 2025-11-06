@@ -109,72 +109,90 @@ function AppContent() {
 
 				const destinationContainer =
 					destinationRow &&
-					EVYRow.findRowContainer(
+					EVYRow.findContainerOfRow(
 						destinationRow.data.rowId,
 						destinationPage.rows
 					);
-
-				let indexOfTarget =
-					destinationContainer?.config.view.content.children?.findIndex(
-						(r) => r.rowId === destinationRow?.data.rowId
-					);
-				if (
-					(indexOfTarget === undefined || indexOfTarget < 0) &&
-					destinationContainer &&
-					destinationRow &&
-					destinationContainer?.config.view.content.child?.rowId ===
-						destinationRow?.data.rowId
-				) {
-					indexOfTarget = 0;
-				}
 
 				const closestEdgeOfTarget: Edge | null = destinationRow
 					? extractClosestEdge(destinationRow.data)
 					: null;
 
+				let indexOfTarget = 0;
+				if (destinationRow) {
+					if (
+						destinationContainer?.type === "children" &&
+						destinationContainer.container.config.view.content
+							.children
+					) {
+						indexOfTarget =
+							destinationContainer.container.config.view.content.children.findIndex(
+								(r) => r.rowId === destinationRow.data.rowId
+							);
+					} else if (
+						destinationContainer?.type === "child" &&
+						destinationContainer.container.config.view.content.child
+					) {
+						indexOfTarget = 0;
+					} else if (closestEdgeOfTarget && !destinationContainer) {
+						const destinationRowIndex =
+							destinationPage.rows.findIndex(
+								(r) => r.rowId === destinationRow.data.rowId
+							);
+						indexOfTarget =
+							closestEdgeOfTarget === "top" ||
+							closestEdgeOfTarget === "left"
+								? destinationRowIndex
+								: destinationRowIndex + 1;
+					}
+				}
+
+				if (
+					closestEdgeOfTarget === "top" ||
+					closestEdgeOfTarget === "left"
+				) {
+					indexOfTarget = indexOfTarget ?? 0;
+				} else if (
+					closestEdgeOfTarget === "bottom" ||
+					closestEdgeOfTarget === "right"
+				) {
+					indexOfTarget = indexOfTarget + 1;
+				} else {
+					indexOfTarget =
+						indexOfTarget ?? destinationPage.rows.length;
+				}
+
+				const baseOptions = {
+					destinationPageId: destinationPageId,
+					destinationIndex: indexOfTarget,
+					destinationContainer: destinationContainer
+						? {
+								rowId: destinationContainer.container.rowId,
+								type: destinationContainer.type,
+						  }
+						: undefined,
+				};
+
 				if (sourcePageId === "rows") {
-					const destinationIndex =
-						closestEdgeOfTarget === "bottom" ||
-						closestEdgeOfTarget === "right"
-							? (indexOfTarget ?? destinationPage.rows.length) + 1
-							: indexOfTarget ?? destinationPage.rows.length;
 					dispatchRow({
 						type: "ADD_ROW",
 						newRowId: crypto.randomUUID(),
 						oldRowId: rowId,
-						destinationPageId: destinationPageId,
-						destinationIndex: destinationIndex,
-						destinationRow: destinationContainer ?? undefined,
+						...baseOptions,
 					});
 				} else if (sourcePageId === destinationPageId) {
-					const destinationIndex =
-						closestEdgeOfTarget === "bottom" ||
-						closestEdgeOfTarget === "right"
-							? (indexOfTarget ?? destinationPage.rows.length) - 1
-							: indexOfTarget ?? 0;
-
 					dispatchRow({
 						type: "MOVE_ROW",
 						rowId,
 						originPageId: sourcePageId,
-						destinationPageId: sourcePageId,
-						destinationIndex: destinationIndex,
-						destinationRow: destinationContainer ?? undefined,
+						...baseOptions,
 					});
 				} else if (destinationPageId !== sourcePageId) {
-					const destinationIndex =
-						closestEdgeOfTarget === "top" ||
-						closestEdgeOfTarget === "left"
-							? indexOfTarget ?? 0
-							: indexOfTarget ?? destinationPage.rows.length;
-
 					dispatchRow({
 						type: "MOVE_ROW",
 						rowId,
 						originPageId: sourcePageId,
-						destinationPageId: destinationPageId,
-						destinationIndex: destinationIndex,
-						destinationRow: destinationContainer ?? undefined,
+						...baseOptions,
 					});
 				}
 			},

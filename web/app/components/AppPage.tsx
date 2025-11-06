@@ -45,22 +45,24 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow]
 	);
 
-	const rowElements = useMemo(() => {
-		return flows
-			.find((f) => f.id === activeFlowId)
-			?.pages.find((p) => p.id === pageId)
-			?.rows?.map((row, index) => (
-				<DraggableRowContainer
-					key={row.rowId}
-					rowId={row.rowId}
-					selectRow={() => selectRow(row.rowId)}
-					showDropzoneBefore={index === 0}
-					showDropzoneAfter
-				>
-					{row.row}
-				</DraggableRowContainer>
-			));
-	}, [flows, activeFlowId, pageId, selectRow]);
+	const rowElements = useMemo(
+		() =>
+			flows
+				.find((f) => f.id === activeFlowId)
+				?.pages.find((p) => p.id === pageId)
+				?.rows?.map((row, index) => (
+					<DraggableRowContainer
+						key={row.rowId}
+						rowId={row.rowId}
+						selectRow={() => selectRow(row.rowId)}
+						showDropzoneBefore={index === 0}
+						showDropzoneAfter
+					>
+						{row.row}
+					</DraggableRowContainer>
+				)),
+		[flows, activeFlowId, pageId, selectRow]
+	);
 
 	return (
 		<div className="evy-overflow-hidden evy-p-30px evy-h-full evy-w-full evy-box-sizing-border">

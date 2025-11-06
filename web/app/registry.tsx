@@ -32,6 +32,8 @@ import {
 	type Row,
 	type RowView,
 	UnknownRow,
+	type ContainerType,
+	EVYRow,
 } from "./rows/EVYRow";
 import { removeUndefined } from "./removeUndefined";
 
@@ -79,7 +81,7 @@ type RowAction =
 			oldRowId: string;
 			destinationPageId: string;
 			destinationIndex: number;
-			destinationRow?: Row;
+			destinationContainer?: { rowId: string; type: ContainerType };
 	  }
 	| {
 			type: "MOVE_ROW";
@@ -87,7 +89,7 @@ type RowAction =
 			originPageId: string;
 			destinationPageId: string;
 			destinationIndex: number;
-			destinationRow?: Row;
+			destinationContainer?: { rowId: string; type: ContainerType };
 	  }
 	| {
 			type: "REMOVE_ROW";
@@ -183,22 +185,59 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				row: createElement(baseRow, { rowId: action.newRowId }),
 			};
 
-			// TODO: Use containerId to find the container row and add the row to the container
-			const newPages = flow.pages.map((page) =>
-				page.id === action.destinationPageId
-					? {
-							...page,
-							rows: [
-								...page.rows.slice(0, action.destinationIndex),
-								rowDataAdd,
-								...page.rows.slice(action.destinationIndex),
-							],
-					  }
-					: page
-			);
+			const page = flow.pages.find(
+				(p) => p.id === action.destinationPageId
+			)!;
+			if (!page) throw new Error("Page not found");
+
+			if (action.destinationContainer) {
+				const stepsToDestinationContainer = page.rows
+					.map((row, index) => {
+						if (row.rowId === action.destinationContainer!.rowId) {
+							return [index];
+						}
+						const match = EVYRow.traverseToRowAndGetPath(
+							row,
+							action.destinationContainer!.rowId
+						);
+						if (match.length > 0) return [index, ...match];
+					})
+					.find((s) => s !== undefined);
+
+				if (!stepsToDestinationContainer?.length) {
+					throw new Error(
+						"Could not find steps to destination container"
+					);
+				}
+
+				let path = page.rows[stepsToDestinationContainer[0] as number];
+				if (stepsToDestinationContainer.length > 1) {
+					path = stepsToDestinationContainer
+						.slice(1)
+						.reduce((acc: Row, curr: number | "child") => {
+							if (curr === "child") {
+								return acc.config.view.content.child!;
+							} else {
+								return acc.config.view.content.children![curr];
+							}
+						}, path);
+				}
+
+				if (action.destinationContainer?.type === "child") {
+					path.config.view.content.child = rowDataAdd;
+				} else if (action.destinationContainer?.type === "children") {
+					path.config.view.content.children!.splice(
+						action.destinationIndex,
+						0,
+						rowDataAdd
+					);
+				}
+			} else {
+				page.rows.splice(action.destinationIndex, 0, rowDataAdd);
+			}
 
 			return updateState({
-				updatedPages: newPages,
+				updatedPages: flow.pages,
 				activeRowId: action.newRowId,
 			});
 		}
