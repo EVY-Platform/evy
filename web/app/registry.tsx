@@ -444,17 +444,22 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 };
 
 type DraggingState = boolean;
-type DraggingAction = {
-	type: "SET_DRAGGING";
-	dragging: boolean;
-};
+type DraggingAction =
+	| {
+			type: "START_DRAGGING";
+	  }
+	| {
+			type: "STOP_DRAGGING";
+	  };
 const draggingReducer = (
 	state: DraggingState,
 	action: DraggingAction
 ): DraggingState => {
 	switch (action.type) {
-		case "SET_DRAGGING":
-			return action.dragging;
+		case "START_DRAGGING":
+			return true;
+		case "STOP_DRAGGING":
+			return false;
 		default:
 			return state;
 	}

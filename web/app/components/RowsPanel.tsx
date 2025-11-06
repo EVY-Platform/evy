@@ -22,10 +22,8 @@ export function RowsPanel() {
 				element: pageInnerRef.current,
 				getData: () => ({ pageId: "rows" }),
 				canDrop: () => true,
-				onDragStart: () =>
-					dispatchDragging({ type: "SET_DRAGGING", dragging: true }),
-				onDrop: () =>
-					dispatchDragging({ type: "SET_DRAGGING", dragging: false }),
+				onDragStart: () => dispatchDragging({ type: "START_DRAGGING" }),
+				onDrop: () => dispatchDragging({ type: "STOP_DRAGGING" }),
 			})
 		);
 	}, [pageInnerRef, dispatchDragging]);
@@ -52,10 +50,7 @@ export function RowsPanel() {
 				{dragging && (
 					<CancelOverlay
 						dismiss={() =>
-							dispatchDragging({
-								type: "SET_DRAGGING",
-								dragging: false,
-							})
+							dispatchDragging({ type: "STOP_DRAGGING" })
 						}
 					/>
 				)}

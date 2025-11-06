@@ -31,7 +31,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				canDrop: () => true,
 				onDrop: () => {
 					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" });
-					dispatchDragging({ type: "SET_DRAGGING", dragging: false });
+					dispatchDragging({ type: "STOP_DRAGGING" });
 				},
 				onDragEnter: () =>
 					dispatchDropIndicator({
