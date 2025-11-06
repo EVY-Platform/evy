@@ -77,12 +77,9 @@ const previewState: State = { type: "preview", container: null, rect: null };
 type RowPrimitiveProps = {
 	children: React.ReactNode;
 	state: State;
-	closestEdge?: Edge;
 	selectRow?: () => void;
-	showIndicator?: boolean;
-	showDropzone?: boolean;
-	showDropzoneBefore?: boolean;
-	showDropzoneAfter?: boolean;
+	indicators?: Array<"before" | "after">;
+	dropzones?: Array<"before" | "after">;
 	orientation?: "horizontal" | "vertical";
 };
 
@@ -91,12 +88,9 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 		{
 			children,
 			state,
-			closestEdge,
 			selectRow,
-			showIndicator = false,
-			showDropzone = false,
-			showDropzoneBefore = false,
-			showDropzoneAfter = false,
+			indicators = [],
+			dropzones = [],
 			orientation = "vertical",
 		},
 		ref
@@ -109,33 +103,19 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			}[state.type];
 		}, [state.type]);
 
-		const dropzoneClass = useMemo(() => {
+		const indicatorClass = useMemo(() => {
 			return orientation === "vertical"
-				? "evy-h-1px evy-w-full evy-bg-gray evy-rounded-sm"
-				: "evy-w-1px evy-min-h-full evy-mt-2 evy-mb-2 evy-bg-gray evy-rounded-sm";
+				? "evy-v-dropzone evy-w-full evy-rounded-sm"
+				: "evy-h-dropzone evy-min-h-full evy-mt-2 evy-mb-2 evy-rounded-sm";
 		}, [orientation]);
-
-		const indicatorBeforeClass = useMemo(() => {
-			if (!showIndicator) return;
-			if (closestEdge !== "top" && closestEdge !== "left") return;
-			return orientation === "vertical"
-				? "evy-bg-blue evy-h-8"
-				: "evy-bg-blue evy-w-8";
-		}, [showIndicator, closestEdge]);
-
-		const indicatorAfterClass = useMemo(() => {
-			if (!showIndicator) return;
-			if (closestEdge !== "bottom" && closestEdge !== "right") return;
-			return orientation === "vertical"
-				? "evy-bg-blue evy-h-8"
-				: "evy-bg-blue evy-w-8";
-		}, [showIndicator, closestEdge]);
 
 		return (
 			<>
-				{showDropzone && showDropzoneBefore && (
+				{dropzones.includes("before") && (
 					<div
-						className={`${dropzoneClass} ${indicatorBeforeClass}`}
+						className={`${indicatorClass} ${
+							indicators.includes("before") ? "expanded" : ""
+						}`}
 					/>
 				)}
 				<div
@@ -146,9 +126,11 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				>
 					{children}
 				</div>
-				{showDropzone && showDropzoneAfter && (
+				{dropzones.includes("after") && (
 					<div
-						className={`${dropzoneClass} ${indicatorAfterClass}`}
+						className={`${indicatorClass} ${
+							indicators.includes("after") ? "expanded" : ""
+						}`}
 					/>
 				)}
 			</>
@@ -181,9 +163,9 @@ export function DraggableRowContainer({
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idleState);
 
-	const shouldShowIndicator = useMemo(() => {
-		return dropIndicator?.rowId === rowId && dragging;
-	}, [dropIndicator, rowId, dragging]);
+	useEffect(() => {
+		ref.current?.setAttribute("data-row-id", rowId);
+	}, [rowId]);
 
 	const allowedEdges = useMemo(() => {
 		return orientation === "horizontal" ? columnEdges : rowEdges;
@@ -201,12 +183,35 @@ export function DraggableRowContainer({
 			)?.id;
 	}, [flows, activeFlowId, rowId]);
 
-	const shouldShowDropzone = useMemo(() => {
-		if (!dragging) return false;
-		if (!currentRowPageId || !dropIndicator?.pageId) return false;
+	const dropzones = useMemo(() => {
+		if (!dragging || !currentRowPageId) return;
 
-		return currentRowPageId === dropIndicator?.pageId;
-	}, [dragging, currentRowPageId, dropIndicator?.pageId]);
+		if (!dropIndicator?.pageId) return;
+		if (currentRowPageId !== dropIndicator?.pageId) return;
+
+		return [
+			showDropzoneAfter ? "before" : undefined,
+			showDropzoneAfter ? "after" : undefined,
+		].filter(Boolean) as Array<"before" | "after">;
+	}, [
+		dragging,
+		currentRowPageId,
+		dropIndicator?.pageId,
+		dropIndicator?.edge,
+	]);
+
+	const indicators = useMemo(() => {
+		if (!dragging || !dropzones) return;
+		if (dropIndicator?.rowId !== rowId) return;
+
+		const edge = dropIndicator?.edge;
+		if (!edge) return;
+
+		return [
+			["top", "left"].includes(edge) ? "before" : undefined,
+			["bottom", "right"].includes(edge) ? "after" : undefined,
+		].filter(Boolean) as Array<"before" | "after">;
+	}, [dropIndicator, rowId, dragging, dropzones]);
 
 	const getElementDepth = useCallback((element: HTMLElement): number => {
 		let depth = 0;
@@ -273,12 +278,9 @@ export function DraggableRowContainer({
 			"DraggableRowContainer useEffect: ref.current is not defined"
 		);
 
-		// Set data attribute for UI tests
-		element.setAttribute("data-row-id", rowId);
-
 		return combine(
 			draggable({
-				element: element,
+				element,
 				getInitialData: () => ({ rowId: rowId }),
 				onGenerateDragPreview: ({
 					location,
@@ -304,10 +306,10 @@ export function DraggableRowContainer({
 				onDrop: () => setState(idleState),
 			}),
 			dropTargetForExternal({
-				element: element,
+				element,
 			}),
 			dropTargetForElements({
-				element: element,
+				element,
 				canDrop: () => true,
 				getIsSticky: () => true,
 				getData: ({ input, element }: DropTargetEvent) =>
@@ -343,12 +345,9 @@ export function DraggableRowContainer({
 			<RowPrimitive
 				ref={ref}
 				state={state}
-				closestEdge={dropIndicator?.edge || undefined}
 				selectRow={selectRow}
-				showIndicator={shouldShowIndicator}
-				showDropzone={shouldShowDropzone}
-				showDropzoneBefore={showDropzoneBefore}
-				showDropzoneAfter={showDropzoneAfter}
+				indicators={indicators}
+				dropzones={dropzones}
 				orientation={orientation}
 			>
 				{children}
