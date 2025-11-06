@@ -190,7 +190,7 @@ export function DraggableRowContainer({
 		if (currentRowPageId !== dropIndicator?.pageId) return;
 
 		return [
-			showDropzoneAfter ? "before" : undefined,
+			showDropzoneBefore ? "before" : undefined,
 			showDropzoneAfter ? "after" : undefined,
 		].filter(Boolean) as Array<"before" | "after">;
 	}, [
