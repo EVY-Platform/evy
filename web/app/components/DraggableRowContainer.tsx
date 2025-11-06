@@ -349,7 +349,13 @@ export function DraggableRowContainer({
 				},
 			})
 		);
-	}, [rowId, dropIndicator, dispatchDropIndicator]);
+	}, [
+		rowId,
+		dropIndicator,
+		dispatchDropIndicator,
+		allowedEdges,
+		getElementDepth,
+	]);
 
 	return (
 		<Fragment>
