@@ -109,12 +109,23 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				: "evy-h-dropzone evy-min-h-full evy-mt-2 evy-mb-2 evy-rounded-sm";
 		}, [orientation]);
 
+		const showBefore = useMemo(
+			() => dropzones.includes("before") || indicators.includes("before"),
+			[dropzones, indicators]
+		);
+		const showAfter = useMemo(
+			() => dropzones.includes("after") || indicators.includes("after"),
+			[dropzones, indicators]
+		);
+
 		return (
 			<>
-				{dropzones.includes("before") && (
+				{showBefore && (
 					<div
 						className={`${indicatorClass} ${
-							indicators.includes("before") ? "expanded" : ""
+							indicators.includes("before")
+								? "expanded evy-mt-2"
+								: ""
 						}`}
 					/>
 				)}
@@ -126,10 +137,12 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				>
 					{children}
 				</div>
-				{dropzones.includes("after") && (
+				{showAfter && (
 					<div
 						className={`${indicatorClass} ${
-							indicators.includes("after") ? "expanded" : ""
+							indicators.includes("after")
+								? "expanded evy-mb-2"
+								: ""
 						}`}
 					/>
 				)}
@@ -143,15 +156,17 @@ export function DraggableRowContainer({
 	children,
 	selectRow,
 	orientation,
-	showDropzoneBefore = false,
-	showDropzoneAfter = false,
+	showIndicators = false,
+	previousRowId,
+	nextRowId,
 }: {
 	rowId: string;
 	children: React.ReactNode;
 	selectRow?: () => void;
 	orientation?: "horizontal" | "vertical";
-	showDropzoneBefore?: boolean;
-	showDropzoneAfter?: boolean;
+	showIndicators?: boolean;
+	previousRowId?: string;
+	nextRowId?: string;
 }) {
 	const {
 		flows,
@@ -165,15 +180,13 @@ export function DraggableRowContainer({
 
 	useEffect(() => {
 		ref.current?.setAttribute("data-row-id", rowId);
-	}, [rowId]);
+	}, []);
 
 	const allowedEdges = useMemo(() => {
 		return orientation === "horizontal" ? columnEdges : rowEdges;
-	}, [orientation]);
+	}, []);
 
 	const currentRowPageId = useMemo(() => {
-		if (!rowId || !activeFlowId) return;
-
 		return flows
 			.find((f) => f.id === activeFlowId)
 			?.pages.find((page) =>
@@ -181,27 +194,10 @@ export function DraggableRowContainer({
 					.flatMap(EVYRow.getRowsRecursive)
 					.find((r) => r.rowId === rowId)
 			)?.id;
-	}, [flows, activeFlowId, rowId]);
-
-	const dropzones = useMemo(() => {
-		if (!dragging || !currentRowPageId) return;
-
-		if (!dropIndicator?.pageId) return;
-		if (currentRowPageId !== dropIndicator?.pageId) return;
-
-		return [
-			showDropzoneBefore ? "before" : undefined,
-			showDropzoneAfter ? "after" : undefined,
-		].filter(Boolean) as Array<"before" | "after">;
-	}, [
-		dragging,
-		currentRowPageId,
-		dropIndicator?.pageId,
-		dropIndicator?.edge,
-	]);
+	}, [flows, activeFlowId]);
 
 	const indicators = useMemo(() => {
-		if (!dragging || !dropzones) return;
+		if (!dragging || !showIndicators) return;
 		if (dropIndicator?.rowId !== rowId) return;
 
 		const edge = dropIndicator?.edge;
@@ -211,7 +207,39 @@ export function DraggableRowContainer({
 			["top", "left"].includes(edge) ? "before" : undefined,
 			["bottom", "right"].includes(edge) ? "after" : undefined,
 		].filter(Boolean) as Array<"before" | "after">;
-	}, [dropIndicator, rowId, dragging, dropzones]);
+	}, [dropIndicator, dragging]);
+
+	// TODO: Fix logic to not show dropzones when there are no containers.. eg with the
+	// segment controller Dimensions 3, there are indicators above the info row title
+	// in the width
+	const dropzones = useMemo(() => {
+		if (!dragging || !currentRowPageId) return;
+		if (currentRowPageId !== dropIndicator?.pageId) return;
+
+		const hideBefore =
+			(previousRowId && !dropIndicator?.rowId) ||
+			(previousRowId &&
+				dropIndicator.rowId === previousRowId &&
+				dropIndicator.edge !== "bottom");
+		const hideAfter =
+			(nextRowId &&
+				dropIndicator?.rowId &&
+				dropIndicator.rowId !== nextRowId) ||
+			(nextRowId &&
+				dropIndicator.rowId === nextRowId &&
+				dropIndicator.edge !== "top");
+
+		return [
+			hideBefore ? undefined : "before",
+			hideAfter ? undefined : "after",
+		].filter(Boolean) as Array<"before" | "after">;
+	}, [
+		dragging,
+		currentRowPageId,
+		dropIndicator?.pageId,
+		dropIndicator?.rowId,
+		dropIndicator?.edge,
+	]);
 
 	const getElementDepth = useCallback((element: HTMLElement): number => {
 		let depth = 0;
@@ -225,50 +253,38 @@ export function DraggableRowContainer({
 
 	const onDragEvent = useCallback(
 		(args: DragEvent) => {
-			const element = ref.current;
-			invariant(
-				element,
-				"DraggableRowContainer onDragEvent: ref.current is not defined"
-			);
-
+			const hoveredRowId = rowId;
 			const draggedRowId = args.source.data.rowId;
-			if (draggedRowId === rowId) return;
+			const dropIndicatorRowId = dropIndicator?.rowId;
+
+			// Ignore events on the same row that we are dragging
+			// to avoid odd behavior
+			if (draggedRowId === hoveredRowId) return;
+			if (dropIndicatorRowId === hoveredRowId) return;
+
+			const hoveredElement = ref.current;
+			if (!hoveredElement) return;
+
+			const hoveredDepth = getElementDepth(hoveredElement);
+
+			const dropElement = document.querySelector(
+				`[data-row-id="${dropIndicatorRowId}"]`
+			) as HTMLElement;
+			if (dropElement) {
+				const dropIndicatorDepth = getElementDepth(dropElement);
+				if (hoveredDepth < dropIndicatorDepth) return;
+			}
 
 			const edge = extractClosestEdge(args.self.data);
 			if (!edge) return;
 
-			// Check if this row is deeper than the current active indicator
-			// by checking if the current active indicator's element contains this element
-			const otherElement = document.querySelector(
-				`[data-row-id="${dropIndicator?.rowId || ""}"]`
-			) as HTMLElement | null;
-
-			let shouldUpdate = false;
-			if (!dropIndicator?.rowId || !otherElement) {
-				// No active indicator, or can't find the element, so update
-				shouldUpdate = true;
-			} else if (otherElement.contains(element)) {
-				// Current element is inside the other element, so it's deeper
-				shouldUpdate = true;
-			} else if (element.contains(otherElement)) {
-				// Other element is inside current element, so other is deeper, don't update
-				shouldUpdate = false;
-			} else {
-				// Neither contains the other, check DOM depth
-				const currentDepth = getElementDepth(element);
-				const otherDepth = getElementDepth(otherElement);
-				shouldUpdate = currentDepth > otherDepth;
-			}
-
-			if (shouldUpdate) {
-				dispatchDropIndicator({
-					type: "SET_INDICATOR_ROW",
-					rowId: rowId,
-					edge: edge,
-				});
-			}
+			dispatchDropIndicator({
+				type: "SET_INDICATOR_ROW",
+				rowId: hoveredRowId,
+				edge: edge,
+			});
 		},
-		[dispatchDropIndicator, rowId, getElementDepth, dropIndicator?.rowId]
+		[dispatchDropIndicator, getElementDepth, dropIndicator?.rowId]
 	);
 
 	useEffect(() => {
@@ -332,13 +348,7 @@ export function DraggableRowContainer({
 				},
 			})
 		);
-	}, [
-		rowId,
-		dropIndicator,
-		dispatchDropIndicator,
-		allowedEdges,
-		getElementDepth,
-	]);
+	}, [dropIndicator, dispatchDropIndicator, allowedEdges, getElementDepth]);
 
 	return (
 		<Fragment>

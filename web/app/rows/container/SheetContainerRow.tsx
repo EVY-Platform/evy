@@ -20,8 +20,6 @@ export default class SheetContainerRow extends EVYRow {
 					{row.config.view.content.child && (
 						<DraggableRowContainer
 							rowId={row.config.view.content.child.rowId}
-							showDropzoneBefore
-							showDropzoneAfter
 						>
 							{row.config.view.content.child.row}
 						</DraggableRowContainer>
