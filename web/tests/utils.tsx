@@ -43,13 +43,13 @@ export const debugFlows: ServerFlow[] = [
 						type: "ColumnContainer",
 						view: {
 							content: {
-								title: "Dimensions (width x height x depth)",
+								title: "Dimensions 1",
 								children: [
 									{
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Width 1",
 												value: "width",
 												placeholder: "Width",
 											},
@@ -67,7 +67,7 @@ export const debugFlows: ServerFlow[] = [
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Height 1",
 												value: "height",
 												placeholder: "Height",
 											},
@@ -84,7 +84,7 @@ export const debugFlows: ServerFlow[] = [
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Length 1",
 												value: "length",
 												placeholder: "Length",
 											},
@@ -113,13 +113,13 @@ export const debugFlows: ServerFlow[] = [
 						type: "ListContainer",
 						view: {
 							content: {
-								title: "Dimensions (width x height x depth)",
+								title: "Dimensions 2",
 								children: [
 									{
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Width 2",
 												value: "width",
 												placeholder: "Width",
 											},
@@ -137,7 +137,7 @@ export const debugFlows: ServerFlow[] = [
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Height 2",
 												value: "height",
 												placeholder: "Height",
 											},
@@ -154,7 +154,7 @@ export const debugFlows: ServerFlow[] = [
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Length 2",
 												value: "length",
 												placeholder: "Length",
 											},
@@ -189,14 +189,14 @@ export const debugFlows: ServerFlow[] = [
 						type: "SelectSegmentContainer",
 						view: {
 							content: {
-								title: "",
+								title: "Dimensions 3",
 								segments: ["Width", "Height", "Length"],
 								children: [
 									{
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Width 3",
 												value: "width",
 												placeholder: "Width",
 											},
@@ -214,7 +214,7 @@ export const debugFlows: ServerFlow[] = [
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Height 3",
 												value: "height",
 												placeholder: "Height",
 											},
@@ -231,7 +231,7 @@ export const debugFlows: ServerFlow[] = [
 										type: "Input",
 										view: {
 											content: {
-												title: "",
+												title: "Length 3",
 												value: "length",
 												placeholder: "Length",
 											},
@@ -260,7 +260,7 @@ export const debugFlows: ServerFlow[] = [
 						type: "SelectSegmentContainer",
 						view: {
 							content: {
-								title: "",
+								title: "Dimensions 4",
 								segments: ["List", "Info"],
 								children: [
 									{
@@ -273,7 +273,7 @@ export const debugFlows: ServerFlow[] = [
 														type: "Input",
 														view: {
 															content: {
-																title: "",
+																title: "Width 4",
 																value: "width",
 																placeholder:
 																	"Width",
@@ -294,7 +294,7 @@ export const debugFlows: ServerFlow[] = [
 														type: "Input",
 														view: {
 															content: {
-																title: "",
+																title: "Height 4",
 																value: "height",
 																placeholder:
 																	"Height",
@@ -315,7 +315,7 @@ export const debugFlows: ServerFlow[] = [
 														type: "Input",
 														view: {
 															content: {
-																title: "",
+																title: "Length 4",
 																value: "length",
 																placeholder:
 																	"Length",
