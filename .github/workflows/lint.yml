@@ -32,8 +32,12 @@ jobs:
                   deno-version: v2.x
                   cache: true
 
+            - name: Pre-cache dependencies with lock file
+              run: deno cache --lock deno.lock app/main.tsx dev/server.ts
             - name: Install dependencies
-              run: deno install --no-lock
+              run: |
+                deno install --no-lock || \
+                deno cache app/main.tsx dev/server.ts
 
             - name: Run lint
               run: deno task lint
