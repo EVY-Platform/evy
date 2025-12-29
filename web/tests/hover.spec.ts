@@ -222,7 +222,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		}
 	});
 
-	test.only("should show indicator for innermost row when hovering over nested containers", async ({
+	test("should show indicator for innermost row when hovering over nested containers", async ({
 		page,
 	}) => {
 		const rowsPanel = page
