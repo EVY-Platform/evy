@@ -29,11 +29,11 @@ jobs:
             - name: Setup Deno
               uses: denoland/setup-deno@v2
 
-            - name: Install dependencies
+            - name: Install Deno dependencies
               run: deno cache --lock deno.lock app/main.tsx dev/server.ts
 
             - name: Setup playwright
-              run: deno task test:setup
+              run: deno run -A npm:playwright install --with-deps
 
             - name: Build application
               run: deno task build

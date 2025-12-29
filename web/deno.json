@@ -41,10 +41,10 @@
 		"build": "deno bundle --platform browser --no-check --output dist/bundle.js app/main.tsx",
 		"dev": "deno task setup && deno task build && deno run --allow-net --allow-env --allow-read --allow-write --allow-run dev/server.ts",
 		"prod": "deno run --allow-net --allow-env --allow-read jsr:@std/http/file-server ./dist --port 3000",
-		"test:setup": "npx playwright install --with-deps",
-		"test": "npx playwright test",
-		"test:ui": "npx playwright test --ui",
-		"test:debug": "npx playwright test --debug",
+		"test:setup": "deno run -A npm:playwright install --with-deps",
+		"test": "deno run -A npm:@playwright/test test",
+		"test:ui": "deno run -A npm:@playwright/test test --ui",
+		"test:debug": "deno run -A npm:@playwright/test test --debug",
 		"lint": "deno lint"
 	}
 }
