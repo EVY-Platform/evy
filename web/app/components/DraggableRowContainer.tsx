@@ -350,10 +350,11 @@ export function DraggableRowContainer({
 			})
 		);
 	}, [
-		dropIndicator,
-		dispatchDropIndicator,
 		allowedEdges,
+		dispatchDropIndicator,
+		dropIndicator,
 		getElementDepth,
+		onDragEvent,
 		rowId,
 	]);
 

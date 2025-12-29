@@ -162,7 +162,8 @@ function AppContent() {
 					closestEdgeOfTarget === "top" ||
 					closestEdgeOfTarget === "left"
 				) {
-					indexOfTarget = indexOfTarget ?? 0;
+					indexOfTarget =
+						indexOfTarget ?? destinationPage.rows.length;
 				} else if (
 					closestEdgeOfTarget === "bottom" ||
 					closestEdgeOfTarget === "right"
