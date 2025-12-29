@@ -7,7 +7,6 @@ on:
 
 jobs:
     web:
-        if: false # Temporarily disabled
         defaults:
             run:
                 working-directory: web
