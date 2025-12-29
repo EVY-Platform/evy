@@ -20,7 +20,7 @@ export default class ButtonRow extends EVYRow {
 			<div className="evy-p-2">
 				<p className="evy-text-md">{row.config.view.content.title}</p>
 				<div className="evy-p-2 evy-flex evy-justify-center">
-					<Button label={row.config.view.content.label} />
+					<Button label={row.config.view.content.label as string} />
 				</div>
 			</div>
 		);

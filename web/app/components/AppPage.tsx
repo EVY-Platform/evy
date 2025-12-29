@@ -1,4 +1,4 @@
-import { useEffect, useContext, useRef, useState, useCallback } from "react";
+import { useEffect, useContext, useRef, useCallback, useMemo } from "react";
 import invariant from "tiny-invariant";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
@@ -8,48 +8,47 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { AppContext } from "../registry";
 
-type State = { type: "idle" } | { type: "is-row-over" };
-
-const idle: State = { type: "idle" };
-const isRowOver: State = { type: "is-row-over" };
-
-// AppPage component for rendering individual pages
 export default function AppPage({ pageId }: { pageId: string }) {
-	const { flows, activeFlowId, dispatchRow, dispatchDragging } =
-		useContext(AppContext);
+	const {
+		flows,
+		activeFlowId,
+		dispatchRow,
+		dispatchDragging,
+		dispatchDropIndicator,
+	} = useContext(AppContext);
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
-	const [state, setState] = useState<State>(idle);
-
-	const rows = flows
-		.find((f) => f.id === activeFlowId)
-		?.pages.find((p) => p.id === pageId)?.rows;
-	if (!rows) return undefined;
 
 	useEffect(() => {
-		invariant(scrollableRef.current);
+		invariant(
+			scrollableRef.current,
+			"AppPage useEffect: scrollableRef.current is not defined"
+		);
 		return combine(
 			dropTargetForElements({
 				element: scrollableRef.current,
 				getData: () => ({ pageId }),
 				canDrop: () => true,
-				onDragEnter: () => setState(isRowOver),
-				onDragLeave: () => setState(idle),
-				onDragStart: () => {
-					setState(isRowOver);
-					dispatchDragging({ type: "SET_DRAGGING", dragging: true });
-				},
 				onDrop: () => {
-					setState(idle);
-					dispatchDragging({ type: "SET_DRAGGING", dragging: false });
+					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" });
+					dispatchDragging({ type: "STOP_DRAGGING" });
 				},
+				onDragEnter: () =>
+					dispatchDropIndicator({
+						type: "SET_INDICATOR_PAGE",
+						pageId: pageId,
+					}),
+				onDragLeave: () =>
+					dispatchDropIndicator({
+						type: "UNSET_INDICATOR_PAGE",
+					}),
 			}),
 			autoScrollForElements({
 				element: scrollableRef.current,
 				canScroll: () => true,
 			})
 		);
-	}, [scrollableRef, pageId, dispatchDragging]);
+	}, [pageId, dispatchDropIndicator]);
 
 	const selectRow = useCallback(
 		(rowId: string) =>
@@ -61,27 +60,36 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow]
 	);
 
-	const rowElements = rows.map((row) => (
-		<DraggableRowContainer
-			key={row.rowId}
-			rowId={row.rowId}
-			selectRow={() => selectRow(row.rowId)}
-		>
-			{row.row}
-		</DraggableRowContainer>
-	));
+	const rowElements = useMemo(() => {
+		const page = flows
+			.find((f) => f.id === activeFlowId)
+			?.pages.find((p) => p.id === pageId);
+		if (!page) return [];
+
+		const lastIndex = page.rows.length - 1;
+		return page.rows.map((row, index) => (
+			<DraggableRowContainer
+				key={row.rowId}
+				rowId={row.rowId}
+				selectRow={() => selectRow(row.rowId)}
+				showIndicators
+				previousRowId={
+					index > 0 ? page.rows[index - 1].rowId : undefined
+				}
+				nextRowId={
+					index < lastIndex ? page.rows[index + 1].rowId : undefined
+				}
+			>
+				{row.row}
+			</DraggableRowContainer>
+		));
+	}, [flows, activeFlowId, pageId, selectRow]);
 
 	return (
 		<div className="evy-overflow-hidden evy-p-30px evy-h-full evy-w-full evy-box-sizing-border">
 			<div
-				className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4"
+				className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4 evy-bg-white"
 				ref={scrollableRef}
-				style={{
-					backgroundColor:
-						state.type === idle.type
-							? "white"
-							: "var(--color-evy-gray-light)",
-				}}
 			>
 				{rowElements}
 			</div>

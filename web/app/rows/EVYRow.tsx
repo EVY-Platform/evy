@@ -43,6 +43,8 @@ export interface RowConfig {
 	action?: RowAction;
 }
 
+export type ContainerType = "child" | "children";
+
 export abstract class EVYRow extends React.Component<{
 	rowId: string;
 }> {
@@ -62,6 +64,65 @@ export abstract class EVYRow extends React.Component<{
 				  )
 				: []),
 		].filter((row) => row !== undefined);
+	}
+
+	static findContainerOfRow(
+		rowId: string,
+		rows: Row[]
+	): { container: Row; type: ContainerType } | null {
+		for (const row of rows) {
+			if (row.rowId === rowId) return null;
+
+			const childMatches = row.config.view.content.child?.rowId === rowId;
+			if (childMatches) return { container: row, type: "child" };
+
+			const childrenMatch = row.config.view.content.children?.some(
+				(r) => r.rowId === rowId
+			);
+			if (childrenMatch) return { container: row, type: "children" };
+
+			if (row.config.view.content.child) {
+				const childrenOfChild = EVYRow.findContainerOfRow(rowId, [
+					row.config.view.content.child,
+				]);
+				if (childrenOfChild) return childrenOfChild;
+			}
+
+			if (row.config.view.content.children) {
+				const childrenOfChildren = EVYRow.findContainerOfRow(
+					rowId,
+					row.config.view.content.children
+				);
+				if (childrenOfChildren) return childrenOfChildren;
+			}
+		}
+		return null;
+	}
+
+	static traverseToRowAndGetPath(
+		row: Row,
+		targetRowId: string
+	): Array<number | "child"> {
+		if (row.rowId === targetRowId) return [];
+
+		const child = row.config.view.content.child;
+		if (child) {
+			return [
+				"child",
+				...EVYRow.traverseToRowAndGetPath(child, targetRowId),
+			];
+		}
+
+		const children = row.config.view.content.children;
+		if (children) {
+			for (const [index, c] of children.entries()) {
+				if (c.rowId === targetRowId) return [index];
+
+				const path = EVYRow.traverseToRowAndGetPath(c, targetRowId);
+				if (path.length > 0) return [index, ...path];
+			}
+		}
+		return [];
 	}
 
 	override render() {

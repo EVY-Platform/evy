@@ -12,7 +12,7 @@ export function ConfigurationPanel() {
 			const rowId = targetRowId || activeRowId;
 			if (!rowId) return;
 			dispatchRow({
-				type: "UPDATE_ROW_CONTENT",
+				type: "UPDATE_ROW",
 				rowId,
 				configId,
 				configValue,
@@ -21,14 +21,14 @@ export function ConfigurationPanel() {
 		[activeRowId, dispatchRow]
 	);
 
-	const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
 	const row = useMemo(
 		() =>
-			pages
-				.flatMap((page) => page.rows)
+			flows
+				.find((f) => f.id === activeFlowId)
+				?.pages.flatMap((page) => page.rows)
 				.flatMap(EVYRow.getRowsRecursive)
 				.find((r) => r.rowId === activeRowId),
-		[pages, activeRowId]
+		[flows, activeFlowId, activeRowId]
 	);
 
 	const renderConfiguration = useCallback(
