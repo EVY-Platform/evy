@@ -253,6 +253,7 @@ export function DraggableRowContainer({
 		return depth;
 	}, []);
 
+	// The goal here is to find out which row's dropzone to set the indicator on.
 	const onDragEvent = useCallback(
 		(args: DragEvent) => {
 			const hoveredRowId = rowId;
@@ -262,23 +263,29 @@ export function DraggableRowContainer({
 			// Ignore events on the same row that we are dragging
 			// to avoid odd behavior
 			if (draggedRowId === hoveredRowId) return;
-			if (dropIndicatorRowId === hoveredRowId) return;
+
+			const edge = extractClosestEdge(args.self.data);
+			if (!edge) return;
 
 			const hoveredElement = ref.current;
 			if (!hoveredElement) return;
 
-			const hoveredDepth = getElementDepth(hoveredElement);
-
 			const dropElement = document.querySelector(
 				`[data-row-id="${dropIndicatorRowId}"]`
 			) as HTMLElement;
-			if (dropElement) {
+
+			const indicatorAlreadyOnRow = dropIndicatorRowId === hoveredRowId;
+			const indicatorAlreadyOnEdge = dropIndicator?.edge === edge;
+
+			if (
+				dropElement &&
+				!indicatorAlreadyOnRow &&
+				!indicatorAlreadyOnEdge
+			) {
+				const hoveredDepth = getElementDepth(hoveredElement);
 				const dropIndicatorDepth = getElementDepth(dropElement);
 				if (hoveredDepth < dropIndicatorDepth) return;
 			}
-
-			const edge = extractClosestEdge(args.self.data);
-			if (!edge) return;
 
 			dispatchDropIndicator({
 				type: "SET_INDICATOR_ROW",
