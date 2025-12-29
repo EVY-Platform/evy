@@ -30,7 +30,7 @@ jobs:
               uses: denoland/setup-deno@v2
 
             - name: Install dependencies
-              run: deno cache --lock deno.lock app/main.tsx dev/server.ts
+              run: deno install
 
             - name: Run lint
               run: deno task lint
