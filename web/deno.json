@@ -30,9 +30,6 @@
 		"@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop-hitbox@1.0.3/closest-edge?target=browser",
 		"@atlaskit/pragmatic-drag-and-drop-hitbox/types": "https://esm.sh/@atlaskit/pragmatic-drag-and-drop-hitbox@1.0.3/types?target=browser",
 		"@atlaskit/primitives": "https://esm.sh/@atlaskit/primitives@14.1.3?target=browser",
-		"@atlaskit/feature-gate-js-client": "npm:@atlaskit/feature-gate-js-client@5.5.6",
-		"@statsig/client-core": "npm:@statsig/client-core@3.25.3",
-		"@statsig/js-client": "npm:@statsig/js-client@3.25.3",
 		"@std/http": "jsr:@std/http@1.0.23",
 		"node:process": "https://esm.sh/process@0.11.10/browser"
 	},
