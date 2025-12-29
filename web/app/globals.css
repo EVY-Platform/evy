@@ -423,20 +423,18 @@ label {
 
 .evy-v-dropzone {
 	transition: height 0.2s ease-in-out;
-	background-color: var(--color-evy-gray);
-	height: 1px;
+	background-color: var(--color-evy-blue);
+	height: 0px;
 }
 .evy-v-dropzone.expanded {
-	background-color: var(--color-evy-blue);
 	height: var(--size-8);
 }
 
 .evy-h-dropzone {
 	transition: width 0.2s ease-in-out;
-	background-color: var(--color-evy-gray);
-	width: 1px;
+	background-color: var(--color-evy-blue);
+	width: 0px;
 }
 .evy-h-dropzone.expanded {
-	background-color: var(--color-evy-blue);
 	width: var(--size-8);
 }
