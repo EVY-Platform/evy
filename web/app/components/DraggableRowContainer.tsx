@@ -55,6 +55,15 @@ interface DragPreviewEvent {
 interface DragEvent {
 	source: { data: { rowId: string } };
 	self: { data: { rowId: string } };
+	location: {
+		current: {
+			dropTargets: Array<{
+				data: {
+					rowId: string;
+				};
+			}>;
+		};
+	};
 }
 
 interface DropTargetEvent {
@@ -196,6 +205,14 @@ export function DraggableRowContainer({
 			)?.id;
 	}, [flows, activeFlowId, rowId]);
 
+	const currentRow = useMemo(() => {
+		return flows
+			.find((f) => f.id === activeFlowId)
+			?.pages.flatMap((page) => page.rows)
+			.flatMap(EVYRow.getRowsRecursive)
+			.find((r) => r.rowId === rowId);
+	}, [flows, activeFlowId, rowId]);
+
 	const indicators = useMemo(() => {
 		if (!dragging || !showIndicators) return;
 		if (dropIndicator?.rowId !== rowId) return;
@@ -258,7 +275,6 @@ export function DraggableRowContainer({
 		(args: DragEvent) => {
 			const hoveredRowId = rowId;
 			const draggedRowId = args.source.data.rowId;
-			const dropIndicatorRowId = dropIndicator?.rowId;
 
 			// Ignore events on the same row that we are dragging
 			// to avoid odd behavior
@@ -270,26 +286,12 @@ export function DraggableRowContainer({
 			const hoveredElement = ref.current;
 			if (!hoveredElement) return;
 
-			const dropElement = document.querySelector(
-				`[data-row-id="${dropIndicatorRowId}"]`
-			) as HTMLElement;
-
-			const indicatorAlreadyOnRow = dropIndicatorRowId === hoveredRowId;
-			const indicatorAlreadyOnEdge = dropIndicator?.edge === edge;
-
-			if (
-				dropElement &&
-				!indicatorAlreadyOnRow &&
-				!indicatorAlreadyOnEdge
-			) {
-				const hoveredDepth = getElementDepth(hoveredElement);
-				const dropIndicatorDepth = getElementDepth(dropElement);
-				if (hoveredDepth < dropIndicatorDepth) return;
-			}
+			const innermostElementRowId =
+				args.location.current.dropTargets[0]?.data.rowId;
 
 			dispatchDropIndicator({
 				type: "SET_INDICATOR_ROW",
-				rowId: hoveredRowId,
+				rowId: innermostElementRowId,
 				edge: edge,
 			});
 		},
@@ -336,7 +338,9 @@ export function DraggableRowContainer({
 			dropTargetForElements({
 				element,
 				canDrop: () => true,
-				getIsSticky: () => true,
+				getIsSticky: () =>
+					!!currentRow?.config.view.content.children?.length ||
+					!!currentRow?.config.view.content.child,
 				getData: ({ input, element }: DropTargetEvent) =>
 					attachClosestEdge(
 						{ rowId },
