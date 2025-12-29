@@ -180,11 +180,11 @@ export function DraggableRowContainer({
 
 	useEffect(() => {
 		ref.current?.setAttribute("data-row-id", rowId);
-	}, []);
+	}, [rowId]);
 
 	const allowedEdges = useMemo(() => {
 		return orientation === "horizontal" ? columnEdges : rowEdges;
-	}, []);
+	}, [orientation]);
 
 	const currentRowPageId = useMemo(() => {
 		return flows
@@ -194,7 +194,7 @@ export function DraggableRowContainer({
 					.flatMap(EVYRow.getRowsRecursive)
 					.find((r) => r.rowId === rowId)
 			)?.id;
-	}, [flows, activeFlowId]);
+	}, [flows, activeFlowId, rowId]);
 
 	const indicators = useMemo(() => {
 		if (!dragging || !showIndicators) return;
@@ -207,7 +207,7 @@ export function DraggableRowContainer({
 			["top", "left"].includes(edge) ? "before" : undefined,
 			["bottom", "right"].includes(edge) ? "after" : undefined,
 		].filter(Boolean) as Array<"before" | "after">;
-	}, [dropIndicator, dragging]);
+	}, [dropIndicator, dragging, rowId]);
 
 	// TODO: Fix logic to not show dropzones when there are no containers.. eg with the
 	// segment controller Dimensions 3, there are indicators above the info row title
@@ -239,6 +239,8 @@ export function DraggableRowContainer({
 		dropIndicator?.pageId,
 		dropIndicator?.rowId,
 		dropIndicator?.edge,
+		previousRowId,
+		nextRowId,
 	]);
 
 	const getElementDepth = useCallback((element: HTMLElement): number => {
@@ -284,7 +286,7 @@ export function DraggableRowContainer({
 				edge: edge,
 			});
 		},
-		[dispatchDropIndicator, getElementDepth, dropIndicator?.rowId]
+		[dispatchDropIndicator, getElementDepth, dropIndicator?.rowId, rowId]
 	);
 
 	useEffect(() => {
@@ -348,7 +350,13 @@ export function DraggableRowContainer({
 				},
 			})
 		);
-	}, [dropIndicator, dispatchDropIndicator, allowedEdges, getElementDepth]);
+	}, [
+		dropIndicator,
+		dispatchDropIndicator,
+		allowedEdges,
+		getElementDepth,
+		rowId,
+	]);
 
 	return (
 		<Fragment>
