@@ -195,16 +195,6 @@ export function DraggableRowContainer({
 		return orientation === "horizontal" ? columnEdges : rowEdges;
 	}, [orientation]);
 
-	const currentRowPageId = useMemo(() => {
-		return flows
-			.find((f) => f.id === activeFlowId)
-			?.pages.find((page) =>
-				page.rows
-					.flatMap(EVYRow.getRowsRecursive)
-					.find((r) => r.rowId === rowId)
-			)?.id;
-	}, [flows, activeFlowId, rowId]);
-
 	const currentRow = useMemo(() => {
 		return flows
 			.find((f) => f.id === activeFlowId)
@@ -230,8 +220,7 @@ export function DraggableRowContainer({
 	// segment controller Dimensions 3, there are indicators above the info row title
 	// in the width
 	const dropzones = useMemo(() => {
-		if (!dragging || !currentRowPageId) return;
-		if (currentRowPageId !== dropIndicator?.pageId) return;
+		if (!dragging || !dropIndicator) return;
 
 		const hideBefore =
 			(previousRowId && !dropIndicator?.rowId) ||
@@ -252,7 +241,6 @@ export function DraggableRowContainer({
 		].filter(Boolean) as Array<"before" | "after">;
 	}, [
 		dragging,
-		currentRowPageId,
 		dropIndicator?.pageId,
 		dropIndicator?.rowId,
 		dropIndicator?.edge,
