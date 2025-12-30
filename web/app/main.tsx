@@ -67,8 +67,9 @@ function AppContent() {
 				);
 
 				const sourcePageId =
-					location.initial.dropTargets[location.initial.dropTargets.length - 1]
-						.data.pageId;
+					location.initial.dropTargets[
+						location.initial.dropTargets.length - 1
+					].data.pageId;
 				invariant(
 					typeof sourcePageId === "string",
 					"AppContent monitor for elements onDrop: sourcePageId is not a string",
@@ -78,13 +79,16 @@ function AppContent() {
 				// dropTargets is an array with [row, ..., page]
 				// Otherwise it is [page]
 				const destinationPageRecord =
-					location.current.dropTargets[location.current.dropTargets.length - 1];
+					location.current.dropTargets[
+						location.current.dropTargets.length - 1
+					];
 				invariant(
 					destinationPageRecord,
 					"AppContent monitor for elements onDrop: destinationPageRecord is not defined",
 				);
 
-				const destinationPageId = destinationPageRecord.data.pageId as string;
+				const destinationPageId = destinationPageRecord.data
+					.pageId as string;
 				if (destinationPageId === "rows" && sourcePageId === "rows") {
 					return;
 				}
@@ -129,7 +133,8 @@ function AppContent() {
 				if (destinationRow) {
 					if (
 						destinationContainer?.type === "children" &&
-						destinationContainer.container.config.view.content.children
+						destinationContainer.container.config.view.content
+							.children
 					) {
 						indexOfTarget =
 							destinationContainer.container.config.view.content.children.findIndex(
@@ -141,25 +146,32 @@ function AppContent() {
 					) {
 						indexOfTarget = 0;
 					} else if (closestEdgeOfTarget && !destinationContainer) {
-						const destinationRowIndex = destinationPage.rows.findIndex(
-							(r) => r.rowId === destinationRow.data.rowId,
-						);
+						const destinationRowIndex =
+							destinationPage.rows.findIndex(
+								(r) => r.rowId === destinationRow.data.rowId,
+							);
 						indexOfTarget =
-							closestEdgeOfTarget === "top" || closestEdgeOfTarget === "left"
+							closestEdgeOfTarget === "top" ||
+							closestEdgeOfTarget === "left"
 								? destinationRowIndex
 								: destinationRowIndex + 1;
 					}
 				}
 
-				if (closestEdgeOfTarget === "top" || closestEdgeOfTarget === "left") {
-					indexOfTarget = indexOfTarget ?? destinationPage.rows.length;
+				if (
+					closestEdgeOfTarget === "top" ||
+					closestEdgeOfTarget === "left"
+				) {
+					indexOfTarget =
+						indexOfTarget ?? destinationPage.rows.length;
 				} else if (
 					closestEdgeOfTarget === "bottom" ||
 					closestEdgeOfTarget === "right"
 				) {
 					indexOfTarget = indexOfTarget + 1;
 				} else {
-					indexOfTarget = indexOfTarget ?? destinationPage.rows.length;
+					indexOfTarget =
+						indexOfTarget ?? destinationPage.rows.length;
 				}
 
 				const baseOptions = {

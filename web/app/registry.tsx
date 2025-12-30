@@ -25,6 +25,7 @@ import InfoRow from "./rows/view/InfoRow";
 import InputListRow from "./rows/view/InputListRow";
 import TextRow from "./rows/view/TextRow";
 
+import { debugFlows } from "../tests/utils.tsx";
 import type { Edge } from "./components/DraggableRowContainer";
 import {
 	type ContainerType,
@@ -154,7 +155,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			...(updatedPages
 				? {
 						flows: state.flows.map((f) =>
-							f.id === state.activeFlowId ? { ...f, pages: updatedPages } : f,
+							f.id === state.activeFlowId
+								? { ...f, pages: updatedPages }
+								: f,
 						),
 					}
 				: {}),
@@ -182,7 +185,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				row: createElement(baseRow, { rowId: action.newRowId }),
 			};
 
-			const page = flow.pages.find((p) => p.id === action.destinationPageId);
+			const page = flow.pages.find(
+				(p) => p.id === action.destinationPageId,
+			);
 			invariant(page, "PageReducer addRow: page is not defined");
 
 			if (action.destinationContainer) {
@@ -211,7 +216,10 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						.reduce((acc: Row, curr: number | "child") => {
 							if (curr === "child") {
 								const child = acc.config.view.content.child;
-								invariant(child, "PageReducer addRow: child is not defined");
+								invariant(
+									child,
+									"PageReducer addRow: child is not defined",
+								);
 								return child;
 							}
 							return acc.config.view.content.children?.[curr];
@@ -280,7 +288,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				page.id === action.pageId
 					? {
 							...page,
-							rows: page.rows.filter((r) => r.rowId !== action.rowId),
+							rows: page.rows.filter(
+								(r) => r.rowId !== action.rowId,
+							),
 						}
 					: page,
 			);
@@ -304,7 +314,10 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 								...row.config.view,
 								content: {
 									...row.config.view.content,
-									[configId]: splitValue.length > 1 ? splitValue : configValue,
+									[configId]:
+										splitValue.length > 1
+											? splitValue
+											: configValue,
 								},
 							},
 						},
@@ -312,11 +325,16 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				}
 
 				if (row.config.view.content.children) {
-					const updatedChildren = row.config.view.content.children.map(
-						(child) =>
-							updateRowInChildren(child, targetRowId, configId, configValue) ||
-							child,
-					);
+					const updatedChildren =
+						row.config.view.content.children.map(
+							(child) =>
+								updateRowInChildren(
+									child,
+									targetRowId,
+									configId,
+									configValue,
+								) || child,
+						);
 					const childUpdated = updatedChildren.some(
 						(child, index) =>
 							child !== row.config.view.content.children?.[index],
@@ -366,7 +384,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 
 			const newPages = flow.pages.map((page) => {
-				const hasAtTopLevel = page.rows.some((r) => r.rowId === action.rowId);
+				const hasAtTopLevel = page.rows.some(
+					(r) => r.rowId === action.rowId,
+				);
 				if (hasAtTopLevel) {
 					const newRows = page.rows.map((row) => {
 						if (row.rowId === action.rowId) {
@@ -379,7 +399,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 										content: {
 											...row.config.view.content,
 											[action.configId]:
-												splitValue.length > 1 ? splitValue : action.configValue,
+												splitValue.length > 1
+													? splitValue
+													: action.configValue,
 										},
 									},
 								},
@@ -524,7 +546,9 @@ export const AppContext = createContext<{
 
 function decodeRow(row: ServerRow): Row {
 	const rowId = crypto.randomUUID();
-	const baseRow = baseRows.find((baseRow) => row.type === baseRow.config.type);
+	const baseRow = baseRows.find(
+		(baseRow) => row.type === baseRow.config.type,
+	);
 	if (!baseRow) {
 		return {
 			rowId,
@@ -545,8 +569,8 @@ function decodeRow(row: ServerRow): Row {
 						typeof row.view.content.title === "string"
 							? row.view.content.title
 							: "Invalid title",
-					children: row.view.content.children?.map((child: ServerRow) =>
-						decodeRow(child),
+					children: row.view.content.children?.map(
+						(child: ServerRow) => decodeRow(child),
 					),
 					child: row.view.content.child
 						? decodeRow(row.view.content.child)
@@ -581,15 +605,9 @@ export function AppProvider({
 		config: row.config,
 	}));
 
-	const defaultFlows: ServerFlow[] = [
-		{
-			id: "default-flow",
-			name: "Default Flow",
-			type: "write",
-			data: "",
-			pages: [{ id: "step_1", title: "Page 1", rows: [] }],
-		},
-	];
+	const defaultFlows: ServerFlow[] = debugFlows;
+	// Can also use debugFlows for testing;
+
 	const flows: ServerFlow[] = initialFlows ?? defaultFlows;
 
 	const [appState, dispatchRow] = useReducer(pageReducer, {

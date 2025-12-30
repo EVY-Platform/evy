@@ -59,7 +59,9 @@ export abstract class EVYRow extends React.Component<{
 				? EVYRow.getRowsRecursive(row.config.view.content.child)
 				: []),
 			...(row.config.view.content.children
-				? row.config.view.content.children.flatMap(EVYRow.getRowsRecursive)
+				? row.config.view.content.children.flatMap(
+						EVYRow.getRowsRecursive,
+					)
 				: []),
 		].filter((row) => row !== undefined);
 	}
@@ -105,7 +107,10 @@ export abstract class EVYRow extends React.Component<{
 
 		const child = row.config.view.content.child;
 		if (child) {
-			return ["child", ...EVYRow.traverseToRowAndGetPath(child, targetRowId)];
+			return [
+				"child",
+				...EVYRow.traverseToRowAndGetPath(child, targetRowId),
+			];
 		}
 
 		const children = row.config.view.content.children;
@@ -124,10 +129,13 @@ export abstract class EVYRow extends React.Component<{
 		return (
 			<AppContext.Consumer>
 				{({ rows, flows, activeFlowId }) => {
-					const baseRow = rows.find((r) => r.rowId === this.props.rowId);
+					const baseRow = rows.find(
+						(r) => r.rowId === this.props.rowId,
+					);
 					if (baseRow) return this.renderContent(baseRow);
 
-					const pages = flows.find((f) => f.id === activeFlowId)?.pages || [];
+					const pages =
+						flows.find((f) => f.id === activeFlowId)?.pages || [];
 					const row = pages
 						.flatMap((page) => page.rows)
 						.flatMap(EVYRow.getRowsRecursive)

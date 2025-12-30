@@ -42,7 +42,10 @@ export function ConfigurationPanel() {
 					const children = content[key] as Row[] | undefined;
 					if (!children) return null;
 					return (
-						<div key={uniqueId} className="evy-flex evy-flex-col evy-gap-4">
+						<div
+							key={uniqueId}
+							className="evy-flex evy-flex-col evy-gap-4"
+						>
 							{children.map((child, index) => {
 								return (
 									<div
@@ -67,7 +70,9 @@ export function ConfigurationPanel() {
 							key={uniqueId}
 							className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
 						>
-							<p className="evy-text-lg evy-font-semibold evy-mb-4">Child</p>
+							<p className="evy-text-lg evy-font-semibold evy-mb-4">
+								Child
+							</p>
 							{renderConfiguration(child)}
 						</div>
 					);
@@ -80,7 +85,11 @@ export function ConfigurationPanel() {
 							type="text"
 							value={String(content[key])}
 							onChange={(e) => {
-								updateRowContent(key, e.target.value, configRow.rowId);
+								updateRowContent(
+									key,
+									e.target.value,
+									configRow.rowId,
+								);
 							}}
 							className="evy-w-full evy-focus-visible:outline-none"
 							required
