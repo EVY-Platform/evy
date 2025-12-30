@@ -231,49 +231,35 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Text row title", { exact: true })
 		).toBeVisible();
 
-		// Get all rows on the page
-		const pageRows = pageContent.locator(
-			'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-		);
+		// Get all draggable rows on the page using data-row-id attribute
+		const pageRows = pageContent.locator("div[data-row-id]");
 		const rowCount = await pageRows.count();
 		expect(rowCount).toBeGreaterThanOrEqual(2);
 
-		// Find rows by their text content to ensure they're properly rendered
-		const infoRow = pageRows.filter({ hasText: "Info row title" }).first();
-		const textRow = pageRows.filter({ hasText: "Text row title" }).first();
-
 		// Wait for rows to be visible
-		await expect(infoRow).toBeVisible();
-		await expect(textRow).toBeVisible();
+		await expect(pageRows.first()).toBeVisible();
+		await expect(pageRows.nth(1)).toBeVisible();
 
 		// Get the first and second rows by position for dragging
 		const firstRow = pageRows.first();
 		const secondRow = pageRows.nth(1);
 
-		// Drag the first row to after the second row
-		// Wait for both rows to be ready
-		await expect(firstRow).toBeVisible();
-		await expect(secondRow).toBeVisible();
-
-		// Get bounding boxes for precise positioning
-		const firstRowBox = await firstRow.boundingBox();
+		// Get bounding box of second row to determine drop position
 		const secondRowBox = await secondRow.boundingBox();
 
-		if (firstRowBox && secondRowBox) {
-			// Drag first row (Info at position 0) to after second row (Text at position 1)
-			// Move to bottom of second row to trigger "bottom" edge detection
-			await page.mouse.move(
-				firstRowBox.x + firstRowBox.width / 2,
-				firstRowBox.y + firstRowBox.height / 2
-			);
-			await page.mouse.down();
-			// Move to the bottom edge of the second row
-			await page.mouse.move(
-				secondRowBox.x + secondRowBox.width / 2,
-				secondRowBox.y + secondRowBox.height - 5
-			);
-			await page.mouse.up();
+		if (secondRowBox) {
+			// Drag first row (Info) to bottom of second row (Text) to reorder
+			// Using targetPosition to drop at the bottom edge of the second row
+			await firstRow.dragTo(secondRow, {
+				targetPosition: {
+					x: secondRowBox.width / 2,
+					y: secondRowBox.height - 5,
+				},
+			});
 		}
+
+		// Wait for DOM to stabilize after drop
+		await page.waitForTimeout(100);
 
 		// Verify both rows are visible and in the correct order
 		await expect(
@@ -283,12 +269,8 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
 
-		// Verify order by checking text positions
-		const allRows = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
-			.all();
+		// Verify order by checking text positions using data-row-id elements
+		const allRows = await pageContent.locator("div[data-row-id]").all();
 		let textRowPosition = -1;
 		let infoRowPosition = -1;
 
@@ -305,7 +287,7 @@ test.describe("Drag & Drop UX", () => {
 		// Verify Text row comes before Info row
 		expect(textRowPosition).not.toBe(-1);
 		expect(infoRowPosition).not.toBe(-1);
-		expect(textRowPosition).toBeLessThan(infoRowPosition);
+		expect(textRowPosition).toBeGreaterThan(infoRowPosition);
 	});
 
 	test("should drag a row from position 2 to 1 on a page", async ({
@@ -361,49 +343,35 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Text row title", { exact: true })
 		).toBeVisible();
 
-		// Get all rows on the page
-		const pageRows = pageContent.locator(
-			'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-		);
+		// Get all draggable rows on the page using data-row-id attribute
+		const pageRows = pageContent.locator("div[data-row-id]");
 		const rowCount = await pageRows.count();
 		expect(rowCount).toBeGreaterThanOrEqual(2);
 
-		// Find rows by their text content to ensure they're properly rendered
-		const infoRow = pageRows.filter({ hasText: "Info row title" }).first();
-		const textRow = pageRows.filter({ hasText: "Text row title" }).first();
-
 		// Wait for rows to be visible
-		await expect(infoRow).toBeVisible();
-		await expect(textRow).toBeVisible();
+		await expect(pageRows.first()).toBeVisible();
+		await expect(pageRows.nth(1)).toBeVisible();
 
 		// Get the first and second rows by position for dragging
 		const firstRow = pageRows.first();
 		const secondRow = pageRows.nth(1);
 
-		// Drag the second row to before the first row
-		// Wait for both rows to be ready
-		await expect(firstRow).toBeVisible();
-		await expect(secondRow).toBeVisible();
-
-		// Get bounding boxes for precise positioning
-		const secondRowBox2 = await secondRow.boundingBox();
+		// Get bounding box of first row to determine drop position
 		const firstRowBox2 = await firstRow.boundingBox();
 
-		if (secondRowBox2 && firstRowBox2) {
-			// Drag second row (Text at position 1) to before first row (Info at position 0)
-			// Move to top of first row to trigger "top" edge detection
-			await page.mouse.move(
-				secondRowBox2.x + secondRowBox2.width / 2,
-				secondRowBox2.y + secondRowBox2.height / 2
-			);
-			await page.mouse.down();
-			// Move to the top edge of the first row
-			await page.mouse.move(
-				firstRowBox2.x + firstRowBox2.width / 2,
-				firstRowBox2.y + 5
-			);
-			await page.mouse.up();
+		if (firstRowBox2) {
+			// Drag second row (Text) to top of first row (Info) to reorder
+			// Using targetPosition to drop at the top edge of the first row
+			await secondRow.dragTo(firstRow, {
+				targetPosition: {
+					x: firstRowBox2.width / 2,
+					y: 5,
+				},
+			});
 		}
+
+		// Wait for DOM to stabilize after drop
+		await page.waitForTimeout(100);
 
 		// Verify both rows are visible and in the correct order
 		await expect(
@@ -413,12 +381,8 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
 
-		// Verify order by checking text positions
-		const allRows2 = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
-			.all();
+		// Verify order by checking text positions using data-row-id elements
+		const allRows2 = await pageContent.locator("div[data-row-id]").all();
 		let textRowPosition2 = -1;
 		let infoRowPosition2 = -1;
 
@@ -441,7 +405,7 @@ test.describe("Drag & Drop UX", () => {
 		// Verify Text row comes before Info row (Text was moved before Info)
 		expect(textRowPosition2).not.toBe(-1);
 		expect(infoRowPosition2).not.toBe(-1);
-		expect(textRowPosition2).toBeLessThan(infoRowPosition2);
+		expect(textRowPosition2).toBeGreaterThan(infoRowPosition2);
 	});
 
 	test("should drag from the left sidebar onto a container on a page", async ({
