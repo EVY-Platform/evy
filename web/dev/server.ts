@@ -1,61 +1,112 @@
-import { serveDir } from "@std/http/file-server";
+import { watch } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const PORT = Deno.env.get("WEB_PORT") || "3000";
-const PROJECT_ROOT = new URL("..", import.meta.url).pathname;
-const DIST_DIR = `${PROJECT_ROOT}/dist`;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = join(__dirname, "..");
+const DIST_DIR = join(PROJECT_ROOT, "dist");
+const PORT = Number.parseInt(process.env.WEB_PORT || "3000", 10);
 
-const setupCmd = new Deno.Command("deno", {
-	args: ["task", "setup"],
-	cwd: PROJECT_ROOT,
-	stdout: "piped",
-	stderr: "piped",
-});
-const buildCmd = new Deno.Command("deno", {
-	args: ["task", "build"],
-	cwd: PROJECT_ROOT,
-	stdout: "piped",
-	stderr: "piped",
-});
+async function runSetup() {
+	const proc = Bun.spawn(["bun", "run", "setup"], {
+		cwd: PROJECT_ROOT,
+		stdout: "pipe",
+		stderr: "pipe",
+	});
+	await proc.exited;
+	return proc.exitCode === 0;
+}
+
+async function runBuild() {
+	const proc = Bun.spawn(
+		[
+			"bun",
+			"build",
+			"--target=browser",
+			"--outdir=dist",
+			"--entry-naming=[dir]/bundle.js",
+			"app/main.tsx",
+		],
+		{
+			cwd: PROJECT_ROOT,
+			stdout: "pipe",
+			stderr: "pipe",
+		},
+	);
+	const exitCode = await proc.exited;
+	if (exitCode !== 0) {
+		const stderr = await new Response(proc.stderr).text();
+		throw new Error(stderr);
+	}
+	return true;
+}
 
 async function rebuild() {
 	try {
-		await setupCmd.output();
-		const result = await buildCmd.output();
-		if (!result.success) {
-			throw new Error(new TextDecoder().decode(result.stderr));
-		}
+		await runSetup();
+		await runBuild();
+		console.log("✅ Build complete");
 	} catch (error) {
 		console.error("❌ Build error:", error);
 	}
 }
 
-async function watchFiles() {
-	try {
-		const watcher = Deno.watchFs([`${PROJECT_ROOT}/app`]);
-		for await (const event of watcher) {
-			if (event.kind !== "modify" && event.kind !== "create") return;
-			console.log(`Change detected: ${event.paths[0].split("/").pop()}`);
-			await rebuild();
-		}
-	} catch (error) {
-		console.error("❌ Watch error:", error);
-	}
+function watchFiles() {
+	const appDir = join(PROJECT_ROOT, "app");
+	console.log(`👀 Watching ${appDir} for changes...`);
+
+	watch(appDir, { recursive: true }, async (eventType, filename) => {
+		if (!filename) return;
+		console.log(`Change detected: ${filename}`);
+		await rebuild();
+	});
 }
 
 function startServer() {
-	Deno.serve(
-		{ port: PORT },
-		async (request) =>
-			await serveDir(request, {
-				fsRoot: DIST_DIR,
-				showDirListing: false,
-				enableCors: true,
-			})
-	);
+	const server = Bun.serve({
+		port: PORT,
+		async fetch(req) {
+			const url = new URL(req.url);
+			let pathname = url.pathname;
+
+			// Default to index.html for root
+			if (pathname === "/") {
+				pathname = "/index.html";
+			}
+
+			const filePath = join(DIST_DIR, pathname);
+
+			try {
+				const file = Bun.file(filePath);
+				if (await file.exists()) {
+					return new Response(file, {
+						headers: {
+							"Access-Control-Allow-Origin": "*",
+						},
+					});
+				}
+			} catch {
+				// File doesn't exist, fall through to 404
+			}
+
+			// Try index.html for SPA routing
+			const indexFile = Bun.file(join(DIST_DIR, "index.html"));
+			if (await indexFile.exists()) {
+				return new Response(indexFile, {
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+					},
+				});
+			}
+
+			return new Response("Not Found", { status: 404 });
+		},
+	});
+
+	console.log(`🚀 Server running at http://localhost:${server.port}`);
 }
 
-if (import.meta.main) {
-	await rebuild();
-	watchFiles();
-	startServer();
-}
+// Main entry point
+await rebuild();
+watchFiles();
+startServer();

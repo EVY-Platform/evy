@@ -1,12 +1,13 @@
-import React, {
-	forwardRef,
+import type React from "react";
+import {
 	Fragment,
-	useMemo,
+	forwardRef,
+	useCallback,
 	useContext,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
-	useCallback,
 } from "react";
 import ReactDOM from "react-dom";
 import invariant from "tiny-invariant";
@@ -20,12 +21,12 @@ import {
 	draggable,
 	dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
+import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 
-import { EVYRow } from "../rows/EVYRow";
 import { AppContext } from "../registry";
+import { EVYRow } from "../rows/EVYRow";
 
 export type Edge = "top" | "right" | "bottom" | "left";
 
@@ -48,7 +49,7 @@ interface DragPreviewEvent {
 	nativeSetDragImage: (
 		image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
 		x: number,
-		y: number
+		y: number,
 	) => void;
 }
 
@@ -102,7 +103,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			dropzones = [],
 			orientation = "vertical",
 		},
-		ref
+		ref,
 	) {
 		const cursor = useMemo(() => {
 			return {
@@ -120,11 +121,11 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		const showBefore = useMemo(
 			() => dropzones.includes("before") || indicators.includes("before"),
-			[dropzones, indicators]
+			[dropzones, indicators],
 		);
 		const showAfter = useMemo(
 			() => dropzones.includes("after") || indicators.includes("after"),
-			[dropzones, indicators]
+			[dropzones, indicators],
 		);
 
 		return (
@@ -132,9 +133,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				{showBefore && (
 					<div
 						className={`${indicatorClass} ${
-							indicators.includes("before")
-								? "expanded evy-mt-2"
-								: ""
+							indicators.includes("before") ? "expanded evy-mt-2" : ""
 						}`}
 					/>
 				)}
@@ -143,21 +142,20 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 					style={{ cursor }}
 					ref={ref}
 					onClick={selectRow}
+					onKeyDown={(e) => e.key === "Enter" && selectRow?.()}
 				>
 					{children}
 				</div>
 				{showAfter && (
 					<div
 						className={`${indicatorClass} ${
-							indicators.includes("after")
-								? "expanded evy-mb-2"
-								: ""
+							indicators.includes("after") ? "expanded evy-mb-2" : ""
 						}`}
 					/>
 				)}
 			</>
 		);
-	}
+	},
 );
 
 export function DraggableRowContainer({
@@ -214,7 +212,7 @@ export function DraggableRowContainer({
 			["top", "left"].includes(edge) ? "before" : undefined,
 			["bottom", "right"].includes(edge) ? "after" : undefined,
 		].filter(Boolean) as Array<"before" | "after">;
-	}, [dropIndicator, dragging, rowId]);
+	}, [dropIndicator, dragging, rowId, showIndicators]);
 
 	// TODO: Fix logic to not show dropzones when there are no containers.. eg with the
 	// segment controller Dimensions 3, there are indicators above the info row title
@@ -239,14 +237,7 @@ export function DraggableRowContainer({
 			hideBefore ? undefined : "before",
 			hideAfter ? undefined : "after",
 		].filter(Boolean) as Array<"before" | "after">;
-	}, [
-		dragging,
-		dropIndicator?.pageId,
-		dropIndicator?.rowId,
-		dropIndicator?.edge,
-		previousRowId,
-		nextRowId,
-	]);
+	}, [dragging, dropIndicator, previousRowId, nextRowId]);
 
 	const getElementDepth = useCallback((element: HTMLElement): number => {
 		let depth = 0;
@@ -283,14 +274,14 @@ export function DraggableRowContainer({
 				edge: edge,
 			});
 		},
-		[dispatchDropIndicator, getElementDepth, dropIndicator?.rowId, rowId]
+		[dispatchDropIndicator, rowId],
 	);
 
 	useEffect(() => {
 		const element = ref.current;
 		invariant(
 			element,
-			"DraggableRowContainer useEffect: ref.current is not defined"
+			"DraggableRowContainer useEffect: ref.current is not defined",
 		);
 
 		return combine(
@@ -336,7 +327,7 @@ export function DraggableRowContainer({
 							input,
 							element,
 							allowedEdges,
-						}
+						},
 					),
 				onDragEnter: onDragEvent,
 				onDrag: onDragEvent,
@@ -347,13 +338,14 @@ export function DraggableRowContainer({
 						type: "UNSET_INDICATOR_ROW",
 					});
 				},
-			})
+			}),
 		);
 	}, [
 		allowedEdges,
+		currentRow?.config.view.content.child,
+		currentRow?.config.view.content.children?.length,
 		dispatchDropIndicator,
 		dropIndicator,
-		getElementDepth,
 		onDragEvent,
 		rowId,
 	]);
@@ -383,7 +375,7 @@ export function DraggableRowContainer({
 					>
 						<RowPrimitive state={state}>{children}</RowPrimitive>
 					</div>,
-					state.container
+					state.container,
 				)}
 		</Fragment>
 	);

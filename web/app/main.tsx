@@ -1,16 +1,16 @@
-import { createRoot } from "react-dom/client";
 import { useContext, useEffect, useMemo } from "react";
+import { createRoot } from "react-dom/client";
 import invariant from "tiny-invariant";
 
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
-import { AppProvider, AppContext, type ServerFlow } from "./registry.tsx";
-import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
-import { RowsPanel } from "./components/RowsPanel.tsx";
-import { FlowSelector } from "./components/FlowSelector.tsx";
 import AppPage from "./components/AppPage.tsx";
+import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
 import type { Edge } from "./components/DraggableRowContainer.tsx";
+import { FlowSelector } from "./components/FlowSelector.tsx";
+import { RowsPanel } from "./components/RowsPanel.tsx";
+import { AppContext, AppProvider, type ServerFlow } from "./registry.tsx";
 import { EVYRow } from "./rows/EVYRow.tsx";
 
 interface DropLocation {
@@ -49,7 +49,7 @@ function AppContent() {
 
 	const pages = useMemo(
 		() => flows.find((flow) => flow.id === activeFlowId)?.pages || [],
-		[flows, activeFlowId]
+		[flows, activeFlowId],
 	);
 
 	useEffect(() => {
@@ -63,32 +63,28 @@ function AppContent() {
 				const rowId = source.data.rowId;
 				invariant(
 					typeof rowId === "string",
-					"AppContent monitor for elements onDrop: rowId is not a string"
+					"AppContent monitor for elements onDrop: rowId is not a string",
 				);
 
 				const sourcePageId =
-					location.initial.dropTargets[
-						location.initial.dropTargets.length - 1
-					].data.pageId;
+					location.initial.dropTargets[location.initial.dropTargets.length - 1]
+						.data.pageId;
 				invariant(
 					typeof sourcePageId === "string",
-					"AppContent monitor for elements onDrop: sourcePageId is not a string"
+					"AppContent monitor for elements onDrop: sourcePageId is not a string",
 				);
 
 				// If the row was dropped on top of another row,
 				// dropTargets is an array with [row, ..., page]
 				// Otherwise it is [page]
 				const destinationPageRecord =
-					location.current.dropTargets[
-						location.current.dropTargets.length - 1
-					];
+					location.current.dropTargets[location.current.dropTargets.length - 1];
 				invariant(
 					destinationPageRecord,
-					"AppContent monitor for elements onDrop: destinationPageRecord is not defined"
+					"AppContent monitor for elements onDrop: destinationPageRecord is not defined",
 				);
 
-				const destinationPageId = destinationPageRecord.data
-					.pageId as string;
+				const destinationPageId = destinationPageRecord.data.pageId as string;
 				if (destinationPageId === "rows" && sourcePageId === "rows") {
 					return;
 				}
@@ -103,11 +99,11 @@ function AppContent() {
 				}
 
 				const destinationPage = pages.find(
-					(page) => page.id === destinationPageId
+					(page) => page.id === destinationPageId,
 				);
 				invariant(
 					destinationPage,
-					"AppContent monitor for elements onDrop: destinationPage is not defined"
+					"AppContent monitor for elements onDrop: destinationPage is not defined",
 				);
 
 				// If the row was dropped on top of another row,
@@ -122,7 +118,7 @@ function AppContent() {
 					destinationRow &&
 					EVYRow.findContainerOfRow(
 						destinationRow.data.rowId,
-						destinationPage.rows
+						destinationPage.rows,
 					);
 
 				const closestEdgeOfTarget: Edge | null = destinationRow
@@ -133,12 +129,11 @@ function AppContent() {
 				if (destinationRow) {
 					if (
 						destinationContainer?.type === "children" &&
-						destinationContainer.container.config.view.content
-							.children
+						destinationContainer.container.config.view.content.children
 					) {
 						indexOfTarget =
 							destinationContainer.container.config.view.content.children.findIndex(
-								(r) => r.rowId === destinationRow.data.rowId
+								(r) => r.rowId === destinationRow.data.rowId,
 							);
 					} else if (
 						destinationContainer?.type === "child" &&
@@ -146,32 +141,25 @@ function AppContent() {
 					) {
 						indexOfTarget = 0;
 					} else if (closestEdgeOfTarget && !destinationContainer) {
-						const destinationRowIndex =
-							destinationPage.rows.findIndex(
-								(r) => r.rowId === destinationRow.data.rowId
-							);
+						const destinationRowIndex = destinationPage.rows.findIndex(
+							(r) => r.rowId === destinationRow.data.rowId,
+						);
 						indexOfTarget =
-							closestEdgeOfTarget === "top" ||
-							closestEdgeOfTarget === "left"
+							closestEdgeOfTarget === "top" || closestEdgeOfTarget === "left"
 								? destinationRowIndex
 								: destinationRowIndex + 1;
 					}
 				}
 
-				if (
-					closestEdgeOfTarget === "top" ||
-					closestEdgeOfTarget === "left"
-				) {
-					indexOfTarget =
-						indexOfTarget ?? destinationPage.rows.length;
+				if (closestEdgeOfTarget === "top" || closestEdgeOfTarget === "left") {
+					indexOfTarget = indexOfTarget ?? destinationPage.rows.length;
 				} else if (
 					closestEdgeOfTarget === "bottom" ||
 					closestEdgeOfTarget === "right"
 				) {
 					indexOfTarget = indexOfTarget + 1;
 				} else {
-					indexOfTarget =
-						indexOfTarget ?? destinationPage.rows.length;
+					indexOfTarget = indexOfTarget ?? destinationPage.rows.length;
 				}
 
 				const baseOptions = {
@@ -181,7 +169,7 @@ function AppContent() {
 						? {
 								rowId: destinationContainer.container.rowId,
 								type: destinationContainer.type,
-						  }
+							}
 						: undefined,
 				};
 

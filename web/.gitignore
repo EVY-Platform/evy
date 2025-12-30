@@ -29,6 +29,3 @@ dist-ssr
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-
-#deno
-.deno_cache/

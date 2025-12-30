@@ -17,23 +17,14 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v5
 
-            - name: Cache Deno dependencies
-              uses: actions/cache@v4
-              with:
-                  path: |
-                      ~/.cache/deno
-                      ~/.deno
-                  key: ${{ runner.os }}-deno-${{ hashFiles('deno.lock') }}
-                  restore-keys: ${{ runner.os }}-deno-
-
-            - name: Setup Deno
-              uses: denoland/setup-deno@v2
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
 
             - name: Install dependencies
-              run: deno install --no-lock
+              run: bun install
 
             - name: Run lint
-              run: deno task lint
+              run: bun run lint
 
             - name: Upload test results
               uses: actions/upload-artifact@v4

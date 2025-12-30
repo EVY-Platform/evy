@@ -1,4 +1,4 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 import TextArea from "../design-system/TextArea";
 
 export default class TextAreaRow extends EVYRow {

@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo } from "react";
 
 import { AppContext } from "../registry";
-import { Row, EVYRow } from "../rows/EVYRow";
+import { EVYRow, type Row } from "../rows/EVYRow";
 
 export function ConfigurationPanel() {
 	const { flows, activeFlowId, activeRowId, dispatchRow } =
@@ -18,7 +18,7 @@ export function ConfigurationPanel() {
 				configValue,
 			});
 		},
-		[activeRowId, dispatchRow]
+		[activeRowId, dispatchRow],
 	);
 
 	const row = useMemo(
@@ -28,7 +28,7 @@ export function ConfigurationPanel() {
 				?.pages.flatMap((page) => page.rows)
 				.flatMap(EVYRow.getRowsRecursive)
 				.find((r) => r.rowId === activeRowId),
-		[flows, activeFlowId, activeRowId]
+		[flows, activeFlowId, activeRowId],
 	);
 
 	const renderConfiguration = useCallback(
@@ -39,12 +39,10 @@ export function ConfigurationPanel() {
 				const uniqueId = `${configRow.rowId}-${key}`;
 
 				if (key === "children") {
-					const children = content[key] as Row[];
+					const children = content[key] as Row[] | undefined;
+					if (!children) return null;
 					return (
-						<div
-							key={uniqueId}
-							className="evy-flex evy-flex-col evy-gap-4"
-						>
+						<div key={uniqueId} className="evy-flex evy-flex-col evy-gap-4">
 							{children.map((child, index) => {
 								return (
 									<div
@@ -60,42 +58,38 @@ export function ConfigurationPanel() {
 							})}
 						</div>
 					);
-				} else if (key === "child") {
+				}
+				if (key === "child") {
+					const child = content[key] as Row | undefined;
+					if (!child) return null;
 					return (
 						<div
 							key={uniqueId}
 							className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
 						>
-							<p className="evy-text-lg evy-font-semibold evy-mb-4">
-								Child
-							</p>
-							{renderConfiguration(content[key] as Row)}
-						</div>
-					);
-				} else {
-					return (
-						<div className="evy-mb-2" key={uniqueId}>
-							<label htmlFor={uniqueId}>{key}</label>
-							<input
-								id={uniqueId}
-								type="text"
-								value={String(content[key])}
-								onChange={(e) => {
-									updateRowContent(
-										key,
-										e.target.value,
-										configRow.rowId
-									);
-								}}
-								className="evy-w-full evy-focus-visible:outline-none"
-								required
-							/>
+							<p className="evy-text-lg evy-font-semibold evy-mb-4">Child</p>
+							{renderConfiguration(child)}
 						</div>
 					);
 				}
+				return (
+					<div className="evy-mb-2" key={uniqueId}>
+						<label htmlFor={uniqueId}>{key}</label>
+						<input
+							id={uniqueId}
+							type="text"
+							value={String(content[key])}
+							onChange={(e) => {
+								updateRowContent(key, e.target.value, configRow.rowId);
+							}}
+							className="evy-w-full evy-focus-visible:outline-none"
+							required
+						/>
+					</div>
+				);
 			});
 		},
-		[updateRowContent]
+		[updateRowContent],
 	);
 
 	const configurationElements = row ? renderConfiguration(row) : [];

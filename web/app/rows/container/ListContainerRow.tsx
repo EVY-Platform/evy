@@ -1,5 +1,5 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
 import { DraggableRowContainer } from "../../components/DraggableRowContainer";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 
 export default class ListContainerRow extends EVYRow {
 	static override config: RowConfig = {
@@ -25,14 +25,8 @@ export default class ListContainerRow extends EVYRow {
 							key={child.rowId}
 							rowId={child.rowId}
 							showIndicators
-							previousRowId={
-								index > 0 ? rows[index - 1].rowId : undefined
-							}
-							nextRowId={
-								index < lastIndex
-									? rows[index + 1].rowId
-									: undefined
-							}
+							previousRowId={index > 0 ? rows[index - 1].rowId : undefined}
+							nextRowId={index < lastIndex ? rows[index + 1].rowId : undefined}
 						>
 							{child.row}
 						</DraggableRowContainer>

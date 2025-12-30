@@ -1,4 +1,4 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 import Input from "../design-system/Input";
 
 export default class InputListRow extends EVYRow {
@@ -19,7 +19,7 @@ export default class InputListRow extends EVYRow {
 			<div className="evy-p-2">
 				<p className="evy-text-md">{row.config.view.content.title}</p>
 				<Input
-					value={row.config.view.data!}
+					value={row.config.view.data ?? ""}
 					placeholder={row.config.view.content.placeholder}
 				/>
 			</div>

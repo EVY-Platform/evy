@@ -1,28 +1,34 @@
 # EVY Web
 
-A React-based app builder built with Deno and served using std/http/file-server.
+A React-based app builder built with Bun.
 
 ## Getting Started
 
 ### Prerequisites
 
--   [Deno](https://deno.land/) installed on your system
+-   [Bun](https://bun.sh/) installed on your system
+
+### Installation
+
+```bash
+bun install
+```
 
 ### Running the App
 
 #### Development Mode
 
 ```bash
-deno task dev
+bun run dev
 ```
 
-This will build the application and start the server.
+This will build the application and start the dev server with hot reloading.
 
 #### Production Mode
 
 ```bash
-deno task build
-deno task start
+bun run build
+bun run prod
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -37,17 +43,23 @@ docker compose up -d
 
 This project includes comprehensive end-to-end tests using Playwright.
 
+### Setup
+
+```bash
+bun run test:setup
+```
+
 ### Running Tests
 
 ```bash
-deno task test
+bun run test
 ```
 
-To run the tests and see the runs to debug and develop
+To run the tests with UI or debug mode:
 
 ```bash
-deno task test:ui
-deno task test:debug
+bun run test:ui
+bun run test:debug
 ```
 
 ## License

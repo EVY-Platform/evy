@@ -1,4 +1,4 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 import Dropdown from "../design-system/Dropdown";
 
 export default class DropdownRow extends EVYRow {
