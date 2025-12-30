@@ -16,7 +16,7 @@ export default defineConfig({
 		{
 			name: "chromium",
 			use: {
-				viewport: { width: 1280, height: 720 },
+				viewport: { width: 1280, height: 1700 },
 				ignoreHTTPSErrors: true,
 			},
 		},

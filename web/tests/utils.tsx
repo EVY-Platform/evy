@@ -1,5 +1,5 @@
 import type { ServerFlow } from "../app/registry.tsx";
-import type { Page } from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
 
 type TestPage = {
 	id: string;

@@ -78,7 +78,8 @@ test.describe("Drag & Drop UX", () => {
 			.getByText("Text row title", { exact: true })
 			.locator("..");
 		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
-		await sidebarRow.dragTo(firstPage);
+		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
+		await sidebarRow.dragTo(pageContent);
 
 		// Verify row is on first page
 		await expect(
@@ -141,7 +142,8 @@ test.describe("Drag & Drop UX", () => {
 			.getByText("Button row text", { exact: true })
 			.locator("..");
 		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
-		await sidebarRow.dragTo(firstPage);
+		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
+		await sidebarRow.dragTo(pageContent);
 
 		// Verify row is on the page
 		await expect(
@@ -153,9 +155,6 @@ test.describe("Drag & Drop UX", () => {
 			.getByText("Button row text", { exact: true })
 			.locator("..")
 			.locator("..");
-
-		// Get the scrollable container inside the page
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
 
 		// Count initial rows on the page
 		const initialRowCount = await pageContent
@@ -453,12 +452,13 @@ test.describe("Drag & Drop UX", () => {
 			.first()
 			.locator("..");
 		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
+		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
 
 		// Add a container row to the page
 		const containerSidebarRow = rowsPanel
 			.getByText("List container row title", { exact: true })
 			.locator("..");
-		await containerSidebarRow.dragTo(firstPage);
+		await containerSidebarRow.dragTo(pageContent);
 
 		// Verify the container is on the page
 		await expect(
