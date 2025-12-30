@@ -51,7 +51,7 @@ export function getDropIndicator(page: Page): Locator {
 export async function stableDragTo(
 	page: Page,
 	source: Locator,
-	target: Locator
+	target: Locator,
 ) {
 	await source.dragTo(target);
 	await page.waitForTimeout(150);

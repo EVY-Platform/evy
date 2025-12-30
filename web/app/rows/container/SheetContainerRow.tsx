@@ -18,7 +18,9 @@ export default class SheetContainerRow extends EVYRow {
 				<p>{row.config.view.content.title}</p>
 				<div className="evy-flex evy-gap-2">
 					{row.config.view.content.child && (
-						<DraggableRowContainer rowId={row.config.view.content.child.rowId}>
+						<DraggableRowContainer
+							rowId={row.config.view.content.child.rowId}
+						>
 							{row.config.view.content.child.row}
 						</DraggableRowContainer>
 					)}

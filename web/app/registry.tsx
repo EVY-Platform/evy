@@ -157,9 +157,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						flows: state.flows.map((f) =>
 							f.id === state.activeFlowId
 								? { ...f, pages: updatedPages }
-								: f
+								: f,
 						),
-				  }
+					}
 				: {}),
 			...(activeFlowId && activeFlowId !== state.activeFlowId
 				? { activeFlowId }
@@ -186,7 +186,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 
 			const page = flow.pages.find(
-				(p) => p.id === action.destinationPageId
+				(p) => p.id === action.destinationPageId,
 			);
 			invariant(page, "PageReducer addRow: page is not defined");
 
@@ -198,7 +198,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						}
 						const match = EVYRow.traverseToRowAndGetPath(
 							row,
-							action.destinationContainer?.rowId
+							action.destinationContainer?.rowId,
 						);
 						if (match.length > 0) return [index, ...match];
 					})
@@ -206,7 +206,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 				invariant(
 					stepsToDestinationContainer?.length,
-					"PageReducer addRow: stepsToDestinationContainer is not defined"
+					"PageReducer addRow: stepsToDestinationContainer is not defined",
 				);
 
 				let path = page.rows[stepsToDestinationContainer[0] as number];
@@ -218,7 +218,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 								const child = acc.config.view.content.child;
 								invariant(
 									child,
-									"PageReducer addRow: child is not defined"
+									"PageReducer addRow: child is not defined",
 								);
 								return child;
 							}
@@ -232,7 +232,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 					path.config.view.content.children?.splice(
 						action.destinationIndex,
 						0,
-						rowDataAdd
+						rowDataAdd,
 					);
 				}
 			} else {
@@ -289,10 +289,10 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 					? {
 							...page,
 							rows: page.rows.filter(
-								(r) => r.rowId !== action.rowId
+								(r) => r.rowId !== action.rowId,
 							),
-					  }
-					: page
+						}
+					: page,
 			);
 			return updateState({ updatedPages: newPages });
 		}
@@ -303,7 +303,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				row: Row,
 				targetRowId: string,
 				configId: string,
-				configValue: string
+				configValue: string,
 			): Row | null => {
 				if (row.rowId === targetRowId) {
 					return {
@@ -332,12 +332,12 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 									child,
 									targetRowId,
 									configId,
-									configValue
-								) || child
+									configValue,
+								) || child,
 						);
 					const childUpdated = updatedChildren.some(
 						(child, index) =>
-							child !== row.config.view.content.children?.[index]
+							child !== row.config.view.content.children?.[index],
 					);
 					if (childUpdated) {
 						return {
@@ -361,7 +361,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						row.config.view.content.child,
 						targetRowId,
 						configId,
-						configValue
+						configValue,
 					);
 					if (updatedChild) {
 						return {
@@ -385,7 +385,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			const newPages = flow.pages.map((page) => {
 				const hasAtTopLevel = page.rows.some(
-					(r) => r.rowId === action.rowId
+					(r) => r.rowId === action.rowId,
 				);
 				if (hasAtTopLevel) {
 					const newRows = page.rows.map((row) => {
@@ -419,8 +419,8 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 							row,
 							action.rowId,
 							action.configId,
-							action.configValue
-						) || row
+							action.configValue,
+						) || row,
 				);
 				return { ...page, rows: newRows };
 			});
@@ -434,7 +434,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "SET_ACTIVE_ROW": {
 			const page = flow.pages.find((page) =>
-				page.rows.some((row) => row.rowId === action.rowId)
+				page.rows.some((row) => row.rowId === action.rowId),
 			);
 			invariant(page, `Page not found for row ${action.rowId}`);
 
@@ -457,7 +457,7 @@ type DraggingAction =
 	  };
 const draggingReducer = (
 	state: DraggingState,
-	action: DraggingAction
+	action: DraggingAction,
 ): DraggingState => {
 	switch (action.type) {
 		case "START_DRAGGING":
@@ -494,7 +494,7 @@ type DropIndicatorAction =
 
 const dropIndicatorReducer = (
 	state: DropIndicatorState,
-	action: DropIndicatorAction
+	action: DropIndicatorAction,
 ): DropIndicatorState => {
 	switch (action.type) {
 		case "SET_INDICATOR_ROW":
@@ -547,7 +547,7 @@ export const AppContext = createContext<{
 function decodeRow(row: ServerRow): Row {
 	const rowId = crypto.randomUUID();
 	const baseRow = baseRows.find(
-		(baseRow) => row.type === baseRow.config.type
+		(baseRow) => row.type === baseRow.config.type,
 	);
 	if (!baseRow) {
 		return {
@@ -570,7 +570,7 @@ function decodeRow(row: ServerRow): Row {
 							? row.view.content.title
 							: "Invalid title",
 					children: row.view.content.children?.map(
-						(child: ServerRow) => decodeRow(child)
+						(child: ServerRow) => decodeRow(child),
 					),
 					child: row.view.content.child
 						? decodeRow(row.view.content.child)
@@ -618,7 +618,7 @@ export function AppProvider({
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
 	const [dropIndicator, dispatchDropIndicator] = useReducer(
 		dropIndicatorReducer,
-		null
+		null,
 	);
 
 	return (

@@ -6,7 +6,7 @@ A React-based app builder built with Bun.
 
 ### Prerequisites
 
--   [Bun](https://bun.sh/) installed on your system
+- [Bun](https://bun.sh/) installed on your system
 
 ### Installation
 

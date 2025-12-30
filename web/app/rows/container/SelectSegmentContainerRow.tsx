@@ -31,9 +31,13 @@ export default class SelectSegmentContainerRow extends EVYRow {
 						<button
 							key={segment}
 							type="button"
-							onClick={() => this.setState({ selectedTab: index })}
+							onClick={() =>
+								this.setState({ selectedTab: index })
+							}
 							className={`evy-flex-1 evy-border ${
-								index === 0 ? "evy-rounded-left-md evy-border-r-0" : ""
+								index === 0
+									? "evy-rounded-left-md evy-border-r-0"
+									: ""
 							} ${
 								index === segments.length - 1
 									? "evy-rounded-right-md evy-border-l-0"
@@ -49,7 +53,9 @@ export default class SelectSegmentContainerRow extends EVYRow {
 					))}
 				</div>
 				{children[this.state.selectedTab] && (
-					<DraggableRowContainer rowId={children[this.state.selectedTab].rowId}>
+					<DraggableRowContainer
+						rowId={children[this.state.selectedTab].rowId}
+					>
 						{children[this.state.selectedTab].row}
 					</DraggableRowContainer>
 				)}

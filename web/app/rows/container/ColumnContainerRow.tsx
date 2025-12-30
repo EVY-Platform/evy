@@ -25,8 +25,14 @@ export default class ColumnContainerRow extends EVYRow {
 							rowId={child.rowId}
 							orientation="horizontal"
 							showIndicators
-							previousRowId={index > 0 ? rows[index - 1].rowId : undefined}
-							nextRowId={index < lastIndex ? rows[index + 1].rowId : undefined}
+							previousRowId={
+								index > 0 ? rows[index - 1].rowId : undefined
+							}
+							nextRowId={
+								index < lastIndex
+									? rows[index + 1].rowId
+									: undefined
+							}
 						>
 							{child.row}
 						</DraggableRowContainer>

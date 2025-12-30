@@ -133,7 +133,9 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				{showBefore && (
 					<div
 						className={`${indicatorClass} ${
-							indicators.includes("before") ? "expanded evy-mt-2" : ""
+							indicators.includes("before")
+								? "expanded evy-mt-2"
+								: ""
 						}`}
 					/>
 				)}
@@ -149,7 +151,9 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				{showAfter && (
 					<div
 						className={`${indicatorClass} ${
-							indicators.includes("after") ? "expanded evy-mb-2" : ""
+							indicators.includes("after")
+								? "expanded evy-mb-2"
+								: ""
 						}`}
 					/>
 				)}
