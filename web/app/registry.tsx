@@ -1,38 +1,38 @@
 import {
-	type ReactNode,
 	type Dispatch,
-	useReducer,
+	type ReactNode,
 	createContext,
 	createElement,
+	useReducer,
 } from "react";
 import invariant from "tiny-invariant";
 
 import ButtonRow from "./rows/action/ButtonRow";
-import CalendarRow from "./rows/edit/CalendarRow";
+import TextActionRow from "./rows/action/TextActionRow";
 import ColumnContainerRow from "./rows/container/ColumnContainerRow";
-import DropdownRow from "./rows/edit/DropdownRow";
-import InfoRow from "./rows/view/InfoRow";
-import InlinePickerRow from "./rows/edit/InlinePickerRow";
-import InputListRow from "./rows/view/InputListRow";
-import InputRow from "./rows/edit/InputRow";
 import ListContainerRow from "./rows/container/ListContainerRow";
-import SearchRow from "./rows/edit/SearchRow";
-import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
 import SelectSegmentContainerRow from "./rows/container/SelectSegmentContainerRow";
 import SheetContainerRow from "./rows/container/SheetContainerRow";
-import TextActionRow from "./rows/action/TextActionRow";
+import CalendarRow from "./rows/edit/CalendarRow";
+import DropdownRow from "./rows/edit/DropdownRow";
+import InlinePickerRow from "./rows/edit/InlinePickerRow";
+import InputRow from "./rows/edit/InputRow";
+import SearchRow from "./rows/edit/SearchRow";
+import SelectPhotoRow from "./rows/edit/SelectPhotoRow";
 import TextAreaRow from "./rows/edit/TextAreaRow";
-import TextRow from "./rows/view/TextRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
+import InfoRow from "./rows/view/InfoRow";
+import InputListRow from "./rows/view/InputListRow";
+import TextRow from "./rows/view/TextRow";
 
 import type { Edge } from "./components/DraggableRowContainer";
 import {
-	type RowConfig,
-	type Row,
-	type RowView,
-	UnknownRow,
 	type ContainerType,
 	EVYRow,
+	type Row,
+	type RowConfig,
+	type RowView,
+	UnknownRow,
 } from "./rows/EVYRow";
 
 type Page = {
@@ -154,11 +154,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			...(updatedPages
 				? {
 						flows: state.flows.map((f) =>
-							f.id === state.activeFlowId
-								? { ...f, pages: updatedPages }
-								: f
+							f.id === state.activeFlowId ? { ...f, pages: updatedPages } : f,
 						),
-				  }
+					}
 				: {}),
 			...(activeFlowId && activeFlowId !== state.activeFlowId
 				? { activeFlowId }
@@ -174,7 +172,8 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const baseRow = baseRows.find((row) => {
 				if (!row || typeof row !== "function") return false;
 				return (row as { name: string }).name === action.oldRowId;
-			})!;
+			});
+			if (!baseRow) return state;
 
 			const rowDataAdd: Row = {
 				...baseRow,
@@ -183,20 +182,18 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				row: createElement(baseRow, { rowId: action.newRowId }),
 			};
 
-			const page = flow.pages.find(
-				(p) => p.id === action.destinationPageId
-			)!;
+			const page = flow.pages.find((p) => p.id === action.destinationPageId);
 			invariant(page, "PageReducer addRow: page is not defined");
 
 			if (action.destinationContainer) {
 				const stepsToDestinationContainer = page.rows
 					.map((row, index) => {
-						if (row.rowId === action.destinationContainer!.rowId) {
+						if (row.rowId === action.destinationContainer?.rowId) {
 							return [index];
 						}
 						const match = EVYRow.traverseToRowAndGetPath(
 							row,
-							action.destinationContainer!.rowId
+							action.destinationContainer?.rowId,
 						);
 						if (match.length > 0) return [index, ...match];
 					})
@@ -204,7 +201,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 				invariant(
 					stepsToDestinationContainer?.length,
-					"PageReducer addRow: stepsToDestinationContainer is not defined"
+					"PageReducer addRow: stepsToDestinationContainer is not defined",
 				);
 
 				let path = page.rows[stepsToDestinationContainer[0] as number];
@@ -213,20 +210,21 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						.slice(1)
 						.reduce((acc: Row, curr: number | "child") => {
 							if (curr === "child") {
-								return acc.config.view.content.child!;
-							} else {
-								return acc.config.view.content.children![curr];
+								const child = acc.config.view.content.child;
+								invariant(child, "PageReducer addRow: child is not defined");
+								return child;
 							}
+							return acc.config.view.content.children?.[curr];
 						}, path);
 				}
 
 				if (action.destinationContainer?.type === "child") {
 					path.config.view.content.child = rowDataAdd;
 				} else if (action.destinationContainer?.type === "children") {
-					path.config.view.content.children!.splice(
+					path.config.view.content.children?.splice(
 						action.destinationIndex,
 						0,
-						rowDataAdd
+						rowDataAdd,
 					);
 				}
 			} else {
@@ -282,11 +280,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				page.id === action.pageId
 					? {
 							...page,
-							rows: page.rows.filter(
-								(r) => r.rowId !== action.rowId
-							),
-					  }
-					: page
+							rows: page.rows.filter((r) => r.rowId !== action.rowId),
+						}
+					: page,
 			);
 			return updateState({ updatedPages: newPages });
 		}
@@ -297,7 +293,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				row: Row,
 				targetRowId: string,
 				configId: string,
-				configValue: string
+				configValue: string,
 			): Row | null => {
 				if (row.rowId === targetRowId) {
 					return {
@@ -308,10 +304,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 								...row.config.view,
 								content: {
 									...row.config.view.content,
-									[configId]:
-										splitValue.length > 1
-											? splitValue
-											: configValue,
+									[configId]: splitValue.length > 1 ? splitValue : configValue,
 								},
 							},
 						},
@@ -319,19 +312,14 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				}
 
 				if (row.config.view.content.children) {
-					const updatedChildren =
-						row.config.view.content.children.map(
-							(child) =>
-								updateRowInChildren(
-									child,
-									targetRowId,
-									configId,
-									configValue
-								) || child
-						);
+					const updatedChildren = row.config.view.content.children.map(
+						(child) =>
+							updateRowInChildren(child, targetRowId, configId, configValue) ||
+							child,
+					);
 					const childUpdated = updatedChildren.some(
 						(child, index) =>
-							child !== row.config.view.content.children?.[index]
+							child !== row.config.view.content.children?.[index],
 					);
 					if (childUpdated) {
 						return {
@@ -355,7 +343,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						row.config.view.content.child,
 						targetRowId,
 						configId,
-						configValue
+						configValue,
 					);
 					if (updatedChild) {
 						return {
@@ -378,9 +366,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 
 			const newPages = flow.pages.map((page) => {
-				const hasAtTopLevel = page.rows.some(
-					(r) => r.rowId === action.rowId
-				);
+				const hasAtTopLevel = page.rows.some((r) => r.rowId === action.rowId);
 				if (hasAtTopLevel) {
 					const newRows = page.rows.map((row) => {
 						if (row.rowId === action.rowId) {
@@ -393,9 +379,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 										content: {
 											...row.config.view.content,
 											[action.configId]:
-												splitValue.length > 1
-													? splitValue
-													: action.configValue,
+												splitValue.length > 1 ? splitValue : action.configValue,
 										},
 									},
 								},
@@ -413,8 +397,8 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 							row,
 							action.rowId,
 							action.configId,
-							action.configValue
-						) || row
+							action.configValue,
+						) || row,
 				);
 				return { ...page, rows: newRows };
 			});
@@ -428,7 +412,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "SET_ACTIVE_ROW": {
 			const page = flow.pages.find((page) =>
-				page.rows.some((row) => row.rowId === action.rowId)
+				page.rows.some((row) => row.rowId === action.rowId),
 			);
 			invariant(page, `Page not found for row ${action.rowId}`);
 
@@ -451,7 +435,7 @@ type DraggingAction =
 	  };
 const draggingReducer = (
 	state: DraggingState,
-	action: DraggingAction
+	action: DraggingAction,
 ): DraggingState => {
 	switch (action.type) {
 		case "START_DRAGGING":
@@ -488,7 +472,7 @@ type DropIndicatorAction =
 
 const dropIndicatorReducer = (
 	state: DropIndicatorState,
-	action: DropIndicatorAction
+	action: DropIndicatorAction,
 ): DropIndicatorState => {
 	switch (action.type) {
 		case "SET_INDICATOR_ROW":
@@ -540,40 +524,37 @@ export const AppContext = createContext<{
 
 function decodeRow(row: ServerRow): Row {
 	const rowId = crypto.randomUUID();
-	const baseRow = baseRows.find(
-		(baseRow) => row.type === baseRow.config.type
-	);
+	const baseRow = baseRows.find((baseRow) => row.type === baseRow.config.type);
 	if (!baseRow) {
 		return {
 			rowId,
 			row: createElement(UnknownRow, { rowId }),
 			config: UnknownRow.config,
 		};
-	} else {
-		return {
-			rowId,
-			row: createElement(baseRow, { rowId }),
-			config: {
-				...row,
-				view: {
-					...row.view,
-					content: {
-						...row.view.content,
-						title:
-							typeof row.view.content.title === "string"
-								? row.view.content.title
-								: "Invalid title",
-						children: row.view.content.children?.map(
-							(child: ServerRow) => decodeRow(child)
-						),
-						child: row.view.content.child
-							? decodeRow(row.view.content.child)
-							: undefined,
-					},
+	}
+	return {
+		rowId,
+		row: createElement(baseRow, { rowId }),
+		config: {
+			...row,
+			view: {
+				...row.view,
+				content: {
+					...row.view.content,
+					title:
+						typeof row.view.content.title === "string"
+							? row.view.content.title
+							: "Invalid title",
+					children: row.view.content.children?.map((child: ServerRow) =>
+						decodeRow(child),
+					),
+					child: row.view.content.child
+						? decodeRow(row.view.content.child)
+						: undefined,
 				},
 			},
-		};
-	}
+		},
+	};
 }
 
 const decodeFlows = (flows: ServerFlow[]): Flow[] => {
@@ -619,7 +600,7 @@ export function AppProvider({
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
 	const [dropIndicator, dispatchDropIndicator] = useReducer(
 		dropIndicatorReducer,
-		null
+		null,
 	);
 
 	return (

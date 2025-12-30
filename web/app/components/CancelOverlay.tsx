@@ -10,15 +10,12 @@ const idle: State = { type: "idle" };
 const hovered: State = { type: "hovered" };
 
 export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
-	const ref = useRef<HTMLDivElement | null>(null);
+	const ref = useRef<HTMLButtonElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
 	useEffect(() => {
 		const element = ref.current;
-		invariant(
-			element,
-			"CancelOverlay useEffect: ref.current is not defined"
-		);
+		invariant(element, "CancelOverlay useEffect: ref.current is not defined");
 		return combine(
 			dropTargetForElements({
 				element: element,
@@ -29,7 +26,7 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 				onDragLeave: () => {
 					setState(idle);
 				},
-			})
+			}),
 		);
 	}, []);
 
@@ -44,13 +41,14 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 							: "var(--color-evy-gray)",
 				}}
 			/>
-			<div
-				className="evy-flex evy-absolute evy-w-full evy-h-full evy-justify-center evy-pt-32"
+			<button
+				type="button"
+				className="evy-flex evy-absolute evy-w-full evy-h-full evy-justify-center evy-pt-32 evy-border-none evy-bg-transparent evy-cursor-pointer"
 				ref={ref}
 				onClick={dismiss}
 			>
 				<img className="evy-h-48" src="/bin.svg" alt="Delete" />
-			</div>
+			</button>
 		</Fragment>
 	);
 }

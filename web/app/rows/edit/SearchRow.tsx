@@ -1,6 +1,6 @@
 import { EVYRow, type Row, type RowConfig } from "../EVYRow";
-import Input from "../design-system/Input";
 import InlineIcon from "../design-system/InlineIcon";
+import Input from "../design-system/Input";
 
 export default class SearchRow extends EVYRow {
 	static override config: RowConfig = {
@@ -28,7 +28,7 @@ export default class SearchRow extends EVYRow {
 				<div className="evy-relative">
 					<InlineIcon icon="/search.svg" alt="Search" />
 					<Input
-						value={row.config.view.data!}
+						value={row.config.view.data ?? ""}
 						placeholder={row.config.view.content.placeholder}
 						offset="left"
 					/>

@@ -1,12 +1,12 @@
-import { useEffect, useContext, useRef, useCallback, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import invariant from "tiny-invariant";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
-import { DraggableRowContainer } from "./DraggableRowContainer";
 import { AppContext } from "../registry";
+import { DraggableRowContainer } from "./DraggableRowContainer";
 
 export default function AppPage({ pageId }: { pageId: string }) {
 	const {
@@ -22,7 +22,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	useEffect(() => {
 		invariant(
 			scrollableRef.current,
-			"AppPage useEffect: scrollableRef.current is not defined"
+			"AppPage useEffect: scrollableRef.current is not defined",
 		);
 		return combine(
 			dropTargetForElements({
@@ -46,9 +46,9 @@ export default function AppPage({ pageId }: { pageId: string }) {
 			autoScrollForElements({
 				element: scrollableRef.current,
 				canScroll: () => true,
-			})
+			}),
 		);
-	}, [pageId, dispatchDropIndicator]);
+	}, [pageId, dispatchDropIndicator, dispatchDragging]);
 
 	const selectRow = useCallback(
 		(rowId: string) =>
@@ -57,7 +57,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				pageId: pageId,
 				rowId: rowId,
 			}),
-		[pageId, dispatchRow]
+		[pageId, dispatchRow],
 	);
 
 	const rowElements = useMemo(() => {
@@ -73,12 +73,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				rowId={row.rowId}
 				selectRow={() => selectRow(row.rowId)}
 				showIndicators
-				previousRowId={
-					index > 0 ? page.rows[index - 1].rowId : undefined
-				}
-				nextRowId={
-					index < lastIndex ? page.rows[index + 1].rowId : undefined
-				}
+				previousRowId={index > 0 ? page.rows[index - 1].rowId : undefined}
+				nextRowId={index < lastIndex ? page.rows[index + 1].rowId : undefined}
 			>
 				{row.row}
 			</DraggableRowContainer>

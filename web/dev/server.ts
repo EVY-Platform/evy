@@ -1,11 +1,11 @@
-import { watch } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { watch } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..");
 const DIST_DIR = join(PROJECT_ROOT, "dist");
-const PORT = parseInt(process.env.WEB_PORT || "3000", 10);
+const PORT = Number.parseInt(process.env.WEB_PORT || "3000", 10);
 
 async function runSetup() {
 	const proc = Bun.spawn(["bun", "run", "setup"], {
@@ -31,7 +31,7 @@ async function runBuild() {
 			cwd: PROJECT_ROOT,
 			stdout: "pipe",
 			stderr: "pipe",
-		}
+		},
 	);
 	const exitCode = await proc.exited;
 	if (exitCode !== 0) {

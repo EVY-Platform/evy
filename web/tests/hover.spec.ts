@@ -1,12 +1,12 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
-	initTestFlows,
 	SELECTORS,
-	getSidebarRow,
+	getDropIndicator,
 	getFirstPage,
 	getPageContent,
 	getPageRow,
-	getDropIndicator,
+	getSidebarRow,
+	initTestFlows,
 } from "./utils.tsx";
 
 test.describe("Drag Hover Indicator Behavior", () => {
@@ -26,7 +26,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		await targetSidebarRow.dragTo(pageContent);
 
 		await expect(
-			firstPage.getByText("Text row title", { exact: true })
+			firstPage.getByText("Text row title", { exact: true }),
 		).toBeVisible();
 
 		const pageRow = getPageRow(page, "Text row title");
@@ -37,12 +37,12 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		if (sidebarBox && rowBox) {
 			await page.mouse.move(
 				sidebarBox.x + sidebarBox.width / 2,
-				sidebarBox.y + sidebarBox.height / 2
+				sidebarBox.y + sidebarBox.height / 2,
 			);
 			await page.mouse.down();
 			await page.mouse.move(
 				rowBox.x + rowBox.width / 2,
-				rowBox.y + rowBox.height / 2
+				rowBox.y + rowBox.height / 2,
 			);
 
 			await expect(getDropIndicator(page)).toBeVisible();
@@ -56,14 +56,11 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
-		const containerSidebarRow = getSidebarRow(
-			page,
-			"List container row title"
-		);
+		const containerSidebarRow = getSidebarRow(page, "List container row title");
 		await containerSidebarRow.dragTo(pageContent);
 
 		await expect(
-			firstPage.getByText("List container row title", { exact: true })
+			firstPage.getByText("List container row title", { exact: true }),
 		).toBeVisible();
 
 		const childSidebarRow = getSidebarRow(page, "Info row title");
@@ -72,7 +69,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		await childSidebarRow.dragTo(containerRow);
 
 		await expect(
-			firstPage.getByText("Info row title", { exact: true })
+			firstPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
 
 		const dragRow = getSidebarRow(page, "Text row title");
@@ -84,12 +81,12 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		if (dragBox && childBox) {
 			await page.mouse.move(
 				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2
+				dragBox.y + dragBox.height / 2,
 			);
 			await page.mouse.down();
 			await page.mouse.move(
 				childBox.x + childBox.width / 2,
-				childBox.y + childBox.height / 2
+				childBox.y + childBox.height / 2,
 			);
 
 			await expect(getDropIndicator(page).first()).toBeVisible();
@@ -105,9 +102,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		for (const rowText of rowTypes) {
 			const sidebarRow = getSidebarRow(page, rowText);
 			await sidebarRow.dragTo(pageContent);
-			await expect(
-				firstPage.getByText(rowText, { exact: true })
-			).toBeVisible();
+			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
 		}
 
 		const pageRows = pageContent.locator(SELECTORS.rowContainer);
@@ -123,13 +118,13 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		if (dragBox && firstRowBox && secondRowBox) {
 			await page.mouse.move(
 				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2
+				dragBox.y + dragBox.height / 2,
 			);
 			await page.mouse.down();
 
 			await page.mouse.move(
 				firstRowBox.x + firstRowBox.width / 2,
-				firstRowBox.y + firstRowBox.height / 2
+				firstRowBox.y + firstRowBox.height / 2,
 			);
 
 			const indicators = getDropIndicator(page);
@@ -137,7 +132,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 			await page.mouse.move(
 				secondRowBox.x + secondRowBox.width / 2,
-				secondRowBox.y + secondRowBox.height / 2
+				secondRowBox.y + secondRowBox.height / 2,
 			);
 
 			expect(await indicators.count()).toBe(1);
@@ -155,15 +150,12 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		await outerContainerRow.dragTo(pageContent);
 
 		await expect(
-			firstPage.getByText("List container row title", { exact: true })
+			firstPage.getByText("List container row title", { exact: true }),
 		).toBeVisible();
 
 		const outerContainer = getPageRow(page, "List container row title");
 
-		const innerContainerRow = getSidebarRow(
-			page,
-			"Column container row title"
-		);
+		const innerContainerRow = getSidebarRow(page, "Column container row title");
 		await innerContainerRow.dragTo(outerContainer);
 
 		const innerContainer = getPageRow(page, "Column container row title");
@@ -172,7 +164,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		await childRow.dragTo(innerContainer);
 
 		await expect(
-			firstPage.getByText("Info row title", { exact: true })
+			firstPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
 
 		const dragRow = getSidebarRow(page, "Text row title");
@@ -184,12 +176,12 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		if (dragBox && childBox) {
 			await page.mouse.move(
 				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2
+				dragBox.y + dragBox.height / 2,
 			);
 			await page.mouse.down();
 			await page.mouse.move(
 				childBox.x + childBox.width / 2,
-				childBox.y + childBox.height / 2
+				childBox.y + childBox.height / 2,
 			);
 
 			await expect(getDropIndicator(page).first()).toBeVisible();
@@ -215,12 +207,12 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		if (dragBox && rowBox) {
 			await page.mouse.move(
 				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2
+				dragBox.y + dragBox.height / 2,
 			);
 			await page.mouse.down();
 			await page.mouse.move(
 				rowBox.x + rowBox.width / 2,
-				rowBox.y + rowBox.height / 2
+				rowBox.y + rowBox.height / 2,
 			);
 
 			await expect(getDropIndicator(page)).toBeVisible();
@@ -229,9 +221,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		}
 	});
 
-	test("should switch indicator when moving between rows", async ({
-		page,
-	}) => {
+	test("should switch indicator when moving between rows", async ({ page }) => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -239,17 +229,13 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		for (const rowText of rowTypes) {
 			const sidebarRow = getSidebarRow(page, rowText);
 			await sidebarRow.dragTo(pageContent);
-			await expect(
-				firstPage.getByText(rowText, { exact: true })
-			).toBeVisible();
+			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
 		}
 
 		const pageRows = pageContent.locator(SELECTORS.rowContainer);
 		const dragRow = getSidebarRow(page, "Button row text");
 
-		const firstPageRow = pageRows
-			.filter({ hasText: "Info row title" })
-			.first();
+		const firstPageRow = pageRows.filter({ hasText: "Info row title" }).first();
 		const secondPageRow = pageRows
 			.filter({ hasText: "Text row title" })
 			.first();
@@ -261,13 +247,13 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		if (dragBox && firstRowBox && secondRowBox) {
 			await page.mouse.move(
 				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2
+				dragBox.y + dragBox.height / 2,
 			);
 			await page.mouse.down();
 
 			await page.mouse.move(
 				firstRowBox.x + firstRowBox.width / 2,
-				firstRowBox.y + firstRowBox.height / 2
+				firstRowBox.y + firstRowBox.height / 2,
 			);
 
 			const indicator = getDropIndicator(page);
@@ -275,7 +261,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 			await page.mouse.move(
 				secondRowBox.x + secondRowBox.width / 2,
-				secondRowBox.y + secondRowBox.height / 2
+				secondRowBox.y + secondRowBox.height / 2,
 			);
 
 			await expect(indicator.first()).toBeVisible();
@@ -303,7 +289,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		if (dragBox && rowBox) {
 			await page.mouse.move(
 				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2
+				dragBox.y + dragBox.height / 2,
 			);
 			await page.mouse.down();
 			await page.mouse.move(rowBox.x + rowBox.width / 2, rowBox.y + 10);
@@ -333,12 +319,12 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		if (dragBox && rowBox) {
 			await page.mouse.move(
 				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2
+				dragBox.y + dragBox.height / 2,
 			);
 			await page.mouse.down();
 			await page.mouse.move(
 				rowBox.x + rowBox.width / 2,
-				rowBox.y + rowBox.height - 10
+				rowBox.y + rowBox.height - 10,
 			);
 
 			const bottomIndicator = page.locator(SELECTORS.bottomIndicator);

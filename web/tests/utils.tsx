@@ -1,5 +1,5 @@
+import type { Locator, Page } from "@playwright/test";
 import type { ServerFlow } from "../app/registry.tsx";
-import type { Page, Locator } from "@playwright/test";
 
 // Common selectors used across tests
 export const SELECTORS = {
@@ -45,6 +45,16 @@ export function getPageRow(page: Page, text: string, pageIndex = 0): Locator {
 
 export function getDropIndicator(page: Page): Locator {
 	return page.locator(SELECTORS.dropIndicator);
+}
+
+// Drag helper with stabilization wait to prevent flaky tests
+export async function stableDragTo(
+	page: Page,
+	source: Locator,
+	target: Locator,
+) {
+	await source.dragTo(target);
+	await page.waitForTimeout(150);
 }
 
 type TestPage = {

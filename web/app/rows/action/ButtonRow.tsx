@@ -1,5 +1,5 @@
-import Button from "../design-system/Button";
 import { EVYRow, type Row, type RowConfig } from "../EVYRow";
+import Button from "../design-system/Button";
 
 export default class ButtonRow extends EVYRow {
 	static override config: RowConfig = {
