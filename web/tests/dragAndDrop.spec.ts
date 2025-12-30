@@ -1,19 +1,19 @@
 import { test, expect } from "@playwright/test";
-import { initTestFlows } from "./utils.tsx";
+import {
+	initTestFlows,
+	SELECTORS,
+	getRowsPanel,
+	getSidebarRow,
+	getFirstPage,
+	getPageContent,
+	getPageRow,
+} from "./utils.tsx";
 
 test.describe("Drag & Drop UX", () => {
 	test.beforeEach(async ({ page }) => {
 		await initTestFlows(page, [
-			{
-				id: "step_1",
-				title: "Page 1",
-				rows: [],
-			},
-			{
-				id: "step_2",
-				title: "Page 2",
-				rows: [],
-			},
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
 		]);
 		await page.goto("/");
 	});
@@ -21,110 +21,57 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag a row from the left sidebar onto a page", async ({
 		page,
 	}) => {
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
+		const sidebarRow = getSidebarRow(page, "Info row title");
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
 
-		// Get the first row from the sidebar (Info row)
-		const sidebarRow = rowsPanel
-			.getByText("Info row title", { exact: true })
-			.locator("..");
-
-		// Get the first page (phone container)
-		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
-
-		// Get the scrollable container inside the page (where rows are rendered)
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
-
-		// Count initial rows on the first page (rows have class "evy-flex evy-flex-col")
 		const initialRowCount = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 
-		// Drag the row from sidebar to the first page
 		await sidebarRow.dragTo(pageContent);
 
 		await expect(
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
 
-		// Verify the row was added to the page
 		const newRowCount = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 		expect(newRowCount).toBe(initialRowCount + 1);
-
-		// Verify the row content appears on the page
-		await expect(
-			firstPage.getByText("Info row title", { exact: true })
-		).toBeVisible();
 	});
 
 	test("should drag a row from one page to another page", async ({
 		page,
 	}) => {
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
-
-		// Add a row to the first page
-		const sidebarRow = rowsPanel
-			.getByText("Text row title", { exact: true })
-			.locator("..");
-		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
+		const sidebarRow = getSidebarRow(page, "Text row title");
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
 		await sidebarRow.dragTo(pageContent);
 
-		// Verify row is on first page
 		await expect(
 			firstPage.getByText("Text row title", { exact: true })
 		).toBeVisible();
 
-		// Get the row from the first page
-		const pageRow = firstPage
-			.getByText("Text row title", { exact: true })
-			.locator("..")
-			.locator("..");
+		const pageRow = getPageRow(page, "Text row title");
+		const secondPage = page.locator(SELECTORS.phoneContainer).nth(1);
+		const secondPageContent = getPageContent(page, 1);
 
-		// Get the second page
-		const secondPage = page.locator('div[class*="evy-bg-phone"]').nth(1);
-
-		// Get the scrollable container inside the second page
-		const secondPageContent = secondPage.locator(
-			'[class*="evy-overflow-scroll"]'
-		);
-
-		// Count initial rows on the second page
 		const initialSecondPageRowCount = await secondPageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 
-		// Drag the row from first page to second page
 		await pageRow.dragTo(secondPageContent);
 
-		// Verify the row was moved to the second page
 		await expect(
 			secondPage.getByText("Text row title", { exact: true })
 		).toBeVisible();
-
-		// Verify the row is no longer on the first page
 		await expect(
 			firstPage.getByText("Text row title", { exact: true })
 		).not.toBeVisible();
 
-		// Verify the second page has one more row
 		const newSecondPageRowCount = await secondPageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 		expect(newSecondPageRowCount).toBe(initialSecondPageRowCount + 1);
 	});
@@ -132,50 +79,29 @@ test.describe("Drag & Drop UX", () => {
 	test("should remove a row from a page by dragging it to the left sidebar", async ({
 		page,
 	}) => {
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
-
-		// Add a row to the first page
-		const sidebarRow = rowsPanel
-			.getByText("Button row text", { exact: true })
-			.locator("..");
-		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
+		const rowsPanel = getRowsPanel(page);
+		const sidebarRow = getSidebarRow(page, "Button row text");
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
 		await sidebarRow.dragTo(pageContent);
 
-		// Verify row is on the page
 		await expect(
 			firstPage.getByText("Button row text", { exact: true })
 		).toBeVisible();
 
-		// Get the row from the page
-		const pageRow = firstPage
-			.getByText("Button row text", { exact: true })
-			.locator("..")
-			.locator("..");
-
-		// Count initial rows on the page
+		const pageRow = getPageRow(page, "Button row text");
 		const initialRowCount = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 
-		// Drag the row back to the sidebar
 		await pageRow.dragTo(rowsPanel);
 
-		// Verify the row was removed from the page
 		await expect(
 			firstPage.getByText("Button row text", { exact: true })
 		).not.toBeVisible();
 
-		// Verify the page has one less row
 		const newRowCount = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 		expect(newRowCount).toBe(initialRowCount - 1);
 	});
@@ -183,73 +109,41 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag a row from position 1 to 2 on a page", async ({
 		page,
 	}) => {
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
-		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
 
-		// Add two rows to the first page
-		const firstSidebarRow = rowsPanel
-			.getByText("Info row title", { exact: true })
-			.locator("..");
-		const secondSidebarRow = rowsPanel
-			.getByText("Text row title", { exact: true })
-			.locator("..");
+		const firstSidebarRow = getSidebarRow(page, "Info row title");
+		const secondSidebarRow = getSidebarRow(page, "Text row title");
 
-		// Get the scrollable container inside the page
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
-
-		// Count initial rows
 		const initialRowCount = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 
 		await firstSidebarRow.dragTo(pageContent);
-
-		// Wait for row count to increase
-		await expect(
-			pageContent.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
-		).toHaveCount(initialRowCount + 1);
+		await expect(pageContent.locator(SELECTORS.rowContainer)).toHaveCount(
+			initialRowCount + 1
+		);
 		await expect(
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
 
 		await secondSidebarRow.dragTo(pageContent);
-
-		// Wait for row count to increase again
-		await expect(
-			pageContent.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
-		).toHaveCount(initialRowCount + 2);
+		await expect(pageContent.locator(SELECTORS.rowContainer)).toHaveCount(
+			initialRowCount + 2
+		);
 		await expect(
 			firstPage.getByText("Text row title", { exact: true })
 		).toBeVisible();
 
-		// Get all draggable rows on the page using data-row-id attribute
-		const pageRows = pageContent.locator("div[data-row-id]");
-		const rowCount = await pageRows.count();
-		expect(rowCount).toBeGreaterThanOrEqual(2);
-
-		// Wait for rows to be visible
+		const pageRows = pageContent.locator(SELECTORS.draggableRow);
 		await expect(pageRows.first()).toBeVisible();
 		await expect(pageRows.nth(1)).toBeVisible();
 
-		// Get the first and second rows by position for dragging
 		const firstRow = pageRows.first();
 		const secondRow = pageRows.nth(1);
-
-		// Get bounding box of second row to determine drop position
 		const secondRowBox = await secondRow.boundingBox();
 
 		if (secondRowBox) {
-			// Drag first row (Info) to bottom of second row (Text) to reorder
-			// Using targetPosition to drop at the bottom edge of the second row
 			await firstRow.dragTo(secondRow, {
 				targetPosition: {
 					x: secondRowBox.width / 2,
@@ -258,10 +152,8 @@ test.describe("Drag & Drop UX", () => {
 			});
 		}
 
-		// Wait for DOM to stabilize after drop
 		await page.waitForTimeout(100);
 
-		// Verify both rows are visible and in the correct order
 		await expect(
 			firstPage.getByText("Text row title", { exact: true })
 		).toBeVisible();
@@ -269,8 +161,7 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
 
-		// Verify order by checking text positions using data-row-id elements
-		const allRows = await pageContent.locator("div[data-row-id]").all();
+		const allRows = await pageContent.locator(SELECTORS.draggableRow).all();
 		let textRowPosition = -1;
 		let infoRowPosition = -1;
 
@@ -284,7 +175,6 @@ test.describe("Drag & Drop UX", () => {
 			}
 		}
 
-		// Verify Text row comes before Info row
 		expect(textRowPosition).not.toBe(-1);
 		expect(infoRowPosition).not.toBe(-1);
 		expect(textRowPosition).toBeGreaterThan(infoRowPosition);
@@ -293,87 +183,49 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag a row from position 2 to 1 on a page", async ({
 		page,
 	}) => {
-		// Wait for page to be ready
 		await page.waitForLoadState("networkidle");
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
-		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
 
-		// Add two rows to the first page
-		const firstSidebarRow = rowsPanel
-			.getByText("Info row title", { exact: true })
-			.locator("..");
-		const secondSidebarRow = rowsPanel
-			.getByText("Text row title", { exact: true })
-			.locator("..");
+		const firstSidebarRow = getSidebarRow(page, "Info row title");
+		const secondSidebarRow = getSidebarRow(page, "Text row title");
 
-		// Get the scrollable container inside the page
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
-
-		// Count initial rows
 		const initialRowCount = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 
 		await firstSidebarRow.dragTo(pageContent);
-
-		// Wait for row count to increase
-		await expect(
-			pageContent.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
-		).toHaveCount(initialRowCount + 1);
+		await expect(pageContent.locator(SELECTORS.rowContainer)).toHaveCount(
+			initialRowCount + 1
+		);
 		await expect(
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
 
 		await secondSidebarRow.dragTo(pageContent);
-
-		// Wait for row count to increase again
-		await expect(
-			pageContent.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
-		).toHaveCount(initialRowCount + 2);
+		await expect(pageContent.locator(SELECTORS.rowContainer)).toHaveCount(
+			initialRowCount + 2
+		);
 		await expect(
 			firstPage.getByText("Text row title", { exact: true })
 		).toBeVisible();
 
-		// Get all draggable rows on the page using data-row-id attribute
-		const pageRows = pageContent.locator("div[data-row-id]");
-		const rowCount = await pageRows.count();
-		expect(rowCount).toBeGreaterThanOrEqual(2);
-
-		// Wait for rows to be visible
+		const pageRows = pageContent.locator(SELECTORS.draggableRow);
 		await expect(pageRows.first()).toBeVisible();
 		await expect(pageRows.nth(1)).toBeVisible();
 
-		// Get the first and second rows by position for dragging
 		const firstRow = pageRows.first();
 		const secondRow = pageRows.nth(1);
+		const firstRowBox = await firstRow.boundingBox();
 
-		// Get bounding box of first row to determine drop position
-		const firstRowBox2 = await firstRow.boundingBox();
-
-		if (firstRowBox2) {
-			// Drag second row (Text) to top of first row (Info) to reorder
-			// Using targetPosition to drop at the top edge of the first row
+		if (firstRowBox) {
 			await secondRow.dragTo(firstRow, {
-				targetPosition: {
-					x: firstRowBox2.width / 2,
-					y: 5,
-				},
+				targetPosition: { x: firstRowBox.width / 2, y: 5 },
 			});
 		}
 
-		// Wait for DOM to stabilize after drop
 		await page.waitForTimeout(100);
 
-		// Verify both rows are visible and in the correct order
 		await expect(
 			firstPage.getByText("Text row title", { exact: true })
 		).toBeVisible();
@@ -381,70 +233,46 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
 
-		// Verify order by checking text positions using data-row-id elements
-		const allRows2 = await pageContent.locator("div[data-row-id]").all();
-		let textRowPosition2 = -1;
-		let infoRowPosition2 = -1;
+		const allRows = await pageContent.locator(SELECTORS.draggableRow).all();
+		let textRowPosition = -1;
+		let infoRowPosition = -1;
 
-		for (let i = 0; i < allRows2.length; i++) {
-			const rowText = await allRows2[i].textContent().catch(() => "");
-			if (
-				rowText?.includes("Text row title") &&
-				textRowPosition2 === -1
-			) {
-				textRowPosition2 = i;
+		for (let i = 0; i < allRows.length; i++) {
+			const rowText = await allRows[i].textContent().catch(() => "");
+			if (rowText?.includes("Text row title") && textRowPosition === -1) {
+				textRowPosition = i;
 			}
-			if (
-				rowText?.includes("Info row title") &&
-				infoRowPosition2 === -1
-			) {
-				infoRowPosition2 = i;
+			if (rowText?.includes("Info row title") && infoRowPosition === -1) {
+				infoRowPosition = i;
 			}
 		}
 
-		// Verify Text row comes before Info row (Text was moved before Info)
-		expect(textRowPosition2).not.toBe(-1);
-		expect(infoRowPosition2).not.toBe(-1);
-		expect(textRowPosition2).toBeGreaterThan(infoRowPosition2);
+		expect(textRowPosition).not.toBe(-1);
+		expect(infoRowPosition).not.toBe(-1);
+		expect(textRowPosition).toBeGreaterThan(infoRowPosition);
 	});
 
 	test("should drag from the left sidebar onto a container on a page", async ({
 		page,
 	}) => {
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
-		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
 
-		// Add a container row to the page
-		const containerSidebarRow = rowsPanel
-			.getByText("List container row title", { exact: true })
-			.locator("..");
+		const containerSidebarRow = getSidebarRow(
+			page,
+			"List container row title"
+		);
 		await containerSidebarRow.dragTo(pageContent);
 
-		// Verify the container is on the page
 		await expect(
 			firstPage.getByText("List container row title", { exact: true })
 		).toBeVisible();
 
-		// Get the container row element
-		const containerRow = firstPage
-			.getByText("List container row title", { exact: true })
-			.locator("..")
-			.locator("..");
+		const containerRow = getPageRow(page, "List container row title");
+		const sidebarRow = getSidebarRow(page, "Info row title");
 
-		// Add a row from sidebar into the container
-		const sidebarRow = rowsPanel
-			.getByText("Info row title", { exact: true })
-			.locator("..");
-
-		// Drag the row onto the container
 		await sidebarRow.dragTo(containerRow);
 
-		// Verify the row was added to the container
-		// Wait for the text to appear - check both in container and on the page
 		await expect(
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
@@ -453,54 +281,36 @@ test.describe("Drag & Drop UX", () => {
 	test("should remove a row from a container on a page by dragging it to the left sidebar", async ({
 		page,
 	}) => {
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
-		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
+		const rowsPanel = getRowsPanel(page);
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
 
-		// Get the scrollable container inside the page
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
-
-		// Add a container row to the page
-		const containerSidebarRow = rowsPanel
-			.getByText("List container row title", { exact: true })
-			.locator("..");
+		const containerSidebarRow = getSidebarRow(
+			page,
+			"List container row title"
+		);
 		await containerSidebarRow.dragTo(pageContent);
 
-		// Get the container row element
-		const containerRow = firstPage
-			.getByText("List container row title", { exact: true })
-			.locator("..")
-			.locator("..");
+		const containerRow = getPageRow(page, "List container row title");
 
-		// Verify the container is on the page first
 		await expect(
 			firstPage.getByText("List container row title", { exact: true })
 		).toBeVisible();
 
-		// Add a row from sidebar into the container
-		const sidebarRow = rowsPanel
-			.getByText("Info row title", { exact: true })
-			.locator("..");
+		const sidebarRow = getSidebarRow(page, "Info row title");
 		await sidebarRow.dragTo(containerRow);
 
-		// Verify the row is in the container
-		// Wait for the child row to appear - check on the page first, then find it
 		await expect(
 			firstPage.getByText("Info row title", { exact: true })
 		).toBeVisible();
 
-		// Find the child row - try multiple approaches
 		const childRow = firstPage
 			.getByText("Info row title", { exact: true })
 			.first();
 		await expect(childRow).toBeVisible();
 
-		// Drag the child row back to the sidebar to remove it
 		await childRow.locator("..").locator("..").dragTo(rowsPanel);
 
-		// Verify the row was removed from the container
 		await expect(
 			containerRow.getByText("Info row title", { exact: true })
 		).not.toBeVisible();
@@ -509,15 +319,10 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag and drop every single row type into a page", async ({
 		page,
 	}) => {
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
+		const rowsPanel = getRowsPanel(page);
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
 
-		const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
-		const pageContent = firstPage.locator('[class*="evy-overflow-scroll"]');
-
-		// All available row types with their identifying text
 		const allRowTypes = [
 			"Info row title",
 			"Text row title",
@@ -538,43 +343,28 @@ test.describe("Drag & Drop UX", () => {
 			"Sheet container row title",
 		];
 
-		// Count initial rows on the page
 		const initialRowCount = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 
-		// Drag and drop each row type
 		for (const rowText of allRowTypes) {
-			// Get the row from the sidebar
 			const sidebarRow = rowsPanel
 				.getByText(rowText, { exact: true })
 				.locator("..");
-
-			// Verify the row exists in the sidebar
 			await expect(
 				sidebarRow.getByText(rowText, { exact: true })
 			).toBeVisible();
-
-			// Drag the row to the page
 			await sidebarRow.dragTo(pageContent);
-
-			// Verify the row was added to the page by checking it's visible
 			await expect(
 				firstPage.getByText(rowText, { exact: true })
 			).toBeVisible();
 		}
 
-		// Verify all rows were added to the page
 		const finalRowCount = await pageContent
-			.locator(
-				'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]'
-			)
+			.locator(SELECTORS.rowContainer)
 			.count();
 		expect(finalRowCount).toBe(initialRowCount + allRowTypes.length);
 
-		// Verify each row is still visible on the page
 		for (const rowText of allRowTypes) {
 			await expect(
 				firstPage.getByText(rowText, { exact: true })

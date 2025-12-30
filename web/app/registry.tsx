@@ -25,7 +25,6 @@ import TextAreaRow from "./rows/edit/TextAreaRow";
 import TextRow from "./rows/view/TextRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
 
-import { debugFlows } from "../tests/utils.tsx"; // Temporary as we build out EVY
 import type { Edge } from "./components/DraggableRowContainer";
 import {
 	type RowConfig,
@@ -601,7 +600,16 @@ export function AppProvider({
 		config: row.config,
 	}));
 
-	const flows: ServerFlow[] = initialFlows ?? debugFlows; // Temporary as we build out EVY
+	const defaultFlows: ServerFlow[] = [
+		{
+			id: "default-flow",
+			name: "Default Flow",
+			type: "write",
+			data: "",
+			pages: [{ id: "step_1", title: "Page 1", rows: [] }],
+		},
+	];
+	const flows: ServerFlow[] = initialFlows ?? defaultFlows;
 
 	const [appState, dispatchRow] = useReducer(pageReducer, {
 		flows: decodeFlows(flows),
