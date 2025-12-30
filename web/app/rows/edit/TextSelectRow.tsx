@@ -1,4 +1,4 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 import Checkbox from "../design-system/Checkbox";
 
 export default class TextSelectRow extends EVYRow {

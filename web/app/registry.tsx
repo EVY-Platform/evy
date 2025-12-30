@@ -1,6 +1,6 @@
 import {
-	ReactNode,
-	Dispatch,
+	type ReactNode,
+	type Dispatch,
 	useReducer,
 	createContext,
 	createElement,
@@ -26,7 +26,7 @@ import TextRow from "./rows/view/TextRow";
 import TextSelectRow from "./rows/edit/TextSelectRow";
 
 import { debugFlows } from "../tests/utils.tsx"; // Temporary as we build out EVY
-import { Edge } from "./components/DraggableRowContainer";
+import type { Edge } from "./components/DraggableRowContainer";
 import {
 	type RowConfig,
 	type Row,
@@ -35,7 +35,6 @@ import {
 	type ContainerType,
 	EVYRow,
 } from "./rows/EVYRow";
-import { removeUndefined } from "./removeUndefined";
 
 type Page = {
 	id: string;
@@ -555,7 +554,7 @@ function decodeRow(row: ServerRow): Row {
 		return {
 			rowId,
 			row: createElement(baseRow, { rowId }),
-			config: removeUndefined({
+			config: {
 				...row,
 				view: {
 					...row.view,
@@ -573,7 +572,7 @@ function decodeRow(row: ServerRow): Row {
 							: undefined,
 					},
 				},
-			}),
+			},
 		};
 	}
 }

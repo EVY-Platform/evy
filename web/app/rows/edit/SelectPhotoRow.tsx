@@ -1,4 +1,4 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 
 export default class SelectPhotoRow extends EVYRow {
 	static override config: RowConfig = {

@@ -1,4 +1,4 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 import { DraggableRowContainer } from "../../components/DraggableRowContainer";
 
 export default class SheetContainerRow extends EVYRow {

@@ -1,42 +1,38 @@
-FROM denoland/deno:2.5.1 AS base
+FROM oven/bun:1 AS base
 
 # Rebuild the source code only when needed
 FROM base AS builder
 
-ENV DENO_DIR=./.deno_cache
-
 WORKDIR /app
 
-# Copy deno.json and lockfile
-COPY deno.json deno.lock ./
+# Copy package.json and lockfile
+COPY package.json bun.lock* ./
 
 # Install dependencies
-RUN deno install
+RUN bun install --frozen-lockfile
 
 # Copy the rest of the application
 COPY . ./
 
-RUN deno task build
+RUN bun run build
 
 # Production image, copy all the files and run the app
 FROM base AS runner
-
-ENV DENO_DIR=./.deno_cache
 
 WORKDIR /app
 
 # Set the correct permission for dist directory
 RUN mkdir -p dist
-RUN chown deno:deno dist
+RUN chown bun:bun dist
 
 # Copy built application
-COPY --from=builder --chown=deno:deno /app/ ./
+COPY --from=builder --chown=bun:bun /app/ ./
 
-USER deno
+USER bun
 
 ARG WEB_PORT="3000"
 ENV WEB_PORT=$WEB_PORT
 EXPOSE $WEB_PORT
 
 # Start the application
-CMD ["deno", "task", "prod"]
+CMD ["bun", "run", "prod"]

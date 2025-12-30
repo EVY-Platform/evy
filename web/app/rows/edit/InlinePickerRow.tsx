@@ -1,4 +1,4 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 import RadioButton from "../design-system/RadioButton";
 
 export default class InlinePickerRow extends EVYRow {

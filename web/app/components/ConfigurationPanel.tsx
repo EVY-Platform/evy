@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo } from "react";
 
 import { AppContext } from "../registry";
-import { Row, EVYRow } from "../rows/EVYRow";
+import { EVYRow, type Row } from "../rows/EVYRow";
 
 export function ConfigurationPanel() {
 	const { flows, activeFlowId, activeRowId, dispatchRow } =
@@ -39,7 +39,8 @@ export function ConfigurationPanel() {
 				const uniqueId = `${configRow.rowId}-${key}`;
 
 				if (key === "children") {
-					const children = content[key] as Row[];
+					const children = content[key] as Row[] | undefined;
+					if (!children) return null;
 					return (
 						<div
 							key={uniqueId}
@@ -61,6 +62,8 @@ export function ConfigurationPanel() {
 						</div>
 					);
 				} else if (key === "child") {
+					const child = content[key] as Row | undefined;
+					if (!child) return null;
 					return (
 						<div
 							key={uniqueId}
@@ -69,7 +72,7 @@ export function ConfigurationPanel() {
 							<p className="evy-text-lg evy-font-semibold evy-mb-4">
 								Child
 							</p>
-							{renderConfiguration(content[key] as Row)}
+							{renderConfiguration(child)}
 						</div>
 					);
 				} else {

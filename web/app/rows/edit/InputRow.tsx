@@ -1,4 +1,4 @@
-import { EVYRow, Row, RowConfig } from "../EVYRow";
+import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 import Input from "../design-system/Input";
 
 export default class InputRow extends EVYRow {
