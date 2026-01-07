@@ -140,6 +140,9 @@ function AppContent() {
 					const destinationContainer =
 						destinationRow.data.rowId === containerDropindicatorId
 							? EVYRow.pickContainerRow(
+									// Droptargets is an array returning the rows under the drop cursor,
+									// starting with the placeholder indicator and then the container
+									// we want that container
 									location.current.dropTargets[1].data.rowId,
 									destinationPage.rows
 							  )
