@@ -6,7 +6,8 @@ export type Row = {
 	row: React.ReactNode;
 	config: RowConfig;
 };
-export interface RowValidation {
+
+interface RowValidation {
 	required?: string;
 	message?: string;
 	minAmount?: string;
@@ -14,16 +15,16 @@ export interface RowValidation {
 	minCharacters?: string;
 }
 
-export interface RowEdit {
+interface RowEdit {
 	destination?: string;
 	validation?: RowValidation;
 }
 
-export interface RowAction {
+interface RowAction {
 	target: string;
 }
 
-export interface RowContent {
+interface RowContent {
 	title: string;
 	children?: Row[];
 	child?: Row;
