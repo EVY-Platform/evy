@@ -100,13 +100,68 @@ export const debugFlows: ServerFlow[] = [
 						view: {
 							content: {
 								title: "Dimensions 1",
-								children: [],
+								children: [
+									{
+										type: "Input",
+										view: {
+											content: {
+												title: "Width 1",
+												value: "width",
+												placeholder: "Width",
+											},
+										},
+										edit: {
+											destination:
+												"{item.dimensions.width}",
+											validation: {
+												required: "true",
+												message: "Width",
+											},
+										},
+									},
+									{
+										type: "Input",
+										view: {
+											content: {
+												title: "Height 1",
+												value: "height",
+												placeholder: "Height",
+											},
+										},
+										edit: {
+											destination: "height",
+											validation: {
+												required: "true",
+												message: "Height",
+											},
+										},
+									},
+									{
+										type: "Input",
+										view: {
+											content: {
+												title: "Length 1",
+												value: "length",
+												placeholder: "Length",
+											},
+										},
+										edit: {
+											destination:
+												"{item.dimensions.length}",
+											validation: {
+												required: "true",
+												message: "Length",
+												minValue: "1",
+											},
+										},
+									},
+								],
 							},
 						},
 						edit: {
 							validation: {
-								required: "false",
-								minAmount: "0",
+								required: "true",
+								minAmount: "3",
 							},
 						},
 					},
