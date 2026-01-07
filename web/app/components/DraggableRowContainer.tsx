@@ -26,7 +26,17 @@ import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/el
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 
 import { AppContext } from "../registry";
-import { EVYRow } from "../rows/EVYRow";
+import {
+	containerDropindicatorId,
+	containerDropindicatorId,
+	EVYRow,
+} from "../rows/EVYRow";
+import {
+	dropIndicatorExpansionBefore,
+	dropIndicatorExpansionAfter,
+	horizontalDropIndicator,
+	verticalDropIndicator,
+} from "../rows/design-system/dropIndicator";
 
 export type Edge = "top" | "right" | "bottom" | "left";
 
@@ -115,8 +125,8 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		const indicatorClass = useMemo(() => {
 			return orientation === "vertical"
-				? "evy-v-dropzone evy-w-full evy-rounded-sm"
-				: "evy-h-dropzone evy-min-h-full evy-mt-2 evy-mb-2 evy-rounded-sm";
+				? verticalDropIndicator
+				: horizontalDropIndicator;
 		}, [orientation]);
 
 		const showBefore = useMemo(
@@ -134,7 +144,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 					<div
 						className={`${indicatorClass} ${
 							indicators.includes("before")
-								? "expanded evy-mt-2"
+								? dropIndicatorExpansionBefore
 								: ""
 						}`}
 					/>
@@ -152,7 +162,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 					<div
 						className={`${indicatorClass} ${
 							indicators.includes("after")
-								? "expanded evy-mb-2"
+								? dropIndicatorExpansionAfter
 								: ""
 						}`}
 					/>
@@ -222,13 +232,13 @@ export function DraggableRowContainer({
 		if (!dragging || !dropIndicator) return;
 
 		const hideBefore =
-			(previousRowId && !dropIndicator?.rowId) ||
+			(previousRowId && !dropIndicator.rowId) ||
 			(previousRowId &&
 				dropIndicator.rowId === previousRowId &&
 				dropIndicator.edge !== "bottom");
 		const hideAfter =
 			(nextRowId &&
-				dropIndicator?.rowId &&
+				dropIndicator.rowId &&
 				dropIndicator.rowId !== nextRowId) ||
 			(nextRowId &&
 				dropIndicator.rowId === nextRowId &&
@@ -369,5 +379,25 @@ export function DraggableRowContainer({
 					state.container
 				)}
 		</Fragment>
+	);
+}
+
+export function PlaceholderDropIndicator({
+	orientation = "vertical",
+}: {
+	orientation?: "horizontal" | "vertical";
+}) {
+	return (
+		<DraggableRowContainer
+			key={containerDropindicatorId}
+			rowId={containerDropindicatorId}
+			orientation={orientation}
+		>
+			<div
+				className={
+					verticalDropIndicator + " " + dropIndicatorExpansionBefore
+				}
+			/>
+		</DraggableRowContainer>
 	);
 }

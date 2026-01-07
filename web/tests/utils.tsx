@@ -51,7 +51,7 @@ export function getDropIndicator(page: Page): Locator {
 export async function stableDragTo(
 	page: Page,
 	source: Locator,
-	target: Locator,
+	target: Locator
 ) {
 	await source.dragTo(target);
 	await page.waitForTimeout(150);
@@ -100,68 +100,13 @@ export const debugFlows: ServerFlow[] = [
 						view: {
 							content: {
 								title: "Dimensions 1",
-								children: [
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Width 1",
-												value: "width",
-												placeholder: "Width",
-											},
-										},
-										edit: {
-											destination:
-												"{item.dimensions.width}",
-											validation: {
-												required: "true",
-												message: "Width",
-											},
-										},
-									},
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Height 1",
-												value: "height",
-												placeholder: "Height",
-											},
-										},
-										edit: {
-											destination: "height",
-											validation: {
-												required: "true",
-												message: "Height",
-											},
-										},
-									},
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Length 1",
-												value: "length",
-												placeholder: "Length",
-											},
-										},
-										edit: {
-											destination:
-												"{item.dimensions.length}",
-											validation: {
-												required: "true",
-												message: "Length",
-												minValue: "1",
-											},
-										},
-									},
-								],
+								children: [],
 							},
 						},
 						edit: {
 							validation: {
-								required: "true",
-								minAmount: "3",
+								required: "false",
+								minAmount: "0",
 							},
 						},
 					},

@@ -11,7 +11,11 @@ import type { Edge } from "./components/DraggableRowContainer.tsx";
 import { FlowSelector } from "./components/FlowSelector.tsx";
 import { RowsPanel } from "./components/RowsPanel.tsx";
 import { AppContext, AppProvider, type ServerFlow } from "./registry.tsx";
-import { EVYRow } from "./rows/EVYRow.tsx";
+import {
+	containerDropindicatorId,
+	EVYRow,
+	type ContainerType,
+} from "./rows/EVYRow.tsx";
 
 interface DropLocation {
 	current: {
@@ -49,21 +53,19 @@ function AppContent() {
 
 	const pages = useMemo(
 		() => flows.find((flow) => flow.id === activeFlowId)?.pages || [],
-		[flows, activeFlowId],
+		[flows, activeFlowId]
 	);
 
 	useEffect(() => {
 		return monitorForElements({
 			onDrop(args: DropEvent) {
 				const { location, source } = args;
-				if (!location.current.dropTargets.length) {
-					return;
-				}
+				if (!location.current.dropTargets.length) return;
 
 				const rowId = source.data.rowId;
 				invariant(
 					typeof rowId === "string",
-					"AppContent monitor for elements onDrop: rowId is not a string",
+					"AppContent monitor for elements onDrop: rowId is not a string"
 				);
 
 				const sourcePageId =
@@ -72,7 +74,7 @@ function AppContent() {
 					].data.pageId;
 				invariant(
 					typeof sourcePageId === "string",
-					"AppContent monitor for elements onDrop: sourcePageId is not a string",
+					"AppContent monitor for elements onDrop: sourcePageId is not a string"
 				);
 
 				// If the row was dropped on top of another row,
@@ -84,7 +86,7 @@ function AppContent() {
 					];
 				invariant(
 					destinationPageRecord,
-					"AppContent monitor for elements onDrop: destinationPageRecord is not defined",
+					"AppContent monitor for elements onDrop: destinationPageRecord is not defined"
 				);
 
 				const destinationPageId = destinationPageRecord.data
@@ -103,12 +105,24 @@ function AppContent() {
 				}
 
 				const destinationPage = pages.find(
-					(page) => page.id === destinationPageId,
+					(page) => page.id === destinationPageId
 				);
 				invariant(
 					destinationPage,
-					"AppContent monitor for elements onDrop: destinationPage is not defined",
+					"AppContent monitor for elements onDrop: destinationPage is not defined"
 				);
+
+				let dispatchOptions: {
+					destinationPageId: string;
+					destinationIndex: number;
+					destinationContainer?: {
+						rowId: string;
+						type: ContainerType;
+					};
+				} = {
+					destinationIndex: 0,
+					destinationPageId: destinationPageId,
+				};
 
 				// If the row was dropped on top of another row,
 				// dropTargets is an array with [row, ..., page]
@@ -118,43 +132,53 @@ function AppContent() {
 						? location.current.dropTargets[0]
 						: null;
 
-				const destinationContainer =
-					destinationRow &&
-					EVYRow.findContainerOfRow(
-						destinationRow.data.rowId,
-						destinationPage.rows,
-					);
-
 				const closestEdgeOfTarget: Edge | null = destinationRow
 					? extractClosestEdge(destinationRow.data)
 					: null;
 
-				let indexOfTarget = 0;
 				if (destinationRow) {
+					const destinationContainer =
+						destinationRow.data.rowId === containerDropindicatorId
+							? EVYRow.pickContainerRow(
+									location.current.dropTargets[1].data.rowId,
+									destinationPage.rows
+							  )
+							: EVYRow.findContainerOfRow(
+									destinationRow.data.rowId,
+									destinationPage.rows
+							  );
+
 					if (
 						destinationContainer?.type === "children" &&
 						destinationContainer.container.config.view.content
 							.children
 					) {
-						indexOfTarget =
+						dispatchOptions.destinationIndex =
 							destinationContainer.container.config.view.content.children.findIndex(
-								(r) => r.rowId === destinationRow.data.rowId,
+								(r) => r.rowId === destinationRow.data.rowId
 							);
 					} else if (
 						destinationContainer?.type === "child" &&
 						destinationContainer.container.config.view.content.child
 					) {
-						indexOfTarget = 0;
+						dispatchOptions.destinationIndex = 0;
 					} else if (closestEdgeOfTarget && !destinationContainer) {
 						const destinationRowIndex =
 							destinationPage.rows.findIndex(
-								(r) => r.rowId === destinationRow.data.rowId,
+								(r) => r.rowId === destinationRow.data.rowId
 							);
-						indexOfTarget =
+						dispatchOptions.destinationIndex =
 							closestEdgeOfTarget === "top" ||
 							closestEdgeOfTarget === "left"
 								? destinationRowIndex
 								: destinationRowIndex + 1;
+					}
+
+					if (destinationContainer) {
+						dispatchOptions.destinationContainer = {
+							rowId: destinationContainer.container.rowId,
+							type: destinationContainer.type,
+						};
 					}
 				}
 
@@ -162,49 +186,41 @@ function AppContent() {
 					closestEdgeOfTarget === "top" ||
 					closestEdgeOfTarget === "left"
 				) {
-					indexOfTarget =
-						indexOfTarget ?? destinationPage.rows.length;
+					dispatchOptions.destinationIndex =
+						dispatchOptions.destinationIndex ??
+						destinationPage.rows.length;
 				} else if (
 					closestEdgeOfTarget === "bottom" ||
 					closestEdgeOfTarget === "right"
 				) {
-					indexOfTarget = indexOfTarget + 1;
+					dispatchOptions.destinationIndex =
+						dispatchOptions.destinationIndex + 1;
 				} else {
-					indexOfTarget =
-						indexOfTarget ?? destinationPage.rows.length;
+					dispatchOptions.destinationIndex =
+						dispatchOptions.destinationIndex ??
+						destinationPage.rows.length;
 				}
-
-				const baseOptions = {
-					destinationPageId: destinationPageId,
-					destinationIndex: indexOfTarget,
-					destinationContainer: destinationContainer
-						? {
-								rowId: destinationContainer.container.rowId,
-								type: destinationContainer.type,
-							}
-						: undefined,
-				};
 
 				if (sourcePageId === "rows") {
 					dispatchRow({
 						type: "ADD_ROW",
 						newRowId: crypto.randomUUID(),
 						oldRowId: rowId,
-						...baseOptions,
+						...dispatchOptions,
 					});
 				} else if (sourcePageId === destinationPageId) {
 					dispatchRow({
 						type: "MOVE_ROW",
 						rowId,
 						originPageId: sourcePageId,
-						...baseOptions,
+						...dispatchOptions,
 					});
 				} else if (destinationPageId !== sourcePageId) {
 					dispatchRow({
 						type: "MOVE_ROW",
 						rowId,
 						originPageId: sourcePageId,
-						...baseOptions,
+						...dispatchOptions,
 					});
 				}
 			},
@@ -214,7 +230,7 @@ function AppContent() {
 	return (
 		<>
 			<div
-				className="evy-border-r evy-border-gray evy-overflow-y-auto evy-bg-white evy-shadow-subtle"
+				className="evy-border-r evy-border-gray evy-bg-white evy-shadow-subtle"
 				style={{ width: panelWidth }}
 			>
 				<RowsPanel key="rows" />
@@ -246,7 +262,7 @@ function App() {
 
 	return (
 		<AppProvider initialFlows={win?.__TEST_FLOWS__}>
-			<div className="evy-h-screen evy-overflow-hidden">
+			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
 				<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-justify-between evy-items-center">
 					<a href="/">
 						<img className="evy-h-4" src="/logo.svg" alt="EVY" />

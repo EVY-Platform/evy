@@ -1,4 +1,7 @@
-import { DraggableRowContainer } from "../../components/DraggableRowContainer";
+import {
+	DraggableRowContainer,
+	PlaceholderDropIndicator,
+} from "../../components/DraggableRowContainer";
 import { EVYRow, type Row, type RowConfig } from "../EVYRow";
 
 interface SelectSegmentContainerState {
@@ -22,6 +25,19 @@ export default class SelectSegmentContainerRow extends EVYRow {
 	renderContent(row: Row) {
 		const segments = row.config.view.content.segments as string[];
 		const children = row.config.view.content.children as Row[];
+
+		const childrenElements = children.length ? (
+			<DraggableRowContainer
+				rowId={children[this.state.selectedTab].rowId}
+			>
+				{children[this.state.selectedTab].row}
+			</DraggableRowContainer>
+		) : (
+			// We don't want to show dropzone in row list
+			row.rowId !== this.constructor.name && (
+				<PlaceholderDropIndicator orientation="vertical" />
+			)
+		);
 
 		return (
 			<div className="evy-p-2">
@@ -52,13 +68,7 @@ export default class SelectSegmentContainerRow extends EVYRow {
 						</button>
 					))}
 				</div>
-				{children[this.state.selectedTab] && (
-					<DraggableRowContainer
-						rowId={children[this.state.selectedTab].rowId}
-					>
-						{children[this.state.selectedTab].row}
-					</DraggableRowContainer>
-				)}
+				{childrenElements}
 			</div>
 		);
 	}
