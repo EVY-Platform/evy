@@ -102,18 +102,33 @@ export abstract class EVYRow extends React.Component<{
 		return null;
 	}
 
-	static pickContainerRow(
+	static findContainerById(
 		rowId: string,
 		rows: Row[]
 	): { container: Row; type: ContainerType } | null {
 		for (const row of rows) {
-			if (row.rowId !== rowId) continue;
+			if ("child" in row.config.view.content && row.rowId === rowId) {
+				return { container: row, type: "child" };
+			}
 
-			const canHaveChild = "child" in row.config.view.content;
-			if (canHaveChild) return { container: row, type: "child" };
+			if ("children" in row.config.view.content && row.rowId === rowId) {
+				return { container: row, type: "children" };
+			}
 
-			const canHaveChildren = "children" in row.config.view.content;
-			if (canHaveChildren) return { container: row, type: "children" };
+			if (row.config.view.content.child) {
+				const child = EVYRow.findContainerById(rowId, [
+					row.config.view.content.child,
+				]);
+				if (child) return child;
+			}
+
+			if (row.config.view.content.children) {
+				const children = EVYRow.findContainerById(
+					rowId,
+					row.config.view.content.children
+				);
+				if (children) return children;
+			}
 		}
 		return null;
 	}

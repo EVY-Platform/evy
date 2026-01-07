@@ -139,7 +139,7 @@ function AppContent() {
 				if (destinationRow) {
 					const destinationContainer =
 						destinationRow.data.rowId === containerDropindicatorId
-							? EVYRow.pickContainerRow(
+							? EVYRow.findContainerById(
 									// Droptargets is an array returning the rows under the drop cursor,
 									// starting with the placeholder indicator and then the container
 									// we want that container
@@ -151,6 +151,9 @@ function AppContent() {
 									destinationPage.rows
 							  );
 
+					// Need to support dropping into nested containers...
+					// right now the destinationContainer is 1 layer deep only,
+					// we need to be able to tell the indexes of every container down
 					if (
 						destinationContainer?.type === "children" &&
 						destinationContainer.container.config.view.content
