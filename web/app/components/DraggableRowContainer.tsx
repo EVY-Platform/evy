@@ -49,7 +49,7 @@ interface DragPreviewEvent {
 	nativeSetDragImage: (
 		image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
 		x: number,
-		y: number,
+		y: number
 	) => void;
 }
 
@@ -103,7 +103,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			dropzones = [],
 			orientation = "vertical",
 		},
-		ref,
+		ref
 	) {
 		const cursor = useMemo(() => {
 			return {
@@ -121,11 +121,11 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		const showBefore = useMemo(
 			() => dropzones.includes("before") || indicators.includes("before"),
-			[dropzones, indicators],
+			[dropzones, indicators]
 		);
 		const showAfter = useMemo(
 			() => dropzones.includes("after") || indicators.includes("after"),
-			[dropzones, indicators],
+			[dropzones, indicators]
 		);
 
 		return (
@@ -159,7 +159,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				)}
 			</>
 		);
-	},
+	}
 );
 
 export function DraggableRowContainer({
@@ -218,9 +218,6 @@ export function DraggableRowContainer({
 		].filter(Boolean) as Array<"before" | "after">;
 	}, [dropIndicator, dragging, rowId, showIndicators]);
 
-	// TODO: Fix logic to not show dropzones when there are no containers.. eg with the
-	// segment controller Dimensions 3, there are indicators above the info row title
-	// in the width
 	const dropzones = useMemo(() => {
 		if (!dragging || !dropIndicator) return;
 
@@ -242,16 +239,6 @@ export function DraggableRowContainer({
 			hideAfter ? undefined : "after",
 		].filter(Boolean) as Array<"before" | "after">;
 	}, [dragging, dropIndicator, previousRowId, nextRowId]);
-
-	const getElementDepth = useCallback((element: HTMLElement): number => {
-		let depth = 0;
-		let current: HTMLElement | null = element;
-		while (current) {
-			depth++;
-			current = current.parentElement;
-		}
-		return depth;
-	}, []);
 
 	// The goal here is to find out which row's dropzone to set the indicator on.
 	const onDragEvent = useCallback(
@@ -278,14 +265,14 @@ export function DraggableRowContainer({
 				edge: edge,
 			});
 		},
-		[dispatchDropIndicator, rowId],
+		[dispatchDropIndicator, rowId]
 	);
 
 	useEffect(() => {
 		const element = ref.current;
 		invariant(
 			element,
-			"DraggableRowContainer useEffect: ref.current is not defined",
+			"DraggableRowContainer useEffect: ref.current is not defined"
 		);
 
 		return combine(
@@ -331,7 +318,7 @@ export function DraggableRowContainer({
 							input,
 							element,
 							allowedEdges,
-						},
+						}
 					),
 				onDragEnter: onDragEvent,
 				onDrag: onDragEvent,
@@ -342,7 +329,7 @@ export function DraggableRowContainer({
 						type: "UNSET_INDICATOR_ROW",
 					});
 				},
-			}),
+			})
 		);
 	}, [
 		allowedEdges,
@@ -379,7 +366,7 @@ export function DraggableRowContainer({
 					>
 						<RowPrimitive state={state}>{children}</RowPrimitive>
 					</div>,
-					state.container,
+					state.container
 				)}
 		</Fragment>
 	);
