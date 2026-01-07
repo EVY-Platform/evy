@@ -109,10 +109,10 @@ export abstract class EVYRow extends React.Component<{
 		for (const row of rows) {
 			if (row.rowId !== rowId) continue;
 
-			const canHaveChild = row.config.view.content.child;
+			const canHaveChild = "child" in row.config.view.content;
 			if (canHaveChild) return { container: row, type: "child" };
 
-			const canHaveChildren = row.config.view.content.children;
+			const canHaveChildren = "children" in row.config.view.content;
 			if (canHaveChildren) return { container: row, type: "children" };
 		}
 		return null;
