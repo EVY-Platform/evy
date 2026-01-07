@@ -40,7 +40,7 @@ export default class ColumnContainerRow extends EVYRow {
 			  ))
 			: // We don't want to show dropzone in row list
 			  row.rowId !== this.constructor.name && (
-					<PlaceholderDropIndicator orientation="horizontal" />
+					<PlaceholderDropIndicator />
 			  );
 
 		return (

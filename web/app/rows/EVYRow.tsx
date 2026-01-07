@@ -126,10 +126,8 @@ export abstract class EVYRow extends React.Component<{
 
 		const child = row.config.view.content.child;
 		if (child) {
-			return [
-				"child",
-				...EVYRow.traverseToRowAndGetPath(child, targetRowId),
-			];
+			const path = EVYRow.traverseToRowAndGetPath(child, targetRowId);
+			if (path.length > 0) return ["child", ...path];
 		}
 
 		const children = row.config.view.content.children;

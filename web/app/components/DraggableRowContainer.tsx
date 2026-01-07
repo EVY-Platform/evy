@@ -382,16 +382,11 @@ export function DraggableRowContainer({
 	);
 }
 
-export function PlaceholderDropIndicator({
-	orientation = "vertical",
-}: {
-	orientation?: "horizontal" | "vertical";
-}) {
+export function PlaceholderDropIndicator() {
 	return (
 		<DraggableRowContainer
 			key={containerDropindicatorId}
 			rowId={containerDropindicatorId}
-			orientation={orientation}
 		>
 			<div
 				className={

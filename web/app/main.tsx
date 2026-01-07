@@ -151,7 +151,7 @@ function AppContent() {
 					if (
 						destinationContainer?.type === "children" &&
 						destinationContainer.container.config.view.content
-							.children
+							.children?.length
 					) {
 						dispatchOptions.destinationIndex =
 							destinationContainer.container.config.view.content.children.findIndex(
@@ -160,6 +160,7 @@ function AppContent() {
 					} else if (
 						destinationContainer?.type === "child" &&
 						destinationContainer.container.config.view.content.child
+							?.rowId
 					) {
 						dispatchOptions.destinationIndex = 0;
 					} else if (closestEdgeOfTarget && !destinationContainer) {

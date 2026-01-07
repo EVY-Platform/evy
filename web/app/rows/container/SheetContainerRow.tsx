@@ -23,9 +23,7 @@ export default class SheetContainerRow extends EVYRow {
 			</DraggableRowContainer>
 		) : (
 			// We don't want to show dropzone in row list
-			row.rowId !== this.constructor.name && (
-				<PlaceholderDropIndicator orientation="horizontal" />
-			)
+			row.rowId !== this.constructor.name && <PlaceholderDropIndicator />
 		);
 		return (
 			<div className="evy-p-2">
