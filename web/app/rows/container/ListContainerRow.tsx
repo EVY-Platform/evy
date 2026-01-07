@@ -38,7 +38,8 @@ export default class ListContainerRow extends EVYRow {
 					</DraggableRowContainer>
 			  ))
 			: // We don't want to show dropzone in row list
-			  row.rowId !== this.constructor.name && <PlaceholderDropIndicator />
+			  row.rowId !== this.constructor.name && (
+					<PlaceholderDropIndicator />
 			  );
 
 		return (
