@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, beforeAll, mock } from "bun:test";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
+import { migrate } from "drizzle-orm/pglite/migrator";
 import { sql } from "drizzle-orm";
 import * as schema from "../db/schema";
 
@@ -19,76 +20,13 @@ const { validateAuth, crud, getFlows, saveFlow, primeData } = await import(
 	"../data"
 );
 
-// Create tables before running tests
+// Run migrations before all tests
 beforeAll(async () => {
-	// Create enum type
-	await testDb.execute(sql`
-		DO $$ BEGIN
-			CREATE TYPE "OS" AS ENUM ('ios', 'android', 'Web');
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$;
-	`);
+	// Apply migrations from the drizzle folder
+	await migrate(testDb, { migrationsFolder: "./drizzle" });
 
-	// Create Device table
-	await testDb.execute(sql`
-		CREATE TABLE IF NOT EXISTS "Device" (
-			token VARCHAR(256) PRIMARY KEY,
-			os "OS" NOT NULL,
-			created_at TIMESTAMP(3) NOT NULL
-		)
-	`);
-
-	// Create Service table
-	await testDb.execute(sql`
-		CREATE TABLE IF NOT EXISTS "Service" (
-			id UUID PRIMARY KEY,
-			name VARCHAR(50) NOT NULL UNIQUE,
-			description TEXT NOT NULL,
-			created_at TIMESTAMP(3) NOT NULL,
-			updated_at TIMESTAMP(3) NOT NULL
-		)
-	`);
-
-	// Create Organization table
-	await testDb.execute(sql`
-		CREATE TABLE IF NOT EXISTS "Organization" (
-			id UUID PRIMARY KEY,
-			name VARCHAR(100) NOT NULL UNIQUE,
-			description TEXT NOT NULL,
-			logo UUID NOT NULL,
-			url VARCHAR(50) NOT NULL,
-			support_email VARCHAR(50) NOT NULL,
-			created_at TIMESTAMP(3) NOT NULL,
-			updated_at TIMESTAMP(3) NOT NULL
-		)
-	`);
-
-	// Create ServiceProvider table
-	await testDb.execute(sql`
-		CREATE TABLE IF NOT EXISTS "ServiceProvider" (
-			id UUID PRIMARY KEY,
-			fk_service_id UUID NOT NULL,
-			fk_organization_id UUID NOT NULL,
-			name VARCHAR(100) NOT NULL UNIQUE,
-			description TEXT NOT NULL,
-			logo UUID NOT NULL,
-			url VARCHAR(50) NOT NULL,
-			created_at TIMESTAMP(3) NOT NULL,
-			updated_at TIMESTAMP(3) NOT NULL,
-			retired BOOLEAN NOT NULL DEFAULT false
-		)
-	`);
-
-	// Create Flow table
-	await testDb.execute(sql`
-		CREATE TABLE IF NOT EXISTS "Flow" (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			data JSONB NOT NULL,
-			created_at TIMESTAMP(3) NOT NULL,
-			updated_at TIMESTAMP(3) NOT NULL
-		)
-	`);
+	// Clear seed data from migrations for clean test state
+	await testDb.execute(sql`DELETE FROM "Flow"`);
 
 	// Prime the data module
 	await primeData();
