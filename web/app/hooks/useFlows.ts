@@ -25,8 +25,9 @@ export function useFlows(): UseFlowsResult {
 				}
 			} catch (err) {
 				if (!cancelled) {
-					console.error("Failed to fetch flows from API:", err);
-					setError(err instanceof Error ? err : new Error(String(err)));
+					setError(
+						err instanceof Error ? err : new Error(String(err))
+					);
 					setLoading(false);
 				}
 			}
