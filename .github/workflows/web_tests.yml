@@ -1,4 +1,4 @@
-name: E2E Tests
+name: Web Tests
 
 on:
     pull_request:
