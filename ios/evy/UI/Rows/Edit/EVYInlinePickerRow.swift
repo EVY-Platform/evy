@@ -63,6 +63,6 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.getRow(["1","pages","2","rows", "0", "view", "content", "children", "1", "child", "view", "content", "children", "3", "child"])
+		try! await EVY.getRow(["1","pages","2","rows", "0", "view", "content", "children", "1", "view", "content", "children", "3"])
 	}
 }

@@ -76,13 +76,13 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
                 EVYTextView(view.content.title)
                     .padding(.vertical, Constants.padding)
             }
-            EVYSelectItem(destination: edit.destination!,
-                          value: value,
-                          format: "",
-                          selectionStyle: .multi,
-                          target: .single_bool,
-                          textStyle: .info)
-                .frame(maxWidth: .infinity, alignment: .leading)
+			EVYSelectItem(destination: edit.destination!,
+						  value: value,
+						  format: "",
+						  selectionStyle: .multi,
+						  target: .single_bool,
+						  textStyle: .info)
+			.frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

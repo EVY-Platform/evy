@@ -76,6 +76,6 @@ struct EVYCalendarRow: View, EVYRowProtocol {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.getRow(["1","pages","2","rows", "0", "view", "content", "children", "0", "child", "view", "content", "children", "4", "child"])
+		try! await EVY.getRow(["1","pages","2","rows", "0", "view", "content", "children", "0", "view", "content", "children", "4"])
 	}
 }
