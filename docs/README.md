@@ -17,3 +17,7 @@ Documentation is available at the global EVY level as well as per services provi
 ### iOS
 
 -   [iOS docs](../ios/README.md)
+
+### Web
+
+-   [Web docs](../web/README.md)
