@@ -191,20 +191,20 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			invariant(page, "PageReducer addRow: page is not defined");
 
 			if (action.destinationContainer) {
-			const destinationRowId = action.destinationContainer.rowId;
-			const stepsToDestinationContainer = page.rows
-				.flatMap((row, index) => {
-					if (row.rowId === destinationRowId) {
-						return [[index]];
-					}
-					const match = EVYRow.traverseToRowAndGetPath(
-						row,
-						destinationRowId
-					);
-					if (match.length > 0) return [[index, ...match]];
-					return [];
-				})
-				.find((s) => s !== undefined);
+				const destinationRowId = action.destinationContainer.rowId;
+				const stepsToDestinationContainer = page.rows
+					.flatMap((row, index) => {
+						if (row.rowId === destinationRowId) {
+							return [[index]];
+						}
+						const match = EVYRow.traverseToRowAndGetPath(
+							row,
+							destinationRowId
+						);
+						if (match.length > 0) return [[index, ...match]];
+						return [];
+					})
+					.find((s) => s !== undefined);
 
 				invariant(
 					stepsToDestinationContainer?.length,
@@ -286,17 +286,82 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 		}
 		case "REMOVE_ROW": {
-			const newPages = flow.pages.map((page) =>
-				page.id === action.pageId
-					? {
-							...page,
-							rows: page.rows.filter(
-								(r) => r.rowId !== action.rowId
-							),
-					  }
-					: page
-			);
-			return updateState({ updatedPages: newPages });
+			const removeRowFromChildren = (
+				row: Row,
+				targetRowId: string
+			): Row => {
+				if (row.config.view.content.children) {
+					const filteredChildren =
+						row.config.view.content.children.filter(
+							(child) => child.rowId !== targetRowId
+						);
+					const updatedChildren = filteredChildren.map((child) =>
+						removeRowFromChildren(child, targetRowId)
+					);
+					return {
+						...row,
+						config: {
+							...row.config,
+							view: {
+								...row.config.view,
+								content: {
+									...row.config.view.content,
+									children: updatedChildren,
+								},
+							},
+						},
+					};
+				}
+				if (row.config.view.content.child?.rowId === targetRowId) {
+					return {
+						...row,
+						config: {
+							...row.config,
+							view: {
+								...row.config.view,
+								content: {
+									...row.config.view.content,
+									child: undefined,
+								},
+							},
+						},
+					};
+				}
+				if (row.config.view.content.child) {
+					return {
+						...row,
+						config: {
+							...row.config,
+							view: {
+								...row.config.view,
+								content: {
+									...row.config.view.content,
+									child: removeRowFromChildren(
+										row.config.view.content.child,
+										targetRowId
+									),
+								},
+							},
+						},
+					};
+				}
+				return row;
+			};
+
+			return updateState({
+				updatedPages: flow.pages.map((page) =>
+					page.id === action.pageId
+						? {
+								...page,
+								rows: page.rows
+									.filter((r) => r.rowId !== action.rowId)
+									.map((r) =>
+										removeRowFromChildren(r, action.rowId)
+									),
+						  }
+						: page
+				),
+			});
 		}
 		case "UPDATE_ROW": {
 			const splitValue = action.configValue.split(",");
