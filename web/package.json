@@ -4,15 +4,15 @@
 	"description": "EVY Web App Builder",
 	"type": "module",
 	"scripts": {
-		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
-		"build": "bun run setup && bun build --target=browser --outdir=dist --entry-naming=[dir]/bundle.js app/main.tsx",
 		"dev": "bun run dev/server.ts",
-		"prod": "bun run dev/server.ts",
-		"test:setup": "bunx playwright install --with-deps",
+		"build": "bun run setup && bun build --target=browser --outdir=dist --entry-naming=[dir]/bundle.js app/main.tsx",
+		"start": "bun run dev/server.ts",
+		"lint": "bunx biome check .",
+		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
 		"test": "bunx playwright test",
+		"test:setup": "bunx playwright install --with-deps",
 		"test:ui": "bunx playwright test --ui",
-		"test:debug": "bunx playwright test --debug",
-		"lint": "bunx biome check ."
+		"test:debug": "bunx playwright test --debug"
 	},
 	"dependencies": {
 		"@atlaskit/pragmatic-drag-and-drop": "^1.7.7",

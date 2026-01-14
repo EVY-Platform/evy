@@ -5,13 +5,13 @@
 	"type": "module",
 	"main": "src/index.ts",
 	"scripts": {
-		"lint": "bunx biome check",
-		"prisma_generate": "prisma generate",
-		"prisma_migration": "prisma migrate dev",
-		"prisma_migrate": "prisma migrate deploy",
+		"dev": "bun --watch src/index.ts",
 		"build": "bun build src/index.ts --outdir dist --target bun",
-		"start": "bun run prisma_migrate && bun src/index.ts",
-		"dev": "bun --watch src/index.ts"
+		"start": "bun run db:migrate && bun src/index.ts",
+		"lint": "bunx biome check",
+		"db:generate": "bunx prisma generate",
+		"db:migrate": "bunx prisma migrate deploy",
+		"db:migrate:dev": "bunx prisma migrate dev"
 	},
 	"license": "GPL-3.0-only",
 	"devDependencies": {

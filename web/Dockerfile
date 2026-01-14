@@ -39,4 +39,4 @@ ENV NODE_ENV=production
 
 EXPOSE $WEB_PORT
 
-CMD ["bun", "run", "prod"]
+CMD ["bun", "run", "start"]
