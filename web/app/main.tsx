@@ -21,35 +21,6 @@ import {
 	type ContainerType,
 } from "./rows/EVYRow.tsx";
 
-interface DropLocation {
-	current: {
-		dropTargets: Array<{
-			data: {
-				pageId: string;
-				rowId: string;
-			};
-		}>;
-	};
-	initial: {
-		dropTargets: Array<{
-			data: {
-				pageId: string;
-			};
-		}>;
-	};
-}
-
-interface DropSource {
-	data: {
-		rowId: string;
-	};
-}
-
-interface DropEvent {
-	location: DropLocation;
-	source: DropSource;
-}
-
 const panelWidth = "300px";
 
 function AppContent() {
