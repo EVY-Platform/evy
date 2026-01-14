@@ -3,7 +3,8 @@ name: E2E Tests
 on:
     pull_request:
         branches: [dev]
-        paths: "web/**"
+    push:
+        branches: [dev]
 
 jobs:
     web:
@@ -17,24 +18,37 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v5
 
+            - name: Check for web changes
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      web:
+                        - 'web/**'
+
             - name: Setup Bun
+              if: steps.filter.outputs.web == 'true'
               uses: oven-sh/setup-bun@v2
 
             - name: Install dependencies
+              if: steps.filter.outputs.web == 'true'
               run: bun install
 
             - name: Setup Playwright
+              if: steps.filter.outputs.web == 'true'
               run: bun run test:setup
 
             - name: Build application
+              if: steps.filter.outputs.web == 'true'
               run: bun run build
 
             - name: Run E2E Tests
+              if: steps.filter.outputs.web == 'true'
               run: bun run test
 
             - name: Upload test results
               uses: actions/upload-artifact@v4
-              if: always()
+              if: always() && steps.filter.outputs.web == 'true'
               with:
                   name: playwright-report
                   path: playwright-report/
