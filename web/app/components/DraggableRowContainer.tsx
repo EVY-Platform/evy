@@ -26,7 +26,13 @@ import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/el
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 
 import { AppContext } from "../registry";
-import { EVYRow } from "../rows/EVYRow";
+import { containerDropindicatorId, EVYRow } from "../rows/EVYRow";
+import {
+	dropIndicatorExpansionBefore,
+	dropIndicatorExpansionAfter,
+	horizontalDropIndicator,
+	verticalDropIndicator,
+} from "../rows/design-system/dropIndicator";
 
 export type Edge = "top" | "right" | "bottom" | "left";
 
@@ -115,8 +121,8 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		const indicatorClass = useMemo(() => {
 			return orientation === "vertical"
-				? "evy-v-dropzone evy-w-full evy-rounded-sm"
-				: "evy-h-dropzone evy-min-h-full evy-mt-2 evy-mb-2 evy-rounded-sm";
+				? verticalDropIndicator
+				: horizontalDropIndicator;
 		}, [orientation]);
 
 		const showBefore = useMemo(
@@ -134,17 +140,20 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 					<div
 						className={`${indicatorClass} ${
 							indicators.includes("before")
-								? "expanded evy-mt-2"
+								? dropIndicatorExpansionBefore
 								: ""
 						}`}
 					/>
 				)}
+				{/* biome-ignore lint/a11y/useSemanticElements: This is a drag-and-drop container that requires a div for proper layout */}
 				<div
 					className="evy-flex evy-flex-col evy-w-full evy-relative evy-hover:bg-gray-light"
 					style={{ cursor }}
 					ref={ref}
 					onClick={selectRow}
 					onKeyDown={(e) => e.key === "Enter" && selectRow?.()}
+					role="button"
+					tabIndex={0}
 				>
 					{children}
 				</div>
@@ -152,7 +161,7 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 					<div
 						className={`${indicatorClass} ${
 							indicators.includes("after")
-								? "expanded evy-mb-2"
+								? dropIndicatorExpansionAfter
 								: ""
 						}`}
 					/>
@@ -219,16 +228,16 @@ export function DraggableRowContainer({
 	}, [dropIndicator, dragging, rowId, showIndicators]);
 
 	const dropzones = useMemo(() => {
-		if (!dragging || !dropIndicator) return;
+		if (!dragging || !dropIndicator || !showIndicators) return;
 
 		const hideBefore =
-			(previousRowId && !dropIndicator?.rowId) ||
+			(previousRowId && !dropIndicator.rowId) ||
 			(previousRowId &&
 				dropIndicator.rowId === previousRowId &&
 				dropIndicator.edge !== "bottom");
 		const hideAfter =
 			(nextRowId &&
-				dropIndicator?.rowId &&
+				dropIndicator.rowId &&
 				dropIndicator.rowId !== nextRowId) ||
 			(nextRowId &&
 				dropIndicator.rowId === nextRowId &&
@@ -238,7 +247,7 @@ export function DraggableRowContainer({
 			hideBefore ? undefined : "before",
 			hideAfter ? undefined : "after",
 		].filter(Boolean) as Array<"before" | "after">;
-	}, [dragging, dropIndicator, previousRowId, nextRowId]);
+	}, [dragging, dropIndicator, previousRowId, nextRowId, showIndicators]);
 
 	// The goal here is to find out which row's dropzone to set the indicator on.
 	const onDragEvent = useCallback(
@@ -369,5 +378,19 @@ export function DraggableRowContainer({
 					state.container
 				)}
 		</Fragment>
+	);
+}
+
+export function PlaceholderDropIndicator() {
+	return (
+		<DraggableRowContainer
+			key={containerDropindicatorId}
+			rowId={containerDropindicatorId}
+			orientation="horizontal"
+		>
+			<div
+				className={`${verticalDropIndicator} ${dropIndicatorExpansionBefore}`}
+			/>
+		</DraggableRowContainer>
 	);
 }

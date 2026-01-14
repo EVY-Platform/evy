@@ -36,7 +36,7 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 	return (
 		<Fragment>
 			<div
-				className="evy-flex evy-absolute evy-w-full evy-h-full evy-opacity-60"
+				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full evy-opacity-60"
 				style={{
 					backgroundColor:
 						state.type === idle.type
@@ -46,7 +46,7 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 			/>
 			<button
 				type="button"
-				className="evy-flex evy-absolute evy-w-full evy-h-full evy-justify-center evy-pt-32 evy-border-none evy-bg-transparent evy-cursor-pointer"
+				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full evy-justify-center evy-pt-32 evy-border-none evy-bg-transparent evy-cursor-pointer"
 				ref={ref}
 				onClick={dismiss}
 			>

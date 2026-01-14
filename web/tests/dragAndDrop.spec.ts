@@ -177,7 +177,7 @@ test.describe("Drag & Drop UX", () => {
 
 		expect(textRowPosition).not.toBe(-1);
 		expect(infoRowPosition).not.toBe(-1);
-		expect(textRowPosition).toBeGreaterThan(infoRowPosition);
+		expect(infoRowPosition).toBeGreaterThan(textRowPosition);
 	});
 
 	test("should drag a row from position 2 to 1 on a page", async ({
@@ -248,7 +248,7 @@ test.describe("Drag & Drop UX", () => {
 
 		expect(textRowPosition).not.toBe(-1);
 		expect(infoRowPosition).not.toBe(-1);
-		expect(textRowPosition).toBeGreaterThan(infoRowPosition);
+		expect(infoRowPosition).toBeGreaterThan(textRowPosition);
 	});
 
 	test("should drag from the left sidebar onto a container on a page", async ({
@@ -347,7 +347,7 @@ test.describe("Drag & Drop UX", () => {
 		];
 
 		const initialRowCount = await pageContent
-			.locator(SELECTORS.rowContainer)
+			.locator(SELECTORS.draggableRow)
 			.count();
 
 		for (const rowText of allRowTypes) {
@@ -364,7 +364,7 @@ test.describe("Drag & Drop UX", () => {
 		}
 
 		const finalRowCount = await pageContent
-			.locator(SELECTORS.rowContainer)
+			.locator(SELECTORS.draggableRow)
 			.count();
 		expect(finalRowCount).toBe(initialRowCount + allRowTypes.length);
 

@@ -7,7 +7,7 @@ export const SELECTORS = {
 	pageContent: '[class*="evy-overflow-scroll"]',
 	rowContainer:
 		'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]',
-	draggableRow: "div[data-row-id]",
+	draggableRow: 'div[data-row-id]:not([data-row-id="placeholder"])',
 	dropIndicator: ".evy-v-dropzone.expanded, .evy-h-dropzone.expanded",
 	topIndicator: ".evy-v-dropzone.expanded.evy-mt-2, .evy-h-dropzone.expanded",
 	bottomIndicator:
@@ -51,7 +51,7 @@ export function getDropIndicator(page: Page): Locator {
 export async function stableDragTo(
 	page: Page,
 	source: Locator,
-	target: Locator,
+	target: Locator
 ) {
 	await source.dragTo(target);
 	await page.waitForTimeout(150);

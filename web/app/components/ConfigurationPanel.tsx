@@ -18,7 +18,7 @@ export function ConfigurationPanel() {
 				configValue,
 			});
 		},
-		[activeRowId, dispatchRow],
+		[activeRowId, dispatchRow]
 	);
 
 	const row = useMemo(
@@ -28,7 +28,7 @@ export function ConfigurationPanel() {
 				?.pages.flatMap((page) => page.rows)
 				.flatMap(EVYRow.getRowsRecursive)
 				.find((r) => r.rowId === activeRowId),
-		[flows, activeFlowId, activeRowId],
+		[flows, activeFlowId, activeRowId]
 	);
 
 	const renderConfiguration = useCallback(
@@ -88,7 +88,7 @@ export function ConfigurationPanel() {
 								updateRowContent(
 									key,
 									e.target.value,
-									configRow.rowId,
+									configRow.rowId
 								);
 							}}
 							className="evy-w-full evy-focus-visible:outline-none"
@@ -98,7 +98,7 @@ export function ConfigurationPanel() {
 				);
 			});
 		},
-		[updateRowContent],
+		[updateRowContent]
 	);
 
 	const configurationElements = row ? renderConfiguration(row) : [];

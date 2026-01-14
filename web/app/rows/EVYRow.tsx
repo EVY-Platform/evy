@@ -46,6 +46,8 @@ export interface RowConfig {
 
 export type ContainerType = "child" | "children";
 
+export const containerDropindicatorId = "placeholder";
+
 export abstract class EVYRow extends React.Component<{
 	rowId: string;
 }> {
@@ -61,15 +63,15 @@ export abstract class EVYRow extends React.Component<{
 				: []),
 			...(row.config.view.content.children
 				? row.config.view.content.children.flatMap(
-						EVYRow.getRowsRecursive,
-					)
+						EVYRow.getRowsRecursive
+				  )
 				: []),
 		].filter((row) => row !== undefined);
 	}
 
 	static findContainerOfRow(
 		rowId: string,
-		rows: Row[],
+		rows: Row[]
 	): { container: Row; type: ContainerType } | null {
 		for (const row of rows) {
 			if (row.rowId === rowId) return null;
@@ -78,7 +80,7 @@ export abstract class EVYRow extends React.Component<{
 			if (childMatches) return { container: row, type: "child" };
 
 			const childrenMatch = row.config.view.content.children?.some(
-				(r) => r.rowId === rowId,
+				(r) => r.rowId === rowId
 			);
 			if (childrenMatch) return { container: row, type: "children" };
 
@@ -92,7 +94,7 @@ export abstract class EVYRow extends React.Component<{
 			if (row.config.view.content.children) {
 				const childrenOfChildren = EVYRow.findContainerOfRow(
 					rowId,
-					row.config.view.content.children,
+					row.config.view.content.children
 				);
 				if (childrenOfChildren) return childrenOfChildren;
 			}
@@ -100,18 +102,47 @@ export abstract class EVYRow extends React.Component<{
 		return null;
 	}
 
+	static findContainerById(
+		rowId: string,
+		rows: Row[]
+	): { container: Row; type: ContainerType } | null {
+		for (const row of rows) {
+			if ("child" in row.config.view.content && row.rowId === rowId) {
+				return { container: row, type: "child" };
+			}
+
+			if ("children" in row.config.view.content && row.rowId === rowId) {
+				return { container: row, type: "children" };
+			}
+
+			if (row.config.view.content.child) {
+				const child = EVYRow.findContainerById(rowId, [
+					row.config.view.content.child,
+				]);
+				if (child) return child;
+			}
+
+			if (row.config.view.content.children) {
+				const children = EVYRow.findContainerById(
+					rowId,
+					row.config.view.content.children
+				);
+				if (children) return children;
+			}
+		}
+		return null;
+	}
+
 	static traverseToRowAndGetPath(
 		row: Row,
-		targetRowId: string,
+		targetRowId: string
 	): Array<number | "child"> {
 		if (row.rowId === targetRowId) return [];
 
 		const child = row.config.view.content.child;
-		if (child) {
-			return [
-				"child",
-				...EVYRow.traverseToRowAndGetPath(child, targetRowId),
-			];
+		if (child?.rowId === targetRowId) {
+			const path = EVYRow.traverseToRowAndGetPath(child, targetRowId);
+			if (path.length > 0) return ["child", ...path];
 		}
 
 		const children = row.config.view.content.children;
@@ -131,7 +162,7 @@ export abstract class EVYRow extends React.Component<{
 			<AppContext.Consumer>
 				{({ rows, flows, activeFlowId }) => {
 					const baseRow = rows.find(
-						(r) => r.rowId === this.props.rowId,
+						(r) => r.rowId === this.props.rowId
 					);
 					if (baseRow) return this.renderContent(baseRow);
 

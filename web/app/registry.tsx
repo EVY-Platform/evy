@@ -157,9 +157,9 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						flows: state.flows.map((f) =>
 							f.id === state.activeFlowId
 								? { ...f, pages: updatedPages }
-								: f,
+								: f
 						),
-					}
+				  }
 				: {}),
 			...(activeFlowId && activeFlowId !== state.activeFlowId
 				? { activeFlowId }
@@ -181,32 +181,34 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const rowDataAdd: Row = {
 				...baseRow,
 				rowId: action.newRowId,
-				config: baseRow.config,
+				config: structuredClone(baseRow.config),
 				row: createElement(baseRow, { rowId: action.newRowId }),
 			};
 
 			const page = flow.pages.find(
-				(p) => p.id === action.destinationPageId,
+				(p) => p.id === action.destinationPageId
 			);
 			invariant(page, "PageReducer addRow: page is not defined");
 
 			if (action.destinationContainer) {
+				const destinationRowId = action.destinationContainer.rowId;
 				const stepsToDestinationContainer = page.rows
-					.map((row, index) => {
-						if (row.rowId === action.destinationContainer?.rowId) {
-							return [index];
+					.flatMap((row, index) => {
+						if (row.rowId === destinationRowId) {
+							return [[index]];
 						}
 						const match = EVYRow.traverseToRowAndGetPath(
 							row,
-							action.destinationContainer?.rowId,
+							destinationRowId
 						);
-						if (match.length > 0) return [index, ...match];
+						if (match.length > 0) return [[index, ...match]];
+						return [];
 					})
 					.find((s) => s !== undefined);
 
 				invariant(
 					stepsToDestinationContainer?.length,
-					"PageReducer addRow: stepsToDestinationContainer is not defined",
+					"PageReducer addRow: stepsToDestinationContainer is not defined"
 				);
 
 				let path = page.rows[stepsToDestinationContainer[0] as number];
@@ -218,7 +220,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 								const child = acc.config.view.content.child;
 								invariant(
 									child,
-									"PageReducer addRow: child is not defined",
+									"PageReducer addRow: child is not defined"
 								);
 								return child;
 							}
@@ -226,13 +228,13 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						}, path);
 				}
 
-				if (action.destinationContainer?.type === "child") {
+				if (action.destinationContainer.type === "child") {
 					path.config.view.content.child = rowDataAdd;
-				} else if (action.destinationContainer?.type === "children") {
+				} else if (action.destinationContainer.type === "children") {
 					path.config.view.content.children?.splice(
 						action.destinationIndex,
 						0,
-						rowDataAdd,
+						rowDataAdd
 					);
 				}
 			} else {
@@ -284,17 +286,82 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 		}
 		case "REMOVE_ROW": {
-			const newPages = flow.pages.map((page) =>
-				page.id === action.pageId
-					? {
-							...page,
-							rows: page.rows.filter(
-								(r) => r.rowId !== action.rowId,
-							),
-						}
-					: page,
-			);
-			return updateState({ updatedPages: newPages });
+			const removeRowFromChildren = (
+				row: Row,
+				targetRowId: string
+			): Row => {
+				if (row.config.view.content.children) {
+					const filteredChildren =
+						row.config.view.content.children.filter(
+							(child) => child.rowId !== targetRowId
+						);
+					const updatedChildren = filteredChildren.map((child) =>
+						removeRowFromChildren(child, targetRowId)
+					);
+					return {
+						...row,
+						config: {
+							...row.config,
+							view: {
+								...row.config.view,
+								content: {
+									...row.config.view.content,
+									children: updatedChildren,
+								},
+							},
+						},
+					};
+				}
+				if (row.config.view.content.child?.rowId === targetRowId) {
+					return {
+						...row,
+						config: {
+							...row.config,
+							view: {
+								...row.config.view,
+								content: {
+									...row.config.view.content,
+									child: undefined,
+								},
+							},
+						},
+					};
+				}
+				if (row.config.view.content.child) {
+					return {
+						...row,
+						config: {
+							...row.config,
+							view: {
+								...row.config.view,
+								content: {
+									...row.config.view.content,
+									child: removeRowFromChildren(
+										row.config.view.content.child,
+										targetRowId
+									),
+								},
+							},
+						},
+					};
+				}
+				return row;
+			};
+
+			return updateState({
+				updatedPages: flow.pages.map((page) =>
+					page.id === action.pageId
+						? {
+								...page,
+								rows: page.rows
+									.filter((r) => r.rowId !== action.rowId)
+									.map((r) =>
+										removeRowFromChildren(r, action.rowId)
+									),
+						  }
+						: page
+				),
+			});
 		}
 		case "UPDATE_ROW": {
 			const splitValue = action.configValue.split(",");
@@ -303,7 +370,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				row: Row,
 				targetRowId: string,
 				configId: string,
-				configValue: string,
+				configValue: string
 			): Row | null => {
 				if (row.rowId === targetRowId) {
 					return {
@@ -332,12 +399,12 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 									child,
 									targetRowId,
 									configId,
-									configValue,
-								) || child,
+									configValue
+								) || child
 						);
 					const childUpdated = updatedChildren.some(
 						(child, index) =>
-							child !== row.config.view.content.children?.[index],
+							child !== row.config.view.content.children?.[index]
 					);
 					if (childUpdated) {
 						return {
@@ -361,7 +428,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 						row.config.view.content.child,
 						targetRowId,
 						configId,
-						configValue,
+						configValue
 					);
 					if (updatedChild) {
 						return {
@@ -385,7 +452,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			const newPages = flow.pages.map((page) => {
 				const hasAtTopLevel = page.rows.some(
-					(r) => r.rowId === action.rowId,
+					(r) => r.rowId === action.rowId
 				);
 				if (hasAtTopLevel) {
 					const newRows = page.rows.map((row) => {
@@ -419,8 +486,8 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 							row,
 							action.rowId,
 							action.configId,
-							action.configValue,
-						) || row,
+							action.configValue
+						) || row
 				);
 				return { ...page, rows: newRows };
 			});
@@ -434,7 +501,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "SET_ACTIVE_ROW": {
 			const page = flow.pages.find((page) =>
-				page.rows.some((row) => row.rowId === action.rowId),
+				page.rows.some((row) => row.rowId === action.rowId)
 			);
 			invariant(page, `Page not found for row ${action.rowId}`);
 
@@ -457,7 +524,7 @@ type DraggingAction =
 	  };
 const draggingReducer = (
 	state: DraggingState,
-	action: DraggingAction,
+	action: DraggingAction
 ): DraggingState => {
 	switch (action.type) {
 		case "START_DRAGGING":
@@ -494,7 +561,7 @@ type DropIndicatorAction =
 
 const dropIndicatorReducer = (
 	state: DropIndicatorState,
-	action: DropIndicatorAction,
+	action: DropIndicatorAction
 ): DropIndicatorState => {
 	switch (action.type) {
 		case "SET_INDICATOR_ROW":
@@ -547,7 +614,7 @@ export const AppContext = createContext<{
 function decodeRow(row: ServerRow): Row {
 	const rowId = crypto.randomUUID();
 	const baseRow = baseRows.find(
-		(baseRow) => row.type === baseRow.config.type,
+		(baseRow) => row.type === baseRow.config.type
 	);
 	if (!baseRow) {
 		return {
@@ -570,7 +637,7 @@ function decodeRow(row: ServerRow): Row {
 							? row.view.content.title
 							: "Invalid title",
 					children: row.view.content.children?.map(
-						(child: ServerRow) => decodeRow(child),
+						(child: ServerRow) => decodeRow(child)
 					),
 					child: row.view.content.child
 						? decodeRow(row.view.content.child)
@@ -618,7 +685,7 @@ export function AppProvider({
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
 	const [dropIndicator, dispatchDropIndicator] = useReducer(
 		dropIndicatorReducer,
-		null,
+		null
 	);
 
 	return (

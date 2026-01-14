@@ -209,7 +209,6 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	});
 
 	test("should clear indicator when drag ends", async ({ page }) => {
-		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
 		const targetSidebarRow = getSidebarRow(page, "Text row title");
@@ -297,7 +296,6 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	test("should show indicator at top edge when hovering near top of row", async ({
 		page,
 	}) => {
-		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
 		const targetSidebarRow = getSidebarRow(page, "Text row title");
@@ -327,7 +325,6 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	test("should show indicator at bottom edge when hovering near bottom of row", async ({
 		page,
 	}) => {
-		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
 		const targetSidebarRow = getSidebarRow(page, "Text row title");
