@@ -8,6 +8,7 @@
 		"dev": "bun --watch src/index.ts",
 		"build": "bun build src/index.ts --outdir dist --target bun",
 		"start": "bun run db:migrate && bun src/index.ts",
+		"test": "bun test",
 		"lint": "bunx biome check",
 		"db:generate": "bunx drizzle-kit generate",
 		"db:migrate": "bunx drizzle-kit migrate",
@@ -16,6 +17,7 @@
 	},
 	"license": "GPL-3.0-only",
 	"devDependencies": {
+		"@electric-sql/pglite": "^0.3.14",
 		"@types/node": "^25.0.8",
 		"@types/uuid": "^11.0.0",
 		"@types/ws": "^8.18.1",

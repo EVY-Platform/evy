@@ -1,0 +1,30 @@
+name: API Lint
+
+on:
+    pull_request:
+        branches: [dev]
+    push:
+        branches: [dev]
+
+jobs:
+    api:
+        defaults:
+            run:
+                working-directory: api
+
+        timeout-minutes: 1
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
+              with:
+                  working-directory: api
+                  path-filter: 'api/**'
+
+            - name: Run lint
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run lint
