@@ -1,5 +1,5 @@
-import { validateAuth, primeData, getNewDataSince, crud } from "./data.js";
-import { initServer, WSParams } from "./ws.js";
+import { validateAuth, primeData, getNewDataSince, crud } from "./data";
+import { initServer, WSParams } from "./ws";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);

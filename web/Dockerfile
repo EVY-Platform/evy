@@ -1,38 +1,42 @@
 FROM oven/bun:1 AS base
 
-# Rebuild the source code only when needed
+WORKDIR /app
+
+# Install dependencies stage
+FROM base AS deps
+
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
+
+# Build stage
 FROM base AS builder
 
 WORKDIR /app
 
-# Copy package.json and lockfile
+COPY --from=deps /app/node_modules ./node_modules
 COPY package.json bun.lock* ./
-
-# Install dependencies
-RUN bun install --frozen-lockfile
-
-# Copy the rest of the application
-COPY . ./
+COPY app ./app
+COPY dev ./dev
 
 RUN bun run build
 
-# Production image, copy all the files and run the app
+# Production stage
 FROM base AS runner
 
 WORKDIR /app
 
-# Set the correct permission for dist directory
-RUN mkdir -p dist
-RUN chown bun:bun dist
-
-# Copy built application
-COPY --from=builder --chown=bun:bun /app/ ./
+# Copy only what's needed for production
+COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
+COPY --from=builder --chown=bun:bun /app/package.json ./
+COPY --from=builder --chown=bun:bun /app/dist ./dist
+COPY --from=builder --chown=bun:bun /app/dev ./dev
 
 USER bun
 
 ARG WEB_PORT="3000"
 ENV WEB_PORT=$WEB_PORT
+ENV NODE_ENV=production
+
 EXPOSE $WEB_PORT
 
-# Start the application
-CMD ["bun", "run", "prod"]
+CMD ["bun", "run", "start"]

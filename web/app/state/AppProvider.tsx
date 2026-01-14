@@ -9,14 +9,13 @@ import {
 } from "./reducers";
 import { decodeFlows } from "../utils/decodeFlow";
 import { baseRows } from "../rows/baseRows";
-import { debugFlows } from "../../tests/utils";
 
 export function AppProvider({
 	children,
 	initialFlows,
 }: {
 	children: ReactNode;
-	initialFlows?: ServerFlow[];
+	initialFlows: ServerFlow[];
 }) {
 	const rows = baseRows.map((row) => ({
 		rowId: row.name,
@@ -24,9 +23,7 @@ export function AppProvider({
 		config: row.config,
 	}));
 
-	const defaultFlows: ServerFlow[] = debugFlows;
-
-	const flows: ServerFlow[] = initialFlows ?? defaultFlows;
+	const flows: ServerFlow[] = initialFlows;
 
 	const [appState, dispatchRow] = useReducer(pageReducer, {
 		flows: decodeFlows(flows),

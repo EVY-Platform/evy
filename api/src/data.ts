@@ -2,8 +2,11 @@ import { v4 as uuidv4 } from "uuid";
 import { Prisma, PrismaClient, OS } from "@prisma/client";
 import type { Service, Organization, ServiceProvider } from "@prisma/client";
 
-import { isCorrectDate } from "./utils.js";
-import { prismaCRUD } from "./prismaCRUD.js";
+import { isCorrectDate } from "./utils";
+import { prismaCRUD } from "./prismaCRUD";
+import { mockFlows } from "./mockFlows";
+
+const isDev = process.env.NODE_ENV !== "production";
 
 type Model = Service | Organization | ServiceProvider;
 type ModelsDictionary = {
@@ -93,7 +96,12 @@ export async function crud(
 	return await promise;
 }
 
-export async function getNewDataSince(since?: Date): Promise<ModelsDictionary> {
+export async function getNewDataSince(
+	since?: Date,
+): Promise<ModelsDictionary | typeof mockFlows> {
+	// In dev mode, return mock flows data
+	if (isDev) return mockFlows;
+
 	const hasValidSince = since && isCorrectDate(new Date(since));
 	const relevantTables = Object.keys(lastTableDataUpdates).filter(
 		(model: string) => {

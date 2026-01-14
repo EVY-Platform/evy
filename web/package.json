@@ -4,24 +4,25 @@
 	"description": "EVY Web App Builder",
 	"type": "module",
 	"scripts": {
-		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
-		"build": "bun run setup && bun build --target=browser --outdir=dist --entry-naming=[dir]/bundle.js app/main.tsx",
 		"dev": "bun run dev/server.ts",
-		"prod": "bun run dev/server.ts",
-		"test:setup": "bunx playwright install --with-deps",
+		"build": "bun run setup && bun build --target=browser --outdir=dist --entry-naming=[dir]/bundle.js --define:__API_URL__=\"'${API_URL:-ws://localhost:8000}'\" app/main.tsx",
+		"start": "bun run dev/server.ts",
+		"lint": "bunx biome check .",
+		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
 		"test": "bunx playwright test",
+		"test:setup": "bunx playwright install --with-deps",
 		"test:ui": "bunx playwright test --ui",
-		"test:debug": "bunx playwright test --debug",
-		"lint": "bunx biome check ."
+		"test:debug": "bunx playwright test --debug"
 	},
 	"dependencies": {
-		"react": "^19.2.3",
-		"react-dom": "^19.2.3",
-		"tiny-invariant": "^1.3.3",
 		"@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
 		"@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^2.1.2",
 		"@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
-		"@atlaskit/primitives": "^17.0.0"
+		"@atlaskit/primitives": "^17.0.0",
+		"react": "^19.2.3",
+		"react-dom": "^19.2.3",
+		"rpc-websockets": "^9.3.2",
+		"tiny-invariant": "^1.3.3"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.57.0",
