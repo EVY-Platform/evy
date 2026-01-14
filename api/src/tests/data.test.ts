@@ -8,41 +8,16 @@ import {
 	createMockDesc,
 } from "./mocks/db";
 
-// Mock the database module before importing data functions
+// Import the real schema (no DB connection side effects)
+import * as schema from "../db/schema";
+
+// Mock only the db connection, re-export real schema
 mock.module("../db", () => ({
 	db: mockDb,
-	device: {
-		_: { name: "Device" },
-		token: { name: "token" },
-		os: { name: "os" },
-	},
-	service: {
-		_: { name: "Service" },
-		id: { name: "id" },
-		name: { name: "name" },
-		updatedAt: { name: "updatedAt" },
-	},
-	organization: {
-		_: { name: "Organization" },
-		id: { name: "id" },
-		name: { name: "name" },
-		updatedAt: { name: "updatedAt" },
-	},
-	serviceProvider: {
-		_: { name: "ServiceProvider" },
-		id: { name: "id" },
-		name: { name: "name" },
-		updatedAt: { name: "updatedAt" },
-	},
-	flow: {
-		_: { name: "Flow" },
-		id: { name: "id" },
-		updatedAt: { name: "updatedAt" },
-	},
-	osEnum: { enumValues: ["ios", "android", "Web"] },
+	...schema,
 }));
 
-// Mock drizzle-orm operators
+// Mock drizzle-orm operators to work with our mock db
 mock.module("drizzle-orm", () => ({
 	eq: createMockEq,
 	gt: createMockGt,

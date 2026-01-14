@@ -56,10 +56,39 @@ export function resetMockStore() {
 	mockStore.flows = [];
 }
 
+// Helper to extract table name from Drizzle table object
+function getTableName(table: unknown): string | undefined {
+	const tableObj = table as Record<string | symbol, unknown>;
+
+	// Try Symbol.for approach (Drizzle's internal structure)
+	const drizzleNameSymbol = Symbol.for("drizzle:Name");
+	if (tableObj[drizzleNameSymbol]) {
+		return tableObj[drizzleNameSymbol] as string;
+	}
+
+	// Try the _ property (Drizzle's public interface)
+	const underscore = tableObj._ as { name?: string } | undefined;
+	if (underscore?.name) {
+		return underscore.name;
+	}
+
+	// Fallback: check for [Table.Symbol.Name] pattern
+	for (const key of Object.getOwnPropertySymbols(tableObj)) {
+		const keyStr = key.toString();
+		if (keyStr.includes("Name") || keyStr.includes("name")) {
+			const value = tableObj[key];
+			if (typeof value === "string") {
+				return value;
+			}
+		}
+	}
+
+	return undefined;
+}
+
 // Helper to get the appropriate store for a table
 function getStoreForTable(table: unknown): unknown[] {
-	const tableObj = table as { _: { name: string } } | undefined;
-	const tableName = tableObj?._?.name;
+	const tableName = getTableName(table);
 
 	switch (tableName) {
 		case "Device":
@@ -97,7 +126,10 @@ function createSelectBuilder(selectFields?: Record<string, unknown>) {
 		},
 		orderBy(order: unknown) {
 			// Extract order info from drizzle orderBy
-			const orderObj = order as { column?: { name?: string }; order?: string };
+			const orderObj = order as {
+				column?: { name?: string };
+				order?: string;
+			};
 			if (orderObj?.column?.name) {
 				orderByField = orderObj.column.name;
 				orderDirection = (orderObj?.order as "asc" | "desc") || "desc";
@@ -119,8 +151,12 @@ function createSelectBuilder(selectFields?: Record<string, unknown>) {
 			// Apply ordering if set
 			if (orderByField) {
 				results.sort((a, b) => {
-					const aVal = (a as Record<string, unknown>)[orderByField as string];
-					const bVal = (b as Record<string, unknown>)[orderByField as string];
+					const aVal = (a as Record<string, unknown>)[
+						orderByField as string
+					];
+					const bVal = (b as Record<string, unknown>)[
+						orderByField as string
+					];
 					if (aVal instanceof Date && bVal instanceof Date) {
 						return orderDirection === "desc"
 							? bVal.getTime() - aVal.getTime()
@@ -255,10 +291,44 @@ export const mockDb = {
 	},
 };
 
+// Convert snake_case to camelCase
+function snakeToCamel(str: string): string {
+	return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+// Helper to extract column/field name from Drizzle column object
+// Returns the camelCase property name used in JavaScript
+function getColumnName(column: unknown): string | undefined {
+	const col = column as Record<string | symbol, unknown>;
+
+	// Try direct name property (this is the snake_case DB column name)
+	if (typeof col.name === "string") {
+		return snakeToCamel(col.name);
+	}
+
+	// Try Symbol.for approach (Drizzle's internal structure)
+	const drizzleNameSymbol = Symbol.for("drizzle:Name");
+	if (col[drizzleNameSymbol]) {
+		return snakeToCamel(col[drizzleNameSymbol] as string);
+	}
+
+	// Fallback: check for symbol properties
+	for (const key of Object.getOwnPropertySymbols(col)) {
+		const keyStr = key.toString();
+		if (keyStr.includes("Name") || keyStr.includes("name")) {
+			const value = col[key];
+			if (typeof value === "string") {
+				return snakeToCamel(value);
+			}
+		}
+	}
+
+	return undefined;
+}
+
 // Mock condition creators (eq, gt, desc)
 export function createMockEq(column: unknown, value: unknown) {
-	const col = column as { name?: string };
-	const fieldName = col?.name;
+	const fieldName = getColumnName(column);
 	return (item: unknown) => {
 		const record = item as Record<string, unknown>;
 		return record[fieldName as string] === value;
@@ -266,8 +336,7 @@ export function createMockEq(column: unknown, value: unknown) {
 }
 
 export function createMockGt(column: unknown, value: unknown) {
-	const col = column as { name?: string };
-	const fieldName = col?.name;
+	const fieldName = getColumnName(column);
 	return (item: unknown) => {
 		const record = item as Record<string, unknown>;
 		const itemValue = record[fieldName as string];
@@ -279,6 +348,6 @@ export function createMockGt(column: unknown, value: unknown) {
 }
 
 export function createMockDesc(column: unknown) {
-	const col = column as { name?: string };
-	return { column: col, order: "desc" };
+	const fieldName = getColumnName(column);
+	return { column: { name: fieldName }, order: "desc" };
 }
