@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, beforeAll, mock } from "bun:test";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { sql } from "drizzle-orm";
 import * as schema from "../db/schema";
 
 // Create in-memory PostgreSQL instance
@@ -20,26 +19,21 @@ const { validateAuth, crud, getFlows, saveFlow, primeData } = await import(
 	"../data"
 );
 
-// Run migrations before all tests
-beforeAll(async () => {
-	// Apply migrations from the drizzle folder
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-
-	// Clear seed data from migrations for clean test state
-	await testDb.execute(sql`DELETE FROM "Flow"`);
-
-	// Prime the data module
-	await primeData();
-});
-
 // Helper to clear all tables between tests
 async function clearTables() {
-	await testDb.execute(sql`DELETE FROM "Flow"`);
-	await testDb.execute(sql`DELETE FROM "ServiceProvider"`);
-	await testDb.execute(sql`DELETE FROM "Organization"`);
-	await testDb.execute(sql`DELETE FROM "Service"`);
-	await testDb.execute(sql`DELETE FROM "Device"`);
+	await testDb.delete(schema.flow);
+	await testDb.delete(schema.serviceProvider);
+	await testDb.delete(schema.organization);
+	await testDb.delete(schema.service);
+	await testDb.delete(schema.device);
 }
+
+// Run migrations before all tests
+beforeAll(async () => {
+	await migrate(testDb, { migrationsFolder: "./drizzle" });
+	await clearTables();
+	await primeData();
+});
 
 describe("validateAuth", () => {
 	beforeEach(async () => {
