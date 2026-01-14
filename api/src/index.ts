@@ -1,6 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { validateAuth, primeData, getNewDataSince, crud } from "./data.js";
 import { initServer, WSParams } from "./ws.js";
 

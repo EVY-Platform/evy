@@ -18,4 +18,4 @@ One platform to rule them all - Plaform to enable Features as a Service
 #### Devops
 
 -   api, admin and pgsql with docker: `docker compose -f docker-compose.dev.yml up --build`
--   Dev the api or admin with watch: `cd [api/admin] yarn dev`
+-   Dev the api or admin with watch: `cd [api/admin] bun dev`
