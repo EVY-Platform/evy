@@ -1,5 +1,8 @@
 import type { Dispatch } from "react";
-import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import {
+	extractClosestEdge,
+	type Edge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import type {
 	BaseEventPayload,
 	ElementDragType,
@@ -8,7 +11,6 @@ import invariant from "tiny-invariant";
 
 import type {
 	Page,
-	Edge,
 	ContainerType,
 	RowAction,
 	DraggingAction,

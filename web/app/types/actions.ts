@@ -1,7 +1,6 @@
 import type { ContainerType } from "./row";
 import type { Flow } from "./flow";
-
-export type Edge = "top" | "bottom" | "left" | "right";
+import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
 export type RowAction =
 	| {

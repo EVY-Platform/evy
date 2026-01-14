@@ -22,7 +22,6 @@ export type {
 
 // Action types
 export type {
-	Edge,
 	RowAction,
 	DraggingState,
 	DraggingAction,
