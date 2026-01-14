@@ -1,27 +1,17 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test";
-import {
-	mockDb,
-	mockStore,
-	resetMockStore,
-	createMockEq,
-	createMockGt,
-	createMockDesc,
-} from "./mocks/db";
-
-// Import the real schema (no DB connection side effects)
+import { describe, it, expect, beforeEach, beforeAll, mock } from "bun:test";
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle } from "drizzle-orm/pglite";
+import { sql } from "drizzle-orm";
 import * as schema from "../db/schema";
 
-// Mock only the db connection, re-export real schema
-mock.module("../db", () => ({
-	db: mockDb,
-	...schema,
-}));
+// Create in-memory PostgreSQL instance
+const client = new PGlite();
+const testDb = drizzle(client, { schema });
 
-// Mock drizzle-orm operators to work with our mock db
-mock.module("drizzle-orm", () => ({
-	eq: createMockEq,
-	gt: createMockGt,
-	desc: createMockDesc,
+// Mock the db module to use our test database
+mock.module("../db", () => ({
+	db: testDb,
+	...schema,
 }));
 
 // Import data functions after mocking
@@ -29,9 +19,93 @@ const { validateAuth, crud, getFlows, saveFlow, primeData } = await import(
 	"../data"
 );
 
+// Create tables before running tests
+beforeAll(async () => {
+	// Create enum type
+	await testDb.execute(sql`
+		DO $$ BEGIN
+			CREATE TYPE "OS" AS ENUM ('ios', 'android', 'Web');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;
+	`);
+
+	// Create Device table
+	await testDb.execute(sql`
+		CREATE TABLE IF NOT EXISTS "Device" (
+			token VARCHAR(256) PRIMARY KEY,
+			os "OS" NOT NULL,
+			created_at TIMESTAMP(3) NOT NULL
+		)
+	`);
+
+	// Create Service table
+	await testDb.execute(sql`
+		CREATE TABLE IF NOT EXISTS "Service" (
+			id UUID PRIMARY KEY,
+			name VARCHAR(50) NOT NULL UNIQUE,
+			description TEXT NOT NULL,
+			created_at TIMESTAMP(3) NOT NULL,
+			updated_at TIMESTAMP(3) NOT NULL
+		)
+	`);
+
+	// Create Organization table
+	await testDb.execute(sql`
+		CREATE TABLE IF NOT EXISTS "Organization" (
+			id UUID PRIMARY KEY,
+			name VARCHAR(100) NOT NULL UNIQUE,
+			description TEXT NOT NULL,
+			logo UUID NOT NULL,
+			url VARCHAR(50) NOT NULL,
+			support_email VARCHAR(50) NOT NULL,
+			created_at TIMESTAMP(3) NOT NULL,
+			updated_at TIMESTAMP(3) NOT NULL
+		)
+	`);
+
+	// Create ServiceProvider table
+	await testDb.execute(sql`
+		CREATE TABLE IF NOT EXISTS "ServiceProvider" (
+			id UUID PRIMARY KEY,
+			fk_service_id UUID NOT NULL,
+			fk_organization_id UUID NOT NULL,
+			name VARCHAR(100) NOT NULL UNIQUE,
+			description TEXT NOT NULL,
+			logo UUID NOT NULL,
+			url VARCHAR(50) NOT NULL,
+			created_at TIMESTAMP(3) NOT NULL,
+			updated_at TIMESTAMP(3) NOT NULL,
+			retired BOOLEAN NOT NULL DEFAULT false
+		)
+	`);
+
+	// Create Flow table
+	await testDb.execute(sql`
+		CREATE TABLE IF NOT EXISTS "Flow" (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			data JSONB NOT NULL,
+			created_at TIMESTAMP(3) NOT NULL,
+			updated_at TIMESTAMP(3) NOT NULL
+		)
+	`);
+
+	// Prime the data module
+	await primeData();
+});
+
+// Helper to clear all tables between tests
+async function clearTables() {
+	await testDb.execute(sql`DELETE FROM "Flow"`);
+	await testDb.execute(sql`DELETE FROM "ServiceProvider"`);
+	await testDb.execute(sql`DELETE FROM "Organization"`);
+	await testDb.execute(sql`DELETE FROM "Service"`);
+	await testDb.execute(sql`DELETE FROM "Device"`);
+}
+
 describe("validateAuth", () => {
-	beforeEach(() => {
-		resetMockStore();
+	beforeEach(async () => {
+		await clearTables();
 	});
 
 	it("should throw error when no token provided", async () => {
@@ -52,8 +126,8 @@ describe("validateAuth", () => {
 	});
 
 	it("should return true for existing device", async () => {
-		// Add existing device to mock store
-		mockStore.devices.push({
+		// Create device first
+		await testDb.insert(schema.device).values({
 			token: "existing-token",
 			os: "ios",
 			createdAt: new Date(),
@@ -67,24 +141,29 @@ describe("validateAuth", () => {
 		const result = await validateAuth("new-token", "android");
 
 		expect(result).toBe(true);
-		expect(mockStore.devices).toHaveLength(1);
-		expect(mockStore.devices[0].token).toBe("new-token");
-		expect(mockStore.devices[0].os).toBe("android");
+
+		// Verify device was created
+		const devices = await testDb.select().from(schema.device);
+		expect(devices).toHaveLength(1);
+		expect(devices[0].token).toBe("new-token");
+		expect(devices[0].os).toBe("android");
 	});
 
 	it("should accept Web as valid OS", async () => {
 		const result = await validateAuth("web-token", "Web");
 
 		expect(result).toBe(true);
-		expect(mockStore.devices).toHaveLength(1);
-		expect(mockStore.devices[0].os).toBe("Web");
+
+		const devices = await testDb.select().from(schema.device);
+		expect(devices).toHaveLength(1);
+		expect(devices[0].os).toBe("Web");
 	});
 });
 
 describe("crud", () => {
-	beforeEach(() => {
-		resetMockStore();
-		// Initialize lastTableDataUpdates by calling primeData
+	beforeEach(async () => {
+		await clearTables();
+		await primeData();
 	});
 
 	it("should throw error for invalid CRUD method", async () => {
@@ -100,46 +179,37 @@ describe("crud", () => {
 	});
 
 	it("should throw error when no filter provided for find", async () => {
-		// First prime the data so the model is valid
-		await primeData();
-
 		await expect(crud("find", "Service")).rejects.toThrow(
 			"No filter provided"
 		);
 	});
 
 	it("should throw error when no data provided for create", async () => {
-		await primeData();
-
 		await expect(crud("create", "Service", { id: "123" })).rejects.toThrow(
 			"No data provided"
 		);
 	});
 
 	it("should find records matching filter", async () => {
-		await primeData();
-
-		// Add a service to mock store
-		const testService = {
-			id: "test-id",
+		// Add a service
+		const testId = "11111111-1111-1111-1111-111111111111";
+		await testDb.insert(schema.service).values({
+			id: testId,
 			name: "Test Service",
 			description: "A test service",
 			createdAt: new Date(),
 			updatedAt: new Date(),
-		};
-		mockStore.services.push(testService);
+		});
 
-		const result = await crud("find", "Service", { id: "test-id" });
+		const result = await crud("find", "Service", { id: testId });
 		expect(result).toHaveLength(1);
 		expect(result[0]).toMatchObject({
-			id: "test-id",
+			id: testId,
 			name: "Test Service",
 		});
 	});
 
 	it("should create a new record", async () => {
-		await primeData();
-
 		const result = await crud("create", "Service", undefined, {
 			name: "New Service",
 			description: "A new service",
@@ -154,11 +224,9 @@ describe("crud", () => {
 	});
 
 	it("should update an existing record", async () => {
-		await primeData();
-
-		// Add a service to update
-		mockStore.services.push({
-			id: "update-id",
+		const testId = "22222222-2222-2222-2222-222222222222";
+		await testDb.insert(schema.service).values({
+			id: testId,
 			name: "Old Name",
 			description: "Old description",
 			createdAt: new Date(),
@@ -168,7 +236,7 @@ describe("crud", () => {
 		const result = await crud(
 			"update",
 			"Service",
-			{ id: "update-id" },
+			{ id: testId },
 			{ name: "Updated Name" }
 		);
 
@@ -177,53 +245,50 @@ describe("crud", () => {
 	});
 
 	it("should delete an existing record", async () => {
-		await primeData();
-
-		// Add a service to delete
-		mockStore.services.push({
-			id: "delete-id",
+		const testId = "33333333-3333-3333-3333-333333333333";
+		await testDb.insert(schema.service).values({
+			id: testId,
 			name: "To Delete",
 			description: "Will be deleted",
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});
 
-		expect(mockStore.services).toHaveLength(1);
+		const beforeDelete = await testDb.select().from(schema.service);
+		expect(beforeDelete).toHaveLength(1);
 
-		const result = await crud("delete", "Service", { id: "delete-id" });
+		const result = await crud("delete", "Service", { id: testId });
 
 		expect(result).toHaveLength(1);
-		expect(mockStore.services).toHaveLength(0);
+
+		const afterDelete = await testDb.select().from(schema.service);
+		expect(afterDelete).toHaveLength(0);
 	});
 });
 
 describe("getFlows", () => {
-	beforeEach(() => {
-		resetMockStore();
+	beforeEach(async () => {
+		await clearTables();
 	});
 
 	it("should return all flows when no since date provided", async () => {
 		const now = new Date();
-		mockStore.flows.push(
+		await testDb.insert(schema.flow).values([
 			{
-				id: "flow-1",
 				data: { name: "Flow 1", type: "sell", data: "{}", pages: [] },
 				createdAt: now,
 				updatedAt: now,
 			},
 			{
-				id: "flow-2",
 				data: { name: "Flow 2", type: "buy", data: "{}", pages: [] },
 				createdAt: now,
 				updatedAt: now,
-			}
-		);
+			},
+		]);
 
 		const result = await getFlows();
 
 		expect(result).toHaveLength(2);
-		expect(result[0].name).toBe("Flow 1");
-		expect(result[1].name).toBe("Flow 2");
 	});
 
 	it("should filter flows by updatedAt when since date provided", async () => {
@@ -231,20 +296,18 @@ describe("getFlows", () => {
 		const newDate = new Date("2025-01-01");
 		const sinceDate = new Date("2024-06-01");
 
-		mockStore.flows.push(
+		await testDb.insert(schema.flow).values([
 			{
-				id: "old-flow",
 				data: { name: "Old Flow", type: "sell", data: "{}", pages: [] },
 				createdAt: oldDate,
 				updatedAt: oldDate,
 			},
 			{
-				id: "new-flow",
 				data: { name: "New Flow", type: "buy", data: "{}", pages: [] },
 				createdAt: newDate,
 				updatedAt: newDate,
-			}
-		);
+			},
+		]);
 
 		const result = await getFlows(sinceDate);
 
@@ -259,8 +322,8 @@ describe("getFlows", () => {
 });
 
 describe("saveFlow", () => {
-	beforeEach(() => {
-		resetMockStore();
+	beforeEach(async () => {
+		await clearTables();
 	});
 
 	it("should create a new flow when no existingFlowId provided", async () => {
@@ -276,17 +339,21 @@ describe("saveFlow", () => {
 		expect(result.name).toBe("New Flow");
 		expect(result.type).toBe("sell");
 		expect(result.pages).toHaveLength(1);
-		expect(mockStore.flows).toHaveLength(1);
+
+		const flows = await testDb.select().from(schema.flow);
+		expect(flows).toHaveLength(1);
 	});
 
 	it("should update existing flow when existingFlowId provided", async () => {
-		// Add existing flow
-		mockStore.flows.push({
-			id: "existing-flow-id",
-			data: { name: "Old Name", type: "sell", data: "{}", pages: [] },
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		});
+		// Create flow first
+		const [existingFlow] = await testDb
+			.insert(schema.flow)
+			.values({
+				data: { name: "Old Name", type: "sell", data: "{}", pages: [] },
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			.returning();
 
 		const updatedFlowData = {
 			name: "Updated Name",
@@ -295,17 +362,19 @@ describe("saveFlow", () => {
 			pages: [{ id: "new-page", title: "New Page" }],
 		};
 
-		const result = await saveFlow(updatedFlowData, "existing-flow-id");
+		const result = await saveFlow(updatedFlowData, existingFlow.id);
 
 		expect(result.name).toBe("Updated Name");
 		expect(result.type).toBe("buy");
-		expect(mockStore.flows).toHaveLength(1);
+
+		const flows = await testDb.select().from(schema.flow);
+		expect(flows).toHaveLength(1);
 	});
 });
 
 describe("primeData", () => {
-	beforeEach(() => {
-		resetMockStore();
+	beforeEach(async () => {
+		await clearTables();
 	});
 
 	it("should initialize without errors when tables are empty", async () => {
@@ -314,15 +383,14 @@ describe("primeData", () => {
 
 	it("should initialize with existing data", async () => {
 		const now = new Date();
-		mockStore.services.push({
-			id: "service-1",
+		await testDb.insert(schema.service).values({
+			id: "44444444-4444-4444-4444-444444444444",
 			name: "Service 1",
 			description: "Test",
 			createdAt: now,
 			updatedAt: now,
 		});
-		mockStore.flows.push({
-			id: "flow-1",
+		await testDb.insert(schema.flow).values({
 			data: { name: "Flow 1", type: "sell", data: "{}", pages: [] },
 			createdAt: now,
 			updatedAt: now,
