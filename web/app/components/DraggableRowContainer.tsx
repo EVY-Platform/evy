@@ -25,7 +25,7 @@ import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/elemen
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 
-import { AppContext } from "../registry";
+import { AppContext } from "../state";
 import { containerDropindicatorId, EVYRow } from "../rows/EVYRow";
 import {
 	dropIndicatorExpansionBefore,

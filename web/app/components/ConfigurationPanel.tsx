@@ -1,7 +1,8 @@
 import { useCallback, useContext, useMemo } from "react";
 
-import { AppContext } from "../registry";
-import { EVYRow, type Row } from "../rows/EVYRow";
+import { AppContext } from "../state";
+import type { Row } from "../types";
+import { EVYRow } from "../rows/EVYRow";
 
 export function ConfigurationPanel() {
 	const { flows, activeFlowId, activeRowId, dispatchRow } =

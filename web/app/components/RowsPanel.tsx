@@ -4,7 +4,7 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { AppContext } from "../registry";
+import { AppContext } from "../state";
 import { CancelOverlay } from "./CancelOverlay";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 

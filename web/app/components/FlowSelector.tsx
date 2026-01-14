@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AppContext } from "../registry";
+import { AppContext } from "../state";
 
 export function FlowSelector() {
 	const { flows, activeFlowId, dispatchRow } = useContext(AppContext);
