@@ -181,7 +181,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const rowDataAdd: Row = {
 				...baseRow,
 				rowId: action.newRowId,
-				config: baseRow.config,
+				config: structuredClone(baseRow.config),
 				row: createElement(baseRow, { rowId: action.newRowId }),
 			};
 

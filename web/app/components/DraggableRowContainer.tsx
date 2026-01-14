@@ -26,11 +26,7 @@ import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/el
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 
 import { AppContext } from "../registry";
-import {
-	containerDropindicatorId,
-	containerDropindicatorId,
-	EVYRow,
-} from "../rows/EVYRow";
+import { containerDropindicatorId, EVYRow } from "../rows/EVYRow";
 import {
 	dropIndicatorExpansionBefore,
 	dropIndicatorExpansionAfter,
