@@ -34,52 +34,10 @@ import {
 	verticalDropIndicator,
 } from "../rows/design-system/dropIndicator";
 
-export type Edge = "top" | "right" | "bottom" | "left";
+import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
-const rowEdges = ["top", "bottom"];
-const columnEdges = ["left", "right"];
-
-interface DragPreviewEvent {
-	location: {
-		current: {
-			input: {
-				clientX: number;
-				clientY: number;
-			};
-		};
-	};
-	source: {
-		element: HTMLElement;
-		data: { rowId: string };
-	};
-	nativeSetDragImage: (
-		image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
-		x: number,
-		y: number
-	) => void;
-}
-
-interface DragEvent {
-	source: { data: { rowId: string } };
-	self: { data: { rowId: string } };
-	location: {
-		current: {
-			dropTargets: Array<{
-				data: {
-					rowId: string;
-				};
-			}>;
-		};
-	};
-}
-
-interface DropTargetEvent {
-	input: {
-		clientX: number;
-		clientY: number;
-	};
-	element: HTMLElement;
-}
+const rowEdges: Edge[] = ["top", "bottom"];
+const columnEdges: Edge[] = ["left", "right"];
 
 type State =
 	| { type: "idle" }
@@ -89,6 +47,21 @@ type State =
 const idleState: State = { type: "idle" };
 const draggingState: State = { type: "dragging" };
 const previewState: State = { type: "preview", container: null, rect: null };
+
+type DragEvent = {
+	source: { data: Record<string, unknown> };
+	self: { data: Record<string | symbol, unknown> };
+	location: {
+		current: {
+			dropTargets: Array<{ data: Record<string, unknown> }>;
+		};
+	};
+};
+
+const getRowId = (data: Record<string, unknown>): string | undefined => {
+	const rowId = data.rowId;
+	return typeof rowId === "string" ? rowId : undefined;
+};
 
 type RowPrimitiveProps = {
 	children: React.ReactNode;
@@ -253,7 +226,7 @@ export function DraggableRowContainer({
 	const onDragEvent = useCallback(
 		(args: DragEvent) => {
 			const hoveredRowId = rowId;
-			const draggedRowId = args.source.data.rowId;
+			const draggedRowId = getRowId(args.source.data);
 
 			// Ignore events on the same row that we are dragging
 			// to avoid odd behavior
@@ -265,8 +238,11 @@ export function DraggableRowContainer({
 			const hoveredElement = ref.current;
 			if (!hoveredElement) return;
 
-			const innermostElementRowId =
-				args.location.current.dropTargets[0]?.data.rowId;
+			const innermostDropTarget = args.location.current.dropTargets[0];
+			if (!innermostDropTarget) return;
+
+			const innermostElementRowId = getRowId(innermostDropTarget.data);
+			if (!innermostElementRowId) return;
 
 			dispatchDropIndicator({
 				type: "SET_INDICATOR_ROW",
@@ -292,20 +268,22 @@ export function DraggableRowContainer({
 					location,
 					source,
 					nativeSetDragImage,
-				}: DragPreviewEvent) => {
+				}) => {
 					const rect = source.element.getBoundingClientRect();
 
-					setCustomNativeDragPreview({
-						nativeSetDragImage,
-						getOffset: preserveOffsetOnSource({
-							element,
-							input: location.current.input,
-						}),
-						render({ container }: { container: HTMLElement }) {
-							setState({ type: "preview", container, rect });
-							return () => setState(draggingState);
-						},
-					});
+					if (nativeSetDragImage) {
+						setCustomNativeDragPreview({
+							nativeSetDragImage,
+							getOffset: preserveOffsetOnSource({
+								element,
+								input: location.current.input,
+							}),
+							render({ container }: { container: HTMLElement }) {
+								setState({ type: "preview", container, rect });
+								return () => setState(draggingState);
+							},
+						});
+					}
 				},
 
 				onDragStart: () => setState(draggingState),
@@ -320,12 +298,12 @@ export function DraggableRowContainer({
 				getIsSticky: () =>
 					!!currentRow?.config.view.content.children?.length ||
 					!!currentRow?.config.view.content.child,
-				getData: ({ input, element }: DropTargetEvent) =>
+				getData: ({ input, element: targetElement }) =>
 					attachClosestEdge(
 						{ rowId },
 						{
 							input,
-							element,
+							element: targetElement,
 							allowedEdges,
 						}
 					),
