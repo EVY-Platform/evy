@@ -11,7 +11,11 @@
 		"lint": "bunx biome check",
 		"db:generate": "bunx prisma generate",
 		"db:migrate": "bunx prisma migrate deploy",
-		"db:migrate:dev": "bunx prisma migrate dev"
+		"db:migrate:dev": "bunx prisma migrate dev",
+		"db:seed": "bun prisma/seed.ts"
+	},
+	"prisma": {
+		"seed": "bun prisma/seed.ts"
 	},
 	"license": "GPL-3.0-only",
 	"devDependencies": {
