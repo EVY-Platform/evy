@@ -215,7 +215,7 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 				if (stepsToDestinationContainer.length > 1) {
 					path = stepsToDestinationContainer
 						.slice(1)
-						.reduce((acc: Row, curr: number | "child") => {
+						.reduce((acc: Row, curr: number | "child"): Row => {
 							if (curr === "child") {
 								const child = acc.config.view.content.child;
 								invariant(
@@ -224,7 +224,13 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 								);
 								return child;
 							}
-							return acc.config.view.content.children?.[curr];
+							const child =
+								acc.config.view.content.children?.[curr];
+							invariant(
+								child,
+								"PageReducer addRow: children element is not defined"
+							);
+							return child;
 						}, path);
 				}
 

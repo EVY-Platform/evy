@@ -4,6 +4,10 @@ import invariant from "tiny-invariant";
 
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import type {
+	BaseEventPayload,
+	ElementDragType,
+} from "@atlaskit/pragmatic-drag-and-drop/types";
 
 import AppPage from "./components/AppPage.tsx";
 import { ConfigurationPanel } from "./components/ConfigurationPanel.tsx";
@@ -59,7 +63,7 @@ function AppContent() {
 
 	useEffect(() => {
 		return monitorForElements({
-			onDrop(args: DropEvent) {
+			onDrop(args: BaseEventPayload<ElementDragType>) {
 				const { location, source } = args;
 				if (!location.current.dropTargets.length) return;
 
@@ -142,17 +146,20 @@ function AppContent() {
 					: null;
 
 				if (destinationRow) {
+					const destinationRowId = destinationRow.data
+						.rowId as string;
 					const destinationContainer =
-						destinationRow.data.rowId === containerDropindicatorId
+						destinationRowId === containerDropindicatorId
 							? EVYRow.findContainerById(
 									// Droptargets is an array returning the rows under the drop cursor,
 									// starting with the placeholder indicator and then the container
 									// we want that container
-									location.current.dropTargets[1].data.rowId,
+									location.current.dropTargets[1].data
+										.rowId as string,
 									destinationPage.rows
 							  )
 							: EVYRow.findContainerOfRow(
-									destinationRow.data.rowId,
+									destinationRowId,
 									destinationPage.rows
 							  );
 
