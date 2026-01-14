@@ -125,7 +125,7 @@ function AppContent() {
 						type: ContainerType;
 					};
 				} = {
-					destinationIndex: 0,
+					destinationIndex: destinationPage.rows.length,
 					destinationPageId: destinationPageId,
 				};
 
@@ -179,11 +179,7 @@ function AppContent() {
 							destinationPage.rows.findIndex(
 								(r) => r.rowId === destinationRow.data.rowId
 							);
-						dispatchOptions.destinationIndex =
-							closestEdgeOfTarget === "top" ||
-							closestEdgeOfTarget === "left"
-								? destinationRowIndex
-								: destinationRowIndex + 1;
+						dispatchOptions.destinationIndex = destinationRowIndex;
 					}
 
 					if (destinationContainer) {
@@ -199,8 +195,7 @@ function AppContent() {
 					closestEdgeOfTarget === "left"
 				) {
 					dispatchOptions.destinationIndex =
-						dispatchOptions.destinationIndex ??
-						destinationPage.rows.length;
+						dispatchOptions.destinationIndex - 1;
 				} else if (
 					closestEdgeOfTarget === "bottom" ||
 					closestEdgeOfTarget === "right"
