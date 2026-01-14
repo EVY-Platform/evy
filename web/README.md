@@ -127,11 +127,22 @@ bun run prod
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### In Docker
+### Docker
+
+#### Build and Run
+
+```bash
+docker build -t evy-web .
+docker run -p 3000:3000 evy-web
+```
+
+#### Using Docker Compose
 
 ```bash
 docker compose up -d
 ```
+
+You can configure the port via the `WEB_PORT` environment variable (default: 3000).
 
 ## Testing
 

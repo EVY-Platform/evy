@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..");
 const DIST_DIR = join(PROJECT_ROOT, "dist");
 const PORT = Number.parseInt(process.env.WEB_PORT || "3000", 10);
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 async function runSetup() {
 	const proc = Bun.spawn(["bun", "run", "setup"], {
@@ -31,7 +32,7 @@ async function runBuild() {
 			cwd: PROJECT_ROOT,
 			stdout: "pipe",
 			stderr: "pipe",
-		},
+		}
 	);
 	const exitCode = await proc.exited;
 	if (exitCode !== 0) {
@@ -107,6 +108,12 @@ function startServer() {
 }
 
 // Main entry point
-await rebuild();
-watchFiles();
-startServer();
+if (IS_PRODUCTION) {
+	// In production, just serve the pre-built files
+	startServer();
+} else {
+	// In development, rebuild and watch for changes
+	await rebuild();
+	watchFiles();
+	startServer();
+}

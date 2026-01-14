@@ -8,8 +8,12 @@ services:
       target: runner
     environment:
       - API_PORT=${API_PORT:-8000}
-      - DB_URL=${DB_URL}
+      # Override DB_URL to use host.docker.internal for Docker networking
+      - DB_URL=postgresql://${DB_USER:-evy}:${DB_PASS:-evy}@host.docker.internal:${DB_PORT:-5432}/${DB_DATABASE:-evy}
     env_file:
       - .env
     ports:
       - ${API_PORT:-8000}:${API_PORT:-8000}
+    # Allow container to connect to host machine's database
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
