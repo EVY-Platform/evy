@@ -1,0 +1,36 @@
+name: 'Setup Bun Environment'
+description: 'Checks for changes, sets up Bun, and installs dependencies'
+
+inputs:
+    working-directory:
+        description: 'The directory to run commands in (api or web)'
+        required: true
+    path-filter:
+        description: 'The path pattern to check for changes'
+        required: true
+
+outputs:
+    has-changes:
+        description: 'Whether there are changes in the specified path'
+        value: ${{ steps.filter.outputs.changes }}
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Check for changes
+          uses: dorny/paths-filter@v3
+          id: filter
+          with:
+              filters: |
+                  changes:
+                    - '${{ inputs.path-filter }}'
+
+        - name: Setup Bun
+          if: steps.filter.outputs.changes == 'true'
+          uses: oven-sh/setup-bun@v2
+
+        - name: Install dependencies
+          if: steps.filter.outputs.changes == 'true'
+          shell: bash
+          working-directory: ${{ inputs.working-directory }}
+          run: bun install

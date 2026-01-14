@@ -18,22 +18,13 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v5
 
-            - name: Check for api changes
-              uses: dorny/paths-filter@v3
-              id: filter
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
               with:
-                  filters: |
-                      api:
-                        - 'api/**'
-
-            - name: Setup Bun
-              if: steps.filter.outputs.api == 'true'
-              uses: oven-sh/setup-bun@v2
-
-            - name: Install dependencies
-              if: steps.filter.outputs.api == 'true'
-              run: bun install
+                  working-directory: api
+                  path-filter: 'api/**'
 
             - name: Run build
-              if: steps.filter.outputs.api == 'true'
+              if: steps.setup.outputs.has-changes == 'true'
               run: bun run build

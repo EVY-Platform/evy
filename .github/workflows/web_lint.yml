@@ -18,29 +18,20 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v5
 
-            - name: Check for web changes
-              uses: dorny/paths-filter@v3
-              id: filter
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
               with:
-                  filters: |
-                      web:
-                        - 'web/**'
-
-            - name: Setup Bun
-              if: steps.filter.outputs.web == 'true'
-              uses: oven-sh/setup-bun@v2
-
-            - name: Install dependencies
-              if: steps.filter.outputs.web == 'true'
-              run: bun install
+                  working-directory: web
+                  path-filter: 'web/**'
 
             - name: Run lint
-              if: steps.filter.outputs.web == 'true'
+              if: steps.setup.outputs.has-changes == 'true'
               run: bun run lint
 
             - name: Upload test results
               uses: actions/upload-artifact@v4
-              if: always() && steps.filter.outputs.web == 'true'
+              if: always() && steps.setup.outputs.has-changes == 'true'
               with:
                   name: lint-report
                   path: lint-report/
