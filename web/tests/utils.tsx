@@ -77,7 +77,6 @@ function createTestFlows(pages: TestPage[]): ServerFlow[] {
 		},
 	];
 }
-
 export async function initTestFlows(page: Page, pages: TestPage[]) {
 	await page.addInitScript((flows: ServerFlow[]) => {
 		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flows;

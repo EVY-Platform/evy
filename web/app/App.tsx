@@ -13,6 +13,7 @@ import { RowsPanel } from "./components/RowsPanel";
 import { AppContext, AppProvider } from "./state";
 import type { ServerFlow } from "./types";
 import { handleDrop } from "./utils/dropHandler";
+import { useFlows } from "./hooks/useFlows";
 
 const panelWidth = "300px";
 
@@ -65,9 +66,31 @@ function AppContent() {
 
 export function App() {
 	const win = window as { __TEST_FLOWS__?: ServerFlow[] };
+	const { flows, loading } = useFlows();
+
+	// Use test flows if available (for testing), otherwise use fetched flows
+	const initialFlows = win?.__TEST_FLOWS__ ?? flows;
+
+	if (loading && !win?.__TEST_FLOWS__) {
+		return (
+			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
+				<div className="evy-text-gray-dark evy-text-lg">Loading flows...</div>
+			</div>
+		);
+	}
+
+	if (!initialFlows) {
+		return (
+			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
+				<div className="evy-text-red-500 evy-text-lg">
+					Failed to load flows
+				</div>
+			</div>
+		);
+	}
 
 	return (
-		<AppProvider initialFlows={win?.__TEST_FLOWS__}>
+		<AppProvider initialFlows={initialFlows}>
 			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
 				<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-justify-between evy-items-center">
 					<a href="/">
