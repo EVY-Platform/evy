@@ -12,6 +12,10 @@ export const SELECTORS = {
 	topIndicator: ".evy-v-dropzone.expanded.evy-mt-2, .evy-h-dropzone.expanded",
 	bottomIndicator:
 		".evy-v-dropzone.expanded.evy-mb-2, .evy-h-dropzone.expanded",
+	flowSelector: "#flow-select",
+	configPanel: 'div:has(> span:text-is("Configuration"))',
+	loadingMessage: 'div:text-is("Loading flows...")',
+	errorMessage: 'div:text-is("Failed to load flows")',
 };
 
 // Helper functions for common locator patterns
@@ -45,6 +49,31 @@ export function getPageRow(page: Page, text: string, pageIndex = 0): Locator {
 
 export function getDropIndicator(page: Page): Locator {
 	return page.locator(SELECTORS.dropIndicator);
+}
+
+// Get the flow selector dropdown
+export function getFlowSelector(page: Page): Locator {
+	return page.locator(SELECTORS.flowSelector);
+}
+
+// Get the configuration panel
+export function getConfigPanel(page: Page): Locator {
+	return page.getByText("Configuration", { exact: true }).locator("..");
+}
+
+// Get a specific config input by label
+export function getConfigInput(page: Page, label: string): Locator {
+	return getConfigPanel(page).getByLabel(label);
+}
+
+// Check if loading state is visible
+export function getLoadingState(page: Page): Locator {
+	return page.getByText("Loading flows...", { exact: true });
+}
+
+// Check if error state is visible
+export function getErrorState(page: Page): Locator {
+	return page.getByText("Failed to load flows", { exact: true });
 }
 
 // Drag helper with stabilization wait to prevent flaky tests
@@ -81,6 +110,13 @@ export async function initTestFlows(page: Page, pages: TestPage[]) {
 	await page.addInitScript((flows: ServerFlow[]) => {
 		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flows;
 	}, createTestFlows(pages));
+}
+
+// Initialize with full ServerFlow objects for more complex test scenarios
+export async function initFullFlows(page: Page, flows: ServerFlow[]) {
+	await page.addInitScript((flowData: ServerFlow[]) => {
+		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flowData;
+	}, flows);
 }
 
 export const debugFlows: ServerFlow[] = [

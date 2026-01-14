@@ -14,3 +14,4 @@ Always use `bun` to run commands or install dependencies.
 ## Development
 
 Make sure you run `bun run build`, `bun run lint` and `bun run test` anytime you make major changes and fix issues that arise.
+Also make sure you can run the app with docker-compose up --build from both the root and the api and web directories.

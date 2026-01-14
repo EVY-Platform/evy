@@ -1,6 +1,4 @@
 dist/
-node_modules/
 data/
-.env
-.DS_Store
 history.txt
+prisma/generated
