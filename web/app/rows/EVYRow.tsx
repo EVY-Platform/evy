@@ -1,50 +1,10 @@
 import React, { type ReactNode } from "react";
-import { AppContext } from "../registry";
 
-export type Row = {
-	rowId: string;
-	row: React.ReactNode;
-	config: RowConfig;
-};
+import { AppContext } from "../state";
+import type { Row, RowConfig, ContainerType } from "../types";
 
-interface RowValidation {
-	required?: string;
-	message?: string;
-	minAmount?: string;
-	minValue?: string;
-	minCharacters?: string;
-}
-
-interface RowEdit {
-	destination?: string;
-	validation?: RowValidation;
-}
-
-interface RowAction {
-	target: string;
-}
-
-interface RowContent {
-	title: string;
-	children?: Row[];
-	child?: Row;
-	[key: string]: string | string[] | Row[] | Row | undefined;
-}
-
-export interface RowView {
-	content: RowContent;
-	data?: string;
-	max_lines?: string;
-}
-
-export interface RowConfig {
-	type: string;
-	view: RowView;
-	edit?: RowEdit;
-	action?: RowAction;
-}
-
-export type ContainerType = "child" | "children";
+// Re-export types for backward compatibility
+export type { Row, RowConfig, RowView, ContainerType } from "../types";
 
 export const containerDropindicatorId = "placeholder";
 

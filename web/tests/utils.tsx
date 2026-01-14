@@ -1,5 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
-import type { ServerFlow } from "../app/registry.tsx";
+import type { ServerFlow } from "../app/types";
 
 // Common selectors used across tests
 export const SELECTORS = {

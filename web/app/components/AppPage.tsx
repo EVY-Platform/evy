@@ -5,7 +5,7 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
-import { AppContext } from "../registry";
+import { AppContext } from "../state";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 
 export default function AppPage({ pageId }: { pageId: string }) {
