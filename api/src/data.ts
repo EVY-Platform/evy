@@ -2,8 +2,8 @@ import { v4 as uuidv4 } from "uuid";
 import { Prisma, PrismaClient, OS } from "@prisma/client";
 import type { Service, Organization, ServiceProvider } from "@prisma/client";
 
-import { isCorrectDate } from "./utils.js";
-import { prismaCRUD } from "./prismaCRUD.js";
+import { isCorrectDate } from "./utils";
+import { prismaCRUD } from "./prismaCRUD";
 
 // Mock flows data for development
 const mockFlows = [
