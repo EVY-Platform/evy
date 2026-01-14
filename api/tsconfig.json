@@ -1,9 +1,12 @@
 {
 	"compilerOptions": {
+		"module": "ESNext",
+		"target": "ESNext",
+		"moduleResolution": "bundler",
 		"strict": true,
 		"skipLibCheck": true,
-		"types": ["bun-types"],
-		"typeRoots": ["./src/types.d.ts", "./node_modules/@types/"]
+		"noEmit": true,
+		"types": ["bun-types"]
 	},
 	"include": ["src/**/*"]
 }
