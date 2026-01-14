@@ -117,7 +117,7 @@ function AppContent() {
 					"AppContent monitor for elements onDrop: destinationPage is not defined"
 				);
 
-				let dispatchOptions: {
+				const dispatchOptions: {
 					destinationPageId: string;
 					destinationIndex: number;
 					destinationContainer?: {
@@ -232,7 +232,7 @@ function AppContent() {
 				}
 			},
 		});
-	}, [pages, dispatchRow]);
+	}, [pages, dispatchRow, dispatchDragging]);
 
 	return (
 		<>

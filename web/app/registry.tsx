@@ -191,19 +191,20 @@ const pageReducer = (state: AppState, action: RowAction): AppState => {
 			invariant(page, "PageReducer addRow: page is not defined");
 
 			if (action.destinationContainer) {
-				const destinationRowId = action.destinationContainer.rowId;
-				const stepsToDestinationContainer = page.rows
-					.map((row, index) => {
-						if (row.rowId === destinationRowId) {
-							return [index];
-						}
-						const match = EVYRow.traverseToRowAndGetPath(
-							row,
-							destinationRowId
-						);
-						if (match.length > 0) return [index, ...match];
-					})
-					.find((s) => s !== undefined);
+			const destinationRowId = action.destinationContainer.rowId;
+			const stepsToDestinationContainer = page.rows
+				.flatMap((row, index) => {
+					if (row.rowId === destinationRowId) {
+						return [[index]];
+					}
+					const match = EVYRow.traverseToRowAndGetPath(
+						row,
+						destinationRowId
+					);
+					if (match.length > 0) return [[index, ...match]];
+					return [];
+				})
+				.find((s) => s !== undefined);
 
 				invariant(
 					stepsToDestinationContainer?.length,

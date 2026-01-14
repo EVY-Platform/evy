@@ -14,7 +14,7 @@ export default function Input({
 	return (
 		<input
 			type="text"
-			className={`evy-w-full evy-box-sizing-border evy-text-sm ${border} evy-focus-visible\:outline-none ${offsetClass}`}
+			className={`evy-w-full evy-box-sizing-border evy-text-sm ${border} evy-focus-visible:outline-none ${offsetClass}`}
 			required
 			value={value}
 			placeholder={placeholder}

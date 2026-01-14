@@ -55,7 +55,7 @@ function watchFiles() {
 	const appDir = join(PROJECT_ROOT, "app");
 	console.log(`👀 Watching ${appDir} for changes...`);
 
-	watch(appDir, { recursive: true }, async (eventType, filename) => {
+	watch(appDir, { recursive: true }, async (_eventType, filename) => {
 		if (!filename) return;
 		console.log(`Change detected: ${filename}`);
 		await rebuild();

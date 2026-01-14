@@ -145,12 +145,15 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 						}`}
 					/>
 				)}
+				{/* biome-ignore lint/a11y/useSemanticElements: This is a drag-and-drop container that requires a div for proper layout */}
 				<div
 					className="evy-flex evy-flex-col evy-w-full evy-relative evy-hover:bg-gray-light"
 					style={{ cursor }}
 					ref={ref}
 					onClick={selectRow}
 					onKeyDown={(e) => e.key === "Enter" && selectRow?.()}
+					role="button"
+					tabIndex={0}
 				>
 					{children}
 				</div>
@@ -244,7 +247,7 @@ export function DraggableRowContainer({
 			hideBefore ? undefined : "before",
 			hideAfter ? undefined : "after",
 		].filter(Boolean) as Array<"before" | "after">;
-	}, [dragging, dropIndicator, previousRowId, nextRowId]);
+	}, [dragging, dropIndicator, previousRowId, nextRowId, showIndicators]);
 
 	// The goal here is to find out which row's dropzone to set the indicator on.
 	const onDragEvent = useCallback(
@@ -386,9 +389,7 @@ export function PlaceholderDropIndicator() {
 			orientation="horizontal"
 		>
 			<div
-				className={
-					verticalDropIndicator + " " + dropIndicatorExpansionBefore
-				}
+				className={`${verticalDropIndicator} ${dropIndicatorExpansionBefore}`}
 			/>
 		</DraggableRowContainer>
 	);
