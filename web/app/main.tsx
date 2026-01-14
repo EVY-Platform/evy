@@ -49,7 +49,8 @@ interface DropEvent {
 const panelWidth = "300px";
 
 function AppContent() {
-	const { flows, activeFlowId, dispatchRow } = useContext(AppContext);
+	const { flows, activeFlowId, dispatchRow, dispatchDragging } =
+		useContext(AppContext);
 
 	const pages = useMemo(
 		() => flows.find((flow) => flow.id === activeFlowId)?.pages || [],
@@ -91,7 +92,11 @@ function AppContent() {
 
 				const destinationPageId = destinationPageRecord.data
 					.pageId as string;
-				if (destinationPageId === "rows" && sourcePageId === "rows") {
+				if (
+					sourcePageId === "rows" &&
+					(!destinationPageId || destinationPageId === "rows")
+				) {
+					dispatchDragging({ type: "STOP_DRAGGING" });
 					return;
 				}
 

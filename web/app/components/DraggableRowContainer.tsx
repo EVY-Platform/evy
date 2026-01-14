@@ -134,11 +134,6 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			[dropzones, indicators]
 		);
 
-		if (showBefore || showAfter) {
-			console.log("showBefore", showBefore);
-			console.log("showAfter", showAfter);
-		}
-
 		return (
 			<>
 				{showBefore && (
@@ -230,7 +225,7 @@ export function DraggableRowContainer({
 	}, [dropIndicator, dragging, rowId, showIndicators]);
 
 	const dropzones = useMemo(() => {
-		if (!dragging || !dropIndicator) return;
+		if (!dragging || !dropIndicator || !showIndicators) return;
 
 		const hideBefore =
 			(previousRowId && !dropIndicator.rowId) ||
@@ -388,6 +383,7 @@ export function PlaceholderDropIndicator() {
 		<DraggableRowContainer
 			key={containerDropindicatorId}
 			rowId={containerDropindicatorId}
+			orientation="horizontal"
 		>
 			<div
 				className={
