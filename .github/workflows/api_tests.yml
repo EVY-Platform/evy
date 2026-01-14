@@ -1,0 +1,39 @@
+name: API Tests
+
+on:
+    pull_request:
+        branches: [dev]
+    push:
+        branches: [dev]
+
+jobs:
+    api:
+        defaults:
+            run:
+                working-directory: api
+
+        timeout-minutes: 5
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+
+            - name: Check for api changes
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      api:
+                        - 'api/**'
+
+            - name: Setup Bun
+              if: steps.filter.outputs.api == 'true'
+              uses: oven-sh/setup-bun@v2
+
+            - name: Install dependencies
+              if: steps.filter.outputs.api == 'true'
+              run: bun install
+
+            - name: Run Tests
+              if: steps.filter.outputs.api == 'true'
+              run: bun run test
