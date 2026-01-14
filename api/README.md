@@ -1,6 +1,6 @@
 # EVY API
 
-RPC-websockets based API server using Bun and Prisma.
+RPC-websockets based API server using Bun and Drizzle ORM.
 
 ## Prerequisites
 
@@ -32,11 +32,10 @@ bun install
 
 ### Database Setup
 
-Generate Prisma client and run migrations:
+Run migrations to set up the database schema:
 
 ```bash
-bun run prisma_generate
-bun run prisma_migration
+bun run db:migrate
 ```
 
 ### Running the Server
@@ -74,14 +73,39 @@ docker compose up -d
 
 Note: Ensure your `.env` file contains the `DB_URL` for the database connection.
 
+## Database Migrations (Drizzle)
+
+### Workflow
+
+1. Make changes to `src/db/schema.ts`
+2. Generate a new migration: `bun run db:generate`
+3. Apply the migration: `bun run db:migrate`
+
+### Development
+
+For quick schema iteration during development, you can push changes directly without generating migration files:
+
+```bash
+bun run db:push
+```
+
+### Drizzle Studio
+
+To visually explore and manage your database:
+
+```bash
+bun run db:studio
+```
+
 ## Available Scripts
 
-| Script             | Description                              |
-| ------------------ | ---------------------------------------- |
-| `bun run dev`      | Start server with hot reload             |
-| `bun run start`    | Run migrations and start server          |
-| `bun run build`    | Build for production                     |
-| `bun run lint`     | Run Biome linter                         |
-| `bun run prisma_generate`   | Generate Prisma client          |
-| `bun run prisma_migration`  | Run migrations (dev)            |
-| `bun run prisma_migrate`    | Deploy migrations (production)  |
+| Script              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `bun run dev`       | Start server with hot reload             |
+| `bun run start`     | Run migrations and start server          |
+| `bun run build`     | Build for production                     |
+| `bun run lint`      | Run Biome linter                         |
+| `bun run db:generate` | Generate migration from schema changes |
+| `bun run db:migrate`  | Apply pending migrations               |
+| `bun run db:push`     | Push schema directly (dev only)        |
+| `bun run db:studio`   | Open Drizzle Studio UI                 |

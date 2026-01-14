@@ -1,9 +1,21 @@
 import { v4 as uuidv4 } from "uuid";
-import { Prisma, PrismaClient, OS } from "@prisma/client";
-import type { Service, Organization, ServiceProvider } from "@prisma/client";
+import { eq, gt, desc } from "drizzle-orm";
+import type { PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { isCorrectDate } from "./utils";
-import { prismaCRUD } from "./prismaCRUD";
+import {
+	db,
+	device,
+	service,
+	organization,
+	serviceProvider,
+	flow,
+	osEnum,
+	type Service,
+	type Organization,
+	type ServiceProvider,
+	type OS,
+} from "./db";
 
 type Model = Service | Organization | ServiceProvider;
 type ModelsDictionary = {
@@ -19,9 +31,14 @@ enum CRUD {
 	delete = "delete",
 }
 
-const prisma = new PrismaClient({
-	log: ["query", "info", "warn", "error"],
-});
+// Table mapping for dynamic access
+const tables: Record<string, PgTableWithColumns<any>> = {
+	Service: service,
+	Organization: organization,
+	ServiceProvider: serviceProvider,
+	Flow: flow,
+};
+
 const lastTableDataUpdates: {
 	[key: string]: Date;
 } = {};
@@ -30,21 +47,31 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	if (!token || token.length < 1) throw new Error("No token provided");
 	if (!os || os.length < 1) throw new Error("No os provided");
 
-	if (!Object.values(OS).includes(os)) return false;
+	if (!osEnum.enumValues.includes(os)) return false;
 
-	return !!(await prisma.device
-		.upsert({
-			where: {
-				token: token,
-			},
-			create: {
-				token,
-				os,
-				created_at: new Date(),
-			},
-			update: {},
-		})
-		.catch(() => false));
+	try {
+		// Check if device exists
+		const existing = await db
+			.select()
+			.from(device)
+			.where(eq(device.token, token))
+			.limit(1);
+
+		if (existing.length > 0) {
+			return true;
+		}
+
+		// Create new device
+		await db.insert(device).values({
+			token,
+			os,
+			createdAt: new Date(),
+		});
+
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 export async function crud(
@@ -67,30 +94,66 @@ export async function crud(
 		if (method === CRUD.delete) throw new Error("No filter provided");
 	}
 
-	let promise;
-	if (method === CRUD.find) {
-		promise = prismaCRUD(prisma, model, "findMany", { where: filter });
-	} else if (method === CRUD.create) {
-		promise = prismaCRUD(prisma, model, method, {
-			data: {
+	const table = tables[model];
+	if (!table) throw new Error("Invalid model provided");
+
+	try {
+		if (method === CRUD.find) {
+			// Build where clause from filter
+			const filterKey = Object.keys(filter!)[0];
+			const filterValue = filter![filterKey];
+			const column = table[filterKey as keyof typeof table];
+			if (!column) throw new Error(`Invalid filter key: ${filterKey}`);
+			return (await db
+				.select()
+				.from(table)
+				.where(eq(column, filterValue))) as Model[];
+		}
+
+		if (method === CRUD.create) {
+			const insertData = {
 				id: uuidv4(),
 				...data,
-				created_at: new Date(),
-				updated_at: new Date(),
-			},
-		});
-	} else if (method === CRUD.update) {
-		promise = prismaCRUD(prisma, model, method, {
-			where: filter,
-			data: { ...data, updated_at: new Date() },
-		});
-	} else if (method === CRUD.delete) {
-		promise = prismaCRUD(prisma, model, method, {
-			where: filter,
-		});
-	}
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			const result = await db.insert(table).values(insertData).returning();
+			return result as Model[];
+		}
 
-	return await promise;
+		if (method === CRUD.update) {
+			const filterKey = Object.keys(filter!)[0];
+			const filterValue = filter![filterKey];
+			const column = table[filterKey as keyof typeof table];
+			if (!column) throw new Error(`Invalid filter key: ${filterKey}`);
+			const updateData = { ...data, updatedAt: new Date() };
+			const result = await db
+				.update(table)
+				.set(updateData)
+				.where(eq(column, filterValue))
+				.returning();
+			return result as Model[];
+		}
+
+		if (method === CRUD.delete) {
+			const filterKey = Object.keys(filter!)[0];
+			const filterValue = filter![filterKey];
+			const column = table[filterKey as keyof typeof table];
+			if (!column) throw new Error(`Invalid filter key: ${filterKey}`);
+			const result = await db
+				.delete(table)
+				.where(eq(column, filterValue))
+				.returning();
+			return result as Model[];
+		}
+
+		return [];
+	} catch (e) {
+		const error = e as { code?: string; message?: string };
+		if (error.code) throw new Error(error.code);
+		if (error.message?.includes("is missing")) throw new Error(error.message);
+		throw new Error(String(e));
+	}
 }
 
 export async function getNewDataSince(since?: Date): Promise<ModelsDictionary> {
@@ -102,46 +165,47 @@ export async function getNewDataSince(since?: Date): Promise<ModelsDictionary> {
 		},
 	);
 
-	return Promise.all(
+	const results = await Promise.all(
 		relevantTables.map(async (model: string) => {
-			return prismaCRUD(prisma, model, "findMany", {
-				...(hasValidSince && {
-					where: {
-						updated_at: { gt: new Date(since) },
-					},
-				}),
-			});
+			const table = tables[model];
+			if (!table) return [];
+
+			if (hasValidSince) {
+				return db
+					.select()
+					.from(table)
+					.where(gt(table.updatedAt, new Date(since)));
+			}
+			return db.select().from(table);
 		}),
-	).then((res: Model[][]) => {
-		return relevantTables.reduce((obj, tableName, index) => {
-			obj[tableName] = res[index];
+	);
+
+	return relevantTables.reduce(
+		(obj, tableName, index) => {
+			obj[tableName] = results[index] as Model[];
 			return obj;
-		}, {} as ModelsDictionary);
-	});
+		},
+		{} as ModelsDictionary,
+	);
 }
 
 export async function primeData() {
+	const modelNames = Object.keys(tables).filter((model) => model !== "Device");
+
 	await Promise.all(
-		Object.keys(Prisma.ModelName)
-			.filter((model: string) => model !== "Device")
-			.map(async (model: string) => {
-				const lastUpdate = await prismaCRUD(
-					prisma,
-					model,
-					"findFirst",
-					{
-						select: {
-							updated_at: true,
-						},
-						orderBy: {
-							updated_at: "desc",
-						},
-						take: 1,
-					},
-				);
-				lastTableDataUpdates[model] =
-					lastUpdate && lastUpdate["updated_at"];
-			}),
+		modelNames.map(async (model: string) => {
+			const table = tables[model];
+			if (!table) return;
+
+			const lastUpdate = await db
+				.select({ updatedAt: table.updatedAt })
+				.from(table)
+				.orderBy(desc(table.updatedAt))
+				.limit(1);
+
+			lastTableDataUpdates[model] =
+				lastUpdate.length > 0 ? lastUpdate[0].updatedAt : new Date(0);
+		}),
 	);
 }
 
@@ -163,21 +227,21 @@ type FlowResponse = {
 export async function getFlows(since?: Date): Promise<FlowResponse[]> {
 	const hasValidSince = since && isCorrectDate(new Date(since));
 
-	const flows = await prisma.flow.findMany({
-		...(hasValidSince && {
-			where: {
-				updated_at: { gt: new Date(since) },
-			},
-		}),
-		orderBy: {
-			updated_at: "desc",
-		},
-	});
+	let flows;
+	if (hasValidSince) {
+		flows = await db
+			.select()
+			.from(flow)
+			.where(gt(flow.updatedAt, new Date(since)))
+			.orderBy(desc(flow.updatedAt));
+	} else {
+		flows = await db.select().from(flow).orderBy(desc(flow.updatedAt));
+	}
 
-	return flows.map((flow) => {
-		const flowData = flow.data as FlowData;
+	return flows.map((f) => {
+		const flowData = f.data as FlowData;
 		return {
-			id: flow.id,
+			id: f.id,
 			name: flowData.name,
 			type: flowData.type,
 			data: flowData.data,
@@ -192,25 +256,32 @@ export async function saveFlow(
 ): Promise<FlowResponse> {
 	const now = new Date();
 
-	const flow = existingFlowId
-		? await prisma.flow.update({
-				where: { id: existingFlowId },
-				data: {
-					data: flowData,
-					updated_at: now,
-				},
+	let savedFlow;
+	if (existingFlowId) {
+		const result = await db
+			.update(flow)
+			.set({
+				data: flowData,
+				updatedAt: now,
 			})
-		: await prisma.flow.create({
-				data: {
-					data: flowData,
-					created_at: now,
-					updated_at: now,
-				},
-			});
+			.where(eq(flow.id, existingFlowId))
+			.returning();
+		savedFlow = result[0];
+	} else {
+		const result = await db
+			.insert(flow)
+			.values({
+				data: flowData,
+				createdAt: now,
+				updatedAt: now,
+			})
+			.returning();
+		savedFlow = result[0];
+	}
 
-	const savedFlowData = flow.data as FlowData;
+	const savedFlowData = savedFlow.data as FlowData;
 	return {
-		id: flow.id,
+		id: savedFlow.id,
 		name: savedFlowData.name,
 		type: savedFlowData.type,
 		data: savedFlowData.data,
