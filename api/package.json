@@ -3,30 +3,26 @@
 	"version": "0.0.1",
 	"description": "Evy api",
 	"type": "module",
-	"main": "dist/index.js",
+	"main": "src/index.ts",
 	"scripts": {
-		"lint": "tslint -c tslint.json -p tsconfig.json --fix",
+		"lint": "bunx biome check",
 		"prisma_generate": "prisma generate",
 		"prisma_migration": "prisma migrate dev",
 		"prisma_migrate": "prisma migrate deploy",
-		"build": "tsc",
-		"start": "yarn prisma_migration && yarn prisma_migrate && node .",
-		"dev": "nodemon --watch src -e ts --exec 'yarn build && node .'"
+		"build": "bun build src/index.ts --outdir dist --target bun",
+		"start": "bun prisma_migration && bun prisma_migrate && bun src/index.ts",
+		"dev": "bun --watch src/index.ts"
 	},
 	"license": "GPL-3.0-only",
 	"devDependencies": {
 		"@types/node": "^18.11.9",
 		"@types/uuid": "^9.0.2",
 		"@types/ws": "^8.5.5",
-		"nodemon": "^2.0.22",
-		"prettier": "^3.0.1",
-		"prisma": "^5.1.1",
-		"tslint": "^6.1.3",
-		"typescript": "^5.1.6"
+		"bun-types": "^1.3.6",
+		"prisma": "^5.1.1"
 	},
 	"dependencies": {
 		"@prisma/client": "^5.1.1",
-		"dotenv": "^16.3.1",
 		"rpc-websockets": "^7.5.1",
 		"uuid": "^9.0.0"
 	}

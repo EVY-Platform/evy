@@ -8,8 +8,6 @@ traefik/
 letsencrypt/
 .env
 .next
-yarn-debug.log*
-yarn-error.log*
 history.txt
 
 # Xcode
