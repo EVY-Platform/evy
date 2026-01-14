@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun run dev/server.ts",
-		"build": "bun run setup && bun build --target=browser --outdir=dist --entry-naming=[dir]/bundle.js app/main.tsx",
+		"build": "bun run setup && bun build --target=browser --outdir=dist --entry-naming=[dir]/bundle.js --define:__API_URL__=\"'${API_URL:-ws://localhost:8000}'\" app/main.tsx",
 		"start": "bun run dev/server.ts",
 		"lint": "bunx biome check .",
 		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",

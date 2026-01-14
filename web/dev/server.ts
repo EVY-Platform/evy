@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..");
 const DIST_DIR = join(PROJECT_ROOT, "dist");
 const PORT = Number.parseInt(process.env.WEB_PORT || "3000", 10);
+const API_URL = process.env.API_URL || "ws://localhost:8000";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 async function runSetup() {
@@ -26,6 +27,7 @@ async function runBuild() {
 			"--target=browser",
 			"--outdir=dist",
 			"--entry-naming=[dir]/bundle.js",
+			`--define:__API_URL__='${API_URL}'`,
 			"app/main.tsx",
 		],
 		{

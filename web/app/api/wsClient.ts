@@ -1,7 +1,6 @@
 import { Client } from "rpc-websockets";
 import type { ServerFlow } from "../types";
-
-const API_URL = "ws://localhost:8000";
+import { config } from "../config";
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
@@ -22,7 +21,7 @@ class WSClient {
 		this.connectionState = "connecting";
 
 		this.connectionPromise = new Promise((resolve, reject) => {
-			this.client = new Client(API_URL);
+			this.client = new Client(config.apiUrl);
 
 			this.client.on("open", async () => {
 				try {
