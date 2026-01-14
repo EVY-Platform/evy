@@ -1,4 +1,11 @@
-import { validateAuth, primeData, getNewDataSince, crud } from "./data";
+import {
+	validateAuth,
+	primeData,
+	getNewDataSince,
+	crud,
+	getFlows,
+	saveFlow,
+} from "./data";
 import { initServer, WSParams } from "./ws";
 
 function authHandler(data: WSParams): Promise<boolean> {
@@ -18,7 +25,13 @@ async function main() {
 
 	server
 		.register("getFlows", async (data: WSParams) => {
-			return getNewDataSince(data.since);
+			return getFlows(data.since);
+		})
+		.protected();
+
+	server
+		.register("saveFlow", async (data: WSParams) => {
+			return saveFlow(data.flowData, data.flowId);
 		})
 		.protected();
 

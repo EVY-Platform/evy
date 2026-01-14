@@ -4,9 +4,6 @@ import type { Service, Organization, ServiceProvider } from "@prisma/client";
 
 import { isCorrectDate } from "./utils";
 import { prismaCRUD } from "./prismaCRUD";
-import { mockFlows } from "./mockFlows";
-
-const isDev = process.env.NODE_ENV !== "production";
 
 type Model = Service | Organization | ServiceProvider;
 type ModelsDictionary = {
@@ -96,12 +93,7 @@ export async function crud(
 	return await promise;
 }
 
-export async function getNewDataSince(
-	since?: Date,
-): Promise<ModelsDictionary | typeof mockFlows> {
-	// In dev mode, return mock flows data
-	if (isDev) return mockFlows;
-
+export async function getNewDataSince(since?: Date): Promise<ModelsDictionary> {
 	const hasValidSince = since && isCorrectDate(new Date(since));
 	const relevantTables = Object.keys(lastTableDataUpdates).filter(
 		(model: string) => {
@@ -151,4 +143,77 @@ export async function primeData() {
 					lastUpdate && lastUpdate["updated_at"];
 			}),
 	);
+}
+
+type FlowData = {
+	name: string;
+	type: string;
+	data: string;
+	pages: unknown[];
+};
+
+type FlowResponse = {
+	id: string;
+	name: string;
+	type: string;
+	data: string;
+	pages: unknown[];
+};
+
+export async function getFlows(since?: Date): Promise<FlowResponse[]> {
+	const hasValidSince = since && isCorrectDate(new Date(since));
+
+	const flows = await prisma.flow.findMany({
+		...(hasValidSince && {
+			where: {
+				updated_at: { gt: new Date(since) },
+			},
+		}),
+		orderBy: {
+			updated_at: "desc",
+		},
+	});
+
+	return flows.map((flow) => {
+		const flowData = flow.data as FlowData;
+		return {
+			id: flow.id,
+			name: flowData.name,
+			type: flowData.type,
+			data: flowData.data,
+			pages: flowData.pages,
+		};
+	});
+}
+
+export async function saveFlow(
+	flowData: FlowData,
+	existingFlowId?: string,
+): Promise<FlowResponse> {
+	const now = new Date();
+
+	const flow = existingFlowId
+		? await prisma.flow.update({
+				where: { id: existingFlowId },
+				data: {
+					data: flowData,
+					updated_at: now,
+				},
+			})
+		: await prisma.flow.create({
+				data: {
+					data: flowData,
+					created_at: now,
+					updated_at: now,
+				},
+			});
+
+	const savedFlowData = flow.data as FlowData;
+	return {
+		id: flow.id,
+		name: savedFlowData.name,
+		type: savedFlowData.type,
+		data: savedFlowData.data,
+		pages: savedFlowData.pages,
+	};
 }

@@ -58,3 +58,10 @@ model ServiceProvider {
 
   @@unique([fk_service_id, fk_organization_id])
 }
+
+model Flow {
+  id         String   @id @default(uuid()) @db.Uuid
+  data       Json     @db.JsonB
+  created_at DateTime @db.Timestamp(3)
+  updated_at DateTime @db.Timestamp(3)
+}
