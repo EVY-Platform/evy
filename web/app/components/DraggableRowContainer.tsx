@@ -134,6 +134,11 @@ const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			[dropzones, indicators]
 		);
 
+		if (showBefore || showAfter) {
+			console.log("showBefore", showBefore);
+			console.log("showAfter", showAfter);
+		}
+
 		return (
 			<>
 				{showBefore && (
