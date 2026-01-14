@@ -45,4 +45,4 @@ EXPOSE $API_PORT
 
 # Run migrations and start the server
 # Using prisma_migrate (deploy) for production, not prisma_migration (dev)
-CMD ["sh", "-c", "bunx prisma migrate deploy && bun src/index.ts"]
+CMD ["bun", "run", "start"]

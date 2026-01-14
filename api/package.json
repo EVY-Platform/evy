@@ -10,7 +10,7 @@
 		"prisma_migration": "prisma migrate dev",
 		"prisma_migrate": "prisma migrate deploy",
 		"build": "bun build src/index.ts --outdir dist --target bun",
-		"start": "bun prisma_migration && bun prisma_migrate && bun src/index.ts",
+		"start": "bun run prisma_migrate && bun src/index.ts",
 		"dev": "bun --watch src/index.ts"
 	},
 	"license": "GPL-3.0-only",
