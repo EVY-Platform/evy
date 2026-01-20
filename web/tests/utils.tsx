@@ -1,22 +1,42 @@
 import type { Locator, Page } from "@playwright/test";
-import type { ServerFlow, ServerRow, ServerPage } from "../app/types";
+import type {
+	ServerFlow,
+	ServerRow,
+	ServerRowContent,
+	RowEdit,
+	RowActionConfig,
+} from "../app/types";
 
-// Input types where id is optional (derived from source types)
-type ServerRowInput = Omit<ServerRow, "id" | "view"> & {
+// Input types where id is optional
+// Using explicit interface to avoid index signature conflicts with ServerRowContent
+interface ServerRowInputContent {
+	title: string;
+	children?: ServerRowInput[];
+	child?: ServerRowInput;
+	value?: string;
+	placeholder?: string;
+	text?: string;
+	segments?: string[];
+}
+
+interface ServerRowInput {
 	id?: string;
-	view: Omit<ServerRow["view"], "content"> & {
-		content: Omit<ServerRow["view"]["content"], "children" | "child"> & {
-			children?: ServerRowInput[];
-			child?: ServerRowInput;
-		};
+	type: string;
+	view: {
+		content: ServerRowInputContent;
+		data?: string;
+		max_lines?: string;
 	};
-};
+	edit?: RowEdit;
+	action?: RowActionConfig;
+}
 
-type ServerPageInput = Omit<ServerPage, "id" | "rows" | "footer"> & {
+interface ServerPageInput {
 	id?: string;
+	title: string;
 	rows?: ServerRowInput[];
 	footer?: ServerRowInput;
-};
+}
 
 // Common selectors used across tests
 export const SELECTORS = {
@@ -97,33 +117,55 @@ export function getErrorState(page: Page): Locator {
 export async function stableDragTo(
 	page: Page,
 	source: Locator,
-	target: Locator
+	target: Locator,
 ) {
 	await source.dragTo(target);
 	await page.waitForTimeout(150);
 }
 
-// Recursively ensure all rows have IDs, transforming ServerRowInput to ServerRow
+// Transform a single ServerRowInput to ServerRow
+function ensureRowId(row: ServerRowInput): ServerRow {
+	const inputContent = row.view.content;
+	const content: ServerRowContent = {
+		title: inputContent.title,
+	};
+
+	if (inputContent.value !== undefined) {
+		content.value = inputContent.value;
+	}
+	if (inputContent.placeholder !== undefined) {
+		content.placeholder = inputContent.placeholder;
+	}
+	if (inputContent.text !== undefined) {
+		content.text = inputContent.text;
+	}
+	if (inputContent.segments !== undefined) {
+		content.segments = inputContent.segments;
+	}
+
+	if (inputContent.children) {
+		content.children = ensureRowIds(inputContent.children);
+	}
+	if (inputContent.child) {
+		content.child = ensureRowId(inputContent.child);
+	}
+
+	return {
+		id: row.id ?? crypto.randomUUID(),
+		type: row.type,
+		view: {
+			content,
+			data: row.view.data,
+			max_lines: row.view.max_lines,
+		},
+		edit: row.edit,
+		action: row.action,
+	};
+}
+
+// Recursively ensure all rows have IDs, transforming ServerRowInput[] to ServerRow[]
 function ensureRowIds(rows: ServerRowInput[]): ServerRow[] {
-	return rows.map((row) => {
-		const rowWithId: ServerRow = {
-			...row,
-			id: crypto.randomUUID(),
-			view: {
-				...row.view,
-				content: {
-					...row.view.content,
-					children: row.view.content.children
-						? ensureRowIds(row.view.content.children)
-						: undefined,
-					child: row.view.content.child
-						? ensureRowIds([row.view.content.child])[0]
-						: undefined,
-				},
-			},
-		} as ServerRow;
-		return rowWithId;
-	});
+	return rows.map(ensureRowId);
 }
 
 // Takes ServerPageInput (id optional) and returns ServerPage (id required)
@@ -135,9 +177,10 @@ function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 			type: "write",
 			data: "",
 			pages: pages.map((page) => ({
-				...page,
-				id: page.id || crypto.randomUUID(),
-				rows: ensureRowIds(page.rows || []),
+				id: page.id ?? crypto.randomUUID(),
+				title: page.title,
+				rows: ensureRowIds(page.rows ?? []),
+				footer: page.footer ? ensureRowId(page.footer) : undefined,
 			})),
 		},
 	];
@@ -156,10 +199,13 @@ export async function initFullFlows(page: Page, flows: ServerFlow[]) {
 }
 
 // Input type for debug flows where row ids are optional
-type DebugFlowInput = Omit<ServerFlow, "id" | "pages"> & {
+interface DebugFlowInput {
 	id?: string;
+	name: string;
+	type: "read" | "write";
+	data: string;
 	pages: ServerPageInput[];
-};
+}
 
 // Helper to create debug flows with auto-generated IDs
 function createDebugFlows(): ServerFlow[] {
@@ -463,7 +509,8 @@ function createDebugFlows(): ServerFlow[] {
 																		"true",
 																	message:
 																		"Length",
-																	minValue: "1",
+																	minValue:
+																		"1",
 																},
 															},
 														},
@@ -516,12 +563,15 @@ function createDebugFlows(): ServerFlow[] {
 
 	// Add IDs to all flows, pages, and rows recursively
 	return flows.map((flow) => ({
-		...flow,
-		id: flow.id || crypto.randomUUID(),
+		id: flow.id ?? crypto.randomUUID(),
+		name: flow.name,
+		type: flow.type,
+		data: flow.data,
 		pages: flow.pages.map((page) => ({
-			...page,
-			id: page.id || crypto.randomUUID(),
-			rows: ensureRowIds(page.rows || []),
+			id: page.id ?? crypto.randomUUID(),
+			title: page.title,
+			rows: ensureRowIds(page.rows ?? []),
+			footer: page.footer ? ensureRowId(page.footer) : undefined,
 		})),
 	}));
 }
