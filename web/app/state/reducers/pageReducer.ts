@@ -124,6 +124,8 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const row = flow.pages
 				.find((page) => page.id === action.originPageId)
 				?.rows.find((r) => r.rowId === action.rowId);
+				// TODO: Handle moving containers and nested rows between pages
+				// with traverseToRowAndGetPath
 			invariant(row, "PageReducer moveRow: row is not defined");
 
 			const newPages = flow.pages.map((page) => {
