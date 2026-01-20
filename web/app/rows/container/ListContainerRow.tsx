@@ -20,15 +20,15 @@ export default class ListContainerRow extends EVYRow {
 		const childrenElements = rows?.length
 			? rows.map((child, index) => (
 					<DraggableRowContainer
-						key={child.rowId}
-						rowId={child.rowId}
+						key={child.id}
+						rowId={child.id}
 						showIndicators
 						previousRowId={
-							index > 0 ? rows[index - 1].rowId : undefined
+							index > 0 ? rows[index - 1].id : undefined
 						}
 						nextRowId={
 							index < lastIndex
-								? rows[index + 1].rowId
+								? rows[index + 1].id
 								: undefined
 						}
 					>
@@ -36,7 +36,7 @@ export default class ListContainerRow extends EVYRow {
 					</DraggableRowContainer>
 			  ))
 			: // We don't want to show dropzone in rows panel
-			  row.rowId !== this.constructor.name && (
+			  row.id !== this.constructor.name && (
 					<PlaceholderDropIndicator />
 			  );
 

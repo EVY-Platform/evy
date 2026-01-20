@@ -48,7 +48,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			const rowDataAdd: Row = {
 				...baseRow,
-				rowId: action.newRowId,
+				id: action.newRowId,
 				config: structuredClone(baseRow.config),
 				row: createElement(baseRow, { rowId: action.newRowId }),
 			};
@@ -62,7 +62,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				const destinationRowId = action.destinationContainer.rowId;
 				const stepsToDestinationContainer = page.rows
 					.flatMap((row, index) => {
-						if (row.rowId === destinationRowId) {
+						if (row.id === destinationRowId) {
 							return [[index]];
 						}
 						const match = EVYRow.traverseToRowAndGetPath(
@@ -123,7 +123,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		case "MOVE_ROW": {
 			const row = flow.pages
 				.find((page) => page.id === action.originPageId)
-				?.rows.find((r) => r.rowId === action.rowId);
+				?.rows.find((r) => r.id === action.rowId);
+				// TODO: Handle moving containers and nested rows between pages
+				// with traverseToRowAndGetPath
 			invariant(row, "PageReducer moveRow: row is not defined");
 
 			const newPages = flow.pages.map((page) => {
@@ -132,7 +134,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 					page.id === action.destinationPageId
 				) {
 					const destinationItems = [
-						...page.rows.filter((r) => r.rowId !== action.rowId),
+						...page.rows.filter((r) => r.id !== action.rowId),
 					];
 					destinationItems.splice(action.destinationIndex, 0, row);
 					return {
@@ -143,7 +145,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				if (page.id === action.originPageId) {
 					return {
 						...page,
-						rows: page.rows.filter((r) => r.rowId !== action.rowId),
+						rows: page.rows.filter((r) => r.id !== action.rowId),
 					};
 				}
 				if (page.id === action.destinationPageId) {
@@ -167,7 +169,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				if (row.config.view.content.children) {
 					const filteredChildren =
 						row.config.view.content.children.filter(
-							(child) => child.rowId !== targetRowId
+							(child) => child.id !== targetRowId
 						);
 					const updatedChildren = filteredChildren.map((child) =>
 						removeRowFromChildren(child, targetRowId)
@@ -186,7 +188,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 						},
 					};
 				}
-				if (row.config.view.content.child?.rowId === targetRowId) {
+				if (row.config.view.content.child?.id === targetRowId) {
 					return {
 						...row,
 						config: {
@@ -228,7 +230,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 						? {
 								...page,
 								rows: page.rows
-									.filter((r) => r.rowId !== action.rowId)
+									.filter((r) => r.id !== action.rowId)
 									.map((r) =>
 										removeRowFromChildren(r, action.rowId)
 									),
@@ -246,7 +248,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				configId: string,
 				configValue: string
 			): Row | null => {
-				if (row.rowId === targetRowId) {
+				if (row.id === targetRowId) {
 					return {
 						...row,
 						config: {
@@ -326,11 +328,11 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			const newPages = flow.pages.map((page) => {
 				const hasAtTopLevel = page.rows.some(
-					(r) => r.rowId === action.rowId
+					(r) => r.id === action.rowId
 				);
 				if (hasAtTopLevel) {
 					const newRows = page.rows.map((row) => {
-						if (row.rowId === action.rowId) {
+						if (row.id === action.rowId) {
 							return {
 								...row,
 								config: {
@@ -375,7 +377,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "SET_ACTIVE_ROW": {
 			const page = flow.pages.find((page) =>
-				page.rows.some((row) => row.rowId === action.rowId)
+				page.rows.some((row) => row.id === action.rowId)
 			);
 			invariant(page, `Page not found for row ${action.rowId}`);
 

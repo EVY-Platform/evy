@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { getFirstPage, getPageContent, initTestFlows, stableDragTo, getSidebarRow } from "./utils.tsx";
+import { getFirstPage, getPageContent, initTestFlows, stableDragTo, getSidebarRow } from "./utils";
 
 test.describe("Row Selection", () => {
 	test.beforeEach(async ({ page }) => {

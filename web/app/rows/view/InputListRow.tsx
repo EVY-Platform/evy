@@ -20,7 +20,7 @@ export default class InputListRow extends EVYRow {
 				<p className="evy-text-md">{row.config.view.content.title}</p>
 				<Input
 					value={row.config.view.data ?? ""}
-					placeholder={row.config.view.content.placeholder}
+					placeholder={row.config.view.content.placeholder ?? ""}
 				/>
 			</div>
 		);

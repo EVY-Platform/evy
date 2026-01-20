@@ -29,7 +29,7 @@ export default class SearchRow extends EVYRow {
 					<InlineIcon icon="/search.svg" alt="Search" />
 					<Input
 						value={row.config.view.data ?? ""}
-						placeholder={row.config.view.content.placeholder}
+						placeholder={row.config.view.content.placeholder ?? ""}
 						offset="left"
 					/>
 				</div>

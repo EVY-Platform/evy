@@ -10,13 +10,8 @@ class WSClient {
 	private connectionPromise: Promise<void> | null = null;
 
 	async connect(): Promise<void> {
-		if (this.connectionState === "connected") {
-			return;
-		}
-
-		if (this.connectionPromise) {
-			return this.connectionPromise;
-		}
+		if (this.connectionState === "connected") return;
+		if (this.connectionPromise) return this.connectionPromise;
 
 		this.connectionState = "connecting";
 
@@ -53,13 +48,27 @@ class WSClient {
 
 	async getFlows(): Promise<ServerFlow[]> {
 		await this.connect();
-
-		if (!this.client) {
-			throw new Error("WebSocket client not initialized");
-		}
+		if (!this.client) throw new Error("WebSocket client not initialized");
 
 		const result = await this.client.call("getFlows", {});
 		return result as ServerFlow[];
+	}
+
+	async saveFlow(flowData: ServerFlow): Promise<ServerFlow> {
+		await this.connect();
+		if (!this.client) throw new Error("WebSocket client not initialized");
+
+		const result = await this.client.call("saveFlow", {
+			flowData: {
+				id: flowData.id,
+				name: flowData.name,
+				type: flowData.type,
+				data: flowData.data,
+				pages: flowData.pages,
+			},
+			flowId: flowData.id,
+		});
+		return result as ServerFlow;
 	}
 
 	disconnect(): void {

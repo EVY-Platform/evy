@@ -128,23 +128,23 @@ export function handleDrop(
 		) {
 			dispatchOptions.destinationIndex =
 				destinationContainer.container.config.view.content.children.findIndex(
-					(r) => r.rowId === destinationRow.data.rowId
+					(r) => r.id === destinationRow.data.rowId
 				);
 		} else if (
 			destinationContainer?.type === "child" &&
-			destinationContainer.container.config.view.content.child?.rowId
+			destinationContainer.container.config.view.content.child?.id
 		) {
 			dispatchOptions.destinationIndex = 0;
 		} else if (closestEdgeOfTarget && !destinationContainer) {
 			const destinationRowIndex = destinationPage.rows.findIndex(
-				(r) => r.rowId === destinationRow.data.rowId
+				(r) => r.id === destinationRow.data.rowId
 			);
 			dispatchOptions.destinationIndex = destinationRowIndex;
 		}
 
 		if (destinationContainer) {
 			dispatchOptions.destinationContainer = {
-				rowId: destinationContainer.container.rowId,
+				rowId: destinationContainer.container.id,
 				type: destinationContainer.type,
 			};
 		}

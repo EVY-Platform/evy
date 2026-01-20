@@ -14,6 +14,7 @@ test.describe("Flow Selector", () => {
 					title: "Page 1 of Flow 1",
 					rows: [
 						{
+							id: "row-1-1-1",
 							type: "Info",
 							view: {
 								content: {
@@ -37,6 +38,7 @@ test.describe("Flow Selector", () => {
 					title: "Page 1 of Flow 2",
 					rows: [
 						{
+							id: "row-2-1-1",
 							type: "Info",
 							view: {
 								content: {

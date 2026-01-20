@@ -1,5 +1,42 @@
 import type { Locator, Page } from "@playwright/test";
-import type { ServerFlow } from "../app/types";
+import type {
+	ServerFlow,
+	ServerRow,
+	ServerRowContent,
+	RowEdit,
+	RowActionConfig,
+} from "../app/types";
+
+// Input types where id is optional
+// Using explicit interface to avoid index signature conflicts with ServerRowContent
+interface ServerRowInputContent {
+	title: string;
+	children?: ServerRowInput[];
+	child?: ServerRowInput;
+	value?: string;
+	placeholder?: string;
+	text?: string;
+	segments?: string[];
+}
+
+interface ServerRowInput {
+	id?: string;
+	type: string;
+	view: {
+		content: ServerRowInputContent;
+		data?: string;
+		max_lines?: string;
+	};
+	edit?: RowEdit;
+	action?: RowActionConfig;
+}
+
+interface ServerPageInput {
+	id?: string;
+	title: string;
+	rows?: ServerRowInput[];
+	footer?: ServerRowInput;
+}
 
 // Common selectors used across tests
 export const SELECTORS = {
@@ -80,33 +117,75 @@ export function getErrorState(page: Page): Locator {
 export async function stableDragTo(
 	page: Page,
 	source: Locator,
-	target: Locator
+	target: Locator,
 ) {
 	await source.dragTo(target);
 	await page.waitForTimeout(150);
 }
 
-type TestPage = {
-	id: string;
-	title: string;
-	rows?: ServerFlow["pages"][number]["rows"];
-};
+// Transform a single ServerRowInput to ServerRow
+function ensureRowId(row: ServerRowInput): ServerRow {
+	const inputContent = row.view.content;
+	const content: ServerRowContent = {
+		title: inputContent.title,
+	};
 
-function createTestFlows(pages: TestPage[]): ServerFlow[] {
+	if (inputContent.value !== undefined) {
+		content.value = inputContent.value;
+	}
+	if (inputContent.placeholder !== undefined) {
+		content.placeholder = inputContent.placeholder;
+	}
+	if (inputContent.text !== undefined) {
+		content.text = inputContent.text;
+	}
+	if (inputContent.segments !== undefined) {
+		content.segments = inputContent.segments;
+	}
+
+	if (inputContent.children) {
+		content.children = ensureRowIds(inputContent.children);
+	}
+	if (inputContent.child) {
+		content.child = ensureRowId(inputContent.child);
+	}
+
+	return {
+		id: row.id ?? crypto.randomUUID(),
+		type: row.type,
+		view: {
+			content,
+			data: row.view.data,
+			max_lines: row.view.max_lines,
+		},
+		edit: row.edit,
+		action: row.action,
+	};
+}
+
+// Recursively ensure all rows have IDs, transforming ServerRowInput[] to ServerRow[]
+function ensureRowIds(rows: ServerRowInput[]): ServerRow[] {
+	return rows.map(ensureRowId);
+}
+
+// Takes ServerPageInput (id optional) and returns ServerPage (id required)
+function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 	return [
 		{
-			id: "test-flow",
+			id: crypto.randomUUID(),
 			name: "Test Flow",
 			type: "write",
 			data: "",
 			pages: pages.map((page) => ({
-				...page,
-				rows: page.rows || [],
+				id: page.id ?? crypto.randomUUID(),
+				title: page.title,
+				rows: ensureRowIds(page.rows ?? []),
+				footer: page.footer ? ensureRowId(page.footer) : undefined,
 			})),
 		},
 	];
 }
-export async function initTestFlows(page: Page, pages: TestPage[]) {
+export async function initTestFlows(page: Page, pages: ServerPageInput[]) {
 	await page.addInitScript((flows: ServerFlow[]) => {
 		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flows;
 	}, createTestFlows(pages));
@@ -119,355 +198,382 @@ export async function initFullFlows(page: Page, flows: ServerFlow[]) {
 	}, flows);
 }
 
-export const debugFlows: ServerFlow[] = [
-	{
-		id: "flow-1",
-		name: "First flow!",
-		type: "write",
-		data: "",
-		pages: [
-			{
-				id: "step_1",
-				title: "Step 1",
-				rows: [
-					{
-						type: "ColumnContainer",
-						view: {
-							content: {
-								title: "Dimensions 1",
-								children: [
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Width 1",
-												value: "width",
-												placeholder: "Width",
+// Input type for debug flows where row ids are optional
+interface DebugFlowInput {
+	id?: string;
+	name: string;
+	type: "read" | "write";
+	data: string;
+	pages: ServerPageInput[];
+}
+
+// Helper to create debug flows with auto-generated IDs
+function createDebugFlows(): ServerFlow[] {
+	const flows: DebugFlowInput[] = [
+		{
+			name: "First flow!",
+			type: "write",
+			data: "",
+			pages: [
+				{
+					id: "step_1",
+					title: "Step 1",
+					rows: [
+						{
+							type: "ColumnContainer",
+							view: {
+								content: {
+									title: "Dimensions 1",
+									children: [
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Width 1",
+													value: "width",
+													placeholder: "Width",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.width}",
+												validation: {
+													required: "true",
+													message: "Width",
+												},
 											},
 										},
-										edit: {
-											destination:
-												"{item.dimensions.width}",
-											validation: {
-												required: "true",
-												message: "Width",
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Height 1",
+													value: "height",
+													placeholder: "Height",
+												},
+											},
+											edit: {
+												destination: "height",
+												validation: {
+													required: "true",
+													message: "Height",
+												},
 											},
 										},
-									},
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Height 1",
-												value: "height",
-												placeholder: "Height",
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Length 1",
+													value: "length",
+													placeholder: "Length",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.length}",
+												validation: {
+													required: "true",
+													message: "Length",
+													minValue: "1",
+												},
 											},
 										},
-										edit: {
-											destination: "height",
-											validation: {
-												required: "true",
-												message: "Height",
-											},
-										},
-									},
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Length 1",
-												value: "length",
-												placeholder: "Length",
-											},
-										},
-										edit: {
-											destination:
-												"{item.dimensions.length}",
-											validation: {
-												required: "true",
-												message: "Length",
-												minValue: "1",
-											},
-										},
-									},
-								],
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
 							},
 						},
-						edit: {
-							validation: {
-								required: "true",
-								minAmount: "3",
+						{
+							type: "ListContainer",
+							view: {
+								content: {
+									title: "Dimensions 2",
+									children: [
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Width 2",
+													value: "width",
+													placeholder: "Width",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.width}",
+												validation: {
+													required: "true",
+													message: "Width",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Height 2",
+													value: "height",
+													placeholder: "Height",
+												},
+											},
+											edit: {
+												destination: "height",
+												validation: {
+													required: "true",
+													message: "Height",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Length 2",
+													value: "length",
+													placeholder: "Length",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.length}",
+												validation: {
+													required: "true",
+													message: "Length",
+													minValue: "1",
+												},
+											},
+										},
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
 							},
 						},
-					},
-					{
-						type: "ListContainer",
-						view: {
-							content: {
-								title: "Dimensions 2",
-								children: [
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Width 2",
-												value: "width",
-												placeholder: "Width",
+					],
+				},
+				{
+					id: "step_2",
+					title: "Step 2",
+					rows: [
+						{
+							type: "SelectSegmentContainer",
+							view: {
+								content: {
+									title: "Dimensions 3",
+									segments: ["Width", "Height", "Length"],
+									children: [
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Width 3",
+													value: "width",
+													placeholder: "Width",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.width}",
+												validation: {
+													required: "true",
+													message: "Width",
+												},
 											},
 										},
-										edit: {
-											destination:
-												"{item.dimensions.width}",
-											validation: {
-												required: "true",
-												message: "Width",
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Height 3",
+													value: "height",
+													placeholder: "Height",
+												},
+											},
+											edit: {
+												destination: "height",
+												validation: {
+													required: "true",
+													message: "Height",
+												},
 											},
 										},
-									},
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Height 2",
-												value: "height",
-												placeholder: "Height",
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Length 3",
+													value: "length",
+													placeholder: "Length",
+												},
+											},
+											edit: {
+												destination:
+													"{item.dimensions.length}",
+												validation: {
+													required: "true",
+													message: "Length",
+													minValue: "1",
+												},
 											},
 										},
-										edit: {
-											destination: "height",
-											validation: {
-												required: "true",
-												message: "Height",
-											},
-										},
-									},
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Length 2",
-												value: "length",
-												placeholder: "Length",
-											},
-										},
-										edit: {
-											destination:
-												"{item.dimensions.length}",
-											validation: {
-												required: "true",
-												message: "Length",
-												minValue: "1",
-											},
-										},
-									},
-								],
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
 							},
 						},
-						edit: {
-							validation: {
-								required: "true",
-								minAmount: "3",
-							},
-						},
-					},
-				],
-			},
-			{
-				id: "step_2",
-				title: "Step 2",
-				rows: [
-					{
-						type: "SelectSegmentContainer",
-						view: {
-							content: {
-								title: "Dimensions 3",
-								segments: ["Width", "Height", "Length"],
-								children: [
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Width 3",
-												value: "width",
-												placeholder: "Width",
-											},
-										},
-										edit: {
-											destination:
-												"{item.dimensions.width}",
-											validation: {
-												required: "true",
-												message: "Width",
-											},
-										},
-									},
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Height 3",
-												value: "height",
-												placeholder: "Height",
-											},
-										},
-										edit: {
-											destination: "height",
-											validation: {
-												required: "true",
-												message: "Height",
-											},
-										},
-									},
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Length 3",
-												value: "length",
-												placeholder: "Length",
-											},
-										},
-										edit: {
-											destination:
-												"{item.dimensions.length}",
-											validation: {
-												required: "true",
-												message: "Length",
-												minValue: "1",
-											},
-										},
-									},
-								],
-							},
-						},
-						edit: {
-							validation: {
-								required: "true",
-								minAmount: "3",
-							},
-						},
-					},
-					{
-						type: "SelectSegmentContainer",
-						view: {
-							content: {
-								title: "Dimensions 4",
-								segments: ["List", "Info"],
-								children: [
-									{
-										type: "ListContainer",
-										view: {
-											content: {
-												title: "Dimensions (width x height x depth)",
-												children: [
-													{
-														type: "Input",
-														view: {
-															content: {
-																title: "Width 4",
-																value: "width",
-																placeholder:
-																	"Width",
+						{
+							type: "SelectSegmentContainer",
+							view: {
+								content: {
+									title: "Dimensions 4",
+									segments: ["List", "Info"],
+									children: [
+										{
+											type: "ListContainer",
+											view: {
+												content: {
+													title: "Dimensions (width x height x depth)",
+													children: [
+														{
+															type: "Input",
+															view: {
+																content: {
+																	title: "Width 4",
+																	value: "width",
+																	placeholder:
+																		"Width",
+																},
+															},
+															edit: {
+																destination:
+																	"{item.dimensions.width}",
+																validation: {
+																	required:
+																		"true",
+																	message:
+																		"Width",
+																},
 															},
 														},
-														edit: {
-															destination:
-																"{item.dimensions.width}",
-															validation: {
-																required:
-																	"true",
-																message:
-																	"Width",
+														{
+															type: "Input",
+															view: {
+																content: {
+																	title: "Height 4",
+																	value: "height",
+																	placeholder:
+																		"Height",
+																},
+															},
+															edit: {
+																destination:
+																	"height",
+																validation: {
+																	required:
+																		"true",
+																	message:
+																		"Height",
+																},
 															},
 														},
-													},
-													{
-														type: "Input",
-														view: {
-															content: {
-																title: "Height 4",
-																value: "height",
-																placeholder:
-																	"Height",
+														{
+															type: "Input",
+															view: {
+																content: {
+																	title: "Length 4",
+																	value: "length",
+																	placeholder:
+																		"Length",
+																},
+															},
+															edit: {
+																destination:
+																	"{item.dimensions.length}",
+																validation: {
+																	required:
+																		"true",
+																	message:
+																		"Length",
+																	minValue:
+																		"1",
+																},
 															},
 														},
-														edit: {
-															destination:
-																"height",
-															validation: {
-																required:
-																	"true",
-																message:
-																	"Height",
-															},
-														},
-													},
-													{
-														type: "Input",
-														view: {
-															content: {
-																title: "Length 4",
-																value: "length",
-																placeholder:
-																	"Length",
-															},
-														},
-														edit: {
-															destination:
-																"{item.dimensions.length}",
-															validation: {
-																required:
-																	"true",
-																message:
-																	"Length",
-																minValue: "1",
-															},
-														},
-													},
-												],
+													],
+												},
+											},
+											edit: {
+												validation: {
+													required: "true",
+													minAmount: "3",
+												},
 											},
 										},
-										edit: {
-											validation: {
-												required: "true",
-												minAmount: "3",
+										{
+											type: "Info",
+											view: {
+												content: {
+													title: "Info row title",
+													text: "Info row info",
+												},
 											},
 										},
-									},
-									{
-										type: "Info",
-										view: {
-											content: {
-												title: "Info row title",
-												text: "Info row info",
-											},
-										},
-									},
-								],
+									],
+								},
+							},
+							edit: {
+								validation: {
+									required: "true",
+									minAmount: "3",
+								},
 							},
 						},
-						edit: {
-							validation: {
-								required: "true",
-								minAmount: "3",
-							},
-						},
-					},
-				],
-			},
-		],
-	},
-	{
-		id: "flow-2",
-		name: "Second flow",
-		type: "write",
-		data: "",
-		pages: [
-			{
-				id: "step_2_1",
-				title: "Step 1",
-				rows: [],
-			},
-		],
-	},
-];
+					],
+				},
+			],
+		},
+		{
+			name: "Second flow",
+			type: "write",
+			data: "",
+			pages: [
+				{
+					id: "step_2_1",
+					title: "Step 1",
+					rows: [],
+				},
+			],
+		},
+	];
+
+	// Add IDs to all flows, pages, and rows recursively
+	return flows.map((flow) => ({
+		id: flow.id ?? crypto.randomUUID(),
+		name: flow.name,
+		type: flow.type,
+		data: flow.data,
+		pages: flow.pages.map((page) => ({
+			id: page.id ?? crypto.randomUUID(),
+			title: page.title,
+			rows: ensureRowIds(page.rows ?? []),
+			footer: page.footer ? ensureRowId(page.footer) : undefined,
+		})),
+	}));
+}
+
+export const debugFlows: ServerFlow[] = createDebugFlows();

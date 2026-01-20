@@ -28,7 +28,7 @@ export function ConfigurationPanel() {
 				.find((f) => f.id === activeFlowId)
 				?.pages.flatMap((page) => page.rows)
 				.flatMap(EVYRow.getRowsRecursive)
-				.find((r) => r.rowId === activeRowId),
+				.find((r) => r.id === activeRowId),
 		[flows, activeFlowId, activeRowId]
 	);
 
@@ -37,7 +37,7 @@ export function ConfigurationPanel() {
 			const content = configRow.config.view.content;
 
 			return Object.keys(content).map((key) => {
-				const uniqueId = `${configRow.rowId}-${key}`;
+				const uniqueId = `${configRow.id}-${key}`;
 
 				if (key === "children") {
 					const children = content[key] as Row[] | undefined;
@@ -50,7 +50,7 @@ export function ConfigurationPanel() {
 							{children.map((child, index) => {
 								return (
 									<div
-										key={child.rowId}
+										key={child.id}
 										className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
 									>
 										<p className="evy-text-lg evy-font-semibold evy-mb-4">
@@ -89,7 +89,7 @@ export function ConfigurationPanel() {
 								updateRowContent(
 									key,
 									e.target.value,
-									configRow.rowId
+									configRow.id
 								);
 							}}
 							className="evy-w-full evy-focus-visible:outline-none"

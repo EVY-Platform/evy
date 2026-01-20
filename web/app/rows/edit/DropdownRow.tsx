@@ -27,7 +27,7 @@ export default class DropdownRow extends EVYRow {
 				<p className="evy-text-md">{row.config.view.content.title}</p>
 				<Dropdown
 					value={row.config.view.data ?? ""}
-					placeholder={row.config.view.content.placeholder}
+					placeholder={row.config.view.content.placeholder ?? ""}
 				/>
 			</div>
 		);

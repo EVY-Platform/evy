@@ -38,7 +38,7 @@ export interface RowConfig {
 }
 
 export type Row = {
-	rowId: string;
+	id: string;
 	row: React.ReactNode;
 	config: RowConfig;
 };
