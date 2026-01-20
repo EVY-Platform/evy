@@ -25,7 +25,7 @@ type ModelsDictionary = {
 type AnyData = {
 	[key: string]: AnyData | string | number | boolean | Date;
 };
-enum CRUD {
+export enum CRUD {
 	find = "find",
 	create = "create",
 	update = "update",

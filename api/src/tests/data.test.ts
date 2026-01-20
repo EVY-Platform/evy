@@ -1,8 +1,42 @@
 import { describe, it, expect, beforeEach, beforeAll, mock } from "bun:test";
-import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
+import { PGlite } from "@electric-sql/pglite";
+import { z } from "zod";
+
 import * as schema from "../db/schema";
+import type { ValidatedFlowData, RowSchema, PageSchema } from "../validation";
+import { CRUD } from "../data";
+/**
+ * Types inferred from individual schemas for use in other parts of the app
+ */
+export type ValidatedRow = z.infer<typeof RowSchema>;
+export type ValidatedPage = z.infer<typeof PageSchema>;
+
+/**
+ * Input types where id is optional (for creating new entities)
+ * These are useful for tests and client code that creates flows
+ */
+export type RowInput = Omit<ValidatedRow, "id" | "view"> & {
+	id?: string;
+	view: Omit<ValidatedRow["view"], "content"> & {
+		content: Omit<ValidatedRow["view"]["content"], "children" | "child"> & {
+			children?: RowInput[];
+			child?: RowInput;
+		};
+	};
+};
+
+export type PageInput = Omit<ValidatedPage, "id" | "rows" | "footer"> & {
+	id?: string;
+	rows: RowInput[];
+	footer?: RowInput;
+};
+
+export type FlowDataInput = Omit<ValidatedFlowData, "id" | "pages"> & {
+	id?: string;
+	pages: PageInput[];
+};
 
 // Create in-memory PostgreSQL instance
 const client = new PGlite();
@@ -26,6 +60,44 @@ async function clearTables() {
 	await testDb.delete(schema.organization);
 	await testDb.delete(schema.service);
 	await testDb.delete(schema.device);
+}
+
+// Recursively ensure all rows have IDs, transforming RowInput to ValidatedRow structure
+function ensureRowIds(rows: RowInput[]): RowInput[] {
+	return rows.map((row) => {
+		const rowWithId: RowInput = {
+			...row,
+			id: crypto.randomUUID(),
+			view: {
+				...row.view,
+				content: {
+					...row.view.content,
+				},
+			},
+		};
+		if (row.view.content.children) {
+			rowWithId.view.content.children = ensureRowIds(row.view.content.children);
+		}
+		if (row.view.content.child) {
+			rowWithId.view.content.child = ensureRowIds([row.view.content.child])[0];
+		}
+		return rowWithId;
+	});
+}
+
+// Helper to create test flow data with auto-generated UUIDs
+// Takes FlowDataInput (id optional) and returns ValidatedFlowData (id required)
+function createTestFlow(flowData: FlowDataInput): ValidatedFlowData {
+	return {
+		...flowData,
+		id: flowData.id || crypto.randomUUID(),
+		pages: flowData.pages.map((page) => ({
+			...page,
+			id: page.id || crypto.randomUUID(),
+			rows: ensureRowIds(page.rows),
+			footer: page.footer ? ensureRowIds([page.footer])[0] : undefined,
+		})),
+	} as ValidatedFlowData;
 }
 
 // Run migrations before all tests
@@ -99,32 +171,32 @@ describe("crud", () => {
 	});
 
 	it("should throw error for invalid CRUD method", async () => {
-		await expect(crud("invalid" as "find", "Service")).rejects.toThrow(
+		await expect(crud("invalid" as CRUD, "Service")).rejects.toThrow(
 			"Invalid CRUD method"
 		);
 	});
 
 	it("should throw error for invalid model", async () => {
 		await expect(
-			crud("find", "InvalidModel", { id: "123" })
+			crud(CRUD.find, "InvalidModel", { id: "123" })
 		).rejects.toThrow("Invalid model provided");
 	});
 
 	it("should throw error when no filter provided for find", async () => {
-		await expect(crud("find", "Service")).rejects.toThrow(
+		await expect(crud(CRUD.find, "Service")).rejects.toThrow(
 			"No filter provided"
 		);
 	});
 
 	it("should throw error when no data provided for create", async () => {
-		await expect(crud("create", "Service", { id: "123" })).rejects.toThrow(
+		await expect(crud(CRUD.create, "Service", { id: "123" })).rejects.toThrow(
 			"No data provided"
 		);
 	});
 
 	it("should find records matching filter", async () => {
 		// Add a service
-		const testId = "11111111-1111-1111-1111-111111111111";
+		const testId = crypto.randomUUID();
 		await testDb.insert(schema.service).values({
 			id: testId,
 			name: "Test Service",
@@ -133,7 +205,7 @@ describe("crud", () => {
 			updatedAt: new Date(),
 		});
 
-		const result = await crud("find", "Service", { id: testId });
+		const result = await crud(CRUD.find, "Service", { id: testId });
 		expect(result).toHaveLength(1);
 		expect(result[0]).toMatchObject({
 			id: testId,
@@ -142,7 +214,7 @@ describe("crud", () => {
 	});
 
 	it("should create a new record", async () => {
-		const result = await crud("create", "Service", undefined, {
+		const result = await crud(CRUD.create, "Service", undefined, {
 			name: "New Service",
 			description: "A new service",
 		});
@@ -156,7 +228,7 @@ describe("crud", () => {
 	});
 
 	it("should update an existing record", async () => {
-		const testId = "22222222-2222-2222-2222-222222222222";
+		const testId = crypto.randomUUID();
 		await testDb.insert(schema.service).values({
 			id: testId,
 			name: "Old Name",
@@ -166,7 +238,7 @@ describe("crud", () => {
 		});
 
 		const result = await crud(
-			"update",
+			CRUD.update,
 			"Service",
 			{ id: testId },
 			{ name: "Updated Name" }
@@ -177,7 +249,7 @@ describe("crud", () => {
 	});
 
 	it("should delete an existing record", async () => {
-		const testId = "33333333-3333-3333-3333-333333333333";
+		const testId = crypto.randomUUID();
 		await testDb.insert(schema.service).values({
 			id: testId,
 			name: "To Delete",
@@ -189,7 +261,7 @@ describe("crud", () => {
 		const beforeDelete = await testDb.select().from(schema.service);
 		expect(beforeDelete).toHaveLength(1);
 
-		const result = await crud("delete", "Service", { id: testId });
+		const result = await crud(CRUD.delete, "Service", { id: testId });
 
 		expect(result).toHaveLength(1);
 
@@ -259,18 +331,15 @@ describe("saveFlow", () => {
 	});
 
 	it("should create a new flow when no existingFlowId provided", async () => {
-		const flowData = {
-			id: "11111111-1111-4111-8111-111111111111",
+		const flowData = createTestFlow({
 			name: "New Flow",
 			type: "create",
 			data: "item",
 			pages: [
 				{
-					id: "22222222-2222-4222-8222-222222222222",
 					title: "Page 1",
 					rows: [
 						{
-							id: "33333333-3333-4333-8333-333333333333",
 							type: "Text",
 							view: {
 								content: {
@@ -282,7 +351,7 @@ describe("saveFlow", () => {
 					],
 				},
 			],
-		};
+		});
 
 		const result = await saveFlow(flowData);
 
@@ -296,33 +365,31 @@ describe("saveFlow", () => {
 
 	it("should update existing flow when existingFlowId provided", async () => {
 		// Create flow first (directly in DB to bypass validation)
+		const existingFlowData = createTestFlow({
+			name: "Old Name",
+			type: "read",
+			data: "item",
+			pages: [{ title: "P1", rows: [] }],
+		});
 		const [existingFlow] = await testDb
 			.insert(schema.flow)
 			.values({
-				data: {
-					id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-					name: "Old Name",
-					type: "read",
-					data: "item",
-					pages: [{ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", title: "P1", rows: [] }],
-				},
+				data: existingFlowData,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			})
 			.returning();
 
-		const updatedFlowData = {
+		const updatedFlowData = createTestFlow({
 			id: existingFlow.id,
 			name: "Updated Name",
 			type: "write",
 			data: "item",
 			pages: [
 				{
-					id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
 					title: "New Page",
 					rows: [
 						{
-							id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
 							type: "Button",
 							view: {
 								content: {
@@ -337,7 +404,7 @@ describe("saveFlow", () => {
 					],
 				},
 			],
-		};
+		});
 
 		const result = await saveFlow(updatedFlowData, existingFlow.id);
 
@@ -414,25 +481,21 @@ describe("saveFlow", () => {
 	});
 
 	it("should validate nested rows in container recursively", async () => {
-		const flowData = {
-			id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+		const flowData = createTestFlow({
 			name: "Test Flow",
 			type: "create",
 			data: "item",
 			pages: [
 				{
-					id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
 					title: "Page 1",
 					rows: [
 						{
-							id: "11111111-2222-4333-8444-555555555555",
 							type: "ColumnContainer",
 							view: {
 								content: {
 									title: "Container",
 									children: [
 										{
-											id: "11111111-2222-4333-8444-555555555556",
 											type: "Input",
 											view: {
 												content: {
@@ -449,7 +512,6 @@ describe("saveFlow", () => {
 											},
 										},
 										{
-											id: "11111111-2222-4333-8444-555555555557",
 											type: "Input",
 											view: {
 												content: {
@@ -466,7 +528,7 @@ describe("saveFlow", () => {
 					],
 				},
 			],
-		};
+		});
 
 		const result = await saveFlow(flowData);
 		expect(result.name).toBe("Test Flow");
@@ -512,24 +574,20 @@ describe("saveFlow", () => {
 	});
 
 	it("should validate deeply nested rows in SheetContainer", async () => {
-		const flowData = {
-			id: "66666666-6666-4666-8666-666666666666",
+		const flowData = createTestFlow({
 			name: "Test Flow",
 			type: "create",
 			data: "item",
 			pages: [
 				{
-					id: "77777777-7777-4777-8777-777777777777",
 					title: "Page 1",
 					rows: [
 						{
-							id: "88888888-8888-4888-8888-888888888881",
 							type: "SheetContainer",
 							view: {
 								content: {
 									title: "Sheet",
 									child: {
-										id: "88888888-8888-4888-8888-888888888882",
 										type: "Text",
 										view: {
 											content: {
@@ -540,14 +598,12 @@ describe("saveFlow", () => {
 									},
 									children: [
 										{
-											id: "88888888-8888-4888-8888-888888888883",
 											type: "ListContainer",
 											view: {
 												content: {
 													title: "Nested List",
 													children: [
 														{
-															id: "88888888-8888-4888-8888-888888888884",
 															type: "Info",
 															view: {
 																content: {
@@ -567,25 +623,22 @@ describe("saveFlow", () => {
 					],
 				},
 			],
-		};
+		});
 
 		const result = await saveFlow(flowData);
 		expect(result.name).toBe("Test Flow");
 	});
 
 	it("should validate footer row", async () => {
-		const flowData = {
-			id: "99999999-9999-4999-8999-999999999999",
+		const flowData = createTestFlow({
 			name: "Test Flow",
 			type: "read",
 			data: "item",
 			pages: [
 				{
-					id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
 					title: "Page 1",
 					rows: [],
 					footer: {
-						id: "ffffffff-0000-4111-8222-333333333333",
 						type: "Button",
 						view: {
 							content: {
@@ -599,7 +652,7 @@ describe("saveFlow", () => {
 					},
 				},
 			],
-		};
+		});
 
 		const result = await saveFlow(flowData);
 		expect(result.pages[0]).toHaveProperty("footer");
@@ -645,7 +698,7 @@ describe("primeData", () => {
 	it("should initialize with existing data", async () => {
 		const now = new Date();
 		await testDb.insert(schema.service).values({
-			id: "44444444-4444-4444-4444-444444444444",
+			id: crypto.randomUUID(),
 			name: "Service 1",
 			description: "Test",
 			createdAt: now,
