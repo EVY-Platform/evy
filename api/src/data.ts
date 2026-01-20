@@ -3,6 +3,7 @@ import { eq, gt, desc } from "drizzle-orm";
 import type { PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { isCorrectDate } from "./utils";
+import { validateFlowData } from "./validation";
 import {
 	db,
 	device,
@@ -254,6 +255,9 @@ export async function saveFlow(
 	flowData: FlowData,
 	existingFlowId?: string,
 ): Promise<FlowResponse> {
+	// Validate flow data before saving
+	validateFlowData(flowData);
+
 	const now = new Date();
 
 	let savedFlow;

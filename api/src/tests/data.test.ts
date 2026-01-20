@@ -261,15 +261,31 @@ describe("saveFlow", () => {
 	it("should create a new flow when no existingFlowId provided", async () => {
 		const flowData = {
 			name: "New Flow",
-			type: "sell",
-			data: "{}",
-			pages: [{ id: "page-1", title: "Page 1" }],
+			type: "create",
+			data: "item",
+			pages: [
+				{
+					id: "page-1",
+					title: "Page 1",
+					rows: [
+						{
+							type: "Text",
+							view: {
+								content: {
+									title: "Hello",
+									text: "World",
+								},
+							},
+						},
+					],
+				},
+			],
 		};
 
 		const result = await saveFlow(flowData);
 
 		expect(result.name).toBe("New Flow");
-		expect(result.type).toBe("sell");
+		expect(result.type).toBe("create");
 		expect(result.pages).toHaveLength(1);
 
 		const flows = await testDb.select().from(schema.flow);
@@ -277,11 +293,16 @@ describe("saveFlow", () => {
 	});
 
 	it("should update existing flow when existingFlowId provided", async () => {
-		// Create flow first
+		// Create flow first (directly in DB to bypass validation)
 		const [existingFlow] = await testDb
 			.insert(schema.flow)
 			.values({
-				data: { name: "Old Name", type: "sell", data: "{}", pages: [] },
+				data: {
+					name: "Old Name",
+					type: "read",
+					data: "item",
+					pages: [{ id: "p1", title: "P1", rows: [] }],
+				},
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			})
@@ -289,18 +310,310 @@ describe("saveFlow", () => {
 
 		const updatedFlowData = {
 			name: "Updated Name",
-			type: "buy",
-			data: '{"updated": true}',
-			pages: [{ id: "new-page", title: "New Page" }],
+			type: "write",
+			data: "item",
+			pages: [
+				{
+					id: "new-page",
+					title: "New Page",
+					rows: [
+						{
+							type: "Button",
+							view: {
+								content: {
+									title: "",
+									label: "Click me",
+								},
+							},
+							action: {
+								target: "close",
+							},
+						},
+					],
+				},
+			],
 		};
 
 		const result = await saveFlow(updatedFlowData, existingFlow.id);
 
 		expect(result.name).toBe("Updated Name");
-		expect(result.type).toBe("buy");
+		expect(result.type).toBe("write");
 
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
+	});
+
+	it("should reject flow with missing name", async () => {
+		const flowData = {
+			name: "",
+			type: "read",
+			data: "item",
+			pages: [{ id: "page-1", title: "Page 1", rows: [] }],
+		};
+
+		await expect(saveFlow(flowData)).rejects.toThrow("Flow validation failed");
+	});
+
+	it("should reject flow with invalid type", async () => {
+		const flowData = {
+			name: "Test Flow",
+			type: "invalid-type",
+			data: "item",
+			pages: [{ id: "page-1", title: "Page 1", rows: [] }],
+		};
+
+		await expect(saveFlow(flowData as any)).rejects.toThrow(
+			"Flow validation failed"
+		);
+	});
+
+	it("should reject flow with no pages", async () => {
+		const flowData = {
+			name: "Test Flow",
+			type: "read",
+			data: "item",
+			pages: [],
+		};
+
+		await expect(saveFlow(flowData)).rejects.toThrow(
+			"Flow must have at least one page"
+		);
+	});
+
+	it("should reject flow with invalid row type", async () => {
+		const flowData = {
+			name: "Test Flow",
+			type: "read",
+			data: "item",
+			pages: [
+				{
+					id: "page-1",
+					title: "Page 1",
+					rows: [
+						{
+							type: "InvalidRowType",
+							view: {
+								content: {
+									title: "Test",
+								},
+							},
+						},
+					],
+				},
+			],
+		};
+
+		await expect(saveFlow(flowData as any)).rejects.toThrow(
+			"Flow validation failed"
+		);
+	});
+
+	it("should validate nested rows in container recursively", async () => {
+		const flowData = {
+			name: "Test Flow",
+			type: "create",
+			data: "item",
+			pages: [
+				{
+					id: "page-1",
+					title: "Page 1",
+					rows: [
+						{
+							type: "ColumnContainer",
+							view: {
+								content: {
+									title: "Container",
+									children: [
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Input 1",
+													value: "",
+													placeholder: "Enter text",
+												},
+											},
+											edit: {
+												destination: "{item.field}",
+												validation: {
+													required: "true",
+												},
+											},
+										},
+										{
+											type: "Input",
+											view: {
+												content: {
+													title: "Input 2",
+													value: "",
+													placeholder: "Enter more text",
+												},
+											},
+										},
+									],
+								},
+							},
+						},
+					],
+				},
+			],
+		};
+
+		const result = await saveFlow(flowData);
+		expect(result.name).toBe("Test Flow");
+		expect(result.pages).toHaveLength(1);
+	});
+
+	it("should reject nested rows with invalid type in container", async () => {
+		const flowData = {
+			name: "Test Flow",
+			type: "create",
+			data: "item",
+			pages: [
+				{
+					id: "page-1",
+					title: "Page 1",
+					rows: [
+						{
+							type: "ColumnContainer",
+							view: {
+								content: {
+									title: "Container",
+									children: [
+										{
+											type: "InvalidNestedType",
+											view: {
+												content: {
+													title: "Invalid",
+												},
+											},
+										},
+									],
+								},
+							},
+						},
+					],
+				},
+			],
+		};
+
+		await expect(saveFlow(flowData as any)).rejects.toThrow(
+			"Flow validation failed"
+		);
+	});
+
+	it("should validate deeply nested rows in SheetContainer", async () => {
+		const flowData = {
+			name: "Test Flow",
+			type: "create",
+			data: "item",
+			pages: [
+				{
+					id: "page-1",
+					title: "Page 1",
+					rows: [
+						{
+							type: "SheetContainer",
+							view: {
+								content: {
+									title: "Sheet",
+									child: {
+										type: "Text",
+										view: {
+											content: {
+												title: "Child Text",
+												text: "Hello",
+											},
+										},
+									},
+									children: [
+										{
+											type: "ListContainer",
+											view: {
+												content: {
+													title: "Nested List",
+													children: [
+														{
+															type: "Info",
+															view: {
+																content: {
+																	title: "",
+																	text: "Deeply nested info",
+																},
+															},
+														},
+													],
+												},
+											},
+										},
+									],
+								},
+							},
+						},
+					],
+				},
+			],
+		};
+
+		const result = await saveFlow(flowData);
+		expect(result.name).toBe("Test Flow");
+	});
+
+	it("should validate footer row", async () => {
+		const flowData = {
+			name: "Test Flow",
+			type: "read",
+			data: "item",
+			pages: [
+				{
+					id: "page-1",
+					title: "Page 1",
+					rows: [],
+					footer: {
+						type: "Button",
+						view: {
+							content: {
+								title: "",
+								label: "Submit",
+							},
+						},
+						action: {
+							target: "submit:item",
+						},
+					},
+				},
+			],
+		};
+
+		const result = await saveFlow(flowData);
+		expect(result.pages[0]).toHaveProperty("footer");
+	});
+
+	it("should reject invalid footer row type", async () => {
+		const flowData = {
+			name: "Test Flow",
+			type: "read",
+			data: "item",
+			pages: [
+				{
+					id: "page-1",
+					title: "Page 1",
+					rows: [],
+					footer: {
+						type: "InvalidFooter",
+						view: {
+							content: {
+								title: "",
+							},
+						},
+					},
+				},
+			],
+		};
+
+		await expect(saveFlow(flowData as any)).rejects.toThrow(
+			"Flow validation failed"
+		);
 	});
 });
 
