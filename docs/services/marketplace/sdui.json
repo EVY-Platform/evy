@@ -1,12 +1,12 @@
 [
 	{
-		"id": "view_item",
+		"id": "74a49d4b-2176-4925-857a-e29e2991f1bd",
 		"name": "View Item",
 		"type": "read",
 		"data": "item",
 		"pages": [
 			{
-				"id": "view",
+				"id": "82cae120-c7b1-4c29-bd42-e1521320b109",
 				"title": "View Item",
 				"rows": [
 					{
@@ -36,13 +36,13 @@
 		]
 	},
 	{
-		"id": "create_item",
+		"id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
 		"name": "Create item",
 		"type": "create",
 		"data": "item",
 		"pages": [
 			{
-				"id": "step_1",
+				"id": "306ed62c-c2af-4652-a873-26c7a388972d",
 				"title": "Create listing",
 				"rows": [
 					{
@@ -258,12 +258,12 @@
 					},
 					"edit": {},
 					"action": {
-						"target": "navigate:create_item:step_2"
+						"target": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:06b21b52-0845-468a-ace1-170a3b05f3a2"
 					}
 				}
 			},
 			{
-				"id": "step_2",
+				"id": "06b21b52-0845-468a-ace1-170a3b05f3a2",
 				"title": "Describe item",
 				"rows": [
 					{
@@ -294,12 +294,12 @@
 					},
 					"edit": {},
 					"action": {
-						"target": "navigate:create_item:step_3"
+						"target": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:26dae81a-4122-4b5c-8396-a72a319ccd8b"
 					}
 				}
 			},
 			{
-				"id": "step_3",
+				"id": "26dae81a-4122-4b5c-8396-a72a319ccd8b",
 				"title": "Pickup & delivery",
 				"rows": [
 					{
@@ -636,12 +636,12 @@
 					},
 					"edit": {},
 					"action": {
-						"target": "navigate:create_item:step_4"
+						"target": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:25a3269b-344c-477d-89c8-b2f5426a5d91"
 					}
 				}
 			},
 			{
-				"id": "step_4",
+				"id": "25a3269b-344c-477d-89c8-b2f5426a5d91",
 				"title": "Payment options",
 				"rows": [
 					{
@@ -712,12 +712,12 @@
 					},
 					"edit": {},
 					"action": {
-						"target": "navigate:create_item:step_5"
+						"target": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:857362ad-856f-465b-85a3-94bc8bb686cd"
 					}
 				}
 			},
 			{
-				"id": "step_5",
+				"id": "857362ad-856f-465b-85a3-94bc8bb686cd",
 				"title": "Sharing data publicly",
 				"rows": [
 					{
