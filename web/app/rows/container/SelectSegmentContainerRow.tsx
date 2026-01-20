@@ -26,13 +26,13 @@ export default class SelectSegmentContainerRow extends EVYRow {
 
 		const childrenElements = children.length ? (
 			<DraggableRowContainer
-				rowId={children[this.state.selectedTab].rowId}
+				rowId={children[this.state.selectedTab].id}
 			>
 				{children[this.state.selectedTab].row}
 			</DraggableRowContainer>
 		) : (
 			// We don't want to show dropzone in rows panel
-			row.rowId !== this.constructor.name && <PlaceholderDropIndicator />
+			row.id !== this.constructor.name && <PlaceholderDropIndicator />
 		);
 
 		return (

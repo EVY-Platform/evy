@@ -34,13 +34,13 @@ export abstract class EVYRow extends React.Component<{
 		rows: Row[]
 	): { container: Row; type: ContainerType } | null {
 		for (const row of rows) {
-			if (row.rowId === rowId) return null;
+			if (row.id === rowId) return null;
 
-			const childMatches = row.config.view.content.child?.rowId === rowId;
+			const childMatches = row.config.view.content.child?.id === rowId;
 			if (childMatches) return { container: row, type: "child" };
 
 			const childrenMatch = row.config.view.content.children?.some(
-				(r) => r.rowId === rowId
+				(r) => r.id === rowId
 			);
 			if (childrenMatch) return { container: row, type: "children" };
 
@@ -67,11 +67,11 @@ export abstract class EVYRow extends React.Component<{
 		rows: Row[]
 	): { container: Row; type: ContainerType } | null {
 		for (const row of rows) {
-			if ("child" in row.config.view.content && row.rowId === rowId) {
+			if ("child" in row.config.view.content && row.id === rowId) {
 				return { container: row, type: "child" };
 			}
 
-			if ("children" in row.config.view.content && row.rowId === rowId) {
+			if ("children" in row.config.view.content && row.id === rowId) {
 				return { container: row, type: "children" };
 			}
 
@@ -97,10 +97,10 @@ export abstract class EVYRow extends React.Component<{
 		row: Row,
 		targetRowId: string
 	): Array<number | "child"> {
-		if (row.rowId === targetRowId) return [];
+		if (row.id === targetRowId) return [];
 
 		const child = row.config.view.content.child;
-		if (child?.rowId === targetRowId) {
+		if (child?.id === targetRowId) {
 			const path = EVYRow.traverseToRowAndGetPath(child, targetRowId);
 			if (path.length > 0) return ["child", ...path];
 		}
@@ -108,7 +108,7 @@ export abstract class EVYRow extends React.Component<{
 		const children = row.config.view.content.children;
 		if (children) {
 			for (const [index, c] of children.entries()) {
-				if (c.rowId === targetRowId) return [index];
+				if (c.id === targetRowId) return [index];
 
 				const path = EVYRow.traverseToRowAndGetPath(c, targetRowId);
 				if (path.length > 0) return [index, ...path];
@@ -122,7 +122,7 @@ export abstract class EVYRow extends React.Component<{
 			<AppContext.Consumer>
 				{({ rows, flows, activeFlowId }) => {
 					const baseRow = rows.find(
-						(r) => r.rowId === this.props.rowId
+						(r) => r.id === this.props.rowId
 					);
 					if (baseRow) return this.renderContent(baseRow);
 
@@ -131,7 +131,7 @@ export abstract class EVYRow extends React.Component<{
 					const row = pages
 						.flatMap((page) => page.rows)
 						.flatMap(EVYRow.getRowsRecursive)
-						.find((r) => r.rowId === this.props.rowId);
+						.find((r) => r.id === this.props.rowId);
 					if (row) return this.renderContent(row);
 
 					return (

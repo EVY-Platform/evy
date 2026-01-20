@@ -40,7 +40,7 @@ export function RowsPanel() {
 				ref={pageInnerRef}
 			>
 				{rows.map((row) => (
-					<DraggableRowContainer key={row.rowId} rowId={row.rowId}>
+					<DraggableRowContainer key={row.id} rowId={row.id}>
 						{row.row}
 					</DraggableRowContainer>
 				))}

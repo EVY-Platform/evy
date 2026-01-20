@@ -98,7 +98,7 @@ export function useDraggable({
 			.find((f) => f.id === activeFlowId)
 			?.pages.flatMap((page) => page.rows)
 			.flatMap(EVYRow.getRowsRecursive)
-			.find((r) => r.rowId === rowId);
+			.find((r) => r.id === rowId);
 	}, [flows, activeFlowId, rowId]);
 
 	const indicators = useMemo(() => {

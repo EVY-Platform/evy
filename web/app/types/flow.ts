@@ -26,6 +26,7 @@ export type ServerRowContent = {
 };
 
 export type ServerRow = Omit<RowConfig, "view"> & {
+	id: string;
 	view: Omit<RowView, "content"> & {
 		content: ServerRowContent;
 	};

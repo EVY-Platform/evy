@@ -5,20 +5,19 @@ import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
 
 function decodeRow(row: ServerRow): Row {
-	const rowId = crypto.randomUUID();
 	const baseRow = baseRows.find(
 		(baseRow) => row.type === baseRow.config.type
 	);
 	if (!baseRow) {
 		return {
-			rowId,
-			row: createElement(UnknownRow, { rowId }),
+			id: row.id,
+			row: createElement(UnknownRow, { rowId: row.id }),
 			config: UnknownRow.config,
 		};
 	}
 	return {
-		rowId,
-		row: createElement(baseRow, { rowId }),
+		id: row.id,
+		row: createElement(baseRow, { rowId: row.id }),
 		config: {
 			...row,
 			view: {

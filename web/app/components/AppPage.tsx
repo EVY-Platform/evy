@@ -54,8 +54,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		(rowId: string) =>
 			dispatchRow({
 				type: "SET_ACTIVE_ROW",
-				pageId: pageId,
-				rowId: rowId,
+				pageId,
+				rowId,
 			}),
 		[pageId, dispatchRow],
 	);
@@ -69,15 +69,15 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		const lastIndex = page.rows.length - 1;
 		return page.rows.map((row, index) => (
 			<DraggableRowContainer
-				key={row.rowId}
-				rowId={row.rowId}
-				selectRow={() => selectRow(row.rowId)}
+				key={row.id}
+				rowId={row.id}
+				selectRow={() => selectRow(row.id)}
 				showIndicators
 				previousRowId={
-					index > 0 ? page.rows[index - 1].rowId : undefined
+					index > 0 ? page.rows[index - 1].id : undefined
 				}
 				nextRowId={
-					index < lastIndex ? page.rows[index + 1].rowId : undefined
+					index < lastIndex ? page.rows[index + 1].id : undefined
 				}
 			>
 				{row.row}

@@ -18,7 +18,7 @@ export function AppProvider({
 	initialFlows: ServerFlow[];
 }) {
 	const rows = baseRows.map((row) => ({
-		rowId: row.name,
+		id: row.name,
 		row: createElement(row, { rowId: row.name }),
 		config: row.config,
 	}));
