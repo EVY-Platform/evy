@@ -260,15 +260,17 @@ describe("saveFlow", () => {
 
 	it("should create a new flow when no existingFlowId provided", async () => {
 		const flowData = {
+			id: "11111111-1111-4111-8111-111111111111",
 			name: "New Flow",
 			type: "create",
 			data: "item",
 			pages: [
 				{
-					id: "page-1",
+					id: "22222222-2222-4222-8222-222222222222",
 					title: "Page 1",
 					rows: [
 						{
+							id: "33333333-3333-4333-8333-333333333333",
 							type: "Text",
 							view: {
 								content: {
@@ -298,10 +300,11 @@ describe("saveFlow", () => {
 			.insert(schema.flow)
 			.values({
 				data: {
+					id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
 					name: "Old Name",
 					type: "read",
 					data: "item",
-					pages: [{ id: "p1", title: "P1", rows: [] }],
+					pages: [{ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", title: "P1", rows: [] }],
 				},
 				createdAt: new Date(),
 				updatedAt: new Date(),
@@ -309,15 +312,17 @@ describe("saveFlow", () => {
 			.returning();
 
 		const updatedFlowData = {
+			id: existingFlow.id,
 			name: "Updated Name",
 			type: "write",
 			data: "item",
 			pages: [
 				{
-					id: "new-page",
+					id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
 					title: "New Page",
 					rows: [
 						{
+							id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
 							type: "Button",
 							view: {
 								content: {
@@ -410,21 +415,24 @@ describe("saveFlow", () => {
 
 	it("should validate nested rows in container recursively", async () => {
 		const flowData = {
+			id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
 			name: "Test Flow",
 			type: "create",
 			data: "item",
 			pages: [
 				{
-					id: "page-1",
+					id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
 					title: "Page 1",
 					rows: [
 						{
+							id: "11111111-2222-4333-8444-555555555555",
 							type: "ColumnContainer",
 							view: {
 								content: {
 									title: "Container",
 									children: [
 										{
+											id: "11111111-2222-4333-8444-555555555556",
 											type: "Input",
 											view: {
 												content: {
@@ -441,6 +449,7 @@ describe("saveFlow", () => {
 											},
 										},
 										{
+											id: "11111111-2222-4333-8444-555555555557",
 											type: "Input",
 											view: {
 												content: {
@@ -504,20 +513,23 @@ describe("saveFlow", () => {
 
 	it("should validate deeply nested rows in SheetContainer", async () => {
 		const flowData = {
+			id: "66666666-6666-4666-8666-666666666666",
 			name: "Test Flow",
 			type: "create",
 			data: "item",
 			pages: [
 				{
-					id: "page-1",
+					id: "77777777-7777-4777-8777-777777777777",
 					title: "Page 1",
 					rows: [
 						{
+							id: "88888888-8888-4888-8888-888888888881",
 							type: "SheetContainer",
 							view: {
 								content: {
 									title: "Sheet",
 									child: {
+										id: "88888888-8888-4888-8888-888888888882",
 										type: "Text",
 										view: {
 											content: {
@@ -528,12 +540,14 @@ describe("saveFlow", () => {
 									},
 									children: [
 										{
+											id: "88888888-8888-4888-8888-888888888883",
 											type: "ListContainer",
 											view: {
 												content: {
 													title: "Nested List",
 													children: [
 														{
+															id: "88888888-8888-4888-8888-888888888884",
 															type: "Info",
 															view: {
 																content: {
@@ -561,15 +575,17 @@ describe("saveFlow", () => {
 
 	it("should validate footer row", async () => {
 		const flowData = {
+			id: "99999999-9999-4999-8999-999999999999",
 			name: "Test Flow",
 			type: "read",
 			data: "item",
 			pages: [
 				{
-					id: "page-1",
+					id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
 					title: "Page 1",
 					rows: [],
 					footer: {
+						id: "ffffffff-0000-4111-8222-333333333333",
 						type: "Button",
 						view: {
 							content: {

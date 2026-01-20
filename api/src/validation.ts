@@ -69,6 +69,7 @@ const BaseContentSchema = z
  * Recursive row schema that validates the full row structure including nested children
  */
 type RowInput = {
+	id: string;
 	type: string;
 	view: {
 		content: {
@@ -99,6 +100,7 @@ type RowInput = {
 export const RowSchema: z.ZodType<RowInput> = z.lazy(() =>
 	z
 		.object({
+			id: z.string().uuid(),
 			type: z.enum(VALID_ROW_TYPES),
 			view: z
 				.object({
@@ -125,7 +127,7 @@ export const RowSchema: z.ZodType<RowInput> = z.lazy(() =>
  */
 export const PageSchema = z
 	.object({
-		id: z.string().min(1, "Page id is required"),
+		id: z.string().uuid(),
 		title: z.string(),
 		rows: z.array(RowSchema),
 		footer: RowSchema.optional(),
@@ -142,6 +144,7 @@ const VALID_FLOW_TYPES = ["read", "write", "create", "update", "delete"] as cons
  */
 export const FlowDataSchema = z
 	.object({
+		id: z.string().uuid(),
 		name: z.string().min(1, "Flow name is required"),
 		type: z.enum(VALID_FLOW_TYPES),
 		data: z.string(),

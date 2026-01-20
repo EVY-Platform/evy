@@ -1,14 +1,21 @@
-import { type ReactNode, createElement, useReducer } from "react";
+import {
+	type ReactNode,
+	createElement,
+	useReducer,
+	useRef,
+	useEffect,
+} from "react";
 
-import type { ServerFlow } from "../types";
+import type { ServerFlow, Flow } from "../types";
 import { AppContext } from "./context";
 import {
 	pageReducer,
 	draggingReducer,
 	dropIndicatorReducer,
 } from "./reducers";
-import { decodeFlows } from "../utils/decodeFlow";
+import { decodeFlows, encodeFlow } from "../utils/decodeFlow";
 import { baseRows } from "../rows/baseRows";
+import { wsClient } from "../api/wsClient";
 
 export function AppProvider({
 	children,
@@ -35,6 +42,25 @@ export function AppProvider({
 		dropIndicatorReducer,
 		null
 	);
+
+	const previousFlowsRef = useRef<Flow[]>(appState.flows);
+
+	useEffect(() => {
+		const activeFlow = appState.flows.find(
+			(f) => f.id === appState.activeFlowId
+		);
+		const previousActiveFlow = previousFlowsRef.current.find(
+			(f) => f.id === appState.activeFlowId
+		);
+
+		if (activeFlow && activeFlow !== previousActiveFlow) {
+			wsClient.saveFlow(encodeFlow(activeFlow)).catch((error) => {
+				console.error("Failed to save flow:", error);
+			});
+		}
+
+		previousFlowsRef.current = appState.flows;
+	}, [appState.flows, appState.activeFlowId]);
 
 	return (
 		<AppContext.Provider
