@@ -7,7 +7,7 @@ import {
 	getPageRow,
 	getSidebarRow,
 	initTestFlows,
-} from "./utils.tsx";
+} from "./utils";
 
 test.describe("Drag Hover Indicator Behavior", () => {
 	test.beforeEach(async ({ page }) => {

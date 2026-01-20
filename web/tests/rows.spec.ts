@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { initTestFlows } from "./utils.tsx";
+import { initTestFlows } from "./utils";
 
 test.describe("EVY Rows", () => {
 	test.beforeEach(async ({ page }) => {

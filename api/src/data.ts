@@ -32,7 +32,6 @@ export enum CRUD {
 	delete = "delete",
 }
 
-// Table mapping for dynamic access
 const tables: Record<string, PgTableWithColumns<any>> = {
 	Service: service,
 	Organization: organization,
@@ -51,7 +50,6 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	if (!osEnum.enumValues.includes(os)) return false;
 
 	try {
-		// Check if device exists
 		const existing = await db
 			.select()
 			.from(device)
@@ -62,7 +60,6 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 			return true;
 		}
 
-		// Create new device
 		await db.insert(device).values({
 			token,
 			os,
@@ -98,13 +95,18 @@ export async function crud(
 	const table = tables[model];
 	if (!table) throw new Error("Invalid model provided");
 
+	const getColumn = (columnName: string) => {
+		if (!(columnName in table)) {
+			throw new Error(`Invalid filter key: ${columnName}`);
+		}
+		return table[columnName as keyof typeof table & string];
+	};
+
 	try {
 		if (method === CRUD.find) {
-			// Build where clause from filter
 			const filterKey = Object.keys(filter!)[0];
 			const filterValue = filter![filterKey];
-			const column = table[filterKey as keyof typeof table];
-			if (!column) throw new Error(`Invalid filter key: ${filterKey}`);
+			const column = getColumn(filterKey);
 			return (await db
 				.select()
 				.from(table)
@@ -125,8 +127,7 @@ export async function crud(
 		if (method === CRUD.update) {
 			const filterKey = Object.keys(filter!)[0];
 			const filterValue = filter![filterKey];
-			const column = table[filterKey as keyof typeof table];
-			if (!column) throw new Error(`Invalid filter key: ${filterKey}`);
+			const column = getColumn(filterKey);
 			const updateData = { ...data, updatedAt: new Date() };
 			const result = await db
 				.update(table)
@@ -139,8 +140,7 @@ export async function crud(
 		if (method === CRUD.delete) {
 			const filterKey = Object.keys(filter!)[0];
 			const filterValue = filter![filterKey];
-			const column = table[filterKey as keyof typeof table];
-			if (!column) throw new Error(`Invalid filter key: ${filterKey}`);
+			const column = getColumn(filterKey);
 			const result = await db
 				.delete(table)
 				.where(eq(column, filterValue))
@@ -255,7 +255,6 @@ export async function saveFlow(
 	flowData: FlowData,
 	existingFlowId?: string,
 ): Promise<FlowResponse> {
-	// Validate flow data before saving
 	validateFlowData(flowData);
 
 	const now = new Date();

@@ -8,7 +8,7 @@ import {
 	getSidebarRow,
 	initTestFlows,
 	stableDragTo,
-} from "./utils.tsx";
+} from "./utils";
 
 test.describe("Drag & Drop UX", () => {
 	test.beforeEach(async ({ page }) => {
