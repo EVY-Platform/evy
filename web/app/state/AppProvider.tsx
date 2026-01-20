@@ -55,6 +55,9 @@ export function AppProvider({
 
 		if (activeFlow && activeFlow !== previousActiveFlow) {
 			wsClient.saveFlow(encodeFlow(activeFlow)).catch((error) => {
+				alert(
+					"Failed to save your changes. Please check your connection and try again."
+				);
 				console.error("Failed to save flow:", error);
 			});
 		}
