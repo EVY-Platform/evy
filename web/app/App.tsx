@@ -15,15 +15,13 @@ import type { ServerFlow } from "./types";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
 
-const panelWidth = "300px";
-
 function AppContent() {
 	const { flows, activeFlowId, dispatchRow, dispatchDragging } =
 		useContext(AppContext);
 
 	const pages = useMemo(
 		() => flows.find((flow) => flow.id === activeFlowId)?.pages || [],
-		[flows, activeFlowId]
+		[flows, activeFlowId],
 	);
 
 	useEffect(() => {
@@ -37,17 +35,20 @@ function AppContent() {
 	return (
 		<>
 			<div
-				className="evy-border-r evy-border-gray evy-bg-white evy-shadow-subtle"
-				style={{ width: panelWidth }}
+				key="rows-panel"
+				className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white evy-shadow-subtle"
 			>
-				<RowsPanel key="rows" />
+				<RowsPanel />
 			</div>
-			<div className="evy-flex evy-flex-1 evy-overflow-y-auto evy-flex-row evy-gap-4 evy-justify-center">
+			<div
+				key="pages-panel"
+				className="evy-flex-1 evy-overflow-auto evy-flex evy-flex-row evy-gap-4 evy-p-4"
+			>
 				{pages.map((page) => {
 					return (
 						<div
 							key={page.id}
-							className="evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662"
+							className="evy-flex-shrink-0 evy-mx-auto evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662"
 						>
 							<AppPage pageId={page.id} />
 						</div>
@@ -55,10 +56,10 @@ function AppContent() {
 				})}
 			</div>
 			<div
-				className="evy-border-l evy-border-gray evy-overflow-y-auto evy-bg-white evy-shadow-subtle"
-				style={{ width: panelWidth }}
+				key="config-panel"
+				className="evy-w-300 evy-flex-shrink-0 evy-border-l evy-border-gray evy-overflow-y-auto evy-bg-white evy-shadow-subtle"
 			>
-				<ConfigurationPanel key="configuration" />
+				<ConfigurationPanel />
 			</div>
 		</>
 	);
@@ -74,7 +75,9 @@ export function App() {
 	if (loading && !win?.__TEST_FLOWS__) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-gray-dark evy-text-lg">Loading flows...</div>
+				<div className="evy-text-gray-dark evy-text-lg">
+					Loading flows...
+				</div>
 			</div>
 		);
 	}

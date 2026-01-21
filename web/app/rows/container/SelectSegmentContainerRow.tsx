@@ -26,14 +26,15 @@ export default class SelectSegmentContainerRow extends EVYRow {
 
 		const childrenElements = children.length ? (
 			<DraggableRowContainer
+				key={children[this.state.selectedTab].id}
 				rowId={children[this.state.selectedTab].id}
 			>
 				{children[this.state.selectedTab].row}
 			</DraggableRowContainer>
-		) : (
-			// We don't want to show dropzone in rows panel
-			row.id !== this.constructor.name && <PlaceholderDropIndicator />
-		);
+		) : // We don't want to show dropzone in rows panel
+		row.id !== this.constructor.name ? (
+			<PlaceholderDropIndicator key="placeholder" />
+		) : null;
 
 		return (
 			<div className="evy-p-2">

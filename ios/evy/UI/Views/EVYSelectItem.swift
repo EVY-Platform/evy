@@ -163,8 +163,9 @@ struct EVYSelectItem: View {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.syncData()
+		try! EVY.getUserData()
 		try! await EVY.createItem()
+		
 		return Group {
 			let options = try! EVY.getDataFromText("{selling_reasons}")
 			switch options {

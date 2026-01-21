@@ -4,6 +4,13 @@ import { config } from "../config";
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
+type SaveFlowResponse = {
+	id: string;
+	data: ServerFlow;
+	createdAt: string;
+	updatedAt: string;
+};
+
 class WSClient {
 	private client: Client | null = null;
 	private connectionState: ConnectionState = "disconnected";
@@ -20,7 +27,6 @@ class WSClient {
 
 			this.client.on("open", async () => {
 				try {
-					// Login with a generated token and OS
 					const token = crypto.randomUUID();
 					await this.client?.login({ token, os: "Web" });
 					this.connectionState = "connected";
@@ -46,19 +52,18 @@ class WSClient {
 		return this.connectionPromise;
 	}
 
-	async getFlows(): Promise<ServerFlow[]> {
+	async getSDUI(): Promise<ServerFlow[]> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const result = await this.client.call("getFlows", {});
-		return result as ServerFlow[];
+		return (await this.client.call("getSDUI", {})) as ServerFlow[];
 	}
 
 	async saveFlow(flowData: ServerFlow): Promise<ServerFlow> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const result = await this.client.call("saveFlow", {
+		const result = (await this.client.call("saveFlow", {
 			flowData: {
 				id: flowData.id,
 				name: flowData.name,
@@ -67,8 +72,8 @@ class WSClient {
 				pages: flowData.pages,
 			},
 			flowId: flowData.id,
-		});
-		return result as ServerFlow;
+		})) as SaveFlowResponse;
+		return result.data;
 	}
 
 	disconnect(): void {

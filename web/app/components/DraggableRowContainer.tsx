@@ -1,5 +1,5 @@
 import type React from "react";
-import { Fragment } from "react";
+import { Fragment, useId } from "react";
 import ReactDOM from "react-dom";
 
 import { useDraggable, idleState } from "../hooks/useDraggable";
@@ -22,6 +22,7 @@ export function DraggableRowContainer({
 	previousRowId?: string;
 	nextRowId?: string;
 }) {
+	const instanceId = useId();
 	const { ref, state, indicators, dropzones } = useDraggable({
 		rowId,
 		orientation,
@@ -33,6 +34,7 @@ export function DraggableRowContainer({
 	return (
 		<Fragment>
 			<RowPrimitive
+				key={`${instanceId}-primitive`}
 				ref={ref}
 				state={state}
 				selectRow={selectRow}
@@ -47,6 +49,7 @@ export function DraggableRowContainer({
 				state.container &&
 				ReactDOM.createPortal(
 					<div
+						key={`${instanceId}-preview`}
 						className="evy-bg-white"
 						style={{
 							width: state.rect.width,

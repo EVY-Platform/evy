@@ -10,6 +10,7 @@
 				"title": "View Item",
 				"rows": [
 					{
+						"id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
 						"type": "Text",
 						"view": {
 							"content": {
@@ -21,6 +22,7 @@
 					}
 				],
 				"footer": {
+					"id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -46,6 +48,7 @@
 				"title": "Create listing",
 				"rows": [
 					{
+						"id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
 						"type": "SelectPhoto",
 						"view": {
 							"content": {
@@ -66,6 +69,7 @@
 						}
 					},
 					{
+						"id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
 						"type": "Input",
 						"view": {
 							"content": {
@@ -83,6 +87,7 @@
 						}
 					},
 					{
+						"id": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
 						"type": "Input",
 						"view": {
 							"content": {
@@ -101,6 +106,7 @@
 						}
 					},
 					{
+						"id": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
 						"type": "Dropdown",
 						"view": {
 							"content": {
@@ -119,6 +125,7 @@
 						}
 					},
 					{
+						"id": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
 						"type": "Dropdown",
 						"view": {
 							"content": {
@@ -137,6 +144,7 @@
 						}
 					},
 					{
+						"id": "a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d",
 						"type": "ColumnContainer",
 						"view": {
 							"content": {
@@ -205,6 +213,7 @@
 						}
 					},
 					{
+						"id": "b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e",
 						"type": "SheetContainer",
 						"view": {
 							"content": {
@@ -249,6 +258,7 @@
 					}
 				],
 				"footer": {
+					"id": "acabbedc-0a5a-4f10-8e0c-3d6cf76d86e8",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -267,6 +277,7 @@
 				"title": "Describe item",
 				"rows": [
 					{
+						"id": "c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f",
 						"type": "TextArea",
 						"view": {
 							"content": {
@@ -285,6 +296,7 @@
 					}
 				],
 				"footer": {
+					"id": "cc86c53a-170d-4800-8897-8f99f3697055",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -303,6 +315,7 @@
 				"title": "Pickup & delivery",
 				"rows": [
 					{
+						"id": "d0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a",
 						"type": "SelectSegmentContainer",
 						"view": {
 							"content": {
@@ -627,6 +640,7 @@
 					}
 				],
 				"footer": {
+					"id": "b1600fd2-aac2-4399-8a94-72baca75b9ba",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -645,6 +659,7 @@
 				"title": "Payment options",
 				"rows": [
 					{
+						"id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
 						"type": "Info",
 						"view": {
 							"content": {
@@ -654,6 +669,7 @@
 						}
 					},
 					{
+						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
 						"type": "ListContainer",
 						"view": {
 							"content": {
@@ -703,6 +719,7 @@
 					}
 				],
 				"footer": {
+					"id": "db46724f-c8f0-43cb-b888-6a23e4ca76cb",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -721,6 +738,7 @@
 				"title": "Sharing data publicly",
 				"rows": [
 					{
+						"id": "a3b4c5d6-e7f8-4a9b-0c1d-2e3f4a5b6c7d",
 						"type": "Info",
 						"view": {
 							"content": {
@@ -731,6 +749,7 @@
 					}
 				],
 				"footer": {
+					"id": "20e9a035-8a42-4282-8725-49b620866c70",
 					"type": "Button",
 					"view": {
 						"content": {

@@ -17,12 +17,12 @@ struct EVYHome: View {
 		} else {
 			VStack(spacing: 40) {
 				Button("View Item") {
-					navigate(NavOperation.navigate(Route(flowId: "view_item", pageId: "view")))
+					navigate(NavOperation.navigate(Route(flowId: "74a49d4b-2176-4925-857a-e29e2991f1bd", pageId: "82cae120-c7b1-4c29-bd42-e1521320b109")))
 				}
 				.font(.evyTitle)
 				.buttonStyle(.plain)
 				Button("Create Item") {
-					navigate(NavOperation.navigate(Route(flowId: "create_item", pageId: "step_1")))
+					navigate(NavOperation.navigate(Route(flowId: "ca47e6c5-da19-4491-8422-adb40d9e8a27", pageId: "306ed62c-c2af-4652-a873-26c7a388972d")))
 				}
 				.font(.evyTitle)
 				.buttonStyle(.plain)

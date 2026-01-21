@@ -104,6 +104,7 @@ struct EVYSearchSingle: View {
 		asyncView
 	} view: {
 		try! await EVY.createItem()
+		
 		return Group {
 			EVYSearch(source: "{local:address}",
 					  destination: "{item.address}",

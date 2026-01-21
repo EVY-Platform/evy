@@ -18,6 +18,7 @@ export default function Input({
 			required
 			value={value}
 			placeholder={placeholder}
+			readOnly
 		/>
 	);
 }

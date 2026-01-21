@@ -12,6 +12,9 @@ public enum EVYParamError: Error {
     case invalidProps
 }
 
+typealias EVYSDUI = [EVYFlow]
+
+
 extension String {
     var isNumber: Bool {
         let digitsCharacters = CharacterSet(charactersIn: "0123456789")
@@ -23,55 +26,55 @@ extension String {
 struct EVY {
     static let data = EVYDataManager()
 	
-	/**
-	 * Methods to get SDUI data
-	 * TODO: These are really just for debugging/deving so some tweaking needs to happen
-	 */
-	static func getSDUIFlows() async throws -> [EVYFlow] {
-		try await EVYAPIManager.shared.fetch(method: "getFlows",
-											 params: "",
-											 expecting: [EVYFlow].self)
+	static func getUserData() throws {
+		let userData = try EVYJson.from(localJSON: "user_data")
+		let encodedUserData = try JSONEncoder().encode(userData)
+		do {
+			try EVY.data.create(key: "user", data: encodedUserData)
+		} catch EVYDataError.keyAlreadyExists {
+			// User data already loaded, skip
+		}
 	}
 	
-	static func getItemData() async throws -> Data {
-		let itemData = try await EVYAPIManager.shared.fetch(method: "getData",
-															params: "",
-															expecting: EVYJson.self)
-		return try JSONEncoder().encode(itemData.parseProp(props: ["item"]))
-	}
-	
-	static func createItem() async throws {
-		try! EVY.data.create(key: "item", data: await getItemData())
-	}
-	
-	static func syncData() async throws {
-		let data = try await EVYAPIManager.shared.fetch(method: "getData",
-														params: "",
-														expecting: EVYJson.self)
+	static func getData() async throws -> Data {
+		let serviceData = try await EVYAPIManager.shared.fetch(method: "getData",
+															   params: "",
+															   expecting: EVYJson.self)
 		
-		let sellingReasons = try JSONEncoder().encode(data.parseProp(props: ["selling_reasons"]))
+		let sellingReasons = try JSONEncoder().encode(serviceData.parseProp(props: ["selling_reasons"]))
 		do {
 			try EVY.data.create(key: "selling_reasons", data: sellingReasons)
 		} catch {}
 		do {
-			let conditions = try JSONEncoder().encode(data.parseProp(props: ["conditions"]))
+			let conditions = try JSONEncoder().encode(serviceData.parseProp(props: ["conditions"]))
 			try EVY.data.create(key: "conditions", data: conditions)
 		} catch {}
 		do {
-			let durations = try JSONEncoder().encode(data.parseProp(props: ["durations"]))
+			let durations = try JSONEncoder().encode(serviceData.parseProp(props: ["durations"]))
 			try EVY.data.create(key: "durations", data: durations)
 		} catch {}
 		do {
-			let areas = try JSONEncoder().encode(data.parseProp(props: ["areas"]))
+			let areas = try JSONEncoder().encode(serviceData.parseProp(props: ["areas"]))
 			try EVY.data.create(key: "areas", data: areas)
 		} catch {}
+		
+		return try JSONEncoder().encode(serviceData.parseProp(props: ["item"]))
+	}
+	
+	static func getSDUI() async throws -> EVYSDUI {
+		try await EVYAPIManager.shared.fetch(method: "getSDUI",
+											 params: "",
+											 expecting: EVYSDUI.self)
+	}
+	
+	static func createItem() async throws {
+		try! EVY.data.create(key: "item", data: await getData())
 	}
 	
 	static func getRow(_ props: [String]) async throws -> EVYRow {
-		try await syncData()
 		try await createItem()
 		
-		let flowData = try await EVYAPIManager.shared.fetch(method: "getFlows",
+		let flowData = try await EVYAPIManager.shared.fetch(method: "getSDUI",
 															params: "",
 															expecting: EVYJson.self)
 		let row = try JSONEncoder().encode(flowData.parseProp(props: props))

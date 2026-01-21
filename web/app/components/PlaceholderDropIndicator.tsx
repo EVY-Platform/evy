@@ -8,7 +8,6 @@ import {
 export function PlaceholderDropIndicator() {
 	return (
 		<DraggableRowContainer
-			key={containerDropindicatorId}
 			rowId={containerDropindicatorId}
 			orientation="horizontal"
 		>

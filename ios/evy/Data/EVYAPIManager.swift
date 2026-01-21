@@ -7,11 +7,6 @@
 
 import Foundation
 
-enum EVYAPIManagerError: Error {
-    case loginError
-	case invalidMethod
-}
-
 let DEFAULT_HOST = "localhost"
 let DEFAULT_PORT = 3000
 
@@ -33,11 +28,7 @@ final class EVYAPIManager {
 	}
     
     private init() {
-		if ProcessInfo.processInfo.environment["DEBUG"] == "true" {
-			self.rpcWS = EVYWebsocketMock()
-		} else {
-			self.rpcWS = EVYWebsocket(host: API_HOST)
-		}
+		self.rpcWS = EVYWebsocket(host: API_HOST)
 	}
 	
 	private func validateAuth() async throws {

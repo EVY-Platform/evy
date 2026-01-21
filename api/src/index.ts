@@ -1,10 +1,11 @@
 import {
 	validateAuth,
 	primeData,
-	getNewDataSince,
 	crud,
-	getFlows,
+	getSDUI,
 	saveFlow,
+	getData,
+	saveData,
 } from "./data";
 import { initServer, WSParams } from "./ws";
 
@@ -18,14 +19,20 @@ async function main() {
 	primeData();
 
 	server
-		.register("getData", async (data: WSParams) => {
-			return getNewDataSince(data.since);
+		.register("getData", async (params: WSParams) => {
+			return getData(params.since);
 		})
 		.protected();
 
 	server
-		.register("getFlows", async (data: WSParams) => {
-			return getFlows(data.since);
+		.register("saveData", async (params: WSParams) => {
+			return saveData(params.dataPayload, params.dataId);
+		})
+		.protected();
+
+	server
+		.register("getSDUI", async (data: WSParams) => {
+			return getSDUI(data.since);
 		})
 		.protected();
 

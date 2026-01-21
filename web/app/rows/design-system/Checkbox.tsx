@@ -7,6 +7,7 @@ export default function Checkbox({ checked }: { checked: boolean }) {
 			type="checkbox"
 			checked={checked}
 			className={`w-4 h-4 bg-gray ${border}`}
+			readOnly
 		/>
 	);
 }

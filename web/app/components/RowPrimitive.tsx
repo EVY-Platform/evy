@@ -1,5 +1,5 @@
 import type React from "react";
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useId, useMemo } from "react";
 
 import {
 	dropIndicatorExpansionBefore,
@@ -38,6 +38,8 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 		},
 		ref
 	) {
+		const instanceId = useId();
+
 		const cursor = useMemo(() => {
 			return {
 				[previewState.type]: "pointer",
@@ -65,6 +67,7 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			<>
 				{showBefore && (
 					<div
+						key={`${instanceId}-indicator-before`}
 						className={`${indicatorClass} ${
 							indicators.includes("before")
 								? dropIndicatorExpansionBefore
@@ -74,6 +77,7 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				)}
 				{/* biome-ignore lint/a11y/useSemanticElements: This is a drag-and-drop container that requires a div for proper layout */}
 				<div
+					key={`${instanceId}-row-content`}
 					className="evy-flex evy-flex-col evy-w-full evy-relative evy-hover:bg-gray-light"
 					style={{ cursor }}
 					ref={ref}
@@ -86,6 +90,7 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				</div>
 				{showAfter && (
 					<div
+						key={`${instanceId}-indicator-after`}
 						className={`${indicatorClass} ${
 							indicators.includes("after")
 								? dropIndicatorExpansionAfter

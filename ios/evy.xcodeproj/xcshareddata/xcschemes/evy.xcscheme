@@ -57,8 +57,8 @@
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable
-            key = "DEBUG"
-            value = "true"
+            key = "API_HOST"
+            value = "localhost:8000"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

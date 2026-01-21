@@ -57,6 +57,7 @@ struct EVYInputList: View {
 		asyncView
 	} view: {
 		try! await EVY.createItem()
+		
 		return Group {
 			EVYInputList(data: "{item.tags}",
 						 format: "{$0.value}",
