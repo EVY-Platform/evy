@@ -7,7 +7,7 @@ import {
 	getData,
 	saveData,
 } from "./data";
-import { initServer, WSParams } from "./ws";
+import { initServer, emitJsonRpc, WSParams } from "./ws";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
@@ -26,7 +26,9 @@ async function main() {
 
 	server
 		.register("saveData", async (params: WSParams) => {
-			return saveData(params.dataPayload, params.dataId);
+			const result = await saveData(params.dataPayload, params.dataId);
+			emitJsonRpc(server, "dataUpdated", result);
+			return result;
 		})
 		.protected();
 
@@ -38,7 +40,9 @@ async function main() {
 
 	server
 		.register("saveFlow", async (data: WSParams) => {
-			return saveFlow(data.flowData, data.flowId);
+			const result = await saveFlow(data.flowData, data.flowId);
+			emitJsonRpc(server, "flowUpdated", result);
+			return result;
 		})
 		.protected();
 

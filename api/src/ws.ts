@@ -7,6 +7,26 @@ export type WSParams = typeof IRPCMethodParams;
 const PORT: number = parseInt(process.env.API_PORT || "8000");
 const HOST: string = "0.0.0.0";
 
+// Custom emit function that sends proper JSON-RPC 2.0 notifications
+// rpc-websockets uses non-standard format: { notification: name, params }
+// JsonRPC.swift expects standard format: { jsonrpc: "2.0", method: name, params }
+function emitJsonRpc(server: WSServer, eventName: string, params: unknown) {
+	const ns = server.of("/");
+	const events = ns.clients().events;
+	const eventSockets = events[eventName]?.sockets || [];
+
+	const message = JSON.stringify({
+		jsonrpc: "2.0",
+		method: eventName,
+		params: params,
+	});
+
+	for (const socketId of eventSockets) {
+		const socket = ns.connected()[socketId];
+		if (socket) socket.send(message);
+	}
+}
+
 function initServer(
 	authHandler: (params: WSParams) => Promise<boolean>,
 ): Promise<WSServer> {
@@ -17,9 +37,13 @@ function initServer(
 		server.on("error", (error: WSError) => reject(error));
 	}).then((server) => {
 		server.setAuth(authHandler);
+
+		server.event("dataUpdated");
+		server.event("flowUpdated");
+
 		console.info(`WS server listening at ${HOST}:${PORT}`);
 		return server;
 	});
 }
 
-export { initServer };
+export { initServer, emitJsonRpc };
