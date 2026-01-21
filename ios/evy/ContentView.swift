@@ -122,6 +122,8 @@ struct ContentView: View {
         NavigationStack(path: $routes) {
 			EVYHome(loading: $loading)
 				.task {
+					guard flows.isEmpty else { return }
+					
 					do {
 						try EVY.getUserData()
 						itemData = try await EVY.getData()
