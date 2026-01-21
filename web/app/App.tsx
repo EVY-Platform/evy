@@ -34,16 +34,10 @@ function AppContent() {
 
 	return (
 		<>
-			<div
-				key="rows-panel"
-				className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white evy-shadow-subtle"
-			>
+			<div className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white evy-shadow-subtle">
 				<RowsPanel />
 			</div>
-			<div
-				key="pages-panel"
-				className="evy-flex-1 evy-overflow-auto evy-flex evy-flex-row evy-gap-4 evy-p-4"
-			>
+			<div className="evy-flex-1 evy-overflow-auto evy-flex evy-flex-row evy-gap-4 evy-p-4">
 				{pages.map((page) => {
 					return (
 						<div
@@ -55,10 +49,7 @@ function AppContent() {
 					);
 				})}
 			</div>
-			<div
-				key="config-panel"
-				className="evy-w-300 evy-flex-shrink-0 evy-border-l evy-border-gray evy-overflow-y-auto evy-bg-white evy-shadow-subtle"
-			>
+			<div className="evy-w-300 evy-flex-shrink-0 evy-border-l evy-border-gray evy-overflow-y-auto evy-bg-white evy-shadow-subtle">
 				<ConfigurationPanel />
 			</div>
 		</>

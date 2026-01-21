@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -10,7 +10,6 @@ const idle: State = { type: "idle" };
 const hovered: State = { type: "hovered" };
 
 export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
-	const instanceId = useId();
 	const ref = useRef<HTMLButtonElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
@@ -37,7 +36,6 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 	return (
 		<Fragment>
 			<div
-				key={`${instanceId}-overlay`}
 				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full evy-opacity-60"
 				style={{
 					backgroundColor:
@@ -47,7 +45,6 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 				}}
 			/>
 			<button
-				key={`${instanceId}-button`}
 				type="button"
 				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full evy-justify-center evy-pt-32 evy-border-none evy-bg-transparent evy-cursor-pointer"
 				ref={ref}
