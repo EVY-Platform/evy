@@ -38,7 +38,6 @@ interface ServerPageInput {
 	footer?: ServerRowInput;
 }
 
-// Common selectors used across tests
 export const SELECTORS = {
 	phoneContainer: 'div[class*="evy-bg-phone"]',
 	pageContent: '[class*="evy-overflow-scroll"]',
@@ -55,7 +54,6 @@ export const SELECTORS = {
 	errorMessage: 'div:text-is("Failed to load flows")',
 };
 
-// Helper functions for common locator patterns
 export function getRowsPanel(page: Page): Locator {
 	return page.getByText("Rows", { exact: true }).first().locator("..");
 }
@@ -88,32 +86,26 @@ export function getDropIndicator(page: Page): Locator {
 	return page.locator(SELECTORS.dropIndicator);
 }
 
-// Get the flow selector dropdown
-export function getFlowSelector(page: Page): Locator {
+export function getSDUISelector(page: Page): Locator {
 	return page.locator(SELECTORS.flowSelector);
 }
 
-// Get the configuration panel
 export function getConfigPanel(page: Page): Locator {
 	return page.getByText("Configuration", { exact: true }).locator("..");
 }
 
-// Get a specific config input by label
 export function getConfigInput(page: Page, label: string): Locator {
 	return getConfigPanel(page).getByLabel(label);
 }
 
-// Check if loading state is visible
 export function getLoadingState(page: Page): Locator {
 	return page.getByText("Loading flows...", { exact: true });
 }
 
-// Check if error state is visible
 export function getErrorState(page: Page): Locator {
 	return page.getByText("Failed to load flows", { exact: true });
 }
 
-// Drag helper with stabilization wait to prevent flaky tests
 export async function stableDragTo(
 	page: Page,
 	source: Locator,
@@ -123,7 +115,6 @@ export async function stableDragTo(
 	await page.waitForTimeout(150);
 }
 
-// Transform a single ServerRowInput to ServerRow
 function ensureRowId(row: ServerRowInput): ServerRow {
 	const inputContent = row.view.content;
 	const content: ServerRowContent = {
@@ -163,12 +154,10 @@ function ensureRowId(row: ServerRowInput): ServerRow {
 	};
 }
 
-// Recursively ensure all rows have IDs, transforming ServerRowInput[] to ServerRow[]
 function ensureRowIds(rows: ServerRowInput[]): ServerRow[] {
 	return rows.map(ensureRowId);
 }
 
-// Takes ServerPageInput (id optional) and returns ServerPage (id required)
 function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 	return [
 		{
@@ -191,14 +180,12 @@ export async function initTestFlows(page: Page, pages: ServerPageInput[]) {
 	}, createTestFlows(pages));
 }
 
-// Initialize with full ServerFlow objects for more complex test scenarios
 export async function initFullFlows(page: Page, flows: ServerFlow[]) {
 	await page.addInitScript((flowData: ServerFlow[]) => {
 		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flowData;
 	}, flows);
 }
 
-// Input type for debug flows where row ids are optional
 interface DebugFlowInput {
 	id?: string;
 	name: string;
@@ -207,7 +194,6 @@ interface DebugFlowInput {
 	pages: ServerPageInput[];
 }
 
-// Helper to create debug flows with auto-generated IDs
 function createDebugFlows(): ServerFlow[] {
 	const flows: DebugFlowInput[] = [
 		{

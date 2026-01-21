@@ -11,11 +11,10 @@ import {
 	primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import type { ValidatedFlowData } from "../validation";
 
-// Enum
 export const osEnum = pgEnum("OS", ["ios", "android", "Web"]);
 
-// Device table
 export const device = pgTable(
 	"Device",
 	{
@@ -26,7 +25,6 @@ export const device = pgTable(
 	(table) => [uniqueIndex("Device_token_os_key").on(table.token, table.os)],
 );
 
-// Service table
 export const service = pgTable(
 	"Service",
 	{
@@ -39,12 +37,10 @@ export const service = pgTable(
 	(table) => [uniqueIndex("Service_name_key").on(table.name)],
 );
 
-// Service relations
 export const serviceRelations = relations(service, ({ many }) => ({
 	providers: many(serviceProvider),
 }));
 
-// Organization table
 export const organization = pgTable(
 	"Organization",
 	{
@@ -60,12 +56,10 @@ export const organization = pgTable(
 	(table) => [uniqueIndex("Organization_name_key").on(table.name)],
 );
 
-// Organization relations
 export const organizationRelations = relations(organization, ({ many }) => ({
 	providers: many(serviceProvider),
 }));
 
-// ServiceProvider table
 export const serviceProvider = pgTable(
 	"ServiceProvider",
 	{
@@ -89,7 +83,6 @@ export const serviceProvider = pgTable(
 	],
 );
 
-// ServiceProvider relations
 export const serviceProviderRelations = relations(
 	serviceProvider,
 	({ one }) => ({
@@ -104,15 +97,22 @@ export const serviceProviderRelations = relations(
 	}),
 );
 
-// Flow table
 export const flow = pgTable("Flow", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	data: jsonb("data").notNull(),
+	data: jsonb("data").$type<ValidatedFlowData>().notNull(),
 	createdAt: timestamp("created_at", { precision: 3 }).notNull(),
 	updatedAt: timestamp("updated_at", { precision: 3 }).notNull(),
 });
 
-// Type exports for use in application code
+export type ServiceData = Record<string, unknown>;
+
+export const data = pgTable("Data", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	data: jsonb("data").$type<ServiceData>().notNull(),
+	createdAt: timestamp("created_at", { precision: 3 }).notNull(),
+	updatedAt: timestamp("updated_at", { precision: 3 }).notNull(),
+});
+
 export type Device = typeof device.$inferSelect;
 export type NewDevice = typeof device.$inferInsert;
 export type Service = typeof service.$inferSelect;
@@ -123,6 +123,7 @@ export type ServiceProvider = typeof serviceProvider.$inferSelect;
 export type NewServiceProvider = typeof serviceProvider.$inferInsert;
 export type Flow = typeof flow.$inferSelect;
 export type NewFlow = typeof flow.$inferInsert;
+export type Data = typeof data.$inferSelect;
+export type NewData = typeof data.$inferInsert;
 
-// OS enum type export
 export type OS = (typeof osEnum.enumValues)[number];

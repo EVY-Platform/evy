@@ -3,7 +3,7 @@ import { eq, gt, desc } from "drizzle-orm";
 import type { PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { isCorrectDate } from "./utils";
-import { validateFlowData } from "./validation";
+import { validateFlowData, type ValidatedFlowData } from "./validation";
 import {
 	db,
 	device,
@@ -11,7 +11,10 @@ import {
 	organization,
 	serviceProvider,
 	flow,
+	data,
 	osEnum,
+	type Data,
+	type Flow,
 	type Service,
 	type Organization,
 	type ServiceProvider,
@@ -19,9 +22,6 @@ import {
 } from "./db";
 
 type Model = Service | Organization | ServiceProvider;
-type ModelsDictionary = {
-	[key: string]: Model[];
-};
 type AnyData = {
 	[key: string]: AnyData | string | number | boolean | Date;
 };
@@ -37,6 +37,7 @@ const tables: Record<string, PgTableWithColumns<any>> = {
 	Organization: organization,
 	ServiceProvider: serviceProvider,
 	Flow: flow,
+	Data: data,
 };
 
 const lastTableDataUpdates: {
@@ -120,7 +121,10 @@ export async function crud(
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
-			const result = await db.insert(table).values(insertData).returning();
+			const result = await db
+				.insert(table)
+				.values(insertData)
+				.returning();
 			return result as Model[];
 		}
 
@@ -152,46 +156,16 @@ export async function crud(
 	} catch (e) {
 		const error = e as { code?: string; message?: string };
 		if (error.code) throw new Error(error.code);
-		if (error.message?.includes("is missing")) throw new Error(error.message);
+		if (error.message?.includes("is missing"))
+			throw new Error(error.message);
 		throw new Error(String(e));
 	}
 }
 
-export async function getNewDataSince(since?: Date): Promise<ModelsDictionary> {
-	const hasValidSince = since && isCorrectDate(new Date(since));
-	const relevantTables = Object.keys(lastTableDataUpdates).filter(
-		(model: string) => {
-			if (!hasValidSince) return true;
-			return lastTableDataUpdates[model] > since;
-		},
-	);
-
-	const results = await Promise.all(
-		relevantTables.map(async (model: string) => {
-			const table = tables[model];
-			if (!table) return [];
-
-			if (hasValidSince) {
-				return db
-					.select()
-					.from(table)
-					.where(gt(table.updatedAt, new Date(since)));
-			}
-			return db.select().from(table);
-		}),
-	);
-
-	return relevantTables.reduce(
-		(obj, tableName, index) => {
-			obj[tableName] = results[index] as Model[];
-			return obj;
-		},
-		{} as ModelsDictionary,
-	);
-}
-
 export async function primeData() {
-	const modelNames = Object.keys(tables).filter((model) => model !== "Device");
+	const modelNames = Object.keys(tables).filter(
+		(model) => model !== "Device",
+	);
 
 	await Promise.all(
 		modelNames.map(async (model: string) => {
@@ -210,84 +184,100 @@ export async function primeData() {
 	);
 }
 
-type FlowData = {
-	name: string;
-	type: string;
-	data: string;
-	pages: unknown[];
-};
+export async function getSDUI(since?: Date): Promise<ValidatedFlowData[]> {
+	const sinceDate =
+		since && isCorrectDate(new Date(since)) ? new Date(since) : undefined;
 
-type FlowResponse = {
-	id: string;
-	name: string;
-	type: string;
-	data: string;
-	pages: unknown[];
-};
+	const flows = await db
+		.select({ data: flow.data })
+		.from(flow)
+		.where(sinceDate ? gt(flow.updatedAt, sinceDate) : undefined)
+		.orderBy(desc(flow.updatedAt));
 
-export async function getFlows(since?: Date): Promise<FlowResponse[]> {
-	const hasValidSince = since && isCorrectDate(new Date(since));
-
-	let flows;
-	if (hasValidSince) {
-		flows = await db
-			.select()
-			.from(flow)
-			.where(gt(flow.updatedAt, new Date(since)))
-			.orderBy(desc(flow.updatedAt));
-	} else {
-		flows = await db.select().from(flow).orderBy(desc(flow.updatedAt));
-	}
-
-	return flows.map((f) => {
-		const flowData = f.data as FlowData;
-		return {
-			id: f.id,
-			name: flowData.name,
-			type: flowData.type,
-			data: flowData.data,
-			pages: flowData.pages,
-		};
-	});
+	return flows.map((f) => f.data);
 }
 
 export async function saveFlow(
-	flowData: FlowData,
+	flowData: unknown,
 	existingFlowId?: string,
-): Promise<FlowResponse> {
-	validateFlowData(flowData);
+): Promise<Flow> {
+	const validatedData = validateFlowData(flowData);
 
 	const now = new Date();
 
-	let savedFlow;
 	if (existingFlowId) {
 		const result = await db
 			.update(flow)
 			.set({
-				data: flowData,
+				data: validatedData,
 				updatedAt: now,
 			})
 			.where(eq(flow.id, existingFlowId))
 			.returning();
-		savedFlow = result[0];
+		return result[0];
+	}
+
+	const result = await db
+		.insert(flow)
+		.values({
+			data: validatedData,
+			createdAt: now,
+			updatedAt: now,
+		})
+		.returning();
+	return result[0];
+}
+
+export async function getData(since?: Date): Promise<Record<string, unknown>> {
+	const sinceDate =
+		since && isCorrectDate(new Date(since)) ? new Date(since) : undefined;
+
+	const dataRecords = await db
+		.select({ data: data.data })
+		.from(data)
+		.where(sinceDate ? gt(data.updatedAt, sinceDate) : undefined)
+		.orderBy(desc(data.updatedAt));
+
+	// Merge all data records into a single object
+	// Later records override earlier ones for any conflicting keys
+	const mergedData: Record<string, unknown> = {};
+	for (const record of dataRecords.reverse()) {
+		Object.assign(mergedData, record.data);
+	}
+
+	return mergedData;
+}
+
+export async function saveData(
+	dataPayload: unknown,
+	existingDataId?: string,
+): Promise<Data> {
+	if (typeof dataPayload !== "object" || dataPayload === null) {
+		throw new Error("Data payload must be a non-null object");
+	}
+	const serviceData = dataPayload as Record<string, unknown>;
+
+	const now = new Date();
+
+	if (existingDataId) {
+		const result = await db
+			.update(data)
+			.set({
+				data: serviceData,
+				updatedAt: now,
+			})
+			.where(eq(data.id, existingDataId))
+			.returning();
+		return result[0];
 	} else {
 		const result = await db
-			.insert(flow)
+			.insert(data)
 			.values({
-				data: flowData,
+				data: serviceData,
 				createdAt: now,
 				updatedAt: now,
 			})
 			.returning();
-		savedFlow = result[0];
+		return result[0];
 	}
-
-	const savedFlowData = savedFlow.data as FlowData;
-	return {
-		id: savedFlow.id,
-		name: savedFlowData.name,
-		type: savedFlowData.type,
-		data: savedFlowData.data,
-		pages: savedFlowData.pages,
-	};
 }

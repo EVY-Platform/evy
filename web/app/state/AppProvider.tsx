@@ -26,7 +26,7 @@ export function AppProvider({
 }) {
 	const rows = baseRows.map((row) => ({
 		id: row.name,
-		row: createElement(row, { rowId: row.name }),
+		row: createElement(row, { key: row.name, rowId: row.name }),
 		config: row.config,
 	}));
 

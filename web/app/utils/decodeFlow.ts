@@ -68,13 +68,13 @@ function decodeRow(row: ServerRow): Row {
 	if (!baseRow) {
 		return {
 			id: row.id,
-			row: createElement(UnknownRow, { rowId: row.id }),
+			row: createElement(UnknownRow, { key: row.id, rowId: row.id }),
 			config: UnknownRow.config,
 		};
 	}
 	return {
 		id: row.id,
-		row: createElement(baseRow, { rowId: row.id }),
+		row: createElement(baseRow, { key: row.id, rowId: row.id }),
 		config: {
 			...row,
 			view: {

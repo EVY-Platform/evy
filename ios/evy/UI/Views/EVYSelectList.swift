@@ -33,7 +33,7 @@ struct EVYSelectList: View {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.syncData()
+		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
 		return Group {

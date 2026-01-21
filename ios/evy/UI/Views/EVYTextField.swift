@@ -99,6 +99,7 @@ struct EVYTextField: View {
 		asyncView
 	} view: {
 		try! await EVY.createItem()
+		
 		return VStack {
 			EVYTextField(input: "{formatDimension(item.dimension.width)}",
 						 destination: "{item.dimension.width}",

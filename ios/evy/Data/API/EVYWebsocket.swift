@@ -8,8 +8,24 @@
 import Foundation
 import JsonRPC
 
-enum EVYWSError: Error {
+public enum EVYRPCError: LocalizedError {
     case loginError
+    case connectionError(String)
+    case rpcError(code: Int, message: String)
+    case unknownError(String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .loginError:
+            return "Authentication failed"
+        case .connectionError(let message):
+            return "Connection error: \(message)"
+        case .rpcError(_, let message):
+            return message
+        case .unknownError(let message):
+            return message
+        }
+    }
 }
 
 struct EVYLoginParams: Encodable {
@@ -44,31 +60,36 @@ final class EVYWebsocket: EVYWebsocketProtocol {
         params: Encodable,
         expecting _: T.Type
     ) async throws -> T {
-        try await rpc.call(method: method, params: params, T.self, String.self)
+        do {
+            return try await rpc.call(method: method, params: params, T.self, String.self)
+        } catch let error as AsAnyRequestError {
+            throw mapRequestError(error.anyRequestError)
+        } catch {
+            throw EVYRPCError.unknownError(error.localizedDescription)
+        }
     }
-}
-
-final class EVYWebsocketMock: EVYWebsocketProtocol {
-	public func connect(token: String, os: EVYOS) async throws -> Bool {
-		return true
-	}
-	
-	public func fetch<T: Codable>(
-		method: String,
-		params: Encodable,
-		expecting _: T.Type
-	) async throws -> T {
-		switch method {
-		case "getFlows":
-			return try T.from(localJSON: "sdui")
-		case "getData":
-			let jsonObject = try EVYJson.from(localJSON: "data")
-			let jsonData = try JSONEncoder().encode(jsonObject)
-			return try JSONDecoder().decode(T.self, from: jsonData)
-		default:
-			return try T.from(localJSON: method)
-		}
-	}
+    
+    private func mapRequestError(_ error: RequestError<Any, Any>) -> EVYRPCError {
+        switch error {
+        case .reply(_, _, let responseError):
+            return .rpcError(code: responseError.code, message: responseError.message)
+        case .service(let serviceError):
+            switch serviceError {
+            case .connection(let cause):
+                return .connectionError(cause.localizedDescription)
+            case .codec(let cause):
+                return .unknownError("Encoding/decoding error: \(cause.localizedDescription)")
+            case .envelope(_, let description):
+                return .unknownError("Protocol error: \(description)")
+            case .unregisteredResponse(let id, _):
+                return .unknownError("Unregistered response with id: \(id)")
+            }
+        case .empty:
+            return .unknownError("Empty response from server")
+        case .custom(let description, _):
+            return .unknownError(description)
+        }
+    }
 }
 
 enum JSONParseError: Error {

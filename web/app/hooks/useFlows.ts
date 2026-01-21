@@ -18,7 +18,7 @@ export function useFlows(): UseFlowsResult {
 
 		async function fetchFlows() {
 			try {
-				const fetchedFlows = await wsClient.getFlows();
+				const fetchedFlows = await wsClient.getSDUI();
 				if (!cancelled) {
 					setFlows(fetchedFlows);
 					setLoading(false);
@@ -26,7 +26,7 @@ export function useFlows(): UseFlowsResult {
 			} catch (err) {
 				if (!cancelled) {
 					setError(
-						err instanceof Error ? err : new Error(String(err))
+						err instanceof Error ? err : new Error(String(err)),
 					);
 					setLoading(false);
 				}

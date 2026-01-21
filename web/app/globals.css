@@ -100,6 +100,12 @@ body {
 .evy-overflow-scroll {
 	overflow: scroll;
 }
+.evy-overflow-auto {
+	overflow: auto;
+}
+.evy-flex-shrink-0 {
+	flex-shrink: 0;
+}
 
 /* Flexbox utilities */
 .evy-justify-between {
@@ -189,6 +195,13 @@ body {
 }
 .evy-w-full {
 	width: 100%;
+}
+.evy-w-300 {
+	width: 300px;
+}
+.evy-mx-auto {
+	margin-left: auto;
+	margin-right: auto;
 }
 
 /* Height utilities */

@@ -180,6 +180,7 @@ class ImageManager {
 		asyncView
 	} view: {
 		try! await EVY.createItem()
+		
 		return EVYSelectPhoto(title: "Photos Title",
 							  subtitle: "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
 							  icon: "::photo.badge.plus.fill::",

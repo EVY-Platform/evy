@@ -16,13 +16,16 @@ export default class SheetContainerRow extends EVYRow {
 
 	renderContent(row: Row) {
 		const childElement = row.config.view.content.child ? (
-			<DraggableRowContainer rowId={row.config.view.content.child.id}>
+			<DraggableRowContainer
+				key={row.config.view.content.child.id}
+				rowId={row.config.view.content.child.id}
+			>
 				{row.config.view.content.child.row}
 			</DraggableRowContainer>
-		) : (
-			// We don't want to show dropzone in rows panel
-			row.id !== this.constructor.name && <PlaceholderDropIndicator />
-		);
+		) : // We don't want to show dropzone in rows panel
+		row.id !== this.constructor.name ? (
+			<PlaceholderDropIndicator key="placeholder" />
+		) : null;
 		return (
 			<div className="evy-p-2">
 				<p>{row.config.view.content.title}</p>

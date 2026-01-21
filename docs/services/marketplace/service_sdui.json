@@ -10,6 +10,7 @@
 				"title": "View Item",
 				"rows": [
 					{
+						"id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
 						"type": "Text",
 						"view": {
 							"content": {
@@ -21,6 +22,7 @@
 					}
 				],
 				"footer": {
+					"id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -43,29 +45,30 @@
 		"pages": [
 			{
 				"id": "306ed62c-c2af-4652-a873-26c7a388972d",
-				"title": "Create listing",
 				"rows": [
 					{
+						"id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
 						"type": "SelectPhoto",
 						"view": {
 							"content": {
 								"title": "",
-								"subtitle": "Photos: {count(item.photo_ids)}/10 - Chose your listing's main photo first.",
 								"icon": "::photo.badge.plus.fill::",
+								"photos": "{item.photo_ids}",
 								"content": "Add photos",
-								"photos": "{item.photo_ids}"
+								"subtitle": "Photos: {count(item.photo_ids)}/10 - Chose your listing's main photo first."
 							}
 						},
 						"edit": {
-							"destination": "{item.photo_ids}",
 							"validation": {
-								"required": "true",
 								"message": "Photos of the item",
+								"required": "true",
 								"minAmount": "3"
-							}
+							},
+							"destination": "{item.photo_ids}"
 						}
 					},
 					{
+						"id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
 						"type": "Input",
 						"view": {
 							"content": {
@@ -75,14 +78,15 @@
 							}
 						},
 						"edit": {
-							"destination": "{item.title}",
 							"validation": {
-								"required": "true",
-								"message": "Test input"
-							}
+								"message": "Test input",
+								"required": "true"
+							},
+							"destination": "{item.title}"
 						}
 					},
 					{
+						"id": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
 						"type": "Input",
 						"view": {
 							"content": {
@@ -92,57 +96,61 @@
 							}
 						},
 						"edit": {
-							"destination": "{item.price.value}",
 							"validation": {
-								"required": "true",
 								"message": "How much are you selling it for?",
+								"required": "true",
 								"minAmount": "1"
-							}
+							},
+							"destination": "{item.price.value}"
 						}
 					},
 					{
+						"id": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
 						"type": "Dropdown",
 						"view": {
+							"data": "{conditions}",
 							"content": {
 								"title": "Condition",
 								"format": "{$0.value}",
 								"placeholder": "Choose one"
-							},
-							"data": "{conditions}"
+							}
 						},
 						"edit": {
-							"destination": "{item.condition_id}",
 							"validation": {
-								"required": "true",
-								"message": "Is the item used, new, etc?"
-							}
+								"message": "Is the item used, new, etc?",
+								"required": "true"
+							},
+							"destination": "{item.condition_id}"
 						}
 					},
 					{
+						"id": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
 						"type": "Dropdown",
 						"view": {
+							"data": "{selling_reasons}",
 							"content": {
 								"title": "Selling Reason",
 								"format": "{$0.value}",
 								"placeholder": "Choose one"
-							},
-							"data": "{selling_reasons}"
+							}
 						},
 						"edit": {
-							"destination": "{item.selling_reason_id}",
 							"validation": {
-								"required": "true",
-								"message": "Why are you selling?"
-							}
+								"message": "Why are you selling?",
+								"required": "true"
+							},
+							"destination": "{item.selling_reason_id}"
 						}
 					},
 					{
+						"id": "a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d",
 						"type": "ColumnContainer",
 						"view": {
 							"content": {
 								"title": "Dimensions (width x height x depth)",
 								"children": [
 									{
+										"id": "11111111-1111-4111-8111-111111111101",
 										"type": "Input",
 										"view": {
 											"content": {
@@ -152,14 +160,15 @@
 											}
 										},
 										"edit": {
-											"destination": "{item.dimensions.width}",
 											"validation": {
-												"required": "true",
-												"message": "Width"
-											}
+												"message": "Width",
+												"required": "true"
+											},
+											"destination": "{item.dimensions.width}"
 										}
 									},
 									{
+										"id": "11111111-1111-4111-8111-111111111102",
 										"type": "Input",
 										"view": {
 											"content": {
@@ -169,14 +178,15 @@
 											}
 										},
 										"edit": {
-											"destination": "{item.dimensions.height}",
 											"validation": {
-												"required": "true",
-												"message": "Height"
-											}
+												"message": "Height",
+												"required": "true"
+											},
+											"destination": "{item.dimensions.height}"
 										}
 									},
 									{
+										"id": "11111111-1111-4111-8111-111111111103",
 										"type": "Input",
 										"view": {
 											"content": {
@@ -186,12 +196,12 @@
 											}
 										},
 										"edit": {
-											"destination": "{item.dimensions.length}",
 											"validation": {
-												"required": "true",
 												"message": "Length",
-												"minValue": "1"
-											}
+												"minValue": "1",
+												"required": "true"
+											},
+											"destination": "{item.dimensions.length}"
 										}
 									}
 								]
@@ -205,37 +215,40 @@
 						}
 					},
 					{
+						"id": "6c48841c-079f-4c58-bab6-af96a87d7399",
 						"type": "SheetContainer",
 						"view": {
 							"content": {
 								"title": "Sheet",
 								"child": {
+									"id": "2422c9ec-df63-4fde-9632-0fe159c0b40e",
 									"type": "InputList",
 									"view": {
+										"data": "{item.tags}",
 										"content": {
 											"title": "Tags",
-											"placeholder": "Search for tags",
-											"format": "{$0.value}"
-										},
-										"data": "{item.tags}"
+											"format": "{$0.value}",
+											"placeholder": "Search for tags"
+										}
 									}
 								},
 								"children": [
 									{
+										"id": "8f8c442e-ee2d-4974-9ef1-29005f3311e6",
 										"type": "Search",
 										"view": {
+											"data": "{api:tags}",
 											"content": {
 												"title": "",
 												"format": "{$0.value}",
 												"placeholder": "Search for tags"
-											},
-											"data": "{api:tags}"
+											}
 										},
 										"edit": {
-											"destination": "{item.tags}",
 											"validation": {
 												"required": "false"
-											}
+											},
+											"destination": "{item.tags}"
 										}
 									}
 								]
@@ -248,7 +261,9 @@
 						}
 					}
 				],
+				"title": "Create listing",
 				"footer": {
+					"id": "acabbedc-0a5a-4f10-8e0c-3d6cf76d86e8",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -264,27 +279,29 @@
 			},
 			{
 				"id": "06b21b52-0845-468a-ace1-170a3b05f3a2",
-				"title": "Describe item",
 				"rows": [
 					{
+						"id": "c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f",
 						"type": "TextArea",
 						"view": {
 							"content": {
 								"title": "",
-								"value": "{item.description}",
+								"value": "",
 								"placeholder": "Write a short description of your product"
 							}
 						},
 						"edit": {
-							"destination": "{item.description}",
 							"validation": {
-								"required": "true",
-								"message": "A short description"
-							}
+								"message": "A short description",
+								"required": "true"
+							},
+							"destination": "{item.description}"
 						}
 					}
 				],
+				"title": "Describe item",
 				"footer": {
+					"id": "cc86c53a-170d-4800-8897-8f99f3697055",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -300,22 +317,23 @@
 			},
 			{
 				"id": "26dae81a-4122-4b5c-8396-a72a319ccd8b",
-				"title": "Pickup & delivery",
 				"rows": [
 					{
+						"id": "d0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a",
 						"type": "SelectSegmentContainer",
 						"view": {
 							"content": {
 								"title": "",
-								"segments": ["Pickup", "Delivery", "Shipping"],
 								"children": [
 									{
+										"id": "22222222-2222-4222-8222-222222222201",
 										"type": "ListContainer",
 										"view": {
 											"content": {
 												"title": "",
 												"children": [
 													{
+														"id": "22222222-2222-4222-8222-222222222202",
 														"type": "Info",
 														"view": {
 															"content": {
@@ -325,44 +343,47 @@
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222203",
 														"type": "SheetContainer",
 														"view": {
 															"content": {
 																"title": "Sheet",
 																"child": {
+																	"id": "22222222-2222-4222-8222-222222222204",
 																	"type": "TextAction",
 																	"view": {
 																		"content": {
 																			"title": "Where",
 																			"text": "{formatAddress(item.transfer_options.pickup.address)}",
-																			"placeholder": "Enter pick up address",
-																			"action": "Change"
+																			"action": "Change",
+																			"placeholder": "Enter pick up address"
 																		}
 																	},
 																	"edit": {
-																		"destination": "{item.transfer_options.pickup.address}",
 																		"validation": {
-																			"required": "true",
-																			"message": "Where can the item be picked up?"
-																		}
+																			"message": "Where can the item be picked up?",
+																			"required": "true"
+																		},
+																		"destination": "{item.transfer_options.pickup.address}"
 																	}
 																},
 																"children": [
 																	{
+																		"id": "22222222-2222-4222-8222-222222222205",
 																		"type": "Search",
 																		"view": {
+																			"data": "local:address",
 																			"content": {
 																				"title": "",
 																				"format": "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}",
 																				"placeholder": "Search address"
-																			},
-																			"data": "local:address"
+																			}
 																		},
 																		"edit": {
-																			"destination": "{item.address}",
 																			"validation": {
 																				"required": "false"
-																			}
+																			},
+																			"destination": "{item.address}"
 																		}
 																	}
 																]
@@ -375,22 +396,24 @@
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222206",
 														"type": "Input",
 														"view": {
 															"content": {
 																"title": "",
-																"placeholder": "Additional information",
-																"value": "{item.address.instructions}"
+																"value": "{item.address.instructions}",
+																"placeholder": "Additional information"
 															}
 														},
 														"edit": {
-															"destination": "{item.address.instructions}",
 															"validation": {
 																"required": "false"
-															}
+															},
+															"destination": "{item.address.instructions}"
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222207",
 														"type": "Info",
 														"view": {
 															"content": {
@@ -405,6 +428,7 @@
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222208",
 														"type": "Calendar",
 														"view": {
 															"content": {
@@ -414,12 +438,12 @@
 															}
 														},
 														"edit": {
-															"destination": "{item.transfer_options.pickup.timeslots}",
 															"validation": {
-																"required": "true",
 																"message": "What times can you pickup?",
+																"required": "true",
 																"minAmount": "1"
-															}
+															},
+															"destination": "{item.transfer_options.pickup.timeslots}"
 														}
 													}
 												]
@@ -427,19 +451,21 @@
 										},
 										"edit": {
 											"validation": {
-												"required": "true",
 												"message": "Can you pick up the item?",
+												"required": "true",
 												"minAmount": "5"
 											}
 										}
 									},
 									{
+										"id": "22222222-2222-4222-8222-222222222209",
 										"type": "ListContainer",
 										"view": {
 											"content": {
 												"title": "",
 												"children": [
 													{
+														"id": "22222222-2222-4222-8222-222222222210",
 														"type": "Info",
 														"view": {
 															"content": {
@@ -449,6 +475,7 @@
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222211",
 														"type": "Input",
 														"view": {
 															"content": {
@@ -458,13 +485,14 @@
 															}
 														},
 														"edit": {
-															"destination": "{item.transfer_options.delivery.fee.value}",
 															"validation": {
 																"required": "false"
-															}
+															},
+															"destination": "{item.transfer_options.delivery.fee.value}"
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222212",
 														"type": "Info",
 														"view": {
 															"content": {
@@ -474,23 +502,25 @@
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222213",
 														"type": "InlinePicker",
 														"view": {
+															"data": "{durations}",
 															"content": {
 																"title": "",
 																"format": "{$0.value}"
-															},
-															"data": "{durations}"
+															}
 														},
 														"edit": {
-															"destination": "{distance}",
 															"validation": {
-																"required": "true",
-																"message": "How far can you deliver?"
-															}
+																"message": "How far can you deliver?",
+																"required": "true"
+															},
+															"destination": "{distance}"
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222214",
 														"type": "Info",
 														"view": {
 															"content": {
@@ -500,6 +530,7 @@
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222215",
 														"type": "Calendar",
 														"view": {
 															"content": {
@@ -509,12 +540,12 @@
 															}
 														},
 														"edit": {
-															"destination": "{item.transfer_options.delivery.timeslots}",
 															"validation": {
-																"required": "true",
 																"message": "What times can you delivery?",
+																"required": "true",
 																"minAmount": "1"
-															}
+															},
+															"destination": "{item.transfer_options.delivery.timeslots}"
 														}
 													}
 												]
@@ -522,19 +553,21 @@
 										},
 										"edit": {
 											"validation": {
-												"required": "true",
 												"message": "Can you deliver the item?",
+												"required": "true",
 												"minAmount": "6"
 											}
 										}
 									},
 									{
+										"id": "22222222-2222-4222-8222-222222222216",
 										"type": "ListContainer",
 										"view": {
 											"content": {
 												"title": "",
 												"children": [
 													{
+														"id": "22222222-2222-4222-8222-222222222217",
 														"type": "Info",
 														"view": {
 															"content": {
@@ -544,6 +577,7 @@
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222218",
 														"type": "Input",
 														"view": {
 															"content": {
@@ -553,14 +587,15 @@
 															}
 														},
 														"edit": {
-															"destination": "{item.transfer_options.ship.postal_code}",
 															"validation": {
-																"required": "true",
-																"message": "Postal code you will be shipping from"
-															}
+																"message": "Postal code you will be shipping from",
+																"required": "true"
+															},
+															"destination": "{item.transfer_options.ship.postal_code}"
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222219",
 														"type": "Info",
 														"view": {
 															"content": {
@@ -570,23 +605,25 @@
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222220",
 														"type": "InlinePicker",
 														"view": {
+															"data": "{areas}",
 															"content": {
 																"title": "",
 																"format": "{$0.value}"
-															},
-															"data": "{areas}"
+															}
 														},
 														"edit": {
-															"destination": "{item.transfer_options.ship.areas}",
 															"validation": {
-																"required": "true",
-																"message": "How far can you ship?"
-															}
+																"message": "How far can you ship?",
+																"required": "true"
+															},
+															"destination": "{item.transfer_options.ship.areas}"
 														}
 													},
 													{
+														"id": "22222222-2222-4222-8222-222222222221",
 														"type": "Input",
 														"view": {
 															"content": {
@@ -596,12 +633,12 @@
 															}
 														},
 														"edit": {
-															"destination": "{item.dimensions.weight}",
 															"validation": {
-																"required": "true",
 																"message": "Weight",
-																"minValue": "1"
-															}
+																"minValue": "1",
+																"required": "true"
+															},
+															"destination": "{item.dimensions.weight}"
 														}
 													}
 												]
@@ -609,13 +646,14 @@
 										},
 										"edit": {
 											"validation": {
-												"required": "true",
 												"message": "Can you ship the item?",
+												"required": "true",
 												"minAmount": "5"
 											}
 										}
 									}
-								]
+								],
+								"segments": ["Pickup", "Delivery", "Shipping"]
 							}
 						},
 						"edit": {
@@ -626,7 +664,9 @@
 						}
 					}
 				],
+				"title": "Pickup & delivery",
 				"footer": {
+					"id": "b1600fd2-aac2-4399-8a94-72baca75b9ba",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -642,9 +682,9 @@
 			},
 			{
 				"id": "25a3269b-344c-477d-89c8-b2f5426a5d91",
-				"title": "Payment options",
 				"rows": [
 					{
+						"id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
 						"type": "Info",
 						"view": {
 							"content": {
@@ -654,12 +694,14 @@
 						}
 					},
 					{
+						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
 						"type": "ListContainer",
 						"view": {
 							"content": {
 								"title": "List",
 								"children": [
 									{
+										"id": "33333333-3333-4333-8333-333333333301",
 										"type": "TextSelect",
 										"view": {
 											"content": {
@@ -668,14 +710,15 @@
 											}
 										},
 										"edit": {
-											"destination": "{item.payment_methods.cash}",
 											"validation": {
-												"required": "true",
-												"message": "Do you accept cash?"
-											}
+												"message": "Do you accept cash?",
+												"required": "true"
+											},
+											"destination": "{item.payment_methods.cash}"
 										}
 									},
 									{
+										"id": "33333333-3333-4333-8333-333333333302",
 										"type": "TextSelect",
 										"view": {
 											"content": {
@@ -684,11 +727,11 @@
 											}
 										},
 										"edit": {
-											"destination": "{item.payment_methods.app}",
 											"validation": {
-												"required": "true",
-												"message": "Do you accept in-app payment?"
-											}
+												"message": "Do you accept in-app payment?",
+												"required": "true"
+											},
+											"destination": "{item.payment_methods.app}"
 										}
 									}
 								]
@@ -702,7 +745,9 @@
 						}
 					}
 				],
+				"title": "Payment options",
 				"footer": {
+					"id": "db46724f-c8f0-43cb-b888-6a23e4ca76cb",
 					"type": "Button",
 					"view": {
 						"content": {
@@ -718,9 +763,9 @@
 			},
 			{
 				"id": "857362ad-856f-465b-85a3-94bc8bb686cd",
-				"title": "Sharing data publicly",
 				"rows": [
 					{
+						"id": "a3b4c5d6-e7f8-4a9b-0c1d-2e3f4a5b6c7d",
 						"type": "Info",
 						"view": {
 							"content": {
@@ -730,7 +775,9 @@
 						}
 					}
 				],
+				"title": "Sharing data publicly",
 				"footer": {
+					"id": "20e9a035-8a42-4282-8725-49b620866c70",
 					"type": "Button",
 					"view": {
 						"content": {

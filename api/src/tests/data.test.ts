@@ -49,13 +49,13 @@ mock.module("../db", () => ({
 }));
 
 // Import data functions after mocking
-const { validateAuth, crud, getFlows, saveFlow, primeData } = await import(
-	"../data"
-);
+const { validateAuth, crud, getSDUI, saveFlow, getData, saveData, primeData } =
+	await import("../data");
 
 // Helper to clear all tables between tests
 async function clearTables() {
 	await testDb.delete(schema.flow);
+	await testDb.delete(schema.data);
 	await testDb.delete(schema.serviceProvider);
 	await testDb.delete(schema.organization);
 	await testDb.delete(schema.service);
@@ -76,10 +76,14 @@ function ensureRowIds(rows: RowInput[]): RowInput[] {
 			},
 		};
 		if (row.view.content.children) {
-			rowWithId.view.content.children = ensureRowIds(row.view.content.children);
+			rowWithId.view.content.children = ensureRowIds(
+				row.view.content.children,
+			);
 		}
 		if (row.view.content.child) {
-			rowWithId.view.content.child = ensureRowIds([row.view.content.child])[0];
+			rowWithId.view.content.child = ensureRowIds([
+				row.view.content.child,
+			])[0];
 		}
 		return rowWithId;
 	});
@@ -114,13 +118,13 @@ describe("validateAuth", () => {
 
 	it("should throw error when no token provided", async () => {
 		await expect(validateAuth("", "ios")).rejects.toThrow(
-			"No token provided"
+			"No token provided",
 		);
 	});
 
 	it("should throw error when no OS provided", async () => {
 		await expect(validateAuth("valid-token", "" as "ios")).rejects.toThrow(
-			"No os provided"
+			"No os provided",
 		);
 	});
 
@@ -172,26 +176,26 @@ describe("crud", () => {
 
 	it("should throw error for invalid CRUD method", async () => {
 		await expect(crud("invalid" as CRUD, "Service")).rejects.toThrow(
-			"Invalid CRUD method"
+			"Invalid CRUD method",
 		);
 	});
 
 	it("should throw error for invalid model", async () => {
 		await expect(
-			crud(CRUD.find, "InvalidModel", { id: "123" })
+			crud(CRUD.find, "InvalidModel", { id: "123" }),
 		).rejects.toThrow("Invalid model provided");
 	});
 
 	it("should throw error when no filter provided for find", async () => {
 		await expect(crud(CRUD.find, "Service")).rejects.toThrow(
-			"No filter provided"
+			"No filter provided",
 		);
 	});
 
 	it("should throw error when no data provided for create", async () => {
-		await expect(crud(CRUD.create, "Service", { id: "123" })).rejects.toThrow(
-			"No data provided"
-		);
+		await expect(
+			crud(CRUD.create, "Service", { id: "123" }),
+		).rejects.toThrow("No data provided");
 	});
 
 	it("should find records matching filter", async () => {
@@ -241,7 +245,7 @@ describe("crud", () => {
 			CRUD.update,
 			"Service",
 			{ id: testId },
-			{ name: "Updated Name" }
+			{ name: "Updated Name" },
 		);
 
 		expect(result).toHaveLength(1);
@@ -270,29 +274,43 @@ describe("crud", () => {
 	});
 });
 
-describe("getFlows", () => {
+describe("getSDUI", () => {
 	beforeEach(async () => {
 		await clearTables();
 	});
 
-	it("should return all flows when no since date provided", async () => {
+	it("should return all flow data when no since date provided", async () => {
 		const now = new Date();
 		await testDb.insert(schema.flow).values([
 			{
-				data: { name: "Flow 1", type: "sell", data: "{}", pages: [] },
+				data: createTestFlow({
+					name: "Flow 1",
+					type: "read",
+					data: "item",
+					pages: [{ title: "P1", rows: [] }],
+				}),
 				createdAt: now,
 				updatedAt: now,
 			},
 			{
-				data: { name: "Flow 2", type: "buy", data: "{}", pages: [] },
+				data: createTestFlow({
+					name: "Flow 2",
+					type: "write",
+					data: "item",
+					pages: [{ title: "P2", rows: [] }],
+				}),
 				createdAt: now,
 				updatedAt: now,
 			},
 		]);
 
-		const result = await getFlows();
+		const result = await getSDUI();
 
 		expect(result).toHaveLength(2);
+		// Result should be the flow data directly, not the full Flow record
+		expect(result[0]).toHaveProperty("name");
+		expect(result[0]).toHaveProperty("pages");
+		expect(result[0]).not.toHaveProperty("createdAt");
 	});
 
 	it("should filter flows by updatedAt when since date provided", async () => {
@@ -302,25 +320,35 @@ describe("getFlows", () => {
 
 		await testDb.insert(schema.flow).values([
 			{
-				data: { name: "Old Flow", type: "sell", data: "{}", pages: [] },
+				data: createTestFlow({
+					name: "Old Flow",
+					type: "read",
+					data: "item",
+					pages: [{ title: "P1", rows: [] }],
+				}),
 				createdAt: oldDate,
 				updatedAt: oldDate,
 			},
 			{
-				data: { name: "New Flow", type: "buy", data: "{}", pages: [] },
+				data: createTestFlow({
+					name: "New Flow",
+					type: "write",
+					data: "item",
+					pages: [{ title: "P2", rows: [] }],
+				}),
 				createdAt: newDate,
 				updatedAt: newDate,
 			},
 		]);
 
-		const result = await getFlows(sinceDate);
+		const result = await getSDUI(sinceDate);
 
 		expect(result).toHaveLength(1);
 		expect(result[0].name).toBe("New Flow");
 	});
 
 	it("should return empty array when no flows exist", async () => {
-		const result = await getFlows();
+		const result = await getSDUI();
 		expect(result).toHaveLength(0);
 	});
 });
@@ -355,9 +383,9 @@ describe("saveFlow", () => {
 
 		const result = await saveFlow(flowData);
 
-		expect(result.name).toBe("New Flow");
-		expect(result.type).toBe("create");
-		expect(result.pages).toHaveLength(1);
+		expect(result.data.name).toBe("New Flow");
+		expect(result.data.type).toBe("create");
+		expect(result.data.pages).toHaveLength(1);
 
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
@@ -408,8 +436,8 @@ describe("saveFlow", () => {
 
 		const result = await saveFlow(updatedFlowData, existingFlow.id);
 
-		expect(result.name).toBe("Updated Name");
-		expect(result.type).toBe("write");
+		expect(result.data.name).toBe("Updated Name");
+		expect(result.data.type).toBe("write");
 
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
@@ -423,7 +451,9 @@ describe("saveFlow", () => {
 			pages: [{ id: "page-1", title: "Page 1", rows: [] }],
 		};
 
-		await expect(saveFlow(flowData)).rejects.toThrow("Flow validation failed");
+		await expect(saveFlow(flowData)).rejects.toThrow(
+			"Flow validation failed",
+		);
 	});
 
 	it("should reject flow with invalid type", async () => {
@@ -435,7 +465,7 @@ describe("saveFlow", () => {
 		};
 
 		await expect(saveFlow(flowData as any)).rejects.toThrow(
-			"Flow validation failed"
+			"Flow validation failed",
 		);
 	});
 
@@ -448,7 +478,7 @@ describe("saveFlow", () => {
 		};
 
 		await expect(saveFlow(flowData)).rejects.toThrow(
-			"Flow must have at least one page"
+			"Flow must have at least one page",
 		);
 	});
 
@@ -476,7 +506,7 @@ describe("saveFlow", () => {
 		};
 
 		await expect(saveFlow(flowData as any)).rejects.toThrow(
-			"Flow validation failed"
+			"Flow validation failed",
 		);
 	});
 
@@ -517,7 +547,8 @@ describe("saveFlow", () => {
 												content: {
 													title: "Input 2",
 													value: "",
-													placeholder: "Enter more text",
+													placeholder:
+														"Enter more text",
 												},
 											},
 										},
@@ -531,8 +562,8 @@ describe("saveFlow", () => {
 		});
 
 		const result = await saveFlow(flowData);
-		expect(result.name).toBe("Test Flow");
-		expect(result.pages).toHaveLength(1);
+		expect(result.data.name).toBe("Test Flow");
+		expect(result.data.pages).toHaveLength(1);
 	});
 
 	it("should reject nested rows with invalid type in container", async () => {
@@ -569,7 +600,7 @@ describe("saveFlow", () => {
 		};
 
 		await expect(saveFlow(flowData as any)).rejects.toThrow(
-			"Flow validation failed"
+			"Flow validation failed",
 		);
 	});
 
@@ -626,7 +657,7 @@ describe("saveFlow", () => {
 		});
 
 		const result = await saveFlow(flowData);
-		expect(result.name).toBe("Test Flow");
+		expect(result.data.name).toBe("Test Flow");
 	});
 
 	it("should validate footer row", async () => {
@@ -655,7 +686,7 @@ describe("saveFlow", () => {
 		});
 
 		const result = await saveFlow(flowData);
-		expect(result.pages[0]).toHaveProperty("footer");
+		expect(result.data.pages[0]).toHaveProperty("footer");
 	});
 
 	it("should reject invalid footer row type", async () => {
@@ -681,8 +712,153 @@ describe("saveFlow", () => {
 		};
 
 		await expect(saveFlow(flowData as any)).rejects.toThrow(
-			"Flow validation failed"
+			"Flow validation failed",
 		);
+	});
+});
+
+describe("getData", () => {
+	beforeEach(async () => {
+		await clearTables();
+	});
+
+	it("should return merged data from all records when no since date provided", async () => {
+		const now = new Date();
+		await testDb.insert(schema.data).values([
+			{
+				data: {
+					conditions: [{ id: "1", value: "New" }],
+					selling_reasons: [{ id: "1", value: "Moving" }],
+				},
+				createdAt: now,
+				updatedAt: now,
+			},
+			{
+				data: {
+					areas: [{ id: "1", value: "City" }],
+				},
+				createdAt: now,
+				updatedAt: now,
+			},
+		]);
+
+		const result = await getData();
+
+		expect(result).toHaveProperty("conditions");
+		expect(result).toHaveProperty("selling_reasons");
+		expect(result).toHaveProperty("areas");
+	});
+
+	it("should filter data by updatedAt when since date provided", async () => {
+		const oldDate = new Date("2024-01-01");
+		const newDate = new Date("2025-01-01");
+		const sinceDate = new Date("2024-06-01");
+
+		await testDb.insert(schema.data).values([
+			{
+				data: {
+					oldField: "old value",
+				},
+				createdAt: oldDate,
+				updatedAt: oldDate,
+			},
+			{
+				data: {
+					newField: "new value",
+				},
+				createdAt: newDate,
+				updatedAt: newDate,
+			},
+		]);
+
+		const result = await getData(sinceDate);
+
+		expect(result).toHaveProperty("newField");
+		expect(result).not.toHaveProperty("oldField");
+	});
+
+	it("should return empty object when no data records exist", async () => {
+		const result = await getData();
+		expect(result).toEqual({});
+	});
+});
+
+describe("saveData", () => {
+	beforeEach(async () => {
+		await clearTables();
+	});
+
+	it("should create a new data record when no existingDataId provided", async () => {
+		const dataPayload = {
+			conditions: [{ id: "1", value: "New" }],
+			selling_reasons: [{ id: "1", value: "Moving" }],
+			item: { title: "Test Item", price: { value: 100, currency: "AUD" } },
+		};
+
+		const result = await saveData(dataPayload);
+
+		expect(result.data).toHaveProperty("conditions");
+		expect(result.data).toHaveProperty("selling_reasons");
+		expect(result.data).toHaveProperty("item");
+
+		const dataRecords = await testDb.select().from(schema.data);
+		expect(dataRecords).toHaveLength(1);
+	});
+
+	it("should update existing data record when existingDataId provided", async () => {
+		// Create data record first
+		const existingDataPayload = {
+			oldField: "old value",
+		};
+		const [existingData] = await testDb
+			.insert(schema.data)
+			.values({
+				data: existingDataPayload,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			.returning();
+
+		const updatedDataPayload = {
+			newField: "new value",
+			conditions: [{ id: "1", value: "Updated" }],
+		};
+
+		const result = await saveData(updatedDataPayload, existingData.id);
+
+		expect(result.data).toHaveProperty("newField");
+		expect(result.data).toHaveProperty("conditions");
+
+		const dataRecords = await testDb.select().from(schema.data);
+		expect(dataRecords).toHaveLength(1);
+	});
+
+	it("should reject null payload", async () => {
+		await expect(saveData(null)).rejects.toThrow(
+			"Data payload must be a non-null object",
+		);
+	});
+
+	it("should reject non-object payload", async () => {
+		await expect(saveData("string payload")).rejects.toThrow(
+			"Data payload must be a non-null object",
+		);
+	});
+
+	it("should accept arbitrary JSON structures", async () => {
+		const dataPayload = {
+			address: {
+				street: "123 Main St",
+				city: "Sydney",
+				nested: { deep: { value: true } },
+			},
+			items: [1, 2, 3],
+			flag: true,
+		};
+
+		const result = await saveData(dataPayload);
+
+		expect(result.data).toEqual(dataPayload);
 	});
 });
 
@@ -705,7 +881,12 @@ describe("primeData", () => {
 			updatedAt: now,
 		});
 		await testDb.insert(schema.flow).values({
-			data: { name: "Flow 1", type: "sell", data: "{}", pages: [] },
+			data: createTestFlow({
+				name: "Flow 1",
+				type: "read",
+				data: "item",
+				pages: [{ title: "P1", rows: [] }],
+			}),
 			createdAt: now,
 			updatedAt: now,
 		});

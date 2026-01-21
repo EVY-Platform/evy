@@ -256,7 +256,7 @@ private func lastMatch(_ input: String, pattern: String) -> RegexMatch? {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.syncData()
+		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
 		let bare = "test"

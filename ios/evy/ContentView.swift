@@ -33,7 +33,7 @@ extension EnvironmentValues {
 }
 
 struct ContentView: View {
-    @State private var flows: [EVYFlow] = []
+    @State private var flows: EVYSDUI = []
     @State private var routes: [Route] = []
     @State private var currentFlowId: String = "home"
 	@State private var showingAlert = false
@@ -123,11 +123,14 @@ struct ContentView: View {
 			EVYHome(loading: $loading)
 				.task {
 					do {
-						try await EVY.syncData()
-						itemData = try await EVY.getItemData()
-						flows = try await EVY.getSDUIFlows()
+						try EVY.getUserData()
+						itemData = try await EVY.getData()
+						flows = try await EVY.getSDUI()
+					} catch let error as EVYRPCError {
+						alertMessage = error.localizedDescription
+						showingAlert = true
 					} catch {
-						alertMessage = "Could not load flows"
+						alertMessage = error.localizedDescription
 						showingAlert = true
 					}
 					loading = false
@@ -144,7 +147,7 @@ struct ContentView: View {
                 }
         }
 		.alert(isPresented: $showingAlert) {
-			Alert(title: Text("Incomplete form"),
+			Alert(title: Text("Error"),
 				  message: Text(alertMessage),
 				  dismissButton: .default(Text("Ok")))
 		}
