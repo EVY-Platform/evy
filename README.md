@@ -2,11 +2,11 @@
 
 One platform to rule them all - Plaform to enable Features as a Service
 
--   [docs](/docs/README.md)
--   [api](/api/README.md)
--   [web](/web/README.md)
--   [iOS](/ios/README.md)
--   [Android](/android/README.md)
+- [docs](/docs/README.md)
+- [api](/api/README.md)
+- [web](/web/README.md)
+- [iOS](/ios/README.md)
+- [Android](/android/README.md)
 
 ## Setup
 
@@ -21,6 +21,9 @@ Run all services together (builds images locally):
 
 ```bash
 docker compose up --build
+cd api
+bun install
+bun run db:seed
 ```
 
 ### Production (with Docker Compose)
@@ -38,6 +41,7 @@ docker compose -f docker-compose.prod.yml up
 ```bash
 cd api
 bun install
+bun run db:seed # Optionally
 bun run dev
 ```
 

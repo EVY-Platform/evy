@@ -36,6 +36,7 @@ Run migrations to set up the database schema:
 
 ```bash
 bun run db:migrate
+bun run db:seed
 ```
 
 ### Running the Server
@@ -99,12 +100,12 @@ bun run db:studio
 
 ## Available Scripts
 
-| Script              | Description                              |
-| ------------------- | ---------------------------------------- |
-| `bun run dev`       | Start server with hot reload             |
-| `bun run start`     | Run migrations and start server          |
-| `bun run build`     | Build for production                     |
-| `bun run lint`      | Run Biome linter                         |
+| Script                | Description                            |
+| --------------------- | -------------------------------------- |
+| `bun run dev`         | Start server with hot reload           |
+| `bun run start`       | Run migrations and start server        |
+| `bun run build`       | Build for production                   |
+| `bun run lint`        | Run Biome linter                       |
 | `bun run db:generate` | Generate migration from schema changes |
 | `bun run db:migrate`  | Apply pending migrations               |
 | `bun run db:push`     | Push schema directly (dev only)        |
