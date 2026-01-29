@@ -159,7 +159,8 @@ public enum EVYJson: Codable, Hashable {
     }
     
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(identifierValue())
+        // Use toString() for hashing since identifierValue() requires MainActor
+        hasher.combine(toString())
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -211,6 +212,7 @@ public enum EVYJson: Codable, Hashable {
         }
     }
     
+    @MainActor
     public func identifierValue() -> String {
         switch self {
         case .dictionary(_):
@@ -220,6 +222,7 @@ public enum EVYJson: Codable, Hashable {
         }
     }
     
+    @MainActor
     public func parseProp(props: [String]) -> EVYJson {
         if props.count < 1 {
             return self
@@ -256,6 +259,7 @@ public enum EVYJson: Codable, Hashable {
         }
     }
     
+    @MainActor
     private func parseIdOrIds(props: [String], value: EVYJson) -> EVYJson {
         let key = props.first!
         

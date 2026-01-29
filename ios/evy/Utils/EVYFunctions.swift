@@ -10,6 +10,7 @@ import SwiftUI
 
 public typealias EVYFunctionOutput = (value: String, prefix: String?, suffix: String?)
 
+@MainActor
 func evyCount(_ args: String) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
@@ -22,6 +23,7 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
+@MainActor
 func evyFormatCurrency(_ args: String,
                        _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
@@ -42,6 +44,7 @@ func evyFormatCurrency(_ args: String,
     }
 }
 
+@MainActor
 func evyFormatDimension(_ args: String,
                         _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
@@ -77,6 +80,7 @@ func evyFormatDimension(_ args: String,
     }
 }
 
+@MainActor
 func evyFormatWeight(_ args: String,
                      _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
@@ -114,6 +118,7 @@ func evyFormatWeight(_ args: String,
     }
 }
 
+@MainActor
 func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {

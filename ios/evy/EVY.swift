@@ -23,6 +23,7 @@ extension String {
 }
 
 
+@MainActor
 struct EVY {
     static let data = EVYDataManager()
 	
@@ -68,7 +69,7 @@ struct EVY {
 	}
 	
 	static func createItem() async throws {
-		try! EVY.data.create(key: "item", data: await getData())
+		try EVY.data.create(key: "item", data: try await getData())
 	}
 	
 	static func getRow(_ props: [String]) async throws -> EVYRow {
@@ -87,14 +88,14 @@ struct EVY {
     static func getDataFromText(_ input: String) throws -> EVYJson {
         let props = EVYInterpreter.parsePropsFromText(input)
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        let data = try data.get(key: splitProps.first!)
-        return data.decoded().parseProp(props: Array(splitProps[1...]))
+        let dataObj = try data.get(key: splitProps.first!)
+        return dataObj.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
     static func getDataFromProps(_ props: String) throws -> EVYJson {
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        let data = try data.get(key: splitProps.first!)
-        return data.decoded().parseProp(props: Array(splitProps[1...]))
+        let dataObj = try data.get(key: splitProps.first!)
+        return dataObj.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
     static func getValueFromText(_ input: String, editing: Bool = false) -> EVYValue {

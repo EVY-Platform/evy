@@ -17,6 +17,7 @@ private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
 
+@MainActor
 struct EVYInterpreter {
     /**
      * Takes a string from the SDUI API

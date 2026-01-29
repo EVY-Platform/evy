@@ -150,24 +150,28 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     }
     
     private func handleDataUpdated(params: Parsable) {
-        do {
-            guard let notification = try params.parse(to: DataUpdatedNotification.self).get() else {
-                return
+        // Parse synchronously on current thread
+        guard let notification = try? params.parse(to: DataUpdatedNotification.self).get(),
+              let encodedData = try? JSONEncoder().encode(notification.data) else {
+            print("[EVYWebsocket] Failed to parse dataUpdated notification")
+            return
+        }
+        
+        // Dispatch to MainActor for thread-safe data access
+        Task { @MainActor in
+            do {
+                if EVY.data.exists(key: notification.dataId) {
+                    try EVY.data.update(props: [notification.dataId], data: encodedData)
+                } else {
+                    try EVY.data.create(key: notification.dataId, data: encodedData)
+                }
+                NotificationCenter.default.post(
+                    name: Notification.Name.evyDataUpdated,
+                    object: nil
+                )
+            } catch {
+                print("[EVYWebsocket] Failed to update data: \(error)")
             }
-            let encodedData = try JSONEncoder().encode(notification.data)
-            
-            if EVY.data.exists(key: notification.dataId) {
-                try EVY.data.update(props: [notification.dataId], data: encodedData)
-            } else {
-                try EVY.data.create(key: notification.dataId, data: encodedData)
-            }
-            
-            NotificationCenter.default.post(
-                name: Notification.Name.evyDataUpdated,
-                object: nil
-            )
-        } catch {
-            print("[EVYWebsocket] Failed to parse dataUpdated notification: \(error)")
         }
     }
     

@@ -18,6 +18,7 @@ extension Notification.Name {
     static let evyFlowUpdated = Notification.Name("EVYFlowUpdated")
 }
 
+@MainActor
 @Observable class EVYState<T> {
     var value: T
 	
@@ -26,9 +27,11 @@ extension Notification.Name {
 		
 		NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
 											   object: nil,
-											   queue: nil,
-											   using: { _ in
-			self.value = setter()
+											   queue: .main,
+											   using: { [weak self] _ in
+			Task { @MainActor in
+				self?.value = setter()
+			}
 		})
 	}
     
@@ -37,12 +40,14 @@ extension Notification.Name {
         
         NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
                             object: nil,
-                            queue: nil,
-                            using: { notif in
+                            queue: .main,
+                            using: { [weak self] notif in
             if let notifProp = notif.object as? String,
                watch.contains(notifProp)
             {
-				self.value = setter(watch)
+				Task { @MainActor in
+					self?.value = setter(watch)
+				}
             }
         })
     }
@@ -55,8 +60,13 @@ extension Notification.Name {
 let config = ModelConfiguration(isStoredInMemoryOnly: true)
 let container = try! ModelContainer(for: EVYData.self, configurations: config)
 
-struct EVYDataManager {
-    private let context: ModelContext = ModelContext(container)
+@MainActor
+final class EVYDataManager {
+    private let context: ModelContext
+    
+    init() {
+        self.context = ModelContext(container)
+    }
     
     func exists(key: String) -> Bool {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })

@@ -58,12 +58,8 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 			return true
 		}
 		
-		do {
-			let storedValue = try EVY.getDataFromText(edit.destination!)
-			return storedValue.toString() == "true"
-		} catch {
-			return false
-		}
+		// Check the selected state which is already observing the destination
+		return selected.value
 	}
 	
 	func incompleteMessages() -> [String] {
