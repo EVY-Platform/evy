@@ -49,12 +49,17 @@ struct EVYSelectPhotoRow: View, EVYRowProtocol {
 	}
 
     var body: some View {
-        EVYSelectPhoto(title: view.content.title,
-                       subtitle: view.content.subtitle,
-                       icon: view.content.icon,
-                       content: view.content.content,
-                       data: view.content.photos,
-                       destination: edit.destination!)
+        if let selectPhoto = try? EVYSelectPhoto(title: view.content.title,
+                                                  subtitle: view.content.subtitle,
+                                                  icon: view.content.icon,
+                                                  content: view.content.content,
+                                                  data: view.content.photos,
+                                                  destination: edit.destination!) {
+            selectPhoto
+        } else {
+            Text("Failed to load photo selector")
+                .foregroundColor(.red)
+        }
     }
 }
 

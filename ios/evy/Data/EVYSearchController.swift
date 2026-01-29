@@ -63,7 +63,7 @@ class EVYSearchController: ObservableObject {
             do {
                 try EVY.data.create(key: id.uuidString, data: address)
                 let json = try EVY.getDataFromProps(id.uuidString)
-                let jsonFormatted = EVY.formatData(json: json, format: format)
+                let jsonFormatted = try EVY.formatData(json: json, format: format)
                 results = [EVYSearchResult(data: json, value: jsonFormatted)]
             } catch {
                 results = []
@@ -73,7 +73,7 @@ class EVYSearchController: ObservableObject {
                 let data = try await EVYMovieAPI().search(term: name)
                 let response = try JSONDecoder().decode([EVYJson].self, from: data)
                 for res in response {
-                    let resFormatted = EVY.formatData(json: res, format: format)
+                    let resFormatted = try EVY.formatData(json: res, format: format)
                     results.append(EVYSearchResult(data: res, value: resFormatted))
                 }
             } catch {

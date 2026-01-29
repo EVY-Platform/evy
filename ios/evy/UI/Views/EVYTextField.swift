@@ -26,7 +26,7 @@ struct EVYTextField: View {
         self.multiLine = multiLine
         
         let editableValue = EVYState(watch: input, setter: {
-            EVY.getValueFromText($0, editing: true)
+            (try? EVY.getValueFromText($0, editing: true)) ?? EVYValue($0, nil, nil)
         })
         self.editableValue = editableValue
         self.value = editableValue.value.value

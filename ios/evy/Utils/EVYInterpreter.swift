@@ -25,7 +25,7 @@ struct EVYInterpreter {
      * - returns that props string
      */
     public static func parsePropsFromText(_ input: String) -> String {
-        guard let match = firstMatch(input, pattern: propsPattern) else {
+        guard let match = try? firstMatch(input, pattern: propsPattern) else {
             return input
         }
         
@@ -47,8 +47,8 @@ struct EVYInterpreter {
             throw EVYParamError.invalidProps
         }
         for i in splitProps.indices {
-            if let matchArray = firstMatch(splitProps[i],
-                                           pattern: arrayPattern)
+            if let matchArray = try? firstMatch(splitProps[i],
+                                                pattern: arrayPattern)
             {
                 splitProps[i].removeSubrange(matchArray.range)
                 
@@ -149,7 +149,7 @@ struct EVYInterpreter {
 }
 
 private func parseProps(_ input: String) -> (RegexMatch, String)? {
-    if let match = firstMatch(input, pattern: propsPattern) {
+    if let match = try? firstMatch(input, pattern: propsPattern) {
         // Remove leading and trailing curly braces
         return (match, String(match.0.dropFirst().dropLast()))
     }
@@ -157,7 +157,7 @@ private func parseProps(_ input: String) -> (RegexMatch, String)? {
 }
 
 private func parseArrayFromProps(_ input: String) -> (RegexMatch, String)? {
-    if let match = firstMatch(input, pattern: arrayPattern) {
+    if let match = try? firstMatch(input, pattern: arrayPattern) {
         // Remove leading and trailing curly braces
         return (match, String(match.0))
     }
@@ -169,20 +169,20 @@ private func parseComparisonFromText(_ input: String) -> (match: RegexMatch,
                                                           left: String,
                                                           right: String)?
 {
-    guard let match = firstMatch(input,
-                                 pattern: "\\{\(comparisonBasePattern) \(comparisonOperatorPattern) \(comparisonBasePattern)\\}") else {
+    guard let match = try? firstMatch(input,
+                                      pattern: "\\{\(comparisonBasePattern) \(comparisonOperatorPattern) \(comparisonBasePattern)\\}") else {
         return nil
     }
 
     // Remove opening { from match
     let comparison = String(match.0.description)
-    guard let leftMatch = firstMatch(comparison, pattern: "\\{\(comparisonBasePattern)") else {
+    guard let leftMatch = try? firstMatch(comparison, pattern: "\\{\(comparisonBasePattern)") else {
         return nil
     }
-    guard let rightMatch = lastMatch(comparison, pattern: "\(comparisonBasePattern)\\}") else {
+    guard let rightMatch = try? lastMatch(comparison, pattern: "\(comparisonBasePattern)\\}") else {
         return nil
     }
-    guard let operatorMatch = firstMatch(comparison, pattern: comparisonOperatorPattern) else {
+    guard let operatorMatch = try? firstMatch(comparison, pattern: comparisonOperatorPattern) else {
         return nil
     }
 
@@ -199,7 +199,7 @@ private func parseFunctionFromText(_ input: String) -> (match: RegexMatch,
                                                         functionName: String,
                                                         functionArgs: String)?
 {
-    guard let match = firstMatch(input, pattern: "\\{\(functionPattern)\\}") else {
+    guard let match = try? firstMatch(input, pattern: "\\{\(functionPattern)\\}") else {
         return nil
     }
 
@@ -214,14 +214,14 @@ private func parseFunctionInText(_ input: String) -> (match: RegexMatch,
                                                       functionName: String,
                                                       functionArgs: String)?
 {
-    guard let match = firstMatch(input, pattern: functionPattern) else {
+    guard let match = try? firstMatch(input, pattern: functionPattern) else {
         return nil
     }
     
     // Remove opening { from match
     let functionCall = match.0.description
-    guard let argsAndParenthesisMatch = firstMatch(functionCall,
-                                                   pattern: functionParamsPattern) else
+    guard let argsAndParenthesisMatch = try? firstMatch(functionCall,
+                                                        pattern: functionParamsPattern) else
     {
         return nil
     }
@@ -236,21 +236,14 @@ private func parseFunctionInText(_ input: String) -> (match: RegexMatch,
     return (match, String(functionName), String(functionArgs))
 }
 
-private func firstMatch(_ input: String, pattern: String) -> RegexMatch? {
-    do {
-        let regex = try Regex(pattern)
-        return input.firstMatch(of: regex)
-    } catch {}
-    
-    return nil
+private func firstMatch(_ input: String, pattern: String) throws -> RegexMatch? {
+    let regex = try Regex(pattern)
+    return input.firstMatch(of: regex)
 }
-private func lastMatch(_ input: String, pattern: String) -> RegexMatch? {
-	do {
-		let regex = try Regex(pattern)
-		return input.matches(of: regex).last
-	} catch {}
-	
-	return nil
+
+private func lastMatch(_ input: String, pattern: String) throws -> RegexMatch? {
+    let regex = try Regex(pattern)
+    return input.matches(of: regex).last
 }
 
 #Preview {

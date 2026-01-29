@@ -40,8 +40,8 @@ class EVYData {
         self.data = data
     }
     
-    func decoded() -> EVYJson {
-        try! JSONDecoder().decode(EVYJson.self, from: data)
+    func decoded() throws -> EVYJson {
+        try JSONDecoder().decode(EVYJson.self, from: data)
     }
     
     func updateDataWithData(_ data: Data, props: [String]) throws {
@@ -49,8 +49,8 @@ class EVYData {
             return
         }
         
-        let currentDataAsJson = decoded()
-        let newDataAsJson = try! JSONDecoder().decode(EVYJson.self, from: data)
+        let currentDataAsJson = try decoded()
+        let newDataAsJson = try JSONDecoder().decode(EVYJson.self, from: data)
         
         let updatedJson = try getUpdatedJson(props: props, data: currentDataAsJson, value: newDataAsJson)
         self.data = try JSONEncoder().encode(updatedJson)
@@ -302,7 +302,17 @@ public enum EVYJson: Codable, Hashable {
                     }
                 }
             }
-        } catch {}
+        } catch EVYDataError.keyNotFound {
+            // Referenced data not found, return original value
+        } catch EVYParamError.invalidProps {
+            // Invalid props format, return original value
+        } catch {
+            // For unexpected errors, post notification but return original value
+            NotificationCenter.default.post(
+                name: Notification.Name.evyErrorOccurred,
+                object: error
+            )
+        }
         
         return value
     }

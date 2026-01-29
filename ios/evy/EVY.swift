@@ -45,19 +45,27 @@ struct EVY {
 		let sellingReasons = try JSONEncoder().encode(serviceData.parseProp(props: ["selling_reasons"]))
 		do {
 			try EVY.data.create(key: "selling_reasons", data: sellingReasons)
-		} catch {}
+		} catch EVYDataError.keyAlreadyExists {
+			// Data already loaded, skip
+		}
 		do {
 			let conditions = try JSONEncoder().encode(serviceData.parseProp(props: ["conditions"]))
 			try EVY.data.create(key: "conditions", data: conditions)
-		} catch {}
+		} catch EVYDataError.keyAlreadyExists {
+			// Data already loaded, skip
+		}
 		do {
 			let durations = try JSONEncoder().encode(serviceData.parseProp(props: ["durations"]))
 			try EVY.data.create(key: "durations", data: durations)
-		} catch {}
+		} catch EVYDataError.keyAlreadyExists {
+			// Data already loaded, skip
+		}
 		do {
 			let areas = try JSONEncoder().encode(serviceData.parseProp(props: ["areas"]))
 			try EVY.data.create(key: "areas", data: areas)
-		} catch {}
+		} catch EVYDataError.keyAlreadyExists {
+			// Data already loaded, skip
+		}
 		
 		return try JSONEncoder().encode(serviceData.parseProp(props: ["item"]))
 	}
@@ -89,22 +97,18 @@ struct EVY {
         let props = EVYInterpreter.parsePropsFromText(input)
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
         let dataObj = try data.get(key: splitProps.first!)
-        return dataObj.decoded().parseProp(props: Array(splitProps[1...]))
+        return try dataObj.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
     static func getDataFromProps(_ props: String) throws -> EVYJson {
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
         let dataObj = try data.get(key: splitProps.first!)
-        return dataObj.decoded().parseProp(props: Array(splitProps[1...]))
+        return try dataObj.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
-    static func getValueFromText(_ input: String, editing: Bool = false) -> EVYValue {
-        do {
-            let match = try EVYInterpreter.parseTextFromText(input, editing)
-            return EVYValue(match.value, match.prefix, match.suffix)
-        } catch {}
-        
-        return EVYValue(input, nil, nil)
+    static func getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValue {
+        let match = try EVYInterpreter.parseTextFromText(input, editing)
+        return EVYValue(match.value, match.prefix, match.suffix)
     }
     
     static func parsePropsFromText(_ input: String) -> String {
@@ -116,7 +120,7 @@ struct EVY {
         return match.value == "true"
     }
     
-    static func formatData(json: EVYJson, format: String) -> String {
+    static func formatData(json: EVYJson, format: String) throws -> String {
         if format.count < 1 {
             return json.toString()
         }
@@ -131,15 +135,11 @@ struct EVY {
             return json.toString()
         }
         
-        do {
-            let encodedData = try JSONEncoder().encode(json)
-            try data.create(key: temporaryId, data: encodedData)
-            let returnText = getValueFromText(formatWithNewData)
-            try data.delete(key: temporaryId)
-            return returnText.toString()
-        } catch {
-            return json.toString()
-        }
+        let encodedData = try JSONEncoder().encode(json)
+        try data.create(key: temporaryId, data: encodedData)
+        let returnText = try getValueFromText(formatWithNewData)
+        try data.delete(key: temporaryId)
+        return returnText.toString()
     }
     
     /**

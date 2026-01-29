@@ -39,7 +39,7 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
         
         let temporaryId = UUID().uuidString
         try EVY.updateValue(view.content.text, at: temporaryId)
-        value = try EVY.data.get(key: temporaryId).decoded()
+        value = try (try EVY.data.get(key: temporaryId)).decoded()
     }
 	
 	init(from decoder: Decoder) throws {

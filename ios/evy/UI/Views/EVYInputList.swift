@@ -22,9 +22,9 @@ struct EVYInputList: View {
             do {
                 let data = try EVY.getDataFromText($0)
                 if case let .array(arrayValue) = data {
-                    return arrayValue.map { EVY.formatData(json: $0, format: format) }
+                    return try arrayValue.map { try EVY.formatData(json: $0, format: format) }
                 } else {
-                    return [EVY.formatData(json: data, format: format)]
+                    return [try EVY.formatData(json: data, format: format)]
                 }
             } catch {}
             

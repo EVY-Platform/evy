@@ -38,7 +38,7 @@ struct EVYDropdown: View {
         selection = EVYState(watch: destination, setter: {
             do {
                 let value = try EVY.getDataFromText($0)
-                return EVY.formatData(json: value, format: format)
+                return try EVY.formatData(json: value, format: format)
             } catch {
                 return ""
             }

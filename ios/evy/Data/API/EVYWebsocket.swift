@@ -130,12 +130,20 @@ final class EVYWebsocket: EVYWebsocketProtocol {
 
 extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate {
     
+    private func postError(_ error: Error) {
+        NotificationCenter.default.post(
+            name: Notification.Name.evyErrorOccurred,
+            object: error
+        )
+    }
+    #if DEBUG
     public func state(_ state: ConnectableState) {
         print("[EVYWebsocket] Connection state changed: \(state)")
     }
+    #endif
     
     public func error(_ error: ServiceError) {
-        print("[EVYWebsocket] Service error: \(error)")
+        postError(EVYError.websocketError(context: error.localizedDescription))
     }
     
     public func notification(method: String, params: Parsable) {
@@ -145,15 +153,26 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
         case "flowUpdated":
             handleFlowUpdated(params: params)
         default:
+            #if DEBUG
             print("[EVYWebsocket] Received unknown notification: \(method)")
+            #endif
         }
     }
     
     private func handleDataUpdated(params: Parsable) {
         // Parse synchronously on current thread
-        guard let notification = try? params.parse(to: DataUpdatedNotification.self).get(),
-              let encodedData = try? JSONEncoder().encode(notification.data) else {
-            print("[EVYWebsocket] Failed to parse dataUpdated notification")
+        let notification: DataUpdatedNotification
+        let encodedData: Data
+        
+        do {
+            guard let parsed = try params.parse(to: DataUpdatedNotification.self).get() else {
+                postError(EVYError.parsingFailed(context: "dataUpdated notification returned nil"))
+                return
+            }
+            notification = parsed
+            encodedData = try JSONEncoder().encode(notification.data)
+        } catch {
+            postError(EVYError.parsingFailed(context: "dataUpdated notification: \(error.localizedDescription)"))
             return
         }
         
@@ -170,7 +189,7 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
                     object: nil
                 )
             } catch {
-                print("[EVYWebsocket] Failed to update data: \(error)")
+                self.postError(EVYError.invalidData(context: "failed to update data: \(error.localizedDescription)"))
             }
         }
     }
@@ -178,6 +197,7 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     private func handleFlowUpdated(params: Parsable) {
         do {
             guard let notification = try params.parse(to: FlowUpdatedNotification.self).get() else {
+                postError(EVYError.parsingFailed(context: "flowUpdated notification returned nil"))
                 return
             }
             
@@ -186,7 +206,7 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
                 object: notification.flow
             )
         } catch {
-            print("[EVYWebsocket] Failed to parse flowUpdated notification: \(error)")
+            postError(EVYError.parsingFailed(context: "flowUpdated notification: \(error.localizedDescription)"))
         }
     }
 }
