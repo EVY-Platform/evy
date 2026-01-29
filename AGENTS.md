@@ -6,12 +6,14 @@ Always use `bun` to run commands or install dependencies.
 
 ## Code conventions
 
--   KISS: Keep It Simple Stupid. Complexity is the enemy of maintainability.
--   Use explicit variable names (even if lengthy).
--   Use prettier to auto-format code.
--   Avoid typecasting unless absolutely impossible to avoid.
+- KISS: Keep It Simple Stupid. Complexity is the enemy of maintainability.
+- Use explicit variable names (even if lengthy).
+- Use prettier to auto-format code.
+- Avoid typecasting unless absolutely impossible to avoid.
 
 ## Development
 
-Make sure you run `bun run build`, `bun run lint` and `bun run test` anytime you make major changes and fix issues that arise.
+For web or api, make sure you run `bun run build`, `bun run lint` and `bun run test` anytime you make major changes and fix issues that arise.
 Also make sure you can run the app with docker-compose up --build from both the root and the api and web directories.
+
+For iOS, make sure you build with xcode iPhone Air iOS 26.2 and fix any errors

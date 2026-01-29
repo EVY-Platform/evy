@@ -124,6 +124,9 @@ struct EVYSelectPhotoButton: View {
                             photos.append(id)
                         }
                     } catch {
+                        #if DEBUG
+                        print("[EVYSelectPhoto] Failed to load image: \(error)")
+                        #endif
                         NotificationCenter.default.post(
                             name: Notification.Name.evyErrorOccurred,
                             object: EVYError.imageLoadFailed(name: "selected photo")

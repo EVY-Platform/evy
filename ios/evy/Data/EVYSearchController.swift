@@ -66,6 +66,9 @@ class EVYSearchController: ObservableObject {
                 let jsonFormatted = try EVY.formatData(json: json, format: format)
                 results = [EVYSearchResult(data: json, value: jsonFormatted)]
             } catch {
+                #if DEBUG
+                print("[EVYSearchController] Error in local search: \(error)")
+                #endif
                 results = []
             }
         default:
@@ -77,6 +80,9 @@ class EVYSearchController: ObservableObject {
                     results.append(EVYSearchResult(data: res, value: resFormatted))
                 }
             } catch {
+                #if DEBUG
+                print("[EVYSearchController] Error in API search: \(error)")
+                #endif
                 results = []
             }
         }

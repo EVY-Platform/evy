@@ -26,7 +26,11 @@ struct EVYInputList: View {
                 } else {
                     return [try EVY.formatData(json: data, format: format)]
                 }
-            } catch {}
+            } catch {
+                #if DEBUG
+                print("[EVYInputList] Error formatting data: \(error)")
+                #endif
+            }
             
             return []
         })

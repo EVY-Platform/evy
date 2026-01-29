@@ -44,7 +44,11 @@ struct EVYSearchMultiple: View {
                     selected.append(EVYSearchResult(data: value, value: formattedValue))
                 }
             }
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYSearchMultiple] Error refreshing data: \(error)")
+            #endif
+        }
     }
     
     func select(_ element: EVYSearchResult) {

@@ -78,7 +78,11 @@ struct EVYSelectItem: View {
                     let valueId = value.identifierValue()
                     return arrayValue.contains { $0.identifierValue() == valueId }
                 }
-            } catch {}
+            } catch {
+                #if DEBUG
+                print("[EVYSelectItem] Error checking selection state: \(error)")
+                #endif
+            }
             
             return false
         })
@@ -154,7 +158,11 @@ struct EVYSelectItem: View {
                     }
                 }
                 
-            } catch {}
+            } catch {
+                #if DEBUG
+                print("[EVYSelectItem] Error updating selection: \(error)")
+                #endif
+            }
         }
     }
 }

@@ -303,11 +303,17 @@ public enum EVYJson: Codable, Hashable {
                 }
             }
         } catch EVYDataError.keyNotFound {
-            // Referenced data not found, return original value
+            #if DEBUG
+            print("[EVYData] parseIdOrIds: key not found for \(key)")
+            #endif
         } catch EVYParamError.invalidProps {
-            // Invalid props format, return original value
+            #if DEBUG
+            print("[EVYData] parseIdOrIds: invalid props for \(key)")
+            #endif
         } catch {
-            // For unexpected errors, post notification but return original value
+            #if DEBUG
+            print("[EVYData] parseIdOrIds unexpected error: \(error)")
+            #endif
             NotificationCenter.default.post(
                 name: Notification.Name.evyErrorOccurred,
                 object: error

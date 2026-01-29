@@ -32,7 +32,11 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
         selected = EVYState(watch: edit.destination!, setter: {
             do {
                 return try EVY.evaluateFromText($0)
-            } catch {}
+            } catch {
+                #if DEBUG
+                print("[EVYTextSelectRow] Error evaluating selection: \(error)")
+                #endif
+            }
             
             return false
         })

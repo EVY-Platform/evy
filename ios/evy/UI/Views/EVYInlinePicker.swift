@@ -26,7 +26,11 @@ struct EVYInlinePicker: View {
             if case let .array(arrayValue) = data {
                 options.append(contentsOf: arrayValue)
             }
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYInlinePicker] Error loading options: \(error)")
+            #endif
+        }
         
         _selection = State(initialValue: options.first!)
         
@@ -40,7 +44,11 @@ struct EVYInlinePicker: View {
                     _selection = State(initialValue: matching!)
                 }
             }
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYInlinePicker] Error loading selection: \(error)")
+            #endif
+        }
     }
     
     private func performAction(option: EVYJson) {
