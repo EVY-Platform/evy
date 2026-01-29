@@ -112,9 +112,6 @@ final class EVYWebsocket: EVYWebsocketProtocol {
     }
     
     private func mapRequestError(_ error: RequestError<Any, Any>) -> EVYRPCError {
-        #if DEBUG
-        print("[EVYWebsocket] Mapping request error: \(error)")
-        #endif
         switch error {
         case .reply(_, _, let responseError):
             return .rpcError(code: responseError.code, message: responseError.message)
