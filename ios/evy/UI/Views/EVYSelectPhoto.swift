@@ -35,7 +35,7 @@ struct EVYSelectPhoto: View {
          icon: String,
          content: String,
          data: String,
-         destination: String)
+         destination: String) throws
     {
         self.title = title
         self.icon = icon
@@ -44,13 +44,11 @@ struct EVYSelectPhoto: View {
         self.subtitle = subtitle
         self.destination = destination
         
-        do {
-            let props = EVY.getValueFromText(data)
-            if let photosData = props.value.data(using: .utf8) {
-                let photoObjects = try JSONDecoder().decode([String].self, from:photosData)
-                _photos = State(initialValue: photoObjects)
-            }
-           } catch {}
+        let props = try EVY.getValueFromText(data)
+        if let photosData = props.value.data(using: .utf8) {
+            let photoObjects = try JSONDecoder().decode([String].self, from: photosData)
+            _photos = State(initialValue: photoObjects)
+        }
     }
 
     var body: some View {
@@ -122,12 +120,17 @@ struct EVYSelectPhotoButton: View {
                     do {
                         if let data = try await selectedItem?.loadTransferable(type: Data.self) {
                             let id = UUID().description
-                            ImageManager().writeImage(name: id,
-                                                      uiImage: UIImage(data: data)!)
+                            try ImageManager().writeImage(name: id, data: data)
                             photos.append(id)
                         }
                     } catch {
-                        print("Failed to load the image")
+                        #if DEBUG
+                        print("[EVYSelectPhoto] Failed to load image: \(error)")
+                        #endif
+                        NotificationCenter.default.post(
+                            name: Notification.Name.evyErrorOccurred,
+                            object: EVYError.imageLoadFailed(name: "selected photo")
+                        )
                     }
                 }
             }
@@ -140,12 +143,20 @@ struct EVYSelectPhotoCarousel: View {
     
     var body: some View {
         ForEach(0..<imageNames.count, id: \.self) { index in
-            ImageManager().getImage(name: imageNames[index])!
-                .resizable()
-                .scaledToFill()
-                .frame(width: carouselElementSize, height: carouselElementSize)
-                .clipShape(RoundedRectangle(cornerRadius: Constants.mainCornerRadius))
-                .padding(.horizontal, 2)
+            if let image = try? ImageManager().getImage(name: imageNames[index]) {
+                image
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: carouselElementSize, height: carouselElementSize)
+                    .clipShape(RoundedRectangle(cornerRadius: Constants.mainCornerRadius))
+                    .padding(.horizontal, 2)
+            } else {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: carouselElementSize, height: carouselElementSize)
+                    .clipShape(RoundedRectangle(cornerRadius: Constants.mainCornerRadius))
+                    .padding(.horizontal, 2)
+            }
         }
     }
 }
@@ -157,21 +168,31 @@ class ImageManager {
 		fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
     }
     
-    func getImage(name: String) -> Image? {
+    func getImage(name: String) throws -> Image {
         let fileUrl = cachesDirectoryUrl.appendingPathComponent("\(name).png")
         let filePath = fileUrl.path
-        if fm.fileExists(atPath: filePath), let data = try? Data(contentsOf: fileUrl)
-		{
-			return Image(uiImage: UIImage(data: data)!)
+        if fm.fileExists(atPath: filePath) {
+            let data = try Data(contentsOf: fileUrl)
+            guard let uiImage = UIImage(data: data) else {
+                throw EVYError.imageLoadFailed(name: name)
+            }
+            return Image(uiImage: uiImage)
         }
-        return Image(uiImage: UIImage(named: "\(name).png")!)
+        guard let uiImage = UIImage(named: "\(name).png") else {
+            throw EVYError.imageLoadFailed(name: name)
+        }
+        return Image(uiImage: uiImage)
     }
     
-    func writeImage(name: String, uiImage: UIImage) {
-        let data = uiImage.pngData()
+    func writeImage(name: String, data: Data) throws {
+        guard let uiImage = UIImage(data: data) else {
+            throw EVYError.imageLoadFailed(name: name)
+        }
+        guard let pngData = uiImage.pngData() else {
+            throw EVYError.imageLoadFailed(name: name)
+        }
         let fileUrl = cachesDirectoryUrl.appendingPathComponent("\(name).png")
-        let filePath = fileUrl.path
-        fm.createFile(atPath: filePath, contents: data)
+        try pngData.write(to: fileUrl)
     }
 }
 
@@ -181,7 +202,7 @@ class ImageManager {
 	} view: {
 		try! await EVY.createItem()
 		
-		return EVYSelectPhoto(title: "Photos Title",
+		return try EVYSelectPhoto(title: "Photos Title",
 							  subtitle: "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
 							  icon: "::photo.badge.plus.fill::",
 							  content: "A great subtitle",

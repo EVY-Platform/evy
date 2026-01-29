@@ -310,6 +310,7 @@ private func calculateIndex(x: Int, y: Int, numberOfRows: Int) -> Int {
     y+(x*(numberOfRows))
 }
 
+@MainActor
 private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
     do {
         let timeslotsJSON = try EVY.getDataFromText(source)

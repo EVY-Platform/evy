@@ -58,7 +58,7 @@
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "API_HOST"
-            value = "localhost:8000"
+            value = "127.0.0.1:8000"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

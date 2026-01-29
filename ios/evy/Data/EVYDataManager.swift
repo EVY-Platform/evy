@@ -13,49 +13,108 @@ public enum EVYDataError: Error {
     case keyNotFound
 }
 
-extension Notification.Name {
-    static let evyDataUpdated = Notification.Name("EVYDataUpdated")
+public enum EVYError: LocalizedError {
+    case parsingFailed(context: String)
+    case invalidData(context: String)
+    case regexCompilationFailed(pattern: String)
+    case imageLoadFailed(name: String)
+    case formatFailed(type: String, reason: String)
+    case websocketError(context: String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .parsingFailed(let context):
+            return "Parsing failed: \(context)"
+        case .invalidData(let context):
+            return "Invalid data: \(context)"
+        case .regexCompilationFailed(let pattern):
+            return "Invalid regex pattern: \(pattern)"
+        case .imageLoadFailed(let name):
+            return "Failed to load image: \(name)"
+        case .formatFailed(let type, let reason):
+            return "Failed to format \(type): \(reason)"
+        case .websocketError(let context):
+            return "WebSocket error: \(context)"
+        }
+    }
 }
 
-@Observable class EVYState<T> {
-    var value: T
-	
-	init(setter: @escaping () -> T) {
-		value = setter()
-		
-		NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
-											   object: nil,
-											   queue: nil,
-											   using: { _ in
-			self.value = setter()
-		})
-	}
+extension Notification.Name {
+    static let evyDataUpdated = Notification.Name("EVYDataUpdated")
+    static let evyFlowUpdated = Notification.Name("EVYFlowUpdated")
+    static let evyErrorOccurred = Notification.Name("EVYErrorOccurred")
+}
+
+@MainActor
+@Observable class EVYState<T: Equatable> {
+    private var _value: T
+    var value: T {
+        get { _value }
+        set {
+            if _value != newValue {
+                _value = newValue
+            }
+        }
+    }
+    
+    init(setter: @escaping () -> T) {
+        _value = setter()
+        
+        NotificationCenter.default.addObserver(
+            forName: .evyDataUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.value = setter()
+            }
+        }
+    }
     
     init(watch: String, setter: @escaping (_ input: String) -> T) {
-        value = setter(watch)
+        _value = setter(watch)
         
-        NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
-                            object: nil,
-                            queue: nil,
-                            using: { notif in
-            if let notifProp = notif.object as? String,
-               watch.contains(notifProp)
-            {
-				self.value = setter(watch)
+        let watchProps = EVY.parsePropsFromText(watch)
+        let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
+        
+        NotificationCenter.default.addObserver(
+            forName: .evyDataUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] notif in
+            Task { @MainActor in
+                guard let notifProp = notif.object as? String else {
+                    // nil means refresh everything (backward compatibility)
+                    self?.value = setter(watch)
+                    return
+                }
+                
+                let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
+                let minLen = min(watchSegments.count, notifSegments.count)
+                let prefixMatch = Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
+                
+                if prefixMatch {
+                    self?.value = setter(watch)
+                }
             }
-        })
+        }
     }
-	
-	init(staticString: T) {
-		value = staticString
-	}
+    
+    init(staticString: T) {
+        _value = staticString
+    }
 }
 
 let config = ModelConfiguration(isStoredInMemoryOnly: true)
 let container = try! ModelContainer(for: EVYData.self, configurations: config)
 
-struct EVYDataManager {
-    private let context: ModelContext = ModelContext(container)
+@MainActor
+final class EVYDataManager {
+    private let context: ModelContext
+    
+    init() {
+        self.context = ModelContext(container)
+    }
     
     func exists(key: String) -> Bool {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })

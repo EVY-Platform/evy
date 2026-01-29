@@ -10,6 +10,7 @@ import SwiftUI
 
 public typealias EVYFunctionOutput = (value: String, prefix: String?, suffix: String?)
 
+@MainActor
 func evyCount(_ args: String) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
@@ -22,26 +23,28 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
+@MainActor
 func evyFormatCurrency(_ args: String,
                        _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
     case let .dictionary(dictValue):
         guard let value = dictValue["value"] else {
-            return ("", nil, nil)
+            throw EVYError.formatFailed(type: "currency", reason: "missing 'value' field")
         }
         if editing {
             return ("\(value.toString())", nil, nil)
         }
         guard let number = NumberFormatter().number(from: value.toString()) else {
-            return ("", nil, nil)
+            throw EVYError.formatFailed(type: "currency", reason: "could not parse number from '\(value.toString())'")
         }
         return (String(format: "%.2f", CGFloat(truncating: number)), "$", nil)
     default:
-        return ("Invalid price data", nil, nil)
+        throw EVYError.formatFailed(type: "currency", reason: "expected dictionary, got \(res)")
     }
 }
 
+@MainActor
 func evyFormatDimension(_ args: String,
                         _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
@@ -73,10 +76,11 @@ func evyFormatDimension(_ args: String,
         }
         return ("\(mm)", nil, "mm")
     default:
-        return ("Could not format dimension", nil, nil)
+        throw EVYError.formatFailed(type: "dimension", reason: "expected integer, got \(res)")
     }
 }
 
+@MainActor
 func evyFormatWeight(_ args: String,
                      _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
@@ -86,7 +90,7 @@ func evyFormatWeight(_ args: String,
             return (stringValue, nil, nil)
         }
         guard let mg = Decimal(string: stringValue) else {
-            return ("", nil, nil)
+            throw EVYError.formatFailed(type: "weight", reason: "could not parse decimal from '\(stringValue)'")
         }
         if mg > 1000000 {
             let kg = mg/1000000
@@ -110,10 +114,11 @@ func evyFormatWeight(_ args: String,
         }
         return ("\(mg)", nil, "mg")
     default:
-        return ("Could not format weight", nil, nil)
+        throw EVYError.formatFailed(type: "weight", reason: "expected string, got \(res)")
     }
 }
 
+@MainActor
 func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
     switch res {
@@ -124,7 +129,7 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
               let postcode = dictValue["postcode"],
               let state = dictValue["state"]
         else {
-            return (args, nil, nil)
+            throw EVYError.formatFailed(type: "address", reason: "missing required fields (unit, street, city, postcode, or state)")
         }
 
         return (String(format: "%@ %@, %@\n%@, %@",
@@ -134,7 +139,7 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
                        city.toString(),
                        state.toString()), nil, nil)
     default:
-        return ("Invalid address data", nil, nil)
+        throw EVYError.formatFailed(type: "address", reason: "expected dictionary, got \(res)")
     }
 }
 

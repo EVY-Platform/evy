@@ -70,7 +70,15 @@ class EVYMovieAPI {
             throw NetworkError.badID
         }
         
-        let decodedResponse = try? JSONDecoder().decode(APIResponse.self, from: data)
+        let decodedResponse: APIResponse?
+        do {
+            decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
+        } catch {
+            #if DEBUG
+            print("[EVYAPI] Error decoding API response: \(error)")
+            #endif
+            decodedResponse = nil
+        }
         return try JSONEncoder().encode(decodedResponse?.results ?? [])
     }
 }

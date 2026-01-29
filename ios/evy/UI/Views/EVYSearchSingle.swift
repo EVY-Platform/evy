@@ -32,7 +32,11 @@ struct EVYSearchSingle: View {
             selected = element.value
             let encoded = try JSONEncoder().encode(element.data)
             try EVY.updateData(encoded, at: destination)
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYSearchSingle] Error selecting element: \(error)")
+            #endif
+        }
     }
     
     func unselect() {
@@ -40,7 +44,11 @@ struct EVYSearchSingle: View {
             value = ""
             selected = ""
             try EVY.updateValue("{}", at: destination)
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYSearchSingle] Error unselecting: \(error)")
+            #endif
+        }
     }
     
     var body: some View {

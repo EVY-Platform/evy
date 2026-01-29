@@ -41,7 +41,12 @@ struct ContentView: View {
 	@State private var loading = true
 	@State private var itemData: Data? // Temporary to avoid making navigation async
     
-    private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) throws {
+    private func showError(_ error: Error) {
+        alertMessage = error.localizedDescription
+        showingAlert = true
+    }
+    
+    private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) {
         switch navOperation {
         case .navigate(let route):
             // If the new flow is already in the hierarchy of navigation
@@ -70,14 +75,22 @@ struct ContentView: View {
             let newFlow = flows.first { $0.id == route.flowId }!
             if newFlow.type == .create {
                 let key: String? = newFlow.data
-                try! EVY.data.create(key: key!, data: itemData!)
+                do {
+                    try EVY.data.create(key: key!, data: itemData!)
+                } catch EVYDataError.keyAlreadyExists {
+                    // Draft already exists, continue
+                } catch {
+                    showError(error)
+                }
             }
             
         case .submit:
             // Make sure the flow was for creation, otherwise error out
             let currentFlow: EVYFlow = flows.first { $0.id == currentFlowId }!
             if currentFlow.type != .create {
-                throw EVYNavigationError.cannotSubmit
+                alertMessage = "Cannot submit - not a create flow"
+                showingAlert = true
+                return
             }
 			
 			let allPagesComplete = currentFlow.pages.allSatisfy { $0.complete() }
@@ -88,7 +101,12 @@ struct ContentView: View {
 			}
 			
             // Otherwise, submit the data
-            try! EVY.submit(key: currentFlow.data)
+            do {
+                try EVY.submit(key: currentFlow.data)
+            } catch {
+                showError(error)
+                return
+            }
             
             // Then, remove the current flow from navigation
 			if let existing = routes.firstIndex(where: { route in
@@ -105,7 +123,13 @@ struct ContentView: View {
             let currentFlow: EVYFlow? = flows.first { $0.id == currentFlowId }
             if currentFlow?.type == .create {
                 let key: String? = currentFlow?.data
-                try! EVY.data.delete(key: key!)
+                do {
+                    try EVY.data.delete(key: key!)
+                } catch EVYDataError.keyNotFound {
+                    // Draft doesn't exist, continue
+                } catch {
+                    showError(error)
+                }
             }
             
 			if let existing = routes.firstIndex(where: { route in
@@ -122,6 +146,8 @@ struct ContentView: View {
         NavigationStack(path: $routes) {
 			EVYHome(loading: $loading)
 				.task {
+					guard flows.isEmpty else { return }
+					
 					do {
 						try EVY.getUserData()
 						itemData = try await EVY.getData()
@@ -136,13 +162,13 @@ struct ContentView: View {
 					loading = false
 				}
                 .environment(\.navigate) { navOperation in
-                    try! handleNavigationData(navOperation, currentFlowId)
+                    handleNavigationData(navOperation, currentFlowId)
                 }
                 .navigationDestination(for: Route.self) { route in
                     let flow = flows.first { $0.id == route.flowId }!
                     flow.getPageById(route.pageId)!
                         .environment(\.navigate) { navOperation in
-                            try! handleNavigationData(navOperation, currentFlowId)
+                            handleNavigationData(navOperation, currentFlowId)
                         }
                 }
         }
@@ -163,10 +189,28 @@ struct ContentView: View {
 			{
                 do {
                     try EVY.data.delete(key: currentFlow.data)
-                } catch {}
+                } catch EVYDataError.keyNotFound {
+                    // Data doesn't exist, continue
+                } catch {
+                    showError(error)
+                }
             }
             
             currentFlowId = newFlowId
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .evyFlowUpdated)) { notification in
+            guard let updatedFlow = notification.object as? EVYFlow else { return }
+            
+            if let index = flows.firstIndex(where: { $0.id == updatedFlow.id }) {
+                flows[index] = updatedFlow
+            } else {
+                flows.append(updatedFlow)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .evyErrorOccurred)) { notification in
+            if let error = notification.object as? Error {
+                showError(error)
+            }
         }
     }
 }

@@ -33,13 +33,20 @@ struct EVYDropdown: View {
             if case let .array(arrayValue) = data {
                 options = arrayValue
             }
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYDropdown] Error loading options: \(error)")
+            #endif
+        }
         
         selection = EVYState(watch: destination, setter: {
             do {
                 let value = try EVY.getDataFromText($0)
-                return EVY.formatData(json: value, format: format)
+                return try EVY.formatData(json: value, format: format)
             } catch {
+                #if DEBUG
+                print("[EVYDropdown] Error formatting selection: \(error)")
+                #endif
                 return ""
             }
         })

@@ -18,6 +18,12 @@ export default class SelectSegmentContainerRow extends EVYRow {
 				children: [],
 			},
 		},
+		edit: {
+			destination: "",
+			validation: {
+				required: "false",
+			},
+		},
 	};
 
 	renderContent(row: Row) {

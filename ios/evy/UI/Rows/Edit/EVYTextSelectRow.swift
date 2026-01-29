@@ -32,14 +32,18 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
         selected = EVYState(watch: edit.destination!, setter: {
             do {
                 return try EVY.evaluateFromText($0)
-            } catch {}
+            } catch {
+                #if DEBUG
+                print("[EVYTextSelectRow] Error evaluating selection: \(error)")
+                #endif
+            }
             
             return false
         })
         
         let temporaryId = UUID().uuidString
         try EVY.updateValue(view.content.text, at: temporaryId)
-        value = try EVY.data.get(key: temporaryId).decoded()
+        value = try (try EVY.data.get(key: temporaryId)).decoded()
     }
 	
 	init(from decoder: Decoder) throws {
@@ -58,12 +62,8 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 			return true
 		}
 		
-		do {
-			let storedValue = try EVY.getDataFromText(edit.destination!)
-			return storedValue.toString() == "true"
-		} catch {
-			return false
-		}
+		// Check the selected state which is already observing the destination
+		return selected.value
 	}
 	
 	func incompleteMessages() -> [String] {

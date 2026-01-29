@@ -32,6 +32,13 @@ final class EVYAPIManager {
 	}
 	
 	private func validateAuth() async throws {
-		if (!authed) { authed = try await rpcWS.connect(token: "Geo", os: EVYOS.ios) }
+		if (authed) { return }
+		
+		authed = try await rpcWS.connect(token: "Geo", os: EVYOS.ios)
+
+		let result = try await rpcWS.subscribe(event: "flowUpdated")
+		if result["flowUpdated"] != "ok" {
+			throw EVYRPCError.subscriptionError("Failed to subscribe to flowUpdated events")
+		}
 	}
 }

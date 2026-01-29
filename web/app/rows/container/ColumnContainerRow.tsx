@@ -11,6 +11,12 @@ export default class ColumnContainerRow extends EVYRow {
 				children: [],
 			},
 		},
+		edit: {
+			destination: "",
+			validation: {
+				required: "false",
+			},
+		},
 	};
 
 	renderContent(row: Row) {

@@ -36,7 +36,9 @@ struct EVYTextView: View {
 			let placeholderVal = EVYValue(placeholder, nil, nil)
 			
 			self.text = EVYState(watch: text, setter: {
-				let value = EVY.getValueFromText($0)
+				guard let value = try? EVY.getValueFromText($0) else {
+					return placeholderVal
+				}
 				
 				if props == $0 {
 					return value

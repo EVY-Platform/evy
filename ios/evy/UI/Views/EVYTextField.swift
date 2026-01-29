@@ -13,8 +13,7 @@ struct EVYTextField: View {
     let multiLine: Bool
     let input: String
     
-    private var editableValue: EVYState<EVYValue>
-    @State private var value: String
+    @Bindable private var editableValue: EVYState<EVYValue>
     
     @FocusState private var focused: Bool
     @State private var editing: Bool = false
@@ -25,11 +24,9 @@ struct EVYTextField: View {
         self.destination = destination
         self.multiLine = multiLine
         
-        let editableValue = EVYState(watch: input, setter: {
-            EVY.getValueFromText($0, editing: true)
+        self.editableValue = EVYState(watch: input, setter: {
+            (try? EVY.getValueFromText($0, editing: true)) ?? EVYValue($0, nil, nil)
         })
-        self.editableValue = editableValue
-        self.value = editableValue.value.value
     }
     
     init(input: String, destination: String, placeholder: String) {
@@ -51,25 +48,21 @@ struct EVYTextField: View {
                     placeholder.frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
-                let valueBinding = Binding(
-                    get: { editableValue.value.value },
-                    set: { value = $0 }
-                )
-                TextField(text: valueBinding,
+                TextField(text: $editableValue.value.value,
                           prompt: EVYTextView(placeholder).toText(),
                           axis: multiLine ? .vertical : .horizontal,
                           label: {})
                 .font(.evy)
                 .lineLimit(multiLine ? 10... : 1...)
                 .focused($focused)
-                .onChange(of: focused, { oldValue, newValue in
+                .onChange(of: focused) { oldValue, newValue in
                     if oldValue == true && newValue == false {
                         editing = false
                     }
-                })
-                .onChange(of: value, { _, newValue in
-                    try! EVY.updateValue(newValue, at: destination)
-                })
+                }
+                .onChange(of: editableValue.value.value) { _, newValue in
+                    try? EVY.updateValue(newValue, at: destination)
+                }
                 .onSubmit {
                     editing = false
                     focused = false
