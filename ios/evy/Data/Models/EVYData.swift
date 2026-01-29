@@ -14,10 +14,10 @@ public enum EVYDataParseError: Error {
     case unprocessableValue
 }
 
-struct EVYValue {
-    let value: String
-    let prefix: String?
-    let suffix: String?
+struct EVYValue: Equatable {
+    var value: String
+    var prefix: String?
+    var suffix: String?
     
     init(_ value: String, _ prefix: String?, _ suffix: String?) {
         self.value = value

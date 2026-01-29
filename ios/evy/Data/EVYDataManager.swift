@@ -46,42 +46,63 @@ extension Notification.Name {
 }
 
 @MainActor
-@Observable class EVYState<T> {
-    var value: T
-	
-	init(setter: @escaping () -> T) {
-		value = setter()
-		
-		NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
-											   object: nil,
-											   queue: .main,
-											   using: { [weak self] _ in
-			Task { @MainActor in
-				self?.value = setter()
-			}
-		})
-	}
+@Observable class EVYState<T: Equatable> {
+    private var _value: T
+    var value: T {
+        get { _value }
+        set {
+            if _value != newValue {
+                _value = newValue
+            }
+        }
+    }
+    
+    init(setter: @escaping () -> T) {
+        _value = setter()
+        
+        NotificationCenter.default.addObserver(
+            forName: .evyDataUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.value = setter()
+            }
+        }
+    }
     
     init(watch: String, setter: @escaping (_ input: String) -> T) {
-        value = setter(watch)
+        _value = setter(watch)
         
-        NotificationCenter.default.addObserver(forName: Notification.Name.evyDataUpdated,
-                            object: nil,
-                            queue: .main,
-                            using: { [weak self] notif in
-            if let notifProp = notif.object as? String,
-               watch.contains(notifProp)
-            {
-				Task { @MainActor in
-					self?.value = setter(watch)
-				}
+        let watchProps = EVY.parsePropsFromText(watch)
+        let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
+        
+        NotificationCenter.default.addObserver(
+            forName: .evyDataUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] notif in
+            Task { @MainActor in
+                guard let notifProp = notif.object as? String else {
+                    // nil means refresh everything (backward compatibility)
+                    self?.value = setter(watch)
+                    return
+                }
+                
+                let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
+                let minLen = min(watchSegments.count, notifSegments.count)
+                let prefixMatch = Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
+                
+                if prefixMatch {
+                    self?.value = setter(watch)
+                }
             }
-        })
+        }
     }
-	
-	init(staticString: T) {
-		value = staticString
-	}
+    
+    init(staticString: T) {
+        _value = staticString
+    }
 }
 
 let config = ModelConfiguration(isStoredInMemoryOnly: true)

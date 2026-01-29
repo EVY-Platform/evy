@@ -231,7 +231,7 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
                 }
                 NotificationCenter.default.post(
                     name: Notification.Name.evyDataUpdated,
-                    object: nil
+                    object: notification.dataId
                 )
             } catch {
                 #if DEBUG
