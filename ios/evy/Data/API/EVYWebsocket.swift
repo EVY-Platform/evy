@@ -117,44 +117,21 @@ final class EVYWebsocket: EVYWebsocketProtocol {
         #endif
         switch error {
         case .reply(_, _, let responseError):
-            #if DEBUG
-            print("[EVYWebsocket] Reply error - code: \(responseError.code), message: \(responseError.message)")
-            #endif
             return .rpcError(code: responseError.code, message: responseError.message)
         case .service(let serviceError):
             switch serviceError {
             case .connection(let cause):
-                #if DEBUG
-                print("[EVYWebsocket] Connection error: \(cause)")
-                #endif
                 return .connectionError(cause.localizedDescription)
             case .codec(let cause):
-                #if DEBUG
-                print("[EVYWebsocket] Codec error: \(cause)")
-                print("[EVYWebsocket] Codec error type: \(type(of: cause))")
-                print("[EVYWebsocket] Codec error debug description: \(String(describing: cause))")
-                #endif
                 return .unknownError("Encoding/decoding error: \(cause.localizedDescription)")
             case .envelope(_, let description):
-                #if DEBUG
-                print("[EVYWebsocket] Envelope error: \(description)")
-                #endif
                 return .unknownError("Protocol error: \(description)")
             case .unregisteredResponse(let id, _):
-                #if DEBUG
-                print("[EVYWebsocket] Unregistered response error - id: \(id)")
-                #endif
                 return .unknownError("Unregistered response with id: \(id)")
             }
         case .empty:
-            #if DEBUG
-            print("[EVYWebsocket] Empty response error")
-            #endif
             return .unknownError("Empty response from server")
         case .custom(let description, _):
-            #if DEBUG
-            print("[EVYWebsocket] Custom error: \(description)")
-            #endif
             return .unknownError(description)
         }
     }
@@ -199,7 +176,6 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     }
     
     private func handleDataUpdated(params: Parsable) {
-        // Parse synchronously on current thread
         let notification: DataUpdatedNotification
         let encodedData: Data
         
