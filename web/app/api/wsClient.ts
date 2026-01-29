@@ -64,13 +64,7 @@ class WSClient {
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
 		const result = (await this.client.call("saveFlow", {
-			flowData: {
-				id: flowData.id,
-				name: flowData.name,
-				type: flowData.type,
-				data: flowData.data,
-				pages: flowData.pages,
-			},
+			flowData,
 			flowId: flowData.id,
 		})) as SaveFlowResponse;
 		return result.data;

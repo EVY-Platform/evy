@@ -170,6 +170,19 @@ struct ContentView: View {
             
             currentFlowId = newFlowId
         }
+        .onReceive(NotificationCenter.default.publisher(for: .evyFlowUpdated)) { notification in
+            guard let updatedFlow = notification.object as? EVYFlow else { return }
+            
+            // Selectively update the matching flow in the flows array
+            if let index = flows.firstIndex(where: { $0.id == updatedFlow.id }) {
+                flows[index] = updatedFlow
+                print("[ContentView] Updated flow with id: \(updatedFlow.id)")
+            } else {
+                // If it's a new flow, append it
+                flows.append(updatedFlow)
+                print("[ContentView] Added new flow with id: \(updatedFlow.id)")
+            }
+        }
     }
 }
 

@@ -7,12 +7,14 @@
 
 import Foundation
 import JsonRPC
+import Serializable
 
 public enum EVYRPCError: LocalizedError {
     case loginError
     case connectionError(String)
     case rpcError(code: Int, message: String)
     case unknownError(String)
+    case subscriptionError(String)
     
     public var errorDescription: String? {
         switch self {
@@ -24,6 +26,8 @@ public enum EVYRPCError: LocalizedError {
             return message
         case .unknownError(let message):
             return message
+        case .subscriptionError(let message):
+            return "Subscription error: \(message)"
         }
     }
 }
@@ -33,6 +37,28 @@ struct EVYLoginParams: Encodable {
     let os: EVYOS
 }
 
+struct DataUpdatedNotification: Decodable {
+    let dataId: String
+    let data: EVYJson
+    let createdAt: String
+    let updatedAt: String
+    
+    enum CodingKeys: String, CodingKey {
+        case dataId = "id"
+        case data
+        case createdAt
+        case updatedAt
+    }
+}
+
+struct FlowUpdatedNotification: Decodable {
+    let flow: EVYFlow
+    
+    enum CodingKeys: String, CodingKey {
+        case flow = "data"
+    }
+}
+
 protocol EVYWebsocketProtocol {
 	func connect(token: String, os: EVYOS) async throws -> Bool
 	func fetch<T: Codable>(
@@ -40,6 +66,7 @@ protocol EVYWebsocketProtocol {
 		params: Encodable,
 		expecting _: T.Type
 	) async throws -> T
+	func subscribe(event: String) async throws -> [String: String]
 }
 
 final class EVYWebsocket: EVYWebsocketProtocol {
@@ -47,12 +74,21 @@ final class EVYWebsocket: EVYWebsocketProtocol {
     
     init(host: String) {
         rpc = JsonRpc(.ws(url: URL(string: "ws://\(host)")!), queue: .main)
+        rpc.delegate = self
     }
     
     public func connect(token: String, os: EVYOS) async throws -> Bool {
 		try await fetch(method: "rpc.login",
 						params: EVYLoginParams(token: token, os: os),
 						expecting: Bool.self)
+    }
+    
+    public func subscribe(event: String) async throws -> [String: String] {
+        try await fetch(
+            method: "rpc.on",
+            params: [event],
+            expecting: [String: String].self
+        )
     }
     
     public func fetch<T: Codable>(
@@ -88,6 +124,65 @@ final class EVYWebsocket: EVYWebsocketProtocol {
             return .unknownError("Empty response from server")
         case .custom(let description, _):
             return .unknownError(description)
+        }
+    }
+}
+
+extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate {
+    
+    public func state(_ state: ConnectableState) {
+        print("[EVYWebsocket] Connection state changed: \(state)")
+    }
+    
+    public func error(_ error: ServiceError) {
+        print("[EVYWebsocket] Service error: \(error)")
+    }
+    
+    public func notification(method: String, params: Parsable) {
+        switch method {
+        case "dataUpdated":
+            handleDataUpdated(params: params)
+        case "flowUpdated":
+            handleFlowUpdated(params: params)
+        default:
+            print("[EVYWebsocket] Received unknown notification: \(method)")
+        }
+    }
+    
+    private func handleDataUpdated(params: Parsable) {
+        do {
+            guard let notification = try params.parse(to: DataUpdatedNotification.self).get() else {
+                return
+            }
+            let encodedData = try JSONEncoder().encode(notification.data)
+            
+            if EVY.data.exists(key: notification.dataId) {
+                try EVY.data.update(props: [notification.dataId], data: encodedData)
+            } else {
+                try EVY.data.create(key: notification.dataId, data: encodedData)
+            }
+            
+            NotificationCenter.default.post(
+                name: Notification.Name.evyDataUpdated,
+                object: nil
+            )
+        } catch {
+            print("[EVYWebsocket] Failed to parse dataUpdated notification: \(error)")
+        }
+    }
+    
+    private func handleFlowUpdated(params: Parsable) {
+        do {
+            guard let notification = try params.parse(to: FlowUpdatedNotification.self).get() else {
+                return
+            }
+            
+            NotificationCenter.default.post(
+                name: Notification.Name.evyFlowUpdated,
+                object: notification.flow
+            )
+        } catch {
+            print("[EVYWebsocket] Failed to parse flowUpdated notification: \(error)")
         }
     }
 }

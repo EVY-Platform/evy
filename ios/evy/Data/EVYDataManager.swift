@@ -15,6 +15,7 @@ public enum EVYDataError: Error {
 
 extension Notification.Name {
     static let evyDataUpdated = Notification.Name("EVYDataUpdated")
+    static let evyFlowUpdated = Notification.Name("EVYFlowUpdated")
 }
 
 @Observable class EVYState<T> {
