@@ -112,49 +112,20 @@ final class EVYWebsocket: EVYWebsocketProtocol {
     }
     
     private func mapRequestError(_ error: RequestError<Any, Any>) -> EVYRPCError {
-        #if DEBUG
-        print("[EVYWebsocket] Mapping request error: \(error)")
-        #endif
         switch error {
         case .reply(_, _, let responseError):
-            #if DEBUG
-            print("[EVYWebsocket] Reply error - code: \(responseError.code), message: \(responseError.message)")
-            #endif
             return .rpcError(code: responseError.code, message: responseError.message)
-        case .service(let serviceError):
-            switch serviceError {
-            case .connection(let cause):
-                #if DEBUG
-                print("[EVYWebsocket] Connection error: \(cause)")
-                #endif
-                return .connectionError(cause.localizedDescription)
-            case .codec(let cause):
-                #if DEBUG
-                print("[EVYWebsocket] Codec error: \(cause)")
-                print("[EVYWebsocket] Codec error type: \(type(of: cause))")
-                print("[EVYWebsocket] Codec error debug description: \(String(describing: cause))")
-                #endif
-                return .unknownError("Encoding/decoding error: \(cause.localizedDescription)")
-            case .envelope(_, let description):
-                #if DEBUG
-                print("[EVYWebsocket] Envelope error: \(description)")
-                #endif
-                return .unknownError("Protocol error: \(description)")
-            case .unregisteredResponse(let id, _):
-                #if DEBUG
-                print("[EVYWebsocket] Unregistered response error - id: \(id)")
-                #endif
-                return .unknownError("Unregistered response with id: \(id)")
-            }
+        case .service(.connection(let cause)):
+            return .connectionError(cause.localizedDescription)
+        case .service(.codec(let cause)):
+            return .unknownError("Encoding/decoding error: \(cause.localizedDescription)")
+        case .service(.envelope(_, let description)):
+            return .unknownError("Protocol error: \(description)")
+        case .service(.unregisteredResponse(let id, _)):
+            return .unknownError("Unregistered response with id: \(id)")
         case .empty:
-            #if DEBUG
-            print("[EVYWebsocket] Empty response error")
-            #endif
             return .unknownError("Empty response from server")
         case .custom(let description, _):
-            #if DEBUG
-            print("[EVYWebsocket] Custom error: \(description)")
-            #endif
             return .unknownError(description)
         }
     }
@@ -172,11 +143,11 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
         )
     }
     
+    #if DEBUG
     public func state(_ state: ConnectableState) {
-        #if DEBUG
         print("[EVYWebsocket] Connection state changed: \(state)")
-        #endif
     }
+    #endif
     
     public func error(_ error: ServiceError) {
         #if DEBUG
@@ -199,17 +170,12 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     }
     
     private func handleDataUpdated(params: Parsable) {
-        // Parse synchronously on current thread
         let notification: DataUpdatedNotification
         let encodedData: Data
         
         do {
             guard let parsed = try params.parse(to: DataUpdatedNotification.self).get() else {
-                #if DEBUG
-                print("[EVYWebsocket] Failed to parse dataUpdated notification: returned nil")
-                #endif
-                postError(EVYError.parsingFailed(context: "dataUpdated notification returned nil"))
-                return
+                throw EVYError.parsingFailed(context: "dataUpdated notification returned nil")
             }
             notification = parsed
             encodedData = try JSONEncoder().encode(notification.data)
@@ -217,7 +183,7 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
             #if DEBUG
             print("[EVYWebsocket] Failed to parse dataUpdated notification: \(error)")
             #endif
-            postError(EVYError.parsingFailed(context: "dataUpdated notification: \(error.localizedDescription)"))
+            postError(EVYError.parsingFailed(context: "dataUpdated: \(error.localizedDescription)"))
             return
         }
         
@@ -245,11 +211,7 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     private func handleFlowUpdated(params: Parsable) {
         do {
             guard let notification = try params.parse(to: FlowUpdatedNotification.self).get() else {
-                #if DEBUG
-                print("[EVYWebsocket] Failed to parse flowUpdated notification: returned nil")
-                #endif
-                postError(EVYError.parsingFailed(context: "flowUpdated notification returned nil"))
-                return
+                throw EVYError.parsingFailed(context: "flowUpdated notification returned nil")
             }
             
             NotificationCenter.default.post(
@@ -260,7 +222,7 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
             #if DEBUG
             print("[EVYWebsocket] Failed to parse flowUpdated notification: \(error)")
             #endif
-            postError(EVYError.parsingFailed(context: "flowUpdated notification: \(error.localizedDescription)"))
+            postError(EVYError.parsingFailed(context: "flowUpdated: \(error.localizedDescription)"))
         }
     }
 }
