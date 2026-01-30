@@ -31,7 +31,9 @@ struct EVYPage: View, Codable {
                     .padding(.horizontal, Constants.majorPadding)
                     .padding(.vertical, Constants.minorPadding)
             }
-        }.navigationTitle(title)
+        }
+        .navigationTitle(title)
+        .accessibilityIdentifier("page_\(id)")
         footer
             .overlay(alignment: .top, content: {
                 Rectangle()
@@ -39,5 +41,6 @@ struct EVYPage: View, Codable {
                     .frame(height: 1)
                     .padding(.top, -Constants.minorPadding)
             })
+            .accessibilityIdentifier("pageFooter_\(id)")
     }
 }

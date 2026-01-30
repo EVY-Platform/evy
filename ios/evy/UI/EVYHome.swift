@@ -13,7 +13,9 @@ struct EVYHome: View {
     
     var body: some View {
 		if loading {
-			ProgressView().controlSize(.large)
+			ProgressView()
+				.controlSize(.large)
+				.accessibilityIdentifier("loadingIndicator")
 		} else {
 			VStack(spacing: 40) {
 				Button("View Item") {
@@ -21,12 +23,15 @@ struct EVYHome: View {
 				}
 				.font(.evyTitle)
 				.buttonStyle(.plain)
+				.accessibilityIdentifier("viewItemButton")
 				Button("Create Item") {
 					navigate(NavOperation.navigate(Route(flowId: "ca47e6c5-da19-4491-8422-adb40d9e8a27", pageId: "306ed62c-c2af-4652-a873-26c7a388972d")))
 				}
 				.font(.evyTitle)
 				.buttonStyle(.plain)
+				.accessibilityIdentifier("createItemButton")
 			}
+			.accessibilityIdentifier("homeButtonsStack")
 		}
     }
 }

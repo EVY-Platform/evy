@@ -27,6 +27,7 @@ struct EVYButton: View {
         .frame(maxWidth: 150)
 		.background(colorScheme == .light ? Constants.buttonColor : .white)
         .cornerRadius(Constants.smallCornerRadius)
+        .accessibilityIdentifier("button_\(label)")
     }
 }
 
