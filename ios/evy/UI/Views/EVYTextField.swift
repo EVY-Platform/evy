@@ -83,7 +83,7 @@ struct EVYTextField: View {
             editing.toggle()
             focused.toggle()
         }
-        
+        .accessibilityIdentifier("textField_\(destination)")
     }
 }
 
