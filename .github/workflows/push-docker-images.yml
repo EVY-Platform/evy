@@ -13,17 +13,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@latest
+        uses: actions/checkout@v6
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@latest
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push api Docker image
-        uses: docker/build-push-action@latest
+        uses: docker/build-push-action@v6
         with:
           context: api/
           push: true
@@ -34,7 +34,7 @@ jobs:
           DB_URL: ${DB_URL}
 
       - name: Build and push web Docker image
-        uses: docker/build-push-action@latest
+        uses: docker/build-push-action@v6
         with:
           context: web/
           push: true
@@ -44,7 +44,7 @@ jobs:
           WEB_PORT: ${WEB_PORT:-3000}
 
       - name: Docker Compose Remote Deploy api
-        uses: glesage/docker-compose-remote-action@latest
+        uses: glesage/docker-compose-remote-action@v1
         with:
           service: api
           project_name: evy
@@ -59,7 +59,7 @@ jobs:
           DB_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/evy
 
       - name: Docker Compose Remote Deploy web
-        uses: glesage/docker-compose-remote-action@latest
+        uses: glesage/docker-compose-remote-action@v1
         with:
           service: web
           project_name: evy

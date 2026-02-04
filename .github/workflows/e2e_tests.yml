@@ -14,16 +14,16 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@latest
+              uses: actions/checkout@v6
 
             - name: Set up Docker
-              uses: docker/setup-docker-action@latest
+              uses: docker/setup-docker-action@v4
 
             - name: Set up Docker Compose
-              uses: docker/setup-compose-action@latest
+              uses: docker/setup-compose-action@v1
 
             - name: Setup Bun
-              uses: oven-sh/setup-bun@latest
+              uses: oven-sh/setup-bun@v2
 
             - name: Install API dependencies
               working-directory: api
@@ -41,7 +41,7 @@ jobs:
               run: bash run-e2e.sh ${{ contains(github.event.pull_request.labels.*.name, 'run-ios') && '' || '--skip-ios' }}
 
             - name: Upload Playwright report
-              uses: actions/upload-artifact@latest
+              uses: actions/upload-artifact@v4
               if: always()
               with:
                   name: playwright-report

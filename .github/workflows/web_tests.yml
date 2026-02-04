@@ -16,7 +16,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
-              uses: actions/checkout@latest
+              uses: actions/checkout@v6
 
             - name: Setup environment
               uses: ./.github/actions/setup-bun
@@ -38,7 +38,7 @@ jobs:
               run: bun run test
 
             - name: Upload test results
-              uses: actions/upload-artifact@latest
+              uses: actions/upload-artifact@v4
               if: always() && steps.setup.outputs.has-changes == 'true'
               with:
                   name: playwright-report
