@@ -45,7 +45,7 @@ final class evyUITests: XCTestCase {
 
         // Wait for flows to load - these buttons come from the API
         let viewItemButton = app.buttons["View Item"]
-        let createItemButton = app.buttons["Create item"]
+        let createItemButton = app.buttons["Create Item"]
 
         // If flows are not available, skip this test
         // This is acceptable in e2e when database is empty
@@ -78,7 +78,7 @@ final class evyUITests: XCTestCase {
         createItemButton.tap()
 
         XCTAssertTrue(scrollView.waitForExistence(timeout: 5), "Create flow page should load")
-        XCTAssertFalse(app.buttons["Create item"].exists, "Home buttons should not be visible")
+        XCTAssertFalse(app.buttons["Create Item"].exists, "Home buttons should not be visible")
 
         // Verify page has content
         let hasContent = app.textFields.count > 0 || app.staticTexts.count > 0
