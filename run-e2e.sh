@@ -83,7 +83,8 @@ if xcodebuild test \
     -project evy.xcodeproj \
     -scheme evy \
     -destination 'platform=iOS Simulator,name=iPhone Air,OS=26.2' \
-    API_HOST=127.0.0.1:8000; then
+    API_HOST=localhost:8000 \
+    -quiet; then
     echo -e "${GREEN}iOS e2e tests passed${NC}"
 else
     echo -e "${RED}iOS e2e tests failed${NC}"
