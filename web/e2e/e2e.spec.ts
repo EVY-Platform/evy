@@ -11,26 +11,34 @@ test.describe("Web E2E Integration Tests", () => {
 		await page.goto("/");
 
 		// Wait for the app to either show content or loading/error state
-		const loadingMessage = page.getByText("Loading flows...", { exact: true });
-		const errorMessage = page.getByText("Failed to load flows", { exact: true });
+		const loadingMessage = page.getByText("Loading flows...", {
+			exact: true,
+		});
+		const errorMessage = page.getByText("Failed to load flows", {
+			exact: true,
+		});
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
 		// Wait for any of these states - proves the app loaded
-		await expect(
-			loadingMessage.or(errorMessage).or(rowsPanel),
-		).toBeVisible({ timeout: 15000 });
+		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible(
+			{ timeout: 15000 },
+		);
 	});
 
 	test("should display app structure when connected", async ({ page }) => {
 		await page.goto("/");
 
-		const loadingMessage = page.getByText("Loading flows...", { exact: true });
-		const errorMessage = page.getByText("Failed to load flows", { exact: true });
+		const loadingMessage = page.getByText("Loading flows...", {
+			exact: true,
+		});
+		const errorMessage = page.getByText("Failed to load flows", {
+			exact: true,
+		});
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
-		await expect(
-			loadingMessage.or(errorMessage).or(rowsPanel),
-		).toBeVisible({ timeout: 15000 });
+		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible(
+			{ timeout: 15000 },
+		);
 
 		// If we see loading, wait for it to resolve
 		if (await loadingMessage.isVisible()) {
@@ -58,7 +66,10 @@ test.describe("Web E2E Integration Tests", () => {
 		let wsConnected = false;
 
 		page.on("websocket", (ws) => {
-			if (ws.url().includes("localhost:8000") || ws.url().includes("127.0.0.1:8000")) {
+			if (
+				ws.url().includes("localhost:8000") ||
+				ws.url().includes("127.0.0.1:8000")
+			) {
 				wsConnected = true;
 			}
 		});
@@ -74,7 +85,9 @@ test.describe("Web E2E Integration Tests", () => {
 		await expect.poll(() => wsConnected, { timeout: 5000 }).toBe(true);
 	});
 
-	test("should receive data from WebSocket when connected", async ({ page }) => {
+	test("should receive data from WebSocket when connected", async ({
+		page,
+	}) => {
 		const wsMessages: string[] = [];
 
 		page.on("websocket", (ws) => {
@@ -87,13 +100,17 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await page.goto("/");
 
-		const loadingMessage = page.getByText("Loading flows...", { exact: true });
+		const loadingMessage = page.getByText("Loading flows...", {
+			exact: true,
+		});
 		const rowsPanel = page.getByText("Rows", { exact: true });
-		const errorMessage = page.getByText("Failed to load flows", { exact: true });
+		const errorMessage = page.getByText("Failed to load flows", {
+			exact: true,
+		});
 
-		await expect(
-			loadingMessage.or(rowsPanel).or(errorMessage),
-		).toBeVisible({ timeout: 15000 });
+		await expect(loadingMessage.or(rowsPanel).or(errorMessage)).toBeVisible(
+			{ timeout: 15000 },
+		);
 
 		if (await loadingMessage.isVisible()) {
 			await expect(loadingMessage).not.toBeVisible({ timeout: 15000 });
@@ -105,17 +122,25 @@ test.describe("Web E2E Integration Tests", () => {
 		}
 	});
 
-	test("should display main panels after successful connection", async ({ page }) => {
+	test("should display main panels after successful connection", async ({
+		page,
+	}) => {
 		await page.goto("/");
 
 		const rowsPanel = page.getByText("Rows", { exact: true });
-		const errorMessage = page.getByText("Failed to load flows", { exact: true });
+		const errorMessage = page.getByText("Failed to load flows", {
+			exact: true,
+		});
 
-		await expect(rowsPanel.or(errorMessage)).toBeVisible({ timeout: 20000 });
+		await expect(rowsPanel.or(errorMessage)).toBeVisible({
+			timeout: 20000,
+		});
 
 		// Only check for panels if app loaded successfully
 		if (await rowsPanel.isVisible()) {
-			const configPanel = page.getByText("Configuration", { exact: true });
+			const configPanel = page.getByText("Configuration", {
+				exact: true,
+			});
 			await expect(configPanel).toBeVisible();
 
 			const flowSelector = page.locator("#flow-select");
