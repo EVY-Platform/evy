@@ -1,18 +1,27 @@
 import { db, flow, data } from "../src/db";
 import type { ValidatedFlowData } from "../src/validation";
 
-const FLOWS_PATH = "../docs/services/service_sdui.json";
+const EVY_FLOWS_PATH = "../docs/evy/evy_sdui.json";
+const SERVICE_FLOWS_PATH = "../docs/services/service_sdui.json";
 const DATA_PATH = "../docs/services/service_data.json";
 
 async function seed() {
 	console.log("Seeding database...");
 
-	const flowsJson = (await Bun.file(
-		FLOWS_PATH,
+	const evyFlowsJson = (await Bun.file(
+		EVY_FLOWS_PATH,
+	).json()) as ValidatedFlowData[];
+	const serviceFlowsJson = (await Bun.file(
+		SERVICE_FLOWS_PATH,
 	).json()) as ValidatedFlowData[];
 	const dataJson = await Bun.file(DATA_PATH).json();
 
-	console.log(`Found ${flowsJson.length} flows to seed`);
+	// Combine flows with evy flows first (includes home flow)
+	const flowsJson = [...evyFlowsJson, ...serviceFlowsJson];
+
+	console.log(
+		`Found ${flowsJson.length} flows to seed (${evyFlowsJson.length} evy + ${serviceFlowsJson.length} service)`,
+	);
 
 	console.log("Clearing existing data...");
 	await db.delete(flow);

@@ -150,7 +150,7 @@
 								"title": "Dimensions (width x height x depth)",
 								"children": [
 									{
-										"id": "11111111-1111-4111-8111-111111111101",
+										"id": "b66e136d-828d-4ed0-ae27-cdc48f7cbffd",
 										"type": "Input",
 										"view": {
 											"content": {
@@ -168,7 +168,7 @@
 										}
 									},
 									{
-										"id": "11111111-1111-4111-8111-111111111102",
+										"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
 										"type": "Input",
 										"view": {
 											"content": {
@@ -186,7 +186,7 @@
 										}
 									},
 									{
-										"id": "11111111-1111-4111-8111-111111111103",
+										"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
 										"type": "Input",
 										"view": {
 											"content": {

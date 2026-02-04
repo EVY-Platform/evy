@@ -3,6 +3,7 @@
 //  evyUITests
 //
 //  End-to-end UI tests for EVY iOS app
+//  All tests run in a single app instance for efficiency
 //
 
 import XCTest
@@ -22,22 +23,20 @@ final class evyUITests: XCTestCase {
         app = nil
     }
 
-    func testAppLaunches() throws {
+    /// Single comprehensive e2e test that verifies all functionality in one app instance
+    /// This avoids the overhead of restarting the iOS app for each test case
+    func testFullE2EFlow() throws {
+        // MARK: - App Launch Verification
         XCTAssertTrue(app.exists, "App should launch successfully")
         
         let loadingIndicator = app.progressIndicators["loadingIndicator"]
-        let homeStack = app.otherElements["homeButtonsStack"]
+        let homePage = app.scrollViews["page_55e427ac-263c-441f-9673-f60627b1baea"]
         
-        let initialUIAppeared = loadingIndicator.waitForExistence(timeout: 5) || homeStack.waitForExistence(timeout: 5)
+        let initialUIAppeared = loadingIndicator.waitForExistence(timeout: 5) || homePage.waitForExistence(timeout: 5)
         XCTAssertTrue(initialUIAppeared || app.buttons.count > 0 || app.staticTexts.count > 0, 
                       "App should display initial UI after launch")
-    }
-    
-    func testFullFlowNavigation() throws {
-        // MARK: - App Launch & Home Screen
 
-        XCTAssertTrue(app.exists, "App should launch successfully")
-
+        // MARK: - API Connection & Home Screen
         let viewItemButton = app.buttons["View Item"]
         let createItemButton = app.buttons["Create Item"]
 
@@ -68,14 +67,5 @@ final class evyUITests: XCTestCase {
         backButton.tap()
 
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen after create flow")
-    }
-    
-    func testAPIConnection() throws {
-        XCTAssertTrue(app.exists, "App should launch successfully")
-        
-        let viewItemButton = app.buttons["View Item"]
-        let apiConnected = viewItemButton.waitForExistence(timeout: 15)
-        
-        XCTAssertTrue(apiConnected, "App should load flows from API - verify API is running and database is seeded")
     }
 }
