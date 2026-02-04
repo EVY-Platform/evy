@@ -76,7 +76,10 @@ fi
 
 echo -e "\n${YELLOW}Step 3: Seeding database...${NC}"
 cd api
-DB_URL=$DB_URL bun db:seed
+if ! DB_URL=$DB_URL bun db:seed; then
+    echo -e "${RED}Database seeding failed${NC}"
+    exit 1
+fi
 cd ..
 
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
@@ -107,7 +110,10 @@ if [ "$SKIP_IOS" = true ]; then
 else
     echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
     cd api
-    DB_URL=$DB_URL bun db:seed
+    if ! DB_URL=$DB_URL bun db:seed; then
+        echo -e "${RED}Database seeding failed${NC}"
+        exit 1
+    fi
     cd ../ios
     if API_HOST=localhost:8000 xcodebuild test \
         -project evy.xcodeproj \
