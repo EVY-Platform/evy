@@ -36,40 +36,16 @@ final class evyUITests: XCTestCase {
                       "App should display initial UI after launch")
     }
     
-    func testAppConnectsToAPI() throws {
-        // Verify app launches
-        XCTAssertTrue(app.exists, "App should launch successfully")
-        
-        // Wait for app to attempt API connection
-        // The app will show either:
-        // 1. Loading indicator while connecting
-        // 2. Home buttons if flows are loaded
-        // 3. Some error state if connection fails
-        
-        // Give the app time to connect
-        let expectation = XCTestExpectation(description: "Wait for API connection attempt")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 15)
-        
-        // After waiting, the app should have transitioned from loading
-        // Check that some UI exists (either success or error state)
-        let hasUI = app.buttons.count > 0 || app.staticTexts.count > 0 || app.otherElements.count > 0
-        XCTAssertTrue(hasUI, "App should display some UI after connection attempt")
-    }
-
     /// This test requires specific flows to be loaded from the API.
-    /// It is disabled by default - rename to testFullFlowNavigation to enable.
-    /// To run this test, seed the database with "View Item" and "Create Item" flows first.
-    func disabled_testFullFlowNavigation() throws {
+    /// The database must be seeded with "View Item" and "Create item" flows.
+    func testFullFlowNavigation() throws {
         // MARK: - App Launch & Home Screen
 
         XCTAssertTrue(app.exists, "App should launch successfully")
 
         // Wait for flows to load - these buttons come from the API
         let viewItemButton = app.buttons["View Item"]
-        let createItemButton = app.buttons["Create Item"]
+        let createItemButton = app.buttons["Create item"]
 
         // If flows are not available, skip this test
         // This is acceptable in e2e when database is empty
@@ -102,7 +78,7 @@ final class evyUITests: XCTestCase {
         createItemButton.tap()
 
         XCTAssertTrue(scrollView.waitForExistence(timeout: 5), "Create flow page should load")
-        XCTAssertFalse(app.buttons["Create Item"].exists, "Home buttons should not be visible")
+        XCTAssertFalse(app.buttons["Create item"].exists, "Home buttons should not be visible")
 
         // Verify page has content
         let hasContent = app.textFields.count > 0 || app.staticTexts.count > 0
@@ -120,5 +96,16 @@ final class evyUITests: XCTestCase {
         backButton.tap()
 
         XCTAssertTrue(createItemButton.waitForExistence(timeout: 5), "Should return to home screen after create flow")
+    }
+    
+    func testAPIConnection() throws {
+        // Verify app launches and successfully connects to API
+        XCTAssertTrue(app.exists, "App should launch successfully")
+        
+        // Wait for flows to load from API - if any button appears, API connection succeeded
+        let viewItemButton = app.buttons["View Item"]
+        let apiConnected = viewItemButton.waitForExistence(timeout: 15)
+        
+        XCTAssertTrue(apiConnected, "App should load flows from API - verify API is running and database is seeded")
     }
 }

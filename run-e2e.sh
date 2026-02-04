@@ -57,7 +57,12 @@ else
     echo -e "${GREEN}Web is ready${NC}"
 fi
 
-echo -e "\n${YELLOW}Step 3: Running API e2e tests...${NC}"
+echo -e "\n${YELLOW}Step 3: Seeding database...${NC}"
+cd api
+DB_URL=postgresql://evy:evy@localhost:5432/evy bun db:seed
+cd ..
+
+echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
 cd api
 if bun test e2e/; then
     echo -e "${GREEN}API e2e tests passed${NC}"
@@ -67,7 +72,7 @@ else
 fi
 cd ..
 
-echo -e "\n${YELLOW}Step 4: Running Web e2e tests...${NC}"
+echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
 cd web
 if bunx playwright test --config=playwright.e2e.config.js; then
     echo -e "${GREEN}Web e2e tests passed${NC}"
@@ -77,13 +82,12 @@ else
 fi
 cd ..
 
-echo -e "\n${YELLOW}Step 5: Running iOS e2e tests...${NC}"
+echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
 cd ios
-if xcodebuild test \
+if API_HOST=localhost:8000 xcodebuild test \
     -project evy.xcodeproj \
     -scheme evy \
     -destination 'platform=iOS Simulator,name=iPhone Air,OS=26.2' \
-    API_HOST=localhost:8000 \
     -quiet; then
     echo -e "${GREEN}iOS e2e tests passed${NC}"
 else
