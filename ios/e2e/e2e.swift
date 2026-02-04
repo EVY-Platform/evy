@@ -8,6 +8,53 @@
 
 import XCTest
 
+// MARK: - Minimal WebSocket Emitter for E2E Tests
+
+/// Minimal WebSocket client for sending JSON-RPC commands to the API
+/// The iOS app has its own WebSocket listener - this just triggers updates
+actor WSEmitter {
+    private var ws: URLSessionWebSocketTask?
+    private var msgId = 0
+    
+    func connect(host: String) async throws {
+        let url = URL(string: "ws://\(host)")!
+        ws = URLSession.shared.webSocketTask(with: url)
+        ws?.resume()
+        try await Task.sleep(nanoseconds: 300_000_000) // 0.3s for connection
+    }
+    
+    func login(token: String, os: String) async throws {
+        let response = try await send(method: "rpc.login", params: ["token": token, "os": os])
+        guard response["result"] as? Bool == true else {
+            throw NSError(domain: "WSEmitter", code: 1, userInfo: [NSLocalizedDescriptionKey: "Login failed"])
+        }
+    }
+    
+    func updateSDUI(flowData: [String: Any], flowId: String) async throws {
+        _ = try await send(method: "updateSDUI", params: ["flowData": flowData, "flowId": flowId])
+    }
+    
+    func disconnect() { ws?.cancel(with: .normalClosure, reason: nil) }
+    
+    private func send(method: String, params: Any) async throws -> [String: Any] {
+        msgId += 1
+        let msg: [String: Any] = ["jsonrpc": "2.0", "id": msgId, "method": method, "params": params]
+        let json = String(data: try JSONSerialization.data(withJSONObject: msg), encoding: .utf8)!
+        try await ws?.send(.string(json))
+        
+        // Wait for response
+        let result = try await ws?.receive()
+        if case .string(let text) = result,
+           let data = text.data(using: .utf8),
+           let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            return response
+        }
+        return [:]
+    }
+}
+
+// MARK: - E2E UI Tests
+
 final class evyUITests: XCTestCase {
 
     var app: XCUIApplication!
@@ -194,5 +241,107 @@ final class evyUITests: XCTestCase {
         backButton.tap()
 
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen after create flow")
+    }
+    
+    /// Test that WebSocket notifications from the API update the iOS UI in real-time
+    /// The iOS app has its own WebSocket listener - we just emit updates and verify UI changes
+    @MainActor
+    func testWebSocketNotificationUpdatesUI() async throws {
+        // MARK: - Setup: Wait for app to load and connect to API
+        let viewItemButton = app.buttons["View Item"]
+        XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
+                      "Home screen not loaded - verify API is running and database is seeded")
+        
+        let originalLabel = "View Item"
+        let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
+        
+        // MARK: - Connect to API and emit update
+        let apiHost = ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:8000"
+        let emitter = WSEmitter()
+        
+        do {
+            try await emitter.connect(host: apiHost)
+            try await emitter.login(token: "e2e-test", os: "ios")
+            try await emitter.updateSDUI(
+                flowData: createHomeFlowData(buttonLabel: updatedLabel),
+                flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
+            )
+        } catch {
+            XCTFail("Failed to emit update: \(error.localizedDescription)")
+            return
+        }
+        
+        // MARK: - Verify iOS app's UI updates via its own WebSocket listener
+        let updatedButton = app.buttons[updatedLabel]
+        XCTAssertTrue(updatedButton.waitForExistence(timeout: 10),
+                      "Button should update to '\(updatedLabel)' after notification")
+        XCTAssertFalse(viewItemButton.exists, "Original button should be replaced")
+        
+        // Cleanup: restore original
+        try? await emitter.updateSDUI(
+            flowData: createHomeFlowData(buttonLabel: originalLabel),
+            flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
+        )
+        await emitter.disconnect()
+    }
+    
+    /// Helper to create the Home flow data structure with a custom button label
+    private func createHomeFlowData(buttonLabel: String) -> [String: Any] {
+        return [
+            "id": "f267c629-2594-4770-8cec-d5324ebb4058",
+            "name": "Home",
+            "type": "read",
+            "data": "",
+            "pages": [
+                [
+                    "id": "55e427ac-263c-441f-9673-f60627b1baea",
+                    "title": "Home",
+                    "rows": [
+                        [
+                            "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
+                            "type": "ColumnContainer",
+                            "view": [
+                                "content": [
+                                    "title": "",
+                                    "children": [
+                                        [
+                                            "id": "441c1433-446b-4682-854d-5d795ef52709",
+                                            "type": "Button",
+                                            "view": [
+                                                "content": [
+                                                    "title": "",
+                                                    "label": buttonLabel
+                                                ]
+                                            ],
+                                            "action": [
+                                                "target": "navigate:74a49d4b-2176-4925-857a-e29e2991f1bd:82cae120-c7b1-4c29-bd42-e1521320b109"
+                                            ]
+                                        ],
+                                        [
+                                            "id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                                            "type": "Button",
+                                            "view": [
+                                                "content": [
+                                                    "title": "",
+                                                    "label": "Create Item"
+                                                ]
+                                            ],
+                                            "action": [
+                                                "target": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:306ed62c-c2af-4652-a873-26c7a388972d"
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ],
+                            "edit": [
+                                "validation": [
+                                    "required": "false"
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
     }
 }
