@@ -1,6 +1,6 @@
 # EVY
 
-One platform to rule them all - Plaform to enable Features as a Service
+If smartphones and the internet were build by the people for the people. Create services on the EVY platform and get paid everytime your contribution is used. The EVY app is privacy-focused, local-first and peer-to-peer.
 
 - [docs](/docs/README.md)
 - [api](/api/README.md)
