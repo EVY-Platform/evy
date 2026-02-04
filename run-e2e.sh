@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eu
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -26,14 +26,21 @@ docker-compose up --build -d
 
 echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
+MAX_RETRIES=30
+
 echo "Waiting for PostgreSQL..."
-until docker-compose exec -T postgres pg_isready -U evy > /dev/null 2>&1; do
+PG_RETRY_COUNT=0
+until docker-compose exec -T postgres pg_isready -U evy > /dev/null 2>&1 || [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; do
     sleep 1
+    PG_RETRY_COUNT=$((PG_RETRY_COUNT + 1))
 done
-echo -e "${GREEN}PostgreSQL is ready${NC}"
+if [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo -e "${YELLOW}PostgreSQL health check timed out, but continuing...${NC}"
+else
+    echo -e "${GREEN}PostgreSQL is ready${NC}"
+fi
 
 echo "Waiting for API..."
-MAX_RETRIES=30
 RETRY_COUNT=0
 until curl -s http://localhost:8000 > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
     sleep 1
@@ -64,6 +71,7 @@ cd ..
 
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
 cd api
+bun install
 if bun test e2e/; then
     echo -e "${GREEN}API e2e tests passed${NC}"
 else
@@ -74,6 +82,8 @@ cd ..
 
 echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
 cd web
+bun install
+bunx playwright install --with-deps chromium
 if bunx playwright test --config=playwright.e2e.config.js; then
     echo -e "${GREEN}Web e2e tests passed${NC}"
 else

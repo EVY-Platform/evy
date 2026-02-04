@@ -71,8 +71,7 @@ test.describe("Web E2E Integration Tests", () => {
 			.or(page.getByText("Failed to load flows", { exact: true }));
 		await expect(loadingOrContent).toBeVisible({ timeout: 15000 });
 
-		await page.waitForTimeout(2000);
-		expect(wsConnected).toBe(true);
+		await expect.poll(() => wsConnected, { timeout: 5000 }).toBe(true);
 	});
 
 	test("should receive data from WebSocket when connected", async ({ page }) => {

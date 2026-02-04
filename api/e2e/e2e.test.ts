@@ -36,8 +36,16 @@ describe("API E2E Tests", () => {
 
 		try {
 			await unauthClient.call("getSDUI", {});
-			expect(true).toBe(false);
+			throw new Error(
+				"Expected 'getSDUI' call to fail for unauthenticated request",
+			);
 		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message.includes("Expected 'getSDUI'")
+			) {
+				throw error;
+			}
 			expect(error).toBeDefined();
 		} finally {
 			unauthClient.close();
