@@ -10,7 +10,7 @@ on:
 jobs:
     e2e:
         timeout-minutes: 15
-        runs-on: macos-26
+        runs-on: ${{ contains(github.event.pull_request.labels.*.name, 'run-ios') && 'macos-26' || 'ubuntu-latest' }}
 
         steps:
             - name: Checkout code
@@ -32,7 +32,7 @@ jobs:
               run: bunx playwright install --with-deps
 
             - name: Run E2E tests
-              run: ./run-e2e.sh
+              run: ./run-e2e.sh ${{ contains(github.event.pull_request.labels.*.name, 'run-ios') && '' || '--skip-ios' }}
 
             - name: Upload Playwright report
               uses: actions/upload-artifact@v4
