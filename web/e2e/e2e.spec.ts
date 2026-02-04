@@ -7,6 +7,67 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("Web E2E Integration Tests", () => {
+	test("should persist SDUI edits after page refresh", async ({ page }) => {
+		// Generate a unique test value to avoid conflicts
+		const uniqueTitle = `E2E Test Title ${Date.now()}`;
+
+		await page.goto("/");
+
+		// Wait for app to fully load
+		const rowsPanel = page.getByText("Rows", { exact: true });
+		await expect(rowsPanel).toBeVisible({ timeout: 20000 });
+
+		// Select the "View Item" flow from the dropdown
+		const flowSelector = page.locator("#flow-select");
+		await expect(flowSelector).toBeVisible();
+		await flowSelector.selectOption({ label: "View Item" });
+
+		// Wait for the flow to load - look for the Text row with "My item is called"
+		const textRow = page.getByText("My item is called", { exact: true });
+		await expect(textRow).toBeVisible({ timeout: 10000 });
+
+		// Click on the row to select it
+		await textRow.click();
+
+		// Wait for the configuration panel to show the row's config
+		const configPanel = page
+			.getByText("Configuration", { exact: true })
+			.locator("..");
+		const titleInput = configPanel.getByLabel("title");
+		await expect(titleInput).toBeVisible({ timeout: 5000 });
+
+		// Edit the title field with our unique value
+		await titleInput.clear();
+		await titleInput.fill(uniqueTitle);
+
+		// Verify the input has our value
+		await expect(titleInput).toHaveValue(uniqueTitle);
+
+		// Wait for auto-save to trigger (auto-save happens on state change)
+		// Give it a moment to ensure the WebSocket call completes
+		await page.waitForTimeout(1000);
+
+		// Refresh the page to test persistence
+		await page.reload();
+
+		// Wait for app to fully load again
+		await expect(rowsPanel).toBeVisible({ timeout: 20000 });
+
+		// Select the same flow again
+		await expect(flowSelector).toBeVisible();
+		await flowSelector.selectOption({ label: "View Item" });
+
+		// Wait for the Text row to appear (it should now show our edited title)
+		const editedRow = page.getByText(uniqueTitle, { exact: true });
+		await expect(editedRow).toBeVisible({ timeout: 10000 });
+
+		// Click on the row to verify the config also shows the updated value
+		await editedRow.click();
+		await expect(titleInput).toBeVisible({ timeout: 5000 });
+		await expect(titleInput).toHaveValue(uniqueTitle);
+	});
+
+
 	test("should load the app and connect to real API", async ({ page }) => {
 		await page.goto("/");
 
