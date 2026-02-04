@@ -10,6 +10,9 @@ API_RESULT=0
 WEB_RESULT=0
 IOS_RESULT=0
 
+MAX_RETRIES=5
+DB_URL=postgresql://evy:evy@localhost:5432/evy
+
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
 echo -e "${YELLOW}========================================${NC}"
@@ -25,8 +28,6 @@ echo -e "\n${YELLOW}Step 1: Starting services with docker-compose...${NC}"
 docker-compose up --build -d
 
 echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
-
-MAX_RETRIES=30
 
 echo "Waiting for PostgreSQL..."
 PG_RETRY_COUNT=0
@@ -66,12 +67,12 @@ fi
 
 echo -e "\n${YELLOW}Step 3: Seeding database...${NC}"
 cd api
-DB_URL=postgresql://evy:evy@localhost:5432/evy bun db:seed
+DB_URL=$DB_URL bun db:seed
 cd ..
 
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
 cd api
-bun install
+bun install --silent
 if bun test e2e/; then
     echo -e "${GREEN}API e2e tests passed${NC}"
 else
@@ -82,8 +83,7 @@ cd ..
 
 echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
 cd web
-bun install
-bunx playwright install --with-deps chromium
+bun install --silent
 if bunx playwright test --config=playwright.e2e.config.js; then
     echo -e "${GREEN}Web e2e tests passed${NC}"
 else
@@ -93,7 +93,9 @@ fi
 cd ..
 
 echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
-cd ios
+cd api
+DB_URL=$DB_URL bun db:seed
+cd ../ios
 if API_HOST=localhost:8000 xcodebuild test \
     -project evy.xcodeproj \
     -scheme evy \

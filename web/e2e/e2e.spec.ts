@@ -52,12 +52,11 @@ test.describe("Web E2E Integration Tests", () => {
 	test("should display EVY logo in header", async ({ page }) => {
 		await page.goto("/");
 
-		const loadingOrContent = page
-			.getByText("Loading flows...", { exact: true })
-			.or(page.getByText("Rows", { exact: true }))
-			.or(page.getByText("Failed to load flows", { exact: true }));
-		await expect(loadingOrContent).toBeVisible({ timeout: 15000 });
+		// Wait for app to fully load (Rows panel indicates success)
+		const rowsPanel = page.getByText("Rows", { exact: true });
+		await expect(rowsPanel).toBeVisible({ timeout: 20000 });
 
+		// Logo should be visible after successful load
 		const logo = page.locator('img[alt="EVY"]');
 		await expect(logo).toBeVisible();
 	});
@@ -76,13 +75,12 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await page.goto("/");
 
-		const loadingOrContent = page
-			.getByText("Loading flows...", { exact: true })
-			.or(page.getByText("Rows", { exact: true }))
-			.or(page.getByText("Failed to load flows", { exact: true }));
-		await expect(loadingOrContent).toBeVisible({ timeout: 15000 });
+		// Wait for app to fully load
+		const rowsPanel = page.getByText("Rows", { exact: true });
+		await expect(rowsPanel).toBeVisible({ timeout: 20000 });
 
-		await expect.poll(() => wsConnected, { timeout: 5000 }).toBe(true);
+		// If app loaded, WebSocket must have connected
+		expect(wsConnected).toBe(true);
 	});
 
 	test("should receive data from WebSocket when connected", async ({

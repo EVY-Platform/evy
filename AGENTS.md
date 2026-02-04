@@ -17,3 +17,4 @@ For web or api, make sure you run `bun run build`, `bun run lint` and `bun run t
 Also make sure you can run the app with docker-compose up --build from both the root and the api and web directories.
 
 For iOS, make sure you build with xcode iPhone Air iOS 26.2 and fix any errors
+If you need to run iOS tests, try to avoid re-running the whole e2e suite to restart docker files, keep them running and just run the iOS tests.

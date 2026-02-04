@@ -10,12 +10,24 @@ import SwiftUI
 struct EVYHome: View {
     @Environment(\.navigate) private var navigate
 	@Binding var loading: Bool
+	var flowsLoaded: Bool
     
     var body: some View {
 		if loading {
 			ProgressView()
 				.controlSize(.large)
 				.accessibilityIdentifier("loadingIndicator")
+		} else if !flowsLoaded {
+			VStack(spacing: 20) {
+				Text("Failed to load flows")
+					.font(.evyTitle)
+					.foregroundColor(.red)
+					.accessibilityIdentifier("errorMessage")
+				Text("Please check your connection and try again")
+					.font(.subheadline)
+					.foregroundColor(.gray)
+			}
+			.accessibilityIdentifier("errorState")
 		} else {
 			VStack(spacing: 40) {
 				Button("View Item") {
@@ -38,7 +50,7 @@ struct EVYHome: View {
 
 #Preview {
 	@Previewable @State var loading: Bool = true
-	EVYHome(loading: $loading).onAppear {
+	EVYHome(loading: $loading, flowsLoaded: true).onAppear {
 		Task { @MainActor in
 			try await Task.sleep(for: .seconds(1))
 			loading = false

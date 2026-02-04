@@ -191,8 +191,7 @@ export async function getSDUI(since?: Date): Promise<ValidatedFlowData[]> {
 	const flows = await db
 		.select({ data: flow.data })
 		.from(flow)
-		.where(sinceDate ? gt(flow.updatedAt, sinceDate) : undefined)
-		.orderBy(desc(flow.updatedAt));
+		.where(sinceDate ? gt(flow.updatedAt, sinceDate) : undefined);
 
 	return flows.map((f) => f.data);
 }
@@ -235,8 +234,7 @@ export async function getData(since?: Date): Promise<Record<string, unknown>> {
 	const dataRecords = await db
 		.select({ data: data.data })
 		.from(data)
-		.where(sinceDate ? gt(data.updatedAt, sinceDate) : undefined)
-		.orderBy(desc(data.updatedAt));
+		.where(sinceDate ? gt(data.updatedAt, sinceDate) : undefined);
 
 	// Merge all data records into a single object
 	// Later records override earlier ones for any conflicting keys
