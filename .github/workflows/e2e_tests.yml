@@ -32,7 +32,7 @@ jobs:
               run: bunx playwright install --with-deps
 
             - name: Run E2E tests
-              run: ./run-e2e.sh ${{ contains(github.event.pull_request.labels.*.name, 'run-ios') && '' || '--skip-ios' }}
+              run: bash run-e2e.sh ${{ contains(github.event.pull_request.labels.*.name, 'run-ios') && '' || '--skip-ios' }}
 
             - name: Upload Playwright report
               uses: actions/upload-artifact@v4
