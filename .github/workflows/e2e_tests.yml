@@ -20,8 +20,6 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v6
 
-            # Docker and Docker Compose are pre-installed on ubuntu-latest
-
             - name: Setup Bun
               uses: oven-sh/setup-bun@v2
 
