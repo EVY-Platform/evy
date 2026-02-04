@@ -4,7 +4,7 @@ import { Client } from "rpc-websockets";
 type WSClient = InstanceType<typeof Client>;
 
 import type { ServerFlow, ServerPage, ServerRow } from "../../web/app/types";
-import type { SaveFlowResponse } from "../../web/app/api/wsClient";
+import type { SDUIUpdateResponse } from "../../web/app/api/wsClient";
 import type { Service, Data } from "../src/db/schema";
 
 const API_URL = process.env.API_URL || "ws://localhost:8000";
@@ -81,7 +81,7 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			await client.call("saveFlow", { flowData });
+			await client.call("updateSDUI", { flowData });
 
 			const result = (await client.call("getSDUI", {})) as ServerFlow[];
 
@@ -96,7 +96,7 @@ describe("API E2E Tests", () => {
 			expect(flow.pages).toBeInstanceOf(Array);
 		});
 
-		it("saveFlow should create a new flow", async () => {
+		it("updateSDUI should create a new flow", async () => {
 			const testRow: ServerRow = {
 				id: crypto.randomUUID(),
 				type: "Text",
@@ -122,9 +122,9 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			const result = (await client.call("saveFlow", {
+			const result = (await client.call("updateSDUI", {
 				flowData,
-			})) as SaveFlowResponse;
+			})) as SDUIUpdateResponse;
 
 			expect(result.id).toBeDefined();
 			expect(result.data).toBeDefined();
@@ -134,7 +134,7 @@ describe("API E2E Tests", () => {
 			expect(result.updatedAt).toBeDefined();
 		});
 
-		it("saveFlow should update an existing flow", async () => {
+		it("updateSDUI should update an existing flow", async () => {
 			const flowId = crypto.randomUUID();
 
 			const testPage: ServerPage = {
@@ -151,19 +151,19 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			const created = (await client.call("saveFlow", {
+			const created = (await client.call("updateSDUI", {
 				flowData: createFlowData,
-			})) as SaveFlowResponse;
+			})) as SDUIUpdateResponse;
 
 			const updateFlowData: ServerFlow = {
 				...createFlowData,
 				name: "Updated Flow Name",
 			};
 
-			const updated = (await client.call("saveFlow", {
+			const updated = (await client.call("updateSDUI", {
 				flowData: updateFlowData,
 				flowId: created.id,
-			})) as SaveFlowResponse;
+			})) as SDUIUpdateResponse;
 
 			expect(updated.data.name).toBe("Updated Flow Name");
 		});

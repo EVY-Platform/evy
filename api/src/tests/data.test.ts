@@ -49,8 +49,15 @@ mock.module("../db", () => ({
 }));
 
 // Import data functions after mocking
-const { validateAuth, crud, getSDUI, saveFlow, getData, saveData, primeData } =
-	await import("../data");
+const {
+	validateAuth,
+	crud,
+	getSDUI,
+	updateSDUI,
+	getData,
+	saveData,
+	primeData,
+} = await import("../data");
 
 // Helper to clear all tables between tests
 async function clearTables() {
@@ -353,7 +360,7 @@ describe("getSDUI", () => {
 	});
 });
 
-describe("saveFlow", () => {
+describe("updateSDUI", () => {
 	beforeEach(async () => {
 		await clearTables();
 	});
@@ -381,7 +388,7 @@ describe("saveFlow", () => {
 			],
 		});
 
-		const result = await saveFlow(flowData);
+		const result = await updateSDUI(flowData);
 
 		expect(result.data.name).toBe("New Flow");
 		expect(result.data.type).toBe("create");
@@ -434,7 +441,7 @@ describe("saveFlow", () => {
 			],
 		});
 
-		const result = await saveFlow(updatedFlowData, existingFlow.id);
+		const result = await updateSDUI(updatedFlowData, existingFlow.id);
 
 		expect(result.data.name).toBe("Updated Name");
 		expect(result.data.type).toBe("write");
@@ -451,7 +458,7 @@ describe("saveFlow", () => {
 			pages: [{ id: "page-1", title: "Page 1", rows: [] }],
 		};
 
-		await expect(saveFlow(flowData)).rejects.toThrow(
+		await expect(updateSDUI(flowData)).rejects.toThrow(
 			"Flow validation failed",
 		);
 	});
@@ -464,7 +471,7 @@ describe("saveFlow", () => {
 			pages: [{ id: "page-1", title: "Page 1", rows: [] }],
 		};
 
-		await expect(saveFlow(flowData as any)).rejects.toThrow(
+		await expect(updateSDUI(flowData as any)).rejects.toThrow(
 			"Flow validation failed",
 		);
 	});
@@ -477,7 +484,7 @@ describe("saveFlow", () => {
 			pages: [],
 		};
 
-		await expect(saveFlow(flowData)).rejects.toThrow(
+		await expect(updateSDUI(flowData)).rejects.toThrow(
 			"Flow must have at least one page",
 		);
 	});
@@ -505,7 +512,7 @@ describe("saveFlow", () => {
 			],
 		};
 
-		await expect(saveFlow(flowData as any)).rejects.toThrow(
+		await expect(updateSDUI(flowData as any)).rejects.toThrow(
 			"Flow validation failed",
 		);
 	});
@@ -561,7 +568,7 @@ describe("saveFlow", () => {
 			],
 		});
 
-		const result = await saveFlow(flowData);
+		const result = await updateSDUI(flowData);
 		expect(result.data.name).toBe("Test Flow");
 		expect(result.data.pages).toHaveLength(1);
 	});
@@ -599,7 +606,7 @@ describe("saveFlow", () => {
 			],
 		};
 
-		await expect(saveFlow(flowData as any)).rejects.toThrow(
+		await expect(updateSDUI(flowData as any)).rejects.toThrow(
 			"Flow validation failed",
 		);
 	});
@@ -656,7 +663,7 @@ describe("saveFlow", () => {
 			],
 		});
 
-		const result = await saveFlow(flowData);
+		const result = await updateSDUI(flowData);
 		expect(result.data.name).toBe("Test Flow");
 	});
 
@@ -685,7 +692,7 @@ describe("saveFlow", () => {
 			],
 		});
 
-		const result = await saveFlow(flowData);
+		const result = await updateSDUI(flowData);
 		expect(result.data.pages[0]).toHaveProperty("footer");
 	});
 
@@ -711,7 +718,7 @@ describe("saveFlow", () => {
 			],
 		};
 
-		await expect(saveFlow(flowData as any)).rejects.toThrow(
+		await expect(updateSDUI(flowData as any)).rejects.toThrow(
 			"Flow validation failed",
 		);
 	});
@@ -792,7 +799,10 @@ describe("saveData", () => {
 		const dataPayload = {
 			conditions: [{ id: "1", value: "New" }],
 			selling_reasons: [{ id: "1", value: "Moving" }],
-			item: { title: "Test Item", price: { value: 100, currency: "AUD" } },
+			item: {
+				title: "Test Item",
+				price: { value: 100, currency: "AUD" },
+			},
 		};
 
 		const result = await saveData(dataPayload);

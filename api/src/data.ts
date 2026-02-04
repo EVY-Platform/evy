@@ -196,7 +196,7 @@ export async function getSDUI(since?: Date): Promise<ValidatedFlowData[]> {
 	return flows.map((f) => f.data);
 }
 
-export async function saveFlow(
+export async function updateSDUI(
 	flowData: unknown,
 	existingFlowId?: string,
 ): Promise<Flow> {

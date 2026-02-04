@@ -4,7 +4,7 @@ import { config } from "../config";
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
-export type SaveFlowResponse = {
+export type SDUIUpdateResponse = {
 	id: string;
 	data: ServerFlow;
 	createdAt: string;
@@ -59,14 +59,14 @@ class WSClient {
 		return (await this.client.call("getSDUI", {})) as ServerFlow[];
 	}
 
-	async saveFlow(flowData: ServerFlow): Promise<ServerFlow> {
+	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const result = (await this.client.call("saveFlow", {
+		const result = (await this.client.call("updateSDUI", {
 			flowData,
 			flowId: flowData.id,
-		})) as SaveFlowResponse;
+		})) as SDUIUpdateResponse;
 		return result.data;
 	}
 
