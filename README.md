@@ -41,7 +41,7 @@ docker compose -f docker-compose.prod.yml up
 ```bash
 cd api
 bun install
-bun run db:seed # Optionally
+bun run db:seed
 bun run dev
 ```
 
