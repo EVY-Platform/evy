@@ -68,7 +68,7 @@
 						}
 					},
 					{
-						"id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+						"id": "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
 						"type": "Input",
 						"view": {
 							"content": {
@@ -86,7 +86,7 @@
 						}
 					},
 					{
-						"id": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
 						"type": "Input",
 						"view": {
 							"content": {
@@ -105,7 +105,7 @@
 						}
 					},
 					{
-						"id": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
+						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
 						"type": "Dropdown",
 						"view": {
 							"data": "{conditions}",
@@ -124,7 +124,7 @@
 						}
 					},
 					{
-						"id": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
+						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
 						"type": "Dropdown",
 						"view": {
 							"data": "{selling_reasons}",
@@ -143,7 +143,7 @@
 						}
 					},
 					{
-						"id": "a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d",
+						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
 						"type": "ColumnContainer",
 						"view": {
 							"content": {
@@ -281,7 +281,7 @@
 				"id": "06b21b52-0845-468a-ace1-170a3b05f3a2",
 				"rows": [
 					{
-						"id": "c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f",
+						"id": "c9d0e1f2-a3b4-4c5d-8e7f-8a9b0c1d2e3f",
 						"type": "TextArea",
 						"view": {
 							"content": {
@@ -319,7 +319,7 @@
 				"id": "26dae81a-4122-4b5c-8396-a72a319ccd8b",
 				"rows": [
 					{
-						"id": "d0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a",
+						"id": "d0e1f2a3-b4c5-4d6e-8f8a-9b0c1d2e3f4a",
 						"type": "SelectSegmentContainer",
 						"view": {
 							"content": {
@@ -765,7 +765,7 @@
 				"id": "857362ad-856f-465b-85a3-94bc8bb686cd",
 				"rows": [
 					{
-						"id": "a3b4c5d6-e7f8-4a9b-0c1d-2e3f4a5b6c7d",
+						"id": "a3b4c5d6-e7f8-4a9b-8c1d-2e3f4a5b6c7d",
 						"type": "Info",
 						"view": {
 							"content": {
