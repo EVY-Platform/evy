@@ -165,7 +165,7 @@ export function validateFlowData(data: unknown): ValidatedFlowData {
 	const result = FlowDataSchema.safeParse(data);
 
 	if (!result.success) {
-		const errorMessages = result.error.errors
+		const errorMessages = result.error.issues
 			.map((err) => {
 				const path = err.path.join(".");
 				return path ? `${path}: ${err.message}` : err.message;
