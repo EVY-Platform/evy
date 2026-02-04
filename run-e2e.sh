@@ -81,7 +81,7 @@ cd ..
 
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
 cd api
-bun install --silent
+bun install
 if bun test e2e/; then
     echo -e "${GREEN}API e2e tests passed${NC}"
 else
@@ -92,7 +92,7 @@ cd ..
 
 echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
 cd web
-bun install --silent
+bun install
 if bunx playwright test --config=playwright.e2e.config.js; then
     echo -e "${GREEN}Web e2e tests passed${NC}"
 else
