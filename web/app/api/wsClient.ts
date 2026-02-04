@@ -4,7 +4,7 @@ import { config } from "../config";
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
-type SaveFlowResponse = {
+export type SaveFlowResponse = {
 	id: string;
 	data: ServerFlow;
 	createdAt: string;

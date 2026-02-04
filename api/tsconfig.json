@@ -5,7 +5,8 @@
 		"moduleResolution": "bundler",
 		"strict": true,
 		"skipLibCheck": true,
-		"noEmit": true
+		"noEmit": true,
+		"types": ["bun-types"]
 	},
-	"include": ["src/**/*", "scripts/seed.ts"]
+	"include": ["src/**/*", "scripts/seed.ts", "e2e/**/*"]
 }
