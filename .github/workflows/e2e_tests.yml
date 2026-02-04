@@ -1,0 +1,47 @@
+name: E2E Tests
+
+on:
+    pull_request:
+        branches: [dev]
+    push:
+        branches: [dev]
+    workflow_dispatch:
+
+# NOTE: iOS e2e tests require macOS 26 (for iOS 26.2 simulator) + Docker.
+# GitHub-hosted ARM macOS runners don't support Docker (no nested virtualization).
+# iOS tests must be run locally or on a self-hosted runner with Docker Desktop.
+
+jobs:
+    e2e:
+        timeout-minutes: 5
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+
+            - name: Install API dependencies
+              working-directory: api
+              run: bun install
+
+            - name: Install Web dependencies
+              working-directory: web
+              run: bun install
+
+            - name: Setup Playwright
+              working-directory: web
+              run: bunx playwright install --with-deps
+
+            - name: Run E2E tests
+              run: bash run-e2e.sh --skip-ios
+
+            - name: Upload Playwright report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: playwright-report
+                  path: web/playwright-report/
+                  retention-days: 7

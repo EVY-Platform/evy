@@ -3,7 +3,7 @@ import {
 	primeData,
 	crud,
 	getSDUI,
-	saveFlow,
+	updateSDUI,
 	getData,
 	saveData,
 } from "./data";
@@ -39,8 +39,8 @@ async function main() {
 		.protected();
 
 	server
-		.register("saveFlow", async (data: WSParams) => {
-			const result = await saveFlow(data.flowData, data.flowId);
+		.register("updateSDUI", async (data: WSParams) => {
+			const result = await updateSDUI(data.flowData, data.flowId);
 			emitJsonRpc(server, "flowUpdated", result);
 			return result;
 		})

@@ -54,15 +54,15 @@ struct ContentView: View {
             if let existing = routes.lastIndex(of: route) {
                 routes.removeSubrange(existing...)
 			} else {
-				let currentFlow = flows.first { $0.id == currentFlowId }
-				if !routes.isEmpty {
-					let currentPageId = routes.last!.pageId
-					let currentPage = currentFlow!.pages.first { $0.id == currentPageId }!
-					if currentFlow?.type == .create, !currentPage.complete() {
-						alertMessage = currentPage.incompleteMessages().joined(separator: "\n")
-						showingAlert = true
-						break
-					}
+				if let currentFlow = flows.first(where: { $0.id == currentFlowId }),
+				   !routes.isEmpty,
+				   let currentPageId = routes.last?.pageId,
+				   let currentPage = currentFlow.pages.first(where: { $0.id == currentPageId }),
+				   currentFlow.type == .create,
+				   !currentPage.complete() {
+					alertMessage = currentPage.incompleteMessages().joined(separator: "\n")
+					showingAlert = true
+					break
 				}
 				routes.append(route)
 			}
@@ -72,11 +72,22 @@ struct ContentView: View {
             }
             
             // If the new flow is for creation, start a draft
-            let newFlow = flows.first { $0.id == route.flowId }!
+            guard let newFlow = flows.first(where: { $0.id == route.flowId }) else {
+                alertMessage = "Flow not found - please check API connection"
+                showingAlert = true
+                routes.removeLast()
+                break
+            }
             if newFlow.type == .create {
-                let key: String? = newFlow.data
+                let key: String = newFlow.data
+                guard let itemData = itemData else {
+                    alertMessage = "Item data not loaded"
+                    showingAlert = true
+                    routes.removeLast()
+                    break
+                }
                 do {
-                    try EVY.data.create(key: key!, data: itemData!)
+                    try EVY.data.create(key: key, data: itemData)
                 } catch EVYDataError.keyAlreadyExists {
                     // Draft already exists, continue
                 } catch {
@@ -86,7 +97,11 @@ struct ContentView: View {
             
         case .submit:
             // Make sure the flow was for creation, otherwise error out
-            let currentFlow: EVYFlow = flows.first { $0.id == currentFlowId }!
+            guard let currentFlow = flows.first(where: { $0.id == currentFlowId }) else {
+                alertMessage = "Flow not found"
+                showingAlert = true
+                return
+            }
             if currentFlow.type != .create {
                 alertMessage = "Cannot submit - not a create flow"
                 showingAlert = true
@@ -120,11 +135,10 @@ struct ContentView: View {
             
         case .close:
             // If the flow was for creation, delete the draft
-            let currentFlow: EVYFlow? = flows.first { $0.id == currentFlowId }
-            if currentFlow?.type == .create {
-                let key: String? = currentFlow?.data
+            if let currentFlow = flows.first(where: { $0.id == currentFlowId }),
+               currentFlow.type == .create {
                 do {
-                    try EVY.data.delete(key: key!)
+                    try EVY.data.delete(key: currentFlow.data)
                 } catch EVYDataError.keyNotFound {
                     // Draft doesn't exist, continue
                 } catch {
@@ -144,7 +158,7 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack(path: $routes) {
-			EVYHome(loading: $loading)
+			EVYHome(loading: $loading, flowsLoaded: !flows.isEmpty)
 				.task {
 					guard flows.isEmpty else { return }
 					
@@ -152,24 +166,31 @@ struct ContentView: View {
 						try EVY.getUserData()
 						itemData = try await EVY.getData()
 						flows = try await EVY.getSDUI()
+						// Only show home buttons if flows loaded successfully
+						loading = false
 					} catch let error as EVYRPCError {
 						alertMessage = error.localizedDescription
 						showingAlert = true
+						loading = false // Show error state, but flows will be empty
 					} catch {
 						alertMessage = error.localizedDescription
 						showingAlert = true
+						loading = false // Show error state, but flows will be empty
 					}
-					loading = false
 				}
                 .environment(\.navigate) { navOperation in
                     handleNavigationData(navOperation, currentFlowId)
                 }
                 .navigationDestination(for: Route.self) { route in
-                    let flow = flows.first { $0.id == route.flowId }!
-                    flow.getPageById(route.pageId)!
-                        .environment(\.navigate) { navOperation in
+                    if let flow = flows.first(where: { $0.id == route.flowId }),
+                       let page = flow.getPageById(route.pageId) {
+                        page.environment(\.navigate) { navOperation in
                             handleNavigationData(navOperation, currentFlowId)
                         }
+                    } else {
+                        Text("Flow not found")
+                            .foregroundColor(.red)
+                    }
                 }
         }
 		.alert(isPresented: $showingAlert) {

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		73F1A0012F30B00100000001 /* evyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F1A0002F30B00100000001 /* evyUITests.swift */; };
 		2E00BD4B2BA1A99D00C09A1D /* EVYRadioButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */; };
 		2E0B20F22B816AFA002C86A3 /* EVYSelectPhotoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E0B20F12B816AFA002C86A3 /* EVYSelectPhotoRow.swift */; };
 		2E5F4DBB2BB01A1200D3A3FB /* EVYDropdownRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E5F4DBA2BB01A1200D3A3FB /* EVYDropdownRow.swift */; };
@@ -78,6 +77,7 @@
 		73E77C9F2C3118D100A53363 /* EVYInlinePickerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E77C9E2C3118D100A53363 /* EVYInlinePickerRow.swift */; };
 		73EDC87D2B8F37E800304DD8 /* EVYButtonRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73EDC87C2B8F37E800304DD8 /* EVYButtonRow.swift */; };
 		73EDC87F2B8F387500304DD8 /* EVYButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73EDC87E2B8F387500304DD8 /* EVYButton.swift */; };
+		73F1A0012F30B00100000001 /* e2e.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F1A0002F30B00100000001 /* e2e.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,8 +91,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		73F1A0002F30B00100000001 /* evyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = evyUITests.swift; sourceTree = "<group>"; };
-		73F1A0052F30B00100000001 /* evyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = evyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRadioButton.swift; sourceTree = "<group>"; };
 		2E0B20F12B816AFA002C86A3 /* EVYSelectPhotoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectPhotoRow.swift; sourceTree = "<group>"; };
 		2E5F4DBA2BB01A1200D3A3FB /* EVYDropdownRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDropdownRow.swift; sourceTree = "<group>"; };
@@ -163,6 +161,8 @@
 		73E77C9E2C3118D100A53363 /* EVYInlinePickerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInlinePickerRow.swift; sourceTree = "<group>"; };
 		73EDC87C2B8F37E800304DD8 /* EVYButtonRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYButtonRow.swift; sourceTree = "<group>"; };
 		73EDC87E2B8F387500304DD8 /* EVYButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYButton.swift; sourceTree = "<group>"; };
+		73F1A0002F30B00100000001 /* e2e.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = e2e.swift; sourceTree = "<group>"; };
+		73F1A0052F30B00100000001 /* evyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = evyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -284,7 +284,7 @@
 			isa = PBXGroup;
 			children = (
 				737C6AA42B2706890093D00C /* evy */,
-				73F1A0072F30B00100000001 /* evyUITests */,
+				73F1A0072F30B00100000001 /* e2e */,
 				737C6AA32B2706890093D00C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -296,14 +296,6 @@
 				73F1A0052F30B00100000001 /* evyUITests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		73F1A0072F30B00100000001 /* evyUITests */ = {
-			isa = PBXGroup;
-			children = (
-				73F1A0002F30B00100000001 /* evyUITests.swift */,
-			);
-			path = evyUITests;
 			sourceTree = "<group>";
 		};
 		737C6AA42B2706890093D00C /* evy */ = {
@@ -405,6 +397,14 @@
 				73CDCABE2B271AF300D4E82A /* EVYZoomableContainer.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		73F1A0072F30B00100000001 /* e2e */ = {
+			isa = PBXGroup;
+			children = (
+				73F1A0002F30B00100000001 /* e2e.swift */,
+			);
+			path = e2e;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -588,7 +588,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				73F1A0012F30B00100000001 /* evyUITests.swift in Sources */,
+				73F1A0012F30B00100000001 /* e2e.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

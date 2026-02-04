@@ -8,11 +8,7 @@ import {
 
 import type { ServerFlow, Flow } from "../types";
 import { AppContext } from "./context";
-import {
-	pageReducer,
-	draggingReducer,
-	dropIndicatorReducer,
-} from "./reducers";
+import { pageReducer, draggingReducer, dropIndicatorReducer } from "./reducers";
 import { decodeFlows, encodeFlow } from "../utils/decodeFlow";
 import { baseRows } from "../rows/baseRows";
 import { wsClient } from "../api/wsClient";
@@ -40,23 +36,23 @@ export function AppProvider({
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
 	const [dropIndicator, dispatchDropIndicator] = useReducer(
 		dropIndicatorReducer,
-		null
+		null,
 	);
 
 	const previousFlowsRef = useRef<Flow[]>(appState.flows);
 
 	useEffect(() => {
 		const activeFlow = appState.flows.find(
-			(f) => f.id === appState.activeFlowId
+			(f) => f.id === appState.activeFlowId,
 		);
 		const previousActiveFlow = previousFlowsRef.current.find(
-			(f) => f.id === appState.activeFlowId
+			(f) => f.id === appState.activeFlowId,
 		);
 
 		if (activeFlow && activeFlow !== previousActiveFlow) {
-			wsClient.saveFlow(encodeFlow(activeFlow)).catch((error) => {
+			wsClient.updateSDUI(encodeFlow(activeFlow)).catch((error) => {
 				alert(
-					"Failed to save your changes. Please check your connection and try again."
+					"Failed to save your changes. Please check your connection and try again.",
 				);
 				console.error("Failed to save flow:", error);
 			});
