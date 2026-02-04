@@ -28,19 +28,19 @@ echo -e "${YELLOW}========================================${NC}"
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    docker compose down -v --remove-orphans 2>/dev/null || true
+    docker-compose down -v --remove-orphans 2>/dev/null || true
 }
 
 trap cleanup EXIT
 
-echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
-docker compose up --build -d
+echo -e "\n${YELLOW}Step 1: Starting services with docker-compose...${NC}"
+docker-compose up --build -d
 
 echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
 echo "Waiting for PostgreSQL..."
 PG_RETRY_COUNT=0
-until docker compose exec -T postgres pg_isready -U evy > /dev/null 2>&1 || [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; do
+until docker-compose exec -T postgres pg_isready -U evy > /dev/null 2>&1 || [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; do
     sleep 1
     PG_RETRY_COUNT=$((PG_RETRY_COUNT + 1))
 done
