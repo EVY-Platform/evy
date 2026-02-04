@@ -3,8 +3,20 @@ name: E2E Tests
 on:
     pull_request:
         branches: [dev]
+        paths:
+            - "api/**"
+            - "web/**"
+            - "ios/**"
+            - "run-e2e.sh"
+            - ".github/workflows/e2e_tests.yml"
     push:
         branches: [dev]
+        paths:
+            - "api/**"
+            - "web/**"
+            - "ios/**"
+            - "run-e2e.sh"
+            - ".github/workflows/e2e_tests.yml"
     workflow_dispatch:
 
 # NOTE: iOS e2e tests require macOS 26 (for iOS 26.2 simulator) + Docker.

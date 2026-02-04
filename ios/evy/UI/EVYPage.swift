@@ -11,7 +11,7 @@ struct EVYPage: View, Codable {
     let id: String
     let title: String
     let rows: [EVYRow]
-    let footer: EVYRow
+    let footer: EVYRow?
 	
 	func complete() -> Bool {
 		rows.allSatisfy { $0.complete() }
@@ -34,13 +34,15 @@ struct EVYPage: View, Codable {
         }
         .navigationTitle(title)
         .accessibilityIdentifier("page_\(id)")
-        footer
-            .overlay(alignment: .top, content: {
-                Rectangle()
-                    .fill(Constants.borderColor)
-                    .frame(height: 1)
-                    .padding(.top, -Constants.minorPadding)
-            })
-            .accessibilityIdentifier("pageFooter_\(id)")
+        if let footer = footer {
+            footer
+                .overlay(alignment: .top, content: {
+                    Rectangle()
+                        .fill(Constants.borderColor)
+                        .frame(height: 1)
+                        .padding(.top, -Constants.minorPadding)
+                })
+                .accessibilityIdentifier("pageFooter_\(id)")
+        }
     }
 }

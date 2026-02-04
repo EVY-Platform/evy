@@ -32,10 +32,12 @@ extension EnvironmentValues {
     }
 }
 
+private let HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
+
 struct ContentView: View {
     @State private var flows: EVYSDUI = []
     @State private var routes: [Route] = []
-    @State private var currentFlowId: String = "home"
+    @State private var currentFlowId: String = HOME_FLOW_ID
 	@State private var showingAlert = false
 	@State private var alertMessage = ""
 	@State private var loading = true
@@ -156,30 +158,52 @@ struct ContentView: View {
         }
     }
     
-    var body: some View {
-        NavigationStack(path: $routes) {
-			EVYHome(loading: $loading, flowsLoaded: !flows.isEmpty)
-				.task {
-					guard flows.isEmpty else { return }
-					
-					do {
-						try EVY.getUserData()
-						itemData = try await EVY.getData()
-						flows = try await EVY.getSDUI()
-						// Only show home buttons if flows loaded successfully
-						loading = false
-					} catch let error as EVYRPCError {
-						alertMessage = error.localizedDescription
-						showingAlert = true
-						loading = false // Show error state, but flows will be empty
-					} catch {
-						alertMessage = error.localizedDescription
-						showingAlert = true
-						loading = false // Show error state, but flows will be empty
-					}
-				}
+    @ViewBuilder
+    private var homeContent: some View {
+        if loading {
+            ProgressView()
+                .controlSize(.large)
+                .accessibilityIdentifier("loadingIndicator")
+        } else if let homeFlow = flows.first(where: { $0.id == HOME_FLOW_ID }),
+                  let homePage = homeFlow.pages.first {
+            homePage
                 .environment(\.navigate) { navOperation in
                     handleNavigationData(navOperation, currentFlowId)
+                }
+        } else {
+            VStack(spacing: 20) {
+                Text("Failed to load flows")
+                    .font(.evyTitle)
+                    .foregroundColor(.red)
+                    .accessibilityIdentifier("errorMessage")
+                Text("Please check your connection and try again")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            }
+            .accessibilityIdentifier("errorState")
+        }
+    }
+    
+    var body: some View {
+        NavigationStack(path: $routes) {
+            homeContent
+                .task {
+                    guard flows.isEmpty else { return }
+                    
+                    do {
+                        try EVY.getUserData()
+                        itemData = try await EVY.getData()
+                        flows = try await EVY.getSDUI()
+                        loading = false
+                    } catch let error as EVYRPCError {
+                        alertMessage = error.localizedDescription
+                        showingAlert = true
+                        loading = false
+                    } catch {
+                        alertMessage = error.localizedDescription
+                        showingAlert = true
+                        loading = false
+                    }
                 }
                 .navigationDestination(for: Route.self) { route in
                     if let flow = flows.first(where: { $0.id == route.flowId }),
@@ -199,7 +223,7 @@ struct ContentView: View {
 				  dismissButton: .default(Text("Ok")))
 		}
         .onChange(of: routes) { _, _ in
-            let newFlowId = routes.last?.flowId ?? "home"
+            let newFlowId = routes.last?.flowId ?? HOME_FLOW_ID
             
             // To be safe, we remove any existing data if the flow has changed
             if newFlowId != currentFlowId,
