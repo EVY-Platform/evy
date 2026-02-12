@@ -23,6 +23,16 @@ extension String {
 }
 
 
+struct GetParams: Encodable {
+	let namespace: String
+	let resource: String
+	let filter: Filter?
+}
+
+struct Filter: Encodable {
+	let id: String?
+}
+
 @MainActor
 struct EVY {
     static let data = EVYDataManager()
@@ -38,10 +48,20 @@ struct EVY {
 	}
 	
 	static func getData() async throws -> Data {
-		let serviceData = try await EVYAPIManager.shared.fetch(method: "getData",
-															   params: "",
-															   expecting: EVYJson.self)
-		
+		let sellingReasonsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SellingReason", filter: nil), expecting: EVYJson.self)
+		let conditionsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "Conditions", filter: nil), expecting: EVYJson.self)
+		let durationsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "Durations", filter: nil), expecting: EVYJson.self)
+		let itemJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "Items", filter: nil), expecting: EVYJson.self)
+		let areasJson: EVYJson = .array([])
+
+		let serviceData: EVYJson = .dictionary([
+			"selling_reasons": sellingReasonsJson,
+			"conditions": conditionsJson,
+			"durations": durationsJson,
+			"areas": areasJson,
+			"item": itemJson,
+		])
+
 		let sellingReasons = try JSONEncoder().encode(serviceData.parseProp(props: ["selling_reasons"]))
 		do {
 			try EVY.data.create(key: "selling_reasons", data: sellingReasons)
@@ -66,14 +86,12 @@ struct EVY {
 		} catch EVYDataError.keyAlreadyExists {
 			// Data already loaded, skip
 		}
-		
+
 		return try JSONEncoder().encode(serviceData.parseProp(props: ["item"]))
 	}
 	
 	static func getSDUI() async throws -> EVYSDUI {
-		try await EVYAPIManager.shared.fetch(method: "getSDUI",
-											 params: "",
-											 expecting: EVYSDUI.self)
+		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SDUI", filter: nil), expecting: EVYSDUI.self)
 	}
 	
 	static func createItem() async throws {
@@ -83,9 +101,7 @@ struct EVY {
 	static func getRow(_ props: [String]) async throws -> EVYRow {
 		try await createItem()
 		
-		let flowData = try await EVYAPIManager.shared.fetch(method: "getSDUI",
-															params: "",
-															expecting: EVYJson.self)
+		let flowData = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SDUI", filter: nil), expecting: EVYJson.self)
 		let row = try JSONEncoder().encode(flowData.parseProp(props: props))
 		return try JSONDecoder().decode(EVYRow.self, from: row)
 	}
