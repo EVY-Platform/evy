@@ -56,16 +56,21 @@ class WSClient {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		return (await this.client.call("getSDUI", {})) as ServerFlow[];
+		return (await this.client.call("get", {
+			namespace: "evy",
+			resource: "SDUI",
+		})) as ServerFlow[];
 	}
 
 	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const result = (await this.client.call("updateSDUI", {
-			flowData,
-			flowId: flowData.id,
+		const result = (await this.client.call("upsert", {
+			namespace: "evy",
+			resource: "SDUI",
+			filter: flowData.id ? { id: flowData.id } : undefined,
+			data: flowData,
 		})) as SDUIUpdateResponse;
 		return result.data;
 	}

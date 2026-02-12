@@ -1,12 +1,4 @@
-import {
-	validateAuth,
-	primeData,
-	crud,
-	getSDUI,
-	updateSDUI,
-	getData,
-	saveData,
-} from "./data";
+import { validateAuth, primeData, get, upsert } from "./data";
 import { initServer, emitJsonRpc, WSParams } from "./ws";
 
 function authHandler(data: WSParams): Promise<boolean> {
@@ -18,37 +10,20 @@ async function main() {
 
 	primeData();
 
-	server
-		.register("getData", async (params: WSParams) => {
-			return getData(params.since);
-		})
-		.protected();
+	server.register("get", async (params: WSParams) => {
+		return get(params);
+	});
 
 	server
-		.register("saveData", async (params: WSParams) => {
-			const result = await saveData(params.dataPayload, params.dataId);
-			emitJsonRpc(server, "dataUpdated", result);
+		.register("upsert", async (params: WSParams) => {
+			const result = await upsert(params);
+			const resource = (params as { resource?: string }).resource;
+			if (resource === "SDUI") {
+				emitJsonRpc(server, "flowUpdated", result);
+			} else {
+				emitJsonRpc(server, "dataUpdated", result);
+			}
 			return result;
-		})
-		.protected();
-
-	server
-		.register("getSDUI", async (data: WSParams) => {
-			return getSDUI(data.since);
-		})
-		.protected();
-
-	server
-		.register("updateSDUI", async (data: WSParams) => {
-			const result = await updateSDUI(data.flowData, data.flowId);
-			emitJsonRpc(server, "flowUpdated", result);
-			return result;
-		})
-		.protected();
-
-	server
-		.register("crud", async (data: WSParams) => {
-			return crud(data.method, data.model, data.filter, data.data);
 		})
 		.protected();
 }

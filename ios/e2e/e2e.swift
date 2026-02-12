@@ -31,7 +31,13 @@ actor WSEmitter {
     }
     
     func updateSDUI(flowData: [String: Any], flowId: String) async throws {
-        _ = try await send(method: "updateSDUI", params: ["flowData": flowData, "flowId": flowId])
+        let params: [String: Any] = [
+            "namespace": "evy",
+            "resource": "SDUI",
+            "filter": ["id": flowId],
+            "data": flowData
+        ]
+        _ = try await send(method: "upsert", params: params)
     }
     
     func disconnect() { ws?.cancel(with: .normalClosure, reason: nil) }

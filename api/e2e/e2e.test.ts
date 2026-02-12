@@ -4,8 +4,7 @@ import { Client } from "rpc-websockets";
 type WSClient = InstanceType<typeof Client>;
 
 import type { ServerFlow, ServerPage, ServerRow } from "../../web/app/types";
-import type { SDUIUpdateResponse } from "../../web/app/api/wsClient";
-import type { Service, Data } from "../src/db/schema";
+import type { Data } from "../src/db/schema";
 
 const API_URL = process.env.API_URL || "ws://localhost:8000";
 const TEST_TOKEN = "e2e-test-token";
@@ -30,19 +29,39 @@ function waitForClient(ws: WSClient): Promise<void> {
 }
 
 describe("API E2E Tests", () => {
-	it("should reject unauthenticated requests", async () => {
+	it("get should succeed without auth (public)", async () => {
+		const unauthClient = new Client(API_URL);
+		await waitForClient(unauthClient);
+
+		const result = (await unauthClient.call("get", {
+			namespace: "evy",
+			resource: "SDUI",
+		})) as ServerFlow[];
+		expect(Array.isArray(result)).toBe(true);
+		unauthClient.close();
+	});
+
+	it("upsert should reject without auth", async () => {
 		const unauthClient = new Client(API_URL);
 		await waitForClient(unauthClient);
 
 		try {
-			await unauthClient.call("getSDUI", {});
-			throw new Error(
-				"Expected 'getSDUI' call to fail for unauthenticated request",
-			);
+			await unauthClient.call("upsert", {
+				namespace: "evy",
+				resource: "SDUI",
+				data: {
+					id: crypto.randomUUID(),
+					name: "Test",
+					type: "read",
+					data: "item",
+					pages: [{ id: crypto.randomUUID(), title: "P", rows: [] }],
+				},
+			});
+			throw new Error("Expected upsert to fail for unauthenticated request");
 		} catch (error) {
 			if (
 				error instanceof Error &&
-				error.message.includes("Expected 'getSDUI'")
+				error.message.includes("Expected upsert to fail")
 			) {
 				throw error;
 			}
@@ -65,8 +84,7 @@ describe("API E2E Tests", () => {
 			client.close();
 		});
 
-		it("getSDUI should return flows with valid structure", async () => {
-			// Create a flow first to ensure there's at least one
+		it("get SDUI should return flows with valid structure", async () => {
 			const testPage: ServerPage = {
 				id: crypto.randomUUID(),
 				title: "Test Page",
@@ -81,9 +99,16 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			await client.call("updateSDUI", { flowData });
+			await client.call("upsert", {
+				namespace: "evy",
+				resource: "SDUI",
+				data: flowData,
+			});
 
-			const result = (await client.call("getSDUI", {})) as ServerFlow[];
+			const result = (await client.call("get", {
+				namespace: "evy",
+				resource: "SDUI",
+			})) as ServerFlow[];
 
 			expect(result).toBeInstanceOf(Array);
 			expect(result.length).toBeGreaterThan(0);
@@ -96,7 +121,7 @@ describe("API E2E Tests", () => {
 			expect(flow.pages).toBeInstanceOf(Array);
 		});
 
-		it("updateSDUI should create a new flow", async () => {
+		it("upsert SDUI should create a new flow", async () => {
 			const testRow: ServerRow = {
 				id: crypto.randomUUID(),
 				type: "Text",
@@ -122,9 +147,11 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			const result = (await client.call("updateSDUI", {
-				flowData,
-			})) as SDUIUpdateResponse;
+			const result = (await client.call("upsert", {
+				namespace: "evy",
+				resource: "SDUI",
+				data: flowData,
+			})) as { id: string; data: ServerFlow; createdAt: string; updatedAt: string };
 
 			expect(result.id).toBeDefined();
 			expect(result.data).toBeDefined();
@@ -134,7 +161,7 @@ describe("API E2E Tests", () => {
 			expect(result.updatedAt).toBeDefined();
 		});
 
-		it("updateSDUI should update an existing flow", async () => {
+		it("upsert SDUI should update an existing flow", async () => {
 			const flowId = crypto.randomUUID();
 
 			const testPage: ServerPage = {
@@ -151,151 +178,57 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			const created = (await client.call("updateSDUI", {
-				flowData: createFlowData,
-			})) as SDUIUpdateResponse;
+			const created = (await client.call("upsert", {
+				namespace: "evy",
+				resource: "SDUI",
+				data: createFlowData,
+			})) as { id: string; data: ServerFlow };
 
 			const updateFlowData: ServerFlow = {
 				...createFlowData,
 				name: "Updated Flow Name",
 			};
 
-			const updated = (await client.call("updateSDUI", {
-				flowData: updateFlowData,
-				flowId: created.id,
-			})) as SDUIUpdateResponse;
+			const updated = (await client.call("upsert", {
+				namespace: "evy",
+				resource: "SDUI",
+				filter: { id: created.id },
+				data: updateFlowData,
+			})) as { data: ServerFlow };
 
 			expect(updated.data.name).toBe("Updated Flow Name");
 		});
 
-		it("getData should return data object", async () => {
-			const result = await client.call("getData", {});
+		it("get non-SDUI resource should return data object", async () => {
+			const result = (await client.call("get", {
+				namespace: "evy",
+				resource: "Items",
+			})) as Record<string, unknown>;
 			expect(typeof result).toBe("object");
 		});
 
-		it("saveData should save and return data", async () => {
+		it("upsert then get non-SDUI resource", async () => {
 			const testData = {
 				testField: "e2e test value",
-				nested: {
-					value: 123,
-				},
+				nested: { value: 123 },
 			};
 
-			const result = (await client.call("saveData", {
-				dataPayload: testData,
+			const upserted = (await client.call("upsert", {
+				namespace: "evy",
+				resource: "Items",
+				data: testData,
 			})) as Data;
 
-			expect(result).toHaveProperty("id");
-			expect(result).toHaveProperty("data");
-			expect((result.data as Record<string, unknown>).testField).toBe(
-				"e2e test value",
-			);
-		});
+			expect(upserted).toHaveProperty("id");
+			expect(upserted).toHaveProperty("data");
 
-		it("saveData should update existing data", async () => {
-			const initialData = { field1: "initial" };
-			const created = (await client.call("saveData", {
-				dataPayload: initialData,
-			})) as Data;
-			const dataId = created.id;
+			const got = (await client.call("get", {
+				namespace: "evy",
+				resource: "Items",
+			})) as Record<string, unknown>;
 
-			const updatedData = { field1: "updated", field2: "new" };
-			const updated = (await client.call("saveData", {
-				dataPayload: updatedData,
-				dataId,
-			})) as Data;
-
-			const updatedDataRecord = updated.data as Record<string, unknown>;
-			expect(updatedDataRecord.field1).toBe("updated");
-			expect(updatedDataRecord.field2).toBe("new");
-		});
-
-		it("crud should create a service", async () => {
-			const result = (await client.call("crud", {
-				method: "create",
-				model: "Service",
-				data: {
-					name: "E2E Test Service",
-					description: "Created via e2e test",
-				},
-			})) as Service[];
-
-			expect(Array.isArray(result)).toBe(true);
-			expect(result.length).toBe(1);
-			expect(result[0].name).toBe("E2E Test Service");
-		});
-
-		it("crud should find services", async () => {
-			const created = (await client.call("crud", {
-				method: "create",
-				model: "Service",
-				data: {
-					name: "Findable Service",
-					description: "Can be found",
-				},
-			})) as Service[];
-
-			const serviceId = created[0].id;
-
-			const found = (await client.call("crud", {
-				method: "find",
-				model: "Service",
-				filter: { id: serviceId },
-			})) as Service[];
-
-			expect(found.length).toBe(1);
-			expect(found[0].name).toBe("Findable Service");
-		});
-
-		it("crud should update a service", async () => {
-			const created = (await client.call("crud", {
-				method: "create",
-				model: "Service",
-				data: {
-					name: "Service to Update",
-					description: "Will be updated",
-				},
-			})) as Service[];
-
-			const serviceId = created[0].id;
-
-			const updated = (await client.call("crud", {
-				method: "update",
-				model: "Service",
-				filter: { id: serviceId },
-				data: { name: "Updated Service Name" },
-			})) as Service[];
-
-			expect(updated[0].name).toBe("Updated Service Name");
-		});
-
-		it("crud should delete a service", async () => {
-			const created = (await client.call("crud", {
-				method: "create",
-				model: "Service",
-				data: {
-					name: "Service to Delete",
-					description: "Will be deleted",
-				},
-			})) as Service[];
-
-			const serviceId = created[0].id;
-
-			const deleted = (await client.call("crud", {
-				method: "delete",
-				model: "Service",
-				filter: { id: serviceId },
-			})) as Service[];
-
-			expect(deleted.length).toBe(1);
-
-			const found = (await client.call("crud", {
-				method: "find",
-				model: "Service",
-				filter: { id: serviceId },
-			})) as Service[];
-
-			expect(found.length).toBe(0);
+			expect(got.testField).toBe("e2e test value");
+			expect((got.nested as Record<string, unknown>).value).toBe(123);
 		});
 	});
 });
