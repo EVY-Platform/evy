@@ -33,6 +33,10 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run build
 
+            - name: Create .env for tests
+              if: steps.setup.outputs.has-changes == 'true'
+              run: cp .env.example .env
+
             - name: Run E2E Tests
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run test

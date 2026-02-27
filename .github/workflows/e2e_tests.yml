@@ -47,6 +47,9 @@ jobs:
               working-directory: web
               run: bunx playwright install --with-deps
 
+            - name: Create .env for E2E
+              run: cp .env.example .env
+
             - name: Run E2E tests
               run: bash run-e2e.sh --skip-ios
 
