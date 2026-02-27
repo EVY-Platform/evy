@@ -252,7 +252,7 @@ async function main(): Promise<void> {
 	await mkdir(OUT_TS, { recursive: true });
 	await mkdir(OUT_SWIFT, { recursive: true });
 
-	const schemaPaths = await findSchemaFiles(SCHEMA_DIR, SCHEMA_DIR);
+	const schemaPaths = (await findSchemaFiles(SCHEMA_DIR, SCHEMA_DIR)).sort();
 	const schemaFiles = await loadSchemaFiles(schemaPaths);
 
 	await Promise.all([
