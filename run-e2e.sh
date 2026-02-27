@@ -71,7 +71,7 @@ fi
 
 echo "Waiting for Web..."
 RETRY_COUNT=0
-until curl -s http://localhost:3000 > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+until curl -s http://localhost:$WEB_PORT > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
     sleep 1
     RETRY_COUNT=$((RETRY_COUNT + 1))
 done
