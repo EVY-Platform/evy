@@ -23,7 +23,6 @@ MAX_RETRIES=60
 RETRY_INTERVAL_SECONDS=1
 COMPOSE_DB_DOMAIN="postgres"
 API_WS_READINESS_JS='import { Client } from "rpc-websockets"; const port = process.env.API_PORT; if (!port) process.exit(1); const client = new Client(`ws://localhost:${port}`); const timeout = setTimeout(() => { client.close(); process.exit(1); }, 1000); client.on("open", async () => { try { await client.call("get", { namespace: "evy", resource: "SDUI" }); clearTimeout(timeout); client.close(); process.exit(0); } catch { clearTimeout(timeout); client.close(); process.exit(1); } }); client.on("error", () => { clearTimeout(timeout); client.close(); process.exit(1); });'
-API_WS_FLOWS_READY_JS='import { Client } from "rpc-websockets"; const port = process.env.API_PORT; if (!port) process.exit(1); const client = new Client(`ws://localhost:${port}`); const timeout = setTimeout(() => { client.close(); process.exit(1); }, 5000); client.on("open", async () => { try { const result = await client.call("get", { namespace: "evy", resource: "SDUI" }); clearTimeout(timeout); client.close(); process.exit(Array.isArray(result) && result.length > 0 ? 0 : 1); } catch { clearTimeout(timeout); client.close(); process.exit(1); } }); client.on("error", () => { clearTimeout(timeout); client.close(); process.exit(1); });'
 
 set -a
 source .env
@@ -99,18 +98,6 @@ else
     API_RESULT=1
 fi
 cd ..
-
-echo -e "\n${YELLOW}Step 4b: Waiting for API to have flows (for web e2e)...${NC}"
-RETRY_COUNT=0
-until (cd api && bun -e "$API_WS_FLOWS_READY_JS") 2>/dev/null || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
-    sleep "$RETRY_INTERVAL_SECONDS"
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-done
-if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-    echo -e "${RED}API did not return flows after ${MAX_RETRIES}s${NC}"
-    exit 1
-fi
-echo -e "${GREEN}API has flows${NC}"
 
 echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
 cd web
