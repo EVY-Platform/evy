@@ -3,18 +3,21 @@ import { defineConfig } from "@playwright/test";
 function requireEnv(name) {
 	const value = process.env[name];
 	if (value === undefined || value === "") {
-		throw new Error(`${name} is required (copy .env.example to .env for dev)`);
+		throw new Error(
+			`${name} is required (copy .env.example to .env for dev)`,
+		);
 	}
 	return value;
 }
 
 const WEB_PORT = requireEnv("WEB_PORT");
+const isCI = process.env.CI === "true";
 
 export default defineConfig({
 	testDir: "./tests",
 	timeout: 10000,
 	fullyParallel: true,
-	forbidOnly: !!process.env.CI,
+	forbidOnly: isCI,
 	retries: 1,
 	reporter: "line",
 	use: {
@@ -33,6 +36,6 @@ export default defineConfig({
 	webServer: {
 		command: "bun run dev",
 		url: `http://localhost:${WEB_PORT}`,
-		reuseExistingServer: !process.env.CI,
+		reuseExistingServer: !isCI,
 	},
 });
