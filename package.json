@@ -1,0 +1,17 @@
+{
+	"name": "evy",
+	"private": true,
+	"description": "EVY monorepo - api, web, ios, shared types",
+	"scripts": {
+		"format": "bun run --cwd api format && bun run --cwd web format",
+		"types:generate": "bun run types/scripts/generate.ts && bun run types/scripts/generate-drizzle.ts",
+		"types:watch": "bun run types/scripts/watch.ts",
+		"types:check": "bun run types/scripts/check.ts"
+	},
+	"devDependencies": {
+		"chokidar": "^4.0.1",
+		"drizzle-orm": "^0.45.1",
+		"json-schema-to-typescript": "^15.0.4",
+		"quicktype": "^23.2.6"
+	}
+}
