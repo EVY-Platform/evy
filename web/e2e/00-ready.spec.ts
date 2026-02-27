@@ -9,7 +9,7 @@ test("web app is ready", async ({ page }) => {
 	await page.goto("/");
 	const flowSelector = page.locator("#flow-select");
 	await expect(flowSelector).toBeVisible();
-	await expect(flowSelector.locator("option").first()).toBeVisible();
-	const optionCount = await flowSelector.locator("option").count();
-	expect(optionCount).toBeGreaterThan(0);
+	await expect
+		.poll(async () => flowSelector.locator("option").count())
+		.toBeGreaterThan(0);
 });
