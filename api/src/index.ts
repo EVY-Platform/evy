@@ -1,8 +1,19 @@
-import { validateAuth, primeData, get, upsert } from "./data";
+import type { GetRequest } from "evy-types/rpc/get.request";
+import { validateAuth, primeData, get, upsert, isResource } from "./data";
 import { initServer, emitJsonRpc, WSParams } from "./ws";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
+}
+
+function isRecord(o: unknown): o is Record<string, unknown> {
+	return o !== null && typeof o === "object";
+}
+
+function hasResource(
+	p: unknown,
+): p is { resource: GetRequest["resource"] } {
+	return isRecord(p) && "resource" in p && isResource(p.resource);
 }
 
 async function main() {
@@ -17,8 +28,8 @@ async function main() {
 	server
 		.register("upsert", async (params: WSParams) => {
 			const result = await upsert(params);
-			const resource = (params as { resource?: string }).resource;
-			if (resource === "SDUI") {
+			if (!hasResource(params)) return result;
+			if (params.resource === "SDUI") {
 				emitJsonRpc(server, "flowUpdated", result);
 			} else {
 				emitJsonRpc(server, "dataUpdated", result);

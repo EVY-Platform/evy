@@ -1,6 +1,7 @@
 import { DraggableRowContainer } from "../../components/DraggableRowContainer";
 import { PlaceholderDropIndicator } from "../../components/PlaceholderDropIndicator";
-import { EVYRow, type Row, type RowConfig } from "../EVYRow";
+import type { Row, RowConfig } from "../types/row";
+import { EVYRow } from "../EVYRow";
 
 interface SelectSegmentContainerState {
 	selectedTab: number;
@@ -27,8 +28,14 @@ export default class SelectSegmentContainerRow extends EVYRow {
 	};
 
 	renderContent(row: Row) {
-		const segments = row.config.view.content.segments as string[];
-		const children = row.config.view.content.children as Row[];
+		const rawSegments = row.config.view.content.segments;
+		const segments: string[] =
+			Array.isArray(rawSegments) &&
+			rawSegments.every((x): x is string => typeof x === "string")
+				? rawSegments
+				: [];
+		const rawChildren = row.config.view.content.children;
+		const children: Row[] = Array.isArray(rawChildren) ? rawChildren : [];
 
 		const childrenElements = children.length ? (
 			<DraggableRowContainer
@@ -50,13 +57,9 @@ export default class SelectSegmentContainerRow extends EVYRow {
 						<button
 							key={segment}
 							type="button"
-							onClick={() =>
-								this.setState({ selectedTab: index })
-							}
+							onClick={() => this.setState({ selectedTab: index })}
 							className={`evy-flex-1 evy-border ${
-								index === 0
-									? "evy-rounded-left-md evy-border-r-0"
-									: ""
+								index === 0 ? "evy-rounded-left-md evy-border-r-0" : ""
 							} ${
 								index === segments.length - 1
 									? "evy-rounded-right-md evy-border-l-0"

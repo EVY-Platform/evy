@@ -10,6 +10,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      API_PORT: "8000"
+      WEB_PORT: "3000"
 
     steps:
       - name: Checkout repository
@@ -29,9 +32,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}-api:latest
           labels: ${{ steps.meta.outputs.labels }}
-        env:
-          API_PORT: ${API_PORT:-8000}
-          DB_URL: ${DB_URL}
+          build-args: API_PORT=${{ env.API_PORT }}
 
       - name: Build and push web Docker image
         uses: docker/build-push-action@v6
@@ -40,8 +41,9 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}-web:latest
           labels: ${{ steps.meta.outputs.labels }}
-        env:
-          WEB_PORT: ${WEB_PORT:-3000}
+          build-args: |
+            WEB_PORT=${{ env.WEB_PORT }}
+            API_URL=${{ format('wss://api.{0}', vars.DOMAIN) }}
 
       - name: Docker Compose Remote Deploy api
         uses: glesage/docker-compose-remote-action@v1
@@ -54,9 +56,12 @@ jobs:
           known_host_key: ${{ secrets.DO_HOST_KEY }}
           pull: true
         env:
-          PG_USER: ${{ secrets.PG_USER }}
-          PG_PASS: ${{ secrets.PG_PASS }}
-          DB_URL: postgresql://${{ secrets.PG_USER }}:${{ secrets.PG_PASS }}@db:5432/evy
+          API_PORT: ${{ env.API_PORT }}
+          DB_USER: ${{ secrets.PG_USER }}
+          DB_PASS: ${{ secrets.PG_PASS }}
+          DB_PORT: "5432"
+          DB_DOMAIN: db
+          DB_DATABASE: evy
 
       - name: Docker Compose Remote Deploy web
         uses: glesage/docker-compose-remote-action@v1
@@ -68,3 +73,5 @@ jobs:
           ssh_key: ${{ secrets.DO_SSH_KEY }}
           known_host_key: ${{ secrets.DO_HOST_KEY }}
           pull: true
+        env:
+          WEB_PORT: ${{ env.WEB_PORT }}

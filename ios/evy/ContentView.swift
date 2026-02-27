@@ -164,12 +164,20 @@ struct ContentView: View {
             ProgressView()
                 .controlSize(.large)
                 .accessibilityIdentifier("loadingIndicator")
-        } else if let homeFlow = flows.first(where: { $0.id == HOME_FLOW_ID }),
-                  let homePage = homeFlow.pages.first {
-            homePage
-                .environment(\.navigate) { navOperation in
-                    handleNavigationData(navOperation, currentFlowId)
+        } else if let homeFlow = flows.first(where: { $0.id == HOME_FLOW_ID }) {
+            if homeFlow.pages.isEmpty {
+                VStack(spacing: 20) {
+                    Text("This flow has no pages")
+                        .font(.evyTitle)
+                        .foregroundColor(.gray)
+                        .accessibilityIdentifier("emptyFlowMessage")
                 }
+            } else if let homePage = homeFlow.pages.first {
+                homePage
+                    .environment(\.navigate) { navOperation in
+                        handleNavigationData(navOperation, currentFlowId)
+                    }
+            }
         } else {
             VStack(spacing: 20) {
                 Text("Failed to load flows")

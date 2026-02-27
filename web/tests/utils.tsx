@@ -1,11 +1,11 @@
 import type { Locator, Page } from "@playwright/test";
 import type {
-	ServerFlow,
-	ServerRow,
-	ServerRowContent,
-	RowEdit,
-	RowActionConfig,
-} from "../app/types";
+	SDUI_Flow as ServerFlow,
+	SDUI_Row as ServerRow,
+	SDUI_RowContent as ServerRowContent,
+	SDUI_RowEdit as RowEdit,
+	SDUI_RowAction as RowActionConfig,
+} from "evy-types/sdui/evy";
 
 // Input types where id is optional
 // Using explicit interface to avoid index signature conflicts with ServerRowContent
@@ -176,13 +176,13 @@ function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 }
 export async function initTestFlows(page: Page, pages: ServerPageInput[]) {
 	await page.addInitScript((flows: ServerFlow[]) => {
-		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flows;
+		window.__TEST_FLOWS__ = flows;
 	}, createTestFlows(pages));
 }
 
 export async function initFullFlows(page: Page, flows: ServerFlow[]) {
 	await page.addInitScript((flowData: ServerFlow[]) => {
-		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flowData;
+		window.__TEST_FLOWS__ = flowData;
 	}, flows);
 }
 
@@ -221,8 +221,7 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination:
-													"{item.dimensions.width}",
+												destination: "{item.dimensions.width}",
 												validation: {
 													required: "true",
 													message: "Width",
@@ -256,8 +255,7 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination:
-													"{item.dimensions.length}",
+												destination: "{item.dimensions.length}",
 												validation: {
 													required: "true",
 													message: "Length",
@@ -291,8 +289,7 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination:
-													"{item.dimensions.width}",
+												destination: "{item.dimensions.width}",
 												validation: {
 													required: "true",
 													message: "Width",
@@ -326,8 +323,7 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination:
-													"{item.dimensions.length}",
+												destination: "{item.dimensions.length}",
 												validation: {
 													required: "true",
 													message: "Length",
@@ -368,8 +364,7 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination:
-													"{item.dimensions.width}",
+												destination: "{item.dimensions.width}",
 												validation: {
 													required: "true",
 													message: "Width",
@@ -403,8 +398,7 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination:
-													"{item.dimensions.length}",
+												destination: "{item.dimensions.length}",
 												validation: {
 													required: "true",
 													message: "Length",
@@ -441,18 +435,14 @@ function createDebugFlows(): ServerFlow[] {
 																content: {
 																	title: "Width 4",
 																	value: "width",
-																	placeholder:
-																		"Width",
+																	placeholder: "Width",
 																},
 															},
 															edit: {
-																destination:
-																	"{item.dimensions.width}",
+																destination: "{item.dimensions.width}",
 																validation: {
-																	required:
-																		"true",
-																	message:
-																		"Width",
+																	required: "true",
+																	message: "Width",
 																},
 															},
 														},
@@ -462,18 +452,14 @@ function createDebugFlows(): ServerFlow[] {
 																content: {
 																	title: "Height 4",
 																	value: "height",
-																	placeholder:
-																		"Height",
+																	placeholder: "Height",
 																},
 															},
 															edit: {
-																destination:
-																	"height",
+																destination: "height",
 																validation: {
-																	required:
-																		"true",
-																	message:
-																		"Height",
+																	required: "true",
+																	message: "Height",
 																},
 															},
 														},
@@ -483,20 +469,15 @@ function createDebugFlows(): ServerFlow[] {
 																content: {
 																	title: "Length 4",
 																	value: "length",
-																	placeholder:
-																		"Length",
+																	placeholder: "Length",
 																},
 															},
 															edit: {
-																destination:
-																	"{item.dimensions.length}",
+																destination: "{item.dimensions.length}",
 																validation: {
-																	required:
-																		"true",
-																	message:
-																		"Length",
-																	minValue:
-																		"1",
+																	required: "true",
+																	message: "Length",
+																	minValue: "1",
 																},
 															},
 														},

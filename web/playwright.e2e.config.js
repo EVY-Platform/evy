@@ -1,5 +1,15 @@
 import { defineConfig } from "@playwright/test";
 
+function requireEnv(name) {
+	const value = process.env[name];
+	if (value === undefined || value === "") {
+		throw new Error(`${name} is required (set by run-e2e.sh for e2e)`);
+	}
+	return value;
+}
+
+const WEB_PORT = requireEnv("WEB_PORT");
+
 /**
  * E2E Playwright config for integration tests against real services.
  * Unlike the regular config, this does NOT auto-start the dev server
@@ -7,14 +17,14 @@ import { defineConfig } from "@playwright/test";
  */
 export default defineConfig({
 	testDir: "./e2e",
-	timeout: 30000,
+	timeout: 10000,
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 1,
 	workers: process.env.CI ? 1 : undefined,
 	reporter: "line",
 	use: {
-		baseURL: "http://localhost:3000",
+		baseURL: `http://localhost:${WEB_PORT}`,
 		trace: "on-first-retry",
 	},
 	projects: [

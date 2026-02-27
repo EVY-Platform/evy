@@ -21,5 +21,8 @@ jobs:
               run: bun install --frozen-lockfile
               working-directory: .
 
+            - name: Generate types
+              run: bun run types:generate
+
             - name: Check generated types are up to date
               run: bun run types:check

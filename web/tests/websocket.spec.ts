@@ -2,17 +2,23 @@ import { expect, test } from "@playwright/test";
 import { initTestFlows } from "./utils";
 
 test.describe("WebSocket Connection States", () => {
-	test("should display loading or error state when no API is available", async ({ page }) => {
+	test("should display loading or error state when no API is available", async ({
+		page,
+	}) => {
 		// Navigate without injecting test flows - this will trigger real WebSocket connection
 		// Since the API server isn't running, we should see either loading or error state
 		await page.goto("/");
 
 		// Either loading or error state should be visible (depending on timing)
-		const loadingMessage = page.getByText("Loading flows...", { exact: true });
-		const errorMessage = page.getByText("Failed to load flows", { exact: true });
+		const loadingMessage = page.getByText("Loading flows...", {
+			exact: true,
+		});
+		const errorMessage = page.getByText("Failed to load flows", {
+			exact: true,
+		});
 
 		// Wait for one of them to appear - this tests that the app shows a state when no API is available
-		await expect(loadingMessage.or(errorMessage)).toBeVisible({ timeout: 15000 });
+		await expect(loadingMessage.or(errorMessage)).toBeVisible();
 	});
 
 	test("should display error state when connection fails", async ({ page }) => {
@@ -23,7 +29,7 @@ test.describe("WebSocket Connection States", () => {
 		const errorMessage = page.getByText("Failed to load flows", {
 			exact: true,
 		});
-		await expect(errorMessage).toBeVisible({ timeout: 15000 });
+		await expect(errorMessage).toBeVisible();
 	});
 
 	test("should display app content when flows are loaded via test injection", async ({
@@ -70,9 +76,7 @@ test.describe("WebSocket Connection States", () => {
 		await expect(logo).toBeVisible();
 	});
 
-	test("should have correct page structure after loading", async ({
-		page,
-	}) => {
+	test("should have correct page structure after loading", async ({ page }) => {
 		await initTestFlows(page, [
 			{
 				id: "test-flow-1",

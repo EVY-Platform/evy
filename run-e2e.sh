@@ -19,8 +19,14 @@ WEB_RESULT=0
 IOS_RESULT=0
 IOS_SKIPPED=false
 
-MAX_RETRIES=5
-DB_URL=postgresql://evy:evy@localhost:5432/evy
+MAX_RETRIES=60
+RETRY_INTERVAL_SECONDS=1
+COMPOSE_DB_DOMAIN="postgres"
+API_WS_READINESS_JS='import { Client } from "rpc-websockets"; const port = process.env.API_PORT; if (!port) process.exit(1); const client = new Client(`ws://localhost:${port}`); const timeout = setTimeout(() => { client.close(); process.exit(1); }, 1000); client.on("open", async () => { try { await client.call("get", { namespace: "evy", resource: "SDUI" }); clearTimeout(timeout); client.close(); process.exit(0); } catch { clearTimeout(timeout); client.close(); process.exit(1); } }); client.on("error", () => { clearTimeout(timeout); client.close(); process.exit(1); });'
+
+set -a
+source .env
+set +a
 
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
@@ -28,13 +34,14 @@ echo -e "${YELLOW}========================================${NC}"
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    docker compose down -v --remove-orphans 2>/dev/null || true
+    DB_DOMAIN="$COMPOSE_DB_DOMAIN" docker compose --env-file .env down -v --remove-orphans 2>/dev/null || true
 }
 
 trap cleanup EXIT
 
 echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
-docker compose up --build -d
+DB_DOMAIN="$COMPOSE_DB_DOMAIN" docker compose --env-file .env build --no-cache web
+DB_DOMAIN="$COMPOSE_DB_DOMAIN" docker compose --env-file .env up --build -d
 
 echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
@@ -52,8 +59,8 @@ fi
 
 echo "Waiting for API..."
 RETRY_COUNT=0
-until curl -s http://localhost:8000 > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
-    sleep 1
+until DB_DOMAIN="$COMPOSE_DB_DOMAIN" docker compose --env-file .env exec -T api bun -e "$API_WS_READINESS_JS" > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+    sleep "$RETRY_INTERVAL_SECONDS"
     RETRY_COUNT=$((RETRY_COUNT + 1))
 done
 if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
@@ -75,12 +82,11 @@ else
 fi
 
 echo -e "\n${YELLOW}Step 3: Seeding database...${NC}"
-cd api
-if ! DB_URL=$DB_URL bun db:seed; then
+bun install
+if ! bun db:seed; then
     echo -e "${RED}Database seeding failed${NC}"
     exit 1
 fi
-cd ..
 
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
 cd api
@@ -109,13 +115,12 @@ if [ "$SKIP_IOS" = true ]; then
     IOS_SKIPPED=true
 else
     echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
-    cd api
-    if ! DB_URL=$DB_URL bun db:seed; then
+    if ! bun db:seed; then
         echo -e "${RED}Database seeding failed${NC}"
         exit 1
     fi
-    cd ../ios
-    if API_HOST=localhost:8000 xcodebuild test \
+    cd ios
+    if API_HOST=localhost:$API_PORT xcodebuild test \
         -project evy.xcodeproj \
         -scheme evy \
         -destination 'platform=iOS Simulator,name=iPhone Air,OS=26.2' \

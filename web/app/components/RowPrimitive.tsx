@@ -36,7 +36,7 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			dropzones = [],
 			orientation = "vertical",
 		},
-		ref
+		ref,
 	) {
 		const cursor = useMemo(() => {
 			return {
@@ -54,11 +54,11 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 
 		const showBefore = useMemo(
 			() => dropzones.includes("before") || indicators.includes("before"),
-			[dropzones, indicators]
+			[dropzones, indicators],
 		);
 		const showAfter = useMemo(
 			() => dropzones.includes("after") || indicators.includes("after"),
-			[dropzones, indicators]
+			[dropzones, indicators],
 		);
 
 		return (
@@ -66,9 +66,7 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				{showBefore && (
 					<div
 						className={`${indicatorClass} ${
-							indicators.includes("before")
-								? dropIndicatorExpansionBefore
-								: ""
+							indicators.includes("before") ? dropIndicatorExpansionBefore : ""
 						}`}
 					/>
 				)}
@@ -87,13 +85,11 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 				{showAfter && (
 					<div
 						className={`${indicatorClass} ${
-							indicators.includes("after")
-								? dropIndicatorExpansionAfter
-								: ""
+							indicators.includes("after") ? dropIndicatorExpansionAfter : ""
 						}`}
 					/>
 				)}
 			</>
 		);
-	}
+	},
 );

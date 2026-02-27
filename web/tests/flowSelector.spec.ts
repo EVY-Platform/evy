@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { ServerFlow } from "../app/types";
+import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
 
 test.describe("Flow Selector", () => {
 	const testFlows: ServerFlow[] = [
@@ -74,7 +74,7 @@ test.describe("Flow Selector", () => {
 	test.beforeEach(async ({ page }) => {
 		// Inject the full flows directly (not using initTestFlows which creates a wrapper)
 		await page.addInitScript((flows: ServerFlow[]) => {
-			(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flows;
+			window.__TEST_FLOWS__ = flows;
 		}, testFlows);
 		await page.goto("/");
 	});
@@ -101,13 +101,9 @@ test.describe("Flow Selector", () => {
 		await expect(options.nth(2)).toHaveText("Third Flow");
 	});
 
-	test("should display content from first flow initially", async ({
-		page,
-	}) => {
+	test("should display content from first flow initially", async ({ page }) => {
 		// Should show Flow 1's content
-		await expect(
-			page.getByText("Flow 1 Info", { exact: true }),
-		).toBeVisible();
+		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
 
 		// Should not show Flow 2's content
 		await expect(
@@ -121,17 +117,13 @@ test.describe("Flow Selector", () => {
 		const flowSelector = page.locator("#flow-select");
 
 		// Initially on Flow 1
-		await expect(
-			page.getByText("Flow 1 Info", { exact: true }),
-		).toBeVisible();
+		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
 
 		// Switch to Flow 2
 		await flowSelector.selectOption("flow-2");
 
 		// Should now show Flow 2's content
-		await expect(
-			page.getByText("Flow 2 Info", { exact: true }),
-		).toBeVisible();
+		await expect(page.getByText("Flow 2 Info", { exact: true })).toBeVisible();
 
 		// Should no longer show Flow 1's content
 		await expect(
@@ -190,8 +182,6 @@ test.describe("Flow Selector", () => {
 		await expect(flowSelector).toHaveValue("flow-1");
 
 		// Should show Flow 1's content again
-		await expect(
-			page.getByText("Flow 1 Info", { exact: true }),
-		).toBeVisible();
+		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
 	});
 });

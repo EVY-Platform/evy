@@ -1,6 +1,7 @@
 import { DraggableRowContainer } from "../../components/DraggableRowContainer";
 import { PlaceholderDropIndicator } from "../../components/PlaceholderDropIndicator";
-import { EVYRow, type Row, type RowConfig } from "../EVYRow";
+import type { Row, RowConfig } from "../types/row";
+import { EVYRow } from "../EVYRow";
 
 export default class ColumnContainerRow extends EVYRow {
 	static override config: RowConfig = {
@@ -31,9 +32,7 @@ export default class ColumnContainerRow extends EVYRow {
 					orientation="horizontal"
 					showIndicators
 					previousRowId={index > 0 ? rows[index - 1].id : undefined}
-					nextRowId={
-						index < lastIndex ? rows[index + 1].id : undefined
-					}
+					nextRowId={index < lastIndex ? rows[index + 1].id : undefined}
 				>
 					{child.row}
 				</DraggableRowContainer>

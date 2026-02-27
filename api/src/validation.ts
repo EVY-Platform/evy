@@ -1,3 +1,4 @@
+import type { SDUI_Flow } from "../../types/generated/ts/sdui/evy";
 import { z } from "zod";
 
 /**
@@ -26,51 +27,43 @@ const VALID_ROW_TYPES = [
 /**
  * Schema for row validation rules
  */
-const RowValidationSchema = z
-	.object({
-		required: z.string().optional(),
-		message: z.string().optional(),
-		minAmount: z.string().optional(),
-		minValue: z.string().optional(),
-		minCharacters: z.string().optional(),
-	})
-	.strict();
+const RowValidationSchema = z.strictObject({
+	required: z.string().optional(),
+	message: z.string().optional(),
+	minAmount: z.string().optional(),
+	minValue: z.string().optional(),
+	minCharacters: z.string().optional(),
+});
 
 /**
  * Schema for row edit configuration
  */
-const RowEditSchema = z
-	.object({
-		destination: z.string().optional(),
-		validation: RowValidationSchema.optional(),
-	})
-	.strict();
+const RowEditSchema = z.strictObject({
+	destination: z.string().optional(),
+	validation: RowValidationSchema.optional(),
+});
 
 /**
  * Schema for row action configuration
  */
-const RowActionSchema = z
-	.object({
-		target: z.string(),
-	})
-	.strict();
+const RowActionSchema = z.strictObject({
+	target: z.string(),
+});
 
 /**
  * Base content schema - title is required, other fields are flexible
  * Uses passthrough to allow additional string fields (like label, text, placeholder, etc.)
  */
-const BaseContentSchema = z
-	.object({
-		title: z.string(),
-	})
-	.passthrough();
+const BaseContentSchema = z.looseObject({
+	title: z.string(),
+});
 
 /**
  * Recursive row schema that validates the full row structure including nested children
  */
 type RowInput = {
 	id: string;
-	type: string;
+	type: (typeof VALID_ROW_TYPES)[number];
 	view: {
 		content: {
 			title: string;
@@ -98,70 +91,62 @@ type RowInput = {
 };
 
 export const RowSchema: z.ZodType<RowInput> = z.lazy(() =>
-	z
-		.object({
-			id: z.string().uuid(),
-			type: z.enum(VALID_ROW_TYPES),
-			view: z
-				.object({
-					content: z
-						.object({
-							title: z.string(),
-							children: z.array(RowSchema).optional(),
-							child: RowSchema.optional(),
-							segments: z.array(z.string()).optional(),
-						})
-						.passthrough(),
-					data: z.string().optional(),
-					max_lines: z.string().optional(),
-				})
-				.strict(),
-			edit: RowEditSchema.optional(),
-			action: RowActionSchema.optional(),
-		})
-		.strict(),
+	z.strictObject({
+		id: z.uuid(),
+		type: z.enum(VALID_ROW_TYPES),
+		view: z.strictObject({
+			content: z.looseObject({
+				title: z.string(),
+				children: z.array(RowSchema).optional(),
+				child: RowSchema.optional(),
+				segments: z.array(z.string()).optional(),
+			}),
+			data: z.string().optional(),
+			max_lines: z.string().optional(),
+		}),
+		edit: RowEditSchema.optional(),
+		action: RowActionSchema.optional(),
+	}),
 );
 
 /**
  * Schema for a page within a flow
  */
-export const PageSchema = z
-	.object({
-		id: z.string().uuid(),
-		title: z.string(),
-		rows: z.array(RowSchema),
-		footer: RowSchema.optional(),
-	})
-	.strict();
+export const PageSchema = z.strictObject({
+	id: z.uuid(),
+	title: z.string(),
+	rows: z.array(RowSchema),
+	footer: RowSchema.optional(),
+});
 
 /**
  * Valid flow types
  */
-const VALID_FLOW_TYPES = ["read", "write", "create", "update", "delete"] as const;
+const VALID_FLOW_TYPES = [
+	"read",
+	"write",
+	"create",
+	"update",
+	"delete",
+] as const;
 
 /**
- * Schema for the complete flow data structure
+ * Schema for the complete flow data structure.
+ * Pages may be an empty array per SDUI_Flow schema.
  */
-export const FlowDataSchema = z
-	.object({
-		id: z.string().uuid(),
-		name: z.string().min(1, "Flow name is required"),
-		type: z.enum(VALID_FLOW_TYPES),
-		data: z.string(),
-		pages: z.array(PageSchema).min(1, "Flow must have at least one page"),
-	})
-	.strict();
-
-/**
- * Type inferred from the FlowDataSchema
- */
-export type ValidatedFlowData = z.infer<typeof FlowDataSchema>;
+export const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
+	id: z.uuid(),
+	name: z.string().min(1, { error: "Flow name is required" }),
+	type: z.enum(VALID_FLOW_TYPES),
+	data: z.string(),
+	pages: z.array(PageSchema),
+});
 
 /**
  * Validates flow data and returns the validated data or throws an error
  * with a descriptive message about what failed validation
  */
-export function validateFlowData(data: unknown): ValidatedFlowData {
+export function validateFlowData(data: unknown): SDUI_Flow {
 	const result = FlowDataSchema.safeParse(data);
 
 	if (!result.success) {

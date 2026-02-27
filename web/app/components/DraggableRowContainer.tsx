@@ -53,11 +53,9 @@ export function DraggableRowContainer({
 							height: state.rect.height,
 						}}
 					>
-						<RowPrimitive state={idleState}>
-							{children}
-						</RowPrimitive>
+						<RowPrimitive state={idleState}>{children}</RowPrimitive>
 					</div>,
-					state.container
+					state.container,
 				)}
 		</Fragment>
 	);

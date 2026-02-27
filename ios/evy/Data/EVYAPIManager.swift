@@ -7,10 +7,14 @@
 
 import Foundation
 
-let DEFAULT_HOST = "localhost"
-let DEFAULT_PORT = 8000
+private func requireAPIHost() -> String {
+	guard let host = ProcessInfo.processInfo.environment["API_HOST"], !host.isEmpty else {
+		fatalError("API_HOST is required (set by run-e2e.sh or Xcode scheme for iOS e2e)")
+	}
+	return host
+}
 
-let API_HOST = ProcessInfo.processInfo.environment["API_HOST"] ?? "\(DEFAULT_HOST):\(DEFAULT_PORT)"
+let API_HOST = requireAPIHost()
 let userDefault = UserDefaults.standard
 
 final class EVYAPIManager {

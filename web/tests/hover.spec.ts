@@ -11,9 +11,7 @@ import {
 
 test.describe("Drag Hover Indicator Behavior", () => {
 	test.beforeEach(async ({ page }) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-		]);
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
 		await page.goto("/");
 	});
 
@@ -58,10 +56,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
-		const containerSidebarRow = getSidebarRow(
-			page,
-			"List container row title",
-		);
+		const containerSidebarRow = getSidebarRow(page, "List container row title");
 		await containerSidebarRow.dragTo(pageContent);
 
 		await expect(
@@ -103,17 +98,11 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
-		const rowTypes = [
-			"Info row title",
-			"Text row title",
-			"Button row text",
-		];
+		const rowTypes = ["Info row title", "Text row title", "Button row text"];
 		for (const rowText of rowTypes) {
 			const sidebarRow = getSidebarRow(page, rowText);
 			await sidebarRow.dragTo(pageContent);
-			await expect(
-				firstPage.getByText(rowText, { exact: true }),
-			).toBeVisible();
+			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
 		}
 
 		const pageRows = pageContent.locator(SELECTORS.rowContainer);
@@ -157,10 +146,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
-		const outerContainerRow = getSidebarRow(
-			page,
-			"List container row title",
-		);
+		const outerContainerRow = getSidebarRow(page, "List container row title");
 		await outerContainerRow.dragTo(pageContent);
 
 		await expect(
@@ -169,10 +155,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const outerContainer = getPageRow(page, "List container row title");
 
-		const innerContainerRow = getSidebarRow(
-			page,
-			"Column container row title",
-		);
+		const innerContainerRow = getSidebarRow(page, "Column container row title");
 		await innerContainerRow.dragTo(outerContainer);
 
 		const innerContainer = getPageRow(page, "Column container row title");
@@ -237,9 +220,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		}
 	});
 
-	test("should switch indicator when moving between rows", async ({
-		page,
-	}) => {
+	test("should switch indicator when moving between rows", async ({ page }) => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -247,17 +228,13 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		for (const rowText of rowTypes) {
 			const sidebarRow = getSidebarRow(page, rowText);
 			await sidebarRow.dragTo(pageContent);
-			await expect(
-				firstPage.getByText(rowText, { exact: true }),
-			).toBeVisible();
+			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
 		}
 
 		const pageRows = pageContent.locator(SELECTORS.rowContainer);
 		const dragRow = getSidebarRow(page, "Button row text");
 
-		const firstPageRow = pageRows
-			.filter({ hasText: "Info row title" })
-			.first();
+		const firstPageRow = pageRows.filter({ hasText: "Info row title" }).first();
 		const secondPageRow = pageRows
 			.filter({ hasText: "Text row title" })
 			.first();

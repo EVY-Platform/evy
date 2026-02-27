@@ -11,7 +11,6 @@ import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { FlowSelector } from "./components/FlowSelector";
 import { RowsPanel } from "./components/RowsPanel";
 import { AppContext, AppProvider } from "./state";
-import type { ServerFlow } from "./types";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
 
@@ -57,18 +56,15 @@ function AppContent() {
 }
 
 export function App() {
-	const win = window as { __TEST_FLOWS__?: ServerFlow[] };
 	const { flows, loading } = useFlows();
 
 	// Use test flows if available (for testing), otherwise use fetched flows
-	const initialFlows = win?.__TEST_FLOWS__ ?? flows;
+	const initialFlows = window.__TEST_FLOWS__ ?? flows;
 
-	if (loading && !win?.__TEST_FLOWS__) {
+	if (loading && !window.__TEST_FLOWS__) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-gray-dark evy-text-lg">
-					Loading flows...
-				</div>
+				<div className="evy-text-gray-dark evy-text-lg">Loading flows...</div>
 			</div>
 		);
 	}
@@ -76,9 +72,7 @@ export function App() {
 	if (!initialFlows) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-red-500 evy-text-lg">
-					Failed to load flows
-				</div>
+				<div className="evy-text-red-500 evy-text-lg">Failed to load flows</div>
 			</div>
 		);
 	}

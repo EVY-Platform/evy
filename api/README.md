@@ -2,6 +2,8 @@
 
 RPC-websockets based API server using Bun and Drizzle ORM.
 
+Shared types for RPC params and SDUI models are generated from `types/schema/` at the repo root. The API imports them via the `evy-types` path alias (see `tsconfig.json`). The Drizzle schema (`src/db/schema.generated.ts`) is also generated from `types/schema/data/`. After changing any schema, run `bun run types:generate` from the repo root and commit the updated `types/generated/` and `api/src/db/schema.generated.ts` files.
+
 ## Prerequisites
 
 - [Bun](https://bun.sh/) installed on your system
@@ -15,12 +17,10 @@ Create a `.env` file with the following variables:
 API_PORT=8000
 DB_USER=evy
 DB_PASS=evy
-DB_DATABASE=evy
 DB_PORT=5432
-DB_URL=postgresql://evy:evy@localhost:5432/evy
+DB_DOMAIN=localhost
+DB_DATABASE=evy
 ```
-
-**Note:** Keep `localhost` in `.env` for local development. The Docker compose files automatically override `DB_URL` to use `host.docker.internal` for Docker networking.
 
 ## Getting Started
 
@@ -36,7 +36,6 @@ Run migrations to set up the database schema:
 
 ```bash
 bun run db:migrate
-bun run db:seed
 ```
 
 ### Running the Server
@@ -63,7 +62,7 @@ The server runs on port 8000 by default (configurable via `API_PORT` env var).
 
 ```bash
 docker build -t evy-api .
-docker run -p 8000:8000 -e DB_URL="postgresql://user:password@host:5432/evy" evy-api
+docker run -p 8000:8000 --env-file .env evy-api
 ```
 
 ### Using Docker Compose
@@ -71,8 +70,6 @@ docker run -p 8000:8000 -e DB_URL="postgresql://user:password@host:5432/evy" evy
 ```bash
 docker compose up -d
 ```
-
-Note: Ensure your `.env` file contains the `DB_URL` for the database connection.
 
 ## Database Migrations (Drizzle)
 

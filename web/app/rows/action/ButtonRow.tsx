@@ -1,4 +1,5 @@
-import { EVYRow, type Row, type RowConfig } from "../EVYRow";
+import type { Row, RowConfig } from "../types/row";
+import { EVYRow } from "../EVYRow";
 import Button from "../design-system/Button";
 
 export default class ButtonRow extends EVYRow {
@@ -20,7 +21,13 @@ export default class ButtonRow extends EVYRow {
 			<div className="evy-p-2">
 				<p className="evy-text-md">{row.config.view.content.title}</p>
 				<div className="evy-p-2 evy-flex evy-justify-center">
-					<Button label={row.config.view.content.label as string} />
+					<Button
+						label={
+							typeof row.config.view.content.label === "string"
+								? row.config.view.content.label
+								: ""
+						}
+					/>
 				</div>
 			</div>
 		);

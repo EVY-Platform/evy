@@ -1,4 +1,5 @@
-import { EVYRow, type Row, type RowConfig } from "../EVYRow";
+import type { Row, RowConfig } from "../types/row";
+import { EVYRow } from "../EVYRow";
 
 export default class SelectPhotoRow extends EVYRow {
 	static override config: RowConfig = {
@@ -28,19 +29,11 @@ export default class SelectPhotoRow extends EVYRow {
 				<p className="evy-text-md">{row.config.view.content.title}</p>
 				<div className="evy-rounded-md evy-px-8 evy-py-8 evy-border evy-text-sm">
 					<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
-						<img
-							className="evy-h-4"
-							src="/add_photo.svg"
-							alt="Upload"
-						/>
-						<p className="evy-text-sm">
-							{row.config.view.content.content}
-						</p>
+						<img className="evy-h-4" src="/add_photo.svg" alt="Upload" />
+						<p className="evy-text-sm">{row.config.view.content.content}</p>
 					</div>
 				</div>
-				<p className="evy-text-sm">
-					{row.config.view.content.subtitle}
-				</p>
+				<p className="evy-text-sm">{row.config.view.content.subtitle}</p>
 			</div>
 		);
 	}

@@ -1,0 +1,122 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui",
+	"title": "SDUI_Flow",
+	"description": "SDUI types: SDUI_Flow, SDUI_Page, SDUI_Row",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["id", "name", "type", "data", "pages"],
+	"properties": {
+		"id": { "type": "string", "format": "uuid" },
+		"name": { "type": "string", "minLength": 1 },
+		"type": {
+			"type": "string",
+			"enum": ["read", "write", "create", "update", "delete"]
+		},
+		"data": { "type": "string" },
+		"pages": {
+			"type": "array",
+			"items": { "$ref": "#/$defs/SDUI_Page" }
+		}
+	},
+	"$defs": {
+		"SDUI_Page": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "title", "rows"],
+			"properties": {
+				"id": { "type": "string", "format": "uuid" },
+				"title": { "type": "string" },
+				"rows": {
+					"type": "array",
+					"items": { "$ref": "#/$defs/SDUI_Row" }
+				},
+				"footer": { "$ref": "#/$defs/SDUI_Row" }
+			}
+		},
+		"SDUI_Row": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "type", "view"],
+			"properties": {
+				"id": { "type": "string", "format": "uuid" },
+				"type": {
+					"type": "string",
+					"enum": [
+						"Button",
+						"Calendar",
+						"ColumnContainer",
+						"Dropdown",
+						"Info",
+						"InlinePicker",
+						"InputList",
+						"Input",
+						"ListContainer",
+						"Search",
+						"SelectPhoto",
+						"SelectSegmentContainer",
+						"SheetContainer",
+						"TextAction",
+						"TextArea",
+						"Text",
+						"TextSelect"
+					]
+				},
+				"view": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["content"],
+					"properties": {
+						"content": { "$ref": "#/$defs/SDUI_RowContent" },
+						"data": { "type": "string" },
+						"max_lines": { "type": "string" }
+					}
+				},
+				"edit": { "$ref": "#/$defs/SDUI_RowEdit" },
+				"action": { "$ref": "#/$defs/SDUI_RowAction" }
+			}
+		},
+		"SDUI_RowContent": {
+			"type": "object",
+			"required": ["title"],
+			"properties": {
+				"title": { "type": "string" },
+				"children": {
+					"type": "array",
+					"items": { "$ref": "#/$defs/SDUI_Row" }
+				},
+				"child": { "$ref": "#/$defs/SDUI_Row" },
+				"segments": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			},
+			"additionalProperties": true
+		},
+		"SDUI_RowEdit": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"destination": { "type": "string" },
+				"validation": { "$ref": "#/$defs/SDUI_RowValidation" }
+			}
+		},
+		"SDUI_RowValidation": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"required": { "type": "string" },
+				"message": { "type": "string" },
+				"minAmount": { "type": "string" },
+				"minValue": { "type": "string" },
+				"minCharacters": { "type": "string" }
+			}
+		},
+		"SDUI_RowAction": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["target"],
+			"properties": { "target": { "type": "string" } }
+		}
+	}
+}

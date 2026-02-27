@@ -1,5 +1,15 @@
 import { defineConfig } from "@playwright/test";
 
+function requireEnv(name) {
+	const value = process.env[name];
+	if (value === undefined || value === "") {
+		throw new Error(`${name} is required (copy .env.example to .env for dev)`);
+	}
+	return value;
+}
+
+const WEB_PORT = requireEnv("WEB_PORT");
+
 export default defineConfig({
 	testDir: "./tests",
 	timeout: 10000,
@@ -9,7 +19,7 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: "line",
 	use: {
-		baseURL: "http://localhost:3000",
+		baseURL: `http://localhost:${WEB_PORT}`,
 		trace: "on-first-retry",
 	},
 	projects: [
@@ -23,7 +33,7 @@ export default defineConfig({
 	],
 	webServer: {
 		command: "bun run dev",
-		url: "http://localhost:3000",
+		url: `http://localhost:${WEB_PORT}`,
 		reuseExistingServer: !process.env.CI,
 	},
 });

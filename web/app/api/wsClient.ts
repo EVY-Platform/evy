@@ -1,15 +1,34 @@
 import { Client } from "rpc-websockets";
-import type { ServerFlow } from "../types";
+import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
+import type { UpsertResponse } from "evy-types/rpc/upsert.response";
 import { config } from "../config";
 
-type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
+function isServerFlowArray(v: unknown): v is ServerFlow[] {
+	if (!Array.isArray(v)) return false;
+	return v.every(
+		(item) =>
+			item !== null &&
+			typeof item === "object" &&
+			"id" in item &&
+			"name" in item &&
+			"type" in item &&
+			"data" in item &&
+			"pages" in item,
+	);
+}
 
-export type SDUIUpdateResponse = {
-	id: string;
-	data: ServerFlow;
-	createdAt: string;
-	updatedAt: string;
-};
+function isUpsertResponse(v: unknown): v is UpsertResponse {
+	return (
+		v !== null &&
+		typeof v === "object" &&
+		"id" in v &&
+		"data" in v &&
+		"createdAt" in v &&
+		"updatedAt" in v
+	);
+}
+
+type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
 class WSClient {
 	private client: Client | null = null;
@@ -56,23 +75,30 @@ class WSClient {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		return (await this.client.call("get", {
+		const raw = await this.client.call("get", {
 			namespace: "evy",
 			resource: "SDUI",
-		})) as ServerFlow[];
+		});
+		if (!isServerFlowArray(raw)) {
+			throw new Error("Invalid get response: expected array of flows");
+		}
+		return raw;
 	}
 
 	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const result = (await this.client.call("upsert", {
+		const raw = await this.client.call("upsert", {
 			namespace: "evy",
 			resource: "SDUI",
 			filter: flowData.id ? { id: flowData.id } : undefined,
 			data: flowData,
-		})) as SDUIUpdateResponse;
-		return result.data;
+		});
+		if (!isUpsertResponse(raw)) {
+			throw new Error("Invalid upsert response");
+		}
+		return raw.data;
 	}
 
 	disconnect(): void {

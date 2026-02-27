@@ -2,6 +2,8 @@
 
 A React-based app builder built with Bun.
 
+Shared types (`SDUI_Flow`, `SDUI_Page`, `SDUI_Row`, RPC payloads) come from the schema-generated `evy-types` package (see `tsconfig.json` path alias to `../types/generated/ts`). After changing schemas in `types/schema/`, run `bun run types:generate` from the repo root and commit the updated generated files.
+
 ## Architecture
 
 ```mermaid

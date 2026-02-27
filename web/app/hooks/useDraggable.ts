@@ -111,7 +111,7 @@ export function useDraggable({
 		return [
 			["top", "left"].includes(edge) ? "before" : undefined,
 			["bottom", "right"].includes(edge) ? "after" : undefined,
-		].filter(Boolean) as Array<"before" | "after">;
+		].filter((x): x is "before" | "after" => x !== undefined);
 	}, [dropIndicator, dragging, rowId, showIndicators]);
 
 	const dropzones = useMemo(() => {
@@ -123,9 +123,7 @@ export function useDraggable({
 				dropIndicator.rowId === previousRowId &&
 				dropIndicator.edge !== "bottom");
 		const hideAfter =
-			(nextRowId &&
-				dropIndicator.rowId &&
-				dropIndicator.rowId !== nextRowId) ||
+			(nextRowId && dropIndicator.rowId && dropIndicator.rowId !== nextRowId) ||
 			(nextRowId &&
 				dropIndicator.rowId === nextRowId &&
 				dropIndicator.edge !== "top");
@@ -133,7 +131,7 @@ export function useDraggable({
 		return [
 			hideBefore ? undefined : "before",
 			hideAfter ? undefined : "after",
-		].filter(Boolean) as Array<"before" | "after">;
+		].filter((x): x is "before" | "after" => x !== undefined);
 	}, [dragging, dropIndicator, previousRowId, nextRowId, showIndicators]);
 
 	const onDragEvent = useCallback(
@@ -163,25 +161,18 @@ export function useDraggable({
 				edge: edge,
 			});
 		},
-		[dispatchDropIndicator, rowId]
+		[dispatchDropIndicator, rowId],
 	);
 
 	useEffect(() => {
 		const element = ref.current;
-		invariant(
-			element,
-			"useDraggable useEffect: ref.current is not defined"
-		);
+		invariant(element, "useDraggable useEffect: ref.current is not defined");
 
 		return combine(
 			draggable({
 				element,
 				getInitialData: () => ({ rowId: rowId }),
-				onGenerateDragPreview: ({
-					location,
-					source,
-					nativeSetDragImage,
-				}) => {
+				onGenerateDragPreview: ({ location, source, nativeSetDragImage }) => {
 					const rect = source.element.getBoundingClientRect();
 
 					if (nativeSetDragImage) {
@@ -218,7 +209,7 @@ export function useDraggable({
 							input,
 							element: targetElement,
 							allowedEdges,
-						}
+						},
 					),
 				onDragEnter: onDragEvent,
 				onDrag: onDragEvent,
@@ -229,7 +220,7 @@ export function useDraggable({
 						type: "UNSET_INDICATOR_ROW",
 					});
 				},
-			})
+			}),
 		);
 	}, [
 		allowedEdges,

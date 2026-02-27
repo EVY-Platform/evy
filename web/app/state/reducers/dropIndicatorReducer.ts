@@ -1,8 +1,11 @@
-import type { DropIndicatorState, DropIndicatorAction } from "../../types";
+import type {
+	DropIndicatorState,
+	DropIndicatorAction,
+} from "../../types/actions";
 
 export const dropIndicatorReducer = (
 	state: DropIndicatorState,
-	action: DropIndicatorAction
+	action: DropIndicatorAction,
 ): DropIndicatorState => {
 	switch (action.type) {
 		case "SET_INDICATOR_ROW":

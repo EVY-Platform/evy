@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo } from "react";
 
 import { AppContext } from "../state";
-import type { Row } from "../types";
+import type { Row } from "../types/row";
 import { EVYRow } from "../rows/EVYRow";
 
 export function ConfigurationPanel() {
@@ -19,7 +19,7 @@ export function ConfigurationPanel() {
 				configValue,
 			});
 		},
-		[activeRowId, dispatchRow]
+		[activeRowId, dispatchRow],
 	);
 
 	const row = useMemo(
@@ -29,7 +29,7 @@ export function ConfigurationPanel() {
 				?.pages.flatMap((page) => page.rows)
 				.flatMap(EVYRow.getRowsRecursive)
 				.find((r) => r.id === activeRowId),
-		[flows, activeFlowId, activeRowId]
+		[flows, activeFlowId, activeRowId],
 	);
 
 	const renderConfiguration = useCallback(
@@ -40,13 +40,10 @@ export function ConfigurationPanel() {
 				const uniqueId = `${configRow.id}-${key}`;
 
 				if (key === "children") {
-					const children = content[key] as Row[] | undefined;
+					const children = content.children;
 					if (!children) return null;
 					return (
-						<div
-							key={uniqueId}
-							className="evy-flex evy-flex-col evy-gap-4"
-						>
+						<div key={uniqueId} className="evy-flex evy-flex-col evy-gap-4">
 							{children.map((child, index) => {
 								return (
 									<div
@@ -64,16 +61,14 @@ export function ConfigurationPanel() {
 					);
 				}
 				if (key === "child") {
-					const child = content[key] as Row | undefined;
+					const child = content.child;
 					if (!child) return null;
 					return (
 						<div
 							key={uniqueId}
 							className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
 						>
-							<p className="evy-text-lg evy-font-semibold evy-mb-4">
-								Child
-							</p>
+							<p className="evy-text-lg evy-font-semibold evy-mb-4">Child</p>
 							{renderConfiguration(child)}
 						</div>
 					);
@@ -86,11 +81,7 @@ export function ConfigurationPanel() {
 							type="text"
 							value={String(content[key])}
 							onChange={(e) => {
-								updateRowContent(
-									key,
-									e.target.value,
-									configRow.id
-								);
+								updateRowContent(key, e.target.value, configRow.id);
 							}}
 							className="evy-w-full evy-focus-visible:outline-none"
 							required
@@ -99,7 +90,7 @@ export function ConfigurationPanel() {
 				);
 			});
 		},
-		[updateRowContent]
+		[updateRowContent],
 	);
 
 	const configurationElements = row ? renderConfiguration(row) : [];

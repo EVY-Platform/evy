@@ -1,14 +1,13 @@
 import { createElement } from "react";
-
 import type {
-	Row,
-	ServerFlow,
-	ServerRow,
-	ServerPage,
-	Flow,
-	Page,
-	ServerRowContent,
-} from "../types";
+	SDUI_Flow as ServerFlow,
+	SDUI_Row as ServerRow,
+	SDUI_Page as ServerPage,
+	SDUI_RowContent as ServerRowContent,
+} from "evy-types/sdui/evy";
+
+import type { Row } from "../types/row";
+import type { SDUI_Flow, SDUI_Page } from "../types/flow";
 import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
 
@@ -23,7 +22,7 @@ function encodeRow(row: Row): ServerRow {
 		if (key === "children") {
 			if (content.children) {
 				encodedContent.children = content.children.map((child: Row) =>
-					encodeRow(child)
+					encodeRow(child),
 				);
 			}
 		} else if (key === "child") {
@@ -32,8 +31,13 @@ function encodeRow(row: Row): ServerRow {
 			}
 		} else {
 			const value = content[key];
-			if (typeof value === "string" || Array.isArray(value)) {
-				encodedContent[key] = value as string | string[];
+			if (typeof value === "string") {
+				encodedContent[key] = value;
+			} else if (
+				Array.isArray(value) &&
+				value.every((x): x is string => typeof x === "string")
+			) {
+				encodedContent[key] = value;
 			}
 		}
 	}
@@ -50,10 +54,10 @@ function encodeRow(row: Row): ServerRow {
 	};
 }
 
-export function encodeFlow(flow: Flow): ServerFlow {
+export function encodeFlow(flow: SDUI_Flow): ServerFlow {
 	return {
 		...flow,
-		pages: flow.pages.map((page: Page) => ({
+		pages: flow.pages.map((page: SDUI_Page) => ({
 			...page,
 			rows: page.rows.map(encodeRow),
 			footer: page.footer ? encodeRow(page.footer) : undefined,
@@ -62,9 +66,7 @@ export function encodeFlow(flow: Flow): ServerFlow {
 }
 
 function decodeRow(row: ServerRow): Row {
-	const baseRow = baseRows.find(
-		(baseRow) => row.type === baseRow.config.type
-	);
+	const baseRow = baseRows.find((baseRow) => row.type === baseRow.config.type);
 	if (!baseRow) {
 		return {
 			id: row.id,
@@ -85,8 +87,8 @@ function decodeRow(row: ServerRow): Row {
 						typeof row.view.content.title === "string"
 							? row.view.content.title
 							: "Invalid title",
-					children: row.view.content.children?.map(
-						(child: ServerRow) => decodeRow(child)
+					children: row.view.content.children?.map((child: ServerRow) =>
+						decodeRow(child),
 					),
 					child: row.view.content.child
 						? decodeRow(row.view.content.child)
@@ -97,7 +99,7 @@ function decodeRow(row: ServerRow): Row {
 	};
 }
 
-export const decodeFlows = (flows: ServerFlow[]): Flow[] => {
+export const decodeFlows = (flows: ServerFlow[]): SDUI_Flow[] => {
 	return flows.map((flow) => ({
 		...flow,
 		pages: flow.pages.map((page: ServerPage) => ({

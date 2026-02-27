@@ -3,6 +3,9 @@
 
 declare const __API_URL__: string;
 
+if (typeof __API_URL__ === "undefined" || __API_URL__ === "") {
+	throw new Error("__API_URL__ is required (set API_URL at build time)");
+}
 export const config = {
-	apiUrl: typeof __API_URL__ !== "undefined" ? __API_URL__ : "ws://localhost:8000",
+	apiUrl: __API_URL__,
 } as const;

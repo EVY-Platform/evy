@@ -1,0 +1,20 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "dataUpdated-notification",
+	"title": "DataUpdatedNotification",
+	"description": "JSON-RPC notification payload for dataUpdated event",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["id", "data", "createdAt", "updatedAt"],
+	"properties": {
+		"id": { "type": "string" },
+		"data": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "../common/json.schema.json#/$defs/JSONValue"
+			}
+		},
+		"createdAt": { "type": "string", "format": "date-time" },
+		"updatedAt": { "type": "string", "format": "date-time" }
+	}
+}

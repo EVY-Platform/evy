@@ -1,4 +1,5 @@
-import { EVYRow, type Row, type RowConfig } from "../EVYRow";
+import type { Row, RowConfig } from "../types/row";
+import { EVYRow } from "../EVYRow";
 
 export default class TextActionRow extends EVYRow {
 	static override config: RowConfig = {
@@ -25,9 +26,7 @@ export default class TextActionRow extends EVYRow {
 			<div className="evy-p-2">
 				<p>{row.config.view.content.title}</p>
 				<div className="evy-flex evy-justify-between">
-					<p className="evy-text-md">
-						{row.config.view.content.text}
-					</p>
+					<p className="evy-text-md">{row.config.view.content.text}</p>
 					<button
 						type="button"
 						className="evy-text-blue evy-text-sm evy-hover:text-black evy-bg-transparent evy-border-none"

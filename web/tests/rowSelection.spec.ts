@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { getFirstPage, getPageContent, initTestFlows, stableDragTo, getSidebarRow } from "./utils";
+import {
+	getFirstPage,
+	getPageContent,
+	initTestFlows,
+	stableDragTo,
+	getSidebarRow,
+} from "./utils";
 
 test.describe("Row Selection", () => {
 	test.beforeEach(async ({ page }) => {
@@ -56,9 +62,7 @@ test.describe("Row Selection", () => {
 
 		// Verify configuration inputs are visible for the selected row
 		await expect(configPanel.getByLabel("title")).toBeVisible();
-		await expect(configPanel.getByLabel("title")).toHaveValue(
-			"First Info Row",
-		);
+		await expect(configPanel.getByLabel("title")).toHaveValue("First Info Row");
 	});
 
 	test("should update configuration panel when different row is selected", async ({
@@ -75,9 +79,7 @@ test.describe("Row Selection", () => {
 		await firstInfoRow.click();
 
 		// Verify first row's title is shown
-		await expect(configPanel.getByLabel("title")).toHaveValue(
-			"First Info Row",
-		);
+		await expect(configPanel.getByLabel("title")).toHaveValue("First Info Row");
 
 		// Click on second Info row
 		const secondInfoRow = page
@@ -183,9 +185,7 @@ test.describe("Row Selection", () => {
 		await textInput.fill("New text content");
 
 		// Title should still show the same row's title
-		await expect(configPanel.getByLabel("title")).toHaveValue(
-			"First Info Row",
-		);
+		await expect(configPanel.getByLabel("title")).toHaveValue("First Info Row");
 
 		// The updated text should be visible
 		await expect(textInput).toHaveValue("New text content");
@@ -251,9 +251,9 @@ test.describe("Row Selection with Containers", () => {
 		// When child is clicked, its config should appear - check the child's title value exists
 		const titleInputs = configPanel.getByLabel("title");
 		// One of the title inputs should have the child's value
-		await expect(titleInputs.filter({ hasText: "Child Info Row" }).or(
-			titleInputs.nth(1)
-		)).toHaveValue("Child Info Row");
+		await expect(
+			titleInputs.filter({ hasText: "Child Info Row" }).or(titleInputs.nth(1)),
+		).toHaveValue("Child Info Row");
 	});
 
 	test("should switch selection between container and child", async ({

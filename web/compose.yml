@@ -6,9 +6,12 @@ services:
             context: ./
             dockerfile: ./Dockerfile
             target: runner
+            args:
+                - WEB_PORT=${WEB_PORT}
+                - API_URL=${API_URL}
         environment:
-            - WEB_PORT=${WEB_PORT:-3000}
+            - WEB_PORT=${WEB_PORT}
         env_file:
-            - .env
+            - ../.env
         ports:
-            - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
+            - ${WEB_PORT}:${WEB_PORT}

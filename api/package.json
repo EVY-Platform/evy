@@ -16,8 +16,7 @@
 		"db:generate": "bunx drizzle-kit generate",
 		"db:migrate": "bunx drizzle-kit migrate",
 		"db:push": "bunx drizzle-kit push",
-		"db:studio": "bunx drizzle-kit studio",
-		"db:seed": "bun scripts/seed.ts"
+		"db:studio": "bunx drizzle-kit studio"
 	},
 	"devDependencies": {
 		"@electric-sql/pglite": "^0.3.15",

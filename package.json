@@ -3,16 +3,18 @@
 	"description": "EVY monorepo - api, web, ios, shared types",
 	"license": "GPL-3.0-only",
 	"scripts": {
-		"format": "bun run --cwd api format && bun run --cwd web format && bunx biome format --write types/scripts",
-		"types:generate": "bun run types/scripts/generate.ts && bun run types/scripts/generate-drizzle.ts",
-		"types:watch": "bun run types/scripts/watch.ts",
-		"types:check": "bun run types/scripts/check.ts"
+		"format": "bun run --cwd api format && bun run --cwd web format && bun run format:scripts",
+		"format:scripts": "bunx biome format --write scripts",
+		"types:generate": "bun scripts/generate-types.ts && bun scripts/generate-drizzle.ts",
+		"types:check": "bun scripts/check-types.ts",
+		"db:seed": "bun --cwd api ../scripts/seed.ts"
 	},
 	"devDependencies": {
 		"chokidar": "^4.0.1",
-		"zod": "^4.3.6",
+		"decamelize": "^6.0.1",
 		"drizzle-orm": "^0.45.1",
 		"json-schema-to-typescript": "^15.0.4",
-		"quicktype": "^23.2.6"
+		"quicktype": "^23.2.6",
+		"zod": "^4.3.6"
 	}
 }
