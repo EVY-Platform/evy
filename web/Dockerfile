@@ -1,29 +1,25 @@
-# Build from repo root so evy-types (../types/generated/ts) is available.
 FROM oven/bun:1 AS base
 
-WORKDIR /workspace
+WORKDIR /app
 
 # Install dependencies stage
 FROM base AS deps
 
-COPY web/package.json web/bun.lock* ./
+COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile
 
-# Build stage: run from web dir so tsconfig path ../types/generated/ts resolves
+# Build stage
 FROM base AS builder
 
-WORKDIR /workspace
+WORKDIR /app
 
 ARG API_URL
 ENV API_URL=$API_URL
 
-COPY --from=deps /workspace/node_modules ./web/node_modules
-COPY web/package.json web/bun.lock* web/tsconfig.json ./web/
-COPY web/app ./web/app
-COPY web/dev ./web/dev
-COPY types ./types
-
-WORKDIR /workspace/web
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json bun.lock* ./
+COPY app ./app
+COPY dev ./dev
 
 RUN bun run build
 
@@ -32,10 +28,11 @@ FROM base AS runner
 
 WORKDIR /app
 
-COPY --from=builder /workspace/web/node_modules ./node_modules
-COPY --from=builder /workspace/web/package.json ./
-COPY --from=builder /workspace/web/dist ./dist
-COPY --from=builder /workspace/web/dev ./dev
+# Copy only what's needed for production
+COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
+COPY --from=builder --chown=bun:bun /app/package.json ./
+COPY --from=builder --chown=bun:bun /app/dist ./dist
+COPY --from=builder --chown=bun:bun /app/dev ./dev
 
 USER bun
 

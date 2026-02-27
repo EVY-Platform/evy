@@ -37,8 +37,8 @@ services:
 
   web:
     build:
-      context: .
-      dockerfile: web/Dockerfile
+      context: ./web
+      dockerfile: Dockerfile
       target: runner
       args:
         - WEB_PORT=${WEB_PORT}
