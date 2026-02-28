@@ -19,6 +19,12 @@ WEB_RESULT=0
 IOS_RESULT=0
 IOS_SKIPPED=false
 
+set -a
+source .env
+source api/.env
+source web/.env
+set +a
+
 MAX_RETRIES=5
 DB_USER=evy
 DB_PASS=evy
