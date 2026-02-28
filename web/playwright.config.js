@@ -5,7 +5,6 @@ if (!process.env.WEB_PORT) throw new Error("WEB_PORT is required");
 export default defineConfig({
 	timeout: 10000,
 	fullyParallel: true,
-	retries: 1,
 	workers: 8,
 	reporter: "line",
 	use: {
