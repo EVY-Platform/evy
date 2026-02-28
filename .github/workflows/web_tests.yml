@@ -25,6 +25,13 @@ jobs:
                   working-directory: web
                   path-filter: 'web/**'
 
+            - name: Cache Playwright browsers
+              if: steps.setup.outputs.has-changes == 'true'
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: ${{ runner.os }}-playwright-${{ hashFiles('web/bun.lock', 'web/package.json') }}
+
             - name: Setup Playwright
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run test:setup
