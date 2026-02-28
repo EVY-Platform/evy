@@ -48,6 +48,7 @@ jobs:
               run: bun run test:setup
 
             - name: Create .env from example
+              working-directory: web
               run: cp .env.example .env
 
             - name: Run E2E tests
