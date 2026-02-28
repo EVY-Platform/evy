@@ -7,7 +7,6 @@ import {
 	getRowsPanel,
 	getSidebarRow,
 	initTestFlows,
-	stableDragTo,
 } from "./utils";
 
 test.describe("Drag & Drop UX", () => {
@@ -30,7 +29,7 @@ test.describe("Drag & Drop UX", () => {
 			.locator(SELECTORS.rowContainer)
 			.count();
 
-		await stableDragTo(page, sidebarRow, pageContent);
+		await sidebarRow.dragTo(pageContent);
 
 		await expect(
 			firstPage.getByText("Info row title", { exact: true }),
@@ -46,7 +45,7 @@ test.describe("Drag & Drop UX", () => {
 		const sidebarRow = getSidebarRow(page, "Text row title");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
-		await stableDragTo(page, sidebarRow, pageContent);
+		await sidebarRow.dragTo(pageContent);
 
 		await expect(
 			firstPage.getByText("Text row title", { exact: true }),
@@ -60,7 +59,7 @@ test.describe("Drag & Drop UX", () => {
 			.locator(SELECTORS.rowContainer)
 			.count();
 
-		await stableDragTo(page, pageRow, secondPageContent);
+		await pageRow.dragTo(secondPageContent);
 
 		await expect(
 			secondPage.getByText("Text row title", { exact: true }),
@@ -82,7 +81,7 @@ test.describe("Drag & Drop UX", () => {
 		const sidebarRow = getSidebarRow(page, "Button row text");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
-		await stableDragTo(page, sidebarRow, pageContent);
+		await sidebarRow.dragTo(pageContent);
 
 		await expect(
 			firstPage.getByText("Button row text", { exact: true }),
@@ -93,7 +92,7 @@ test.describe("Drag & Drop UX", () => {
 			.locator(SELECTORS.rowContainer)
 			.count();
 
-		await stableDragTo(page, pageRow, rowsPanel);
+		await pageRow.dragTo(rowsPanel);
 
 		await expect(
 			firstPage.getByText("Button row text", { exact: true }),
@@ -116,7 +115,7 @@ test.describe("Drag & Drop UX", () => {
 			.locator(SELECTORS.rowContainer)
 			.count();
 
-		await stableDragTo(page, firstSidebarRow, pageContent);
+		await firstSidebarRow.dragTo(pageContent);
 		await expect(pageContent.locator(SELECTORS.rowContainer)).toHaveCount(
 			initialRowCount + 1,
 		);
@@ -124,7 +123,7 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
 
-		await stableDragTo(page, secondSidebarRow, pageContent);
+		await secondSidebarRow.dragTo(pageContent);
 		await expect(pageContent.locator(SELECTORS.rowContainer)).toHaveCount(
 			initialRowCount + 2,
 		);
@@ -147,7 +146,6 @@ test.describe("Drag & Drop UX", () => {
 					y: secondRowBox.height - 5,
 				},
 			});
-			await page.waitForTimeout(150);
 		}
 
 		await expect(
@@ -188,7 +186,7 @@ test.describe("Drag & Drop UX", () => {
 			.locator(SELECTORS.rowContainer)
 			.count();
 
-		await stableDragTo(page, firstSidebarRow, pageContent);
+		await firstSidebarRow.dragTo(pageContent);
 		await expect(pageContent.locator(SELECTORS.rowContainer)).toHaveCount(
 			initialRowCount + 1,
 		);
@@ -196,7 +194,7 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
 
-		await stableDragTo(page, secondSidebarRow, pageContent);
+		await secondSidebarRow.dragTo(pageContent);
 		await expect(pageContent.locator(SELECTORS.rowContainer)).toHaveCount(
 			initialRowCount + 2,
 		);
@@ -216,7 +214,6 @@ test.describe("Drag & Drop UX", () => {
 			await secondRow.dragTo(firstRow, {
 				targetPosition: { x: firstRowBox.width / 2, y: 5 },
 			});
-			await page.waitForTimeout(150);
 		}
 
 		await expect(
@@ -252,7 +249,7 @@ test.describe("Drag & Drop UX", () => {
 		const pageContent = getPageContent(page);
 
 		const containerSidebarRow = getSidebarRow(page, "List container row title");
-		await stableDragTo(page, containerSidebarRow, pageContent);
+		await containerSidebarRow.dragTo(pageContent);
 
 		await expect(
 			firstPage.getByText("List container row title", { exact: true }),
@@ -261,7 +258,7 @@ test.describe("Drag & Drop UX", () => {
 		const containerRow = getPageRow(page, "List container row title");
 		const sidebarRow = getSidebarRow(page, "Info row title");
 
-		await stableDragTo(page, sidebarRow, containerRow);
+		await sidebarRow.dragTo(containerRow);
 
 		await expect(
 			firstPage.getByText("Info row title", { exact: true }),
@@ -276,7 +273,7 @@ test.describe("Drag & Drop UX", () => {
 		const pageContent = getPageContent(page);
 
 		const containerSidebarRow = getSidebarRow(page, "List container row title");
-		await stableDragTo(page, containerSidebarRow, pageContent);
+		await containerSidebarRow.dragTo(pageContent);
 
 		const containerRow = getPageRow(page, "List container row title");
 
@@ -285,7 +282,7 @@ test.describe("Drag & Drop UX", () => {
 		).toBeVisible();
 
 		const sidebarRow = getSidebarRow(page, "Info row title");
-		await stableDragTo(page, sidebarRow, containerRow);
+		await sidebarRow.dragTo(containerRow);
 
 		await expect(
 			firstPage.getByText("Info row title", { exact: true }),
@@ -296,7 +293,7 @@ test.describe("Drag & Drop UX", () => {
 			.first();
 		await expect(childRow).toBeVisible();
 
-		await stableDragTo(page, childRow.locator("..").locator(".."), rowsPanel);
+		await childRow.locator("..").locator("..").dragTo(rowsPanel);
 
 		await expect(
 			containerRow.getByText("Info row title", { exact: true }),
@@ -341,7 +338,7 @@ test.describe("Drag & Drop UX", () => {
 			await expect(
 				sidebarRow.getByText(rowText, { exact: true }),
 			).toBeVisible();
-			await stableDragTo(page, sidebarRow, pageContent);
+			await sidebarRow.dragTo(pageContent);
 			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
 		}
 

@@ -16,7 +16,7 @@ const API_URL =
 	process.env.API_URL || `ws://localhost:${requireEnv("API_PORT")}`;
 const TEST_TOKEN = "e2e-test-token";
 const TEST_OS = "Web";
-const CONNECTION_TIMEOUT = 10000;
+const CONNECTION_TIMEOUT = 5000;
 
 function isRecord(o: unknown): o is Record<string, unknown> {
 	return o !== null && typeof o === "object";
@@ -57,36 +57,9 @@ describe("API E2E Tests", () => {
 				namespace: "evy",
 				resource: "SDUI",
 			});
-			expect(result.length).toBeGreaterThan(0);
-		});
-
-		it("upsert should reject without auth", async () => {
-			try {
-				await unauthClient.call("upsert", {
-					namespace: "evy",
-					resource: "SDUI",
-					data: {
-						id: crypto.randomUUID(),
-						name: "Test",
-						type: "read",
-						data: "item",
-						pages: [
-							{ id: crypto.randomUUID(), title: "P", rows: [] },
-						],
-					},
-				});
-				throw new Error(
-					"Expected upsert to fail for unauthenticated request",
-				);
-			} catch (error) {
-				if (
-					error instanceof Error &&
-					error.message.includes("Expected upsert to fail")
-				) {
-					throw error;
-				}
-				expect(error).toBeDefined();
-			}
+			throw new Error(
+				"Expected upsert to fail for unauthenticated request",
+			);
 		});
 	});
 

@@ -40,11 +40,11 @@ function initServer(
 
 		server.on("listening", () => resolve(server));
 		server.on("error", (error: WSError) => reject(error));
-	}).then((server) => {
-		server.setAuth(authHandler);
+	}).then(async (server) => {
+		await server.setAuth(authHandler);
 
-		server.event("dataUpdated");
-		server.event("flowUpdated");
+		await server.event("dataUpdated");
+		await server.event("flowUpdated");
 
 		console.info(`WS server listening at ${HOST}:${PORT}`);
 		return server;

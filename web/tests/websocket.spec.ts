@@ -18,15 +18,18 @@ test.describe("WebSocket Connection States", () => {
 		});
 
 		// Wait for one of them to appear - this tests that the app shows a state when no API is available
-		await expect(loadingMessage.or(errorMessage)).toBeVisible({
-			timeout: 15000,
-		});
+		await expect(loadingMessage.or(errorMessage)).toBeVisible();
 	});
 
-	test("should display error state when connection fails", async ({
-		page,
-	}) => {
-		// Navigate without test flows - WebSocket will fail to connect
+	test("should display error state when connection fails", async ({ page }) => {
+		await page.addInitScript(() => {
+			window.WebSocket = class {
+				constructor() {
+					throw new Error("Forced WebSocket failure for test");
+				}
+			} as unknown as typeof WebSocket;
+		});
+
 		await page.goto("/");
 
 		// Wait for the error state to appear after connection timeout
@@ -80,9 +83,7 @@ test.describe("WebSocket Connection States", () => {
 		await expect(logo).toBeVisible();
 	});
 
-	test("should have correct page structure after loading", async ({
-		page,
-	}) => {
+	test("should have correct page structure after loading", async ({ page }) => {
 		await initTestFlows(page, [
 			{
 				id: "test-flow-1",
