@@ -104,9 +104,7 @@ function validateConfigSemantic(
 	][]) {
 		const def = defs[tableKey];
 		if (!def) {
-			throw new Error(
-				`drizzle.config.json: table "${tableKey}" is not a $def`,
-			);
+			throw new Error(`drizzle.config.json: table "${tableKey}" is not a $def`);
 		}
 		const propKeys = schemaPropertyKeys(def);
 		if (!propKeys.has(tableConfig.primaryKey)) {

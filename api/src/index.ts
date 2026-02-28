@@ -10,9 +10,7 @@ function isRecord(o: unknown): o is Record<string, unknown> {
 	return o !== null && typeof o === "object";
 }
 
-function hasResource(
-	p: unknown,
-): p is { resource: GetRequest["resource"] } {
+function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
 	return isRecord(p) && "resource" in p && isResource(p.resource);
 }
 

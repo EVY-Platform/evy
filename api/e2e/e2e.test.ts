@@ -65,14 +65,10 @@ describe("API E2E Tests", () => {
 						name: "Test",
 						type: "read",
 						data: "item",
-						pages: [
-							{ id: crypto.randomUUID(), title: "P", rows: [] },
-						],
+						pages: [{ id: crypto.randomUUID(), title: "P", rows: [] }],
 					},
 				});
-				throw new Error(
-					"Expected upsert to fail for unauthenticated request",
-				);
+				throw new Error("Expected upsert to fail for unauthenticated request");
 			} catch (error) {
 				if (
 					error instanceof Error &&

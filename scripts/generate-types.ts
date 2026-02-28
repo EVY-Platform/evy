@@ -179,8 +179,7 @@ async function generateTypeScript(
 		} else if (mod.startsWith("data/") && mod.includes("data")) {
 			lines.unshift(`export * from "./${mod}";`);
 		} else {
-			const name =
-				title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
+			const name = title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
 			lines.push(`export { ${name} } from "./${mod}";`);
 		}
 	}

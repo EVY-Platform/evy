@@ -86,14 +86,10 @@ function ensureRowIds(rows: RowInput[]): RowInput[] {
 			},
 		};
 		if (row.view.content.children) {
-			rowWithId.view.content.children = ensureRowIds(
-				row.view.content.children,
-			);
+			rowWithId.view.content.children = ensureRowIds(row.view.content.children);
 		}
 		if (row.view.content.child) {
-			rowWithId.view.content.child = ensureRowIds([
-				row.view.content.child,
-			])[0];
+			rowWithId.view.content.child = ensureRowIds([row.view.content.child])[0];
 		}
 		return rowWithId;
 	});
@@ -128,9 +124,7 @@ describe("validateAuth", () => {
 	});
 
 	it("should throw error when no token provided", async () => {
-		await expect(validateAuth("", "ios")).rejects.toThrow(
-			"No token provided",
-		);
+		await expect(validateAuth("", "ios")).rejects.toThrow("No token provided");
 	});
 
 	it("should throw error when no OS provided", async () => {

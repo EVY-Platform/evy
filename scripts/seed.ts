@@ -13,7 +13,13 @@ const SERVICE_FLOWS_PATH = join(
 	"services",
 	"service_sdui.json",
 );
-const DATA_PATH = join(SCRIPT_DIR, "..", "docs", "services", "service_data.json");
+const DATA_PATH = join(
+	SCRIPT_DIR,
+	"..",
+	"docs",
+	"services",
+	"service_data.json",
+);
 
 async function seed() {
 	console.log("Seeding database...");

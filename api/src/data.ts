@@ -70,11 +70,7 @@ function validateGetUpsertParams(
 		}
 	}
 	if (requireData) {
-		if (
-			p.data === undefined ||
-			typeof p.data !== "object" ||
-			p.data === null
-		) {
+		if (p.data === undefined || typeof p.data !== "object" || p.data === null) {
 			throw new Error("data is required and must be a non-null object");
 		}
 	}
