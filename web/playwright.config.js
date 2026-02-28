@@ -1,26 +1,15 @@
 import { defineConfig } from "@playwright/test";
 
-function requireEnv(name) {
-	const value = process.env[name];
-	if (value === undefined || value === "") {
-		throw new Error(`${name} is required (copy .env.example to .env for dev)`);
-	}
-	return value;
-}
-
-const WEB_PORT = requireEnv("WEB_PORT");
-const isCI = process.env.CI === "true";
+if (!process.env.WEB_PORT) throw new Error("WEB_PORT is required");
 
 export default defineConfig({
-	testDir: "./tests",
 	timeout: 10000,
 	fullyParallel: true,
-	forbidOnly: isCI,
 	retries: 1,
 	workers: 8,
 	reporter: "line",
 	use: {
-		baseURL: `http://localhost:${WEB_PORT}`,
+		baseURL: `http://localhost:${process.env.WEB_PORT}`,
 		trace: "on-first-retry",
 	},
 	projects: [
@@ -34,7 +23,7 @@ export default defineConfig({
 	],
 	webServer: {
 		command: "bun run dev",
-		url: `http://localhost:${WEB_PORT}`,
-		reuseExistingServer: !isCI,
+		url: `http://localhost:${process.env.WEB_PORT}`,
+		reuseExistingServer: true, //process.env.CI === "true",
 	},
 });
