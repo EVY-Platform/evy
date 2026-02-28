@@ -4,8 +4,8 @@ if (!process.env.WEB_PORT) throw new Error("WEB_PORT is required");
 const url = `http://localhost:${process.env.WEB_PORT}`;
 
 export default defineConfig({
-	timeout: 20000,
-	fullyParallel: false,
+	timeout: 10000,
+	fullyParallel: true,
 	workers: 4,
 	reporter: "line",
 	use: { baseURL: url },
