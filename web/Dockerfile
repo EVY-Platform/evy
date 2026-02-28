@@ -33,7 +33,7 @@ COPY --from=builder --chown=bun:bun /app/dev ./dev
 
 USER bun
 
-ARG WEB_PORT="3000"
+ARG WEB_PORT
 ENV WEB_PORT=$WEB_PORT
 ENV NODE_ENV=production
 
