@@ -21,7 +21,7 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: 1,
-	workers: 4,
+	workers: 8,
 	reporter: "line",
 	use: {
 		baseURL: `http://localhost:${WEB_PORT}`,
