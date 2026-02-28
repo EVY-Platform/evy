@@ -43,10 +43,6 @@ test.describe("Web E2E Integration Tests", () => {
 		// Verify the input has our value
 		await expect(titleInput).toHaveValue(uniqueTitle);
 
-		// Wait for auto-save to trigger (auto-save happens on state change)
-		// Give it a moment to ensure the WebSocket call completes
-		await page.waitForTimeout(100);
-
 		// Refresh the page to test persistence
 		await page.reload();
 

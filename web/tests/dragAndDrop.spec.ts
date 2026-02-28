@@ -151,7 +151,6 @@ test.describe("Drag & Drop UX", () => {
 					y: secondRowBox.height - 5,
 				},
 			});
-			await page.waitForTimeout(100);
 		}
 
 		await expect(
@@ -222,7 +221,6 @@ test.describe("Drag & Drop UX", () => {
 			await secondRow.dragTo(firstRow, {
 				targetPosition: { x: firstRowBox.width / 2, y: 5 },
 			});
-			await page.waitForTimeout(100);
 		}
 
 		await expect(
