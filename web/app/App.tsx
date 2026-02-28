@@ -57,7 +57,7 @@ function AppContent() {
 
 export function App() {
 	const { flows, loading } = useFlows();
-	const usingInjectedTestFlows = Boolean(win?.__TEST_FLOWS__);
+	const usingInjectedTestFlows = Boolean(window.__TEST_FLOWS__);
 
 	// Use test flows if available (for testing), otherwise use fetched flows
 	const initialFlows = window.__TEST_FLOWS__ ?? flows;
