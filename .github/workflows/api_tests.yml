@@ -25,11 +25,6 @@ jobs:
                   working-directory: api
                   path-filter: 'api/**'
 
-            - name: Install root dependencies
-              if: steps.setup.outputs.has-changes == 'true'
-              run: bun install
-              working-directory: .
-
             - name: Run Tests
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run test
