@@ -93,16 +93,16 @@ graph TB
 
 ### Row Categories
 
--   **View Rows**: Display-only components (TextRow, InfoRow, InputListRow)
--   **Edit Rows**: Form input components (InputRow, DropdownRow, CalendarRow, etc.)
--   **Action Rows**: Interactive components (ButtonRow, TextActionRow)
--   **Container Rows**: Layout components that hold child rows (ListContainer, ColumnContainer, etc.)
+- **View Rows**: Display-only components (TextRow, InfoRow, InputListRow)
+- **Edit Rows**: Form input components (InputRow, DropdownRow, CalendarRow, etc.)
+- **Action Rows**: Interactive components (ButtonRow, TextActionRow)
+- **Container Rows**: Layout components that hold child rows (ListContainer, ColumnContainer, etc.)
 
 ## Getting Started
 
 ### Prerequisites
 
--   [Bun](https://bun.sh/) installed on your system
+- [Bun](https://bun.sh/) installed on your system
 
 ### Installation
 
@@ -165,8 +165,8 @@ bun run test
 To run the tests with UI or debug mode:
 
 ```bash
-bun run test:ui
-bun run test:debug
+bun run test --ui
+bun run test --debug
 ```
 
 ## License
