@@ -10,14 +10,12 @@ import {
 } from "./utils";
 
 test.describe("Drag Hover Indicator Behavior", () => {
-	test.beforeEach(async ({ page }) => {
-		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
-		await page.goto("/");
-	});
-
 	test("should show drop indicator when hovering over a row on a page", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
+		await page.goto("/");
+
 		const sidebarRow = getSidebarRow(page, "Info row title");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -53,6 +51,9 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	test("should show drop indicator inside a container when hovering over container children", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
+		await page.goto("/");
+
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -95,6 +96,9 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	});
 
 	test("should show only one drop indicator at a time", async ({ page }) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
+		await page.goto("/");
+
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -143,6 +147,9 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	test("should show indicator for innermost row when hovering over nested containers", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
+		await page.goto("/");
+
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -192,6 +199,9 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	});
 
 	test("should clear indicator when drag ends", async ({ page }) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
+		await page.goto("/");
+
 		const pageContent = getPageContent(page);
 
 		const targetSidebarRow = getSidebarRow(page, "Text row title");
@@ -221,6 +231,9 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	});
 
 	test("should switch indicator when moving between rows", async ({ page }) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
+		await page.goto("/");
+
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -273,6 +286,9 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	test("should show indicator at top edge when hovering near top of row", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
+		await page.goto("/");
+
 		const pageContent = getPageContent(page);
 
 		const targetSidebarRow = getSidebarRow(page, "Text row title");
@@ -302,6 +318,9 @@ test.describe("Drag Hover Indicator Behavior", () => {
 	test("should show indicator at bottom edge when hovering near bottom of row", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
+		await page.goto("/");
+
 		const pageContent = getPageContent(page);
 
 		const targetSidebarRow = getSidebarRow(page, "Text row title");

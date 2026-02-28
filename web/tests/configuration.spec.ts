@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 import { initTestFlows } from "./utils";
 
 test.describe("Row configuration", () => {
-	test.beforeEach(async ({ page }) => {
+	test("should display row configurations in configuration panel", async ({
+		page,
+	}) => {
 		await initTestFlows(page, [
 			{
 				id: "step_1",
@@ -21,11 +23,6 @@ test.describe("Row configuration", () => {
 			},
 		]);
 		await page.goto("/");
-	});
-
-	test("should display row configurations in configuration panel", async ({
-		page,
-	}) => {
 		// Find and click on the Info row
 		const infoRow = page.getByText("Test Info Row", { exact: true }).first();
 		await expect(infoRow).toBeVisible();

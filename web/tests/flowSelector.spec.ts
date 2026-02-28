@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import type { ServerFlow } from "../app/types";
 
 test.describe("Flow Selector", () => {
-	const testFlows: ServerFlow[] = [
+	const threeFlows: ServerFlow[] = [
 		{
 			id: "flow-1",
 			name: "First Flow",
@@ -71,25 +72,29 @@ test.describe("Flow Selector", () => {
 		},
 	];
 
-	test.beforeEach(async ({ page }) => {
-		// Inject the full flows directly (not using initTestFlows which creates a wrapper)
+	const singleFlow: ServerFlow[] = [threeFlows[0]];
+
+	async function openWithFlows(page: Page, flows: ServerFlow[]) {
 		await page.addInitScript((flows: ServerFlow[]) => {
 			(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flows;
-		}, testFlows);
+		}, flows);
 		await page.goto("/");
-	});
+	}
 
 	test("should display flow selector dropdown", async ({ page }) => {
+		await openWithFlows(page, singleFlow);
 		const flowSelector = page.locator("#flow-select");
 		await expect(flowSelector).toBeVisible();
 	});
 
 	test("should show first flow selected by default", async ({ page }) => {
+		await openWithFlows(page, singleFlow);
 		const flowSelector = page.locator("#flow-select");
 		await expect(flowSelector).toHaveValue("flow-1");
 	});
 
 	test("should list all available flows in dropdown", async ({ page }) => {
+		await openWithFlows(page, threeFlows);
 		const flowSelector = page.locator("#flow-select");
 
 		// Check all flow options are present
@@ -102,6 +107,7 @@ test.describe("Flow Selector", () => {
 	});
 
 	test("should display content from first flow initially", async ({ page }) => {
+		await openWithFlows(page, singleFlow);
 		// Should show Flow 1's content
 		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
 
@@ -114,6 +120,7 @@ test.describe("Flow Selector", () => {
 	test("should switch flows when selecting a different option", async ({
 		page,
 	}) => {
+		await openWithFlows(page, threeFlows);
 		const flowSelector = page.locator("#flow-select");
 
 		// Initially on Flow 1
@@ -132,6 +139,7 @@ test.describe("Flow Selector", () => {
 	});
 
 	test("should update pages when switching flows", async ({ page }) => {
+		await openWithFlows(page, threeFlows);
 		const phoneContainers = page.locator('div[class*="evy-bg-phone"]');
 
 		// Flow 1 has 1 page
@@ -154,6 +162,7 @@ test.describe("Flow Selector", () => {
 	test("should preserve flow selection when interacting with the app", async ({
 		page,
 	}) => {
+		await openWithFlows(page, threeFlows);
 		const flowSelector = page.locator("#flow-select");
 
 		// Switch to Flow 2
@@ -171,6 +180,7 @@ test.describe("Flow Selector", () => {
 	test("should switch back to first flow after selecting another", async ({
 		page,
 	}) => {
+		await openWithFlows(page, threeFlows);
 		const flowSelector = page.locator("#flow-select");
 
 		// Switch to Flow 3

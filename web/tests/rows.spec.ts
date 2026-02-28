@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 import { initTestFlows } from "./utils";
 
 test.describe("EVY Rows", () => {
-	test.beforeEach(async ({ page }) => {
+	test("should display available row components in the Rows panel", async ({
+		page,
+	}) => {
 		await initTestFlows(page, [
 			{
 				id: "step_1",
@@ -21,11 +23,6 @@ test.describe("EVY Rows", () => {
 			},
 		]);
 		await page.goto("/");
-	});
-
-	test("should display available row components in the Rows panel", async ({
-		page,
-	}) => {
 		const rowsPanel = page
 			.getByText("Rows", { exact: true })
 			.first()

@@ -10,17 +10,15 @@ import {
 } from "./utils";
 
 test.describe("Drag & Drop UX", () => {
-	test.beforeEach(async ({ page }) => {
+	test("should drag a row from the left sidebar onto a page", async ({
+		page,
+	}) => {
 		await initTestFlows(page, [
 			{ id: "step_1", title: "Page 1", rows: [] },
 			{ id: "step_2", title: "Page 2", rows: [] },
 		]);
 		await page.goto("/");
-	});
 
-	test("should drag a row from the left sidebar onto a page", async ({
-		page,
-	}) => {
 		const sidebarRow = getSidebarRow(page, "Info row title");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -42,6 +40,12 @@ test.describe("Drag & Drop UX", () => {
 	});
 
 	test("should drag a row from one page to another page", async ({ page }) => {
+		await initTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
 		const sidebarRow = getSidebarRow(page, "Text row title");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -77,6 +81,12 @@ test.describe("Drag & Drop UX", () => {
 	test("should remove a row from a page by dragging it to the left sidebar", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
 		const rowsPanel = getRowsPanel(page);
 		const sidebarRow = getSidebarRow(page, "Button row text");
 		const firstPage = getFirstPage(page);
@@ -105,6 +115,12 @@ test.describe("Drag & Drop UX", () => {
 	});
 
 	test("should drag a row from position 1 to 2 on a page", async ({ page }) => {
+		await initTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -175,6 +191,11 @@ test.describe("Drag & Drop UX", () => {
 	});
 
 	test("should drag a row from position 2 to 1 on a page", async ({ page }) => {
+		await initTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
 		await page.waitForLoadState("networkidle");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -245,6 +266,12 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag from the left sidebar onto a container on a page", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -268,6 +295,12 @@ test.describe("Drag & Drop UX", () => {
 	test("should remove a row from a container on a page by dragging it to the left sidebar", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
 		const rowsPanel = getRowsPanel(page);
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -303,6 +336,12 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag and drop every single row type into a page", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
 		const rowsPanel = getRowsPanel(page);
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
