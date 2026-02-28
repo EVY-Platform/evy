@@ -57,7 +57,7 @@ fi
 echo "Waiting for API..."
 RETRY_COUNT=0
 until curl -s http://localhost:8000 > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
-    sleep "$RETRY_INTERVAL_SECONDS"
+    sleep 1
     RETRY_COUNT=$((RETRY_COUNT + 1))
 done
 if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
