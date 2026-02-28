@@ -18,19 +18,13 @@ API_RESULT=0
 WEB_RESULT=0
 IOS_RESULT=0
 IOS_SKIPPED=false
+MAX_RETRIES=5
 
 set -a
 source .env
 source api/.env
 source web/.env
 set +a
-
-MAX_RETRIES=5
-DB_USER=evy
-DB_PASS=evy
-DB_PORT=5432
-DB_DOMAIN=localhost
-DB_DATABASE=evy
 
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
@@ -39,6 +33,24 @@ echo -e "${YELLOW}========================================${NC}"
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
     docker compose down -v --remove-orphans 2>/dev/null || true
+}
+
+wait_for_http_service() {
+    local service_name="$1"
+    local service_url="$2"
+    local retry_count=0
+
+    echo "Waiting for $service_name..."
+    until curl -s "$service_url" > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
+        sleep 1
+        retry_count=$((retry_count + 1))
+    done
+
+    if [ $retry_count -eq $MAX_RETRIES ]; then
+        echo -e "${YELLOW}$service_name health check timed out, but continuing...${NC}"
+    else
+        echo -e "${GREEN}$service_name is ready${NC}"
+    fi
 }
 
 trap cleanup EXIT
@@ -60,38 +72,17 @@ else
     echo -e "${GREEN}PostgreSQL is ready${NC}"
 fi
 
-echo "Waiting for API..."
-RETRY_COUNT=0
-until curl -s http://localhost:8000 > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
-    sleep 1
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-done
-if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-    echo -e "${YELLOW}API health check timed out, but continuing...${NC}"
-else
-    echo -e "${GREEN}API is ready${NC}"
-fi
-
-echo "Waiting for Web..."
-RETRY_COUNT=0
-until curl -s http://localhost:$WEB_PORT > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
-    sleep 1
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-done
-if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-    echo -e "${YELLOW}Web health check timed out, but continuing...${NC}"
-else
-    echo -e "${GREEN}Web is ready${NC}"
-fi
+wait_for_http_service "API" "http://localhost:$API_PORT"
+wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 
 echo -e "\n${YELLOW}Step 3: Seeding database...${NC}"
-cd api
-if ! DB_USER=$DB_USER DB_PASS=$DB_PASS DB_PORT=$DB_PORT DB_DOMAIN=$DB_DOMAIN DB_DATABASE=$DB_DATABASE bun db:seed; then
-    echo -e "${RED}Database seeding failed${NC}"
-    exit 1
-fi
+if ! bun db:seed; then
+        echo -e "${RED}Database seeding failed${NC}"
+        exit 1
+    fi
 
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
+cd api
 bun install
 if bun run test:e2e; then
     echo -e "${GREEN}API e2e tests passed${NC}"
@@ -117,12 +108,7 @@ if [ "$SKIP_IOS" = true ]; then
     IOS_SKIPPED=true
 else
     echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
-    cd api
-    if ! DB_USER=$DB_USER DB_PASS=$DB_PASS DB_PORT=$DB_PORT DB_DOMAIN=$DB_DOMAIN DB_DATABASE=$DB_DATABASE bun db:seed; then
-        echo -e "${RED}Database seeding failed${NC}"
-        exit 1
-    fi
-    cd ../ios
+    cd ios
     if API_HOST=localhost:$API_PORT xcodebuild test \
         -project evy.xcodeproj \
         -scheme evy \

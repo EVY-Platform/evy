@@ -52,9 +52,36 @@ describe("API E2E Tests", () => {
 				namespace: "evy",
 				resource: "SDUI",
 			});
-			throw new Error(
-				"Expected upsert to fail for unauthenticated request",
-			);
+			expect(Array.isArray(result)).toBe(true);
+		});
+
+		it("upsert should reject without auth", async () => {
+			try {
+				await unauthClient.call("upsert", {
+					namespace: "evy",
+					resource: "SDUI",
+					data: {
+						id: crypto.randomUUID(),
+						name: "Test",
+						type: "read",
+						data: "item",
+						pages: [
+							{ id: crypto.randomUUID(), title: "P", rows: [] },
+						],
+					},
+				});
+				throw new Error(
+					"Expected upsert to fail for unauthenticated request",
+				);
+			} catch (error) {
+				if (
+					error instanceof Error &&
+					error.message.includes("Expected upsert to fail")
+				) {
+					throw error;
+				}
+				expect(error).toBeDefined();
+			}
 		});
 	});
 

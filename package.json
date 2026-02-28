@@ -7,7 +7,7 @@
 		"format:scripts": "bunx biome format --write scripts",
 		"types:generate": "bun scripts/generate-types.ts && bun scripts/generate-drizzle.ts",
 		"types:check": "bun scripts/check-types.ts",
-		"db:seed": "bun --cwd api ../scripts/seed.ts"
+		"db:seed": "bun scripts/seed.ts"
 	},
 	"devDependencies": {
 		"chokidar": "^4.0.1",
