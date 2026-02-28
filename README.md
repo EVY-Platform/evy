@@ -50,7 +50,13 @@ Or with Docker:
 ```bash
 cd api
 docker build -t evy-api .
-docker run -p 8000:8000 -e DB_URL="your-database-url" evy-api
+docker run -p 8000:8000 \
+  -e DB_USER="user" \
+  -e DB_PASS="password" \
+  -e DB_PORT="5432" \
+  -e DB_DOMAIN="host" \
+  -e DB_DATABASE="evy" \
+  evy-api
 ```
 
 #### Web

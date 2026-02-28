@@ -29,4 +29,8 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run test
               env:
-                  DB_URL: postgres://localhost:5432/test
+                  DB_USER: evy
+                  DB_PASS: evy
+                  DB_PORT: 5432
+                  DB_DOMAIN: localhost
+                  DB_DATABASE: test

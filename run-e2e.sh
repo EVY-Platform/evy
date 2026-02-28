@@ -20,7 +20,11 @@ IOS_RESULT=0
 IOS_SKIPPED=false
 
 MAX_RETRIES=5
-DB_URL=postgresql://evy:evy@localhost:5432/evy
+DB_USER=evy
+DB_PASS=evy
+DB_PORT=5432
+DB_DOMAIN=localhost
+DB_DATABASE=evy
 
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
@@ -76,7 +80,7 @@ fi
 
 echo -e "\n${YELLOW}Step 3: Seeding database...${NC}"
 cd api
-if ! DB_URL=$DB_URL bun db:seed; then
+if ! DB_USER=$DB_USER DB_PASS=$DB_PASS DB_PORT=$DB_PORT DB_DOMAIN=$DB_DOMAIN DB_DATABASE=$DB_DATABASE bun db:seed; then
     echo -e "${RED}Database seeding failed${NC}"
     exit 1
 fi
@@ -110,7 +114,7 @@ if [ "$SKIP_IOS" = true ]; then
 else
     echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
     cd api
-    if ! DB_URL=$DB_URL bun db:seed; then
+    if ! DB_USER=$DB_USER DB_PASS=$DB_PASS DB_PORT=$DB_PORT DB_DOMAIN=$DB_DOMAIN DB_DATABASE=$DB_DATABASE bun db:seed; then
         echo -e "${RED}Database seeding failed${NC}"
         exit 1
     fi
