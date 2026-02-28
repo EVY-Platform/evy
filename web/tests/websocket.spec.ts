@@ -21,9 +21,7 @@ test.describe("WebSocket Connection States", () => {
 		await expect(loadingMessage.or(errorMessage)).toBeVisible();
 	});
 
-	test("should display error state when connection fails", async ({
-		page,
-	}) => {
+	test("should display error state when connection fails", async ({ page }) => {
 		// Navigate without test flows - WebSocket will fail to connect
 		await page.goto("/");
 
@@ -78,9 +76,7 @@ test.describe("WebSocket Connection States", () => {
 		await expect(logo).toBeVisible();
 	});
 
-	test("should have correct page structure after loading", async ({
-		page,
-	}) => {
+	test("should have correct page structure after loading", async ({ page }) => {
 		await initTestFlows(page, [
 			{
 				id: "test-flow-1",
