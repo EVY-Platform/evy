@@ -32,14 +32,14 @@ echo -e "${YELLOW}========================================${NC}"
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    DB_DOMAIN="$COMPOSE_DB_DOMAIN" docker compose --env-file .env down -v --remove-orphans 2>/dev/null || true
+    docker compose --env-file .env down -v --remove-orphans 2>/dev/null || true
 }
 
 trap cleanup EXIT
 
 echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
-DB_DOMAIN="$COMPOSE_DB_DOMAIN" docker compose --env-file .env build --no-cache web
-DB_DOMAIN="$COMPOSE_DB_DOMAIN" docker compose --env-file .env up --build -d
+docker compose --env-file .env build --no-cache web
+docker compose --env-file .env up --build -d
 
 echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
@@ -57,7 +57,7 @@ fi
 
 echo "Waiting for API..."
 RETRY_COUNT=0
-until DB_DOMAIN="$COMPOSE_DB_DOMAIN" docker compose --env-file .env exec -T api bun -e "$API_WS_READINESS_JS" > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+until docker compose --env-file .env exec -T api bun -e "$API_WS_READINESS_JS" > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
     sleep "$RETRY_INTERVAL_SECONDS"
     RETRY_COUNT=$((RETRY_COUNT + 1))
 done
