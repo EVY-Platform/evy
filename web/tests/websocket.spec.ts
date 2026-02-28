@@ -10,26 +10,33 @@ test.describe("WebSocket Connection States", () => {
 		await page.goto("/");
 
 		// Either loading or error state should be visible (depending on timing)
-		const loadingMessage = page.getByText("Loading flows...", { exact: true });
+		const loadingMessage = page.getByText("Loading flows...", {
+			exact: true,
+		});
 		const errorMessage = page.getByText("Failed to load flows", {
 			exact: true,
 		});
 
 		// Wait for one of them to appear - this tests that the app shows a state when no API is available
-		await expect(loadingMessage.or(errorMessage)).toBeVisible({
-			timeout: 15000,
-		});
+		await expect(loadingMessage.or(errorMessage)).toBeVisible();
 	});
 
 	test("should display error state when connection fails", async ({ page }) => {
-		// Navigate without test flows - WebSocket will fail to connect
+		await page.addInitScript(() => {
+			window.WebSocket = class {
+				constructor() {
+					throw new Error("Forced WebSocket failure for test");
+				}
+			} as unknown as typeof WebSocket;
+		});
+
 		await page.goto("/");
 
 		// Wait for the error state to appear after connection timeout
 		const errorMessage = page.getByText("Failed to load flows", {
 			exact: true,
 		});
-		await expect(errorMessage).toBeVisible({ timeout: 15000 });
+		await expect(errorMessage).toBeVisible();
 	});
 
 	test("should display app content when flows are loaded via test injection", async ({
