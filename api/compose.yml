@@ -6,8 +6,6 @@ services:
       context: ../
       dockerfile: ./api/Dockerfile
       target: runner
-      args:
-        - API_PORT=${API_PORT}
     environment:
       - API_PORT=${API_PORT}
       - DB_USER=${DB_USER}

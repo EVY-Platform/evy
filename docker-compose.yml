@@ -20,8 +20,6 @@ services:
       context: .
       dockerfile: ./api/Dockerfile
       target: runner
-      args:
-        - API_PORT=${API_PORT}
     ports:
       - ${API_PORT}:${API_PORT}
     environment:
@@ -40,9 +38,6 @@ services:
       context: ./web
       dockerfile: Dockerfile
       target: runner
-      args:
-        - WEB_PORT=${WEB_PORT}
-        - API_URL=${API_URL}
     ports:
       - ${WEB_PORT}:${WEB_PORT}
     environment:
