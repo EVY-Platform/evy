@@ -32,14 +32,13 @@ echo -e "${YELLOW}========================================${NC}"
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    docker compose --env-file .env down -v --remove-orphans 2>/dev/null || true
+    docker compose down -v --remove-orphans 2>/dev/null || true
 }
 
 trap cleanup EXIT
 
 echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
-docker compose --env-file .env build --no-cache web
-docker compose --env-file .env up --build -d
+docker compose up --build -d
 
 echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
@@ -57,7 +56,7 @@ fi
 
 echo "Waiting for API..."
 RETRY_COUNT=0
-until docker compose --env-file .env exec -T api bun -e "$API_WS_READINESS_JS" > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+until curl -s http://localhost:8000 > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
     sleep "$RETRY_INTERVAL_SECONDS"
     RETRY_COUNT=$((RETRY_COUNT + 1))
 done
@@ -87,7 +86,6 @@ if ! DB_USER=$DB_USER DB_PASS=$DB_PASS DB_PORT=$DB_PORT DB_DOMAIN=$DB_DOMAIN DB_
 fi
 
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
-cd api
 bun install
 if bun run test:e2e; then
     echo -e "${GREEN}API e2e tests passed${NC}"
@@ -118,7 +116,7 @@ else
         echo -e "${RED}Database seeding failed${NC}"
         exit 1
     fi
-    cd ios
+    cd ../ios
     if API_HOST=localhost:$API_PORT xcodebuild test \
         -project evy.xcodeproj \
         -scheme evy \
