@@ -3,9 +3,7 @@ import { defineConfig } from "@playwright/test";
 function requireEnv(name) {
 	const value = process.env[name];
 	if (value === undefined || value === "") {
-		throw new Error(
-			`${name} is required (copy .env.example to .env for dev)`,
-		);
+		throw new Error(`${name} is required (copy .env.example to .env for dev)`);
 	}
 	return value;
 }
