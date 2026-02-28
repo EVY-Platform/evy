@@ -27,8 +27,8 @@ export function handleDrop(
 	invariant(typeof rowId === "string", "handleDrop: rowId is not a string");
 
 	const sourcePageId =
-		location.initial.dropTargets[location.initial.dropTargets.length - 1]
-			.data.pageId;
+		location.initial.dropTargets[location.initial.dropTargets.length - 1].data
+			.pageId;
 	invariant(
 		typeof sourcePageId === "string",
 		"handleDrop: sourcePageId is not a string",
@@ -115,10 +115,7 @@ export function handleDrop(
 						secondTargetRowId,
 						destinationPage.rows,
 					)
-				: EVYRow.findContainerOfRow(
-						destinationRowId,
-						destinationPage.rows,
-					);
+				: EVYRow.findContainerOfRow(destinationRowId, destinationPage.rows);
 
 		// Need to support dropping into nested containers...
 		// right now the destinationContainer is 1 layer deep only,
