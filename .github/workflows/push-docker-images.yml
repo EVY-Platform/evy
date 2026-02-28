@@ -10,9 +10,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    env:
-      API_PORT: "8000"
-      WEB_PORT: "3000"
 
     steps:
       - name: Checkout repository
@@ -77,5 +74,3 @@ jobs:
           ssh_key: ${{ secrets.DO_SSH_KEY }}
           known_host_key: ${{ secrets.DO_HOST_KEY }}
           pull: true
-        env:
-          WEB_PORT: ${{ env.WEB_PORT }}
