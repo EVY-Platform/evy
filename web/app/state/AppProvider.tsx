@@ -16,9 +16,11 @@ import { wsClient } from "../api/wsClient";
 export function AppProvider({
 	children,
 	initialFlows,
+	syncWithApi = true,
 }: {
 	children: ReactNode;
 	initialFlows: ServerFlow[];
+	syncWithApi?: boolean;
 }) {
 	const rows = baseRows.map((row) => ({
 		id: row.name,
@@ -49,7 +51,7 @@ export function AppProvider({
 			(f) => f.id === appState.activeFlowId,
 		);
 
-		if (activeFlow && activeFlow !== previousActiveFlow) {
+		if (syncWithApi && activeFlow && activeFlow !== previousActiveFlow) {
 			wsClient.updateSDUI(encodeFlow(activeFlow)).catch((error) => {
 				alert(
 					"Failed to save your changes. Please check your connection and try again.",
@@ -59,7 +61,7 @@ export function AppProvider({
 		}
 
 		previousFlowsRef.current = appState.flows;
-	}, [appState.flows, appState.activeFlowId]);
+	}, [appState.flows, appState.activeFlowId, syncWithApi]);
 
 	return (
 		<AppContext.Provider
