@@ -30,9 +30,7 @@ export default class ListContainerRow extends EVYRow {
 					rowId={child.id}
 					showIndicators
 					previousRowId={index > 0 ? rows[index - 1].id : undefined}
-					nextRowId={
-						index < lastIndex ? rows[index + 1].id : undefined
-					}
+					nextRowId={index < lastIndex ? rows[index + 1].id : undefined}
 				>
 					{child.row}
 				</DraggableRowContainer>

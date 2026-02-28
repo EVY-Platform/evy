@@ -51,9 +51,7 @@ test.describe("EVY Rows", () => {
 
 		// Verify each row title is visible (this ensures we have exactly 13 row components)
 		for (const title of expectedRowTitles) {
-			await expect(
-				rowsPanel.getByText(title, { exact: true }),
-			).toBeVisible();
+			await expect(rowsPanel.getByText(title, { exact: true })).toBeVisible();
 		}
 	});
 });

@@ -2,7 +2,7 @@
 	"$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
 	"assist": { "actions": { "source": { "organizeImports": "off" } } },
 	"formatter": {
-		"enabled": false
+		"enabled": true
 	},
 	"linter": {
 		"enabled": true,
@@ -11,6 +11,12 @@
 		}
 	},
 	"files": {
-		"includes": ["**", "!**/dist", "!**/node_modules"]
+		"includes": [
+			"**",
+			"!**/dist",
+			"!**/node_modules",
+			"!**/test-results",
+			"!**/playwright-report"
+		]
 	}
 }

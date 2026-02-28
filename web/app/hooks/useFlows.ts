@@ -25,9 +25,7 @@ export function useFlows(): UseFlowsResult {
 				}
 			} catch (err) {
 				if (!cancelled) {
-					setError(
-						err instanceof Error ? err : new Error(String(err)),
-					);
+					setError(err instanceof Error ? err : new Error(String(err)));
 					setLoading(false);
 				}
 			}

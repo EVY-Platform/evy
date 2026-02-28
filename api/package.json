@@ -2,6 +2,7 @@
 	"name": "evy",
 	"version": "0.0.1",
 	"description": "Evy api",
+	"license": "GPL-3.0-only",
 	"type": "module",
 	"main": "src/index.ts",
 	"scripts": {
@@ -11,13 +12,13 @@
 		"test": "bun test src/",
 		"test:e2e": "bun test e2e/",
 		"lint": "bunx biome check",
+		"format": "bunx biome format --write .",
 		"db:generate": "bunx drizzle-kit generate",
 		"db:migrate": "bunx drizzle-kit migrate",
 		"db:push": "bunx drizzle-kit push",
 		"db:studio": "bunx drizzle-kit studio",
 		"db:seed": "bun scripts/seed.ts"
 	},
-	"license": "GPL-3.0-only",
 	"devDependencies": {
 		"@electric-sql/pglite": "^0.3.15",
 		"@types/node": "^25.2.0",

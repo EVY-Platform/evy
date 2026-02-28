@@ -23,7 +23,7 @@ function encodeRow(row: Row): ServerRow {
 		if (key === "children") {
 			if (content.children) {
 				encodedContent.children = content.children.map((child: Row) =>
-					encodeRow(child)
+					encodeRow(child),
 				);
 			}
 		} else if (key === "child") {
@@ -62,9 +62,7 @@ export function encodeFlow(flow: Flow): ServerFlow {
 }
 
 function decodeRow(row: ServerRow): Row {
-	const baseRow = baseRows.find(
-		(baseRow) => row.type === baseRow.config.type
-	);
+	const baseRow = baseRows.find((baseRow) => row.type === baseRow.config.type);
 	if (!baseRow) {
 		return {
 			id: row.id,
@@ -85,8 +83,8 @@ function decodeRow(row: ServerRow): Row {
 						typeof row.view.content.title === "string"
 							? row.view.content.title
 							: "Invalid title",
-					children: row.view.content.children?.map(
-						(child: ServerRow) => decodeRow(child)
+					children: row.view.content.children?.map((child: ServerRow) =>
+						decodeRow(child),
 					),
 					child: row.view.content.child
 						? decodeRow(row.view.content.child)
