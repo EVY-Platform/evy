@@ -1,12 +1,14 @@
 import { defineConfig } from "@playwright/test";
 
+if (!process.env.WEB_PORT) throw new Error("WEB_PORT is required");
+
 export default defineConfig({
 	timeout: 10000,
 	fullyParallel: true,
 	workers: 8,
 	reporter: "line",
 	use: {
-		baseURL: "http://localhost:3000",
+		baseURL: `http://localhost:${process.env.WEB_PORT}`,
 		trace: "on-first-retry",
 	},
 	projects: [
@@ -20,7 +22,7 @@ export default defineConfig({
 	],
 	webServer: {
 		command: "bun run dev",
-		url: "http://localhost:3000",
-		reuseExistingServer: !process.env.CI,
+		url: `http://localhost:${process.env.WEB_PORT}`,
+		reuseExistingServer: !!process.env.SKIP_SERVER,
 	},
 });

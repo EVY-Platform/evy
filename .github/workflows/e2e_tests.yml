@@ -47,6 +47,9 @@ jobs:
               working-directory: web
               run: bun run test:setup
 
+            - name: Create .env from example
+              run: cp .env.example .env
+
             - name: Run E2E tests
               run: bash run-e2e.sh --skip-ios
 
