@@ -3,7 +3,6 @@ import {
 	getFirstPage,
 	getPageContent,
 	initTestFlows,
-	stableDragTo,
 	getSidebarRow,
 } from "./utils";
 
@@ -119,7 +118,7 @@ test.describe("Row Selection", () => {
 		const pageContent = getPageContent(page);
 		const firstPage = getFirstPage(page);
 
-		await stableDragTo(page, sidebarRow, pageContent);
+		await sidebarRow.dragTo(pageContent);
 
 		// The dropped row should be visible
 		await expect(

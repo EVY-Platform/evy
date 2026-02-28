@@ -106,15 +106,6 @@ export function getErrorState(page: Page): Locator {
 	return page.getByText("Failed to load flows", { exact: true });
 }
 
-export async function stableDragTo(
-	page: Page,
-	source: Locator,
-	target: Locator,
-) {
-	await source.dragTo(target);
-	await page.waitForTimeout(100);
-}
-
 function ensureRowId(row: ServerRowInput): ServerRow {
 	const inputContent = row.view.content;
 	const content: ServerRowContent = {
