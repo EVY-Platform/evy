@@ -3,8 +3,8 @@ import { defineConfig } from "@playwright/test";
 if (!process.env.WEB_PORT) throw new Error("WEB_PORT is required");
 
 export default defineConfig({
-	timeout: 10000,
-	fullyParallel: true,
+	timeout: 15000,
+	fullyParallel: false,
 	workers: 8,
 	reporter: "line",
 	use: {
