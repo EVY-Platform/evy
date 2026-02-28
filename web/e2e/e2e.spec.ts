@@ -15,7 +15,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		// Wait for app to fully load
 		const rowsPanel = page.getByText("Rows", { exact: true });
-		await expect(rowsPanel).toBeVisible({ timeout: 20000 });
+		await expect(rowsPanel).toBeVisible();
 
 		// Select the "View Item" flow from the dropdown
 		const flowSelector = page.locator("#flow-select");
@@ -24,7 +24,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		// Wait for the flow to load - look for the Text row with "My item is called"
 		const textRow = page.getByText("My item is called", { exact: true });
-		await expect(textRow).toBeVisible({ timeout: 10000 });
+		await expect(textRow).toBeVisible();
 
 		// Click on the row to select it
 		await textRow.click();
@@ -34,7 +34,7 @@ test.describe("Web E2E Integration Tests", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 		const titleInput = configPanel.getByLabel("title");
-		await expect(titleInput).toBeVisible({ timeout: 5000 });
+		await expect(titleInput).toBeVisible();
 
 		// Edit the title field with our unique value
 		await titleInput.clear();
@@ -51,7 +51,7 @@ test.describe("Web E2E Integration Tests", () => {
 		await page.reload();
 
 		// Wait for app to fully load again
-		await expect(rowsPanel).toBeVisible({ timeout: 20000 });
+		await expect(rowsPanel).toBeVisible();
 
 		// Select the same flow again
 		await expect(flowSelector).toBeVisible();
@@ -59,11 +59,11 @@ test.describe("Web E2E Integration Tests", () => {
 
 		// Wait for the Text row to appear (it should now show our edited title)
 		const editedRow = page.getByText(uniqueTitle, { exact: true });
-		await expect(editedRow).toBeVisible({ timeout: 10000 });
+		await expect(editedRow).toBeVisible();
 
 		// Click on the row to verify the config also shows the updated value
 		await editedRow.click();
-		await expect(titleInput).toBeVisible({ timeout: 5000 });
+		await expect(titleInput).toBeVisible();
 		await expect(titleInput).toHaveValue(uniqueTitle);
 	});
 
@@ -80,9 +80,9 @@ test.describe("Web E2E Integration Tests", () => {
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
 		// Wait for any of these states - proves the app loaded
-		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible({
-			timeout: 15000,
-		});
+		await expect(
+			loadingMessage.or(errorMessage).or(rowsPanel),
+		).toBeVisible();
 	});
 
 	test("should display app structure when connected", async ({ page }) => {
@@ -96,13 +96,13 @@ test.describe("Web E2E Integration Tests", () => {
 		});
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
-		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible({
-			timeout: 15000,
-		});
+		await expect(
+			loadingMessage.or(errorMessage).or(rowsPanel),
+		).toBeVisible();
 
 		// If we see loading, wait for it to resolve
 		if (await loadingMessage.isVisible()) {
-			await expect(loadingMessage).not.toBeVisible({ timeout: 15000 });
+			await expect(loadingMessage).not.toBeVisible();
 		}
 
 		// After connection attempt, we should see either Rows panel or error
@@ -114,7 +114,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		// Wait for app to fully load (Rows panel indicates success)
 		const rowsPanel = page.getByText("Rows", { exact: true });
-		await expect(rowsPanel).toBeVisible({ timeout: 20000 });
+		await expect(rowsPanel).toBeVisible();
 
 		// Logo should be visible after successful load
 		const logo = page.locator('img[alt="EVY"]');
@@ -137,7 +137,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		// Wait for app to fully load
 		const rowsPanel = page.getByText("Rows", { exact: true });
-		await expect(rowsPanel).toBeVisible({ timeout: 20000 });
+		await expect(rowsPanel).toBeVisible();
 
 		// If app loaded, WebSocket must have connected
 		expect(wsConnected).toBe(true);
@@ -166,12 +166,12 @@ test.describe("Web E2E Integration Tests", () => {
 			exact: true,
 		});
 
-		await expect(loadingMessage.or(rowsPanel).or(errorMessage)).toBeVisible({
-			timeout: 15000,
-		});
+		await expect(
+			loadingMessage.or(rowsPanel).or(errorMessage),
+		).toBeVisible();
 
 		if (await loadingMessage.isVisible()) {
-			await expect(loadingMessage).not.toBeVisible({ timeout: 15000 });
+			await expect(loadingMessage).not.toBeVisible();
 		}
 
 		// If app loaded successfully, we should have received messages
@@ -190,9 +190,7 @@ test.describe("Web E2E Integration Tests", () => {
 			exact: true,
 		});
 
-		await expect(rowsPanel.or(errorMessage)).toBeVisible({
-			timeout: 20000,
-		});
+		await expect(rowsPanel.or(errorMessage)).toBeVisible();
 
 		// Only check for panels if app loaded successfully
 		if (await rowsPanel.isVisible()) {
