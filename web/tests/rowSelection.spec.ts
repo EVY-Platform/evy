@@ -7,7 +7,7 @@ import {
 } from "./utils";
 
 test.describe("Row Selection", () => {
-	test.beforeEach(async ({ page }) => {
+	test("should select a row when clicked", async ({ page }) => {
 		await initTestFlows(page, [
 			{
 				id: "step_1",
@@ -22,31 +22,11 @@ test.describe("Row Selection", () => {
 							},
 						},
 					},
-					{
-						type: "Text",
-						view: {
-							content: {
-								title: "Text Row",
-								text: "Text row content",
-							},
-						},
-					},
-					{
-						type: "Info",
-						view: {
-							content: {
-								title: "Second Info Row",
-								text: "Second row text content",
-							},
-						},
-					},
 				],
 			},
 		]);
 		await page.goto("/");
-	});
 
-	test("should select a row when clicked", async ({ page }) => {
 		// Find and click on the first Info row
 		const firstInfoRow = page
 			.getByText("First Info Row", { exact: true })
@@ -67,6 +47,34 @@ test.describe("Row Selection", () => {
 	test("should update configuration panel when different row is selected", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Info",
+						view: {
+							content: {
+								title: "First Info Row",
+								text: "First row text content",
+							},
+						},
+					},
+					{
+						type: "Info",
+						view: {
+							content: {
+								title: "Second Info Row",
+								text: "Second row text content",
+							},
+						},
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
@@ -93,6 +101,34 @@ test.describe("Row Selection", () => {
 	});
 
 	test("should show only one row selected at a time", async ({ page }) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Info",
+						view: {
+							content: {
+								title: "First Info Row",
+								text: "First row text content",
+							},
+						},
+					},
+					{
+						type: "Text",
+						view: {
+							content: {
+								title: "Text Row",
+								text: "Text row content",
+							},
+						},
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
@@ -114,6 +150,9 @@ test.describe("Row Selection", () => {
 	test("should show configuration for dragged row after drop", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [{ id: "step_1", title: "Test Page", rows: [] }]);
+		await page.goto("/");
+
 		const sidebarRow = getSidebarRow(page, "Input row title");
 		const pageContent = getPageContent(page);
 		const firstPage = getFirstPage(page);
@@ -141,6 +180,25 @@ test.describe("Row Selection", () => {
 	test("should update row content when editing configuration", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Info",
+						view: {
+							content: {
+								title: "First Info Row",
+								text: "First row text content",
+							},
+						},
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
 		// Click on first Info row
 		const firstInfoRow = page
 			.getByText("First Info Row", { exact: true })
@@ -168,6 +226,25 @@ test.describe("Row Selection", () => {
 	test("should maintain selection when switching configuration values", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Info",
+						view: {
+							content: {
+								title: "First Info Row",
+								text: "First row text content",
+							},
+						},
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
@@ -192,7 +269,7 @@ test.describe("Row Selection", () => {
 });
 
 test.describe("Row Selection with Containers", () => {
-	test.beforeEach(async ({ page }) => {
+	test("should select container row when clicked", async ({ page }) => {
 		await initTestFlows(page, [
 			{
 				id: "step_1",
@@ -221,9 +298,7 @@ test.describe("Row Selection with Containers", () => {
 			},
 		]);
 		await page.goto("/");
-	});
 
-	test("should select container row when clicked", async ({ page }) => {
 		const containerRow = page
 			.getByText("Container Row", { exact: true })
 			.first();
@@ -241,6 +316,35 @@ test.describe("Row Selection with Containers", () => {
 	test("should select child row inside container when clicked", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "ListContainer",
+						view: {
+							content: {
+								title: "Container Row",
+								children: [
+									{
+										type: "Info",
+										view: {
+											content: {
+												title: "Child Info Row",
+												text: "Child row text",
+											},
+										},
+									},
+								],
+							},
+						},
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
 		const childRow = page.getByText("Child Info Row", { exact: true }).first();
 		await childRow.click();
 
@@ -258,6 +362,35 @@ test.describe("Row Selection with Containers", () => {
 	test("should switch selection between container and child", async ({
 		page,
 	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "ListContainer",
+						view: {
+							content: {
+								title: "Container Row",
+								children: [
+									{
+										type: "Info",
+										view: {
+											content: {
+												title: "Child Info Row",
+												text: "Child row text",
+											},
+										},
+									},
+								],
+							},
+						},
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
