@@ -106,14 +106,10 @@ test.describe("Flow Selector", () => {
 		await expect(options.nth(2)).toHaveText("Third Flow");
 	});
 
-	test("should display content from first flow initially", async ({
-		page,
-	}) => {
+	test("should display content from first flow initially", async ({ page }) => {
 		await openWithFlows(page, singleFlow);
 		// Should show Flow 1's content
-		await expect(
-			page.getByText("Flow 1 Info", { exact: true }),
-		).toBeVisible();
+		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
 
 		// Should not show Flow 2's content
 		await expect(
@@ -128,17 +124,13 @@ test.describe("Flow Selector", () => {
 		const flowSelector = page.locator("#flow-select");
 
 		// Initially on Flow 1
-		await expect(
-			page.getByText("Flow 1 Info", { exact: true }),
-		).toBeVisible();
+		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
 
 		// Switch to Flow 2
 		await flowSelector.selectOption("flow-2");
 
 		// Should now show Flow 2's content
-		await expect(
-			page.getByText("Flow 2 Info", { exact: true }),
-		).toBeVisible();
+		await expect(page.getByText("Flow 2 Info", { exact: true })).toBeVisible();
 
 		// Should no longer show Flow 1's content
 		await expect(
@@ -200,8 +192,6 @@ test.describe("Flow Selector", () => {
 		await expect(flowSelector).toHaveValue("flow-1");
 
 		// Should show Flow 1's content again
-		await expect(
-			page.getByText("Flow 1 Info", { exact: true }),
-		).toBeVisible();
+		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
 	});
 });

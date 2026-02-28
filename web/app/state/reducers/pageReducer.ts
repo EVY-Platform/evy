@@ -39,7 +39,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 	};
 
 	function rowNameEquals(row: unknown, name: string): boolean {
-		if (row === null || typeof row !== "object") return false;
+		if (row === null) return false;
 		const n = (row as Record<string, unknown>).name;
 		return typeof n === "string" && n === name;
 	}

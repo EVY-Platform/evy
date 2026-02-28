@@ -85,9 +85,10 @@ export function handleDrop(
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]
 	// Otherwise it is [page]
+	const firstDropTarget = location.current.dropTargets[0];
 	const destinationRow =
-		location.current.dropTargets.length > 1
-			? location.current.dropTargets[0]
+		location.current.dropTargets.length > 1 && !!firstDropTarget?.data.rowId
+			? firstDropTarget
 			: null;
 
 	const closestEdgeOfTarget: Edge | null = destinationRow
@@ -95,26 +96,25 @@ export function handleDrop(
 		: null;
 
 	if (destinationRow) {
-		const rawDestinationRowId = destinationRow.data.rowId;
+		const destinationRowId = destinationRow.data.rowId;
 		invariant(
-			typeof rawDestinationRowId === "string",
+			typeof destinationRowId === "string",
 			"handleDrop: destination rowId is not a string",
-		);
-		const destinationRowId = rawDestinationRowId;
-		const secondTargetRowId = location.current.dropTargets[1]?.data.rowId;
-		invariant(
-			typeof secondTargetRowId === "string",
-			"handleDrop: dropTargets[1].rowId is not a string",
 		);
 		const destinationContainer =
 			destinationRowId === containerDropindicatorId
-				? EVYRow.findContainerById(
-						// Droptargets is an array returning the rows under the drop cursor,
-						// starting with the placeholder indicator and then the container
-						// we want that container
-						secondTargetRowId,
-						destinationPage.rows,
-					)
+				? (() => {
+						const secondTargetRowId =
+							location.current.dropTargets[1]?.data.rowId;
+						invariant(
+							typeof secondTargetRowId === "string",
+							"handleDrop: dropTargets[1].rowId is not a string",
+						);
+						return EVYRow.findContainerById(
+							secondTargetRowId,
+							destinationPage.rows,
+						);
+					})()
 				: EVYRow.findContainerOfRow(destinationRowId, destinationPage.rows);
 
 		// Need to support dropping into nested containers...
