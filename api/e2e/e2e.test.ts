@@ -6,7 +6,10 @@ type WSClient = InstanceType<typeof Client>;
 import type { ServerFlow, ServerPage, ServerRow } from "../../web/app/types";
 import type { Data } from "../src/db/schema";
 
-const API_URL = process.env.API_URL || "ws://localhost:8000";
+const API_URL = process.env.API_URL;
+if (!API_URL) {
+	throw new Error("API_URL environment variable is not set");
+}
 const TEST_TOKEN = "e2e-test-token";
 const TEST_OS = "Web";
 const CONNECTION_TIMEOUT = 5000;

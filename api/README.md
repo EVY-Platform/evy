@@ -15,12 +15,12 @@ Create a `.env` file with the following variables:
 API_PORT=8000
 DB_USER=evy
 DB_PASS=evy
-DB_DATABASE=evy
 DB_PORT=5432
-DB_URL=postgresql://evy:evy@localhost:5432/evy
+DB_DOMAIN=localhost
+DB_DATABASE=evy
 ```
 
-**Note:** Keep `localhost` in `.env` for local development. The Docker compose files automatically override `DB_URL` to use `host.docker.internal` for Docker networking.
+**Note:** Keep `localhost` in `.env` for local development. Docker compose files can override `DB_DOMAIN` to use Docker service names (for example `postgres`) or `host.docker.internal` when needed.
 
 ## Getting Started
 
@@ -63,7 +63,13 @@ The server runs on port 8000 by default (configurable via `API_PORT` env var).
 
 ```bash
 docker build -t evy-api .
-docker run -p 8000:8000 -e DB_URL="postgresql://user:password@host:5432/evy" evy-api
+docker run -p 8000:8000 \
+  -e DB_USER="user" \
+  -e DB_PASS="password" \
+  -e DB_PORT="5432" \
+  -e DB_DOMAIN="host" \
+  -e DB_DATABASE="evy" \
+  evy-api
 ```
 
 ### Using Docker Compose
@@ -72,7 +78,7 @@ docker run -p 8000:8000 -e DB_URL="postgresql://user:password@host:5432/evy" evy
 docker compose up -d
 ```
 
-Note: Ensure your `.env` file contains the `DB_URL` for the database connection.
+Note: Ensure your `.env` file contains `DB_USER`, `DB_PASS`, `DB_PORT`, `DB_DOMAIN`, and `DB_DATABASE` for the database connection.
 
 ## Database Migrations (Drizzle)
 

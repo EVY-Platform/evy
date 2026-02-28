@@ -5,8 +5,16 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..");
 const DIST_DIR = join(PROJECT_ROOT, "dist");
-const PORT = Number.parseInt(process.env.WEB_PORT || "3000", 10);
-const API_URL = process.env.API_URL || "ws://localhost:8000";
+const webPort = process.env.WEB_PORT;
+if (!webPort) {
+	throw new Error("WEB_PORT environment variable is not set");
+}
+const apiUrl = process.env.API_URL;
+if (!apiUrl) {
+	throw new Error("API_URL environment variable is not set");
+}
+const PORT = Number.parseInt(webPort, 10);
+const API_URL = apiUrl;
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 async function runSetup() {
