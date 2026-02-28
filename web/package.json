@@ -12,7 +12,7 @@
 		"format": "bunx biome format --write .",
 		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
 		"test": "bunx playwright test tests/",
-		"test:e2e": "bunx playwright test --config=playwright.e2e.config.js",
+		"test:e2e": "bunx playwright test e2e/",
 		"test:setup": "bunx playwright install --with-deps",
 		"test:ui": "bunx playwright test --ui",
 		"test:debug": "bunx playwright test --debug"
