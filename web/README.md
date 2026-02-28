@@ -110,6 +110,8 @@ graph TB
 bun install
 ```
 
+Create a root `.env` file at the repository root (`../.env` from the `web` directory). The web scripts load environment variables from this shared root env file.
+
 ### Running the App
 
 #### Development Mode

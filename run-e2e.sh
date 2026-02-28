@@ -22,8 +22,6 @@ MAX_RETRIES=5
 
 set -a
 source .env
-source api/.env
-source web/.env
 set +a
 
 echo -e "${YELLOW}========================================${NC}"
@@ -109,7 +107,7 @@ if [ "$SKIP_IOS" = true ]; then
 else
     echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
     cd ios
-    if API_HOST=localhost:$API_PORT xcodebuild test \
+    if xcodebuild test \
         -project evy.xcodeproj \
         -scheme evy \
         -destination 'platform=iOS Simulator,name=iPhone Air,OS=26.2' \

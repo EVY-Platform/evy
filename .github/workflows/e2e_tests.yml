@@ -53,11 +53,9 @@ jobs:
               working-directory: web
               run: bun run test:setup
 
-            - name: Create .env files from examples
+            - name: Create root .env from example
               run: |
                   cp .env.example .env
-                  cp api/.env.example api/.env
-                  cp web/.env.example web/.env
 
             - name: Run E2E tests
               run: bash run-e2e.sh --skip-ios

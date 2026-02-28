@@ -11,7 +11,7 @@ Shared types for RPC params and SDUI models are generated from `types/schema/` a
 
 ## Environment Variables
 
-Create a `.env` file with the following variables:
+Create a root `.env` file at the repository root (`../.env` from the `api` directory) with the following variables:
 
 ```env
 API_PORT=8000
@@ -77,7 +77,7 @@ docker run -p 8000:8000 \
 docker compose up -d
 ```
 
-Note: Ensure your `.env` file contains `DB_USER`, `DB_PASS`, `DB_PORT`, `DB_DOMAIN`, and `DB_DATABASE` for the database connection.
+Note: Ensure the root `.env` file contains `DB_USER`, `DB_PASS`, `DB_PORT`, `DB_DOMAIN`, and `DB_DATABASE` for the database connection.
 
 ## Database Migrations (Drizzle)
 
