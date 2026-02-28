@@ -65,8 +65,6 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				(p) => p.id === action.destinationPageId,
 			);
 			if (!page) return state;
-			// TODO this was on main
-			//invariant(page, "PageReducer addRow: page is not defined");
 
 			if (action.destinationContainer) {
 				const destinationRowId = action.destinationContainer.rowId;

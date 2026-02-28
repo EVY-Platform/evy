@@ -113,8 +113,6 @@ export function handleDrop(
 						// starting with the placeholder indicator and then the container
 						// we want that container
 						secondTargetRowId,
-						// TODO this was on main and replaced above line
-						// location.current.dropTargets[1].data.rowId as string,
 						destinationPage.rows,
 					)
 				: EVYRow.findContainerOfRow(
