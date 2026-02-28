@@ -21,6 +21,6 @@ export default defineConfig({
 	webServer: {
 		command: "bun run dev",
 		url: "http://localhost:3000",
-		reuseExistingServer: process.env.CI !== "true",
+		reuseExistingServer: process.env.CI === "true",
 	},
 });
