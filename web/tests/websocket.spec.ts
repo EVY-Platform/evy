@@ -22,7 +22,14 @@ test.describe("WebSocket Connection States", () => {
 	});
 
 	test("should display error state when connection fails", async ({ page }) => {
-		// Navigate without test flows - WebSocket will fail to connect
+		await page.addInitScript(() => {
+			window.WebSocket = class {
+				constructor() {
+					throw new Error("Forced WebSocket failure for test");
+				}
+			} as unknown as typeof WebSocket;
+		});
+
 		await page.goto("/");
 
 		// Wait for the error state to appear after connection timeout
