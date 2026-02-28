@@ -9,48 +9,37 @@ import type {
 } from "@atlaskit/pragmatic-drag-and-drop/types";
 import invariant from "tiny-invariant";
 
-import type {
-	Page,
-	ContainerType,
-	RowAction,
-	DraggingAction,
-} from "../types";
+import type { Page, ContainerType, RowAction, DraggingAction } from "../types";
 import { EVYRow, containerDropindicatorId } from "../rows/EVYRow";
 
 export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
 	pages: Page[],
 	dispatchRow: Dispatch<RowAction>,
-	dispatchDragging: Dispatch<DraggingAction>
+	dispatchDragging: Dispatch<DraggingAction>,
 ): void {
 	const { location, source } = args;
 	if (!location.current.dropTargets.length) return;
 
 	const rowId = source.data.rowId;
-	invariant(
-		typeof rowId === "string",
-		"handleDrop: rowId is not a string"
-	);
+	invariant(typeof rowId === "string", "handleDrop: rowId is not a string");
 
 	const sourcePageId =
-		location.initial.dropTargets[
-			location.initial.dropTargets.length - 1
-		].data.pageId;
+		location.initial.dropTargets[location.initial.dropTargets.length - 1].data
+			.pageId;
 	invariant(
 		typeof sourcePageId === "string",
-		"handleDrop: sourcePageId is not a string"
+		"handleDrop: sourcePageId is not a string",
 	);
 
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]
 	// Otherwise it is [page]
 	const destinationPageRecord =
-		location.current.dropTargets[
-			location.current.dropTargets.length - 1
-		];
+		location.current.dropTargets[location.current.dropTargets.length - 1];
 	invariant(
 		destinationPageRecord,
-		"handleDrop: destinationPageRecord is not defined"
+		"handleDrop: destinationPageRecord is not defined",
 	);
 
 	const destinationPageId = destinationPageRecord.data.pageId as string;
@@ -71,13 +60,8 @@ export function handleDrop(
 		return;
 	}
 
-	const destinationPage = pages.find(
-		(page) => page.id === destinationPageId
-	);
-	invariant(
-		destinationPage,
-		"handleDrop: destinationPage is not defined"
-	);
+	const destinationPage = pages.find((page) => page.id === destinationPageId);
+	invariant(destinationPage, "handleDrop: destinationPage is not defined");
 
 	const dispatchOptions: {
 		destinationPageId: string;
@@ -112,12 +96,9 @@ export function handleDrop(
 						// starting with the placeholder indicator and then the container
 						// we want that container
 						location.current.dropTargets[1].data.rowId as string,
-						destinationPage.rows
-				  )
-				: EVYRow.findContainerOfRow(
-						destinationRowId,
-						destinationPage.rows
-				  );
+						destinationPage.rows,
+					)
+				: EVYRow.findContainerOfRow(destinationRowId, destinationPage.rows);
 
 		// Need to support dropping into nested containers...
 		// right now the destinationContainer is 1 layer deep only,
@@ -128,7 +109,7 @@ export function handleDrop(
 		) {
 			dispatchOptions.destinationIndex =
 				destinationContainer.container.config.view.content.children.findIndex(
-					(r) => r.id === destinationRow.data.rowId
+					(r) => r.id === destinationRow.data.rowId,
 				);
 		} else if (
 			destinationContainer?.type === "child" &&
@@ -137,7 +118,7 @@ export function handleDrop(
 			dispatchOptions.destinationIndex = 0;
 		} else if (closestEdgeOfTarget && !destinationContainer) {
 			const destinationRowIndex = destinationPage.rows.findIndex(
-				(r) => r.id === destinationRow.data.rowId
+				(r) => r.id === destinationRow.data.rowId,
 			);
 			dispatchOptions.destinationIndex = destinationRowIndex;
 		}
@@ -151,14 +132,12 @@ export function handleDrop(
 	}
 
 	if (closestEdgeOfTarget === "top" || closestEdgeOfTarget === "left") {
-		dispatchOptions.destinationIndex =
-			dispatchOptions.destinationIndex - 1;
+		dispatchOptions.destinationIndex = dispatchOptions.destinationIndex - 1;
 	} else if (
 		closestEdgeOfTarget === "bottom" ||
 		closestEdgeOfTarget === "right"
 	) {
-		dispatchOptions.destinationIndex =
-			dispatchOptions.destinationIndex + 1;
+		dispatchOptions.destinationIndex = dispatchOptions.destinationIndex + 1;
 	} else {
 		dispatchOptions.destinationIndex =
 			dispatchOptions.destinationIndex ?? destinationPage.rows.length;

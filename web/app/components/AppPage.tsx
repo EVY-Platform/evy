@@ -73,12 +73,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				rowId={row.id}
 				selectRow={() => selectRow(row.id)}
 				showIndicators
-				previousRowId={
-					index > 0 ? page.rows[index - 1].id : undefined
-				}
-				nextRowId={
-					index < lastIndex ? page.rows[index + 1].id : undefined
-				}
+				previousRowId={index > 0 ? page.rows[index - 1].id : undefined}
+				nextRowId={index < lastIndex ? page.rows[index + 1].id : undefined}
 			>
 				{row.row}
 			</DraggableRowContainer>

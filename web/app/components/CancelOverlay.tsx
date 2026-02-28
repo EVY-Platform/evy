@@ -15,10 +15,7 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 
 	useEffect(() => {
 		const element = ref.current;
-		invariant(
-			element,
-			"CancelOverlay useEffect: ref.current is not defined",
-		);
+		invariant(element, "CancelOverlay useEffect: ref.current is not defined");
 		return combine(
 			dropTargetForElements({
 				element: element,

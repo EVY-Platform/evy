@@ -15,7 +15,7 @@ export function RowsPanel() {
 	useEffect(() => {
 		invariant(
 			pageInnerRef.current,
-			"RowsPanel useEffect: pageInnerRef.current is not defined"
+			"RowsPanel useEffect: pageInnerRef.current is not defined",
 		);
 		return combine(
 			dropTargetForElements({
@@ -24,7 +24,7 @@ export function RowsPanel() {
 				canDrop: () => true,
 				onDragStart: () => dispatchDragging({ type: "START_DRAGGING" }),
 				onDrop: () => dispatchDragging({ type: "STOP_DRAGGING" }),
-			})
+			}),
 		);
 	}, [dispatchDragging]);
 

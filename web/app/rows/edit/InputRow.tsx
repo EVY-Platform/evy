@@ -26,9 +26,7 @@ export default class InputRow extends EVYRow {
 				<p className="evy-text-md">{row.config.view.content.title}</p>
 				<Input
 					value={row.config.view.content.value?.toString() ?? ""}
-					placeholder={
-						row.config.view.content.placeholder?.toString() ?? ""
-					}
+					placeholder={row.config.view.content.placeholder?.toString() ?? ""}
 				/>
 			</div>
 		);

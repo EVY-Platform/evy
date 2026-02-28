@@ -66,9 +66,7 @@ export function App() {
 	if (loading && !win?.__TEST_FLOWS__) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-gray-dark evy-text-lg">
-					Loading flows...
-				</div>
+				<div className="evy-text-gray-dark evy-text-lg">Loading flows...</div>
 			</div>
 		);
 	}
@@ -76,9 +74,7 @@ export function App() {
 	if (!initialFlows) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-red-500 evy-text-lg">
-					Failed to load flows
-				</div>
+				<div className="evy-text-red-500 evy-text-lg">Failed to load flows</div>
 			</div>
 		);
 	}

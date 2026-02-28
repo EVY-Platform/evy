@@ -34,7 +34,7 @@ async function runBuild() {
 			cwd: PROJECT_ROOT,
 			stdout: "pipe",
 			stderr: "pipe",
-		}
+		},
 	);
 	const exitCode = await proc.exited;
 	if (exitCode !== 0) {

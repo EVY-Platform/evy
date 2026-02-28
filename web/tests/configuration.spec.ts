@@ -27,9 +27,7 @@ test.describe("Row configuration", () => {
 		page,
 	}) => {
 		// Find and click on the Info row
-		const infoRow = page
-			.getByText("Test Info Row", { exact: true })
-			.first();
+		const infoRow = page.getByText("Test Info Row", { exact: true }).first();
 		await expect(infoRow).toBeVisible();
 		await infoRow.click();
 
