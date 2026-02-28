@@ -9,7 +9,7 @@ import type { Data } from "../src/db/schema";
 const API_URL = process.env.API_URL || "ws://localhost:8000";
 const TEST_TOKEN = "e2e-test-token";
 const TEST_OS = "Web";
-const CONNECTION_TIMEOUT = 10000;
+const CONNECTION_TIMEOUT = 5000;
 
 function waitForClient(ws: WSClient): Promise<void> {
 	return new Promise((resolve, reject) => {
@@ -57,7 +57,9 @@ describe("API E2E Tests", () => {
 					pages: [{ id: crypto.randomUUID(), title: "P", rows: [] }],
 				},
 			});
-			throw new Error("Expected upsert to fail for unauthenticated request");
+			throw new Error(
+				"Expected upsert to fail for unauthenticated request",
+			);
 		} catch (error) {
 			if (
 				error instanceof Error &&
@@ -151,7 +153,12 @@ describe("API E2E Tests", () => {
 				namespace: "evy",
 				resource: "SDUI",
 				data: flowData,
-			})) as { id: string; data: ServerFlow; createdAt: string; updatedAt: string };
+			})) as {
+				id: string;
+				data: ServerFlow;
+				createdAt: string;
+				updatedAt: string;
+			};
 
 			expect(result.id).toBeDefined();
 			expect(result.data).toBeDefined();

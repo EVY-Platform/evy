@@ -45,7 +45,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		// Wait for auto-save to trigger (auto-save happens on state change)
 		// Give it a moment to ensure the WebSocket call completes
-		await page.waitForTimeout(1000);
+		await page.waitForTimeout(100);
 
 		// Refresh the page to test persistence
 		await page.reload();
@@ -80,7 +80,9 @@ test.describe("Web E2E Integration Tests", () => {
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
 		// Wait for any of these states - proves the app loaded
-		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible();
+		await expect(
+			loadingMessage.or(errorMessage).or(rowsPanel),
+		).toBeVisible();
 	});
 
 	test("should display app structure when connected", async ({ page }) => {
@@ -94,7 +96,9 @@ test.describe("Web E2E Integration Tests", () => {
 		});
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
-		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible();
+		await expect(
+			loadingMessage.or(errorMessage).or(rowsPanel),
+		).toBeVisible();
 
 		// If we see loading, wait for it to resolve
 		if (await loadingMessage.isVisible()) {
@@ -162,7 +166,9 @@ test.describe("Web E2E Integration Tests", () => {
 			exact: true,
 		});
 
-		await expect(loadingMessage.or(rowsPanel).or(errorMessage)).toBeVisible();
+		await expect(
+			loadingMessage.or(rowsPanel).or(errorMessage),
+		).toBeVisible();
 
 		if (await loadingMessage.isVisible()) {
 			await expect(loadingMessage).not.toBeVisible();

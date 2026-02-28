@@ -112,7 +112,7 @@ export async function stableDragTo(
 	target: Locator,
 ) {
 	await source.dragTo(target);
-	await page.waitForTimeout(150);
+	await page.waitForTimeout(100);
 }
 
 function ensureRowId(row: ServerRowInput): ServerRow {
@@ -221,7 +221,8 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination: "{item.dimensions.width}",
+												destination:
+													"{item.dimensions.width}",
 												validation: {
 													required: "true",
 													message: "Width",
@@ -255,7 +256,8 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination: "{item.dimensions.length}",
+												destination:
+													"{item.dimensions.length}",
 												validation: {
 													required: "true",
 													message: "Length",
@@ -289,7 +291,8 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination: "{item.dimensions.width}",
+												destination:
+													"{item.dimensions.width}",
 												validation: {
 													required: "true",
 													message: "Width",
@@ -323,7 +326,8 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination: "{item.dimensions.length}",
+												destination:
+													"{item.dimensions.length}",
 												validation: {
 													required: "true",
 													message: "Length",
@@ -364,7 +368,8 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination: "{item.dimensions.width}",
+												destination:
+													"{item.dimensions.width}",
 												validation: {
 													required: "true",
 													message: "Width",
@@ -398,7 +403,8 @@ function createDebugFlows(): ServerFlow[] {
 												},
 											},
 											edit: {
-												destination: "{item.dimensions.length}",
+												destination:
+													"{item.dimensions.length}",
 												validation: {
 													required: "true",
 													message: "Length",
@@ -435,14 +441,18 @@ function createDebugFlows(): ServerFlow[] {
 																content: {
 																	title: "Width 4",
 																	value: "width",
-																	placeholder: "Width",
+																	placeholder:
+																		"Width",
 																},
 															},
 															edit: {
-																destination: "{item.dimensions.width}",
+																destination:
+																	"{item.dimensions.width}",
 																validation: {
-																	required: "true",
-																	message: "Width",
+																	required:
+																		"true",
+																	message:
+																		"Width",
 																},
 															},
 														},
@@ -452,14 +462,18 @@ function createDebugFlows(): ServerFlow[] {
 																content: {
 																	title: "Height 4",
 																	value: "height",
-																	placeholder: "Height",
+																	placeholder:
+																		"Height",
 																},
 															},
 															edit: {
-																destination: "height",
+																destination:
+																	"height",
 																validation: {
-																	required: "true",
-																	message: "Height",
+																	required:
+																		"true",
+																	message:
+																		"Height",
 																},
 															},
 														},
@@ -469,15 +483,20 @@ function createDebugFlows(): ServerFlow[] {
 																content: {
 																	title: "Length 4",
 																	value: "length",
-																	placeholder: "Length",
+																	placeholder:
+																		"Length",
 																},
 															},
 															edit: {
-																destination: "{item.dimensions.length}",
+																destination:
+																	"{item.dimensions.length}",
 																validation: {
-																	required: "true",
-																	message: "Length",
-																	minValue: "1",
+																	required:
+																		"true",
+																	message:
+																		"Length",
+																	minValue:
+																		"1",
 																},
 															},
 														},
