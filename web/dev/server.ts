@@ -39,6 +39,27 @@ async function runBuild() {
 	});
 	if (!result.success) {
 		throw new Error(`Build failed: ${JSON.stringify(result.logs)}`);
+		// TODO: was on dev
+		// const proc = Bun.spawn(
+		// 	[
+		// 		"bun",
+		// 		"build",
+		// 		"--target=browser",
+		// 		"--outdir=dist",
+		// 		"--entry-naming=[dir]/bundle.js",
+		// 		`--define:__API_URL__='${API_URL}'`,
+		// 		"app/main.tsx",
+		// 	],
+		// 	{
+		// 		cwd: PROJECT_ROOT,
+		// 		stdout: "pipe",
+		// 		stderr: "pipe",
+		// 	},
+		// );
+		// const exitCode = await proc.exited;
+		// if (exitCode !== 0) {
+		// 	const stderr = await new Response(proc.stderr).text();
+		// 	throw new Error(stderr);
 	}
 	return true;
 }

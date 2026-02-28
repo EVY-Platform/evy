@@ -33,7 +33,7 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run build
 
-            - name: Create .env for tests
+            - name: Create .env from example
               if: steps.setup.outputs.has-changes == 'true'
               run: cp .env.example .env
 

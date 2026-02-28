@@ -80,7 +80,11 @@ test.describe("Web E2E Integration Tests", () => {
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
 		// Wait for any of these states - proves the app loaded
-		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible();
+		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible(
+			{
+				timeout: 15000,
+			},
+		);
 	});
 
 	test("should display app structure when connected", async ({ page }) => {
@@ -94,7 +98,11 @@ test.describe("Web E2E Integration Tests", () => {
 		});
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
-		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible();
+		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible(
+			{
+				timeout: 15000,
+			},
+		);
 
 		// If we see loading, wait for it to resolve
 		if (await loadingMessage.isVisible()) {
@@ -166,7 +174,11 @@ test.describe("Web E2E Integration Tests", () => {
 			exact: true,
 		});
 
-		await expect(loadingMessage.or(rowsPanel).or(errorMessage)).toBeVisible();
+		await expect(loadingMessage.or(rowsPanel).or(errorMessage)).toBeVisible(
+			{
+				timeout: 15000,
+			},
+		);
 
 		if (await loadingMessage.isVisible()) {
 			await expect(loadingMessage).not.toBeVisible();

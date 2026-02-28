@@ -23,6 +23,6 @@ export default defineConfig({
 	webServer: {
 		command: "bun run dev",
 		url: `http://localhost:${process.env.WEB_PORT}`,
-		reuseExistingServer: process.env.CI === "true",
+		reuseExistingServer: true, // If server not reachable at url it will still do command
 	},
 });

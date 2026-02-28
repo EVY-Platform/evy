@@ -25,7 +25,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			...(updatedPages
 				? {
 						flows: state.flows.map((f) =>
-							f.id === state.activeFlowId ? { ...f, pages: updatedPages } : f,
+							f.id === state.activeFlowId
+								? { ...f, pages: updatedPages }
+								: f,
 						),
 					}
 				: {}),
@@ -59,8 +61,12 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				row: createElement(baseRow, { rowId: action.newRowId }),
 			};
 
-			const page = flow.pages.find((p) => p.id === action.destinationPageId);
+			const page = flow.pages.find(
+				(p) => p.id === action.destinationPageId,
+			);
 			if (!page) return state;
+			// TODO this was on main
+			//invariant(page, "PageReducer addRow: page is not defined");
 
 			if (action.destinationContainer) {
 				const destinationRowId = action.destinationContainer.rowId;
@@ -69,7 +75,10 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 						if (row.id === destinationRowId) {
 							return [[index]];
 						}
-						const match = EVYRow.traverseToRowAndGetPath(row, destinationRowId);
+						const match = EVYRow.traverseToRowAndGetPath(
+							row,
+							destinationRowId,
+						);
 						if (match.length > 0) return [[index, ...match]];
 						return [];
 					})
@@ -81,7 +90,10 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				);
 
 				const firstStep = stepsToDestinationContainer[0];
-				invariant(typeof firstStep === "number", "expected number index");
+				invariant(
+					typeof firstStep === "number",
+					"expected number index",
+				);
 				let path = page.rows[firstStep];
 				if (stepsToDestinationContainer.length > 1) {
 					path = stepsToDestinationContainer
@@ -89,10 +101,14 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 						.reduce((acc: Row, curr: number | "child"): Row => {
 							if (curr === "child") {
 								const child = acc.config.view.content.child;
-								invariant(child, "PageReducer addRow: child is not defined");
+								invariant(
+									child,
+									"PageReducer addRow: child is not defined",
+								);
 								return child;
 							}
-							const child = acc.config.view.content.children?.[curr];
+							const child =
+								acc.config.view.content.children?.[curr];
 							invariant(
 								child,
 								"PageReducer addRow: children element is not defined",
@@ -161,11 +177,15 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 		}
 		case "REMOVE_ROW": {
-			const removeRowFromChildren = (row: Row, targetRowId: string): Row => {
+			const removeRowFromChildren = (
+				row: Row,
+				targetRowId: string,
+			): Row => {
 				if (row.config.view.content.children) {
-					const filteredChildren = row.config.view.content.children.filter(
-						(child) => child.id !== targetRowId,
-					);
+					const filteredChildren =
+						row.config.view.content.children.filter(
+							(child) => child.id !== targetRowId,
+						);
 					const updatedChildren = filteredChildren.map((child) =>
 						removeRowFromChildren(child, targetRowId),
 					);
@@ -226,7 +246,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 								...page,
 								rows: page.rows
 									.filter((r) => r.id !== action.rowId)
-									.map((r) => removeRowFromChildren(r, action.rowId)),
+									.map((r) =>
+										removeRowFromChildren(r, action.rowId),
+									),
 							}
 						: page,
 				),
@@ -250,7 +272,10 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 								...row.config.view,
 								content: {
 									...row.config.view.content,
-									[configId]: splitValue.length > 1 ? splitValue : configValue,
+									[configId]:
+										splitValue.length > 1
+											? splitValue
+											: configValue,
 								},
 							},
 						},
@@ -258,11 +283,16 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				}
 
 				if (row.config.view.content.children) {
-					const updatedChildren = row.config.view.content.children.map(
-						(child) =>
-							updateRowInChildren(child, targetRowId, configId, configValue) ||
-							child,
-					);
+					const updatedChildren =
+						row.config.view.content.children.map(
+							(child) =>
+								updateRowInChildren(
+									child,
+									targetRowId,
+									configId,
+									configValue,
+								) || child,
+						);
 					const childUpdated = updatedChildren.some(
 						(child, index) =>
 							child !== row.config.view.content.children?.[index],
@@ -312,7 +342,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 
 			const newPages = flow.pages.map((page) => {
-				const hasAtTopLevel = page.rows.some((r) => r.id === action.rowId);
+				const hasAtTopLevel = page.rows.some(
+					(r) => r.id === action.rowId,
+				);
 				if (hasAtTopLevel) {
 					const newRows = page.rows.map((row) => {
 						if (row.id === action.rowId) {
@@ -325,7 +357,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 										content: {
 											...row.config.view.content,
 											[action.configId]:
-												splitValue.length > 1 ? splitValue : action.configValue,
+												splitValue.length > 1
+													? splitValue
+													: action.configValue,
 										},
 									},
 								},
