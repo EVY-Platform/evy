@@ -5,15 +5,10 @@ type WSClient = InstanceType<typeof Client>;
 
 import type { SDUI_Flow, SDUI_Page, SDUI_Row } from "evy-types/sdui/evy";
 
-function requireEnv(name: string): string {
-	const value = process.env[name];
-	if (value === undefined || value === "") {
-		throw new Error(`${name} is required (set by run-e2e.sh or .env)`);
-	}
-	return value;
+const API_URL = process.env.API_URL;
+if (!API_URL) {
+	throw new Error("API_URL environment variable is not set");
 }
-const API_URL =
-	process.env.API_URL || `ws://localhost:${requireEnv("API_PORT")}`;
 const TEST_TOKEN = "e2e-test-token";
 const TEST_OS = "Web";
 const CONNECTION_TIMEOUT = 5000;

@@ -57,11 +57,12 @@ function AppContent() {
 
 export function App() {
 	const { flows, loading } = useFlows();
+	const usingInjectedTestFlows = Boolean(win?.__TEST_FLOWS__);
 
 	// Use test flows if available (for testing), otherwise use fetched flows
 	const initialFlows = window.__TEST_FLOWS__ ?? flows;
 
-	if (loading && !window.__TEST_FLOWS__) {
+	if (loading && !usingInjectedTestFlows) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
 				<div className="evy-text-gray-dark evy-text-lg">Loading flows...</div>
@@ -78,7 +79,10 @@ export function App() {
 	}
 
 	return (
-		<AppProvider initialFlows={initialFlows}>
+		<AppProvider
+			initialFlows={initialFlows}
+			syncWithApi={!usingInjectedTestFlows}
+		>
 			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
 				<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-justify-between evy-items-center">
 					<a href="/">

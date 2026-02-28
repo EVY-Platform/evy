@@ -5,6 +5,7 @@ services:
       - ${WEB_PORT}:${WEB_PORT}
     environment:
       - WEB_PORT=${WEB_PORT}
+      - API_URL=${API_URL}
     labels:
       - traefik.enable=true
       - traefik.port=80
@@ -22,7 +23,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - DB_PORT=${DB_PORT}
-      - DB_DOMAIN=${DB_DOMAIN}
+      - DB_DOMAIN=db
       - DB_DATABASE=${DB_DATABASE}
       - API_PORT=${API_PORT}
     labels:

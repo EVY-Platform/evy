@@ -5,10 +5,10 @@ type WSError = typeof IRPCError;
 export type WSParams = typeof IRPCMethodParams;
 
 const apiPort = process.env.API_PORT;
-if (apiPort === undefined || apiPort === "") {
-	throw new Error("API_PORT is required");
+if (!apiPort) {
+	throw new Error("API_PORT environment variable is not set");
 }
-const PORT: number = Number.parseInt(apiPort, 10);
+const PORT: number = parseInt(apiPort, 10);
 const HOST: string = "0.0.0.0";
 
 // Custom emit function that sends proper JSON-RPC 2.0 notifications

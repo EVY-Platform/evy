@@ -19,14 +19,12 @@ WEB_RESULT=0
 IOS_RESULT=0
 IOS_SKIPPED=false
 
-MAX_RETRIES=60
-RETRY_INTERVAL_SECONDS=1
-COMPOSE_DB_DOMAIN="postgres"
-API_WS_READINESS_JS='import { Client } from "rpc-websockets"; const port = process.env.API_PORT; if (!port) process.exit(1); const client = new Client(`ws://localhost:${port}`); const timeout = setTimeout(() => { client.close(); process.exit(1); }, 1000); client.on("open", async () => { try { await client.call("get", { namespace: "evy", resource: "SDUI" }); clearTimeout(timeout); client.close(); process.exit(0); } catch { clearTimeout(timeout); client.close(); process.exit(1); } }); client.on("error", () => { clearTimeout(timeout); client.close(); process.exit(1); });'
-
-set -a
-source .env
-set +a
+MAX_RETRIES=5
+DB_USER=evy
+DB_PASS=evy
+DB_PORT=5432
+DB_DOMAIN=localhost
+DB_DATABASE=evy
 
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
@@ -82,8 +80,8 @@ else
 fi
 
 echo -e "\n${YELLOW}Step 3: Seeding database...${NC}"
-bun install
-if ! bun db:seed; then
+cd api
+if ! DB_USER=$DB_USER DB_PASS=$DB_PASS DB_PORT=$DB_PORT DB_DOMAIN=$DB_DOMAIN DB_DATABASE=$DB_DATABASE bun db:seed; then
     echo -e "${RED}Database seeding failed${NC}"
     exit 1
 fi
@@ -115,7 +113,8 @@ if [ "$SKIP_IOS" = true ]; then
     IOS_SKIPPED=true
 else
     echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
-    if ! bun db:seed; then
+    cd api
+    if ! DB_USER=$DB_USER DB_PASS=$DB_PASS DB_PORT=$DB_PORT DB_DOMAIN=$DB_DOMAIN DB_DATABASE=$DB_DATABASE bun db:seed; then
         echo -e "${RED}Database seeding failed${NC}"
         exit 1
     fi

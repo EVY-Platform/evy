@@ -32,7 +32,13 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}-api:latest
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: API_PORT=${{ env.API_PORT }}
+        env:
+          API_PORT: ${API_PORT}
+          DB_USER: ${DB_USER}
+          DB_PASS: ${DB_PASS}
+          DB_PORT: ${DB_PORT}
+          DB_DOMAIN: ${DB_DOMAIN}
+          DB_DATABASE: ${DB_DATABASE}
 
       - name: Build and push web Docker image
         uses: docker/build-push-action@v6
@@ -41,9 +47,8 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}-web:latest
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            WEB_PORT=${{ env.WEB_PORT }}
-            API_URL=${{ format('wss://api.{0}', vars.DOMAIN) }}
+        env:
+          WEB_PORT: ${WEB_PORT}
 
       - name: Docker Compose Remote Deploy api
         uses: glesage/docker-compose-remote-action@v1
@@ -56,10 +61,9 @@ jobs:
           known_host_key: ${{ secrets.DO_HOST_KEY }}
           pull: true
         env:
-          API_PORT: ${{ env.API_PORT }}
           DB_USER: ${{ secrets.PG_USER }}
           DB_PASS: ${{ secrets.PG_PASS }}
-          DB_PORT: "5432"
+          DB_PORT: 5432
           DB_DOMAIN: db
           DB_DATABASE: evy
 

@@ -34,9 +34,8 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run test
               env:
-                  API_PORT: "8000"
-                  DB_USER: postgres
-                  DB_PASS: postgres
-                  DB_PORT: "5432"
+                  DB_USER: evy
+                  DB_PASS: evy
+                  DB_PORT: 5432
                   DB_DOMAIN: localhost
                   DB_DATABASE: test

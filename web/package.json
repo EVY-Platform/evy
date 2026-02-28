@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun --env-file=.env run dev/server.ts",
-		"build": "bun run setup && bun build --target=browser --outdir=dist --entry-naming=[dir]/bundle.js --define:__API_URL__=\"'$API_URL'\" app/main.tsx",
+		"build": "bun run setup && bun build --target=browser --outdir=dist --entry-naming=[dir]/bundle.js --define:__API_URL__=\"'${API_URL}'\" app/main.tsx",
 		"start": "bun run dev/server.ts",
 		"lint": "bunx biome check .",
 		"format": "bunx biome format --write .",
