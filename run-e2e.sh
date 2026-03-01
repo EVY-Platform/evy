@@ -121,6 +121,8 @@ else
         -project evy.xcodeproj \
         -scheme evy \
         -destination 'platform=iOS Simulator,name=iPhone Air,OS=26.2' \
+        -parallel-testing-enabled YES \
+        -parallel-testing-worker-count 2 \
         -quiet; then
         echo -e "${GREEN}iOS e2e tests passed${NC}"
     else
