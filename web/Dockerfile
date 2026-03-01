@@ -26,7 +26,6 @@ COPY web/dev ./web/dev
 ARG API_URL
 ENV API_URL=$API_URL
 WORKDIR /workspace/web
-# Run build script directly to skip prebuild (types already generated in typesgen stage)
 RUN bun run dev/build.ts
 
 # Production stage
