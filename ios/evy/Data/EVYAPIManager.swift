@@ -38,7 +38,7 @@ final class EVYAPIManager {
 	private func validateAuth() async throws {
 		if (authed) { return }
 		
-		authed = try await rpcWS.connect(token: "Geo", os: EVYOS.ios)
+		authed = try await rpcWS.connect(token: "Geo", os: DataOS.ios)
 
 		let result = try await rpcWS.subscribe(event: "flowUpdated")
 		if result["flowUpdated"] != "ok" {

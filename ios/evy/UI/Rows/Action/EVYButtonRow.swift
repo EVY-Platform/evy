@@ -7,62 +7,43 @@
 
 import SwiftUI
 
-struct EVYButtonRowView: Codable {
-    let content: ContentData
-    
-    struct ContentData: Codable {
-        let title: String
-        let label: String
-    }
-}
-    
 struct EVYButtonRow: View, EVYRowProtocol {
-    @Environment(\.navigate) private var navigate
-    
-    public static let JSONType = "Button"
-    
-    private let view: EVYButtonRowView
-    private let action: SDUI.Action
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(EVYButtonRowView.self, forKey:.view)
-        action = try container.decode(SDUI.Action.self, forKey:.action)
-    }
-	
-	init(from decoder: Decoder) throws {
-		let container = try decoder.container(keyedBy: RowCodingKeys.self)
-		try self.init(container: container)
+	@Environment(\.navigate) private var navigate
+
+	public static let JSONType = "Button"
+
+	private let view: ButtonRowViewData
+	private let action: SDUI_RowAction?
+
+	init(view: ButtonRowViewData, action: SDUI_RowAction?) {
+		self.view = view
+		self.action = action
 	}
-	
-	func encode(to encoder: Encoder) throws {
-		var container = encoder.container(keyedBy: RowCodingKeys.self)
-		try container.encode(view, forKey: .view)
-		try container.encode(action, forKey: .action)
+
+	private func performAction() {
+		guard let action, let target = try? SDUI_ActionTarget.parse(action.target) else { return }
+		switch target {
+		case let .navigate(route):
+			navigate(NavOperation.navigate(route))
+		case .submit:
+			navigate(NavOperation.submit)
+		case .close:
+			navigate(NavOperation.close)
+		}
 	}
-    
-    private func performAction() {
-        switch action.target {
-        case let .navigate(route):
-            navigate(NavOperation.navigate(route))
-        case .submit:
-            navigate(NavOperation.submit)
-        case .close:
-            navigate(NavOperation.close)
-        }
-    }
-    
-    var body: some View {
-        EVYButton(label: view.content.label, action: performAction)
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.top, Constants.minorPadding)
-        .padding(.bottom, Constants.majorPadding)
-    }
+
+	var body: some View {
+		EVYButton(label: view.content.label, action: performAction)
+			.frame(maxWidth: .infinity, alignment: .center)
+			.padding(.top, Constants.minorPadding)
+			.padding(.bottom, Constants.majorPadding)
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","1","footer"])
+		try! await EVY.getRow(["1", "pages", "1", "footer"])
 	}
 }

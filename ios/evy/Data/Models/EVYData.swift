@@ -107,50 +107,43 @@ class EVYData {
     }
 }
 
-public typealias EVYJsonString = String
-public typealias EVYJsonInt = Int
-public typealias EVYJsonDecimal = Decimal
-public typealias EVYJsonBool = Bool
-public typealias EVYJsonArray = [EVYJson]
-public typealias EVYJsonDict = [String: EVYJson]
-
 public enum EVYJson: Codable, Hashable {
-    case string(EVYJsonString)
-    case int(EVYJsonInt)
-	case decimal(EVYJsonDecimal)
-    case bool(EVYJsonBool)
-    case dictionary(EVYJsonDict)
-    case array(EVYJsonArray)
+	case string(String)
+	case int(Int)
+	case decimal(Decimal)
+	case bool(Bool)
+	case dictionary([String: EVYJson])
+	case array([EVYJson])
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
-        if let stringValue = try? container.decode(EVYJsonString.self) {
+        if let stringValue = try? container.decode(String.self) {
             self = .string(stringValue)
             return
         }
         
-        if let intValue = try? container.decode(EVYJsonInt.self) {
+        if let intValue = try? container.decode(Int.self) {
             self = .int(intValue)
             return
         }
 		
-		if let decimalValue = try? container.decode(EVYJsonDecimal.self) {
+		if let decimalValue = try? container.decode(Decimal.self) {
 			self = .decimal(decimalValue)
 			return
 		}
         
-        if let boolValue = try? container.decode(EVYJsonBool.self) {
+        if let boolValue = try? container.decode(Bool.self) {
             self = .bool(boolValue)
             return
         }
 
-        if let dictionaryValue = try? container.decode(EVYJsonDict.self) {
+        if let dictionaryValue = try? container.decode([String: EVYJson].self) {
             self = .dictionary(dictionaryValue)
             return
         }
 
-        if let arrayValue = try? container.decode(EVYJsonArray.self) {
+        if let arrayValue = try? container.decode([EVYJson].self) {
             self = .array(arrayValue)
             return
         }

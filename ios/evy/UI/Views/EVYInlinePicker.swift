@@ -12,7 +12,7 @@ struct EVYInlinePicker: View {
     let format: String
     let destination: String
     
-    private var options: EVYJsonArray = []
+    private var options: [EVYJson] = []
     
     @State private var selection: EVYJson
     

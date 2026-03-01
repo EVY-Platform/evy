@@ -34,7 +34,7 @@ public enum EVYRPCError: LocalizedError {
 
 struct EVYLoginParams: Encodable {
     let token: String
-    let os: EVYOS
+    let os: DataOS
 }
 
 struct DataUpdatedNotification: Decodable {
@@ -52,15 +52,15 @@ struct DataUpdatedNotification: Decodable {
 }
 
 struct FlowUpdatedNotification: Decodable {
-    let flow: EVYFlow
-    
+    let flow: SDUI_Flow
+
     enum CodingKeys: String, CodingKey {
         case flow = "data"
     }
 }
 
 protocol EVYWebsocketProtocol {
-	func connect(token: String, os: EVYOS) async throws -> Bool
+	func connect(token: String, os: DataOS) async throws -> Bool
 	func fetch<T: Codable>(
 		method: String,
 		params: Encodable,
@@ -77,7 +77,7 @@ final class EVYWebsocket: EVYWebsocketProtocol {
         rpc.delegate = self
     }
     
-    public func connect(token: String, os: EVYOS) async throws -> Bool {
+    public func connect(token: String, os: DataOS) async throws -> Bool {
 		try await fetch(method: "rpc.login",
 						params: EVYLoginParams(token: token, os: os),
 						expecting: Bool.self)

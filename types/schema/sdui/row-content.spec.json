@@ -1,0 +1,132 @@
+{
+	"Button": {
+		"content": {
+			"title": "string",
+			"label": "string"
+		}
+	},
+	"Input": {
+		"content": {
+			"title": "string",
+			"value": "string",
+			"placeholder": "string"
+		}
+	},
+	"Info": {
+		"content": {
+			"title": "string",
+			"text": "string"
+		}
+	},
+	"Text": {
+		"view": {
+			"max_lines": "string"
+		},
+		"content": {
+			"title": "string",
+			"text": "string"
+		}
+	},
+	"TextAction": {
+		"content": {
+			"title": "string",
+			"text": "string",
+			"placeholder": "string",
+			"action": "string"
+		}
+	},
+	"TextArea": {
+		"content": {
+			"title": "string",
+			"value": "string",
+			"placeholder": "string"
+		}
+	},
+	"TextSelect": {
+		"content": {
+			"title": "string",
+			"text": "string"
+		}
+	},
+	"Dropdown": {
+		"view": {
+			"data": "string"
+		},
+		"content": {
+			"title": "string",
+			"format": "string",
+			"placeholder": "string"
+		}
+	},
+	"InlinePicker": {
+		"view": {
+			"data": "string"
+		},
+		"content": {
+			"title": "string",
+			"format": "string"
+		}
+	},
+	"Search": {
+		"view": {
+			"data": "string"
+		},
+		"content": {
+			"title": "string",
+			"format": "string",
+			"placeholder": "string"
+		}
+	},
+	"SelectPhoto": {
+		"content": {
+			"title": "string",
+			"icon": "string",
+			"subtitle": "string",
+			"content": "string",
+			"photos": "string"
+		}
+	},
+	"Calendar": {
+		"content": {
+			"title": "string",
+			"primary": "string",
+			"secondary": "string"
+		}
+	},
+	"InputList": {
+		"view": {
+			"data": "string"
+		},
+		"content": {
+			"title": "string",
+			"format": "string",
+			"placeholder": "string"
+		}
+	},
+	"ColumnContainer": {
+		"content": {
+			"title": "string",
+			"children": "[SDUI_Row]"
+		}
+	},
+	"ListContainer": {
+		"content": {
+			"title": "string",
+			"children": "[SDUI_Row]"
+		}
+	},
+	"SheetContainer": {
+		"content": {
+			"title": "string",
+			"child": "SDUI_Row",
+			"children": "[SDUI_Row]"
+		}
+	},
+	"SelectSegmentContainer": {
+		"content": {
+			"title": "string",
+			"children": "[SDUI_Row]",
+			"segments": "[String]"
+		}
+	}
+}

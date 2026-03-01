@@ -35,7 +35,7 @@ extension EnvironmentValues {
 private let HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
 
 struct ContentView: View {
-    @State private var flows: EVYSDUI = []
+    @State private var flows: [SDUI_Flow] = []
     @State private var routes: [Route] = []
     @State private var currentFlowId: String = HOME_FLOW_ID
 	@State private var showingAlert = false
@@ -73,13 +73,14 @@ struct ContentView: View {
                 break
             }
             
-            // If the new flow is for creation, start a draft
             guard let newFlow = flows.first(where: { $0.id == route.flowId }) else {
                 alertMessage = "Flow not found - please check API connection"
                 showingAlert = true
                 routes.removeLast()
                 break
             }
+			
+			// If the new flow is for creation, start a draft
             if newFlow.type == .create {
                 let key: String = newFlow.data
                 guard let itemData = itemData else {
@@ -196,7 +197,7 @@ struct ContentView: View {
         NavigationStack(path: $routes) {
             homeContent
                 .task {
-                    guard flows.isEmpty else { return }
+                    if !flows.isEmpty { return }
                     
                     do {
                         try EVY.getUserData()
@@ -216,9 +217,10 @@ struct ContentView: View {
                 .navigationDestination(for: Route.self) { route in
                     if let flow = flows.first(where: { $0.id == route.flowId }),
                        let page = flow.getPageById(route.pageId) {
-                        page.environment(\.navigate) { navOperation in
-                            handleNavigationData(navOperation, currentFlowId)
-                        }
+                        page
+                            .environment(\.navigate) { navOperation in
+                                handleNavigationData(navOperation, currentFlowId)
+                            }
                     } else {
                         Text("Flow not found")
                             .foregroundColor(.red)
@@ -252,8 +254,8 @@ struct ContentView: View {
             currentFlowId = newFlowId
         }
         .onReceive(NotificationCenter.default.publisher(for: .evyFlowUpdated)) { notification in
-            guard let updatedFlow = notification.object as? EVYFlow else { return }
-            
+            guard let updatedFlow = notification.object as? SDUI_Flow else { return }
+
             if let index = flows.firstIndex(where: { $0.id == updatedFlow.id }) {
                 flows[index] = updatedFlow
             } else {

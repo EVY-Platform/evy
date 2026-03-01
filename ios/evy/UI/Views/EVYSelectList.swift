@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EVYSelectList: View {
-    let options: EVYJsonArray
+    let options: [EVYJson]
     let format: String
     let destination: String
     

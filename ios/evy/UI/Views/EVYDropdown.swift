@@ -13,7 +13,7 @@ struct EVYDropdown: View {
     let format: String
     let placeholder: String?
     
-    private var options: EVYJsonArray = []
+    private var options: [EVYJson] = []
     private var selection: EVYState<String>
     @State private var showSheet = false
     

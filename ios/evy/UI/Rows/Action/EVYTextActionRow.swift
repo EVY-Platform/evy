@@ -7,49 +7,38 @@
 
 import SwiftUI
 
-struct EVYTextActionRowView: Codable {
-    let content: ContentData
-    
-    struct ContentData: Codable {
-        let title: String
-        let text: String
-        let placeholder: String
-        let action: String
-    }
-}
-
 struct EVYTextActionRow: View, EVYRowProtocol {
-    public static let JSONType = "TextAction"
-    
-    private let view: EVYTextActionRowView
-    private let edit: SDUI.Edit
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(EVYTextActionRowView.self, forKey:.view)
-        edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-    }
-    
-    var body: some View {
-        VStack(alignment:.leading) {
-            if view.content.title.count > 0 {
-                EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.padding)
-            }
-            HStack {
+	public static let JSONType = "TextAction"
+
+	private let view: TextActionRowViewData
+	private let action: SDUI_RowAction?
+
+	init(view: TextActionRowViewData, action: SDUI_RowAction?) {
+		self.view = view
+		self.action = action
+	}
+
+	var body: some View {
+		VStack(alignment: .leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+					.padding(.vertical, Constants.padding)
+			}
+			HStack {
 				EVYTextView(view.content.text,
-							placeholder: view.content.placeholder,
-							style: .info)
-				.frame(maxWidth: .infinity, alignment: .leading)
+				            placeholder: view.content.placeholder,
+				            style: .info)
+					.frame(maxWidth: .infinity, alignment: .leading)
 				EVYTextView(view.content.action, style: .action)
-            }
-        }
-    }
+			}
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","2","rows", "0", "view", "content", "children", "0", "child", "view", "content", "children", "1", "child"])
+		try! await EVY.getRow(["1", "pages", "2", "rows", "0", "view", "content", "children", "0", "child", "view", "content", "children", "1", "child"])
 	}
 }

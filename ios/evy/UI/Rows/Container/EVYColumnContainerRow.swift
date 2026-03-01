@@ -7,60 +7,48 @@
 
 import SwiftUI
 
-private class ColumnContainerContent: Codable {
-	let title: String
-	let children: [EVYRow]
-}
-private struct ColumnContainerView: Codable {
-	let content: ColumnContainerContent
-}
-
 struct EVYColumnContainerRow: View, EVYRowProtocol {
-    public static let JSONType = "ColumnContainer"
-    
-    private let view: ColumnContainerView
-	private let edit: SDUI.Edit
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(ColumnContainerView.self, forKey:.view)
-		edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-    }
-	
-	func complete() -> Bool {
-		if edit.validation.minAmount == nil { return true }
-		
-		let completeChildren = view.content.children.filter {
-			$0.complete()
-		}
-		return completeChildren.count >= edit.validation.minAmount!
+	public static let JSONType = "ColumnContainer"
+
+	private let view: ColumnContainerRowViewData
+	private let edit: SDUI_RowEdit?
+
+	init(view: ColumnContainerRowViewData, edit: SDUI_RowEdit?) {
+		self.view = view
+		self.edit = edit
 	}
-	
+
+	func complete() -> Bool {
+		guard let minAmount = edit?.validation?.minAmountInt else { return true }
+		let completeCount = view.content.children.filter { SDUI_Row.complete(row: $0) }.count
+		return completeCount >= minAmount
+	}
+
 	func incompleteMessages() -> [String] {
 		view.content.children
-			.filter { $0.complete() == false }
-			.map { $0.incompleteMessages() }
-			.flatMap(\.self)
+			.filter { !SDUI_Row.complete(row: $0) }
+			.flatMap { SDUI_Row.incompleteMessages(row: $0) }
 	}
-    
-    var body: some View {
-        VStack(alignment:.leading) {
+
+	var body: some View {
+		VStack(alignment: .leading) {
 			if view.content.title.count > 0 {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
 			HStack(alignment: .top) {
-				ForEach(Array(view.content.children.enumerated()), id: \.offset) { index, child in
-					child
+				ForEach(Array(view.content.children.enumerated()), id: \.offset) { _, child in
+					EVYRow(row: child)
 				}
 			}
-        }
-    }
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","0","rows", "5"])
+		try! await EVY.getRow(["1", "pages", "0", "rows", "5"])
 	}
 }
