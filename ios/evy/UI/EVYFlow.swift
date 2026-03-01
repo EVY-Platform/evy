@@ -10,6 +10,7 @@ import SwiftUI
 public enum EVYFlowType: String, Codable {
     case create
     case read
+    case write
     case update
     case delete
 }
