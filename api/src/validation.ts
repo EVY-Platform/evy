@@ -1,28 +1,9 @@
-import type { SDUI_Flow } from "../../types/generated/ts/sdui/evy";
+import {
+	SDUI_FLOW_TYPE_VALUES,
+	SDUI_ROW_TYPE_VALUES,
+} from "evy-types/sdui/evy";
+import type { SDUI_Flow, SDUI_Row } from "evy-types/sdui/evy";
 import { z } from "zod";
-
-/**
- * Valid row types supported by the SDUI framework
- */
-const VALID_ROW_TYPES = [
-	"Button",
-	"Calendar",
-	"ColumnContainer",
-	"Dropdown",
-	"Info",
-	"InlinePicker",
-	"InputList",
-	"Input",
-	"ListContainer",
-	"Search",
-	"SelectPhoto",
-	"SelectSegmentContainer",
-	"SheetContainer",
-	"TextAction",
-	"TextArea",
-	"Text",
-	"TextSelect",
-] as const;
 
 /**
  * Schema for row validation rules
@@ -51,49 +32,12 @@ const RowActionSchema = z.strictObject({
 });
 
 /**
- * Base content schema - title is required, other fields are flexible
- * Uses passthrough to allow additional string fields (like label, text, placeholder, etc.)
- */
-const BaseContentSchema = z.looseObject({
-	title: z.string(),
-});
-
-/**
  * Recursive row schema that validates the full row structure including nested children
  */
-type RowInput = {
-	id: string;
-	type: (typeof VALID_ROW_TYPES)[number];
-	view: {
-		content: {
-			title: string;
-			children?: RowInput[];
-			child?: RowInput;
-			segments?: string[];
-			[key: string]: unknown;
-		};
-		data?: string;
-		max_lines?: string;
-	};
-	edit?: {
-		destination?: string;
-		validation?: {
-			required?: string;
-			message?: string;
-			minAmount?: string;
-			minValue?: string;
-			minCharacters?: string;
-		};
-	};
-	action?: {
-		target: string;
-	};
-};
-
-export const RowSchema: z.ZodType<RowInput> = z.lazy(() =>
+export const RowSchema: z.ZodType<SDUI_Row> = z.lazy(() =>
 	z.strictObject({
 		id: z.uuid(),
-		type: z.enum(VALID_ROW_TYPES),
+		type: z.enum(SDUI_ROW_TYPE_VALUES),
 		view: z.strictObject({
 			content: z.looseObject({
 				title: z.string(),
@@ -120,24 +64,13 @@ export const PageSchema = z.strictObject({
 });
 
 /**
- * Valid flow types
- */
-const VALID_FLOW_TYPES = [
-	"read",
-	"write",
-	"create",
-	"update",
-	"delete",
-] as const;
-
-/**
  * Schema for the complete flow data structure.
  * Pages may be an empty array per SDUI_Flow schema.
  */
 export const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
 	id: z.uuid(),
 	name: z.string().min(1, { error: "Flow name is required" }),
-	type: z.enum(VALID_FLOW_TYPES),
+	type: z.enum(SDUI_FLOW_TYPE_VALUES),
 	data: z.string(),
 	pages: z.array(PageSchema),
 });

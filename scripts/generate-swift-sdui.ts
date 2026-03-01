@@ -7,15 +7,11 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { OUT_SWIFT, SCHEMA_DIR } from "./types-generation-utils.js";
 
-const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const TYPES_ROOT = join(REPO_ROOT, "types");
-const SCHEMA_DIR = join(TYPES_ROOT, "schema");
 const SDUI_SCHEMA_PATH = join(SCHEMA_DIR, "sdui", "evy.schema.json");
 const ROW_SPEC_PATH = join(SCHEMA_DIR, "sdui", "row-content.spec.json");
-const OUT_SWIFT = join(TYPES_ROOT, "generated", "swift");
 
 type RowSpec = Record<
 	string,

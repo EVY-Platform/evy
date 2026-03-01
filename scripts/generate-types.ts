@@ -1,19 +1,21 @@
 import { compile } from "json-schema-to-typescript";
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { dirname, join, relative } from "node:path";
+import { join, relative } from "node:path";
 import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import {
+	OUT_SWIFT,
+	OUT_TS,
+	REPO_ROOT,
+	SCHEMA_DIR,
+	TYPES_ROOT,
+	schemaPathToSwiftTypeName,
+	schemaPathToTsName,
+} from "./types-generation-utils.js";
 
 const COMMON_SCHEMA_ROOT_REF: Record<string, string> = {
 	"common/json": "#/$defs/JSONValue",
 	"common/rpc": "#/$defs/IdFilter",
 };
-
-const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const TYPES_ROOT = join(REPO_ROOT, "types");
-const SCHEMA_DIR = join(TYPES_ROOT, "schema");
-const OUT_TS = join(TYPES_ROOT, "generated", "ts");
-const OUT_SWIFT = join(TYPES_ROOT, "generated", "swift");
 
 type LoadedSchemaFile = {
 	schemaPath: string;
@@ -51,23 +53,6 @@ async function loadSchemaFiles(
 		});
 	}
 	return loadedFiles;
-}
-
-function schemaPathToTsName(schemaPath: string): string {
-	return relative(SCHEMA_DIR, schemaPath)
-		.replace(/\.schema\.json$/, "")
-		.replace(/\.json$/, "")
-		.replace(/[/\\]/g, "/");
-}
-
-function schemaPathToSwiftTypeName(schemaPath: string): string {
-	return relative(SCHEMA_DIR, schemaPath)
-		.replace(/\.schema\.json$/, "")
-		.replace(/\.json$/, "")
-		.replace(/[/\\]/g, ".")
-		.split(".")
-		.map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-		.join("");
 }
 
 function buildSchemaWithRootRef(
@@ -163,6 +148,26 @@ async function generateTypeScript(
 				cwd: join(schemaPath, ".."),
 			});
 			await writeFile(outPath, ts, "utf-8");
+
+			if (schemaKey === "sdui/evy") {
+				const flowTypeEnum = (schema.properties as Record<string, unknown>)
+					?.type as { enum?: string[] } | undefined;
+				const flowValues = flowTypeEnum?.enum ?? [];
+				const rowDef = (schema.$defs as Record<string, unknown>)?.[
+					"SDUI_Row"
+				] as Record<string, unknown> | undefined;
+				const rowTypeEnum = (rowDef?.properties as Record<string, unknown>)
+					?.type as { enum?: string[] } | undefined;
+				const rowValues = rowTypeEnum?.enum ?? [];
+				const flowLine = `export const SDUI_FLOW_TYPE_VALUES = ${JSON.stringify(flowValues)} as const;`;
+				const rowLine = `export const SDUI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`;
+				const current = await readFile(outPath, "utf-8");
+				await writeFile(
+					outPath,
+					`${current.trimEnd()}\n\n${flowLine}\n${rowLine}\n`,
+					"utf-8",
+				);
+			}
 		}),
 	);
 

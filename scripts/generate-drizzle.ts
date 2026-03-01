@@ -5,11 +5,10 @@
  */
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import decamelize from "decamelize";
 import { z } from "zod";
+import { TYPES_ROOT } from "./types-generation-utils.js";
 
-const TYPES_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "types");
 const DATA_SCHEMA_PATH = join(TYPES_ROOT, "schema", "data", "data.schema.json");
 const DRIZZLE_CONFIG_PATH = join(
 	TYPES_ROOT,
