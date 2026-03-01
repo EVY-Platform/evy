@@ -51,6 +51,13 @@ wait_for_http_service() {
     fi
 }
 
+seed_database() {
+    if ! bun db:seed; then
+        echo -e "${RED}Database seeding failed${NC}"
+        exit 1
+    fi
+}
+
 trap cleanup EXIT
 
 echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
@@ -79,13 +86,8 @@ if ! bun types:generate; then
     exit 1
 fi
 
-echo -e "\n${YELLOW}Step 4: Seeding database...${NC}"
-if ! bun db:seed; then
-        echo -e "${RED}Database seeding failed${NC}"
-        exit 1
-    fi
-
-echo -e "\n${YELLOW}Step 5: Running API e2e tests...${NC}"
+echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
+seed_database
 cd api
 bun install
 if bun run test:e2e; then
@@ -96,7 +98,8 @@ else
 fi
 cd ..
 
-echo -e "\n${YELLOW}Step 6: Running Web e2e tests...${NC}"
+echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
+seed_database
 cd web
 bun install
 if bun run test:e2e; then
@@ -108,10 +111,11 @@ fi
 cd ..
 
 if [ "$SKIP_IOS" = true ]; then
-    echo -e "\n${YELLOW}Step 7: Skipping iOS e2e tests (--skip-ios flag set)${NC}"
+    echo -e "\n${YELLOW}Step 6: Skipping iOS e2e tests (--skip-ios flag set)${NC}"
     IOS_SKIPPED=true
 else
-    echo -e "\n${YELLOW}Step 7: Running iOS e2e tests...${NC}"
+    echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
+    seed_database
     cd ios
     if xcodebuild test \
         -project evy.xcodeproj \
