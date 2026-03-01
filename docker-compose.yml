@@ -38,6 +38,8 @@ services:
       context: ./web
       dockerfile: Dockerfile
       target: runner
+      args:
+        API_URL: ${API_URL}
     ports:
       - ${WEB_PORT}:${WEB_PORT}
     environment:

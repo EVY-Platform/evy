@@ -18,6 +18,8 @@ COPY package.json bun.lock* ./
 COPY app ./app
 COPY dev ./dev
 
+ARG API_URL
+ENV API_URL=$API_URL
 RUN bun run build
 
 # Production stage

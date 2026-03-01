@@ -13,10 +13,10 @@
 		"test:e2e": "bun --env-file=../.env test e2e/",
 		"lint": "bunx biome check",
 		"format": "bunx biome format --write .",
-		"db:generate": "bun --env-file=../.env bunx drizzle-kit generate",
-		"db:migrate": "bun --env-file=../.env bunx drizzle-kit migrate",
-		"db:push": "bun --env-file=../.env bunx drizzle-kit push",
-		"db:studio": "bun --env-file=../.env bunx drizzle-kit studio"
+		"db:generate": "bun --env-file=../.env drizzle-kit generate",
+		"db:migrate": "bun --env-file=../.env drizzle-kit migrate",
+		"db:push": "bun --env-file=../.env drizzle-kit push",
+		"db:studio": "bun --env-file=../.env drizzle-kit studio"
 	},
 	"devDependencies": {
 		"@electric-sql/pglite": "^0.3.15",
