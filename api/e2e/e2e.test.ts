@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { Client } from "rpc-websockets";
+import { isRecord } from "../src/utils";
 
 type WSClient = InstanceType<typeof Client>;
 
@@ -12,10 +13,6 @@ if (!API_URL) {
 const TEST_TOKEN = "e2e-test-token";
 const TEST_OS = "Web";
 const CONNECTION_TIMEOUT = 5000;
-
-function isRecord(o: unknown): o is Record<string, unknown> {
-	return o !== null && typeof o === "object";
-}
 
 function waitForClient(ws: WSClient): Promise<void> {
 	return new Promise((resolve, reject) => {

@@ -16,6 +16,7 @@ import {
 	osEnum,
 } from "evy-types/db/schema.generated";
 import { db } from "./db";
+import { isRecord } from "./utils";
 import { validateFlowData } from "./validation";
 
 export type Namespace = GetRequest["namespace"];
@@ -133,10 +134,6 @@ export async function primeData() {
 				lastUpdate.length > 0 ? lastUpdate[0].updatedAt : new Date(0);
 		}),
 	);
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-	return v !== null && typeof v === "object" && !Array.isArray(v);
 }
 
 function isNamespacedRecord(v: unknown): v is DATA_Data["data"] {

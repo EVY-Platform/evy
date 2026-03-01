@@ -1,13 +1,10 @@
 import type { GetRequest } from "evy-types/rpc/get.request";
 import { validateAuth, primeData, get, upsert, isResource } from "./data";
-import { initServer, emitJsonRpc, WSParams } from "./ws";
+import { isRecord } from "./utils";
+import { initServer, emitJsonRpc, type WSParams } from "./ws";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
-}
-
-function isRecord(o: unknown): o is Record<string, unknown> {
-	return o !== null && typeof o === "object";
 }
 
 function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
