@@ -12,7 +12,7 @@ jobs:
             run:
                 working-directory: api
 
-        timeout-minutes: 5
+        timeout-minutes: 2
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
