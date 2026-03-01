@@ -22,8 +22,6 @@ const DATA_PATH = join(
 );
 
 async function seed() {
-	console.log("Seeding database...");
-
 	const evyFlowsRaw = JSON.parse(await readFile(EVY_FLOWS_PATH, "utf-8"));
 	const serviceFlowsRaw = JSON.parse(
 		await readFile(SERVICE_FLOWS_PATH, "utf-8"),
