@@ -24,6 +24,12 @@ jobs:
               with:
                   working-directory: web
                   path-filter: 'web/**'
+                  path-filter-extra: 'types/**'
+
+            - name: Install root dependencies
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun install
+              working-directory: .
 
             - name: Cache Playwright browsers
               if: steps.setup.outputs.has-changes == 'true'
@@ -39,6 +45,11 @@ jobs:
             - name: Create .env from example
               if: steps.setup.outputs.has-changes == 'true'
               run: cp ../.env.example ../.env
+
+            - name: Generate types
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun types:generate
+              working-directory: .
 
             - name: Build application
               if: steps.setup.outputs.has-changes == 'true'

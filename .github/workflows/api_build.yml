@@ -24,10 +24,16 @@ jobs:
               with:
                   working-directory: api
                   path-filter: 'api/**'
+                  path-filter-extra: 'types/**'
 
             - name: Install root dependencies
               if: steps.setup.outputs.has-changes == 'true'
               run: bun install
+              working-directory: .
+
+            - name: Generate shared types
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run types:generate
               working-directory: .
 
             - name: Run build

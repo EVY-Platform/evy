@@ -473,7 +473,8 @@ async function main(): Promise<void> {
 
 	await mkdir(dirname(OUT_PATH), { recursive: true });
 	await writeFile(OUT_PATH, lines.join("\n"), "utf-8");
-	console.log("  TS: db/schema.generated.ts");
+
+	console.log("Drizzle schema generated successfully.");
 }
 
 main().catch((err) => {

@@ -18,7 +18,6 @@ Cross-platform contracts live in **`types/`** at the repo root.
 **Commands (from repo root):**
 
 - `bun run types:generate` — regenerate TS and Swift from schemas.
-- `bun run types:check` — fail if generated files differ (used in CI).
 
 After changing any schema (including `types/schema/data/`), run `bun run types:generate` and commit the updated files under `types/generated/` and `api/src/db/schema.generated.ts`.
 

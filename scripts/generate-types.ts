@@ -132,7 +132,6 @@ async function generateTypeScript(
 			if (schemaKey === "common/json") {
 				const ts = `${`/* eslint-disable */\n/** Generated from ${relative(TYPES_ROOT, schemaPath)} - do not edit. */`}\n\nexport interface CommonJSON {\n  [k: string]: string | number | boolean | null;\n}\n`;
 				await writeFile(outPath, ts, "utf-8");
-				console.log("  TS:", outRel);
 				return;
 			}
 
@@ -164,8 +163,6 @@ async function generateTypeScript(
 				cwd: join(schemaPath, ".."),
 			});
 			await writeFile(outPath, ts, "utf-8");
-
-			console.log("  TS:", outRel);
 		}),
 	);
 
@@ -188,7 +185,8 @@ async function generateTypeScript(
 			? lines.join("\n") + "\n"
 			: "/** Generated types - add schemas in types/schema to generate. */\n";
 	await writeFile(join(OUT_TS, "index.ts"), content, "utf-8");
-	console.log("  TS: index.ts");
+
+	console.log("TypeScript types generated successfully.");
 }
 
 async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
@@ -240,9 +238,10 @@ async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 			} finally {
 				if (tempPath) await rm(tempPath, { force: true });
 			}
-			console.log("  Swift:", `${typeName}.swift`);
 		}),
 	);
+
+	console.log("Swift types generated successfully.");
 }
 
 async function main(): Promise<void> {

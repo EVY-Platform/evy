@@ -40,15 +40,9 @@ async function seed() {
 	// Combine flows with evy flows first (includes home flow)
 	const flowsJson = [...evyFlowsJson, ...serviceFlowsJson];
 
-	console.log(
-		`Found ${flowsJson.length} flows to seed (${evyFlowsJson.length} evy + ${serviceFlowsJson.length} service)`,
-	);
-
-	console.log("Clearing existing data...");
 	await db.delete(schema.flow);
 	await db.delete(schema.data);
 
-	console.log("Inserting flows...");
 	for (const flowData of flowsJson) {
 		await db.insert(schema.flow).values({
 			id: flowData.id,
@@ -56,10 +50,8 @@ async function seed() {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});
-		console.log(`  Inserted flow: ${flowData.name} (${flowData.id})`);
 	}
 
-	console.log("Inserting service data...");
 	await db.insert(schema.data).values({
 		data: dataJson,
 		createdAt: new Date(),

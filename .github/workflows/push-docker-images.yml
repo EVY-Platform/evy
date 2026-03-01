@@ -25,27 +25,20 @@ jobs:
       - name: Build and push api Docker image
         uses: docker/build-push-action@v6
         with:
-          context: api/
+          context: .
+          file: api/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}-api:latest
           labels: ${{ steps.meta.outputs.labels }}
-        env:
-          API_PORT: ${API_PORT}
-          DB_USER: ${DB_USER}
-          DB_PASS: ${DB_PASS}
-          DB_PORT: ${DB_PORT}
-          DB_DOMAIN: ${DB_DOMAIN}
-          DB_DATABASE: ${DB_DATABASE}
 
       - name: Build and push web Docker image
         uses: docker/build-push-action@v6
         with:
-          context: web/
+          context: .
+          file: web/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}-web:latest
           labels: ${{ steps.meta.outputs.labels }}
-        env:
-          WEB_PORT: ${WEB_PORT}
 
       - name: Docker Compose Remote Deploy api
         uses: glesage/docker-compose-remote-action@v1

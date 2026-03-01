@@ -35,8 +35,8 @@ services:
 
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
       target: runner
       args:
         API_URL: ${API_URL}

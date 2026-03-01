@@ -73,13 +73,19 @@ fi
 wait_for_http_service "API" "http://localhost:$API_PORT"
 wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 
-echo -e "\n${YELLOW}Step 3: Seeding database...${NC}"
+echo -e "\n${YELLOW}Step 3: Generating types...${NC}"
+if ! bun types:generate; then
+    echo -e "${RED}Type generation failed${NC}"
+    exit 1
+fi
+
+echo -e "\n${YELLOW}Step 4: Seeding database...${NC}"
 if ! bun db:seed; then
         echo -e "${RED}Database seeding failed${NC}"
         exit 1
     fi
 
-echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
+echo -e "\n${YELLOW}Step 5: Running API e2e tests...${NC}"
 cd api
 bun install
 if bun run test:e2e; then
@@ -90,7 +96,7 @@ else
 fi
 cd ..
 
-echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
+echo -e "\n${YELLOW}Step 6: Running Web e2e tests...${NC}"
 cd web
 bun install
 if bun run test:e2e; then
@@ -102,10 +108,10 @@ fi
 cd ..
 
 if [ "$SKIP_IOS" = true ]; then
-    echo -e "\n${YELLOW}Step 6: Skipping iOS e2e tests (--skip-ios flag set)${NC}"
+    echo -e "\n${YELLOW}Step 7: Skipping iOS e2e tests (--skip-ios flag set)${NC}"
     IOS_SKIPPED=true
 else
-    echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
+    echo -e "\n${YELLOW}Step 7: Running iOS e2e tests...${NC}"
     cd ios
     if xcodebuild test \
         -project evy.xcodeproj \

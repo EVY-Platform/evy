@@ -2,28 +2,28 @@ FROM oven/bun:1-alpine AS base
 
 WORKDIR /app
 
+# Generate shared types from schema (no committed generated files)
+FROM base AS typesgen
+COPY package.json bun.lock* ./
+COPY types/schema ./types/schema
+COPY scripts ./scripts
+RUN bun install --frozen-lockfile && bun run types:generate
+
 # Install dependencies stage
 FROM base AS deps
-
-# Copy package.json and lockfile
 COPY api/package.json api/bun.lock* ./
-
-# Install dependencies
 RUN bun install --frozen-lockfile
 
 # Build stage
 FROM base AS builder
-
 WORKDIR /app
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY api/package.json api/bun.lock* ./
 COPY api/tsconfig.json ./tsconfig.json
 COPY api/src ./src
 COPY api/drizzle.config.ts ./
-# Copy drizzle directory if it exists (for migrations)
 COPY api/drizzle* ./drizzle/
-COPY types/generated/ts ./types/generated/ts
+COPY --from=typesgen /app/types/generated/ts ./types/generated/ts
 
 # Production stage
 FROM base AS runner
