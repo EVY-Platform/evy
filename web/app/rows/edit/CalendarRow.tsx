@@ -1,4 +1,4 @@
-import type { Row, RowConfig } from "../types/row";
+import type { Row, RowConfig } from "../../types/row";
 import { EVYRow } from "../EVYRow";
 
 export default class CalendarRow extends EVYRow {

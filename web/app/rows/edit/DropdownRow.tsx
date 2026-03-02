@@ -1,4 +1,4 @@
-import type { Row, RowConfig } from "../types/row";
+import type { Row, RowConfig } from "../../types/row";
 import { EVYRow } from "../EVYRow";
 import Dropdown from "../design-system/Dropdown";
 

@@ -1,6 +1,6 @@
 import { DraggableRowContainer } from "../../components/DraggableRowContainer";
 import { PlaceholderDropIndicator } from "../../components/PlaceholderDropIndicator";
-import type { Row, RowConfig } from "../types/row";
+import type { Row, RowConfig } from "../../types/row";
 import { EVYRow } from "../EVYRow";
 
 export default class ColumnContainerRow extends EVYRow {
