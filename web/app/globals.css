@@ -38,7 +38,6 @@
 	/* Font weights */
 	--font-medium: 500;
 	--font-semibold: 600;
-	--font-bold: 700;
 
 	/* Opacity */
 	--opacity-60: 0.6;
@@ -182,9 +181,6 @@ body {
 .evy-mb-4 {
 	margin-bottom: var(--spacing-4);
 }
-.evy-mb-8 {
-	margin-bottom: var(--spacing-8);
-}
 
 /* Width utilities */
 .evy-w-336 {
@@ -280,9 +276,6 @@ body {
 }
 .evy-font-semibold {
 	font-weight: var(--font-semibold);
-}
-.evy-font-bold {
-	font-weight: var(--font-bold);
 }
 
 /* Border utilities */
