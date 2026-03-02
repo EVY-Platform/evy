@@ -51,7 +51,7 @@ export default class SelectSegmentContainerRow extends EVYRow {
 
 		return (
 			<div className="evy-p-2">
-				<p>{String(row.config.view.content.title ?? "")}</p>
+				<p>{row.config.view.content.title}</p>
 				<div className="evy-rounded-full evy-flex evy-mb-2">
 					{segments.map((segment, index) => (
 						<button

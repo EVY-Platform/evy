@@ -3,18 +3,21 @@ import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
 import type { UpsertResponse } from "evy-types/rpc/upsert.response";
 import { config } from "../config";
 
+function isServerFlow(v: unknown): v is ServerFlow {
+	return (
+		v !== null &&
+		typeof v === "object" &&
+		"id" in v &&
+		"name" in v &&
+		"type" in v &&
+		"data" in v &&
+		"pages" in v
+	);
+}
+
 function isServerFlowArray(v: unknown): v is ServerFlow[] {
 	if (!Array.isArray(v)) return false;
-	return v.every(
-		(item) =>
-			item !== null &&
-			typeof item === "object" &&
-			"id" in item &&
-			"name" in item &&
-			"type" in item &&
-			"data" in item &&
-			"pages" in item,
-	);
+	return v.every(isServerFlow);
 }
 
 function isUpsertResponse(v: unknown): v is UpsertResponse {
@@ -31,7 +34,7 @@ function isUpsertResponse(v: unknown): v is UpsertResponse {
 function isFlowUpsertResponse(
 	v: unknown,
 ): v is { id: string; data: ServerFlow; createdAt: string; updatedAt: string } {
-	return isUpsertResponse(v) && isServerFlowArray(v.data);
+	return isUpsertResponse(v) && isServerFlow(v.data);
 }
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";

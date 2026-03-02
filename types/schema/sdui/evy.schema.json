@@ -91,7 +91,7 @@
 					"items": { "type": "string" }
 				}
 			},
-			"additionalProperties": true
+			"additionalProperties": false
 		},
 		"SDUI_RowEdit": {
 			"type": "object",
