@@ -28,6 +28,12 @@ function isUpsertResponse(v: unknown): v is UpsertResponse {
 	);
 }
 
+function isFlowUpsertResponse(
+	v: unknown,
+): v is { id: string; data: ServerFlow; createdAt: string; updatedAt: string } {
+	return isUpsertResponse(v) && isServerFlowArray(v.data);
+}
+
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
 class WSClient {
@@ -95,8 +101,8 @@ class WSClient {
 			filter: flowData.id ? { id: flowData.id } : undefined,
 			data: flowData,
 		});
-		if (!isUpsertResponse(raw)) {
-			throw new Error("Invalid upsert response");
+		if (!isFlowUpsertResponse(raw)) {
+			throw new Error("Invalid upsert response: expected flow");
 		}
 		return raw.data;
 	}
