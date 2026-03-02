@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { Client } from "rpc-websockets";
-import { isRecord } from "../src/utils";
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+
+import { isRecord } from "../src/data";
 
 type WSClient = InstanceType<typeof Client>;
 

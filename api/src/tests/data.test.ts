@@ -16,14 +16,14 @@ import {
 /**
  * Types inferred from individual schemas for use in other parts of the app
  */
-export type ValidatedRow = z.infer<typeof RowSchema>;
-export type ValidatedPage = z.infer<typeof PageSchema>;
+type ValidatedRow = z.infer<typeof RowSchema>;
+type ValidatedPage = z.infer<typeof PageSchema>;
 
 /**
  * Input types where id is optional (for creating new entities)
  * These are useful for tests and client code that creates flows
  */
-export type RowInput = Omit<ValidatedRow, "id" | "view"> & {
+type RowInput = Omit<ValidatedRow, "id" | "view"> & {
 	id?: string;
 	view: Omit<ValidatedRow["view"], "content"> & {
 		content: Omit<ValidatedRow["view"]["content"], "children" | "child"> & {
@@ -33,13 +33,13 @@ export type RowInput = Omit<ValidatedRow, "id" | "view"> & {
 	};
 };
 
-export type PageInput = Omit<ValidatedPage, "id" | "rows" | "footer"> & {
+type PageInput = Omit<ValidatedPage, "id" | "rows" | "footer"> & {
 	id?: string;
 	rows: RowInput[];
 	footer?: RowInput;
 };
 
-export type FlowDataInput = Omit<SDUI_Flow, "id" | "pages"> & {
+type FlowDataInput = Omit<SDUI_Flow, "id" | "pages"> & {
 	id?: string;
 	pages: PageInput[];
 };

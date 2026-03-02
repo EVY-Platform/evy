@@ -52,7 +52,7 @@ const getRowId = (data: Record<string, unknown>): string | undefined => {
 	return typeof rowId === "string" ? rowId : undefined;
 };
 
-export type UseDraggableOptions = {
+type UseDraggableOptions = {
 	rowId: string;
 	orientation?: "horizontal" | "vertical";
 	showIndicators?: boolean;
@@ -60,7 +60,7 @@ export type UseDraggableOptions = {
 	nextRowId?: string;
 };
 
-export type UseDraggableResult = {
+type UseDraggableResult = {
 	ref: React.RefObject<HTMLDivElement | null>;
 	state: DraggableState;
 	indicators: Array<"before" | "after"> | undefined;

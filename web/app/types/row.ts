@@ -16,13 +16,13 @@ export type Row = {
 };
 
 /** Same shape as evy-types RowContent but children/child use UI Row */
-export type RowContent = Omit<SerialRowContent, "children" | "child"> & {
+type RowContent = Omit<SerialRowContent, "children" | "child"> & {
 	children?: Row[];
 	child?: Row;
 };
 
 /** Same shape as serial Row.view but content uses UI RowContent */
-export type RowView = Omit<SerialRow["view"], "content"> & {
+type RowView = Omit<SerialRow["view"], "content"> & {
 	content: RowContent;
 };
 

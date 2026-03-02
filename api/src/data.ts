@@ -16,7 +16,6 @@ import {
 	osEnum,
 } from "evy-types/db/schema.generated";
 import { db } from "./db";
-import { isRecord } from "./utils";
 import { validateFlowData } from "./validation";
 
 const tables = {
@@ -30,11 +29,11 @@ type TableName = keyof typeof tables;
 const modelNames = Object.keys(tables) as TableName[];
 const lastTableDataUpdates: Partial<Record<TableName, Date>> = {};
 
-export type Namespace = GetRequest["namespace"];
-export type Resource = GetRequest["resource"];
+type Namespace = GetRequest["namespace"];
+type Resource = GetRequest["resource"];
 
-export const NAMESPACES = ["evy", "marketplace"] as readonly Namespace[];
-export const RESOURCES = [
+const NAMESPACES = ["evy", "marketplace"] as readonly Namespace[];
+const RESOURCES = [
 	"SDUI",
 	"Device",
 	"Organisation",
@@ -51,6 +50,9 @@ function isNamespace(v: unknown): v is Namespace {
 }
 export function isResource(v: unknown): v is Resource {
 	return typeof v === "string" && RESOURCES.includes(v as Resource);
+}
+export function isRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function getParamsRecord(

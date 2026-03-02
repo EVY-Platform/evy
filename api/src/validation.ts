@@ -67,7 +67,7 @@ export const PageSchema = z.strictObject({
  * Schema for the complete flow data structure.
  * Pages may be an empty array per SDUI_Flow schema.
  */
-export const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
+const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
 	id: z.uuid(),
 	name: z.string().min(1, { error: "Flow name is required" }),
 	type: z.enum(SDUI_FLOW_TYPE_VALUES),

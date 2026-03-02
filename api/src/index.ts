@@ -1,7 +1,13 @@
-import type { GetRequest } from "evy-types/rpc/get.request";
-import { validateAuth, primeData, get, upsert, isResource } from "./data";
-import { isRecord } from "./utils";
 import { initServer, emitJsonRpc, type WSParams } from "./ws";
+import type { GetRequest } from "evy-types/rpc/get.request";
+import {
+	get,
+	isRecord,
+	isResource,
+	primeData,
+	upsert,
+	validateAuth,
+} from "./data";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
