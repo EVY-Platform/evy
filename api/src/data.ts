@@ -58,22 +58,24 @@ function validateGetUpsertParams(
 	requireData: boolean,
 ): asserts params is GetRequest | UpsertRequest {
 	getParamsRecord(params);
-	const p = params;
-	if (!("namespace" in p) || !isNamespace(p.namespace)) {
+	if (!("namespace" in params) || !isNamespace(params.namespace)) {
 		throw new Error("Invalid or missing namespace");
 	}
-	if (!("resource" in p) || !isResource(p.resource)) {
+	if (!("resource" in params) || !isResource(params.resource)) {
 		throw new Error("Invalid or missing resource");
 	}
-	if (p.filter !== undefined) {
-		if (typeof p.filter !== "object" || p.filter === null) {
+	if (params.filter !== undefined) {
+		if (typeof params.filter !== "object" || params.filter === null) {
 			throw new Error("filter must be an object");
 		}
 	}
-	if (requireData) {
-		if (p.data === undefined || typeof p.data !== "object" || p.data === null) {
-			throw new Error("data is required and must be a non-null object");
-		}
+	if (!requireData) return;
+	if (
+		params.data === undefined ||
+		typeof params.data !== "object" ||
+		params.data === null
+	) {
+		throw new Error("data is required and must be a non-null object");
 	}
 }
 
