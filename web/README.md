@@ -126,7 +126,7 @@ This will build the application and start the dev server with hot reloading.
 
 ```bash
 bun run build
-bun run prod
+bun run start
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -141,6 +141,8 @@ docker run -p 3000:3000 evy-web
 ```
 
 #### Using Docker Compose
+
+From the repo root (the web app has no `docker-compose.yml` in its directory):
 
 ```bash
 docker compose up -d
@@ -173,4 +175,4 @@ bun run test --debug
 
 ## License
 
-Apache 2.0, see [LICENSE](LICENSE) for more details.
+The web app is licensed under Apache 2.0; see [LICENSE](LICENSE). The rest of the EVY repo is GPL-3.0-only.

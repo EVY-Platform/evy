@@ -2,7 +2,7 @@
 
 RPC-websockets based API server using Bun and Drizzle ORM.
 
-Shared types for RPC params and SDUI models are generated from `types/schema/` at the repo root. The API imports them via the `evy-types` path alias (see `tsconfig.json`). The Drizzle schema (`src/db/schema.generated.ts`) is also generated from `types/schema/data/`. After changing any schema, run `bun run types:generate` from the repo root and commit the updated `types/generated/` and `api/src/db/schema.generated.ts` files.
+Shared types for RPC params and SDUI models are generated from `types/schema/` at the repo root. The API imports them via the `evy-types` path alias (see `tsconfig.json`). The Drizzle schema is generated to `types/generated/ts/db/schema.generated.ts` from `types/schema/data/`; the API imports it via the `evy-types/db/schema.generated` path alias. After changing any schema, run `bun run types:generate` from the repo root and commit the updated `types/generated/` files.
 
 ## Prerequisites
 
@@ -73,6 +73,8 @@ docker run -p 8000:8000 \
 
 ### Using Docker Compose
 
+From the repo root (the API has no `docker-compose.yml` in its directory):
+
 ```bash
 docker compose up -d
 ```
@@ -83,9 +85,12 @@ Note: Ensure the root `.env` file contains `DB_USER`, `DB_PASS`, `DB_PORT`, `DB_
 
 ### Workflow
 
-1. Make changes to `src/db/schema.ts`
-2. Generate a new migration: `bun run db:generate`
-3. Apply the migration: `bun run db:migrate`
+The database schema is generated from the repo-root type definitions. To change the schema:
+
+1. Edit `types/schema/data/` at the repo root (e.g. `data.schema.json`, `drizzle.config.json`).
+2. From the repo root, run `bun run types:generate` to regenerate the Drizzle schema and types.
+3. From the `api` directory, generate a new migration: `bun run db:generate`
+4. Apply the migration: `bun run db:migrate`
 
 ### Development
 

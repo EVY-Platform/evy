@@ -1,4 +1,8 @@
-# Data models
+# Marketplace data models
+
+These shapes are **domain models** used by the marketplace service. They are not defined in the repo’s JSON Schema; they are stored as JSON under `NamespacedData.marketplace` and validated at the application layer. See [EVY data models](../evy/sddata/data.md) for the API persistence schema and the distinction between schema-defined types and domain models.
+
+---
 
 #### seller
 
@@ -35,7 +39,9 @@ id: uuid
 value: string
 ```
 
-#### timeslot
+#### timeslot (marketplace UI)
+
+Used for calendar/grid UI (e.g. picker cells). For the EVY API timeslot shape (start/end timestamps, availability), see [EVY data models](../evy/sddata/data.md#timeslot).
 
 ```
 x: int

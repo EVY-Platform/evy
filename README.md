@@ -1,6 +1,6 @@
 # EVY
 
-If smartphones and the internet were build by the people for the people. Create services on the EVY platform and get paid everytime your contribution is used. The EVY app is privacy-focused, local-first and peer-to-peer.
+If smartphones and the internet were built by the people for the people. Create services on the EVY platform and get paid every time your contribution is used. The EVY app is privacy-focused, local-first and peer-to-peer.
 
 - [docs](/docs/README.md)
 - [api](/api/README.md)
@@ -19,7 +19,7 @@ Cross-platform contracts live in **`types/`** at the repo root.
 
 - `bun run types:generate` — regenerate TS and Swift from schemas.
 
-After changing any schema (including `types/schema/data/`), run `bun run types:generate` and commit the updated files under `types/generated/` and `api/src/db/schema.generated.ts`.
+After changing any schema (including `types/schema/data/`), run `bun run types:generate` and commit the updated files under `types/generated/`.
 
 ## Setup
 
@@ -31,14 +31,22 @@ After changing any schema (including `types/schema/data/`), run `bun run types:g
 
 ### Development (with Docker Compose)
 
-For example run api manually but the rest with docker:
+For example, run Postgres via Docker and run the API and web app locally:
 
 ```bash
-docker compose up --build postgres web
+docker compose up --build postgres
 bun install
 bun run db:seed
 
 cd api
+bun install
+bun run dev
+```
+
+In another terminal, from the repo root:
+
+```bash
+cd web
 bun install
 bun run dev
 ```
