@@ -1,6 +1,7 @@
 import { DraggableRowContainer } from "../../components/DraggableRowContainer";
 import { PlaceholderDropIndicator } from "../../components/PlaceholderDropIndicator";
-import { EVYRow, type Row, type RowConfig } from "../EVYRow";
+import type { Row, RowConfig } from "../../types/row";
+import { EVYRow } from "../EVYRow";
 
 export default class SheetContainerRow extends EVYRow {
 	static override config: RowConfig = {

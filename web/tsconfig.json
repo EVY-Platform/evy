@@ -9,7 +9,12 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"noEmit": true,
-		"types": ["bun-types"]
+		"types": ["bun-types"],
+		"baseUrl": ".",
+		"paths": {
+			"evy-types": ["../types/generated/ts"],
+			"evy-types/*": ["../types/generated/ts/*"]
+		}
 	},
 	"include": ["app/**/*", "dev/**/*", "tests/**/*"]
 }

@@ -7,62 +7,55 @@
 
 import SwiftUI
 
-struct EVYInlinePickerRowView: Codable {
-    let content: ContentData
-    let data: String
-    
-    struct ContentData: Codable {
-        let title: String
-        let format: String
-    }
-}
-    
 struct EVYInlinePickerRow: View, EVYRowProtocol {
-    public static let JSONType = "InlinePicker"
-    
-    private let view: EVYInlinePickerRowView
-    private let edit: SDUI.Edit
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(EVYInlinePickerRowView.self, forKey:.view)
-        edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-    }
-	
+	public static let JSONType = "InlinePicker"
+
+	private let view: InlinePickerRowViewData
+	private let edit: SDUI_RowEdit?
+
+	init(view: InlinePickerRowViewData, edit: SDUI_RowEdit?) {
+		self.view = view
+		self.edit = edit
+	}
+
 	func complete() -> Bool {
-		if !edit.validation.required {
-			return true
-		}
-		
+		guard let validation = edit?.validation, validation.requiredBool else { return true }
+		guard let destination = edit?.destination else { return false }
 		do {
-			let storedValue = try EVY.getDataFromText(edit.destination!)
+			let storedValue = try EVY.getDataFromText(destination)
 			return storedValue.toString().count > 0
 		} catch {
 			return false
 		}
 	}
-	
+
 	func incompleteMessages() -> [String] {
-		edit.validation.message != nil ? [edit.validation.message!] : []
+		guard let msg = edit?.validation?.message else { return [] }
+		return [msg]
 	}
-    
-    var body: some View {
-        VStack(alignment:.leading) {
-            if view.content.title.count > 0 {
-                EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.padding)
-            }
-            EVYInlinePicker(title: view.content.title,
-                            data: view.data,
-                            format: view.content.format,
-                            destination: edit.destination!)
-        }
-    }
+
+	var body: some View {
+		VStack(alignment: .leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+					.padding(.vertical, Constants.padding)
+			}
+			if let destination = edit?.destination {
+				EVYInlinePicker(
+					title: view.content.title,
+					data: view.data ?? "",
+					format: view.content.format,
+					destination: destination
+				)
+			}
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","2","rows", "0", "view", "content", "children", "1", "view", "content", "children", "3"])
+		try! await EVY.getRow(["1", "pages", "2", "rows", "0", "view", "content", "children", "1", "view", "content", "children", "3"])
 	}
 }

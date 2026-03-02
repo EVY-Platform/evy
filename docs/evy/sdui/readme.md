@@ -38,18 +38,18 @@ They are needed in order to submit all fields of all pages of a flow at the end 
 
 ```
 {
-    "id",
-    "name",
+    "id": "uuid",
+    "name": "string",
 
     // Which service the flow belongs to, eg "marketplace"
     // This is not used on the client apps, only server-side
     "service",
 
-    // The type of flow that it is: Create, Read, Update, Delete
+    // The type of flow: "read" | "write" | "create" | "update" | "delete"
     "type",
 
     // What is the data that the page is acting on, eg "item"
-    "data": "model_name"
+    "data": "model_name",
 
     "pages": [PAGE]
 }
@@ -59,14 +59,10 @@ They are needed in order to submit all fields of all pages of a flow at the end 
 
 ```
 {
-    // Shown in the navbar
-    "title",
-
-    // The rows that are on the page
+    "id": "uuid",
+    "title": "string",   // Shown in the navbar
     "rows": [ROW],
-
-    // Shown as sticky footer
-    "footer": ROW
+    "footer": ROW        // Optional; shown as sticky footer
 }
 ```
 
@@ -87,28 +83,27 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 -   Objects and arrays
     -   When objects or arrays are passed into a prop of content, they are parsed fully by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
 
-### Row schema explanained
+### Row schema explained
 
 ```
 {
-    // The type of row that it is, Button, Text, Calendar, etc
-    "type",
+    "id": "uuid",
+    "type": "Button" | "Calendar" | "ColumnContainer" | ... ,
 
-    // The visible part of the row, what to show to the user
     "view": {
-        // What text in what fields
-        content: {
-            // Represents the header of the row, if empty string then no header will be shown
-            "title",
-
-            // Each subsequent key/value pair represents a line of content shown on a row
-            // the key is the name, the value is what the content is or where it's from
-            //eg "subtitle": "My great subtitle"
+        "content": {
+            // Required. Header of the row; empty string means no header.
+            "title": "string",
+            // Layout: "children" (array of rows), "child" (single row), "segments" (array of strings).
+            "children": [ROW],  // optional
+            "child": ROW,        // optional
+            "segments": ["string"],
+            // Additional keys per row type (label, value, placeholder, format, etc.)
+            // See types/schema/sdui/row-content.spec.json for the full list per type.
         },
-        // Some types of rows need data, for example dropdowns, or search bars
-        data: {
-            "value": "String"
-        }
+        // Optional. A string (e.g. template or data reference) for rows that need data (dropdowns, search).
+        "data": "string",
+        "max_lines": "string"    // optional
     },
     // The edit part of the row, what to do when editing the row
     "edit": {
@@ -135,4 +130,13 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 
 ### Rows
 
-TBD
+Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and their content keys in `types/schema/sdui/row-content.spec.json`. Supported types:
+
+| Category   | Row types |
+| ---------- | --------- |
+| View       | Info, Text, InputList |
+| Edit       | Input, TextArea, TextSelect, Dropdown, InlinePicker, Search, SelectPhoto, Calendar |
+| Action     | Button, TextAction |
+| Container  | ColumnContainer, ListContainer, SheetContainer, SelectSegmentContainer |
+
+Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`). See `row-content.spec.json` for the exact keys per type.

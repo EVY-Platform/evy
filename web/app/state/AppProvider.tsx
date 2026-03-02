@@ -5,8 +5,9 @@ import {
 	useRef,
 	useEffect,
 } from "react";
+import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
 
-import type { ServerFlow, Flow } from "../types";
+import type { SDUI_Flow } from "../types/flow";
 import { AppContext } from "./context";
 import { pageReducer, draggingReducer, dropIndicatorReducer } from "./reducers";
 import { decodeFlows, encodeFlow } from "../utils/decodeFlow";
@@ -41,7 +42,7 @@ export function AppProvider({
 		null,
 	);
 
-	const previousFlowsRef = useRef<Flow[]>(appState.flows);
+	const previousFlowsRef = useRef<SDUI_Flow[]>(appState.flows);
 
 	useEffect(() => {
 		const activeFlow = appState.flows.find(

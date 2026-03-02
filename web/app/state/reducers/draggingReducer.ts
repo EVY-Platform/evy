@@ -1,4 +1,4 @@
-import type { DraggingState, DraggingAction } from "../../types";
+import type { DraggingState, DraggingAction } from "../../types/actions";
 
 export const draggingReducer = (
 	state: DraggingState,

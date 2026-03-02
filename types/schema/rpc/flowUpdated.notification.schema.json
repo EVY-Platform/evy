@@ -1,0 +1,15 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "flowUpdated-notification",
+	"title": "FlowUpdatedNotification",
+	"description": "JSON-RPC notification payload for flowUpdated event",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["id", "data", "createdAt", "updatedAt"],
+	"properties": {
+		"id": { "type": "string" },
+		"data": { "$ref": "../sdui/evy.schema.json" },
+		"createdAt": { "type": "string", "format": "date-time" },
+		"updatedAt": { "type": "string", "format": "date-time" }
+	}
+}

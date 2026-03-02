@@ -1,7 +1,9 @@
 import { createElement } from "react";
 import invariant from "tiny-invariant";
 
-import type { AppState, Page, Row, RowAction } from "../../types";
+import type { AppState, RowAction } from "../../types/actions";
+import type { SDUI_Page } from "../../types/flow";
+import type { Row } from "../../types/row";
 import { EVYRow } from "../../rows/EVYRow";
 import { baseRows } from "../../rows/baseRows";
 
@@ -14,7 +16,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		activeFlowId,
 		activeRowId,
 	}: {
-		updatedPages?: Page[];
+		updatedPages?: SDUI_Page[];
 		activeFlowId?: string;
 		activeRowId?: string;
 	}): AppState => {
@@ -36,11 +38,17 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		};
 	};
 
+	function rowNameEquals(row: unknown, name: string): boolean {
+		if (row === null) return false;
+		const n = (row as Record<string, unknown>).name;
+		return typeof n === "string" && n === name;
+	}
+
 	switch (action.type) {
 		case "ADD_ROW": {
 			const baseRow = baseRows.find((row) => {
 				if (!row || typeof row !== "function") return false;
-				return (row as { name: string }).name === action.oldRowId;
+				return rowNameEquals(row, action.oldRowId);
 			});
 			if (!baseRow) return state;
 
@@ -52,7 +60,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 
 			const page = flow.pages.find((p) => p.id === action.destinationPageId);
-			invariant(page, "PageReducer addRow: page is not defined");
+			if (!page) return state;
 
 			if (action.destinationContainer) {
 				const destinationRowId = action.destinationContainer.rowId;
@@ -72,7 +80,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 					"PageReducer addRow: stepsToDestinationContainer is not defined",
 				);
 
-				let path = page.rows[stepsToDestinationContainer[0] as number];
+				const firstStep = stepsToDestinationContainer[0];
+				invariant(typeof firstStep === "number", "expected number index");
+				let path = page.rows[firstStep];
 				if (stepsToDestinationContainer.length > 1) {
 					path = stepsToDestinationContainer
 						.slice(1)
@@ -350,7 +360,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const page = flow.pages.find((page) =>
 				page.rows.some((row) => row.id === action.rowId),
 			);
-			invariant(page, `Page not found for row ${action.rowId}`);
+			if (!page) return state;
 
 			return updateState({
 				activeRowId: action.rowId,

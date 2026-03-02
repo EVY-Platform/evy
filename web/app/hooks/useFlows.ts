@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { ServerFlow } from "../types";
+import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
 import { wsClient } from "../api/wsClient";
 
 type UseFlowsResult = {

@@ -4,6 +4,9 @@
 # Typescript
 dist/
 node_modules/
+
+# Generated shared types (ephemeral; generated on the fly in dev/test/CI/Docker)
+types/generated/
 traefik/
 letsencrypt/
 .env

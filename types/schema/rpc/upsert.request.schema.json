@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "upsert-request",
+	"title": "UpsertRequest",
+	"description": "JSON-RPC params for upsert method",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["namespace", "resource", "data"],
+	"properties": {
+		"namespace": { "type": "string", "enum": ["evy", "marketplace"] },
+		"resource": {
+			"type": "string",
+			"enum": [
+				"SDUI",
+				"Device",
+				"Organisation",
+				"Service",
+				"Provider",
+				"SellingReason",
+				"Conditions",
+				"Durations",
+				"Items"
+			]
+		},
+		"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" },
+		"data": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "../common/json.schema.json#/$defs/JSONValue"
+			}
+		}
+	}
+}

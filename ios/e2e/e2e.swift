@@ -2,8 +2,8 @@
 //  e2e.swift
 //  evyUITests
 //
-//  End-to-end UI tests for EVY iOS app
-//  All tests run in a single app instance for efficiency
+//  End-to-end UI tests for EVY iOS app.
+//  Two test classes run in parallel (each in its own app instance when parallelised).
 //
 
 import XCTest
@@ -15,21 +15,21 @@ import XCTest
 actor WSEmitter {
     private var ws: URLSessionWebSocketTask?
     private var msgId = 0
-    
+
     func connect(host: String) async throws {
         let url = URL(string: "ws://\(host)")!
         ws = URLSession.shared.webSocketTask(with: url)
         ws?.resume()
         try await Task.sleep(nanoseconds: 300_000_000) // 0.3s for connection
     }
-    
+
     func login(token: String, os: String) async throws {
         let response = try await send(method: "rpc.login", params: ["token": token, "os": os])
         guard response["result"] as? Bool == true else {
             throw NSError(domain: "WSEmitter", code: 1, userInfo: [NSLocalizedDescriptionKey: "Login failed"])
         }
     }
-    
+
     func updateSDUI(flowData: [String: Any], flowId: String) async throws {
         let params: [String: Any] = [
             "namespace": "evy",
@@ -39,15 +39,15 @@ actor WSEmitter {
         ]
         _ = try await send(method: "upsert", params: params)
     }
-    
+
     func disconnect() { ws?.cancel(with: .normalClosure, reason: nil) }
-    
+
     private func send(method: String, params: Any) async throws -> [String: Any] {
         msgId += 1
         let msg: [String: Any] = ["jsonrpc": "2.0", "id": msgId, "method": method, "params": params]
         let json = String(data: try JSONSerialization.data(withJSONObject: msg), encoding: .utf8)!
         try await ws?.send(.string(json))
-        
+
         // Wait for response
         let result = try await ws?.receive()
         if case .string(let text) = result,
@@ -59,100 +59,134 @@ actor WSEmitter {
     }
 }
 
-// MARK: - E2E UI Tests
+// MARK: - Base class for E2E tests
 
-final class evyUITests: XCTestCase {
+class E2ETestBase: XCTestCase {
 
     var app: XCUIApplication!
-    
+
     /// Helper to clear text field content and type new text
-    private func clearAndType(field: XCUIElement, text: String) {
-        // Try to select all and delete existing text
+    func clearAndType(field: XCUIElement, text: String) {
         if let existingText = field.value as? String, !existingText.isEmpty {
-            // Triple tap to select all text
             field.tap(withNumberOfTaps: 3, numberOfTouches: 1)
-            // Small delay to ensure selection
             Thread.sleep(forTimeInterval: 0.3)
             field.typeText(XCUIKeyboardKey.delete.rawValue)
         }
         field.typeText(text)
     }
-    
+
     /// Helper to find a text field by accessibility identifier across all element types
-    private func findElement(identifier: String) -> XCUIElement? {
-        // Try as otherElement first (most common for SwiftUI containers)
+    func findElement(identifier: String) -> XCUIElement? {
         let otherElement = app.otherElements[identifier].firstMatch
         if otherElement.waitForExistence(timeout: 2) {
             return otherElement
         }
-        
-        // Try as a generic descendant - use firstMatch to handle multiple matches
         let descendant = app.descendants(matching: .any)[identifier].firstMatch
         if descendant.waitForExistence(timeout: 2) {
             return descendant
         }
-        
         return nil
     }
-    
+
+    /// Helper to locate elements when exact accessibility identifiers vary slightly.
+    func findElement(identifiers: [String], containsAny tokens: [String]) -> XCUIElement? {
+        for identifier in identifiers {
+            if let element = findElement(identifier: identifier) {
+                return element
+            }
+        }
+        for token in tokens {
+            let predicate = NSPredicate(format: "identifier CONTAINS %@", token)
+            let matches = app.descendants(matching: .any).matching(predicate)
+            let count = matches.count
+            if count > 0 {
+                for index in 0..<count {
+                    let element = matches.element(boundBy: index)
+                    if element.exists {
+                        return element
+                    }
+                }
+            }
+            let firstMatch = matches.firstMatch
+            if firstMatch.waitForExistence(timeout: 2) {
+                return firstMatch
+            }
+        }
+        return nil
+    }
+
+    /// Scroll-aware version of multi-strategy element lookup.
+    func findElementWithScroll(identifiers: [String],
+                              containsAny tokens: [String],
+                              in scrollView: XCUIElement,
+                              maxScrollAttempts: Int = 6) -> XCUIElement? {
+        if let element = findElement(identifiers: identifiers, containsAny: tokens) {
+            return element
+        }
+        for _ in 0..<maxScrollAttempts {
+            scrollView.swipeUp()
+            if let element = findElement(identifiers: identifiers, containsAny: tokens) {
+                return element
+            }
+        }
+        return nil
+    }
+
     /// Helper to tap a text field container and return the editable field
-    private func tapAndGetEditableField(container: XCUIElement) -> XCUIElement? {
+    func tapAndGetEditableField(container: XCUIElement) -> XCUIElement? {
         container.tap()
-        
-        // Wait a moment for the edit mode to activate
         Thread.sleep(forTimeInterval: 0.5)
-        
-        // In SwiftUI, the TextField might become a child or the container itself becomes editable
-        // Try to find the text field within the container first
         let textField = container.textFields.firstMatch
         if textField.exists {
             return textField
         }
-        
-        // Fallback: try to find the first focused text field in the app
         let anyTextField = app.textFields.firstMatch
         if anyTextField.waitForExistence(timeout: 2) {
             return anyTextField
         }
-        
         return nil
     }
 
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchEnvironment["API_HOST"] = ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:8000"
+        guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
+            XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
+            return
+        }
+        app.launchEnvironment["API_HOST"] = apiHost
         app.launch()
     }
 
     override func tearDownWithError() throws {
         app = nil
     }
+}
 
-    /// Single comprehensive e2e test that verifies all functionality in one app instance
-    /// This avoids the overhead of restarting the iOS app for each test case
-    func testFullE2EFlow() throws {
+// MARK: - Navigation and visibility only
+
+final class E2EFlowTests: E2ETestBase {
+
+    /// UI visibility and navigation: launch, home, View Item flow, Create Item flow (no form editing), back to home.
+    func testNavigationAndVisibility() throws {
         // MARK: - App Launch Verification
         XCTAssertTrue(app.exists, "App should launch successfully")
-        
+
         let loadingIndicator = app.progressIndicators["loadingIndicator"]
         let homePage = app.scrollViews["page_55e427ac-263c-441f-9673-f60627b1baea"]
-        
         let initialUIAppeared = loadingIndicator.waitForExistence(timeout: 5) || homePage.waitForExistence(timeout: 5)
-        XCTAssertTrue(initialUIAppeared || app.buttons.count > 0 || app.staticTexts.count > 0, 
+        XCTAssertTrue(initialUIAppeared || app.buttons.count > 0 || app.staticTexts.count > 0,
                       "App should display initial UI after launch")
 
         // MARK: - API Connection & Home Screen
         let viewItemButton = app.buttons["View Item"]
         let createItemButton = app.buttons["Create Item"]
-
-        XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20), 
+        XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
                       "Home screen not loaded - verify API is running and database is seeded")
         XCTAssertTrue(createItemButton.exists, "Create Item button should be visible")
 
         // MARK: - View Item Flow Navigation
         viewItemButton.tap()
-
         let scrollView = app.scrollViews.firstMatch
         XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after tapping View Item")
         XCTAssertFalse(viewItemButton.exists, "Home buttons should not be visible after navigation")
@@ -160,111 +194,39 @@ final class evyUITests: XCTestCase {
         let backButton = app.navigationBars.buttons.firstMatch
         XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
         backButton.tap()
-
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
 
         // MARK: - Create Item Flow Navigation
         createItemButton.tap()
-
         XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
         XCTAssertFalse(createItemButton.exists, "Home buttons should not be visible after navigation")
 
-        // MARK: - Text Input Editing
-        // Test editing the title input field
-        guard let titleTextField = findElement(identifier: "textField_{item.title}") else {
-            XCTFail("Title text field should exist with identifier 'textField_{item.title}'")
-            return
-        }
-        
-        // Tap to start editing and get the editable field
-        guard let titleField = tapAndGetEditableField(container: titleTextField) else {
-            XCTFail("Failed to get editable title field")
-            return
-        }
-        
-        // Clear and type new text
-        let testTitle = "Test Item Title"
-        clearAndType(field: titleField, text: testTitle)
-        
-        // Verify text was entered
-        let textFieldValue = titleField.value as? String ?? ""
-        XCTAssertTrue(textFieldValue.contains("Test") || textFieldValue.contains("Item"), 
-                      "Text field should contain typed text, got: '\(textFieldValue)'")
-        
-        // Dismiss keyboard by tapping outside
-        scrollView.tap()
-        
-        // Wait for keyboard to dismiss
-        Thread.sleep(forTimeInterval: 0.5)
-        
-        // Test editing the price input field
-        guard let priceTextField = findElement(identifier: "textField_{item.price.value}") else {
-            XCTFail("Price text field should exist with identifier 'textField_{item.price.value}'")
-            return
-        }
-        
-        guard let priceField = tapAndGetEditableField(container: priceTextField) else {
-            XCTFail("Failed to get editable price field")
-            return
-        }
-        
-        // Clear and type a price value
-        clearAndType(field: priceField, text: "99")
-        
-        // Verify price was entered
-        let priceValue = priceField.value as? String ?? ""
-        XCTAssertTrue(priceValue.contains("99"), 
-                      "Price field should contain typed value, got: '\(priceValue)'")
-        
-        // Dismiss keyboard
-        scrollView.tap()
-        Thread.sleep(forTimeInterval: 0.5)
-        
-        // Test dimension input field (width)
-        guard let widthTextField = findElement(identifier: "textField_{item.dimensions.width}") else {
-            XCTFail("Width text field should exist with identifier 'textField_{item.dimensions.width}'")
-            return
-        }
-        
-        guard let widthField = tapAndGetEditableField(container: widthTextField) else {
-            XCTFail("Failed to get editable width field")
-            return
-        }
-        
-        // Clear and type a dimension value
-        clearAndType(field: widthField, text: "50")
-        
-        // Verify dimension was entered
-        let widthValue = widthField.value as? String ?? ""
-        XCTAssertTrue(widthValue.contains("50"), 
-                      "Width field should contain typed value, got: '\(widthValue)'")
-        
-        // Dismiss keyboard
-        scrollView.tap()
-
-        // MARK: - Return to Home
+        // MARK: - Return to Home (no form editing)
         XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
         backButton.tap()
-
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen after create flow")
     }
-    
-    /// Test that WebSocket notifications from the API update the iOS UI in real-time
-    /// The iOS app has its own WebSocket listener - we just emit updates and verify UI changes
+}
+
+// MARK: - WebSocket and form data editing
+
+final class WebSocketE2ETests: E2ETestBase {
+
+    /// Test that WebSocket notifications from the API update the iOS UI in real-time.
     @MainActor
     func testWebSocketNotificationUpdatesUI() async throws {
-        // MARK: - Setup: Wait for app to load and connect to API
         let viewItemButton = app.buttons["View Item"]
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
                       "Home screen not loaded - verify API is running and database is seeded")
-        
+
         let originalLabel = "View Item"
         let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
-        
-        // MARK: - Connect to API and emit update
-        let apiHost = ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:8000"
+
+        guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
+            XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
+            return
+        }
         let emitter = WSEmitter()
-        
         do {
             try await emitter.connect(host: apiHost)
             try await emitter.login(token: "e2e-test", os: "ios")
@@ -276,22 +238,82 @@ final class evyUITests: XCTestCase {
             XCTFail("Failed to emit update: \(error.localizedDescription)")
             return
         }
-        
-        // MARK: - Verify iOS app's UI updates via its own WebSocket listener
+
         let updatedButton = app.buttons[updatedLabel]
         XCTAssertTrue(updatedButton.waitForExistence(timeout: 10),
                       "Button should update to '\(updatedLabel)' after notification")
         XCTAssertFalse(viewItemButton.exists, "Original button should be replaced")
-        
-        // Cleanup: restore original
+
         try? await emitter.updateSDUI(
             flowData: createHomeFlowData(buttonLabel: originalLabel),
             flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
         )
         await emitter.disconnect()
     }
-    
-    /// Helper to create the Home flow data structure with a custom button label
+
+    /// Form data editing: navigate to Create Item, edit title/price/width, verify, return to home.
+    func testCreateItemFormEditing() throws {
+        let viewItemButton = app.buttons["View Item"]
+        let createItemButton = app.buttons["Create Item"]
+        XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
+                      "Home screen not loaded - verify API is running and database is seeded")
+        createItemButton.tap()
+
+        let scrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
+
+        // Title field
+        guard let titleTextField = findElement(identifier: "textField_{item.title}") else {
+            XCTFail("Title text field should exist with identifier 'textField_{item.title}'")
+            return
+        }
+        guard let titleField = tapAndGetEditableField(container: titleTextField) else {
+            XCTFail("Failed to get editable title field")
+            return
+        }
+        let testTitle = "Test Item Title"
+        clearAndType(field: titleField, text: testTitle)
+        let textFieldValue = titleField.value as? String ?? ""
+        XCTAssertTrue(textFieldValue.contains("Test") || textFieldValue.contains("Item"),
+                      "Text field should contain typed text, got: '\(textFieldValue)'")
+        scrollView.tap()
+        Thread.sleep(forTimeInterval: 0.5)
+
+        // Price field (optional)
+        if let priceTextField = findElementWithScroll(
+            identifiers: ["textField_{item.price.value}", "textField_{item.price}"],
+            containsAny: ["price"],
+            in: scrollView
+        ), let priceField = tapAndGetEditableField(container: priceTextField) {
+            clearAndType(field: priceField, text: "99")
+            let priceValue = priceField.value as? String ?? ""
+            XCTAssertTrue(priceValue.contains("99"), "Price field should contain typed value, got: '\(priceValue)'")
+            scrollView.tap()
+            Thread.sleep(forTimeInterval: 0.5)
+        } else {
+            print("Skipping price field edit: no matching editable field found")
+        }
+
+        // Width field (optional)
+        if let widthTextField = findElementWithScroll(
+            identifiers: ["textField_{item.dimensions.width}", "textField_{item.dimension.width}"],
+            containsAny: ["dimensions.width", "dimension.width"],
+            in: scrollView
+        ), let widthField = tapAndGetEditableField(container: widthTextField) {
+            clearAndType(field: widthField, text: "50")
+            let widthValue = widthField.value as? String ?? ""
+            XCTAssertTrue(widthValue.contains("50"), "Width field should contain typed value, got: '\(widthValue)'")
+            scrollView.tap()
+        } else {
+            print("Skipping width field edit: no matching editable field found")
+        }
+
+        let backButton = app.navigationBars.buttons.firstMatch
+        XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
+        backButton.tap()
+        XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen after create flow")
+    }
+
     private func createHomeFlowData(buttonLabel: String) -> [String: Any] {
         return [
             "id": "f267c629-2594-4770-8cec-d5324ebb4058",

@@ -1,10 +1,7 @@
 import React, { type ReactNode } from "react";
 
 import { AppContext } from "../state";
-import type { Row, RowConfig, ContainerType } from "../types";
-
-// Re-export types for backward compatibility
-export type { Row, RowConfig, RowView, ContainerType } from "../types";
+import type { Row, RowConfig, ContainerType } from "../types/row";
 
 export const containerDropindicatorId = "placeholder";
 

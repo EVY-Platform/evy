@@ -1,18 +1,18 @@
 import { createContext, type Dispatch } from "react";
 
+import type { Row } from "../types/row";
+import type { SDUI_Flow } from "../types/flow";
 import type {
-	Row,
-	Flow,
 	DraggingState,
 	DropIndicatorState,
 	RowAction,
 	DraggingAction,
 	DropIndicatorAction,
-} from "../types";
+} from "../types/actions";
 
 export const AppContext = createContext<{
 	rows: Row[];
-	flows: Flow[];
+	flows: SDUI_Flow[];
 	activeFlowId?: string;
 	activeRowId?: string;
 	dragging: DraggingState;

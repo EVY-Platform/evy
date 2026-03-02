@@ -17,7 +17,7 @@ const previewState: DraggableState = {
 	rect: null,
 };
 
-export type RowPrimitiveProps = {
+type RowPrimitiveProps = {
 	children: React.ReactNode;
 	state: DraggableState;
 	selectRow?: () => void;

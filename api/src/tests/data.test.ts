@@ -1,22 +1,29 @@
+import type { z } from "zod";
 import { describe, it, expect, beforeEach, beforeAll, mock } from "bun:test";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { PGlite } from "@electric-sql/pglite";
-import { z } from "zod";
 
-import * as schema from "../db/schema";
-import type { ValidatedFlowData, RowSchema, PageSchema } from "../validation";
+import type { DATA_Flow, DATA_Rows } from "evy-types/data/data";
+import type { SDUI_Flow } from "evy-types/sdui/evy";
+import * as schema from "evy-types/db/schema.generated";
+import {
+	type RowSchema,
+	type PageSchema,
+	validateFlowData,
+} from "../validation";
+
 /**
  * Types inferred from individual schemas for use in other parts of the app
  */
-export type ValidatedRow = z.infer<typeof RowSchema>;
-export type ValidatedPage = z.infer<typeof PageSchema>;
+type ValidatedRow = z.infer<typeof RowSchema>;
+type ValidatedPage = z.infer<typeof PageSchema>;
 
 /**
  * Input types where id is optional (for creating new entities)
  * These are useful for tests and client code that creates flows
  */
-export type RowInput = Omit<ValidatedRow, "id" | "view"> & {
+type RowInput = Omit<ValidatedRow, "id" | "view"> & {
 	id?: string;
 	view: Omit<ValidatedRow["view"], "content"> & {
 		content: Omit<ValidatedRow["view"]["content"], "children" | "child"> & {
@@ -26,13 +33,13 @@ export type RowInput = Omit<ValidatedRow, "id" | "view"> & {
 	};
 };
 
-export type PageInput = Omit<ValidatedPage, "id" | "rows" | "footer"> & {
+type PageInput = Omit<ValidatedPage, "id" | "rows" | "footer"> & {
 	id?: string;
 	rows: RowInput[];
 	footer?: RowInput;
 };
 
-export type FlowDataInput = Omit<ValidatedFlowData, "id" | "pages"> & {
+type FlowDataInput = Omit<SDUI_Flow, "id" | "pages"> & {
 	id?: string;
 	pages: PageInput[];
 };
@@ -49,6 +56,15 @@ mock.module("../db", () => ({
 
 // Import data functions after mocking
 const { validateAuth, get, upsert, primeData } = await import("../data");
+
+function isDATA_Flow(row: DATA_Rows): row is DATA_Flow {
+	return (
+		"data" in row &&
+		typeof row.data === "object" &&
+		row.data !== null &&
+		"name" in row.data
+	);
+}
 
 // Helper to clear all tables between tests
 async function clearTables() {
@@ -74,23 +90,19 @@ function ensureRowIds(rows: RowInput[]): RowInput[] {
 			},
 		};
 		if (row.view.content.children) {
-			rowWithId.view.content.children = ensureRowIds(
-				row.view.content.children,
-			);
+			rowWithId.view.content.children = ensureRowIds(row.view.content.children);
 		}
 		if (row.view.content.child) {
-			rowWithId.view.content.child = ensureRowIds([
-				row.view.content.child,
-			])[0];
+			rowWithId.view.content.child = ensureRowIds([row.view.content.child])[0];
 		}
 		return rowWithId;
 	});
 }
 
 // Helper to create test flow data with auto-generated UUIDs
-// Takes FlowDataInput (id optional) and returns ValidatedFlowData (id required)
-function createTestFlow(flowData: FlowDataInput): ValidatedFlowData {
-	return {
+// Takes FlowDataInput (id optional) and returns SDUI_Flow (id required)
+function createTestFlow(flowData: FlowDataInput): SDUI_Flow {
+	const built = {
 		...flowData,
 		id: flowData.id || crypto.randomUUID(),
 		pages: flowData.pages.map((page) => ({
@@ -99,7 +111,8 @@ function createTestFlow(flowData: FlowDataInput): ValidatedFlowData {
 			rows: ensureRowIds(page.rows),
 			footer: page.footer ? ensureRowIds([page.footer])[0] : undefined,
 		})),
-	} as ValidatedFlowData;
+	};
+	return validateFlowData(built);
 }
 
 // Run migrations before all tests
@@ -115,9 +128,7 @@ describe("validateAuth", () => {
 	});
 
 	it("should throw error when no token provided", async () => {
-		await expect(validateAuth("", "ios")).rejects.toThrow(
-			"No token provided",
-		);
+		await expect(validateAuth("", "ios")).rejects.toThrow("No token provided");
 	});
 
 	it("should throw error when no OS provided", async () => {
@@ -212,10 +223,10 @@ describe("get", () => {
 			},
 		]);
 
-		const result = (await get({
+		const result = await get({
 			namespace: "evy",
 			resource: "SDUI",
-		})) as ValidatedFlowData[];
+		});
 
 		expect(result).toHaveLength(2);
 		expect(result[0]).toHaveProperty("name");
@@ -237,22 +248,22 @@ describe("get", () => {
 			updatedAt: new Date(),
 		});
 
-		const result = (await get({
+		const result = await get({
 			namespace: "evy",
 			resource: "SDUI",
 			filter: { id: flowId },
-		})) as ValidatedFlowData[];
+		});
 
 		expect(result).toHaveLength(1);
 		expect(result[0].name).toBe("Single Flow");
 	});
 
 	it("should return empty array for SDUI when filter.id matches nothing", async () => {
-		const result = (await get({
+		const result = await get({
 			namespace: "evy",
 			resource: "SDUI",
 			filter: { id: crypto.randomUUID() },
-		})) as ValidatedFlowData[];
+		});
 
 		expect(result).toHaveLength(0);
 	});
@@ -264,19 +275,19 @@ describe("get", () => {
 			data: [{ id: "1", value: "New" }],
 		});
 
-		const result = (await get({
+		const result = await get({
 			namespace: "evy",
 			resource: "Conditions",
-		})) as unknown[];
+		});
 
 		expect(result).toEqual([{ id: "1", value: "New" }]);
 	});
 
 	it("should return empty object for non-SDUI resource when no data", async () => {
-		const result = (await get({
+		const result = await get({
 			namespace: "evy",
 			resource: "Items",
-		})) as Record<string, unknown>;
+		});
 
 		expect(result).toEqual({});
 	});
@@ -320,14 +331,17 @@ describe("upsert", () => {
 			],
 		});
 
-		const result = (await upsert({
+		const result = await upsert({
 			namespace: "evy",
 			resource: "SDUI",
 			data: flowData,
-		})) as { data: ValidatedFlowData };
+		});
 
-		expect(result.data.name).toBe("New Flow");
-		expect(result.data.type).toBe("create");
+		expect(isDATA_Flow(result)).toBe(true);
+		if (isDATA_Flow(result)) {
+			expect(result.data.name).toBe("New Flow");
+			expect(result.data.type).toBe("create");
+		}
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -372,15 +386,18 @@ describe("upsert", () => {
 			],
 		});
 
-		const result = (await upsert({
+		const result = await upsert({
 			namespace: "evy",
 			resource: "SDUI",
 			filter: { id: existingFlow.id },
 			data: updatedFlowData,
-		})) as { data: ValidatedFlowData };
+		});
 
-		expect(result.data.name).toBe("Updated Name");
-		expect(result.data.type).toBe("write");
+		expect(isDATA_Flow(result)).toBe(true);
+		if (isDATA_Flow(result)) {
+			expect(result.data.name).toBe("Updated Name");
+			expect(result.data.type).toBe("write");
+		}
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -406,16 +423,23 @@ describe("upsert", () => {
 			selling_reasons: [{ id: "1", value: "Moving" }],
 		};
 
-		const result = (await upsert({
+		const result = await upsert({
 			namespace: "evy",
 			resource: "Conditions",
 			data: payload,
-		})) as { data: Record<string, unknown> };
+		});
 
-		expect(result.data).toHaveProperty("evy");
-		expect((result.data.evy as Record<string, unknown>).Conditions).toEqual(
-			payload,
-		);
+		expect(!isDATA_Flow(result)).toBe(true);
+		if (!isDATA_Flow(result)) {
+			expect(result.data).toHaveProperty("evy");
+			const evy = result.data.evy;
+			expect(evy).not.toBeUndefined();
+			expect(typeof evy).toBe("object");
+			expect(evy).toHaveProperty("Conditions");
+			if (evy && "Conditions" in evy) {
+				expect(evy.Conditions).toEqual(payload);
+			}
+		}
 		const dataRecords = await testDb.select().from(schema.data);
 		expect(dataRecords).toHaveLength(1);
 	});
@@ -441,19 +465,22 @@ describe("upsert SDUI validation", () => {
 		).rejects.toThrow("Flow validation failed");
 	});
 
-	it("should reject flow with no pages", async () => {
-		await expect(
-			upsert({
-				namespace: "evy",
-				resource: "SDUI",
-				data: {
-					name: "Test Flow",
-					type: "read",
-					data: "item",
-					pages: [],
-				},
-			}),
-		).rejects.toThrow("Flow must have at least one page");
+	it("should accept flow with no pages", async () => {
+		const result = await upsert({
+			namespace: "evy",
+			resource: "SDUI",
+			data: {
+				id: crypto.randomUUID(),
+				name: "Test Flow",
+				type: "read",
+				data: "item",
+				pages: [],
+			},
+		});
+		expect(isDATA_Flow(result)).toBe(true);
+		if (isDATA_Flow(result)) {
+			expect(result.data.pages).toHaveLength(0);
+		}
 	});
 
 	it("should reject flow with invalid row type", async () => {
@@ -532,13 +559,16 @@ describe("upsert SDUI validation", () => {
 			],
 		});
 
-		const result = (await upsert({
+		const result = await upsert({
 			namespace: "evy",
 			resource: "SDUI",
 			data: flowData,
-		})) as { data: ValidatedFlowData };
-		expect(result.data.name).toBe("Test Flow");
-		expect(result.data.pages).toHaveLength(1);
+		});
+		expect(isDATA_Flow(result)).toBe(true);
+		if (isDATA_Flow(result)) {
+			expect(result.data.name).toBe("Test Flow");
+			expect(result.data.pages).toHaveLength(1);
+		}
 	});
 
 	it("should validate footer row", async () => {
@@ -561,12 +591,15 @@ describe("upsert SDUI validation", () => {
 			],
 		});
 
-		const result = (await upsert({
+		const result = await upsert({
 			namespace: "evy",
 			resource: "SDUI",
 			data: flowData,
-		})) as { data: ValidatedFlowData };
-		expect(result.data.pages[0]).toHaveProperty("footer");
+		});
+		expect(isDATA_Flow(result)).toBe(true);
+		if (isDATA_Flow(result)) {
+			expect(result.data.pages[0]).toHaveProperty("footer");
+		}
 	});
 });
 

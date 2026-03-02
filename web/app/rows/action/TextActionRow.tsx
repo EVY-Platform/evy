@@ -1,4 +1,5 @@
-import { EVYRow, type Row, type RowConfig } from "../EVYRow";
+import type { Row, RowConfig } from "../../types/row";
+import { EVYRow } from "../EVYRow";
 
 export default class TextActionRow extends EVYRow {
 	static override config: RowConfig = {

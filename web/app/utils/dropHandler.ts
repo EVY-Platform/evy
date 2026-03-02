@@ -9,12 +9,14 @@ import type {
 } from "@atlaskit/pragmatic-drag-and-drop/types";
 import invariant from "tiny-invariant";
 
-import type { Page, ContainerType, RowAction, DraggingAction } from "../types";
+import type { SDUI_Page } from "../types/flow";
+import type { ContainerType } from "../types/row";
+import type { RowAction, DraggingAction } from "../types/actions";
 import { EVYRow, containerDropindicatorId } from "../rows/EVYRow";
 
 export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
-	pages: Page[],
+	pages: SDUI_Page[],
 	dispatchRow: Dispatch<RowAction>,
 	dispatchDragging: Dispatch<DraggingAction>,
 ): void {
@@ -42,7 +44,12 @@ export function handleDrop(
 		"handleDrop: destinationPageRecord is not defined",
 	);
 
-	const destinationPageId = destinationPageRecord.data.pageId as string;
+	const rawDestinationPageId = destinationPageRecord.data.pageId;
+	invariant(
+		typeof rawDestinationPageId === "string",
+		"handleDrop: destination pageId is not a string",
+	);
+	const destinationPageId = rawDestinationPageId;
 	if (
 		sourcePageId === "rows" &&
 		(!destinationPageId || destinationPageId === "rows")
@@ -78,9 +85,10 @@ export function handleDrop(
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]
 	// Otherwise it is [page]
+	const firstDropTarget = location.current.dropTargets[0];
 	const destinationRow =
-		location.current.dropTargets.length > 1
-			? location.current.dropTargets[0]
+		location.current.dropTargets.length > 1 && !!firstDropTarget?.data.rowId
+			? firstDropTarget
 			: null;
 
 	const closestEdgeOfTarget: Edge | null = destinationRow
@@ -88,16 +96,25 @@ export function handleDrop(
 		: null;
 
 	if (destinationRow) {
-		const destinationRowId = destinationRow.data.rowId as string;
+		const destinationRowId = destinationRow.data.rowId;
+		invariant(
+			typeof destinationRowId === "string",
+			"handleDrop: destination rowId is not a string",
+		);
 		const destinationContainer =
 			destinationRowId === containerDropindicatorId
-				? EVYRow.findContainerById(
-						// Droptargets is an array returning the rows under the drop cursor,
-						// starting with the placeholder indicator and then the container
-						// we want that container
-						location.current.dropTargets[1].data.rowId as string,
-						destinationPage.rows,
-					)
+				? (() => {
+						const secondTargetRowId =
+							location.current.dropTargets[1]?.data.rowId;
+						invariant(
+							typeof secondTargetRowId === "string",
+							"handleDrop: dropTargets[1].rowId is not a string",
+						);
+						return EVYRow.findContainerById(
+							secondTargetRowId,
+							destinationPage.rows,
+						);
+					})()
 				: EVYRow.findContainerOfRow(destinationRowId, destinationPage.rows);
 
 		// Need to support dropping into nested containers...

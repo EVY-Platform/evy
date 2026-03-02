@@ -52,7 +52,7 @@ const getRowId = (data: Record<string, unknown>): string | undefined => {
 	return typeof rowId === "string" ? rowId : undefined;
 };
 
-export type UseDraggableOptions = {
+type UseDraggableOptions = {
 	rowId: string;
 	orientation?: "horizontal" | "vertical";
 	showIndicators?: boolean;
@@ -60,7 +60,7 @@ export type UseDraggableOptions = {
 	nextRowId?: string;
 };
 
-export type UseDraggableResult = {
+type UseDraggableResult = {
 	ref: React.RefObject<HTMLDivElement | null>;
 	state: DraggableState;
 	indicators: Array<"before" | "after"> | undefined;
@@ -111,7 +111,7 @@ export function useDraggable({
 		return [
 			["top", "left"].includes(edge) ? "before" : undefined,
 			["bottom", "right"].includes(edge) ? "after" : undefined,
-		].filter(Boolean) as Array<"before" | "after">;
+		].filter((x): x is "before" | "after" => x !== undefined);
 	}, [dropIndicator, dragging, rowId, showIndicators]);
 
 	const dropzones = useMemo(() => {
@@ -131,7 +131,7 @@ export function useDraggable({
 		return [
 			hideBefore ? undefined : "before",
 			hideAfter ? undefined : "after",
-		].filter(Boolean) as Array<"before" | "after">;
+		].filter((x): x is "before" | "after" => x !== undefined);
 	}, [dragging, dropIndicator, previousRowId, nextRowId, showIndicators]);
 
 	const onDragEvent = useCallback(

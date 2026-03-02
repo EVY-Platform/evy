@@ -2,6 +2,8 @@
 
 A React-based app builder built with Bun.
 
+Shared types (`SDUI_Flow`, `SDUI_Page`, `SDUI_Row`, RPC payloads) come from the schema-generated `evy-types` package (see `tsconfig.json` path alias to `../types/generated/ts`). After changing schemas in `types/schema/`, run `bun run types:generate` from the repo root and commit the updated generated files.
+
 ## Architecture
 
 ```mermaid
@@ -108,6 +110,8 @@ graph TB
 bun install
 ```
 
+Create a root `.env` file at the repository root (`../.env` from the `web` directory). The web scripts load environment variables from this shared root env file.
+
 ### Running the App
 
 #### Development Mode
@@ -122,7 +126,7 @@ This will build the application and start the dev server with hot reloading.
 
 ```bash
 bun run build
-bun run prod
+bun run start
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -137,6 +141,8 @@ docker run -p 3000:3000 evy-web
 ```
 
 #### Using Docker Compose
+
+From the repo root (the web app has no `docker-compose.yml` in its directory):
 
 ```bash
 docker compose up -d
@@ -169,4 +175,4 @@ bun run test --debug
 
 ## License
 
-Apache 2.0, see [LICENSE](LICENSE) for more details.
+The web app is licensed under Apache 2.0; see [LICENSE](LICENSE). The rest of the EVY repo is GPL-3.0-only.

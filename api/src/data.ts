@@ -1,9 +1,12 @@
 import { eq, desc } from "drizzle-orm";
-import type { PgTableWithColumns } from "drizzle-orm/pg-core";
 
-import { validateFlowData, type ValidatedFlowData } from "./validation";
+import type { DATA_Data, DATA_Flow, DATA_Rows, OS } from "evy-types/data/data";
+import type { GetDataResponse } from "evy-types/rpc/get.response";
+import type { GetRequest } from "evy-types/rpc/get.request";
+import type { SDUI_Flow } from "evy-types/sdui/evy";
+import type { UpsertRequest } from "evy-types/rpc/upsert.request";
+
 import {
-	db,
 	device,
 	service,
 	organization,
@@ -11,16 +14,26 @@ import {
 	flow,
 	data,
 	osEnum,
-	type Data,
-	type Flow,
-	type Service,
-	type Organization,
-	type ServiceProvider,
-	type OS,
-} from "./db";
+} from "evy-types/db/schema.generated";
+import { db } from "./db";
+import { validateFlowData } from "./validation";
 
-export const NAMESPACES = ["evy", "marketplace"] as const;
-export const RESOURCES = [
+const tables = {
+	Service: service,
+	Organization: organization,
+	ServiceProvider: serviceProvider,
+	Flow: flow,
+	Data: data,
+} as const;
+type TableName = keyof typeof tables;
+const modelNames = Object.keys(tables) as TableName[];
+const lastTableDataUpdates: Partial<Record<TableName, Date>> = {};
+
+type Namespace = GetRequest["namespace"];
+type Resource = GetRequest["resource"];
+
+const NAMESPACES = ["evy", "marketplace"] as readonly Namespace[];
+const RESOURCES = [
 	"SDUI",
 	"Device",
 	"Organisation",
@@ -30,56 +43,45 @@ export const RESOURCES = [
 	"Conditions",
 	"Durations",
 	"Items",
-] as const;
+] as readonly Resource[];
 
-export type Namespace = (typeof NAMESPACES)[number];
-export type Resource = (typeof RESOURCES)[number];
+function isNamespace(v: unknown): v is Namespace {
+	return typeof v === "string" && NAMESPACES.includes(v as Namespace);
+}
+function isNamespacedRecord(v: unknown): v is DATA_Data["data"] {
+	if (!isRecord(v)) return false;
+	for (const key of Object.keys(v)) {
+		if (!isRecord(v[key])) return false;
+	}
+	return true;
+}
+export function isResource(v: unknown): v is Resource {
+	return typeof v === "string" && RESOURCES.includes(v as Resource);
+}
+export function isRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
 
-export type GetUpsertFilter = { id?: string };
-export type GetUpsertParams = {
-	namespace: Namespace;
-	resource: Resource;
-	filter?: GetUpsertFilter;
-	data?: Record<string, unknown>;
-};
-
-function validateGetUpsertParams(
+function validateParams(
 	params: unknown,
-	requireData: boolean,
-): asserts params is GetUpsertParams {
+): asserts params is GetRequest | UpsertRequest {
 	if (params === null || typeof params !== "object") {
 		throw new Error("Params must be an object");
 	}
-	const p = params as Record<string, unknown>;
-	if (!p.namespace || !NAMESPACES.includes(p.namespace as Namespace)) {
+	if (!("namespace" in params) || !isNamespace(params.namespace)) {
 		throw new Error("Invalid or missing namespace");
 	}
-	if (!p.resource || !RESOURCES.includes(p.resource as Resource)) {
+	if (!("resource" in params) || !isResource(params.resource)) {
 		throw new Error("Invalid or missing resource");
 	}
-	if (p.filter !== undefined) {
-		if (typeof p.filter !== "object" || p.filter === null) {
-			throw new Error("filter must be an object");
-		}
-	}
-	if (requireData) {
-		if (p.data === undefined || typeof p.data !== "object" || p.data === null) {
-			throw new Error("data is required and must be a non-null object");
-		}
+	if (
+		"filter" in params &&
+		params.filter !== undefined &&
+		(typeof params.filter !== "object" || params.filter === null)
+	) {
+		throw new Error("filter must be an object");
 	}
 }
-
-const tables: Record<string, PgTableWithColumns<any>> = {
-	Service: service,
-	Organization: organization,
-	ServiceProvider: serviceProvider,
-	Flow: flow,
-	Data: data,
-};
-
-const lastTableDataUpdates: {
-	[key: string]: Date;
-} = {};
 
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	if (!token || token.length < 1) throw new Error("No token provided");
@@ -111,14 +113,9 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 }
 
 export async function primeData() {
-	const modelNames = Object.keys(tables).filter(
-		(model) => model !== "Device",
-	);
-
 	await Promise.all(
-		modelNames.map(async (model: string) => {
+		modelNames.map(async (model) => {
 			const table = tables[model];
-			if (!table) return;
 
 			const lastUpdate = await db
 				.select({ updatedAt: table.updatedAt })
@@ -132,32 +129,43 @@ export async function primeData() {
 	);
 }
 
-/** Merge all Data rows by updatedAt (later wins), return top-level namespace/resource structure */
 async function getMergedNamespacedData(): Promise<
-	Record<Namespace, Record<string, unknown>>
+	Record<Namespace, Partial<Record<Resource, GetDataResponse>>>
 > {
 	const dataRecords = await db
 		.select({ data: data.data })
 		.from(data)
 		.orderBy(desc(data.updatedAt));
-	const merged: Record<string, Record<string, unknown>> = {};
+	const merged: Partial<
+		Record<Namespace, Partial<Record<Resource, GetDataResponse>>>
+	> = {};
 	for (const record of dataRecords.reverse()) {
-		const d = record.data as Record<string, Record<string, unknown>>;
+		if (!isNamespacedRecord(record.data)) continue;
+		const d = record.data;
 		for (const ns of NAMESPACES) {
-			if (d[ns] && typeof d[ns] === "object") {
-				merged[ns] = merged[ns] || {};
+			if (d[ns]) {
+				merged[ns] = merged[ns] ?? {};
 				Object.assign(merged[ns], d[ns]);
 			}
 		}
 	}
-	return merged as Record<Namespace, Record<string, unknown>>;
+	return {
+		evy: merged.evy ?? {},
+		marketplace: merged.marketplace ?? {},
+	};
 }
 
 export async function get(
+	params: GetRequest & { resource: "SDUI" },
+): Promise<SDUI_Flow[]>;
+export async function get(
+	params: GetRequest,
+): Promise<SDUI_Flow[] | GetDataResponse>;
+export async function get(
 	params: unknown,
-): Promise<ValidatedFlowData[] | Record<string, unknown>> {
-	validateGetUpsertParams(params, false);
-	const { namespace, resource, filter } = params as GetUpsertParams;
+): Promise<SDUI_Flow[] | GetDataResponse> {
+	validateParams(params);
+	const { namespace, resource, filter } = params;
 
 	if (resource === "SDUI") {
 		if (filter?.id) {
@@ -178,31 +186,41 @@ export async function get(
 	const merged = await getMergedNamespacedData();
 	const nsData = merged[namespace] ?? {};
 	const value = nsData[resource];
-	return (typeof value === "object" && value !== null
-		? value
-		: {}) as Record<string, unknown>;
+	if (value !== null && value !== undefined) return value;
+	return {};
 }
 
-export async function upsert(
-	params: unknown,
-): Promise<Flow | Data | Record<string, unknown>> {
-	validateGetUpsertParams(params, true);
-	const { namespace, resource, filter, data: dataPayload } =
-		params as GetUpsertParams;
-	const dataObj = dataPayload!;
+export async function upsert(params: unknown): Promise<DATA_Rows> {
+	validateParams(params);
+	if (
+		!("data" in params) ||
+		params.data === undefined ||
+		typeof params.data !== "object" ||
+		params.data === null
+	) {
+		throw new Error("data is required and must be a non-null object");
+	}
+
+	const { namespace, resource, filter, data: dataPayload } = params;
+	const now = new Date();
 
 	if (resource === "SDUI") {
-		const validatedData = validateFlowData(dataObj);
+		const validatedData = validateFlowData(dataPayload);
 		const now = new Date();
-		const existingId = filter?.id;
 
-		if (existingId) {
+		if (filter?.id) {
 			const result = await db
 				.update(flow)
 				.set({ data: validatedData, updatedAt: now })
-				.where(eq(flow.id, existingId))
+				.where(eq(flow.id, filter.id))
 				.returning();
-			return result[0];
+
+			return {
+				id: result[0].id,
+				data: result[0].data,
+				createdAt: result[0].createdAt.toISOString(),
+				updatedAt: result[0].updatedAt.toISOString(),
+			};
 		}
 		const result = await db
 			.insert(flow)
@@ -212,15 +230,21 @@ export async function upsert(
 				updatedAt: now,
 			})
 			.returning();
-		return result[0];
+
+		return {
+			id: result[0].id,
+			data: result[0].data,
+			createdAt: result[0].createdAt.toISOString(),
+			updatedAt: result[0].updatedAt.toISOString(),
+		};
 	}
 
-	const now = new Date();
-	const rowPayload: Record<Namespace, Record<string, unknown>> = {
+	const rowPayload: DATA_Data["data"] = {
 		evy: {},
 		marketplace: {},
 	};
-	rowPayload[namespace][resource] = dataObj;
+	const nsData = rowPayload[namespace];
+	if (nsData) nsData[resource] = dataPayload;
 
 	const result = await db
 		.insert(data)
@@ -230,5 +254,11 @@ export async function upsert(
 			updatedAt: now,
 		})
 		.returning();
-	return result[0];
+
+	return {
+		id: result[0].id,
+		data: result[0].data,
+		createdAt: result[0].createdAt.toISOString(),
+		updatedAt: result[0].updatedAt.toISOString(),
+	};
 }

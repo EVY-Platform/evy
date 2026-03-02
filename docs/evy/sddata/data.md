@@ -1,48 +1,80 @@
 # Data models
 
-### Base model that all others inherit from:
+This page describes both the **API persistence schema** (defined in `types/schema/data/data.schema.json` and used by the API and Drizzle) and **domain/conceptual models** that are stored as JSON in namespaced data (e.g. `NamespacedData.evy`, `NamespacedData.marketplace`) and are not validated by JSON Schema.
+
+---
+
+## API persistence schema (DATA_*)
+
+These types are defined in `types/schema/data/data.schema.json`. The API and generated Drizzle schema use them.
+
+### Common timestamp fields
+
+Tables that track updates use:
+
+- `createdAt`: string (date-time)
+- `updatedAt`: string (date-time)
+
+(There is no `archived_timestamp` in the current schema.)
+
+### DATA_Device
+
+Primary key: `token`.
+
+```
+token: string (maxLength 256)
+os: "ios" | "android" | "Web"
+createdAt: string (date-time)
+```
+
+### DATA_Service
 
 ```
 id: uuid
-created_timestamp: timestamp
-updated_timestamp: timestamp
-archived_timestamp: timestamp
-```
-
-### device
-
-```
-os: os
-token: string
-```
-
-### organisation
-
-```
-name: string
+name: string (maxLength 50)
 description: string
-logo_id: uuid
-url: string
-support_email: string
+createdAt: string (date-time)
+updatedAt: string (date-time)
 ```
 
-### service
+### DATA_Organization
 
 ```
-name: string
+id: uuid
+name: string (maxLength 100)
 description: string
+logo: uuid
+url: string (maxLength 50)
+supportEmail: string (maxLength 50)
+createdAt: string (date-time)
+updatedAt: string (date-time)
 ```
 
-### service_provider
+### DATA_ServiceProvider
 
 ```
-service_id: uuid
-organisation_id: uuid
-name: string
+id: uuid
+fkServiceId: uuid
+fkOrganizationId: uuid
+name: string (maxLength 100)
 description: string
-logo_id: uuid
-url: string
+logo: uuid
+url: string (maxLength 50)
+createdAt: string (date-time)
+updatedAt: string (date-time)
+retired: boolean (default false)
 ```
+
+### DATA_Flow and DATA_Data
+
+- **DATA_Flow**: `id`, `data` (SDUI_Flow JSON), `createdAt`, `updatedAt`.
+- **DATA_Data**: `id`, `data` (NamespacedData: `evy` and `marketplace` namespaces), `createdAt`, `updatedAt`.
+
+---
+
+## Domain models (NamespacedData)
+
+The following shapes are used in app and service logic and stored as JSON under `NamespacedData.evy` or `NamespacedData.marketplace`. They are not defined in the JSON Schema; validation is application-level.
 
 ### location
 
@@ -51,14 +83,14 @@ latitude: decimal
 longitude: decimal
 ```
 
-#### price
+### price
 
 ```
 currency: string
 value: decimal
 ```
 
-#### address
+### address
 
 ```
 unit: string
@@ -71,14 +103,14 @@ location: location
 instructions: string
 ```
 
-#### area
+### area
 
 ```
 id: uuid
 value: string
 ```
 
-#### tag
+### tag
 
 ```
 value: string
@@ -86,11 +118,11 @@ value: string
 
 ### photo
 
-Base model with no extra props
+Base model with no extra props.
 
 ### logo
 
-Base model with no extra props
+Base model with no extra props.
 
 ### timeslot
 

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
+import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
 import type { Page } from "@playwright/test";
-import type { ServerFlow } from "../app/types";
 
 test.describe("Flow Selector", () => {
 	const threeFlows: ServerFlow[] = [
@@ -76,7 +76,7 @@ test.describe("Flow Selector", () => {
 
 	async function openWithFlows(page: Page, flows: ServerFlow[]) {
 		await page.addInitScript((flows: ServerFlow[]) => {
-			(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flows;
+			window.__TEST_FLOWS__ = flows;
 		}, flows);
 		await page.goto("/");
 	}

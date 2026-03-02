@@ -1,42 +1,20 @@
-import type { Row, RowConfig, RowView } from "./row";
+/**
+ * Flow and page types. All shapes come from evy-types (schema-generated).
+ * SDUI_Flow/SDUI_Page use UI Row (with ReactNode) on top of evy-types serial shapes.
+ */
+import type { Row } from "./row";
+import type {
+	SDUI_Flow as EvySDUI_Flow,
+	SDUI_Page as EvySDUI_Page,
+} from "evy-types/sdui/evy";
 
-export type Page = {
-	id: string;
-	title: string;
+/** Client page: same shape as evy-types SDUI_Page but rows/footer use UI Row */
+export type SDUI_Page = Omit<EvySDUI_Page, "rows" | "footer"> & {
 	rows: Row[];
 	footer?: Row;
 };
 
-export type Flow = {
-	id: string;
-	name: string;
-	type: "read" | "write";
-	data: string;
-	pages: Page[];
-};
-
-// Server types necessary to ingest the raw flows
-// since in client-side type we need to have the concrete
-// row instances
-export type ServerRowContent = {
-	title: string;
-	children?: ServerRow[];
-	child?: ServerRow;
-	[key: string]: string | string[] | ServerRow[] | ServerRow | undefined;
-};
-
-export type ServerRow = Omit<RowConfig, "view"> & {
-	id: string;
-	view: Omit<RowView, "content"> & {
-		content: ServerRowContent;
-	};
-};
-
-export type ServerPage = Omit<Page, "rows" | "footer"> & {
-	rows: ServerRow[];
-	footer?: ServerRow;
-};
-
-export type ServerFlow = Omit<Flow, "pages"> & {
-	pages: ServerPage[];
+/** Client flow: same shape as evy-types SDUI_Flow but pages use client SDUI_Page */
+export type SDUI_Flow = Omit<EvySDUI_Flow, "pages"> & {
+	pages: SDUI_Page[];
 };

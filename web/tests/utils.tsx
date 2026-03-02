@@ -1,11 +1,11 @@
 import type { Locator, Page } from "@playwright/test";
 import type {
-	ServerFlow,
-	ServerRow,
-	ServerRowContent,
-	RowEdit,
-	RowActionConfig,
-} from "../app/types";
+	SDUI_Flow as ServerFlow,
+	SDUI_Row as ServerRow,
+	SDUI_RowContent as ServerRowContent,
+	SDUI_RowEdit as RowEdit,
+	SDUI_RowAction as RowActionConfig,
+} from "evy-types/sdui/evy";
 
 // Input types where id is optional
 // Using explicit interface to avoid index signature conflicts with ServerRowContent
@@ -167,13 +167,13 @@ function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 }
 export async function initTestFlows(page: Page, pages: ServerPageInput[]) {
 	await page.addInitScript((flows: ServerFlow[]) => {
-		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flows;
+		window.__TEST_FLOWS__ = flows;
 	}, createTestFlows(pages));
 }
 
 export async function initFullFlows(page: Page, flows: ServerFlow[]) {
 	await page.addInitScript((flowData: ServerFlow[]) => {
-		(window as { __TEST_FLOWS__?: ServerFlow[] }).__TEST_FLOWS__ = flowData;
+		window.__TEST_FLOWS__ = flowData;
 	}, flows);
 }
 

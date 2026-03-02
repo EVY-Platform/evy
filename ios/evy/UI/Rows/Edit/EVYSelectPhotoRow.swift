@@ -5,68 +5,54 @@
 //  Created by Clemence Chalot on 18/02/2024.
 //
 
-
 import SwiftUI
 import PhotosUI
 
-struct EVYSelectPhotoRowView: Codable {
-    let content: ContentData
-    
-    struct ContentData: Codable {
-        let title: String
-        let icon: String
-        let subtitle: String
-        let content: String
-        let photos: String
-    }
-}
-
 struct EVYSelectPhotoRow: View, EVYRowProtocol {
-    public static let JSONType = "SelectPhoto"
-    
-    private let view: EVYSelectPhotoRowView
-    private let edit: SDUI.Edit
+	public static let JSONType = "SelectPhoto"
 
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(EVYSelectPhotoRowView.self, forKey:.view)
-        edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-    }
-	
+	private let view: SelectPhotoRowViewData
+	private let edit: SDUI_RowEdit?
+
+	init(view: SelectPhotoRowViewData, edit: SDUI_RowEdit?) {
+		self.view = view
+		self.edit = edit
+	}
+
 	func complete() -> Bool {
-		if !edit.validation.required {
-			return true
-		}
-		
-		if edit.validation.minAmount == nil {
-			return true
-		}
-		
-		return view.content.photos.count >= edit.validation.minAmount!
-	}
-	
-	func incompleteMessages() -> [String] {
-		edit.validation.message != nil ? [edit.validation.message!] : []
+		guard let validation = edit?.validation, validation.requiredBool else { return true }
+		guard let minAmount = validation.minAmountInt else { return true }
+		return view.content.photos.count >= minAmount
 	}
 
-    var body: some View {
-        if let selectPhoto = try? EVYSelectPhoto(title: view.content.title,
-                                                  subtitle: view.content.subtitle,
-                                                  icon: view.content.icon,
-                                                  content: view.content.content,
-                                                  data: view.content.photos,
-                                                  destination: edit.destination!) {
-            selectPhoto
-        } else {
-            Text("Failed to load photo selector")
-                .foregroundColor(.red)
-        }
-    }
+	func incompleteMessages() -> [String] {
+		guard let msg = edit?.validation?.message else { return [] }
+		return [msg]
+	}
+
+	var body: some View {
+		if let destination = edit?.destination,
+		   let selectPhoto = try? EVYSelectPhoto(
+		   	title: view.content.title,
+		   	subtitle: view.content.subtitle,
+		   	icon: view.content.icon,
+		   	content: view.content.content,
+		   	data: view.content.photos,
+		   	destination: destination
+		   )
+		{
+			selectPhoto
+		} else {
+			Text("Failed to load photo selector")
+				.foregroundColor(.red)
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","0","rows", "0"])
+		try! await EVY.getRow(["1", "pages", "0", "rows", "0"])
 	}
 }

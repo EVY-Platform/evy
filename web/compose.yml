@@ -10,6 +10,6 @@ services:
             - WEB_PORT=${WEB_PORT}
             - API_URL=${API_URL}
         env_file:
-            - .env
+            - ../.env
         ports:
             - ${WEB_PORT}:${WEB_PORT}

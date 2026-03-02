@@ -18,7 +18,7 @@ struct EVYSelectPhoto: View {
     let content: String
     let destination: String
     
-    private var options: EVYJsonArray = []
+    private var options: [EVYJson] = []
     
     @State private var selection: EVYJson?
     @State private var showSheet = false

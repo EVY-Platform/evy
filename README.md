@@ -1,6 +1,6 @@
 # EVY
 
-If smartphones and the internet were build by the people for the people. Create services on the EVY platform and get paid everytime your contribution is used. The EVY app is privacy-focused, local-first and peer-to-peer.
+If smartphones and the internet were built by the people for the people. Create services on the EVY platform and get paid every time your contribution is used. The EVY app is privacy-focused, local-first and peer-to-peer.
 
 - [docs](/docs/README.md)
 - [api](/api/README.md)
@@ -8,22 +8,47 @@ If smartphones and the internet were build by the people for the people. Create 
 - [iOS](/ios/README.md)
 - [Android](/android/README.md)
 
+## Shared types (schema-first)
+
+Cross-platform contracts live in **`types/`** at the repo root.
+
+- **Source of truth:** `types/schema/` — JSON Schema files for SDUI types and JSON-RPC payloads.
+- **Generated:** `types/generated/ts/` (TypeScript) and `types/generated/swift/` (Swift). These are committed; do not edit by hand.
+
+**Commands (from repo root):**
+
+- `bun run types:generate` — regenerate TS and Swift from schemas.
+
+After changing any schema (including `types/schema/data/`), run `bun run types:generate` and commit the updated files under `types/generated/`.
+
 ## Setup
 
 1. Install [Bun](https://bun.sh/)
 2. Install [Docker](https://www.docker.com/)
+3. Copy `.env.example` to `.env`
 
 ## Running Services
 
 ### Development (with Docker Compose)
 
-Run all services together (builds images locally):
+For example, run Postgres via Docker and run the API and web app locally:
 
 ```bash
-docker compose up --build
-cd api
+docker compose up --build postgres
 bun install
 bun run db:seed
+
+cd api
+bun install
+bun run dev
+```
+
+In another terminal, from the repo root:
+
+```bash
+cd web
+bun install
+bun run dev
 ```
 
 ### Production (with Docker Compose)
@@ -41,7 +66,6 @@ docker compose -f docker-compose.prod.yml up
 ```bash
 cd api
 bun install
-bun run db:seed
 bun run dev
 ```
 

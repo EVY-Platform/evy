@@ -75,7 +75,6 @@ test.describe("Web E2E Integration Tests", () => {
 		});
 		const rowsPanel = page.getByText("Rows", { exact: true });
 
-		// Wait for any of these states - proves the app loaded
 		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible();
 	});
 
@@ -115,11 +114,15 @@ test.describe("Web E2E Integration Tests", () => {
 
 	test("should attempt WebSocket connection to API", async ({ page }) => {
 		let wsConnected = false;
+		const apiPort = process.env.API_PORT;
+		if (!apiPort) {
+			throw new Error("API_PORT is not set");
+		}
 
 		page.on("websocket", (ws) => {
 			if (
-				ws.url().includes("localhost:8000") ||
-				ws.url().includes("127.0.0.1:8000")
+				ws.url().includes(`localhost:${apiPort}`) ||
+				ws.url().includes(`127.0.0.1:${apiPort}`)
 			) {
 				wsConnected = true;
 			}

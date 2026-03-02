@@ -1,0 +1,30 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "common/json",
+	"title": "CommonJSON",
+	"description": "Shared JSON scalar and value definitions for schema reuse",
+	"$defs": {
+		"JSONScalar": {
+			"anyOf": [
+				{ "type": "string" },
+				{ "type": "number" },
+				{ "type": "integer" },
+				{ "type": "boolean" },
+				{ "type": "null" }
+			]
+		},
+		"JSONValue": {
+			"anyOf": [
+				{ "$ref": "#/$defs/JSONScalar" },
+				{
+					"type": "array",
+					"items": { "$ref": "#/$defs/JSONScalar" }
+				},
+				{
+					"type": "object",
+					"additionalProperties": { "$ref": "#/$defs/JSONScalar" }
+				}
+			]
+		}
+	}
+}

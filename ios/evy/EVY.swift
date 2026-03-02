@@ -12,16 +12,12 @@ public enum EVYParamError: Error {
     case invalidProps
 }
 
-typealias EVYSDUI = [EVYFlow]
-
-
 extension String {
     var isNumber: Bool {
         let digitsCharacters = CharacterSet(charactersIn: "0123456789")
         return CharacterSet(charactersIn: self).isSubset(of: digitsCharacters)
     }
 }
-
 
 struct GetParams: Encodable {
 	let namespace: String
@@ -90,20 +86,19 @@ struct EVY {
 		return try JSONEncoder().encode(serviceData.parseProp(props: ["item"]))
 	}
 	
-	static func getSDUI() async throws -> EVYSDUI {
-		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SDUI", filter: nil), expecting: EVYSDUI.self)
+	static func getSDUI() async throws -> [SDUI_Flow] {
+		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SDUI", filter: nil), expecting: [SDUI_Flow].self)
 	}
 	
 	static func createItem() async throws {
 		try EVY.data.create(key: "item", data: try await getData())
 	}
 	
-	static func getRow(_ props: [String]) async throws -> EVYRow {
+	static func getRow(_ props: [String]) async throws -> SDUI_Row {
 		try await createItem()
-		
 		let flowData = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SDUI", filter: nil), expecting: EVYJson.self)
-		let row = try JSONEncoder().encode(flowData.parseProp(props: props))
-		return try JSONDecoder().decode(EVYRow.self, from: row)
+		let rowData = try JSONEncoder().encode(flowData.parseProp(props: props))
+		return try JSONDecoder().decode(SDUI_Row.self, from: rowData)
 	}
     
     /**

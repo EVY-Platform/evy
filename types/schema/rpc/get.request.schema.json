@@ -1,0 +1,27 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "get-request",
+	"title": "GetRequest",
+	"description": "JSON-RPC params for get method",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["namespace", "resource"],
+	"properties": {
+		"namespace": { "type": "string", "enum": ["evy", "marketplace"] },
+		"resource": {
+			"type": "string",
+			"enum": [
+				"SDUI",
+				"Device",
+				"Organisation",
+				"Service",
+				"Provider",
+				"SellingReason",
+				"Conditions",
+				"Durations",
+				"Items"
+			]
+		},
+		"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" }
+	}
+}

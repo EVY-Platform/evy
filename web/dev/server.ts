@@ -5,17 +5,16 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..");
 const DIST_DIR = join(PROJECT_ROOT, "dist");
-const webPort = process.env.WEB_PORT;
-if (!webPort) {
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const PORT = process.env.WEB_PORT;
+const API_URL = process.env.API_URL;
+
+if (!PORT) {
 	throw new Error("WEB_PORT environment variable is not set");
 }
-const apiUrl = process.env.API_URL;
-if (!apiUrl) {
+if (!API_URL) {
 	throw new Error("API_URL environment variable is not set");
 }
-const PORT = Number.parseInt(webPort, 10);
-const API_URL = apiUrl;
-const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 async function runSetup() {
 	const proc = Bun.spawn(["bun", "run", "setup"], {
@@ -28,26 +27,17 @@ async function runSetup() {
 }
 
 async function runBuild() {
-	const proc = Bun.spawn(
-		[
-			"bun",
-			"build",
-			"--target=browser",
-			"--outdir=dist",
-			"--entry-naming=[dir]/bundle.js",
-			`--define:__API_URL__='${API_URL}'`,
-			"app/main.tsx",
-		],
-		{
-			cwd: PROJECT_ROOT,
-			stdout: "pipe",
-			stderr: "pipe",
+	const result = await Bun.build({
+		entrypoints: [join(PROJECT_ROOT, "app/main.tsx")],
+		outdir: DIST_DIR,
+		target: "browser",
+		naming: "[dir]/bundle.js",
+		define: {
+			__API_URL__: JSON.stringify(API_URL),
 		},
-	);
-	const exitCode = await proc.exited;
-	if (exitCode !== 0) {
-		const stderr = await new Response(proc.stderr).text();
-		throw new Error(stderr);
+	});
+	if (!result.success) {
+		throw new Error(`Build failed: ${JSON.stringify(result.logs)}`);
 	}
 	return true;
 }

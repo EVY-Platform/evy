@@ -2,6 +2,8 @@
 
 RPC-websockets based API server using Bun and Drizzle ORM.
 
+Shared types for RPC params and SDUI models are generated from `types/schema/` at the repo root. The API imports them via the `evy-types` path alias (see `tsconfig.json`). The Drizzle schema is generated to `types/generated/ts/db/schema.generated.ts` from `types/schema/data/`; the API imports it via the `evy-types/db/schema.generated` path alias. After changing any schema, run `bun run types:generate` from the repo root and commit the updated `types/generated/` files.
+
 ## Prerequisites
 
 - [Bun](https://bun.sh/) installed on your system
@@ -9,7 +11,7 @@ RPC-websockets based API server using Bun and Drizzle ORM.
 
 ## Environment Variables
 
-Create a `.env` file with the following variables:
+Create a root `.env` file at the repository root (`../.env` from the `api` directory) with the following variables:
 
 ```env
 API_PORT=8000
@@ -19,8 +21,6 @@ DB_PORT=5432
 DB_DOMAIN=localhost
 DB_DATABASE=evy
 ```
-
-**Note:** Keep `localhost` in `.env` for local development. Docker compose files can override `DB_DOMAIN` to use Docker service names (for example `postgres`) or `host.docker.internal` when needed.
 
 ## Getting Started
 
@@ -36,7 +36,6 @@ Run migrations to set up the database schema:
 
 ```bash
 bun run db:migrate
-bun run db:seed
 ```
 
 ### Running the Server
@@ -74,19 +73,24 @@ docker run -p 8000:8000 \
 
 ### Using Docker Compose
 
+From the repo root (the API has no `docker-compose.yml` in its directory):
+
 ```bash
 docker compose up -d
 ```
 
-Note: Ensure your `.env` file contains `DB_USER`, `DB_PASS`, `DB_PORT`, `DB_DOMAIN`, and `DB_DATABASE` for the database connection.
+Note: Ensure the root `.env` file contains `DB_USER`, `DB_PASS`, `DB_PORT`, `DB_DOMAIN`, and `DB_DATABASE` for the database connection.
 
 ## Database Migrations (Drizzle)
 
 ### Workflow
 
-1. Make changes to `src/db/schema.ts`
-2. Generate a new migration: `bun run db:generate`
-3. Apply the migration: `bun run db:migrate`
+The database schema is generated from the repo-root type definitions. To change the schema:
+
+1. Edit `types/schema/data/` at the repo root (e.g. `data.schema.json`, `drizzle.config.json`).
+2. From the repo root, run `bun run types:generate` to regenerate the Drizzle schema and types.
+3. From the `api` directory, generate a new migration: `bun run db:generate`
+4. Apply the migration: `bun run db:migrate`
 
 ### Development
 

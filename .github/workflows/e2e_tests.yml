@@ -7,6 +7,7 @@ on:
             - "api/**"
             - "web/**"
             - "ios/**"
+            - "types/**"
             - "run-e2e.sh"
             - ".github/workflows/e2e_tests.yml"
     push:
@@ -15,6 +16,7 @@ on:
             - "api/**"
             - "web/**"
             - "ios/**"
+            - "types/**"
             - "run-e2e.sh"
             - ".github/workflows/e2e_tests.yml"
     workflow_dispatch:
@@ -25,7 +27,7 @@ on:
 
 jobs:
     e2e:
-        timeout-minutes: 5
+        timeout-minutes: 2
         runs-on: ubuntu-latest
 
         steps:
@@ -34,6 +36,10 @@ jobs:
 
             - name: Setup Bun
               uses: oven-sh/setup-bun@v2
+
+            - name: Install root dependencies
+              run: bun install
+              working-directory: .
 
             - name: Install API dependencies
               working-directory: api
@@ -53,11 +59,13 @@ jobs:
               working-directory: web
               run: bun run test:setup
 
-            - name: Create .env files from examples
+            - name: Create root .env from example
               run: |
                   cp .env.example .env
-                  cp api/.env.example api/.env
-                  cp web/.env.example web/.env
+
+            - name: Generate types
+              run: bun types:generate
+              working-directory: .
 
             - name: Run E2E tests
               run: bash run-e2e.sh --skip-ios

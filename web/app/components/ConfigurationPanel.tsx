@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo } from "react";
 
 import { AppContext } from "../state";
-import type { Row } from "../types";
+import type { Row } from "../types/row";
 import { EVYRow } from "../rows/EVYRow";
 
 export function ConfigurationPanel() {
@@ -40,7 +40,7 @@ export function ConfigurationPanel() {
 				const uniqueId = `${configRow.id}-${key}`;
 
 				if (key === "children") {
-					const children = content[key] as Row[] | undefined;
+					const children = content.children;
 					if (!children) return null;
 					return (
 						<div key={uniqueId} className="evy-flex evy-flex-col evy-gap-4">
@@ -61,7 +61,7 @@ export function ConfigurationPanel() {
 					);
 				}
 				if (key === "child") {
-					const child = content[key] as Row | undefined;
+					const child = content.child;
 					if (!child) return null;
 					return (
 						<div

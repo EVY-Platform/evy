@@ -7,21 +7,8 @@
 
 import SwiftUI
 
-public enum EVYFlowType: String, Codable {
-    case create
-    case read
-    case update
-    case delete
-}
-
-struct EVYFlow: Decodable, Encodable {
-    let id: String
-    let name: String
-    let type: EVYFlowType
-    let data: String
-    let pages: [EVYPage]
-    
-    func getPageById(_ id: String) -> EVYPage? {
-        pages.first { $0.id == id }
-    }
+extension SDUI_Flow {
+	func getPageById(_ id: String) -> SDUI_Page? {
+		pages.first { $0.id == id }
+	}
 }

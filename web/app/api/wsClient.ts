@@ -1,15 +1,43 @@
 import { Client } from "rpc-websockets";
-import type { ServerFlow } from "../types";
+import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
+import type { UpsertResponse } from "evy-types/rpc/upsert.response";
 import { config } from "../config";
 
-type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
+function isServerFlow(v: unknown): v is ServerFlow {
+	return (
+		v !== null &&
+		typeof v === "object" &&
+		"id" in v &&
+		"name" in v &&
+		"type" in v &&
+		"data" in v &&
+		"pages" in v
+	);
+}
 
-export type SDUIUpdateResponse = {
-	id: string;
-	data: ServerFlow;
-	createdAt: string;
-	updatedAt: string;
-};
+function isServerFlowArray(v: unknown): v is ServerFlow[] {
+	if (!Array.isArray(v)) return false;
+	return v.every(isServerFlow);
+}
+
+function isUpsertResponse(v: unknown): v is UpsertResponse {
+	return (
+		v !== null &&
+		typeof v === "object" &&
+		"id" in v &&
+		"data" in v &&
+		"createdAt" in v &&
+		"updatedAt" in v
+	);
+}
+
+function isFlowUpsertResponse(
+	v: unknown,
+): v is { id: string; data: ServerFlow; createdAt: string; updatedAt: string } {
+	return isUpsertResponse(v) && isServerFlow(v.data);
+}
+
+type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
 class WSClient {
 	private client: Client | null = null;
@@ -56,23 +84,30 @@ class WSClient {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		return (await this.client.call("get", {
+		const raw = await this.client.call("get", {
 			namespace: "evy",
 			resource: "SDUI",
-		})) as ServerFlow[];
+		});
+		if (!isServerFlowArray(raw)) {
+			throw new Error("Invalid get response: expected array of flows");
+		}
+		return raw;
 	}
 
 	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const result = (await this.client.call("upsert", {
+		const raw = await this.client.call("upsert", {
 			namespace: "evy",
 			resource: "SDUI",
 			filter: flowData.id ? { id: flowData.id } : undefined,
 			data: flowData,
-		})) as SDUIUpdateResponse;
-		return result.data;
+		});
+		if (!isFlowUpsertResponse(raw)) {
+			throw new Error("Invalid upsert response: expected flow");
+		}
+		return raw.data;
 	}
 
 	disconnect(): void {

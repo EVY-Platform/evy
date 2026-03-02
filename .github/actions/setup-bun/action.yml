@@ -8,6 +8,10 @@ inputs:
     path-filter:
         description: 'The path pattern to check for changes'
         required: true
+    path-filter-extra:
+        description: 'Optional second path pattern (e.g. types/**) to trigger the job'
+        required: false
+        default: ''
 
 outputs:
     has-changes:
@@ -24,6 +28,7 @@ runs:
               filters: |
                   changes:
                     - '${{ inputs.path-filter }}'
+                    ${{ inputs.path-filter-extra != '' && format('- ''{0}''', inputs.path-filter-extra) }}
 
         - name: Setup Bun
           if: steps.filter.outputs.changes == 'true'

@@ -6,7 +6,14 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"noEmit": true,
-		"types": ["bun-types"]
+		"types": ["bun-types"],
+		"baseUrl": ".",
+		"paths": {
+			"evy-types": ["../types/generated/ts", "./types/generated/ts"],
+			"evy-types/*": ["../types/generated/ts/*", "./types/generated/ts/*"],
+			"drizzle-orm": ["./node_modules/drizzle-orm"],
+			"drizzle-orm/*": ["./node_modules/drizzle-orm/*"]
+		}
 	},
 	"include": ["src/**/*", "scripts/seed.ts", "e2e/**/*"]
 }

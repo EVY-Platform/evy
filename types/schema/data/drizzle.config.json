@@ -1,0 +1,86 @@
+{
+	"enums": {
+		"OS": {
+			"name": "OS",
+			"values": ["ios", "android", "Web"]
+		}
+	},
+	"tables": {
+		"DATA_Device": {
+			"tableName": "Device",
+			"primaryKey": "token",
+			"defaultRandom": [],
+			"uniqueIndexes": [
+				{ "name": "Device_token_os_key", "columns": ["token", "os"] }
+			]
+		},
+		"DATA_Service": {
+			"tableName": "Service",
+			"primaryKey": "id",
+			"defaultRandom": [],
+			"uniqueIndexes": [
+				{ "name": "Service_name_key", "columns": ["name"] }
+			]
+		},
+		"DATA_Organization": {
+			"tableName": "Organization",
+			"primaryKey": "id",
+			"defaultRandom": [],
+			"uniqueIndexes": [
+				{ "name": "Organization_name_key", "columns": ["name"] }
+			]
+		},
+		"DATA_ServiceProvider": {
+			"tableName": "ServiceProvider",
+			"primaryKey": "id",
+			"defaultRandom": [],
+			"uniqueIndexes": [
+				{ "name": "ServiceProvider_name_key", "columns": ["name"] },
+				{
+					"name": "ServiceProvider_fk_service_id_fk_organization_id_key",
+					"columns": ["fkServiceId", "fkOrganizationId"]
+				}
+			]
+		},
+		"DATA_Flow": {
+			"tableName": "Flow",
+			"primaryKey": "id",
+			"defaultRandom": ["id"],
+			"uniqueIndexes": []
+		},
+		"DATA_Data": {
+			"tableName": "Data",
+			"primaryKey": "id",
+			"defaultRandom": ["id"],
+			"uniqueIndexes": []
+		}
+	},
+	"relations": [
+		{
+			"from": "DATA_ServiceProvider",
+			"to": "DATA_Service",
+			"fields": ["fkServiceId"],
+			"references": ["id"],
+			"relationName": "service"
+		},
+		{
+			"from": "DATA_ServiceProvider",
+			"to": "DATA_Organization",
+			"fields": ["fkOrganizationId"],
+			"references": ["id"],
+			"relationName": "organization"
+		},
+		{
+			"from": "DATA_Service",
+			"to": "DATA_ServiceProvider",
+			"oneToMany": true,
+			"relationName": "providers"
+		},
+		{
+			"from": "DATA_Organization",
+			"to": "DATA_ServiceProvider",
+			"oneToMany": true,
+			"relationName": "providers"
+		}
+	]
+}

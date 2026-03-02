@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { Client } from "rpc-websockets";
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+
+import { isRecord } from "../src/data";
 
 type WSClient = InstanceType<typeof Client>;
 
-import type { ServerFlow, ServerPage, ServerRow } from "../../web/app/types";
-import type { Data } from "../src/db/schema";
+import type { SDUI_Flow, SDUI_Page, SDUI_Row } from "evy-types/sdui/evy";
 
 const API_URL = process.env.API_URL;
 if (!API_URL) {
@@ -32,48 +33,50 @@ function waitForClient(ws: WSClient): Promise<void> {
 }
 
 describe("API E2E Tests", () => {
-	it("get should succeed without auth (public)", async () => {
-		const unauthClient = new Client(API_URL);
-		await waitForClient(unauthClient);
+	describe("Public", () => {
+		let unauthClient: WSClient;
 
-		const result = (await unauthClient.call("get", {
-			namespace: "evy",
-			resource: "SDUI",
-		})) as ServerFlow[];
-		expect(Array.isArray(result)).toBe(true);
-		unauthClient.close();
-	});
+		beforeAll(async () => {
+			unauthClient = new Client(API_URL);
+			await waitForClient(unauthClient);
+		});
 
-	it("upsert should reject without auth", async () => {
-		const unauthClient = new Client(API_URL);
-		await waitForClient(unauthClient);
+		afterAll(() => {
+			unauthClient.close();
+		});
 
-		try {
-			await unauthClient.call("upsert", {
+		it("get should succeed without auth (public)", async () => {
+			const result = await unauthClient.call("get", {
 				namespace: "evy",
 				resource: "SDUI",
-				data: {
-					id: crypto.randomUUID(),
-					name: "Test",
-					type: "read",
-					data: "item",
-					pages: [{ id: crypto.randomUUID(), title: "P", rows: [] }],
-				},
 			});
-			throw new Error(
-				"Expected upsert to fail for unauthenticated request",
-			);
-		} catch (error) {
-			if (
-				error instanceof Error &&
-				error.message.includes("Expected upsert to fail")
-			) {
-				throw error;
+			expect(Array.isArray(result)).toBe(true);
+		});
+
+		it("upsert should reject without auth", async () => {
+			try {
+				await unauthClient.call("upsert", {
+					namespace: "evy",
+					resource: "SDUI",
+					data: {
+						id: crypto.randomUUID(),
+						name: "Test",
+						type: "read",
+						data: "item",
+						pages: [{ id: crypto.randomUUID(), title: "P", rows: [] }],
+					},
+				});
+				throw new Error("Expected upsert to fail for unauthenticated request");
+			} catch (error) {
+				if (
+					error instanceof Error &&
+					error.message.includes("Expected upsert to fail")
+				) {
+					throw error;
+				}
+				expect(error).toBeDefined();
 			}
-			expect(error).toBeDefined();
-		} finally {
-			unauthClient.close();
-		}
+		});
 	});
 
 	describe("Authenticated", () => {
@@ -90,13 +93,13 @@ describe("API E2E Tests", () => {
 		});
 
 		it("get SDUI should return flows with valid structure", async () => {
-			const testPage: ServerPage = {
+			const testPage: SDUI_Page = {
 				id: crypto.randomUUID(),
 				title: "Test Page",
 				rows: [],
 			};
 
-			const flowData: ServerFlow = {
+			const flowData: SDUI_Flow = {
 				id: crypto.randomUUID(),
 				name: "SDUI Test Flow",
 				type: "read",
@@ -110,14 +113,12 @@ describe("API E2E Tests", () => {
 				data: flowData,
 			});
 
-			const result = (await client.call("get", {
+			const result = await client.call("get", {
 				namespace: "evy",
 				resource: "SDUI",
-			})) as ServerFlow[];
+			});
 
-			expect(result).toBeInstanceOf(Array);
 			expect(result.length).toBeGreaterThan(0);
-
 			const flow = result[0];
 			expect(flow).toHaveProperty("id");
 			expect(flow).toHaveProperty("name");
@@ -127,7 +128,7 @@ describe("API E2E Tests", () => {
 		});
 
 		it("upsert SDUI should create a new flow", async () => {
-			const testRow: ServerRow = {
+			const testRow: SDUI_Row = {
 				id: crypto.randomUUID(),
 				type: "Text",
 				view: {
@@ -138,13 +139,13 @@ describe("API E2E Tests", () => {
 				},
 			};
 
-			const testPage: ServerPage = {
+			const testPage: SDUI_Page = {
 				id: crypto.randomUUID(),
 				title: "Test Page",
 				rows: [testRow],
 			};
 
-			const flowData: ServerFlow = {
+			const flowData: SDUI_Flow = {
 				id: crypto.randomUUID(),
 				name: "E2E Test Flow",
 				type: "read",
@@ -152,16 +153,11 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			const result = (await client.call("upsert", {
+			const result = await client.call("upsert", {
 				namespace: "evy",
 				resource: "SDUI",
 				data: flowData,
-			})) as {
-				id: string;
-				data: ServerFlow;
-				createdAt: string;
-				updatedAt: string;
-			};
+			});
 
 			expect(result.id).toBeDefined();
 			expect(result.data).toBeDefined();
@@ -174,13 +170,13 @@ describe("API E2E Tests", () => {
 		it("upsert SDUI should update an existing flow", async () => {
 			const flowId = crypto.randomUUID();
 
-			const testPage: ServerPage = {
+			const testPage: SDUI_Page = {
 				id: crypto.randomUUID(),
 				title: "Original Page",
 				rows: [],
 			};
 
-			const createFlowData: ServerFlow = {
+			const createFlowData: SDUI_Flow = {
 				id: flowId,
 				name: "Flow to Update",
 				type: "write",
@@ -188,33 +184,33 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			const created = (await client.call("upsert", {
+			const created = await client.call("upsert", {
 				namespace: "evy",
 				resource: "SDUI",
 				data: createFlowData,
-			})) as { id: string; data: ServerFlow };
+			});
 
-			const updateFlowData: ServerFlow = {
+			const updateFlowData: SDUI_Flow = {
 				...createFlowData,
 				name: "Updated Flow Name",
 			};
 
-			const updated = (await client.call("upsert", {
+			const updated = await client.call("upsert", {
 				namespace: "evy",
 				resource: "SDUI",
 				filter: { id: created.id },
 				data: updateFlowData,
-			})) as { data: ServerFlow };
+			});
 
 			expect(updated.data.name).toBe("Updated Flow Name");
 		});
 
 		it("get non-SDUI resource should return data object", async () => {
-			const result = (await client.call("get", {
+			const result = await client.call("get", {
 				namespace: "evy",
 				resource: "Items",
-			})) as Record<string, unknown>;
-			expect(typeof result).toBe("object");
+			});
+			expect(result !== null && typeof result === "object").toBe(true);
 		});
 
 		it("upsert then get non-SDUI resource", async () => {
@@ -223,22 +219,26 @@ describe("API E2E Tests", () => {
 				nested: { value: 123 },
 			};
 
-			const upserted = (await client.call("upsert", {
+			const upserted = await client.call("upsert", {
 				namespace: "evy",
 				resource: "Items",
 				data: testData,
-			})) as Data;
+			});
 
 			expect(upserted).toHaveProperty("id");
 			expect(upserted).toHaveProperty("data");
+			expect(isRecord(upserted.data)).toBe(true);
 
-			const got = (await client.call("get", {
+			const got = await client.call("get", {
 				namespace: "evy",
 				resource: "Items",
-			})) as Record<string, unknown>;
+			});
 
+			expect(isRecord(got)).toBe(true);
 			expect(got.testField).toBe("e2e test value");
-			expect((got.nested as Record<string, unknown>).value).toBe(123);
+
+			expect(isRecord(got.nested)).toBe(true);
+			expect(got.nested.value).toBe(123);
 		});
 	});
 });

@@ -7,42 +7,39 @@
 
 import SwiftUI
 
-struct EVYPage: View, Codable {
-    let id: String
-    let title: String
-    let rows: [EVYRow]
-    let footer: EVYRow?
-	
+extension SDUI_Page {
 	func complete() -> Bool {
-		rows.allSatisfy { $0.complete() }
+		rows.allSatisfy { SDUI_Row.complete(row: $0) }
 	}
-	
 	func incompleteMessages() -> [String] {
 		rows
-			.filter { $0.view.complete() == false }
-			.map { $0.view.incompleteMessages() }
-			.flatMap(\.self)
+			.filter { !SDUI_Row.complete(row: $0) }
+			.flatMap { SDUI_Row.incompleteMessages(row: $0) }
 	}
+}
 
-    var body: some View {
-        ScrollView {
-            ForEach(rows) { row in
-                row
-                    .padding(.horizontal, Constants.majorPadding)
-                    .padding(.vertical, Constants.minorPadding)
-            }
-        }
-        .navigationTitle(title)
-        .accessibilityIdentifier("page_\(id)")
-        if let footer = footer {
-            footer
-                .overlay(alignment: .top, content: {
-                    Rectangle()
-                        .fill(Constants.borderColor)
-                        .frame(height: 1)
-                        .padding(.top, -Constants.minorPadding)
-                })
-                .accessibilityIdentifier("pageFooter_\(id)")
-        }
-    }
+extension SDUI_Page: View {
+	public var body: some View {
+		Group {
+			ScrollView {
+				ForEach(rows, id: \.id) { row in
+					EVYRow(row: row)
+						.padding(.horizontal, Constants.majorPadding)
+						.padding(.vertical, Constants.minorPadding)
+				}
+			}
+			.navigationTitle(title)
+			.accessibilityIdentifier("page_\(id)")
+			if let footer = footer {
+				EVYRow(row: footer)
+					.overlay(alignment: .top, content: {
+						Rectangle()
+							.fill(Constants.borderColor)
+							.frame(height: 1)
+							.padding(.top, -Constants.minorPadding)
+					})
+					.accessibilityIdentifier("pageFooter_\(id)")
+			}
+		}
+	}
 }
