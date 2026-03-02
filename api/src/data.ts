@@ -19,6 +19,17 @@ import { db } from "./db";
 import { isRecord } from "./utils";
 import { validateFlowData } from "./validation";
 
+const tables = {
+	Service: service,
+	Organization: organization,
+	ServiceProvider: serviceProvider,
+	Flow: flow,
+	Data: data,
+} as const;
+type TableName = keyof typeof tables;
+const modelNames = Object.keys(tables) as TableName[];
+const lastTableDataUpdates: Partial<Record<TableName, Date>> = {};
+
 export type Namespace = GetRequest["namespace"];
 export type Resource = GetRequest["resource"];
 
@@ -26,6 +37,7 @@ export const NAMESPACES = [
 	"evy",
 	"marketplace",
 ] as const satisfies readonly Namespace[];
+
 export const RESOURCES = [
 	"SDUI",
 	"Device",
@@ -79,17 +91,6 @@ function validateGetUpsertParams(
 	}
 }
 
-const tables = {
-	Service: service,
-	Organization: organization,
-	ServiceProvider: serviceProvider,
-	Flow: flow,
-	Data: data,
-} as const;
-type TableName = keyof typeof tables;
-
-const lastTableDataUpdates: Partial<Record<TableName, Date>> = {};
-
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	if (!token || token.length < 1) throw new Error("No token provided");
 	if (!os || os.length < 1) throw new Error("No os provided");
@@ -120,8 +121,6 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 }
 
 export async function primeData() {
-	const modelNames = Object.keys(tables) as TableName[];
-
 	await Promise.all(
 		modelNames.map(async (model) => {
 			const table = tables[model];
