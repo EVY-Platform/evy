@@ -114,12 +114,6 @@ async function generateTypeScript(
 
 			await mkdir(join(outPath, ".."), { recursive: true });
 
-			if (schemaKey === "common/json") {
-				const ts = `${`/* eslint-disable */\n/** Generated from ${relative(TYPES_ROOT, schemaPath)} - do not edit. */`}\n\nexport interface CommonJSON {\n  [k: string]: string | number | boolean | null;\n}\n`;
-				await writeFile(outPath, ts, "utf-8");
-				return;
-			}
-
 			let schemaForCompile = schema;
 			let title =
 				(schema.title as string | undefined) ??
