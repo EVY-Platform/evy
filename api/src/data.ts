@@ -33,11 +33,7 @@ const lastTableDataUpdates: Partial<Record<TableName, Date>> = {};
 export type Namespace = GetRequest["namespace"];
 export type Resource = GetRequest["resource"];
 
-export const NAMESPACES = [
-	"evy",
-	"marketplace",
-] as const satisfies readonly Namespace[];
-
+export const NAMESPACES = ["evy", "marketplace"] as readonly Namespace[];
 export const RESOURCES = [
 	"SDUI",
 	"Device",
@@ -48,7 +44,7 @@ export const RESOURCES = [
 	"Conditions",
 	"Durations",
 	"Items",
-] as const satisfies readonly Resource[];
+] as readonly Resource[];
 
 function isNamespace(v: unknown): v is Namespace {
 	return typeof v === "string" && NAMESPACES.includes(v as Namespace);
