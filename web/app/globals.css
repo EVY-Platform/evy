@@ -140,6 +140,10 @@ body {
 	padding-left: var(--spacing-2);
 	padding-right: var(--spacing-2);
 }
+.evy-px-4 {
+	padding-left: var(--spacing-4);
+	padding-right: var(--spacing-4);
+}
 .evy-px-8 {
 	padding-left: var(--spacing-8);
 	padding-right: var(--spacing-8);
@@ -304,6 +308,10 @@ body {
 	border-bottom-width: 1px;
 	border-bottom-style: solid;
 }
+.evy-border-t {
+	border-top-width: 1px;
+	border-top-style: solid;
+}
 .evy-border-gray {
 	border-color: var(--color-gray-border);
 }
@@ -321,6 +329,10 @@ body {
 .evy-rounded-24 {
 	border-top-left-radius: var(--radius-2-4);
 	border-top-right-radius: var(--radius-2-4);
+	border-bottom-left-radius: var(--radius-2-4);
+	border-bottom-right-radius: var(--radius-2-4);
+}
+.evy-rounded-bottom-24 {
 	border-bottom-left-radius: var(--radius-2-4);
 	border-bottom-right-radius: var(--radius-2-4);
 }

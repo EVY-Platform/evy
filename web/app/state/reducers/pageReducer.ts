@@ -191,10 +191,15 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				},
 			});
 
-			const newPages = flow.pages.map((page) => ({
-				...page,
-				rows: updateRowInTree(page.rows, action.rowId, updater),
-			}));
+			const newPages = flow.pages.map((page) => {
+				const updatedFooter =
+					page.footer?.id === action.rowId ? updater(page.footer) : page.footer;
+				return {
+					...page,
+					rows: updateRowInTree(page.rows, action.rowId, updater),
+					footer: updatedFooter,
+				};
+			});
 
 			return updateState({ updatedPages: newPages });
 		}
@@ -205,8 +210,10 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 		}
 		case "SET_ACTIVE_ROW": {
-			const page = flow.pages.find((page) =>
-				page.rows.some((row) => row.id === action.rowId),
+			const page = flow.pages.find(
+				(page) =>
+					page.rows.some((row) => row.id === action.rowId) ||
+					page.footer?.id === action.rowId,
 			);
 			if (!page) return state;
 

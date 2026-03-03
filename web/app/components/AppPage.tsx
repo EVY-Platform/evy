@@ -81,14 +81,39 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		));
 	}, [flows, activeFlowId, pageId, selectRow]);
 
+	const footer = flows
+		.find((f) => f.id === activeFlowId)
+		?.pages.find((p) => p.id === pageId)?.footer;
+
 	return (
 		<div className="evy-overflow-hidden evy-p-30px evy-h-full evy-w-full evy-box-sizing-border">
-			<div
-				className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4 evy-bg-white"
-				ref={scrollableRef}
-			>
-				{rowElements}
-			</div>
+			{footer ? (
+				<div className="evy-flex evy-flex-col evy-h-full evy-rounded-24 evy-bg-white">
+					<div
+						className="evy-overflow-scroll evy-flex-1 evy-pt-4"
+						ref={scrollableRef}
+					>
+						{rowElements}
+					</div>
+					{/* biome-ignore lint/a11y/useSemanticElements: footer row container needs div for layout consistency */}
+					<div
+						className="evy-border-t evy-border-gray-light evy-hover:bg-gray-light evy-cursor-pointer evy-rounded-bottom-24"
+						onClick={() => selectRow(footer.id)}
+						onKeyDown={(e) => e.key === "Enter" && selectRow(footer.id)}
+						role="button"
+						tabIndex={0}
+					>
+						{footer.row}
+					</div>
+				</div>
+			) : (
+				<div
+					className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4 evy-bg-white"
+					ref={scrollableRef}
+				>
+					{rowElements}
+				</div>
+			)}
 		</div>
 	);
 }
