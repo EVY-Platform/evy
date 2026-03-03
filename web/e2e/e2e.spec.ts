@@ -173,6 +173,20 @@ test.describe("Web E2E Integration Tests", () => {
 		}
 	});
 
+	test("should display footer row when page has one", async ({ page }) => {
+		await page.goto("/");
+
+		const rowsPanel = page.getByText("Rows", { exact: true });
+		await expect(rowsPanel).toBeVisible();
+
+		const flowSelector = page.locator("#flow-select");
+		await expect(flowSelector).toBeVisible();
+		await flowSelector.selectOption({ label: "View Item" });
+
+		const footerButton = page.getByText("Go home", { exact: true });
+		await expect(footerButton).toBeVisible();
+	});
+
 	test("should display main panels after successful connection", async ({
 		page,
 	}) => {

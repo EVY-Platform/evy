@@ -14,9 +14,11 @@ export function useRowById(rowId?: string): Row | undefined {
 		if (baseRow) return baseRow;
 
 		const pages = flows.find((f) => f.id === activeFlowId)?.pages ?? [];
-		return pages
-			.flatMap((page) => page.rows)
-			.flatMap(getRowsRecursive)
-			.find((r) => r.id === rowId);
+		const allRows = pages.flatMap((page) => {
+			const rows = page.rows.flatMap(getRowsRecursive);
+			if (page.footer) rows.push(...getRowsRecursive(page.footer));
+			return rows;
+		});
+		return allRows.find((r) => r.id === rowId);
 	}, [rows, flows, activeFlowId, rowId]);
 }
