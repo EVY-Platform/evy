@@ -1,12 +1,21 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
 import { useRowById } from "../hooks/useRowById";
 
 export function ConfigurationPanel() {
-	const { activeRowId, dispatchRow } = useContext(AppContext);
+	const { activeRowId, activePageId, flows, activeFlowId, dispatchRow } =
+		useContext(AppContext);
 	const row = useRowById(activeRowId);
+
+	const activePage = useMemo(
+		() =>
+			flows
+				.find((f) => f.id === activeFlowId)
+				?.pages.find((p) => p.id === activePageId),
+		[flows, activeFlowId, activePageId],
+	);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {
@@ -91,6 +100,27 @@ export function ConfigurationPanel() {
 				Configuration
 			</div>
 			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll">
+				{activePage && (
+					<>
+						<div className="evy-mb-2">
+							<label htmlFor="page-title">Page title</label>
+							<input
+								id="page-title"
+								type="text"
+								value={activePage.title}
+								onChange={(e) =>
+									dispatchRow({
+										type: "UPDATE_PAGE_TITLE",
+										pageId: activePage.id,
+										title: e.target.value,
+									})
+								}
+								className="evy-w-full evy-focus-visible:outline-none"
+							/>
+						</div>
+						<div className="evy-border-b evy-border-gray" />
+					</>
+				)}
 				{configurationElements.length > 0 ? (
 					configurationElements
 				) : (

@@ -34,7 +34,9 @@ test.describe("Row configuration", () => {
 			.locator("..");
 
 		// Verify Info row configuration inputs (title and text)
-		await expect(configPanel.getByLabel("title")).toBeVisible();
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toBeVisible();
 		await expect(configPanel.getByLabel("text")).toBeVisible();
 
 		// Test updating the Info row's configuration

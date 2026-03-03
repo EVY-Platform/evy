@@ -15,6 +15,7 @@ export const AppContext = createContext<{
 	flows: SDUI_Flow[];
 	activeFlowId?: string;
 	activeRowId?: string;
+	activePageId?: string;
 	dragging: DraggingState;
 	dropIndicator: DropIndicatorState;
 	dispatchRow: Dispatch<RowAction>;

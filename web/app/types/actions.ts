@@ -38,6 +38,11 @@ export type RowAction =
 			type: "SET_ACTIVE_ROW";
 			pageId: string;
 			rowId: string;
+	  }
+	| {
+			type: "UPDATE_PAGE_TITLE";
+			pageId: string;
+			title: string;
 	  };
 
 export type DraggingState = boolean;
@@ -77,4 +82,5 @@ export type AppState = {
 	flows: SDUI_Flow[];
 	activeRowId?: string;
 	activeFlowId?: string;
+	activePageId?: string;
 };

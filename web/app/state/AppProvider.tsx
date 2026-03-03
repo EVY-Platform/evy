@@ -71,6 +71,7 @@ export function AppProvider({
 				flows: appState.flows,
 				activeFlowId: appState.activeFlowId,
 				activeRowId: appState.activeRowId,
+				activePageId: appState.activePageId,
 				dragging,
 				dropIndicator,
 				dispatchRow,
