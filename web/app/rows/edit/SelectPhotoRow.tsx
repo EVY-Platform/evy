@@ -1,5 +1,6 @@
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
+import EVYText from "../design-system/EVYText";
 import { RowLayout } from "../design-system/RowLayout";
 
 export default defineRow("SelectPhotoRow", {
@@ -27,7 +28,13 @@ export default defineRow("SelectPhotoRow", {
 		<RowLayout title={row.config.view.content.title}>
 			<div className="evy-rounded-md evy-px-8 evy-py-8 evy-border evy-text-sm">
 				<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
-					<img className="evy-h-4" src="/add_photo.svg" alt="Upload" />
+					<EVYText
+						text={
+							typeof row.config.view.content.icon === "string"
+								? row.config.view.content.icon
+								: ""
+						}
+					/>
 					<p className="evy-text-sm">{row.config.view.content.content}</p>
 				</div>
 			</div>
