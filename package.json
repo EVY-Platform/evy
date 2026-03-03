@@ -3,8 +3,7 @@
 	"description": "EVY monorepo - api, web, ios, shared types",
 	"license": "GPL-3.0-only",
 	"scripts": {
-		"format": "bun run --cwd api format && bun run --cwd web format && bun run format:scripts",
-		"format:scripts": "bunx biome format --write scripts",
+		"format": "bun run --cwd api format && bun run --cwd web format && bunx biome format --write scripts",
 		"types:generate": "bun scripts/generate-types.ts && bun scripts/generate-drizzle.ts",
 		"db:seed": "bun scripts/seed.ts"
 	},

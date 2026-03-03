@@ -1,8 +1,12 @@
 import { eq, desc } from "drizzle-orm";
 
-import type { DATA_Data, DATA_Flow, DATA_Rows, OS } from "evy-types/data/data";
+import type { DATA_Data, DATA_Rows, OS } from "evy-types/data/data";
 import type { GetDataResponse } from "evy-types/rpc/get.response";
-import type { GetRequest } from "evy-types/rpc/get.request";
+import {
+	NAMESPACE_VALUES,
+	RESOURCE_VALUES,
+	type GetRequest,
+} from "evy-types/rpc/get.request";
 import type { SDUI_Flow } from "evy-types/sdui/evy";
 import type { UpsertRequest } from "evy-types/rpc/upsert.request";
 
@@ -32,21 +36,8 @@ const lastTableDataUpdates: Partial<Record<TableName, Date>> = {};
 type Namespace = GetRequest["namespace"];
 type Resource = GetRequest["resource"];
 
-const NAMESPACES = ["evy", "marketplace"] as readonly Namespace[];
-const RESOURCES = [
-	"SDUI",
-	"Device",
-	"Organisation",
-	"Service",
-	"Provider",
-	"SellingReason",
-	"Conditions",
-	"Durations",
-	"Items",
-] as readonly Resource[];
-
 function isNamespace(v: unknown): v is Namespace {
-	return typeof v === "string" && NAMESPACES.includes(v as Namespace);
+	return typeof v === "string" && NAMESPACE_VALUES.includes(v as Namespace);
 }
 function isNamespacedRecord(v: unknown): v is DATA_Data["data"] {
 	if (!isRecord(v)) return false;
@@ -56,10 +47,24 @@ function isNamespacedRecord(v: unknown): v is DATA_Data["data"] {
 	return true;
 }
 export function isResource(v: unknown): v is Resource {
-	return typeof v === "string" && RESOURCES.includes(v as Resource);
+	return typeof v === "string" && RESOURCE_VALUES.includes(v as Resource);
 }
 export function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function formatRow(row: {
+	id: string;
+	data: unknown;
+	createdAt: Date;
+	updatedAt: Date;
+}): DATA_Rows {
+	return {
+		id: row.id,
+		data: row.data,
+		createdAt: row.createdAt.toISOString(),
+		updatedAt: row.updatedAt.toISOString(),
+	} as DATA_Rows;
 }
 
 function validateParams(
@@ -142,7 +147,7 @@ async function getMergedNamespacedData(): Promise<
 	for (const record of dataRecords.reverse()) {
 		if (!isNamespacedRecord(record.data)) continue;
 		const d = record.data;
-		for (const ns of NAMESPACES) {
+		for (const ns of NAMESPACE_VALUES) {
 			if (d[ns]) {
 				merged[ns] = merged[ns] ?? {};
 				Object.assign(merged[ns], d[ns]);
@@ -206,7 +211,6 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 
 	if (resource === "SDUI") {
 		const validatedData = validateFlowData(dataPayload);
-		const now = new Date();
 
 		if (filter?.id) {
 			const result = await db
@@ -214,13 +218,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 				.set({ data: validatedData, updatedAt: now })
 				.where(eq(flow.id, filter.id))
 				.returning();
-
-			return {
-				id: result[0].id,
-				data: result[0].data,
-				createdAt: result[0].createdAt.toISOString(),
-				updatedAt: result[0].updatedAt.toISOString(),
-			};
+			return formatRow(result[0]);
 		}
 		const result = await db
 			.insert(flow)
@@ -230,13 +228,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 				updatedAt: now,
 			})
 			.returning();
-
-		return {
-			id: result[0].id,
-			data: result[0].data,
-			createdAt: result[0].createdAt.toISOString(),
-			updatedAt: result[0].updatedAt.toISOString(),
-		};
+		return formatRow(result[0]);
 	}
 
 	const rowPayload: DATA_Data["data"] = {
@@ -244,7 +236,9 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 		marketplace: {},
 	};
 	const nsData = rowPayload[namespace];
-	if (nsData) nsData[resource] = dataPayload;
+	if (nsData) {
+		(nsData as Record<Resource, GetDataResponse>)[resource] = dataPayload;
+	}
 
 	const result = await db
 		.insert(data)
@@ -254,11 +248,5 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 			updatedAt: now,
 		})
 		.returning();
-
-	return {
-		id: result[0].id,
-		data: result[0].data,
-		createdAt: result[0].createdAt.toISOString(),
-		updatedAt: result[0].updatedAt.toISOString(),
-	};
+	return formatRow(result[0]);
 }

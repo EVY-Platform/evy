@@ -162,6 +162,19 @@ async function generateTypeScript(
 					"utf-8",
 				);
 			}
+			if (schemaKey === "rpc/get.request") {
+				const props = schema.properties as Record<string, { enum?: string[] }>;
+				const namespaceValues = props?.namespace?.enum ?? [];
+				const resourceValues = props?.resource?.enum ?? [];
+				const namespaceLine = `export const NAMESPACE_VALUES = ${JSON.stringify(namespaceValues)} as const;`;
+				const resourceLine = `export const RESOURCE_VALUES = ${JSON.stringify(resourceValues)} as const;`;
+				const current = await readFile(outPath, "utf-8");
+				await writeFile(
+					outPath,
+					`${current.trimEnd()}\n\n${namespaceLine}\n${resourceLine}\n`,
+					"utf-8",
+				);
+			}
 		}),
 	);
 
@@ -174,6 +187,10 @@ async function generateTypeScript(
 			lines.unshift(`export * from "./${mod}";`);
 		} else if (mod.startsWith("data/") && mod.includes("data")) {
 			lines.unshift(`export * from "./${mod}";`);
+		} else if (mod === "rpc/get.request") {
+			lines.push(
+				`export { GetRequest, NAMESPACE_VALUES, RESOURCE_VALUES } from "./${mod}";`,
+			);
 		} else {
 			const name = title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
 			lines.push(`export { ${name} } from "./${mod}";`);

@@ -6,7 +6,7 @@ import { useRowById } from "../hooks/useRowById";
 
 export function ConfigurationPanel() {
 	const { activeRowId, dispatchRow } = useContext(AppContext);
-	const row = useRowById(activeRowId ?? "");
+	const row = useRowById(activeRowId);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {

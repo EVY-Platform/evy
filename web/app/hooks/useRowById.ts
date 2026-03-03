@@ -4,10 +4,12 @@ import { AppContext } from "../state";
 import type { Row } from "../types/row";
 import { getRowsRecursive } from "../utils/rowTree";
 
-export function useRowById(rowId: string): Row | undefined {
+export function useRowById(rowId?: string): Row | undefined {
 	const { rows, flows, activeFlowId } = useContext(AppContext);
 
 	return useMemo(() => {
+		if (!rowId) return undefined;
+
 		const baseRow = rows.find((r) => r.id === rowId);
 		if (baseRow) return baseRow;
 
