@@ -81,14 +81,21 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		));
 	}, [flows, activeFlowId, pageId, selectRow]);
 
-	const footer = flows
+	const page = flows
 		.find((f) => f.id === activeFlowId)
-		?.pages.find((p) => p.id === pageId)?.footer;
+		?.pages.find((p) => p.id === pageId);
+
+	const titleElement = page?.title ? (
+		<div className="evy-page-title">{page.title}</div>
+	) : null;
+
+	const footer = page?.footer;
 
 	return (
 		<div className="evy-overflow-hidden evy-p-30px evy-h-full evy-w-full evy-box-sizing-border">
 			{footer ? (
 				<div className="evy-flex evy-flex-col evy-h-full evy-rounded-24 evy-bg-white">
+					{titleElement}
 					<div
 						className="evy-overflow-scroll evy-flex-1 evy-pt-4"
 						ref={scrollableRef}
@@ -111,6 +118,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4 evy-bg-white"
 					ref={scrollableRef}
 				>
+					{titleElement}
 					{rowElements}
 				</div>
 			)}

@@ -19,10 +19,12 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		updatedPages,
 		activeFlowId,
 		activeRowId,
+		activePageId,
 	}: {
 		updatedPages?: SDUI_Page[];
 		activeFlowId?: string;
 		activeRowId?: string;
+		activePageId?: string;
 	}): AppState => {
 		return {
 			...state,
@@ -38,6 +40,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				: {}),
 			...(activeRowId && activeRowId !== state.activeRowId
 				? { activeRowId }
+				: {}),
+			...(activePageId && activePageId !== state.activePageId
+				? { activePageId }
 				: {}),
 		};
 	};
@@ -219,7 +224,14 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			return updateState({
 				activeRowId: action.rowId,
+				activePageId: action.pageId,
 			});
+		}
+		case "UPDATE_PAGE_TITLE": {
+			const newPages = flow.pages.map((page) =>
+				page.id === action.pageId ? { ...page, title: action.title } : page,
+			);
+			return updateState({ updatedPages: newPages });
 		}
 		default:
 			return state;

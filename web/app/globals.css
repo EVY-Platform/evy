@@ -442,6 +442,13 @@ label {
 	display: block;
 }
 
+.evy-page-title {
+	text-align: center;
+	font-weight: var(--font-semibold);
+	font-size: var(--text-xl);
+	padding: var(--spacing-2) var(--spacing-4);
+}
+
 .evy-v-dropzone {
 	transition: height 0.2s ease-in-out;
 	background-color: var(--color-evy-blue);
