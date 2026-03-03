@@ -55,7 +55,7 @@ mock.module("../db", () => ({
 }));
 
 // Import data functions after mocking
-const { validateAuth, get, upsert, primeData } = await import("../data");
+const { validateAuth, get, upsert } = await import("../data");
 
 function isDATA_Flow(row: DATA_Rows): row is DATA_Flow {
 	return (
@@ -119,7 +119,6 @@ function createTestFlow(flowData: FlowDataInput): SDUI_Flow {
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
 	await clearTables();
-	await primeData();
 });
 
 describe("validateAuth", () => {
@@ -600,38 +599,5 @@ describe("upsert SDUI validation", () => {
 		if (isDATA_Flow(result)) {
 			expect(result.data.pages[0]).toHaveProperty("footer");
 		}
-	});
-});
-
-describe("primeData", () => {
-	beforeEach(async () => {
-		await clearTables();
-	});
-
-	it("should initialize without errors when tables are empty", async () => {
-		await expect(primeData()).resolves.toBeUndefined();
-	});
-
-	it("should initialize with existing data", async () => {
-		const now = new Date();
-		await testDb.insert(schema.service).values({
-			id: crypto.randomUUID(),
-			name: "Service 1",
-			description: "Test",
-			createdAt: now,
-			updatedAt: now,
-		});
-		await testDb.insert(schema.flow).values({
-			data: createTestFlow({
-				name: "Flow 1",
-				type: "read",
-				data: "item",
-				pages: [{ title: "P1", rows: [] }],
-			}),
-			createdAt: now,
-			updatedAt: now,
-		});
-
-		await expect(primeData()).resolves.toBeUndefined();
 	});
 });

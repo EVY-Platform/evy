@@ -1,13 +1,6 @@
 import { initServer, emitJsonRpc, type WSParams } from "./ws";
 import type { GetRequest } from "evy-types/rpc/get.request";
-import {
-	get,
-	isRecord,
-	isResource,
-	primeData,
-	upsert,
-	validateAuth,
-} from "./data";
+import { get, isRecord, isResource, upsert, validateAuth } from "./data";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
@@ -19,8 +12,6 @@ function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
 
 async function main() {
 	const server = await initServer(authHandler);
-
-	primeData();
 
 	server.register("get", async (params: WSParams) => {
 		return get(params);

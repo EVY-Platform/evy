@@ -10,28 +10,9 @@ import {
 import type { SDUI_Flow } from "evy-types/sdui/evy";
 import type { UpsertRequest } from "evy-types/rpc/upsert.request";
 
-import {
-	device,
-	service,
-	organization,
-	serviceProvider,
-	flow,
-	data,
-	osEnum,
-} from "evy-types/db/schema.generated";
+import { device, flow, data, osEnum } from "evy-types/db/schema.generated";
 import { db } from "./db";
 import { validateFlowData } from "./validation";
-
-const tables = {
-	Service: service,
-	Organization: organization,
-	ServiceProvider: serviceProvider,
-	Flow: flow,
-	Data: data,
-} as const;
-type TableName = keyof typeof tables;
-const modelNames = Object.keys(tables) as TableName[];
-const lastTableDataUpdates: Partial<Record<TableName, Date>> = {};
 
 type Namespace = GetRequest["namespace"];
 type Resource = GetRequest["resource"];
@@ -115,23 +96,6 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	} catch {
 		return false;
 	}
-}
-
-export async function primeData() {
-	await Promise.all(
-		modelNames.map(async (model) => {
-			const table = tables[model];
-
-			const lastUpdate = await db
-				.select({ updatedAt: table.updatedAt })
-				.from(table)
-				.orderBy(desc(table.updatedAt))
-				.limit(1);
-
-			lastTableDataUpdates[model] =
-				lastUpdate.length > 0 ? lastUpdate[0].updatedAt : new Date(0);
-		}),
-	);
 }
 
 async function getMergedNamespacedData(): Promise<
