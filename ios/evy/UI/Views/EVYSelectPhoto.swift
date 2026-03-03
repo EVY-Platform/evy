@@ -35,18 +35,18 @@ struct EVYSelectPhoto: View {
          icon: String,
          content: String,
          data: String,
-         destination: String) throws
+         destination: String)
     {
         self.title = title
         self.icon = icon
-        self.title = title
         self.content = content
         self.subtitle = subtitle
         self.destination = destination
         
-        let props = try EVY.getValueFromText(data)
-        if let photosData = props.value.data(using: .utf8) {
-            let photoObjects = try JSONDecoder().decode([String].self, from: photosData)
+        if let props = try? EVY.getValueFromText(data),
+           let photosData = props.value.data(using: .utf8),
+           let photoObjects = try? JSONDecoder().decode([String].self, from: photosData)
+        {
             _photos = State(initialValue: photoObjects)
         }
     }
@@ -202,7 +202,7 @@ class ImageManager {
 	} view: {
 		try! await EVY.createItem()
 		
-		return try EVYSelectPhoto(title: "Photos Title",
+		return EVYSelectPhoto(title: "Photos Title",
 							  subtitle: "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
 							  icon: "::photo.badge.plus.fill::",
 							  content: "A great subtitle",
