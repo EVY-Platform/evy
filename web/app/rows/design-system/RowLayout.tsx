@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import EVYText from "./EVYText";
 
 export function RowLayout({
 	title,
@@ -11,7 +12,9 @@ export function RowLayout({
 }) {
 	return (
 		<div className="evy-p-2">
-			<p className={titleClassName}>{title}</p>
+			<p className={titleClassName}>
+				<EVYText text={title} />
+			</p>
 			{children}
 		</div>
 	);

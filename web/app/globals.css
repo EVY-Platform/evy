@@ -353,6 +353,12 @@ body {
 .evy-start-0 {
 	inset-inline-start: 0;
 }
+.evy-end-0 {
+	inset-inline-end: 0;
+}
+.evy-pe-2 {
+	padding-inline-end: var(--spacing-2);
+}
 
 /* Opacity utilities */
 .evy-opacity-60 {
@@ -440,6 +446,13 @@ label {
 	color: var(--color-black);
 	margin-bottom: var(--spacing-2);
 	display: block;
+}
+
+.evy-inline-icon {
+	display: inline;
+	height: 1em;
+	width: 1em;
+	vertical-align: -0.125em;
 }
 
 .evy-page-title {
