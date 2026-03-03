@@ -4,8 +4,12 @@ import invariant from "tiny-invariant";
 import type { AppState, RowAction } from "../../types/actions";
 import type { SDUI_Page } from "../../types/flow";
 import type { Row } from "../../types/row";
-import { EVYRow } from "../../rows/EVYRow";
 import { baseRows } from "../../rows/baseRows";
+import {
+	traverseToRowAndGetPath,
+	removeRowFromTree,
+	updateRowInTree,
+} from "../../utils/rowTree";
 
 export const pageReducer = (state: AppState, action: RowAction): AppState => {
 	const flow = state.flows.find((f) => f.id === state.activeFlowId);
@@ -69,7 +73,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 						if (row.id === destinationRowId) {
 							return [[index]];
 						}
-						const match = EVYRow.traverseToRowAndGetPath(row, destinationRowId);
+						const match = traverseToRowAndGetPath(row, destinationRowId);
 						if (match.length > 0) return [[index, ...match]];
 						return [];
 					})
@@ -123,8 +127,6 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const row = flow.pages
 				.find((page) => page.id === action.originPageId)
 				?.rows.find((r) => r.id === action.rowId);
-			// TODO: Handle moving containers and nested rows between pages
-			// with traverseToRowAndGetPath
 			invariant(row, "PageReducer moveRow: row is not defined");
 
 			const newPages = flow.pages.map((page) => {
@@ -161,72 +163,12 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 		}
 		case "REMOVE_ROW": {
-			const removeRowFromChildren = (row: Row, targetRowId: string): Row => {
-				if (row.config.view.content.children) {
-					const filteredChildren = row.config.view.content.children.filter(
-						(child) => child.id !== targetRowId,
-					);
-					const updatedChildren = filteredChildren.map((child) =>
-						removeRowFromChildren(child, targetRowId),
-					);
-					return {
-						...row,
-						config: {
-							...row.config,
-							view: {
-								...row.config.view,
-								content: {
-									...row.config.view.content,
-									children: updatedChildren,
-								},
-							},
-						},
-					};
-				}
-				if (row.config.view.content.child?.id === targetRowId) {
-					return {
-						...row,
-						config: {
-							...row.config,
-							view: {
-								...row.config.view,
-								content: {
-									...row.config.view.content,
-									child: undefined,
-								},
-							},
-						},
-					};
-				}
-				if (row.config.view.content.child) {
-					return {
-						...row,
-						config: {
-							...row.config,
-							view: {
-								...row.config.view,
-								content: {
-									...row.config.view.content,
-									child: removeRowFromChildren(
-										row.config.view.content.child,
-										targetRowId,
-									),
-								},
-							},
-						},
-					};
-				}
-				return row;
-			};
-
 			return updateState({
 				updatedPages: flow.pages.map((page) =>
 					page.id === action.pageId
 						? {
 								...page,
-								rows: page.rows
-									.filter((r) => r.id !== action.rowId)
-									.map((r) => removeRowFromChildren(r, action.rowId)),
+								rows: removeRowFromTree(page.rows, action.rowId),
 							}
 						: page,
 				),
@@ -234,120 +176,26 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "UPDATE_ROW": {
 			const splitValue = action.configValue.split(",");
-
-			const updateRowInChildren = (
-				row: Row,
-				targetRowId: string,
-				configId: string,
-				configValue: string,
-			): Row | null => {
-				if (row.id === targetRowId) {
-					return {
-						...row,
-						config: {
-							...row.config,
-							view: {
-								...row.config.view,
-								content: {
-									...row.config.view.content,
-									[configId]: splitValue.length > 1 ? splitValue : configValue,
-								},
-							},
+			const value = splitValue.length > 1 ? splitValue : action.configValue;
+			const updater = (row: Row): Row => ({
+				...row,
+				config: {
+					...row.config,
+					view: {
+						...row.config.view,
+						content: {
+							...row.config.view.content,
+							[action.configId]: value,
 						},
-					};
-				}
-
-				if (row.config.view.content.children) {
-					const updatedChildren = row.config.view.content.children.map(
-						(child) =>
-							updateRowInChildren(child, targetRowId, configId, configValue) ||
-							child,
-					);
-					const childUpdated = updatedChildren.some(
-						(child, index) =>
-							child !== row.config.view.content.children?.[index],
-					);
-					if (childUpdated) {
-						return {
-							...row,
-							config: {
-								...row.config,
-								view: {
-									...row.config.view,
-									content: {
-										...row.config.view.content,
-										children: updatedChildren,
-									},
-								},
-							},
-						};
-					}
-				}
-
-				if (row.config.view.content.child) {
-					const updatedChild = updateRowInChildren(
-						row.config.view.content.child,
-						targetRowId,
-						configId,
-						configValue,
-					);
-					if (updatedChild) {
-						return {
-							...row,
-							config: {
-								...row.config,
-								view: {
-									...row.config.view,
-									content: {
-										...row.config.view.content,
-										child: updatedChild,
-									},
-								},
-							},
-						};
-					}
-				}
-
-				return null;
-			};
-
-			const newPages = flow.pages.map((page) => {
-				const hasAtTopLevel = page.rows.some((r) => r.id === action.rowId);
-				if (hasAtTopLevel) {
-					const newRows = page.rows.map((row) => {
-						if (row.id === action.rowId) {
-							return {
-								...row,
-								config: {
-									...row.config,
-									view: {
-										...row.config.view,
-										content: {
-											...row.config.view.content,
-											[action.configId]:
-												splitValue.length > 1 ? splitValue : action.configValue,
-										},
-									},
-								},
-							};
-						}
-						return row;
-					});
-					return { ...page, rows: newRows };
-				}
-
-				// If not found as top-level, search recursively in children
-				const newRows = page.rows.map(
-					(row) =>
-						updateRowInChildren(
-							row,
-							action.rowId,
-							action.configId,
-							action.configValue,
-						) || row,
-				);
-				return { ...page, rows: newRows };
+					},
+				},
 			});
+
+			const newPages = flow.pages.map((page) => ({
+				...page,
+				rows: updateRowInTree(page.rows, action.rowId, updater),
+			}));
+
 			return updateState({ updatedPages: newPages });
 		}
 		case "SET_ACTIVE_FLOW": {

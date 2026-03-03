@@ -1,8 +1,9 @@
-import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
+import { RowLayout } from "../design-system/RowLayout";
 
-export default class CalendarRow extends EVYRow {
-	static override config: RowConfig = {
+export default defineRow("CalendarRow", {
+	config: {
 		type: "Calendar",
 		view: {
 			content: {
@@ -19,18 +20,14 @@ export default class CalendarRow extends EVYRow {
 				minAmount: "1",
 			},
 		},
-	};
-
-	renderContent(row: Row) {
-		return (
-			<div className="evy-p-2">
-				<p className="evy-text-md">{row.config.view.content.title}</p>
-				<img
-					src="/calendar.png"
-					alt="calendar"
-					className="evy-max-w-100 evy-block evy-pointer-events-none"
-				/>
-			</div>
-		);
-	}
-}
+	} satisfies RowConfig,
+	render: (row) => (
+		<RowLayout title={row.config.view.content.title}>
+			<img
+				src="/calendar.png"
+				alt="calendar"
+				className="evy-max-w-100 evy-block evy-pointer-events-none"
+			/>
+		</RowLayout>
+	),
+});

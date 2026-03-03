@@ -1,9 +1,10 @@
-import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
 import Checkbox from "../design-system/Checkbox";
+import { RowLayout } from "../design-system/RowLayout";
 
-export default class TextSelectRow extends EVYRow {
-	static override config: RowConfig = {
+export default defineRow("TextSelectRow", {
+	config: {
 		type: "TextSelect",
 		view: {
 			content: {
@@ -18,17 +19,13 @@ export default class TextSelectRow extends EVYRow {
 				message: "Please make a selection",
 			},
 		},
-	};
-
-	renderContent(row: Row) {
-		return (
-			<div className="evy-p-2">
-				<p className="evy-text-md">{row.config.view.content.title}</p>
-				<div className="evy-flex evy-justify-between">
-					<p className="evy-text-sm">{row.config.view.content.text}</p>
-					<Checkbox checked={false} />
-				</div>
+	} satisfies RowConfig,
+	render: (row) => (
+		<RowLayout title={row.config.view.content.title}>
+			<div className="evy-flex evy-justify-between">
+				<p className="evy-text-sm">{row.config.view.content.text}</p>
+				<Checkbox checked={false} />
 			</div>
-		);
-	}
-}
+		</RowLayout>
+	),
+});

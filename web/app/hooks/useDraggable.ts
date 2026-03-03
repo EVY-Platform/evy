@@ -24,7 +24,7 @@ import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/externa
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
 import { AppContext } from "../state";
-import { EVYRow } from "../rows/EVYRow";
+import { useRowById } from "./useRowById";
 
 const rowEdges: Edge[] = ["top", "bottom"];
 const columnEdges: Edge[] = ["left", "right"];
@@ -74,13 +74,8 @@ export function useDraggable({
 	previousRowId,
 	nextRowId,
 }: UseDraggableOptions): UseDraggableResult {
-	const {
-		flows,
-		activeFlowId,
-		dragging,
-		dropIndicator,
-		dispatchDropIndicator,
-	} = useContext(AppContext);
+	const { dragging, dropIndicator, dispatchDropIndicator } =
+		useContext(AppContext);
 
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<DraggableState>(idleState);
@@ -93,13 +88,7 @@ export function useDraggable({
 		return orientation === "horizontal" ? columnEdges : rowEdges;
 	}, [orientation]);
 
-	const currentRow = useMemo(() => {
-		return flows
-			.find((f) => f.id === activeFlowId)
-			?.pages.flatMap((page) => page.rows)
-			.flatMap(EVYRow.getRowsRecursive)
-			.find((r) => r.id === rowId);
-	}, [flows, activeFlowId, rowId]);
+	const currentRow = useRowById(rowId);
 
 	const indicators = useMemo(() => {
 		if (!dragging || !showIndicators) return;

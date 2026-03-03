@@ -1,8 +1,9 @@
-import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
+import { RowLayout } from "../design-system/RowLayout";
 
-export default class TextRow extends EVYRow {
-	static override config: RowConfig = {
+export default defineRow("TextRow", {
+	config: {
 		type: "Text",
 		view: {
 			content: {
@@ -11,14 +12,10 @@ export default class TextRow extends EVYRow {
 			},
 			max_lines: "",
 		},
-	};
-
-	renderContent(row: Row) {
-		return (
-			<div className="evy-p-2">
-				<p className="evy-text-md">{row.config.view.content.title}</p>
-				<p className="evy-text-sm">{row.config.view.content.text}</p>
-			</div>
-		);
-	}
-}
+	} satisfies RowConfig,
+	render: (row) => (
+		<RowLayout title={row.config.view.content.title}>
+			<p className="evy-text-sm">{row.config.view.content.text}</p>
+		</RowLayout>
+	),
+});

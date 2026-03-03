@@ -12,7 +12,8 @@ import invariant from "tiny-invariant";
 import type { SDUI_Page } from "../types/flow";
 import type { ContainerType } from "../types/row";
 import type { RowAction, DraggingAction } from "../types/actions";
-import { EVYRow, containerDropindicatorId } from "../rows/EVYRow";
+import { containerDropindicatorId } from "../rows/EVYRow";
+import { findContainerById, findContainerOfRow } from "../utils/rowTree";
 
 export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
@@ -110,12 +111,9 @@ export function handleDrop(
 							typeof secondTargetRowId === "string",
 							"handleDrop: dropTargets[1].rowId is not a string",
 						);
-						return EVYRow.findContainerById(
-							secondTargetRowId,
-							destinationPage.rows,
-						);
+						return findContainerById(secondTargetRowId, destinationPage.rows);
 					})()
-				: EVYRow.findContainerOfRow(destinationRowId, destinationPage.rows);
+				: findContainerOfRow(destinationRowId, destinationPage.rows);
 
 		// Need to support dropping into nested containers...
 		// right now the destinationContainer is 1 layer deep only,
