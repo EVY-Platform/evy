@@ -60,15 +60,10 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow],
 	);
 
-	const page = useMemo(
-		() =>
-			flows
-				.find((f) => f.id === activeFlowId)
-				?.pages.find((p) => p.id === pageId),
-		[flows, activeFlowId, pageId],
-	);
-
 	const rowElements = useMemo(() => {
+		const page = flows
+			.find((f) => f.id === activeFlowId)
+			?.pages.find((p) => p.id === pageId);
 		if (!page) return [];
 
 		const lastIndex = page.rows.length - 1;
@@ -84,32 +79,41 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				{row.row}
 			</DraggableRowContainer>
 		));
-	}, [page, selectRow]);
+	}, [flows, activeFlowId, pageId, selectRow]);
+
+	const footer = flows
+		.find((f) => f.id === activeFlowId)
+		?.pages.find((p) => p.id === pageId)?.footer;
 
 	return (
 		<div className="evy-overflow-hidden evy-p-30px evy-h-full evy-w-full evy-box-sizing-border">
-			<div className="evy-flex evy-flex-col evy-h-full evy-rounded-24 evy-bg-white">
+			{footer ? (
+				<div className="evy-flex evy-flex-col evy-h-full evy-rounded-24 evy-bg-white">
+					<div
+						className="evy-overflow-scroll evy-flex-1 evy-pt-4"
+						ref={scrollableRef}
+					>
+						{rowElements}
+					</div>
+					{/* biome-ignore lint/a11y/useSemanticElements: footer row container needs div for layout consistency */}
+					<div
+						className="evy-border-t evy-border-gray-light evy-hover:bg-gray-light evy-cursor-pointer evy-rounded-bottom-24"
+						onClick={() => selectRow(footer.id)}
+						onKeyDown={(e) => e.key === "Enter" && selectRow(footer.id)}
+						role="button"
+						tabIndex={0}
+					>
+						{footer.row}
+					</div>
+				</div>
+			) : (
 				<div
-					className="evy-overflow-scroll evy-flex-1 evy-pt-4"
+					className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4 evy-bg-white"
 					ref={scrollableRef}
 				>
 					{rowElements}
 				</div>
-				{page?.footer && (
-					/* biome-ignore lint/a11y/useSemanticElements: footer row container needs div for layout consistency */
-					<div
-						className="evy-border-t evy-border-gray-light evy-hover:bg-gray-light evy-cursor-pointer evy-rounded-bottom-24"
-						onClick={() => selectRow(page.footer?.id ?? "")}
-						onKeyDown={(e) =>
-							e.key === "Enter" && selectRow(page.footer?.id ?? "")
-						}
-						role="button"
-						tabIndex={0}
-					>
-						{page.footer.row}
-					</div>
-				)}
-			</div>
+			)}
 		</div>
 	);
 }
