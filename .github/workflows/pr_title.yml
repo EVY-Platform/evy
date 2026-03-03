@@ -1,0 +1,21 @@
+name: PR Title Validation
+
+on:
+    pull_request:
+        branches: [dev]
+        types: [opened, edited, synchronize, reopened]
+
+jobs:
+    validate-title:
+        timeout-minutes: 1
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check PR title format
+              run: |
+                  TITLE="${{ github.event.pull_request.title }}"
+                  if echo "$TITLE" | grep -qE '^\[(FEAT|BUG|REFACTOR)\] .+'; then
+                    echo "PR title is valid: $TITLE"
+                  else
+                    echo "PR title must match the format: [FEAT|BUG|REFACTOR] <description>"
+                    exit 1
+                  fi
