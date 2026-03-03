@@ -1,9 +1,10 @@
-import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
 import Button from "../design-system/Button";
+import { RowLayout } from "../design-system/RowLayout";
 
-export default class ButtonRow extends EVYRow {
-	static override config: RowConfig = {
+export default defineRow("ButtonRow", {
+	config: {
 		type: "Button",
 		view: {
 			content: {
@@ -14,22 +15,18 @@ export default class ButtonRow extends EVYRow {
 		action: {
 			target: "close",
 		},
-	};
-
-	renderContent(row: Row) {
-		return (
-			<div className="evy-p-2">
-				<p className="evy-text-md">{row.config.view.content.title}</p>
-				<div className="evy-p-2 evy-flex evy-justify-center">
-					<Button
-						label={
-							typeof row.config.view.content.label === "string"
-								? row.config.view.content.label
-								: ""
-						}
-					/>
-				</div>
+	} satisfies RowConfig,
+	render: (row) => (
+		<RowLayout title={row.config.view.content.title}>
+			<div className="evy-p-2 evy-flex evy-justify-center">
+				<Button
+					label={
+						typeof row.config.view.content.label === "string"
+							? row.config.view.content.label
+							: ""
+					}
+				/>
 			</div>
-		);
-	}
-}
+		</RowLayout>
+	),
+});

@@ -1,9 +1,10 @@
-import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
 import Dropdown from "../design-system/Dropdown";
+import { RowLayout } from "../design-system/RowLayout";
 
-export default class DropdownRow extends EVYRow {
-	static override config: RowConfig = {
+export default defineRow("DropdownRow", {
+	config: {
 		type: "Dropdown",
 		view: {
 			content: {
@@ -20,17 +21,13 @@ export default class DropdownRow extends EVYRow {
 				message: "Please select an option",
 			},
 		},
-	};
-
-	renderContent(row: Row) {
-		return (
-			<div className="evy-p-2">
-				<p className="evy-text-md">{row.config.view.content.title}</p>
-				<Dropdown
-					value={row.config.view.data ?? ""}
-					placeholder={row.config.view.content.placeholder ?? ""}
-				/>
-			</div>
-		);
-	}
-}
+	} satisfies RowConfig,
+	render: (row) => (
+		<RowLayout title={row.config.view.content.title}>
+			<Dropdown
+				value={row.config.view.data ?? ""}
+				placeholder={row.config.view.content.placeholder ?? ""}
+			/>
+		</RowLayout>
+	),
+});

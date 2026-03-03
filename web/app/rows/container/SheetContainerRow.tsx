@@ -1,10 +1,12 @@
-import { DraggableRowContainer } from "../../components/DraggableRowContainer";
-import { PlaceholderDropIndicator } from "../../components/PlaceholderDropIndicator";
-import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import type { RowConfig } from "../../types/row";
+import { ContainerChildren } from "../../components/ContainerChildren";
+import { defineRow } from "../defineRow";
+import { RowLayout } from "../design-system/RowLayout";
 
-export default class SheetContainerRow extends EVYRow {
-	static override config: RowConfig = {
+const typeName = "SheetContainerRow";
+
+export default defineRow(typeName, {
+	config: {
 		type: "SheetContainer",
 		view: {
 			content: {
@@ -13,25 +15,20 @@ export default class SheetContainerRow extends EVYRow {
 				children: [],
 			},
 		},
-	};
+	} satisfies RowConfig,
+	render: (row) => {
+		const child = row.config.view.content.child;
+		const rows = child ? [child] : undefined;
 
-	renderContent(row: Row) {
-		const childElement = row.config.view.content.child ? (
-			<DraggableRowContainer
-				key={row.config.view.content.child.id}
-				rowId={row.config.view.content.child.id}
-			>
-				{row.config.view.content.child.row}
-			</DraggableRowContainer>
-		) : // We don't want to show dropzone in rows panel
-		row.id !== this.constructor.name ? (
-			<PlaceholderDropIndicator key="placeholder" />
-		) : null;
 		return (
-			<div className="evy-p-2">
-				<p>{row.config.view.content.title}</p>
-				<div className="evy-flex evy-gap-2">{childElement}</div>
-			</div>
+			<RowLayout title={row.config.view.content.title}>
+				<div className="evy-flex evy-gap-2">
+					<ContainerChildren
+						rows={rows}
+						showPlaceholder={row.id !== typeName}
+					/>
+				</div>
+			</RowLayout>
 		);
-	}
-}
+	},
+});

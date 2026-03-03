@@ -1,10 +1,12 @@
-import { DraggableRowContainer } from "../../components/DraggableRowContainer";
-import { PlaceholderDropIndicator } from "../../components/PlaceholderDropIndicator";
-import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import type { RowConfig } from "../../types/row";
+import { ContainerChildren } from "../../components/ContainerChildren";
+import { defineRow } from "../defineRow";
+import { RowLayout } from "../design-system/RowLayout";
 
-export default class ColumnContainerRow extends EVYRow {
-	static override config: RowConfig = {
+const typeName = "ColumnContainerRow";
+
+export default defineRow(typeName, {
+	config: {
 		type: "ColumnContainer",
 		view: {
 			content: {
@@ -18,35 +20,17 @@ export default class ColumnContainerRow extends EVYRow {
 				required: "false",
 			},
 		},
-	};
-
-	renderContent(row: Row) {
-		const rows = row.config.view.content.children;
-		const lastIndex = rows && rows.length > 0 ? rows.length - 1 : 0;
-
-		const childrenElements = rows?.length ? (
-			rows.map((child, index) => (
-				<DraggableRowContainer
-					key={child.id}
-					rowId={child.id}
+	} satisfies RowConfig,
+	render: (row) => (
+		<RowLayout title={row.config.view.content.title}>
+			<div className="evy-flex">
+				<ContainerChildren
+					rows={row.config.view.content.children}
 					orientation="horizontal"
 					showIndicators
-					previousRowId={index > 0 ? rows[index - 1].id : undefined}
-					nextRowId={index < lastIndex ? rows[index + 1].id : undefined}
-				>
-					{child.row}
-				</DraggableRowContainer>
-			))
-		) : // We don't want to show dropzone in rows panel
-		row.id !== this.constructor.name ? (
-			<PlaceholderDropIndicator key="placeholder" />
-		) : null;
-
-		return (
-			<div className="evy-p-2">
-				<p>{row.config.view.content.title}</p>
-				<div className="evy-flex">{childrenElements}</div>
+					showPlaceholder={row.id !== typeName}
+				/>
 			</div>
-		);
-	}
-}
+		</RowLayout>
+	),
+});

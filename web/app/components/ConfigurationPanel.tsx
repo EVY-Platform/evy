@@ -1,12 +1,12 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
-import { EVYRow } from "../rows/EVYRow";
+import { useRowById } from "../hooks/useRowById";
 
 export function ConfigurationPanel() {
-	const { flows, activeFlowId, activeRowId, dispatchRow } =
-		useContext(AppContext);
+	const { activeRowId, dispatchRow } = useContext(AppContext);
+	const row = useRowById(activeRowId ?? "");
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {
@@ -20,16 +20,6 @@ export function ConfigurationPanel() {
 			});
 		},
 		[activeRowId, dispatchRow],
-	);
-
-	const row = useMemo(
-		() =>
-			flows
-				.find((f) => f.id === activeFlowId)
-				?.pages.flatMap((page) => page.rows)
-				.flatMap(EVYRow.getRowsRecursive)
-				.find((r) => r.id === activeRowId),
-		[flows, activeFlowId, activeRowId],
 	);
 
 	const renderConfiguration = useCallback(

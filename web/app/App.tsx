@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo } from "react";
+import { useContext, useEffect } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type {
@@ -13,15 +13,11 @@ import { RowsPanel } from "./components/RowsPanel";
 import { AppContext, AppProvider } from "./state";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
+import { useActiveFlow } from "./hooks/useActiveFlow";
 
 function AppContent() {
-	const { flows, activeFlowId, dispatchRow, dispatchDragging } =
-		useContext(AppContext);
-
-	const pages = useMemo(
-		() => flows.find((flow) => flow.id === activeFlowId)?.pages || [],
-		[flows, activeFlowId],
-	);
+	const { dispatchRow, dispatchDragging } = useContext(AppContext);
+	const { pages } = useActiveFlow();
 
 	useEffect(() => {
 		return monitorForElements({

@@ -1,9 +1,10 @@
-import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
 import Input from "../design-system/Input";
+import { RowLayout } from "../design-system/RowLayout";
 
-export default class InputListRow extends EVYRow {
-	static override config: RowConfig = {
+export default defineRow("InputListRow", {
+	config: {
 		type: "InputList",
 		view: {
 			content: {
@@ -13,17 +14,13 @@ export default class InputListRow extends EVYRow {
 			},
 			data: "",
 		},
-	};
-
-	renderContent(row: Row) {
-		return (
-			<div className="evy-p-2">
-				<p className="evy-text-md">{row.config.view.content.title}</p>
-				<Input
-					value={row.config.view.data ?? ""}
-					placeholder={row.config.view.content.placeholder ?? ""}
-				/>
-			</div>
-		);
-	}
-}
+	} satisfies RowConfig,
+	render: (row) => (
+		<RowLayout title={row.config.view.content.title}>
+			<Input
+				value={row.config.view.data ?? ""}
+				placeholder={row.config.view.content.placeholder ?? ""}
+			/>
+		</RowLayout>
+	),
+});

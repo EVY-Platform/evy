@@ -1,16 +1,15 @@
-import { DraggableRowContainer } from "../../components/DraggableRowContainer";
-import { PlaceholderDropIndicator } from "../../components/PlaceholderDropIndicator";
+import { useState } from "react";
+
 import type { Row, RowConfig } from "../../types/row";
-import { EVYRow } from "../EVYRow";
+import { ContainerChildren } from "../../components/ContainerChildren";
+import { defineRow } from "../defineRow";
+import { RowLayout } from "../design-system/RowLayout";
+import { useRowById } from "../../hooks/useRowById";
 
-interface SelectSegmentContainerState {
-	selectedTab: number;
-}
+const typeName = "SelectSegmentContainerRow";
 
-export default class SelectSegmentContainerRow extends EVYRow {
-	override state: SelectSegmentContainerState = { selectedTab: 0 };
-
-	static override config: RowConfig = {
+export default defineRow(typeName, {
+	config: {
 		type: "SelectSegmentContainer",
 		view: {
 			content: {
@@ -25,9 +24,19 @@ export default class SelectSegmentContainerRow extends EVYRow {
 				required: "false",
 			},
 		},
-	};
+	} satisfies RowConfig,
+	Component: function SelectSegmentContainerRowInner({
+		rowId,
+	}: {
+		rowId: string;
+	}) {
+		const row = useRowById(rowId);
+		const [selectedTab, setSelectedTab] = useState(0);
 
-	renderContent(row: Row) {
+		if (!row) {
+			return null;
+		}
+
 		const rawSegments = row.config.view.content.segments;
 		const segments: string[] =
 			Array.isArray(rawSegments) &&
@@ -36,46 +45,35 @@ export default class SelectSegmentContainerRow extends EVYRow {
 				: [];
 		const rawChildren = row.config.view.content.children;
 		const children: Row[] = Array.isArray(rawChildren) ? rawChildren : [];
-
-		const childrenElements = children.length ? (
-			<DraggableRowContainer
-				key={children[this.state.selectedTab].id}
-				rowId={children[this.state.selectedTab].id}
-			>
-				{children[this.state.selectedTab].row}
-			</DraggableRowContainer>
-		) : // We don't want to show dropzone in rows panel
-		row.id !== this.constructor.name ? (
-			<PlaceholderDropIndicator key="placeholder" />
-		) : null;
+		const selectedChild = children[selectedTab];
+		const rowsToShow =
+			selectedChild !== undefined ? [selectedChild] : undefined;
 
 		return (
-			<div className="evy-p-2">
-				<p>{row.config.view.content.title}</p>
+			<RowLayout title={row.config.view.content.title}>
 				<div className="evy-rounded-full evy-flex evy-mb-2">
 					{segments.map((segment, index) => (
 						<button
 							key={segment}
 							type="button"
-							onClick={() => this.setState({ selectedTab: index })}
+							onClick={() => setSelectedTab(index)}
 							className={`evy-flex-1 evy-border ${
 								index === 0 ? "evy-rounded-left-md evy-border-r-0" : ""
 							} ${
 								index === segments.length - 1
 									? "evy-rounded-right-md evy-border-l-0"
 									: ""
-							} ${
-								this.state.selectedTab === index
-									? "evy-bg-gray-light"
-									: "evy-bg-white"
-							}`}
+							} ${selectedTab === index ? "evy-bg-gray-light" : "evy-bg-white"}`}
 						>
 							{segment}
 						</button>
 					))}
 				</div>
-				{childrenElements}
-			</div>
+				<ContainerChildren
+					rows={rowsToShow}
+					showPlaceholder={row.id !== typeName}
+				/>
+			</RowLayout>
 		);
-	}
-}
+	},
+});
