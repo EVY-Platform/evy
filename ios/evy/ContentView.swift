@@ -60,7 +60,6 @@ struct ContentView: View {
 				   !routes.isEmpty,
 				   let currentPageId = routes.last?.pageId,
 				   let currentPage = currentFlow.pages.first(where: { $0.id == currentPageId }),
-				   currentFlow.type == .create,
 				   !currentPage.complete() {
 					alertMessage = currentPage.incompleteMessages().joined(separator: "\n")
 					showingAlert = true
