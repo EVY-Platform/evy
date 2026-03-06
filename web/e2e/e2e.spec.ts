@@ -33,7 +33,7 @@ test.describe("Web E2E Integration Tests", () => {
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
-		const titleInput = configPanel.getByLabel("title");
+		const titleInput = configPanel.getByLabel("title", { exact: true });
 		await expect(titleInput).toBeVisible();
 
 		// Edit the title field with our unique value

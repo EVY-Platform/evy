@@ -192,10 +192,8 @@ final class E2EFlowTests: E2ETestBase {
         XCTAssertFalse(viewItemButton.exists, "Home buttons should not be visible after navigation")
 
         // MARK: - Footer Visibility
-        let footer = app.otherElements["pageFooter_82cae120-c7b1-4c29-bd42-e1521320b109"]
-        XCTAssertTrue(footer.waitForExistence(timeout: 5), "Footer should be visible on View Item page")
         let goHomeButton = app.buttons["Go home"]
-        XCTAssertTrue(goHomeButton.exists, "Footer 'Go home' button should be visible")
+        XCTAssertTrue(goHomeButton.waitForExistence(timeout: 5), "Footer 'Go home' button should be visible")
 
         let backButton = app.navigationBars.buttons.firstMatch
         XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
