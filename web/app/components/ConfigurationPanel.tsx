@@ -1,8 +1,50 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
+import type { SDUI_Flow } from "../types/flow";
 import { useRowById } from "../hooks/useRowById";
+
+function resolveActionTarget(target: string, flows: SDUI_Flow[]): string {
+	if (!target.startsWith("navigate:")) return target;
+
+	const [prefix, flowId, pageId] = target.split(":");
+	if (!flowId || !pageId) return target;
+
+	const flow = flows.find((f) => f.id === flowId);
+	const flowName = flow?.name ?? flowId;
+	const pageTitle = flow?.pages.find((p) => p.id === pageId)?.title ?? pageId;
+
+	return `${prefix}:${flowName}:${pageTitle}`;
+}
+
+function ActionTargetInput({
+	value,
+	flows,
+	onChange,
+}: {
+	value: string;
+	flows: SDUI_Flow[];
+	onChange: (newValue: string) => void;
+}) {
+	const [isFocused, setIsFocused] = useState(false);
+	const displayValue = isFocused ? value : resolveActionTarget(value, flows);
+
+	return (
+		<div className="evy-mb-2">
+			<label htmlFor="action-target">target</label>
+			<input
+				id="action-target"
+				type="text"
+				value={displayValue}
+				onFocus={() => setIsFocused(true)}
+				onBlur={() => setIsFocused(false)}
+				onChange={(e) => onChange(e.target.value)}
+				className="evy-w-full evy-focus-visible:outline-none"
+			/>
+		</div>
+	);
+}
 
 export function ConfigurationPanel() {
 	const { activeRowId, activePageId, flows, activeFlowId, dispatchRow } =
@@ -127,23 +169,18 @@ export function ConfigurationPanel() {
 						<div className="evy-border-b evy-border-gray" />
 						<div>
 							<p className="evy-text-lg evy-font-semibold evy-mb-4">Action</p>
-							<div className="evy-mb-2">
-								<label htmlFor="action-target">target</label>
-								<input
-									id="action-target"
-									type="text"
-									value={row?.config.action?.target ?? ""}
-									onChange={(e) => {
-										if (!row) return;
-										dispatchRow({
-											type: "UPDATE_ROW_ACTION",
-											rowId: row.id,
-											target: e.target.value,
-										});
-									}}
-									className="evy-w-full evy-focus-visible:outline-none"
-								/>
-							</div>
+							<ActionTargetInput
+								value={row?.config.action?.target ?? ""}
+								flows={flows}
+								onChange={(newValue) => {
+									if (!row) return;
+									dispatchRow({
+										type: "UPDATE_ROW_ACTION",
+										rowId: row.id,
+										target: newValue,
+									});
+								}}
+							/>
 						</div>
 					</>
 				) : (

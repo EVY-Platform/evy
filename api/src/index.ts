@@ -14,11 +14,13 @@ async function main() {
 	const server = await initServer(authHandler);
 
 	server.register("get", async (params: WSParams) => {
+		console.log("get", params);
 		return get(params);
 	});
 
 	server
 		.register("upsert", async (params: WSParams) => {
+			console.log("upsert", params);
 			const result = await upsert(params);
 			if (!hasResource(params)) return result;
 			if (params.resource === "SDUI") {

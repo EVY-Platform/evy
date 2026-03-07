@@ -38,6 +38,52 @@
 		]
 	},
 	{
+		"id": "18e988ea-9131-4ee3-a692-77c8f3d36c58",
+		"name": "Test",
+		"type": "create",
+		"data": "item",
+		"pages": [
+			{
+				"id": "77cb970d-9845-442e-87ef-dfc3d27fcdcd",
+				"title": "Test Item",
+				"rows": [
+					{
+						"id": "9c8da929-4645-4088-b658-f669157b09fd",
+						"type": "Input",
+						"view": {
+							"content": {
+								"title": "test title",
+								"value": "test value",
+								"placeholder": "test placeholder"
+							}
+						},
+						"edit": {
+							"validation": {
+								"message": "test input",
+								"required": "true"
+							},
+							"destination": "{item.title}"
+						}
+					}
+				],
+				"footer": {
+					"id": "422aaaad-8d8d-4f9d-84f2-43f10fc90a2c",
+					"type": "Button",
+					"view": {
+						"content": {
+							"title": "",
+							"label": "Submit"
+						}
+					},
+					"edit": {},
+					"action": {
+						"target": "submit:item"
+					}
+				}
+			}
+		]
+	},
+	{
 		"id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
 		"name": "Create item",
 		"type": "create",
