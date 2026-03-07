@@ -122,7 +122,30 @@ export function ConfigurationPanel() {
 					</>
 				)}
 				{configurationElements.length > 0 ? (
-					configurationElements
+					<>
+						{configurationElements}
+						<div className="evy-border-b evy-border-gray" />
+						<div>
+							<p className="evy-text-lg evy-font-semibold evy-mb-4">Action</p>
+							<div className="evy-mb-2">
+								<label htmlFor="action-target">target</label>
+								<input
+									id="action-target"
+									type="text"
+									value={row?.config.action?.target ?? ""}
+									onChange={(e) => {
+										if (!row) return;
+										dispatchRow({
+											type: "UPDATE_ROW_ACTION",
+											rowId: row.id,
+											target: e.target.value,
+										});
+									}}
+									className="evy-w-full evy-focus-visible:outline-none"
+								/>
+							</div>
+						</div>
+					</>
 				) : (
 					<div className="evy-text-sm evy-text-gray evy-text-center evy-mt-8">
 						Select a row to configure

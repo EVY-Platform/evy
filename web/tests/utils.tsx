@@ -16,6 +16,7 @@ interface ServerRowInputContent {
 	value?: string;
 	placeholder?: string;
 	text?: string;
+	label?: string;
 	segments?: string[];
 }
 
@@ -120,6 +121,9 @@ function ensureRowId(row: ServerRowInput): ServerRow {
 	}
 	if (inputContent.text !== undefined) {
 		content.text = inputContent.text;
+	}
+	if (inputContent.label !== undefined) {
+		content.label = inputContent.label;
 	}
 	if (inputContent.segments !== undefined) {
 		content.segments = inputContent.segments;
