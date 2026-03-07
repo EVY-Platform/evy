@@ -45,7 +45,7 @@ They are needed in order to submit all fields of all pages of a flow at the end 
     // This is not used on the client apps, only server-side
     "service",
 
-    // The type of flow: "read" | "write" | "create" | "update" | "delete"
+    // The type of flow: "create" | "read" | "update" | "delete"
     "type",
 
     // What is the data that the page is acting on, eg "item"

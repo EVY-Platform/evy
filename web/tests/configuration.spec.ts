@@ -81,21 +81,73 @@ test.describe("Row configuration", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		// Verify the Action section heading exists
 		await expect(configPanel.getByText("Action")).toBeVisible();
 
-		// Verify the target input shows the current value
-		const targetInput = configPanel.getByLabel("target");
-		await expect(targetInput).toBeVisible();
-		await expect(targetInput).toHaveValue("close");
+		const closeButton = configPanel.getByRole("button", { name: "Close" });
+		const submitButton = configPanel.getByRole("button", { name: "Submit" });
+		const navigateButton = configPanel.getByRole("button", {
+			name: "Navigate",
+		});
 
-		// Edit the target value
-		await targetInput.clear();
-		await targetInput.fill("submit");
-		await expect(targetInput).toHaveValue("submit");
+		await expect(closeButton).toBeVisible();
+		await expect(submitButton).toBeVisible();
+		await expect(navigateButton).toBeVisible();
+
+		await expect(closeButton).toHaveClass(/evy-bg-gray-light/);
+		await expect(submitButton).not.toHaveClass(/evy-bg-gray-light/);
+
+		await submitButton.click();
+		await expect(submitButton).toHaveClass(/evy-bg-gray-light/);
+		await expect(closeButton).not.toHaveClass(/evy-bg-gray-light/);
 	});
 
-	test("should show empty action target for rows without action", async ({
+	test("should show navigate inputs when navigate is selected", async ({
+		page,
+	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						view: {
+							content: {
+								title: "",
+								label: "Nav Button",
+							},
+						},
+						action: {
+							target: "submit",
+						},
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
+		const buttonRow = page.getByText("Nav Button", { exact: true }).first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = page
+			.getByText("Configuration", { exact: true })
+			.locator("..");
+
+		await expect(
+			configPanel.getByLabel("flow", { exact: true }),
+		).not.toBeVisible();
+		await expect(
+			configPanel.getByLabel("page", { exact: true }),
+		).not.toBeVisible();
+
+		await configPanel.getByRole("button", { name: "Navigate" }).click();
+
+		await expect(configPanel.getByLabel("flow", { exact: true })).toBeVisible();
+		await expect(configPanel.getByLabel("page", { exact: true })).toBeVisible();
+	});
+
+	test("should show no segment selected for rows without action", async ({
 		page,
 	}) => {
 		await initTestFlows(page, [
@@ -125,12 +177,16 @@ test.describe("Row configuration", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		// Action section should still appear
 		await expect(configPanel.getByText("Action")).toBeVisible();
 
-		// Target input should be empty
-		const targetInput = configPanel.getByLabel("target");
-		await expect(targetInput).toBeVisible();
-		await expect(targetInput).toHaveValue("");
+		const navigateButton = configPanel.getByRole("button", {
+			name: "Navigate",
+		});
+		const submitButton = configPanel.getByRole("button", { name: "Submit" });
+		const closeButton = configPanel.getByRole("button", { name: "Close" });
+
+		await expect(navigateButton).not.toHaveClass(/evy-bg-gray-light/);
+		await expect(submitButton).not.toHaveClass(/evy-bg-gray-light/);
+		await expect(closeButton).not.toHaveClass(/evy-bg-gray-light/);
 	});
 });

@@ -213,7 +213,7 @@ describe("get", () => {
 			{
 				data: createTestFlow({
 					name: "Flow 2",
-					type: "write",
+					type: "create",
 					data: "item",
 					pages: [{ title: "P2", rows: [] }],
 				}),
@@ -364,7 +364,7 @@ describe("upsert", () => {
 		const updatedFlowData = createTestFlow({
 			id: existingFlow.id,
 			name: "Updated Name",
-			type: "write",
+			type: "create",
 			data: "item",
 			pages: [
 				{
@@ -395,7 +395,7 @@ describe("upsert", () => {
 		expect(isDATA_Flow(result)).toBe(true);
 		if (isDATA_Flow(result)) {
 			expect(result.data.name).toBe("Updated Name");
-			expect(result.data.type).toBe("write");
+			expect(result.data.type).toBe("create");
 		}
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);

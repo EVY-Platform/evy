@@ -5,20 +5,47 @@ import type { Row } from "../types/row";
 import type { SDUI_Flow } from "../types/flow";
 import { useRowById } from "../hooks/useRowById";
 
-function resolveActionTarget(target: string, flows: SDUI_Flow[]): string {
-	if (!target.startsWith("navigate:")) return target;
+const ACTION_TYPES = ["navigate", "submit", "close"] as const;
+type ActionType = (typeof ACTION_TYPES)[number];
 
-	const [prefix, flowId, pageId] = target.split(":");
-	if (!flowId || !pageId) return target;
-
-	const flow = flows.find((f) => f.id === flowId);
-	const flowName = flow?.name ?? flowId;
-	const pageTitle = flow?.pages.find((p) => p.id === pageId)?.title ?? pageId;
-
-	return `${prefix}:${flowName}:${pageTitle}`;
+function parseActionType(value: string): ActionType | undefined {
+	for (const t of ACTION_TYPES) {
+		if (value === t || value.startsWith(`${t}:`)) return t;
+	}
+	return undefined;
 }
 
-function ActionTargetInput({
+function FriendlyInput({
+	id,
+	label,
+	rawValue,
+	displayValue,
+	onChange,
+}: {
+	id: string;
+	label: string;
+	rawValue: string;
+	displayValue: string;
+	onChange: (newValue: string) => void;
+}) {
+	const [isFocused, setIsFocused] = useState(false);
+	return (
+		<div className="evy-mb-2">
+			<label htmlFor={id}>{label}</label>
+			<input
+				id={id}
+				type="text"
+				value={isFocused ? rawValue : displayValue}
+				onFocus={() => setIsFocused(true)}
+				onBlur={() => setIsFocused(false)}
+				onChange={(e) => onChange(e.target.value)}
+				className="evy-w-full evy-focus-visible:outline-none"
+			/>
+		</div>
+	);
+}
+
+function ActionTargetSection({
 	value,
 	flows,
 	onChange,
@@ -27,22 +54,65 @@ function ActionTargetInput({
 	flows: SDUI_Flow[];
 	onChange: (newValue: string) => void;
 }) {
-	const [isFocused, setIsFocused] = useState(false);
-	const displayValue = isFocused ? value : resolveActionTarget(value, flows);
+	const selected = parseActionType(value);
+	const parts = value.split(":");
+	const flowId = parts[1] ?? "";
+	const pageId = parts[2] ?? "";
+
+	const flow = flows.find((f) => f.id === flowId);
+	const flowDisplayName = flow?.name ?? flowId;
+	const pageDisplayTitle =
+		flow?.pages.find((p) => p.id === pageId)?.title ?? pageId;
 
 	return (
-		<div className="evy-mb-2">
-			<label htmlFor="action-target">target</label>
-			<input
-				id="action-target"
-				type="text"
-				value={displayValue}
-				onFocus={() => setIsFocused(true)}
-				onBlur={() => setIsFocused(false)}
-				onChange={(e) => onChange(e.target.value)}
-				className="evy-w-full evy-focus-visible:outline-none"
-			/>
-		</div>
+		<>
+			<div className="evy-rounded-full evy-flex evy-mb-2">
+				{ACTION_TYPES.map((actionType, index) => (
+					<button
+						key={actionType}
+						type="button"
+						onClick={() => {
+							if (actionType === "navigate") {
+								onChange(`navigate:${flowId}:${pageId}`);
+							} else {
+								onChange(actionType);
+							}
+						}}
+						className={`evy-flex-1 evy-border ${
+							index === 0 ? "evy-rounded-left-md evy-border-r-0" : ""
+						} ${
+							index === ACTION_TYPES.length - 1
+								? "evy-rounded-right-md evy-border-l-0"
+								: ""
+						} ${selected === actionType ? "evy-bg-gray-light" : "evy-bg-white"}`}
+					>
+						{actionType.charAt(0).toUpperCase() + actionType.slice(1)}
+					</button>
+				))}
+			</div>
+			{selected === "navigate" && (
+				<>
+					<FriendlyInput
+						id="action-flow"
+						label="flow"
+						rawValue={flowId}
+						displayValue={flowDisplayName}
+						onChange={(newFlowId) =>
+							onChange(`navigate:${newFlowId}:${pageId}`)
+						}
+					/>
+					<FriendlyInput
+						id="action-page"
+						label="page"
+						rawValue={pageId}
+						displayValue={pageDisplayTitle}
+						onChange={(newPageId) =>
+							onChange(`navigate:${flowId}:${newPageId}`)
+						}
+					/>
+				</>
+			)}
+		</>
 	);
 }
 
@@ -169,7 +239,7 @@ export function ConfigurationPanel() {
 						<div className="evy-border-b evy-border-gray" />
 						<div>
 							<p className="evy-text-lg evy-font-semibold evy-mb-4">Action</p>
-							<ActionTargetInput
+							<ActionTargetSection
 								value={row?.config.action?.target ?? ""}
 								flows={flows}
 								onChange={(newValue) => {
