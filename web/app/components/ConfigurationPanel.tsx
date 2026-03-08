@@ -242,7 +242,15 @@ export function ConfigurationPanel() {
 								<p className="evy-text-lg evy-font-semibold">Action</p>
 								<button
 									type="button"
-									className="evy-text-sm evy-text-red evy-cursor-pointer"
+									disabled={!row?.config.action?.target}
+									title={
+										row?.config.action?.target ? undefined : "Row has no action"
+									}
+									className={`evy-text-sm evy-bg-transparent evy-border-none evy-rounded-sm ${
+										row?.config.action?.target
+											? "evy-text-black evy-cursor-pointer evy-hover:bg-gray-light"
+											: "evy-text-gray"
+									}`}
 									onClick={() => {
 										if (!row) return;
 										dispatchRow({
