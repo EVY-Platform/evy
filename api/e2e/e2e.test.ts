@@ -179,7 +179,7 @@ describe("API E2E Tests", () => {
 			const createFlowData: SDUI_Flow = {
 				id: flowId,
 				name: "Flow to Update",
-				type: "write",
+				type: "create",
 				data: "item",
 				pages: [testPage],
 			};

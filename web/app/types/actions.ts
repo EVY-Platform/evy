@@ -31,6 +31,11 @@ export type RowAction =
 			configValue: string;
 	  }
 	| {
+			type: "UPDATE_ROW_ACTION";
+			rowId: string;
+			target: string;
+	  }
+	| {
 			type: "SET_ACTIVE_FLOW";
 			flowId: string;
 	  }

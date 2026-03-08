@@ -16,6 +16,7 @@ interface ServerRowInputContent {
 	value?: string;
 	placeholder?: string;
 	text?: string;
+	label?: string;
 	segments?: string[];
 }
 
@@ -121,6 +122,9 @@ function ensureRowId(row: ServerRowInput): ServerRow {
 	if (inputContent.text !== undefined) {
 		content.text = inputContent.text;
 	}
+	if (inputContent.label !== undefined) {
+		content.label = inputContent.label;
+	}
 	if (inputContent.segments !== undefined) {
 		content.segments = inputContent.segments;
 	}
@@ -154,7 +158,7 @@ function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 		{
 			id: crypto.randomUUID(),
 			name: "Test Flow",
-			type: "write",
+			type: "create",
 			data: "",
 			pages: pages.map((page) => ({
 				id: page.id ?? crypto.randomUUID(),
@@ -180,7 +184,7 @@ export async function initFullFlows(page: Page, flows: ServerFlow[]) {
 interface DebugFlowInput {
 	id?: string;
 	name: string;
-	type: "read" | "write";
+	type: "read" | "create";
 	data: string;
 	pages: ServerPageInput[];
 }
@@ -189,7 +193,7 @@ function createDebugFlows(): ServerFlow[] {
 	const flows: DebugFlowInput[] = [
 		{
 			name: "First flow!",
-			type: "write",
+			type: "create",
 			data: "",
 			pages: [
 				{
@@ -507,7 +511,7 @@ function createDebugFlows(): ServerFlow[] {
 		},
 		{
 			name: "Second flow",
-			type: "write",
+			type: "create",
 			data: "",
 			pages: [
 				{

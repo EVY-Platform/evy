@@ -1,8 +1,120 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
+import type { SDUI_Flow } from "../types/flow";
 import { useRowById } from "../hooks/useRowById";
+
+const ACTION_TYPES = ["navigate", "submit", "close"] as const;
+type ActionType = (typeof ACTION_TYPES)[number];
+
+function parseActionType(value: string): ActionType | undefined {
+	for (const t of ACTION_TYPES) {
+		if (value === t || value.startsWith(`${t}:`)) return t;
+	}
+	return undefined;
+}
+
+function FriendlyInput({
+	id,
+	label,
+	rawValue,
+	displayValue,
+	onChange,
+}: {
+	id: string;
+	label: string;
+	rawValue: string;
+	displayValue: string;
+	onChange: (newValue: string) => void;
+}) {
+	const [isFocused, setIsFocused] = useState(false);
+	return (
+		<div className="evy-mb-2">
+			<label htmlFor={id}>{label}</label>
+			<input
+				id={id}
+				type="text"
+				value={isFocused ? rawValue : displayValue}
+				onFocus={() => setIsFocused(true)}
+				onBlur={() => setIsFocused(false)}
+				onChange={(e) => onChange(e.target.value)}
+				className="evy-w-full evy-focus-visible:outline-none"
+			/>
+		</div>
+	);
+}
+
+function ActionTargetSection({
+	value,
+	flows,
+	onChange,
+}: {
+	value: string;
+	flows: SDUI_Flow[];
+	onChange: (newValue: string) => void;
+}) {
+	const selected = parseActionType(value);
+	const parts = value.split(":");
+	const flowId = parts[1] ?? "";
+	const pageId = parts[2] ?? "";
+
+	const flow = flows.find((f) => f.id === flowId);
+	const flowDisplayName = flow?.name ?? flowId;
+	const pageDisplayTitle =
+		flow?.pages.find((p) => p.id === pageId)?.title ?? pageId;
+
+	return (
+		<>
+			<div className="evy-rounded-full evy-flex evy-mb-2">
+				{ACTION_TYPES.map((actionType, index) => (
+					<button
+						key={actionType}
+						type="button"
+						onClick={() => {
+							if (actionType === "navigate") {
+								onChange(`navigate:${flowId}:${pageId}`);
+							} else {
+								onChange(actionType);
+							}
+						}}
+						className={`evy-flex-1 evy-border ${
+							index === 0 ? "evy-rounded-left-md evy-border-r-0" : ""
+						} ${
+							index === ACTION_TYPES.length - 1
+								? "evy-rounded-right-md evy-border-l-0"
+								: ""
+						} ${selected === actionType ? "evy-bg-gray-light" : "evy-bg-white"}`}
+					>
+						{actionType.charAt(0).toUpperCase() + actionType.slice(1)}
+					</button>
+				))}
+			</div>
+			{selected === "navigate" && (
+				<>
+					<FriendlyInput
+						id="action-flow"
+						label="flow"
+						rawValue={flowId}
+						displayValue={flowDisplayName}
+						onChange={(newFlowId) =>
+							onChange(`navigate:${newFlowId}:${pageId}`)
+						}
+					/>
+					<FriendlyInput
+						id="action-page"
+						label="page"
+						rawValue={pageId}
+						displayValue={pageDisplayTitle}
+						onChange={(newPageId) =>
+							onChange(`navigate:${flowId}:${newPageId}`)
+						}
+					/>
+				</>
+			)}
+		</>
+	);
+}
 
 export function ConfigurationPanel() {
 	const { activeRowId, activePageId, flows, activeFlowId, dispatchRow } =
@@ -122,7 +234,25 @@ export function ConfigurationPanel() {
 					</>
 				)}
 				{configurationElements.length > 0 ? (
-					configurationElements
+					<>
+						{configurationElements}
+						<div className="evy-border-b evy-border-gray" />
+						<div>
+							<p className="evy-text-lg evy-font-semibold evy-mb-4">Action</p>
+							<ActionTargetSection
+								value={row?.config.action?.target ?? ""}
+								flows={flows}
+								onChange={(newValue) => {
+									if (!row) return;
+									dispatchRow({
+										type: "UPDATE_ROW_ACTION",
+										rowId: row.id,
+										target: newValue,
+									});
+								}}
+							/>
+						</div>
+					</>
 				) : (
 					<div className="evy-text-sm evy-text-gray evy-text-center evy-mt-8">
 						Select a row to configure
