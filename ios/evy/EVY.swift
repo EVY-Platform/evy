@@ -33,37 +33,6 @@ struct Filter: Encodable {
 struct EVY {
     static let data = EVYDataManager()
     
-    private static let actionAliasMap: [String: String] = [
-        "title": "item.title",
-        "photos": "item.photo_ids",
-        "price": "item.price.value",
-        "condition": "item.condition_id",
-        "selling_reason": "item.selling_reason_id",
-        "width": "item.dimensions.width",
-        "height": "item.dimensions.height",
-        "length": "item.dimensions.length",
-        "description": "item.description",
-        "transfer_options": "item.transfer_options",
-        "payment_methods": "item.payment_methods",
-    ]
-
-    private static func resolvePropsPath(_ props: String) throws -> [String] {
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        guard let firstProp = splitProps.first else {
-            throw EVYParamError.invalidProps
-        }
-        if data.exists(key: firstProp) {
-            return splitProps
-        }
-        guard let aliasPath = actionAliasMap[firstProp] else {
-            return splitProps
-        }
-        let remainingProps = Array(splitProps.dropFirst())
-        let resolvedPath = remainingProps.isEmpty
-            ? aliasPath
-            : aliasPath + "." + remainingProps.joined(separator: PROP_SEPARATOR)
-        return try EVYInterpreter.splitPropsFromText(resolvedPath)
-    }
 	
 	static func getUserData() throws {
 		let userData = try EVYJson.from(localJSON: "user_data")
@@ -138,15 +107,20 @@ struct EVY {
      */
     static func getDataFromText(_ input: String) throws -> EVYJson {
         let props = EVYInterpreter.parsePropsFromText(input)
-        let splitProps = try resolvePropsPath(props)
-        let dataObj = try data.get(key: splitProps.first!)
-        return try dataObj.decoded().parseProp(props: Array(splitProps[1...]))
+        return try getDataFromProps(props)
     }
     
     static func getDataFromProps(_ props: String) throws -> EVYJson {
-        let splitProps = try resolvePropsPath(props)
-        let dataObj = try data.get(key: splitProps.first!)
-        return try dataObj.decoded().parseProp(props: Array(splitProps[1...]))
+        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        let firstProp = splitProps.first!
+        let remainingProps = Array(splitProps[1...])
+
+        if let draftObj = try? data.getDraft(variableName: firstProp) {
+            return try draftObj.decoded().parseProp(props: remainingProps)
+        }
+
+        let dataObj = try data.get(key: firstProp)
+        return try dataObj.decoded().parseProp(props: remainingProps)
     }
     
     static func getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValue {
@@ -185,6 +159,19 @@ struct EVY {
         return returnText.toString()
     }
     
+    static func ensureDraftExists(variableName: String) {
+        guard !data.exists(key: variableName),
+              !data.hasDraft(variableName: variableName) else {
+            return
+        }
+        guard let emptyData = "\"\"".data(using: .utf8) else { return }
+        do {
+            try data.createDraft(variableName: variableName, data: emptyData)
+        } catch {
+            // Draft may have been created concurrently
+        }
+    }
+
     /**
      * Creating a new entity in the API
      */
@@ -194,24 +181,22 @@ struct EVY {
         // TODO: Send to API
     }
     
-    /**
-     * Updating a nested value in an object by using props
-     */
     static func updateValue(_ value: String, at: String) throws {
         try updateData("\"\(value)\"".data(using: .utf8)!, at: at)
     }
     
     static func updateData(_ newData: Data, at: String) throws {
-        let props = EVYInterpreter.parsePropsFromText(at)
-        let splitProps = try resolvePropsPath(props)
-        let firstProp = splitProps.first!
-        
-        if data.exists(key: firstProp) {
-            let dataObj = try data.get(key: firstProp)
-            try dataObj.updateDataWithData(newData, props: Array(splitProps[1...]))
-			try data.update(props: splitProps, data: dataObj.data)
+        let variableName = EVYInterpreter.parsePropsFromText(at)
+
+        if let existing = try? data.getDraft(variableName: variableName) {
+            existing.data = newData
+            NotificationCenter.default.post(name: .evyDataUpdated, object: variableName)
+        } else if data.exists(key: variableName) {
+            let dataObj = try data.get(key: variableName)
+            dataObj.data = newData
+            try data.update(props: [variableName], data: newData)
         } else {
-            try data.create(key: firstProp, data: newData)
+            try data.createDraft(variableName: variableName, data: newData)
         }
     }
 }

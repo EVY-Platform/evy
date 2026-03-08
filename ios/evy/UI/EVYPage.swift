@@ -30,5 +30,38 @@ extension SDUI_Page: View {
 					.accessibilityIdentifier("pageFooter_\(id)")
 			}
 		}
+		.onAppear {
+			bootstrapDrafts()
+		}
+	}
+
+	@MainActor private func bootstrapDrafts() {
+		var destinations: Set<String> = []
+		for row in rows {
+			Self.collectDestinations(from: row, into: &destinations)
+		}
+		if let footer = footer {
+			Self.collectDestinations(from: footer, into: &destinations)
+		}
+		for destination in destinations {
+			let variableName = EVYInterpreter.parsePropsFromText(destination)
+			if !variableName.isEmpty {
+				EVY.ensureDraftExists(variableName: variableName)
+			}
+		}
+	}
+
+	private static func collectDestinations(from row: SDUI_Row, into destinations: inout Set<String>) {
+		if let destination = row.destination, !destination.isEmpty {
+			destinations.insert(destination)
+		}
+		if let children = row.view.content.children {
+			for child in children {
+				collectDestinations(from: child, into: &destinations)
+			}
+		}
+		if let child = row.view.content.child {
+			collectDestinations(from: child, into: &destinations)
+		}
 	}
 }

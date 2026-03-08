@@ -102,9 +102,9 @@
 							"content": {
 								"title": "",
 								"icon": "::photo.badge.plus.fill::",
-								"photos": "{item.photo_ids}",
+								"photos": "{photo_ids}",
 								"content": "Add photos",
-								"subtitle": "Photos: {count(item.photo_ids)}/10 - Chose your listing's main photo first."
+								"subtitle": "Photos: {count(photo_ids)}/10 - Chose your listing's main photo first."
 							}
 						},
 						"destination": "{photo_ids}",
@@ -116,7 +116,7 @@
 						"view": {
 							"content": {
 								"title": "A row title ::star.square.on.square.fill::",
-								"value": "{item.title}",
+								"value": "{title}",
 								"placeholder": "My iPhone ::star.square.on.square.fill:: 20"
 							}
 						},
@@ -129,8 +129,8 @@
 						"view": {
 							"content": {
 								"title": "Price",
-								"value": "{formatCurrency(item.price)}",
-								"placeholder": "{formatCurrency(item.price)}"
+								"value": "{formatCurrency(price)}",
+								"placeholder": "{formatCurrency(price)}"
 							}
 						},
 						"destination": "{price}",
@@ -177,7 +177,7 @@
 										"view": {
 											"content": {
 												"title": "",
-												"value": "{formatDimension(item.dimensions.width)}",
+												"value": "{formatDimension(width)}",
 												"placeholder": "Width"
 											}
 										},
@@ -190,7 +190,7 @@
 										"view": {
 											"content": {
 												"title": "",
-												"value": "{formatDimension(item.dimensions.height)}",
+												"value": "{formatDimension(height)}",
 												"placeholder": "Height"
 											}
 										},
@@ -203,7 +203,7 @@
 										"view": {
 											"content": {
 												"title": "",
-												"value": "{formatDimension(item.dimensions.length)}",
+												"value": "{formatDimension(length)}",
 												"placeholder": "Length"
 											}
 										},
@@ -225,7 +225,7 @@
 									"id": "2422c9ec-df63-4fde-9632-0fe159c0b40e",
 									"type": "InputList",
 									"view": {
-										"data": "{item.tags}",
+										"data": "{tags}",
 										"content": {
 											"title": "Tags",
 											"format": "{$0.value}",
@@ -390,7 +390,7 @@
 																	"view": {
 																		"content": {
 																			"title": "Where",
-																			"text": "{formatAddress(item.transfer_options.pickup.address)}",
+																			"text": "{formatAddress(pickup_address)}",
 																			"action": "Change",
 																			"placeholder": "Enter pick up address"
 																		}
@@ -424,7 +424,7 @@
 														"view": {
 															"content": {
 																"title": "",
-																"value": "{item.address.instructions}",
+																"value": "{address_instructions}",
 																"placeholder": "Additional information"
 															}
 														},
@@ -448,8 +448,8 @@
 														"view": {
 															"content": {
 																"title": "",
-																"primary": "{item.transfer_options.pickup.timeslots}",
-																"secondary": "{item.transfer_options.delivery.timeslots}"
+																"primary": "{pickup_timeslots}",
+																"secondary": "{delivery_timeslots}"
 															}
 														},
 														"destination": "{pickup_timeslots}",
@@ -485,7 +485,7 @@
 														"view": {
 															"content": {
 																"title": "Surcharge",
-																"value": "{formatCurrency(item.transfer_options.delivery.fee)}",
+																"value": "{formatCurrency(delivery_fee)}",
 																"placeholder": "Do you want to charge for delivery?"
 															}
 														},
@@ -533,8 +533,8 @@
 														"view": {
 															"content": {
 																"title": "",
-																"primary": "{item.transfer_options.delivery.timeslots}",
-																"secondary": "{item.transfer_options.pickup.timeslots}"
+																"primary": "{delivery_timeslots}",
+																"secondary": "{pickup_timeslots}"
 															}
 														},
 														"destination": "{delivery_timeslots}",
@@ -570,7 +570,7 @@
 														"view": {
 															"content": {
 																"title": "Where from",
-																"value": "{item.transfer_options.ship.postal_code}",
+																"value": "{shipping_source_postal_code}",
 																"placeholder": "Postal code you will be shipping from"
 															}
 														},
@@ -607,7 +607,7 @@
 														"view": {
 															"content": {
 																"title": "Weight (kg)",
-																"value": "{formatWeight(item.dimensions.weight)}",
+																"value": "{formatWeight(weight)}",
 																"placeholder": "Weight"
 															}
 														},
@@ -639,8 +639,8 @@
 					},
 					"actions": [
 						{
-							"condition": "{count(transfer_options) >= 1}",
-							"false": "{highlight_required(transfer_options)}",
+							"condition": "{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0}",
+							"false": "{highlight_required(pickup_timeslots)}",
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,25a3269b-344c-477d-89c8-b2f5426a5d91)}"
 						}
 					]
@@ -709,8 +709,8 @@
 					},
 					"actions": [
 						{
-							"condition": "{count(payment_methods) >= 1}",
-							"false": "{highlight_required(payment_methods)}",
+							"condition": "{payment_cash === true || payment_app === true}",
+							"false": "{highlight_required(payment_app)}",
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,857362ad-856f-465b-85a3-94bc8bb686cd)}"
 						}
 					]

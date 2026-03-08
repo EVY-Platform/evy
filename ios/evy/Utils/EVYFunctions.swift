@@ -207,19 +207,19 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
 		try! await EVY.createItem()
 		
 		return VStack {
-			EVYTextView("{formatDimension(item.dimensions.width)}")
-			EVYTextView("a == a: {a == a}")
-			EVYTextView("a == b: {a == b}")
-			EVYTextView("1 == 2: {1 == 2}")
-			EVYTextView("1 == 1: {1 == 1}")
-			EVYTextView("1 != 1: {1 != 1}")
-			EVYTextView("item.title == Amazing: {{item.title} == Amazing}")
-			EVYTextView("item.title == Amazing Fridge: {{item.title} == Amazing Fridge}")
-			EVYTextView("Amazing Fridge == item.title: {Amazing Fridge == {item.title}}")
-			EVYTextView("count (item.title) == 13: {{count(item.title)} == 13}")
-			EVYTextView("count (item.title) == 14: {{count(item.title)} == 14}")
-			EVYTextView("count (item.title) > 0: {{count(item.title)} > 0}")
-			EVYTextView("{formatAddress(item.address)}")
+		EVYTextView("{formatDimension(width)}")
+		EVYTextView("a == a: {a == a}")
+		EVYTextView("a == b: {a == b}")
+		EVYTextView("1 == 2: {1 == 2}")
+		EVYTextView("1 == 1: {1 == 1}")
+		EVYTextView("1 != 1: {1 != 1}")
+		EVYTextView("title == Amazing: {{title} == Amazing}")
+		EVYTextView("title == Amazing Fridge: {{title} == Amazing Fridge}")
+		EVYTextView("Amazing Fridge == title: {Amazing Fridge == {title}}")
+		EVYTextView("count (title) == 13: {{count(title)} == 13}")
+		EVYTextView("count (title) == 14: {{count(title)} == 14}")
+		EVYTextView("count (title) > 0: {{count(title)} > 0}")
+		EVYTextView("{formatAddress(pickup_address)}")
 		}
 	}
 }

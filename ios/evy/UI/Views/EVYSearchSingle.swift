@@ -114,8 +114,8 @@ struct EVYSearchSingle: View {
 		try! await EVY.createItem()
 		
 		return Group {
-			EVYSearch(source: "{local:address}",
-					  destination: "{item.address}",
+		EVYSearch(source: "{local:address}",
+				  destination: "{address}",
 					  placeholder: "Search",
 					  format: "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}")
 		}

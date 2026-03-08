@@ -328,7 +328,7 @@ private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
 	} view: {
 		try! await EVY.createItem()
 		
-		return EVYCalendar(primary: "{item.transfer_options.pickup.timeslots}",
-						   secondary: "{item.transfer_options.delivery.timeslots}")
+	return EVYCalendar(primary: "{pickup_timeslots}",
+					   secondary: "{delivery_timeslots}")
 	}
 }

@@ -63,7 +63,7 @@ struct EVYInputList: View {
 		try! await EVY.createItem()
 		
 		return Group {
-			EVYInputList(data: "{item.tags}",
+			EVYInputList(data: "{tags}",
 						 format: "{$0.value}",
 						 placeholder: "Add tags to improve search")
 		}

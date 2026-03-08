@@ -261,26 +261,26 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
 		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
-		let bare = "test"
-		let data = "{item.title}"
-		
-		let parsedData = try! EVYInterpreter.parseTextFromText(data)
-		let withPrefix = try! EVYInterpreter.parseTextFromText(
-			"{formatCurrency(item.price)}"
-		)
-		let withSuffix = try! EVYInterpreter.parseTextFromText(
-			"{formatDimension(item.dimension.width)}"
-		)
-		let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
-			"{formatDimension(item.dimension.width)} - {item.title}"
-		)
-		let withComparison = try! EVYInterpreter.parseTextFromText(
-			"{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
-		)
-		
-		let weight = try! EVYInterpreter.parseTextFromText(
-			"{formatWeight(item.dimension.weight)}"
-		)
+	let bare = "test"
+	let data = "{title}"
+	
+	let parsedData = try! EVYInterpreter.parseTextFromText(data)
+	let withPrefix = try! EVYInterpreter.parseTextFromText(
+		"{formatCurrency(price)}"
+	)
+	let withSuffix = try! EVYInterpreter.parseTextFromText(
+		"{formatDimension(width)}"
+	)
+	let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
+		"{formatDimension(width)} - {title}"
+	)
+	let withComparison = try! EVYInterpreter.parseTextFromText(
+		"{count(title) == count(selling_reasons)} v {count(title) == count(title)}"
+	)
+	
+	let weight = try! EVYInterpreter.parseTextFromText(
+		"{formatWeight(weight)}"
+	)
 		
 		let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
 		
@@ -295,9 +295,9 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
 			Text(weight.toString())
 			Text(firstSellingReason.toString())
 			
-			EVYTextField(input: "{formatCurrency(item.price)}",
-						 destination: "{item.price.value}",
-						 placeholder: "Editing price")
+		EVYTextField(input: "{formatCurrency(price)}",
+					 destination: "{price}",
+					 placeholder: "Editing price")
 		}
 	}
 }

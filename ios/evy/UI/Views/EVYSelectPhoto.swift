@@ -203,10 +203,10 @@ class ImageManager {
 		try! await EVY.createItem()
 		
 		return EVYSelectPhoto(title: "Photos Title",
-							  subtitle: "Photos: {count(item.photo_ids)}/10 - Chose your listing’s main photo first.",
+							  subtitle: "Photos: {count(photo_ids)}/10 - Chose your listing’s main photo first.",
 							  icon: "::photo.badge.plus.fill::",
 							  content: "A great subtitle",
-							  data: "{item.photo_ids}",
-							  destination: "{item.photo_ids}")
+							  data: "{photo_ids}",
+							  destination: "{photo_ids}")
 	}
 }

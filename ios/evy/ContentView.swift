@@ -93,9 +93,10 @@ struct ContentView: View {
             showingAlert = true
             
         case .close:
-            // If the flow was for creation, delete the draft
+            // If the flow was for creation, delete the draft data
             if let currentFlow = flows.first(where: { $0.id == currentFlowId }),
                currentFlow.type == .create {
+                EVY.data.deleteAllDrafts()
                 do {
                     try EVY.data.delete(key: currentFlow.data)
                 } catch EVYDataError.keyNotFound {
@@ -223,13 +224,13 @@ struct ContentView: View {
         .onChange(of: routes) { _, _ in
             let newFlowId = routes.last?.flowId ?? HOME_FLOW_ID
             
-            // To be safe, we remove any existing data if the flow has changed
             if newFlowId != currentFlowId,
 			   let currentFlow = flows.first(where: {
 				   $0.id == currentFlowId
 			   }),
                currentFlow.type == .create
 			{
+                EVY.data.deleteAllDrafts()
                 do {
                     try EVY.data.delete(key: currentFlow.data)
                 } catch EVYDataError.keyNotFound {

@@ -42,7 +42,7 @@ struct EVYSelectList: View {
 			case let .array(arrayValue):
 				EVYSelectList(options: arrayValue,
 							  format: "{$0.value}",
-							  destination: "{item.selling_reason_id}")
+							  destination: "{selling_reason}")
 			default:
 				Text("error")
 			}

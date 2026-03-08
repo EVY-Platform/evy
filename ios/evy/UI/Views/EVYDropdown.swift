@@ -103,7 +103,7 @@ struct EVYDropdown: View {
 						placeholder: "A placeholder",
 						data: "{conditions}",
 						format: "{$0.value}",
-						destination: "{item.condition_id}")
+						destination: "{condition}")
 		}
 	}
 }

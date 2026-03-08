@@ -136,9 +136,9 @@ struct EVYTextView: View {
 			EVYTextView("Title style", style: EVYTextStyle.title)
 			EVYButton(label: "button", action: {})
 			EVYTextView("Action", style: EVYTextStyle.action)
-			EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
-			EVYTextView("count: {count(item.photo_ids)}")
-			EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star.square.on.square.fill::")
+			EVYTextView("{title} ::star.square.on.square.fill:: and more text")
+			EVYTextView("count: {count(photo_ids)}")
+			EVYTextView("{title} has {count(photo_ids)} photos ::star.square.on.square.fill::")
 		}
 	}
 }

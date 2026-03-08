@@ -70,12 +70,23 @@ enum EVYActionRunner {
                 executeTrueBranch = (try? EVY.evaluateFromText(condition)) ?? false
             }
             
-            let branch = executeTrueBranch ? action.`true` : action.`false`
-            let trimmedBranch = branch.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmedBranch.isEmpty { continue }
+            if !executeTrueBranch {
+                let falseBranch = action.`false`.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !falseBranch.isEmpty {
+                    do {
+                        try execute(branch: falseBranch, navigate: navigate)
+                    } catch {
+                        NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
+                    }
+                }
+                return
+            }
+            
+            let trueBranch = action.`true`.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trueBranch.isEmpty { continue }
             
             do {
-                try execute(branch: trimmedBranch, navigate: navigate)
+                try execute(branch: trueBranch, navigate: navigate)
             } catch {
                 NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
             }

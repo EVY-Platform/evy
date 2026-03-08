@@ -110,6 +110,8 @@ let container = try! ModelContainer(for: EVYData.self, configurations: config)
 
 @MainActor
 final class EVYDataManager {
+    private static let draftPrefix = "draft_"
+
     private let context: ModelContext
     
     init() {
@@ -165,6 +167,76 @@ final class EVYDataManager {
         
         NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
                                         object: key)
+    }
+
+    // MARK: - Draft helpers
+
+    static func draftKey(variableName: String) -> String {
+        "\(draftPrefix)\(variableName)_\(UUID().uuidString)"
+    }
+
+    static func draftPrefix(for variableName: String) -> String {
+        "\(draftPrefix)\(variableName)_"
+    }
+
+    static func variableName(fromDraftKey key: String) -> String? {
+        guard key.hasPrefix(draftPrefix) else { return nil }
+        let withoutPrefix = key.dropFirst(draftPrefix.count)
+        guard let lastUnderscore = withoutPrefix.lastIndex(of: "_") else { return nil }
+        return String(withoutPrefix[withoutPrefix.startIndex..<lastUnderscore])
+    }
+
+    func hasDraft(variableName: String) -> Bool {
+        let prefix = EVYDataManager.draftPrefix(for: variableName)
+        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key.starts(with: prefix) })
+        do {
+            return try context.fetchCount(descriptor) > 0
+        } catch {
+            return false
+        }
+    }
+
+    func getDraft(variableName: String) throws -> EVYData {
+        let prefix = EVYDataManager.draftPrefix(for: variableName)
+        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key.starts(with: prefix) })
+        guard let first = try context.fetch(descriptor).first else {
+            throw EVYDataError.keyNotFound
+        }
+        return first
+    }
+
+    func createDraft(variableName: String, data: Data) throws {
+        if hasDraft(variableName: variableName) {
+            throw EVYDataError.keyAlreadyExists
+        }
+        let key = EVYDataManager.draftKey(variableName: variableName)
+        context.insert(EVYData(key: key, data: data))
+
+        NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
+                                        object: variableName)
+    }
+
+    func updateDraft(variableName: String, data: Data) throws {
+        let existing = try getDraft(variableName: variableName)
+        existing.data = data
+
+        NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
+                                        object: variableName)
+    }
+
+    func deleteAllDrafts() {
+        let prefix = EVYDataManager.draftPrefix
+        do {
+            let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key.starts(with: prefix) })
+            let drafts = try context.fetch(descriptor)
+            for draft in drafts {
+                context.delete(draft)
+            }
+        } catch {
+            #if DEBUG
+            print("[EVYDataManager] deleteAllDrafts error: \(error)")
+            #endif
+        }
     }
 }
 
