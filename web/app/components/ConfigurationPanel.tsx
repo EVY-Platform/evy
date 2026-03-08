@@ -244,9 +244,7 @@ export function ConfigurationPanel() {
 									type="button"
 									disabled={!row?.config.action?.target}
 									title={
-										row?.config.action?.target
-											? undefined
-											: "Row has no action"
+										row?.config.action?.target ? undefined : "Row has no action"
 									}
 									className={`evy-text-sm evy-bg-transparent evy-border-none evy-rounded-sm ${
 										row?.config.action?.target
