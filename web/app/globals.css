@@ -121,6 +121,9 @@ body {
 }
 
 /* Spacing utilities */
+.evy-p-0 {
+	padding: 0;
+}
 .evy-p-2 {
 	padding: var(--spacing-2);
 }
