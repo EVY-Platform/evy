@@ -28,6 +28,17 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
 }
 
 @MainActor
+func evyLength(_ args: String) throws -> EVYFunctionOutput {
+    let res = try EVY.getDataFromProps(args)
+    switch res {
+    case let .string(stringValue):
+        return EVYFunctionOutput(value: String(stringValue.count), prefix: nil, suffix: nil)
+    default:
+        return EVYFunctionOutput(value: args, prefix: nil, suffix: nil)
+    }
+}
+
+@MainActor
 func evyFormatCurrency(_ args: String,
                        _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)

@@ -105,6 +105,8 @@ struct EVYInterpreter {
             switch funcName {
             case "count":
                 value = try evyCount(funcArgs)
+            case "length":
+                value = try evyLength(funcArgs)
             case "formatCurrency":
                 value = try evyFormatCurrency(funcArgs, editing)
             case "formatDimension":
