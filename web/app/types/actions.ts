@@ -36,6 +36,10 @@ export type RowAction =
 			target: string;
 	  }
 	| {
+			type: "REMOVE_ROW_ACTION";
+			rowId: string;
+	  }
+	| {
 			type: "SET_ACTIVE_FLOW";
 			flowId: string;
 	  }

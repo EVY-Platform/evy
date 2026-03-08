@@ -229,6 +229,24 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			return updateState({ updatedPages: newPages });
 		}
+		case "REMOVE_ROW_ACTION": {
+			const updater = (row: Row): Row => {
+				const { action: _, ...rest } = row.config;
+				return { ...row, config: rest };
+			};
+
+			const newPages = flow.pages.map((page) => {
+				const updatedFooter =
+					page.footer?.id === action.rowId ? updater(page.footer) : page.footer;
+				return {
+					...page,
+					rows: updateRowInTree(page.rows, action.rowId, updater),
+					footer: updatedFooter,
+				};
+			});
+
+			return updateState({ updatedPages: newPages });
+		}
 		case "SET_ACTIVE_FLOW": {
 			return updateState({
 				activeFlowId: action.flowId,
