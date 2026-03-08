@@ -238,7 +238,22 @@ export function ConfigurationPanel() {
 						{configurationElements}
 						<div className="evy-border-b evy-border-gray" />
 						<div>
-							<p className="evy-text-lg evy-font-semibold evy-mb-4">Action</p>
+							<div className="evy-flex evy-items-center evy-justify-between evy-mb-4">
+								<p className="evy-text-lg evy-font-semibold">Action</p>
+								<button
+									type="button"
+									className="evy-text-sm evy-text-red evy-cursor-pointer"
+									onClick={() => {
+										if (!row) return;
+										dispatchRow({
+											type: "REMOVE_ROW_ACTION",
+											rowId: row.id,
+										});
+									}}
+								>
+									Remove
+								</button>
+							</div>
 							<ActionTargetSection
 								value={row?.config.action?.target ?? ""}
 								flows={flows}

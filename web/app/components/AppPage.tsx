@@ -19,14 +19,35 @@ export default function AppPage({ pageId }: { pageId: string }) {
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
+	const selectRow = useCallback(
+		(rowId: string) =>
+			dispatchRow({
+				type: "SET_ACTIVE_ROW",
+				pageId,
+				rowId,
+			}),
+		[pageId, dispatchRow],
+	);
+
+	const selectPage = useCallback(
+		(e: MouseEvent) => {
+			if (e.target === e.currentTarget) {
+				dispatchRow({ type: "SET_ACTIVE_PAGE", pageId });
+			}
+		},
+		[pageId, dispatchRow],
+	);
+
 	useEffect(() => {
 		invariant(
 			scrollableRef.current,
 			"AppPage useEffect: scrollableRef.current is not defined",
 		);
-		return combine(
+		const element = scrollableRef.current;
+		element.addEventListener("click", selectPage);
+		const cleanup = combine(
 			dropTargetForElements({
-				element: scrollableRef.current,
+				element,
 				getData: () => ({ pageId }),
 				canDrop: () => true,
 				onDrop: () => {
@@ -44,21 +65,15 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					}),
 			}),
 			autoScrollForElements({
-				element: scrollableRef.current,
+				element,
 				canScroll: () => true,
 			}),
 		);
-	}, [pageId, dispatchDropIndicator, dispatchDragging]);
-
-	const selectRow = useCallback(
-		(rowId: string) =>
-			dispatchRow({
-				type: "SET_ACTIVE_ROW",
-				pageId,
-				rowId,
-			}),
-		[pageId, dispatchRow],
-	);
+		return () => {
+			element.removeEventListener("click", selectPage);
+			cleanup();
+		};
+	}, [pageId, selectPage, dispatchDropIndicator, dispatchDragging]);
 
 	const rowElements = useMemo(() => {
 		const page = flows
@@ -86,7 +101,13 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		?.pages.find((p) => p.id === pageId);
 
 	const titleElement = page?.title ? (
-		<div className="evy-page-title">{page.title}</div>
+		<button
+			type="button"
+			className="evy-page-title evy-cursor-pointer"
+			onClick={() => dispatchRow({ type: "SET_ACTIVE_PAGE", pageId })}
+		>
+			{page.title}
+		</button>
 	) : null;
 
 	const footer = page?.footer;
@@ -102,16 +123,13 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					>
 						{rowElements}
 					</div>
-					{/* biome-ignore lint/a11y/useSemanticElements: footer row container needs div for layout consistency */}
-					<div
-						className="evy-border-t evy-border-gray-light evy-hover:bg-gray-light evy-cursor-pointer evy-rounded-bottom-24"
+					<button
+						type="button"
+						className="evy-border-t evy-border-gray-light evy-hover:bg-gray-light evy-cursor-pointer evy-rounded-bottom-24 evy-w-full evy-bg-white evy-p-0"
 						onClick={() => selectRow(footer.id)}
-						onKeyDown={(e) => e.key === "Enter" && selectRow(footer.id)}
-						role="button"
-						tabIndex={0}
 					>
 						{footer.row}
-					</div>
+					</button>
 				</div>
 			) : (
 				<div

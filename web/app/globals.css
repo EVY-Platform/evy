@@ -7,6 +7,7 @@
 	--color-evy-gray-dark: oklch(35.84% 0.0103 285.87);
 	--color-white: #ffffff;
 	--color-black: #000000;
+	--color-evy-red: oklch(57% 0.22 27);
 	--color-gray-border: oklch(85% 0 0);
 
 	/* Spacing */
@@ -121,6 +122,9 @@ body {
 }
 
 /* Spacing utilities */
+.evy-p-0 {
+	padding: 0;
+}
 .evy-p-2 {
 	padding: var(--spacing-2);
 }
@@ -274,6 +278,9 @@ body {
 }
 .evy-text-gray {
 	color: var(--color-evy-gray);
+}
+.evy-text-red {
+	color: var(--color-evy-red);
 }
 .evy-font-medium {
 	font-weight: var(--font-medium);
@@ -460,6 +467,9 @@ label {
 	font-weight: var(--font-semibold);
 	font-size: var(--text-xl);
 	padding: var(--spacing-2) var(--spacing-4);
+	width: 100%;
+	background: none;
+	border: none;
 }
 
 .evy-v-dropzone {
