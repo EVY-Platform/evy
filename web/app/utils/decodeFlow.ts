@@ -49,8 +49,8 @@ function encodeRow(row: Row): ServerRow {
 			...row.config.view,
 			content: encodedContent,
 		},
-		edit: row.config.edit,
-		action: row.config.action,
+		destination: row.config.destination,
+		actions: row.config.actions,
 	};
 }
 
@@ -79,6 +79,7 @@ function decodeRow(row: ServerRow): Row {
 		row: createElement(baseRow, { key: row.id, rowId: row.id }),
 		config: {
 			...row,
+			actions: row.actions ?? [],
 			view: {
 				...row.view,
 				content: {

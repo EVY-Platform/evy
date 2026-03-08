@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("TextActionRow", {
 	config: {
 		type: "TextAction",
+		actions: [],
 		view: {
 			content: {
 				title: "Text action row title",
@@ -14,13 +15,7 @@ export default defineRow("TextActionRow", {
 				action: "Change",
 			},
 		},
-		edit: {
-			destination: "{item.transfer_options.pickup.address}",
-			validation: {
-				required: "true",
-				message: "Please provide an address",
-			},
-		},
+		destination: "{pickup_address}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

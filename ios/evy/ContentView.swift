@@ -7,17 +7,14 @@
 
 import SwiftUI
 
-public enum EVYNavigationError: Error {
-    case cannotSubmit
-}
-
 public struct Route: Hashable, Codable {
     let flowId: String
     let pageId: String
 }
 public enum NavOperation: Hashable {
     case navigate(Route)
-    case submit
+    case create(String)
+    case highlightRequired(String)
     case close
 }
 
@@ -56,15 +53,6 @@ struct ContentView: View {
             if let existing = routes.lastIndex(of: route) {
                 routes.removeSubrange(existing...)
 			} else {
-				if let currentFlow = flows.first(where: { $0.id == currentFlowId }),
-				   !routes.isEmpty,
-				   let currentPageId = routes.last?.pageId,
-				   let currentPage = currentFlow.pages.first(where: { $0.id == currentPageId }),
-				   !currentPage.complete() {
-					alertMessage = currentPage.incompleteMessages().joined(separator: "\n")
-					showingAlert = true
-					break
-				}
 				routes.append(route)
 			}
             
@@ -97,43 +85,12 @@ struct ContentView: View {
                 }
             }
             
-        case .submit:
-            // Make sure the flow was for creation, otherwise error out
-            guard let currentFlow = flows.first(where: { $0.id == currentFlowId }) else {
-                alertMessage = "Flow not found"
-                showingAlert = true
-                return
-            }
-            if currentFlow.type != .create {
-                alertMessage = "Cannot submit - not a create flow"
-                showingAlert = true
-                return
-            }
-			
-			let allPagesComplete = currentFlow.pages.allSatisfy { $0.complete() }
-			if !allPagesComplete {
-				alertMessage = "Incomplete flow"
-				showingAlert = true
-				break
-			}
-			
-            // Otherwise, submit the data
-            do {
-                try EVY.submit(key: currentFlow.data)
-            } catch {
-                showError(error)
-                return
-            }
-            
-            // Then, remove the current flow from navigation
-			if let existing = routes.firstIndex(where: { route in
-				route.flowId == currentFlowId
-			}) {
-                routes.removeSubrange(existing...)
-            } else {
-                // But if something is wrong, we exit back home
-                routes.removeAll()
-            }
+        case .create(let key):
+            createFlow(currentFlowId: currentFlowId, key: key)
+
+        case .highlightRequired(let fieldName):
+            alertMessage = "\(fieldName) is required"
+            showingAlert = true
             
         case .close:
             // If the flow was for creation, delete the draft
@@ -156,6 +113,38 @@ struct ContentView: View {
                 routes.removeAll()
             }
         }
+    }
+    
+    private func createFlow(currentFlowId: String, key: String) {
+            // Make sure the flow was for creation, otherwise error out
+            guard let currentFlow = flows.first(where: { $0.id == currentFlowId }) else {
+                alertMessage = "Flow not found"
+                showingAlert = true
+                return
+            }
+            if currentFlow.type != .create {
+                alertMessage = "Cannot create - not a create flow"
+                showingAlert = true
+                return
+            }
+			
+            // Create the data
+            do {
+                try EVY.create(key: key)
+            } catch {
+                showError(error)
+                return
+            }
+            
+            // Then, remove the current flow from navigation
+			if let existing = routes.firstIndex(where: { route in
+				route.flowId == currentFlowId
+			}) {
+                routes.removeSubrange(existing...)
+            } else {
+                // But if something is wrong, we exit back home
+                routes.removeAll()
+            }
     }
     
     @ViewBuilder

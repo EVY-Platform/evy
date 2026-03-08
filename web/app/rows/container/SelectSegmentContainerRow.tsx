@@ -11,17 +11,12 @@ const typeName = "SelectSegmentContainerRow";
 export default defineRow(typeName, {
 	config: {
 		type: "SelectSegmentContainer",
+		actions: [],
 		view: {
 			content: {
 				title: "Select segment container row title",
 				segments: ["X", "Y", "Z"],
 				children: [],
-			},
-		},
-		edit: {
-			destination: "",
-			validation: {
-				required: "false",
 			},
 		},
 	} satisfies RowConfig,

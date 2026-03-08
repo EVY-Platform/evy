@@ -12,9 +12,7 @@ export default defineRow("ButtonRow", {
 				label: "Button row text",
 			},
 		},
-		action: {
-			target: "close",
-		},
+		actions: [{ condition: "", false: "", true: "close" }],
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

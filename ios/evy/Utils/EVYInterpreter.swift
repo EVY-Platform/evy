@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-private let comparisonBasePattern = "[a-zA-Z0-9.\\(\\){} ]+"
-private let comparisonOperatorPattern = "(>|<|==|!=)"
+private let comparisonBasePattern = "[a-zA-Z0-9_.\\(\\){} ]+"
+private let comparisonOperatorPattern = "(>=|<=|==|!=|>|<)"
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
-private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
+private let functionPattern = "[a-zA-Z_]+\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
 
@@ -66,6 +66,14 @@ struct EVYInterpreter {
                                          _ editing: Bool = false) throws -> EVYValue
     {
         try parseText(EVYValue(input, nil, nil), editing)
+    }
+
+    public static func parseFunctionCall(_ input: String) -> (functionName: String, functionArgs: String)? {
+        let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let (_, functionName, functionArgs) = parseFunctionInText(trimmedInput) {
+            return (functionName, functionArgs)
+        }
+        return nil
     }
     
     private static func parseText(_ input: EVYValue,

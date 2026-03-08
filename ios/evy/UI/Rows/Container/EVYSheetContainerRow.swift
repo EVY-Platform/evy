@@ -17,17 +17,6 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 		self.view = view
 	}
 
-	func complete() -> Bool {
-		guard let child = view.content.child else { return true }
-		return SDUI_Row.complete(row: child)
-	}
-
-	func incompleteMessages() -> [String] {
-		view.content.children
-			.filter { !SDUI_Row.complete(row: $0) }
-			.flatMap { SDUI_Row.incompleteMessages(row: $0) }
-	}
-
 	var body: some View {
 		VStack(alignment: .leading) {
 			if view.content.title.count > 0 {

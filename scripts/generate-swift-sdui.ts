@@ -1,7 +1,7 @@
 /**
  * Generates Swift SDUI types from evy.schema.json and row-content.spec.json:
  * - SDUIEnums.swift (flow + row type enums)
- * - SDUIShapes.swift (Flow, Page, Row, RowView, RowContent, Edit, Validation, Action)
+ * - SDUIShapes.swift (Flow, Page, Row, RowView, RowContent, Action)
  * - SDUIRowPayloads.swift (per-row view/content structs + SDUI_RowPayload + from(row:) helper)
  * Run from repo root: bun run types:generate (called by generate-types.ts).
  */
@@ -41,6 +41,10 @@ function rowTypeToEnumCase(rowType: string): string {
 	return parts
 		.map((p, i) => (i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)))
 		.join("");
+}
+
+function swiftIdentifier(name: string): string {
+	return name === "true" || name === "false" ? `\`${name}\`` : name;
 }
 
 async function loadSchema(): Promise<Record<string, unknown>> {
@@ -173,7 +177,7 @@ function emitPropertyLine(
 		overrides,
 	);
 	const optionalSuffix = isOptional ? "?" : "";
-	return `    public let ${propName}: ${swiftType}${optionalSuffix}`;
+	return `    public let ${swiftIdentifier(propName)}: ${swiftType}${optionalSuffix}`;
 }
 
 /** Emit a single shape (struct or class) from a schema object. */
@@ -184,6 +188,51 @@ function emitShapeFromDef(
 ): string {
 	const props = (def.properties ?? {}) as Record<string, unknown>;
 	const required = (def.required ?? []) as string[];
+	if (defName === "SDUI_Row") {
+		return `// MARK: - SDUI_Row
+public final class SDUI_Row: Codable {
+    public let id: String
+    public let type: EVYRowType
+    public let view: SDUI_RowView
+    public let destination: String?
+    public let actions: [SDUI_RowAction]
+
+    public init(id: String, type: EVYRowType, view: SDUI_RowView, destination: String?, actions: [SDUI_RowAction]) {
+        self.id = id
+        self.type = type
+        self.view = view
+        self.destination = destination
+        self.actions = actions
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case type
+        case view
+        case destination
+        case actions
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        type = try container.decode(EVYRowType.self, forKey: .type)
+        view = try container.decode(SDUI_RowView.self, forKey: .view)
+        destination = try container.decodeIfPresent(String.self, forKey: .destination)
+        actions = try container.decodeIfPresent([SDUI_RowAction].self, forKey: .actions) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(type, forKey: .type)
+        try container.encode(view, forKey: .view)
+        try container.encodeIfPresent(destination, forKey: .destination)
+        try container.encode(actions, forKey: .actions)
+    }
+}
+`;
+	}
 	const lines: string[] = [];
 	for (const [propName, propSchema] of Object.entries(props)) {
 		lines.push(
@@ -195,7 +244,7 @@ function emitShapeFromDef(
 	const keyword = useFinalClass ? "final class" : useClass ? "class" : "struct";
 	const initParams = lines
 		.map((l) => {
-			const match = /public let (\w+): ([\w\[\]?]+)/.exec(l);
+			const match = /public let (`?\w+`?): ([\w\[\]?]+)/.exec(l);
 			if (!match) return "";
 			const name = match[1];
 			const type = match[2];
@@ -204,7 +253,7 @@ function emitShapeFromDef(
 		.filter(Boolean);
 	const initAssigns = lines
 		.map((l) => {
-			const match = /public let (\w+):/.exec(l);
+			const match = /public let (`?\w+`?):/.exec(l);
 			return match ? `        self.${match[1]} = ${match[1]}` : "";
 		})
 		.filter(Boolean);
@@ -345,14 +394,12 @@ ${flowLines.join("\n")}
 }
 `;
 
-	// $defs in order: Page, Row, RowView (synthetic), RowContent (custom), RowEdit, RowValidation, RowAction
+	// $defs in order: Page, Row, RowView (synthetic), RowContent (custom), RowAction
 	const defOrder = [
 		"SDUI_Page",
 		"SDUI_Row",
 		"SDUI_RowView",
 		"SDUI_RowContent",
-		"SDUI_RowEdit",
-		"SDUI_RowValidation",
 		"SDUI_RowAction",
 	];
 	const defBlocks: string[] = [];
@@ -434,7 +481,7 @@ function emitSDUIRowPayloads(rowSpec: RowSpec): string {
 		if (!spec) continue;
 		const viewDataName = `${rowType}RowViewData`;
 		payloadCases.push(
-			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, SDUI_RowEdit?, SDUI_RowAction?)`,
+			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, String?, [SDUI_RowAction])`,
 		);
 	}
 
@@ -446,7 +493,7 @@ function emitSDUIRowPayloads(rowSpec: RowSpec): string {
 		const enumCase = rowTypeToEnumCase(rowType);
 		fromRowCases.push(`        case .${enumCase}:
             let viewData = try JSONDecoder().decode(${viewDataName}.self, from: JSONEncoder().encode(row.view))
-            return .${enumCase}(viewData, row.edit, row.action)`);
+            return .${enumCase}(viewData, row.destination, row.actions)`);
 	}
 
 	return `// Generated from types/schema/sdui/evy.schema.json + row-content.spec.json - do not edit.

@@ -32,6 +32,38 @@ struct Filter: Encodable {
 @MainActor
 struct EVY {
     static let data = EVYDataManager()
+    
+    private static let actionAliasMap: [String: String] = [
+        "title": "item.title",
+        "photos": "item.photo_ids",
+        "price": "item.price.value",
+        "condition": "item.condition_id",
+        "selling_reason": "item.selling_reason_id",
+        "width": "item.dimensions.width",
+        "height": "item.dimensions.height",
+        "length": "item.dimensions.length",
+        "description": "item.description",
+        "transfer_options": "item.transfer_options",
+        "payment_methods": "item.payment_methods",
+    ]
+
+    private static func resolvePropsPath(_ props: String) throws -> [String] {
+        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        guard let firstProp = splitProps.first else {
+            throw EVYParamError.invalidProps
+        }
+        if data.exists(key: firstProp) {
+            return splitProps
+        }
+        guard let aliasPath = actionAliasMap[firstProp] else {
+            return splitProps
+        }
+        let remainingProps = Array(splitProps.dropFirst())
+        let resolvedPath = remainingProps.isEmpty
+            ? aliasPath
+            : aliasPath + "." + remainingProps.joined(separator: PROP_SEPARATOR)
+        return try EVYInterpreter.splitPropsFromText(resolvedPath)
+    }
 	
 	static func getUserData() throws {
 		let userData = try EVYJson.from(localJSON: "user_data")
@@ -106,13 +138,13 @@ struct EVY {
      */
     static func getDataFromText(_ input: String) throws -> EVYJson {
         let props = EVYInterpreter.parsePropsFromText(input)
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        let splitProps = try resolvePropsPath(props)
         let dataObj = try data.get(key: splitProps.first!)
         return try dataObj.decoded().parseProp(props: Array(splitProps[1...]))
     }
     
     static func getDataFromProps(_ props: String) throws -> EVYJson {
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        let splitProps = try resolvePropsPath(props)
         let dataObj = try data.get(key: splitProps.first!)
         return try dataObj.decoded().parseProp(props: Array(splitProps[1...]))
     }
@@ -154,9 +186,9 @@ struct EVY {
     }
     
     /**
-     * Submitting a new entity to the API
+     * Creating a new entity in the API
      */
-    static func submit(key: String) throws {
+    static func create(key: String) throws {
         let existing = try data.get(key: key)
         existing.key = UUID().uuidString
         // TODO: Send to API
@@ -171,7 +203,7 @@ struct EVY {
     
     static func updateData(_ newData: Data, at: String) throws {
         let props = EVYInterpreter.parsePropsFromText(at)
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
+        let splitProps = try resolvePropsPath(props)
         let firstProp = splitProps.first!
         
         if data.exists(key: firstProp) {

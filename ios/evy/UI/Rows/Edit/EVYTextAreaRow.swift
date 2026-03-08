@@ -11,27 +11,11 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
 	public static let JSONType = "TextArea"
 
 	private let view: TextAreaRowViewData
-	private let edit: SDUI_RowEdit?
+	private let destination: String?
 
-	init(view: TextAreaRowViewData, edit: SDUI_RowEdit?) {
+	init(view: TextAreaRowViewData, destination: String?) {
 		self.view = view
-		self.edit = edit
-	}
-
-	func complete() -> Bool {
-		guard let validation = edit?.validation, validation.requiredBool else { return true }
-		if let minVal = validation.minValueInt {
-			return (Int(view.content.value) ?? 0) >= minVal
-		}
-		if let minChars = validation.minCharactersInt {
-			return view.content.value.count >= minChars
-		}
-		return true
-	}
-
-	func incompleteMessages() -> [String] {
-		guard let msg = edit?.validation?.message else { return [] }
-		return [msg]
+		self.destination = destination
 	}
 
 	var body: some View {
@@ -40,7 +24,7 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			if let destination = edit?.destination {
+			if let destination {
 				EVYTextField(
 					input: view.content.value,
 					destination: destination,

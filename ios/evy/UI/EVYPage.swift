@@ -7,17 +7,6 @@
 
 import SwiftUI
 
-extension SDUI_Page {
-	func complete() -> Bool {
-		rows.allSatisfy { SDUI_Row.complete(row: $0) }
-	}
-	func incompleteMessages() -> [String] {
-		rows
-			.filter { !SDUI_Row.complete(row: $0) }
-			.flatMap { SDUI_Row.incompleteMessages(row: $0) }
-	}
-}
-
 extension SDUI_Page: View {
 	public var body: some View {
 		Group {

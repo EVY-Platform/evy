@@ -22,6 +22,10 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
         return EVYFunctionOutput(value: String(stringValue.count), prefix: nil, suffix: nil)
     case let .array(arrayValue):
         return EVYFunctionOutput(value: String(arrayValue.count), prefix: nil, suffix: nil)
+    case let .int(intValue):
+        return EVYFunctionOutput(value: String(intValue), prefix: nil, suffix: nil)
+    case let .decimal(decimalValue):
+        return EVYFunctionOutput(value: "\(decimalValue)", prefix: nil, suffix: nil)
     default:
         return EVYFunctionOutput(value: args, prefix: nil, suffix: nil)
     }
@@ -162,7 +166,14 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
-func evyComparison(_ comparisonOperator: String, left: String, right: String) -> Bool {
+private func evyNumericValue(_ value: String) -> Decimal? {
+    Decimal(string: value.trimmingCharacters(in: .whitespacesAndNewlines))
+}
+
+private func evyCompareValues<T: Comparable>(_ comparisonOperator: String,
+                                             left: T,
+                                             right: T) -> Bool
+{
     switch comparisonOperator {
     case "==":
         return left == right
@@ -172,9 +183,21 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
         return left < right
     case ">":
         return left > right
+    case "<=":
+        return left <= right
+    case ">=":
+        return left >= right
     default:
         return false
     }
+}
+
+func evyComparison(_ comparisonOperator: String, left: String, right: String) -> Bool {
+    if let leftNumber = evyNumericValue(left), let rightNumber = evyNumericValue(right) {
+        return evyCompareValues(comparisonOperator, left: leftNumber, right: rightNumber)
+    }
+
+    return evyCompareValues(comparisonOperator, left: left, right: right)
 }
 
 #Preview {

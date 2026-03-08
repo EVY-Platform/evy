@@ -3,8 +3,7 @@ import type {
 	SDUI_Flow as ServerFlow,
 	SDUI_Row as ServerRow,
 	SDUI_RowContent as ServerRowContent,
-	SDUI_RowEdit as RowEdit,
-	SDUI_RowAction as RowActionConfig,
+	SDUI_RowAction as RowAction,
 } from "evy-types/sdui/evy";
 
 // Input types where id is optional
@@ -28,8 +27,8 @@ interface ServerRowInput {
 		data?: string;
 		max_lines?: string;
 	};
-	edit?: RowEdit;
-	action?: RowActionConfig;
+	destination?: string;
+	actions: RowAction[];
 }
 
 interface ServerPageInput {
@@ -144,8 +143,8 @@ function ensureRowId(row: ServerRowInput): ServerRow {
 			data: row.view.data,
 			max_lines: row.view.max_lines,
 		},
-		edit: row.edit,
-		action: row.action,
+		destination: row.destination,
+		actions: row.actions,
 	};
 }
 
@@ -202,6 +201,7 @@ function createDebugFlows(): ServerFlow[] {
 					rows: [
 						{
 							type: "ColumnContainer",
+							actions: [],
 							view: {
 								content: {
 									title: "Dimensions 1",
@@ -215,13 +215,8 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Width",
 												},
 											},
-											edit: {
-												destination: "{item.dimensions.width}",
-												validation: {
-													required: "true",
-													message: "Width",
-												},
-											},
+											destination: "{width}",
+											actions: [],
 										},
 										{
 											type: "Input",
@@ -232,13 +227,8 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Height",
 												},
 											},
-											edit: {
-												destination: "height",
-												validation: {
-													required: "true",
-													message: "Height",
-												},
-											},
+											destination: "{height}",
+											actions: [],
 										},
 										{
 											type: "Input",
@@ -249,27 +239,16 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Length",
 												},
 											},
-											edit: {
-												destination: "{item.dimensions.length}",
-												validation: {
-													required: "true",
-													message: "Length",
-													minValue: "1",
-												},
-											},
+											destination: "{length}",
+											actions: [],
 										},
 									],
-								},
-							},
-							edit: {
-								validation: {
-									required: "true",
-									minAmount: "3",
 								},
 							},
 						},
 						{
 							type: "ListContainer",
+							actions: [],
 							view: {
 								content: {
 									title: "Dimensions 2",
@@ -283,13 +262,8 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Width",
 												},
 											},
-											edit: {
-												destination: "{item.dimensions.width}",
-												validation: {
-													required: "true",
-													message: "Width",
-												},
-											},
+											destination: "{width}",
+											actions: [],
 										},
 										{
 											type: "Input",
@@ -300,13 +274,8 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Height",
 												},
 											},
-											edit: {
-												destination: "height",
-												validation: {
-													required: "true",
-													message: "Height",
-												},
-											},
+											destination: "{height}",
+											actions: [],
 										},
 										{
 											type: "Input",
@@ -317,22 +286,10 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Length",
 												},
 											},
-											edit: {
-												destination: "{item.dimensions.length}",
-												validation: {
-													required: "true",
-													message: "Length",
-													minValue: "1",
-												},
-											},
+											destination: "{length}",
+											actions: [],
 										},
 									],
-								},
-							},
-							edit: {
-								validation: {
-									required: "true",
-									minAmount: "3",
 								},
 							},
 						},
@@ -344,6 +301,7 @@ function createDebugFlows(): ServerFlow[] {
 					rows: [
 						{
 							type: "SelectSegmentContainer",
+							actions: [],
 							view: {
 								content: {
 									title: "Dimensions 3",
@@ -358,13 +316,8 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Width",
 												},
 											},
-											edit: {
-												destination: "{item.dimensions.width}",
-												validation: {
-													required: "true",
-													message: "Width",
-												},
-											},
+											destination: "{width}",
+											actions: [],
 										},
 										{
 											type: "Input",
@@ -375,13 +328,8 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Height",
 												},
 											},
-											edit: {
-												destination: "height",
-												validation: {
-													required: "true",
-													message: "Height",
-												},
-											},
+											destination: "{height}",
+											actions: [],
 										},
 										{
 											type: "Input",
@@ -392,27 +340,16 @@ function createDebugFlows(): ServerFlow[] {
 													placeholder: "Length",
 												},
 											},
-											edit: {
-												destination: "{item.dimensions.length}",
-												validation: {
-													required: "true",
-													message: "Length",
-													minValue: "1",
-												},
-											},
+											destination: "{length}",
+											actions: [],
 										},
 									],
-								},
-							},
-							edit: {
-								validation: {
-									required: "true",
-									minAmount: "3",
 								},
 							},
 						},
 						{
 							type: "SelectSegmentContainer",
+							actions: [],
 							view: {
 								content: {
 									title: "Dimensions 4",
@@ -420,6 +357,7 @@ function createDebugFlows(): ServerFlow[] {
 									children: [
 										{
 											type: "ListContainer",
+											actions: [],
 											view: {
 												content: {
 													title: "Dimensions (width x height x depth)",
@@ -433,13 +371,8 @@ function createDebugFlows(): ServerFlow[] {
 																	placeholder: "Width",
 																},
 															},
-															edit: {
-																destination: "{item.dimensions.width}",
-																validation: {
-																	required: "true",
-																	message: "Width",
-																},
-															},
+															destination: "{width}",
+															actions: [],
 														},
 														{
 															type: "Input",
@@ -450,13 +383,8 @@ function createDebugFlows(): ServerFlow[] {
 																	placeholder: "Height",
 																},
 															},
-															edit: {
-																destination: "height",
-																validation: {
-																	required: "true",
-																	message: "Height",
-																},
-															},
+															destination: "{height}",
+															actions: [],
 														},
 														{
 															type: "Input",
@@ -467,22 +395,10 @@ function createDebugFlows(): ServerFlow[] {
 																	placeholder: "Length",
 																},
 															},
-															edit: {
-																destination: "{item.dimensions.length}",
-																validation: {
-																	required: "true",
-																	message: "Length",
-																	minValue: "1",
-																},
-															},
+															destination: "{length}",
+															actions: [],
 														},
 													],
-												},
-											},
-											edit: {
-												validation: {
-													required: "true",
-													minAmount: "3",
 												},
 											},
 										},
@@ -494,14 +410,9 @@ function createDebugFlows(): ServerFlow[] {
 													text: "Info row info",
 												},
 											},
+											actions: [],
 										},
 									],
-								},
-							},
-							edit: {
-								validation: {
-									required: "true",
-									minAmount: "3",
 								},
 							},
 						},

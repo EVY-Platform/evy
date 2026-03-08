@@ -12,26 +12,15 @@ struct EVYSelectPhotoRow: View, EVYRowProtocol {
 	public static let JSONType = "SelectPhoto"
 
 	private let view: SelectPhotoRowViewData
-	private let edit: SDUI_RowEdit?
+	private let destination: String?
 
-	init(view: SelectPhotoRowViewData, edit: SDUI_RowEdit?) {
+	init(view: SelectPhotoRowViewData, destination: String?) {
 		self.view = view
-		self.edit = edit
-	}
-
-	func complete() -> Bool {
-		guard let validation = edit?.validation, validation.requiredBool else { return true }
-		guard let minAmount = validation.minAmountInt else { return true }
-		return view.content.photos.count >= minAmount
-	}
-
-	func incompleteMessages() -> [String] {
-		guard let msg = edit?.validation?.message else { return [] }
-		return [msg]
+		self.destination = destination
 	}
 
 	var body: some View {
-		if let destination = edit?.destination {
+		if let destination {
 			EVYSelectPhoto(
 				title: view.content.title,
 				subtitle: view.content.subtitle,

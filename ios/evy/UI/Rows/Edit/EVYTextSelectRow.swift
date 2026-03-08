@@ -11,16 +11,16 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 	public static let JSONType = "TextSelect"
 
 	private let view: TextSelectRowViewData
-	private let edit: SDUI_RowEdit?
-	private let action: SDUI_RowAction?
+	private let destination: String
+	private let actions: [SDUI_RowAction]
 	private let value: EVYJson
 	private let selected: EVYState<Bool>
 
-	init?(view: TextSelectRowViewData, edit: SDUI_RowEdit?, action: SDUI_RowAction?) {
-		guard let destination = edit?.destination else { return nil }
+	init?(view: TextSelectRowViewData, destination: String?, actions: [SDUI_RowAction]) {
+		guard let destination else { return nil }
 		self.view = view
-		self.edit = edit
-		self.action = action
+		self.destination = destination
+		self.actions = actions
 		self.selected = EVYState(watch: destination, setter: {
 			do {
 				return try EVY.evaluateFromText($0)
@@ -38,33 +38,21 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 		self.value = decoded
 	}
 
-	func complete() -> Bool {
-		guard let validation = edit?.validation, validation.requiredBool else { return true }
-		return selected.value
-	}
-
-	func incompleteMessages() -> [String] {
-		guard let msg = edit?.validation?.message else { return [] }
-		return [msg]
-	}
-
 	var body: some View {
 		VStack(alignment: .leading) {
 			if view.content.title.count > 0 {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			if let destination = edit?.destination {
-				EVYSelectItem(
-					destination: destination,
-					value: value,
-					format: "",
-					selectionStyle: .multi,
-					target: .single_bool,
-					textStyle: .info
-				)
-				.frame(maxWidth: .infinity, alignment: .leading)
-			}
+			EVYSelectItem(
+				destination: destination,
+				value: value,
+				format: "",
+				selectionStyle: .multi,
+				target: .single_bool,
+				textStyle: .info
+			)
+			.frame(maxWidth: .infinity, alignment: .leading)
 		}
 	}
 }

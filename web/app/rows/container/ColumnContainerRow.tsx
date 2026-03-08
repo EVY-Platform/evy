@@ -8,16 +8,11 @@ const typeName = "ColumnContainerRow";
 export default defineRow(typeName, {
 	config: {
 		type: "ColumnContainer",
+		actions: [],
 		view: {
 			content: {
 				title: "Column container row title",
 				children: [],
-			},
-		},
-		edit: {
-			destination: "",
-			validation: {
-				required: "false",
 			},
 		},
 	} satisfies RowConfig,

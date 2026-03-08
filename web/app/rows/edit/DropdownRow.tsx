@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("DropdownRow", {
 	config: {
 		type: "Dropdown",
+		actions: [],
 		view: {
 			content: {
 				title: "Dropdown row title",
@@ -14,13 +15,7 @@ export default defineRow("DropdownRow", {
 			},
 			data: "",
 		},
-		edit: {
-			destination: "{item.condition_id}",
-			validation: {
-				required: "true",
-				message: "Please select an option",
-			},
-		},
+		destination: "{condition}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

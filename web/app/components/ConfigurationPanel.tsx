@@ -1,19 +1,9 @@
 import { useCallback, useContext, useMemo, useState } from "react";
+import type { SDUI_RowAction } from "evy-types/sdui/evy";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
-import type { SDUI_Flow } from "../types/flow";
 import { useRowById } from "../hooks/useRowById";
-
-const ACTION_TYPES = ["navigate", "submit", "close"] as const;
-type ActionType = (typeof ACTION_TYPES)[number];
-
-function parseActionType(value: string): ActionType | undefined {
-	for (const t of ACTION_TYPES) {
-		if (value === t || value.startsWith(`${t}:`)) return t;
-	}
-	return undefined;
-}
 
 function FriendlyInput({
 	id,
@@ -45,74 +35,51 @@ function FriendlyInput({
 	);
 }
 
-function ActionTargetSection({
-	value,
-	flows,
+function ActionItemSection({
+	actionItem,
+	index,
 	onChange,
+	onRemove,
 }: {
-	value: string;
-	flows: SDUI_Flow[];
-	onChange: (newValue: string) => void;
+	actionItem: SDUI_RowAction;
+	index: number;
+	onChange: (index: number, key: keyof SDUI_RowAction, value: string) => void;
+	onRemove: (index: number) => void;
 }) {
-	const selected = parseActionType(value);
-	const parts = value.split(":");
-	const flowId = parts[1] ?? "";
-	const pageId = parts[2] ?? "";
-
-	const flow = flows.find((f) => f.id === flowId);
-	const flowDisplayName = flow?.name ?? flowId;
-	const pageDisplayTitle =
-		flow?.pages.find((p) => p.id === pageId)?.title ?? pageId;
-
 	return (
-		<>
-			<div className="evy-rounded-full evy-flex evy-mb-2">
-				{ACTION_TYPES.map((actionType, index) => (
-					<button
-						key={actionType}
-						type="button"
-						onClick={() => {
-							if (actionType === "navigate") {
-								onChange(`navigate:${flowId}:${pageId}`);
-							} else {
-								onChange(actionType);
-							}
-						}}
-						className={`evy-flex-1 evy-border ${
-							index === 0 ? "evy-rounded-left-md evy-border-r-0" : ""
-						} ${
-							index === ACTION_TYPES.length - 1
-								? "evy-rounded-right-md evy-border-l-0"
-								: ""
-						} ${selected === actionType ? "evy-bg-gray-light" : "evy-bg-white"}`}
-					>
-						{actionType.charAt(0).toUpperCase() + actionType.slice(1)}
-					</button>
-				))}
+		<div className="evy-mb-4">
+			<div className="evy-flex evy-items-center evy-justify-between evy-mb-2">
+				<p className="evy-text-sm evy-font-semibold">Action {index + 1}</p>
+				<button
+					type="button"
+					onClick={() => onRemove(index)}
+					className="evy-text-sm evy-bg-transparent evy-border-none evy-rounded-sm evy-cursor-pointer evy-hover:bg-gray-light"
+				>
+					Remove
+				</button>
 			</div>
-			{selected === "navigate" && (
-				<>
-					<FriendlyInput
-						id="action-flow"
-						label="flow"
-						rawValue={flowId}
-						displayValue={flowDisplayName}
-						onChange={(newFlowId) =>
-							onChange(`navigate:${newFlowId}:${pageId}`)
-						}
-					/>
-					<FriendlyInput
-						id="action-page"
-						label="page"
-						rawValue={pageId}
-						displayValue={pageDisplayTitle}
-						onChange={(newPageId) =>
-							onChange(`navigate:${flowId}:${newPageId}`)
-						}
-					/>
-				</>
-			)}
-		</>
+			<FriendlyInput
+				id={`condition-${index}`}
+				label="When"
+				rawValue={actionItem.condition}
+				displayValue={actionItem.condition}
+				onChange={(newValue) => onChange(index, "condition", newValue)}
+			/>
+			<FriendlyInput
+				id={`true-${index}`}
+				label="Then"
+				rawValue={actionItem.true}
+				displayValue={actionItem.true}
+				onChange={(newValue) => onChange(index, "true", newValue)}
+			/>
+			<FriendlyInput
+				id={`false-${index}`}
+				label="Otherwise"
+				rawValue={actionItem.false}
+				displayValue={actionItem.false}
+				onChange={(newValue) => onChange(index, "false", newValue)}
+			/>
+		</div>
 	);
 }
 
@@ -238,42 +205,70 @@ export function ConfigurationPanel() {
 						{configurationElements}
 						<div className="evy-border-b evy-border-gray" />
 						<div>
-							<div className="evy-flex evy-items-center evy-justify-between evy-mb-4">
-								<p className="evy-text-lg evy-font-semibold">Action</p>
-								<button
-									type="button"
-									disabled={!row?.config.action?.target}
-									title={
-										row?.config.action?.target ? undefined : "Row has no action"
-									}
-									className={`evy-text-sm evy-bg-transparent evy-border-none evy-rounded-sm ${
-										row?.config.action?.target
-											? "evy-text-black evy-cursor-pointer evy-hover:bg-gray-light"
-											: "evy-text-gray"
-									}`}
-									onClick={() => {
-										if (!row) return;
-										dispatchRow({
-											type: "REMOVE_ROW_ACTION",
-											rowId: row.id,
-										});
-									}}
-								>
-									Remove
-								</button>
-							</div>
-							<ActionTargetSection
-								value={row?.config.action?.target ?? ""}
-								flows={flows}
-								onChange={(newValue) => {
+							<p className="evy-text-lg evy-font-semibold evy-mb-4">Actions</p>
+							{row && row.config.actions.length > 0 ? (
+								row.config.actions.map((actionItem, index) => (
+									<ActionItemSection
+										key={`${row.id}-action-${index}`}
+										actionItem={actionItem}
+										index={index}
+										onChange={(actionIndex, key, value) => {
+											if (!row) return;
+											const actions = [...row.config.actions];
+											const existingAction = actions[actionIndex];
+											if (!existingAction) return;
+											actions[actionIndex] = {
+												...existingAction,
+												[key]: value,
+											};
+											dispatchRow({
+												type: "UPDATE_ROW_ACTIONS",
+												rowId: row.id,
+												actions,
+											});
+										}}
+										onRemove={(actionIndex) => {
+											if (!row) return;
+											const actions = row.config.actions.filter(
+												(_, index) => index !== actionIndex,
+											);
+											if (actions.length === 0) {
+												dispatchRow({
+													type: "REMOVE_ROW_ACTION",
+													rowId: row.id,
+												});
+												return;
+											}
+											dispatchRow({
+												type: "UPDATE_ROW_ACTIONS",
+												rowId: row.id,
+												actions,
+											});
+										}}
+									/>
+								))
+							) : (
+								<p className="evy-text-sm evy-text-gray evy-mb-3">
+									Row has no actions
+								</p>
+							)}
+							<button
+								type="button"
+								onClick={() => {
 									if (!row) return;
 									dispatchRow({
-										type: "UPDATE_ROW_ACTION",
+										type: "UPDATE_ROW_ACTIONS",
 										rowId: row.id,
-										target: newValue,
+										actions: [
+											...row.config.actions,
+											{ condition: "", false: "", true: "" },
+										],
 									});
 								}}
-							/>
+								className="evy-w-full evy-mt-4 evy-text-sm evy-bg-transparent evy-border evy-border-gray evy-rounded-sm evy-px-2 evy-py-1 evy-cursor-pointer evy-hover:bg-gray-light"
+							>
+								Add action
+							</button>
 						</div>
 					</>
 				) : (

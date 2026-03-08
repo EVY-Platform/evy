@@ -11,33 +11,11 @@ struct EVYDropdownRow: View, EVYRowProtocol {
 	public static let JSONType = "Dropdown"
 
 	private let view: DropdownRowViewData
-	private let edit: SDUI_RowEdit?
+	private let destination: String?
 
-	init(view: DropdownRowViewData, edit: SDUI_RowEdit?) {
+	init(view: DropdownRowViewData, destination: String?) {
 		self.view = view
-		self.edit = edit
-	}
-
-	func complete() -> Bool {
-		guard let validation = edit?.validation, validation.requiredBool else { return true }
-		guard let minAmount = validation.minAmountInt else { return true }
-		guard let destination = edit?.destination else { return false }
-		do {
-			let storedValue = try EVY.getDataFromText(destination)
-			switch storedValue {
-			case let .array(arrayValue):
-				return arrayValue.count >= minAmount
-			default:
-				return storedValue.toString().count >= minAmount
-			}
-		} catch {
-			return false
-		}
-	}
-
-	func incompleteMessages() -> [String] {
-		guard let msg = edit?.validation?.message else { return [] }
-		return [msg]
+		self.destination = destination
 	}
 
 	var body: some View {
@@ -46,7 +24,7 @@ struct EVYDropdownRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			if let destination = edit?.destination {
+			if let destination {
 				EVYDropdown(
 					title: view.content.title,
 					placeholder: view.content.placeholder,

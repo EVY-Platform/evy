@@ -324,6 +324,7 @@ describe("upsert", () => {
 									text: "World",
 								},
 							},
+							actions: [],
 						},
 					],
 				},
@@ -378,7 +379,7 @@ describe("upsert", () => {
 									label: "Click me",
 								},
 							},
-							action: { target: "close" },
+							actions: [{ condition: "", false: "", true: "close" }],
 						},
 					],
 				},
@@ -521,6 +522,7 @@ describe("upsert SDUI validation", () => {
 					rows: [
 						{
 							type: "ColumnContainer",
+							actions: [],
 							view: {
 								content: {
 									title: "Container",
@@ -534,10 +536,8 @@ describe("upsert SDUI validation", () => {
 													placeholder: "Enter text",
 												},
 											},
-											edit: {
-												destination: "{item.field}",
-												validation: { required: "true" },
-											},
+											destination: "{field}",
+											actions: [],
 										},
 										{
 											type: "Input",
@@ -548,6 +548,7 @@ describe("upsert SDUI validation", () => {
 													placeholder: "Enter more text",
 												},
 											},
+											actions: [],
 										},
 									],
 								},
@@ -584,7 +585,7 @@ describe("upsert SDUI validation", () => {
 						view: {
 							content: { title: "", label: "Submit" },
 						},
-						action: { target: "submit:item" },
+						actions: [{ condition: "", false: "", true: "{create(item)}" }],
 					},
 				},
 			],

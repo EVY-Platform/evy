@@ -1,6 +1,7 @@
 import type { ContainerType } from "./row";
 import type { SDUI_Flow } from "./flow";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import type { SDUI_RowAction } from "evy-types/sdui/evy";
 
 export type RowAction =
 	| {
@@ -31,9 +32,9 @@ export type RowAction =
 			configValue: string;
 	  }
 	| {
-			type: "UPDATE_ROW_ACTION";
+			type: "UPDATE_ROW_ACTIONS";
 			rowId: string;
-			target: string;
+			actions: SDUI_RowAction[];
 	  }
 	| {
 			type: "REMOVE_ROW_ACTION";

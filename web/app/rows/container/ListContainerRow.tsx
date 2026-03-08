@@ -8,16 +8,11 @@ const typeName = "ListContainerRow";
 export default defineRow(typeName, {
 	config: {
 		type: "ListContainer",
+		actions: [],
 		view: {
 			content: {
 				title: "List container row title",
 				children: [],
-			},
-		},
-		edit: {
-			destination: "",
-			validation: {
-				required: "false",
 			},
 		},
 	} satisfies RowConfig,

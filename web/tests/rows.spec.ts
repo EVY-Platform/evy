@@ -18,6 +18,7 @@ test.describe("EVY Rows", () => {
 								text: "Test text",
 							},
 						},
+						actions: [],
 					},
 				],
 			},

@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("SelectPhotoRow", {
 	config: {
 		type: "SelectPhoto",
+		actions: [],
 		view: {
 			content: {
 				title: "Select photo row title",
@@ -15,14 +16,7 @@ export default defineRow("SelectPhotoRow", {
 				photos: "{item.photo_ids}",
 			},
 		},
-		edit: {
-			destination: "{item.photo_ids}",
-			validation: {
-				required: "true",
-				message: "Photos of the item",
-				minAmount: "3",
-			},
-		},
+		destination: "{photo_ids}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

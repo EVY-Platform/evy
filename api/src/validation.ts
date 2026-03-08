@@ -6,30 +6,18 @@ import type { SDUI_Flow, SDUI_Row } from "evy-types/sdui/evy";
 import { z } from "zod";
 
 /**
- * Schema for row validation rules
+ * Schema for a single row action item
  */
-const RowValidationSchema = z.strictObject({
-	required: z.string().optional(),
-	message: z.string().optional(),
-	minAmount: z.string().optional(),
-	minValue: z.string().optional(),
-	minCharacters: z.string().optional(),
-});
-
-/**
- * Schema for row edit configuration
- */
-const RowEditSchema = z.strictObject({
-	destination: z.string().optional(),
-	validation: RowValidationSchema.optional(),
+const RowActionSchema = z.strictObject({
+	condition: z.string(),
+	false: z.string(),
+	true: z.string(),
 });
 
 /**
  * Schema for row action configuration
  */
-const RowActionSchema = z.strictObject({
-	target: z.string(),
-});
+const RowActionsSchema = z.array(RowActionSchema);
 
 /**
  * Recursive row schema that validates the full row structure including nested children
@@ -48,8 +36,8 @@ export const RowSchema: z.ZodType<SDUI_Row> = z.lazy(() =>
 			data: z.string().optional(),
 			max_lines: z.string().optional(),
 		}),
-		edit: RowEditSchema.optional(),
-		action: RowActionSchema.optional(),
+		destination: z.string().optional(),
+		actions: RowActionsSchema.default([]),
 	}),
 );
 

@@ -11,11 +11,11 @@ struct EVYTextActionRow: View, EVYRowProtocol {
 	public static let JSONType = "TextAction"
 
 	private let view: TextActionRowViewData
-	private let action: SDUI_RowAction?
+	private let actions: [SDUI_RowAction]
 
-	init(view: TextActionRowViewData, action: SDUI_RowAction?) {
+	init(view: TextActionRowViewData, actions: [SDUI_RowAction]) {
 		self.view = view
-		self.action = action
+		self.actions = actions
 	}
 
 	var body: some View {

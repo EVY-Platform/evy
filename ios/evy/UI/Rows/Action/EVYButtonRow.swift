@@ -13,23 +13,15 @@ struct EVYButtonRow: View, EVYRowProtocol {
 	public static let JSONType = "Button"
 
 	private let view: ButtonRowViewData
-	private let action: SDUI_RowAction?
+	private let actions: [SDUI_RowAction]
 
-	init(view: ButtonRowViewData, action: SDUI_RowAction?) {
+	init(view: ButtonRowViewData, actions: [SDUI_RowAction]) {
 		self.view = view
-		self.action = action
+		self.actions = actions
 	}
 
 	private func performAction() {
-		guard let action, let target = try? SDUI_ActionTarget.parse(action.target) else { return }
-		switch target {
-		case let .navigate(route):
-			navigate(NavOperation.navigate(route))
-		case .submit:
-			navigate(NavOperation.submit)
-		case .close:
-			navigate(NavOperation.close)
-		}
+		EVYActionRunner.run(actions: actions, navigate: navigate)
 	}
 
 	var body: some View {

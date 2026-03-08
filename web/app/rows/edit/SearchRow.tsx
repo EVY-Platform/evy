@@ -7,6 +7,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("SearchRow", {
 	config: {
 		type: "Search",
+		actions: [],
 		view: {
 			content: {
 				title: "Search row title",
@@ -15,12 +16,7 @@ export default defineRow("SearchRow", {
 			},
 			data: "",
 		},
-		edit: {
-			destination: "{item.address}",
-			validation: {
-				required: "false",
-			},
-		},
+		destination: "{address}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
