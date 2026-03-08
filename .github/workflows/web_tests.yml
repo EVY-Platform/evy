@@ -7,7 +7,7 @@ on:
         branches: [dev]
 
 jobs:
-    web:
+    web_tests:
         defaults:
             run:
                 working-directory: web

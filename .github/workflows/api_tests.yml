@@ -7,7 +7,7 @@ on:
         branches: [dev]
 
 jobs:
-    api:
+    api_tests:
         defaults:
             run:
                 working-directory: api
