@@ -333,6 +333,45 @@ test.describe("Drag & Drop UX", () => {
 		).not.toBeVisible();
 	});
 
+	test("should show delete overlay on rows panel when dragging a page row", async ({
+		page,
+	}) => {
+		await initTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
+		const sidebarRow = getSidebarRow(page, "Info row title");
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
+
+		await sidebarRow.dragTo(pageContent);
+		await expect(
+			firstPage.getByText("Info row title", { exact: true }),
+		).toBeVisible();
+
+		const pageRow = getPageRow(page, "Info row title");
+		const rowBox = await pageRow.boundingBox();
+
+		if (rowBox) {
+			await page.mouse.move(
+				rowBox.x + rowBox.width / 2,
+				rowBox.y + rowBox.height / 2,
+			);
+			await page.mouse.down();
+			await page.mouse.move(
+				rowBox.x + rowBox.width / 2 + 10,
+				rowBox.y + rowBox.height / 2 + 10,
+			);
+
+			const deleteOverlay = page.locator('img[alt="Delete"]');
+			await expect(deleteOverlay).toBeVisible();
+
+			await page.mouse.up();
+		}
+	});
+
 	test("should drag and drop every single row type into a page", async ({
 		page,
 	}) => {

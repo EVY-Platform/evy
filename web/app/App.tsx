@@ -21,8 +21,15 @@ function AppContent() {
 
 	useEffect(() => {
 		return monitorForElements({
+			onDragStart({ location }: BaseEventPayload<ElementDragType>) {
+				const outermost =
+					location.initial.dropTargets[location.initial.dropTargets.length - 1];
+				const source = outermost?.data.pageId === "rows" ? "rows" : "page";
+				dispatchDragging({ type: "START_DRAGGING", source });
+			},
 			onDrop(args: BaseEventPayload<ElementDragType>) {
-				handleDrop(args, pages, dispatchRow, dispatchDragging);
+				handleDrop(args, pages, dispatchRow);
+				dispatchDragging({ type: "STOP_DRAGGING" });
 			},
 		});
 	}, [pages, dispatchRow, dispatchDragging]);

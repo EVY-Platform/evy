@@ -9,13 +9,8 @@ import { AppContext } from "../state";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 
 export default function AppPage({ pageId }: { pageId: string }) {
-	const {
-		flows,
-		activeFlowId,
-		dispatchRow,
-		dispatchDragging,
-		dispatchDropIndicator,
-	} = useContext(AppContext);
+	const { flows, activeFlowId, dispatchRow, dispatchDropIndicator } =
+		useContext(AppContext);
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
@@ -52,7 +47,6 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				canDrop: () => true,
 				onDrop: () => {
 					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" });
-					dispatchDragging({ type: "STOP_DRAGGING" });
 				},
 				onDragEnter: () =>
 					dispatchDropIndicator({
@@ -73,7 +67,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 			element.removeEventListener("click", selectPage);
 			cleanup();
 		};
-	}, [pageId, selectPage, dispatchDropIndicator, dispatchDragging]);
+	}, [pageId, selectPage, dispatchDropIndicator]);
 
 	const rowElements = useMemo(() => {
 		const page = flows

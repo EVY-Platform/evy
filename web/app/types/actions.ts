@@ -59,11 +59,14 @@ export type RowAction =
 			title: string;
 	  };
 
-export type DraggingState = boolean;
+export type DraggingSource = "rows" | "page";
+
+export type DraggingState = false | DraggingSource;
 
 export type DraggingAction =
 	| {
 			type: "START_DRAGGING";
+			source: DraggingSource;
 	  }
 	| {
 			type: "STOP_DRAGGING";

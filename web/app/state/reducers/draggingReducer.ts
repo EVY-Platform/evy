@@ -6,7 +6,7 @@ export const draggingReducer = (
 ): DraggingState => {
 	switch (action.type) {
 		case "START_DRAGGING":
-			return true;
+			return action.source;
 		case "STOP_DRAGGING":
 			return false;
 		default:

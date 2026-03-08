@@ -30,11 +30,9 @@ export function RowsPanel() {
 				element: pageInnerRef.current,
 				getData: () => ({ pageId: "rows" }),
 				canDrop: () => true,
-				onDragStart: () => dispatchDragging({ type: "START_DRAGGING" }),
-				onDrop: () => dispatchDragging({ type: "STOP_DRAGGING" }),
 			}),
 		);
-	}, [dispatchDragging]);
+	}, []);
 
 	return (
 		<div className="evy-flex evy-flex-col evy-relative evy-w-full evy-h-full">

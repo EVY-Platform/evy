@@ -91,7 +91,7 @@ export function useDraggable({
 	const currentRow = useRowById(rowId);
 
 	const indicators = useMemo(() => {
-		if (!dragging || !showIndicators) return;
+		if (dragging !== "rows" || !showIndicators) return;
 		if (dropIndicator?.rowId !== rowId) return;
 
 		const edge = dropIndicator?.edge;
@@ -104,7 +104,7 @@ export function useDraggable({
 	}, [dropIndicator, dragging, rowId, showIndicators]);
 
 	const dropzones = useMemo(() => {
-		if (!dragging || !dropIndicator || !showIndicators) return;
+		if (dragging !== "rows" || !dropIndicator || !showIndicators) return;
 
 		const hideBefore =
 			(previousRowId && !dropIndicator.rowId) ||
