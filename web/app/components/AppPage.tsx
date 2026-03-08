@@ -60,6 +60,15 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow],
 	);
 
+	const selectPage = useCallback(
+		(e: React.MouseEvent<HTMLDivElement>) => {
+			if (e.target === e.currentTarget) {
+				dispatchRow({ type: "SET_ACTIVE_PAGE", pageId });
+			}
+		},
+		[pageId, dispatchRow],
+	);
+
 	const rowElements = useMemo(() => {
 		const page = flows
 			.find((f) => f.id === activeFlowId)
@@ -86,7 +95,13 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		?.pages.find((p) => p.id === pageId);
 
 	const titleElement = page?.title ? (
-		<div className="evy-page-title">{page.title}</div>
+		<button
+			type="button"
+			className="evy-page-title evy-cursor-pointer"
+			onClick={() => dispatchRow({ type: "SET_ACTIVE_PAGE", pageId })}
+		>
+			{page.title}
+		</button>
 	) : null;
 
 	const footer = page?.footer;
@@ -96,9 +111,17 @@ export default function AppPage({ pageId }: { pageId: string }) {
 			{footer ? (
 				<div className="evy-flex evy-flex-col evy-h-full evy-rounded-24 evy-bg-white">
 					{titleElement}
+					{/* biome-ignore lint/a11y/useSemanticElements: scroll container needs div */}
 					<div
 						className="evy-overflow-scroll evy-flex-1 evy-pt-4"
 						ref={scrollableRef}
+						onClick={selectPage}
+						onKeyDown={(e) =>
+							e.key === "Enter" &&
+							dispatchRow({ type: "SET_ACTIVE_PAGE", pageId })
+						}
+						role="button"
+						tabIndex={0}
 					>
 						{rowElements}
 					</div>
@@ -114,9 +137,17 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					</div>
 				</div>
 			) : (
+				// biome-ignore lint/a11y/useSemanticElements: scroll container needs div
 				<div
 					className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4 evy-bg-white"
 					ref={scrollableRef}
+					onClick={selectPage}
+					onKeyDown={(e) =>
+						e.key === "Enter" &&
+						dispatchRow({ type: "SET_ACTIVE_PAGE", pageId })
+					}
+					role="button"
+					tabIndex={0}
 				>
 					{titleElement}
 					{rowElements}

@@ -248,6 +248,16 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				activePageId: action.pageId,
 			});
 		}
+		case "SET_ACTIVE_PAGE": {
+			const page = flow.pages.find((p) => p.id === action.pageId);
+			if (!page) return state;
+
+			return {
+				...state,
+				activePageId: action.pageId,
+				activeRowId: undefined,
+			};
+		}
 		case "UPDATE_PAGE_TITLE": {
 			const newPages = flow.pages.map((page) =>
 				page.id === action.pageId ? { ...page, title: action.title } : page,

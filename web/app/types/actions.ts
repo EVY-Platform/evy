@@ -45,6 +45,10 @@ export type RowAction =
 			rowId: string;
 	  }
 	| {
+			type: "SET_ACTIVE_PAGE";
+			pageId: string;
+	  }
+	| {
 			type: "UPDATE_PAGE_TITLE";
 			pageId: string;
 			title: string;
