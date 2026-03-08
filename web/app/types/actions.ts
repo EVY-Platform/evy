@@ -36,6 +36,10 @@ export type RowAction =
 			target: string;
 	  }
 	| {
+			type: "REMOVE_ROW_ACTION";
+			rowId: string;
+	  }
+	| {
 			type: "SET_ACTIVE_FLOW";
 			flowId: string;
 	  }
@@ -43,6 +47,10 @@ export type RowAction =
 			type: "SET_ACTIVE_ROW";
 			pageId: string;
 			rowId: string;
+	  }
+	| {
+			type: "SET_ACTIVE_PAGE";
+			pageId: string;
 	  }
 	| {
 			type: "UPDATE_PAGE_TITLE";
