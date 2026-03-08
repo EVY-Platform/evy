@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { initTestFlows } from "./utils";
+import { getRowsPanel, initTestFlows } from "./utils";
 
 test.describe("EVY Rows", () => {
 	test("should display available row components in the Rows panel", async ({
@@ -23,13 +23,8 @@ test.describe("EVY Rows", () => {
 			},
 		]);
 		await page.goto("/");
-		const rowsPanel = page
-			.getByText("Rows", { exact: true })
-			.first()
-			.locator("..");
+		const rowsPanel = getRowsPanel(page);
 
-		// Check that all expected row components are present by verifying their unique text titles
-		// Each row component has a unique title that we can verify
 		const expectedRowTitles = [
 			"Info row title",
 			"Text row title",
@@ -46,9 +41,54 @@ test.describe("EVY Rows", () => {
 			"Text select row title",
 		];
 
-		// Verify each row title is visible (this ensures we have exactly 13 row components)
 		for (const title of expectedRowTitles) {
 			await expect(rowsPanel.getByText(title, { exact: true })).toBeVisible();
 		}
+	});
+
+	test("should filter rows by search query", async ({ page }) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Page 1",
+				rows: [],
+			},
+		]);
+		await page.goto("/");
+		const rowsPanel = getRowsPanel(page);
+		const searchInput = rowsPanel.getByPlaceholder("Button, Calendar, etc...");
+
+		await expect(searchInput).toBeVisible();
+
+		await searchInput.fill("input");
+
+		await expect(
+			rowsPanel.getByText("Input row title", { exact: true }),
+		).toBeVisible();
+		await expect(
+			rowsPanel.getByText("Input list row title", { exact: true }),
+		).toBeVisible();
+
+		await expect(
+			rowsPanel.getByText("Button row text", { exact: true }),
+		).not.toBeVisible();
+		await expect(
+			rowsPanel.getByText("Calendar row title", { exact: true }),
+		).not.toBeVisible();
+		await expect(
+			rowsPanel.getByText("Text row title", { exact: true }),
+		).not.toBeVisible();
+
+		await searchInput.clear();
+
+		await expect(
+			rowsPanel.getByText("Button row text", { exact: true }),
+		).toBeVisible();
+		await expect(
+			rowsPanel.getByText("Calendar row title", { exact: true }),
+		).toBeVisible();
+		await expect(
+			rowsPanel.getByText("Input row title", { exact: true }),
+		).toBeVisible();
 	});
 });
