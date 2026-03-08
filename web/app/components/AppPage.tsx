@@ -125,7 +125,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					</div>
 					<button
 						type="button"
-						className="evy-border-none evy-border-t evy-border-gray-light evy-hover:bg-gray-light evy-cursor-pointer evy-rounded-bottom-24 evy-w-full evy-bg-white evy-p-0"
+						className="evy-border-t evy-border-gray-light evy-hover:bg-gray-light evy-cursor-pointer evy-rounded-bottom-24 evy-w-full evy-bg-white evy-p-0"
 						onClick={() => selectRow(footer.id)}
 					>
 						{footer.row}
