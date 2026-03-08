@@ -38,13 +38,17 @@ struct EVYSearchMultiple: View {
             }
             
             for value in arrayValue {
-                let formattedValue = EVY.formatData(json: value, format: format)
+                let formattedValue = try EVY.formatData(json: value, format: format)
                 let alreadySelected = selected.contains { $0.value == formattedValue }
                 if !alreadySelected {
                     selected.append(EVYSearchResult(data: value, value: formattedValue))
                 }
             }
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYSearchMultiple] Error refreshing data: \(error)")
+            #endif
+        }
     }
     
     func select(_ element: EVYSearchResult) {
@@ -137,6 +141,7 @@ struct EVYSearchMultiple: View {
 		asyncView
 	} view: {
 		try! await EVY.createItem()
+		
 		return EVYSearch(source: "{api:tags}",
 						 destination: "{item.tags}",
 						 placeholder: "Search",

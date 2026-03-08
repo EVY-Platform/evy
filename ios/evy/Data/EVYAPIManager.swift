@@ -7,15 +7,14 @@
 
 import Foundation
 
-enum EVYAPIManagerError: Error {
-    case loginError
-	case invalidMethod
+private func requireAPIHost() -> String {
+	guard let host = ProcessInfo.processInfo.environment["API_HOST"], !host.isEmpty else {
+		fatalError("API_HOST is required (set by run-e2e.sh or Xcode scheme for iOS e2e)")
+	}
+	return host
 }
 
-let DEFAULT_HOST = "localhost"
-let DEFAULT_PORT = 8000
-
-let API_HOST = ProcessInfo.processInfo.environment["API_HOST"] ?? "\(DEFAULT_HOST):\(DEFAULT_PORT)"
+let API_HOST = requireAPIHost()
 let userDefault = UserDefaults.standard
 
 final class EVYAPIManager {
@@ -33,14 +32,17 @@ final class EVYAPIManager {
 	}
     
     private init() {
-		if ProcessInfo.processInfo.environment["DEBUG"] == "true" {
-			self.rpcWS = EVYWebsocketMock()
-		} else {
-			self.rpcWS = EVYWebsocket(host: API_HOST)
-		}
+		self.rpcWS = EVYWebsocket(host: API_HOST)
 	}
 	
 	private func validateAuth() async throws {
-		if (!authed) { authed = try await rpcWS.connect(token: "Geo", os: EVYOS.ios) }
+		if (authed) { return }
+		
+		authed = try await rpcWS.connect(token: "Geo", os: DataOS.ios)
+
+		let result = try await rpcWS.subscribe(event: "flowUpdated")
+		if result["flowUpdated"] != "ok" {
+			throw EVYRPCError.subscriptionError("Failed to subscribe to flowUpdated events")
+		}
 	}
 }

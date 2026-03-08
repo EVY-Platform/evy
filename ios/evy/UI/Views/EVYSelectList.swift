@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EVYSelectList: View {
-    let options: EVYJsonArray
+    let options: [EVYJson]
     let format: String
     let destination: String
     
@@ -33,7 +33,7 @@ struct EVYSelectList: View {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.syncData()
+		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
 		return Group {

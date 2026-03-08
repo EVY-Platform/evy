@@ -8,49 +8,45 @@
 import SwiftUI
 
 struct EVYListContainerRow: View, EVYRowProtocol {
-    public static let JSONType = "ListContainer"
-    
-    private let view: SDUI.ContainerView
-	private let edit: SDUI.Edit
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(SDUI.ContainerView.self, forKey:.view)
-		edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-    }
-	
-	func complete() -> Bool {
-		let completeChildren = view.content.children.filter {
-			$0.child.complete()
-		}
-		return completeChildren.count >= Int(edit.validation.minAmount ?? 1)
+	public static let JSONType = "ListContainer"
+
+	private let view: ListContainerRowViewData
+	private let edit: SDUI_RowEdit?
+
+	init(view: ListContainerRowViewData, edit: SDUI_RowEdit?) {
+		self.view = view
+		self.edit = edit
 	}
-	
+
+	func complete() -> Bool {
+		guard let minAmount = edit?.validation?.minAmountInt else { return true }
+		let completeCount = view.content.children.filter { SDUI_Row.complete(row: $0) }.count
+		return completeCount >= minAmount
+	}
+
 	func incompleteMessages() -> [String] {
 		view.content.children
-			.filter { $0.child.view.complete() == false }
-			.map { $0.child.view.incompleteMessages() }
-			.flatMap(\.self)
+			.filter { !SDUI_Row.complete(row: $0) }
+			.flatMap { SDUI_Row.incompleteMessages(row: $0) }
 	}
-    
-    var body: some View {
-        VStack(alignment:.leading) {
-			if view.content.children.first!.title.count > 0 {
-				EVYTextView(view.content.children.first!.title)
+
+	var body: some View {
+		VStack(alignment: .leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-            VStack(alignment: .leading) {
-				ForEach(view.content.children, id: \.child.id) { child in
-					child.child
-                }
-            }
-        }
-    }
+			ForEach(view.content.children, id: \.id) { child in
+				EVYRow(row: child)
+			}
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","2","rows", "0", "views", "content", "children", "0", "child"])
+		try! await EVY.getRow(["1", "pages", "2", "rows", "0", "view", "content", "children", "0"])
 	}
 }

@@ -1,0 +1,242 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "data",
+	"title": "DATA_Rows",
+	"description": "API persistence row types: DATA_Flow, DATA_Device, DATA_Service, etc.",
+	"oneOf": [
+		{
+			"$ref": "#/$defs/DATA_Flow"
+		},
+		{
+			"$ref": "#/$defs/DATA_Data"
+		},
+		{
+			"$ref": "#/$defs/DATA_Device"
+		},
+		{
+			"$ref": "#/$defs/DATA_Service"
+		},
+		{
+			"$ref": "#/$defs/DATA_Organization"
+		},
+		{
+			"$ref": "#/$defs/DATA_ServiceProvider"
+		}
+	],
+	"$defs": {
+		"DATA_Flow": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "data", "createdAt", "updatedAt"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"data": {
+					"$ref": "../sdui/evy.schema.json"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"DATA_Data": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "data", "createdAt", "updatedAt"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"data": {
+					"$ref": "#/$defs/NamespacedData"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"OS": {
+			"type": "string",
+			"enum": ["ios", "android", "Web"]
+		},
+		"DATA_Device": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["token", "os", "createdAt"],
+			"properties": {
+				"token": {
+					"type": "string",
+					"maxLength": 256
+				},
+				"os": {
+					"$ref": "#/$defs/OS"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"DATA_Service": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "name", "description", "createdAt", "updatedAt"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"name": {
+					"type": "string",
+					"maxLength": 50
+				},
+				"description": {
+					"type": "string"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"DATA_Organization": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"name",
+				"description",
+				"logo",
+				"url",
+				"supportEmail",
+				"createdAt",
+				"updatedAt"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"name": {
+					"type": "string",
+					"maxLength": 100
+				},
+				"description": {
+					"type": "string"
+				},
+				"logo": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"url": {
+					"type": "string",
+					"maxLength": 50
+				},
+				"supportEmail": {
+					"type": "string",
+					"maxLength": 50
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"DATA_ServiceProvider": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"fkServiceId",
+				"fkOrganizationId",
+				"name",
+				"description",
+				"logo",
+				"url",
+				"createdAt",
+				"updatedAt",
+				"retired"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"fkServiceId": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"fkOrganizationId": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"name": {
+					"type": "string",
+					"maxLength": 100
+				},
+				"description": {
+					"type": "string"
+				},
+				"logo": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"url": {
+					"type": "string",
+					"maxLength": 50
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"retired": {
+					"type": "boolean",
+					"default": false
+				}
+			}
+		},
+		"NamespacedData": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"evy": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "../common/json.schema.json#/$defs/JSONValue"
+					}
+				},
+				"marketplace": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "../common/json.schema.json#/$defs/JSONValue"
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,16 +1,178 @@
-# Fresh project
+# EVY Web
 
-Your new Fresh project is ready to go. You can follow the Fresh "Getting
-Started" guide here: https://fresh.deno.dev/docs/getting-started
+A React-based app builder built with Bun.
 
-### Usage
+Shared types (`SDUI_Flow`, `SDUI_Page`, `SDUI_Row`, RPC payloads) come from the schema-generated `evy-types` package (see `tsconfig.json` path alias to `../types/generated/ts`). After changing schemas in `types/schema/`, run `bun run types:generate` from the repo root and commit the updated generated files.
 
-Make sure to install Deno: https://deno.land/manual/getting_started/installation
+## Architecture
 
-Then start the project:
+```mermaid
+graph TB
+    subgraph app [App Layer]
+        App[App.tsx]
+        AppContent[AppContent]
+    end
 
+    subgraph state [State Management]
+        AppProvider[AppProvider]
+        AppContext[AppContext]
+        PageReducer[pageReducer]
+        DraggingReducer[draggingReducer]
+        DropIndicatorReducer[dropIndicatorReducer]
+    end
+
+    subgraph panels [UI Panels]
+        RowsPanel[RowsPanel]
+        AppPage[AppPage]
+        ConfigPanel[ConfigurationPanel]
+        FlowSelector[FlowSelector]
+    end
+
+    subgraph dragdrop [Drag and Drop]
+        useDraggable[useDraggable hook]
+        DraggableRowContainer[DraggableRowContainer]
+        RowPrimitive[RowPrimitive]
+        DropHandler[dropHandler]
+    end
+
+    subgraph rows [Row Components]
+        EVYRow[EVYRow base class]
+        ViewRows[View Rows]
+        EditRows[Edit Rows]
+        ActionRows[Action Rows]
+        ContainerRows[Container Rows]
+    end
+
+    subgraph designsystem [Design System]
+        Button[Button]
+        Input[Input]
+        Dropdown[Dropdown]
+        DropIndicator[dropIndicator]
+    end
+
+    App --> AppProvider
+    AppProvider --> AppContext
+    AppContext --> PageReducer
+    AppContext --> DraggingReducer
+    AppContext --> DropIndicatorReducer
+
+    App --> AppContent
+    AppContent --> RowsPanel
+    AppContent --> AppPage
+    AppContent --> ConfigPanel
+    App --> FlowSelector
+
+    AppPage --> DraggableRowContainer
+    DraggableRowContainer --> useDraggable
+    DraggableRowContainer --> RowPrimitive
+    RowsPanel --> DraggableRowContainer
+    AppContent --> DropHandler
+
+    DraggableRowContainer --> EVYRow
+    EVYRow --> ViewRows
+    EVYRow --> EditRows
+    EVYRow --> ActionRows
+    EVYRow --> ContainerRows
+
+    RowPrimitive --> DropIndicator
+    EditRows --> designsystem
+    ActionRows --> designsystem
 ```
-deno task start
+
+### Key Components
+
+| Component              | Description                                                         |
+| ---------------------- | ------------------------------------------------------------------- |
+| **App**                | Main entry point, sets up layout with header and three-panel design |
+| **AppProvider**        | React context provider managing flows, rows, and drag state         |
+| **RowsPanel**          | Left sidebar displaying available row components                    |
+| **AppPage**            | Center panel showing phone preview with draggable rows              |
+| **ConfigurationPanel** | Right sidebar for editing selected row properties                   |
+| **useDraggable**       | Custom hook encapsulating drag-and-drop behavior                    |
+| **EVYRow**             | Abstract base class for all row components                          |
+
+### Row Categories
+
+- **View Rows**: Display-only components (TextRow, InfoRow, InputListRow)
+- **Edit Rows**: Form input components (InputRow, DropdownRow, CalendarRow, etc.)
+- **Action Rows**: Interactive components (ButtonRow, TextActionRow)
+- **Container Rows**: Layout components that hold child rows (ListContainer, ColumnContainer, etc.)
+
+## Getting Started
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) installed on your system
+
+### Installation
+
+```bash
+bun install
 ```
 
-This will watch the project directory and restart as necessary.
+Create a root `.env` file at the repository root (`../.env` from the `web` directory). The web scripts load environment variables from this shared root env file.
+
+### Running the App
+
+#### Development Mode
+
+```bash
+bun run dev
+```
+
+This will build the application and start the dev server with hot reloading.
+
+#### Production Mode
+
+```bash
+bun run build
+bun run start
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### Docker
+
+#### Build and Run
+
+```bash
+docker build -t evy-web .
+docker run -p 3000:3000 evy-web
+```
+
+#### Using Docker Compose
+
+From the repo root (the web app has no `docker-compose.yml` in its directory):
+
+```bash
+docker compose up -d
+```
+
+You can configure the port via the `WEB_PORT` environment variable (default: 3000).
+
+## Testing
+
+This project includes comprehensive end-to-end tests using Playwright.
+
+### Setup
+
+```bash
+bun run test:setup
+```
+
+### Running Tests
+
+```bash
+bun run test
+```
+
+To run the tests with UI or debug mode:
+
+```bash
+bun run test --ui
+bun run test --debug
+```
+
+## License
+
+The web app is licensed under Apache 2.0; see [LICENSE](LICENSE). The rest of the EVY repo is GPL-3.0-only.

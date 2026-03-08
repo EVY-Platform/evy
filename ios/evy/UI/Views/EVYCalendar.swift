@@ -163,9 +163,8 @@ struct EVYCalendarAxisView: View {
 }
 
 struct ViewOffsetKey: PreferenceKey {
-    typealias Value = CGPoint
-    static var defaultValue = CGPoint.zero
-    static func reduce(value: inout Value, nextValue: () -> Value) {
+    static var defaultValue: CGPoint { CGPoint.zero }
+    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
         value.x += nextValue().x
         value.y += nextValue().y
     }
@@ -310,6 +309,7 @@ private func calculateIndex(x: Int, y: Int, numberOfRows: Int) -> Int {
     y+(x*(numberOfRows))
 }
 
+@MainActor
 private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
     do {
         let timeslotsJSON = try EVY.getDataFromText(source)

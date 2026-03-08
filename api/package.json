@@ -2,32 +2,35 @@
 	"name": "evy",
 	"version": "0.0.1",
 	"description": "Evy api",
-	"type": "module",
-	"main": "dist/index.js",
-	"scripts": {
-		"lint": "tslint -c tslint.json -p tsconfig.json --fix",
-		"prisma_generate": "prisma generate",
-		"prisma_migration": "prisma migrate dev",
-		"prisma_migrate": "prisma migrate deploy",
-		"build": "tsc",
-		"start": "yarn prisma_migration && yarn prisma_migrate && node .",
-		"dev": "nodemon --watch src -e ts --exec 'yarn build && node .'"
-	},
 	"license": "GPL-3.0-only",
+	"type": "module",
+	"main": "src/index.ts",
+	"scripts": {
+		"dev": "bun --env-file=../.env --watch src/index.ts",
+		"build": "bun build src/index.ts --outdir dist --target bun",
+		"start": "bun run db:migrate && bun --env-file=../.env src/index.ts",
+		"test": "bun --env-file=../.env test src/",
+		"test:e2e": "bun --env-file=../.env test e2e/",
+		"lint": "bunx biome check",
+		"format": "bunx biome format --write .",
+		"db:generate": "bun --env-file=../.env drizzle-kit generate",
+		"db:migrate": "bun --env-file=../.env drizzle-kit migrate",
+		"db:push": "bun --env-file=../.env drizzle-kit push",
+		"db:studio": "bun --env-file=../.env drizzle-kit studio"
+	},
 	"devDependencies": {
-		"@types/node": "^18.11.9",
-		"@types/uuid": "^9.0.2",
-		"@types/ws": "^8.5.5",
-		"nodemon": "^2.0.22",
-		"prettier": "^3.0.1",
-		"prisma": "^5.1.1",
-		"tslint": "^6.1.3",
-		"typescript": "^5.1.6"
+		"@electric-sql/pglite": "^0.3.15",
+		"@types/node": "^25.2.0",
+		"@types/uuid": "^11.0.0",
+		"@types/ws": "^8.18.1",
+		"bun-types": "^1.3.8",
+		"drizzle-kit": "^0.31.8"
 	},
 	"dependencies": {
-		"@prisma/client": "^5.1.1",
-		"dotenv": "^16.3.1",
-		"rpc-websockets": "^7.5.1",
-		"uuid": "^9.0.0"
+		"drizzle-orm": "^0.45.1",
+		"postgres": "^3.4.8",
+		"rpc-websockets": "^9.3.3",
+		"uuid": "^13.0.0",
+		"zod": "^4.3.6"
 	}
 }

@@ -1,0 +1,22 @@
+name: api
+
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: ./api/Dockerfile
+      target: runner
+    environment:
+      - API_PORT=${API_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_PORT=${DB_PORT}
+      - DB_DOMAIN=host.docker.internal
+      - DB_DATABASE=${DB_DATABASE}
+    env_file:
+      - ../.env
+    ports:
+      - ${API_PORT}:${API_PORT}
+    # Allow container to connect to host machine's database
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

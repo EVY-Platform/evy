@@ -60,19 +60,29 @@ class EVYSearchController: ObservableObject {
 				}
 			""".data(using: .utf8)!
             let id = UUID()
-            try! EVY.data.create(key: id.uuidString, data: address)
-            let json = try! EVY.getDataFromProps(id.uuidString)
-            let jsonFormatted = EVY.formatData(json: json, format: format)
-            results = [EVYSearchResult(data: json, value: jsonFormatted)]
+            do {
+                try EVY.data.create(key: id.uuidString, data: address)
+                let json = try EVY.getDataFromProps(id.uuidString)
+                let jsonFormatted = try EVY.formatData(json: json, format: format)
+                results = [EVYSearchResult(data: json, value: jsonFormatted)]
+            } catch {
+                #if DEBUG
+                print("[EVYSearchController] Error in local search: \(error)")
+                #endif
+                results = []
+            }
         default:
             do {
                 let data = try await EVYMovieAPI().search(term: name)
                 let response = try JSONDecoder().decode([EVYJson].self, from: data)
                 for res in response {
-                    let resFormatted = EVY.formatData(json: res, format: format)
+                    let resFormatted = try EVY.formatData(json: res, format: format)
                     results.append(EVYSearchResult(data: res, value: resFormatted))
                 }
             } catch {
+                #if DEBUG
+                print("[EVYSearchController] Error in API search: \(error)")
+                #endif
                 results = []
             }
         }

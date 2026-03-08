@@ -1,18 +1,19 @@
 {
 	"compilerOptions": {
-		"allowJs": true,
-		"target": "es6",
-		"moduleResolution": "nodenext",
-		"resolveJsonModule": true,
-		"outDir": "./dist",
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
+		"module": "ESNext",
+		"target": "ESNext",
+		"moduleResolution": "bundler",
 		"strict": true,
 		"skipLibCheck": true,
+		"noEmit": true,
+		"types": ["bun-types"],
+		"baseUrl": ".",
 		"paths": {
-			"*": ["./node_modules/*"]
-		},
-		"typeRoots": ["./src/types.d.ts", "./node_modules/@types/"]
+			"evy-types": ["../types/generated/ts", "./types/generated/ts"],
+			"evy-types/*": ["../types/generated/ts/*", "./types/generated/ts/*"],
+			"drizzle-orm": ["./node_modules/drizzle-orm"],
+			"drizzle-orm/*": ["./node_modules/drizzle-orm/*"]
+		}
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*", "scripts/seed.ts", "e2e/**/*"]
 }

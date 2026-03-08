@@ -8,60 +8,53 @@
 import SwiftUI
 
 struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
-    public static let JSONType = "SelectSegmentContainer"
-    
-	private let view: SDUI.ContainerView
-	private let edit: SDUI.Edit
-    @State private var selected: String
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(SDUI.ContainerView.self, forKey:.view)
-		edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        selected = view.content.children.first!.title
-    }
-	
-	init(from decoder: Decoder) throws {
-		let container = try decoder.container(keyedBy: RowCodingKeys.self)
-		try self.init(container: container)
-	}
-	
-	func encode(to encoder: Encoder) throws {
-		var container = encoder.container(keyedBy: RowCodingKeys.self)
-		try container.encode(view, forKey: .view)
-		try container.encode(edit, forKey: .edit)
-	}
-	
-	func complete() -> Bool {
-		let completeChildren = view.content.children.filter {
-			$0.child.complete()
-		}
-		return completeChildren.count >= Int(edit.validation.minAmount ?? 1)
-	}
-	
-	func incompleteMessages() -> [String] {
-		view.content.children
-			.filter { $0.child.view.complete() == false }
-			.map { $0.child.view.incompleteMessages() }
-			.flatMap(\.self)
+	public static let JSONType = "SelectSegmentContainer"
+
+	private let view: SelectSegmentContainerRowViewData
+	private let edit: SDUI_RowEdit?
+	@State private var selected: Int = 0
+
+	init(view: SelectSegmentContainerRowViewData, edit: SDUI_RowEdit?) {
+		self.view = view
+		self.edit = edit
 	}
 
-    var body: some View {
-        Picker("", selection: $selected) {
-            ForEach(view.content.children, id: \.child.id) { child in
-                EVYTextView(child.title).tag(child.title)
-            }
-        }
-        .pickerStyle(.segmented)
-        .padding(.bottom, Constants.majorPadding)
-        
-		view.content.children.first { $0.title == selected }?.child
-    }
+	func complete() -> Bool {
+		guard let minAmount = edit?.validation?.minAmountInt else { return true }
+		let completeCount = view.content.children.filter { SDUI_Row.complete(row: $0) }.count
+		return completeCount >= minAmount
+	}
+
+	func incompleteMessages() -> [String] {
+		view.content.children
+			.filter { !SDUI_Row.complete(row: $0) }
+			.flatMap { SDUI_Row.incompleteMessages(row: $0) }
+	}
+
+	var body: some View {
+		VStack(alignment: .leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+			}
+			Picker("", selection: $selected) {
+				ForEach(Array(view.content.segments.enumerated()), id: \.offset) { index, segment in
+					Text(segment).tag(index)
+				}
+			}
+			.pickerStyle(.segmented)
+			.padding(.bottom, Constants.majorPadding)
+
+			if selected < view.content.children.count {
+				EVYRow(row: view.content.children[selected])
+			}
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","2","rows", "0"])
+		try! await EVY.getRow(["1", "pages", "2", "rows", "0"])
 	}
 }

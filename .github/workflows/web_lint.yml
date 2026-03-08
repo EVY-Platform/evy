@@ -1,0 +1,49 @@
+name: Web Lint
+
+on:
+    pull_request:
+        branches: [dev]
+    push:
+        branches: [dev]
+
+jobs:
+    web_lint:
+        defaults:
+            run:
+                working-directory: web
+
+        timeout-minutes: 1
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
+              with:
+                  working-directory: web
+                  path-filter: 'web/**'
+                  path-filter-extra: 'types/**'
+
+            - name: Install root dependencies
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun install
+              working-directory: .
+
+            - name: Generate types
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun types:generate
+              working-directory: .
+
+            - name: Run lint
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run lint
+
+            - name: Upload test results
+              uses: actions/upload-artifact@v4
+              if: always() && steps.setup.outputs.has-changes == 'true'
+              with:
+                  name: lint-report
+                  path: lint-report/
+                  retention-days: 1

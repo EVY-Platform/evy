@@ -1,0 +1,71 @@
+[
+	{
+		"id": "f267c629-2594-4770-8cec-d5324ebb4058",
+		"name": "Home",
+		"type": "read",
+		"data": "",
+		"pages": [
+			{
+				"id": "55e427ac-263c-441f-9673-f60627b1baea",
+				"title": "Home",
+				"rows": [
+					{
+						"id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
+						"type": "ColumnContainer",
+						"view": {
+							"content": {
+								"title": "",
+								"children": [
+									{
+										"id": "441c1433-446b-4682-854d-5d795ef52709",
+										"type": "Button",
+										"view": {
+											"content": {
+												"title": "",
+												"label": "View"
+											}
+										},
+										"action": {
+											"target": "navigate:74a49d4b-2176-4925-857a-e29e2991f1bd:82cae120-c7b1-4c29-bd42-e1521320b109"
+										}
+									},
+									{
+										"id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+										"type": "Button",
+										"view": {
+											"content": {
+												"title": "",
+												"label": "Create"
+											}
+										},
+										"action": {
+											"target": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:306ed62c-c2af-4652-a873-26c7a388972d"
+										}
+									},
+									{
+										"id": "e2ecbf8a-36dc-4d9a-8076-5ab542a0c085",
+										"type": "Button",
+										"view": {
+											"content": {
+												"title": "",
+												"label": "Test"
+											}
+										},
+										"action": {
+											"target": "navigate:18e988ea-9131-4ee3-a692-77c8f3d36c58:77cb970d-9845-442e-87ef-dfc3d27fcdcd"
+										}
+									}
+								]
+							}
+						},
+						"edit": {
+							"validation": {
+								"required": "false"
+							}
+						}
+					}
+				]
+			}
+		]
+	}
+]

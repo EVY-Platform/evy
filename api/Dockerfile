@@ -1,34 +1,48 @@
-#build deps
-FROM node:18-alpine AS dep_builder
+FROM oven/bun:1-alpine AS base
+
 WORKDIR /app
-COPY package.json .
-COPY yarn.lock .
-RUN yarn install
 
-#build code
-FROM node:18-alpine AS code_builder
+# Generate shared types from schema (no committed generated files)
+FROM base AS typesgen
+COPY package.json bun.lock* ./
+COPY types/schema ./types/schema
+COPY scripts ./scripts
+RUN bun install --frozen-lockfile && bun run types:generate
+
+# Install dependencies stage
+FROM base AS deps
+COPY api/package.json api/bun.lock* ./
+RUN bun install --frozen-lockfile
+
+# Build stage
+FROM base AS builder
 WORKDIR /app
-COPY . .
-COPY --from=dep_builder ./app/node_modules ./node_modules
-RUN yarn prisma_generate
-RUN yarn build
+COPY --from=deps /app/node_modules ./node_modules
+COPY api/package.json api/bun.lock* ./
+COPY api/tsconfig.json ./tsconfig.json
+COPY api/src ./src
+COPY api/drizzle.config.ts ./
+COPY api/drizzle* ./drizzle/
+COPY --from=typesgen /app/types/generated/ts ./types/generated/ts
 
-#final - We need alpine and not buster-slim because of libSSL
-FROM node:18-alpine AS final
+# Production stage
+FROM base AS runner
+
 WORKDIR /app
-COPY --from=code_builder ./app/dist ./dist
-COPY --from=code_builder ./app/prisma ./prisma
-COPY package.json .
-COPY yarn.lock .
-RUN yarn install --production
-RUN rm ./yarn.lock
 
-ARG API_PORT="8001"
-ARG DATABASE_URL
+# Copy node_modules
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/types ./types
+COPY --from=builder /app/drizzle.config.ts ./
+COPY --from=builder /app/drizzle ./drizzle
 
+ARG API_PORT
 ENV API_PORT=$API_PORT
-ENV DATABASE_URL=$DATABASE_URL
 
 EXPOSE $API_PORT
 
-CMD [ "yarn", "start" ]
+# Run migrations and start the server
+CMD ["bun", "run", "start"]

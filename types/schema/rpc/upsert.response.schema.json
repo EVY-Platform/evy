@@ -1,0 +1,10 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "upsert-response",
+	"title": "UpsertResponse",
+	"description": "Response for upsert (DATA_Flow | DATA_Data)",
+	"oneOf": [
+		{ "$ref": "../data/data.schema.json#/$defs/DATA_Flow" },
+		{ "$ref": "../data/data.schema.json#/$defs/DATA_Data" }
+	]
+}

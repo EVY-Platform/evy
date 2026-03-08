@@ -14,10 +14,10 @@ public enum EVYDataParseError: Error {
     case unprocessableValue
 }
 
-struct EVYValue {
-    let value: String
-    let prefix: String?
-    let suffix: String?
+struct EVYValue: Equatable {
+    var value: String
+    var prefix: String?
+    var suffix: String?
     
     init(_ value: String, _ prefix: String?, _ suffix: String?) {
         self.value = value
@@ -40,8 +40,8 @@ class EVYData {
         self.data = data
     }
     
-    func decoded() -> EVYJson {
-        try! JSONDecoder().decode(EVYJson.self, from: data)
+    func decoded() throws -> EVYJson {
+        try JSONDecoder().decode(EVYJson.self, from: data)
     }
     
     func updateDataWithData(_ data: Data, props: [String]) throws {
@@ -49,8 +49,8 @@ class EVYData {
             return
         }
         
-        let currentDataAsJson = decoded()
-        let newDataAsJson = try! JSONDecoder().decode(EVYJson.self, from: data)
+        let currentDataAsJson = try decoded()
+        let newDataAsJson = try JSONDecoder().decode(EVYJson.self, from: data)
         
         let updatedJson = try getUpdatedJson(props: props, data: currentDataAsJson, value: newDataAsJson)
         self.data = try JSONEncoder().encode(updatedJson)
@@ -107,50 +107,43 @@ class EVYData {
     }
 }
 
-public typealias EVYJsonString = String
-public typealias EVYJsonInt = Int
-public typealias EVYJsonDecimal = Decimal
-public typealias EVYJsonBool = Bool
-public typealias EVYJsonArray = [EVYJson]
-public typealias EVYJsonDict = [String: EVYJson]
-
 public enum EVYJson: Codable, Hashable {
-    case string(EVYJsonString)
-    case int(EVYJsonInt)
-	case decimal(EVYJsonDecimal)
-    case bool(EVYJsonBool)
-    case dictionary(EVYJsonDict)
-    case array(EVYJsonArray)
+	case string(String)
+	case int(Int)
+	case decimal(Decimal)
+	case bool(Bool)
+	case dictionary([String: EVYJson])
+	case array([EVYJson])
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
-        if let stringValue = try? container.decode(EVYJsonString.self) {
+        if let stringValue = try? container.decode(String.self) {
             self = .string(stringValue)
             return
         }
         
-        if let intValue = try? container.decode(EVYJsonInt.self) {
+        if let intValue = try? container.decode(Int.self) {
             self = .int(intValue)
             return
         }
 		
-		if let decimalValue = try? container.decode(EVYJsonDecimal.self) {
+		if let decimalValue = try? container.decode(Decimal.self) {
 			self = .decimal(decimalValue)
 			return
 		}
         
-        if let boolValue = try? container.decode(EVYJsonBool.self) {
+        if let boolValue = try? container.decode(Bool.self) {
             self = .bool(boolValue)
             return
         }
 
-        if let dictionaryValue = try? container.decode(EVYJsonDict.self) {
+        if let dictionaryValue = try? container.decode([String: EVYJson].self) {
             self = .dictionary(dictionaryValue)
             return
         }
 
-        if let arrayValue = try? container.decode(EVYJsonArray.self) {
+        if let arrayValue = try? container.decode([EVYJson].self) {
             self = .array(arrayValue)
             return
         }
@@ -159,7 +152,8 @@ public enum EVYJson: Codable, Hashable {
     }
     
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(identifierValue())
+        // Use toString() for hashing since identifierValue() requires MainActor
+        hasher.combine(toString())
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -211,6 +205,7 @@ public enum EVYJson: Codable, Hashable {
         }
     }
     
+    @MainActor
     public func identifierValue() -> String {
         switch self {
         case .dictionary(_):
@@ -220,6 +215,7 @@ public enum EVYJson: Codable, Hashable {
         }
     }
     
+    @MainActor
     public func parseProp(props: [String]) -> EVYJson {
         if props.count < 1 {
             return self
@@ -256,6 +252,7 @@ public enum EVYJson: Codable, Hashable {
         }
     }
     
+    @MainActor
     private func parseIdOrIds(props: [String], value: EVYJson) -> EVYJson {
         let key = props.first!
         
@@ -298,7 +295,23 @@ public enum EVYJson: Codable, Hashable {
                     }
                 }
             }
-        } catch {}
+        } catch EVYDataError.keyNotFound {
+            #if DEBUG
+            print("[EVYData] parseIdOrIds: key not found for \(key)")
+            #endif
+        } catch EVYParamError.invalidProps {
+            #if DEBUG
+            print("[EVYData] parseIdOrIds: invalid props for \(key)")
+            #endif
+        } catch {
+            #if DEBUG
+            print("[EVYData] parseIdOrIds unexpected error: \(error)")
+            #endif
+            NotificationCenter.default.post(
+                name: Notification.Name.evyErrorOccurred,
+                object: error
+            )
+        }
         
         return value
     }

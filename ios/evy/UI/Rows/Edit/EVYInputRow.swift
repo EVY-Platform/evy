@@ -7,64 +7,62 @@
 
 import SwiftUI
 
-struct EVYInputRowView: Codable {
-    let content: ContentData
-    
-    struct ContentData: Codable {
-        let title: String
-        let value: String
-        let placeholder: String
-    }
-}
-    
 struct EVYInputRow: View, EVYRowProtocol {
-    public static let JSONType = "Input"
-    
-    private let view: EVYInputRowView
-    private let edit: SDUI.Edit
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(EVYInputRowView.self, forKey:.view)
-        edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-    }
-	
+	public static let JSONType = "Input"
+
+	private let view: InputRowViewData
+	private let edit: SDUI_RowEdit?
+
+	init(view: InputRowViewData, edit: SDUI_RowEdit?) {
+		self.view = view
+		self.edit = edit
+	}
+
 	func complete() -> Bool {
-		if !edit.validation.required {
+		guard let validation = edit?.validation, validation.requiredBool else {
 			return true
 		}
-		
+		guard let destination = edit?.destination else { return false }
 		do {
-			let storedValue = try EVY.getDataFromText(edit.destination!)
-			if edit.validation.minValue != nil {
-				return Int(storedValue.toString()) ?? 0 >= edit.validation.minValue!
+			let storedValue = try EVY.getDataFromText(destination)
+			if let minVal = validation.minValueInt {
+				return (Int(storedValue.toString()) ?? 0) >= minVal
 			}
-			return storedValue.toString().count >= edit.validation.minCharacters ?? 1
+			if let minChars = validation.minCharactersInt {
+				return storedValue.toString().count >= minChars
+			}
+			return true
 		} catch {
 			return false
 		}
 	}
-	
+
 	func incompleteMessages() -> [String] {
-		edit.validation.message != nil ? [edit.validation.message!] : []
+		guard let msg = edit?.validation?.message else { return [] }
+		return [msg]
 	}
-    
-    var body: some View {
-        VStack(alignment:.leading) {
-            if view.content.title.count > 0 {
-                EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.padding)
-            }
-            EVYTextField(input: view.content.value,
-                         destination: edit.destination!,
-                         placeholder: view.content.placeholder)
-        }
-    }
+
+	var body: some View {
+		VStack(alignment: .leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+					.padding(.vertical, Constants.padding)
+			}
+			if let destination = edit?.destination {
+				EVYTextField(
+					input: view.content.value,
+					destination: destination,
+					placeholder: view.content.placeholder
+				)
+			}
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","0","rows", "1"])
+		try! await EVY.getRow(["1", "pages", "0", "rows", "1"])
 	}
 }

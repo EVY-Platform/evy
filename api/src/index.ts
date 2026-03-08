@@ -1,27 +1,32 @@
-import dotenv from "dotenv";
-dotenv.config();
-
-import { validateAuth, primeData, getNewDataSince, crud } from "./data.js";
-import { initServer, WSParams } from "./ws.js";
+import { initServer, emitJsonRpc, type WSParams } from "./ws";
+import type { GetRequest } from "evy-types/rpc/get.request";
+import { get, isRecord, isResource, upsert, validateAuth } from "./data";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
 }
 
+function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
+	return isRecord(p) && "resource" in p && isResource(p.resource);
+}
+
 async function main() {
 	const server = await initServer(authHandler);
 
-	primeData();
+	server.register("get", async (params: WSParams) => {
+		return get(params);
+	});
 
 	server
-		.register("getNewDataSince", async (data: WSParams) => {
-			return getNewDataSince(data.since);
-		})
-		.protected();
-
-	server
-		.register("crud", async (data: WSParams) => {
-			return crud(data.method, data.model, data.filter, data.data);
+		.register("upsert", async (params: WSParams) => {
+			const result = await upsert(params);
+			if (!hasResource(params)) return result;
+			if (params.resource === "SDUI") {
+				emitJsonRpc(server, "flowUpdated", result);
+			} else {
+				emitJsonRpc(server, "dataUpdated", result);
+			}
+			return result;
 		})
 		.protected();
 }

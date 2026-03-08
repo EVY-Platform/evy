@@ -1,0 +1,15 @@
+name: web
+
+services:
+    app:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            target: runner
+        environment:
+            - WEB_PORT=${WEB_PORT}
+            - API_URL=${API_URL}
+        env_file:
+            - ../.env
+        ports:
+            - ${WEB_PORT}:${WEB_PORT}

@@ -78,7 +78,11 @@ struct EVYSelectItem: View {
                     let valueId = value.identifierValue()
                     return arrayValue.contains { $0.identifierValue() == valueId }
                 }
-            } catch {}
+            } catch {
+                #if DEBUG
+                print("[EVYSelectItem] Error checking selection state: \(error)")
+                #endif
+            }
             
             return false
         })
@@ -86,7 +90,7 @@ struct EVYSelectItem: View {
     
     var body: some View {
         HStack {
-            let text = EVY.formatData(json: value, format: format)
+            let text = (try? EVY.formatData(json: value, format: format)) ?? value.toString()
             EVYTextView(text, style: textStyle)
                 .frame(maxWidth: .infinity, alignment: .leading)
             EVYRadioButton(isSelected: selected.value, style: selectionStyle)
@@ -154,7 +158,11 @@ struct EVYSelectItem: View {
                     }
                 }
                 
-            } catch {}
+            } catch {
+                #if DEBUG
+                print("[EVYSelectItem] Error updating selection: \(error)")
+                #endif
+            }
         }
     }
 }
@@ -163,8 +171,9 @@ struct EVYSelectItem: View {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.syncData()
+		try! EVY.getUserData()
 		try! await EVY.createItem()
+		
 		return Group {
 			let options = try! EVY.getDataFromText("{selling_reasons}")
 			switch options {

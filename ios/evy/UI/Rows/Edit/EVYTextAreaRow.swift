@@ -7,60 +7,55 @@
 
 import SwiftUI
 
-struct EVYTextAreaRowView: Codable {
-    let content: ContentData
-    
-    struct ContentData: Codable {
-        let title: String
-        let value: String
-        let placeholder: String
-    }
-}
-    
 struct EVYTextAreaRow: View, EVYRowProtocol {
-    public static let JSONType = "TextArea"
-    
-    private let view: EVYTextAreaRowView
-    private let edit: SDUI.Edit
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(EVYTextAreaRowView.self, forKey:.view)
-        edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-    }
-	
-	func complete() -> Bool {
-		if !edit.validation.required {
-			return true
-		}
-		
-		if edit.validation.minValue != nil {
-			return Int(view.content.value) ?? 0 >= edit.validation.minValue!
-		}
-		return view.content.value.count >= edit.validation.minCharacters ?? 1
-	}
-	
-	func incompleteMessages() -> [String] {
-		edit.validation.message != nil ? [edit.validation.message!] : []
+	public static let JSONType = "TextArea"
+
+	private let view: TextAreaRowViewData
+	private let edit: SDUI_RowEdit?
+
+	init(view: TextAreaRowViewData, edit: SDUI_RowEdit?) {
+		self.view = view
+		self.edit = edit
 	}
 
-    var body: some View {
-        VStack(alignment:.leading) {
-            if view.content.title.count > 0 {
-                EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.padding)
-            }
-            EVYTextField(input: view.content.value,
-                         destination: edit.destination!,
-                         placeholder: view.content.placeholder,
-                         multiLine: true)
-        }
-    }
+	func complete() -> Bool {
+		guard let validation = edit?.validation, validation.requiredBool else { return true }
+		if let minVal = validation.minValueInt {
+			return (Int(view.content.value) ?? 0) >= minVal
+		}
+		if let minChars = validation.minCharactersInt {
+			return view.content.value.count >= minChars
+		}
+		return true
+	}
+
+	func incompleteMessages() -> [String] {
+		guard let msg = edit?.validation?.message else { return [] }
+		return [msg]
+	}
+
+	var body: some View {
+		VStack(alignment: .leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+					.padding(.vertical, Constants.padding)
+			}
+			if let destination = edit?.destination {
+				EVYTextField(
+					input: view.content.value,
+					destination: destination,
+					placeholder: view.content.placeholder,
+					multiLine: true
+				)
+			}
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","1","rows", "0"])
+		try! await EVY.getRow(["1", "pages", "1", "rows", "0"])
 	}
 }

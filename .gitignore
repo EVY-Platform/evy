@@ -1,13 +1,16 @@
+# macOS
+.DS_Store
+
 # Typescript
 dist/
 node_modules/
+
+# Generated shared types (ephemeral; generated on the fly in dev/test/CI/Docker)
+types/generated/
 traefik/
 letsencrypt/
 .env
 .next
-.DS_Store
-yarn-debug.log*
-yarn-error.log*
 history.txt
 
 # Xcode

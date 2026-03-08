@@ -2,13 +2,13 @@ import SwiftUI
 
 private let maxAllowedScale = 4.0
 
-struct EVYZoomableContainer<Content: View>: View {
-    let content: Content
+struct EVYZoomableContainer<ZContent: View>: View {
+    let content: ZContent
 
     @State private var currentScale: CGFloat = 1.0
     @State private var tapLocation: CGPoint = .zero
 
-    init(@ViewBuilder content: () -> Content) {
+    init(@ViewBuilder content: () -> ZContent) {
         self.content = content()
     }
 

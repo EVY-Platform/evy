@@ -12,7 +12,7 @@ struct EVYInlinePicker: View {
     let format: String
     let destination: String
     
-    private var options: EVYJsonArray = []
+    private var options: [EVYJson] = []
     
     @State private var selection: EVYJson
     
@@ -26,7 +26,11 @@ struct EVYInlinePicker: View {
             if case let .array(arrayValue) = data {
                 options.append(contentsOf: arrayValue)
             }
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYInlinePicker] Error loading options: \(error)")
+            #endif
+        }
         
         _selection = State(initialValue: options.first!)
         
@@ -40,7 +44,11 @@ struct EVYInlinePicker: View {
                     _selection = State(initialValue: matching!)
                 }
             }
-        } catch {}
+        } catch {
+            #if DEBUG
+            print("[EVYInlinePicker] Error loading selection: \(error)")
+            #endif
+        }
     }
     
     private func performAction(option: EVYJson) {
@@ -56,7 +64,8 @@ struct EVYInlinePicker: View {
                 Button(action: {
                     performAction(option: option)
                 }) {
-                    let textView = EVYTextView(EVY.formatData(json: option, format: format))
+                    let formatted = (try? EVY.formatData(json: option, format: format)) ?? option.toString()
+                    let textView = EVYTextView(formatted)
                     EVYRectangle.fitWidth(content: textView,
                                             style: isSelected ? .primary : .secondary)
                 }
@@ -69,8 +78,9 @@ struct EVYInlinePicker: View {
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
-		try! await EVY.syncData()
+		try! EVY.getUserData()
 		try! await EVY.createItem()
+		
 		return Group {
 			EVYInlinePicker(title: "Dropdown",
 							data: "{durations}",

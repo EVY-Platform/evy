@@ -36,7 +36,9 @@ struct EVYTextView: View {
 			let placeholderVal = EVYValue(placeholder, nil, nil)
 			
 			self.text = EVYState(watch: text, setter: {
-				let value = EVY.getValueFromText($0)
+				guard let value = try? EVY.getValueFromText($0) else {
+					return placeholderVal
+				}
 				
 				if props == $0 {
 					return value
@@ -107,7 +109,7 @@ struct EVYTextView: View {
 		case .info:
 			return Text(input)
 				.font(.evy)
-				.foregroundStyle(Constants.textColor)
+				.foregroundStyle(Constants.textGreyColor)
 		case .button:
 			return Text(input)
 				.font(.evy)

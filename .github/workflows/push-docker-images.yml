@@ -1,0 +1,69 @@
+name: Create and publish docker images to Github
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push api Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: api/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}-api:latest
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push web Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}-web:latest
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Docker Compose Remote Deploy api
+        uses: glesage/docker-compose-remote-action@v1
+        with:
+          service: api
+          project_name: evy
+          ssh_host: 170.64.163.217
+          ssh_user: evy
+          ssh_key: ${{ secrets.DO_SSH_KEY }}
+          known_host_key: ${{ secrets.DO_HOST_KEY }}
+          pull: true
+        env:
+          DB_USER: ${{ secrets.PG_USER }}
+          DB_PASS: ${{ secrets.PG_PASS }}
+          DB_PORT: 5432
+          DB_DOMAIN: db
+          DB_DATABASE: evy
+
+      - name: Docker Compose Remote Deploy web
+        uses: glesage/docker-compose-remote-action@v1
+        with:
+          service: web
+          project_name: evy
+          ssh_host: 170.64.163.217
+          ssh_user: evy
+          ssh_key: ${{ secrets.DO_SSH_KEY }}
+          known_host_key: ${{ secrets.DO_HOST_KEY }}
+          pull: true

@@ -24,7 +24,7 @@ struct Constants {
     static let mainCornerRadius: CGFloat = base*2
     static let smallCornerRadius: CGFloat = base
 
-    static let textColor = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
+    static let textGreyColor = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
     static let buttonColor: Color = Color(#colorLiteral(red: 0.2352934182, green: 0.2352946103, blue: 0.2610042691, alpha: 1))
     static let buttonDisabledColor: Color = Color(#colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
     static let tappableClearColor: Color = Color.black.opacity(0.0001)
@@ -33,7 +33,7 @@ struct Constants {
     
     static let borderWidth: CGFloat = 1.0
     static let thinBorderWidth: CGFloat = 0.5
-    static let borderColor: Color = Color(#colorLiteral(red: 0.725489974, green: 0.7254903913, blue: 0.7340979576, alpha: 1))
+    static let borderColor: Color = Color(#colorLiteral(red: 0.7267977595, green: 0.7267977595, blue: 0.7267977595, alpha: 1))
     static let borderOpacity: CGFloat = 0.5
 	
 	static let listRowHeight: CGFloat = base*12

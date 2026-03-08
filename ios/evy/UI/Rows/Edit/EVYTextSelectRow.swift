@@ -7,90 +7,72 @@
 
 import SwiftUI
 
-struct EVYTextSelectRowView: Codable {
-    let content: ContentData
-    
-    struct ContentData: Codable {
-        let title: String
-        let text: String
-    }
-}
-
 struct EVYTextSelectRow: View, EVYRowProtocol {
-    public static let JSONType = "TextSelect"
-    
-    private let view: EVYTextSelectRowView
-    private let edit: SDUI.Edit
-    private let value: EVYJson
-    
-    private var selected: EVYState<Bool>
-    
-    init(container: KeyedDecodingContainer<RowCodingKeys>) throws {
-        view = try container.decode(EVYTextSelectRowView.self, forKey:.view)
-        edit = try container.decode(SDUI.Edit.self, forKey:.edit)
-        
-        selected = EVYState(watch: edit.destination!, setter: {
-            do {
-                return try EVY.evaluateFromText($0)
-            } catch {}
-            
-            return false
-        })
-        
-        let temporaryId = UUID().uuidString
-        try EVY.updateValue(view.content.text, at: temporaryId)
-        value = try EVY.data.get(key: temporaryId).decoded()
-    }
-	
-	init(from decoder: Decoder) throws {
-		let container = try decoder.container(keyedBy: RowCodingKeys.self)
-		try self.init(container: container)
+	public static let JSONType = "TextSelect"
+
+	private let view: TextSelectRowViewData
+	private let edit: SDUI_RowEdit?
+	private let action: SDUI_RowAction?
+	private let value: EVYJson
+	private let selected: EVYState<Bool>
+
+	init?(view: TextSelectRowViewData, edit: SDUI_RowEdit?, action: SDUI_RowAction?) {
+		guard let destination = edit?.destination else { return nil }
+		self.view = view
+		self.edit = edit
+		self.action = action
+		self.selected = EVYState(watch: destination, setter: {
+			do {
+				return try EVY.evaluateFromText($0)
+			} catch {
+				#if DEBUG
+				print("[EVYTextSelectRow] Error evaluating selection: \(error)")
+				#endif
+				return false
+			}
+		})
+		let temporaryId = UUID().uuidString
+		guard (try? EVY.updateValue(view.content.text, at: temporaryId)) != nil,
+		      let data = try? EVY.data.get(key: temporaryId),
+		      let decoded = try? data.decoded() else { return nil }
+		self.value = decoded
 	}
-	
-	func encode(to encoder: Encoder) throws {
-		var container = encoder.container(keyedBy: RowCodingKeys.self)
-		try container.encode(view, forKey: .view)
-		try container.encode(edit, forKey: .edit)
-	}
-	
+
 	func complete() -> Bool {
-		if !edit.validation.required {
-			return true
-		}
-		
-		do {
-			let storedValue = try EVY.getDataFromText(edit.destination!)
-			return storedValue.toString() == "true"
-		} catch {
-			return false
-		}
+		guard let validation = edit?.validation, validation.requiredBool else { return true }
+		return selected.value
 	}
-	
+
 	func incompleteMessages() -> [String] {
-		edit.validation.message != nil ? [edit.validation.message!] : []
+		guard let msg = edit?.validation?.message else { return [] }
+		return [msg]
 	}
-    
-    var body: some View {
-        VStack(alignment:.leading) {
-            if view.content.title.count > 0 {
-                EVYTextView(view.content.title)
-                    .padding(.vertical, Constants.padding)
-            }
-            EVYSelectItem(destination: edit.destination!,
-                          value: value,
-                          format: "",
-                          selectionStyle: .multi,
-                          target: .single_bool,
-                          textStyle: .info)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
+
+	var body: some View {
+		VStack(alignment: .leading) {
+			if view.content.title.count > 0 {
+				EVYTextView(view.content.title)
+					.padding(.vertical, Constants.padding)
+			}
+			if let destination = edit?.destination {
+				EVYSelectItem(
+					destination: destination,
+					value: value,
+					format: "",
+					selectionStyle: .multi,
+					target: .single_bool,
+					textStyle: .info
+				)
+				.frame(maxWidth: .infinity, alignment: .leading)
+			}
+		}
+	}
 }
 
 #Preview {
 	AsyncPreview { asyncView in
-		asyncView
+		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1","pages","3","rows", "1", "view", "content", "children", "0", "child"])
+		try! await EVY.getRow(["1", "pages", "3", "rows", "1", "view", "content", "children", "0", "child"])
 	}
 }
