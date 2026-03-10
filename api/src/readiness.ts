@@ -26,7 +26,9 @@ async function assertApiReadable(): Promise<void> {
 		(flow) => isFlow(flow) && flow.name === "View Item",
 	);
 	if (!hasSeededViewItemFlow) {
-		throw new Error("Seed verification failed: missing seeded 'View Item' flow");
+		throw new Error(
+			"Seed verification failed: missing seeded 'View Item' flow",
+		);
 	}
 
 	const items = await get({ namespace: "evy", resource: "items" });
