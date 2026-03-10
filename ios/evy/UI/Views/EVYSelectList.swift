@@ -11,6 +11,7 @@ struct EVYSelectList: View {
     let options: [EVYJson]
     let format: String
     let destination: String
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         List {
@@ -19,7 +20,8 @@ struct EVYSelectList: View {
                               value: value,
                               format: format,
                               selectionStyle: .single,
-                              target: .single_identifier)
+                              target: .single_identifier,
+                              onSelect: { dismiss() })
 				.frame(height: Constants.listRowHeight)
             }
             .listRowSeparator(.hidden)
