@@ -11,11 +11,9 @@ struct EVYInputListRow: View, EVYRowProtocol {
 	public static let JSONType = "InputList"
 
 	private let view: InputListRowViewData
-	private let edit: SDUI_RowEdit?
 
-	init(view: InputListRowViewData, edit: SDUI_RowEdit?) {
+	init(view: InputListRowViewData) {
 		self.view = view
-		self.edit = edit
 	}
 
 	var body: some View {

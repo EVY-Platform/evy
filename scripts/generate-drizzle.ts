@@ -190,14 +190,6 @@ function isRefToOs(ref: string | undefined): boolean {
 	return typeof ref === "string" && ref.includes("OS");
 }
 
-function isData(defKey: string, propName: string): boolean {
-	return defKey === "DATA_Data" && propName === "data";
-}
-
-function isRefToNamespacedData(ref: string | undefined): boolean {
-	return typeof ref === "string" && ref.includes("NamespacedData");
-}
-
 type ColumnSuffixes = { isPk: boolean; hasDefaultRandom: boolean };
 
 function buildStringColumn(
@@ -233,16 +225,12 @@ function buildBooleanColumn(dbCol: string, defaultVal: unknown): string {
 
 function buildObjectColumn(
 	dbCol: string,
-	defKey: string,
-	propName: string,
 	prop: JsonSchemaProp,
 	{ isPk, hasDefaultRandom }: ColumnSuffixes,
 ): string {
 	let col: string;
 	if (isRefToSduiFlow(prop)) {
 		col = `jsonb("${dbCol}").$type<SDUI_Flow>().notNull()`;
-	} else if (isData(defKey, propName)) {
-		col = `jsonb("${dbCol}").$type<DATA_Data["data"]>().notNull()`;
 	} else {
 		col = `jsonb("${dbCol}").$type<Record<string, unknown>>().notNull()`;
 	}
@@ -254,8 +242,6 @@ function buildObjectColumn(
 function buildRefColumn(
 	dbCol: string,
 	ref: string,
-	defKey: string,
-	propName: string,
 	{ isPk, hasDefaultRandom }: ColumnSuffixes,
 ): string {
 	if (isRefToOs(ref)) {
@@ -264,11 +250,6 @@ function buildRefColumn(
 	if (ref.includes("SDUI_Flow") || ref.includes("evy.schema.json")) {
 		let col = `jsonb("${dbCol}").$type<SDUI_Flow>().notNull()`;
 		if (isPk) col += ".primaryKey()";
-		if (hasDefaultRandom) col += ".defaultRandom()";
-		return col;
-	}
-	if (isRefToNamespacedData(ref) && isData(defKey, propName)) {
-		let col = `jsonb("${dbCol}").$type<DATA_Data["data"]>().notNull()`;
 		if (hasDefaultRandom) col += ".defaultRandom()";
 		return col;
 	}
@@ -316,9 +297,9 @@ function emitColumn(
 	} else if (type === "boolean") {
 		col = buildBooleanColumn(dbCol, defaultVal);
 	} else if (type === "object") {
-		col = buildObjectColumn(dbCol, defKey, propName, prop, suffixes);
+		col = buildObjectColumn(dbCol, prop, suffixes);
 	} else if (ref) {
-		col = buildRefColumn(dbCol, ref, defKey, propName, suffixes);
+		col = buildRefColumn(dbCol, ref, suffixes);
 	} else {
 		col = `text("${dbCol}")`;
 	}
@@ -352,7 +333,6 @@ async function main(): Promise<void> {
 		'} from "drizzle-orm/pg-core";',
 		'import { relations } from "drizzle-orm";',
 		'import type { SDUI_Flow } from "evy-types/sdui/evy";',
-		'import type { DATA_Data } from "evy-types/data/data";',
 		"",
 	];
 

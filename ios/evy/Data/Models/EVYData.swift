@@ -151,11 +151,6 @@ public enum EVYJson: Codable, Hashable {
         throw EVYDataParseError.unprocessableValue
     }
     
-    public func hash(into hasher: inout Hasher) {
-        // Use toString() for hashing since identifierValue() requires MainActor
-        hasher.combine(toString())
-    }
-
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {

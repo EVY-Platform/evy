@@ -19,6 +19,7 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 		return combine(
 			dropTargetForElements({
 				element: element,
+				getData: () => ({ pageId: "rows" }),
 				canDrop: () => true,
 				onDragEnter: () => {
 					setState(hovered);

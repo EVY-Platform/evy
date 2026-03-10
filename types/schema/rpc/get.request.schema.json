@@ -11,15 +11,16 @@
 		"resource": {
 			"type": "string",
 			"enum": [
-				"SDUI",
-				"Device",
-				"Organisation",
-				"Service",
-				"Provider",
-				"SellingReason",
-				"Conditions",
-				"Durations",
-				"Items"
+				"sdui",
+				"devices",
+				"organisations",
+				"services",
+				"providers",
+				"selling_reasons",
+				"conditions",
+				"durations",
+				"areas",
+				"items"
 			]
 		},
 		"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" }

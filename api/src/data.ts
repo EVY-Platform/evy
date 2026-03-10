@@ -1,16 +1,22 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
+import pluralize from "pluralize";
 
-import type { DATA_Data, DATA_Rows, OS } from "evy-types/data/data";
-import type { GetDataResponse } from "evy-types/rpc/get.response";
+import type { DATA_Data, DATA_Flow, DATA_Rows } from "evy-types/data/data";
 import {
+	type GetResponse,
 	NAMESPACE_VALUES,
 	RESOURCE_VALUES,
 	type GetRequest,
-} from "evy-types/rpc/get.request";
-import type { SDUI_Flow } from "evy-types/sdui/evy";
-import type { UpsertRequest } from "evy-types/rpc/upsert.request";
-
-import { device, flow, data, osEnum } from "evy-types/db/schema.generated";
+	type OS,
+	type SDUI_Flow,
+	type UpsertRequest,
+} from "evy-types";
+import {
+	device,
+	flow,
+	data,
+	osEnum,
+} from "../../types/generated/ts/db/schema.generated";
 import { db } from "./db";
 import { validateFlowData } from "./validation";
 
@@ -20,13 +26,6 @@ type Resource = GetRequest["resource"];
 function isNamespace(v: unknown): v is Namespace {
 	return typeof v === "string" && NAMESPACE_VALUES.includes(v as Namespace);
 }
-function isNamespacedRecord(v: unknown): v is DATA_Data["data"] {
-	if (!isRecord(v)) return false;
-	for (const key of Object.keys(v)) {
-		if (!isRecord(v[key])) return false;
-	}
-	return true;
-}
 export function isResource(v: unknown): v is Resource {
 	return typeof v === "string" && RESOURCE_VALUES.includes(v as Resource);
 }
@@ -34,18 +33,40 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function formatRow(row: {
+type PersistedFlowRow = {
 	id: string;
-	data: unknown;
+	data: SDUI_Flow;
 	createdAt: Date;
 	updatedAt: Date;
-}): DATA_Rows {
+};
+
+type PersistedDataRow = {
+	id: string;
+	namespace: string;
+	resource: string;
+	data: DATA_Data["data"];
+	createdAt: Date;
+	updatedAt: Date;
+};
+
+function formatFlowRow(row: PersistedFlowRow): DATA_Flow {
 	return {
 		id: row.id,
 		data: row.data,
 		createdAt: row.createdAt.toISOString(),
 		updatedAt: row.updatedAt.toISOString(),
-	} as DATA_Rows;
+	};
+}
+
+function formatPersistedDataRow(row: PersistedDataRow): DATA_Data {
+	return {
+		id: row.id,
+		namespace: row.namespace,
+		resource: row.resource,
+		data: row.data,
+		createdAt: row.createdAt.toISOString(),
+		updatedAt: row.updatedAt.toISOString(),
+	};
 }
 
 function validateParams(
@@ -98,45 +119,12 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	}
 }
 
-async function getMergedNamespacedData(): Promise<
-	Record<Namespace, Partial<Record<Resource, GetDataResponse>>>
-> {
-	const dataRecords = await db
-		.select({ data: data.data })
-		.from(data)
-		.orderBy(desc(data.updatedAt));
-	const merged: Partial<
-		Record<Namespace, Partial<Record<Resource, GetDataResponse>>>
-	> = {};
-	for (const record of dataRecords.reverse()) {
-		if (!isNamespacedRecord(record.data)) continue;
-		const d = record.data;
-		for (const ns of NAMESPACE_VALUES) {
-			if (d[ns]) {
-				merged[ns] = merged[ns] ?? {};
-				Object.assign(merged[ns], d[ns]);
-			}
-		}
-	}
-	return {
-		evy: merged.evy ?? {},
-		marketplace: merged.marketplace ?? {},
-	};
-}
-
-export async function get(
-	params: GetRequest & { resource: "SDUI" },
-): Promise<SDUI_Flow[]>;
-export async function get(
-	params: GetRequest,
-): Promise<SDUI_Flow[] | GetDataResponse>;
-export async function get(
-	params: unknown,
-): Promise<SDUI_Flow[] | GetDataResponse> {
+export async function get(params: GetRequest): Promise<GetResponse>;
+export async function get(params: unknown): Promise<GetResponse> {
 	validateParams(params);
 	const { namespace, resource, filter } = params;
 
-	if (resource === "SDUI") {
+	if (resource === "sdui") {
 		if (filter?.id) {
 			const rows = await db
 				.select({ data: flow.data })
@@ -152,11 +140,22 @@ export async function get(
 		return flows.map((f) => f.data);
 	}
 
-	const merged = await getMergedNamespacedData();
-	const nsData = merged[namespace] ?? {};
-	const value = nsData[resource];
-	if (value !== null && value !== undefined) return value;
-	return {};
+	const singularResource = pluralize.singular(resource);
+	const whereClauses = [
+		eq(data.namespace, namespace),
+		eq(data.resource, singularResource),
+	];
+	if (filter?.id) {
+		whereClauses.push(eq(data.id, filter.id));
+	}
+
+	const rows = await db
+		.select({ data: data.data })
+		.from(data)
+		.where(and(...whereClauses))
+		.orderBy(desc(data.updatedAt));
+
+	return rows.map((r) => r.data) as GetResponse;
 }
 
 export async function upsert(params: unknown): Promise<DATA_Rows> {
@@ -173,7 +172,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 	const { namespace, resource, filter, data: dataPayload } = params;
 	const now = new Date();
 
-	if (resource === "SDUI") {
+	if (resource === "sdui") {
 		const validatedData = validateFlowData(dataPayload);
 
 		if (filter?.id) {
@@ -182,7 +181,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 				.set({ data: validatedData, updatedAt: now })
 				.where(eq(flow.id, filter.id))
 				.returning();
-			return formatRow(result[0]);
+			return formatFlowRow(result[0]);
 		}
 		const result = await db
 			.insert(flow)
@@ -192,25 +191,43 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 				updatedAt: now,
 			})
 			.returning();
-		return formatRow(result[0]);
+		return formatFlowRow(result[0]);
 	}
 
-	const rowPayload: DATA_Data["data"] = {
-		evy: {},
-		marketplace: {},
-	};
-	const nsData = rowPayload[namespace];
-	if (nsData) {
-		(nsData as Record<Resource, GetDataResponse>)[resource] = dataPayload;
+	const singularResource = pluralize.singular(resource);
+
+	if (filter?.id) {
+		const result = await db
+			.update(data)
+			.set({ data: dataPayload, updatedAt: now })
+			.where(
+				and(
+					eq(data.id, filter.id),
+					eq(data.namespace, namespace),
+					eq(data.resource, singularResource),
+				),
+			)
+			.returning();
+		if (result.length > 0) {
+			return formatPersistedDataRow({
+				...result[0],
+				data: result[0].data as DATA_Data["data"],
+			});
+		}
 	}
 
 	const result = await db
 		.insert(data)
 		.values({
-			data: rowPayload,
+			namespace,
+			resource: singularResource,
+			data: dataPayload,
 			createdAt: now,
 			updatedAt: now,
 		})
 		.returning();
-	return formatRow(result[0]);
+	return formatPersistedDataRow({
+		...result[0],
+		data: result[0].data as DATA_Data["data"],
+	});
 }

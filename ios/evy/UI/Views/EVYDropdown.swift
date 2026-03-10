@@ -45,7 +45,7 @@ struct EVYDropdown: View {
                 return try EVY.formatData(json: value, format: format)
             } catch {
                 #if DEBUG
-                print("[EVYDropdown] Error formatting selection: \(error)")
+                print("[EVYDropdown] Error formatting selection: \(error) for input \($0)")
                 #endif
                 return ""
             }
@@ -103,7 +103,7 @@ struct EVYDropdown: View {
 						placeholder: "A placeholder",
 						data: "{conditions}",
 						format: "{$0.value}",
-						destination: "{item.condition_id}")
+						destination: "{condition}")
 		}
 	}
 }

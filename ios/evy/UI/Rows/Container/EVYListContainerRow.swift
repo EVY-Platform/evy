@@ -11,23 +11,9 @@ struct EVYListContainerRow: View, EVYRowProtocol {
 	public static let JSONType = "ListContainer"
 
 	private let view: ListContainerRowViewData
-	private let edit: SDUI_RowEdit?
 
-	init(view: ListContainerRowViewData, edit: SDUI_RowEdit?) {
+	init(view: ListContainerRowViewData) {
 		self.view = view
-		self.edit = edit
-	}
-
-	func complete() -> Bool {
-		guard let minAmount = edit?.validation?.minAmountInt else { return true }
-		let completeCount = view.content.children.filter { SDUI_Row.complete(row: $0) }.count
-		return completeCount >= minAmount
-	}
-
-	func incompleteMessages() -> [String] {
-		view.content.children
-			.filter { !SDUI_Row.complete(row: $0) }
-			.flatMap { SDUI_Row.incompleteMessages(row: $0) }
 	}
 
 	var body: some View {

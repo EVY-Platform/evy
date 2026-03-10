@@ -1,4 +1,4 @@
-import type { SDUI_Flow } from "evy-types/sdui/evy";
+import type { SDUI_Flow } from "evy-types";
 
 declare global {
 	interface Window {

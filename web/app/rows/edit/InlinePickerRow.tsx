@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("InlinePickerRow", {
 	config: {
 		type: "InlinePicker",
+		actions: [],
 		view: {
 			content: {
 				title: "Inline picker row title",
@@ -13,13 +14,7 @@ export default defineRow("InlinePickerRow", {
 			},
 			data: "",
 		},
-		edit: {
-			destination: "{distance}",
-			validation: {
-				required: "true",
-				message: "Please select a duration",
-			},
-		},
+		destination: "{distance}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

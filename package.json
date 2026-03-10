@@ -9,11 +9,15 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.4",
+		"@types/pluralize": "^0.0.33",
 		"chokidar": "^4.0.1",
 		"decamelize": "^6.0.1",
 		"drizzle-orm": "^0.45.1",
 		"json-schema-to-typescript": "^15.0.4",
 		"quicktype": "^23.2.6",
 		"zod": "^4.3.6"
+	},
+	"dependencies": {
+		"pluralize": "^8.0.0"
 	}
 }

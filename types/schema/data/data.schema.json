@@ -49,14 +49,22 @@
 		"DATA_Data": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "data", "createdAt", "updatedAt"],
+			"required": ["id", "namespace", "resource", "data", "createdAt", "updatedAt"],
 			"properties": {
 				"id": {
 					"type": "string",
 					"format": "uuid"
 				},
+				"namespace": {
+					"type": "string",
+					"maxLength": 50
+				},
+				"resource": {
+					"type": "string",
+					"maxLength": 50
+				},
 				"data": {
-					"$ref": "#/$defs/NamespacedData"
+					"$ref": "../common/json.schema.json#/$defs/JSONValue"
 				},
 				"createdAt": {
 					"type": "string",
@@ -217,24 +225,6 @@
 				"retired": {
 					"type": "boolean",
 					"default": false
-				}
-			}
-		},
-		"NamespacedData": {
-			"type": "object",
-			"additionalProperties": false,
-			"properties": {
-				"evy": {
-					"type": "object",
-					"additionalProperties": {
-						"$ref": "../common/json.schema.json#/$defs/JSONValue"
-					}
-				},
-				"marketplace": {
-					"type": "object",
-					"additionalProperties": {
-						"$ref": "../common/json.schema.json#/$defs/JSONValue"
-					}
 				}
 			}
 		}

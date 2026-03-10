@@ -2,19 +2,35 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "get-response",
 	"title": "GetResponse",
-	"description": "Response for get method (SDUI: array of SDUI_Flow; other: key-value object)",
+	"description": "Response for get method - SDUI_Flow[] or recursive GetDataResponse",
 	"oneOf": [
 		{
-			"title": "GetSDUIResponse",
 			"type": "array",
 			"items": { "$ref": "../sdui/evy.schema.json" }
 		},
 		{
-			"title": "GetDataResponse",
-			"type": "object",
-			"additionalProperties": {
-				"$ref": "../common/json.schema.json#/$defs/JSONValue"
-			}
+			"type": "array",
+			"items": { "$ref": "#/$defs/GetDataResponse" }
 		}
-	]
+	],
+	"$defs": {
+		"GetDataResponse": {
+			"title": "GetDataResponse",
+			"anyOf": [
+				{ "type": "string" },
+				{ "type": "number" },
+				{ "type": "integer" },
+				{ "type": "boolean" },
+				{ "type": "null" },
+				{
+					"type": "array",
+					"items": { "$ref": "#/$defs/GetDataResponse" }
+				},
+				{
+					"type": "object",
+					"additionalProperties": { "$ref": "#/$defs/GetDataResponse" }
+				}
+			]
+		}
+	}
 }

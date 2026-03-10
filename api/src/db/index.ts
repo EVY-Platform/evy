@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import * as schema from "evy-types/db/schema.generated";
+import * as schema from "../../../types/generated/ts/db/schema.generated";
 import { getConnectionUrl } from "./connectionUrl";
 
 const connectionString = getConnectionUrl();

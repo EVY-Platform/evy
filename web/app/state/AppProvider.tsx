@@ -5,7 +5,7 @@ import {
 	useRef,
 	useEffect,
 } from "react";
-import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
+import type { SDUI_Flow as ServerFlow } from "evy-types";
 
 import type { SDUI_Flow } from "../types/flow";
 import { AppContext } from "./context";

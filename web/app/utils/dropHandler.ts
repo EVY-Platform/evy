@@ -11,7 +11,7 @@ import invariant from "tiny-invariant";
 
 import type { SDUI_Page } from "../types/flow";
 import type { ContainerType } from "../types/row";
-import type { RowAction, DraggingAction } from "../types/actions";
+import type { RowAction } from "../types/actions";
 import { containerDropindicatorId } from "../rows/EVYRow";
 import { findContainerById, findContainerOfRow } from "../utils/rowTree";
 
@@ -19,7 +19,6 @@ export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
 	pages: SDUI_Page[],
 	dispatchRow: Dispatch<RowAction>,
-	dispatchDragging: Dispatch<DraggingAction>,
 ): void {
 	const { location, source } = args;
 	if (!location.current.dropTargets.length) return;
@@ -55,7 +54,6 @@ export function handleDrop(
 		sourcePageId === "rows" &&
 		(!destinationPageId || destinationPageId === "rows")
 	) {
-		dispatchDragging({ type: "STOP_DRAGGING" });
 		return;
 	}
 

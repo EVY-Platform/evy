@@ -33,7 +33,7 @@ actor WSEmitter {
     func updateSDUI(flowData: [String: Any], flowId: String) async throws {
         let params: [String: Any] = [
             "namespace": "evy",
-            "resource": "SDUI",
+            "resource": "sdui",
             "filter": ["id": flowId],
             "data": flowData
         ]
@@ -167,7 +167,7 @@ class E2ETestBase: XCTestCase {
 
 final class E2EFlowTests: E2ETestBase {
 
-    /// UI visibility and navigation: launch, home, View Item flow, Create Item flow (no form editing), back to home.
+    /// UI visibility and navigation: launch, home, View flow, Create flow (no form editing), back to home.
     func testNavigationAndVisibility() throws {
         // MARK: - App Launch Verification
         XCTAssertTrue(app.exists, "App should launch successfully")
@@ -179,16 +179,16 @@ final class E2EFlowTests: E2ETestBase {
                       "App should display initial UI after launch")
 
         // MARK: - API Connection & Home Screen
-        let viewItemButton = app.buttons["View Item"]
-        let createItemButton = app.buttons["Create Item"]
+        let viewItemButton = app.buttons["View"]
+        let createItemButton = app.buttons["Create"]
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
                       "Home screen not loaded - verify API is running and database is seeded")
-        XCTAssertTrue(createItemButton.exists, "Create Item button should be visible")
+        XCTAssertTrue(createItemButton.exists, "Create button should be visible")
 
         // MARK: - View Item Flow Navigation
         viewItemButton.tap()
         let scrollView = app.scrollViews.firstMatch
-        XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after tapping View Item")
+        XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after tapping View")
         XCTAssertFalse(viewItemButton.exists, "Home buttons should not be visible after navigation")
 
         // MARK: - Footer Visibility
@@ -219,11 +219,11 @@ final class WebSocketE2ETests: E2ETestBase {
     /// Test that WebSocket notifications from the API update the iOS UI in real-time.
     @MainActor
     func testWebSocketNotificationUpdatesUI() async throws {
-        let viewItemButton = app.buttons["View Item"]
+        let viewItemButton = app.buttons["View"]
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
                       "Home screen not loaded - verify API is running and database is seeded")
 
-        let originalLabel = "View Item"
+        let originalLabel = "View"
         let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
 
         guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
@@ -255,10 +255,10 @@ final class WebSocketE2ETests: E2ETestBase {
         await emitter.disconnect()
     }
 
-    /// Form data editing: navigate to Create Item, edit title/price/width, verify, return to home.
+    /// Form data editing: navigate to Create, edit title/price/width, verify, return to home.
     func testCreateItemFormEditing() throws {
-        let viewItemButton = app.buttons["View Item"]
-        let createItemButton = app.buttons["Create Item"]
+        let viewItemButton = app.buttons["View"]
+        let createItemButton = app.buttons["Create"]
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
                       "Home screen not loaded - verify API is running and database is seeded")
         createItemButton.tap()
@@ -267,8 +267,8 @@ final class WebSocketE2ETests: E2ETestBase {
         XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
 
         // Title field
-        guard let titleTextField = findElement(identifier: "textField_{item.title}") else {
-            XCTFail("Title text field should exist with identifier 'textField_{item.title}'")
+        guard let titleTextField = findElement(identifier: "textField_{title}") else {
+            XCTFail("Title text field should exist with identifier 'textField_{title}'")
             return
         }
         guard let titleField = tapAndGetEditableField(container: titleTextField) else {
@@ -285,7 +285,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
         // Price field (optional)
         if let priceTextField = findElementWithScroll(
-            identifiers: ["textField_{item.price.value}", "textField_{item.price}"],
+            identifiers: ["textField_{price}"],
             containsAny: ["price"],
             in: scrollView
         ), let priceField = tapAndGetEditableField(container: priceTextField) {
@@ -300,8 +300,8 @@ final class WebSocketE2ETests: E2ETestBase {
 
         // Width field (optional)
         if let widthTextField = findElementWithScroll(
-            identifiers: ["textField_{item.dimensions.width}", "textField_{item.dimension.width}"],
-            containsAny: ["dimensions.width", "dimension.width"],
+            identifiers: ["textField_{width}"],
+            containsAny: ["width"],
             in: scrollView
         ), let widthField = tapAndGetEditableField(container: widthTextField) {
             clearAndType(field: widthField, text: "50")
@@ -332,6 +332,7 @@ final class WebSocketE2ETests: E2ETestBase {
                         [
                             "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
                             "type": "ColumnContainer",
+                            "actions": [],
                             "view": [
                                 "content": [
                                     "title": "",
@@ -345,9 +346,11 @@ final class WebSocketE2ETests: E2ETestBase {
                                                     "label": buttonLabel
                                                 ]
                                             ],
-                                            "action": [
-                                                "target": "navigate:74a49d4b-2176-4925-857a-e29e2991f1bd:82cae120-c7b1-4c29-bd42-e1521320b109"
-                                            ]
+                                            "actions": [[
+                                                "condition": "",
+                                                "false": "",
+                                                "true": "navigate:74a49d4b-2176-4925-857a-e29e2991f1bd:82cae120-c7b1-4c29-bd42-e1521320b109"
+                                            ]]
                                         ],
                                         [
                                             "id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
@@ -355,19 +358,16 @@ final class WebSocketE2ETests: E2ETestBase {
                                             "view": [
                                                 "content": [
                                                     "title": "",
-                                                    "label": "Create Item"
+                                                    "label": "Create"
                                                 ]
                                             ],
-                                            "action": [
-                                                "target": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:306ed62c-c2af-4652-a873-26c7a388972d"
-                                            ]
+                                            "actions": [[
+                                                "condition": "",
+                                                "false": "",
+                                                "true": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:306ed62c-c2af-4652-a873-26c7a388972d"
+                                            ]]
                                         ]
                                     ]
-                                ]
-                            ],
-                            "edit": [
-                                "validation": [
-                                    "required": "false"
                                 ]
                             ]
                         ]

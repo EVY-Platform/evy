@@ -96,7 +96,7 @@ class EVYSearchController: ObservableObject {
 		try! await EVY.createItem()
 		
 		return EVYSearch(source: "{api:movies}",
-						 destination: "{item.tags}",
+						 destination: "{tags}",
 						 placeholder: "Search",
 						 format: "{$0.value}")
 	}

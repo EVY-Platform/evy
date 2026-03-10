@@ -105,26 +105,16 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
         "data": "string",
         "max_lines": "string"    // optional
     },
-    // The edit part of the row, what to do when editing the row
-    "edit": {
-        // Where the input data is stored
-        "destination",
+    // Where the input data is stored (optional, used by edit rows)
+    "destination": "string",
 
-        // Whether this row is required for a page to be considered complete
-        "validation": {
-            "required", // Yes or no
-            "message", // What to show if the validation fails
-            "minAmount", // Minimum amount of items
-            "minValue", // Minimum value
-            "minCharacters" // Minimum characters
-        }
-
-    },
-
-    // What action should be taken when tapping the button
-    "action": {
-        "target": "navigate:flow_id:page_id|submit|close",
-    }
+    // Actions are required on every row and default to an empty array
+    // They are evaluated in order until one executes a non-empty branch
+    "actions": [{
+        "condition": "{length(title) > 0}",
+        "false": "{highlight_required(title)}",
+        "true": "{create(item)}"
+    }]
 }
 ```
 

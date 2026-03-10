@@ -11,28 +11,12 @@ struct EVYSearchRow: View, EVYRowProtocol {
 	public static let JSONType = "Search"
 
 	private let view: SearchRowViewData
-	private let edit: SDUI_RowEdit?
+	private let destination: String?
 	@State private var showSheet = false
 
-	init(view: SearchRowViewData, edit: SDUI_RowEdit?) {
+	init(view: SearchRowViewData, destination: String?) {
 		self.view = view
-		self.edit = edit
-	}
-
-	func complete() -> Bool {
-		guard let validation = edit?.validation, validation.requiredBool else { return true }
-		guard let destination = edit?.destination else { return false }
-		do {
-			let storedValue = try EVY.getDataFromText(destination)
-			return storedValue.toString().count > 0
-		} catch {
-			return false
-		}
-	}
-
-	func incompleteMessages() -> [String] {
-		guard let msg = edit?.validation?.message else { return [] }
-		return [msg]
+		self.destination = destination
 	}
 
 	var body: some View {
@@ -41,7 +25,7 @@ struct EVYSearchRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			if let destination = edit?.destination {
+			if let destination {
 				EVYSearch(
 					source: view.data ?? "",
 					destination: destination,

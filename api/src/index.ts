@@ -1,5 +1,5 @@
 import { initServer, emitJsonRpc, type WSParams } from "./ws";
-import type { GetRequest } from "evy-types/rpc/get.request";
+import type { GetRequest } from "evy-types";
 import { get, isRecord, isResource, upsert, validateAuth } from "./data";
 
 function authHandler(data: WSParams): Promise<boolean> {
@@ -21,7 +21,7 @@ async function main() {
 		.register("upsert", async (params: WSParams) => {
 			const result = await upsert(params);
 			if (!hasResource(params)) return result;
-			if (params.resource === "SDUI") {
+			if (params.resource === "sdui") {
 				emitJsonRpc(server, "flowUpdated", result);
 			} else {
 				emitJsonRpc(server, "dataUpdated", result);

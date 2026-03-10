@@ -10,6 +10,7 @@ export { getRowsRecursive } from "../utils/rowTree";
 export const UnknownRow = defineRow("UnknownRow", {
 	config: {
 		type: "Unknown",
+		actions: [],
 		view: {
 			content: {
 				title: "Unknown row",

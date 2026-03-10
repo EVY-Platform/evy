@@ -6,19 +6,14 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("TextSelectRow", {
 	config: {
 		type: "TextSelect",
+		actions: [],
 		view: {
 			content: {
 				title: "Text select row title",
 				text: "placeholder",
 			},
 		},
-		edit: {
-			destination: "{item.payment_methods.cash}",
-			validation: {
-				required: "true",
-				message: "Please make a selection",
-			},
-		},
+		destination: "{payment_cash}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

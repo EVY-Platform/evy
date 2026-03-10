@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("InfoRow", {
 	config: {
 		type: "Info",
+		actions: [],
 		view: {
 			content: {
 				title: "Info row title",

@@ -28,7 +28,7 @@ struct EVYInputList: View {
                 }
             } catch {
                 #if DEBUG
-                print("[EVYInputList] Error formatting data: \(error)")
+                print("[EVYInputList] Error formatting data: \(error) for input \($0)")
                 #endif
             }
             
@@ -63,7 +63,7 @@ struct EVYInputList: View {
 		try! await EVY.createItem()
 		
 		return Group {
-			EVYInputList(data: "{item.tags}",
+			EVYInputList(data: "{tags}",
 						 format: "{$0.value}",
 						 placeholder: "Add tags to improve search")
 		}

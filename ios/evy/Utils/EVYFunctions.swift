@@ -22,6 +22,21 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
         return EVYFunctionOutput(value: String(stringValue.count), prefix: nil, suffix: nil)
     case let .array(arrayValue):
         return EVYFunctionOutput(value: String(arrayValue.count), prefix: nil, suffix: nil)
+    case let .int(intValue):
+        return EVYFunctionOutput(value: String(intValue), prefix: nil, suffix: nil)
+    case let .decimal(decimalValue):
+        return EVYFunctionOutput(value: "\(decimalValue)", prefix: nil, suffix: nil)
+    default:
+        return EVYFunctionOutput(value: args, prefix: nil, suffix: nil)
+    }
+}
+
+@MainActor
+func evyLength(_ args: String) throws -> EVYFunctionOutput {
+    let res = try EVY.getDataFromProps(args)
+    switch res {
+    case let .string(stringValue):
+        return EVYFunctionOutput(value: String(stringValue.count), prefix: nil, suffix: nil)
     default:
         return EVYFunctionOutput(value: args, prefix: nil, suffix: nil)
     }
@@ -151,7 +166,14 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
-func evyComparison(_ comparisonOperator: String, left: String, right: String) -> Bool {
+private func evyNumericValue(_ value: String) -> Decimal? {
+    Decimal(string: value.trimmingCharacters(in: .whitespacesAndNewlines))
+}
+
+private func evyCompareValues<T: Comparable>(_ comparisonOperator: String,
+                                             left: T,
+                                             right: T) -> Bool
+{
     switch comparisonOperator {
     case "==":
         return left == right
@@ -161,9 +183,21 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
         return left < right
     case ">":
         return left > right
+    case "<=":
+        return left <= right
+    case ">=":
+        return left >= right
     default:
         return false
     }
+}
+
+func evyComparison(_ comparisonOperator: String, left: String, right: String) -> Bool {
+    if let leftNumber = evyNumericValue(left), let rightNumber = evyNumericValue(right) {
+        return evyCompareValues(comparisonOperator, left: leftNumber, right: rightNumber)
+    }
+
+    return evyCompareValues(comparisonOperator, left: left, right: right)
 }
 
 #Preview {
@@ -173,19 +207,19 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
 		try! await EVY.createItem()
 		
 		return VStack {
-			EVYTextView("{formatDimension(item.dimensions.width)}")
-			EVYTextView("a == a: {a == a}")
-			EVYTextView("a == b: {a == b}")
-			EVYTextView("1 == 2: {1 == 2}")
-			EVYTextView("1 == 1: {1 == 1}")
-			EVYTextView("1 != 1: {1 != 1}")
-			EVYTextView("item.title == Amazing: {{item.title} == Amazing}")
-			EVYTextView("item.title == Amazing Fridge: {{item.title} == Amazing Fridge}")
-			EVYTextView("Amazing Fridge == item.title: {Amazing Fridge == {item.title}}")
-			EVYTextView("count (item.title) == 13: {{count(item.title)} == 13}")
-			EVYTextView("count (item.title) == 14: {{count(item.title)} == 14}")
-			EVYTextView("count (item.title) > 0: {{count(item.title)} > 0}")
-			EVYTextView("{formatAddress(item.address)}")
+		EVYTextView("{formatDimension(width)}")
+		EVYTextView("a == a: {a == a}")
+		EVYTextView("a == b: {a == b}")
+		EVYTextView("1 == 2: {1 == 2}")
+		EVYTextView("1 == 1: {1 == 1}")
+		EVYTextView("1 != 1: {1 != 1}")
+		EVYTextView("title == Amazing: {{title} == Amazing}")
+		EVYTextView("title == Amazing Fridge: {{title} == Amazing Fridge}")
+		EVYTextView("Amazing Fridge == title: {Amazing Fridge == {title}}")
+		EVYTextView("count (title) == 13: {{count(title)} == 13}")
+		EVYTextView("count (title) == 14: {{count(title)} == 14}")
+		EVYTextView("count (title) > 0: {{count(title)} > 0}")
+		EVYTextView("{formatAddress(pickup_address)}")
 		}
 	}
 }

@@ -208,12 +208,12 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			return updateState({ updatedPages: newPages });
 		}
-		case "UPDATE_ROW_ACTION": {
+		case "UPDATE_ROW_ACTIONS": {
 			const updater = (row: Row): Row => ({
 				...row,
 				config: {
 					...row.config,
-					action: { target: action.target },
+					actions: action.actions,
 				},
 			});
 
@@ -231,8 +231,13 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "REMOVE_ROW_ACTION": {
 			const updater = (row: Row): Row => {
-				const { action: _, ...rest } = row.config;
-				return { ...row, config: rest };
+				return {
+					...row,
+					config: {
+						...row.config,
+						actions: [],
+					},
+				};
 			};
 
 			const newPages = flow.pages.map((page) => {

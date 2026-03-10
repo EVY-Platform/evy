@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("TextAreaRow", {
 	config: {
 		type: "TextArea",
+		actions: [],
 		view: {
 			content: {
 				title: "Text area row title",
@@ -13,13 +14,7 @@ export default defineRow("TextAreaRow", {
 				placeholder: "placeholder",
 			},
 		},
-		edit: {
-			destination: "{item.description}",
-			validation: {
-				required: "true",
-				message: "Please provide a description",
-			},
-		},
+		destination: "{description}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

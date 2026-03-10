@@ -21,6 +21,7 @@ test.describe("Row Selection", () => {
 								text: "First row text content",
 							},
 						},
+						actions: [],
 					},
 				],
 			},
@@ -64,6 +65,7 @@ test.describe("Row Selection", () => {
 								text: "First row text content",
 							},
 						},
+						actions: [],
 					},
 					{
 						type: "Info",
@@ -73,6 +75,7 @@ test.describe("Row Selection", () => {
 								text: "Second row text content",
 							},
 						},
+						actions: [],
 					},
 				],
 			},
@@ -120,6 +123,7 @@ test.describe("Row Selection", () => {
 								text: "First row text content",
 							},
 						},
+						actions: [],
 					},
 					{
 						type: "Text",
@@ -129,6 +133,7 @@ test.describe("Row Selection", () => {
 								text: "Text row content",
 							},
 						},
+						actions: [],
 					},
 				],
 			},
@@ -203,6 +208,7 @@ test.describe("Row Selection", () => {
 								text: "First row text content",
 							},
 						},
+						actions: [],
 					},
 				],
 			},
@@ -249,6 +255,7 @@ test.describe("Row Selection", () => {
 								text: "First row text content",
 							},
 						},
+						actions: [],
 					},
 				],
 			},
@@ -289,6 +296,7 @@ test.describe("Row Selection with Containers", () => {
 				rows: [
 					{
 						type: "ListContainer",
+						actions: [],
 						view: {
 							content: {
 								title: "Container Row",
@@ -301,6 +309,7 @@ test.describe("Row Selection with Containers", () => {
 												text: "Child row text",
 											},
 										},
+										actions: [],
 									},
 								],
 							},
@@ -335,6 +344,7 @@ test.describe("Row Selection with Containers", () => {
 				rows: [
 					{
 						type: "ListContainer",
+						actions: [],
 						view: {
 							content: {
 								title: "Container Row",
@@ -347,6 +357,7 @@ test.describe("Row Selection with Containers", () => {
 												text: "Child row text",
 											},
 										},
+										actions: [],
 									},
 								],
 							},
@@ -381,6 +392,7 @@ test.describe("Row Selection with Containers", () => {
 				rows: [
 					{
 						type: "ListContainer",
+						actions: [],
 						view: {
 							content: {
 								title: "Container Row",
@@ -393,6 +405,7 @@ test.describe("Row Selection with Containers", () => {
 												text: "Child row text",
 											},
 										},
+										actions: [],
 									},
 								],
 							},

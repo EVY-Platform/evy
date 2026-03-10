@@ -37,7 +37,7 @@
 		"SDUI_Row": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "view"],
+			"required": ["id", "type", "view", "actions"],
 			"properties": {
 				"id": { "type": "string", "format": "uuid" },
 				"type": {
@@ -72,8 +72,12 @@
 						"max_lines": { "type": "string" }
 					}
 				},
-				"edit": { "$ref": "#/$defs/SDUI_RowEdit" },
-				"action": { "$ref": "#/$defs/SDUI_RowAction" }
+				"destination": { "type": "string" },
+				"actions": {
+					"type": "array",
+					"default": [],
+					"items": { "$ref": "#/$defs/SDUI_RowAction" }
+				}
 			}
 		},
 		"SDUI_RowContent": {
@@ -93,30 +97,15 @@
 			},
 			"additionalProperties": false
 		},
-		"SDUI_RowEdit": {
-			"type": "object",
-			"additionalProperties": false,
-			"properties": {
-				"destination": { "type": "string" },
-				"validation": { "$ref": "#/$defs/SDUI_RowValidation" }
-			}
-		},
-		"SDUI_RowValidation": {
-			"type": "object",
-			"additionalProperties": false,
-			"properties": {
-				"required": { "type": "string" },
-				"message": { "type": "string" },
-				"minAmount": { "type": "string" },
-				"minValue": { "type": "string" },
-				"minCharacters": { "type": "string" }
-			}
-		},
 		"SDUI_RowAction": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["target"],
-			"properties": { "target": { "type": "string" } }
+			"required": ["condition", "false", "true"],
+			"properties": {
+				"condition": { "type": "string" },
+				"false": { "type": "string" },
+				"true": { "type": "string" }
+			}
 		}
 	}
 }

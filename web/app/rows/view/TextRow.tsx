@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("TextRow", {
 	config: {
 		type: "Text",
+		actions: [],
 		view: {
 			content: {
 				title: "Text row title",

@@ -94,23 +94,23 @@ struct EVYTextField: View {
 		try! await EVY.createItem()
 		
 		return VStack {
-			EVYTextField(input: "{formatDimension(item.dimension.width)}",
-						 destination: "{item.dimension.width}",
-						 placeholder: "10",
-						 multiLine: true)
-			
-			EVYTextField(input: "{formatCurrency(item.price)}",
-						 destination: "{item.price.value}",
-						 placeholder: "10")
-						 
-			EVYTextField(input: "{item.title}",
-						 destination: "{item.title}",
-						 placeholder: "Sample placeholder",
-						 multiLine: true)
-			
-			EVYTextField(input: "{item.title}",
-						 destination: "{item.title}",
-						 placeholder: "Sample placeholder")
+		EVYTextField(input: "{formatDimension(width)}",
+					 destination: "{width}",
+					 placeholder: "10",
+					 multiLine: true)
+		
+		EVYTextField(input: "{formatCurrency(price)}",
+					 destination: "{price}",
+					 placeholder: "10")
+					 
+		EVYTextField(input: "{title}",
+					 destination: "{title}",
+					 placeholder: "Sample placeholder",
+					 multiLine: true)
+		
+		EVYTextField(input: "{title}",
+					 destination: "{title}",
+					 placeholder: "Sample placeholder")
 			
 			EVYTextField(input: "",
 						 destination: "",

@@ -1,6 +1,6 @@
 import { compile } from "json-schema-to-typescript";
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { spawn } from "node:child_process";
 import {
 	OUT_SWIFT,
@@ -21,6 +21,19 @@ type LoadedSchemaFile = {
 	schemaPath: string;
 	schemaKey: string;
 	schema: Record<string, unknown>;
+};
+
+type ExternalTypeImport = {
+	modulePath: string;
+	typeName: string;
+};
+
+type GeneratedTsSchema = {
+	schemaPath: string;
+	schemaKey: string;
+	schema: Record<string, unknown>;
+	outPath: string;
+	outModulePath: string;
 };
 
 async function findSchemaFiles(dir: string, base: string): Promise<string[]> {
@@ -82,35 +95,278 @@ function getRootDefinition(
 function inlineDefsRefs(
 	obj: unknown,
 	defsMap: Record<string, unknown>,
+	expanding: Set<string> = new Set(),
 ): unknown {
 	if (obj && typeof obj === "object" && !Array.isArray(obj)) {
 		const o = obj as Record<string, unknown>;
 		const ref = o.$ref as string | undefined;
 		if (ref?.startsWith("#/$defs/")) {
 			const name = ref.replace(/^#\/\$defs\//, "");
+			// Recursive defs like JSONValue -> JSONScalar need a cycle guard.
+			if (expanding.has(name)) return obj;
 			const d = defsMap[name];
-			return d !== undefined
-				? inlineDefsRefs(JSON.parse(JSON.stringify(d)), defsMap)
-				: obj;
+			if (d === undefined) return obj;
+			const next = new Set(expanding);
+			next.add(name);
+			return inlineDefsRefs(JSON.parse(JSON.stringify(d)), defsMap, next);
 		}
 		const out: Record<string, unknown> = {};
 		for (const [k, v] of Object.entries(o)) {
-			out[k] = inlineDefsRefs(v, defsMap);
+			out[k] = inlineDefsRefs(v, defsMap, expanding);
 		}
 		return out;
 	}
 	if (Array.isArray(obj))
-		return obj.map((item) => inlineDefsRefs(item, defsMap));
+		return obj.map((item) => inlineDefsRefs(item, defsMap, expanding));
 	return obj;
+}
+
+function collectExternalRefs(
+	obj: unknown,
+	refs: Set<string> = new Set(),
+): Set<string> {
+	if (Array.isArray(obj)) {
+		for (const item of obj) collectExternalRefs(item, refs);
+		return refs;
+	}
+	if (obj && typeof obj === "object") {
+		const record = obj as Record<string, unknown>;
+		const ref = record.$ref;
+		if (typeof ref === "string" && !ref.startsWith("#/")) {
+			refs.add(ref);
+		}
+		for (const value of Object.values(record)) {
+			collectExternalRefs(value, refs);
+		}
+	}
+	return refs;
+}
+
+function getRootTypeName(
+	schemaPath: string,
+	schema: Record<string, unknown>,
+): string {
+	return (
+		(schema.title as string | undefined) ??
+		schemaPathToSwiftTypeName(schemaPath)
+	);
+}
+
+function parseExternalRef(ref: string): {
+	relativeSchemaRef: string;
+	fragment: string;
+} {
+	const [relativeSchemaRef, fragment = ""] = ref.split("#");
+	return { relativeSchemaRef, fragment };
+}
+
+function getReferencedTypeName(
+	targetSchemaPath: string,
+	targetSchema: Record<string, unknown>,
+	fragment: string,
+): string {
+	if (fragment.startsWith("/$defs/")) {
+		return fragment.replace(/^\/\$defs\//, "");
+	}
+	return getRootTypeName(targetSchemaPath, targetSchema);
+}
+
+function toImportModulePath(
+	fromModulePath: string,
+	targetModulePath: string,
+): string {
+	const rel = relative(dirname(fromModulePath), targetModulePath).replace(
+		/\\/g,
+		"/",
+	);
+	return rel.startsWith(".") ? rel : `./${rel}`;
+}
+
+function resolveExternalTypeImports(
+	generatedSchema: GeneratedTsSchema,
+	schemaByPath: Map<string, LoadedSchemaFile>,
+): ExternalTypeImport[] {
+	const importsByModule = new Map<string, Set<string>>();
+
+	// Convert external schema refs into `import type` lines that point at the
+	// already-generated module instead of re-declaring the same shapes locally.
+	for (const ref of collectExternalRefs(generatedSchema.schema)) {
+		const { relativeSchemaRef, fragment } = parseExternalRef(ref);
+		const targetSchemaPath = join(
+			dirname(generatedSchema.schemaPath),
+			relativeSchemaRef,
+		);
+		const loadedTarget = schemaByPath.get(targetSchemaPath);
+		if (!loadedTarget) continue;
+
+		const targetModulePath = schemaPathToTsName(targetSchemaPath);
+		if (targetModulePath === generatedSchema.outModulePath) continue;
+
+		const typeName = getReferencedTypeName(
+			targetSchemaPath,
+			loadedTarget.schema,
+			fragment,
+		);
+
+		if (!importsByModule.has(targetModulePath)) {
+			importsByModule.set(targetModulePath, new Set());
+		}
+		importsByModule.get(targetModulePath)?.add(typeName);
+	}
+
+	return [...importsByModule.entries()]
+		.sort(([left], [right]) => left.localeCompare(right))
+		.flatMap(([targetModulePath, typeNames]) => {
+			const normalizedModulePath = toImportModulePath(
+				generatedSchema.outModulePath,
+				targetModulePath,
+			);
+			return [...typeNames]
+				.sort((left, right) => left.localeCompare(right))
+				.map((typeName) => ({
+					modulePath: normalizedModulePath,
+					typeName,
+				}));
+		});
+}
+
+function injectImports(ts: string, imports: ExternalTypeImport[]): string {
+	if (imports.length === 0) return ts;
+
+	const groupedImports = new Map<string, string[]>();
+	for (const entry of imports) {
+		const current = groupedImports.get(entry.modulePath) ?? [];
+		current.push(entry.typeName);
+		groupedImports.set(entry.modulePath, current);
+	}
+
+	const importBlock = [...groupedImports.entries()]
+		.sort(([left], [right]) => left.localeCompare(right))
+		.map(([modulePath, typeNames]) => {
+			const uniqueTypeNames = [...new Set(typeNames)].sort((left, right) =>
+				left.localeCompare(right),
+			);
+			return `import type { ${uniqueTypeNames.join(", ")} } from "${modulePath}";`;
+		})
+		.join("\n");
+
+	// Keep generated imports immediately below the banner comment so the rest of
+	// the file still matches json-schema-to-typescript output as closely as possible.
+	const bannerEnd = ts.indexOf("\n\n");
+	if (bannerEnd === -1) return `${importBlock}\n\n${ts}`;
+	return `${ts.slice(0, bannerEnd + 2)}${importBlock}\n\n${ts.slice(bannerEnd + 2)}`;
+}
+
+function buildGeneratedTsSchema(
+	schemaFile: LoadedSchemaFile,
+): GeneratedTsSchema {
+	const outModulePath = schemaPathToTsName(schemaFile.schemaPath);
+	return {
+		...schemaFile,
+		outModulePath,
+		outPath: join(OUT_TS, `${outModulePath}.ts`),
+	};
+}
+
+async function appendGeneratedText(
+	outPath: string,
+	text: string,
+): Promise<void> {
+	const current = await readFile(outPath, "utf-8");
+	await writeFile(outPath, `${current.trimEnd()}\n\n${text}\n`, "utf-8");
+}
+
+async function appendSchemaSpecificExports(
+	generatedSchema: GeneratedTsSchema,
+): Promise<void> {
+	const { outPath, schema, schemaKey } = generatedSchema;
+
+	// These exports are small generation conveniences layered on top of the
+	// compiled schema output, so they are appended after the main file is written.
+	if (schemaKey === "sdui/evy") {
+		const flowTypeEnum = (schema.properties as Record<string, unknown>)?.type as
+			| { enum?: string[] }
+			| undefined;
+		const flowValues = flowTypeEnum?.enum ?? [];
+		const rowDef = (schema.$defs as Record<string, unknown>)?.["SDUI_Row"] as
+			| Record<string, unknown>
+			| undefined;
+		const rowTypeEnum = (rowDef?.properties as Record<string, unknown>)?.type as
+			| { enum?: string[] }
+			| undefined;
+		const rowValues = rowTypeEnum?.enum ?? [];
+
+		await appendGeneratedText(
+			outPath,
+			[
+				`export const SDUI_FLOW_TYPE_VALUES = ${JSON.stringify(flowValues)} as const;`,
+				`export const SDUI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`,
+			].join("\n"),
+		);
+		return;
+	}
+
+	if (schemaKey === "common/json") {
+		await appendGeneratedText(outPath, "export type JSONValue = CommonJSON;");
+		return;
+	}
+
+	if (schemaKey === "common/rpc") {
+		await appendGeneratedText(outPath, "export type IdFilter = CommonRPC;");
+		return;
+	}
+
+	if (schemaKey === "rpc/get.request") {
+		const props = schema.properties as Record<string, { enum?: string[] }>;
+		const namespaceValues = props?.namespace?.enum ?? [];
+		const resourceValues = props?.resource?.enum ?? [];
+		await appendGeneratedText(
+			outPath,
+			[
+				`export const NAMESPACE_VALUES = ${JSON.stringify(namespaceValues)} as const;`,
+				`export const RESOURCE_VALUES = ${JSON.stringify(resourceValues)} as const;`,
+			].join("\n"),
+		);
+	}
+}
+
+function buildIndexExportLine(
+	schemaPath: string,
+	schema: Record<string, unknown>,
+): string {
+	const rel = schemaPathToTsName(schemaPath);
+	const mod = rel.replace(/\.ts$/, "");
+	const title = (schema.title as string | undefined) ?? null;
+
+	if (mod.startsWith("sdui/") && mod.includes("sdui")) {
+		return `export * from "./${mod}";`;
+	}
+	if (mod.startsWith("data/") && mod.includes("data")) {
+		return `export * from "./${mod}";`;
+	}
+	if (mod === "common/json" || mod === "common/rpc") {
+		return `export * from "./${mod}";`;
+	}
+	if (mod === "rpc/get.request") {
+		return `export type { GetRequest } from "./${mod}";\nexport { NAMESPACE_VALUES, RESOURCE_VALUES } from "./${mod}";`;
+	}
+
+	const name =
+		title ?? schemaPathToSwiftTypeName(schemaPath).replace(/^Rpc/, "");
+	return `export type { ${name} } from "./${mod}";`;
 }
 
 async function generateTypeScript(
 	schemaFiles: LoadedSchemaFile[],
 ): Promise<void> {
+	const schemaByPath = new Map(
+		schemaFiles.map((file) => [file.schemaPath, file] as const),
+	);
+
 	await Promise.all(
-		schemaFiles.map(async ({ schemaPath, schemaKey, schema }) => {
-			const outRel = schemaPathToTsName(schemaPath) + ".ts";
-			const outPath = join(OUT_TS, outRel);
+		schemaFiles.map(async (schemaFile) => {
+			const generatedSchema = buildGeneratedTsSchema(schemaFile);
+			const { outPath, schemaPath, schemaKey, schema } = generatedSchema;
 
 			await mkdir(join(outPath, ".."), { recursive: true });
 
@@ -135,65 +391,32 @@ async function generateTypeScript(
 					description: schema.description as string | undefined,
 				};
 			}
+			const externalTypeImports = resolveExternalTypeImports(
+				generatedSchema,
+				schemaByPath,
+			);
 			const ts = await compile(schemaForCompile, title, {
 				bannerComment: `/* eslint-disable */\n/** Generated from ${relative(TYPES_ROOT, schemaPath)} - do not edit. */`,
-				declareExternallyReferenced: true,
+				declareExternallyReferenced: externalTypeImports.length === 0,
 				style: { singleQuote: false },
 				cwd: join(schemaPath, ".."),
 			});
-			await writeFile(outPath, ts, "utf-8");
-
-			if (schemaKey === "sdui/evy") {
-				const flowTypeEnum = (schema.properties as Record<string, unknown>)
-					?.type as { enum?: string[] } | undefined;
-				const flowValues = flowTypeEnum?.enum ?? [];
-				const rowDef = (schema.$defs as Record<string, unknown>)?.[
-					"SDUI_Row"
-				] as Record<string, unknown> | undefined;
-				const rowTypeEnum = (rowDef?.properties as Record<string, unknown>)
-					?.type as { enum?: string[] } | undefined;
-				const rowValues = rowTypeEnum?.enum ?? [];
-				const flowLine = `export const SDUI_FLOW_TYPE_VALUES = ${JSON.stringify(flowValues)} as const;`;
-				const rowLine = `export const SDUI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`;
-				const current = await readFile(outPath, "utf-8");
-				await writeFile(
-					outPath,
-					`${current.trimEnd()}\n\n${flowLine}\n${rowLine}\n`,
-					"utf-8",
-				);
-			}
-			if (schemaKey === "rpc/get.request") {
-				const props = schema.properties as Record<string, { enum?: string[] }>;
-				const namespaceValues = props?.namespace?.enum ?? [];
-				const resourceValues = props?.resource?.enum ?? [];
-				const namespaceLine = `export const NAMESPACE_VALUES = ${JSON.stringify(namespaceValues)} as const;`;
-				const resourceLine = `export const RESOURCE_VALUES = ${JSON.stringify(resourceValues)} as const;`;
-				const current = await readFile(outPath, "utf-8");
-				await writeFile(
-					outPath,
-					`${current.trimEnd()}\n\n${namespaceLine}\n${resourceLine}\n`,
-					"utf-8",
-				);
-			}
+			const tsWithImports = injectImports(ts, externalTypeImports);
+			await writeFile(outPath, tsWithImports, "utf-8");
+			await appendSchemaSpecificExports(generatedSchema);
 		}),
 	);
 
 	const lines: string[] = [];
 	for (const { schemaPath: f, schema } of schemaFiles) {
-		const rel = schemaPathToTsName(f);
-		const mod = rel.replace(/\.ts$/, "");
-		const title = (schema.title as string | undefined) ?? null;
-		if (mod.startsWith("sdui/") && mod.includes("sdui")) {
-			lines.unshift(`export * from "./${mod}";`);
-		} else if (mod.startsWith("data/") && mod.includes("data")) {
-			lines.unshift(`export * from "./${mod}";`);
-		} else if (mod === "rpc/get.request") {
-			lines.push(
-				`export { GetRequest, NAMESPACE_VALUES, RESOURCE_VALUES } from "./${mod}";`,
-			);
+		const exportLine = buildIndexExportLine(f, schema);
+		if (
+			exportLine.includes('export * from "./sdui/') ||
+			exportLine.includes('export * from "./data/')
+		) {
+			lines.unshift(exportLine);
 		} else {
-			const name = title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
-			lines.push(`export { ${name} } from "./${mod}";`);
+			lines.push(exportLine);
 		}
 	}
 	const content =
@@ -208,9 +431,10 @@ async function generateTypeScript(
 async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 	await mkdir(OUT_SWIFT, { recursive: true });
 
-	// Skip sdui/evy — generated by generate-swift-sdui.ts from schema + row-content.spec.json
 	const schemaFilesToQuicktype = schemaFiles.filter(
-		(f) => f.schemaKey !== "sdui/evy",
+		(f) =>
+			f.schemaKey !== "sdui/evy" && // generated by generate-swift-sdui.ts
+			f.schemaKey !== "rpc/get.response", // recursive $defs unsupported by quicktype
 	);
 
 	await Promise.all(

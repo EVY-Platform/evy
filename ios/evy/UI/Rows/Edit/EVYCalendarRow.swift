@@ -11,36 +11,9 @@ struct EVYCalendarRow: View, EVYRowProtocol {
 	public static let JSONType = "Calendar"
 
 	private let view: CalendarRowViewData
-	private let edit: SDUI_RowEdit?
 
-	init(view: CalendarRowViewData, edit: SDUI_RowEdit?) {
+	init(view: CalendarRowViewData) {
 		self.view = view
-		self.edit = edit
-	}
-
-	func complete() -> Bool {
-		guard let validation = edit?.validation, validation.requiredBool else { return true }
-		guard let minAmount = validation.minAmountInt else { return true }
-		guard let destination = edit?.destination else { return false }
-		do {
-			let storedValue = try EVY.getDataFromText(destination)
-			switch storedValue {
-			case let .array(timeslots):
-				let selectedTimeslots = timeslots.filter {
-					$0.parseProp(props: ["selected"]).toString() == "true"
-				}
-				return selectedTimeslots.count >= minAmount
-			default:
-				return storedValue.toString().count >= minAmount
-			}
-		} catch {
-			return false
-		}
-	}
-
-	func incompleteMessages() -> [String] {
-		guard let msg = edit?.validation?.message else { return [] }
-		return [msg]
 	}
 
 	var body: some View {

@@ -18,7 +18,8 @@ API_RESULT=0
 WEB_RESULT=0
 IOS_RESULT=0
 IOS_SKIPPED=false
-MAX_RETRIES=5
+MAX_RETRIES=30
+RETRY_DELAY_SECONDS=2
 
 set -a
 source .env
@@ -30,7 +31,7 @@ echo -e "${YELLOW}========================================${NC}"
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    docker compose down -v --remove-orphans 2>/dev/null || true
+    # docker compose down -v --remove-orphans 2>/dev/null || true
 }
 
 wait_for_http_service() {
@@ -39,16 +40,36 @@ wait_for_http_service() {
     local retry_count=0
 
     echo "Waiting for $service_name..."
-    until curl -s "$service_url" > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
-        sleep 1
+    until curl -fsS "$service_url" > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
+        sleep "$RETRY_DELAY_SECONDS"
         retry_count=$((retry_count + 1))
     done
 
     if [ $retry_count -eq $MAX_RETRIES ]; then
-        echo -e "${YELLOW}$service_name health check timed out, but continuing...${NC}"
-    else
-        echo -e "${GREEN}$service_name is ready${NC}"
+        echo -e "${RED}$service_name health check failed${NC}"
+        exit 1
     fi
+
+    echo -e "${GREEN}$service_name is ready${NC}"
+}
+
+wait_for_api_readiness() {
+    local script_name="$1"
+    local display_name="$2"
+    local retry_count=0
+
+    echo "Waiting for $display_name..."
+    until docker compose exec -T api bun run "$script_name" > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
+        sleep "$RETRY_DELAY_SECONDS"
+        retry_count=$((retry_count + 1))
+    done
+
+    if [ $retry_count -eq $MAX_RETRIES ]; then
+        echo -e "${RED}$display_name failed${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}$display_name is ready${NC}"
 }
 
 seed_database() {
@@ -56,6 +77,8 @@ seed_database() {
         echo -e "${RED}Database seeding failed${NC}"
         exit 1
     fi
+
+    wait_for_api_readiness "health:seeded" "seeded API data"
 }
 
 trap cleanup EXIT
@@ -67,17 +90,17 @@ echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
 echo "Waiting for PostgreSQL..."
 PG_RETRY_COUNT=0
-until docker compose exec -T postgres pg_isready -U evy > /dev/null 2>&1 || [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; do
-    sleep 1
+until docker compose exec -T postgres pg_isready -U "$DB_USER" > /dev/null 2>&1 || [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; do
+    sleep "$RETRY_DELAY_SECONDS"
     PG_RETRY_COUNT=$((PG_RETRY_COUNT + 1))
 done
 if [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; then
-    echo -e "${YELLOW}PostgreSQL health check timed out, but continuing...${NC}"
-else
-    echo -e "${GREEN}PostgreSQL is ready${NC}"
+    echo -e "${RED}PostgreSQL health check failed${NC}"
+    exit 1
 fi
+echo -e "${GREEN}PostgreSQL is ready${NC}"
 
-wait_for_http_service "API" "http://localhost:$API_PORT"
+wait_for_api_readiness "health" "API"
 wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 
 echo -e "\n${YELLOW}Step 3: Generating types...${NC}"

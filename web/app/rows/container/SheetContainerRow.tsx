@@ -8,6 +8,7 @@ const typeName = "SheetContainerRow";
 export default defineRow(typeName, {
 	config: {
 		type: "SheetContainer",
+		actions: [],
 		view: {
 			content: {
 				title: "Sheet container row title",

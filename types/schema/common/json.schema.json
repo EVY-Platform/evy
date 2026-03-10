@@ -16,14 +16,8 @@
 		"JSONValue": {
 			"anyOf": [
 				{ "$ref": "#/$defs/JSONScalar" },
-				{
-					"type": "array",
-					"items": { "$ref": "#/$defs/JSONScalar" }
-				},
-				{
-					"type": "object",
-					"additionalProperties": { "$ref": "#/$defs/JSONScalar" }
-				}
+				{ "type": "array" },
+				{ "type": "object" }
 			]
 		}
 	}

@@ -18,6 +18,7 @@ test.describe("Row configuration", () => {
 								text: "Initial text content",
 							},
 						},
+						actions: [],
 					},
 				],
 			},
@@ -48,7 +49,7 @@ test.describe("Row configuration", () => {
 		await expect(textInput).toHaveValue("Updated info text");
 	});
 
-	test("should display and edit action target in configuration panel", async ({
+	test("should display and edit action items in configuration panel", async ({
 		page,
 	}) => {
 		await initTestFlows(page, [
@@ -64,9 +65,7 @@ test.describe("Row configuration", () => {
 								label: "Test Button",
 							},
 						},
-						action: {
-							target: "close",
-						},
+						actions: [{ condition: "", false: "", true: "close" }],
 					},
 				],
 			},
@@ -81,27 +80,18 @@ test.describe("Row configuration", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		await expect(configPanel.getByText("Action")).toBeVisible();
+		await expect(configPanel.getByText("Actions")).toBeVisible();
+		await expect(configPanel.getByLabel("condition-0")).toHaveValue("");
+		await expect(configPanel.getByLabel("false-0")).toHaveValue("");
+		await expect(configPanel.getByLabel("true-0")).toHaveValue("close");
 
-		const closeButton = configPanel.getByRole("button", { name: "Close" });
-		const submitButton = configPanel.getByRole("button", { name: "Submit" });
-		const navigateButton = configPanel.getByRole("button", {
-			name: "Navigate",
-		});
-
-		await expect(closeButton).toBeVisible();
-		await expect(submitButton).toBeVisible();
-		await expect(navigateButton).toBeVisible();
-
-		await expect(closeButton).toHaveClass(/evy-bg-gray-light/);
-		await expect(submitButton).not.toHaveClass(/evy-bg-gray-light/);
-
-		await submitButton.click();
-		await expect(submitButton).toHaveClass(/evy-bg-gray-light/);
-		await expect(closeButton).not.toHaveClass(/evy-bg-gray-light/);
+		await configPanel.getByLabel("true-0").fill("{create(item)}");
+		await expect(configPanel.getByLabel("true-0")).toHaveValue(
+			"{create(item)}",
+		);
 	});
 
-	test("should show navigate inputs when navigate is selected", async ({
+	test("should add another action item in configuration panel", async ({
 		page,
 	}) => {
 		await initTestFlows(page, [
@@ -117,9 +107,7 @@ test.describe("Row configuration", () => {
 								label: "Nav Button",
 							},
 						},
-						action: {
-							target: "submit",
-						},
+						actions: [{ condition: "", false: "", true: "{create(item)}" }],
 					},
 				],
 			},
@@ -134,20 +122,16 @@ test.describe("Row configuration", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		await expect(
-			configPanel.getByLabel("flow", { exact: true }),
-		).not.toBeVisible();
-		await expect(
-			configPanel.getByLabel("page", { exact: true }),
-		).not.toBeVisible();
-
-		await configPanel.getByRole("button", { name: "Navigate" }).click();
-
-		await expect(configPanel.getByLabel("flow", { exact: true })).toBeVisible();
-		await expect(configPanel.getByLabel("page", { exact: true })).toBeVisible();
+		await expect(configPanel.getByLabel("true-0")).toHaveValue(
+			"{create(item)}",
+		);
+		await configPanel.getByRole("button", { name: "Add action" }).click();
+		await expect(configPanel.getByLabel("condition-1")).toHaveValue("");
+		await expect(configPanel.getByLabel("false-1")).toHaveValue("");
+		await expect(configPanel.getByLabel("true-1")).toHaveValue("");
 	});
 
-	test("should show no segment selected for rows without action", async ({
+	test("should show empty actions state for rows without actions", async ({
 		page,
 	}) => {
 		await initTestFlows(page, [
@@ -163,6 +147,7 @@ test.describe("Row configuration", () => {
 								text: "Some text",
 							},
 						},
+						actions: [],
 					},
 				],
 			},
@@ -177,16 +162,9 @@ test.describe("Row configuration", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		await expect(configPanel.getByText("Action")).toBeVisible();
-
-		const navigateButton = configPanel.getByRole("button", {
-			name: "Navigate",
-		});
-		const submitButton = configPanel.getByRole("button", { name: "Submit" });
-		const closeButton = configPanel.getByRole("button", { name: "Close" });
-
-		await expect(navigateButton).not.toHaveClass(/evy-bg-gray-light/);
-		await expect(submitButton).not.toHaveClass(/evy-bg-gray-light/);
-		await expect(closeButton).not.toHaveClass(/evy-bg-gray-light/);
+		await expect(
+			configPanel.getByText("Actions", { exact: true }),
+		).toBeVisible();
+		await expect(configPanel.getByText("Row has no actions")).toBeVisible();
 	});
 });

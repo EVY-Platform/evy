@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-private let comparisonBasePattern = "[a-zA-Z0-9.\\(\\){} ]+"
-private let comparisonOperatorPattern = "(>|<|==|!=)"
+private let comparisonBasePattern = "[a-zA-Z0-9_.\\(\\){} ]+"
+private let comparisonOperatorPattern = "(>=|<=|==|!=|>|<)"
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
-private let functionPattern = "[a-zA-Z]+\(functionParamsPattern)"
+private let functionPattern = "[a-zA-Z_]+\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
 
@@ -67,6 +67,14 @@ struct EVYInterpreter {
     {
         try parseText(EVYValue(input, nil, nil), editing)
     }
+
+    public static func parseFunctionCall(_ input: String) -> (functionName: String, functionArgs: String)? {
+        let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let (_, functionName, functionArgs) = parseFunctionInText(trimmedInput) {
+            return (functionName, functionArgs)
+        }
+        return nil
+    }
     
     private static func parseText(_ input: EVYValue,
                                   _ editing: Bool) throws -> EVYValue
@@ -105,6 +113,8 @@ struct EVYInterpreter {
             switch funcName {
             case "count":
                 value = try evyCount(funcArgs)
+            case "length":
+                value = try evyLength(funcArgs)
             case "formatCurrency":
                 value = try evyFormatCurrency(funcArgs, editing)
             case "formatDimension":
@@ -251,26 +261,26 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
 		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
-		let bare = "test"
-		let data = "{item.title}"
-		
-		let parsedData = try! EVYInterpreter.parseTextFromText(data)
-		let withPrefix = try! EVYInterpreter.parseTextFromText(
-			"{formatCurrency(item.price)}"
-		)
-		let withSuffix = try! EVYInterpreter.parseTextFromText(
-			"{formatDimension(item.dimension.width)}"
-		)
-		let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
-			"{formatDimension(item.dimension.width)} - {item.title}"
-		)
-		let withComparison = try! EVYInterpreter.parseTextFromText(
-			"{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
-		)
-		
-		let weight = try! EVYInterpreter.parseTextFromText(
-			"{formatWeight(item.dimension.weight)}"
-		)
+	let bare = "test"
+	let data = "{title}"
+	
+	let parsedData = try! EVYInterpreter.parseTextFromText(data)
+	let withPrefix = try! EVYInterpreter.parseTextFromText(
+		"{formatCurrency(price)}"
+	)
+	let withSuffix = try! EVYInterpreter.parseTextFromText(
+		"{formatDimension(width)}"
+	)
+	let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
+		"{formatDimension(width)} - {title}"
+	)
+	let withComparison = try! EVYInterpreter.parseTextFromText(
+		"{count(title) == count(selling_reasons)} v {count(title) == count(title)}"
+	)
+	
+	let weight = try! EVYInterpreter.parseTextFromText(
+		"{formatWeight(weight)}"
+	)
 		
 		let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
 		
@@ -285,9 +295,9 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
 			Text(weight.toString())
 			Text(firstSellingReason.toString())
 			
-			EVYTextField(input: "{formatCurrency(item.price)}",
-						 destination: "{item.price.value}",
-						 placeholder: "Editing price")
+		EVYTextField(input: "{formatCurrency(price)}",
+					 destination: "{price}",
+					 placeholder: "Editing price")
 		}
 	}
 }

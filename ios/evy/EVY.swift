@@ -32,6 +32,7 @@ struct Filter: Encodable {
 @MainActor
 struct EVY {
     static let data = EVYDataManager()
+    
 	
 	static func getUserData() throws {
 		let userData = try EVYJson.from(localJSON: "user_data")
@@ -44,18 +45,18 @@ struct EVY {
 	}
 	
 	static func getData() async throws -> Data {
-		let sellingReasonsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SellingReason", filter: nil), expecting: EVYJson.self)
-		let conditionsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "Conditions", filter: nil), expecting: EVYJson.self)
-		let durationsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "Durations", filter: nil), expecting: EVYJson.self)
-		let itemJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "Items", filter: nil), expecting: EVYJson.self)
-		let areasJson: EVYJson = .array([])
+		let sellingReasonsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "selling_reasons", filter: nil), expecting: [EVYJson].self)
+		let conditionsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "conditions", filter: nil), expecting: [EVYJson].self)
+		let durationsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "durations", filter: nil), expecting: [EVYJson].self)
+		let itemsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "items", filter: nil), expecting: [EVYJson].self)
+		let areasJson: [EVYJson] = []
 
 		let serviceData: EVYJson = .dictionary([
-			"selling_reasons": sellingReasonsJson,
-			"conditions": conditionsJson,
-			"durations": durationsJson,
-			"areas": areasJson,
-			"item": itemJson,
+			"selling_reasons": .array(sellingReasonsJson),
+			"conditions": .array(conditionsJson),
+			"durations": .array(durationsJson),
+			"areas": .array(areasJson),
+			"item": itemsJson.first ?? .dictionary([:]),
 		])
 
 		let sellingReasons = try JSONEncoder().encode(serviceData.parseProp(props: ["selling_reasons"]))
@@ -87,7 +88,7 @@ struct EVY {
 	}
 	
 	static func getSDUI() async throws -> [SDUI_Flow] {
-		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SDUI", filter: nil), expecting: [SDUI_Flow].self)
+		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "sdui", filter: nil), expecting: [SDUI_Flow].self)
 	}
 	
 	static func createItem() async throws {
@@ -96,7 +97,7 @@ struct EVY {
 	
 	static func getRow(_ props: [String]) async throws -> SDUI_Row {
 		try await createItem()
-		let flowData = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "SDUI", filter: nil), expecting: EVYJson.self)
+		let flowData = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "sdui", filter: nil), expecting: EVYJson.self)
 		let rowData = try JSONEncoder().encode(flowData.parseProp(props: props))
 		return try JSONDecoder().decode(SDUI_Row.self, from: rowData)
 	}
@@ -106,15 +107,20 @@ struct EVY {
      */
     static func getDataFromText(_ input: String) throws -> EVYJson {
         let props = EVYInterpreter.parsePropsFromText(input)
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        let dataObj = try data.get(key: splitProps.first!)
-        return try dataObj.decoded().parseProp(props: Array(splitProps[1...]))
+        return try getDataFromProps(props)
     }
     
     static func getDataFromProps(_ props: String) throws -> EVYJson {
         let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        let dataObj = try data.get(key: splitProps.first!)
-        return try dataObj.decoded().parseProp(props: Array(splitProps[1...]))
+        let firstProp = splitProps.first!
+        let remainingProps = Array(splitProps[1...])
+
+        if let draftObj = try? data.getDraft(variableName: firstProp) {
+            return try draftObj.decoded().parseProp(props: remainingProps)
+        }
+
+        let dataObj = try data.get(key: firstProp)
+        return try dataObj.decoded().parseProp(props: remainingProps)
     }
     
     static func getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValue {
@@ -153,33 +159,44 @@ struct EVY {
         return returnText.toString()
     }
     
+    static func ensureDraftExists(variableName: String) {
+        guard !data.exists(key: variableName),
+              !data.hasDraft(variableName: variableName) else {
+            return
+        }
+        guard let emptyData = "\"\"".data(using: .utf8) else { return }
+        do {
+            try data.createDraft(variableName: variableName, data: emptyData)
+        } catch {
+            // Draft may have been created concurrently
+        }
+    }
+
     /**
-     * Submitting a new entity to the API
+     * Creating a new entity in the API
      */
-    static func submit(key: String) throws {
+    static func create(key: String) throws {
         let existing = try data.get(key: key)
         existing.key = UUID().uuidString
         // TODO: Send to API
     }
     
-    /**
-     * Updating a nested value in an object by using props
-     */
     static func updateValue(_ value: String, at: String) throws {
         try updateData("\"\(value)\"".data(using: .utf8)!, at: at)
     }
     
     static func updateData(_ newData: Data, at: String) throws {
-        let props = EVYInterpreter.parsePropsFromText(at)
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        let firstProp = splitProps.first!
-        
-        if data.exists(key: firstProp) {
-            let dataObj = try data.get(key: firstProp)
-            try dataObj.updateDataWithData(newData, props: Array(splitProps[1...]))
-			try data.update(props: splitProps, data: dataObj.data)
+        let variableName = EVYInterpreter.parsePropsFromText(at)
+
+        if let existing = try? data.getDraft(variableName: variableName) {
+            existing.data = newData
+            NotificationCenter.default.post(name: .evyDataUpdated, object: variableName)
+        } else if data.exists(key: variableName) {
+            let dataObj = try data.get(key: variableName)
+            dataObj.data = newData
+            try data.update(props: [variableName], data: newData)
         } else {
-            try data.create(key: firstProp, data: newData)
+            try data.createDraft(variableName: variableName, data: newData)
         }
     }
 }

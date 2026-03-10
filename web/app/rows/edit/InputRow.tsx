@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("InputRow", {
 	config: {
 		type: "Input",
+		actions: [],
 		view: {
 			content: {
 				title: "Input row title",
@@ -13,13 +14,7 @@ export default defineRow("InputRow", {
 				value: "",
 			},
 		},
-		edit: {
-			destination: "{item.title}",
-			validation: {
-				required: "true",
-				message: "This field is required",
-			},
-		},
+		destination: "{title}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

@@ -11,24 +11,10 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
 	public static let JSONType = "SelectSegmentContainer"
 
 	private let view: SelectSegmentContainerRowViewData
-	private let edit: SDUI_RowEdit?
 	@State private var selected: Int = 0
 
-	init(view: SelectSegmentContainerRowViewData, edit: SDUI_RowEdit?) {
+	init(view: SelectSegmentContainerRowViewData) {
 		self.view = view
-		self.edit = edit
-	}
-
-	func complete() -> Bool {
-		guard let minAmount = edit?.validation?.minAmountInt else { return true }
-		let completeCount = view.content.children.filter { SDUI_Row.complete(row: $0) }.count
-		return completeCount >= minAmount
-	}
-
-	func incompleteMessages() -> [String] {
-		view.content.children
-			.filter { !SDUI_Row.complete(row: $0) }
-			.flatMap { SDUI_Row.incompleteMessages(row: $0) }
 	}
 
 	var body: some View {
