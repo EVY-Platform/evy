@@ -48,8 +48,8 @@ struct EVY {
 		let sellingReasonsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "selling_reasons", filter: nil), expecting: [EVYJson].self)
 		let conditionsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "conditions", filter: nil), expecting: [EVYJson].self)
 		let durationsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "durations", filter: nil), expecting: [EVYJson].self)
+		let areasJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "areas", filter: nil), expecting: [EVYJson].self)
 		let itemsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "items", filter: nil), expecting: [EVYJson].self)
-		let areasJson: [EVYJson] = []
 
 		let serviceData: EVYJson = .dictionary([
 			"selling_reasons": .array(sellingReasonsJson),
