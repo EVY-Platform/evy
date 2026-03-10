@@ -48,7 +48,7 @@ describe("API E2E Tests", () => {
 		it("get should succeed without auth (public)", async () => {
 			const result = await unauthClient.call("get", {
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 			});
 			expect(Array.isArray(result)).toBe(true);
 		});
@@ -57,7 +57,7 @@ describe("API E2E Tests", () => {
 			try {
 				await unauthClient.call("upsert", {
 					namespace: "evy",
-					resource: "SDUI",
+					resource: "sdui",
 					data: {
 						id: crypto.randomUUID(),
 						name: "Test",
@@ -109,13 +109,13 @@ describe("API E2E Tests", () => {
 
 			await client.call("upsert", {
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 				data: flowData,
 			});
 
 			const result = await client.call("get", {
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 			});
 
 			expect(result.length).toBeGreaterThan(0);
@@ -155,7 +155,7 @@ describe("API E2E Tests", () => {
 
 			const result = await client.call("upsert", {
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 				data: flowData,
 			});
 
@@ -186,7 +186,7 @@ describe("API E2E Tests", () => {
 
 			const created = await client.call("upsert", {
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 				data: createFlowData,
 			});
 
@@ -197,7 +197,7 @@ describe("API E2E Tests", () => {
 
 			const updated = await client.call("upsert", {
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 				filter: { id: created.id },
 				data: updateFlowData,
 			});
@@ -208,9 +208,9 @@ describe("API E2E Tests", () => {
 		it("get non-SDUI resource should return data object", async () => {
 			const result = await client.call("get", {
 				namespace: "evy",
-				resource: "Items",
+				resource: "items",
 			});
-			expect(result !== null && typeof result === "object").toBe(true);
+			expect(Array.isArray(result)).toBe(true);
 		});
 
 		it("upsert then get non-SDUI resource", async () => {
@@ -221,7 +221,7 @@ describe("API E2E Tests", () => {
 
 			const upserted = await client.call("upsert", {
 				namespace: "evy",
-				resource: "Items",
+				resource: "items",
 				data: testData,
 			});
 
@@ -231,14 +231,19 @@ describe("API E2E Tests", () => {
 
 			const got = await client.call("get", {
 				namespace: "evy",
-				resource: "Items",
+				resource: "items",
 			});
 
-			expect(isRecord(got)).toBe(true);
-			expect(got.testField).toBe("e2e test value");
-
-			expect(isRecord(got.nested)).toBe(true);
-			expect(got.nested.value).toBe(123);
+			expect(Array.isArray(got)).toBe(true);
+			expect(got.length).toBeGreaterThan(0);
+			const matchingRecord = got.find(
+				(entry: unknown) =>
+					isRecord(entry) &&
+					entry.testField === "e2e test value" &&
+					isRecord(entry.nested) &&
+					entry.nested.value === 123,
+			);
+			expect(isRecord(matchingRecord)).toBe(true);
 		});
 	});
 });

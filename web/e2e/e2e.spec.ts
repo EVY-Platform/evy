@@ -182,8 +182,13 @@ test.describe("Web E2E Integration Tests", () => {
 		const flowSelector = page.locator("#flow-select");
 		await expect(flowSelector).toBeVisible();
 		await flowSelector.selectOption({ label: "View Item" });
+		await expect(flowSelector).not.toHaveValue("Select a flow");
 
-		const footerButton = page.getByText("Go home", { exact: true });
+		const footerButton = page
+			.locator('div[class*="evy-bg-phone"]')
+			.first()
+			.getByRole("button", { name: "Go home" })
+			.first();
 		await expect(footerButton).toBeVisible();
 	});
 

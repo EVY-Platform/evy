@@ -37,42 +37,42 @@
 	],
 	"durations": [
 		{
-			"id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+			"id": "cfe1a972-2430-44cf-b8b4-74f65ed56683",
 			"value": "5 min"
 		},
 		{
-			"id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+			"id": "3e0f4b97-97c3-46da-a242-a5c1e8e63245",
 			"value": "10 min"
 		},
 		{
-			"id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+			"id": "085bcd36-e076-493e-89d0-4d4485ef923e",
 			"value": "15 min"
 		},
 		{
-			"id": "69f25102-822c-436c-a6c1-3b49f887355e",
+			"id": "c16330bd-3b7a-4517-ba2f-01dd190a85ef",
 			"value": "30 min"
 		}
 	],
 	"areas": [
 		{
-			"id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
+			"id": "787674a6-ef4d-4d8c-b1e2-1c860b0a9155",
 			"value": "City"
 		},
 		{
-			"id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
+			"id": "5a6275a5-c46e-47de-8db6-5f6e73bf511a",
 			"value": "State"
 		},
 		{
-			"id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+			"id": "bd87e698-7623-474b-bf87-48600d103253",
 			"value": "Country"
 		},
 		{
-			"id": "69f25102-822c-436c-a6c1-3b49f887355e",
+			"id": "d4349457-4a93-43cb-bb14-5e7e5bb17834",
 			"value": "World"
 		}
 	],
 	"item": {
-		"id": "item",
+		"id": "12401f50-cf1a-45d7-a112-2e68a2070466",
 		"title": "Amazing Fridge",
 		"photo_ids": [],
 		"price": {

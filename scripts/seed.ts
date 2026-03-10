@@ -1,6 +1,7 @@
 import { dirname, join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import pluralize from "pluralize";
 import { db, schema } from "../api/src/db";
 import { validateFlowData } from "../api/src/validation";
 
@@ -50,11 +51,20 @@ async function seed() {
 		});
 	}
 
-	await db.insert(schema.data).values({
-		data: dataJson,
-		createdAt: new Date(),
-		updatedAt: new Date(),
-	});
+	const now = new Date();
+	for (const [key, value] of Object.entries(dataJson)) {
+		const resource = pluralize.singular(key);
+		const items = Array.isArray(value) ? value : [value];
+		for (const item of items) {
+			await db.insert(schema.data).values({
+				namespace: "evy",
+				resource,
+				data: item,
+				createdAt: now,
+				updatedAt: now,
+			});
+		}
+	}
 
 	console.log("Seeding complete!");
 	process.exit(0);

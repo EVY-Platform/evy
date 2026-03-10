@@ -33,7 +33,7 @@ actor WSEmitter {
     func updateSDUI(flowData: [String: Any], flowId: String) async throws {
         let params: [String: Any] = [
             "namespace": "evy",
-            "resource": "SDUI",
+            "resource": "sdui",
             "filter": ["id": flowId],
             "data": flowData
         ]

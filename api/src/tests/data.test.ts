@@ -187,7 +187,7 @@ describe("get", () => {
 
 	it("should throw when namespace is invalid", async () => {
 		await expect(
-			get({ namespace: "invalid", resource: "SDUI" }),
+			get({ namespace: "invalid", resource: "sdui" }),
 		).rejects.toThrow("Invalid or missing namespace");
 	});
 
@@ -224,7 +224,7 @@ describe("get", () => {
 
 		const result = await get({
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 		});
 
 		expect(result).toHaveLength(2);
@@ -249,7 +249,7 @@ describe("get", () => {
 
 		const result = await get({
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 			filter: { id: flowId },
 		});
 
@@ -260,35 +260,36 @@ describe("get", () => {
 	it("should return empty array for SDUI when filter.id matches nothing", async () => {
 		const result = await get({
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 			filter: { id: crypto.randomUUID() },
 		});
 
 		expect(result).toHaveLength(0);
 	});
 
-	it("should return namespaced resource data for non-SDUI resource", async () => {
+	it("should return resource data for non-SDUI resource", async () => {
+		const conditionData = { id: "1", value: "New" };
 		await upsert({
 			namespace: "evy",
-			resource: "Conditions",
-			data: [{ id: "1", value: "New" }],
+			resource: "conditions",
+			data: conditionData,
 		});
 
 		const result = await get({
 			namespace: "evy",
-			resource: "Conditions",
+			resource: "conditions",
 		});
 
-		expect(result).toEqual([{ id: "1", value: "New" }]);
+		expect(result).toEqual([conditionData]);
 	});
 
-	it("should return empty object for non-SDUI resource when no data", async () => {
+	it("should return empty array for non-SDUI resource when no data", async () => {
 		const result = await get({
 			namespace: "evy",
-			resource: "Items",
+			resource: "items",
 		});
 
-		expect(result).toEqual({});
+		expect(result).toEqual([]);
 	});
 });
 
@@ -303,7 +304,7 @@ describe("upsert", () => {
 
 	it("should throw when data is missing", async () => {
 		await expect(
-			upsert({ namespace: "evy", resource: "SDUI" }),
+			upsert({ namespace: "evy", resource: "sdui" }),
 		).rejects.toThrow("data is required");
 	});
 
@@ -333,7 +334,7 @@ describe("upsert", () => {
 
 		const result = await upsert({
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 			data: flowData,
 		});
 
@@ -388,7 +389,7 @@ describe("upsert", () => {
 
 		const result = await upsert({
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 			filter: { id: existingFlow.id },
 			data: updatedFlowData,
 		});
@@ -406,7 +407,7 @@ describe("upsert", () => {
 		await expect(
 			upsert({
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 				data: {
 					name: "",
 					type: "read",
@@ -417,31 +418,23 @@ describe("upsert", () => {
 		).rejects.toThrow("Flow validation failed");
 	});
 
-	it("should upsert namespaced Data resource", async () => {
-		const payload = {
-			conditions: [{ id: "1", value: "New" }],
-			selling_reasons: [{ id: "1", value: "Moving" }],
-		};
+	it("should upsert Data resource with namespace and resource columns", async () => {
+		const payload = { id: "1", value: "New" };
 
 		const result = await upsert({
 			namespace: "evy",
-			resource: "Conditions",
+			resource: "conditions",
 			data: payload,
 		});
 
 		expect(!isDATA_Flow(result)).toBe(true);
 		if (!isDATA_Flow(result)) {
-			expect(result.data).toHaveProperty("evy");
-			const evy = result.data.evy;
-			expect(evy).not.toBeUndefined();
-			expect(typeof evy).toBe("object");
-			expect(evy).toHaveProperty("Conditions");
-			if (evy && "Conditions" in evy) {
-				expect(evy.Conditions).toEqual(payload);
-			}
+			expect(result.data).toEqual(payload);
 		}
 		const dataRecords = await testDb.select().from(schema.data);
 		expect(dataRecords).toHaveLength(1);
+		expect(dataRecords[0].namespace).toBe("evy");
+		expect(dataRecords[0].resource).toBe("condition");
 	});
 });
 
@@ -454,7 +447,7 @@ describe("upsert SDUI validation", () => {
 		await expect(
 			upsert({
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 				data: {
 					name: "Test Flow",
 					type: "invalid-type",
@@ -468,7 +461,7 @@ describe("upsert SDUI validation", () => {
 	it("should accept flow with no pages", async () => {
 		const result = await upsert({
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 			data: {
 				id: crypto.randomUUID(),
 				name: "Test Flow",
@@ -487,7 +480,7 @@ describe("upsert SDUI validation", () => {
 		await expect(
 			upsert({
 				namespace: "evy",
-				resource: "SDUI",
+				resource: "sdui",
 				data: {
 					name: "Test Flow",
 					type: "read",
@@ -561,7 +554,7 @@ describe("upsert SDUI validation", () => {
 
 		const result = await upsert({
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 			data: flowData,
 		});
 		expect(isDATA_Flow(result)).toBe(true);
@@ -593,7 +586,7 @@ describe("upsert SDUI validation", () => {
 
 		const result = await upsert({
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 			data: flowData,
 		});
 		expect(isDATA_Flow(result)).toBe(true);

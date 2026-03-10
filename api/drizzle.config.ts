@@ -2,7 +2,7 @@ import { defineConfig } from "drizzle-kit";
 import { getConnectionUrl } from "./src/db/connectionUrl";
 
 export default defineConfig({
-	schema: "./src/db/schema.ts",
+	schema: "../types/generated/ts/db/schema.generated.ts",
 	out: "./drizzle",
 	dialect: "postgresql",
 	dbCredentials: {

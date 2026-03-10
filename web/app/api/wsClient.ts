@@ -86,7 +86,7 @@ class WSClient {
 
 		const raw = await this.client.call("get", {
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 		});
 		if (!isServerFlowArray(raw)) {
 			throw new Error("Invalid get response: expected array of flows");
@@ -100,7 +100,7 @@ class WSClient {
 
 		const raw = await this.client.call("upsert", {
 			namespace: "evy",
-			resource: "SDUI",
+			resource: "sdui",
 			filter: flowData.id ? { id: flowData.id } : undefined,
 			data: flowData,
 		});

@@ -21,7 +21,7 @@ async function main() {
 		.register("upsert", async (params: WSParams) => {
 			const result = await upsert(params);
 			if (!hasResource(params)) return result;
-			if (params.resource === "SDUI") {
+			if (params.resource === "sdui") {
 				emitJsonRpc(server, "flowUpdated", result);
 			} else {
 				emitJsonRpc(server, "dataUpdated", result);
