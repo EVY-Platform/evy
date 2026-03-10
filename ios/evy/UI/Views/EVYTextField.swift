@@ -13,7 +13,9 @@ struct EVYTextField: View {
     let multiLine: Bool
     let input: String
     
+    @Bindable private var displayValue: EVYState<EVYValue>
     @Bindable private var editableValue: EVYState<EVYValue>
+    @Bindable private var placeholderValue: EVYState<EVYValue>
     
     @FocusState private var focused: Bool
     @State private var editing: Bool = false
@@ -24,8 +26,14 @@ struct EVYTextField: View {
         self.destination = destination
         self.multiLine = multiLine
         
+        self.displayValue = EVYState(watch: input, setter: {
+            Self.resolveValue(from: $0)
+        })
         self.editableValue = EVYState(watch: input, setter: {
-            (try? EVY.getValueFromText($0, editing: true)) ?? EVYValue($0, nil, nil)
+            Self.resolveValue(from: $0, editing: true)
+        })
+        self.placeholderValue = EVYState(watch: placeholder, setter: {
+            Self.resolveValue(from: $0)
         })
     }
     
@@ -36,11 +44,21 @@ struct EVYTextField: View {
                   multiLine: false)
     }
     
+    private static func resolveValue(from text: String, editing: Bool = false) -> EVYValue {
+        if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
+            return resolvedValue
+        }
+        if EVY.parsePropsFromText(text) == text {
+            return EVYValue(text, nil, nil)
+        }
+        return EVYValue("", nil, nil)
+    }
+    
     var body: some View {
         Group {
             if !editing || destination.isEmpty {
-                let display = EVYTextView(input)
-                let placeholder = EVYTextView(placeholder, style: .info)
+                let display = EVYTextView(displayValue.value.toString())
+                let placeholder = EVYTextView(placeholderValue.value.toString(), style: .info)
                 
                 if display.text.value.value.count > 0 {
                     display.frame(maxWidth: .infinity, alignment: .leading)
@@ -49,7 +67,7 @@ struct EVYTextField: View {
                 }
             } else {
                 TextField(text: $editableValue.value.value,
-                          prompt: EVYTextView(placeholder).toText(),
+                          prompt: EVYTextView(placeholderValue.value.toString()).toText(),
                           axis: multiLine ? .vertical : .horizontal,
                           label: {})
                 .font(.evy)
