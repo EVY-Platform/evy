@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { SDUI_Flow as ServerFlow } from "evy-types/sdui/evy";
+import type { SDUI_Flow as ServerFlow } from "evy-types";
 import type { Page } from "@playwright/test";
 
 test.describe("Flow Selector", () => {

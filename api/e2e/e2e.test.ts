@@ -1,11 +1,10 @@
 import { Client } from "rpc-websockets";
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import type { SDUI_Flow, SDUI_Page, SDUI_Row } from "evy-types";
 
 import { isRecord } from "../src/data";
 
 type WSClient = InstanceType<typeof Client>;
-
-import type { SDUI_Flow, SDUI_Page, SDUI_Row } from "evy-types/sdui/evy";
 
 const API_URL = process.env.API_URL;
 if (!API_URL) {

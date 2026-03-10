@@ -1,5 +1,5 @@
 import { initServer, emitJsonRpc, type WSParams } from "./ws";
-import type { GetRequest } from "evy-types/rpc/get.request";
+import type { GetRequest } from "evy-types";
 import { get, isRecord, isResource, upsert, validateAuth } from "./data";
 
 function authHandler(data: WSParams): Promise<boolean> {

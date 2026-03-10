@@ -4,9 +4,9 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { PGlite } from "@electric-sql/pglite";
 
+import type { SDUI_Flow } from "evy-types";
 import type { DATA_Flow, DATA_Rows } from "evy-types/data/data";
-import type { SDUI_Flow } from "evy-types/sdui/evy";
-import * as schema from "evy-types/db/schema.generated";
+import * as schema from "../../../types/generated/ts/db/schema.generated";
 import {
 	type RowSchema,
 	type PageSchema,

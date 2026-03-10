@@ -1,17 +1,22 @@
 import { eq, and, desc } from "drizzle-orm";
 import pluralize from "pluralize";
 
-import type { DATA_Data, DATA_Flow, DATA_Rows, OS } from "evy-types/data/data";
-import type { GetDataResponse } from "evy-types/rpc/get.response";
+import type { DATA_Data, DATA_Flow, DATA_Rows } from "evy-types/data/data";
 import {
+	type GetResponse,
 	NAMESPACE_VALUES,
 	RESOURCE_VALUES,
 	type GetRequest,
-} from "evy-types/rpc/get.request";
-import type { SDUI_Flow } from "evy-types/sdui/evy";
-import type { UpsertRequest } from "evy-types/rpc/upsert.request";
-
-import { device, flow, data, osEnum } from "evy-types/db/schema.generated";
+	type OS,
+	type SDUI_Flow,
+	type UpsertRequest,
+} from "evy-types";
+import {
+	device,
+	flow,
+	data,
+	osEnum,
+} from "../../types/generated/ts/db/schema.generated";
 import { db } from "./db";
 import { validateFlowData } from "./validation";
 
@@ -114,13 +119,8 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	}
 }
 
-export async function get(params: GetRequest): Promise<SDUI_Flow[]>;
-export async function get(
-	params: GetRequest,
-): Promise<SDUI_Flow[] | GetDataResponse[]>;
-export async function get(
-	params: unknown,
-): Promise<SDUI_Flow[] | GetDataResponse[]> {
+export async function get(params: GetRequest): Promise<GetResponse>;
+export async function get(params: unknown): Promise<GetResponse> {
 	validateParams(params);
 	const { namespace, resource, filter } = params;
 
@@ -155,7 +155,7 @@ export async function get(
 		.where(and(...whereClauses))
 		.orderBy(desc(data.updatedAt));
 
-	return rows.map((r) => r.data) as GetDataResponse[];
+	return rows.map((r) => r.data) as GetResponse;
 }
 
 export async function upsert(params: unknown): Promise<DATA_Rows> {

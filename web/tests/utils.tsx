@@ -1,10 +1,10 @@
 import type { Locator, Page } from "@playwright/test";
 import type {
 	SDUI_Flow as ServerFlow,
+	SDUI_RowAction as RowAction,
 	SDUI_Row as ServerRow,
 	SDUI_RowContent as ServerRowContent,
-	SDUI_RowAction as RowAction,
-} from "evy-types/sdui/evy";
+} from "evy-types";
 
 // Input types where id is optional
 // Using explicit interface to avoid index signature conflicts with ServerRowContent

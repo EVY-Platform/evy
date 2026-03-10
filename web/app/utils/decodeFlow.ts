@@ -1,10 +1,10 @@
 import { createElement } from "react";
 import type {
 	SDUI_Flow as ServerFlow,
-	SDUI_Row as ServerRow,
 	SDUI_Page as ServerPage,
+	SDUI_Row as ServerRow,
 	SDUI_RowContent as ServerRowContent,
-} from "evy-types/sdui/evy";
+} from "evy-types";
 
 import type { Row } from "../types/row";
 import type { SDUI_Flow, SDUI_Page } from "../types/flow";

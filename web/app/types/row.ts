@@ -7,7 +7,7 @@ import type React from "react";
 import type {
 	SDUI_Row as SerialRow,
 	SDUI_RowContent as SerialRowContent,
-} from "evy-types/sdui/evy";
+} from "evy-types";
 
 export type Row = {
 	id: string;

@@ -1,4 +1,4 @@
-import type { SDUI_Flow } from "evy-types/sdui/evy";
+import type { SDUI_Flow } from "evy-types";
 import { get } from "./data";
 
 const requireSeededData = process.argv.includes("--require-seeded");

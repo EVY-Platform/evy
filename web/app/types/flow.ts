@@ -6,7 +6,7 @@ import type { Row } from "./row";
 import type {
 	SDUI_Flow as EvySDUI_Flow,
 	SDUI_Page as EvySDUI_Page,
-} from "evy-types/sdui/evy";
+} from "evy-types";
 
 /** Client page: same shape as evy-types SDUI_Page but rows/footer use UI Row */
 export type SDUI_Page = Omit<EvySDUI_Page, "rows" | "footer"> & {

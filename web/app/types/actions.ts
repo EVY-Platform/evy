@@ -1,7 +1,7 @@
 import type { ContainerType } from "./row";
 import type { SDUI_Flow } from "./flow";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import type { SDUI_RowAction } from "evy-types/sdui/evy";
+import type { SDUI_RowAction } from "evy-types";
 
 export type RowAction =
 	| {

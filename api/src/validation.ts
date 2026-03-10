@@ -1,8 +1,9 @@
 import {
 	SDUI_FLOW_TYPE_VALUES,
 	SDUI_ROW_TYPE_VALUES,
-} from "evy-types/sdui/evy";
-import type { SDUI_Flow, SDUI_Row } from "evy-types/sdui/evy";
+	type SDUI_Flow,
+	type SDUI_Row,
+} from "evy-types";
 import { z } from "zod";
 
 /**
