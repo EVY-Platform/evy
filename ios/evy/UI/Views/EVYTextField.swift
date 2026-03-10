@@ -26,14 +26,17 @@ struct EVYTextField: View {
         self.destination = destination
         self.multiLine = multiLine
         
-        self.displayValue = EVYState(watch: input, setter: {
-            Self.resolveValue(from: $0)
+        let inputWatchTarget = Self.watchTarget(for: input)
+        let placeholderWatchTarget = Self.watchTarget(for: placeholder)
+        
+        self.displayValue = EVYState(watch: inputWatchTarget, setter: { _ in
+            Self.resolveValue(from: input)
         })
-        self.editableValue = EVYState(watch: input, setter: {
-            Self.resolveValue(from: $0, editing: true)
+        self.editableValue = EVYState(watch: inputWatchTarget, setter: { _ in
+            Self.resolveValue(from: input, editing: true)
         })
-        self.placeholderValue = EVYState(watch: placeholder, setter: {
-            Self.resolveValue(from: $0)
+        self.placeholderValue = EVYState(watch: placeholderWatchTarget, setter: { _ in
+            Self.resolveValue(from: placeholder)
         })
     }
     
@@ -52,6 +55,17 @@ struct EVYTextField: View {
             return EVYValue(text, nil, nil)
         }
         return EVYValue("", nil, nil)
+    }
+    
+    private static func watchTarget(for text: String) -> String {
+        let parsedProps = EVY.parsePropsFromText(text)
+        if parsedProps == text {
+            return text
+        }
+        if let functionCall = EVYInterpreter.parseFunctionCall(parsedProps) {
+            return functionCall.functionArgs
+        }
+        return parsedProps
     }
     
     var body: some View {

@@ -182,6 +182,19 @@ struct EVY {
     }
     
     static func updateValue(_ value: String, at: String) throws {
+        let destinationProps = EVYInterpreter.parsePropsFromText(at)
+        if let (functionName, functionArgs) = EVYInterpreter.parseFunctionCall(destinationProps) {
+            switch functionName {
+            case "buildCurrency":
+                try updateData(try evyBuildCurrency(functionArgs, value), at: functionArgs)
+                return
+            case "buildAddress":
+                try updateData(try evyBuildAddress(functionArgs, value), at: functionArgs)
+                return
+            default:
+                break
+            }
+        }
         try updateData("\"\(value)\"".data(using: .utf8)!, at: at)
     }
     

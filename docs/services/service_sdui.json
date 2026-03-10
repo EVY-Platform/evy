@@ -133,7 +133,7 @@
 								"placeholder": "{formatCurrency(price)}"
 							}
 						},
-						"destination": "{price}",
+						"destination": "{buildCurrency(price)}",
 						"actions": []
 					},
 					{
@@ -267,17 +267,12 @@
 					},
 					"actions": [
 						{
-							"condition": "{count(photos) >= 3}",
-							"false": "{highlight_required(photos)}",
-							"true": ""
-						},
-						{
 							"condition": "{length(title) > 0}",
 							"false": "{highlight_required(title)}",
 							"true": ""
 						},
 						{
-							"condition": "{price >= 1}",
+							"condition": "{price.value >= 1}",
 							"false": "{highlight_required(price)}",
 							"true": ""
 						},

@@ -123,6 +123,8 @@ struct EVYInterpreter {
                 value = try evyFormatWeight(funcArgs, editing)
             case "formatAddress":
                 value = try evyFormatAddress(funcArgs)
+            case "buildCurrency", "buildAddress":
+                value = nil
             default:
                 value = nil
             }
