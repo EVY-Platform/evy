@@ -14,7 +14,7 @@ struct EVYSelectList: View {
     
     var body: some View {
         List {
-            ForEach(options, id: \.self) { value in
+            ForEach(Array(options.enumerated()), id: \.offset) { _, value in
                 EVYSelectItem(destination: destination,
                               value: value,
                               format: format,

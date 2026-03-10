@@ -59,7 +59,7 @@ struct EVYInlinePicker: View {
     
     var body: some View {
         HStack {
-            ForEach(options, id: \.self) { option in
+            ForEach(Array(options.enumerated()), id: \.offset) { _, option in
                 let isSelected = option.identifierValue() == selection.identifierValue()
                 Button(action: {
                     performAction(option: option)
