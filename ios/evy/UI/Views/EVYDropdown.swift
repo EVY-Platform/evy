@@ -28,20 +28,29 @@ struct EVYDropdown: View {
         self.format = format
         self.placeholder = placeholder
         
+        var loadedOptions: [EVYJson] = []
+        
         do {
             let data = try EVY.getDataFromText(data)
             if case let .array(arrayValue) = data {
-                options = arrayValue
+                loadedOptions = arrayValue
             }
         } catch {
             #if DEBUG
             print("[EVYDropdown] Error loading options: \(error)")
             #endif
         }
+        options = loadedOptions
         
         selection = EVYState(watch: destination, setter: {
             do {
                 let value = try EVY.getDataFromText($0)
+                if case let .string(identifier) = value {
+                    if identifier.isEmpty { return "" }
+                    if let matchingOption = loadedOptions.first(where: { $0.identifierValue() == identifier }) {
+                        return try EVY.formatData(json: matchingOption, format: format)
+                    }
+                }
                 return try EVY.formatData(json: value, format: format)
             } catch {
                 #if DEBUG
