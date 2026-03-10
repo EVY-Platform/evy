@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 extension SDUI_Page: View {
 	public var body: some View {
@@ -33,6 +34,14 @@ extension SDUI_Page: View {
 		.onAppear {
 			bootstrapDrafts()
 		}
+		.simultaneousGesture(TapGesture().onEnded {
+			UIApplication.shared.sendAction(
+				#selector(UIResponder.resignFirstResponder),
+				to: nil,
+				from: nil,
+				for: nil
+			)
+		})
 	}
 
 	@MainActor private func bootstrapDrafts() {

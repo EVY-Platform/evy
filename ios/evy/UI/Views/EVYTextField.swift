@@ -112,8 +112,10 @@ struct EVYTextField: View {
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            editing.toggle()
-            focused.toggle()
+            if !editing {
+                editing = true
+                focused = true
+            }
         }
         .accessibilityIdentifier("textField_\(destination)")
     }
