@@ -159,12 +159,12 @@ struct EVY {
         return returnText.toString()
     }
     
-    static func ensureDraftExists(variableName: String) {
+    static func ensureDraftExists(variableName: String, initialData: Data? = nil) {
         guard !data.exists(key: variableName),
               !data.hasDraft(variableName: variableName) else {
             return
         }
-        guard let emptyData = "\"\"".data(using: .utf8) else { return }
+        let emptyData = initialData ?? "\"\"".data(using: .utf8)!
         do {
             try data.createDraft(variableName: variableName, data: emptyData)
         } catch {

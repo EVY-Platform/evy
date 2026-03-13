@@ -44,6 +44,17 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "74A100082F32000100000001"
+               BuildableName = "evyTests.xctest"
+               BlueprintName = "evyTests"
+               ReferencedContainer = "container:evy.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "73F1A0082F30B00100000001"
                BuildableName = "evyUITests.xctest"
                BlueprintName = "evyUITests"

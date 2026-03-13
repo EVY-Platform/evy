@@ -660,7 +660,7 @@
 						"type": "ListContainer",
 						"view": {
 							"content": {
-								"title": "List",
+								"title": "",
 								"children": [
 									{
 										"id": "33333333-3333-4333-8333-333333333301",
@@ -704,7 +704,7 @@
 					},
 					"actions": [
 						{
-							"condition": "{payment_cash === true || payment_app === true}",
+							"condition": "{payment_cash == true || payment_app == true}",
 							"false": "{highlight_required(payment_app)}",
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,857362ad-856f-465b-85a3-94bc8bb686cd)}"
 						}
