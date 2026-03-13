@@ -8,7 +8,6 @@
 import SwiftUI
 
 private let comparisonBlockPattern = "\\{[^{}\"]+\\}"
-private let comparisonOperatorPattern = "(>=|<=|==|!=|>|<)"
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
@@ -168,14 +167,6 @@ private func parseProps(_ input: String) -> (Regex<AnyRegexOutput>.Match, String
     if let match = try? firstMatch(input, pattern: propsPattern) {
         // Remove leading and trailing curly braces
         return (match, String(match.0.dropFirst().dropLast()))
-    }
-    return nil
-}
-
-private func parseArrayFromProps(_ input: String) -> (Regex<AnyRegexOutput>.Match, String)? {
-    if let match = try? firstMatch(input, pattern: arrayPattern) {
-        // Remove leading and trailing curly braces
-        return (match, String(match.0))
     }
     return nil
 }

@@ -93,22 +93,7 @@ struct ContentView: View {
             showingAlert = true
             
         case .close:
-            // If the flow was for creation, delete the draft data
-            if let currentFlow = flows.first(where: { $0.id == currentFlowId }),
-               currentFlow.type == .create {
-                EVY.data.deleteAllDrafts()
-                do {
-                    try EVY.data.delete(key: currentFlow.data)
-                } catch EVYDataError.keyNotFound {
-                    // Draft doesn't exist, continue
-                } catch {
-                    showError(error)
-                }
-            }
-            
-			if let existing = routes.firstIndex(where: { route in
-				route.flowId == currentFlowId
-			}) {
+			if let existing = routes.firstIndex(where: { $0.flowId == currentFlowId }) {
                 routes.removeSubrange(existing...)
             } else {
                 routes.removeAll()
@@ -117,35 +102,29 @@ struct ContentView: View {
     }
     
     private func createFlow(currentFlowId: String, key: String) {
-            // Make sure the flow was for creation, otherwise error out
-            guard let currentFlow = flows.first(where: { $0.id == currentFlowId }) else {
-                alertMessage = "Flow not found"
-                showingAlert = true
-                return
-            }
-            if currentFlow.type != .create {
-                alertMessage = "Cannot create - not a create flow"
-                showingAlert = true
-                return
-            }
-			
-            // Create the data
-            do {
-                try EVY.create(key: key)
-            } catch {
-                showError(error)
-                return
-            }
-            
-            // Then, remove the current flow from navigation
-			if let existing = routes.firstIndex(where: { route in
-				route.flowId == currentFlowId
-			}) {
-                routes.removeSubrange(existing...)
-            } else {
-                // But if something is wrong, we exit back home
-                routes.removeAll()
-            }
+        guard let currentFlow = flows.first(where: { $0.id == currentFlowId }) else {
+            alertMessage = "Flow not found"
+            showingAlert = true
+            return
+        }
+        if currentFlow.type != .create {
+            alertMessage = "Cannot create - not a create flow"
+            showingAlert = true
+            return
+        }
+
+        do {
+            try EVY.create(key: key)
+        } catch {
+            showError(error)
+            return
+        }
+
+        if let existing = routes.firstIndex(where: { $0.flowId == currentFlowId }) {
+            routes.removeSubrange(existing...)
+        } else {
+            routes.removeAll()
+        }
     }
     
     @ViewBuilder
