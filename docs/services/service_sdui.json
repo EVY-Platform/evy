@@ -43,50 +43,6 @@
 		]
 	},
 	{
-		"id": "18e988ea-9131-4ee3-a692-77c8f3d36c58",
-		"name": "Test",
-		"type": "create",
-		"data": "item",
-		"pages": [
-			{
-				"id": "77cb970d-9845-442e-87ef-dfc3d27fcdcd",
-				"title": "Test Item",
-				"rows": [
-					{
-						"id": "9c8da929-4645-4088-b658-f669157b09fd",
-						"type": "Input",
-						"view": {
-							"content": {
-								"title": "test title",
-								"value": "{title}",
-								"placeholder": "test placeholder"
-							}
-						},
-						"destination": "{title}",
-						"actions": []
-					}
-				],
-				"footer": {
-					"id": "422aaaad-8d8d-4f9d-84f2-43f10fc90a2c",
-					"type": "Button",
-					"view": {
-						"content": {
-							"title": "",
-							"label": "Submit"
-						}
-					},
-					"actions": [
-						{
-							"condition": "{length(title) > 0}",
-							"false": "{highlight_required(title)}",
-							"true": "{create(item)}"
-						}
-					]
-				}
-			}
-		]
-	},
-	{
 		"id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
 		"name": "Create item",
 		"type": "create",
@@ -133,7 +89,7 @@
 								"placeholder": "{formatCurrency(price)}"
 							}
 						},
-						"destination": "{price}",
+						"destination": "{buildCurrency(price)}",
 						"actions": []
 					},
 					{
@@ -220,7 +176,7 @@
 						"type": "SheetContainer",
 						"view": {
 							"content": {
-								"title": "Sheet",
+								"title": "",
 								"child": {
 									"id": "2422c9ec-df63-4fde-9632-0fe159c0b40e",
 									"type": "InputList",
@@ -267,17 +223,12 @@
 					},
 					"actions": [
 						{
-							"condition": "{count(photos) >= 3}",
-							"false": "{highlight_required(photos)}",
-							"true": ""
-						},
-						{
 							"condition": "{length(title) > 0}",
 							"false": "{highlight_required(title)}",
 							"true": ""
 						},
 						{
-							"condition": "{price >= 1}",
+							"condition": "{price.value >= 1}",
 							"false": "{highlight_required(price)}",
 							"true": ""
 						},
@@ -383,7 +334,7 @@
 														"type": "SheetContainer",
 														"view": {
 															"content": {
-																"title": "Sheet",
+																"title": "",
 																"child": {
 																	"id": "22222222-2222-4222-8222-222222222204",
 																	"type": "TextAction",
@@ -665,7 +616,7 @@
 						"type": "ListContainer",
 						"view": {
 							"content": {
-								"title": "List",
+								"title": "",
 								"children": [
 									{
 										"id": "33333333-3333-4333-8333-333333333301",
@@ -709,7 +660,7 @@
 					},
 					"actions": [
 						{
-							"condition": "{payment_cash === true || payment_app === true}",
+							"condition": "{payment_cash == true || payment_app == true}",
 							"false": "{highlight_required(payment_app)}",
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,857362ad-856f-465b-85a3-94bc8bb686cd)}"
 						}

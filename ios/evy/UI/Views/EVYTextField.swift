@@ -13,7 +13,9 @@ struct EVYTextField: View {
     let multiLine: Bool
     let input: String
     
+    @Bindable private var displayValue: EVYState<EVYValue>
     @Bindable private var editableValue: EVYState<EVYValue>
+    @Bindable private var placeholderValue: EVYState<EVYValue>
     
     @FocusState private var focused: Bool
     @State private var editing: Bool = false
@@ -24,8 +26,17 @@ struct EVYTextField: View {
         self.destination = destination
         self.multiLine = multiLine
         
-        self.editableValue = EVYState(watch: input, setter: {
-            (try? EVY.getValueFromText($0, editing: true)) ?? EVYValue($0, nil, nil)
+        let inputWatchTarget = Self.watchTarget(for: input)
+        let placeholderWatchTarget = Self.watchTarget(for: placeholder)
+        
+        self.displayValue = EVYState(watch: inputWatchTarget, setter: { _ in
+            Self.resolveValue(from: input)
+        })
+        self.editableValue = EVYState(watch: inputWatchTarget, setter: { _ in
+            Self.resolveValue(from: input, editing: true)
+        })
+        self.placeholderValue = EVYState(watch: placeholderWatchTarget, setter: { _ in
+            Self.resolveValue(from: placeholder)
         })
     }
     
@@ -36,11 +47,32 @@ struct EVYTextField: View {
                   multiLine: false)
     }
     
+    private static func resolveValue(from text: String, editing: Bool = false) -> EVYValue {
+        if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
+            return resolvedValue
+        }
+        if EVY.parsePropsFromText(text) == text {
+            return EVYValue(text, nil, nil)
+        }
+        return EVYValue("", nil, nil)
+    }
+    
+    private static func watchTarget(for text: String) -> String {
+        let parsedProps = EVY.parsePropsFromText(text)
+        if parsedProps == text {
+            return text
+        }
+        if let functionCall = EVYInterpreter.parseFunctionCall(parsedProps) {
+            return functionCall.functionArgs
+        }
+        return parsedProps
+    }
+    
     var body: some View {
         Group {
             if !editing || destination.isEmpty {
-                let display = EVYTextView(input)
-                let placeholder = EVYTextView(placeholder, style: .info)
+                let display = EVYTextView(displayValue.value.toString())
+                let placeholder = EVYTextView(placeholderValue.value.toString(), style: .info)
                 
                 if display.text.value.value.count > 0 {
                     display.frame(maxWidth: .infinity, alignment: .leading)
@@ -49,7 +81,7 @@ struct EVYTextField: View {
                 }
             } else {
                 TextField(text: $editableValue.value.value,
-                          prompt: EVYTextView(placeholder).toText(),
+                          prompt: EVYTextView(placeholderValue.value.toString()).toText(),
                           axis: multiLine ? .vertical : .horizontal,
                           label: {})
                 .font(.evy)
@@ -80,8 +112,10 @@ struct EVYTextField: View {
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            editing.toggle()
-            focused.toggle()
+            if !editing {
+                editing = true
+                focused = true
+            }
         }
         .accessibilityIdentifier("textField_\(destination)")
     }
@@ -94,22 +128,22 @@ struct EVYTextField: View {
 		try! await EVY.createItem()
 		
 		return VStack {
-		EVYTextField(input: "{formatDimension(width)}",
-					 destination: "{width}",
+		EVYTextField(input: "{formatDimension(item.dimensions.width)}",
+					 destination: "{item.dimensions.width}",
 					 placeholder: "10",
 					 multiLine: true)
 		
-		EVYTextField(input: "{formatCurrency(price)}",
-					 destination: "{price}",
+		EVYTextField(input: "{formatCurrency(item.price)}",
+					 destination: "{item.price}",
 					 placeholder: "10")
 					 
-		EVYTextField(input: "{title}",
-					 destination: "{title}",
+		EVYTextField(input: "{item.title}",
+					 destination: "{item.title}",
 					 placeholder: "Sample placeholder",
 					 multiLine: true)
 		
-		EVYTextField(input: "{title}",
-					 destination: "{title}",
+		EVYTextField(input: "{item.title}",
+					 destination: "{item.title}",
 					 placeholder: "Sample placeholder")
 			
 			EVYTextField(input: "",

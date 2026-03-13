@@ -163,14 +163,7 @@ export function handleDrop(
 			oldRowId: rowId,
 			...dispatchOptions,
 		});
-	} else if (sourcePageId === destinationPageId) {
-		dispatchRow({
-			type: "MOVE_ROW",
-			rowId,
-			originPageId: sourcePageId,
-			...dispatchOptions,
-		});
-	} else if (destinationPageId !== sourcePageId) {
+	} else {
 		dispatchRow({
 			type: "MOVE_ROW",
 			rowId,

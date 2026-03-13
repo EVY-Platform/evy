@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 extension SDUI_Page: View {
 	public var body: some View {
@@ -33,35 +34,48 @@ extension SDUI_Page: View {
 		.onAppear {
 			bootstrapDrafts()
 		}
+		.simultaneousGesture(TapGesture().onEnded {
+			UIApplication.shared.sendAction(
+				#selector(UIResponder.resignFirstResponder),
+				to: nil,
+				from: nil,
+				for: nil
+			)
+		})
 	}
 
 	@MainActor private func bootstrapDrafts() {
-		var destinations: Set<String> = []
 		for row in rows {
-			Self.collectDestinations(from: row, into: &destinations)
+			Self.bootstrapDrafts(for: row)
 		}
 		if let footer = footer {
-			Self.collectDestinations(from: footer, into: &destinations)
-		}
-		for destination in destinations {
-			let variableName = EVYInterpreter.parsePropsFromText(destination)
-			if !variableName.isEmpty {
-				EVY.ensureDraftExists(variableName: variableName)
-			}
+			Self.bootstrapDrafts(for: footer)
 		}
 	}
 
-	private static func collectDestinations(from row: SDUI_Row, into destinations: inout Set<String>) {
+	@MainActor
+	private static func bootstrapDrafts(for row: SDUI_Row) {
 		if let destination = row.destination, !destination.isEmpty {
-			destinations.insert(destination)
+			let variableName = EVYInterpreter.parsePropsFromText(destination)
+			if !variableName.isEmpty {
+				let initialData: Data?
+				if row.type == .inlinePicker {
+					initialData = "[]".data(using: .utf8)
+				} else if row.type == .calendar {
+					initialData = try? EVY.data.get(key: "timeslots").data
+				} else {
+					initialData = nil
+				}
+				EVY.ensureDraftExists(variableName: variableName, initialData: initialData)
+			}
 		}
 		if let children = row.view.content.children {
 			for child in children {
-				collectDestinations(from: child, into: &destinations)
+				bootstrapDrafts(for: child)
 			}
 		}
 		if let child = row.view.content.child {
-			collectDestinations(from: child, into: &destinations)
+			bootstrapDrafts(for: child)
 		}
 	}
 }

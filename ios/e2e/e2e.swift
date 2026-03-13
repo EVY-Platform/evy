@@ -255,6 +255,49 @@ final class WebSocketE2ETests: E2ETestBase {
         await emitter.disconnect()
     }
 
+    @MainActor
+    func testConditionalActionEvaluatesLogicalExpression() async throws {
+        let viewItemButton = app.buttons["View"]
+        XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
+                      "Home screen not loaded - verify API is running and database is seeded")
+
+        guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
+            XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
+            return
+        }
+
+        let emitter = WSEmitter()
+        let conditionalLabel = "Conditional \(Int(Date().timeIntervalSince1970))"
+
+        do {
+            try await emitter.connect(host: apiHost)
+            try await emitter.login(token: "e2e-test", os: "ios")
+            try await emitter.updateSDUI(
+                flowData: createConditionalFlowData(buttonLabel: conditionalLabel),
+                flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
+            )
+        } catch {
+            XCTFail("Failed to publish conditional flow: \(error.localizedDescription)")
+            return
+        }
+
+        let conditionalButton = app.buttons[conditionalLabel]
+        XCTAssertTrue(conditionalButton.waitForExistence(timeout: 10),
+                      "Conditional button should exist after SDUI update")
+
+        conditionalButton.tap()
+
+        let goHomeButton = app.buttons["Go home"]
+        XCTAssertTrue(goHomeButton.waitForExistence(timeout: 10),
+                      "Tapping the conditional button should navigate when the logical expression is true")
+
+        try? await emitter.updateSDUI(
+            flowData: createHomeFlowData(buttonLabel: "View"),
+            flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
+        )
+        await emitter.disconnect()
+    }
+
     /// Form data editing: navigate to Create, edit title/price/width, verify, return to home.
     func testCreateItemFormEditing() throws {
         let viewItemButton = app.buttons["View"]
@@ -375,5 +418,34 @@ final class WebSocketE2ETests: E2ETestBase {
                 ]
             ]
         ]
+    }
+
+    private func createConditionalFlowData(buttonLabel: String) -> [String: Any] {
+        var flowData = createHomeFlowData(buttonLabel: buttonLabel)
+        guard var pages = flowData["pages"] as? [[String: Any]],
+              var homePage = pages.first,
+              var rows = homePage["rows"] as? [[String: Any]],
+              var firstRow = rows.first,
+              var rowView = firstRow["view"] as? [String: Any],
+              var rowContent = rowView["content"] as? [String: Any],
+              var children = rowContent["children"] as? [[String: Any]],
+              var firstButton = children.first,
+              var actions = firstButton["actions"] as? [[String: Any]],
+              var firstAction = actions.first else {
+            return flowData
+        }
+
+        firstAction["condition"] = "{1 > 0 || (0 > 1 && 2 > 3)}"
+        actions[0] = firstAction
+        firstButton["actions"] = actions
+        children[0] = firstButton
+        rowContent["children"] = children
+        rowView["content"] = rowContent
+        firstRow["view"] = rowView
+        rows[0] = firstRow
+        homePage["rows"] = rows
+        pages[0] = homePage
+        flowData["pages"] = pages
+        return flowData
     }
 }

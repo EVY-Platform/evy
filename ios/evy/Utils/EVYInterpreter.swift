@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-private let comparisonBasePattern = "[a-zA-Z0-9_.\\(\\){} ]+"
-private let comparisonOperatorPattern = "(>=|<=|==|!=|>|<)"
+private let comparisonBlockPattern = "\\{[^{}\"]+\\}"
+private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
 private let functionPattern = "[a-zA-Z_]+\(functionParamsPattern)"
@@ -83,17 +83,22 @@ struct EVYInterpreter {
             return input
         }
         
-        if let (match, comparisonOperator, left, right) = parseComparisonFromText(input.value)
+        if let (fullMatch, comparison) = parseComparisonFromText(input.value)
         {
-            let parsedLeft = try parseText(EVYValue(left, input.prefix, input.suffix),
-                                           editing)
-            let parsedRight = try parseText(EVYValue(right, input.prefix, input.suffix),
-                                            editing)
-            let comparisonResult = evyComparison(comparisonOperator,
-                                                 left: parsedLeft.value,
-                                                 right: parsedRight.value)
+            let comparisonResult = try evaluateBooleanExpression(comparison) { operand in
+                let trimmedOperand = operand.trimmingCharacters(in: .whitespacesAndNewlines)
+                let parsedOperand = try parseText(EVYValue(trimmedOperand, nil, nil),
+                                                  editing)
+                if parsedOperand.value != trimmedOperand {
+                    return parsedOperand.value
+                }
+                if let propsValue = try? EVY.getDataFromText("{\(trimmedOperand)}") {
+                    return propsValue.toString()
+                }
+                return parsedOperand.value
+            }
             let parsedInput = input.value.replacingOccurrences(
-                of: match.0.description,
+                of: fullMatch,
                 with: comparisonResult ? "true" : "false"
             )
             return try parseText(EVYValue(parsedInput, input.prefix, input.suffix),
@@ -123,6 +128,8 @@ struct EVYInterpreter {
                 value = try evyFormatWeight(funcArgs, editing)
             case "formatAddress":
                 value = try evyFormatAddress(funcArgs)
+            case "buildCurrency", "buildAddress":
+                value = nil
             default:
                 value = nil
             }
@@ -164,43 +171,180 @@ private func parseProps(_ input: String) -> (Regex<AnyRegexOutput>.Match, String
     return nil
 }
 
-private func parseArrayFromProps(_ input: String) -> (Regex<AnyRegexOutput>.Match, String)? {
-    if let match = try? firstMatch(input, pattern: arrayPattern) {
-        // Remove leading and trailing curly braces
-        return (match, String(match.0))
+private func parseComparisonFromText(_ input: String) -> (fullMatch: String, content: String)?
+{
+    guard let regex = try? Regex(comparisonBlockPattern) else {
+        return nil
+    }
+    for match in input.matches(of: regex) {
+        let block = String(match.0)
+        let comparison = String(block.dropFirst().dropLast())
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if containsTopLevelComparisonOperator(comparison) {
+            return (block, comparison)
+        }
     }
     return nil
 }
 
-private func parseComparisonFromText(_ input: String) -> (match: Regex<AnyRegexOutput>.Match,
-                                                          comparisonOperator: String,
-                                                          left: String,
-                                                          right: String)?
+private func evaluateBooleanExpression(_ input: String,
+                                       resolver: (String) throws -> String) throws -> Bool
 {
-    guard let match = try? firstMatch(input,
-                                      pattern: "\\{\(comparisonBasePattern) \(comparisonOperatorPattern) \(comparisonBasePattern)\\}") else {
-        return nil
+    let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+    let orTerms = splitRespectingParens(trimmedInput, separator: "||")
+    if orTerms.count > 1 {
+        for term in orTerms {
+            if try evaluateBooleanExpression(term, resolver: resolver) {
+                return true
+            }
+        }
+        return false
     }
 
-    // Remove opening { from match
-    let comparison = String(match.0.description)
-    guard let leftMatch = try? firstMatch(comparison, pattern: "\\{\(comparisonBasePattern)") else {
-        return nil
-    }
-    guard let rightMatch = try? lastMatch(comparison, pattern: "\(comparisonBasePattern)\\}") else {
-        return nil
-    }
-    guard let operatorMatch = try? firstMatch(comparison, pattern: comparisonOperatorPattern) else {
-        return nil
+    let andTerms = splitRespectingParens(trimmedInput, separator: "&&")
+    if andTerms.count > 1 {
+        for term in andTerms {
+            if try !evaluateBooleanExpression(term, resolver: resolver) {
+                return false
+            }
+        }
+        return true
     }
 
-    let leftMatchWithBracket = leftMatch.0.description.trimmingCharacters(in: .whitespacesAndNewlines)
-    let left = leftMatchWithBracket.dropFirst()
-    let rightMatchWithBracket = rightMatch.0.description.trimmingCharacters(in: .whitespacesAndNewlines)
-    let right = rightMatchWithBracket.dropLast()
-    let comparisonOperator = operatorMatch.0.description.trimmingCharacters(in: .whitespacesAndNewlines)
+    if isWrappedInParentheses(trimmedInput) {
+        let innerExpression = String(trimmedInput.dropFirst().dropLast())
+        return try evaluateBooleanExpression(innerExpression, resolver: resolver)
+    }
 
-    return (match, comparisonOperator, String(left), String(right))
+    if trimmedInput == "true" {
+        return true
+    }
+    if trimmedInput == "false" {
+        return false
+    }
+
+    guard let (left, comparisonOperator, right) = parseAtomicComparison(trimmedInput) else {
+        throw EVYError.invalidData(context: "Invalid comparison expression: \(trimmedInput)")
+    }
+
+    let resolvedLeft = try resolver(left)
+    let resolvedRight = try resolver(right)
+    return evyComparison(comparisonOperator, left: resolvedLeft, right: resolvedRight)
+}
+
+private func splitRespectingParens(_ input: String, separator: String) -> [String] {
+    guard !input.isEmpty else {
+        return [input]
+    }
+
+    var parts: [String] = []
+    var depth = 0
+    var currentStart = input.startIndex
+    var index = input.startIndex
+
+    while index < input.endIndex {
+        let character = input[index]
+        if character == "(" {
+            depth += 1
+        } else if character == ")" && depth > 0 {
+            depth -= 1
+        }
+
+        if depth == 0, input[index...].hasPrefix(separator) {
+            parts.append(String(input[currentStart..<index])
+                .trimmingCharacters(in: .whitespacesAndNewlines))
+            currentStart = input.index(index, offsetBy: separator.count)
+            index = currentStart
+            continue
+        }
+
+        index = input.index(after: index)
+    }
+
+    parts.append(String(input[currentStart...]).trimmingCharacters(in: .whitespacesAndNewlines))
+    return parts
+}
+
+private func parseAtomicComparison(_ input: String) -> (left: String,
+                                                        comparisonOperator: String,
+                                                        right: String)?
+{
+    var depth = 0
+    var index = input.startIndex
+
+    while index < input.endIndex {
+        let character = input[index]
+        if character == "(" {
+            depth += 1
+        } else if character == ")" && depth > 0 {
+            depth -= 1
+        }
+
+        if depth == 0 {
+            for comparisonOperator in comparisonOperators {
+                if input[index...].hasPrefix(comparisonOperator) {
+                    let left = String(input[..<index]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let rightStart = input.index(index, offsetBy: comparisonOperator.count)
+                    let right = String(input[rightStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !left.isEmpty, !right.isEmpty else {
+                        return nil
+                    }
+                    return (left, comparisonOperator, right)
+                }
+            }
+        }
+
+        index = input.index(after: index)
+    }
+
+    return nil
+}
+
+private func containsTopLevelComparisonOperator(_ input: String) -> Bool {
+    var depth = 0
+    var index = input.startIndex
+
+    while index < input.endIndex {
+        let character = input[index]
+        if character == "(" {
+            depth += 1
+        } else if character == ")" && depth > 0 {
+            depth -= 1
+        }
+
+        if depth == 0 {
+            for comparisonOperator in comparisonOperators {
+                if input[index...].hasPrefix(comparisonOperator) {
+                    return true
+                }
+            }
+        }
+
+        index = input.index(after: index)
+    }
+
+    return false
+}
+
+private func isWrappedInParentheses(_ input: String) -> Bool {
+    guard input.first == "(", input.last == ")" else {
+        return false
+    }
+
+    var depth = 0
+    for index in input.indices {
+        let character = input[index]
+        if character == "(" {
+            depth += 1
+        } else if character == ")" {
+            depth -= 1
+            if depth == 0 {
+                return index == input.index(before: input.endIndex)
+            }
+        }
+    }
+
+    return false
 }
 
 private func parseFunctionFromText(_ input: String) -> (match: Regex<AnyRegexOutput>.Match,
@@ -262,24 +406,27 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
 		try! await EVY.createItem()
 		
 	let bare = "test"
-	let data = "{title}"
+	let data = "{item.title}"
 	
 	let parsedData = try! EVYInterpreter.parseTextFromText(data)
 	let withPrefix = try! EVYInterpreter.parseTextFromText(
-		"{formatCurrency(price)}"
+		"{formatCurrency(item.price)}"
 	)
 	let withSuffix = try! EVYInterpreter.parseTextFromText(
-		"{formatDimension(width)}"
+		"{formatDimension(item.dimensions.width)}"
 	)
 	let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
-		"{formatDimension(width)} - {title}"
+		"{formatDimension(item.dimensions.width)} - {item.title}"
 	)
 	let withComparison = try! EVYInterpreter.parseTextFromText(
-		"{count(title) == count(selling_reasons)} v {count(title) == count(title)}"
+		"{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
 	)
+    let withMultiComparison = try! EVYInterpreter.parseTextFromText(
+        "{count(item.title) > 0 || (1 > 2 && count(selling_reasons) > 0)}"
+    )
 	
 	let weight = try! EVYInterpreter.parseTextFromText(
-		"{formatWeight(weight)}"
+		"{formatWeight(item.dimensions.weight)}"
 	)
 		
 		let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
@@ -292,11 +439,12 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
 			Text(withSuffix.toString())
 			Text(WithSuffixAndRight.toString())
 			Text(withComparison.toString())
+            Text(withMultiComparison.toString())
 			Text(weight.toString())
 			Text(firstSellingReason.toString())
 			
-		EVYTextField(input: "{formatCurrency(price)}",
-					 destination: "{price}",
+		EVYTextField(input: "{formatCurrency(item.price)}",
+					 destination: "{item.price}",
 					 placeholder: "Editing price")
 		}
 	}

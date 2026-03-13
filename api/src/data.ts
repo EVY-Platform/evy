@@ -1,8 +1,10 @@
 import { eq, and, desc } from "drizzle-orm";
 import pluralize from "pluralize";
 
-import type { DATA_Data, DATA_Flow, DATA_Rows } from "evy-types/data/data";
 import {
+	type DATA_Data,
+	type DATA_Flow,
+	type DATA_Rows,
 	type GetResponse,
 	NAMESPACE_VALUES,
 	RESOURCE_VALUES,

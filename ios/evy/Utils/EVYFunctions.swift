@@ -46,95 +46,134 @@ func evyLength(_ args: String) throws -> EVYFunctionOutput {
 func evyFormatCurrency(_ args: String,
                        _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
+    
+    let rawValue: String
     switch res {
     case let .dictionary(dictValue):
         guard let value = dictValue["value"] else {
             throw EVYError.formatFailed(type: "currency", reason: "missing 'value' field")
         }
-        if editing {
-            return EVYFunctionOutput(value: "\(value.toString())", prefix: nil, suffix: nil)
-        }
-        guard let number = NumberFormatter().number(from: value.toString()) else {
-            throw EVYError.formatFailed(type: "currency", reason: "could not parse number from '\(value.toString())'")
-        }
-        return EVYFunctionOutput(value: String(format: "%.2f", CGFloat(truncating: number)), prefix: "$", suffix: nil)
+        rawValue = value.toString()
+    case let .string(stringValue):
+        rawValue = stringValue
+    case let .int(intValue):
+        rawValue = String(intValue)
+    case let .decimal(decimalValue):
+        rawValue = "\(decimalValue)"
     default:
         throw EVYError.formatFailed(type: "currency", reason: "expected dictionary, got \(res)")
     }
+    
+    let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedValue.isEmpty {
+        return EVYFunctionOutput(value: "", prefix: nil, suffix: nil)
+    }
+    if editing {
+        return EVYFunctionOutput(value: trimmedValue, prefix: nil, suffix: nil)
+    }
+    guard let number = NumberFormatter().number(from: trimmedValue) else {
+        throw EVYError.formatFailed(type: "currency", reason: "could not parse number from '\(trimmedValue)'")
+    }
+    return EVYFunctionOutput(value: String(format: "%.2f", CGFloat(truncating: number)), prefix: "$", suffix: nil)
 }
 
 @MainActor
 func evyFormatDimension(_ args: String,
                         _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
+    
+    let mm: Int
     switch res {
-	case let .int(mm):
-        if editing {
-            return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
+    case let .int(intValue):
+        mm = intValue
+    case let .string(stringValue):
+        let trimmedValue = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedValue.isEmpty {
+            return EVYFunctionOutput(value: "", prefix: nil, suffix: nil)
         }
-        if mm > 1000 {
-            let meters = Decimal(mm/1000)
-            let truncatedMeters = NSDecimalNumber(decimal: meters).intValue
-            if meters == Decimal(integerLiteral: truncatedMeters) {
-                return EVYFunctionOutput(value: "\(truncatedMeters)", prefix: nil, suffix: "m")
-            }
-            return EVYFunctionOutput(value: "\(meters)", prefix: nil, suffix: "m")
+        guard let parsedValue = Int(trimmedValue) else {
+            throw EVYError.formatFailed(type: "dimension", reason: "could not parse integer from '\(trimmedValue)'")
         }
-        if mm > 100 {
-            let cm = Decimal(mm/10)
-            let truncatedCM = NSDecimalNumber(decimal: cm).intValue
-            if cm == Decimal(integerLiteral: truncatedCM) {
-                return EVYFunctionOutput(value: "\(truncatedCM)", prefix: nil, suffix: "cm")
-            }
-            return EVYFunctionOutput(value: "\(cm)", prefix: nil, suffix: "cm")
-        }
-        
-		let truncatedMM = NSDecimalNumber(integerLiteral: mm).intValue
-        if mm == truncatedMM {
-            return EVYFunctionOutput(value: "\(truncatedMM)", prefix: nil, suffix: "mm")
-        }
-        return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: "mm")
+        mm = parsedValue
     default:
         throw EVYError.formatFailed(type: "dimension", reason: "expected integer, got \(res)")
     }
+    
+    if editing {
+        return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
+    }
+    if mm > 1000 {
+        let meters = Decimal(mm/1000)
+        let truncatedMeters = NSDecimalNumber(decimal: meters).intValue
+        if meters == Decimal(integerLiteral: truncatedMeters) {
+            return EVYFunctionOutput(value: "\(truncatedMeters)", prefix: nil, suffix: "m")
+        }
+        return EVYFunctionOutput(value: "\(meters)", prefix: nil, suffix: "m")
+    }
+    if mm > 100 {
+        let cm = Decimal(mm/10)
+        let truncatedCM = NSDecimalNumber(decimal: cm).intValue
+        if cm == Decimal(integerLiteral: truncatedCM) {
+            return EVYFunctionOutput(value: "\(truncatedCM)", prefix: nil, suffix: "cm")
+        }
+        return EVYFunctionOutput(value: "\(cm)", prefix: nil, suffix: "cm")
+    }
+    
+    let truncatedMM = NSDecimalNumber(integerLiteral: mm).intValue
+    if mm == truncatedMM {
+        return EVYFunctionOutput(value: "\(truncatedMM)", prefix: nil, suffix: "mm")
+    }
+    return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: "mm")
 }
 
 @MainActor
 func evyFormatWeight(_ args: String,
                      _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
+    
+    let rawValue: String
     switch res {
     case let .string(stringValue):
-        if editing {
-            return EVYFunctionOutput(value: stringValue, prefix: nil, suffix: nil)
-        }
-        guard let mg = Decimal(string: stringValue) else {
-            throw EVYError.formatFailed(type: "weight", reason: "could not parse decimal from '\(stringValue)'")
-        }
-        if mg > 1000000 {
-            let kg = mg/1000000
-            let truncatedKG = NSDecimalNumber(decimal: kg).intValue
-            if kg == Decimal(integerLiteral: truncatedKG) {
-                return EVYFunctionOutput(value: "\(truncatedKG)", prefix: nil, suffix: "kg")
-            }
-            return EVYFunctionOutput(value: "\(kg)", prefix: nil, suffix: "kg")
-        }
-        if mg > 1000 {
-            let gram = mg/1000
-            let truncatedGram = NSDecimalNumber(decimal: gram).intValue
-            if gram == Decimal(integerLiteral: truncatedGram) {
-                return EVYFunctionOutput(value: "\(truncatedGram)", prefix: nil, suffix: "g")
-            }
-            return EVYFunctionOutput(value: "\(gram)", prefix: nil, suffix: "g")
-        }
-        let truncatedMG = NSDecimalNumber(decimal: mg).intValue
-        if mg == Decimal(integerLiteral: truncatedMG) {
-            return EVYFunctionOutput(value: "\(truncatedMG)", prefix: nil, suffix: "mg")
-        }
-        return EVYFunctionOutput(value: "\(mg)", prefix: nil, suffix: "mg")
+        rawValue = stringValue
+    case let .int(intValue):
+        rawValue = String(intValue)
+    case let .decimal(decimalValue):
+        rawValue = "\(decimalValue)"
     default:
-        throw EVYError.formatFailed(type: "weight", reason: "expected string, got \(res)")
+        throw EVYError.formatFailed(type: "weight", reason: "expected string or number, got \(res)")
     }
+    
+    let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedValue.isEmpty {
+        return EVYFunctionOutput(value: "", prefix: nil, suffix: nil)
+    }
+    if editing {
+        return EVYFunctionOutput(value: trimmedValue, prefix: nil, suffix: nil)
+    }
+    guard let mg = Decimal(string: trimmedValue) else {
+        throw EVYError.formatFailed(type: "weight", reason: "could not parse decimal from '\(trimmedValue)'")
+    }
+    if mg > 1000000 {
+        let kg = mg/1000000
+        let truncatedKG = NSDecimalNumber(decimal: kg).intValue
+        if kg == Decimal(integerLiteral: truncatedKG) {
+            return EVYFunctionOutput(value: "\(truncatedKG)", prefix: nil, suffix: "kg")
+        }
+        return EVYFunctionOutput(value: "\(kg)", prefix: nil, suffix: "kg")
+    }
+    if mg > 1000 {
+        let gram = mg/1000
+        let truncatedGram = NSDecimalNumber(decimal: gram).intValue
+        if gram == Decimal(integerLiteral: truncatedGram) {
+            return EVYFunctionOutput(value: "\(truncatedGram)", prefix: nil, suffix: "g")
+        }
+        return EVYFunctionOutput(value: "\(gram)", prefix: nil, suffix: "g")
+    }
+    let truncatedMG = NSDecimalNumber(decimal: mg).intValue
+    if mg == Decimal(integerLiteral: truncatedMG) {
+        return EVYFunctionOutput(value: "\(truncatedMG)", prefix: nil, suffix: "mg")
+    }
+    return EVYFunctionOutput(value: "\(mg)", prefix: nil, suffix: "mg")
 }
 
 @MainActor
@@ -166,8 +205,188 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
+@MainActor
+func evyBuildCurrency(_ args: String,
+                      _ value: String) throws -> Data {
+    let existingCurrency = evyExistingCurrency(for: args) ?? "AUD"
+    let builtCurrency = EVYJson.dictionary([
+        "currency": .string(existingCurrency),
+        "value": evyJsonValue(from: value)
+    ])
+    return try JSONEncoder().encode(builtCurrency)
+}
+
+@MainActor
+func evyBuildAddress(_ args: String,
+                     _ value: String) throws -> Data {
+    let existingData = try? EVY.getDataFromProps(args)
+    let existingAddress: [String: EVYJson]
+    if case let .dictionary(dictValue) = existingData {
+        existingAddress = dictValue
+    } else {
+        existingAddress = [:]
+    }
+    
+    let builtAddress = EVYJson.dictionary(
+        evyAddressFields(from: value, existingAddress: existingAddress)
+    )
+    return try JSONEncoder().encode(builtAddress)
+}
+
 private func evyNumericValue(_ value: String) -> Decimal? {
     Decimal(string: value.trimmingCharacters(in: .whitespacesAndNewlines))
+}
+
+private func evyJsonValue(from value: String) -> EVYJson {
+    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedValue.isEmpty {
+        return .string("")
+    }
+    if let intValue = Int(trimmedValue) {
+        return .int(intValue)
+    }
+    if let decimalValue = Decimal(string: trimmedValue) {
+        return .decimal(decimalValue)
+    }
+    return .string(trimmedValue)
+}
+
+@MainActor
+private func evyExistingCurrency(for props: String) -> String? {
+    guard let existingData = try? EVY.getDataFromProps(props),
+          case let .dictionary(dictValue) = existingData,
+          let currencyValue = dictValue["currency"]
+    else {
+        return nil
+    }
+    return currencyValue.toString()
+}
+
+private func evyAddressFields(from value: String,
+                              existingAddress: [String: EVYJson]) -> [String: EVYJson] {
+    let requiredKeys = ["unit", "street", "city", "postcode", "state"]
+    var addressFields = existingAddress
+    
+    for key in requiredKeys where addressFields[key] == nil {
+        addressFields[key] = .string("")
+    }
+    
+    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedValue.isEmpty {
+        return addressFields
+    }
+    
+    let parsedFields = evyParsedAddressFields(from: trimmedValue, existingAddress: addressFields)
+    for (key, parsedValue) in parsedFields {
+        addressFields[key] = .string(parsedValue)
+    }
+    
+    return addressFields
+}
+
+private func evyParsedAddressFields(from value: String,
+                                    existingAddress: [String: EVYJson]) -> [String: String] {
+    let normalizedValue = value.replacingOccurrences(of: "\r\n", with: "\n")
+    let lines = normalizedValue
+        .split(separator: "\n", omittingEmptySubsequences: true)
+        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+    
+    if lines.count >= 2 {
+        return evyParsedTwoLineAddress(
+            firstLine: lines[0],
+            secondLine: lines[1],
+            existingAddress: existingAddress
+        )
+    }
+    
+    let commaSeparatedParts = normalizedValue
+        .split(separator: ",", omittingEmptySubsequences: true)
+        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+    
+    if commaSeparatedParts.count >= 2 {
+        return evyParsedSingleLineAddress(
+            firstPart: commaSeparatedParts[0],
+            secondPart: commaSeparatedParts[1],
+            existingAddress: existingAddress
+        )
+    }
+    
+    return [
+        "unit": existingAddress["unit"]?.toString() ?? "",
+        "street": normalizedValue,
+        "city": existingAddress["city"]?.toString() ?? "",
+        "postcode": existingAddress["postcode"]?.toString() ?? "",
+        "state": existingAddress["state"]?.toString() ?? ""
+    ]
+}
+
+private func evyParsedTwoLineAddress(firstLine: String,
+                                     secondLine: String,
+                                     existingAddress: [String: EVYJson]) -> [String: String] {
+    let firstLineParts = firstLine
+        .split(separator: ",", omittingEmptySubsequences: true)
+        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+    let secondLineParts = secondLine
+        .split(separator: ",", omittingEmptySubsequences: true)
+        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+    
+    let unitAndStreet = evyAddressUnitAndStreet(
+        from: firstLineParts.first ?? firstLine,
+        existingAddress: existingAddress
+    )
+    
+    return [
+        "unit": unitAndStreet.unit,
+        "street": unitAndStreet.street,
+        "city": secondLineParts.first ?? "",
+        "postcode": firstLineParts.count > 1 ? firstLineParts[1] : "",
+        "state": secondLineParts.count > 1 ? secondLineParts[1] : ""
+    ]
+}
+
+private func evyParsedSingleLineAddress(firstPart: String,
+                                        secondPart: String,
+                                        existingAddress: [String: EVYJson]) -> [String: String] {
+    let unitAndStreet = evyAddressUnitAndStreet(
+        from: firstPart,
+        existingAddress: existingAddress
+    )
+    let locationParts = secondPart
+        .split(separator: " ", omittingEmptySubsequences: true)
+        .map(String.init)
+    
+    let postcode = locationParts.last ?? ""
+    let state = locationParts.count > 1 ? locationParts[locationParts.count - 2] : ""
+    let city = locationParts.count > 2
+        ? locationParts.dropLast(2).joined(separator: " ")
+        : ""
+    
+    return [
+        "unit": unitAndStreet.unit,
+        "street": unitAndStreet.street,
+        "city": city,
+        "postcode": postcode,
+        "state": state
+    ]
+}
+
+private func evyAddressUnitAndStreet(from input: String,
+                                     existingAddress: [String: EVYJson]) -> (unit: String, street: String) {
+    let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+    let existingStreet = existingAddress["street"]?.toString() ?? ""
+    
+    if !existingStreet.isEmpty, trimmedInput.hasSuffix(existingStreet) {
+        let unit = String(trimmedInput.dropLast(existingStreet.count))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return (unit, existingStreet)
+    }
+    
+    let parts = trimmedInput.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+    if parts.count == 2 {
+        return (String(parts[0]), String(parts[1]))
+    }
+    
+    return ("", trimmedInput)
 }
 
 private func evyCompareValues<T: Comparable>(_ comparisonOperator: String,
@@ -204,22 +423,23 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
+		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
 		return VStack {
-		EVYTextView("{formatDimension(width)}")
+		EVYTextView("{formatDimension(item.dimensions.width)}")
 		EVYTextView("a == a: {a == a}")
 		EVYTextView("a == b: {a == b}")
 		EVYTextView("1 == 2: {1 == 2}")
 		EVYTextView("1 == 1: {1 == 1}")
 		EVYTextView("1 != 1: {1 != 1}")
-		EVYTextView("title == Amazing: {{title} == Amazing}")
-		EVYTextView("title == Amazing Fridge: {{title} == Amazing Fridge}")
-		EVYTextView("Amazing Fridge == title: {Amazing Fridge == {title}}")
-		EVYTextView("count (title) == 13: {{count(title)} == 13}")
-		EVYTextView("count (title) == 14: {{count(title)} == 14}")
-		EVYTextView("count (title) > 0: {{count(title)} > 0}")
-		EVYTextView("{formatAddress(pickup_address)}")
+		EVYTextView("title == Amazing: {{item.title} == Amazing}")
+		EVYTextView("title == Amazing Fridge: {{item.title} == Amazing Fridge}")
+		EVYTextView("Amazing Fridge == title: {Amazing Fridge == {item.title}}")
+		EVYTextView("count (title) == 13: {{count(item.title)} == 13}")
+		EVYTextView("count (title) == 14: {{count(item.title)} == 14}")
+		EVYTextView("count (title) > 0: {{count(item.title)} > 0}")
+		EVYTextView("{formatAddress(user.address)}")
 		}
 	}
 }

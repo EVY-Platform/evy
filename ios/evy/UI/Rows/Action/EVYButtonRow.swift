@@ -36,6 +36,6 @@ struct EVYButtonRow: View, EVYRowProtocol {
 	AsyncPreview { asyncView in
 		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1", "pages", "1", "footer"])
+		try! await EVY.getRow(["1", "pages", "0", "footer"])
 	}
 }

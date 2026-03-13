@@ -31,7 +31,7 @@ echo -e "${YELLOW}========================================${NC}"
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    # docker compose down -v --remove-orphans 2>/dev/null || true
+    docker compose down -v --remove-orphans 2>/dev/null || true
 }
 
 wait_for_http_service() {

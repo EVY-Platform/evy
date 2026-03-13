@@ -49,23 +49,6 @@
 												"true": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:306ed62c-c2af-4652-a873-26c7a388972d"
 											}
 										]
-									},
-									{
-										"id": "e2ecbf8a-36dc-4d9a-8076-5ab542a0c085",
-										"type": "Button",
-										"view": {
-											"content": {
-												"title": "",
-												"label": "Test"
-											}
-										},
-										"actions": [
-											{
-												"condition": "",
-												"false": "",
-												"true": "navigate:18e988ea-9131-4ee3-a692-77c8f3d36c58:77cb970d-9845-442e-87ef-dfc3d27fcdcd"
-											}
-										]
 									}
 								]
 							}

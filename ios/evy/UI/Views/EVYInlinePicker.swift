@@ -13,54 +13,69 @@ struct EVYInlinePicker: View {
     let destination: String
     
     private var options: [EVYJson] = []
+    private var selectedIdentifiers: EVYState<[String]>
     
-    @State private var selection: EVYJson
-    
-    init(title: String, data: String, format: String, destination: String) {
+    init(title: String,
+         data: String,
+         format: String,
+         destination: String)
+    {
         self.title = title
         self.format = format
         self.destination = destination
         
+        var loadedOptions: [EVYJson] = []
         do {
             let data = try EVY.getDataFromText(data)
             if case let .array(arrayValue) = data {
-                options.append(contentsOf: arrayValue)
+                loadedOptions.append(contentsOf: arrayValue)
             }
         } catch {
             #if DEBUG
             print("[EVYInlinePicker] Error loading options: \(error)")
             #endif
         }
+        options = loadedOptions
         
-        _selection = State(initialValue: options.first!)
-        
-        do {
-            let selected = try EVY.getDataFromText(destination)
-            if case let .string(stringValue) = selected {
-                let matching = options.first { option in
-                    option.identifierValue() == stringValue
+        selectedIdentifiers = EVYState(watch: destination, setter: {
+            do {
+                let selected = try EVY.getDataFromText($0)
+                guard case let .array(arrayValue) = selected else {
+                    throw EVYError.invalidData(context: "InlinePicker destination '\($0)' must be an array.")
                 }
-                if matching != nil {
-                    _selection = State(initialValue: matching!)
-                }
+                return arrayValue.map { $0.identifierValue() }
+            } catch {
+                NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
+                #if DEBUG
+                print("[EVYInlinePicker] Error loading selection: \(error)")
+                #endif
             }
-        } catch {
-            #if DEBUG
-            print("[EVYInlinePicker] Error loading selection: \(error)")
-            #endif
-        }
+            return []
+        })
     }
     
     private func performAction(option: EVYJson) {
-        selection = option
-        
-        try! EVY.updateValue(option.identifierValue(), at: destination)
+        let optionIdentifier = option.identifierValue()
+        do {
+            var updatedIdentifiers = selectedIdentifiers.value.filter {
+                $0 != optionIdentifier
+            }
+            if updatedIdentifiers.count == selectedIdentifiers.value.count {
+                updatedIdentifiers.append(optionIdentifier)
+            }
+            let encoded = try JSONEncoder().encode(updatedIdentifiers)
+            try EVY.updateData(encoded, at: destination)
+        } catch {
+            #if DEBUG
+            print("[EVYInlinePicker] Error updating selection: \(error)")
+            #endif
+        }
     }
     
     var body: some View {
         HStack {
             ForEach(Array(options.enumerated()), id: \.offset) { _, option in
-                let isSelected = option.identifierValue() == selection.identifierValue()
+                let isSelected = selectedIdentifiers.value.contains(option.identifierValue())
                 Button(action: {
                     performAction(option: option)
                 }) {

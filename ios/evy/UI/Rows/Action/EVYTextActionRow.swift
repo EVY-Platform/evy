@@ -39,6 +39,6 @@ struct EVYTextActionRow: View, EVYRowProtocol {
 	AsyncPreview { asyncView in
 		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1", "pages", "2", "rows", "0", "view", "content", "children", "0", "child", "view", "content", "children", "1", "child"])
+		try! await EVY.getRow(["2", "pages", "2", "rows", "0", "view", "content", "children", "0", "child", "view", "content", "children", "1", "child"])
 	}
 }

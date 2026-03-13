@@ -32,7 +32,6 @@ struct Filter: Encodable {
 @MainActor
 struct EVY {
     static let data = EVYDataManager()
-    
 	
 	static func getUserData() throws {
 		let userData = try EVYJson.from(localJSON: "user_data")
@@ -44,44 +43,37 @@ struct EVY {
 		}
 	}
 	
+	private static func fetchResource(_ resource: String) async throws -> [EVYJson] {
+		try await EVYAPIManager.shared.fetch(
+			method: "get",
+			params: GetParams(namespace: "evy", resource: resource, filter: nil),
+			expecting: [EVYJson].self
+		)
+	}
+
+	private static func storeIfNew(key: String, from serviceData: EVYJson) {
+		do {
+			let encoded = try JSONEncoder().encode(serviceData.parseProp(props: [key]))
+			try data.create(key: key, data: encoded)
+		} catch EVYDataError.keyAlreadyExists {
+			// Data already loaded, skip
+		} catch {}
+	}
+
 	static func getData() async throws -> Data {
-		let sellingReasonsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "selling_reasons", filter: nil), expecting: [EVYJson].self)
-		let conditionsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "conditions", filter: nil), expecting: [EVYJson].self)
-		let durationsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "durations", filter: nil), expecting: [EVYJson].self)
-		let itemsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "items", filter: nil), expecting: [EVYJson].self)
-		let areasJson: [EVYJson] = []
+		let resources = ["selling_reasons", "conditions", "durations", "areas", "timeslots"]
+		var serviceDict: [String: EVYJson] = [:]
+		for resource in resources {
+			serviceDict[resource] = .array(try await fetchResource(resource))
+		}
 
-		let serviceData: EVYJson = .dictionary([
-			"selling_reasons": .array(sellingReasonsJson),
-			"conditions": .array(conditionsJson),
-			"durations": .array(durationsJson),
-			"areas": .array(areasJson),
-			"item": itemsJson.first ?? .dictionary([:]),
-		])
+		let itemsJson = try await fetchResource("items")
+		serviceDict["item"] = itemsJson.first ?? .dictionary([:])
 
-		let sellingReasons = try JSONEncoder().encode(serviceData.parseProp(props: ["selling_reasons"]))
-		do {
-			try EVY.data.create(key: "selling_reasons", data: sellingReasons)
-		} catch EVYDataError.keyAlreadyExists {
-			// Data already loaded, skip
-		}
-		do {
-			let conditions = try JSONEncoder().encode(serviceData.parseProp(props: ["conditions"]))
-			try EVY.data.create(key: "conditions", data: conditions)
-		} catch EVYDataError.keyAlreadyExists {
-			// Data already loaded, skip
-		}
-		do {
-			let durations = try JSONEncoder().encode(serviceData.parseProp(props: ["durations"]))
-			try EVY.data.create(key: "durations", data: durations)
-		} catch EVYDataError.keyAlreadyExists {
-			// Data already loaded, skip
-		}
-		do {
-			let areas = try JSONEncoder().encode(serviceData.parseProp(props: ["areas"]))
-			try EVY.data.create(key: "areas", data: areas)
-		} catch EVYDataError.keyAlreadyExists {
-			// Data already loaded, skip
+		let serviceData: EVYJson = .dictionary(serviceDict)
+
+		for resource in resources {
+			storeIfNew(key: resource, from: serviceData)
 		}
 
 		return try JSONEncoder().encode(serviceData.parseProp(props: ["item"]))
@@ -159,12 +151,12 @@ struct EVY {
         return returnText.toString()
     }
     
-    static func ensureDraftExists(variableName: String) {
+    static func ensureDraftExists(variableName: String, initialData: Data? = nil) {
         guard !data.exists(key: variableName),
               !data.hasDraft(variableName: variableName) else {
             return
         }
-        guard let emptyData = "\"\"".data(using: .utf8) else { return }
+        let emptyData = initialData ?? "\"\"".data(using: .utf8)!
         do {
             try data.createDraft(variableName: variableName, data: emptyData)
         } catch {
@@ -182,19 +174,43 @@ struct EVY {
     }
     
     static func updateValue(_ value: String, at: String) throws {
+        let destinationProps = EVYInterpreter.parsePropsFromText(at)
+        if let (functionName, functionArgs) = EVYInterpreter.parseFunctionCall(destinationProps) {
+            switch functionName {
+            case "buildCurrency":
+                try updateData(try evyBuildCurrency(functionArgs, value), at: functionArgs)
+                return
+            case "buildAddress":
+                try updateData(try evyBuildAddress(functionArgs, value), at: functionArgs)
+                return
+            default:
+                break
+            }
+        }
         try updateData("\"\(value)\"".data(using: .utf8)!, at: at)
     }
     
     static func updateData(_ newData: Data, at: String) throws {
         let variableName = EVYInterpreter.parsePropsFromText(at)
+        let splitProps = try EVYInterpreter.splitPropsFromText(variableName)
+        let rootVariable = splitProps.first!
+        let remainingProps = Array(splitProps.dropFirst())
 
-        if let existing = try? data.getDraft(variableName: variableName) {
-            existing.data = newData
-            NotificationCenter.default.post(name: .evyDataUpdated, object: variableName)
-        } else if data.exists(key: variableName) {
-            let dataObj = try data.get(key: variableName)
-            dataObj.data = newData
-            try data.update(props: [variableName], data: newData)
+        if let existing = try? data.getDraft(variableName: rootVariable) {
+            if remainingProps.isEmpty {
+                existing.data = newData
+            } else {
+                try existing.updateDataWithData(newData, props: remainingProps)
+            }
+            NotificationCenter.default.post(name: .evyDataUpdated, object: rootVariable)
+        } else if data.exists(key: rootVariable) {
+            let dataObj = try data.get(key: rootVariable)
+            if remainingProps.isEmpty {
+                dataObj.data = newData
+            } else {
+                try dataObj.updateDataWithData(newData, props: remainingProps)
+            }
+            try data.update(props: splitProps, data: dataObj.data)
         } else {
             try data.createDraft(variableName: variableName, data: newData)
         }

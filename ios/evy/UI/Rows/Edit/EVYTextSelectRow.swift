@@ -33,7 +33,7 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 		})
 		let temporaryId = UUID().uuidString
 		guard (try? EVY.updateValue(view.content.text, at: temporaryId)) != nil,
-		      let data = try? EVY.data.get(key: temporaryId),
+		      let data = try? EVY.data.getDraft(variableName: temporaryId),
 		      let decoded = try? data.decoded() else { return nil }
 		self.value = decoded
 	}
@@ -61,6 +61,6 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 	AsyncPreview { asyncView in
 		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1", "pages", "3", "rows", "1", "view", "content", "children", "0", "child"])
+		try! await EVY.getRow(["2", "pages", "3", "rows", "1", "view", "content", "children", "0"])
 	}
 }
