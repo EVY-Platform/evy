@@ -171,36 +171,47 @@ struct ViewOffsetKey: PreferenceKey {
 }
 
 struct EVYCalendar: View {
-    private var yLabels: [EVYCalendarLabel]
-    private var xLabels: [EVYCalendarLabel]
-    
     private let primarySource: String
-    private let secondaryTimeslotsData: [EVYCalendarTimeslotData]
+    private let secondarySource: String
     
+    @State private var yLabels: [EVYCalendarLabel]
+    @State private var xLabels: [EVYCalendarLabel]
     @State private var scrollOffset = CGPoint.zero
     @State private var calendarTimeslots: EVYCalendarTimeslots
     
     init(primary: String, secondary: String) {
         primarySource = primary
-        secondaryTimeslotsData = getTimeslotsData(secondary)
+        secondarySource = secondary
 
-        let primaryTimeslotsData = getTimeslotsData(primary)
+        let (xl, yl, timeslots) = Self.buildCalendarData(
+            primarySource: primary,
+            secondarySource: secondary
+        )
+        _xLabels = State(initialValue: xl)
+        _yLabels = State(initialValue: yl)
+        _calendarTimeslots = State(initialValue: timeslots)
+    }
+    
+    private static func buildCalendarData(
+        primarySource: String,
+        secondarySource: String
+    ) -> ([EVYCalendarLabel], [EVYCalendarLabel], EVYCalendarTimeslots) {
+        let primaryTimeslotsData = getTimeslotsData(primarySource)
+        let secondaryTimeslotsData = getTimeslotsData(secondarySource)
         
-        // Build the initial axis labels
-        xLabels = primaryTimeslotsData
+        var xLabels = primaryTimeslotsData
             .filter { $0.y == 0 }
-			.map {
-				EVYCalendarLabel(value: String($0.header),
-								 full: false)
-			}
-        yLabels = primaryTimeslotsData
+            .map {
+                EVYCalendarLabel(value: String($0.header),
+                                 full: false)
+            }
+        var yLabels = primaryTimeslotsData
             .filter { $0.x == 0 }
-			.map {
-				EVYCalendarLabel(value: String($0.start_label),
-								 full: false)
-			}
+            .map {
+                EVYCalendarLabel(value: String($0.start_label),
+                                 full: false)
+            }
         
-        // Mark the axis labels as full if needed
         for x in 0..<xLabels.count {
             let selectedInColumn = primaryTimeslotsData
                 .filter { $0.x == x && $0.selected }
@@ -218,7 +229,6 @@ struct EVYCalendar: View {
             yLabels[y].full = true
         }
         
-        // Append a label to yaxis to denote the end
         if !primaryTimeslotsData.isEmpty {
             yLabels.append(
                 EVYCalendarLabel(value: primaryTimeslotsData.last!.end_label,
@@ -226,11 +236,32 @@ struct EVYCalendar: View {
             )
         }
         
-        // Build the initial calendar timeslots to display
-        calendarTimeslots = EVYCalendarTimeslots(rows: yLabels.count-1,
-                                                      columns: xLabels.count,
-                                                      primaryTimeslotsData: primaryTimeslotsData,
-                                                      secondaryTimeslotsData: secondaryTimeslotsData)
+        let timeslots = EVYCalendarTimeslots(
+            rows: max(yLabels.count - 1, 0),
+            columns: xLabels.count,
+            primaryTimeslotsData: primaryTimeslotsData,
+            secondaryTimeslotsData: secondaryTimeslotsData
+        )
+        
+        return (xLabels, yLabels, timeslots)
+    }
+    
+    private func reloadData(animated: Bool = false) {
+        let (xl, yl, timeslots) = Self.buildCalendarData(
+            primarySource: primarySource,
+            secondarySource: secondarySource
+        )
+        if animated {
+            withAnimation(.linear(duration: animationDuration)) {
+                xLabels = xl
+                yLabels = yl
+                calendarTimeslots = timeslots
+            }
+        } else {
+            xLabels = xl
+            yLabels = yl
+            calendarTimeslots = timeslots
+        }
     }
     
     private func handleOperation(_ operation: EVYCalendarOperation) {
@@ -272,12 +303,7 @@ struct EVYCalendar: View {
             }
         }
         
-        withAnimation(.linear(duration: animationDuration)) {
-            calendarTimeslots = EVYCalendarTimeslots(rows: yLabels.count-1,
-                                                     columns: xLabels.count,
-                                                     primaryTimeslotsData: getTimeslotsData(primarySource),
-                                                     secondaryTimeslotsData: secondaryTimeslotsData)
-        }
+        reloadData(animated: true)
     }
     
     var body: some View {
@@ -299,8 +325,12 @@ struct EVYCalendar: View {
                     }.scrollIndicators(.hidden)
                 }.coordinateSpace(name: "scroll")
             }
-        }.environment(\.operate) { calendarOperation in
+        }
+        .environment(\.operate) { calendarOperation in
             handleOperation(calendarOperation)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .evyDataUpdated)) { _ in
+            reloadData()
         }
     }
 }
@@ -327,8 +357,12 @@ private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
 		asyncView
 	} view: {
 		try! await EVY.createItem()
-		
-	return EVYCalendar(primary: "{pickup_timeslots}",
+
+		let timeslotsData = (try? EVY.data.get(key: "timeslots"))?.data
+		EVY.ensureDraftExists(variableName: "pickup_timeslots", initialData: timeslotsData)
+		EVY.ensureDraftExists(variableName: "delivery_timeslots", initialData: timeslotsData)
+
+		return EVYCalendar(primary: "{pickup_timeslots}",
 					   secondary: "{delivery_timeslots}")
 	}
 }

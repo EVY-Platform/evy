@@ -61,6 +61,8 @@ extension SDUI_Page: View {
 				let initialData: Data?
 				if row.type == .inlinePicker {
 					initialData = "[]".data(using: .utf8)
+				} else if row.type == .calendar {
+					initialData = try? EVY.data.get(key: "timeslots").data
 				} else {
 					initialData = nil
 				}

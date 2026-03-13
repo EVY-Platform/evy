@@ -415,27 +415,27 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
 		try! await EVY.createItem()
 		
 	let bare = "test"
-	let data = "{title}"
+	let data = "{item.title}"
 	
 	let parsedData = try! EVYInterpreter.parseTextFromText(data)
 	let withPrefix = try! EVYInterpreter.parseTextFromText(
-		"{formatCurrency(price)}"
+		"{formatCurrency(item.price)}"
 	)
 	let withSuffix = try! EVYInterpreter.parseTextFromText(
-		"{formatDimension(width)}"
+		"{formatDimension(item.dimensions.width)}"
 	)
 	let WithSuffixAndRight = try! EVYInterpreter.parseTextFromText(
-		"{formatDimension(width)} - {title}"
+		"{formatDimension(item.dimensions.width)} - {item.title}"
 	)
 	let withComparison = try! EVYInterpreter.parseTextFromText(
-		"{count(title) == count(selling_reasons)} v {count(title) == count(title)}"
+		"{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
 	)
     let withMultiComparison = try! EVYInterpreter.parseTextFromText(
-        "{count(title) > 0 || (1 > 2 && count(selling_reasons) > 0)}"
+        "{count(item.title) > 0 || (1 > 2 && count(selling_reasons) > 0)}"
     )
 	
 	let weight = try! EVYInterpreter.parseTextFromText(
-		"{formatWeight(weight)}"
+		"{formatWeight(item.dimensions.weight)}"
 	)
 		
 		let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
@@ -452,8 +452,8 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
 			Text(weight.toString())
 			Text(firstSellingReason.toString())
 			
-		EVYTextField(input: "{formatCurrency(price)}",
-					 destination: "{price}",
+		EVYTextField(input: "{formatCurrency(item.price)}",
+					 destination: "{item.price}",
 					 placeholder: "Editing price")
 		}
 	}

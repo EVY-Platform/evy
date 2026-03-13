@@ -49,6 +49,7 @@ struct EVY {
 		let conditionsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "conditions", filter: nil), expecting: [EVYJson].self)
 		let durationsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "durations", filter: nil), expecting: [EVYJson].self)
 		let areasJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "areas", filter: nil), expecting: [EVYJson].self)
+		let timeslotsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "timeslots", filter: nil), expecting: [EVYJson].self)
 		let itemsJson = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "items", filter: nil), expecting: [EVYJson].self)
 
 		let serviceData: EVYJson = .dictionary([
@@ -56,6 +57,7 @@ struct EVY {
 			"conditions": .array(conditionsJson),
 			"durations": .array(durationsJson),
 			"areas": .array(areasJson),
+			"timeslots": .array(timeslotsJson),
 			"item": itemsJson.first ?? .dictionary([:]),
 		])
 
@@ -80,6 +82,12 @@ struct EVY {
 		do {
 			let areas = try JSONEncoder().encode(serviceData.parseProp(props: ["areas"]))
 			try EVY.data.create(key: "areas", data: areas)
+		} catch EVYDataError.keyAlreadyExists {
+			// Data already loaded, skip
+		}
+		do {
+			let timeslots = try JSONEncoder().encode(serviceData.parseProp(props: ["timeslots"]))
+			try EVY.data.create(key: "timeslots", data: timeslots)
 		} catch EVYDataError.keyAlreadyExists {
 			// Data already loaded, skip
 		}
@@ -200,14 +208,25 @@ struct EVY {
     
     static func updateData(_ newData: Data, at: String) throws {
         let variableName = EVYInterpreter.parsePropsFromText(at)
+        let splitProps = try EVYInterpreter.splitPropsFromText(variableName)
+        let rootVariable = splitProps.first!
+        let remainingProps = Array(splitProps.dropFirst())
 
-        if let existing = try? data.getDraft(variableName: variableName) {
-            existing.data = newData
-            NotificationCenter.default.post(name: .evyDataUpdated, object: variableName)
-        } else if data.exists(key: variableName) {
-            let dataObj = try data.get(key: variableName)
-            dataObj.data = newData
-            try data.update(props: [variableName], data: newData)
+        if let existing = try? data.getDraft(variableName: rootVariable) {
+            if remainingProps.isEmpty {
+                existing.data = newData
+            } else {
+                try existing.updateDataWithData(newData, props: remainingProps)
+            }
+            NotificationCenter.default.post(name: .evyDataUpdated, object: rootVariable)
+        } else if data.exists(key: rootVariable) {
+            let dataObj = try data.get(key: rootVariable)
+            if remainingProps.isEmpty {
+                dataObj.data = newData
+            } else {
+                try dataObj.updateDataWithData(newData, props: remainingProps)
+            }
+            try data.update(props: splitProps, data: dataObj.data)
         } else {
             try data.createDraft(variableName: variableName, data: newData)
         }

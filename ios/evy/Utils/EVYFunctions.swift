@@ -130,38 +130,50 @@ func evyFormatDimension(_ args: String,
 func evyFormatWeight(_ args: String,
                      _ editing: Bool = false) throws -> EVYFunctionOutput {
     let res = try EVY.getDataFromProps(args)
+    
+    let rawValue: String
     switch res {
     case let .string(stringValue):
-        if editing {
-            return EVYFunctionOutput(value: stringValue, prefix: nil, suffix: nil)
-        }
-        guard let mg = Decimal(string: stringValue) else {
-            throw EVYError.formatFailed(type: "weight", reason: "could not parse decimal from '\(stringValue)'")
-        }
-        if mg > 1000000 {
-            let kg = mg/1000000
-            let truncatedKG = NSDecimalNumber(decimal: kg).intValue
-            if kg == Decimal(integerLiteral: truncatedKG) {
-                return EVYFunctionOutput(value: "\(truncatedKG)", prefix: nil, suffix: "kg")
-            }
-            return EVYFunctionOutput(value: "\(kg)", prefix: nil, suffix: "kg")
-        }
-        if mg > 1000 {
-            let gram = mg/1000
-            let truncatedGram = NSDecimalNumber(decimal: gram).intValue
-            if gram == Decimal(integerLiteral: truncatedGram) {
-                return EVYFunctionOutput(value: "\(truncatedGram)", prefix: nil, suffix: "g")
-            }
-            return EVYFunctionOutput(value: "\(gram)", prefix: nil, suffix: "g")
-        }
-        let truncatedMG = NSDecimalNumber(decimal: mg).intValue
-        if mg == Decimal(integerLiteral: truncatedMG) {
-            return EVYFunctionOutput(value: "\(truncatedMG)", prefix: nil, suffix: "mg")
-        }
-        return EVYFunctionOutput(value: "\(mg)", prefix: nil, suffix: "mg")
+        rawValue = stringValue
+    case let .int(intValue):
+        rawValue = String(intValue)
+    case let .decimal(decimalValue):
+        rawValue = "\(decimalValue)"
     default:
-        throw EVYError.formatFailed(type: "weight", reason: "expected string, got \(res)")
+        throw EVYError.formatFailed(type: "weight", reason: "expected string or number, got \(res)")
     }
+    
+    let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedValue.isEmpty {
+        return EVYFunctionOutput(value: "", prefix: nil, suffix: nil)
+    }
+    if editing {
+        return EVYFunctionOutput(value: trimmedValue, prefix: nil, suffix: nil)
+    }
+    guard let mg = Decimal(string: trimmedValue) else {
+        throw EVYError.formatFailed(type: "weight", reason: "could not parse decimal from '\(trimmedValue)'")
+    }
+    if mg > 1000000 {
+        let kg = mg/1000000
+        let truncatedKG = NSDecimalNumber(decimal: kg).intValue
+        if kg == Decimal(integerLiteral: truncatedKG) {
+            return EVYFunctionOutput(value: "\(truncatedKG)", prefix: nil, suffix: "kg")
+        }
+        return EVYFunctionOutput(value: "\(kg)", prefix: nil, suffix: "kg")
+    }
+    if mg > 1000 {
+        let gram = mg/1000
+        let truncatedGram = NSDecimalNumber(decimal: gram).intValue
+        if gram == Decimal(integerLiteral: truncatedGram) {
+            return EVYFunctionOutput(value: "\(truncatedGram)", prefix: nil, suffix: "g")
+        }
+        return EVYFunctionOutput(value: "\(gram)", prefix: nil, suffix: "g")
+    }
+    let truncatedMG = NSDecimalNumber(decimal: mg).intValue
+    if mg == Decimal(integerLiteral: truncatedMG) {
+        return EVYFunctionOutput(value: "\(truncatedMG)", prefix: nil, suffix: "mg")
+    }
+    return EVYFunctionOutput(value: "\(mg)", prefix: nil, suffix: "mg")
 }
 
 @MainActor
@@ -411,22 +423,23 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
 	AsyncPreview { asyncView in
 		asyncView
 	} view: {
+		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
 		return VStack {
-		EVYTextView("{formatDimension(width)}")
+		EVYTextView("{formatDimension(item.dimensions.width)}")
 		EVYTextView("a == a: {a == a}")
 		EVYTextView("a == b: {a == b}")
 		EVYTextView("1 == 2: {1 == 2}")
 		EVYTextView("1 == 1: {1 == 1}")
 		EVYTextView("1 != 1: {1 != 1}")
-		EVYTextView("title == Amazing: {{title} == Amazing}")
-		EVYTextView("title == Amazing Fridge: {{title} == Amazing Fridge}")
-		EVYTextView("Amazing Fridge == title: {Amazing Fridge == {title}}")
-		EVYTextView("count (title) == 13: {{count(title)} == 13}")
-		EVYTextView("count (title) == 14: {{count(title)} == 14}")
-		EVYTextView("count (title) > 0: {{count(title)} > 0}")
-		EVYTextView("{formatAddress(pickup_address)}")
+		EVYTextView("title == Amazing: {{item.title} == Amazing}")
+		EVYTextView("title == Amazing Fridge: {{item.title} == Amazing Fridge}")
+		EVYTextView("Amazing Fridge == title: {Amazing Fridge == {item.title}}")
+		EVYTextView("count (title) == 13: {{count(item.title)} == 13}")
+		EVYTextView("count (title) == 14: {{count(item.title)} == 14}")
+		EVYTextView("count (title) > 0: {{count(item.title)} > 0}")
+		EVYTextView("{formatAddress(user.address)}")
 		}
 	}
 }

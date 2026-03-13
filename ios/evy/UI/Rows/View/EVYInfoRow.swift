@@ -35,6 +35,6 @@ struct EVYInfoRow: View, EVYRowProtocol {
 	AsyncPreview { asyncView in
 		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1", "pages", "4", "rows", "0"])
+		try! await EVY.getRow(["2", "pages", "4", "rows", "0"])
 	}
 }

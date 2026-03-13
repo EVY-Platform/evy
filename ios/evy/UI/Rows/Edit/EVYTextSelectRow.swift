@@ -61,6 +61,6 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 	AsyncPreview { asyncView in
 		EVYRow(row: asyncView)
 	} view: {
-		try! await EVY.getRow(["1", "pages", "3", "rows", "1", "view", "content", "children", "0", "child"])
+		try! await EVY.getRow(["2", "pages", "3", "rows", "1", "view", "content", "children", "0"])
 	}
 }
