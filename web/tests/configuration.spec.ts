@@ -46,7 +46,7 @@ test.describe("Row configuration", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		await expect(configPanel.getByLabel("Page title")).toHaveValue("Test Page");
+		await expect(page.getByLabel("Page title")).toHaveValue("Test Page");
 		await expect(
 			configPanel.getByRole("button", { name: /^Input$/ }),
 		).toBeVisible();

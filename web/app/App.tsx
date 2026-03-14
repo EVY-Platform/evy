@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useMemo } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type {
@@ -58,6 +58,46 @@ function AppContent() {
 	);
 }
 
+function NavBar() {
+	const { activePageId, activeFlowId, flows, dispatchRow } =
+		useContext(AppContext);
+
+	const activePage = useMemo(
+		() =>
+			flows
+				.find((f) => f.id === activeFlowId)
+				?.pages.find((p) => p.id === activePageId),
+		[flows, activeFlowId, activePageId],
+	);
+
+	return (
+		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center">
+			<a href="/">
+				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
+			</a>
+			<div className="evy-flex-1 evy-flex evy-justify-center">
+				{activePage && (
+					<input
+						type="text"
+						value={activePage.title}
+						onChange={(e) =>
+							dispatchRow({
+								type: "UPDATE_PAGE_TITLE",
+								pageId: activePage.id,
+								title: e.target.value,
+							})
+						}
+						placeholder="Page title"
+						className="evy-text-center evy-bg-transparent evy-border-none evy-focus-visible:outline-none evy-text-lg evy-font-semibold"
+						aria-label="Page title"
+					/>
+				)}
+			</div>
+			<FlowSelector />
+		</div>
+	);
+}
+
 export function App() {
 	const { flows, loading } = useFlows();
 	const usingInjectedTestFlows = Boolean(window.__TEST_FLOWS__);
@@ -87,12 +127,7 @@ export function App() {
 			syncWithApi={!usingInjectedTestFlows}
 		>
 			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
-				<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-justify-between evy-items-center">
-					<a href="/">
-						<img className="evy-h-4" src="/logo.svg" alt="EVY" />
-					</a>
-					<FlowSelector />
-				</div>
+				<NavBar />
 				<div className="evy-flex evy-flex-1 evy-overflow-hidden evy-bg-gray-light">
 					<AppContent />
 				</div>
