@@ -328,7 +328,6 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
-		// Container may show config for both container and children, first should be the container
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveValue("Container Row");
@@ -374,11 +373,9 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
-		// When child is clicked, its config should appear - check the child's title value exists
-		const titleInputs = configPanel.getByLabel("title", { exact: true });
-		// One of the title inputs should have the child's value
+		await configPanel.getByRole("button", { name: /^Info$/ }).click();
 		await expect(
-			titleInputs.filter({ hasText: "Child Info Row" }).or(titleInputs.nth(1)),
+			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveValue("Child Info Row");
 	});
 
@@ -423,17 +420,16 @@ test.describe("Row Selection with Containers", () => {
 		// Select child first
 		const childRow = page.getByText("Child Info Row", { exact: true }).first();
 		await childRow.click();
-		// When child is selected, verify the child title value is present
+		await configPanel.getByRole("button", { name: /^Info$/ }).click();
 		await expect(
-			configPanel.getByLabel("title", { exact: true }).nth(1),
+			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveValue("Child Info Row");
 
-		// Select container
-		const containerRow = page
-			.getByText("Container Row", { exact: true })
-			.first();
-		await containerRow.click();
-		// First title should be container's
+		await configPanel
+			.getByRole("button", {
+				name: "Back to parent configuration from Info",
+			})
+			.click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveValue("Container Row");

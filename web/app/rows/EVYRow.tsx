@@ -4,9 +4,6 @@ import { RowLayout } from "./design-system/RowLayout";
 
 export const containerDropindicatorId = "placeholder";
 
-/** Re-export for callers that still use EVYRow.getRowsRecursive (e.g. decodeFlow). */
-export { getRowsRecursive } from "../utils/rowTree";
-
 export const UnknownRow = defineRow("UnknownRow", {
 	config: {
 		type: "Unknown",

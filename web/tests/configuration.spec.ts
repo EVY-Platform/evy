@@ -2,6 +2,69 @@ import { expect, test } from "@playwright/test";
 import { initTestFlows } from "./utils";
 
 test.describe("Row configuration", () => {
+	test("should drill into child row configuration from the configuration panel", async ({
+		page,
+	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "ColumnContainer",
+						view: {
+							content: {
+								title: "Container Row",
+								children: [
+									{
+										type: "Input",
+										view: {
+											content: {
+												title: "Input Row",
+												placeholder: "First placeholder",
+											},
+										},
+										actions: [],
+									},
+								],
+							},
+						},
+						actions: [],
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
+		const containerRow = page
+			.getByText("Container Row", { exact: true })
+			.first();
+		await expect(containerRow).toBeVisible();
+		await containerRow.click();
+
+		const configPanel = page
+			.getByText("Configuration", { exact: true })
+			.locator("..");
+
+		await expect(configPanel.getByLabel("Page title")).toHaveValue("Test Page");
+		await expect(
+			configPanel.getByRole("button", { name: /^Input$/ }),
+		).toBeVisible();
+
+		await configPanel.getByRole("button", { name: /^Input$/ }).click();
+
+		await expect(configPanel.getByLabel("Page title")).toHaveCount(0);
+		await expect(
+			configPanel.getByRole("button", {
+				name: "Back to parent configuration from Input",
+			}),
+		).toBeVisible();
+		await expect(configPanel.getByLabel("placeholder")).toHaveValue(
+			"First placeholder",
+		);
+		await expect(configPanel.getByLabel("title")).toHaveValue("Input Row");
+	});
+
 	test("should display row configurations in configuration panel", async ({
 		page,
 	}) => {
