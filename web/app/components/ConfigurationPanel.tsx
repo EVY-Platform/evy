@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
@@ -13,18 +13,9 @@ function isRowArray(value: unknown): value is Row[] {
 }
 
 export function ConfigurationPanel() {
-	const { activeRowId, activePageId, flows, activeFlowId, dispatchRow } =
-		useContext(AppContext);
+	const { activeRowId, dispatchRow } = useContext(AppContext);
 	const row = useRowById(activeRowId);
 	const [configStack, setConfigStack] = useState<string[]>([]);
-
-	const activePage = useMemo(
-		() =>
-			flows
-				.find((f) => f.id === activeFlowId)
-				?.pages.find((p) => p.id === activePageId),
-		[flows, activeFlowId, activePageId],
-	);
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
 	const currentConfigRow = useRowById(currentConfigRowId);
 
@@ -182,27 +173,6 @@ export function ConfigurationPanel() {
 				Configuration
 			</div>
 			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll">
-				{activePage && !isDrilledIntoChild && (
-					<>
-						<div className="evy-mb-2">
-							<label htmlFor="page-title">Page title</label>
-							<input
-								id="page-title"
-								type="text"
-								value={activePage.title}
-								onChange={(e) =>
-									dispatchRow({
-										type: "UPDATE_PAGE_TITLE",
-										pageId: activePage.id,
-										title: e.target.value,
-									})
-								}
-								className="evy-w-full evy-focus-visible:outline-none"
-							/>
-						</div>
-						<div className="evy-border-b evy-border-gray" />
-					</>
-				)}
 				{isDrilledIntoChild && currentConfigRow && (
 					<>
 						<button
