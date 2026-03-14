@@ -131,6 +131,9 @@ body {
 .evy-p-4 {
 	padding: var(--spacing-4);
 }
+.evy-pl-4 {
+	padding-left: var(--spacing-4);
+}
 .evy-pl-8 {
 	padding-left: var(--spacing-8);
 }

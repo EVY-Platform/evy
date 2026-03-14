@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
@@ -16,6 +16,7 @@ export function ConfigurationPanel() {
 	const { activeRowId, activePageId, flows, activeFlowId, dispatchRow } =
 		useContext(AppContext);
 	const row = useRowById(activeRowId);
+	const [configStack, setConfigStack] = useState<string[]>([]);
 
 	const activePage = useMemo(
 		() =>
@@ -24,6 +25,24 @@ export function ConfigurationPanel() {
 				?.pages.find((p) => p.id === activePageId),
 		[flows, activeFlowId, activePageId],
 	);
+	const currentConfigRowId = configStack.at(-1) ?? row?.id;
+	const currentConfigRow = useRowById(currentConfigRowId);
+
+	useEffect(() => {
+		if (!activeRowId) {
+			setConfigStack([]);
+			return;
+		}
+		setConfigStack([]);
+	}, [activeRowId]);
+
+	const openChildConfiguration = useCallback((childRowId: string) => {
+		setConfigStack((currentStack) => [...currentStack, childRowId]);
+	}, []);
+
+	const goBackToParentConfiguration = useCallback(() => {
+		setConfigStack((currentStack) => currentStack.slice(0, -1));
+	}, []);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {
@@ -41,14 +60,14 @@ export function ConfigurationPanel() {
 
 	const updateRowActions = useCallback(
 		(nextActions: NonNullable<Row["config"]["actions"]>) => {
-			if (!row) return;
+			if (!currentConfigRow) return;
 			dispatchRow({
 				type: "UPDATE_ROW_ACTIONS",
-				rowId: row.id,
+				rowId: currentConfigRow.id,
 				actions: nextActions,
 			});
 		},
-		[row, dispatchRow],
+		[currentConfigRow, dispatchRow],
 	);
 
 	const updateActionField = useCallback(
@@ -57,22 +76,23 @@ export function ConfigurationPanel() {
 			field: "condition" | "false" | "true",
 			value: string,
 		) => {
-			if (!row) return;
-			const nextActions = row.config.actions.map((action, index) =>
-				index === actionIndex ? { ...action, [field]: value } : action,
+			if (!currentConfigRow) return;
+			const nextActions = currentConfigRow.config.actions.map(
+				(action, index) =>
+					index === actionIndex ? { ...action, [field]: value } : action,
 			);
 			updateRowActions(nextActions);
 		},
-		[row, updateRowActions],
+		[currentConfigRow, updateRowActions],
 	);
 
 	const addAction = useCallback(() => {
-		if (!row) return;
+		if (!currentConfigRow) return;
 		updateRowActions([
-			...row.config.actions,
+			...currentConfigRow.config.actions,
 			{ condition: "", false: "", true: "" },
 		]);
-	}, [row, updateRowActions]);
+	}, [currentConfigRow, updateRowActions]);
 
 	const renderConfiguration = useCallback(
 		(configRow: Row): React.ReactNode[] => {
@@ -85,20 +105,29 @@ export function ConfigurationPanel() {
 					if (!isRowArray(value)) return null;
 					const children = value;
 					return (
-						<div key={uniqueId} className="evy-flex evy-flex-col evy-gap-4">
-							{children.map((child, index) => {
-								return (
-									<div
-										key={child.id}
-										className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
-									>
-										<p className="evy-text-lg evy-font-semibold evy-mb-4">
-											Child {index + 1}
-										</p>
-										{renderConfiguration(child)}
-									</div>
-								);
-							})}
+						<div key={uniqueId}>
+							<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
+								Children
+							</div>
+							<div className="evy-flex evy-flex-col evy-gap-4">
+								{children.map((child) => {
+									return (
+										<button
+											type="button"
+											key={child.id}
+											className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
+											onClick={() => openChildConfiguration(child.id)}
+										>
+											<span>{child.config.type}</span>
+											<img
+												className="evy-h-4 evy-w-4"
+												src="/chevron_right.svg"
+												alt=""
+											/>
+										</button>
+									);
+								})}
+							</div>
 						</div>
 					);
 				}
@@ -106,13 +135,19 @@ export function ConfigurationPanel() {
 					if (!isRow(value)) return null;
 					const child = value;
 					return (
-						<div
+						<button
+							type="button"
 							key={uniqueId}
-							className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
+							className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
+							onClick={() => openChildConfiguration(child.id)}
 						>
-							<p className="evy-text-lg evy-font-semibold evy-mb-4">Child</p>
-							{renderConfiguration(child)}
-						</div>
+							<span>{child.config.type}</span>
+							<img
+								className="evy-h-4 evy-w-4"
+								src="/chevron_right.svg"
+								alt=""
+							/>
+						</button>
 					);
 				}
 				return (
@@ -132,11 +167,14 @@ export function ConfigurationPanel() {
 				);
 			});
 		},
-		[updateRowContent],
+		[openChildConfiguration, updateRowContent],
 	);
 
-	const configurationElements = row ? renderConfiguration(row) : [];
-	const rowActions = row?.config.actions ?? [];
+	const configurationElements = currentConfigRow
+		? renderConfiguration(currentConfigRow)
+		: [];
+	const rowActions = currentConfigRow?.config.actions ?? [];
+	const isDrilledIntoChild = configStack.length > 0;
 
 	return (
 		<div className="evy-flex evy-flex-col evy-h-full">
@@ -144,7 +182,7 @@ export function ConfigurationPanel() {
 				Configuration
 			</div>
 			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll">
-				{activePage && (
+				{activePage && !isDrilledIntoChild && (
 					<>
 						<div className="evy-mb-2">
 							<label htmlFor="page-title">Page title</label>
@@ -162,6 +200,22 @@ export function ConfigurationPanel() {
 								className="evy-w-full evy-focus-visible:outline-none"
 							/>
 						</div>
+						<div className="evy-border-b evy-border-gray" />
+					</>
+				)}
+				{isDrilledIntoChild && currentConfigRow && (
+					<>
+						<button
+							type="button"
+							className="evy-flex evy-items-center evy-w-full evy-p-0 evy-bg-transparent evy-border-none evy-text-left evy-cursor-pointer"
+							onClick={goBackToParentConfiguration}
+							aria-label={`Back to parent configuration from ${currentConfigRow.config.type}`}
+						>
+							<img className="evy-h-4 evy-w-4" src="/chevron_left.svg" alt="" />
+							<span className="evy-text-lg evy-font-semibold evy-pl-4">
+								{currentConfigRow.config.type}
+							</span>
+						</button>
 						<div className="evy-border-b evy-border-gray" />
 					</>
 				)}

@@ -37,10 +37,6 @@ export type RowAction =
 			actions: SDUI_RowAction[];
 	  }
 	| {
-			type: "REMOVE_ROW_ACTION";
-			rowId: string;
-	  }
-	| {
 			type: "SET_ACTIVE_FLOW";
 			flowId: string;
 	  }
