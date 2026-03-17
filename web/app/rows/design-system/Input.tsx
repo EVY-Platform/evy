@@ -1,4 +1,10 @@
+import type { CSSProperties } from "react";
 import { border } from "./border";
+
+const offsetStyles: Record<string, CSSProperties> = {
+	left: { paddingLeft: "var(--spacing-8)" },
+	right: { paddingRight: "var(--spacing-8)" },
+};
 
 export default function Input({
 	value,
@@ -9,12 +15,11 @@ export default function Input({
 	placeholder: string;
 	offset?: "none" | "left" | "right";
 }) {
-	const offsetClass =
-		offset === "left" ? "evy-pl-8" : offset === "right" ? "evy-pr-8" : "";
 	return (
 		<input
 			type="text"
-			className={`evy-w-full evy-box-sizing-border evy-text-sm ${border} evy-focus-visible:outline-none ${offsetClass}`}
+			className={`evy-w-full evy-box-sizing-border evy-text-sm ${border} evy-focus-visible:outline-none`}
+			style={offsetStyles[offset]}
 			required
 			value={value}
 			placeholder={placeholder}

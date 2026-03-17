@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useState } from "react";
 
 import type { Row, RowConfig } from "../../types/row";
@@ -7,6 +8,22 @@ import { RowLayout } from "../design-system/RowLayout";
 import { useRowById } from "../../hooks/useRowById";
 
 const typeName = "SelectSegmentContainerRow";
+
+const firstSegmentStyle: CSSProperties = {
+	borderTopLeftRadius: "var(--radius-md)",
+	borderBottomLeftRadius: "var(--radius-md)",
+	borderRightWidth: "0px",
+};
+
+const lastSegmentStyle: CSSProperties = {
+	borderTopRightRadius: "var(--radius-md)",
+	borderBottomRightRadius: "var(--radius-md)",
+	borderLeftWidth: "0px",
+};
+
+const segmentGroupStyle: CSSProperties = {
+	borderRadius: "999px",
+};
 
 export default defineRow(typeName, {
 	config: {
@@ -46,23 +63,25 @@ export default defineRow(typeName, {
 
 		return (
 			<RowLayout title={row.config.view.content.title}>
-				<div className="evy-rounded-full evy-flex evy-mb-2">
-					{segments.map((segment, index) => (
-						<button
-							key={segment}
-							type="button"
-							onClick={() => setSelectedTab(index)}
-							className={`evy-flex-1 evy-border ${
-								index === 0 ? "evy-rounded-left-md evy-border-r-0" : ""
-							} ${
-								index === segments.length - 1
-									? "evy-rounded-right-md evy-border-l-0"
-									: ""
-							} ${selectedTab === index ? "evy-bg-gray-light" : "evy-bg-white"}`}
-						>
-							{segment}
-						</button>
-					))}
+				<div className="evy-flex evy-mb-2" style={segmentGroupStyle}>
+					{segments.map((segment, index) => {
+						const isFirst = index === 0;
+						const isLast = index === segments.length - 1;
+						return (
+							<button
+								key={segment}
+								type="button"
+								onClick={() => setSelectedTab(index)}
+								className={`evy-flex-1 evy-border ${selectedTab === index ? "evy-bg-gray-light" : "evy-bg-white"}`}
+								style={{
+									...(isFirst && firstSegmentStyle),
+									...(isLast && lastSegmentStyle),
+								}}
+							>
+								{segment}
+							</button>
+						);
+					})}
 				</div>
 				<ContainerChildren
 					rows={rowsToShow}

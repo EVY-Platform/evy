@@ -1,7 +1,14 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import iconMap from "./iconMap";
 
 const ICON_REGEX = /::[a-zA-Z.]+::/g;
+
+const inlineIconStyle: CSSProperties = {
+	display: "inline",
+	height: "1em",
+	width: "1em",
+	verticalAlign: "-0.125em",
+};
 
 export default function parseIconText(input: string): ReactNode {
 	const parts: ReactNode[] = [];
@@ -22,7 +29,7 @@ export default function parseIconText(input: string): ReactNode {
 			parts.push(
 				<img
 					key={matchStart}
-					className="evy-inline-icon"
+					style={inlineIconStyle}
 					src={iconPath}
 					alt={iconName}
 				/>,

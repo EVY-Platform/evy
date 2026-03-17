@@ -20,7 +20,8 @@ export default defineRow("CalendarRow", {
 			<img
 				src="/calendar.png"
 				alt="calendar"
-				className="evy-max-w-100 evy-block evy-pointer-events-none"
+				className="evy-block evy-pointer-events-none"
+				style={{ maxWidth: "100%" }}
 			/>
 		</RowLayout>
 	),

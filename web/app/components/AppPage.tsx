@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import invariant from "tiny-invariant";
 
@@ -7,6 +8,25 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 
 import { AppContext } from "../state";
 import { DraggableRowContainer } from "./DraggableRowContainer";
+
+const pageTitleStyle: CSSProperties = {
+	textAlign: "center",
+	fontWeight: "var(--font-semibold)",
+	fontSize: "var(--text-xl)",
+	padding: "var(--spacing-2) var(--spacing-4)",
+	width: "100%",
+	background: "none",
+	border: "none",
+};
+
+const rounded24Style: CSSProperties = {
+	borderRadius: "var(--radius-2-4)",
+};
+
+const roundedBottom24Style: CSSProperties = {
+	borderBottomLeftRadius: "var(--radius-2-4)",
+	borderBottomRightRadius: "var(--radius-2-4)",
+};
 
 export default function AppPage({ pageId }: { pageId: string }) {
 	const { flows, activeFlowId, dispatchRow, dispatchDropIndicator } =
@@ -97,7 +117,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	const titleElement = page?.title ? (
 		<button
 			type="button"
-			className="evy-page-title evy-cursor-pointer"
+			className="evy-cursor-pointer"
+			style={pageTitleStyle}
 			onClick={() => dispatchRow({ type: "SET_ACTIVE_PAGE", pageId })}
 		>
 			{page.title}
@@ -107,9 +128,15 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	const footer = page?.footer;
 
 	return (
-		<div className="evy-overflow-hidden evy-p-30px evy-h-full evy-w-full evy-box-sizing-border">
+		<div
+			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
+			style={{ padding: "var(--spacing-30px)" }}
+		>
 			{footer ? (
-				<div className="evy-flex evy-flex-col evy-h-full evy-rounded-24 evy-bg-white">
+				<div
+					className="evy-flex evy-flex-col evy-h-full evy-bg-white"
+					style={rounded24Style}
+				>
 					{titleElement}
 					<div
 						className="evy-overflow-scroll evy-flex-1 evy-pt-4"
@@ -119,7 +146,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					</div>
 					<button
 						type="button"
-						className="evy-border-none evy-hover:bg-gray-light evy-cursor-pointer evy-rounded-bottom-24 evy-w-full evy-bg-white evy-p-0"
+						className="evy-border-none evy-hover:bg-gray-light evy-cursor-pointer evy-w-full evy-bg-white evy-p-0"
+						style={roundedBottom24Style}
 						onClick={() => selectRow(footer.id)}
 					>
 						{footer.row}
@@ -127,7 +155,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				</div>
 			) : (
 				<div
-					className="evy-overflow-scroll evy-h-full evy-rounded-24 evy-pt-4 evy-bg-white"
+					className="evy-overflow-scroll evy-h-full evy-pt-4 evy-bg-white"
+					style={rounded24Style}
 					ref={scrollableRef}
 				>
 					{titleElement}

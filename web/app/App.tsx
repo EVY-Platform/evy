@@ -1,4 +1,5 @@
-import { useContext, useEffect, useMemo, useRef } from "react";
+import type { CSSProperties } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type {
@@ -14,6 +15,91 @@ import { AppContext, AppProvider } from "./state";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
 import { useActiveFlow } from "./hooks/useActiveFlow";
+
+const focusButtonCss = `
+@keyframes focus-glow {
+	0%, 100% { box-shadow: 0 0 6px 1px oklch(35.84% 0.0103 285.87 / 0.35); }
+	50% { box-shadow: 0 0 14px 4px oklch(35.84% 0.0103 285.87 / 0.6); }
+}
+.evy-focus-button--active {
+	border-color: var(--color-evy-gray-dark);
+	box-shadow: 0 0 8px 2px oklch(35.84% 0.0103 285.87 / 0.5);
+	animation: focus-glow 2s ease-in-out infinite;
+}
+`;
+
+const focusButtonStyle: CSSProperties = {
+	fontSize: "var(--text-sm)",
+	fontWeight: "var(--font-medium)",
+	height: "var(--size-navbar-control)",
+	padding: "0 var(--spacing-4)",
+	border: "1px solid var(--color-gray-border)",
+	borderRadius: "var(--radius-md)",
+	backgroundColor: "var(--color-white)",
+	cursor: "pointer",
+	position: "relative",
+	display: "inline-flex",
+	alignItems: "center",
+	justifyContent: "center",
+	transition: "border-color var(--transition), box-shadow var(--transition)",
+};
+
+const focusButtonHoverStyle: CSSProperties = {
+	...focusButtonStyle,
+	borderColor: "var(--color-evy-gray)",
+};
+
+const canvasBaseStyle: CSSProperties = {
+	flexDirection: "row",
+	overflow: "auto",
+};
+
+const canvasStyle: CSSProperties = {
+	...canvasBaseStyle,
+	gap: "var(--spacing-4)",
+	transition: "gap 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+};
+
+const canvasFocusedStyle: CSSProperties = {
+	...canvasBaseStyle,
+	gap: 0,
+	transition: "gap 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms",
+};
+
+const pageWrapperBaseStyle: CSSProperties = {
+	overflow: "hidden",
+	height: "var(--size-662)",
+};
+
+const pageWrapperStyle: CSSProperties = {
+	...pageWrapperBaseStyle,
+	marginLeft: "auto",
+	marginRight: "auto",
+	width: "var(--size-336)",
+	transition:
+		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1) 300ms, width 300ms cubic-bezier(0.4, 0, 0.2, 1), margin 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+};
+
+const pageWrapperHiddenStyle: CSSProperties = {
+	...pageWrapperBaseStyle,
+	opacity: 0,
+	width: 0,
+	marginLeft: 0,
+	marginRight: 0,
+	pointerEvents: "none",
+	transition:
+		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1), width 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms, margin 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms",
+};
+
+const panelShadowStyle: CSSProperties = {
+	boxShadow: "var(--shadow-subtle)",
+};
+
+const rightPanelStyle: CSSProperties = {
+	...panelShadowStyle,
+	borderLeftWidth: "1px",
+	borderLeftStyle: "solid",
+};
 
 function AppContent() {
 	const { dispatchRow, dispatchDragging, activePageId, focusMode } =
@@ -57,13 +143,15 @@ function AppContent() {
 
 	return (
 		<>
-			<div className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white evy-shadow-subtle">
+			<div
+				className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white"
+				style={panelShadowStyle}
+			>
 				<RowsPanel />
 			</div>
 			<div
-				className={`evy-flex-1 evy-overflow-auto evy-flex evy-flex-row evy-p-4 evy-canvas ${
-					focusMode ? "evy-canvas--focused" : ""
-				}`}
+				className="evy-flex-1 evy-flex evy-p-4"
+				style={focusMode ? canvasFocusedStyle : canvasStyle}
 				ref={canvasRef}
 			>
 				{pages.map((page) => {
@@ -72,16 +160,18 @@ function AppContent() {
 					return (
 						<div
 							key={page.id}
-							className={`evy-page-wrapper evy-flex-shrink-0 evy-mx-auto evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662 ${
-								isHidden ? "evy-page-wrapper--hidden" : ""
-							}`}
+							className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+							style={isHidden ? pageWrapperHiddenStyle : pageWrapperStyle}
 						>
 							<AppPage pageId={page.id} />
 						</div>
 					);
 				})}
 			</div>
-			<div className="evy-w-300 evy-flex-shrink-0 evy-border-l evy-border-gray evy-overflow-y-auto evy-bg-white evy-shadow-subtle">
+			<div
+				className="evy-w-300 evy-flex-shrink-0 evy-border-gray evy-overflow-y-auto evy-bg-white"
+				style={rightPanelStyle}
+			>
 				<ConfigurationPanel />
 			</div>
 		</>
@@ -91,6 +181,7 @@ function AppContent() {
 function NavBar() {
 	const { activePageId, activeFlowId, flows, dispatchRow, focusMode } =
 		useContext(AppContext);
+	const [focusBtnHovered, setFocusBtnHovered] = useState(false);
 
 	const activePage = useMemo(
 		() =>
@@ -102,6 +193,7 @@ function NavBar() {
 
 	return (
 		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center">
+			<style>{focusButtonCss}</style>
 			<a href="/">
 				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 			</a>
@@ -119,15 +211,17 @@ function NavBar() {
 								})
 							}
 							placeholder="Page title"
-							className="evy-navbar-page-title evy-text-center evy-bg-transparent evy-border-none evy-focus-visible:outline-none evy-text-lg evy-font-semibold"
+							className="evy-text-center evy-bg-transparent evy-border-none evy-focus-visible:outline-none evy-text-lg evy-font-semibold"
+							style={{ height: "var(--size-navbar-control)" }}
 							aria-label="Page title"
 						/>
 						<button
 							type="button"
 							onClick={() => dispatchRow({ type: "TOGGLE_FOCUS_MODE" })}
-							className={`evy-focus-button ${
-								focusMode ? "evy-focus-button--active" : ""
-							}`}
+							className={focusMode ? "evy-focus-button--active" : ""}
+							style={focusBtnHovered ? focusButtonHoverStyle : focusButtonStyle}
+							onMouseEnter={() => setFocusBtnHovered(true)}
+							onMouseLeave={() => setFocusBtnHovered(false)}
 							aria-pressed={focusMode}
 						>
 							Focus

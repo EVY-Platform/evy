@@ -11,7 +11,8 @@ export default function TextArea({
 		<textarea
 			id="message"
 			rows={4}
-			className={`evy-block evy-box-sizing-border evy-p-2 evy-w-full evy-text-sm ${border} evy-focus-visible:outline-none evy-resize-none`}
+			className={`evy-block evy-box-sizing-border evy-p-2 evy-w-full evy-text-sm ${border} evy-focus-visible:outline-none`}
+			style={{ resize: "none" }}
 			placeholder={placeholder}
 			value={value}
 			readOnly
