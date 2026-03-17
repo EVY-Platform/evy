@@ -10,6 +10,7 @@ Shared types (`SDUI_Flow`, `SDUI_Page`, `SDUI_Row`, RPC payloads) come from the 
 graph TB
     subgraph app [App Layer]
         App[App.tsx]
+        NavBar[NavBar]
         AppContent[AppContent]
     end
 
@@ -21,6 +22,14 @@ graph TB
         DropIndicatorReducer[dropIndicatorReducer]
     end
 
+    subgraph hooks [Hooks]
+        useFlows[useFlows]
+        useActiveFlow[useActiveFlow]
+        useRowById[useRowById]
+        useDraggable[useDraggable]
+        useUrlSync[useUrlSync]
+    end
+
     subgraph panels [UI Panels]
         RowsPanel[RowsPanel]
         AppPage[AppPage]
@@ -29,14 +38,13 @@ graph TB
     end
 
     subgraph dragdrop [Drag and Drop]
-        useDraggable[useDraggable hook]
         DraggableRowContainer[DraggableRowContainer]
         RowPrimitive[RowPrimitive]
-        DropHandler[dropHandler]
+        DropHandler[handleDrop]
     end
 
     subgraph rows [Row Components]
-        EVYRow[EVYRow base class]
+        defineRow["defineRow() factory"]
         ViewRows[View Rows]
         EditRows[Edit Rows]
         ActionRows[Action Rows]
@@ -44,9 +52,14 @@ graph TB
     end
 
     subgraph designsystem [Design System]
+        RowLayout[RowLayout]
         Button[Button]
         Input[Input]
+        TextAreaDS[TextArea]
         Dropdown[Dropdown]
+        RadioButton[RadioButton]
+        Checkbox[Checkbox]
+        EVYText[EVYText]
         DropIndicator[dropIndicator]
     end
 
@@ -56,23 +69,24 @@ graph TB
     AppContext --> DraggingReducer
     AppContext --> DropIndicatorReducer
 
+    App --> NavBar
+    NavBar --> FlowSelector
     App --> AppContent
     AppContent --> RowsPanel
     AppContent --> AppPage
     AppContent --> ConfigPanel
-    App --> FlowSelector
+    AppContent --> DropHandler
 
     AppPage --> DraggableRowContainer
     DraggableRowContainer --> useDraggable
     DraggableRowContainer --> RowPrimitive
     RowsPanel --> DraggableRowContainer
-    AppContent --> DropHandler
 
-    DraggableRowContainer --> EVYRow
-    EVYRow --> ViewRows
-    EVYRow --> EditRows
-    EVYRow --> ActionRows
-    EVYRow --> ContainerRows
+    DraggableRowContainer --> defineRow
+    defineRow --> ViewRows
+    defineRow --> EditRows
+    defineRow --> ActionRows
+    defineRow --> ContainerRows
 
     RowPrimitive --> DropIndicator
     EditRows --> designsystem
@@ -84,19 +98,20 @@ graph TB
 | Component              | Description                                                         |
 | ---------------------- | ------------------------------------------------------------------- |
 | **App**                | Main entry point, sets up layout with header and three-panel design |
+| **NavBar**             | Top bar with logo, page title editor, focus mode toggle, and flow selector |
 | **AppProvider**        | React context provider managing flows, rows, and drag state         |
 | **RowsPanel**          | Left sidebar displaying available row components                    |
 | **AppPage**            | Center panel showing phone preview with draggable rows              |
 | **ConfigurationPanel** | Right sidebar for editing selected row properties                   |
 | **useDraggable**       | Custom hook encapsulating drag-and-drop behavior                    |
-| **EVYRow**             | Abstract base class for all row components                          |
+| **defineRow**          | Factory function used to declare all row components                 |
 
 ### Row Categories
 
 - **View Rows**: Display-only components (TextRow, InfoRow, InputListRow)
-- **Edit Rows**: Form input components (InputRow, DropdownRow, CalendarRow, etc.)
+- **Edit Rows**: Form input components (InputRow, DropdownRow, CalendarRow, TextAreaRow, SearchRow, SelectPhotoRow, InlinePickerRow, TextSelectRow)
 - **Action Rows**: Interactive components (ButtonRow, TextActionRow)
-- **Container Rows**: Layout components that hold child rows (ListContainer, ColumnContainer, etc.)
+- **Container Rows**: Layout components that hold child rows (ListContainerRow, ColumnContainerRow, SheetContainerRow, SelectSegmentContainerRow)
 
 ## Getting Started
 
@@ -152,7 +167,7 @@ You can configure the port via the `WEB_PORT` environment variable (default: 300
 
 ## Testing
 
-This project includes comprehensive end-to-end tests using Playwright.
+This project uses Playwright for both component tests and end-to-end tests.
 
 ### Setup
 
@@ -162,11 +177,19 @@ bun run test:setup
 
 ### Running Tests
 
+Component and integration tests (`tests/`):
+
 ```bash
 bun run test
 ```
 
-To run the tests with UI or debug mode:
+End-to-end tests (`e2e/`):
+
+```bash
+bun run test:e2e
+```
+
+To run the component tests with UI or debug mode:
 
 ```bash
 bun run test --ui
@@ -175,4 +198,4 @@ bun run test --debug
 
 ## License
 
-The web app is licensed under Apache 2.0; see [LICENSE](LICENSE). The rest of the EVY repo is GPL-3.0-only.
+Licensed under GPL-3.0-only; see [LICENSE](LICENSE) and the repository root [LICENSE](../LICENSE).
