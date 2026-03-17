@@ -20,11 +20,8 @@ function AppContent() {
 		useContext(AppContext);
 	const { pages } = useActiveFlow();
 	const canvasRef = useRef<HTMLDivElement | null>(null);
-	const visiblePages = useMemo(
-		() =>
-			focusMode ? pages.filter((page) => page.id === activePageId) : pages,
-		[pages, focusMode, activePageId],
-	);
+	const previousFocusModeRef = useRef(focusMode);
+	const lastFocusedPageIdRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		return monitorForElements({
@@ -60,20 +57,89 @@ function AppContent() {
 		};
 	}, [dispatchRow]);
 
+	// This is a workaround to prevent the canvas from jumping to the top when the focus mode is toggled
+	useEffect(() => {
+		if (!activePageId) {
+			return;
+		}
+
+		const previousFocusMode = previousFocusModeRef.current;
+		previousFocusModeRef.current = focusMode;
+
+		const isExitingFocus = previousFocusMode && !focusMode;
+		const isReenteringSamePage =
+			!previousFocusMode &&
+			focusMode &&
+			activePageId === lastFocusedPageIdRef.current;
+
+		if (isExitingFocus) {
+			lastFocusedPageIdRef.current = activePageId;
+		}
+
+		if ((!isExitingFocus && !isReenteringSamePage) || !activePageId) {
+			return;
+		}
+
+		const canvasElement = canvasRef.current;
+		if (!canvasElement) {
+			return;
+		}
+
+		const activePageElement = canvasElement.querySelector<HTMLElement>(
+			`[data-page-id="${activePageId}"]`,
+		);
+		if (!activePageElement) {
+			return;
+		}
+
+		const animationDuration = 650;
+		const startTime = performance.now();
+		let frameId: number;
+
+		const keepCentered = () => {
+			const pageRect = activePageElement.getBoundingClientRect();
+			const canvasRect = canvasElement.getBoundingClientRect();
+			const offset =
+				pageRect.left +
+				pageRect.width / 2 -
+				(canvasRect.left + canvasRect.width / 2);
+			canvasElement.scrollLeft += offset;
+
+			if (performance.now() - startTime < animationDuration) {
+				frameId = requestAnimationFrame(keepCentered);
+			} else if (isReenteringSamePage) {
+				lastFocusedPageIdRef.current = null;
+			}
+		};
+
+		frameId = requestAnimationFrame(keepCentered);
+
+		return () => {
+			cancelAnimationFrame(frameId);
+		};
+	}, [focusMode, activePageId]);
+
 	return (
 		<>
 			<div className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white evy-shadow-subtle">
 				<RowsPanel />
 			</div>
 			<div
-				className="evy-flex-1 evy-overflow-auto evy-flex evy-flex-row evy-gap-4 evy-p-4"
+				className={`evy-flex-1 evy-overflow-auto evy-flex evy-flex-row evy-p-4 evy-canvas ${
+					focusMode ? "evy-canvas--focused" : ""
+				}`}
 				ref={canvasRef}
 			>
-				{visiblePages.map((page) => {
+				{pages.map((page) => {
+					const isHidden = focusMode && page.id !== activePageId;
+
 					return (
 						<div
 							key={page.id}
-							className="evy-flex-shrink-0 evy-mx-auto evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662"
+							data-page-id={page.id}
+							className={`evy-page-wrapper evy-flex-shrink-0 evy-mx-auto evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662 ${
+								isHidden ? "evy-page-wrapper--hidden" : ""
+							}`}
 						>
 							<AppPage pageId={page.id} />
 						</div>
