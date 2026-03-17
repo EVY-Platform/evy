@@ -4,6 +4,7 @@ import {
 	useReducer,
 	useRef,
 	useEffect,
+	useMemo,
 } from "react";
 import type { SDUI_Flow as ServerFlow } from "evy-types";
 
@@ -13,6 +14,8 @@ import { pageReducer, draggingReducer, dropIndicatorReducer } from "./reducers";
 import { decodeFlows, encodeFlow } from "../utils/decodeFlow";
 import { baseRows } from "../rows/baseRows";
 import { wsClient } from "../api/wsClient";
+import { useUrlSync } from "../hooks/useUrlSync";
+import { parseUrlPath, resolveUrlIds } from "../utils/urlUtils";
 
 export function AppProvider({
 	children,
@@ -31,11 +34,23 @@ export function AppProvider({
 
 	const flows: ServerFlow[] = initialFlows;
 
-	const [appState, dispatchRow] = useReducer(pageReducer, {
-		flows: decodeFlows(flows),
-		activeFlowId: flows[0]?.id,
-		focusMode: false,
-	});
+	const initialState = useMemo(() => {
+		const { flowId: urlFlowId, pageId: urlPageId } = parseUrlPath();
+		const { flowId: activeFlowId, pageId: activePageId } = resolveUrlIds(
+			urlFlowId,
+			urlPageId,
+			flows,
+		);
+
+		return {
+			flows: decodeFlows(flows),
+			activeFlowId,
+			activePageId,
+			focusMode: false,
+		};
+	}, [flows]);
+
+	const [appState, dispatchRow] = useReducer(pageReducer, initialState);
 
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
 	const [dropIndicator, dispatchDropIndicator] = useReducer(
@@ -64,6 +79,13 @@ export function AppProvider({
 
 		previousFlowsRef.current = appState.flows;
 	}, [appState.flows, appState.activeFlowId, syncWithApi]);
+
+	useUrlSync(
+		appState.activeFlowId,
+		appState.activePageId,
+		appState.flows,
+		dispatchRow,
+	);
 
 	return (
 		<AppContext.Provider
