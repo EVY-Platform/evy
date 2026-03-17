@@ -73,7 +73,7 @@ export function AppProvider({
 				activeFlowId: appState.activeFlowId,
 				activeRowId: appState.activeRowId,
 				activePageId: appState.activePageId,
-				focusMode: appState.focusMode ?? false,
+				focusMode: appState.focusMode,
 				dragging,
 				dropIndicator,
 				dispatchRow,
