@@ -1,5 +1,4 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import type { MouseEvent } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
@@ -14,7 +13,7 @@ function isRowArray(value: unknown): value is Row[] {
 }
 
 export function ConfigurationPanel() {
-	const { activeRowId, dispatchRow } = useContext(AppContext);
+	const { activeRowId, focusMode, dispatchRow } = useContext(AppContext);
 	const row = useRowById(activeRowId);
 	const [configStack, setConfigStack] = useState<string[]>([]);
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
@@ -33,24 +32,26 @@ export function ConfigurationPanel() {
 	}, []);
 
 	const handleOpenChildConfiguration = useCallback(
-		(event: MouseEvent<HTMLButtonElement>, childRowId: string) => {
-			event.stopPropagation();
+		(childRowId: string) => {
 			openChildConfiguration(childRowId);
+			if (!focusMode) {
+				dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+			}
 		},
-		[openChildConfiguration],
+		[openChildConfiguration, focusMode, dispatchRow],
 	);
 
 	const goBackToParentConfiguration = useCallback(() => {
 		setConfigStack((currentStack) => currentStack.slice(0, -1));
 	}, []);
 
-	const handleGoBackToParentConfiguration = useCallback(
-		(event: MouseEvent<HTMLButtonElement>) => {
-			event.stopPropagation();
-			goBackToParentConfiguration();
-		},
-		[goBackToParentConfiguration],
-	);
+	const handleGoBackToParentConfiguration = useCallback(() => {
+		const willReturnToRoot = configStack.length <= 1;
+		goBackToParentConfiguration();
+		if (willReturnToRoot && focusMode) {
+			dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+		}
+	}, [configStack.length, goBackToParentConfiguration, focusMode, dispatchRow]);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {
@@ -124,9 +125,7 @@ export function ConfigurationPanel() {
 											type="button"
 											key={child.id}
 											className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
-											onClick={(event) =>
-												handleOpenChildConfiguration(event, child.id)
-											}
+											onClick={() => handleOpenChildConfiguration(child.id)}
 										>
 											<span>{child.config.type}</span>
 											<img
@@ -149,7 +148,7 @@ export function ConfigurationPanel() {
 							type="button"
 							key={uniqueId}
 							className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
-							onClick={(event) => handleOpenChildConfiguration(event, child.id)}
+							onClick={() => handleOpenChildConfiguration(child.id)}
 						>
 							<span>{child.config.type}</span>
 							<img
