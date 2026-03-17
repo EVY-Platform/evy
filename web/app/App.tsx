@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type {
@@ -16,8 +16,10 @@ import { useFlows } from "./hooks/useFlows";
 import { useActiveFlow } from "./hooks/useActiveFlow";
 
 function AppContent() {
-	const { dispatchRow, dispatchDragging } = useContext(AppContext);
+	const { dispatchRow, dispatchDragging, activePageId, focusMode } =
+		useContext(AppContext);
 	const { pages } = useActiveFlow();
+	const canvasRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
 		return monitorForElements({
@@ -34,17 +36,45 @@ function AppContent() {
 		});
 	}, [pages, dispatchRow, dispatchDragging]);
 
+	useEffect(() => {
+		const element = canvasRef.current;
+		if (!element) {
+			return;
+		}
+
+		const clearSelection = (event: MouseEvent) => {
+			if (event.target === event.currentTarget) {
+				dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
+			}
+		};
+
+		element.addEventListener("click", clearSelection);
+
+		return () => {
+			element.removeEventListener("click", clearSelection);
+		};
+	}, [dispatchRow]);
+
 	return (
 		<>
 			<div className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white evy-shadow-subtle">
 				<RowsPanel />
 			</div>
-			<div className="evy-flex-1 evy-overflow-auto evy-flex evy-flex-row evy-gap-4 evy-p-4">
+			<div
+				className={`evy-flex-1 evy-overflow-auto evy-flex evy-flex-row evy-p-4 evy-canvas ${
+					focusMode ? "evy-canvas--focused" : ""
+				}`}
+				ref={canvasRef}
+			>
 				{pages.map((page) => {
+					const isHidden = focusMode && page.id !== activePageId;
+
 					return (
 						<div
 							key={page.id}
-							className="evy-flex-shrink-0 evy-mx-auto evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662"
+							className={`evy-page-wrapper evy-flex-shrink-0 evy-mx-auto evy-bg-phone evy-bg-no-repeat evy-bg-contain evy-w-336 evy-h-662 ${
+								isHidden ? "evy-page-wrapper--hidden" : ""
+							}`}
 						>
 							<AppPage pageId={page.id} />
 						</div>
@@ -59,7 +89,7 @@ function AppContent() {
 }
 
 function NavBar() {
-	const { activePageId, activeFlowId, flows, dispatchRow } =
+	const { activePageId, activeFlowId, flows, dispatchRow, focusMode } =
 		useContext(AppContext);
 
 	const activePage = useMemo(
@@ -75,22 +105,34 @@ function NavBar() {
 			<a href="/">
 				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 			</a>
-			<div className="evy-flex-1 evy-flex evy-justify-center">
+			<div className="evy-flex-1 evy-flex evy-justify-center evy-items-center evy-gap-2">
 				{activePage && (
-					<input
-						type="text"
-						value={activePage.title}
-						onChange={(e) =>
-							dispatchRow({
-								type: "UPDATE_PAGE_TITLE",
-								pageId: activePage.id,
-								title: e.target.value,
-							})
-						}
-						placeholder="Page title"
-						className="evy-text-center evy-bg-transparent evy-border-none evy-focus-visible:outline-none evy-text-lg evy-font-semibold"
-						aria-label="Page title"
-					/>
+					<>
+						<input
+							type="text"
+							value={activePage.title}
+							onChange={(e) =>
+								dispatchRow({
+									type: "UPDATE_PAGE_TITLE",
+									pageId: activePage.id,
+									title: e.target.value,
+								})
+							}
+							placeholder="Page title"
+							className="evy-navbar-page-title evy-text-center evy-bg-transparent evy-border-none evy-focus-visible:outline-none evy-text-lg evy-font-semibold"
+							aria-label="Page title"
+						/>
+						<button
+							type="button"
+							onClick={() => dispatchRow({ type: "TOGGLE_FOCUS_MODE" })}
+							className={`evy-focus-button ${
+								focusMode ? "evy-focus-button--active" : ""
+							}`}
+							aria-pressed={focusMode}
+						>
+							Focus
+						</button>
+					</>
 				)}
 			</div>
 			<FlowSelector />

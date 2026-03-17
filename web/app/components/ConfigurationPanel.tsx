@@ -12,28 +12,54 @@ function isRowArray(value: unknown): value is Row[] {
 	return Array.isArray(value) && value.every(isRow);
 }
 
+function ChildRowButton({
+	child,
+	onClick,
+}: {
+	child: Row;
+	onClick: () => void;
+}) {
+	return (
+		<button
+			type="button"
+			className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
+			onClick={onClick}
+		>
+			<span>{child.config.type}</span>
+			<img className="evy-h-4 evy-w-4" src="/chevron_right.svg" alt="" />
+		</button>
+	);
+}
+
 export function ConfigurationPanel() {
-	const { activeRowId, dispatchRow } = useContext(AppContext);
+	const { activeRowId, focusMode, dispatchRow } = useContext(AppContext);
 	const row = useRowById(activeRowId);
 	const [configStack, setConfigStack] = useState<string[]>([]);
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
 	const currentConfigRow = useRowById(currentConfigRowId);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: reset stack when selected row changes
 	useEffect(() => {
-		if (!activeRowId) {
-			setConfigStack([]);
-			return;
-		}
 		setConfigStack([]);
 	}, [activeRowId]);
 
-	const openChildConfiguration = useCallback((childRowId: string) => {
-		setConfigStack((currentStack) => [...currentStack, childRowId]);
-	}, []);
+	const openChildConfiguration = useCallback(
+		(childRowId: string) => {
+			setConfigStack((currentStack) => [...currentStack, childRowId]);
+			if (!focusMode) {
+				dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+			}
+		},
+		[focusMode, dispatchRow],
+	);
 
 	const goBackToParentConfiguration = useCallback(() => {
+		const willReturnToRoot = configStack.length <= 1;
 		setConfigStack((currentStack) => currentStack.slice(0, -1));
-	}, []);
+		if (willReturnToRoot && focusMode) {
+			dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+		}
+	}, [configStack.length, focusMode, dispatchRow]);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {
@@ -101,23 +127,13 @@ export function ConfigurationPanel() {
 								Children
 							</div>
 							<div className="evy-flex evy-flex-col evy-gap-4">
-								{children.map((child) => {
-									return (
-										<button
-											type="button"
-											key={child.id}
-											className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
-											onClick={() => openChildConfiguration(child.id)}
-										>
-											<span>{child.config.type}</span>
-											<img
-												className="evy-h-4 evy-w-4"
-												src="/chevron_right.svg"
-												alt=""
-											/>
-										</button>
-									);
-								})}
+								{children.map((child) => (
+									<ChildRowButton
+										key={child.id}
+										child={child}
+										onClick={() => openChildConfiguration(child.id)}
+									/>
+								))}
 							</div>
 						</div>
 					);
@@ -126,19 +142,11 @@ export function ConfigurationPanel() {
 					if (!isRow(value)) return null;
 					const child = value;
 					return (
-						<button
-							type="button"
+						<ChildRowButton
 							key={uniqueId}
-							className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
+							child={child}
 							onClick={() => openChildConfiguration(child.id)}
-						>
-							<span>{child.config.type}</span>
-							<img
-								className="evy-h-4 evy-w-4"
-								src="/chevron_right.svg"
-								alt=""
-							/>
-						</button>
+						/>
 					);
 				}
 				return (
