@@ -258,6 +258,27 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				activeRowId: undefined,
 			};
 		}
+		case "CLEAR_ACTIVE_SELECTION": {
+			return {
+				...state,
+				activePageId: undefined,
+				activeRowId: undefined,
+				focusMode: false,
+			};
+		}
+		case "TOGGLE_FOCUS_MODE": {
+			const nextFocusMode = !state.focusMode;
+			const nextActivePageId =
+				nextFocusMode && !state.activePageId
+					? flow.pages[0]?.id
+					: state.activePageId;
+
+			return {
+				...state,
+				focusMode: nextFocusMode,
+				activePageId: nextActivePageId,
+			};
+		}
 		case "UPDATE_PAGE_TITLE": {
 			const newPages = flow.pages.map((page) =>
 				page.id === action.pageId ? { ...page, title: action.title } : page,

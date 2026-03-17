@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
@@ -31,9 +32,25 @@ export function ConfigurationPanel() {
 		setConfigStack((currentStack) => [...currentStack, childRowId]);
 	}, []);
 
+	const handleOpenChildConfiguration = useCallback(
+		(event: MouseEvent<HTMLButtonElement>, childRowId: string) => {
+			event.stopPropagation();
+			openChildConfiguration(childRowId);
+		},
+		[openChildConfiguration],
+	);
+
 	const goBackToParentConfiguration = useCallback(() => {
 		setConfigStack((currentStack) => currentStack.slice(0, -1));
 	}, []);
+
+	const handleGoBackToParentConfiguration = useCallback(
+		(event: MouseEvent<HTMLButtonElement>) => {
+			event.stopPropagation();
+			goBackToParentConfiguration();
+		},
+		[goBackToParentConfiguration],
+	);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {
@@ -107,7 +124,9 @@ export function ConfigurationPanel() {
 											type="button"
 											key={child.id}
 											className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
-											onClick={() => openChildConfiguration(child.id)}
+											onClick={(event) =>
+												handleOpenChildConfiguration(event, child.id)
+											}
 										>
 											<span>{child.config.type}</span>
 											<img
@@ -130,7 +149,7 @@ export function ConfigurationPanel() {
 							type="button"
 							key={uniqueId}
 							className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
-							onClick={() => openChildConfiguration(child.id)}
+							onClick={(event) => handleOpenChildConfiguration(event, child.id)}
 						>
 							<span>{child.config.type}</span>
 							<img
@@ -158,7 +177,7 @@ export function ConfigurationPanel() {
 				);
 			});
 		},
-		[openChildConfiguration, updateRowContent],
+		[handleOpenChildConfiguration, updateRowContent],
 	);
 
 	const configurationElements = currentConfigRow
@@ -178,7 +197,7 @@ export function ConfigurationPanel() {
 						<button
 							type="button"
 							className="evy-flex evy-items-center evy-w-full evy-p-0 evy-bg-transparent evy-border-none evy-text-left evy-cursor-pointer"
-							onClick={goBackToParentConfiguration}
+							onClick={handleGoBackToParentConfiguration}
 							aria-label={`Back to parent configuration from ${currentConfigRow.config.type}`}
 						>
 							<img className="evy-h-4 evy-w-4" src="/chevron_left.svg" alt="" />

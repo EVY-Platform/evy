@@ -16,6 +16,7 @@ export const AppContext = createContext<{
 	activeFlowId?: string;
 	activeRowId?: string;
 	activePageId?: string;
+	focusMode: boolean;
 	dragging: DraggingState;
 	dropIndicator: DropIndicatorState;
 	dispatchRow: Dispatch<RowAction>;
@@ -24,6 +25,7 @@ export const AppContext = createContext<{
 }>({
 	rows: [],
 	flows: [],
+	focusMode: false,
 	dragging: false,
 	dropIndicator: null,
 	dispatchRow: () => {},

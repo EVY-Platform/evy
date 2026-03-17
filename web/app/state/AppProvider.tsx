@@ -34,6 +34,7 @@ export function AppProvider({
 	const [appState, dispatchRow] = useReducer(pageReducer, {
 		flows: decodeFlows(flows),
 		activeFlowId: flows[0]?.id,
+		focusMode: false,
 	});
 
 	const [dragging, dispatchDragging] = useReducer(draggingReducer, false);
@@ -72,6 +73,7 @@ export function AppProvider({
 				activeFlowId: appState.activeFlowId,
 				activeRowId: appState.activeRowId,
 				activePageId: appState.activePageId,
+				focusMode: appState.focusMode ?? false,
 				dragging,
 				dropIndicator,
 				dispatchRow,
