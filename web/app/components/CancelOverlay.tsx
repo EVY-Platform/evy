@@ -34,8 +34,9 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 	return (
 		<Fragment>
 			<div
-				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full evy-opacity-60"
+				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full"
 				style={{
+					opacity: 0.6,
 					backgroundColor:
 						state.type === idle.type
 							? "var(--color-evy-gray-light)"
@@ -44,11 +45,12 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 			/>
 			<button
 				type="button"
-				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full evy-justify-center evy-pt-32 evy-border-none evy-bg-transparent evy-cursor-pointer"
+				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full evy-justify-center evy-border-none evy-bg-transparent evy-cursor-pointer"
+				style={{ paddingTop: "var(--spacing-32)" }}
 				ref={ref}
 				onClick={dismiss}
 			>
-				<img className="evy-h-48" src="/bin.svg" alt="Delete" />
+				<img style={{ height: "var(--size-48)" }} src="/bin.svg" alt="Delete" />
 			</button>
 		</Fragment>
 	);

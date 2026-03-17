@@ -20,7 +20,10 @@ export default defineRow("SelectPhotoRow", {
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
-			<div className="evy-rounded-md evy-px-8 evy-py-8 evy-border evy-text-sm">
+			<div
+				className="evy-rounded-md evy-border evy-text-sm"
+				style={{ padding: "var(--spacing-8)" }}
+			>
 				<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
 					<EVYText
 						text={

@@ -77,9 +77,6 @@ body {
 .evy-flex-col {
 	flex-direction: column;
 }
-.evy-flex-row {
-	flex-direction: row;
-}
 .evy-flex-1 {
 	flex: 1 1 0%;
 }
@@ -100,9 +97,6 @@ body {
 }
 .evy-overflow-scroll {
 	overflow: scroll;
-}
-.evy-overflow-auto {
-	overflow: auto;
 }
 .evy-flex-shrink-0 {
 	flex-shrink: 0;
@@ -135,43 +129,16 @@ body {
 .evy-pl-4 {
 	padding-left: var(--spacing-4);
 }
-.evy-pl-8 {
-	padding-left: var(--spacing-8);
-}
-.evy-pr-8 {
-	padding-right: var(--spacing-8);
-}
-.evy-p-30px {
-	padding: var(--spacing-30px);
-}
-.evy-px-2 {
-	padding-left: var(--spacing-2);
-	padding-right: var(--spacing-2);
-}
 .evy-px-4 {
 	padding-left: var(--spacing-4);
 	padding-right: var(--spacing-4);
-}
-.evy-px-8 {
-	padding-left: var(--spacing-8);
-	padding-right: var(--spacing-8);
 }
 .evy-py-2 {
 	padding-top: var(--spacing-2);
 	padding-bottom: var(--spacing-2);
 }
-.evy-py-8 {
-	padding-top: var(--spacing-8);
-	padding-bottom: var(--spacing-8);
-}
 .evy-pt-4 {
 	padding-top: var(--spacing-4);
-}
-.evy-pt-32 {
-	padding-top: var(--spacing-32);
-}
-.evy-ps-2 {
-	padding-inline-start: var(--spacing-2);
 }
 
 /* Margin utilities */
@@ -195,29 +162,16 @@ body {
 }
 
 /* Width utilities */
-.evy-w-336 {
-	width: var(--size-336);
-}
-.evy-max-w-100 {
-	max-width: 100%;
-}
 .evy-w-full {
 	width: 100%;
 }
 .evy-w-300 {
 	width: 300px;
 }
-.evy-mx-auto {
-	margin-left: auto;
-	margin-right: auto;
-}
 
 /* Height utilities */
 .evy-h-4 {
 	height: var(--size-4);
-}
-.evy-h-48 {
-	height: var(--size-48);
 }
 .evy-h-full {
 	height: 100%;
@@ -225,17 +179,11 @@ body {
 .evy-h-screen {
 	height: 100vh;
 }
-.evy-h-662 {
-	height: var(--size-662);
-}
 .evy-min-h-full {
 	min-height: 100%;
 }
 
 /* Background utilities */
-.evy-bg-gray {
-	background-color: var(--color-evy-gray);
-}
 .evy-bg-gray-light {
 	background-color: var(--color-evy-gray-light);
 }
@@ -283,9 +231,6 @@ body {
 .evy-text-gray {
 	color: var(--color-evy-gray);
 }
-.evy-text-red {
-	color: var(--color-evy-red);
-}
 .evy-font-medium {
 	font-weight: var(--font-medium);
 }
@@ -305,23 +250,9 @@ body {
 	border-right-width: 1px;
 	border-right-style: solid;
 }
-.evy-border-r-0 {
-	border-right-width: 0px;
-}
-.evy-border-l {
-	border-left-width: 1px;
-	border-left-style: solid;
-}
-.evy-border-l-0 {
-	border-left-width: 0px;
-}
 .evy-border-b {
 	border-bottom-width: 1px;
 	border-bottom-style: solid;
-}
-.evy-border-t {
-	border-top-width: 1px;
-	border-top-style: solid;
 }
 .evy-border-gray {
 	border-color: var(--color-gray-border);
@@ -337,46 +268,11 @@ body {
 .evy-rounded-md {
 	border-radius: var(--radius-md);
 }
-.evy-rounded-full {
-	border-radius: 999px;
-}
-.evy-rounded-24 {
-	border-top-left-radius: var(--radius-2-4);
-	border-top-right-radius: var(--radius-2-4);
-	border-bottom-left-radius: var(--radius-2-4);
-	border-bottom-right-radius: var(--radius-2-4);
-}
-.evy-rounded-bottom-24 {
-	border-bottom-left-radius: var(--radius-2-4);
-	border-bottom-right-radius: var(--radius-2-4);
-}
-.evy-rounded-left-md {
-	border-top-left-radius: var(--radius-md);
-	border-bottom-left-radius: var(--radius-md);
-}
-.evy-rounded-right-md {
-	border-top-right-radius: var(--radius-md);
-	border-bottom-right-radius: var(--radius-md);
-}
 
 /* Position utilities */
 .evy-inset-y-0 {
 	top: 0;
 	bottom: 0;
-}
-.evy-start-0 {
-	inset-inline-start: 0;
-}
-.evy-end-0 {
-	inset-inline-end: 0;
-}
-.evy-pe-2 {
-	padding-inline-end: var(--spacing-2);
-}
-
-/* Opacity utilities */
-.evy-opacity-60 {
-	opacity: var(--opacity-60);
 }
 
 /* Pointer events */
@@ -392,11 +288,6 @@ body {
 	outline: none;
 }
 
-/* Shadow utilities */
-.evy-shadow-subtle {
-	box-shadow: var(--shadow-subtle);
-}
-
 /* Hover utilities */
 .evy-hover\:bg-gray:hover {
 	background-color: var(--color-evy-gray);
@@ -406,11 +297,6 @@ body {
 }
 .evy-hover\:text-black:hover {
 	color: var(--color-black);
-}
-
-/* Resize utilities */
-.evy-resize-none {
-	resize: none;
 }
 
 /* Form element styling */
@@ -463,100 +349,6 @@ label {
 	color: var(--color-black);
 	margin-bottom: var(--spacing-2);
 	display: block;
-}
-
-.evy-inline-icon {
-	display: inline;
-	height: 1em;
-	width: 1em;
-	vertical-align: -0.125em;
-}
-
-.evy-page-title {
-	text-align: center;
-	font-weight: var(--font-semibold);
-	font-size: var(--text-xl);
-	padding: var(--spacing-2) var(--spacing-4);
-	width: 100%;
-	background: none;
-	border: none;
-}
-
-.evy-flow-selector {
-	padding-right: calc(var(--spacing-8) + var(--spacing-4));
-}
-
-.evy-navbar-page-title {
-	height: var(--size-navbar-control);
-}
-
-.evy-focus-button {
-	font-size: var(--text-sm);
-	font-weight: var(--font-medium);
-	height: var(--size-navbar-control);
-	padding: 0 var(--spacing-4);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-md);
-	background-color: var(--color-white);
-	cursor: pointer;
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	transition:
-		border-color var(--transition),
-		box-shadow var(--transition);
-}
-
-.evy-focus-button:hover {
-	border-color: var(--color-evy-gray);
-}
-
-.evy-focus-button--active {
-	border-color: var(--color-evy-gray-dark);
-	box-shadow: 0 0 8px 2px oklch(35.84% 0.0103 285.87 / 0.5);
-	animation: focus-glow 2s ease-in-out infinite;
-}
-
-@keyframes focus-glow {
-	0%,
-	100% {
-		box-shadow: 0 0 6px 1px oklch(35.84% 0.0103 285.87 / 0.35);
-	}
-
-	50% {
-		box-shadow: 0 0 14px 4px oklch(35.84% 0.0103 285.87 / 0.6);
-	}
-}
-
-.evy-canvas {
-	gap: var(--spacing-4);
-	transition: gap 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.evy-canvas--focused {
-	gap: 0;
-	transition: gap 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms;
-}
-
-.evy-page-wrapper {
-	overflow: hidden;
-	transition:
-		opacity 350ms cubic-bezier(0.4, 0, 0.2, 1) 300ms,
-		width 300ms cubic-bezier(0.4, 0, 0.2, 1),
-		margin 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.evy-page-wrapper--hidden {
-	opacity: 0;
-	width: 0;
-	margin-left: 0;
-	margin-right: 0;
-	pointer-events: none;
-	transition:
-		opacity 350ms cubic-bezier(0.4, 0, 0.2, 1),
-		width 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms,
-		margin 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms;
 }
 
 .evy-v-dropzone {
