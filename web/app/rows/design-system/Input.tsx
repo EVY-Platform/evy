@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { parseText } from "../../utils/evyInterpreter";
 import { border } from "./border";
 
 const offsetStyles: Record<string, CSSProperties> = {
@@ -21,8 +22,8 @@ export default function Input({
 			className={`evy-w-full evy-box-sizing-border evy-text-sm ${border} evy-focus-visible:outline-none`}
 			style={offsetStyles[offset]}
 			required
-			value={value}
-			placeholder={placeholder}
+			value={parseText(value)}
+			placeholder={parseText(placeholder)}
 			readOnly
 		/>
 	);

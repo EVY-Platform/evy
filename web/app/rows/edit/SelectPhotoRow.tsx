@@ -32,10 +32,26 @@ export default defineRow("SelectPhotoRow", {
 								: ""
 						}
 					/>
-					<p className="evy-text-sm">{row.config.view.content.content}</p>
+					<p className="evy-text-sm">
+						<EVYText
+							text={
+								typeof row.config.view.content.content === "string"
+									? row.config.view.content.content
+									: ""
+							}
+						/>
+					</p>
 				</div>
 			</div>
-			<p className="evy-text-sm">{row.config.view.content.subtitle}</p>
+			<p className="evy-text-sm">
+				<EVYText
+					text={
+						typeof row.config.view.content.subtitle === "string"
+							? row.config.view.content.subtitle
+							: ""
+					}
+				/>
+			</p>
 		</RowLayout>
 	),
 });
