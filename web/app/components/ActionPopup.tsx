@@ -296,10 +296,15 @@ function OperandEditor({
 }) {
 	const parsed = useMemo(() => parseOperand(value), [value]);
 
+	const booleanOptions: PopoverOption[] = [
+		{ value: "true", label: "true" },
+		{ value: "false", label: "false" },
+	];
+
 	const primaryOptions: PopoverOption[] = useMemo(() => {
 		const values: PopoverOption[] = [
-			{ value: "true", label: "true", separator: "Base" },
-			{ value: "false", label: "false" },
+			{ value: "__boolean__", label: "boolean", separator: "Base" },
+			{ value: "__number__", label: "number" },
 		];
 		const variables: PopoverOption[] = draftVariables.map((v, i) => ({
 			value: v,
@@ -323,16 +328,32 @@ function OperandEditor({
 		[draftVariables],
 	);
 
+	const isBooleanValue =
+		parsed.type === "value" &&
+		(parsed.value === "true" || parsed.value === "false");
+
+	const isNumericValue =
+		parsed.type === "value" &&
+		parsed.value !== "" &&
+		!isBooleanValue &&
+		Number.isFinite(Number(parsed.value));
+
 	const primaryValue = useMemo(() => {
 		if (parsed.type === "function") return `__fn__${parsed.name}`;
+		if (isBooleanValue) return "__boolean__";
+		if (isNumericValue) return "__number__";
 		return parsed.value;
-	}, [parsed]);
+	}, [parsed, isBooleanValue, isNumericValue]);
 
 	const handlePrimaryChange = useCallback(
 		(selected: string) => {
 			if (selected.startsWith("__fn__")) {
 				const fnName = selected.slice(6);
 				onChange(`${fnName}()`);
+			} else if (selected === "__boolean__") {
+				onChange("true");
+			} else if (selected === "__number__") {
+				onChange("0");
 			} else {
 				onChange(selected);
 			}
@@ -356,6 +377,24 @@ function OperandEditor({
 				value={primaryValue}
 				onChange={handlePrimaryChange}
 			/>
+			{isBooleanValue && (
+				<PopoverSelect
+					ariaLabel={`${ariaLabel}-boolean`}
+					options={booleanOptions}
+					value={parsed.value}
+					onChange={onChange}
+				/>
+			)}
+			{isNumericValue && (
+				<input
+					type="number"
+					step="any"
+					aria-label={`${ariaLabel}-number`}
+					value={parsed.value}
+					onChange={(e) => onChange(e.target.value)}
+					className="evy-w-full evy-box-sizing-border evy-text-sm evy-rounded-sm evy-p-2 evy-border evy-border-gray-light evy-focus-visible:outline-none"
+				/>
+			)}
 			{parsed.type === "function" && (
 				<PopoverSelect
 					ariaLabel={`${ariaLabel}-arg`}
