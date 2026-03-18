@@ -285,25 +285,7 @@ function OperandEditor({
 }) {
 	const parsed = useMemo(() => parseOperand(value), [value]);
 
-	const primaryOptions: PopoverOption[] = useMemo(() => {
-		const values: PopoverOption[] = [
-			{ value: "__boolean__", label: "boolean", separator: "Base" },
-			{ value: "__number__", label: "number" },
-		];
-		const variables: PopoverOption[] = draftVariables.map((v, i) => ({
-			value: v,
-			label: displayLabel(v),
-			...(i === 0 ? { separator: "Data" } : {}),
-		}));
-		const functions: PopoverOption[] = CONDITION_FUNCTIONS.map((fn, i) => ({
-			value: `__fn__${fn}`,
-			label: `${fn}(...)`,
-			...(i === 0 ? { separator: "Functions" } : {}),
-		}));
-		return [...values, ...variables, ...functions];
-	}, [draftVariables]);
-
-	const argOptions: PopoverOption[] = useMemo(
+	const variableOptions: PopoverOption[] = useMemo(
 		() =>
 			draftVariables.map((v) => ({
 				value: v,
@@ -311,6 +293,22 @@ function OperandEditor({
 			})),
 		[draftVariables],
 	);
+
+	const primaryOptions: PopoverOption[] = useMemo(() => {
+		const values: PopoverOption[] = [
+			{ value: "__boolean__", label: "boolean", separator: "Base" },
+			{ value: "__number__", label: "number" },
+		];
+		const variables: PopoverOption[] = variableOptions.map((opt, i) =>
+			i === 0 ? { ...opt, separator: "Data" } : opt,
+		);
+		const functions: PopoverOption[] = CONDITION_FUNCTIONS.map((fn, i) => ({
+			value: `__fn__${fn}`,
+			label: `${fn}(...)`,
+			...(i === 0 ? { separator: "Functions" } : {}),
+		}));
+		return [...values, ...variables, ...functions];
+	}, [variableOptions]);
 
 	const isBooleanValue =
 		parsed.type === "value" &&
@@ -382,7 +380,7 @@ function OperandEditor({
 			{parsed.type === "function" && (
 				<PopoverSelect
 					ariaLabel={`${ariaLabel}-arg`}
-					options={argOptions}
+					options={variableOptions}
 					value={parsed.arg}
 					onChange={handleArgChange}
 					placeholder="argument..."

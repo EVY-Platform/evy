@@ -1,6 +1,10 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { initTestFlows, initFullFlows } from "./utils";
 
+function getConfigPanel(page: Page): Locator {
+	return page.getByText("Configuration", { exact: true }).locator("..");
+}
+
 async function popoverSelect(
 	page: Page,
 	trigger: Locator,
@@ -54,9 +58,7 @@ test.describe("Row configuration", () => {
 		await expect(containerRow).toBeVisible();
 		await containerRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		await expect(page.getByLabel("Page title")).toHaveValue("Test Page");
 		await expect(
@@ -103,9 +105,7 @@ test.describe("Row configuration", () => {
 		await expect(infoRow).toBeVisible();
 		await infoRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
@@ -144,9 +144,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		await expect(configPanel.getByText("Actions")).toBeVisible();
 		await expect(configPanel.getByText("If true:")).toBeVisible();
@@ -197,9 +195,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		await expect(configPanel.getByText("Action 1")).toBeVisible();
 
@@ -260,9 +256,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		await configPanel.getByLabel("Edit action 1").click();
 
@@ -331,9 +325,7 @@ test.describe("Row configuration", () => {
 		await expect(infoRow).toBeVisible();
 		await infoRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		await expect(
 			configPanel.getByText("Actions", { exact: true }),
@@ -385,9 +377,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await configPanel.getByLabel("Edit action 1").click();
 
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });
@@ -445,9 +435,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await configPanel.getByLabel("Edit action 1").click();
 
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });
@@ -498,9 +486,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await configPanel.getByLabel("Edit action 1").click();
 
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });
@@ -557,9 +543,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await configPanel.getByLabel("Edit action 1").click();
 
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });
@@ -628,9 +612,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await configPanel.getByLabel("Edit action 1").click();
 
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });
@@ -680,9 +662,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await expect(configPanel.getByText("If true:")).toBeVisible();
 		await expect(configPanel.getByText("close")).toBeVisible();
 
@@ -728,9 +708,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		await expect(configPanel.getByText("Action 1")).toBeVisible();
 		await expect(configPanel.getByText("Action 2")).toBeVisible();
@@ -793,9 +771,7 @@ test.describe("Row configuration", () => {
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await configPanel.getByLabel("Edit action 1").click();
 
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });

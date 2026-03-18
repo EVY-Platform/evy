@@ -78,7 +78,7 @@ export function handleDrop(
 		};
 	} = {
 		destinationIndex: destinationPage.rows.length,
-		destinationPageId: destinationPageId,
+		destinationPageId,
 	};
 
 	// If the row was dropped on top of another row,

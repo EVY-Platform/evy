@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 type State = { type: "idle" } | { type: "hovered" };
@@ -16,19 +15,17 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 	useEffect(() => {
 		const element = ref.current;
 		invariant(element, "CancelOverlay useEffect: ref.current is not defined");
-		return combine(
-			dropTargetForElements({
-				element: element,
-				getData: () => ({ pageId: "rows" }),
-				canDrop: () => true,
-				onDragEnter: () => {
-					setState(hovered);
-				},
-				onDragLeave: () => {
-					setState(idle);
-				},
-			}),
-		);
+		return dropTargetForElements({
+			element,
+			getData: () => ({ pageId: "rows" }),
+			canDrop: () => true,
+			onDragEnter: () => {
+				setState(hovered);
+			},
+			onDragLeave: () => {
+				setState(idle);
+			},
+		});
 	}, []);
 
 	return (
