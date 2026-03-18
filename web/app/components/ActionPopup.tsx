@@ -16,20 +16,23 @@ const popupCss = `
 	background: var(--color-white);
 	border-radius: var(--radius-md);
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-	width: 500px;
+	width: 680px;
 	max-height: 80vh;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 }
 .evy-popup-header {
-	padding: var(--spacing-4);
+	padding: var(--spacing-4) var(--spacing-4);
 	border-bottom: 1px solid var(--color-gray-border);
 }
 .evy-popup-body {
 	padding: var(--spacing-4);
 	overflow-y: auto;
 	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
 }
 .evy-popup-footer {
 	padding: var(--spacing-3) var(--spacing-4);
@@ -39,12 +42,13 @@ const popupCss = `
 	gap: var(--spacing-2);
 }
 .evy-popup-btn {
-	font-size: var(--text-sm);
+	font-size: var(--text-md);
 	font-family: inherit;
-	padding: 6px 16px;
+	padding: 8px 20px;
 	border-radius: var(--radius-sm);
 	border: 1px solid var(--color-gray-border);
 	cursor: pointer;
+	transition: all var(--transition);
 }
 .evy-popup-btn-cancel {
 	background: var(--color-white);
@@ -61,8 +65,67 @@ const popupCss = `
 .evy-popup-btn-save:hover {
 	opacity: 0.85;
 }
+.evy-popup-section {
+	background: var(--color-evy-gray-light);
+	border: 1px solid var(--color-gray-border);
+	border-radius: var(--radius-md);
+	padding: var(--spacing-3);
+}
+.evy-popup-section-title {
+	font-size: var(--text-sm);
+	font-weight: var(--font-semibold);
+	color: var(--color-black);
+	margin-bottom: var(--spacing-2);
+	display: block;
+}
+.evy-popup-branches {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-3);
+}
+.evy-condition-row {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr auto;
+	gap: 6px;
+	align-items: start;
+}
+.evy-condition-or {
+	display: block;
+	text-align: center;
+	font-size: 0.625rem;
+	font-weight: var(--font-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--color-evy-gray);
+	padding: 2px 0;
+}
+.evy-condition-remove {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	opacity: 0.7;
+	transition: all var(--transition);
+	margin-top: 2px;
+	filter: brightness(0) saturate(100%) invert(23%) sepia(95%) saturate(5000%) hue-rotate(355deg) brightness(88%) contrast(95%);
+}
+.evy-condition-remove:hover {
+	opacity: 1;
+	background: var(--color-white);
+}
+.evy-condition-remove img {
+	width: 14px;
+	height: 14px;
+}
 `;
 
+import type { SDUI_Flow } from "../types/flow";
 import { AppContext } from "../state";
 import {
 	COMPARISON_OPERATORS,
@@ -145,30 +208,39 @@ export function ActionPopup({
 					</div>
 
 					<div className="evy-popup-body">
-						<ConditionEditor
-							conditions={conditions}
-							draftVariables={draftVariables}
-							onChange={setConditions}
-							actionIndex={actionIndex}
-						/>
+						<div className="evy-popup-section">
+							<span className="evy-popup-section-title">Conditions (OR)</span>
+							<ConditionEditor
+								conditions={conditions}
+								draftVariables={draftVariables}
+								onChange={setConditions}
+								actionIndex={actionIndex}
+							/>
+						</div>
 
-						<BranchEditor
-							label="If true"
-							branchId={`true-${actionIndex}`}
-							value={trueBranch}
-							draftVariables={draftVariables}
-							flows={flows}
-							onChange={setTrueBranch}
-						/>
+						<div className="evy-popup-branches">
+							<div className="evy-popup-section">
+								<span className="evy-popup-section-title">If true</span>
+								<BranchEditor
+									branchId={`true-${actionIndex}`}
+									value={trueBranch}
+									draftVariables={draftVariables}
+									flows={flows}
+									onChange={setTrueBranch}
+								/>
+							</div>
 
-						<BranchEditor
-							label="If false"
-							branchId={`false-${actionIndex}`}
-							value={falseBranch}
-							draftVariables={draftVariables}
-							flows={flows}
-							onChange={setFalseBranch}
-						/>
+							<div className="evy-popup-section">
+								<span className="evy-popup-section-title">If false</span>
+								<BranchEditor
+									branchId={`false-${actionIndex}`}
+									value={falseBranch}
+									draftVariables={draftVariables}
+									flows={flows}
+									onChange={setFalseBranch}
+								/>
+							</div>
+						</div>
 					</div>
 
 					<div className="evy-popup-footer">
@@ -303,9 +375,24 @@ function ConditionEditor({
 	onChange,
 	actionIndex,
 }: ConditionEditorProps) {
-	const addCondition = useCallback(() => {
-		onChange([...conditions, { left: "", operator: "==", right: "" }]);
-	}, [conditions, onChange]);
+	const [draft, setDraft] = useState<ConditionPart>({
+		left: "",
+		operator: "==",
+		right: "",
+	});
+
+	const handleDraftChange = useCallback(
+		(field: "left" | "operator" | "right", value: string) => {
+			const updated = { ...draft, [field]: value };
+			setDraft(updated);
+
+			if (updated.left && updated.operator && updated.right) {
+				onChange([...conditions, updated]);
+				setDraft({ left: "", operator: "==", right: "" });
+			}
+		},
+		[draft, conditions, onChange],
+	);
 
 	const handleRowChange = useCallback(
 		(rowIndex: number, field: "left" | "operator" | "right", value: string) => {
@@ -325,77 +412,77 @@ function ConditionEditor({
 		[conditions, onChange],
 	);
 
+	const rows = [...conditions, draft];
+
 	return (
-		<div className="evy-mb-2">
-			<span className="evy-text-sm evy-font-medium evy-block evy-mb-1">
-				Conditions (OR)
-			</span>
-			<div className="evy-flex evy-flex-col evy-gap-2">
-				{conditions.length === 0 && (
-					<span className="evy-text-sm evy-text-gray">No conditions</span>
-				)}
-				{conditions.map((row, rowIndex) => {
-					const conditionRowId = `condition-${actionIndex}-${rowIndex}`;
-					return (
-						<div
-							key={conditionRowId}
-							className="evy-flex evy-items-start evy-gap-1"
-						>
+		<div className="evy-flex evy-flex-col evy-gap-2">
+			{rows.map((row, rowIndex) => {
+				const isPlaceholderRow = rowIndex === conditions.length;
+				const conditionRowId = `condition-${actionIndex}-${rowIndex}`;
+				return (
+					<span key={conditionRowId}>
+						{rowIndex > 0 && <span className="evy-condition-or">OR</span>}
+						<div className="evy-condition-row">
 							<OperandEditor
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-left`}
 								value={row.left}
 								draftVariables={draftVariables}
-								onChange={(v) => handleRowChange(rowIndex, "left", v)}
+								onChange={(v) =>
+									isPlaceholderRow
+										? handleDraftChange("left", v)
+										: handleRowChange(rowIndex, "left", v)
+								}
 							/>
 
 							<PopoverSelect
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-op`}
 								options={OPERATOR_OPTIONS}
 								value={row.operator}
-								onChange={(v) => handleRowChange(rowIndex, "operator", v)}
+								onChange={(v) =>
+									isPlaceholderRow
+										? handleDraftChange("operator", v)
+										: handleRowChange(rowIndex, "operator", v)
+								}
 							/>
 
 							<OperandEditor
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-right`}
 								value={row.right}
 								draftVariables={draftVariables}
-								onChange={(v) => handleRowChange(rowIndex, "right", v)}
+								onChange={(v) =>
+									isPlaceholderRow
+										? handleDraftChange("right", v)
+										: handleRowChange(rowIndex, "right", v)
+								}
 							/>
 
-							<button
-								type="button"
-								className="evy-text-sm evy-bg-transparent evy-border-none evy-cursor-pointer evy-text-gray"
-								onClick={() => handleRemoveCondition(rowIndex)}
-								aria-label={`Remove condition ${rowIndex + 1}`}
-							>
-								x
-							</button>
+							{!isPlaceholderRow && (
+								<button
+									type="button"
+									className="evy-condition-remove"
+									onClick={() => handleRemoveCondition(rowIndex)}
+									aria-label={`Remove condition ${rowIndex + 1}`}
+								>
+									<img src="/bin.svg" alt="" />
+								</button>
+							)}
 						</div>
-					);
-				})}
-				<button
-					type="button"
-					className="evy-text-sm evy-bg-transparent evy-border-none evy-cursor-pointer evy-text-blue"
-					onClick={addCondition}
-				>
-					Add condition
-				</button>
-			</div>
+					</span>
+				);
+			})}
 		</div>
 	);
 }
 
 type BranchEditorProps = {
-	label: string;
 	branchId: string;
 	value: string;
 	draftVariables: string[];
-	flows: ReturnType<typeof useContext<typeof AppContext>>["flows"];
+	flows: SDUI_Flow[];
 	onChange: (value: string) => void;
 };
 
 function BranchEditor({
-	label,
 	branchId,
 	value,
 	draftVariables,
@@ -436,28 +523,23 @@ function BranchEditor({
 	);
 
 	return (
-		<div className="evy-mb-2">
-			<span className="evy-text-sm evy-font-medium evy-block evy-mb-1">
-				{label}
-			</span>
-			<div className="evy-flex evy-flex-col evy-gap-1">
-				<PopoverSelect
-					ariaLabel={`${branchId}-function`}
-					options={FUNCTION_OPTIONS}
-					value={selectedFunction}
-					onChange={handleFunctionChange}
-				/>
+		<div className="evy-flex evy-flex-col evy-gap-1">
+			<PopoverSelect
+				ariaLabel={`${branchId}-function`}
+				options={FUNCTION_OPTIONS}
+				value={selectedFunction}
+				onChange={handleFunctionChange}
+			/>
 
-				{argDropdowns.map((dropdown, argIndex) => (
-					<PopoverSelect
-						key={`${branchId}-arg-${argIndex}-${dropdown.options.length}`}
-						ariaLabel={`${branchId}-arg-${argIndex}`}
-						options={dropdown.options}
-						value={args[argIndex] ?? ""}
-						onChange={(v) => handleArgChange(argIndex, v)}
-					/>
-				))}
-			</div>
+			{argDropdowns.map((dropdown, argIndex) => (
+				<PopoverSelect
+					key={`${branchId}-arg-${argIndex}-${dropdown.options.length}`}
+					ariaLabel={`${branchId}-arg-${argIndex}`}
+					options={dropdown.options}
+					value={args[argIndex] ?? ""}
+					onChange={(v) => handleArgChange(argIndex, v)}
+				/>
+			))}
 		</div>
 	);
 }
@@ -470,7 +552,7 @@ function buildArgDropdowns(
 	functionName: ActionFunction | "",
 	currentArgs: string[],
 	draftVariables: string[],
-	flows: ReturnType<typeof useContext<typeof AppContext>>["flows"],
+	flows: SDUI_Flow[],
 ): DropdownConfig[] {
 	if (!functionName || functionName === "close") return [];
 

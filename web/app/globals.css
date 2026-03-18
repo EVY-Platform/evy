@@ -142,6 +142,9 @@ body {
 }
 
 /* Margin utilities */
+.evy-gap-1 {
+	gap: 0.25rem;
+}
 .evy-gap-2 {
 	gap: var(--spacing-2);
 }

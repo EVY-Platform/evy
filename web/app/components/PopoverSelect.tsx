@@ -89,6 +89,7 @@ const popoverCss = `
 export type PopoverOption = {
 	value: string;
 	label: string;
+	separator?: string;
 };
 
 type PopoverSelectProps = {
@@ -223,16 +224,22 @@ export function PopoverSelect({
 							aria-label={ariaLabel}
 						>
 							{options.map((opt) => (
-								<button
-									key={opt.value}
-									type="button"
-									role="option"
-									aria-selected={opt.value === value}
-									onClick={() => handleSelect(opt.value)}
-									className="evy-popover-option"
-								>
-									{opt.label}
-								</button>
+								<span key={opt.value}>
+									{opt.separator && (
+										<span className="evy-popover-separator">
+											{opt.separator}
+										</span>
+									)}
+									<button
+										type="button"
+										role="option"
+										aria-selected={opt.value === value}
+										onClick={() => handleSelect(opt.value)}
+										className="evy-popover-option"
+									>
+										{opt.label}
+									</button>
+								</span>
 							))}
 						</div>
 					</div>,

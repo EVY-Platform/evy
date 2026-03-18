@@ -266,8 +266,6 @@ test.describe("Row configuration", () => {
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });
 		await expect(popup).toBeVisible();
 
-		await popup.getByRole("button", { name: "Add condition" }).click();
-
 		const leftOperand = popup.getByLabel("condition-0-0-left");
 		const operator = popup.getByLabel("condition-0-0-op");
 		const rightOperand = popup.getByLabel("condition-0-0-right");
