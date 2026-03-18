@@ -252,7 +252,7 @@ export function App() {
 	if (!initialFlows) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-red-500 evy-text-lg">Failed to load flows</div>
+				<div className="evy-text-red evy-text-lg">Failed to load flows</div>
 			</div>
 		);
 	}

@@ -111,13 +111,13 @@ const popupCss = `
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	opacity: 0.7;
+	filter: brightness(0) saturate(100%) invert(23%) sepia(95%) saturate(5000%) hue-rotate(355deg) brightness(88%) contrast(95%);
 	transition: all var(--transition);
 	margin-top: 2px;
-	filter: brightness(0) saturate(100%) invert(23%) sepia(95%) saturate(5000%) hue-rotate(355deg) brightness(88%) contrast(95%);
 }
 .evy-condition-remove:hover {
 	opacity: 1;
-	background: var(--color-white);
+	filter: brightness(0) saturate(100%) invert(23%) sepia(95%) saturate(5000%) hue-rotate(355deg) brightness(88%) contrast(95%) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 .evy-condition-remove img {
 	width: 14px;

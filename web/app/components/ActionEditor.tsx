@@ -160,24 +160,14 @@ function ActionSummaryCard({
 				</span>
 				<button
 					type="button"
-					className="evy-bg-transparent evy-border-none evy-cursor-pointer"
-					style={{ padding: 0, lineHeight: 0 }}
+					className="evy-bin-button evy-bg-transparent evy-border-none evy-cursor-pointer"
 					onClick={(e) => {
 						e.stopPropagation();
 						onRemove();
 					}}
 					aria-label={`Remove action ${index + 1}`}
 				>
-					<img
-						src="/bin.svg"
-						alt=""
-						style={{
-							width: 14,
-							height: 14,
-							filter:
-								"brightness(0) saturate(100%) invert(23%) sepia(95%) saturate(5000%) hue-rotate(355deg) brightness(88%) contrast(95%)",
-						}}
-					/>
+					<img src="/bin.svg" alt="" />
 				</button>
 			</div>
 
