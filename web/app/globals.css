@@ -357,6 +357,12 @@ label {
 	display: block;
 }
 
+.evy-inline-icon {
+	height: 1em;
+	width: auto;
+	vertical-align: middle;
+}
+
 .evy-v-dropzone {
 	transition: height 0.2s ease-in-out;
 	background-color: var(--color-evy-blue);
