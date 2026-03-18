@@ -123,8 +123,12 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				page.rows.splice(action.destinationIndex, 0, rowDataAdd);
 			}
 
+			const updatedPages = flow.pages.map((p) =>
+				p.id === action.destinationPageId ? { ...p, rows: [...p.rows] } : p,
+			);
+
 			return updateState({
-				updatedPages: flow.pages,
+				updatedPages,
 				activeRowId: action.newRowId,
 			});
 		}
