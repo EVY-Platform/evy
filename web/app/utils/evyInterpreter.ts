@@ -3,14 +3,9 @@ import { callFunction } from "./evyFunctions";
 const FUNCTION_WITH_BRACES = /\{([a-zA-Z_]+)\(([^)]*)\)\}/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
 
-function resolveFunction(match: string): string | null {
-	const fnMatch = match.match(/^\{([a-zA-Z_]+)\(([^)]*)\)\}$/);
-	if (!fnMatch) return null;
-
-	const functionName = fnMatch[1];
+function resolveFunction(functionName: string): string | null {
 	const result = callFunction(functionName);
 	if (!result) return "";
-
 	return `${result.prefix ?? ""}${result.value}${result.suffix ?? ""}`;
 }
 
@@ -28,7 +23,7 @@ export function parseText(input: string): string {
 	while (safety++ < 50) {
 		const fnMatch = FUNCTION_WITH_BRACES.exec(text);
 		if (fnMatch) {
-			const resolved = resolveFunction(fnMatch[0]);
+			const resolved = resolveFunction(fnMatch[1]);
 			if (resolved !== null) {
 				text = text.replace(fnMatch[0], resolved);
 				continue;

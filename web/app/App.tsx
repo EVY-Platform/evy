@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type {
@@ -17,6 +17,24 @@ import { useFlows } from "./hooks/useFlows";
 import { useActiveFlow } from "./hooks/useActiveFlow";
 
 const focusButtonCss = `
+.evy-focus-button {
+	font-size: var(--text-sm);
+	font-weight: var(--font-medium);
+	height: var(--size-navbar-control);
+	padding: 0 var(--spacing-4);
+	border: 1px solid var(--color-gray-border);
+	border-radius: var(--radius-md);
+	background-color: var(--color-white);
+	cursor: pointer;
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: border-color var(--transition), box-shadow var(--transition);
+}
+.evy-focus-button:hover {
+	border-color: var(--color-evy-gray);
+}
 @keyframes focus-glow {
 	0%, 100% { box-shadow: 0 0 6px 1px oklch(35.84% 0.0103 285.87 / 0.35); }
 	50% { box-shadow: 0 0 14px 4px oklch(35.84% 0.0103 285.87 / 0.6); }
@@ -27,27 +45,6 @@ const focusButtonCss = `
 	animation: focus-glow 2s ease-in-out infinite;
 }
 `;
-
-const focusButtonStyle: CSSProperties = {
-	fontSize: "var(--text-sm)",
-	fontWeight: "var(--font-medium)",
-	height: "var(--size-navbar-control)",
-	padding: "0 var(--spacing-4)",
-	border: "1px solid var(--color-gray-border)",
-	borderRadius: "var(--radius-md)",
-	backgroundColor: "var(--color-white)",
-	cursor: "pointer",
-	position: "relative",
-	display: "inline-flex",
-	alignItems: "center",
-	justifyContent: "center",
-	transition: "border-color var(--transition), box-shadow var(--transition)",
-};
-
-const focusButtonHoverStyle: CSSProperties = {
-	...focusButtonStyle,
-	borderColor: "var(--color-evy-gray)",
-};
 
 const canvasBaseStyle: CSSProperties = {
 	flexDirection: "row",
@@ -181,7 +178,6 @@ function AppContent() {
 function NavBar() {
 	const { activePageId, activeFlowId, flows, dispatchRow, focusMode } =
 		useContext(AppContext);
-	const [focusBtnHovered, setFocusBtnHovered] = useState(false);
 
 	const activePage = useMemo(
 		() =>
@@ -218,10 +214,7 @@ function NavBar() {
 						<button
 							type="button"
 							onClick={() => dispatchRow({ type: "TOGGLE_FOCUS_MODE" })}
-							className={focusMode ? "evy-focus-button--active" : ""}
-							style={focusBtnHovered ? focusButtonHoverStyle : focusButtonStyle}
-							onMouseEnter={() => setFocusBtnHovered(true)}
-							onMouseLeave={() => setFocusBtnHovered(false)}
+							className={`evy-focus-button${focusMode ? " evy-focus-button--active" : ""}`}
 							aria-pressed={focusMode}
 						>
 							Focus
@@ -252,7 +245,7 @@ export function App() {
 	if (!initialFlows) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-red-500 evy-text-lg">Failed to load flows</div>
+				<div className="evy-text-red evy-text-lg">Failed to load flows</div>
 			</div>
 		);
 	}

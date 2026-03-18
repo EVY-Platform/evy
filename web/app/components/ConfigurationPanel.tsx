@@ -3,6 +3,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
 import { useRowById } from "../hooks/useRowById";
+import { ActionEditor } from "./ActionEditor";
 
 function isRow(value: unknown): value is Row {
 	return value !== null && typeof value === "object" && "config" in value;
@@ -32,7 +33,7 @@ function ChildRowButton({
 }
 
 export function ConfigurationPanel() {
-	const { activeRowId, focusMode, dispatchRow } = useContext(AppContext);
+	const { activeRowId, flows, focusMode, dispatchRow } = useContext(AppContext);
 	const row = useRowById(activeRowId);
 	const [configStack, setConfigStack] = useState<string[]>([]);
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
@@ -86,30 +87,6 @@ export function ConfigurationPanel() {
 		},
 		[currentConfigRow, dispatchRow],
 	);
-
-	const updateActionField = useCallback(
-		(
-			actionIndex: number,
-			field: "condition" | "false" | "true",
-			value: string,
-		) => {
-			if (!currentConfigRow) return;
-			const nextActions = currentConfigRow.config.actions.map(
-				(action, index) =>
-					index === actionIndex ? { ...action, [field]: value } : action,
-			);
-			updateRowActions(nextActions);
-		},
-		[currentConfigRow, updateRowActions],
-	);
-
-	const addAction = useCallback(() => {
-		if (!currentConfigRow) return;
-		updateRowActions([
-			...currentConfigRow.config.actions,
-			{ condition: "", false: "", true: "" },
-		]);
-	}, [currentConfigRow, updateRowActions]);
 
 	const renderConfiguration = useCallback(
 		(configRow: Row): React.ReactNode[] => {
@@ -172,7 +149,6 @@ export function ConfigurationPanel() {
 	const configurationElements = currentConfigRow
 		? renderConfiguration(currentConfigRow)
 		: [];
-	const rowActions = currentConfigRow?.config.actions ?? [];
 	const isDrilledIntoChild = configStack.length > 0;
 
 	return (
@@ -201,79 +177,11 @@ export function ConfigurationPanel() {
 					<>
 						{configurationElements}
 						<div className="evy-border-b evy-border-gray" />
-						<div>
-							<div className="evy-flex evy-items-center evy-justify-between evy-mb-4">
-								<p className="evy-text-lg evy-font-semibold">Actions</p>
-								<button
-									type="button"
-									className="evy-text-sm evy-bg-transparent evy-border-none evy-rounded-sm evy-text-black evy-cursor-pointer evy-hover:bg-gray-light"
-									onClick={addAction}
-								>
-									Add action
-								</button>
-							</div>
-							{rowActions.length > 0 ? (
-								<div className="evy-flex evy-flex-col evy-gap-4">
-									{rowActions.map((action, index) => {
-										const conditionId = `condition-${index}`;
-										const falseId = `false-${index}`;
-										const trueId = `true-${index}`;
-
-										return (
-											<div
-												key={conditionId}
-												className="evy-p-2 evy-bg-gray-light evy-border evy-border-gray"
-											>
-												<div className="evy-mb-2">
-													<label htmlFor={conditionId}>{conditionId}</label>
-													<input
-														id={conditionId}
-														type="text"
-														value={action.condition}
-														onChange={(e) =>
-															updateActionField(
-																index,
-																"condition",
-																e.target.value,
-															)
-														}
-														className="evy-w-full evy-focus-visible:outline-none"
-													/>
-												</div>
-												<div className="evy-mb-2">
-													<label htmlFor={falseId}>{falseId}</label>
-													<input
-														id={falseId}
-														type="text"
-														value={action.false}
-														onChange={(e) =>
-															updateActionField(index, "false", e.target.value)
-														}
-														className="evy-w-full evy-focus-visible:outline-none"
-													/>
-												</div>
-												<div className="evy-mb-2">
-													<label htmlFor={trueId}>{trueId}</label>
-													<input
-														id={trueId}
-														type="text"
-														value={action.true}
-														onChange={(e) =>
-															updateActionField(index, "true", e.target.value)
-														}
-														className="evy-w-full evy-focus-visible:outline-none"
-													/>
-												</div>
-											</div>
-										);
-									})}
-								</div>
-							) : (
-								<div className="evy-text-sm evy-text-gray">
-									Row has no actions
-								</div>
-							)}
-						</div>
+						<ActionEditor
+							actions={currentConfigRow?.config.actions ?? []}
+							flows={flows}
+							onUpdate={updateRowActions}
+						/>
 					</>
 				) : (
 					<div className="evy-text-sm evy-text-gray evy-text-center evy-mt-8">

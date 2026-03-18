@@ -160,6 +160,7 @@ struct EVYSelectItem: View {
                         try EVY.updateData(encoded, at: destination)
                     }
                 }
+                
                 onSelect?()
             } catch {
                 #if DEBUG

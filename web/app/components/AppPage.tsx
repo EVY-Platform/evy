@@ -89,10 +89,15 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		};
 	}, [pageId, selectPage, dispatchDropIndicator]);
 
+	const page = useMemo(
+		() =>
+			flows
+				.find((f) => f.id === activeFlowId)
+				?.pages.find((p) => p.id === pageId),
+		[flows, activeFlowId, pageId],
+	);
+
 	const rowElements = useMemo(() => {
-		const page = flows
-			.find((f) => f.id === activeFlowId)
-			?.pages.find((p) => p.id === pageId);
 		if (!page) return [];
 
 		const lastIndex = page.rows.length - 1;
@@ -108,11 +113,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				{row.row}
 			</DraggableRowContainer>
 		));
-	}, [flows, activeFlowId, pageId, selectRow]);
-
-	const page = flows
-		.find((f) => f.id === activeFlowId)
-		?.pages.find((p) => p.id === pageId);
+	}, [page, selectRow]);
 
 	const titleElement = page?.title ? (
 		<button

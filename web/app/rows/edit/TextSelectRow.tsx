@@ -18,7 +18,7 @@ export default defineRow("TextSelectRow", {
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
-			<div className="evy-flex evy-justify-between">
+			<div className="evy-flex evy-justify-between evy-gap-2">
 				<p className="evy-text-sm">
 					<EVYText text={row.config.view.content.text ?? ""} />
 				</p>
