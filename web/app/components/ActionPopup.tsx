@@ -105,23 +105,8 @@ const popupCss = `
 	justify-content: center;
 	width: 24px;
 	height: 24px;
-	padding: 0;
-	background: transparent;
-	border: none;
 	border-radius: var(--radius-sm);
-	cursor: pointer;
-	opacity: 0.7;
-	filter: brightness(0) saturate(100%) invert(23%) sepia(95%) saturate(5000%) hue-rotate(355deg) brightness(88%) contrast(95%);
-	transition: all var(--transition);
 	margin-top: 2px;
-}
-.evy-condition-remove:hover {
-	opacity: 1;
-	filter: brightness(0) saturate(100%) invert(23%) sepia(95%) saturate(5000%) hue-rotate(355deg) brightness(88%) contrast(95%) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
-}
-.evy-condition-remove img {
-	width: 14px;
-	height: 14px;
 }
 `;
 
@@ -133,7 +118,6 @@ import {
 	ACTION_FUNCTIONS,
 	FUNCTION_LABELS,
 	CONDITION_FUNCTIONS,
-	CONDITION_FUNCTION_LABELS,
 	displayLabel,
 	extractDraftVariables,
 	parseCondition,
@@ -276,6 +260,11 @@ const FUNCTION_OPTIONS: PopoverOption[] = ACTION_FUNCTIONS.map((fn) => ({
 	label: FUNCTION_LABELS[fn],
 }));
 
+const BOOLEAN_OPTIONS: PopoverOption[] = [
+	{ value: "true", label: "true" },
+	{ value: "false", label: "false" },
+];
+
 type ConditionEditorProps = {
 	conditions: ConditionPart[];
 	draftVariables: string[];
@@ -296,11 +285,6 @@ function OperandEditor({
 }) {
 	const parsed = useMemo(() => parseOperand(value), [value]);
 
-	const booleanOptions: PopoverOption[] = [
-		{ value: "true", label: "true" },
-		{ value: "false", label: "false" },
-	];
-
 	const primaryOptions: PopoverOption[] = useMemo(() => {
 		const values: PopoverOption[] = [
 			{ value: "__boolean__", label: "boolean", separator: "Base" },
@@ -313,7 +297,7 @@ function OperandEditor({
 		}));
 		const functions: PopoverOption[] = CONDITION_FUNCTIONS.map((fn, i) => ({
 			value: `__fn__${fn}`,
-			label: `${CONDITION_FUNCTION_LABELS[fn]}(...)`,
+			label: `${fn}(...)`,
 			...(i === 0 ? { separator: "Functions" } : {}),
 		}));
 		return [...values, ...variables, ...functions];
@@ -380,7 +364,7 @@ function OperandEditor({
 			{isBooleanValue && (
 				<PopoverSelect
 					ariaLabel={`${ariaLabel}-boolean`}
-					options={booleanOptions}
+					options={BOOLEAN_OPTIONS}
 					value={parsed.value}
 					onChange={onChange}
 				/>
@@ -498,7 +482,7 @@ function ConditionEditor({
 							{!isPlaceholderRow && (
 								<button
 									type="button"
-									className="evy-condition-remove"
+									className="evy-bin-button evy-condition-remove evy-bg-transparent evy-border-none evy-cursor-pointer"
 									onClick={() => handleRemoveCondition(rowIndex)}
 									aria-label={`Remove condition ${rowIndex + 1}`}
 								>
@@ -570,11 +554,11 @@ function BranchEditor({
 				onChange={handleFunctionChange}
 			/>
 
-			{argDropdowns.map((dropdown, argIndex) => (
+			{argDropdowns.map((options, argIndex) => (
 				<PopoverSelect
-					key={`${branchId}-arg-${argIndex}-${dropdown.options.length}`}
+					key={`${branchId}-arg-${argIndex}-${options.length}`}
 					ariaLabel={`${branchId}-arg-${argIndex}`}
-					options={dropdown.options}
+					options={options}
 					value={args[argIndex] ?? ""}
 					onChange={(v) => handleArgChange(argIndex, v)}
 				/>
@@ -583,42 +567,31 @@ function BranchEditor({
 	);
 }
 
-type DropdownConfig = {
-	options: PopoverOption[];
-};
-
 function buildArgDropdowns(
 	functionName: ActionFunction | "",
 	currentArgs: string[],
 	draftVariables: string[],
 	flows: SDUI_Flow[],
-): DropdownConfig[] {
+): PopoverOption[][] {
 	if (!functionName || functionName === "close") return [];
 
 	if (functionName === "navigate") {
-		const flowOptions = getFlowOptions(flows).map((f) => ({
-			value: f.id,
-			label: f.label,
-		}));
-		const dropdowns: DropdownConfig[] = [{ options: flowOptions }];
+		const dropdowns: PopoverOption[][] = [getFlowOptions(flows)];
 
 		const selectedFlowId = currentArgs[0];
 		if (selectedFlowId) {
-			const pageOptions = getPageOptions(flows, selectedFlowId).map((p) => ({
-				value: p.id,
-				label: p.label,
-			}));
-			dropdowns.push({ options: pageOptions });
+			dropdowns.push(getPageOptions(flows, selectedFlowId));
 		}
 		return dropdowns;
 	}
 
 	if (functionName === "create") {
-		const dataNames = getDataModelNames(flows).map((name) => ({
-			value: name,
-			label: displayLabel(name),
-		}));
-		return [{ options: dataNames }];
+		return [
+			getDataModelNames(flows).map((name) => ({
+				value: name,
+				label: displayLabel(name),
+			})),
+		];
 	}
 
 	if (functionName === "highlight_required") {
@@ -626,11 +599,11 @@ function buildArgDropdowns(
 			value: v,
 			label: displayLabel(v),
 		}));
-		const dropdowns: DropdownConfig[] = [{ options: varOptions }];
+		const dropdowns: PopoverOption[][] = [varOptions];
 
 		const filledCount = currentArgs.filter(Boolean).length;
 		if (filledCount >= dropdowns.length) {
-			dropdowns.push({ options: varOptions });
+			dropdowns.push(varOptions);
 		}
 		return dropdowns;
 	}

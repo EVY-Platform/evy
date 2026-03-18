@@ -165,11 +165,9 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 	}
 
 	const colonParts = trimmed.split(":");
-	if (colonParts.length >= 1) {
-		const functionName = colonParts[0];
-		if (isActionFunction(functionName)) {
-			return { functionName, args: colonParts.slice(1) };
-		}
+	const functionName = colonParts[0];
+	if (isActionFunction(functionName)) {
+		return { functionName, args: colonParts.slice(1) };
 	}
 
 	return null;
@@ -203,29 +201,24 @@ export function getDataModelNames(flows: SDUI_Flow[]): string[] {
 
 export function getFlowOptions(
 	flows: SDUI_Flow[],
-): { id: string; label: string }[] {
-	return flows.map((f) => ({ id: f.id, label: f.name }));
+): { value: string; label: string }[] {
+	return flows.map((f) => ({ value: f.id, label: f.name }));
 }
 
 export function getPageOptions(
 	flows: SDUI_Flow[],
 	flowId: string,
-): { id: string; label: string }[] {
+): { value: string; label: string }[] {
 	const flow = flows.find((f) => f.id === flowId);
 	if (!flow) return [];
 	return flow.pages.map((p) => ({
-		id: p.id,
+		value: p.id,
 		label: p.title || p.id,
 	}));
 }
 
 export const CONDITION_FUNCTIONS = ["count", "length"] as const;
 export type ConditionFunction = (typeof CONDITION_FUNCTIONS)[number];
-
-export const CONDITION_FUNCTION_LABELS: Record<ConditionFunction, string> = {
-	count: "count",
-	length: "length",
-};
 
 export type ParsedOperand =
 	| { type: "value"; value: string }
@@ -250,18 +243,10 @@ function isConditionFunction(name: string): name is ConditionFunction {
 	return CONDITION_FUNCTIONS.includes(name as ConditionFunction);
 }
 
-function formatOperandRaw(operand: string): string {
-	const parsed = parseOperand(operand);
-	if (parsed.type === "function") {
-		return `${parsed.name}(${parsed.arg})`;
-	}
-	return operand;
-}
-
 export function formatConditionDisplay(part: ConditionPart): string {
-	const left = formatOperandRaw(part.left);
+	const left = serializeOperand(parseOperand(part.left));
 	const op = OPERATOR_LABELS[part.operator];
-	const right = formatOperandRaw(part.right);
+	const right = serializeOperand(parseOperand(part.right));
 	return `${left} ${op} ${right}`;
 }
 

@@ -276,11 +276,24 @@ test.describe("Row configuration", () => {
 
 		await popoverSelect(page, leftOperand, "Name");
 		await popoverSelect(page, operator, "not equals");
-		await popoverSelect(page, rightOperand, "true");
+		await popoverSelect(page, rightOperand, "boolean");
 
-		await expect(leftOperand).toHaveAttribute("data-value", "name");
-		await expect(operator).toHaveAttribute("data-value", "!=");
-		await expect(rightOperand).toHaveAttribute("data-value", "true");
+		const committedLeft = popup.getByRole("combobox", {
+			name: "condition-0-0-left",
+			exact: true,
+		});
+		const committedOp = popup.getByRole("combobox", {
+			name: "condition-0-0-op",
+			exact: true,
+		});
+		const committedRight = popup.getByRole("combobox", {
+			name: "condition-0-0-right",
+			exact: true,
+		});
+
+		await expect(committedLeft).toHaveAttribute("data-value", "name");
+		await expect(committedOp).toHaveAttribute("data-value", "!=");
+		await expect(committedRight).toHaveAttribute("data-value", "__boolean__");
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
