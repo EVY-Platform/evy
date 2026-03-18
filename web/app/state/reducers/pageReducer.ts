@@ -9,6 +9,7 @@ import {
 	traverseToRowAndGetPath,
 	removeRowFromTree,
 	updateRowInTree,
+	getRowsRecursive,
 } from "../../utils/rowTree";
 
 export const pageReducer = (state: AppState, action: RowAction): AppState => {
@@ -242,8 +243,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		case "SET_ACTIVE_ROW": {
 			const page = flow.pages.find(
 				(page) =>
-					page.rows.some((row) => row.id === action.rowId) ||
-					page.footer?.id === action.rowId,
+					page.rows.some((row) =>
+						getRowsRecursive(row).some((r) => r.id === action.rowId),
+					) || page.footer?.id === action.rowId,
 			);
 			if (!page) return state;
 
@@ -268,6 +270,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				activePageId: undefined,
 				activeRowId: undefined,
 				focusMode: false,
+				secondarySheetRowId: undefined,
 			};
 		}
 		case "TOGGLE_FOCUS_MODE": {
@@ -281,6 +284,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				...state,
 				focusMode: nextFocusMode,
 				activePageId: nextActivePageId,
+				...(!nextFocusMode ? { secondarySheetRowId: undefined } : {}),
 			};
 		}
 		case "UPDATE_PAGE_TITLE": {
@@ -288,6 +292,18 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				page.id === action.pageId ? { ...page, title: action.title } : page,
 			);
 			return updateState({ updatedPages: newPages });
+		}
+		case "OPEN_SECONDARY_SHEET": {
+			return {
+				...state,
+				secondarySheetRowId: action.sheetRowId,
+			};
+		}
+		case "CLOSE_SECONDARY_SHEET": {
+			return {
+				...state,
+				secondarySheetRowId: undefined,
+			};
 		}
 		default:
 			return state;

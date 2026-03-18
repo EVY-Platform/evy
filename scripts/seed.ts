@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import pluralize from "pluralize";
 import { z } from "zod";
 import { db, schema } from "../api/src/db";
-import { validateFlowData } from "../api/src/validation";
+import { validateFlowData, formatZodErrors } from "../api/src/validation";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const EVY_FLOWS_PATH = join(SCRIPT_DIR, "..", "docs", "evy", "evy_sdui.json");
@@ -53,14 +53,8 @@ function validateSeedDataItem(
 ): SeedDataItem {
 	const result = SeedDataItemSchema.safeParse(item);
 	if (!result.success) {
-		const errorMessages = result.error.issues
-			.map((issue) => {
-				const path = issue.path.join(".");
-				return path ? `${path}: ${issue.message}` : issue.message;
-			})
-			.join("; ");
 		throw new Error(
-			`Seed data validation failed for resource "${resource}" at index ${index}: ${errorMessages}`,
+			`Seed data validation failed for resource "${resource}" at index ${index}: ${formatZodErrors(result.error.issues)}`,
 		);
 	}
 	return result.data;

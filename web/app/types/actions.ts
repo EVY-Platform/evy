@@ -59,7 +59,9 @@ export type RowAction =
 			type: "UPDATE_PAGE_TITLE";
 			pageId: string;
 			title: string;
-	  };
+	  }
+	| { type: "OPEN_SECONDARY_SHEET"; sheetRowId: string }
+	| { type: "CLOSE_SECONDARY_SHEET" };
 
 export type DraggingSource = "rows" | "page";
 
@@ -103,4 +105,5 @@ export type AppState = {
 	activeFlowId?: string;
 	activePageId?: string;
 	focusMode: boolean;
+	secondarySheetRowId?: string;
 };

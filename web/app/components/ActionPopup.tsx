@@ -118,7 +118,6 @@ import {
 	ACTION_FUNCTIONS,
 	FUNCTION_LABELS,
 	CONDITION_FUNCTIONS,
-	displayLabel,
 	extractDraftVariables,
 	parseCondition,
 	serializeCondition,
@@ -129,6 +128,7 @@ import {
 	getDataModelNames,
 	getFlowOptions,
 	getPageOptions,
+	toVariableOptions,
 	type ConditionPart,
 	type ActionFunction,
 } from "../utils/actionHelpers";
@@ -286,11 +286,7 @@ function OperandEditor({
 	const parsed = useMemo(() => parseOperand(value), [value]);
 
 	const variableOptions: PopoverOption[] = useMemo(
-		() =>
-			draftVariables.map((v) => ({
-				value: v,
-				label: displayLabel(v),
-			})),
+		() => toVariableOptions(draftVariables),
 		[draftVariables],
 	);
 
@@ -402,28 +398,25 @@ function ConditionEditor({
 		right: "",
 	});
 
-	const handleDraftChange = useCallback(
-		(field: "left" | "operator" | "right", value: string) => {
-			const updated = { ...draft, [field]: value };
-			setDraft(updated);
-
-			if (updated.left && updated.operator && updated.right) {
-				onChange([...conditions, updated]);
-				setDraft({ left: "", operator: "==", right: "" });
+	const handleFieldChange = useCallback(
+		(rowIndex: number, field: "left" | "operator" | "right", value: string) => {
+			const isPlaceholder = rowIndex === conditions.length;
+			if (isPlaceholder) {
+				const updated = { ...draft, [field]: value };
+				setDraft(updated);
+				if (updated.left && updated.operator && updated.right) {
+					onChange([...conditions, updated]);
+					setDraft({ left: "", operator: "==", right: "" });
+				}
+			} else {
+				onChange(
+					conditions.map((c, i) =>
+						i === rowIndex ? { ...c, [field]: value } : c,
+					),
+				);
 			}
 		},
 		[draft, conditions, onChange],
-	);
-
-	const handleRowChange = useCallback(
-		(rowIndex: number, field: "left" | "operator" | "right", value: string) => {
-			const updated = conditions.map((c, i) => {
-				if (i !== rowIndex) return c;
-				return { ...c, [field]: value };
-			});
-			onChange(updated);
-		},
-		[conditions, onChange],
 	);
 
 	const handleRemoveCondition = useCallback(
@@ -448,33 +441,21 @@ function ConditionEditor({
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-left`}
 								value={row.left}
 								draftVariables={draftVariables}
-								onChange={(v) =>
-									isPlaceholderRow
-										? handleDraftChange("left", v)
-										: handleRowChange(rowIndex, "left", v)
-								}
+								onChange={(v) => handleFieldChange(rowIndex, "left", v)}
 							/>
 
 							<PopoverSelect
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-op`}
 								options={OPERATOR_OPTIONS}
 								value={row.operator}
-								onChange={(v) =>
-									isPlaceholderRow
-										? handleDraftChange("operator", v)
-										: handleRowChange(rowIndex, "operator", v)
-								}
+								onChange={(v) => handleFieldChange(rowIndex, "operator", v)}
 							/>
 
 							<OperandEditor
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-right`}
 								value={row.right}
 								draftVariables={draftVariables}
-								onChange={(v) =>
-									isPlaceholderRow
-										? handleDraftChange("right", v)
-										: handleRowChange(rowIndex, "right", v)
-								}
+								onChange={(v) => handleFieldChange(rowIndex, "right", v)}
 							/>
 
 							{!isPlaceholderRow && (
@@ -584,19 +565,11 @@ function buildArgDropdowns(
 	}
 
 	if (functionName === "create") {
-		return [
-			getDataModelNames(flows).map((name) => ({
-				value: name,
-				label: displayLabel(name),
-			})),
-		];
+		return [toVariableOptions(getDataModelNames(flows))];
 	}
 
 	if (functionName === "highlight_required") {
-		const varOptions = draftVariables.map((v) => ({
-			value: v,
-			label: displayLabel(v),
-		}));
+		const varOptions = toVariableOptions(draftVariables);
 		const dropdowns: PopoverOption[][] = [varOptions];
 
 		const filledCount = currentArgs.filter(Boolean).length;

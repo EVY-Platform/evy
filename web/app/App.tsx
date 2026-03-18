@@ -8,6 +8,7 @@ import type {
 } from "@atlaskit/pragmatic-drag-and-drop/types";
 
 import AppPage from "./components/AppPage";
+import SecondarySheetPage from "./components/SecondarySheetPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { FlowSelector } from "./components/FlowSelector";
 import { RowsPanel } from "./components/RowsPanel";
@@ -15,6 +16,7 @@ import { AppContext, AppProvider } from "./state";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
 import { useActiveFlow } from "./hooks/useActiveFlow";
+import { findRowInPages } from "./utils/rowTree";
 
 const focusButtonCss = `
 .evy-focus-button {
@@ -63,6 +65,13 @@ const canvasFocusedStyle: CSSProperties = {
 	transition: "gap 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms",
 };
 
+const canvasFocusedWithSecondaryStyle: CSSProperties = {
+	...canvasBaseStyle,
+	gap: 0,
+	justifyContent: "center",
+	transition: "gap 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms",
+};
+
 const pageWrapperBaseStyle: CSSProperties = {
 	overflow: "hidden",
 	height: "var(--size-662)",
@@ -88,6 +97,35 @@ const pageWrapperHiddenStyle: CSSProperties = {
 		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1), width 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms, margin 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms",
 };
 
+const pageWrapperFocusedWithSecondaryStyle: CSSProperties = {
+	...pageWrapperBaseStyle,
+	width: "var(--size-336)",
+	marginLeft: 0,
+	marginRight: 0,
+	transition:
+		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1) 300ms, width 300ms cubic-bezier(0.4, 0, 0.2, 1), margin 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+};
+
+const secondaryPageWrapperStyle: CSSProperties = {
+	...pageWrapperBaseStyle,
+	width: "var(--size-336)",
+	marginLeft: "var(--spacing-4)",
+	opacity: 1,
+	transition:
+		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1) 100ms, width 300ms cubic-bezier(0.4, 0, 0.2, 1), margin 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+};
+
+const secondaryPageWrapperHiddenStyle: CSSProperties = {
+	...pageWrapperBaseStyle,
+	opacity: 0,
+	width: 0,
+	marginLeft: 0,
+	overflow: "hidden",
+	pointerEvents: "none",
+	transition:
+		"opacity 200ms cubic-bezier(0.4, 0, 0.2, 1), width 300ms cubic-bezier(0.4, 0, 0.2, 1) 200ms, margin 300ms cubic-bezier(0.4, 0, 0.2, 1) 200ms",
+};
+
 const panelShadowStyle: CSSProperties = {
 	boxShadow: "var(--shadow-subtle)",
 };
@@ -99,10 +137,22 @@ const rightPanelStyle: CSSProperties = {
 };
 
 function AppContent() {
-	const { dispatchRow, dispatchDragging, activePageId, focusMode } =
-		useContext(AppContext);
+	const {
+		dispatchRow,
+		dispatchDragging,
+		activePageId,
+		focusMode,
+		secondarySheetRowId,
+	} = useContext(AppContext);
 	const { pages } = useActiveFlow();
 	const canvasRef = useRef<HTMLDivElement | null>(null);
+
+	const secondarySheetRow = useMemo(() => {
+		if (!secondarySheetRowId || !focusMode) return undefined;
+		return findRowInPages(secondarySheetRowId, pages);
+	}, [secondarySheetRowId, focusMode, pages]);
+
+	const showSecondary = Boolean(secondarySheetRow);
 
 	useEffect(() => {
 		return monitorForElements({
@@ -127,7 +177,11 @@ function AppContent() {
 
 		const clearSelection = (event: MouseEvent) => {
 			if (event.target === event.currentTarget) {
-				dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
+				if (secondarySheetRowId) {
+					dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
+				} else if (!focusMode) {
+					dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
+				}
 			}
 		};
 
@@ -136,7 +190,7 @@ function AppContent() {
 		return () => {
 			element.removeEventListener("click", clearSelection);
 		};
-	}, [dispatchRow]);
+	}, [dispatchRow, secondarySheetRowId, focusMode]);
 
 	return (
 		<>
@@ -148,22 +202,51 @@ function AppContent() {
 			</div>
 			<div
 				className="evy-flex-1 evy-flex evy-p-4"
-				style={focusMode ? canvasFocusedStyle : canvasStyle}
+				style={
+					focusMode
+						? showSecondary
+							? canvasFocusedWithSecondaryStyle
+							: canvasFocusedStyle
+						: canvasStyle
+				}
 				ref={canvasRef}
 			>
 				{pages.map((page) => {
 					const isHidden = focusMode && page.id !== activePageId;
+					const isFocusedPage = focusMode && page.id === activePageId;
+
+					let wrapperStyle = pageWrapperStyle;
+					if (isHidden) {
+						wrapperStyle = pageWrapperHiddenStyle;
+					} else if (isFocusedPage && showSecondary) {
+						wrapperStyle = pageWrapperFocusedWithSecondaryStyle;
+					}
 
 					return (
 						<div
 							key={page.id}
 							className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-							style={isHidden ? pageWrapperHiddenStyle : pageWrapperStyle}
+							style={wrapperStyle}
 						>
 							<AppPage pageId={page.id} />
 						</div>
 					);
 				})}
+				{focusMode && (
+					<div
+						className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+						style={
+							showSecondary
+								? secondaryPageWrapperStyle
+								: secondaryPageWrapperHiddenStyle
+						}
+						data-testid="secondary-sheet-page"
+					>
+						{secondarySheetRow && secondarySheetRowId && (
+							<SecondarySheetPage sheetRowId={secondarySheetRowId} />
+						)}
+					</div>
+				)}
 			</div>
 			<div
 				className="evy-w-300 evy-flex-shrink-0 evy-border-gray evy-overflow-y-auto evy-bg-white"

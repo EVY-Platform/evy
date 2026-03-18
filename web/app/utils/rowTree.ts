@@ -1,5 +1,18 @@
 import type { Row, ContainerType } from "../types/row";
 
+export function findRowInPages(
+	rowId: string,
+	pages: { rows: Row[] }[],
+): Row | undefined {
+	for (const page of pages) {
+		for (const row of page.rows) {
+			const found = getRowsRecursive(row).find((r) => r.id === rowId);
+			if (found) return found;
+		}
+	}
+	return undefined;
+}
+
 export function getRowsRecursive(row: Row): Row[] {
 	return [
 		row,

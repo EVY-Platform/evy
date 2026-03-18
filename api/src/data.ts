@@ -60,12 +60,14 @@ function formatFlowRow(row: PersistedFlowRow): DATA_Flow {
 	};
 }
 
-function formatPersistedDataRow(row: PersistedDataRow): DATA_Data {
+function formatPersistedDataRow(
+	row: Omit<PersistedDataRow, "data"> & { data: unknown },
+): DATA_Data {
 	return {
 		id: row.id,
 		namespace: row.namespace,
 		resource: row.resource,
-		data: row.data,
+		data: row.data as DATA_Data["data"],
 		createdAt: row.createdAt.toISOString(),
 		updatedAt: row.updatedAt.toISOString(),
 	};
@@ -211,10 +213,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 			)
 			.returning();
 		if (result.length > 0) {
-			return formatPersistedDataRow({
-				...result[0],
-				data: result[0].data as DATA_Data["data"],
-			});
+			return formatPersistedDataRow(result[0]);
 		}
 	}
 
@@ -228,8 +227,5 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 			updatedAt: now,
 		})
 		.returning();
-	return formatPersistedDataRow({
-		...result[0],
-		data: result[0].data as DATA_Data["data"],
-	});
+	return formatPersistedDataRow(result[0]);
 }
