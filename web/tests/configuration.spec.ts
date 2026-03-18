@@ -1,5 +1,14 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { initTestFlows } from "./utils";
+
+async function popoverSelect(
+	page: Page,
+	trigger: Locator,
+	optionLabel: string,
+) {
+	await trigger.click();
+	await page.getByRole("option", { name: optionLabel, exact: true }).click();
+}
 
 test.describe("Row configuration", () => {
 	test("should drill into child row configuration from the configuration panel", async ({
@@ -87,34 +96,27 @@ test.describe("Row configuration", () => {
 			},
 		]);
 		await page.goto("/");
-		// Find and click on the Info row
 		const infoRow = page.getByText("Test Info Row", { exact: true }).first();
 		await expect(infoRow).toBeVisible();
 		await infoRow.click();
 
-		// Verify that the configuration panel shows configuration inputs
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		// Verify Info row configuration inputs (title and text)
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
 		).toBeVisible();
 		await expect(configPanel.getByLabel("text")).toBeVisible();
 
-		// Test updating the Info row's configuration
 		const textInput = configPanel.getByLabel("text");
 		await textInput.clear();
 		await textInput.fill("Updated info text");
 
-		// Verify the update is reflected
 		await expect(textInput).toHaveValue("Updated info text");
 	});
 
-	test("should display and edit action items in configuration panel", async ({
-		page,
-	}) => {
+	test("should display and edit action items via popup", async ({ page }) => {
 		await initTestFlows(page, [
 			{
 				id: "step_1",
@@ -144,19 +146,30 @@ test.describe("Row configuration", () => {
 			.locator("..");
 
 		await expect(configPanel.getByText("Actions")).toBeVisible();
-		await expect(configPanel.getByLabel("condition-0")).toHaveValue("");
-		await expect(configPanel.getByLabel("false-0")).toHaveValue("");
-		await expect(configPanel.getByLabel("true-0")).toHaveValue("close");
+		await expect(configPanel.getByText("If true:")).toBeVisible();
+		await expect(configPanel.getByText("Close")).toBeVisible();
 
-		await configPanel.getByLabel("true-0").fill("{create(item)}");
-		await expect(configPanel.getByLabel("true-0")).toHaveValue(
-			"{create(item)}",
-		);
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		const trueFunctionSelect = popup.getByLabel("true-0-function");
+		await expect(trueFunctionSelect).toHaveAttribute("data-value", "close");
+
+		const falseFunctionSelect = popup.getByLabel("false-0-function");
+		await expect(falseFunctionSelect).toHaveAttribute("data-value", "");
+
+		await popoverSelect(page, falseFunctionSelect, "Close");
+		await expect(falseFunctionSelect).toHaveAttribute("data-value", "close");
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await expect(configPanel.getByText("If false:")).toBeVisible();
 	});
 
-	test("should add another action item in configuration panel", async ({
-		page,
-	}) => {
+	test("should add another action item via popup", async ({ page }) => {
 		await initTestFlows(page, [
 			{
 				id: "step_1",
@@ -170,7 +183,7 @@ test.describe("Row configuration", () => {
 								label: "Nav Button",
 							},
 						},
-						actions: [{ condition: "", false: "", true: "{create(item)}" }],
+						actions: [{ condition: "", false: "", true: "close" }],
 					},
 				],
 			},
@@ -185,13 +198,96 @@ test.describe("Row configuration", () => {
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		await expect(configPanel.getByLabel("true-0")).toHaveValue(
-			"{create(item)}",
-		);
+		await expect(configPanel.getByText("Action 1")).toBeVisible();
+
 		await configPanel.getByRole("button", { name: "Add action" }).click();
-		await expect(configPanel.getByLabel("condition-1")).toHaveValue("");
-		await expect(configPanel.getByLabel("false-1")).toHaveValue("");
-		await expect(configPanel.getByLabel("true-1")).toHaveValue("");
+
+		const popup = page.getByRole("dialog", { name: "Edit action 2" });
+		await expect(popup).toBeVisible();
+
+		await expect(popup.getByLabel("true-1-function")).toHaveAttribute(
+			"data-value",
+			"",
+		);
+		await expect(popup.getByLabel("false-1-function")).toHaveAttribute(
+			"data-value",
+			"",
+		);
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await expect(configPanel.getByText("Action 2")).toBeVisible();
+	});
+
+	test("should edit conditions via popup", async ({ page }) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Input",
+						view: {
+							content: {
+								title: "Name",
+								value: "{name}",
+								placeholder: "Enter name",
+							},
+						},
+						destination: "{name}",
+						actions: [],
+					},
+					{
+						type: "Button",
+						view: {
+							content: {
+								title: "",
+								label: "Submit",
+							},
+						},
+						actions: [{ condition: "", false: "", true: "close" }],
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
+		const buttonRow = page.getByText("Submit", { exact: true }).first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = page
+			.getByText("Configuration", { exact: true })
+			.locator("..");
+
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		await popup.getByRole("button", { name: "Add condition" }).click();
+
+		const leftOperand = popup.getByLabel("condition-0-0-left");
+		const operator = popup.getByLabel("condition-0-0-op");
+		const rightOperand = popup.getByLabel("condition-0-0-right");
+
+		await expect(leftOperand).toHaveAttribute("data-value", "");
+		await expect(operator).toHaveAttribute("data-value", "==");
+		await expect(rightOperand).toHaveAttribute("data-value", "");
+
+		await popoverSelect(page, leftOperand, "Name");
+		await popoverSelect(page, operator, "not equals");
+		await popoverSelect(page, rightOperand, "true");
+
+		await expect(leftOperand).toHaveAttribute("data-value", "name");
+		await expect(operator).toHaveAttribute("data-value", "!=");
+		await expect(rightOperand).toHaveAttribute("data-value", "true");
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await expect(configPanel.getByText("Name not equals true")).toBeVisible();
 	});
 
 	test("should show empty actions state for rows without actions", async ({

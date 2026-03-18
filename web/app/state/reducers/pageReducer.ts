@@ -230,13 +230,10 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return updateState({ updatedPages: newPages });
 		}
 		case "SET_ACTIVE_FLOW": {
-			return {
-				...state,
+			return updateState({
 				activeFlowId: action.flowId,
 				activeRowId: undefined,
-				activePageId: undefined,
-				focusMode: false,
-			};
+			});
 		}
 		case "SET_ACTIVE_ROW": {
 			const page = flow.pages.find(

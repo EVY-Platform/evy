@@ -225,6 +225,9 @@ body {
 .evy-text-blue {
 	color: var(--color-evy-blue);
 }
+.evy-text-red {
+	color: var(--color-evy-red);
+}
 .evy-text-black {
 	color: var(--color-black);
 }

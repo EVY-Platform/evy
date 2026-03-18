@@ -24,7 +24,6 @@ struct EVYSelectItem: View {
     let selectionStyle: EVYRadioStyle
     let target: EVYSelectItemTarget
     let textStyle: EVYTextStyle
-    let onSelect: (() -> Void)?
     
     private var selected: EVYState<Bool>
     
@@ -33,8 +32,7 @@ struct EVYSelectItem: View {
          format: String,
          selectionStyle: EVYRadioStyle,
          target: EVYSelectItemTarget,
-         textStyle: EVYTextStyle = .body,
-         onSelect: (() -> Void)? = nil)
+         textStyle: EVYTextStyle = .body)
     {
         self.destination = destination
         self.value = value
@@ -42,7 +40,6 @@ struct EVYSelectItem: View {
         self.selectionStyle = selectionStyle
         self.target = target
         self.textStyle = textStyle
-        self.onSelect = onSelect
         
         selected = EVYState(watch: destination, setter: {
             do {
@@ -160,7 +157,7 @@ struct EVYSelectItem: View {
                         try EVY.updateData(encoded, at: destination)
                     }
                 }
-                onSelect?()
+                
             } catch {
                 #if DEBUG
                 print("[EVYSelectItem] Error updating selection: \(error)")
