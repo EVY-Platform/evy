@@ -64,21 +64,22 @@ const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
 	pages: z.array(PageSchema),
 });
 
-/**
- * Validates flow data and returns the validated data or throws an error
- * with a descriptive message about what failed validation
- */
+export function formatZodErrors(issues: z.core.$ZodIssue[]): string {
+	return issues
+		.map((issue) => {
+			const path = issue.path.join(".");
+			return path ? `${path}: ${issue.message}` : issue.message;
+		})
+		.join("; ");
+}
+
 export function validateFlowData(data: unknown): SDUI_Flow {
 	const result = FlowDataSchema.safeParse(data);
 
 	if (!result.success) {
-		const errorMessages = result.error.issues
-			.map((err) => {
-				const path = err.path.join(".");
-				return path ? `${path}: ${err.message}` : err.message;
-			})
-			.join("; ");
-		throw new Error(`Flow validation failed: ${errorMessages}`);
+		throw new Error(
+			`Flow validation failed: ${formatZodErrors(result.error.issues)}`,
+		);
 	}
 
 	return result.data;

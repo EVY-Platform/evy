@@ -128,17 +128,28 @@ function hasExternalRefs(obj: unknown): boolean {
  * strip `export` from interfaces that aren't the schema's primary type so they
  * stay module-local.
  */
-function unexportReferencedTypes(source: string, primaryTitle: string): string {
+function unexportReferencedTypes(
+	source: string,
+	keepExported: Set<string>,
+): string {
 	return source.replace(
 		/^export (interface|type) (\w+)/gm,
 		(match, keyword, name) =>
-			name === primaryTitle ? match : `${keyword} ${name}`,
+			keepExported.has(name) ? match : `${keyword} ${name}`,
 	);
 }
 
 async function generateTypeScript(
 	schemaFiles: LoadedSchemaFile[],
 ): Promise<void> {
+	const allSchemaTitles = new Set(
+		schemaFiles.map(
+			({ schemaPath, schema }) =>
+				(schema.title as string | undefined) ??
+				schemaPathToSwiftTypeName(schemaPath),
+		),
+	);
+
 	await Promise.all(
 		schemaFiles.map(async ({ schemaPath, schemaKey, schema }) => {
 			const outRel = schemaPathToTsName(schemaPath) + ".ts";
@@ -173,9 +184,19 @@ async function generateTypeScript(
 				style: { singleQuote: false },
 				cwd: join(schemaPath, ".."),
 			});
-			const output = hasExternalRefs(schema)
-				? unexportReferencedTypes(ts, title)
-				: ts;
+			let output = ts;
+			if (hasExternalRefs(schema)) {
+				const ownDefs = new Set(
+					Object.keys((schema.$defs as Record<string, unknown>) ?? {}),
+				);
+				ownDefs.add(title);
+				for (const defName of ownDefs) {
+					if (defName !== title && allSchemaTitles.has(defName)) {
+						ownDefs.delete(defName);
+					}
+				}
+				output = unexportReferencedTypes(ts, ownDefs);
+			}
 			await writeFile(outPath, output, "utf-8");
 
 			if (schemaKey === "sdui/evy") {

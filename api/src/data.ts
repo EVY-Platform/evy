@@ -211,10 +211,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 			)
 			.returning();
 		if (result.length > 0) {
-			return formatPersistedDataRow({
-				...result[0],
-				data: result[0].data as DATA_Data["data"],
-			});
+			return formatPersistedDataRow(result[0]);
 		}
 	}
 
@@ -228,8 +225,5 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 			updatedAt: now,
 		})
 		.returning();
-	return formatPersistedDataRow({
-		...result[0],
-		data: result[0].data as DATA_Data["data"],
-	});
+	return formatPersistedDataRow(result[0]);
 }

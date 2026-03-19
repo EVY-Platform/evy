@@ -45,6 +45,12 @@ export function displayLabel(variableName: string): string {
 	return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+export function toVariableOptions(
+	variables: string[],
+): { value: string; label: string }[] {
+	return variables.map((v) => ({ value: v, label: displayLabel(v) }));
+}
+
 function collectDestinations(row: Row, result: Set<string>): void {
 	const destination = row.config.destination;
 	if (destination) {

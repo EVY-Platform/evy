@@ -18,7 +18,9 @@ function encodeRow(row: Row): ServerRow {
 	const encodedContent: ServerRowContent = { title: content.title };
 
 	// Copy over all string/string[] properties
-	for (const key of Object.keys(content)) {
+	const contentRecord = content as unknown as Record<string, unknown>;
+	const encodedRecord = encodedContent as unknown as Record<string, unknown>;
+	for (const key of Object.keys(contentRecord)) {
 		if (key === "children") {
 			if (content.children) {
 				encodedContent.children = content.children.map((child: Row) =>
@@ -30,14 +32,14 @@ function encodeRow(row: Row): ServerRow {
 				encodedContent.child = encodeRow(content.child);
 			}
 		} else {
-			const value = content[key];
+			const value = contentRecord[key];
 			if (typeof value === "string") {
-				encodedContent[key] = value;
+				encodedRecord[key] = value;
 			} else if (
 				Array.isArray(value) &&
 				value.every((x): x is string => typeof x === "string")
 			) {
-				encodedContent[key] = value;
+				encodedRecord[key] = value;
 			}
 		}
 	}

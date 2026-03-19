@@ -30,30 +30,29 @@ export function defineRow(
 ): RowComponent {
 	const { config } = definition;
 
-	let RowComponentImpl: (props: { rowId: string }) => ReactNode;
+	let innerFn: (props: { rowId: string }) => ReactNode;
 
 	if ("Component" in definition && definition.Component) {
 		const Comp = definition.Component;
-		RowComponentImpl = function InnerWithComponent({
-			rowId,
-		}: {
-			rowId: string;
-		}) {
+		innerFn = function InnerWithComponent({ rowId }: { rowId: string }) {
 			return createElement(Comp, { rowId });
 		};
-	} else {
-		RowComponentImpl = function InnerWithRender({ rowId }: { rowId: string }) {
+	} else if ("render" in definition) {
+		const render = definition.render;
+		innerFn = function InnerWithRender({ rowId }: { rowId: string }) {
 			const row = useRowById(rowId);
 			if (!row) {
 				return <UnknownRowContent />;
 			}
-			return definition.render(row);
+			return render(row);
 		};
+	} else {
+		innerFn = () => <UnknownRowContent />;
 	}
 
-	RowComponentImpl.displayName = typeName;
+	const RowComponentImpl = innerFn as RowComponent;
 	RowComponentImpl.config = config;
 	Object.defineProperty(RowComponentImpl, "name", { value: typeName });
 
-	return RowComponentImpl as RowComponent;
+	return RowComponentImpl;
 }

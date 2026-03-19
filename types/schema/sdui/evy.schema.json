@@ -85,6 +85,18 @@
 			"required": ["title"],
 			"properties": {
 				"title": { "type": "string" },
+				"label": { "type": "string" },
+				"text": { "type": "string" },
+				"value": { "type": "string" },
+				"placeholder": { "type": "string" },
+				"format": { "type": "string" },
+				"action": { "type": "string" },
+				"primary": { "type": "string" },
+				"secondary": { "type": "string" },
+				"subtitle": { "type": "string" },
+				"icon": { "type": "string" },
+				"content": { "type": "string" },
+				"photos": { "type": "string" },
 				"children": {
 					"type": "array",
 					"items": { "$ref": "#/$defs/SDUI_Row" }

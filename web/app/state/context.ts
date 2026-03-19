@@ -17,6 +17,7 @@ export const AppContext = createContext<{
 	activeRowId?: string;
 	activePageId?: string;
 	focusMode: boolean;
+	secondarySheetRowId?: string;
 	dragging: DraggingState;
 	dropIndicator: DropIndicatorState;
 	dispatchRow: Dispatch<RowAction>;

@@ -178,18 +178,6 @@ function getPropSchema(
 	return typeof p === "object" && p !== null ? p : null;
 }
 
-function isRefToSduiFlow(prop: JsonSchemaProp): boolean {
-	const ref = prop.$ref;
-	return (
-		typeof ref === "string" &&
-		(ref.includes("SDUI_Flow") || ref.includes("evy.schema.json"))
-	);
-}
-
-function isRefToOs(ref: string | undefined): boolean {
-	return typeof ref === "string" && ref.includes("OS");
-}
-
 type ColumnSuffixes = { isPk: boolean; hasDefaultRandom: boolean };
 
 function buildStringColumn(
@@ -223,17 +211,25 @@ function buildBooleanColumn(dbCol: string, defaultVal: unknown): string {
 	return col;
 }
 
+function resolveJsonbTypeAnnotation(ref: string | undefined): string {
+	if (ref?.includes("SDUI_Flow") || ref?.includes("evy.schema.json")) {
+		return "SDUI_Flow";
+	}
+	if (ref?.includes("JSONValue") || ref?.includes("json.schema.json")) {
+		return 'DATA_Data["data"]';
+	}
+	return "unknown";
+}
+
 function buildObjectColumn(
 	dbCol: string,
 	prop: JsonSchemaProp,
 	{ isPk, hasDefaultRandom }: ColumnSuffixes,
 ): string {
-	let col: string;
-	if (isRefToSduiFlow(prop)) {
-		col = `jsonb("${dbCol}").$type<SDUI_Flow>().notNull()`;
-	} else {
-		col = `jsonb("${dbCol}").$type<Record<string, unknown>>().notNull()`;
-	}
+	const typeArg = prop.$ref
+		? resolveJsonbTypeAnnotation(prop.$ref)
+		: "Record<string, unknown>";
+	let col = `jsonb("${dbCol}").$type<${typeArg}>().notNull()`;
 	if (isPk) col += ".primaryKey()";
 	if (hasDefaultRandom) col += ".defaultRandom()";
 	return col;
@@ -244,16 +240,14 @@ function buildRefColumn(
 	ref: string,
 	{ isPk, hasDefaultRandom }: ColumnSuffixes,
 ): string {
-	if (isRefToOs(ref)) {
+	if (ref.includes("OS")) {
 		return `osEnum("${dbCol}").notNull()`;
 	}
-	if (ref.includes("SDUI_Flow") || ref.includes("evy.schema.json")) {
-		let col = `jsonb("${dbCol}").$type<SDUI_Flow>().notNull()`;
-		if (isPk) col += ".primaryKey()";
-		if (hasDefaultRandom) col += ".defaultRandom()";
-		return col;
-	}
-	return `jsonb("${dbCol}").$type<unknown>().notNull()`;
+	const typeArg = resolveJsonbTypeAnnotation(ref);
+	let col = `jsonb("${dbCol}").$type<${typeArg}>().notNull()`;
+	if (isPk) col += ".primaryKey()";
+	if (hasDefaultRandom) col += ".defaultRandom()";
+	return col;
 }
 
 function applyNullabilityFallback(
@@ -333,6 +327,7 @@ async function main(): Promise<void> {
 		'} from "drizzle-orm/pg-core";',
 		'import { relations } from "drizzle-orm";',
 		'import type { SDUI_Flow } from "evy-types/sdui/evy";',
+		'import type { DATA_Data } from "evy-types/data/data";',
 		"",
 	];
 

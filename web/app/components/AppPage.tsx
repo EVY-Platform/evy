@@ -1,26 +1,17 @@
 import type { CSSProperties } from "react";
-import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
-import invariant from "tiny-invariant";
-
-import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { useCallback, useContext, useMemo, useRef } from "react";
 
 import { AppContext } from "../state";
-import { DraggableRowContainer } from "./DraggableRowContainer";
+import { usePageDropTarget } from "../hooks/usePageDropTarget";
+import { useSelectRow } from "../hooks/useSelectRow";
+import { buildRowElements } from "./buildRowElements";
+import { baseTitleStyle, rounded24Style } from "./pageStyles";
 
 const pageTitleStyle: CSSProperties = {
-	textAlign: "center",
-	fontWeight: "var(--font-semibold)",
-	fontSize: "var(--text-xl)",
-	padding: "var(--spacing-2) var(--spacing-4)",
+	...baseTitleStyle,
 	width: "100%",
 	background: "none",
 	border: "none",
-};
-
-const rounded24Style: CSSProperties = {
-	borderRadius: "var(--radius-2-4)",
 };
 
 const roundedBottom24Style: CSSProperties = {
@@ -34,15 +25,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
-	const selectRow = useCallback(
-		(rowId: string) =>
-			dispatchRow({
-				type: "SET_ACTIVE_ROW",
-				pageId,
-				rowId,
-			}),
-		[pageId, dispatchRow],
-	);
+	const selectRow = useSelectRow(pageId, dispatchRow);
 
 	const selectPage = useCallback(
 		(e: MouseEvent) => {
@@ -53,41 +36,12 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow],
 	);
 
-	useEffect(() => {
-		invariant(
-			scrollableRef.current,
-			"AppPage useEffect: scrollableRef.current is not defined",
-		);
-		const element = scrollableRef.current;
-		element.addEventListener("click", selectPage);
-		const cleanup = combine(
-			dropTargetForElements({
-				element,
-				getData: () => ({ pageId }),
-				canDrop: () => true,
-				onDrop: () => {
-					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" });
-				},
-				onDragEnter: () =>
-					dispatchDropIndicator({
-						type: "SET_INDICATOR_PAGE",
-						pageId: pageId,
-					}),
-				onDragLeave: () =>
-					dispatchDropIndicator({
-						type: "UNSET_INDICATOR_PAGE",
-					}),
-			}),
-			autoScrollForElements({
-				element,
-				canScroll: () => true,
-			}),
-		);
-		return () => {
-			element.removeEventListener("click", selectPage);
-			cleanup();
-		};
-	}, [pageId, selectPage, dispatchDropIndicator]);
+	usePageDropTarget({
+		scrollableRef,
+		pageId,
+		dispatchDropIndicator,
+		onClickBackground: selectPage,
+	});
 
 	const page = useMemo(
 		() =>
@@ -99,20 +53,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 
 	const rowElements = useMemo(() => {
 		if (!page) return [];
-
-		const lastIndex = page.rows.length - 1;
-		return page.rows.map((row, index) => (
-			<DraggableRowContainer
-				key={row.id}
-				rowId={row.id}
-				selectRow={() => selectRow(row.id)}
-				showIndicators
-				previousRowId={index > 0 ? page.rows[index - 1].id : undefined}
-				nextRowId={index < lastIndex ? page.rows[index + 1].id : undefined}
-			>
-				{row.row}
-			</DraggableRowContainer>
-		));
+		return buildRowElements(page.rows, selectRow);
 	}, [page, selectRow]);
 
 	const titleElement = page?.title ? (

@@ -21,7 +21,7 @@ interface ServerRowInputContent {
 
 interface ServerRowInput {
 	id?: string;
-	type: string;
+	type: ServerRow["type"];
 	view: {
 		content: ServerRowInputContent;
 		data?: string;

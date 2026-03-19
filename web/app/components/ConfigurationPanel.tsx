@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
@@ -23,7 +23,7 @@ function ChildRowButton({
 	return (
 		<button
 			type="button"
-			className="evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
+			className="evy-w-full evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
 			onClick={onClick}
 		>
 			<span>{child.config.type}</span>
@@ -33,7 +33,8 @@ function ChildRowButton({
 }
 
 export function ConfigurationPanel() {
-	const { activeRowId, flows, focusMode, dispatchRow } = useContext(AppContext);
+	const { activeRowId, flows, focusMode, secondarySheetRowId, dispatchRow } =
+		useContext(AppContext);
 	const row = useRowById(activeRowId);
 	const [configStack, setConfigStack] = useState<string[]>([]);
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
@@ -44,23 +45,45 @@ export function ConfigurationPanel() {
 		setConfigStack([]);
 	}, [activeRowId]);
 
+	useEffect(() => {
+		if (!focusMode) {
+			setConfigStack([]);
+		}
+	}, [focusMode]);
+
+	const prevSecondarySheetRowId = useRef(secondarySheetRowId);
+	useEffect(() => {
+		if (prevSecondarySheetRowId.current && !secondarySheetRowId) {
+			setConfigStack([]);
+		}
+		prevSecondarySheetRowId.current = secondarySheetRowId;
+	}, [secondarySheetRowId]);
+
 	const openChildConfiguration = useCallback(
-		(childRowId: string) => {
+		(childRowId: string, parentRow: Row) => {
 			setConfigStack((currentStack) => [...currentStack, childRowId]);
-			if (!focusMode) {
-				dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+			if (
+				parentRow.config.type === "SheetContainer" &&
+				parentRow.config.view.content.children?.some((c) => c.id === childRowId)
+			) {
+				if (!focusMode) {
+					dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+				}
+				dispatchRow({
+					type: "OPEN_SECONDARY_SHEET",
+					sheetRowId: parentRow.id,
+				});
 			}
 		},
 		[focusMode, dispatchRow],
 	);
 
 	const goBackToParentConfiguration = useCallback(() => {
-		const willReturnToRoot = configStack.length <= 1;
 		setConfigStack((currentStack) => currentStack.slice(0, -1));
-		if (willReturnToRoot && focusMode) {
-			dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+		if (secondarySheetRowId) {
+			dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
 		}
-	}, [configStack.length, focusMode, dispatchRow]);
+	}, [secondarySheetRowId, dispatchRow]);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {
@@ -91,8 +114,14 @@ export function ConfigurationPanel() {
 	const renderConfiguration = useCallback(
 		(configRow: Row): React.ReactNode[] => {
 			const content = configRow.config.view.content;
+			const entries = Object.entries(content).sort(([a], [b]) => {
+				const isContainerKey = (k: string) => k === "child" || k === "children";
+				if (isContainerKey(a) && !isContainerKey(b)) return 1;
+				if (!isContainerKey(a) && isContainerKey(b)) return -1;
+				return 0;
+			});
 
-			return Object.entries(content).map(([key, value]) => {
+			return entries.map(([key, value]) => {
 				const uniqueId = `${configRow.id}-${key}`;
 
 				if (key === "children") {
@@ -108,7 +137,7 @@ export function ConfigurationPanel() {
 									<ChildRowButton
 										key={child.id}
 										child={child}
-										onClick={() => openChildConfiguration(child.id)}
+										onClick={() => openChildConfiguration(child.id, configRow)}
 									/>
 								))}
 							</div>
@@ -119,11 +148,15 @@ export function ConfigurationPanel() {
 					if (!isRow(value)) return null;
 					const child = value;
 					return (
-						<ChildRowButton
-							key={uniqueId}
-							child={child}
-							onClick={() => openChildConfiguration(child.id)}
-						/>
+						<div key={uniqueId}>
+							<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
+								Child
+							</div>
+							<ChildRowButton
+								child={child}
+								onClick={() => openChildConfiguration(child.id, configRow)}
+							/>
+						</div>
 					);
 				}
 				return (

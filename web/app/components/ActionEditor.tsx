@@ -85,8 +85,10 @@ export function ActionEditor({ actions, flows, onUpdate }: ActionEditorProps) {
 		setEditingIndex(null);
 	}, []);
 
-	const editingAction =
-		editingIndex !== null ? actions[editingIndex] : undefined;
+	const editing =
+		editingIndex !== null && actions[editingIndex]
+			? { action: actions[editingIndex], index: editingIndex }
+			: undefined;
 
 	return (
 		<div>
@@ -118,10 +120,10 @@ export function ActionEditor({ actions, flows, onUpdate }: ActionEditorProps) {
 				<div className="evy-text-sm evy-text-gray">Row has no actions</div>
 			)}
 
-			{editingAction && editingIndex !== null && (
+			{editing && (
 				<ActionPopup
-					action={editingAction}
-					actionIndex={editingIndex}
+					action={editing.action}
+					actionIndex={editing.index}
 					onSave={handlePopupSave}
 					onCancel={handlePopupCancel}
 				/>
