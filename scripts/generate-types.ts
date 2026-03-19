@@ -200,21 +200,17 @@ async function generateTypeScript(
 			await writeFile(outPath, output, "utf-8");
 
 			if (schemaKey === "sdui/evy") {
-				const flowTypeEnum = (schema.properties as Record<string, unknown>)
-					?.type as { enum?: string[] } | undefined;
-				const flowValues = flowTypeEnum?.enum ?? [];
 				const rowDef = (schema.$defs as Record<string, unknown>)?.[
 					"SDUI_Row"
 				] as Record<string, unknown> | undefined;
 				const rowTypeEnum = (rowDef?.properties as Record<string, unknown>)
 					?.type as { enum?: string[] } | undefined;
 				const rowValues = rowTypeEnum?.enum ?? [];
-				const flowLine = `export const SDUI_FLOW_TYPE_VALUES = ${JSON.stringify(flowValues)} as const;`;
 				const rowLine = `export const SDUI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`;
 				const current = await readFile(outPath, "utf-8");
 				await writeFile(
 					outPath,
-					`${current.trimEnd()}\n\n${flowLine}\n${rowLine}\n`,
+					`${current.trimEnd()}\n\n${rowLine}\n`,
 					"utf-8",
 				);
 			}

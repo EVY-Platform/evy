@@ -213,8 +213,6 @@ describe("get", () => {
 			{
 				data: createTestFlow({
 					name: "Flow 1",
-					type: "read",
-					data: "item",
 					pages: [{ title: "P1", rows: [] }],
 				}),
 				createdAt: now,
@@ -223,8 +221,6 @@ describe("get", () => {
 			{
 				data: createTestFlow({
 					name: "Flow 2",
-					type: "create",
-					data: "item",
 					pages: [{ title: "P2", rows: [] }],
 				}),
 				createdAt: now,
@@ -249,8 +245,6 @@ describe("get", () => {
 			data: createTestFlow({
 				id: flowId,
 				name: "Single Flow",
-				type: "read",
-				data: "item",
 				pages: [{ title: "P1", rows: [] }],
 			}),
 			createdAt: new Date(),
@@ -322,8 +316,6 @@ describe("upsert", () => {
 	it("should create new flow for resource SDUI without filter.id", async () => {
 		const flowData = createTestFlow({
 			name: "New Flow",
-			type: "create",
-			data: "item",
 			pages: [
 				{
 					title: "Page 1",
@@ -352,7 +344,6 @@ describe("upsert", () => {
 		expect(isDATA_Flow(result)).toBe(true);
 		if (isDATA_Flow(result)) {
 			expect(result.data.name).toBe("New Flow");
-			expect(result.data.type).toBe("create");
 		}
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
@@ -361,8 +352,6 @@ describe("upsert", () => {
 	it("should update existing flow for resource SDUI with filter.id", async () => {
 		const existingFlowData = createTestFlow({
 			name: "Old Name",
-			type: "read",
-			data: "item",
 			pages: [{ title: "P1", rows: [] }],
 		});
 		const [existingFlow] = await testDb
@@ -377,8 +366,6 @@ describe("upsert", () => {
 		const updatedFlowData = createTestFlow({
 			id: existingFlow.id,
 			name: "Updated Name",
-			type: "create",
-			data: "item",
 			pages: [
 				{
 					title: "New Page",
@@ -408,7 +395,6 @@ describe("upsert", () => {
 		expect(isDATA_Flow(result)).toBe(true);
 		if (isDATA_Flow(result)) {
 			expect(result.data.name).toBe("Updated Name");
-			expect(result.data.type).toBe("create");
 		}
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
@@ -421,8 +407,6 @@ describe("upsert", () => {
 				resource: "sdui",
 				data: {
 					name: "",
-					type: "read",
-					data: "item",
 					pages: [{ id: "page-1", title: "Page 1", rows: [] }],
 				},
 			}),
@@ -453,15 +437,14 @@ describe("upsert SDUI validation", () => {
 		await clearTables();
 	});
 
-	it("should reject flow with invalid type", async () => {
+	it("should reject flow with unrecognized keys", async () => {
 		await expect(
 			upsert({
 				namespace: "evy",
 				resource: "sdui",
 				data: {
 					name: "Test Flow",
-					type: "invalid-type",
-					data: "item",
+					unknownField: "value",
 					pages: [{ id: "page-1", title: "Page 1", rows: [] }],
 				},
 			}),
@@ -475,8 +458,6 @@ describe("upsert SDUI validation", () => {
 			data: {
 				id: crypto.randomUUID(),
 				name: "Test Flow",
-				type: "read",
-				data: "item",
 				pages: [],
 			},
 		});
@@ -493,8 +474,6 @@ describe("upsert SDUI validation", () => {
 				resource: "sdui",
 				data: {
 					name: "Test Flow",
-					type: "read",
-					data: "item",
 					pages: [
 						{
 							id: "page-1",
@@ -517,8 +496,6 @@ describe("upsert SDUI validation", () => {
 	it("should validate nested rows in container recursively", async () => {
 		const flowData = createTestFlow({
 			name: "Test Flow",
-			type: "create",
-			data: "item",
 			pages: [
 				{
 					title: "Page 1",
@@ -577,8 +554,6 @@ describe("upsert SDUI validation", () => {
 	it("should validate footer row", async () => {
 		const flowData = createTestFlow({
 			name: "Test Flow",
-			type: "read",
-			data: "item",
 			pages: [
 				{
 					title: "Page 1",

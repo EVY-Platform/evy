@@ -133,8 +133,6 @@ describe("seed script", () => {
 				{
 					id: "f267c629-2594-4770-8cec-d5324ebb4058",
 					name: "Home",
-					type: "read",
-					data: "",
 					pages: [],
 				},
 			],
@@ -164,8 +162,6 @@ describe("seed script", () => {
 			evyFlows: [
 				{
 					name: "Home",
-					type: "read",
-					data: "",
 					pages: [],
 				},
 			],

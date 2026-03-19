@@ -39,6 +39,7 @@ struct ContentView: View {
 	@State private var alertMessage = ""
 	@State private var loading = true
 	@State private var itemData: Data? // Temporary to avoid making navigation async
+    @State private var activeDraftKeys: Set<String> = []
     
     private func showError(_ error: Error) {
         alertMessage = error.localizedDescription
@@ -66,10 +67,9 @@ struct ContentView: View {
                 routes.removeLast()
                 break
             }
-			
-			// If the new flow is for creation, start a draft
-            if newFlow.type == .create {
-                let key: String = newFlow.data
+            
+            let createKeys = Self.extractCreateKeys(from: newFlow)
+            for key in createKeys {
                 guard let itemData = itemData else {
                     alertMessage = "Item data not loaded"
                     showingAlert = true
@@ -78,8 +78,9 @@ struct ContentView: View {
                 }
                 do {
                     try EVY.data.create(key: key, data: itemData)
+                    activeDraftKeys.insert(key)
                 } catch EVYDataError.keyAlreadyExists {
-                    // Draft already exists, continue
+                    activeDraftKeys.insert(key)
                 } catch {
                     showError(error)
                 }
@@ -102,23 +103,14 @@ struct ContentView: View {
     }
     
     private func createFlow(currentFlowId: String, key: String) {
-        guard let currentFlow = flows.first(where: { $0.id == currentFlowId }) else {
-            alertMessage = "Flow not found"
-            showingAlert = true
-            return
-        }
-        if currentFlow.type != .create {
-            alertMessage = "Cannot create - not a create flow"
-            showingAlert = true
-            return
-        }
-
         do {
             try EVY.create(key: key)
         } catch {
             showError(error)
             return
         }
+
+        activeDraftKeys.remove(key)
 
         if let existing = routes.firstIndex(where: { $0.flowId == currentFlowId }) {
             routes.removeSubrange(existing...)
@@ -201,21 +193,27 @@ struct ContentView: View {
 				  dismissButton: .default(Text("Ok")))
 		}
         .onChange(of: routes) { _, _ in
+            let previousFlowId = currentFlowId
             let newFlowId = routes.last?.flowId ?? HOME_FLOW_ID
             
-            if newFlowId != currentFlowId,
-			   let currentFlow = flows.first(where: {
-				   $0.id == currentFlowId
-			   }),
-               currentFlow.type == .create
-			{
-                EVY.data.deleteAllDrafts()
-                do {
-                    try EVY.data.delete(key: currentFlow.data)
-                } catch EVYDataError.keyNotFound {
-                    // Data doesn't exist, continue
-                } catch {
-                    showError(error)
+            if newFlowId != previousFlowId {
+                let keysToDelete = Self.createKeysToDelete(
+                    whenLeaving: previousFlowId,
+                    flows: flows,
+                    activeDraftKeys: activeDraftKeys
+                )
+                if !keysToDelete.isEmpty {
+                    EVY.data.deleteAllDrafts()
+                    for key in keysToDelete {
+                        do {
+                            try EVY.data.delete(key: key)
+                        } catch EVYDataError.keyNotFound {
+                            // Already cleaned up
+                        } catch {
+                            showError(error)
+                        }
+                    }
+                    activeDraftKeys.subtract(keysToDelete)
                 }
             }
             
@@ -234,6 +232,55 @@ struct ContentView: View {
             if let error = notification.object as? Error {
                 showError(error)
             }
+        }
+    }
+    
+    static func createKeysToDelete(
+        whenLeaving flowId: String,
+        flows: [SDUI_Flow],
+        activeDraftKeys: Set<String>
+    ) -> Set<String> {
+        guard let flow = flows.first(where: { $0.id == flowId }) else {
+            return []
+        }
+        return extractCreateKeys(from: flow).intersection(activeDraftKeys)
+    }
+    
+    private static func extractCreateKeys(from flow: SDUI_Flow) -> Set<String> {
+        var keys = Set<String>()
+        for page in flow.pages {
+            for row in page.rows {
+                Self.collectCreateKeys(from: row, into: &keys)
+            }
+            if let footer = page.footer {
+                Self.collectCreateKeys(from: footer, into: &keys)
+            }
+        }
+        return keys
+    }
+    
+    private static func collectCreateKeys(from row: SDUI_Row, into keys: inout Set<String>) {
+        for action in row.actions {
+            for branch in [action.`true`, action.`false`] {
+                var unwrapped = branch.trimmingCharacters(in: .whitespacesAndNewlines)
+                if unwrapped.hasPrefix("{"), unwrapped.hasSuffix("}") {
+                    unwrapped = String(unwrapped.dropFirst().dropLast())
+                }
+                if let (name, args) = EVYInterpreter.parseFunctionCall(unwrapped),
+                   name == "create"
+                {
+                    let key = args.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !key.isEmpty { keys.insert(key) }
+                }
+            }
+        }
+        if let children = row.view.content.children {
+            for child in children {
+                Self.collectCreateKeys(from: child, into: &keys)
+            }
+        }
+        if let child = row.view.content.child {
+            Self.collectCreateKeys(from: child, into: &keys)
         }
     }
 }

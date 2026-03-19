@@ -7,8 +7,6 @@ test.describe("Flow Selector", () => {
 		{
 			id: "flow-1",
 			name: "First Flow",
-			type: "create",
-			data: "",
 			pages: [
 				{
 					id: "page-1-1",
@@ -32,8 +30,6 @@ test.describe("Flow Selector", () => {
 		{
 			id: "flow-2",
 			name: "Second Flow",
-			type: "create",
-			data: "",
 			pages: [
 				{
 					id: "page-2-1",
@@ -62,8 +58,6 @@ test.describe("Flow Selector", () => {
 		{
 			id: "flow-3",
 			name: "Third Flow",
-			type: "create",
-			data: "",
 			pages: [
 				{
 					id: "page-3-1",

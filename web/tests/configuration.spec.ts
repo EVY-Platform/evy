@@ -340,8 +340,6 @@ test.describe("Row configuration", () => {
 			{
 				id: "flow_a",
 				name: "Onboarding",
-				type: "create",
-				data: "",
 				pages: [
 					{
 						id: "page_a1",
@@ -360,8 +358,6 @@ test.describe("Row configuration", () => {
 			{
 				id: "flow_b",
 				name: "Checkout",
-				type: "create",
-				data: "",
 				pages: [
 					{
 						id: "page_b1",
@@ -409,13 +405,24 @@ test.describe("Row configuration", () => {
 			{
 				id: "flow_c",
 				name: "Listing",
-				type: "create",
-				data: "items",
 				pages: [
 					{
 						id: "page_c1",
 						title: "Details",
 						rows: [
+							{
+								id: "row_input_items",
+								type: "Input",
+								view: {
+									content: {
+										title: "Item name",
+										value: "",
+										placeholder: "Enter name",
+									},
+								},
+								destination: "{items}",
+								actions: [],
+							},
 							{
 								id: "row_btn2",
 								type: "Button",
@@ -726,8 +733,6 @@ test.describe("Row configuration", () => {
 			{
 				id: "flow_x",
 				name: "Main Flow",
-				type: "create",
-				data: "",
 				pages: [
 					{
 						id: "page_x",

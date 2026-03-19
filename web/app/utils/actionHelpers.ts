@@ -197,14 +197,6 @@ export function serializeBranch(
 	return `{${functionName}(${filteredArgs.join(",")})}`;
 }
 
-export function getDataModelNames(flows: SDUI_Flow[]): string[] {
-	const names = new Set<string>();
-	for (const flow of flows) {
-		if (flow.data) names.add(flow.data);
-	}
-	return Array.from(names).sort();
-}
-
 export function getFlowOptions(
 	flows: SDUI_Flow[],
 ): { value: string; label: string }[] {
