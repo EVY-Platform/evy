@@ -412,8 +412,9 @@ function ConditionEditor({
 		}) => {
 			if (isPlaceholder) {
 				const updated = { ...draft, [field]: value };
-				setDraft(updated);
-				if (updated.left && updated.operator && updated.right) {
+				if (!updated.left || !updated.operator || !updated.right) {
+					setDraft(updated);
+				} else {
 					onChange([...conditions, updated]);
 					setDraft({ left: "", operator: "==", right: "" });
 				}
