@@ -399,8 +399,17 @@ function ConditionEditor({
 	});
 
 	const handleFieldChange = useCallback(
-		(rowIndex: number, field: "left" | "operator" | "right", value: string) => {
-			const isPlaceholder = rowIndex === conditions.length;
+		({
+			rowIndex,
+			field,
+			isPlaceholder,
+			value,
+		}: {
+			rowIndex: number;
+			field: "left" | "operator" | "right";
+			isPlaceholder: boolean;
+			value: string;
+		}) => {
 			if (isPlaceholder) {
 				const updated = { ...draft, [field]: value };
 				setDraft(updated);
@@ -431,7 +440,7 @@ function ConditionEditor({
 	return (
 		<div className="evy-flex evy-flex-col evy-gap-2">
 			{rows.map((row, rowIndex) => {
-				const isPlaceholderRow = rowIndex === conditions.length;
+				const isPlaceholder = rowIndex === conditions.length;
 				const conditionRowId = `condition-${actionIndex}-${rowIndex}`;
 				return (
 					<span key={conditionRowId}>
@@ -441,24 +450,45 @@ function ConditionEditor({
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-left`}
 								value={row.left}
 								draftVariables={draftVariables}
-								onChange={(v) => handleFieldChange(rowIndex, "left", v)}
+								onChange={(v) =>
+									handleFieldChange({
+										rowIndex,
+										field: "left",
+										isPlaceholder,
+										value: v,
+									})
+								}
 							/>
 
 							<PopoverSelect
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-op`}
 								options={OPERATOR_OPTIONS}
 								value={row.operator}
-								onChange={(v) => handleFieldChange(rowIndex, "operator", v)}
+								onChange={(v) =>
+									handleFieldChange({
+										rowIndex,
+										field: "operator",
+										isPlaceholder,
+										value: v,
+									})
+								}
 							/>
 
 							<OperandEditor
 								ariaLabel={`condition-${actionIndex}-${rowIndex}-right`}
 								value={row.right}
 								draftVariables={draftVariables}
-								onChange={(v) => handleFieldChange(rowIndex, "right", v)}
+								onChange={(v) =>
+									handleFieldChange({
+										rowIndex,
+										field: "right",
+										isPlaceholder,
+										value: v,
+									})
+								}
 							/>
 
-							{!isPlaceholderRow && (
+							{!isPlaceholder && (
 								<button
 									type="button"
 									className="evy-bin-button evy-condition-remove evy-bg-transparent evy-border-none evy-cursor-pointer"
