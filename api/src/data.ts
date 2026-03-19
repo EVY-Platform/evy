@@ -60,14 +60,12 @@ function formatFlowRow(row: PersistedFlowRow): DATA_Flow {
 	};
 }
 
-function formatPersistedDataRow(
-	row: Omit<PersistedDataRow, "data"> & { data: unknown },
-): DATA_Data {
+function formatPersistedDataRow(row: PersistedDataRow): DATA_Data {
 	return {
 		id: row.id,
 		namespace: row.namespace,
 		resource: row.resource,
-		data: row.data as DATA_Data["data"],
+		data: row.data,
 		createdAt: row.createdAt.toISOString(),
 		updatedAt: row.updatedAt.toISOString(),
 	};
