@@ -1,25 +1,11 @@
-import type { CSSProperties } from "react";
-import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
-import invariant from "tiny-invariant";
-
-import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { useContext, useMemo, useRef } from "react";
 
 import { AppContext } from "../state";
-import { DraggableRowContainer } from "./DraggableRowContainer";
+import { usePageDropTarget } from "../hooks/usePageDropTarget";
+import { useSelectRow } from "../hooks/useSelectRow";
+import { buildRowElements } from "./buildRowElements";
+import { baseTitleStyle, rounded24Style } from "./pageStyles";
 import { findRowInPages } from "../utils/rowTree";
-
-const rounded24Style: CSSProperties = {
-	borderRadius: "var(--radius-2-4)",
-};
-
-const titleStyle: CSSProperties = {
-	textAlign: "center",
-	fontWeight: "var(--font-semibold)",
-	fontSize: "var(--text-xl)",
-	padding: "var(--spacing-2) var(--spacing-4)",
-};
 
 export default function SecondarySheetPage({
 	sheetRowId,
@@ -39,60 +25,23 @@ export default function SecondarySheetPage({
 	const title = sheetRow?.config.view.content.title ?? "Sheet";
 	const childRows = sheetRow?.config.view.content.children ?? [];
 
-	const selectRow = useCallback(
-		(rowId: string) => dispatchRow({ type: "SET_ACTIVE_ROW", pageId, rowId }),
-		[pageId, dispatchRow],
-	);
+	const selectRow = useSelectRow(pageId, dispatchRow);
 
-	useEffect(() => {
-		invariant(
-			scrollableRef.current,
-			"SecondarySheetPage useEffect: scrollableRef.current is not defined",
-		);
-		const element = scrollableRef.current;
-		const cleanup = combine(
-			dropTargetForElements({
-				element,
-				getData: () => ({ pageId, sheetRowId }),
-				canDrop: () => true,
-				onDrop: () => {
-					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" });
-				},
-				onDragEnter: () =>
-					dispatchDropIndicator({
-						type: "SET_INDICATOR_PAGE",
-						pageId,
-					}),
-				onDragLeave: () =>
-					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" }),
-			}),
-			autoScrollForElements({
-				element,
-				canScroll: () => true,
-			}),
-		);
-		return () => {
-			cleanup();
-		};
-	}, [pageId, sheetRowId, dispatchDropIndicator]);
+	const extraData = useMemo(() => ({ sheetRowId }), [sheetRowId]);
+
+	usePageDropTarget({
+		scrollableRef,
+		pageId,
+		dispatchDropIndicator,
+		extraData,
+	});
 
 	const childRowIds = childRows.map((r) => r.id).join(",");
 	// biome-ignore lint/correctness/useExhaustiveDependencies: childRowIds detects in-place array mutations that childRows reference misses
-	const rowElements = useMemo(() => {
-		const lastIndex = childRows.length - 1;
-		return childRows.map((row, index) => (
-			<DraggableRowContainer
-				key={row.id}
-				rowId={row.id}
-				selectRow={() => selectRow(row.id)}
-				showIndicators
-				previousRowId={index > 0 ? childRows[index - 1].id : undefined}
-				nextRowId={index < lastIndex ? childRows[index + 1].id : undefined}
-			>
-				{row.row}
-			</DraggableRowContainer>
-		));
-	}, [childRows, childRowIds, selectRow]);
+	const rowElements = useMemo(
+		() => buildRowElements(childRows, selectRow),
+		[childRows, childRowIds, selectRow],
+	);
 
 	return (
 		<div
@@ -104,7 +53,7 @@ export default function SecondarySheetPage({
 				style={rounded24Style}
 				ref={scrollableRef}
 			>
-				<div style={titleStyle}>{title}</div>
+				<div style={baseTitleStyle}>{title}</div>
 				{rowElements}
 			</div>
 		</div>
