@@ -9,12 +9,12 @@ test.describe("Secondary Sheet Page", () => {
 			rows: [
 				{
 					id: "sheet-1",
-					type: "SheetContainer",
+					type: "SheetContainer" as const,
 					view: {
 						content: {
 							title: "My Sheet",
 							child: {
-								type: "Info",
+								type: "Info" as const,
 								view: {
 									content: {
 										title: "Child Info",
@@ -25,7 +25,7 @@ test.describe("Secondary Sheet Page", () => {
 							},
 							children: [
 								{
-									type: "Text",
+									type: "Text" as const,
 									view: {
 										content: {
 											title: "Sheet Child 1",
@@ -35,7 +35,7 @@ test.describe("Secondary Sheet Page", () => {
 									actions: [],
 								},
 								{
-									type: "Text",
+									type: "Text" as const,
 									view: {
 										content: {
 											title: "Sheet Child 2",

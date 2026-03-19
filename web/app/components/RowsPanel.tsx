@@ -30,7 +30,8 @@ export function RowsPanel() {
 				element: pageInnerRef.current,
 				getData: () => ({ pageId: "rows" }),
 				canDrop: () => true,
-				onDragStart: () => dispatchDragging({ type: "START_DRAGGING" }),
+				onDragStart: () =>
+					dispatchDragging({ type: "START_DRAGGING", source: "rows" }),
 				onDrop: () => dispatchDragging({ type: "STOP_DRAGGING" }),
 			}),
 		);

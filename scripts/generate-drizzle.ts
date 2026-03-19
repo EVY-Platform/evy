@@ -239,6 +239,10 @@ function buildObjectColumn(
 	return col;
 }
 
+function isRefToJsonValue(ref: string): boolean {
+	return ref.includes("JSONValue") || ref.includes("json.schema.json");
+}
+
 function buildRefColumn(
 	dbCol: string,
 	ref: string,
@@ -249,6 +253,12 @@ function buildRefColumn(
 	}
 	if (ref.includes("SDUI_Flow") || ref.includes("evy.schema.json")) {
 		let col = `jsonb("${dbCol}").$type<SDUI_Flow>().notNull()`;
+		if (isPk) col += ".primaryKey()";
+		if (hasDefaultRandom) col += ".defaultRandom()";
+		return col;
+	}
+	if (isRefToJsonValue(ref)) {
+		let col = `jsonb("${dbCol}").$type<DATA_Data["data"]>().notNull()`;
 		if (isPk) col += ".primaryKey()";
 		if (hasDefaultRandom) col += ".defaultRandom()";
 		return col;
@@ -333,6 +343,7 @@ async function main(): Promise<void> {
 		'} from "drizzle-orm/pg-core";',
 		'import { relations } from "drizzle-orm";',
 		'import type { SDUI_Flow } from "evy-types/sdui/evy";',
+		'import type { DATA_Data } from "evy-types/data/data";',
 		"",
 	];
 

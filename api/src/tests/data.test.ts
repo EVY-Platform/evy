@@ -4,7 +4,13 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { PGlite } from "@electric-sql/pglite";
 
-import type { SDUI_Flow, DATA_Flow, DATA_Rows } from "evy-types";
+import type {
+	SDUI_Flow,
+	DATA_Flow,
+	DATA_Data,
+	DATA_Rows,
+	GetRequest,
+} from "evy-types";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 import {
 	type RowSchema,
@@ -181,18 +187,23 @@ describe("get", () => {
 	});
 
 	it("should throw when params is not an object", async () => {
-		await expect(get(null)).rejects.toThrow("Params must be an object");
+		await expect(get(null as unknown as GetRequest)).rejects.toThrow(
+			"Params must be an object",
+		);
 	});
 
 	it("should throw when namespace is invalid", async () => {
 		await expect(
-			get({ namespace: "invalid", resource: "sdui" }),
+			get({ namespace: "invalid", resource: "sdui" } as unknown as GetRequest),
 		).rejects.toThrow("Invalid or missing namespace");
 	});
 
 	it("should throw when resource is invalid", async () => {
 		await expect(
-			get({ namespace: "evy", resource: "InvalidResource" }),
+			get({
+				namespace: "evy",
+				resource: "InvalidResource",
+			} as unknown as GetRequest),
 		).rejects.toThrow("Invalid or missing resource");
 	});
 
@@ -253,7 +264,8 @@ describe("get", () => {
 		});
 
 		expect(result).toHaveLength(1);
-		expect(result[0].name).toBe("Single Flow");
+		const flow = result[0] as SDUI_Flow;
+		expect(flow.name).toBe("Single Flow");
 	});
 
 	it("should return empty array for SDUI when filter.id matches nothing", async () => {
@@ -427,9 +439,8 @@ describe("upsert", () => {
 		});
 
 		expect(!isDATA_Flow(result)).toBe(true);
-		if (!isDATA_Flow(result)) {
-			expect(result.data).toEqual(payload);
-		}
+		const dataResult = result as DATA_Data;
+		expect(dataResult.data).toEqual(payload);
 		const dataRecords = await testDb.select().from(schema.data);
 		expect(dataRecords).toHaveLength(1);
 		expect(dataRecords[0].namespace).toBe("evy");
