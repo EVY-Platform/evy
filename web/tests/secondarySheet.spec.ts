@@ -142,9 +142,10 @@ test.describe("Secondary Sheet Page", () => {
 		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 
-		// Click the back button in the config panel
-		const backButton = page.getByRole("button", { name: /Back to parent/ });
-		await backButton.click();
+		// Navigate up via navbar breadcrumb (root row = SheetContainer)
+		await page
+			.getByRole("button", { name: "Configure row: My Sheet" })
+			.click();
 
 		await expect(secondaryPage).toHaveCSS("opacity", "0");
 	});

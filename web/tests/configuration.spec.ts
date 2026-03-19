@@ -60,7 +60,9 @@ test.describe("Row configuration", () => {
 
 		const configPanel = getConfigPanel(page);
 
-		await expect(page.getByLabel("Page title")).toHaveValue("Test Page");
+		await expect(
+			page.getByRole("button", { name: "Select page Test Page" }),
+		).toBeVisible();
 		await expect(
 			configPanel.getByRole("button", { name: /^Input$/ }),
 		).toBeVisible();
@@ -69,8 +71,8 @@ test.describe("Row configuration", () => {
 
 		await expect(configPanel.getByLabel("Page title")).toHaveCount(0);
 		await expect(
-			configPanel.getByRole("button", {
-				name: "Back to parent configuration from Input",
+			page.getByRole("button", {
+				name: "Configure nested row at depth 1: Input Row",
 			}),
 		).toBeVisible();
 		await expect(configPanel.getByLabel("placeholder")).toHaveValue(
@@ -814,5 +816,79 @@ test.describe("Row configuration", () => {
 
 		const falseFn = popup.getByLabel("false-0-function");
 		await expect(falseFn).toHaveAttribute("data-value", "close");
+	});
+
+	test("navbar breadcrumbs scroll for many nested levels and navigate on click", async ({
+		page,
+	}) => {
+		function deepNest(level: number) {
+			if (level === 0) {
+				return {
+					type: "Input" as const,
+					view: {
+						content: {
+							title: "Deep leaf",
+							placeholder: "",
+							value: "",
+						},
+					},
+					actions: [],
+				};
+			}
+			return {
+				type: "ColumnContainer" as const,
+				view: {
+					content: {
+						title: `Nest level ${level}`,
+						children: [deepNest(level - 1)],
+					},
+				},
+				actions: [],
+			};
+		}
+
+		await initTestFlows(page, [
+			{
+				id: "step_deep",
+				title: "Deep Page",
+				rows: [deepNest(12)],
+			},
+		]);
+		await page.goto("/");
+
+		const configPanel = getConfigPanel(page);
+
+		await page.getByText("Nest level 12", { exact: true }).first().click();
+
+		for (let i = 0; i < 11; i++) {
+			const nextButton = configPanel.getByRole("button", {
+				name: /^ColumnContainer$/,
+			});
+			await expect(nextButton.first()).toBeVisible();
+			await nextButton.first().click();
+		}
+
+		await configPanel.getByRole("button", { name: /^Input$/ }).click();
+
+		const breadcrumbScroll = page.getByTestId("nav-breadcrumb-scroll");
+		await expect(
+			await breadcrumbScroll.evaluate((el) => el.scrollWidth > el.clientWidth),
+		).toBe(true);
+
+		await expect(
+			page.getByRole("button", {
+				name: "Configure nested row at depth 12: Deep leaf",
+			}),
+		).toBeVisible();
+
+		await page
+			.getByRole("button", {
+				name: "Configure nested row at depth 5: Nest level 7",
+			})
+			.click();
+
+		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
+			"Nest level 7",
+		);
 	});
 });

@@ -10,9 +10,19 @@ import {
 	removeRowFromTree,
 	updateRowInTree,
 	getRowsRecursive,
+	findRowInPages,
 } from "../../utils/rowTree";
 
 export const pageReducer = (state: AppState, action: RowAction): AppState => {
+	if (action.type === "SET_ACTIVE_FLOW") {
+		return {
+			...state,
+			activeFlowId: action.flowId,
+			activeRowId: undefined,
+			configStack: [],
+		};
+	}
+
 	const flow = state.flows.find((f) => f.id === state.activeFlowId);
 	if (!flow) return state;
 
@@ -21,11 +31,13 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		activeFlowId,
 		activeRowId,
 		activePageId,
+		configStack,
 	}: {
 		updatedPages?: SDUI_Page[];
 		activeFlowId?: string;
 		activeRowId?: string;
 		activePageId?: string;
+		configStack?: string[];
 	}): AppState => {
 		return {
 			...state,
@@ -39,12 +51,13 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			...(activeFlowId && activeFlowId !== state.activeFlowId
 				? { activeFlowId }
 				: {}),
-			...(activeRowId && activeRowId !== state.activeRowId
+			...(activeRowId !== undefined && activeRowId !== state.activeRowId
 				? { activeRowId }
 				: {}),
-			...(activePageId && activePageId !== state.activePageId
+			...(activePageId !== undefined && activePageId !== state.activePageId
 				? { activePageId }
 				: {}),
+			...(configStack !== undefined ? { configStack } : {}),
 		};
 	};
 
@@ -131,6 +144,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return updateState({
 				updatedPages,
 				activeRowId: action.newRowId,
+				configStack: [],
 			});
 		}
 		case "MOVE_ROW": {
@@ -170,6 +184,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return updateState({
 				updatedPages: newPages,
 				activeRowId: action.rowId,
+				configStack: [],
 			});
 		}
 		case "REMOVE_ROW": {
@@ -234,12 +249,6 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			return updateState({ updatedPages: newPages });
 		}
-		case "SET_ACTIVE_FLOW": {
-			return updateState({
-				activeFlowId: action.flowId,
-				activeRowId: undefined,
-			});
-		}
 		case "SET_ACTIVE_ROW": {
 			const page = flow.pages.find(
 				(page) =>
@@ -252,6 +261,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return updateState({
 				activeRowId: action.rowId,
 				activePageId: action.pageId,
+				configStack: [],
 			});
 		}
 		case "SET_ACTIVE_PAGE": {
@@ -262,6 +272,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				...state,
 				activePageId: action.pageId,
 				activeRowId: undefined,
+				configStack: [],
 			};
 		}
 		case "CLEAR_ACTIVE_SELECTION": {
@@ -271,6 +282,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				activeRowId: undefined,
 				focusMode: false,
 				secondarySheetRowId: undefined,
+				configStack: [],
 			};
 		}
 		case "TOGGLE_FOCUS_MODE": {
@@ -284,7 +296,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				...state,
 				focusMode: nextFocusMode,
 				activePageId: nextActivePageId,
-				...(!nextFocusMode ? { secondarySheetRowId: undefined } : {}),
+				...(!nextFocusMode
+					? { secondarySheetRowId: undefined, configStack: [] }
+					: {}),
 			};
 		}
 		case "UPDATE_PAGE_TITLE": {
@@ -303,6 +317,48 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return {
 				...state,
 				secondarySheetRowId: undefined,
+				configStack: [],
+			};
+		}
+		case "PUSH_CONFIG_STACK": {
+			const parentRow = findRowInPages(action.parentRowId, flow.pages);
+			if (!parentRow) return state;
+
+			const isSheetChild =
+				parentRow.config.type === "SheetContainer" &&
+				parentRow.config.view.content.children?.some(
+					(c) => c.id === action.childRowId,
+				);
+
+			let nextFocusMode = state.focusMode;
+			let nextActivePageId = state.activePageId;
+			let nextSecondarySheetRowId = state.secondarySheetRowId;
+
+			if (isSheetChild) {
+				if (!state.focusMode) {
+					nextFocusMode = true;
+					nextActivePageId = state.activePageId ?? flow.pages[0]?.id;
+				}
+				nextSecondarySheetRowId = parentRow.id;
+			}
+
+			return {
+				...state,
+				focusMode: nextFocusMode,
+				activePageId: nextActivePageId,
+				secondarySheetRowId: nextSecondarySheetRowId,
+				configStack: [...state.configStack, action.childRowId],
+			};
+		}
+		case "NAVIGATE_BREADCRUMB": {
+			const newStack = state.configStack.slice(0, action.configStackLength);
+			const truncated =
+				newStack.length < state.configStack.length && state.secondarySheetRowId;
+
+			return {
+				...state,
+				configStack: newStack,
+				...(truncated ? { secondarySheetRowId: undefined } : {}),
 			};
 		}
 		default:

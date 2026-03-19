@@ -84,6 +84,57 @@ const popoverCss = `
 	border-top: 1px solid var(--color-gray-border);
 	margin-top: 2px;
 }
+/* Navbar flow picker: do NOT stack with .evy-popover-trigger (avoids borders / full-width / combobox-like chrome) */
+.evy-popover-trigger--breadcrumb {
+	display: inline-flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px;
+	margin: 0;
+	width: auto;
+	max-width: 14rem;
+	min-width: 0;
+	min-height: var(--size-navbar-control);
+	padding: 0 2px 0 var(--spacing-2);
+	font-size: var(--text-sm);
+	font-weight: var(--font-semibold);
+	font-family: inherit;
+	line-height: 1.5;
+	text-align: left;
+	cursor: pointer;
+	color: var(--color-evy-blue);
+	background: transparent;
+	border: none;
+	border-radius: 0;
+	outline: none;
+	box-shadow: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+.evy-popover-trigger--breadcrumb:hover {
+	text-decoration: underline;
+}
+.evy-popover-trigger--breadcrumb:focus {
+	outline: none;
+	box-shadow: none;
+	border: none;
+}
+.evy-popover-trigger--breadcrumb:focus-visible {
+	outline: 2px solid var(--color-evy-blue);
+	outline-offset: 2px;
+}
+.evy-popover-trigger--breadcrumb .evy-popover-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex: 1;
+	min-width: 0;
+}
+.evy-popover-trigger--breadcrumb .evy-popover-chevron {
+	flex-shrink: 0;
+	opacity: 1;
+	color: var(--color-evy-blue);
+}
 `;
 
 export type PopoverOption = {
@@ -98,6 +149,9 @@ type PopoverSelectProps = {
 	onChange: (value: string) => void;
 	ariaLabel: string;
 	placeholder?: string;
+	/** Navbar-style trigger: blue link + chevron, no box border */
+	variant?: "default" | "breadcrumb";
+	id?: string;
 };
 
 export function PopoverSelect({
@@ -106,6 +160,8 @@ export function PopoverSelect({
 	onChange,
 	ariaLabel,
 	placeholder = "--",
+	variant = "default",
+	id,
 }: PopoverSelectProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const triggerRef = useRef<HTMLButtonElement>(null);
@@ -181,18 +237,28 @@ export function PopoverSelect({
 	const selectedOption = options.find((o) => o.value === value);
 	const displayText = selectedOption?.label ?? placeholder;
 
+	const listboxDomId =
+		variant === "breadcrumb" && id ? `${id}-listbox` : undefined;
+
 	return (
 		<>
 			<style>{popoverCss}</style>
 			<button
 				ref={triggerRef}
+				id={id}
 				type="button"
-				role="combobox"
+				role={variant === "breadcrumb" ? "button" : "combobox"}
+				aria-haspopup={variant === "breadcrumb" ? "listbox" : undefined}
+				aria-controls={isOpen && listboxDomId ? listboxDomId : undefined}
 				aria-label={ariaLabel}
 				aria-expanded={isOpen}
 				data-value={value}
 				onClick={() => (isOpen ? close() : open())}
-				className="evy-popover-trigger"
+				className={
+					variant === "breadcrumb"
+						? "evy-popover-trigger--breadcrumb"
+						: "evy-popover-trigger"
+				}
 			>
 				<span className="evy-popover-text">{displayText}</span>
 				<svg
@@ -221,7 +287,9 @@ export function PopoverSelect({
 						<div
 							className="evy-popover-menu-scroll"
 							role="listbox"
+							id={listboxDomId}
 							aria-label={ariaLabel}
+							aria-labelledby={variant === "breadcrumb" && id ? id : undefined}
 						>
 							{options.map((opt) => (
 								<span key={opt.value}>

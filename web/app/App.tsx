@@ -10,7 +10,7 @@ import type {
 import AppPage from "./components/AppPage";
 import SecondarySheetPage from "./components/SecondarySheetPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
-import { FlowSelector } from "./components/FlowSelector";
+import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
 import { AppContext, AppProvider } from "./state";
 import { handleDrop } from "./utils/dropHandler";
@@ -271,41 +271,24 @@ function NavBar() {
 	);
 
 	return (
-		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center">
+		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center evy-gap-2 evy-min-w-0">
 			<style>{focusButtonCss}</style>
-			<a href="/">
+			<a href="/" className="evy-shrink-0">
 				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 			</a>
-			<div className="evy-flex-1 evy-flex evy-justify-center evy-items-center evy-gap-2">
+			<NavigationBreadcrumb />
+			<div className="evy-shrink-0">
 				{activePage && (
-					<>
-						<input
-							type="text"
-							value={activePage.title}
-							onChange={(e) =>
-								dispatchRow({
-									type: "UPDATE_PAGE_TITLE",
-									pageId: activePage.id,
-									title: e.target.value,
-								})
-							}
-							placeholder="Page title"
-							className="evy-text-center evy-bg-transparent evy-border-none evy-focus-visible:outline-none evy-text-lg evy-font-semibold"
-							style={{ height: "var(--size-navbar-control)" }}
-							aria-label="Page title"
-						/>
-						<button
-							type="button"
-							onClick={() => dispatchRow({ type: "TOGGLE_FOCUS_MODE" })}
-							className={`evy-focus-button${focusMode ? " evy-focus-button--active" : ""}`}
-							aria-pressed={focusMode}
-						>
-							Focus
-						</button>
-					</>
+					<button
+						type="button"
+						onClick={() => dispatchRow({ type: "TOGGLE_FOCUS_MODE" })}
+						className={`evy-focus-button${focusMode ? " evy-focus-button--active" : ""}`}
+						aria-pressed={focusMode}
+					>
+						Focus
+					</button>
 				)}
 			</div>
-			<FlowSelector />
 		</div>
 	);
 }

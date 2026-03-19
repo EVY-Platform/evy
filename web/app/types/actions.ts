@@ -61,7 +61,13 @@ export type RowAction =
 			title: string;
 	  }
 	| { type: "OPEN_SECONDARY_SHEET"; sheetRowId: string }
-	| { type: "CLOSE_SECONDARY_SHEET" };
+	| { type: "CLOSE_SECONDARY_SHEET" }
+	| {
+			type: "PUSH_CONFIG_STACK";
+			parentRowId: string;
+			childRowId: string;
+	  }
+	| { type: "NAVIGATE_BREADCRUMB"; configStackLength: number };
 
 export type DraggingSource = "rows" | "page";
 
@@ -106,4 +112,5 @@ export type AppState = {
 	activePageId?: string;
 	focusMode: boolean;
 	secondarySheetRowId?: string;
+	configStack: string[];
 };
