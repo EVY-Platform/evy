@@ -146,22 +146,6 @@ export function useCamera() {
 		[notify, scheduleTransform],
 	);
 
-	const setScaleCenterViewport = useCallback(
-		(nextScale: number) => {
-			const viewport = viewportRef.current;
-			if (!viewport) return;
-			const rect = viewport.getBoundingClientRect();
-			zoomAtScreenPoint({ x: rect.width / 2, y: rect.height / 2 }, nextScale);
-		},
-		[zoomAtScreenPoint],
-	);
-
-	const resetView = useCallback(() => {
-		cameraRef.current = { offsetX: 0, offsetY: 0, scale: 1 };
-		scheduleTransform();
-		notify();
-	}, [notify, scheduleTransform]);
-
 	const fitToBounds = useCallback(
 		(bounds: FitBounds, paddingPx = 48) => {
 			const viewport = viewportRef.current;
@@ -205,8 +189,6 @@ export function useCamera() {
 		};
 	}, [applyTransform]);
 
-	const zoomPercent = Math.round(cameraRef.current.scale * 100);
-
 	return {
 		viewportRef,
 		worldRef,
@@ -214,9 +196,6 @@ export function useCamera() {
 		pan,
 		panToElement,
 		zoomAtScreenPoint,
-		setScaleCenterViewport,
-		resetView,
 		fitToBounds,
-		zoomPercent,
 	};
 }
