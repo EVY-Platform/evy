@@ -47,7 +47,6 @@ type CanvasViewportProps = {
 	contentStyle?: CSSProperties;
 };
 
-
 export function CanvasViewport({
 	children,
 	onBackgroundClick,
