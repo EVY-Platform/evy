@@ -40,9 +40,6 @@ jobs:
 
             - name: Start PostgreSQL
               run: |
-                  if ! command -v pg_ctlcluster &> /dev/null; then
-                    apt-get update -qq && apt-get install -y -qq --no-install-recommends postgresql > /dev/null
-                  fi
                   pg_ctlcluster 16 main start
                   su - postgres -c "psql -c \"CREATE USER evy WITH PASSWORD 'evy' CREATEDB;\""
                   su - postgres -c "createdb -O evy evy"
