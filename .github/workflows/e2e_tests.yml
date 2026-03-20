@@ -27,8 +27,24 @@ on:
 
 jobs:
     e2e_tests:
-        timeout-minutes: 2
+        timeout-minutes: 5
         runs-on: ubuntu-latest
+        container: mcr.microsoft.com/playwright:v1.58.1-noble
+
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    POSTGRES_USER: evy
+                    POSTGRES_PASSWORD: evy
+                    POSTGRES_DB: evy
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U evy -d evy"
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
 
         steps:
             - name: Checkout code
@@ -49,26 +65,17 @@ jobs:
               working-directory: web
               run: bun install
 
-            - name: Cache Playwright browsers
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cache/ms-playwright
-                  key: ${{ runner.os }}-playwright-${{ hashFiles('web/bun.lock', 'web/package.json') }}
-
-            - name: Setup Playwright
-              working-directory: web
-              run: bun run test:setup
-
             - name: Create root .env from example
               run: |
                   cp .env.example .env
+                  sed -i 's/^DB_DOMAIN=.*/DB_DOMAIN=postgres/' .env
 
             - name: Generate types
               run: bun types:generate
               working-directory: .
 
             - name: Run E2E tests
-              run: bash run-e2e.sh --skip-ios
+              run: bash run-e2e.sh --skip-ios --no-docker
 
             - name: Upload Playwright report
               uses: actions/upload-artifact@v4
