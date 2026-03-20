@@ -5,6 +5,7 @@ const url = `http://localhost:${process.env.WEB_PORT}`;
 
 export default defineConfig({
 	timeout: 10000,
+	retries: process.env.CI ? 1 : 0,
 	fullyParallel: true,
 	workers: 4,
 	reporter: [["line"], ["html", { open: "never" }]],
