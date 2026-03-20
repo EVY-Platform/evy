@@ -5,18 +5,8 @@ import type {
 } from "react";
 import { useCallback, useEffect, useRef } from "react";
 
-import { Minus, Plus, RotateCcw } from "lucide-react";
-
-import {
-	useCamera,
-	CAMERA_MAX_SCALE,
-	CAMERA_MIN_SCALE,
-} from "../hooks/useCamera";
-import {
-	CameraContext,
-	useCameraContext,
-} from "../state/contexts/CameraContext";
-import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+import { useCamera } from "../hooks/useCamera";
+import { CameraContext } from "../state/contexts/CameraContext";
 import type { ScreenPoint } from "../utils/coordinates";
 
 /** Ctrl/trackpad zoom: `exp(-deltaY * sensitivity)` */
@@ -52,72 +42,6 @@ type CanvasViewportProps = {
 	contentStyle?: CSSProperties;
 };
 
-function ZoomControls() {
-	const { zoomPercent, setScaleCenterViewport, resetView, getCamera } =
-		useCameraContext();
-
-	const zoomIn = useCallback(() => {
-		const next = Math.min(CAMERA_MAX_SCALE, getCamera().scale * 1.15);
-		setScaleCenterViewport(next);
-	}, [getCamera, setScaleCenterViewport]);
-
-	const zoomOut = useCallback(() => {
-		const next = Math.max(CAMERA_MIN_SCALE, getCamera().scale / 1.15);
-		setScaleCenterViewport(next);
-	}, [getCamera, setScaleCenterViewport]);
-
-	return (
-		<div
-			className="evy-absolute evy-flex evy-items-center evy-gap-1 evy-rounded-lg evy-border evy-border-gray evy-bg-white evy-px-2 evy-py-1"
-			style={{
-				bottom: "var(--size-4)",
-				right: "var(--size-4)",
-				zIndex: 40,
-				boxShadow: "var(--shadow-subtle)",
-			}}
-		>
-			<button
-				type="button"
-				className="evy-p-1 evy-rounded evy-hover:bg-gray-light evy-cursor-pointer"
-				onClick={zoomOut}
-				aria-label="Zoom out"
-			>
-				<Minus
-					className="evy-h-4 evy-w-4"
-					strokeWidth={LUCIDE_STROKE_WIDTH}
-					aria-hidden
-				/>
-			</button>
-			<span className="evy-min-w-12 evy-text-center evy-text-sm evy-tabular-nums">
-				{zoomPercent}%
-			</span>
-			<button
-				type="button"
-				className="evy-p-1 evy-rounded evy-hover:bg-gray-light evy-cursor-pointer"
-				onClick={zoomIn}
-				aria-label="Zoom in"
-			>
-				<Plus
-					className="evy-h-4 evy-w-4"
-					strokeWidth={LUCIDE_STROKE_WIDTH}
-					aria-hidden
-				/>
-			</button>
-			<button
-				type="button"
-				className="evy-p-1 evy-rounded evy-hover:bg-gray-light evy-cursor-pointer"
-				onClick={resetView}
-				aria-label="Reset zoom and pan"
-			>
-				<RotateCcw
-					className="evy-h-4 evy-w-4"
-					strokeWidth={LUCIDE_STROKE_WIDTH}
-					aria-hidden
-				/>
-			</button>
-		</div>
-	);
-}
 
 export function CanvasViewport({
 	children,
@@ -389,14 +313,6 @@ export function CanvasViewport({
 					style={{ zIndex: 20 }}
 					aria-hidden
 				/>
-				<div
-					className="evy-pointer-events-none evy-absolute evy-inset-0"
-					style={{ zIndex: 30 }}
-				>
-					<div className="evy-pointer-events-auto evy-inline-block">
-						<ZoomControls />
-					</div>
-				</div>
 			</div>
 		</CameraContext.Provider>
 	);
