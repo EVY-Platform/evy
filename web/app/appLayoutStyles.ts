@@ -33,14 +33,11 @@ export const pageWrapperHiddenStyle: CSSProperties = {
 	pointerEvents: "none",
 };
 
-const secondaryPageFrameBase: CSSProperties = {
+export const secondaryPageWrapperStyle: CSSProperties = {
 	...pagePhoneFrameBase,
 	marginLeft: "var(--size-4)",
-};
-
-export const secondaryPageWrapperStyle: CSSProperties = {
-	...secondaryPageFrameBase,
 	opacity: 1,
+	transition: undefined,
 };
 
 export const panelShadowStyle: CSSProperties = {

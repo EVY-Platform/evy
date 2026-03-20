@@ -219,8 +219,6 @@ function AppContent() {
 		return findRowInPages(secondarySheetRowId, pages);
 	}, [secondarySheetRowId, focusMode, pages]);
 
-	const showSecondary = Boolean(secondarySheetRow);
-
 	useEffect(() => {
 		return monitorForElements({
 			onDragStart({ location }: BaseEventPayload<ElementDragType>) {
@@ -269,18 +267,15 @@ function AppContent() {
 								>
 									<AppPage pageId={page.id} />
 								</CanvasPageFrame>
-								{focusMode &&
-									isActive &&
-									showSecondary &&
-									secondarySheetRow && (
-										<CanvasPageFrame
-											wrapperStyle={secondaryPageWrapperStyle}
-											className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-											data-testid="secondary-sheet-page"
-										>
-											<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
-										</CanvasPageFrame>
-									)}
+								{focusMode && isActive && secondarySheetRow && (
+									<CanvasPageFrame
+										wrapperStyle={secondaryPageWrapperStyle}
+										className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+										data-testid="secondary-sheet-page"
+									>
+										<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
+									</CanvasPageFrame>
+								)}
 							</Fragment>
 						);
 					})}
