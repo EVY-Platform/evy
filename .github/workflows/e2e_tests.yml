@@ -36,7 +36,7 @@ jobs:
 
         services:
             postgres:
-                image: postgres:16
+                image: postgres:17
                 env:
                     POSTGRES_USER: evy
                     POSTGRES_PASSWORD: evy
@@ -78,7 +78,7 @@ jobs:
               run: bash run-e2e.sh --skip-ios --no-docker
 
             - name: Upload Playwright report
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               if: always()
               with:
                   name: e2e-tests-playwright-report
