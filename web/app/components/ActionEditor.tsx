@@ -189,7 +189,7 @@ function ActionSummaryCard({
 				{conditions.length > 0 && (
 					<div className="evy-mb-1">
 						<span className="evy-text-sm evy-font-medium evy-text-gray">
-							Conditions (OR):
+							Conditions:
 						</span>
 						<ul className="evy-action-summary-list">
 							{conditions.map((cond) => (
