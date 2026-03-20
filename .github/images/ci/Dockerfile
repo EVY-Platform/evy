@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/playwright:v1.58.2-noble
 
-RUN apt-get update && apt-get install -y --no-install-recommends unzip \
+RUN apt-get update && apt-get install -y --no-install-recommends unzip postgresql \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL https://bun.sh/install | bash

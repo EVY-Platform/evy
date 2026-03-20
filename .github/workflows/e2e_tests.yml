@@ -34,24 +34,15 @@ jobs:
         runs-on: ubuntu-latest
         container: ghcr.io/evy-platform/evy-ci:playwright-1.58.2
 
-        services:
-            postgres:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: evy
-                    POSTGRES_PASSWORD: evy
-                    POSTGRES_DB: evy
-                ports:
-                    - 5432:5432
-                options: >-
-                    --health-cmd "pg_isready -U evy -d evy"
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-
         steps:
             - name: Checkout code
               uses: actions/checkout@v6
+
+            - name: Start PostgreSQL
+              run: |
+                  pg_ctlcluster 16 main start
+                  su - postgres -c "psql -c \"CREATE USER evy WITH PASSWORD 'evy' CREATEDB;\""
+                  su - postgres -c "createdb -O evy evy"
 
             - name: Install root dependencies
               run: bun install
@@ -66,9 +57,7 @@ jobs:
               run: bun install
 
             - name: Create root .env from example
-              run: |
-                  cp .env.example .env
-                  sed -i 's/^DB_DOMAIN=.*/DB_DOMAIN=postgres/' .env
+              run: cp .env.example .env
 
             - name: Generate types
               run: bun types:generate
