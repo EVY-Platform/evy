@@ -36,14 +36,14 @@ graph TD
         CancelOverlay[CancelOverlay]
         CanvasViewport[CanvasViewport]
         CanvasPageFrame[CanvasPageFrame]
-        SecondarySheetPage[SecondarySheetPage]
         ConfigPanel[ConfigurationPanel]
-    end
 
-    subgraph pages [Page Content]
-        AppPage[AppPage]
-        ActionEditor[ActionEditor]
-        ActionPopup[ActionPopup]
+        subgraph pages [Page Content]
+            AppPage[AppPage]
+            SecondarySheetPage[SecondarySheetPage]
+            ActionEditor[ActionEditor]
+            ActionPopup[ActionPopup]
+        end
     end
 
     subgraph hooks [Hooks]
@@ -100,7 +100,6 @@ graph TD
     App --> AppContent
     AppContent --> RowsPanel
     AppContent --> CanvasViewport
-    AppContent --> SecondarySheetPage
     AppContent --> ConfigPanel
     AppContent --> DropHandler
 
@@ -112,6 +111,7 @@ graph TD
     CanvasViewport --> CanvasPageFrame
     CanvasPageFrame --> useIntersectVisible
     CanvasPageFrame --> AppPage
+    CanvasPageFrame --> SecondarySheetPage
 
     AppPage --> usePageDropTarget
     AppPage --> DraggableRowContainer
