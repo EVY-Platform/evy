@@ -6,8 +6,8 @@ import {
 import resolveIcon from "../../icons/resolveIcon";
 
 const positionStyles: Record<"left" | "right", CSSProperties> = {
-	left: { insetInlineStart: 0, paddingInlineStart: "var(--spacing-2)" },
-	right: { insetInlineEnd: 0, paddingInlineEnd: "var(--spacing-2)" },
+	left: { insetInlineStart: 0, paddingInlineStart: "var(--size-2)" },
+	right: { insetInlineEnd: 0, paddingInlineEnd: "var(--size-2)" },
 };
 
 export default function InlineIcon({

@@ -10,7 +10,7 @@ const wrapperStyle: React.CSSProperties = {
 
 const iconStyle: React.CSSProperties = {
 	position: "absolute",
-	left: "1rem",
+	left: "var(--size-4)",
 	width: 14,
 	height: 14,
 	pointerEvents: "none",
@@ -19,10 +19,10 @@ const iconStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
 	width: "100%",
-	paddingTop: "0.75rem",
-	paddingBottom: "0.75rem",
-	paddingLeft: "calc(14px + 1rem + 0.5rem)",
-	paddingRight: "calc(20px + 1rem)",
+	paddingTop: "var(--size-3)",
+	paddingBottom: "var(--size-3)",
+	paddingLeft: "calc(14px + var(--size-4) + var(--size-2))",
+	paddingRight: "calc(20px + var(--size-4))",
 	border: "none",
 	borderRadius: 0,
 	boxShadow: "none",
@@ -30,7 +30,7 @@ const inputStyle: React.CSSProperties = {
 
 const clearStyle: React.CSSProperties = {
 	position: "absolute",
-	right: "1rem",
+	right: "var(--size-4)",
 	display: "flex",
 	alignItems: "center",
 	justifyContent: "center",

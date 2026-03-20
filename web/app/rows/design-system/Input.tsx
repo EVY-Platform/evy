@@ -4,9 +4,9 @@ import { parseText } from "../../utils/evyInterpreter";
 import { border } from "./border";
 
 const placeholderBase: CSSProperties = {
-	paddingLeft: "var(--spacing-2)",
+	paddingLeft: "var(--size-2)",
 	color: "var(--color-evy-gray)",
-	columnGap: "var(--spacing-1)",
+	columnGap: "var(--size-1)",
 };
 
 export default function Input({

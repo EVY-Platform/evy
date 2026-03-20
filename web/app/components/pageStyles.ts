@@ -8,5 +8,5 @@ export const baseTitleStyle: CSSProperties = {
 	textAlign: "center",
 	fontWeight: "var(--font-semibold)",
 	fontSize: "var(--text-xl)",
-	padding: "var(--spacing-2) var(--spacing-4)",
+	padding: "var(--size-2) var(--size-4)",
 };

@@ -27,7 +27,7 @@ const breadcrumbScrollCss = `
 	flex-direction: row;
 	flex-wrap: nowrap;
 	align-items: center;
-	gap: var(--spacing-2);
+	gap: var(--size-2);
 	white-space: nowrap;
 	min-height: var(--size-navbar-control);
 }
@@ -40,9 +40,9 @@ const breadcrumbScrollCss = `
 	border: none;
 	border-radius: var(--radius-sm);
 	cursor: pointer;
-	padding: 0 var(--spacing-2);
+	padding: 0 var(--size-2);
 	min-height: var(--size-navbar-control);
-	max-width: 12rem;
+	max-width: var(--size-48);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

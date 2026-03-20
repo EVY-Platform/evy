@@ -25,11 +25,11 @@ const createFlowDialogCss = `
 	background: var(--color-white);
 	border-radius: var(--radius-md);
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-	width: min(400px, calc(100vw - 2rem));
-	padding: var(--spacing-4);
+	width: min(400px, calc(100vw - var(--size-8)));
+	padding: var(--size-4);
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-3);
+	gap: var(--size-3);
 }
 .evy-create-flow-title {
 	font-size: var(--text-md);
@@ -39,7 +39,7 @@ const createFlowDialogCss = `
 .evy-create-flow-field {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-1);
+	gap: var(--size-1);
 }
 .evy-create-flow-label {
 	font-size: var(--text-sm);
@@ -59,12 +59,12 @@ const createFlowDialogCss = `
 .evy-create-flow-footer {
 	display: flex;
 	justify-content: flex-end;
-	gap: var(--spacing-2);
+	gap: var(--size-2);
 }
 .evy-create-flow-btn {
 	font-size: var(--text-sm);
 	font-family: inherit;
-	padding: 8px 16px;
+	padding: var(--size-2) var(--size-4);
 	border-radius: var(--radius-sm);
 	border: 1px solid var(--color-gray-border);
 	cursor: pointer;

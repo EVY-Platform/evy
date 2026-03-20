@@ -4,7 +4,7 @@ import type { SDUI_RowAction } from "evy-types";
 
 const actionSummaryCss = `
 .evy-action-summary {
-	padding: var(--spacing-2);
+	padding: var(--size-2);
 	background-color: var(--color-evy-gray-light);
 	border: 1px solid var(--color-gray-border);
 	border-radius: var(--radius-sm);
@@ -12,7 +12,7 @@ const actionSummaryCss = `
 .evy-action-summary-body {
 	display: block;
 	width: 100%;
-	padding: var(--spacing-2);
+	padding: var(--size-2);
 	background: var(--color-white);
 	border: 1px solid var(--color-gray-border);
 	border-radius: var(--radius-sm);
@@ -26,7 +26,7 @@ const actionSummaryCss = `
 }
 .evy-action-summary-list {
 	margin: 2px 0 0 0;
-	padding-left: 16px;
+	padding-left: var(--size-4);
 	list-style: disc;
 }
 .evy-action-summary-list li {

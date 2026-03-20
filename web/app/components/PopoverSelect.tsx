@@ -8,7 +8,7 @@ const popoverCss = `
 	display: inline-flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 4px;
+	gap: var(--size-1);
 	font-size: var(--text-sm);
 	font-family: inherit;
 	text-align: left;
@@ -63,7 +63,7 @@ const popoverCss = `
 .evy-popover-option {
 	display: block;
 	width: 100%;
-	padding: 4px 8px;
+	padding: var(--size-1) var(--size-2);
 	font-size: var(--text-sm);
 	font-family: inherit;
 	text-align: left;
@@ -99,7 +99,7 @@ const popoverCss = `
 	width: auto;
 	max-width: 14rem;
 	min-height: var(--size-navbar-control);
-	padding: 0 2px 0 var(--spacing-2);
+	padding: 0 2px 0 var(--size-2);
 	font-weight: var(--font-semibold);
 	line-height: 1.5;
 	color: var(--color-evy-blue);
