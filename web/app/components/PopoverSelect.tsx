@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ChevronDown } from "lucide-react";
 
 const popoverCss = `
 .evy-popover-trigger,
@@ -7,7 +8,7 @@ const popoverCss = `
 	display: inline-flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 4px;
+	gap: var(--size-1);
 	font-size: var(--text-sm);
 	font-family: inherit;
 	text-align: left;
@@ -62,7 +63,7 @@ const popoverCss = `
 .evy-popover-option {
 	display: block;
 	width: 100%;
-	padding: 4px 8px;
+	padding: var(--size-1) var(--size-2);
 	font-size: var(--text-sm);
 	font-family: inherit;
 	text-align: left;
@@ -88,11 +89,17 @@ const popoverCss = `
 	border-top: 1px solid var(--color-gray-border);
 	margin-top: 2px;
 }
+.evy-popover-divider {
+	border: none;
+	border-top: 1px solid var(--color-gray-border);
+	margin: 6px 0 0;
+	height: 0;
+}
 .evy-popover-trigger--breadcrumb {
 	width: auto;
 	max-width: 14rem;
 	min-height: var(--size-navbar-control);
-	padding: 0 2px 0 var(--spacing-2);
+	padding: 0 2px 0 var(--size-2);
 	font-weight: var(--font-semibold);
 	line-height: 1.5;
 	color: var(--color-evy-blue);
@@ -125,31 +132,46 @@ export type PopoverOption = {
 	value: string;
 	label: string;
 	separator?: string;
+	/** Renders a horizontal rule above this option */
+	dividerBefore?: boolean;
+	/**
+	 * When true, selecting calls `onAction` instead of `onChange` and does not change the value.
+	 */
+	action?: boolean;
 };
 
 type PopoverSelectProps = {
 	options: PopoverOption[];
 	value: string;
 	onChange: (value: string) => void;
+	/** Invoked for options with `action: true` */
+	onAction?: (value: string) => void;
 	ariaLabel: string;
 	placeholder?: string;
 	/** Navbar-style trigger: blue link + chevron, no box border */
 	variant?: "default" | "breadcrumb";
 	id?: string;
+	/** When true, the menu also opens on pointer hover (e.g. flow selector). */
+	openOnHover?: boolean;
 };
+
+const HOVER_CLOSE_DELAY_MS = 200;
 
 export function PopoverSelect({
 	options,
 	value,
 	onChange,
+	onAction,
 	ariaLabel,
 	placeholder = "--",
 	variant = "default",
 	id,
+	openOnHover = false,
 }: PopoverSelectProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
+	const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [position, setPosition] = useState<{
 		top: number;
 		left: number;
@@ -167,9 +189,29 @@ export function PopoverSelect({
 		setIsOpen(true);
 	}, []);
 
-	const close = useCallback(() => {
-		setIsOpen(false);
+	const clearHoverCloseTimer = useCallback(() => {
+		if (hoverCloseTimerRef.current !== null) {
+			clearTimeout(hoverCloseTimerRef.current);
+			hoverCloseTimerRef.current = null;
+		}
 	}, []);
+
+	const close = useCallback(() => {
+		clearHoverCloseTimer();
+		setIsOpen(false);
+	}, [clearHoverCloseTimer]);
+
+	const scheduleHoverClose = useCallback(() => {
+		clearHoverCloseTimer();
+		hoverCloseTimerRef.current = setTimeout(() => {
+			hoverCloseTimerRef.current = null;
+			close();
+		}, HOVER_CLOSE_DELAY_MS);
+	}, [clearHoverCloseTimer, close]);
+
+	useEffect(() => {
+		return () => clearHoverCloseTimer();
+	}, [clearHoverCloseTimer]);
 
 	useEffect(() => {
 		if (!isOpen || !menuRef.current || !position) return;
@@ -210,12 +252,39 @@ export function PopoverSelect({
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, [isOpen, close]);
 
+	const handleTriggerPointerEnter = useCallback(() => {
+		if (!openOnHover) return;
+		clearHoverCloseTimer();
+		open();
+	}, [openOnHover, clearHoverCloseTimer, open]);
+
+	const handleTriggerPointerLeave = useCallback(() => {
+		if (!openOnHover) return;
+		scheduleHoverClose();
+	}, [openOnHover, scheduleHoverClose]);
+
+	const handleMenuPointerEnter = useCallback(() => {
+		if (!openOnHover) return;
+		clearHoverCloseTimer();
+	}, [openOnHover, clearHoverCloseTimer]);
+
+	const handleMenuPointerLeave = useCallback(() => {
+		if (!openOnHover) return;
+		scheduleHoverClose();
+	}, [openOnHover, scheduleHoverClose]);
+
 	const handleSelect = useCallback(
 		(optionValue: string) => {
+			const opt = options.find((o) => o.value === optionValue);
+			if (opt?.action) {
+				onAction?.(optionValue);
+				close();
+				return;
+			}
 			onChange(optionValue);
 			close();
 		},
-		[onChange, close],
+		[onChange, onAction, close, options],
 	);
 
 	const selectedOption = options.find((o) => o.value === value);
@@ -237,7 +306,15 @@ export function PopoverSelect({
 				aria-label={ariaLabel}
 				aria-expanded={isOpen}
 				data-value={value}
-				onClick={() => (isOpen ? close() : open())}
+				onMouseEnter={handleTriggerPointerEnter}
+				onMouseLeave={handleTriggerPointerLeave}
+				onClick={() => {
+					if (isOpen) {
+						close();
+					} else {
+						open();
+					}
+				}}
 				className={
 					variant === "breadcrumb"
 						? "evy-popover-trigger--breadcrumb"
@@ -245,15 +322,13 @@ export function PopoverSelect({
 				}
 			>
 				<span className="evy-popover-text">{displayText}</span>
-				<svg
+				<ChevronDown
 					className="evy-popover-chevron"
-					width="10"
-					height="10"
-					viewBox="0 0 12 12"
-					aria-hidden="true"
-				>
-					<path fill="currentColor" d="M6 9L1 4h10z" />
-				</svg>
+					width={10}
+					height={10}
+					strokeWidth={2}
+					aria-hidden
+				/>
 			</button>
 			{isOpen &&
 				position &&
@@ -274,6 +349,8 @@ export function PopoverSelect({
 							id={listboxDomId}
 							aria-label={ariaLabel}
 							aria-labelledby={variant === "breadcrumb" && id ? id : undefined}
+							onMouseEnter={handleMenuPointerEnter}
+							onMouseLeave={handleMenuPointerLeave}
 						>
 							{options.map((opt) => (
 								<span key={opt.value}>
@@ -282,10 +359,11 @@ export function PopoverSelect({
 											{opt.separator}
 										</span>
 									)}
+									{opt.dividerBefore && <hr className="evy-popover-divider" />}
 									<button
 										type="button"
 										role="option"
-										aria-selected={opt.value === value}
+										aria-selected={opt.action ? false : opt.value === value}
 										onClick={() => handleSelect(opt.value)}
 										className="evy-popover-option"
 									>

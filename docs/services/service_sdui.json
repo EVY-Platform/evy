@@ -53,7 +53,7 @@
 						"view": {
 							"content": {
 								"title": "",
-								"icon": "::photo.badge.plus.fill::",
+								"icon": "::image-plus::",
 								"photos": "{photo_ids}",
 								"content": "Add photos",
 								"subtitle": "Photos: {count(photo_ids)}/10 - Chose your listing's main photo first."
@@ -67,9 +67,9 @@
 						"type": "Input",
 						"view": {
 							"content": {
-								"title": "A row title ::star.square.on.square.fill::",
+								"title": "A row title ::star::",
 								"value": "{title}",
-								"placeholder": "My iPhone ::star.square.on.square.fill:: 20"
+								"placeholder": "My iPhone ::star:: 20"
 							}
 						},
 						"destination": "{title}",

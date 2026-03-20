@@ -1,5 +1,6 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { Trash2 } from "lucide-react";
 import type { SDUI_RowAction } from "evy-types";
 
 const popupCss = `
@@ -23,28 +24,28 @@ const popupCss = `
 	overflow: hidden;
 }
 .evy-popup-header {
-	padding: var(--spacing-4) var(--spacing-4);
+	padding: var(--size-4) var(--size-4);
 	border-bottom: 1px solid var(--color-gray-border);
 }
 .evy-popup-body {
-	padding: var(--spacing-4);
+	padding: var(--size-4);
 	overflow-y: auto;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-3);
+	gap: var(--size-3);
 }
 .evy-popup-footer {
-	padding: var(--spacing-3) var(--spacing-4);
+	padding: var(--size-3) var(--size-4);
 	border-top: 1px solid var(--color-gray-border);
 	display: flex;
 	justify-content: flex-end;
-	gap: var(--spacing-2);
+	gap: var(--size-2);
 }
 .evy-popup-btn {
 	font-size: var(--text-md);
 	font-family: inherit;
-	padding: 8px 20px;
+	padding: var(--size-2) 20px;
 	border-radius: var(--radius-sm);
 	border: 1px solid var(--color-gray-border);
 	cursor: pointer;
@@ -69,19 +70,19 @@ const popupCss = `
 	background: var(--color-evy-gray-light);
 	border: 1px solid var(--color-gray-border);
 	border-radius: var(--radius-md);
-	padding: var(--spacing-3);
+	padding: var(--size-3);
 }
 .evy-popup-section-title {
 	font-size: var(--text-sm);
 	font-weight: var(--font-semibold);
 	color: var(--color-black);
-	margin-bottom: var(--spacing-2);
+	margin-bottom: var(--size-2);
 	display: block;
 }
 .evy-popup-branches {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: var(--spacing-3);
+	gap: var(--size-3);
 }
 .evy-condition-row {
 	display: grid;
@@ -495,7 +496,11 @@ function ConditionEditor({
 									onClick={() => handleRemoveCondition(rowIndex)}
 									aria-label={`Remove condition ${rowIndex + 1}`}
 								>
-									<img src="/bin.svg" alt="" />
+									<Trash2
+										className="evy-h-4 evy-w-4"
+										strokeWidth={2}
+										aria-hidden
+									/>
 								</button>
 							)}
 						</div>

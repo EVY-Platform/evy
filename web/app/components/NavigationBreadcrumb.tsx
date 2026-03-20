@@ -1,17 +1,16 @@
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 
+import parseIconText from "../icons/parseIconText";
+import { CreateFlowDialog } from "./CreateFlowDialog";
 import { PopoverSelect } from "./PopoverSelect";
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
+import {
+	breadcrumbLabelForPage,
+	breadcrumbLabelForRow,
+	splitCamelCaseToWords,
+} from "../utils/navLabels";
 import { findRowInPages } from "../utils/rowTree";
-
-function breadcrumbLabelForRow(row: Row): string {
-	const title = row.config.view.content.title;
-	if (typeof title === "string" && title.trim() !== "") {
-		return title;
-	}
-	return row.config.type;
-}
 
 const breadcrumbScrollCss = `
 .evy-nav-breadcrumb-scroll {
@@ -28,7 +27,7 @@ const breadcrumbScrollCss = `
 	flex-direction: row;
 	flex-wrap: nowrap;
 	align-items: center;
-	gap: var(--spacing-2);
+	gap: var(--size-2);
 	white-space: nowrap;
 	min-height: var(--size-navbar-control);
 }
@@ -41,9 +40,9 @@ const breadcrumbScrollCss = `
 	border: none;
 	border-radius: var(--radius-sm);
 	cursor: pointer;
-	padding: 0 var(--spacing-2);
+	padding: 0 var(--size-2);
 	min-height: var(--size-navbar-control);
-	max-width: 12rem;
+	max-width: var(--size-48);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -76,6 +75,8 @@ function Separator() {
 	);
 }
 
+const CREATE_FLOW_OPTION_VALUE = "__evy_create_flow__";
+
 export function NavigationBreadcrumb() {
 	const {
 		flows,
@@ -87,6 +88,7 @@ export function NavigationBreadcrumb() {
 		dispatchRow,
 	} = useContext(AppContext);
 
+	const [createFlowOpen, setCreateFlowOpen] = useState(false);
 	const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
 	const activeFlow = flows.find((f) => f.id === activeFlowId);
@@ -108,7 +110,18 @@ export function NavigationBreadcrumb() {
 	}, [breadcrumbScrollKey]);
 
 	const flowOptions = useMemo(
-		() => flows.map((f) => ({ value: f.id, label: f.name })),
+		() => [
+			...flows.map((f) => ({
+				value: f.id,
+				label: splitCamelCaseToWords(f.name),
+			})),
+			{
+				value: CREATE_FLOW_OPTION_VALUE,
+				label: "Create new flow",
+				dividerBefore: true,
+				action: true,
+			},
+		],
 		[flows],
 	);
 
@@ -133,6 +146,13 @@ export function NavigationBreadcrumb() {
 
 	return (
 		<>
+			<CreateFlowDialog
+				open={createFlowOpen}
+				onClose={() => setCreateFlowOpen(false)}
+				onCreate={(name) => {
+					dispatchRow({ type: "CREATE_FLOW", name });
+				}}
+			/>
 			<style>{breadcrumbScrollCss}</style>
 			<div
 				ref={scrollContainerRef}
@@ -148,8 +168,14 @@ export function NavigationBreadcrumb() {
 						onChange={(flowId) => {
 							dispatchRow({ type: "SET_ACTIVE_FLOW", flowId });
 						}}
+						onAction={(flowId) => {
+							if (flowId === CREATE_FLOW_OPTION_VALUE) {
+								setCreateFlowOpen(true);
+							}
+						}}
 						ariaLabel="Active flow"
 						placeholder="Select a flow"
+						openOnHover
 					/>
 
 					{activePage && (
@@ -159,7 +185,7 @@ export function NavigationBreadcrumb() {
 								type="button"
 								className={`evy-nav-breadcrumb-link evy-shrink-0${focusMode ? " evy-nav-breadcrumb-link--focus-page" : ""}`}
 								aria-current={focusMode ? "page" : undefined}
-								aria-label={`Select page ${activePage.title}`}
+								aria-label={`Select page ${breadcrumbLabelForPage(activePage, pages)}`}
 								onClick={() => {
 									dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
 								}}
@@ -178,7 +204,7 @@ export function NavigationBreadcrumb() {
 									}
 								}}
 							>
-								{activePage.title}
+								{breadcrumbLabelForPage(activePage, pages)}
 							</button>
 						</>
 					)}
@@ -201,7 +227,7 @@ export function NavigationBreadcrumb() {
 									onClick={() => navigateBreadcrumb(stackLength)}
 									aria-label={ariaLabel}
 								>
-									{label}
+									{parseIconText(label)}
 								</button>
 							</span>
 						);

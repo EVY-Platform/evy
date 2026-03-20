@@ -14,8 +14,8 @@ export default function RadioButton({
 					: "evy-bg-gray-dark evy-text-white evy-hover:bg-gray"
 			}`}
 			style={{
-				paddingLeft: "var(--spacing-2)",
-				paddingRight: "var(--spacing-2)",
+				paddingLeft: "var(--size-2)",
+				paddingRight: "var(--size-2)",
 			}}
 		>
 			{label}

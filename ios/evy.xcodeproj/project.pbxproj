@@ -21,6 +21,7 @@
 		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
 		731988822C271BBD0035E094 /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 731988812C271BBD0035E094 /* JsonRPC */; };
 		731988852C271BC40035E094 /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 731988842C271BC40035E094 /* Serializable */; };
+		73F4B0032F40B00100000001 /* LucideIcons in Frameworks */ = {isa = PBXBuildFile; productRef = 73F4B0022F40B00100000001 /* LucideIcons */; };
 		7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */; };
 		7320F59A2C300B8B00297C48 /* EVYTextActionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */; };
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
@@ -182,6 +183,7 @@
 			files = (
 				731988822C271BBD0035E094 /* JsonRPC in Frameworks */,
 				731988852C271BC40035E094 /* Serializable in Frameworks */,
+				73F4B0032F40B00100000001 /* LucideIcons in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -461,6 +463,7 @@
 			packageProductDependencies = (
 				731988812C271BBD0035E094 /* JsonRPC */,
 				731988842C271BC40035E094 /* Serializable */,
+				73F4B0022F40B00100000001 /* LucideIcons */,
 			);
 			productName = evy;
 			productReference = 737C6AA22B2706890093D00C /* evy.app */;
@@ -537,6 +540,7 @@
 			packageReferences = (
 				731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */,
 				731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */,
+				73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */,
 			);
 			productRefGroup = 737C6AA32B2706890093D00C /* Products */;
 			projectDirPath = "";
@@ -1006,6 +1010,14 @@
 				minimumVersion = 0.3.1;
 			};
 		};
+		73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/JakubMazur/lucide-icons-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.510.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1018,6 +1030,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */;
 			productName = Serializable;
+		};
+		73F4B0022F40B00100000001 /* LucideIcons */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */;
+			productName = LucideIcons;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

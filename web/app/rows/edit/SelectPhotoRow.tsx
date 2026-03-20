@@ -11,7 +11,7 @@ export default defineRow("SelectPhotoRow", {
 			content: {
 				title: "Select photo row title",
 				subtitle: "Photos: 0/10",
-				icon: "::photo.badge.plus.fill::",
+				icon: "::image-plus::",
 				content: "Add photos",
 				photos: "{item.photo_ids}",
 			},
@@ -22,7 +22,7 @@ export default defineRow("SelectPhotoRow", {
 		<RowLayout title={row.config.view.content.title}>
 			<div
 				className="evy-rounded-md evy-border evy-text-sm"
-				style={{ padding: "var(--spacing-8)" }}
+				style={{ padding: "var(--size-8)" }}
 			>
 				<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
 					<EVYText

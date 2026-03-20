@@ -204,7 +204,7 @@ class ImageManager {
 		
 		return EVYSelectPhoto(title: "Photos Title",
 							  subtitle: "Photos: {count(photo_ids)}/10 - Chose your listing’s main photo first.",
-							  icon: "::photo.badge.plus.fill::",
+							  icon: "::image-plus::",
 							  content: "A great subtitle",
 							  data: "{photo_ids}",
 							  destination: "{photo_ids}")

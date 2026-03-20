@@ -1,3 +1,5 @@
+import { Search, X } from "lucide-react";
+
 const wrapperStyle: React.CSSProperties = {
 	position: "relative",
 	display: "flex",
@@ -8,7 +10,7 @@ const wrapperStyle: React.CSSProperties = {
 
 const iconStyle: React.CSSProperties = {
 	position: "absolute",
-	left: "1rem",
+	left: "var(--size-4)",
 	width: 14,
 	height: 14,
 	pointerEvents: "none",
@@ -17,10 +19,10 @@ const iconStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
 	width: "100%",
-	paddingTop: "0.75rem",
-	paddingBottom: "0.75rem",
-	paddingLeft: "calc(14px + 1rem + 0.5rem)",
-	paddingRight: "calc(20px + 1rem)",
+	paddingTop: "var(--size-3)",
+	paddingBottom: "var(--size-3)",
+	paddingLeft: "calc(14px + var(--size-4) + var(--size-2))",
+	paddingRight: "calc(20px + var(--size-4))",
 	border: "none",
 	borderRadius: 0,
 	boxShadow: "none",
@@ -28,7 +30,7 @@ const inputStyle: React.CSSProperties = {
 
 const clearStyle: React.CSSProperties = {
 	position: "absolute",
-	right: "1rem",
+	right: "var(--size-4)",
 	display: "flex",
 	alignItems: "center",
 	justifyContent: "center",
@@ -52,7 +54,7 @@ export function SearchInput({
 }) {
 	return (
 		<div style={wrapperStyle} className="evy-bg-white">
-			<img src="/search.svg" alt="" aria-hidden="true" style={iconStyle} />
+			<Search style={iconStyle} aria-hidden strokeWidth={2} />
 			<input
 				type="text"
 				placeholder={placeholder}
@@ -68,21 +70,7 @@ export function SearchInput({
 					onClick={() => onChange("")}
 					aria-label="Clear search"
 				>
-					<svg
-						width="8"
-						height="8"
-						viewBox="0 0 10 10"
-						fill="none"
-						aria-hidden="true"
-						role="img"
-					>
-						<path
-							d="M1 1L9 9M9 1L1 9"
-							stroke="white"
-							strokeWidth="1.5"
-							strokeLinecap="round"
-						/>
-					</svg>
+					<X width={8} height={8} strokeWidth={2} color="white" aria-hidden />
 				</button>
 			)}
 		</div>

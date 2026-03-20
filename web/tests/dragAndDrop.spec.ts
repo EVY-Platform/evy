@@ -365,7 +365,7 @@ test.describe("Drag & Drop UX", () => {
 				rowBox.y + rowBox.height / 2 + 10,
 			);
 
-			const deleteOverlay = page.locator('img[alt="Delete"]');
+			const deleteOverlay = page.getByRole("button", { name: "Delete" });
 			await expect(deleteOverlay).toBeVisible();
 
 			await page.mouse.up();

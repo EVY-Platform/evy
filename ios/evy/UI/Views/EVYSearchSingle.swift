@@ -5,6 +5,7 @@
 //  Created by Geoffroy Lesage on 15/9/2024.
 //
 
+import LucideIcons
 import SwiftUI
 
 struct EVYSearchSingle: View {
@@ -56,7 +57,7 @@ struct EVYSearchSingle: View {
             // Search bar
             HStack {
                 if value.isEmpty {
-                    Image(systemName: "magnifyingglass")
+                    Image(uiImage: Lucide.search)
                         .padding(.leading, Constants.minorPadding)
                 }
                 
@@ -64,7 +65,7 @@ struct EVYSearchSingle: View {
                     .font(.evy)
             
                 if !value.isEmpty {
-                    Image(systemName: "xmark")
+                    Image(uiImage: Lucide.x)
                         .padding(.trailing, Constants.minorPadding)
                         .onTapGesture { unselect() }
                 }

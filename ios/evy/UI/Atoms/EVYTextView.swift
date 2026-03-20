@@ -5,7 +5,9 @@
 //  Created by Geoffroy Lesage on 18/12/2023.
 //
 
+import LucideIcons
 import SwiftUI
+import UIKit
 
 public enum EVYTextStyle: String {
     case body
@@ -17,7 +19,9 @@ public enum EVYTextStyle: String {
 
 struct EVYTextView: View {
 	@Environment(\.colorScheme) var colorScheme
-	
+
+	private static let iconTokenRegex = try! Regex("::[a-zA-Z0-9-]+::")
+
 	var text: EVYState<EVYValue>
     let style: EVYTextStyle
     
@@ -53,12 +57,12 @@ struct EVYTextView: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: .zero, content: {
-            if text.value.prefix != nil {
-                parsedText(text.value.prefix!, style)
+            if let prefix = text.value.prefix {
+                parsedText(prefix, style)
             }
             parsedText(text.value.value, style)
-            if text.value.suffix != nil {
-                parsedText(text.value.suffix!, style)
+            if let suffix = text.value.suffix {
+                parsedText(suffix, style)
             }
         })
     }
@@ -76,32 +80,35 @@ struct EVYTextView: View {
 			return Text(input)
 		}
 
-		let regex = try! Regex("::[a-zA-Z.]+::")
-			if let match = input.firstMatch(of: regex) {
+		if let match = input.firstMatch(of: Self.iconTokenRegex) {
 			let imageStart = match.range.lowerBound
 			let imageEnd = match.range.upperBound
-			
-			let imageName = match.0.trimmingCharacters(in: CharacterSet(charactersIn: ":"))
-			let imageText = Text("\(Image(systemName: imageName))")
-			
-			let hasPrefix = imageStart > input.startIndex
-			let hasSuffix = imageEnd < input.endIndex
-			
-			if hasPrefix && hasSuffix {
-				let start = String(input.prefix(upTo: imageStart))
-				let end = String(input.suffix(from: imageEnd))
-				return parsedText(start, style) + imageText + parsedText(end, style)
-			} else if hasPrefix {
-				let start = String(input.prefix(upTo: imageStart))
-				return parsedText(start, style) + imageText
-			} else if hasSuffix {
-				let end = String(input.suffix(from: imageEnd))
-				return imageText + parsedText(end, style)
+
+			let matchString = String(match.0)
+			let imageName = matchString.trimmingCharacters(in: CharacterSet(charactersIn: ":"))
+			let imageText: Text
+			if let uiImage = UIImage(lucideId: imageName) {
+				imageText = Text(Image(uiImage: uiImage).renderingMode(.template))
 			} else {
-				return imageText
+				imageText = styledPlainText(matchString, style)
 			}
+
+			var result = imageText
+			if imageStart > input.startIndex {
+				let start = String(input.prefix(upTo: imageStart))
+				result = parsedText(start, style) + result
+			}
+			if imageEnd < input.endIndex {
+				let end = String(input.suffix(from: imageEnd))
+				result = result + parsedText(end, style)
+			}
+			return result
 		}
 		
+		return styledPlainText(input, style)
+	}
+	
+	private func styledPlainText(_ input: String, _ style: EVYTextStyle) -> Text {
 		switch style {
 		case .title:
 			return Text(input)
@@ -130,15 +137,15 @@ struct EVYTextView: View {
 	} view: {
 		try! await EVY.createItem()
 		return VStack {
-			EVYTextView("::star.square.on.square.fill::")
+			EVYTextView("::star::")
 			EVYTextView("Body style", style: EVYTextStyle.body)
 			EVYTextView("Info style", style: EVYTextStyle.info)
 			EVYTextView("Title style", style: EVYTextStyle.title)
 			EVYButton(label: "button", action: {})
 			EVYTextView("Action", style: EVYTextStyle.action)
-			EVYTextView("{item.title} ::star.square.on.square.fill:: and more text")
+			EVYTextView("{item.title} ::star:: and more text")
 			EVYTextView("count: {count(item.photo_ids)}")
-			EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star.square.on.square.fill::")
+			EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star::")
 		}
 	}
 }

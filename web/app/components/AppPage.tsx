@@ -72,7 +72,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	return (
 		<div
 			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
-			style={{ padding: "var(--spacing-30px)" }}
+			style={{ padding: "var(--size-30px)" }}
 		>
 			{footer ? (
 				<div

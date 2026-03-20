@@ -37,7 +37,7 @@ const canvasBaseStyle: CSSProperties = {
 
 const canvasStyle: CSSProperties = {
 	...canvasBaseStyle,
-	gap: "var(--spacing-4)",
+	gap: "var(--size-4)",
 	transition: transition([{ prop: "gap" }]),
 };
 
@@ -93,7 +93,7 @@ const pageWrapperFocusedWithSecondaryStyle: CSSProperties = {
 const secondaryPageWrapperStyle: CSSProperties = {
 	...pageWrapperBaseStyle,
 	width: "var(--size-336)",
-	marginLeft: "var(--spacing-4)",
+	marginLeft: "var(--size-4)",
 	opacity: 1,
 	transition: pageWrapperTransition(100),
 };

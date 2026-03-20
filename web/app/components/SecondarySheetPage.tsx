@@ -46,7 +46,7 @@ export default function SecondarySheetPage({
 	return (
 		<div
 			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
-			style={{ padding: "var(--spacing-30px)" }}
+			style={{ padding: "var(--size-30px)" }}
 		>
 			<div
 				className="evy-overflow-scroll evy-h-full evy-pt-4 evy-bg-white"

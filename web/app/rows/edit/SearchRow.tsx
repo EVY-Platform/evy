@@ -21,11 +21,10 @@ export default defineRow("SearchRow", {
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
 			<div className="evy-relative">
-				<InlineIcon icon="/search.svg" alt="Search" />
+				<InlineIcon icon="::search::" alt="Search" />
 				<Input
 					value={row.config.view.data ?? ""}
 					placeholder={row.config.view.content.placeholder ?? ""}
-					offset="left"
 				/>
 			</div>
 		</RowLayout>

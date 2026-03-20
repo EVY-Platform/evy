@@ -76,7 +76,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
     -   eg: "title": "My title", could also be "title": "{item.title}"
 -   All strings can include:
     -   **variables** surrounded with curley braces: "Hello {name}, how are you?"
-    -   **icons** surrounded with double colons: "EVY ::evy_icon:: is the best!"
+    -   **icons** surrounded with double colons ([Lucide](https://lucide.dev/icons) names): "EVY ::image-plus:: is the best!"
     -   **emojis** prefixed with a colon: "I like :dog a lot"
 -   [ x ]
     -   Denotes a type array of x

@@ -5,6 +5,7 @@
 //  Created by Geoffroy Lesage on 15/9/2024.
 //
 
+import LucideIcons
 import SwiftUI
 
 struct EVYSearchMultiple: View {
@@ -77,7 +78,7 @@ struct EVYSearchMultiple: View {
         VStack {
             // Search bar
             HStack {
-                Image(systemName: "magnifyingglass")
+                Image(uiImage: Lucide.search)
                     .padding(.leading, Constants.minorPadding)
                 TextField(placeholder, text: $searchFieldValue).font(.evy)
             }
