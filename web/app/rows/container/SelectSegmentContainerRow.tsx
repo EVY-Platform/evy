@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 
 import type { Row, RowConfig } from "../../types/row";
 import { ContainerChildren } from "../../components/ContainerChildren";
@@ -64,7 +64,7 @@ export default defineRow(typeName, {
 		const title = row.config.view.content.title;
 
 		return (
-			<Fragment>
+			<>
 				{title ? (
 					<p className="evy-text-md evy-p-2">
 						<EVYText text={title} />
@@ -94,7 +94,7 @@ export default defineRow(typeName, {
 					rows={rowsToShow}
 					showPlaceholder={row.id !== typeName}
 				/>
-			</Fragment>
+			</>
 		);
 	},
 });
