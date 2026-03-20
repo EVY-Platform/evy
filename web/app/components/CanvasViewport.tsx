@@ -29,8 +29,8 @@ function viewportLocalPoint(
 const GRID_BASE_SIZE_PX = 24;
 
 const GRID_BACKGROUND_IMAGE = `
-	linear-gradient(to right, var(--color-black) 1px, transparent 1px),
-	linear-gradient(to bottom, var(--color-black) 1px, transparent 1px)
+	linear-gradient(to right, var(--color-gray-border) 1px, transparent 1px),
+	linear-gradient(to bottom, var(--color-gray-border) 1px, transparent 1px)
 `;
 
 const worldStyle: CSSProperties = {
