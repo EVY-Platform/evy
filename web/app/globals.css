@@ -123,6 +123,10 @@ body {
 .evy-p-2 {
 	padding: var(--size-2);
 }
+.evy-px-2 {
+	padding-left: var(--size-2);
+	padding-right: var(--size-2);
+}
 .evy-p-3 {
 	padding: var(--size-3);
 }

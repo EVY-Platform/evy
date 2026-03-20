@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import type { Row, RowConfig } from "../../types/row";
 import { ContainerChildren } from "../../components/ContainerChildren";
 import { defineRow } from "../defineRow";
-import { RowLayout } from "../design-system/RowLayout";
+import EVYText from "../design-system/EVYText";
 import { useRowById } from "../../hooks/useRowById";
 
 const typeName = "SelectSegmentContainerRow";
@@ -61,9 +61,16 @@ export default defineRow(typeName, {
 		const rowsToShow =
 			selectedChild !== undefined ? [selectedChild] : undefined;
 
+		const title = row.config.view.content.title;
+
 		return (
-			<RowLayout title={row.config.view.content.title}>
-				<div className="evy-flex evy-mb-2" style={segmentGroupStyle}>
+			<Fragment>
+				{title ? (
+					<p className="evy-text-md evy-p-2">
+						<EVYText text={title} />
+					</p>
+				) : null}
+				<div className="evy-flex evy-mb-2 evy-px-2" style={segmentGroupStyle}>
 					{segments.map((segment, index) => {
 						const isFirst = index === 0;
 						const isLast = index === segments.length - 1;
@@ -87,7 +94,7 @@ export default defineRow(typeName, {
 					rows={rowsToShow}
 					showPlaceholder={row.id !== typeName}
 				/>
-			</RowLayout>
+			</Fragment>
 		);
 	},
 });
