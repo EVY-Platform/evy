@@ -7,12 +7,12 @@ FROM base AS typesgen
 COPY package.json bun.lock* ./
 COPY types/schema ./types/schema
 COPY scripts ./scripts
-RUN bun install --frozen-lockfile && bun run types:generate
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate
 
 # Install web dependencies
 FROM base AS deps
 COPY web/package.json web/bun.lock* ./
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 
 # Build stage (evy-types = ../types/generated/ts from web/, so workspace has types/ and web/)
 FROM base AS builder

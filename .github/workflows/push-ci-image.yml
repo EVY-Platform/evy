@@ -1,0 +1,35 @@
+name: Build and push CI image
+
+on:
+    push:
+        branches: [dev, main]
+        paths:
+            - ".github/images/ci/Dockerfile"
+            - ".github/workflows/push-ci-image.yml"
+    workflow_dispatch:
+
+jobs:
+    build-and-push:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
+
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v4
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build and push CI image
+              uses: docker/build-push-action@v7
+              with:
+                  context: .github/images/ci
+                  file: .github/images/ci/Dockerfile
+                  push: true
+                  tags: ghcr.io/evy-platform/evy-ci:playwright-1.58.2

@@ -31,7 +31,7 @@ After changing any schema (including `types/schema/data/`), run `bun run types:g
 
 ### Development (with Docker Compose)
 
-For example, run Postgres via Docker and run the API and web app locally:
+Run Postgres via Docker and run the API and web app locally:
 
 ```bash
 docker compose up --build postgres
@@ -100,3 +100,40 @@ docker run -p 3000:3000 evy-web
 ```
 
 See individual README files for more details.
+
+## Testing
+
+### Unit and integration tests
+
+```bash
+cd api && bun run test    # API tests
+cd web && bun run test    # Web Playwright tests (requires `bun run test:setup` first)
+```
+
+### E2E tests
+
+The `run-e2e.sh` script runs API, web, and (optionally) iOS end-to-end tests.
+
+**With Docker** (builds and runs all services in containers):
+
+```bash
+./run-e2e.sh --skip-ios
+```
+
+**Without Docker** (faster -- runs API and web directly via Bun, with Postgres provided separately, for example via Docker):
+
+```bash
+docker compose up -d postgres
+./run-e2e.sh --skip-ios --no-docker
+```
+
+| Flag | Description |
+|------|-------------|
+| `--skip-ios` | Skip iOS e2e tests (required on machines without Xcode/simulator) |
+| `--no-docker` | Run API and web as local Bun processes instead of Docker containers |
+
+### CI
+
+CI uses a custom Docker image with Playwright, Bun, and PostgreSQL pre-installed (`ghcr.io/evy-platform/evy-ci`). The E2E workflow starts PostgreSQL from inside that image instead of pulling a separate GitHub Actions service container.
+
+If you change `.github/images/ci/Dockerfile`, rebuild and publish the CI image before depending on the new tools in a workflow. See `.github/images/ci/Dockerfile` and `.github/workflows/push-ci-image.yml`.

@@ -568,11 +568,11 @@ function BranchEditor({
 				onChange={handleFunctionChange}
 			/>
 
-			{argDropdowns.map((options, argIndex) => (
+			{argDropdowns.map((slot, argIndex) => (
 				<PopoverSelect
-					key={`${branchId}-arg-${argIndex}-${options.length}`}
+					key={`${branchId}-${slot.slotId}`}
 					ariaLabel={`${branchId}-arg-${argIndex}`}
-					options={options}
+					options={slot.options}
 					value={args[argIndex] ?? ""}
 					onChange={(v) => handleArgChange(argIndex, v)}
 				/>
@@ -581,35 +581,46 @@ function BranchEditor({
 	);
 }
 
+type ArgDropdownSlot = { slotId: string; options: PopoverOption[] };
+
 function buildArgDropdowns(
 	functionName: ActionFunction | "",
 	currentArgs: string[],
 	draftVariables: string[],
 	flows: SDUI_Flow[],
-): PopoverOption[][] {
+): ArgDropdownSlot[] {
 	if (!functionName || functionName === "close") return [];
 
 	if (functionName === "navigate") {
-		const dropdowns: PopoverOption[][] = [getFlowOptions(flows)];
+		const dropdowns: ArgDropdownSlot[] = [
+			{ slotId: "navigate-flow", options: getFlowOptions(flows) },
+		];
 
 		const selectedFlowId = currentArgs[0];
 		if (selectedFlowId) {
-			dropdowns.push(getPageOptions(flows, selectedFlowId));
+			dropdowns.push({
+				slotId: "navigate-page",
+				options: getPageOptions(flows, selectedFlowId),
+			});
 		}
 		return dropdowns;
 	}
 
 	if (functionName === "create") {
-		return [toVariableOptions(draftVariables)];
+		return [
+			{ slotId: "create-variable", options: toVariableOptions(draftVariables) },
+		];
 	}
 
 	if (functionName === "highlight_required") {
 		const varOptions = toVariableOptions(draftVariables);
-		const dropdowns: PopoverOption[][] = [varOptions];
+		const dropdowns: ArgDropdownSlot[] = [
+			{ slotId: "highlight-first", options: varOptions },
+		];
 
 		const filledCount = currentArgs.filter(Boolean).length;
 		if (filledCount >= dropdowns.length) {
-			dropdowns.push(varOptions);
+			dropdowns.push({ slotId: "highlight-second", options: varOptions });
 		}
 		return dropdowns;
 	}

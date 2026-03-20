@@ -108,7 +108,7 @@ export function ActionEditor({ actions, flows, onUpdate }: ActionEditorProps) {
 				<div className="evy-flex evy-flex-col evy-gap-4">
 					{actions.map((action, index) => (
 						<ActionSummaryCard
-							key={`action-${action.condition}-${action.true}-${action.false}-${index}`}
+							key={`action-${action.condition}-${action.true}-${action.false}`}
 							action={action}
 							index={index}
 							flows={flows}

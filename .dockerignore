@@ -1,2 +1,13 @@
 node_modules
 npm-debug.log
+.git
+.gitignore
+.env
+ios/
+*.md
+.vscode/
+.cursor/
+**/*.test.ts
+**/e2e/
+**/tests/
+**/.DS_Store

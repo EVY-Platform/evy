@@ -6,11 +6,16 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$REPO_ROOT"
+
 # Parse arguments
 SKIP_IOS=false
+NO_DOCKER=false
 for arg in "$@"; do
     case $arg in
         --skip-ios) SKIP_IOS=true ;;
+        --no-docker) NO_DOCKER=true ;;
     esac
 done
 
@@ -20,6 +25,8 @@ IOS_RESULT=0
 IOS_SKIPPED=false
 MAX_RETRIES=30
 RETRY_DELAY_SECONDS=2
+API_PID=""
+WEB_PID=""
 
 set -a
 source .env
@@ -31,7 +38,18 @@ echo -e "${YELLOW}========================================${NC}"
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    docker compose down -v --remove-orphans 2>/dev/null || true
+    if [ "$NO_DOCKER" = true ]; then
+        if [ -n "${WEB_PID}" ]; then
+            kill "$WEB_PID" 2>/dev/null || true
+        fi
+        if [ -n "${API_PID}" ]; then
+            kill "$API_PID" 2>/dev/null || true
+        fi
+        wait "${WEB_PID}" 2>/dev/null || true
+        wait "${API_PID}" 2>/dev/null || true
+    else
+        docker compose down -v --remove-orphans 2>/dev/null || true
+    fi
 }
 
 wait_for_http_service() {
@@ -53,16 +71,39 @@ wait_for_http_service() {
     echo -e "${GREEN}$service_name is ready${NC}"
 }
 
+wait_for_postgres_no_docker() {
+    echo "Waiting for PostgreSQL..."
+    local retry_count=0
+    local host="${DB_DOMAIN}"
+    local port="${DB_PORT}"
+    until (echo -n > "/dev/tcp/${host}/${port}") 2>/dev/null || [ $retry_count -eq $MAX_RETRIES ]; do
+        sleep "$RETRY_DELAY_SECONDS"
+        retry_count=$((retry_count + 1))
+    done
+    if [ $retry_count -eq $MAX_RETRIES ]; then
+        echo -e "${RED}PostgreSQL health check failed${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}PostgreSQL is ready${NC}"
+}
+
 wait_for_api_readiness() {
     local script_name="$1"
     local display_name="$2"
     local retry_count=0
 
     echo "Waiting for $display_name..."
-    until docker compose exec -T api bun run "$script_name" > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
-        sleep "$RETRY_DELAY_SECONDS"
-        retry_count=$((retry_count + 1))
-    done
+    if [ "$NO_DOCKER" = true ]; then
+        until (cd "$REPO_ROOT/api" && bun run "$script_name") > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
+            sleep "$RETRY_DELAY_SECONDS"
+            retry_count=$((retry_count + 1))
+        done
+    else
+        until docker compose exec -T api bun run "$script_name" > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
+            sleep "$RETRY_DELAY_SECONDS"
+            retry_count=$((retry_count + 1))
+        done
+    fi
 
     if [ $retry_count -eq $MAX_RETRIES ]; then
         echo -e "${RED}$display_name failed${NC}"
@@ -83,25 +124,52 @@ seed_database() {
 
 trap cleanup EXIT
 
-echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
-docker compose up --build -d
+if [ "$NO_DOCKER" = true ]; then
+    echo -e "\n${YELLOW}Step 1: Starting services without Docker...${NC}"
+    wait_for_postgres_no_docker
 
-echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
+    echo "Starting API (background)..."
+    (
+        cd "$REPO_ROOT/api"
+        exec bun run start
+    ) &
+    API_PID=$!
 
-echo "Waiting for PostgreSQL..."
-PG_RETRY_COUNT=0
-until docker compose exec -T postgres pg_isready -U "$DB_USER" > /dev/null 2>&1 || [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; do
-    sleep "$RETRY_DELAY_SECONDS"
-    PG_RETRY_COUNT=$((PG_RETRY_COUNT + 1))
-done
-if [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; then
-    echo -e "${RED}PostgreSQL health check failed${NC}"
-    exit 1
+    wait_for_api_readiness "health" "API"
+
+    echo "Starting Web (background)..."
+    (
+        cd "$REPO_ROOT/web"
+        exec bun run start
+    ) &
+    WEB_PID=$!
+
+    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
+    wait_for_http_service "Web" "http://localhost:$WEB_PORT"
+else
+    export DOCKER_BUILDKIT=1
+    export COMPOSE_DOCKER_CLI_BUILD=1
+
+    echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
+    docker compose up --build -d
+
+    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
+
+    echo "Waiting for PostgreSQL..."
+    PG_RETRY_COUNT=0
+    until docker compose exec -T postgres pg_isready -U "$DB_USER" > /dev/null 2>&1 || [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; do
+        sleep "$RETRY_DELAY_SECONDS"
+        PG_RETRY_COUNT=$((PG_RETRY_COUNT + 1))
+    done
+    if [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; then
+        echo -e "${RED}PostgreSQL health check failed${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}PostgreSQL is ready${NC}"
+
+    wait_for_api_readiness "health" "API"
+    wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 fi
-echo -e "${GREEN}PostgreSQL is ready${NC}"
-
-wait_for_api_readiness "health" "API"
-wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 
 echo -e "\n${YELLOW}Step 3: Generating types...${NC}"
 if ! bun types:generate; then

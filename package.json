@@ -8,9 +8,9 @@
 		"db:seed": "bun scripts/seed.ts"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.4",
+		"@biomejs/biome": "^2.4.8",
 		"@types/pluralize": "^0.0.33",
-		"chokidar": "^4.0.1",
+		"chokidar": "^4.0.3",
 		"decamelize": "^6.0.1",
 		"drizzle-orm": "^0.45.1",
 		"json-schema-to-typescript": "^15.0.4",

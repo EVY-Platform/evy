@@ -17,6 +17,8 @@ async function selectFlowByLabel(
 		.click();
 }
 
+test.describe.configure({ mode: "serial" });
+
 test.describe("Web E2E Integration Tests", () => {
 	test("should persist SDUI edits after page refresh", async ({ page }) => {
 		// Generate a unique test value to avoid conflicts
