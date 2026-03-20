@@ -127,7 +127,7 @@ function CollapsibleSidePanel({
 				<button
 					type="button"
 					style={collapsedPanelBarStyle}
-					className="evy-cursor-pointer evy-border-none evy-focus-visible:outline-none"
+					className="evy-cursor-pointer evy-border-none evy-bg-white evy-focus-visible:outline-none"
 					onClick={onOpenInteraction}
 					aria-label={collapsedLabel}
 				>

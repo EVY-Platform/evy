@@ -3,6 +3,7 @@
 	--color-evy-light: oklch(97.02% 0 0);
 	--color-evy-blue: oklch(60.04% 0.2013 261.37);
 	--color-evy-gray: oklch(62.34% 0 0);
+	--color-evy-gray-medium: oklch(77.42% 0 0);
 	--color-evy-gray-light: oklch(92.494% 0.00011 271.152);
 	--color-evy-gray-dark: oklch(35.84% 0.0103 285.87);
 	--color-white: #ffffff;
@@ -19,9 +20,7 @@
 	--size-30px: 30px;
 	--size-32: 8rem; /* 128px */
 	--size-48: 12rem; /* 192px */
-	/* Shared: top bar min-height and collapsed side rail width */
 	--size-nav-bar: 50px;
-	/* Breadcrumb / popover triggers align to this inner control height */
 	--size-nav-control: 34px;
 	--size-336: 336px;
 	--size-662: 662px;

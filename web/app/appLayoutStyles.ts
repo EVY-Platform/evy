@@ -73,4 +73,5 @@ export const collapsedPanelBarStyle: CSSProperties = {
 	width: "100%",
 	minHeight: "100%",
 	flex: 1,
+	backgroundColor: "var(--color-white)",
 };

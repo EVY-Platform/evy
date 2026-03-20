@@ -10,11 +10,10 @@ import { useFocusPanOnEnter } from "../hooks/useFocusPanOnEnter";
 import { useViewportGestures } from "../hooks/useViewportGestures";
 import { CameraContext } from "../state/contexts/CameraContext";
 
-const GRID_BASE_SIZE_PX = 24;
+const GRID_BASE_SIZE_PX = 12;
 
 const GRID_BACKGROUND_IMAGE = `
-	linear-gradient(to right, var(--color-gray-border) 1px, transparent 1px),
-	linear-gradient(to bottom, var(--color-gray-border) 1px, transparent 1px)
+	radial-gradient(circle, var(--color-evy-gray-medium) 1px, transparent 1px)
 `;
 
 const worldStyle: CSSProperties = {
@@ -86,6 +85,7 @@ export function CanvasViewport({
 	const cam = getCamera();
 	const gridSize = GRID_BASE_SIZE_PX * cam.scale;
 	const gridStyle: CSSProperties = {
+		backgroundColor: "var(--color-evy-light)",
 		backgroundImage: GRID_BACKGROUND_IMAGE,
 		backgroundSize: `${gridSize}px ${gridSize}px`,
 		backgroundPosition: `${cam.offsetX}px ${cam.offsetY}px`,
