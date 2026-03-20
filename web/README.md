@@ -12,6 +12,7 @@ graph TB
         App[App.tsx]
         NavBar[NavBar]
         AppContent[AppContent]
+        SecondarySheetPage[SecondarySheetPage]
     end
 
     subgraph state [State Management]
@@ -28,18 +29,28 @@ graph TB
         useRowById[useRowById]
         useDraggable[useDraggable]
         useUrlSync[useUrlSync]
+        usePageDropTarget[usePageDropTarget]
+        useSelectRow[useSelectRow]
     end
 
     subgraph panels [UI Panels]
         RowsPanel[RowsPanel]
+        SearchInput[SearchInput]
+        CancelOverlay[CancelOverlay]
         AppPage[AppPage]
         ConfigPanel[ConfigurationPanel]
+        ActionEditor[ActionEditor]
+        ActionPopup[ActionPopup]
         NavigationBreadcrumb[NavigationBreadcrumb]
+        PopoverSelect[PopoverSelect]
+        CreateFlowDialog[CreateFlowDialog]
     end
 
     subgraph dragdrop [Drag and Drop]
         DraggableRowContainer[DraggableRowContainer]
+        ContainerChildren[ContainerChildren]
         RowPrimitive[RowPrimitive]
+        PlaceholderDropIndicator[PlaceholderDropIndicator]
         DropHandler[handleDrop]
     end
 
@@ -60,6 +71,7 @@ graph TB
         RadioButton[RadioButton]
         Checkbox[Checkbox]
         EVYText[EVYText]
+        InlineIcon[InlineIcon]
         DropIndicator[dropIndicator]
     end
 
@@ -71,16 +83,31 @@ graph TB
 
     App --> NavBar
     NavBar --> NavigationBreadcrumb
+    NavigationBreadcrumb --> PopoverSelect
+    NavigationBreadcrumb --> CreateFlowDialog
     App --> AppContent
     AppContent --> RowsPanel
     AppContent --> AppPage
+    AppContent --> SecondarySheetPage
     AppContent --> ConfigPanel
     AppContent --> DropHandler
 
+    RowsPanel --> SearchInput
+    RowsPanel --> CancelOverlay
+    RowsPanel --> DraggableRowContainer
+
+    AppPage --> usePageDropTarget
     AppPage --> DraggableRowContainer
+    SecondarySheetPage --> usePageDropTarget
+    SecondarySheetPage --> DraggableRowContainer
+
+    ConfigPanel --> ActionEditor
+    ActionEditor --> ActionPopup
+
     DraggableRowContainer --> useDraggable
     DraggableRowContainer --> RowPrimitive
-    RowsPanel --> DraggableRowContainer
+    DraggableRowContainer --> ContainerChildren
+    ContainerChildren --> PlaceholderDropIndicator
 
     DraggableRowContainer --> defineRow
     defineRow --> ViewRows
@@ -98,12 +125,16 @@ graph TB
 | Component              | Description                                                         |
 | ---------------------- | ------------------------------------------------------------------- |
 | **App**                | Main entry point, sets up layout with header and three-panel design |
-| **NavBar**             | Top bar with logo, page title editor, focus mode toggle, and flow selector |
-| **AppProvider**        | React context provider managing flows, rows, and drag state         |
-| **RowsPanel**          | Left sidebar displaying available row components                    |
+| **NavBar**             | Top bar with logo and breadcrumb navigation                         |
+| **NavigationBreadcrumb** | Flow/page/row breadcrumb with flow selector and focus mode toggle |
+| **AppProvider**        | React context provider managing flows, rows, drag state, focus mode, and config stack |
+| **RowsPanel**          | Left sidebar displaying available row components with search        |
 | **AppPage**            | Center panel showing phone preview with draggable rows              |
-| **ConfigurationPanel** | Right sidebar for editing selected row properties                   |
+| **SecondarySheetPage** | Secondary phone preview for sheet content in focus mode             |
+| **ConfigurationPanel** | Right sidebar for editing row properties, page titles, and actions  |
+| **ActionEditor**       | Action configuration UI within the configuration panel              |
 | **useDraggable**       | Custom hook encapsulating drag-and-drop behavior                    |
+| **usePageDropTarget**  | Hook setting up page-level drop targets for drag-and-drop           |
 | **defineRow**          | Factory function used to declare all row components                 |
 
 ### Row Categories
