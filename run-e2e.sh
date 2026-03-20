@@ -83,6 +83,9 @@ seed_database() {
 
 trap cleanup EXIT
 
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
 echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
 docker compose up --build -d
 

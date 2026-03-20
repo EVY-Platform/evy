@@ -7,13 +7,13 @@ FROM base AS typesgen
 COPY package.json bun.lock* ./
 COPY types/schema ./types/schema
 COPY scripts ./scripts
-RUN bun install --frozen-lockfile && bun run types:generate
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate
 
 # Install dependencies stage
 FROM base AS deps
 WORKDIR /app/api
 COPY api/package.json api/bun.lock* ./
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 
 # Build stage
 FROM base AS builder
@@ -23,7 +23,7 @@ COPY api/package.json api/bun.lock* ./
 COPY api/tsconfig.json ./tsconfig.json
 COPY api/src ./src
 COPY api/drizzle.config.ts ./
-COPY api/drizzle* ./drizzle/
+COPY api/drizzle ./drizzle
 COPY --from=typesgen /app/types/generated/ts ../types/generated/ts
 
 # Production stage
