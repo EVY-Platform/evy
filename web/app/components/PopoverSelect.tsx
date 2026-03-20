@@ -2,22 +2,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 const popoverCss = `
-.evy-popover-trigger {
+.evy-popover-trigger,
+.evy-popover-trigger--breadcrumb {
 	display: inline-flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 4px;
-	padding: 2px 6px;
 	font-size: var(--text-sm);
 	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
+	min-width: 0;
+}
+.evy-popover-trigger {
+	padding: 2px 6px;
 	color: var(--color-black);
 	background-color: var(--color-white);
 	border: 1px solid var(--color-gray-border);
 	border-radius: var(--radius-sm);
-	cursor: pointer;
-	min-width: 0;
 	width: 100%;
-	text-align: left;
 	transition:
 		border-color var(--transition),
 		box-shadow var(--transition);
@@ -35,6 +38,7 @@ const popoverCss = `
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	flex: 1;
+	min-width: 0;
 }
 .evy-popover-chevron {
 	flex-shrink: 0;
@@ -84,31 +88,19 @@ const popoverCss = `
 	border-top: 1px solid var(--color-gray-border);
 	margin-top: 2px;
 }
-/* Navbar flow picker: do NOT stack with .evy-popover-trigger (avoids borders / full-width / combobox-like chrome) */
 .evy-popover-trigger--breadcrumb {
-	display: inline-flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 4px;
-	margin: 0;
 	width: auto;
 	max-width: 14rem;
-	min-width: 0;
 	min-height: var(--size-navbar-control);
 	padding: 0 2px 0 var(--spacing-2);
-	font-size: var(--text-sm);
 	font-weight: var(--font-semibold);
-	font-family: inherit;
 	line-height: 1.5;
-	text-align: left;
-	cursor: pointer;
 	color: var(--color-evy-blue);
 	background: transparent;
 	border: none;
 	border-radius: 0;
 	outline: none;
 	box-shadow: none;
-	-webkit-appearance: none;
 	appearance: none;
 }
 .evy-popover-trigger--breadcrumb:hover {
@@ -123,15 +115,7 @@ const popoverCss = `
 	outline: 2px solid var(--color-evy-blue);
 	outline-offset: 2px;
 }
-.evy-popover-trigger--breadcrumb .evy-popover-text {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	flex: 1;
-	min-width: 0;
-}
 .evy-popover-trigger--breadcrumb .evy-popover-chevron {
-	flex-shrink: 0;
 	opacity: 1;
 	color: var(--color-evy-blue);
 }

@@ -207,12 +207,10 @@ export function ConfigurationPanel() {
 							onUpdate={updateRowActions}
 						/>
 					</>
-				) : showPageTitleInPanel ? (
-					<div className="evy-text-sm evy-text-gray evy-text-center evy-mt-4">
-						Select a row to configure
-					</div>
 				) : (
-					<div className="evy-text-sm evy-text-gray evy-text-center evy-mt-8">
+					<div
+						className={`evy-text-sm evy-text-gray evy-text-center ${showPageTitleInPanel ? "evy-mt-4" : "evy-mt-8"}`}
+					>
 						Select a row to configure
 					</div>
 				)}

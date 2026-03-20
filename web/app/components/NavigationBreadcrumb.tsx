@@ -55,7 +55,26 @@ const breadcrumbScrollCss = `
 	outline: 2px solid var(--color-evy-blue);
 	outline-offset: 2px;
 }
+@keyframes evy-breadcrumb-page-text-glow {
+	0%, 100% {
+		text-shadow: 0 0 1px oklch(60.04% 0.2013 261.37 / 0.1);
+	}
+	50% {
+		text-shadow: 0 0 12px oklch(60.04% 0.2013 261.37 / 1);
+	}
+}
+.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link--focus-page {
+	animation: evy-breadcrumb-page-text-glow 1s ease-in-out infinite;
+}
 `;
+
+function Separator() {
+	return (
+		<span className="evy-text-gray-dark evy-select-none" aria-hidden>
+			&gt;
+		</span>
+	);
+}
 
 export function NavigationBreadcrumb() {
 	const {
@@ -64,6 +83,7 @@ export function NavigationBreadcrumb() {
 		activePageId,
 		activeRowId,
 		configStack,
+		focusMode,
 		dispatchRow,
 	} = useContext(AppContext);
 
@@ -92,16 +112,24 @@ export function NavigationBreadcrumb() {
 		[flows],
 	);
 
-	const handleRowNavigate = () => {
-		dispatchRow({ type: "NAVIGATE_BREADCRUMB", configStackLength: 0 });
+	const navigateBreadcrumb = (configStackLength: number) => {
+		dispatchRow({ type: "NAVIGATE_BREADCRUMB", configStackLength });
 	};
 
-	const handleChildNavigate = (stackLength: number) => {
-		dispatchRow({
-			type: "NAVIGATE_BREADCRUMB",
-			configStackLength: stackLength,
-		});
-	};
+	const rowSegments: Array<{ id: string; row: Row; stackLength: number }> = [];
+	if (activePage && rootRow) {
+		rowSegments.push({ id: rootRow.id, row: rootRow, stackLength: 0 });
+		for (let i = 0; i < configStack.length; i++) {
+			const childRow = findRowInPages(configStack[i], pages);
+			if (childRow) {
+				rowSegments.push({
+					id: configStack[i],
+					row: childRow,
+					stackLength: i + 1,
+				});
+			}
+		}
+	}
 
 	return (
 		<>
@@ -126,18 +154,14 @@ export function NavigationBreadcrumb() {
 
 					{activePage && (
 						<>
-							<span className="evy-text-gray-dark evy-select-none" aria-hidden>
-								&gt;
-							</span>
+							<Separator />
 							<button
 								type="button"
-								className="evy-nav-breadcrumb-link evy-shrink-0"
+								className={`evy-nav-breadcrumb-link evy-shrink-0${focusMode ? " evy-nav-breadcrumb-link--focus-page" : ""}`}
+								aria-current={focusMode ? "page" : undefined}
 								aria-label={`Select page ${activePage.title}`}
 								onClick={() => {
-									dispatchRow({
-										type: "SET_ACTIVE_PAGE",
-										pageId: activePage.id,
-									});
+									dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
 								}}
 								onDoubleClick={(e) => {
 									e.preventDefault();
@@ -159,44 +183,25 @@ export function NavigationBreadcrumb() {
 						</>
 					)}
 
-					{activePage && rootRow && (
-						<>
-							<span className="evy-text-gray-dark evy-select-none" aria-hidden>
-								&gt;
-							</span>
-							<button
-								type="button"
-								className="evy-nav-breadcrumb-link evy-shrink-0"
-								onClick={handleRowNavigate}
-								aria-label={`Configure row: ${breadcrumbLabelForRow(rootRow)}`}
-							>
-								{breadcrumbLabelForRow(rootRow)}
-							</button>
-						</>
-					)}
-
-					{configStack.map((childRowId, index) => {
-						const childRow = findRowInPages(childRowId, pages);
-						if (!childRow) return null;
-						const stackLengthAfterClick = index + 1;
+					{rowSegments.map(({ id, row, stackLength }) => {
+						const label = breadcrumbLabelForRow(row);
+						const ariaLabel =
+							stackLength === 0
+								? `Configure row: ${label}`
+								: `Configure nested row at depth ${stackLength}: ${label}`;
 						return (
 							<span
-								key={childRowId}
+								key={id}
 								className="evy-inline-flex evy-items-center evy-gap-2 evy-shrink-0"
 							>
-								<span
-									className="evy-text-gray-dark evy-select-none"
-									aria-hidden
-								>
-									&gt;
-								</span>
+								<Separator />
 								<button
 									type="button"
 									className="evy-nav-breadcrumb-link evy-shrink-0"
-									onClick={() => handleChildNavigate(stackLengthAfterClick)}
-									aria-label={`Configure nested row at depth ${stackLengthAfterClick}: ${breadcrumbLabelForRow(childRow)}`}
+									onClick={() => navigateBreadcrumb(stackLength)}
+									aria-label={ariaLabel}
 								>
-									{breadcrumbLabelForRow(childRow)}
+									{label}
 								</button>
 							</span>
 						);
