@@ -339,6 +339,15 @@ export function CanvasViewport({
 		minHeight: "100%",
 	};
 
+	const cam = getCamera();
+	const gridSize = 24 * cam.scale;
+	const infiniteGridStyle: CSSProperties = {
+		...gridBackgroundStyle,
+		backgroundSize: `${gridSize}px ${gridSize}px`,
+		backgroundPosition: `${cam.offsetX}px ${cam.offsetY}px`,
+		zIndex: 0,
+	};
+
 	return (
 		<CameraContext.Provider value={camera}>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: Canvas viewport clears selection on empty click */}
@@ -349,6 +358,12 @@ export function CanvasViewport({
 				className="evy-relative evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-p-4"
 				onClick={handleBackgroundLayerClick}
 			>
+				<div
+					className="evy-pointer-events-none evy-absolute evy-inset-0"
+					style={infiniteGridStyle}
+					data-canvas-grid
+					aria-hidden
+				/>
 				{/* biome-ignore lint/a11y/noStaticElementInteractions: Transformed world layer hit target */}
 				{/* biome-ignore lint/a11y/useKeyWithClickEvents: Mouse-only canvas interaction */}
 				<div
@@ -357,12 +372,6 @@ export function CanvasViewport({
 					style={worldStyle}
 					onClick={handleBackgroundLayerClick}
 				>
-					<div
-						className="evy-pointer-events-none evy-absolute evy-inset-0"
-						style={{ ...gridBackgroundStyle, zIndex: 0 }}
-						data-canvas-grid
-						aria-hidden
-					/>
 					{/* biome-ignore lint/a11y/noStaticElementInteractions: Page row background hit target */}
 					{/* biome-ignore lint/a11y/useKeyWithClickEvents: Mouse-only canvas interaction */}
 					<div
