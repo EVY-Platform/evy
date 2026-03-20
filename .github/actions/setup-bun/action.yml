@@ -30,11 +30,6 @@ runs:
                     - '${{ inputs.path-filter }}'
                     ${{ inputs.path-filter-extra != '' && format('- ''{0}''', inputs.path-filter-extra) }}
 
-        - name: Install unzip (needed for Bun in container jobs)
-          if: steps.filter.outputs.changes == 'true'
-          shell: bash
-          run: which unzip > /dev/null 2>&1 || (apt-get update && apt-get install -y unzip)
-
         - name: Setup Bun
           if: steps.filter.outputs.changes == 'true'
           uses: oven-sh/setup-bun@v2

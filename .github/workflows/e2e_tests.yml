@@ -29,7 +29,7 @@ jobs:
     e2e_tests:
         timeout-minutes: 2
         runs-on: ubuntu-latest
-        container: mcr.microsoft.com/playwright:v1.58.2-noble
+        container: ghcr.io/evy-platform/evy-ci:playwright-1.58.2
 
         services:
             postgres:
@@ -49,12 +49,6 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v6
-
-            - name: Install unzip
-              run: apt-get update && apt-get install -y unzip
-
-            - name: Setup Bun
-              uses: oven-sh/setup-bun@v2
 
             - name: Install root dependencies
               run: bun install
