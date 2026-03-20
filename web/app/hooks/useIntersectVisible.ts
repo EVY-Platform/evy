@@ -6,17 +6,12 @@ import { type RefObject, useEffect, useState } from "react";
  */
 export function useIntersectVisible(
 	elementRef: RefObject<HTMLElement | null>,
-	options: { rootMargin?: string; disabled?: boolean } = {},
+	options: { rootMargin?: string } = {},
 ): boolean {
-	const { rootMargin = "100%", disabled = false } = options;
+	const { rootMargin = "100%" } = options;
 	const [visible, setVisible] = useState(true);
 
 	useEffect(() => {
-		if (disabled) {
-			setVisible(true);
-			return;
-		}
-
 		const element = elementRef.current;
 		if (!element) {
 			return;
@@ -33,7 +28,7 @@ export function useIntersectVisible(
 		return () => {
 			observer.disconnect();
 		};
-	}, [elementRef, rootMargin, disabled]);
+	}, [elementRef, rootMargin]);
 
-	return disabled ? true : visible;
+	return visible;
 }

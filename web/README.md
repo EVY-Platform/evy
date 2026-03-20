@@ -48,7 +48,6 @@ graph TD
 
     subgraph hooks [Hooks]
         useCamera[useCamera]
-        useIntersectVisible[useIntersectVisible]
         usePageDropTarget[usePageDropTarget]
         useDraggable[useDraggable]
         useFlows[useFlows]
@@ -109,7 +108,6 @@ graph TD
 
     CanvasViewport --> useCamera
     CanvasViewport --> CanvasPageFrame
-    CanvasPageFrame --> useIntersectVisible
     CanvasPageFrame --> AppPage
     CanvasPageFrame --> SecondarySheetPage
 

@@ -7,8 +7,6 @@ type CanvasPageFrameProps = {
 	wrapperStyle: CSSProperties;
 	className: string;
 	children: ReactNode;
-	/** When true, always mount children (e.g. focus mode with animated widths). */
-	cullingDisabled: boolean;
 	/** Set for flow pages so focus mode can pan the camera to this frame. */
 	pageId?: string;
 	"data-testid"?: string;
@@ -21,15 +19,11 @@ export function CanvasPageFrame({
 	wrapperStyle,
 	className,
 	children,
-	cullingDisabled,
 	pageId,
 	"data-testid": dataTestId,
 }: CanvasPageFrameProps) {
 	const frameRef = useRef<HTMLDivElement | null>(null);
-	const visible = useIntersectVisible(frameRef, {
-		rootMargin: "100%",
-		disabled: cullingDisabled,
-	});
+	const visible = useIntersectVisible(frameRef, { rootMargin: "100%" });
 
 	return (
 		<div

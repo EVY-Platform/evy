@@ -74,9 +74,6 @@ function AppContent() {
 		}
 	}, [dispatchRow, secondarySheetRowId, focusMode]);
 
-	/** Only virtualize when many pages; small flows keep all pages mounted for reliability. */
-	const cullingDisabled = focusMode || pages.length <= 12;
-
 	return (
 		<>
 			<div
@@ -105,7 +102,6 @@ function AppContent() {
 									pageId={page.id}
 									wrapperStyle={wrapperStyle}
 									className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-									cullingDisabled={cullingDisabled}
 								>
 									<AppPage pageId={page.id} />
 								</CanvasPageFrame>
@@ -117,7 +113,6 @@ function AppContent() {
 												: secondaryPageWrapperHiddenStyle
 										}
 										className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-										cullingDisabled
 										data-testid="secondary-sheet-page"
 									>
 										{secondarySheetRow && (
