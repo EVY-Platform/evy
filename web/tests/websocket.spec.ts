@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { initTestFlows } from "./utils";
+import {
+	ensureSidePanelsExpanded,
+	getConfigPanel,
+	getErrorState,
+	getLoadingState,
+	initTestFlows,
+} from "./utils";
 
 test.describe("WebSocket Connection States", () => {
 	test("should display loading or error state when no API is available", async ({
@@ -9,13 +15,8 @@ test.describe("WebSocket Connection States", () => {
 		// Since the API server isn't running, we should see either loading or error state
 		await page.goto("/");
 
-		// Either loading or error state should be visible (depending on timing)
-		const loadingMessage = page.getByText("Loading flows...", {
-			exact: true,
-		});
-		const errorMessage = page.getByText("Failed to load flows", {
-			exact: true,
-		});
+		const loadingMessage = getLoadingState(page);
+		const errorMessage = getErrorState(page);
 
 		// Wait for one of them to appear - this tests that the app shows a state when no API is available
 		await expect(loadingMessage.or(errorMessage)).toBeVisible();
@@ -32,10 +33,7 @@ test.describe("WebSocket Connection States", () => {
 
 		await page.goto("/");
 
-		// Wait for the error state to appear after connection timeout
-		const errorMessage = page.getByText("Failed to load flows", {
-			exact: true,
-		});
+		const errorMessage = getErrorState(page);
 		await expect(errorMessage).toBeVisible();
 	});
 
@@ -51,21 +49,15 @@ test.describe("WebSocket Connection States", () => {
 			},
 		]);
 		await page.goto("/");
+		await ensureSidePanelsExpanded(page);
 
-		// Should not show loading or error states
-		await expect(
-			page.getByText("Loading flows...", { exact: true }),
-		).not.toBeVisible();
-		await expect(
-			page.getByText("Failed to load flows", { exact: true }),
-		).not.toBeVisible();
+		await expect(getLoadingState(page)).not.toBeVisible();
+		await expect(getErrorState(page)).not.toBeVisible();
 
-		// Should show the main app content
 		const rowsPanel = page.getByText("Rows", { exact: true });
 		await expect(rowsPanel).toBeVisible();
 
-		const configPanel = page.getByText("Configuration", { exact: true });
-		await expect(configPanel).toBeVisible();
+		await expect(getConfigPanel(page)).toBeVisible();
 	});
 
 	test("should display logo in header when app loads", async ({ page }) => {
@@ -92,17 +84,14 @@ test.describe("WebSocket Connection States", () => {
 			},
 		]);
 		await page.goto("/");
+		await ensureSidePanelsExpanded(page);
 
 		// Check the three main panels are present
 		// Left panel: Rows
 		const rowsPanel = page.getByText("Rows", { exact: true }).first();
 		await expect(rowsPanel).toBeVisible();
 
-		// Right panel: Configuration
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.first();
-		await expect(configPanel).toBeVisible();
+		await expect(getConfigPanel(page)).toBeVisible();
 
 		// Center: Phone mockup(s)
 		const phoneContainer = page.locator('div[class*="evy-bg-phone"]');

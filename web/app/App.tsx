@@ -1,7 +1,16 @@
-import type { CSSProperties } from "react";
-import { useContext, useEffect, useMemo, useRef } from "react";
+import {
+	Fragment,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	type CSSProperties,
+	type ReactNode,
+} from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { FileSliders, Rows3 } from "lucide-react";
 import type {
 	BaseEventPayload,
 	ElementDragType,
@@ -12,126 +21,199 @@ import SecondarySheetPage from "./components/SecondarySheetPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
-import { AppContext, AppProvider } from "./state";
+import { CanvasViewport } from "./components/CanvasViewport";
+import { CanvasPageFrame } from "./components/CanvasPageFrame";
+import { AppProvider, useDragContext, useFlowsContext } from "./state";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
-import { useActiveFlow } from "./hooks/useActiveFlow";
+import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
+import {
+	canvasContentStyle,
+	collapsedPanelBarStyle,
+	pageWrapperHiddenStyle,
+	pageWrapperStyle,
+	panelContentFadeTransitionStyle,
+	panelShadowStyle,
+	rightPanelStyle,
+	secondaryPageWrapperHiddenStyle,
+	secondaryPageWrapperStyle,
+	sidePanelWidthTransitionStyle,
+} from "./appLayoutStyles";
+import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
 
-const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+const PANEL_EXPANDED_WIDTH_PX = 300;
 
-function transition(
-	props: Array<{ prop: string; ms?: number; delay?: number }>,
-): string {
-	return props
-		.map(({ prop, ms = 300, delay = 0 }) =>
-			delay ? `${prop} ${ms}ms ${EASE} ${delay}ms` : `${prop} ${ms}ms ${EASE}`,
-		)
-		.join(", ");
+const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
+
+function useHoverToggle() {
+	const [hovered, setHovered] = useState(false);
+	const open = useCallback(() => {
+		setHovered(true);
+	}, []);
+	const close = useCallback(() => {
+		setHovered(false);
+	}, []);
+	return { hovered, open, close };
 }
 
-const canvasBaseStyle: CSSProperties = {
-	flexDirection: "row",
-	overflow: "auto",
-};
+type CollapsibleSidePanelSide = "left" | "right";
 
-const canvasStyle: CSSProperties = {
-	...canvasBaseStyle,
-	gap: "var(--size-4)",
-	transition: transition([{ prop: "gap" }]),
-};
+function CollapsibleSidePanel({
+	side,
+	isExpanded,
+	pinOpenByPage,
+	onOpenInteraction,
+	onCloseInteraction,
+	collapsedLabel,
+	icon,
+	children,
+}: {
+	side: CollapsibleSidePanelSide;
+	isExpanded: boolean;
+	pinOpenByPage: boolean;
+	onOpenInteraction: () => void;
+	onCloseInteraction: () => void;
+	collapsedLabel: string;
+	icon: ReactNode;
+	children: ReactNode;
+}) {
+	const outerRef = useRef<HTMLDivElement>(null);
+	const isExpandedRef = useRef(isExpanded);
+	const [contentVisible, setContentVisible] = useState(isExpanded);
 
-const canvasFocusedStyle: CSSProperties = {
-	...canvasBaseStyle,
-	gap: 0,
-	transition: transition([{ prop: "gap", delay: 350 }]),
-};
+	isExpandedRef.current = isExpanded;
 
-const canvasFocusedWithSecondaryStyle: CSSProperties = {
-	...canvasFocusedStyle,
-	justifyContent: "center",
-};
+	useEffect(() => {
+		if (!isExpanded) {
+			setContentVisible(false);
+		}
+	}, [isExpanded]);
 
-const pageWrapperBaseStyle: CSSProperties = {
-	overflow: "hidden",
-	height: "var(--size-662)",
-};
+	useEffect(() => {
+		const node = outerRef.current;
+		if (!node) return;
 
-const pageWrapperTransition = (opacityDelay: number, sizeDelay = 0) =>
-	transition([
-		{ prop: "opacity", ms: 350, delay: opacityDelay },
-		{ prop: "width", delay: sizeDelay },
-		{ prop: "margin", delay: sizeDelay },
-	]);
+		const onTransitionEnd = (event: TransitionEvent) => {
+			if (event.propertyName !== "width") return;
+			if (!isExpandedRef.current) return;
+			setContentVisible(true);
+		};
 
-const pageWrapperStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	marginLeft: "auto",
-	marginRight: "auto",
-	width: "var(--size-336)",
-	transition: pageWrapperTransition(300),
-};
+		node.addEventListener("transitionend", onTransitionEnd);
+		return () => node.removeEventListener("transitionend", onTransitionEnd);
+	}, []);
 
-const pageWrapperHiddenStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	opacity: 0,
-	width: 0,
-	marginLeft: 0,
-	marginRight: 0,
-	pointerEvents: "none",
-	transition: pageWrapperTransition(0, 350),
-};
+	const outerStyle = useMemo<CSSProperties>(() => {
+		return {
+			...sidePanelWidthTransitionStyle,
+			position: "absolute",
+			top: 0,
+			bottom: 0,
+			zIndex: 20,
+			width: isExpanded ? PANEL_EXPANDED_WIDTH_PX : "var(--size-nav-bar)",
+			...(side === "left" ? { left: 0 } : { right: 0 }),
+			...(side === "left" ? panelShadowStyle : rightPanelStyle),
+		};
+	}, [isExpanded, side]);
 
-const pageWrapperFocusedWithSecondaryStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	width: "var(--size-336)",
-	marginLeft: 0,
-	marginRight: 0,
-	transition: pageWrapperTransition(300),
-};
+	useEffect(() => {
+		const node = outerRef.current;
+		if (!node) return;
 
-const secondaryPageWrapperStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	width: "var(--size-336)",
-	marginLeft: "var(--size-4)",
-	opacity: 1,
-	transition: pageWrapperTransition(100),
-};
+		const handleMouseLeave = () => {
+			if (!pinOpenByPage) {
+				onCloseInteraction();
+			}
+		};
 
-const secondaryPageWrapperHiddenStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	opacity: 0,
-	width: 0,
-	marginLeft: 0,
-	overflow: "hidden",
-	pointerEvents: "none",
-	transition: transition([
-		{ prop: "opacity", ms: 200 },
-		{ prop: "width", delay: 200 },
-		{ prop: "margin", delay: 200 },
-	]),
-};
+		node.addEventListener("mouseenter", onOpenInteraction);
+		node.addEventListener("mouseleave", handleMouseLeave);
+		return () => {
+			node.removeEventListener("mouseenter", onOpenInteraction);
+			node.removeEventListener("mouseleave", handleMouseLeave);
+		};
+	}, [onOpenInteraction, onCloseInteraction, pinOpenByPage]);
 
-const panelShadowStyle: CSSProperties = {
-	boxShadow: "var(--shadow-subtle)",
-};
+	const outerClassName =
+		side === "left"
+			? "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-r evy-border-gray"
+			: "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-gray";
 
-const rightPanelStyle: CSSProperties = {
-	...panelShadowStyle,
-	borderLeftWidth: "1px",
-	borderLeftStyle: "solid",
-};
+	const innerClassName =
+		side === "left"
+			? "evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-hidden"
+			: "evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-y-auto";
+
+	const innerContentStyle = useMemo(
+		() => ({
+			...panelContentFadeTransitionStyle,
+			opacity: contentVisible ? 1 : 0,
+			pointerEvents: contentVisible ? ("auto" as const) : ("none" as const),
+		}),
+		[contentVisible],
+	);
+
+	return (
+		<div ref={outerRef} className={outerClassName} style={outerStyle}>
+			{isExpanded ? (
+				<div className={innerClassName} style={innerContentStyle}>
+					{children}
+				</div>
+			) : (
+				<button
+					type="button"
+					style={collapsedPanelBarStyle}
+					className="evy-cursor-pointer evy-border-none evy-bg-white evy-focus-visible:outline-none"
+					onClick={onOpenInteraction}
+					aria-label={collapsedLabel}
+				>
+					{icon}
+				</button>
+			)}
+		</div>
+	);
+}
 
 function AppContent() {
 	const {
 		dispatchRow,
-		dispatchDragging,
 		activePageId,
 		focusMode,
 		secondarySheetRowId,
-	} = useContext(AppContext);
-	const { pages } = useActiveFlow();
-	const canvasRef = useRef<HTMLDivElement | null>(null);
+		flows,
+		activeFlowId,
+	} = useFlowsContext();
+	const { dragging, dispatchDragging } = useDragContext();
+
+	const rowsHover = useHoverToggle();
+	const configurationHover = useHoverToggle();
+
+	const pinSidePanelsOpenByPage = Boolean(activePageId);
+	const expandSidePanelsForPageDrag = dragging === "page";
+	const isRowsPanelExpanded =
+		pinSidePanelsOpenByPage || expandSidePanelsForPageDrag || rowsHover.hovered;
+	const isConfigurationPanelExpanded =
+		pinSidePanelsOpenByPage ||
+		expandSidePanelsForPageDrag ||
+		configurationHover.hovered;
+
+	useEffect(() => {
+		if (!pinSidePanelsOpenByPage && !expandSidePanelsForPageDrag) {
+			rowsHover.close();
+			configurationHover.close();
+		}
+	}, [
+		pinSidePanelsOpenByPage,
+		expandSidePanelsForPageDrag,
+		rowsHover.close,
+		configurationHover.close,
+	]);
+
+	const pages = useMemo(
+		() => findFlowById(flows, activeFlowId)?.pages ?? [],
+		[flows, activeFlowId],
+	);
 
 	const secondarySheetRow = useMemo(() => {
 		if (!secondarySheetRowId || !focusMode) return undefined;
@@ -155,98 +237,102 @@ function AppContent() {
 		});
 	}, [pages, dispatchRow, dispatchDragging]);
 
-	useEffect(() => {
-		const element = canvasRef.current;
-		if (!element) {
+	const clearSelectionOnBackground = useCallback(() => {
+		if (secondarySheetRowId) {
+			dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
 			return;
 		}
-
-		const clearSelection = (event: MouseEvent) => {
-			if (event.target === event.currentTarget) {
-				if (secondarySheetRowId) {
-					dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
-				} else if (!focusMode) {
-					dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
-				}
-			}
-		};
-
-		element.addEventListener("click", clearSelection);
-
-		return () => {
-			element.removeEventListener("click", clearSelection);
-		};
-	}, [dispatchRow, secondarySheetRowId, focusMode]);
+		dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
+	}, [dispatchRow, secondarySheetRowId]);
 
 	return (
-		<>
-			<div
-				className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white"
-				style={panelShadowStyle}
+		<div className="evy-relative evy-flex-1 evy-min-h-0 evy-min-w-0 evy-overflow-hidden">
+			<div className="evy-absolute evy-inset-0 evy-flex evy-min-h-0 evy-flex-col">
+				<CanvasViewport
+					contentStyle={canvasContentStyle}
+					onBackgroundClick={clearSelectionOnBackground}
+					focusMode={focusMode}
+					activePageId={activePageId}
+				>
+					{pages.map((page) => {
+						const isActive = page.id === activePageId;
+						const isHidden = focusMode && !isActive;
+						const wrapperStyle = isHidden
+							? pageWrapperHiddenStyle
+							: pageWrapperStyle;
+
+						return (
+							<Fragment key={page.id}>
+								<CanvasPageFrame
+									pageId={page.id}
+									wrapperStyle={wrapperStyle}
+									className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+								>
+									<AppPage pageId={page.id} />
+								</CanvasPageFrame>
+								{focusMode && isActive && (
+									<CanvasPageFrame
+										wrapperStyle={
+											showSecondary
+												? secondaryPageWrapperStyle
+												: secondaryPageWrapperHiddenStyle
+										}
+										className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+										data-testid="secondary-sheet-page"
+									>
+										{secondarySheetRow && (
+											<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
+										)}
+									</CanvasPageFrame>
+								)}
+							</Fragment>
+						);
+					})}
+				</CanvasViewport>
+			</div>
+			<CollapsibleSidePanel
+				side="left"
+				isExpanded={isRowsPanelExpanded}
+				pinOpenByPage={pinSidePanelsOpenByPage}
+				onOpenInteraction={rowsHover.open}
+				onCloseInteraction={rowsHover.close}
+				collapsedLabel="Expand rows panel"
+				icon={
+					<Rows3
+						size={20}
+						strokeWidth={LUCIDE_STROKE_WIDTH}
+						style={COLLAPSED_PANEL_ICON_STYLE}
+						aria-hidden
+					/>
+				}
 			>
 				<RowsPanel />
-			</div>
-			<div
-				className="evy-flex-1 evy-flex evy-p-4"
-				style={
-					focusMode
-						? showSecondary
-							? canvasFocusedWithSecondaryStyle
-							: canvasFocusedStyle
-						: canvasStyle
+			</CollapsibleSidePanel>
+			<CollapsibleSidePanel
+				side="right"
+				isExpanded={isConfigurationPanelExpanded}
+				pinOpenByPage={pinSidePanelsOpenByPage}
+				onOpenInteraction={configurationHover.open}
+				onCloseInteraction={configurationHover.close}
+				collapsedLabel="Expand configuration panel"
+				icon={
+					<FileSliders
+						size={20}
+						strokeWidth={LUCIDE_STROKE_WIDTH}
+						style={COLLAPSED_PANEL_ICON_STYLE}
+						aria-hidden
+					/>
 				}
-				ref={canvasRef}
-			>
-				{pages.map((page) => {
-					const isHidden = focusMode && page.id !== activePageId;
-					const isFocusedPage = focusMode && page.id === activePageId;
-
-					let wrapperStyle = pageWrapperStyle;
-					if (isHidden) {
-						wrapperStyle = pageWrapperHiddenStyle;
-					} else if (isFocusedPage && showSecondary) {
-						wrapperStyle = pageWrapperFocusedWithSecondaryStyle;
-					}
-
-					return (
-						<div
-							key={page.id}
-							className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-							style={wrapperStyle}
-						>
-							<AppPage pageId={page.id} />
-						</div>
-					);
-				})}
-				{focusMode && (
-					<div
-						className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-						style={
-							showSecondary
-								? secondaryPageWrapperStyle
-								: secondaryPageWrapperHiddenStyle
-						}
-						data-testid="secondary-sheet-page"
-					>
-						{secondarySheetRow && (
-							<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
-						)}
-					</div>
-				)}
-			</div>
-			<div
-				className="evy-w-300 evy-flex-shrink-0 evy-border-gray evy-overflow-y-auto evy-bg-white"
-				style={rightPanelStyle}
 			>
 				<ConfigurationPanel />
-			</div>
-		</>
+			</CollapsibleSidePanel>
+		</div>
 	);
 }
 
 function NavBar() {
 	return (
-		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center evy-gap-2 evy-min-w-0">
+		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center evy-gap-2 evy-min-w-0 evy-min-h-nav-bar">
 			<a href="/" className="evy-shrink-0">
 				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 			</a>
@@ -285,7 +371,7 @@ export function App() {
 		>
 			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
 				<NavBar />
-				<div className="evy-flex evy-flex-1 evy-overflow-hidden evy-bg-gray-light">
+				<div className="evy-flex evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-bg-gray-light">
 					<AppContent />
 				</div>
 			</div>

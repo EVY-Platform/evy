@@ -24,6 +24,11 @@ function UnknownRowContent(): ReactNode {
 	);
 }
 
+/**
+ * Row components are not wrapped in `React.memo` here: doing so caused newly
+ * dropped rows (palette → page) to skip rendering in tests; FlowsContext split
+ * already limits re-renders during drag.
+ */
 export function defineRow(
 	typeName: string,
 	definition: RowDefinition,

@@ -1,21 +1,10 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
-import { initTestFlows, initFullFlows } from "./utils";
-
-function getConfigPanel(page: Page): Locator {
-	return page.getByText("Configuration", { exact: true }).locator("..");
-}
-
-async function popoverSelect(
-	page: Page,
-	trigger: Locator,
-	optionLabel: string,
-) {
-	await trigger.click();
-	await page
-		.getByRole("listbox")
-		.getByRole("option", { name: optionLabel, exact: true })
-		.click();
-}
+import { expect, test } from "@playwright/test";
+import {
+	getConfigPanel,
+	initFullFlows,
+	initTestFlows,
+	popoverSelect,
+} from "./utils";
 
 test.describe("Row configuration", () => {
 	test("should drill into child row configuration from the configuration panel", async ({

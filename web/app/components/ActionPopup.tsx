@@ -1,118 +1,11 @@
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Trash2 } from "lucide-react";
 import type { SDUI_RowAction } from "evy-types";
 
-const popupCss = `
-.evy-popup-overlay {
-	position: fixed;
-	inset: 0;
-	background: rgba(0, 0, 0, 0.3);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 9000;
-}
-.evy-popup-panel {
-	background: var(--color-white);
-	border-radius: var(--radius-md);
-	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-	width: 680px;
-	max-height: 80vh;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-}
-.evy-popup-header {
-	padding: var(--size-4) var(--size-4);
-	border-bottom: 1px solid var(--color-gray-border);
-}
-.evy-popup-body {
-	padding: var(--size-4);
-	overflow-y: auto;
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	gap: var(--size-3);
-}
-.evy-popup-footer {
-	padding: var(--size-3) var(--size-4);
-	border-top: 1px solid var(--color-gray-border);
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--size-2);
-}
-.evy-popup-btn {
-	font-size: var(--text-md);
-	font-family: inherit;
-	padding: var(--size-2) 20px;
-	border-radius: var(--radius-sm);
-	border: 1px solid var(--color-gray-border);
-	cursor: pointer;
-	transition: all var(--transition);
-}
-.evy-popup-btn-cancel {
-	background: var(--color-white);
-	color: var(--color-black);
-}
-.evy-popup-btn-cancel:hover {
-	background: var(--color-evy-gray-light);
-}
-.evy-popup-btn-save {
-	background: var(--color-black);
-	color: var(--color-white);
-	border-color: var(--color-black);
-}
-.evy-popup-btn-save:hover {
-	opacity: 0.85;
-}
-.evy-popup-section {
-	background: var(--color-evy-gray-light);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-md);
-	padding: var(--size-3);
-}
-.evy-popup-section-title {
-	font-size: var(--text-sm);
-	font-weight: var(--font-semibold);
-	color: var(--color-black);
-	margin-bottom: var(--size-2);
-	display: block;
-}
-.evy-popup-branches {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: var(--size-3);
-}
-.evy-condition-row {
-	display: grid;
-	grid-template-columns: 1fr auto 1fr auto;
-	gap: 6px;
-	align-items: start;
-}
-.evy-condition-or {
-	display: block;
-	text-align: center;
-	font-size: 0.625rem;
-	font-weight: var(--font-semibold);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	color: var(--color-evy-gray);
-	padding: 2px 0;
-}
-.evy-condition-remove {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 24px;
-	height: 24px;
-	border-radius: var(--radius-sm);
-	margin-top: 2px;
-}
-`;
-
 import type { SDUI_Flow } from "../types/flow";
-import { AppContext } from "../state";
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+import { useFlowsContext } from "../state";
 import {
 	COMPARISON_OPERATORS,
 	OPERATOR_LABELS,
@@ -132,6 +25,8 @@ import {
 	type ConditionPart,
 	type ActionFunction,
 } from "../utils/actionHelpers";
+import { actionPopupEditorCss } from "./actionPopupEditorCss";
+import { modalSharedCss } from "./modalSharedCss";
 import { PopoverSelect, type PopoverOption } from "./PopoverSelect";
 
 type ActionPopupProps = {
@@ -147,7 +42,7 @@ export function ActionPopup({
 	onSave,
 	onCancel,
 }: ActionPopupProps) {
-	const { flows, activeFlowId } = useContext(AppContext);
+	const { flows, activeFlowId } = useFlowsContext();
 	const [conditions, setConditions] = useState<ConditionPart[]>(() =>
 		parseCondition(action.condition),
 	);
@@ -167,21 +62,26 @@ export function ActionPopup({
 		});
 	}, [conditions, trueBranch, falseBranch, onSave]);
 
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") onCancel();
+		};
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [onCancel]);
+
 	return createPortal(
 		<>
-			<style>{popupCss}</style>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-to-dismiss is a standard modal pattern */}
-			<div
-				className="evy-popup-overlay"
-				onClick={onCancel}
-				onKeyDown={(e) => {
-					if (e.key === "Escape") onCancel();
-				}}
-			>
+			<style>{`${modalSharedCss}\n${actionPopupEditorCss}`}</style>
+			<div className="evy-modal-root">
+				<button
+					type="button"
+					className="evy-modal-backdrop"
+					aria-label="Close dialog"
+					onClick={onCancel}
+				/>
 				<div
-					className="evy-popup-panel"
-					onClick={(e) => e.stopPropagation()}
-					onKeyDown={() => {}}
+					className="evy-modal-panel evy-modal-panel--action"
 					role="dialog"
 					aria-label={`Edit action ${actionIndex + 1}`}
 				>
@@ -227,17 +127,17 @@ export function ActionPopup({
 						</div>
 					</div>
 
-					<div className="evy-popup-footer">
+					<div className="evy-modal-footer">
 						<button
 							type="button"
-							className="evy-popup-btn evy-popup-btn-cancel"
+							className="evy-modal-btn evy-modal-btn--md evy-modal-btn-cancel"
 							onClick={onCancel}
 						>
 							Cancel
 						</button>
 						<button
 							type="button"
-							className="evy-popup-btn evy-popup-btn-save"
+							className="evy-modal-btn evy-modal-btn--md evy-modal-btn-primary"
 							onClick={handleSave}
 						>
 							Save
@@ -498,7 +398,7 @@ function ConditionEditor({
 								>
 									<Trash2
 										className="evy-h-4 evy-w-4"
-										strokeWidth={2}
+										strokeWidth={LUCIDE_STROKE_WIDTH}
 										aria-hidden
 									/>
 								</button>

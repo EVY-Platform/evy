@@ -4,6 +4,8 @@ import invariant from "tiny-invariant";
 
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+
 type State = { type: "idle" } | { type: "hovered" };
 
 const idle: State = { type: "idle" };
@@ -51,7 +53,7 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 			>
 				<Trash2
 					style={{ height: "6rem", width: "6rem" }}
-					strokeWidth={2}
+					strokeWidth={LUCIDE_STROKE_WIDTH}
 					aria-hidden
 				/>
 			</button>

@@ -1,9 +1,11 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 
-import { AppContext } from "../state";
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
 import { useRowById } from "../hooks/useRowById";
+import { findFlowById } from "../utils/flowHelpers";
 import { ActionEditor } from "./ActionEditor";
 
 function isRow(value: unknown): value is Row {
@@ -28,7 +30,11 @@ function ChildRowButton({
 			onClick={onClick}
 		>
 			<span>{child.config.type}</span>
-			<ChevronRight className="evy-h-4 evy-w-4" strokeWidth={2} aria-hidden />
+			<ChevronRight
+				className="evy-h-4 evy-w-4"
+				strokeWidth={LUCIDE_STROKE_WIDTH}
+				aria-hidden
+			/>
 		</button>
 	);
 }
@@ -41,13 +47,13 @@ export function ConfigurationPanel() {
 		flows,
 		configStack,
 		dispatchRow,
-	} = useContext(AppContext);
+	} = useFlowsContext();
 	const row = useRowById(activeRowId);
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
 	const currentConfigRow = useRowById(currentConfigRowId);
 
 	const activePage = useMemo(() => {
-		const flow = flows.find((f) => f.id === activeFlowId);
+		const flow = findFlowById(flows, activeFlowId);
 		return flow?.pages.find((p) => p.id === activePageId);
 	}, [flows, activeFlowId, activePageId]);
 
@@ -103,38 +109,39 @@ export function ConfigurationPanel() {
 			return entries.map(([key, value]) => {
 				const uniqueId = `${configRow.id}-${key}`;
 
-				if (key === "children") {
-					if (!isRowArray(value)) return null;
-					const children = value;
+				if (key === "child" || key === "children") {
+					const items =
+						key === "child"
+							? isRow(value)
+								? [value]
+								: []
+							: isRowArray(value)
+								? value
+								: [];
+					if (items.length === 0) return null;
+					const label = key === "child" ? "Child" : "Children";
 					return (
 						<div key={uniqueId}>
 							<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
-								Children
+								{label}
 							</div>
-							<div className="evy-flex evy-flex-col evy-gap-4">
-								{children.map((child) => (
+							<div
+								className={
+									items.length > 1
+										? "evy-flex evy-flex-col evy-gap-4"
+										: undefined
+								}
+							>
+								{items.map((childRow) => (
 									<ChildRowButton
-										key={child.id}
-										child={child}
-										onClick={() => openChildConfiguration(child.id, configRow)}
+										key={childRow.id}
+										child={childRow}
+										onClick={() =>
+											openChildConfiguration(childRow.id, configRow)
+										}
 									/>
 								))}
 							</div>
-						</div>
-					);
-				}
-				if (key === "child") {
-					if (!isRow(value)) return null;
-					const child = value;
-					return (
-						<div key={uniqueId}>
-							<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
-								Child
-							</div>
-							<ChildRowButton
-								child={child}
-								onClick={() => openChildConfiguration(child.id, configRow)}
-							/>
 						</div>
 					);
 				}

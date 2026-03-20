@@ -1,11 +1,12 @@
-import { useContext, useMemo } from "react";
+import { useMemo } from "react";
 
-import { AppContext } from "../state";
+import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
+import { findFlowById } from "../utils/flowHelpers";
 import { getRowsRecursive } from "../utils/rowTree";
 
 export function useRowById(rowId?: string): Row | undefined {
-	const { rows, flows, activeFlowId } = useContext(AppContext);
+	const { rows, flows, activeFlowId } = useFlowsContext();
 
 	return useMemo(() => {
 		if (!rowId) return undefined;
@@ -13,7 +14,7 @@ export function useRowById(rowId?: string): Row | undefined {
 		const baseRow = rows.find((r) => r.id === rowId);
 		if (baseRow) return baseRow;
 
-		const pages = flows.find((f) => f.id === activeFlowId)?.pages ?? [];
+		const pages = findFlowById(flows, activeFlowId)?.pages ?? [];
 		const allRows = pages.flatMap((page) => {
 			const rows = page.rows.flatMap(getRowsRecursive);
 			if (page.footer) rows.push(...getRowsRecursive(page.footer));

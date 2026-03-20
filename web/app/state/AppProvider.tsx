@@ -9,12 +9,14 @@ import {
 import type { SDUI_Flow as ServerFlow } from "evy-types";
 
 import type { SDUI_Flow } from "../types/flow";
-import { AppContext } from "./context";
+import { FlowsContext } from "./contexts/FlowsContext";
+import { DragContext } from "./contexts/DragContext";
 import { pageReducer, draggingReducer, dropIndicatorReducer } from "./reducers";
 import { decodeFlows, encodeFlow } from "../utils/decodeFlow";
 import { baseRows } from "../rows/baseRows";
 import { wsClient } from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
+import { findFlowById } from "../utils/flowHelpers";
 import { parseUrlPath, resolveUrlIds } from "../utils/urlUtils";
 
 export function AppProvider({
@@ -32,24 +34,22 @@ export function AppProvider({
 		config: row.config,
 	}));
 
-	const flows: ServerFlow[] = initialFlows;
-
 	const initialState = useMemo(() => {
 		const { flowId: urlFlowId, pageId: urlPageId } = parseUrlPath();
 		const { flowId: activeFlowId, pageId: activePageId } = resolveUrlIds(
 			urlFlowId,
 			urlPageId,
-			flows,
+			initialFlows,
 		);
 
 		return {
-			flows: decodeFlows(flows),
+			flows: decodeFlows(initialFlows),
 			activeFlowId,
 			activePageId,
 			focusMode: false,
 			configStack: [],
 		};
-	}, [flows]);
+	}, [initialFlows]);
 
 	const [appState, dispatchRow] = useReducer(pageReducer, initialState);
 
@@ -62,11 +62,10 @@ export function AppProvider({
 	const previousFlowsRef = useRef<SDUI_Flow[]>(appState.flows);
 
 	useEffect(() => {
-		const activeFlow = appState.flows.find(
-			(f) => f.id === appState.activeFlowId,
-		);
-		const previousActiveFlow = previousFlowsRef.current.find(
-			(f) => f.id === appState.activeFlowId,
+		const activeFlow = findFlowById(appState.flows, appState.activeFlowId);
+		const previousActiveFlow = findFlowById(
+			previousFlowsRef.current,
+			appState.activeFlowId,
 		);
 
 		if (syncWithApi && activeFlow && activeFlow !== previousActiveFlow) {
@@ -88,25 +87,45 @@ export function AppProvider({
 		dispatchRow,
 	);
 
+	const flowsContextValue = useMemo(
+		() => ({
+			rows,
+			flows: appState.flows,
+			activeFlowId: appState.activeFlowId,
+			activeRowId: appState.activeRowId,
+			activePageId: appState.activePageId,
+			focusMode: appState.focusMode,
+			secondarySheetRowId: appState.secondarySheetRowId,
+			configStack: appState.configStack,
+			dispatchRow,
+		}),
+		[
+			rows,
+			appState.flows,
+			appState.activeFlowId,
+			appState.activeRowId,
+			appState.activePageId,
+			appState.focusMode,
+			appState.secondarySheetRowId,
+			appState.configStack,
+		],
+	);
+
+	const dragContextValue = useMemo(
+		() => ({
+			dragging,
+			dropIndicator,
+			dispatchDragging,
+			dispatchDropIndicator,
+		}),
+		[dragging, dropIndicator],
+	);
+
 	return (
-		<AppContext.Provider
-			value={{
-				rows,
-				flows: appState.flows,
-				activeFlowId: appState.activeFlowId,
-				activeRowId: appState.activeRowId,
-				activePageId: appState.activePageId,
-				focusMode: appState.focusMode,
-				secondarySheetRowId: appState.secondarySheetRowId,
-				configStack: appState.configStack,
-				dragging,
-				dropIndicator,
-				dispatchRow,
-				dispatchDragging,
-				dispatchDropIndicator,
-			}}
-		>
-			{children}
-		</AppContext.Provider>
+		<FlowsContext.Provider value={flowsContextValue}>
+			<DragContext.Provider value={dragContextValue}>
+				{children}
+			</DragContext.Provider>
+		</FlowsContext.Provider>
 	);
 }

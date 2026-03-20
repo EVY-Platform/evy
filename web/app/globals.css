@@ -3,6 +3,7 @@
 	--color-evy-light: oklch(97.02% 0 0);
 	--color-evy-blue: oklch(60.04% 0.2013 261.37);
 	--color-evy-gray: oklch(62.34% 0 0);
+	--color-evy-gray-medium: oklch(77.42% 0 0);
 	--color-evy-gray-light: oklch(92.494% 0.00011 271.152);
 	--color-evy-gray-dark: oklch(35.84% 0.0103 285.87);
 	--color-white: #ffffff;
@@ -19,7 +20,8 @@
 	--size-30px: 30px;
 	--size-32: 8rem; /* 128px */
 	--size-48: 12rem; /* 192px */
-	--size-navbar-control: 34px;
+	--size-nav-bar: 50px;
+	--size-nav-control: 34px;
 	--size-336: 336px;
 	--size-662: 662px;
 
@@ -201,6 +203,9 @@ body {
 .evy-h-screen {
 	height: 100vh;
 }
+.evy-min-h-nav-bar {
+	min-height: var(--size-nav-bar);
+}
 .evy-min-h-full {
 	min-height: 100%;
 }
@@ -298,6 +303,9 @@ body {
 }
 
 /* Position utilities */
+.evy-inset-0 {
+	inset: 0;
+}
 .evy-inset-y-0 {
 	top: 0;
 	bottom: 0;

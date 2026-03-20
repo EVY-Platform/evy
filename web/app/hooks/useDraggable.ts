@@ -1,11 +1,4 @@
-import {
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
 import {
@@ -23,11 +16,14 @@ import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/externa
 
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
-import { AppContext } from "../state";
+import { useDragContext } from "../state";
 import { useRowById } from "./useRowById";
 
 const rowEdges: Edge[] = ["top", "bottom"];
 const columnEdges: Edge[] = ["left", "right"];
+
+/** Separator for throttled drop-indicator keys (rowId may contain arbitrary text). */
+const DROP_INDICATOR_KEY_SEP = "\u0001";
 
 export type DraggableState =
 	| { type: "idle" }
@@ -74,11 +70,12 @@ export function useDraggable({
 	previousRowId,
 	nextRowId,
 }: UseDraggableOptions): UseDraggableResult {
-	const { dragging, dropIndicator, dispatchDropIndicator } =
-		useContext(AppContext);
+	const { dragging, dropIndicator, dispatchDropIndicator } = useDragContext();
 
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<DraggableState>(idleState);
+
+	const lastDispatchedDropKey = useRef<string | null>(null);
 
 	useEffect(() => {
 		ref.current?.setAttribute("data-row-id", rowId);
@@ -144,10 +141,15 @@ export function useDraggable({
 			const innermostElementRowId = getRowId(innermostDropTarget.data);
 			if (!innermostElementRowId) return;
 
+			const nextKey = `${innermostElementRowId}${DROP_INDICATOR_KEY_SEP}${edge}`;
+			if (nextKey === lastDispatchedDropKey.current) {
+				return;
+			}
+			lastDispatchedDropKey.current = nextKey;
 			dispatchDropIndicator({
 				type: "SET_INDICATOR_ROW",
 				rowId: innermostElementRowId,
-				edge: edge,
+				edge,
 			});
 		},
 		[dispatchDropIndicator, rowId],
@@ -205,6 +207,7 @@ export function useDraggable({
 				onDragLeave: () => {
 					if (dropIndicator?.rowId !== rowId) return;
 
+					lastDispatchedDropKey.current = null;
 					dispatchDropIndicator({
 						type: "UNSET_INDICATOR_ROW",
 					});

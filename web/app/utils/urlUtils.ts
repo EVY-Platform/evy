@@ -1,3 +1,5 @@
+import { findFlowById } from "./flowHelpers";
+
 export function parseUrlPath(): { flowId?: string; pageId?: string } {
 	const parts = window.location.pathname.split("/").filter(Boolean);
 	return {
@@ -23,7 +25,7 @@ export function resolveUrlIds(
 		return { flowId: defaultFlowId, pageId: undefined };
 	}
 
-	const flow = flows.find((f) => f.id === urlFlowId);
+	const flow = findFlowById(flows, urlFlowId);
 	if (!flow) {
 		alert(`Flow not found: "${urlFlowId}". Showing the first available flow.`);
 		return { flowId: defaultFlowId, pageId: flows[0]?.pages[0]?.id };

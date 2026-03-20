@@ -1,17 +1,18 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { AppContext } from "../state";
+import { useDragContext, useFlowsContext } from "../state";
 import { CancelOverlay } from "./CancelOverlay";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { SearchInput } from "./SearchInput";
 
 export function RowsPanel() {
 	const pageInnerRef = useRef<HTMLDivElement | null>(null);
-	const { rows, dragging, dispatchDragging } = useContext(AppContext);
+	const { rows } = useFlowsContext();
+	const { dragging, dispatchDragging } = useDragContext();
 	const [searchQuery, setSearchQuery] = useState("");
 
 	const filteredRows = useMemo(() => {
@@ -30,12 +31,12 @@ export function RowsPanel() {
 				element: pageInnerRef.current,
 				getData: () => ({ pageId: "rows" }),
 				canDrop: () => true,
-				onDragStart: () =>
-					dispatchDragging({ type: "START_DRAGGING", source: "rows" }),
-				onDrop: () => dispatchDragging({ type: "STOP_DRAGGING" }),
+				// Drag source is set only in App.tsx (monitorForElements) from
+				// initial drop targets, so page-row drags are not reclassified as "rows"
+				// when the pointer moves over this panel.
 			}),
 		);
-	}, [dispatchDragging]);
+	}, []);
 
 	return (
 		<div className="evy-flex evy-flex-col evy-relative evy-w-full evy-h-full">

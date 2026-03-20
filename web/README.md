@@ -7,43 +7,52 @@ Shared types (`SDUI_Flow`, `SDUI_Page`, `SDUI_Row`, RPC payloads) come from the 
 ## Architecture
 
 ```mermaid
-graph TB
+%%{init: {'theme': 'default', 'flowchart': {'rankSpacing': 60, 'nodeSpacing': 30}}}%%
+graph TD
     subgraph app [App Layer]
         App[App.tsx]
         NavBar[NavBar]
         AppContent[AppContent]
-        SecondarySheetPage[SecondarySheetPage]
     end
 
     subgraph state [State Management]
         AppProvider[AppProvider]
-        AppContext[AppContext]
+        FlowsContext[FlowsContext]
+        DragContext[DragContext]
         PageReducer[pageReducer]
         DraggingReducer[draggingReducer]
         DropIndicatorReducer[dropIndicatorReducer]
     end
 
-    subgraph hooks [Hooks]
-        useFlows[useFlows]
-        useActiveFlow[useActiveFlow]
-        useRowById[useRowById]
-        useDraggable[useDraggable]
-        useUrlSync[useUrlSync]
-        usePageDropTarget[usePageDropTarget]
-        useSelectRow[useSelectRow]
-    end
-
-    subgraph panels [UI Panels]
-        RowsPanel[RowsPanel]
-        SearchInput[SearchInput]
-        CancelOverlay[CancelOverlay]
-        AppPage[AppPage]
-        ConfigPanel[ConfigurationPanel]
-        ActionEditor[ActionEditor]
-        ActionPopup[ActionPopup]
+    subgraph nav [Navigation]
         NavigationBreadcrumb[NavigationBreadcrumb]
         PopoverSelect[PopoverSelect]
         CreateFlowDialog[CreateFlowDialog]
+    end
+
+    subgraph layout [Layout Panels]
+        RowsPanel[RowsPanel]
+        SearchInput[SearchInput]
+        CancelOverlay[CancelOverlay]
+        CanvasViewport[CanvasViewport]
+        CanvasPageFrame[CanvasPageFrame]
+        ConfigPanel[ConfigurationPanel]
+
+        subgraph pages [Page Content]
+            AppPage[AppPage]
+            SecondarySheetPage[SecondarySheetPage]
+            ActionEditor[ActionEditor]
+            ActionPopup[ActionPopup]
+        end
+    end
+
+    subgraph hooks [Hooks]
+        useCamera[useCamera]
+        usePageDropTarget[usePageDropTarget]
+        useDraggable[useDraggable]
+        useFlows[useFlows]
+        useRowById[useRowById]
+        useUrlSync[useUrlSync]
     end
 
     subgraph dragdrop [Drag and Drop]
@@ -76,25 +85,31 @@ graph TB
     end
 
     App --> AppProvider
-    AppProvider --> AppContext
-    AppContext --> PageReducer
-    AppContext --> DraggingReducer
-    AppContext --> DropIndicatorReducer
+    AppProvider --> FlowsContext
+    AppProvider --> DragContext
+    FlowsContext --> PageReducer
+    DragContext --> DraggingReducer
+    DragContext --> DropIndicatorReducer
 
     App --> NavBar
     NavBar --> NavigationBreadcrumb
     NavigationBreadcrumb --> PopoverSelect
     NavigationBreadcrumb --> CreateFlowDialog
+
     App --> AppContent
     AppContent --> RowsPanel
-    AppContent --> AppPage
-    AppContent --> SecondarySheetPage
+    AppContent --> CanvasViewport
     AppContent --> ConfigPanel
     AppContent --> DropHandler
 
     RowsPanel --> SearchInput
     RowsPanel --> CancelOverlay
     RowsPanel --> DraggableRowContainer
+
+    CanvasViewport --> useCamera
+    CanvasViewport --> CanvasPageFrame
+    CanvasPageFrame --> AppPage
+    CanvasPageFrame --> SecondarySheetPage
 
     AppPage --> usePageDropTarget
     AppPage --> DraggableRowContainer

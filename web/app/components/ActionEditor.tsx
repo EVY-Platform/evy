@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
+
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import type { SDUI_RowAction } from "evy-types";
 
 const actionSummaryCss = `
@@ -170,7 +172,11 @@ function ActionSummaryCard({
 					}}
 					aria-label={`Remove action ${index + 1}`}
 				>
-					<Trash2 className="evy-h-4 evy-w-4" strokeWidth={2} aria-hidden />
+					<Trash2
+						className="evy-h-4 evy-w-4"
+						strokeWidth={LUCIDE_STROKE_WIDTH}
+						aria-hidden
+					/>
 				</button>
 			</div>
 

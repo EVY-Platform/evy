@@ -1,4 +1,76 @@
+import invariant from "tiny-invariant";
+
+import type { SDUI_Page } from "../types/flow";
 import type { Row, ContainerType } from "../types/row";
+
+const SECONDARY_PAGE_ID_PREFIX = "secondary:";
+
+/** If `pageId` is a secondary-sheet pseudo id, returns the host row id; otherwise `undefined`. */
+export function parseSecondarySheetRowId(pageId: string): string | undefined {
+	return pageId.startsWith(SECONDARY_PAGE_ID_PREFIX)
+		? pageId.slice(SECONDARY_PAGE_ID_PREFIX.length)
+		: undefined;
+}
+
+/**
+ * Maps a drag `pageId` from initial drop targets to the real page id
+ * (secondary pseudo ids resolve via the sheet host row).
+ */
+export function resolveSourcePageIdFromRaw(
+	rawSourcePageId: string,
+	pages: SDUI_Page[],
+): string {
+	const sheetRowId = parseSecondarySheetRowId(rawSourcePageId);
+	if (!sheetRowId) return rawSourcePageId;
+	const sourcePage = findPageContainingRow(pages, sheetRowId);
+	return sourcePage?.id ?? rawSourcePageId;
+}
+
+export type ResolvedDropDestinationPage = {
+	page: SDUI_Page;
+	resolvedPageId: string;
+	secondarySheetRowId: string | undefined;
+};
+
+/** Resolves destination drop target `pageId` (including `secondary:*`) to a real page. */
+export function resolveDestinationPageFromRawPageId(
+	rawDestinationPageId: string,
+	pages: SDUI_Page[],
+): ResolvedDropDestinationPage {
+	const secondarySheetRowId = parseSecondarySheetRowId(rawDestinationPageId);
+	if (secondarySheetRowId) {
+		const destinationPage = findPageContainingRow(pages, secondarySheetRowId);
+		invariant(
+			destinationPage,
+			"resolveDestinationPageFromRawPageId: destinationPage is not defined",
+		);
+		return {
+			page: destinationPage,
+			resolvedPageId: destinationPage.id,
+			secondarySheetRowId,
+		};
+	}
+	const destinationPage = pages.find(
+		(page) => page.id === rawDestinationPageId,
+	);
+	invariant(
+		destinationPage,
+		"resolveDestinationPageFromRawPageId: destinationPage is not defined",
+	);
+	return {
+		page: destinationPage,
+		resolvedPageId: rawDestinationPageId,
+		secondarySheetRowId: undefined,
+	};
+}
+
+/** Page whose top-level `rows` contains the given row id (not recursive). */
+export function findPageContainingRow(
+	pages: SDUI_Page[],
+	rowId: string,
+): SDUI_Page | undefined {
+	return pages.find((page) => page.rows.some((r) => r.id === rowId));
+}
 
 export function findRowInPages(
 	rowId: string,
@@ -22,7 +94,7 @@ export function getRowsRecursive(row: Row): Row[] {
 		...(row.config.view.content.children
 			? row.config.view.content.children.flatMap(getRowsRecursive)
 			: []),
-	].filter((r) => r !== undefined);
+	];
 }
 
 export function findContainerOfRow(

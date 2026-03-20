@@ -16,11 +16,11 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		await initTestFlows(page, [{ id: "step_1", title: "Page 1", rows: [] }]);
 		await page.goto("/");
 
-		const sidebarRow = getSidebarRow(page, "Info row title");
+		const sidebarRow = await getSidebarRow(page, "Info row title");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
-		const targetSidebarRow = getSidebarRow(page, "Text row title");
+		const targetSidebarRow = await getSidebarRow(page, "Text row title");
 		await targetSidebarRow.dragTo(pageContent);
 
 		await expect(
@@ -57,14 +57,17 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
-		const containerSidebarRow = getSidebarRow(page, "List container row title");
+		const containerSidebarRow = await getSidebarRow(
+			page,
+			"List container row title",
+		);
 		await containerSidebarRow.dragTo(pageContent);
 
 		await expect(
 			firstPage.getByText("List container row title", { exact: true }),
 		).toBeVisible();
 
-		const childSidebarRow = getSidebarRow(page, "Info row title");
+		const childSidebarRow = await getSidebarRow(page, "Info row title");
 		const containerRow = getPageRow(page, "List container row title");
 
 		await childSidebarRow.dragTo(containerRow);
@@ -73,7 +76,7 @@ test.describe("Drag Hover Indicator Behavior", () => {
 			firstPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
 
-		const dragRow = getSidebarRow(page, "Text row title");
+		const dragRow = await getSidebarRow(page, "Text row title");
 		const childRow = getPageRow(page, "Info row title");
 
 		const dragBox = await dragRow.boundingBox();
@@ -104,13 +107,13 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const rowTypes = ["Info row title", "Text row title", "Button row text"];
 		for (const rowText of rowTypes) {
-			const sidebarRow = getSidebarRow(page, rowText);
+			const sidebarRow = await getSidebarRow(page, rowText);
 			await sidebarRow.dragTo(pageContent);
 			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
 		}
 
 		const pageRows = pageContent.locator(SELECTORS.rowContainer);
-		const dragRow = getSidebarRow(page, "Calendar row title");
+		const dragRow = await getSidebarRow(page, "Calendar row title");
 
 		const firstPageRow = pageRows.first();
 		const secondPageRow = pageRows.nth(1);
@@ -153,7 +156,10 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
-		const outerContainerRow = getSidebarRow(page, "List container row title");
+		const outerContainerRow = await getSidebarRow(
+			page,
+			"List container row title",
+		);
 		await outerContainerRow.dragTo(pageContent);
 
 		await expect(
@@ -162,19 +168,22 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const outerContainer = getPageRow(page, "List container row title");
 
-		const innerContainerRow = getSidebarRow(page, "Column container row title");
+		const innerContainerRow = await getSidebarRow(
+			page,
+			"Column container row title",
+		);
 		await innerContainerRow.dragTo(outerContainer);
 
 		const innerContainer = getPageRow(page, "Column container row title");
 
-		const childRow = getSidebarRow(page, "Info row title");
+		const childRow = await getSidebarRow(page, "Info row title");
 		await childRow.dragTo(innerContainer);
 
 		await expect(
 			firstPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
 
-		const dragRow = getSidebarRow(page, "Text row title");
+		const dragRow = await getSidebarRow(page, "Text row title");
 		const childRowElement = getPageRow(page, "Info row title");
 
 		const dragBox = await dragRow.boundingBox();
@@ -204,11 +213,11 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const pageContent = getPageContent(page);
 
-		const targetSidebarRow = getSidebarRow(page, "Text row title");
+		const targetSidebarRow = await getSidebarRow(page, "Text row title");
 		await targetSidebarRow.dragTo(pageContent);
 
 		const pageRow = getPageRow(page, "Text row title");
-		const dragRow = getSidebarRow(page, "Info row title");
+		const dragRow = await getSidebarRow(page, "Info row title");
 
 		const dragBox = await dragRow.boundingBox();
 		const rowBox = await pageRow.boundingBox();
@@ -239,13 +248,13 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const rowTypes = ["Info row title", "Text row title"];
 		for (const rowText of rowTypes) {
-			const sidebarRow = getSidebarRow(page, rowText);
+			const sidebarRow = await getSidebarRow(page, rowText);
 			await sidebarRow.dragTo(pageContent);
 			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
 		}
 
 		const pageRows = pageContent.locator(SELECTORS.rowContainer);
-		const dragRow = getSidebarRow(page, "Button row text");
+		const dragRow = await getSidebarRow(page, "Button row text");
 
 		const firstPageRow = pageRows.filter({ hasText: "Info row title" }).first();
 		const secondPageRow = pageRows
@@ -291,11 +300,11 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const pageContent = getPageContent(page);
 
-		const targetSidebarRow = getSidebarRow(page, "Text row title");
+		const targetSidebarRow = await getSidebarRow(page, "Text row title");
 		await targetSidebarRow.dragTo(pageContent);
 
 		const pageRow = getPageRow(page, "Text row title");
-		const dragRow = getSidebarRow(page, "Info row title");
+		const dragRow = await getSidebarRow(page, "Info row title");
 
 		const dragBox = await dragRow.boundingBox();
 		const rowBox = await pageRow.boundingBox();
@@ -323,11 +332,11 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const pageContent = getPageContent(page);
 
-		const targetSidebarRow = getSidebarRow(page, "Text row title");
+		const targetSidebarRow = await getSidebarRow(page, "Text row title");
 		await targetSidebarRow.dragTo(pageContent);
 
 		const pageRow = getPageRow(page, "Text row title");
-		const dragRow = getSidebarRow(page, "Info row title");
+		const dragRow = await getSidebarRow(page, "Info row title");
 
 		const dragBox = await dragRow.boundingBox();
 		const rowBox = await pageRow.boundingBox();

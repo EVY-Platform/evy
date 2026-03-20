@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import type {
 	SDUI_Flow as ServerFlow,
 	SDUI_RowAction as RowAction,
@@ -49,16 +49,32 @@ export const SELECTORS = {
 	bottomIndicator:
 		".evy-v-dropzone.expanded.evy-mb-2, .evy-h-dropzone.expanded",
 	flowSelector: "#flow-select",
+	secondarySheetPage: '[data-testid="secondary-sheet-page"]',
 	loadingMessage: 'div:text-is("Loading flows...")',
 	errorMessage: 'div:text-is("Failed to load flows")',
 };
 
-export function getRowsPanel(page: Page): Locator {
+/** Selects the first canvas page so side panels stay open (they auto-collapse when no page is selected). */
+export async function ensureSidePanelsExpanded(page: Page): Promise<void> {
+	const rowsLabel = page.getByText("Rows", { exact: true }).first();
+	if (await rowsLabel.isVisible()) {
+		return;
+	}
+	await getFirstPage(page).getByRole("button").first().click();
+	await expect(rowsLabel).toBeVisible();
+}
+
+export async function getRowsPanel(page: Page): Promise<Locator> {
+	await ensureSidePanelsExpanded(page);
 	return page.getByText("Rows", { exact: true }).first().locator("..");
 }
 
-export function getSidebarRow(page: Page, text: string): Locator {
-	return getRowsPanel(page).getByText(text, { exact: true }).locator("..");
+export async function getSidebarRow(
+	page: Page,
+	text: string,
+): Promise<Locator> {
+	const rowsPanel = await getRowsPanel(page);
+	return rowsPanel.getByText(text, { exact: true }).locator("..");
 }
 
 export function getFirstPage(page: Page): Locator {
@@ -91,6 +107,30 @@ export function getLoadingState(page: Page): Locator {
 
 export function getErrorState(page: Page): Locator {
 	return page.getByText("Failed to load flows", { exact: true });
+}
+
+export function getConfigPanel(page: Page): Locator {
+	return page.getByText("Configuration", { exact: true }).locator("..");
+}
+
+/** Flow picker is visible when the app has finished loading (real API or injected flows). */
+export async function waitForAppLoaded(page: Page): Promise<void> {
+	await expect(page.locator(SELECTORS.flowSelector)).toBeVisible();
+}
+
+export async function openFlowPicker(page: Page): Promise<void> {
+	await page.locator(SELECTORS.flowSelector).click();
+}
+
+export async function selectFlowByLabel(
+	page: Page,
+	label: string,
+): Promise<void> {
+	await openFlowPicker(page);
+	await page
+		.getByRole("listbox", { name: "Active flow" })
+		.getByRole("option", { name: label, exact: true })
+		.click();
 }
 
 function ensureRowId(row: ServerRowInput): ServerRow {
@@ -163,4 +203,86 @@ export async function initFullFlows(page: Page, flows: ServerFlow[]) {
 	await page.addInitScript((flowData: ServerFlow[]) => {
 		window.__TEST_FLOWS__ = flowData;
 	}, flows);
+}
+
+/** Loads injected full flow JSON and opens the app (same pattern as component tests that use `initFullFlows`). */
+export async function openAppWithFullFlows(
+	page: Page,
+	flows: ServerFlow[],
+): Promise<void> {
+	await initFullFlows(page, flows);
+	await page.goto("/");
+}
+
+export async function popoverSelect(
+	page: Page,
+	trigger: Locator,
+	optionLabel: string,
+): Promise<void> {
+	await trigger.click();
+	await page
+		.getByRole("listbox")
+		.getByRole("option", { name: optionLabel, exact: true })
+		.click();
+}
+
+export function getSecondarySheetPage(page: Page): Locator {
+	return page.locator(SELECTORS.secondarySheetPage);
+}
+
+/** Clicks the phone canvas then the breadcrumb so the configuration panel is in page focus mode. */
+export async function enterCanvasFocusModeByPageTitle(
+	page: Page,
+	pageTitle: string,
+): Promise<void> {
+	await getFirstPage(page).click();
+	await page.getByRole("button", { name: `Select page ${pageTitle}` }).click();
+}
+
+/** Opens a sheet’s secondary page via its first matching child type button in the configuration panel. */
+export async function openSecondarySheetChildFromConfigPanel(
+	page: Page,
+	options: { sheetTitle?: string; firstChildButtonName?: string } = {},
+): Promise<void> {
+	const sheetTitle = options.sheetTitle ?? "My Sheet";
+	const firstChildButtonName = options.firstChildButtonName ?? "Text";
+	await page.getByText(sheetTitle, { exact: true }).click();
+	const configPanel = getConfigPanel(page);
+	const childButton = configPanel
+		.getByRole("button", { name: firstChildButtonName })
+		.first();
+	await expect(childButton).toBeVisible();
+	await childButton.click();
+}
+
+/** Common drag-and-drop tests fixture: two empty pages. */
+export async function setupTwoEmptyTestPages(page: Page): Promise<void> {
+	await initTestFlows(page, [
+		{ id: "step_1", title: "Page 1", rows: [] },
+		{ id: "step_2", title: "Page 2", rows: [] },
+	]);
+	await page.goto("/");
+}
+
+/** Asserts `laterSubstring` appears after `earlierSubstring` in page canvas draggable rows. */
+export async function expectDraggableSubrowOrder(
+	pageContent: Locator,
+	earlierSubstring: string,
+	laterSubstring: string,
+): Promise<void> {
+	const allRows = await pageContent.locator(SELECTORS.draggableRow).all();
+	let earlierIndex = -1;
+	let laterIndex = -1;
+	for (let i = 0; i < allRows.length; i++) {
+		const rowText = await allRows[i].textContent().catch(() => "");
+		if (rowText?.includes(earlierSubstring) && earlierIndex === -1) {
+			earlierIndex = i;
+		}
+		if (rowText?.includes(laterSubstring) && laterIndex === -1) {
+			laterIndex = i;
+		}
+	}
+	expect(earlierIndex).not.toBe(-1);
+	expect(laterIndex).not.toBe(-1);
+	expect(laterIndex).toBeGreaterThan(earlierIndex);
 }

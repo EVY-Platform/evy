@@ -1,5 +1,8 @@
 import type { SDUI_Flow } from "../types/flow";
 import type { Row } from "../types/row";
+import { displayLabel } from "./labelFormatting";
+import { findFlowById } from "./flowHelpers";
+import { getRowsRecursive } from "./rowTree";
 
 export const COMPARISON_OPERATORS = ["==", "!=", ">", "<", ">=", "<="] as const;
 export type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
@@ -39,12 +42,6 @@ export type ParsedBranch = {
 	args: string[];
 };
 
-export function displayLabel(variableName: string): string {
-	if (variableName === "true" || variableName === "false") return variableName;
-	const spaced = variableName.replace(/_/g, " ");
-	return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
-
 export function toVariableOptions(
 	variables: string[],
 ): { value: string; label: string }[] {
@@ -52,26 +49,28 @@ export function toVariableOptions(
 }
 
 function collectDestinations(row: Row, result: Set<string>): void {
-	const destination = row.config.destination;
-	if (destination) {
-		const variableName = extractVariableFromDestination(destination);
-		if (variableName) result.add(variableName);
-	}
-	const content = row.config.view.content;
-	if (content.children) {
-		for (const child of content.children) {
-			collectDestinations(child, result);
+	for (const subRow of getRowsRecursive(row)) {
+		const destination = subRow.config.destination;
+		if (destination) {
+			const variableName = extractVariableFromDestination(destination);
+			if (variableName) result.add(variableName);
 		}
 	}
-	if (content.child) {
-		collectDestinations(content.child, result);
+}
+
+/** If wrapped in `{...}`, returns inner trimmed text; otherwise returns trimmed `s`. */
+function unwrapOptionalBraces(s: string): string {
+	const t = s.trim();
+	if (t.startsWith("{") && t.endsWith("}")) {
+		return t.slice(1, -1).trim();
 	}
+	return t;
 }
 
 function extractVariableFromDestination(destination: string): string | null {
 	const trimmed = destination.trim();
 	if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null;
-	const inner = trimmed.slice(1, -1).trim();
+	const inner = unwrapOptionalBraces(trimmed);
 
 	const parenIndex = inner.indexOf("(");
 	if (parenIndex !== -1) {
@@ -87,7 +86,7 @@ export function extractDraftVariables(
 	flows: SDUI_Flow[],
 	activeFlowId: string | undefined,
 ): string[] {
-	const flow = flows.find((f) => f.id === activeFlowId);
+	const flow = findFlowById(flows, activeFlowId);
 	if (!flow) return [];
 
 	const variables = new Set<string>();
@@ -106,10 +105,7 @@ export function parseCondition(conditionString: string): ConditionPart[] {
 	const trimmed = conditionString.trim();
 	if (!trimmed) return [];
 
-	const inner =
-		trimmed.startsWith("{") && trimmed.endsWith("}")
-			? trimmed.slice(1, -1).trim()
-			: trimmed;
+	const inner = unwrapOptionalBraces(trimmed);
 	if (!inner) return [];
 
 	const parts = inner.split("||").map((s) => s.trim());
@@ -152,7 +148,7 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 	}
 
 	if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-		const inner = trimmed.slice(1, -1).trim();
+		const inner = unwrapOptionalBraces(trimmed);
 
 		if (inner === "close") {
 			return { functionName: "close", args: [] };
@@ -207,7 +203,7 @@ export function getPageOptions(
 	flows: SDUI_Flow[],
 	flowId: string,
 ): { value: string; label: string }[] {
-	const flow = flows.find((f) => f.id === flowId);
+	const flow = findFlowById(flows, flowId);
 	if (!flow) return [];
 	return flow.pages.map((p) => ({
 		value: p.id,
@@ -257,7 +253,7 @@ export function formatBranchDisplay(
 
 	if (parsed.functionName === "navigate" && flows && parsed.args.length >= 2) {
 		const [flowId, pageId] = parsed.args;
-		const flow = flows.find((f) => f.id === flowId);
+		const flow = findFlowById(flows, flowId);
 		const flowName = flow?.name ?? flowId;
 		const page = flow?.pages.find((p) => p.id === pageId);
 		const pageName = page?.title || page?.id || pageId;

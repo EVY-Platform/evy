@@ -3,26 +3,20 @@
  * (data.schema.json + drizzle.config.json). Config must only reference defs
  * and properties that exist in the schema (strict extension).
  */
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import decamelize from "decamelize";
 import { z } from "zod";
-import { TYPES_ROOT } from "./types-generation-utils.js";
+import {
+	OUT_TS,
+	SCHEMA_DIR,
+	loadJson,
+	runMain,
+} from "./types-generation-utils.js";
 
-const DATA_SCHEMA_PATH = join(TYPES_ROOT, "schema", "data", "data.schema.json");
-const DRIZZLE_CONFIG_PATH = join(
-	TYPES_ROOT,
-	"schema",
-	"data",
-	"drizzle.config.json",
-);
-const OUT_PATH = join(
-	TYPES_ROOT,
-	"generated",
-	"ts",
-	"db",
-	"schema.generated.ts",
-);
+const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
+const DRIZZLE_CONFIG_PATH = join(SCHEMA_DIR, "data", "drizzle.config.json");
+const OUT_PATH = join(OUT_TS, "db", "schema.generated.ts");
 
 const jsonSchemaPropSchema = z.looseObject({
 	type: z.string().optional(),
@@ -302,10 +296,8 @@ function emitColumn(
 }
 
 async function main(): Promise<void> {
-	const schemaRaw = await readFile(DATA_SCHEMA_PATH, "utf-8");
-	const configRaw = await readFile(DRIZZLE_CONFIG_PATH, "utf-8");
-	const schema = jsonSchemaSchema.parse(JSON.parse(schemaRaw) as unknown);
-	const config = drizzleConfigSchema.parse(JSON.parse(configRaw) as unknown);
+	const schema = jsonSchemaSchema.parse(await loadJson(DATA_SCHEMA_PATH));
+	const config = drizzleConfigSchema.parse(await loadJson(DRIZZLE_CONFIG_PATH));
 
 	validateConfigSemantic(schema, config);
 
@@ -451,7 +443,4 @@ async function main(): Promise<void> {
 	console.log("Drizzle schema generated successfully.");
 }
 
-main().catch((err) => {
-	console.error(err);
-	process.exit(1);
-});
+runMain(main);
