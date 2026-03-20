@@ -20,6 +20,7 @@
 		"@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^2.1.5",
 		"@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
 		"@atlaskit/primitives": "^18.0.0",
+		"lucide-react": "^0.577.0",
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
 		"rpc-websockets": "^9.3.3",

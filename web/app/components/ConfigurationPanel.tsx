@@ -1,4 +1,5 @@
 import { useCallback, useContext, useMemo } from "react";
+import { ChevronRight } from "lucide-react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
@@ -27,7 +28,7 @@ function ChildRowButton({
 			onClick={onClick}
 		>
 			<span>{child.config.type}</span>
-			<img className="evy-h-4 evy-w-4" src="/chevron_right.svg" alt="" />
+			<ChevronRight className="evy-h-4 evy-w-4" strokeWidth={2} aria-hidden />
 		</button>
 	);
 }

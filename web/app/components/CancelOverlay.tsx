@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import { Trash2 } from "lucide-react";
 import invariant from "tiny-invariant";
 
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -42,12 +43,17 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 			/>
 			<button
 				type="button"
+				aria-label="Delete"
 				className="evy-flex evy-absolute evy-inset-y-0 evy-w-full evy-justify-center evy-border-none evy-bg-transparent evy-cursor-pointer"
 				style={{ paddingTop: "200px" }}
 				ref={ref}
 				onClick={dismiss}
 			>
-				<img style={{ height: "6rem" }} src="/bin.svg" alt="Delete" />
+				<Trash2
+					style={{ height: "6rem", width: "6rem" }}
+					strokeWidth={2}
+					aria-hidden
+				/>
 			</button>
 		</Fragment>
 	);

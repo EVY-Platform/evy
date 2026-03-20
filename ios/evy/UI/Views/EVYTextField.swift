@@ -72,12 +72,12 @@ struct EVYTextField: View {
         Group {
             if !editing || destination.isEmpty {
                 let display = EVYTextView(displayValue.value.toString())
-                let placeholder = EVYTextView(placeholderValue.value.toString(), style: .info)
-                
+                let placeholderView = EVYTextView(placeholderValue.value.toString(), style: .info)
+
                 if display.text.value.value.count > 0 {
                     display.frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    placeholder.frame(maxWidth: .infinity, alignment: .leading)
+                    placeholderView.frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
                 TextField(text: $editableValue.value.value,

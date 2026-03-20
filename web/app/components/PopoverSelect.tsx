@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ChevronDown } from "lucide-react";
 
 const popoverCss = `
 .evy-popover-trigger,
@@ -321,15 +322,13 @@ export function PopoverSelect({
 				}
 			>
 				<span className="evy-popover-text">{displayText}</span>
-				<svg
+				<ChevronDown
 					className="evy-popover-chevron"
-					width="10"
-					height="10"
-					viewBox="0 0 12 12"
-					aria-hidden="true"
-				>
-					<path fill="currentColor" d="M6 9L1 4h10z" />
-				</svg>
+					width={10}
+					height={10}
+					strokeWidth={2}
+					aria-hidden
+				/>
 			</button>
 			{isOpen &&
 				position &&

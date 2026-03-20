@@ -71,7 +71,7 @@ struct EVYDropdown: View {
                 }
             }
             Spacer()
-            EVYTextView("::chevron.down::")
+            EVYTextView("::chevron-down::")
         }
 		.buttonStyle(.plain)
         .padding(EdgeInsets(top: Constants.fieldPadding,

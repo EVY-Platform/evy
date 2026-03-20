@@ -1,30 +1,28 @@
 import type { ReactNode } from "react";
-import iconMap from "./iconMap";
-
-const ICON_REGEX = /::[a-zA-Z.]+::/g;
+import { LUCIDE_STROKE_WIDTH, PARSE_ICON_REGEX } from "./iconSyntax";
+import resolveIcon from "./resolveIcon";
 
 export default function parseIconText(input: string): ReactNode {
 	const parts: ReactNode[] = [];
 	let lastIndex = 0;
 
-	for (const match of input.matchAll(ICON_REGEX)) {
+	for (const match of input.matchAll(PARSE_ICON_REGEX)) {
 		const matchStart = match.index;
 		const matchEnd = matchStart + match[0].length;
+		const iconName = match[1];
 
 		if (matchStart > lastIndex) {
 			parts.push(input.slice(lastIndex, matchStart));
 		}
 
-		const iconName = match[0].slice(2, -2);
-		const iconPath = iconMap[iconName];
-
-		if (iconPath) {
+		const IconComponent = resolveIcon(iconName);
+		if (IconComponent) {
 			parts.push(
-				<img
+				<IconComponent
 					key={matchStart}
 					className="evy-inline-icon"
-					src={iconPath}
-					alt={iconName}
+					aria-hidden
+					strokeWidth={LUCIDE_STROKE_WIDTH}
 				/>,
 			);
 		} else {
@@ -38,9 +36,5 @@ export default function parseIconText(input: string): ReactNode {
 		parts.push(input.slice(lastIndex));
 	}
 
-	if (parts.length === 0) {
-		return input;
-	}
-
-	return parts;
+	return parts.length === 0 ? input : parts;
 }

@@ -1,25 +1,14 @@
 import type { CSSProperties } from "react";
-import iconMap from "../../icons/iconMap";
+import {
+	FULL_ICON_TOKEN_REGEX,
+	LUCIDE_STROKE_WIDTH,
+} from "../../icons/iconSyntax";
+import resolveIcon from "../../icons/resolveIcon";
 
-const ICON_SYNTAX_REGEX = /^::(.+)::$/;
-
-const leftPositionStyle: CSSProperties = {
-	insetInlineStart: 0,
-	paddingInlineStart: "var(--spacing-2)",
+const positionStyles: Record<"left" | "right", CSSProperties> = {
+	left: { insetInlineStart: 0, paddingInlineStart: "var(--spacing-2)" },
+	right: { insetInlineEnd: 0, paddingInlineEnd: "var(--spacing-2)" },
 };
-
-const rightPositionStyle: CSSProperties = {
-	insetInlineEnd: 0,
-	paddingInlineEnd: "var(--spacing-2)",
-};
-
-function resolveIconSrc(icon: string): string {
-	const match = icon.match(ICON_SYNTAX_REGEX);
-	if (match) {
-		return iconMap[match[1]] ?? icon;
-	}
-	return icon;
-}
 
 export default function InlineIcon({
 	icon,
@@ -30,12 +19,22 @@ export default function InlineIcon({
 	alt: string;
 	position?: "left" | "right";
 }) {
+	const match = icon.match(FULL_ICON_TOKEN_REGEX);
+	const IconComponent = match ? resolveIcon(match[1]) : undefined;
+	if (!IconComponent) return null;
+
 	return (
 		<div
 			className="evy-absolute evy-inset-y-0 evy-flex evy-items-center evy-pointer-events-none"
-			style={position === "right" ? rightPositionStyle : leftPositionStyle}
+			style={positionStyles[position]}
 		>
-			<img className="evy-h-4" src={resolveIconSrc(icon)} alt={alt} />
+			<IconComponent
+				className="evy-h-4 evy-w-4"
+				size={16}
+				strokeWidth={LUCIDE_STROKE_WIDTH}
+				role="img"
+				aria-label={alt}
+			/>
 		</div>
 	);
 }

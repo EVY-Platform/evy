@@ -1,3 +1,5 @@
+import { Search, X } from "lucide-react";
+
 const wrapperStyle: React.CSSProperties = {
 	position: "relative",
 	display: "flex",
@@ -52,7 +54,7 @@ export function SearchInput({
 }) {
 	return (
 		<div style={wrapperStyle} className="evy-bg-white">
-			<img src="/search.svg" alt="" aria-hidden="true" style={iconStyle} />
+			<Search style={iconStyle} aria-hidden strokeWidth={2} />
 			<input
 				type="text"
 				placeholder={placeholder}
@@ -68,21 +70,7 @@ export function SearchInput({
 					onClick={() => onChange("")}
 					aria-label="Clear search"
 				>
-					<svg
-						width="8"
-						height="8"
-						viewBox="0 0 10 10"
-						fill="none"
-						aria-hidden="true"
-						role="img"
-					>
-						<path
-							d="M1 1L9 9M9 1L1 9"
-							stroke="white"
-							strokeWidth="1.5"
-							strokeLinecap="round"
-						/>
-					</svg>
+					<X width={8} height={8} strokeWidth={2} color="white" aria-hidden />
 				</button>
 			)}
 		</div>

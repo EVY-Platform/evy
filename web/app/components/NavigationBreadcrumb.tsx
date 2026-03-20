@@ -1,5 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 
+import parseIconText from "../icons/parseIconText";
 import { CreateFlowDialog } from "./CreateFlowDialog";
 import { PopoverSelect } from "./PopoverSelect";
 import { AppContext } from "../state";
@@ -226,7 +227,7 @@ export function NavigationBreadcrumb() {
 									onClick={() => navigateBreadcrumb(stackLength)}
 									aria-label={ariaLabel}
 								>
-									{label}
+									{parseIconText(label)}
 								</button>
 							</span>
 						);

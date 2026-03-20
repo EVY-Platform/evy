@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { SDUI_RowAction } from "evy-types";
 
 const actionSummaryCss = `
@@ -169,7 +170,7 @@ function ActionSummaryCard({
 					}}
 					aria-label={`Remove action ${index + 1}`}
 				>
-					<img src="/bin.svg" alt="" />
+					<Trash2 className="evy-h-4 evy-w-4" strokeWidth={2} aria-hidden />
 				</button>
 			</div>
 

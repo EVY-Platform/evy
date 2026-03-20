@@ -10,8 +10,8 @@ export default function Dropdown({
 }) {
 	return (
 		<div className="evy-relative">
-			<Input value={value} placeholder={placeholder} offset="right" />
-			<InlineIcon icon="::chevron.down::" alt="Select" position="right" />
+			<Input value={value} placeholder={placeholder} />
+			<InlineIcon icon="::chevron-down::" alt="Select" position="right" />
 		</div>
 	);
 }

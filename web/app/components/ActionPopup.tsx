@@ -1,5 +1,6 @@
 import { useCallback, useContext, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { Trash2 } from "lucide-react";
 import type { SDUI_RowAction } from "evy-types";
 
 const popupCss = `
@@ -495,7 +496,11 @@ function ConditionEditor({
 									onClick={() => handleRemoveCondition(rowIndex)}
 									aria-label={`Remove condition ${rowIndex + 1}`}
 								>
-									<img src="/bin.svg" alt="" />
+									<Trash2
+										className="evy-h-4 evy-w-4"
+										strokeWidth={2}
+										aria-hidden
+									/>
 								</button>
 							)}
 						</div>

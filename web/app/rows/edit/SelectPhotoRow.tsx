@@ -11,7 +11,7 @@ export default defineRow("SelectPhotoRow", {
 			content: {
 				title: "Select photo row title",
 				subtitle: "Photos: 0/10",
-				icon: "::photo.badge.plus.fill::",
+				icon: "::image-plus::",
 				content: "Add photos",
 				photos: "{item.photo_ids}",
 			},
