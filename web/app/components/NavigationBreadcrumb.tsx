@@ -190,20 +190,6 @@ export function NavigationBreadcrumb() {
 								onClick={() => {
 									dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
 								}}
-								onDoubleClick={(e) => {
-									e.preventDefault();
-									const nextTitle = window.prompt(
-										"Page title",
-										activePage.title,
-									);
-									if (nextTitle !== null) {
-										dispatchRow({
-											type: "UPDATE_PAGE_TITLE",
-											pageId: activePage.id,
-											title: nextTitle,
-										});
-									}
-								}}
 							>
 								{breadcrumbLabelForPage(activePage, pages)}
 							</button>
