@@ -93,7 +93,7 @@ export function ActionPopup({
 
 					<div className="evy-popup-body">
 						<div className="evy-popup-section">
-							<span className="evy-popup-section-title">Conditions (OR)</span>
+							<span className="evy-popup-section-title">Conditions</span>
 							<ConditionEditor
 								conditions={conditions}
 								draftVariables={draftVariables}

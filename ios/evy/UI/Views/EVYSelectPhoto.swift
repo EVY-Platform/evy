@@ -77,6 +77,16 @@ struct EVYSelectPhoto: View {
 			EVYTextView(subtitle, style: .info)
                 .padding(.vertical, Constants.padding)
         }
+        .onChange(of: photos) {
+            do {
+                let encoded = try JSONEncoder().encode(photos)
+                try EVY.updateData(encoded, at: destination)
+            } catch {
+                #if DEBUG
+                print("[EVYSelectPhoto] Error updating photos: \(error)")
+                #endif
+            }
+        }
     }
 }
 

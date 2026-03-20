@@ -36,12 +36,14 @@ struct ContentView: View {
     @State private var routes: [Route] = []
     @State private var currentFlowId: String = HOME_FLOW_ID
 	@State private var showingAlert = false
+	@State private var alertTitle = ""
 	@State private var alertMessage = ""
 	@State private var loading = true
 	@State private var itemData: Data? // Temporary to avoid making navigation async
     @State private var activeDraftKeys: Set<String> = []
     
     private func showError(_ error: Error) {
+		alertTitle = "Error"
         alertMessage = error.localizedDescription
         showingAlert = true
     }
@@ -62,7 +64,8 @@ struct ContentView: View {
             }
             
             guard let newFlow = flows.first(where: { $0.id == route.flowId }) else {
-                alertMessage = "Flow not found - please check API connection"
+				alertTitle = "Unable to load flow"
+                alertMessage = "Please check your internet connection"
                 showingAlert = true
                 routes.removeLast()
                 break
@@ -71,7 +74,8 @@ struct ContentView: View {
             let createKeys = Self.extractCreateKeys(from: newFlow)
             for key in createKeys {
                 guard let itemData = itemData else {
-                    alertMessage = "Item data not loaded"
+					alertTitle = "Unable to load item"
+                    alertMessage = "Please check your internet connection"
                     showingAlert = true
                     routes.removeLast()
                     break
@@ -90,6 +94,7 @@ struct ContentView: View {
             createFlow(currentFlowId: currentFlowId, key: key)
 
         case .highlightRequired(let fieldName):
+			alertTitle = "Missing information"
             alertMessage = "\(fieldName) is required"
             showingAlert = true
             
@@ -165,10 +170,12 @@ struct ContentView: View {
                         flows = try await EVY.getSDUI()
                         loading = false
                     } catch let error as EVYRPCError {
+						alertTitle = "Error"
                         alertMessage = error.localizedDescription
                         showingAlert = true
                         loading = false
                     } catch {
+						alertTitle = "Error"
                         alertMessage = error.localizedDescription
                         showingAlert = true
                         loading = false
@@ -188,7 +195,7 @@ struct ContentView: View {
                 }
         }
 		.alert(isPresented: $showingAlert) {
-			Alert(title: Text("Error"),
+			Alert(title: Text(alertTitle),
 				  message: Text(alertMessage),
 				  dismissButton: .default(Text("Ok")))
 		}
