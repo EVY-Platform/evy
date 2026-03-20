@@ -107,11 +107,36 @@ test.describe("Flow Selector", () => {
 
 		const listbox = page.getByRole("listbox", { name: "Active flow" });
 		const options = listbox.getByRole("option");
-		await expect(options).toHaveCount(3);
+		await expect(options).toHaveCount(4);
 
 		await expect(options.nth(0)).toHaveText("First Flow");
 		await expect(options.nth(1)).toHaveText("Second Flow");
 		await expect(options.nth(2)).toHaveText("Third Flow");
+		await expect(options.nth(3)).toHaveText("Create new flow");
+	});
+
+	test("should create a new flow from the dropdown and select it", async ({
+		page,
+	}) => {
+		await openWithFlows(page, singleFlow);
+		await openFlowPicker(page);
+
+		await page
+			.getByRole("option", { name: "Create new flow", exact: true })
+			.click();
+
+		await expect(page.getByTestId("create-flow-dialog")).toBeVisible();
+
+		await page.getByLabel("Flow name").fill("Brand New Flow");
+		await page.getByRole("button", { name: "Create", exact: true }).click();
+
+		await expect(page.getByTestId("create-flow-dialog")).not.toBeVisible();
+
+		const flowSelector = page.locator("#flow-select");
+		const newFlowId = await flowSelector.getAttribute("data-value");
+		expect(newFlowId).toBeTruthy();
+		expect(newFlowId).not.toBe("flow-1");
+		await expect(flowSelector).toContainText("Brand New Flow");
 	});
 
 	test("should display content from first flow initially", async ({ page }) => {

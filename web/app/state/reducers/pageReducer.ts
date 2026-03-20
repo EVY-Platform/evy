@@ -12,6 +12,7 @@ import {
 	getRowsRecursive,
 	findRowInPages,
 } from "../../utils/rowTree";
+import { buildNewClientFlow } from "../../utils/flowFactory";
 
 export const pageReducer = (state: AppState, action: RowAction): AppState => {
 	if (action.type === "SET_ACTIVE_FLOW") {
@@ -19,6 +20,20 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			...state,
 			activeFlowId: action.flowId,
 			activeRowId: undefined,
+			configStack: [],
+		};
+	}
+
+	if (action.type === "CREATE_FLOW") {
+		const trimmedName = action.name.trim();
+		if (trimmedName === "") return state;
+		const newFlow = buildNewClientFlow(trimmedName);
+		return {
+			...state,
+			flows: [...state.flows, newFlow],
+			activeFlowId: newFlow.id,
+			activeRowId: undefined,
+			activePageId: newFlow.pages[0]?.id,
 			configStack: [],
 		};
 	}

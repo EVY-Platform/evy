@@ -41,6 +41,10 @@ export type RowAction =
 			flowId: string;
 	  }
 	| {
+			type: "CREATE_FLOW";
+			name: string;
+	  }
+	| {
 			type: "SET_ACTIVE_ROW";
 			pageId: string;
 			rowId: string;
