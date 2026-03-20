@@ -75,7 +75,7 @@ struct ContentView: View {
             for key in createKeys {
                 guard let itemData = itemData else {
 					alertTitle = "Unable to load item"
-                    alertMessage = "Plese check your internet connection"
+                    alertMessage = "Please check your internet connection"
                     showingAlert = true
                     routes.removeLast()
                     break
