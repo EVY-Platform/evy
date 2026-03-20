@@ -67,11 +67,11 @@ test.describe("Secondary Sheet Page", () => {
 
 		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
-		const secondaryPage = getSecondarySheetPage(page);
-		await expect(secondaryPage).toHaveCSS("opacity", "0");
+		await expect(getSecondarySheetPage(page)).toHaveCount(0);
 
 		await openSecondarySheetChildFromConfigPanel(page);
 
+		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 	});
 
@@ -120,7 +120,7 @@ test.describe("Secondary Sheet Page", () => {
 
 		await page.getByRole("button", { name: "Configure row: My Sheet" }).click();
 
-		await expect(secondaryPage).toHaveCSS("opacity", "0");
+		await expect(getSecondarySheetPage(page)).toHaveCount(0);
 	});
 
 	test("should dismiss secondary page when clicking canvas background", async ({
@@ -148,7 +148,7 @@ test.describe("Secondary Sheet Page", () => {
 			});
 		}
 
-		await expect(secondaryPage).toHaveCSS("opacity", "0");
+		await expect(getSecondarySheetPage(page)).toHaveCount(0);
 	});
 
 	test("should auto-enter focus mode when clicking SheetContainer children outside focus mode", async ({

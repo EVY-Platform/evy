@@ -36,7 +36,6 @@ import {
 	panelContentFadeTransitionStyle,
 	panelShadowStyle,
 	rightPanelStyle,
-	secondaryPageWrapperHiddenStyle,
 	secondaryPageWrapperStyle,
 	sidePanelWidthTransitionStyle,
 } from "./appLayoutStyles";
@@ -220,8 +219,6 @@ function AppContent() {
 		return findRowInPages(secondarySheetRowId, pages);
 	}, [secondarySheetRowId, focusMode, pages]);
 
-	const showSecondary = Boolean(secondarySheetRow);
-
 	useEffect(() => {
 		return monitorForElements({
 			onDragStart({ location }: BaseEventPayload<ElementDragType>) {
@@ -270,19 +267,13 @@ function AppContent() {
 								>
 									<AppPage pageId={page.id} />
 								</CanvasPageFrame>
-								{focusMode && isActive && (
+								{focusMode && isActive && secondarySheetRow && (
 									<CanvasPageFrame
-										wrapperStyle={
-											showSecondary
-												? secondaryPageWrapperStyle
-												: secondaryPageWrapperHiddenStyle
-										}
+										wrapperStyle={secondaryPageWrapperStyle}
 										className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
 										data-testid="secondary-sheet-page"
 									>
-										{secondarySheetRow && (
-											<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
-										)}
+										<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
 									</CanvasPageFrame>
 								)}
 							</Fragment>
