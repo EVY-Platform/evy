@@ -200,7 +200,9 @@ You can configure the port via the `WEB_PORT` environment variable (default: 300
 
 This project uses Playwright for both component tests and end-to-end tests.
 
-### Setup
+### Setup (local only)
+
+Install Chromium and its system dependencies (not needed in CI -- the CI image has them pre-installed):
 
 ```bash
 bun run test:setup
@@ -214,7 +216,7 @@ Component and integration tests (`tests/`):
 bun run test
 ```
 
-End-to-end tests (`e2e/`):
+End-to-end tests (`e2e/`) -- requires the full stack to be running (see [root README](../README.md#e2e-tests)):
 
 ```bash
 bun run test:e2e
