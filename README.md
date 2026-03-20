@@ -120,7 +120,7 @@ The `run-e2e.sh` script runs API, web, and (optionally) iOS end-to-end tests.
 ./run-e2e.sh --skip-ios
 ```
 
-**Without Docker** (faster -- runs API and web directly via Bun, only Postgres in Docker):
+**Without Docker** (faster -- runs API and web directly via Bun, with Postgres provided separately, for example via Docker):
 
 ```bash
 docker compose up -d postgres
@@ -134,4 +134,6 @@ docker compose up -d postgres
 
 ### CI
 
-CI uses a custom Docker image with Playwright + Bun pre-installed (`ghcr.io/evy-platform/evy-ci`). See `.github/images/ci/Dockerfile` and `.github/workflows/push-ci-image.yml`.
+CI uses a custom Docker image with Playwright, Bun, and PostgreSQL pre-installed (`ghcr.io/evy-platform/evy-ci`). The E2E workflow starts PostgreSQL from inside that image instead of pulling a separate GitHub Actions service container.
+
+If you change `.github/images/ci/Dockerfile`, rebuild and publish the CI image before depending on the new tools in a workflow. See `.github/images/ci/Dockerfile` and `.github/workflows/push-ci-image.yml`.
