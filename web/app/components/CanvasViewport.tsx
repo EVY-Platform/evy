@@ -25,13 +25,18 @@ function viewportLocalPoint(
 	return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-const gridBackgroundStyle: CSSProperties = {
-	backgroundImage: `
-		linear-gradient(to right, var(--color-gray-border) 1px, transparent 1px),
-		linear-gradient(to bottom, var(--color-gray-border) 1px, transparent 1px)
-	`,
-	backgroundSize: "24px 24px",
-	opacity: 0.35,
+const GRID_BASE_SIZE_PX = 24;
+
+const GRID_BACKGROUND_IMAGE = `
+	linear-gradient(to right, var(--color-black) 1px, transparent 1px),
+	linear-gradient(to bottom, var(--color-black) 1px, transparent 1px)
+`;
+
+const worldStyle: CSSProperties = {
+	transformOrigin: "0 0",
+	willChange: "transform",
+	minWidth: "100%",
+	minHeight: "100%",
 };
 
 type CanvasViewportProps = {
@@ -256,20 +261,13 @@ export function CanvasViewport({
 		[onBackgroundClick],
 	);
 
-	const worldStyle: CSSProperties = {
-		transformOrigin: "0 0",
-		willChange: "transform",
-		minWidth: "100%",
-		minHeight: "100%",
-	};
-
 	const cam = getCamera();
-	const gridSize = 24 * cam.scale;
-	const infiniteGridStyle: CSSProperties = {
-		...gridBackgroundStyle,
+	const gridSize = GRID_BASE_SIZE_PX * cam.scale;
+	const gridStyle: CSSProperties = {
+		backgroundImage: GRID_BACKGROUND_IMAGE,
 		backgroundSize: `${gridSize}px ${gridSize}px`,
 		backgroundPosition: `${cam.offsetX}px ${cam.offsetY}px`,
-		zIndex: 0,
+		opacity: 1,
 	};
 
 	return (
@@ -284,7 +282,7 @@ export function CanvasViewport({
 			>
 				<div
 					className="evy-pointer-events-none evy-absolute evy-inset-0"
-					style={infiniteGridStyle}
+					style={gridStyle}
 					data-canvas-grid
 					aria-hidden
 				/>
@@ -307,12 +305,6 @@ export function CanvasViewport({
 						{children}
 					</div>
 				</div>
-				{/* Future: overlays (selection chrome) in screen space */}
-				<div
-					className="evy-pointer-events-none evy-absolute evy-inset-0"
-					style={{ zIndex: 20 }}
-					aria-hidden
-				/>
 			</div>
 		</CameraContext.Provider>
 	);
