@@ -43,12 +43,6 @@ export const secondaryPageWrapperStyle: CSSProperties = {
 	opacity: 1,
 };
 
-export const secondaryPageWrapperHiddenStyle: CSSProperties = {
-	...secondaryPageFrameBase,
-	opacity: 0,
-	pointerEvents: "none",
-};
-
 export const panelShadowStyle: CSSProperties = {
 	boxShadow: "var(--shadow-subtle)",
 };

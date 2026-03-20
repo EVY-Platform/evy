@@ -36,7 +36,6 @@ import {
 	panelContentFadeTransitionStyle,
 	panelShadowStyle,
 	rightPanelStyle,
-	secondaryPageWrapperHiddenStyle,
 	secondaryPageWrapperStyle,
 	sidePanelWidthTransitionStyle,
 } from "./appLayoutStyles";
@@ -270,21 +269,18 @@ function AppContent() {
 								>
 									<AppPage pageId={page.id} />
 								</CanvasPageFrame>
-								{focusMode && isActive && (
-									<CanvasPageFrame
-										wrapperStyle={
-											showSecondary
-												? secondaryPageWrapperStyle
-												: secondaryPageWrapperHiddenStyle
-										}
-										className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-										data-testid="secondary-sheet-page"
-									>
-										{secondarySheetRow && (
+								{focusMode &&
+									isActive &&
+									showSecondary &&
+									secondarySheetRow && (
+										<CanvasPageFrame
+											wrapperStyle={secondaryPageWrapperStyle}
+											className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+											data-testid="secondary-sheet-page"
+										>
 											<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
-										)}
-									</CanvasPageFrame>
-								)}
+										</CanvasPageFrame>
+									)}
 							</Fragment>
 						);
 					})}
