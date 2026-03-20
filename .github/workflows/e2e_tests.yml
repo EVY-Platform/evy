@@ -27,6 +27,9 @@ on:
 
 jobs:
     e2e_tests:
+        permissions:
+            contents: read
+            packages: read
         timeout-minutes: 2
         runs-on: ubuntu-latest
         container: ghcr.io/evy-platform/evy-ci:playwright-1.58.2

@@ -8,6 +8,9 @@ on:
 
 jobs:
     web_tests:
+        permissions:
+            contents: read
+            packages: read
         defaults:
             run:
                 working-directory: web
