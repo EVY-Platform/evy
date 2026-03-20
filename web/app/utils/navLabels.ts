@@ -1,15 +1,6 @@
 import type { Row } from "../types/row";
 import type { SDUI_Page } from "../types/flow";
-
-/**
- * Turns identifiers like `ColumnContainer` or `textRow` into spaced words for display.
- */
-export function splitCamelCaseToWords(identifier: string): string {
-	return identifier
-		.replace(/([a-z])([A-Z])/g, "$1 $2")
-		.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
-		.trim();
-}
+import { splitCamelCaseToWords } from "./labelFormatting";
 
 export function breadcrumbLabelForRow(row: Row): string {
 	const title = row.config.view.content.title;

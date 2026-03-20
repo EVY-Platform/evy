@@ -12,12 +12,15 @@ graph TB
         App[App.tsx]
         NavBar[NavBar]
         AppContent[AppContent]
+        CanvasViewport[CanvasViewport]
+        CanvasPageFrame[CanvasPageFrame]
         SecondarySheetPage[SecondarySheetPage]
     end
 
     subgraph state [State Management]
         AppProvider[AppProvider]
-        AppContext[AppContext]
+        FlowsContext[FlowsContext]
+        DragContext[DragContext]
         PageReducer[pageReducer]
         DraggingReducer[draggingReducer]
         DropIndicatorReducer[dropIndicatorReducer]
@@ -25,12 +28,12 @@ graph TB
 
     subgraph hooks [Hooks]
         useFlows[useFlows]
-        useActiveFlow[useActiveFlow]
         useRowById[useRowById]
         useDraggable[useDraggable]
         useUrlSync[useUrlSync]
         usePageDropTarget[usePageDropTarget]
-        useSelectRow[useSelectRow]
+        useCamera[useCamera]
+        useIntersectVisible[useIntersectVisible]
     end
 
     subgraph panels [UI Panels]
@@ -76,10 +79,11 @@ graph TB
     end
 
     App --> AppProvider
-    AppProvider --> AppContext
-    AppContext --> PageReducer
-    AppContext --> DraggingReducer
-    AppContext --> DropIndicatorReducer
+    AppProvider --> FlowsContext
+    AppProvider --> DragContext
+    FlowsContext --> PageReducer
+    DragContext --> DraggingReducer
+    DragContext --> DropIndicatorReducer
 
     App --> NavBar
     NavBar --> NavigationBreadcrumb
@@ -87,10 +91,14 @@ graph TB
     NavigationBreadcrumb --> CreateFlowDialog
     App --> AppContent
     AppContent --> RowsPanel
-    AppContent --> AppPage
+    AppContent --> CanvasViewport
+    CanvasViewport --> CanvasPageFrame
+    CanvasPageFrame --> AppPage
     AppContent --> SecondarySheetPage
     AppContent --> ConfigPanel
     AppContent --> DropHandler
+    CanvasViewport --> useCamera
+    CanvasPageFrame --> useIntersectVisible
 
     RowsPanel --> SearchInput
     RowsPanel --> CancelOverlay

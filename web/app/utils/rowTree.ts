@@ -22,7 +22,7 @@ export function getRowsRecursive(row: Row): Row[] {
 		...(row.config.view.content.children
 			? row.config.view.content.children.flatMap(getRowsRecursive)
 			: []),
-	].filter((r) => r !== undefined);
+	];
 }
 
 export function findContainerOfRow(

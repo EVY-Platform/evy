@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+
 const popoverCss = `
 .evy-popover-trigger,
 .evy-popover-trigger--breadcrumb {
@@ -326,7 +328,7 @@ export function PopoverSelect({
 					className="evy-popover-chevron"
 					width={10}
 					height={10}
-					strokeWidth={2}
+					strokeWidth={LUCIDE_STROKE_WIDTH}
 					aria-hidden
 				/>
 			</button>

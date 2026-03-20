@@ -1,9 +1,9 @@
 import type { CSSProperties } from "react";
-import { useCallback, useContext, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
-import { AppContext } from "../state";
+import { useDragContext, useFlowsContext } from "../state";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
-import { useSelectRow } from "../hooks/useSelectRow";
+import { findFlowById } from "../utils/flowHelpers";
 import { buildRowElements } from "./buildRowElements";
 import { baseTitleStyle, rounded24Style } from "./pageStyles";
 
@@ -20,12 +20,15 @@ const roundedBottom24Style: CSSProperties = {
 };
 
 export default function AppPage({ pageId }: { pageId: string }) {
-	const { flows, activeFlowId, dispatchRow, dispatchDropIndicator } =
-		useContext(AppContext);
+	const { flows, activeFlowId, dispatchRow } = useFlowsContext();
+	const { dispatchDropIndicator } = useDragContext();
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
-	const selectRow = useSelectRow(pageId, dispatchRow);
+	const selectRow = useCallback(
+		(rowId: string) => dispatchRow({ type: "SET_ACTIVE_ROW", pageId, rowId }),
+		[pageId, dispatchRow],
+	);
 
 	const selectPage = useCallback(
 		(e: MouseEvent) => {
@@ -44,10 +47,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	});
 
 	const page = useMemo(
-		() =>
-			flows
-				.find((f) => f.id === activeFlowId)
-				?.pages.find((p) => p.id === pageId),
+		() => findFlowById(flows, activeFlowId)?.pages.find((p) => p.id === pageId),
 		[flows, activeFlowId, pageId],
 	);
 
@@ -72,7 +72,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	return (
 		<div
 			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
-			style={{ padding: "var(--size-30px)" }}
+			style={{ padding: "var(--size-30px)", contain: "layout style paint" }}
 		>
 			{footer ? (
 				<div

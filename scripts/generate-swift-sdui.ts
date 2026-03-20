@@ -6,9 +6,14 @@
  * Run from repo root: bun run types:generate (called by generate-types.ts).
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { OUT_SWIFT, SCHEMA_DIR } from "./types-generation-utils.js";
+import {
+	OUT_SWIFT,
+	SCHEMA_DIR,
+	loadJson,
+	runMain,
+} from "./types-generation-utils.js";
 
 const SDUI_SCHEMA_PATH = join(SCHEMA_DIR, "sdui", "evy.schema.json");
 const ROW_SPEC_PATH = join(SCHEMA_DIR, "sdui", "row-content.spec.json");
@@ -45,16 +50,6 @@ function rowTypeToEnumCase(rowType: string): string {
 
 function swiftIdentifier(name: string): string {
 	return name === "true" || name === "false" ? `\`${name}\`` : name;
-}
-
-async function loadSchema(): Promise<Record<string, unknown>> {
-	const raw = await readFile(SDUI_SCHEMA_PATH, "utf-8");
-	return JSON.parse(raw) as Record<string, unknown>;
-}
-
-async function loadRowSpec(): Promise<RowSpec> {
-	const raw = await readFile(ROW_SPEC_PATH, "utf-8");
-	return JSON.parse(raw) as RowSpec;
 }
 
 /** Row type list from row-content spec (single source of truth for SDUI_Row.type enum). */
@@ -114,10 +109,7 @@ function swiftTypeForSchemaProp(
 /** Known definition names that must be classes (recursive refs). */
 const CLASS_DEFS = new Set(["SDUI_Row", "SDUI_RowView", "SDUI_RowContent"]);
 
-function emitSDUIEnums(
-	_schema: Record<string, unknown>,
-	rowSpec: RowSpec,
-): string {
+function emitSDUIEnums(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
 	const rowEnumCases: string[] = [];
 	for (const t of rowTypes) {
@@ -229,7 +221,7 @@ public final class SDUI_Row: Codable {
 	const keyword = useFinalClass ? "final class" : useClass ? "class" : "struct";
 	const initParams = lines
 		.map((l) => {
-			const match = /public let (`?\w+`?): ([\w\[\]?]+)/.exec(l);
+			const match = /public let (`?\w+`?): ([\w[\]?]+)/.exec(l);
 			if (!match) return "";
 			const name = match[1];
 			const type = match[2];
@@ -508,12 +500,12 @@ ${fromRowCases.join("\n")}
 }
 
 async function main(): Promise<void> {
-	const schema = await loadSchema();
-	const rowSpec = await loadRowSpec();
+	const schema = await loadJson<Record<string, unknown>>(SDUI_SCHEMA_PATH);
+	const rowSpec = await loadJson<RowSpec>(ROW_SPEC_PATH);
 
 	await writeFile(
 		join(OUT_SWIFT, "SDUIEnums.swift"),
-		emitSDUIEnums(schema, rowSpec),
+		emitSDUIEnums(rowSpec),
 		"utf-8",
 	);
 	await writeFile(
@@ -530,7 +522,4 @@ async function main(): Promise<void> {
 	console.log("Swift SDUI types generated successfully.");
 }
 
-main().catch((err) => {
-	console.error(err);
-	process.exit(1);
-});
+runMain(main);

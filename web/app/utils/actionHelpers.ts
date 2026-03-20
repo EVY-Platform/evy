@@ -1,5 +1,7 @@
 import type { SDUI_Flow } from "../types/flow";
 import type { Row } from "../types/row";
+import { displayLabel } from "./labelFormatting";
+import { findFlowById } from "./flowHelpers";
 
 export const COMPARISON_OPERATORS = ["==", "!=", ">", "<", ">=", "<="] as const;
 export type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
@@ -38,12 +40,6 @@ export type ParsedBranch = {
 	functionName: ActionFunction;
 	args: string[];
 };
-
-export function displayLabel(variableName: string): string {
-	if (variableName === "true" || variableName === "false") return variableName;
-	const spaced = variableName.replace(/_/g, " ");
-	return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
 
 export function toVariableOptions(
 	variables: string[],
@@ -87,7 +83,7 @@ export function extractDraftVariables(
 	flows: SDUI_Flow[],
 	activeFlowId: string | undefined,
 ): string[] {
-	const flow = flows.find((f) => f.id === activeFlowId);
+	const flow = findFlowById(flows, activeFlowId);
 	if (!flow) return [];
 
 	const variables = new Set<string>();
@@ -207,7 +203,7 @@ export function getPageOptions(
 	flows: SDUI_Flow[],
 	flowId: string,
 ): { value: string; label: string }[] {
-	const flow = flows.find((f) => f.id === flowId);
+	const flow = findFlowById(flows, flowId);
 	if (!flow) return [];
 	return flow.pages.map((p) => ({
 		value: p.id,
@@ -257,7 +253,7 @@ export function formatBranchDisplay(
 
 	if (parsed.functionName === "navigate" && flows && parsed.args.length >= 2) {
 		const [flowId, pageId] = parsed.args;
-		const flow = flows.find((f) => f.id === flowId);
+		const flow = findFlowById(flows, flowId);
 		const flowName = flow?.name ?? flowId;
 		const page = flow?.pages.find((p) => p.id === pageId);
 		const pageName = page?.title || page?.id || pageId;

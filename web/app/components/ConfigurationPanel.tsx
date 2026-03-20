@@ -1,9 +1,11 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 
-import { AppContext } from "../state";
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
 import { useRowById } from "../hooks/useRowById";
+import { findFlowById } from "../utils/flowHelpers";
 import { ActionEditor } from "./ActionEditor";
 
 function isRow(value: unknown): value is Row {
@@ -28,7 +30,11 @@ function ChildRowButton({
 			onClick={onClick}
 		>
 			<span>{child.config.type}</span>
-			<ChevronRight className="evy-h-4 evy-w-4" strokeWidth={2} aria-hidden />
+			<ChevronRight
+				className="evy-h-4 evy-w-4"
+				strokeWidth={LUCIDE_STROKE_WIDTH}
+				aria-hidden
+			/>
 		</button>
 	);
 }
@@ -41,13 +47,13 @@ export function ConfigurationPanel() {
 		flows,
 		configStack,
 		dispatchRow,
-	} = useContext(AppContext);
+	} = useFlowsContext();
 	const row = useRowById(activeRowId);
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
 	const currentConfigRow = useRowById(currentConfigRowId);
 
 	const activePage = useMemo(() => {
-		const flow = flows.find((f) => f.id === activeFlowId);
+		const flow = findFlowById(flows, activeFlowId);
 		return flow?.pages.find((p) => p.id === activePageId);
 	}, [flows, activeFlowId, activePageId]);
 

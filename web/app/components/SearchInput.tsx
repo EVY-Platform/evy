@@ -1,5 +1,7 @@
 import { Search, X } from "lucide-react";
 
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+
 const wrapperStyle: React.CSSProperties = {
 	position: "relative",
 	display: "flex",
@@ -54,7 +56,7 @@ export function SearchInput({
 }) {
 	return (
 		<div style={wrapperStyle} className="evy-bg-white">
-			<Search style={iconStyle} aria-hidden strokeWidth={2} />
+			<Search style={iconStyle} aria-hidden strokeWidth={LUCIDE_STROKE_WIDTH} />
 			<input
 				type="text"
 				placeholder={placeholder}
@@ -70,7 +72,13 @@ export function SearchInput({
 					onClick={() => onChange("")}
 					aria-label="Clear search"
 				>
-					<X width={8} height={8} strokeWidth={2} color="white" aria-hidden />
+					<X
+						width={8}
+						height={8}
+						strokeWidth={LUCIDE_STROKE_WIDTH}
+						color="white"
+						aria-hidden
+					/>
 				</button>
 			)}
 		</div>

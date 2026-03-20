@@ -1,4 +1,5 @@
 import { callFunction } from "./evyFunctions";
+import { propPathToFriendlyLabel } from "./labelFormatting";
 
 const FUNCTION_WITH_BRACES = /\{([a-zA-Z_]+)\(([^)]*)\)\}/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
@@ -7,11 +8,6 @@ function resolveFunction(functionName: string): string | null {
 	const result = callFunction(functionName);
 	if (!result) return "";
 	return `${result.prefix ?? ""}${result.value}${result.suffix ?? ""}`;
-}
-
-function propToUserFriendlyString(prop: string): string {
-	const lastSegment = prop.split(".").pop() ?? prop;
-	return lastSegment.replace(/_/g, " ");
 }
 
 export function parseText(input: string): string {
@@ -39,7 +35,7 @@ export function parseText(input: string): string {
 				continue;
 			}
 
-			text = text.replace(propsMatch[0], propToUserFriendlyString(inner));
+			text = text.replace(propsMatch[0], propPathToFriendlyLabel(inner));
 			continue;
 		}
 

@@ -155,7 +155,7 @@ test.describe("Secondary Sheet Page", () => {
 		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 
-		const canvas = page.locator(".evy-flex-1.evy-flex.evy-p-4");
+		const canvas = page.locator('[data-testid="canvas-viewport"]');
 		const canvasBox = await canvas.boundingBox();
 		if (canvasBox) {
 			await page.mouse.click(

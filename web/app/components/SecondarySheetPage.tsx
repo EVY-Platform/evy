@@ -1,10 +1,10 @@
-import { useContext, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
-import { AppContext } from "../state";
+import { useDragContext, useFlowsContext } from "../state";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
-import { useSelectRow } from "../hooks/useSelectRow";
 import { buildRowElements } from "./buildRowElements";
 import { baseTitleStyle, rounded24Style } from "./pageStyles";
+import { findFlowById } from "../utils/flowHelpers";
 import { findRowInPages } from "../utils/rowTree";
 
 export default function SecondarySheetPage({
@@ -12,12 +12,12 @@ export default function SecondarySheetPage({
 }: {
 	sheetRowId: string;
 }) {
-	const { flows, activeFlowId, dispatchRow, dispatchDropIndicator } =
-		useContext(AppContext);
+	const { flows, activeFlowId, dispatchRow } = useFlowsContext();
+	const { dispatchDropIndicator } = useDragContext();
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
 	const sheetRow = useMemo(() => {
-		const pages = flows.find((f) => f.id === activeFlowId)?.pages ?? [];
+		const pages = findFlowById(flows, activeFlowId)?.pages ?? [];
 		return findRowInPages(sheetRowId, pages);
 	}, [flows, activeFlowId, sheetRowId]);
 
@@ -25,7 +25,10 @@ export default function SecondarySheetPage({
 	const title = sheetRow?.config.view.content.title ?? "Sheet";
 	const childRows = sheetRow?.config.view.content.children ?? [];
 
-	const selectRow = useSelectRow(pageId, dispatchRow);
+	const selectRow = useCallback(
+		(rowId: string) => dispatchRow({ type: "SET_ACTIVE_ROW", pageId, rowId }),
+		[pageId, dispatchRow],
+	);
 
 	const extraData = useMemo(() => ({ sheetRowId }), [sheetRowId]);
 

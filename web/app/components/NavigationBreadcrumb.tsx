@@ -1,15 +1,16 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import parseIconText from "../icons/parseIconText";
 import { CreateFlowDialog } from "./CreateFlowDialog";
 import { PopoverSelect } from "./PopoverSelect";
-import { AppContext } from "../state";
+import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
 import {
 	breadcrumbLabelForPage,
 	breadcrumbLabelForRow,
-	splitCamelCaseToWords,
 } from "../utils/navLabels";
+import { findFlowById } from "../utils/flowHelpers";
+import { splitCamelCaseToWords } from "../utils/labelFormatting";
 import { findRowInPages } from "../utils/rowTree";
 
 const breadcrumbScrollCss = `
@@ -86,12 +87,12 @@ export function NavigationBreadcrumb() {
 		configStack,
 		focusMode,
 		dispatchRow,
-	} = useContext(AppContext);
+	} = useFlowsContext();
 
 	const [createFlowOpen, setCreateFlowOpen] = useState(false);
 	const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-	const activeFlow = flows.find((f) => f.id === activeFlowId);
+	const activeFlow = findFlowById(flows, activeFlowId);
 	const activePage = activeFlow?.pages.find((p) => p.id === activePageId);
 	const pages = activeFlow?.pages ?? [];
 

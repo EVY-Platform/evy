@@ -13,6 +13,7 @@ import {
 	findRowInPages,
 } from "../../utils/rowTree";
 import { buildNewClientFlow } from "../../utils/flowFactory";
+import { findFlowById } from "../../utils/flowHelpers";
 
 export const pageReducer = (state: AppState, action: RowAction): AppState => {
 	if (action.type === "SET_ACTIVE_FLOW") {
@@ -38,7 +39,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		};
 	}
 
-	const flow = state.flows.find((f) => f.id === state.activeFlowId);
+	const flow = findFlowById(state.flows, state.activeFlowId);
 	if (!flow) return state;
 
 	const updateState = ({

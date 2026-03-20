@@ -1,5 +1,4 @@
-import type { CSSProperties } from "react";
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { Fragment, useCallback, useEffect, useMemo } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type {
@@ -12,126 +11,39 @@ import SecondarySheetPage from "./components/SecondarySheetPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
-import { AppContext, AppProvider } from "./state";
+import { CanvasViewport } from "./components/CanvasViewport";
+import { CanvasPageFrame } from "./components/CanvasPageFrame";
+import { FocusPanOnEnter } from "./components/FocusPanOnEnter";
+import { AppProvider, useDragContext, useFlowsContext } from "./state";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
-import { useActiveFlow } from "./hooks/useActiveFlow";
+import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
-
-const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
-
-function transition(
-	props: Array<{ prop: string; ms?: number; delay?: number }>,
-): string {
-	return props
-		.map(({ prop, ms = 300, delay = 0 }) =>
-			delay ? `${prop} ${ms}ms ${EASE} ${delay}ms` : `${prop} ${ms}ms ${EASE}`,
-		)
-		.join(", ");
-}
-
-const canvasBaseStyle: CSSProperties = {
-	flexDirection: "row",
-	overflow: "auto",
-};
-
-const canvasStyle: CSSProperties = {
-	...canvasBaseStyle,
-	gap: "var(--size-4)",
-	transition: transition([{ prop: "gap" }]),
-};
-
-const canvasFocusedStyle: CSSProperties = {
-	...canvasBaseStyle,
-	gap: 0,
-	transition: transition([{ prop: "gap", delay: 350 }]),
-};
-
-const canvasFocusedWithSecondaryStyle: CSSProperties = {
-	...canvasFocusedStyle,
-	justifyContent: "center",
-};
-
-const pageWrapperBaseStyle: CSSProperties = {
-	overflow: "hidden",
-	height: "var(--size-662)",
-};
-
-const pageWrapperTransition = (opacityDelay: number, sizeDelay = 0) =>
-	transition([
-		{ prop: "opacity", ms: 350, delay: opacityDelay },
-		{ prop: "width", delay: sizeDelay },
-		{ prop: "margin", delay: sizeDelay },
-	]);
-
-const pageWrapperStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	marginLeft: "auto",
-	marginRight: "auto",
-	width: "var(--size-336)",
-	transition: pageWrapperTransition(300),
-};
-
-const pageWrapperHiddenStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	opacity: 0,
-	width: 0,
-	marginLeft: 0,
-	marginRight: 0,
-	pointerEvents: "none",
-	transition: pageWrapperTransition(0, 350),
-};
-
-const pageWrapperFocusedWithSecondaryStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	width: "var(--size-336)",
-	marginLeft: 0,
-	marginRight: 0,
-	transition: pageWrapperTransition(300),
-};
-
-const secondaryPageWrapperStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	width: "var(--size-336)",
-	marginLeft: "var(--size-4)",
-	opacity: 1,
-	transition: pageWrapperTransition(100),
-};
-
-const secondaryPageWrapperHiddenStyle: CSSProperties = {
-	...pageWrapperBaseStyle,
-	opacity: 0,
-	width: 0,
-	marginLeft: 0,
-	overflow: "hidden",
-	pointerEvents: "none",
-	transition: transition([
-		{ prop: "opacity", ms: 200 },
-		{ prop: "width", delay: 200 },
-		{ prop: "margin", delay: 200 },
-	]),
-};
-
-const panelShadowStyle: CSSProperties = {
-	boxShadow: "var(--shadow-subtle)",
-};
-
-const rightPanelStyle: CSSProperties = {
-	...panelShadowStyle,
-	borderLeftWidth: "1px",
-	borderLeftStyle: "solid",
-};
+import {
+	canvasContentStyle,
+	pageWrapperHiddenStyle,
+	pageWrapperStyle,
+	panelShadowStyle,
+	rightPanelStyle,
+	secondaryPageWrapperHiddenStyle,
+	secondaryPageWrapperStyle,
+} from "./appLayoutStyles";
 
 function AppContent() {
 	const {
 		dispatchRow,
-		dispatchDragging,
 		activePageId,
 		focusMode,
 		secondarySheetRowId,
-	} = useContext(AppContext);
-	const { pages } = useActiveFlow();
-	const canvasRef = useRef<HTMLDivElement | null>(null);
+		flows,
+		activeFlowId,
+	} = useFlowsContext();
+	const { dispatchDragging } = useDragContext();
+
+	const pages = useMemo(
+		() => findFlowById(flows, activeFlowId)?.pages ?? [],
+		[flows, activeFlowId],
+	);
 
 	const secondarySheetRow = useMemo(() => {
 		if (!secondarySheetRowId || !focusMode) return undefined;
@@ -155,28 +67,16 @@ function AppContent() {
 		});
 	}, [pages, dispatchRow, dispatchDragging]);
 
-	useEffect(() => {
-		const element = canvasRef.current;
-		if (!element) {
-			return;
+	const clearSelectionOnBackground = useCallback(() => {
+		if (secondarySheetRowId) {
+			dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
+		} else if (!focusMode) {
+			dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
 		}
-
-		const clearSelection = (event: MouseEvent) => {
-			if (event.target === event.currentTarget) {
-				if (secondarySheetRowId) {
-					dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
-				} else if (!focusMode) {
-					dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
-				}
-			}
-		};
-
-		element.addEventListener("click", clearSelection);
-
-		return () => {
-			element.removeEventListener("click", clearSelection);
-		};
 	}, [dispatchRow, secondarySheetRowId, focusMode]);
+
+	/** Only virtualize when many pages; small flows keep all pages mounted for reliability. */
+	const cullingDisabled = focusMode || pages.length <= 12;
 
 	return (
 		<>
@@ -186,53 +86,49 @@ function AppContent() {
 			>
 				<RowsPanel />
 			</div>
-			<div
-				className="evy-flex-1 evy-flex evy-p-4"
-				style={
-					focusMode
-						? showSecondary
-							? canvasFocusedWithSecondaryStyle
-							: canvasFocusedStyle
-						: canvasStyle
-				}
-				ref={canvasRef}
-			>
-				{pages.map((page) => {
-					const isHidden = focusMode && page.id !== activePageId;
-					const isFocusedPage = focusMode && page.id === activePageId;
+			<div className="evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-hidden">
+				<CanvasViewport
+					contentStyle={canvasContentStyle}
+					onBackgroundClick={clearSelectionOnBackground}
+				>
+					<FocusPanOnEnter focusMode={focusMode} activePageId={activePageId} />
+					{pages.map((page) => {
+						const isActive = page.id === activePageId;
+						const isHidden = focusMode && !isActive;
+						const wrapperStyle = isHidden
+							? pageWrapperHiddenStyle
+							: pageWrapperStyle;
 
-					let wrapperStyle = pageWrapperStyle;
-					if (isHidden) {
-						wrapperStyle = pageWrapperHiddenStyle;
-					} else if (isFocusedPage && showSecondary) {
-						wrapperStyle = pageWrapperFocusedWithSecondaryStyle;
-					}
-
-					return (
-						<div
-							key={page.id}
-							className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-							style={wrapperStyle}
-						>
-							<AppPage pageId={page.id} />
-						</div>
-					);
-				})}
-				{focusMode && (
-					<div
-						className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
-						style={
-							showSecondary
-								? secondaryPageWrapperStyle
-								: secondaryPageWrapperHiddenStyle
-						}
-						data-testid="secondary-sheet-page"
-					>
-						{secondarySheetRow && (
-							<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
-						)}
-					</div>
-				)}
+						return (
+							<Fragment key={page.id}>
+								<CanvasPageFrame
+									pageId={page.id}
+									wrapperStyle={wrapperStyle}
+									className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+									cullingDisabled={cullingDisabled}
+								>
+									<AppPage pageId={page.id} />
+								</CanvasPageFrame>
+								{focusMode && isActive && (
+									<CanvasPageFrame
+										wrapperStyle={
+											showSecondary
+												? secondaryPageWrapperStyle
+												: secondaryPageWrapperHiddenStyle
+										}
+										className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+										cullingDisabled
+										data-testid="secondary-sheet-page"
+									>
+										{secondarySheetRow && (
+											<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
+										)}
+									</CanvasPageFrame>
+								)}
+							</Fragment>
+						);
+					})}
+				</CanvasViewport>
 			</div>
 			<div
 				className="evy-w-300 evy-flex-shrink-0 evy-border-gray evy-overflow-y-auto evy-bg-white"
@@ -285,7 +181,7 @@ export function App() {
 		>
 			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
 				<NavBar />
-				<div className="evy-flex evy-flex-1 evy-overflow-hidden evy-bg-gray-light">
+				<div className="evy-flex evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-bg-gray-light">
 					<AppContent />
 				</div>
 			</div>

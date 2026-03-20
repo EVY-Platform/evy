@@ -1,17 +1,18 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
-import { AppContext } from "../state";
+import { useDragContext, useFlowsContext } from "../state";
 import { CancelOverlay } from "./CancelOverlay";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { SearchInput } from "./SearchInput";
 
 export function RowsPanel() {
 	const pageInnerRef = useRef<HTMLDivElement | null>(null);
-	const { rows, dragging, dispatchDragging } = useContext(AppContext);
+	const { rows } = useFlowsContext();
+	const { dragging, dispatchDragging } = useDragContext();
 	const [searchQuery, setSearchQuery] = useState("");
 
 	const filteredRows = useMemo(() => {

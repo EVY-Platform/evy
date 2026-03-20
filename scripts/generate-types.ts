@@ -8,6 +8,8 @@ import {
 	REPO_ROOT,
 	SCHEMA_DIR,
 	TYPES_ROOT,
+	loadJson,
+	runMain,
 	schemaPathToSwiftTypeName,
 	schemaPathToTsName,
 } from "./types-generation-utils.js";
@@ -17,19 +19,48 @@ const COMMON_SCHEMA_ROOT_REF: Record<string, string> = {
 	"common/rpc": "#/$defs/IdFilter",
 };
 
+async function appendLinesToGeneratedFile(
+	outPath: string,
+	lines: string[],
+): Promise<void> {
+	const current = await readFile(outPath, "utf-8");
+	await writeFile(
+		outPath,
+		`${current.trimEnd()}\n\n${lines.join("\n")}\n`,
+		"utf-8",
+	);
+}
+
+function spawnExitOk(
+	command: string,
+	args: string[],
+	options: { cwd: string; stdio?: "inherit" },
+	errorLabel: string,
+): Promise<void> {
+	return new Promise((resolve, reject) => {
+		const proc = spawn(command, args, options);
+		proc.on("exit", (code) =>
+			code === 0
+				? resolve()
+				: reject(new Error(`${errorLabel} exited ${code}`)),
+		);
+		proc.on("error", reject);
+	});
+}
+
 type LoadedSchemaFile = {
 	schemaPath: string;
 	schemaKey: string;
 	schema: Record<string, unknown>;
 };
 
-async function findSchemaFiles(dir: string, base: string): Promise<string[]> {
+async function findSchemaFiles(dir: string): Promise<string[]> {
 	const entries = await readdir(dir, { withFileTypes: true });
 	const out: string[] = [];
 	for (const e of entries) {
 		const full = join(dir, e.name);
 		if (e.isDirectory()) {
-			out.push(...(await findSchemaFiles(full, base)));
+			out.push(...(await findSchemaFiles(full)));
 		} else if (e.isFile() && e.name.endsWith(".schema.json")) {
 			out.push(full);
 		}
@@ -42,13 +73,10 @@ async function loadSchemaFiles(
 ): Promise<LoadedSchemaFile[]> {
 	const loadedFiles: LoadedSchemaFile[] = [];
 	for (const schemaPath of schemaPaths) {
-		const rawSchema = await readFile(schemaPath, "utf-8");
-		const schema = JSON.parse(rawSchema) as Record<string, unknown>;
+		const schema = await loadJson<Record<string, unknown>>(schemaPath);
 		loadedFiles.push({
 			schemaPath,
-			schemaKey: relative(SCHEMA_DIR, schemaPath)
-				.replace(/\.schema\.json$/, "")
-				.replace(/\\/g, "/"),
+			schemaKey: schemaPathToTsName(schemaPath),
 			schema,
 		});
 	}
@@ -206,26 +234,18 @@ async function generateTypeScript(
 				const rowTypeEnum = (rowDef?.properties as Record<string, unknown>)
 					?.type as { enum?: string[] } | undefined;
 				const rowValues = rowTypeEnum?.enum ?? [];
-				const rowLine = `export const SDUI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`;
-				const current = await readFile(outPath, "utf-8");
-				await writeFile(
-					outPath,
-					`${current.trimEnd()}\n\n${rowLine}\n`,
-					"utf-8",
-				);
+				await appendLinesToGeneratedFile(outPath, [
+					`export const SDUI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`,
+				]);
 			}
 			if (schemaKey === "rpc/get.request") {
 				const props = schema.properties as Record<string, { enum?: string[] }>;
 				const namespaceValues = props?.namespace?.enum ?? [];
 				const resourceValues = props?.resource?.enum ?? [];
-				const namespaceLine = `export const NAMESPACE_VALUES = ${JSON.stringify(namespaceValues)} as const;`;
-				const resourceLine = `export const RESOURCE_VALUES = ${JSON.stringify(resourceValues)} as const;`;
-				const current = await readFile(outPath, "utf-8");
-				await writeFile(
-					outPath,
-					`${current.trimEnd()}\n\n${namespaceLine}\n${resourceLine}\n`,
-					"utf-8",
-				);
+				await appendLinesToGeneratedFile(outPath, [
+					`export const NAMESPACE_VALUES = ${JSON.stringify(namespaceValues)} as const;`,
+					`export const RESOURCE_VALUES = ${JSON.stringify(resourceValues)} as const;`,
+				]);
 			}
 		}),
 	);
@@ -235,9 +255,9 @@ async function generateTypeScript(
 		const rel = schemaPathToTsName(f);
 		const mod = rel.replace(/\.ts$/, "");
 		const title = (schema.title as string | undefined) ?? null;
-		if (mod.startsWith("sdui/") && mod.includes("sdui")) {
+		if (mod.startsWith("sdui/")) {
 			lines.unshift(`export * from "./${mod}";`);
-		} else if (mod.startsWith("data/") && mod.includes("data")) {
+		} else if (mod.startsWith("data/")) {
 			lines.unshift(`export * from "./${mod}";`);
 		} else if (schemaKey === "rpc/get.request") {
 			lines.push(
@@ -278,7 +298,7 @@ async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 			const rootRef = COMMON_SCHEMA_ROOT_REF[schemaKey];
 			if (rootRef) {
 				const withRef = buildSchemaWithRootRef(schema, rootRef);
-				const safeSchemaKey = schemaKey.replace(/[\/\\]/g, "-");
+				const safeSchemaKey = schemaKey.replace(/[/\\]/g, "-");
 				tempPath = join(
 					TYPES_ROOT,
 					`.quicktype-${safeSchemaKey}-tmp.schema.json`,
@@ -288,28 +308,21 @@ async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 			}
 
 			try {
-				await new Promise<void>((resolve, reject) => {
-					const proc = spawn(
-						"bunx",
-						[
-							"quicktype",
-							"--src-lang",
-							"schema",
-							"--lang",
-							"swift",
-							"-o",
-							outPath,
-							inputPath,
-						],
-						{ stdio: "inherit", cwd: REPO_ROOT },
-					);
-					proc.on("exit", (code) =>
-						code === 0
-							? resolve()
-							: reject(new Error(`quicktype exited ${code}`)),
-					);
-					proc.on("error", reject);
-				});
+				await spawnExitOk(
+					"bunx",
+					[
+						"quicktype",
+						"--src-lang",
+						"schema",
+						"--lang",
+						"swift",
+						"-o",
+						outPath,
+						inputPath,
+					],
+					{ stdio: "inherit", cwd: REPO_ROOT },
+					"quicktype",
+				);
 			} finally {
 				if (tempPath) await rm(tempPath, { force: true });
 			}
@@ -317,22 +330,12 @@ async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 	);
 
 	// Generate SDUI Swift from evy.schema.json + row-content.spec.json
-	await new Promise<void>((resolve, reject) => {
-		const proc = spawn(
-			"bun",
-			["run", join(REPO_ROOT, "scripts", "generate-swift-sdui.ts")],
-			{
-				stdio: "inherit",
-				cwd: REPO_ROOT,
-			},
-		);
-		proc.on("exit", (code) =>
-			code === 0
-				? resolve()
-				: reject(new Error(`generate-swift-sdui exited ${code}`)),
-		);
-		proc.on("error", reject);
-	});
+	await spawnExitOk(
+		"bun",
+		["run", join(REPO_ROOT, "scripts", "generate-swift-sdui.ts")],
+		{ stdio: "inherit", cwd: REPO_ROOT },
+		"generate-swift-sdui",
+	);
 
 	console.log("Swift types generated successfully.");
 }
@@ -346,7 +349,7 @@ async function main(): Promise<void> {
 	await mkdir(OUT_TS, { recursive: true });
 	await mkdir(OUT_SWIFT, { recursive: true });
 
-	const schemaPaths = (await findSchemaFiles(SCHEMA_DIR, SCHEMA_DIR)).sort();
+	const schemaPaths = (await findSchemaFiles(SCHEMA_DIR)).sort();
 	const schemaFiles = await loadSchemaFiles(schemaPaths);
 
 	await Promise.all([
@@ -355,7 +358,4 @@ async function main(): Promise<void> {
 	]);
 }
 
-main().catch((err) => {
-	console.error(err);
-	process.exit(1);
-});
+runMain(main);
