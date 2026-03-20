@@ -13,7 +13,6 @@ import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
 import { CanvasViewport } from "./components/CanvasViewport";
 import { CanvasPageFrame } from "./components/CanvasPageFrame";
-import { FocusPanOnEnter } from "./components/FocusPanOnEnter";
 import { AppProvider, useDragContext, useFlowsContext } from "./state";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
@@ -90,8 +89,9 @@ function AppContent() {
 				<CanvasViewport
 					contentStyle={canvasContentStyle}
 					onBackgroundClick={clearSelectionOnBackground}
+					focusMode={focusMode}
+					activePageId={activePageId}
 				>
-					<FocusPanOnEnter focusMode={focusMode} activePageId={activePageId} />
 					{pages.map((page) => {
 						const isActive = page.id === activePageId;
 						const isHidden = focusMode && !isActive;

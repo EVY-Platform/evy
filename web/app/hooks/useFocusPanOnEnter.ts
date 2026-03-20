@@ -1,21 +1,20 @@
 import { useEffect, useRef } from "react";
 
-import { useCameraContext } from "../state/contexts/CameraContext";
+import type { useCamera } from "./useCamera";
 
-type FocusPanOnEnterProps = {
-	focusMode: boolean;
-	activePageId: string | undefined;
-};
+type PanToElement = ReturnType<typeof useCamera>["panToElement"];
 
 /**
  * When focus mode turns on, smoothly pans the canvas so the active page is centered.
  * Exiting focus mode does not move the camera.
+ *
+ * Call from {@link CanvasViewport} (or any component that owns the same `panToElement` as the viewport).
  */
-export function FocusPanOnEnter({
-	focusMode,
-	activePageId,
-}: FocusPanOnEnterProps) {
-	const { panToElement } = useCameraContext();
+export function useFocusPanOnEnter(
+	focusMode: boolean,
+	activePageId: string | undefined,
+	panToElement: PanToElement,
+) {
 	const prevFocusModeRef = useRef(focusMode);
 
 	useEffect(() => {
@@ -48,6 +47,4 @@ export function FocusPanOnEnter({
 			cancelAnimationFrame(rafId);
 		};
 	}, [focusMode, activePageId, panToElement]);
-
-	return null;
 }

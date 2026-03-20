@@ -6,6 +6,7 @@ import type {
 import { useCallback, useEffect, useRef } from "react";
 
 import { useCamera } from "../hooks/useCamera";
+import { useFocusPanOnEnter } from "../hooks/useFocusPanOnEnter";
 import { CameraContext } from "../state/contexts/CameraContext";
 import type { ScreenPoint } from "../utils/coordinates";
 
@@ -45,22 +46,30 @@ type CanvasViewportProps = {
 	onBackgroundClick?: () => void;
 	/** Layout styles for the horizontal row of pages (gap, justify, etc.). */
 	contentStyle?: CSSProperties;
+	/** When focus mode turns on, pan so this page is centered. */
+	focusMode?: boolean;
+	activePageId?: string;
 };
 
 export function CanvasViewport({
 	children,
 	onBackgroundClick,
 	contentStyle,
+	focusMode = false,
+	activePageId,
 }: CanvasViewportProps) {
 	const camera = useCamera();
 	const {
 		viewportRef,
 		worldRef,
 		pan,
+		panToElement,
 		zoomAtScreenPoint,
 		fitToBounds,
 		getCamera,
 	} = camera;
+
+	useFocusPanOnEnter(focusMode, activePageId, panToElement);
 
 	const contentMeasureRef = useRef<HTMLDivElement | null>(null);
 
