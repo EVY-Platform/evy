@@ -7,7 +7,7 @@ export default defineConfig({
 	timeout: 10000,
 	fullyParallel: true,
 	workers: 4,
-	reporter: "line",
+	reporter: [["line"], ["html", { open: "never" }]],
 	use: { baseURL: url },
 	projects: [
 		{
