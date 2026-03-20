@@ -2,8 +2,6 @@
 	{
 		"id": "f267c629-2594-4770-8cec-d5324ebb4058",
 		"name": "Home",
-		"type": "read",
-		"data": "",
 		"pages": [
 			{
 				"id": "55e427ac-263c-441f-9673-f60627b1baea",

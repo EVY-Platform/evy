@@ -10,7 +10,7 @@ import type {
 import AppPage from "./components/AppPage";
 import SecondarySheetPage from "./components/SecondarySheetPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
-import { FlowSelector } from "./components/FlowSelector";
+import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
 import { AppContext, AppProvider } from "./state";
 import { handleDrop } from "./utils/dropHandler";
@@ -18,35 +18,17 @@ import { useFlows } from "./hooks/useFlows";
 import { useActiveFlow } from "./hooks/useActiveFlow";
 import { findRowInPages } from "./utils/rowTree";
 
-const focusButtonCss = `
-.evy-focus-button {
-	font-size: var(--text-sm);
-	font-weight: var(--font-medium);
-	height: var(--size-navbar-control);
-	padding: 0 var(--spacing-4);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-md);
-	background-color: var(--color-white);
-	cursor: pointer;
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	transition: border-color var(--transition), box-shadow var(--transition);
+const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+
+function transition(
+	props: Array<{ prop: string; ms?: number; delay?: number }>,
+): string {
+	return props
+		.map(({ prop, ms = 300, delay = 0 }) =>
+			delay ? `${prop} ${ms}ms ${EASE} ${delay}ms` : `${prop} ${ms}ms ${EASE}`,
+		)
+		.join(", ");
 }
-.evy-focus-button:hover {
-	border-color: var(--color-evy-gray);
-}
-@keyframes focus-glow {
-	0%, 100% { box-shadow: 0 0 6px 1px oklch(35.84% 0.0103 285.87 / 0.35); }
-	50% { box-shadow: 0 0 14px 4px oklch(35.84% 0.0103 285.87 / 0.6); }
-}
-.evy-focus-button--active {
-	border-color: var(--color-evy-gray-dark);
-	box-shadow: 0 0 8px 2px oklch(35.84% 0.0103 285.87 / 0.5);
-	animation: focus-glow 2s ease-in-out infinite;
-}
-`;
 
 const canvasBaseStyle: CSSProperties = {
 	flexDirection: "row",
@@ -56,20 +38,18 @@ const canvasBaseStyle: CSSProperties = {
 const canvasStyle: CSSProperties = {
 	...canvasBaseStyle,
 	gap: "var(--spacing-4)",
-	transition: "gap 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+	transition: transition([{ prop: "gap" }]),
 };
 
 const canvasFocusedStyle: CSSProperties = {
 	...canvasBaseStyle,
 	gap: 0,
-	transition: "gap 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms",
+	transition: transition([{ prop: "gap", delay: 350 }]),
 };
 
 const canvasFocusedWithSecondaryStyle: CSSProperties = {
-	...canvasBaseStyle,
-	gap: 0,
+	...canvasFocusedStyle,
 	justifyContent: "center",
-	transition: "gap 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms",
 };
 
 const pageWrapperBaseStyle: CSSProperties = {
@@ -77,13 +57,19 @@ const pageWrapperBaseStyle: CSSProperties = {
 	height: "var(--size-662)",
 };
 
+const pageWrapperTransition = (opacityDelay: number, sizeDelay = 0) =>
+	transition([
+		{ prop: "opacity", ms: 350, delay: opacityDelay },
+		{ prop: "width", delay: sizeDelay },
+		{ prop: "margin", delay: sizeDelay },
+	]);
+
 const pageWrapperStyle: CSSProperties = {
 	...pageWrapperBaseStyle,
 	marginLeft: "auto",
 	marginRight: "auto",
 	width: "var(--size-336)",
-	transition:
-		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1) 300ms, width 300ms cubic-bezier(0.4, 0, 0.2, 1), margin 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+	transition: pageWrapperTransition(300),
 };
 
 const pageWrapperHiddenStyle: CSSProperties = {
@@ -93,8 +79,7 @@ const pageWrapperHiddenStyle: CSSProperties = {
 	marginLeft: 0,
 	marginRight: 0,
 	pointerEvents: "none",
-	transition:
-		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1), width 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms, margin 300ms cubic-bezier(0.4, 0, 0.2, 1) 350ms",
+	transition: pageWrapperTransition(0, 350),
 };
 
 const pageWrapperFocusedWithSecondaryStyle: CSSProperties = {
@@ -102,8 +87,7 @@ const pageWrapperFocusedWithSecondaryStyle: CSSProperties = {
 	width: "var(--size-336)",
 	marginLeft: 0,
 	marginRight: 0,
-	transition:
-		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1) 300ms, width 300ms cubic-bezier(0.4, 0, 0.2, 1), margin 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+	transition: pageWrapperTransition(300),
 };
 
 const secondaryPageWrapperStyle: CSSProperties = {
@@ -111,8 +95,7 @@ const secondaryPageWrapperStyle: CSSProperties = {
 	width: "var(--size-336)",
 	marginLeft: "var(--spacing-4)",
 	opacity: 1,
-	transition:
-		"opacity 350ms cubic-bezier(0.4, 0, 0.2, 1) 100ms, width 300ms cubic-bezier(0.4, 0, 0.2, 1), margin 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+	transition: pageWrapperTransition(100),
 };
 
 const secondaryPageWrapperHiddenStyle: CSSProperties = {
@@ -122,8 +105,11 @@ const secondaryPageWrapperHiddenStyle: CSSProperties = {
 	marginLeft: 0,
 	overflow: "hidden",
 	pointerEvents: "none",
-	transition:
-		"opacity 200ms cubic-bezier(0.4, 0, 0.2, 1), width 300ms cubic-bezier(0.4, 0, 0.2, 1) 200ms, margin 300ms cubic-bezier(0.4, 0, 0.2, 1) 200ms",
+	transition: transition([
+		{ prop: "opacity", ms: 200 },
+		{ prop: "width", delay: 200 },
+		{ prop: "margin", delay: 200 },
+	]),
 };
 
 const panelShadowStyle: CSSProperties = {
@@ -242,8 +228,8 @@ function AppContent() {
 						}
 						data-testid="secondary-sheet-page"
 					>
-						{secondarySheetRow && secondarySheetRowId && (
-							<SecondarySheetPage sheetRowId={secondarySheetRowId} />
+						{secondarySheetRow && (
+							<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
 						)}
 					</div>
 				)}
@@ -259,53 +245,12 @@ function AppContent() {
 }
 
 function NavBar() {
-	const { activePageId, activeFlowId, flows, dispatchRow, focusMode } =
-		useContext(AppContext);
-
-	const activePage = useMemo(
-		() =>
-			flows
-				.find((f) => f.id === activeFlowId)
-				?.pages.find((p) => p.id === activePageId),
-		[flows, activeFlowId, activePageId],
-	);
-
 	return (
-		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center">
-			<style>{focusButtonCss}</style>
-			<a href="/">
+		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center evy-gap-2 evy-min-w-0">
+			<a href="/" className="evy-shrink-0">
 				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 			</a>
-			<div className="evy-flex-1 evy-flex evy-justify-center evy-items-center evy-gap-2">
-				{activePage && (
-					<>
-						<input
-							type="text"
-							value={activePage.title}
-							onChange={(e) =>
-								dispatchRow({
-									type: "UPDATE_PAGE_TITLE",
-									pageId: activePage.id,
-									title: e.target.value,
-								})
-							}
-							placeholder="Page title"
-							className="evy-text-center evy-bg-transparent evy-border-none evy-focus-visible:outline-none evy-text-lg evy-font-semibold"
-							style={{ height: "var(--size-navbar-control)" }}
-							aria-label="Page title"
-						/>
-						<button
-							type="button"
-							onClick={() => dispatchRow({ type: "TOGGLE_FOCUS_MODE" })}
-							className={`evy-focus-button${focusMode ? " evy-focus-button--active" : ""}`}
-							aria-pressed={focusMode}
-						>
-							Focus
-						</button>
-					</>
-				)}
-			</div>
-			<FlowSelector />
+			<NavigationBreadcrumb />
 		</div>
 	);
 }

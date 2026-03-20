@@ -1,9 +1,4 @@
-import {
-	SDUI_FLOW_TYPE_VALUES,
-	SDUI_ROW_TYPE_VALUES,
-	type SDUI_Flow,
-	type SDUI_Row,
-} from "evy-types";
+import { SDUI_ROW_TYPE_VALUES, type SDUI_Flow, type SDUI_Row } from "evy-types";
 import { z } from "zod";
 
 /**
@@ -59,8 +54,6 @@ export const PageSchema = z.strictObject({
 const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
 	id: z.uuid(),
 	name: z.string().min(1, { error: "Flow name is required" }),
-	type: z.enum(SDUI_FLOW_TYPE_VALUES),
-	data: z.string(),
 	pages: z.array(PageSchema),
 });
 

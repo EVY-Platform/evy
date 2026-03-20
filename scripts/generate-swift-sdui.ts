@@ -115,18 +115,9 @@ function swiftTypeForSchemaProp(
 const CLASS_DEFS = new Set(["SDUI_Row", "SDUI_RowView", "SDUI_RowContent"]);
 
 function emitSDUIEnums(
-	schema: Record<string, unknown>,
+	_schema: Record<string, unknown>,
 	rowSpec: RowSpec,
 ): string {
-	const flowTypeEnum = (schema.properties as Record<string, unknown>)?.type as
-		| { enum?: string[] }
-		| undefined;
-	const flowTypes = (flowTypeEnum?.enum ?? []) as string[];
-
-	const flowCases = flowTypes.map(
-		(t) => `    case ${t.toLowerCase()} = "${t}"`,
-	);
-
 	const rowTypes = getRowTypesFromSpec(rowSpec);
 	const rowEnumCases: string[] = [];
 	for (const t of rowTypes) {
@@ -140,11 +131,6 @@ function emitSDUIEnums(
 
 import Foundation
 
-/// Flow type enum for SDUI_Flow.type (schema-generated).
-public enum EVYFlowType: String, Codable {
-${flowCases.join("\n")}
-}
-
 /// Row type enum for SDUI_Row.type (from row-content.spec.json).
 public enum EVYRowType: String, Codable {
 ${rowEnumCases.join("\n")}
@@ -152,10 +138,9 @@ ${rowEnumCases.join("\n")}
 `;
 }
 
-/** Overrides: schema property -> Swift type (e.g. SDUI_Flow.type -> EVYFlowType). */
+/** Overrides: schema property -> Swift type (e.g. SDUI_Row.type -> EVYRowType). */
 function buildShapeOverrides(): Map<string, string> {
 	const m = new Map<string, string>();
-	m.set("SDUI_Flow.type", "EVYFlowType");
 	m.set("SDUI_Row.type", "EVYRowType");
 	m.set("SDUI_Row.view", "SDUI_RowView");
 	return m;
@@ -419,7 +404,7 @@ ${flowLines.join("\n")}
 
 	return `// Generated from types/schema/sdui/evy.schema.json - do not edit.
 // Run \`bun run types:generate\` from repo root to regenerate.
-// Depends on SDUIEnums.swift for EVYFlowType and EVYRowType.
+// Depends on SDUIEnums.swift for EVYRowType.
 
 import Foundation
 

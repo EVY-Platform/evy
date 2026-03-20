@@ -144,8 +144,6 @@ function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 		{
 			id: crypto.randomUUID(),
 			name: "Test Flow",
-			type: "create",
-			data: "",
 			pages: pages.map((page) => ({
 				id: page.id ?? crypto.randomUUID(),
 				title: page.title,

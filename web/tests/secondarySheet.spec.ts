@@ -53,18 +53,24 @@ test.describe("Secondary Sheet Page", () => {
 		},
 	];
 
+	async function enterFocusMode(page: import("@playwright/test").Page) {
+		const firstPage = getFirstPage(page);
+		await firstPage.click();
+		const pageBreadcrumb = page.getByRole("button", {
+			name: "Select page Page 1",
+		});
+		await pageBreadcrumb.click();
+	}
+
 	async function openSecondaryViaConfigPanel(
 		page: import("@playwright/test").Page,
 	) {
-		// Select the SheetContainer row on the page to show its config
 		await page.getByText("My Sheet", { exact: true }).click();
 
-		// The config panel should show "Children" with child buttons
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 
-		// Click the first children item (Text row) in the config panel
 		const childButton = configPanel
 			.getByRole("button", { name: "Text" })
 			.first();
@@ -78,18 +84,13 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		// Select the page and enter focus mode
-		const firstPage = getFirstPage(page);
-		await firstPage.click();
-		await page.getByRole("button", { name: "Focus" }).click();
+		await enterFocusMode(page);
 
-		// Secondary should not be visible yet
 		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
 		await expect(secondaryPage).toHaveCSS("opacity", "0");
 
 		await openSecondaryViaConfigPanel(page);
 
-		// The secondary sheet page should now be visible
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 	});
 
@@ -99,9 +100,7 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		const firstPage = getFirstPage(page);
-		await firstPage.click();
-		await page.getByRole("button", { name: "Focus" }).click();
+		await enterFocusMode(page);
 
 		await openSecondaryViaConfigPanel(page);
 
@@ -116,9 +115,7 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		const firstPage = getFirstPage(page);
-		await firstPage.click();
-		await page.getByRole("button", { name: "Focus" }).click();
+		await enterFocusMode(page);
 
 		await openSecondaryViaConfigPanel(page);
 
@@ -133,18 +130,14 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		const firstPage = getFirstPage(page);
-		await firstPage.click();
-		await page.getByRole("button", { name: "Focus" }).click();
+		await enterFocusMode(page);
 
 		await openSecondaryViaConfigPanel(page);
 
 		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 
-		// Click the back button in the config panel
-		const backButton = page.getByRole("button", { name: /Back to parent/ });
-		await backButton.click();
+		await page.getByRole("button", { name: "Configure row: My Sheet" }).click();
 
 		await expect(secondaryPage).toHaveCSS("opacity", "0");
 	});
@@ -155,16 +148,13 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		const firstPage = getFirstPage(page);
-		await firstPage.click();
-		await page.getByRole("button", { name: "Focus" }).click();
+		await enterFocusMode(page);
 
 		await openSecondaryViaConfigPanel(page);
 
 		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 
-		// Click the canvas background
 		const canvas = page.locator(".evy-flex-1.evy-flex.evy-p-4");
 		const canvasBox = await canvas.boundingBox();
 		if (canvasBox) {
@@ -183,22 +173,11 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		// Select the page and row, then ensure focus mode is off
 		const firstPage = getFirstPage(page);
 		await firstPage.click();
-		const focusButton = page.getByRole("button", { name: "Focus" });
 
-		// Turn off focus mode if it's on
-		const isPressed = await focusButton.getAttribute("aria-pressed");
-		if (isPressed === "true") {
-			await focusButton.click();
-			await expect(focusButton).toHaveAttribute("aria-pressed", "false");
-		}
-
-		// Select the SheetContainer row
 		await page.getByText("My Sheet", { exact: true }).click();
 
-		// Click a children item in the config panel
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
@@ -208,8 +187,10 @@ test.describe("Secondary Sheet Page", () => {
 		await expect(childButton).toBeVisible();
 		await childButton.click();
 
-		// Should auto-enter focus mode and show secondary page
-		await expect(focusButton).toHaveAttribute("aria-pressed", "true");
+		const pageBreadcrumb = page.getByRole("button", {
+			name: "Select page Page 1",
+		});
+		await expect(pageBreadcrumb).toHaveAttribute("aria-current", "page");
 		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 	});

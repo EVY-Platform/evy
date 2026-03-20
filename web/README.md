@@ -34,7 +34,7 @@ graph TB
         RowsPanel[RowsPanel]
         AppPage[AppPage]
         ConfigPanel[ConfigurationPanel]
-        FlowSelector[FlowSelector]
+        NavigationBreadcrumb[NavigationBreadcrumb]
     end
 
     subgraph dragdrop [Drag and Drop]
@@ -70,7 +70,7 @@ graph TB
     AppContext --> DropIndicatorReducer
 
     App --> NavBar
-    NavBar --> FlowSelector
+    NavBar --> NavigationBreadcrumb
     App --> AppContent
     AppContent --> RowsPanel
     AppContent --> AppPage

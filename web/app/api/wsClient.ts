@@ -12,9 +12,10 @@ function isServerFlow(v: unknown): v is ServerFlow {
 		typeof v === "object" &&
 		"id" in v &&
 		"name" in v &&
-		"type" in v &&
-		"data" in v &&
-		"pages" in v
+		typeof v.id === "string" &&
+		typeof v.name === "string" &&
+		"pages" in v &&
+		Array.isArray(v.pages)
 	);
 }
 

@@ -6,6 +6,17 @@ import { test, expect } from "@playwright/test";
  * Note: Tests should be resilient to empty database state.
  */
 
+async function selectFlowByLabel(
+	page: import("@playwright/test").Page,
+	label: string,
+) {
+	await page.locator("#flow-select").click();
+	await page
+		.getByRole("listbox", { name: "Active flow" })
+		.getByRole("option", { name: label, exact: true })
+		.click();
+}
+
 test.describe("Web E2E Integration Tests", () => {
 	test("should persist SDUI edits after page refresh", async ({ page }) => {
 		// Generate a unique test value to avoid conflicts
@@ -17,10 +28,10 @@ test.describe("Web E2E Integration Tests", () => {
 		const rowsPanel = page.getByText("Rows", { exact: true });
 		await expect(rowsPanel).toBeVisible();
 
-		// Select the "View Item" flow from the dropdown
+		// Select the "View Item" flow from the flow picker
 		const flowSelector = page.locator("#flow-select");
 		await expect(flowSelector).toBeVisible();
-		await flowSelector.selectOption({ label: "View Item" });
+		await selectFlowByLabel(page, "View Item");
 
 		// Wait for the flow to load - look for the Text row with "My item is called"
 		const textRow = page.getByText("My item is called", { exact: true });
@@ -51,7 +62,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		// Select the same flow again
 		await expect(flowSelector).toBeVisible();
-		await flowSelector.selectOption({ label: "View Item" });
+		await selectFlowByLabel(page, "View Item");
 
 		// Wait for the Text row to appear (it should now show our edited title)
 		const editedRow = page.getByText(uniqueTitle, { exact: true });
@@ -181,8 +192,8 @@ test.describe("Web E2E Integration Tests", () => {
 
 		const flowSelector = page.locator("#flow-select");
 		await expect(flowSelector).toBeVisible();
-		await flowSelector.selectOption({ label: "View Item" });
-		await expect(flowSelector).not.toHaveValue("Select a flow");
+		await selectFlowByLabel(page, "View Item");
+		await expect(flowSelector).not.toHaveAttribute("data-value", "");
 
 		const footerButton = page
 			.locator('div[class*="evy-bg-phone"]')

@@ -230,12 +230,12 @@ test.describe("Row Selection", () => {
 		await titleInput.clear();
 		await titleInput.fill("Updated Title");
 
-		// The row should now display the updated title
+		// The row should now display the updated title (scope to canvas, not navbar breadcrumb)
 		await expect(
-			page.getByText("Updated Title", { exact: true }),
+			getFirstPage(page).getByText("Updated Title", { exact: true }),
 		).toBeVisible();
 		await expect(
-			page.getByText("First Info Row", { exact: true }),
+			getFirstPage(page).getByText("First Info Row", { exact: true }),
 		).not.toBeVisible();
 	});
 
@@ -425,10 +425,8 @@ test.describe("Row Selection with Containers", () => {
 			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveValue("Child Info Row");
 
-		await configPanel
-			.getByRole("button", {
-				name: "Back to parent configuration from Info",
-			})
+		await page
+			.getByRole("button", { name: "Configure row: Container Row" })
 			.click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),

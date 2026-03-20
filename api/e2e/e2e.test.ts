@@ -60,8 +60,6 @@ describe("API E2E Tests", () => {
 					data: {
 						id: crypto.randomUUID(),
 						name: "Test",
-						type: "read",
-						data: "item",
 						pages: [{ id: crypto.randomUUID(), title: "P", rows: [] }],
 					},
 				});
@@ -101,8 +99,6 @@ describe("API E2E Tests", () => {
 			const flowData: SDUI_Flow = {
 				id: crypto.randomUUID(),
 				name: "SDUI Test Flow",
-				type: "read",
-				data: "item",
 				pages: [testPage],
 			};
 
@@ -121,7 +117,6 @@ describe("API E2E Tests", () => {
 			const flow = result[0];
 			expect(flow).toHaveProperty("id");
 			expect(flow).toHaveProperty("name");
-			expect(flow).toHaveProperty("type");
 			expect(flow).toHaveProperty("pages");
 			expect(flow.pages).toBeInstanceOf(Array);
 		});
@@ -148,8 +143,6 @@ describe("API E2E Tests", () => {
 			const flowData: SDUI_Flow = {
 				id: crypto.randomUUID(),
 				name: "E2E Test Flow",
-				type: "read",
-				data: "item",
 				pages: [testPage],
 			};
 
@@ -162,7 +155,6 @@ describe("API E2E Tests", () => {
 			expect(result.id).toBeDefined();
 			expect(result.data).toBeDefined();
 			expect(result.data.name).toBe("E2E Test Flow");
-			expect(result.data.type).toBe("read");
 			expect(result.createdAt).toBeDefined();
 			expect(result.updatedAt).toBeDefined();
 		});
@@ -179,8 +171,6 @@ describe("API E2E Tests", () => {
 			const createFlowData: SDUI_Flow = {
 				id: flowId,
 				name: "Flow to Update",
-				type: "create",
-				data: "item",
 				pages: [testPage],
 			};
 

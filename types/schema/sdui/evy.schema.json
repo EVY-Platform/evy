@@ -5,15 +5,10 @@
 	"description": "SDUI types: SDUI_Flow, SDUI_Page, SDUI_Row",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["id", "name", "type", "data", "pages"],
+	"required": ["id", "name", "pages"],
 	"properties": {
 		"id": { "type": "string", "format": "uuid" },
 		"name": { "type": "string", "minLength": 1 },
-		"type": {
-			"type": "string",
-			"enum": ["create", "read", "update", "delete"]
-		},
-		"data": { "type": "string" },
 		"pages": {
 			"type": "array",
 			"items": { "$ref": "#/$defs/SDUI_Page" }

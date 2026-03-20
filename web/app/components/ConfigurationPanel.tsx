@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 
 import { AppContext } from "../state";
 import type { Row } from "../types/row";
@@ -33,57 +33,35 @@ function ChildRowButton({
 }
 
 export function ConfigurationPanel() {
-	const { activeRowId, flows, focusMode, secondarySheetRowId, dispatchRow } =
-		useContext(AppContext);
+	const {
+		activeRowId,
+		activePageId,
+		activeFlowId,
+		flows,
+		configStack,
+		dispatchRow,
+	} = useContext(AppContext);
 	const row = useRowById(activeRowId);
-	const [configStack, setConfigStack] = useState<string[]>([]);
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
 	const currentConfigRow = useRowById(currentConfigRowId);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: reset stack when selected row changes
-	useEffect(() => {
-		setConfigStack([]);
-	}, [activeRowId]);
+	const activePage = useMemo(() => {
+		const flow = flows.find((f) => f.id === activeFlowId);
+		return flow?.pages.find((p) => p.id === activePageId);
+	}, [flows, activeFlowId, activePageId]);
 
-	useEffect(() => {
-		if (!focusMode) {
-			setConfigStack([]);
-		}
-	}, [focusMode]);
-
-	const prevSecondarySheetRowId = useRef(secondarySheetRowId);
-	useEffect(() => {
-		if (prevSecondarySheetRowId.current && !secondarySheetRowId) {
-			setConfigStack([]);
-		}
-		prevSecondarySheetRowId.current = secondarySheetRowId;
-	}, [secondarySheetRowId]);
+	const showPageTitleInPanel = Boolean(activePage) && configStack.length === 0;
 
 	const openChildConfiguration = useCallback(
 		(childRowId: string, parentRow: Row) => {
-			setConfigStack((currentStack) => [...currentStack, childRowId]);
-			if (
-				parentRow.config.type === "SheetContainer" &&
-				parentRow.config.view.content.children?.some((c) => c.id === childRowId)
-			) {
-				if (!focusMode) {
-					dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
-				}
-				dispatchRow({
-					type: "OPEN_SECONDARY_SHEET",
-					sheetRowId: parentRow.id,
-				});
-			}
+			dispatchRow({
+				type: "PUSH_CONFIG_STACK",
+				parentRowId: parentRow.id,
+				childRowId,
+			});
 		},
-		[focusMode, dispatchRow],
+		[dispatchRow],
 	);
-
-	const goBackToParentConfiguration = useCallback(() => {
-		setConfigStack((currentStack) => currentStack.slice(0, -1));
-		if (secondarySheetRowId) {
-			dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
-		}
-	}, [secondarySheetRowId, dispatchRow]);
 
 	const updateRowContent = useCallback(
 		(configId: string, configValue: string, targetRowId?: string) => {
@@ -182,7 +160,6 @@ export function ConfigurationPanel() {
 	const configurationElements = currentConfigRow
 		? renderConfiguration(currentConfigRow)
 		: [];
-	const isDrilledIntoChild = configStack.length > 0;
 
 	return (
 		<div className="evy-flex evy-flex-col evy-h-full">
@@ -190,22 +167,36 @@ export function ConfigurationPanel() {
 				Configuration
 			</div>
 			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll">
-				{isDrilledIntoChild && currentConfigRow && (
-					<>
-						<button
-							type="button"
-							className="evy-flex evy-items-center evy-w-full evy-p-0 evy-bg-transparent evy-border-none evy-text-left evy-cursor-pointer"
-							onClick={goBackToParentConfiguration}
-							aria-label={`Back to parent configuration from ${currentConfigRow.config.type}`}
+				{showPageTitleInPanel && activePage && (
+					<div className="evy-mb-2">
+						<label
+							htmlFor="config-panel-page-title"
+							className="evy-text-sm evy-font-medium evy-text-black"
 						>
-							<img className="evy-h-4 evy-w-4" src="/chevron_left.svg" alt="" />
-							<span className="evy-text-lg evy-font-semibold evy-pl-4">
-								{currentConfigRow.config.type}
-							</span>
-						</button>
-						<div className="evy-border-b evy-border-gray" />
-					</>
+							Page title
+						</label>
+						<input
+							id="config-panel-page-title"
+							type="text"
+							value={activePage.title}
+							onChange={(e) =>
+								dispatchRow({
+									type: "UPDATE_PAGE_TITLE",
+									pageId: activePage.id,
+									title: e.target.value,
+								})
+							}
+							placeholder="Page title"
+							aria-label="Page title"
+							className="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
+						/>
+					</div>
 				)}
+				{showPageTitleInPanel &&
+					activePage &&
+					configurationElements.length > 0 && (
+						<div className="evy-border-b evy-border-gray" />
+					)}
 				{configurationElements.length > 0 ? (
 					<>
 						{configurationElements}
@@ -217,7 +208,9 @@ export function ConfigurationPanel() {
 						/>
 					</>
 				) : (
-					<div className="evy-text-sm evy-text-gray evy-text-center evy-mt-8">
+					<div
+						className={`evy-text-sm evy-text-gray evy-text-center ${showPageTitleInPanel ? "evy-mt-4" : "evy-mt-8"}`}
+					>
 						Select a row to configure
 					</div>
 				)}

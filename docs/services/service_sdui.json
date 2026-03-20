@@ -2,8 +2,6 @@
 	{
 		"id": "74a49d4b-2176-4925-857a-e29e2991f1bd",
 		"name": "View Item",
-		"type": "read",
-		"data": "item",
 		"pages": [
 			{
 				"id": "82cae120-c7b1-4c29-bd42-e1521320b109",
@@ -45,8 +43,6 @@
 	{
 		"id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
 		"name": "Create item",
-		"type": "create",
-		"data": "item",
 		"pages": [
 			{
 				"id": "306ed62c-c2af-4652-a873-26c7a388972d",

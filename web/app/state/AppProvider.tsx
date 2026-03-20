@@ -47,6 +47,7 @@ export function AppProvider({
 			activeFlowId,
 			activePageId,
 			focusMode: false,
+			configStack: [],
 		};
 	}, [flows]);
 
@@ -97,6 +98,7 @@ export function AppProvider({
 				activePageId: appState.activePageId,
 				focusMode: appState.focusMode,
 				secondarySheetRowId: appState.secondarySheetRowId,
+				configStack: appState.configStack,
 				dragging,
 				dropIndicator,
 				dispatchRow,

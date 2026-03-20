@@ -125,7 +125,6 @@ import {
 	serializeBranch,
 	parseOperand,
 	serializeOperand,
-	getDataModelNames,
 	getFlowOptions,
 	getPageOptions,
 	toVariableOptions,
@@ -596,7 +595,7 @@ function buildArgDropdowns(
 	}
 
 	if (functionName === "create") {
-		return [toVariableOptions(getDataModelNames(flows))];
+		return [toVariableOptions(draftVariables)];
 	}
 
 	if (functionName === "highlight_required") {
