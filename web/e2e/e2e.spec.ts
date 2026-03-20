@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 /**
  * E2E Integration tests that run against real API services.
@@ -6,10 +7,7 @@ import { test, expect } from "@playwright/test";
  * Note: Tests should be resilient to empty database state.
  */
 
-async function selectFlowByLabel(
-	page: import("@playwright/test").Page,
-	label: string,
-) {
+async function selectFlowByLabel(page: Page, label: string) {
 	await page.locator("#flow-select").click();
 	await page
 		.getByRole("listbox", { name: "Active flow" })
@@ -17,60 +15,53 @@ async function selectFlowByLabel(
 		.click();
 }
 
+async function waitForAppLoaded(page: Page) {
+	const flowSelector = page.locator("#flow-select");
+	await expect(flowSelector).toBeVisible();
+}
+
+async function expandSidePanels(page: Page) {
+	const rowsLabel = page.getByText("Rows", { exact: true }).first();
+	if (await rowsLabel.isVisible()) return;
+	const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
+	await firstPage.getByRole("button").first().click();
+	await expect(rowsLabel).toBeVisible();
+}
+
 test.describe.configure({ mode: "serial" });
 
 test.describe("Web E2E Integration Tests", () => {
 	test("should persist SDUI edits after page refresh", async ({ page }) => {
-		// Generate a unique test value to avoid conflicts
 		const uniqueTitle = `E2E Test Title ${Date.now()}`;
 
 		await page.goto("/");
+		await waitForAppLoaded(page);
 
-		// Wait for app to fully load
-		const rowsPanel = page.getByText("Rows", { exact: true });
-		await expect(rowsPanel).toBeVisible();
-
-		// Select the "View Item" flow from the flow picker
-		const flowSelector = page.locator("#flow-select");
-		await expect(flowSelector).toBeVisible();
 		await selectFlowByLabel(page, "View Item");
 
-		// Wait for the flow to load - look for the Text row with "My item is called"
 		const textRow = page.getByText("My item is called", { exact: true });
 		await expect(textRow).toBeVisible();
 
-		// Click on the row to select it
 		await textRow.click();
 
-		// Wait for the configuration panel to show the row's config
 		const configPanel = page
 			.getByText("Configuration", { exact: true })
 			.locator("..");
 		const titleInput = configPanel.getByLabel("title", { exact: true });
 		await expect(titleInput).toBeVisible();
 
-		// Edit the title field with our unique value
 		await titleInput.clear();
 		await titleInput.fill(uniqueTitle);
-
-		// Verify the input has our value
 		await expect(titleInput).toHaveValue(uniqueTitle);
 
-		// Refresh the page to test persistence
 		await page.reload();
+		await waitForAppLoaded(page);
 
-		// Wait for app to fully load again
-		await expect(rowsPanel).toBeVisible();
-
-		// Select the same flow again
-		await expect(flowSelector).toBeVisible();
 		await selectFlowByLabel(page, "View Item");
 
-		// Wait for the Text row to appear (it should now show our edited title)
 		const editedRow = page.getByText(uniqueTitle, { exact: true });
 		await expect(editedRow).toBeVisible();
 
-		// Click on the row to verify the config also shows the updated value
 		await editedRow.click();
 		await expect(titleInput).toBeVisible();
 		await expect(titleInput).toHaveValue(uniqueTitle);
@@ -79,16 +70,17 @@ test.describe("Web E2E Integration Tests", () => {
 	test("should load the app and connect to real API", async ({ page }) => {
 		await page.goto("/");
 
-		// Wait for the app to either show content or loading/error state
 		const loadingMessage = page.getByText("Loading flows...", {
 			exact: true,
 		});
 		const errorMessage = page.getByText("Failed to load flows", {
 			exact: true,
 		});
-		const rowsPanel = page.getByText("Rows", { exact: true });
+		const flowSelector = page.locator("#flow-select");
 
-		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible();
+		await expect(
+			loadingMessage.or(errorMessage).or(flowSelector),
+		).toBeVisible();
 	});
 
 	test("should display app structure when connected", async ({ page }) => {
@@ -100,27 +92,23 @@ test.describe("Web E2E Integration Tests", () => {
 		const errorMessage = page.getByText("Failed to load flows", {
 			exact: true,
 		});
-		const rowsPanel = page.getByText("Rows", { exact: true });
+		const flowSelector = page.locator("#flow-select");
 
-		await expect(loadingMessage.or(errorMessage).or(rowsPanel)).toBeVisible();
+		await expect(
+			loadingMessage.or(errorMessage).or(flowSelector),
+		).toBeVisible();
 
-		// If we see loading, wait for it to resolve
 		if (await loadingMessage.isVisible()) {
 			await expect(loadingMessage).not.toBeVisible();
 		}
 
-		// After connection attempt, we should see either Rows panel or error
-		await expect(rowsPanel.or(errorMessage)).toBeVisible();
+		await expect(flowSelector.or(errorMessage)).toBeVisible();
 	});
 
 	test("should display EVY logo in header", async ({ page }) => {
 		await page.goto("/");
+		await waitForAppLoaded(page);
 
-		// Wait for app to fully load (Rows panel indicates success)
-		const rowsPanel = page.getByText("Rows", { exact: true });
-		await expect(rowsPanel).toBeVisible();
-
-		// Logo should be visible after successful load
 		const logo = page.locator('img[alt="EVY"]');
 		await expect(logo).toBeVisible();
 	});
@@ -142,12 +130,8 @@ test.describe("Web E2E Integration Tests", () => {
 		});
 
 		await page.goto("/");
+		await waitForAppLoaded(page);
 
-		// Wait for app to fully load
-		const rowsPanel = page.getByText("Rows", { exact: true });
-		await expect(rowsPanel).toBeVisible();
-
-		// If app loaded, WebSocket must have connected
 		expect(wsConnected).toBe(true);
 	});
 
@@ -169,33 +153,33 @@ test.describe("Web E2E Integration Tests", () => {
 		const loadingMessage = page.getByText("Loading flows...", {
 			exact: true,
 		});
-		const rowsPanel = page.getByText("Rows", { exact: true });
+		const flowSelector = page.locator("#flow-select");
 		const errorMessage = page.getByText("Failed to load flows", {
 			exact: true,
 		});
 
-		await expect(loadingMessage.or(rowsPanel).or(errorMessage)).toBeVisible();
+		await expect(
+			loadingMessage.or(flowSelector).or(errorMessage),
+		).toBeVisible();
 
 		if (await loadingMessage.isVisible()) {
 			await expect(loadingMessage).not.toBeVisible();
 		}
 
-		// If app loaded successfully, we should have received messages
-		if (await rowsPanel.isVisible()) {
+		if (await flowSelector.isVisible()) {
 			expect(wsMessages.length).toBeGreaterThan(0);
 		}
 	});
 
 	test("should display footer row when page has one", async ({ page }) => {
 		await page.goto("/");
+		await waitForAppLoaded(page);
 
-		const rowsPanel = page.getByText("Rows", { exact: true });
-		await expect(rowsPanel).toBeVisible();
-
-		const flowSelector = page.locator("#flow-select");
-		await expect(flowSelector).toBeVisible();
 		await selectFlowByLabel(page, "View Item");
-		await expect(flowSelector).not.toHaveAttribute("data-value", "");
+		await expect(page.locator("#flow-select")).not.toHaveAttribute(
+			"data-value",
+			"",
+		);
 
 		const footerButton = page
 			.locator('div[class*="evy-bg-phone"]')
@@ -210,22 +194,23 @@ test.describe("Web E2E Integration Tests", () => {
 	}) => {
 		await page.goto("/");
 
-		const rowsPanel = page.getByText("Rows", { exact: true });
+		const flowSelector = page.locator("#flow-select");
 		const errorMessage = page.getByText("Failed to load flows", {
 			exact: true,
 		});
 
-		await expect(rowsPanel.or(errorMessage)).toBeVisible();
+		await expect(flowSelector.or(errorMessage)).toBeVisible();
 
-		// Only check for panels if app loaded successfully
-		if (await rowsPanel.isVisible()) {
+		if (await flowSelector.isVisible()) {
+			await expandSidePanels(page);
+
+			const rowsPanel = page.getByText("Rows", { exact: true });
+			await expect(rowsPanel).toBeVisible();
+
 			const configPanel = page.getByText("Configuration", {
 				exact: true,
 			});
 			await expect(configPanel).toBeVisible();
-
-			const flowSelector = page.locator("#flow-select");
-			await expect(flowSelector).toBeVisible();
 		}
 	});
 });
