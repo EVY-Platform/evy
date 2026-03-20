@@ -31,12 +31,12 @@ export function RowsPanel() {
 				element: pageInnerRef.current,
 				getData: () => ({ pageId: "rows" }),
 				canDrop: () => true,
-				onDragStart: () =>
-					dispatchDragging({ type: "START_DRAGGING", source: "rows" }),
-				onDrop: () => dispatchDragging({ type: "STOP_DRAGGING" }),
+				// Drag source is set only in App.tsx (monitorForElements) from
+				// initial drop targets, so page-row drags are not reclassified as "rows"
+				// when the pointer moves over this panel.
 			}),
 		);
-	}, [dispatchDragging]);
+	}, []);
 
 	return (
 		<div className="evy-flex evy-flex-col evy-relative evy-w-full evy-h-full">

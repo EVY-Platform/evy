@@ -109,38 +109,39 @@ export function ConfigurationPanel() {
 			return entries.map(([key, value]) => {
 				const uniqueId = `${configRow.id}-${key}`;
 
-				if (key === "children") {
-					if (!isRowArray(value)) return null;
-					const children = value;
+				if (key === "child" || key === "children") {
+					const items =
+						key === "child"
+							? isRow(value)
+								? [value]
+								: []
+							: isRowArray(value)
+								? value
+								: [];
+					if (items.length === 0) return null;
+					const label = key === "child" ? "Child" : "Children";
 					return (
 						<div key={uniqueId}>
 							<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
-								Children
+								{label}
 							</div>
-							<div className="evy-flex evy-flex-col evy-gap-4">
-								{children.map((child) => (
+							<div
+								className={
+									items.length > 1
+										? "evy-flex evy-flex-col evy-gap-4"
+										: undefined
+								}
+							>
+								{items.map((childRow) => (
 									<ChildRowButton
-										key={child.id}
-										child={child}
-										onClick={() => openChildConfiguration(child.id, configRow)}
+										key={childRow.id}
+										child={childRow}
+										onClick={() =>
+											openChildConfiguration(childRow.id, configRow)
+										}
 									/>
 								))}
 							</div>
-						</div>
-					);
-				}
-				if (key === "child") {
-					if (!isRow(value)) return null;
-					const child = value;
-					return (
-						<div key={uniqueId}>
-							<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
-								Child
-							</div>
-							<ChildRowButton
-								child={child}
-								onClick={() => openChildConfiguration(child.id, configRow)}
-							/>
 						</div>
 					);
 				}

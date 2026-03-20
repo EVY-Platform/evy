@@ -1,23 +1,20 @@
 import { expect, test } from "@playwright/test";
 import {
 	SELECTORS,
+	expectDraggableSubrowOrder,
 	getFirstPage,
 	getPageContent,
 	getPageRow,
 	getRowsPanel,
 	getSidebarRow,
-	initTestFlows,
+	setupTwoEmptyTestPages,
 } from "./utils";
 
 test.describe("Drag & Drop UX", () => {
 	test("should drag a row from the left sidebar onto a page", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 
 		const sidebarRow = await getSidebarRow(page, "Info row title");
 		const firstPage = getFirstPage(page);
@@ -40,11 +37,7 @@ test.describe("Drag & Drop UX", () => {
 	});
 
 	test("should drag a row from one page to another page", async ({ page }) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 
 		const sidebarRow = await getSidebarRow(page, "Text row title");
 		const firstPage = getFirstPage(page);
@@ -81,11 +74,7 @@ test.describe("Drag & Drop UX", () => {
 	test("should remove a row from a page by dragging it to the left sidebar", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 
 		const rowsPanel = await getRowsPanel(page);
 		const sidebarRow = await getSidebarRow(page, "Button row text");
@@ -115,11 +104,7 @@ test.describe("Drag & Drop UX", () => {
 	});
 
 	test("should drag a row from position 1 to 2 on a page", async ({ page }) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -171,31 +156,15 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
 
-		const allRows = await pageContent.locator(SELECTORS.draggableRow).all();
-		let textRowPosition = -1;
-		let infoRowPosition = -1;
-
-		for (let i = 0; i < allRows.length; i++) {
-			const rowText = await allRows[i].textContent().catch(() => "");
-			if (rowText?.includes("Text row title") && textRowPosition === -1) {
-				textRowPosition = i;
-			}
-			if (rowText?.includes("Info row title") && infoRowPosition === -1) {
-				infoRowPosition = i;
-			}
-		}
-
-		expect(textRowPosition).not.toBe(-1);
-		expect(infoRowPosition).not.toBe(-1);
-		expect(infoRowPosition).toBeGreaterThan(textRowPosition);
+		await expectDraggableSubrowOrder(
+			pageContent,
+			"Text row title",
+			"Info row title",
+		);
 	});
 
 	test("should drag a row from position 2 to 1 on a page", async ({ page }) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 		await page.waitForLoadState("networkidle");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -244,33 +213,17 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
 
-		const allRows = await pageContent.locator(SELECTORS.draggableRow).all();
-		let textRowPosition = -1;
-		let infoRowPosition = -1;
-
-		for (let i = 0; i < allRows.length; i++) {
-			const rowText = await allRows[i].textContent().catch(() => "");
-			if (rowText?.includes("Text row title") && textRowPosition === -1) {
-				textRowPosition = i;
-			}
-			if (rowText?.includes("Info row title") && infoRowPosition === -1) {
-				infoRowPosition = i;
-			}
-		}
-
-		expect(textRowPosition).not.toBe(-1);
-		expect(infoRowPosition).not.toBe(-1);
-		expect(infoRowPosition).toBeGreaterThan(textRowPosition);
+		await expectDraggableSubrowOrder(
+			pageContent,
+			"Text row title",
+			"Info row title",
+		);
 	});
 
 	test("should drag from the left sidebar onto a container on a page", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -298,11 +251,7 @@ test.describe("Drag & Drop UX", () => {
 	test("should remove a row from a container on a page by dragging it to the left sidebar", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 
 		const rowsPanel = await getRowsPanel(page);
 		const firstPage = getFirstPage(page);
@@ -342,11 +291,7 @@ test.describe("Drag & Drop UX", () => {
 	test("should show delete overlay on rows panel when dragging a page row", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 
 		const sidebarRow = await getSidebarRow(page, "Info row title");
 		const firstPage = getFirstPage(page);
@@ -381,11 +326,7 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag and drop every single row type into a page", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
-			{ id: "step_1", title: "Page 1", rows: [] },
-			{ id: "step_2", title: "Page 2", rows: [] },
-		]);
-		await page.goto("/");
+		await setupTwoEmptyTestPages(page);
 
 		const rowsPanel = await getRowsPanel(page);
 		const firstPage = getFirstPage(page);

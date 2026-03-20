@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { getFirstPage, initTestFlows } from "./utils";
+import {
+	enterCanvasFocusModeByPageTitle,
+	getFirstPage,
+	getSecondarySheetPage,
+	initTestFlows,
+	openSecondarySheetChildFromConfigPanel,
+} from "./utils";
 
 test.describe("Secondary Sheet Page", () => {
 	const sheetContainerPage = [
@@ -53,43 +59,18 @@ test.describe("Secondary Sheet Page", () => {
 		},
 	];
 
-	async function enterFocusMode(page: import("@playwright/test").Page) {
-		const firstPage = getFirstPage(page);
-		await firstPage.click();
-		const pageBreadcrumb = page.getByRole("button", {
-			name: "Select page Page 1",
-		});
-		await pageBreadcrumb.click();
-	}
-
-	async function openSecondaryViaConfigPanel(
-		page: import("@playwright/test").Page,
-	) {
-		await page.getByText("My Sheet", { exact: true }).click();
-
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
-
-		const childButton = configPanel
-			.getByRole("button", { name: "Text" })
-			.first();
-		await expect(childButton).toBeVisible();
-		await childButton.click();
-	}
-
 	test("should open secondary page when clicking children in config panel in focus mode", async ({
 		page,
 	}) => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		await enterFocusMode(page);
+		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
-		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
+		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "0");
 
-		await openSecondaryViaConfigPanel(page);
+		await openSecondarySheetChildFromConfigPanel(page);
 
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 	});
@@ -100,11 +81,11 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		await enterFocusMode(page);
+		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
-		await openSecondaryViaConfigPanel(page);
+		await openSecondarySheetChildFromConfigPanel(page);
 
-		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
+		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 
 		await expect(secondaryPage.getByText("Sheet Child 1")).toBeVisible();
@@ -115,11 +96,11 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		await enterFocusMode(page);
+		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
-		await openSecondaryViaConfigPanel(page);
+		await openSecondarySheetChildFromConfigPanel(page);
 
-		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
+		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 		await expect(secondaryPage.getByText("My Sheet")).toBeVisible();
 	});
@@ -130,11 +111,11 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		await enterFocusMode(page);
+		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
-		await openSecondaryViaConfigPanel(page);
+		await openSecondarySheetChildFromConfigPanel(page);
 
-		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
+		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 
 		await page.getByRole("button", { name: "Configure row: My Sheet" }).click();
@@ -148,11 +129,11 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		await enterFocusMode(page);
+		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
-		await openSecondaryViaConfigPanel(page);
+		await openSecondarySheetChildFromConfigPanel(page);
 
-		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
+		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 
 		// Click canvas background away from side panels (they overlay the viewport edges).
@@ -176,25 +157,14 @@ test.describe("Secondary Sheet Page", () => {
 		await initTestFlows(page, sheetContainerPage);
 		await page.goto("/");
 
-		const firstPage = getFirstPage(page);
-		await firstPage.click();
-
-		await page.getByText("My Sheet", { exact: true }).click();
-
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
-		const childButton = configPanel
-			.getByRole("button", { name: "Text" })
-			.first();
-		await expect(childButton).toBeVisible();
-		await childButton.click();
+		await getFirstPage(page).click();
+		await openSecondarySheetChildFromConfigPanel(page);
 
 		const pageBreadcrumb = page.getByRole("button", {
 			name: "Select page Page 1",
 		});
 		await expect(pageBreadcrumb).toHaveAttribute("aria-current", "page");
-		const secondaryPage = page.locator('[data-testid="secondary-sheet-page"]');
+		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 	});
 });

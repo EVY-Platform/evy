@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 import {
+	getConfigPanel,
 	getFirstPage,
 	getPageContent,
-	initTestFlows,
 	getSidebarRow,
+	initTestFlows,
 } from "./utils";
 
 test.describe("Row Selection", () => {
@@ -35,10 +36,7 @@ test.describe("Row Selection", () => {
 		await expect(firstInfoRow).toBeVisible();
 		await firstInfoRow.click();
 
-		// The configuration panel should show the row's configuration
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		// Verify configuration inputs are visible for the selected row
 		await expect(
@@ -82,9 +80,7 @@ test.describe("Row Selection", () => {
 		]);
 		await page.goto("/");
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		// Click on first Info row
 		const firstInfoRow = page
@@ -140,9 +136,7 @@ test.describe("Row Selection", () => {
 		]);
 		await page.goto("/");
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		// Click on first Info row
 		const firstInfoRow = page
@@ -184,9 +178,7 @@ test.describe("Row Selection", () => {
 		await inputRow.click();
 
 		// Configuration panel should show input row configuration
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
 		).toBeVisible();
@@ -222,9 +214,7 @@ test.describe("Row Selection", () => {
 		await firstInfoRow.click();
 
 		// Update the title in the configuration panel
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		const titleInput = configPanel.getByLabel("title", { exact: true });
 
 		await titleInput.clear();
@@ -262,9 +252,7 @@ test.describe("Row Selection", () => {
 		]);
 		await page.goto("/");
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		// Click on first Info row
 		const firstInfoRow = page
@@ -325,9 +313,7 @@ test.describe("Row Selection with Containers", () => {
 			.first();
 		await containerRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveValue("Container Row");
@@ -370,9 +356,7 @@ test.describe("Row Selection with Containers", () => {
 		const childRow = page.getByText("Child Info Row", { exact: true }).first();
 		await childRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		await configPanel.getByRole("button", { name: /^Info$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
@@ -413,9 +397,7 @@ test.describe("Row Selection with Containers", () => {
 		]);
 		await page.goto("/");
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 
 		// Select child first
 		const childRow = page.getByText("Child Info Row", { exact: true }).first();

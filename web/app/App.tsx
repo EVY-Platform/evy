@@ -5,6 +5,7 @@ import {
 	useMemo,
 	useRef,
 	useState,
+	type CSSProperties,
 	type ReactNode,
 } from "react";
 
@@ -32,6 +33,7 @@ import {
 	collapsedPanelBarStyle,
 	pageWrapperHiddenStyle,
 	pageWrapperStyle,
+	panelContentFadeTransitionStyle,
 	panelShadowStyle,
 	rightPanelStyle,
 	secondaryPageWrapperHiddenStyle,
@@ -77,8 +79,32 @@ function CollapsibleSidePanel({
 	children: ReactNode;
 }) {
 	const outerRef = useRef<HTMLDivElement>(null);
+	const isExpandedRef = useRef(isExpanded);
+	const [contentVisible, setContentVisible] = useState(isExpanded);
 
-	const outerStyle = useMemo(() => {
+	isExpandedRef.current = isExpanded;
+
+	useEffect(() => {
+		if (!isExpanded) {
+			setContentVisible(false);
+		}
+	}, [isExpanded]);
+
+	useEffect(() => {
+		const node = outerRef.current;
+		if (!node) return;
+
+		const onTransitionEnd = (event: TransitionEvent) => {
+			if (event.propertyName !== "width") return;
+			if (!isExpandedRef.current) return;
+			setContentVisible(true);
+		};
+
+		node.addEventListener("transitionend", onTransitionEnd);
+		return () => node.removeEventListener("transitionend", onTransitionEnd);
+	}, []);
+
+	const outerStyle = useMemo<CSSProperties>(() => {
 		return {
 			...sidePanelWidthTransitionStyle,
 			position: "absolute",
@@ -119,10 +145,21 @@ function CollapsibleSidePanel({
 			? "evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-hidden"
 			: "evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-y-auto";
 
+	const innerContentStyle = useMemo(
+		() => ({
+			...panelContentFadeTransitionStyle,
+			opacity: contentVisible ? 1 : 0,
+			pointerEvents: contentVisible ? ("auto" as const) : ("none" as const),
+		}),
+		[contentVisible],
+	);
+
 	return (
 		<div ref={outerRef} className={outerClassName} style={outerStyle}>
 			{isExpanded ? (
-				<div className={innerClassName}>{children}</div>
+				<div className={innerClassName} style={innerContentStyle}>
+					{children}
+				</div>
 			) : (
 				<button
 					type="button"
@@ -147,15 +184,31 @@ function AppContent() {
 		flows,
 		activeFlowId,
 	} = useFlowsContext();
-	const { dispatchDragging } = useDragContext();
+	const { dragging, dispatchDragging } = useDragContext();
 
 	const rowsHover = useHoverToggle();
 	const configurationHover = useHoverToggle();
 
 	const pinSidePanelsOpenByPage = Boolean(activePageId);
-	const isRowsPanelExpanded = pinSidePanelsOpenByPage || rowsHover.hovered;
+	const expandSidePanelsForPageDrag = dragging === "page";
+	const isRowsPanelExpanded =
+		pinSidePanelsOpenByPage || expandSidePanelsForPageDrag || rowsHover.hovered;
 	const isConfigurationPanelExpanded =
-		pinSidePanelsOpenByPage || configurationHover.hovered;
+		pinSidePanelsOpenByPage ||
+		expandSidePanelsForPageDrag ||
+		configurationHover.hovered;
+
+	useEffect(() => {
+		if (!pinSidePanelsOpenByPage && !expandSidePanelsForPageDrag) {
+			rowsHover.close();
+			configurationHover.close();
+		}
+	}, [
+		pinSidePanelsOpenByPage,
+		expandSidePanelsForPageDrag,
+		rowsHover.close,
+		configurationHover.close,
+	]);
 
 	const pages = useMemo(
 		() => findFlowById(flows, activeFlowId)?.pages ?? [],
@@ -187,10 +240,10 @@ function AppContent() {
 	const clearSelectionOnBackground = useCallback(() => {
 		if (secondarySheetRowId) {
 			dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
-		} else if (!focusMode) {
-			dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
+			return;
 		}
-	}, [dispatchRow, secondarySheetRowId, focusMode]);
+		dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
+	}, [dispatchRow, secondarySheetRowId]);
 
 	return (
 		<div className="evy-relative evy-flex-1 evy-min-h-0 evy-min-w-0 evy-overflow-hidden">

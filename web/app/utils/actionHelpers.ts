@@ -2,6 +2,7 @@ import type { SDUI_Flow } from "../types/flow";
 import type { Row } from "../types/row";
 import { displayLabel } from "./labelFormatting";
 import { findFlowById } from "./flowHelpers";
+import { getRowsRecursive } from "./rowTree";
 
 export const COMPARISON_OPERATORS = ["==", "!=", ">", "<", ">=", "<="] as const;
 export type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
@@ -48,26 +49,28 @@ export function toVariableOptions(
 }
 
 function collectDestinations(row: Row, result: Set<string>): void {
-	const destination = row.config.destination;
-	if (destination) {
-		const variableName = extractVariableFromDestination(destination);
-		if (variableName) result.add(variableName);
-	}
-	const content = row.config.view.content;
-	if (content.children) {
-		for (const child of content.children) {
-			collectDestinations(child, result);
+	for (const subRow of getRowsRecursive(row)) {
+		const destination = subRow.config.destination;
+		if (destination) {
+			const variableName = extractVariableFromDestination(destination);
+			if (variableName) result.add(variableName);
 		}
 	}
-	if (content.child) {
-		collectDestinations(content.child, result);
+}
+
+/** If wrapped in `{...}`, returns inner trimmed text; otherwise returns trimmed `s`. */
+function unwrapOptionalBraces(s: string): string {
+	const t = s.trim();
+	if (t.startsWith("{") && t.endsWith("}")) {
+		return t.slice(1, -1).trim();
 	}
+	return t;
 }
 
 function extractVariableFromDestination(destination: string): string | null {
 	const trimmed = destination.trim();
 	if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null;
-	const inner = trimmed.slice(1, -1).trim();
+	const inner = unwrapOptionalBraces(trimmed);
 
 	const parenIndex = inner.indexOf("(");
 	if (parenIndex !== -1) {
@@ -102,10 +105,7 @@ export function parseCondition(conditionString: string): ConditionPart[] {
 	const trimmed = conditionString.trim();
 	if (!trimmed) return [];
 
-	const inner =
-		trimmed.startsWith("{") && trimmed.endsWith("}")
-			? trimmed.slice(1, -1).trim()
-			: trimmed;
+	const inner = unwrapOptionalBraces(trimmed);
 	if (!inner) return [];
 
 	const parts = inner.split("||").map((s) => s.trim());
@@ -148,7 +148,7 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 	}
 
 	if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-		const inner = trimmed.slice(1, -1).trim();
+		const inner = unwrapOptionalBraces(trimmed);
 
 		if (inner === "close") {
 			return { functionName: "close", args: [] };

@@ -13,21 +13,56 @@ import type { SDUI_Page } from "../types/flow";
 import type { ContainerType } from "../types/row";
 import type { RowAction } from "../types/actions";
 import { containerDropindicatorId } from "../rows/EVYRow";
-import { findContainerById, findContainerOfRow } from "../utils/rowTree";
+import {
+	findContainerById,
+	findContainerOfRow,
+	resolveDestinationPageFromRawPageId,
+	resolveSourcePageIdFromRaw,
+} from "../utils/rowTree";
 
-const SECONDARY_PREFIX = "secondary:";
+type DropDispatchOptions = {
+	destinationPageId: string;
+	destinationIndex: number;
+	destinationContainer?: {
+		rowId: string;
+		type: ContainerType;
+	};
+};
 
-function parseSecondarySheetRowId(pageId: string): string | undefined {
-	return pageId.startsWith(SECONDARY_PREFIX)
-		? pageId.slice(SECONDARY_PREFIX.length)
-		: undefined;
+function getDefaultAppendIndexForPageDrop(
+	destinationPage: SDUI_Page,
+	secondarySheetRowId: string | undefined,
+): number {
+	if (secondarySheetRowId) {
+		return (
+			destinationPage.rows.find((r) => r.id === secondarySheetRowId)?.config
+				.view.content.children?.length ?? 0
+		);
+	}
+	return destinationPage.rows.length;
 }
 
-function findPageContainingRow(
-	pages: SDUI_Page[],
-	rowId: string,
-): SDUI_Page | undefined {
-	return pages.find((page) => page.rows.some((r) => r.id === rowId));
+function buildInitialDropDispatchOptions(
+	destinationPage: SDUI_Page,
+	resolvedPageId: string,
+	secondarySheetRowId: string | undefined,
+): DropDispatchOptions {
+	const dispatchOptions: DropDispatchOptions = {
+		destinationIndex: getDefaultAppendIndexForPageDrop(
+			destinationPage,
+			secondarySheetRowId,
+		),
+		destinationPageId: resolvedPageId,
+	};
+
+	if (secondarySheetRowId) {
+		dispatchOptions.destinationContainer = {
+			rowId: secondarySheetRowId,
+			type: "children",
+		};
+	}
+
+	return dispatchOptions;
 }
 
 export function handleDrop(
@@ -49,14 +84,7 @@ export function handleDrop(
 		"handleDrop: sourcePageId is not a string",
 	);
 
-	let sourcePageId = rawSourcePageId;
-	const sourceSheetRowId = parseSecondarySheetRowId(rawSourcePageId);
-	if (sourceSheetRowId) {
-		const sourcePage = findPageContainingRow(pages, sourceSheetRowId);
-		if (sourcePage) {
-			sourcePageId = sourcePage.id;
-		}
-	}
+	const sourcePageId = resolveSourcePageIdFromRaw(rawSourcePageId, pages);
 
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]
@@ -74,8 +102,6 @@ export function handleDrop(
 		"handleDrop: destination pageId is not a string",
 	);
 
-	const secondarySheetRowId = parseSecondarySheetRowId(rawDestinationPageId);
-	const isSecondarySheet = secondarySheetRowId !== undefined;
 	const destinationPageId = rawDestinationPageId;
 	if (
 		sourcePageId === "rows" &&
@@ -93,40 +119,17 @@ export function handleDrop(
 		return;
 	}
 
-	let destinationPage: SDUI_Page | undefined;
-	let resolvedPageId = destinationPageId;
-	if (secondarySheetRowId) {
-		destinationPage = findPageContainingRow(pages, secondarySheetRowId);
-		if (destinationPage) {
-			resolvedPageId = destinationPage.id;
-		}
-	} else {
-		destinationPage = pages.find((page) => page.id === destinationPageId);
-	}
-	invariant(destinationPage, "handleDrop: destinationPage is not defined");
+	const {
+		page: destinationPage,
+		resolvedPageId,
+		secondarySheetRowId: resolvedSecondarySheetRowId,
+	} = resolveDestinationPageFromRawPageId(rawDestinationPageId, pages);
 
-	const dispatchOptions: {
-		destinationPageId: string;
-		destinationIndex: number;
-		destinationContainer?: {
-			rowId: string;
-			type: ContainerType;
-		};
-	} = {
-		destinationIndex: isSecondarySheet
-			? (destinationPage.rows.find((r) => r.id === secondarySheetRowId)?.config
-					.view.content.children?.length ?? 0)
-			: destinationPage.rows.length,
-		destinationPageId: resolvedPageId,
-	};
-
-	// For secondary sheet drops with no specific row target, set the container
-	if (isSecondarySheet && secondarySheetRowId) {
-		dispatchOptions.destinationContainer = {
-			rowId: secondarySheetRowId,
-			type: "children",
-		};
-	}
+	const dispatchOptions = buildInitialDropDispatchOptions(
+		destinationPage,
+		resolvedPageId,
+		resolvedSecondarySheetRowId,
+	);
 
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]

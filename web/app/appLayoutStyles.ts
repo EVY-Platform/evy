@@ -59,11 +59,18 @@ export const rightPanelStyle: CSSProperties = {
 	borderLeftStyle: "solid",
 };
 
-const PANEL_WIDTH_MS = 200;
+export const PANEL_WIDTH_MS = 200;
 
 export const sidePanelWidthTransitionStyle: CSSProperties = {
 	transition: `width ${PANEL_WIDTH_MS}ms ${EASE}`,
 	flexShrink: 0,
+};
+
+/** Opacity fade for panel inner content after width expansion completes. */
+export const PANEL_CONTENT_FADE_MS = 150;
+
+export const panelContentFadeTransitionStyle: CSSProperties = {
+	transition: `opacity ${PANEL_CONTENT_FADE_MS}ms ${EASE}`,
 };
 
 export const collapsedPanelBarStyle: CSSProperties = {

@@ -1,32 +1,21 @@
 import { test, expect } from "@playwright/test";
-import type { Page } from "@playwright/test";
+
+import {
+	ensureSidePanelsExpanded,
+	getConfigPanel,
+	getErrorState,
+	getFirstPage,
+	getLoadingState,
+	selectFlowByLabel,
+	SELECTORS,
+	waitForAppLoaded,
+} from "../tests/utils";
 
 /**
  * E2E Integration tests that run against real API services.
  * These tests do NOT inject mock data - they test the full stack.
  * Note: Tests should be resilient to empty database state.
  */
-
-async function selectFlowByLabel(page: Page, label: string) {
-	await page.locator("#flow-select").click();
-	await page
-		.getByRole("listbox", { name: "Active flow" })
-		.getByRole("option", { name: label, exact: true })
-		.click();
-}
-
-async function waitForAppLoaded(page: Page) {
-	const flowSelector = page.locator("#flow-select");
-	await expect(flowSelector).toBeVisible();
-}
-
-async function expandSidePanels(page: Page) {
-	const rowsLabel = page.getByText("Rows", { exact: true }).first();
-	if (await rowsLabel.isVisible()) return;
-	const firstPage = page.locator('div[class*="evy-bg-phone"]').first();
-	await firstPage.getByRole("button").first().click();
-	await expect(rowsLabel).toBeVisible();
-}
 
 test.describe.configure({ mode: "serial" });
 
@@ -44,9 +33,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await textRow.click();
 
-		const configPanel = page
-			.getByText("Configuration", { exact: true })
-			.locator("..");
+		const configPanel = getConfigPanel(page);
 		const titleInput = configPanel.getByLabel("title", { exact: true });
 		await expect(titleInput).toBeVisible();
 
@@ -70,13 +57,9 @@ test.describe("Web E2E Integration Tests", () => {
 	test("should load the app and connect to real API", async ({ page }) => {
 		await page.goto("/");
 
-		const loadingMessage = page.getByText("Loading flows...", {
-			exact: true,
-		});
-		const errorMessage = page.getByText("Failed to load flows", {
-			exact: true,
-		});
-		const flowSelector = page.locator("#flow-select");
+		const loadingMessage = getLoadingState(page);
+		const errorMessage = getErrorState(page);
+		const flowSelector = page.locator(SELECTORS.flowSelector);
 
 		await expect(
 			loadingMessage.or(errorMessage).or(flowSelector),
@@ -86,13 +69,9 @@ test.describe("Web E2E Integration Tests", () => {
 	test("should display app structure when connected", async ({ page }) => {
 		await page.goto("/");
 
-		const loadingMessage = page.getByText("Loading flows...", {
-			exact: true,
-		});
-		const errorMessage = page.getByText("Failed to load flows", {
-			exact: true,
-		});
-		const flowSelector = page.locator("#flow-select");
+		const loadingMessage = getLoadingState(page);
+		const errorMessage = getErrorState(page);
+		const flowSelector = page.locator(SELECTORS.flowSelector);
 
 		await expect(
 			loadingMessage.or(errorMessage).or(flowSelector),
@@ -150,13 +129,9 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await page.goto("/");
 
-		const loadingMessage = page.getByText("Loading flows...", {
-			exact: true,
-		});
-		const flowSelector = page.locator("#flow-select");
-		const errorMessage = page.getByText("Failed to load flows", {
-			exact: true,
-		});
+		const loadingMessage = getLoadingState(page);
+		const flowSelector = page.locator(SELECTORS.flowSelector);
+		const errorMessage = getErrorState(page);
 
 		await expect(
 			loadingMessage.or(flowSelector).or(errorMessage),
@@ -176,14 +151,12 @@ test.describe("Web E2E Integration Tests", () => {
 		await waitForAppLoaded(page);
 
 		await selectFlowByLabel(page, "View Item");
-		await expect(page.locator("#flow-select")).not.toHaveAttribute(
+		await expect(page.locator(SELECTORS.flowSelector)).not.toHaveAttribute(
 			"data-value",
 			"",
 		);
 
-		const footerButton = page
-			.locator('div[class*="evy-bg-phone"]')
-			.first()
+		const footerButton = getFirstPage(page)
 			.getByRole("button", { name: "Go home" })
 			.first();
 		await expect(footerButton).toBeVisible();
@@ -194,23 +167,18 @@ test.describe("Web E2E Integration Tests", () => {
 	}) => {
 		await page.goto("/");
 
-		const flowSelector = page.locator("#flow-select");
-		const errorMessage = page.getByText("Failed to load flows", {
-			exact: true,
-		});
+		const flowSelector = page.locator(SELECTORS.flowSelector);
+		const errorMessage = getErrorState(page);
 
 		await expect(flowSelector.or(errorMessage)).toBeVisible();
 
 		if (await flowSelector.isVisible()) {
-			await expandSidePanels(page);
+			await ensureSidePanelsExpanded(page);
 
 			const rowsPanel = page.getByText("Rows", { exact: true });
 			await expect(rowsPanel).toBeVisible();
 
-			const configPanel = page.getByText("Configuration", {
-				exact: true,
-			});
-			await expect(configPanel).toBeVisible();
+			await expect(getConfigPanel(page)).toBeVisible();
 		}
 	});
 });
