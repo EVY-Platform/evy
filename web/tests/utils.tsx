@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import type {
 	SDUI_Flow as ServerFlow,
 	SDUI_RowAction as RowAction,
@@ -53,12 +53,27 @@ export const SELECTORS = {
 	errorMessage: 'div:text-is("Failed to load flows")',
 };
 
-export function getRowsPanel(page: Page): Locator {
+/** Selects the first canvas page so side panels stay open (they auto-collapse when no page is selected). */
+export async function ensureSidePanelsExpanded(page: Page): Promise<void> {
+	const rowsLabel = page.getByText("Rows", { exact: true }).first();
+	if (await rowsLabel.isVisible()) {
+		return;
+	}
+	await getFirstPage(page).getByRole("button").first().click();
+	await expect(rowsLabel).toBeVisible();
+}
+
+export async function getRowsPanel(page: Page): Promise<Locator> {
+	await ensureSidePanelsExpanded(page);
 	return page.getByText("Rows", { exact: true }).first().locator("..");
 }
 
-export function getSidebarRow(page: Page, text: string): Locator {
-	return getRowsPanel(page).getByText(text, { exact: true }).locator("..");
+export async function getSidebarRow(
+	page: Page,
+	text: string,
+): Promise<Locator> {
+	const rowsPanel = await getRowsPanel(page);
+	return rowsPanel.getByText(text, { exact: true }).locator("..");
 }
 
 export function getFirstPage(page: Page): Locator {

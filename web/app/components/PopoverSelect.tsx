@@ -100,7 +100,7 @@ const popoverCss = `
 .evy-popover-trigger--breadcrumb {
 	width: auto;
 	max-width: 14rem;
-	min-height: var(--size-navbar-control);
+	min-height: var(--size-nav-control);
 	padding: 0 2px 0 var(--size-2);
 	font-weight: var(--font-semibold);
 	line-height: 1.5;

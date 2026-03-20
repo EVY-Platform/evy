@@ -58,3 +58,19 @@ export const rightPanelStyle: CSSProperties = {
 	borderLeftWidth: "1px",
 	borderLeftStyle: "solid",
 };
+
+const PANEL_WIDTH_MS = 200;
+
+export const sidePanelWidthTransitionStyle: CSSProperties = {
+	transition: `width ${PANEL_WIDTH_MS}ms ${EASE}`,
+	flexShrink: 0,
+};
+
+export const collapsedPanelBarStyle: CSSProperties = {
+	display: "flex",
+	alignItems: "center",
+	justifyContent: "center",
+	width: "100%",
+	minHeight: "100%",
+	flex: 1,
+};

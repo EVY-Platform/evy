@@ -24,7 +24,7 @@ test.describe("EVY Rows", () => {
 			},
 		]);
 		await page.goto("/");
-		const rowsPanel = getRowsPanel(page);
+		const rowsPanel = await getRowsPanel(page);
 
 		const expectedRowTitles = [
 			"Info row title",
@@ -56,7 +56,7 @@ test.describe("EVY Rows", () => {
 			},
 		]);
 		await page.goto("/");
-		const rowsPanel = getRowsPanel(page);
+		const rowsPanel = await getRowsPanel(page);
 		const searchInput = rowsPanel.getByPlaceholder("Button, Calendar, etc...");
 
 		await expect(searchInput).toBeVisible();

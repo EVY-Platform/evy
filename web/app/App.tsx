@@ -1,6 +1,15 @@
-import { Fragment, useCallback, useEffect, useMemo } from "react";
+import {
+	Fragment,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	type ReactNode,
+} from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { FileSliders, Rows3 } from "lucide-react";
 import type {
 	BaseEventPayload,
 	ElementDragType,
@@ -20,13 +29,114 @@ import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
 import {
 	canvasContentStyle,
+	collapsedPanelBarStyle,
 	pageWrapperHiddenStyle,
 	pageWrapperStyle,
 	panelShadowStyle,
 	rightPanelStyle,
 	secondaryPageWrapperHiddenStyle,
 	secondaryPageWrapperStyle,
+	sidePanelWidthTransitionStyle,
 } from "./appLayoutStyles";
+import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
+
+const PANEL_EXPANDED_WIDTH_PX = 300;
+
+const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
+
+function useHoverToggle() {
+	const [hovered, setHovered] = useState(false);
+	const open = useCallback(() => {
+		setHovered(true);
+	}, []);
+	const close = useCallback(() => {
+		setHovered(false);
+	}, []);
+	return { hovered, open, close };
+}
+
+type CollapsibleSidePanelSide = "left" | "right";
+
+function CollapsibleSidePanel({
+	side,
+	isExpanded,
+	pinOpenByPage,
+	onOpenInteraction,
+	onCloseInteraction,
+	collapsedLabel,
+	icon,
+	children,
+}: {
+	side: CollapsibleSidePanelSide;
+	isExpanded: boolean;
+	pinOpenByPage: boolean;
+	onOpenInteraction: () => void;
+	onCloseInteraction: () => void;
+	collapsedLabel: string;
+	icon: ReactNode;
+	children: ReactNode;
+}) {
+	const outerRef = useRef<HTMLDivElement>(null);
+
+	const outerStyle = useMemo(() => {
+		return {
+			...sidePanelWidthTransitionStyle,
+			position: "absolute",
+			top: 0,
+			bottom: 0,
+			zIndex: 20,
+			width: isExpanded ? PANEL_EXPANDED_WIDTH_PX : "var(--size-nav-bar)",
+			...(side === "left" ? { left: 0 } : { right: 0 }),
+			...(side === "left" ? panelShadowStyle : rightPanelStyle),
+		};
+	}, [isExpanded, side]);
+
+	useEffect(() => {
+		const node = outerRef.current;
+		if (!node) return;
+
+		const handleMouseLeave = () => {
+			if (!pinOpenByPage) {
+				onCloseInteraction();
+			}
+		};
+
+		node.addEventListener("mouseenter", onOpenInteraction);
+		node.addEventListener("mouseleave", handleMouseLeave);
+		return () => {
+			node.removeEventListener("mouseenter", onOpenInteraction);
+			node.removeEventListener("mouseleave", handleMouseLeave);
+		};
+	}, [onOpenInteraction, onCloseInteraction, pinOpenByPage]);
+
+	const outerClassName =
+		side === "left"
+			? "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-r evy-border-gray"
+			: "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-gray";
+
+	const innerClassName =
+		side === "left"
+			? "evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-hidden"
+			: "evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-y-auto";
+
+	return (
+		<div ref={outerRef} className={outerClassName} style={outerStyle}>
+			{isExpanded ? (
+				<div className={innerClassName}>{children}</div>
+			) : (
+				<button
+					type="button"
+					style={collapsedPanelBarStyle}
+					className="evy-cursor-pointer evy-border-none evy-focus-visible:outline-none"
+					onClick={onOpenInteraction}
+					aria-label={collapsedLabel}
+				>
+					{icon}
+				</button>
+			)}
+		</div>
+	);
+}
 
 function AppContent() {
 	const {
@@ -38,6 +148,14 @@ function AppContent() {
 		activeFlowId,
 	} = useFlowsContext();
 	const { dispatchDragging } = useDragContext();
+
+	const rowsHover = useHoverToggle();
+	const configurationHover = useHoverToggle();
+
+	const pinSidePanelsOpenByPage = Boolean(activePageId);
+	const isRowsPanelExpanded = pinSidePanelsOpenByPage || rowsHover.hovered;
+	const isConfigurationPanelExpanded =
+		pinSidePanelsOpenByPage || configurationHover.hovered;
 
 	const pages = useMemo(
 		() => findFlowById(flows, activeFlowId)?.pages ?? [],
@@ -75,14 +193,8 @@ function AppContent() {
 	}, [dispatchRow, secondarySheetRowId, focusMode]);
 
 	return (
-		<>
-			<div
-				className="evy-w-300 evy-flex-shrink-0 evy-border-r evy-border-gray evy-bg-white"
-				style={panelShadowStyle}
-			>
-				<RowsPanel />
-			</div>
-			<div className="evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-hidden">
+		<div className="evy-relative evy-flex-1 evy-min-h-0 evy-min-w-0 evy-overflow-hidden">
+			<div className="evy-absolute evy-inset-0 evy-flex evy-min-h-0 evy-flex-col">
 				<CanvasViewport
 					contentStyle={canvasContentStyle}
 					onBackgroundClick={clearSelectionOnBackground}
@@ -125,19 +237,49 @@ function AppContent() {
 					})}
 				</CanvasViewport>
 			</div>
-			<div
-				className="evy-w-300 evy-flex-shrink-0 evy-border-gray evy-overflow-y-auto evy-bg-white"
-				style={rightPanelStyle}
+			<CollapsibleSidePanel
+				side="left"
+				isExpanded={isRowsPanelExpanded}
+				pinOpenByPage={pinSidePanelsOpenByPage}
+				onOpenInteraction={rowsHover.open}
+				onCloseInteraction={rowsHover.close}
+				collapsedLabel="Expand rows panel"
+				icon={
+					<Rows3
+						size={20}
+						strokeWidth={LUCIDE_STROKE_WIDTH}
+						style={COLLAPSED_PANEL_ICON_STYLE}
+						aria-hidden
+					/>
+				}
+			>
+				<RowsPanel />
+			</CollapsibleSidePanel>
+			<CollapsibleSidePanel
+				side="right"
+				isExpanded={isConfigurationPanelExpanded}
+				pinOpenByPage={pinSidePanelsOpenByPage}
+				onOpenInteraction={configurationHover.open}
+				onCloseInteraction={configurationHover.close}
+				collapsedLabel="Expand configuration panel"
+				icon={
+					<FileSliders
+						size={20}
+						strokeWidth={LUCIDE_STROKE_WIDTH}
+						style={COLLAPSED_PANEL_ICON_STYLE}
+						aria-hidden
+					/>
+				}
 			>
 				<ConfigurationPanel />
-			</div>
-		</>
+			</CollapsibleSidePanel>
+		</div>
 	);
 }
 
 function NavBar() {
 	return (
-		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center evy-gap-2 evy-min-w-0">
+		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center evy-gap-2 evy-min-w-0 evy-min-h-nav-bar">
 			<a href="/" className="evy-shrink-0">
 				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 			</a>

@@ -30,7 +30,7 @@ const breadcrumbScrollCss = `
 	align-items: center;
 	gap: var(--size-2);
 	white-space: nowrap;
-	min-height: var(--size-navbar-control);
+	min-height: var(--size-nav-control);
 }
 .evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link {
 	font-size: var(--text-sm);
@@ -42,7 +42,7 @@ const breadcrumbScrollCss = `
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	padding: 0 var(--size-2);
-	min-height: var(--size-navbar-control);
+	min-height: var(--size-nav-control);
 	max-width: var(--size-48);
 	overflow: hidden;
 	text-overflow: ellipsis;

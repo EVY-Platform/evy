@@ -166,7 +166,7 @@ test.describe("Row Selection", () => {
 		await initTestFlows(page, [{ id: "step_1", title: "Test Page", rows: [] }]);
 		await page.goto("/");
 
-		const sidebarRow = getSidebarRow(page, "Input row title");
+		const sidebarRow = await getSidebarRow(page, "Input row title");
 		const pageContent = getPageContent(page);
 		const firstPage = getFirstPage(page);
 

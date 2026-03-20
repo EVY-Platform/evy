@@ -19,7 +19,10 @@
 	--size-30px: 30px;
 	--size-32: 8rem; /* 128px */
 	--size-48: 12rem; /* 192px */
-	--size-navbar-control: 34px;
+	/* Shared: top bar min-height and collapsed side rail width */
+	--size-nav-bar: 50px;
+	/* Breadcrumb / popover triggers align to this inner control height */
+	--size-nav-control: 34px;
 	--size-336: 336px;
 	--size-662: 662px;
 
@@ -200,6 +203,9 @@ body {
 }
 .evy-h-screen {
 	height: 100vh;
+}
+.evy-min-h-nav-bar {
+	min-height: var(--size-nav-bar);
 }
 .evy-min-h-full {
 	min-height: 100%;

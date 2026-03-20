@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { initTestFlows } from "./utils";
+import { ensureSidePanelsExpanded, initTestFlows } from "./utils";
 
 test.describe("WebSocket Connection States", () => {
 	test("should display loading or error state when no API is available", async ({
@@ -51,6 +51,7 @@ test.describe("WebSocket Connection States", () => {
 			},
 		]);
 		await page.goto("/");
+		await ensureSidePanelsExpanded(page);
 
 		// Should not show loading or error states
 		await expect(
@@ -92,6 +93,7 @@ test.describe("WebSocket Connection States", () => {
 			},
 		]);
 		await page.goto("/");
+		await ensureSidePanelsExpanded(page);
 
 		// Check the three main panels are present
 		// Left panel: Rows
