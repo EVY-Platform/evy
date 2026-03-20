@@ -29,7 +29,7 @@ jobs:
     e2e_tests:
         timeout-minutes: 5
         runs-on: ubuntu-latest
-        container: mcr.microsoft.com/playwright:v1.58.1-noble
+        container: mcr.microsoft.com/playwright:v1.58.2-noble
 
         services:
             postgres:
