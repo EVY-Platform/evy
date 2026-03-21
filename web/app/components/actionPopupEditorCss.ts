@@ -93,4 +93,11 @@ export const actionPopupEditorCss = `
 	padding-left: var(--size-3);
 	border-left: 2px solid var(--color-gray-border);
 }
+/* Match PopoverSelect trigger (2px 6px, --text-sm) — number inputs default taller without this */
+.evy-action-popup-number-input {
+	padding: 2px 6px;
+	font-size: var(--text-sm);
+	line-height: 1.25;
+	min-height: 0;
+}
 `;
