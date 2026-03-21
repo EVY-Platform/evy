@@ -41,3 +41,7 @@ export {
 	getFlowOptions,
 	getPageOptions,
 } from "./actionFlowOptions";
+export {
+	findPageReferences,
+	type PageReferenceEntry,
+} from "./pageReferences";

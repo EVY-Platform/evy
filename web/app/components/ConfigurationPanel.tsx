@@ -1,12 +1,17 @@
-import { useCallback, useMemo } from "react";
-import { ChevronRight } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { ChevronRight, Trash2 } from "lucide-react";
 
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
 import { useRowById } from "../hooks/useRowById";
 import { findFlowById } from "../utils/flowHelpers";
+import {
+	findPageReferences,
+	type PageReferenceEntry,
+} from "../utils/actionHelpers";
 import { ActionEditor } from "./ActionEditor";
+import { PageInUseDialog } from "./PageInUseDialog";
 
 function isRow(value: unknown): value is Row {
 	return value !== null && typeof value === "object" && "config" in value;
@@ -52,12 +57,39 @@ export function ConfigurationPanel() {
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
 	const currentConfigRow = useRowById(currentConfigRowId);
 
-	const activePage = useMemo(() => {
-		const flow = findFlowById(flows, activeFlowId);
-		return flow?.pages.find((p) => p.id === activePageId);
-	}, [flows, activeFlowId, activePageId]);
+	const activeFlow = useMemo(
+		() => findFlowById(flows, activeFlowId),
+		[flows, activeFlowId],
+	);
+
+	const activePage = useMemo(
+		() => activeFlow?.pages.find((p) => p.id === activePageId),
+		[activeFlow, activePageId],
+	);
 
 	const showPageTitleInPanel = Boolean(activePage) && configStack.length === 0;
+
+	const [pageInUseReferences, setPageInUseReferences] = useState<
+		PageReferenceEntry[]
+	>([]);
+
+	const canDeleteCurrentPage = Boolean(
+		activeFlow && activePage && activeFlow.pages.length > 1,
+	);
+
+	const handleDeletePageClick = useCallback(() => {
+		if (!activeFlow || !activePage || !canDeleteCurrentPage) return;
+		const references = findPageReferences(activeFlow, activePage.id);
+		if (references.length > 0) {
+			setPageInUseReferences(references);
+			return;
+		}
+		dispatchRow({ type: "REMOVE_PAGE", pageId: activePage.id });
+	}, [activeFlow, activePage, canDeleteCurrentPage, dispatchRow]);
+
+	const dismissPageInUseDialog = useCallback(() => {
+		setPageInUseReferences([]);
+	}, []);
 
 	const openChildConfiguration = useCallback(
 		(childRowId: string, parentRow: Row) => {
@@ -171,18 +203,42 @@ export function ConfigurationPanel() {
 
 	return (
 		<div className="evy-flex evy-flex-col evy-h-full">
+			<PageInUseDialog
+				references={pageInUseReferences}
+				onClose={dismissPageInUseDialog}
+			/>
 			<div className="evy-p-4 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
 				Configuration
 			</div>
 			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll">
 				{showPageTitleInPanel && activePage && (
 					<div className="evy-mb-2">
-						<label
-							htmlFor="config-panel-page-title"
-							className="evy-text-sm evy-font-medium evy-text-black"
-						>
-							Page title
-						</label>
+						<div className="evy-flex evy-items-center evy-justify-between evy-gap-2">
+							<label
+								htmlFor="config-panel-page-title"
+								className="evy-text-sm evy-font-medium evy-text-black"
+							>
+								Page title
+							</label>
+							<button
+								type="button"
+								className="evy-bin-button evy-bg-transparent evy-border-none evy-cursor-pointer evy-shrink-0"
+								onClick={handleDeletePageClick}
+								disabled={!canDeleteCurrentPage}
+								aria-label="Remove page from flow"
+								title={
+									canDeleteCurrentPage
+										? "Remove page from flow"
+										: "Cannot remove the only page in this flow"
+								}
+							>
+								<Trash2
+									className="evy-h-4 evy-w-4"
+									strokeWidth={LUCIDE_STROKE_WIDTH}
+									aria-hidden
+								/>
+							</button>
+						</div>
 						<input
 							id="config-panel-page-title"
 							type="text"
