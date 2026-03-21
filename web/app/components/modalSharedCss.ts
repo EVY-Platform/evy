@@ -43,7 +43,7 @@ export const modalSharedCss = `
 	gap: var(--size-3);
 }
 .evy-modal-footer {
-	padding: var(--size-3) var(--size-4);
+	padding: var(--size-4);
 	border-top: 1px solid var(--color-gray-border);
 	display: flex;
 	justify-content: flex-end;

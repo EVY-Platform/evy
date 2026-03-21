@@ -92,7 +92,7 @@ export function ActionPopup({
 					</div>
 
 					<div className="evy-popup-body">
-						<div className="evy-popup-section">
+						<div>
 							<span className="evy-popup-section-title">Conditions</span>
 							<ConditionEditor
 								conditions={conditions}
@@ -103,7 +103,7 @@ export function ActionPopup({
 						</div>
 
 						<div className="evy-popup-branches">
-							<div className="evy-popup-section">
+							<div>
 								<span className="evy-popup-section-title">If true</span>
 								<BranchEditor
 									branchId={`true-${actionIndex}`}
@@ -114,7 +114,7 @@ export function ActionPopup({
 								/>
 							</div>
 
-							<div className="evy-popup-section">
+							<div>
 								<span className="evy-popup-section-title">If false</span>
 								<BranchEditor
 									branchId={`false-${actionIndex}`}
@@ -339,7 +339,7 @@ function ConditionEditor({
 	const rows = [...conditions, draft];
 
 	return (
-		<div className="evy-flex evy-flex-col evy-gap-2">
+		<div className="evy-flex evy-flex-col">
 			{rows.map((row, rowIndex) => {
 				const isPlaceholder = rowIndex === conditions.length;
 				const conditionRowId = `condition-${actionIndex}-${rowIndex}`;

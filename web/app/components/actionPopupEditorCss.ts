@@ -4,22 +4,16 @@
  */
 export const actionPopupEditorCss = `
 .evy-popup-header {
-	padding: var(--size-4) var(--size-4);
+	padding: var(--size-4);
 	border-bottom: 1px solid var(--color-gray-border);
 }
 .evy-popup-body {
-	padding: var(--size-4);
+	padding: var(--size-8);
 	overflow-y: auto;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	gap: var(--size-3);
-}
-.evy-popup-section {
-	background: var(--color-evy-gray-light);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-md);
-	padding: var(--size-3);
 }
 .evy-popup-section-title {
 	font-size: var(--text-sm);
@@ -32,6 +26,7 @@ export const actionPopupEditorCss = `
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: var(--size-3);
+	margin-top: var(--size-2);
 }
 .evy-condition-row {
 	display: grid;
@@ -47,7 +42,7 @@ export const actionPopupEditorCss = `
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: var(--color-evy-gray);
-	padding: 2px 0;
+	padding: var(--size-1) 0;
 }
 .evy-condition-remove {
 	display: flex;
