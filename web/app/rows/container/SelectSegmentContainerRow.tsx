@@ -22,7 +22,7 @@ const lastSegmentStyle: CSSProperties = {
 };
 
 const segmentGroupStyle: CSSProperties = {
-	borderRadius: "999px",
+	borderRadius: "var(--radius-md)",
 };
 
 export default defineRow(typeName, {

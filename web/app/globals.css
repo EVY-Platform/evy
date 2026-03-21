@@ -31,6 +31,7 @@
 	--radius-2-4: 2.4rem; /* 38.4px */
 
 	/* Font sizes */
+	--text-xs: 0.5rem; /* 8px */
 	--text-sm: 0.75rem; /* 12px */
 	--text-md: 0.875rem; /* 14px */
 	--text-l: 0.9375rem; /* 15px */

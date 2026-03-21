@@ -7,7 +7,7 @@ import type { SDUI_Flow } from "../types/flow";
 import {
 	parseCondition,
 	parseBranch,
-	formatConditionDisplay,
+	formatExpressionSummary,
 	formatBranchDisplay,
 } from "../utils/actionHelpers";
 import { ActionPopup } from "./ActionPopup";
@@ -138,9 +138,13 @@ function ActionSummaryCard({
 	onEdit,
 	onRemove,
 }: ActionSummaryCardProps) {
-	const conditions = useMemo(
+	const conditionExpr = useMemo(
 		() => parseCondition(action.condition),
 		[action.condition],
+	);
+	const summaryLines = useMemo(
+		() => formatExpressionSummary(conditionExpr),
+		[conditionExpr],
 	);
 	const trueBranch = useMemo(() => parseBranch(action.true), [action.true]);
 	const falseBranch = useMemo(() => parseBranch(action.false), [action.false]);
@@ -174,18 +178,16 @@ function ActionSummaryCard({
 				onClick={onEdit}
 				aria-label={`Edit action ${index + 1}`}
 			>
-				{conditions.length > 0 && (
+				{summaryLines.length > 0 && (
 					<div className="evy-mb-1">
 						<span className="evy-text-sm evy-font-medium evy-text-gray">
 							Conditions
 						</span>
 						<ul className="evy-action-summary-list">
-							{conditions.map((cond) => (
-								<li
-									key={`${cond.left}-${cond.operator}-${cond.right}`}
-									className="evy-text-sm"
-								>
-									{formatConditionDisplay(cond)}
+							{summaryLines.map((line) => (
+								<li key={`${line.prefix}-${line.text}`} className="evy-text-sm">
+									{line.prefix ? `${line.prefix} ` : ""}
+									{line.text}
 								</li>
 							))}
 						</ul>
@@ -218,7 +220,7 @@ function ActionSummaryCard({
 					</div>
 				)}
 
-				{conditions.length === 0 && !trueBranch && !falseBranch && (
+				{summaryLines.length === 0 && !trueBranch && !falseBranch && (
 					<span className="evy-text-sm evy-text-gray">
 						Click to configure...
 					</span>

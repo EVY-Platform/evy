@@ -6,6 +6,7 @@ import type { SDUI_RowAction } from "evy-types";
 import type { SDUI_Flow } from "../types/flow";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { useFlowsContext } from "../state";
+import { Plus } from "lucide-react";
 import {
 	COMPARISON_OPERATORS,
 	OPERATOR_LABELS,
@@ -22,7 +23,11 @@ import {
 	getFlowOptions,
 	getPageOptions,
 	toVariableOptions,
-	type ConditionPart,
+	emptyLeaf,
+	type ConditionExpression,
+	type ConditionGroup,
+	type ConditionLeaf,
+	type LogicalOperator,
 	type ActionFunction,
 } from "../utils/actionHelpers";
 import { actionPopupEditorCss } from "./actionPopupEditorCss";
@@ -43,7 +48,7 @@ export function ActionPopup({
 	onCancel,
 }: ActionPopupProps) {
 	const { flows, activeFlowId } = useFlowsContext();
-	const [conditions, setConditions] = useState<ConditionPart[]>(() =>
+	const [expression, setExpression] = useState<ConditionExpression | null>(() =>
 		parseCondition(action.condition),
 	);
 	const [trueBranch, setTrueBranch] = useState(action.true);
@@ -56,11 +61,11 @@ export function ActionPopup({
 
 	const handleSave = useCallback(() => {
 		onSave({
-			condition: serializeCondition(conditions),
+			condition: serializeCondition(expression),
 			true: trueBranch,
 			false: falseBranch,
 		});
-	}, [conditions, trueBranch, falseBranch, onSave]);
+	}, [expression, trueBranch, falseBranch, onSave]);
 
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -94,11 +99,13 @@ export function ActionPopup({
 					<div className="evy-popup-body">
 						<div>
 							<span className="evy-popup-section-title">Conditions</span>
-							<ConditionEditor
-								conditions={conditions}
+							<ConditionGroupEditor
+								expression={expression}
 								draftVariables={draftVariables}
-								onChange={setConditions}
+								onChange={setExpression}
 								actionIndex={actionIndex}
+								idPrefix={`condition-${actionIndex}`}
+								isTopLevel
 							/>
 						</div>
 
@@ -165,12 +172,290 @@ const BOOLEAN_OPTIONS: PopoverOption[] = [
 	{ value: "false", label: "false" },
 ];
 
-type ConditionEditorProps = {
-	conditions: ConditionPart[];
+type ConditionGroupEditorProps = {
+	expression: ConditionExpression | null;
 	draftVariables: string[];
-	onChange: (conditions: ConditionPart[]) => void;
+	onChange: (expression: ConditionExpression | null) => void;
 	actionIndex: number;
+	idPrefix: string;
+	isTopLevel?: boolean;
 };
+
+function ensureGroup(expr: ConditionExpression | null): ConditionGroup {
+	if (!expr) {
+		return { type: "group", logicalOperator: "or", children: [] };
+	}
+	if (expr.type === "group") return expr;
+	return { type: "group", logicalOperator: "or", children: [expr] };
+}
+
+function normalizeExpression(
+	group: ConditionGroup,
+): ConditionExpression | null {
+	if (group.children.length === 0) return null;
+	if (group.children.length === 1) return group.children[0];
+	return group;
+}
+
+function LogicalSegmentControl({
+	value,
+	onChange,
+	testId,
+}: {
+	value: LogicalOperator;
+	onChange: () => void;
+	testId: string;
+}) {
+	return (
+		<div className="evy-condition-logic-row">
+			<div className="evy-segment-control" data-testid={testId}>
+				<button
+					type="button"
+					className={
+						value === "and"
+							? "evy-segment-btn--active"
+							: "evy-segment-btn--inactive"
+					}
+					onClick={value === "and" ? undefined : onChange}
+				>
+					AND
+				</button>
+				<button
+					type="button"
+					className={
+						value === "or"
+							? "evy-segment-btn--active"
+							: "evy-segment-btn--inactive"
+					}
+					onClick={value === "or" ? undefined : onChange}
+				>
+					OR
+				</button>
+			</div>
+		</div>
+	);
+}
+
+function ConditionGroupEditor({
+	expression,
+	draftVariables,
+	onChange,
+	actionIndex,
+	idPrefix,
+	isTopLevel = false,
+}: ConditionGroupEditorProps) {
+	const group = useMemo(() => ensureGroup(expression), [expression]);
+
+	const [draft, setDraft] = useState<ConditionLeaf>(emptyLeaf());
+
+	const handleLogicalToggle = useCallback(() => {
+		const next: LogicalOperator = group.logicalOperator === "or" ? "and" : "or";
+		onChange(normalizeExpression({ ...group, logicalOperator: next }));
+	}, [group, onChange]);
+
+	const handleLeafChange = useCallback(
+		(
+			rowIndex: number,
+			field: "left" | "operator" | "right",
+			isPlaceholder: boolean,
+			value: string,
+		) => {
+			if (isPlaceholder) {
+				const updated: ConditionLeaf = { ...draft, [field]: value };
+				if (!updated.left || !updated.operator || !updated.right) {
+					setDraft(updated);
+				} else {
+					const newChildren = [...group.children, updated];
+					onChange(normalizeExpression({ ...group, children: newChildren }));
+					setDraft(emptyLeaf());
+				}
+			} else {
+				const child = group.children[rowIndex];
+				if (child.type !== "leaf") return;
+				const updated: ConditionLeaf = { ...child, [field]: value };
+				const newChildren = group.children.map((c, i) =>
+					i === rowIndex ? updated : c,
+				);
+				onChange(normalizeExpression({ ...group, children: newChildren }));
+			}
+		},
+		[draft, group, onChange],
+	);
+
+	const handleRemoveCondition = useCallback(
+		(rowIndex: number) => {
+			const newChildren = group.children.filter((_, i) => i !== rowIndex);
+			onChange(normalizeExpression({ ...group, children: newChildren }));
+		},
+		[group, onChange],
+	);
+
+	const handleAddNestedGroup = useCallback(
+		(rowIndex: number) => {
+			const existingChild = group.children[rowIndex];
+			if (existingChild.type === "leaf") {
+				const nestedOp: LogicalOperator =
+					group.logicalOperator === "and" ? "or" : "and";
+				const nestedGroup: ConditionGroup = {
+					type: "group",
+					logicalOperator: nestedOp,
+					children: [existingChild, emptyLeaf()],
+				};
+				const newChildren = group.children.map((c, i) =>
+					i === rowIndex ? nestedGroup : c,
+				);
+				onChange(normalizeExpression({ ...group, children: newChildren }));
+			}
+		},
+		[group, onChange],
+	);
+
+	const handleNestedGroupChange = useCallback(
+		(rowIndex: number, nestedExpr: ConditionExpression | null) => {
+			const newChildren = [...group.children];
+			if (nestedExpr) {
+				newChildren[rowIndex] = nestedExpr;
+			} else {
+				newChildren.splice(rowIndex, 1);
+			}
+			onChange(normalizeExpression({ ...group, children: newChildren }));
+		},
+		[group, onChange],
+	);
+
+	const leafRows: (ConditionLeaf | ConditionGroup)[] = [...group.children];
+
+	return (
+		<div
+			className={`evy-flex evy-flex-col${isTopLevel ? "" : " evy-condition-nested-group"}`}
+		>
+			{leafRows.map((child, rowIndex) => {
+				const rowId = `${idPrefix}-${rowIndex}`;
+
+				if (child.type === "group") {
+					return (
+						<span key={rowId}>
+							{rowIndex > 0 && (
+								<LogicalSegmentControl
+									value={group.logicalOperator}
+									onChange={handleLogicalToggle}
+									testId={`${idPrefix}-logical-toggle`}
+								/>
+							)}
+							<ConditionGroupEditor
+								expression={child}
+								draftVariables={draftVariables}
+								onChange={(nested) => handleNestedGroupChange(rowIndex, nested)}
+								actionIndex={actionIndex}
+								idPrefix={`${idPrefix}-${rowIndex}`}
+							/>
+						</span>
+					);
+				}
+
+				return (
+					<span key={rowId}>
+						{rowIndex > 0 && (
+							<LogicalSegmentControl
+								value={group.logicalOperator}
+								onChange={handleLogicalToggle}
+								testId={`${idPrefix}-logical-toggle`}
+							/>
+						)}
+						<div className="evy-condition-row">
+							<OperandEditor
+								ariaLabel={`${rowId}-left`}
+								value={child.left}
+								draftVariables={draftVariables}
+								onChange={(v) => handleLeafChange(rowIndex, "left", false, v)}
+							/>
+
+							<PopoverSelect
+								ariaLabel={`${rowId}-op`}
+								options={OPERATOR_OPTIONS}
+								value={child.operator}
+								onChange={(v) =>
+									handleLeafChange(rowIndex, "operator", false, v)
+								}
+							/>
+
+							<OperandEditor
+								ariaLabel={`${rowId}-right`}
+								value={child.right}
+								draftVariables={draftVariables}
+								onChange={(v) => handleLeafChange(rowIndex, "right", false, v)}
+							/>
+
+							<button
+								type="button"
+								className="evy-bin-button evy-condition-remove evy-bg-transparent evy-border-none evy-cursor-pointer"
+								onClick={() => handleRemoveCondition(rowIndex)}
+								aria-label={`Remove condition ${rowIndex + 1}`}
+							>
+								<Trash2
+									className="evy-h-4 evy-w-4"
+									strokeWidth={LUCIDE_STROKE_WIDTH}
+									aria-hidden
+								/>
+							</button>
+
+							<button
+								type="button"
+								className="evy-condition-nest-btn evy-bg-transparent evy-border-none evy-cursor-pointer"
+								onClick={() => handleAddNestedGroup(rowIndex)}
+								aria-label={`Add nested group at condition ${rowIndex + 1}`}
+								title="Add nested group"
+							>
+								<Plus
+									className="evy-h-4 evy-w-4"
+									strokeWidth={LUCIDE_STROKE_WIDTH}
+									aria-hidden
+								/>
+							</button>
+						</div>
+					</span>
+				);
+			})}
+
+			{/* Placeholder row for adding a new leaf */}
+			<span>
+				{leafRows.length > 0 && (
+					<LogicalSegmentControl
+						value={group.logicalOperator}
+						onChange={handleLogicalToggle}
+						testId={`${idPrefix}-logical-toggle`}
+					/>
+				)}
+				<div className="evy-condition-row evy-condition-row--placeholder">
+					<OperandEditor
+						ariaLabel={`${idPrefix}-${leafRows.length}-left`}
+						value={draft.left}
+						draftVariables={draftVariables}
+						onChange={(v) => handleLeafChange(leafRows.length, "left", true, v)}
+					/>
+
+					<PopoverSelect
+						ariaLabel={`${idPrefix}-${leafRows.length}-op`}
+						options={OPERATOR_OPTIONS}
+						value={draft.operator}
+						onChange={(v) =>
+							handleLeafChange(leafRows.length, "operator", true, v)
+						}
+					/>
+
+					<OperandEditor
+						ariaLabel={`${idPrefix}-${leafRows.length}-right`}
+						value={draft.right}
+						draftVariables={draftVariables}
+						onChange={(v) =>
+							handleLeafChange(leafRows.length, "right", true, v)
+						}
+					/>
+				</div>
+			</span>
+		</div>
+	);
+}
 
 function OperandEditor({
 	ariaLabel,
@@ -282,131 +567,6 @@ function OperandEditor({
 					placeholder="argument..."
 				/>
 			)}
-		</div>
-	);
-}
-
-function ConditionEditor({
-	conditions,
-	draftVariables,
-	onChange,
-	actionIndex,
-}: ConditionEditorProps) {
-	const [draft, setDraft] = useState<ConditionPart>({
-		left: "",
-		operator: "==",
-		right: "",
-	});
-
-	const handleFieldChange = useCallback(
-		({
-			rowIndex,
-			field,
-			isPlaceholder,
-			value,
-		}: {
-			rowIndex: number;
-			field: "left" | "operator" | "right";
-			isPlaceholder: boolean;
-			value: string;
-		}) => {
-			if (isPlaceholder) {
-				const updated = { ...draft, [field]: value };
-				if (!updated.left || !updated.operator || !updated.right) {
-					setDraft(updated);
-				} else {
-					onChange([...conditions, updated]);
-					setDraft({ left: "", operator: "==", right: "" });
-				}
-			} else {
-				onChange(
-					conditions.map((c, i) =>
-						i === rowIndex ? { ...c, [field]: value } : c,
-					),
-				);
-			}
-		},
-		[draft, conditions, onChange],
-	);
-
-	const handleRemoveCondition = useCallback(
-		(rowIndex: number) => {
-			onChange(conditions.filter((_, i) => i !== rowIndex));
-		},
-		[conditions, onChange],
-	);
-
-	const rows = [...conditions, draft];
-
-	return (
-		<div className="evy-flex evy-flex-col">
-			{rows.map((row, rowIndex) => {
-				const isPlaceholder = rowIndex === conditions.length;
-				const conditionRowId = `condition-${actionIndex}-${rowIndex}`;
-				return (
-					<span key={conditionRowId}>
-						{rowIndex > 0 && <span className="evy-condition-or">OR</span>}
-						<div className="evy-condition-row">
-							<OperandEditor
-								ariaLabel={`condition-${actionIndex}-${rowIndex}-left`}
-								value={row.left}
-								draftVariables={draftVariables}
-								onChange={(v) =>
-									handleFieldChange({
-										rowIndex,
-										field: "left",
-										isPlaceholder,
-										value: v,
-									})
-								}
-							/>
-
-							<PopoverSelect
-								ariaLabel={`condition-${actionIndex}-${rowIndex}-op`}
-								options={OPERATOR_OPTIONS}
-								value={row.operator}
-								onChange={(v) =>
-									handleFieldChange({
-										rowIndex,
-										field: "operator",
-										isPlaceholder,
-										value: v,
-									})
-								}
-							/>
-
-							<OperandEditor
-								ariaLabel={`condition-${actionIndex}-${rowIndex}-right`}
-								value={row.right}
-								draftVariables={draftVariables}
-								onChange={(v) =>
-									handleFieldChange({
-										rowIndex,
-										field: "right",
-										isPlaceholder,
-										value: v,
-									})
-								}
-							/>
-
-							{!isPlaceholder && (
-								<button
-									type="button"
-									className="evy-bin-button evy-condition-remove evy-bg-transparent evy-border-none evy-cursor-pointer"
-									onClick={() => handleRemoveCondition(rowIndex)}
-									aria-label={`Remove condition ${rowIndex + 1}`}
-								>
-									<Trash2
-										className="evy-h-4 evy-w-4"
-										strokeWidth={LUCIDE_STROKE_WIDTH}
-										aria-hidden
-									/>
-								</button>
-							)}
-						</div>
-					</span>
-				);
-			})}
 		</div>
 	);
 }

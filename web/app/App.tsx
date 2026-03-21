@@ -60,7 +60,7 @@ const ADD_PAGE_BUTTON_STYLE: CSSProperties = {
 	transform: "translateX(-50%)",
 	zIndex: 15,
 	borderColor: "var(--color-evy-gray-dark)",
-	borderRadius: "9999px",
+	borderRadius: "var(--radius-md)",
 };
 
 function useHoverToggle() {
