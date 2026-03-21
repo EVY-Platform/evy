@@ -45,6 +45,7 @@ export type RowAction =
 			name: string;
 	  }
 	| { type: "ADD_PAGE" }
+	| { type: "REMOVE_PAGE"; pageId: string }
 	| {
 			type: "SET_ACTIVE_ROW";
 			pageId: string;

@@ -343,6 +343,20 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			);
 			return updateState({ updatedPages: newPages });
 		}
+		case "REMOVE_PAGE": {
+			if (flow.pages.length <= 1) return state;
+			const updatedPages = flow.pages.filter((p) => p.id !== action.pageId);
+			if (updatedPages.length === flow.pages.length) return state;
+
+			const wasActivePage = state.activePageId === action.pageId;
+
+			return updateState({
+				updatedPages,
+				activePageId: wasActivePage ? updatedPages[0]?.id : state.activePageId,
+				activeRowId: wasActivePage ? undefined : state.activeRowId,
+				configStack: wasActivePage ? [] : state.configStack,
+			});
+		}
 		case "OPEN_SECONDARY_SHEET": {
 			return {
 				...state,
