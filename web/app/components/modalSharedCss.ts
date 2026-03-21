@@ -1,6 +1,6 @@
 /**
  * Shared modal styles for overlay + backdrop + panel shell + footer buttons.
- * Used by {@link ActionPopup} and {@link CreateFlowDialog}.
+ * Used by {@link ActionPopup}, {@link CreateFlowDialog}, and {@link PageInUseDialog}.
  */
 export const modalSharedCss = `
 .evy-modal-root {
@@ -48,6 +48,9 @@ export const modalSharedCss = `
 	display: flex;
 	justify-content: flex-end;
 	gap: var(--size-2);
+}
+.evy-modal-footer--center {
+	justify-content: center;
 }
 .evy-modal-btn {
 	font-family: inherit;

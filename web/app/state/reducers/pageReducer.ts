@@ -343,6 +343,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			);
 			return updateState({ updatedPages: newPages });
 		}
+		// UI only deletes the active page; reducer still handles arbitrary pageId for tests/future use.
 		case "REMOVE_PAGE": {
 			if (flow.pages.length <= 1) return state;
 			const updatedPages = flow.pages.filter((p) => p.id !== action.pageId);

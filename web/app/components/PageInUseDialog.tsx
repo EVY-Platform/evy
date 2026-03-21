@@ -4,7 +4,7 @@ import { TriangleAlert } from "lucide-react";
 
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { useEscapeKey } from "../hooks/useEscapeKey";
-import type { PageReferenceEntry } from "../utils/pageReferences";
+import type { PageReferenceEntry } from "../utils/actionHelpers";
 import { modalSharedCss } from "./modalSharedCss";
 import { pageInUseDialogCss } from "./pageInUseDialogCss";
 
@@ -62,7 +62,7 @@ export function PageInUseDialog({ references, onClose }: PageInUseDialogProps) {
 						</ul>
 					</div>
 
-					<div className="evy-page-in-use-footer">
+					<div className="evy-modal-footer evy-modal-footer--center">
 						<button
 							type="button"
 							className="evy-modal-btn evy-modal-btn--md evy-modal-btn-primary"

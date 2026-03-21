@@ -87,6 +87,10 @@ export function ConfigurationPanel() {
 		dispatchRow({ type: "REMOVE_PAGE", pageId: activePage.id });
 	}, [activeFlow, activePage, canDeleteCurrentPage, dispatchRow]);
 
+	const dismissPageInUseDialog = useCallback(() => {
+		setPageInUseReferences([]);
+	}, []);
+
 	const openChildConfiguration = useCallback(
 		(childRowId: string, parentRow: Row) => {
 			dispatchRow({
@@ -201,7 +205,7 @@ export function ConfigurationPanel() {
 		<div className="evy-flex evy-flex-col evy-h-full">
 			<PageInUseDialog
 				references={pageInUseReferences}
-				onClose={() => setPageInUseReferences([])}
+				onClose={dismissPageInUseDialog}
 			/>
 			<div className="evy-p-4 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
 				Configuration

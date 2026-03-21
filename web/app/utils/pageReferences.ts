@@ -41,31 +41,21 @@ function collectReferencesForPage(
 	page: SDUI_Page,
 	flow: SDUI_Flow,
 	targetPageId: string,
-	seenRowIds: Set<string>,
 	results: PageReferenceEntry[],
 ): void {
 	const pageLabel = breadcrumbLabelForPage(page, flow.pages);
+	const rowsOnPage: Row[] = [
+		...page.rows.flatMap((topRow) => getRowsRecursive(topRow)),
+		...(page.footer ? getRowsRecursive(page.footer) : []),
+	];
 
-	const visitRow = (row: Row) => {
-		if (!rowReferencesTargetPage(row, flow.id, targetPageId)) return;
-		if (seenRowIds.has(row.id)) return;
-		seenRowIds.add(row.id);
+	for (const row of rowsOnPage) {
+		if (!rowReferencesTargetPage(row, flow.id, targetPageId)) continue;
 		results.push({
 			referenceKey: `${page.id}:${row.id}`,
 			pageLabel,
 			rowLabel: breadcrumbLabelForRow(row),
 		});
-	};
-
-	for (const topRow of page.rows) {
-		for (const row of getRowsRecursive(topRow)) {
-			visitRow(row);
-		}
-	}
-	if (page.footer) {
-		for (const row of getRowsRecursive(page.footer)) {
-			visitRow(row);
-		}
 	}
 }
 
@@ -75,9 +65,8 @@ export function findPageReferences(
 	targetPageId: string,
 ): PageReferenceEntry[] {
 	const results: PageReferenceEntry[] = [];
-	const seenRowIds = new Set<string>();
 	for (const page of flow.pages) {
-		collectReferencesForPage(page, flow, targetPageId, seenRowIds, results);
+		collectReferencesForPage(page, flow, targetPageId, results);
 	}
 	return results;
 }

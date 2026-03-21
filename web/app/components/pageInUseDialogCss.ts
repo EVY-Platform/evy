@@ -1,4 +1,4 @@
-/** Page-in-use warning dialog; shell + footer use {@link modalSharedCss}. */
+/** Page-in-use warning dialog body + header; panel shell + footer use {@link modalSharedCss}. */
 export const pageInUseDialogCss = `
 .evy-modal-panel--page-in-use {
 	width: min(480px, calc(100vw - var(--size-8)));
@@ -29,11 +29,5 @@ export const pageInUseDialogCss = `
 .evy-page-in-use-list li {
 	font-size: var(--text-sm);
 	line-height: 1.6;
-}
-.evy-page-in-use-footer {
-	padding: var(--size-4);
-	border-top: 1px solid var(--color-gray-border);
-	display: flex;
-	justify-content: center;
 }
 `;
