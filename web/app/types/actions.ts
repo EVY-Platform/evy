@@ -44,6 +44,7 @@ export type RowAction =
 			type: "CREATE_FLOW";
 			name: string;
 	  }
+	| { type: "ADD_PAGE" }
 	| {
 			type: "SET_ACTIVE_ROW";
 			pageId: string;

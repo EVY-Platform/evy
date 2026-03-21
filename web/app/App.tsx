@@ -29,6 +29,7 @@ import { useFlows } from "./hooks/useFlows";
 import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
 import {
+	addPageButtonStyle,
 	canvasContentStyle,
 	collapsedPanelBarStyle,
 	pageWrapperHiddenStyle,
@@ -242,6 +243,8 @@ function AppContent() {
 		dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
 	}, [dispatchRow, secondarySheetRowId]);
 
+	const showAddPageButton = Boolean(activeFlowId) && !focusMode;
+
 	return (
 		<div className="evy-relative evy-flex-1 evy-min-h-0 evy-min-w-0 evy-overflow-hidden">
 			<div className="evy-absolute evy-inset-0 evy-flex evy-min-h-0 evy-flex-col">
@@ -281,6 +284,17 @@ function AppContent() {
 					})}
 				</CanvasViewport>
 			</div>
+			{showAddPageButton && (
+				<button
+					type="button"
+					onClick={() => dispatchRow({ type: "ADD_PAGE" })}
+					style={addPageButtonStyle}
+					className="evy-bg-white evy-border evy-border-gray-dark evy-rounded-full evy-px-4 evy-py-2 evy-text-sm evy-cursor-pointer evy-text-gray-dark evy-font-medium evy-focus-visible:outline-none"
+					aria-label="Add a page"
+				>
+					Add a page
+				</button>
+			)}
 			<CollapsibleSidePanel
 				side="left"
 				isExpanded={isRowsPanelExpanded}

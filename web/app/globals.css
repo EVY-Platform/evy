@@ -293,6 +293,9 @@ body {
 .evy-border-gray-light {
 	border-color: var(--color-evy-gray-light);
 }
+.evy-border-gray-dark {
+	border-color: var(--color-evy-gray-dark);
+}
 
 /* Border radius utilities */
 .evy-rounded-sm {
@@ -300,6 +303,9 @@ body {
 }
 .evy-rounded-md {
 	border-radius: var(--radius-md);
+}
+.evy-rounded-full {
+	border-radius: 9999px;
 }
 
 /* Position utilities */
