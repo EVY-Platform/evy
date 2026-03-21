@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { createFlowFormCss } from "./createFlowFormCss";
 import { modalSharedCss } from "./modalSharedCss";
 
@@ -26,14 +27,7 @@ export function CreateFlowDialog({
 		queueMicrotask(() => inputRef.current?.focus());
 	}, [open]);
 
-	useEffect(() => {
-		if (!open) return;
-		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
-		};
-		document.addEventListener("keydown", onKeyDown);
-		return () => document.removeEventListener("keydown", onKeyDown);
-	}, [open, onClose]);
+	useEscapeKey(onClose, open);
 
 	if (!open) return null;
 

@@ -55,6 +55,7 @@
 		73B3CF862C68AD2200FD333A /* EVYColumnContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF842C68AD2200FD333A /* EVYColumnContainerRow.swift */; };
 		73B3CF872C68AD2200FD333A /* EVYListContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF852C68AD2200FD333A /* EVYListContainerRow.swift */; };
 		73C5D23E2C0AF1030024FF11 /* EVYTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */; };
+		73F3C0DF2E56000100ROW01 /* EVYRowTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F3C0DE2E56000100ROW02 /* EVYRowTitle.swift */; };
 		73C78AEA2BC549840026F39D /* EVYSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AE92BC549840026F39D /* EVYSearch.swift */; };
 		73C78AEE2BC54DFE0026F39D /* EVYSearchRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */; };
 		73C78AFE2BC564F10026F39D /* SF-Pro-Text-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 73C78AFC2BC564F00026F39D /* SF-Pro-Text-Regular.otf */; };
@@ -147,6 +148,7 @@
 		73B3CF842C68AD2200FD333A /* EVYColumnContainerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYColumnContainerRow.swift; sourceTree = "<group>"; };
 		73B3CF852C68AD2200FD333A /* EVYListContainerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYListContainerRow.swift; sourceTree = "<group>"; };
 		73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextView.swift; sourceTree = "<group>"; };
+		73F3C0DE2E56000100ROW02 /* EVYRowTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRowTitle.swift; sourceTree = "<group>"; };
 		73C78AE92BC549840026F39D /* EVYSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearch.swift; sourceTree = "<group>"; };
 		73C78AED2BC54DFE0026F39D /* EVYSearchRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYSearchRow.swift; sourceTree = "<group>"; };
 		73C78AFC2BC564F00026F39D /* SF-Pro-Text-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SF-Pro-Text-Regular.otf"; sourceTree = "<group>"; };
@@ -377,6 +379,7 @@
 			isa = PBXGroup;
 			children = (
 				73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */,
+				73F3C0DE2E56000100ROW02 /* EVYRowTitle.swift */,
 				73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */,
 				2E00BD4A2BA1A99D00C09A1D /* EVYRadioButton.swift */,
 				73CB09512C7608A7008F7D2C /* EVYRectangle.swift */,
@@ -589,6 +592,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				73C5D23E2C0AF1030024FF11 /* EVYTextView.swift in Sources */,
+				73F3C0DF2E56000100ROW01 /* EVYRowTitle.swift in Sources */,
 				73CB09522C7608A7008F7D2C /* EVYRectangle.swift in Sources */,
 				730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */,
 				737C6AA82B2706890093D00C /* ContentView.swift in Sources */,

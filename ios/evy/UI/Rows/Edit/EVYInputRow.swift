@@ -20,10 +20,7 @@ struct EVYInputRow: View, EVYRowProtocol {
 
 	var body: some View {
 		VStack(alignment: .leading) {
-			if view.content.title.count > 0 {
-				EVYTextView(view.content.title)
-					.padding(.vertical, Constants.padding)
-			}
+			EVYRowTitle(title: view.content.title)
 			if let destination {
 				EVYTextField(
 					input: view.content.value,

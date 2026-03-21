@@ -1,4 +1,5 @@
-import { readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -38,5 +39,34 @@ export function runMain(main: () => Promise<void>): void {
 	main().catch((err: unknown) => {
 		console.error(err);
 		process.exit(1);
+	});
+}
+
+export async function appendLinesToGeneratedFile(
+	outPath: string,
+	lines: string[],
+): Promise<void> {
+	const current = await readFile(outPath, "utf-8");
+	await writeFile(
+		outPath,
+		`${current.trimEnd()}\n\n${lines.join("\n")}\n`,
+		"utf-8",
+	);
+}
+
+export function spawnExitOk(
+	command: string,
+	args: string[],
+	options: { cwd: string; stdio?: "inherit" },
+	errorLabel: string,
+): Promise<void> {
+	return new Promise((resolve, reject) => {
+		const proc = spawn(command, args, options);
+		proc.on("exit", (code) =>
+			code === 0
+				? resolve()
+				: reject(new Error(`${errorLabel} exited ${code}`)),
+		);
+		proc.on("error", reject);
 	});
 }
