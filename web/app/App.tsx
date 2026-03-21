@@ -44,6 +44,24 @@ import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
 const PANEL_EXPANDED_WIDTH_PX = 300;
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
+const PHONE_FRAME_STYLE: CSSProperties = {
+	backgroundImage: 'url("/phone.svg")',
+	backgroundRepeat: "no-repeat",
+	backgroundSize: "contain",
+};
+const LEFT_PANEL_BORDER_STYLE: CSSProperties = {
+	borderRightWidth: "1px",
+	borderRightStyle: "solid",
+};
+const ADD_PAGE_BUTTON_STYLE: CSSProperties = {
+	position: "absolute",
+	bottom: "var(--size-4)",
+	left: "50%",
+	transform: "translateX(-50%)",
+	zIndex: 15,
+	borderColor: "var(--color-evy-gray-dark)",
+	borderRadius: "9999px",
+};
 
 function useHoverToggle() {
 	const [hovered, setHovered] = useState(false);
@@ -112,7 +130,9 @@ function CollapsibleSidePanel({
 			zIndex: 20,
 			width: isExpanded ? PANEL_EXPANDED_WIDTH_PX : "var(--size-nav-bar)",
 			...(side === "left" ? { left: 0 } : { right: 0 }),
-			...(side === "left" ? panelShadowStyle : rightPanelStyle),
+			...(side === "left"
+				? { ...panelShadowStyle, ...LEFT_PANEL_BORDER_STYLE }
+				: rightPanelStyle),
 		};
 	}, [isExpanded, side]);
 
@@ -136,7 +156,7 @@ function CollapsibleSidePanel({
 
 	const outerClassName =
 		side === "left"
-			? "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-r evy-border-gray"
+			? "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-gray"
 			: "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-gray";
 
 	const innerClassName =
@@ -242,6 +262,8 @@ function AppContent() {
 		dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
 	}, [dispatchRow, secondarySheetRowId]);
 
+	const showAddPageButton = Boolean(activeFlowId) && !focusMode;
+
 	return (
 		<div className="evy-relative evy-flex-1 evy-min-h-0 evy-min-w-0 evy-overflow-hidden">
 			<div className="evy-absolute evy-inset-0 evy-flex evy-min-h-0 evy-flex-col">
@@ -254,23 +276,27 @@ function AppContent() {
 					{pages.map((page) => {
 						const isActive = page.id === activePageId;
 						const isHidden = focusMode && !isActive;
-						const wrapperStyle = isHidden
-							? pageWrapperHiddenStyle
-							: pageWrapperStyle;
+						const wrapperStyle = {
+							...(isHidden ? pageWrapperHiddenStyle : pageWrapperStyle),
+							...PHONE_FRAME_STYLE,
+						};
 
 						return (
 							<Fragment key={page.id}>
 								<CanvasPageFrame
 									pageId={page.id}
 									wrapperStyle={wrapperStyle}
-									className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+									className="evy-flex-shrink-0"
 								>
 									<AppPage pageId={page.id} />
 								</CanvasPageFrame>
 								{focusMode && isActive && secondarySheetRow && (
 									<CanvasPageFrame
-										wrapperStyle={secondaryPageWrapperStyle}
-										className="evy-flex-shrink-0 evy-bg-phone evy-bg-no-repeat evy-bg-contain"
+										wrapperStyle={{
+											...secondaryPageWrapperStyle,
+											...PHONE_FRAME_STYLE,
+										}}
+										className="evy-flex-shrink-0"
 										data-testid="secondary-sheet-page"
 									>
 										<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
@@ -281,6 +307,17 @@ function AppContent() {
 					})}
 				</CanvasViewport>
 			</div>
+			{showAddPageButton && (
+				<button
+					type="button"
+					onClick={() => dispatchRow({ type: "ADD_PAGE" })}
+					style={ADD_PAGE_BUTTON_STYLE}
+					className="evy-bg-white evy-border evy-px-4 evy-py-2 evy-text-sm evy-cursor-pointer evy-text-gray-dark evy-font-medium evy-focus-visible:outline-none"
+					aria-label="Add a page"
+				>
+					Add a page
+				</button>
+			)}
 			<CollapsibleSidePanel
 				side="left"
 				isExpanded={isRowsPanelExpanded}
