@@ -55,6 +55,27 @@ final class EVYInterpreterTests: XCTestCase {
         XCTAssertEqual(result.value, "result: true")
     }
 
+    func testWatchTargetUnwrapsCountToUnderlyingDataKey() {
+        let key = uniqueKey("photo_ids")
+        XCTAssertEqual(
+            EVY.watchTarget(for: "Photos: {count(\(key))}/10 - more text"),
+            key
+        )
+    }
+
+    func testCountReflectsArrayAfterStoreUpdate() throws {
+        let key = uniqueKey("photos")
+        try store(.array([.string("a")]), at: key)
+        let one = try EVYInterpreter.parseTextFromText("n: {count(\(key))}")
+        XCTAssertEqual(one.value, "n: 1")
+
+        let encoded = try JSONEncoder().encode(EVYJson.array([.string("a"), .string("b")]))
+        try EVY.data.update(props: [key], data: encoded)
+
+        let two = try EVYInterpreter.parseTextFromText("n: {count(\(key))}")
+        XCTAssertEqual(two.value, "n: 2")
+    }
+
     private func store(_ value: EVYJson, at key: String) throws {
         if EVY.data.exists(key: key) {
             try EVY.data.delete(key: key)
