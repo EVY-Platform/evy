@@ -1,6 +1,13 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { LUCIDE_STROKE_WIDTH, PARSE_ICON_REGEX } from "./iconSyntax";
 import resolveIcon from "./resolveIcon";
+
+const INLINE_ICON_STYLE: CSSProperties = {
+	display: "inline-block",
+	height: "1em",
+	width: "1em",
+	verticalAlign: "middle",
+};
 
 export default function parseIconText(input: string): ReactNode {
 	const parts: ReactNode[] = [];
@@ -20,7 +27,7 @@ export default function parseIconText(input: string): ReactNode {
 			parts.push(
 				<IconComponent
 					key={matchStart}
-					className="evy-inline-icon"
+					style={INLINE_ICON_STYLE}
 					aria-hidden
 					strokeWidth={LUCIDE_STROKE_WIDTH}
 				/>,

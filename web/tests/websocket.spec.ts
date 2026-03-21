@@ -94,7 +94,7 @@ test.describe("WebSocket Connection States", () => {
 		await expect(getConfigPanel(page)).toBeVisible();
 
 		// Center: Phone mockup(s)
-		const phoneContainer = page.locator('div[class*="evy-bg-phone"]');
+		const phoneContainer = page.locator("[data-canvas-page-frame]");
 		await expect(phoneContainer.first()).toBeVisible();
 	});
 });

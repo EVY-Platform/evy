@@ -39,7 +39,7 @@ interface ServerPageInput {
 }
 
 export const SELECTORS = {
-	phoneContainer: 'div[class*="evy-bg-phone"]',
+	phoneContainer: "[data-canvas-page-frame]",
 	pageContent: '[class*="evy-overflow-scroll"]',
 	rowContainer:
 		'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]',

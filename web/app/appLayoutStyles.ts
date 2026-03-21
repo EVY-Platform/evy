@@ -9,14 +9,6 @@ export const canvasContentStyle: CSSProperties = {
 	gap: "var(--size-4)",
 };
 
-export const addPageButtonStyle: CSSProperties = {
-	position: "absolute",
-	bottom: "var(--size-4)",
-	left: "50%",
-	transform: "translateX(-50%)",
-	zIndex: 15,
-};
-
 const pagePhoneFrameBase: CSSProperties = {
 	overflow: "hidden",
 	height: "var(--size-662)",
