@@ -1,13 +1,5 @@
-import {
-	Fragment,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-	type CSSProperties,
-	type ReactNode,
-} from "react";
+import { Fragment, useCallback, useEffect, useMemo } from "react";
+import type { CSSProperties } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { FileSliders, Rows3 } from "lucide-react";
@@ -17,6 +9,10 @@ import type {
 } from "@atlaskit/pragmatic-drag-and-drop/types";
 
 import AppPage from "./components/AppPage";
+import {
+	CollapsibleSidePanel,
+	useHoverToggle,
+} from "./components/CollapsibleSidePanel";
 import SecondarySheetPage from "./components/SecondarySheetPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
@@ -30,28 +26,17 @@ import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
 import {
 	canvasContentStyle,
-	collapsedPanelBarStyle,
 	pageWrapperHiddenStyle,
 	pageWrapperStyle,
-	panelContentFadeTransitionStyle,
-	panelShadowStyle,
-	rightPanelStyle,
 	secondaryPageWrapperStyle,
-	sidePanelWidthTransitionStyle,
 } from "./appLayoutStyles";
 import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
-
-const PANEL_EXPANDED_WIDTH_PX = 300;
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
 const PHONE_FRAME_STYLE: CSSProperties = {
 	backgroundImage: 'url("/phone.svg")',
 	backgroundRepeat: "no-repeat",
 	backgroundSize: "contain",
-};
-const LEFT_PANEL_BORDER_STYLE: CSSProperties = {
-	borderRightWidth: "1px",
-	borderRightStyle: "solid",
 };
 const ADD_PAGE_BUTTON_STYLE: CSSProperties = {
 	position: "absolute",
@@ -60,139 +45,8 @@ const ADD_PAGE_BUTTON_STYLE: CSSProperties = {
 	transform: "translateX(-50%)",
 	zIndex: 15,
 	borderColor: "var(--color-evy-gray-dark)",
-	borderRadius: "9999px",
+	borderRadius: "var(--radius-md)",
 };
-
-function useHoverToggle() {
-	const [hovered, setHovered] = useState(false);
-	const open = useCallback(() => {
-		setHovered(true);
-	}, []);
-	const close = useCallback(() => {
-		setHovered(false);
-	}, []);
-	return { hovered, open, close };
-}
-
-type CollapsibleSidePanelSide = "left" | "right";
-
-function CollapsibleSidePanel({
-	side,
-	isExpanded,
-	pinOpenByPage,
-	onOpenInteraction,
-	onCloseInteraction,
-	collapsedLabel,
-	icon,
-	children,
-}: {
-	side: CollapsibleSidePanelSide;
-	isExpanded: boolean;
-	pinOpenByPage: boolean;
-	onOpenInteraction: () => void;
-	onCloseInteraction: () => void;
-	collapsedLabel: string;
-	icon: ReactNode;
-	children: ReactNode;
-}) {
-	const outerRef = useRef<HTMLDivElement>(null);
-	const isExpandedRef = useRef(isExpanded);
-	const [contentVisible, setContentVisible] = useState(isExpanded);
-
-	isExpandedRef.current = isExpanded;
-
-	useEffect(() => {
-		if (!isExpanded) {
-			setContentVisible(false);
-		}
-	}, [isExpanded]);
-
-	useEffect(() => {
-		const node = outerRef.current;
-		if (!node) return;
-
-		const onTransitionEnd = (event: TransitionEvent) => {
-			if (event.propertyName !== "width") return;
-			if (!isExpandedRef.current) return;
-			setContentVisible(true);
-		};
-
-		node.addEventListener("transitionend", onTransitionEnd);
-		return () => node.removeEventListener("transitionend", onTransitionEnd);
-	}, []);
-
-	const outerStyle = useMemo<CSSProperties>(() => {
-		return {
-			...sidePanelWidthTransitionStyle,
-			position: "absolute",
-			top: 0,
-			bottom: 0,
-			zIndex: 20,
-			width: isExpanded ? PANEL_EXPANDED_WIDTH_PX : "var(--size-nav-bar)",
-			...(side === "left" ? { left: 0 } : { right: 0 }),
-			...(side === "left"
-				? { ...panelShadowStyle, ...LEFT_PANEL_BORDER_STYLE }
-				: rightPanelStyle),
-		};
-	}, [isExpanded, side]);
-
-	useEffect(() => {
-		const node = outerRef.current;
-		if (!node) return;
-
-		const handleMouseLeave = () => {
-			if (!pinOpenByPage) {
-				onCloseInteraction();
-			}
-		};
-
-		node.addEventListener("mouseenter", onOpenInteraction);
-		node.addEventListener("mouseleave", handleMouseLeave);
-		return () => {
-			node.removeEventListener("mouseenter", onOpenInteraction);
-			node.removeEventListener("mouseleave", handleMouseLeave);
-		};
-	}, [onOpenInteraction, onCloseInteraction, pinOpenByPage]);
-
-	const outerClassName =
-		side === "left"
-			? "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-gray"
-			: "evy-flex evy-flex-col evy-overflow-hidden evy-bg-white evy-border-gray";
-
-	const innerClassName =
-		side === "left"
-			? "evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-hidden"
-			: "evy-flex evy-flex-1 evy-min-h-0 evy-flex-col evy-overflow-y-auto";
-
-	const innerContentStyle = useMemo(
-		() => ({
-			...panelContentFadeTransitionStyle,
-			opacity: contentVisible ? 1 : 0,
-			pointerEvents: contentVisible ? ("auto" as const) : ("none" as const),
-		}),
-		[contentVisible],
-	);
-
-	return (
-		<div ref={outerRef} className={outerClassName} style={outerStyle}>
-			{isExpanded ? (
-				<div className={innerClassName} style={innerContentStyle}>
-					{children}
-				</div>
-			) : (
-				<button
-					type="button"
-					style={collapsedPanelBarStyle}
-					className="evy-cursor-pointer evy-border-none evy-bg-white evy-focus-visible:outline-none"
-					onClick={onOpenInteraction}
-					aria-label={collapsedLabel}
-				>
-					{icon}
-				</button>
-			)}
-		</div>
-	);
-}
 
 function AppContent() {
 	const {

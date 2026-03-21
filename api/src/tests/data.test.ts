@@ -11,7 +11,7 @@ import type {
 	DATA_Rows,
 	GetRequest,
 } from "evy-types";
-import * as schema from "../../../types/generated/ts/db/schema.generated";
+import * as schema from "../db/drizzleTables";
 import {
 	type RowSchema,
 	type PageSchema,

@@ -10,6 +10,7 @@ on:
             - "types/**"
             - "run-e2e.sh"
             - ".github/workflows/e2e_tests.yml"
+            - ".github/actions/**"
     push:
         branches: [dev]
         paths:
@@ -19,6 +20,7 @@ on:
             - "types/**"
             - "run-e2e.sh"
             - ".github/workflows/e2e_tests.yml"
+            - ".github/actions/**"
     workflow_dispatch:
 
 # NOTE: iOS e2e tests require macOS 26 (for iOS 26.2 simulator) + Docker.
@@ -56,12 +58,8 @@ jobs:
               working-directory: web
               run: bun install
 
-            - name: Create root .env from example
-              run: cp .env.example .env
-
-            - name: Generate types
-              run: bun types:generate
-              working-directory: .
+            - name: Prepare .env and generate types
+              uses: ./.github/actions/prepare-dotenv-and-types
 
             - name: Run E2E tests
               run: bash run-e2e.sh --skip-ios --no-docker

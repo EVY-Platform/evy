@@ -138,7 +138,7 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 
 		await expect(configPanel.getByText("Actions")).toBeVisible();
-		await expect(configPanel.getByText("If true:")).toBeVisible();
+		await expect(configPanel.getByText("If true")).toBeVisible();
 		await expect(configPanel.getByText("Close")).toBeVisible();
 
 		await configPanel.getByLabel("Edit action 1").click();
@@ -158,7 +158,7 @@ test.describe("Row configuration", () => {
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
-		await expect(configPanel.getByText("If false:")).toBeVisible();
+		await expect(configPanel.getByText("If false")).toBeVisible();
 	});
 
 	test("should add another action item via popup", async ({ page }) => {
@@ -628,11 +628,11 @@ test.describe("Row configuration", () => {
 		await popoverSelect(page, op1, "not equals");
 		await popoverSelect(page, right1, "Name");
 
-		await expect(popup.locator(".evy-condition-or")).toHaveCount(2);
+		await expect(popup.locator(".evy-condition-logic-row")).toHaveCount(2);
 
 		await popup.getByLabel("Remove condition 1").click();
 
-		await expect(popup.locator(".evy-condition-or")).toHaveCount(1);
+		await expect(popup.locator(".evy-condition-logic-row")).toHaveCount(1);
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
@@ -661,7 +661,7 @@ test.describe("Row configuration", () => {
 		await buttonRow.click();
 
 		const configPanel = getConfigPanel(page);
-		await expect(configPanel.getByText("If true:")).toBeVisible();
+		await expect(configPanel.getByText("If true")).toBeVisible();
 		await expect(configPanel.getByText("close")).toBeVisible();
 
 		await configPanel.getByLabel("Edit action 1").click();
@@ -805,6 +805,242 @@ test.describe("Row configuration", () => {
 
 		const falseFn = popup.getByLabel("false-0-function");
 		await expect(falseFn).toHaveAttribute("data-value", "close");
+	});
+
+	test("should display flat OR conditions in summary", async ({ page }) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						view: { content: { title: "", label: "OR Test" } },
+						actions: [
+							{
+								condition:
+									"{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0}",
+								false: "",
+								true: "close",
+							},
+						],
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
+		const buttonRow = page.getByText("OR Test", { exact: true }).first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = getConfigPanel(page);
+
+		await expect(
+			configPanel.getByText("count(pickup_timeslots) > 0"),
+		).toBeVisible();
+		await expect(
+			configPanel.getByText("or count(delivery_timeslots) > 0"),
+		).toBeVisible();
+	});
+
+	test("should display nested AND/OR conditions in summary", async ({
+		page,
+	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						view: { content: { title: "", label: "Nested Test" } },
+						actions: [
+							{
+								condition:
+									"{count(pickup_timeslots) > 0 && (count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0)}",
+								false: "",
+								true: "close",
+							},
+						],
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
+		const buttonRow = page.getByText("Nested Test", { exact: true }).first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = getConfigPanel(page);
+
+		await expect(
+			configPanel.getByText("count(pickup_timeslots) > 0"),
+		).toBeVisible();
+		await expect(
+			configPanel.getByText(
+				"and count(delivery_timeslots) > 0 or count(shipping_destination_areas) > 0",
+			),
+		).toBeVisible();
+	});
+
+	test("should toggle OR to AND in condition editor", async ({ page }) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Input",
+						view: {
+							content: {
+								title: "Name",
+								value: "{name}",
+								placeholder: "",
+							},
+						},
+						destination: "{name}",
+						actions: [],
+					},
+					{
+						type: "Input",
+						view: {
+							content: {
+								title: "Email",
+								value: "{email}",
+								placeholder: "",
+							},
+						},
+						destination: "{email}",
+						actions: [],
+					},
+					{
+						type: "Button",
+						view: { content: { title: "", label: "Toggle Test" } },
+						actions: [
+							{
+								condition: "{name == true || email == true}",
+								false: "",
+								true: "close",
+							},
+						],
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
+		const buttonRow = page.getByText("Toggle Test", { exact: true }).first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		const segmentControl = popup
+			.getByTestId("condition-0-logical-toggle")
+			.first();
+		const orBtn = segmentControl.getByText("OR", { exact: true });
+		const andBtn = segmentControl.getByText("AND", { exact: true });
+
+		await expect(orBtn).toHaveClass(/evy-segment-btn--active/);
+		await expect(andBtn).toHaveClass(/evy-segment-btn--inactive/);
+
+		await andBtn.click();
+		await expect(andBtn).toHaveClass(/evy-segment-btn--active/);
+		await expect(orBtn).toHaveClass(/evy-segment-btn--inactive/);
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await expect(configPanel.getByText("and email equals true")).toBeVisible();
+	});
+
+	test("should add nested group and round-trip nested condition", async ({
+		page,
+	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Input",
+						view: {
+							content: {
+								title: "Name",
+								value: "{name}",
+								placeholder: "",
+							},
+						},
+						destination: "{name}",
+						actions: [],
+					},
+					{
+						type: "Input",
+						view: {
+							content: {
+								title: "Email",
+								value: "{email}",
+								placeholder: "",
+							},
+						},
+						destination: "{email}",
+						actions: [],
+					},
+					{
+						type: "Button",
+						view: { content: { title: "", label: "Nest Test" } },
+						actions: [
+							{
+								condition: "{name == true || email == true}",
+								false: "",
+								true: "close",
+							},
+						],
+					},
+				],
+			},
+		]);
+		await page.goto("/");
+
+		const buttonRow = page.getByText("Nest Test", { exact: true }).first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		const nestBtn = popup.getByLabel("Add nested group at condition 2");
+		await expect(nestBtn).toBeVisible();
+		await nestBtn.click();
+
+		const nestedPlaceholderLeft = popup.getByLabel("condition-0-1-1-left");
+		await expect(nestedPlaceholderLeft).toBeVisible();
+
+		await popoverSelect(page, nestedPlaceholderLeft, "Name");
+		const nestedPlaceholderRight = popup.getByLabel("condition-0-1-1-right");
+		await popoverSelect(page, nestedPlaceholderRight, "Email");
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await configPanel.getByLabel("Edit action 1").click();
+		const popup2 = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup2).toBeVisible();
+
+		const nestedLeafLeft = popup2.getByRole("combobox", {
+			name: "condition-0-1-1-left",
+			exact: true,
+		});
+		await expect(nestedLeafLeft).toHaveAttribute("data-value", "name");
 	});
 
 	test("navbar breadcrumbs scroll for many nested levels and navigate on click", async ({

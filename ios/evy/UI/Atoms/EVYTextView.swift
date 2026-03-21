@@ -38,16 +38,18 @@ struct EVYTextView: View {
 		// Otherwise, go all out
 		} else {
 			let placeholderVal = EVYValue(placeholder, nil, nil)
-			
-			self.text = EVYState(watch: text, setter: {
-				guard let value = try? EVY.getValueFromText($0) else {
+			let templateText = text
+			let watchKey = EVY.watchTarget(for: templateText)
+
+			self.text = EVYState(watch: watchKey, setter: { _ in
+				guard let value = try? EVY.getValueFromText(templateText) else {
 					return placeholderVal
 				}
-				
-				if props == $0 {
+
+				if props == templateText {
 					return value
 				}
-				if $0.contains(value.value) {
+				if templateText.contains(value.value) {
 					return placeholderVal
 				}
 				return value

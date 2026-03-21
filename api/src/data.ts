@@ -13,12 +13,7 @@ import {
 	type SDUI_Flow,
 	type UpsertRequest,
 } from "evy-types";
-import {
-	device,
-	flow,
-	data,
-	osEnum,
-} from "../../types/generated/ts/db/schema.generated";
+import { device, flow, data, osEnum } from "./db/drizzleTables";
 import { db } from "./db";
 import { validateFlowData } from "./validation";
 

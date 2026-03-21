@@ -3,47 +3,35 @@ import { Trash2 } from "lucide-react";
 
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import type { SDUI_RowAction } from "evy-types";
+import type { SDUI_Flow } from "../types/flow";
+import {
+	parseCondition,
+	parseBranch,
+	formatExpressionSummary,
+	formatBranchDisplay,
+} from "../utils/actionHelpers";
+import { ActionPopup } from "./ActionPopup";
 
 const actionSummaryCss = `
-.evy-action-summary {
-	padding: var(--size-2);
-	background-color: var(--color-evy-gray-light);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-sm);
-}
 .evy-action-summary-body {
 	display: block;
 	width: 100%;
-	padding: var(--size-2);
-	background: var(--color-white);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-sm);
+	padding: 0;
+	background: none;
+	border: none;
 	cursor: pointer;
 	text-align: left;
 	font-family: inherit;
-	transition: border-color var(--transition);
-}
-.evy-action-summary-body:hover {
-	border-color: var(--color-evy-gray);
 }
 .evy-action-summary-list {
 	margin: 2px 0 0 0;
-	padding-left: var(--size-4);
+	padding-left: var(--size-3);
 	list-style: disc;
 }
 .evy-action-summary-list li {
 	line-height: 1.4;
 }
 `;
-
-import type { SDUI_Flow } from "../types/flow";
-import {
-	parseCondition,
-	parseBranch,
-	formatConditionDisplay,
-	formatBranchDisplay,
-} from "../utils/actionHelpers";
-import { ActionPopup } from "./ActionPopup";
 
 type ActionEditorProps = {
 	actions: SDUI_RowAction[];
@@ -150,15 +138,19 @@ function ActionSummaryCard({
 	onEdit,
 	onRemove,
 }: ActionSummaryCardProps) {
-	const conditions = useMemo(
+	const conditionExpr = useMemo(
 		() => parseCondition(action.condition),
 		[action.condition],
+	);
+	const summaryLines = useMemo(
+		() => formatExpressionSummary(conditionExpr),
+		[conditionExpr],
 	);
 	const trueBranch = useMemo(() => parseBranch(action.true), [action.true]);
 	const falseBranch = useMemo(() => parseBranch(action.false), [action.false]);
 
 	return (
-		<div className="evy-action-summary">
+		<div>
 			<div className="evy-flex evy-items-center evy-justify-between evy-mb-2">
 				<span className="evy-text-sm evy-font-semibold">
 					Action {index + 1}
@@ -186,18 +178,16 @@ function ActionSummaryCard({
 				onClick={onEdit}
 				aria-label={`Edit action ${index + 1}`}
 			>
-				{conditions.length > 0 && (
+				{summaryLines.length > 0 && (
 					<div className="evy-mb-1">
 						<span className="evy-text-sm evy-font-medium evy-text-gray">
-							Conditions:
+							Conditions
 						</span>
 						<ul className="evy-action-summary-list">
-							{conditions.map((cond) => (
-								<li
-									key={`${cond.left}-${cond.operator}-${cond.right}`}
-									className="evy-text-sm"
-								>
-									{formatConditionDisplay(cond)}
+							{summaryLines.map((line) => (
+								<li key={`${line.prefix}-${line.text}`} className="evy-text-sm">
+									{line.prefix ? `${line.prefix} ` : ""}
+									{line.text}
 								</li>
 							))}
 						</ul>
@@ -207,7 +197,7 @@ function ActionSummaryCard({
 				{trueBranch && (
 					<div className="evy-mb-1">
 						<span className="evy-text-sm evy-font-medium evy-text-gray">
-							If true:
+							If true
 						</span>
 						<ul className="evy-action-summary-list">
 							<li className="evy-text-sm">
@@ -220,7 +210,7 @@ function ActionSummaryCard({
 				{falseBranch && (
 					<div className="evy-mb-1">
 						<span className="evy-text-sm evy-font-medium evy-text-gray">
-							If false:
+							If false
 						</span>
 						<ul className="evy-action-summary-list">
 							<li className="evy-text-sm">
@@ -230,7 +220,7 @@ function ActionSummaryCard({
 					</div>
 				)}
 
-				{conditions.length === 0 && !trueBranch && !falseBranch && (
+				{summaryLines.length === 0 && !trueBranch && !falseBranch && (
 					<span className="evy-text-sm evy-text-gray">
 						Click to configure...
 					</span>

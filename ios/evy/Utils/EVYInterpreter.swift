@@ -265,10 +265,8 @@ private func splitRespectingParens(_ input: String, separator: String) -> [Strin
     return parts
 }
 
-private func parseAtomicComparison(_ input: String) -> (left: String,
-                                                        comparisonOperator: String,
-                                                        right: String)?
-{
+/// First comparison operator at parenthesis depth 0 (shared scan for parse + detection).
+private func firstTopLevelComparison(in input: String) -> (opIndex: String.Index, op: String)? {
     var depth = 0
     var index = input.startIndex
 
@@ -283,13 +281,7 @@ private func parseAtomicComparison(_ input: String) -> (left: String,
         if depth == 0 {
             for comparisonOperator in comparisonOperators {
                 if input[index...].hasPrefix(comparisonOperator) {
-                    let left = String(input[..<index]).trimmingCharacters(in: .whitespacesAndNewlines)
-                    let rightStart = input.index(index, offsetBy: comparisonOperator.count)
-                    let right = String(input[rightStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !left.isEmpty, !right.isEmpty else {
-                        return nil
-                    }
-                    return (left, comparisonOperator, right)
+                    return (index, comparisonOperator)
                 }
             }
         }
@@ -300,30 +292,24 @@ private func parseAtomicComparison(_ input: String) -> (left: String,
     return nil
 }
 
-private func containsTopLevelComparisonOperator(_ input: String) -> Bool {
-    var depth = 0
-    var index = input.startIndex
-
-    while index < input.endIndex {
-        let character = input[index]
-        if character == "(" {
-            depth += 1
-        } else if character == ")" && depth > 0 {
-            depth -= 1
-        }
-
-        if depth == 0 {
-            for comparisonOperator in comparisonOperators {
-                if input[index...].hasPrefix(comparisonOperator) {
-                    return true
-                }
-            }
-        }
-
-        index = input.index(after: index)
+private func parseAtomicComparison(_ input: String) -> (left: String,
+                                                        comparisonOperator: String,
+                                                        right: String)?
+{
+    guard let (opIndex, comparisonOperator) = firstTopLevelComparison(in: input) else {
+        return nil
     }
+    let left = String(input[..<opIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
+    let rightStart = input.index(opIndex, offsetBy: comparisonOperator.count)
+    let right = String(input[rightStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !left.isEmpty, !right.isEmpty else {
+        return nil
+    }
+    return (left, comparisonOperator, right)
+}
 
-    return false
+private func containsTopLevelComparisonOperator(_ input: String) -> Bool {
+    firstTopLevelComparison(in: input) != nil
 }
 
 private func isWrappedInParentheses(_ input: String) -> Bool {

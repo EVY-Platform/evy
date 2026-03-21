@@ -35,14 +35,9 @@ jobs:
               run: bun install
               working-directory: .
 
-            - name: Create .env from example
+            - name: Prepare .env and generate types
               if: steps.setup.outputs.has-changes == 'true'
-              run: cp ../.env.example ../.env
-
-            - name: Generate types
-              if: steps.setup.outputs.has-changes == 'true'
-              run: bun types:generate
-              working-directory: .
+              uses: ./.github/actions/prepare-dotenv-and-types
 
             - name: Build application
               if: steps.setup.outputs.has-changes == 'true'

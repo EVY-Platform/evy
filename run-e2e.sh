@@ -36,6 +36,23 @@ echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
 echo -e "${YELLOW}========================================${NC}"
 
+# Run a command (stdout/stderr discarded) until it succeeds or max retries.
+retry_until_cmd() {
+    local description="$1"
+    shift
+    local retry_count=0
+    echo "Waiting for $description..."
+    until "$@" > /dev/null 2>&1 || [ "$retry_count" -eq "$MAX_RETRIES" ]; do
+        sleep "$RETRY_DELAY_SECONDS"
+        retry_count=$((retry_count + 1))
+    done
+    if [ "$retry_count" -eq "$MAX_RETRIES" ]; then
+        echo -e "${RED}$description failed${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}$description is ready${NC}"
+}
+
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
     if [ "$NO_DOCKER" = true ]; then
@@ -55,62 +72,23 @@ cleanup() {
 wait_for_http_service() {
     local service_name="$1"
     local service_url="$2"
-    local retry_count=0
-
-    echo "Waiting for $service_name..."
-    until curl -fsS "$service_url" > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
-        sleep "$RETRY_DELAY_SECONDS"
-        retry_count=$((retry_count + 1))
-    done
-
-    if [ $retry_count -eq $MAX_RETRIES ]; then
-        echo -e "${RED}$service_name health check failed${NC}"
-        exit 1
-    fi
-
-    echo -e "${GREEN}$service_name is ready${NC}"
+    retry_until_cmd "$service_name" curl -fsS "$service_url"
 }
 
 wait_for_postgres_no_docker() {
-    echo "Waiting for PostgreSQL..."
-    local retry_count=0
     local host="${DB_DOMAIN}"
     local port="${DB_PORT}"
-    until (echo -n > "/dev/tcp/${host}/${port}") 2>/dev/null || [ $retry_count -eq $MAX_RETRIES ]; do
-        sleep "$RETRY_DELAY_SECONDS"
-        retry_count=$((retry_count + 1))
-    done
-    if [ $retry_count -eq $MAX_RETRIES ]; then
-        echo -e "${RED}PostgreSQL health check failed${NC}"
-        exit 1
-    fi
-    echo -e "${GREEN}PostgreSQL is ready${NC}"
+    retry_until_cmd "PostgreSQL" bash -c "echo -n > /dev/tcp/${host}/${port}"
 }
 
 wait_for_api_readiness() {
     local script_name="$1"
     local display_name="$2"
-    local retry_count=0
-
-    echo "Waiting for $display_name..."
     if [ "$NO_DOCKER" = true ]; then
-        until (cd "$REPO_ROOT/api" && bun run "$script_name") > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
-            sleep "$RETRY_DELAY_SECONDS"
-            retry_count=$((retry_count + 1))
-        done
+        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT/api\" && bun run \"$script_name\""
     else
-        until docker compose exec -T api bun run "$script_name" > /dev/null 2>&1 || [ $retry_count -eq $MAX_RETRIES ]; do
-            sleep "$RETRY_DELAY_SECONDS"
-            retry_count=$((retry_count + 1))
-        done
+        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T api bun run \"$script_name\""
     fi
-
-    if [ $retry_count -eq $MAX_RETRIES ]; then
-        echo -e "${RED}$display_name failed${NC}"
-        exit 1
-    fi
-
-    echo -e "${GREEN}$display_name is ready${NC}"
 }
 
 seed_database() {
@@ -155,17 +133,7 @@ else
 
     echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
-    echo "Waiting for PostgreSQL..."
-    PG_RETRY_COUNT=0
-    until docker compose exec -T postgres pg_isready -U "$DB_USER" > /dev/null 2>&1 || [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; do
-        sleep "$RETRY_DELAY_SECONDS"
-        PG_RETRY_COUNT=$((PG_RETRY_COUNT + 1))
-    done
-    if [ $PG_RETRY_COUNT -eq $MAX_RETRIES ]; then
-        echo -e "${RED}PostgreSQL health check failed${NC}"
-        exit 1
-    fi
-    echo -e "${GREEN}PostgreSQL is ready${NC}"
+    retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
 
     wait_for_api_readiness "health" "API"
     wait_for_http_service "Web" "http://localhost:$WEB_PORT"
