@@ -3,24 +3,8 @@ name: E2E Tests
 on:
     pull_request:
         branches: [dev]
-        paths:
-            - "api/**"
-            - "web/**"
-            - "ios/**"
-            - "types/**"
-            - "run-e2e.sh"
-            - ".github/workflows/e2e_tests.yml"
-            - ".github/actions/**"
     push:
         branches: [dev]
-        paths:
-            - "api/**"
-            - "web/**"
-            - "ios/**"
-            - "types/**"
-            - "run-e2e.sh"
-            - ".github/workflows/e2e_tests.yml"
-            - ".github/actions/**"
     workflow_dispatch:
 
 # NOTE: iOS e2e tests require macOS 26 (for iOS 26.2 simulator) + Docker.
@@ -40,33 +24,53 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v6
 
+            - name: Check for E2E-relevant changes
+              uses: dorny/paths-filter@v4
+              id: paths
+              with:
+                  filters: |
+                      e2e:
+                        - 'api/**'
+                        - 'web/**'
+                        - 'ios/**'
+                        - 'types/**'
+                        - 'run-e2e.sh'
+                        - '.github/workflows/e2e_tests.yml'
+                        - '.github/actions/**'
+
             - name: Start PostgreSQL
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               run: |
                   pg_ctlcluster 16 main start
                   su - postgres -c "psql -c \"CREATE USER evy WITH PASSWORD 'evy' CREATEDB;\""
                   su - postgres -c "createdb -O evy evy"
 
             - name: Install root dependencies
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               run: bun install
               working-directory: .
 
             - name: Install API dependencies
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               working-directory: api
               run: bun install
 
             - name: Install Web dependencies
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               working-directory: web
               run: bun install
 
             - name: Prepare .env and generate types
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               uses: ./.github/actions/prepare-dotenv-and-types
 
             - name: Run E2E tests
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               run: bash run-e2e.sh --skip-ios --no-docker
 
             - name: Upload Playwright report
               uses: actions/upload-artifact@v7
-              if: always()
+              if: always() && (github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true')
               with:
                   name: e2e-tests-playwright-report
                   path: web/playwright-report/
