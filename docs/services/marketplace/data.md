@@ -4,72 +4,80 @@ These shapes are **domain models** used by the marketplace service. They are not
 
 ---
 
-#### seller
+## location
 
 ```
-reliability_rate: float
-items_sold: int
+latitude: decimal
+longitude: decimal
 ```
 
-#### dimension
+## price
 
 ```
-width: int
-height: int
-length: int
-weight: int
+currency: string
+value: decimal
 ```
 
-#### condition
+## address
 
 ```
-value: string
+unit: string
+street: string
+city: string
+postcode: string
+state: string
+country: string
+location: location
+instructions: string
 ```
 
-#### selling_reason
-
-```
-value: string
-```
-
-#### duration
+## area
 
 ```
 id: uuid
 value: string
 ```
 
-#### timeslot (marketplace UI)
-
-Used for calendar/grid UI (e.g. picker cells). For the EVY API timeslot shape (start/end **ISO date-time strings**, availability), see [EVY data models](../evy/sddata/data.md#timeslot).
+## tag
 
 ```
-x: int
-y: int
-header: string
-start_label: string
-end_label: string
-selected: boolean
+value: string
 ```
 
-#### item
+## photo
+
+Base model with no extra props.
+
+## logo
+
+Base model with no extra props.
+
+## timeslot
+
+Instants must be ISO 8601 strings. Preferred names:
 
 ```
-title: string
-description: string
-createdAt: string (date-time, ISO 8601)
-seller_id: uuid
-condition_id: uuid
-selling_reason_id: uuid
-tag_ids: [uuid]
-tags: [tag]
-payment_methods: {
-    cash: boolean
-    app: boolean
+startAt: string (date-time)
+endAt: string (date-time)
+available: boolean
+type: string
+```
+
+Legacy field names `start_timestamp` / `end_timestamp` are still validated the same way if present: **ISO strings only**, not Unix seconds or milliseconds.
+
+## transfer_options
+
+```
+pickup: {
+    timeslots: [timeslot]
+    address: address
 }
-photo_ids: [string]
-address: address
-price: price
-dimension: dimension
-transfer_options: transfer_options
+delivery: {
+    fee: price
+    timeslots: [timeslot]
+}
+ship: {
+    postal_code: string
+    areas: [area]
+}
 ```
