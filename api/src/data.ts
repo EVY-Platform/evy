@@ -30,39 +30,37 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-type PersistedFlowRow = {
-	id: string;
-	data: SDUI_Flow;
-	createdAt: Date;
-	updatedAt: Date;
+type IsoTimestampColumns = {
+	createdAt: string;
+	updatedAt: string;
 };
 
-type PersistedDataRow = {
-	id: string;
-	namespace: string;
-	resource: string;
-	data: DATA_Data["data"];
-	createdAt: Date;
-	updatedAt: Date;
-};
-
-function formatFlowRow(row: PersistedFlowRow): DATA_Flow {
+function formatFlowRow(
+	row: IsoTimestampColumns & { id: string; data: SDUI_Flow },
+): DATA_Flow {
 	return {
 		id: row.id,
 		data: row.data,
-		createdAt: row.createdAt.toISOString(),
-		updatedAt: row.updatedAt.toISOString(),
+		createdAt: row.createdAt,
+		updatedAt: row.updatedAt,
 	};
 }
 
-function formatPersistedDataRow(row: PersistedDataRow): DATA_Data {
+function formatPersistedDataRow(
+	row: IsoTimestampColumns & {
+		id: string;
+		namespace: string;
+		resource: string;
+		data: DATA_Data["data"];
+	},
+): DATA_Data {
 	return {
 		id: row.id,
 		namespace: row.namespace,
 		resource: row.resource,
 		data: row.data,
-		createdAt: row.createdAt.toISOString(),
-		updatedAt: row.updatedAt.toISOString(),
+		createdAt: row.createdAt,
+		updatedAt: row.updatedAt,
 	};
 }
 
@@ -107,7 +105,7 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 		await db.insert(device).values({
 			token,
 			os,
-			createdAt: new Date(),
+			createdAt: new Date().toISOString(),
 		});
 
 		return true;
@@ -167,7 +165,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 	}
 
 	const { namespace, resource, filter, data: dataPayload } = params;
-	const now = new Date();
+	const nowIso = new Date().toISOString();
 
 	if (resource === "sdui") {
 		const validatedData = validateFlowData(dataPayload);
@@ -175,7 +173,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 		if (filter?.id) {
 			const result = await db
 				.update(flow)
-				.set({ data: validatedData, updatedAt: now })
+				.set({ data: validatedData, updatedAt: nowIso })
 				.where(eq(flow.id, filter.id))
 				.returning();
 			return formatFlowRow(result[0]);
@@ -184,8 +182,8 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 			.insert(flow)
 			.values({
 				data: validatedData,
-				createdAt: now,
-				updatedAt: now,
+				createdAt: nowIso,
+				updatedAt: nowIso,
 			})
 			.returning();
 		return formatFlowRow(result[0]);
@@ -197,7 +195,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 	if (filter?.id) {
 		const result = await db
 			.update(data)
-			.set({ data: validatedPayload, updatedAt: now })
+			.set({ data: validatedPayload, updatedAt: nowIso })
 			.where(
 				and(
 					eq(data.id, filter.id),
@@ -217,8 +215,8 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 			namespace,
 			resource: singularResource,
 			data: validatedPayload,
-			createdAt: now,
-			updatedAt: now,
+			createdAt: nowIso,
+			updatedAt: nowIso,
 		})
 		.returning();
 	return formatPersistedDataRow(result[0]);

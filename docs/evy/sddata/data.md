@@ -4,9 +4,9 @@
 
 These types are defined in `types/schema/data/data.schema.json`. The API and generated Drizzle schema use them.
 
-### Common timestamp fields
+### Common date-time fields
 
-Tables that track updates use:
+Tables that track updates use ISO 8601 / RFC 3339 strings (never numeric Unix timestamps):
 
 - `createdAt`: string (date-time)
 - `updatedAt`: string (date-time)
@@ -120,12 +120,16 @@ Base model with no extra props.
 
 ### timeslot
 
+Instants must be ISO 8601 strings. Preferred names:
+
 ```
-start_timestamp: string
-end_timestamp: string
+startAt: string (date-time)
+endAt: string (date-time)
 available: boolean
 type: string
 ```
+
+Legacy field names `start_timestamp` / `end_timestamp` are still validated the same way if present: **ISO strings only**, not Unix seconds or milliseconds.
 
 ### transfer_options
 

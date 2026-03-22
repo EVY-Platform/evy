@@ -7,10 +7,10 @@ enum
 integer
 number
 boolean
-timestamp
+date-time (string)
 ```
 
-- Relational columns generated for Postgres enforce UUID, timestamps, enums, booleans, and (where defined) `integer` vs `number` column types. JSON stored in `jsonb` is validated at the API layer, not by Postgres row types.
+- Relational columns generated for Postgres enforce UUID, enums, booleans, and (where defined) `integer` vs `number` column types. **Instants** (`createdAt`, `updatedAt`, etc.) use JSON Schema `string` + `format: "date-time"` and are stored in Postgres as **`text`** containing an **ISO 8601 / RFC 3339** value (e.g. `2024-01-19T12:00:00.000Z`), not as Unix timestamps and not as SQL `timestamp` columns. JSON stored in `jsonb` is validated at the API layer, not by Postgres row types.
 - **`integer`**: whole numbers only (no fractional part). On the API, values must satisfy `Number.isInteger` after JSON parse.
 - **`number`**: decimal-capable numeric values; integer literals (e.g. `3`) are allowed. On the API, values must be finite (`number` JSON values; rejects `NaN` / `Infinity`).
 - **TypeScript generated from JSON Schema** often maps both `integer` and `number` to TS `number`. Runtime rules above (API / DB) are the source of truth when the distinction matters.

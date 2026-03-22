@@ -186,8 +186,9 @@ function buildStringColumn(
 		if (hasDefaultRandom) col += ".defaultRandom()";
 		return col;
 	}
+	/** JSON Schema `date-time`: store RFC 3339 / ISO 8601 strings in Postgres `text`, not `timestamp`. */
 	if (format === "date-time") {
-		return `timestamp("${dbCol}", { precision: 3 }).notNull()`;
+		return `text("${dbCol}").notNull()`;
 	}
 	if (typeof maxLength === "number") {
 		let col = `varchar("${dbCol}", { length: ${maxLength} })`;
@@ -340,7 +341,6 @@ async function main(): Promise<void> {
 		"	text,",
 		"	integer,",
 		"	numeric,",
-		"	timestamp,",
 		"	boolean,",
 		"	jsonb,",
 		"	uniqueIndex,",

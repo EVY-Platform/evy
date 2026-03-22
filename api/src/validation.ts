@@ -33,6 +33,99 @@ export const JsonValueSchema: z.ZodType<unknown> = z.lazy(() =>
 
 const DataPayloadObjectSchema = z.record(z.string(), JsonValueSchema);
 
+export function formatZodErrors(issues: z.core.$ZodIssue[]): string {
+	return issues
+		.map((issue) => {
+			const path = issue.path.join(".");
+			return path ? `${path}: ${issue.message}` : issue.message;
+		})
+		.join("; ");
+}
+
+/**
+ * Instants in JSON payloads use camelCase `*At` (e.g. `createdAt`) or legacy snake_case `*_timestamp`.
+ * Add explicit exceptions here only when a field is an instant but does not match those patterns.
+ */
+const ISO_DATE_TIME_FIELD_NAME_EXCEPTIONS = new Set<string>([]);
+
+/**
+ * Whether a JSON object key should hold an ISO 8601 / RFC 3339 string (never a numeric timestamp).
+ */
+export function isIsoDateTimeFieldName(key: string): boolean {
+	if (ISO_DATE_TIME_FIELD_NAME_EXCEPTIONS.has(key)) {
+		return true;
+	}
+	if (key.endsWith("_timestamp")) {
+		return true;
+	}
+	// camelCase instant suffix, length check avoids matching very short keys
+	if (key.length >= 3 && key.endsWith("At")) {
+		return true;
+	}
+	return false;
+}
+
+const zIsoDateTimeString = z.iso.datetime();
+
+function throwDataIsoValidationError(path: string, reason: string): never {
+	throw new Error(`Data validation failed: ${path}: ${reason}`);
+}
+
+/**
+ * Walks arbitrary JSON under a data payload and enforces ISO date-time strings on
+ * keys matched by {@link isIsoDateTimeFieldName}. Rejects finite numbers and non-string types for those keys.
+ */
+export function assertIsoDateTimeJsonFields(
+	value: unknown,
+	pathPrefix = "",
+): void {
+	if (value === null || typeof value !== "object") {
+		return;
+	}
+	if (Array.isArray(value)) {
+		for (let index = 0; index < value.length; index++) {
+			assertIsoDateTimeJsonFields(
+				value[index],
+				pathPrefix ? `${pathPrefix}[${index}]` : `[${index}]`,
+			);
+		}
+		return;
+	}
+
+	const record = value as Record<string, unknown>;
+	for (const [key, child] of Object.entries(record)) {
+		const path = pathPrefix ? `${pathPrefix}.${key}` : key;
+		if (isIsoDateTimeFieldName(key)) {
+			if (typeof child === "number" && Number.isFinite(child)) {
+				throwDataIsoValidationError(
+					path,
+					"date-time fields must be ISO 8601 strings, not numeric timestamps",
+				);
+			}
+			if (child === null || child === undefined) {
+				throwDataIsoValidationError(
+					path,
+					"date-time field must be an ISO 8601 string",
+				);
+			}
+			if (typeof child !== "string") {
+				throwDataIsoValidationError(
+					path,
+					"date-time field must be an ISO 8601 string",
+				);
+			}
+			const parsed = zIsoDateTimeString.safeParse(child);
+			if (!parsed.success) {
+				throwDataIsoValidationError(
+					path,
+					`expected ISO 8601 date-time string (${formatZodErrors(parsed.error.issues)})`,
+				);
+			}
+		}
+		assertIsoDateTimeJsonFields(child, path);
+	}
+}
+
 /**
  * Schema for a single row action item
  */
@@ -89,15 +182,6 @@ const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
 	pages: z.array(PageSchema),
 });
 
-export function formatZodErrors(issues: z.core.$ZodIssue[]): string {
-	return issues
-		.map((issue) => {
-			const path = issue.path.join(".");
-			return path ? `${path}: ${issue.message}` : issue.message;
-		})
-		.join("; ");
-}
-
 /**
  * Validates non-SDUI `upsert` payloads: top-level object with JSON-serializable values
  * (`JSONValue`), with finite numeric scalars only.
@@ -109,6 +193,7 @@ export function validateDataPayload(data: unknown): DATA_Data["data"] {
 			`Data validation failed: ${formatZodErrors(result.error.issues)}`,
 		);
 	}
+	assertIsoDateTimeJsonFields(result.data);
 	return result.data as DATA_Data["data"];
 }
 

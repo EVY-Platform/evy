@@ -66,10 +66,12 @@ Outputs: 15 minutes
 #### formatDate
 
 ```
-formatDate(_variable_type_timestamp_, "MM/DD/YYYY")
-Variable: 1705651372
-Outputs: 19/01/2024
+formatDate(_variable_type_date_time_string_, "MM/DD/YYYY")
+Variable: "2024-01-19T12:42:52.000Z"
+Outputs: 01/19/2024
 ```
+
+Input is an **ISO 8601 / RFC 3339** string (same wire type as `createdAt` / `updatedAt`), not a Unix timestamp number.
 
 ### Dynamic formatting functions
 

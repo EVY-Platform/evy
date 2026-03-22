@@ -41,7 +41,7 @@ value: string
 
 #### timeslot (marketplace UI)
 
-Used for calendar/grid UI (e.g. picker cells). For the EVY API timeslot shape (start/end timestamps, availability), see [EVY data models](../evy/sddata/data.md#timeslot).
+Used for calendar/grid UI (e.g. picker cells). For the EVY API timeslot shape (start/end **ISO date-time strings**, availability), see [EVY data models](../evy/sddata/data.md#timeslot).
 
 ```
 x: int
@@ -57,6 +57,7 @@ selected: boolean
 ```
 title: string
 description: string
+createdAt: string (date-time, ISO 8601)
 seller_id: uuid
 condition_id: uuid
 selling_reason_id: uuid

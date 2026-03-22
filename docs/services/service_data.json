@@ -81,7 +81,7 @@
 		},
 		"seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
 		"address": {},
-		"created_timestamp": "1701471377",
+		"createdAt": "2023-12-01T22:56:17.000Z",
 		"transfer_options": {
 			"pickup": {
 				"timeslots": [

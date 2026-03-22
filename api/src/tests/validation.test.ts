@@ -1,5 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import {
+	isIsoDateTimeFieldName,
 	JsonValueSchema,
 	validateDataPayload,
 	zIntegerSchema,
@@ -55,6 +56,28 @@ describe("JsonValueSchema", () => {
 	});
 });
 
+describe("isIsoDateTimeFieldName", () => {
+	it("matches camelCase *At instants", () => {
+		expect(isIsoDateTimeFieldName("createdAt")).toBe(true);
+		expect(isIsoDateTimeFieldName("updatedAt")).toBe(true);
+		expect(isIsoDateTimeFieldName("startAt")).toBe(true);
+		expect(isIsoDateTimeFieldName("endAt")).toBe(true);
+	});
+
+	it("matches legacy *_timestamp keys", () => {
+		expect(isIsoDateTimeFieldName("start_timestamp")).toBe(true);
+		expect(isIsoDateTimeFieldName("end_timestamp")).toBe(true);
+		expect(isIsoDateTimeFieldName("created_timestamp")).toBe(true);
+	});
+
+	it("does not match unrelated keys", () => {
+		expect(isIsoDateTimeFieldName("id")).toBe(false);
+		expect(isIsoDateTimeFieldName("count")).toBe(false);
+		expect(isIsoDateTimeFieldName("timestamp")).toBe(false);
+		expect(isIsoDateTimeFieldName("at")).toBe(false);
+	});
+});
+
 describe("validateDataPayload", () => {
 	it("accepts plain objects with JSON-serializable values", () => {
 		const out = validateDataPayload({ id: "1", value: "ok", n: 1.25 });
@@ -70,5 +93,48 @@ describe("validateDataPayload", () => {
 		expect(() => validateDataPayload({ bad: Number.NaN })).toThrow(
 			"Data validation failed",
 		);
+	});
+
+	it("rejects numeric timestamps for createdAt", () => {
+		expect(() =>
+			validateDataPayload({ id: "1", createdAt: 1_705_651_372 }),
+		).toThrow("numeric timestamps");
+	});
+
+	it("accepts ISO strings for createdAt and updatedAt", () => {
+		const out = validateDataPayload({
+			id: "1",
+			createdAt: "2024-01-19T12:00:00.000Z",
+			updatedAt: "2024-01-19T12:00:00.000Z",
+		});
+		expect(out).toEqual({
+			id: "1",
+			createdAt: "2024-01-19T12:00:00.000Z",
+			updatedAt: "2024-01-19T12:00:00.000Z",
+		});
+	});
+
+	it("rejects epoch digit strings for created_timestamp", () => {
+		expect(() =>
+			validateDataPayload({
+				id: "1",
+				created_timestamp: "1701471377",
+			}),
+		).toThrow("Data validation failed");
+	});
+
+	it("validates date-time fields in nested objects", () => {
+		expect(() =>
+			validateDataPayload({
+				item: { createdAt: 1_234_567_890 },
+			}),
+		).toThrow("numeric timestamps");
+		expect(
+			validateDataPayload({
+				item: { createdAt: "2024-01-19T12:00:00.000Z" },
+			}),
+		).toEqual({
+			item: { createdAt: "2024-01-19T12:00:00.000Z" },
+		});
 	});
 });
