@@ -13,7 +13,7 @@ If smartphones and the internet were built by the people for the people. Create 
 Cross-platform contracts live in **`types/`** at the repo root.
 
 - **Source of truth:** `types/schema/` — JSON Schema files for SDUI types and JSON-RPC payloads.
-- **Generated:** `types/generated/ts/` (TypeScript) and `types/generated/swift/` (Swift). These are committed; do not edit by hand.
+- **Generated manually:** `types/generated/ts/` (TypeScript) and `types/generated/swift/` (Swift).
 
 **Commands (from repo root):**
 
