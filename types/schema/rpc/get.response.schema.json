@@ -18,8 +18,8 @@
 			"title": "GetDataResponse",
 			"anyOf": [
 				{ "type": "string" },
-				{ "type": "number" },
 				{ "type": "integer" },
+				{ "type": "number" },
 				{ "type": "boolean" },
 				{ "type": "null" },
 				{

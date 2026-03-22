@@ -15,7 +15,7 @@ import {
 } from "evy-types";
 import { device, flow, data, osEnum } from "./db/drizzleTables";
 import { db } from "./db";
-import { validateFlowData } from "./validation";
+import { validateDataPayload, validateFlowData } from "./validation";
 
 type Namespace = GetRequest["namespace"];
 type Resource = GetRequest["resource"];
@@ -191,12 +191,13 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 		return formatFlowRow(result[0]);
 	}
 
+	const validatedPayload = validateDataPayload(dataPayload);
 	const singularResource = pluralize.singular(resource);
 
 	if (filter?.id) {
 		const result = await db
 			.update(data)
-			.set({ data: dataPayload, updatedAt: now })
+			.set({ data: validatedPayload, updatedAt: now })
 			.where(
 				and(
 					eq(data.id, filter.id),
@@ -215,7 +216,7 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 		.values({
 			namespace,
 			resource: singularResource,
-			data: dataPayload,
+			data: validatedPayload,
 			createdAt: now,
 			updatedAt: now,
 		})

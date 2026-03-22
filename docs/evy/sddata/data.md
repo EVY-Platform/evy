@@ -1,9 +1,5 @@
 # Data models
 
-This page describes both the **API persistence schema** (defined in `types/schema/data/data.schema.json` and used by the API and Drizzle) and **domain/conceptual models** that are stored as JSON in namespaced data (e.g. `NamespacedData.evy`, `NamespacedData.marketplace`) and are not validated by JSON Schema.
-
----
-
 ## API persistence schema (DATA_*)
 
 These types are defined in `types/schema/data/data.schema.json`. The API and generated Drizzle schema use them.
@@ -14,8 +10,6 @@ Tables that track updates use:
 
 - `createdAt`: string (date-time)
 - `updatedAt`: string (date-time)
-
-(There is no `archived_timestamp` in the current schema.)
 
 ### DATA_Device
 

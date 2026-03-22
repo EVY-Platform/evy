@@ -114,6 +114,12 @@
 				"description": {
 					"type": "string"
 				},
+				"sortOrder": {
+					"type": "integer"
+				},
+				"defaultWeightKg": {
+					"type": "number"
+				},
 				"createdAt": {
 					"type": "string",
 					"format": "date-time"

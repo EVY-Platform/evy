@@ -205,6 +205,21 @@ function buildBooleanColumn(dbCol: string, defaultVal: unknown): string {
 	return col;
 }
 
+function buildIntegerColumn(
+	dbCol: string,
+	{ isPk, hasDefaultRandom }: ColumnSuffixes,
+): string {
+	let col = `integer("${dbCol}")`;
+	if (isPk) col += ".primaryKey()";
+	if (hasDefaultRandom) col += ".defaultRandom()";
+	return col;
+}
+
+/** JSON Schema `number`: stored as Postgres `numeric` with JS number mode (decimals + integer literals). */
+function buildNumberColumn(dbCol: string): string {
+	return `numeric("${dbCol}", { precision: 28, scale: 10, mode: "number" })`;
+}
+
 function resolveJsonbTypeAnnotation(ref: string | undefined): string {
 	if (ref?.includes("SDUI_Flow") || ref?.includes("evy.schema.json")) {
 		return "SDUI_Flow";
@@ -249,7 +264,11 @@ function applyNullabilityFallback(
 	type: string | undefined,
 	format: string | undefined,
 	ref: string | undefined,
+	isRequired: boolean,
 ): string {
+	if (!isRequired) {
+		return col.replace(/\.notNull\(\)/g, "");
+	}
 	if (
 		col.includes(".notNull()") ||
 		type === "boolean" ||
@@ -257,20 +276,22 @@ function applyNullabilityFallback(
 	) {
 		return col;
 	}
-	if (type === "string" && format !== "date-time") return col + ".notNull()";
+	if (type === "string" && format !== "date-time") return `${col}.notNull()`;
 	if (type === "object" || ref) return col;
-	return col + ".notNull()";
+	if (type === "integer" || type === "number") return `${col}.notNull()`;
+	return `${col}.notNull()`;
 }
 
 /**
  * Emit a Drizzle column definition string from a JSON Schema property.
- * Rule order: string → boolean → object → $ref → fallback text.
+ * Rule order: string → integer → number → boolean → object → $ref → fallback text.
  */
 function emitColumn(
-	defKey: string,
+	_defKey: string,
 	propName: string,
 	prop: JsonSchemaProp,
 	tableConfig: { primaryKey: string; defaultRandom: string[] },
+	requiredSet: Set<string>,
 ): string {
 	const dbCol = decamelize(propName);
 	const suffixes: ColumnSuffixes = {
@@ -278,10 +299,15 @@ function emitColumn(
 		hasDefaultRandom: tableConfig.defaultRandom.includes(propName),
 	};
 	const { type, format, maxLength, $ref: ref, default: defaultVal } = prop;
+	const isRequired = requiredSet.has(propName);
 
 	let col: string;
 	if (type === "string") {
 		col = buildStringColumn(dbCol, format, maxLength, suffixes);
+	} else if (type === "integer") {
+		col = buildIntegerColumn(dbCol, suffixes);
+	} else if (type === "number") {
+		col = buildNumberColumn(dbCol);
 	} else if (type === "boolean") {
 		col = buildBooleanColumn(dbCol, defaultVal);
 	} else if (type === "object") {
@@ -292,7 +318,7 @@ function emitColumn(
 		col = `text("${dbCol}")`;
 	}
 
-	return applyNullabilityFallback(col, type, format, ref);
+	return applyNullabilityFallback(col, type, format, ref, isRequired);
 }
 
 async function main(): Promise<void> {
@@ -312,6 +338,8 @@ async function main(): Promise<void> {
 		"	uuid,",
 		"	varchar,",
 		"	text,",
+		"	integer,",
+		"	numeric,",
 		"	timestamp,",
 		"	boolean,",
 		"	jsonb,",
@@ -323,7 +351,7 @@ async function main(): Promise<void> {
 		"",
 	];
 
-	for (const [enumKey, enumConfig] of Object.entries(config.enums ?? {}) as [
+	for (const [_enumKey, enumConfig] of Object.entries(config.enums ?? {}) as [
 		string,
 		DrizzleEnumConfig,
 	][]) {
@@ -354,11 +382,12 @@ async function main(): Promise<void> {
 			`	"${tableConfig.tableName}",`,
 			"	{",
 		);
+		const requiredSet = new Set(def.required ?? []);
 		const propEntries = Object.entries(def.properties);
-		for (const [propName, propVal] of propEntries) {
+		for (const [propName, _propVal] of propEntries) {
 			const prop = getPropSchema(def, propName);
 			if (!prop) continue;
-			const col = emitColumn(defKey, propName, prop, tableConfig);
+			const col = emitColumn(defKey, propName, prop, tableConfig, requiredSet);
 			lines.push(`		${propName}: ${col},`);
 		}
 		lines.push("	},");

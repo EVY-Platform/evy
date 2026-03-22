@@ -430,6 +430,27 @@ describe("upsert", () => {
 		expect(dataRecords[0].namespace).toBe("evy");
 		expect(dataRecords[0].resource).toBe("condition");
 	});
+
+	it("should reject Data payload with NaN", async () => {
+		await expect(
+			upsert({
+				namespace: "evy",
+				resource: "conditions",
+				data: { id: "1", value: "x", bad: Number.NaN },
+			}),
+		).rejects.toThrow("Data validation failed");
+	});
+
+	it("should accept Data payload with integer and decimal numbers", async () => {
+		const payload = { id: "1", count: 3, price: 19.99 };
+		const result = await upsert({
+			namespace: "evy",
+			resource: "conditions",
+			data: payload,
+		});
+		const dataResult = result as DATA_Data;
+		expect(dataResult.data).toEqual(payload);
+	});
 });
 
 describe("upsert SDUI validation", () => {

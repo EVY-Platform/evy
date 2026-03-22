@@ -1,5 +1,37 @@
-import { SDUI_ROW_TYPE_VALUES, type SDUI_Flow, type SDUI_Row } from "evy-types";
+import {
+	SDUI_ROW_TYPE_VALUES,
+	type DATA_Data,
+	type SDUI_Flow,
+	type SDUI_Row,
+} from "evy-types";
 import { z } from "zod";
+
+/**
+ * JSON Schema `integer`: whole numbers only (no fractional part).
+ */
+export const zIntegerSchema = z.number().int();
+
+/**
+ * JSON Schema `number`: finite numeric values; allows integer literals and decimals.
+ */
+export const zNumberSchema = z.number().finite();
+
+/**
+ * Recursive JSON value matching `types/schema/common/json.schema.json` `JSONValue`.
+ * Scalar numbers are validated as finite (covers both JSON Schema `integer` and `number` branches).
+ */
+export const JsonValueSchema: z.ZodType<unknown> = z.lazy(() =>
+	z.union([
+		z.null(),
+		z.boolean(),
+		z.string(),
+		zNumberSchema,
+		z.array(JsonValueSchema),
+		z.record(z.string(), JsonValueSchema),
+	]),
+);
+
+const DataPayloadObjectSchema = z.record(z.string(), JsonValueSchema);
 
 /**
  * Schema for a single row action item
@@ -64,6 +96,20 @@ export function formatZodErrors(issues: z.core.$ZodIssue[]): string {
 			return path ? `${path}: ${issue.message}` : issue.message;
 		})
 		.join("; ");
+}
+
+/**
+ * Validates non-SDUI `upsert` payloads: top-level object with JSON-serializable values
+ * (`JSONValue`), with finite numeric scalars only.
+ */
+export function validateDataPayload(data: unknown): DATA_Data["data"] {
+	const result = DataPayloadObjectSchema.safeParse(data);
+	if (!result.success) {
+		throw new Error(
+			`Data validation failed: ${formatZodErrors(result.error.issues)}`,
+		);
+	}
+	return result.data as DATA_Data["data"];
 }
 
 export function validateFlowData(data: unknown): SDUI_Flow {
