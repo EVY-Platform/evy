@@ -71,6 +71,17 @@ function isDATA_Flow(row: DATA_Rows): row is DATA_Flow {
 	);
 }
 
+/** Single-column ISO instant for test DB inserts. */
+function isoNow(): string {
+	return new Date().toISOString();
+}
+
+/** Shared `createdAt` / `updatedAt` for flow (and similar) row fixtures. */
+function testFlowRowTimestamps(): { createdAt: string; updatedAt: string } {
+	const iso = isoNow();
+	return { createdAt: iso, updatedAt: iso };
+}
+
 // Helper to clear all tables between tests
 async function clearTables() {
 	await testDb.delete(schema.flow);
@@ -151,7 +162,7 @@ describe("validateAuth", () => {
 		await testDb.insert(schema.device).values({
 			token: "existing-token",
 			os: "ios",
-			createdAt: new Date(),
+			createdAt: isoNow(),
 		});
 
 		const result = await validateAuth("existing-token", "ios");
@@ -208,23 +219,21 @@ describe("get", () => {
 	});
 
 	it("should return all flow data for resource SDUI when no filter", async () => {
-		const now = new Date();
+		const timestamps = testFlowRowTimestamps();
 		await testDb.insert(schema.flow).values([
 			{
 				data: createTestFlow({
 					name: "Flow 1",
 					pages: [{ title: "P1", rows: [] }],
 				}),
-				createdAt: now,
-				updatedAt: now,
+				...timestamps,
 			},
 			{
 				data: createTestFlow({
 					name: "Flow 2",
 					pages: [{ title: "P2", rows: [] }],
 				}),
-				createdAt: now,
-				updatedAt: now,
+				...timestamps,
 			},
 		]);
 
@@ -247,8 +256,7 @@ describe("get", () => {
 				name: "Single Flow",
 				pages: [{ title: "P1", rows: [] }],
 			}),
-			createdAt: new Date(),
-			updatedAt: new Date(),
+			...testFlowRowTimestamps(),
 		});
 
 		const result = await get({
@@ -358,8 +366,7 @@ describe("upsert", () => {
 			.insert(schema.flow)
 			.values({
 				data: existingFlowData,
-				createdAt: new Date(),
-				updatedAt: new Date(),
+				...testFlowRowTimestamps(),
 			})
 			.returning();
 
@@ -429,6 +436,27 @@ describe("upsert", () => {
 		expect(dataRecords).toHaveLength(1);
 		expect(dataRecords[0].namespace).toBe("evy");
 		expect(dataRecords[0].resource).toBe("condition");
+	});
+
+	it("should reject Data payload with NaN", async () => {
+		await expect(
+			upsert({
+				namespace: "evy",
+				resource: "conditions",
+				data: { id: "1", value: "x", bad: Number.NaN },
+			}),
+		).rejects.toThrow("Data validation failed");
+	});
+
+	it("should accept Data payload with integer and decimal numbers", async () => {
+		const payload = { id: "1", count: 3, price: 19.99 };
+		const result = await upsert({
+			namespace: "evy",
+			resource: "conditions",
+			data: payload,
+		});
+		const dataResult = result as DATA_Data;
+		expect(dataResult.data).toEqual(payload);
 	});
 });
 

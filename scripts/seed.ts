@@ -118,11 +118,11 @@ export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 export async function seedDatabase({
 	flowsJson,
 	dataJson,
-	now = new Date(),
+	now = new Date().toISOString(),
 }: {
 	flowsJson: SeedFlow[];
 	dataJson: SeedDataMap;
-	now?: Date;
+	now?: string;
 }) {
 	await seedDb.delete(schema.flow);
 	await seedDb.delete(schema.data);

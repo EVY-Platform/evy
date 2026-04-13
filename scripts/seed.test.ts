@@ -9,8 +9,8 @@ type SeededFlowRow = {
 	data: {
 		id: string;
 	};
-	createdAt: Date;
-	updatedAt: Date;
+	createdAt: string;
+	updatedAt: string;
 };
 
 type SeededDataRow = {
@@ -18,8 +18,8 @@ type SeededDataRow = {
 	namespace: string;
 	resource: string;
 	data: Record<string, unknown>;
-	createdAt: Date;
-	updatedAt: Date;
+	createdAt: string;
+	updatedAt: string;
 };
 
 const insertedRows = {
@@ -108,7 +108,7 @@ describe("seed script", () => {
 		await seedDatabase({
 			flowsJson,
 			dataJson,
-			now: new Date("2026-03-11T00:00:00.000Z"),
+			now: "2026-03-11T00:00:00.000Z",
 		});
 
 		expect(insertedRows.flows.length).toBeGreaterThan(0);

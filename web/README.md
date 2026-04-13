@@ -1,8 +1,8 @@
 # EVY Web
 
-A React-based app builder built with Bun.
+A React-based app builder.
 
-Shared types (`SDUI_Flow`, `SDUI_Page`, `SDUI_Row`, RPC payloads) come from the schema-generated `evy-types` package (see `tsconfig.json` path alias to `../types/generated/ts`). After changing schemas in `types/schema/`, run `bun run types:generate` from the repo root and commit the updated generated files.
+Shared types (`SDUI_Flow`, `SDUI_Page`, `SDUI_Row`, RPC payloads) come from the schema-generated `evy-types` package (see `tsconfig.json` path alias to `../types/generated/ts`).
 
 ## Architecture
 
@@ -152,61 +152,43 @@ graph TD
 | **usePageDropTarget**  | Hook setting up page-level drop targets for drag-and-drop           |
 | **defineRow**          | Factory function used to declare all row components                 |
 
-### Row Categories
-
-- **View Rows**: Display-only components (TextRow, InfoRow, InputListRow)
-- **Edit Rows**: Form input components (InputRow, DropdownRow, CalendarRow, TextAreaRow, SearchRow, SelectPhotoRow, InlinePickerRow, TextSelectRow)
-- **Action Rows**: Interactive components (ButtonRow, TextActionRow)
-- **Container Rows**: Layout components that hold child rows (ListContainerRow, ColumnContainerRow, SheetContainerRow, SelectSegmentContainerRow)
-
 ## Getting Started
 
 ### Prerequisites
 
 - [Bun](https://bun.sh/) installed on your system
+- PostgreSQL database (or use Docker Compose)
 
-### Installation
+### Environment Variables
 
-```bash
-bun install
+Ensure your root env file (`../.env`) is set with the .env.example. The following environment variables are used by the Web:
+
+```env
+WEB_PORT=3000
+API_URL=http://localhost:8000
 ```
 
-Create a root `.env` file at the repository root (`../.env` from the `web` directory). The web scripts load environment variables from this shared root env file.
-
-### Running the App
-
-#### Development Mode
+### Running dev app with hot-reload
 
 ```bash
 bun run dev
-```
-
-This will build the application and start the dev server with hot reloading.
-
-#### Production Mode
-
-```bash
-bun run build
-bun run start
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ### Docker
 
-#### Build and Run
-
 ```bash
 docker build -t evy-web .
 docker run -p 3000:3000 evy-web
 ```
 
-#### Using Docker Compose
+### Docker Compose
 
 From the repo root (the web app has no `docker-compose.yml` in its directory):
 
 ```bash
-docker compose up -d
+docker compose up -d web
 ```
 
 You can configure the port via the `WEB_PORT` environment variable (default: 3000).
@@ -215,26 +197,10 @@ You can configure the port via the `WEB_PORT` environment variable (default: 300
 
 This project uses Playwright for both component tests and end-to-end tests.
 
-### Setup (local only)
-
 Install Chromium and its system dependencies (not needed in CI -- the CI image has them pre-installed):
 
 ```bash
 bun run test:setup
-```
-
-### Running Tests
-
-Component and integration tests (`tests/`):
-
-```bash
-bun run test
-```
-
-End-to-end tests (`e2e/`) -- requires the full stack to be running (see [root README](../README.md#e2e-tests)):
-
-```bash
-bun run test:e2e
 ```
 
 To run the component tests with UI or debug mode:
@@ -244,6 +210,16 @@ bun run test --ui
 bun run test --debug
 ```
 
-## License
+## Available Scripts
 
-Licensed under GPL-3.0-only; see [LICENSE](LICENSE) and the repository root [LICENSE](../LICENSE).
+| Script                 | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `bun run dev`          | Start the web app in development mode    |
+| `bun run build`        | Build the production assets into `dist/` |
+| `bun run start`        | Start the web app using the Bun server   |
+| `bun run lint`         | Run Biome checks across the project      |
+| `bun run format`       | Format the project with Biome            |
+| `bun run setup`        | Copy static assets into `dist/`          |
+| `bun run test`         | Run Playwright component tests           |
+| `bun run test:e2e`     | Run Playwright end-to-end tests          |
+| `bun run test:setup`   | Install Playwright Chromium dependencies |

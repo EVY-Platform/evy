@@ -22,6 +22,20 @@
 			"when": 1773146346012,
 			"tag": "0002_wise_kinsey_walden",
 			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1774163491984,
+			"tag": "0003_white_wrecker",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1774163929893,
+			"tag": "0004_small_scourge",
+			"breakpoints": true
 		}
 	]
 }

@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "data",
 	"title": "DATA_Rows",
-	"description": "API persistence row types: DATA_Flow, DATA_Device, DATA_Service, etc.",
+	"description": "API persistence row types: DATA_Flow, DATA_Device, DATA_Service, etc. Date-time fields use ISO 8601 / RFC 3339 strings (format date-time), not Unix timestamps; Drizzle maps them to Postgres text columns.",
 	"oneOf": [
 		{
 			"$ref": "#/$defs/DATA_Flow"
@@ -113,6 +113,12 @@
 				},
 				"description": {
 					"type": "string"
+				},
+				"sortOrder": {
+					"type": "integer"
+				},
+				"defaultWeightKg": {
+					"type": "number"
 				},
 				"createdAt": {
 					"type": "string",
