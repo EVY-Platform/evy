@@ -2,9 +2,14 @@ import { dirname, join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import pluralize from "pluralize";
+import postgres from "postgres";
 import { z } from "zod";
-import { db, schema } from "../api/src/db";
+import { db as coreDb, schema as coreSchema } from "../api/src/db";
 import { validateFlowData, formatZodErrors } from "../api/src/validation";
+import {
+	db as marketplaceDb,
+	schema as marketplaceSchema,
+} from "../services/marketplace/src/db";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const EVY_FLOWS_PATH = join(SCRIPT_DIR, "..", "docs", "evy", "evy_sdui.json");
@@ -22,6 +27,15 @@ const DATA_PATH = join(
 	"services",
 	"service_data.json",
 );
+
+const MARKETPLACE_SEED_KEYS = new Set([
+	"selling_reasons",
+	"conditions",
+	"durations",
+	"areas",
+	"timeslots",
+	"item",
+]);
 
 const SeedDataItemSchema = z.looseObject({
 	id: z.uuid(),
@@ -42,9 +56,8 @@ type SeedDb = {
 	};
 };
 
-// Drizzle types are resolved from both the repo root and `api/` package in this workspace,
-// so use a narrow runtime shape here to avoid cross-package type incompatibilities.
-const seedDb = db as unknown as SeedDb;
+const coreSeedDb = coreDb as unknown as SeedDb;
+const marketplaceSeedDb = marketplaceDb as unknown as SeedDb;
 
 function validateSeedDataItem(
 	item: unknown,
@@ -80,16 +93,50 @@ function validateSeedData(dataJson: unknown): SeedDataMap {
 	return validatedEntries;
 }
 
-export async function loadSeedInputs(): Promise<{
-	flowsJson: SeedFlow[];
-	dataJson: SeedDataMap;
-}>;
-export async function loadSeedInputs(paths: SeedInputPaths): Promise<{
-	flowsJson: SeedFlow[];
-	dataJson: SeedDataMap;
-}>;
+export function extractMarketplaceData(dataJson: SeedDataMap): SeedDataMap {
+	const out: SeedDataMap = {};
+	for (const [key, value] of Object.entries(dataJson)) {
+		if (MARKETPLACE_SEED_KEYS.has(key)) {
+			out[key] = value;
+		}
+	}
+	return out;
+}
+
+export async function ensureMarketplaceDatabaseExists(): Promise<void> {
+	const dbName = process.env.MARKETPLACE_DB_DATABASE ?? "marketplace";
+	if (!/^[a-zA-Z0-9_]+$/.test(dbName)) {
+		throw new Error("Invalid MARKETPLACE_DB_DATABASE");
+	}
+	const user = process.env.DB_USER;
+	const pass = process.env.DB_PASS;
+	const port = process.env.DB_PORT;
+	const domain = process.env.DB_DOMAIN;
+	if (!user || !pass || !port || !domain) {
+		throw new Error("Missing DB_* env for ensureMarketplaceDatabaseExists");
+	}
+	const sql = postgres({
+		host: domain,
+		port: Number(port),
+		user,
+		password: pass,
+		database: "postgres",
+	});
+	try {
+		await sql.unsafe(`CREATE DATABASE "${dbName}"`);
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : String(error);
+		if (!message.includes("already exists")) {
+			await sql.end({ timeout: 5 });
+			throw error;
+		}
+	}
+	await sql.end({ timeout: 5 });
+}
+
 export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
-	flowsJson: SeedFlow[];
+	evyFlowsJson: SeedFlow[];
+	serviceFlowsJson: SeedFlow[];
 	dataJson: SeedDataMap;
 }> {
 	const evyFlowsRaw = JSON.parse(
@@ -109,26 +156,25 @@ export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 		JSON.parse(await readFile(paths.dataPath ?? DATA_PATH, "utf-8")),
 	);
 
-	// Combine flows with evy flows first (includes home flow)
-	const flowsJson = [...evyFlowsJson, ...serviceFlowsJson];
-
-	return { flowsJson, dataJson };
+	return { evyFlowsJson, serviceFlowsJson, dataJson };
 }
 
 export async function seedDatabase({
-	flowsJson,
-	dataJson,
+	evyFlowsJson,
+	serviceFlowsJson,
+	marketplaceDataJson,
 	now = new Date().toISOString(),
 }: {
-	flowsJson: SeedFlow[];
-	dataJson: SeedDataMap;
+	evyFlowsJson: SeedFlow[];
+	serviceFlowsJson: SeedFlow[];
+	marketplaceDataJson: SeedDataMap;
 	now?: string;
 }) {
-	await seedDb.delete(schema.flow);
-	await seedDb.delete(schema.data);
+	await coreSeedDb.delete(coreSchema.flow);
+	await coreSeedDb.delete(coreSchema.data);
 
-	for (const flowData of flowsJson) {
-		await seedDb.insert(schema.flow).values({
+	for (const flowData of evyFlowsJson) {
+		await coreSeedDb.insert(coreSchema.flow).values({
 			id: flowData.id,
 			data: flowData,
 			createdAt: now,
@@ -136,12 +182,23 @@ export async function seedDatabase({
 		});
 	}
 
-	for (const [key, value] of Object.entries(dataJson)) {
+	for (const flowData of serviceFlowsJson) {
+		await coreSeedDb.insert(coreSchema.flow).values({
+			id: flowData.id,
+			data: flowData,
+			createdAt: now,
+			updatedAt: now,
+		});
+	}
+
+	await marketplaceSeedDb.delete(marketplaceSchema.data);
+
+	for (const [key, value] of Object.entries(marketplaceDataJson)) {
 		const resource = pluralize.singular(key);
 		for (const item of value) {
-			await seedDb.insert(schema.data).values({
+			await marketplaceSeedDb.insert(marketplaceSchema.data).values({
 				id: item.id,
-				namespace: "evy",
+				namespace: "marketplace",
 				resource,
 				data: item,
 				createdAt: now,
@@ -151,10 +208,13 @@ export async function seedDatabase({
 	}
 }
 
-// Keep this module safe to import in tests while still allowing direct script execution.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-	const { flowsJson, dataJson } = await loadSeedInputs();
-	seedDatabase({ flowsJson, dataJson })
+	const { evyFlowsJson, serviceFlowsJson, dataJson } = await loadSeedInputs();
+	const marketplaceDataJson = extractMarketplaceData(dataJson);
+	ensureMarketplaceDatabaseExists()
+		.then(() =>
+			seedDatabase({ evyFlowsJson, serviceFlowsJson, marketplaceDataJson }),
+		)
 		.then(() => {
 			console.log("Seeding complete!");
 			process.exit(0);

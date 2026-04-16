@@ -2,7 +2,7 @@ import { Client } from "rpc-websockets";
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import type { UI_Flow, UI_Page, UI_Row } from "evy-types";
 
-import { isRecord } from "../src/data";
+import { isRecord } from "../src/coreData";
 import { waitForClientOpen } from "../src/tests/wsTestHelpers";
 
 type WSClient = InstanceType<typeof Client>;
@@ -181,7 +181,7 @@ describe("API E2E Tests", () => {
 
 		it("get non-SDUI resource should return data object", async () => {
 			const result = await client.call("get", {
-				namespace: "evy",
+				namespace: "marketplace",
 				resource: "items",
 			});
 			expect(Array.isArray(result)).toBe(true);
@@ -189,12 +189,13 @@ describe("API E2E Tests", () => {
 
 		it("upsert then get non-SDUI resource", async () => {
 			const testData = {
+				id: crypto.randomUUID(),
 				testField: "e2e test value",
 				nested: { value: 123 },
 			};
 
 			const upserted = await client.call("upsert", {
-				namespace: "evy",
+				namespace: "marketplace",
 				resource: "items",
 				data: testData,
 			});
@@ -204,7 +205,7 @@ describe("API E2E Tests", () => {
 			expect(isRecord(upserted.data)).toBe(true);
 
 			const got = await client.call("get", {
-				namespace: "evy",
+				namespace: "marketplace",
 				resource: "items",
 			});
 

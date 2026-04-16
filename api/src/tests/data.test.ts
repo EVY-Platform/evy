@@ -56,7 +56,7 @@ mock.module("../db", () => ({
 	...schema,
 }));
 
-const { validateAuth, get, upsert } = await import("../data");
+const { validateAuth, getCore, upsertCore } = await import("../coreData");
 
 function isDATA_EVY_Flow(row: DATA_EVY_Rows): row is DATA_EVY_Flow {
 	return (
@@ -186,20 +186,23 @@ describe("get", () => {
 	});
 
 	it("should throw when params is not an object", async () => {
-		await expect(get(null as unknown as GetRequest)).rejects.toThrow(
+		await expect(getCore(null as unknown as GetRequest)).rejects.toThrow(
 			"Params must be an object",
 		);
 	});
 
 	it("should throw when namespace is invalid", async () => {
 		await expect(
-			get({ namespace: "invalid", resource: "sdui" } as unknown as GetRequest),
+			getCore({
+				namespace: "invalid",
+				resource: "sdui",
+			} as unknown as GetRequest),
 		).rejects.toThrow("Invalid or missing namespace");
 	});
 
 	it("should throw when resource is invalid", async () => {
 		await expect(
-			get({
+			getCore({
 				namespace: "evy",
 				resource: "InvalidResource",
 			} as unknown as GetRequest),
@@ -225,7 +228,7 @@ describe("get", () => {
 			},
 		]);
 
-		const result = await get({
+		const result = await getCore({
 			namespace: "evy",
 			resource: "sdui",
 		});
@@ -247,7 +250,7 @@ describe("get", () => {
 			...testFlowRowTimestamps(),
 		});
 
-		const result = await get({
+		const result = await getCore({
 			namespace: "evy",
 			resource: "sdui",
 			filter: { id: flowId },
@@ -259,7 +262,7 @@ describe("get", () => {
 	});
 
 	it("should return empty array for SDUI when filter.id matches nothing", async () => {
-		const result = await get({
+		const result = await getCore({
 			namespace: "evy",
 			resource: "sdui",
 			filter: { id: crypto.randomUUID() },
@@ -269,25 +272,33 @@ describe("get", () => {
 	});
 
 	it("should return resource data for non-SDUI resource", async () => {
-		const conditionData = { id: "1", value: "New" };
-		await upsert({
+		const nowIso = new Date().toISOString();
+		const serviceId = crypto.randomUUID();
+		const serviceData = {
+			id: serviceId,
+			name: "SeedSvc",
+			description: "D",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		};
+		await upsertCore({
 			namespace: "evy",
-			resource: "conditions",
-			data: conditionData,
+			resource: "services",
+			data: serviceData,
 		});
 
-		const result = await get({
+		const result = await getCore({
 			namespace: "evy",
-			resource: "conditions",
+			resource: "services",
 		});
 
-		expect(result).toEqual([conditionData]);
+		expect(result).toEqual([serviceData]);
 	});
 
 	it("should return empty array for non-SDUI resource when no data", async () => {
-		const result = await get({
+		const result = await getCore({
 			namespace: "evy",
-			resource: "items",
+			resource: "services",
 		});
 
 		expect(result).toEqual([]);
@@ -300,12 +311,12 @@ describe("upsert", () => {
 	});
 
 	it("should throw when params is not an object", async () => {
-		await expect(upsert(null)).rejects.toThrow("Params must be an object");
+		await expect(upsertCore(null)).rejects.toThrow("Params must be an object");
 	});
 
 	it("should throw when data is missing", async () => {
 		await expect(
-			upsert({ namespace: "evy", resource: "sdui" }),
+			upsertCore({ namespace: "evy", resource: "sdui" }),
 		).rejects.toThrow("data is required");
 	});
 
@@ -331,7 +342,7 @@ describe("upsert", () => {
 			],
 		});
 
-		const result = await upsert({
+		const result = await upsertCore({
 			namespace: "evy",
 			resource: "sdui",
 			data: flowData,
@@ -378,7 +389,7 @@ describe("upsert", () => {
 			],
 		});
 
-		const result = await upsert({
+		const result = await upsertCore({
 			namespace: "evy",
 			resource: "sdui",
 			filter: { id: existingFlow.id },
@@ -399,7 +410,7 @@ describe("upsert", () => {
 			pages: [{ title: "Draft", rows: [] }],
 		});
 
-		const created = await upsert({
+		const created = await upsertCore({
 			namespace: "evy",
 			resource: "sdui",
 			filter: { id: flowId },
@@ -411,7 +422,7 @@ describe("upsert", () => {
 		expect(createdFlow.data.id).toBe(flowId);
 		expect(createdFlow.data.name).toBe("Client Created Flow");
 
-		const updated = await upsert({
+		const updated = await upsertCore({
 			namespace: "evy",
 			resource: "sdui",
 			filter: { id: flowId },
@@ -437,7 +448,7 @@ describe("upsert", () => {
 
 	it("should reject SDUI flow with missing name", async () => {
 		await expect(
-			upsert({
+			upsertCore({
 				namespace: "evy",
 				resource: "sdui",
 				data: {
@@ -449,38 +460,66 @@ describe("upsert", () => {
 	});
 
 	it("should upsert Data resource with namespace and resource columns", async () => {
-		const payload = { id: "1", value: "New" };
+		const nowIso = new Date().toISOString();
+		const serviceId = crypto.randomUUID();
+		const payload = {
+			id: serviceId,
+			name: "UpsertSvc",
+			description: "D",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		};
 
-		const result = await upsert({
+		const result = await upsertCore({
 			namespace: "evy",
-			resource: "conditions",
+			resource: "services",
 			data: payload,
 		});
 
-		expect(!isDATA_EVY_Flow(result)).toBe(true);
 		const dataResult = result as DATA_EVY_Data;
+		expect(dataResult.namespace).toBe("evy");
+		expect(dataResult.resource).toBe("service");
 		expect(dataResult.data).toEqual(payload);
 		const dataRecords = await testDb.select().from(schema.data);
 		expect(dataRecords).toHaveLength(1);
 		expect(dataRecords[0].namespace).toBe("evy");
-		expect(dataRecords[0].resource).toBe("condition");
+		expect(dataRecords[0].resource).toBe("service");
 	});
 
 	it("should reject Data payload with NaN", async () => {
+		const nowIso = new Date().toISOString();
+		const serviceId = crypto.randomUUID();
 		await expect(
-			upsert({
+			upsertCore({
 				namespace: "evy",
-				resource: "conditions",
-				data: { id: "1", value: "x", bad: Number.NaN },
+				resource: "services",
+				data: {
+					id: serviceId,
+					name: "n",
+					description: "d",
+					createdAt: nowIso,
+					updatedAt: nowIso,
+					bad: Number.NaN,
+				},
 			}),
 		).rejects.toThrow("Data validation failed");
 	});
 
 	it("should accept Data payload with integer and decimal numbers", async () => {
-		const payload = { id: "1", count: 3, price: 19.99 };
-		const result = await upsert({
+		const nowIso = new Date().toISOString();
+		const serviceId = crypto.randomUUID();
+		const payload = {
+			id: serviceId,
+			name: "n",
+			description: "d",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+			count: 3,
+			price: 19.99,
+		};
+		const result = await upsertCore({
 			namespace: "evy",
-			resource: "conditions",
+			resource: "services",
 			data: payload,
 		});
 		const dataResult = result as DATA_EVY_Data;
@@ -495,7 +534,7 @@ describe("upsert SDUI validation", () => {
 
 	it("should reject flow with unrecognized keys", async () => {
 		await expect(
-			upsert({
+			upsertCore({
 				namespace: "evy",
 				resource: "sdui",
 				data: {
@@ -508,7 +547,7 @@ describe("upsert SDUI validation", () => {
 	});
 
 	it("should accept flow with no pages", async () => {
-		const result = await upsert({
+		const result = await upsertCore({
 			namespace: "evy",
 			resource: "sdui",
 			data: {
@@ -523,7 +562,7 @@ describe("upsert SDUI validation", () => {
 
 	it("should reject flow with invalid row type", async () => {
 		await expect(
-			upsert({
+			upsertCore({
 				namespace: "evy",
 				resource: "sdui",
 				data: {
@@ -593,7 +632,7 @@ describe("upsert SDUI validation", () => {
 			],
 		});
 
-		const result = await upsert({
+		const result = await upsertCore({
 			namespace: "evy",
 			resource: "sdui",
 			data: flowData,
@@ -621,7 +660,7 @@ describe("upsert SDUI validation", () => {
 			],
 		});
 
-		const result = await upsert({
+		const result = await upsertCore({
 			namespace: "evy",
 			resource: "sdui",
 			data: flowData,

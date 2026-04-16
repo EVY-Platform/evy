@@ -43,10 +43,10 @@ struct EVY {
 		}
 	}
 	
-	private static func fetchResource(_ resource: String) async throws -> [EVYJson] {
+	private static func fetchResource(_ resource: String, namespace: String = "marketplace") async throws -> [EVYJson] {
 		try await EVYAPIManager.shared.fetch(
 			method: "get",
-			params: GetParams(namespace: "evy", resource: resource, filter: nil),
+			params: GetParams(namespace: namespace, resource: resource, filter: nil),
 			expecting: [EVYJson].self
 		)
 	}
@@ -67,7 +67,7 @@ struct EVY {
 			serviceDict[resource] = .array(try await fetchResource(resource))
 		}
 
-		let itemsJson = try await fetchResource("items")
+		let itemsJson = try await fetchResource("items", namespace: "marketplace")
 		serviceDict["item"] = itemsJson.first ?? .dictionary([:])
 
 		let serviceData: EVYJson = .dictionary(serviceDict)

@@ -22,51 +22,73 @@ type SeededDataRow = {
 	updatedAt: string;
 };
 
-const insertedRows = {
+const coreInsertedRows = {
 	flows: [] as SeededFlowRow[],
 	data: [] as SeededDataRow[],
 };
 
-const testDb = {
-	delete(table: unknown) {
-		if (table === schema.flow) {
-			insertedRows.flows = [];
-			return Promise.resolve();
-		}
-		if (table === schema.data) {
-			insertedRows.data = [];
-			return Promise.resolve();
-		}
-		throw new Error("Unexpected table deletion");
-	},
-	insert(table: unknown) {
-		return {
-			values: async (values: unknown) => {
-				const rows = Array.isArray(values) ? values : [values];
-				if (table === schema.flow) {
-					insertedRows.flows.push(...(rows as SeededFlowRow[]));
-					return;
-				}
-				if (table === schema.data) {
-					insertedRows.data.push(...(rows as SeededDataRow[]));
-					return;
-				}
-				throw new Error("Unexpected table insertion");
-			},
-		};
-	},
+const marketplaceInsertedRows = {
+	data: [] as SeededDataRow[],
 };
 
+function makeMockDb(insertedRows: {
+	flows: SeededFlowRow[];
+	data: SeededDataRow[];
+}) {
+	return {
+		delete(table: unknown) {
+			if (table === schema.flow) {
+				insertedRows.flows = [];
+				return Promise.resolve();
+			}
+			if (table === schema.data) {
+				insertedRows.data = [];
+				return Promise.resolve();
+			}
+			throw new Error("Unexpected table deletion");
+		},
+		insert(table: unknown) {
+			return {
+				values: async (values: unknown) => {
+					const rows = Array.isArray(values) ? values : [values];
+					if (table === schema.flow) {
+						insertedRows.flows.push(...(rows as SeededFlowRow[]));
+						return;
+					}
+					if (table === schema.data) {
+						insertedRows.data.push(...(rows as SeededDataRow[]));
+						return;
+					}
+					throw new Error("Unexpected table insertion");
+				},
+			};
+		},
+	};
+}
+
+const coreTestDb = makeMockDb(coreInsertedRows);
+const marketplaceTestDb = makeMockDb(marketplaceInsertedRows);
+
 mock.module("../api/src/db", () => ({
-	db: testDb,
+	db: coreTestDb,
 	schema,
 }));
 
-const { loadSeedInputs, seedDatabase } = await import("./seed");
+mock.module("../services/marketplace/src/db", () => ({
+	db: marketplaceTestDb,
+	schema: {
+		data: schema.data,
+	},
+}));
+
+const { loadSeedInputs, seedDatabase, extractMarketplaceData } = await import(
+	"./seed"
+);
 
 async function clearTables() {
-	insertedRows.flows = [];
-	insertedRows.data = [];
+	coreInsertedRows.flows = [];
+	coreInsertedRows.data = [];
+	marketplaceInsertedRows.data = [];
 }
 
 async function createTempSeedFiles({
@@ -103,27 +125,36 @@ beforeEach(async () => {
 
 describe("seed script", () => {
 	it("preserves JSON-defined ids for all seeded flows and data rows", async () => {
-		const { flowsJson, dataJson } = await loadSeedInputs();
+		const { evyFlowsJson, serviceFlowsJson, dataJson } = await loadSeedInputs();
+		const marketplaceDataJson = extractMarketplaceData(dataJson);
 
 		await seedDatabase({
-			flowsJson,
-			dataJson,
+			evyFlowsJson,
+			serviceFlowsJson,
+			marketplaceDataJson,
 			now: "2026-03-11T00:00:00.000Z",
 		});
 
-		expect(insertedRows.flows.length).toBeGreaterThan(0);
-		for (const flow of insertedRows.flows) {
+		expect(coreInsertedRows.flows.length).toBe(
+			evyFlowsJson.length + serviceFlowsJson.length,
+		);
+		for (const flow of coreInsertedRows.flows) {
 			expect(flow.id).toBe(flow.data.id);
 		}
 
-		expect(insertedRows.data.length).toBeGreaterThan(0);
-		for (const row of insertedRows.data) {
+		let expectedData = 0;
+		for (const value of Object.values(marketplaceDataJson)) {
+			expectedData += value.length;
+		}
+		expect(marketplaceInsertedRows.data.length).toBe(expectedData);
+		for (const row of marketplaceInsertedRows.data) {
 			expect(typeof row.data).toBe("object");
 			expect(row.data).not.toBeNull();
 
 			const rowData = row.data as Record<string, unknown>;
 			expect(typeof rowData.id).toBe("string");
 			expect(row.id).toBe(rowData.id);
+			expect(row.namespace).toBe("marketplace");
 		}
 	});
 

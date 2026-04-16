@@ -16,6 +16,8 @@ DB_PASS=evy
 DB_PORT=5432
 DB_DOMAIN=localhost
 DB_DATABASE=evy
+# Required for each non-evy namespace (host:port, no scheme); see api/src/services.ts
+MARKETPLACE_GRPC_URL=localhost:8001
 ```
 
 ## Getting Started

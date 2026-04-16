@@ -1,0 +1,191 @@
+import { createServer } from "node:net";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
+import { migrate } from "drizzle-orm/pglite/migrator";
+import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
+
+import * as schema from "../db/schema";
+import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
+
+function getFreePort(): Promise<number> {
+	return new Promise((resolve, reject) => {
+		const server = createServer();
+		server.listen(0, "127.0.0.1", () => {
+			const addr = server.address();
+			if (!addr || typeof addr === "string") {
+				server.close();
+				reject(new Error("Could not get free port"));
+				return;
+			}
+			const port = addr.port;
+			server.close(() => resolve(port));
+		});
+		server.on("error", reject);
+	});
+}
+
+const { pgliteClient, testDb } = createPgliteTestDatabase();
+
+mock.module("../db", () => ({
+	db: testDb,
+	schema,
+}));
+
+const { startMarketplaceGrpcServer, stopMarketplaceGrpcServer } = await import(
+	"../grpc/server"
+);
+
+let grpcPort: number;
+
+function createTestGrpcClient(): grpc.ServiceClient {
+	const protoPath = join(
+		dirname(fileURLToPath(import.meta.url)),
+		"../../../../types/schema/service.proto",
+	);
+	const packageDefinition = protoLoader.loadSync(protoPath, {
+		keepCase: true,
+		longs: String,
+		enums: String,
+		defaults: true,
+		oneofs: true,
+	});
+	const root = grpc.loadPackageDefinition(packageDefinition) as grpc.GrpcObject;
+	const Client = (root.evy as { Service: grpc.ServiceClientConstructor })
+		.Service;
+	return new Client(
+		`127.0.0.1:${grpcPort}`,
+		grpc.credentials.createInsecure(),
+	) as grpc.ServiceClient;
+}
+
+beforeAll(async () => {
+	await migrate(testDb, { migrationsFolder: "./drizzle" });
+	grpcPort = await getFreePort();
+	await startMarketplaceGrpcServer({ port: grpcPort });
+});
+
+afterAll(async () => {
+	stopMarketplaceGrpcServer();
+	await pgliteClient.close();
+});
+
+beforeEach(async () => {
+	await clearAllTestTables(testDb);
+});
+
+type EvyServiceClient = grpc.ServiceClient & {
+	Get: (
+		req: {
+			namespace: string;
+			resource: string;
+			filter?: { id: string };
+		},
+		cb: grpc.requestCallback<{ result_json: string }>,
+	) => void;
+	Upsert: (
+		req: {
+			namespace: string;
+			resource: string;
+			filter?: { id: string };
+			data_json: string;
+		},
+		cb: grpc.requestCallback<{ result_json: string }>,
+	) => void;
+	SubscribeEvents: (req: Record<string, never>) => grpc.ClientReadableStream<{
+		event_name: string;
+		payload_json: string;
+	}>;
+};
+
+describe("marketplace gRPC server", () => {
+	it("Get and Upsert round-trip typed params", async () => {
+		const client = createTestGrpcClient() as EvyServiceClient;
+		const row = { id: crypto.randomUUID(), value: "grpc-condition" };
+
+		await new Promise<void>((resolve, reject) => {
+			client.Upsert(
+				{
+					namespace: "marketplace",
+					resource: "conditions",
+					data_json: JSON.stringify(row),
+				},
+				(err) => {
+					if (err) reject(err);
+					else resolve();
+				},
+			);
+		});
+
+		const got = await new Promise<unknown>((resolve, reject) => {
+			client.Get(
+				{
+					namespace: "marketplace",
+					resource: "conditions",
+				},
+				(err, res) => {
+					if (err) {
+						reject(err);
+						return;
+					}
+					if (!res) {
+						reject(new Error("empty Get response"));
+						return;
+					}
+					resolve(JSON.parse(res.result_json));
+				},
+			);
+		});
+
+		expect(got).toEqual([row]);
+	});
+
+	it("SubscribeEvents receives dataUpdated after catalog upsert", async () => {
+		const client = createTestGrpcClient() as EvyServiceClient;
+		const received: { event_name: string; payload_json: string }[] = [];
+		const stream = client.SubscribeEvents({});
+
+		stream.on("data", (msg) => {
+			received.push(msg);
+		});
+
+		await new Promise((r) => setTimeout(r, 50));
+
+		const row = { id: crypto.randomUUID(), value: "notify-me" };
+		await new Promise<void>((resolve, reject) => {
+			client.Upsert(
+				{
+					namespace: "marketplace",
+					resource: "conditions",
+					data_json: JSON.stringify(row),
+				},
+				(err) => {
+					if (err) reject(err);
+					else resolve();
+				},
+			);
+		});
+
+		await new Promise((r) => setTimeout(r, 150));
+		expect(received.some((e) => e.event_name === "dataUpdated")).toBe(true);
+		const dataEvent = received.find((e) => e.event_name === "dataUpdated");
+		expect(dataEvent).toBeDefined();
+		if (!dataEvent) {
+			return;
+		}
+		expect(JSON.parse(dataEvent.payload_json)).toMatchObject({
+			namespace: "marketplace",
+			resource: "condition",
+			data: row,
+		});
+	});
+});

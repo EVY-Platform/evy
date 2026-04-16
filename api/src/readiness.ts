@@ -1,5 +1,5 @@
 import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
-import { get as defaultGet } from "./data";
+import { get as defaultGet } from "./rpc";
 
 type AssertApiReadableOptions = {
 	requireSeeded: boolean;
@@ -41,7 +41,7 @@ export async function assertApiReadable(
 		);
 	}
 
-	const items = await deps.get({ namespace: "evy", resource: "items" });
+	const items = await deps.get({ namespace: "marketplace", resource: "items" });
 	if (!Array.isArray(items) || items.length === 0) {
 		throw new Error("Seed verification failed: missing seeded items data");
 	}

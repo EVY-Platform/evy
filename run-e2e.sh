@@ -26,11 +26,25 @@ IOS_SKIPPED=false
 MAX_RETRIES=30
 RETRY_DELAY_SECONDS=2
 API_PID=""
+MARKETPLACE_PID=""
 WEB_PID=""
 
+# Preserve env overrides when sourcing `.env` (e.g. WEB_PORT=3001 ./run-e2e.sh).
+_PRESET_WEB_PORT="${WEB_PORT-}"
+_PRESET_API_PORT="${API_PORT-}"
+_PRESET_MARKETPLACE_API_PORT="${MARKETPLACE_API_PORT-}"
 set -a
 source .env
 set +a
+if [ -n "${_PRESET_WEB_PORT}" ]; then
+	export WEB_PORT="${_PRESET_WEB_PORT}"
+fi
+if [ -n "${_PRESET_API_PORT}" ]; then
+	export API_PORT="${_PRESET_API_PORT}"
+fi
+if [ -n "${_PRESET_MARKETPLACE_API_PORT}" ]; then
+	export MARKETPLACE_API_PORT="${_PRESET_MARKETPLACE_API_PORT}"
+fi
 
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
@@ -59,11 +73,15 @@ cleanup() {
         if [ -n "${WEB_PID}" ]; then
             kill "$WEB_PID" 2>/dev/null || true
         fi
+        if [ -n "${MARKETPLACE_PID}" ]; then
+            kill "$MARKETPLACE_PID" 2>/dev/null || true
+        fi
         if [ -n "${API_PID}" ]; then
             kill "$API_PID" 2>/dev/null || true
         fi
         wait "${WEB_PID}" 2>/dev/null || true
         wait "${API_PID}" 2>/dev/null || true
+        wait "${MARKETPLACE_PID}" 2>/dev/null || true
     else
         docker compose down -v --remove-orphans 2>/dev/null || true
     fi
@@ -88,6 +106,16 @@ wait_for_api_readiness() {
         retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT/api\" && bun run \"$script_name\""
     else
         retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T api bun run \"$script_name\""
+    fi
+}
+
+wait_for_marketplace_readiness() {
+    local script_name="$1"
+    local display_name="$2"
+    if [ "$NO_DOCKER" = true ]; then
+        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT/services/marketplace\" && bun run \"$script_name\""
+    else
+        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T marketplace bun run \"$script_name\""
     fi
 }
 
@@ -136,6 +164,7 @@ seed_database() {
     fi
 
     wait_for_api_readiness "health:seeded" "seeded API data"
+    wait_for_marketplace_readiness "health:seeded" "seeded marketplace data"
 }
 
 trap cleanup EXIT
@@ -143,6 +172,15 @@ trap cleanup EXIT
 if [ "$NO_DOCKER" = true ]; then
     echo -e "\n${YELLOW}Step 1: Starting services without Docker...${NC}"
     wait_for_postgres_no_docker
+
+    echo "Starting Marketplace (background)..."
+    (
+        cd "$REPO_ROOT/services/marketplace"
+        exec bun run start
+    ) &
+    MARKETPLACE_PID=$!
+
+    wait_for_marketplace_readiness "health" "Marketplace"
 
     echo "Starting API (background)..."
     (
@@ -172,6 +210,8 @@ else
     echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
     retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
+
+    wait_for_marketplace_readiness "health" "Marketplace"
 
     wait_for_api_readiness "health" "API"
     wait_for_http_service "Web" "http://localhost:$WEB_PORT"

@@ -9,11 +9,37 @@ services:
       POSTGRES_DB: ${DB_DATABASE}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/postgres-init-marketplace.sql:/docker-entrypoint-initdb.d/02-marketplace.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  marketplace:
+    build:
+      context: .
+      dockerfile: ./services/marketplace/Dockerfile
+      target: runner
+    ports:
+      - ${MARKETPLACE_API_PORT:-8001}:${MARKETPLACE_API_PORT:-8001}
+    environment:
+      - MARKETPLACE_API_PORT=${MARKETPLACE_API_PORT:-8001}
+      - API_PORT=${MARKETPLACE_API_PORT:-8001}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_PORT=5432
+      - DB_DOMAIN=postgres
+      - MARKETPLACE_DB_DATABASE=${MARKETPLACE_DB_DATABASE:-marketplace}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "run", "health"]
+      interval: 500ms
+      timeout: 1s
+      retries: 10
+      start_period: 100ms
 
   api:
     build:
@@ -29,8 +55,12 @@ services:
       - DB_DOMAIN=postgres
       - DB_DATABASE=${DB_DATABASE}
       - API_PORT=${API_PORT}
+      # gRPC address for the marketplace backend (pattern: <NAMESPACE>_GRPC_URL for each non-evy namespace)
+      - MARKETPLACE_GRPC_URL=marketplace:${MARKETPLACE_API_PORT:-8001}
     depends_on:
       postgres:
+        condition: service_healthy
+      marketplace:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "bun", "run", "health"]

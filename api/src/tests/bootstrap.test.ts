@@ -114,6 +114,9 @@ describe("assertApiReadable", () => {
 						} satisfies UI_Flow,
 					];
 				}
+				if (params.resource === "items" && params.namespace === "marketplace") {
+					return [];
+				}
 				return [];
 			},
 		};
@@ -134,7 +137,10 @@ describe("assertApiReadable", () => {
 						} satisfies UI_Flow,
 					];
 				}
-				return [{ title: "item" }];
+				if (params.resource === "items" && params.namespace === "marketplace") {
+					return [{ title: "item" }];
+				}
+				return [];
 			},
 		};
 		await expect(

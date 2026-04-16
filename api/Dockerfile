@@ -34,6 +34,7 @@ WORKDIR /app/api
 # Copy node_modules
 COPY --from=builder /app/api/node_modules ./node_modules
 COPY --from=builder /app/api/package.json ./
+COPY types/schema/service.proto /app/types/schema/service.proto
 COPY --from=builder /app/api/src ./src
 COPY --from=builder /app/api/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/types ../types
