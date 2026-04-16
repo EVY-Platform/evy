@@ -43,9 +43,13 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run build
 
-            - name: Run Tests
+            - name: Run unit tests
               if: steps.setup.outputs.has-changes == 'true'
-              run: bun run test
+              run: bun run test:unit
+
+            - name: Run integration tests
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run test:integration
 
             - name: Upload test results
               uses: actions/upload-artifact@v7

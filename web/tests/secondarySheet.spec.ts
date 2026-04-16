@@ -133,15 +133,15 @@ test.describe("Secondary Sheet Page", () => {
 
 		// Click canvas background away from side panels (they overlay the viewport edges).
 		const canvas = page.getByTestId("canvas-viewport");
+		await canvas.scrollIntoViewIfNeeded();
 		const canvasBox = await canvas.boundingBox();
-		if (canvasBox) {
-			await canvas.click({
-				position: {
-					x: canvasBox.width / 2,
-					y: Math.min(120, canvasBox.height / 2),
-				},
-			});
-		}
+		expect(canvasBox).not.toBeNull();
+		await canvas.click({
+			position: {
+				x: canvasBox.width / 2,
+				y: Math.min(120, canvasBox.height / 2),
+			},
+		});
 
 		await expect(getSecondarySheetPage(page)).toHaveCount(0);
 	});
