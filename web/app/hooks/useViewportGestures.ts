@@ -2,14 +2,16 @@ import type { RefObject } from "react";
 import { useEffect } from "react";
 
 import type { CameraState } from "./useCamera";
+import { CANVAS_PAGE_INTERIOR_SELECTOR } from "../utils/canvasPageInterior";
 import type { ScreenPoint } from "../utils/coordinates";
 
-/** Ctrl/trackpad zoom: `exp(-deltaY * sensitivity)` */
 const WHEEL_ZOOM_SENSITIVITY = 0.002;
 const MIN_PAN_SPEED_FOR_INERTIA = 0.2;
 const INERTIA_MULTIPLIER = 14;
 const INERTIA_DECAY = 0.88;
 const INERTIA_STOP_THRESHOLD = 0.4;
+/** After this idle gap, wheel over the page interior scrolls the page instead of the canvas. */
+const PAN_MOMENTUM_MS = 300;
 
 function viewportLocalPoint(
 	viewport: HTMLElement,
@@ -42,20 +44,21 @@ export function useViewportGestures({
 		const viewport = viewportRef.current;
 		if (!viewport) return;
 
-		const isInsidePageFrame = (target: EventTarget | null): boolean => {
+		const isInsidePageInterior = (target: EventTarget | null): boolean => {
 			if (!(target instanceof Element)) return false;
-			const frame = target.closest("[data-canvas-page-frame]");
-			return frame !== null && viewport.contains(frame);
+			const interior = target.closest(CANVAS_PAGE_INTERIOR_SELECTOR);
+			return interior !== null && viewport.contains(interior);
 		};
 
-		const onWheel = (event: WheelEvent) => {
-			const { x: localX, y: localY } = viewportLocalPoint(
-				viewport,
-				event.clientX,
-				event.clientY,
-			);
+		let lastPanTime = 0;
 
+		const onWheel = (event: WheelEvent) => {
 			if (event.ctrlKey || event.metaKey) {
+				const { x: localX, y: localY } = viewportLocalPoint(
+					viewport,
+					event.clientX,
+					event.clientY,
+				);
 				event.preventDefault();
 				const factor = Math.exp(-event.deltaY * WHEEL_ZOOM_SENSITIVITY);
 				const nextScale = getCamera().scale * factor;
@@ -63,12 +66,16 @@ export function useViewportGestures({
 				return;
 			}
 
-			if (isInsidePageFrame(event.target)) {
+			const insidePage = isInsidePageInterior(event.target);
+			const withinMomentum = performance.now() - lastPanTime < PAN_MOMENTUM_MS;
+
+			if (insidePage && !withinMomentum) {
 				return;
 			}
 
 			event.preventDefault();
 			pan(-event.deltaX, -event.deltaY);
+			lastPanTime = performance.now();
 		};
 
 		viewport.addEventListener("wheel", onWheel, { passive: false });

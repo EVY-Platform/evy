@@ -4,6 +4,7 @@ import { useDragContext, useFlowsContext } from "../state";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
 import { buildRowElements } from "./buildRowElements";
 import { baseTitleStyle, rounded24Style } from "./pageStyles";
+import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
 import { findFlowById } from "../utils/flowHelpers";
 import { findRowInPages } from "../utils/rowTree";
 
@@ -54,6 +55,7 @@ export default function SecondarySheetPage({
 			<div
 				className="evy-overflow-scroll evy-h-full evy-pt-4 evy-bg-white"
 				style={rounded24Style}
+				{...canvasPageInteriorDomProps}
 				ref={scrollableRef}
 			>
 				<div style={baseTitleStyle}>{title}</div>
