@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef } from "react";
 
 import { useDragContext, useFlowsContext } from "../state";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
+import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
 import { findFlowById } from "../utils/flowHelpers";
 import { buildRowElements } from "./buildRowElements";
 import { baseTitleStyle, rounded24Style } from "./pageStyles";
@@ -82,6 +83,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					{titleElement}
 					<div
 						className="evy-overflow-scroll evy-flex-1 evy-pt-4"
+						{...canvasPageInteriorDomProps}
 						ref={scrollableRef}
 					>
 						{rowElements}
@@ -99,6 +101,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				<div
 					className="evy-overflow-scroll evy-h-full evy-pt-4 evy-bg-white"
 					style={rounded24Style}
+					{...canvasPageInteriorDomProps}
 					ref={scrollableRef}
 				>
 					{titleElement}
