@@ -123,16 +123,22 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			// Reuse the same tree insertion logic as MOVE_ROW so dragging a brand-new
 			// row from the sidebar and moving an existing nested row behave the same.
+			const insertionResult = insertRowIntoTree(
+				page.rows,
+				rowDataAdd,
+				action.destinationIndex,
+				action.destinationContainer,
+			);
+			invariant(
+				insertionResult.inserted,
+				"PageReducer addRow: destination container not found in tree",
+			);
+
 			const updatedPages = flow.pages.map((p) =>
 				p.id === action.destinationPageId
 					? {
 							...p,
-							rows: insertRowIntoTree(
-								page.rows,
-								rowDataAdd,
-								action.destinationIndex,
-								action.destinationContainer,
-							),
+							rows: insertionResult.rows,
 						}
 					: p,
 			);
@@ -157,34 +163,24 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				action.rowId,
 			);
 
-			// When moving within the same page, removing the dragged row can also
-			// remove the destination container if the user is dropping into one of
-			// that row's descendants. Bail out instead of trying to reinsert into a
-			// container that no longer exists in the updated tree.
-			if (
-				action.destinationContainer &&
-				action.originPageId === action.destinationPageId
-			) {
-				const destinationContainer = findRowInPages(
-					action.destinationContainer.rowId,
-					[{ rows: originRowsWithoutRow }],
-				);
-				if (!destinationContainer) return state;
-			}
-
 			const newPages = flow.pages.map((page) => {
 				if (
 					page.id === action.originPageId &&
 					page.id === action.destinationPageId
 				) {
+					const insertionResult = insertRowIntoTree(
+						originRowsWithoutRow,
+						row,
+						action.destinationIndex,
+						action.destinationContainer,
+					);
+					// Removing the dragged row can drop the destination container from the
+					// tree (e.g. invalid same-page drop into a descendant). No-op is expected.
+					if (!insertionResult.inserted) return page;
+
 					return {
 						...page,
-						rows: insertRowIntoTree(
-							originRowsWithoutRow,
-							row,
-							action.destinationIndex,
-							action.destinationContainer,
-						),
+						rows: insertionResult.rows,
 					};
 				}
 				if (page.id === action.originPageId) {
@@ -194,14 +190,20 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 					};
 				}
 				if (page.id === action.destinationPageId) {
+					const insertionResult = insertRowIntoTree(
+						page.rows,
+						row,
+						action.destinationIndex,
+						action.destinationContainer,
+					);
+					invariant(
+						insertionResult.inserted,
+						"PageReducer moveRow: destination container not found in tree",
+					);
+
 					return {
 						...page,
-						rows: insertRowIntoTree(
-							page.rows,
-							row,
-							action.destinationIndex,
-							action.destinationContainer,
-						),
+						rows: insertionResult.rows,
 					};
 				}
 				return page;
