@@ -7,7 +7,7 @@ import {
 	getPageRow,
 	getRowsPanel,
 	getSidebarRow,
-	initTestFlows,
+	openAppWithTestFlows,
 	setupTwoEmptyTestPages,
 } from "./utils";
 
@@ -75,7 +75,7 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag a row from a child container to another page", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Page 1",
@@ -106,8 +106,6 @@ test.describe("Drag & Drop UX", () => {
 			},
 			{ id: "step_2", title: "Page 2", rows: [] },
 		]);
-		await page.goto("/");
-
 		const firstPage = getFirstPage(page);
 		const secondPage = page.locator(SELECTORS.phoneContainer).nth(1);
 		const secondPageContent = getPageContent(page, 1);
@@ -126,7 +124,7 @@ test.describe("Drag & Drop UX", () => {
 	test("should drag a row from a children container to another page", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Page 1",
@@ -158,8 +156,6 @@ test.describe("Drag & Drop UX", () => {
 			},
 			{ id: "step_2", title: "Page 2", rows: [] },
 		]);
-		await page.goto("/");
-
 		const firstPage = getFirstPage(page);
 		const secondPage = page.locator(SELECTORS.phoneContainer).nth(1);
 		const secondPageContent = getPageContent(page, 1);

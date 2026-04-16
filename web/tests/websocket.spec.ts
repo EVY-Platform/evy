@@ -3,8 +3,11 @@ import {
 	ensureSidePanelsExpanded,
 	getConfigPanel,
 	getErrorState,
+	getFirstPage,
 	getLoadingState,
-	initTestFlows,
+	getRowsPanel,
+	installConstructorFailingWebSocket,
+	openAppWithTestFlows,
 } from "./utils";
 
 test.describe("WebSocket Connection States", () => {
@@ -23,13 +26,10 @@ test.describe("WebSocket Connection States", () => {
 	});
 
 	test("should display error state when connection fails", async ({ page }) => {
-		await page.addInitScript(() => {
-			window.WebSocket = class {
-				constructor() {
-					throw new Error("Forced WebSocket failure for test");
-				}
-			} as unknown as typeof WebSocket;
-		});
+		await installConstructorFailingWebSocket(
+			page,
+			"Forced WebSocket failure for test",
+		);
 
 		await page.goto("/");
 
@@ -41,34 +41,32 @@ test.describe("WebSocket Connection States", () => {
 		page,
 	}) => {
 		// Inject test flows to simulate successful connection
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "test-flow-1",
 				title: "Test Page",
 				rows: [],
 			},
 		]);
-		await page.goto("/");
 		await ensureSidePanelsExpanded(page);
 
 		await expect(getLoadingState(page)).not.toBeVisible();
 		await expect(getErrorState(page)).not.toBeVisible();
 
-		const rowsPanel = page.getByText("Rows", { exact: true });
+		const rowsPanel = await getRowsPanel(page);
 		await expect(rowsPanel).toBeVisible();
 
 		await expect(getConfigPanel(page)).toBeVisible();
 	});
 
 	test("should display logo in header when app loads", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "test-flow-1",
 				title: "Test Page",
 				rows: [],
 			},
 		]);
-		await page.goto("/");
 
 		// Logo should be visible in the header
 		const logo = page.locator('img[alt="EVY"]');
@@ -76,25 +74,21 @@ test.describe("WebSocket Connection States", () => {
 	});
 
 	test("should have correct page structure after loading", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "test-flow-1",
 				title: "Test Page",
 				rows: [],
 			},
 		]);
-		await page.goto("/");
 		await ensureSidePanelsExpanded(page);
 
 		// Check the three main panels are present
-		// Left panel: Rows
-		const rowsPanel = page.getByText("Rows", { exact: true }).first();
+		const rowsPanel = await getRowsPanel(page);
 		await expect(rowsPanel).toBeVisible();
 
 		await expect(getConfigPanel(page)).toBeVisible();
 
-		// Center: Phone mockup(s)
-		const phoneContainer = page.locator("[data-canvas-page-frame]");
-		await expect(phoneContainer.first()).toBeVisible();
+		await expect(getFirstPage(page)).toBeVisible();
 	});
 });

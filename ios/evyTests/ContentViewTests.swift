@@ -16,7 +16,7 @@ final class ContentViewTests: XCTestCase {
         let keysToDelete = ContentView.createKeysToDelete(
             whenLeaving: "home-flow",
             flows: flows,
-            activeDraftKeys: ["item"]
+            activeDraftKeys: Set(["item"]),
         )
 
         XCTAssertEqual(keysToDelete, [])
@@ -28,10 +28,10 @@ final class ContentViewTests: XCTestCase {
         let keysToDelete = ContentView.createKeysToDelete(
             whenLeaving: "create-flow",
             flows: flows,
-            activeDraftKeys: ["item"]
+            activeDraftKeys: Set(["item"]),
         )
 
-        XCTAssertEqual(keysToDelete, ["item"])
+        XCTAssertEqual(keysToDelete, Set(["item"]))
     }
 
     private func makeFlows() throws -> [SDUI_Flow] {

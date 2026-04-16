@@ -4,12 +4,12 @@ import {
 	getFirstPage,
 	getPageContent,
 	getSidebarRow,
-	initTestFlows,
+	openAppWithTestFlows,
 } from "./utils";
 
 test.describe("Row Selection", () => {
 	test("should select a row when clicked", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -26,10 +26,7 @@ test.describe("Row Selection", () => {
 					},
 				],
 			},
-		]);
-		await page.goto("/");
-
-		// Find and click on the first Info row
+		]); // Find and click on the first Info row
 		const firstInfoRow = page
 			.getByText("First Info Row", { exact: true })
 			.first();
@@ -50,7 +47,7 @@ test.describe("Row Selection", () => {
 	test("should update configuration panel when different row is selected", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -78,8 +75,6 @@ test.describe("Row Selection", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const configPanel = getConfigPanel(page);
 
 		// Click on first Info row
@@ -106,7 +101,7 @@ test.describe("Row Selection", () => {
 	});
 
 	test("should show only one row selected at a time", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -134,8 +129,6 @@ test.describe("Row Selection", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const configPanel = getConfigPanel(page);
 
 		// Click on first Info row
@@ -157,9 +150,9 @@ test.describe("Row Selection", () => {
 	test("should show configuration for dragged row after drop", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [{ id: "step_1", title: "Test Page", rows: [] }]);
-		await page.goto("/");
-
+		await openAppWithTestFlows(page, [
+			{ id: "step_1", title: "Test Page", rows: [] },
+		]);
 		const sidebarRow = await getSidebarRow(page, "Input row title");
 		const pageContent = getPageContent(page);
 		const firstPage = getFirstPage(page);
@@ -187,7 +180,7 @@ test.describe("Row Selection", () => {
 	test("should update row content when editing configuration", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -204,10 +197,7 @@ test.describe("Row Selection", () => {
 					},
 				],
 			},
-		]);
-		await page.goto("/");
-
-		// Click on first Info row
+		]); // Click on first Info row
 		const firstInfoRow = page
 			.getByText("First Info Row", { exact: true })
 			.first();
@@ -232,7 +222,7 @@ test.describe("Row Selection", () => {
 	test("should maintain selection when switching configuration values", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -250,8 +240,6 @@ test.describe("Row Selection", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const configPanel = getConfigPanel(page);
 
 		// Click on first Info row
@@ -277,7 +265,7 @@ test.describe("Row Selection", () => {
 
 test.describe("Row Selection with Containers", () => {
 	test("should select container row when clicked", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -306,8 +294,6 @@ test.describe("Row Selection with Containers", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const containerRow = page
 			.getByText("Container Row", { exact: true })
 			.first();
@@ -322,7 +308,7 @@ test.describe("Row Selection with Containers", () => {
 	test("should select child row inside container when clicked", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -351,8 +337,6 @@ test.describe("Row Selection with Containers", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const childRow = page.getByText("Child Info Row", { exact: true }).first();
 		await childRow.click();
 
@@ -366,7 +350,7 @@ test.describe("Row Selection with Containers", () => {
 	test("should switch selection between container and child", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -395,8 +379,6 @@ test.describe("Row Selection with Containers", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const configPanel = getConfigPanel(page);
 
 		// Select child first

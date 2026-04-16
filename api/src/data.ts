@@ -169,19 +169,27 @@ export async function upsert(params: unknown): Promise<DATA_Rows> {
 
 	if (resource === "sdui") {
 		const validatedData = validateFlowData(dataPayload);
+		const flowId = filter?.id ?? validatedData.id;
+		const persistedFlowData =
+			validatedData.id === flowId
+				? validatedData
+				: { ...validatedData, id: flowId };
 
 		if (filter?.id) {
 			const result = await db
 				.update(flow)
-				.set({ data: validatedData, updatedAt: nowIso })
+				.set({ data: persistedFlowData, updatedAt: nowIso })
 				.where(eq(flow.id, filter.id))
 				.returning();
-			return formatFlowRow(result[0]);
+			if (result.length > 0) {
+				return formatFlowRow(result[0]);
+			}
 		}
 		const result = await db
 			.insert(flow)
 			.values({
-				data: validatedData,
+				id: flowId,
+				data: persistedFlowData,
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			})

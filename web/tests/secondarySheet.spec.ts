@@ -3,7 +3,7 @@ import {
 	enterCanvasFocusModeByPageTitle,
 	getFirstPage,
 	getSecondarySheetPage,
-	initTestFlows,
+	openAppWithTestFlows,
 	openSecondarySheetChildFromConfigPanel,
 } from "./utils";
 
@@ -62,8 +62,7 @@ test.describe("Secondary Sheet Page", () => {
 	test("should open secondary page when clicking children in config panel in focus mode", async ({
 		page,
 	}) => {
-		await initTestFlows(page, sheetContainerPage);
-		await page.goto("/");
+		await openAppWithTestFlows(page, sheetContainerPage);
 
 		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
@@ -78,8 +77,7 @@ test.describe("Secondary Sheet Page", () => {
 	test("should show SheetContainer children in secondary page", async ({
 		page,
 	}) => {
-		await initTestFlows(page, sheetContainerPage);
-		await page.goto("/");
+		await openAppWithTestFlows(page, sheetContainerPage);
 
 		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
@@ -93,8 +91,7 @@ test.describe("Secondary Sheet Page", () => {
 	});
 
 	test("should show sheet title in secondary page", async ({ page }) => {
-		await initTestFlows(page, sheetContainerPage);
-		await page.goto("/");
+		await openAppWithTestFlows(page, sheetContainerPage);
 
 		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
@@ -108,8 +105,7 @@ test.describe("Secondary Sheet Page", () => {
 	test("should dismiss secondary page when navigating back in config panel", async ({
 		page,
 	}) => {
-		await initTestFlows(page, sheetContainerPage);
-		await page.goto("/");
+		await openAppWithTestFlows(page, sheetContainerPage);
 
 		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
@@ -126,8 +122,7 @@ test.describe("Secondary Sheet Page", () => {
 	test("should dismiss secondary page when clicking canvas background", async ({
 		page,
 	}) => {
-		await initTestFlows(page, sheetContainerPage);
-		await page.goto("/");
+		await openAppWithTestFlows(page, sheetContainerPage);
 
 		await enterCanvasFocusModeByPageTitle(page, "Page 1");
 
@@ -154,8 +149,7 @@ test.describe("Secondary Sheet Page", () => {
 	test("should auto-enter focus mode when clicking SheetContainer children outside focus mode", async ({
 		page,
 	}) => {
-		await initTestFlows(page, sheetContainerPage);
-		await page.goto("/");
+		await openAppWithTestFlows(page, sheetContainerPage);
 
 		await getFirstPage(page).click();
 		await openSecondarySheetChildFromConfigPanel(page);

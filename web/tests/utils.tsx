@@ -122,6 +122,23 @@ export async function openFlowPicker(page: Page): Promise<void> {
 	await page.locator(SELECTORS.flowSelector).click();
 }
 
+/** Opens the flow picker, chooses "Create new flow", fills the name, and submits. */
+export async function createNewFlowThroughPicker(
+	page: Page,
+	flowName: string,
+): Promise<void> {
+	await openFlowPicker(page);
+	await page
+		.getByRole("option", { name: "Create new flow", exact: true })
+		.click();
+	const createFlowDialog = page.getByTestId("create-flow-dialog");
+	await expect(createFlowDialog).toBeVisible();
+	await createFlowDialog.getByLabel("Flow name").fill(flowName);
+	await createFlowDialog
+		.getByRole("button", { name: "Create", exact: true })
+		.click();
+}
+
 export async function selectFlowByLabel(
 	page: Page,
 	label: string,
@@ -214,6 +231,29 @@ export async function openAppWithFullFlows(
 	await page.goto("/");
 }
 
+/** Injects simplified page fixtures via `initTestFlows` and opens the app. */
+export async function openAppWithTestFlows(
+	page: Page,
+	pages: Parameters<typeof initTestFlows>[1],
+): Promise<void> {
+	await initTestFlows(page, pages);
+	await page.goto("/");
+}
+
+/** `addInitScript` that replaces `WebSocket` with a class whose constructor throws. */
+export async function installConstructorFailingWebSocket(
+	page: Page,
+	message: string,
+): Promise<void> {
+	await page.addInitScript((msg: string) => {
+		window.WebSocket = class {
+			constructor() {
+				throw new Error(msg);
+			}
+		} as unknown as typeof WebSocket;
+	}, message);
+}
+
 export async function popoverSelect(
 	page: Page,
 	trigger: Locator,
@@ -257,11 +297,10 @@ export async function openSecondarySheetChildFromConfigPanel(
 
 /** Common drag-and-drop tests fixture: two empty pages. */
 export async function setupTwoEmptyTestPages(page: Page): Promise<void> {
-	await initTestFlows(page, [
+	await openAppWithTestFlows(page, [
 		{ id: "step_1", title: "Page 1", rows: [] },
 		{ id: "step_2", title: "Page 2", rows: [] },
 	]);
-	await page.goto("/");
 }
 
 /** Asserts `laterSubstring` appears after `earlierSubstring` in page canvas draggable rows. */

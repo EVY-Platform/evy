@@ -4,12 +4,15 @@ type WSServer = typeof Server;
 type WSError = typeof IRPCError;
 export type WSParams = typeof IRPCMethodParams;
 
-const apiPort = process.env.API_PORT;
-if (!apiPort) {
-	throw new Error("API_PORT environment variable is not set");
-}
-const PORT: number = parseInt(apiPort, 10);
 const HOST: string = "0.0.0.0";
+
+function getListenPort(): number {
+	const apiPort = process.env.API_PORT;
+	if (!apiPort) {
+		throw new Error("API_PORT environment variable is not set");
+	}
+	return parseInt(apiPort, 10);
+}
 
 // Custom emit function that sends proper JSON-RPC 2.0 notifications
 // rpc-websockets uses non-standard format: { notification: name, params }
@@ -35,8 +38,9 @@ function emitJsonRpc(server: WSServer, eventName: string, params: unknown) {
 function initServer(
 	authHandler: (params: WSParams) => Promise<boolean>,
 ): Promise<WSServer> {
+	const port = getListenPort();
 	return new Promise<WSServer>((resolve, reject) => {
-		const server = new Server({ host: HOST, port: PORT });
+		const server = new Server({ host: HOST, port });
 
 		server.on("listening", () => resolve(server));
 		server.on("error", (error: WSError) => reject(error));
@@ -46,7 +50,7 @@ function initServer(
 		await server.event("dataUpdated");
 		await server.event("flowUpdated");
 
-		console.info(`WS server listening at ${HOST}:${PORT}`);
+		console.info(`WS server listening at ${HOST}:${port}`);
 		return server;
 	});
 }

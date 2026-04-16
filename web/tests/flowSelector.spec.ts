@@ -3,6 +3,7 @@ import type { SDUI_Flow as ServerFlow } from "evy-types";
 import type { Page } from "@playwright/test";
 
 import {
+	createNewFlowThroughPicker,
 	openAppWithFullFlows,
 	openFlowPicker,
 	selectFlowByLabel,
@@ -111,16 +112,7 @@ test.describe("Flow Selector", () => {
 		page,
 	}) => {
 		await openWithFlows(page, singleFlow);
-		await openFlowPicker(page);
-
-		await page
-			.getByRole("option", { name: "Create new flow", exact: true })
-			.click();
-
-		await expect(page.getByTestId("create-flow-dialog")).toBeVisible();
-
-		await page.getByLabel("Flow name").fill("Brand New Flow");
-		await page.getByRole("button", { name: "Create", exact: true }).click();
+		await createNewFlowThroughPicker(page, "Brand New Flow");
 
 		await expect(page.getByTestId("create-flow-dialog")).not.toBeVisible();
 

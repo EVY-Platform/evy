@@ -326,34 +326,42 @@ final class WebSocketE2ETests: E2ETestBase {
         scrollView.tap()
         Thread.sleep(forTimeInterval: 0.5)
 
-        // Price field (optional)
-        if let priceTextField = findElementWithScroll(
+        // Price field (required for regression coverage)
+        guard let priceTextField = findElementWithScroll(
             identifiers: ["textField_{price}"],
             containsAny: ["price"],
             in: scrollView
-        ), let priceField = tapAndGetEditableField(container: priceTextField) {
-            clearAndType(field: priceField, text: "99")
-            let priceValue = priceField.value as? String ?? ""
-            XCTAssertTrue(priceValue.contains("99"), "Price field should contain typed value, got: '\(priceValue)'")
-            scrollView.tap()
-            Thread.sleep(forTimeInterval: 0.5)
-        } else {
-            print("Skipping price field edit: no matching editable field found")
+        ) else {
+            XCTFail("Price field should exist (textField_{price} or accessibility containing 'price')")
+            return
         }
+        guard let priceField = tapAndGetEditableField(container: priceTextField) else {
+            XCTFail("Failed to get editable price field")
+            return
+        }
+        clearAndType(field: priceField, text: "99")
+        let priceValue = priceField.value as? String ?? ""
+        XCTAssertTrue(priceValue.contains("99"), "Price field should contain typed value, got: '\(priceValue)'")
+        scrollView.tap()
+        Thread.sleep(forTimeInterval: 0.5)
 
-        // Width field (optional)
-        if let widthTextField = findElementWithScroll(
+        // Width field (required for regression coverage)
+        guard let widthTextField = findElementWithScroll(
             identifiers: ["textField_{width}"],
             containsAny: ["width"],
             in: scrollView
-        ), let widthField = tapAndGetEditableField(container: widthTextField) {
-            clearAndType(field: widthField, text: "50")
-            let widthValue = widthField.value as? String ?? ""
-            XCTAssertTrue(widthValue.contains("50"), "Width field should contain typed value, got: '\(widthValue)'")
-            scrollView.tap()
-        } else {
-            print("Skipping width field edit: no matching editable field found")
+        ) else {
+            XCTFail("Width field should exist (textField_{width} or accessibility containing 'width')")
+            return
         }
+        guard let widthField = tapAndGetEditableField(container: widthTextField) else {
+            XCTFail("Failed to get editable width field")
+            return
+        }
+        clearAndType(field: widthField, text: "50")
+        let widthValue = widthField.value as? String ?? ""
+        XCTAssertTrue(widthValue.contains("50"), "Width field should contain typed value, got: '\(widthValue)'")
+        scrollView.tap()
 
         let backButton = app.navigationBars.buttons.firstMatch
         XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
@@ -447,5 +455,39 @@ final class WebSocketE2ETests: E2ETestBase {
         pages[0] = homePage
         flowData["pages"] = pages
         return flowData
+    }
+}
+
+// MARK: - Error / unreachable API
+
+/// Verifies the app surfaces a connection failure when the API is not reachable.
+final class E2EErrorStateTests: XCTestCase {
+    private var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        continueAfterFailure = false
+        app = XCUIApplication()
+        // Unlikely to accept WebSocket handshakes in CI / simulator.
+        app.launchEnvironment["API_HOST"] = "127.0.0.1:59998"
+        app.launch()
+    }
+
+    override func tearDownWithError() throws {
+        app = nil
+        try super.tearDownWithError()
+    }
+
+    func testUnreachableAPIShowsErrorState() throws {
+        let errorState = app.otherElements["errorState"]
+        XCTAssertTrue(
+            errorState.waitForExistence(timeout: 30),
+            "errorState should appear when API_HOST is unreachable"
+        )
+        let failedMessage = app.staticTexts["Failed to load flows"]
+        XCTAssertTrue(
+            failedMessage.waitForExistence(timeout: 5),
+            "User-visible copy should mention failed flow load"
+        )
     }
 }

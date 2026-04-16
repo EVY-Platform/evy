@@ -8,9 +8,7 @@ import {
 	it,
 	mock,
 } from "bun:test";
-import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { PGlite } from "@electric-sql/pglite";
 
 import type {
 	SDUI_Flow,
@@ -25,17 +23,11 @@ import {
 	type PageSchema,
 	validateFlowData,
 } from "../validation";
+import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
 
-/**
- * Types inferred from individual schemas for use in other parts of the app
- */
 type ValidatedRow = z.infer<typeof RowSchema>;
 type ValidatedPage = z.infer<typeof PageSchema>;
 
-/**
- * Input types where id is optional (for creating new entities)
- * These are useful for tests and client code that creates flows
- */
 type RowInput = Omit<ValidatedRow, "id" | "view"> & {
 	id?: string;
 	view: Omit<ValidatedRow["view"], "content"> & {
@@ -57,17 +49,13 @@ type FlowDataInput = Omit<SDUI_Flow, "id" | "pages"> & {
 	pages: PageInput[];
 };
 
-// Create in-memory PostgreSQL instance
-const client = new PGlite();
-const testDb = drizzle(client, { schema });
+const { pgliteClient, testDb } = createPgliteTestDatabase();
 
-// Mock the db module to use our test database
 mock.module("../db", () => ({
 	db: testDb,
 	...schema,
 }));
 
-// Import data functions after mocking
 const { validateAuth, get, upsert } = await import("../data");
 
 function isDATA_Flow(row: DATA_Rows): row is DATA_Flow {
@@ -79,28 +67,19 @@ function isDATA_Flow(row: DATA_Rows): row is DATA_Flow {
 	);
 }
 
-/** Single-column ISO instant for test DB inserts. */
-function isoNow(): string {
-	return new Date().toISOString();
+function expectToBeDATA_Flow(row: DATA_Rows): DATA_Flow {
+	expect(isDATA_Flow(row)).toBe(true);
+	if (!isDATA_Flow(row)) {
+		throw new Error("Expected DATA_Flow");
+	}
+	return row;
 }
 
-/** Shared `createdAt` / `updatedAt` for flow (and similar) row fixtures. */
 function testFlowRowTimestamps(): { createdAt: string; updatedAt: string } {
-	const iso = isoNow();
+	const iso = new Date().toISOString();
 	return { createdAt: iso, updatedAt: iso };
 }
 
-// Helper to clear all tables between tests
-async function clearTables() {
-	await testDb.delete(schema.flow);
-	await testDb.delete(schema.data);
-	await testDb.delete(schema.serviceProvider);
-	await testDb.delete(schema.organization);
-	await testDb.delete(schema.service);
-	await testDb.delete(schema.device);
-}
-
-// Recursively ensure all rows have IDs, transforming RowInput to ValidatedRow structure
 function ensureRowIds(rows: RowInput[]): RowInput[] {
 	return rows.map((row) => {
 		const rowWithId: RowInput = {
@@ -123,8 +102,6 @@ function ensureRowIds(rows: RowInput[]): RowInput[] {
 	});
 }
 
-// Helper to create test flow data with auto-generated UUIDs
-// Takes FlowDataInput (id optional) and returns SDUI_Flow (id required)
 function createTestFlow(flowData: FlowDataInput): SDUI_Flow {
 	const built = {
 		...flowData,
@@ -139,19 +116,18 @@ function createTestFlow(flowData: FlowDataInput): SDUI_Flow {
 	return validateFlowData(built);
 }
 
-// Run migrations before all tests
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
-	await clearTables();
+	await clearAllTestTables(testDb);
 });
 
 afterAll(async () => {
-	await client.close();
+	await pgliteClient.close();
 });
 
 describe("validateAuth", () => {
 	beforeEach(async () => {
-		await clearTables();
+		await clearAllTestTables(testDb);
 	});
 
 	it("should throw error when no token provided", async () => {
@@ -174,7 +150,7 @@ describe("validateAuth", () => {
 		await testDb.insert(schema.device).values({
 			token: "existing-token",
 			os: "ios",
-			createdAt: isoNow(),
+			createdAt: new Date().toISOString(),
 		});
 
 		const result = await validateAuth("existing-token", "ios");
@@ -206,7 +182,7 @@ describe("validateAuth", () => {
 
 describe("get", () => {
 	beforeEach(async () => {
-		await clearTables();
+		await clearAllTestTables(testDb);
 	});
 
 	it("should throw when params is not an object", async () => {
@@ -320,7 +296,7 @@ describe("get", () => {
 
 describe("upsert", () => {
 	beforeEach(async () => {
-		await clearTables();
+		await clearAllTestTables(testDb);
 	});
 
 	it("should throw when params is not an object", async () => {
@@ -361,10 +337,8 @@ describe("upsert", () => {
 			data: flowData,
 		});
 
-		expect(isDATA_Flow(result)).toBe(true);
-		if (isDATA_Flow(result)) {
-			expect(result.data.name).toBe("New Flow");
-		}
+		const flowRow = expectToBeDATA_Flow(result);
+		expect(flowRow.data.name).toBe("New Flow");
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -411,12 +385,54 @@ describe("upsert", () => {
 			data: updatedFlowData,
 		});
 
-		expect(isDATA_Flow(result)).toBe(true);
-		if (isDATA_Flow(result)) {
-			expect(result.data.name).toBe("Updated Name");
-		}
+		const flowRow = expectToBeDATA_Flow(result);
+		expect(flowRow.data.name).toBe("Updated Name");
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
+	});
+
+	it("should insert then update the same SDUI flow when filter.id is provided for a new client-created flow", async () => {
+		const flowId = crypto.randomUUID();
+		const initialFlowData = createTestFlow({
+			id: flowId,
+			name: "Client Created Flow",
+			pages: [{ title: "Draft", rows: [] }],
+		});
+
+		const created = await upsert({
+			namespace: "evy",
+			resource: "sdui",
+			filter: { id: flowId },
+			data: initialFlowData,
+		});
+
+		const createdFlow = expectToBeDATA_Flow(created);
+		expect(createdFlow.id).toBe(flowId);
+		expect(createdFlow.data.id).toBe(flowId);
+		expect(createdFlow.data.name).toBe("Client Created Flow");
+
+		const updated = await upsert({
+			namespace: "evy",
+			resource: "sdui",
+			filter: { id: flowId },
+			data: createTestFlow({
+				id: flowId,
+				name: "Client Created Flow Updated",
+				pages: [{ title: "Published", rows: [] }],
+			}),
+		});
+
+		const updatedFlow = expectToBeDATA_Flow(updated);
+		expect(updatedFlow.id).toBe(flowId);
+		expect(updatedFlow.data.id).toBe(flowId);
+		expect(updatedFlow.data.name).toBe("Client Created Flow Updated");
+		expect(updatedFlow.data.pages[0]?.title).toBe("Published");
+
+		const flows = await testDb.select().from(schema.flow);
+		expect(flows).toHaveLength(1);
+		expect(flows[0]?.id).toBe(flowId);
+		expect(flows[0]?.data.id).toBe(flowId);
+		expect(flows[0]?.data.name).toBe("Client Created Flow Updated");
 	});
 
 	it("should reject SDUI flow with missing name", async () => {
@@ -474,7 +490,7 @@ describe("upsert", () => {
 
 describe("upsert SDUI validation", () => {
 	beforeEach(async () => {
-		await clearTables();
+		await clearAllTestTables(testDb);
 	});
 
 	it("should reject flow with unrecognized keys", async () => {
@@ -501,10 +517,8 @@ describe("upsert SDUI validation", () => {
 				pages: [],
 			},
 		});
-		expect(isDATA_Flow(result)).toBe(true);
-		if (isDATA_Flow(result)) {
-			expect(result.data.pages).toHaveLength(0);
-		}
+		const flowRow = expectToBeDATA_Flow(result);
+		expect(flowRow.data.pages).toHaveLength(0);
 	});
 
 	it("should reject flow with invalid row type", async () => {
@@ -584,11 +598,9 @@ describe("upsert SDUI validation", () => {
 			resource: "sdui",
 			data: flowData,
 		});
-		expect(isDATA_Flow(result)).toBe(true);
-		if (isDATA_Flow(result)) {
-			expect(result.data.name).toBe("Test Flow");
-			expect(result.data.pages).toHaveLength(1);
-		}
+		const flowRow = expectToBeDATA_Flow(result);
+		expect(flowRow.data.name).toBe("Test Flow");
+		expect(flowRow.data.pages).toHaveLength(1);
 	});
 
 	it("should validate footer row", async () => {
@@ -614,9 +626,7 @@ describe("upsert SDUI validation", () => {
 			resource: "sdui",
 			data: flowData,
 		});
-		expect(isDATA_Flow(result)).toBe(true);
-		if (isDATA_Flow(result)) {
-			expect(result.data.pages[0]).toHaveProperty("footer");
-		}
+		const flowRow = expectToBeDATA_Flow(result);
+		expect(flowRow.data.pages[0]).toHaveProperty("footer");
 	});
 });
