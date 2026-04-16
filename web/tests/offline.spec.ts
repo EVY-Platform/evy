@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 import {
-	createNewFlowThroughPicker,
 	ensureSidePanelsExpanded,
 	getConfigPanel,
 	getFirstPage,
@@ -15,30 +14,90 @@ test.describe("Offline and connection resilience", () => {
 		page,
 	}) => {
 		await page.addInitScript(() => {
-			const OriginalWebSocket = window.WebSocket;
-			window.WebSocket = class extends OriginalWebSocket {
-				override send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
+			const mockFlow = {
+				id: "offline-flow",
+				name: "Offline Save Fail",
+				pages: [{ id: "offline-page", title: "Page", rows: [] }],
+			};
+
+			class MockWebSocket extends EventTarget {
+				static CONNECTING = 0;
+				static OPEN = 1;
+				static CLOSING = 2;
+				static CLOSED = 3;
+
+				readyState = MockWebSocket.CONNECTING;
+				onopen: ((event: Event) => void) | null = null;
+				onmessage: ((event: MessageEvent<string>) => void) | null = null;
+				onclose: ((event: CloseEvent) => void) | null = null;
+				onerror: ((event: Event) => void) | null = null;
+
+				constructor(_url: string | URL) {
+					super();
+					queueMicrotask(() => {
+						this.readyState = MockWebSocket.OPEN;
+						const openEvent = new Event("open");
+						this.dispatchEvent(openEvent);
+						this.onopen?.(openEvent);
+					});
+				}
+
+				send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
 					const asText =
 						typeof data === "string"
 							? data
 							: data instanceof ArrayBuffer
 								? new TextDecoder().decode(data)
 								: null;
-					if (asText !== null && /"method"\s*:\s*"upsert"/.test(asText)) {
+					if (!asText) return;
+
+					const request = JSON.parse(asText) as {
+						id?: number | string;
+						method?: string;
+					};
+
+					if (request.method === "rpc.login") {
+						this.respond({ jsonrpc: "2.0", id: request.id, result: true });
+						return;
+					}
+
+					if (request.method === "get") {
+						this.respond({
+							jsonrpc: "2.0",
+							id: request.id,
+							result: [mockFlow],
+						});
+						return;
+					}
+
+					if (request.method === "upsert") {
 						throw new Error("Simulated WebSocket send failure");
 					}
-					super.send(data);
 				}
-			} as unknown as typeof WebSocket;
-		});
 
-		const uniqueFlowName = `Offline Save Fail ${Date.now()}`;
+				close() {
+					this.readyState = MockWebSocket.CLOSED;
+					const closeEvent = new CloseEvent("close");
+					this.dispatchEvent(closeEvent);
+					this.onclose?.(closeEvent);
+				}
+
+				private respond(payload: unknown) {
+					queueMicrotask(() => {
+						const messageEvent = new MessageEvent("message", {
+							data: JSON.stringify(payload),
+						});
+						this.dispatchEvent(messageEvent);
+						this.onmessage?.(messageEvent);
+					});
+				}
+			}
+
+			window.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+		});
 
 		await page.goto("/");
 		await waitForAppLoaded(page);
-
-		await createNewFlowThroughPicker(page, uniqueFlowName);
-
 		await ensureSidePanelsExpanded(page);
 
 		page.once("dialog", (dialog) => {
