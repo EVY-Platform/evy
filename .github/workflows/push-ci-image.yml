@@ -32,4 +32,4 @@ jobs:
                   context: .github/images/ci
                   file: .github/images/ci/Dockerfile
                   push: true
-                  tags: ghcr.io/evy-platform/evy-ci:playwright-1.58.2
+                  tags: ghcr.io/evy-platform/evy-ci:playwright-1.59.1
