@@ -131,9 +131,12 @@ export async function createNewFlowThroughPicker(
 	await page
 		.getByRole("option", { name: "Create new flow", exact: true })
 		.click();
-	await expect(page.getByTestId("create-flow-dialog")).toBeVisible();
-	await page.getByLabel("Flow name").fill(flowName);
-	await page.getByRole("button", { name: "Create", exact: true }).click();
+	const createFlowDialog = page.getByTestId("create-flow-dialog");
+	await expect(createFlowDialog).toBeVisible();
+	await createFlowDialog.getByLabel("Flow name").fill(flowName);
+	await createFlowDialog
+		.getByRole("button", { name: "Create", exact: true })
+		.click();
 }
 
 export async function selectFlowByLabel(

@@ -1,4 +1,6 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import type { SDUI_Flow, SDUI_Row } from "evy-types";
+import { Client } from "rpc-websockets";
 
 import {
 	createNewFlowThroughPicker,
@@ -14,6 +16,114 @@ import {
 	SELECTORS,
 	waitForAppLoaded,
 } from "../tests/utils";
+
+const API_POLL_TIMEOUT_MS = 10_000;
+
+function getApiUrl(): string {
+	const apiUrl = process.env.API_URL;
+	if (!apiUrl) {
+		throw new Error("API_URL is not set");
+	}
+	return apiUrl;
+}
+
+async function withApiClient<T>(
+	run: (client: Client) => Promise<T>,
+): Promise<T> {
+	const client = new Client(getApiUrl());
+
+	await new Promise<void>((resolve, reject) => {
+		const onOpen = () => {
+			client.removeListener("error", onError);
+			resolve();
+		};
+		const onError = (error: Error) => {
+			client.removeListener("open", onOpen);
+			reject(error);
+		};
+
+		client.on("open", onOpen);
+		client.on("error", onError);
+	});
+
+	try {
+		return await run(client);
+	} finally {
+		client.close();
+	}
+}
+
+async function getFlowsFromApi(): Promise<SDUI_Flow[]> {
+	return withApiClient(async (client) => {
+		const result = await client.call("get", {
+			namespace: "evy",
+			resource: "sdui",
+		});
+		return result as SDUI_Flow[];
+	});
+}
+
+function rowContainsTitle(row: SDUI_Row, title: string): boolean {
+	if (row.view.content.title === title) {
+		return true;
+	}
+
+	if (
+		row.view.content.child &&
+		rowContainsTitle(row.view.content.child, title)
+	) {
+		return true;
+	}
+
+	return (row.view.content.children ?? []).some((child) =>
+		rowContainsTitle(child, title),
+	);
+}
+
+function flowContainsRowTitle(
+	flow: SDUI_Flow | undefined,
+	title: string,
+): boolean {
+	if (!flow) {
+		return false;
+	}
+
+	return flow.pages.some((page) => {
+		if (page.footer && rowContainsTitle(page.footer, title)) {
+			return true;
+		}
+
+		return page.rows.some((row) => rowContainsTitle(row, title));
+	});
+}
+
+async function expectFlowPersisted(flowName: string): Promise<void> {
+	await expect
+		.poll(
+			async () => {
+				const flows = await getFlowsFromApi();
+				return flows.some((flow) => flow.name === flowName);
+			},
+			{ timeout: API_POLL_TIMEOUT_MS },
+		)
+		.toBe(true);
+}
+
+async function expectFlowRowTitlePersisted(
+	flowName: string,
+	rowTitle: string,
+): Promise<void> {
+	await expect
+		.poll(
+			async () => {
+				const flows = await getFlowsFromApi();
+				const flow = flows.find((candidate) => candidate.name === flowName);
+				return flowContainsRowTitle(flow, rowTitle);
+			},
+			{ timeout: API_POLL_TIMEOUT_MS },
+		)
+		.toBe(true);
+}
 
 /**
  * E2E Integration tests that run against real API services.
@@ -37,6 +147,7 @@ test.describe("Web E2E Integration Tests", () => {
 		await expect(page.locator(SELECTORS.flowSelector)).toContainText(
 			uniqueFlowName,
 		);
+		await expectFlowPersisted(uniqueFlowName);
 
 		await page.reload();
 		await waitForAppLoaded(page);
@@ -68,6 +179,7 @@ test.describe("Web E2E Integration Tests", () => {
 		await expect(
 			getFirstPage(page).getByText("Info row title", { exact: true }),
 		).toBeVisible();
+		await expectFlowRowTitlePersisted(uniqueFlowName, "Info row title");
 
 		await page.reload();
 		await waitForAppLoaded(page);
@@ -98,6 +210,7 @@ test.describe("Web E2E Integration Tests", () => {
 		await titleInput.clear();
 		await titleInput.fill(uniqueTitle);
 		await expect(titleInput).toHaveValue(uniqueTitle);
+		await expectFlowRowTitlePersisted("View Item", uniqueTitle);
 
 		await page.reload();
 		await waitForAppLoaded(page);

@@ -391,6 +391,50 @@ describe("upsert", () => {
 		expect(flows).toHaveLength(1);
 	});
 
+	it("should insert then update the same SDUI flow when filter.id is provided for a new client-created flow", async () => {
+		const flowId = crypto.randomUUID();
+		const initialFlowData = createTestFlow({
+			id: flowId,
+			name: "Client Created Flow",
+			pages: [{ title: "Draft", rows: [] }],
+		});
+
+		const created = await upsert({
+			namespace: "evy",
+			resource: "sdui",
+			filter: { id: flowId },
+			data: initialFlowData,
+		});
+
+		const createdFlow = expectToBeDATA_Flow(created);
+		expect(createdFlow.id).toBe(flowId);
+		expect(createdFlow.data.id).toBe(flowId);
+		expect(createdFlow.data.name).toBe("Client Created Flow");
+
+		const updated = await upsert({
+			namespace: "evy",
+			resource: "sdui",
+			filter: { id: flowId },
+			data: createTestFlow({
+				id: flowId,
+				name: "Client Created Flow Updated",
+				pages: [{ title: "Published", rows: [] }],
+			}),
+		});
+
+		const updatedFlow = expectToBeDATA_Flow(updated);
+		expect(updatedFlow.id).toBe(flowId);
+		expect(updatedFlow.data.id).toBe(flowId);
+		expect(updatedFlow.data.name).toBe("Client Created Flow Updated");
+		expect(updatedFlow.data.pages[0]?.title).toBe("Published");
+
+		const flows = await testDb.select().from(schema.flow);
+		expect(flows).toHaveLength(1);
+		expect(flows[0]?.id).toBe(flowId);
+		expect(flows[0]?.data.id).toBe(flowId);
+		expect(flows[0]?.data.name).toBe("Client Created Flow Updated");
+	});
+
 	it("should reject SDUI flow with missing name", async () => {
 		await expect(
 			upsert({
