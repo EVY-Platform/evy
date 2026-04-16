@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { getRowsPanel, initTestFlows } from "./utils";
+import { getRowsPanel, openAppWithTestFlows } from "./utils";
 
 test.describe("EVY Rows", () => {
 	test("should display available row components in the Rows panel", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Page 1",
@@ -23,7 +23,6 @@ test.describe("EVY Rows", () => {
 				],
 			},
 		]);
-		await page.goto("/");
 		const rowsPanel = await getRowsPanel(page);
 
 		const expectedRowTitles = [
@@ -48,14 +47,13 @@ test.describe("EVY Rows", () => {
 	});
 
 	test("should filter rows by search query", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Page 1",
 				rows: [],
 			},
 		]);
-		await page.goto("/");
 		const rowsPanel = await getRowsPanel(page);
 		const searchInput = rowsPanel.getByPlaceholder("Button, Calendar, etc...");
 

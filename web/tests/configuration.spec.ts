@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
 	getConfigPanel,
 	initFullFlows,
-	initTestFlows,
+	openAppWithTestFlows,
 	popoverSelect,
 } from "./utils";
 
@@ -10,7 +10,7 @@ test.describe("Row configuration", () => {
 	test("should drill into child row configuration from the configuration panel", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -39,8 +39,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const containerRow = page
 			.getByText("Container Row", { exact: true })
 			.first();
@@ -73,7 +71,7 @@ test.describe("Row configuration", () => {
 	test("should display row configurations in configuration panel", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -91,7 +89,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
 		const infoRow = page.getByText("Test Info Row", { exact: true }).first();
 		await expect(infoRow).toBeVisible();
 		await infoRow.click();
@@ -111,7 +108,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should display and edit action items via popup", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -129,8 +126,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Test Button", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -162,7 +157,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should add another action item via popup", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -180,8 +175,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Nav Button", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -211,7 +204,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should edit conditions via popup", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -241,8 +234,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Submit", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -292,7 +283,7 @@ test.describe("Row configuration", () => {
 	test("should show empty actions state for rows without actions", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -310,8 +301,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const infoRow = page.getByText("No Action Row", { exact: true }).first();
 		await expect(infoRow).toBeVisible();
 		await infoRow.click();
@@ -453,7 +442,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should use number operand in condition", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -478,8 +467,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Check", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -510,7 +497,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should use function operand in condition", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -535,8 +522,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Validate", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -567,7 +552,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should add multiple OR conditions and remove one", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -604,8 +589,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Send", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -641,7 +624,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should discard changes when cancel is clicked", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -654,8 +637,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Cancel Test", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -682,7 +663,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should remove an action from summary card", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -700,8 +681,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Multi Action", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -808,7 +787,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should display flat OR conditions in summary", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -828,8 +807,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("OR Test", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -847,7 +824,7 @@ test.describe("Row configuration", () => {
 	test("should display nested AND/OR conditions in summary", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -867,8 +844,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Nested Test", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -886,7 +861,7 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should toggle OR to AND in condition editor", async ({ page }) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -929,8 +904,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Toggle Test", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -963,7 +936,7 @@ test.describe("Row configuration", () => {
 	test("should add nested group and round-trip nested condition", async ({
 		page,
 	}) => {
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
 				title: "Test Page",
@@ -1006,8 +979,6 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		await page.goto("/");
-
 		const buttonRow = page.getByText("Nest Test", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -1072,15 +1043,13 @@ test.describe("Row configuration", () => {
 			};
 		}
 
-		await initTestFlows(page, [
+		await openAppWithTestFlows(page, [
 			{
 				id: "step_deep",
 				title: "Deep Page",
 				rows: [deepNest(12)],
 			},
 		]);
-		await page.goto("/");
-
 		const configPanel = getConfigPanel(page);
 
 		await page.getByText("Nest level 12", { exact: true }).first().click();

@@ -5,7 +5,8 @@ import {
 	getFirstPage,
 	getPageContent,
 	getSidebarRow,
-	initTestFlows,
+	installConstructorFailingWebSocket,
+	openAppWithTestFlows,
 	waitForAppLoaded,
 } from "./utils";
 
@@ -116,15 +117,10 @@ test.describe("Offline and connection resilience", () => {
 	test("injected flows keep builder UI usable without a successful API read path", async ({
 		page,
 	}) => {
-		await page.addInitScript(() => {
-			window.WebSocket = class {
-				constructor() {
-					throw new Error("No WebSocket in this test");
-				}
-			} as unknown as typeof WebSocket;
-		});
-		await initTestFlows(page, [{ id: "p1", title: "Offline page", rows: [] }]);
-		await page.goto("/");
+		await installConstructorFailingWebSocket(page, "No WebSocket in this test");
+		await openAppWithTestFlows(page, [
+			{ id: "p1", title: "Offline page", rows: [] },
+		]);
 		await ensureSidePanelsExpanded(page);
 
 		await expect(page.getByText("Rows", { exact: true }).first()).toBeVisible();

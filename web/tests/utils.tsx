@@ -231,6 +231,29 @@ export async function openAppWithFullFlows(
 	await page.goto("/");
 }
 
+/** Injects simplified page fixtures via `initTestFlows` and opens the app. */
+export async function openAppWithTestFlows(
+	page: Page,
+	pages: Parameters<typeof initTestFlows>[1],
+): Promise<void> {
+	await initTestFlows(page, pages);
+	await page.goto("/");
+}
+
+/** `addInitScript` that replaces `WebSocket` with a class whose constructor throws. */
+export async function installConstructorFailingWebSocket(
+	page: Page,
+	message: string,
+): Promise<void> {
+	await page.addInitScript((msg: string) => {
+		window.WebSocket = class {
+			constructor() {
+				throw new Error(msg);
+			}
+		} as unknown as typeof WebSocket;
+	}, message);
+}
+
 export async function popoverSelect(
 	page: Page,
 	trigger: Locator,
@@ -274,11 +297,10 @@ export async function openSecondarySheetChildFromConfigPanel(
 
 /** Common drag-and-drop tests fixture: two empty pages. */
 export async function setupTwoEmptyTestPages(page: Page): Promise<void> {
-	await initTestFlows(page, [
+	await openAppWithTestFlows(page, [
 		{ id: "step_1", title: "Page 1", rows: [] },
 		{ id: "step_2", title: "Page 2", rows: [] },
 	]);
-	await page.goto("/");
 }
 
 /** Asserts `laterSubstring` appears after `earlierSubstring` in page canvas draggable rows. */
