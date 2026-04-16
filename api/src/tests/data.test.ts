@@ -1,5 +1,13 @@
 import type { z } from "zod";
-import { describe, it, expect, beforeEach, beforeAll, mock } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { PGlite } from "@electric-sql/pglite";
@@ -135,6 +143,10 @@ function createTestFlow(flowData: FlowDataInput): SDUI_Flow {
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
 	await clearTables();
+});
+
+afterAll(async () => {
+	await client.close();
 });
 
 describe("validateAuth", () => {
