@@ -133,15 +133,15 @@ test.describe("Secondary Sheet Page", () => {
 
 		// Click canvas background away from side panels (they overlay the viewport edges).
 		const canvas = page.getByTestId("canvas-viewport");
+		await canvas.scrollIntoViewIfNeeded();
 		const canvasBox = await canvas.boundingBox();
-		if (canvasBox) {
-			await canvas.click({
-				position: {
-					x: canvasBox.width / 2,
-					y: Math.min(120, canvasBox.height / 2),
-				},
-			});
-		}
+		expect(canvasBox).not.toBeNull();
+		await canvas.click({
+			position: {
+				x: canvasBox.width / 2,
+				y: Math.min(120, canvasBox.height / 2),
+			},
+		});
 
 		await expect(getSecondarySheetPage(page)).toHaveCount(0);
 	});
@@ -153,6 +153,24 @@ test.describe("Secondary Sheet Page", () => {
 
 		await getFirstPage(page).click();
 		await openSecondarySheetChildFromConfigPanel(page);
+
+		const pageBreadcrumb = page.getByRole("button", {
+			name: "Select page Page 1",
+		});
+		await expect(pageBreadcrumb).toHaveAttribute("aria-current", "page");
+		const secondaryPage = getSecondarySheetPage(page);
+		await expect(secondaryPage).toHaveCSS("opacity", "1");
+	});
+
+	test("should auto-enter focus mode when clicking SheetContainer child outside focus mode", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, sheetContainerPage);
+
+		await getFirstPage(page).click();
+		await openSecondarySheetChildFromConfigPanel(page, {
+			firstChildButtonName: "Info",
+		});
 
 		const pageBreadcrumb = page.getByRole("button", {
 			name: "Select page Page 1",

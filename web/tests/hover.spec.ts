@@ -29,23 +29,25 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const pageRow = getPageRow(page, "Text row title");
 
+		await sidebarRow.scrollIntoViewIfNeeded();
+		await pageRow.scrollIntoViewIfNeeded();
 		const sidebarBox = await sidebarRow.boundingBox();
 		const rowBox = await pageRow.boundingBox();
+		expect(sidebarBox).not.toBeNull();
+		expect(rowBox).not.toBeNull();
 
-		if (sidebarBox && rowBox) {
-			await page.mouse.move(
-				sidebarBox.x + sidebarBox.width / 2,
-				sidebarBox.y + sidebarBox.height / 2,
-			);
-			await page.mouse.down();
-			await page.mouse.move(
-				rowBox.x + rowBox.width / 2,
-				rowBox.y + rowBox.height / 2,
-			);
+		await page.mouse.move(
+			sidebarBox.x + sidebarBox.width / 2,
+			sidebarBox.y + sidebarBox.height / 2,
+		);
+		await page.mouse.down();
+		await page.mouse.move(
+			rowBox.x + rowBox.width / 2,
+			rowBox.y + rowBox.height / 2,
+		);
 
-			await expect(getDropIndicator(page)).toBeVisible();
-			await page.mouse.up();
-		}
+		await expect(getDropIndicator(page)).toBeVisible();
+		await page.mouse.up();
 	});
 
 	test("should show drop indicator inside a container when hovering over container children", async ({
@@ -79,23 +81,25 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const dragRow = await getSidebarRow(page, "Text row title");
 		const childRow = getPageRow(page, "Info row title");
 
+		await dragRow.scrollIntoViewIfNeeded();
+		await childRow.scrollIntoViewIfNeeded();
 		const dragBox = await dragRow.boundingBox();
 		const childBox = await childRow.boundingBox();
+		expect(dragBox).not.toBeNull();
+		expect(childBox).not.toBeNull();
 
-		if (dragBox && childBox) {
-			await page.mouse.move(
-				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2,
-			);
-			await page.mouse.down();
-			await page.mouse.move(
-				childBox.x + childBox.width / 2,
-				childBox.y + childBox.height / 2,
-			);
+		await page.mouse.move(
+			dragBox.x + dragBox.width / 2,
+			dragBox.y + dragBox.height / 2,
+		);
+		await page.mouse.down();
+		await page.mouse.move(
+			childBox.x + childBox.width / 2,
+			childBox.y + childBox.height / 2,
+		);
 
-			await expect(getDropIndicator(page).first()).toBeVisible();
-			await page.mouse.up();
-		}
+		await expect(getDropIndicator(page).first()).toBeVisible();
+		await page.mouse.up();
 	});
 
 	test("should show only one drop indicator at a time", async ({ page }) => {
@@ -118,33 +122,37 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const firstPageRow = pageRows.first();
 		const secondPageRow = pageRows.nth(1);
 
+		await dragRow.scrollIntoViewIfNeeded();
+		await firstPageRow.scrollIntoViewIfNeeded();
+		await secondPageRow.scrollIntoViewIfNeeded();
 		const dragBox = await dragRow.boundingBox();
 		const firstRowBox = await firstPageRow.boundingBox();
 		const secondRowBox = await secondPageRow.boundingBox();
+		expect(dragBox).not.toBeNull();
+		expect(firstRowBox).not.toBeNull();
+		expect(secondRowBox).not.toBeNull();
 
-		if (dragBox && firstRowBox && secondRowBox) {
-			await page.mouse.move(
-				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2,
-			);
-			await page.mouse.down();
+		await page.mouse.move(
+			dragBox.x + dragBox.width / 2,
+			dragBox.y + dragBox.height / 2,
+		);
+		await page.mouse.down();
 
-			await page.mouse.move(
-				firstRowBox.x + firstRowBox.width / 2,
-				firstRowBox.y + firstRowBox.height / 2,
-			);
+		await page.mouse.move(
+			firstRowBox.x + firstRowBox.width / 2,
+			firstRowBox.y + firstRowBox.height / 2,
+		);
 
-			const indicators = getDropIndicator(page);
-			expect(await indicators.count()).toBe(1);
+		const indicators = getDropIndicator(page);
+		expect(await indicators.count()).toBe(1);
 
-			await page.mouse.move(
-				secondRowBox.x + secondRowBox.width / 2,
-				secondRowBox.y + secondRowBox.height / 2,
-			);
+		await page.mouse.move(
+			secondRowBox.x + secondRowBox.width / 2,
+			secondRowBox.y + secondRowBox.height / 2,
+		);
 
-			expect(await indicators.count()).toBe(1);
-			await page.mouse.up();
-		}
+		expect(await indicators.count()).toBe(1);
+		await page.mouse.up();
 	});
 
 	test("should show indicator for innermost row when hovering over nested containers", async ({
@@ -186,25 +194,27 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const dragRow = await getSidebarRow(page, "Text row title");
 		const childRowElement = getPageRow(page, "Info row title");
 
+		await dragRow.scrollIntoViewIfNeeded();
+		await childRowElement.scrollIntoViewIfNeeded();
 		const dragBox = await dragRow.boundingBox();
 		const childBox = await childRowElement.boundingBox();
+		expect(dragBox).not.toBeNull();
+		expect(childBox).not.toBeNull();
 
-		if (dragBox && childBox) {
-			await page.mouse.move(
-				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2,
-			);
-			await page.mouse.down();
-			await page.mouse.move(
-				childBox.x + childBox.width / 2,
-				childBox.y + childBox.height / 2,
-			);
+		await page.mouse.move(
+			dragBox.x + dragBox.width / 2,
+			dragBox.y + dragBox.height / 2,
+		);
+		await page.mouse.down();
+		await page.mouse.move(
+			childBox.x + childBox.width / 2,
+			childBox.y + childBox.height / 2,
+		);
 
-			await expect(getDropIndicator(page).first()).toBeVisible();
-			expect(await getDropIndicator(page).count()).toBe(1);
+		await expect(getDropIndicator(page).first()).toBeVisible();
+		expect(await getDropIndicator(page).count()).toBe(1);
 
-			await page.mouse.up();
-		}
+		await page.mouse.up();
 	});
 
 	test("should clear indicator when drag ends", async ({ page }) => {
@@ -219,24 +229,26 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const pageRow = getPageRow(page, "Text row title");
 		const dragRow = await getSidebarRow(page, "Info row title");
 
+		await dragRow.scrollIntoViewIfNeeded();
+		await pageRow.scrollIntoViewIfNeeded();
 		const dragBox = await dragRow.boundingBox();
 		const rowBox = await pageRow.boundingBox();
+		expect(dragBox).not.toBeNull();
+		expect(rowBox).not.toBeNull();
 
-		if (dragBox && rowBox) {
-			await page.mouse.move(
-				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2,
-			);
-			await page.mouse.down();
-			await page.mouse.move(
-				rowBox.x + rowBox.width / 2,
-				rowBox.y + rowBox.height / 2,
-			);
+		await page.mouse.move(
+			dragBox.x + dragBox.width / 2,
+			dragBox.y + dragBox.height / 2,
+		);
+		await page.mouse.down();
+		await page.mouse.move(
+			rowBox.x + rowBox.width / 2,
+			rowBox.y + rowBox.height / 2,
+		);
 
-			await expect(getDropIndicator(page)).toBeVisible();
-			await page.mouse.up();
-			await expect(getDropIndicator(page)).not.toBeVisible();
-		}
+		await expect(getDropIndicator(page)).toBeVisible();
+		await page.mouse.up();
+		await expect(getDropIndicator(page)).not.toBeVisible();
 	});
 
 	test("should switch indicator when moving between rows", async ({ page }) => {
@@ -261,35 +273,39 @@ test.describe("Drag Hover Indicator Behavior", () => {
 			.filter({ hasText: "Text row title" })
 			.first();
 
+		await dragRow.scrollIntoViewIfNeeded();
+		await firstPageRow.scrollIntoViewIfNeeded();
+		await secondPageRow.scrollIntoViewIfNeeded();
 		const dragBox = await dragRow.boundingBox();
 		const firstRowBox = await firstPageRow.boundingBox();
 		const secondRowBox = await secondPageRow.boundingBox();
+		expect(dragBox).not.toBeNull();
+		expect(firstRowBox).not.toBeNull();
+		expect(secondRowBox).not.toBeNull();
 
-		if (dragBox && firstRowBox && secondRowBox) {
-			await page.mouse.move(
-				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2,
-			);
-			await page.mouse.down();
+		await page.mouse.move(
+			dragBox.x + dragBox.width / 2,
+			dragBox.y + dragBox.height / 2,
+		);
+		await page.mouse.down();
 
-			await page.mouse.move(
-				firstRowBox.x + firstRowBox.width / 2,
-				firstRowBox.y + firstRowBox.height / 2,
-			);
+		await page.mouse.move(
+			firstRowBox.x + firstRowBox.width / 2,
+			firstRowBox.y + firstRowBox.height / 2,
+		);
 
-			const indicator = getDropIndicator(page);
-			await expect(indicator.first()).toBeVisible();
+		const indicator = getDropIndicator(page);
+		await expect(indicator.first()).toBeVisible();
 
-			await page.mouse.move(
-				secondRowBox.x + secondRowBox.width / 2,
-				secondRowBox.y + secondRowBox.height / 2,
-			);
+		await page.mouse.move(
+			secondRowBox.x + secondRowBox.width / 2,
+			secondRowBox.y + secondRowBox.height / 2,
+		);
 
-			await expect(indicator.first()).toBeVisible();
-			expect(await indicator.count()).toBe(1);
+		await expect(indicator.first()).toBeVisible();
+		expect(await indicator.count()).toBe(1);
 
-			await page.mouse.up();
-		}
+		await page.mouse.up();
 	});
 
 	test("should show indicator at top edge when hovering near top of row", async ({
@@ -306,22 +322,24 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const pageRow = getPageRow(page, "Text row title");
 		const dragRow = await getSidebarRow(page, "Info row title");
 
+		await dragRow.scrollIntoViewIfNeeded();
+		await pageRow.scrollIntoViewIfNeeded();
 		const dragBox = await dragRow.boundingBox();
 		const rowBox = await pageRow.boundingBox();
+		expect(dragBox).not.toBeNull();
+		expect(rowBox).not.toBeNull();
 
-		if (dragBox && rowBox) {
-			await page.mouse.move(
-				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2,
-			);
-			await page.mouse.down();
-			await page.mouse.move(rowBox.x + rowBox.width / 2, rowBox.y + 10);
+		await page.mouse.move(
+			dragBox.x + dragBox.width / 2,
+			dragBox.y + dragBox.height / 2,
+		);
+		await page.mouse.down();
+		await page.mouse.move(rowBox.x + rowBox.width / 2, rowBox.y + 10);
 
-			const topIndicator = page.locator(SELECTORS.topIndicator);
-			await expect(topIndicator.first()).toBeVisible();
+		const topIndicator = page.locator(SELECTORS.topIndicator);
+		await expect(topIndicator.first()).toBeVisible();
 
-			await page.mouse.up();
-		}
+		await page.mouse.up();
 	});
 
 	test("should show indicator at bottom edge when hovering near bottom of row", async ({
@@ -338,24 +356,26 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const pageRow = getPageRow(page, "Text row title");
 		const dragRow = await getSidebarRow(page, "Info row title");
 
+		await dragRow.scrollIntoViewIfNeeded();
+		await pageRow.scrollIntoViewIfNeeded();
 		const dragBox = await dragRow.boundingBox();
 		const rowBox = await pageRow.boundingBox();
+		expect(dragBox).not.toBeNull();
+		expect(rowBox).not.toBeNull();
 
-		if (dragBox && rowBox) {
-			await page.mouse.move(
-				dragBox.x + dragBox.width / 2,
-				dragBox.y + dragBox.height / 2,
-			);
-			await page.mouse.down();
-			await page.mouse.move(
-				rowBox.x + rowBox.width / 2,
-				rowBox.y + rowBox.height - 10,
-			);
+		await page.mouse.move(
+			dragBox.x + dragBox.width / 2,
+			dragBox.y + dragBox.height / 2,
+		);
+		await page.mouse.down();
+		await page.mouse.move(
+			rowBox.x + rowBox.width / 2,
+			rowBox.y + rowBox.height - 10,
+		);
 
-			const bottomIndicator = page.locator(SELECTORS.bottomIndicator);
-			await expect(bottomIndicator.first()).toBeVisible();
+		const bottomIndicator = page.locator(SELECTORS.bottomIndicator);
+		await expect(bottomIndicator.first()).toBeVisible();
 
-			await page.mouse.up();
-		}
+		await page.mouse.up();
 	});
 });

@@ -238,16 +238,15 @@ test.describe("Drag & Drop UX", () => {
 
 		const firstRow = pageRows.first();
 		const secondRow = pageRows.nth(1);
+		await secondRow.scrollIntoViewIfNeeded();
 		const secondRowBox = await secondRow.boundingBox();
-
-		if (secondRowBox) {
-			await firstRow.dragTo(secondRow, {
-				targetPosition: {
-					x: secondRowBox.width / 2,
-					y: secondRowBox.height - 5,
-				},
-			});
-		}
+		expect(secondRowBox).not.toBeNull();
+		await firstRow.dragTo(secondRow, {
+			targetPosition: {
+				x: secondRowBox.width / 2,
+				y: secondRowBox.height - 5,
+			},
+		});
 
 		await expect(
 			firstPage.getByText("Text row title", { exact: true }),
@@ -265,7 +264,6 @@ test.describe("Drag & Drop UX", () => {
 
 	test("should drag a row from position 2 to 1 on a page", async ({ page }) => {
 		await setupTwoEmptyTestPages(page);
-		await page.waitForLoadState("networkidle");
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
@@ -298,13 +296,12 @@ test.describe("Drag & Drop UX", () => {
 
 		const firstRow = pageRows.first();
 		const secondRow = pageRows.nth(1);
+		await firstRow.scrollIntoViewIfNeeded();
 		const firstRowBox = await firstRow.boundingBox();
-
-		if (firstRowBox) {
-			await secondRow.dragTo(firstRow, {
-				targetPosition: { x: firstRowBox.width / 2, y: 5 },
-			});
-		}
+		expect(firstRowBox).not.toBeNull();
+		await secondRow.dragTo(firstRow, {
+			targetPosition: { x: firstRowBox.width / 2, y: 5 },
+		});
 
 		await expect(
 			firstPage.getByText("Text row title", { exact: true }),
@@ -403,24 +400,23 @@ test.describe("Drag & Drop UX", () => {
 		).toBeVisible();
 
 		const pageRow = getPageRow(page, "Info row title");
+		await pageRow.scrollIntoViewIfNeeded();
 		const rowBox = await pageRow.boundingBox();
+		expect(rowBox).not.toBeNull();
+		await page.mouse.move(
+			rowBox.x + rowBox.width / 2,
+			rowBox.y + rowBox.height / 2,
+		);
+		await page.mouse.down();
+		await page.mouse.move(
+			rowBox.x + rowBox.width / 2 + 10,
+			rowBox.y + rowBox.height / 2 + 10,
+		);
 
-		if (rowBox) {
-			await page.mouse.move(
-				rowBox.x + rowBox.width / 2,
-				rowBox.y + rowBox.height / 2,
-			);
-			await page.mouse.down();
-			await page.mouse.move(
-				rowBox.x + rowBox.width / 2 + 10,
-				rowBox.y + rowBox.height / 2 + 10,
-			);
+		const deleteOverlay = page.getByRole("button", { name: "Delete" });
+		await expect(deleteOverlay).toBeVisible();
 
-			const deleteOverlay = page.getByRole("button", { name: "Delete" });
-			await expect(deleteOverlay).toBeVisible();
-
-			await page.mouse.up();
-		}
+		await page.mouse.up();
 	});
 
 	test("should drag and drop every single row type into a page", async ({

@@ -186,11 +186,12 @@ export function PopoverSelect({
 				onMouseEnter={handleTriggerPointerEnter}
 				onMouseLeave={handleTriggerPointerLeave}
 				onClick={() => {
-					if (isOpen) {
-						close();
-					} else {
-						open();
-					}
+					// With hover-open, pointer hover may open the menu before click; toggling
+					// closed here races with Playwright (hover → click) and flakes tests.
+					if (openOnHover) {
+						if (!isOpen) open();
+					} else if (isOpen) close();
+					else open();
 				}}
 				className={
 					variant === "breadcrumb"

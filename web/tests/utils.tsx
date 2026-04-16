@@ -119,7 +119,11 @@ export async function waitForAppLoaded(page: Page): Promise<void> {
 }
 
 export async function openFlowPicker(page: Page): Promise<void> {
-	await page.locator(SELECTORS.flowSelector).click();
+	const trigger = page.locator(SELECTORS.flowSelector);
+	await trigger.click();
+	await expect(
+		page.getByRole("listbox", { name: "Active flow" }),
+	).toBeVisible();
 }
 
 /** Opens the flow picker, chooses "Create new flow", fills the name, and submits. */
