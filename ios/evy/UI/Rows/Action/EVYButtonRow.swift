@@ -13,9 +13,9 @@ struct EVYButtonRow: View, EVYRowProtocol {
 	public static let JSONType = "Button"
 
 	private let view: ButtonRowViewData
-	private let actions: [SDUI_RowAction]
+	private let actions: [UI_RowAction]
 
-	init(view: ButtonRowViewData, actions: [SDUI_RowAction]) {
+	init(view: ButtonRowViewData, actions: [UI_RowAction]) {
 		self.view = view
 		self.actions = actions
 	}

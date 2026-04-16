@@ -1,4 +1,4 @@
-import type { SDUI_Flow } from "../types/flow";
+import type { UI_Flow } from "../types/flow";
 import { findFlowById } from "./flowHelpers";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
@@ -78,7 +78,7 @@ export function serializeBranch(
 
 export function formatBranchDisplay(
 	branchString: string,
-	flows?: SDUI_Flow[],
+	flows?: UI_Flow[],
 ): string {
 	const parsed = parseBranch(branchString);
 	if (!parsed) return "None";

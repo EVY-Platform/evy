@@ -2,12 +2,12 @@ import { createContext, useContext } from "react";
 import type { Dispatch } from "react";
 
 import type { Row } from "../../types/row";
-import type { SDUI_Flow } from "../../types/flow";
+import type { UI_Flow } from "../../types/flow";
 import type { RowAction } from "../../types/actions";
 
 export type FlowsContextValue = {
 	rows: Row[];
-	flows: SDUI_Flow[];
+	flows: UI_Flow[];
 	activeFlowId?: string;
 	activeRowId?: string;
 	activePageId?: string;

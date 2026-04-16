@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import type { SDUI_RowAction } from "evy-types";
+import type { UI_RowAction } from "evy-types";
 
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useFlowsContext } from "../state";
@@ -16,9 +16,9 @@ import { BranchEditor } from "./actionPopup/BranchEditor";
 import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
 
 type ActionPopupProps = {
-	action: SDUI_RowAction;
+	action: UI_RowAction;
 	actionIndex: number;
-	onSave: (action: SDUI_RowAction) => void;
+	onSave: (action: UI_RowAction) => void;
 	onCancel: () => void;
 };
 

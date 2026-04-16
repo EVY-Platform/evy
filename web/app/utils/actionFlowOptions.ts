@@ -1,4 +1,4 @@
-import type { SDUI_Flow } from "../types/flow";
+import type { UI_Flow } from "../types/flow";
 import { displayLabel } from "./labelFormatting";
 import { findFlowById } from "./flowHelpers";
 
@@ -9,13 +9,13 @@ export function toVariableOptions(
 }
 
 export function getFlowOptions(
-	flows: SDUI_Flow[],
+	flows: UI_Flow[],
 ): { value: string; label: string }[] {
 	return flows.map((f) => ({ value: f.id, label: f.name }));
 }
 
 export function getPageOptions(
-	flows: SDUI_Flow[],
+	flows: UI_Flow[],
 	flowId: string,
 ): { value: string; label: string }[] {
 	const flow = findFlowById(flows, flowId);

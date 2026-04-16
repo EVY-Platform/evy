@@ -9,7 +9,7 @@ import Foundation
 
 @MainActor
 enum EVYActionRunner {
-    static func run(actions: [SDUI_RowAction],
+    static func run(actions: [UI_RowAction],
                     navigate: @escaping (NavOperation) -> Void)
     {
         guard !actions.isEmpty else { return }

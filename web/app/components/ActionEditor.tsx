@@ -2,8 +2,8 @@ import { useCallback, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
-import type { SDUI_RowAction } from "evy-types";
-import type { SDUI_Flow } from "../types/flow";
+import type { UI_RowAction } from "evy-types";
+import type { UI_Flow } from "../types/flow";
 import {
 	parseCondition,
 	parseBranch,
@@ -34,16 +34,16 @@ const actionSummaryCss = `
 `;
 
 type ActionEditorProps = {
-	actions: SDUI_RowAction[];
-	flows: SDUI_Flow[];
-	onUpdate: (actions: SDUI_RowAction[]) => void;
+	actions: UI_RowAction[];
+	flows: UI_Flow[];
+	onUpdate: (actions: UI_RowAction[]) => void;
 };
 
 export function ActionEditor({ actions, flows, onUpdate }: ActionEditorProps) {
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
 	const updateAction = useCallback(
-		(index: number, updated: SDUI_RowAction) => {
+		(index: number, updated: UI_RowAction) => {
 			onUpdate(actions.map((a, i) => (i === index ? updated : a)));
 		},
 		[actions, onUpdate],
@@ -63,7 +63,7 @@ export function ActionEditor({ actions, flows, onUpdate }: ActionEditorProps) {
 	}, [actions, onUpdate]);
 
 	const handlePopupSave = useCallback(
-		(updated: SDUI_RowAction) => {
+		(updated: UI_RowAction) => {
 			if (editingIndex !== null) {
 				updateAction(editingIndex, updated);
 			}
@@ -124,9 +124,9 @@ export function ActionEditor({ actions, flows, onUpdate }: ActionEditorProps) {
 }
 
 type ActionSummaryCardProps = {
-	action: SDUI_RowAction;
+	action: UI_RowAction;
 	index: number;
-	flows: SDUI_Flow[];
+	flows: UI_Flow[];
 	onEdit: () => void;
 	onRemove: () => void;
 };

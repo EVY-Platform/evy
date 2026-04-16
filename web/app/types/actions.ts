@@ -1,7 +1,7 @@
 import type { ContainerType } from "./row";
-import type { SDUI_Flow } from "./flow";
+import type { UI_Flow } from "./flow";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import type { SDUI_RowAction } from "evy-types";
+import type { UI_RowAction } from "evy-types";
 
 export type RowAction =
 	| {
@@ -34,7 +34,7 @@ export type RowAction =
 	| {
 			type: "UPDATE_ROW_ACTIONS";
 			rowId: string;
-			actions: SDUI_RowAction[];
+			actions: UI_RowAction[];
 	  }
 	| {
 			type: "SET_ACTIVE_FLOW";
@@ -112,7 +112,7 @@ export type DropIndicatorAction =
 	  };
 
 export type AppState = {
-	flows: SDUI_Flow[];
+	flows: UI_Flow[];
 	activeRowId?: string;
 	activeFlowId?: string;
 	activePageId?: string;

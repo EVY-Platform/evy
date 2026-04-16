@@ -6,7 +6,7 @@
 		}
 	},
 	"tables": {
-		"DATA_Device": {
+		"DATA_EVY_Device": {
 			"tableName": "Device",
 			"primaryKey": "token",
 			"defaultRandom": [],
@@ -14,7 +14,7 @@
 				{ "name": "Device_token_os_key", "columns": ["token", "os"] }
 			]
 		},
-		"DATA_Service": {
+		"DATA_EVY_Service": {
 			"tableName": "Service",
 			"primaryKey": "id",
 			"defaultRandom": [],
@@ -22,7 +22,7 @@
 				{ "name": "Service_name_key", "columns": ["name"] }
 			]
 		},
-		"DATA_Organization": {
+		"DATA_EVY_Organization": {
 			"tableName": "Organization",
 			"primaryKey": "id",
 			"defaultRandom": [],
@@ -30,7 +30,7 @@
 				{ "name": "Organization_name_key", "columns": ["name"] }
 			]
 		},
-		"DATA_ServiceProvider": {
+		"DATA_EVY_ServiceProvider": {
 			"tableName": "ServiceProvider",
 			"primaryKey": "id",
 			"defaultRandom": [],
@@ -42,13 +42,13 @@
 				}
 			]
 		},
-		"DATA_Flow": {
+		"DATA_EVY_Flow": {
 			"tableName": "Flow",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
-		"DATA_Data": {
+		"DATA_EVY_Data": {
 			"tableName": "Data",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
@@ -57,28 +57,28 @@
 	},
 	"relations": [
 		{
-			"from": "DATA_ServiceProvider",
-			"to": "DATA_Service",
+			"from": "DATA_EVY_ServiceProvider",
+			"to": "DATA_EVY_Service",
 			"fields": ["fkServiceId"],
 			"references": ["id"],
 			"relationName": "service"
 		},
 		{
-			"from": "DATA_ServiceProvider",
-			"to": "DATA_Organization",
+			"from": "DATA_EVY_ServiceProvider",
+			"to": "DATA_EVY_Organization",
 			"fields": ["fkOrganizationId"],
 			"references": ["id"],
 			"relationName": "organization"
 		},
 		{
-			"from": "DATA_Service",
-			"to": "DATA_ServiceProvider",
+			"from": "DATA_EVY_Service",
+			"to": "DATA_EVY_ServiceProvider",
 			"oneToMany": true,
 			"relationName": "providers"
 		},
 		{
-			"from": "DATA_Organization",
-			"to": "DATA_ServiceProvider",
+			"from": "DATA_EVY_Organization",
+			"to": "DATA_EVY_ServiceProvider",
 			"oneToMany": true,
 			"relationName": "providers"
 		}

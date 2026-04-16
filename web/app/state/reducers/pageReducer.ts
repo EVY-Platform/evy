@@ -2,7 +2,7 @@ import { createElement } from "react";
 import invariant from "tiny-invariant";
 
 import type { AppState, RowAction } from "../../types/actions";
-import type { SDUI_Page } from "../../types/flow";
+import type { UI_Page } from "../../types/flow";
 import type { Row } from "../../types/row";
 import { baseRows } from "../../rows/baseRows";
 import {
@@ -69,7 +69,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		activePageId,
 		configStack,
 	}: {
-		updatedPages?: SDUI_Page[];
+		updatedPages?: UI_Page[];
 		activeFlowId?: string;
 		activeRowId?: string;
 		activePageId?: string;

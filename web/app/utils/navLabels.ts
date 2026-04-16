@@ -1,5 +1,5 @@
 import type { Row } from "../types/row";
-import type { SDUI_Page } from "../types/flow";
+import type { UI_Page } from "../types/flow";
 import { splitCamelCaseToWords } from "./labelFormatting";
 
 export function breadcrumbLabelForRow(row: Row): string {
@@ -11,8 +11,8 @@ export function breadcrumbLabelForRow(row: Row): string {
 }
 
 export function breadcrumbLabelForPage(
-	page: SDUI_Page,
-	pagesInFlow: SDUI_Page[],
+	page: UI_Page,
+	pagesInFlow: UI_Page[],
 ): string {
 	const trimmedTitle = page.title?.trim() ?? "";
 	if (trimmedTitle !== "") {

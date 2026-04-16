@@ -1,4 +1,4 @@
-import type { SDUI_Flow } from "../types/flow";
+import type { UI_Flow } from "../types/flow";
 import type { Row } from "../types/row";
 import { findFlowById } from "./flowHelpers";
 import { getRowsRecursive } from "./rowTree";
@@ -30,7 +30,7 @@ function collectDestinations(row: Row, result: Set<string>): void {
 }
 
 export function extractDraftVariables(
-	flows: SDUI_Flow[],
+	flows: UI_Flow[],
 	activeFlowId: string | undefined,
 ): string[] {
 	const flow = findFlowById(flows, activeFlowId);

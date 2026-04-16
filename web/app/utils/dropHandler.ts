@@ -9,7 +9,7 @@ import type {
 } from "@atlaskit/pragmatic-drag-and-drop/types";
 import invariant from "tiny-invariant";
 
-import type { SDUI_Page } from "../types/flow";
+import type { UI_Page } from "../types/flow";
 import type { ContainerType } from "../types/row";
 import type { RowAction } from "../types/actions";
 import { containerDropindicatorId } from "../rows/EVYRow";
@@ -30,7 +30,7 @@ type DropDispatchOptions = {
 };
 
 function getDefaultAppendIndexForPageDrop(
-	destinationPage: SDUI_Page,
+	destinationPage: UI_Page,
 	secondarySheetRowId: string | undefined,
 ): number {
 	if (secondarySheetRowId) {
@@ -43,7 +43,7 @@ function getDefaultAppendIndexForPageDrop(
 }
 
 function buildInitialDropDispatchOptions(
-	destinationPage: SDUI_Page,
+	destinationPage: UI_Page,
 	resolvedPageId: string,
 	secondarySheetRowId: string | undefined,
 ): DropDispatchOptions {
@@ -67,7 +67,7 @@ function buildInitialDropDispatchOptions(
 
 export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
-	pages: SDUI_Page[],
+	pages: UI_Page[],
 	dispatchRow: Dispatch<RowAction>,
 ): void {
 	const { location, source } = args;

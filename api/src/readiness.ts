@@ -1,4 +1,4 @@
-import type { GetRequest, GetResponse, SDUI_Flow } from "evy-types";
+import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 import { get as defaultGet } from "./data";
 
 type AssertApiReadableOptions = {
@@ -9,7 +9,7 @@ type ApiReadableDeps = {
 	get: (params: GetRequest) => Promise<GetResponse>;
 };
 
-function isFlow(value: unknown): value is SDUI_Flow {
+function isFlow(value: unknown): value is UI_Flow {
 	return (
 		value !== null &&
 		typeof value === "object" &&

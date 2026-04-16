@@ -23,19 +23,19 @@ protocol EVYRowProtocol: View {
 }
 
 struct EVYRow: View, Identifiable {
-	let row: SDUI_Row
+	let row: UI_Row
 	var id: String { row.id }
 
 	var body: some View {
 		Group {
-			if let payload = try? SDUI_RowPayload.from(row: row) {
+			if let payload = try? UI_RowPayload.from(row: row) {
 				rowView(for: payload)
 			}
 		}
 	}
 
 	@ViewBuilder
-	private func rowView(for payload: SDUI_RowPayload) -> some View {
+	private func rowView(for payload: UI_RowPayload) -> some View {
 		switch payload {
 		case .button(let v, _, let a): EVYButtonRow(view: v, actions: a)
 		case .calendar(let v, _, _): EVYCalendarRow(view: v)

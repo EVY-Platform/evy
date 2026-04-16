@@ -1,8 +1,8 @@
 import {
-	SDUI_ROW_TYPE_VALUES,
-	type DATA_Data,
-	type SDUI_Flow,
-	type SDUI_Row,
+	UI_ROW_TYPE_VALUES,
+	type DATA_EVY_Data,
+	type UI_Flow,
+	type UI_Row,
 } from "evy-types";
 import { z } from "zod";
 
@@ -143,10 +143,10 @@ const RowActionsSchema = z.array(RowActionSchema);
 /**
  * Recursive row schema that validates the full row structure including nested children
  */
-export const RowSchema: z.ZodType<SDUI_Row> = z.lazy(() =>
+export const RowSchema: z.ZodType<UI_Row> = z.lazy(() =>
 	z.strictObject({
 		id: z.uuid(),
-		type: z.enum(SDUI_ROW_TYPE_VALUES),
+		type: z.enum(UI_ROW_TYPE_VALUES),
 		view: z.strictObject({
 			content: z.looseObject({
 				title: z.string(),
@@ -174,9 +174,9 @@ export const PageSchema = z.strictObject({
 
 /**
  * Schema for the complete flow data structure.
- * Pages may be an empty array per SDUI_Flow schema.
+ * Pages may be an empty array per UI_Flow schema.
  */
-const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
+const FlowDataSchema: z.ZodType<UI_Flow> = z.strictObject({
 	id: z.uuid(),
 	name: z.string().min(1, { error: "Flow name is required" }),
 	pages: z.array(PageSchema),
@@ -186,7 +186,7 @@ const FlowDataSchema: z.ZodType<SDUI_Flow> = z.strictObject({
  * Validates non-SDUI `upsert` payloads: top-level object with JSON-serializable values
  * (`JSONValue`), with finite numeric scalars only.
  */
-export function validateDataPayload(data: unknown): DATA_Data["data"] {
+export function validateDataPayload(data: unknown): DATA_EVY_Data["data"] {
 	const result = DataPayloadObjectSchema.safeParse(data);
 	if (!result.success) {
 		throw new Error(
@@ -194,10 +194,10 @@ export function validateDataPayload(data: unknown): DATA_Data["data"] {
 		);
 	}
 	assertIsoDateTimeJsonFields(result.data);
-	return result.data as DATA_Data["data"];
+	return result.data as DATA_EVY_Data["data"];
 }
 
-export function validateFlowData(data: unknown): SDUI_Flow {
+export function validateFlowData(data: unknown): UI_Flow {
 	const result = FlowDataSchema.safeParse(data);
 
 	if (!result.success) {

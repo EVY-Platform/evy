@@ -1,83 +1,65 @@
 # Marketplace data models
 
-These shapes are **domain models** used by the marketplace service. They are not defined in the repo’s JSON Schema; they are stored as JSON under `NamespacedData.marketplace` and validated at the application layer. See [EVY data models](../evy/sddata/data.md) for the API persistence schema and the distinction between schema-defined types and domain models.
+These shapes are **marketplace domain models**. They are not defined as top-level `$defs` in `types/schema/data/data.schema.json`; payloads live as JSON under the `marketplace` namespace (and/or in `DATA_EVY_Data` rows) and are validated at the application layer.
+
+Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/sddata/data.md).
 
 ---
 
-## location
-
-```
-latitude: decimal
-longitude: decimal
-```
-
-## price
-
-```
-currency: string
-value: decimal
-```
-
-## address
-
-```
-unit: string
-street: string
-city: string
-postcode: string
-state: string
-country: string
-location: location
-instructions: string
-```
-
-## area
+## DATA_MARKETPLACE_Tag
 
 ```
 id: uuid
 value: string
 ```
 
-## tag
+---
+
+## DATA_MARKETPLACE_SellingReason
 
 ```
+id: uuid
 value: string
 ```
 
-## photo
+---
 
-Base model with no extra props.
-
-## logo
-
-Base model with no extra props.
-
-## timeslot
-
-Instants must be ISO 8601 strings. Preferred names:
+## DATA_MARKETPLACE_Condition
 
 ```
-startAt: string (date-time)
-endAt: string (date-time)
-available: boolean
-type: string
+id: uuid
+value: string
 ```
 
-Legacy field names `start_timestamp` / `end_timestamp` are still validated the same way if present: **ISO strings only**, not Unix seconds or milliseconds.
+---
 
-## transfer_options
+## DATA_MARKETPLACE_Item
+
+A listing aggregate. Field names below follow the marketplace service mock and UI bindings; some keys use `snake_case` in persisted JSON.
 
 ```
-pickup: {
-    timeslots: [timeslot]
-    address: address
+id: uuid
+title: string
+photo_ids: [uuid]
+price: price
+seller_id: uuid
+address: address
+createdAt: string (date-time)
+transfer_options: transfer_options
+description: string
+condition_id: uuid (optional; selected condition)
+selling_reason_id: uuid (optional; selected selling reason)
+dimensions: {
+    width: number
+    height: number
+    length: number
+    weight: number
 }
-delivery: {
-    fee: price
-    timeslots: [timeslot]
-}
-ship: {
-    postal_code: string
-    areas: [area]
+tags: [DATA_MARKETPLACE_Tag]
+payment_methods: {
+    cash: boolean
+    app: boolean
 }
 ```
+
+`condition_id` / `selling_reason_id` reference option rows (`DATA_MARKETPLACE_Condition` / `DATA_MARKETPLACE_SellingReason`) loaded like other reference data.
