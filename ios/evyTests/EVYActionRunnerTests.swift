@@ -16,14 +16,14 @@ final class EVYActionRunnerTests: XCTestCase {
 
     func testCloseAction() {
         var received: NavOperation?
-        let action = UI_RowAction(condition: "", true: "{close}", false: "")
+        let action = UI_RowAction(condition: "", false: "", true: "{close}")
         EVYActionRunner.run(actions: [action]) { received = $0 }
         XCTAssertEqual(received, .close)
     }
 
     func testCreateAction() {
         var received: NavOperation?
-        let action = UI_RowAction(condition: "", true: "{create(item)}", false: "")
+        let action = UI_RowAction(condition: "", false: "", true: "{create(item)}")
         EVYActionRunner.run(actions: [action]) { received = $0 }
         XCTAssertEqual(received, .create("item"))
     }
@@ -32,8 +32,8 @@ final class EVYActionRunnerTests: XCTestCase {
         var received: NavOperation?
         let action = UI_RowAction(
             condition: "",
-            true: "{navigate(flow-1,page-2)}",
             false: "",
+            true: "{navigate(flow-1,page-2)}",
         )
         EVYActionRunner.run(actions: [action]) { received = $0 }
         guard case let .navigate(route) = received else {
@@ -48,8 +48,8 @@ final class EVYActionRunnerTests: XCTestCase {
         var received: NavOperation?
         let action = UI_RowAction(
             condition: "",
-            true: "navigate:flowX:pageY",
             false: "",
+            true: "navigate:flowX:pageY",
         )
         EVYActionRunner.run(actions: [action]) { received = $0 }
         guard case let .navigate(route) = received else {
@@ -64,8 +64,8 @@ final class EVYActionRunnerTests: XCTestCase {
         var received: NavOperation?
         let action = UI_RowAction(
             condition: "",
-            true: "{highlight_required(unit_price)}",
             false: "",
+            true: "{highlight_required(unit_price)}",
         )
         EVYActionRunner.run(actions: [action]) { received = $0 }
         guard case let .highlightRequired(label) = received else {
@@ -82,8 +82,8 @@ final class EVYActionRunnerTests: XCTestCase {
         )
         let action = UI_RowAction(
             condition: "",
-            true: "{notARealEvyFunction()}",
             false: "",
+            true: "{notARealEvyFunction()}",
         )
         EVYActionRunner.run(actions: [action]) { _ in }
         wait(for: [expectation], timeout: 2)

@@ -229,14 +229,20 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .evyFlowUpdated)) { notification in
             guard let updatedFlow = notification.object as? UI_Flow else { return }
 
-            if let index = flows.firstIndex(where: { $0.id == updatedFlow.id }) {
-                flows[index] = updatedFlow
+            var nextFlows = flows
+            if let index = nextFlows.firstIndex(where: { $0.id == updatedFlow.id }) {
+                nextFlows[index] = updatedFlow
             } else {
-                flows.append(updatedFlow)
+                nextFlows.append(updatedFlow)
             }
+            flows = nextFlows
         }
         .onReceive(NotificationCenter.default.publisher(for: .evyErrorOccurred)) { notification in
             if let error = notification.object as? Error {
+                // If the error fires while we are still loading (e.g. the initial
+                // WebSocket handshake failed), exit the loading state so the
+                // error UI renders instead of spinning forever behind an alert.
+                if loading { loading = false }
                 showError(error)
             }
         }

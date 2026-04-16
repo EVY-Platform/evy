@@ -212,6 +212,7 @@ private func evyJsonFromFirstArgument(args: String, errorType: String) throws ->
     return try EVY.getDataFromProps(path)
 }
 
+@MainActor
 private func evyTrimmedFirstPath(from args: String, errorType: String) throws -> String {
     let parts = EVYInterpreter.splitFunctionArguments(args)
     guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
@@ -689,3 +690,4 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
 		}
 	}
 }
+

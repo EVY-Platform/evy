@@ -91,6 +91,44 @@ wait_for_api_readiness() {
     fi
 }
 
+extract_ios_simulator_destination() {
+    local destination_line="$1"
+    local destination_id="${destination_line#*id:}"
+    destination_id="${destination_id%%,*}"
+
+    if [ -z "$destination_id" ] || [[ "$destination_id" == dvtdevice-*placeholder* ]]; then
+        return 1
+    fi
+
+    printf 'platform=iOS Simulator,id=%s' "$destination_id"
+}
+
+resolve_ios_simulator_destination() {
+    if [ -n "${IOS_SIMULATOR_DESTINATION:-}" ]; then
+        printf '%s' "$IOS_SIMULATOR_DESTINATION"
+        return 0
+    fi
+
+    local destinations_output
+    if ! destinations_output="$(xcodebuild -showdestinations -project evy.xcodeproj -scheme evy 2>/dev/null)"; then
+        return 1
+    fi
+
+    local destination_line
+    local resolved_destination
+    while IFS= read -r destination_line; do
+        if [[ "$destination_line" == *"platform:iOS Simulator"* ]]; then
+            resolved_destination="$(extract_ios_simulator_destination "$destination_line" || true)"
+            if [ -n "$resolved_destination" ]; then
+                printf '%s' "$resolved_destination"
+                return 0
+            fi
+        fi
+    done <<< "$destinations_output"
+
+    return 1
+}
+
 seed_database() {
     if ! bun db:seed; then
         echo -e "${RED}Database seeding failed${NC}"
@@ -176,17 +214,26 @@ else
     echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
     seed_database
     cd ios
-    if xcodebuild test \
-        -project evy.xcodeproj \
-        -scheme evy \
-        -destination 'platform=iOS Simulator,name=iPhone Air,OS=26.2' \
-        -parallel-testing-enabled YES \
-        -parallel-testing-worker-count 2 \
-        -quiet; then
-        echo -e "${GREEN}iOS e2e tests passed${NC}"
-    else
-        echo -e "${RED}iOS e2e tests failed${NC}"
+    IOS_DESTINATION="$(resolve_ios_simulator_destination)"
+    if [ -z "$IOS_DESTINATION" ]; then
+        echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
+        echo "Available destinations:"
+        xcodebuild -showdestinations -project evy.xcodeproj -scheme evy || true
         IOS_RESULT=1
+    else
+        echo "Using iOS simulator destination: $IOS_DESTINATION"
+        if xcodebuild test \
+            -project evy.xcodeproj \
+            -scheme evy \
+            -destination "$IOS_DESTINATION" \
+            -parallel-testing-enabled YES \
+            -parallel-testing-worker-count 2 \
+            -quiet; then
+            echo -e "${GREEN}iOS e2e tests passed${NC}"
+        else
+            echo -e "${RED}iOS e2e tests failed${NC}"
+            IOS_RESULT=1
+        fi
     fi
     cd ..
 fi
