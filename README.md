@@ -2,6 +2,32 @@
 
 If smartphones and the internet were built by the people for the people. Create services on the EVY platform and get paid every time your contribution is used. The EVY app is privacy-focused, local-first and peer-to-peer.
 
+## Architecture at a glance
+
+EVY is split into thin clients (iOS, web builder), one public edge (`api`), and per-namespace backend services that speak a shared gRPC contract (`evy.Service`). The main `api` stores SDUI flows locally and proxies every other namespace to the right backend.
+
+```mermaid
+flowchart LR
+    ios[iOS app]
+    web[Web builder]
+
+    api[api<br/>JSON-RPC 2.0 WebSocket<br/>SDUI store + router]
+    marketplace[marketplace service<br/>gRPC evy.Service]
+    pg[(Postgres<br/>evy + marketplace DBs)]
+
+    ios -- WebSocket --> api
+    web -- WebSocket --> api
+    api -- local Drizzle --> pg
+    api -- gRPC<br/>MARKETPLACE_GRPC_URL --> marketplace
+    marketplace -- Drizzle --> pg
+```
+
+- `namespace: "evy"` + `resource: "sdui"` reads/writes `UI_Flow` documents owned by `api`.
+- Every other namespace is routed over gRPC; each non-`evy` namespace must declare a `<NAMESPACE>_GRPC_URL` env var.
+- Real-time updates are pushed back to clients as standard JSON-RPC notifications (`flowUpdated`, `dataUpdated`). Remote services emit via `evy.Service.SubscribeEvents`, which the `api` fans out to connected clients.
+
+See [`api/README.md`](./api/README.md) for the full request/notification sequence diagrams.
+
 # Documentation
 
 - EVY Platform
@@ -14,6 +40,7 @@ If smartphones and the internet were built by the people for the people. Create 
   - [Example data](./docs/services/service_data.json)
   - [Example UI flow for view & create item pages](./docs/services/service_sdui.json)
 - [API](./api/README.md)
+- [Marketplace service](./services/marketplace/README.md)
 - [iOS](./ios/README.md)
 - [Web](./web/README.md)
 
