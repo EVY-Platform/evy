@@ -206,6 +206,129 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
 }
 
 @MainActor
+func evyFormatDecimal(_ args: String,
+                      _ editing: Bool = false) throws -> EVYFunctionOutput {
+    let parts = EVYInterpreter.splitFunctionArguments(args)
+    guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
+        throw EVYError.formatFailed(type: "decimal", reason: "missing value argument")
+    }
+    let places: Int
+    if parts.count >= 2 {
+        let rawPlaces = EVYInterpreter.stripOptionalSurroundingQuotes(parts[1])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        places = Int(rawPlaces) ?? 2
+    } else {
+        places = 2
+    }
+
+    let res = try EVY.getDataFromProps(path)
+    let number = try evyDoubleValue(from: res, type: "decimal")
+
+    if editing {
+        return EVYFunctionOutput(value: evyPlainNumberString(number), prefix: nil, suffix: nil)
+    }
+
+    let formatter = NumberFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.minimumFractionDigits = max(0, places)
+    formatter.maximumFractionDigits = max(0, places)
+    formatter.roundingMode = .halfUp
+    formatter.numberStyle = .decimal
+    guard let formatted = formatter.string(from: NSNumber(value: number)) else {
+        throw EVYError.formatFailed(type: "decimal", reason: "could not format number")
+    }
+    return EVYFunctionOutput(value: formatted, prefix: nil, suffix: nil)
+}
+
+@MainActor
+func evyFormatMetricLength(_ args: String,
+                           _ editing: Bool = false) throws -> EVYFunctionOutput {
+    let parts = EVYInterpreter.splitFunctionArguments(args)
+    guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
+        throw EVYError.formatFailed(type: "metricLength", reason: "missing value argument")
+    }
+    let res = try EVY.getDataFromProps(path)
+    let mm = try evyMillimetres(from: res)
+
+    if editing {
+        return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
+    }
+
+    let metres = Double(mm) / 1000.0
+    let formatted = String(format: "%.2f", metres)
+    return EVYFunctionOutput(value: formatted, prefix: nil, suffix: "m")
+}
+
+@MainActor
+func evyFormatImperialLength(_ args: String,
+                             _ editing: Bool = false) throws -> EVYFunctionOutput {
+    let parts = EVYInterpreter.splitFunctionArguments(args)
+    guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
+        throw EVYError.formatFailed(type: "imperialLength", reason: "missing value argument")
+    }
+    let res = try EVY.getDataFromProps(path)
+    let mm = try evyMillimetres(from: res)
+
+    if editing {
+        return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
+    }
+
+    let feet = Double(mm) / 304.8
+    let formatted = String(format: "%.2f", feet)
+    return EVYFunctionOutput(value: formatted, prefix: nil, suffix: "ft")
+}
+
+@MainActor
+func evyFormatDuration(_ args: String,
+                       _ editing: Bool = false) throws -> EVYFunctionOutput {
+    let parts = EVYInterpreter.splitFunctionArguments(args)
+    guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
+        throw EVYError.formatFailed(type: "duration", reason: "missing value argument")
+    }
+    let res = try EVY.getDataFromProps(path)
+    let ms = try evyMilliseconds(from: res)
+
+    if editing {
+        return EVYFunctionOutput(value: "\(ms)", prefix: nil, suffix: nil)
+    }
+
+    let label = evyHumanizeDuration(milliseconds: ms)
+    return EVYFunctionOutput(value: label, prefix: nil, suffix: nil)
+}
+
+@MainActor
+func evyFormatDate(_ args: String,
+                   _ editing: Bool = false) throws -> EVYFunctionOutput {
+    let parts = EVYInterpreter.splitFunctionArguments(args)
+    guard parts.count >= 2 else {
+        throw EVYError.formatFailed(type: "date", reason: "expected value and format pattern")
+    }
+    let path = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+    let pattern = evyNormalizeDateFormatPattern(
+        EVYInterpreter.stripOptionalSurroundingQuotes(parts[1])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    )
+    guard !path.isEmpty, !pattern.isEmpty else {
+        throw EVYError.formatFailed(type: "date", reason: "missing value or format pattern")
+    }
+
+    let res = try EVY.getDataFromProps(path)
+    let isoString = try evyIso8601String(from: res, type: "date")
+
+    if editing {
+        return EVYFunctionOutput(value: isoString, prefix: nil, suffix: nil)
+    }
+
+    let date = try evyParseIso8601Date(isoString)
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = pattern
+    let formatted = formatter.string(from: date)
+    return EVYFunctionOutput(value: formatted, prefix: nil, suffix: nil)
+}
+
+@MainActor
 func evyBuildCurrency(_ args: String,
                       _ value: String) throws -> Data {
     let existingCurrency = evyExistingCurrency(for: args) ?? "AUD"
@@ -231,6 +354,120 @@ func evyBuildAddress(_ args: String,
         evyAddressFields(from: value, existingAddress: existingAddress)
     )
     return try JSONEncoder().encode(builtAddress)
+}
+
+private func evyDoubleValue(from json: EVYJson, type: String) throws -> Double {
+    switch json {
+    case let .int(intValue):
+        return Double(intValue)
+    case let .decimal(decimalValue):
+        return NSDecimalNumber(decimal: decimalValue).doubleValue
+    case let .string(stringValue):
+        let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let parsed = Double(trimmed) else {
+            throw EVYError.formatFailed(type: type, reason: "could not parse number from '\(trimmed)'")
+        }
+        return parsed
+    default:
+        throw EVYError.formatFailed(type: type, reason: "expected number, got \(json)")
+    }
+}
+
+private func evyPlainNumberString(_ value: Double) -> String {
+    if value.truncatingRemainder(dividingBy: 1) == 0, value <= Double(Int.max), value >= Double(Int.min) {
+        return String(Int(value))
+    }
+    return "\(value)"
+}
+
+private func evyMillimetres(from json: EVYJson) throws -> Int {
+    switch json {
+    case let .int(intValue):
+        return intValue
+    case let .string(stringValue):
+        let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            throw EVYError.formatFailed(type: "metricLength", reason: "empty millimetre value")
+        }
+        guard let mm = Int(trimmed) else {
+            throw EVYError.formatFailed(type: "metricLength", reason: "could not parse integer from '\(trimmed)'")
+        }
+        return mm
+    default:
+        throw EVYError.formatFailed(type: "metricLength", reason: "expected integer millimetres, got \(json)")
+    }
+}
+
+private func evyMilliseconds(from json: EVYJson) throws -> Int64 {
+    switch json {
+    case let .int(intValue):
+        return Int64(intValue)
+    case let .decimal(decimalValue):
+        return NSDecimalNumber(decimal: decimalValue).int64Value
+    case let .string(stringValue):
+        let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            throw EVYError.formatFailed(type: "duration", reason: "empty duration value")
+        }
+        guard let parsed = Int64(trimmed) else {
+            throw EVYError.formatFailed(type: "duration", reason: "could not parse integer from '\(trimmed)'")
+        }
+        return parsed
+    default:
+        throw EVYError.formatFailed(type: "duration", reason: "expected duration in milliseconds, got \(json)")
+    }
+}
+
+private func evyHumanizeDuration(milliseconds: Int64) -> String {
+    let ms = max(milliseconds, 0)
+    let units: [(Int64, String, String)] = [
+        (86_400_000, "day", "days"),
+        (3_600_000, "hour", "hours"),
+        (60_000, "minute", "minutes"),
+        (1000, "second", "seconds"),
+    ]
+    for (unitMs, singular, plural) in units {
+        if ms >= unitMs {
+            let count = ms / unitMs
+            let label = count == 1 ? singular : plural
+            return "\(count) \(label)"
+        }
+    }
+    return "\(ms) milliseconds"
+}
+
+private func evyNormalizeDateFormatPattern(_ pattern: String) -> String {
+    var result = pattern
+    result = result.replacingOccurrences(of: "YYYY", with: "yyyy")
+    result = result.replacingOccurrences(of: "DD", with: "dd")
+    return result
+}
+
+private func evyIso8601String(from json: EVYJson, type: String) throws -> String {
+    switch json {
+    case let .string(stringValue):
+        let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            throw EVYError.formatFailed(type: type, reason: "empty date string")
+        }
+        return trimmed
+    default:
+        throw EVYError.formatFailed(type: type, reason: "expected ISO 8601 string, got \(json)")
+    }
+}
+
+private func evyParseIso8601Date(_ isoString: String) throws -> Date {
+    let withFraction = ISO8601DateFormatter()
+    withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    if let date = withFraction.date(from: isoString) {
+        return date
+    }
+    let basic = ISO8601DateFormatter()
+    basic.formatOptions = [.withInternetDateTime]
+    if let date = basic.date(from: isoString) {
+        return date
+    }
+    throw EVYError.formatFailed(type: "date", reason: "could not parse ISO 8601 date '\(isoString)'")
 }
 
 private func evyNumericValue(_ value: String) -> Decimal? {

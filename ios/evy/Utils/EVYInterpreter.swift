@@ -75,6 +75,58 @@ struct EVYInterpreter {
         }
         return nil
     }
+
+    /// Splits top-level comma-separated function arguments, respecting nested parentheses and double-quoted segments.
+    public static func splitFunctionArguments(_ args: String) -> [String] {
+        var components: [String] = []
+        var current = ""
+        var depth = 0
+        var inString = false
+
+        for ch in args {
+            if inString {
+                current.append(ch)
+                if ch == "\"" {
+                    inString = false
+                }
+                continue
+            }
+
+            switch ch {
+            case "\"":
+                inString = true
+                current.append(ch)
+            case "(":
+                depth += 1
+                current.append(ch)
+            case ")":
+                depth -= 1
+                current.append(ch)
+            case "," where depth == 0:
+                let trimmed = current.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    components.append(trimmed)
+                }
+                current = ""
+            default:
+                current.append(ch)
+            }
+        }
+
+        let trimmedTail = current.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedTail.isEmpty {
+            components.append(trimmedTail)
+        }
+        return components
+    }
+
+    public static func stripOptionalSurroundingQuotes(_ s: String) -> String {
+        let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2, trimmed.first == "\"", trimmed.last == "\"" else {
+            return trimmed
+        }
+        return String(trimmed.dropFirst().dropLast())
+    }
     
     private static func parseText(_ input: EVYValue,
                                   _ editing: Bool) throws -> EVYValue
@@ -128,6 +180,16 @@ struct EVYInterpreter {
                 value = try evyFormatWeight(funcArgs, editing)
             case "formatAddress":
                 value = try evyFormatAddress(funcArgs)
+            case "formatDecimal":
+                value = try evyFormatDecimal(funcArgs, editing)
+            case "formatMetricLength":
+                value = try evyFormatMetricLength(funcArgs, editing)
+            case "formatImperialLength":
+                value = try evyFormatImperialLength(funcArgs, editing)
+            case "formatDuration":
+                value = try evyFormatDuration(funcArgs, editing)
+            case "formatDate":
+                value = try evyFormatDate(funcArgs, editing)
             case "buildCurrency", "buildAddress":
                 value = nil
             default:

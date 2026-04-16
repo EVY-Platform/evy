@@ -4,8 +4,8 @@ import { propPathToFriendlyLabel } from "./labelFormatting";
 const FUNCTION_WITH_BRACES = /\{([a-zA-Z_]+)\(([^)]*)\)\}/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
 
-function resolveFunction(functionName: string): string | null {
-	const result = callFunction(functionName);
+function resolveFunction(functionName: string, rawArgs: string): string | null {
+	const result = callFunction(functionName, rawArgs);
 	if (!result) return "";
 	return `${result.prefix ?? ""}${result.value}${result.suffix ?? ""}`;
 }
@@ -19,7 +19,8 @@ export function parseText(input: string): string {
 	while (safety++ < 50) {
 		const fnMatch = FUNCTION_WITH_BRACES.exec(text);
 		if (fnMatch) {
-			const resolved = resolveFunction(fnMatch[1]);
+			// Regex captures `[1]` as the function name and `[2]` as the raw text inside `(...)`.
+			const resolved = resolveFunction(fnMatch[1], fnMatch[2] ?? "");
 			if (resolved !== null) {
 				text = text.replace(fnMatch[0], resolved);
 				continue;

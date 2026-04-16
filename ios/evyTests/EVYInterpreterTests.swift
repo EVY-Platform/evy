@@ -63,6 +63,31 @@ final class EVYInterpreterTests: XCTestCase {
         )
     }
 
+    func testWatchTargetUsesFirstArgumentForMultiArgFunction() {
+        XCTAssertEqual(
+            EVY.watchTarget(for: "{formatDecimal(item.price, 2)}"),
+            "item.price"
+        )
+    }
+
+    func testWatchTargetUsesFirstArgumentWithQuotedFormatString() {
+        XCTAssertEqual(
+            EVY.watchTarget(for: "{formatDate(item.createdAt, \"MM/dd/yyyy\")}"),
+            "item.createdAt"
+        )
+    }
+
+    func testSplitFunctionArgumentsRespectsQuotesAndNesting() {
+        XCTAssertEqual(
+            EVYInterpreter.splitFunctionArguments(#"item.date, "MM/dd/yyyy""#),
+            [#"item.date"#, #""MM/dd/yyyy""#]
+        )
+        XCTAssertEqual(
+            EVYInterpreter.splitFunctionArguments("outer.inner, 2"),
+            ["outer.inner", "2"]
+        )
+    }
+
     func testCountReflectsArrayAfterStoreUpdate() throws {
         let key = uniqueKey("photos")
         try store(.array([.string("a")]), at: key)
@@ -76,6 +101,42 @@ final class EVYInterpreterTests: XCTestCase {
         XCTAssertEqual(two.value, "n: 2")
     }
 
+    func testFormatDecimalRoundsToPlaces() throws {
+        let key = uniqueKey("amount")
+        try store(.string("20.0423"), at: key)
+        let out = try EVYInterpreter.parseTextFromText("{\(formatDecimal(key, 2))}")
+        XCTAssertEqual(out.value, "20.04")
+    }
+
+    func testFormatMetricLengthUsesTwoDecimalMetres() throws {
+        let key = uniqueKey("mm")
+        try store(.int(23240), at: key)
+        let out = try EVYInterpreter.parseTextFromText("{\(formatMetricLength(key))}")
+        XCTAssertEqual(out.toString(), "23.24m")
+    }
+
+    func testFormatImperialLengthConvertsMillimetresToFeet() throws {
+        let key = uniqueKey("mm")
+        try store(.int(4231), at: key)
+        let out = try EVYInterpreter.parseTextFromText("{\(formatImperialLength(key))}")
+        XCTAssertEqual(out.toString(), "13.88ft")
+    }
+
+    func testFormatDurationHumanizesMilliseconds() throws {
+        let key = uniqueKey("ms")
+        try store(.int(900_000), at: key)
+        let out = try EVYInterpreter.parseTextFromText("{\(formatDuration(key))}")
+        XCTAssertEqual(out.value, "15 minutes")
+    }
+
+    func testFormatDateFormatsIsoStringWithPattern() throws {
+        let key = uniqueKey("created")
+        try store(.string("2024-01-19T12:42:52.000Z"), at: key)
+        let datePattern = "MM/dd/yyyy"
+        let out = try EVYInterpreter.parseTextFromText("{\(formatDate(key, datePattern))}")
+        XCTAssertEqual(out.value, "01/19/2024")
+    }
+
     private func store(_ value: EVYJson, at key: String) throws {
         if EVY.data.exists(key: key) {
             try EVY.data.delete(key: key)
@@ -87,5 +148,25 @@ final class EVYInterpreterTests: XCTestCase {
     private func uniqueKey(_ suffix: String) -> String {
         let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
         return "evy_interpreter_tests_\(suffix)_\(randomId)"
+    }
+
+    private func formatDecimal(_ key: String, _ places: Int) -> String {
+        "formatDecimal(\(key), \(places))"
+    }
+
+    private func formatMetricLength(_ key: String) -> String {
+        "formatMetricLength(\(key))"
+    }
+
+    private func formatImperialLength(_ key: String) -> String {
+        "formatImperialLength(\(key))"
+    }
+
+    private func formatDuration(_ key: String) -> String {
+        "formatDuration(\(key))"
+    }
+
+    private func formatDate(_ key: String, _ pattern: String) -> String {
+        "formatDate(\(key), \"\(pattern)\")"
     }
 }
