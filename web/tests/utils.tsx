@@ -122,6 +122,20 @@ export async function openFlowPicker(page: Page): Promise<void> {
 	await page.locator(SELECTORS.flowSelector).click();
 }
 
+/** Opens the flow picker, chooses "Create new flow", fills the name, and submits. */
+export async function createNewFlowThroughPicker(
+	page: Page,
+	flowName: string,
+): Promise<void> {
+	await openFlowPicker(page);
+	await page
+		.getByRole("option", { name: "Create new flow", exact: true })
+		.click();
+	await expect(page.getByTestId("create-flow-dialog")).toBeVisible();
+	await page.getByLabel("Flow name").fill(flowName);
+	await page.getByRole("button", { name: "Create", exact: true }).click();
+}
+
 export async function selectFlowByLabel(
 	page: Page,
 	label: string,

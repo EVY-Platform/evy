@@ -1,11 +1,15 @@
 import { test, expect } from "@playwright/test";
 
 import {
+	createNewFlowThroughPicker,
 	ensureSidePanelsExpanded,
 	getConfigPanel,
 	getErrorState,
 	getFirstPage,
 	getLoadingState,
+	getPageContent,
+	getSidebarRow,
+	openFlowPicker,
 	selectFlowByLabel,
 	SELECTORS,
 	waitForAppLoaded,
@@ -20,6 +24,60 @@ import {
 test.describe.configure({ mode: "serial" });
 
 test.describe("Web E2E Integration Tests", () => {
+	test("should persist a newly created flow after page refresh", async ({
+		page,
+	}) => {
+		const uniqueFlowName = `E2E New Flow ${Date.now()}`;
+
+		await page.goto("/");
+		await waitForAppLoaded(page);
+
+		await createNewFlowThroughPicker(page, uniqueFlowName);
+		await expect(page.getByTestId("create-flow-dialog")).not.toBeVisible();
+		await expect(page.locator(SELECTORS.flowSelector)).toContainText(
+			uniqueFlowName,
+		);
+
+		await page.reload();
+		await waitForAppLoaded(page);
+
+		await openFlowPicker(page);
+		await expect(
+			page
+				.getByRole("listbox", { name: "Active flow" })
+				.getByRole("option", { name: uniqueFlowName, exact: true }),
+		).toBeVisible();
+	});
+
+	test("should persist a sidebar row dropped on canvas after page refresh", async ({
+		page,
+	}) => {
+		const uniqueFlowName = `E2E Row Flow ${Date.now()}`;
+
+		await page.goto("/");
+		await waitForAppLoaded(page);
+
+		await createNewFlowThroughPicker(page, uniqueFlowName);
+		await expect(page.getByTestId("create-flow-dialog")).not.toBeVisible();
+
+		await ensureSidePanelsExpanded(page);
+		const sidebarRow = await getSidebarRow(page, "Info row title");
+		const pageContent = getPageContent(page);
+		await sidebarRow.dragTo(pageContent);
+
+		await expect(
+			getFirstPage(page).getByText("Info row title", { exact: true }),
+		).toBeVisible();
+
+		await page.reload();
+		await waitForAppLoaded(page);
+		await selectFlowByLabel(page, uniqueFlowName);
+
+		await expect(
+			getFirstPage(page).getByText("Info row title", { exact: true }),
+		).toBeVisible();
+	});
+
 	test("should persist SDUI edits after page refresh", async ({ page }) => {
 		const uniqueTitle = `E2E Test Title ${Date.now()}`;
 

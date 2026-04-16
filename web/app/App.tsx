@@ -225,12 +225,10 @@ function NavBar() {
 
 export function App() {
 	const { flows, loading } = useFlows();
-	const usingInjectedTestFlows = Boolean(window.__TEST_FLOWS__);
+	const testFlows = window.__TEST_FLOWS__;
+	const initialFlows = testFlows ?? flows;
 
-	// Use test flows if available (for testing), otherwise use fetched flows
-	const initialFlows = window.__TEST_FLOWS__ ?? flows;
-
-	if (loading && !usingInjectedTestFlows) {
+	if (loading && !testFlows) {
 		return (
 			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
 				<div className="evy-text-gray-dark evy-text-lg">Loading flows...</div>
@@ -247,10 +245,7 @@ export function App() {
 	}
 
 	return (
-		<AppProvider
-			initialFlows={initialFlows}
-			syncWithApi={!usingInjectedTestFlows}
-		>
+		<AppProvider initialFlows={initialFlows} syncWithApi={!testFlows}>
 			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
 				<NavBar />
 				<div className="evy-flex evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-bg-gray-light">
