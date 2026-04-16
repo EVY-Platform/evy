@@ -40,6 +40,24 @@ function textRow(id: string, text = "hello"): Row {
 	};
 }
 
+function sheetRow(id: string, child: Row, children: Row[] = []): Row {
+	return {
+		id,
+		row: null,
+		config: {
+			type: "SheetContainer",
+			actions: [],
+			view: {
+				content: {
+					title: "Sheet",
+					child,
+					children,
+				},
+			},
+		} as Row["config"],
+	};
+}
+
 function initialState(overrides: Partial<AppState> = {}): AppState {
 	return {
 		flows: [
@@ -275,6 +293,41 @@ describe("pageReducer", () => {
 			configStackLength: 0,
 		});
 		expect(popped.configStack).toEqual([]);
+	});
+
+	it("PUSH_CONFIG_STACK auto-enters focus mode for SheetContainer child", () => {
+		const state = initialState({
+			activePageId: undefined,
+			focusMode: false,
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [
+								sheetRow("sheet-1", textRow("sheet-child"), [
+									textRow("sheet-list-child"),
+								]),
+							],
+						},
+					],
+				},
+			],
+		});
+
+		const next = pageReducer(state, {
+			type: "PUSH_CONFIG_STACK",
+			parentRowId: "sheet-1",
+			childRowId: "sheet-child",
+		});
+
+		expect(next.focusMode).toBe(true);
+		expect(next.activePageId).toBe("page-1");
+		expect(next.secondarySheetRowId).toBe("sheet-1");
+		expect(next.configStack).toEqual(["sheet-child"]);
 	});
 
 	it("OPEN_SECONDARY_SHEET and CLOSE_SECONDARY_SHEET", () => {

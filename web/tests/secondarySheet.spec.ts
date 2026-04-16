@@ -161,4 +161,22 @@ test.describe("Secondary Sheet Page", () => {
 		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 	});
+
+	test("should auto-enter focus mode when clicking SheetContainer child outside focus mode", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, sheetContainerPage);
+
+		await getFirstPage(page).click();
+		await openSecondarySheetChildFromConfigPanel(page, {
+			firstChildButtonName: "Info",
+		});
+
+		const pageBreadcrumb = page.getByRole("button", {
+			name: "Select page Page 1",
+		});
+		await expect(pageBreadcrumb).toHaveAttribute("aria-current", "page");
+		const secondaryPage = getSecondarySheetPage(page);
+		await expect(secondaryPage).toHaveCSS("opacity", "1");
+	});
 });

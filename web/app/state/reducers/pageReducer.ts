@@ -367,17 +367,18 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const parentRow = findRowInPages(action.parentRowId, flow.pages);
 			if (!parentRow) return state;
 
-			const isSheetChild =
+			const isSheetNestedRow =
 				parentRow.config.type === "SheetContainer" &&
-				parentRow.config.view.content.children?.some(
-					(c) => c.id === action.childRowId,
-				);
+				(parentRow.config.view.content.child?.id === action.childRowId ||
+					parentRow.config.view.content.children?.some(
+						(c) => c.id === action.childRowId,
+					));
 
 			let nextFocusMode = state.focusMode;
 			let nextActivePageId = state.activePageId;
 			let nextSecondarySheetRowId = state.secondarySheetRowId;
 
-			if (isSheetChild) {
+			if (isSheetNestedRow) {
 				if (!state.focusMode) {
 					nextFocusMode = true;
 					nextActivePageId = state.activePageId ?? flow.pages[0]?.id;
