@@ -1,8 +1,8 @@
-# SDUI
+# Server-driven UI (UI types)
 
 ## Data
 
-SDUI flows (`SDUI_Flow`) only describe structure: `id`, `name`, and `pages`. **Reference data** (dropdown options, tags, durations, etc.) is **not** embedded inside the flow JSON.
+UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. **Reference data** (dropdown options, tags, durations, etc.) is **not** embedded inside the flow JSON.
 
 - Rows that need a data source set `view.data` to a string that typically references a variable or API/local source, for example:
 	- `"{conditions}"` — bind to data the client already has under that key
@@ -40,7 +40,7 @@ The canonical shape matches `types/schema/sdui/evy.schema.json`:
 
 ## Row
 
-Rows are what are put into pages. They are the building block of the EVY SDUI framework
+Rows are what are put into pages. They are the building block of the EVY server-driven UI framework
 
 ### Base features
 
@@ -53,7 +53,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 -   [ x ]
     -   Denotes a type array of x
 -   Objects and arrays
-    -   When objects or arrays are passed into a prop of content, they are parsed fully by the SDUI framework. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
+    -   When objects or arrays are passed into a prop of content, they are parsed fully by the UI runtime. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
 
 ### Row schema explained
 
@@ -91,7 +91,7 @@ Rows are what are put into pages. They are the building block of the EVY SDUI fr
 
 ### Actions
 
-Each row has an `actions` array of `SDUI_RowAction` objects: `condition`, `false`, and `true` are all strings. On the **client** (e.g. iOS), actions are evaluated **in order** until a branch runs that does something non-trivial; the **web builder** edits the same strings and persists them on the row.
+Each row has an `actions` array of `UI_RowAction` objects: `condition`, `false`, and `true` are all strings. On the **client** (e.g. iOS), actions are evaluated **in order** until a branch runs that does something non-trivial; the **web builder** edits the same strings and persists them on the row.
 
 #### Conditions
 

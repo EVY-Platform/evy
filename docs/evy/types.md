@@ -21,9 +21,9 @@ date-time (string)
 
 | Path / pattern | Purpose |
 |----------------|--------|
-| `types/schema/**/*.schema.json` | JSON Schema for SDUI, RPC, and data models. Used to generate TypeScript and Swift. |
-| `types/schema/sdui/row-content.spec.json` | Per–row-type content/view keys for SDUI. Used by the Swift SDUI generator only. |
-| `types/schema/data/data.schema.json` | API persistence models (DATA_Flow, DATA_Device, etc.). |
+| `types/schema/**/*.schema.json` | JSON Schema for UI flows, RPC, and data models. Used to generate TypeScript and Swift. |
+| `types/schema/sdui/row-content.spec.json` | Per–row-type content/view keys for UI rows. Used by the Swift UI generator only. |
+| `types/schema/data/data.schema.json` | API persistence models (`DATA_EVY_Flow`, `DATA_EVY_Device`, etc.). |
 | `types/schema/data/drizzle.config.json` | Drizzle table names, primary keys, enums, relations. Must stay in sync with `data.schema.json`. |
 
 ### Command
@@ -36,7 +36,7 @@ bun run types:generate
 
 This runs:
 
-1. **`scripts/generate-types.ts`** — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. For SDUI Swift it also runs `scripts/generate-swift-sdui.ts`, which uses `evy.schema.json` and `row-content.spec.json`.
+1. **`scripts/generate-types.ts`** — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. For Swift UI shapes it also runs `scripts/generate-swift-sdui.ts`, which uses `evy.schema.json` and `row-content.spec.json`.
 2. **`scripts/generate-drizzle.ts`** — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`.
 
 ### Outputs (do not edit by hand)

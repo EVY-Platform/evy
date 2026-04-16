@@ -222,11 +222,11 @@ function buildNumberColumn(dbCol: string): string {
 }
 
 function resolveJsonbTypeAnnotation(ref: string | undefined): string {
-	if (ref?.includes("SDUI_Flow") || ref?.includes("evy.schema.json")) {
-		return "SDUI_Flow";
+	if (ref?.includes("UI_Flow") || ref?.includes("evy.schema.json")) {
+		return "UI_Flow";
 	}
 	if (ref?.includes("JSONValue") || ref?.includes("json.schema.json")) {
-		return 'DATA_Data["data"]';
+		return 'DATA_EVY_Data["data"]';
 	}
 	return "unknown";
 }
@@ -346,8 +346,8 @@ async function main(): Promise<void> {
 		"	uniqueIndex,",
 		'} from "drizzle-orm/pg-core";',
 		'import { relations } from "drizzle-orm";',
-		'import type { SDUI_Flow } from "evy-types/sdui/evy";',
-		'import type { DATA_Data } from "evy-types/data/data";',
+		'import type { UI_Flow } from "evy-types/sdui/evy";',
+		'import type { DATA_EVY_Data } from "evy-types/data/data";',
 		"",
 	];
 
@@ -362,12 +362,12 @@ async function main(): Promise<void> {
 	}
 
 	const tableOrder = [
-		"DATA_Device",
-		"DATA_Service",
-		"DATA_Organization",
-		"DATA_ServiceProvider",
-		"DATA_Flow",
-		"DATA_Data",
+		"DATA_EVY_Device",
+		"DATA_EVY_Service",
+		"DATA_EVY_Organization",
+		"DATA_EVY_ServiceProvider",
+		"DATA_EVY_Flow",
+		"DATA_EVY_Data",
 	];
 
 	for (const defKey of tableOrder) {
@@ -425,45 +425,42 @@ async function main(): Promise<void> {
 		lines.push("");
 	}
 
-	const serviceProviderRels = manyToOneRels.filter(
-		(r) => r.from === "DATA_ServiceProvider",
-	);
-	if (serviceProviderRels.length > 0) {
-		const fromTable = config.tables?.DATA_ServiceProvider;
-		const toService = config.tables?.DATA_Service;
-		const toOrg = config.tables?.DATA_Organization;
-		if (fromTable && toService && toOrg) {
-			lines.push(
-				"export const serviceProviderRelations = relations(",
-				"	serviceProvider,",
-				"	({ one }) => ({",
-			);
-			const toServiceRel = serviceProviderRels.find(
-				(r) => r.to === "DATA_Service",
-			);
-			const toOrgRel = serviceProviderRels.find(
-				(r) => r.to === "DATA_Organization",
-			);
-			if (toServiceRel?.fields?.[0] && toServiceRel?.references?.[0]) {
-				lines.push(
-					"		service: one(service, {",
-					`			fields: [serviceProvider.${toServiceRel.fields[0]}],`,
-					`			references: [service.${toServiceRel.references[0]}],`,
-					"		}),",
-				);
+	const manyToOneByFrom = new Map<string, typeof manyToOneRels>();
+	for (const rel of manyToOneRels) {
+		const list = manyToOneByFrom.get(rel.from) ?? [];
+		list.push(rel);
+		manyToOneByFrom.set(rel.from, list);
+	}
+
+	for (const [fromKey, rels] of manyToOneByFrom) {
+		const fromTable = config.tables?.[fromKey];
+		if (!fromTable) continue;
+		const fromVar = tableNameToVariable(fromTable.tableName);
+		const exportName = `${fromVar}Relations`;
+		const bodyLines: string[] = [];
+		for (const rel of rels) {
+			const toTable = config.tables?.[rel.to];
+			const field = rel.fields?.[0];
+			const reference = rel.references?.[0];
+			if (!toTable || field === undefined || reference === undefined) {
+				continue;
 			}
-			if (toOrgRel?.fields?.[0] && toOrgRel?.references?.[0]) {
-				lines.push(
-					"		organization: one(organization, {",
-					`			fields: [serviceProvider.${toOrgRel.fields[0]}],`,
-					`			references: [organization.${toOrgRel.references[0]}],`,
-					"		}),",
-				);
-			}
-			lines.push("	}),");
-			lines.push(");");
-			lines.push("");
+			const toVar = tableNameToVariable(toTable.tableName);
+			bodyLines.push(
+				`		${rel.relationName}: one(${toVar}, {`,
+				`			fields: [${fromVar}.${field}],`,
+				`			references: [${toVar}.${reference}],`,
+				"		}),",
+			);
 		}
+		if (bodyLines.length === 0) continue;
+		lines.push(`export const ${exportName} = relations(`);
+		lines.push(`	${fromVar},`);
+		lines.push("	({ one }) => ({");
+		lines.push(...bodyLines);
+		lines.push("	}),");
+		lines.push(");");
+		lines.push("");
 	}
 
 	await mkdir(dirname(OUT_PATH), { recursive: true });

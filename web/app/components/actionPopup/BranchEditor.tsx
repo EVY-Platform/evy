@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 
-import type { SDUI_Flow } from "../../types/flow";
+import type { UI_Flow } from "../../types/flow";
 import {
 	type ActionFunction,
 	getFlowOptions,
@@ -16,7 +16,7 @@ type BranchEditorProps = {
 	branchId: string;
 	value: string;
 	draftVariables: string[];
-	flows: SDUI_Flow[];
+	flows: UI_Flow[];
 	onChange: (value: string) => void;
 };
 
@@ -26,7 +26,7 @@ function buildArgDropdowns(
 	functionName: ActionFunction | "",
 	currentArgs: string[],
 	draftVariables: string[],
-	flows: SDUI_Flow[],
+	flows: UI_Flow[],
 ): ArgDropdownSlot[] {
 	if (!functionName || functionName === "close") return [];
 

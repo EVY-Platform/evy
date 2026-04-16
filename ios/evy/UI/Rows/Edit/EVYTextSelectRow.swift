@@ -12,11 +12,11 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 
 	private let view: TextSelectRowViewData
 	private let destination: String
-	private let actions: [SDUI_RowAction]
+	private let actions: [UI_RowAction]
 	private let value: EVYJson
 	private let selected: EVYState<Bool>
 
-	init?(view: TextSelectRowViewData, destination: String?, actions: [SDUI_RowAction]) {
+	init?(view: TextSelectRowViewData, destination: String?, actions: [UI_RowAction]) {
 		guard let destination else { return nil }
 		self.view = view
 		self.destination = destination

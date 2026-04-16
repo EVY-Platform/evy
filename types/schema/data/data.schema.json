@@ -1,30 +1,30 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "data",
-	"title": "DATA_Rows",
-	"description": "API persistence row types: DATA_Flow, DATA_Device, DATA_Service, etc. Date-time fields use ISO 8601 / RFC 3339 strings (format date-time), not Unix timestamps; Drizzle maps them to Postgres text columns.",
+	"title": "DATA_EVY_Rows",
+	"description": "API persistence row types: DATA_EVY_Flow, DATA_EVY_Device, DATA_EVY_Service, etc. Date-time fields use ISO 8601 / RFC 3339 strings (format date-time), not Unix timestamps; Drizzle maps them to Postgres text columns.",
 	"oneOf": [
 		{
-			"$ref": "#/$defs/DATA_Flow"
+			"$ref": "#/$defs/DATA_EVY_Flow"
 		},
 		{
-			"$ref": "#/$defs/DATA_Data"
+			"$ref": "#/$defs/DATA_EVY_Data"
 		},
 		{
-			"$ref": "#/$defs/DATA_Device"
+			"$ref": "#/$defs/DATA_EVY_Device"
 		},
 		{
-			"$ref": "#/$defs/DATA_Service"
+			"$ref": "#/$defs/DATA_EVY_Service"
 		},
 		{
-			"$ref": "#/$defs/DATA_Organization"
+			"$ref": "#/$defs/DATA_EVY_Organization"
 		},
 		{
-			"$ref": "#/$defs/DATA_ServiceProvider"
+			"$ref": "#/$defs/DATA_EVY_ServiceProvider"
 		}
 	],
 	"$defs": {
-		"DATA_Flow": {
+		"DATA_EVY_Flow": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": ["id", "data", "createdAt", "updatedAt"],
@@ -46,7 +46,7 @@
 				}
 			}
 		},
-		"DATA_Data": {
+		"DATA_EVY_Data": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": ["id", "namespace", "resource", "data", "createdAt", "updatedAt"],
@@ -80,7 +80,7 @@
 			"type": "string",
 			"enum": ["ios", "android", "Web"]
 		},
-		"DATA_Device": {
+		"DATA_EVY_Device": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": ["token", "os", "createdAt"],
@@ -98,7 +98,7 @@
 				}
 			}
 		},
-		"DATA_Service": {
+		"DATA_EVY_Service": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": ["id", "name", "description", "createdAt", "updatedAt"],
@@ -130,7 +130,7 @@
 				}
 			}
 		},
-		"DATA_Organization": {
+		"DATA_EVY_Organization": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": [
@@ -177,7 +177,7 @@
 				}
 			}
 		},
-		"DATA_ServiceProvider": {
+		"DATA_EVY_ServiceProvider": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": [

@@ -2,7 +2,7 @@
 
 A React-based app builder.
 
-Shared types (`SDUI_Flow`, `SDUI_Page`, `SDUI_Row`, RPC payloads) come from the schema-generated `evy-types` package (see `tsconfig.json` path alias to `../types/generated/ts`).
+Shared types (`UI_Flow`, `UI_Page`, `UI_Row`, `DATA_EVY_*` rows, RPC payloads) come from the schema-generated `evy-types` package (see `tsconfig.json` path alias to `../types/generated/ts`).
 
 ## Architecture
 

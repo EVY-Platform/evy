@@ -79,19 +79,19 @@ struct EVY {
 		return try JSONEncoder().encode(serviceData.parseProp(props: ["item"]))
 	}
 	
-	static func getSDUI() async throws -> [SDUI_Flow] {
-		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "sdui", filter: nil), expecting: [SDUI_Flow].self)
+	static func getSDUI() async throws -> [UI_Flow] {
+		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "sdui", filter: nil), expecting: [UI_Flow].self)
 	}
 	
 	static func createItem() async throws {
 		try EVY.data.create(key: "item", data: try await getData())
 	}
 	
-	static func getRow(_ props: [String]) async throws -> SDUI_Row {
+	static func getRow(_ props: [String]) async throws -> UI_Row {
 		try await createItem()
 		let flowData = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "sdui", filter: nil), expecting: EVYJson.self)
 		let rowData = try JSONEncoder().encode(flowData.parseProp(props: props))
-		return try JSONDecoder().decode(SDUI_Row.self, from: rowData)
+		return try JSONDecoder().decode(UI_Row.self, from: rowData)
 	}
     
     /**

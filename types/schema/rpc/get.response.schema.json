@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "get-response",
 	"title": "GetResponse",
-	"description": "Response for get method - SDUI_Flow[] or recursive GetDataResponse",
+	"description": "Response for get method - UI_Flow[] or recursive GetDataResponse",
 	"oneOf": [
 		{
 			"type": "array",

@@ -8,7 +8,7 @@
 import SwiftUI
 import UIKit
 
-extension SDUI_Page: View {
+extension UI_Page: View {
 	public var body: some View {
 		Group {
 			ScrollView {
@@ -54,7 +54,7 @@ extension SDUI_Page: View {
 	}
 
 	@MainActor
-	private static func bootstrapDrafts(for row: SDUI_Row) {
+	private static func bootstrapDrafts(for row: UI_Row) {
 		if let destination = row.destination, !destination.isEmpty {
 			let variableName = EVYInterpreter.parsePropsFromText(destination)
 			if !variableName.isEmpty {

@@ -11,9 +11,9 @@ struct EVYTextActionRow: View, EVYRowProtocol {
 	public static let JSONType = "TextAction"
 
 	private let view: TextActionRowViewData
-	private let actions: [SDUI_RowAction]
+	private let actions: [UI_RowAction]
 
-	init(view: TextActionRowViewData, actions: [SDUI_RowAction]) {
+	init(view: TextActionRowViewData, actions: [UI_RowAction]) {
 		self.view = view
 		self.actions = actions
 	}

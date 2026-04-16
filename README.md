@@ -12,7 +12,7 @@ If smartphones and the internet were built by the people for the people. Create 
 - Marketplace
   - [Data models](./docs/services/marketplace/data.md)
   - [Example data](./docs/services/service_data.json)
-  - [Example SDUI for view & create item pages](./docs/services/service_sdui.json)
+  - [Example UI flow for view & create item pages](./docs/services/service_sdui.json)
 - [API](./api/README.md)
 - [iOS](./ios/README.md)
 - [Web](./web/README.md)
@@ -21,7 +21,7 @@ If smartphones and the internet were built by the people for the people. Create 
 
 Cross-platform contracts live in **`types/`**
 
-- **Source of truth:** `types/schema/` — JSON Schema files for SDUI types and JSON-RPC payloads.
+- **Source of truth:** `types/schema/` — JSON Schema files for UI flow types (`UI_*`), shared data rows (`DATA_EVY_*`), and JSON-RPC payloads.
 - **Generated manually:** `types/generated/ts/` and `types/generated/swift/`.
 
 After changing any definitions in `types/schema/`, run `bun run types:generate`

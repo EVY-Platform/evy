@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { Client } from "rpc-websockets";
-import type { GetRequest, GetResponse, SDUI_Flow } from "evy-types";
+import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 
 import { assertApiReadable } from "../readiness";
 import { getFreePort, waitForClientOpen, type WSServer } from "./wsTestHelpers";
@@ -22,7 +22,7 @@ describe("initServer bootstrap", () => {
 		server
 			.register("upsert", async () => ({
 				id: "stub",
-				data: { id: "stub", name: "Stub", pages: [] } satisfies SDUI_Flow,
+				data: { id: "stub", name: "Stub", pages: [] } satisfies UI_Flow,
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 			}))
@@ -91,7 +91,7 @@ describe("assertApiReadable", () => {
 							id: "1",
 							name: "Other",
 							pages: [],
-						} satisfies SDUI_Flow,
+						} satisfies UI_Flow,
 					];
 				}
 				return [{ title: "x" }];
@@ -111,7 +111,7 @@ describe("assertApiReadable", () => {
 							id: "1",
 							name: "View Item",
 							pages: [],
-						} satisfies SDUI_Flow,
+						} satisfies UI_Flow,
 					];
 				}
 				return [];
@@ -131,7 +131,7 @@ describe("assertApiReadable", () => {
 							id: "1",
 							name: "View Item",
 							pages: [],
-						} satisfies SDUI_Flow,
+						} satisfies UI_Flow,
 					];
 				}
 				return [{ title: "item" }];

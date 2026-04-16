@@ -1,9 +1,9 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import type {
-	SDUI_Flow as ServerFlow,
-	SDUI_RowAction as RowAction,
-	SDUI_Row as ServerRow,
-	SDUI_RowContent as ServerRowContent,
+	UI_Flow as ServerFlow,
+	UI_RowAction as RowAction,
+	UI_Row as ServerRow,
+	UI_RowContent as ServerRowContent,
 } from "evy-types";
 
 // Input types where id is optional

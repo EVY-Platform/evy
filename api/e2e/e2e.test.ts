@@ -1,6 +1,6 @@
 import { Client } from "rpc-websockets";
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import type { SDUI_Flow, SDUI_Page, SDUI_Row } from "evy-types";
+import type { UI_Flow, UI_Page, UI_Row } from "evy-types";
 
 import { isRecord } from "../src/data";
 import { waitForClientOpen } from "../src/tests/wsTestHelpers";
@@ -74,13 +74,13 @@ describe("API E2E Tests", () => {
 		});
 
 		it("get SDUI should return flows with valid structure", async () => {
-			const testPage: SDUI_Page = {
+			const testPage: UI_Page = {
 				id: crypto.randomUUID(),
 				title: "Test Page",
 				rows: [],
 			};
 
-			const flowData: SDUI_Flow = {
+			const flowData: UI_Flow = {
 				id: crypto.randomUUID(),
 				name: "SDUI Test Flow",
 				pages: [testPage],
@@ -106,7 +106,7 @@ describe("API E2E Tests", () => {
 		});
 
 		it("upsert SDUI should create a new flow", async () => {
-			const testRow: SDUI_Row = {
+			const testRow: UI_Row = {
 				id: crypto.randomUUID(),
 				type: "Text",
 				actions: [],
@@ -118,13 +118,13 @@ describe("API E2E Tests", () => {
 				},
 			};
 
-			const testPage: SDUI_Page = {
+			const testPage: UI_Page = {
 				id: crypto.randomUUID(),
 				title: "Test Page",
 				rows: [testRow],
 			};
 
-			const flowData: SDUI_Flow = {
+			const flowData: UI_Flow = {
 				id: crypto.randomUUID(),
 				name: "E2E Test Flow",
 				pages: [testPage],
@@ -146,13 +146,13 @@ describe("API E2E Tests", () => {
 		it("upsert SDUI should update an existing flow", async () => {
 			const flowId = crypto.randomUUID();
 
-			const testPage: SDUI_Page = {
+			const testPage: UI_Page = {
 				id: crypto.randomUUID(),
 				title: "Original Page",
 				rows: [],
 			};
 
-			const createFlowData: SDUI_Flow = {
+			const createFlowData: UI_Flow = {
 				id: flowId,
 				name: "Flow to Update",
 				pages: [testPage],
@@ -164,7 +164,7 @@ describe("API E2E Tests", () => {
 				data: createFlowData,
 			});
 
-			const updateFlowData: SDUI_Flow = {
+			const updateFlowData: UI_Flow = {
 				...createFlowData,
 				name: "Updated Flow Name",
 			};

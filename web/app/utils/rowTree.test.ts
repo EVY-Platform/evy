@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import type { SDUI_Page } from "../types/flow";
+import type { UI_Page } from "../types/flow";
 import type { Row } from "../types/row";
 import {
 	findContainerById,
@@ -35,7 +35,7 @@ function makeRow(
 	};
 }
 
-function page(id: string, rows: Row[]): SDUI_Page {
+function page(id: string, rows: Row[]): UI_Page {
 	return { id, title: "T", rows };
 }
 

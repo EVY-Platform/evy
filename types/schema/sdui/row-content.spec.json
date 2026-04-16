@@ -106,26 +106,26 @@
 	"ColumnContainer": {
 		"content": {
 			"title": "string",
-			"children": "[SDUI_Row]"
+			"children": "[UI_Row]"
 		}
 	},
 	"ListContainer": {
 		"content": {
 			"title": "string",
-			"children": "[SDUI_Row]"
+			"children": "[UI_Row]"
 		}
 	},
 	"SheetContainer": {
 		"content": {
 			"title": "string",
-			"child": "SDUI_Row",
-			"children": "[SDUI_Row]"
+			"child": "UI_Row",
+			"children": "[UI_Row]"
 		}
 	},
 	"SelectSegmentContainer": {
 		"content": {
 			"title": "string",
-			"children": "[SDUI_Row]",
+			"children": "[UI_Row]",
 			"segments": "[String]"
 		}
 	}

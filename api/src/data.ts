@@ -2,15 +2,15 @@ import { eq, and, desc } from "drizzle-orm";
 import pluralize from "pluralize";
 
 import {
-	type DATA_Data,
-	type DATA_Flow,
-	type DATA_Rows,
+	type DATA_EVY_Data,
+	type DATA_EVY_Flow,
+	type DATA_EVY_Rows,
 	type GetResponse,
 	NAMESPACE_VALUES,
 	RESOURCE_VALUES,
 	type GetRequest,
 	type OS,
-	type SDUI_Flow,
+	type UI_Flow,
 	type UpsertRequest,
 } from "evy-types";
 import { device, flow, data, osEnum } from "./db/drizzleTables";
@@ -36,8 +36,8 @@ type IsoTimestampColumns = {
 };
 
 function formatFlowRow(
-	row: IsoTimestampColumns & { id: string; data: SDUI_Flow },
-): DATA_Flow {
+	row: IsoTimestampColumns & { id: string; data: UI_Flow },
+): DATA_EVY_Flow {
 	return {
 		id: row.id,
 		data: row.data,
@@ -51,9 +51,9 @@ function formatPersistedDataRow(
 		id: string;
 		namespace: string;
 		resource: string;
-		data: DATA_Data["data"];
+		data: DATA_EVY_Data["data"];
 	},
-): DATA_Data {
+): DATA_EVY_Data {
 	return {
 		id: row.id,
 		namespace: row.namespace,
@@ -153,7 +153,7 @@ export async function get(params: unknown): Promise<GetResponse> {
 	return rows.map((r) => r.data) as GetResponse;
 }
 
-export async function upsert(params: unknown): Promise<DATA_Rows> {
+export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
 	validateParams(params);
 	if (
 		!("data" in params) ||

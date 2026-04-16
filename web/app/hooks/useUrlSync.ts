@@ -1,13 +1,13 @@
 import { useEffect, useRef, type Dispatch } from "react";
 
 import type { RowAction } from "../types/actions";
-import type { SDUI_Flow } from "../types/flow";
+import type { UI_Flow } from "../types/flow";
 import { buildUrlPath, parseUrlPath, resolveUrlIds } from "../utils/urlUtils";
 
 export function useUrlSync(
 	activeFlowId: string | undefined,
 	activePageId: string | undefined,
-	flows: SDUI_Flow[],
+	flows: UI_Flow[],
 	dispatchRow: Dispatch<RowAction>,
 ) {
 	const isInitialMount = useRef(true);

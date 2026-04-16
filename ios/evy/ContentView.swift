@@ -32,7 +32,7 @@ extension EnvironmentValues {
 private let HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
 
 struct ContentView: View {
-    @State private var flows: [SDUI_Flow] = []
+    @State private var flows: [UI_Flow] = []
     @State private var routes: [Route] = []
     @State private var currentFlowId: String = HOME_FLOW_ID
 	@State private var showingAlert = false
@@ -227,7 +227,7 @@ struct ContentView: View {
             currentFlowId = newFlowId
         }
         .onReceive(NotificationCenter.default.publisher(for: .evyFlowUpdated)) { notification in
-            guard let updatedFlow = notification.object as? SDUI_Flow else { return }
+            guard let updatedFlow = notification.object as? UI_Flow else { return }
 
             if let index = flows.firstIndex(where: { $0.id == updatedFlow.id }) {
                 flows[index] = updatedFlow
@@ -244,7 +244,7 @@ struct ContentView: View {
     
     static func createKeysToDelete(
         whenLeaving flowId: String,
-        flows: [SDUI_Flow],
+        flows: [UI_Flow],
         activeDraftKeys: Set<String>
     ) -> Set<String> {
         guard let flow = flows.first(where: { $0.id == flowId }) else {
@@ -253,7 +253,7 @@ struct ContentView: View {
         return extractCreateKeys(from: flow).intersection(activeDraftKeys)
     }
     
-    private static func extractCreateKeys(from flow: SDUI_Flow) -> Set<String> {
+    private static func extractCreateKeys(from flow: UI_Flow) -> Set<String> {
         var keys = Set<String>()
         for page in flow.pages {
             for row in page.rows {
@@ -266,7 +266,7 @@ struct ContentView: View {
         return keys
     }
     
-    private static func collectCreateKeys(from row: SDUI_Row, into keys: inout Set<String>) {
+    private static func collectCreateKeys(from row: UI_Row, into keys: inout Set<String>) {
         for action in row.actions {
             for branch in [action.`true`, action.`false`] {
                 var unwrapped = branch.trimmingCharacters(in: .whitespacesAndNewlines)

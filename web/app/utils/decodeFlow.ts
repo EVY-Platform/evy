@@ -1,13 +1,13 @@
 import { createElement } from "react";
 import type {
-	SDUI_Flow as ServerFlow,
-	SDUI_Page as ServerPage,
-	SDUI_Row as ServerRow,
-	SDUI_RowContent as ServerRowContent,
+	UI_Flow as ServerFlow,
+	UI_Page as ServerPage,
+	UI_Row as ServerRow,
+	UI_RowContent as ServerRowContent,
 } from "evy-types";
 
 import type { Row } from "../types/row";
-import type { SDUI_Flow, SDUI_Page } from "../types/flow";
+import type { UI_Flow, UI_Page } from "../types/flow";
 import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
 
@@ -56,10 +56,10 @@ function encodeRow(row: Row): ServerRow {
 	};
 }
 
-export function encodeFlow(flow: SDUI_Flow): ServerFlow {
+export function encodeFlow(flow: UI_Flow): ServerFlow {
 	return {
 		...flow,
-		pages: flow.pages.map((page: SDUI_Page) => ({
+		pages: flow.pages.map((page: UI_Page) => ({
 			...page,
 			rows: page.rows.map(encodeRow),
 			footer: page.footer ? encodeRow(page.footer) : undefined,
@@ -102,7 +102,7 @@ function decodeRow(row: ServerRow): Row {
 	};
 }
 
-export const decodeFlows = (flows: ServerFlow[]): SDUI_Flow[] => {
+export const decodeFlows = (flows: ServerFlow[]): UI_Flow[] => {
 	return flows.map((flow) => ({
 		...flow,
 		pages: flow.pages.map((page: ServerPage) => ({
