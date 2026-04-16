@@ -7,7 +7,7 @@ import {
 	formatMetricLengthMm,
 	splitFunctionArguments,
 	stripOptionalSurroundingQuotes,
-} from "../evyFunctions";
+} from "../functions";
 
 describe("splitFunctionArguments", () => {
 	test("splits simple comma args", () => {

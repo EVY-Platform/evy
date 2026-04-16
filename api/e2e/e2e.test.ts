@@ -2,7 +2,7 @@ import { Client } from "rpc-websockets";
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import type { UI_Flow, UI_Page, UI_Row } from "evy-types";
 
-import { isRecord } from "../src/coreData";
+import { isRecord } from "../src/data";
 import { waitForClientOpen } from "../src/tests/wsTestHelpers";
 
 type WSClient = InstanceType<typeof Client>;

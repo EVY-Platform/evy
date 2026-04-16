@@ -11,7 +11,7 @@ import type {
 	UpsertRequest,
 } from "evy-types";
 import { NAMESPACE_VALUES } from "evy-types";
-import { getCore, upsertCore } from "./coreData";
+import { getCore, upsertCore } from "./data";
 import { emitJsonRpc } from "./ws";
 
 type RpcServer = Awaited<ReturnType<typeof import("./ws")["initServer"]>>;

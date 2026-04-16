@@ -4,7 +4,7 @@ Functions are used to convert an input into a different output. For example form
 
 -   Some default functions are available server-side and client-side (eg `formatDecimal`) and some are composed using those built in functions, and sent via JSON config to the clients.
 -   We need to avoid defining custom coded formatting functions in mobile clients as much as possible due to the constraints of mobile release cycles
--   **`length`**, **`formatDimension`**, **`formatWeight`**, and the **Builder functions** (`buildCurrency`, `buildAddress`) below describe behavior **as implemented in the iOS client today** ([`ios/evy/Utils/EVYFunctions.swift`](../../../ios/evy/Utils/EVYFunctions.swift)). Earlier sections in this file are the broader target model; web may still use stubs for some functions.
+-   **`length`**, **`formatDimension`**, **`formatWeight`**, and the **Builder functions** (`buildCurrency`, `buildAddress`) below describe behavior **as implemented in the iOS client today** ([`ios/evy/Utils/Functions.swift`](../../../ios/evy/Utils/Functions.swift)). Earlier sections in this file are the broader target model; web may still use stubs for some functions.
 
 ## Methods
 
@@ -209,7 +209,7 @@ Resulting data: { "currency": "AUD", "value": "13.50" }  // shape; actual storag
 
 #### buildAddress
 
-Builds or updates an **address** object from multi-line or comma-separated typed text, merging with any existing address at the destination path (missing keys default to empty strings). Parsing supports two-line addresses, single-line comma forms, and simple street-only updates; see `evyAddressFields` / `evyParsedAddressFields` in [`ios/evy/Utils/EVYFunctions.swift`](../../../ios/evy/Utils/EVYFunctions.swift).
+Builds or updates an **address** object from multi-line or comma-separated typed text, merging with any existing address at the destination path (missing keys default to empty strings). Parsing supports two-line addresses, single-line comma forms, and simple street-only updates; see `evyAddressFields` / `evyParsedAddressFields` in [`ios/evy/Utils/Functions.swift`](../../../ios/evy/Utils/Functions.swift).
 
 ```
 Destination pattern: {buildAddress(user.address)}

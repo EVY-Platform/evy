@@ -56,7 +56,7 @@ mock.module("../db", () => ({
 	...schema,
 }));
 
-const { validateAuth, getCore, upsertCore } = await import("../coreData");
+const { validateAuth, getCore, upsertCore } = await import("../data");
 
 function isDATA_EVY_Flow(row: DATA_EVY_Rows): row is DATA_EVY_Flow {
 	return (

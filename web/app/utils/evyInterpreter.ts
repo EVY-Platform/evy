@@ -1,4 +1,4 @@
-import { callFunction } from "./evyFunctions";
+import { callFunction } from "./functions";
 import { propPathToFriendlyLabel } from "./labelFormatting";
 
 const FUNCTION_WITH_BRACES = /\{([a-zA-Z_]+)\(([^)]*)\)\}/;

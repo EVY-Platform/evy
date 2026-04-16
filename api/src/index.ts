@@ -1,5 +1,5 @@
 import { initServer, type WSParams } from "./ws";
-import { validateAuth } from "./coreData";
+import { validateAuth } from "./data";
 import { get, setMainServerForRpc, upsert } from "./rpc";
 import { setMainServerForServices } from "./services";
 

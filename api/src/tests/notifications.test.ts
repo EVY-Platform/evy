@@ -28,7 +28,7 @@ mock.module("../db", () => ({
 }));
 
 const { getCore, isRecord, isResource, upsertCore, validateAuth } =
-	await import("../coreData");
+	await import("../data");
 
 function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
 	return isRecord(p) && "resource" in p && isResource(p.resource);

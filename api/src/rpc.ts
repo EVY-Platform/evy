@@ -5,7 +5,7 @@ import type {
 	UpsertRequest,
 } from "evy-types";
 import { NAMESPACE_VALUES } from "evy-types";
-import { getCore, isResource, upsertCore } from "./coreData";
+import { getCore, isResource, upsertCore } from "./data";
 import { forwardGet, forwardUpsert } from "./services";
 import { emitJsonRpc } from "./ws";
 

@@ -73,7 +73,7 @@ export function normalizeDateFormatPattern(pattern: string): string {
 export function formatDateIso(iso: string, pattern: string): string {
 	const d = new Date(iso);
 	if (Number.isNaN(d.getTime())) {
-		throw new Error(`evyFunctions.formatDateIso: invalid ISO date '${iso}'`);
+		throw new Error(`functions.formatDateIso: invalid ISO date '${iso}'`);
 	}
 	const p = normalizeDateFormatPattern(pattern);
 	return p.replace(/yyyy|yy|MM|dd|HH|mm|ss/g, (token) => {
