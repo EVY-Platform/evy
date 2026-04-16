@@ -7,6 +7,7 @@ import {
 	getPageRow,
 	getRowsPanel,
 	getSidebarRow,
+	initTestFlows,
 	setupTwoEmptyTestPages,
 } from "./utils";
 
@@ -69,6 +70,109 @@ test.describe("Drag & Drop UX", () => {
 			.locator(SELECTORS.rowContainer)
 			.count();
 		expect(newSecondPageRowCount).toBe(initialSecondPageRowCount + 1);
+	});
+
+	test("should drag a row from a child container to another page", async ({
+		page,
+	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Page 1",
+				rows: [
+					{
+						id: "sheet-1",
+						type: "SheetContainer" as const,
+						view: {
+							content: {
+								title: "Sheet container row title",
+								child: {
+									id: "sheet-child-1",
+									type: "Info" as const,
+									view: {
+										content: {
+											title: "Child Info",
+											text: "Child text",
+										},
+									},
+									actions: [],
+								},
+								children: [],
+							},
+						},
+						actions: [],
+					},
+				],
+			},
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
+		const firstPage = getFirstPage(page);
+		const secondPage = page.locator(SELECTORS.phoneContainer).nth(1);
+		const secondPageContent = getPageContent(page, 1);
+		const childRow = getPageRow(page, "Child Info");
+
+		await childRow.dragTo(secondPageContent);
+
+		await expect(
+			secondPage.getByText("Child Info", { exact: true }),
+		).toBeVisible();
+		await expect(
+			firstPage.getByText("Child Info", { exact: true }),
+		).not.toBeVisible();
+	});
+
+	test("should drag a row from a children container to another page", async ({
+		page,
+	}) => {
+		await initTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Page 1",
+				rows: [
+					{
+						id: "list-1",
+						type: "ListContainer" as const,
+						view: {
+							content: {
+								title: "List container row title",
+								children: [
+									{
+										id: "list-child-1",
+										type: "Info" as const,
+										view: {
+											content: {
+												title: "Nested Info",
+												text: "Nested text",
+											},
+										},
+										actions: [],
+									},
+								],
+							},
+						},
+						actions: [],
+					},
+				],
+			},
+			{ id: "step_2", title: "Page 2", rows: [] },
+		]);
+		await page.goto("/");
+
+		const firstPage = getFirstPage(page);
+		const secondPage = page.locator(SELECTORS.phoneContainer).nth(1);
+		const secondPageContent = getPageContent(page, 1);
+		const childRow = getPageRow(page, "Nested Info");
+
+		await childRow.dragTo(secondPageContent);
+
+		await expect(
+			secondPage.getByText("Nested Info", { exact: true }),
+		).toBeVisible();
+		await expect(
+			firstPage.getByText("Nested Info", { exact: true }),
+		).not.toBeVisible();
 	});
 
 	test("should remove a row from a page by dragging it to the left sidebar", async ({

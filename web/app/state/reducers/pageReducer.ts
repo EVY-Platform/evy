@@ -6,11 +6,11 @@ import type { SDUI_Page } from "../../types/flow";
 import type { Row } from "../../types/row";
 import { baseRows } from "../../rows/baseRows";
 import {
-	traverseToRowAndGetPath,
 	removeRowFromTree,
 	updateRowInTree,
 	getRowsRecursive,
 	findRowInPages,
+	insertRowIntoTree,
 } from "../../utils/rowTree";
 import {
 	buildNewClientFlow,
@@ -121,60 +121,20 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const page = flow.pages.find((p) => p.id === action.destinationPageId);
 			if (!page) return state;
 
-			if (action.destinationContainer) {
-				const destinationRowId = action.destinationContainer.rowId;
-				const stepsToDestinationContainer = page.rows
-					.flatMap((row, index) => {
-						if (row.id === destinationRowId) {
-							return [[index]];
-						}
-						const match = traverseToRowAndGetPath(row, destinationRowId);
-						if (match.length > 0) return [[index, ...match]];
-						return [];
-					})
-					.find((s) => s !== undefined);
-
-				invariant(
-					stepsToDestinationContainer?.length,
-					"PageReducer addRow: stepsToDestinationContainer is not defined",
-				);
-
-				const firstStep = stepsToDestinationContainer[0];
-				invariant(typeof firstStep === "number", "expected number index");
-				let path = page.rows[firstStep];
-				if (stepsToDestinationContainer.length > 1) {
-					path = stepsToDestinationContainer
-						.slice(1)
-						.reduce((acc: Row, curr: number | "child"): Row => {
-							if (curr === "child") {
-								const child = acc.config.view.content.child;
-								invariant(child, "PageReducer addRow: child is not defined");
-								return child;
-							}
-							const child = acc.config.view.content.children?.[curr];
-							invariant(
-								child,
-								"PageReducer addRow: children element is not defined",
-							);
-							return child;
-						}, path);
-				}
-
-				if (action.destinationContainer.type === "child") {
-					path.config.view.content.child = rowDataAdd;
-				} else if (action.destinationContainer.type === "children") {
-					path.config.view.content.children?.splice(
-						action.destinationIndex,
-						0,
-						rowDataAdd,
-					);
-				}
-			} else {
-				page.rows.splice(action.destinationIndex, 0, rowDataAdd);
-			}
-
+			// Reuse the same tree insertion logic as MOVE_ROW so dragging a brand-new
+			// row from the sidebar and moving an existing nested row behave the same.
 			const updatedPages = flow.pages.map((p) =>
-				p.id === action.destinationPageId ? { ...p, rows: [...p.rows] } : p,
+				p.id === action.destinationPageId
+					? {
+							...p,
+							rows: insertRowIntoTree(
+								page.rows,
+								rowDataAdd,
+								action.destinationIndex,
+								action.destinationContainer,
+							),
+						}
+					: p,
 			);
 
 			return updateState({
@@ -184,35 +144,65 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 		}
 		case "MOVE_ROW": {
-			const row = flow.pages
-				.find((page) => page.id === action.originPageId)
-				?.rows.find((r) => r.id === action.rowId);
+			const originPage = flow.pages.find(
+				(page) => page.id === action.originPageId,
+			);
+			if (!originPage) return state;
+
+			const row = findRowInPages(action.rowId, [originPage]);
 			invariant(row, "PageReducer moveRow: row is not defined");
+
+			const originRowsWithoutRow = removeRowFromTree(
+				originPage.rows,
+				action.rowId,
+			);
+
+			// When moving within the same page, removing the dragged row can also
+			// remove the destination container if the user is dropping into one of
+			// that row's descendants. Bail out instead of trying to reinsert into a
+			// container that no longer exists in the updated tree.
+			if (
+				action.destinationContainer &&
+				action.originPageId === action.destinationPageId
+			) {
+				const destinationContainer = findRowInPages(
+					action.destinationContainer.rowId,
+					[{ rows: originRowsWithoutRow }],
+				);
+				if (!destinationContainer) return state;
+			}
 
 			const newPages = flow.pages.map((page) => {
 				if (
 					page.id === action.originPageId &&
 					page.id === action.destinationPageId
 				) {
-					const destinationItems = [
-						...page.rows.filter((r) => r.id !== action.rowId),
-					];
-					destinationItems.splice(action.destinationIndex, 0, row);
 					return {
 						...page,
-						rows: destinationItems,
+						rows: insertRowIntoTree(
+							originRowsWithoutRow,
+							row,
+							action.destinationIndex,
+							action.destinationContainer,
+						),
 					};
 				}
 				if (page.id === action.originPageId) {
 					return {
 						...page,
-						rows: page.rows.filter((r) => r.id !== action.rowId),
+						rows: originRowsWithoutRow,
 					};
 				}
 				if (page.id === action.destinationPageId) {
-					const destinationItems = [...page.rows];
-					destinationItems.splice(action.destinationIndex, 0, row);
-					return { ...page, rows: destinationItems };
+					return {
+						...page,
+						rows: insertRowIntoTree(
+							page.rows,
+							row,
+							action.destinationIndex,
+							action.destinationContainer,
+						),
+					};
 				}
 				return page;
 			});

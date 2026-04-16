@@ -184,6 +184,8 @@ export function traverseToRowAndGetPath(
 }
 
 function removeRowInSubtree(row: Row, targetRowId: string): Row {
+	let nextRow = row;
+
 	if (row.config.view.content.children) {
 		const filteredChildren = row.config.view.content.children.filter(
 			(child) => child.id !== targetRowId,
@@ -191,36 +193,114 @@ function removeRowInSubtree(row: Row, targetRowId: string): Row {
 		const updatedChildren = filteredChildren.map((child) =>
 			removeRowInSubtree(child, targetRowId),
 		);
-		return {
-			...row,
-			config: {
-				...row.config,
-				view: {
-					...row.config.view,
-					content: {
-						...row.config.view.content,
-						children: updatedChildren,
+		const childUpdated =
+			filteredChildren.length !== row.config.view.content.children.length ||
+			updatedChildren.some((child, index) => child !== filteredChildren[index]);
+		if (childUpdated) {
+			nextRow = {
+				...row,
+				config: {
+					...row.config,
+					view: {
+						...row.config.view,
+						content: {
+							...row.config.view.content,
+							children: updatedChildren,
+						},
 					},
 				},
-			},
-		};
+			};
+		}
 	}
-	if (row.config.view.content.child?.id === targetRowId) {
+
+	// Some container rows expose both `children` and a single `child`.
+	// We must keep traversing after the `children` pass so moves/removals from
+	// sheet-like containers do not leave the nested `child` behind.
+	if (nextRow.config.view.content.child?.id === targetRowId) {
 		return {
-			...row,
+			...nextRow,
 			config: {
-				...row.config,
+				...nextRow.config,
 				view: {
-					...row.config.view,
+					...nextRow.config.view,
 					content: {
-						...row.config.view.content,
+						...nextRow.config.view.content,
 						child: undefined,
 					},
 				},
 			},
 		};
 	}
-	if (row.config.view.content.child) {
+
+	if (nextRow.config.view.content.child) {
+		const updatedChild = removeRowInSubtree(
+			nextRow.config.view.content.child,
+			targetRowId,
+		);
+		if (updatedChild !== nextRow.config.view.content.child) {
+			return {
+				...nextRow,
+				config: {
+					...nextRow.config,
+					view: {
+						...nextRow.config.view,
+						content: {
+							...nextRow.config.view.content,
+							child: updatedChild,
+						},
+					},
+				},
+			};
+		}
+	}
+
+	return nextRow;
+}
+
+export function removeRowFromTree(rows: Row[], targetRowId: string): Row[] {
+	return rows
+		.filter((r) => r.id !== targetRowId)
+		.map((r) => removeRowInSubtree(r, targetRowId));
+}
+
+function insertRowAtIndex(
+	rows: Row[],
+	row: Row,
+	destinationIndex: number,
+): Row[] {
+	const normalizedIndex = Math.max(0, Math.min(destinationIndex, rows.length));
+	const updatedRows = [...rows];
+	updatedRows.splice(normalizedIndex, 0, row);
+	return updatedRows;
+}
+
+function insertRowIntoSubtree(
+	row: Row,
+	targetRowId: string,
+	rowToInsert: Row,
+	destinationIndex: number,
+	destinationType: ContainerType,
+): Row | null {
+	if (row.id === targetRowId) {
+		// Drag/drop destinations can point at either a single-slot `child`
+		// container or an ordered `children` collection, so insertion needs to
+		// preserve both shapes instead of assuming top-level page rows only.
+		if (destinationType === "child") {
+			return {
+				...row,
+				config: {
+					...row.config,
+					view: {
+						...row.config.view,
+						content: {
+							...row.config.view.content,
+							child: rowToInsert,
+						},
+					},
+				},
+			};
+		}
+
 		return {
 			...row,
 			config: {
@@ -229,22 +309,108 @@ function removeRowInSubtree(row: Row, targetRowId: string): Row {
 					...row.config.view,
 					content: {
 						...row.config.view.content,
-						child: removeRowInSubtree(
-							row.config.view.content.child,
-							targetRowId,
+						children: insertRowAtIndex(
+							row.config.view.content.children ?? [],
+							rowToInsert,
+							destinationIndex,
 						),
 					},
 				},
 			},
 		};
 	}
-	return row;
+
+	if (row.config.view.content.children) {
+		const updatedChildren = row.config.view.content.children.map(
+			(child) =>
+				insertRowIntoSubtree(
+					child,
+					targetRowId,
+					rowToInsert,
+					destinationIndex,
+					destinationType,
+				) ?? child,
+		);
+		const childUpdated = updatedChildren.some(
+			(child, index) => child !== row.config.view.content.children?.[index],
+		);
+		if (childUpdated) {
+			return {
+				...row,
+				config: {
+					...row.config,
+					view: {
+						...row.config.view,
+						content: {
+							...row.config.view.content,
+							children: updatedChildren,
+						},
+					},
+				},
+			};
+		}
+	}
+
+	if (row.config.view.content.child) {
+		const updatedChild = insertRowIntoSubtree(
+			row.config.view.content.child,
+			targetRowId,
+			rowToInsert,
+			destinationIndex,
+			destinationType,
+		);
+		if (updatedChild) {
+			return {
+				...row,
+				config: {
+					...row.config,
+					view: {
+						...row.config.view,
+						content: {
+							...row.config.view.content,
+							child: updatedChild,
+						},
+					},
+				},
+			};
+		}
+	}
+
+	return null;
 }
 
-export function removeRowFromTree(rows: Row[], targetRowId: string): Row[] {
-	return rows
-		.filter((r) => r.id !== targetRowId)
-		.map((r) => removeRowInSubtree(r, targetRowId));
+export function insertRowIntoTree(
+	rows: Row[],
+	rowToInsert: Row,
+	destinationIndex: number,
+	destinationContainer?: { rowId: string; type: ContainerType },
+): Row[] {
+	// Shared by ADD_ROW and MOVE_ROW so both code paths support nested drop
+	// targets. The previous crash happened because MOVE_ROW only knew how to
+	// reinsert into top-level page rows.
+	if (!destinationContainer) {
+		return insertRowAtIndex(rows, rowToInsert, destinationIndex);
+	}
+
+	let inserted = false;
+	const updatedRows = rows.map((row) => {
+		const updatedRow = insertRowIntoSubtree(
+			row,
+			destinationContainer.rowId,
+			rowToInsert,
+			destinationIndex,
+			destinationContainer.type,
+		);
+		if (!updatedRow) return row;
+		inserted = true;
+		return updatedRow;
+	});
+
+	invariant(
+		inserted,
+		"insertRowIntoTree: destination container is not defined",
+	);
+	return updatedRows;
 }
 
 function updateRowInSubtree(
