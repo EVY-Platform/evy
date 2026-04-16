@@ -2,7 +2,7 @@ name: Build and push CI image
 
 on:
     push:
-        branches: [dev, main, chore/dep-updates]
+        branches: [dev, main]
         paths:
             - ".github/images/ci/Dockerfile"
             - ".github/workflows/push-ci-image.yml"
