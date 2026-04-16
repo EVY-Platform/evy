@@ -127,14 +127,21 @@ struct EVY {
     /// Root data key to observe for `.evyDataUpdated` when `text` contains `{count(foo)}`, `{formatCurrency(item.price)}`, etc.
     /// Matches first `{…}` segment; unwraps function calls to their argument path so notifications for `foo` refresh the view.
     static func watchTarget(for text: String) -> String {
-        let parsedProps = EVY.parsePropsFromText(text)
-        if parsedProps == text {
-            return text
+        let unwrapped = EVY.parsePropsFromText(text)
+        let candidates: [String] = unwrapped == text ? [text] : [unwrapped, text]
+        for candidate in candidates {
+            if let functionCall = EVYInterpreter.parseFunctionCall(candidate) {
+                let parts = EVYInterpreter.splitFunctionArguments(functionCall.functionArgs)
+                if let first = parts.first, !first.isEmpty {
+                    return EVYInterpreter.stripOptionalSurroundingQuotes(first)
+                }
+                return functionCall.functionArgs
+            }
         }
-        if let functionCall = EVYInterpreter.parseFunctionCall(parsedProps) {
-            return functionCall.functionArgs
+        if unwrapped != text {
+            return unwrapped
         }
-        return parsedProps
+        return text
     }
 
     static func evaluateFromText(_ input: String) throws -> Bool {
