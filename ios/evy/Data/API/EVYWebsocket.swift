@@ -70,17 +70,20 @@ protocol EVYWebsocketProtocol {
 }
 
 final class EVYWebsocket: EVYWebsocketProtocol {
-    let rpc: Service<ServiceCore<WsConnectionFactory.Connection, WsConnectionFactory.Delegate>>
+    let rpc: Client & Persistent & Connectable
     
     init(host: String) {
-        rpc = JsonRpc(.ws(url: URL(string: "ws://\(host)")!), queue: .main)
+        rpc = JsonRpc(.ws(url: URL(string: "ws://\(host)")!, autoconnect: false), queue: .main)
         rpc.delegate = self
     }
     
     public func connect(token: String, os: DataOS) async throws -> Bool {
-		try await fetch(method: "rpc.login",
-						params: EVYLoginParams(token: token, os: os),
-						expecting: Bool.self)
+        if rpc.connected == .disconnected {
+            rpc.connect()
+        }
+		return try await fetch(method: "rpc.login",
+							   params: EVYLoginParams(token: token, os: os),
+							   expecting: Bool.self)
     }
     
     public func subscribe(event: String) async throws -> [String: String] {
@@ -213,11 +216,13 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
             guard let notification = try params.parse(to: FlowUpdatedNotification.self).get() else {
                 throw EVYError.parsingFailed(context: "flowUpdated notification returned nil")
             }
-            
-            NotificationCenter.default.post(
-                name: Notification.Name.evyFlowUpdated,
-                object: notification.flow
-            )
+
+            Task { @MainActor in
+                NotificationCenter.default.post(
+                    name: Notification.Name.evyFlowUpdated,
+                    object: notification.flow
+                )
+            }
         } catch {
             #if DEBUG
             print("[EVYWebsocket] Failed to parse flowUpdated notification: \(error)")

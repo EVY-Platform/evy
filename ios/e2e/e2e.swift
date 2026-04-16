@@ -48,14 +48,27 @@ actor WSEmitter {
         let json = String(data: try JSONSerialization.data(withJSONObject: msg), encoding: .utf8)!
         try await ws?.send(.string(json))
 
-        // Wait for response
-        let result = try await ws?.receive()
-        if case .string(let text) = result,
-           let data = text.data(using: .utf8),
-           let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        // Skip any asynchronous notifications (no `id`) emitted by the server
+        // while we wait for the reply to this specific request.
+        while true {
+            let result = try await ws?.receive()
+            guard case .string(let text) = result,
+                  let data = text.data(using: .utf8),
+                  let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            else {
+                return [:]
+            }
+            if response["id"] == nil { continue }
+            if let error = response["error"] as? [String: Any] {
+                let message = (error["message"] as? String) ?? "JSON-RPC error"
+                throw NSError(
+                    domain: "WSEmitter",
+                    code: (error["code"] as? Int) ?? -1,
+                    userInfo: [NSLocalizedDescriptionKey: "\(method) failed: \(message)"]
+                )
+            }
             return response
         }
-        return [:]
     }
 }
 
@@ -328,11 +341,15 @@ final class WebSocketE2ETests: E2ETestBase {
 
         // Price field (required for regression coverage)
         guard let priceTextField = findElementWithScroll(
-            identifiers: ["textField_{price}"],
-            containsAny: ["price"],
+            identifiers: [
+                "textField_{price}",
+                "textField_{item.price}",
+                "textField_{buildCurrency(price)}",
+            ],
+            containsAny: ["price", "item.price", "buildCurrency"],
             in: scrollView
         ) else {
-            XCTFail("Price field should exist (textField_{price} or accessibility containing 'price')")
+            XCTFail("Price field should exist (textField_{price}, textField_{item.price}, textField_{buildCurrency(price)}, or accessibility containing 'price')")
             return
         }
         guard let priceField = tapAndGetEditableField(container: priceTextField) else {
@@ -347,11 +364,11 @@ final class WebSocketE2ETests: E2ETestBase {
 
         // Width field (required for regression coverage)
         guard let widthTextField = findElementWithScroll(
-            identifiers: ["textField_{width}"],
-            containsAny: ["width"],
+            identifiers: ["textField_{width}", "textField_{item.dimensions.width}"],
+            containsAny: ["width", "dimensions.width"],
             in: scrollView
         ) else {
-            XCTFail("Width field should exist (textField_{width} or accessibility containing 'width')")
+            XCTFail("Width field should exist (textField_{width}, textField_{item.dimensions.width}, or accessibility containing 'width')")
             return
         }
         guard let widthField = tapAndGetEditableField(container: widthTextField) else {
@@ -370,11 +387,12 @@ final class WebSocketE2ETests: E2ETestBase {
     }
 
     private func createHomeFlowData(buttonLabel: String) -> [String: Any] {
+        // Must match the server-side `FlowDataSchema` strict object: {id, name, pages}.
+        // Any extra top-level key here causes `upsert` validation to fail and the
+        // `flowUpdated` notification is never emitted.
         return [
             "id": "f267c629-2594-4770-8cec-d5324ebb4058",
             "name": "Home",
-            "type": "read",
-            "data": "",
             "pages": [
                 [
                     "id": "55e427ac-263c-441f-9673-f60627b1baea",
@@ -479,15 +497,15 @@ final class E2EErrorStateTests: XCTestCase {
     }
 
     func testUnreachableAPIShowsErrorState() throws {
-        let errorState = app.otherElements["errorState"]
-        XCTAssertTrue(
-            errorState.waitForExistence(timeout: 30),
-            "errorState should appear when API_HOST is unreachable"
-        )
         let failedMessage = app.staticTexts["Failed to load flows"]
         XCTAssertTrue(
             failedMessage.waitForExistence(timeout: 5),
             "User-visible copy should mention failed flow load"
+        )
+        let retryMessage = app.staticTexts["Please check your connection and try again"]
+        XCTAssertTrue(
+            retryMessage.exists,
+            "User-visible copy should explain how to recover from a failed flow load"
         )
     }
 }

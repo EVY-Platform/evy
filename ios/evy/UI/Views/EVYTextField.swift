@@ -60,13 +60,22 @@ struct EVYTextField: View {
     var body: some View {
         Group {
             if !editing || destination.isEmpty {
-                let display = EVYTextView(displayValue.value.toString())
-                let placeholderView = EVYTextView(placeholderValue.value.toString(), style: .info)
+                let displayText = displayValue.value.toString()
+                let placeholderText = placeholderValue.value.toString()
 
-                if display.text.value.value.count > 0 {
-                    display.frame(maxWidth: .infinity, alignment: .leading)
+                if !displayText.isEmpty {
+                    EVYTextView(displayText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else if !placeholderText.isEmpty {
+                    EVYTextView(placeholderText, style: .info)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    placeholderView.frame(maxWidth: .infinity, alignment: .leading)
+                    // No resolved value and no placeholder text: render an empty
+                    // space so the field is still visible and keeps an accessibility
+                    // element (needed for UI tests and for the user to tap it).
+                    Text(" ")
+                        .font(.evy)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
                 TextField(text: $editableValue.value.value,
