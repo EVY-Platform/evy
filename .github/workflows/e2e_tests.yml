@@ -36,12 +36,14 @@ jobs:
                         - 'types/**'
                         - 'run-e2e.sh'
                         - '.github/workflows/e2e_tests.yml'
+                        - '.github/images/ci/**'
                         - '.github/actions/**'
 
             - name: Start PostgreSQL
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               run: |
-                  pg_ctlcluster 16 main start
+                  pg_createcluster 18 main || true
+                  pg_ctlcluster 18 main start
                   su - postgres -c "psql -c \"CREATE USER evy WITH PASSWORD 'evy' CREATEDB;\""
                   su - postgres -c "createdb -O evy evy"
 
