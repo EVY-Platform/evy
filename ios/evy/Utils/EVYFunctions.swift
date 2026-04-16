@@ -205,6 +205,21 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
+/// First comma-separated argument as a data path; used by single-argument formatters.
+@MainActor
+private func evyJsonFromFirstArgument(args: String, errorType: String) throws -> EVYJson {
+    let path = try evyTrimmedFirstPath(from: args, errorType: errorType)
+    return try EVY.getDataFromProps(path)
+}
+
+private func evyTrimmedFirstPath(from args: String, errorType: String) throws -> String {
+    let parts = EVYInterpreter.splitFunctionArguments(args)
+    guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
+        throw EVYError.formatFailed(type: errorType, reason: "missing value argument")
+    }
+    return path
+}
+
 @MainActor
 func evyFormatDecimal(_ args: String,
                       _ editing: Bool = false) throws -> EVYFunctionOutput {
@@ -216,7 +231,10 @@ func evyFormatDecimal(_ args: String,
     if parts.count >= 2 {
         let rawPlaces = EVYInterpreter.stripOptionalSurroundingQuotes(parts[1])
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        places = Int(rawPlaces) ?? 2
+        guard let parsedPlaces = Int(rawPlaces), parsedPlaces >= 0, parsedPlaces <= 20 else {
+            throw EVYError.formatFailed(type: "decimal", reason: "invalid fraction digits '\(rawPlaces)'")
+        }
+        places = parsedPlaces
     } else {
         places = 2
     }
@@ -243,12 +261,8 @@ func evyFormatDecimal(_ args: String,
 @MainActor
 func evyFormatMetricLength(_ args: String,
                            _ editing: Bool = false) throws -> EVYFunctionOutput {
-    let parts = EVYInterpreter.splitFunctionArguments(args)
-    guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
-        throw EVYError.formatFailed(type: "metricLength", reason: "missing value argument")
-    }
-    let res = try EVY.getDataFromProps(path)
-    let mm = try evyMillimetres(from: res)
+    let res = try evyJsonFromFirstArgument(args: args, errorType: "metricLength")
+    let mm = try evyMillimetres(from: res, errorType: "metricLength")
 
     if editing {
         return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
@@ -262,12 +276,8 @@ func evyFormatMetricLength(_ args: String,
 @MainActor
 func evyFormatImperialLength(_ args: String,
                              _ editing: Bool = false) throws -> EVYFunctionOutput {
-    let parts = EVYInterpreter.splitFunctionArguments(args)
-    guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
-        throw EVYError.formatFailed(type: "imperialLength", reason: "missing value argument")
-    }
-    let res = try EVY.getDataFromProps(path)
-    let mm = try evyMillimetres(from: res)
+    let res = try evyJsonFromFirstArgument(args: args, errorType: "imperialLength")
+    let mm = try evyMillimetres(from: res, errorType: "imperialLength")
 
     if editing {
         return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
@@ -281,11 +291,7 @@ func evyFormatImperialLength(_ args: String,
 @MainActor
 func evyFormatDuration(_ args: String,
                        _ editing: Bool = false) throws -> EVYFunctionOutput {
-    let parts = EVYInterpreter.splitFunctionArguments(args)
-    guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
-        throw EVYError.formatFailed(type: "duration", reason: "missing value argument")
-    }
-    let res = try EVY.getDataFromProps(path)
+    let res = try evyJsonFromFirstArgument(args: args, errorType: "duration")
     let ms = try evyMilliseconds(from: res)
 
     if editing {
@@ -304,6 +310,9 @@ func evyFormatDate(_ args: String,
         throw EVYError.formatFailed(type: "date", reason: "expected value and format pattern")
     }
     let path = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !path.isEmpty else {
+        throw EVYError.formatFailed(type: "date", reason: "missing value argument")
+    }
     let pattern = evyNormalizeDateFormatPattern(
         EVYInterpreter.stripOptionalSurroundingQuotes(parts[1])
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -380,21 +389,21 @@ private func evyPlainNumberString(_ value: Double) -> String {
     return "\(value)"
 }
 
-private func evyMillimetres(from json: EVYJson) throws -> Int {
+private func evyMillimetres(from json: EVYJson, errorType: String) throws -> Int {
     switch json {
     case let .int(intValue):
         return intValue
     case let .string(stringValue):
         let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            throw EVYError.formatFailed(type: "metricLength", reason: "empty millimetre value")
+            throw EVYError.formatFailed(type: errorType, reason: "empty millimetre value")
         }
         guard let mm = Int(trimmed) else {
-            throw EVYError.formatFailed(type: "metricLength", reason: "could not parse integer from '\(trimmed)'")
+            throw EVYError.formatFailed(type: errorType, reason: "could not parse integer from '\(trimmed)'")
         }
         return mm
     default:
-        throw EVYError.formatFailed(type: "metricLength", reason: "expected integer millimetres, got \(json)")
+        throw EVYError.formatFailed(type: errorType, reason: "expected integer millimetres, got \(json)")
     }
 }
 
