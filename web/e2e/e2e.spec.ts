@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { SDUI_Flow, SDUI_Row } from "evy-types";
+import type { UI_Flow, UI_Row } from "evy-types";
 import { Client } from "rpc-websockets";
 
 import {
@@ -53,17 +53,17 @@ async function withApiClient<T>(
 	}
 }
 
-async function getFlowsFromApi(): Promise<SDUI_Flow[]> {
+async function getFlowsFromApi(): Promise<UI_Flow[]> {
 	return withApiClient(async (client) => {
 		const result = await client.call("get", {
 			namespace: "evy",
 			resource: "sdui",
 		});
-		return result as SDUI_Flow[];
+		return result as UI_Flow[];
 	});
 }
 
-function rowContainsTitle(row: SDUI_Row, title: string): boolean {
+function rowContainsTitle(row: UI_Row, title: string): boolean {
 	if (row.view.content.title === title) {
 		return true;
 	}
@@ -81,7 +81,7 @@ function rowContainsTitle(row: SDUI_Row, title: string): boolean {
 }
 
 function flowContainsRowTitle(
-	flow: SDUI_Flow | undefined,
+	flow: UI_Flow | undefined,
 	title: string,
 ): boolean {
 	if (!flow) {

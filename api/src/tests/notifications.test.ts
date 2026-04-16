@@ -8,7 +8,7 @@ import {
 	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { GetRequest, SDUI_Flow, SDUI_Page } from "evy-types";
+import type { GetRequest, UI_Flow, UI_Page } from "evy-types";
 
 import * as schema from "../db/drizzleTables";
 import {
@@ -99,12 +99,12 @@ describe("upsert real-time notifications", () => {
 		);
 		const notifyPromise = waitForNotification(subscriber, "flowUpdated");
 
-		const testPage: SDUI_Page = {
+		const testPage: UI_Page = {
 			id: crypto.randomUUID(),
 			title: "Page",
 			rows: [],
 		};
-		const flowData: SDUI_Flow = {
+		const flowData: UI_Flow = {
 			id: crypto.randomUUID(),
 			name: "WS Notify Flow",
 			pages: [testPage],
@@ -170,7 +170,7 @@ describe("upsert real-time notifications", () => {
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-7", "Web");
 
-		const testPage: SDUI_Page = {
+		const testPage: UI_Page = {
 			id: crypto.randomUUID(),
 			title: "P",
 			rows: [],

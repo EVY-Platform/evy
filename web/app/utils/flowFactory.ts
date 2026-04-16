@@ -1,9 +1,6 @@
-import type {
-	SDUI_Flow as ServerFlow,
-	SDUI_Page as ServerPage,
-} from "evy-types";
+import type { UI_Flow as ServerFlow, UI_Page as ServerPage } from "evy-types";
 
-import type { SDUI_Flow } from "../types/flow";
+import type { UI_Flow } from "../types/flow";
 import { decodeFlows } from "./decodeFlow";
 
 /**
@@ -20,7 +17,7 @@ export function buildNewClientPage(): ServerPage {
 /**
  * Builds a minimal valid flow (one empty page) for the builder UI and API validation.
  */
-export function buildNewClientFlow(name: string): SDUI_Flow {
+export function buildNewClientFlow(name: string): UI_Flow {
 	const flowId = crypto.randomUUID();
 	const serverFlow: ServerFlow = {
 		id: flowId,

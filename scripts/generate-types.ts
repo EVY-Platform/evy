@@ -200,14 +200,14 @@ async function generateTypeScript(
 			await writeFile(outPath, output, "utf-8");
 
 			if (schemaKey === "sdui/evy") {
-				const rowDef = (schema.$defs as Record<string, unknown>)?.[
-					"SDUI_Row"
-				] as Record<string, unknown> | undefined;
+				const rowDef = (schema.$defs as Record<string, unknown>)?.["UI_Row"] as
+					| Record<string, unknown>
+					| undefined;
 				const rowTypeEnum = (rowDef?.properties as Record<string, unknown>)
 					?.type as { enum?: string[] } | undefined;
 				const rowValues = rowTypeEnum?.enum ?? [];
 				await appendLinesToGeneratedFile(outPath, [
-					`export const SDUI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`,
+					`export const UI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`,
 				]);
 			}
 			if (schemaKey === "rpc/get.request") {
@@ -301,7 +301,7 @@ async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 		}),
 	);
 
-	// Generate SDUI Swift from evy.schema.json + row-content.spec.json
+	// Generate Swift UI types from evy.schema.json + row-content.spec.json
 	await spawnExitOk(
 		"bun",
 		["run", join(REPO_ROOT, "scripts", "generate-swift-sdui.ts")],

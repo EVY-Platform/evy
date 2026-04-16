@@ -79,9 +79,9 @@
 		74A100112F32000100000001 /* ContentViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100142F32000100000001 /* ContentViewTests.swift */; };
 		74A100122F32000100000001 /* EVYWebsocketNotificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100152F32000100000001 /* EVYWebsocketNotificationTests.swift */; };
 		74A100132F32000100000001 /* EVYActionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100162F32000100000001 /* EVYActionRunnerTests.swift */; };
-		73F2A0012F30B00200000001 /* SDUIEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0112F30B00200000001 /* SDUIEnums.swift */; };
-		73F2A0022F30B00200000001 /* SDUIShapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0122F30B00200000001 /* SDUIShapes.swift */; };
-		73F2A0032F30B00200000001 /* SDUIRowPayloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0132F30B00200000001 /* SDUIRowPayloads.swift */; };
+		73F2A0012F30B00200000001 /* UIEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0112F30B00200000001 /* UIEnums.swift */; };
+		73F2A0022F30B00200000001 /* UIShapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0122F30B00200000001 /* UIShapes.swift */; };
+		73F2A0032F30B00200000001 /* UIRowPayloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0132F30B00200000001 /* UIRowPayloads.swift */; };
 		73F2A0042F30B00200000001 /* DataOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0142F30B00200000001 /* DataOs.swift */; };
 		73F3A0012F30B00300000001 /* EVYActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F3A0022F30B00300000001 /* EVYActionRunner.swift */; };
 /* End PBXBuildFile section */
@@ -177,9 +177,9 @@
 		74A100152F32000100000001 /* EVYWebsocketNotificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYWebsocketNotificationTests.swift; sourceTree = "<group>"; };
 		74A100162F32000100000001 /* EVYActionRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionRunnerTests.swift; sourceTree = "<group>"; };
 		74A100052F32000100000001 /* evyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = evyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		73F2A0112F30B00200000001 /* SDUIEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDUIEnums.swift; sourceTree = "<group>"; };
-		73F2A0122F30B00200000001 /* SDUIShapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDUIShapes.swift; sourceTree = "<group>"; };
-		73F2A0132F30B00200000001 /* SDUIRowPayloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDUIRowPayloads.swift; sourceTree = "<group>"; };
+		73F2A0112F30B00200000001 /* UIEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIEnums.swift; sourceTree = "<group>"; };
+		73F2A0122F30B00200000001 /* UIShapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIShapes.swift; sourceTree = "<group>"; };
+		73F2A0132F30B00200000001 /* UIRowPayloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIRowPayloads.swift; sourceTree = "<group>"; };
 		73F2A0142F30B00200000001 /* DataOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataOs.swift; sourceTree = "<group>"; };
 		73F3A0022F30B00300000001 /* EVYActionRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionRunner.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -449,9 +449,9 @@
 			isa = PBXGroup;
 			children = (
 				73F2A0142F30B00200000001 /* DataOs.swift */,
-				73F2A0112F30B00200000001 /* SDUIEnums.swift */,
-				73F2A0122F30B00200000001 /* SDUIShapes.swift */,
-				73F2A0132F30B00200000001 /* SDUIRowPayloads.swift */,
+				73F2A0112F30B00200000001 /* UIEnums.swift */,
+				73F2A0122F30B00200000001 /* UIShapes.swift */,
+				73F2A0132F30B00200000001 /* UIRowPayloads.swift */,
 			);
 			path = ../../types/generated/swift;
 			sourceTree = "<group>";
@@ -659,9 +659,9 @@
 				73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
 				73B3CF862C68AD2200FD333A /* EVYColumnContainerRow.swift in Sources */,
-				73F2A0012F30B00200000001 /* SDUIEnums.swift in Sources */,
-				73F2A0022F30B00200000001 /* SDUIShapes.swift in Sources */,
-				73F2A0032F30B00200000001 /* SDUIRowPayloads.swift in Sources */,
+				73F2A0012F30B00200000001 /* UIEnums.swift in Sources */,
+				73F2A0022F30B00200000001 /* UIShapes.swift in Sources */,
+				73F2A0032F30B00200000001 /* UIRowPayloads.swift in Sources */,
 				73F2A0042F30B00200000001 /* DataOs.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

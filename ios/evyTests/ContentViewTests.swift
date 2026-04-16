@@ -34,7 +34,7 @@ final class ContentViewTests: XCTestCase {
         XCTAssertEqual(keysToDelete, Set(["item"]))
     }
 
-    private func makeFlows() throws -> [SDUI_Flow] {
+    private func makeFlows() throws -> [UI_Flow] {
         let json: [[String: Any]] = [
             [
                 "id": "home-flow",
@@ -110,6 +110,6 @@ final class ContentViewTests: XCTestCase {
         ]
 
         let data = try JSONSerialization.data(withJSONObject: json)
-        return try JSONDecoder().decode([SDUI_Flow].self, from: data)
+        return try JSONDecoder().decode([UI_Flow].self, from: data)
     }
 }

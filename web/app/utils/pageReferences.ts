@@ -1,4 +1,4 @@
-import type { SDUI_Flow, SDUI_Page } from "../types/flow";
+import type { UI_Flow, UI_Page } from "../types/flow";
 import type { Row } from "../types/row";
 import { parseBranch } from "./actionBranch";
 import { breadcrumbLabelForPage, breadcrumbLabelForRow } from "./navLabels";
@@ -38,8 +38,8 @@ function rowReferencesTargetPage(
 }
 
 function collectReferencesForPage(
-	page: SDUI_Page,
-	flow: SDUI_Flow,
+	page: UI_Page,
+	flow: UI_Flow,
 	targetPageId: string,
 	results: PageReferenceEntry[],
 ): void {
@@ -61,7 +61,7 @@ function collectReferencesForPage(
 
 /** Finds rows in `flow` whose actions navigate to `targetPageId` within the same flow. */
 export function findPageReferences(
-	flow: SDUI_Flow,
+	flow: UI_Flow,
 	targetPageId: string,
 ): PageReferenceEntry[] {
 	const results: PageReferenceEntry[] = [];

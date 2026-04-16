@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sdui",
-	"title": "SDUI_Flow",
-	"description": "SDUI types: SDUI_Flow, SDUI_Page, SDUI_Row",
+	"title": "UI_Flow",
+	"description": "UI types: UI_Flow, UI_Page, UI_Row",
 	"type": "object",
 	"additionalProperties": false,
 	"required": ["id", "name", "pages"],
@@ -11,11 +11,11 @@
 		"name": { "type": "string", "minLength": 1 },
 		"pages": {
 			"type": "array",
-			"items": { "$ref": "#/$defs/SDUI_Page" }
+			"items": { "$ref": "#/$defs/UI_Page" }
 		}
 	},
 	"$defs": {
-		"SDUI_Page": {
+		"UI_Page": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": ["id", "title", "rows"],
@@ -24,12 +24,12 @@
 				"title": { "type": "string" },
 				"rows": {
 					"type": "array",
-					"items": { "$ref": "#/$defs/SDUI_Row" }
+					"items": { "$ref": "#/$defs/UI_Row" }
 				},
-				"footer": { "$ref": "#/$defs/SDUI_Row" }
+				"footer": { "$ref": "#/$defs/UI_Row" }
 			}
 		},
-		"SDUI_Row": {
+		"UI_Row": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": ["id", "type", "view", "actions"],
@@ -62,7 +62,7 @@
 					"additionalProperties": false,
 					"required": ["content"],
 					"properties": {
-						"content": { "$ref": "#/$defs/SDUI_RowContent" },
+						"content": { "$ref": "#/$defs/UI_RowContent" },
 						"data": { "type": "string" },
 						"max_lines": { "type": "string" }
 					}
@@ -71,11 +71,11 @@
 				"actions": {
 					"type": "array",
 					"default": [],
-					"items": { "$ref": "#/$defs/SDUI_RowAction" }
+					"items": { "$ref": "#/$defs/UI_RowAction" }
 				}
 			}
 		},
-		"SDUI_RowContent": {
+		"UI_RowContent": {
 			"type": "object",
 			"required": ["title"],
 			"properties": {
@@ -94,9 +94,9 @@
 				"photos": { "type": "string" },
 				"children": {
 					"type": "array",
-					"items": { "$ref": "#/$defs/SDUI_Row" }
+					"items": { "$ref": "#/$defs/UI_Row" }
 				},
-				"child": { "$ref": "#/$defs/SDUI_Row" },
+				"child": { "$ref": "#/$defs/UI_Row" },
 				"segments": {
 					"type": "array",
 					"items": { "type": "string" }
@@ -104,7 +104,7 @@
 			},
 			"additionalProperties": false
 		},
-		"SDUI_RowAction": {
+		"UI_RowAction": {
 			"type": "object",
 			"additionalProperties": false,
 			"required": ["condition", "false", "true"],

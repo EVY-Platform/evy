@@ -52,7 +52,7 @@ struct DataUpdatedNotification: Decodable {
 }
 
 struct FlowUpdatedNotification: Decodable {
-    let flow: SDUI_Flow
+    let flow: UI_Flow
 
     enum CodingKeys: String, CodingKey {
         case flow = "data"

@@ -1,7 +1,7 @@
 import { Client } from "rpc-websockets";
 import type {
 	GetResponse,
-	SDUI_Flow as ServerFlow,
+	UI_Flow as ServerFlow,
 	UpsertResponse,
 } from "evy-types";
 import { config } from "../config";

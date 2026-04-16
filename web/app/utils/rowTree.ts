@@ -1,6 +1,6 @@
 import invariant from "tiny-invariant";
 
-import type { SDUI_Page } from "../types/flow";
+import type { UI_Page } from "../types/flow";
 import type { Row, ContainerType } from "../types/row";
 
 const SECONDARY_PAGE_ID_PREFIX = "secondary:";
@@ -18,7 +18,7 @@ function parseSecondarySheetRowId(pageId: string): string | undefined {
  */
 export function resolveSourcePageIdFromRaw(
 	rawSourcePageId: string,
-	pages: SDUI_Page[],
+	pages: UI_Page[],
 ): string {
 	const sheetRowId = parseSecondarySheetRowId(rawSourcePageId);
 	if (!sheetRowId) return rawSourcePageId;
@@ -27,7 +27,7 @@ export function resolveSourcePageIdFromRaw(
 }
 
 type ResolvedDropDestinationPage = {
-	page: SDUI_Page;
+	page: UI_Page;
 	resolvedPageId: string;
 	secondarySheetRowId: string | undefined;
 };
@@ -35,7 +35,7 @@ type ResolvedDropDestinationPage = {
 /** Resolves destination drop target `pageId` (including `secondary:*`) to a real page. */
 export function resolveDestinationPageFromRawPageId(
 	rawDestinationPageId: string,
-	pages: SDUI_Page[],
+	pages: UI_Page[],
 ): ResolvedDropDestinationPage {
 	const secondarySheetRowId = parseSecondarySheetRowId(rawDestinationPageId);
 	if (secondarySheetRowId) {
@@ -66,9 +66,9 @@ export function resolveDestinationPageFromRawPageId(
 
 /** Page whose top-level `rows` contains the given row id (not recursive). */
 function findPageContainingRow(
-	pages: SDUI_Page[],
+	pages: UI_Page[],
 	rowId: string,
-): SDUI_Page | undefined {
+): UI_Page | undefined {
 	return pages.find((page) => page.rows.some((r) => r.id === rowId));
 }
 
