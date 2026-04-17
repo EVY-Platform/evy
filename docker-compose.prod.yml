@@ -22,12 +22,12 @@ services:
     environment:
       - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST:-0.0.0.0}
       - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT:-8001}
+      - MARKETPLACE_DB_DATABASE=${MARKETPLACE_DB_DATABASE:-marketplace}
       - API_PORT=${MARKETPLACE_GRPC_PORT:-8001}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - DB_PORT=${DB_PORT}
       - DB_DOMAIN=db
-      - MARKETPLACE_DB_DATABASE=${MARKETPLACE_DB_DATABASE:-marketplace}
     depends_on:
       db:
         condition: service_healthy
