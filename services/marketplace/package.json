@@ -12,7 +12,6 @@
 		"health": "bun src/readiness.ts",
 		"health:seeded": "bun src/readiness.ts --require-seeded",
 		"test": "bun --env-file=../../.env test src/",
-		"test:e2e": "bun --env-file=../../.env test e2e/",
 		"lint": "bunx biome check",
 		"format": "bunx biome format --write .",
 		"db:generate": "bun --env-file=../../.env drizzle-kit generate",

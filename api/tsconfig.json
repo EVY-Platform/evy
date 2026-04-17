@@ -16,5 +16,5 @@
 			"drizzle-orm/*": ["./node_modules/drizzle-orm/*"]
 		}
 	},
-	"include": ["src/**/*", "scripts/seed.ts", "e2e/**/*"]
+	"include": ["src/**/*", "e2e/**/*"]
 }

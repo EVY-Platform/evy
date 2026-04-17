@@ -19,7 +19,6 @@ flowchart LR
         data[data.ts<br/>local evy store]
         services[services.ts<br/>namespace router]
         validation[validation.ts]
-        functions[functions.ts]
     end
 
     subgraph marketplace_process [marketplace service]
@@ -105,7 +104,6 @@ flowchart TD
     data[data.ts<br/>Drizzle + auth<br/>getCore / upsertCore]
     services[services.ts<br/>gRPC adapters + SubscribeEvents]
     validation[validation.ts<br/>Zod schemas + ISO date-time guard]
-    functions[functions.ts<br/>server-side SDData helpers]
     readiness[readiness.ts<br/>health / seed check]
     drizzleTables[db/drizzleTables.ts<br/>re-exports generated schema]
 
@@ -123,7 +121,6 @@ flowchart TD
 ```
 
 - `db/drizzleTables.ts` simply re-exports `types/generated/ts/db/schema.generated.ts`; the schema itself comes from `types/schema/data/` via `bun run types:generate`.
-- `functions.ts` mirrors the iOS/SDData formatters (see [Functions](../docs/evy/sddata/functions.md)) for scenarios where server-side evaluation of template functions is needed.
 - `validation.ts` enforces that any JSON key ending in `At` or `_timestamp` (plus explicit exceptions) is an ISO 8601 string &mdash; never a Unix number &mdash; before it reaches Postgres.
 
 ### Shared contracts
