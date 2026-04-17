@@ -12,7 +12,7 @@ import { migrate } from "drizzle-orm/pglite/migrator";
 import type * as grpc from "@grpc/grpc-js";
 
 import * as schema from "../db/schema";
-import { createEvyServiceClient } from "../grpc/server";
+import { createEvyServiceClient } from "../index";
 import { createPgliteTestDatabase } from "./dbTestHelpers";
 
 function getFreePort(): Promise<number> {
@@ -40,7 +40,7 @@ mock.module("../db", () => ({
 }));
 
 const { startMarketplaceGrpcServer, stopMarketplaceGrpcServer } = await import(
-	"../grpc/server"
+	"../index"
 );
 
 let grpcPort: number;

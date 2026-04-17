@@ -7,12 +7,20 @@ import type {
 	GetResponse,
 	UpsertRequest,
 } from "evy-types";
-import { MARKETPLACE_DATA_RESOURCES } from "./constants";
 import { data } from "./db/schema";
 import { db } from "./db";
 import { validateDataPayload } from "./validation";
 
 const MARKETPLACE_NAMESPACE = "marketplace";
+
+const MARKETPLACE_DATA_RESOURCES = new Set<string>([
+	"selling_reasons",
+	"conditions",
+	"items",
+	"durations",
+	"areas",
+	"timeslots",
+]);
 
 function validateParams(
 	params: unknown,

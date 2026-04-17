@@ -1,5 +1,5 @@
 import { defineConfig } from "drizzle-kit";
-import { getMarketplaceConnectionUrl } from "./src/db/connectionUrl";
+import { getMarketplaceConnectionUrl } from "./src/db";
 
 export default defineConfig({
 	schema: "./src/db/schema.ts",

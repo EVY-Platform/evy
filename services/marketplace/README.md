@@ -10,7 +10,7 @@ flowchart LR
     api[api<br/>JSON-RPC 2.0]
 
     subgraph marketplace [marketplace service]
-        grpc[grpc/server.ts<br/>Get / Upsert / SubscribeEvents]
+        grpc[index.ts<br/>Get / Upsert / SubscribeEvents]
         data[data.ts]
         bus[(EventEmitter<br/>notify)]
     end
