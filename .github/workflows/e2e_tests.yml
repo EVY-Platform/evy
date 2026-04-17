@@ -34,6 +34,7 @@ jobs:
                         - 'web/**'
                         - 'ios/**'
                         - 'types/**'
+                        - 'services/**'
                         - 'run-e2e.sh'
                         - '.github/workflows/e2e_tests.yml'
                         - '.github/actions/**'
@@ -44,6 +45,7 @@ jobs:
                   pg_ctlcluster 16 main start
                   su - postgres -c "psql -c \"CREATE USER evy WITH PASSWORD 'evy' CREATEDB;\""
                   su - postgres -c "createdb -O evy evy"
+                  su - postgres -c "createdb -O evy marketplace"
 
             - name: Install dependencies
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
