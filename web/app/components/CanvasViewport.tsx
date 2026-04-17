@@ -3,22 +3,17 @@ import type {
 	MouseEvent as ReactMouseEvent,
 	ReactNode,
 } from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
+import {
+	type CursorPosition,
+	drawDotField,
+	GRID_BASE_SIZE_PX,
+} from "./canvasDotField";
 import { useCamera } from "../hooks/useCamera";
 import { useFocusPanOnEnter } from "../hooks/useFocusPanOnEnter";
 import { useViewportGestures } from "../hooks/useViewportGestures";
 import { CameraContext } from "../state/contexts/CameraContext";
-
-const GRID_BASE_SIZE_PX = 12;
-
-const GRID_BACKGROUND_IMAGE = `
-	radial-gradient(circle, var(--color-evy-gray-medium) 1px, transparent 1px)
-`;
-
-const GRID_HIGHLIGHT_BACKGROUND_IMAGE = `
-	radial-gradient(circle, var(--color-evy-gray-dark) 1px, transparent 1px)
-`;
 
 const worldStyle: CSSProperties = {
 	transformOrigin: "0 0",
@@ -59,33 +54,126 @@ export function CanvasViewport({
 	useFocusPanOnEnter(focusMode, activePageId, panToElement);
 
 	const contentMeasureRef = useRef<HTMLDivElement | null>(null);
-	const highlightRef = useRef<HTMLDivElement | null>(null);
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const cursorRef = useRef<CursorPosition>(null);
+	const camRef = useRef(getCamera());
+	const disableMorphRef = useRef(false);
+	const requestRepaintRef = useRef<() => void>(() => {});
+
+	const cam = getCamera();
+	camRef.current = cam;
+
+	useEffect(() => {
+		const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+		const syncReducedMotion = () => {
+			disableMorphRef.current = mediaQuery.matches;
+			requestRepaintRef.current();
+		};
+		disableMorphRef.current = mediaQuery.matches;
+		mediaQuery.addEventListener("change", syncReducedMotion);
+		return () => {
+			mediaQuery.removeEventListener("change", syncReducedMotion);
+		};
+	}, []);
 
 	useEffect(() => {
 		const viewport = viewportRef.current;
-		const highlight = highlightRef.current;
-		if (!viewport || !highlight) return;
+		const canvas = canvasRef.current;
+		if (!viewport || !canvas) {
+			return;
+		}
+
+		let rafId: number | null = null;
+
+		const paintDotField = () => {
+			const cssWidth = canvas.clientWidth;
+			const cssHeight = canvas.clientHeight;
+			if (cssWidth <= 0 || cssHeight <= 0) {
+				return;
+			}
+
+			const devicePixelRatio = window.devicePixelRatio || 1;
+			canvas.width = Math.round(cssWidth * devicePixelRatio);
+			canvas.height = Math.round(cssHeight * devicePixelRatio);
+
+			const context = canvas.getContext("2d");
+			if (!context) {
+				return;
+			}
+
+			context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+
+			const style = getComputedStyle(viewport);
+			const currentCam = camRef.current;
+			const gridSize = GRID_BASE_SIZE_PX * currentCam.scale;
+
+			drawDotField({
+				ctx: context,
+				cssWidth,
+				cssHeight,
+				gridSize,
+				offsetX: currentCam.offsetX,
+				offsetY: currentCam.offsetY,
+				cursor: cursorRef.current,
+				backgroundColor: style.getPropertyValue("--color-evy-light").trim(),
+				colorMedium: style.getPropertyValue("--color-evy-gray-medium").trim(),
+				colorDark: style.getPropertyValue("--color-evy-gray-dark").trim(),
+				disableMorph: disableMorphRef.current,
+			});
+		};
+
+		const schedulePaint = () => {
+			if (rafId != null) {
+				return;
+			}
+			rafId = requestAnimationFrame(() => {
+				rafId = null;
+				paintDotField();
+			});
+		};
+
+		requestRepaintRef.current = schedulePaint;
+
+		const resizeObserver = new ResizeObserver(() => {
+			schedulePaint();
+		});
+		resizeObserver.observe(viewport);
 
 		const onMove = (event: MouseEvent) => {
-			const rect = viewport.getBoundingClientRect();
-			highlight.style.setProperty(
-				"--mouse-x",
-				`${event.clientX - rect.left}px`,
-			);
-			highlight.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
+			const rect = canvas.getBoundingClientRect();
+			cursorRef.current = {
+				x: event.clientX - rect.left,
+				y: event.clientY - rect.top,
+			};
+			schedulePaint();
 		};
+
 		const onLeave = () => {
-			highlight.style.setProperty("--mouse-x", "-300px");
-			highlight.style.setProperty("--mouse-y", "-300px");
+			cursorRef.current = null;
+			schedulePaint();
 		};
 
 		viewport.addEventListener("mousemove", onMove);
 		viewport.addEventListener("mouseleave", onLeave);
+
+		schedulePaint();
+
 		return () => {
+			resizeObserver.disconnect();
 			viewport.removeEventListener("mousemove", onMove);
 			viewport.removeEventListener("mouseleave", onLeave);
+			requestRepaintRef.current = () => {};
+			if (rafId != null) {
+				cancelAnimationFrame(rafId);
+			}
 		};
 	}, [viewportRef]);
+
+	// Repaint when camera pan/zoom changes (canvas reads camRef; effect deps tie to camera state).
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional — schedule paint on camera updates
+	useLayoutEffect(() => {
+		requestRepaintRef.current();
+	}, [cam.offsetX, cam.offsetY, cam.scale]);
 
 	const handleFitToView = useCallback(() => {
 		const content = contentMeasureRef.current;
@@ -113,26 +201,6 @@ export function CanvasViewport({
 		[onBackgroundClick],
 	);
 
-	const cam = getCamera();
-	const gridSize = GRID_BASE_SIZE_PX * cam.scale;
-	const gridStyle: CSSProperties = {
-		backgroundColor: "var(--color-evy-light)",
-		backgroundImage: GRID_BACKGROUND_IMAGE,
-		backgroundSize: `${gridSize}px ${gridSize}px`,
-		backgroundPosition: `${cam.offsetX}px ${cam.offsetY}px`,
-		opacity: 1,
-	};
-
-	const highlightGridStyle: CSSProperties = {
-		backgroundImage: GRID_HIGHLIGHT_BACKGROUND_IMAGE,
-		backgroundSize: `${gridSize}px ${gridSize}px`,
-		backgroundPosition: `${cam.offsetX}px ${cam.offsetY}px`,
-		WebkitMaskImage:
-			"radial-gradient(circle 80px at var(--mouse-x, -300px) var(--mouse-y, -300px), black 0%, transparent 100%)",
-		maskImage:
-			"radial-gradient(circle 80px at var(--mouse-x, -300px) var(--mouse-y, -300px), black 0%, transparent 100%)",
-	};
-
 	return (
 		<CameraContext.Provider value={camera}>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: Canvas viewport clears selection on empty click */}
@@ -143,16 +211,10 @@ export function CanvasViewport({
 				className="evy-relative evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-p-4"
 				onClick={handleBackgroundLayerClick}
 			>
-				<div
-					className="evy-pointer-events-none evy-absolute evy-inset-0"
-					style={gridStyle}
+				<canvas
+					ref={canvasRef}
+					className="evy-pointer-events-none evy-absolute evy-inset-0 evy-block evy-h-full evy-w-full"
 					data-canvas-grid
-					aria-hidden
-				/>
-				<div
-					ref={highlightRef}
-					className="evy-pointer-events-none evy-absolute evy-inset-0"
-					style={highlightGridStyle}
 					aria-hidden
 				/>
 				{/* biome-ignore lint/a11y/noStaticElementInteractions: Transformed world layer hit target */}
