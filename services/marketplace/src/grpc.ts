@@ -148,6 +148,7 @@ function buildMarketplaceServiceHandlers(
 }
 
 export type StartMarketplaceGrpcOptions = {
+	host?: string;
 	port?: number;
 };
 
@@ -161,9 +162,20 @@ function resolveGrpcListenPort(options: StartMarketplaceGrpcOptions): number {
 	return Number.parseInt(process.env.MARKETPLACE_GRPC_PORT, 10);
 }
 
+function resolveGrpcListenHost(options: StartMarketplaceGrpcOptions): string {
+	if (options.host !== undefined) {
+		return options.host;
+	}
+	if (!process.env.MARKETPLACE_GRPC_HOST) {
+		throw new Error("MARKETPLACE_GRPC_HOST environment variable is not set");
+	}
+	return process.env.MARKETPLACE_GRPC_HOST;
+}
+
 export async function startMarketplaceGrpcServer(
 	options: StartMarketplaceGrpcOptions = {},
 ): Promise<number> {
+	const host = resolveGrpcListenHost(options);
 	const port = resolveGrpcListenPort(options);
 	const root = loadEvyServiceGrpcRoot();
 
@@ -180,14 +192,14 @@ export async function startMarketplaceGrpcServer(
 
 	await new Promise<void>((resolve, reject) => {
 		server.bindAsync(
-			`0.0.0.0:${port}`,
+			`${host}:${port}`,
 			grpc.ServerCredentials.createInsecure(),
 			(err, boundPort) => {
 				if (err) {
 					reject(err);
 					return;
 				}
-				console.info(`Marketplace gRPC listening at 0.0.0.0:${boundPort}`);
+				console.info(`Marketplace gRPC listening at ${host}:${boundPort}`);
 				resolve();
 			},
 		);

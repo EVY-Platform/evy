@@ -6,7 +6,7 @@ Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https:
 
 ### System view
 
-The API is the only public edge for iOS and the web builder; it fans out to per-namespace backend services. Every non-`evy` namespace (currently only `marketplace`) must declare its gRPC address via `<NAMESPACE>_GRPC_URL` (host:port, no scheme).
+The API is the only public edge for iOS and the web builder; it fans out to per-namespace backend services. Every non-`evy` namespace (currently only `marketplace`) must declare its gRPC address via `<NAMESPACE>_GRPC_HOST` and `<NAMESPACE>_GRPC_PORT`.
 
 ```mermaid
 flowchart LR
@@ -149,8 +149,9 @@ DB_PASS=evy
 DB_PORT=5432
 DB_DOMAIN=localhost
 DB_DATABASE=evy
-# Required for each non-evy namespace (host:port, no scheme); see api/src/services.ts
-MARKETPLACE_GRPC_URL=localhost:8001
+# Required for each non-evy namespace (URL is built as host:port); see api/src/services.ts
+MARKETPLACE_GRPC_HOST=0.0.0.0
+MARKETPLACE_GRPC_PORT=8001
 ```
 
 ## Getting Started
@@ -185,7 +186,8 @@ docker run -p 8000:8000 \
   -e DB_PORT="5432" \
   -e DB_DOMAIN="host" \
   -e DB_DATABASE="evy" \
-  -e MARKETPLACE_GRPC_URL="marketplace:8001" \
+  -e MARKETPLACE_GRPC_HOST="marketplace" \
+  -e MARKETPLACE_GRPC_PORT="8001" \
   evy-api
 ```
 

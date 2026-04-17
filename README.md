@@ -18,12 +18,12 @@ flowchart LR
     ios -- WebSocket --> api
     web -- WebSocket --> api
     api -- local Drizzle --> pg
-    api -- gRPC<br/>MARKETPLACE_GRPC_URL --> marketplace
+    api -- gRPC<br/>MARKETPLACE_GRPC_HOST:MARKETPLACE_GRPC_PORT --> marketplace
     marketplace -- Drizzle --> pg
 ```
 
 - `namespace: "evy"` + `resource: "sdui"` reads/writes `UI_Flow` documents owned by `api`.
-- Every other namespace is routed over gRPC; each non-`evy` namespace must declare a `<NAMESPACE>_GRPC_URL` env var.
+- Every other namespace is routed over gRPC; each non-`evy` namespace must declare `<NAMESPACE>_GRPC_HOST` and `<NAMESPACE>_GRPC_PORT` env vars.
 - Real-time updates are pushed back to clients as standard JSON-RPC notifications (`flowUpdated`, `dataUpdated`). Remote services emit via `evy.Service.SubscribeEvents`, which the `api` fans out to connected clients.
 
 See [`api/README.md`](./api/README.md) for the full request/notification sequence diagrams.
@@ -89,7 +89,7 @@ cd api && bun install && bun run dev
 cd web && bun install && bun run dev
 ```
 
-Ensure `.env` includes `MARKETPLACE_GRPC_URL` (e.g. `localhost:8001`, host:port with no scheme) so the main API can reach the marketplace gRPC server.
+Ensure `.env` includes `MARKETPLACE_GRPC_HOST` and `MARKETPLACE_GRPC_PORT` (e.g. `0.0.0.0` and `8001`) so the main API can reach the marketplace gRPC server.
 
 ### Production (with Docker Compose)
 

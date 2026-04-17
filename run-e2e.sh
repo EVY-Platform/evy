@@ -32,6 +32,7 @@ WEB_PID=""
 # Preserve env overrides when sourcing `.env` (e.g. WEB_PORT=3001 ./run-e2e.sh).
 _PRESET_WEB_PORT="${WEB_PORT-}"
 _PRESET_API_PORT="${API_PORT-}"
+_PRESET_MARKETPLACE_GRPC_HOST="${MARKETPLACE_GRPC_HOST-}"
 _PRESET_MARKETPLACE_GRPC_PORT="${MARKETPLACE_GRPC_PORT-}"
 set -a
 source .env
@@ -41,6 +42,9 @@ if [ -n "${_PRESET_WEB_PORT}" ]; then
 fi
 if [ -n "${_PRESET_API_PORT}" ]; then
 	export API_PORT="${_PRESET_API_PORT}"
+fi
+if [ -n "${_PRESET_MARKETPLACE_GRPC_HOST}" ]; then
+	export MARKETPLACE_GRPC_HOST="${_PRESET_MARKETPLACE_GRPC_HOST}"
 fi
 if [ -n "${_PRESET_MARKETPLACE_GRPC_PORT}" ]; then
 	export MARKETPLACE_GRPC_PORT="${_PRESET_MARKETPLACE_GRPC_PORT}"

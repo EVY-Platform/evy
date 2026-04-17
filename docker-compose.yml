@@ -24,6 +24,7 @@ services:
     ports:
       - ${MARKETPLACE_GRPC_PORT:-8001}:${MARKETPLACE_GRPC_PORT:-8001}
     environment:
+      - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST:-0.0.0.0}
       - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT:-8001}
       - API_PORT=${MARKETPLACE_GRPC_PORT:-8001}
       - DB_USER=${DB_USER}
@@ -55,8 +56,9 @@ services:
       - DB_DOMAIN=postgres
       - DB_DATABASE=${DB_DATABASE}
       - API_PORT=${API_PORT}
-      # gRPC address for the marketplace backend (pattern: <NAMESPACE>_GRPC_URL for each non-evy namespace)
-      - MARKETPLACE_GRPC_URL=marketplace:${MARKETPLACE_GRPC_PORT:-8001}
+      # gRPC address for the marketplace backend (pattern: <NAMESPACE>_GRPC_HOST + <NAMESPACE>_GRPC_PORT per non-evy namespace)
+      - MARKETPLACE_GRPC_HOST=marketplace
+      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT:-8001}
     depends_on:
       postgres:
         condition: service_healthy

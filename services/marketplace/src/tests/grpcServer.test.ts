@@ -9,11 +9,7 @@ import {
 	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type {
-	Client,
-	ClientReadableStream,
-	ServiceError,
-} from "@grpc/grpc-js";
+import type { Client, ClientReadableStream, ServiceError } from "@grpc/grpc-js";
 
 import * as schema from "../db/schema";
 import { createEvyServiceClient } from "../grpc";
@@ -52,7 +48,7 @@ let grpcPort: number;
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
 	grpcPort = await getFreePort();
-	await startMarketplaceGrpcServer({ port: grpcPort });
+	await startMarketplaceGrpcServer({ host: "127.0.0.1", port: grpcPort });
 });
 
 afterAll(async () => {

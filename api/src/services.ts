@@ -212,14 +212,20 @@ function getGrpcAdapters(): Map<string, ServiceAdapter> {
 		if (namespace === "evy") {
 			continue;
 		}
-		const envKey = `${namespace.toUpperCase()}_GRPC_URL`;
-		const url = process.env[envKey];
-		if (!url?.trim()) {
+		const prefix = namespace.toUpperCase();
+		const hostKey = `${prefix}_GRPC_HOST`;
+		const portKey = `${prefix}_GRPC_PORT`;
+		const host = process.env[hostKey]?.trim();
+		const port = process.env[portKey]?.trim();
+		if (!host || !port) {
 			throw new Error(
-				`Missing ${envKey}: every non-evy namespace must declare its gRPC URL (host:port, no scheme).`,
+				`Missing ${hostKey} and/or ${portKey}: every non-evy namespace must declare its gRPC host and port.`,
 			);
 		}
-		next.set(namespace, makeGrpcAdapter(namespace, url.trim(), ServiceCtor));
+		next.set(
+			namespace,
+			makeGrpcAdapter(namespace, `${host}:${port}`, ServiceCtor),
+		);
 	}
 	grpcAdapters = next;
 	return grpcAdapters;

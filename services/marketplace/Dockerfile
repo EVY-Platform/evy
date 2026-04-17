@@ -41,6 +41,8 @@ COPY --from=builder /app/types ../../types
 COPY --from=builder /app/services/marketplace/drizzle.config.ts ./
 COPY --from=builder /app/services/marketplace/drizzle ./drizzle
 
+ARG MARKETPLACE_GRPC_HOST
+ENV MARKETPLACE_GRPC_HOST=$MARKETPLACE_GRPC_HOST
 ARG MARKETPLACE_GRPC_PORT
 ENV MARKETPLACE_GRPC_PORT=$MARKETPLACE_GRPC_PORT
 
