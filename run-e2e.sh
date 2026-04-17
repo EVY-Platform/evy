@@ -20,6 +20,7 @@ for arg in "$@"; do
 done
 
 API_RESULT=0
+MARKETPLACE_RESULT=0
 WEB_RESULT=0
 IOS_RESULT=0
 IOS_SKIPPED=false
@@ -241,6 +242,17 @@ else
 fi
 cd ..
 
+echo -e "\n${YELLOW}Step 4b: Running Marketplace e2e tests...${NC}"
+seed_database
+cd services/marketplace
+if bun run test:e2e; then
+    echo -e "${GREEN}Marketplace e2e tests passed${NC}"
+else
+    echo -e "${RED}Marketplace e2e tests failed${NC}"
+    MARKETPLACE_RESULT=1
+fi
+cd ../..
+
 echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
 seed_database
 cd web
@@ -293,6 +305,12 @@ else
     echo -e "API:  ${RED}FAILED${NC}"
 fi
 
+if [ $MARKETPLACE_RESULT -eq 0 ]; then
+    echo -e "Marketplace:  ${GREEN}PASSED${NC}"
+else
+    echo -e "Marketplace:  ${RED}FAILED${NC}"
+fi
+
 if [ $WEB_RESULT -eq 0 ]; then
     echo -e "Web:  ${GREEN}PASSED${NC}"
 else
@@ -307,7 +325,7 @@ else
     echo -e "iOS:  ${RED}FAILED${NC}"
 fi
 
-if [ $API_RESULT -ne 0 ] || [ $WEB_RESULT -ne 0 ] || ([ "$IOS_SKIPPED" = false ] && [ $IOS_RESULT -ne 0 ]); then
+if [ $API_RESULT -ne 0 ] || [ $MARKETPLACE_RESULT -ne 0 ] || [ $WEB_RESULT -ne 0 ] || ([ "$IOS_SKIPPED" = false ] && [ $IOS_RESULT -ne 0 ]); then
     echo -e "\n${RED}Some tests failed!${NC}"
     exit 1
 else

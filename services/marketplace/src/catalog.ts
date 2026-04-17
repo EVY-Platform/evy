@@ -14,7 +14,9 @@ export const MARKETPLACE_DATA_JSON_KEYS = [
 ] as const;
 
 /** JSON keys accepted by {@link extractMarketplaceData} in seed script. */
-export const MARKETPLACE_SEED_KEYS = new Set<string>(MARKETPLACE_DATA_JSON_KEYS);
+export const MARKETPLACE_SEED_KEYS = new Set<string>(
+	MARKETPLACE_DATA_JSON_KEYS,
+);
 
 /** Allowed `resource` values on marketplace Get/Upsert (RPC uses plural names). */
 export const MARKETPLACE_DATA_RESOURCES = new Set(

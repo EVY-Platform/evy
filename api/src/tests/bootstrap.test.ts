@@ -5,9 +5,6 @@ import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 import { assertApiReadable } from "../readiness";
 import { getFreePort, waitForClientOpen, type WSServer } from "./wsTestHelpers";
 
-const viewItemFlowId = crypto.randomUUID();
-const otherFlowId = crypto.randomUUID();
-
 describe("initServer bootstrap", () => {
 	let previousApiPort: string | undefined;
 	let server: WSServer;
@@ -85,63 +82,26 @@ describe("assertApiReadable", () => {
 		).rejects.toThrow("expected sdui response array");
 	});
 
-	it("throws when requireSeeded is true but View Item flow is missing", async () => {
+	it("throws when requireSeeded is true but sdui is empty", async () => {
 		const deps = {
-			get: async (params: GetRequest): Promise<GetResponse> => {
-				if (params.resource === "sdui") {
-					return [
-						{
-							id: otherFlowId,
-							name: "Other",
-							pages: [],
-						} satisfies UI_Flow,
-					];
-				}
-				return [{ title: "x" }];
-			},
+			get: async (_params: GetRequest): Promise<GetResponse> => [],
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: true }, deps),
-		).rejects.toThrow("View Item");
+		).rejects.toThrow("missing seeded SDUI flows");
 	});
 
-	it("throws when requireSeeded is true but items are empty", async () => {
+	it("resolves when requireSeeded is true and sdui has at least one flow", async () => {
 		const deps = {
 			get: async (params: GetRequest): Promise<GetResponse> => {
 				if (params.resource === "sdui") {
 					return [
 						{
-							id: viewItemFlowId,
-							name: "View Item",
+							id: crypto.randomUUID(),
+							name: "Seeded Flow",
 							pages: [],
 						} satisfies UI_Flow,
 					];
-				}
-				if (params.resource === "items" && params.namespace === "marketplace") {
-					return [];
-				}
-				return [];
-			},
-		};
-		await expect(
-			assertApiReadable({ requireSeeded: true }, deps),
-		).rejects.toThrow("missing seeded items");
-	});
-
-	it("resolves when requireSeeded is true and seeded flows and items exist", async () => {
-		const deps = {
-			get: async (params: GetRequest): Promise<GetResponse> => {
-				if (params.resource === "sdui") {
-					return [
-						{
-							id: viewItemFlowId,
-							name: "View Item",
-							pages: [],
-						} satisfies UI_Flow,
-					];
-				}
-				if (params.resource === "items" && params.namespace === "marketplace") {
-					return [{ title: "item" }];
 				}
 				return [];
 			},

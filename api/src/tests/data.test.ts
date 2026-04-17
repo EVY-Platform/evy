@@ -67,7 +67,9 @@ function isDATA_EVY_Flow(row: DATA_EVY_Rows): row is DATA_EVY_Flow {
 	);
 }
 
-function expectToBeDATA_EVY_Flow(row: DATA_EVY_Rows): asserts row is DATA_EVY_Flow {
+function expectToBeDATA_EVY_Flow(
+	row: DATA_EVY_Rows,
+): asserts row is DATA_EVY_Flow {
 	expect(isDATA_EVY_Flow(row)).toBe(true);
 	if (!isDATA_EVY_Flow(row)) {
 		throw new Error("Expected DATA_EVY_Flow");
