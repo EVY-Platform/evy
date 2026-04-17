@@ -112,6 +112,7 @@ export function CanvasViewport({
 				cssWidth,
 				cssHeight,
 				gridSize,
+				scale: currentCam.scale,
 				offsetX: currentCam.offsetX,
 				offsetY: currentCam.offsetY,
 				cursor: cursorRef.current,
