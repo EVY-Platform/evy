@@ -20,9 +20,6 @@ FROM base AS builder
 WORKDIR /app/services/marketplace
 COPY --from=deps /app/services/marketplace/node_modules ./node_modules
 COPY services/marketplace/package.json ./
-# can we delete?
-COPY types/schema/service.proto /app/types/schema/service.proto
-# can we delete?
 COPY services/marketplace/tsconfig.json ./tsconfig.json
 COPY services/marketplace/src ./src
 COPY services/marketplace/drizzle.config.ts ./
