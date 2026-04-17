@@ -7,9 +7,7 @@ import type {
 import { NAMESPACE_VALUES } from "evy-types";
 import { getCore, isResource, upsertCore } from "./data";
 import { forwardGet, forwardUpsert, wireGrpcClientsTo } from "./services";
-import { emitJsonRpc } from "./ws";
-
-type RpcServer = Awaited<ReturnType<typeof import("./ws")["initServer"]>>;
+import { emitJsonRpc, type RpcServer } from "./ws";
 
 let mainServerRef: RpcServer | null = null;
 

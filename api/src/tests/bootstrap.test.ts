@@ -5,6 +5,9 @@ import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 import { assertApiReadable } from "../readiness";
 import { getFreePort, waitForClientOpen, type WSServer } from "./wsTestHelpers";
 
+const viewItemFlowId = crypto.randomUUID();
+const otherFlowId = crypto.randomUUID();
+
 describe("initServer bootstrap", () => {
 	let previousApiPort: string | undefined;
 	let server: WSServer;
@@ -88,7 +91,7 @@ describe("assertApiReadable", () => {
 				if (params.resource === "sdui") {
 					return [
 						{
-							id: "1",
+							id: otherFlowId,
 							name: "Other",
 							pages: [],
 						} satisfies UI_Flow,
@@ -108,7 +111,7 @@ describe("assertApiReadable", () => {
 				if (params.resource === "sdui") {
 					return [
 						{
-							id: "1",
+							id: viewItemFlowId,
 							name: "View Item",
 							pages: [],
 						} satisfies UI_Flow,
@@ -131,7 +134,7 @@ describe("assertApiReadable", () => {
 				if (params.resource === "sdui") {
 					return [
 						{
-							id: "1",
+							id: viewItemFlowId,
 							name: "View Item",
 							pages: [],
 						} satisfies UI_Flow,

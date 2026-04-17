@@ -7,11 +7,6 @@ import {
 import { z } from "zod";
 
 /**
- * JSON Schema `integer`: whole numbers only (no fractional part).
- */
-export const zIntegerSchema = z.number().int();
-
-/**
  * JSON Schema `number`: finite numeric values; allows integer literals and decimals.
  */
 export const zNumberSchema = z.number().finite();
@@ -43,18 +38,9 @@ export function formatZodErrors(issues: z.core.$ZodIssue[]): string {
 }
 
 /**
- * Instants in JSON payloads use camelCase `*At` (e.g. `createdAt`) or legacy snake_case `*_timestamp`.
- * Add explicit exceptions here only when a field is an instant but does not match those patterns.
- */
-const ISO_DATE_TIME_FIELD_NAME_EXCEPTIONS = new Set<string>([]);
-
-/**
  * Whether a JSON object key should hold an ISO 8601 / RFC 3339 string (never a numeric timestamp).
  */
 export function isIsoDateTimeFieldName(key: string): boolean {
-	if (ISO_DATE_TIME_FIELD_NAME_EXCEPTIONS.has(key)) {
-		return true;
-	}
 	if (key.endsWith("_timestamp")) {
 		return true;
 	}

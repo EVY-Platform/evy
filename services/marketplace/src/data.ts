@@ -9,18 +9,10 @@ import type {
 } from "evy-types";
 import { data } from "./db/schema";
 import { db } from "./db";
+import { MARKETPLACE_DATA_RESOURCES } from "./catalog";
 import { validateDataPayload } from "./validation";
 
 const MARKETPLACE_NAMESPACE = "marketplace";
-
-const MARKETPLACE_DATA_RESOURCES = new Set<string>([
-	"selling_reasons",
-	"conditions",
-	"items",
-	"durations",
-	"areas",
-	"timeslots",
-]);
 
 function validateParams(
 	params: unknown,

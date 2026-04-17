@@ -9,6 +9,26 @@ import type { GetRequest, UpsertRequest } from "evy-types";
 
 import { get, upsert } from "./data";
 
+/**
+ * Best-effort write for server-streaming SubscribeEvents. If the client has
+ * half-closed the stream, `write` throws; we ignore that so the listener does
+ * not tear down unrelated work.
+ */
+function tryWriteSubscribeEvent(
+	call: grpc.ServerWritableStream<unknown, unknown>,
+	eventName: string,
+	payload: unknown,
+): void {
+	try {
+		call.write({
+			event_name: eventName,
+			payload_json: JSON.stringify(payload),
+		});
+	} catch {
+		// Half-closed stream or backpressure — drop notification for this subscriber.
+	}
+}
+
 function resolveMarketplaceServiceProtoPath(): string {
 	const fromSource = join(
 		dirname(fileURLToPath(import.meta.url)),
@@ -31,18 +51,25 @@ function resolveMarketplaceServiceProtoPath(): string {
 	throw new Error("Could not resolve types/schema/service.proto");
 }
 
+let evyServiceGrpcPackageRoot: grpc.GrpcObject | null = null;
+
 function loadEvyServiceGrpcRoot(): grpc.GrpcObject {
-	const packageDefinition = protoLoader.loadSync(
-		resolveMarketplaceServiceProtoPath(),
-		{
-			keepCase: true,
-			longs: String,
-			enums: String,
-			defaults: true,
-			oneofs: true,
-		},
-	);
-	return grpc.loadPackageDefinition(packageDefinition) as grpc.GrpcObject;
+	if (!evyServiceGrpcPackageRoot) {
+		const packageDefinition = protoLoader.loadSync(
+			resolveMarketplaceServiceProtoPath(),
+			{
+				keepCase: true,
+				longs: String,
+				enums: String,
+				defaults: true,
+				oneofs: true,
+			},
+		);
+		evyServiceGrpcPackageRoot = grpc.loadPackageDefinition(
+			packageDefinition,
+		) as grpc.GrpcObject;
+	}
+	return evyServiceGrpcPackageRoot;
 }
 
 /** gRPC client for tests or tooling; `address` is `host:port` with no scheme. */
@@ -108,11 +135,24 @@ function buildMarketplaceServiceHandlers(
 				void (async () => {
 					try {
 						const req = call.request;
+						let data: UpsertRequest["data"];
+						try {
+							data = JSON.parse(req.data_json) as UpsertRequest["data"];
+						} catch (parseErr) {
+							cb({
+								code: grpc.status.INVALID_ARGUMENT,
+								message:
+									parseErr instanceof Error
+										? `Invalid data_json: ${parseErr.message}`
+										: "Invalid data_json",
+							});
+							return;
+						}
 						const params: UpsertRequest = {
 							namespace: req.namespace as GetRequest["namespace"],
 							resource: req.resource as GetRequest["resource"],
 							filter: req.filter?.id ? { id: req.filter.id } : undefined,
-							data: JSON.parse(req.data_json) as UpsertRequest["data"],
+							data,
 						};
 						const result = await upsert(params);
 						eventBus.emit("notify", "dataUpdated", result);
@@ -126,15 +166,8 @@ function buildMarketplaceServiceHandlers(
 				})();
 			},
 			SubscribeEvents: (call: grpc.ServerWritableStream<unknown, unknown>) => {
-				const listener = (_eventName: string, payload: unknown) => {
-					try {
-						call.write({
-							event_name: "dataUpdated",
-							payload_json: JSON.stringify(payload),
-						});
-					} catch {
-						// Stream may be half-closed
-					}
+				const listener = (eventName: string, payload: unknown) => {
+					tryWriteSubscribeEvent(call, eventName, payload);
 				};
 				eventBus.on("notify", listener);
 				const cleanup = () => {

@@ -6,6 +6,7 @@ import postgres from "postgres";
 import { z } from "zod";
 import { db as coreDb, schema as coreSchema } from "../api/src/db";
 import { validateFlowData, formatZodErrors } from "../api/src/validation";
+import { MARKETPLACE_SEED_KEYS } from "../services/marketplace/src/catalog";
 import {
 	db as marketplaceDb,
 	schema as marketplaceSchema,
@@ -28,15 +29,6 @@ const DATA_PATH = join(
 	"service_data.json",
 );
 
-const MARKETPLACE_SEED_KEYS = new Set([
-	"selling_reasons",
-	"conditions",
-	"durations",
-	"areas",
-	"timeslots",
-	"item",
-]);
-
 const SeedDataItemSchema = z.looseObject({
 	id: z.uuid(),
 });
@@ -49,16 +41,6 @@ type SeedInputPaths = {
 	serviceFlowsPath?: string;
 	dataPath?: string;
 };
-type SeedDb = {
-	delete: (table: unknown) => Promise<unknown>;
-	insert: (table: unknown) => {
-		values: (value: unknown) => Promise<unknown>;
-	};
-};
-
-const coreSeedDb = coreDb as unknown as SeedDb;
-const marketplaceSeedDb = marketplaceDb as unknown as SeedDb;
-
 function validateSeedDataItem(
 	item: unknown,
 	resource: string,
@@ -170,33 +152,40 @@ export async function seedDatabase({
 	marketplaceDataJson: SeedDataMap;
 	now?: string;
 }) {
-	await coreSeedDb.delete(coreSchema.flow);
-	await coreSeedDb.delete(coreSchema.data);
+	await coreDb.transaction(async (tx) => {
+		await tx.delete(coreSchema.flow);
+		await tx.delete(coreSchema.data);
+		const flowRows = [
+			...evyFlowsJson.map((flowData) => ({
+				id: flowData.id,
+				data: flowData,
+				createdAt: now,
+				updatedAt: now,
+			})),
+			...serviceFlowsJson.map((flowData) => ({
+				id: flowData.id,
+				data: flowData,
+				createdAt: now,
+				updatedAt: now,
+			})),
+		];
+		if (flowRows.length > 0) {
+			await tx.insert(coreSchema.flow).values(flowRows);
+		}
+	});
 
-	for (const flowData of evyFlowsJson) {
-		await coreSeedDb.insert(coreSchema.flow).values({
-			id: flowData.id,
-			data: flowData,
-			createdAt: now,
-			updatedAt: now,
-		});
-	}
-
-	for (const flowData of serviceFlowsJson) {
-		await coreSeedDb.insert(coreSchema.flow).values({
-			id: flowData.id,
-			data: flowData,
-			createdAt: now,
-			updatedAt: now,
-		});
-	}
-
-	await marketplaceSeedDb.delete(marketplaceSchema.data);
-
+	const marketplaceRows: {
+		id: string;
+		namespace: string;
+		resource: string;
+		data: SeedDataItem;
+		createdAt: string;
+		updatedAt: string;
+	}[] = [];
 	for (const [key, value] of Object.entries(marketplaceDataJson)) {
 		const resource = pluralize.singular(key);
 		for (const item of value) {
-			await marketplaceSeedDb.insert(marketplaceSchema.data).values({
+			marketplaceRows.push({
 				id: item.id,
 				namespace: "marketplace",
 				resource,
@@ -206,6 +195,13 @@ export async function seedDatabase({
 			});
 		}
 	}
+
+	await marketplaceDb.transaction(async (tx) => {
+		await tx.delete(marketplaceSchema.data);
+		if (marketplaceRows.length > 0) {
+			await tx.insert(marketplaceSchema.data).values(marketplaceRows);
+		}
+	});
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

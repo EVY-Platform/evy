@@ -1,4 +1,3 @@
-import { createServer } from "node:net";
 import {
 	afterAll,
 	beforeAll,
@@ -11,26 +10,10 @@ import {
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { Client, ClientReadableStream, ServiceError } from "@grpc/grpc-js";
 
+import { getFreePort } from "../../../../api/src/tests/wsTestHelpers";
 import * as schema from "../db/schema";
 import { createEvyServiceClient } from "../grpc";
 import { createPgliteTestDatabase } from "./dbTestHelpers";
-
-function getFreePort(): Promise<number> {
-	return new Promise((resolve, reject) => {
-		const server = createServer();
-		server.listen(0, "127.0.0.1", () => {
-			const addr = server.address();
-			if (!addr || typeof addr === "string") {
-				server.close();
-				reject(new Error("Could not get free port"));
-				return;
-			}
-			const port = addr.port;
-			server.close(() => resolve(port));
-		});
-		server.on("error", reject);
-	});
-}
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 

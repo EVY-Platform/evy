@@ -1,5 +1,6 @@
 import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 import { get as defaultGet } from "./rpc";
+import { validateFlowData } from "./validation";
 
 type AssertApiReadableOptions = {
 	requireSeeded: boolean;
@@ -10,12 +11,15 @@ type ApiReadableDeps = {
 };
 
 function isFlow(value: unknown): value is UI_Flow {
-	return (
-		value !== null &&
-		typeof value === "object" &&
-		"name" in value &&
-		typeof value.name === "string"
-	);
+	if (value === null || typeof value !== "object") {
+		return false;
+	}
+	try {
+		validateFlowData(value);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 export async function assertApiReadable(

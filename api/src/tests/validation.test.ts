@@ -1,11 +1,13 @@
 import { describe, it, expect } from "bun:test";
+import { z } from "zod";
 import {
 	isIsoDateTimeFieldName,
 	JsonValueSchema,
 	validateDataPayload,
-	zIntegerSchema,
 	zNumberSchema,
 } from "../validation";
+
+const zIntegerSchema = z.number().int();
 
 describe("zIntegerSchema", () => {
 	it("accepts whole numbers", () => {

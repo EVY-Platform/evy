@@ -10,9 +10,7 @@ import type {
 	UpsertRequest,
 } from "evy-types";
 import { NAMESPACE_VALUES } from "evy-types";
-import { emitJsonRpc } from "./ws";
-
-type RpcServer = Awaited<ReturnType<typeof import("./ws")["initServer"]>>;
+import { emitJsonRpc, type RpcServer } from "./ws";
 
 function resolveServiceProtoPath(): string {
 	const fromSource = join(
@@ -140,7 +138,17 @@ function makeGrpcAdapter(
 		reconnectDelayMs = 1000;
 
 		stream.on("data", (msg) => {
-			eventListener?.(msg.event_name, JSON.parse(msg.payload_json) as unknown);
+			let payload: unknown;
+			try {
+				payload = JSON.parse(msg.payload_json) as unknown;
+			} catch (err) {
+				console.warn(
+					"SubscribeEvents: invalid payload_json, skipping",
+					err instanceof Error ? err.message : err,
+				);
+				return;
+			}
+			eventListener?.(msg.event_name, payload);
 		});
 		stream.on("error", () => {
 			if (eventStream === stream) {

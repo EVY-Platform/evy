@@ -1,5 +1,5 @@
 import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
-import type { DATA_EVY_Data } from "evy-types/data/data";
+import type { DATA_EVY_Data } from "evy-types";
 
 export const data = pgTable("Data", {
 	id: uuid("id").primaryKey().defaultRandom(),
