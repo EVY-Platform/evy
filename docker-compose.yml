@@ -22,10 +22,10 @@ services:
       dockerfile: ./services/marketplace/Dockerfile
       target: runner
     ports:
-      - ${MARKETPLACE_API_PORT:-8001}:${MARKETPLACE_API_PORT:-8001}
+      - ${MARKETPLACE_GRPC_PORT:-8001}:${MARKETPLACE_GRPC_PORT:-8001}
     environment:
-      - MARKETPLACE_API_PORT=${MARKETPLACE_API_PORT:-8001}
-      - API_PORT=${MARKETPLACE_API_PORT:-8001}
+      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT:-8001}
+      - API_PORT=${MARKETPLACE_GRPC_PORT:-8001}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - DB_PORT=5432
@@ -56,7 +56,7 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - API_PORT=${API_PORT}
       # gRPC address for the marketplace backend (pattern: <NAMESPACE>_GRPC_URL for each non-evy namespace)
-      - MARKETPLACE_GRPC_URL=marketplace:${MARKETPLACE_API_PORT:-8001}
+      - MARKETPLACE_GRPC_URL=marketplace:${MARKETPLACE_GRPC_PORT:-8001}
     depends_on:
       postgres:
         condition: service_healthy

@@ -34,13 +34,10 @@ function getProtoPath(): string {
 }
 
 function getGrpcListenPort(): number {
-	const raw = process.env.MARKETPLACE_API_PORT ?? process.env.API_PORT;
-	if (!raw) {
-		throw new Error(
-			"MARKETPLACE_API_PORT (or API_PORT) environment variable is not set",
-		);
+	if (!process.env.MARKETPLACE_GRPC_PORT) {
+		throw new Error("MARKETPLACE_GRPC_PORT environment variable is not set");
 	}
-	return Number.parseInt(raw, 10);
+	return Number.parseInt(process.env.MARKETPLACE_GRPC_PORT, 10);
 }
 
 function loadEvyServiceGrpcObject(): grpc.GrpcObject {

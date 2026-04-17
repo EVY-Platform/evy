@@ -37,9 +37,9 @@ COPY --from=builder /app/types ../../types
 COPY --from=builder /app/services/marketplace/drizzle.config.ts ./
 COPY --from=builder /app/services/marketplace/drizzle ./drizzle
 
-ARG MARKETPLACE_API_PORT
-ENV MARKETPLACE_API_PORT=$MARKETPLACE_API_PORT
+ARG MARKETPLACE_GRPC_PORT
+ENV MARKETPLACE_GRPC_PORT=$MARKETPLACE_GRPC_PORT
 
-EXPOSE $MARKETPLACE_API_PORT
+EXPOSE $MARKETPLACE_GRPC_PORT
 
 CMD ["bun", "run", "start"]

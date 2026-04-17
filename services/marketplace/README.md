@@ -33,7 +33,7 @@ flowchart LR
 
 Uses the root `.env` file. Required variables include:
 
-- `MARKETPLACE_API_PORT` — gRPC listen port (default `8001` in compose)
+- `MARKETPLACE_GRPC_PORT` — gRPC listen port (default `8001` in compose)
 - `DB_*` — Postgres host credentials; database name for this service is `MARKETPLACE_DB_DATABASE` (default `marketplace`)
 
 ## Scripts
