@@ -18,7 +18,7 @@ flowchart LR
     ios -- WebSocket --> api
     web -- WebSocket --> api
     api -- local Drizzle --> pg
-    api -- gRPC<br/>MARKETPLACE_GRPC_HOST:MARKETPLACE_GRPC_PORT --> marketplace
+    api -- gRPC --> marketplace
     marketplace -- Drizzle --> pg
 ```
 
@@ -79,13 +79,7 @@ bun install
 bun run db:seed
 
 cd services/marketplace && bun install && bun run dev
-```
-
-```bash
 cd api && bun install && bun run dev
-```
-
-```bash
 cd web && bun install && bun run dev
 ```
 
