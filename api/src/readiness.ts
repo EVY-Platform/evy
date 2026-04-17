@@ -1,5 +1,5 @@
-import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
-import { get as defaultGet } from "./data";
+import type { GetRequest, GetResponse } from "evy-types";
+import { get as defaultGet } from "./rpc";
 
 type AssertApiReadableOptions = {
 	requireSeeded: boolean;
@@ -8,15 +8,6 @@ type AssertApiReadableOptions = {
 type ApiReadableDeps = {
 	get: (params: GetRequest) => Promise<GetResponse>;
 };
-
-function isFlow(value: unknown): value is UI_Flow {
-	return (
-		value !== null &&
-		typeof value === "object" &&
-		"name" in value &&
-		typeof value.name === "string"
-	);
-}
 
 export async function assertApiReadable(
 	options: AssertApiReadableOptions,
@@ -32,18 +23,8 @@ export async function assertApiReadable(
 		return;
 	}
 
-	const hasSeededViewItemFlow = flows.some(
-		(flow) => isFlow(flow) && flow.name === "View Item",
-	);
-	if (!hasSeededViewItemFlow) {
-		throw new Error(
-			"Seed verification failed: missing seeded 'View Item' flow",
-		);
-	}
-
-	const items = await deps.get({ namespace: "evy", resource: "items" });
-	if (!Array.isArray(items) || items.length === 0) {
-		throw new Error("Seed verification failed: missing seeded items data");
+	if (flows.length === 0) {
+		throw new Error("Seed verification failed: missing seeded SDUI flows");
 	}
 }
 

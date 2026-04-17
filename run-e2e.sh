@@ -20,17 +20,36 @@ for arg in "$@"; do
 done
 
 API_RESULT=0
+MARKETPLACE_RESULT=0
 WEB_RESULT=0
 IOS_RESULT=0
 IOS_SKIPPED=false
 MAX_RETRIES=30
 RETRY_DELAY_SECONDS=2
 API_PID=""
+MARKETPLACE_PID=""
 WEB_PID=""
 
+# Preserve env overrides when sourcing `.env` (e.g. WEB_PORT=3001 ./run-e2e.sh).
+_PRESET_WEB_PORT="${WEB_PORT-}"
+_PRESET_API_PORT="${API_PORT-}"
+_PRESET_MARKETPLACE_GRPC_HOST="${MARKETPLACE_GRPC_HOST-}"
+_PRESET_MARKETPLACE_GRPC_PORT="${MARKETPLACE_GRPC_PORT-}"
 set -a
 source .env
 set +a
+if [ -n "${_PRESET_WEB_PORT}" ]; then
+	export WEB_PORT="${_PRESET_WEB_PORT}"
+fi
+if [ -n "${_PRESET_API_PORT}" ]; then
+	export API_PORT="${_PRESET_API_PORT}"
+fi
+if [ -n "${_PRESET_MARKETPLACE_GRPC_HOST}" ]; then
+	export MARKETPLACE_GRPC_HOST="${_PRESET_MARKETPLACE_GRPC_HOST}"
+fi
+if [ -n "${_PRESET_MARKETPLACE_GRPC_PORT}" ]; then
+	export MARKETPLACE_GRPC_PORT="${_PRESET_MARKETPLACE_GRPC_PORT}"
+fi
 
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
@@ -59,11 +78,15 @@ cleanup() {
         if [ -n "${WEB_PID}" ]; then
             kill "$WEB_PID" 2>/dev/null || true
         fi
+        if [ -n "${MARKETPLACE_PID}" ]; then
+            kill "$MARKETPLACE_PID" 2>/dev/null || true
+        fi
         if [ -n "${API_PID}" ]; then
             kill "$API_PID" 2>/dev/null || true
         fi
         wait "${WEB_PID}" 2>/dev/null || true
         wait "${API_PID}" 2>/dev/null || true
+        wait "${MARKETPLACE_PID}" 2>/dev/null || true
     else
         docker compose down -v --remove-orphans 2>/dev/null || true
     fi
@@ -88,6 +111,16 @@ wait_for_api_readiness() {
         retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT/api\" && bun run \"$script_name\""
     else
         retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T api bun run \"$script_name\""
+    fi
+}
+
+wait_for_marketplace_readiness() {
+    local script_name="$1"
+    local display_name="$2"
+    if [ "$NO_DOCKER" = true ]; then
+        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT/services/marketplace\" && bun run \"$script_name\""
+    else
+        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T marketplace bun run \"$script_name\""
     fi
 }
 
@@ -136,13 +169,26 @@ seed_database() {
     fi
 
     wait_for_api_readiness "health:seeded" "seeded API data"
+    wait_for_marketplace_readiness "health:seeded" "seeded marketplace data"
 }
 
 trap cleanup EXIT
 
+echo -e "\n${YELLOW}Installing dependencies...${NC}"
+bun run install:all
+
 if [ "$NO_DOCKER" = true ]; then
     echo -e "\n${YELLOW}Step 1: Starting services without Docker...${NC}"
     wait_for_postgres_no_docker
+
+    echo "Starting Marketplace (background)..."
+    (
+        cd "$REPO_ROOT/services/marketplace"
+        exec bun run start
+    ) &
+    MARKETPLACE_PID=$!
+
+    wait_for_marketplace_readiness "health" "Marketplace"
 
     echo "Starting API (background)..."
     (
@@ -173,6 +219,8 @@ else
 
     retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
 
+    wait_for_marketplace_readiness "health" "Marketplace"
+
     wait_for_api_readiness "health" "API"
     wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 fi
@@ -186,7 +234,6 @@ fi
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
 seed_database
 cd api
-bun install
 if bun run test:e2e; then
     echo -e "${GREEN}API e2e tests passed${NC}"
 else
@@ -195,10 +242,20 @@ else
 fi
 cd ..
 
+echo -e "\n${YELLOW}Step 4b: Running Marketplace e2e tests...${NC}"
+seed_database
+cd services/marketplace
+if bun run test:e2e; then
+    echo -e "${GREEN}Marketplace e2e tests passed${NC}"
+else
+    echo -e "${RED}Marketplace e2e tests failed${NC}"
+    MARKETPLACE_RESULT=1
+fi
+cd ../..
+
 echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
 seed_database
 cd web
-bun install
 if bun run test:e2e; then
     echo -e "${GREEN}Web e2e tests passed${NC}"
 else
@@ -248,6 +305,12 @@ else
     echo -e "API:  ${RED}FAILED${NC}"
 fi
 
+if [ $MARKETPLACE_RESULT -eq 0 ]; then
+    echo -e "Marketplace:  ${GREEN}PASSED${NC}"
+else
+    echo -e "Marketplace:  ${RED}FAILED${NC}"
+fi
+
 if [ $WEB_RESULT -eq 0 ]; then
     echo -e "Web:  ${GREEN}PASSED${NC}"
 else
@@ -262,7 +325,7 @@ else
     echo -e "iOS:  ${RED}FAILED${NC}"
 fi
 
-if [ $API_RESULT -ne 0 ] || [ $WEB_RESULT -ne 0 ] || ([ "$IOS_SKIPPED" = false ] && [ $IOS_RESULT -ne 0 ]); then
+if [ $API_RESULT -ne 0 ] || [ $MARKETPLACE_RESULT -ne 0 ] || [ $WEB_RESULT -ne 0 ] || ([ "$IOS_SKIPPED" = false ] && [ $IOS_RESULT -ne 0 ]); then
     echo -e "\n${RED}Some tests failed!${NC}"
     exit 1
 else

@@ -1,5 +1,7 @@
 # Marketplace data models
 
+The main `api` owns all SDUI (flows) in its database. The marketplace service is **data-only** (catalog rows such as conditions, items, etc.): it implements the shared gRPC contract at [`types/schema/service.proto`](../../../types/schema/service.proto) (`evy.Service`). The `api` routes non-SDUI `marketplace` namespace requests to that service via `MARKETPLACE_GRPC_HOST` and `MARKETPLACE_GRPC_PORT`; clients still use WebSockets only to the main API.
+
 These shapes are **marketplace domain models**. They are not defined as top-level `$defs` in `types/schema/data/data.schema.json`; payloads live as JSON under the `marketplace` namespace (and/or in `DATA_EVY_Data` rows) and are validated at the application layer.
 
 Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/sddata/data.md).

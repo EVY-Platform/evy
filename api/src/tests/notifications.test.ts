@@ -27,9 +27,8 @@ mock.module("../db", () => ({
 	...schema,
 }));
 
-const { get, isRecord, isResource, upsert, validateAuth } = await import(
-	"../data"
-);
+const { getCore, isRecord, isResource, upsertCore, validateAuth } =
+	await import("../data");
 
 function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
 	return isRecord(p) && "resource" in p && isResource(p.resource);
@@ -58,11 +57,11 @@ describe("upsert real-time notifications", () => {
 			validateAuth(params.token, params.os),
 		);
 
-		server.register("get", async (params) => get(params));
+		server.register("get", async (params) => getCore(params));
 
 		server
 			.register("upsert", async (params) => {
-				const result = await upsert(params);
+				const result = await upsertCore(params);
 				if (!hasResource(params)) return result;
 				if (params.resource === "sdui") {
 					emitJsonRpc(server, "flowUpdated", result);
@@ -136,10 +135,18 @@ describe("upsert real-time notifications", () => {
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-4", "Web");
 
-		const payload = { e2eField: "notification-items", n: 42 };
+		const nowIso = new Date().toISOString();
+		const serviceId = crypto.randomUUID();
+		const payload = {
+			id: serviceId,
+			name: "NotifySvc",
+			description: "D",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		};
 		const upsertResult = await caller.call("upsert", {
 			namespace: "evy",
-			resource: "items",
+			resource: "services",
 			data: payload,
 		});
 

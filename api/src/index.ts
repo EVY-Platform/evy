@@ -1,34 +1,18 @@
-import { initServer, emitJsonRpc, type WSParams } from "./ws";
-import type { GetRequest } from "evy-types";
-import { get, isRecord, isResource, upsert, validateAuth } from "./data";
+import { initServer, type WSParams } from "./ws";
+import { validateAuth } from "./data";
+import { get, upsert, wireServerEvents } from "./rpc";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
 }
 
-function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
-	return isRecord(p) && "resource" in p && isResource(p.resource);
-}
-
 async function main() {
 	const server = await initServer(authHandler);
+	wireServerEvents(server);
 
-	server.register("get", async (params: WSParams) => {
-		return get(params);
-	});
+	server.register("get", get);
 
-	server
-		.register("upsert", async (params: WSParams) => {
-			const result = await upsert(params);
-			if (!hasResource(params)) return result;
-			if (params.resource === "sdui") {
-				emitJsonRpc(server, "flowUpdated", result);
-			} else {
-				emitJsonRpc(server, "dataUpdated", result);
-			}
-			return result;
-		})
-		.protected();
+	server.register("upsert", upsert).protected();
 }
 
 main();

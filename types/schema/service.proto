@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package evy;
+
+// Non-evy backend services implement this interface (data-only; no SDUI).
+service Service {
+  rpc Get (GetRequest) returns (GetResponse);
+  rpc Upsert (UpsertRequest) returns (UpsertResponse);
+  rpc SubscribeEvents (SubscribeEventsRequest) returns (stream ServiceEvent);
+}
+
+message GetRequest {
+  string namespace = 1;
+  string resource = 2;
+  Filter filter = 3;
+}
+
+message UpsertRequest {
+  string namespace = 1;
+  string resource = 2;
+  Filter filter = 3;
+  string data_json = 4;
+}
+
+message Filter {
+  string id = 1;
+}
+
+message GetResponse {
+  string result_json = 1;
+}
+
+message UpsertResponse {
+  string result_json = 1;
+}
+
+message SubscribeEventsRequest {}
+
+message ServiceEvent {
+  string event_name = 1;
+  string payload_json = 2;
+}

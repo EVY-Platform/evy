@@ -2,20 +2,19 @@ import { eq, and, desc } from "drizzle-orm";
 import pluralize from "pluralize";
 
 import {
-	type DATA_EVY_Data,
-	type DATA_EVY_Flow,
 	type DATA_EVY_Rows,
 	type GetResponse,
 	NAMESPACE_VALUES,
 	RESOURCE_VALUES,
 	type GetRequest,
 	type OS,
-	type UI_Flow,
 	type UpsertRequest,
 } from "evy-types";
 import { device, flow, data, osEnum } from "./db/drizzleTables";
 import { db } from "./db";
 import { validateDataPayload, validateFlowData } from "./validation";
+
+const CORE_NAMESPACE = "evy";
 
 type Namespace = GetRequest["namespace"];
 type Resource = GetRequest["resource"];
@@ -23,48 +22,16 @@ type Resource = GetRequest["resource"];
 function isNamespace(v: unknown): v is Namespace {
 	return typeof v === "string" && NAMESPACE_VALUES.includes(v as Namespace);
 }
+
 export function isResource(v: unknown): v is Resource {
 	return typeof v === "string" && RESOURCE_VALUES.includes(v as Resource);
 }
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-type IsoTimestampColumns = {
-	createdAt: string;
-	updatedAt: string;
-};
-
-function formatFlowRow(
-	row: IsoTimestampColumns & { id: string; data: UI_Flow },
-): DATA_EVY_Flow {
-	return {
-		id: row.id,
-		data: row.data,
-		createdAt: row.createdAt,
-		updatedAt: row.updatedAt,
-	};
-}
-
-function formatPersistedDataRow(
-	row: IsoTimestampColumns & {
-		id: string;
-		namespace: string;
-		resource: string;
-		data: DATA_EVY_Data["data"];
-	},
-): DATA_EVY_Data {
-	return {
-		id: row.id,
-		namespace: row.namespace,
-		resource: row.resource,
-		data: row.data,
-		createdAt: row.createdAt,
-		updatedAt: row.updatedAt,
-	};
-}
-
-function validateParams(
+function validateCoreParams(
 	params: unknown,
 ): asserts params is GetRequest | UpsertRequest {
 	if (params === null || typeof params !== "object") {
@@ -72,6 +39,9 @@ function validateParams(
 	}
 	if (!("namespace" in params) || !isNamespace(params.namespace)) {
 		throw new Error("Invalid or missing namespace");
+	}
+	if (params.namespace !== CORE_NAMESPACE) {
+		throw new Error("Core API only serves namespace evy");
 	}
 	if (!("resource" in params) || !isResource(params.resource)) {
 		throw new Error("Invalid or missing resource");
@@ -114,9 +84,8 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	}
 }
 
-export async function get(params: GetRequest): Promise<GetResponse>;
-export async function get(params: unknown): Promise<GetResponse> {
-	validateParams(params);
+export async function getCore(params: unknown): Promise<GetResponse> {
+	validateCoreParams(params);
 	const { namespace, resource, filter } = params;
 
 	if (resource === "sdui") {
@@ -153,8 +122,8 @@ export async function get(params: unknown): Promise<GetResponse> {
 	return rows.map((r) => r.data) as GetResponse;
 }
 
-export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
-	validateParams(params);
+export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
+	validateCoreParams(params);
 	if (
 		!("data" in params) ||
 		params.data === undefined ||
@@ -169,11 +138,10 @@ export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
 
 	if (resource === "sdui") {
 		const validatedData = validateFlowData(dataPayload);
-		const flowId = filter?.id ?? validatedData.id;
 		const persistedFlowData =
-			validatedData.id === flowId
-				? validatedData
-				: { ...validatedData, id: flowId };
+			filter?.id && filter.id !== validatedData.id
+				? { ...validatedData, id: filter.id }
+				: validatedData;
 
 		if (filter?.id) {
 			const result = await db
@@ -182,19 +150,19 @@ export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
 				.where(eq(flow.id, filter.id))
 				.returning();
 			if (result.length > 0) {
-				return formatFlowRow(result[0]);
+				return result[0];
 			}
 		}
 		const result = await db
 			.insert(flow)
 			.values({
-				id: flowId,
+				id: persistedFlowData.id,
 				data: persistedFlowData,
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			})
 			.returning();
-		return formatFlowRow(result[0]);
+		return result[0];
 	}
 
 	const validatedPayload = validateDataPayload(dataPayload);
@@ -213,7 +181,7 @@ export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
 			)
 			.returning();
 		if (result.length > 0) {
-			return formatPersistedDataRow(result[0]);
+			return result[0];
 		}
 	}
 
@@ -227,5 +195,5 @@ export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
 			updatedAt: nowIso,
 		})
 		.returning();
-	return formatPersistedDataRow(result[0]);
+	return result[0];
 }

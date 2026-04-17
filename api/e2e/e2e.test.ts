@@ -2,7 +2,6 @@ import { Client } from "rpc-websockets";
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import type { UI_Flow, UI_Page, UI_Row } from "evy-types";
 
-import { isRecord } from "../src/data";
 import { waitForClientOpen } from "../src/tests/wsTestHelpers";
 
 type WSClient = InstanceType<typeof Client>;
@@ -177,47 +176,6 @@ describe("API E2E Tests", () => {
 			});
 
 			expect(updated.data.name).toBe("Updated Flow Name");
-		});
-
-		it("get non-SDUI resource should return data object", async () => {
-			const result = await client.call("get", {
-				namespace: "evy",
-				resource: "items",
-			});
-			expect(Array.isArray(result)).toBe(true);
-		});
-
-		it("upsert then get non-SDUI resource", async () => {
-			const testData = {
-				testField: "e2e test value",
-				nested: { value: 123 },
-			};
-
-			const upserted = await client.call("upsert", {
-				namespace: "evy",
-				resource: "items",
-				data: testData,
-			});
-
-			expect(upserted).toHaveProperty("id");
-			expect(upserted).toHaveProperty("data");
-			expect(isRecord(upserted.data)).toBe(true);
-
-			const got = await client.call("get", {
-				namespace: "evy",
-				resource: "items",
-			});
-
-			expect(Array.isArray(got)).toBe(true);
-			expect(got.length).toBeGreaterThan(0);
-			const matchingRecord = got.find(
-				(entry: unknown) =>
-					isRecord(entry) &&
-					entry.testField === "e2e test value" &&
-					isRecord(entry.nested) &&
-					entry.nested.value === 123,
-			);
-			expect(isRecord(matchingRecord)).toBe(true);
 		});
 	});
 });

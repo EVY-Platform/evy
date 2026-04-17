@@ -30,6 +30,8 @@
 		"drizzle-kit": "^0.31.10"
 	},
 	"dependencies": {
+		"@grpc/grpc-js": "^1.14.3",
+		"@grpc/proto-loader": "^0.8.0",
 		"drizzle-orm": "^0.45.2",
 		"pluralize": "^8.0.0",
 		"postgres": "^3.4.9",
