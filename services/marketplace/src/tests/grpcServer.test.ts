@@ -9,10 +9,14 @@ import {
 	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type * as grpc from "@grpc/grpc-js";
+import type {
+	Client,
+	ClientReadableStream,
+	ServiceError,
+} from "@grpc/grpc-js";
 
 import * as schema from "../db/schema";
-import { createEvyServiceClient } from "../index";
+import { createEvyServiceClient } from "../grpc";
 import { createPgliteTestDatabase } from "./dbTestHelpers";
 
 function getFreePort(): Promise<number> {
@@ -40,7 +44,7 @@ mock.module("../db", () => ({
 }));
 
 const { startMarketplaceGrpcServer, stopMarketplaceGrpcServer } = await import(
-	"../index"
+	"../grpc"
 );
 
 let grpcPort: number;
@@ -60,14 +64,14 @@ beforeEach(async () => {
 	await testDb.delete(schema.data);
 });
 
-type EvyServiceClient = grpc.ServiceClient & {
+type EvyServiceClient = Client & {
 	Get: (
 		req: {
 			namespace: string;
 			resource: string;
 			filter?: { id: string };
 		},
-		cb: grpc.requestCallback<{ result_json: string }>,
+		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
 	) => void;
 	Upsert: (
 		req: {
@@ -76,9 +80,9 @@ type EvyServiceClient = grpc.ServiceClient & {
 			filter?: { id: string };
 			data_json: string;
 		},
-		cb: grpc.requestCallback<{ result_json: string }>,
+		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
 	) => void;
-	SubscribeEvents: (req: Record<string, never>) => grpc.ClientReadableStream<{
+	SubscribeEvents: (req: Record<string, never>) => ClientReadableStream<{
 		event_name: string;
 		payload_json: string;
 	}>;
@@ -98,7 +102,7 @@ describe("marketplace gRPC server", () => {
 					resource: "conditions",
 					data_json: JSON.stringify(row),
 				},
-				(err) => {
+				(err: ServiceError | null) => {
 					if (err) reject(err);
 					else resolve();
 				},
@@ -111,7 +115,7 @@ describe("marketplace gRPC server", () => {
 					namespace: "marketplace",
 					resource: "conditions",
 				},
-				(err, res) => {
+				(err: ServiceError | null, res?: { result_json: string }) => {
 					if (err) {
 						reject(err);
 						return;
@@ -135,7 +139,7 @@ describe("marketplace gRPC server", () => {
 		const received: { event_name: string; payload_json: string }[] = [];
 		const stream = client.SubscribeEvents({});
 
-		stream.on("data", (msg) => {
+		stream.on("data", (msg: { event_name: string; payload_json: string }) => {
 			received.push(msg);
 		});
 
@@ -149,7 +153,7 @@ describe("marketplace gRPC server", () => {
 					resource: "conditions",
 					data_json: JSON.stringify(row),
 				},
-				(err) => {
+				(err: ServiceError | null) => {
 					if (err) reject(err);
 					else resolve();
 				},
