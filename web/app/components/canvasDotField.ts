@@ -14,6 +14,7 @@ export type DrawDotFieldParams = {
 	cssWidth: number;
 	cssHeight: number;
 	gridSize: number;
+	scale: number;
 	offsetX: number;
 	offsetY: number;
 	cursor: CursorPosition;
@@ -45,6 +46,7 @@ export function drawDotField(params: DrawDotFieldParams): void {
 		cssWidth,
 		cssHeight,
 		gridSize,
+		scale,
 		offsetX,
 		offsetY,
 		cursor,
@@ -57,9 +59,13 @@ export function drawDotField(params: DrawDotFieldParams): void {
 	ctx.fillStyle = backgroundColor;
 	ctx.fillRect(0, 0, cssWidth, cssHeight);
 
-	if (gridSize <= 0 || cssWidth <= 0 || cssHeight <= 0) {
+	if (gridSize <= 0 || cssWidth <= 0 || cssHeight <= 0 || scale <= 0) {
 		return;
 	}
+
+	const dotBaseRadius = DOT_BASE_RADIUS * scale;
+	const dotHoverRadius = DOT_HOVER_RADIUS * scale;
+	const morphRadius = MORPH_RADIUS_PX * scale;
 
 	const half = gridSize / 2;
 	const iStart = Math.ceil((0 - offsetX - half) / gridSize);
@@ -71,7 +77,7 @@ export function drawDotField(params: DrawDotFieldParams): void {
 	const cursorY = cursor?.y ?? Number.POSITIVE_INFINITY;
 	const hasCursor = cursor !== null;
 
-	const R = MORPH_RADIUS_PX;
+	const R = morphRadius;
 
 	for (let j = jStart; j <= jEnd; j++) {
 		for (let i = iStart; i <= iEnd; i++) {
@@ -106,7 +112,7 @@ export function drawDotField(params: DrawDotFieldParams): void {
 			ctx.fillStyle = mixDotColor(colorMedium, colorDark, colorT);
 
 			const radius =
-				DOT_BASE_RADIUS + (DOT_HOVER_RADIUS - DOT_BASE_RADIUS) * influence;
+				dotBaseRadius + (dotHoverRadius - dotBaseRadius) * influence;
 			ctx.beginPath();
 			ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
 			ctx.fill();
