@@ -1,4 +1,3 @@
-import { EventEmitter } from "node:events";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,7 +10,6 @@ import type {
 	UpsertRequest,
 } from "evy-types";
 import { NAMESPACE_VALUES } from "evy-types";
-import { getCore, upsertCore } from "./data";
 import { emitJsonRpc } from "./ws";
 
 type RpcServer = Awaited<ReturnType<typeof import("./ws")["initServer"]>>;
@@ -94,23 +92,6 @@ function buildProtoGetRequest(params: GetRequest) {
 		namespace: params.namespace,
 		resource: params.resource,
 		...(params.filter?.id ? { filter: { id: params.filter.id } } : {}),
-	};
-}
-
-function makeLocalEvyAdapter(): ServiceAdapter {
-	const emitter = new EventEmitter();
-	return {
-		get: (p) => getCore(p),
-		upsert: async (p) => {
-			const result = await upsertCore(p);
-			emitter.emit("notify", "dataUpdated", result);
-			return result;
-		},
-		onEvent(listener) {
-			emitter.on("notify", (eventName: string, payload: unknown) => {
-				listener(eventName, payload);
-			});
-		},
 	};
 }
 
@@ -219,37 +200,36 @@ function makeGrpcAdapter(
 	};
 }
 
-let adapters: Map<string, ServiceAdapter> | null = null;
+let grpcAdapters: Map<string, ServiceAdapter> | null = null;
 
-function getAdapters(): Map<string, ServiceAdapter> {
-	if (adapters) {
-		return adapters;
+function getGrpcAdapters(): Map<string, ServiceAdapter> {
+	if (grpcAdapters) {
+		return grpcAdapters;
 	}
 	const next = new Map<string, ServiceAdapter>();
 	const ServiceCtor = loadEvyServiceConstructor();
 	for (const namespace of NAMESPACE_VALUES) {
 		if (namespace === "evy") {
-			next.set(namespace, makeLocalEvyAdapter());
-		} else {
-			const envKey = `${namespace.toUpperCase()}_GRPC_URL`;
-			const url = process.env[envKey];
-			if (!url?.trim()) {
-				throw new Error(
-					`Missing ${envKey}: every non-evy namespace must declare its gRPC URL (host:port, no scheme).`,
-				);
-			}
-			next.set(namespace, makeGrpcAdapter(namespace, url.trim(), ServiceCtor));
+			continue;
 		}
+		const envKey = `${namespace.toUpperCase()}_GRPC_URL`;
+		const url = process.env[envKey];
+		if (!url?.trim()) {
+			throw new Error(
+				`Missing ${envKey}: every non-evy namespace must declare its gRPC URL (host:port, no scheme).`,
+			);
+		}
+		next.set(namespace, makeGrpcAdapter(namespace, url.trim(), ServiceCtor));
 	}
-	adapters = next;
-	return adapters;
+	grpcAdapters = next;
+	return grpcAdapters;
 }
 
 export function forwardGet(
 	namespace: string,
 	params: GetRequest,
 ): Promise<GetResponse> {
-	const adapter = getAdapters().get(namespace);
+	const adapter = getGrpcAdapters().get(namespace);
 	if (!adapter) {
 		throw new Error(`No service registered for namespace ${namespace}`);
 	}
@@ -260,15 +240,15 @@ export function forwardUpsert(
 	namespace: string,
 	params: UpsertRequest,
 ): Promise<DATA_EVY_Rows> {
-	const adapter = getAdapters().get(namespace);
+	const adapter = getGrpcAdapters().get(namespace);
 	if (!adapter) {
 		throw new Error(`No service registered for namespace ${namespace}`);
 	}
 	return adapter.upsert(params);
 }
 
-export function setMainServerForServices(server: RpcServer): void {
-	for (const adapter of getAdapters().values()) {
+export function wireGrpcClientsTo(server: RpcServer): void {
+	for (const adapter of getGrpcAdapters().values()) {
 		adapter.onEvent((eventName, payload) => {
 			emitJsonRpc(server, eventName, payload);
 		});

@@ -25,26 +25,11 @@ function formatZodErrors(issues: z.core.$ZodIssue[]): string {
 		.join("; ");
 }
 
-const ISO_DATE_TIME_FIELD_NAME_EXCEPTIONS = new Set<string>([]);
-
 function isIsoDateTimeFieldName(key: string): boolean {
-	if (ISO_DATE_TIME_FIELD_NAME_EXCEPTIONS.has(key)) {
-		return true;
-	}
-	if (key.endsWith("_timestamp")) {
-		return true;
-	}
-	if (key.length >= 3 && key.endsWith("At")) {
-		return true;
-	}
-	return false;
+	return key.endsWith("_timestamp") || (key.length >= 3 && key.endsWith("At"));
 }
 
 const zIsoDateTimeString = z.iso.datetime();
-
-function throwDataIsoValidationError(path: string, reason: string): never {
-	throw new Error(`Data validation failed: ${path}: ${reason}`);
-}
 
 function assertIsoDateTimeJsonFields(value: unknown, pathPrefix = ""): void {
 	if (value === null || typeof value !== "object") {
@@ -65,28 +50,19 @@ function assertIsoDateTimeJsonFields(value: unknown, pathPrefix = ""): void {
 		const path = pathPrefix ? `${pathPrefix}.${key}` : key;
 		if (isIsoDateTimeFieldName(key)) {
 			if (typeof child === "number" && Number.isFinite(child)) {
-				throwDataIsoValidationError(
-					path,
-					"date-time fields must be ISO 8601 strings, not numeric timestamps",
-				);
-			}
-			if (child === null || child === undefined) {
-				throwDataIsoValidationError(
-					path,
-					"date-time field must be an ISO 8601 string",
+				throw new Error(
+					`Data validation failed: ${path}: date-time fields must be ISO 8601 strings, not numeric timestamps`,
 				);
 			}
 			if (typeof child !== "string") {
-				throwDataIsoValidationError(
-					path,
-					"date-time field must be an ISO 8601 string",
+				throw new Error(
+					`Data validation failed: ${path}: date-time field must be an ISO 8601 string`,
 				);
 			}
 			const parsed = zIsoDateTimeString.safeParse(child);
 			if (!parsed.success) {
-				throwDataIsoValidationError(
-					path,
-					`expected ISO 8601 date-time string (${formatZodErrors(parsed.error.issues)})`,
+				throw new Error(
+					`Data validation failed: ${path}: expected ISO 8601 date-time string (${formatZodErrors(parsed.error.issues)})`,
 				);
 			}
 		}

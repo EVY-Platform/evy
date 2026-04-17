@@ -10,7 +10,7 @@ import {
 import { migrate } from "drizzle-orm/pglite/migrator";
 
 import * as schema from "../db/schema";
-import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
+import { createPgliteTestDatabase } from "./dbTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
@@ -30,7 +30,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await clearAllTestTables(testDb);
+	await testDb.delete(schema.data);
 });
 
 describe("marketplace get/upsert", () => {

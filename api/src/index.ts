@@ -1,7 +1,6 @@
 import { initServer, type WSParams } from "./ws";
 import { validateAuth } from "./data";
-import { get, setMainServerForRpc, upsert } from "./rpc";
-import { setMainServerForServices } from "./services";
+import { get, upsert, wireServerEvents } from "./rpc";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
@@ -9,8 +8,7 @@ function authHandler(data: WSParams): Promise<boolean> {
 
 async function main() {
 	const server = await initServer(authHandler);
-	setMainServerForRpc(server);
-	setMainServerForServices(server);
+	wireServerEvents(server);
 
 	server.register("get", get);
 

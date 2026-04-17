@@ -2,15 +2,12 @@ import { eq, and, desc } from "drizzle-orm";
 import pluralize from "pluralize";
 
 import {
-	type DATA_EVY_Data,
-	type DATA_EVY_Flow,
 	type DATA_EVY_Rows,
 	type GetResponse,
 	NAMESPACE_VALUES,
 	RESOURCE_VALUES,
 	type GetRequest,
 	type OS,
-	type UI_Flow,
 	type UpsertRequest,
 } from "evy-types";
 import { device, flow, data, osEnum } from "./db/drizzleTables";
@@ -32,40 +29,6 @@ export function isResource(v: unknown): v is Resource {
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-type IsoTimestampColumns = {
-	createdAt: string;
-	updatedAt: string;
-};
-
-function formatFlowRow(
-	row: IsoTimestampColumns & { id: string; data: UI_Flow },
-): DATA_EVY_Flow {
-	return {
-		id: row.id,
-		data: row.data,
-		createdAt: row.createdAt,
-		updatedAt: row.updatedAt,
-	};
-}
-
-function formatPersistedDataRow(
-	row: IsoTimestampColumns & {
-		id: string;
-		namespace: string;
-		resource: string;
-		data: DATA_EVY_Data["data"];
-	},
-): DATA_EVY_Data {
-	return {
-		id: row.id,
-		namespace: row.namespace,
-		resource: row.resource,
-		data: row.data,
-		createdAt: row.createdAt,
-		updatedAt: row.updatedAt,
-	};
 }
 
 function validateCoreParams(
@@ -175,11 +138,10 @@ export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
 
 	if (resource === "sdui") {
 		const validatedData = validateFlowData(dataPayload);
-		const flowId = filter?.id ?? validatedData.id;
 		const persistedFlowData =
-			validatedData.id === flowId
-				? validatedData
-				: { ...validatedData, id: flowId };
+			filter?.id && filter.id !== validatedData.id
+				? { ...validatedData, id: filter.id }
+				: validatedData;
 
 		if (filter?.id) {
 			const result = await db
@@ -188,19 +150,19 @@ export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
 				.where(eq(flow.id, filter.id))
 				.returning();
 			if (result.length > 0) {
-				return formatFlowRow(result[0]);
+				return result[0];
 			}
 		}
 		const result = await db
 			.insert(flow)
 			.values({
-				id: flowId,
+				id: persistedFlowData.id,
 				data: persistedFlowData,
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			})
 			.returning();
-		return formatFlowRow(result[0]);
+		return result[0];
 	}
 
 	const validatedPayload = validateDataPayload(dataPayload);
@@ -219,7 +181,7 @@ export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
 			)
 			.returning();
 		if (result.length > 0) {
-			return formatPersistedDataRow(result[0]);
+			return result[0];
 		}
 	}
 
@@ -233,5 +195,5 @@ export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
 			updatedAt: nowIso,
 		})
 		.returning();
-	return formatPersistedDataRow(result[0]);
+	return result[0];
 }

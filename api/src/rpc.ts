@@ -6,15 +6,16 @@ import type {
 } from "evy-types";
 import { NAMESPACE_VALUES } from "evy-types";
 import { getCore, isResource, upsertCore } from "./data";
-import { forwardGet, forwardUpsert } from "./services";
+import { forwardGet, forwardUpsert, wireGrpcClientsTo } from "./services";
 import { emitJsonRpc } from "./ws";
 
 type RpcServer = Awaited<ReturnType<typeof import("./ws")["initServer"]>>;
 
 let mainServerRef: RpcServer | null = null;
 
-export function setMainServerForRpc(server: RpcServer): void {
+export function wireServerEvents(server: RpcServer): void {
 	mainServerRef = server;
+	wireGrpcClientsTo(server);
 }
 
 function validateRpcParams(
@@ -57,8 +58,8 @@ function assertUpsertShape(
 
 export async function get(params: unknown): Promise<GetResponse> {
 	validateRpcParams(params);
-	if (params.resource === "sdui") {
-		return getCore({ ...params, namespace: "evy" });
+	if (params.namespace === "evy") {
+		return getCore(params);
 	}
 	return forwardGet(params.namespace, params);
 }
@@ -66,10 +67,14 @@ export async function get(params: unknown): Promise<GetResponse> {
 export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
 	validateRpcParams(params);
 	assertUpsertShape(params);
-	if (params.resource === "sdui") {
-		const result = await upsertCore({ ...params, namespace: "evy" });
+	if (params.namespace === "evy") {
+		const result = await upsertCore(params);
 		if (mainServerRef) {
-			emitJsonRpc(mainServerRef, "flowUpdated", result);
+			emitJsonRpc(
+				mainServerRef,
+				params.resource === "sdui" ? "flowUpdated" : "dataUpdated",
+				result,
+			);
 		}
 		return result;
 	}

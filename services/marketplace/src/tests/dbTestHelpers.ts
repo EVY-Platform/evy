@@ -14,7 +14,3 @@ export function createPgliteTestDatabase(): {
 	const testDb = drizzle(pgliteClient, { schema });
 	return { pgliteClient, testDb };
 }
-
-export async function clearAllTestTables(testDb: PgliteTestDb): Promise<void> {
-	await testDb.delete(schema.data);
-}

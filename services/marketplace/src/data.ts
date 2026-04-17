@@ -1,14 +1,11 @@
 import { eq, and, desc } from "drizzle-orm";
 import pluralize from "pluralize";
 
-import {
-	type DATA_EVY_Data,
-	type DATA_EVY_Rows,
-	type GetResponse,
-	NAMESPACE_VALUES,
-	RESOURCE_VALUES,
-	type GetRequest,
-	type UpsertRequest,
+import type {
+	DATA_EVY_Rows,
+	GetRequest,
+	GetResponse,
+	UpsertRequest,
 } from "evy-types";
 import { MARKETPLACE_DATA_RESOURCES } from "./constants";
 import { data } from "./db/schema";
@@ -17,66 +14,28 @@ import { validateDataPayload } from "./validation";
 
 const MARKETPLACE_NAMESPACE = "marketplace";
 
-type Namespace = GetRequest["namespace"];
-type Resource = GetRequest["resource"];
-
-function isNamespace(v: unknown): v is Namespace {
-	return typeof v === "string" && NAMESPACE_VALUES.includes(v as Namespace);
-}
-
-function isResource(v: unknown): v is Resource {
-	return typeof v === "string" && RESOURCE_VALUES.includes(v as Resource);
-}
-
-type IsoTimestampColumns = {
-	createdAt: string;
-	updatedAt: string;
-};
-
-function formatPersistedDataRow(
-	row: IsoTimestampColumns & {
-		id: string;
-		namespace: string;
-		resource: string;
-		data: DATA_EVY_Data["data"];
-	},
-): DATA_EVY_Data {
-	return {
-		id: row.id,
-		namespace: row.namespace,
-		resource: row.resource,
-		data: row.data,
-		createdAt: row.createdAt,
-		updatedAt: row.updatedAt,
-	};
-}
-
-function assertMarketplaceResource(resource: Resource): void {
-	if (resource === "sdui") {
-		throw new Error("SDUI is served by the api, not the marketplace service");
-	}
-	if (MARKETPLACE_DATA_RESOURCES.has(resource)) {
-		return;
-	}
-	throw new Error("Unsupported resource for marketplace service");
-}
-
 function validateParams(
 	params: unknown,
 ): asserts params is GetRequest | UpsertRequest {
 	if (params === null || typeof params !== "object") {
 		throw new Error("Params must be an object");
 	}
-	if (!("namespace" in params) || !isNamespace(params.namespace)) {
-		throw new Error("Invalid or missing namespace");
-	}
-	if (params.namespace !== MARKETPLACE_NAMESPACE) {
+	if (
+		!("namespace" in params) ||
+		typeof params.namespace !== "string" ||
+		params.namespace !== MARKETPLACE_NAMESPACE
+	) {
 		throw new Error("Marketplace service requires namespace marketplace");
 	}
-	if (!("resource" in params) || !isResource(params.resource)) {
+	if (!("resource" in params) || typeof params.resource !== "string") {
 		throw new Error("Invalid or missing resource");
 	}
-	assertMarketplaceResource(params.resource);
+	if (params.resource === "sdui") {
+		throw new Error("SDUI is served by the api, not the marketplace service");
+	}
+	if (!MARKETPLACE_DATA_RESOURCES.has(params.resource)) {
+		throw new Error("Unsupported resource for marketplace service");
+	}
 	if (
 		"filter" in params &&
 		params.filter !== undefined &&
@@ -138,7 +97,7 @@ export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
 			)
 			.returning();
 		if (result.length > 0) {
-			return formatPersistedDataRow(result[0]);
+			return result[0];
 		}
 	}
 
@@ -152,5 +111,5 @@ export async function upsert(params: unknown): Promise<DATA_EVY_Rows> {
 			updatedAt: nowIso,
 		})
 		.returning();
-	return formatPersistedDataRow(result[0]);
+	return result[0];
 }

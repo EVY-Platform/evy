@@ -1,6 +1,4 @@
 import { createServer } from "node:net";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import {
 	afterAll,
 	beforeAll,
@@ -11,11 +9,11 @@ import {
 	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import * as grpc from "@grpc/grpc-js";
-import * as protoLoader from "@grpc/proto-loader";
+import type * as grpc from "@grpc/grpc-js";
 
 import * as schema from "../db/schema";
-import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
+import { createEvyServiceClient } from "../grpc/server";
+import { createPgliteTestDatabase } from "./dbTestHelpers";
 
 function getFreePort(): Promise<number> {
 	return new Promise((resolve, reject) => {
@@ -47,27 +45,6 @@ const { startMarketplaceGrpcServer, stopMarketplaceGrpcServer } = await import(
 
 let grpcPort: number;
 
-function createTestGrpcClient(): grpc.ServiceClient {
-	const protoPath = join(
-		dirname(fileURLToPath(import.meta.url)),
-		"../../../../types/schema/service.proto",
-	);
-	const packageDefinition = protoLoader.loadSync(protoPath, {
-		keepCase: true,
-		longs: String,
-		enums: String,
-		defaults: true,
-		oneofs: true,
-	});
-	const root = grpc.loadPackageDefinition(packageDefinition) as grpc.GrpcObject;
-	const Client = (root.evy as { Service: grpc.ServiceClientConstructor })
-		.Service;
-	return new Client(
-		`127.0.0.1:${grpcPort}`,
-		grpc.credentials.createInsecure(),
-	) as grpc.ServiceClient;
-}
-
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
 	grpcPort = await getFreePort();
@@ -80,7 +57,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await clearAllTestTables(testDb);
+	await testDb.delete(schema.data);
 });
 
 type EvyServiceClient = grpc.ServiceClient & {
@@ -109,7 +86,9 @@ type EvyServiceClient = grpc.ServiceClient & {
 
 describe("marketplace gRPC server", () => {
 	it("Get and Upsert round-trip typed params", async () => {
-		const client = createTestGrpcClient() as EvyServiceClient;
+		const client = createEvyServiceClient(
+			`127.0.0.1:${grpcPort}`,
+		) as EvyServiceClient;
 		const row = { id: crypto.randomUUID(), value: "grpc-condition" };
 
 		await new Promise<void>((resolve, reject) => {
@@ -150,7 +129,9 @@ describe("marketplace gRPC server", () => {
 	});
 
 	it("SubscribeEvents receives dataUpdated after catalog upsert", async () => {
-		const client = createTestGrpcClient() as EvyServiceClient;
+		const client = createEvyServiceClient(
+			`127.0.0.1:${grpcPort}`,
+		) as EvyServiceClient;
 		const received: { event_name: string; payload_json: string }[] = [];
 		const stream = client.SubscribeEvents({});
 
