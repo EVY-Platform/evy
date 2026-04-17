@@ -4,6 +4,7 @@
 	"license": "GPL-3.0-only",
 	"scripts": {
 		"format": "bun run --cwd api format && bun run --cwd web format && bun run --cwd services/marketplace format && bunx biome format --write scripts",
+		"install:all": "bun install && bun install --cwd api && bun install --cwd web && bun install --cwd services/marketplace",
 		"types:generate": "bun scripts/generate-types.ts && bun scripts/generate-drizzle.ts",
 		"db:seed": "bun scripts/seed.ts"
 	},

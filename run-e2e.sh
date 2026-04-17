@@ -169,6 +169,9 @@ seed_database() {
 
 trap cleanup EXIT
 
+echo -e "\n${YELLOW}Installing dependencies...${NC}"
+bun run install:all
+
 if [ "$NO_DOCKER" = true ]; then
     echo -e "\n${YELLOW}Step 1: Starting services without Docker...${NC}"
     wait_for_postgres_no_docker
@@ -226,7 +229,6 @@ fi
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
 seed_database
 cd api
-bun install
 if bun run test:e2e; then
     echo -e "${GREEN}API e2e tests passed${NC}"
 else
@@ -238,7 +240,6 @@ cd ..
 echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
 seed_database
 cd web
-bun install
 if bun run test:e2e; then
     echo -e "${GREEN}Web e2e tests passed${NC}"
 else
