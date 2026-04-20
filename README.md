@@ -4,7 +4,9 @@ If smartphones and the internet were built by the people for the people. Create 
 
 ## Architecture at a glance
 
-EVY is split into thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by **`service` + `resource`**: `service: "evy"` is handled in-process in the API (SDUI flows and core catalog tables); any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/services.ts`](./api/src/services.ts).
+EVY is split into thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by `service + resource`:
+- `service: "evy"` is handled in-process in the API (SDUI flows and core catalog tables)
+- any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/services.ts`](./api/src/services.ts).
 
 ```mermaid
 flowchart LR
@@ -24,9 +26,8 @@ flowchart LR
 
 - `service: "evy"` + `resource: "sdui"` reads/writes `UI_Flow` documents in the API database. Other `evy` resources (`devices`, `organisations`, `services`, `providers`) are also served locally by the API.
 - `service` values other than `evy` are forwarded over gRPC. Each such service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (uppercase service name, e.g. `MARKETPLACE_GRPC_HOST`).
-- **`flowUpdated`** is emitted after successful `evy` upserts when `resource === "sdui"`. **`dataUpdated`** covers other successful `evy` data upserts and events from remote services. Remote workers push via `evy.Service.SubscribeEvents`, which the API forwards through the same WebSocket `emitJsonRpc` path.
-
-See [`api/README.md`](./api/README.md) for the full request/notification sequence diagrams.
+- `flowUpdated` is emitted after successful `evy` upserts when `resource === "sdui"`.
+- `dataUpdated` covers other successful `evy` data upserts and events from remote services. Remote workers push via `evy.Service.SubscribeEvents`, which the API forwards through the same WebSocket `emitJsonRpc` path.
 
 # Documentation
 
@@ -46,11 +47,11 @@ See [`api/README.md`](./api/README.md) for the full request/notification sequenc
 
 ## Shared type system
 
-Cross-platform contracts live in **`types/`**
+Cross-platform contracts live in `types/`
 
-- **Source of truth:** `types/schema/` — JSON Schema files for UI flow types (`UI_*`), shared data rows (`DATA_EVY_*`), and JSON-RPC payloads.
-- **Generated manually:** `types/generated/ts/` and `types/generated/swift/`.
-- **Internal gRPC IDL:** `types/schema/service.proto` — `evy.Service` contract implemented by data-only backend services. The `evy` path is implemented in [`api/src/data.ts`](./api/src/data.ts); [`api/src/services.ts`](./api/src/services.ts) holds **gRPC clients and `SubscribeEvents` fan-out** only for non-`evy` services.
+- Source of truth: `types/schema/` — JSON Schema files for UI flow types (`UI_*`), shared data rows (`DATA_EVY_*`), and JSON-RPC payloads.
+- Generated manually: `types/generated/ts/` and `types/generated/swift/`.
+- Internal gRPC IDL: `types/schema/service.proto` — `evy.Service` contract implemented by data-only backend services. The `evy` path is implemented in [`api/src/data.ts`](./api/src/data.ts); [`api/src/services.ts`](./api/src/services.ts) holds gRPC clients and `SubscribeEvents` fan-out only for non-`evy` services.
 
 After changing any definitions in `types/schema/`, run `bun run types:generate`
 
@@ -72,7 +73,7 @@ docker compose up --build
 
 Copy `.env.example` to `.env`. The first `bun run db:seed` from the repo root creates the `marketplace` database if needed and seeds both services.
 
-**Local Bun (no Docker for Node):** start Postgres (`docker compose up --build postgres`), then in separate terminals from the repo root:
+Local Bun (no Docker for Node): start Postgres (`docker compose up --build postgres`), then in separate terminals from the repo root:
 
 ```bash
 bun install
