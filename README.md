@@ -4,7 +4,9 @@ If smartphones and the internet were built by the people for the people. Create 
 
 ## Architecture at a glance
 
-EVY is split into thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by `service` + `resource`: `service: "evy"` is handled in-process in the API (SDUI flows and core catalog tables); any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/services.ts`](./api/src/services.ts).
+EVY is split into thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by `service + resource`:
+- `service: "evy"` is handled in-process in the API (SDUI flows and core catalog tables)
+- any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/services.ts`](./api/src/services.ts).
 
 ```mermaid
 flowchart LR
