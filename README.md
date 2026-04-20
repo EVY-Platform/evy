@@ -24,10 +24,7 @@ flowchart LR
     marketplace -- Drizzle --> pg
 ```
 
-- `service: "evy"` + `resource: "sdui"` reads/writes `UI_Flow` documents in the API database. Other `evy` resources (`devices`, `organisations`, `services`, `providers`) are also served locally by the API.
-- `service` values other than `evy` are forwarded over gRPC. Each such service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (uppercase service name, e.g. `MARKETPLACE_GRPC_HOST`).
-- `flowUpdated` is emitted after successful `evy` upserts when `resource === "sdui"`.
-- `dataUpdated` covers other successful `evy` data upserts and events from remote services. Remote workers push via `evy.Service.SubscribeEvents`, which the API forwards through the same WebSocket `emitJsonRpc` path.
+Resource routing, `flowUpdated` / `dataUpdated`, and gRPC forwarding are covered in [`api/README.md`](./api/README.md).
 
 # Documentation
 
@@ -44,16 +41,11 @@ flowchart LR
 - [Marketplace service](./services/marketplace/README.md)
 - [iOS](./ios/README.md)
 - [Web](./web/README.md)
+- [Android](./android/README.md) (placeholder; no app in this repo yet)
 
 ## Shared type system
 
-Cross-platform contracts live in `types/`
-
-- Source of truth: `types/schema/` — JSON Schema files for UI flow types (`UI_*`), shared data rows (`DATA_EVY_*`), and JSON-RPC payloads.
-- Generated manually: `types/generated/ts/` and `types/generated/swift/`.
-- Internal gRPC IDL: `types/schema/service.proto` — `evy.Service` contract implemented by data-only backend services. The `evy` path is implemented in [`api/src/data.ts`](./api/src/data.ts); [`api/src/services.ts`](./api/src/services.ts) holds gRPC clients and `SubscribeEvents` fan-out only for non-`evy` services.
-
-After changing any definitions in `types/schema/`, run `bun run types:generate`
+Schema layout, codegen steps, and outputs: [`docs/evy/types.md`](./docs/evy/types.md). In short: source JSON Schema lives under `types/schema/`; run `bun run types:generate` from the repo root after changes. gRPC contract: [`types/schema/service.proto`](./types/schema/service.proto). The `evy` data path is implemented in [`api/src/data.ts`](./api/src/data.ts); [`api/src/services.ts`](./api/src/services.ts) holds gRPC clients and `SubscribeEvents` fan-out for non-`evy` services.
 
 ## Setup
 
@@ -84,7 +76,7 @@ cd api && bun install && bun run dev
 cd web && bun install && bun run dev
 ```
 
-Ensure `.env` includes `MARKETPLACE_GRPC_HOST` and `MARKETPLACE_GRPC_PORT` (e.g. `0.0.0.0` and `8001`) so the main API can reach the marketplace gRPC server.
+**gRPC (`MARKETPLACE_GRPC_*`):** Same variable names are used for API dial target and marketplace listen address—see comments in [`.env.example`](./.env.example) and [API prerequisites](./api/README.md#prerequisites). Local processes on the host: use `127.0.0.1`; do not use `0.0.0.0` as the API’s client target.
 
 ### Production (with Docker Compose)
 
