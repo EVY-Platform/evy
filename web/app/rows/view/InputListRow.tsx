@@ -11,7 +11,7 @@ export default defineRow("InputListRow", {
 			content: {
 				title: "Input list row title",
 				placeholder: "Search for tags",
-				format: "{$0.value}",
+				format: "{datum.value}",
 			},
 			data: "",
 		},

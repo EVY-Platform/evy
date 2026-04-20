@@ -11,7 +11,7 @@ export default defineRow("DropdownRow", {
 			content: {
 				title: "Dropdown row title",
 				placeholder: "placeholder",
-				format: "{$0.value}",
+				format: "{datum.value}",
 			},
 			data: "",
 		},

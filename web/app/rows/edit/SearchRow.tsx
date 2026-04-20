@@ -11,7 +11,7 @@ export default defineRow("SearchRow", {
 		view: {
 			content: {
 				title: "Search row title",
-				format: "{$0.value}",
+				format: "{datum.value}",
 				placeholder: "placeholder",
 			},
 			data: "",

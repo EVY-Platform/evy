@@ -10,7 +10,7 @@ export default defineRow("InlinePickerRow", {
 		view: {
 			content: {
 				title: "Inline picker row title",
-				format: "{$0.value}",
+				format: "{datum.value}",
 			},
 			data: "",
 		},
