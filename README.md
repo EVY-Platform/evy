@@ -84,7 +84,7 @@ cd api && bun install && bun run dev
 cd web && bun install && bun run dev
 ```
 
-Ensure `.env` includes `MARKETPLACE_GRPC_HOST` and `MARKETPLACE_GRPC_PORT` (e.g. `0.0.0.0` and `8001`) so the main API can reach the marketplace gRPC server.
+**gRPC env (`MARKETPLACE_GRPC_*`):** The API dials marketplace at `${MARKETPLACE_GRPC_HOST}:${MARKETPLACE_GRPC_PORT}`. The marketplace process uses the same variables to **listen**. When both run on your machine (not in Compose), set `MARKETPLACE_GRPC_HOST=127.0.0.1` and `MARKETPLACE_GRPC_PORT=8001` in `.env` so the API connects to the local listener. Do **not** use `0.0.0.0` as the host for the API client—that address is for binding inside containers; Compose overrides are documented in `.env.example` (`marketplace` hostname for the API container, `0.0.0.0` bind for the marketplace container).
 
 ### Production (with Docker Compose)
 

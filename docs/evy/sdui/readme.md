@@ -47,13 +47,12 @@ Rows are what are put into pages. They are the building block of the EVY server-
 -   All values are strings, there are no types as this is dynamic on the apps
     -   eg: "title": "My title", could also be "title": "{item.title}"
 -   All strings can include:
-    -   variables surrounded with curley braces: "Hello {name}, how are you?"
-    -   icons surrounded with double colons ([Lucide](https://lucide.dev/icons) names in kebab-case): "EVY ::image-plus:: is the best!"
-    -   emojis prefixed with a colon: "I like :dog a lot"
+    -   variables surrounded with curly braces: "Hello {name}, how are you?"
+    -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!" (iOS and web parse `::icon-name::` only; they do not expand Slack-style `:emoji:` shortcodes)
 -   [ x ]
     -   Denotes a type array of x
 -   Objects and arrays
-    -   When objects or arrays are passed into a prop of content, they are parsed fully by the UI runtime. Eg: "{item.tags}" will become "[{id": a, "value": "Furniture"}, {id": a, "value": "Chair"}]"
+    -   When objects or arrays are interpolated (e.g. `{item.tags}`), the UI runtime resolves the binding to structured data (e.g. a JSON array of tag objects) before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
 
 ### Row schema explained
 
@@ -91,7 +90,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 
 ### Actions
 
-Each row has an `actions` array of `UI_RowAction` objects: `condition`, `false`, and `true` are all strings. On the client (e.g. iOS), actions are evaluated in order until a branch runs that does something non-trivial; the web builder edits the same strings and persists them on the row.
+Each row has an `actions` array of `UI_RowAction` objects: `condition`, `false`, and `true` are all strings. The web builder edits the same strings and persists them on the row. **iOS (`EVYActionRunner`)** evaluates actions in order: if the condition is false, it runs the `false` branch (if non-empty) and **stops**; if the condition is true, it runs the `true` branch (if non-empty) and **continues** to the next action. Other clients may differ—do not rely on “stop after first meaningful outcome” unless each client documents it.
 
 #### Conditions
 
@@ -119,15 +118,16 @@ Supported action functions:
 | -------- | ------- |
 | `close` | Close current UI (same as bare `close` in simple cases) |
 | `create(model)` | Submit / create domain entity, e.g. `{create(item)}` |
-| `navigate(flowId, pageId)` | Go to a page within a flow (UUIDs as in `docs/services/service_sdui.json`) |
+| `navigate(flowId, pageId)` | Go to a page within a flow (UUIDs as in `docs/services/service_sdui.json`). iOS also accepts a colon-separated form (e.g. `navigate:flowId:pageId`)—see `EVYActionRunner` tests. |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
-#### Evaluation (typical client behavior)
+#### Evaluation (iOS reference)
 
-1. For each action in order, evaluate `condition`.
-2. If the condition is false, run the `false` branch (if non-empty).
-3. If the condition is true, run the `true` branch (if non-empty).
-4. Stop when the client has applied a meaningful outcome (exact stopping rules are client-specific; the builder uses the same strings for storage).
+1. For each action in order, evaluate `condition` (empty condition is treated as true).
+2. If the condition is false, execute the `false` branch if non-empty, then **stop** (no further actions in the array run).
+3. If the condition is true, execute the `true` branch if non-empty, then **continue** to the next action.
+
+The web builder does not execute actions; it only stores these strings. For other runtimes, treat stopping rules as implementation-defined unless documented.
 
 #### Examples (from `docs/services/service_sdui.json`)
 

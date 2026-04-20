@@ -1,10 +1,12 @@
 # evy iOS App
 
-iOS consumer app. Minimum iOS version supported: 13.0.
+iOS consumer app. Minimum iOS version supported: **17.0** (matches `IPHONEOS_DEPLOYMENT_TARGET` in `evy.xcodeproj`).
 
 For local and e2e runs, define `API_HOST` in the repository root `.env` file (for example `API_HOST=localhost:8000`).
 
-Shared types: Domain and RPC contracts are defined in the repo root at `types/schema/` (JSON Schema). TypeScript and Swift are generated into `types/generated/`. The iOS app keeps its own Codable models (e.g. `EVYFlow`, `EVYPage`, `EVYRow`, notification structs in `EVYWebsocket`) in sync with those schemas; when you change a schema, update the corresponding Swift types and run `bun run types:generate` from the repo root so api/web stay in sync.
+**Generated types:** `types/generated/` (including Swift SDUI payloads under `types/generated/swift`) is produced by `bun run types:generate` and is **not** committed. Run that from the repo root after cloning or changing schemas so Xcode can resolve generated Swift referenced by the project.
+
+**Hand-written models:** Domain and RPC contracts are defined in the repo root at `types/schema/` (JSON Schema). The iOS app keeps its own Codable models (e.g. `EVYFlow`, `EVYPage`, `EVYRow`, notification structs in `EVYWebsocket`) in sync with those schemas; when you change a schema, update the corresponding Swift types and run `bun run types:generate` from the repo root so api/web stay in sync.
 
 ### Architecture
 
@@ -57,7 +59,7 @@ flowchart LR
     Container -->|read bindings| EVY
 
     Interpreter[interpreter.swift<br/>parseProps / splitProps /<br/>parseTextFromText / parseFunctionCall]
-    Functions[Functions.swift<br/>count, length, format*,<br/>build*, compare, ...]
+    Functions[functions.swift<br/>count, length, format*,<br/>build*, compare, ...]
     EVY --> Interpreter
     EVY --> Functions
     Functions --> EVY

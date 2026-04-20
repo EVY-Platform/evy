@@ -22,7 +22,7 @@ flowchart LR
     end
 
     subgraph marketplace_process [marketplace service]
-        grpc[grpc/server.ts<br/>evy.Service]
+        grpc[src/grpc.ts<br/>evy.Service]
         mdata[data.ts]
     end
 
@@ -98,7 +98,7 @@ flowchart TD
     rpc[rpc.ts<br/>get / upsert routing]
     data[data.ts<br/>Drizzle + auth<br/>getCore / upsertCore]
     services[services.ts<br/>gRPC adapters + SubscribeEvents]
-    validation[validation.ts<br/>Zod schemas + ISO date-time guard]
+    validation[validation.ts<br/>re-exports evy-types validators]
     readiness[readiness.ts<br/>health / seed check]
     drizzleTables[db/drizzleTables.ts<br/>re-exports generated schema]
 
@@ -115,7 +115,7 @@ flowchart TD
 ```
 
 - `db/drizzleTables.ts` simply re-exports `types/generated/ts/db/schema.generated.ts`; the schema itself comes from `types/schema/data/` via `bun run types:generate`.
-- `validation.ts` enforces that any JSON key ending in `At` or `_timestamp` (plus explicit exceptions) is an ISO 8601 string &mdash; never a Unix number &mdash; before it reaches Postgres.
+- `validation.ts` re-exports generated validators from `evy-types` (see `types/validators.ts` for JSON Schema validation and ISO 8601 guards on `*At` / `*_timestamp` fields before data reaches Postgres).
 
 ### Shared contracts
 
@@ -140,8 +140,9 @@ DB_PASS=evy
 DB_PORT=5432
 DB_DOMAIN=localhost
 DB_EVY_DATABASE=evy
-# Required for each non-evy service (URL is host:port); see api/src/services.ts
-MARKETPLACE_GRPC_HOST=0.0.0.0
+# Required for each non-evy service (dial target host:port for the API); see api/src/services.ts
+# Local processes on the host: use 127.0.0.1. Docker Compose overrides use the service name `marketplace`.
+MARKETPLACE_GRPC_HOST=127.0.0.1
 MARKETPLACE_GRPC_PORT=8001
 ```
 
@@ -184,11 +185,17 @@ docker run -p 8000:8000 \
 
 ### Docker Compose
 
-From the repo root (the API has no `docker-compose.yml` in its directory):
+From the repo root, the main stack is in `docker-compose.yml`:
 
 ```bash
 docker compose up -d api
 ```
+
+There is also a standalone compose file at [`compose.yml`](./compose.yml) in this directory (service name `app`, build context repo root) for running only the API image with `env_file` pointing at the root `.env`.
+
+### Health checks
+
+`bun run health` and `bun run health:seeded` invoke `src/readiness.ts` **without** `--env-file=../.env` (unlike `dev`, `start`, and `test`). Export variables from the root `.env` in your shell, rely on Docker Compose `environment` / `env_file`, or run readiness from an environment where `DB_*` and `API_PORT` are already set.
 
 ## Available Scripts
 
