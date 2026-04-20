@@ -10,6 +10,7 @@ export function PlaceholderDropIndicator() {
 		<DraggableRowContainer
 			rowId={containerDropindicatorId}
 			orientation="horizontal"
+			isDraggable={false}
 		>
 			<div
 				className={`${verticalDropIndicator} ${dropIndicatorExpansionBefore}`}

@@ -203,6 +203,35 @@ test.describe("Drag & Drop UX", () => {
 		expect(newRowCount).toBe(initialRowCount - 1);
 	});
 
+	test("should remove an empty column container by dragging it to the left sidebar", async ({
+		page,
+	}) => {
+		await setupTwoEmptyTestPages(page);
+
+		const rowsPanel = await getRowsPanel(page);
+		const firstPage = getFirstPage(page);
+		const pageContent = getPageContent(page);
+
+		const columnSidebarRow = await getSidebarRow(
+			page,
+			"Column container row title",
+		);
+		await columnSidebarRow.dragTo(pageContent);
+
+		await expect(
+			firstPage.getByText("Column container row title", { exact: true }),
+		).toBeVisible();
+
+		const emptyColumnRow = pageContent
+			.locator(SELECTORS.draggableRow)
+			.filter({ hasText: "Column container row title" });
+		await emptyColumnRow.dragTo(rowsPanel);
+
+		await expect(
+			firstPage.getByText("Column container row title", { exact: true }),
+		).not.toBeVisible();
+	});
+
 	test("should drag a row from position 1 to 2 on a page", async ({ page }) => {
 		await setupTwoEmptyTestPages(page);
 
