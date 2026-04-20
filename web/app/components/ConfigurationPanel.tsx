@@ -21,6 +21,48 @@ function isRowArray(value: unknown): value is Row[] {
 	return Array.isArray(value) && value.every(isRow);
 }
 
+function ConfigTextField({
+	id,
+	label,
+	value,
+	onChange,
+	placeholder,
+	ariaLabel,
+	labelClassName,
+	inputClassName = "evy-w-full evy-focus-visible:outline-none",
+	required,
+	fieldClassName = "evy-mb-2",
+}: {
+	id: string;
+	label: string;
+	value: string;
+	onChange: (next: string) => void;
+	placeholder?: string;
+	ariaLabel?: string;
+	labelClassName?: string;
+	inputClassName?: string;
+	required?: boolean;
+	fieldClassName?: string;
+}) {
+	return (
+		<div className={fieldClassName}>
+			<label htmlFor={id} className={labelClassName}>
+				{label}
+			</label>
+			<input
+				id={id}
+				type="text"
+				value={value}
+				onChange={(e) => onChange(e.target.value)}
+				placeholder={placeholder}
+				aria-label={ariaLabel}
+				className={inputClassName}
+				required={required}
+			/>
+		</div>
+	);
+}
+
 function ChildRowButton({
 	child,
 	onClick,
@@ -116,6 +158,20 @@ export function ConfigurationPanel() {
 		[activeRowId, dispatchRow],
 	);
 
+	const updateRowRoot = useCallback(
+		(field: "source" | "destination", value: string, targetRowId?: string) => {
+			const rowId = targetRowId || activeRowId;
+			if (!rowId) return;
+			dispatchRow({
+				type: "UPDATE_ROW_ROOT",
+				rowId,
+				field,
+				value,
+			});
+		},
+		[activeRowId, dispatchRow],
+	);
+
 	const updateRowActions = useCallback(
 		(nextActions: NonNullable<Row["config"]["actions"]>) => {
 			if (!currentConfigRow) return;
@@ -138,7 +194,7 @@ export function ConfigurationPanel() {
 				return 0;
 			});
 
-			return entries.map(([key, value]) => {
+			const contentElements = entries.map(([key, value]) => {
 				const uniqueId = `${configRow.id}-${key}`;
 
 				if (key === "child" || key === "children") {
@@ -178,23 +234,51 @@ export function ConfigurationPanel() {
 					);
 				}
 				return (
-					<div className="evy-mb-2" key={uniqueId}>
-						<label htmlFor={uniqueId}>{key}</label>
-						<input
-							id={uniqueId}
-							type="text"
-							value={String(value)}
-							onChange={(e) => {
-								updateRowContent(key, e.target.value, configRow.id);
-							}}
-							className="evy-w-full evy-focus-visible:outline-none"
-							required
-						/>
-					</div>
+					<ConfigTextField
+						key={uniqueId}
+						id={uniqueId}
+						label={key}
+						value={String(value)}
+						onChange={(next) => updateRowContent(key, next, configRow.id)}
+						required
+					/>
 				);
 			});
+
+			return [
+				...contentElements,
+				<div
+					className="evy-flex evy-flex-col evy-gap-3"
+					key={`${configRow.id}-bindings`}
+				>
+					<ConfigTextField
+						id={`${configRow.id}-source`}
+						label="Source"
+						value={configRow.config.source}
+						onChange={(next) => updateRowRoot("source", next, configRow.id)}
+						placeholder="Where the row reads data from"
+						ariaLabel="Row data source"
+						labelClassName="evy-text-sm evy-font-medium evy-text-black"
+						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
+						fieldClassName=""
+					/>
+					<ConfigTextField
+						id={`${configRow.id}-destination`}
+						label="Destination"
+						value={configRow.config.destination ?? ""}
+						onChange={(next) =>
+							updateRowRoot("destination", next, configRow.id)
+						}
+						placeholder="Where the row writes data to"
+						ariaLabel="Row destination"
+						labelClassName="evy-text-sm evy-font-medium evy-text-black"
+						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
+						fieldClassName=""
+					/>
+				</div>,
+			];
 		},
-		[openChildConfiguration, updateRowContent],
+		[openChildConfiguration, updateRowContent, updateRowRoot],
 	);
 
 	const configurationElements = currentConfigRow
@@ -256,17 +340,15 @@ export function ConfigurationPanel() {
 						/>
 					</div>
 				)}
-				{showPageTitleInPanel &&
-					activePage &&
-					configurationElements.length > 0 && (
-						<div className="evy-border-b evy-border-gray" />
-					)}
-				{configurationElements.length > 0 ? (
+				{showPageTitleInPanel && activePage && currentConfigRow && (
+					<div className="evy-border-b evy-border-gray" />
+				)}
+				{currentConfigRow ? (
 					<>
 						{configurationElements}
 						<div className="evy-border-b evy-border-gray" />
 						<ActionEditor
-							actions={currentConfigRow?.config.actions ?? []}
+							actions={currentConfigRow.config.actions ?? []}
 							flows={flows}
 							onUpdate={updateRowActions}
 						/>

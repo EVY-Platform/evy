@@ -7,6 +7,7 @@ export default defineRow("InfoRow", {
 	config: {
 		type: "Info",
 		actions: [],
+		source: "",
 		view: {
 			content: {
 				title: "Info row title",

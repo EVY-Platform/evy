@@ -6,6 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("ButtonRow", {
 	config: {
 		type: "Button",
+		source: "",
 		view: {
 			content: {
 				title: "",

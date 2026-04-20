@@ -6,6 +6,7 @@ export default defineRow("CalendarRow", {
 	config: {
 		type: "Calendar",
 		actions: [],
+		source: "{item}",
 		view: {
 			content: {
 				title: "Calendar row title",

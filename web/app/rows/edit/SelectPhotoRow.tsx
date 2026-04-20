@@ -7,6 +7,7 @@ export default defineRow("SelectPhotoRow", {
 	config: {
 		type: "SelectPhoto",
 		actions: [],
+		source: "{item}",
 		view: {
 			content: {
 				title: "Select photo row title",

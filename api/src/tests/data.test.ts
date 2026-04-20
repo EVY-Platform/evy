@@ -25,8 +25,9 @@ import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
 type ValidatedRow = UI_Row;
 type ValidatedPage = UI_Page;
 
-type RowInput = Omit<ValidatedRow, "id" | "view"> & {
+type RowInput = Omit<ValidatedRow, "id" | "view" | "source"> & {
 	id?: string;
+	source?: string;
 	view: Omit<ValidatedRow["view"], "content"> & {
 		content: Omit<ValidatedRow["view"]["content"], "children" | "child"> & {
 			children?: RowInput[];
@@ -83,6 +84,7 @@ function ensureRowIds(rows: RowInput[]): RowInput[] {
 		const rowWithId: RowInput = {
 			...row,
 			id: crypto.randomUUID(),
+			source: row.source ?? "",
 			view: {
 				...row.view,
 				content: {

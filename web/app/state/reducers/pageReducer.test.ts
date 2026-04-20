@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 
 import type { AppState } from "../../types/actions";
-import type { Row } from "../../types/row";
+import type { Row, RowConfig } from "../../types/row";
 
 function MockTextBase() {
 	return null;
@@ -12,6 +12,7 @@ const mockTextWithConfig = MockTextBase as typeof MockTextBase & {
 };
 mockTextWithConfig.config = {
 	type: "Text",
+	source: "",
 	actions: [],
 	view: {
 		content: { title: "", text: "" },
@@ -31,6 +32,7 @@ function textRow(id: string, text = "hello"): Row {
 		row: null,
 		config: {
 			type: "Text",
+			source: "",
 			actions: [],
 			view: {
 				content: { title: "T", text },
@@ -46,6 +48,7 @@ function sheetRow(id: string, child: Row, children: Row[] = []): Row {
 		row: null,
 		config: {
 			type: "SheetContainer",
+			source: "",
 			actions: [],
 			view: {
 				content: {
@@ -156,6 +159,54 @@ describe("pageReducer", () => {
 		});
 		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
 		expect(row?.config.view.content.text).toEqual(["a", "b"]);
+	});
+
+	it("UPDATE_ROW_ROOT sets source without changing view.content", () => {
+		const state = initialState();
+		const before = state.flows[0].pages[0].rows.find((r) => r.id === "row-1");
+		const next = pageReducer(state, {
+			type: "UPDATE_ROW_ROOT",
+			rowId: "row-1",
+			field: "source",
+			value: "{items}",
+		});
+		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
+		expect(row?.config.source).toBe("{items}");
+		expect(row?.config.view.content).toEqual(before?.config.view.content);
+	});
+
+	it("UPDATE_ROW_ROOT clears destination when value is empty string", () => {
+		const base = textRow("row-1");
+		const rowWithDestination: Row = {
+			...base,
+			config: {
+				...base.config,
+				destination: "{title}",
+			} satisfies RowConfig,
+		};
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [rowWithDestination],
+						},
+					],
+				},
+			],
+		});
+		const next = pageReducer(state, {
+			type: "UPDATE_ROW_ROOT",
+			rowId: "row-1",
+			field: "destination",
+			value: "",
+		});
+		const row = next.flows[0].pages[0].rows[0];
+		expect(row.config.destination).toBeUndefined();
 	});
 
 	it("SET_ACTIVE_ROW updates selection", () => {

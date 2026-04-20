@@ -60,6 +60,7 @@ final class ContentViewTests: XCTestCase {
                             [
                                 "id": "home-button",
                                 "type": "Button",
+                                "source": "",
                                 "view": [
                                     "content": [
                                         "title": "",
@@ -89,6 +90,7 @@ final class ContentViewTests: XCTestCase {
                             [
                                 "id": "title-row",
                                 "type": "Input",
+                                "source": "{item}",
                                 "view": [
                                     "content": [
                                         "title": "Title",
@@ -103,6 +105,7 @@ final class ContentViewTests: XCTestCase {
                         "footer": [
                             "id": "submit-button",
                             "type": "Button",
+                            "source": "{item}",
                             "view": [
                                 "content": [
                                     "title": "",

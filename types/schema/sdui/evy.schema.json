@@ -32,7 +32,7 @@
 		"UI_Row": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "view", "actions"],
+			"required": ["id", "type", "view", "source", "actions"],
 			"properties": {
 				"id": { "type": "string", "format": "uuid" },
 				"type": {
@@ -63,10 +63,10 @@
 					"required": ["content"],
 					"properties": {
 						"content": { "$ref": "#/$defs/UI_RowContent" },
-						"data": { "type": "string" },
 						"max_lines": { "type": "string" }
 					}
 				},
+				"source": { "type": "string" },
 				"destination": { "type": "string" },
 				"actions": {
 					"type": "array",

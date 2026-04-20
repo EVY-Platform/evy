@@ -107,6 +107,41 @@ test.describe("Row configuration", () => {
 		await expect(textInput).toHaveValue("Updated info text");
 	});
 
+	test("should display and edit Source binding in configuration panel", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Info",
+						source: "{initial}",
+						view: {
+							content: {
+								title: "Binding row",
+								text: "Body",
+							},
+						},
+						actions: [],
+					},
+				],
+			},
+		]);
+		await page.getByText("Binding row", { exact: true }).first().click();
+
+		const configPanel = getConfigPanel(page);
+		const sourceInput = configPanel.getByLabel("Row data source");
+		await expect(sourceInput).toBeVisible();
+		await expect(sourceInput).toHaveValue("{initial}");
+
+		await sourceInput.clear();
+		await sourceInput.fill("{items}");
+
+		await expect(sourceInput).toHaveValue("{items}");
+	});
+
 	test("should display and edit action items via popup", async ({ page }) => {
 		await openAppWithTestFlows(page, [
 			{

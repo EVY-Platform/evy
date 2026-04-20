@@ -11,11 +11,13 @@ struct EVYSearchRow: View, EVYRowProtocol {
 	public static let JSONType = "Search"
 
 	private let view: SearchRowViewData
+	private let source: String
 	private let destination: String?
 	@State private var showSheet = false
 
-	init(view: SearchRowViewData, destination: String?) {
+	init(view: SearchRowViewData, source: String, destination: String?) {
 		self.view = view
+		self.source = source
 		self.destination = destination
 	}
 
@@ -27,7 +29,7 @@ struct EVYSearchRow: View, EVYRowProtocol {
 			}
 			if let destination {
 				EVYSearch(
-					source: view.data ?? "",
+					source: source,
 					destination: destination,
 					placeholder: view.content.placeholder,
 					format: view.content.format

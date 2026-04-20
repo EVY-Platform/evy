@@ -11,10 +11,12 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
 	public static let JSONType = "InlinePicker"
 
 	private let view: InlinePickerRowViewData
+	private let source: String
 	private let destination: String?
 
-	init(view: InlinePickerRowViewData, destination: String?) {
+	init(view: InlinePickerRowViewData, source: String, destination: String?) {
 		self.view = view
+		self.source = source
 		self.destination = destination
 	}
 
@@ -27,7 +29,7 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
 			if let destination {
 				EVYInlinePicker(
 					title: view.content.title,
-					data: view.data ?? "",
+					data: source,
 					format: view.content.format,
 					destination: destination
 				)

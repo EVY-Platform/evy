@@ -7,12 +7,12 @@ export default defineRow("InlinePickerRow", {
 	config: {
 		type: "InlinePicker",
 		actions: [],
+		source: "",
 		view: {
 			content: {
 				title: "Inline picker row title",
 				format: "{datum.value}",
 			},
-			data: "",
 		},
 		destination: "{distance}",
 	} satisfies RowConfig,

@@ -22,9 +22,9 @@ interface ServerRowInputContent {
 interface ServerRowInput {
 	id?: string;
 	type: ServerRow["type"];
+	source?: string;
 	view: {
 		content: ServerRowInputContent;
-		data?: string;
 		max_lines?: string;
 	};
 	destination?: string;
@@ -169,9 +169,9 @@ function ensureRowId(row: ServerRowInput): ServerRow {
 		type: row.type,
 		view: {
 			content,
-			data: row.view.data,
 			max_lines: row.view.max_lines,
 		},
+		source: row.source ?? "",
 		destination: row.destination,
 		actions: row.actions,
 	};
