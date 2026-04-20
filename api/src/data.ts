@@ -1,10 +1,8 @@
 import { eq, desc } from "drizzle-orm";
 
 import {
-	type DATA_EVY_Organization,
 	type DATA_EVY_Rows,
 	type DATA_EVY_Service,
-	type DATA_EVY_ServiceProvider,
 	type GetResponse,
 	RESOURCES_BY_SERVICE,
 	RESOURCE_VALUES,
@@ -104,38 +102,6 @@ function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 			: {}),
 		createdAt: r.createdAt,
 		updatedAt: r.updatedAt,
-	};
-}
-
-function mapOrganizationRow(
-	r: typeof organization.$inferSelect,
-): DATA_EVY_Organization {
-	return {
-		id: r.id,
-		name: r.name,
-		description: r.description,
-		logo: r.logo,
-		url: r.url,
-		supportEmail: r.supportEmail,
-		createdAt: r.createdAt,
-		updatedAt: r.updatedAt,
-	};
-}
-
-function mapServiceProviderRow(
-	r: typeof serviceProvider.$inferSelect,
-): DATA_EVY_ServiceProvider {
-	return {
-		id: r.id,
-		fkServiceId: r.fkServiceId,
-		fkOrganizationId: r.fkOrganizationId,
-		name: r.name,
-		description: r.description,
-		logo: r.logo,
-		url: r.url,
-		createdAt: r.createdAt,
-		updatedAt: r.updatedAt,
-		retired: r.retired,
 	};
 }
 
@@ -247,15 +213,11 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 	}
 
 	if (resource === "organisations") {
-		return listCoreCatalogRows(organization, filter?.id, mapOrganizationRow);
+		return listCoreCatalogRows(organization, filter?.id, (r) => r);
 	}
 
 	if (resource === "providers") {
-		return listCoreCatalogRows(
-			serviceProvider,
-			filter?.id,
-			mapServiceProviderRow,
-		);
+		return listCoreCatalogRows(serviceProvider, filter?.id, (r) => r);
 	}
 
 	throw new Error("Unsupported resource for core API");
@@ -381,7 +343,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<DATA_EVY_Rows> {
 				}
 				return db.insert(organization).values(insertValues).returning();
 			},
-			mapOrganizationRow,
+			(r) => r,
 		);
 	}
 
@@ -425,7 +387,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<DATA_EVY_Rows> {
 				}
 				return db.insert(serviceProvider).values(insertValues).returning();
 			},
-			mapServiceProviderRow,
+			(r) => r,
 		);
 	}
 
