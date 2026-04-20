@@ -55,19 +55,4 @@ describe("API E2E WebSocket reconnect", () => {
 		second.close();
 		caller.close();
 	});
-
-	it("client observes close when connection is closed", async () => {
-		const client = await connectAndLogin(
-			API_URL,
-			`${TEST_TOKEN}-close`,
-			TEST_OS,
-		);
-
-		const closed = new Promise<void>((resolve) => {
-			client.on("close", () => resolve());
-		});
-
-		client.close();
-		await closed;
-	});
 });

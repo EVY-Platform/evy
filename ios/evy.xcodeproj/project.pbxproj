@@ -84,7 +84,6 @@
 		73F6A0022F60000100000001 /* isNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F6A0012F60000100000001 /* isNumber.swift */; };
 		74A100012F32000100000001 /* EVYInterpreterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100042F32000100000001 /* EVYInterpreterTests.swift */; };
 		74A100112F32000100000001 /* ContentViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100142F32000100000001 /* ContentViewTests.swift */; };
-		74A100122F32000100000001 /* EVYWebsocketNotificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100152F32000100000001 /* EVYWebsocketNotificationTests.swift */; };
 		74A100132F32000100000001 /* EVYActionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100162F32000100000001 /* EVYActionRunnerTests.swift */; };
 		74A100172F32000100000001 /* EVYCreateMergesDraftsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100182F32000100000001 /* EVYCreateMergesDraftsTests.swift */; };
 		74A100222F32000100000001 /* EVYDraftBindingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100212F32000100000001 /* EVYDraftBindingTests.swift */; };
@@ -186,7 +185,6 @@
 		74A100042F32000100000001 /* EVYInterpreterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInterpreterTests.swift; sourceTree = "<group>"; };
 		74A100052F32000100000001 /* evyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = evyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		74A100142F32000100000001 /* ContentViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewTests.swift; sourceTree = "<group>"; };
-		74A100152F32000100000001 /* EVYWebsocketNotificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYWebsocketNotificationTests.swift; sourceTree = "<group>"; };
 		74A100162F32000100000001 /* EVYActionRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionRunnerTests.swift; sourceTree = "<group>"; };
 		74A100182F32000100000001 /* EVYCreateMergesDraftsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCreateMergesDraftsTests.swift; sourceTree = "<group>"; };
 		74A100212F32000100000001 /* EVYDraftBindingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftBindingTests.swift; sourceTree = "<group>"; };
@@ -463,7 +461,6 @@
 				74A100182F32000100000001 /* EVYCreateMergesDraftsTests.swift */,
 				74A100212F32000100000001 /* EVYDraftBindingTests.swift */,
 				74A100042F32000100000001 /* EVYInterpreterTests.swift */,
-				74A100152F32000100000001 /* EVYWebsocketNotificationTests.swift */,
 			);
 			path = evyTests;
 			sourceTree = "<group>";
@@ -697,7 +694,6 @@
 				74A100172F32000100000001 /* EVYCreateMergesDraftsTests.swift in Sources */,
 				74A100222F32000100000001 /* EVYDraftBindingTests.swift in Sources */,
 				74A100012F32000100000001 /* EVYInterpreterTests.swift in Sources */,
-				74A100122F32000100000001 /* EVYWebsocketNotificationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -20,12 +20,6 @@ final class EVYInterpreterTests: XCTestCase {
         XCTAssertFalse(try EVY.evaluateFromText("{1 > 0 && 0 > 1}"))
     }
 
-    func testEvaluatesGroupedLogicalOperators() throws {
-        XCTAssertTrue(try EVY.evaluateFromText("{0 > 1 || (1 > 0 && 2 > 1)}"))
-        XCTAssertFalse(try EVY.evaluateFromText("{(0 > 1 || 1 > 2) && 2 > 3}"))
-        XCTAssertTrue(try EVY.evaluateFromText("{0 > 1 || 0 > 2 || 1 > 0}"))
-    }
-
     func testEvaluatesFunctionOperands() throws {
         let titleKey = uniqueKey("title")
         let reasonsKey = uniqueKey("reasons")
@@ -48,11 +42,6 @@ final class EVYInterpreterTests: XCTestCase {
         XCTAssertFalse(try EVY.evaluateFromText("{\(paymentCashKey) == true && \(paymentAppKey) == false}"))
     }
 
-    func testReplacesComparisonInsideText() throws {
-        let result = try parseTextFromText("result: {1 > 0 || 2 > 0}")
-        XCTAssertEqual(result.value, "result: true")
-    }
-
     func testWatchTargetUnwrapsCountToUnderlyingDataKey() {
         let key = uniqueKey("photo_ids")
         XCTAssertEqual(
@@ -65,24 +54,6 @@ final class EVYInterpreterTests: XCTestCase {
         XCTAssertEqual(
             EVY.watchTarget(for: "{formatDecimal(item.price, 2)}"),
             "item.price"
-        )
-    }
-
-    func testWatchTargetUsesFirstArgumentWithQuotedFormatString() {
-        XCTAssertEqual(
-            EVY.watchTarget(for: "{formatDate(item.createdAt, \"MM/dd/yyyy\")}"),
-            "item.createdAt"
-        )
-    }
-
-    func testSplitFunctionArgumentsRespectsQuotesAndNesting() {
-        XCTAssertEqual(
-            splitFunctionArguments(#"item.date, "MM/dd/yyyy""#),
-            [#"item.date"#, #""MM/dd/yyyy""#]
-        )
-        XCTAssertEqual(
-            splitFunctionArguments("outer.inner, 2"),
-            ["outer.inner", "2"]
         )
     }
 

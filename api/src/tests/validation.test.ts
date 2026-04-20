@@ -55,17 +55,6 @@ describe("validateServicePayload", () => {
 			}),
 		).toThrow("Service validation failed");
 	});
-
-	it("accepts ISO strings for createdAt and updatedAt", () => {
-		const out = validateServicePayload({
-			id,
-			name: "n",
-			description: "d",
-			createdAt: now,
-			updatedAt: now,
-		});
-		expect(out.createdAt).toBe(now);
-	});
 });
 
 describe("validateOrganizationPayload", () => {

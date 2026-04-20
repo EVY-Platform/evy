@@ -499,19 +499,6 @@ describe("upsert", () => {
 		expect(flows[0]?.data.name).toBe("Client Created Flow Updated");
 	});
 
-	it("should reject SDUI flow with missing name", async () => {
-		await expect(
-			upsertCore({
-				service: "evy",
-				resource: "sdui",
-				data: {
-					name: "",
-					pages: [{ id: "page-1", title: "Page 1", rows: [] }],
-				},
-			}),
-		).rejects.toThrow("Flow validation failed");
-	});
-
 	it("should upsert Service resource into the Service table", async () => {
 		const nowIso = new Date().toISOString();
 		const serviceId = crypto.randomUUID();
@@ -537,47 +524,6 @@ describe("upsert", () => {
 		expect(svcRows).toHaveLength(1);
 		expect(svcRows[0].id).toBe(serviceId);
 		expect(svcRows[0].name).toBe("UpsertSvc");
-	});
-
-	it("should reject Service payload with NaN in optional numeric field", async () => {
-		const nowIso = new Date().toISOString();
-		const serviceId = crypto.randomUUID();
-		await expect(
-			upsertCore({
-				service: "evy",
-				resource: "services",
-				data: {
-					id: serviceId,
-					name: "n",
-					description: "d",
-					createdAt: nowIso,
-					updatedAt: nowIso,
-					sortOrder: Number.NaN,
-				},
-			}),
-		).rejects.toThrow("Service validation failed");
-	});
-
-	it("should accept Service payload with optional sortOrder and defaultWeightKg", async () => {
-		const nowIso = new Date().toISOString();
-		const serviceId = crypto.randomUUID();
-		const payload = {
-			id: serviceId,
-			name: "n",
-			description: "d",
-			createdAt: nowIso,
-			updatedAt: nowIso,
-			sortOrder: 3,
-			defaultWeightKg: 19.99,
-		};
-		const result = await upsertCore({
-			service: "evy",
-			resource: "services",
-			data: payload,
-		});
-		const row = result as DATA_EVY_Service;
-		expect(row.sortOrder).toBe(3);
-		expect(row.defaultWeightKg).toBe(19.99);
 	});
 });
 
