@@ -10,13 +10,13 @@ service Service {
 }
 
 message GetRequest {
-  string namespace = 1;
+  string service = 1;
   string resource = 2;
   Filter filter = 3;
 }
 
 message UpsertRequest {
-  string namespace = 1;
+  string service = 1;
   string resource = 2;
   Filter filter = 3;
   string data_json = 4;

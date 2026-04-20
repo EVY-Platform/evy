@@ -8,7 +8,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. **Refer
 	- `"{conditions}"` — bind to data the client already has under that key
 	- `"{api:tags}"` — remote search / API-backed data
 	- `"local:address"` — client-local data source
-- That data is loaded separately: the API persists generic records under namespace + resource (see `types/schema/data/data.schema.json` and the `get` JSON-RPC method). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
+- That data is loaded separately: clients call JSON-RPC `get` with **`service`** and **`resource`** (e.g. `service: "evy"`, `resource: "sdui"` for flows; catalog lists use `service: "marketplace"` and plural resources like `conditions`, `items`). The API serves `evy` data from typed `DATA_EVY_*` persistence (see [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json)); marketplace rows live in the marketplace worker behind gRPC. Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
 So a flow might reference “10 min, 20 min, 30 min” options via `view.data` and a variable like `{durations}`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
 
@@ -185,3 +185,5 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 | Container  | ColumnContainer, ListContainer, SheetContainer, SelectSegmentContainer |
 
 Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`). See `row-content.spec.json` for the exact keys per type.
+
+For list-backed rows (Dropdown, InlinePicker, Search, InputList, etc.), `format` is evaluated per item from `view.data`. Use **`datum`** as the placeholder for the current item in expressions, e.g. `{datum.value}` or `{datum.unit} {datum.street}, {datum.city}`.

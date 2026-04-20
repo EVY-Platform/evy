@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_DB: ${DB_EVY_DATABASE}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/postgres-init-marketplace.sql:/docker-entrypoint-initdb.d/02-marketplace.sql:ro
@@ -22,12 +22,12 @@ services:
       dockerfile: ./services/marketplace/Dockerfile
       target: runner
     ports:
-      - ${MARKETPLACE_GRPC_PORT:-8001}:${MARKETPLACE_GRPC_PORT:-8001}
+      - ${MARKETPLACE_GRPC_PORT}:${MARKETPLACE_GRPC_PORT}
     environment:
-      - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST:-0.0.0.0}
-      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT:-8001}
-      - MARKETPLACE_DB_DATABASE=${MARKETPLACE_DB_DATABASE:-marketplace}
-      - API_PORT=${MARKETPLACE_GRPC_PORT:-8001}
+      # Listen on all interfaces inside the container (do not use host `.env` here).
+      - MARKETPLACE_GRPC_HOST=0.0.0.0
+      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
+      - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - DB_PORT=5432
@@ -54,10 +54,11 @@ services:
       - DB_PASS=${DB_PASS}
       - DB_PORT=5432
       - DB_DOMAIN=postgres
-      - DB_DATABASE=${DB_DATABASE}
+      - DB_EVY_DATABASE=${DB_EVY_DATABASE}
       - API_PORT=${API_PORT}
+      # gRPC client target (Compose DNS name), not the marketplace bind address in `.env`.
       - MARKETPLACE_GRPC_HOST=marketplace
-      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT:-8001}
+      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
     depends_on:
       postgres:
         condition: service_healthy

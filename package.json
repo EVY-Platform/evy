@@ -14,9 +14,10 @@
 		"chokidar": "^4.0.3",
 		"decamelize": "^6.0.1",
 		"drizzle-orm": "^0.45.2",
+		"ajv": "^8.17.1",
+		"ajv-formats": "^3.0.1",
 		"json-schema-to-typescript": "^15.0.4",
-		"quicktype": "^23.2.6",
-		"zod": "^4.3.6"
+		"quicktype": "^23.2.6"
 	},
 	"dependencies": {
 		"pluralize": "^8.0.0",

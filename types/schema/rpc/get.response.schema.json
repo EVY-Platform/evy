@@ -2,17 +2,19 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "get-response",
 	"title": "GetResponse",
-	"description": "Response for get method - UI_Flow[] or recursive GetDataResponse",
-	"oneOf": [
-		{
-			"type": "array",
-			"items": { "$ref": "../sdui/evy.schema.json" }
-		},
-		{
-			"type": "array",
-			"items": { "$ref": "#/$defs/GetDataResponse" }
-		}
-	],
+	"description": "Response for get method - array of UI_Flow and/or generic GetDataResponse items (per-item oneOf avoids overlap with the previous root oneOf, which matched both branches for [] and for UI_Flow[]).",
+	"type": "array",
+	"items": {
+		"oneOf": [
+			{ "$ref": "../sdui/evy.schema.json" },
+			{
+				"allOf": [
+					{ "$ref": "#/$defs/GetDataResponse" },
+					{ "not": { "$ref": "../sdui/evy.schema.json" } }
+				]
+			}
+		]
+	},
 	"$defs": {
 		"GetDataResponse": {
 			"title": "GetDataResponse",

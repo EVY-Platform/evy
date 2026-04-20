@@ -14,7 +14,7 @@ export async function assertApiReadable(
 	deps: ApiReadableDeps = { get: defaultGet },
 ): Promise<void> {
 	const { requireSeeded } = options;
-	const flows = await deps.get({ namespace: "evy", resource: "sdui" });
+	const flows = await deps.get({ service: "evy", resource: "sdui" });
 	if (!Array.isArray(flows)) {
 		throw new Error("API readiness failed: expected sdui response array");
 	}

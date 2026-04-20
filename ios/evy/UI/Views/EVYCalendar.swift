@@ -359,8 +359,18 @@ private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
 		try! await EVY.createItem()
 
 		let timeslotsData = (try? EVY.data.get(key: "timeslots"))?.data
-		EVY.ensureDraftExists(variableName: "pickup_timeslots", initialData: timeslotsData)
-		EVY.ensureDraftExists(variableName: "delivery_timeslots", initialData: timeslotsData)
+        let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "timeslots")
+        EVY.data.activeDraftScopeId = previewScopeId
+		EVY.ensureDraftExists(
+            variableName: "pickup_timeslots",
+            initialData: timeslotsData,
+            scopeId: previewScopeId
+        )
+		EVY.ensureDraftExists(
+            variableName: "delivery_timeslots",
+            initialData: timeslotsData,
+            scopeId: previewScopeId
+        )
 
 		return EVYCalendar(primary: "{pickup_timeslots}",
 					   secondary: "{delivery_timeslots}")

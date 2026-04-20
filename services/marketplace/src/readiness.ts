@@ -14,7 +14,7 @@ export async function assertMarketplaceReadable(
 	deps: MarketplaceReadableDeps = { get: defaultGet },
 ): Promise<void> {
 	const { requireSeeded } = options;
-	const items = await deps.get({ namespace: "marketplace", resource: "items" });
+	const items = await deps.get({ service: "marketplace", resource: "items" });
 	if (!Array.isArray(items)) {
 		throw new Error(
 			"Marketplace readiness failed: expected items response array",

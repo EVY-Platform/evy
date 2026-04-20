@@ -299,30 +299,39 @@ echo -e "\n${YELLOW}========================================${NC}"
 echo -e "${YELLOW}Test Results Summary${NC}"
 echo -e "${YELLOW}========================================${NC}"
 
+LABEL_WIDTH=12
+
+print_result() {
+    local label="$1"
+    local color="$2"
+    local status="$3"
+    printf "%-${LABEL_WIDTH}s ${color}%s${NC}\n" "${label}:" "$status"
+}
+
 if [ $API_RESULT -eq 0 ]; then
-    echo -e "API:  ${GREEN}PASSED${NC}"
+    print_result "API" "${GREEN}" "PASSED"
 else
-    echo -e "API:  ${RED}FAILED${NC}"
+    print_result "API" "${RED}" "FAILED"
 fi
 
 if [ $MARKETPLACE_RESULT -eq 0 ]; then
-    echo -e "Marketplace:  ${GREEN}PASSED${NC}"
+    print_result "Marketplace" "${GREEN}" "PASSED"
 else
-    echo -e "Marketplace:  ${RED}FAILED${NC}"
+    print_result "Marketplace" "${RED}" "FAILED"
 fi
 
 if [ $WEB_RESULT -eq 0 ]; then
-    echo -e "Web:  ${GREEN}PASSED${NC}"
+    print_result "Web" "${GREEN}" "PASSED"
 else
-    echo -e "Web:  ${RED}FAILED${NC}"
+    print_result "Web" "${RED}" "FAILED"
 fi
 
 if [ "$IOS_SKIPPED" = true ]; then
-    echo -e "iOS:  ${YELLOW}SKIPPED${NC}"
+    print_result "iOS" "${YELLOW}" "SKIPPED"
 elif [ $IOS_RESULT -eq 0 ]; then
-    echo -e "iOS:  ${GREEN}PASSED${NC}"
+    print_result "iOS" "${GREEN}" "PASSED"
 else
-    echo -e "iOS:  ${RED}FAILED${NC}"
+    print_result "iOS" "${RED}" "FAILED"
 fi
 
 if [ $API_RESULT -ne 0 ] || [ $MARKETPLACE_RESULT -ne 0 ] || [ $WEB_RESULT -ne 0 ] || ([ "$IOS_SKIPPED" = false ] && [ $IOS_RESULT -ne 0 ]); then

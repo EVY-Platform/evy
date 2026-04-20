@@ -156,32 +156,13 @@ export async function selectFlowByLabel(
 
 function ensureRowId(row: ServerRowInput): ServerRow {
 	const inputContent = row.view.content;
+	const { children, child, ...contentRest } = inputContent;
+
 	const content: ServerRowContent = {
-		title: inputContent.title,
+		...contentRest,
+		...(children !== undefined ? { children: ensureRowIds(children) } : {}),
+		...(child !== undefined ? { child: ensureRowId(child) } : {}),
 	};
-
-	if (inputContent.value !== undefined) {
-		content.value = inputContent.value;
-	}
-	if (inputContent.placeholder !== undefined) {
-		content.placeholder = inputContent.placeholder;
-	}
-	if (inputContent.text !== undefined) {
-		content.text = inputContent.text;
-	}
-	if (inputContent.label !== undefined) {
-		content.label = inputContent.label;
-	}
-	if (inputContent.segments !== undefined) {
-		content.segments = inputContent.segments;
-	}
-
-	if (inputContent.children) {
-		content.children = ensureRowIds(inputContent.children);
-	}
-	if (inputContent.child) {
-		content.child = ensureRowId(inputContent.child);
-	}
 
 	return {
 		id: row.id ?? crypto.randomUUID(),

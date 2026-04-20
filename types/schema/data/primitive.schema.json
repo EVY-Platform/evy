@@ -1,0 +1,30 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "primitive",
+	"title": "DATA_PRIMITIVE",
+	"description": "Generic service-owned data row (namespace is implied by the owning service). Used by downstream services for their Data table.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["id", "resource", "data", "createdAt", "updatedAt"],
+	"properties": {
+		"id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"resource": {
+			"type": "string",
+			"maxLength": 50
+		},
+		"data": {
+			"$ref": "../common/json.schema.json#/$defs/JSONValue"
+		},
+		"createdAt": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"updatedAt": {
+			"type": "string",
+			"format": "date-time"
+		}
+	}
+}

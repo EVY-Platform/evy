@@ -19,9 +19,10 @@ let userDefault = UserDefaults.standard
 
 final class EVYAPIManager {
 	private let rpcWS: EVYWebsocketProtocol
-    static let shared = EVYAPIManager()
 	private var authed: Bool = false
-	
+
+	static let shared = EVYAPIManager()
+
 	public func fetch<T: Codable>(
 		method: String,
 		params: Encodable,
@@ -30,14 +31,14 @@ final class EVYAPIManager {
 		try await validateAuth()
 		return try await rpcWS.fetch(method: method, params: params, expecting: T.self)
 	}
-    
-    private init() {
+
+	private init() {
 		self.rpcWS = EVYWebsocket(host: API_HOST)
 	}
-	
+
 	private func validateAuth() async throws {
 		if (authed) { return }
-		
+
 		authed = try await rpcWS.connect(token: "Geo", os: DataOS.ios)
 
 		let result = try await rpcWS.subscribe(event: "flowUpdated")

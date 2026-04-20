@@ -20,7 +20,7 @@ public enum EVYError: LocalizedError {
     case imageLoadFailed(name: String)
     case formatFailed(type: String, reason: String)
     case websocketError(context: String)
-    
+
     public var errorDescription: String? {
         switch self {
         case .parsingFailed(let context):
@@ -56,10 +56,10 @@ extension Notification.Name {
             }
         }
     }
-    
+
     init(setter: @escaping () -> T) {
         _value = setter()
-        
+
         NotificationCenter.default.addObserver(
             forName: .evyDataUpdated,
             object: nil,
@@ -70,13 +70,13 @@ extension Notification.Name {
             }
         }
     }
-    
+
     init(watch: String, setter: @escaping (_ input: String) -> T) {
         _value = setter(watch)
-        
+
         let watchProps = EVY.parsePropsFromText(watch)
         let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
-        
+
         NotificationCenter.default.addObserver(
             forName: .evyDataUpdated,
             object: nil,
@@ -84,40 +84,39 @@ extension Notification.Name {
         ) { [weak self] notif in
             Task { @MainActor in
                 guard let notifProp = notif.object as? String else {
-                    // nil means refresh everything (backward compatibility)
                     self?.value = setter(watch)
                     return
                 }
-                
+
                 let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
                 let minLen = min(watchSegments.count, notifSegments.count)
                 let prefixMatch = Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
-                
+
                 if prefixMatch {
                     self?.value = setter(watch)
                 }
             }
         }
     }
-    
+
     init(staticString: T) {
         _value = staticString
     }
 }
 
 let config = ModelConfiguration(isStoredInMemoryOnly: true)
-let container = try! ModelContainer(for: EVYData.self, configurations: config)
+let container = try! ModelContainer(for: EVYData.self, EVYDraft.self, configurations: config)
 
 @MainActor
 final class EVYDataManager {
-    private static let draftPrefix = "draft_"
-
     private let context: ModelContext
-    
+
+    var activeDraftScopeId: String?
+
     init() {
         self.context = ModelContext(container)
     }
-    
+
     func exists(key: String) -> Bool {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
         do {
@@ -126,7 +125,7 @@ final class EVYDataManager {
             return false
         }
     }
-    
+
     func get(key: String) throws -> EVYData {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
         guard let first = try context.fetch(descriptor).first else {
@@ -134,109 +133,131 @@ final class EVYDataManager {
         }
         return first
     }
-    
+
     func create(key: String, data: Data) throws {
         if exists(key: key) {
             throw EVYDataError.keyAlreadyExists
         }
         context.insert(EVYData(key: key, data: data))
-        
+
         NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
                                         object: key)
     }
-    
+
     func update(props: [String], data: Data) throws {
         let existing = try get(key: props.first!)
         existing.data = data
-        
+
         var propsForNotification = props
-        
-        let firstIndexWithANumber = props.firstIndex { $0.isNumber }
-        if firstIndexWithANumber != nil {
-            propsForNotification.removeLast(props.count - firstIndexWithANumber!)
+        if let index = props.firstIndex(where: { $0.isNumber }) {
+            propsForNotification.removeLast(props.count - index)
         }
-        
+
         let notifKey = propsForNotification.joined(separator: PROP_SEPARATOR)
         NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
                                         object: notifKey)
     }
-    
+
     func delete(key: String) throws {
         let existing = try get(key: key)
         context.delete(existing)
-        
+
         NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
                                         object: key)
     }
 
-    // MARK: - Draft helpers
+    // MARK: - Drafts
 
-    static func draftKey(variableName: String) -> String {
-        "\(draftPrefix)\(variableName)_\(UUID().uuidString)"
+    func drafts(forScopeId scopeId: String) throws -> [EVYDraft] {
+        let descriptor = FetchDescriptor<EVYDraft>(predicate: #Predicate { $0.scopeId == scopeId })
+        return try context.fetch(descriptor)
     }
 
-    static func draftPrefix(for variableName: String) -> String {
-        "\(draftPrefix)\(variableName)_"
-    }
-
-    static func variableName(fromDraftKey key: String) -> String? {
-        guard key.hasPrefix(draftPrefix) else { return nil }
-        let withoutPrefix = key.dropFirst(draftPrefix.count)
-        guard let lastUnderscore = withoutPrefix.lastIndex(of: "_") else { return nil }
-        return String(withoutPrefix[withoutPrefix.startIndex..<lastUnderscore])
-    }
-
-    func hasDraft(variableName: String) -> Bool {
-        let prefix = EVYDataManager.draftPrefix(for: variableName)
-        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key.starts(with: prefix) })
-        do {
-            return try context.fetchCount(descriptor) > 0
-        } catch {
-            return false
-        }
-    }
-
-    func getDraft(variableName: String) throws -> EVYData {
-        let prefix = EVYDataManager.draftPrefix(for: variableName)
-        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key.starts(with: prefix) })
-        guard let first = try context.fetch(descriptor).first else {
+    func draft(binding: EVYDraft.Binding) throws -> EVYDraft {
+        guard let row = draftFirstMatching(scopeId: binding.scopeId, pathKey: binding.pathKey) else {
             throw EVYDataError.keyNotFound
         }
-        return first
+        return row
     }
 
-    func createDraft(variableName: String, data: Data) throws {
-        if hasDraft(variableName: variableName) {
+    func draftIfPresent(binding: EVYDraft.Binding) -> EVYDraft? {
+        draftFirstMatching(scopeId: binding.scopeId, pathKey: binding.pathKey)
+    }
+
+    private func draftFirstMatching(scopeId: String, pathKey: String) -> EVYDraft? {
+        let sid = scopeId
+        let pk = pathKey
+        let descriptor = FetchDescriptor<EVYDraft>(
+            predicate: #Predicate { $0.scopeId == sid && $0.pathKey == pk }
+        )
+        do {
+            return try context.fetch(descriptor).first
+        } catch {
+            #if DEBUG
+            print("[EVYDataManager] draftFirstMatching error: \(error)")
+            #endif
+            return nil
+        }
+    }
+
+    func hasDraft(binding: EVYDraft.Binding) -> Bool {
+        draftIfPresent(binding: binding) != nil
+    }
+
+    func createDraft(binding: EVYDraft.Binding, data: Data) throws {
+        if hasDraft(binding: binding) {
             throw EVYDataError.keyAlreadyExists
         }
-        let key = EVYDataManager.draftKey(variableName: variableName)
-        context.insert(EVYData(key: key, data: data))
-
-        NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
-                                        object: variableName)
+        context.insert(EVYDraft(binding: binding, data: data))
+        NotificationCenter.default.post(name: .evyDataUpdated, object: binding.notificationKey)
     }
 
-    func updateDraft(variableName: String, data: Data) throws {
-        let existing = try getDraft(variableName: variableName)
+    func upsertDraft(binding: EVYDraft.Binding, data: Data) throws {
+        if let existing = draftIfPresent(binding: binding) {
+            existing.data = data
+        } else {
+            context.insert(EVYDraft(binding: binding, data: data))
+        }
+        NotificationCenter.default.post(name: .evyDataUpdated, object: binding.notificationKey)
+    }
+
+    func updateDraft(binding: EVYDraft.Binding, data: Data) throws {
+        let existing = try draft(binding: binding)
         existing.data = data
-
-        NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
-                                        object: variableName)
+        NotificationCenter.default.post(name: .evyDataUpdated, object: binding.notificationKey)
     }
 
-    func deleteAllDrafts() {
-        let prefix = EVYDataManager.draftPrefix
+    func deleteDrafts(scopeId: String) {
         do {
-            let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key.starts(with: prefix) })
-            let drafts = try context.fetch(descriptor)
-            for draft in drafts {
-                context.delete(draft)
+            let descriptor = FetchDescriptor<EVYDraft>(predicate: #Predicate { $0.scopeId == scopeId })
+            let rows = try context.fetch(descriptor)
+            for row in rows {
+                context.delete(row)
             }
         } catch {
             #if DEBUG
-            print("[EVYDataManager] deleteAllDrafts error: \(error)")
+            print("[EVYDataManager] deleteDrafts error: \(error)")
             #endif
         }
     }
-}
 
+    func deleteAllDraftsForTestIsolation() {
+        do {
+            let descriptor = FetchDescriptor<EVYDraft>()
+            for row in try context.fetch(descriptor) {
+                context.delete(row)
+            }
+        } catch {
+            #if DEBUG
+            print("[EVYDataManager] deleteAllDraftsForTestIsolation error: \(error)")
+            #endif
+        }
+    }
+
+    func draftBinding(fromParsedProps parsed: String, scopeId: String? = nil) throws -> EVYDraft.Binding {
+        try EVYDraft.binding(
+            parsedProps: parsed,
+            scopeId: scopeId ?? activeDraftScopeId
+        )
+    }
+}

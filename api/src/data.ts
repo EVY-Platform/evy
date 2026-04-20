@@ -1,58 +1,150 @@
-import { eq, and, desc } from "drizzle-orm";
-import pluralize from "pluralize";
+import { eq, desc } from "drizzle-orm";
 
 import {
 	type DATA_EVY_Rows,
+	type DATA_EVY_Service,
 	type GetResponse,
-	NAMESPACE_VALUES,
+	RESOURCES_BY_SERVICE,
 	RESOURCE_VALUES,
 	type GetRequest,
 	type OS,
 	type UpsertRequest,
 } from "evy-types";
-import { device, flow, data, osEnum } from "./db/drizzleTables";
+import {
+	device,
+	flow,
+	service,
+	organization,
+	serviceProvider,
+	osEnum,
+} from "./db/drizzleTables";
 import { db } from "./db";
-import { validateDataPayload, validateFlowData } from "./validation";
+import {
+	validateFlowData,
+	validateOrganizationPayload,
+	validateServicePayload,
+	validateServiceProviderPayload,
+} from "./validation";
+import {
+	validateStrictGetRequest,
+	validateStrictUpsertRequest,
+} from "evy-types/rpcRequestHelpers";
+import {
+	validateGetResponse,
+	validateUpsertResponse,
+} from "evy-types/validators";
 
-const CORE_NAMESPACE = "evy";
+const CORE_SERVICE = "evy";
 
-type Namespace = GetRequest["namespace"];
+const CORE_API_RESOURCES = new Set(RESOURCES_BY_SERVICE.evy);
+
 type Resource = GetRequest["resource"];
-
-function isNamespace(v: unknown): v is Namespace {
-	return typeof v === "string" && NAMESPACE_VALUES.includes(v as Namespace);
-}
 
 export function isResource(v: unknown): v is Resource {
 	return typeof v === "string" && RESOURCE_VALUES.includes(v as Resource);
+}
+
+function assertEvyCoreAccess(params: GetRequest | UpsertRequest): void {
+	if (params.service !== CORE_SERVICE) {
+		throw new Error("Core API only serves service evy");
+	}
+	if (!CORE_API_RESOURCES.has(params.resource)) {
+		throw new Error("Resource is not served by the core API");
+	}
+}
+
+function validateCoreGetParams(params: unknown): asserts params is GetRequest {
+	validateStrictGetRequest(params);
+	assertEvyCoreAccess(params);
+}
+
+function validateCoreUpsertParams(
+	params: unknown,
+): asserts params is UpsertRequest {
+	validateStrictUpsertRequest(params);
+	assertEvyCoreAccess(params);
+}
+
+/**
+ * Core `get` handler after JSON-RPC shape checks. Callers must already have run
+ * {@link validateStrictGetRequest}; this only applies evy-core access rules.
+ */
+export async function getCoreForValidatedRequest(
+	params: GetRequest,
+): Promise<GetResponse> {
+	assertEvyCoreAccess(params);
+	return getCoreBody(params);
+}
+
+/**
+ * Core `upsert` handler after JSON-RPC shape checks. Callers must already have run
+ * {@link validateStrictUpsertRequest}; this only applies evy-core access rules.
+ */
+export async function upsertCoreForValidatedRequest(
+	params: UpsertRequest,
+): Promise<DATA_EVY_Rows> {
+	assertEvyCoreAccess(params);
+	return upsertCoreBody(params);
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function validateCoreParams(
-	params: unknown,
-): asserts params is GetRequest | UpsertRequest {
-	if (params === null || typeof params !== "object") {
-		throw new Error("Params must be an object");
+function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
+	return {
+		id: r.id,
+		name: r.name,
+		description: r.description,
+		...(r.sortOrder !== null ? { sortOrder: r.sortOrder } : {}),
+		...(r.defaultWeightKg !== null
+			? { defaultWeightKg: r.defaultWeightKg }
+			: {}),
+		createdAt: r.createdAt,
+		updatedAt: r.updatedAt,
+	};
+}
+
+type CatalogTable =
+	| typeof service
+	| typeof organization
+	| typeof serviceProvider;
+
+async function listCoreCatalogRows<TRow>(
+	table: CatalogTable,
+	filterId: string | undefined,
+	mapRow: (r: TRow) => unknown,
+): Promise<GetResponse> {
+	const base = db.select().from(table);
+	const rows = filterId
+		? await base.where(eq(table.id, filterId)).orderBy(desc(table.updatedAt))
+		: await base.orderBy(desc(table.updatedAt));
+	const mapped = rows.map((r) => mapRow(r as TRow));
+	return validateGetResponse(mapped);
+}
+
+/**
+ * Update by `filterId` when set; if no row matched (or no filter), insert. When
+ * `filterId` is set and insert runs, `overrideInsertId` is applied to the insert row.
+ */
+async function upsertCatalogEntity<TSelect>(
+	filterId: string | undefined,
+	doUpdate: () => Promise<TSelect[]>,
+	doInsert: () => Promise<TSelect[]>,
+	mapRow: (row: TSelect) => DATA_EVY_Rows,
+): Promise<DATA_EVY_Rows> {
+	if (filterId) {
+		const updated = await doUpdate();
+		if (updated.length > 0) {
+			const row = mapRow(updated[0]);
+			validateUpsertResponse(row);
+			return row;
+		}
 	}
-	if (!("namespace" in params) || !isNamespace(params.namespace)) {
-		throw new Error("Invalid or missing namespace");
-	}
-	if (params.namespace !== CORE_NAMESPACE) {
-		throw new Error("Core API only serves namespace evy");
-	}
-	if (!("resource" in params) || !isResource(params.resource)) {
-		throw new Error("Invalid or missing resource");
-	}
-	if (
-		"filter" in params &&
-		params.filter !== undefined &&
-		(typeof params.filter !== "object" || params.filter === null)
-	) {
-		throw new Error("filter must be an object");
-	}
+	const inserted = await doInsert();
+	const row = mapRow(inserted[0]);
+	validateUpsertResponse(row);
+	return row;
 }
 
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
@@ -79,14 +171,18 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 		});
 
 		return true;
-	} catch {
+	} catch (err) {
+		console.warn("validateAuth: unexpected error", err);
 		return false;
 	}
 }
 
-export async function getCore(params: unknown): Promise<GetResponse> {
-	validateCoreParams(params);
-	const { namespace, resource, filter } = params;
+async function getCoreBody(params: GetRequest): Promise<GetResponse> {
+	const { resource, filter } = params;
+
+	if (resource === "devices") {
+		throw new Error("devices are managed via validateAuth only");
+	}
 
 	if (resource === "sdui") {
 		if (filter?.id) {
@@ -95,46 +191,50 @@ export async function getCore(params: unknown): Promise<GetResponse> {
 				.from(flow)
 				.where(eq(flow.id, filter.id))
 				.limit(1);
-			return rows.length ? [rows[0].data] : [];
+			const payload = rows.length ? [rows[0].data] : [];
+			for (const item of payload) {
+				validateFlowData(item);
+			}
+			return validateGetResponse(payload);
 		}
 		const flows = await db
 			.select({ data: flow.data })
 			.from(flow)
 			.orderBy(desc(flow.updatedAt));
-		return flows.map((f) => f.data);
+		const payload = flows.map((f) => f.data);
+		for (const item of payload) {
+			validateFlowData(item);
+		}
+		return validateGetResponse(payload);
 	}
 
-	const singularResource = pluralize.singular(resource);
-	const whereClauses = [
-		eq(data.namespace, namespace),
-		eq(data.resource, singularResource),
-	];
-	if (filter?.id) {
-		whereClauses.push(eq(data.id, filter.id));
+	if (resource === "services") {
+		return listCoreCatalogRows(service, filter?.id, mapServiceRow);
 	}
 
-	const rows = await db
-		.select({ data: data.data })
-		.from(data)
-		.where(and(...whereClauses))
-		.orderBy(desc(data.updatedAt));
+	if (resource === "organisations") {
+		return listCoreCatalogRows(organization, filter?.id, (r) => r);
+	}
 
-	return rows.map((r) => r.data) as GetResponse;
+	if (resource === "providers") {
+		return listCoreCatalogRows(serviceProvider, filter?.id, (r) => r);
+	}
+
+	throw new Error("Unsupported resource for core API");
 }
 
-export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
-	validateCoreParams(params);
-	if (
-		!("data" in params) ||
-		params.data === undefined ||
-		typeof params.data !== "object" ||
-		params.data === null
-	) {
-		throw new Error("data is required and must be a non-null object");
-	}
+export async function getCore(params: unknown): Promise<GetResponse> {
+	validateCoreGetParams(params);
+	return getCoreBody(params);
+}
 
-	const { namespace, resource, filter, data: dataPayload } = params;
+async function upsertCoreBody(params: UpsertRequest): Promise<DATA_EVY_Rows> {
+	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
+
+	if (resource === "devices") {
+		throw new Error("devices are managed via validateAuth only");
+	}
 
 	if (resource === "sdui") {
 		const validatedData = validateFlowData(dataPayload);
@@ -150,7 +250,9 @@ export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
 				.where(eq(flow.id, filter.id))
 				.returning();
 			if (result.length > 0) {
-				return result[0];
+				const row = result[0];
+				validateUpsertResponse(row);
+				return row;
 			}
 		}
 		const result = await db
@@ -162,38 +264,137 @@ export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
 				updatedAt: nowIso,
 			})
 			.returning();
-		return result[0];
+		const row = result[0];
+		validateUpsertResponse(row);
+		return row;
 	}
 
-	const validatedPayload = validateDataPayload(dataPayload);
-	const singularResource = pluralize.singular(resource);
-
-	if (filter?.id) {
-		const result = await db
-			.update(data)
-			.set({ data: validatedPayload, updatedAt: nowIso })
-			.where(
-				and(
-					eq(data.id, filter.id),
-					eq(data.namespace, namespace),
-					eq(data.resource, singularResource),
-				),
-			)
-			.returning();
-		if (result.length > 0) {
-			return result[0];
-		}
+	if (resource === "services") {
+		const validated = validateServicePayload(dataPayload);
+		const filterId = filter?.id;
+		return upsertCatalogEntity(
+			filterId,
+			() =>
+				filterId
+					? db
+							.update(service)
+							.set({
+								name: validated.name,
+								description: validated.description,
+								sortOrder: validated.sortOrder ?? null,
+								defaultWeightKg: validated.defaultWeightKg ?? null,
+								updatedAt: nowIso,
+							})
+							.where(eq(service.id, filterId))
+							.returning()
+					: Promise.resolve([]),
+			() => {
+				const insertValues: typeof service.$inferInsert = {
+					id: validated.id,
+					name: validated.name,
+					description: validated.description,
+					sortOrder: validated.sortOrder ?? null,
+					defaultWeightKg: validated.defaultWeightKg ?? null,
+					createdAt: validated.createdAt,
+					updatedAt: nowIso,
+				};
+				if (filterId) {
+					insertValues.id = filterId;
+				}
+				return db.insert(service).values(insertValues).returning();
+			},
+			mapServiceRow,
+		);
 	}
 
-	const result = await db
-		.insert(data)
-		.values({
-			namespace,
-			resource: singularResource,
-			data: validatedPayload,
-			createdAt: nowIso,
-			updatedAt: nowIso,
-		})
-		.returning();
-	return result[0];
+	if (resource === "organisations") {
+		const validated = validateOrganizationPayload(dataPayload);
+		const filterId = filter?.id;
+		return upsertCatalogEntity(
+			filterId,
+			() =>
+				filterId
+					? db
+							.update(organization)
+							.set({
+								name: validated.name,
+								description: validated.description,
+								logo: validated.logo,
+								url: validated.url,
+								supportEmail: validated.supportEmail,
+								updatedAt: nowIso,
+							})
+							.where(eq(organization.id, filterId))
+							.returning()
+					: Promise.resolve([]),
+			() => {
+				const insertValues: typeof organization.$inferInsert = {
+					id: validated.id,
+					name: validated.name,
+					description: validated.description,
+					logo: validated.logo,
+					url: validated.url,
+					supportEmail: validated.supportEmail,
+					createdAt: validated.createdAt,
+					updatedAt: nowIso,
+				};
+				if (filterId) {
+					insertValues.id = filterId;
+				}
+				return db.insert(organization).values(insertValues).returning();
+			},
+			(r) => r,
+		);
+	}
+
+	if (resource === "providers") {
+		const validated = validateServiceProviderPayload(dataPayload);
+		const filterId = filter?.id;
+		return upsertCatalogEntity(
+			filterId,
+			() =>
+				filterId
+					? db
+							.update(serviceProvider)
+							.set({
+								fkServiceId: validated.fkServiceId,
+								fkOrganizationId: validated.fkOrganizationId,
+								name: validated.name,
+								description: validated.description,
+								logo: validated.logo,
+								url: validated.url,
+								retired: validated.retired,
+								updatedAt: nowIso,
+							})
+							.where(eq(serviceProvider.id, filterId))
+							.returning()
+					: Promise.resolve([]),
+			() => {
+				const insertValues: typeof serviceProvider.$inferInsert = {
+					id: validated.id,
+					fkServiceId: validated.fkServiceId,
+					fkOrganizationId: validated.fkOrganizationId,
+					name: validated.name,
+					description: validated.description,
+					logo: validated.logo,
+					url: validated.url,
+					createdAt: validated.createdAt,
+					updatedAt: nowIso,
+					retired: validated.retired,
+				};
+				if (filterId) {
+					insertValues.id = filterId;
+				}
+				return db.insert(serviceProvider).values(insertValues).returning();
+			},
+			(r) => r,
+		);
+	}
+
+	throw new Error("Unsupported resource for core API");
+}
+
+export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
+	validateCoreUpsertParams(params);
+	return upsertCoreBody(params);
 }

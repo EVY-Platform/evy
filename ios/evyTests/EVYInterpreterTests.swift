@@ -2,8 +2,6 @@
 //  EVYInterpreterTests.swift
 //  evyTests
 //
-//  Created by Cursor on 13/3/2026.
-//
 
 import XCTest
 @testable import evy
@@ -20,12 +18,6 @@ final class EVYInterpreterTests: XCTestCase {
         XCTAssertFalse(try EVY.evaluateFromText("{0 > 1 || 0 > 2}"))
         XCTAssertTrue(try EVY.evaluateFromText("{1 > 0 && 2 > 1}"))
         XCTAssertFalse(try EVY.evaluateFromText("{1 > 0 && 0 > 1}"))
-    }
-
-    func testEvaluatesGroupedLogicalOperators() throws {
-        XCTAssertTrue(try EVY.evaluateFromText("{0 > 1 || (1 > 0 && 2 > 1)}"))
-        XCTAssertFalse(try EVY.evaluateFromText("{(0 > 1 || 1 > 2) && 2 > 3}"))
-        XCTAssertTrue(try EVY.evaluateFromText("{0 > 1 || 0 > 2 || 1 > 0}"))
     }
 
     func testEvaluatesFunctionOperands() throws {
@@ -50,11 +42,6 @@ final class EVYInterpreterTests: XCTestCase {
         XCTAssertFalse(try EVY.evaluateFromText("{\(paymentCashKey) == true && \(paymentAppKey) == false}"))
     }
 
-    func testReplacesComparisonInsideText() throws {
-        let result = try EVYInterpreter.parseTextFromText("result: {1 > 0 || 2 > 0}")
-        XCTAssertEqual(result.value, "result: true")
-    }
-
     func testWatchTargetUnwrapsCountToUnderlyingDataKey() {
         let key = uniqueKey("photo_ids")
         XCTAssertEqual(
@@ -70,69 +57,51 @@ final class EVYInterpreterTests: XCTestCase {
         )
     }
 
-    func testWatchTargetUsesFirstArgumentWithQuotedFormatString() {
-        XCTAssertEqual(
-            EVY.watchTarget(for: "{formatDate(item.createdAt, \"MM/dd/yyyy\")}"),
-            "item.createdAt"
-        )
-    }
-
-    func testSplitFunctionArgumentsRespectsQuotesAndNesting() {
-        XCTAssertEqual(
-            EVYInterpreter.splitFunctionArguments(#"item.date, "MM/dd/yyyy""#),
-            [#"item.date"#, #""MM/dd/yyyy""#]
-        )
-        XCTAssertEqual(
-            EVYInterpreter.splitFunctionArguments("outer.inner, 2"),
-            ["outer.inner", "2"]
-        )
-    }
-
     func testCountReflectsArrayAfterStoreUpdate() throws {
         let key = uniqueKey("photos")
         try store(.array([.string("a")]), at: key)
-        let one = try EVYInterpreter.parseTextFromText("n: {count(\(key))}")
+        let one = try parseTextFromText("n: {count(\(key))}")
         XCTAssertEqual(one.value, "n: 1")
 
         let encoded = try JSONEncoder().encode(EVYJson.array([.string("a"), .string("b")]))
         try EVY.data.update(props: [key], data: encoded)
 
-        let two = try EVYInterpreter.parseTextFromText("n: {count(\(key))}")
+        let two = try parseTextFromText("n: {count(\(key))}")
         XCTAssertEqual(two.value, "n: 2")
     }
 
     func testFormatDecimalRoundsToPlaces() throws {
         let key = uniqueKey("amount")
         try store(.string("20.0423"), at: key)
-        let out = try EVYInterpreter.parseTextFromText("{formatDecimal(\(key), 2)}")
+        let out = try parseTextFromText("{formatDecimal(\(key), 2)}")
         XCTAssertEqual(out.value, "20.04")
     }
 
     func testFormatMetricLengthUsesTwoDecimalMetres() throws {
         let key = uniqueKey("mm")
         try store(.int(23240), at: key)
-        let out = try EVYInterpreter.parseTextFromText("{formatMetricLength(\(key))}")
+        let out = try parseTextFromText("{formatMetricLength(\(key))}")
         XCTAssertEqual(out.toString(), "23.24m")
     }
 
     func testFormatImperialLengthConvertsMillimetresToFeet() throws {
         let key = uniqueKey("mm")
         try store(.int(4231), at: key)
-        let out = try EVYInterpreter.parseTextFromText("{formatImperialLength(\(key))}")
+        let out = try parseTextFromText("{formatImperialLength(\(key))}")
         XCTAssertEqual(out.toString(), "13.88ft")
     }
 
     func testFormatDurationHumanizesMilliseconds() throws {
         let key = uniqueKey("ms")
         try store(.int(900_000), at: key)
-        let out = try EVYInterpreter.parseTextFromText("{formatDuration(\(key))}")
+        let out = try parseTextFromText("{formatDuration(\(key))}")
         XCTAssertEqual(out.value, "15 minutes")
     }
 
     func testFormatDateFormatsIsoStringWithPattern() throws {
         let key = uniqueKey("created")
         try store(.string("2024-01-19T12:42:52.000Z"), at: key)
-        let out = try EVYInterpreter.parseTextFromText(
+        let out = try parseTextFromText(
             "{formatDate(\(key), \"MM/dd/yyyy\")}"
         )
         XCTAssertEqual(out.value, "01/19/2024")

@@ -35,7 +35,7 @@ Uses the root `.env` file. Required variables include:
 
 - `MARKETPLACE_GRPC_HOST` — gRPC bind address (default `0.0.0.0` in compose)
 - `MARKETPLACE_GRPC_PORT` — gRPC listen port (default `8001` in compose)
-- `DB_*` — Postgres host credentials; database name for this service is `MARKETPLACE_DB_DATABASE` (default `marketplace`)
+- `DB_*` — Postgres host credentials; database name for this service is `DB_MARKETPLACE_DATABASE`
 
 ## Scripts
 

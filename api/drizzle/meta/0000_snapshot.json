@@ -1,5 +1,5 @@
 {
-	"id": "7509e8d0-1c49-4b89-a22b-c23fcd3d68a7",
+	"id": "7a96a789-dac2-4808-b5dc-830838e70c13",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -23,7 +23,7 @@
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				}
@@ -77,13 +77,13 @@
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				},
 				"updated_at": {
 					"name": "updated_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				}
@@ -138,13 +138,13 @@
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				},
 				"updated_at": {
 					"name": "updated_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				}
@@ -168,13 +168,7 @@
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {
-				"Organization_name_unique": {
-					"name": "Organization_name_unique",
-					"nullsNotDistinct": false,
-					"columns": ["name"]
-				}
-			},
+			"uniqueConstraints": {},
 			"policies": {},
 			"checkConstraints": {},
 			"isRLSEnabled": false
@@ -201,15 +195,27 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"sort_order": {
+					"name": "sort_order",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"default_weight_kg": {
+					"name": "default_weight_kg",
+					"type": "numeric(28, 10)",
+					"primaryKey": false,
+					"notNull": false
+				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				},
 				"updated_at": {
 					"name": "updated_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				}
@@ -233,13 +239,7 @@
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {
-				"Service_name_unique": {
-					"name": "Service_name_unique",
-					"nullsNotDistinct": false,
-					"columns": ["name"]
-				}
-			},
+			"uniqueConstraints": {},
 			"policies": {},
 			"checkConstraints": {},
 			"isRLSEnabled": false
@@ -292,13 +292,13 @@
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				},
 				"updated_at": {
 					"name": "updated_at",
-					"type": "timestamp (3)",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true
 				},
@@ -350,13 +350,7 @@
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {
-				"ServiceProvider_name_unique": {
-					"name": "ServiceProvider_name_unique",
-					"nullsNotDistinct": false,
-					"columns": ["name"]
-				}
-			},
+			"uniqueConstraints": {},
 			"policies": {},
 			"checkConstraints": {},
 			"isRLSEnabled": false

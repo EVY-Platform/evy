@@ -46,7 +46,7 @@ beforeEach(async () => {
 type EvyServiceClient = Client & {
 	Get: (
 		req: {
-			namespace: string;
+			service: string;
 			resource: string;
 			filter?: { id: string };
 		},
@@ -54,7 +54,7 @@ type EvyServiceClient = Client & {
 	) => void;
 	Upsert: (
 		req: {
-			namespace: string;
+			service: string;
 			resource: string;
 			filter?: { id: string };
 			data_json: string;
@@ -77,7 +77,7 @@ describe("marketplace gRPC server", () => {
 		await new Promise<void>((resolve, reject) => {
 			client.Upsert(
 				{
-					namespace: "marketplace",
+					service: "marketplace",
 					resource: "conditions",
 					data_json: JSON.stringify(row),
 				},
@@ -91,7 +91,7 @@ describe("marketplace gRPC server", () => {
 		const got = await new Promise<unknown>((resolve, reject) => {
 			client.Get(
 				{
-					namespace: "marketplace",
+					service: "marketplace",
 					resource: "conditions",
 				},
 				(err: ServiceError | null, res?: { result_json: string }) => {
@@ -128,7 +128,7 @@ describe("marketplace gRPC server", () => {
 		await new Promise<void>((resolve, reject) => {
 			client.Upsert(
 				{
-					namespace: "marketplace",
+					service: "marketplace",
 					resource: "conditions",
 					data_json: JSON.stringify(row),
 				},
@@ -147,7 +147,6 @@ describe("marketplace gRPC server", () => {
 			return;
 		}
 		expect(JSON.parse(dataEvent.payload_json)).toMatchObject({
-			namespace: "marketplace",
 			resource: "condition",
 			data: row,
 		});

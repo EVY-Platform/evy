@@ -3,14 +3,59 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import pluralize from "pluralize";
 import postgres from "postgres";
-import { z } from "zod";
-import { db as coreDb, schema as coreSchema } from "../api/src/db";
-import { validateFlowData, formatZodErrors } from "../api/src/validation";
+import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate as migratePg } from "drizzle-orm/postgres-js/migrator";
+import Ajv2020 from "ajv/dist/2020";
+import addFormats from "ajv-formats";
 import { MARKETPLACE_SEED_KEYS } from "../services/marketplace/src/catalog";
-import {
-	db as marketplaceDb,
-	schema as marketplaceSchema,
-} from "../services/marketplace/src/db";
+import { validateUiFlow } from "../types/validators";
+
+const SEED_DATA_ITEM_SCHEMA_ID =
+	"https://evy.local/seed/seed-data-item.schema.json";
+const SEED_DATA_ITEM_SCHEMA: Record<string, unknown> = {
+	$schema: "https://json-schema.org/draft/2020-12/schema",
+	$id: SEED_DATA_ITEM_SCHEMA_ID,
+	type: "object",
+	additionalProperties: true,
+	required: ["id"],
+	properties: {
+		id: { type: "string", format: "uuid" },
+	},
+};
+
+let seedItemAjv: InstanceType<typeof Ajv2020> | null = null;
+function validateSeedDataItemShape(
+	item: unknown,
+): { id: string } & Record<string, unknown> {
+	if (!seedItemAjv) {
+		const ajv = new Ajv2020({ allErrors: true, strict: false });
+		addFormats(ajv);
+		ajv.addSchema(SEED_DATA_ITEM_SCHEMA);
+		seedItemAjv = ajv;
+	}
+	const validate = seedItemAjv.getSchema<
+		{
+			id: string;
+		} & Record<string, unknown>
+	>(SEED_DATA_ITEM_SCHEMA_ID);
+	if (!validate) {
+		throw new Error("seed: ajv schema not registered");
+	}
+	if (validate(item)) {
+		return item as { id: string } & Record<string, unknown>;
+	}
+	const errs = validate.errors;
+	const detail = errs?.length
+		? errs
+				.map((e) => {
+					const path = e.instancePath === "" ? "(root)" : e.instancePath;
+					return `${path}: ${e.message ?? "invalid"}`;
+				})
+				.join("; ")
+		: "invalid";
+	throw new Error(`Seed data item validation failed: ${detail}`);
+}
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const EVY_FLOWS_PATH = join(SCRIPT_DIR, "..", "docs", "evy", "evy_sdui.json");
@@ -28,14 +73,71 @@ const DATA_PATH = join(
 	"services",
 	"service_data.json",
 );
+const API_MIGRATIONS_PATH = join(SCRIPT_DIR, "..", "api", "drizzle");
+const MARKETPLACE_MIGRATIONS_PATH = join(
+	SCRIPT_DIR,
+	"..",
+	"services",
+	"marketplace",
+	"drizzle",
+);
 
-const SeedDataItemSchema = z.looseObject({
-	id: z.uuid(),
+type SeedFlow = ReturnType<typeof validateUiFlow>;
+type SeedDataItem = ReturnType<typeof validateSeedDataItemShape>;
+type SeedDataMap = Record<string, SeedDataItem[]>;
+
+function requireEnv(name: string): string {
+	const value = process.env[name];
+	if (value === undefined || value === "") {
+		throw new Error(`Missing required database env: ${name}`);
+	}
+	return value;
+}
+
+function getConnectionUrl(databaseEnvName: string): string {
+	const user = requireEnv("DB_USER");
+	const pass = requireEnv("DB_PASS");
+	const port = requireEnv("DB_PORT");
+	const domain = requireEnv("DB_DOMAIN");
+	const database = requireEnv(databaseEnvName);
+
+	const encodedUser = encodeURIComponent(user);
+	const encodedPass = encodeURIComponent(pass);
+	return `postgresql://${encodedUser}:${encodedPass}@${domain}:${port}/${database}`;
+}
+
+/** postgres.js logs NOTICE messages to console by default; Drizzle migrations trigger benign IF NOT EXISTS notices. */
+const seedPostgresOptions = { onnotice: () => {} };
+
+const flowTable = pgTable("Flow", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	data: jsonb("data").$type<SeedFlow>().notNull(),
+	createdAt: text("created_at").notNull(),
+	updatedAt: text("updated_at").notNull(),
 });
 
-type SeedFlow = ReturnType<typeof validateFlowData>;
-type SeedDataItem = z.infer<typeof SeedDataItemSchema>;
-type SeedDataMap = Record<string, SeedDataItem[]>;
+const marketplaceDataTable = pgTable("Data", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	resource: varchar("resource", { length: 50 }).notNull(),
+	data: jsonb("data").$type<SeedDataItem>().notNull(),
+	createdAt: text("created_at").notNull(),
+	updatedAt: text("updated_at").notNull(),
+});
+
+const coreSchema = { flow: flowTable };
+const marketplaceSchema = { data: marketplaceDataTable };
+
+const coreDb = drizzle(
+	postgres(getConnectionUrl("DB_EVY_DATABASE"), seedPostgresOptions),
+	{
+		schema: coreSchema,
+	},
+);
+const marketplaceDb = drizzle(
+	postgres(getConnectionUrl("DB_MARKETPLACE_DATABASE"), seedPostgresOptions),
+	{ schema: marketplaceSchema },
+);
+
 type SeedInputPaths = {
 	evyFlowsPath?: string;
 	serviceFlowsPath?: string;
@@ -46,13 +148,14 @@ function validateSeedDataItem(
 	resource: string,
 	index: number,
 ): SeedDataItem {
-	const result = SeedDataItemSchema.safeParse(item);
-	if (!result.success) {
+	try {
+		return validateSeedDataItemShape(item);
+	} catch (e) {
+		const msg = e instanceof Error ? e.message : String(e);
 		throw new Error(
-			`Seed data validation failed for resource "${resource}" at index ${index}: ${formatZodErrors(result.error.issues)}`,
+			`Seed data validation failed for resource "${resource}" at index ${index}: ${msg}`,
 		);
 	}
-	return result.data;
 }
 
 function validateSeedData(dataJson: unknown): SeedDataMap {
@@ -75,45 +178,90 @@ function validateSeedData(dataJson: unknown): SeedDataMap {
 	return validatedEntries;
 }
 
-export function extractMarketplaceData(dataJson: SeedDataMap): SeedDataMap {
-	const out: SeedDataMap = {};
+function partitionSeedCatalogData(dataJson: SeedDataMap): {
+	marketplace: SeedDataMap;
+	evy: SeedDataMap;
+} {
+	const marketplace: SeedDataMap = {};
+	const evy: SeedDataMap = {};
 	for (const [key, value] of Object.entries(dataJson)) {
 		if (MARKETPLACE_SEED_KEYS.has(key)) {
-			out[key] = value;
+			marketplace[key] = value;
+		} else {
+			evy[key] = value;
 		}
 	}
-	return out;
+	return { marketplace, evy };
+}
+
+type SeedDataRow = {
+	id: string;
+	resource: string;
+	data: SeedDataItem;
+	createdAt: string;
+	updatedAt: string;
+};
+
+function buildDataRows(dataJson: SeedDataMap, now: string): SeedDataRow[] {
+	const rows: SeedDataRow[] = [];
+	for (const [key, value] of Object.entries(dataJson)) {
+		const resource = pluralize.singular(key);
+		for (const item of value) {
+			rows.push({
+				id: item.id,
+				resource,
+				data: item,
+				createdAt: now,
+				updatedAt: now,
+			});
+		}
+	}
+	return rows;
 }
 
 export async function ensureMarketplaceDatabaseExists(): Promise<void> {
-	const dbName = process.env.MARKETPLACE_DB_DATABASE ?? "marketplace";
-	if (!/^[a-zA-Z0-9_]+$/.test(dbName)) {
-		throw new Error("Invalid MARKETPLACE_DB_DATABASE");
-	}
 	const user = process.env.DB_USER;
 	const pass = process.env.DB_PASS;
 	const port = process.env.DB_PORT;
 	const domain = process.env.DB_DOMAIN;
-	if (!user || !pass || !port || !domain) {
-		throw new Error("Missing DB_* env for ensureMarketplaceDatabaseExists");
+	const dbName = process.env.DB_MARKETPLACE_DATABASE;
+	if (!user || !pass || !port || !domain || !dbName) {
+		const missing = [
+			!user && "DB_USER",
+			!pass && "DB_PASS",
+			!port && "DB_PORT",
+			!domain && "DB_DOMAIN",
+			!dbName && "DB_MARKETPLACE_DATABASE",
+		]
+			.filter(Boolean)
+			.join(", ");
+		throw new Error(`Missing required database env: ${missing}`);
 	}
-	const sql = postgres({
+	const sqlClient = postgres({
 		host: domain,
 		port: Number(port),
 		user,
 		password: pass,
 		database: "postgres",
+		...seedPostgresOptions,
 	});
 	try {
-		await sql.unsafe(`CREATE DATABASE "${dbName}"`);
+		await sqlClient.unsafe(`CREATE DATABASE "${dbName}"`);
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : String(error);
 		if (!message.includes("already exists")) {
-			await sql.end({ timeout: 5 });
+			await sqlClient.end({ timeout: 5 });
 			throw error;
 		}
 	}
-	await sql.end({ timeout: 5 });
+	await sqlClient.end({ timeout: 5 });
+}
+
+export async function runMigrations(): Promise<void> {
+	await migratePg(coreDb, { migrationsFolder: API_MIGRATIONS_PATH });
+	await migratePg(marketplaceDb, {
+		migrationsFolder: MARKETPLACE_MIGRATIONS_PATH,
+	});
 }
 
 export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
@@ -130,9 +278,9 @@ export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 	if (!Array.isArray(evyFlowsRaw) || !Array.isArray(serviceFlowsRaw)) {
 		throw new Error("Flow files must export JSON arrays");
 	}
-	const evyFlowsJson = evyFlowsRaw.map((f: unknown) => validateFlowData(f));
+	const evyFlowsJson = evyFlowsRaw.map((f: unknown) => validateUiFlow(f));
 	const serviceFlowsJson = serviceFlowsRaw.map((f: unknown) =>
-		validateFlowData(f),
+		validateUiFlow(f),
 	);
 	const dataJson = validateSeedData(
 		JSON.parse(await readFile(paths.dataPath ?? DATA_PATH, "utf-8")),
@@ -144,17 +292,24 @@ export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 export async function seedDatabase({
 	evyFlowsJson,
 	serviceFlowsJson,
+	evyDataJson,
 	marketplaceDataJson,
 	now = new Date().toISOString(),
 }: {
 	evyFlowsJson: SeedFlow[];
 	serviceFlowsJson: SeedFlow[];
+	evyDataJson: SeedDataMap;
 	marketplaceDataJson: SeedDataMap;
 	now?: string;
 }) {
+	if (Object.keys(evyDataJson).length > 0) {
+		throw new Error(
+			`Seeding non-marketplace catalog keys into the API database is not implemented (got: ${Object.keys(evyDataJson).join(", ")}). Add dedicated-table inserts for Service, Organization, or ServiceProvider if needed.`,
+		);
+	}
+
 	await coreDb.transaction(async (tx) => {
 		await tx.delete(coreSchema.flow);
-		await tx.delete(coreSchema.data);
 		const flowRows = [
 			...evyFlowsJson.map((flowData) => ({
 				id: flowData.id,
@@ -174,27 +329,7 @@ export async function seedDatabase({
 		}
 	});
 
-	const marketplaceRows: {
-		id: string;
-		namespace: string;
-		resource: string;
-		data: SeedDataItem;
-		createdAt: string;
-		updatedAt: string;
-	}[] = [];
-	for (const [key, value] of Object.entries(marketplaceDataJson)) {
-		const resource = pluralize.singular(key);
-		for (const item of value) {
-			marketplaceRows.push({
-				id: item.id,
-				namespace: "marketplace",
-				resource,
-				data: item,
-				createdAt: now,
-				updatedAt: now,
-			});
-		}
-	}
+	const marketplaceRows = buildDataRows(marketplaceDataJson, now);
 
 	await marketplaceDb.transaction(async (tx) => {
 		await tx.delete(marketplaceSchema.data);
@@ -204,15 +339,24 @@ export async function seedDatabase({
 	});
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+async function main(): Promise<void> {
 	const { evyFlowsJson, serviceFlowsJson, dataJson } = await loadSeedInputs();
-	const marketplaceDataJson = extractMarketplaceData(dataJson);
-	ensureMarketplaceDatabaseExists()
-		.then(() =>
-			seedDatabase({ evyFlowsJson, serviceFlowsJson, marketplaceDataJson }),
-		)
+	const { marketplace: marketplaceDataJson, evy: evyDataJson } =
+		partitionSeedCatalogData(dataJson);
+	await ensureMarketplaceDatabaseExists();
+	await runMigrations();
+	await seedDatabase({
+		evyFlowsJson,
+		serviceFlowsJson,
+		evyDataJson,
+		marketplaceDataJson,
+	});
+	console.info("Seeding complete.");
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+	main()
 		.then(() => {
-			console.log("Seeding complete!");
 			process.exit(0);
 		})
 		.catch((error) => {

@@ -49,7 +49,7 @@ describe("initServer bootstrap", () => {
 		await waitForClientOpen(client);
 		await expect(
 			client.call("upsert", {
-				namespace: "evy",
+				service: "evy",
 				resource: "sdui",
 				data: {
 					id: crypto.randomUUID(),

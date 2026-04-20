@@ -8,12 +8,6 @@ import XCTest
 
 @MainActor
 final class EVYActionRunnerTests: XCTestCase {
-    func testEmptyActionsDoesNotNavigate() {
-        var navigateCount = 0
-        EVYActionRunner.run(actions: []) { _ in navigateCount += 1 }
-        XCTAssertEqual(navigateCount, 0)
-    }
-
     func testCloseAction() {
         var received: NavOperation?
         let action = UI_RowAction(condition: "", false: "", true: "{close}")

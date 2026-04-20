@@ -12,15 +12,8 @@ public enum EVYParamError: Error {
     case invalidProps
 }
 
-extension String {
-    var isNumber: Bool {
-        let digitsCharacters = CharacterSet(charactersIn: "0123456789")
-        return CharacterSet(charactersIn: self).isSubset(of: digitsCharacters)
-    }
-}
-
 struct GetParams: Encodable {
-	let namespace: String
+	let service: String
 	let resource: String
 	let filter: Filter?
 }
@@ -39,48 +32,48 @@ struct EVY {
 		do {
 			try EVY.data.create(key: "user", data: encodedUserData)
 		} catch EVYDataError.keyAlreadyExists {
-			// User data already loaded, skip
 		}
 	}
 	
-	private static func fetchResource(_ resource: String, namespace: String = "marketplace") async throws -> [EVYJson] {
+	private static func fetchResource(_ resource: String, service: String) async throws -> [EVYJson] {
 		try await EVYAPIManager.shared.fetch(
 			method: "get",
-			params: GetParams(namespace: namespace, resource: resource, filter: nil),
+			params: GetParams(service: service, resource: resource, filter: nil),
 			expecting: [EVYJson].self
 		)
 	}
 
-	private static func storeIfNew(key: String, from serviceData: EVYJson) {
+	private static func storeIfNew(key: String, from serviceData: EVYJson) throws {
 		do {
 			let encoded = try JSONEncoder().encode(serviceData.parseProp(props: [key]))
 			try data.create(key: key, data: encoded)
 		} catch EVYDataError.keyAlreadyExists {
-			// Data already loaded, skip
-		} catch {}
+		} catch {
+			throw error
+		}
 	}
 
 	static func getData() async throws -> Data {
 		let resources = ["selling_reasons", "conditions", "durations", "areas", "timeslots"]
 		var serviceDict: [String: EVYJson] = [:]
 		for resource in resources {
-			serviceDict[resource] = .array(try await fetchResource(resource))
+			serviceDict[resource] = .array(try await fetchResource(resource, service: "marketplace"))
 		}
 
-		let itemsJson = try await fetchResource("items", namespace: "marketplace")
+		let itemsJson = try await fetchResource("items", service: "marketplace")
 		serviceDict["item"] = itemsJson.first ?? .dictionary([:])
 
 		let serviceData: EVYJson = .dictionary(serviceDict)
 
 		for resource in resources {
-			storeIfNew(key: resource, from: serviceData)
+			try storeIfNew(key: resource, from: serviceData)
 		}
 
 		return try JSONEncoder().encode(serviceData.parseProp(props: ["item"]))
 	}
 	
 	static func getSDUI() async throws -> [UI_Flow] {
-		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "sdui", filter: nil), expecting: [UI_Flow].self)
+		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil), expecting: [UI_Flow].self)
 	}
 	
 	static func createItem() async throws {
@@ -89,142 +82,169 @@ struct EVY {
 	
 	static func getRow(_ props: [String]) async throws -> UI_Row {
 		try await createItem()
-		let flowData = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(namespace: "evy", resource: "sdui", filter: nil), expecting: EVYJson.self)
+		let flowData = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil), expecting: EVYJson.self)
 		let rowData = try JSONEncoder().encode(flowData.parseProp(props: props))
 		return try JSONDecoder().decode(UI_Row.self, from: rowData)
 	}
     
-    /**
-     * Methods to get data from various sources and inputs
-     */
     static func getDataFromText(_ input: String) throws -> EVYJson {
-        let props = EVYInterpreter.parsePropsFromText(input)
-        return try getDataFromProps(props)
+        try _getDataFromText(input)
     }
-    
+
     static func getDataFromProps(_ props: String) throws -> EVYJson {
-        let splitProps = try EVYInterpreter.splitPropsFromText(props)
-        let firstProp = splitProps.first!
-        let remainingProps = Array(splitProps[1...])
-
-        if let draftObj = try? data.getDraft(variableName: firstProp) {
-            return try draftObj.decoded().parseProp(props: remainingProps)
-        }
-
-        let dataObj = try data.get(key: firstProp)
-        return try dataObj.decoded().parseProp(props: remainingProps)
+        try _getDataFromProps(props)
     }
-    
+
     static func getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValue {
-        let match = try EVYInterpreter.parseTextFromText(input, editing)
-        return EVYValue(match.value, match.prefix, match.suffix)
-    }
-    
-    static func parsePropsFromText(_ input: String) -> String {
-        EVYInterpreter.parsePropsFromText(input)
+        try _getValueFromText(input, editing: editing)
     }
 
-    /// Root data key to observe for `.evyDataUpdated` when `text` contains `{count(foo)}`, `{formatCurrency(item.price)}`, etc.
-    /// Matches first `{…}` segment; unwraps function calls to their argument path so notifications for `foo` refresh the view.
+    static func parsePropsFromText(_ input: String) -> String {
+        _parsePropsFromText(input)
+    }
+
     static func watchTarget(for text: String) -> String {
-        let unwrapped = EVY.parsePropsFromText(text)
-        let candidates: [String] = unwrapped == text ? [text] : [unwrapped, text]
-        for candidate in candidates {
-            if let functionCall = EVYInterpreter.parseFunctionCall(candidate) {
-                let parts = EVYInterpreter.splitFunctionArguments(functionCall.functionArgs)
-                if let first = parts.first, !first.isEmpty {
-                    return EVYInterpreter.stripOptionalSurroundingQuotes(first)
-                }
-                return functionCall.functionArgs
-            }
-        }
-        if unwrapped != text {
-            return unwrapped
-        }
-        return text
+        _watchTarget(for: text)
     }
 
     static func evaluateFromText(_ input: String) throws -> Bool {
-        let match = try EVYInterpreter.parseTextFromText(input)
-        return match.value == "true"
+        try _evaluateFromText(input)
     }
-    
+
     static func formatData(json: EVYJson, format: String) throws -> String {
-        if format.count < 1 {
-            return json.toString()
-        }
-        
-        let temporaryId = UUID().uuidString
-        let formatWithNewData = format
-            .replacingOccurrences(of: "$0.", with: "\(temporaryId).")
-            .replacingOccurrences(of: ".$0", with: ".\(temporaryId)")
-            .replacingOccurrences(of: "($0)", with: "(\(temporaryId))")
-        
-        if formatWithNewData.isEmpty {
-            return json.toString()
-        }
-        
-        let encodedData = try JSONEncoder().encode(json)
-        try data.create(key: temporaryId, data: encodedData)
-        let returnText = try getValueFromText(formatWithNewData)
-        try data.delete(key: temporaryId)
-        return returnText.toString()
+        try _formatData(json: json, format: format)
     }
     
-    static func ensureDraftExists(variableName: String, initialData: Data? = nil) {
+    static func ensureDraftExists(
+        variableName: String,
+        initialData: Data? = nil,
+        scopeId: String? = nil
+    ) {
+        guard let resolvedScopeId = scopeId ?? data.activeDraftScopeId,
+              let binding = try? data.draftBinding(
+            fromParsedProps: variableName,
+            scopeId: resolvedScopeId
+        ) else {
+            return
+        }
         guard !data.exists(key: variableName),
-              !data.hasDraft(variableName: variableName) else {
+              !data.hasDraft(binding: binding) else {
             return
         }
         let emptyData = initialData ?? "\"\"".data(using: .utf8)!
         do {
-            try data.createDraft(variableName: variableName, data: emptyData)
+            try data.createDraft(binding: binding, data: emptyData)
         } catch {
-            // Draft may have been created concurrently
         }
     }
 
-    /**
-     * Creating a new entity in the API
-     */
-    static func create(key: String) throws {
+    static func create(key: String, draftScopeId: String? = nil) throws {
+        struct UpsertParams: Encodable {
+            let service: String
+            let resource: String
+            let filter: Filter?
+            let data: EVYJson
+        }
+
         let existing = try data.get(key: key)
-        existing.key = UUID().uuidString
-        // TODO: Send to API
+        let newId = UUID().uuidString
+        let payload = try existing.decoded()
+        guard case .dictionary = payload else {
+            throw EVYParamError.invalidProps
+        }
+
+        var mergedPayload = payload
+
+        let scopeForMerge = draftScopeId ?? data.activeDraftScopeId
+        let draftRows: [EVYDraft] = {
+            guard let s = scopeForMerge else { return [] }
+            return (try? data.drafts(forScopeId: s)) ?? []
+        }()
+        for draftRow in draftRows {
+            let draftValue = try draftRow.decoded()
+            if case .string(let s) = draftValue, s.isEmpty {
+                continue
+            }
+            mergedPayload = draftRow.merged(into: mergedPayload, draftValue: draftValue)
+        }
+
+        guard case .dictionary(var dict) = mergedPayload else {
+            throw EVYParamError.invalidProps
+        }
+        dict["id"] = .string(newId)
+        let dataWithId = EVYJson.dictionary(dict)
+        let params = UpsertParams(
+            service: "marketplace",
+            resource: "\(key)s",
+            filter: Filter(id: newId),
+            data: dataWithId
+        )
+        existing.data = try JSONEncoder().encode(dataWithId)
+        existing.key = newId
+
+        Task { @MainActor in
+            do {
+                _ = try await EVYAPIManager.shared.fetch(
+                    method: "upsert",
+                    params: params,
+                    expecting: EVYJson.self
+                )
+            } catch {
+                NotificationCenter.default.post(
+                    name: .evyErrorOccurred,
+                    object: error
+                )
+            }
+        }
     }
     
-    static func updateValue(_ value: String, at: String) throws {
-        let destinationProps = EVYInterpreter.parsePropsFromText(at)
-        if let (functionName, functionArgs) = EVYInterpreter.parseFunctionCall(destinationProps) {
+    static func updateValue(_ value: String, at: String, scopeId: String? = nil) throws {
+        let destinationProps = _parsePropsFromText(at)
+        if let (functionName, functionArgs) = parseFunctionCall(destinationProps) {
             switch functionName {
             case "buildCurrency":
-                try updateData(try evyBuildCurrency(functionArgs, value), at: functionArgs)
+                try updateData(try evyBuildCurrency(functionArgs, value), at: functionArgs, scopeId: scopeId)
                 return
             case "buildAddress":
-                try updateData(try evyBuildAddress(functionArgs, value), at: functionArgs)
+                try updateData(try evyBuildAddress(functionArgs, value), at: functionArgs, scopeId: scopeId)
                 return
             default:
                 break
             }
         }
-        try updateData("\"\(value)\"".data(using: .utf8)!, at: at)
+        try updateData("\"\(value)\"".data(using: .utf8)!, at: at, scopeId: scopeId)
     }
     
-    static func updateData(_ newData: Data, at: String) throws {
-        let variableName = EVYInterpreter.parsePropsFromText(at)
-        let splitProps = try EVYInterpreter.splitPropsFromText(variableName)
+    static func updateData(_ newData: Data, at: String, scopeId: String? = nil) throws {
+        let variableName = _parsePropsFromText(at)
+        let splitProps = try splitPropsFromText(variableName)
         let rootVariable = splitProps.first!
-        let remainingProps = Array(splitProps.dropFirst())
+        let resolvedScopeId = scopeId ?? data.activeDraftScopeId
+        let draftBinding = try resolvedScopeId.map {
+            try data.draftBinding(fromParsedProps: variableName, scopeId: $0)
+        }
 
-        if let existing = try? data.getDraft(variableName: rootVariable) {
+        if let draftBinding,
+           let existingDraft = data.draftIfPresent(binding: draftBinding)
+        {
+            let remainingProps = EVYDraft.remainingPropsAfterDraftPrefix(
+                splitProps: splitProps,
+                binding: draftBinding
+            )
             if remainingProps.isEmpty {
-                existing.data = newData
+                existingDraft.data = newData
             } else {
-                try existing.updateDataWithData(newData, props: remainingProps)
+                let wrapper = EVYData(key: "_draft", data: existingDraft.data)
+                try wrapper.updateDataWithData(newData, props: remainingProps)
+                existingDraft.data = wrapper.data
             }
-            NotificationCenter.default.post(name: .evyDataUpdated, object: rootVariable)
+            NotificationCenter.default.post(
+                name: .evyDataUpdated,
+                object: draftBinding.notificationKey
+            )
         } else if data.exists(key: rootVariable) {
             let dataObj = try data.get(key: rootVariable)
+            let remainingProps = Array(splitProps.dropFirst())
             if remainingProps.isEmpty {
                 dataObj.data = newData
             } else {
@@ -232,7 +252,10 @@ struct EVY {
             }
             try data.update(props: splitProps, data: dataObj.data)
         } else {
-            try data.createDraft(variableName: variableName, data: newData)
+            guard let draftBinding else {
+                throw EVYDataError.keyNotFound
+            }
+            try data.upsertDraft(binding: draftBinding, data: newData)
         }
     }
 }

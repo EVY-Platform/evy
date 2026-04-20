@@ -32,9 +32,11 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 			}
 		})
 		let temporaryId = UUID().uuidString
-		guard (try? EVY.updateValue(view.content.text, at: temporaryId)) != nil,
-		      let data = try? EVY.data.getDraft(variableName: temporaryId),
-		      let decoded = try? data.decoded() else { return nil }
+		let temporaryScopeId = EVYDraft.createMergeScopeId(flowId: "temporary", entityKey: temporaryId)
+		guard (try? EVY.updateValue(view.content.text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
+		      let binding = try? EVY.data.draftBinding(fromParsedProps: temporaryId, scopeId: temporaryScopeId),
+		      let draft = EVY.data.draftIfPresent(binding: binding),
+		      let decoded = try? draft.decoded() else { return nil }
 		self.value = decoded
 	}
 

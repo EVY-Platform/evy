@@ -12,7 +12,7 @@ services:
       - DB_PASS=${DB_PASS}
       - DB_PORT=${DB_PORT}
       - DB_DOMAIN=host.docker.internal
-      - DB_DATABASE=${DB_DATABASE}
+      - DB_EVY_DATABASE=${DB_EVY_DATABASE}
     env_file:
       - ../.env
     ports:

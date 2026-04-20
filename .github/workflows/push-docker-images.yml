@@ -55,7 +55,7 @@ jobs:
           DB_PASS: ${{ secrets.PG_PASS }}
           DB_PORT: 5432
           DB_DOMAIN: db
-          DB_DATABASE: evy
+          DB_EVY_DATABASE: evy
 
       - name: Docker Compose Remote Deploy web
         uses: glesage/docker-compose-remote-action@v1
