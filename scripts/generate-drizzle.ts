@@ -440,7 +440,6 @@ async function main(): Promise<void> {
 		'} from "drizzle-orm/pg-core";',
 		'import { relations } from "drizzle-orm";',
 		'import type { UI_Flow } from "evy-types/sdui/evy";',
-		'import type { DATA_PRIMITIVE } from "evy-types/data/primitive";',
 		"",
 	];
 
@@ -556,6 +555,21 @@ async function main(): Promise<void> {
 	}
 
 	await mkdir(dirname(OUT_PATH), { recursive: true });
+
+	const body = lines.join("\n");
+	if (body.includes("DATA_PRIMITIVE")) {
+		const uiFlowIdx = lines.findIndex((l) =>
+			l.includes("import type { UI_Flow }"),
+		);
+		if (uiFlowIdx !== -1) {
+			lines.splice(
+				uiFlowIdx + 1,
+				0,
+				'import type { DATA_PRIMITIVE } from "evy-types/data/primitive";',
+			);
+		}
+	}
+
 	await writeFile(OUT_PATH, lines.join("\n"), "utf-8");
 
 	console.log("Drizzle schema generated successfully.");

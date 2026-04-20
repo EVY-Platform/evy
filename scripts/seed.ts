@@ -106,6 +106,9 @@ function getConnectionUrl(databaseEnvName: string): string {
 	return `postgresql://${encodedUser}:${encodedPass}@${domain}:${port}/${database}`;
 }
 
+/** postgres.js logs NOTICE messages to console by default; Drizzle migrations trigger benign IF NOT EXISTS notices. */
+const seedPostgresOptions = { onnotice: () => {} };
+
 const flowTable = pgTable("Flow", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	data: jsonb("data").$type<SeedFlow>().notNull(),
@@ -124,11 +127,14 @@ const marketplaceDataTable = pgTable("Data", {
 const coreSchema = { flow: flowTable };
 const marketplaceSchema = { data: marketplaceDataTable };
 
-const coreDb = drizzle(postgres(getConnectionUrl("DB_EVY_DATABASE")), {
-	schema: coreSchema,
-});
+const coreDb = drizzle(
+	postgres(getConnectionUrl("DB_EVY_DATABASE"), seedPostgresOptions),
+	{
+		schema: coreSchema,
+	},
+);
 const marketplaceDb = drizzle(
-	postgres(getConnectionUrl("DB_MARKETPLACE_DATABASE")),
+	postgres(getConnectionUrl("DB_MARKETPLACE_DATABASE"), seedPostgresOptions),
 	{ schema: marketplaceSchema },
 );
 
@@ -237,6 +243,7 @@ export async function ensureMarketplaceDatabaseExists(): Promise<void> {
 		user,
 		password: pass,
 		database: "postgres",
+		...seedPostgresOptions,
 	});
 	try {
 		await sqlClient.unsafe(`CREATE DATABASE "${dbName}"`);

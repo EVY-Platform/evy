@@ -8,10 +8,10 @@
 import Foundation
 import SwiftUI
 
-public struct EVYFunctionOutput {
-    public let value: String
-    public let prefix: String?
-    public let suffix: String?
+struct EVYFunctionOutput {
+    let value: String
+    let prefix: String?
+    let suffix: String?
 }
 
 @MainActor

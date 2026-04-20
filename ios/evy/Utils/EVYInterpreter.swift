@@ -62,7 +62,7 @@ public func parseFunctionCall(_ input: String) -> (functionName: String, functio
 }
 
 @MainActor
-public func splitFunctionArguments(_ args: String) -> [String] {
+func splitFunctionArguments(_ args: String) -> [String] {
     var components: [String] = []
     var current = ""
     var depth = 0

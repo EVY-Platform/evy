@@ -1,4 +1,4 @@
-export type EVYFunctionOutput = {
+type EVYFunctionOutput = {
 	value: string;
 	prefix?: string;
 	suffix?: string;
