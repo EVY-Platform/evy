@@ -65,7 +65,8 @@ export function drawDotField(params: DrawDotFieldParams): void {
 
 	const dotBaseRadius = DOT_BASE_RADIUS * scale;
 	const dotHoverRadius = DOT_HOVER_RADIUS * scale;
-	const morphRadius = MORPH_RADIUS_PX * scale;
+	/** Fixed in CSS px so zoom changes how many grid cells fall inside the radius. */
+	const morphRadius = MORPH_RADIUS_PX;
 
 	const half = gridSize / 2;
 	const iStart = Math.ceil((0 - offsetX - half) / gridSize);
@@ -84,7 +85,8 @@ export function drawDotField(params: DrawDotFieldParams): void {
 			const baseX = offsetX + i * gridSize + half;
 			const baseY = offsetY + j * gridSize + half;
 
-			let influence = 0;
+			let colorInfluence = 0;
+			let pullInfluence = 0;
 			let dx = 0;
 			let dy = 0;
 			let d = 0;
@@ -92,27 +94,27 @@ export function drawDotField(params: DrawDotFieldParams): void {
 				dx = cursorX - baseX;
 				dy = cursorY - baseY;
 				d = Math.hypot(dx, dy);
-				if (d < R && d > 1e-6) {
-					const t = 1 - d / R;
-					influence = t * t;
-				} else if (d <= 1e-6) {
-					influence = 1;
+				if (d < R) {
+					const t = d / R;
+					const oneMinusT = 1 - t;
+					colorInfluence = oneMinusT * oneMinusT;
+					pullInfluence = Math.sin(Math.PI * t);
 				}
 			}
 
 			let drawX = baseX;
 			let drawY = baseY;
-			if (!disableMorph && hasCursor && influence > 0 && d > 1e-6) {
-				const pull = influence * MORPH_STRENGTH * gridSize;
+			if (!disableMorph && hasCursor && pullInfluence > 0 && d > 1e-6) {
+				const pull = pullInfluence * MORPH_STRENGTH * gridSize;
 				drawX += (dx / d) * pull;
 				drawY += (dy / d) * pull;
 			}
 
-			const colorT = Math.sqrt(influence);
+			const colorT = Math.sqrt(colorInfluence);
 			ctx.fillStyle = mixDotColor(colorMedium, colorDark, colorT);
 
 			const radius =
-				dotBaseRadius + (dotHoverRadius - dotBaseRadius) * influence;
+				dotBaseRadius + (dotHoverRadius - dotBaseRadius) * colorInfluence;
 			ctx.beginPath();
 			ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
 			ctx.fill();
