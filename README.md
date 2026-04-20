@@ -33,15 +33,14 @@ Resource routing, `flowUpdated` / `dataUpdated`, and gRPC forwarding are covered
   - [Data models](./docs/evy/sddata/data.md)
   - [Functions](./docs/evy/sddata/functions.md)
   - [Server Driven UI](./docs/evy/sdui/readme.md)
-- Marketplace
+  - [API](./api/README.md)
+  - [iOS](./ios/README.md)
+  - [Web](./web/README.md)
+  - [Android](./android/README.md) (placeholder; no app in this repo yet)
+- [Marketplace](./services/marketplace/README.md)
   - [Data models](./docs/services/marketplace/data.md)
   - [Example data](./docs/services/service_data.json)
   - [Example UI flow for view & create item pages](./docs/services/service_sdui.json)
-- [API](./api/README.md)
-- [Marketplace service](./services/marketplace/README.md)
-- [iOS](./ios/README.md)
-- [Web](./web/README.md)
-- [Android](./android/README.md) (placeholder; no app in this repo yet)
 
 ## Shared type system
 
