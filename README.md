@@ -24,7 +24,8 @@ flowchart LR
 
 - `service: "evy"` + `resource: "sdui"` reads/writes `UI_Flow` documents in the API database. Other `evy` resources (`devices`, `organisations`, `services`, `providers`) are also served locally by the API.
 - `service` values other than `evy` are forwarded over gRPC. Each such service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (uppercase service name, e.g. `MARKETPLACE_GRPC_HOST`).
-- **`flowUpdated`** is emitted after successful `evy` upserts when `resource === "sdui"`. **`dataUpdated`** covers other successful `evy` data upserts and events from remote services. Remote workers push via `evy.Service.SubscribeEvents`, which the API forwards through the same WebSocket `emitJsonRpc` path.
+- `flowUpdated` is emitted after successful `evy` upserts when `resource === "sdui"`.
+- `dataUpdated` covers other successful `evy` data upserts and events from remote services. Remote workers push via `evy.Service.SubscribeEvents`, which the API forwards through the same WebSocket `emitJsonRpc` path.
 
 See [`api/README.md`](./api/README.md) for the full request/notification sequence diagrams.
 
