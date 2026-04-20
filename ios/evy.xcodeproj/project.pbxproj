@@ -46,7 +46,7 @@
 		738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B4AED2B95DC3F005FF527 /* EVYData.swift */; };
 		73A401EC2C96F76C00ADA1A4 /* EVYSearchSingle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A401EB2C96F76C00ADA1A4 /* EVYSearchSingle.swift */; };
 		73A401EE2C96F78500ADA1A4 /* EVYSearchMultiple.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A401ED2C96F78500ADA1A4 /* EVYSearchMultiple.swift */; };
-		73A6BDFB2B85F75800C8F882 /* functions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BDF82B85F75800C8F882 /* functions.swift */; };
+		73A6BDFB2B85F75800C8F882 /* evfunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BDF82B85F75800C8F882 /* evfunctions.swift */; };
 		73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73AC529C2BC27913004204A2 /* EVYAPI.swift */; };
 		73B3CF7D2C6871EA00FD333A /* EVYCalendarRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF7C2C6871EA00FD333A /* EVYCalendarRow.swift */; };
 		73B3CF812C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF802C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift */; };
@@ -146,7 +146,7 @@
 		738B4AED2B95DC3F005FF527 /* EVYData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYData.swift; sourceTree = "<group>"; };
 		73A401EB2C96F76C00ADA1A4 /* EVYSearchSingle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchSingle.swift; sourceTree = "<group>"; };
 		73A401ED2C96F78500ADA1A4 /* EVYSearchMultiple.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchMultiple.swift; sourceTree = "<group>"; };
-		73A6BDF82B85F75800C8F882 /* functions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = functions.swift; sourceTree = "<group>"; };
+		73A6BDF82B85F75800C8F882 /* evfunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = evfunctions.swift; sourceTree = "<group>"; };
 		73AC529C2BC27913004204A2 /* EVYAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAPI.swift; sourceTree = "<group>"; };
 		73B3CF7C2C6871EA00FD333A /* EVYCalendarRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarRow.swift; sourceTree = "<group>"; };
 		73B3CF802C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectSegmentContainerRow.swift; sourceTree = "<group>"; };
@@ -236,7 +236,7 @@
 				73F6A0012F60000100000001 /* isNumber.swift */,
 				73D878E72B2ECD6900A1F9C2 /* chunked.swift */,
 				730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */,
-				73A6BDF82B85F75800C8F882 /* functions.swift */,
+				73A6BDF82B85F75800C8F882 /* evfunctions.swift */,
 				735795D22C21AF6100ADB49D /* EVYInterpreter.swift */,
 				73F5D2002F50000200000001 /* forEachRow.swift */,
 			);
@@ -666,7 +666,7 @@
 				7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */,
 				73E77C9D2C3118C100A53363 /* EVYInlinePicker.swift in Sources */,
 				734F5A242C2ED3BD00C0FD0A /* EVYSelectPhoto.swift in Sources */,
-				73A6BDFB2B85F75800C8F882 /* functions.swift in Sources */,
+				73A6BDFB2B85F75800C8F882 /* evfunctions.swift in Sources */,
 				73AC529D2BC27913004204A2 /* EVYAPI.swift in Sources */,
 				73CDCAB82B27176700D4E82A /* EVYImageOverlay.swift in Sources */,
 				73B3CF862C68AD2200FD333A /* EVYColumnContainerRow.swift in Sources */,
