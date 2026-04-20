@@ -15,6 +15,9 @@ import { useFocusPanOnEnter } from "../hooks/useFocusPanOnEnter";
 import { useViewportGestures } from "../hooks/useViewportGestures";
 import { CameraContext } from "../state/contexts/CameraContext";
 
+/** Time constant for display cursor to ease toward the pointer (~95% in this many ms). */
+const CURSOR_EASE_MS = 200;
+
 const worldStyle: CSSProperties = {
 	transformOrigin: "0 0",
 	willChange: "transform",
@@ -55,7 +58,9 @@ export function CanvasViewport({
 
 	const contentMeasureRef = useRef<HTMLDivElement | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
-	const cursorRef = useRef<CursorPosition>(null);
+	const targetCursorRef = useRef<CursorPosition>(null);
+	const displayCursorRef = useRef<CursorPosition>(null);
+	const lastCursorEaseTsRef = useRef<number | null>(null);
 	const camRef = useRef(getCamera());
 	const disableMorphRef = useRef(false);
 	const requestRepaintRef = useRef<() => void>(() => {});
@@ -84,6 +89,7 @@ export function CanvasViewport({
 		}
 
 		let rafId: number | null = null;
+		const easeTauMs = CURSOR_EASE_MS / 3;
 
 		const paintDotField = () => {
 			const cssWidth = canvas.clientWidth;
@@ -115,7 +121,7 @@ export function CanvasViewport({
 				scale: currentCam.scale,
 				offsetX: currentCam.offsetX,
 				offsetY: currentCam.offsetY,
-				cursor: cursorRef.current,
+				cursor: displayCursorRef.current,
 				backgroundColor: style.getPropertyValue("--color-evy-light").trim(),
 				colorMedium: style.getPropertyValue("--color-evy-gray-medium").trim(),
 				colorDark: style.getPropertyValue("--color-evy-gray-dark").trim(),
@@ -123,14 +129,50 @@ export function CanvasViewport({
 			});
 		};
 
+		const tick = (timeStamp: number) => {
+			rafId = null;
+
+			const target = targetCursorRef.current;
+			const display = displayCursorRef.current;
+
+			let stillAnimating = false;
+
+			if (target === null) {
+				displayCursorRef.current = null;
+				lastCursorEaseTsRef.current = null;
+			} else if (display === null) {
+				displayCursorRef.current = { x: target.x, y: target.y };
+				lastCursorEaseTsRef.current = timeStamp;
+			} else {
+				const lastTs = lastCursorEaseTsRef.current;
+				const dt = lastTs !== null ? Math.max(0.0001, timeStamp - lastTs) : 16;
+				lastCursorEaseTsRef.current = timeStamp;
+
+				const alpha = 1 - Math.exp(-dt / easeTauMs);
+				const nx = display.x + (target.x - display.x) * alpha;
+				const ny = display.y + (target.y - display.y) * alpha;
+				if (Math.hypot(target.x - nx, target.y - ny) < 0.1) {
+					displayCursorRef.current = { x: target.x, y: target.y };
+				} else {
+					displayCursorRef.current = { x: nx, y: ny };
+					stillAnimating = true;
+				}
+			}
+
+			paintDotField();
+
+			if (stillAnimating) {
+				rafId = requestAnimationFrame(tick);
+			} else {
+				lastCursorEaseTsRef.current = null;
+			}
+		};
+
 		const schedulePaint = () => {
 			if (rafId != null) {
 				return;
 			}
-			rafId = requestAnimationFrame(() => {
-				rafId = null;
-				paintDotField();
-			});
+			rafId = requestAnimationFrame(tick);
 		};
 
 		requestRepaintRef.current = schedulePaint;
@@ -142,7 +184,7 @@ export function CanvasViewport({
 
 		const onMove = (event: MouseEvent) => {
 			const rect = canvas.getBoundingClientRect();
-			cursorRef.current = {
+			targetCursorRef.current = {
 				x: event.clientX - rect.left,
 				y: event.clientY - rect.top,
 			};
@@ -150,7 +192,9 @@ export function CanvasViewport({
 		};
 
 		const onLeave = () => {
-			cursorRef.current = null;
+			targetCursorRef.current = null;
+			displayCursorRef.current = null;
+			lastCursorEaseTsRef.current = null;
 			schedulePaint();
 		};
 
