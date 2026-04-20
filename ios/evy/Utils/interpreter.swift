@@ -1,5 +1,5 @@
 //
-//  EVYInterpreter.swift
+//  interpreter.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 18/12/2023.
