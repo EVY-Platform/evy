@@ -108,6 +108,7 @@ describe("API E2E Tests", () => {
 			const testRow: UI_Row = {
 				id: crypto.randomUUID(),
 				type: "Text",
+				source: "",
 				actions: [],
 				view: {
 					content: {
