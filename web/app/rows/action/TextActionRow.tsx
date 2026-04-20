@@ -7,6 +7,7 @@ export default defineRow("TextActionRow", {
 	config: {
 		type: "TextAction",
 		actions: [],
+		source: "{item}",
 		view: {
 			content: {
 				title: "Text action row title",

@@ -8,13 +8,13 @@ export default defineRow("SearchRow", {
 	config: {
 		type: "Search",
 		actions: [],
+		source: "",
 		view: {
 			content: {
 				title: "Search row title",
-				format: "{$0.value}",
+				format: "{datum.value}",
 				placeholder: "placeholder",
 			},
-			data: "",
 		},
 		destination: "{address}",
 	} satisfies RowConfig,
@@ -23,7 +23,7 @@ export default defineRow("SearchRow", {
 			<div className="evy-relative">
 				<InlineIcon icon="::search::" alt="Search" />
 				<Input
-					value={row.config.view.data ?? ""}
+					value={row.config.source}
 					placeholder={row.config.view.content.placeholder ?? ""}
 				/>
 			</div>

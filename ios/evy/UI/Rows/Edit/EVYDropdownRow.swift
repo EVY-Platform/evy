@@ -11,10 +11,12 @@ struct EVYDropdownRow: View, EVYRowProtocol {
 	public static let JSONType = "Dropdown"
 
 	private let view: DropdownRowViewData
+	private let source: String
 	private let destination: String?
 
-	init(view: DropdownRowViewData, destination: String?) {
+	init(view: DropdownRowViewData, source: String, destination: String?) {
 		self.view = view
+		self.source = source
 		self.destination = destination
 	}
 
@@ -28,7 +30,7 @@ struct EVYDropdownRow: View, EVYRowProtocol {
 				EVYDropdown(
 					title: view.content.title,
 					placeholder: view.content.placeholder,
-					data: view.data ?? "",
+					data: source,
 					format: view.content.format,
 					destination: destination
 				)

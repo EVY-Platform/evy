@@ -32,6 +32,12 @@ export type RowAction =
 			configValue: string;
 	  }
 	| {
+			type: "UPDATE_ROW_ROOT";
+			rowId: string;
+			field: "source" | "destination";
+			value: string;
+	  }
+	| {
 			type: "UPDATE_ROW_ACTIONS";
 			rowId: string;
 			actions: UI_RowAction[];

@@ -7,6 +7,7 @@ export default defineRow("TextAreaRow", {
 	config: {
 		type: "TextArea",
 		actions: [],
+		source: "{item}",
 		view: {
 			content: {
 				title: "Text area row title",

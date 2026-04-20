@@ -11,9 +11,11 @@ struct EVYInputListRow: View, EVYRowProtocol {
 	public static let JSONType = "InputList"
 
 	private let view: InputListRowViewData
+	private let source: String
 
-	init(view: InputListRowViewData) {
+	init(view: InputListRowViewData, source: String) {
 		self.view = view
+		self.source = source
 	}
 
 	var body: some View {
@@ -23,7 +25,7 @@ struct EVYInputListRow: View, EVYRowProtocol {
 					.padding(.vertical, Constants.padding)
 			}
 			EVYInputList(
-				data: view.data ?? "",
+				data: source,
 				format: view.content.format,
 				placeholder: view.content.placeholder
 			)

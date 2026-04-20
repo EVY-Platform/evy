@@ -171,13 +171,15 @@ public final class UI_Row: Codable {
     public let id: String
     public let type: EVYRowType
     public let view: UI_RowView
+    public let source: String
     public let destination: String?
     public let actions: [UI_RowAction]
 
-    public init(id: String, type: EVYRowType, view: UI_RowView, destination: String?, actions: [UI_RowAction]) {
+    public init(id: String, type: EVYRowType, view: UI_RowView, source: String, destination: String?, actions: [UI_RowAction]) {
         self.id = id
         self.type = type
         self.view = view
+        self.source = source
         self.destination = destination
         self.actions = actions
     }
@@ -186,6 +188,7 @@ public final class UI_Row: Codable {
         case id
         case type
         case view
+        case source
         case destination
         case actions
     }
@@ -195,6 +198,7 @@ public final class UI_Row: Codable {
         id = try container.decode(String.self, forKey: .id)
         type = try container.decode(EVYRowType.self, forKey: .type)
         view = try container.decode(UI_RowView.self, forKey: .view)
+        source = try container.decode(String.self, forKey: .source)
         destination = try container.decodeIfPresent(String.self, forKey: .destination)
         actions = try container.decodeIfPresent([UI_RowAction].self, forKey: .actions) ?? []
     }
@@ -204,6 +208,7 @@ public final class UI_Row: Codable {
         try container.encode(id, forKey: .id)
         try container.encode(type, forKey: .type)
         try container.encode(view, forKey: .view)
+        try container.encode(source, forKey: .source)
         try container.encodeIfPresent(destination, forKey: .destination)
         try container.encode(actions, forKey: .actions)
     }
@@ -458,7 +463,7 @@ function emitUIRowPayloads(rowSpec: RowSpec): string {
 		if (!spec) continue;
 		const viewDataName = `${rowType}RowViewData`;
 		payloadCases.push(
-			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, String?, [UI_RowAction])`,
+			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, String, String?, [UI_RowAction])`,
 		);
 	}
 
@@ -470,7 +475,7 @@ function emitUIRowPayloads(rowSpec: RowSpec): string {
 		const enumCase = rowTypeToEnumCase(rowType);
 		fromRowCases.push(`        case .${enumCase}:
             let viewData = try JSONDecoder().decode(${viewDataName}.self, from: JSONEncoder().encode(row.view))
-            return .${enumCase}(viewData, row.destination, row.actions)`);
+            return .${enumCase}(viewData, row.source, row.destination, row.actions)`);
 	}
 
 	return `// Generated from types/schema/sdui/evy.schema.json + row-content.spec.json - do not edit.

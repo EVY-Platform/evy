@@ -10,6 +10,7 @@
 					{
 						"id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
 						"type": "ColumnContainer",
+						"source": "",
 						"view": {
 							"content": {
 								"title": "",
@@ -17,6 +18,7 @@
 									{
 										"id": "441c1433-446b-4682-854d-5d795ef52709",
 										"type": "Button",
+										"source": "",
 										"view": {
 											"content": {
 												"title": "",
@@ -34,6 +36,7 @@
 									{
 										"id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
 										"type": "Button",
+										"source": "",
 										"view": {
 											"content": {
 												"title": "",

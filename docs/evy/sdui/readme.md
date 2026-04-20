@@ -6,13 +6,15 @@
 
 UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Reference data (dropdown options, tags, durations, etc.) is not embedded inside the flow JSON.
 
-- Rows that need a data source set `view.data` to a string that typically references a variable or API/local source, for example:
-	- `"{conditions}"` — bind to data the client already has under that key
-	- `"{api:tags}"` — remote search / API-backed data
-	- `"local:address"` — client-local data source
-- That data is loaded separately via JSON-RPC `get` (`service` / `resource`); routing and persistence are described in [`api/README`](../../api/README.md). `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
+- Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from when rendering or editing:
+	- `"{item}"` — bind to the current flow entity / draft (e.g. listing fields, `{formatWeight(weight)}`, `{item.title}`).
+	- `"{conditions}"`, `"{selling_reasons}"`, `"{durations}"`, `"{areas}"`, `"{tags}"` — catalog or in-memory keys the client resolves to option lists.
+	- `"{api:tags}"` — remote search / API-backed data.
+	- `"local:address"` — client-local data source.
+	- `""` — no external read binding (e.g. pure navigation buttons, static Info).
+- That catalog/API/local data is loaded separately via JSON-RPC `get` (`service` / `resource`); routing and persistence are described in [`api/README`](../../api/README.md). `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
-So a flow might reference “10 min, 20 min, 30 min” options via `view.data` and a variable like `{durations}`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
+So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is still written to a field via `destination`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
 
 ## Flow
 
@@ -74,10 +76,10 @@ Rows are what are put into pages. They are the building block of the EVY server-
             // Additional keys per row type (label, value, placeholder, format, etc.)
             // See types/schema/sdui/row-content.spec.json for the full list per type.
         },
-        // Optional. A string (e.g. template or data reference) for rows that need data (dropdowns, search).
-        "data": "string",
-        "max_lines": "string"    // optional
+        "max_lines": "string"    // optional (e.g. Text)
     },
+    // Where the row reads option/list/entity data from (required string; use "" if unused).
+    "source": "string",
     // Where the input data is stored (optional, used by edit rows)
     "destination": "string",
 
@@ -188,4 +190,4 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 
 Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`). See `row-content.spec.json` for the exact keys per type.
 
-For list-backed rows (Dropdown, InlinePicker, Search, InputList, etc.), `format` is evaluated per item from `view.data`. Use `datum` as the placeholder for the current item in expressions, e.g. `{datum.value}` or `{datum.unit} {datum.street}, {datum.city}`.
+For list-backed rows (Dropdown, InlinePicker, Search, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `datum` as the placeholder for the current item in expressions, e.g. `{datum.value}` or `{datum.unit} {datum.street}, {datum.city}`.

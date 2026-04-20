@@ -12,7 +12,8 @@ import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
 
 function encodeRow(row: Row): ServerRow {
-	const content = row.config.view.content;
+	const { view, ...rowRoot } = row.config;
+	const content = view.content;
 
 	// Build the encoded content, converting Row children/child to ServerRow
 	const encodedContent: ServerRowContent = { title: content.title };
@@ -46,13 +47,11 @@ function encodeRow(row: Row): ServerRow {
 
 	return {
 		id: row.id,
-		type: row.config.type,
+		...rowRoot,
 		view: {
-			...row.config.view,
+			...view,
 			content: encodedContent,
 		},
-		destination: row.config.destination,
-		actions: row.config.actions,
 	};
 }
 

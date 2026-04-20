@@ -18,6 +18,18 @@ import {
 } from "../../utils/flowFactory";
 import { findFlowById } from "../../utils/flowHelpers";
 
+function mapRowAcrossPages(
+	pages: UI_Page[],
+	rowId: string,
+	updater: (row: Row) => Row,
+): UI_Page[] {
+	return pages.map((page) => ({
+		...page,
+		rows: updateRowInTree(page.rows, rowId, updater),
+		footer: page.footer?.id === rowId ? updater(page.footer) : page.footer,
+	}));
+}
+
 export const pageReducer = (state: AppState, action: RowAction): AppState => {
 	if (action.type === "SET_ACTIVE_FLOW") {
 		return {
@@ -244,17 +256,26 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				},
 			});
 
-			const newPages = flow.pages.map((page) => {
-				const updatedFooter =
-					page.footer?.id === action.rowId ? updater(page.footer) : page.footer;
-				return {
-					...page,
-					rows: updateRowInTree(page.rows, action.rowId, updater),
-					footer: updatedFooter,
-				};
+			return updateState({
+				updatedPages: mapRowAcrossPages(flow.pages, action.rowId, updater),
+			});
+		}
+		case "UPDATE_ROW_ROOT": {
+			const updater = (row: Row): Row => ({
+				...row,
+				config: {
+					...row.config,
+					...(action.field === "source"
+						? { source: action.value }
+						: {
+								destination: action.value === "" ? undefined : action.value,
+							}),
+				},
 			});
 
-			return updateState({ updatedPages: newPages });
+			return updateState({
+				updatedPages: mapRowAcrossPages(flow.pages, action.rowId, updater),
+			});
 		}
 		case "UPDATE_ROW_ACTIONS": {
 			const updater = (row: Row): Row => ({
@@ -265,17 +286,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				},
 			});
 
-			const newPages = flow.pages.map((page) => {
-				const updatedFooter =
-					page.footer?.id === action.rowId ? updater(page.footer) : page.footer;
-				return {
-					...page,
-					rows: updateRowInTree(page.rows, action.rowId, updater),
-					footer: updatedFooter,
-				};
+			return updateState({
+				updatedPages: mapRowAcrossPages(flow.pages, action.rowId, updater),
 			});
-
-			return updateState({ updatedPages: newPages });
 		}
 		case "SET_ACTIVE_ROW": {
 			const page = flow.pages.find(

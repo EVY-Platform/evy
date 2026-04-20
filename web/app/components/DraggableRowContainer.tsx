@@ -13,6 +13,7 @@ export function DraggableRowContainer({
 	showIndicators = false,
 	previousRowId,
 	nextRowId,
+	isDraggable = true,
 }: {
 	rowId: string;
 	children: React.ReactNode;
@@ -21,6 +22,7 @@ export function DraggableRowContainer({
 	showIndicators?: boolean;
 	previousRowId?: string;
 	nextRowId?: string;
+	isDraggable?: boolean;
 }) {
 	const { ref, state, indicators, dropzones } = useDraggable({
 		rowId,
@@ -28,6 +30,7 @@ export function DraggableRowContainer({
 		showIndicators,
 		previousRowId,
 		nextRowId,
+		isDraggable,
 	});
 
 	return (

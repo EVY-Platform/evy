@@ -54,6 +54,7 @@ type UseDraggableOptions = {
 	showIndicators?: boolean;
 	previousRowId?: string;
 	nextRowId?: string;
+	isDraggable?: boolean;
 };
 
 type UseDraggableResult = {
@@ -69,6 +70,7 @@ export function useDraggable({
 	showIndicators = false,
 	previousRowId,
 	nextRowId,
+	isDraggable = true,
 }: UseDraggableOptions): UseDraggableResult {
 	const { dragging, dropIndicator, dispatchDropIndicator } = useDragContext();
 
@@ -160,30 +162,36 @@ export function useDraggable({
 		invariant(element, "useDraggable useEffect: ref.current is not defined");
 
 		return combine(
-			draggable({
-				element,
-				getInitialData: () => ({ rowId: rowId }),
-				onGenerateDragPreview: ({ location, source, nativeSetDragImage }) => {
-					const rect = source.element.getBoundingClientRect();
+			...(isDraggable
+				? [
+						draggable({
+							element,
+							getInitialData: () => ({ rowId: rowId }),
+							onGenerateDragPreview: ({
+								location,
+								source,
+								nativeSetDragImage,
+							}) => {
+								const rect = source.element.getBoundingClientRect();
 
-					if (nativeSetDragImage) {
-						setCustomNativeDragPreview({
-							nativeSetDragImage,
-							getOffset: preserveOffsetOnSource({
-								element,
-								input: location.current.input,
-							}),
-							render({ container }: { container: HTMLElement }) {
-								setState({ type: "preview", container, rect });
-								return () => setState(draggingState);
+								setCustomNativeDragPreview({
+									nativeSetDragImage,
+									getOffset: preserveOffsetOnSource({
+										element,
+										input: location.current.input,
+									}),
+									render({ container }: { container: HTMLElement }) {
+										setState({ type: "preview", container, rect });
+										return () => setState(draggingState);
+									},
+								});
 							},
-						});
-					}
-				},
 
-				onDragStart: () => setState(draggingState),
-				onDrop: () => setState(idleState),
-			}),
+							onDragStart: () => setState(draggingState),
+							onDrop: () => setState(idleState),
+						}),
+					]
+				: []),
 			dropTargetForExternal({
 				element,
 			}),
@@ -220,6 +228,7 @@ export function useDraggable({
 		currentRow?.config.view.content.children?.length,
 		dispatchDropIndicator,
 		dropIndicator,
+		isDraggable,
 		onDragEvent,
 		rowId,
 	]);

@@ -49,9 +49,6 @@
 		}
 	},
 	"Dropdown": {
-		"view": {
-			"data": "string"
-		},
 		"content": {
 			"title": "string",
 			"format": "string",
@@ -59,18 +56,12 @@
 		}
 	},
 	"InlinePicker": {
-		"view": {
-			"data": "string"
-		},
 		"content": {
 			"title": "string",
 			"format": "string"
 		}
 	},
 	"Search": {
-		"view": {
-			"data": "string"
-		},
 		"content": {
 			"title": "string",
 			"format": "string",
@@ -94,9 +85,6 @@
 		}
 	},
 	"InputList": {
-		"view": {
-			"data": "string"
-		},
 		"content": {
 			"title": "string",
 			"format": "string",

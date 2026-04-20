@@ -9,6 +9,7 @@ export default defineRow(typeName, {
 	config: {
 		type: "SheetContainer",
 		actions: [],
+		source: "",
 		view: {
 			content: {
 				title: "Sheet container row title",

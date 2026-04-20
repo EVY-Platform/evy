@@ -1,13 +1,14 @@
 import { dirname, join } from "node:path";
-import { readFile } from "node:fs/promises";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { fileURLToPath } from "node:url";
+import { migrate as migratePg } from "drizzle-orm/postgres-js/migrator";
+import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { readFile } from "node:fs/promises";
+import addFormats from "ajv-formats";
+import Ajv2020 from "ajv/dist/2020";
 import pluralize from "pluralize";
 import postgres from "postgres";
-import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
-import { drizzle } from "drizzle-orm/postgres-js";
-import { migrate as migratePg } from "drizzle-orm/postgres-js/migrator";
-import Ajv2020 from "ajv/dist/2020";
-import addFormats from "ajv-formats";
+
 import { MARKETPLACE_SEED_KEYS } from "../services/marketplace/src/catalog";
 import { validateUiFlow } from "../types/validators";
 

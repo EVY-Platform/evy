@@ -7,20 +7,20 @@ export default defineRow("DropdownRow", {
 	config: {
 		type: "Dropdown",
 		actions: [],
+		source: "",
 		view: {
 			content: {
 				title: "Dropdown row title",
 				placeholder: "placeholder",
-				format: "{$0.value}",
+				format: "{datum.value}",
 			},
-			data: "",
 		},
 		destination: "{condition}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
 			<Dropdown
-				value={row.config.view.data ?? ""}
+				value={row.config.source}
 				placeholder={row.config.view.content.placeholder ?? ""}
 			/>
 		</RowLayout>
