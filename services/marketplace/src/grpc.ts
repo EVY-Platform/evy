@@ -7,7 +7,14 @@ import type { Client } from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import type { GetRequest, UpsertRequest } from "evy-types";
 
-import { get, upsert } from "./data";
+import {
+	getForValidatedMarketplaceRequest,
+	upsertForValidatedMarketplaceRequest,
+} from "./data";
+import {
+	validateStrictGetRequest,
+	validateStrictUpsertRequest,
+} from "evy-types/rpcRequestHelpers";
 
 /**
  * Best-effort write for server-streaming SubscribeEvents. If the client has
@@ -94,7 +101,7 @@ function buildMarketplaceServiceHandlers(
 			Get: (
 				call: grpc.ServerUnaryCall<
 					{
-						namespace: string;
+						service: string;
 						resource: string;
 						filter?: { id: string };
 					},
@@ -106,11 +113,12 @@ function buildMarketplaceServiceHandlers(
 					try {
 						const req = call.request;
 						const params: GetRequest = {
-							namespace: req.namespace as GetRequest["namespace"],
+							service: req.service as GetRequest["service"],
 							resource: req.resource as GetRequest["resource"],
 							filter: req.filter?.id ? { id: req.filter.id } : undefined,
 						};
-						const result = await get(params);
+						validateStrictGetRequest(params);
+						const result = await getForValidatedMarketplaceRequest(params);
 						cb(null, { result_json: JSON.stringify(result) });
 					} catch (err) {
 						cb({
@@ -123,7 +131,7 @@ function buildMarketplaceServiceHandlers(
 			Upsert: (
 				call: grpc.ServerUnaryCall<
 					{
-						namespace: string;
+						service: string;
 						resource: string;
 						filter?: { id: string };
 						data_json: string;
@@ -149,12 +157,13 @@ function buildMarketplaceServiceHandlers(
 							return;
 						}
 						const params: UpsertRequest = {
-							namespace: req.namespace as GetRequest["namespace"],
+							service: req.service as GetRequest["service"],
 							resource: req.resource as GetRequest["resource"],
 							filter: req.filter?.id ? { id: req.filter.id } : undefined,
 							data,
 						};
-						const result = await upsert(params);
+						validateStrictUpsertRequest(params);
+						const result = await upsertForValidatedMarketplaceRequest(params);
 						eventBus.emit("notify", "dataUpdated", result);
 						cb(null, { result_json: JSON.stringify(result) });
 					} catch (err) {

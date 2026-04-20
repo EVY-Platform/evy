@@ -47,12 +47,6 @@
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
-		},
-		"DATA_EVY_Data": {
-			"tableName": "Data",
-			"primaryKey": "id",
-			"defaultRandom": ["id"],
-			"uniqueIndexes": []
 		}
 	},
 	"relations": [

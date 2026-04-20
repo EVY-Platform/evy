@@ -44,4 +44,4 @@ jobs:
                   DB_PASS: evy
                   DB_PORT: 5432
                   DB_DOMAIN: localhost
-                  DB_DATABASE: test
+                  DB_EVY_DATABASE: test

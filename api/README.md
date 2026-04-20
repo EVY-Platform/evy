@@ -1,12 +1,12 @@
 # EVY API
 
-Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https://github.com/elpheria/rpc-websockets)) that persists SDUI flows with Drizzle/Postgres, forwards all non-SDUI traffic to backend services over gRPC, and pushes real-time `dataUpdated` / `flowUpdated` notifications to connected clients.
+Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https://github.com/elpheria/rpc-websockets)) that handles `service: "evy"` in-process (SDUI flows and core tables), forwards other services over gRPC, and pushes real-time `dataUpdated` / `flowUpdated` notifications to connected clients.
 
 ## Architecture
 
 ### System view
 
-The API is the only public edge for iOS and the web builder; it fans out to per-namespace backend services. Every non-`evy` namespace (currently only `marketplace`) must declare its gRPC address via `<NAMESPACE>_GRPC_HOST` and `<NAMESPACE>_GRPC_PORT`.
+The API is the only public edge for iOS and the web builder. Requests are validated against [`types/schema/rpc/`](../types/schema/rpc) and routed by **`service` + `resource`** in [`src/rpc.ts`](./src/rpc.ts): `service === "evy"` goes to [`src/data.ts`](./src/data.ts); any other registered service uses [`src/services.ts`](./src/services.ts) to call gRPC. Every non-`evy` service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (see `SERVICE_VALUES` in generated types / [`src/services.ts`](./src/services.ts)).
 
 ```mermaid
 flowchart LR
@@ -17,7 +17,7 @@ flowchart LR
         ws[ws.ts<br/>JSON-RPC 2.0 server]
         rpc[rpc.ts<br/>get / upsert dispatch]
         data[data.ts<br/>local evy store]
-        services[services.ts<br/>namespace router]
+        services[services.ts<br/>gRPC clients + events]
         validation[validation.ts]
     end
 
@@ -41,10 +41,10 @@ flowchart LR
 
 ### Request dispatch
 
-`get` is public, `upsert` is protected (requires a valid device token via `validateAuth`). Both carry a `namespace` + `resource` pair:
+`get` is public, `upsert` is protected (requires a valid device token via `validateAuth`). Params include **`service`**, **`resource`**, optional **`filter.id`**, and for `upsert` a **`data`** object (see JSON Schemas under `types/schema/rpc/`).
 
-- `namespace: "evy"` **and** `resource: "sdui"` &mdash; read/write `UI_Flow` documents in the local `flow` table.
-- Every other `(namespace, resource)` pair &mdash; proxied to the matching gRPC backend. `evy` arbitrary resources (non-`sdui`) are served locally from the `data` table via the local adapter in `services.ts`.
+- **`service: "evy"`** &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, and `providers` (typed catalog tables). There is no generic `evy` “data” table routed through `services.ts`.
+- **`service` ≠ `"evy"`** (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardUnary` in [`src/services.ts`](./src/services.ts), which issues `Get` / `Upsert` on `evy.Service` and validates JSON responses.
 
 ```mermaid
 sequenceDiagram
@@ -55,28 +55,23 @@ sequenceDiagram
     participant S as services.ts
     participant MP as marketplace (gRPC)
 
-    C->>WS: JSON-RPC upsert { namespace, resource, data }
+    C->>WS: JSON-RPC upsert { service, resource, filter?, data }
     WS->>WS: validateAuth(token, os) if protected
     WS->>RPC: upsert(params)
-    RPC->>RPC: validateRpcParams / assertUpsertShape
+    RPC->>RPC: validateStrictUpsertRequest(params)
 
-    alt resource == "sdui"
-        RPC->>D: upsertCore({ namespace: "evy", ... })
-        D->>D: validateFlowData (Zod)
-        D-->>RPC: DATA_EVY_Flow
-        RPC->>WS: emitJsonRpc("flowUpdated", row)
-        WS-->>C: notification flowUpdated
-    else other resource
-        RPC->>S: forwardUpsert(namespace, params)
-        alt namespace == "evy"
-            S->>D: upsertCore(params)
-            D-->>S: row
-        else namespace != "evy"
-            S->>MP: gRPC Upsert
-            MP-->>S: row JSON
-        end
+    alt service == "evy"
+        RPC->>D: upsertCoreForValidatedRequest(params)
+        D-->>RPC: row
+        RPC->>WS: emitJsonRpc(notification, row)
+        Note over RPC,WS: flowUpdated if resource is sdui else dataUpdated
+        WS-->>C: JSON-RPC notification
+    else service != "evy"
+        RPC->>S: forwardUnary(service, "upsert", params)
+        S->>MP: gRPC Upsert (JSON in data_json / result_json)
+        MP-->>S: row JSON
         S-->>RPC: row
-        Note over S,WS: SubscribeEvents stream fans "dataUpdated"<br/>notifications back through ws.ts
+        Note over S,WS: SubscribeEvents stream forwards remote events<br/>through emitJsonRpc (e.g. dataUpdated)
     end
 
     RPC-->>WS: row
@@ -91,8 +86,8 @@ sequenceDiagram
 { "jsonrpc": "2.0", "method": "dataUpdated", "params": { /* row */ } }
 ```
 
-- SDUI writes emit `flowUpdated` directly from `rpc.ts`.
-- Non-SDUI writes emit `dataUpdated`. Local `evy` writes emit via an in-process `EventEmitter`; remote services emit by pushing onto `evy.Service.SubscribeEvents`, which `services.ts` keeps open with exponential-backoff reconnect and forwards through `emitJsonRpc`.
+- Successful **`evy`** upserts call `emitJsonRpc` from [`src/rpc.ts`](./src/rpc.ts): `flowUpdated` when `resource === "sdui"`, otherwise `dataUpdated`.
+- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them with the same `emitJsonRpc` helper (reconnect with exponential backoff).
 
 ### Internal module layout
 
@@ -115,7 +110,6 @@ flowchart TD
     rpc --> ws
     data --> validation
     data --> drizzleTables
-    services --> data
     services --> ws
     readiness --> rpc
 ```
@@ -145,8 +139,8 @@ DB_USER=evy
 DB_PASS=evy
 DB_PORT=5432
 DB_DOMAIN=localhost
-DB_DATABASE=evy
-# Required for each non-evy namespace (URL is built as host:port); see api/src/services.ts
+DB_EVY_DATABASE=evy
+# Required for each non-evy service (URL is host:port); see api/src/services.ts
 MARKETPLACE_GRPC_HOST=0.0.0.0
 MARKETPLACE_GRPC_PORT=8001
 ```
@@ -182,7 +176,7 @@ docker run -p 8000:8000 \
   -e DB_PASS="password" \
   -e DB_PORT="5432" \
   -e DB_DOMAIN="host" \
-  -e DB_DATABASE="evy" \
+  -e DB_EVY_DATABASE="evy" \
   -e MARKETPLACE_GRPC_HOST="marketplace" \
   -e MARKETPLACE_GRPC_PORT="8001" \
   evy-api

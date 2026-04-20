@@ -95,7 +95,7 @@
 							"data": "{conditions}",
 							"content": {
 								"title": "Condition",
-								"format": "{$0.value}",
+								"format": "{datum.value}",
 								"placeholder": "Choose one"
 							}
 						},
@@ -109,7 +109,7 @@
 							"data": "{selling_reasons}",
 							"content": {
 								"title": "Selling Reason",
-								"format": "{$0.value}",
+								"format": "{datum.value}",
 								"placeholder": "Choose one"
 							}
 						},
@@ -180,7 +180,7 @@
 										"data": "{tags}",
 										"content": {
 											"title": "Tags",
-											"format": "{$0.value}",
+											"format": "{datum.value}",
 											"placeholder": "Search for tags"
 										}
 									},
@@ -194,7 +194,7 @@
 											"data": "{api:tags}",
 											"content": {
 												"title": "",
-												"format": "{$0.value}",
+												"format": "{datum.value}",
 												"placeholder": "Search for tags"
 											}
 										},
@@ -353,7 +353,7 @@
 																			"data": "local:address",
 																			"content": {
 																				"title": "",
-																				"format": "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}",
+																				"format": "{datum.unit} {datum.street}, {datum.city} {datum.state} {datum.postcode}",
 																				"placeholder": "Search address"
 																			}
 																		},
@@ -457,7 +457,7 @@
 															"data": "{durations}",
 															"content": {
 																"title": "",
-																"format": "{$0.value}"
+																"format": "{datum.value}"
 															}
 														},
 														"destination": "{distance}",
@@ -542,7 +542,7 @@
 															"data": "{areas}",
 															"content": {
 																"title": "",
-																"format": "{$0.value}"
+																"format": "{datum.value}"
 															}
 														},
 														"destination": "{shipping_destination_areas}",

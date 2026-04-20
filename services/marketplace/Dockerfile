@@ -25,21 +25,23 @@ COPY services/marketplace/src ./src
 COPY services/marketplace/drizzle.config.ts ./
 COPY services/marketplace/drizzle ./drizzle
 COPY --from=typesgen /app/types/generated/ts ../../types/generated/ts
+COPY types/schema ../../types/schema
+COPY types/validators.ts ../../types/validators.ts
+COPY types/rpcRequestHelpers.ts ../../types/rpcRequestHelpers.ts
 
 # Production stage
 FROM base AS runner
 
 WORKDIR /app/services/marketplace
 
-# Copy node_modules
-COPY --from=builder /app/services/marketplace/node_modules ./node_modules
+COPY --from=builder /app/services/marketplace/node_modules /app/node_modules
 COPY --from=builder /app/services/marketplace/package.json ./
-COPY types/schema/service.proto /app/types/schema/service.proto
 COPY --from=builder /app/services/marketplace/src ./src
 COPY --from=builder /app/services/marketplace/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/types ../../types
 COPY --from=builder /app/services/marketplace/drizzle.config.ts ./
 COPY --from=builder /app/services/marketplace/drizzle ./drizzle
+COPY types/schema/service.proto /app/types/schema/service.proto
 
 ARG MARKETPLACE_GRPC_HOST
 ENV MARKETPLACE_GRPC_HOST=$MARKETPLACE_GRPC_HOST

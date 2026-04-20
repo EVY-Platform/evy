@@ -25,21 +25,23 @@ COPY api/src ./src
 COPY api/drizzle.config.ts ./
 COPY api/drizzle ./drizzle
 COPY --from=typesgen /app/types/generated/ts ../types/generated/ts
+COPY types/schema ../types/schema
+COPY types/validators.ts ../types/validators.ts
+COPY types/rpcRequestHelpers.ts ../types/rpcRequestHelpers.ts
 
 # Production stage
 FROM base AS runner
 
 WORKDIR /app/api
 
-# Copy node_modules
-COPY --from=builder /app/api/node_modules ./node_modules
+COPY --from=builder /app/api/node_modules /app/node_modules
 COPY --from=builder /app/api/package.json ./
-COPY types/schema/service.proto /app/types/schema/service.proto
 COPY --from=builder /app/api/src ./src
 COPY --from=builder /app/api/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/types ../types
 COPY --from=builder /app/api/drizzle.config.ts ./
 COPY --from=builder /app/api/drizzle ./drizzle
+COPY types/schema/service.proto /app/types/schema/service.proto
 
 ARG API_PORT
 ENV API_PORT=$API_PORT

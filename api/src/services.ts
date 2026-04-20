@@ -4,12 +4,16 @@ import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import type {
-	DATA_EVY_Rows,
 	GetRequest,
 	GetResponse,
 	UpsertRequest,
+	UpsertResponse,
 } from "evy-types";
-import { NAMESPACE_VALUES } from "evy-types";
+import { SERVICE_VALUES } from "evy-types";
+import {
+	validateGetResponse,
+	validateUpsertResponse,
+} from "evy-types/validators";
 import { emitJsonRpc, type RpcServer } from "./ws";
 
 function resolveServiceProtoPath(): string {
@@ -55,14 +59,14 @@ function loadEvyServiceConstructor(): grpc.ServiceClientConstructor {
 
 type ServiceAdapter = {
 	get(params: GetRequest): Promise<GetResponse>;
-	upsert(params: UpsertRequest): Promise<DATA_EVY_Rows>;
+	upsert(params: UpsertRequest): Promise<UpsertResponse>;
 	onEvent(listener: (eventName: string, payload: unknown) => void): void;
 };
 
 type GrpcServiceClient = grpc.Client & {
 	Get: (
 		request: {
-			namespace: string;
+			service: string;
 			resource: string;
 			filter?: { id: string };
 		},
@@ -70,7 +74,7 @@ type GrpcServiceClient = grpc.Client & {
 	) => grpc.ClientUnaryCall;
 	Upsert: (
 		request: {
-			namespace: string;
+			service: string;
 			resource: string;
 			filter?: { id: string };
 			data_json: string;
@@ -87,14 +91,14 @@ type GrpcServiceClient = grpc.Client & {
 
 function buildProtoGetRequest(params: GetRequest) {
 	return {
-		namespace: params.namespace,
+		service: params.service,
 		resource: params.resource,
 		...(params.filter?.id ? { filter: { id: params.filter.id } } : {}),
 	};
 }
 
 function makeGrpcAdapter(
-	namespace: string,
+	serviceName: string,
 	url: string,
 	ServiceClientCtor: grpc.ServiceClientConstructor,
 ): ServiceAdapter {
@@ -141,11 +145,7 @@ function makeGrpcAdapter(
 			let payload: unknown;
 			try {
 				payload = JSON.parse(msg.payload_json) as unknown;
-			} catch (err) {
-				console.warn(
-					"SubscribeEvents: invalid payload_json, skipping",
-					err instanceof Error ? err.message : err,
-				);
+			} catch {
 				return;
 			}
 			eventListener?.(msg.event_name, payload);
@@ -173,14 +173,25 @@ function makeGrpcAdapter(
 						return;
 					}
 					if (!response) {
-						reject(new Error(`Empty Get response from ${namespace} service`));
+						reject(new Error(`Empty Get response from ${serviceName} service`));
 						return;
 					}
-					resolve(JSON.parse(response.result_json) as GetResponse);
+					let parsed: unknown;
+					try {
+						parsed = JSON.parse(response.result_json) as unknown;
+					} catch (parseErr) {
+						reject(parseErr);
+						return;
+					}
+					try {
+						resolve(validateGetResponse(parsed));
+					} catch (validationErr) {
+						reject(validationErr);
+					}
 				});
 			}),
 		upsert: (params) =>
-			new Promise<DATA_EVY_Rows>((resolve, reject) => {
+			new Promise<UpsertResponse>((resolve, reject) => {
 				client.Upsert(
 					{
 						...buildProtoGetRequest(params),
@@ -193,11 +204,22 @@ function makeGrpcAdapter(
 						}
 						if (!response) {
 							reject(
-								new Error(`Empty Upsert response from ${namespace} service`),
+								new Error(`Empty Upsert response from ${serviceName} service`),
 							);
 							return;
 						}
-						resolve(JSON.parse(response.result_json) as DATA_EVY_Rows);
+						let parsed: unknown;
+						try {
+							parsed = JSON.parse(response.result_json) as unknown;
+						} catch (parseErr) {
+							reject(parseErr);
+							return;
+						}
+						try {
+							resolve(validateUpsertResponse(parsed));
+						} catch (validationErr) {
+							reject(validationErr);
+						}
 					},
 				);
 			}),
@@ -216,49 +238,49 @@ function getGrpcAdapters(): Map<string, ServiceAdapter> {
 	}
 	const next = new Map<string, ServiceAdapter>();
 	const ServiceCtor = loadEvyServiceConstructor();
-	for (const namespace of NAMESPACE_VALUES) {
-		if (namespace === "evy") {
+	for (const svc of SERVICE_VALUES) {
+		if (svc === "evy") {
 			continue;
 		}
-		const prefix = namespace.toUpperCase();
+		const prefix = svc.toUpperCase();
 		const hostKey = `${prefix}_GRPC_HOST`;
 		const portKey = `${prefix}_GRPC_PORT`;
 		const host = process.env[hostKey]?.trim();
 		const port = process.env[portKey]?.trim();
 		if (!host || !port) {
 			throw new Error(
-				`Missing ${hostKey} and/or ${portKey}: every non-evy namespace must declare its gRPC host and port.`,
+				`Missing ${hostKey} and/or ${portKey}: every non-evy service must declare its gRPC host and port.`,
 			);
 		}
-		next.set(
-			namespace,
-			makeGrpcAdapter(namespace, `${host}:${port}`, ServiceCtor),
-		);
+		next.set(svc, makeGrpcAdapter(svc, `${host}:${port}`, ServiceCtor));
 	}
 	grpcAdapters = next;
 	return grpcAdapters;
 }
 
-export function forwardGet(
-	namespace: string,
+export function forwardUnary(
+	serviceName: string,
+	method: "get",
 	params: GetRequest,
-): Promise<GetResponse> {
-	const adapter = getGrpcAdapters().get(namespace);
-	if (!adapter) {
-		throw new Error(`No service registered for namespace ${namespace}`);
-	}
-	return adapter.get(params);
-}
-
-export function forwardUpsert(
-	namespace: string,
+): Promise<GetResponse>;
+export function forwardUnary(
+	serviceName: string,
+	method: "upsert",
 	params: UpsertRequest,
-): Promise<DATA_EVY_Rows> {
-	const adapter = getGrpcAdapters().get(namespace);
+): Promise<UpsertResponse>;
+export function forwardUnary(
+	serviceName: string,
+	method: "get" | "upsert",
+	params: GetRequest | UpsertRequest,
+): Promise<GetResponse | UpsertResponse> {
+	const adapter = getGrpcAdapters().get(serviceName);
 	if (!adapter) {
-		throw new Error(`No service registered for namespace ${namespace}`);
+		throw new Error(`No service registered for service ${serviceName}`);
 	}
-	return adapter.upsert(params);
+	if (method === "get") {
+		return adapter.get(params as GetRequest);
+	}
+	return adapter.upsert(params as UpsertRequest);
 }
 
 export function wireGrpcClientsTo(server: RpcServer): void {

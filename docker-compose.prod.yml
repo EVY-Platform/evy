@@ -18,12 +18,11 @@ services:
   marketplace:
     image: "ghcr.io/glesage/evy-marketplace:latest"
     ports:
-      - ${MARKETPLACE_GRPC_PORT:-8001}:${MARKETPLACE_GRPC_PORT:-8001}
+      - ${MARKETPLACE_GRPC_PORT}:${MARKETPLACE_GRPC_PORT}
     environment:
-      - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST:-0.0.0.0}
-      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT:-8001}
-      - MARKETPLACE_DB_DATABASE=${MARKETPLACE_DB_DATABASE:-marketplace}
-      - API_PORT=${MARKETPLACE_GRPC_PORT:-8001}
+      - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST}
+      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
+      - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - DB_PORT=${DB_PORT}
@@ -40,11 +39,10 @@ services:
       - DB_PASS=${DB_PASS}
       - DB_PORT=${DB_PORT}
       - DB_DOMAIN=db
-      - DB_DATABASE=${DB_DATABASE}
+      - DB_EVY_DATABASE=${DB_EVY_DATABASE}
       - API_PORT=${API_PORT}
-      # gRPC for marketplace backend (<NAMESPACE>_GRPC_HOST + <NAMESPACE>_GRPC_PORT per non-evy namespace)
       - MARKETPLACE_GRPC_HOST=marketplace
-      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT:-8001}
+      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
     labels:
       - traefik.enable=true
       - traefik.port=80
@@ -62,7 +60,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_DB: ${DB_EVY_DATABASE}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 1s

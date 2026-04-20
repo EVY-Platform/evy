@@ -39,7 +39,7 @@ struct ContentView: View {
 	@State private var alertTitle = ""
 	@State private var alertMessage = ""
 	@State private var loading = true
-	@State private var itemData: Data? // Temporary to avoid making navigation async
+    @State private var itemData: Data?
     @State private var activeDraftKeys: Set<String> = []
     
     private func showError(_ error: Error) {
@@ -51,8 +51,6 @@ struct ContentView: View {
     private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) {
         switch navOperation {
         case .navigate(let route):
-            // If the new flow is already in the hierarchy of navigation
-            // go back to it instead of adding more to the stack
             if let existing = routes.lastIndex(of: route) {
                 routes.removeSubrange(existing...)
 			} else {
@@ -109,7 +107,8 @@ struct ContentView: View {
     
     private func createFlow(currentFlowId: String, key: String) {
         do {
-            try EVY.create(key: key)
+            let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: key)
+            try EVY.create(key: key, draftScopeId: draftScope)
         } catch {
             showError(error)
             return
@@ -185,6 +184,7 @@ struct ContentView: View {
                     if let flow = flows.first(where: { $0.id == route.flowId }),
                        let page = flow.getPageById(route.pageId) {
                         page
+                            .environment(\.evyDraftScopeId, Self.draftScopeId(for: route, flows: flows))
                             .environment(\.navigate) { navOperation in
                                 handleNavigationData(navOperation, currentFlowId)
                             }
@@ -210,12 +210,18 @@ struct ContentView: View {
                     activeDraftKeys: activeDraftKeys
                 )
                 if !keysToDelete.isEmpty {
-                    EVY.data.deleteAllDrafts()
+                    for key in keysToDelete {
+                        EVY.data.deleteDrafts(
+                            scopeId: EVYDraft.createMergeScopeId(
+                                flowId: previousFlowId,
+                                entityKey: key
+                            )
+                        )
+                    }
                     for key in keysToDelete {
                         do {
                             try EVY.data.delete(key: key)
                         } catch EVYDataError.keyNotFound {
-                            // Already cleaned up
                         } catch {
                             showError(error)
                         }
@@ -239,15 +245,21 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .evyErrorOccurred)) { notification in
             if let error = notification.object as? Error {
-                // If the error fires while we are still loading (e.g. the initial
-                // WebSocket handshake failed), exit the loading state so the
-                // error UI renders instead of spinning forever behind an alert.
                 if loading { loading = false }
                 showError(error)
             }
         }
     }
     
+    static func draftScopeId(for route: Route, flows: [UI_Flow]) -> String? {
+        guard let flow = flows.first(where: { $0.id == route.flowId }) else { return nil }
+        let keys = extractCreateKeys(from: flow)
+        if let k = keys.sorted().first {
+            return EVYDraft.createMergeScopeId(flowId: route.flowId, entityKey: k)
+        }
+        return "\(route.flowId)#browse"
+    }
+
     static func createKeysToDelete(
         whenLeaving flowId: String,
         flows: [UI_Flow],
@@ -262,39 +274,24 @@ struct ContentView: View {
     private static func extractCreateKeys(from flow: UI_Flow) -> Set<String> {
         var keys = Set<String>()
         for page in flow.pages {
-            for row in page.rows {
-                Self.collectCreateKeys(from: row, into: &keys)
-            }
-            if let footer = page.footer {
-                Self.collectCreateKeys(from: footer, into: &keys)
+            forEachRow(in: page) { row in
+                for action in row.actions {
+                    for branch in [action.`true`, action.`false`] {
+                        var unwrapped = branch.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if unwrapped.hasPrefix("{"), unwrapped.hasSuffix("}") {
+                            unwrapped = String(unwrapped.dropFirst().dropLast())
+                        }
+                        if let (name, args) = parseFunctionCall(unwrapped),
+                           name == "create"
+                        {
+                            let key = args.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !key.isEmpty { keys.insert(key) }
+                        }
+                    }
+                }
             }
         }
         return keys
-    }
-    
-    private static func collectCreateKeys(from row: UI_Row, into keys: inout Set<String>) {
-        for action in row.actions {
-            for branch in [action.`true`, action.`false`] {
-                var unwrapped = branch.trimmingCharacters(in: .whitespacesAndNewlines)
-                if unwrapped.hasPrefix("{"), unwrapped.hasSuffix("}") {
-                    unwrapped = String(unwrapped.dropFirst().dropLast())
-                }
-                if let (name, args) = EVYInterpreter.parseFunctionCall(unwrapped),
-                   name == "create"
-                {
-                    let key = args.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !key.isEmpty { keys.insert(key) }
-                }
-            }
-        }
-        if let children = row.view.content.children {
-            for child in children {
-                Self.collectCreateKeys(from: child, into: &keys)
-            }
-        }
-        if let child = row.view.content.child {
-            Self.collectCreateKeys(from: child, into: &keys)
-        }
     }
 }
 

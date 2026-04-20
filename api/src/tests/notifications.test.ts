@@ -112,7 +112,7 @@ describe("upsert real-time notifications", () => {
 		const caller = await connectAndLogin(apiUrl, "notify-token-2", "Web");
 
 		const upsertResult = await caller.call("upsert", {
-			namespace: "evy",
+			service: "evy",
 			resource: "sdui",
 			data: flowData,
 		});
@@ -145,7 +145,7 @@ describe("upsert real-time notifications", () => {
 			updatedAt: nowIso,
 		};
 		const upsertResult = await caller.call("upsert", {
-			namespace: "evy",
+			service: "evy",
 			resource: "services",
 			data: payload,
 		});
@@ -183,7 +183,7 @@ describe("upsert real-time notifications", () => {
 			rows: [],
 		};
 		await caller.call("upsert", {
-			namespace: "evy",
+			service: "evy",
 			resource: "sdui",
 			data: {
 				id: crypto.randomUUID(),

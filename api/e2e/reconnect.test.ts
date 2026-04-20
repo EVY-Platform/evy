@@ -40,7 +40,7 @@ describe("API E2E WebSocket reconnect", () => {
 
 		const pageId = crypto.randomUUID();
 		const upsertResult = await caller.call("upsert", {
-			namespace: "evy",
+			service: "evy",
 			resource: "sdui",
 			data: {
 				id: crypto.randomUUID(),

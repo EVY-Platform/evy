@@ -7,10 +7,9 @@ services:
       dockerfile: ./services/marketplace/Dockerfile
       target: runner
     environment:
-      - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST:-0.0.0.0}
+      - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST}
       - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
-      - MARKETPLACE_DB_DATABASE=${MARKETPLACE_DB_DATABASE:-marketplace}
-      - API_PORT=${MARKETPLACE_GRPC_PORT}
+      - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - DB_PORT=${DB_PORT}

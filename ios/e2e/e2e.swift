@@ -2,16 +2,11 @@
 //  e2e.swift
 //  evyUITests
 //
-//  End-to-end UI tests for EVY iOS app.
-//  Two test classes run in parallel (each in its own app instance when parallelised).
-//
 
 import XCTest
 
 // MARK: - Minimal WebSocket Emitter for E2E Tests
 
-/// Minimal WebSocket client for sending JSON-RPC commands to the API
-/// The iOS app has its own WebSocket listener - this just triggers updates
 actor WSEmitter {
     private var ws: URLSessionWebSocketTask?
     private var msgId = 0
@@ -32,12 +27,28 @@ actor WSEmitter {
 
     func updateSDUI(flowData: [String: Any], flowId: String) async throws {
         let params: [String: Any] = [
-            "namespace": "evy",
+            "service": "evy",
             "resource": "sdui",
             "filter": ["id": flowId],
             "data": flowData
         ]
         _ = try await send(method: "upsert", params: params)
+    }
+
+    func getResource(service: String, resource: String, filter: [String: Any]? = nil) async throws -> Any {
+        var params: [String: Any] = ["service": service, "resource": resource]
+        if let filter = filter {
+            params["filter"] = filter
+        }
+        let response = try await send(method: "get", params: params)
+        guard let result = response["result"] else {
+            throw NSError(
+                domain: "WSEmitter",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "get response missing result"]
+            )
+        }
+        return result
     }
 
     func disconnect() { ws?.cancel(with: .normalClosure, reason: nil) }
@@ -48,8 +59,6 @@ actor WSEmitter {
         let json = String(data: try JSONSerialization.data(withJSONObject: msg), encoding: .utf8)!
         try await ws?.send(.string(json))
 
-        // Skip any asynchronous notifications (no `id`) emitted by the server
-        // while we wait for the reply to this specific request.
         while true {
             let result = try await ws?.receive()
             guard case .string(let text) = result,
@@ -78,17 +87,17 @@ class E2ETestBase: XCTestCase {
 
     var app: XCUIApplication!
 
-    /// Helper to clear text field content and type new text
-    func clearAndType(field: XCUIElement, text: String) {
+    func clearAndType(field: XCUIElement, text: String, placeholder: String? = nil) {
         if let existingText = field.value as? String, !existingText.isEmpty {
-            field.tap(withNumberOfTaps: 3, numberOfTouches: 1)
-            Thread.sleep(forTimeInterval: 0.3)
-            field.typeText(XCUIKeyboardKey.delete.rawValue)
+            let shouldClearExistingText = placeholder == nil || existingText != placeholder
+            if shouldClearExistingText {
+                field.tap()
+                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingText.count))
+            }
         }
         field.typeText(text)
     }
 
-    /// Helper to find a text field by accessibility identifier across all element types
     func findElement(identifier: String) -> XCUIElement? {
         let otherElement = app.otherElements[identifier].firstMatch
         if otherElement.waitForExistence(timeout: 2) {
@@ -101,7 +110,6 @@ class E2ETestBase: XCTestCase {
         return nil
     }
 
-    /// Helper to locate elements when exact accessibility identifiers vary slightly.
     func findElement(identifiers: [String], containsAny tokens: [String]) -> XCUIElement? {
         for identifier in identifiers {
             if let element = findElement(identifier: identifier) {
@@ -128,7 +136,6 @@ class E2ETestBase: XCTestCase {
         return nil
     }
 
-    /// Scroll-aware version of multi-strategy element lookup.
     func findElementWithScroll(identifiers: [String],
                               containsAny tokens: [String],
                               in scrollView: XCUIElement,
@@ -145,10 +152,9 @@ class E2ETestBase: XCTestCase {
         return nil
     }
 
-    /// Helper to tap a text field container and return the editable field
-    func tapAndGetEditableField(container: XCUIElement) -> XCUIElement? {
+    func tapAndGetEditableField(container: XCUIElement) async -> XCUIElement? {
         container.tap()
-        Thread.sleep(forTimeInterval: 0.5)
+        try? await Task.sleep(for: .milliseconds(500))
         let textField = container.textFields.firstMatch
         if textField.exists {
             return textField
@@ -180,9 +186,7 @@ class E2ETestBase: XCTestCase {
 
 final class E2EFlowTests: E2ETestBase {
 
-    /// UI visibility and navigation: launch, home, View flow, Create flow (no form editing), back to home.
     func testNavigationAndVisibility() throws {
-        // MARK: - App Launch Verification
         XCTAssertTrue(app.exists, "App should launch successfully")
 
         let loadingIndicator = app.progressIndicators["loadingIndicator"]
@@ -191,20 +195,17 @@ final class E2EFlowTests: E2ETestBase {
         XCTAssertTrue(initialUIAppeared || app.buttons.count > 0 || app.staticTexts.count > 0,
                       "App should display initial UI after launch")
 
-        // MARK: - API Connection & Home Screen
         let viewItemButton = app.buttons["View"]
         let createItemButton = app.buttons["Create"]
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
                       "Home screen not loaded - verify API is running and database is seeded")
         XCTAssertTrue(createItemButton.exists, "Create button should be visible")
 
-        // MARK: - View Item Flow Navigation
         viewItemButton.tap()
         let scrollView = app.scrollViews.firstMatch
         XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after tapping View")
         XCTAssertFalse(viewItemButton.exists, "Home buttons should not be visible after navigation")
 
-        // MARK: - Footer Visibility
         let goHomeButton = app.buttons["Go home"]
         XCTAssertTrue(goHomeButton.waitForExistence(timeout: 5), "Footer 'Go home' button should be visible")
 
@@ -213,12 +214,10 @@ final class E2EFlowTests: E2ETestBase {
         backButton.tap()
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
 
-        // MARK: - Create Item Flow Navigation
         createItemButton.tap()
         XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
         XCTAssertFalse(createItemButton.exists, "Home buttons should not be visible after navigation")
 
-        // MARK: - Return to Home (no form editing)
         XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
         backButton.tap()
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen after create flow")
@@ -229,7 +228,6 @@ final class E2EFlowTests: E2ETestBase {
 
 final class WebSocketE2ETests: E2ETestBase {
 
-    /// Test that WebSocket notifications from the API update the iOS UI in real-time.
     @MainActor
     func testWebSocketNotificationUpdatesUI() async throws {
         let viewItemButton = app.buttons["View"]
@@ -311,12 +309,27 @@ final class WebSocketE2ETests: E2ETestBase {
         await emitter.disconnect()
     }
 
-    /// Form data editing: navigate to Create, edit title/price/width, verify, return to home.
-    func testCreateItemFormEditing() throws {
+    @MainActor
+    func testCreateItemFormEditing() async throws {
         let viewItemButton = app.buttons["View"]
         let createItemButton = app.buttons["Create"]
         XCTAssertTrue(viewItemButton.waitForExistence(timeout: 20),
                       "Home screen not loaded - verify API is running and database is seeded")
+
+        guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
+            XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
+            return
+        }
+
+        let emitter = WSEmitter()
+        try await emitter.connect(host: apiHost)
+        try await emitter.login(token: "e2e-test", os: "ios")
+        try await emitter.updateSDUI(
+            flowData: Self.minimalCreateItemFlowData(),
+            flowId: "ca47e6c5-da19-4491-8422-adb40d9e8a27"
+        )
+        try await Task.sleep(for: .seconds(2))
+
         createItemButton.tap()
 
         let scrollView = app.scrollViews.firstMatch
@@ -327,19 +340,18 @@ final class WebSocketE2ETests: E2ETestBase {
             XCTFail("Title text field should exist with identifier 'textField_{title}'")
             return
         }
-        guard let titleField = tapAndGetEditableField(container: titleTextField) else {
+        guard let titleField = await tapAndGetEditableField(container: titleTextField) else {
             XCTFail("Failed to get editable title field")
             return
         }
-        let testTitle = "Test Item Title"
-        clearAndType(field: titleField, text: testTitle)
+        let testTitle = "Test Item Title \(Int(Date().timeIntervalSince1970))"
+        clearAndType(field: titleField, text: testTitle, placeholder: "Item")
         let textFieldValue = titleField.value as? String ?? ""
         XCTAssertTrue(textFieldValue.contains("Test") || textFieldValue.contains("Item"),
                       "Text field should contain typed text, got: '\(textFieldValue)'")
         scrollView.tap()
-        Thread.sleep(forTimeInterval: 0.5)
+        try await Task.sleep(for: .milliseconds(500))
 
-        // Price field (required for regression coverage)
         guard let priceTextField = findElementWithScroll(
             identifiers: [
                 "textField_{price}",
@@ -352,17 +364,16 @@ final class WebSocketE2ETests: E2ETestBase {
             XCTFail("Price field should exist (textField_{price}, textField_{item.price}, textField_{buildCurrency(price)}, or accessibility containing 'price')")
             return
         }
-        guard let priceField = tapAndGetEditableField(container: priceTextField) else {
+        guard let priceField = await tapAndGetEditableField(container: priceTextField) else {
             XCTFail("Failed to get editable price field")
             return
         }
-        clearAndType(field: priceField, text: "99")
+        clearAndType(field: priceField, text: "99", placeholder: "0")
         let priceValue = priceField.value as? String ?? ""
         XCTAssertTrue(priceValue.contains("99"), "Price field should contain typed value, got: '\(priceValue)'")
         scrollView.tap()
-        Thread.sleep(forTimeInterval: 0.5)
+        try await Task.sleep(for: .milliseconds(500))
 
-        // Width field (required for regression coverage)
         guard let widthTextField = findElementWithScroll(
             identifiers: ["textField_{width}", "textField_{item.dimensions.width}"],
             containsAny: ["width", "dimensions.width"],
@@ -371,25 +382,131 @@ final class WebSocketE2ETests: E2ETestBase {
             XCTFail("Width field should exist (textField_{width}, textField_{item.dimensions.width}, or accessibility containing 'width')")
             return
         }
-        guard let widthField = tapAndGetEditableField(container: widthTextField) else {
+        guard let widthField = await tapAndGetEditableField(container: widthTextField) else {
             XCTFail("Failed to get editable width field")
             return
         }
-        clearAndType(field: widthField, text: "50")
+        clearAndType(field: widthField, text: "50", placeholder: "0")
         let widthValue = widthField.value as? String ?? ""
         XCTAssertTrue(widthValue.contains("50"), "Width field should contain typed value, got: '\(widthValue)'")
         scrollView.tap()
+        try await Task.sleep(for: .milliseconds(500))
 
-        let backButton = app.navigationBars.buttons.firstMatch
-        XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
-        backButton.tap()
-        XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen after create flow")
+        let submitButton = app.buttons["Submit"]
+        XCTAssertTrue(submitButton.waitForExistence(timeout: 5), "Submit should exist on minimal create flow")
+        submitButton.tap()
+
+        XCTAssertTrue(viewItemButton.waitForExistence(timeout: 15),
+                      "Should return to home after create(item)")
+
+        let itemsPayload = try await emitter.getResource(service: "marketplace", resource: "items")
+        XCTAssertTrue(
+            Self.marketplaceItemsContainListing(title: testTitle, priceValue: 99, widthText: "50", items: itemsPayload),
+            "Marketplace items should include listing with title, price.value 99, and width 50"
+        )
+
+        await emitter.disconnect()
+    }
+
+    private static func minimalCreateItemFlowData() -> [String: Any] {
+        [
+            "id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+            "name": "Create item",
+            "pages": [
+                [
+                    "id": "306ed62c-c2af-4652-a873-26c7a388972d",
+                    "title": "Create listing",
+                    "rows": [
+                        [
+                            "id": "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
+                            "type": "Input",
+                            "view": [
+                                "content": [
+                                    "title": "Title",
+                                    "value": "{title}",
+                                    "placeholder": "Item",
+                                ],
+                            ],
+                            "destination": "{title}",
+                            "actions": [],
+                        ],
+                        [
+                            "id": "668aeb79-d8ba-43b7-9619-07f91d0a1908",
+                            "type": "Input",
+                            "view": [
+                                "content": [
+                                    "title": "Price",
+                                    "value": "{formatCurrency(price)}",
+                                    "placeholder": "0",
+                                ],
+                            ],
+                            "destination": "{buildCurrency(price)}",
+                            "actions": [],
+                        ],
+                        [
+                            "id": "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
+                            "type": "Input",
+                            "view": [
+                                "content": [
+                                    "title": "Width",
+                                    "value": "{formatDimension(width)}",
+                                    "placeholder": "0",
+                                ],
+                            ],
+                            "destination": "{width}",
+                            "actions": [],
+                        ],
+                    ],
+                    "footer": [
+                        "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
+                        "type": "Button",
+                        "view": [
+                            "content": [
+                                "title": "",
+                                "label": "Submit",
+                            ],
+                        ],
+                        "actions": [
+                            [
+                                "condition": "",
+                                "false": "",
+                                "true": "{create(item)}",
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]
+    }
+
+    private static func marketplaceItemsContainListing(
+        title: String,
+        priceValue: Double,
+        widthText: String,
+        items: Any
+    ) -> Bool {
+        guard let arr = items as? [Any] else { return false }
+        let normalizedExpectedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        for case let item as [String: Any] in arr {
+            guard let t = item["title"] as? String else { continue }
+            let normalizedActualTitle = t.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard normalizedActualTitle == normalizedExpectedTitle else { continue }
+            var priceOk = false
+            if let price = item["price"] as? [String: Any], let pv = price["value"] {
+                if let d = pv as? Double, abs(d - priceValue) < 0.01 { priceOk = true }
+                if let i = pv as? Int, Double(i) == priceValue { priceOk = true }
+                if let n = pv as? NSNumber, abs(n.doubleValue - priceValue) < 0.01 { priceOk = true }
+            }
+            guard priceOk else { continue }
+            let widthValue = item["width"] ?? (item["dimensions"] as? [String: Any])?["width"]
+            if let w = widthValue as? String, w == widthText { return true }
+            if let w = widthValue as? Int, String(w) == widthText { return true }
+            if let n = widthValue as? NSNumber, n.stringValue == widthText { return true }
+        }
+        return false
     }
 
     private func createHomeFlowData(buttonLabel: String) -> [String: Any] {
-        // Must match the server-side `FlowDataSchema` strict object: {id, name, pages}.
-        // Any extra top-level key here causes `upsert` validation to fail and the
-        // `flowUpdated` notification is never emitted.
         return [
             "id": "f267c629-2594-4770-8cec-d5324ebb4058",
             "name": "Home",
@@ -478,7 +595,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
 // MARK: - Error / unreachable API
 
-/// Verifies the app surfaces a connection failure when the API is not reachable.
 final class E2EErrorStateTests: XCTestCase {
     private var app: XCUIApplication!
 
@@ -486,7 +602,6 @@ final class E2EErrorStateTests: XCTestCase {
         try super.setUpWithError()
         continueAfterFailure = false
         app = XCUIApplication()
-        // Unlikely to accept WebSocket handshakes in CI / simulator.
         app.launchEnvironment["API_HOST"] = "127.0.0.1:59998"
         app.launch()
     }
@@ -509,3 +624,4 @@ final class E2EErrorStateTests: XCTestCase {
         )
     }
 }
+

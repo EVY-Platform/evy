@@ -2,8 +2,6 @@
 //  EVYWebsocketNotificationTests.swift
 //  evyTests
 //
-//  Contract tests for JSON-RPC notification payloads (matches API emitJsonRpc / iOS client).
-//
 
 import XCTest
 @testable import evy
@@ -29,16 +27,15 @@ final class EVYWebsocketNotificationTests: XCTestCase {
 
     func testDataUpdatedPayloadDecodesAsExpectedShape() throws {
         let jsonString = """
-        {"id":"data-row-id","namespace":"evy","resource":"item","createdAt":"2024-01-19T12:00:00.000Z","updatedAt":"2024-01-19T12:00:00.000Z","data":{"title":"x","n":1}}
+        {"id":"data-row-id","name":"x","description":"d","createdAt":"2024-01-19T12:00:00.000Z","updatedAt":"2024-01-19T12:00:00.000Z"}
         """
         let data = try XCTUnwrap(jsonString.data(using: .utf8))
         let top = try XCTUnwrap(
             try JSONSerialization.jsonObject(with: data) as? [String: Any],
         )
         XCTAssertEqual(top["id"] as? String, "data-row-id")
-        let payload = try XCTUnwrap(top["data"] as? [String: Any])
-        XCTAssertEqual(payload["title"] as? String, "x")
-        XCTAssertEqual(payload["n"] as? Int, 1)
+        XCTAssertEqual(top["name"] as? String, "x")
+        XCTAssertEqual(top["description"] as? String, "d")
     }
 
     func testEVYRPCErrorDescriptions() {

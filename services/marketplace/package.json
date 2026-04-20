@@ -32,9 +32,10 @@
 	"dependencies": {
 		"@grpc/grpc-js": "^1.14.3",
 		"@grpc/proto-loader": "^0.8.0",
+		"ajv": "^8.17.1",
+		"ajv-formats": "^3.0.1",
 		"drizzle-orm": "^0.45.2",
 		"pluralize": "^8.0.0",
-		"postgres": "^3.4.9",
-		"zod": "^4.3.6"
+		"postgres": "^3.4.9"
 	}
 }

@@ -2,8 +2,6 @@
 //  EVYRowTitle.swift
 //  evy
 //
-//  Shared optional title line for SDUI rows (reduces copy-paste across row views).
-//
 
 import SwiftUI
 

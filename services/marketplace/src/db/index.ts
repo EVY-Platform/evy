@@ -2,10 +2,6 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
 
-/**
- * Marketplace PostgreSQL URL from DB_USER, DB_PASS, DB_PORT, DB_DOMAIN.
- * Database name: MARKETPLACE_DB_DATABASE (default `marketplace`).
- */
 function requireEnv(name: string): string {
 	const value = process.env[name];
 	if (value === undefined || value === "") {
@@ -19,7 +15,7 @@ export function getMarketplaceConnectionUrl(): string {
 	const pass = requireEnv("DB_PASS");
 	const port = requireEnv("DB_PORT");
 	const domain = requireEnv("DB_DOMAIN");
-	const database = process.env.MARKETPLACE_DB_DATABASE ?? "marketplace";
+	const database = requireEnv("DB_MARKETPLACE_DATABASE");
 
 	const encodedUser = encodeURIComponent(user);
 	const encodedPass = encodeURIComponent(pass);

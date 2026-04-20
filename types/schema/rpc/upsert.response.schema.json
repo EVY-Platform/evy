@@ -2,9 +2,12 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "upsert-response",
 	"title": "UpsertResponse",
-	"description": "Response for upsert (DATA_EVY_Flow | DATA_EVY_Data)",
+	"description": "Response for upsert (evy typed rows or DATA_PRIMITIVE from a service)",
 	"oneOf": [
 		{ "$ref": "../data/data.schema.json#/$defs/DATA_EVY_Flow" },
-		{ "$ref": "../data/data.schema.json#/$defs/DATA_EVY_Data" }
+		{ "$ref": "../data/data.schema.json#/$defs/DATA_EVY_Service" },
+		{ "$ref": "../data/data.schema.json#/$defs/DATA_EVY_Organization" },
+		{ "$ref": "../data/data.schema.json#/$defs/DATA_EVY_ServiceProvider" },
+		{ "$ref": "../data/primitive.schema.json" }
 	]
 }

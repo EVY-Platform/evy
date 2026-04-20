@@ -1,5 +1,5 @@
 //
-//  Functions.swift
+//  functions.swift
 //  evy
 //
 //  Created by Geoffroy Lesage on 17/12/2023.
@@ -205,7 +205,6 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
     }
 }
 
-/// First comma-separated argument as a data path; used by single-argument formatters.
 @MainActor
 private func evyJsonFromFirstArgument(args: String, errorType: String) throws -> EVYJson {
     let path = try evyTrimmedFirstPath(from: args, errorType: errorType)
@@ -214,7 +213,7 @@ private func evyJsonFromFirstArgument(args: String, errorType: String) throws ->
 
 @MainActor
 private func evyTrimmedFirstPath(from args: String, errorType: String) throws -> String {
-    let parts = EVYInterpreter.splitFunctionArguments(args)
+    let parts = splitFunctionArguments(args)
     guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
         throw EVYError.formatFailed(type: errorType, reason: "missing value argument")
     }
@@ -224,13 +223,13 @@ private func evyTrimmedFirstPath(from args: String, errorType: String) throws ->
 @MainActor
 func evyFormatDecimal(_ args: String,
                       _ editing: Bool = false) throws -> EVYFunctionOutput {
-    let parts = EVYInterpreter.splitFunctionArguments(args)
+    let parts = splitFunctionArguments(args)
     guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
         throw EVYError.formatFailed(type: "decimal", reason: "missing value argument")
     }
     let places: Int
     if parts.count >= 2 {
-        let rawPlaces = EVYInterpreter.stripOptionalSurroundingQuotes(parts[1])
+        let rawPlaces = stripOptionalSurroundingQuotes(parts[1])
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard let parsedPlaces = Int(rawPlaces), parsedPlaces >= 0, parsedPlaces <= 20 else {
             throw EVYError.formatFailed(type: "decimal", reason: "invalid fraction digits '\(rawPlaces)'")
@@ -306,7 +305,7 @@ func evyFormatDuration(_ args: String,
 @MainActor
 func evyFormatDate(_ args: String,
                    _ editing: Bool = false) throws -> EVYFunctionOutput {
-    let parts = EVYInterpreter.splitFunctionArguments(args)
+    let parts = splitFunctionArguments(args)
     guard parts.count >= 2 else {
         throw EVYError.formatFailed(type: "date", reason: "expected value and format pattern")
     }
@@ -315,7 +314,7 @@ func evyFormatDate(_ args: String,
         throw EVYError.formatFailed(type: "date", reason: "missing value argument")
     }
     let pattern = evyNormalizeDateFormatPattern(
-        EVYInterpreter.stripOptionalSurroundingQuotes(parts[1])
+        stripOptionalSurroundingQuotes(parts[1])
             .trimmingCharacters(in: .whitespacesAndNewlines)
     )
     guard !path.isEmpty, !pattern.isEmpty else {

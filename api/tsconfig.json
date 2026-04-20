@@ -12,6 +12,14 @@
 		"paths": {
 			"evy-types": ["../types/generated/ts", "./types/generated/ts"],
 			"evy-types/*": ["../types/generated/ts/*", "./types/generated/ts/*"],
+			"evy-types/validators": [
+				"../types/validators.ts",
+				"./types/validators.ts"
+			],
+			"evy-types/rpcRequestHelpers": [
+				"../types/rpcRequestHelpers.ts",
+				"./types/rpcRequestHelpers.ts"
+			],
 			"drizzle-orm": ["./node_modules/drizzle-orm"],
 			"drizzle-orm/*": ["./node_modules/drizzle-orm/*"]
 		}

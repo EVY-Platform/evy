@@ -2,8 +2,6 @@
 //  ContentViewTests.swift
 //  evyTests
 //
-//  Created by Cursor on 20/3/2026.
-//
 
 import XCTest
 @testable import evy
@@ -32,6 +30,21 @@ final class ContentViewTests: XCTestCase {
         )
 
         XCTAssertEqual(keysToDelete, Set(["item"]))
+    }
+
+    func testDraftScopeIdForCreateFlowMatchesFlowAndEntityKey() throws {
+        let flows = try makeFlows()
+        let route = Route(flowId: "create-flow", pageId: "create-page")
+        XCTAssertEqual(
+            ContentView.draftScopeId(for: route, flows: flows),
+            EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: "item")
+        )
+    }
+
+    func testDraftScopeIdForHomeFlowWithoutCreateUsesBrowseSuffix() throws {
+        let flows = try makeFlows()
+        let route = Route(flowId: "home-flow", pageId: "home-page")
+        XCTAssertEqual(ContentView.draftScopeId(for: route, flows: flows), "home-flow#browse")
     }
 
     private func makeFlows() throws -> [UI_Flow] {

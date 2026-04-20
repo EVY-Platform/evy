@@ -2,8 +2,6 @@
 //  EVYActionRunner.swift
 //  evy
 //
-//  Created by Cursor on 8/3/2026.
-//
 
 import Foundation
 
@@ -57,16 +55,16 @@ enum EVYActionRunner {
             return
         }
 
-        if let (functionName, functionArgs) = EVYInterpreter.parseFunctionCall(unwrappedBranch) {
+        if let (functionName, functionArgs) = parseFunctionCall(unwrappedBranch) {
             switch functionName {
             case "navigate":
-                let args = splitArguments(functionArgs)
+                let args = splitFunctionArguments(functionArgs)
                 guard args.count == 2 else {
                     throw EVYError.invalidData(context: "navigate requires flowId and pageId")
                 }
                 navigate(.navigate(Route(flowId: args[0], pageId: args[1])))
             case "create":
-                let args = splitArguments(functionArgs)
+                let args = splitFunctionArguments(functionArgs)
                 guard let key = args.first, !key.isEmpty else {
                     throw EVYError.invalidData(context: "create requires a key")
                 }
@@ -74,7 +72,7 @@ enum EVYActionRunner {
             case "close":
                 navigate(.close)
             case "highlight_required":
-                let args = splitArguments(functionArgs)
+                let args = splitFunctionArguments(functionArgs)
                 let alias = args.first ?? "field"
                 let fieldName = alias
                     .replacingOccurrences(of: "_", with: " ")
@@ -109,11 +107,5 @@ enum EVYActionRunner {
     private static func unwrapActionBranch(_ branch: String) -> String {
         guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return branch }
         return String(branch.dropFirst().dropLast())
-    }
-    
-    private static func splitArguments(_ args: String) -> [String] {
-        args
-            .split(separator: ",", omittingEmptySubsequences: false)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 }

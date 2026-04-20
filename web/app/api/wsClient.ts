@@ -1,9 +1,5 @@
 import { Client } from "rpc-websockets";
-import type {
-	GetResponse,
-	UI_Flow as ServerFlow,
-	UpsertResponse,
-} from "evy-types";
+import type { UI_Flow as ServerFlow, UpsertResponse } from "evy-types";
 import { config } from "../config";
 
 function isServerFlow(v: unknown): v is ServerFlow {
@@ -88,14 +84,14 @@ class WSClient {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const raw = (await this.client.call("get", {
-			namespace: "evy",
+		const rawUnknown: unknown = await this.client.call("get", {
+			service: "evy",
 			resource: "sdui",
-		})) as GetResponse;
-		if (!isServerFlowArray(raw)) {
+		});
+		if (!isServerFlowArray(rawUnknown)) {
 			throw new Error("Invalid get response: expected array of flows");
 		}
-		return raw;
+		return rawUnknown;
 	}
 
 	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {
@@ -103,7 +99,7 @@ class WSClient {
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
 		const raw = await this.client.call("upsert", {
-			namespace: "evy",
+			service: "evy",
 			resource: "sdui",
 			filter: flowData.id ? { id: flowData.id } : undefined,
 			data: flowData,

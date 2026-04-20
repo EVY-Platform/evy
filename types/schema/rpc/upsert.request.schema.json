@@ -3,33 +3,55 @@
 	"$id": "upsert-request",
 	"title": "UpsertRequest",
 	"description": "JSON-RPC params for upsert method",
-	"type": "object",
-	"additionalProperties": false,
-	"required": ["namespace", "resource", "data"],
-	"properties": {
-		"namespace": { "type": "string", "enum": ["evy", "marketplace"] },
-		"resource": {
-			"type": "string",
-			"enum": [
-				"sdui",
-				"devices",
-				"organisations",
-				"services",
-				"providers",
-				"selling_reasons",
-				"conditions",
-				"durations",
-				"areas",
-				"timeslots",
-				"items"
-			]
-		},
-		"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" },
-		"data": {
+	"$defs": {
+		"UpsertDataPayload": {
 			"type": "object",
 			"additionalProperties": {
 				"$ref": "../common/json.schema.json#/$defs/JSONValue"
 			}
 		}
-	}
+	},
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["service", "resource", "data"],
+			"properties": {
+				"service": { "const": "evy" },
+				"resource": {
+					"type": "string",
+					"enum": [
+						"sdui",
+						"devices",
+						"organisations",
+						"services",
+						"providers"
+					]
+				},
+				"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" },
+				"data": { "$ref": "#/$defs/UpsertDataPayload" }
+			}
+		},
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["service", "resource", "data"],
+			"properties": {
+				"service": { "const": "marketplace" },
+				"resource": {
+					"type": "string",
+					"enum": [
+						"selling_reasons",
+						"conditions",
+						"durations",
+						"areas",
+						"timeslots",
+						"items"
+					]
+				},
+				"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" },
+				"data": { "$ref": "#/$defs/UpsertDataPayload" }
+			}
+		}
+	]
 }

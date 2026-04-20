@@ -29,7 +29,7 @@ describe("API E2E Tests", () => {
 
 		it("get should succeed without auth (public)", async () => {
 			const result = await unauthClient.call("get", {
-				namespace: "evy",
+				service: "evy",
 				resource: "sdui",
 			});
 			expect(Array.isArray(result)).toBe(true);
@@ -38,7 +38,7 @@ describe("API E2E Tests", () => {
 		it("upsert should reject without auth", async () => {
 			try {
 				await unauthClient.call("upsert", {
-					namespace: "evy",
+					service: "evy",
 					resource: "sdui",
 					data: {
 						id: crypto.randomUUID(),
@@ -86,13 +86,13 @@ describe("API E2E Tests", () => {
 			};
 
 			await client.call("upsert", {
-				namespace: "evy",
+				service: "evy",
 				resource: "sdui",
 				data: flowData,
 			});
 
 			const result = await client.call("get", {
-				namespace: "evy",
+				service: "evy",
 				resource: "sdui",
 			});
 
@@ -130,7 +130,7 @@ describe("API E2E Tests", () => {
 			};
 
 			const result = await client.call("upsert", {
-				namespace: "evy",
+				service: "evy",
 				resource: "sdui",
 				data: flowData,
 			});
@@ -158,7 +158,7 @@ describe("API E2E Tests", () => {
 			};
 
 			const created = await client.call("upsert", {
-				namespace: "evy",
+				service: "evy",
 				resource: "sdui",
 				data: createFlowData,
 			});
@@ -169,7 +169,7 @@ describe("API E2E Tests", () => {
 			};
 
 			const updated = await client.call("upsert", {
-				namespace: "evy",
+				service: "evy",
 				resource: "sdui",
 				filter: { id: created.id },
 				data: updateFlowData,

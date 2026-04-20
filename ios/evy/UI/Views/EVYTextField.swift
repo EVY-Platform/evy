@@ -70,9 +70,7 @@ struct EVYTextField: View {
                     EVYTextView(placeholderText, style: .info)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    // No resolved value and no placeholder text: render an empty
-                    // space so the field is still visible and keeps an accessibility
-                    // element (needed for UI tests and for the user to tap it).
+                    // Spacer so the field stays tappable when display and placeholder are empty.
                     Text(" ")
                         .font(.evy)
                         .frame(maxWidth: .infinity, alignment: .leading)

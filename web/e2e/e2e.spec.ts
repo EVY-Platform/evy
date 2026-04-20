@@ -56,7 +56,7 @@ async function withApiClient<T>(
 async function getFlowsFromApi(): Promise<UI_Flow[]> {
 	return withApiClient(async (client) => {
 		const result = await client.call("get", {
-			namespace: "evy",
+			service: "evy",
 			resource: "sdui",
 		});
 		return result as UI_Flow[];

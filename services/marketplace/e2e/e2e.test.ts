@@ -56,7 +56,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 
 	it("get marketplace.items should return an array", async () => {
 		const result = await client.call("get", {
-			namespace: "marketplace",
+			service: "marketplace",
 			resource: "items",
 		});
 		expect(Array.isArray(result)).toBe(true);
@@ -70,7 +70,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		};
 
 		const upserted = await client.call("upsert", {
-			namespace: "marketplace",
+			service: "marketplace",
 			resource: "items",
 			data: testData,
 		});
@@ -80,7 +80,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(upserted.data)).toBe(true);
 
 		const got = await client.call("get", {
-			namespace: "marketplace",
+			service: "marketplace",
 			resource: "items",
 		});
 
@@ -94,5 +94,42 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				entry.nested.value === 123,
 		);
 		expect(isRecord(matchingRecord)).toBe(true);
+	});
+
+	it("upsert marketplace.items with filter.id creates row keyed by client UUID (iOS shape)", async () => {
+		const clientId = crypto.randomUUID();
+		const itemPayload = {
+			id: clientId,
+			title: "from-ios",
+		};
+
+		const upserted = await client.call("upsert", {
+			service: "marketplace",
+			resource: "items",
+			filter: { id: clientId },
+			data: itemPayload,
+		});
+
+		expect(isRecord(upserted)).toBe(true);
+		expect(upserted).toHaveProperty("id", clientId);
+		expect(upserted).toHaveProperty("data");
+		expect(isRecord(upserted.data)).toBe(true);
+		expect(upserted.data).toMatchObject({
+			id: clientId,
+			title: "from-ios",
+		});
+
+		const got = await client.call("get", {
+			service: "marketplace",
+			resource: "items",
+			filter: { id: clientId },
+		});
+
+		expect(Array.isArray(got)).toBe(true);
+		expect(got).toHaveLength(1);
+		expect(got[0]).toMatchObject({
+			id: clientId,
+			title: "from-ios",
+		});
 	});
 });

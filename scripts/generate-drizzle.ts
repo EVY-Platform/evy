@@ -6,7 +6,6 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import decamelize from "decamelize";
-import { z } from "zod";
 import {
 	OUT_TS,
 	SCHEMA_DIR,
@@ -18,66 +17,157 @@ const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
 const DRIZZLE_CONFIG_PATH = join(SCHEMA_DIR, "data", "drizzle.config.json");
 const OUT_PATH = join(OUT_TS, "db", "schema.generated.ts");
 
-const jsonSchemaPropSchema = z.looseObject({
-	type: z.string().optional(),
-	format: z.string().optional(),
-	maxLength: z.number().optional(),
-	$ref: z.string().optional(),
-	default: z.unknown().optional(),
-});
+interface JsonSchemaProp {
+	type?: string;
+	format?: string;
+	maxLength?: number;
+	$ref?: string;
+	default?: unknown;
+}
 
-const jsonSchemaDefSchema = z.looseObject({
-	type: z.string().optional(),
-	properties: z.record(z.string(), jsonSchemaPropSchema).optional(),
-	required: z.array(z.string()).optional(),
-	enum: z.array(z.unknown()).optional(),
-	$ref: z.string().optional(),
-	additionalProperties: z.boolean().optional(),
-});
+interface JsonSchemaDef {
+	type?: string;
+	properties?: Record<string, JsonSchemaProp>;
+	required?: string[];
+	enum?: unknown[];
+	$ref?: string;
+	additionalProperties?: boolean;
+}
 
-const jsonSchemaSchema = z.object({
-	$defs: z.record(z.string(), jsonSchemaDefSchema).optional(),
-});
+interface JsonSchema {
+	$defs?: Record<string, JsonSchemaDef>;
+}
 
-const drizzleEnumConfigSchema = z.object({
-	name: z.string(),
-	values: z.array(z.string()),
-});
+interface DrizzleEnumConfig {
+	name: string;
+	values: string[];
+}
 
-const drizzleTableConfigSchema = z.object({
-	tableName: z.string(),
-	primaryKey: z.string(),
-	defaultRandom: z.array(z.string()),
-	uniqueIndexes: z.array(
-		z.object({
-			name: z.string(),
-			columns: z.array(z.string()),
-		}),
-	),
-});
+interface DrizzleTableConfig {
+	tableName: string;
+	primaryKey: string;
+	defaultRandom: string[];
+	uniqueIndexes: { name: string; columns: string[] }[];
+}
 
-const drizzleConfigSchema = z.object({
-	enums: z.record(z.string(), drizzleEnumConfigSchema).optional(),
-	tables: z.record(z.string(), drizzleTableConfigSchema).optional(),
-	relations: z
-		.array(
-			z.object({
-				from: z.string(),
-				to: z.string(),
-				fields: z.array(z.string()).optional(),
-				references: z.array(z.string()).optional(),
-				relationName: z.string(),
-				oneToMany: z.boolean().optional(),
-			}),
-		)
-		.optional(),
-});
+interface DrizzleRelation {
+	from: string;
+	to: string;
+	fields?: string[];
+	references?: string[];
+	relationName: string;
+	oneToMany?: boolean;
+}
 
-type JsonSchema = z.infer<typeof jsonSchemaSchema>;
-type DrizzleConfig = z.infer<typeof drizzleConfigSchema>;
-type DrizzleTableConfig = z.infer<typeof drizzleTableConfigSchema>;
-type DrizzleEnumConfig = z.infer<typeof drizzleEnumConfigSchema>;
-type JsonSchemaProp = z.infer<typeof jsonSchemaPropSchema>;
+interface DrizzleConfig {
+	enums?: Record<string, DrizzleEnumConfig>;
+	tables?: Record<string, DrizzleTableConfig>;
+	relations?: DrizzleRelation[];
+}
+
+/** Minimal JSON shape so {@link validateConfigSemantic} can safely read `tables` / `relations`. */
+function assertDrizzleConfigRoot(
+	value: unknown,
+): asserts value is Record<string, unknown> {
+	if (value === null || typeof value !== "object" || Array.isArray(value)) {
+		throw new Error("drizzle.config.json: root must be an object");
+	}
+}
+
+function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
+	assertDrizzleConfigRoot(value);
+	const cfg = value;
+	if (cfg.tables !== undefined) {
+		if (
+			typeof cfg.tables !== "object" ||
+			cfg.tables === null ||
+			Array.isArray(cfg.tables)
+		) {
+			throw new Error("drizzle.config.json: tables must be an object");
+		}
+		for (const [k, t] of Object.entries(cfg.tables)) {
+			if (typeof t !== "object" || t === null || Array.isArray(t)) {
+				throw new Error(`drizzle.config.json: tables.${k} must be an object`);
+			}
+			const tb = t as Record<string, unknown>;
+			for (const req of ["tableName", "primaryKey"] as const) {
+				if (typeof tb[req] !== "string") {
+					throw new Error(
+						`drizzle.config.json: tables.${k}.${req} must be a string`,
+					);
+				}
+			}
+			if (!Array.isArray(tb.defaultRandom)) {
+				throw new Error(
+					`drizzle.config.json: tables.${k}.defaultRandom must be an array`,
+				);
+			}
+			if (!Array.isArray(tb.uniqueIndexes)) {
+				throw new Error(
+					`drizzle.config.json: tables.${k}.uniqueIndexes must be an array`,
+				);
+			}
+			for (const idx of tb.uniqueIndexes as unknown[]) {
+				if (typeof idx !== "object" || idx === null || Array.isArray(idx)) {
+					throw new Error(
+						`drizzle.config.json: tables.${k}.uniqueIndexes entries must be objects`,
+					);
+				}
+				const i = idx as Record<string, unknown>;
+				if (typeof i.name !== "string") {
+					throw new Error(
+						`drizzle.config.json: tables.${k} uniqueIndex name must be a string`,
+					);
+				}
+				if (!Array.isArray(i.columns)) {
+					throw new Error(
+						`drizzle.config.json: tables.${k} uniqueIndex columns must be an array`,
+					);
+				}
+			}
+		}
+	}
+	if (cfg.enums !== undefined) {
+		if (
+			typeof cfg.enums !== "object" ||
+			cfg.enums === null ||
+			Array.isArray(cfg.enums)
+		) {
+			throw new Error("drizzle.config.json: enums must be an object");
+		}
+		for (const [k, e] of Object.entries(cfg.enums)) {
+			if (typeof e !== "object" || e === null || Array.isArray(e)) {
+				throw new Error(`drizzle.config.json: enums.${k} must be an object`);
+			}
+			const en = e as Record<string, unknown>;
+			if (typeof en.name !== "string" || !Array.isArray(en.values)) {
+				throw new Error(
+					`drizzle.config.json: enums.${k} must have name (string) and values (array)`,
+				);
+			}
+		}
+	}
+	if (cfg.relations !== undefined) {
+		if (!Array.isArray(cfg.relations)) {
+			throw new Error("drizzle.config.json: relations must be an array");
+		}
+		for (const rel of cfg.relations as unknown[]) {
+			if (typeof rel !== "object" || rel === null || Array.isArray(rel)) {
+				throw new Error(
+					"drizzle.config.json: relations entries must be objects",
+				);
+			}
+			const r = rel as Record<string, unknown>;
+			for (const req of ["from", "to", "relationName"] as const) {
+				if (typeof r[req] !== "string") {
+					throw new Error(
+						`drizzle.config.json: each relation must have ${req} as a string`,
+					);
+				}
+			}
+		}
+	}
+}
 
 function schemaPropertyKeys(def: {
 	properties?: Record<string, JsonSchemaProp>;
@@ -226,7 +316,7 @@ function resolveJsonbTypeAnnotation(ref: string | undefined): string {
 		return "UI_Flow";
 	}
 	if (ref?.includes("JSONValue") || ref?.includes("json.schema.json")) {
-		return 'DATA_EVY_Data["data"]';
+		return 'DATA_PRIMITIVE["data"]';
 	}
 	return "unknown";
 }
@@ -323,8 +413,11 @@ function emitColumn(
 }
 
 async function main(): Promise<void> {
-	const schema = jsonSchemaSchema.parse(await loadJson(DATA_SCHEMA_PATH));
-	const config = drizzleConfigSchema.parse(await loadJson(DRIZZLE_CONFIG_PATH));
+	const schemaRaw = await loadJson<unknown>(DATA_SCHEMA_PATH);
+	const configRaw = await loadJson<unknown>(DRIZZLE_CONFIG_PATH);
+	assertDrizzleConfig(configRaw);
+	const schema = schemaRaw as JsonSchema;
+	const config = configRaw;
 
 	validateConfigSemantic(schema, config);
 
@@ -347,7 +440,7 @@ async function main(): Promise<void> {
 		'} from "drizzle-orm/pg-core";',
 		'import { relations } from "drizzle-orm";',
 		'import type { UI_Flow } from "evy-types/sdui/evy";',
-		'import type { DATA_EVY_Data } from "evy-types/data/data";',
+		'import type { DATA_PRIMITIVE } from "evy-types/data/primitive";',
 		"",
 	];
 
@@ -367,7 +460,6 @@ async function main(): Promise<void> {
 		"DATA_EVY_Organization",
 		"DATA_EVY_ServiceProvider",
 		"DATA_EVY_Flow",
-		"DATA_EVY_Data",
 	];
 
 	for (const defKey of tableOrder) {

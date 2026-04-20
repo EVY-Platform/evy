@@ -3,27 +3,45 @@
 	"$id": "get-request",
 	"title": "GetRequest",
 	"description": "JSON-RPC params for get method",
-	"type": "object",
-	"additionalProperties": false,
-	"required": ["namespace", "resource"],
-	"properties": {
-		"namespace": { "type": "string", "enum": ["evy", "marketplace"] },
-		"resource": {
-			"type": "string",
-			"enum": [
-				"sdui",
-				"devices",
-				"organisations",
-				"services",
-				"providers",
-				"selling_reasons",
-				"conditions",
-				"durations",
-				"areas",
-				"timeslots",
-				"items"
-			]
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["service", "resource"],
+			"properties": {
+				"service": { "const": "evy" },
+				"resource": {
+					"type": "string",
+					"enum": [
+						"sdui",
+						"devices",
+						"organisations",
+						"services",
+						"providers"
+					]
+				},
+				"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" }
+			}
 		},
-		"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" }
-	}
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["service", "resource"],
+			"properties": {
+				"service": { "const": "marketplace" },
+				"resource": {
+					"type": "string",
+					"enum": [
+						"selling_reasons",
+						"conditions",
+						"durations",
+						"areas",
+						"timeslots",
+						"items"
+					]
+				},
+				"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" }
+			}
+		}
+	]
 }

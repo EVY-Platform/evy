@@ -8,9 +8,6 @@
 			"$ref": "#/$defs/DATA_EVY_Flow"
 		},
 		{
-			"$ref": "#/$defs/DATA_EVY_Data"
-		},
-		{
 			"$ref": "#/$defs/DATA_EVY_Device"
 		},
 		{
@@ -35,36 +32,6 @@
 				},
 				"data": {
 					"$ref": "../sdui/evy.schema.json"
-				},
-				"createdAt": {
-					"type": "string",
-					"format": "date-time"
-				},
-				"updatedAt": {
-					"type": "string",
-					"format": "date-time"
-				}
-			}
-		},
-		"DATA_EVY_Data": {
-			"type": "object",
-			"additionalProperties": false,
-			"required": ["id", "namespace", "resource", "data", "createdAt", "updatedAt"],
-			"properties": {
-				"id": {
-					"type": "string",
-					"format": "uuid"
-				},
-				"namespace": {
-					"type": "string",
-					"maxLength": 50
-				},
-				"resource": {
-					"type": "string",
-					"maxLength": 50
-				},
-				"data": {
-					"$ref": "../common/json.schema.json#/$defs/JSONValue"
 				},
 				"createdAt": {
 					"type": "string",
