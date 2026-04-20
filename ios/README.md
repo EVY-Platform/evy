@@ -56,7 +56,7 @@ flowchart LR
     ViewRows -->|read bindings| EVY
     Container -->|read bindings| EVY
 
-    Interpreter[EVYInterpreter.swift<br/>parseProps / splitProps /<br/>parseTextFromText / parseFunctionCall]
+    Interpreter[interpreter.swift<br/>parseProps / splitProps /<br/>parseTextFromText / parseFunctionCall]
     Functions[Functions.swift<br/>count, length, format*,<br/>build*, compare, ...]
     EVY --> Interpreter
     EVY --> Functions

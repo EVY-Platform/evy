@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import parseIconText from "../../icons/parseIconText";
-import { parseText } from "../../utils/evyInterpreter";
+import { parseText } from "../../utils/interpreter";
 import { border } from "./border";
 
 const placeholderBase: CSSProperties = {
