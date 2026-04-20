@@ -2,7 +2,7 @@
 
 A React-based app builder.
 
-Shared types (`UI_Flow`, `UI_Page`, `UI_Row`, `DATA_EVY_*` rows, RPC payloads) come from the schema-generated `evy-types` package (see `tsconfig.json` path alias to `../types/generated/ts`).
+Shared contracts and codegen: [`docs/evy/types.md`](../docs/evy/types.md). The app imports generated types as `evy-types` (`tsconfig.json` → `../types/generated/ts`).
 
 ## Architecture
 
@@ -154,14 +154,11 @@ graph TD
 
 ## Getting Started
 
-### Prerequisites
-
-- [Bun](https://bun.sh/) installed on your system
-- A running EVY API (or full stack via Docker Compose). The web app talks to the API over `API_URL`; it does not connect to Postgres directly.
+Setup (Bun, Docker, copying `.env`): [README § Setup](../README.md#setup) and [§ Running Services](../README.md#running-services). The web app only needs a reachable API over `API_URL` (no direct Postgres).
 
 ### Environment Variables
 
-Ensure your root env file (`../.env`) is set with the .env.example. The following environment variables are used by the Web:
+From the repo root, copy [`.env.example`](../.env.example) to `.env`. Web-specific:
 
 ```env
 WEB_PORT=3000
@@ -179,10 +176,10 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### Docker
 
-The image is built from the **repository root** (the Dockerfile copies `types/schema`, root `package.json`, and `scripts/` for `bun run types:generate`).
+Build context must be the **repository root** (`web/Dockerfile` runs `bun run types:generate` using root `types/schema` and `scripts/`).
 
 ```bash
-# From the repo root (not from web/)
+# From repo root (not from web/)
 docker build -f web/Dockerfile -t evy-web \
   --build-arg API_URL=ws://host.docker.internal:8000 \
   .
@@ -192,17 +189,17 @@ docker run -p 3000:3000 \
   evy-web
 ```
 
-`web/dev/server.ts` requires `WEB_PORT` and `API_URL` at runtime. Adjust `API_URL` if the API is reachable on another host or port. CI builds with `context: .` and `file: web/Dockerfile` (see `.github/workflows/push-docker-images.yml`).
+`web/dev/server.ts` requires `WEB_PORT` and `API_URL` at runtime. CI: `.github/workflows/push-docker-images.yml`.
 
 ### Docker Compose
 
-From the repo root (the web app has no `docker-compose.yml` in its directory):
+Full stack: [README § Development (with Docker Compose)](../README.md#development-with-docker-compose). Web service only:
 
 ```bash
 docker compose up -d web
 ```
 
-You can configure the port via the `WEB_PORT` environment variable (default: 3000).
+`WEB_PORT` defaults are set via `.env` (see `.env.example`).
 
 ## Testing
 
@@ -212,7 +209,7 @@ Tests are split into two layers:
 - **`test:integration`** — Playwright against `tests/` (browser tests; expects the app/API per `playwright.config` / env).
 - **`test:e2e`** — Playwright against `e2e/`.
 
-`bun run test` runs **`test:unit` then `test:integration`** (see `package.json`). CI runs those steps separately (`.github/workflows/web_tests.yml`).
+`bun run test` runs **`test:unit` then `test:integration`** (`package.json`). CI: `.github/workflows/web_tests.yml`.
 
 Install Chromium and its system dependencies (not needed in CI — the CI image has them pre-installed):
 

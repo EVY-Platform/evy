@@ -31,15 +31,14 @@ flowchart LR
 
 ## Environment
 
-Uses the root `.env` file. Required variables include:
+Uses the root `.env`. For `MARKETPLACE_GRPC_*` (dial vs bind, local vs Compose), see [README § Running Services](../../README.md#running-services) and [`.env.example`](../../.env.example).
 
-- `MARKETPLACE_GRPC_HOST` — gRPC bind address (default `0.0.0.0` in compose)
-- `MARKETPLACE_GRPC_PORT` — gRPC listen port (default `8001` in compose)
-- `DB_*` — Postgres host credentials; database name for this service is `DB_MARKETPLACE_DATABASE`
+- `MARKETPLACE_GRPC_HOST` / `MARKETPLACE_GRPC_PORT` — listen address/port for this process (Compose may override bind; the API uses the same keys as a **client** target—see root docs)
+- `DB_*` — Postgres credentials; this service’s database name is `DB_MARKETPLACE_DATABASE`
 
 ## Scripts
 
-Same pattern as the top-level `api/` package: `bun run dev`, `bun run db:migrate`, `bun run health`, etc.
+Same scripts as [`api`](../../api/README.md#available-scripts): `bun run dev`, `bun run db:migrate`, `bun run health`, etc.
 
 ## Docker
 

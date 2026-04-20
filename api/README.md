@@ -2,42 +2,15 @@
 
 Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https://github.com/elpheria/rpc-websockets)) that handles `service: "evy"` in-process (SDUI flows and core tables), forwards other services over gRPC, and pushes real-time `dataUpdated` / `flowUpdated` notifications to connected clients.
 
+Monorepo setup (Compose, seeding, local Bun): [README § Running Services](../README.md#running-services).
+
 ## Architecture
 
 ### System view
 
+High-level diagram (iOS / web / API / marketplace / Postgres): [README § Architecture at a glance](../README.md#architecture-at-a-glance).
+
 The API is the only public edge for iOS and the web builder. Requests are validated against [`types/schema/rpc/`](../types/schema/rpc) and routed by `service` + `resource` in [`src/rpc.ts`](./src/rpc.ts): `service === "evy"` goes to [`src/data.ts`](./src/data.ts); any other registered service uses [`src/services.ts`](./src/services.ts) to call gRPC. Every non-`evy` service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (see `SERVICE_VALUES` in generated types / [`src/services.ts`](./src/services.ts)).
-
-```mermaid
-flowchart LR
-    ios[iOS app]
-    web[Web builder]
-
-    subgraph api_process [api process]
-        ws[ws.ts<br/>JSON-RPC 2.0 server]
-        rpc[rpc.ts<br/>get / upsert dispatch]
-        data[data.ts<br/>local evy store]
-        services[services.ts<br/>gRPC clients + events]
-        validation[validation.ts]
-    end
-
-    subgraph marketplace_process [marketplace service]
-        grpc[src/grpc.ts<br/>evy.Service]
-        mdata[data.ts]
-    end
-
-    pg[(Postgres<br/>evy + marketplace DBs)]
-
-    ios -- WebSocket JSON-RPC --> ws
-    web -- WebSocket JSON-RPC --> ws
-    ws --> rpc
-    rpc --> data
-    rpc --> services
-    services -- gRPC evy.Service --> grpc
-    data --> pg
-    grpc --> mdata
-    mdata --> pg
-```
 
 ### Request dispatch
 
@@ -119,6 +92,8 @@ flowchart TD
 
 ### Shared contracts
 
+Broader schema layout: [docs/evy/types.md § Sources](../docs/evy/types.md#sources). Commonly used paths:
+
 | File | Purpose |
 |------|---------|
 | [`types/schema/service.proto`](../types/schema/service.proto) | `evy.Service` gRPC IDL implemented by every non-`evy` backend |
@@ -131,7 +106,7 @@ flowchart TD
 - [Bun](https://bun.sh/) installed on your system
 - PostgreSQL database (or use Docker Compose)
 
-Ensure your root env file (`../.env`) is set with the .env.example. The following environment variables are used by the API:
+Copy [`.env.example`](../.env.example) to `../.env` (see comments there). API-relevant variables include:
 
 ```env
 API_PORT=8000
@@ -185,13 +160,7 @@ docker run -p 8000:8000 \
 
 ### Docker Compose
 
-From the repo root, the main stack is in `docker-compose.yml`:
-
-```bash
-docker compose up -d api
-```
-
-There is also a standalone compose file at [`compose.yml`](./compose.yml) in this directory (service name `app`, build context repo root) for running only the API image with `env_file` pointing at the root `.env`.
+From the repo root: `docker compose up -d api` (same stack as [README § Development (with Docker Compose)](../README.md#development-with-docker-compose)). Optional API-only file: [`compose.yml`](./compose.yml) here (service `app`, `env_file` → root `.env`).
 
 ### Health checks
 

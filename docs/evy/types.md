@@ -44,4 +44,4 @@ This runs:
 - `types/generated/ts/` — TypeScript types and Drizzle schema. The API and web app import these via the `evy-types` path alias.
 - `types/generated/swift/` — Swift types. The iOS app references these (and keeps some Codable models in sync manually where needed).
 
-After changing any schema or `drizzle.config.json` or `row-content.spec.json`, run `bun run types:generate` and commit the updated generated files under `types/generated/`.
+After changing any schema or `drizzle.config.json` or `row-content.spec.json`, run `bun run types:generate`. Output under `types/generated/` is gitignored; regenerate locally and do not hand-edit generated files.

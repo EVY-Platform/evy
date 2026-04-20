@@ -1,5 +1,7 @@
 # Server-driven UI (UI types)
 
+**See also:** [Repository README](../../README.md) (architecture, setup), [API](../../api/README.md) (JSON-RPC and gRPC routing), [Types](../types.md) (codegen, schema layout).
+
 ## Data
 
 UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Reference data (dropdown options, tags, durations, etc.) is not embedded inside the flow JSON.
@@ -8,7 +10,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 	- `"{conditions}"` — bind to data the client already has under that key
 	- `"{api:tags}"` — remote search / API-backed data
 	- `"local:address"` — client-local data source
-- That data is loaded separately: clients call JSON-RPC `get` with `service` and `resource` (e.g. `service: "evy"`, `resource: "sdui"` for flows; catalog lists use `service: "marketplace"` and plural resources like `conditions`, `items`). The API serves `evy` data from typed `DATA_EVY_*` persistence (see [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json)); marketplace rows live in the marketplace worker behind gRPC. Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
+- That data is loaded separately via JSON-RPC `get` (`service` / `resource`); routing and persistence are described in [`api/README`](../../api/README.md). `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
 So a flow might reference “10 min, 20 min, 30 min” options via `view.data` and a variable like `{durations}`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
 
@@ -90,7 +92,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 
 ### Actions
 
-Each row has an `actions` array of `UI_RowAction` objects: `condition`, `false`, and `true` are all strings. The web builder edits the same strings and persists them on the row. **iOS (`EVYActionRunner`)** evaluates actions in order: if the condition is false, it runs the `false` branch (if non-empty) and **stops**; if the condition is true, it runs the `true` branch (if non-empty) and **continues** to the next action. Other clients may differ—do not rely on “stop after first meaningful outcome” unless each client documents it.
+Each row has an `actions` array of `UI_RowAction` objects (`condition`, `false`, `true` are strings). The web builder persists them; execution is client-specific (see **Evaluation** below for iOS).
 
 #### Conditions
 
