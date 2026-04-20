@@ -57,6 +57,8 @@ jobs:
 
             - name: Run E2E tests
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              env:
+                  MARKETPLACE_GRPC_HOST: 127.0.0.1
               run: bash run-e2e.sh --skip-ios --no-docker
 
             - name: Upload Playwright report
