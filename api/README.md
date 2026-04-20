@@ -6,7 +6,7 @@ Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https:
 
 ### System view
 
-The API is the only public edge for iOS and the web builder. Requests are validated against [`types/schema/rpc/`](../types/schema/rpc) and routed by **`service` + `resource`** in [`src/rpc.ts`](./src/rpc.ts): `service === "evy"` goes to [`src/data.ts`](./src/data.ts); any other registered service uses [`src/services.ts`](./src/services.ts) to call gRPC. Every non-`evy` service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (see `SERVICE_VALUES` in generated types / [`src/services.ts`](./src/services.ts)).
+The API is the only public edge for iOS and the web builder. Requests are validated against [`types/schema/rpc/`](../types/schema/rpc) and routed by `service` + `resource` in [`src/rpc.ts`](./src/rpc.ts): `service === "evy"` goes to [`src/data.ts`](./src/data.ts); any other registered service uses [`src/services.ts`](./src/services.ts) to call gRPC. Every non-`evy` service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (see `SERVICE_VALUES` in generated types / [`src/services.ts`](./src/services.ts)).
 
 ```mermaid
 flowchart LR
@@ -41,10 +41,10 @@ flowchart LR
 
 ### Request dispatch
 
-`get` is public, `upsert` is protected (requires a valid device token via `validateAuth`). Params include **`service`**, **`resource`**, optional **`filter.id`**, and for `upsert` a **`data`** object (see JSON Schemas under `types/schema/rpc/`).
+`get` is public, `upsert` is protected (requires a valid device token via `validateAuth`). Params include `service`, `resource`, optional `filter.id`, and for `upsert` a `data` object (see JSON Schemas under `types/schema/rpc/`).
 
-- **`service: "evy"`** &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, and `providers` (typed catalog tables). There is no generic `evy` “data” table routed through `services.ts`.
-- **`service` ≠ `"evy"`** (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardUnary` in [`src/services.ts`](./src/services.ts), which issues `Get` / `Upsert` on `evy.Service` and validates JSON responses.
+- `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, and `providers` (typed catalog tables). There is no generic `evy` “data” table routed through `services.ts`.
+- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardUnary` in [`src/services.ts`](./src/services.ts), which issues `Get` / `Upsert` on `evy.Service` and validates JSON responses.
 
 ```mermaid
 sequenceDiagram
@@ -86,7 +86,7 @@ sequenceDiagram
 { "jsonrpc": "2.0", "method": "dataUpdated", "params": { /* row */ } }
 ```
 
-- Successful **`evy`** upserts call `emitJsonRpc` from [`src/rpc.ts`](./src/rpc.ts): `flowUpdated` when `resource === "sdui"`, otherwise `dataUpdated`.
+- Successful `evy` upserts call `emitJsonRpc` from [`src/rpc.ts`](./src/rpc.ts): `flowUpdated` when `resource === "sdui"`, otherwise `dataUpdated`.
 - Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them with the same `emitJsonRpc` helper (reconnect with exponential backoff).
 
 ### Internal module layout

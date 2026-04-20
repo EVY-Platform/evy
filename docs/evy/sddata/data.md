@@ -1,10 +1,10 @@
 # Data models
 
-This document covers **EVY shared data**: schema-backed rows stored in the **API** database (source of truth: [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json)) and **reusable value objects** used across clients and services. Domain payloads for workers such as marketplace are documented under that service; they are not `DATA_EVY_*` rows in this schema.
+This document covers EVY shared data: schema-backed rows stored in the API database (source of truth: [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json)) and reusable value objects used across clients and services. Domain payloads for workers such as marketplace are documented under that service; they are not `DATA_EVY_*` rows in this schema.
 
 ## Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `get` / `upsert` using **`service`** and **`resource`** (see [`types/schema/rpc/get.request.schema.json`](../../../types/schema/rpc/get.request.schema.json)). **`service: "evy"`** maps to the row types below in the API’s Postgres schema. **`service: "marketplace"`** (and future workers) is proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic “namespace row” in the EVY data schema.
+Clients call the API with JSON-RPC `get` / `upsert` using `service` and `resource` (see [`types/schema/rpc/get.request.schema.json`](../../../types/schema/rpc/get.request.schema.json)). `service: "evy"` maps to the row types below in the API’s Postgres schema. `service: "marketplace"` (and future workers) is proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic “namespace row” in the EVY data schema.
 
 ## Common date-time fields
 
@@ -73,13 +73,13 @@ retired: boolean (default false)
 
 Row shape: `id`, `data` ([`UI_Flow`](../sdui/readme.md) JSON), `createdAt`, `updatedAt`. On the wire this is accessed with `service: "evy"` and `resource: "sdui"`.
 
-There is **no** `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses **typed** tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get` / `upsert`).
+There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get` / `upsert`).
 
 ---
 
 ## Shared value objects (reuse across services)
 
-These shapes are not separate JSON Schema `$defs` in the EVY data schema; they are **contracts** for JSON embedded in domain payloads (e.g. marketplace item JSON) or in UI state. Worker services and clients validate them at the application layer.
+These shapes are not separate JSON Schema `$defs` in the EVY data schema; they are contracts for JSON embedded in domain payloads (e.g. marketplace item JSON) or in UI state. Worker services and clients validate them at the application layer.
 
 ### location
 

@@ -1,6 +1,6 @@
 # EVY Marketplace service
 
-gRPC server for marketplace **domain data only** (catalog rows such as items, conditions, tags, selling reasons). SDUI flows are stored and served by the main [`api`](../../api/README.md). The marketplace service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto); the `api` registers a gRPC client in [`api/src/services.ts`](../../api/src/services.ts) (using `MARKETPLACE_GRPC_HOST` and `MARKETPLACE_GRPC_PORT`) and proxies non-SDUI marketplace traffic here. Clients still use WebSockets only to the main `api`.
+gRPC server for marketplace domain data only (catalog rows such as items, conditions, tags, selling reasons). SDUI flows are stored and served by the main [`api`](../../api/README.md). The marketplace service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto); the `api` registers a gRPC client in [`api/src/services.ts`](../../api/src/services.ts) (using `MARKETPLACE_GRPC_HOST` and `MARKETPLACE_GRPC_PORT`) and proxies non-SDUI marketplace traffic here. Clients still use WebSockets only to the main `api`.
 
 ## Architecture
 

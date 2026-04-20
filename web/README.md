@@ -139,18 +139,18 @@ graph TD
 
 | Component              | Description                                                         |
 | ---------------------- | ------------------------------------------------------------------- |
-| **App**                | Main entry point, sets up layout with header and three-panel design |
-| **NavBar**             | Top bar with logo and breadcrumb navigation                         |
-| **NavigationBreadcrumb** | Flow/page/row breadcrumb with flow selector and focus mode toggle |
-| **AppProvider**        | React context provider managing flows, rows, drag state, focus mode, and config stack |
-| **RowsPanel**          | Left sidebar displaying available row components with search        |
-| **AppPage**            | Center panel showing phone preview with draggable rows              |
-| **SecondarySheetPage** | Secondary phone preview for sheet content in focus mode             |
-| **ConfigurationPanel** | Right sidebar for editing row properties, page titles, and actions  |
-| **ActionEditor**       | Action configuration UI within the configuration panel              |
-| **useDraggable**       | Custom hook encapsulating drag-and-drop behavior                    |
-| **usePageDropTarget**  | Hook setting up page-level drop targets for drag-and-drop           |
-| **defineRow**          | Factory function used to declare all row components                 |
+| App                | Main entry point, sets up layout with header and three-panel design |
+| NavBar             | Top bar with logo and breadcrumb navigation                         |
+| NavigationBreadcrumb | Flow/page/row breadcrumb with flow selector and focus mode toggle |
+| AppProvider        | React context provider managing flows, rows, drag state, focus mode, and config stack |
+| RowsPanel          | Left sidebar displaying available row components with search        |
+| AppPage            | Center panel showing phone preview with draggable rows              |
+| SecondarySheetPage | Secondary phone preview for sheet content in focus mode             |
+| ConfigurationPanel | Right sidebar for editing row properties, page titles, and actions  |
+| ActionEditor       | Action configuration UI within the configuration panel              |
+| useDraggable       | Custom hook encapsulating drag-and-drop behavior                    |
+| usePageDropTarget  | Hook setting up page-level drop targets for drag-and-drop           |
+| defineRow          | Factory function used to declare all row components                 |
 
 ## Getting Started
 
