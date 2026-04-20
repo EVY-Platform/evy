@@ -1,4 +1,4 @@
-import { parseText } from "../../utils/evyInterpreter";
+import { parseText } from "../../utils/interpreter";
 import { border } from "./border";
 
 export default function TextArea({

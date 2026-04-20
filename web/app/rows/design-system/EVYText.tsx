@@ -1,5 +1,5 @@
 import parseIconText from "../../icons/parseIconText";
-import { parseText } from "../../utils/evyInterpreter";
+import { parseText } from "../../utils/interpreter";
 
 export default function EVYText({
 	text,

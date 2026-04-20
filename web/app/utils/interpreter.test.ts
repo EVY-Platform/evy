@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { parseText } from "./evyInterpreter";
+import { parseText } from "./interpreter";
 
 describe("parseText", () => {
 	it("resolves count function placeholder", () => {

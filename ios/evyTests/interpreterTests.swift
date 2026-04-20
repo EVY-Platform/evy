@@ -1,5 +1,5 @@
 //
-//  EVYInterpreterTests.swift
+//  interpreterTests.swift
 //  evyTests
 //
 
@@ -7,7 +7,7 @@ import XCTest
 @testable import evy
 
 @MainActor
-final class EVYInterpreterTests: XCTestCase {
+final class InterpreterTests: XCTestCase {
     override func setUpWithError() throws {
         try super.setUpWithError()
         try EVY.getUserData()
