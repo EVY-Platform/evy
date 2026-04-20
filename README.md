@@ -27,8 +27,6 @@ flowchart LR
 - `flowUpdated` is emitted after successful `evy` upserts when `resource === "sdui"`.
 - `dataUpdated` covers other successful `evy` data upserts and events from remote services. Remote workers push via `evy.Service.SubscribeEvents`, which the API forwards through the same WebSocket `emitJsonRpc` path.
 
-See [`api/README.md`](./api/README.md) for the full request/notification sequence diagrams.
-
 # Documentation
 
 - EVY Platform
