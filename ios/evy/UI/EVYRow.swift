@@ -27,10 +27,8 @@ struct EVYRow: View, Identifiable {
 	var id: String { row.id }
 
 	var body: some View {
-		Group {
-			if let payload = try? UI_RowPayload.from(row: row) {
-				rowView(for: payload)
-			}
+		if let payload = try? UI_RowPayload.from(row: row) {
+			rowView(for: payload)
 		}
 	}
 

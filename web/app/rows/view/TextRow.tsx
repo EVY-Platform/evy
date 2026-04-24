@@ -19,7 +19,7 @@ export default defineRow("TextRow", {
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
 			<p className="evy-text-sm">
-				<EVYText text={row.config.view.content.text ?? ""} />
+				<EVYText text={row.config.view.content.text} />
 			</p>
 		</RowLayout>
 	),

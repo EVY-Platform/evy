@@ -9,25 +9,26 @@ import SwiftUI
 
 struct EVYSearch: View {
     private let canSelectMultiple: Bool
-    
+
     let source: String
     let destination: String
     let placeholder: String
-    let format: String
-    
-    init(source: String,
-         destination: String,
-         placeholder: String,
-         format: String)
-    {
+    let resultTemplate: UI_Row?
+
+    init(
+        source: String,
+        destination: String,
+        placeholder: String,
+        resultTemplate: UI_Row?,
+    ) {
         self.source = source
         self.destination = destination
         self.placeholder = placeholder
-        self.format = format
-        
+        self.resultTemplate = resultTemplate
+
         do {
             let data = try EVY.getDataFromText(destination)
-            if case .array(_) = data {
+            if case .array = data {
                 canSelectMultiple = true
             } else {
                 canSelectMultiple = false
@@ -36,18 +37,22 @@ struct EVYSearch: View {
             canSelectMultiple = false
         }
     }
-    
+
     var body: some View {
         if canSelectMultiple {
-            EVYSearchMultiple(source: source,
-                              format: format,
-                              destination: destination,
-                              placeholder: placeholder)
+            EVYSearchMultiple(
+                source: source,
+                resultTemplate: resultTemplate,
+                destination: destination,
+                placeholder: placeholder,
+            )
         } else {
-            EVYSearchSingle(source: source,
-                            format: format,
-                            destination: destination,
-                            placeholder: placeholder)
+            EVYSearchSingle(
+                source: source,
+                resultTemplate: resultTemplate,
+                destination: destination,
+                placeholder: placeholder,
+            )
         }
     }
 }

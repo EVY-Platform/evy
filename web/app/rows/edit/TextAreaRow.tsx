@@ -20,8 +20,8 @@ export default defineRow("TextAreaRow", {
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
 			<TextArea
-				value={row.config.view.content.value ?? ""}
-				placeholder={row.config.view.content.placeholder ?? ""}
+				value={row.config.view.content.value}
+				placeholder={row.config.view.content.placeholder}
 			/>
 		</RowLayout>
 	),

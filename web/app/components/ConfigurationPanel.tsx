@@ -12,6 +12,56 @@ import {
 } from "../utils/actionHelpers";
 import { ActionEditor } from "./ActionEditor";
 import { PageInUseDialog } from "./PageInUseDialog";
+import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
+
+const INFO_PANEL_FIELD_ORDER = ["icon", "title", "subtitle"] as const;
+const INPUT_LIST_PANEL_FIELD_ORDER = [
+	"title",
+	"placeholder",
+	"format",
+] as const;
+
+function isContainerKey(k: string): boolean {
+	return k === "child" || k === "children";
+}
+
+function sortContentEntriesForPanel(
+	rowType: string,
+	entries: [string, unknown][],
+): [string, unknown][] {
+	const containers = entries.filter(([k]) => isContainerKey(k));
+	const rest = entries.filter(([k]) => !isContainerKey(k));
+
+	const byKey = new Map(rest);
+	const fieldOrder =
+		rowType === "Info"
+			? INFO_PANEL_FIELD_ORDER
+			: rowType === "InputList"
+				? INPUT_LIST_PANEL_FIELD_ORDER
+				: undefined;
+
+	if (!fieldOrder) {
+		return [...rest, ...containers];
+	}
+
+	const fixed = new Set<string>(fieldOrder);
+	const ordered: [string, unknown][] = [];
+
+	for (const k of fieldOrder) {
+		if (byKey.has(k)) {
+			const v = byKey.get(k);
+			if (v !== undefined) {
+				ordered.push([k, v]);
+			}
+		}
+	}
+	for (const [k, v] of rest) {
+		if (!fixed.has(k)) {
+			ordered.push([k, v]);
+		}
+	}
+	return [...ordered, ...containers];
+}
 
 function isRow(value: unknown): value is Row {
 	return value !== null && typeof value === "object" && "config" in value;
@@ -186,13 +236,11 @@ export function ConfigurationPanel() {
 
 	const renderConfiguration = useCallback(
 		(configRow: Row): React.ReactNode[] => {
-			const content = configRow.config.view.content;
-			const entries = Object.entries(content).sort(([a], [b]) => {
-				const isContainerKey = (k: string) => k === "child" || k === "children";
-				if (isContainerKey(a) && !isContainerKey(b)) return 1;
-				if (!isContainerKey(a) && isContainerKey(b)) return -1;
-				return 0;
-			});
+			const merged = mergeRowContentWithPaletteDefaults(configRow);
+			const entries = sortContentEntriesForPanel(
+				configRow.config.type,
+				Object.entries(merged),
+			);
 
 			const contentElements = entries.map(([key, value]) => {
 				const uniqueId = `${configRow.id}-${key}`;
@@ -345,10 +393,13 @@ export function ConfigurationPanel() {
 				)}
 				{currentConfigRow ? (
 					<>
+						<p className="evy-text-lg evy-font-semibold">
+							{currentConfigRow.config.type} Row
+						</p>
 						{configurationElements}
 						<div className="evy-border-b evy-border-gray" />
 						<ActionEditor
-							actions={currentConfigRow.config.actions ?? []}
+							actions={currentConfigRow.config.actions}
 							flows={flows}
 							onUpdate={updateRowActions}
 						/>

@@ -12,21 +12,22 @@ struct EVYSearchSingle: View {
     @State private var selected: String = ""
     @State private var value: String = ""
     @ObservedObject private var searchController: EVYSearchController
-    
+
     let destination: String
     let placeholder: String
-    
-    init(source: String,
-         format: String,
-         destination: String,
-         placeholder: String)
-    {
+
+    init(
+        source: String,
+        resultTemplate: UI_Row?,
+        destination: String,
+        placeholder: String,
+    ) {
         self.destination = destination
         self.placeholder = placeholder
-        
-        searchController = EVYSearchController(source: source, format: format)
+
+        searchController = EVYSearchController(source: source, resultTemplate: resultTemplate)
     }
-    
+
     func select(_ element: EVYSearchResult) {
         do {
             value = element.value
@@ -39,7 +40,7 @@ struct EVYSearchSingle: View {
             #endif
         }
     }
-    
+
     func unselect() {
         do {
             value = ""
@@ -51,7 +52,7 @@ struct EVYSearchSingle: View {
             #endif
         }
     }
-    
+
     var body: some View {
         VStack {
             // Search bar
@@ -60,20 +61,22 @@ struct EVYSearchSingle: View {
                     Image(uiImage: Lucide.search)
                         .padding(.leading, Constants.minorPadding)
                 }
-                
+
                 TextField(placeholder, text: $value)
                     .font(.evy)
-            
+
                 if !value.isEmpty {
                     Image(uiImage: Lucide.x)
                         .padding(.trailing, Constants.minorPadding)
                         .onTapGesture { unselect() }
                 }
             }
-            .padding(EdgeInsets(top: Constants.fieldPadding,
-                                leading: Constants.minorPadding,
-                                bottom: Constants.fieldPadding,
-                                trailing: Constants.minorPadding))
+            .padding(EdgeInsets(
+                top: Constants.fieldPadding,
+                leading: Constants.minorPadding,
+                bottom: Constants.fieldPadding,
+                trailing: Constants.minorPadding,
+            ))
             .background(
                 RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
                     .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth)
@@ -92,33 +95,35 @@ struct EVYSearchSingle: View {
                     if newValue == selected {
                         return
                     }
-                    
+
                     await searchController.search(name: newValue)
                 })
             }
-            
+
             // Search results
             List {
                 ForEach(searchController.results, id: \.value) { result in
-                    EVYTextView(result.value).onTapGesture { select(result) }
+                    EVYRow(row: result.displayRow)
+						.onTapGesture { select(result) }
                 }
             }
             .listStyle(.plain)
             .listRowSpacing(20)
+            .scrollContentBackground(.hidden)
+            .background(Color.white)
         }
     }
 }
+
 #Preview {
-	AsyncPreview { asyncView in
-		asyncView
-	} view: {
-		try! await EVY.createItem()
-		
-		return Group {
-		EVYSearch(source: "{local:address}",
-				  destination: "{address}",
-					  placeholder: "Search",
-					  format: "{$0.unit} {$0.street}, {$0.city} {$0.state} {$0.postcode}")
-		}
-	}
+    AsyncPreview { asyncView in
+        asyncView
+    } view: {
+        try! await EVY.createItem()
+
+        return EVYSearch(source: "{local:address}",
+						 destination: "{address}",
+						 placeholder: "Search",
+						 resultTemplate: nil)
+    }
 }

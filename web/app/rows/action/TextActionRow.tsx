@@ -22,13 +22,13 @@ export default defineRow("TextActionRow", {
 		<RowLayout title={row.config.view.content.title}>
 			<div className="evy-flex evy-justify-between">
 				<p className="evy-text-md">
-					<EVYText text={row.config.view.content.text ?? ""} />
+					<EVYText text={row.config.view.content.text} />
 				</p>
 				<button
 					type="button"
 					className="evy-text-blue evy-text-sm evy-hover:text-black evy-bg-transparent evy-border-none"
 				>
-					<EVYText text={row.config.view.content.action ?? ""} />
+					<EVYText text={row.config.view.content.action} />
 				</button>
 			</div>
 		</RowLayout>

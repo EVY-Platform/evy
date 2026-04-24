@@ -16,7 +16,7 @@ import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/externa
 
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
-import { useDragContext } from "../state";
+import { useDragContext } from "../state/contexts/DragContext";
 import { useRowById } from "./useRowById";
 
 const rowEdges: Edge[] = ["top", "bottom"];

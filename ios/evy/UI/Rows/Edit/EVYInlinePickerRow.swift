@@ -12,9 +12,9 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
 
 	private let view: InlinePickerRowViewData
 	private let source: String
-	private let destination: String?
+	private let destination: String
 
-	init(view: InlinePickerRowViewData, source: String, destination: String?) {
+	init(view: InlinePickerRowViewData, source: String, destination: String) {
 		self.view = view
 		self.source = source
 		self.destination = destination
@@ -26,7 +26,7 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			if let destination {
+			if !destination.isEmpty {
 				EVYInlinePicker(
 					title: view.content.title,
 					data: source,

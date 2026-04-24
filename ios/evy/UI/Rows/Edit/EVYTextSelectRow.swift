@@ -16,8 +16,8 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 	private let value: EVYJson
 	private let selected: EVYState<Bool>
 
-	init?(view: TextSelectRowViewData, destination: String?, actions: [UI_RowAction]) {
-		guard let destination else { return nil }
+	init?(view: TextSelectRowViewData, destination: String, actions: [UI_RowAction]) {
+		guard !destination.isEmpty else { return nil }
 		self.view = view
 		self.destination = destination
 		self.actions = actions

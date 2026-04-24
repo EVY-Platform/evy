@@ -24,7 +24,7 @@ test.describe("Secondary Sheet Page", () => {
 								view: {
 									content: {
 										title: "Child Info",
-										text: "Child text",
+										subtitle: "Child subtitle",
 									},
 								},
 								actions: [],

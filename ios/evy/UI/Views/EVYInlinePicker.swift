@@ -79,7 +79,8 @@ struct EVYInlinePicker: View {
                 Button(action: {
                     performAction(option: option)
                 }) {
-                    let formatted = (try? EVY.formatData(json: option, format: format)) ?? option.toString()
+                    let formatted = (try? EVY.formatDataOrToString(json: option, format: format))
+                        ?? option.toString()
                     let textView = EVYTextView(formatted)
                     EVYRectangle.fitWidth(content: textView,
                                             style: isSelected ? .primary : .secondary)
@@ -96,11 +97,9 @@ struct EVYInlinePicker: View {
 		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
-		return Group {
-			EVYInlinePicker(title: "Dropdown",
-							data: "{durations}",
-							format: "{$0.value}",
-							destination: "{duration}")
-		}
+		return EVYInlinePicker(title: "Dropdown",
+							   data: "{durations}",
+							   format: "{$0.value}",
+							   destination: "{duration}")
 	}
 }

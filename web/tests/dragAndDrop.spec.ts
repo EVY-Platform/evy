@@ -92,7 +92,7 @@ test.describe("Drag & Drop UX", () => {
 									view: {
 										content: {
 											title: "Child Info",
-											text: "Child text",
+											subtitle: "Child subtitle",
 										},
 									},
 									actions: [],
@@ -142,7 +142,7 @@ test.describe("Drag & Drop UX", () => {
 										view: {
 											content: {
 												title: "Nested Info",
-												text: "Nested text",
+												subtitle: "Nested subtitle",
 											},
 										},
 										actions: [],

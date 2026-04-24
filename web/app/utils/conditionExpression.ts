@@ -268,7 +268,7 @@ function serializeExpressionInner(expr: ConditionExpression): string {
 	return parts.join(sep);
 }
 
-/** Convert an expression tree to a flat list (backwards-compatible helper). */
+/** Convert an expression tree to a flat list of leaf conditions. */
 export function expressionToFlatParts(
 	expr: ConditionExpression | null,
 ): ConditionPart[] {

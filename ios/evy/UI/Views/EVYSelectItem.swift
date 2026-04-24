@@ -93,7 +93,8 @@ struct EVYSelectItem: View {
     
     var body: some View {
         HStack {
-            let text = (try? EVY.formatData(json: value, format: format)) ?? value.toString()
+            let text = (try? EVY.formatDataOrToString(json: value, format: format))
+                ?? value.toString()
             EVYTextView(text, style: textStyle)
                 .frame(maxWidth: .infinity, alignment: .leading)
             EVYRadioButton(isSelected: selected.value, style: selectionStyle)

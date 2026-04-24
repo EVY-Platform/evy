@@ -22,9 +22,13 @@ struct EVYInputList: View {
             do {
                 let data = try EVY.getDataFromText($0)
                 if case let .array(arrayValue) = data {
-                    return try arrayValue.map { try EVY.formatData(json: $0, format: format) }
+                    return try arrayValue.map { json in
+                        try EVY.formatDataOrToString(json: json, format: format)
+                    }
                 } else {
-                    return [try EVY.formatData(json: data, format: format)]
+                    return [
+                        try EVY.formatDataOrToString(json: data, format: format),
+                    ]
                 }
             } catch {
                 #if DEBUG
@@ -62,10 +66,8 @@ struct EVYInputList: View {
 	} view: {
 		try! await EVY.createItem()
 		
-		return Group {
-			EVYInputList(data: "{tags}",
-						 format: "{$0.value}",
-						 placeholder: "Add tags to improve search")
-		}
+		return EVYInputList(data: "{tags}",
+							format: "{$0.value}",
+							placeholder: "Add tags to improve search")
 	}
 }

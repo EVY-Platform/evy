@@ -81,7 +81,7 @@ test.describe("Row configuration", () => {
 						view: {
 							content: {
 								title: "Test Info Row",
-								text: "Initial text content",
+								subtitle: "Initial subtitle content",
 							},
 						},
 						actions: [],
@@ -98,13 +98,13 @@ test.describe("Row configuration", () => {
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
 		).toBeVisible();
-		await expect(configPanel.getByLabel("text")).toBeVisible();
+		await expect(configPanel.getByLabel("subtitle")).toBeVisible();
 
-		const textInput = configPanel.getByLabel("text");
-		await textInput.clear();
-		await textInput.fill("Updated info text");
+		const subtitleInput = configPanel.getByLabel("subtitle");
+		await subtitleInput.clear();
+		await subtitleInput.fill("Updated subtitle text");
 
-		await expect(textInput).toHaveValue("Updated info text");
+		await expect(subtitleInput).toHaveValue("Updated subtitle text");
 	});
 
 	test("should display and edit Source binding in configuration panel", async ({
@@ -121,7 +121,7 @@ test.describe("Row configuration", () => {
 						view: {
 							content: {
 								title: "Binding row",
-								text: "Body",
+								subtitle: "Body",
 							},
 						},
 						actions: [],
@@ -140,6 +140,41 @@ test.describe("Row configuration", () => {
 		await sourceInput.fill("{items}");
 
 		await expect(sourceInput).toHaveValue("{items}");
+	});
+
+	test("should display InputList format in configuration panel", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "InputList",
+						view: {
+							content: {
+								title: "Tags",
+								placeholder: "Search for tags",
+								format: "{datum.value}",
+							},
+						},
+						actions: [],
+					},
+				],
+			},
+		]);
+		await page.getByText("Tags", { exact: true }).first().click();
+
+		const configPanel = getConfigPanel(page);
+		const formatInput = configPanel.getByLabel("format");
+		await expect(formatInput).toBeVisible();
+		await expect(formatInput).toHaveValue("{datum.value}");
+
+		await formatInput.clear();
+		await formatInput.fill("{datum.label}");
+
+		await expect(formatInput).toHaveValue("{datum.label}");
 	});
 
 	test("should display and edit action items via popup", async ({ page }) => {
@@ -328,7 +363,7 @@ test.describe("Row configuration", () => {
 						view: {
 							content: {
 								title: "No Action Row",
-								text: "Some text",
+								subtitle: "Some subtitle",
 							},
 						},
 						actions: [],

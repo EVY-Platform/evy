@@ -217,9 +217,7 @@ func _evaluateFromText(_ input: String) throws -> Bool {
 
 @MainActor
 func _formatData(json: EVYJson, format: String) throws -> String {
-    if format.count < 1 {
-        return json.toString()
-    }
+	if format.count < 1 { return "" }
 
     let temporaryId = UUID().uuidString
     let formatWithNewData = format
@@ -227,9 +225,7 @@ func _formatData(json: EVYJson, format: String) throws -> String {
         .replacingOccurrences(of: ".datum", with: ".\(temporaryId)")
         .replacingOccurrences(of: "(datum)", with: "(\(temporaryId))")
 
-    if formatWithNewData.isEmpty {
-        return json.toString()
-    }
+    if formatWithNewData.isEmpty { return "" }
 
     let encodedData = try JSONEncoder().encode(json)
     try EVY.data.create(key: temporaryId, data: encodedData)

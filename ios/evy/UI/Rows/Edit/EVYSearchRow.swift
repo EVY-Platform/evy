@@ -12,10 +12,10 @@ struct EVYSearchRow: View, EVYRowProtocol {
 
 	private let view: SearchRowViewData
 	private let source: String
-	private let destination: String?
+	private let destination: String
 	@State private var showSheet = false
 
-	init(view: SearchRowViewData, source: String, destination: String?) {
+	init(view: SearchRowViewData, source: String, destination: String) {
 		self.view = view
 		self.source = source
 		self.destination = destination
@@ -27,12 +27,12 @@ struct EVYSearchRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			if let destination {
+			if !destination.isEmpty {
 				EVYSearch(
 					source: source,
 					destination: destination,
 					placeholder: view.content.placeholder,
-					format: view.content.format
+					resultTemplate: view.content.child
 				)
 			}
 		}

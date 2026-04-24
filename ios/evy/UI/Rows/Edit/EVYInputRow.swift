@@ -11,9 +11,9 @@ struct EVYInputRow: View, EVYRowProtocol {
 	public static let JSONType = "Input"
 
 	private let view: InputRowViewData
-	private let destination: String?
+	private let destination: String
 
-	init(view: InputRowViewData, destination: String?) {
+	init(view: InputRowViewData, destination: String) {
 		self.view = view
 		self.destination = destination
 	}
@@ -21,7 +21,7 @@ struct EVYInputRow: View, EVYRowProtocol {
 	var body: some View {
 		VStack(alignment: .leading) {
 			EVYRowTitle(title: view.content.title)
-			if let destination {
+			if !destination.isEmpty {
 				EVYTextField(
 					input: view.content.value,
 					destination: destination,
