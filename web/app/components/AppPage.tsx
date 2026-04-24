@@ -27,8 +27,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
 	const selectRow = useCallback(
-		(rowId: string) => dispatchRow({ type: "SET_ACTIVE_ROW", pageId, rowId }),
-		[pageId, dispatchRow],
+		(rowId: string) => dispatchRow({ type: "SET_ACTIVE_ROW", rowId }),
+		[dispatchRow],
 	);
 
 	const selectPage = useCallback(

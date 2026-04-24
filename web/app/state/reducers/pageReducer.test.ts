@@ -213,11 +213,92 @@ describe("pageReducer", () => {
 		const state = initialState();
 		const next = pageReducer(state, {
 			type: "SET_ACTIVE_ROW",
-			pageId: "page-1",
 			rowId: "row-1",
 		});
 		expect(next.activeRowId).toBe("row-1");
 		expect(next.activePageId).toBe("page-1");
+	});
+
+	it("SET_ACTIVE_ROW derives root and config stack for nested row", () => {
+		const inner = textRow("inner");
+		const list: Row = {
+			id: "list-1",
+			row: null,
+			config: {
+				type: "ListContainer",
+				source: "",
+				actions: [],
+				view: {
+					content: {
+						title: "",
+						children: [inner],
+					},
+				},
+			} as Row["config"],
+		};
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [list],
+						},
+					],
+				},
+			],
+		});
+		const next = pageReducer(state, {
+			type: "SET_ACTIVE_ROW",
+			rowId: "inner",
+		});
+		expect(next.activeRowId).toBe("list-1");
+		expect(next.configStack).toEqual(["inner"]);
+		expect(next.activePageId).toBe("page-1");
+	});
+
+	it("SET_ACTIVE_ROW respects explicit configStack for URL restore", () => {
+		const inner = textRow("inner");
+		const list: Row = {
+			id: "list-1",
+			row: null,
+			config: {
+				type: "ListContainer",
+				source: "",
+				actions: [],
+				view: {
+					content: {
+						title: "",
+						children: [inner],
+					},
+				},
+			} as Row["config"],
+		};
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [list],
+						},
+					],
+				},
+			],
+		});
+		const next = pageReducer(state, {
+			type: "SET_ACTIVE_ROW",
+			rowId: "list-1",
+			configStack: ["inner"],
+		});
+		expect(next.activeRowId).toBe("list-1");
+		expect(next.configStack).toEqual(["inner"]);
 	});
 
 	it("SET_ACTIVE_PAGE clears row selection", () => {

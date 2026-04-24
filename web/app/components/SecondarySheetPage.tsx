@@ -27,8 +27,10 @@ export default function SecondarySheetPage({
 	const childRows = sheetRow?.config.view.content.children ?? [];
 
 	const selectRow = useCallback(
-		(rowId: string) => dispatchRow({ type: "SET_ACTIVE_ROW", pageId, rowId }),
-		[pageId, dispatchRow],
+		(rowId: string) => {
+			dispatchRow({ type: "SET_ACTIVE_ROW", rowId });
+		},
+		[dispatchRow],
 	);
 
 	const extraData = useMemo(() => ({ sheetRowId }), [sheetRowId]);

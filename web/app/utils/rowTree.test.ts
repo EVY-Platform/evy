@@ -5,6 +5,7 @@ import type { Row } from "../types/row";
 import {
 	findContainerById,
 	findContainerOfRow,
+	findRowIdPathFromPageRoot,
 	findRowInPages,
 	getRowsRecursive,
 	insertRowIntoTree,
@@ -100,6 +101,33 @@ describe("findRowInPages", () => {
 
 	it("returns undefined when missing", () => {
 		expect(findRowInPages("x", [page("p", [makeRow("a")])])).toBeUndefined();
+	});
+
+	it("finds row nested under footer", () => {
+		const inner = makeRow("foot-inner");
+		const foot = makeRow("foot", { child: inner });
+		const p: UI_Page = { id: "p", title: "T", rows: [], footer: foot };
+		expect(findRowInPages("foot-inner", [p])).toBe(inner);
+	});
+});
+
+describe("findRowIdPathFromPageRoot", () => {
+	it("returns path from top-level row to nested leaf", () => {
+		const leaf = makeRow("leaf");
+		const mid = makeRow("mid", { child: leaf });
+		const p = page("p1", [makeRow("root", { children: [mid] })]);
+		expect(findRowIdPathFromPageRoot(p, "leaf")).toEqual([
+			"root",
+			"mid",
+			"leaf",
+		]);
+	});
+
+	it("works when leaf is under footer", () => {
+		const inner = makeRow("f-in");
+		const foot = makeRow("foot", { child: inner });
+		const p: UI_Page = { id: "p", title: "T", rows: [], footer: foot };
+		expect(findRowIdPathFromPageRoot(p, "f-in")).toEqual(["foot", "f-in"]);
 	});
 });
 
