@@ -331,3 +331,32 @@ export const decodeFlows = (flows: ServerFlow[]): UI_Flow[] => {
 		})),
 	}));
 };
+
+function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {
+	row.id = rootId;
+	const { child, children } = row.view.content;
+	if (child) {
+		assignFreshIdsInPlace(child, crypto.randomUUID());
+	}
+	if (children) {
+		for (const c of children) {
+			assignFreshIdsInPlace(c, crypto.randomUUID());
+		}
+	}
+}
+
+/** Clone a palette base row for `ADD_ROW`: encode to ServerRow, deep-clone, assign fresh ids, decode. */
+export function buildRowForNewPageFromBase(
+	baseRow: RowComponent,
+	newRowId: string,
+): Row {
+	const tempId = "row-build-temp";
+	const seed: Row = {
+		id: tempId,
+		row: createElement(baseRow, { key: tempId, rowId: tempId }),
+		config: baseRow.config,
+	};
+	const cloned = structuredClone(encodeRowToServerRow(seed));
+	assignFreshIdsInPlace(cloned, newRowId);
+	return decodeRow(cloned);
+}

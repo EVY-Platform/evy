@@ -5,6 +5,7 @@
 //  Created by Geoffroy Lesage on 22/8/2024.
 //
 
+import Foundation
 import SwiftUI
 
 private enum EVYSearchSourceType {
@@ -180,3 +181,39 @@ class EVYSearchController: ObservableObject {
     }
 }
 
+#Preview {
+    AsyncPreview { (asyncView: EVYSearch) in
+        asyncView
+    } view: {
+        // Local-only: no EVY.getRow / EVYAPIManager (avoids API_HOST fatalError in Xcode canvas).
+        if !EVY.data.exists(key: "tags") {
+            try EVY.data.create(key: "tags", data: Data("[]".utf8))
+        }
+        let templateJson = """
+        {
+            "id": "preview-search-row",
+            "type": "Info",
+            "source": "",
+            "destination": "",
+            "actions": [],
+            "view": {
+                "content": {
+                    "title": "{datum.unit} {datum.street}",
+                    "subtitle": "{datum.city} {datum.state} {datum.postcode}",
+                    "icon": ""
+                }
+            }
+        }
+        """
+        let template = try JSONDecoder().decode(
+            UI_Row.self,
+            from: Data(templateJson.utf8),
+        )
+        return EVYSearch(
+            source: "local:address",
+            destination: "{tags}",
+            placeholder: "Search",
+            resultTemplate: template
+        )
+    }
+}

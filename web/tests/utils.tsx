@@ -74,7 +74,9 @@ export async function getSidebarRow(
 	text: string,
 ): Promise<Locator> {
 	const rowsPanel = await getRowsPanel(page);
-	return rowsPanel.getByText(text, { exact: true }).locator("..");
+	const row = rowsPanel.getByText(text, { exact: true }).locator("..");
+	await row.scrollIntoViewIfNeeded();
+	return row;
 }
 
 export function getFirstPage(page: Page): Locator {
@@ -88,6 +90,7 @@ export function getPageContent(page: Page, pageIndex = 0): Locator {
 		.locator(SELECTORS.pageContent);
 }
 
+/** Canvas row in the phone, from the row title (two parents up to the card). */
 export function getPageRow(page: Page, text: string, pageIndex = 0): Locator {
 	return page
 		.locator(SELECTORS.phoneContainer)

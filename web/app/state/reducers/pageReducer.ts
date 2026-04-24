@@ -1,10 +1,10 @@
-import { createElement } from "react";
 import invariant from "tiny-invariant";
 
 import type { AppState, RowAction } from "../../types/actions";
 import type { UI_Page } from "../../types/flow";
 import type { Row } from "../../types/row";
 import { baseRows } from "../../rows/baseRows";
+import { buildRowForNewPageFromBase } from "../../utils/decodeFlow";
 import {
 	removeRowFromTree,
 	updateRowInTree,
@@ -123,18 +123,14 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 			if (!baseRow) return state;
 
-			const rowDataAdd: Row = {
-				...baseRow,
-				id: action.newRowId,
-				config: structuredClone(baseRow.config),
-				row: createElement(baseRow, { rowId: action.newRowId }),
-			};
+			const rowDataAdd: Row = buildRowForNewPageFromBase(
+				baseRow,
+				action.newRowId,
+			);
 
 			const page = flow.pages.find((p) => p.id === action.destinationPageId);
 			if (!page) return state;
 
-			// Reuse the same tree insertion logic as MOVE_ROW so dragging a brand-new
-			// row from the sidebar and moving an existing nested row behave the same.
 			const insertionResult = insertRowIntoTree(
 				page.rows,
 				rowDataAdd,

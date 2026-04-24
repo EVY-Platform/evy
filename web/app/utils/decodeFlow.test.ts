@@ -1,8 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import type { UI_Flow as ServerFlow, UI_Row as ServerRow } from "evy-types";
+import invariant from "tiny-invariant";
 
 import { validateUiFlow } from "../../../types/validators";
+import SearchRow from "../rows/edit/SearchRow";
 import {
+	buildRowForNewPageFromBase,
 	decodeFlows,
 	encodeFlow,
 	normalizeServerFlow,
@@ -185,5 +188,21 @@ describe("decodeFlows / encodeFlow", () => {
 		const decoded = decodeFlows([validated])[0];
 		const encoded = encodeFlow(decoded);
 		expect(encoded).toEqual(canonical);
+	});
+});
+
+describe("buildRowForNewPageFromBase", () => {
+	it("produces a Search row with a non-palette id for the nested template child", () => {
+		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+		const row = buildRowForNewPageFromBase(SearchRow, newId);
+		expect(row.id).toBe(newId);
+		expect(row.config.type).toBe("Search");
+		expect(row.config.view.content.title).toBe("Search row title");
+		const child = row.config.view.content.child;
+		expect(child).toBeDefined();
+		invariant(child, "search row template child");
+		const childId = child.id;
+		expect(childId).toBeDefined();
+		expect(childId).not.toBe("00000000-0000-4000-8000-000000000001");
 	});
 });
