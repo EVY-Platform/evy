@@ -12,15 +12,15 @@ struct EVYSelectPhotoRow: View, EVYRowProtocol {
 	public static let JSONType = "SelectPhoto"
 
 	private let view: SelectPhotoRowViewData
-	private let destination: String?
+	private let destination: String
 
-	init(view: SelectPhotoRowViewData, destination: String?) {
+	init(view: SelectPhotoRowViewData, destination: String) {
 		self.view = view
 		self.destination = destination
 	}
 
 	var body: some View {
-		if let destination {
+		if !destination.isEmpty {
 			EVYSelectPhoto(
 				title: view.content.title,
 				subtitle: view.content.subtitle,

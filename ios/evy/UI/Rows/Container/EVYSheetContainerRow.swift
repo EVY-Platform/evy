@@ -32,10 +32,12 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
 								EVYRow(row: row)
 							}
 						}
-						.frame(maxHeight: .infinity, alignment: .top)
+						.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+						.background(Color.white.ignoresSafeArea())
 						.padding(.top, Constants.majorPadding)
 						.presentationDetents([.medium, .large])
 						.presentationDragIndicator(.visible)
+						.presentationBackground(.white)
 					}
 			}
 		}

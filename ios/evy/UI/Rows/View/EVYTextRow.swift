@@ -26,7 +26,7 @@ struct EVYTextRow: View, EVYRowProtocol {
 			}
 			EVYTextView(view.content.text)
 				.frame(maxWidth: .infinity, alignment: .leading)
-				.lineLimit(Int(view.max_lines ?? "1") ?? 1)
+				.lineLimit(Int(view.max_lines.isEmpty ? "1" : view.max_lines) ?? 1)
 				.background {
 					ViewThatFits(in: .vertical) {
 						EVYTextView(view.content.text).hidden()

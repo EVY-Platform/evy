@@ -16,10 +16,8 @@ func forEachRow(in page: UI_Page, visitor: (UI_Row) -> Void) {
 
 private func visit(_ row: UI_Row, visitor: (UI_Row) -> Void) {
     visitor(row)
-    if let children = row.view.content.children {
-        for child in children {
-            visit(child, visitor: visitor)
-        }
+    for child in row.view.content.children {
+        visit(child, visitor: visitor)
     }
     if let child = row.view.content.child {
         visit(child, visitor: visitor)

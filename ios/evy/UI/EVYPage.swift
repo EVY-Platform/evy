@@ -71,8 +71,8 @@ private struct EVYPageBody: View {
     @MainActor
     private func bootstrapDrafts(in page: UI_Page, scopeId: String?) {
         forEachRow(in: page) { row in
-            guard let destination = row.destination, !destination.isEmpty else { return }
-            let variableName = parsePropsFromText(destination)
+            guard !row.destination.isEmpty else { return }
+            let variableName = parsePropsFromText(row.destination)
             guard !variableName.isEmpty else { return }
             let initialData: Data?
             if row.type == .inlinePicker {
@@ -90,3 +90,4 @@ private struct EVYPageBody: View {
         }
     }
 }
+

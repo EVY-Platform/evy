@@ -11,9 +11,9 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
 	public static let JSONType = "TextArea"
 
 	private let view: TextAreaRowViewData
-	private let destination: String?
+	private let destination: String
 
-	init(view: TextAreaRowViewData, destination: String?) {
+	init(view: TextAreaRowViewData, destination: String) {
 		self.view = view
 		self.destination = destination
 	}
@@ -24,7 +24,7 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			if let destination {
+			if !destination.isEmpty {
 				EVYTextField(
 					input: view.content.value,
 					destination: destination,

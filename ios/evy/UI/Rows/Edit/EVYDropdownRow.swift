@@ -12,9 +12,9 @@ struct EVYDropdownRow: View, EVYRowProtocol {
 
 	private let view: DropdownRowViewData
 	private let source: String
-	private let destination: String?
+	private let destination: String
 
-	init(view: DropdownRowViewData, source: String, destination: String?) {
+	init(view: DropdownRowViewData, source: String, destination: String) {
 		self.view = view
 		self.source = source
 		self.destination = destination
@@ -26,7 +26,7 @@ struct EVYDropdownRow: View, EVYRowProtocol {
 				EVYTextView(view.content.title)
 					.padding(.vertical, Constants.padding)
 			}
-			if let destination {
+			if !destination.isEmpty {
 				EVYDropdown(
 					title: view.content.title,
 					placeholder: view.content.placeholder,

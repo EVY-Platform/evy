@@ -10,26 +10,23 @@
 					{
 						"id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
 						"type": "Text",
+						"source": "{item}",
+						"destination": "",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "My item is called",
 								"text": "{item.title}"
 							},
 							"max_lines": ""
-						},
-						"actions": [],
-						"source": "{item}"
+						}
 					}
 				],
 				"footer": {
 					"id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
 					"type": "Button",
-					"view": {
-						"content": {
-							"title": "",
-							"label": "Go home"
-						}
-					},
+					"source": "{item}",
+					"destination": "",
 					"actions": [
 						{
 							"condition": "",
@@ -37,7 +34,12 @@
 							"true": "close"
 						}
 					],
-					"source": "{item}"
+					"view": {
+						"content": {
+							"title": "",
+							"label": "Go home"
+						}
+					}
 				}
 			}
 		]
@@ -52,78 +54,81 @@
 					{
 						"id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
 						"type": "SelectPhoto",
+						"source": "{item}",
+						"destination": "{photo_ids}",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
+								"subtitle": "Photos: {count(photo_ids)}/10 - Chose your listing's main photo first.",
 								"icon": "::image-plus::",
-								"photos": "{photo_ids}",
 								"content": "Add photos",
-								"subtitle": "Photos: {count(photo_ids)}/10 - Chose your listing's main photo first."
+								"photos": "{photo_ids}"
 							}
-						},
-						"destination": "{photo_ids}",
-						"actions": [],
-						"source": "{item}"
+						}
 					},
 					{
 						"id": "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
 						"type": "Input",
+						"source": "{item}",
+						"destination": "{title}",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "A row title ::star::",
-								"value": "{title}",
-								"placeholder": "My iPhone ::star:: 20"
+								"placeholder": "My iPhone ::star:: 20",
+								"value": "{title}"
 							}
-						},
-						"destination": "{title}",
-						"actions": [],
-						"source": "{item}"
+						}
 					},
 					{
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
 						"type": "Input",
+						"source": "{item}",
+						"destination": "{buildCurrency(price)}",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "Price",
-								"value": "{formatCurrency(price)}",
-								"placeholder": "{formatCurrency(price)}"
+								"placeholder": "{formatCurrency(price)}",
+								"value": "{formatCurrency(price)}"
 							}
-						},
-						"destination": "{buildCurrency(price)}",
-						"actions": [],
-						"source": "{item}"
+						}
 					},
 					{
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
 						"type": "Dropdown",
+						"source": "{conditions}",
+						"destination": "{condition}",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "Condition",
-								"format": "{datum.value}",
-								"placeholder": "Choose one"
+								"placeholder": "Choose one",
+								"format": "{datum.value}"
 							}
-						},
-						"destination": "{condition}",
-						"actions": [],
-						"source": "{conditions}"
+						}
 					},
 					{
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
 						"type": "Dropdown",
+						"source": "{selling_reasons}",
+						"destination": "{selling_reason}",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "Selling Reason",
-								"format": "{datum.value}",
-								"placeholder": "Choose one"
+								"placeholder": "Choose one",
+								"format": "{datum.value}"
 							}
-						},
-						"destination": "{selling_reason}",
-						"actions": [],
-						"source": "{selling_reasons}"
+						}
 					},
 					{
 						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
 						"type": "ColumnContainer",
+						"source": "{item}",
+						"destination": "",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "Dimensions (width x height x depth)",
@@ -131,102 +136,111 @@
 									{
 										"id": "b66e136d-828d-4ed0-ae27-cdc48f7cbffd",
 										"type": "Input",
+										"source": "{item}",
+										"destination": "{width}",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
-												"value": "{formatDimension(width)}",
-												"placeholder": "Width"
+												"placeholder": "Width",
+												"value": "{formatDimension(width)}"
 											}
-										},
-										"destination": "{width}",
-										"actions": [],
-										"source": "{item}"
+										}
 									},
 									{
 										"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
 										"type": "Input",
+										"source": "{item}",
+										"destination": "{height}",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
-												"value": "{formatDimension(height)}",
-												"placeholder": "Height"
+												"placeholder": "Height",
+												"value": "{formatDimension(height)}"
 											}
-										},
-										"destination": "{height}",
-										"actions": [],
-										"source": "{item}"
+										}
 									},
 									{
 										"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
 										"type": "Input",
+										"source": "{item}",
+										"destination": "{length}",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
-												"value": "{formatDimension(length)}",
-												"placeholder": "Length"
+												"placeholder": "Length",
+												"value": "{formatDimension(length)}"
 											}
-										},
-										"destination": "{length}",
-										"actions": [],
-										"source": "{item}"
+										}
 									}
 								]
 							}
-						},
-						"actions": [],
-						"source": "{item}"
+						}
 					},
 					{
 						"id": "6c48841c-079f-4c58-bab6-af96a87d7399",
 						"type": "SheetContainer",
+						"source": "{item}",
+						"destination": "",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
 								"child": {
 									"id": "2422c9ec-df63-4fde-9632-0fe159c0b40e",
 									"type": "InputList",
+									"source": "{tags}",
+									"destination": "",
+									"actions": [],
 									"view": {
 										"content": {
 											"title": "Tags",
-											"format": "{datum.value}",
-											"placeholder": "Search for tags"
+											"placeholder": "Search for tags",
+											"format": "{datum.value}"
 										}
-									},
-									"actions": [],
-									"source": "{tags}"
+									}
 								},
 								"children": [
 									{
 										"id": "8f8c442e-ee2d-4974-9ef1-29005f3311e6",
 										"type": "Search",
+										"source": "{api:tags}",
+										"destination": "{tags}",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
-												"format": "{datum.value}",
-												"placeholder": "Search for tags"
+												"placeholder": "Search for tags",
+												"child": {
+													"id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+													"type": "Info",
+													"source": "",
+													"destination": "",
+													"actions": [],
+													"view": {
+														"content": {
+															"title": "{datum.value}",
+															"subtitle": "",
+															"icon": ""
+														}
+													}
+												}
 											}
-										},
-										"destination": "{tags}",
-										"actions": [],
-										"source": "{api:tags}"
+										}
 									}
 								]
 							}
-						},
-						"actions": [],
-						"source": "{item}"
+						}
 					}
 				],
 				"title": "Create listing",
 				"footer": {
 					"id": "acabbedc-0a5a-4f10-8e0c-3d6cf76d86e8",
 					"type": "Button",
-					"view": {
-						"content": {
-							"title": "",
-							"label": "Next"
-						}
-					},
+					"source": "{item}",
+					"destination": "",
 					"actions": [
 						{
 							"condition": "{length(title) > 0}",
@@ -269,7 +283,12 @@
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,06b21b52-0845-468a-ace1-170a3b05f3a2)}"
 						}
 					],
-					"source": "{item}"
+					"view": {
+						"content": {
+							"title": "",
+							"label": "Next"
+						}
+					}
 				}
 			},
 			{
@@ -278,28 +297,24 @@
 					{
 						"id": "c9d0e1f2-a3b4-4c5d-8e7f-8a9b0c1d2e3f",
 						"type": "TextArea",
+						"source": "{item}",
+						"destination": "{description}",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
 								"value": "",
 								"placeholder": "Write a short description of your product"
 							}
-						},
-						"destination": "{description}",
-						"actions": [],
-						"source": "{item}"
+						}
 					}
 				],
 				"title": "Describe item",
 				"footer": {
 					"id": "cc86c53a-170d-4800-8897-8f99f3697055",
 					"type": "Button",
-					"view": {
-						"content": {
-							"title": "",
-							"label": "Next"
-						}
-					},
+					"source": "{item}",
+					"destination": "",
 					"actions": [
 						{
 							"condition": "{length(description) > 0}",
@@ -307,7 +322,12 @@
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,26dae81a-4122-4b5c-8396-a72a319ccd8b)}"
 						}
 					],
-					"source": "{item}"
+					"view": {
+						"content": {
+							"title": "",
+							"label": "Next"
+						}
+					}
 				}
 			},
 			{
@@ -316,13 +336,24 @@
 					{
 						"id": "d0e1f2a3-b4c5-4d6e-8f8a-9b0c1d2e3f4a",
 						"type": "SelectSegmentContainer",
+						"source": "{item}",
+						"destination": "",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
+								"segments": [
+									"Pickup",
+									"Delivery",
+									"Shipping"
+								],
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222201",
 										"type": "ListContainer",
+										"source": "{item}",
+										"destination": "",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
@@ -330,106 +361,125 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222202",
 														"type": "Info",
+														"source": "{item}",
+														"destination": "",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
-																"text": "Allow buyers to pick up the item"
+																"subtitle": "Allow buyers to pick up the item",
+																"icon": ""
 															}
-														},
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222203",
 														"type": "SheetContainer",
+														"source": "{item}",
+														"destination": "",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
 																"child": {
 																	"id": "22222222-2222-4222-8222-222222222204",
 																	"type": "TextAction",
+																	"source": "{item}",
+																	"destination": "{pickup_address}",
+																	"actions": [],
 																	"view": {
 																		"content": {
 																			"title": "Where",
 																			"text": "{formatAddress(pickup_address)}",
-																			"action": "Change",
-																			"placeholder": "Enter pick up address"
+																			"placeholder": "Enter pick up address",
+																			"action": "Change"
 																		}
-																	},
-																	"destination": "{pickup_address}",
-																	"actions": [],
-																	"source": "{item}"
+																	}
 																},
 																"children": [
 																	{
 																		"id": "22222222-2222-4222-8222-222222222205",
 																		"type": "Search",
+																		"source": "local:address",
+																		"destination": "{address}",
+																		"actions": [],
 																		"view": {
 																			"content": {
 																				"title": "",
-																				"format": "{datum.unit} {datum.street}, {datum.city} {datum.state} {datum.postcode}",
-																				"placeholder": "Search address"
+																				"placeholder": "Search address",
+																				"child": {
+																					"id": "33333333-3333-4333-8333-333333333305",
+																					"type": "Info",
+																					"source": "",
+																					"destination": "",
+																					"actions": [],
+																					"view": {
+																						"content": {
+																							"title": "{datum.unit} {datum.street}, {datum.city} {datum.state} {datum.postcode}",
+																							"subtitle": "",
+																							"icon": ""
+																						}
+																					}
+																				}
 																			}
-																		},
-																		"destination": "{address}",
-																		"actions": [],
-																		"source": "local:address"
+																		}
 																	}
 																]
 															}
-														},
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222206",
 														"type": "Input",
+														"source": "{item}",
+														"destination": "{address_instructions}",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
-																"value": "{address_instructions}",
-																"placeholder": "Additional information"
+																"placeholder": "Additional information",
+																"value": "{address_instructions}"
 															}
-														},
-														"destination": "{address_instructions}",
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222207",
 														"type": "Info",
+														"source": "{item}",
+														"destination": "",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "When",
-																"text": "When are you available for buyers to inspect or pick up this item"
+																"subtitle": "When are you available for buyers to inspect or pick up this item",
+																"icon": ""
 															}
-														},
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222208",
 														"type": "Calendar",
+														"source": "{item}",
+														"destination": "{pickup_timeslots}",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
 																"primary": "{pickup_timeslots}",
 																"secondary": "{delivery_timeslots}"
 															}
-														},
-														"destination": "{pickup_timeslots}",
-														"actions": [],
-														"source": "{item}"
+														}
 													}
 												]
 											}
-										},
-										"actions": [],
-										"source": "{item}"
+										}
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222209",
 										"type": "ListContainer",
+										"source": "{item}",
+										"destination": "",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
@@ -437,89 +487,96 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222210",
 														"type": "Info",
+														"source": "{item}",
+														"destination": "",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
-																"text": "Deliver directly to the buyer"
+																"subtitle": "Deliver directly to the buyer",
+																"icon": ""
 															}
-														},
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222211",
 														"type": "Input",
+														"source": "{item}",
+														"destination": "{delivery_fee}",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "Surcharge",
-																"value": "{formatCurrency(delivery_fee)}",
-																"placeholder": "Do you want to charge for delivery?"
+																"placeholder": "Do you want to charge for delivery?",
+																"value": "{formatCurrency(delivery_fee)}"
 															}
-														},
-														"destination": "{delivery_fee}",
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222212",
 														"type": "Info",
+														"source": "{item}",
+														"destination": "",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "How far",
-																"text": "How long can you travel to deliver this item"
+																"subtitle": "How long can you travel to deliver this item",
+																"icon": ""
 															}
-														},
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222213",
 														"type": "InlinePicker",
+														"source": "{durations}",
+														"destination": "{distance}",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
 																"format": "{datum.value}"
 															}
-														},
-														"destination": "{distance}",
-														"actions": [],
-														"source": "{durations}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222214",
 														"type": "Info",
+														"source": "{item}",
+														"destination": "",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "When",
-																"text": "When are you available to deliver this item"
+																"subtitle": "When are you available to deliver this item",
+																"icon": ""
 															}
-														},
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222215",
 														"type": "Calendar",
+														"source": "{item}",
+														"destination": "{delivery_timeslots}",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
 																"primary": "{delivery_timeslots}",
 																"secondary": "{pickup_timeslots}"
 															}
-														},
-														"destination": "{delivery_timeslots}",
-														"actions": [],
-														"source": "{item}"
+														}
 													}
 												]
 											}
-										},
-										"actions": [],
-										"source": "{item}"
+										}
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222216",
 										"type": "ListContainer",
+										"source": "{item}",
+										"destination": "",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
@@ -527,96 +584,87 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222217",
 														"type": "Info",
+														"source": "{item}",
+														"destination": "",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
-																"text": "Postal shipping at the buyer's expense"
+																"subtitle": "Postal shipping at the buyer's expense",
+																"icon": ""
 															}
-														},
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222218",
 														"type": "Input",
+														"source": "{item}",
+														"destination": "{shipping_source_postal_code}",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "Where from",
-																"value": "{shipping_source_postal_code}",
-																"placeholder": "Postal code you will be shipping from"
+																"placeholder": "Postal code you will be shipping from",
+																"value": "{shipping_source_postal_code}"
 															}
-														},
-														"destination": "{shipping_source_postal_code}",
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222219",
 														"type": "Info",
+														"source": "{item}",
+														"destination": "",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "Where to",
-																"text": "Select how far you are willing to ship"
+																"subtitle": "Select how far you are willing to ship",
+																"icon": ""
 															}
-														},
-														"actions": [],
-														"source": "{item}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222220",
 														"type": "InlinePicker",
+														"source": "{areas}",
+														"destination": "{shipping_destination_areas}",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
 																"format": "{datum.value}"
 															}
-														},
-														"destination": "{shipping_destination_areas}",
-														"actions": [],
-														"source": "{areas}"
+														}
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222221",
 														"type": "Input",
+														"source": "{item}",
+														"destination": "{weight}",
+														"actions": [],
 														"view": {
 															"content": {
 																"title": "Weight (kg)",
-																"value": "{formatWeight(weight)}",
-																"placeholder": "Weight"
+																"placeholder": "Weight",
+																"value": "{formatWeight(weight)}"
 															}
-														},
-														"destination": "{weight}",
-														"actions": [],
-														"source": "{item}"
+														}
 													}
 												]
 											}
-										},
-										"actions": [],
-										"source": "{item}"
+										}
 									}
-								],
-								"segments": [
-									"Pickup",
-									"Delivery",
-									"Shipping"
 								]
 							}
-						},
-						"actions": [],
-						"source": "{item}"
+						}
 					}
 				],
 				"title": "Pickup & delivery",
 				"footer": {
 					"id": "b1600fd2-aac2-4399-8a94-72baca75b9ba",
 					"type": "Button",
-					"view": {
-						"content": {
-							"title": "",
-							"label": "Next"
-						}
-					},
+					"source": "{item}",
+					"destination": "",
 					"actions": [
 						{
 							"condition": "{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0}",
@@ -624,7 +672,12 @@
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,25a3269b-344c-477d-89c8-b2f5426a5d91)}"
 						}
 					],
-					"source": "{item}"
+					"view": {
+						"content": {
+							"title": "",
+							"label": "Next"
+						}
+					}
 				}
 			},
 			{
@@ -633,18 +686,23 @@
 					{
 						"id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
 						"type": "Info",
+						"source": "{item}",
+						"destination": "",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
-								"text": "Payment will be made by the buyers on pickup"
+								"subtitle": "Payment will be made by the buyers on pickup",
+								"icon": ""
 							}
-						},
-						"actions": [],
-						"source": "{item}"
+						}
 					},
 					{
 						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
 						"type": "ListContainer",
+						"source": "{item}",
+						"destination": "",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
@@ -652,46 +710,40 @@
 									{
 										"id": "33333333-3333-4333-8333-333333333301",
 										"type": "TextSelect",
+										"source": "{item}",
+										"destination": "{payment_cash}",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "Accept cash",
 												"text": "Let buyers know you will accept cash on pickup"
 											}
-										},
-										"destination": "{payment_cash}",
-										"actions": [],
-										"source": "{item}"
+										}
 									},
 									{
 										"id": "33333333-3333-4333-8333-333333333302",
 										"type": "TextSelect",
+										"source": "{item}",
+										"destination": "{payment_app}",
+										"actions": [],
 										"view": {
 											"content": {
 												"title": "Accept app payments",
 												"text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n- Cards are verified before the purchase\\n- Payment is transferred immediately when both buyer and seller confirm using a temporary code"
 											}
-										},
-										"destination": "{payment_app}",
-										"actions": [],
-										"source": "{item}"
+										}
 									}
 								]
 							}
-						},
-						"actions": [],
-						"source": "{item}"
+						}
 					}
 				],
 				"title": "Payment options",
 				"footer": {
 					"id": "db46724f-c8f0-43cb-b888-6a23e4ca76cb",
 					"type": "Button",
-					"view": {
-						"content": {
-							"title": "",
-							"label": "Next"
-						}
-					},
+					"source": "{item}",
+					"destination": "",
 					"actions": [
 						{
 							"condition": "{payment_cash == true || payment_app == true}",
@@ -699,7 +751,12 @@
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,857362ad-856f-465b-85a3-94bc8bb686cd)}"
 						}
 					],
-					"source": "{item}"
+					"view": {
+						"content": {
+							"title": "",
+							"label": "Next"
+						}
+					}
 				}
 			},
 			{
@@ -708,26 +765,24 @@
 					{
 						"id": "a3b4c5d6-e7f8-4a9b-8c1d-2e3f4a5b6c7d",
 						"type": "Info",
+						"source": "{item}",
+						"destination": "",
+						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
-								"text": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule"
+								"subtitle": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule",
+								"icon": ""
 							}
-						},
-						"actions": [],
-						"source": "{item}"
+						}
 					}
 				],
 				"title": "Sharing data publicly",
 				"footer": {
 					"id": "20e9a035-8a42-4282-8725-49b620866c70",
 					"type": "Button",
-					"view": {
-						"content": {
-							"title": "",
-							"label": "Submit"
-						}
-					},
+					"source": "{item}",
+					"destination": "",
 					"actions": [
 						{
 							"condition": "",
@@ -735,7 +790,12 @@
 							"true": "{create(item)}"
 						}
 					],
-					"source": "{item}"
+					"view": {
+						"content": {
+							"title": "",
+							"label": "Submit"
+						}
+					}
 				}
 			}
 		]

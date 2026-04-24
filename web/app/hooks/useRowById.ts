@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { useFlowsContext } from "../state";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { Row } from "../types/row";
 import { findFlowById } from "../utils/flowHelpers";
 import { getRowsRecursive } from "../utils/rowTree";

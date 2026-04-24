@@ -188,6 +188,8 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 | Action     | Button, TextAction |
 | Container  | ColumnContainer, ListContainer, SheetContainer, SelectSegmentContainer |
 
-Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`). See `row-content.spec.json` for the exact keys per type.
+Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`, `child`, `children`). See `row-content.spec.json` for the exact keys per type.
 
-For list-backed rows (Dropdown, InlinePicker, Search, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `datum` as the placeholder for the current item in expressions, e.g. `{datum.value}` or `{datum.unit} {datum.street}, {datum.city}`.
+For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `datum` as the placeholder for the current item in expressions, e.g. `{datum.value}` or `{datum.unit} {datum.street}, {datum.city}`.
+
+For **Search** rows, iOS renders each hit using `view.content.child` (typically an `Info` row template) instead of `format`; string fields in that child row are evaluated with `datum` the same way. The web builder’s Search row stub does not render live results.

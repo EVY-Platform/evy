@@ -15,7 +15,7 @@ jobs:
             run:
                 working-directory: web
 
-        timeout-minutes: 2
+        timeout-minutes: 3
         runs-on: ubuntu-latest
         container: ghcr.io/evy-platform/evy-ci:playwright-1.59.1
         steps:

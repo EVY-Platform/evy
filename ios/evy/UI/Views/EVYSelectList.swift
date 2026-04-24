@@ -28,6 +28,7 @@ struct EVYSelectList: View {
             .listRowBackground(Color.clear)
         }
         .listStyle(.inset)
+        .scrollContentBackground(.hidden)
     }
 }
 

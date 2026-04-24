@@ -21,7 +21,7 @@ export default defineRow("DropdownRow", {
 		<RowLayout title={row.config.view.content.title}>
 			<Dropdown
 				value={row.config.source}
-				placeholder={row.config.view.content.placeholder ?? ""}
+				placeholder={row.config.view.content.placeholder}
 			/>
 		</RowLayout>
 	),

@@ -8,17 +8,17 @@
 import SwiftUI
     
 struct EVYDropdown: View {
-    let title: String?
+    let title: String
     let destination: String
     let format: String
-    let placeholder: String?
+    let placeholder: String
     
     private var options: [EVYJson] = []
     private var selection: EVYState<String>
     @State private var showSheet = false
     
-    init(title: String?,
-         placeholder: String?,
+    init(title: String = "",
+         placeholder: String = "",
          data: String,
          format: String,
          destination: String)
@@ -48,10 +48,10 @@ struct EVYDropdown: View {
                 if case let .string(identifier) = value {
                     if identifier.isEmpty { return "" }
                     if let matchingOption = loadedOptions.first(where: { $0.identifierValue() == identifier }) {
-                        return try EVY.formatData(json: matchingOption, format: format)
+                        return try EVY.formatDataOrToString(json: matchingOption, format: format)
                     }
                 }
-                return try EVY.formatData(json: value, format: format)
+                return try EVY.formatDataOrToString(json: value, format: format)
             } catch {
                 #if DEBUG
                 print("[EVYDropdown] Error formatting selection: \(error) for input \($0)")
@@ -67,7 +67,7 @@ struct EVYDropdown: View {
                 if selection.value.count > 0 {
                     EVYTextView(selection.value)
                 } else {
-					EVYTextView(placeholder ?? "", style: .info)
+					EVYTextView(placeholder, style: .info)
                 }
             }
             Spacer()
@@ -87,15 +87,18 @@ struct EVYDropdown: View {
         .onTapGesture { showSheet.toggle() }
         .sheet(isPresented: $showSheet, content: {
             VStack {
-                if title?.count ?? 0 > 0 {
-                    EVYTextView(title!).padding(.top, Constants.majorPadding)
+                if title.count > 0 {
+                    EVYTextView(title).padding(.top, Constants.majorPadding)
                 }
                 EVYSelectList(options: options,
                               format: format,
                               destination: destination)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(Color.white.ignoresSafeArea())
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(.white)
         })
     }
 }
@@ -107,13 +110,11 @@ struct EVYDropdown: View {
 		try! EVY.getUserData()
 		try! await EVY.createItem()
 		
-		return Group {
-			EVYDropdown(title: "Dropdown",
-						placeholder: "A placeholder",
-						data: "{conditions}",
-						format: "{$0.value}",
-						destination: "{condition}")
-		}
+		return EVYDropdown(title: "Dropdown",
+						   placeholder: "A placeholder",
+						   data: "{conditions}",
+						   format: "{$0.value}",
+						   destination: "{condition}")
 	}
 }
 

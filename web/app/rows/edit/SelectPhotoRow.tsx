@@ -26,32 +26,14 @@ export default defineRow("SelectPhotoRow", {
 				style={{ padding: "var(--size-8)" }}
 			>
 				<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
-					<EVYText
-						text={
-							typeof row.config.view.content.icon === "string"
-								? row.config.view.content.icon
-								: ""
-						}
-					/>
+					<EVYText text={row.config.view.content.icon} />
 					<p className="evy-text-sm">
-						<EVYText
-							text={
-								typeof row.config.view.content.content === "string"
-									? row.config.view.content.content
-									: ""
-							}
-						/>
+						<EVYText text={row.config.view.content.content} />
 					</p>
 				</div>
 			</div>
 			<p className="evy-text-sm">
-				<EVYText
-					text={
-						typeof row.config.view.content.subtitle === "string"
-							? row.config.view.content.subtitle
-							: ""
-					}
-				/>
+				<EVYText text={row.config.view.content.subtitle} />
 			</p>
 		</RowLayout>
 	),

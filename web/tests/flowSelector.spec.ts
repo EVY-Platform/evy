@@ -26,7 +26,7 @@ test.describe("Flow Selector", () => {
 							view: {
 								content: {
 									title: "Flow 1 Info",
-									text: "This is from Flow 1",
+									subtitle: "This is from Flow 1",
 								},
 							},
 							actions: [],
@@ -49,7 +49,7 @@ test.describe("Flow Selector", () => {
 							view: {
 								content: {
 									title: "Flow 2 Info",
-									text: "This is from Flow 2",
+									subtitle: "This is from Flow 2",
 								},
 							},
 							actions: [],

@@ -114,6 +114,13 @@ struct EVY {
     static func formatData(json: EVYJson, format: String) throws -> String {
         try _formatData(json: json, format: format)
     }
+
+    static func formatDataOrToString(json: EVYJson, format: String) throws -> String {
+        if format.isEmpty {
+            return json.toString()
+        }
+        return try formatData(json: json, format: format)
+    }
     
     static func ensureDraftExists(
         variableName: String,

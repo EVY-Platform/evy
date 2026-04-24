@@ -15,7 +15,8 @@
 	"Info": {
 		"content": {
 			"title": "string",
-			"text": "string"
+			"subtitle": "string",
+			"icon": "string"
 		}
 	},
 	"Text": {
@@ -64,8 +65,8 @@
 	"Search": {
 		"content": {
 			"title": "string",
-			"format": "string",
-			"placeholder": "string"
+			"placeholder": "string",
+			"child": "UI_Row"
 		}
 	},
 	"SelectPhoto": {

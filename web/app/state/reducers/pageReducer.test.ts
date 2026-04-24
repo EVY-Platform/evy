@@ -175,7 +175,7 @@ describe("pageReducer", () => {
 		expect(row?.config.view.content).toEqual(before?.config.view.content);
 	});
 
-	it("UPDATE_ROW_ROOT clears destination when value is empty string", () => {
+	it("UPDATE_ROW_ROOT sets destination to empty string when value is empty string", () => {
 		const base = textRow("row-1");
 		const rowWithDestination: Row = {
 			...base,
@@ -206,7 +206,7 @@ describe("pageReducer", () => {
 			value: "",
 		});
 		const row = next.flows[0].pages[0].rows[0];
-		expect(row.config.destination).toBeUndefined();
+		expect(row.config.destination).toBe("");
 	});
 
 	it("SET_ACTIVE_ROW updates selection", () => {

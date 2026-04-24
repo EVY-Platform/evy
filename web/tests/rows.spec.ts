@@ -15,7 +15,7 @@ test.describe("EVY Rows", () => {
 						view: {
 							content: {
 								title: "Test Info",
-								text: "Test text",
+								subtitle: "Test subtitle",
 							},
 						},
 						actions: [],

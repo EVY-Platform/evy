@@ -85,6 +85,7 @@
 				"value": { "type": "string" },
 				"placeholder": { "type": "string" },
 				"format": { "type": "string" },
+				"child": { "$ref": "#/$defs/UI_Row" },
 				"action": { "type": "string" },
 				"primary": { "type": "string" },
 				"secondary": { "type": "string" },
@@ -96,7 +97,6 @@
 					"type": "array",
 					"items": { "$ref": "#/$defs/UI_Row" }
 				},
-				"child": { "$ref": "#/$defs/UI_Row" },
 				"segments": {
 					"type": "array",
 					"items": { "type": "string" }

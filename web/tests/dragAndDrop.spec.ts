@@ -92,7 +92,7 @@ test.describe("Drag & Drop UX", () => {
 									view: {
 										content: {
 											title: "Child Info",
-											text: "Child text",
+											subtitle: "Child subtitle",
 										},
 									},
 									actions: [],
@@ -142,7 +142,7 @@ test.describe("Drag & Drop UX", () => {
 										view: {
 											content: {
 												title: "Nested Info",
-												text: "Nested text",
+												subtitle: "Nested subtitle",
 											},
 										},
 										actions: [],
@@ -453,8 +453,6 @@ test.describe("Drag & Drop UX", () => {
 	}) => {
 		await setupTwoEmptyTestPages(page);
 
-		const rowsPanel = await getRowsPanel(page);
-		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
 		const allRowTypes = [
@@ -482,14 +480,12 @@ test.describe("Drag & Drop UX", () => {
 			.count();
 
 		for (const rowText of allRowTypes) {
-			const sidebarRow = rowsPanel
-				.getByText(rowText, { exact: true })
-				.locator("..");
-			await expect(
-				sidebarRow.getByText(rowText, { exact: true }),
-			).toBeVisible();
+			const sidebarRow = await getSidebarRow(page, rowText);
+			await expect(sidebarRow).toBeVisible();
 			await sidebarRow.dragTo(pageContent);
-			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
+			const pageRow = getPageRow(page, rowText);
+			await pageRow.scrollIntoViewIfNeeded();
+			await expect(pageRow.getByText(rowText, { exact: true })).toBeVisible();
 		}
 
 		const finalRowCount = await pageContent
@@ -498,7 +494,9 @@ test.describe("Drag & Drop UX", () => {
 		expect(finalRowCount).toBe(initialRowCount + allRowTypes.length);
 
 		for (const rowText of allRowTypes) {
-			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
+			const pageRow = getPageRow(page, rowText);
+			await pageRow.scrollIntoViewIfNeeded();
+			await expect(pageRow.getByText(rowText, { exact: true })).toBeVisible();
 		}
 	});
 });

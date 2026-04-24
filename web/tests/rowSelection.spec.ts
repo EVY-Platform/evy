@@ -19,7 +19,7 @@ test.describe("Row Selection", () => {
 						view: {
 							content: {
 								title: "First Info Row",
-								text: "First row text content",
+								subtitle: "First row subtitle content",
 							},
 						},
 						actions: [],
@@ -57,7 +57,7 @@ test.describe("Row Selection", () => {
 						view: {
 							content: {
 								title: "First Info Row",
-								text: "First row text content",
+								subtitle: "First row subtitle content",
 							},
 						},
 						actions: [],
@@ -67,7 +67,7 @@ test.describe("Row Selection", () => {
 						view: {
 							content: {
 								title: "Second Info Row",
-								text: "Second row text content",
+								subtitle: "Second row subtitle content",
 							},
 						},
 						actions: [],
@@ -111,7 +111,7 @@ test.describe("Row Selection", () => {
 						view: {
 							content: {
 								title: "First Info Row",
-								text: "First row text content",
+								subtitle: "First row subtitle content",
 							},
 						},
 						actions: [],
@@ -190,7 +190,7 @@ test.describe("Row Selection", () => {
 						view: {
 							content: {
 								title: "First Info Row",
-								text: "First row text content",
+								subtitle: "First row subtitle content",
 							},
 						},
 						actions: [],
@@ -232,7 +232,7 @@ test.describe("Row Selection", () => {
 						view: {
 							content: {
 								title: "First Info Row",
-								text: "First row text content",
+								subtitle: "First row subtitle content",
 							},
 						},
 						actions: [],
@@ -248,18 +248,18 @@ test.describe("Row Selection", () => {
 			.first();
 		await firstInfoRow.click();
 
-		// Edit the text field
-		const textInput = configPanel.getByLabel("text");
-		await textInput.clear();
-		await textInput.fill("New text content");
+		// Edit the subtitle field
+		const subtitleInput = configPanel.getByLabel("subtitle");
+		await subtitleInput.clear();
+		await subtitleInput.fill("New subtitle content");
 
 		// Title should still show the same row's title
 		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
 			"First Info Row",
 		);
 
-		// The updated text should be visible
-		await expect(textInput).toHaveValue("New text content");
+		// The updated subtitle should be visible
+		await expect(subtitleInput).toHaveValue("New subtitle content");
 	});
 });
 

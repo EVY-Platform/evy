@@ -20,8 +20,8 @@ export default defineRow("InputRow", {
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
 			<Input
-				value={row.config.view.content.value?.toString() ?? ""}
-				placeholder={row.config.view.content.placeholder?.toString() ?? ""}
+				value={row.config.view.content.value}
+				placeholder={row.config.view.content.placeholder}
 			/>
 		</RowLayout>
 	),

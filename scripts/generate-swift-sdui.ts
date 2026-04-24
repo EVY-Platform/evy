@@ -172,10 +172,10 @@ public final class UI_Row: Codable {
     public let type: EVYRowType
     public let view: UI_RowView
     public let source: String
-    public let destination: String?
+    public let destination: String
     public let actions: [UI_RowAction]
 
-    public init(id: String, type: EVYRowType, view: UI_RowView, source: String, destination: String?, actions: [UI_RowAction]) {
+    public init(id: String, type: EVYRowType, view: UI_RowView, source: String, destination: String, actions: [UI_RowAction]) {
         self.id = id
         self.type = type
         self.view = view
@@ -199,7 +199,7 @@ public final class UI_Row: Codable {
         type = try container.decode(EVYRowType.self, forKey: .type)
         view = try container.decode(UI_RowView.self, forKey: .view)
         source = try container.decode(String.self, forKey: .source)
-        destination = try container.decodeIfPresent(String.self, forKey: .destination)
+        destination = try container.decodeIfPresent(String.self, forKey: .destination) ?? ""
         actions = try container.decodeIfPresent([UI_RowAction].self, forKey: .actions) ?? []
     }
 
@@ -209,7 +209,7 @@ public final class UI_Row: Codable {
         try container.encode(type, forKey: .type)
         try container.encode(view, forKey: .view)
         try container.encode(source, forKey: .source)
-        try container.encodeIfPresent(destination, forKey: .destination)
+        try container.encode(destination, forKey: .destination)
         try container.encode(actions, forKey: .actions)
     }
 }
@@ -292,13 +292,13 @@ function emitRowContentWithPassthrough(): string {
 	return `// MARK: - UI_RowContent (preserves additional string keys so payload decode gets full content)
 public class UI_RowContent: Codable {
     public let title: String
-    public let children: [UI_Row]?
+    public let children: [UI_Row]
     public let child: UI_Row?
-    public let segments: [String]?
+    public let segments: [String]
     /// Additional content keys (e.g. label, value, placeholder) preserved for payload decoding.
     private let additional: [String: String]
 
-    public init(title: String, children: [UI_Row]?, child: UI_Row?, segments: [String]?, additional: [String: String] = [:]) {
+    public init(title: String, children: [UI_Row] = [], child: UI_Row? = nil, segments: [String] = [], additional: [String: String] = [:]) {
         self.title = title
         self.children = children
         self.child = child
@@ -309,9 +309,9 @@ public class UI_RowContent: Codable {
     public required init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: UI_RowContentCodingKeys.self)
         title = try c.decode(String.self, forKey: .title)
-        children = try c.decodeIfPresent([UI_Row].self, forKey: .children)
+        children = try c.decodeIfPresent([UI_Row].self, forKey: .children) ?? []
         child = try c.decodeIfPresent(UI_Row.self, forKey: .child)
-        segments = try c.decodeIfPresent([String].self, forKey: .segments)
+        segments = try c.decodeIfPresent([String].self, forKey: .segments) ?? []
         let known = Set(["title", "children", "child", "segments"])
         var extra: [String: String] = [:]
         for key in c.allKeys {
@@ -326,9 +326,9 @@ public class UI_RowContent: Codable {
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: UI_RowContentCodingKeys.self)
         try c.encode(title, forKey: .title)
-        try c.encodeIfPresent(children, forKey: .children)
+        try c.encode(children, forKey: .children)
         try c.encodeIfPresent(child, forKey: .child)
-        try c.encodeIfPresent(segments, forKey: .segments)
+        try c.encode(segments, forKey: .segments)
         for (k, v) in additional {
             try c.encode(v, forKey: UI_RowContentCodingKeys(stringValue: k, intValue: nil)!)
         }
@@ -411,17 +411,66 @@ ${defBlocks.join("\n\n")}
 `;
 }
 
+/** Decode line for one row-content spec field (non-optional Swift types; missing keys use defaults). */
+function emitRowContentDecodeLine(key: string, specType: string): string {
+	const k = swiftIdentifier(key);
+	switch (specType) {
+		case "string":
+			return `        ${k} = try c.decodeIfPresent(String.self, forKey: .${k}) ?? ""`;
+		case "[UI_Row]":
+			return `        ${k} = try c.decodeIfPresent([UI_Row].self, forKey: .${k}) ?? []`;
+		case "[String]":
+			return `        ${k} = try c.decodeIfPresent([String].self, forKey: .${k}) ?? []`;
+		case "UI_Row":
+			return `        ${k} = try c.decodeIfPresent(UI_Row.self, forKey: .${k})`;
+		default:
+			return `        ${k} = try c.decodeIfPresent(String.self, forKey: .${k}) ?? ""`;
+	}
+}
+
+function emitRowContentEncodeLine(key: string, specType: string): string {
+	const k = swiftIdentifier(key);
+	switch (specType) {
+		case "UI_Row":
+			return `        try c.encodeIfPresent(${k}, forKey: .${k})`;
+		default:
+			return `        try c.encode(${k}, forKey: .${k})`;
+	}
+}
+
 function emitRowContentStruct(
 	rowType: string,
 	content: Record<string, string>,
 ): string {
 	const contentName = `${rowType}RowContent`;
-	const fields = Object.entries(content).map(
-		([k, v]) => `    public let ${k}: ${swiftTypeForSpecType(v)}`,
+	const entries = Object.entries(content);
+	const fieldLines = entries.map(
+		([k, v]) =>
+			`    public let ${swiftIdentifier(k)}: ${swiftTypeForSpecType(v)}`,
 	);
+	const codingKeyCases = entries.map(
+		([k]) => `        case ${swiftIdentifier(k)}`,
+	);
+	const decodeLines = entries.map(([k, v]) => emitRowContentDecodeLine(k, v));
+	const encodeLines = entries.map(([k, v]) => emitRowContentEncodeLine(k, v));
+
 	return `// MARK: - ${contentName}
 public struct ${contentName}: Codable {
-${fields.join("\n")}
+${fieldLines.join("\n")}
+
+    private enum CodingKeys: String, CodingKey {
+${codingKeyCases.join("\n")}
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+${decodeLines.join("\n")}
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+${encodeLines.join("\n")}
+    }
 }`;
 }
 
@@ -432,16 +481,50 @@ function emitRowViewDataStruct(
 	const viewDataName = `${rowType}RowViewData`;
 	const contentName = `${rowType}RowContent`;
 
-	const viewFields: string[] = ["    public let content: " + contentName];
-	if (spec.view) {
-		for (const [k] of Object.entries(spec.view)) {
-			viewFields.push(`    public let ${k}: String?`);
-		}
+	if (!spec.view || Object.keys(spec.view).length === 0) {
+		return `// MARK: - ${viewDataName}
+public struct ${viewDataName}: Codable {
+    public let content: ${contentName}
+}`;
 	}
+
+	const viewEntries = Object.entries(spec.view);
+	const viewFieldLines = viewEntries.map(
+		([k]) => `    public let ${swiftIdentifier(k)}: String`,
+	);
+	const codingKeyCases = [
+		"        case content",
+		...viewEntries.map(([k]) => `        case ${swiftIdentifier(k)}`),
+	];
+	const decodeViewLines = viewEntries.map(
+		([k]) =>
+			`        ${swiftIdentifier(k)} = try c.decodeIfPresent(String.self, forKey: .${swiftIdentifier(k)}) ?? ""`,
+	);
+	const encodeViewLines = viewEntries.map(
+		([k]) =>
+			`        try c.encode(${swiftIdentifier(k)}, forKey: .${swiftIdentifier(k)})`,
+	);
 
 	return `// MARK: - ${viewDataName}
 public struct ${viewDataName}: Codable {
-${viewFields.join("\n")}
+    public let content: ${contentName}
+${viewFieldLines.join("\n")}
+
+    private enum CodingKeys: String, CodingKey {
+${codingKeyCases.join("\n")}
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        content = try c.decode(${contentName}.self, forKey: .content)
+${decodeViewLines.join("\n")}
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(content, forKey: .content)
+${encodeViewLines.join("\n")}
+    }
 }`;
 }
 
@@ -463,7 +546,7 @@ function emitUIRowPayloads(rowSpec: RowSpec): string {
 		if (!spec) continue;
 		const viewDataName = `${rowType}RowViewData`;
 		payloadCases.push(
-			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, String, String?, [UI_RowAction])`,
+			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, String, String, [UI_RowAction])`,
 		);
 	}
 
