@@ -54,8 +54,9 @@ export type RowAction =
 	| { type: "REMOVE_PAGE"; pageId: string }
 	| {
 			type: "SET_ACTIVE_ROW";
-			pageId: string;
 			rowId: string;
+			/** When set (e.g. browser URL restore), uses this stack instead of deriving from the canvas path */
+			configStack?: string[];
 	  }
 	| {
 			type: "SET_ACTIVE_PAGE";

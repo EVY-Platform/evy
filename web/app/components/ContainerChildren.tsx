@@ -1,4 +1,7 @@
+import { useCallback } from "react";
+
 import type { Row } from "../types/row";
+import { useFlowsContext } from "../state";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { PlaceholderDropIndicator } from "./PlaceholderDropIndicator";
 
@@ -13,6 +16,15 @@ export function ContainerChildren({
 	showIndicators?: boolean;
 	showPlaceholder: boolean;
 }) {
+	const { dispatchRow } = useFlowsContext();
+
+	const selectNestedRow = useCallback(
+		(nestedRowId: string) => {
+			dispatchRow({ type: "SET_ACTIVE_ROW", rowId: nestedRowId });
+		},
+		[dispatchRow],
+	);
+
 	if (!rows?.length) {
 		return showPlaceholder ? (
 			<PlaceholderDropIndicator key="placeholder" />
@@ -27,6 +39,7 @@ export function ContainerChildren({
 				<DraggableRowContainer
 					key={child.id}
 					rowId={child.id}
+					selectRow={() => selectNestedRow(child.id)}
 					orientation={orientation}
 					showIndicators={showIndicators}
 					previousRowId={index > 0 ? rows[index - 1].id : undefined}

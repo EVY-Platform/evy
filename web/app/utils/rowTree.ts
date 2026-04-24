@@ -74,15 +74,66 @@ function findPageContainingRow(
 
 export function findRowInPages(
 	rowId: string,
-	pages: { rows: Row[] }[],
+	pages: { rows: Row[]; footer?: Row }[],
 ): Row | undefined {
 	for (const page of pages) {
-		for (const row of page.rows) {
-			const found = findRowInSubtree(row, rowId);
-			if (found) return found;
-		}
+		const found = findRowInSinglePage(page, rowId);
+		if (found) return found;
 	}
 	return undefined;
+}
+
+/** Resolves a row anywhere on a single page (main `rows` or `footer`). */
+export function findRowInSinglePage(
+	page: { rows: Row[]; footer?: Row },
+	rowId: string,
+): Row | undefined {
+	for (const row of page.rows) {
+		const found = findRowInSubtree(row, rowId);
+		if (found) return found;
+	}
+	if (page.footer) {
+		return findRowInSubtree(page.footer, rowId);
+	}
+	return undefined;
+}
+
+/**
+ * Path of row ids from a top-level page row (or footer root) down to `leafRowId`.
+ * Used to derive `activeRowId` + `configStack` when selecting a nested row on the canvas.
+ */
+export function findRowIdPathFromPageRoot(
+	page: UI_Page,
+	leafRowId: string,
+): string[] | null {
+	for (const top of page.rows) {
+		const path = findRowIdPathFromAncestorRow(top, leafRowId);
+		if (path) return path;
+	}
+	if (page.footer) {
+		return findRowIdPathFromAncestorRow(page.footer, leafRowId);
+	}
+	return null;
+}
+
+function findRowIdPathFromAncestorRow(
+	root: Row,
+	leafRowId: string,
+): string[] | null {
+	if (root.id === leafRowId) return [root.id];
+
+	const child = root.config.view.content.child;
+	if (child) {
+		const sub = findRowIdPathFromAncestorRow(child, leafRowId);
+		if (sub) return [root.id, ...sub];
+	}
+
+	for (const nested of root.config.view.content.children ?? []) {
+		const sub = findRowIdPathFromAncestorRow(nested, leafRowId);
+		if (sub) return [root.id, ...sub];
+	}
+
+	return null;
 }
 
 function findRowInSubtree(row: Row, rowId: string): Row | undefined {

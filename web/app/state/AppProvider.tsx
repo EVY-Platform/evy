@@ -17,7 +17,12 @@ import { baseRows } from "../rows/baseRows";
 import { wsClient } from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
 import { findFlowById } from "../utils/flowHelpers";
-import { parseUrlPath, resolveUrlIds } from "../utils/urlUtils";
+import {
+	deriveSheetAndFocusFromRowChain,
+	parseUrlPath,
+	resolveUrlIds,
+	validateRowPathSegmentsForPage,
+} from "../utils/urlUtils";
 
 export function AppProvider({
 	children,
@@ -35,19 +40,49 @@ export function AppProvider({
 	}));
 
 	const initialState = useMemo(() => {
-		const { flowId: urlFlowId, pageId: urlPageId } = parseUrlPath();
+		const {
+			flowId: urlFlowId,
+			pageId: urlPageId,
+			rowPathSegments,
+		} = parseUrlPath();
 		const { flowId: activeFlowId, pageId: activePageId } = resolveUrlIds(
 			urlFlowId,
 			urlPageId,
 			initialFlows,
 		);
 
+		const flows = decodeFlows(initialFlows);
+		const activeFlow = findFlowById(flows, activeFlowId);
+		const page = activeFlow?.pages.find((p) => p.id === activePageId);
+
+		let activeRowId: string | undefined;
+		let configStack: string[] = [];
+		let focusMode = false;
+		let secondarySheetRowId: string | undefined;
+
+		if (page && activeFlow && rowPathSegments.length > 0) {
+			const validated = validateRowPathSegmentsForPage(page, rowPathSegments);
+			if (validated) {
+				activeRowId = validated.rootRowId;
+				configStack = validated.configStack;
+				const sheet = deriveSheetAndFocusFromRowChain(
+					activeFlow.pages,
+					validated.rootRowId,
+					validated.configStack,
+				);
+				focusMode = sheet.focusMode;
+				secondarySheetRowId = sheet.secondarySheetRowId;
+			}
+		}
+
 		return {
-			flows: decodeFlows(initialFlows),
+			flows,
 			activeFlowId,
 			activePageId,
-			focusMode: false,
-			configStack: [],
+			activeRowId,
+			focusMode,
+			secondarySheetRowId,
+			configStack,
 		};
 	}, [initialFlows]);
 
@@ -83,6 +118,8 @@ export function AppProvider({
 	useUrlSync(
 		appState.activeFlowId,
 		appState.activePageId,
+		appState.activeRowId,
+		appState.configStack,
 		appState.flows,
 		dispatchRow,
 	);
