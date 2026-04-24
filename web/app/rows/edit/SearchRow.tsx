@@ -9,8 +9,7 @@ import { RowLayout } from "../design-system/RowLayout";
 import InfoRow from "../view/InfoRow";
 import { SearchPreviewResults } from "./searchPreview";
 
-const SEARCH_RESULT_TEMPLATE_ROW_ID =
-	"00000000-0000-4000-8000-000000000001";
+const SEARCH_RESULT_TEMPLATE_ROW_ID = "00000000-0000-4000-8000-000000000001";
 
 const defaultSearchResultTemplateRow: Row = {
 	id: SEARCH_RESULT_TEMPLATE_ROW_ID,

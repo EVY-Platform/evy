@@ -21,7 +21,9 @@ function getBaseRowForType(type: string): RowComponent | undefined {
 	return BASE_ROW_BY_TYPE.get(type);
 }
 
-export function mergeRowContentWithPaletteDefaults(row: Row): Record<string, unknown> {
+export function mergeRowContentWithPaletteDefaults(
+	row: Row,
+): Record<string, unknown> {
 	const baseRow = getBaseRowForType(row.config.type);
 	const content = {
 		...(row.config.view.content as Record<string, unknown>),
@@ -251,8 +253,12 @@ function encodeRowToServerRow(row: Row): ServerRow {
 	const mergedView: ServerRow["view"] = {
 		content: mergedContent,
 	};
-	if (row.config.view.max_lines !== undefined || def.view.max_lines !== undefined) {
-		mergedView.max_lines = row.config.view.max_lines ?? def.view.max_lines ?? "";
+	if (
+		row.config.view.max_lines !== undefined ||
+		def.view.max_lines !== undefined
+	) {
+		mergedView.max_lines =
+			row.config.view.max_lines ?? def.view.max_lines ?? "";
 	}
 	return {
 		id: row.id,
