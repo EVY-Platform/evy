@@ -20,5 +20,5 @@ NEVER skip tests of any kind
 
 ## Pull requests
 
-Pull request names should be prefixed with "[FEAT|FIX|CHORE]"
+Pull request names should be prefixed with "[FEAT|FIX|REFACTOR]"
 Pull request descriptions should include the summary of the task, the major changes made, the tests ran, and any risks or suggestions for later
