@@ -31,7 +31,7 @@
 						{
 							"condition": "",
 							"false": "",
-							"true": "close"
+							"true": "{close()}"
 						}
 					],
 					"view": {
@@ -342,11 +342,7 @@
 						"view": {
 							"content": {
 								"title": "",
-								"segments": [
-									"Pickup",
-									"Delivery",
-									"Shipping"
-								],
+								"segments": ["Pickup", "Delivery", "Shipping"],
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222201",

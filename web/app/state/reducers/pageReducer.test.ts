@@ -393,7 +393,7 @@ describe("pageReducer", () => {
 
 	it("UPDATE_ROW_ACTIONS sets actions", () => {
 		const state = initialState();
-		const actions = [{ condition: "", true: "close", false: "" }];
+		const actions = [{ condition: "", true: "{close()}", false: "" }];
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW_ACTIONS",
 			rowId: "row-1",

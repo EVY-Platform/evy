@@ -30,16 +30,8 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 	const trimmed = branchString.trim();
 	if (!trimmed) return null;
 
-	if (trimmed === "close") {
-		return { functionName: "close", args: [] };
-	}
-
 	if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
 		const inner = unwrapOptionalBraces(trimmed);
-
-		if (inner === "close") {
-			return { functionName: "close", args: [] };
-		}
 
 		const parenIndex = inner.indexOf("(");
 		if (parenIndex !== -1 && inner.endsWith(")")) {
@@ -55,7 +47,7 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 
 	const colonParts = trimmed.split(":");
 	const functionName = colonParts[0];
-	if (isActionFunction(functionName)) {
+	if (functionName !== "close" && isActionFunction(functionName)) {
 		return { functionName, args: colonParts.slice(1) };
 	}
 
@@ -70,7 +62,7 @@ export function serializeBranch(
 
 	const filteredArgs = args.filter(Boolean);
 
-	if (functionName === "close") return "close";
+	if (functionName === "close") return "{close()}";
 
 	if (filteredArgs.length === 0) return `{${functionName}()}`;
 	return `{${functionName}(${filteredArgs.join(",")})}`;

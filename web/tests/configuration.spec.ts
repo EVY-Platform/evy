@@ -191,7 +191,7 @@ test.describe("Row configuration", () => {
 								label: "Test Button",
 							},
 						},
-						actions: [{ condition: "", false: "", true: "close" }],
+						actions: [{ condition: "", false: "", true: "{close()}" }],
 					},
 				],
 			},
@@ -240,7 +240,7 @@ test.describe("Row configuration", () => {
 								label: "Nav Button",
 							},
 						},
-						actions: [{ condition: "", false: "", true: "close" }],
+						actions: [{ condition: "", false: "", true: "{close()}" }],
 					},
 				],
 			},
@@ -299,7 +299,7 @@ test.describe("Row configuration", () => {
 								label: "Submit",
 							},
 						},
-						actions: [{ condition: "", false: "", true: "close" }],
+						actions: [{ condition: "", false: "", true: "{close()}" }],
 					},
 				],
 			},
@@ -532,7 +532,7 @@ test.describe("Row configuration", () => {
 					{
 						type: "Button",
 						view: { content: { title: "", label: "Check" } },
-						actions: [{ condition: "", false: "", true: "close" }],
+						actions: [{ condition: "", false: "", true: "{close()}" }],
 					},
 				],
 			},
@@ -587,7 +587,7 @@ test.describe("Row configuration", () => {
 					{
 						type: "Button",
 						view: { content: { title: "", label: "Validate" } },
-						actions: [{ condition: "", false: "", true: "close" }],
+						actions: [{ condition: "", false: "", true: "{close()}" }],
 					},
 				],
 			},
@@ -654,7 +654,7 @@ test.describe("Row configuration", () => {
 					{
 						type: "Button",
 						view: { content: { title: "", label: "Send" } },
-						actions: [{ condition: "", false: "", true: "close" }],
+						actions: [{ condition: "", false: "", true: "{close()}" }],
 					},
 				],
 			},
@@ -702,7 +702,7 @@ test.describe("Row configuration", () => {
 					{
 						type: "Button",
 						view: { content: { title: "", label: "Cancel Test" } },
-						actions: [{ condition: "", false: "", true: "close" }],
+						actions: [{ condition: "", false: "", true: "{close()}" }],
 					},
 				],
 			},
@@ -744,7 +744,7 @@ test.describe("Row configuration", () => {
 							content: { title: "", label: "Multi Action" },
 						},
 						actions: [
-							{ condition: "", false: "", true: "close" },
+							{ condition: "", false: "", true: "{close()}" },
 							{ condition: "", false: "", true: "{create()}" },
 						],
 					},
@@ -801,7 +801,7 @@ test.describe("Row configuration", () => {
 									{
 										condition: "{name == true}",
 										true: "{navigate(flow_x,page_x)}",
-										false: "close",
+										false: "{close()}",
 									},
 								],
 							},
@@ -870,7 +870,7 @@ test.describe("Row configuration", () => {
 								condition:
 									"{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0}",
 								false: "",
-								true: "close",
+								true: "{close()}",
 							},
 						],
 					},
@@ -907,7 +907,7 @@ test.describe("Row configuration", () => {
 								condition:
 									"{count(pickup_timeslots) > 0 && (count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0)}",
 								false: "",
-								true: "close",
+								true: "{close()}",
 							},
 						],
 					},
@@ -967,7 +967,7 @@ test.describe("Row configuration", () => {
 							{
 								condition: "{name == true || email == true}",
 								false: "",
-								true: "close",
+								true: "{close()}",
 							},
 						],
 					},
@@ -1042,7 +1042,7 @@ test.describe("Row configuration", () => {
 							{
 								condition: "{name == true || email == true}",
 								false: "",
-								true: "close",
+								true: "{close()}",
 							},
 						],
 					},
