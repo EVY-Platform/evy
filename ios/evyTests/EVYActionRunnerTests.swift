@@ -10,9 +10,23 @@ import XCTest
 final class EVYActionRunnerTests: XCTestCase {
     func testCloseAction() {
         var received: NavOperation?
-        let action = UI_RowAction(condition: "", false: "", true: "{close}")
+        let action = UI_RowAction(condition: "", false: "", true: "{close()}")
         EVYActionRunner.run(actions: [action]) { received = $0 }
         XCTAssertEqual(received, .close)
+    }
+
+    func testBareCloseActionIsInert() {
+        var received: NavOperation?
+        let action = UI_RowAction(condition: "", false: "", true: "close")
+        EVYActionRunner.run(actions: [action]) { received = $0 }
+        XCTAssertNil(received)
+    }
+
+    func testUnwrappedCloseFunctionIsInert() {
+        var received: NavOperation?
+        let action = UI_RowAction(condition: "", false: "", true: "close()")
+        EVYActionRunner.run(actions: [action]) { received = $0 }
+        XCTAssertNil(received)
     }
 
     func testCreateAction() {

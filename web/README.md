@@ -152,6 +152,8 @@ graph TD
 | usePageDropTarget  | Hook setting up page-level drop targets for drag-and-drop           |
 | defineRow          | Factory function used to declare all row components                 |
 
+Action branches are stored as strings. The builder emits executable actions in function-call form; use `{close()}` for close, while a bare `close` string is treated as non-executable text by runtimes.
+
 ## Getting Started
 
 Setup (Bun, Docker, copying `.env`): [README § Setup](../README.md#setup) and [§ Running Services](../README.md#running-services). The web app only needs a reachable API over `API_URL` (no direct Postgres).

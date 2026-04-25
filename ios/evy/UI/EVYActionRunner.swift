@@ -11,17 +11,17 @@ enum EVYActionRunner {
                     navigate: @escaping (NavOperation) -> Void)
     {
         guard !actions.isEmpty else { return }
-        
+
         for action in actions {
             let condition = action.condition.trimmingCharacters(in: .whitespacesAndNewlines)
             let executeTrueBranch: Bool
-            
+
             if condition.isEmpty {
                 executeTrueBranch = true
             } else {
                 executeTrueBranch = (try? EVY.evaluateFromText(condition)) ?? false
             }
-            
+
             if !executeTrueBranch {
                 let falseBranch = action.`false`.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !falseBranch.isEmpty {
@@ -33,10 +33,10 @@ enum EVYActionRunner {
                 }
                 return
             }
-            
+
             let trueBranch = action.`true`.trimmingCharacters(in: .whitespacesAndNewlines)
             if trueBranch.isEmpty { continue }
-            
+
             do {
                 try execute(branch: trueBranch, navigate: navigate)
             } catch {
@@ -44,7 +44,7 @@ enum EVYActionRunner {
             }
         }
     }
-    
+
     private static func execute(branch: String,
                                 navigate: @escaping (NavOperation) -> Void) throws
     {
@@ -54,6 +54,8 @@ enum EVYActionRunner {
             navigate(operation)
             return
         }
+
+        guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
 
         if let (functionName, functionArgs) = parseFunctionCall(unwrappedBranch) {
             switch functionName {
@@ -83,7 +85,7 @@ enum EVYActionRunner {
                 throw EVYError.invalidData(context: "Unsupported action function: \(functionName)")
             }
         } else {
-            throw EVYError.invalidData(context: "Unknown action branch: \(branch)")
+            return
         }
     }
 
@@ -97,13 +99,12 @@ enum EVYActionRunner {
         case "create":
             guard parts.count == 2 else { return nil }
             return .create(String(parts[1]))
-        case "close":
-            return .close
+
         default:
             return nil
         }
     }
-    
+
     private static func unwrapActionBranch(_ branch: String) -> String {
         guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return branch }
         return String(branch.dropFirst().dropLast())
