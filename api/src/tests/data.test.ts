@@ -343,7 +343,11 @@ describe("get", () => {
 			description: serviceData.description,
 			createdAt: serviceData.createdAt,
 		});
-		expect(typeof (result[0] as DATA_EVY_Service).updatedAt).toBe("string");
+		const serviceRow = result[0];
+		if (!("updatedAt" in serviceRow)) {
+			throw new Error("Expected service row with updatedAt");
+		}
+		expect(typeof serviceRow.updatedAt).toBe("string");
 	});
 
 	it("should return empty array for non-SDUI resource when no data", async () => {
@@ -434,7 +438,7 @@ describe("upsert", () => {
 									label: "Click me",
 								},
 							},
-							actions: [{ condition: "", false: "", true: "close" }],
+							actions: [{ condition: "", false: "", true: "{close()}" }],
 						},
 					],
 				},

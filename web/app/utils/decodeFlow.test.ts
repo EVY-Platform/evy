@@ -27,7 +27,7 @@ describe("normalizeServerRow", () => {
 					label: "OK",
 				},
 			},
-			actions: [{ condition: "", false: "", true: "close" }],
+			actions: [{ condition: "", false: "", true: "{close()}" }],
 		} as unknown as ServerRow;
 
 		const n = normalizeServerRow(partial);

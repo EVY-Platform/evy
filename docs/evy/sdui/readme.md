@@ -18,7 +18,7 @@ So a flow might reference “10 min, 20 min, 30 min” options via `source: "{du
 
 ## Flow
 
-Flows are not visually used in the UI but represent a full user journey (eg: creating an item)  
+Flows are not visually used in the UI but represent a full user journey (eg: creating an item)
 They are needed in order to submit all fields of all pages of a flow at the end upon clicking a single button on a page
 
 The canonical shape matches `types/schema/sdui/evy.schema.json`:
@@ -100,10 +100,10 @@ Each row has an `actions` array of `UI_RowAction` objects (`condition`, `false`,
 
 - Wrap the whole condition in curly braces: `{ ... }`.
 - Empty `condition` — treated as always true (the `true` branch is taken unless you rely on client-specific rules).
-- Single comparison: `{left op right}`  
-	Operators: `==`, `!=`, `>`, `<`, `>=`, `<=`  
+- Single comparison: `{left op right}`
+	Operators: `==`, `!=`, `>`, `<`, `>=`, `<=`
 	Left and right operands are usually variable names or literals (client interprets values).
-- OR: join comparisons with `||` inside the braces:  
+- OR: join comparisons with `||` inside the braces:
 	`{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0}`
 - Condition helpers (used like functions in the expression):
 	- `count(var)` — e.g. `{count(photo_ids) > 0}`
@@ -111,16 +111,13 @@ Each row has an `actions` array of `UI_RowAction` objects (`condition`, `false`,
 
 #### Branches (`true` / `false`)
 
-Each branch is a string. Empty string means “do nothing” for that branch.
-
-- Literal `close` — no braces — closes the current screen/flow step.
-- Function call form: `{functionName(arg1, arg2, ...)}`
+Each branch is a string. Empty string means “do nothing” for that branch. Function call form: `{functionName(arg1, arg2, ...)}`
 
 Supported action functions:
 
 | Function | Meaning |
 | -------- | ------- |
-| `close` | Close current UI (same as bare `close` in simple cases) |
+| `close()` | Close current UI, e.g. `{close()}` |
 | `create(model)` | Submit / create domain entity, e.g. `{create(item)}` |
 | `navigate(flowId, pageId)` | Go to a page within a flow (UUIDs as in `docs/services/service_sdui.json`). iOS also accepts a colon-separated form (e.g. `navigate:flowId:pageId`)—see `EVYActionRunner` tests. |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
