@@ -17,3 +17,8 @@ For iOS, make sure you build with Xcode targeting iPhone Air iOS 26.2 and fix an
 Ensure you run `./run-e2e.sh --skip-ios` from root to run the e2e tests (see README.md for `--no-docker` option).
 If you need to run iOS tests, keep services running and just run the iOS tests separately rather than re-running the whole e2e suite.
 NEVER skip tests of any kind
+
+## Pull requests
+
+Pull request names should be prefixed with "[FEAT|FIX|REFACTOR]"
+Pull request descriptions should include the summary of the task, the major changes made, the tests ran, and any risks or suggestions for later
