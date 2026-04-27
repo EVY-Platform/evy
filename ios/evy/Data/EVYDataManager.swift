@@ -101,11 +101,8 @@ final class EVYDataManager {
     if let exact = try? get(key: key) {
       return exact
     }
-    return try getSyncedResource(resource: key)
-  }
 
-  private func getSyncedResource(resource: String) throws -> EVYData {
-    let suffix = ":\(resource)"
+    let suffix = ":\(key)"
     let descriptor = FetchDescriptor<EVYData>()
     guard let first = try context.fetch(descriptor).first(where: { $0.key.hasSuffix(suffix) })
     else {
@@ -172,50 +169,25 @@ final class EVYDataManager {
       object: key)
   }
 
-  // MARK: - Drafts
-
   func drafts(forScopeId scopeId: String) throws -> [EVYDraft] {
     let descriptor = FetchDescriptor<EVYDraft>(predicate: #Predicate { $0.scopeId == scopeId })
     return try context.fetch(descriptor)
   }
 
-  func draft(binding: EVYDraft.Binding) throws -> EVYDraft {
-    guard let row = draftFirstMatching(scopeId: binding.scopeId, pathKey: binding.pathKey) else {
-      throw EVYDataError.keyNotFound
-    }
-    return row
-  }
-
   func draftIfPresent(binding: EVYDraft.Binding) -> EVYDraft? {
-    draftFirstMatching(scopeId: binding.scopeId, pathKey: binding.pathKey)
-  }
-
-  private func draftFirstMatching(scopeId: String, pathKey: String) -> EVYDraft? {
-    let sid = scopeId
-    let pk = pathKey
+    let scopeId = binding.scopeId
+    let pathKey = binding.pathKey
     let descriptor = FetchDescriptor<EVYDraft>(
-      predicate: #Predicate { $0.scopeId == sid && $0.pathKey == pk }
+      predicate: #Predicate { $0.scopeId == scopeId && $0.pathKey == pathKey }
     )
     do {
       return try context.fetch(descriptor).first
     } catch {
       #if DEBUG
-        print("[EVYDataManager] draftFirstMatching error: \(error)")
+        print("[EVYDataManager] draftIfPresent error: \(error)")
       #endif
       return nil
     }
-  }
-
-  func hasDraft(binding: EVYDraft.Binding) -> Bool {
-    draftIfPresent(binding: binding) != nil
-  }
-
-  func createDraft(binding: EVYDraft.Binding, data: Data) throws {
-    if hasDraft(binding: binding) {
-      throw EVYDataError.keyAlreadyExists
-    }
-    context.insert(EVYDraft(binding: binding, data: data))
-    NotificationCenter.default.post(name: .evyDataUpdated, object: binding.notificationKey)
   }
 
   func upsertDraft(binding: EVYDraft.Binding, data: Data) throws {
@@ -227,35 +199,22 @@ final class EVYDataManager {
     NotificationCenter.default.post(name: .evyDataUpdated, object: binding.notificationKey)
   }
 
-  func updateDraft(binding: EVYDraft.Binding, data: Data) throws {
-    let existing = try draft(binding: binding)
-    existing.data = data
-    NotificationCenter.default.post(name: .evyDataUpdated, object: binding.notificationKey)
-  }
-
-  func deleteDrafts(scopeId: String) {
+  func deleteDrafts(scopeId: String? = nil) {
     do {
-      let descriptor = FetchDescriptor<EVYDraft>(predicate: #Predicate { $0.scopeId == scopeId })
-      let rows = try context.fetch(descriptor)
+      let rows: [EVYDraft]
+      if let scopeId {
+        let descriptor = FetchDescriptor<EVYDraft>(predicate: #Predicate { $0.scopeId == scopeId })
+        rows = try context.fetch(descriptor)
+      } else {
+        rows = try context.fetch(FetchDescriptor<EVYDraft>())
+      }
+
       for row in rows {
         context.delete(row)
       }
     } catch {
       #if DEBUG
         print("[EVYDataManager] deleteDrafts error: \(error)")
-      #endif
-    }
-  }
-
-  func deleteAllDraftsForTestIsolation() {
-    do {
-      let descriptor = FetchDescriptor<EVYDraft>()
-      for row in try context.fetch(descriptor) {
-        context.delete(row)
-      }
-    } catch {
-      #if DEBUG
-        print("[EVYDataManager] deleteAllDraftsForTestIsolation error: \(error)")
       #endif
     }
   }

@@ -14,13 +14,13 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
   override func setUp() async throws {
     try await super.setUp()
     try? EVY.data.delete(key: "item")
-    EVY.data.deleteAllDraftsForTestIsolation()
+    EVY.data.deleteDrafts()
     EVY.data.activeDraftScopeId = testDraftScope
   }
 
   override func tearDown() async throws {
     try? EVY.data.delete(key: "item")
-    EVY.data.deleteAllDraftsForTestIsolation()
+    EVY.data.deleteDrafts()
     EVY.data.activeDraftScopeId = nil
     try await super.tearDown()
   }
@@ -64,7 +64,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "value": .decimal(99),
     ])
     let priceBinding = try EVY.data.draftBinding(fromParsedProps: "price")
-    try EVY.data.updateDraft(binding: priceBinding, data: try JSONEncoder().encode(newPrice))
+    try EVY.data.upsertDraft(binding: priceBinding, data: try JSONEncoder().encode(newPrice))
 
     try EVY.create(key: "item", draftScopeId: testDraftScope)
 

@@ -161,13 +161,13 @@ struct EVY {
       return
     }
     guard !data.exists(key: variableName),
-      !data.hasDraft(binding: binding)
+      data.draftIfPresent(binding: binding) == nil
     else {
       return
     }
     let emptyData = initialData ?? "\"\"".data(using: .utf8)!
     do {
-      try data.createDraft(binding: binding, data: emptyData)
+      try data.upsertDraft(binding: binding, data: emptyData)
     } catch {
     }
   }
