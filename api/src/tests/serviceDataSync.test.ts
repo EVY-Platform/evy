@@ -12,10 +12,6 @@ const forwardGetMock = mock(
 	],
 );
 
-mock.module("../services", () => ({
-	forwardGet: forwardGetMock,
-}));
-
 const { extractBindingsFromString, extractCandidatesFromBinding } =
 	await import("../expressionParser");
 const {
@@ -24,6 +20,10 @@ const {
 	resolveCandidateToService,
 	syncServiceData,
 } = await import("../serviceDataSync");
+
+function syncServiceDataWithMock(params: unknown) {
+	return syncServiceData(params, { forwardGet: forwardGetMock });
+}
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
 
@@ -236,7 +236,7 @@ describe("service data sync utilities", () => {
 
 describe("syncServiceData", () => {
 	it("returns all changed marketplace resources", async () => {
-		const result = await syncServiceData({
+		const result = await syncServiceDataWithMock({
 			service: "marketplace",
 			lastSyncTime: EPOCH,
 		});
@@ -254,7 +254,7 @@ describe("syncServiceData", () => {
 	});
 
 	it("passes updatedAfter to each underlying get request", async () => {
-		await syncServiceData({
+		await syncServiceDataWithMock({
 			service: "marketplace",
 			lastSyncTime: EPOCH,
 		});
@@ -269,7 +269,7 @@ describe("syncServiceData", () => {
 	it("returns an empty data array when no resources changed", async () => {
 		forwardGetMock.mockImplementation(async (): Promise<GetResponse> => []);
 
-		const result = await syncServiceData({
+		const result = await syncServiceDataWithMock({
 			service: "marketplace",
 			lastSyncTime: "2999-01-01T00:00:00.000Z",
 		});
@@ -279,13 +279,13 @@ describe("syncServiceData", () => {
 
 	it("rejects missing or invalid lastSyncTime", async () => {
 		await expect(
-			syncServiceData({
+			syncServiceDataWithMock({
 				service: "marketplace",
 			}),
 		).rejects.toThrow("Invalid or missing lastSyncTime");
 
 		await expect(
-			syncServiceData({
+			syncServiceDataWithMock({
 				service: "marketplace",
 				lastSyncTime: "not-a-date",
 			}),
@@ -294,20 +294,20 @@ describe("syncServiceData", () => {
 
 	it("rejects missing, invalid, or core services", async () => {
 		await expect(
-			syncServiceData({
+			syncServiceDataWithMock({
 				lastSyncTime: EPOCH,
 			}),
 		).rejects.toThrow("Invalid or missing service");
 
 		await expect(
-			syncServiceData({
+			syncServiceDataWithMock({
 				service: "unknown",
 				lastSyncTime: EPOCH,
 			}),
 		).rejects.toThrow("Invalid or unsupported service");
 
 		await expect(
-			syncServiceData({
+			syncServiceDataWithMock({
 				service: "evy",
 				lastSyncTime: EPOCH,
 			}),
@@ -315,7 +315,7 @@ describe("syncServiceData", () => {
 	});
 
 	it("returns items as an array", async () => {
-		const result = await syncServiceData({
+		const result = await syncServiceDataWithMock({
 			service: "marketplace",
 			lastSyncTime: EPOCH,
 		});

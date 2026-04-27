@@ -1,5 +1,10 @@
 import pluralize from "pluralize";
-import type { GetRequest, SyncServiceDataResponse, UI_Flow } from "evy-types";
+import type {
+	GetRequest,
+	GetResponse,
+	SyncServiceDataResponse,
+	UI_Flow,
+} from "evy-types";
 import { RESOURCES_BY_SERVICE } from "evy-types";
 import { validateStrictSyncServiceDataRequest } from "evy-types/rpcRequestHelpers";
 import { validateSyncServiceDataResponse } from "evy-types/validators";
@@ -10,6 +15,14 @@ import {
 import { forwardGet } from "./services";
 
 type SyncableService = Exclude<keyof typeof RESOURCES_BY_SERVICE, "evy">;
+
+type SyncServiceDataDependencies = {
+	forwardGet: (serviceName: string, params: GetRequest) => Promise<GetResponse>;
+};
+
+const DEFAULT_SYNC_SERVICE_DATA_DEPENDENCIES: SyncServiceDataDependencies = {
+	forwardGet,
+};
 
 const SYNCABLE_SERVICES = Object.keys(RESOURCES_BY_SERVICE).filter(
 	(serviceName) => serviceName !== "evy",
@@ -59,6 +72,7 @@ export function resolveCandidateToService(candidate: string): string | null {
 
 export async function syncServiceData(
 	params: unknown,
+	dependencies: SyncServiceDataDependencies = DEFAULT_SYNC_SERVICE_DATA_DEPENDENCIES,
 ): Promise<SyncServiceDataResponse> {
 	validateStrictSyncServiceDataRequest(params);
 
@@ -79,7 +93,7 @@ export async function syncServiceData(
 			},
 		};
 
-		const value = await forwardGet(serviceName, request);
+		const value = await dependencies.forwardGet(serviceName, request);
 		if (Array.isArray(value) && value.length === 0) {
 			continue;
 		}
