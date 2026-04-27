@@ -6,6 +6,12 @@ For local and e2e runs, set `API_HOST` in the repository root `.env` (see [READM
 
 **Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes ([Shared type system](../README.md#shared-type-system)). Generated Swift under `types/generated/swift/` is not committed; the app also keeps hand-written `Codable` models (e.g. `EVYFlow`, `EVYPage`, `EVYRow`, `EVYWebsocket`) aligned with `types/schema/`.
 
+### Synced service data
+
+At startup, the app calls `syncServiceData` for supported backend services and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `marketplace:items` or `marketplace:conditions`). Exact keys are preferred when app code needs a specific backend resource.
+
+SDUI bindings may still use resource-only names such as `{conditions}` or `{timeslots}`. Those bindings resolve exact local keys first, then explicitly fall back to synced service resources. This keeps local draft/entity data separate from backend catalog data while preserving simple SDUI source strings.
+
 ### Architecture
 
 ```mermaid

@@ -76,7 +76,7 @@ private struct EVYPageBody: View {
             if row.type == .inlinePicker {
                 initialData = "[]".data(using: .utf8)
             } else if row.type == .calendar {
-                initialData = try? EVY.data.get(key: "timeslots").data
+                initialData = try? EVY.data.getForBinding(key: "timeslots").data
             } else {
                 initialData = nil
             }

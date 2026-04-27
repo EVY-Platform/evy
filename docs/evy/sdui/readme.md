@@ -16,7 +16,10 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 	- `{$datum:value}` — current list/search result item field, used in row `format` strings and Search result templates.
 	- `{$api:resource}` — API-backed client source.
 	- `{$local:resource}` — client-local source.
-- That catalog/API/local data is loaded separately via JSON-RPC `get` (`service` / `resource`) or client-specific local/API handlers; routing and persistence are described in [`api/README`](../../api/README.md). `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
+- Catalog/API/local data is loaded outside the flow document. Clients can request individual lists with JSON-RPC `get` (`service` / `resource`) or sync service data in batches with `syncServiceData`.
+- `syncServiceData` accepts `{ "service": "marketplace", "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows. Clients should store synced rows under service-qualified keys such as `marketplace:items` and `marketplace:conditions`.
+- Flow bindings use the resource name without the service prefix (`{items}`, `{conditions}`, `{tags}`). The client data layer resolves those bindings to synced service data when no exact local key exists. Exact local keys still take precedence for drafts and flow state.
+- `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
 So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is still written to a field via `destination`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
 

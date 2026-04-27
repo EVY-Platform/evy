@@ -221,9 +221,6 @@ class EVYSearchController: ObservableObject {
                 let json = try EVY.getDataFromProps(id.uuidString)
                 results = [try makeSearchResult(datum: json)]
             } catch {
-                #if DEBUG
-                print("[EVYSearchController] Error in local search: \(error)")
-                #endif
                 results = []
             }
         default:
@@ -232,9 +229,6 @@ class EVYSearchController: ObservableObject {
                 let response = try JSONDecoder().decode([EVYJson].self, from: data)
                 results = try response.map { try makeSearchResult(datum: $0) }
             } catch {
-                #if DEBUG
-                print("[EVYSearchController] Error in API search: \(error)")
-                #endif
                 results = []
             }
         }

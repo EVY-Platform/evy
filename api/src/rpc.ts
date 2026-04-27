@@ -8,7 +8,7 @@ import {
 	upsertCoreForValidatedRequest,
 } from "./data";
 import { syncServiceData as syncServiceDataBody } from "./serviceDataSync";
-import { forwardUnary, wireGrpcClientsTo } from "./services";
+import { forwardGet, forwardUpsert, wireGrpcClientsTo } from "./services";
 import {
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
@@ -27,7 +27,7 @@ export async function get(params: unknown): Promise<GetResponse> {
 	if (params.service === "evy") {
 		return getCoreForValidatedRequest(params);
 	}
-	return forwardUnary(params.service, "get", params);
+	return forwardGet(params.service, params);
 }
 
 export async function upsert(params: unknown): Promise<UpsertResponse> {
@@ -43,7 +43,7 @@ export async function upsert(params: unknown): Promise<UpsertResponse> {
 		}
 		return result;
 	}
-	return forwardUnary(params.service, "upsert", params);
+	return forwardUpsert(params.service, params);
 }
 
 export async function syncServiceData(

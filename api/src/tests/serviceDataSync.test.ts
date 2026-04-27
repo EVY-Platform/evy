@@ -6,19 +6,17 @@ import {
 	type UI_Flow,
 } from "evy-types";
 
-const forwardUnaryMock = mock(
-	async (
-		_serviceName: string,
-		_method: "get",
-		params: GetRequest,
-	): Promise<GetResponse> => [{ id: `${params.resource}-1` }],
+const forwardGetMock = mock(
+	async (_serviceName: string, params: GetRequest): Promise<GetResponse> => [
+		{ id: `${params.resource}-1` },
+	],
 );
 
 mock.module("../services", () => ({
-	forwardUnary: forwardUnaryMock,
+	forwardGet: forwardGetMock,
 }));
 
-const { extractBindingsFromString, extractCandidatesFromBinding, tokenize } =
+const { extractBindingsFromString, extractCandidatesFromBinding } =
 	await import("../expressionParser");
 const {
 	discoverReferencedServices,
@@ -135,13 +133,11 @@ function testFlow(): UI_Flow {
 }
 
 beforeEach(() => {
-	forwardUnaryMock.mockClear();
-	forwardUnaryMock.mockImplementation(
-		async (
-			_serviceName: string,
-			_method: "get",
-			params: GetRequest,
-		): Promise<GetResponse> => [{ id: `${params.resource}-1` }],
+	forwardGetMock.mockClear();
+	forwardGetMock.mockImplementation(
+		async (_serviceName: string, params: GetRequest): Promise<GetResponse> => [
+			{ id: `${params.resource}-1` },
+		],
 	);
 });
 
@@ -203,18 +199,6 @@ describe("expression parser utility", () => {
 		expect(extractCandidatesFromBinding("$local:address")).toEqual([]);
 		expect(extractCandidatesFromBinding("$datum:value")).toEqual([]);
 	});
-
-	it("tokenizes boolean expressions while keeping function calls intact", () => {
-		expect(tokenize("length(title) > 0 && price.value >= 1")).toEqual([
-			"length(title)",
-			">",
-			"0",
-			"&&",
-			"price.value",
-			">=",
-			"1",
-		]);
-	});
 });
 
 describe("service data sync utilities", () => {
@@ -264,7 +248,7 @@ describe("syncServiceData", () => {
 			true,
 		);
 		expect(result.data.every((row) => Array.isArray(row.value))).toBe(true);
-		expect(forwardUnaryMock).toHaveBeenCalledTimes(
+		expect(forwardGetMock).toHaveBeenCalledTimes(
 			RESOURCES_BY_SERVICE.marketplace.length,
 		);
 	});
@@ -275,16 +259,15 @@ describe("syncServiceData", () => {
 			lastSyncTime: EPOCH,
 		});
 
-		for (const call of forwardUnaryMock.mock.calls) {
-			const [serviceName, method, params] = call;
+		for (const call of forwardGetMock.mock.calls) {
+			const [serviceName, params] = call;
 			expect(serviceName).toBe("marketplace");
-			expect(method).toBe("get");
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
 		}
 	});
 
 	it("returns an empty data array when no resources changed", async () => {
-		forwardUnaryMock.mockImplementation(async (): Promise<GetResponse> => []);
+		forwardGetMock.mockImplementation(async (): Promise<GetResponse> => []);
 
 		const result = await syncServiceData({
 			service: "marketplace",

@@ -31,9 +31,6 @@ struct EVYInputList: View {
                     ]
                 }
             } catch {
-                #if DEBUG
-                print("[EVYInputList] Error formatting data: \(error) for input \($0)")
-                #endif
             }
 
             return []

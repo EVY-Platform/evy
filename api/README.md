@@ -17,7 +17,8 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 `get` is public, `upsert` is protected (requires a valid device token via `validateAuth`). Params include `service`, `resource`, optional `filter.id`, and for `upsert` a `data` object (see JSON Schemas under `types/schema/rpc/`).
 
 - `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, and `providers` (typed catalog tables). There is no generic `evy` “data” table routed through `services.ts`.
-- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardUnary` in [`src/services.ts`](./src/services.ts), which issues `Get` / `Upsert` on `evy.Service` and validates JSON responses.
+- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet` / `forwardUpsert` in [`src/services.ts`](./src/services.ts), which issue `Get` / `Upsert` on `evy.Service` and validate JSON responses.
+- `syncServiceData` is a protected RPC for client-side service cache refresh. Params are `{ service, lastSyncTime }`, where `service` is a syncable non-`evy` service and `lastSyncTime` is an ISO date-time. The API forwards one `get` per service resource with `filter.updatedAfter = lastSyncTime`, omits empty result arrays, and returns `{ data: [{ service, resource, value }] }`. Clients should persist synced rows with service-qualified keys like `marketplace:items`; SDUI bindings such as `{items}` may resolve through client fallback, while `{$api:...}`, `{$local:...}`, and `{$datum:...}` are client-side binding namespaces rather than backend flow state.
 
 ```mermaid
 sequenceDiagram

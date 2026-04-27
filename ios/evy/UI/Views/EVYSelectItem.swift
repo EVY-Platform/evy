@@ -82,9 +82,7 @@ struct EVYSelectItem: View {
                     return arrayValue.contains { $0.identifierValue() == valueId }
                 }
             } catch {
-                #if DEBUG
-                print("[EVYSelectItem] Error checking selection state: \(error)")
-                #endif
+                return false
             }
 
             return false

@@ -263,29 +263,26 @@ function getGrpcAdapters(): Map<string, ServiceAdapter> {
 	return grpcAdapters;
 }
 
-export function forwardUnary(
-	serviceName: string,
-	method: "get",
-	params: GetRequest,
-): Promise<GetResponse>;
-export function forwardUnary(
-	serviceName: string,
-	method: "upsert",
-	params: UpsertRequest,
-): Promise<UpsertResponse>;
-export function forwardUnary(
-	serviceName: string,
-	method: "get" | "upsert",
-	params: GetRequest | UpsertRequest,
-): Promise<GetResponse | UpsertResponse> {
+function getServiceAdapter(serviceName: string): ServiceAdapter {
 	const adapter = getGrpcAdapters().get(serviceName);
 	if (!adapter) {
 		throw new Error(`No service registered for service ${serviceName}`);
 	}
-	if (method === "get") {
-		return adapter.get(params as GetRequest);
-	}
-	return adapter.upsert(params as UpsertRequest);
+	return adapter;
+}
+
+export function forwardGet(
+	serviceName: string,
+	params: GetRequest,
+): Promise<GetResponse> {
+	return getServiceAdapter(serviceName).get(params);
+}
+
+export function forwardUpsert(
+	serviceName: string,
+	params: UpsertRequest,
+): Promise<UpsertResponse> {
+	return getServiceAdapter(serviceName).upsert(params);
 }
 
 export function wireGrpcClientsTo(server: RpcServer): void {

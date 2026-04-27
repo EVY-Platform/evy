@@ -7,7 +7,7 @@ import {
 	extractBindingsFromString,
 	extractCandidatesFromBinding,
 } from "./expressionParser";
-import { forwardUnary } from "./services";
+import { forwardGet } from "./services";
 
 type SyncableService = Exclude<keyof typeof RESOURCES_BY_SERVICE, "evy">;
 
@@ -79,7 +79,7 @@ export async function syncServiceData(
 			},
 		};
 
-		const value = await forwardUnary(serviceName, "get", request);
+		const value = await forwardGet(serviceName, request);
 		if (Array.isArray(value) && value.length === 0) {
 			continue;
 		}

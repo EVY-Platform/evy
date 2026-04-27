@@ -25,9 +25,6 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 			do {
 				return try EVY.evaluateFromText($0)
 			} catch {
-				#if DEBUG
-				print("[EVYTextSelectRow] Error evaluating selection: \(error)")
-				#endif
 				return false
 			}
 		})

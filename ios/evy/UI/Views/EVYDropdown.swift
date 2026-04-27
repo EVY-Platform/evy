@@ -36,9 +36,6 @@ struct EVYDropdown: View {
                 loadedOptions = arrayValue
             }
         } catch {
-            #if DEBUG
-            print("[EVYDropdown] Error loading options: \(error)")
-            #endif
         }
         options = loadedOptions
 
@@ -53,9 +50,6 @@ struct EVYDropdown: View {
                 }
                 return try EVY.formatDataOrToString(json: value, format: format)
             } catch {
-                #if DEBUG
-                print("[EVYDropdown] Error formatting selection: \(error) for input \($0)")
-                #endif
                 return ""
             }
         })

@@ -117,17 +117,26 @@ final class EVYDataManager {
 
     func get(key: String) throws -> EVYData {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
-        if let first = try context.fetch(descriptor).first {
-            return first
+        guard let first = try context.fetch(descriptor).first else {
+            throw EVYDataError.keyNotFound
         }
+        return first
+    }
 
-        let suffix = ":\(key)"
-        let fallbackDescriptor = FetchDescriptor<EVYData>()
-        if let first = try context.fetch(fallbackDescriptor).first(where: { $0.key.hasSuffix(suffix) }) {
-            return first
+    func getForBinding(key: String) throws -> EVYData {
+        if let exact = try? get(key: key) {
+            return exact
         }
+        return try getSyncedResource(resource: key)
+    }
 
-        throw EVYDataError.keyNotFound
+    private func getSyncedResource(resource: String) throws -> EVYData {
+        let suffix = ":\(resource)"
+        let descriptor = FetchDescriptor<EVYData>()
+        guard let first = try context.fetch(descriptor).first(where: { $0.key.hasSuffix(suffix) }) else {
+            throw EVYDataError.keyNotFound
+        }
+        return first
     }
 
     func create(key: String, data: Data) throws {
