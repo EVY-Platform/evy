@@ -38,12 +38,11 @@ export function extractCandidatesFromBinding(bindingBody: string): string[] {
 	);
 }
 
-export function isExcludedBinding(bindingBody: string): boolean {
-	const trimmedBindingBody = bindingBody.trim();
+function isExcludedBinding(bindingBody: string): boolean {
 	return (
-		trimmedBindingBody.startsWith("$api:") ||
-		trimmedBindingBody.startsWith("$local:") ||
-		trimmedBindingBody.startsWith("$datum:")
+		bindingBody.startsWith("$api:") ||
+		bindingBody.startsWith("$local:") ||
+		bindingBody.startsWith("$datum:")
 	);
 }
 
@@ -144,31 +143,31 @@ export function tokenize(input: string): string[] {
 	return tokens;
 }
 
-export function isFunctionCall(value: string): boolean {
-	return FUNCTION_CALL_PATTERN.test(value.trim());
+function isFunctionCall(value: string): boolean {
+	return FUNCTION_CALL_PATTERN.test(value);
 }
 
-export function extractFunctionArgs(functionCall: string): string[] {
-	const match = functionCall.trim().match(FUNCTION_CALL_PATTERN);
+function extractFunctionArgs(functionCall: string): string[] {
+	const match = functionCall.match(FUNCTION_CALL_PATTERN);
 	if (!match) {
 		return [];
 	}
 	return splitFunctionArguments(match[2] ?? "");
 }
 
-export function rootSegment(path: string): string {
-	const withoutArrayAccessor = path.trim().replace(/\[[^\]]*\]/g, "");
+function rootSegment(path: string): string {
+	const withoutArrayAccessor = path.replace(/\[[^\]]*\]/g, "");
 	const [root] = withoutArrayAccessor.split(".");
-	return root?.trim() ?? "";
+	return root ?? "";
 }
 
-export function isNumericLiteral(value: string): boolean {
-	return /^-?\d+(\.\d+)?$/.test(value.trim());
+function isNumericLiteral(value: string): boolean {
+	return /^-?\d+(\.\d+)?$/.test(value);
 }
 
-export function isUuidLike(value: string): boolean {
+function isUuidLike(value: string): boolean {
 	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-		value.trim(),
+		value,
 	);
 }
 
@@ -268,37 +267,34 @@ function splitFunctionArguments(args: string): string[] {
 }
 
 function candidateFromValue(value: string): string {
-	const trimmedValue = value.trim();
-	if (shouldSkipLiteralOrUuid(trimmedValue)) {
+	if (shouldSkipLiteralOrUuid(value)) {
 		return "";
 	}
-	return rootSegment(trimmedValue);
+	return rootSegment(value);
 }
 
-function isCandidate(value: string): value is string {
+function isCandidate(value: string): boolean {
 	return /^[A-Za-z_][A-Za-z0-9_]*$/.test(value);
 }
 
 function shouldSkipExpressionToken(token: string): boolean {
-	const trimmedToken = token.trim();
 	return (
-		!trimmedToken ||
-		COMPARISON_OPERATOR_TOKENS.has(trimmedToken) ||
-		LOGICAL_OPERATOR_TOKENS.has(trimmedToken) ||
-		PARENTHESIS_TOKENS.has(trimmedToken) ||
-		shouldSkipLiteralOrUuid(trimmedToken)
+		!token ||
+		COMPARISON_OPERATOR_TOKENS.has(token) ||
+		LOGICAL_OPERATOR_TOKENS.has(token) ||
+		PARENTHESIS_TOKENS.has(token) ||
+		shouldSkipLiteralOrUuid(token)
 	);
 }
 
 function shouldSkipLiteralOrUuid(value: string): boolean {
-	const trimmedValue = value.trim();
 	return (
-		isNumericLiteral(trimmedValue) ||
-		isUuidLike(trimmedValue) ||
-		isStringLiteral(trimmedValue) ||
-		trimmedValue === "true" ||
-		trimmedValue === "false" ||
-		trimmedValue === "null"
+		isNumericLiteral(value) ||
+		isUuidLike(value) ||
+		isStringLiteral(value) ||
+		value === "true" ||
+		value === "false" ||
+		value === "null"
 	);
 }
 
@@ -307,16 +303,12 @@ function containsComparisonOperator(value: string): boolean {
 }
 
 function startsWithOperator(input: string, index: number): boolean {
-	const twoCharOperator = input.slice(index, index + 2);
+	const twoChar = input.slice(index, index + 2);
+	const oneChar = input[index] ?? "";
 	return (
-		twoCharOperator === "&&" ||
-		twoCharOperator === "||" ||
-		twoCharOperator === ">=" ||
-		twoCharOperator === "<=" ||
-		twoCharOperator === "!=" ||
-		twoCharOperator === "==" ||
-		input[index] === ">" ||
-		input[index] === "<"
+		LOGICAL_OPERATOR_TOKENS.has(twoChar) ||
+		COMPARISON_OPERATOR_TOKENS.has(twoChar) ||
+		COMPARISON_OPERATOR_TOKENS.has(oneChar)
 	);
 }
 
@@ -325,10 +317,9 @@ function isWhitespace(value: string | undefined): boolean {
 }
 
 function isStringLiteral(value: string): boolean {
-	const trimmedValue = value.trim();
 	return (
-		(trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) ||
-		(trimmedValue.startsWith("'") && trimmedValue.endsWith("'"))
+		(value.startsWith('"') && value.endsWith('"')) ||
+		(value.startsWith("'") && value.endsWith("'"))
 	);
 }
 

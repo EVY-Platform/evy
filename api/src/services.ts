@@ -90,12 +90,10 @@ type GrpcServiceClient = grpc.Client & {
 };
 
 function buildProtoGetRequest(params: GetRequest) {
-	const filter = {
-		...(params.filter?.id ? { id: params.filter.id } : {}),
-		...(params.filter?.updatedAfter
-			? { updated_after: params.filter.updatedAfter }
-			: {}),
-	};
+	const filter: Record<string, string> = {};
+	if (params.filter?.id) filter.id = params.filter.id;
+	if (params.filter?.updatedAfter)
+		filter.updated_after = params.filter.updatedAfter;
 
 	return {
 		service: params.service,

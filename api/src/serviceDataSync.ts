@@ -39,15 +39,11 @@ export function discoverReferencedServices(flows: UI_Flow[]): Set<string> {
 }
 
 export function resolveCandidateToService(candidate: string): string | null {
-	const trimmedCandidate = candidate.trim();
-	if (!trimmedCandidate) {
+	if (!candidate) {
 		return null;
 	}
 
-	const candidateVariants = [
-		trimmedCandidate,
-		pluralize.plural(trimmedCandidate),
-	];
+	const candidateVariants = [candidate, pluralize.plural(candidate)];
 
 	for (const serviceName of SYNCABLE_SERVICES) {
 		const resources = RESOURCES_BY_SERVICE[serviceName] as readonly string[];

@@ -112,12 +112,10 @@ function buildMarketplaceServiceHandlers(
 				void (async () => {
 					try {
 						const req = call.request;
-						const filter = {
-							...(req.filter?.id ? { id: req.filter.id } : {}),
-							...(req.filter?.updated_after
-								? { updatedAfter: req.filter.updated_after }
-								: {}),
-						};
+						const filter: Record<string, string> = {};
+						if (req.filter?.id) filter.id = req.filter.id;
+						if (req.filter?.updated_after)
+							filter.updatedAfter = req.filter.updated_after;
 						const params = {
 							service: req.service,
 							resource: req.resource,

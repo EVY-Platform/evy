@@ -34,37 +34,11 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 		let temporaryId = UUID().uuidString
 		let temporaryScopeId = EVYDraft.createMergeScopeId(flowId: "temporary", entityKey: temporaryId)
 
-		do {
-			try EVY.updateValue(view.content.text, at: temporaryId, scopeId: temporaryScopeId)
-		} catch {
-			#if DEBUG
-			print("[EVYTextSelectRow] Failed to store temporary value: \(error)")
-			#endif
-			return nil
-		}
-
-		guard let binding = try? EVY.data.draftBinding(fromParsedProps: temporaryId, scopeId: temporaryScopeId) else {
-			#if DEBUG
-			print("[EVYTextSelectRow] No draft binding found for '\(temporaryId)'")
-			#endif
-			return nil
-		}
-
-		guard let draft = EVY.data.draftIfPresent(binding: binding) else {
-			#if DEBUG
-			print("[EVYTextSelectRow] No draft present for binding '\(binding)'")
-			#endif
-			return nil
-		}
-
-		do {
-			self.value = try draft.decoded()
-		} catch {
-			#if DEBUG
-			print("[EVYTextSelectRow] Failed to decode draft: \(error)")
-			#endif
-			return nil
-		}
+		guard (try? EVY.updateValue(view.content.text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
+		      let binding = try? EVY.data.draftBinding(fromParsedProps: temporaryId, scopeId: temporaryScopeId),
+		      let draft = EVY.data.draftIfPresent(binding: binding),
+		      let decoded = try? draft.decoded() else { return nil }
+		self.value = decoded
 	}
 
 	var body: some View {
