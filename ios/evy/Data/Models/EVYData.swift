@@ -18,13 +18,13 @@ struct EVYValue: Equatable {
     var value: String
     var prefix: String?
     var suffix: String?
-    
+
     init(_ value: String, _ prefix: String?, _ suffix: String?) {
         self.value = value
         self.prefix = prefix
         self.suffix = suffix
     }
-    
+
     func toString() -> String {
         return "\(prefix ?? "")\(value)\(suffix ?? "")"
     }
@@ -33,34 +33,36 @@ struct EVYValue: Equatable {
 @Model
 class EVYData {
     var key: String
+    var lastSyncedAt: String
     var data: Data
-    
-    init(key: String, data: Data) {
+
+    init(key: String, lastSyncedAt: String = "", data: Data) {
         self.key = key
+        self.lastSyncedAt = lastSyncedAt
         self.data = data
     }
-    
+
     func decoded() throws -> EVYJson {
         try JSONDecoder().decode(EVYJson.self, from: data)
     }
-    
+
     func updateDataWithData(_ data: Data, props: [String]) throws {
         if props.count < 1 {
             return
         }
-        
+
         let currentDataAsJson = try decoded()
         let newDataAsJson = try JSONDecoder().decode(EVYJson.self, from: data)
-        
+
         let updatedJson = try getUpdatedJson(props: props, data: currentDataAsJson, value: newDataAsJson)
         self.data = try JSONEncoder().encode(updatedJson)
     }
-    
+
     private func getUpdatedJson(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {
         if props.count < 1 {
             return data
         }
-        
+
         switch data {
         case var .dictionary(dictValue):
             guard let firstProp = props.first else {
@@ -117,22 +119,22 @@ public enum EVYJson: Codable, Hashable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        
+
         if let stringValue = try? container.decode(String.self) {
             self = .string(stringValue)
             return
         }
-        
+
         if let intValue = try? container.decode(Int.self) {
             self = .int(intValue)
             return
         }
-		
+
 		if let decimalValue = try? container.decode(Decimal.self) {
 			self = .decimal(decimalValue)
 			return
 		}
-        
+
         if let boolValue = try? container.decode(Bool.self) {
             self = .bool(boolValue)
             return
@@ -150,7 +152,7 @@ public enum EVYJson: Codable, Hashable {
 
         throw EVYDataParseError.unprocessableValue
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
@@ -168,10 +170,10 @@ public enum EVYJson: Codable, Hashable {
             try container.encode(jsonData)
         }
     }
-    
+
     public func toString() -> String {
         let encoder = JSONEncoder()
-        
+
         switch self {
         case let .string(stringValue):
             return stringValue
@@ -199,7 +201,7 @@ public enum EVYJson: Codable, Hashable {
             return string
         }
     }
-    
+
     @MainActor
     public func identifierValue() -> String {
         switch self {
@@ -209,13 +211,13 @@ public enum EVYJson: Codable, Hashable {
             return toString()
         }
     }
-    
+
     @MainActor
     public func parseProp(props: [String]) -> EVYJson {
         if props.count < 1 {
             return self
         }
-        
+
         switch self {
         case let .dictionary(dictValue):
             guard let firstVariable = props.first else {
@@ -227,7 +229,7 @@ public enum EVYJson: Codable, Hashable {
             if props.count == 1 {
                 return parseIdOrIds(props: props, value: subData)
             }
-            
+
             return subData.parseProp(props: Array(props[1...]))
         case let .array(arrayValue):
             guard let firstVariable = props.first else {
@@ -236,7 +238,7 @@ public enum EVYJson: Codable, Hashable {
             guard let index = Int(firstVariable) else {
                 return self
             }
-            
+
             let subData = arrayValue[index]
             if props.count == 1 {
                 return parseIdOrIds(props: props, value: subData)
@@ -246,26 +248,26 @@ public enum EVYJson: Codable, Hashable {
             return parseIdOrIds(props: props, value: self)
         }
     }
-    
+
     @MainActor
     private func parseIdOrIds(props: [String], value: EVYJson) -> EVYJson {
         let key = props.first!
-        
+
         if !key.hasSuffix("_id") && !key.hasSuffix("_ids") {
             return value
         }
-        
+
         var inputValues: [String] = []
         if case let .array(arrayValue) = value {
             inputValues.append(contentsOf: arrayValue.map { $0.toString() })
         } else if case .string(_) = value {
             inputValues.append(value.toString())
         }
-        
+
         if inputValues.isEmpty {
             return value
         }
-        
+
         do {
             if key.hasSuffix("_ids") {
                 let data = try EVY.getDataFromProps(String(key.dropLast(4) + "s"))
@@ -307,7 +309,7 @@ public enum EVYJson: Codable, Hashable {
                 object: error
             )
         }
-        
+
         return value
     }
 }

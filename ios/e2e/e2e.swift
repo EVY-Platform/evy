@@ -420,6 +420,7 @@ final class WebSocketE2ETests: E2ETestBase {
                         [
                             "id": "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
                             "type": "Input",
+                            "source": "{item}",
                             "view": [
                                 "content": [
                                     "title": "Title",
@@ -433,6 +434,7 @@ final class WebSocketE2ETests: E2ETestBase {
                         [
                             "id": "668aeb79-d8ba-43b7-9619-07f91d0a1908",
                             "type": "Input",
+                            "source": "{item}",
                             "view": [
                                 "content": [
                                     "title": "Price",
@@ -446,6 +448,7 @@ final class WebSocketE2ETests: E2ETestBase {
                         [
                             "id": "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
                             "type": "Input",
+                            "source": "{item}",
                             "view": [
                                 "content": [
                                     "title": "Width",
@@ -460,6 +463,8 @@ final class WebSocketE2ETests: E2ETestBase {
                     "footer": [
                         "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
                         "type": "Button",
+                        "source": "{item}",
+                        "destination": "",
                         "view": [
                             "content": [
                                 "title": "",
@@ -518,6 +523,8 @@ final class WebSocketE2ETests: E2ETestBase {
                         [
                             "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
                             "type": "ColumnContainer",
+                            "source": "",
+                            "destination": "",
                             "actions": [],
                             "view": [
                                 "content": [
@@ -526,6 +533,8 @@ final class WebSocketE2ETests: E2ETestBase {
                                         [
                                             "id": "441c1433-446b-4682-854d-5d795ef52709",
                                             "type": "Button",
+                                            "source": "",
+                                            "destination": "",
                                             "view": [
                                                 "content": [
                                                     "title": "",
@@ -541,6 +550,8 @@ final class WebSocketE2ETests: E2ETestBase {
                                         [
                                             "id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
                                             "type": "Button",
+                                            "source": "",
+                                            "destination": "",
                                             "view": [
                                                 "content": [
                                                     "title": "",
@@ -624,4 +635,3 @@ final class E2EErrorStateTests: XCTestCase {
         )
     }
 }
-

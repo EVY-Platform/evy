@@ -135,7 +135,7 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow({
 			id: ROW_A,
 			type: "Search",
-			source: "{api:tags}",
+			source: "{$api:tags}",
 			destination: "{tags}",
 			actions: [],
 			view: {
@@ -148,7 +148,7 @@ describe("normalizeServerRow", () => {
 
 		expect(n.view.content.child?.type).toBe("Info");
 		expect(n.view.content.child?.view.content).toMatchObject({
-			title: "{datum.value}",
+			title: "{$datum:value}",
 			subtitle: "",
 			icon: "",
 		});

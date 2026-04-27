@@ -6,15 +6,15 @@
 //
 
 import SwiftUI
-    
+
 struct EVYInlinePicker: View {
     let title: String
     let format: String
     let destination: String
-    
+
     private var options: [EVYJson] = []
     private var selectedIdentifiers: EVYState<[String]>
-    
+
     init(title: String,
          data: String,
          format: String,
@@ -23,7 +23,7 @@ struct EVYInlinePicker: View {
         self.title = title
         self.format = format
         self.destination = destination
-        
+
         var loadedOptions: [EVYJson] = []
         do {
             let data = try EVY.getDataFromText(data)
@@ -36,7 +36,7 @@ struct EVYInlinePicker: View {
             #endif
         }
         options = loadedOptions
-        
+
         selectedIdentifiers = EVYState(watch: destination, setter: {
             do {
                 let selected = try EVY.getDataFromText($0)
@@ -53,7 +53,7 @@ struct EVYInlinePicker: View {
             return []
         })
     }
-    
+
     private func performAction(option: EVYJson) {
         let optionIdentifier = option.identifierValue()
         do {
@@ -71,7 +71,7 @@ struct EVYInlinePicker: View {
             #endif
         }
     }
-    
+
     var body: some View {
         HStack {
             ForEach(Array(options.enumerated()), id: \.offset) { _, option in
@@ -96,10 +96,10 @@ struct EVYInlinePicker: View {
 	} view: {
 		try! EVY.getUserData()
 		try! await EVY.createItem()
-		
+
 		return EVYInlinePicker(title: "Dropdown",
 							   data: "{durations}",
-							   format: "{$0.value}",
+							   format: "{$datum:value}",
 							   destination: "{duration}")
 	}
 }

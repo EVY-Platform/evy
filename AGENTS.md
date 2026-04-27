@@ -13,7 +13,7 @@ Always use `bun` to run commands or install dependencies.
 ## Development
 
 For web or api, make sure you run `bun run build`, `bun run lint` and `bun run test` anytime you make major changes and fix issues that arise.
-For iOS, make sure you build with Xcode targeting iPhone Air iOS 26.2 and fix any errors.
+For iOS, make sure you build with Xcode targeting iPhone 17 iOS 26.4.1 and fix any errors.
 Ensure you run `./run-e2e.sh --skip-ios` from root to run the e2e tests (see README.md for `--no-docker` option).
 If you need to run iOS tests, keep services running and just run the iOS tests separately rather than re-running the whole e2e suite.
 NEVER skip tests of any kind

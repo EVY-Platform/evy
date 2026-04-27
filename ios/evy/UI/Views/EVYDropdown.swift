@@ -6,17 +6,17 @@
 //
 
 import SwiftUI
-    
+
 struct EVYDropdown: View {
     let title: String
     let destination: String
     let format: String
     let placeholder: String
-    
+
     private var options: [EVYJson] = []
     private var selection: EVYState<String>
     @State private var showSheet = false
-    
+
     init(title: String = "",
          placeholder: String = "",
          data: String,
@@ -27,21 +27,18 @@ struct EVYDropdown: View {
         self.destination = destination
         self.format = format
         self.placeholder = placeholder
-        
+
         var loadedOptions: [EVYJson] = []
-        
+
         do {
             let data = try EVY.getDataFromText(data)
             if case let .array(arrayValue) = data {
                 loadedOptions = arrayValue
             }
         } catch {
-            #if DEBUG
-            print("[EVYDropdown] Error loading options: \(error)")
-            #endif
         }
         options = loadedOptions
-        
+
         selection = EVYState(watch: destination, setter: {
             do {
                 let value = try EVY.getDataFromText($0)
@@ -53,14 +50,11 @@ struct EVYDropdown: View {
                 }
                 return try EVY.formatDataOrToString(json: value, format: format)
             } catch {
-                #if DEBUG
-                print("[EVYDropdown] Error formatting selection: \(error) for input \($0)")
-                #endif
                 return ""
             }
         })
     }
-    
+
     var body: some View {
         HStack {
             Button(action: { showSheet.toggle() }) {
@@ -109,12 +103,11 @@ struct EVYDropdown: View {
 	} view: {
 		try! EVY.getUserData()
 		try! await EVY.createItem()
-		
+
 		return EVYDropdown(title: "Dropdown",
 						   placeholder: "A placeholder",
 						   data: "{conditions}",
-						   format: "{$0.value}",
+						   format: "{$datum:value}",
 						   destination: "{condition}")
 	}
 }
-

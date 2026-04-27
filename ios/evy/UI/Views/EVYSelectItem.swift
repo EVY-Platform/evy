@@ -25,9 +25,9 @@ struct EVYSelectItem: View {
     let target: EVYSelectItemTarget
     let textStyle: EVYTextStyle
     let onSelect: (() -> Void)?
-    
+
     private var selected: EVYState<Bool>
-    
+
     init(destination: String,
          value: EVYJson,
          format: String,
@@ -43,7 +43,7 @@ struct EVYSelectItem: View {
         self.target = target
         self.textStyle = textStyle
         self.onSelect = onSelect
-        
+
         selected = EVYState(watch: destination, setter: {
             do {
                 if target == .single_identifier {
@@ -82,15 +82,13 @@ struct EVYSelectItem: View {
                     return arrayValue.contains { $0.identifierValue() == valueId }
                 }
             } catch {
-                #if DEBUG
-                print("[EVYSelectItem] Error checking selection state: \(error)")
-                #endif
+                return false
             }
-            
+
             return false
         })
     }
-    
+
     var body: some View {
         HStack {
             let text = (try? EVY.formatDataOrToString(json: value, format: format))
@@ -126,7 +124,7 @@ struct EVYSelectItem: View {
                     guard case let .array(arrayValue) = existingData else {
                         return
                     }
-                    
+
                     if target == .multi_identifier {
                         let valueId = value.identifierValue()
                         var updatedData = arrayValue.filter {
@@ -161,7 +159,7 @@ struct EVYSelectItem: View {
                         try EVY.updateData(encoded, at: destination)
                     }
                 }
-                
+
                 onSelect?()
             } catch {
                 #if DEBUG
@@ -178,13 +176,13 @@ struct EVYSelectItem: View {
 	} view: {
 		try! EVY.getUserData()
 		try! await EVY.createItem()
-		
+
 		return Group {
 			let options = try! EVY.getDataFromText("{selling_reasons}")
 			switch options {
 			case let .array(arrayValue):
 				EVYSelectList(options: arrayValue,
-									 format: "{$0.value}",
+									 format: "{$datum:value}",
 									 destination: "{selling_reason}")
 			default:
 				Text("error")

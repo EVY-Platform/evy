@@ -25,14 +25,12 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 			do {
 				return try EVY.evaluateFromText($0)
 			} catch {
-				#if DEBUG
-				print("[EVYTextSelectRow] Error evaluating selection: \(error)")
-				#endif
 				return false
 			}
 		})
 		let temporaryId = UUID().uuidString
 		let temporaryScopeId = EVYDraft.createMergeScopeId(flowId: "temporary", entityKey: temporaryId)
+
 		guard (try? EVY.updateValue(view.content.text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
 		      let binding = try? EVY.data.draftBinding(fromParsedProps: temporaryId, scopeId: temporaryScopeId),
 		      let draft = EVY.data.draftIfPresent(binding: binding),

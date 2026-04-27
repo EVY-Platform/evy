@@ -22,8 +22,8 @@ function buildInfoTemplateRow(): Row {
 			actions: [],
 			view: {
 				content: {
-					title: "{datum.value}",
-					subtitle: "{datum.city}",
+					title: "{$datum:value}",
+					subtitle: "{$datum:city}",
 					icon: "",
 				},
 			},
@@ -33,8 +33,8 @@ function buildInfoTemplateRow(): Row {
 
 describe("formatSearchPreviewString", () => {
 	it("replaces datum bindings with dummy preview values", () => {
-		expect(formatSearchPreviewString("{datum.value}")).toBe("Example tag");
-		expect(formatSearchPreviewString("{datum.city}, {datum.postcode}")).toBe(
+		expect(formatSearchPreviewString("{$datum:value}")).toBe("Example tag");
+		expect(formatSearchPreviewString("{$datum:city}, {$datum:postcode}")).toBe(
 			"Sydney, 2000",
 		);
 	});

@@ -121,7 +121,7 @@ struct EVYSearchSingle: View {
     } view: {
         try! await EVY.createItem()
 
-        return EVYSearch(source: "{local:address}",
+        return EVYSearch(source: "{$local:address}",
 						 destination: "{address}",
 						 placeholder: "Search",
 						 resultTemplate: nil)

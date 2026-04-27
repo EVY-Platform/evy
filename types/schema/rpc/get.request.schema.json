@@ -12,15 +12,9 @@
 				"service": { "const": "evy" },
 				"resource": {
 					"type": "string",
-					"enum": [
-						"sdui",
-						"devices",
-						"organisations",
-						"services",
-						"providers"
-					]
+					"enum": ["sdui", "devices", "organisations", "services", "providers"]
 				},
-				"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" }
+				"filter": { "$ref": "../common/rpc.schema.json#/$defs/DataFilter" }
 			}
 		},
 		{
@@ -40,7 +34,7 @@
 						"items"
 					]
 				},
-				"filter": { "$ref": "../common/rpc.schema.json#/$defs/IdFilter" }
+				"filter": { "$ref": "../common/rpc.schema.json#/$defs/DataFilter" }
 			}
 		}
 	]

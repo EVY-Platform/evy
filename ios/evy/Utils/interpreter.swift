@@ -180,7 +180,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     }
 
     let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
-    let dataObj = try EVY.data.get(key: firstProp)
+    let dataObj = try EVY.data.getForBinding(key: firstProp)
     return try dataObj.decoded().parseProp(props: remainingProps)
 }
 
@@ -221,9 +221,7 @@ func _formatData(json: EVYJson, format: String) throws -> String {
 
     let temporaryId = UUID().uuidString
     let formatWithNewData = format
-        .replacingOccurrences(of: "datum.", with: "\(temporaryId).")
-        .replacingOccurrences(of: ".datum", with: ".\(temporaryId)")
-        .replacingOccurrences(of: "(datum)", with: "(\(temporaryId))")
+        .replacingOccurrences(of: "$datum:", with: "\(temporaryId).")
 
     if formatWithNewData.isEmpty { return "" }
 

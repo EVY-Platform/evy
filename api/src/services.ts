@@ -68,7 +68,7 @@ type GrpcServiceClient = grpc.Client & {
 		request: {
 			service: string;
 			resource: string;
-			filter?: { id: string };
+			filter?: { id?: string; updated_after?: string };
 		},
 		callback: grpc.requestCallback<{ result_json: string }>,
 	) => grpc.ClientUnaryCall;
@@ -76,7 +76,7 @@ type GrpcServiceClient = grpc.Client & {
 		request: {
 			service: string;
 			resource: string;
-			filter?: { id: string };
+			filter?: { id?: string; updated_after?: string };
 			data_json: string;
 		},
 		callback: grpc.requestCallback<{ result_json: string }>,
@@ -90,10 +90,15 @@ type GrpcServiceClient = grpc.Client & {
 };
 
 function buildProtoGetRequest(params: GetRequest) {
+	const filter: Record<string, string> = {};
+	if (params.filter?.id) filter.id = params.filter.id;
+	if (params.filter?.updatedAfter)
+		filter.updated_after = params.filter.updatedAfter;
+
 	return {
 		service: params.service,
 		resource: params.resource,
-		...(params.filter?.id ? { filter: { id: params.filter.id } } : {}),
+		...(Object.keys(filter).length > 0 ? { filter } : {}),
 	};
 }
 
@@ -105,7 +110,7 @@ function makeGrpcAdapter(
 	const client = new ServiceClientCtor(
 		url,
 		grpc.credentials.createInsecure(),
-	) as GrpcServiceClient;
+	) as unknown as GrpcServiceClient;
 
 	let eventListener: ((eventName: string, payload: unknown) => void) | null =
 		null;
@@ -258,29 +263,26 @@ function getGrpcAdapters(): Map<string, ServiceAdapter> {
 	return grpcAdapters;
 }
 
-export function forwardUnary(
-	serviceName: string,
-	method: "get",
-	params: GetRequest,
-): Promise<GetResponse>;
-export function forwardUnary(
-	serviceName: string,
-	method: "upsert",
-	params: UpsertRequest,
-): Promise<UpsertResponse>;
-export function forwardUnary(
-	serviceName: string,
-	method: "get" | "upsert",
-	params: GetRequest | UpsertRequest,
-): Promise<GetResponse | UpsertResponse> {
+function getServiceAdapter(serviceName: string): ServiceAdapter {
 	const adapter = getGrpcAdapters().get(serviceName);
 	if (!adapter) {
 		throw new Error(`No service registered for service ${serviceName}`);
 	}
-	if (method === "get") {
-		return adapter.get(params as GetRequest);
-	}
-	return adapter.upsert(params as UpsertRequest);
+	return adapter;
+}
+
+export function forwardGet(
+	serviceName: string,
+	params: GetRequest,
+): Promise<GetResponse> {
+	return getServiceAdapter(serviceName).get(params);
+}
+
+export function forwardUpsert(
+	serviceName: string,
+	params: UpsertRequest,
+): Promise<UpsertResponse> {
+	return getServiceAdapter(serviceName).upsert(params);
 }
 
 export function wireGrpcClientsTo(server: RpcServer): void {

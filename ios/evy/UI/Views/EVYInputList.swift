@@ -12,12 +12,12 @@ struct EVYInputList: View {
     let format: String
     var placeholder: String
     private var values: EVYState<[String]>
-    
+
     init(data: String, format: String, placeholder: String) {
         self.data = data
         self.format = format
         self.placeholder = placeholder
-        
+
         values = EVYState(watch: data, setter: {
             do {
                 let data = try EVY.getDataFromText($0)
@@ -31,15 +31,12 @@ struct EVYInputList: View {
                     ]
                 }
             } catch {
-                #if DEBUG
-                print("[EVYInputList] Error formatting data: \(error) for input \($0)")
-                #endif
             }
-            
+
             return []
         })
     }
-    
+
     var body: some View {
         EVYTextField(input: "",
                      destination: "",
@@ -65,9 +62,9 @@ struct EVYInputList: View {
 		asyncView
 	} view: {
 		try! await EVY.createItem()
-		
+
 		return EVYInputList(data: "{tags}",
-							format: "{$0.value}",
+							format: "{$datum:value}",
 							placeholder: "Add tags to improve search")
 	}
 }

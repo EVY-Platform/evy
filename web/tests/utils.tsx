@@ -15,7 +15,9 @@ interface ServerRowInputContent {
 	value?: string;
 	placeholder?: string;
 	text?: string;
+	subtitle?: string;
 	label?: string;
+	format?: string;
 	segments?: string[];
 }
 

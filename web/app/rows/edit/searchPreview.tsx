@@ -40,6 +40,8 @@ const previewRowComponents: Record<string, RowComponent> = {
 
 type SearchPreviewDatum = Record<string, string>;
 
+const BRACED_DATUM_BINDING_REGEX = /\{\$datum:([A-Za-z0-9_.-]+)\}/g;
+
 function SearchPreviewFallback({ rowType }: { rowType: string }) {
 	return (
 		<RowLayout title="">
@@ -50,21 +52,13 @@ function SearchPreviewFallback({ rowType }: { rowType: string }) {
 	);
 }
 
-function resolveDatumValue(path: string, datum: SearchPreviewDatum): string {
-	const normalizedPath = path.trim();
-	if (!normalizedPath) {
-		return datum.value ?? "";
-	}
-
-	return datum[normalizedPath] ?? "";
-}
-
 export function formatSearchPreviewString(
 	template: string,
 	datum: SearchPreviewDatum = SEARCH_PREVIEW_DATUM,
 ): string {
-	return template.replace(/\{datum(?:\.([^}]+))?\}/g, (_match, path?: string) =>
-		resolveDatumValue(path ?? "", datum),
+	return template.replace(
+		BRACED_DATUM_BINDING_REGEX,
+		(_match, path: string) => datum[path] ?? "",
 	);
 }
 

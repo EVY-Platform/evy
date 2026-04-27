@@ -1,0 +1,24 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "syncServiceData-response",
+	"title": "SyncServiceDataResponse",
+	"description": "JSON-RPC response for syncServiceData method",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["data"],
+	"properties": {
+		"data": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["service", "resource", "value"],
+				"properties": {
+					"service": { "type": "string" },
+					"resource": { "type": "string" },
+					"value": {}
+				}
+			}
+		}
+	}
+}

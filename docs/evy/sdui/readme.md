@@ -8,11 +8,18 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 
 - Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from when rendering or editing:
 	- `"{item}"` — bind to the current flow entity / draft (e.g. listing fields, `{formatWeight(weight)}`, `{item.title}`).
-	- `"{conditions}"`, `"{selling_reasons}"`, `"{durations}"`, `"{areas}"`, `"{tags}"` — catalog or in-memory keys the client resolves to option lists.
-	- `"{api:tags}"` — remote search / API-backed data.
-	- `"local:address"` — client-local data source.
+	- `"{conditions}"`, `"{selling_reasons}"`, `"{durations}"`, `"{areas}"`, `"{tags}"` — backend/catalog or in-memory keys the client resolves to option lists.
+	- `"{$api:tags}"` — remote search / API-backed client source.
+	- `"{$local:address}"` — client-local source.
 	- `""` — no external read binding (e.g. pure navigation buttons, static Info).
-- That catalog/API/local data is loaded separately via JSON-RPC `get` (`service` / `resource`); routing and persistence are described in [`api/README`](../../api/README.md). `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
+- Braced `{...}` expressions are used for all SDUI bindings. Prefixed `{$...:...}` bindings identify data that does not belong to backend flow state:
+	- `{$datum:value}` — current list/search result item field, used in row `format` strings and Search result templates.
+	- `{$api:resource}` — API-backed client source.
+	- `{$local:resource}` — client-local source.
+- Catalog/API/local data is loaded outside the flow document. Clients can request individual lists with JSON-RPC `get` (`service` / `resource`) or sync service data in batches with `syncServiceData`.
+- `syncServiceData` accepts `{ "service": "marketplace", "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows. Clients should store synced rows under service-qualified keys such as `marketplace:items` and `marketplace:conditions`.
+- Flow bindings use the resource name without the service prefix (`{items}`, `{conditions}`, `{tags}`). The client data layer resolves those bindings to synced service data when no exact local key exists. Exact local keys still take precedence for drafts and flow state.
+- `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
 So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is still written to a field via `destination`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
 
@@ -187,6 +194,6 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 
 Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`, `child`, `children`). See `row-content.spec.json` for the exact keys per type.
 
-For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `datum` as the placeholder for the current item in expressions, e.g. `{datum.value}` or `{datum.unit} {datum.street}, {datum.city}`.
+For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `{$datum:...}` as the placeholder for the current item, e.g. `{$datum:value}` or `{$datum:unit} {$datum:street}, {$datum:city}`.
 
-For **Search** rows, iOS renders each hit using `view.content.child` (typically an `Info` row template) instead of `format`; string fields in that child row are evaluated with `datum` the same way. The web builder’s Search row stub does not render live results.
+For **Search** rows, iOS renders each hit using `view.content.child` (typically an `Info` row template) instead of `format`; string fields in that child row are evaluated with `{$datum:...}` the same way. The web builder’s Search row stub does not render live results.
