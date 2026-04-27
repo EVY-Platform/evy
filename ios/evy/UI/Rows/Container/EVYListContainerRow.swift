@@ -8,31 +8,31 @@
 import SwiftUI
 
 struct EVYListContainerRow: View, EVYRowProtocol {
-	public static let JSONType = "ListContainer"
+  public static let JSONType = "ListContainer"
 
-	private let view: ListContainerRowViewData
+  private let view: ListContainerRowViewData
 
-	init(view: ListContainerRowViewData) {
-		self.view = view
-	}
+  init(view: ListContainerRowViewData) {
+    self.view = view
+  }
 
-	var body: some View {
-		VStack(alignment: .leading) {
-			if view.content.title.count > 0 {
-				EVYTextView(view.content.title)
-					.padding(.vertical, Constants.padding)
-			}
-			ForEach(view.content.children, id: \.id) { child in
-				EVYRow(row: child)
-			}
-		}
-	}
+  var body: some View {
+    VStack(alignment: .leading) {
+      if view.content.title.count > 0 {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+      }
+      ForEach(view.content.children, id: \.id) { child in
+        EVYRow(row: child)
+      }
+    }
+  }
 }
 
 #Preview {
-	AsyncPreview { asyncView in
-		EVYRow(row: asyncView)
-	} view: {
-		try! await EVY.getRow(["2", "pages", "3", "rows", "1"])
-	}
+  AsyncPreview { asyncView in
+    EVYRow(row: asyncView)
+  } view: {
+    try! await EVY.getRow(["2", "pages", "3", "rows", "1"])
+  }
 }

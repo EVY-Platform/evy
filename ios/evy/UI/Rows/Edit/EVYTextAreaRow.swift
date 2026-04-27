@@ -8,38 +8,38 @@
 import SwiftUI
 
 struct EVYTextAreaRow: View, EVYRowProtocol {
-	public static let JSONType = "TextArea"
+  public static let JSONType = "TextArea"
 
-	private let view: TextAreaRowViewData
-	private let destination: String
+  private let view: TextAreaRowViewData
+  private let destination: String
 
-	init(view: TextAreaRowViewData, destination: String) {
-		self.view = view
-		self.destination = destination
-	}
+  init(view: TextAreaRowViewData, destination: String) {
+    self.view = view
+    self.destination = destination
+  }
 
-	var body: some View {
-		VStack(alignment: .leading) {
-			if view.content.title.count > 0 {
-				EVYTextView(view.content.title)
-					.padding(.vertical, Constants.padding)
-			}
-			if !destination.isEmpty {
-				EVYTextField(
-					input: view.content.value,
-					destination: destination,
-					placeholder: view.content.placeholder,
-					multiLine: true
-				)
-			}
-		}
-	}
+  var body: some View {
+    VStack(alignment: .leading) {
+      if view.content.title.count > 0 {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+      }
+      if !destination.isEmpty {
+        EVYTextField(
+          input: view.content.value,
+          destination: destination,
+          placeholder: view.content.placeholder,
+          multiLine: true
+        )
+      }
+    }
+  }
 }
 
 #Preview {
-	AsyncPreview { asyncView in
-		EVYRow(row: asyncView)
-	} view: {
-		try! await EVY.getRow(["2", "pages", "1", "rows", "0"])
-	}
+  AsyncPreview { asyncView in
+    EVYRow(row: asyncView)
+  } view: {
+    try! await EVY.getRow(["2", "pages", "1", "rows", "0"])
+  }
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension UI_Flow {
-	func getPageById(_ id: String) -> UI_Page? {
-		pages.first { $0.id == id }
-	}
+  func getPageById(_ id: String) -> UI_Page? {
+    pages.first { $0.id == id }
+  }
 }

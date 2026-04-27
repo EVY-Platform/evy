@@ -8,34 +8,34 @@
 import SwiftUI
 
 struct EVYButtonRow: View, EVYRowProtocol {
-	@Environment(\.navigate) private var navigate
+  @Environment(\.navigate) private var navigate
 
-	public static let JSONType = "Button"
+  public static let JSONType = "Button"
 
-	private let view: ButtonRowViewData
-	private let actions: [UI_RowAction]
+  private let view: ButtonRowViewData
+  private let actions: [UI_RowAction]
 
-	init(view: ButtonRowViewData, actions: [UI_RowAction]) {
-		self.view = view
-		self.actions = actions
-	}
+  init(view: ButtonRowViewData, actions: [UI_RowAction]) {
+    self.view = view
+    self.actions = actions
+  }
 
-	private func performAction() {
-		EVYActionRunner.run(actions: actions, navigate: navigate)
-	}
+  private func performAction() {
+    EVYActionRunner.run(actions: actions, navigate: navigate)
+  }
 
-	var body: some View {
-		EVYButton(label: view.content.label, action: performAction)
-			.frame(maxWidth: .infinity, alignment: .center)
-			.padding(.top, Constants.minorPadding)
-			.padding(.bottom, Constants.majorPadding)
-	}
+  var body: some View {
+    EVYButton(label: view.content.label, action: performAction)
+      .frame(maxWidth: .infinity, alignment: .center)
+      .padding(.top, Constants.minorPadding)
+      .padding(.bottom, Constants.majorPadding)
+  }
 }
 
 #Preview {
-	AsyncPreview { asyncView in
-		EVYRow(row: asyncView)
-	} view: {
-		try! await EVY.getRow(["1", "pages", "0", "footer"])
-	}
+  AsyncPreview { asyncView in
+    EVYRow(row: asyncView)
+  } view: {
+    try! await EVY.getRow(["1", "pages", "0", "footer"])
+  }
 }

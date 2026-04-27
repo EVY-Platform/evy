@@ -6,10 +6,10 @@
 //
 
 public struct EVYCalendarTimeslotData: Decodable {
-    let x: Int
-    let y: Int
-    let header: String
-    let start_label: String
-    let end_label: String
-    let selected: Bool
+  let x: Int
+  let y: Int
+  let header: String
+  let start_label: String
+  let end_label: String
+  let selected: Bool
 }

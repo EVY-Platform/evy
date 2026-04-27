@@ -7,94 +7,98 @@
 
 import SwiftUI
 
-let timeslotWidth: CGFloat = Constants.base*18
+let timeslotWidth: CGFloat = Constants.base * 18
 
 public struct EVYTimeslot: Decodable, Hashable {
-    let timeslot: String
-    let available: Bool
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(UUID().uuidString)
-    }
+  let timeslot: String
+  let available: Bool
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(UUID().uuidString)
+  }
 }
 public struct EVYTimeslotDate: Decodable {
-    let header: String
-    let date: String
-    let timeslots: [EVYTimeslot]
+  let header: String
+  let date: String
+  let timeslots: [EVYTimeslot]
 }
 
 struct EVYTimeslotColumn: View {
-    let timeslotDate: EVYTimeslotDate
-    let numberOfTimeslotsPerDay: Int
-    let action: () -> Void
-    
-    var body: some View {
-        VStack {
-            EVYTextView(timeslotDate.header)
-            EVYTextView(timeslotDate.date)
-            ForEach((0...(numberOfTimeslotsPerDay-1)), id: \.self) { timeslotIndex in
-                if timeslotDate.timeslots.count-1 < timeslotIndex {
-                    Button(action: action) {
-                        EVYRectangle.fixedWidth(content: EVYTextView("-"),
-                                                style: .clear,
-                                                width: timeslotWidth)
-                    }
-                }
-                else {
-                    let t = timeslotDate.timeslots[timeslotIndex]
-                    Button(action: action) {
-                        EVYRectangle.fixedWidth(content: EVYTextView(t.timeslot),
-                                                style: t.available ? .primary : .secondary,
-                                                width: timeslotWidth)
-                    }
-                }
-            }
+  let timeslotDate: EVYTimeslotDate
+  let numberOfTimeslotsPerDay: Int
+  let action: () -> Void
+
+  var body: some View {
+    VStack {
+      EVYTextView(timeslotDate.header)
+      EVYTextView(timeslotDate.date)
+      ForEach((0...(numberOfTimeslotsPerDay - 1)), id: \.self) { timeslotIndex in
+        if timeslotDate.timeslots.count - 1 < timeslotIndex {
+          Button(action: action) {
+            EVYRectangle.fixedWidth(
+              content: EVYTextView("-"),
+              style: .clear,
+              width: timeslotWidth)
+          }
+        } else {
+          let t = timeslotDate.timeslots[timeslotIndex]
+          Button(action: action) {
+            EVYRectangle.fixedWidth(
+              content: EVYTextView(t.timeslot),
+              style: t.available ? .primary : .secondary,
+              width: timeslotWidth)
+          }
         }
+      }
     }
+  }
 }
 
 struct EVYTimeslotPicker: View {
-    @State private var selectedGroupIndex: Int = 0
-    private var numberOfTimeslotsPerDay: Int = 0
-    
-    let timeslotDates: [EVYTimeslotDate]
-    
-    init(_ timeslotDates: [EVYTimeslotDate]) {
-        self.timeslotDates = timeslotDates
-        for index in 0...timeslotDates.count-1 {
-            if timeslotDates[index].timeslots.count > numberOfTimeslotsPerDay {
-                numberOfTimeslotsPerDay = timeslotDates[index].timeslots.count
-            }
-        }
-    }
-    
-    var body: some View {
-        let groupedDays = timeslotDates.chunked(with: 4)
+  @State private var selectedGroupIndex: Int = 0
+  private var numberOfTimeslotsPerDay: Int = 0
 
-        VStack {
-            TabView(selection:$selectedGroupIndex) {
-                    ForEach(groupedDays.indices, id: \.self) { index in
-                        HStack {
-                            ForEach(groupedDays[index], id: \.date) { timeslotDate in
-                                EVYTimeslotColumn(timeslotDate: timeslotDate,
-                                                  numberOfTimeslotsPerDay: numberOfTimeslotsPerDay,
-                                                  action: { print("test") })
-                                .padding(.horizontal, Constants.padding)
-                            }
-                        }
-                    }
-            }
-            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            
-            EVYCarouselIndicator(indices: (0...groupedDays.count-1),
-                                 selectionIndex: selectedGroupIndex,
-                                 color: .black)
-        }
+  let timeslotDates: [EVYTimeslotDate]
+
+  init(_ timeslotDates: [EVYTimeslotDate]) {
+    self.timeslotDates = timeslotDates
+    for index in 0...timeslotDates.count - 1 {
+      if timeslotDates[index].timeslots.count > numberOfTimeslotsPerDay {
+        numberOfTimeslotsPerDay = timeslotDates[index].timeslots.count
+      }
     }
+  }
+
+  var body: some View {
+    let groupedDays = timeslotDates.chunked(with: 4)
+
+    VStack {
+      TabView(selection: $selectedGroupIndex) {
+        ForEach(groupedDays.indices, id: \.self) { index in
+          HStack {
+            ForEach(groupedDays[index], id: \.date) { timeslotDate in
+              EVYTimeslotColumn(
+                timeslotDate: timeslotDate,
+                numberOfTimeslotsPerDay: numberOfTimeslotsPerDay,
+                action: { print("test") }
+              )
+              .padding(.horizontal, Constants.padding)
+            }
+          }
+        }
+      }
+      .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+
+      EVYCarouselIndicator(
+        indices: (0...groupedDays.count - 1),
+        selectionIndex: selectedGroupIndex,
+        color: .black)
+    }
+  }
 }
 
 #Preview {
-    let json = """
+  let json = """
     [
         {
             "header": "Wed",
@@ -238,8 +242,8 @@ struct EVYTimeslotPicker: View {
         }
     ]
     """.data(using: .utf8)!
-    
-    let timeslotDates = try! JSONDecoder().decode([EVYTimeslotDate].self, from: json)
 
-    return EVYTimeslotPicker(timeslotDates)
+  let timeslotDates = try! JSONDecoder().decode([EVYTimeslotDate].self, from: json)
+
+  return EVYTimeslotPicker(timeslotDates)
 }
