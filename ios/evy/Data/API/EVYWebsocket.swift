@@ -194,10 +194,10 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     // Dispatch to MainActor for thread-safe data access
     Task { @MainActor in
       do {
-        if EVY.data.exists(key: notification.dataId) {
-          try EVY.data.update(props: [notification.dataId], data: encodedData)
+        if EVY.publicStore.exists(key: notification.dataId) {
+          try EVY.publicStore.update(props: [notification.dataId], data: encodedData)
         } else {
-          try EVY.data.create(key: notification.dataId, data: encodedData)
+          try EVY.publicStore.create(key: notification.dataId, data: encodedData)
         }
         NotificationCenter.default.post(
           name: Notification.Name.evyDataUpdated,

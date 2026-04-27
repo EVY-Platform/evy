@@ -16,7 +16,7 @@
 				"properties": {
 					"service": { "type": "string" },
 					"resource": { "type": "string" },
-					"value": {}
+					"value": { "$ref": "../common/json.schema.json#/$defs/JSONValue" }
 				}
 			}
 		}

@@ -55,7 +55,7 @@ private struct EVYPageBody: View {
       }
     }
     .onAppear {
-      EVY.data.activeDraftScopeId = evyDraftScopeId
+      EVY.draftStore.activeScopeId = evyDraftScopeId
       bootstrapDrafts(in: page, scopeId: evyDraftScopeId)
     }
     .simultaneousGesture(
@@ -80,7 +80,7 @@ private struct EVYPageBody: View {
       if row.type == .inlinePicker {
         initialData = "[]".data(using: .utf8)
       } else if row.type == .calendar {
-        initialData = try? EVY.data.getForBinding(key: "timeslots").data
+        initialData = try? EVY.publicStore.getForBinding(key: "timeslots").data
       } else {
         initialData = nil
       }

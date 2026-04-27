@@ -221,7 +221,7 @@ class EVYSearchController: ObservableObject {
         """.data(using: .utf8)!
       let id = UUID()
       do {
-        try EVY.data.create(key: id.uuidString, data: address)
+        try EVY.publicStore.create(key: id.uuidString, data: address)
         let json = try EVY.getDataFromProps(id.uuidString)
         results = [try makeSearchResult(datum: json)]
       } catch {
@@ -244,8 +244,8 @@ class EVYSearchController: ObservableObject {
     asyncView
   } view: {
     // Local-only: no EVY.getRow / EVYAPIManager (avoids API_HOST fatalError in Xcode canvas).
-    if !EVY.data.exists(key: "tags") {
-      try EVY.data.create(key: "tags", data: Data("[]".utf8))
+    if !EVY.publicStore.exists(key: "tags") {
+      try EVY.publicStore.create(key: "tags", data: Data("[]".utf8))
     }
     let templateJson = """
       {

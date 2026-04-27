@@ -1,0 +1,122 @@
+//
+//  EVYStores.swift
+//  evy
+//
+//  Created by Geoffroy Lesage on 27/4/2026.
+//
+
+import Foundation
+import Observation
+
+public enum EVYDataError: Error {
+  case keyAlreadyExists
+  case keyNotFound
+}
+
+extension Notification.Name {
+  static let evyDataUpdated = Notification.Name("EVYDataUpdated")
+  static let evyFlowUpdated = Notification.Name("EVYFlowUpdated")
+  static let evyErrorOccurred = Notification.Name("EVYErrorOccurred")
+}
+
+@MainActor
+@Observable class EVYState<T: Equatable> {
+  private var _value: T
+  var value: T {
+    get { _value }
+    set {
+      if _value != newValue { _value = newValue }
+    }
+  }
+
+  init(setter: @escaping () -> T) {
+    _value = setter()
+
+    NotificationCenter.default.addObserver(
+      forName: .evyDataUpdated,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      Task { @MainActor in
+        self?.value = setter()
+      }
+    }
+  }
+
+  init(watch: String, setter: @escaping (_ input: String) -> T) {
+    _value = setter(watch)
+
+    let watchProps = EVY.parsePropsFromText(watch)
+    let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
+
+    NotificationCenter.default.addObserver(
+      forName: .evyDataUpdated,
+      object: nil,
+      queue: .main
+    ) { [weak self] notif in
+      Task { @MainActor in
+        guard let notifProp = notif.object as? String else {
+          self?.value = setter(watch)
+          return
+        }
+
+        let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
+        let minLen = min(watchSegments.count, notifSegments.count)
+        let prefixMatch = Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
+
+        if prefixMatch { self?.value = setter(watch) }
+      }
+    }
+  }
+
+  init(staticString: T) {
+    _value = staticString
+  }
+}
+
+@MainActor
+final class EVYDraftStore {
+  private let dataStore: EVYDataStore
+
+  var activeScopeId: String?
+
+  init() {
+    dataStore = EVYDataStore(name: "cache")
+  }
+
+  func drafts(forScopeId scopeId: String) throws -> [EVYData] {
+    try dataStore.getAll(
+      keyPrefix: EVYDraft.Binding.draftKeyPrefix(forScopeId: scopeId)
+    )
+  }
+
+  func draftIfPresent(binding: EVYDraft.Binding) -> EVYData? {
+    try? dataStore.get(key: binding.draftKey)
+  }
+
+  func upsert(binding: EVYDraft.Binding, data: Data) throws {
+    try dataStore.upsert(key: binding.draftKey, value: data, notify: false)
+
+    NotificationCenter.default.post(
+      name: .evyDataUpdated,
+      object: binding.notificationKey
+    )
+  }
+
+  func deleteDrafts(scopeId: String? = nil) {
+    if let scopeId {
+      dataStore.deleteAll(
+        keyPrefix: EVYDraft.Binding.draftKeyPrefix(forScopeId: scopeId)
+      )
+    } else {
+      dataStore.deleteAll()
+    }
+  }
+
+  func binding(fromParsedProps parsed: String, scopeId: String? = nil) throws -> EVYDraft.Binding {
+    try EVYDraft.binding(
+      parsedProps: parsed,
+      scopeId: scopeId ?? activeScopeId
+    )
+  }
+}

@@ -72,15 +72,19 @@ flowchart LR
     EVYPage --> RowTree
 
     subgraph data [Data]
-        Manager[EVYDataManager<br/>SwiftData ModelContext]
+        PublicStore[EVYDataStore public<br/>server-synced SwiftData]
+        PrivateStore[EVYDataStore private<br/>$local SwiftData]
+        DraftStore[EVYDraftStore<br/>draft cache + active scope]
         EntityModel[(EVYData)]
-        DraftModel[(EVYDraft)]
         DraftPath[EVYDraft.binding / EVYDraft.Scope<br/>scopeId = flowId#entityKey]
-        Manager --> EntityModel
-        Manager --> DraftModel
-        Manager --> DraftPath
+        PublicStore --> EntityModel
+        PrivateStore --> EntityModel
+        DraftStore --> EntityModel
+        DraftStore --> DraftPath
     end
-    EVY --> Manager
+    EVY --> PublicStore
+    EVY --> PrivateStore
+    EVY --> DraftStore
 
     subgraph api [Data/API]
         APIManager[EVYAPIManager.shared]

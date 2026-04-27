@@ -79,7 +79,7 @@ struct ContentView: View {
           break
         }
         do {
-          try EVY.data.create(key: key, data: itemData)
+          try EVY.publicStore.create(key: key, data: itemData)
           activeDraftKeys.insert(key)
         } catch EVYDataError.keyAlreadyExists {
           activeDraftKeys.insert(key)
@@ -214,7 +214,7 @@ struct ContentView: View {
         )
         if !keysToDelete.isEmpty {
           for key in keysToDelete {
-            EVY.data.deleteDrafts(
+            EVY.draftStore.deleteDrafts(
               scopeId: EVYDraft.createMergeScopeId(
                 flowId: previousFlowId,
                 entityKey: key
@@ -223,7 +223,7 @@ struct ContentView: View {
           }
           for key in keysToDelete {
             do {
-              try EVY.data.delete(key: key)
+              try EVY.publicStore.delete(key: key)
             } catch EVYDataError.keyNotFound {
             } catch {
               showError(error)

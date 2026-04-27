@@ -35,9 +35,9 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
 
     guard
       (try? EVY.updateValue(view.content.text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
-      let binding = try? EVY.data.draftBinding(
+      let binding = try? EVY.draftStore.binding(
         fromParsedProps: temporaryId, scopeId: temporaryScopeId),
-      let draft = EVY.data.draftIfPresent(binding: binding),
+      let draft = EVY.draftStore.draftIfPresent(binding: binding),
       let decoded = try? draft.decoded()
     else { return nil }
     self.value = decoded

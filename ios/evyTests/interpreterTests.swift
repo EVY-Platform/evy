@@ -61,6 +61,24 @@ final class InterpreterTests: XCTestCase {
     )
   }
 
+  func testLocalPrefixRoutesToPrivateDataStore() throws {
+    let key = uniqueKey("local_routing")
+    try store(.string("public"), at: key)
+
+    let (localStore, localKey) = EVY.store(for: "$local.\(key)")
+    try localStore.create(
+      key: localKey,
+      data: try JSONEncoder().encode(EVYJson.string("private"))
+    )
+
+    let publicValue = try parseTextFromText("value: {\(key)}")
+    let privateValue = try parseTextFromText("value: {$local.\(key)}")
+
+    XCTAssertEqual(publicValue.value, "value: public")
+    XCTAssertEqual(privateValue.value, "value: private")
+    XCTAssertEqual(EVY.watchTarget(for: "{$local.\(key)}"), key)
+  }
+
   func testCountReflectsArrayAfterStoreUpdate() throws {
     let key = uniqueKey("photos")
     try store(.array([.string("a")]), at: key)
@@ -68,7 +86,7 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(one.value, "n: 1")
 
     let encoded = try JSONEncoder().encode(EVYJson.array([.string("a"), .string("b")]))
-    try EVY.data.update(props: [key], data: encoded)
+    try EVY.publicStore.update(props: [key], data: encoded)
 
     let two = try parseTextFromText("n: {count(\(key))}")
     XCTAssertEqual(two.value, "n: 2")
@@ -112,11 +130,11 @@ final class InterpreterTests: XCTestCase {
   }
 
   private func store(_ value: EVYJson, at key: String) throws {
-    if EVY.data.exists(key: key) {
-      try EVY.data.delete(key: key)
+    if EVY.publicStore.exists(key: key) {
+      try EVY.publicStore.delete(key: key)
     }
     let encodedValue = try JSONEncoder().encode(value)
-    try EVY.data.create(key: key, data: encodedValue)
+    try EVY.publicStore.create(key: key, data: encodedValue)
   }
 
   private func uniqueKey(_ suffix: String) -> String {

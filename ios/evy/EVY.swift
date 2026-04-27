@@ -39,19 +39,38 @@ struct SyncServiceDataResponse: Codable {
 
 @MainActor
 struct EVY {
-  static let data = EVYDataManager()
+  private static let localPrefix = "$local"
+
+  static let publicStore = EVYDataStore(name: "public")
+  static let privateStore = EVYDataStore(name: "private")
+  static let draftStore = EVYDraftStore()
+
+  static func stripLocalPrefix(_ props: String) -> String {
+    if props.hasPrefix(localPrefix + PROP_SEPARATOR) {
+      return String(props.dropFirst(localPrefix.count + PROP_SEPARATOR.count))
+    }
+    return props
+  }
+
+  static func store(for props: String) -> (EVYDataStore, String) {
+    let cleanProps = stripLocalPrefix(props)
+    if cleanProps != props {
+      return (privateStore, cleanProps)
+    }
+    return (publicStore, props)
+  }
 
   static func getUserData() throws {
     let userData = try EVYJson.from(localJSON: "user_data")
     let encodedUserData = try JSONEncoder().encode(userData)
     do {
-      try EVY.data.create(key: "user", data: encodedUserData)
+      try EVY.publicStore.create(key: "user", data: encodedUserData)
     } catch EVYDataError.keyAlreadyExists {
     }
   }
 
   private static func upsertSyncedData(key: String, data encodedData: Data) throws {
-    try EVY.data.upsert(key: key, value: encodedData)
+    try EVY.publicStore.upsert(key: key, value: encodedData)
   }
 
   static func syncServiceData(service: String) async throws {
@@ -80,7 +99,7 @@ struct EVY {
   }
 
   static func getItemData() throws -> Data {
-    let itemsData = try EVY.data.get(key: "marketplace:items")
+    let itemsData = try EVY.publicStore.get(key: "marketplace:items")
     let items = try itemsData.decoded()
     if case .array(let arr) = items, let first = arr.first {
       return try JSONEncoder().encode(first)
@@ -100,7 +119,7 @@ struct EVY {
   }
 
   static func createItem() async throws {
-    try EVY.data.create(key: "item", data: try await getData())
+    try EVY.publicStore.create(key: "item", data: try await getData())
   }
 
   static func getRow(_ props: [String]) async throws -> UI_Row {
@@ -152,22 +171,23 @@ struct EVY {
     initialData: Data? = nil,
     scopeId: String? = nil
   ) {
-    guard let resolvedScopeId = scopeId ?? data.activeDraftScopeId,
-      let binding = try? data.draftBinding(
-        fromParsedProps: variableName,
+    let (store, cleanVariableName) = store(for: variableName)
+    guard let resolvedScopeId = scopeId ?? draftStore.activeScopeId,
+      let binding = try? draftStore.binding(
+        fromParsedProps: cleanVariableName,
         scopeId: resolvedScopeId
       )
     else {
       return
     }
-    guard !data.exists(key: variableName),
-      data.draftIfPresent(binding: binding) == nil
+    guard !store.exists(key: cleanVariableName),
+      draftStore.draftIfPresent(binding: binding) == nil
     else {
       return
     }
     let emptyData = initialData ?? "\"\"".data(using: .utf8)!
     do {
-      try data.upsertDraft(binding: binding, data: emptyData)
+      try draftStore.upsert(binding: binding, data: emptyData)
     } catch {
     }
   }
@@ -180,7 +200,7 @@ struct EVY {
       let data: EVYJson
     }
 
-    let existing = try data.get(key: key)
+    let existing = try publicStore.get(key: key)
     let newId = UUID().uuidString
     let payload = try existing.decoded()
     guard case .dictionary = payload else {
@@ -189,17 +209,20 @@ struct EVY {
 
     var mergedPayload = payload
 
-    let scopeForMerge = draftScopeId ?? data.activeDraftScopeId
-    let draftRows: [EVYDraft] = {
+    let scopeForMerge = draftScopeId ?? draftStore.activeScopeId
+    let draftEntries: [EVYData] = {
       guard let s = scopeForMerge else { return [] }
-      return (try? data.drafts(forScopeId: s)) ?? []
+      return (try? draftStore.drafts(forScopeId: s)) ?? []
     }()
-    for draftRow in draftRows {
-      let draftValue = try draftRow.decoded()
+    for draftEntry in draftEntries {
+      let draftValue = try draftEntry.decoded()
       if case .string(let s) = draftValue, s.isEmpty {
         continue
       }
-      mergedPayload = draftRow.merged(into: mergedPayload, draftValue: draftValue)
+      guard let binding = EVYDraft.Binding.parseDraftKey(draftEntry.key) else {
+        continue
+      }
+      mergedPayload = EVYDraft.merge(binding: binding, value: draftValue, into: mergedPayload)
     }
 
     guard case .dictionary(var dict) = mergedPayload else {
@@ -252,15 +275,16 @@ struct EVY {
 
   static func updateData(_ newData: Data, at: String, scopeId: String? = nil) throws {
     let variableName = _parsePropsFromText(at)
-    let splitProps = try splitPropsFromText(variableName)
+    let (store, cleanVariableName) = store(for: variableName)
+    let splitProps = try splitPropsFromText(cleanVariableName)
     let rootVariable = splitProps.first!
-    let resolvedScopeId = scopeId ?? data.activeDraftScopeId
+    let resolvedScopeId = scopeId ?? draftStore.activeScopeId
     let draftBinding = try resolvedScopeId.map {
-      try data.draftBinding(fromParsedProps: variableName, scopeId: $0)
+      try draftStore.binding(fromParsedProps: cleanVariableName, scopeId: $0)
     }
 
     if let draftBinding,
-      let existingDraft = data.draftIfPresent(binding: draftBinding)
+      let existingDraft = draftStore.draftIfPresent(binding: draftBinding)
     {
       let remainingProps = EVYDraft.remainingPropsAfterDraftPrefix(
         splitProps: splitProps,
@@ -277,20 +301,20 @@ struct EVY {
         name: .evyDataUpdated,
         object: draftBinding.notificationKey
       )
-    } else if data.exists(key: rootVariable) {
-      let dataObj = try data.get(key: rootVariable)
+    } else if store.exists(key: rootVariable) {
+      let dataObj = try store.get(key: rootVariable)
       let remainingProps = Array(splitProps.dropFirst())
       if remainingProps.isEmpty {
         dataObj.data = newData
       } else {
         try dataObj.updateDataWithData(newData, props: remainingProps)
       }
-      try data.update(props: splitProps, data: dataObj.data)
+      try store.update(props: splitProps, data: dataObj.data)
     } else {
       guard let draftBinding else {
         throw EVYDataError.keyNotFound
       }
-      try data.upsertDraft(binding: draftBinding, data: newData)
+      try draftStore.upsert(binding: draftBinding, data: newData)
     }
   }
 }

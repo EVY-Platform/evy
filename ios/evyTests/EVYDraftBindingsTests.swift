@@ -42,4 +42,17 @@ final class EVYDraftBindingTests: XCTestCase {
     }
     XCTAssertEqual(segs, [uuid, "foo"])
   }
+
+  func testDraftKeyRoundTripsBinding() throws {
+    let binding = try EVYDraft.binding(
+      parsedProps: "dimensions.width",
+      scopeId: "flow#item"
+    )
+
+    let parsedBinding = try XCTUnwrap(EVYDraft.Binding.parseDraftKey(binding.draftKey))
+
+    XCTAssertEqual(parsedBinding.scopeId, binding.scopeId)
+    XCTAssertEqual(parsedBinding.pathSegments, binding.pathSegments)
+    XCTAssertEqual(parsedBinding.mergeMode, binding.mergeMode)
+  }
 }
