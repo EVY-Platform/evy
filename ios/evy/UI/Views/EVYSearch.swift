@@ -8,51 +8,51 @@
 import SwiftUI
 
 struct EVYSearch: View {
-    private let canSelectMultiple: Bool
+  private let canSelectMultiple: Bool
 
-    let source: String
-    let destination: String
-    let placeholder: String
-    let resultTemplate: UI_Row?
+  let source: String
+  let destination: String
+  let placeholder: String
+  let resultTemplate: UI_Row?
 
-    init(
-        source: String,
-        destination: String,
-        placeholder: String,
-        resultTemplate: UI_Row?,
-    ) {
-        self.source = source
-        self.destination = destination
-        self.placeholder = placeholder
-        self.resultTemplate = resultTemplate
+  init(
+    source: String,
+    destination: String,
+    placeholder: String,
+    resultTemplate: UI_Row?,
+  ) {
+    self.source = source
+    self.destination = destination
+    self.placeholder = placeholder
+    self.resultTemplate = resultTemplate
 
-        do {
-            let data = try EVY.getDataFromText(destination)
-            if case .array = data {
-                canSelectMultiple = true
-            } else {
-                canSelectMultiple = false
-            }
-        } catch {
-            canSelectMultiple = false
-        }
+    do {
+      let data = try EVY.getDataFromText(destination)
+      if case .array = data {
+        canSelectMultiple = true
+      } else {
+        canSelectMultiple = false
+      }
+    } catch {
+      canSelectMultiple = false
     }
+  }
 
-    var body: some View {
-        if canSelectMultiple {
-            EVYSearchMultiple(
-                source: source,
-                resultTemplate: resultTemplate,
-                destination: destination,
-                placeholder: placeholder,
-            )
-        } else {
-            EVYSearchSingle(
-                source: source,
-                resultTemplate: resultTemplate,
-                destination: destination,
-                placeholder: placeholder,
-            )
-        }
+  var body: some View {
+    if canSelectMultiple {
+      EVYSearchMultiple(
+        source: source,
+        resultTemplate: resultTemplate,
+        destination: destination,
+        placeholder: placeholder,
+      )
+    } else {
+      EVYSearchSingle(
+        source: source,
+        resultTemplate: resultTemplate,
+        destination: destination,
+        placeholder: placeholder,
+      )
     }
+  }
 }

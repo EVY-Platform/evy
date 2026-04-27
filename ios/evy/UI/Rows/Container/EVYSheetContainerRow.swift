@@ -8,46 +8,46 @@
 import SwiftUI
 
 struct EVYSheetContainerRow: View, EVYRowProtocol {
-	public static let JSONType = "SheetContainer"
+  public static let JSONType = "SheetContainer"
 
-	private let view: SheetContainerRowViewData
-	@State private var showSheet: Bool = false
+  private let view: SheetContainerRowViewData
+  @State private var showSheet: Bool = false
 
-	init(view: SheetContainerRowViewData) {
-		self.view = view
-	}
+  init(view: SheetContainerRowViewData) {
+    self.view = view
+  }
 
-	var body: some View {
-		VStack(alignment: .leading) {
-			if view.content.title.count > 0 {
-				EVYTextView(view.content.title)
-			}
-			if let child = view.content.child {
-				EVYRow(row: child)
-					.contentShape(Rectangle())
-					.onTapGesture { showSheet.toggle() }
-					.sheet(isPresented: $showSheet) {
-						VStack {
-							ForEach(view.content.children, id: \.id) { row in
-								EVYRow(row: row)
-							}
-						}
-						.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-						.background(Color.white.ignoresSafeArea())
-						.padding(.top, Constants.majorPadding)
-						.presentationDetents([.medium, .large])
-						.presentationDragIndicator(.visible)
-						.presentationBackground(.white)
-					}
-			}
-		}
-	}
+  var body: some View {
+    VStack(alignment: .leading) {
+      if view.content.title.count > 0 {
+        EVYTextView(view.content.title)
+      }
+      if let child = view.content.child {
+        EVYRow(row: child)
+          .contentShape(Rectangle())
+          .onTapGesture { showSheet.toggle() }
+          .sheet(isPresented: $showSheet) {
+            VStack {
+              ForEach(view.content.children, id: \.id) { row in
+                EVYRow(row: row)
+              }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(Color.white.ignoresSafeArea())
+            .padding(.top, Constants.majorPadding)
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(.white)
+          }
+      }
+    }
+  }
 }
 
 #Preview {
-	AsyncPreview { asyncView in
-		EVYRow(row: asyncView)
-	} view: {
-		try! await EVY.getRow(["2", "pages", "0", "rows", "6"])
-	}
+  AsyncPreview { asyncView in
+    EVYRow(row: asyncView)
+  } view: {
+    try! await EVY.getRow(["2", "pages", "0", "rows", "6"])
+  }
 }

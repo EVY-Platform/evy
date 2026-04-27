@@ -8,77 +8,77 @@
 import Foundation
 
 struct APIResponse: Decodable {
-    let results: [Result]
-    
-    private enum CodingKeys: String, CodingKey {
-        case results = "Search"
-    }
+  let results: [Result]
+
+  private enum CodingKeys: String, CodingKey {
+    case results = "Search"
+  }
 }
 
 struct Result: Decodable, Encodable {
-    let id: String
-    let value: String
-    
-    private enum DecodingKeys: String, CodingKey {
-        case id = "imdbID"
-        case value = "Title"
-    }
-    
-    private enum EncodingKeys: String, CodingKey {
-        case id
-        case value
-    }
-    
-    init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: DecodingKeys.self)
-        id = try container.decode(String.self, forKey: .id)
-        
-        let decodedValue = try container.decode(String.self, forKey: .value)
-        let components = decodedValue.components(separatedBy: " ")
-        value = components.randomElement()!
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: EncodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(value, forKey: .value)
-    }
+  let id: String
+  let value: String
+
+  private enum DecodingKeys: String, CodingKey {
+    case id = "imdbID"
+    case value = "Title"
+  }
+
+  private enum EncodingKeys: String, CodingKey {
+    case id
+    case value
+  }
+
+  init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: DecodingKeys.self)
+    id = try container.decode(String.self, forKey: .id)
+
+    let decodedValue = try container.decode(String.self, forKey: .value)
+    let components = decodedValue.components(separatedBy: " ")
+    value = components.randomElement()!
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: EncodingKeys.self)
+    try container.encode(id, forKey: .id)
+    try container.encode(value, forKey: .value)
+  }
 }
 
 enum NetworkError: Error {
-    case badURL
-    case badID
+  case badURL
+  case badID
 }
 
 class EVYMovieAPI {
-    func search(term: String) async throws -> Data {
-        var components = URLComponents()
-        components.scheme = "https"
-        components.host = "omdbapi.com"
-        components.queryItems = [
-            URLQueryItem(name: "s", value: term.trimmingCharacters(in: .whitespacesAndNewlines)),
-            URLQueryItem(name: "apikey", value: "306232b0")
-        ]
-        
-        guard let url = components.url else {
-            throw NetworkError.badURL
-        }
-        
-        let (data, response) = try await URLSession.shared.data(from: url)
-        
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-            throw NetworkError.badID
-        }
-        
-        let decodedResponse: APIResponse?
-        do {
-            decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
-        } catch {
-            #if DEBUG
-            print("[EVYAPI] Error decoding API response: \(error)")
-            #endif
-            decodedResponse = nil
-        }
-        return try JSONEncoder().encode(decodedResponse?.results ?? [])
+  func search(term: String) async throws -> Data {
+    var components = URLComponents()
+    components.scheme = "https"
+    components.host = "omdbapi.com"
+    components.queryItems = [
+      URLQueryItem(name: "s", value: term.trimmingCharacters(in: .whitespacesAndNewlines)),
+      URLQueryItem(name: "apikey", value: "306232b0"),
+    ]
+
+    guard let url = components.url else {
+      throw NetworkError.badURL
     }
+
+    let (data, response) = try await URLSession.shared.data(from: url)
+
+    guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+      throw NetworkError.badID
+    }
+
+    let decodedResponse: APIResponse?
+    do {
+      decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
+    } catch {
+      #if DEBUG
+        print("[EVYAPI] Error decoding API response: \(error)")
+      #endif
+      decodedResponse = nil
+    }
+    return try JSONEncoder().encode(decodedResponse?.results ?? [])
+  }
 }

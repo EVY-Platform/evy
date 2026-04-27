@@ -8,34 +8,34 @@
 import SwiftUI
 
 struct EVYInputRow: View, EVYRowProtocol {
-	public static let JSONType = "Input"
+  public static let JSONType = "Input"
 
-	private let view: InputRowViewData
-	private let destination: String
+  private let view: InputRowViewData
+  private let destination: String
 
-	init(view: InputRowViewData, destination: String) {
-		self.view = view
-		self.destination = destination
-	}
+  init(view: InputRowViewData, destination: String) {
+    self.view = view
+    self.destination = destination
+  }
 
-	var body: some View {
-		VStack(alignment: .leading) {
-			EVYRowTitle(title: view.content.title)
-			if !destination.isEmpty {
-				EVYTextField(
-					input: view.content.value,
-					destination: destination,
-					placeholder: view.content.placeholder
-				)
-			}
-		}
-	}
+  var body: some View {
+    VStack(alignment: .leading) {
+      EVYRowTitle(title: view.content.title)
+      if !destination.isEmpty {
+        EVYTextField(
+          input: view.content.value,
+          destination: destination,
+          placeholder: view.content.placeholder
+        )
+      }
+    }
+  }
 }
 
 #Preview {
-	AsyncPreview { asyncView in
-		EVYRow(row: asyncView)
-	} view: {
-		try! await EVY.getRow(["2", "pages", "0", "rows", "1"])
-	}
+  AsyncPreview { asyncView in
+    EVYRow(row: asyncView)
+  } view: {
+    try! await EVY.getRow(["2", "pages", "0", "rows", "1"])
+  }
 }

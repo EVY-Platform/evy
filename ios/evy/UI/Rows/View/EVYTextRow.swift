@@ -8,57 +8,57 @@
 import SwiftUI
 
 struct EVYTextRow: View, EVYRowProtocol {
-	public static let JSONType = "Text"
+  public static let JSONType = "Text"
 
-	private let view: TextRowViewData
-	@State private var showSheet = false
-	@State private var canBeExpanded: Bool = false
+  private let view: TextRowViewData
+  @State private var showSheet = false
+  @State private var canBeExpanded: Bool = false
 
-	init(view: TextRowViewData) {
-		self.view = view
-	}
+  init(view: TextRowViewData) {
+    self.view = view
+  }
 
-	var body: some View {
-		VStack(alignment: .leading) {
-			if view.content.title.count > 0 {
-				EVYTextView(view.content.title)
-					.padding(.vertical, Constants.padding)
-			}
-			EVYTextView(view.content.text)
-				.frame(maxWidth: .infinity, alignment: .leading)
-				.lineLimit(Int(view.max_lines.isEmpty ? "1" : view.max_lines) ?? 1)
-				.background {
-					ViewThatFits(in: .vertical) {
-						EVYTextView(view.content.text).hidden()
-						Color.clear.onAppear {
-							canBeExpanded = true
-						}
-					}
-				}
-				.sheet(isPresented: $showSheet) {
-					EVYTextView(view.content.text)
-						.frame(maxHeight: .infinity, alignment: .top)
-						.padding(.top, Constants.majorPadding)
-						.presentationDragIndicator(.visible)
-				}
-			if canBeExpanded {
-				EVYTextView("Read more", style: .action)
-					.padding(.vertical, Constants.padding)
-			}
-		}
-		.contentShape(Rectangle())
-		.onTapGesture {
-			if canBeExpanded {
-				showSheet.toggle()
-			}
-		}
-	}
+  var body: some View {
+    VStack(alignment: .leading) {
+      if view.content.title.count > 0 {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+      }
+      EVYTextView(view.content.text)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .lineLimit(Int(view.max_lines.isEmpty ? "1" : view.max_lines) ?? 1)
+        .background {
+          ViewThatFits(in: .vertical) {
+            EVYTextView(view.content.text).hidden()
+            Color.clear.onAppear {
+              canBeExpanded = true
+            }
+          }
+        }
+        .sheet(isPresented: $showSheet) {
+          EVYTextView(view.content.text)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.top, Constants.majorPadding)
+            .presentationDragIndicator(.visible)
+        }
+      if canBeExpanded {
+        EVYTextView("Read more", style: .action)
+          .padding(.vertical, Constants.padding)
+      }
+    }
+    .contentShape(Rectangle())
+    .onTapGesture {
+      if canBeExpanded {
+        showSheet.toggle()
+      }
+    }
+  }
 }
 
 #Preview {
-	AsyncPreview { asyncView in
-		EVYRow(row: asyncView)
-	} view: {
-		try! await EVY.getRow(["1", "pages", "0", "rows", "0"])
-	}
+  AsyncPreview { asyncView in
+    EVYRow(row: asyncView)
+  } view: {
+    try! await EVY.getRow(["1", "pages", "0", "rows", "0"])
+  }
 }
