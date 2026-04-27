@@ -1,7 +1,6 @@
-import { eq, desc } from "drizzle-orm";
+import { and, desc, eq, gt } from "drizzle-orm";
 
 import {
-	type DATA_EVY_Rows,
 	type DATA_EVY_Service,
 	type GetResponse,
 	RESOURCES_BY_SERVICE,
@@ -9,6 +8,7 @@ import {
 	type GetRequest,
 	type OS,
 	type UpsertRequest,
+	type UpsertResponse,
 } from "evy-types";
 import {
 	device,
@@ -82,7 +82,7 @@ export async function getCoreForValidatedRequest(
  */
 export async function upsertCoreForValidatedRequest(
 	params: UpsertRequest,
-): Promise<DATA_EVY_Rows> {
+): Promise<UpsertResponse> {
 	assertEvyCoreAccess(params);
 	return upsertCoreBody(params);
 }
@@ -112,12 +112,21 @@ type CatalogTable =
 
 async function listCoreCatalogRows<TRow>(
 	table: CatalogTable,
-	filterId: string | undefined,
+	filter: GetRequest["filter"] | undefined,
 	mapRow: (r: TRow) => unknown,
 ): Promise<GetResponse> {
 	const base = db.select().from(table);
-	const rows = filterId
-		? await base.where(eq(table.id, filterId)).orderBy(desc(table.updatedAt))
+	const whereClauses = [];
+
+	if (filter?.id) {
+		whereClauses.push(eq(table.id, filter.id));
+	}
+	if (filter?.updatedAfter) {
+		whereClauses.push(gt(table.updatedAt, filter.updatedAfter));
+	}
+
+	const rows = whereClauses.length
+		? await base.where(and(...whereClauses)).orderBy(desc(table.updatedAt))
 		: await base.orderBy(desc(table.updatedAt));
 	const mapped = rows.map((r) => mapRow(r as TRow));
 	return validateGetResponse(mapped);
@@ -131,8 +140,8 @@ async function upsertCatalogEntity<TSelect>(
 	filterId: string | undefined,
 	doUpdate: () => Promise<TSelect[]>,
 	doInsert: () => Promise<TSelect[]>,
-	mapRow: (row: TSelect) => DATA_EVY_Rows,
-): Promise<DATA_EVY_Rows> {
+	mapRow: (row: TSelect) => UpsertResponse,
+): Promise<UpsertResponse> {
 	if (filterId) {
 		const updated = await doUpdate();
 		if (updated.length > 0) {
@@ -185,23 +194,20 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 	}
 
 	if (resource === "sdui") {
+		const base = db.select({ data: flow.data }).from(flow);
+		const whereClauses = [];
+
 		if (filter?.id) {
-			const rows = await db
-				.select({ data: flow.data })
-				.from(flow)
-				.where(eq(flow.id, filter.id))
-				.limit(1);
-			const payload = rows.length ? [rows[0].data] : [];
-			for (const item of payload) {
-				validateFlowData(item);
-			}
-			return validateGetResponse(payload);
+			whereClauses.push(eq(flow.id, filter.id));
 		}
-		const flows = await db
-			.select({ data: flow.data })
-			.from(flow)
-			.orderBy(desc(flow.updatedAt));
-		const payload = flows.map((f) => f.data);
+		if (filter?.updatedAfter) {
+			whereClauses.push(gt(flow.updatedAt, filter.updatedAfter));
+		}
+
+		const rows = whereClauses.length
+			? await base.where(and(...whereClauses)).orderBy(desc(flow.updatedAt))
+			: await base.orderBy(desc(flow.updatedAt));
+		const payload = rows.map((f) => f.data);
 		for (const item of payload) {
 			validateFlowData(item);
 		}
@@ -209,15 +215,15 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 	}
 
 	if (resource === "services") {
-		return listCoreCatalogRows(service, filter?.id, mapServiceRow);
+		return listCoreCatalogRows(service, filter, mapServiceRow);
 	}
 
 	if (resource === "organisations") {
-		return listCoreCatalogRows(organization, filter?.id, (r) => r);
+		return listCoreCatalogRows(organization, filter, (r) => r);
 	}
 
 	if (resource === "providers") {
-		return listCoreCatalogRows(serviceProvider, filter?.id, (r) => r);
+		return listCoreCatalogRows(serviceProvider, filter, (r) => r);
 	}
 
 	throw new Error("Unsupported resource for core API");
@@ -228,7 +234,7 @@ export async function getCore(params: unknown): Promise<GetResponse> {
 	return getCoreBody(params);
 }
 
-async function upsertCoreBody(params: UpsertRequest): Promise<DATA_EVY_Rows> {
+async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
@@ -394,7 +400,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<DATA_EVY_Rows> {
 	throw new Error("Unsupported resource for core API");
 }
 
-export async function upsertCore(params: unknown): Promise<DATA_EVY_Rows> {
+export async function upsertCore(params: unknown): Promise<UpsertResponse> {
 	validateCoreUpsertParams(params);
 	return upsertCoreBody(params);
 }

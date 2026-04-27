@@ -18,9 +18,7 @@
 			"tableName": "Service",
 			"primaryKey": "id",
 			"defaultRandom": [],
-			"uniqueIndexes": [
-				{ "name": "Service_name_key", "columns": ["name"] }
-			]
+			"uniqueIndexes": [{ "name": "Service_name_key", "columns": ["name"] }]
 		},
 		"DATA_EVY_Organization": {
 			"tableName": "Organization",

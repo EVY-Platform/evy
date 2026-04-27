@@ -1,0 +1,19 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "syncServiceData-request",
+	"title": "SyncServiceDataRequest",
+	"description": "JSON-RPC params for syncServiceData method",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["service", "lastSyncTime"],
+	"properties": {
+		"service": {
+			"type": "string",
+			"minLength": 1
+		},
+		"lastSyncTime": {
+			"type": "string",
+			"format": "date-time"
+		}
+	}
+}

@@ -51,9 +51,7 @@ extension Notification.Name {
     var value: T {
         get { _value }
         set {
-            if _value != newValue {
-                _value = newValue
-            }
+            if _value != newValue { _value = newValue }
         }
     }
 
@@ -92,9 +90,7 @@ extension Notification.Name {
                 let minLen = min(watchSegments.count, notifSegments.count)
                 let prefixMatch = Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
 
-                if prefixMatch {
-                    self?.value = setter(watch)
-                }
+                if prefixMatch { self?.value = setter(watch) }
             }
         }
     }
@@ -113,25 +109,25 @@ final class EVYDataManager {
 
     var activeDraftScopeId: String?
 
-    init() {
-        self.context = ModelContext(container)
-    }
+    init() { self.context = ModelContext(container) }
 
     func exists(key: String) -> Bool {
-        let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
-        do {
-            return try context.fetchCount(descriptor) > 0
-        } catch {
-            return false
-        }
+        (try? get(key: key)) != nil
     }
 
     func get(key: String) throws -> EVYData {
         let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
-        guard let first = try context.fetch(descriptor).first else {
-            throw EVYDataError.keyNotFound
+        if let first = try context.fetch(descriptor).first {
+            return first
         }
-        return first
+
+        let suffix = ":\(key)"
+        let fallbackDescriptor = FetchDescriptor<EVYData>()
+        if let first = try context.fetch(fallbackDescriptor).first(where: { $0.key.hasSuffix(suffix) }) {
+            return first
+        }
+
+        throw EVYDataError.keyNotFound
     }
 
     func create(key: String, data: Data) throws {
@@ -142,6 +138,27 @@ final class EVYDataManager {
 
         NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
                                         object: key)
+    }
+
+    func upsert(key: String, value: Data) throws {
+        let nowIso = Date().ISO8601Format()
+
+        if let existing = try? get(key: key) {
+            existing.data = value
+            existing.lastSyncedAt = nowIso
+        } else {
+            context.insert(EVYData(key: key, lastSyncedAt: nowIso, data: value))
+        }
+
+        NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
+                                        object: key)
+
+        if let resourceKey = key.split(separator: ":").last.map(String.init),
+           resourceKey != key
+        {
+            NotificationCenter.default.post(name: Notification.Name.evyDataUpdated,
+                                            object: resourceKey)
+        }
     }
 
     func update(props: [String], data: Data) throws {

@@ -156,7 +156,7 @@ test.describe("Row configuration", () => {
 							content: {
 								title: "Tags",
 								placeholder: "Search for tags",
-								format: "{datum.value}",
+								format: "{$datum:value}",
 							},
 						},
 						actions: [],
@@ -169,12 +169,12 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const formatInput = configPanel.getByLabel("format");
 		await expect(formatInput).toBeVisible();
-		await expect(formatInput).toHaveValue("{datum.value}");
+		await expect(formatInput).toHaveValue("{$datum:value}");
 
 		await formatInput.clear();
-		await formatInput.fill("{datum.label}");
+		await formatInput.fill("{$datum:label}");
 
-		await expect(formatInput).toHaveValue("{datum.label}");
+		await expect(formatInput).toHaveValue("{$datum:label}");
 	});
 
 	test("should display and edit action items via popup", async ({ page }) => {
@@ -398,6 +398,7 @@ test.describe("Row configuration", () => {
 							{
 								id: "row_btn",
 								type: "Button",
+								source: "",
 								view: { content: { title: "", label: "Go" } },
 								actions: [{ condition: "", false: "", true: "" }],
 							},
@@ -463,6 +464,7 @@ test.describe("Row configuration", () => {
 							{
 								id: "row_input_items",
 								type: "Input",
+								source: "",
 								view: {
 									content: {
 										title: "Item name",
@@ -476,6 +478,7 @@ test.describe("Row configuration", () => {
 							{
 								id: "row_btn2",
 								type: "Button",
+								source: "",
 								view: {
 									content: { title: "", label: "Create Item" },
 								},
@@ -781,6 +784,7 @@ test.describe("Row configuration", () => {
 							{
 								id: "row_input",
 								type: "Input",
+								source: "",
 								view: {
 									content: {
 										title: "Name",
@@ -794,6 +798,7 @@ test.describe("Row configuration", () => {
 							{
 								id: "row_btn",
 								type: "Button",
+								source: "",
 								view: {
 									content: { title: "", label: "Prefilled" },
 								},
@@ -1087,7 +1092,20 @@ test.describe("Row configuration", () => {
 	test("navbar breadcrumbs scroll for many nested levels and navigate on click", async ({
 		page,
 	}) => {
-		function deepNest(level: number) {
+		type DeepNestRow = {
+			type: "Input" | "ColumnContainer";
+			view: {
+				content: {
+					title: string;
+					placeholder?: string;
+					value?: string;
+					children?: DeepNestRow[];
+				};
+			};
+			actions: [];
+		};
+
+		function deepNest(level: number): DeepNestRow {
 			if (level === 0) {
 				return {
 					type: "Input" as const,

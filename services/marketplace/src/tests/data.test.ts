@@ -63,6 +63,34 @@ describe("marketplace get/upsert", () => {
 		expect(result).toEqual([row]);
 	});
 
+	it("filters rows by updatedAfter", async () => {
+		const oldRow = { id: crypto.randomUUID(), value: "old" };
+		const newRow = { id: crypto.randomUUID(), value: "new" };
+
+		await testDb.insert(schema.data).values([
+			{
+				resource: "condition",
+				data: oldRow,
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				resource: "condition",
+				data: newRow,
+				createdAt: "2024-01-03T00:00:00.000Z",
+				updatedAt: "2024-01-03T00:00:00.000Z",
+			},
+		]);
+
+		const result = await get({
+			service: "marketplace",
+			resource: "conditions",
+			filter: { updatedAfter: "2024-01-02T00:00:00.000Z" },
+		});
+
+		expect(result).toEqual([newRow]);
+	});
+
 	it("uses filter.id as primary key when inserting a new row (client id)", async () => {
 		const clientId = crypto.randomUUID();
 		const payload = { id: clientId, title: "client-keyed" };

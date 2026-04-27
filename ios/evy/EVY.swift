@@ -22,10 +22,25 @@ struct Filter: Encodable {
 	let id: String?
 }
 
+struct SyncServiceDataParams: Encodable {
+	let service: String
+	let lastSyncTime: String
+}
+
+struct SyncedServiceDataRow: Codable {
+	let service: String
+	let resource: String
+	let value: EVYJson
+}
+
+struct SyncServiceDataResponse: Codable {
+	let data: [SyncedServiceDataRow]
+}
+
 @MainActor
 struct EVY {
     static let data = EVYDataManager()
-	
+
 	static func getUserData() throws {
 		let userData = try EVYJson.from(localJSON: "user_data")
 		let encodedUserData = try JSONEncoder().encode(userData)
@@ -34,59 +49,65 @@ struct EVY {
 		} catch EVYDataError.keyAlreadyExists {
 		}
 	}
-	
-	private static func fetchResource(_ resource: String, service: String) async throws -> [EVYJson] {
-		try await EVYAPIManager.shared.fetch(
-			method: "get",
-			params: GetParams(service: service, resource: resource, filter: nil),
-			expecting: [EVYJson].self
-		)
+
+	private static func upsertSyncedData(key: String, data encodedData: Data) throws {
+		try EVY.data.upsert(key: key, value: encodedData)
 	}
 
-	private static func storeIfNew(key: String, from serviceData: EVYJson) throws {
-		do {
-			let encoded = try JSONEncoder().encode(serviceData.parseProp(props: [key]))
-			try data.create(key: key, data: encoded)
-		} catch EVYDataError.keyAlreadyExists {
-		} catch {
-			throw error
+	static func syncServiceData(service: String) async throws {
+		let params = SyncServiceDataParams(
+			service: service,
+			lastSyncTime: "1970-01-01T00:00:00.000Z"
+		)
+		let response = try await EVYAPIManager.shared.fetch(
+			method: "syncServiceData",
+			params: params,
+			expecting: SyncServiceDataResponse.self
+		)
+
+		for row in response.data {
+			let key = "\(row.service):\(row.resource)"
+			let encoded = try JSONEncoder().encode(row.value)
+			try upsertSyncedData(key: key, data: encoded)
 		}
+	}
+
+	static func syncAllServices() async throws {
+		let services = ["marketplace"]
+		for service in services {
+			try await syncServiceData(service: service)
+		}
+	}
+
+	static func getItemData() throws -> Data {
+		let itemsData = try EVY.data.get(key: "marketplace:items")
+		let items = try itemsData.decoded()
+		if case .array(let arr) = items, let first = arr.first {
+			return try JSONEncoder().encode(first)
+		}
+		return try JSONEncoder().encode(EVYJson.dictionary([:]))
 	}
 
 	static func getData() async throws -> Data {
-		let resources = ["selling_reasons", "conditions", "durations", "areas", "timeslots"]
-		var serviceDict: [String: EVYJson] = [:]
-		for resource in resources {
-			serviceDict[resource] = .array(try await fetchResource(resource, service: "marketplace"))
-		}
-
-		let itemsJson = try await fetchResource("items", service: "marketplace")
-		serviceDict["item"] = itemsJson.first ?? .dictionary([:])
-
-		let serviceData: EVYJson = .dictionary(serviceDict)
-
-		for resource in resources {
-			try storeIfNew(key: resource, from: serviceData)
-		}
-
-		return try JSONEncoder().encode(serviceData.parseProp(props: ["item"]))
+		try await syncAllServices()
+		return try getItemData()
 	}
-	
+
 	static func getSDUI() async throws -> [UI_Flow] {
 		try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil), expecting: [UI_Flow].self)
 	}
-	
+
 	static func createItem() async throws {
 		try EVY.data.create(key: "item", data: try await getData())
 	}
-	
+
 	static func getRow(_ props: [String]) async throws -> UI_Row {
 		try await createItem()
 		let flowData = try await EVYAPIManager.shared.fetch(method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil), expecting: EVYJson.self)
 		let rowData = try JSONEncoder().encode(flowData.parseProp(props: props))
 		return try JSONDecoder().decode(UI_Row.self, from: rowData)
 	}
-    
+
     static func getDataFromText(_ input: String) throws -> EVYJson {
         try _getDataFromText(input)
     }
@@ -121,7 +142,7 @@ struct EVY {
         }
         return try formatData(json: json, format: format)
     }
-    
+
     static func ensureDraftExists(
         variableName: String,
         initialData: Data? = nil,
@@ -204,7 +225,7 @@ struct EVY {
             }
         }
     }
-    
+
     static func updateValue(_ value: String, at: String, scopeId: String? = nil) throws {
         let destinationProps = _parsePropsFromText(at)
         if let (functionName, functionArgs) = parseFunctionCall(destinationProps) {
@@ -221,7 +242,7 @@ struct EVY {
         }
         try updateData("\"\(value)\"".data(using: .utf8)!, at: at, scopeId: scopeId)
     }
-    
+
     static func updateData(_ newData: Data, at: String, scopeId: String? = nil) throws {
         let variableName = _parsePropsFromText(at)
         let splitProps = try splitPropsFromText(variableName)
@@ -270,10 +291,10 @@ struct EVY {
 struct AsyncPreview<VisualContent: View, ViewData>: View {
 	var viewBuilder: (ViewData) -> VisualContent
 	var view: () async throws -> ViewData?
-	
+
 	@State private var viewData: ViewData?
 	@State private var error: Error?
-	
+
 	var body: some View {
 		safeView.task {
 			do {
@@ -283,7 +304,7 @@ struct AsyncPreview<VisualContent: View, ViewData>: View {
 			}
 		}
 	}
-	
+
 	@ViewBuilder
 	private var safeView: some View {
 		if let viewData {

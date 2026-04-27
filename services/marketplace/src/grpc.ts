@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import type { Client } from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import type { GetRequest, UpsertRequest } from "evy-types";
+import type { UpsertRequest } from "evy-types";
 
 import {
 	getForValidatedMarketplaceRequest,
@@ -103,7 +103,7 @@ function buildMarketplaceServiceHandlers(
 					{
 						service: string;
 						resource: string;
-						filter?: { id: string };
+						filter?: { id?: string; updated_after?: string };
 					},
 					{ result_json: string }
 				>,
@@ -112,10 +112,16 @@ function buildMarketplaceServiceHandlers(
 				void (async () => {
 					try {
 						const req = call.request;
-						const params: GetRequest = {
-							service: req.service as GetRequest["service"],
-							resource: req.resource as GetRequest["resource"],
-							filter: req.filter?.id ? { id: req.filter.id } : undefined,
+						const filter = {
+							...(req.filter?.id ? { id: req.filter.id } : {}),
+							...(req.filter?.updated_after
+								? { updatedAfter: req.filter.updated_after }
+								: {}),
+						};
+						const params = {
+							service: req.service,
+							resource: req.resource,
+							filter: Object.keys(filter).length > 0 ? filter : undefined,
 						};
 						validateStrictGetRequest(params);
 						const result = await getForValidatedMarketplaceRequest(params);
@@ -156,9 +162,9 @@ function buildMarketplaceServiceHandlers(
 							});
 							return;
 						}
-						const params: UpsertRequest = {
-							service: req.service as GetRequest["service"],
-							resource: req.resource as GetRequest["resource"],
+						const params = {
+							service: req.service,
+							resource: req.resource,
 							filter: req.filter?.id ? { id: req.filter.id } : undefined,
 							data,
 						};

@@ -55,6 +55,58 @@ private final class SearchTemplateFormatPrep {
         "title", "subtitle", "text", "label", "placeholder", "value",
     ]
 
+    private static let datumReferenceRegex = try! NSRegularExpression(
+        pattern: #"\{\$datum:([A-Za-z0-9_.-]+)\}"#
+    )
+
+    private static func datumValue(path: String, datum: EVYJson) -> String {
+        let pathSegments = path.split(separator: ".").map(String.init)
+        if pathSegments.isEmpty {
+            return datum.toString()
+        }
+
+        var currentValue = datum
+        for pathSegment in pathSegments {
+            switch currentValue {
+            case let .dictionary(dictionaryValue):
+                guard let nextValue = dictionaryValue[pathSegment] else {
+                    return ""
+                }
+                currentValue = nextValue
+            case let .array(arrayValue):
+                guard let index = Int(pathSegment), arrayValue.indices.contains(index) else {
+                    return ""
+                }
+                currentValue = arrayValue[index]
+            default:
+                return ""
+            }
+        }
+
+        return currentValue.toString()
+    }
+
+    private static func formatDatumReferences(_ template: String, datum: EVYJson) -> String {
+        var formattedTemplate = template
+        let templateRange = NSRange(template.startIndex..., in: template)
+        let matches = datumReferenceRegex.matches(in: template, range: templateRange)
+
+        for match in matches.reversed() {
+            guard let fullRange = Range(match.range, in: formattedTemplate),
+                  let pathRange = Range(match.range(at: 1), in: formattedTemplate) else {
+                continue
+            }
+
+            let path = String(formattedTemplate[pathRange])
+            formattedTemplate.replaceSubrange(
+                fullRange,
+                with: datumValue(path: path, datum: datum)
+            )
+        }
+
+        return formattedTemplate
+    }
+
     init(template: UI_Row) throws {
         let data = try JSONEncoder().encode(template)
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -71,7 +123,7 @@ private final class SearchTemplateFormatPrep {
         }
         for key in Array(content.keys) {
             if let raw = content[key] as? String {
-                content[key] = try EVY.formatData(json: datum, format: raw)
+                content[key] = Self.formatDatumReferences(raw, datum: datum)
             }
         }
         let value = Self.displayKeys
@@ -91,8 +143,9 @@ enum EVYSearchFormattingError: Error {
 
 @MainActor
 class EVYSearchController: ObservableObject {
+    private static let apiSourcePrefix = "$api:"
+
     private let sourceType: EVYSearchSourceType
-    private let source: String
     private let resultTemplate: UI_Row?
 
     private var cachedFormatPrep: SearchTemplateFormatPrep?
@@ -101,18 +154,25 @@ class EVYSearchController: ObservableObject {
 
     init(source: String, resultTemplate: UI_Row?) {
         self.resultTemplate = resultTemplate
+        sourceType = Self.searchSourceType(for: source)
+    }
 
-        let sourceProps = EVY.parsePropsFromText(source)
-        if sourceProps.hasPrefix("api:") {
-            sourceType = .api
-            self.source = String(source.dropFirst(4))
-        } else if sourceProps.hasPrefix("local:") {
-            sourceType = .local
-            self.source = String(source.dropFirst(6))
-        } else {
-            sourceType = .local
-            self.source = source
+    private static func searchSourceType(for source: String) -> EVYSearchSourceType {
+        guard let binding = bracedBinding(from: source),
+              binding.hasPrefix(apiSourcePrefix) else {
+            return .local
         }
+        return .api
+    }
+
+    private static func bracedBinding(from source: String) -> String? {
+        let normalizedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
+        let sourceProps = EVY.parsePropsFromText(normalizedSource)
+        guard normalizedSource == "{\(sourceProps)}" else {
+            return nil
+        }
+
+        return sourceProps
     }
 
     private func loadFormatPrep() throws -> SearchTemplateFormatPrep {
@@ -198,8 +258,8 @@ class EVYSearchController: ObservableObject {
             "actions": [],
             "view": {
                 "content": {
-                    "title": "{datum.unit} {datum.street}",
-                    "subtitle": "{datum.city} {datum.state} {datum.postcode}",
+                    "title": "{$datum:unit} {$datum:street}",
+                    "subtitle": "{$datum:city} {$datum:state} {$datum:postcode}",
                     "icon": ""
                 }
             }
@@ -210,7 +270,7 @@ class EVYSearchController: ObservableObject {
             from: Data(templateJson.utf8),
         )
         return EVYSearch(
-            source: "local:address",
+            source: "{$local:address}",
             destination: "{tags}",
             placeholder: "Search",
             resultTemplate: template

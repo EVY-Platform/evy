@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gt } from "drizzle-orm";
 import pluralize from "pluralize";
 
 import type {
@@ -52,6 +52,9 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 	const whereClauses = [eq(data.resource, singularResource)];
 	if (filter?.id) {
 		whereClauses.push(eq(data.id, filter.id));
+	}
+	if (filter?.updatedAfter) {
+		whereClauses.push(gt(data.updatedAt, filter.updatedAfter));
 	}
 
 	const rows = await db

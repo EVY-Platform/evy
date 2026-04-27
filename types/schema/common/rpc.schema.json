@@ -4,13 +4,16 @@
 	"title": "CommonRPC",
 	"description": "Shared RPC request/response definitions",
 	"$defs": {
-		"IdFilter": {
+		"DataFilter": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id"],
 			"properties": {
-				"id": { "type": "string" }
+				"id": { "type": "string", "format": "uuid" },
+				"updatedAfter": { "type": "string", "format": "date-time" }
 			}
+		},
+		"IdFilter": {
+			"$ref": "#/$defs/DataFilter"
 		}
 	}
 }

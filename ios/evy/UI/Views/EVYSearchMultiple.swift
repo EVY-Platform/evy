@@ -152,7 +152,7 @@ struct EVYSearchMultiple: View {
         try! await EVY.createItem()
 
         return EVYSearch(
-            source: "{api:tags}",
+            source: "{$api:tags}",
             destination: "{tags}",
             placeholder: "Search",
             resultTemplate: nil,

@@ -105,7 +105,7 @@
 							"content": {
 								"title": "Condition",
 								"placeholder": "Choose one",
-								"format": "{datum.value}"
+								"format": "{$datum:value}"
 							}
 						}
 					},
@@ -119,7 +119,7 @@
 							"content": {
 								"title": "Selling Reason",
 								"placeholder": "Choose one",
-								"format": "{datum.value}"
+								"format": "{$datum:value}"
 							}
 						}
 					},
@@ -198,7 +198,7 @@
 										"content": {
 											"title": "Tags",
 											"placeholder": "Search for tags",
-											"format": "{datum.value}"
+											"format": "{$datum:value}"
 										}
 									}
 								},
@@ -206,7 +206,7 @@
 									{
 										"id": "8f8c442e-ee2d-4974-9ef1-29005f3311e6",
 										"type": "Search",
-										"source": "{api:tags}",
+										"source": "{$api:tags}",
 										"destination": "{tags}",
 										"actions": [],
 										"view": {
@@ -221,7 +221,7 @@
 													"actions": [],
 													"view": {
 														"content": {
-															"title": "{datum.value}",
+															"title": "{$datum:value}",
 															"subtitle": "",
 															"icon": ""
 														}
@@ -396,7 +396,7 @@
 																	{
 																		"id": "22222222-2222-4222-8222-222222222205",
 																		"type": "Search",
-																		"source": "local:address",
+																		"source": "{$local:address}",
 																		"destination": "{address}",
 																		"actions": [],
 																		"view": {
@@ -411,7 +411,7 @@
 																					"actions": [],
 																					"view": {
 																						"content": {
-																							"title": "{datum.unit} {datum.street}, {datum.city} {datum.state} {datum.postcode}",
+																							"title": "{$datum:unit} {$datum:street}, {$datum:city} {$datum:state} {$datum:postcode}",
 																							"subtitle": "",
 																							"icon": ""
 																						}
@@ -531,7 +531,7 @@
 														"view": {
 															"content": {
 																"title": "",
-																"format": "{datum.value}"
+																"format": "{$datum:value}"
 															}
 														}
 													},
@@ -628,7 +628,7 @@
 														"view": {
 															"content": {
 																"title": "",
-																"format": "{datum.value}"
+																"format": "{$datum:value}"
 															}
 														}
 													},

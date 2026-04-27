@@ -66,8 +66,6 @@ private struct EVYPageBody: View {
     }
 
     /// Ensures a draft exists for each row `destination` binding in the active scope.
-    /// `row.source` describes where the row reads option/list data from (e.g. `{item}`, `{conditions}`, `local:address`);
-    /// it does not introduce a separate draft key — only `destination` does.
     @MainActor
     private func bootstrapDrafts(in page: UI_Page, scopeId: String?) {
         forEachRow(in: page) { row in
@@ -90,4 +88,3 @@ private struct EVYPageBody: View {
         }
     }
 }
-

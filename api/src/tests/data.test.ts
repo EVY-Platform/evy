@@ -15,8 +15,8 @@ import type {
 	UI_Row,
 	DATA_EVY_Flow,
 	DATA_EVY_Service,
-	DATA_EVY_Rows,
 	GetRequest,
+	UpsertResponse,
 } from "evy-types";
 import * as schema from "../db/drizzleTables";
 import { validateFlowData } from "../validation";
@@ -56,7 +56,7 @@ mock.module("../db", () => ({
 
 const { validateAuth, getCore, upsertCore } = await import("../data");
 
-function isDATA_EVY_Flow(row: DATA_EVY_Rows): row is DATA_EVY_Flow {
+function isDATA_EVY_Flow(row: UpsertResponse): row is DATA_EVY_Flow {
 	return (
 		"data" in row &&
 		typeof row.data === "object" &&
@@ -66,7 +66,7 @@ function isDATA_EVY_Flow(row: DATA_EVY_Rows): row is DATA_EVY_Flow {
 }
 
 function expectToBeDATA_EVY_Flow(
-	row: DATA_EVY_Rows,
+	row: UpsertResponse,
 ): asserts row is DATA_EVY_Flow {
 	expect(isDATA_EVY_Flow(row)).toBe(true);
 	if (!isDATA_EVY_Flow(row)) {

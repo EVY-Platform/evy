@@ -41,13 +41,13 @@ struct ContentView: View {
 	@State private var loading = true
     @State private var itemData: Data?
     @State private var activeDraftKeys: Set<String> = []
-    
+
     private func showError(_ error: Error) {
 		alertTitle = "Error"
         alertMessage = error.localizedDescription
         showingAlert = true
     }
-    
+
     private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) {
         switch navOperation {
         case .navigate(let route):
@@ -56,11 +56,11 @@ struct ContentView: View {
 			} else {
 				routes.append(route)
 			}
-            
+
             if currentFlowId == route.flowId {
                 break
             }
-            
+
             guard let newFlow = flows.first(where: { $0.id == route.flowId }) else {
 				alertTitle = "Unable to load flow"
                 alertMessage = "Please check your internet connection"
@@ -68,7 +68,7 @@ struct ContentView: View {
                 routes.removeLast()
                 break
             }
-            
+
             let createKeys = Self.extractCreateKeys(from: newFlow)
             for key in createKeys {
                 guard let itemData = itemData else {
@@ -87,7 +87,7 @@ struct ContentView: View {
                     showError(error)
                 }
             }
-            
+
         case .create(let key):
             createFlow(currentFlowId: currentFlowId, key: key)
 
@@ -95,7 +95,7 @@ struct ContentView: View {
 			alertTitle = "Missing information"
             alertMessage = "\(fieldName) is required"
             showingAlert = true
-            
+
         case .close:
 			if let existing = routes.firstIndex(where: { $0.flowId == currentFlowId }) {
                 routes.removeSubrange(existing...)
@@ -104,7 +104,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     private func createFlow(currentFlowId: String, key: String) {
         do {
             let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: key)
@@ -122,7 +122,7 @@ struct ContentView: View {
             routes.removeAll()
         }
     }
-    
+
     @ViewBuilder
     private var homeContent: some View {
         if loading {
@@ -156,16 +156,17 @@ struct ContentView: View {
             .accessibilityIdentifier("errorState")
         }
     }
-    
+
     var body: some View {
         NavigationStack(path: $routes) {
             homeContent
                 .task {
                     if !flows.isEmpty { return }
-                    
+
                     do {
                         try EVY.getUserData()
-                        itemData = try await EVY.getData()
+                        try await EVY.syncAllServices()
+                        itemData = try EVY.getItemData()
                         flows = try await EVY.getSDUI()
                         loading = false
                     } catch let error as EVYRPCError {
@@ -202,7 +203,7 @@ struct ContentView: View {
         .onChange(of: routes) { _, _ in
             let previousFlowId = currentFlowId
             let newFlowId = routes.last?.flowId ?? HOME_FLOW_ID
-            
+
             if newFlowId != previousFlowId {
                 let keysToDelete = Self.createKeysToDelete(
                     whenLeaving: previousFlowId,
@@ -229,7 +230,7 @@ struct ContentView: View {
                     activeDraftKeys.subtract(keysToDelete)
                 }
             }
-            
+
             currentFlowId = newFlowId
         }
         .onReceive(NotificationCenter.default.publisher(for: .evyFlowUpdated)) { notification in
@@ -250,7 +251,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     static func draftScopeId(for route: Route, flows: [UI_Flow]) -> String? {
         guard let flow = flows.first(where: { $0.id == route.flowId }) else { return nil }
         let keys = extractCreateKeys(from: flow)
@@ -270,7 +271,7 @@ struct ContentView: View {
         }
         return extractCreateKeys(from: flow).intersection(activeDraftKeys)
     }
-    
+
     private static func extractCreateKeys(from flow: UI_Flow) -> Set<String> {
         var keys = Set<String>()
         for page in flow.pages {

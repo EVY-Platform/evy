@@ -68,7 +68,7 @@ type GrpcServiceClient = grpc.Client & {
 		request: {
 			service: string;
 			resource: string;
-			filter?: { id: string };
+			filter?: { id?: string; updated_after?: string };
 		},
 		callback: grpc.requestCallback<{ result_json: string }>,
 	) => grpc.ClientUnaryCall;
@@ -76,7 +76,7 @@ type GrpcServiceClient = grpc.Client & {
 		request: {
 			service: string;
 			resource: string;
-			filter?: { id: string };
+			filter?: { id?: string; updated_after?: string };
 			data_json: string;
 		},
 		callback: grpc.requestCallback<{ result_json: string }>,
@@ -90,10 +90,17 @@ type GrpcServiceClient = grpc.Client & {
 };
 
 function buildProtoGetRequest(params: GetRequest) {
+	const filter = {
+		...(params.filter?.id ? { id: params.filter.id } : {}),
+		...(params.filter?.updatedAfter
+			? { updated_after: params.filter.updatedAfter }
+			: {}),
+	};
+
 	return {
 		service: params.service,
 		resource: params.resource,
-		...(params.filter?.id ? { filter: { id: params.filter.id } } : {}),
+		...(Object.keys(filter).length > 0 ? { filter } : {}),
 	};
 }
 
@@ -105,7 +112,7 @@ function makeGrpcAdapter(
 	const client = new ServiceClientCtor(
 		url,
 		grpc.credentials.createInsecure(),
-	) as GrpcServiceClient;
+	) as unknown as GrpcServiceClient;
 
 	let eventListener: ((eventName: string, payload: unknown) => void) | null =
 		null;

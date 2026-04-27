@@ -221,9 +221,7 @@ func _formatData(json: EVYJson, format: String) throws -> String {
 
     let temporaryId = UUID().uuidString
     let formatWithNewData = format
-        .replacingOccurrences(of: "datum.", with: "\(temporaryId).")
-        .replacingOccurrences(of: ".datum", with: ".\(temporaryId)")
-        .replacingOccurrences(of: "(datum)", with: "(\(temporaryId))")
+        .replacingOccurrences(of: "$datum:", with: "\(temporaryId).")
 
     if formatWithNewData.isEmpty { return "" }
 

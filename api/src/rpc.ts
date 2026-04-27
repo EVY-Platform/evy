@@ -1,8 +1,13 @@
-import type { GetResponse, UpsertResponse } from "evy-types";
+import type {
+	GetResponse,
+	SyncServiceDataResponse,
+	UpsertResponse,
+} from "evy-types";
 import {
 	getCoreForValidatedRequest,
 	upsertCoreForValidatedRequest,
 } from "./data";
+import { syncServiceData as syncServiceDataBody } from "./serviceDataSync";
 import { forwardUnary, wireGrpcClientsTo } from "./services";
 import {
 	validateStrictGetRequest,
@@ -39,4 +44,10 @@ export async function upsert(params: unknown): Promise<UpsertResponse> {
 		return result;
 	}
 	return forwardUnary(params.service, "upsert", params);
+}
+
+export async function syncServiceData(
+	params: unknown,
+): Promise<SyncServiceDataResponse> {
+	return syncServiceDataBody(params);
 }
