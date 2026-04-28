@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum EVYError: LocalizedError {
+enum EVYError: LocalizedError {
   case parsingFailed(context: String)
   case invalidData(context: String)
   case regexCompilationFailed(pattern: String)
@@ -15,7 +15,7 @@ public enum EVYError: LocalizedError {
   case formatFailed(type: String, reason: String)
   case websocketError(context: String)
 
-  public var errorDescription: String? {
+  var errorDescription: String? {
     switch self {
     case .parsingFailed(let context):
       return "Parsing failed: \(context)"

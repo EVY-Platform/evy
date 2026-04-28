@@ -8,8 +8,7 @@
 import PhotosUI
 import SwiftUI
 
-struct EVYSelectPhotoRow: View, EVYRowProtocol {
-  public static let JSONType = "SelectPhoto"
+struct EVYSelectPhotoRow: View {
 
   private let view: SelectPhotoRowViewData
   private let destination: String
@@ -40,6 +39,6 @@ struct EVYSelectPhotoRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "0", "rows", "0"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "0"])
   }
 }

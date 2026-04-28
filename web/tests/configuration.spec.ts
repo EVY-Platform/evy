@@ -1,10 +1,6 @@
 import { expect, test } from "@playwright/test";
-import {
-	getConfigPanel,
-	initFullFlows,
-	openAppWithTestFlows,
-	popoverSelect,
-} from "./utils";
+import { initFullFlows, openAppWithTestFlows } from "./flowFixtures";
+import { getConfigPanel, popoverSelect } from "./utils";
 
 test.describe("Row configuration", () => {
 	test("should drill into child row configuration from the configuration panel", async ({

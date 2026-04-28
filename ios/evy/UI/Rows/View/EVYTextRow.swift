@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYTextRow: View, EVYRowProtocol {
-  public static let JSONType = "Text"
+struct EVYTextRow: View {
 
   private let view: TextRowViewData
   @State private var showSheet = false
@@ -59,6 +58,6 @@ struct EVYTextRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["1", "pages", "0", "rows", "0"])
+    try! await EVYPreviewFixtures.getRow(["1", "pages", "0", "rows", "0"])
   }
 }

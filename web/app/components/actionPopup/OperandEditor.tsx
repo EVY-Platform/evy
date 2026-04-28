@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from "react";
 
+import { toVariableOptions } from "../../utils/actionFlowOptions";
 import {
 	CONDITION_FUNCTIONS,
 	parseOperand,
 	serializeOperand,
-	toVariableOptions,
-} from "../../utils/actionHelpers";
+} from "../../utils/actionOperands";
 import { PopoverSelect, type PopoverOption } from "../PopoverSelect";
 import { BOOLEAN_OPTIONS } from "./actionPopupConstants";
 

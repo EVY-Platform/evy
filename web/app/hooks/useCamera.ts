@@ -4,8 +4,8 @@ import type { ScreenPoint } from "../utils/coordinates";
 
 import { EASE } from "../appLayoutStyles";
 
-export const CAMERA_MIN_SCALE = 0.25;
-export const CAMERA_MAX_SCALE = 2;
+const CAMERA_MIN_SCALE = 0.25;
+const CAMERA_MAX_SCALE = 2;
 
 const SMOOTH_PAN_MS = 350;
 

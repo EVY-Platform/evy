@@ -4,12 +4,11 @@ import { Trash2 } from "lucide-react";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import type { UI_RowAction } from "evy-types";
 import type { UI_Flow } from "../types/flow";
+import { parseBranch, formatBranchDisplay } from "../utils/actionBranch";
 import {
 	parseCondition,
-	parseBranch,
 	formatExpressionSummary,
-	formatBranchDisplay,
-} from "../utils/actionHelpers";
+} from "../utils/conditionExpression";
 import { ActionPopup } from "./ActionPopup";
 
 const actionSummaryCss = `

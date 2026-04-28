@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-public struct Route: Hashable, Codable {
+struct Route: Hashable, Codable {
   let flowId: String
   let pageId: String
 }
-public enum NavOperation: Hashable {
+enum NavOperation: Hashable {
   case navigate(Route)
   case create(String)
   case highlightRequired(String)
@@ -34,13 +34,14 @@ private let HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
 struct ContentView: View {
   @State private var flows: [UI_Flow] = []
   @State private var routes: [Route] = []
-  @State private var currentFlowId: String = HOME_FLOW_ID
   @State private var showingAlert = false
   @State private var alertTitle = ""
   @State private var alertMessage = ""
   @State private var loading = true
-  @State private var itemData: Data?
-  @State private var activeDraftKeys: Set<String> = []
+
+  private var currentFlowId: String {
+    routes.last?.flowId ?? HOME_FLOW_ID
+  }
 
   private func showError(_ error: Error) {
     alertTitle = "Error"
@@ -48,7 +49,7 @@ struct ContentView: View {
     showingAlert = true
   }
 
-  private func handleNavigationData(_ navOperation: NavOperation, _ currentFlowId: String) {
+  private func handleNavigationData(_ navOperation: NavOperation) {
     switch navOperation {
     case .navigate(let route):
       if let existing = routes.lastIndex(of: route) {
@@ -61,7 +62,7 @@ struct ContentView: View {
         break
       }
 
-      guard let newFlow = flows.first(where: { $0.id == route.flowId }) else {
+      guard flows.first(where: { $0.id == route.flowId }) != nil else {
         alertTitle = "Unable to load flow"
         alertMessage = "Please check your internet connection"
         showingAlert = true
@@ -69,27 +70,8 @@ struct ContentView: View {
         break
       }
 
-      let createKeys = Self.extractCreateKeys(from: newFlow)
-      for key in createKeys {
-        guard let itemData = itemData else {
-          alertTitle = "Unable to load item"
-          alertMessage = "Please check your internet connection"
-          showingAlert = true
-          routes.removeLast()
-          break
-        }
-        do {
-          try EVY.publicStore.create(key: key, data: itemData)
-          activeDraftKeys.insert(key)
-        } catch EVYDataError.keyAlreadyExists {
-          activeDraftKeys.insert(key)
-        } catch {
-          showError(error)
-        }
-      }
-
     case .create(let key):
-      createFlow(currentFlowId: currentFlowId, key: key)
+      createFlow(key: key)
 
     case .highlightRequired(let fieldName):
       alertTitle = "Missing information"
@@ -105,7 +87,7 @@ struct ContentView: View {
     }
   }
 
-  private func createFlow(currentFlowId: String, key: String) {
+  private func createFlow(key: String) {
     do {
       let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: key)
       try EVY.create(key: key, draftScopeId: draftScope)
@@ -113,8 +95,6 @@ struct ContentView: View {
       showError(error)
       return
     }
-
-    activeDraftKeys.remove(key)
 
     if let existing = routes.firstIndex(where: { $0.flowId == currentFlowId }) {
       routes.removeSubrange(existing...)
@@ -140,7 +120,7 @@ struct ContentView: View {
       } else if let homePage = homeFlow.pages.first {
         homePage
           .environment(\.navigate) { navOperation in
-            handleNavigationData(navOperation, currentFlowId)
+            handleNavigationData(navOperation)
           }
       }
     } else {
@@ -166,7 +146,6 @@ struct ContentView: View {
           do {
             try EVY.getUserData()
             try await EVY.syncAllServices()
-            itemData = try EVY.getItemData()
             flows = try await EVY.getSDUI()
             loading = false
           } catch let error as EVYRPCError {
@@ -186,9 +165,12 @@ struct ContentView: View {
             let page = flow.getPageById(route.pageId)
           {
             page
-              .environment(\.evyDraftScopeId, Self.draftScopeId(for: route, flows: flows))
+              .environment(
+                \.evyDraftScopeId,
+                EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows)
+              )
               .environment(\.navigate) { navOperation in
-                handleNavigationData(navOperation, currentFlowId)
+                handleNavigationData(navOperation)
               }
           } else {
             Text("Flow not found")
@@ -202,38 +184,25 @@ struct ContentView: View {
         message: Text(alertMessage),
         dismissButton: .default(Text("Ok")))
     }
-    .onChange(of: routes) { _, _ in
-      let previousFlowId = currentFlowId
-      let newFlowId = routes.last?.flowId ?? HOME_FLOW_ID
+    .onChange(of: routes) { oldRoutes, newRoutes in
+      let previousFlowId = oldRoutes.last?.flowId ?? HOME_FLOW_ID
+      let newFlowId = newRoutes.last?.flowId ?? HOME_FLOW_ID
 
-      if newFlowId != previousFlowId {
-        let keysToDelete = Self.createKeysToDelete(
-          whenLeaving: previousFlowId,
-          flows: flows,
-          activeDraftKeys: activeDraftKeys
-        )
-        if !keysToDelete.isEmpty {
-          for key in keysToDelete {
-            EVY.draftStore.deleteDrafts(
-              scopeId: EVYDraft.createMergeScopeId(
-                flowId: previousFlowId,
-                entityKey: key
-              )
-            )
-          }
-          for key in keysToDelete {
-            do {
-              try EVY.publicStore.delete(key: key)
-            } catch EVYDataError.keyNotFound {
-            } catch {
-              showError(error)
-            }
-          }
-          activeDraftKeys.subtract(keysToDelete)
-        }
+      guard newFlowId != previousFlowId else {
+        return
       }
 
-      currentFlowId = newFlowId
+      let createKeys = EVYFlowDraftScopeResolver.extractCreateKeys(
+        from: flows.first(where: { $0.id == previousFlowId })
+      )
+      for key in createKeys {
+        EVY.draftStore.deleteDrafts(
+          scopeId: EVYDraft.createMergeScopeId(
+            flowId: previousFlowId,
+            entityKey: key
+          )
+        )
+      }
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyFlowUpdated)) { notification in
       guard let updatedFlow = notification.object as? UI_Flow else { return }
@@ -254,6 +223,10 @@ struct ContentView: View {
     }
   }
 
+}
+
+@MainActor
+enum EVYFlowDraftScopeResolver {
   static func draftScopeId(for route: Route, flows: [UI_Flow]) -> String? {
     guard let flow = flows.first(where: { $0.id == route.flowId }) else { return nil }
     let keys = extractCreateKeys(from: flow)
@@ -263,18 +236,8 @@ struct ContentView: View {
     return "\(route.flowId):browse"
   }
 
-  static func createKeysToDelete(
-    whenLeaving flowId: String,
-    flows: [UI_Flow],
-    activeDraftKeys: Set<String>
-  ) -> Set<String> {
-    guard let flow = flows.first(where: { $0.id == flowId }) else {
-      return []
-    }
-    return extractCreateKeys(from: flow).intersection(activeDraftKeys)
-  }
-
-  private static func extractCreateKeys(from flow: UI_Flow) -> Set<String> {
+  static func extractCreateKeys(from flow: UI_Flow?) -> Set<String> {
+    guard let flow else { return [] }
     var keys = Set<String>()
     for page in flow.pages {
       forEachRow(in: page) { row in

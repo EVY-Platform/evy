@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYCalendarRow: View, EVYRowProtocol {
-  public static let JSONType = "Calendar"
+struct EVYCalendarRow: View {
 
   private let view: CalendarRowViewData
 
@@ -29,7 +28,7 @@ struct EVYCalendarRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow([
+    try! await EVYPreviewFixtures.getRow([
       "2", "pages", "2", "rows", "0", "view", "content", "children", "0", "view", "content",
       "children", "4",
     ])

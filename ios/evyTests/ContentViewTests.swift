@@ -9,35 +9,30 @@ import XCTest
 
 @MainActor
 final class ContentViewTests: XCTestCase {
-  func testCreateKeysToDeleteDoesNotCleanWhenEnteringCreateFlow() throws {
-    let flows = try makeFlows()
-
-    let keysToDelete = ContentView.createKeysToDelete(
-      whenLeaving: "home-flow",
-      flows: flows,
-      activeDraftKeys: Set(["item"]),
-    )
-
-    XCTAssertEqual(keysToDelete, [])
+  func testExtractCreateKeysReturnsEmptyForNilFlow() {
+    let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: nil)
+    XCTAssertEqual(keys, [])
   }
 
-  func testCreateKeysToDeleteCleansCreateFlowKeysWhenLeavingCreateFlow() throws {
+  func testExtractCreateKeysFindsCreateActions() throws {
     let flows = try makeFlows()
+    let createFlow = flows.first(where: { $0.id == "create-flow" })
+    let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: createFlow)
+    XCTAssertEqual(keys, Set(["item"]))
+  }
 
-    let keysToDelete = ContentView.createKeysToDelete(
-      whenLeaving: "create-flow",
-      flows: flows,
-      activeDraftKeys: Set(["item"]),
-    )
-
-    XCTAssertEqual(keysToDelete, Set(["item"]))
+  func testExtractCreateKeysReturnsEmptyForFlowWithoutCreateActions() throws {
+    let flows = try makeFlows()
+    let homeFlow = flows.first(where: { $0.id == "home-flow" })
+    let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: homeFlow)
+    XCTAssertEqual(keys, [])
   }
 
   func testDraftScopeIdForCreateFlowMatchesFlowAndEntityKey() throws {
     let flows = try makeFlows()
     let route = Route(flowId: "create-flow", pageId: "create-page")
     XCTAssertEqual(
-      ContentView.draftScopeId(for: route, flows: flows),
+      EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows),
       EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: "item")
     )
   }
@@ -45,7 +40,7 @@ final class ContentViewTests: XCTestCase {
   func testDraftScopeIdForHomeFlowWithoutCreateUsesBrowseSuffix() throws {
     let flows = try makeFlows()
     let route = Route(flowId: "home-flow", pageId: "home-page")
-    XCTAssertEqual(ContentView.draftScopeId(for: route, flows: flows), "home-flow:browse")
+    XCTAssertEqual(EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows), "home-flow:browse")
   }
 
   private func makeFlows() throws -> [UI_Flow] {

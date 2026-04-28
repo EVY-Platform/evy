@@ -1,7 +1,8 @@
-import { eq, and, desc, gt } from "drizzle-orm";
+import { eq, and, desc, gt, sql } from "drizzle-orm";
 import pluralize from "pluralize";
 
 import type {
+	ApiRequest,
 	DATA_PRIMITIVE,
 	GetRequest,
 	GetResponse,
@@ -21,8 +22,94 @@ import {
 import { validateDataPayload } from "./validation";
 
 const MARKETPLACE_SERVICE = "marketplace";
+const MAX_ITEM_TAG_SUGGESTIONS = 3;
+const MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE = 3;
 
-function assertMarketplaceRules(params: GetRequest | UpsertRequest): void {
+type MarketplaceSuggestion = {
+	id: string;
+	value: string;
+};
+
+function normalizeItemSuggestionQuery(query: string): string {
+	return query
+		.toLocaleLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "");
+}
+
+async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
+	const query = params.filter?.query?.trim() ?? "";
+	if (query.length === 0) {
+		return validateGetResponse([]);
+	}
+
+	const normalizedQuery = normalizeItemSuggestionQuery(query);
+
+	const result = await db.execute(sql`
+		WITH tags AS (
+			SELECT DISTINCT ON ((tag->>'id'), lower(trim(tag->>'value')))
+				tag->>'id' AS id,
+				tag->>'value' AS value
+			FROM ${data}, jsonb_array_elements(
+				CASE
+					WHEN jsonb_typeof(${data.data}->'tags') = 'array' THEN ${data.data}->'tags'
+					ELSE '[]'::jsonb
+				END
+			) AS tag
+			WHERE ${data.resource} = 'item'
+				AND tag->>'id' IS NOT NULL
+				AND length(trim(tag->>'value')) > 0
+			ORDER BY (tag->>'id'), lower(trim(tag->>'value'))
+		),
+		normalized_tags AS (
+			SELECT id, value, lower(trim(value)) AS norm_value
+			FROM tags
+		),
+		fuzzy_tags AS (
+			SELECT id, value, norm_value,
+				CASE
+					WHEN norm_value = ${normalizedQuery}
+						OR norm_value LIKE ${normalizedQuery || "%"}
+						OR position(${normalizedQuery} in norm_value) > 0
+					THEN 0
+					ELSE levenshtein(${normalizedQuery}, norm_value)
+				END AS lev_dist
+			FROM normalized_tags
+		)
+		SELECT id, value,
+			CASE
+				WHEN norm_value = ${normalizedQuery} THEN 0.0
+				WHEN norm_value LIKE ${normalizedQuery || "%"} THEN 1.0 + (length(norm_value) - ${normalizedQuery.length}) / 100.0
+				WHEN position(${normalizedQuery} in norm_value) > 0 THEN 2.0 + (position(${normalizedQuery} in norm_value) - 1) / 100.0 + abs(length(norm_value) - ${normalizedQuery.length}) / 1000.0
+				ELSE 3.0 + lev_dist::float / GREATEST(${normalizedQuery.length}, length(norm_value))
+			END AS score
+		FROM fuzzy_tags
+		WHERE norm_value = ${normalizedQuery}
+			OR norm_value LIKE ${normalizedQuery || "%"}
+			OR position(${normalizedQuery} in norm_value) > 0
+			OR lev_dist <= ${MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE}
+		ORDER BY score, value
+		LIMIT ${MAX_ITEM_TAG_SUGGESTIONS}
+	`);
+
+	const rows =
+		result && typeof result === "object" && "rows" in result
+			? result.rows
+			: result;
+
+	const suggestions: MarketplaceSuggestion[] = [];
+	for (const row of rows as Array<{ id: unknown; value: unknown }>) {
+		if (typeof row.id === "string" && typeof row.value === "string") {
+			suggestions.push({ id: row.id, value: row.value });
+		}
+	}
+
+	return validateGetResponse([{ id: "query", value: query }, ...suggestions]);
+}
+
+function assertMarketplaceRules(
+	params: GetRequest | ApiRequest | UpsertRequest,
+): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
 		throw new Error("Marketplace service requires service marketplace");
 	}
@@ -45,8 +132,17 @@ function validateMarketplaceUpsertParams(
 	assertMarketplaceRules(params);
 }
 
-async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
+async function marketplaceGetBody(
+	params: GetRequest | ApiRequest,
+): Promise<GetResponse> {
 	const { resource, filter } = params;
+
+	if ("method" in params && params.method) {
+		if (resource === "items" && params.method === "suggestions") {
+			return getItemTagSuggestions(params);
+		}
+		throw new Error(`Unsupported marketplace get method ${params.method}`);
+	}
 
 	const singularResource = pluralize.singular(resource);
 	const whereClauses = [eq(data.resource, singularResource)];
@@ -71,7 +167,7 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
  * {@link validateStrictGetRequest}; this only applies marketplace access rules.
  */
 export async function getForValidatedMarketplaceRequest(
-	params: GetRequest,
+	params: GetRequest | ApiRequest,
 ): Promise<GetResponse> {
 	assertMarketplaceRules(params);
 	return marketplaceGetBody(params);

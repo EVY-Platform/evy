@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { openAppWithTestFlows } from "./flowFixtures";
 import {
 	enterCanvasFocusModeByPageTitle,
 	getFirstPage,
 	getSecondarySheetPage,
-	openAppWithTestFlows,
 	openSecondarySheetChildFromConfigPanel,
 } from "./utils";
 

@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYTextAreaRow: View, EVYRowProtocol {
-  public static let JSONType = "TextArea"
+struct EVYTextAreaRow: View {
 
   private let view: TextAreaRowViewData
   private let destination: String
@@ -40,6 +39,6 @@ struct EVYTextAreaRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "1", "rows", "0"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "1", "rows", "0"])
   }
 }

@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYSheetContainerRow: View, EVYRowProtocol {
-  public static let JSONType = "SheetContainer"
+struct EVYSheetContainerRow: View {
 
   private let view: SheetContainerRowViewData
   @State private var showSheet: Bool = false
@@ -48,6 +47,6 @@ struct EVYSheetContainerRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "0", "rows", "6"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "6"])
   }
 }

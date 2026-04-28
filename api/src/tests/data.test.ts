@@ -18,8 +18,8 @@ import type {
 	GetRequest,
 	UpsertResponse,
 } from "evy-types";
+import { validateUiFlow as validateFlowData } from "evy-types/validators";
 import * as schema from "../db/drizzleTables";
-import { validateFlowData } from "../validation";
 import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
 
 type ValidatedRow = UI_Row;

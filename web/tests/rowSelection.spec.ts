@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { openAppWithTestFlows } from "./flowFixtures";
 import {
 	getConfigPanel,
 	getFirstPage,
 	getPageContent,
 	getSidebarRow,
-	openAppWithTestFlows,
 } from "./utils";
 
 test.describe("Row Selection", () => {

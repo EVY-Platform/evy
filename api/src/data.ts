@@ -20,17 +20,15 @@ import {
 } from "./db/drizzleTables";
 import { db } from "./db";
 import {
-	validateFlowData,
-	validateOrganizationPayload,
-	validateServicePayload,
-	validateServiceProviderPayload,
-} from "./validation";
-import {
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
 import {
+	validateDataEvyOrganization as validateOrganizationPayload,
+	validateDataEvyService as validateServicePayload,
+	validateDataEvyServiceProvider as validateServiceProviderPayload,
 	validateGetResponse,
+	validateUiFlow as validateFlowData,
 	validateUpsertResponse,
 } from "evy-types/validators";
 

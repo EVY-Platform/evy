@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYDropdownRow: View, EVYRowProtocol {
-  public static let JSONType = "Dropdown"
+struct EVYDropdownRow: View {
 
   private let view: DropdownRowViewData
   private let source: String
@@ -43,6 +42,6 @@ struct EVYDropdownRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "0", "rows", "3"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "3"])
   }
 }
