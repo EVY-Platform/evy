@@ -583,7 +583,7 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
     asyncView
   } view: {
     try! EVY.getUserData()
-    try! await EVY.createItem()
+    try! await EVY.seedPreviewData()
 
     let bare = "test"
     let data = "{item.title}"

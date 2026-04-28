@@ -113,7 +113,7 @@ struct EVYDropdown: View {
     asyncView
   } view: {
     try! EVY.getUserData()
-    try! await EVY.createItem()
+    try! await EVY.seedPreviewData()
 
     return EVYDropdown(
       title: "Dropdown",

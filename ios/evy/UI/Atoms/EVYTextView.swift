@@ -141,7 +141,7 @@ struct EVYTextView: View {
   AsyncPreview { asyncView in
     asyncView
   } view: {
-    try! await EVY.createItem()
+    try! await EVY.seedPreviewData()
     return VStack {
       EVYTextView("::star::")
       EVYTextView("Body style", style: EVYTextStyle.body)

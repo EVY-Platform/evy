@@ -9,28 +9,23 @@ import XCTest
 
 @MainActor
 final class ContentViewTests: XCTestCase {
-  func testCreateKeysToDeleteDoesNotCleanWhenEnteringCreateFlow() throws {
-    let flows = try makeFlows()
-
-    let keysToDelete = ContentView.createKeysToDelete(
-      whenLeaving: "home-flow",
-      flows: flows,
-      activeDraftKeys: Set(["item"]),
-    )
-
-    XCTAssertEqual(keysToDelete, [])
+  func testExtractCreateKeysReturnsEmptyForNilFlow() {
+    let keys = ContentView.extractCreateKeys(from: nil)
+    XCTAssertEqual(keys, [])
   }
 
-  func testCreateKeysToDeleteCleansCreateFlowKeysWhenLeavingCreateFlow() throws {
+  func testExtractCreateKeysFindsCreateActions() throws {
     let flows = try makeFlows()
+    let createFlow = flows.first(where: { $0.id == "create-flow" })
+    let keys = ContentView.extractCreateKeys(from: createFlow)
+    XCTAssertEqual(keys, Set(["item"]))
+  }
 
-    let keysToDelete = ContentView.createKeysToDelete(
-      whenLeaving: "create-flow",
-      flows: flows,
-      activeDraftKeys: Set(["item"]),
-    )
-
-    XCTAssertEqual(keysToDelete, Set(["item"]))
+  func testExtractCreateKeysReturnsEmptyForFlowWithoutCreateActions() throws {
+    let flows = try makeFlows()
+    let homeFlow = flows.first(where: { $0.id == "home-flow" })
+    let keys = ContentView.extractCreateKeys(from: homeFlow)
+    XCTAssertEqual(keys, [])
   }
 
   func testDraftScopeIdForCreateFlowMatchesFlowAndEntityKey() throws {

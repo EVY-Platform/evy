@@ -721,7 +721,7 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
     asyncView
   } view: {
     try! EVY.getUserData()
-    try! await EVY.createItem()
+    try! await EVY.seedPreviewData()
 
     return VStack {
       EVYTextView("{formatDimension(item.dimensions.width)}")

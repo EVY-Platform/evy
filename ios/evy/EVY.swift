@@ -97,32 +97,29 @@ struct EVY {
     }
   }
 
-  static func getItemData() throws -> Data {
-    let itemsData = try EVY.publicStore.get(key: "marketplace:items")
-    let items = try itemsData.decoded()
-    if case .array(let arr) = items, let first = arr.first {
-      return try JSONEncoder().encode(first)
-    }
-    return try JSONEncoder().encode(EVYJson.dictionary([:]))
-  }
-
-  static func getData() async throws -> Data {
-    try await syncAllServices()
-    return try getItemData()
-  }
-
   static func getSDUI() async throws -> [UI_Flow] {
     try await EVYAPIManager.shared.fetch(
       method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil),
       expecting: [UI_Flow].self)
   }
 
-  static func createItem() async throws {
-    try EVY.publicStore.create(key: "item", data: try await getData())
+  /// Seed preview data by syncing services and creating a local "item" key
+  /// from the first marketplace item. **Preview-only** – not used at runtime.
+  static func seedPreviewData() async throws {
+    try await syncAllServices()
+    let itemsData = try EVY.publicStore.get(key: "marketplace:items")
+    let items = try itemsData.decoded()
+    let firstItem: Data
+    if case .array(let arr) = items, let first = arr.first {
+      firstItem = try JSONEncoder().encode(first)
+    } else {
+      firstItem = try JSONEncoder().encode(EVYJson.dictionary([:]))
+    }
+    try EVY.publicStore.create(key: "item", data: firstItem)
   }
 
   static func getRow(_ props: [String]) async throws -> UI_Row {
-    try await createItem()
+    try await seedPreviewData()
     let flowData = try await EVYAPIManager.shared.fetch(
       method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil),
       expecting: EVYJson.self)
@@ -200,11 +197,16 @@ struct EVY {
       let data: EVYJson
     }
 
-    let existing = try publicStore.get(key: key)
+    let existing: EVYData? = try? publicStore.get(key: key)
     let newId = UUID().uuidString
-    let payload = try existing.decoded()
-    guard case .dictionary = payload else {
-      throw EVYParamError.invalidProps
+    let payload: EVYJson
+    if let existing {
+      payload = try existing.decoded()
+      guard case .dictionary = payload else {
+        throw EVYParamError.invalidProps
+      }
+    } else {
+      payload = .dictionary([:])
     }
 
     var mergedPayload = payload
@@ -236,8 +238,10 @@ struct EVY {
       filter: Filter(id: newId),
       data: dataWithId
     )
-    existing.data = try JSONEncoder().encode(dataWithId)
-    existing.key = newId
+    if let existing {
+      existing.data = try JSONEncoder().encode(dataWithId)
+      existing.key = newId
+    }
 
     Task { @MainActor in
       do {

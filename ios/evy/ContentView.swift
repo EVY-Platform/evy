@@ -39,8 +39,6 @@ struct ContentView: View {
   @State private var alertTitle = ""
   @State private var alertMessage = ""
   @State private var loading = true
-  @State private var itemData: Data?
-  @State private var activeDraftKeys: Set<String> = []
 
   private func showError(_ error: Error) {
     alertTitle = "Error"
@@ -61,31 +59,12 @@ struct ContentView: View {
         break
       }
 
-      guard let newFlow = flows.first(where: { $0.id == route.flowId }) else {
+      guard flows.first(where: { $0.id == route.flowId }) != nil else {
         alertTitle = "Unable to load flow"
         alertMessage = "Please check your internet connection"
         showingAlert = true
         routes.removeLast()
         break
-      }
-
-      let createKeys = Self.extractCreateKeys(from: newFlow)
-      for key in createKeys {
-        guard let itemData = itemData else {
-          alertTitle = "Unable to load item"
-          alertMessage = "Please check your internet connection"
-          showingAlert = true
-          routes.removeLast()
-          break
-        }
-        do {
-          try EVY.publicStore.create(key: key, data: itemData)
-          activeDraftKeys.insert(key)
-        } catch EVYDataError.keyAlreadyExists {
-          activeDraftKeys.insert(key)
-        } catch {
-          showError(error)
-        }
       }
 
     case .create(let key):
@@ -113,8 +92,6 @@ struct ContentView: View {
       showError(error)
       return
     }
-
-    activeDraftKeys.remove(key)
 
     if let existing = routes.firstIndex(where: { $0.flowId == currentFlowId }) {
       routes.removeSubrange(existing...)
@@ -166,7 +143,6 @@ struct ContentView: View {
           do {
             try EVY.getUserData()
             try await EVY.syncAllServices()
-            itemData = try EVY.getItemData()
             flows = try await EVY.getSDUI()
             loading = false
           } catch let error as EVYRPCError {
@@ -207,29 +183,16 @@ struct ContentView: View {
       let newFlowId = routes.last?.flowId ?? HOME_FLOW_ID
 
       if newFlowId != previousFlowId {
-        let keysToDelete = Self.createKeysToDelete(
-          whenLeaving: previousFlowId,
-          flows: flows,
-          activeDraftKeys: activeDraftKeys
+        let createKeys = Self.extractCreateKeys(
+          from: flows.first(where: { $0.id == previousFlowId })
         )
-        if !keysToDelete.isEmpty {
-          for key in keysToDelete {
-            EVY.draftStore.deleteDrafts(
-              scopeId: EVYDraft.createMergeScopeId(
-                flowId: previousFlowId,
-                entityKey: key
-              )
+        for key in createKeys {
+          EVY.draftStore.deleteDrafts(
+            scopeId: EVYDraft.createMergeScopeId(
+              flowId: previousFlowId,
+              entityKey: key
             )
-          }
-          for key in keysToDelete {
-            do {
-              try EVY.publicStore.delete(key: key)
-            } catch EVYDataError.keyNotFound {
-            } catch {
-              showError(error)
-            }
-          }
-          activeDraftKeys.subtract(keysToDelete)
+          )
         }
       }
 
@@ -263,18 +226,8 @@ struct ContentView: View {
     return "\(route.flowId):browse"
   }
 
-  static func createKeysToDelete(
-    whenLeaving flowId: String,
-    flows: [UI_Flow],
-    activeDraftKeys: Set<String>
-  ) -> Set<String> {
-    guard let flow = flows.first(where: { $0.id == flowId }) else {
-      return []
-    }
-    return extractCreateKeys(from: flow).intersection(activeDraftKeys)
-  }
-
-  private static func extractCreateKeys(from flow: UI_Flow) -> Set<String> {
+  static func extractCreateKeys(from flow: UI_Flow?) -> Set<String> {
+    guard let flow else { return [] }
     var keys = Set<String>()
     for page in flow.pages {
       forEachRow(in: page) { row in

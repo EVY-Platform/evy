@@ -101,7 +101,7 @@ struct EVYInlinePicker: View {
     asyncView
   } view: {
     try! EVY.getUserData()
-    try! await EVY.createItem()
+    try! await EVY.seedPreviewData()
 
     return EVYInlinePicker(
       title: "Dropdown",
