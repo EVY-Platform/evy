@@ -15,23 +15,8 @@ jobs:
             run:
                 working-directory: web
 
-      timeout-minutes: 5
+        timeout-minutes: 5
         runs-on: blacksmith-2vcpu-ubuntu-2404-arm
-
-        services:
-            postgres:
-                image: postgres:16
-                ports:
-                    - 5432:5432
-                env:
-                    POSTGRES_USER: evy
-                    POSTGRES_PASSWORD: evy
-                    POSTGRES_DB: evy
-                options: >-
-                    --health-cmd "pg_isready -U evy -d evy"
-                    --health-interval 5s
-                    --health-timeout 5s
-                    --health-retries 10
 
         steps:
             - name: Checkout code
@@ -49,10 +34,6 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun install
               working-directory: .
-
-            - name: Create marketplace database
-              if: steps.setup.outputs.has-changes == 'true'
-              run: docker exec ${{ job.services.postgres.id }} createdb -U evy marketplace
 
             - name: Prepare .env and generate types
               if: steps.setup.outputs.has-changes == 'true'
