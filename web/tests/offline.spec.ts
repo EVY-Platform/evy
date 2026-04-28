@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openAppWithTestFlows } from "./flowFixtures";
 import {
 	ensureSidePanelsExpanded,
 	getConfigPanel,
@@ -6,7 +7,6 @@ import {
 	getPageContent,
 	getSidebarRow,
 	installConstructorFailingWebSocket,
-	openAppWithTestFlows,
 	waitForAppLoaded,
 } from "./utils";
 

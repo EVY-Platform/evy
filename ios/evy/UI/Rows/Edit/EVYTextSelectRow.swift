@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYTextSelectRow: View, EVYRowProtocol {
-  public static let JSONType = "TextSelect"
+struct EVYTextSelectRow: View {
 
   private let view: TextSelectRowViewData
   private let destination: String
@@ -66,6 +65,6 @@ struct EVYTextSelectRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "3", "rows", "1", "view", "content", "children", "0"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "3", "rows", "1", "view", "content", "children", "0"])
   }
 }

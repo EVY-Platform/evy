@@ -366,7 +366,7 @@ private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
   AsyncPreview { asyncView in
     asyncView
   } view: {
-    try! await EVY.createItem()
+    try! await EVYPreviewFixtures.seedData()
 
     let timeslotsData = (try? EVY.publicStore.getForBinding(key: "timeslots"))?.data
     let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "timeslots")

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { getRowsPanel, openAppWithTestFlows } from "./utils";
+import { openAppWithTestFlows } from "./flowFixtures";
+import { getRowsPanel } from "./utils";
 
 test.describe("EVY Rows", () => {
 	test("should display available row components in the Rows panel", async ({

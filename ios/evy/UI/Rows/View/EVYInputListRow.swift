@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYInputListRow: View, EVYRowProtocol {
-  public static let JSONType = "InputList"
+struct EVYInputListRow: View {
 
   private let view: InputListRowViewData
   private let source: String
@@ -37,6 +36,6 @@ struct EVYInputListRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "0", "rows", "6", "view", "content", "child"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "6", "view", "content", "child"])
   }
 }

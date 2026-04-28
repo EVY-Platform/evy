@@ -5,13 +5,13 @@
 //  Created by Geoffroy Lesage on 15/9/2024.
 //
 
-import LucideIcons
 import SwiftUI
 
 struct EVYSearchSingle: View {
   @State private var selected: String = ""
   @State private var value: String = ""
-  @ObservedObject private var searchController: EVYSearchController
+
+  @StateObject private var searchController: EVYSearchController
 
   let destination: String
   let placeholder: String
@@ -25,7 +25,9 @@ struct EVYSearchSingle: View {
     self.destination = destination
     self.placeholder = placeholder
 
-    searchController = EVYSearchController(source: source, resultTemplate: resultTemplate)
+    _searchController = StateObject(
+      wrappedValue: EVYSearchController(source: source, resultTemplate: resultTemplate)
+    )
   }
 
   func select(_ element: EVYSearchResult) {
@@ -56,77 +58,62 @@ struct EVYSearchSingle: View {
   var body: some View {
     VStack {
       // Search bar
-      HStack {
-        if value.isEmpty {
-          Image(uiImage: Lucide.search)
-            .padding(.leading, Constants.minorPadding)
-        }
-
-        TextField(placeholder, text: $value)
-          .font(.evy)
-
-        if !value.isEmpty {
-          Image(uiImage: Lucide.x)
-            .padding(.trailing, Constants.minorPadding)
-            .onTapGesture { unselect() }
-        }
-      }
-      .padding(
-        EdgeInsets(
-          top: Constants.fieldPadding,
-          leading: Constants.minorPadding,
-          bottom: Constants.fieldPadding,
-          trailing: Constants.minorPadding,
-        )
+      EVYSearchField(
+        placeholder: placeholder,
+        text: $value,
+        showsLeadingIconWhenEmpty: true,
+        showsClearButton: true,
+        onClear: unselect
       )
-      .background(
-        RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-          .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth)
-          .opacity(Constants.borderOpacity)
-      )
-      .contentShape(Rectangle())
-      .padding(.horizontal, Constants.majorPadding)
       .onChange(of: value) { _, newValue in
-        Task(operation: {
-          if newValue.isEmpty {
-            return
-          }
-          if newValue.count < 3 {
-            return
-          }
-          if newValue == selected {
-            return
-          }
+        if newValue == selected {
+          return
+        }
 
-          await searchController.search(name: newValue)
-        })
+        searchController.debouncedSearch(name: newValue)
       }
 
       // Search results
-      List {
-        ForEach(searchController.results, id: \.value) { result in
-          EVYRow(row: result.displayRow)
-            .onTapGesture { select(result) }
-        }
+      EVYSearchResultsList(results: searchController.results) { result in
+        select(result)
       }
-      .listStyle(.plain)
-      .listRowSpacing(20)
-      .scrollContentBackground(.hidden)
-      .background(Color.white)
     }
   }
 }
 
 #Preview {
-  AsyncPreview { asyncView in
+  AsyncPreview { (asyncView: EVYSearch) in
     asyncView
   } view: {
-    try! await EVY.createItem()
-
+    // Local-only: no EVY.getRow / EVYAPIManager (avoids API_HOST fatalError in Xcode canvas).
+    if !EVY.publicStore.exists(key: "tags") {
+      try EVY.publicStore.create(key: "tags", data: Data("[]".utf8))
+    }
+    let templateJson = """
+      {
+      	"id": "preview-search-row",
+      	"type": "Info",
+      	"source": "",
+      	"destination": "",
+      	"actions": [],
+      	"view": {
+      		"content": {
+      			"title": "{$datum:unit} {$datum:street}",
+      			"subtitle": "{$datum:city} {$datum:state} {$datum:postcode}",
+      			"icon": ""
+      		}
+      	}
+      }
+      """
+    let template = try JSONDecoder().decode(
+      UI_Row.self,
+      from: Data(templateJson.utf8),
+    )
     return EVYSearch(
       source: "{$local:address}",
-      destination: "{address}",
+      destination: "",
       placeholder: "Search",
-      resultTemplate: nil)
+      resultTemplate: template
+    )
   }
 }

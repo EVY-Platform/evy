@@ -8,8 +8,17 @@
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
-				"id": { "type": "string", "format": "uuid" },
-				"updatedAfter": { "type": "string", "format": "date-time" }
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"updatedAfter": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"query": {
+					"type": "string"
+				}
 			}
 		},
 		"IdFilter": {

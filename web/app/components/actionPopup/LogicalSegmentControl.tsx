@@ -1,4 +1,4 @@
-import type { LogicalOperator } from "../../utils/actionHelpers";
+import type { LogicalOperator } from "../../utils/conditionExpression";
 
 export function LogicalSegmentControl({
 	value,

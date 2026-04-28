@@ -1,6 +1,6 @@
 import { initServer, type WSParams } from "./ws";
 import { validateAuth } from "./data";
-import { get, syncServiceData, upsert, wireServerEvents } from "./rpc";
+import { api, get, syncServiceData, upsert, wireServerEvents } from "./rpc";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
@@ -11,8 +11,9 @@ async function main() {
 	wireServerEvents(server);
 
 	server.register("get", get);
-
 	server.register("upsert", upsert).protected();
+
+	server.register("api", api);
 
 	server.register("syncServiceData", syncServiceData).protected();
 }

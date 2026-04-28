@@ -13,6 +13,7 @@ message GetRequest {
   string service = 1;
   string resource = 2;
   Filter filter = 3;
+  string method = 4;
 }
 
 message UpsertRequest {
@@ -25,6 +26,7 @@ message UpsertRequest {
 message Filter {
   string id = 1;
   string updated_after = 2;
+  string query = 3;
 }
 
 message GetResponse {

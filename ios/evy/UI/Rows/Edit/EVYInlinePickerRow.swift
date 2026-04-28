@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYInlinePickerRow: View, EVYRowProtocol {
-  public static let JSONType = "InlinePicker"
+struct EVYInlinePickerRow: View {
 
   private let view: InlinePickerRowViewData
   private let source: String
@@ -42,7 +41,7 @@ struct EVYInlinePickerRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow([
+    try! await EVYPreviewFixtures.getRow([
       "2", "pages", "2", "rows", "0", "view", "content", "children", "1", "view", "content",
       "children", "3",
     ])

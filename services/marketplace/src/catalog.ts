@@ -4,7 +4,7 @@ import { RESOURCES_BY_SERVICE } from "evy-types";
  * Keys in `docs/services/service_data.json` for marketplace catalog rows.
  * RPC `resource` values match {@link MARKETPLACE_DATA_RESOURCES} (shared schema).
  */
-export const MARKETPLACE_DATA_JSON_KEYS = [
+const MARKETPLACE_DATA_JSON_KEYS = [
 	"selling_reasons",
 	"conditions",
 	"durations",

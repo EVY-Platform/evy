@@ -8,7 +8,7 @@ import {
 	type ConditionGroup,
 	type ConditionLeaf,
 	type LogicalOperator,
-} from "../../utils/actionHelpers";
+} from "../../utils/conditionExpression";
 import { PopoverSelect } from "../PopoverSelect";
 import { OPERATOR_OPTIONS } from "./actionPopupConstants";
 import {

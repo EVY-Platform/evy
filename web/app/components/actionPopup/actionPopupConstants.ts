@@ -1,9 +1,8 @@
+import { ACTION_FUNCTIONS, FUNCTION_LABELS } from "../../utils/actionBranch";
 import {
-	ACTION_FUNCTIONS,
 	COMPARISON_OPERATORS,
-	FUNCTION_LABELS,
 	OPERATOR_LABELS,
-} from "../../utils/actionHelpers";
+} from "../../utils/conditionExpression";
 import type { PopoverOption } from "../PopoverSelect";
 
 export const OPERATOR_OPTIONS: PopoverOption[] = COMPARISON_OPERATORS.map(

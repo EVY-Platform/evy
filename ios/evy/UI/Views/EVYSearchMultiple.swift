@@ -5,13 +5,13 @@
 //  Created by Geoffroy Lesage on 15/9/2024.
 //
 
-import LucideIcons
 import SwiftUI
 
 struct EVYSearchMultiple: View {
   @State private var selected: [EVYSearchResult] = []
   @State private var searchFieldValue = ""
-  @ObservedObject private var searchController: EVYSearchController
+
+  @StateObject private var searchController: EVYSearchController
 
   let source: String
   let destination: String
@@ -29,7 +29,9 @@ struct EVYSearchMultiple: View {
     self.destination = destination
     self.placeholder = placeholder
 
-    searchController = EVYSearchController(source: source, resultTemplate: resultTemplate)
+    _searchController = StateObject(
+      wrappedValue: EVYSearchController(source: source, resultTemplate: resultTemplate)
+    )
   }
 
   func refresh() {
@@ -84,34 +86,13 @@ struct EVYSearchMultiple: View {
 
   var body: some View {
     VStack {
-      HStack {
-        Image(uiImage: Lucide.search)
-          .padding(.leading, Constants.minorPadding)
-        TextField(placeholder, text: $searchFieldValue).font(.evy)
-      }
-      .padding(
-        EdgeInsets(
-          top: Constants.fieldPadding,
-          leading: Constants.minorPadding,
-          bottom: Constants.fieldPadding,
-          trailing: Constants.minorPadding,
-        )
+      EVYSearchField(
+        placeholder: placeholder,
+        text: $searchFieldValue
       )
-      .background(
-        RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-          .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth)
-          .opacity(Constants.borderOpacity)
-      )
-      .contentShape(Rectangle())
       .padding(.horizontal, Constants.majorPadding)
       .onChange(of: searchFieldValue) { _, newValue in
-        Task(operation: {
-          if !newValue.isEmpty && newValue.count > 3 {
-            await searchController.search(name: newValue)
-          } else {
-            searchController.results.removeAll()
-          }
-        })
+        searchController.debouncedSearch(name: newValue)
       }
 
       if selected.count > 0 {
@@ -133,21 +114,14 @@ struct EVYSearchMultiple: View {
         .scrollIndicators(.hidden)
       }
 
-      List {
-        ForEach(searchController.results, id: \.value) { result in
-          EVYRow(row: result.displayRow)
-            .onTapGesture { select(result) }
-        }
-        .onChange(of: searchController.results) { _, _ in
-          searchController.results.removeAll { r in
-            selected.contains { $0.value == r.value }
-          }
+      EVYSearchResultsList(results: searchController.results) { result in
+        select(result)
+      }
+      .onChange(of: searchController.results) { _, _ in
+        searchController.results.removeAll { r in
+          selected.contains { $0.value == r.value }
         }
       }
-      .listStyle(.plain)
-      .listRowSpacing(20)
-      .scrollContentBackground(.hidden)
-      .background(Color.white)
     }
     .onAppear { refresh() }
   }
@@ -157,7 +131,7 @@ struct EVYSearchMultiple: View {
   AsyncPreview { asyncView in
     asyncView
   } view: {
-    try! await EVY.createItem()
+    try! await EVYPreviewFixtures.seedData()
 
     return EVYSearch(
       source: "{$api:tags}",

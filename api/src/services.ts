@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import type {
+	ApiRequest,
 	GetRequest,
 	GetResponse,
 	UpsertRequest,
@@ -57,28 +58,42 @@ function loadEvyServiceConstructor(): grpc.ServiceClientConstructor {
 	return evyPkg.Service;
 }
 
+type ForwardableGetRequest = GetRequest | ApiRequest;
+
+type AppGetRequestInput = {
+	service: string;
+	resource: string;
+	filter?: { id?: string; updatedAfter?: string; query?: string };
+	method?: string;
+};
+
+type ProtoGetRequest = {
+	service: string;
+	resource: string;
+	filter?: { id?: string; updated_after?: string; query?: string };
+	method?: string;
+};
+
+type ProtoUpsertRequest = {
+	service: string;
+	resource: string;
+	filter?: { id?: string; updated_after?: string };
+	data_json: string;
+};
+
 type ServiceAdapter = {
-	get(params: GetRequest): Promise<GetResponse>;
+	get(params: ForwardableGetRequest): Promise<GetResponse>;
 	upsert(params: UpsertRequest): Promise<UpsertResponse>;
 	onEvent(listener: (eventName: string, payload: unknown) => void): void;
 };
 
 type GrpcServiceClient = grpc.Client & {
 	Get: (
-		request: {
-			service: string;
-			resource: string;
-			filter?: { id?: string; updated_after?: string };
-		},
+		request: ProtoGetRequest,
 		callback: grpc.requestCallback<{ result_json: string }>,
 	) => grpc.ClientUnaryCall;
 	Upsert: (
-		request: {
-			service: string;
-			resource: string;
-			filter?: { id?: string; updated_after?: string };
-			data_json: string;
-		},
+		request: ProtoUpsertRequest,
 		callback: grpc.requestCallback<{ result_json: string }>,
 	) => grpc.ClientUnaryCall;
 	SubscribeEvents: (
@@ -89,7 +104,22 @@ type GrpcServiceClient = grpc.Client & {
 	}>;
 };
 
-function buildProtoGetRequest(params: GetRequest) {
+function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
+	const filter: Record<string, string> = {};
+	if (params.filter?.id) filter.id = params.filter.id;
+	if (params.filter?.updatedAfter)
+		filter.updated_after = params.filter.updatedAfter;
+	if (params.filter?.query) filter.query = params.filter.query;
+
+	return {
+		service: params.service,
+		resource: params.resource,
+		...(Object.keys(filter).length > 0 ? { filter } : {}),
+		...(params.method ? { method: params.method } : {}),
+	};
+}
+
+function buildProtoUpsertRequest(params: UpsertRequest): ProtoUpsertRequest {
 	const filter: Record<string, string> = {};
 	if (params.filter?.id) filter.id = params.filter.id;
 	if (params.filter?.updatedAfter)
@@ -99,6 +129,7 @@ function buildProtoGetRequest(params: GetRequest) {
 		service: params.service,
 		resource: params.resource,
 		...(Object.keys(filter).length > 0 ? { filter } : {}),
+		data_json: JSON.stringify(params.data),
 	};
 }
 
@@ -197,36 +228,30 @@ function makeGrpcAdapter(
 			}),
 		upsert: (params) =>
 			new Promise<UpsertResponse>((resolve, reject) => {
-				client.Upsert(
-					{
-						...buildProtoGetRequest(params),
-						data_json: JSON.stringify(params.data),
-					},
-					(err, response) => {
-						if (err) {
-							reject(err);
-							return;
-						}
-						if (!response) {
-							reject(
-								new Error(`Empty Upsert response from ${serviceName} service`),
-							);
-							return;
-						}
-						let parsed: unknown;
-						try {
-							parsed = JSON.parse(response.result_json) as unknown;
-						} catch (parseErr) {
-							reject(parseErr);
-							return;
-						}
-						try {
-							resolve(validateUpsertResponse(parsed));
-						} catch (validationErr) {
-							reject(validationErr);
-						}
-					},
-				);
+				client.Upsert(buildProtoUpsertRequest(params), (err, response) => {
+					if (err) {
+						reject(err);
+						return;
+					}
+					if (!response) {
+						reject(
+							new Error(`Empty Upsert response from ${serviceName} service`),
+						);
+						return;
+					}
+					let parsed: unknown;
+					try {
+						parsed = JSON.parse(response.result_json) as unknown;
+					} catch (parseErr) {
+						reject(parseErr);
+						return;
+					}
+					try {
+						resolve(validateUpsertResponse(parsed));
+					} catch (validationErr) {
+						reject(validationErr);
+					}
+				});
 			}),
 		onEvent(listener) {
 			eventListener = listener;
@@ -273,7 +298,7 @@ function getServiceAdapter(serviceName: string): ServiceAdapter {
 
 export function forwardGet(
 	serviceName: string,
-	params: GetRequest,
+	params: ForwardableGetRequest,
 ): Promise<GetResponse> {
 	return getServiceAdapter(serviceName).get(params);
 }

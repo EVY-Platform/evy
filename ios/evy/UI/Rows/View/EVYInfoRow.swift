@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYInfoRow: View, EVYRowProtocol {
-  public static let JSONType = "Info"
+struct EVYInfoRow: View {
 
   private static let leadingIconMinWidth: CGFloat = 32
 
@@ -78,6 +77,6 @@ extension View {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "4", "rows", "0"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "4", "rows", "0"])
   }
 }

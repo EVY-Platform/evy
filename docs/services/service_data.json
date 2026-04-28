@@ -1650,15 +1650,15 @@
 			},
 			{
 				"id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
-				"value": "Tag B with extras"
+				"value": "iPhone"
 			},
 			{
 				"id": "1eedac33-eb0b-4796-9853-50ad4036179f",
-				"value": "Tag C"
+				"value": "Apple"
 			},
 			{
 				"id": "69f25102-822c-436c-a6c1-3b49f887355e",
-				"value": "Tag D"
+				"value": "Phone"
 			}
 		],
 		"payment_methods": {

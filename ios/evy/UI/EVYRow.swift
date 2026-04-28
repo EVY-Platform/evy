@@ -7,20 +7,6 @@
 
 import SwiftUI
 
-public enum RowCodingKeys: String, CodingKey {
-  case type
-  case view
-  case destination
-  case actions
-}
-
-public enum EVYRowError: Error {
-  case cannotParseRow
-}
-
-protocol EVYRowProtocol: View {
-  static var JSONType: String { get }
-}
 
 struct EVYRow: View, Identifiable {
   let row: UI_Row

@@ -1,3 +1,4 @@
+import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { SyncServiceDataRequest } from "./generated/ts/rpc/syncServiceData.request";
 import {
@@ -7,6 +8,7 @@ import {
 } from "./generated/ts/rpc/get.request";
 import type { UpsertRequest } from "./generated/ts/rpc/upsert.request";
 import {
+	validateApiRequest,
 	validateGetRequest,
 	validateSyncServiceDataRequest,
 	validateUpsertRequest,
@@ -73,6 +75,13 @@ export function validateStrictGetRequest(
 ): asserts params is GetRequest {
 	assertRpcParamsCommon(params);
 	validateGetRequest(params);
+}
+
+export function validateStrictApiRequest(
+	params: unknown,
+): asserts params is ApiRequest {
+	assertRpcParamsCommon(params);
+	validateApiRequest(params);
 }
 
 export function validateStrictUpsertRequest(
