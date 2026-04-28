@@ -128,7 +128,7 @@ struct EVYSearchMultiple: View {
         .scrollIndicators(.hidden)
       }
 
-      List {
+      LazyVStack(spacing: 20) {
         ForEach(searchController.results, id: \.value) { result in
           EVYRow(row: result.displayRow)
             .onTapGesture { select(result) }
@@ -139,10 +139,6 @@ struct EVYSearchMultiple: View {
           }
         }
       }
-      .listStyle(.plain)
-      .listRowSpacing(20)
-      .scrollContentBackground(.hidden)
-      .background(Color.white)
     }
     .onAppear { refresh() }
   }

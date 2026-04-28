@@ -96,16 +96,12 @@ struct EVYSearchSingle: View {
       }
 
       // Search results
-      List {
+      LazyVStack(spacing: 20) {
         ForEach(searchController.results, id: \.value) { result in
           EVYRow(row: result.displayRow)
             .onTapGesture { select(result) }
         }
       }
-      .listStyle(.plain)
-      .listRowSpacing(20)
-      .scrollContentBackground(.hidden)
-      .background(Color.white)
     }
   }
 }

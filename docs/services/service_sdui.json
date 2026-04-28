@@ -178,61 +178,6 @@
 								]
 							}
 						}
-					},
-					{
-						"id": "6c48841c-079f-4c58-bab6-af96a87d7399",
-						"type": "SheetContainer",
-						"source": "{item}",
-						"destination": "",
-						"actions": [],
-						"view": {
-							"content": {
-								"title": "",
-								"child": {
-									"id": "2422c9ec-df63-4fde-9632-0fe159c0b40e",
-									"type": "InputList",
-									"source": "{tags}",
-									"destination": "",
-									"actions": [],
-									"view": {
-										"content": {
-											"title": "Tags",
-											"placeholder": "Search for tags",
-											"format": "{$datum:value}"
-										}
-									}
-								},
-								"children": [
-									{
-										"id": "8f8c442e-ee2d-4974-9ef1-29005f3311e6",
-										"type": "Search",
-										"source": "{$api:tags}",
-										"destination": "{tags}",
-										"actions": [],
-										"view": {
-											"content": {
-												"title": "",
-												"placeholder": "Search for tags",
-												"child": {
-													"id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
-													"type": "Info",
-													"source": "",
-													"destination": "",
-													"actions": [],
-													"view": {
-														"content": {
-															"title": "{$datum:value}",
-															"subtitle": "",
-															"icon": ""
-														}
-													}
-												}
-											}
-										}
-									}
-								]
-							}
-						}
 					}
 				],
 				"title": "Create listing",
