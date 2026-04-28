@@ -150,14 +150,36 @@ extract_ios_simulator_field() {
     printf '%s' "$field_value"
 }
 
-ios_simulator_field_matches() {
-    local destination_line="$1"
-    local field_name="$2"
-    local expected_value="$3"
-    local field_value
+find_ios_simulator_destination() {
+    local destinations_output="$1"
+    local preferred_device_name="${2:-}"
+    local preferred_os_version="${3:-}"
+    local destination_line
+    local resolved_destination
 
-    field_value="$(extract_ios_simulator_field "$destination_line" "$field_name" || true)"
-    [ "$field_value" = "$expected_value" ]
+    while IFS= read -r destination_line; do
+        if [[ "$destination_line" != *"platform:iOS Simulator"* ]]; then
+            continue
+        fi
+
+        if [ -n "$preferred_device_name" ] &&
+            [ "$(extract_ios_simulator_field "$destination_line" "name" || true)" != "$preferred_device_name" ]; then
+            continue
+        fi
+
+        if [ -n "$preferred_os_version" ] &&
+            [ "$(extract_ios_simulator_field "$destination_line" "OS" || true)" != "$preferred_os_version" ]; then
+            continue
+        fi
+
+        resolved_destination="$(extract_ios_simulator_destination "$destination_line" || true)"
+        if [ -n "$resolved_destination" ]; then
+            printf '%s' "$resolved_destination"
+            return 0
+        fi
+    done <<< "$destinations_output"
+
+    return 1
 }
 
 resolve_ios_simulator_destination() {
@@ -169,44 +191,18 @@ resolve_ios_simulator_destination() {
     local preferred_device_name="${IOS_SIMULATOR_DEVICE_NAME:-iPhone 17}"
     local preferred_os_version="${IOS_SIMULATOR_OS_VERSION:-26.4.1}"
     local destinations_output
+    local resolved_destination
     if ! destinations_output="$(xcodebuild -showdestinations -project evy.xcodeproj -scheme evy 2>/dev/null)"; then
         return 1
     fi
 
-    local destination_line
-    local resolved_destination
-    while IFS= read -r destination_line; do
-        if [[ "$destination_line" == *"platform:iOS Simulator"* ]] &&
-            ios_simulator_field_matches "$destination_line" "name" "$preferred_device_name" &&
-            ios_simulator_field_matches "$destination_line" "OS" "$preferred_os_version"; then
-            resolved_destination="$(extract_ios_simulator_destination "$destination_line" || true)"
-            if [ -n "$resolved_destination" ]; then
-                printf '%s' "$resolved_destination"
-                return 0
-            fi
-        fi
-    done <<< "$destinations_output"
-
-    while IFS= read -r destination_line; do
-        if [[ "$destination_line" == *"platform:iOS Simulator"* ]] &&
-            ios_simulator_field_matches "$destination_line" "name" "$preferred_device_name"; then
-            resolved_destination="$(extract_ios_simulator_destination "$destination_line" || true)"
-            if [ -n "$resolved_destination" ]; then
-                printf '%s' "$resolved_destination"
-                return 0
-            fi
-        fi
-    done <<< "$destinations_output"
-
-    while IFS= read -r destination_line; do
-        if [[ "$destination_line" == *"platform:iOS Simulator"* ]]; then
-            resolved_destination="$(extract_ios_simulator_destination "$destination_line" || true)"
-            if [ -n "$resolved_destination" ]; then
-                printf '%s' "$resolved_destination"
-                return 0
-            fi
-        fi
-    done <<< "$destinations_output"
+    resolved_destination="$(find_ios_simulator_destination "$destinations_output" "$preferred_device_name" "$preferred_os_version" ||
+        find_ios_simulator_destination "$destinations_output" "$preferred_device_name" ||
+        find_ios_simulator_destination "$destinations_output" || true)"
+    if [ -n "$resolved_destination" ]; then
+        printf '%s' "$resolved_destination"
+        return 0
+    fi
 
     return 1
 }
