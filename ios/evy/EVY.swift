@@ -74,9 +74,11 @@ struct EVY {
   }
 
   static func syncServiceData(service: String) async throws {
+    let lastSyncTime = EVY.publicStore.oldestLastSyncedAt(keyPrefix: "\(service):")
+      ?? "1970-01-01T00:00:00.000Z"
     let params = SyncServiceDataParams(
       service: service,
-      lastSyncTime: "1970-01-01T00:00:00.000Z"
+      lastSyncTime: lastSyncTime
     )
     let response = try await EVYAPIManager.shared.fetch(
       method: "syncServiceData",
