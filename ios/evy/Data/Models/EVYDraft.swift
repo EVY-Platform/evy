@@ -12,8 +12,6 @@ enum EVYDraft {
   }
 
   struct Binding: Equatable {
-    private static let draftKeySeparator = "|"
-
     let scopeId: String
     let pathSegments: [String]
     let mergeMode: MergeMode
@@ -32,7 +30,7 @@ enum EVYDraft {
         modeFlag = "e"
       }
 
-      return "\(scopeId)\(Self.draftKeySeparator)\(modeFlag)\(pathKey)"
+      return "\(scopeId):\(modeFlag)\(pathKey)"
     }
 
     var notificationKey: String {
@@ -40,11 +38,11 @@ enum EVYDraft {
     }
 
     static func draftKeyPrefix(forScopeId scopeId: String) -> String {
-      "\(scopeId)\(draftKeySeparator)"
+      "\(scopeId):"
     }
 
     static func parseDraftKey(_ key: String) -> Binding? {
-      guard let separatorRange = key.range(of: draftKeySeparator) else {
+      guard let separatorRange = key.range(of: ":", options: .backwards) else {
         return nil
       }
 
@@ -81,12 +79,21 @@ enum EVYDraft {
   }
 
   enum Scope {
-    static let fallbackUnscoped = "app#unscoped"
+    static let fallbackUnscoped = "app:unscoped"
 
     static func entityKey(fromScopeId scopeId: String?) -> String? {
-      guard let scopeId, let range = scopeId.range(of: "#", options: .backwards) else { return nil }
-      let key = String(scopeId[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-      if key.isEmpty || key == "browse" { return nil }
+      guard let scopeId else { return nil }
+
+      let trimmedScopeId = scopeId.trimmingCharacters(in: .whitespacesAndNewlines)
+      if trimmedScopeId == fallbackUnscoped || trimmedScopeId.hasPrefix("ephemeral:") {
+        return nil
+      }
+
+      guard let range = trimmedScopeId.range(of: ":", options: .backwards) else { return nil }
+
+      let flowId = String(trimmedScopeId[..<range.lowerBound])
+      let key = String(trimmedScopeId[range.upperBound...])
+      if flowId.isEmpty || key.isEmpty || key == "browse" { return nil }
       return key
     }
   }
@@ -135,7 +142,7 @@ enum EVYDraft {
   }
 
   static func createMergeScopeId(flowId: String, entityKey: String) -> String {
-    "\(flowId)#\(entityKey)"
+    "\(flowId):\(entityKey)"
   }
 
   static func merge(binding: Binding, value draftValue: EVYJson, into entity: EVYJson) -> EVYJson {

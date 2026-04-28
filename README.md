@@ -32,6 +32,8 @@ Clients can refresh backend service data with the protected `syncServiceData` JS
 
 Clients should store synced backend resources with service-qualified keys such as `marketplace:items` and `marketplace:conditions`. SDUI source bindings may still use short resource names like `{items}` or `{conditions}`; client data lookup resolves exact local keys first, then falls back to synced service resources. This keeps drafts and local flow state separate from backend catalog data while preserving concise flow bindings.
 
+iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS README § Draft scopes and draft cache keys](./ios/README.md#draft-scopes-and-draft-cache-keys).
+
 # Documentation
 
 - EVY Platform

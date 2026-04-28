@@ -260,7 +260,7 @@ struct ContentView: View {
     if let k = keys.sorted().first {
       return EVYDraft.createMergeScopeId(flowId: route.flowId, entityKey: k)
     }
-    return "\(route.flowId)#browse"
+    return "\(route.flowId):browse"
   }
 
   static func createKeysToDelete(

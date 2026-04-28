@@ -45,7 +45,7 @@ final class ContentViewTests: XCTestCase {
   func testDraftScopeIdForHomeFlowWithoutCreateUsesBrowseSuffix() throws {
     let flows = try makeFlows()
     let route = Route(flowId: "home-flow", pageId: "home-page")
-    XCTAssertEqual(ContentView.draftScopeId(for: route, flows: flows), "home-flow#browse")
+    XCTAssertEqual(ContentView.draftScopeId(for: route, flows: flows), "home-flow:browse")
   }
 
   private func makeFlows() throws -> [UI_Flow] {

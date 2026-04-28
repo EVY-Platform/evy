@@ -9,7 +9,7 @@ import XCTest
 
 @MainActor
 final class EVYCreateMergesDraftsTests: XCTestCase {
-  private let testDraftScope = "__test__#item"
+  private let testDraftScope = "__test__:item"
 
   override func setUp() async throws {
     try await super.setUp()
@@ -198,8 +198,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
     let row = try EVY.publicStore.get(key: "item")
 
-    let scopeA = "flow-a#item"
-    let scopeB = "flow-b#item"
+    let scopeA = "flow-a:item"
+    let scopeB = "flow-b:item"
 
     let titleA = try EVYDraft.binding(parsedProps: "title", scopeId: scopeA)
     try EVY.draftStore.upsert(
