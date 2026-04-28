@@ -158,7 +158,7 @@ class E2ETestBase: XCTestCase {
     return nil
   }
 
-  func tapAndGetEditableField(container: XCUIElement) async -> XCUIElement? {
+  @MainActor func tapAndGetEditableField(container: XCUIElement) async -> XCUIElement? {
     container.tap()
     try? await Task.sleep(for: .milliseconds(500))
     let textField = container.textFields.firstMatch
