@@ -20,7 +20,7 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: useblacksmith/checkout
+              uses: actions/checkout@v6
 
             - name: Check for E2E-relevant changes
               uses: dorny/paths-filter@v4
@@ -74,9 +74,6 @@ jobs:
                   set -euo pipefail
                   echo "Available Xcode apps:"
                   ls -1d /Applications/Xcode*.app 2>/dev/null || true
-                  if [ -d /Applications/Xcode.app ]; then
-                    sudo xcode-select -s /Applications/Xcode.app
-                  fi
                   echo "Selected developer directory:"
                   xcode-select -p
                   xcodebuild -version
