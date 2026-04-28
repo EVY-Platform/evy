@@ -7,10 +7,9 @@
 
 import SwiftUI
 
-struct EVYButtonRow: View, EVYRowProtocol {
+struct EVYButtonRow: View {
   @Environment(\.navigate) private var navigate
 
-  public static let JSONType = "Button"
 
   private let view: ButtonRowViewData
   private let actions: [UI_RowAction]
@@ -36,6 +35,6 @@ struct EVYButtonRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["1", "pages", "0", "footer"])
+    try! await EVYPreviewFixtures.getRow(["1", "pages", "0", "footer"])
   }
 }

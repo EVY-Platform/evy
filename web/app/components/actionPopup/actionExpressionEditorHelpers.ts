@@ -1,7 +1,7 @@
 import type {
 	ConditionExpression,
 	ConditionGroup,
-} from "../../utils/actionHelpers";
+} from "../../utils/conditionExpression";
 
 export function ensureGroup(expr: ConditionExpression | null): ConditionGroup {
 	if (!expr) {

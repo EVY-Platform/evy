@@ -1,10 +1,10 @@
 import { describe, it, expect } from "bun:test";
 import {
-	validateFlowData,
-	validateOrganizationPayload,
-	validateServicePayload,
-	validateServiceProviderPayload,
-} from "../validation";
+	validateDataEvyOrganization as validateOrganizationPayload,
+	validateDataEvyService as validateServicePayload,
+	validateDataEvyServiceProvider as validateServiceProviderPayload,
+	validateUiFlow as validateFlowData,
+} from "evy-types/validators";
 
 describe("validateServicePayload", () => {
 	const id = "550e8400-e29b-41d4-a716-446655440000";

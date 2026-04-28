@@ -3,12 +3,14 @@ import { useCallback, useMemo } from "react";
 import type { UI_Flow } from "../../types/flow";
 import {
 	type ActionFunction,
-	getFlowOptions,
-	getPageOptions,
 	parseBranch,
 	serializeBranch,
+} from "../../utils/actionBranch";
+import {
+	getFlowOptions,
+	getPageOptions,
 	toVariableOptions,
-} from "../../utils/actionHelpers";
+} from "../../utils/actionFlowOptions";
 import { PopoverSelect, type PopoverOption } from "../PopoverSelect";
 import { FUNCTION_OPTIONS } from "./actionPopupConstants";
 

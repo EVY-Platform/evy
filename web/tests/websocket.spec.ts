@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openAppWithTestFlows } from "./flowFixtures";
 import {
 	ensureSidePanelsExpanded,
 	getConfigPanel,
@@ -7,7 +8,6 @@ import {
 	getLoadingState,
 	getRowsPanel,
 	installConstructorFailingWebSocket,
-	openAppWithTestFlows,
 } from "./utils";
 
 test.describe("WebSocket Connection States", () => {

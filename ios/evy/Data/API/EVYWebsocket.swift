@@ -9,14 +9,14 @@ import Foundation
 import JsonRPC
 import Serializable
 
-public enum EVYRPCError: LocalizedError {
+enum EVYRPCError: LocalizedError {
   case loginError
   case connectionError(String)
   case rpcError(code: Int, message: String)
   case unknownError(String)
   case subscriptionError(String)
 
-  public var errorDescription: String? {
+  var errorDescription: String? {
     switch self {
     case .loginError:
       return "Authentication failed"
@@ -77,7 +77,7 @@ final class EVYWebsocket: EVYWebsocketProtocol {
     rpc.delegate = self
   }
 
-  public func connect(token: String, os: DataOS) async throws -> Bool {
+  func connect(token: String, os: DataOS) async throws -> Bool {
     if rpc.connected == .disconnected {
       rpc.connect()
     }
@@ -87,7 +87,7 @@ final class EVYWebsocket: EVYWebsocketProtocol {
       expecting: Bool.self)
   }
 
-  public func subscribe(event: String) async throws -> [String: String] {
+  func subscribe(event: String) async throws -> [String: String] {
     try await fetch(
       method: "rpc.on",
       params: [event],
@@ -95,7 +95,7 @@ final class EVYWebsocket: EVYWebsocketProtocol {
     )
   }
 
-  public func fetch<T: Codable>(
+  func fetch<T: Codable>(
     method: String,
     params: Encodable,
     expecting _: T.Type
@@ -148,19 +148,19 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
   }
 
   #if DEBUG
-    public func state(_ state: ConnectableState) {
+    func state(_ state: ConnectableState) {
       print("[EVYWebsocket] Connection state changed: \(state)")
     }
   #endif
 
-  public func error(_ error: ServiceError) {
+  func error(_ error: ServiceError) {
     #if DEBUG
       print("[EVYWebsocket] Service error: \(error)")
     #endif
     postError(EVYError.websocketError(context: error.localizedDescription))
   }
 
-  public func notification(method: String, params: Parsable) {
+  func notification(method: String, params: Parsable) {
     switch method {
     case "dataUpdated":
       handleDataUpdated(params: params)

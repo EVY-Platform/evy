@@ -4,12 +4,12 @@ import type { UI_RowAction } from "evy-types";
 
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useFlowsContext } from "../state";
+import { extractDraftVariables } from "../utils/actionVariables";
 import {
-	extractDraftVariables,
 	parseCondition,
 	serializeCondition,
 	type ConditionExpression,
-} from "../utils/actionHelpers";
+} from "../utils/conditionExpression";
 import { actionPopupEditorCss } from "./actionPopupEditorCss";
 import { modalSharedCss } from "./modalSharedCss";
 import { BranchEditor } from "./actionPopup/BranchEditor";

@@ -2,9 +2,9 @@ import { expect, test } from "@playwright/test";
 import type { UI_Flow as ServerFlow } from "evy-types";
 import type { Page } from "@playwright/test";
 
+import { openAppWithFullFlows } from "./flowFixtures";
 import {
 	createNewFlowThroughPicker,
-	openAppWithFullFlows,
 	openFlowPicker,
 	selectFlowByLabel,
 	SELECTORS,

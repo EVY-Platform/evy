@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openAppWithTestFlows } from "./flowFixtures";
 import {
 	SELECTORS,
 	getDropIndicator,
@@ -6,7 +7,6 @@ import {
 	getPageContent,
 	getPageRow,
 	getSidebarRow,
-	openAppWithTestFlows,
 } from "./utils";
 
 test.describe("Drag Hover Indicator Behavior", () => {

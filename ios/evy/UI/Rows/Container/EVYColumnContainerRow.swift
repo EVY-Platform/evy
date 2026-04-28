@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYColumnContainerRow: View, EVYRowProtocol {
-  public static let JSONType = "ColumnContainer"
+struct EVYColumnContainerRow: View {
 
   private let view: ColumnContainerRowViewData
 
@@ -35,6 +34,6 @@ struct EVYColumnContainerRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "0", "rows", "5"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "5"])
   }
 }

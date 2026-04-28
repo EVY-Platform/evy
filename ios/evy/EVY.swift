@@ -103,30 +103,6 @@ struct EVY {
       expecting: [UI_Flow].self)
   }
 
-  /// Seed preview data by syncing services and creating a local "item" key
-  /// from the first marketplace item. **Preview-only** – not used at runtime.
-  static func seedPreviewData() async throws {
-    try await syncAllServices()
-    let itemsData = try EVY.publicStore.get(key: "marketplace:items")
-    let items = try itemsData.decoded()
-    let firstItem: Data
-    if case .array(let arr) = items, let first = arr.first {
-      firstItem = try JSONEncoder().encode(first)
-    } else {
-      firstItem = try JSONEncoder().encode(EVYJson.dictionary([:]))
-    }
-    try EVY.publicStore.create(key: "item", data: firstItem)
-  }
-
-  static func getRow(_ props: [String]) async throws -> UI_Row {
-    try await seedPreviewData()
-    let flowData = try await EVYAPIManager.shared.fetch(
-      method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil),
-      expecting: EVYJson.self)
-    let rowData = try JSONEncoder().encode(flowData.parseProp(props: props))
-    return try JSONDecoder().decode(UI_Row.self, from: rowData)
-  }
-
   static func getDataFromText(_ input: String) throws -> EVYJson {
     try _getDataFromText(input)
   }
@@ -317,6 +293,33 @@ struct EVY {
       }
       try draftStore.upsert(binding: draftBinding, data: newData)
     }
+  }
+}
+
+@MainActor
+enum EVYPreviewFixtures {
+  /// Seed preview data by syncing services and creating a local "item" key
+  /// from the first marketplace item. **Preview-only** – not used at runtime.
+  static func seedData() async throws {
+    try await EVY.syncAllServices()
+    let itemsData = try EVY.publicStore.get(key: "marketplace:items")
+    let items = try itemsData.decoded()
+    let firstItem: Data
+    if case .array(let arr) = items, let first = arr.first {
+      firstItem = try JSONEncoder().encode(first)
+    } else {
+      firstItem = try JSONEncoder().encode(EVYJson.dictionary([:]))
+    }
+    try EVY.publicStore.create(key: "item", data: firstItem)
+  }
+
+  static func getRow(_ props: [String]) async throws -> UI_Row {
+    try await seedData()
+    let flowData = try await EVYAPIManager.shared.fetch(
+      method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil),
+      expecting: EVYJson.self)
+    let rowData = try JSONEncoder().encode(flowData.parseProp(props: props))
+    return try JSONDecoder().decode(UI_Row.self, from: rowData)
   }
 }
 

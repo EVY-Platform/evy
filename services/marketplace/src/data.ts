@@ -22,11 +22,20 @@ import {
 import { validateDataPayload } from "./validation";
 
 const MARKETPLACE_SERVICE = "marketplace";
+const MAX_ITEM_TAG_SUGGESTIONS = 3;
+const MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE = 3;
 
-export type MarketplaceSuggestion = {
+type MarketplaceSuggestion = {
 	id: string;
 	value: string;
 };
+
+function normalizeItemSuggestionQuery(query: string): string {
+	return query
+		.toLocaleLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "");
+}
 
 async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 	const query = params.filter?.query?.trim() ?? "";
@@ -34,10 +43,7 @@ async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 		return validateGetResponse([]);
 	}
 
-	const normalizedQuery = query
-		.toLocaleLowerCase()
-		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "");
+	const normalizedQuery = normalizeItemSuggestionQuery(query);
 
 	const result = await db.execute(sql`
 		WITH tags AS (
@@ -81,9 +87,9 @@ async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 		WHERE norm_value = ${normalizedQuery}
 			OR norm_value LIKE ${normalizedQuery || "%"}
 			OR position(${normalizedQuery} in norm_value) > 0
-			OR lev_dist <= 3
+			OR lev_dist <= ${MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE}
 		ORDER BY score, value
-		LIMIT 3
+		LIMIT ${MAX_ITEM_TAG_SUGGESTIONS}
 	`);
 
 	const rows =

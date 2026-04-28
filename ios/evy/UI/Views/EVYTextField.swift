@@ -133,7 +133,7 @@ struct EVYTextField: View {
   AsyncPreview { asyncView in
     asyncView
   } view: {
-    try! await EVY.seedPreviewData()
+    try! await EVYPreviewFixtures.seedData()
 
     return VStack {
       EVYTextField(

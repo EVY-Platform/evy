@@ -34,7 +34,5 @@ struct EVYButton: View {
 #Preview {
   EVYButton(
     label: "Button",
-    action: {
-      print("clicked button")
-    })
+    action: {})
 }

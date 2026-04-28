@@ -201,7 +201,7 @@ function buildMarketplaceServiceHandlers(
 	};
 }
 
-export type StartMarketplaceGrpcOptions = {
+type StartMarketplaceGrpcOptions = {
 	host?: string;
 	port?: number;
 };

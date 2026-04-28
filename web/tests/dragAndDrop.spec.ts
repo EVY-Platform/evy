@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openAppWithTestFlows } from "./flowFixtures";
 import {
 	SELECTORS,
 	expectDraggableSubrowOrder,
@@ -7,7 +8,6 @@ import {
 	getPageRow,
 	getRowsPanel,
 	getSidebarRow,
-	openAppWithTestFlows,
 	setupTwoEmptyTestPages,
 } from "./utils";
 

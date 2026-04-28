@@ -2,7 +2,7 @@ import { parseOperand, serializeOperand } from "./actionOperands";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
 export const COMPARISON_OPERATORS = ["==", "!=", ">", "<", ">=", "<="] as const;
-export type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
+type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
 
 export const OPERATOR_LABELS: Record<ComparisonOperator, string> = {
 	"==": "equals",
@@ -11,12 +11,6 @@ export const OPERATOR_LABELS: Record<ComparisonOperator, string> = {
 	"<": "<",
 	">=": ">=",
 	"<=": "<=",
-};
-
-export type ConditionPart = {
-	left: string;
-	operator: ComparisonOperator;
-	right: string;
 };
 
 export type LogicalOperator = "and" | "or";
@@ -268,57 +262,7 @@ function serializeExpressionInner(expr: ConditionExpression): string {
 	return parts.join(sep);
 }
 
-/** Convert an expression tree to a flat list of leaf conditions. */
-export function expressionToFlatParts(
-	expr: ConditionExpression | null,
-): ConditionPart[] {
-	if (!expr) return [];
-	const result: ConditionPart[] = [];
-	collectLeaves(expr, result);
-	return result;
-}
-
-function collectLeaves(
-	expr: ConditionExpression,
-	result: ConditionPart[],
-): void {
-	if (expr.type === "leaf") {
-		result.push({
-			left: expr.left,
-			operator: expr.operator,
-			right: expr.right,
-		});
-		return;
-	}
-	for (const child of expr.children) {
-		collectLeaves(child, result);
-	}
-}
-
-/** Build an expression from a flat list of parts joined by a logical operator. */
-export function flatPartsToExpression(
-	parts: ConditionPart[],
-	logicalOperator: LogicalOperator = "or",
-): ConditionExpression | null {
-	if (parts.length === 0) return null;
-	const leaves: ConditionLeaf[] = parts.map((p) => ({
-		type: "leaf",
-		left: p.left,
-		operator: p.operator,
-		right: p.right,
-	}));
-	if (leaves.length === 1) return leaves[0];
-	return { type: "group", logicalOperator, children: leaves };
-}
-
-export function formatConditionDisplay(part: ConditionPart): string {
-	const left = serializeOperand(parseOperand(part.left));
-	const op = OPERATOR_LABELS[part.operator];
-	const right = serializeOperand(parseOperand(part.right));
-	return `${left} ${op} ${right}`;
-}
-
-export type ConditionSummaryLine = {
+type ConditionSummaryLine = {
 	prefix: string;
 	text: string;
 };

@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-public enum EVYDataParseError: Error {
+enum EVYDataParseError: Error {
   case invalidProps
   case invalidVariable
   case unprocessableValue

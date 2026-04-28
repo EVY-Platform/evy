@@ -4,7 +4,7 @@ import { TriangleAlert } from "lucide-react";
 
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { useEscapeKey } from "../hooks/useEscapeKey";
-import type { PageReferenceEntry } from "../utils/actionHelpers";
+import type { PageReferenceEntry } from "../utils/pageReferences";
 import { modalSharedCss } from "./modalSharedCss";
 import { pageInUseDialogCss } from "./pageInUseDialogCss";
 

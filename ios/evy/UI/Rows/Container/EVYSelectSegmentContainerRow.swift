@@ -7,8 +7,7 @@
 
 import SwiftUI
 
-struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
-  public static let JSONType = "SelectSegmentContainer"
+struct EVYSelectSegmentContainerRow: View {
 
   private let view: SelectSegmentContainerRowViewData
   @State private var selected: Int = 0
@@ -41,6 +40,6 @@ struct EVYSelectSegmentContainerRow: View, EVYRowProtocol {
   AsyncPreview { asyncView in
     EVYRow(row: asyncView)
   } view: {
-    try! await EVY.getRow(["2", "pages", "2", "rows", "0"])
+    try! await EVYPreviewFixtures.getRow(["2", "pages", "2", "rows", "0"])
   }
 }

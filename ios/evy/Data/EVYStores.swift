@@ -22,6 +22,7 @@ extension Notification.Name {
 @MainActor
 @Observable class EVYState<T: Equatable> {
   private var _value: T
+  @ObservationIgnored private var observerTokens: [NSObjectProtocol] = []
   var value: T {
     get { _value }
     set {
@@ -32,15 +33,17 @@ extension Notification.Name {
   init(setter: @escaping () -> T) {
     _value = setter()
 
-    NotificationCenter.default.addObserver(
-      forName: .evyDataUpdated,
-      object: nil,
-      queue: .main
-    ) { [weak self] _ in
-      Task { @MainActor in
-        self?.value = setter()
+    observerTokens.append(
+      NotificationCenter.default.addObserver(
+        forName: .evyDataUpdated,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        Task { @MainActor in
+          self?.value = setter()
+        }
       }
-    }
+    )
   }
 
   init(watch: String, setter: @escaping (_ input: String) -> T) {
@@ -49,28 +52,36 @@ extension Notification.Name {
     let watchProps = EVY.parsePropsFromText(watch)
     let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
 
-    NotificationCenter.default.addObserver(
-      forName: .evyDataUpdated,
-      object: nil,
-      queue: .main
-    ) { [weak self] notif in
-      Task { @MainActor in
-        guard let notifProp = notif.object as? String else {
-          self?.value = setter(watch)
-          return
+    observerTokens.append(
+      NotificationCenter.default.addObserver(
+        forName: .evyDataUpdated,
+        object: nil,
+        queue: .main
+      ) { [weak self] notif in
+        Task { @MainActor in
+          guard let notifProp = notif.object as? String else {
+            self?.value = setter(watch)
+            return
+          }
+
+          let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
+          let minLen = min(watchSegments.count, notifSegments.count)
+          let prefixMatch = Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
+
+          if prefixMatch { self?.value = setter(watch) }
         }
-
-        let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
-        let minLen = min(watchSegments.count, notifSegments.count)
-        let prefixMatch = Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
-
-        if prefixMatch { self?.value = setter(watch) }
       }
-    }
+    )
   }
 
   init(staticString: T) {
     _value = staticString
+  }
+
+  deinit {
+    for observerToken in observerTokens {
+      NotificationCenter.default.removeObserver(observerToken)
+    }
   }
 }
 

@@ -9,7 +9,7 @@ import { findFlowById } from "../utils/flowHelpers";
 import {
 	findPageReferences,
 	type PageReferenceEntry,
-} from "../utils/actionHelpers";
+} from "../utils/pageReferences";
 import { ActionEditor } from "./ActionEditor";
 import { PageInUseDialog } from "./PageInUseDialog";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";

@@ -69,7 +69,7 @@ struct EVYInputList: View {
   AsyncPreview { asyncView in
     asyncView
   } view: {
-    try! await EVY.seedPreviewData()
+    try! await EVYPreviewFixtures.seedData()
 
     return EVYInputList(
       data: "{tags}",

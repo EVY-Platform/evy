@@ -10,21 +10,21 @@ import XCTest
 @MainActor
 final class ContentViewTests: XCTestCase {
   func testExtractCreateKeysReturnsEmptyForNilFlow() {
-    let keys = ContentView.extractCreateKeys(from: nil)
+    let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: nil)
     XCTAssertEqual(keys, [])
   }
 
   func testExtractCreateKeysFindsCreateActions() throws {
     let flows = try makeFlows()
     let createFlow = flows.first(where: { $0.id == "create-flow" })
-    let keys = ContentView.extractCreateKeys(from: createFlow)
+    let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: createFlow)
     XCTAssertEqual(keys, Set(["item"]))
   }
 
   func testExtractCreateKeysReturnsEmptyForFlowWithoutCreateActions() throws {
     let flows = try makeFlows()
     let homeFlow = flows.first(where: { $0.id == "home-flow" })
-    let keys = ContentView.extractCreateKeys(from: homeFlow)
+    let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: homeFlow)
     XCTAssertEqual(keys, [])
   }
 
@@ -32,7 +32,7 @@ final class ContentViewTests: XCTestCase {
     let flows = try makeFlows()
     let route = Route(flowId: "create-flow", pageId: "create-page")
     XCTAssertEqual(
-      ContentView.draftScopeId(for: route, flows: flows),
+      EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows),
       EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: "item")
     )
   }
@@ -40,7 +40,7 @@ final class ContentViewTests: XCTestCase {
   func testDraftScopeIdForHomeFlowWithoutCreateUsesBrowseSuffix() throws {
     let flows = try makeFlows()
     let route = Route(flowId: "home-flow", pageId: "home-page")
-    XCTAssertEqual(ContentView.draftScopeId(for: route, flows: flows), "home-flow:browse")
+    XCTAssertEqual(EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows), "home-flow:browse")
   }
 
   private func makeFlows() throws -> [UI_Flow] {

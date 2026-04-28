@@ -212,7 +212,7 @@ class ImageManager {
   AsyncPreview { asyncView in
     asyncView
   } view: {
-    try! await EVY.seedPreviewData()
+    try! await EVYPreviewFixtures.seedData()
 
     return EVYSelectPhoto(
       title: "Photos Title",
