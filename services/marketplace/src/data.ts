@@ -54,15 +54,34 @@ async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 				AND tag->>'id' IS NOT NULL
 				AND length(trim(tag->>'value')) > 0
 			ORDER BY (tag->>'id'), lower(trim(tag->>'value'))
+		),
+		normalized_tags AS (
+			SELECT id, value, lower(trim(value)) AS norm_value
+			FROM tags
+		),
+		fuzzy_tags AS (
+			SELECT id, value, norm_value,
+				CASE
+					WHEN norm_value = ${normalizedQuery}
+						OR norm_value LIKE ${normalizedQuery || "%"}
+						OR position(${normalizedQuery} in norm_value) > 0
+					THEN 0
+					ELSE levenshtein(${normalizedQuery}, norm_value)
+				END AS lev_dist
+			FROM normalized_tags
 		)
 		SELECT id, value,
 			CASE
-				WHEN lower(trim(value)) = ${normalizedQuery} THEN 0.0
-				WHEN lower(trim(value)) LIKE ${normalizedQuery || "%"} THEN 1.0 + (length(trim(value)) - ${normalizedQuery.length}) / 100.0
-				WHEN position(${normalizedQuery} in lower(trim(value))) > 0 THEN 2.0 + (position(${normalizedQuery} in lower(trim(value))) - 1) / 100.0 + abs(length(trim(value)) - ${normalizedQuery.length}) / 1000.0
-				ELSE 3.0 + levenshtein(${normalizedQuery}, lower(trim(value)))::float / GREATEST(${normalizedQuery.length}, length(trim(value)))
+				WHEN norm_value = ${normalizedQuery} THEN 0.0
+				WHEN norm_value LIKE ${normalizedQuery || "%"} THEN 1.0 + (length(norm_value) - ${normalizedQuery.length}) / 100.0
+				WHEN position(${normalizedQuery} in norm_value) > 0 THEN 2.0 + (position(${normalizedQuery} in norm_value) - 1) / 100.0 + abs(length(norm_value) - ${normalizedQuery.length}) / 1000.0
+				ELSE 3.0 + lev_dist::float / GREATEST(${normalizedQuery.length}, length(norm_value))
 			END AS score
-		FROM tags
+		FROM fuzzy_tags
+		WHERE norm_value = ${normalizedQuery}
+			OR norm_value LIKE ${normalizedQuery || "%"}
+			OR position(${normalizedQuery} in norm_value) > 0
+			OR lev_dist <= 3
 		ORDER BY score, value
 		LIMIT 3
 	`);

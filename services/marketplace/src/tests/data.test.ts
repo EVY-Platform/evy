@@ -166,12 +166,42 @@ describe("marketplace get/upsert", () => {
 			},
 		});
 
-		expect(result[0]).toEqual({ id: "query", value: "iph" });
-		expect(result.slice(1, 4)).toContainEqual({
-			id: "iphone-tag",
-			value: "iPhone",
+		expect(result).toEqual([
+			{ id: "query", value: "iph" },
+			{ id: "iphone-tag", value: "iPhone" },
+		]);
+	});
+
+	it("returns fuzzy suggestions when Levenshtein distance is at most three", async () => {
+		await testDb.insert(schema.data).values({
+			resource: "item",
+			data: {
+				id: crypto.randomUUID(),
+				title: "Phone accessories",
+				tags: [
+					{ id: "near-phone-tag", value: "Phona" },
+					{ id: "distance-three-tag", value: "Phxxx" },
+					{ id: "distant-laptop-tag", value: "Laptop" },
+				],
+			},
+			createdAt: "2024-01-01T00:00:00.000Z",
+			updatedAt: "2024-01-01T00:00:00.000Z",
 		});
-		expect(result).toHaveLength(4);
+
+		const result = await getForValidatedMarketplaceRequest({
+			service: "marketplace",
+			resource: "items",
+			method: "suggestions",
+			filter: {
+				query: "phone",
+			},
+		});
+
+		expect(result).toEqual([
+			{ id: "query", value: "phone" },
+			{ id: "near-phone-tag", value: "Phona" },
+			{ id: "distance-three-tag", value: "Phxxx" },
+		]);
 	});
 
 	it("dedupes repeated item tags in suggestions", async () => {
