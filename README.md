@@ -105,7 +105,9 @@ If port `3000` is already in use locally, run with an override (values set befor
 
 ## CI
 
-CI workflows run on Blacksmith Ubuntu runners: Bun is installed via `oven-sh/setup-bun` or `.github/actions/setup-bun`, Playwright browsers via `web`’s `test:setup`. PostgreSQL runs as a GitHub Actions service container (`postgres:16`) only where needed for API-backed flows (see `.github/workflows/e2e_tests.yml`).
+Most workflows run on Blacksmith Ubuntu runners with Bun (`oven-sh/setup-bun` or `.github/actions/setup-bun`) and Playwright setup via `web`’s `test:setup` where applicable.
+
+The E2E workflow (`.github/workflows/e2e_tests.yml`) runs on Blacksmith macOS (`blacksmith-6vcpu-macos-latest`): PostgreSQL is installed and started on the host via Homebrew, then `./run-e2e.sh --no-docker` runs API, marketplace, web, and iOS Simulator tests.
 
 The repo still builds a CI Docker image (`ghcr.io/evy-platform/evy-ci`) via `.github/workflows/push-ci-image.yml` for local use or future workflows.
 

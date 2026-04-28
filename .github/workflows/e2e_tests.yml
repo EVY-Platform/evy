@@ -7,32 +7,16 @@ on:
         branches: [dev]
     workflow_dispatch:
 
-# NOTE: iOS e2e tests require macOS 26 (for iOS 26.2 simulator) + Docker.
-# GitHub-hosted ARM macOS runners don't support Docker (no nested virtualization).
-# iOS tests must be run locally or on a self-hosted runner with Docker Desktop.
+# E2E runs on Blacksmith macOS so iOS Simulator tests can run in CI. PostgreSQL is started on the host
+# (Homebrew); api/marketplace/web run via `run-e2e.sh --no-docker` (no Docker required for this job).
 
 jobs:
     e2e_tests:
         permissions:
             contents: read
             packages: read
-        timeout-minutes: 5
-        runs-on: blacksmith-2vcpu-ubuntu-2404-arm
-
-        services:
-            postgres:
-                image: postgres:16
-                ports:
-                    - 5432:5432
-                env:
-                    POSTGRES_USER: evy
-                    POSTGRES_PASSWORD: evy
-                    POSTGRES_DB: evy
-                options: >-
-                    --health-cmd "pg_isready -U evy -d evy"
-                    --health-interval 5s
-                    --health-timeout 5s
-                    --health-retries 10
+        timeout-minutes: 30
+        runs-on: blacksmith-6vcpu-macos-latest
 
         steps:
             - name: Checkout code
@@ -57,9 +41,20 @@ jobs:
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               uses: oven-sh/setup-bun@v2
 
-            - name: Create marketplace database
+            - name: Start PostgreSQL on host
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
-              run: docker exec ${{ job.services.postgres.id }} createdb -U evy marketplace
+              run: |
+                  set -euo pipefail
+                  brew install postgresql@16
+                  PG_BIN="$(brew --prefix postgresql@16)/bin"
+                  echo "$PG_BIN" >> "$GITHUB_PATH"
+                  export PGDATA="${RUNNER_TEMP}/pgdata"
+                  "$PG_BIN/initdb" -D "$PGDATA" -U postgres -A trust -E UTF8 --locale=C
+                  "$PG_BIN/pg_ctl" -D "$PGDATA" -o "-p 5432" -l "${RUNNER_TEMP}/postgres.log" -w start
+                  "$PG_BIN/psql" -h localhost -p 5432 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+                    -c "CREATE USER evy WITH PASSWORD 'evy' CREATEDB;"
+                  "$PG_BIN/createdb" -h localhost -p 5432 -U postgres -O evy evy
+                  "$PG_BIN/createdb" -h localhost -p 5432 -U postgres -O evy marketplace
 
             - name: Install dependencies
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
@@ -73,11 +68,19 @@ jobs:
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               run: bun run --cwd web test:setup
 
+            - name: Select Xcode for iOS tests
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              run: |
+                  sudo xcode-select -s /Applications/Xcode_26.4.1.app
+                  xcodebuild -version
+                  xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | head -n 80
+
             - name: Run E2E tests
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               env:
                   MARKETPLACE_GRPC_HOST: 127.0.0.1
-              run: bash run-e2e.sh --skip-ios --no-docker
+                  IOS_SIMULATOR_DESTINATION: platform=iOS Simulator,name=iPhone 17,OS=26.4.1
+              run: bash run-e2e.sh --no-docker
 
             - name: Upload Playwright report
               uses: actions/upload-artifact@v7
