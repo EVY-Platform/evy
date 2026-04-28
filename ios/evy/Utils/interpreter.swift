@@ -165,14 +165,15 @@ func _getDataFromText(_ input: String) throws -> EVYJson {
 
 @MainActor
 func _getDataFromProps(_ props: String) throws -> EVYJson {
-  let splitProps = try splitPropsFromText(props)
+  let (store, cleanProps) = EVY.store(for: props)
+  let splitProps = try splitPropsFromText(cleanProps)
   guard let firstProp = splitProps.first else {
     throw EVYParamError.invalidProps
   }
 
-  if let scopeId = EVY.data.activeDraftScopeId,
-    let draftBinding = try? EVY.data.draftBinding(fromParsedProps: props, scopeId: scopeId),
-    let draftRow = EVY.data.draftIfPresent(binding: draftBinding)
+  if let scopeId = EVY.draftStore.activeScopeId,
+    let draftBinding = try? EVY.draftStore.binding(fromParsedProps: cleanProps, scopeId: scopeId),
+    let draftRow = EVY.draftStore.draftIfPresent(binding: draftBinding)
   {
     let remaining = EVYDraft.remainingPropsAfterDraftPrefix(
       splitProps: splitProps,
@@ -182,7 +183,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
   }
 
   let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
-  let dataObj = try EVY.data.getForBinding(key: firstProp)
+  let dataObj = try store.getForBinding(key: firstProp)
   return try dataObj.decoded().parseProp(props: remainingProps)
 }
 
@@ -195,18 +196,19 @@ func _getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValu
 @MainActor
 func _watchTarget(for text: String) -> String {
   let unwrapped = _parsePropsFromText(text)
-  let candidates: [String] = unwrapped == text ? [text] : [unwrapped, text]
+  let cleanUnwrapped = EVY.stripLocalPrefix(unwrapped)
+  let candidates: [String] = unwrapped == text ? [text] : [cleanUnwrapped, text]
   for candidate in candidates {
     if let functionCall = parseFunctionCall(candidate) {
       let parts = splitFunctionArguments(functionCall.functionArgs)
       if let first = parts.first, !first.isEmpty {
-        return stripOptionalSurroundingQuotes(first)
+        return EVY.stripLocalPrefix(stripOptionalSurroundingQuotes(first))
       }
-      return functionCall.functionArgs
+      return EVY.stripLocalPrefix(functionCall.functionArgs)
     }
   }
   if unwrapped != text {
-    return unwrapped
+    return cleanUnwrapped
   }
   return text
 }
@@ -229,9 +231,9 @@ func _formatData(json: EVYJson, format: String) throws -> String {
   if formatWithNewData.isEmpty { return "" }
 
   let encodedData = try JSONEncoder().encode(json)
-  try EVY.data.create(key: temporaryId, data: encodedData)
+  try EVY.publicStore.create(key: temporaryId, data: encodedData)
   let returnText = try _getValueFromText(formatWithNewData)
-  try EVY.data.delete(key: temporaryId)
+  try EVY.publicStore.delete(key: temporaryId)
   return returnText.toString()
 }
 

@@ -4,72 +4,8 @@
 //
 
 import Foundation
-import SwiftData
 
-@Model
-final class EVYDraft {
-  var scopeId: String
-  var pathKey: String
-  var isAliasBinding: Bool
-  var data: Data
-
-  init(scopeId: String, pathKey: String, isAliasBinding: Bool, data: Data) {
-    self.scopeId = scopeId
-    self.pathKey = pathKey
-    self.isAliasBinding = isAliasBinding
-    self.data = data
-  }
-
-  convenience init(binding: EVYDraft.Binding, data: Data) {
-    let alias: Bool
-    if case .aliasFlat = binding.mergeMode {
-      alias = true
-    } else {
-      alias = false
-    }
-    self.init(
-      scopeId: binding.scopeId,
-      pathKey: binding.pathKey,
-      isAliasBinding: alias,
-      data: data
-    )
-  }
-
-  func decoded() throws -> EVYJson {
-    try JSONDecoder().decode(EVYJson.self, from: data)
-  }
-
-  func mergeModeEnum() -> EVYDraft.MergeMode {
-    let segments: [String]
-    if let raw = Data(base64Encoded: pathKey),
-      let arr = try? JSONSerialization.jsonObject(with: raw) as? [String]
-    {
-      segments = arr
-    } else {
-      segments = []
-    }
-    if isAliasBinding {
-      return .aliasFlat(pathSegments: segments)
-    }
-    return .explicitPath(pathSegments: segments)
-  }
-
-  func merged(into entity: EVYJson, draftValue: EVYJson) -> EVYJson {
-    switch mergeModeEnum() {
-    case .explicitPath(let path):
-      return evyJsonUpdating(json: entity, at: path, with: draftValue) ?? entity
-    case .aliasFlat(let pathSegments):
-      let leafName = pathSegments.last ?? ""
-      return mergeDraftValue(
-        variableName: leafName,
-        draftValue: draftValue,
-        into: entity
-      )
-    }
-  }
-}
-
-extension EVYDraft {
+enum EVYDraft {
   enum MergeMode: Equatable {
     case explicitPath(pathSegments: [String])
     case aliasFlat(pathSegments: [String])
@@ -85,18 +21,83 @@ extension EVYDraft {
         .base64EncodedString() ?? pathSegments.joined(separator: "\u{1f}")
     }
 
+    // Internal cache key format: <scopeId>:<modeFlag><base64PathKey>.
+    // The mode flag is "a" for alias-flat bindings and "e" for explicit paths.
+    var draftKey: String {
+      let modeFlag: String
+      switch mergeMode {
+      case .aliasFlat:
+        modeFlag = "a"
+      case .explicitPath:
+        modeFlag = "e"
+      }
+
+      return "\(scopeId):\(modeFlag)\(pathKey)"
+    }
+
     var notificationKey: String {
       pathSegments.joined(separator: PROP_SEPARATOR)
+    }
+
+    static func draftKeyPrefix(forScopeId scopeId: String) -> String {
+      "\(scopeId):"
+    }
+
+    // Scope IDs can contain colons, so split on the last colon to separate
+    // the scope from the mode/path portion of the draft cache key.
+    static func parseDraftKey(_ key: String) -> Binding? {
+      guard let separatorRange = key.range(of: ":", options: .backwards) else {
+        return nil
+      }
+
+      let scopeId = String(key[..<separatorRange.lowerBound])
+      let modeAndPathKey = String(key[separatorRange.upperBound...])
+      guard let modeFlag = modeAndPathKey.first else {
+        return nil
+      }
+
+      let pathKey = String(modeAndPathKey.dropFirst())
+      guard
+        let rawPathData = Data(base64Encoded: pathKey),
+        let pathSegments = try? JSONSerialization.jsonObject(with: rawPathData) as? [String]
+      else {
+        return nil
+      }
+
+      let mergeMode: MergeMode
+      switch modeFlag {
+      case "a":
+        mergeMode = .aliasFlat(pathSegments: pathSegments)
+      case "e":
+        mergeMode = .explicitPath(pathSegments: pathSegments)
+      default:
+        return nil
+      }
+
+      return Binding(
+        scopeId: scopeId,
+        pathSegments: pathSegments,
+        mergeMode: mergeMode
+      )
     }
   }
 
   enum Scope {
-    static let fallbackUnscoped = "app#unscoped"
+    static let fallbackUnscoped = "app:unscoped"
 
     static func entityKey(fromScopeId scopeId: String?) -> String? {
-      guard let scopeId, let range = scopeId.range(of: "#", options: .backwards) else { return nil }
-      let key = String(scopeId[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-      if key.isEmpty || key == "browse" { return nil }
+      guard let scopeId else { return nil }
+
+      let trimmedScopeId = scopeId.trimmingCharacters(in: .whitespacesAndNewlines)
+      if trimmedScopeId == fallbackUnscoped || trimmedScopeId.hasPrefix("ephemeral:") {
+        return nil
+      }
+
+      guard let range = trimmedScopeId.range(of: ":", options: .backwards) else { return nil }
+
+      let flowId = String(trimmedScopeId[..<range.lowerBound])
+      let key = String(trimmedScopeId[range.upperBound...])
+      if flowId.isEmpty || key.isEmpty || key == "browse" { return nil }
       return key
     }
   }
@@ -145,7 +146,21 @@ extension EVYDraft {
   }
 
   static func createMergeScopeId(flowId: String, entityKey: String) -> String {
-    "\(flowId)#\(entityKey)"
+    "\(flowId):\(entityKey)"
+  }
+
+  static func merge(binding: Binding, value draftValue: EVYJson, into entity: EVYJson) -> EVYJson {
+    switch binding.mergeMode {
+    case .explicitPath(let path):
+      return evyJsonUpdating(json: entity, at: path, with: draftValue) ?? entity
+    case .aliasFlat(let pathSegments):
+      let leafName = pathSegments.last ?? ""
+      return mergeDraftValue(
+        variableName: leafName,
+        draftValue: draftValue,
+        into: entity
+      )
+    }
   }
 
   static func remainingPropsAfterDraftPrefix(splitProps: [String], binding: Binding) -> [String] {

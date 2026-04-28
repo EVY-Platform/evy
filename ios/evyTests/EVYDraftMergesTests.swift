@@ -9,19 +9,19 @@ import XCTest
 
 @MainActor
 final class EVYCreateMergesDraftsTests: XCTestCase {
-  private let testDraftScope = "__test__#item"
+  private let testDraftScope = "__test__:item"
 
   override func setUp() async throws {
     try await super.setUp()
-    try? EVY.data.delete(key: "item")
-    EVY.data.deleteAllDraftsForTestIsolation()
-    EVY.data.activeDraftScopeId = testDraftScope
+    try? EVY.publicStore.delete(key: "item")
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = testDraftScope
   }
 
   override func tearDown() async throws {
-    try? EVY.data.delete(key: "item")
-    EVY.data.deleteAllDraftsForTestIsolation()
-    EVY.data.activeDraftScopeId = nil
+    try? EVY.publicStore.delete(key: "item")
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = nil
     try await super.tearDown()
   }
 
@@ -30,8 +30,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "id": .string("00000000-0000-0000-0000-000000000001"),
       "title": .string("Seed Title"),
     ]
-    try EVY.data.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.data.get(key: "item")
+    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "title")
     try EVY.updateValue("User Title", at: "{title}")
@@ -55,16 +55,16 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
         "value": .decimal(250),
       ]),
     ]
-    try EVY.data.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.data.get(key: "item")
+    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "price")
     let newPrice = EVYJson.dictionary([
       "currency": .string("AUD"),
       "value": .decimal(99),
     ])
-    let priceBinding = try EVY.data.draftBinding(fromParsedProps: "price")
-    try EVY.data.updateDraft(binding: priceBinding, data: try JSONEncoder().encode(newPrice))
+    let priceBinding = try EVY.draftStore.binding(fromParsedProps: "price")
+    try EVY.draftStore.upsert(binding: priceBinding, data: try JSONEncoder().encode(newPrice))
 
     try EVY.create(key: "item", draftScopeId: testDraftScope)
 
@@ -90,8 +90,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "id": .string("00000000-0000-0000-0000-000000000001"),
       "title": .string("Seed Title"),
     ]
-    try EVY.data.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.data.get(key: "item")
+    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "title")
 
@@ -114,8 +114,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
         "height": .int(1600),
       ]),
     ]
-    try EVY.data.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.data.get(key: "item")
+    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "width")
     try EVY.updateValue("50", at: "{width}")
@@ -139,8 +139,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "id": .string("00000000-0000-0000-0000-000000000001"),
       "title": .string("T"),
     ]
-    try EVY.data.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.data.get(key: "item")
+    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "width")
     try EVY.updateValue("50", at: "{width}")
@@ -164,14 +164,14 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
         "height": .int(2),
       ]),
     ]
-    try EVY.data.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.data.get(key: "item")
+    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    let row = try EVY.publicStore.get(key: "item")
 
     let binding = try EVYDraft.binding(
       parsedProps: "dimensions.width",
       scopeId: testDraftScope
     )
-    try EVY.data.upsertDraft(
+    try EVY.draftStore.upsert(
       binding: binding,
       data: try JSONEncoder().encode(EVYJson.string("99"))
     )
@@ -195,19 +195,19 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "id": .string("00000000-0000-0000-0000-000000000001"),
       "title": .string("Seed"),
     ]
-    try EVY.data.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.data.get(key: "item")
+    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    let row = try EVY.publicStore.get(key: "item")
 
-    let scopeA = "flow-a#item"
-    let scopeB = "flow-b#item"
+    let scopeA = "flow-a:item"
+    let scopeB = "flow-b:item"
 
     let titleA = try EVYDraft.binding(parsedProps: "title", scopeId: scopeA)
-    try EVY.data.upsertDraft(
+    try EVY.draftStore.upsert(
       binding: titleA,
       data: try JSONEncoder().encode(EVYJson.string("From A"))
     )
     let titleB = try EVYDraft.binding(parsedProps: "title", scopeId: scopeB)
-    try EVY.data.upsertDraft(
+    try EVY.draftStore.upsert(
       binding: titleB,
       data: try JSONEncoder().encode(EVYJson.string("From B"))
     )

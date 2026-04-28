@@ -12,6 +12,16 @@ At startup, the app calls `syncServiceData` for supported backend services and s
 
 SDUI bindings may still use resource-only names such as `{conditions}` or `{timeslots}`. Those bindings resolve exact local keys first, then explicitly fall back to synced service resources. This keeps local draft/entity data separate from backend catalog data while preserving simple SDUI source strings.
 
+### Draft scopes and draft cache keys
+
+iOS drafts are stored in the in-memory draft cache, separate from public/private SwiftData stores.
+
+Draft scope IDs use `<flowId>:<entityKey>` (for example, `create-flow:item`). Reserved scopes include `<flowId>:browse`, `app:unscoped`, and `ephemeral:<uuid>`.
+
+Full internal draft cache keys append the mode/path segment with another colon: `<flowId>:<entityKey>:<modeFlag><base64Path>` (for example, `create-flow:item:aWyJ0aXRsZSJd`). Because scope IDs also contain `:`, draft key parsing splits on the last colon. The mode flag is `a` for alias-flat merge mode or `e` for explicit-path merge mode; the remaining path key is the base64-encoded JSON path.
+
+These draft keys are distinct from service-qualified data keys like `marketplace:items` and SDUI binding prefixes like `{$local:address}`.
+
 ### Architecture
 
 ```mermaid
@@ -72,15 +82,19 @@ flowchart LR
     EVYPage --> RowTree
 
     subgraph data [Data]
-        Manager[EVYDataManager<br/>SwiftData ModelContext]
+        PublicStore[EVYDataStore public<br/>server-synced SwiftData]
+        PrivateStore[EVYDataStore private<br/>$local SwiftData]
+        DraftStore[EVYDraftStore<br/>draft cache + active scope]
         EntityModel[(EVYData)]
-        DraftModel[(EVYDraft)]
-        DraftPath[EVYDraft.binding / EVYDraft.Scope<br/>scopeId = flowId#entityKey]
-        Manager --> EntityModel
-        Manager --> DraftModel
-        Manager --> DraftPath
+        DraftPath[EVYDraft.binding / EVYDraft.Scope<br/>scopeId = flowId:entityKey]
+        PublicStore --> EntityModel
+        PrivateStore --> EntityModel
+        DraftStore --> EntityModel
+        DraftStore --> DraftPath
     end
-    EVY --> Manager
+    EVY --> PublicStore
+    EVY --> PrivateStore
+    EVY --> DraftStore
 
     subgraph api [Data/API]
         APIManager[EVYAPIManager.shared]

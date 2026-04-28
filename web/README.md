@@ -4,6 +4,8 @@ A React-based app builder.
 
 Shared contracts and codegen: [`docs/evy/types.md`](../docs/evy/types.md). The app imports generated types as `evy-types` (`tsconfig.json` → `../types/generated/ts`).
 
+iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS README § Draft scopes and draft cache keys](../ios/README.md#draft-scopes-and-draft-cache-keys).
+
 ## Architecture
 
 ```mermaid
