@@ -18,7 +18,21 @@ jobs:
             packages: read
         timeout-minutes: 2
         runs-on: blacksmith-2vcpu-ubuntu-2404-arm
-        container: ghcr.io/evy-platform/evy-ci:playwright-1.59.1
+
+        services:
+            postgres:
+                image: postgres:16
+                ports:
+                    - 5432:5432
+                env:
+                    POSTGRES_USER: evy
+                    POSTGRES_PASSWORD: evy
+                    POSTGRES_DB: evy
+                options: >-
+                    --health-cmd "pg_isready -U evy -d evy"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
 
         steps:
             - name: Checkout code
@@ -39,13 +53,13 @@ jobs:
                         - '.github/workflows/e2e_tests.yml'
                         - '.github/actions/**'
 
-            - name: Start PostgreSQL
+            - name: Setup Bun
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
-              run: |
-                  pg_ctlcluster 16 main start
-                  su - postgres -c "psql -c \"CREATE USER evy WITH PASSWORD 'evy' CREATEDB;\""
-                  su - postgres -c "createdb -O evy evy"
-                  su - postgres -c "createdb -O evy marketplace"
+              uses: oven-sh/setup-bun@v2
+
+            - name: Create marketplace database
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              run: docker exec ${{ job.services.postgres.id }} createdb -U evy marketplace
 
             - name: Install dependencies
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
@@ -54,6 +68,10 @@ jobs:
             - name: Prepare .env and generate types
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               uses: ./.github/actions/prepare-dotenv-and-types
+
+            - name: Install Playwright browsers
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              run: bun run --cwd web test:setup
 
             - name: Run E2E tests
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
