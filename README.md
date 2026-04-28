@@ -105,10 +105,9 @@ If port `3000` is already in use locally, run with an override (values set befor
 
 ## CI
 
-Most workflows run on Blacksmith Ubuntu runners with Bun (`oven-sh/setup-bun` or `.github/actions/setup-bun`) and Playwright setup via `web`’s `test:setup` where applicable.
+All workflows install Bun via `.github/actions/setup-bun` (`oven-sh/setup-bun@v2`) and gate steps on `dorny/paths-filter` so unrelated PRs are no-ops.
 
-The E2E workflow (`.github/workflows/e2e_tests.yml`) runs on Blacksmith macOS (`blacksmith-6vcpu-macos-latest`): PostgreSQL is installed and started on the host via Homebrew, then `./run-e2e.sh --no-docker` runs API, marketplace, web, and iOS Simulator tests.
-
-The repo still builds a CI Docker image (`ghcr.io/evy-platform/evy-ci`) via `.github/workflows/push-ci-image.yml` for local use or future workflows.
-
-If you change `.github/images/ci/Dockerfile`, rebuild and publish via `.github/workflows/push-ci-image.yml`. See `.github/images/ci/Dockerfile`.
+Runners by workflow:
+- API lint/build/tests, web lint: `ubuntu-latest`.
+- Web tests (`.github/workflows/web_tests.yml`): `blacksmith-4vcpu-ubuntu-2404-arm`; installs Playwright via `bun run test:setup`.
+- E2E (`.github/workflows/e2e_tests.yml`): `blacksmith-6vcpu-macos-latest`. PostgreSQL is started on the host via Homebrew, then `./run-e2e.sh --no-docker` runs API, marketplace, web, and iOS Simulator tests (Xcode 26.4.1 / iPhone 17 / iOS 26.4.1).
