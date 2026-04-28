@@ -86,7 +86,6 @@ struct EVYSearchSingle: View {
           .opacity(Constants.borderOpacity)
       )
       .contentShape(Rectangle())
-      .padding(.horizontal, Constants.majorPadding)
       .onChange(of: value) { _, newValue in
         if newValue == selected {
           return
