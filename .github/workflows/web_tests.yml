@@ -17,7 +17,22 @@ jobs:
 
         timeout-minutes: 3
         runs-on: blacksmith-2vcpu-ubuntu-2404-arm
-        container: ghcr.io/evy-platform/evy-ci:playwright-1.59.1
+
+        services:
+            postgres:
+                image: postgres:16
+                ports:
+                    - 5432:5432
+                env:
+                    POSTGRES_USER: evy
+                    POSTGRES_PASSWORD: evy
+                    POSTGRES_DB: evy
+                options: >-
+                    --health-cmd "pg_isready -U evy -d evy"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
+
         steps:
             - name: Checkout code
               uses: actions/checkout@v6
@@ -35,9 +50,17 @@ jobs:
               run: bun install
               working-directory: .
 
+            - name: Create marketplace database
+              if: steps.setup.outputs.has-changes == 'true'
+              run: docker exec ${{ job.services.postgres.id }} createdb -U evy marketplace
+
             - name: Prepare .env and generate types
               if: steps.setup.outputs.has-changes == 'true'
               uses: ./.github/actions/prepare-dotenv-and-types
+
+            - name: Install Playwright browsers
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run test:setup
 
             - name: Build application
               if: steps.setup.outputs.has-changes == 'true'

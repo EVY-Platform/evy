@@ -105,8 +105,8 @@ If port `3000` is already in use locally, run with an override (values set befor
 
 ## CI
 
-Some workflows use a custom Docker image with Playwright and Bun (`ghcr.io/evy-platform/evy-ci`), for example `.github/workflows/web_tests.yml`.
+CI workflows run on Blacksmith Ubuntu runners: Bun is installed via `oven-sh/setup-bun` or `.github/actions/setup-bun`, Playwright browsers via `web`’s `test:setup`, and PostgreSQL via a GitHub Actions service container (`postgres:16`) where needed (see `.github/workflows/e2e_tests.yml` and `.github/workflows/web_tests.yml`).
 
-The E2E workflow (`.github/workflows/e2e_tests.yml`) runs on Blacksmith Ubuntu runners: Bun is installed via `oven-sh/setup-bun`, Playwright browsers via `web`’s `test:setup`, and PostgreSQL via a GitHub Actions service container (`postgres:16`).
+The repo still builds a CI Docker image (`ghcr.io/evy-platform/evy-ci`) via `.github/workflows/push-ci-image.yml` for local use or future workflows.
 
-If you change `.github/images/ci/Dockerfile`, rebuild and publish the CI image before workflows that reference it depend on new tools. See `.github/images/ci/Dockerfile` and `.github/workflows/push-ci-image.yml`.
+If you change `.github/images/ci/Dockerfile`, rebuild and publish via `.github/workflows/push-ci-image.yml`. See `.github/images/ci/Dockerfile`.
