@@ -191,7 +191,8 @@ class EVYSearchController: ObservableObject {
     }
 
     let apiPath = String(binding.dropFirst(apiSourcePrefix.count))
-    let pathSegments = apiPath.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+    let pathSegments = apiPath.split(separator: ":", omittingEmptySubsequences: false).map(
+      String.init)
     guard pathSegments.count == 3,
       pathSegments.allSatisfy({ !$0.isEmpty })
     else {
@@ -233,8 +234,6 @@ class EVYSearchController: ObservableObject {
     let (row, value) = try loadFormatPrep().formattedResult(datum: datum)
     return EVYSearchResult(data: datum, value: value, displayRow: row)
   }
-
-
 
   func debouncedSearch(name: String) {
     searchTask?.cancel()

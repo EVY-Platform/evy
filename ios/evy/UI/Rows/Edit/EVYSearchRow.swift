@@ -27,14 +27,12 @@ struct EVYSearchRow: View, EVYRowProtocol {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
       }
-      if !destination.isEmpty {
-        EVYSearch(
-          source: source,
-          destination: destination,
-          placeholder: view.content.placeholder,
-          resultTemplate: view.content.child
-        )
-      }
+      EVYSearch(
+        source: source,
+        destination: destination,
+        placeholder: view.content.placeholder,
+        resultTemplate: view.content.child
+      )
     }
   }
 }

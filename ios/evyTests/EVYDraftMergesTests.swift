@@ -30,7 +30,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "id": .string("00000000-0000-0000-0000-000000000001"),
       "title": .string("Seed Title"),
     ]
-    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    try EVY.publicStore.create(
+      key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
     let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "title")
@@ -55,7 +56,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
         "value": .decimal(250),
       ]),
     ]
-    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    try EVY.publicStore.create(
+      key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
     let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "price")
@@ -90,7 +92,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "id": .string("00000000-0000-0000-0000-000000000001"),
       "title": .string("Seed Title"),
     ]
-    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    try EVY.publicStore.create(
+      key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
     let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "title")
@@ -114,7 +117,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
         "height": .int(1600),
       ]),
     ]
-    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    try EVY.publicStore.create(
+      key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
     let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "width")
@@ -139,7 +143,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "id": .string("00000000-0000-0000-0000-000000000001"),
       "title": .string("T"),
     ]
-    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    try EVY.publicStore.create(
+      key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
     let row = try EVY.publicStore.get(key: "item")
 
     EVY.ensureDraftExists(variableName: "width")
@@ -164,7 +169,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
         "height": .int(2),
       ]),
     ]
-    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    try EVY.publicStore.create(
+      key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
     let row = try EVY.publicStore.get(key: "item")
 
     let binding = try EVYDraft.binding(
@@ -195,7 +201,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "id": .string("00000000-0000-0000-0000-000000000001"),
       "title": .string("Seed"),
     ]
-    try EVY.publicStore.create(key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
+    try EVY.publicStore.create(
+      key: "item", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
     let row = try EVY.publicStore.get(key: "item")
 
     let scopeA = "flow-a:item"
