@@ -8,8 +8,25 @@
 import Foundation
 import SwiftUI
 
+private struct EVYApiSearchSource {
+  let service: String
+  let resource: String
+  let method: String
+}
+
+private struct EVYApiSearchRequest: Encodable {
+  let service: String
+  let resource: String
+  let method: String
+  let filter: EVYApiSearchFilter
+}
+
+private struct EVYApiSearchFilter: Encodable {
+  let query: String
+}
+
 private enum EVYSearchSourceType {
-  case api
+  case api(EVYApiSearchSource)
   case local
 }
 
@@ -147,13 +164,19 @@ enum EVYSearchFormattingError: Error {
 @MainActor
 class EVYSearchController: ObservableObject {
   private static let apiSourcePrefix = "$api:"
+  private static let searchDebounceNanoseconds: UInt64 = 250_000_000
 
   private let sourceType: EVYSearchSourceType
   private let resultTemplate: UI_Row?
 
   private var cachedFormatPrep: SearchTemplateFormatPrep?
+  private var searchTask: Task<Void, Never>?
 
   @Published var results: [EVYSearchResult] = []
+
+  deinit {
+    searchTask?.cancel()
+  }
 
   init(source: String, resultTemplate: UI_Row?) {
     self.resultTemplate = resultTemplate
@@ -166,7 +189,22 @@ class EVYSearchController: ObservableObject {
     else {
       return .local
     }
-    return .api
+
+    let apiPath = String(binding.dropFirst(apiSourcePrefix.count))
+    let pathSegments = apiPath.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+    guard pathSegments.count == 3,
+      pathSegments.allSatisfy({ !$0.isEmpty })
+    else {
+      return .local
+    }
+
+    return .api(
+      EVYApiSearchSource(
+        service: pathSegments[0],
+        resource: pathSegments[1],
+        method: pathSegments[2]
+      )
+    )
   }
 
   private static func bracedBinding(from source: String) -> String? {
@@ -194,6 +232,31 @@ class EVYSearchController: ObservableObject {
   func makeSearchResult(datum: EVYJson) throws -> EVYSearchResult {
     let (row, value) = try loadFormatPrep().formattedResult(datum: datum)
     return EVYSearchResult(data: datum, value: value, displayRow: row)
+  }
+
+
+
+  func debouncedSearch(name: String) {
+    searchTask?.cancel()
+
+    guard !name.isEmpty else {
+      results.removeAll()
+      return
+    }
+
+    searchTask = Task { [weak self] in
+      do {
+        try await Task.sleep(nanoseconds: Self.searchDebounceNanoseconds)
+      } catch {
+        return
+      }
+
+      guard !Task.isCancelled else {
+        return
+      }
+
+      await self?.search(name: name)
+    }
   }
 
   func search(name: String) async {
@@ -227,10 +290,18 @@ class EVYSearchController: ObservableObject {
       } catch {
         results = []
       }
-    default:
+    case .api(let apiSource):
       do {
-        let data = try await EVYMovieAPI().search(term: name)
-        let response = try JSONDecoder().decode([EVYJson].self, from: data)
+        let response = try await EVYAPIManager.shared.fetch(
+          method: "api",
+          params: EVYApiSearchRequest(
+            service: apiSource.service,
+            resource: apiSource.resource,
+            method: apiSource.method,
+            filter: EVYApiSearchFilter(query: name)
+          ),
+          expecting: [EVYJson].self
+        )
         results = try response.map { try makeSearchResult(datum: $0) }
       } catch {
         results = []

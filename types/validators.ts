@@ -16,6 +16,7 @@ import type {
 	DATA_EVY_ServiceProvider,
 } from "./generated/ts/data/data";
 import type { DATA_PRIMITIVE } from "./generated/ts/data/primitive";
+import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { SyncServiceDataRequest } from "./generated/ts/rpc/syncServiceData.request";
@@ -37,6 +38,9 @@ import primitiveSchemaRaw from "./schema/data/primitive.schema.json" with {
 	type: "json",
 };
 import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
+import apiRequestRaw from "./schema/rpc/api.request.schema.json" with {
+	type: "json",
+};
 import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
 	type: "json",
 };
@@ -65,6 +69,7 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"data/data.schema.json": dataSchemaRaw as Record<string, unknown>,
 	"data/primitive.schema.json": primitiveSchemaRaw as Record<string, unknown>,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
+	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
 	"rpc/upsert.request.schema.json": upsertRequestRaw as Record<string, unknown>,
 	"rpc/syncServiceData.request.schema.json":
@@ -170,6 +175,7 @@ function assertValid<T>(
 const REQUEST_SCHEMA_FILES = [
 	"common/json.schema.json",
 	"common/rpc.schema.json",
+	"rpc/api.request.schema.json",
 	"rpc/get.request.schema.json",
 	"rpc/upsert.request.schema.json",
 	"rpc/syncServiceData.request.schema.json",
@@ -219,6 +225,7 @@ function getEntityAjv(): InstanceType<typeof Ajv2020> {
 	return entityAjv;
 }
 
+let validateApiRequestFn: ValidateFunction<ApiRequest> | null = null;
 let validateGetRequestFn: ValidateFunction<GetRequest> | null = null;
 let validateUpsertRequestFn: ValidateFunction<UpsertRequest> | null = null;
 let validateSyncServiceDataRequestFn: ValidateFunction<SyncServiceDataRequest> | null =
@@ -236,6 +243,16 @@ let validateGetResponseFn: ValidateFunction<GetResponse> | null = null;
 let validateUpsertResponseFn: ValidateFunction<UpsertResponse> | null = null;
 let validateSyncServiceDataResponseFn: ValidateFunction<SyncServiceDataResponse> | null =
 	null;
+
+function getValidateApiRequest(): ValidateFunction<ApiRequest> {
+	if (!validateApiRequestFn) {
+		validateApiRequestFn = compileRoot<ApiRequest>(
+			getRequestAjv(),
+			fileId("rpc/api.request.schema.json"),
+		);
+	}
+	return validateApiRequestFn;
+}
 
 function getValidateGetRequest(): ValidateFunction<GetRequest> {
 	if (!validateGetRequestFn) {
@@ -347,6 +364,11 @@ function getValidateSyncServiceDataResponse(): ValidateFunction<SyncServiceDataR
 		);
 	}
 	return validateSyncServiceDataResponseFn;
+}
+
+export function validateApiRequest(data: unknown): ApiRequest {
+	assertValid("ApiRequest", getValidateApiRequest(), data);
+	return data;
 }
 
 export function validateGetRequest(data: unknown): GetRequest {

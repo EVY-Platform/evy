@@ -11,6 +11,7 @@ import SwiftUI
 struct EVYSearchMultiple: View {
   @State private var selected: [EVYSearchResult] = []
   @State private var searchFieldValue = ""
+
   @ObservedObject private var searchController: EVYSearchController
 
   let source: String
@@ -105,13 +106,7 @@ struct EVYSearchMultiple: View {
       .contentShape(Rectangle())
       .padding(.horizontal, Constants.majorPadding)
       .onChange(of: searchFieldValue) { _, newValue in
-        Task(operation: {
-          if !newValue.isEmpty && newValue.count > 3 {
-            await searchController.search(name: newValue)
-          } else {
-            searchController.results.removeAll()
-          }
-        })
+        searchController.debouncedSearch(name: newValue)
       }
 
       if selected.count > 0 {

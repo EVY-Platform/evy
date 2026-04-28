@@ -12,6 +12,7 @@ import {
 	upsertForValidatedMarketplaceRequest,
 } from "./data";
 import {
+	validateStrictApiRequest,
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
@@ -103,7 +104,8 @@ function buildMarketplaceServiceHandlers(
 					{
 						service: string;
 						resource: string;
-						filter?: { id?: string; updated_after?: string };
+						filter?: { id?: string; updated_after?: string; query?: string };
+						method?: string;
 					},
 					{ result_json: string }
 				>,
@@ -116,12 +118,18 @@ function buildMarketplaceServiceHandlers(
 						if (req.filter?.id) filter.id = req.filter.id;
 						if (req.filter?.updated_after)
 							filter.updatedAfter = req.filter.updated_after;
+						if (req.filter?.query) filter.query = req.filter.query;
 						const params = {
 							service: req.service,
 							resource: req.resource,
+							...(req.method ? { method: req.method } : {}),
 							filter: Object.keys(filter).length > 0 ? filter : undefined,
 						};
-						validateStrictGetRequest(params);
+						if (req.method) {
+							validateStrictApiRequest(params);
+						} else {
+							validateStrictGetRequest(params);
+						}
 						const result = await getForValidatedMarketplaceRequest(params);
 						cb(null, { result_json: JSON.stringify(result) });
 					} catch (err) {

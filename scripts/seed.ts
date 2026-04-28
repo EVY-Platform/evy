@@ -265,6 +265,16 @@ export async function runMigrations(): Promise<void> {
 	});
 }
 
+function normalizeSeedFlows(raw: unknown): unknown[] {
+	if (Array.isArray(raw)) {
+		return raw;
+	}
+	if (raw !== null && typeof raw === "object") {
+		return [raw];
+	}
+	throw new Error("Flow files must export JSON objects or arrays");
+}
+
 export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 	evyFlowsJson: SeedFlow[];
 	serviceFlowsJson: SeedFlow[];
@@ -276,11 +286,10 @@ export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 	const serviceFlowsRaw = JSON.parse(
 		await readFile(paths.serviceFlowsPath ?? SERVICE_FLOWS_PATH, "utf-8"),
 	);
-	if (!Array.isArray(evyFlowsRaw) || !Array.isArray(serviceFlowsRaw)) {
-		throw new Error("Flow files must export JSON arrays");
-	}
-	const evyFlowsJson = evyFlowsRaw.map((f: unknown) => validateUiFlow(f));
-	const serviceFlowsJson = serviceFlowsRaw.map((f: unknown) =>
+	const evyFlowsArray = normalizeSeedFlows(evyFlowsRaw);
+	const serviceFlowsArray = normalizeSeedFlows(serviceFlowsRaw);
+	const evyFlowsJson = evyFlowsArray.map((f: unknown) => validateUiFlow(f));
+	const serviceFlowsJson = serviceFlowsArray.map((f: unknown) =>
 		validateUiFlow(f),
 	);
 	const dataJson = validateSeedData(

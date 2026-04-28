@@ -11,6 +11,7 @@ import SwiftUI
 struct EVYSearchSingle: View {
   @State private var selected: String = ""
   @State private var value: String = ""
+
   @ObservedObject private var searchController: EVYSearchController
 
   let destination: String
@@ -87,19 +88,11 @@ struct EVYSearchSingle: View {
       .contentShape(Rectangle())
       .padding(.horizontal, Constants.majorPadding)
       .onChange(of: value) { _, newValue in
-        Task(operation: {
-          if newValue.isEmpty {
-            return
-          }
-          if newValue.count < 3 {
-            return
-          }
-          if newValue == selected {
-            return
-          }
+        if newValue == selected {
+          return
+        }
 
-          await searchController.search(name: newValue)
-        })
+        searchController.debouncedSearch(name: newValue)
       }
 
       // Search results
