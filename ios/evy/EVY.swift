@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-public enum EVYParamError: Error {
+enum EVYParamError: Error {
   case invalidProps
 }
 
@@ -40,24 +40,23 @@ struct SyncServiceDataResponse: Codable {
 @MainActor
 struct EVY {
   private static let localPrefix = "$local"
+  private static let localPrefixWithSeparator = localPrefix + PROP_SEPARATOR
 
   static let publicStore = EVYDataStore(name: "public")
   static let privateStore = EVYDataStore(name: "private")
   static let draftStore = EVYDraftStore()
 
   static func stripLocalPrefix(_ props: String) -> String {
-    if props.hasPrefix(localPrefix + PROP_SEPARATOR) {
-      return String(props.dropFirst(localPrefix.count + PROP_SEPARATOR.count))
+    guard props.hasPrefix(localPrefixWithSeparator) else {
+      return props
     }
-    return props
+    return String(props.dropFirst(localPrefixWithSeparator.count))
   }
 
   static func store(for props: String) -> (EVYDataStore, String) {
     let cleanProps = stripLocalPrefix(props)
-    if cleanProps != props {
-      return (privateStore, cleanProps)
-    }
-    return (publicStore, props)
+    let isLocalProps = cleanProps != props
+    return (isLocalProps ? privateStore : publicStore, cleanProps)
   }
 
   static func getUserData() throws {
@@ -66,11 +65,8 @@ struct EVY {
     do {
       try EVY.publicStore.create(key: "user", data: encodedUserData)
     } catch EVYDataError.keyAlreadyExists {
+      // Expected when startup bootstrapping runs after user data already exists.
     }
-  }
-
-  private static func upsertSyncedData(key: String, data encodedData: Data) throws {
-    try EVY.publicStore.upsert(key: key, value: encodedData)
   }
 
   static func syncServiceData(service: String) async throws {
@@ -89,7 +85,7 @@ struct EVY {
     for row in response.data {
       let key = "\(row.service):\(row.resource)"
       let encoded = try JSONEncoder().encode(row.value)
-      try upsertSyncedData(key: key, data: encoded)
+      try publicStore.upsert(key: key, value: encoded)
     }
   }
 
@@ -191,6 +187,7 @@ struct EVY {
     do {
       try draftStore.upsert(binding: binding, data: emptyData)
     } catch {
+      // Best-effort draft bootstrap; callers can still render from existing data.
     }
   }
 
@@ -299,10 +296,7 @@ struct EVY {
         try wrapper.updateDataWithData(newData, props: remainingProps)
         existingDraft.data = wrapper.data
       }
-      NotificationCenter.default.post(
-        name: .evyDataUpdated,
-        object: draftBinding.notificationKey
-      )
+      draftStore.notifyUpdate(binding: draftBinding)
     } else if store.exists(key: rootVariable) {
       let dataObj = try store.get(key: rootVariable)
       let remainingProps = Array(splitProps.dropFirst())

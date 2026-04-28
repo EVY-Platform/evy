@@ -21,6 +21,8 @@ enum EVYDraft {
         .base64EncodedString() ?? pathSegments.joined(separator: "\u{1f}")
     }
 
+    // Internal cache key format: <scopeId>:<modeFlag><base64PathKey>.
+    // The mode flag is "a" for alias-flat bindings and "e" for explicit paths.
     var draftKey: String {
       let modeFlag: String
       switch mergeMode {
@@ -41,6 +43,8 @@ enum EVYDraft {
       "\(scopeId):"
     }
 
+    // Scope IDs can contain colons, so split on the last colon to separate
+    // the scope from the mode/path portion of the draft cache key.
     static func parseDraftKey(_ key: String) -> Binding? {
       guard let separatorRange = key.range(of: ":", options: .backwards) else {
         return nil

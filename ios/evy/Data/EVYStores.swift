@@ -8,7 +8,7 @@
 import Foundation
 import Observation
 
-public enum EVYDataError: Error {
+enum EVYDataError: Error {
   case keyAlreadyExists
   case keyNotFound
 }
@@ -96,7 +96,10 @@ final class EVYDraftStore {
 
   func upsert(binding: EVYDraft.Binding, data: Data) throws {
     try dataStore.upsert(key: binding.draftKey, value: data, notify: false)
+    notifyUpdate(binding: binding)
+  }
 
+  func notifyUpdate(binding: EVYDraft.Binding) {
     NotificationCenter.default.post(
       name: .evyDataUpdated,
       object: binding.notificationKey

@@ -36,6 +36,8 @@ final class EVYDataStore {
     return first
   }
 
+  // Binding lookups prefer exact local keys, then fall back to service-qualified
+  // synced keys such as "marketplace:items" when SDUI uses "{items}".
   func getForBinding(key: String) throws -> EVYData {
     if let exact = try? get(key: key) {
       return exact
@@ -167,8 +169,12 @@ final class EVYDataStore {
 
   private func upperBound(for prefix: String) -> String {
     var result = prefix
-    guard let last = result.unicodeScalars.popLast(),
-          let next = UnicodeScalar(last.value + 1) else { return prefix }
+    guard
+      let last = result.unicodeScalars.popLast(),
+      let next = UnicodeScalar(last.value + 1)
+    else {
+      return prefix
+    }
     result.unicodeScalars.append(next)
     return result
   }
