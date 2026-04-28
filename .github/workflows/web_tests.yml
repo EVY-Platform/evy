@@ -20,7 +20,7 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: useblacksmith/checkout
+              uses: actions/checkout@v6
 
             - name: Setup environment
               uses: ./.github/actions/setup-bun
