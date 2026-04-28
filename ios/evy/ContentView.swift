@@ -29,7 +29,12 @@ extension EnvironmentValues {
   }
 }
 
-private let HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
+private let DEFAULT_HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
+
+private var HOME_FLOW_ID: String {
+  let configuredHomeFlowId = ProcessInfo.processInfo.environment["HOME_FLOW_ID"] ?? ""
+  return configuredHomeFlowId.isEmpty ? DEFAULT_HOME_FLOW_ID : configuredHomeFlowId
+}
 
 struct ContentView: View {
   @State private var flows: [UI_Flow] = []

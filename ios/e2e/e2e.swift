@@ -84,6 +84,20 @@ actor WSEmitter {
   }
 }
 
+private enum E2EFlowIds {
+  static let defaultViewFlow = "74a49d4b-2176-4925-857a-e29e2991f1bd"
+  static let defaultViewPage = "82cae120-c7b1-4c29-bd42-e1521320b109"
+  static let defaultCreateFlow = "ca47e6c5-da19-4491-8422-adb40d9e8a27"
+  static let defaultCreatePage = "306ed62c-c2af-4652-a873-26c7a388972d"
+
+  static let navigationHomeFlow = "10000000-0000-4000-8000-000000000001"
+  static let webSocketHomeFlow = "10000000-0000-4000-8000-000000000002"
+  static let webSocketViewFlow = "10000000-0000-4000-8000-000000000003"
+  static let webSocketViewPage = "10000000-0000-4000-8000-000000000004"
+  static let webSocketCreateFlow = "10000000-0000-4000-8000-000000000005"
+  static let webSocketCreatePage = "10000000-0000-4000-8000-000000000006"
+}
+
 // MARK: - Base class for E2E tests
 
 class E2ETestBase: XCTestCase {
@@ -172,15 +186,192 @@ class E2ETestBase: XCTestCase {
     return nil
   }
 
+  var homeFlowId: String? { nil }
+
   override func setUpWithError() throws {
     continueAfterFailure = false
+    try launchApp()
+  }
+
+  func launchApp() throws {
     app = XCUIApplication()
     guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
       XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
       return
     }
     app.launchEnvironment["API_HOST"] = apiHost
+    if let homeFlowId {
+      app.launchEnvironment["HOME_FLOW_ID"] = homeFlowId
+    }
     app.launch()
+  }
+
+  func requireAPIHost() throws -> String {
+    guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
+      throw NSError(
+        domain: "E2ETestBase",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "API_HOST is required"]
+      )
+    }
+    return apiHost
+  }
+
+  func runAsyncOperation(
+    _ description: String,
+    timeout: TimeInterval = 10,
+    operation: @escaping () async throws -> Void
+  ) throws {
+    let asyncExpectation = expectation(description: description)
+    var capturedError: Error?
+
+    Task {
+      do {
+        try await operation()
+      } catch {
+        capturedError = error
+      }
+      asyncExpectation.fulfill()
+    }
+
+    wait(for: [asyncExpectation], timeout: timeout)
+    if let capturedError {
+      throw capturedError
+    }
+  }
+
+  func seedFlows(_ flows: [(flowId: String, flowData: [String: Any])], apiHost: String) throws {
+    try runAsyncOperation("Seed isolated E2E flows", timeout: 15) {
+      let emitter = WSEmitter()
+      try await emitter.connect(host: apiHost)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      for flow in flows {
+        try await emitter.updateSDUI(flowData: flow.flowData, flowId: flow.flowId)
+      }
+      await emitter.disconnect()
+    }
+  }
+
+  static func homeFlowData(
+    flowId: String,
+    viewFlowId: String,
+    viewPageId: String,
+    createFlowId: String,
+    createPageId: String,
+    buttonLabel: String
+  ) -> [String: Any] {
+    return [
+      "id": flowId,
+      "name": "E2E Home",
+      "pages": [
+        [
+          "id": "55e427ac-263c-441f-9673-f60627b1baea",
+          "title": "Home",
+          "rows": [
+            [
+              "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
+              "type": "ColumnContainer",
+              "source": "",
+              "destination": "",
+              "actions": [],
+              "view": [
+                "content": [
+                  "title": "",
+                  "children": [
+                    [
+                      "id": "441c1433-446b-4682-854d-5d795ef52709",
+                      "type": "Button",
+                      "source": "",
+                      "destination": "",
+                      "view": [
+                        "content": [
+                          "title": "",
+                          "label": buttonLabel,
+                        ]
+                      ],
+                      "actions": [
+                        [
+                          "condition": "",
+                          "false": "",
+                          "true": "navigate:\(viewFlowId):\(viewPageId)",
+                        ]
+                      ],
+                    ],
+                    [
+                      "id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                      "type": "Button",
+                      "source": "",
+                      "destination": "",
+                      "view": [
+                        "content": [
+                          "title": "",
+                          "label": "Create",
+                        ]
+                      ],
+                      "actions": [
+                        [
+                          "condition": "",
+                          "false": "",
+                          "true": "navigate:\(createFlowId):\(createPageId)",
+                        ]
+                      ],
+                    ],
+                  ],
+                ]
+              ],
+            ]
+          ],
+        ]
+      ],
+    ]
+  }
+
+  static func viewItemFlowData(flowId: String, pageId: String) -> [String: Any] {
+    return [
+      "id": flowId,
+      "name": "E2E View Item",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "View Item",
+          "rows": [
+            [
+              "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+              "type": "Text",
+              "source": "{item}",
+              "destination": "",
+              "actions": [],
+              "view": [
+                "content": [
+                  "title": "My item is called",
+                  "text": "{title}",
+                ],
+                "max_lines": "",
+              ],
+            ]
+          ],
+          "footer": [
+            "id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
+            "type": "Button",
+            "source": "{item}",
+            "destination": "",
+            "actions": [
+              [
+                "condition": "",
+                "false": "",
+                "true": "{close()}",
+              ]
+            ],
+            "view": [
+              "content": [
+                "title": "",
+                "label": "Go home",
+              ]
+            ],
+          ],
+        ]
+      ],
+    ]
   }
 
   override func tearDownWithError() throws {
@@ -191,6 +382,29 @@ class E2ETestBase: XCTestCase {
 // MARK: - Navigation and visibility only
 
 final class E2EFlowTests: E2ETestBase {
+  override var homeFlowId: String? { E2EFlowIds.navigationHomeFlow }
+
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    let apiHost = try requireAPIHost()
+    try seedFlows(
+      [
+        (
+          flowId: E2EFlowIds.navigationHomeFlow,
+          flowData: Self.homeFlowData(
+            flowId: E2EFlowIds.navigationHomeFlow,
+            viewFlowId: E2EFlowIds.defaultViewFlow,
+            viewPageId: E2EFlowIds.defaultViewPage,
+            createFlowId: E2EFlowIds.defaultCreateFlow,
+            createPageId: E2EFlowIds.defaultCreatePage,
+            buttonLabel: "View"
+          )
+        )
+      ],
+      apiHost: apiHost
+    )
+    try launchApp()
+  }
 
   func testNavigationAndVisibility() throws {
     XCTAssertTrue(app.exists, "App should launch successfully")
@@ -238,6 +452,44 @@ final class E2EFlowTests: E2ETestBase {
 // MARK: - WebSocket and form data editing
 
 final class WebSocketE2ETests: E2ETestBase {
+  override var homeFlowId: String? { E2EFlowIds.webSocketHomeFlow }
+
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    let apiHost = try requireAPIHost()
+    try seedIsolatedFlows(apiHost: apiHost)
+    try launchApp()
+  }
+
+  override func tearDownWithError() throws {
+    if let apiHost = try? requireAPIHost() {
+      try? seedIsolatedFlows(apiHost: apiHost)
+    }
+    try super.tearDownWithError()
+  }
+
+  private func seedIsolatedFlows(apiHost: String) throws {
+    try seedFlows(
+      [
+        (
+          flowId: E2EFlowIds.webSocketHomeFlow,
+          flowData: createHomeFlowData(buttonLabel: "View")
+        ),
+        (
+          flowId: E2EFlowIds.webSocketViewFlow,
+          flowData: Self.viewItemFlowData(
+            flowId: E2EFlowIds.webSocketViewFlow,
+            pageId: E2EFlowIds.webSocketViewPage
+          )
+        ),
+        (
+          flowId: E2EFlowIds.webSocketCreateFlow,
+          flowData: Self.minimalCreateItemFlowData()
+        ),
+      ],
+      apiHost: apiHost
+    )
+  }
 
   @MainActor
   func testWebSocketNotificationUpdatesUI() async throws {
@@ -259,7 +511,7 @@ final class WebSocketE2ETests: E2ETestBase {
       try await emitter.login(token: "e2e-test", os: "ios")
       try await emitter.updateSDUI(
         flowData: createHomeFlowData(buttonLabel: updatedLabel),
-        flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
+        flowId: E2EFlowIds.webSocketHomeFlow
       )
     } catch {
       XCTFail("Failed to emit update: \(error.localizedDescription)")
@@ -274,7 +526,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     try? await emitter.updateSDUI(
       flowData: createHomeFlowData(buttonLabel: originalLabel),
-      flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
+      flowId: E2EFlowIds.webSocketHomeFlow
     )
     await emitter.disconnect()
   }
@@ -299,7 +551,7 @@ final class WebSocketE2ETests: E2ETestBase {
       try await emitter.login(token: "e2e-test", os: "ios")
       try await emitter.updateSDUI(
         flowData: createConditionalFlowData(buttonLabel: conditionalLabel),
-        flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
+        flowId: E2EFlowIds.webSocketHomeFlow
       )
     } catch {
       XCTFail("Failed to publish conditional flow: \(error.localizedDescription)")
@@ -320,7 +572,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     try? await emitter.updateSDUI(
       flowData: createHomeFlowData(buttonLabel: "View"),
-      flowId: "f267c629-2594-4770-8cec-d5324ebb4058"
+      flowId: E2EFlowIds.webSocketHomeFlow
     )
     await emitter.disconnect()
   }
@@ -343,7 +595,7 @@ final class WebSocketE2ETests: E2ETestBase {
     try await emitter.login(token: "e2e-test", os: "ios")
     try await emitter.updateSDUI(
       flowData: Self.minimalCreateItemFlowData(),
-      flowId: "ca47e6c5-da19-4491-8422-adb40d9e8a27"
+      flowId: E2EFlowIds.webSocketCreateFlow
     )
     try await Task.sleep(for: .seconds(2))
 
@@ -441,11 +693,11 @@ final class WebSocketE2ETests: E2ETestBase {
 
   private static func minimalCreateItemFlowData() -> [String: Any] {
     [
-      "id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+      "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item",
       "pages": [
         [
-          "id": "306ed62c-c2af-4652-a873-26c7a388972d",
+          "id": E2EFlowIds.webSocketCreatePage,
           "title": "Create listing",
           "rows": [
             [
@@ -544,7 +796,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
   private func createHomeFlowData(buttonLabel: String) -> [String: Any] {
     return [
-      "id": "f267c629-2594-4770-8cec-d5324ebb4058",
+      "id": E2EFlowIds.webSocketHomeFlow,
       "name": "Home",
       "pages": [
         [
@@ -577,7 +829,7 @@ final class WebSocketE2ETests: E2ETestBase {
                           "condition": "",
                           "false": "",
                           "true":
-                            "navigate:74a49d4b-2176-4925-857a-e29e2991f1bd:82cae120-c7b1-4c29-bd42-e1521320b109",
+                            "navigate:\(E2EFlowIds.webSocketViewFlow):\(E2EFlowIds.webSocketViewPage)",
                         ]
                       ],
                     ],
@@ -597,7 +849,7 @@ final class WebSocketE2ETests: E2ETestBase {
                           "condition": "",
                           "false": "",
                           "true":
-                            "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:306ed62c-c2af-4652-a873-26c7a388972d",
+                            "navigate:\(E2EFlowIds.webSocketCreateFlow):\(E2EFlowIds.webSocketCreatePage)"
                         ]
                       ],
                     ],
