@@ -7,7 +7,7 @@ on:
         branches: [dev]
     workflow_dispatch:
 
-# E2E runs on Blacksmith macOS so iOS Simulator tests can run in CI. PostgreSQL is started on the host
+# E2E runs on Blacksmith macOS 26 so iOS Simulator tests can run in CI. PostgreSQL is started on the host
 # (Homebrew); api/marketplace/web run via `run-e2e.sh --no-docker` (no Docker required for this job).
 
 jobs:
@@ -16,11 +16,11 @@ jobs:
             contents: read
             packages: read
         timeout-minutes: 30
-        runs-on: blacksmith-6vcpu-macos-latest
+        runs-on: blacksmith-6vcpu-macos-26
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v6
+              uses: useblacksmith/checkout
 
             - name: Check for E2E-relevant changes
               uses: dorny/paths-filter@v4
@@ -68,18 +68,27 @@ jobs:
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               run: bun run --cwd web test:setup
 
-            - name: Select Xcode for iOS tests
+            - name: Verify Xcode and iOS simulators
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               run: |
-                  sudo xcode-select -s /Applications/Xcode_26.4.1.app
+                  set -euo pipefail
+                  echo "Available Xcode apps:"
+                  ls -1d /Applications/Xcode*.app 2>/dev/null || true
+                  if [ -d /Applications/Xcode.app ]; then
+                    sudo xcode-select -s /Applications/Xcode.app
+                  fi
+                  echo "Selected developer directory:"
+                  xcode-select -p
                   xcodebuild -version
-                  xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | head -n 80
+                  xcodebuild -showsdks
+                  xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | sed -n '1,80p'
 
             - name: Run E2E tests
               if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
               env:
                   MARKETPLACE_GRPC_HOST: 127.0.0.1
-                  IOS_SIMULATOR_DESTINATION: platform=iOS Simulator,name=iPhone 17,OS=26.4.1
+                  IOS_SIMULATOR_DEVICE_NAME: iPhone 17
+                  IOS_SIMULATOR_OS_VERSION: 26.4.1
               run: bash run-e2e.sh --no-docker
 
             - name: Upload Playwright report
