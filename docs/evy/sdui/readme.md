@@ -18,7 +18,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 	- `{$local:resource}` — client-local source.
 - Catalog/API/local data is loaded outside the flow document. Clients can request individual lists with JSON-RPC `get` (`service` / `resource`) or sync service data in batches with `syncServiceData`.
 - `syncServiceData` accepts `{ "service": "marketplace", "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows. Clients get all service resources changed since `lastSyncTime`.
-- Clients should store synced rows under service-qualified keys such as `marketplace:items` and `marketplace:conditions`. Navigate actions can pass query params as JSON after `?` (for example, `navigate:flowId:pageId?{"items": [$datum.id]}`). Clients parse this JSON into a `[String: [String]]` dictionary, resolve the first ID for each key from the synced collection, and expose the matching entity under the same plural key.
+- Clients should store synced rows under service-qualified keys such as `marketplace:items` and `marketplace:conditions`. Navigate actions can pass query params after `?` on the page argument (for example, `{navigate(flowId, pageId?{"items": [$datum.id]})}`). Query values can use JSON (`?{"key": ["id"]}`) or URL-style (`?key=id1&key=id2`) format. Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each key from the synced collection, and expose the matching entity under the same plural key.
 - iOS draft scope IDs and draft cache keys are internal draft-store identifiers; see [iOS README § Draft scopes and draft cache keys](../../../ios/README.md#draft-scopes-and-draft-cache-keys).
 - Flow bindings use the plural resource name without the service prefix (`{items}`, `{conditions}`, `{tags}`). The client data layer resolves those bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
 - `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
@@ -111,16 +111,23 @@ Each row has an `actions` array of `UI_RowAction` objects (`condition`, `false`,
 - Empty `condition` — treated as always true (the `true` branch is taken unless you rely on client-specific rules).
 - Single comparison: `{left op right}`
 	Operators: `==`, `!=`, `>`, `<`, `>=`, `<=`
-	Left and right operands are usually variable names or literals (client interprets values).
+	Left and right operands are usually variable names or literals (client interprets values). Both sides are resolved as data bindings when possible; if both resolve to numbers the comparison is numeric, otherwise lexicographic string comparison is used.
+- AND: join comparisons with `&&` inside the braces:
+	`{length(title) > 0 && price.value >= 1}`
 - OR: join comparisons with `||` inside the braces:
 	`{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0}`
+- Grouping: use parentheses to control precedence:
+	`{(length(title) > 0 && price.value >= 1) || override == true}`
+- Boolean literals `true` and `false` are valid as standalone conditions or operands.
 - Condition helpers (used like functions in the expression):
-	- `count(var)` — e.g. `{count(photo_ids) > 0}`
-	- `length(var)` — e.g. `{length(title) > 0}`
+	- `count(var)` — number of elements in a list/array, e.g. `{count(photo_ids) > 0}`
+	- `length(var)` — number of characters in a string, e.g. `{length(title) > 0}`
 
 #### Branches (`true` / `false`)
 
-Each branch is a string. Empty string means “do nothing” for that branch. Function call form: `{functionName(arg1, arg2, ...)}`
+Each branch is a string. Empty string means "do nothing" for that branch.
+
+Action branches **must** be wrapped in curly braces to be executed: `{functionName(arg1, arg2, ...)}`. A bare function name without braces (e.g. `close` or `close()`) is treated as inert text and will not trigger any action.
 
 Supported action functions:
 
@@ -128,7 +135,7 @@ Supported action functions:
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}` |
 | `create(model)` | Submit / create domain entity, e.g. `{create(items)}` |
-| `navigate(flowId, pageId)` | Go to a page within a flow. iOS also accepts a colon-separated form (`navigate:flowId:pageId`). To pass query params, append `?` followed by a JSON object mapping plural resource keys to arrays of IDs or `$datum` expressions, e.g. `navigate:flowId:pageId?{"items": [$datum.id]}`. |
+| `navigate(flowId, pageId)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. To pass query params, append `?` to the page argument followed by a JSON object or URL-style pairs, e.g. `{navigate(flowId, pageId?{"items": [$datum.id]})}` or `{navigate(flowId, pageId?items=id1&items=id2)}`. iOS also accepts legacy colon-separated forms (`navigate:flowId:pageId`, `create:key`). |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
 #### Evaluation (iOS reference)
@@ -167,7 +174,7 @@ Navigate with query params (selects an entity from synced data):
 {
 	"condition": "",
 	"false": "",
-	"true": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:06b21b52-0845-468a-ace1-170a3b05f3a2?{\"items\": [$datum.id]}"
+	"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,06b21b52-0845-468a-ace1-170a3b05f3a2?{\"items\": [$datum.id]})}"
 }
 ```
 
