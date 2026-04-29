@@ -6,15 +6,15 @@ export default defineRow("CalendarRow", {
 	config: {
 		type: "Calendar",
 		actions: [],
-		source: "{item}",
+		source: "",
 		view: {
 			content: {
 				title: "Calendar row title",
-				primary: "{item.transfer_options.pickup.timeslots}",
-				secondary: "{item.transfer_options.delivery.timeslots}",
+				primary: "{items.transfer_options.pickup.timeslots}",
+				secondary: "{items.transfer_options.delivery.timeslots}",
 			},
 		},
-		destination: "{pickup_timeslots}",
+		destination: "{items.pickup_timeslots}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

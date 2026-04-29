@@ -43,7 +43,7 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow({
 			id: ROW_A,
 			type: "Info",
-			source: "{item}",
+			source: "{items}",
 			actions: [],
 			view: {
 				content: {
@@ -168,7 +168,7 @@ describe("decodeFlows / encodeFlow", () => {
 						{
 							id: ROW_A,
 							type: "Text",
-							source: "{item}",
+							source: "{items}",
 							actions: [],
 							view: {
 								content: {

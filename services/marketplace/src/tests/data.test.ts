@@ -71,13 +71,13 @@ describe("marketplace get/upsert", () => {
 
 		await testDb.insert(schema.data).values([
 			{
-				resource: "condition",
+				resource: "conditions",
 				data: oldRow,
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
 			{
-				resource: "condition",
+				resource: "conditions",
 				data: newRow,
 				createdAt: "2024-01-03T00:00:00.000Z",
 				updatedAt: "2024-01-03T00:00:00.000Z",
@@ -130,7 +130,7 @@ describe("marketplace get/upsert", () => {
 	it("returns the raw query and closest item tag suggestions", async () => {
 		await testDb.insert(schema.data).values([
 			{
-				resource: "item",
+				resource: "items",
 				data: {
 					id: crypto.randomUUID(),
 					title: "iPhone 13",
@@ -143,7 +143,7 @@ describe("marketplace get/upsert", () => {
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
 			{
-				resource: "item",
+				resource: "items",
 				data: {
 					id: crypto.randomUUID(),
 					title: "Desk phone",
@@ -174,7 +174,7 @@ describe("marketplace get/upsert", () => {
 
 	it("returns fuzzy suggestions when Levenshtein distance is at most three", async () => {
 		await testDb.insert(schema.data).values({
-			resource: "item",
+			resource: "items",
 			data: {
 				id: crypto.randomUUID(),
 				title: "Phone accessories",
@@ -207,7 +207,7 @@ describe("marketplace get/upsert", () => {
 	it("dedupes repeated item tags in suggestions", async () => {
 		await testDb.insert(schema.data).values([
 			{
-				resource: "item",
+				resource: "items",
 				data: {
 					id: crypto.randomUUID(),
 					title: "First iPhone",
@@ -217,7 +217,7 @@ describe("marketplace get/upsert", () => {
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
 			{
-				resource: "item",
+				resource: "items",
 				data: {
 					id: crypto.randomUUID(),
 					title: "Second iPhone",
@@ -245,7 +245,7 @@ describe("marketplace get/upsert", () => {
 
 	it("returns no suggestions for an empty query", async () => {
 		await testDb.insert(schema.data).values({
-			resource: "item",
+			resource: "items",
 			data: {
 				id: crypto.randomUUID(),
 				title: "iPhone 13",

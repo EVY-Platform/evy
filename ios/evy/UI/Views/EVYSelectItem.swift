@@ -188,7 +188,7 @@ struct EVYSelectItem: View {
         EVYSelectList(
           options: arrayValue,
           format: "{$datum:value}",
-          destination: "{selling_reason}")
+          destination: "{items.selling_reason}")
       default:
         Text("error")
       }

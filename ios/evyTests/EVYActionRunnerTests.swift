@@ -32,9 +32,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateAction() {
     var received: NavOperation?
-    let action = UI_RowAction(condition: "", false: "", true: "{create(item)}")
+    let action = UI_RowAction(condition: "", false: "", true: "{create(items)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
-    XCTAssertEqual(received, .create("item"))
+    XCTAssertEqual(received, .create("items"))
   }
 
   func testNavigateWithBraceFunction() {
@@ -51,6 +51,27 @@ final class EVYActionRunnerTests: XCTestCase {
     }
     XCTAssertEqual(route.flowId, "flow-1")
     XCTAssertEqual(route.pageId, "page-2")
+    XCTAssertEqual(route.query, [:])
+  }
+
+  func testNavigateWithBraceFunctionAndQuery() {
+    var received: NavOperation?
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flow-1,page-2?items=894cb705-8033-40c5-b5b1-efe05c8fdd11&items=0f17c313-b475-4fbc-85cf-4d6b4512c5eb)}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate, got \(String(describing: received))")
+      return
+    }
+    XCTAssertEqual(route.flowId, "flow-1")
+    XCTAssertEqual(route.pageId, "page-2")
+    XCTAssertEqual(
+      route.query["items"],
+      ["894cb705-8033-40c5-b5b1-efe05c8fdd11", "0f17c313-b475-4fbc-85cf-4d6b4512c5eb"]
+    )
   }
 
   func testNavigateColonFormat() {
@@ -67,6 +88,27 @@ final class EVYActionRunnerTests: XCTestCase {
     }
     XCTAssertEqual(route.flowId, "flowX")
     XCTAssertEqual(route.pageId, "pageY")
+    XCTAssertEqual(route.query, [:])
+  }
+
+  func testNavigateColonFormatWithQuery() {
+    var received: NavOperation?
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "navigate:flowX:pageY?items=894cb705-8033-40c5-b5b1-efe05c8fdd11&items=0f17c313-b475-4fbc-85cf-4d6b4512c5eb",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertEqual(route.flowId, "flowX")
+    XCTAssertEqual(route.pageId, "pageY")
+    XCTAssertEqual(
+      route.query["items"],
+      ["894cb705-8033-40c5-b5b1-efe05c8fdd11", "0f17c313-b475-4fbc-85cf-4d6b4512c5eb"]
+    )
   }
 
   func testHighlightRequiredFormatsFieldLabel() {
@@ -96,5 +138,58 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     EVYActionRunner.run(actions: [action]) { _ in }
     wait(for: [expectation], timeout: 2)
+  }
+
+  func testNavigateColonFormatWithJsonQuery() {
+    var received: NavOperation?
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "navigate:flowX:pageY?{\"items\": [\"id-1\", \"id-2\"]}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertEqual(route.flowId, "flowX")
+    XCTAssertEqual(route.pageId, "pageY")
+    XCTAssertEqual(route.query["items"], ["id-1", "id-2"])
+  }
+
+  func testNavigateWithDatumResolvesId() {
+    var received: NavOperation?
+    let datum = EVYJson.dictionary([
+      "id": .string("resolved-uuid"),
+      "title": .string("Test Item"),
+    ])
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "navigate:flowX:pageY?{\"items\": [$datum.id]}",
+    )
+    EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertEqual(route.flowId, "flowX")
+    XCTAssertEqual(route.pageId, "pageY")
+    XCTAssertEqual(route.query["items"], ["resolved-uuid"])
+  }
+
+  func testNavigateWithoutDatumKeepsDatumExpression() {
+    var received: NavOperation?
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "navigate:flowX:pageY?{\"items\": [$datum.id]}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertEqual(route.query["items"], ["$datum.id"])
   }
 }

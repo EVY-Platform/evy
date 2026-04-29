@@ -7,17 +7,17 @@ export default defineRow("SelectPhotoRow", {
 	config: {
 		type: "SelectPhoto",
 		actions: [],
-		source: "{item}",
+		source: "",
 		view: {
 			content: {
 				title: "Select photo row title",
 				subtitle: "Photos: 0/10",
 				icon: "::image-plus::",
 				content: "Add photos",
-				photos: "{item.photo_ids}",
+				photos: "{items.photo_ids}",
 			},
 		},
-		destination: "{photo_ids}",
+		destination: "{items.photo_ids}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

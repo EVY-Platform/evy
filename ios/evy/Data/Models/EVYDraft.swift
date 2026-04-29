@@ -130,7 +130,7 @@ enum EVYDraft {
       )
     }
 
-    if segments.count > 1 {
+    if segments.count > 1 || entityKey != nil {
       return Binding(
         scopeId: effectiveScope,
         pathSegments: segments,
@@ -240,12 +240,12 @@ private func evyJsonUpdating(
 
   switch json {
   case .dictionary(var dict):
-    guard let child = dict[head] else {
-      return nil
-    }
     if path.count == 1 {
       dict[head] = value
       return .dictionary(dict)
+    }
+    guard let child = dict[head] else {
+      return nil
     }
     guard
       let updatedChild = evyJsonUpdating(

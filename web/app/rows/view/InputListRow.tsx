@@ -20,7 +20,7 @@ export default defineRow("InputListRow", {
 		<RowLayout title={row.config.view.content.title}>
 			<Input
 				value={row.config.source}
-				placeholder={row.config.view.content.placeholder ?? ""}
+				placeholder={row.config.view.content.placeholder}
 			/>
 		</RowLayout>
 	),

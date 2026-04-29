@@ -10,7 +10,7 @@
 					{
 						"id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
 						"type": "Text",
-						"source": "{item}",
+						"source": "{items}",
 						"destination": "",
 						"actions": [],
 						"view": {
@@ -25,7 +25,7 @@
 				"footer": {
 					"id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
 					"type": "Button",
-					"source": "{item}",
+					"source": "{items}",
 					"destination": "",
 					"actions": [
 						{
@@ -54,8 +54,8 @@
 					{
 						"id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
 						"type": "SelectPhoto",
-						"source": "{item}",
-						"destination": "{photo_ids}",
+						"source": "",
+						"destination": "{items.photo_ids}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -70,8 +70,8 @@
 					{
 						"id": "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
 						"type": "Input",
-						"source": "{item}",
-						"destination": "{title}",
+						"source": "",
+						"destination": "{items.title}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -84,8 +84,8 @@
 					{
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
 						"type": "Input",
-						"source": "{item}",
-						"destination": "{buildCurrency(price)}",
+						"source": "",
+						"destination": "{buildCurrency(items.price)}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -99,7 +99,7 @@
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
 						"type": "Dropdown",
 						"source": "{conditions}",
-						"destination": "{condition}",
+						"destination": "{items.condition}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -113,7 +113,7 @@
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
 						"type": "Dropdown",
 						"source": "{selling_reasons}",
-						"destination": "{selling_reason}",
+						"destination": "{items.selling_reason}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -126,7 +126,7 @@
 					{
 						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
 						"type": "ColumnContainer",
-						"source": "{item}",
+						"source": "{items}",
 						"destination": "",
 						"actions": [],
 						"view": {
@@ -136,8 +136,8 @@
 									{
 										"id": "b66e136d-828d-4ed0-ae27-cdc48f7cbffd",
 										"type": "Input",
-										"source": "{item}",
-										"destination": "{width}",
+										"source": "",
+										"destination": "{items.width}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -150,8 +150,8 @@
 									{
 										"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
 										"type": "Input",
-										"source": "{item}",
-										"destination": "{height}",
+										"source": "",
+										"destination": "{items.height}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -164,8 +164,8 @@
 									{
 										"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
 										"type": "Input",
-										"source": "{item}",
-										"destination": "{length}",
+										"source": "",
+										"destination": "{items.length}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -184,7 +184,7 @@
 				"footer": {
 					"id": "acabbedc-0a5a-4f10-8e0c-3d6cf76d86e8",
 					"type": "Button",
-					"source": "{item}",
+					"source": "{items}",
 					"destination": "",
 					"actions": [
 						{
@@ -242,8 +242,8 @@
 					{
 						"id": "c9d0e1f2-a3b4-4c5d-8e7f-8a9b0c1d2e3f",
 						"type": "TextArea",
-						"source": "{item}",
-						"destination": "{description}",
+						"source": "",
+						"destination": "{items.description}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -258,7 +258,7 @@
 				"footer": {
 					"id": "cc86c53a-170d-4800-8897-8f99f3697055",
 					"type": "Button",
-					"source": "{item}",
+					"source": "{items}",
 					"destination": "",
 					"actions": [
 						{
@@ -281,22 +281,18 @@
 					{
 						"id": "d0e1f2a3-b4c5-4d6e-8f8a-9b0c1d2e3f4a",
 						"type": "SelectSegmentContainer",
-						"source": "{item}",
+						"source": "{items}",
 						"destination": "",
 						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
-								"segments": [
-									"Pickup",
-									"Delivery",
-									"Shipping"
-								],
+								"segments": ["Pickup", "Delivery", "Shipping"],
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222201",
 										"type": "ListContainer",
-										"source": "{item}",
+										"source": "{items}",
 										"destination": "",
 										"actions": [],
 										"view": {
@@ -306,7 +302,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222202",
 														"type": "Info",
-														"source": "{item}",
+														"source": "{items}",
 														"destination": "",
 														"actions": [],
 														"view": {
@@ -320,7 +316,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222203",
 														"type": "SheetContainer",
-														"source": "{item}",
+														"source": "{items}",
 														"destination": "",
 														"actions": [],
 														"view": {
@@ -329,8 +325,8 @@
 																"child": {
 																	"id": "22222222-2222-4222-8222-222222222204",
 																	"type": "TextAction",
-																	"source": "{item}",
-																	"destination": "{pickup_address}",
+																	"source": "",
+																	"destination": "{items.pickup_address}",
 																	"actions": [],
 																	"view": {
 																		"content": {
@@ -376,8 +372,8 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222206",
 														"type": "Input",
-														"source": "{item}",
-														"destination": "{address_instructions}",
+														"source": "",
+														"destination": "{items.address_instructions}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -390,7 +386,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222207",
 														"type": "Info",
-														"source": "{item}",
+														"source": "{items}",
 														"destination": "",
 														"actions": [],
 														"view": {
@@ -404,8 +400,8 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222208",
 														"type": "Calendar",
-														"source": "{item}",
-														"destination": "{pickup_timeslots}",
+														"source": "",
+														"destination": "{items.pickup_timeslots}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -422,7 +418,7 @@
 									{
 										"id": "22222222-2222-4222-8222-222222222209",
 										"type": "ListContainer",
-										"source": "{item}",
+										"source": "{items}",
 										"destination": "",
 										"actions": [],
 										"view": {
@@ -432,7 +428,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222210",
 														"type": "Info",
-														"source": "{item}",
+														"source": "{items}",
 														"destination": "",
 														"actions": [],
 														"view": {
@@ -446,8 +442,8 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222211",
 														"type": "Input",
-														"source": "{item}",
-														"destination": "{delivery_fee}",
+														"source": "",
+														"destination": "{items.delivery_fee}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -460,7 +456,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222212",
 														"type": "Info",
-														"source": "{item}",
+														"source": "{items}",
 														"destination": "",
 														"actions": [],
 														"view": {
@@ -475,7 +471,7 @@
 														"id": "22222222-2222-4222-8222-222222222213",
 														"type": "InlinePicker",
 														"source": "{durations}",
-														"destination": "{distance}",
+														"destination": "{items.distance}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -487,7 +483,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222214",
 														"type": "Info",
-														"source": "{item}",
+														"source": "{items}",
 														"destination": "",
 														"actions": [],
 														"view": {
@@ -501,8 +497,8 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222215",
 														"type": "Calendar",
-														"source": "{item}",
-														"destination": "{delivery_timeslots}",
+														"source": "",
+														"destination": "{items.delivery_timeslots}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -519,7 +515,7 @@
 									{
 										"id": "22222222-2222-4222-8222-222222222216",
 										"type": "ListContainer",
-										"source": "{item}",
+										"source": "{items}",
 										"destination": "",
 										"actions": [],
 										"view": {
@@ -529,7 +525,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222217",
 														"type": "Info",
-														"source": "{item}",
+														"source": "{items}",
 														"destination": "",
 														"actions": [],
 														"view": {
@@ -543,8 +539,8 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222218",
 														"type": "Input",
-														"source": "{item}",
-														"destination": "{shipping_source_postal_code}",
+														"source": "",
+														"destination": "{items.shipping_source_postal_code}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -557,7 +553,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222219",
 														"type": "Info",
-														"source": "{item}",
+														"source": "{items}",
 														"destination": "",
 														"actions": [],
 														"view": {
@@ -572,7 +568,7 @@
 														"id": "22222222-2222-4222-8222-222222222220",
 														"type": "InlinePicker",
 														"source": "{areas}",
-														"destination": "{shipping_destination_areas}",
+														"destination": "{items.shipping_destination_areas}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -584,8 +580,8 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222221",
 														"type": "Input",
-														"source": "{item}",
-														"destination": "{weight}",
+														"source": "",
+														"destination": "{items.weight}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -608,7 +604,7 @@
 				"footer": {
 					"id": "b1600fd2-aac2-4399-8a94-72baca75b9ba",
 					"type": "Button",
-					"source": "{item}",
+					"source": "{items}",
 					"destination": "",
 					"actions": [
 						{
@@ -631,7 +627,7 @@
 					{
 						"id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
 						"type": "Info",
-						"source": "{item}",
+						"source": "{items}",
 						"destination": "",
 						"actions": [],
 						"view": {
@@ -645,7 +641,7 @@
 					{
 						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
 						"type": "ListContainer",
-						"source": "{item}",
+						"source": "{items}",
 						"destination": "",
 						"actions": [],
 						"view": {
@@ -655,8 +651,8 @@
 									{
 										"id": "33333333-3333-4333-8333-333333333301",
 										"type": "TextSelect",
-										"source": "{item}",
-										"destination": "{payment_cash}",
+										"source": "",
+										"destination": "{items.payment_cash}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -668,8 +664,8 @@
 									{
 										"id": "33333333-3333-4333-8333-333333333302",
 										"type": "TextSelect",
-										"source": "{item}",
-										"destination": "{payment_app}",
+										"source": "",
+										"destination": "{items.payment_app}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -687,7 +683,7 @@
 				"footer": {
 					"id": "db46724f-c8f0-43cb-b888-6a23e4ca76cb",
 					"type": "Button",
-					"source": "{item}",
+					"source": "{items}",
 					"destination": "",
 					"actions": [
 						{
@@ -710,7 +706,7 @@
 					{
 						"id": "a3b4c5d6-e7f8-4a9b-8c1d-2e3f4a5b6c7d",
 						"type": "Info",
-						"source": "{item}",
+						"source": "{items}",
 						"destination": "",
 						"actions": [],
 						"view": {
@@ -726,13 +722,13 @@
 				"footer": {
 					"id": "20e9a035-8a42-4282-8725-49b620866c70",
 					"type": "Button",
-					"source": "{item}",
+					"source": "{items}",
 					"destination": "",
 					"actions": [
 						{
 							"condition": "",
 							"false": "",
-							"true": "{create(item)}"
+							"true": "{create(items)}"
 						}
 					],
 					"view": {

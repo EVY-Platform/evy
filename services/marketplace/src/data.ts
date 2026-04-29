@@ -1,5 +1,4 @@
 import { eq, and, desc, gt, sql } from "drizzle-orm";
-import pluralize from "pluralize";
 
 import type {
 	ApiRequest,
@@ -56,7 +55,7 @@ async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 					ELSE '[]'::jsonb
 				END
 			) AS tag
-			WHERE ${data.resource} = 'item'
+			WHERE ${data.resource} = 'items'
 				AND tag->>'id' IS NOT NULL
 				AND length(trim(tag->>'value')) > 0
 			ORDER BY (tag->>'id'), lower(trim(tag->>'value'))
@@ -144,8 +143,7 @@ async function marketplaceGetBody(
 		throw new Error(`Unsupported marketplace get method ${params.method}`);
 	}
 
-	const singularResource = pluralize.singular(resource);
-	const whereClauses = [eq(data.resource, singularResource)];
+	const whereClauses = [eq(data.resource, resource)];
 	if (filter?.id) {
 		whereClauses.push(eq(data.id, filter.id));
 	}
@@ -185,13 +183,12 @@ async function marketplaceUpsertBody(
 	const nowIso = new Date().toISOString();
 
 	const validatedPayload = validateDataPayload(dataPayload);
-	const singularResource = pluralize.singular(resource);
 
 	if (filter?.id) {
 		const result = await db
 			.update(data)
 			.set({ data: validatedPayload, updatedAt: nowIso })
-			.where(and(eq(data.id, filter.id), eq(data.resource, singularResource)))
+			.where(and(eq(data.id, filter.id), eq(data.resource, resource)))
 			.returning();
 		if (result.length > 0) {
 			const row = result[0];
@@ -201,7 +198,7 @@ async function marketplaceUpsertBody(
 	}
 
 	const insertValues: typeof data.$inferInsert = {
-		resource: singularResource,
+		resource,
 		data: validatedPayload,
 		createdAt: nowIso,
 		updatedAt: nowIso,

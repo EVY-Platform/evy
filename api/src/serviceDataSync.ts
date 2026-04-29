@@ -1,4 +1,3 @@
-import pluralize from "pluralize";
 import type {
 	GetRequest,
 	GetResponse,
@@ -56,32 +55,22 @@ export function resolveCandidateToService(candidate: string): string | null {
 		return null;
 	}
 
-	const candidateVariants = [candidate, pluralize.plural(candidate)];
-
 	for (const serviceName of SYNCABLE_SERVICES) {
 		const resources = RESOURCES_BY_SERVICE[serviceName] as readonly string[];
-		for (const candidateVariant of candidateVariants) {
-			if (resources.includes(candidateVariant)) {
-				return serviceName;
-			}
+		if (resources.includes(candidate)) {
+			return serviceName;
 		}
 	}
 
 	return null;
 }
 
-export async function syncServiceData(
-	params: unknown,
-	dependencies: SyncServiceDataDependencies = DEFAULT_SYNC_SERVICE_DATA_DEPENDENCIES,
+async function syncAllResources(
+	serviceName: SyncableService,
+	lastSyncTime: string,
+	dependencies: SyncServiceDataDependencies,
 ): Promise<SyncServiceDataResponse> {
-	validateStrictSyncServiceDataRequest(params);
-
-	if (params.service !== "marketplace") {
-		throw new Error(`Invalid or unsupported service ${params.service}`);
-	}
-
-	const serviceName = params.service;
-	const resources = RESOURCES_BY_SERVICE.marketplace;
+	const resources = RESOURCES_BY_SERVICE[serviceName];
 
 	const data: SyncServiceDataResponse["data"] = [];
 	for (const resource of resources) {
@@ -89,7 +78,7 @@ export async function syncServiceData(
 			service: serviceName,
 			resource,
 			filter: {
-				updatedAfter: params.lastSyncTime,
+				updatedAfter: lastSyncTime,
 			},
 		};
 
@@ -106,6 +95,19 @@ export async function syncServiceData(
 	}
 
 	return validateSyncServiceDataResponse({ data });
+}
+
+export async function syncServiceData(
+	params: unknown,
+	dependencies: SyncServiceDataDependencies = DEFAULT_SYNC_SERVICE_DATA_DEPENDENCIES,
+): Promise<SyncServiceDataResponse> {
+	validateStrictSyncServiceDataRequest(params);
+
+	if (params.service !== "marketplace") {
+		throw new Error(`Invalid or unsupported service ${params.service}`);
+	}
+
+	return syncAllResources(params.service, params.lastSyncTime, dependencies);
 }
 
 function collectCandidatesFromValue(

@@ -10,15 +10,17 @@ For local and e2e runs, set `API_HOST` in the repository root `.env` (see [READM
 
 At startup, the app calls `syncServiceData` for supported backend services and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `marketplace:items` or `marketplace:conditions`). Exact keys are preferred when app code needs a specific backend resource.
 
-SDUI bindings may still use resource-only names such as `{conditions}` or `{timeslots}`. Those bindings resolve exact local keys first, then explicitly fall back to synced service resources. This keeps local draft/entity data separate from backend catalog data while preserving simple SDUI source strings.
+Pages can receive query parameters through navigation actions. The query is a JSON object after `?` mapping plural resource keys to arrays of IDs or `$datum` expressions (for example, `navigate:flowId:pageId?{"items": [$datum.id]}`). iOS parses that JSON into a `[String: [String]]` dictionary. When the page opens, iOS resolves each key locally, picks the first ID from the already-synced collection, and stores the matching entity under the same plural key so bindings like `{items}` render the selected row.
+
+SDUI bindings use plural resource-only names such as `{conditions}` or `{timeslots}`. Edit rows write drafts through plural destinations such as `{items.title}` or `{items.condition}`. Those bindings resolve exact local keys first, then explicitly fall back to synced service resources. This keeps local draft/entity data separate from backend catalog data while preserving simple SDUI source strings.
 
 ### Draft scopes and draft cache keys
 
 iOS drafts are stored in the in-memory draft cache, separate from public/private SwiftData stores.
 
-Draft scope IDs use `<flowId>:<entityKey>` (for example, `create-flow:item`). Reserved scopes include `<flowId>:browse`, `app:unscoped`, and `ephemeral:<uuid>`.
+Draft scope IDs use `<flowId>:<entityKey>` with a plural entity key (for example, `create-flow:items`). Reserved scopes include `<flowId>:browse`, `app:unscoped`, and `ephemeral:<uuid>`.
 
-Full internal draft cache keys append the mode/path segment with another colon: `<flowId>:<entityKey>:<modeFlag><base64Path>` (for example, `create-flow:item:aWyJ0aXRsZSJd`). Because scope IDs also contain `:`, draft key parsing splits on the last colon. The mode flag is `a` for alias-flat merge mode or `e` for explicit-path merge mode; the remaining path key is the base64-encoded JSON path.
+Full internal draft cache keys append the mode/path segment with another colon: `<flowId>:<entityKey>:<modeFlag><base64Path>` (for example, `create-flow:items:aWyJ0aXRsZSJd`). Because scope IDs also contain `:`, draft key parsing splits on the last colon. The mode flag is `a` for alias-flat merge mode or `e` for explicit-path merge mode; the remaining path key is the base64-encoded JSON path.
 
 These draft keys are distinct from service-qualified data keys like `marketplace:items` and SDUI binding prefixes like `{$local:address}`.
 

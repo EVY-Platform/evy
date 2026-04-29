@@ -97,6 +97,29 @@ struct EVY {
     }
   }
 
+  static func resolveQueryParams(_ query: [String: [String]]) {
+    for (queryKey, ids) in query {
+      let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
+      guard let id = ids.first,
+        let collectionData = collectionData(for: queryKey, serviceName: serviceName),
+        let collectionJson = try? collectionData.decoded(),
+        case .array(let collectionValues) = collectionJson,
+        let matchingValue = collectionValues.first(where: { $0.identifierValue() == id }),
+        let encodedMatchingValue = try? JSONEncoder().encode(matchingValue)
+      else {
+        continue
+      }
+      try? publicStore.upsert(key: queryKey, value: encodedMatchingValue)
+    }
+  }
+
+  private static func collectionData(for collectionKey: String, serviceName: String?) -> EVYData? {
+    if let serviceName {
+      return try? publicStore.getSyncedResource(resource: collectionKey, serviceName: serviceName)
+    }
+    return try? publicStore.getForBinding(key: collectionKey)
+  }
+
   static func getSDUI() async throws -> [UI_Flow] {
     try await EVYAPIManager.shared.fetch(
       method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil),
@@ -210,7 +233,7 @@ struct EVY {
     let dataWithId = EVYJson.dictionary(dict)
     let params = UpsertParams(
       service: "marketplace",
-      resource: "\(key)s",
+      resource: key,
       filter: Filter(id: newId),
       data: dataWithId
     )
@@ -298,7 +321,7 @@ struct EVY {
 
 @MainActor
 enum EVYPreviewFixtures {
-  /// Seed preview data by syncing services and creating a local "item" key
+  /// Seed preview data by syncing services and creating a local "items" key
   /// from the first marketplace item. **Preview-only** – not used at runtime.
   static func seedData() async throws {
     try await EVY.syncAllServices()
@@ -310,7 +333,7 @@ enum EVYPreviewFixtures {
     } else {
       firstItem = try JSONEncoder().encode(EVYJson.dictionary([:]))
     }
-    try EVY.publicStore.create(key: "item", data: firstItem)
+    try EVY.publicStore.create(key: "items", data: firstItem)
   }
 
   static func getRow(_ props: [String]) async throws -> UI_Row {

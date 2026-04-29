@@ -120,6 +120,6 @@ struct EVYDropdown: View {
       placeholder: "A placeholder",
       data: "{conditions}",
       format: "{$datum:value}",
-      destination: "{condition}")
+      destination: "{items.condition}")
   }
 }

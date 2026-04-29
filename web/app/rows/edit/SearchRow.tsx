@@ -50,7 +50,7 @@ export default defineRow("SearchRow", {
 				<InlineIcon icon="::search::" alt="Search" />
 				<Input
 					value={row.config.source}
-					placeholder={row.config.view.content.placeholder ?? ""}
+					placeholder={row.config.view.content.placeholder}
 				/>
 			</div>
 			<SearchPreviewResults

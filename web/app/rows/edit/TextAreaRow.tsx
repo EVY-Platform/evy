@@ -7,7 +7,7 @@ export default defineRow("TextAreaRow", {
 	config: {
 		type: "TextArea",
 		actions: [],
-		source: "{item}",
+		source: "",
 		view: {
 			content: {
 				title: "Text area row title",
@@ -15,7 +15,7 @@ export default defineRow("TextAreaRow", {
 				placeholder: "placeholder",
 			},
 		},
-		destination: "{description}",
+		destination: "{items.description}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
