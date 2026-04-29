@@ -12,12 +12,14 @@ struct EVYSearchRow: View {
   private let view: SearchRowViewData
   private let source: String
   private let destination: String
+  private let actions: [UI_RowAction]
   @State private var showSheet = false
 
-  init(view: SearchRowViewData, source: String, destination: String) {
+  init(view: SearchRowViewData, source: String, destination: String, actions: [UI_RowAction]) {
     self.view = view
     self.source = source
     self.destination = destination
+    self.actions = actions
   }
 
   var body: some View {
@@ -30,7 +32,8 @@ struct EVYSearchRow: View {
         source: source,
         destination: destination,
         placeholder: view.content.placeholder,
-        resultTemplate: view.content.child
+        resultTemplate: view.content.child,
+        actions: actions
       )
     }
   }

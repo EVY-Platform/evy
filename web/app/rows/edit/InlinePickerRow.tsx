@@ -7,14 +7,14 @@ export default defineRow("InlinePickerRow", {
 	config: {
 		type: "InlinePicker",
 		actions: [],
-		source: "",
+		source: "{durations}",
 		view: {
 			content: {
 				title: "Inline picker row title",
 				format: "{$datum:value}",
 			},
 		},
-		destination: "{distance}",
+		destination: "{items.distance}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

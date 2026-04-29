@@ -8,14 +8,14 @@ export default defineRow("TextSelectRow", {
 	config: {
 		type: "TextSelect",
 		actions: [],
-		source: "{item}",
+		source: "",
 		view: {
 			content: {
 				title: "Text select row title",
 				text: "placeholder",
 			},
 		},
-		destination: "{payment_cash}",
+		destination: "{items.payment_cash}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

@@ -57,8 +57,8 @@ function testFlow(): UI_Flow {
 				rows: [
 					testRow({
 						type: "SheetContainer",
-						source: "{item}",
-						destination: "{buildCurrency(price)}",
+						source: "",
+						destination: "{buildCurrency(items.price)}",
 						actions: [
 							{
 								condition: "{length(title) > 0 && price.value >= 1}",
@@ -83,7 +83,7 @@ function testFlow(): UI_Flow {
 									testRow({
 										type: "Search",
 										source: "{$api:tags}",
-										destination: "{tags}",
+										destination: "{items.tags}",
 										view: {
 											content: {
 												title: "",
@@ -118,8 +118,8 @@ function testFlow(): UI_Flow {
 				],
 				footer: testRow({
 					type: "Button",
-					source: "{item}",
-					actions: [{ condition: "", false: "", true: "{create(item)}" }],
+					source: "{items}",
+					actions: [{ condition: "", false: "", true: "{create(items)}" }],
 					view: {
 						content: {
 							title: "",
@@ -145,24 +145,34 @@ describe("expression parser utility", () => {
 	it("extracts all braced bindings from a string", () => {
 		expect(
 			extractBindingsFromString(
-				"{item.title} costs {formatCurrency(price)} and {$datum:value}",
+				"{items.title} costs {formatCurrency(items.price)} and {$datum:value}",
 			),
-		).toEqual(["item.title", "formatCurrency(price)", "$datum:value"]);
+		).toEqual(["items.title", "formatCurrency(items.price)", "$datum:value"]);
+	});
+
+	it("extracts action bindings that contain nested query objects", () => {
+		expect(
+			extractBindingsFromString(
+				'{navigate(flowId,pageId,{"items": [$datum.id], "conditions": ["id-1"]})}',
+			),
+		).toEqual([
+			'navigate(flowId,pageId,{"items": [$datum.id], "conditions": ["id-1"]})',
+		]);
 	});
 
 	it("extracts plain identifiers and root path segments", () => {
 		expect(extractCandidatesFromBinding("selling_reasons")).toEqual([
 			"selling_reasons",
 		]);
-		expect(extractCandidatesFromBinding("item.title")).toEqual(["item"]);
+		expect(extractCandidatesFromBinding("items.title")).toEqual(["items"]);
 		expect(extractCandidatesFromBinding("price.value")).toEqual(["price"]);
 	});
 
 	it("extracts function arguments without extracting function names", () => {
-		expect(extractCandidatesFromBinding("formatCurrency(price)")).toEqual([
-			"price",
-		]);
-		expect(extractCandidatesFromBinding("create(item)")).toEqual(["item"]);
+		expect(extractCandidatesFromBinding("formatCurrency(items.price)")).toEqual(
+			["items"],
+		);
+		expect(extractCandidatesFromBinding("create(items)")).toEqual(["items"]);
 		expect(extractCandidatesFromBinding("highlight_required(title)")).toEqual([
 			"title",
 		]);
@@ -175,6 +185,14 @@ describe("expression parser utility", () => {
 				"navigate(ca47e6c5-0000-4000-8000-000000000000,06b21b52-0000-4000-8000-000000000000)",
 			),
 		).toEqual([]);
+	});
+
+	it("extracts resource keys from navigate query object arguments", () => {
+		expect(
+			extractCandidatesFromBinding(
+				'navigate(ca47e6c5-0000-4000-8000-000000000000,06b21b52-0000-4000-8000-000000000000,{"items": [$datum.id], "conditions": ["id-1"]})',
+			),
+		).toEqual(["items", "conditions"]);
 	});
 
 	it("extracts operands from comparison expressions", () => {
@@ -205,7 +223,7 @@ describe("service data sync utilities", () => {
 	it("extracts candidates recursively from source, destination, actions, nested child rows, nested children arrays, and footers", () => {
 		const candidates = extractCandidatesFromFlows([testFlow()]);
 
-		expect(candidates.has("item")).toBe(true);
+		expect(candidates.has("items")).toBe(true);
 		expect(candidates.has("conditions")).toBe(true);
 		expect(candidates.has("price")).toBe(true);
 		expect(candidates.has("title")).toBe(true);
@@ -219,9 +237,9 @@ describe("service data sync utilities", () => {
 		expect(candidates.has("navigate")).toBe(false);
 	});
 
-	it("maps singular and plural resource candidates to services", () => {
+	it("maps plural resource candidates to services", () => {
 		expect(resolveCandidateToService("conditions")).toBe("marketplace");
-		expect(resolveCandidateToService("item")).toBe("marketplace");
+		expect(resolveCandidateToService("item")).toBeNull();
 		expect(resolveCandidateToService("items")).toBe("marketplace");
 		expect(resolveCandidateToService("price")).toBeNull();
 		expect(resolveCandidateToService("title")).toBeNull();

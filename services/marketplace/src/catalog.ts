@@ -10,7 +10,7 @@ const MARKETPLACE_DATA_JSON_KEYS = [
 	"durations",
 	"areas",
 	"timeslots",
-	"item",
+	"items",
 ] as const;
 
 /** JSON keys routed to the marketplace database during `bun run db:seed` (see `partitionSeedCatalogData` in `scripts/seed.ts`). */

@@ -30,7 +30,9 @@ Resource routing, `flowUpdated` / `dataUpdated`, service data sync, and gRPC for
 
 Clients can refresh backend service data with the protected `syncServiceData` JSON-RPC method. The request includes a syncable service name and an ISO `lastSyncTime`; the response returns changed resource rows shaped as `{ service, resource, value }`.
 
-Clients should store synced backend resources with service-qualified keys such as `marketplace:items` and `marketplace:conditions`. SDUI source bindings may still use short resource names like `{items}` or `{conditions}`; client data lookup resolves exact local keys first, then falls back to synced service resources. This keeps drafts and local flow state separate from backend catalog data while preserving concise flow bindings.
+For startup/cache refresh, the API fetches every resource in the service using `filter.updatedAfter = lastSyncTime`.
+
+Clients should store synced backend resources with service-qualified keys such as `marketplace:items` and `marketplace:conditions`. SDUI source bindings may still use short plural resource names like `{items}` or `{conditions}`; client data lookup resolves exact local keys first, then falls back to synced service resources. Navigate actions pass query params as the optional third `navigate` argument using a JSON object (`{navigate(flowId, pageId, {"items": [$datum.id]})}`); clients parse the query into a typed dictionary, resolve the first ID for each key from the synced collection, and expose the matching entity under the same plural key. Draft destinations also use plural resource paths such as `{items.title}`. This keeps drafts and local flow state separate from backend catalog data while preserving concise flow bindings.
 
 iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS README § Draft scopes and draft cache keys](./ios/README.md#draft-scopes-and-draft-cache-keys).
 

@@ -67,7 +67,9 @@ public func parseFunctionCall(_ input: String) -> (functionName: String, functio
 func splitFunctionArguments(_ args: String) -> [String] {
   var components: [String] = []
   var current = ""
-  var depth = 0
+  var parenDepth = 0
+  var bracketDepth = 0
+  var braceDepth = 0
   var inString = false
 
   for ch in args {
@@ -84,12 +86,24 @@ func splitFunctionArguments(_ args: String) -> [String] {
       inString = true
       current.append(ch)
     case "(":
-      depth += 1
+      parenDepth += 1
       current.append(ch)
     case ")":
-      depth -= 1
+      parenDepth -= 1
       current.append(ch)
-    case "," where depth == 0:
+    case "[":
+      bracketDepth += 1
+      current.append(ch)
+    case "]":
+      bracketDepth -= 1
+      current.append(ch)
+    case "{":
+      braceDepth += 1
+      current.append(ch)
+    case "}":
+      braceDepth -= 1
+      current.append(ch)
+    case "," where parenDepth == 0 && bracketDepth == 0 && braceDepth == 0:
       let trimmed = current.trimmingCharacters(in: .whitespacesAndNewlines)
       if !trimmed.isEmpty {
         components.append(trimmed)

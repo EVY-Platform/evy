@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct EVYSearchSingle: View {
+  @Environment(\.navigate) private var navigate
+
   @State private var selected: String = ""
   @State private var value: String = ""
 
@@ -15,15 +17,18 @@ struct EVYSearchSingle: View {
 
   let destination: String
   let placeholder: String
+  let actions: [UI_RowAction]
 
   init(
     source: String,
     resultTemplate: UI_Row?,
     destination: String,
     placeholder: String,
+    actions: [UI_RowAction],
   ) {
     self.destination = destination
     self.placeholder = placeholder
+    self.actions = actions
 
     _searchController = StateObject(
       wrappedValue: EVYSearchController(source: source, resultTemplate: resultTemplate)
@@ -31,22 +36,34 @@ struct EVYSearchSingle: View {
   }
 
   func select(_ element: EVYSearchResult) {
-    do {
-      value = element.value
-      selected = element.value
-      let encoded = try JSONEncoder().encode(element.data)
-      try EVY.updateData(encoded, at: destination)
-    } catch {
-      #if DEBUG
-        print("[EVYSearchSingle] Error selecting element: \(error)")
-      #endif
+    value = element.value
+    selected = element.value
+
+    if !destination.isEmpty {
+      do {
+        let encoded = try JSONEncoder().encode(element.data)
+        try EVY.updateData(encoded, at: destination)
+      } catch {
+        #if DEBUG
+          print("[EVYSearchSingle] Error updating selected element: \(error)")
+        #endif
+      }
+    }
+
+    if !actions.isEmpty {
+      EVYActionRunner.run(actions: actions, datum: element.data, navigate: navigate)
     }
   }
 
   func unselect() {
+    value = ""
+    selected = ""
+
+    guard !destination.isEmpty else {
+      return
+    }
+
     do {
-      value = ""
-      selected = ""
       try EVY.updateValue("{}", at: destination)
     } catch {
       #if DEBUG
@@ -57,7 +74,6 @@ struct EVYSearchSingle: View {
 
   var body: some View {
     VStack {
-      // Search bar
       EVYSearchField(
         placeholder: placeholder,
         text: $value,
@@ -73,7 +89,6 @@ struct EVYSearchSingle: View {
         searchController.debouncedSearch(name: newValue)
       }
 
-      // Search results
       EVYSearchResultsList(results: searchController.results) { result in
         select(result)
       }
@@ -113,7 +128,8 @@ struct EVYSearchSingle: View {
       source: "{$local:address}",
       destination: "",
       placeholder: "Search",
-      resultTemplate: template
+      resultTemplate: template,
+      actions: []
     )
   }
 }

@@ -43,13 +43,24 @@ final class EVYDataStore {
       return exact
     }
 
-    let suffix = ":\(key)"
-    let descriptor = FetchDescriptor<EVYData>()
-    guard let first = try context.fetch(descriptor).first(where: { $0.key.hasSuffix(suffix) })
-    else {
+    guard let serviceName = serviceName(forSyncedResource: key) else {
       throw EVYDataError.keyNotFound
     }
-    return first
+    return try getSyncedResource(resource: key, serviceName: serviceName)
+  }
+
+  func getSyncedResource(resource: String, serviceName: String) throws -> EVYData {
+    return try get(key: "\(serviceName):\(resource)")
+  }
+
+  func serviceName(forSyncedResource resource: String) -> String? {
+    let suffix = ":\(resource)"
+    let descriptor = FetchDescriptor<EVYData>()
+    guard let key = try? context.fetch(descriptor).first(where: { $0.key.hasSuffix(suffix) })?.key
+    else {
+      return nil
+    }
+    return key.split(separator: ":", maxSplits: 1).first.map(String.init)
   }
 
   func getAll(keyPrefix: String? = nil) throws -> [EVYData] {

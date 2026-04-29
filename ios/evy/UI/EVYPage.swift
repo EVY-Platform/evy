@@ -12,10 +12,19 @@ private struct EVYDraftScopeEnvironmentKey: EnvironmentKey {
   static let defaultValue: String? = nil
 }
 
+private struct EVYPageQueryEnvironmentKey: EnvironmentKey {
+  static let defaultValue: [String: [String]] = [:]
+}
+
 extension EnvironmentValues {
   var evyDraftScopeId: String? {
     get { self[EVYDraftScopeEnvironmentKey.self] }
     set { self[EVYDraftScopeEnvironmentKey.self] = newValue }
+  }
+
+  var evyPageQuery: [String: [String]] {
+    get { self[EVYPageQueryEnvironmentKey.self] }
+    set { self[EVYPageQueryEnvironmentKey.self] = newValue }
   }
 }
 
@@ -28,8 +37,30 @@ extension UI_Page: View {
 private struct EVYPageBody: View {
   let page: UI_Page
   @Environment(\.evyDraftScopeId) private var evyDraftScopeId
+  @Environment(\.evyPageQuery) private var evyPageQuery
 
   var body: some View {
+    pageContent
+      .onAppear {
+        EVY.draftStore.activeScopeId = evyDraftScopeId
+        if !evyPageQuery.isEmpty {
+          EVY.resolveQueryParams(evyPageQuery)
+        }
+        bootstrapDrafts(in: page, scopeId: evyDraftScopeId)
+      }
+    .simultaneousGesture(
+      TapGesture().onEnded {
+        UIApplication.shared.sendAction(
+          #selector(UIResponder.resignFirstResponder),
+          to: nil,
+          from: nil,
+          for: nil
+        )
+      })
+  }
+
+  @ViewBuilder
+  private var pageContent: some View {
     Group {
       ScrollView {
         ForEach(page.rows, id: \.id) { row in
@@ -54,19 +85,6 @@ private struct EVYPageBody: View {
           .accessibilityIdentifier("pageFooter_\(page.id)")
       }
     }
-    .onAppear {
-      EVY.draftStore.activeScopeId = evyDraftScopeId
-      bootstrapDrafts(in: page, scopeId: evyDraftScopeId)
-    }
-    .simultaneousGesture(
-      TapGesture().onEnded {
-        UIApplication.shared.sendAction(
-          #selector(UIResponder.resignFirstResponder),
-          to: nil,
-          from: nil,
-          for: nil
-        )
-      })
   }
 
   /// Ensures a draft exists for each row `destination` binding in the active scope.
@@ -74,7 +92,8 @@ private struct EVYPageBody: View {
   private func bootstrapDrafts(in page: UI_Page, scopeId: String?) {
     forEachRow(in: page) { row in
       guard !row.destination.isEmpty else { return }
-      let variableName = parsePropsFromText(row.destination)
+      let destinationProps = parsePropsFromText(row.destination)
+      let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
       guard !variableName.isEmpty else { return }
       let initialData: Data?
       if row.type == .inlinePicker {

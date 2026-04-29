@@ -15,17 +15,20 @@ struct EVYSearch: View {
   let destination: String
   let placeholder: String
   let resultTemplate: UI_Row?
+  let actions: [UI_RowAction]
 
   init(
     source: String,
     destination: String,
     placeholder: String,
     resultTemplate: UI_Row?,
+    actions: [UI_RowAction],
   ) {
     self.source = source
     self.destination = destination
     self.placeholder = placeholder
     self.resultTemplate = resultTemplate
+    self.actions = actions
 
     do {
       let data = try EVY.getDataFromText(destination)
@@ -46,6 +49,7 @@ struct EVYSearch: View {
         resultTemplate: resultTemplate,
         destination: destination,
         placeholder: placeholder,
+        actions: actions,
       )
     } else {
       EVYSearchSingle(
@@ -53,6 +57,7 @@ struct EVYSearch: View {
         resultTemplate: resultTemplate,
         destination: destination,
         placeholder: placeholder,
+        actions: actions,
       )
     }
   }

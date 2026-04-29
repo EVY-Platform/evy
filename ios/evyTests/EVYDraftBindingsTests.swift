@@ -22,8 +22,8 @@ final class EVYDraftBindingTests: XCTestCase {
   }
 
   func testBindingTitleDoesNotUseEphemeralScope() throws {
-    let binding = try EVYDraft.binding(parsedProps: "title", scopeId: "flow:item")
-    XCTAssertEqual(binding.scopeId, "flow:item")
+    let binding = try EVYDraft.binding(parsedProps: "title", scopeId: "flow:items")
+    XCTAssertEqual(binding.scopeId, "flow:items")
     XCTAssertFalse(binding.scopeId.hasPrefix("ephemeral:"))
   }
 
@@ -44,7 +44,7 @@ final class EVYDraftBindingTests: XCTestCase {
   }
 
   func testDraftKeyPrefixUsesColonSeparator() {
-    XCTAssertEqual(EVYDraft.Binding.draftKeyPrefix(forScopeId: "flow:item"), "flow:item:")
+    XCTAssertEqual(EVYDraft.Binding.draftKeyPrefix(forScopeId: "flow:items"), "flow:items:")
   }
 
   func testParseDraftKeySplitsOnLastColonForEphemeralKeys() throws {
@@ -61,7 +61,7 @@ final class EVYDraftBindingTests: XCTestCase {
   func testDraftKeyRoundTripsBindingWithColonScope() throws {
     let binding = try EVYDraft.binding(
       parsedProps: "dimensions.width",
-      scopeId: "flow:item"
+      scopeId: "flow:items"
     )
 
     let parsedBinding = try XCTUnwrap(EVYDraft.Binding.parseDraftKey(binding.draftKey))
@@ -72,7 +72,7 @@ final class EVYDraftBindingTests: XCTestCase {
   }
 
   func testScopeEntityKeyParsesEntityScopes() {
-    XCTAssertEqual(EVYDraft.Scope.entityKey(fromScopeId: "flow:item"), "item")
+    XCTAssertEqual(EVYDraft.Scope.entityKey(fromScopeId: "flow:items"), "items")
   }
 
   func testScopeEntityKeyReturnsNilForReservedScopes() {

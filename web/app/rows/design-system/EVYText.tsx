@@ -5,10 +5,10 @@ export default function EVYText({
 	text,
 	className,
 }: {
-	text: string;
+	text?: string;
 	className?: string;
 }) {
-	const resolvedText = parseText(text);
+	const resolvedText = parseText(text ?? "");
 	return (
 		<span className={className} style={{ whiteSpace: "pre-line" }}>
 			{parseIconText(resolvedText)}

@@ -120,6 +120,74 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(out.value, "15 minutes")
   }
 
+  func testResolveQueryParamsStoresMatchingEntityUnderQueryKey() throws {
+    let entityKey = uniqueKey("entities")
+    let firstId = UUID().uuidString
+    let secondId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(firstId),
+          "title": .string("First item"),
+        ]),
+        .dictionary([
+          "id": .string(secondId),
+          "title": .string("Selected item"),
+        ]),
+      ]),
+      at: "marketplace:\(entityKey)"
+    )
+
+    EVY.resolveQueryParams([entityKey: [secondId]])
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected item"))
+  }
+
+  func testResolveQueryParamsInfersServiceFromSyncedResourceKey() throws {
+    let entityKey = uniqueKey("entities")
+    let id = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Selected from other service"),
+        ])
+      ]),
+      at: "other_service:\(entityKey)"
+    )
+
+    EVY.resolveQueryParams([entityKey: [id]])
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected from other service"))
+  }
+
+  func testResolveQueryParamsUsesFirstIdWhenMultipleIdsAreProvided() throws {
+    let entityKey = uniqueKey("entities")
+    let firstId = UUID().uuidString
+    let secondId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(firstId),
+          "title": .string("First selected item"),
+        ]),
+        .dictionary([
+          "id": .string(secondId),
+          "title": .string("Second item"),
+        ]),
+      ]),
+      at: "marketplace:\(entityKey)"
+    )
+
+    EVY.resolveQueryParams([entityKey: [firstId, secondId]])
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("First selected item"))
+  }
+
   func testFormatDateFormatsIsoStringWithPattern() throws {
     let key = uniqueKey("created")
     try store(.string("2024-01-19T12:42:52.000Z"), at: key)

@@ -15,6 +15,13 @@
 			"when": 1777385709420,
 			"tag": "0001_enable_fuzzystrmatch",
 			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1778000000000,
+			"tag": "0002_pluralize_resources",
+			"breakpoints": true
 		}
 	]
 }

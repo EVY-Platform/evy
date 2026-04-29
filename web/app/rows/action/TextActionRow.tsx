@@ -7,7 +7,7 @@ export default defineRow("TextActionRow", {
 	config: {
 		type: "TextAction",
 		actions: [],
-		source: "{item}",
+		source: "",
 		view: {
 			content: {
 				title: "Text action row title",
@@ -16,7 +16,7 @@ export default defineRow("TextActionRow", {
 				action: "Change",
 			},
 		},
-		destination: "{pickup_address}",
+		destination: "{items.pickup_address}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

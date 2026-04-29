@@ -293,7 +293,7 @@ class E2ETestBase: XCTestCase {
                         [
                           "condition": "",
                           "false": "",
-                          "true": "navigate:\(viewFlowId):\(viewPageId)",
+                          "true": "{navigate(\(viewFlowId),\(viewPageId))}",
                         ]
                       ],
                     ],
@@ -312,7 +312,7 @@ class E2ETestBase: XCTestCase {
                         [
                           "condition": "",
                           "false": "",
-                          "true": "navigate:\(createFlowId):\(createPageId)",
+                          "true": "{navigate(\(createFlowId),\(createPageId))}",
                         ]
                       ],
                     ],
@@ -338,13 +338,13 @@ class E2ETestBase: XCTestCase {
             [
               "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
               "type": "Text",
-              "source": "{item}",
+              "source": "{items}",
               "destination": "",
               "actions": [],
               "view": [
                 "content": [
                   "title": "My item is called",
-                  "text": "{title}",
+                  "text": "{items.title}",
                 ],
                 "max_lines": "",
               ],
@@ -353,7 +353,7 @@ class E2ETestBase: XCTestCase {
           "footer": [
             "id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
             "type": "Button",
-            "source": "{item}",
+            "source": "{items}",
             "destination": "",
             "actions": [
               [
@@ -605,8 +605,8 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
 
     // Title field
-    guard let titleTextField = findElement(identifier: "textField_{title}") else {
-      XCTFail("Title text field should exist with identifier 'textField_{title}'")
+    guard let titleTextField = findElement(identifier: "textField_{items.title}") else {
+      XCTFail("Title text field should exist with identifier 'textField_{items.title}'")
       return
     }
     guard let titleField = await tapAndGetEditableField(container: titleTextField) else {
@@ -625,16 +625,15 @@ final class WebSocketE2ETests: E2ETestBase {
     guard
       let priceTextField = findElementWithScroll(
         identifiers: [
-          "textField_{price}",
-          "textField_{item.price}",
-          "textField_{buildCurrency(price)}",
+          "textField_{items.price}",
+          "textField_{buildCurrency(items.price)}",
         ],
-        containsAny: ["price", "item.price", "buildCurrency"],
+        containsAny: ["items.price", "buildCurrency"],
         in: scrollView
       )
     else {
       XCTFail(
-        "Price field should exist (textField_{price}, textField_{item.price}, textField_{buildCurrency(price)}, or accessibility containing 'price')"
+        "Price field should exist (textField_{items.price}, textField_{buildCurrency(items.price)}, or accessibility containing 'items.price')"
       )
       return
     }
@@ -651,13 +650,13 @@ final class WebSocketE2ETests: E2ETestBase {
 
     guard
       let widthTextField = findElementWithScroll(
-        identifiers: ["textField_{width}", "textField_{item.dimensions.width}"],
-        containsAny: ["width", "dimensions.width"],
+        identifiers: ["textField_{items.width}"],
+        containsAny: ["items.width"],
         in: scrollView
       )
     else {
       XCTFail(
-        "Width field should exist (textField_{width}, textField_{item.dimensions.width}, or accessibility containing 'width')"
+        "Width field should exist (textField_{items.width}, or accessibility containing 'items.width')"
       )
       return
     }
@@ -679,7 +678,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     XCTAssertTrue(
       viewItemButton.waitForExistence(timeout: 15),
-      "Should return to home after create(item)")
+      "Should return to home after create(items)")
 
     let itemsPayload = try await emitter.getResource(service: "marketplace", resource: "items")
     XCTAssertTrue(
@@ -703,7 +702,7 @@ final class WebSocketE2ETests: E2ETestBase {
             [
               "id": "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
               "type": "Input",
-              "source": "{item}",
+              "source": "",
               "view": [
                 "content": [
                   "title": "Title",
@@ -711,13 +710,13 @@ final class WebSocketE2ETests: E2ETestBase {
                   "placeholder": "Item",
                 ]
               ],
-              "destination": "{title}",
+              "destination": "{items.title}",
               "actions": [],
             ],
             [
               "id": "668aeb79-d8ba-43b7-9619-07f91d0a1908",
               "type": "Input",
-              "source": "{item}",
+              "source": "",
               "view": [
                 "content": [
                   "title": "Price",
@@ -725,13 +724,13 @@ final class WebSocketE2ETests: E2ETestBase {
                   "placeholder": "0",
                 ]
               ],
-              "destination": "{buildCurrency(price)}",
+              "destination": "{buildCurrency(items.price)}",
               "actions": [],
             ],
             [
               "id": "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
               "type": "Input",
-              "source": "{item}",
+              "source": "",
               "view": [
                 "content": [
                   "title": "Width",
@@ -739,14 +738,14 @@ final class WebSocketE2ETests: E2ETestBase {
                   "placeholder": "0",
                 ]
               ],
-              "destination": "{width}",
+              "destination": "{items.width}",
               "actions": [],
             ],
           ],
           "footer": [
             "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
             "type": "Button",
-            "source": "{item}",
+            "source": "{items}",
             "destination": "",
             "view": [
               "content": [
@@ -758,7 +757,7 @@ final class WebSocketE2ETests: E2ETestBase {
               [
                 "condition": "",
                 "false": "",
-                "true": "{create(item)}",
+                "true": "{create(items)}",
               ]
             ],
           ],
@@ -829,7 +828,7 @@ final class WebSocketE2ETests: E2ETestBase {
                           "condition": "",
                           "false": "",
                           "true":
-                            "navigate:\(E2EFlowIds.webSocketViewFlow):\(E2EFlowIds.webSocketViewPage)",
+                            "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage))}",
                         ]
                       ],
                     ],
@@ -849,7 +848,7 @@ final class WebSocketE2ETests: E2ETestBase {
                           "condition": "",
                           "false": "",
                           "true":
-                            "navigate:\(E2EFlowIds.webSocketCreateFlow):\(E2EFlowIds.webSocketCreatePage)"
+                            "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
                         ]
                       ],
                     ],

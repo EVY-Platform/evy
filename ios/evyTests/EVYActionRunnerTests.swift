@@ -32,9 +32,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateAction() {
     var received: NavOperation?
-    let action = UI_RowAction(condition: "", false: "", true: "{create(item)}")
+    let action = UI_RowAction(condition: "", false: "", true: "{create(items)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
-    XCTAssertEqual(received, .create("item"))
+    XCTAssertEqual(received, .create("items"))
   }
 
   func testNavigateWithBraceFunction() {
@@ -51,22 +51,40 @@ final class EVYActionRunnerTests: XCTestCase {
     }
     XCTAssertEqual(route.flowId, "flow-1")
     XCTAssertEqual(route.pageId, "page-2")
+    XCTAssertEqual(route.query, [:])
   }
 
-  func testNavigateColonFormat() {
+  func testNavigateWithBraceFunctionAndJsonQueryArgument() {
     var received: NavOperation?
     let action = UI_RowAction(
       condition: "",
       false: "",
-      true: "navigate:flowX:pageY",
+      true: "{navigate(flow-1,page-2,{\"items\": [\"id-1\", \"id-2\"]})}",
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
-      XCTFail("Expected navigate")
+      XCTFail("Expected navigate, got \(String(describing: received))")
       return
     }
-    XCTAssertEqual(route.flowId, "flowX")
-    XCTAssertEqual(route.pageId, "pageY")
+    XCTAssertEqual(route.flowId, "flow-1")
+    XCTAssertEqual(route.pageId, "page-2")
+    XCTAssertEqual(route.query["items"], ["id-1", "id-2"])
+  }
+
+  func testNavigateNonJsonQueryArgumentPostsError() {
+    var received: NavOperation?
+    let expectation = expectation(
+      forNotification: Notification.Name.evyErrorOccurred,
+      object: nil,
+    )
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flow-1,page-2,notJson)}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    wait(for: [expectation], timeout: 2)
+    XCTAssertNil(received)
   }
 
   func testHighlightRequiredFormatsFieldLabel() {
@@ -96,5 +114,41 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     EVYActionRunner.run(actions: [action]) { _ in }
     wait(for: [expectation], timeout: 2)
+  }
+
+  func testNavigateWithDatumResolvesId() {
+    var received: NavOperation?
+    let datum = EVYJson.dictionary([
+      "id": .string("resolved-uuid"),
+      "title": .string("Test Item"),
+    ])
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flowX,pageY,{\"items\": [$datum.id]})}",
+    )
+    EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertEqual(route.flowId, "flowX")
+    XCTAssertEqual(route.pageId, "pageY")
+    XCTAssertEqual(route.query["items"], ["resolved-uuid"])
+  }
+
+  func testNavigateWithoutDatumKeepsDatumExpression() {
+    var received: NavOperation?
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flowX,pageY,{\"items\": [$datum.id]})}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertEqual(route.query["items"], ["$datum.id"])
   }
 }

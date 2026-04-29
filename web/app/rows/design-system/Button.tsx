@@ -1,10 +1,10 @@
-export default function Button({ label }: { label: string }) {
+export default function Button({ label }: { label?: string }) {
 	return (
 		<button
 			type="button"
 			className="evy-rounded-md evy-text-sm evy-px-4 evy-py-2 evy-border-none evy-text-white evy-bg-gray-dark evy-hover:bg-gray"
 		>
-			{label}
+			{label ?? ""}
 		</button>
 	);
 }

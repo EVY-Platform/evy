@@ -6,7 +6,6 @@ import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
 import { readFile } from "node:fs/promises";
 import addFormats from "ajv-formats";
 import Ajv2020 from "ajv/dist/2020";
-import pluralize from "pluralize";
 import postgres from "postgres";
 
 import { MARKETPLACE_SEED_KEYS } from "../services/marketplace/src/catalog";
@@ -205,8 +204,7 @@ type SeedDataRow = {
 
 function buildDataRows(dataJson: SeedDataMap, now: string): SeedDataRow[] {
 	const rows: SeedDataRow[] = [];
-	for (const [key, value] of Object.entries(dataJson)) {
-		const resource = pluralize.singular(key);
+	for (const [resource, value] of Object.entries(dataJson)) {
 		for (const item of value) {
 			rows.push({
 				id: item.id,

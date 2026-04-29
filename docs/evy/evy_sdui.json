@@ -29,7 +29,13 @@
 						}
 					},
 					"source": "{$api:marketplace:items:suggestions}",
-					"actions": [],
+					"actions": [
+						{
+							"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{\"items\":[\"12401f50-cf1a-45d7-a112-2e68a2070466\"]})}",
+							"false": "",
+							"condition": ""
+						}
+					],
 					"destination": ""
 				}
 			],
@@ -43,7 +49,7 @@
 					{
 						"condition": "",
 						"false": "",
-						"true": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:306ed62c-c2af-4652-a873-26c7a388972d"
+						"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}"
 					}
 				],
 				"view": {

@@ -5,8 +5,8 @@ export default function TextArea({
 	placeholder,
 	value,
 }: {
-	placeholder: string;
-	value: string;
+	placeholder?: string;
+	value?: string;
 }) {
 	return (
 		<textarea
@@ -14,8 +14,8 @@ export default function TextArea({
 			rows={4}
 			className={`evy-block evy-box-sizing-border evy-p-2 evy-w-full evy-text-sm ${border} evy-focus-visible:outline-none`}
 			style={{ resize: "none" }}
-			placeholder={parseText(placeholder)}
-			value={parseText(value)}
+			placeholder={parseText(placeholder ?? "")}
+			value={parseText(value ?? "")}
 			readOnly
 		/>
 	);

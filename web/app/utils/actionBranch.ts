@@ -37,7 +37,7 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 		if (parenIndex !== -1 && inner.endsWith(")")) {
 			const functionName = inner.slice(0, parenIndex).trim();
 			const argsString = inner.slice(parenIndex + 1, -1).trim();
-			const args = argsString ? argsString.split(",").map((a) => a.trim()) : [];
+			const args = splitFunctionArguments(argsString);
 
 			if (isActionFunction(functionName)) {
 				return { functionName, args };
@@ -45,13 +45,64 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 		}
 	}
 
-	const colonParts = trimmed.split(":");
-	const functionName = colonParts[0];
-	if (functionName !== "close" && isActionFunction(functionName)) {
-		return { functionName, args: colonParts.slice(1) };
+	return null;
+}
+
+function splitFunctionArguments(argsString: string): string[] {
+	if (!argsString.trim()) return [];
+
+	const args: string[] = [];
+	let current = "";
+	let parenDepth = 0;
+	let bracketDepth = 0;
+	let braceDepth = 0;
+	let inString: '"' | "'" | null = null;
+	let previousChar = "";
+
+	for (const char of argsString) {
+		if (inString) {
+			current += char;
+			if (char === inString && previousChar !== "\\") {
+				inString = null;
+			}
+			previousChar = char;
+			continue;
+		}
+
+		if (char === '"' || char === "'") {
+			inString = char;
+			current += char;
+			previousChar = char;
+			continue;
+		}
+
+		if (char === "(") parenDepth++;
+		if (char === ")") parenDepth--;
+		if (char === "[") bracketDepth++;
+		if (char === "]") bracketDepth--;
+		if (char === "{") braceDepth++;
+		if (char === "}") braceDepth--;
+
+		if (
+			char === "," &&
+			parenDepth === 0 &&
+			bracketDepth === 0 &&
+			braceDepth === 0
+		) {
+			const trimmed = current.trim();
+			if (trimmed) args.push(trimmed);
+			current = "";
+			previousChar = char;
+			continue;
+		}
+
+		current += char;
+		previousChar = char;
 	}
 
-	return null;
+	const trimmed = current.trim();
+	if (trimmed) args.push(trimmed);
+	return args;
 }
 
 export function serializeBranch(
@@ -81,7 +132,8 @@ export function formatBranchDisplay(
 		const flowName = flow?.name ?? flowId;
 		const page = flow?.pages.find((p) => p.id === pageId);
 		const pageName = page?.title || page?.id || pageId;
-		return `${parsed.functionName}(${flowName}, ${pageName})`;
+		const queryDisplay = parsed.args[2] ? `, ${parsed.args[2]}` : "";
+		return `${parsed.functionName}(${flowName}, ${pageName}${queryDisplay})`;
 	}
 
 	if (parsed.args.length === 0) return parsed.functionName;

@@ -18,7 +18,7 @@ final class ContentViewTests: XCTestCase {
     let flows = try makeFlows()
     let createFlow = flows.first(where: { $0.id == "create-flow" })
     let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: createFlow)
-    XCTAssertEqual(keys, Set(["item"]))
+    XCTAssertEqual(keys, Set(["items"]))
   }
 
   func testExtractCreateKeysReturnsEmptyForFlowWithoutCreateActions() throws {
@@ -33,7 +33,7 @@ final class ContentViewTests: XCTestCase {
     let route = Route(flowId: "create-flow", pageId: "create-page")
     XCTAssertEqual(
       EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows),
-      EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: "item")
+      EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: "items")
     )
   }
 
@@ -67,7 +67,7 @@ final class ContentViewTests: XCTestCase {
                   [
                     "condition": "",
                     "false": "",
-                    "true": "navigate:create-flow:create-page",
+                    "true": "{navigate(create-flow,create-page)}",
                   ]
                 ],
               ]
@@ -86,7 +86,7 @@ final class ContentViewTests: XCTestCase {
               [
                 "id": "title-row",
                 "type": "Input",
-                "source": "{item}",
+                "source": "",
                 "view": [
                   "content": [
                     "title": "Title",
@@ -94,14 +94,14 @@ final class ContentViewTests: XCTestCase {
                     "placeholder": "Enter a title",
                   ]
                 ],
-                "destination": "{title}",
+                "destination": "{items.title}",
                 "actions": [],
               ]
             ],
             "footer": [
               "id": "submit-button",
               "type": "Button",
-              "source": "{item}",
+              "source": "{items}",
               "view": [
                 "content": [
                   "title": "",
@@ -112,7 +112,7 @@ final class ContentViewTests: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": "{create(item)}",
+                  "true": "{create(items)}",
                 ]
               ],
             ],

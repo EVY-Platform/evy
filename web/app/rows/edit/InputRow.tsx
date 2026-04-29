@@ -7,7 +7,7 @@ export default defineRow("InputRow", {
 	config: {
 		type: "Input",
 		actions: [],
-		source: "{item}",
+		source: "",
 		view: {
 			content: {
 				title: "Input row title",
@@ -15,7 +15,7 @@ export default defineRow("InputRow", {
 				value: "",
 			},
 		},
-		destination: "{title}",
+		destination: "{items.title}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

@@ -10,6 +10,13 @@ import SwiftUI
 struct Route: Hashable, Codable {
   let flowId: String
   let pageId: String
+  let query: [String: [String]]
+
+  init(flowId: String, pageId: String, query: [String: [String]] = [:]) {
+    self.flowId = flowId
+    self.pageId = pageId
+    self.query = query
+  }
 }
 enum NavOperation: Hashable {
   case navigate(Route)
@@ -170,6 +177,7 @@ struct ContentView: View {
             let page = flow.getPageById(route.pageId)
           {
             page
+              .environment(\.evyPageQuery, route.query)
               .environment(
                 \.evyDraftScopeId,
                 EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows)

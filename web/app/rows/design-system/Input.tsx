@@ -13,11 +13,11 @@ export default function Input({
 	value,
 	placeholder,
 }: {
-	value: string;
-	placeholder: string;
+	value?: string;
+	placeholder?: string;
 }) {
-	const resolved = parseText(value);
-	const parsedPlaceholder = parseText(placeholder);
+	const resolved = parseText(value ?? "");
+	const parsedPlaceholder = parseText(placeholder ?? "");
 
 	return (
 		<div className="evy-relative">

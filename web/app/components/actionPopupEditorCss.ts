@@ -100,4 +100,20 @@ export const actionPopupEditorCss = `
 	line-height: 1.25;
 	min-height: 0;
 }
+.evy-action-popup-textarea {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 4px 6px;
+	font-size: var(--text-sm);
+	font-family: inherit;
+	line-height: 1.4;
+	border: 1px solid var(--color-gray-border);
+	border-radius: var(--radius-sm);
+	resize: vertical;
+	overflow-y: auto;
+}
+.evy-action-popup-textarea:focus-visible {
+	outline: none;
+	border-color: var(--color-blue);
+}
 `;
