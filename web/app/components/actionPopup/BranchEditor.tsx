@@ -94,6 +94,15 @@ export function BranchEditor({
 	const handleArgChange = useCallback(
 		(argIndex: number, argValue: string) => {
 			if (!selectedFunction) return;
+			const trimmedArgValue = argValue.trim();
+			if (
+				selectedFunction === "navigate" &&
+				argIndex === 2 &&
+				trimmedArgValue &&
+				!trimmedArgValue.startsWith("{")
+			) {
+				return;
+			}
 			const newArgs = [...args];
 			while (newArgs.length <= argIndex) newArgs.push("");
 			newArgs[argIndex] = argValue;
@@ -127,6 +136,17 @@ export function BranchEditor({
 					onChange={(v) => handleArgChange(argIndex, v)}
 				/>
 			))}
+
+			{selectedFunction === "navigate" && args[0] && args[1] && (
+				<textarea
+					aria-label={`${branchId}-navigate-query`}
+					value={args[2] ?? ""}
+					onChange={(e) => handleArgChange(2, e.target.value)}
+					placeholder='Optional JSON query, e.g. {"items": [$datum.id]}'
+					rows={3}
+					className="evy-action-popup-textarea"
+				/>
+			)}
 		</div>
 	);
 }

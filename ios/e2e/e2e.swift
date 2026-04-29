@@ -293,7 +293,7 @@ class E2ETestBase: XCTestCase {
                         [
                           "condition": "",
                           "false": "",
-                          "true": "navigate:\(viewFlowId):\(viewPageId)",
+                          "true": "{navigate(\(viewFlowId),\(viewPageId))}",
                         ]
                       ],
                     ],
@@ -312,7 +312,7 @@ class E2ETestBase: XCTestCase {
                         [
                           "condition": "",
                           "false": "",
-                          "true": "navigate:\(createFlowId):\(createPageId)",
+                          "true": "{navigate(\(createFlowId),\(createPageId))}",
                         ]
                       ],
                     ],
@@ -828,7 +828,7 @@ final class WebSocketE2ETests: E2ETestBase {
                           "condition": "",
                           "false": "",
                           "true":
-                            "navigate:\(E2EFlowIds.webSocketViewFlow):\(E2EFlowIds.webSocketViewPage)",
+                            "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage))}",
                         ]
                       ],
                     ],
@@ -848,7 +848,7 @@ final class WebSocketE2ETests: E2ETestBase {
                           "condition": "",
                           "false": "",
                           "true":
-                            "navigate:\(E2EFlowIds.webSocketCreateFlow):\(E2EFlowIds.webSocketCreatePage)"
+                            "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
                         ]
                       ],
                     ],

@@ -49,7 +49,7 @@
 					{
 						"condition": "",
 						"false": "",
-						"true": "navigate:ca47e6c5-da19-4491-8422-adb40d9e8a27:306ed62c-c2af-4652-a873-26c7a388972d"
+						"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}"
 					}
 				],
 				"view": {

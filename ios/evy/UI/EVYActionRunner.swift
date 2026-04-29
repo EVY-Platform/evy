@@ -54,13 +54,6 @@ enum EVYActionRunner {
   ) throws {
     let unwrappedBranch = unwrapActionBranch(branch)
 
-    if let operation = parseColonFormat(unwrappedBranch, datum: datum)
-      ?? parseColonFormat(branch, datum: datum)
-    {
-      navigate(operation)
-      return
-    }
-
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
 
     if let (functionName, functionArgs) = parseFunctionCall(unwrappedBranch) {
@@ -71,20 +64,13 @@ enum EVYActionRunner {
           throw EVYError.invalidData(context: "navigate requires flowId and pageId")
         }
         let flowId = stripOptionalSurroundingQuotes(args[0])
-        let pageArgument = stripOptionalSurroundingQuotes(args[1])
-        let extraQueryArgument = args.count > 2 ? args.dropFirst(2).joined(separator: ",") : ""
-        let querySeparator: String
-        if extraQueryArgument.isEmpty {
-          querySeparator = ""
-        } else if pageArgument.contains("?") {
-          querySeparator = ","
-        } else {
-          querySeparator = "?"
-        }
-        let pageRoute = splitPageAndQuery(pageArgument + querySeparator + extraQueryArgument)
-        let resolvedQuery = resolveDatumInQuery(pageRoute.query, datum: datum)
+        let pageId = stripOptionalSurroundingQuotes(args[1])
+
+        let queryArgument = args.count > 2 ? args.dropFirst(2).joined(separator: ",") : ""
+        let query = try parseQueryArgument(queryArgument)
+        let resolvedQuery = resolveDatumInQuery(query, datum: datum)
         navigate(
-          .navigate(Route(flowId: flowId, pageId: pageRoute.pageId, query: resolvedQuery))
+          .navigate(Route(flowId: flowId, pageId: pageId, query: resolvedQuery))
         )
       case "create":
         let args = splitFunctionArguments(functionArgs)
@@ -111,65 +97,14 @@ enum EVYActionRunner {
     }
   }
 
-  private static func parseColonFormat(_ value: String, datum: EVYJson?) -> NavOperation? {
-    let parts = value.split(separator: ":", maxSplits: 2)
-    guard let keyword = parts.first else { return nil }
-    switch keyword {
-    case "navigate":
-      guard parts.count == 3 else { return nil }
-      let pageRoute = splitPageAndQuery(String(parts[2]))
-      let resolvedQuery = resolveDatumInQuery(pageRoute.query, datum: datum)
-      return .navigate(
-        Route(
-          flowId: String(parts[1]),
-          pageId: pageRoute.pageId,
-          query: resolvedQuery
-        )
-      )
-    case "create":
-      guard parts.count == 2 else { return nil }
-      return .create(String(parts[1]))
-
-    default:
-      return nil
-    }
-  }
-
-  private static func splitPageAndQuery(_ value: String) -> (
-    pageId: String, query: [String: [String]]
-  ) {
-    let parts = value.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
-    let pageId = String(parts.first ?? "")
-    guard parts.count == 2 else {
-      return (pageId, [:])
-    }
-    return (pageId, parseQueryString(String(parts[1])))
-  }
-
-  private static func parseQueryString(_ value: String) -> [String: [String]] {
-    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+  private static func parseQueryArgument(_ value: String) throws -> [String: [String]] {
+    let trimmedValue = stripOptionalSurroundingQuotes(value)
+      .trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedValue.isEmpty else { return [:] }
-
-    if trimmedValue.hasPrefix("{") {
-      return parseJsonQuery(trimmedValue)
+    guard trimmedValue.hasPrefix("{") else {
+      throw EVYError.invalidData(context: "navigate query params must be a JSON object")
     }
-
-    var query: [String: [String]] = [:]
-    let pairs = trimmedValue.split(separator: "&", omittingEmptySubsequences: true)
-    for pair in pairs {
-      let keyValue = pair.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
-      guard keyValue.count == 2 else { continue }
-
-      let key = decodeQueryComponent(String(keyValue[0]))
-      guard !key.isEmpty else { continue }
-
-      let value = decodeQueryComponent(String(keyValue[1]))
-      guard !value.isEmpty else { continue }
-
-      query[key, default: []].append(value)
-    }
-
-    return query
+    return parseJsonQuery(trimmedValue)
   }
 
   private static func parseJsonQuery(_ jsonString: String) -> [String: [String]] {
@@ -237,10 +172,6 @@ enum EVYActionRunner {
     let resolved = datum.parseProp(props: props)
     let result = resolved.identifierValue()
     return result.isEmpty ? value : result
-  }
-
-  private static func decodeQueryComponent(_ value: String) -> String {
-    value.replacingOccurrences(of: "+", with: " ").removingPercentEncoding ?? value
   }
 
   private static func unwrapActionBranch(_ branch: String) -> String {

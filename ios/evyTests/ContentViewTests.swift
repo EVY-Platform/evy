@@ -67,7 +67,7 @@ final class ContentViewTests: XCTestCase {
                   [
                     "condition": "",
                     "false": "",
-                    "true": "navigate:create-flow:create-page",
+                    "true": "{navigate(create-flow,create-page)}",
                   ]
                 ],
               ]

@@ -379,7 +379,7 @@ test.describe("Row configuration", () => {
 		await expect(configPanel.getByText("Row has no actions")).toBeVisible();
 	});
 
-	test("should select navigate action with cascading flow and page dropdowns", async ({
+	test("should select navigate action with cascading flow, page, and query params", async ({
 		page,
 	}) => {
 		await initFullFlows(page, [
@@ -437,12 +437,48 @@ test.describe("Row configuration", () => {
 		await expect(pageArg).toBeVisible();
 		await popoverSelect(page, pageArg, "Payment");
 
+		const trueQueryParams = popup.getByLabel("true-0-navigate-query");
+		await expect(trueQueryParams).toBeVisible();
+		await trueQueryParams.fill('{"items": [$datum.id]}');
+
+		const falseFn = popup.getByLabel("false-0-function");
+		await popoverSelect(page, falseFn, "Navigate");
+
+		const falseFlowArg = popup.getByLabel("false-0-arg-0");
+		await expect(falseFlowArg).toBeVisible();
+		await popoverSelect(page, falseFlowArg, "Checkout");
+
+		const falsePageArg = popup.getByLabel("false-0-arg-1");
+		await expect(falsePageArg).toBeVisible();
+		await popoverSelect(page, falsePageArg, "Payment");
+
+		const falseQueryParams = popup.getByLabel("false-0-navigate-query");
+		await expect(falseQueryParams).toBeVisible();
+		await falseQueryParams.fill('{"fallbacks": ["id-1", "id-2"]}');
+
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("navigate(Checkout, Payment)"),
+			configPanel.getByText(
+				'navigate(Checkout, Payment, {"items": [$datum.id]})',
+			),
 		).toBeVisible();
+		await expect(
+			configPanel.getByText(
+				'navigate(Checkout, Payment, {"fallbacks": ["id-1", "id-2"]})',
+			),
+		).toBeVisible();
+
+		await configPanel.getByLabel("Edit action 1").click();
+		const reopenedPopup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(reopenedPopup).toBeVisible();
+		await expect(reopenedPopup.getByLabel("true-0-navigate-query")).toHaveValue(
+			'{"items": [$datum.id]}',
+		);
+		await expect(
+			reopenedPopup.getByLabel("false-0-navigate-query"),
+		).toHaveValue('{"fallbacks": ["id-1", "id-2"]}');
 	});
 
 	test("should select create action with data model argument", async ({

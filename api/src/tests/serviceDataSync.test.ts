@@ -150,6 +150,16 @@ describe("expression parser utility", () => {
 		).toEqual(["items.title", "formatCurrency(items.price)", "$datum:value"]);
 	});
 
+	it("extracts action bindings that contain nested query objects", () => {
+		expect(
+			extractBindingsFromString(
+				'{navigate(flowId,pageId,{"items": [$datum.id], "conditions": ["id-1"]})}',
+			),
+		).toEqual([
+			'navigate(flowId,pageId,{"items": [$datum.id], "conditions": ["id-1"]})',
+		]);
+	});
+
 	it("extracts plain identifiers and root path segments", () => {
 		expect(extractCandidatesFromBinding("selling_reasons")).toEqual([
 			"selling_reasons",
@@ -175,6 +185,14 @@ describe("expression parser utility", () => {
 				"navigate(ca47e6c5-0000-4000-8000-000000000000,06b21b52-0000-4000-8000-000000000000)",
 			),
 		).toEqual([]);
+	});
+
+	it("extracts resource keys from navigate query object arguments", () => {
+		expect(
+			extractCandidatesFromBinding(
+				'navigate(ca47e6c5-0000-4000-8000-000000000000,06b21b52-0000-4000-8000-000000000000,{"items": [$datum.id], "conditions": ["id-1"]})',
+			),
+		).toEqual(["items", "conditions"]);
 	});
 
 	it("extracts operands from comparison expressions", () => {

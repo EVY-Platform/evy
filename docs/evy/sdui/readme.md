@@ -18,7 +18,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 	- `{$local:resource}` — client-local source.
 - Catalog/API/local data is loaded outside the flow document. Clients can request individual lists with JSON-RPC `get` (`service` / `resource`) or sync service data in batches with `syncServiceData`.
 - `syncServiceData` accepts `{ "service": "marketplace", "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows. Clients get all service resources changed since `lastSyncTime`.
-- Clients should store synced rows under service-qualified keys such as `marketplace:items` and `marketplace:conditions`. Navigate actions can pass query params after `?` on the page argument (for example, `{navigate(flowId, pageId?{"items": [$datum.id]})}`). Query values can use JSON (`?{"key": ["id"]}`) or URL-style (`?key=id1&key=id2`) format. Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each key from the synced collection, and expose the matching entity under the same plural key.
+- Clients should store synced rows under service-qualified keys such as `marketplace:items` and `marketplace:conditions`. Navigate actions pass query params as the optional third `navigate` argument (for example, `{navigate(flowId, pageId, {"items": [$datum.id]})}`). Query values must use a JSON object (`{"key": ["id"]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each key from the synced collection, and expose the matching entity under the same plural key.
 - iOS draft scope IDs and draft cache keys are internal draft-store identifiers; see [iOS README § Draft scopes and draft cache keys](../../../ios/README.md#draft-scopes-and-draft-cache-keys).
 - Flow bindings use the plural resource name without the service prefix (`{items}`, `{conditions}`, `{tags}`). The client data layer resolves those bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
 - `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
@@ -135,7 +135,7 @@ Supported action functions:
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}` |
 | `create(model)` | Submit / create domain entity, e.g. `{create(items)}` |
-| `navigate(flowId, pageId)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. To pass query params, append `?` to the page argument followed by a JSON object or URL-style pairs, e.g. `{navigate(flowId, pageId?{"items": [$datum.id]})}` or `{navigate(flowId, pageId?items=id1&items=id2)}`. iOS also accepts legacy colon-separated forms (`navigate:flowId:pageId`, `create:key`). |
+| `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a JSON object, e.g. `{navigate(flowId, pageId, {"items": [$datum.id]})}`. |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
 #### Evaluation (iOS reference)
@@ -174,7 +174,7 @@ Navigate with query params (selects an entity from synced data):
 {
 	"condition": "",
 	"false": "",
-	"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,06b21b52-0845-468a-ace1-170a3b05f3a2?{\"items\": [$datum.id]})}"
+	"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,06b21b52-0845-468a-ace1-170a3b05f3a2,{\"items\": [$datum.id]})}"
 }
 ```
 

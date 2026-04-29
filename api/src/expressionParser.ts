@@ -1,4 +1,3 @@
-const BRACED_BINDING_PATTERN = /\{([^}]+)\}/g;
 const FUNCTION_CALL_PATTERN = /^([a-zA-Z_]+)\((.*)\)$/;
 const COMPARISON_OPERATOR_TOKENS = new Set([">=", "<=", "==", "!=", ">", "<"]);
 const LOGICAL_OPERATOR_TOKENS = new Set(["&&", "||"]);
@@ -6,12 +5,48 @@ const PARENTHESIS_TOKENS = new Set(["(", ")"]);
 
 export function extractBindingsFromString(text: string): string[] {
 	const bindings: string[] = [];
-	for (const match of text.matchAll(BRACED_BINDING_PATTERN)) {
-		const bindingBody = match[1]?.trim();
-		if (bindingBody) {
-			bindings.push(bindingBody);
+	let bindingBody = "";
+	let depth = 0;
+	let inString: '"' | "'" | null = null;
+	let previousChar = "";
+
+	for (const char of text) {
+		if (depth === 0) {
+			if (char === "{") {
+				depth = 1;
+				bindingBody = "";
+			}
+			previousChar = char;
+			continue;
 		}
+
+		let shouldAppendChar = true;
+		if (inString) {
+			if (char === inString && previousChar !== "\\") {
+				inString = null;
+			}
+		} else if (char === '"' || char === "'") {
+			inString = char;
+		} else if (char === "{") {
+			depth++;
+		} else if (char === "}") {
+			depth--;
+			if (depth === 0) {
+				const trimmedBindingBody = bindingBody.trim();
+				if (trimmedBindingBody) {
+					bindings.push(trimmedBindingBody);
+				}
+				bindingBody = "";
+				shouldAppendChar = false;
+			}
+		}
+
+		if (shouldAppendChar) {
+			bindingBody += char;
+		}
+		previousChar = char;
 	}
+
 	return bindings;
 }
 
@@ -200,6 +235,11 @@ function extractCandidatesFromFunctionCall(functionCall: string): string[] {
 			continue;
 		}
 
+		if (isQueryObjectArgument(trimmedArg)) {
+			candidates.push(...extractCandidatesFromQueryObjectArgument(trimmedArg));
+			continue;
+		}
+
 		if (isFunctionCall(trimmedArg)) {
 			candidates.push(...extractCandidatesFromFunctionCall(trimmedArg));
 			continue;
@@ -216,46 +256,47 @@ function extractCandidatesFromFunctionCall(functionCall: string): string[] {
 function splitFunctionArguments(args: string): string[] {
 	const components: string[] = [];
 	let current = "";
-	let depth = 0;
-	let inString = false;
+	let parenDepth = 0;
+	let bracketDepth = 0;
+	let braceDepth = 0;
+	let inString: '"' | "'" | null = null;
+	let previousChar = "";
 
 	for (const char of args) {
+		let shouldAppendChar = true;
 		if (inString) {
-			current += char;
-			if (char === '"') {
-				inString = false;
+			if (char === inString && previousChar !== "\\") {
+				inString = null;
 			}
-			continue;
-		}
+		} else if (char === '"' || char === "'") {
+			inString = char;
+		} else {
+			if (char === "(") parenDepth++;
+			if (char === ")") parenDepth--;
+			if (char === "[") bracketDepth++;
+			if (char === "]") bracketDepth--;
+			if (char === "{") braceDepth++;
+			if (char === "}") braceDepth--;
 
-		if (char === '"') {
-			inString = true;
-			current += char;
-			continue;
-		}
-
-		if (char === "(") {
-			depth++;
-			current += char;
-			continue;
-		}
-
-		if (char === ")") {
-			depth--;
-			current += char;
-			continue;
-		}
-
-		if (char === "," && depth === 0) {
-			const trimmedCurrent = current.trim();
-			if (trimmedCurrent) {
-				components.push(trimmedCurrent);
+			if (
+				char === "," &&
+				parenDepth === 0 &&
+				bracketDepth === 0 &&
+				braceDepth === 0
+			) {
+				const trimmedCurrent = current.trim();
+				if (trimmedCurrent) {
+					components.push(trimmedCurrent);
+				}
+				current = "";
+				shouldAppendChar = false;
 			}
-			current = "";
-			continue;
 		}
 
-		current += char;
+		if (shouldAppendChar) {
+			current += char;
+		}
+		previousChar = char;
 	}
 
 	const trimmedCurrent = current.trim();
@@ -264,6 +305,23 @@ function splitFunctionArguments(args: string): string[] {
 	}
 
 	return components;
+}
+
+function isQueryObjectArgument(value: string): boolean {
+	const trimmedValue = value.trim();
+	return trimmedValue.startsWith("{") && trimmedValue.endsWith("}");
+}
+
+function extractCandidatesFromQueryObjectArgument(value: string): string[] {
+	const candidates: string[] = [];
+	const keyPattern = /["']?([A-Za-z_][A-Za-z0-9_]*)["']?\s*:/g;
+	for (const match of value.matchAll(keyPattern)) {
+		const candidate = match[1] ?? "";
+		if (isCandidate(candidate)) {
+			candidates.push(candidate);
+		}
+	}
+	return candidates;
 }
 
 function candidateFromValue(value: string): string {
@@ -299,7 +357,7 @@ function shouldSkipLiteralOrUuid(value: string): boolean {
 }
 
 function containsComparisonOperator(value: string): boolean {
-	return /[><=!]/.test(value);
+	return /(>=|<=|==|!=|>|<)/.test(value);
 }
 
 function startsWithOperator(input: string, index: number): boolean {
