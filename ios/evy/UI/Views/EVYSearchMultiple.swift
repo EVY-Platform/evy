@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct EVYSearchMultiple: View {
+  @Environment(\.navigate) private var navigate
+
   @State private var selected: [EVYSearchResult] = []
   @State private var searchFieldValue = ""
 
@@ -17,17 +19,20 @@ struct EVYSearchMultiple: View {
   let destination: String
   let placeholder: String
   let resultTemplate: UI_Row?
+  let actions: [UI_RowAction]
 
   init(
     source: String,
     resultTemplate: UI_Row?,
     destination: String,
     placeholder: String,
+    actions: [UI_RowAction],
   ) {
     self.source = source
     self.resultTemplate = resultTemplate
     self.destination = destination
     self.placeholder = placeholder
+    self.actions = actions
 
     _searchController = StateObject(
       wrappedValue: EVYSearchController(source: source, resultTemplate: resultTemplate)
@@ -35,7 +40,7 @@ struct EVYSearchMultiple: View {
   }
 
   func refresh() {
-    guard resultTemplate != nil else {
+    guard resultTemplate != nil, !destination.isEmpty else {
       return
     }
     do {
@@ -62,20 +67,34 @@ struct EVYSearchMultiple: View {
   }
 
   func select(_ element: EVYSearchResult) {
-    do {
-      selected.append(element)
+    selected.append(element)
 
-      let encoded = try JSONEncoder().encode(selected.map { $0.data })
-      try EVY.updateData(encoded, at: destination)
+    if !destination.isEmpty {
+      do {
+        let encoded = try JSONEncoder().encode(selected.map { $0.data })
+        try EVY.updateData(encoded, at: destination)
+      } catch {
+        selected.removeAll { $0.value == element.value }
+      }
+    }
+
+    if selected.contains(where: { $0.value == element.value }) {
       searchController.results.removeAll { $0.value == element.value }
-    } catch {
-      selected.removeAll { $0.value == element.value }
+    }
+
+    if !actions.isEmpty {
+      EVYActionRunner.run(actions: actions, datum: element.data, navigate: navigate)
     }
   }
 
   func unselect(_ element: EVYSearchResult) {
+    selected.removeAll { $0.value == element.value }
+
+    guard !destination.isEmpty else {
+      return
+    }
+
     do {
-      selected.removeAll { $0.value == element.value }
       try EVY.updateData(
         try JSONEncoder().encode(selected.map { $0.data }),
         at: destination)
@@ -138,6 +157,7 @@ struct EVYSearchMultiple: View {
       destination: "{tags}",
       placeholder: "Search",
       resultTemplate: nil,
+      actions: [],
     )
   }
 }

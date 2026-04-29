@@ -341,7 +341,8 @@ class EVYSearchController: ObservableObject {
       source: "{$local:address}",
       destination: "{tags}",
       placeholder: "Search",
-      resultTemplate: template
+      resultTemplate: template,
+      actions: []
     )
   }
 }
