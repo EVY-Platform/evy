@@ -344,7 +344,7 @@ class E2ETestBase: XCTestCase {
               "view": [
                 "content": [
                   "title": "My item is called",
-                  "text": "{title}",
+                  "text": "{items.title}",
                 ],
                 "max_lines": "",
               ],
