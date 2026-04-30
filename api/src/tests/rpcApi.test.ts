@@ -18,7 +18,7 @@ const forwardGetMock = mock(
 mock.module("../services", () => ({
 	forwardGet: forwardGetMock,
 	forwardUpsert: mock(),
-	wireGrpcClientsTo: mock(),
+	wireGrpcEvents: mock(),
 }));
 
 mock.module("../data", () => ({

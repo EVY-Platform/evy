@@ -9,19 +9,21 @@ EVY is split into thin clients (iOS, web builder), one public edge (`api`), and 
 - any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/services.ts`](./api/src/services.ts).
 
 ```mermaid
+%%{ init: { 'flowchart': { 'curve': 'linear' } } }%%
 flowchart LR
     ios[iOS app]
     web[Web builder]
 
     api[api<br/>JSON-RPC 2.0 WebSocket<br/>SDUI store + router]
     marketplace[marketplace service<br/>gRPC evy.Service]
-    pg[(Postgres<br/>evy + marketplace DBs)]
+    evyDb[(Postgres<br/>evy DB)]
+    mpDb[(Postgres<br/>marketplace DB)]
 
     ios -- WebSocket --> api
     web -- WebSocket --> api
-    api -- local Drizzle --> pg
+    api -- Drizzle --> evyDb
     api -- gRPC --> marketplace
-    marketplace -- Drizzle --> pg
+    marketplace -- Drizzle --> mpDb
 ```
 
 Resource routing, `flowUpdated` / `dataUpdated`, service data sync, and gRPC forwarding are covered in [`api/README.md`](./api/README.md).

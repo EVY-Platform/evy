@@ -4,7 +4,7 @@ import { Client } from "rpc-websockets";
 import { drizzle } from "drizzle-orm/pglite";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 
-import * as schema from "../db/drizzleTables";
+import * as schema from "../../../types/generated/ts/db/schema.generated";
 
 export type WSServer = Awaited<
 	ReturnType<typeof import("../ws")["initServer"]>

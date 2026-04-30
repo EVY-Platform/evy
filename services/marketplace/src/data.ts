@@ -15,10 +15,11 @@ import { data } from "./db/schema";
 import { db } from "./db";
 import { MARKETPLACE_DATA_RESOURCES } from "./catalog";
 import {
+	assertIsoDateTimeJsonFields,
 	validateGetResponse,
+	validateUpsertDataPayload,
 	validateUpsertResponse,
 } from "evy-types/validators";
-import { validateDataPayload } from "./validation";
 
 const MARKETPLACE_SERVICE = "marketplace";
 const MAX_ITEM_TAG_SUGGESTIONS = 3;
@@ -28,6 +29,12 @@ type MarketplaceSuggestion = {
 	id: string;
 	value: string;
 };
+
+function validateDataPayload(dataPayload: unknown): DATA_PRIMITIVE["data"] {
+	const validatedPayload = validateUpsertDataPayload(dataPayload);
+	assertIsoDateTimeJsonFields(validatedPayload);
+	return validatedPayload;
+}
 
 function normalizeItemSuggestionQuery(query: string): string {
 	return query

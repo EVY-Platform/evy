@@ -1,6 +1,7 @@
-import { initServer, type WSParams } from "./ws";
 import { validateAuth } from "./data";
-import { api, get, syncServiceData, upsert, wireServerEvents } from "./rpc";
+import { api, get, initRpc, syncServiceData, upsert } from "./rpc";
+import { wireGrpcEvents } from "./services";
+import { emitJsonRpc, initServer, type WSParams } from "./ws";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
@@ -8,13 +9,16 @@ function authHandler(data: WSParams): Promise<boolean> {
 
 async function main() {
 	const server = await initServer(authHandler);
-	wireServerEvents(server);
+	const broadcast = (eventName: string, payload: unknown) => {
+		emitJsonRpc(server, eventName, payload);
+	};
+
+	initRpc(broadcast);
+	wireGrpcEvents(broadcast);
 
 	server.register("get", get);
 	server.register("upsert", upsert).protected();
-
 	server.register("api", api);
-
 	server.register("syncServiceData", syncServiceData).protected();
 }
 
