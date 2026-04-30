@@ -86,15 +86,18 @@ sequenceDiagram
 { "jsonrpc": "2.0", "method": "dataUpdated", "params": { /* row */ } }
 ```
 
-- Successful `evy` upserts call `emitJsonRpc` from [`src/rpc.ts`](./src/rpc.ts): `flowUpdated` when `resource === "sdui"`, otherwise `dataUpdated`.
-- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them with the same `emitJsonRpc` helper (reconnect with exponential backoff).
+- [`src/index.ts`](./src/index.ts) creates a `broadcast` callback wrapping `emitJsonRpc` and injects it into `rpc` and `services` at startup.
+- Successful `evy` upserts invoke the broadcast callback from [`src/rpc.ts`](./src/rpc.ts): `flowUpdated` when `resource === "sdui"`, otherwise `dataUpdated`.
+- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them via the same broadcast callback (reconnect with exponential backoff).
+- The shared [`src/broadcast.ts`](./src/broadcast.ts) defines the `BroadcastFn` type contract, decoupling `rpc` and `services` from the WebSocket layer.
 
 ### Internal module layout
 
 ```mermaid
 flowchart TD
-    index[index.ts<br/>wires server + handlers]
+    index[index.ts<br/>wires server + handlers + broadcast]
     ws[ws.ts<br/>JSON-RPC transport]
+    broadcast[broadcast.ts<br/>BroadcastFn type contract]
     rpc[rpc.ts<br/>get / upsert routing]
     data[data.ts<br/>Drizzle + auth<br/>getCore / upsertCore]
     services[services.ts<br/>gRPC adapters + SubscribeEvents]
@@ -106,13 +109,14 @@ flowchart TD
     index --> ws
     index --> rpc
     index --> data
+    index --> services
     rpc --> data
     rpc --> services
     rpc --> serviceDataSync
-    rpc --> ws
+    rpc --> broadcast
     serviceDataSync --> services
     serviceDataSync --> expressionParser
-    services --> ws
+    services --> broadcast
     data --> db
     readiness --> rpc
 ```

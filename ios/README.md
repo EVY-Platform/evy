@@ -40,7 +40,7 @@ flowchart LR
         Row -->|child / children| Row
     end
 
-    Content -->|fetch SDUI| EVY
+    Content -->|sync services / fetch SDUI| EVY
     Content -->|render| EVYPage
     EVYPage --> Page
     EVYPage --> EVYRow[EVYRow dispatcher]
@@ -57,7 +57,7 @@ flowchart LR
     EVYRow --> Edit
     EVYRow --> ViewRows
 
-    Views[UI/Views<br/>EVYCalendar, EVYDropdown, EVYInlinePicker,<br/>EVYInputList, EVYMap, EVYSearch, EVYSelectList,<br/>EVYSelectPhoto, EVYTextField, EVYTimeslotPicker, ...]
+    Views[UI/Views<br/>EVYButton, EVYCalendar, EVYDropdown, EVYInlinePicker,<br/>EVYInputList, EVYMap, EVYSearch, EVYSelectList,<br/>EVYSelectPhoto, EVYTextField, EVYTimeslotPicker, ...]
     Atoms[UI/Atoms<br/>CarouselIndicator, RadioButton,<br/>Rectangle, RowTitle, TextView]
     Action --> Views
     Edit --> Views
@@ -65,7 +65,7 @@ flowchart LR
     ViewRows --> Atoms
     Views --> Atoms
 
-    EVY[[EVY facade<br/>getData / getSDUI / create<br/>getDataFromText / updateValue<br/>ensureDraftExists / formatData]]
+    EVY[[EVY facade<br/>getDataFromText / getDataFromProps / getSDUI<br/>create / updateValue / updateData<br/>ensureDraftExists / formatData / evaluateFromText<br/>syncAllServices / resolveQueryParams]]
     Action -->|run| Runner[EVYActionRunner<br/>navigate / create / close /<br/>highlight_required]
     Runner --> Content
     Runner --> EVY
@@ -74,21 +74,23 @@ flowchart LR
     ViewRows -->|read bindings| EVY
     Container -->|read bindings| EVY
 
-    Interpreter[interpreter.swift<br/>parseProps / splitProps /<br/>parseTextFromText / parseFunctionCall]
+    Interpreter[interpreter.swift<br/>parsePropsFromText / splitPropsFromText /<br/>parseTextFromText / parseFunctionCall /<br/>splitFunctionArguments]
     Functions[functions.swift<br/>count, length, format*,<br/>build*, compare, ...]
     EVY --> Interpreter
     EVY --> Functions
     Functions --> EVY
-    RowTree[EVYRowTree<br/>DFS walk]
-    Content --> RowTree
-    EVYPage --> RowTree
+
+    RowVisitor[forEachRow<br/>recursive row visitor]
+    Content -->|extract create keys| RowVisitor
+    EVYPage -->|bootstrap drafts| RowVisitor
+    RowVisitor --> Row
 
     subgraph data [Data]
         PublicStore[EVYDataStore public<br/>server-synced SwiftData]
         PrivateStore[EVYDataStore private<br/>$local SwiftData]
-        DraftStore[EVYDraftStore<br/>draft cache + active scope]
+        DraftStore[EVYDraftStore<br/>in-memory draft cache + active scope]
         EntityModel[(EVYData)]
-        DraftPath[EVYDraft.binding / EVYDraft.Scope<br/>scopeId = flowId:entityKey]
+        DraftPath[EVYDraft.Binding<br/>scopeId + pathSegments + mergeMode]
         PublicStore --> EntityModel
         PrivateStore --> EntityModel
         DraftStore --> EntityModel
@@ -98,19 +100,28 @@ flowchart LR
     EVY --> PrivateStore
     EVY --> DraftStore
 
+    SearchCtrl[EVYSearchController<br/>local/API search state]
+    Views --> SearchCtrl
+    SearchCtrl -->|read local results| EVY
+    SearchCtrl -->|API searches| APIManager
+
     subgraph api [Data/API]
-        APIManager[EVYAPIManager.shared]
+        APIManager[EVYAPIManager.shared<br/>auth + subscriptions]
         WS[EVYWebsocket<br/>JSON-RPC over WebSocket]
         APIManager --> WS
     end
     EVY -->|fetch / upsert| APIManager
 
     Notif{{NotificationCenter<br/>.evyDataUpdated<br/>.evyFlowUpdated<br/>.evyErrorOccurred}}
-    Manager -. post .-> Notif
+    PublicStore -. post .-> Notif
+    DraftStore -. post .-> Notif
     EVY -. post .-> Notif
+    Runner -. post .-> Notif
     WS -. post .-> Notif
+    Views -. post errors .-> Notif
     Notif -. observe .-> Content
     Notif -. observe .-> EVYState["EVYState T"]
+    Notif -. observe .-> Views
     EVYState -. drives .-> Views
     EVYState -. drives .-> Atoms
 ```
