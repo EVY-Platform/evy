@@ -20,36 +20,62 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 - `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet` / `forwardUpsert` in [`src/services.ts`](./src/services.ts), which issue `Get` / `Upsert` on `evy.Service` and validate JSON responses.
 - `syncServiceData` is a protected RPC for client-side service cache refresh. Params are `{ service, lastSyncTime }`, where `service` is a syncable non-`evy` service and `lastSyncTime` is an ISO date-time. The API forwards one `get` per service resource with `filter.updatedAfter = lastSyncTime`, omits empty result arrays, and returns `{ data: [{ service, resource, value }] }`. Clients should persist synced rows with service-qualified keys like `marketplace:items`; SDUI bindings such as `{items}` may resolve through client fallback, while `{$api:...}`, `{$local:...}`, and `{$datum:...}` are client-side binding namespaces rather than backend flow state. The API stores action strings without executing them, but its service-sync parser extracts resource keys from braced expressions and action function arguments.
 
+Synchronous request/response path:
+
 ```mermaid
 sequenceDiagram
-    participant C as Client (iOS / web)
-    participant WS as ws.ts
-    participant RPC as rpc.ts
-    participant D as data.ts (local)
-    participant S as services.ts
-    participant MP as marketplace (gRPC)
+    participant Client
+    participant ws as ws.ts
+    participant rpc as rpc.ts
+    participant data as data.ts
+    participant services as services.ts
+    participant marketplace as marketplace (gRPC)
 
-    C->>WS: JSON-RPC upsert { service, resource, filter?, data }
-    WS->>WS: validateAuth(token, os) if protected
-    WS->>RPC: upsert(params)
-    RPC->>RPC: validateStrictUpsertRequest(params)
+    Client->>ws: JSON-RPC upsert
+    ws->>ws: auth (validateAuth)
+    ws->>rpc: registered handler
+    rpc->>rpc: validateStrictUpsertRequest
 
     alt service == "evy"
-        RPC->>D: upsertCoreForValidatedRequest(params)
-        D-->>RPC: row
-        RPC->>WS: emitJsonRpc(notification, row)
-        Note over RPC,WS: flowUpdated if resource is sdui else dataUpdated
-        WS-->>C: JSON-RPC notification
+        rpc->>data: upsertCoreForValidatedRequest
+        data-->>rpc: row
     else service != "evy"
-        RPC->>S: forwardUnary(service, "upsert", params)
-        S->>MP: gRPC Upsert (JSON in data_json / result_json)
-        MP-->>S: row JSON
-        S-->>RPC: row
-        Note over S,WS: SubscribeEvents stream forwards remote events<br/>through emitJsonRpc (e.g. dataUpdated)
+        rpc->>services: forwardUpsert
+        services->>marketplace: gRPC Upsert
+        marketplace-->>services: row JSON
+        services-->>rpc: row
     end
 
-    RPC-->>WS: row
-    WS-->>C: JSON-RPC response
+    rpc-->>ws: JSON-RPC response (row)
+    ws-->>Client: JSON-RPC response (row)
+```
+
+Notification fan-out paths:
+
+```mermaid
+sequenceDiagram
+    participant Client as Subscribed clients
+    participant ws as ws.ts
+    participant rpc as rpc.ts
+    participant data as data.ts
+    participant services as services.ts
+    participant marketplace as marketplace (gRPC)
+
+    rect rgb(230, 245, 255)
+    Note over data,ws: Core evy upsert triggers notification
+    data->>rpc: upsert success (row)
+    rpc->>rpc: choose flowUpdated / dataUpdated
+    rpc->>ws: emitJsonRpc(event, row)
+    ws->>Client: JSON-RPC notification
+    end
+
+    rect rgb(245, 235, 255)
+    Note over marketplace,ws: Remote service event triggers notification
+    marketplace->>services: SubscribeEvents payload
+    services->>services: parse payload_json
+    services->>ws: emitJsonRpc(event, data)
+    ws->>Client: JSON-RPC notification
+    end
 ```
 
 ### Real-time notifications
@@ -72,24 +98,27 @@ flowchart TD
     rpc[rpc.ts<br/>get / upsert routing]
     data[data.ts<br/>Drizzle + auth<br/>getCore / upsertCore]
     services[services.ts<br/>gRPC adapters + SubscribeEvents]
-    validation[validation.ts<br/>re-exports evy-types validators]
+    serviceDataSync[serviceDataSync.ts<br/>syncServiceData]
+    expressionParser[expressionParser.ts<br/>binding extraction]
     readiness[readiness.ts<br/>health / seed check]
-    drizzleTables[db/drizzleTables.ts<br/>re-exports generated schema]
+    db[db/<br/>Drizzle client + schema]
 
     index --> ws
     index --> rpc
-    index --> services
+    index --> data
     rpc --> data
     rpc --> services
+    rpc --> serviceDataSync
     rpc --> ws
-    data --> validation
-    data --> drizzleTables
+    serviceDataSync --> services
+    serviceDataSync --> expressionParser
     services --> ws
+    data --> db
     readiness --> rpc
 ```
 
-- `db/drizzleTables.ts` simply re-exports `types/generated/ts/db/schema.generated.ts`; the schema itself comes from `types/schema/data/` via `bun run types:generate`.
-- `validation.ts` re-exports generated validators from `evy-types` (see `types/validators.ts` for JSON Schema validation and ISO 8601 guards on `*At` / `*_timestamp` fields before data reaches Postgres).
+- `db/` contains `index.ts` (Drizzle client) and connection helpers; API tables are imported directly from `types/generated/ts/db/schema.generated.ts`. The schema comes from `types/schema/data/` via `bun run types:generate`.
+- Validators are imported directly from `evy-types/validators` and `evy-types/rpcRequestHelpers` (no local wrapper file).
 
 ### Shared contracts
 

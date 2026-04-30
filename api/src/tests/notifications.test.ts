@@ -10,7 +10,7 @@ import {
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { GetRequest, UI_Flow, UI_Page } from "evy-types";
 
-import * as schema from "../db/drizzleTables";
+import * as schema from "../../../types/generated/ts/db/schema.generated";
 import {
 	clearAllTestTables,
 	connectAndLogin,

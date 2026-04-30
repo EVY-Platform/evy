@@ -10,12 +10,12 @@ import type {
 	UpsertRequest,
 	UpsertResponse,
 } from "evy-types";
+import type { BroadcastFn } from "./broadcast";
 import { SERVICE_VALUES } from "evy-types";
 import {
 	validateGetResponse,
 	validateUpsertResponse,
 } from "evy-types/validators";
-import { emitJsonRpc, type RpcServer } from "./ws";
 
 function resolveServiceProtoPath(): string {
 	const fromSource = join(
@@ -151,7 +151,7 @@ function makeGrpcAdapter(
 	}> | null = null;
 	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	let reconnectDelayMs = 1000;
-	const RECONNECT_MS_MAX = 30_000;
+	const reconnectMaxDelayMs = 30_000;
 
 	function scheduleReconnect(): void {
 		if (reconnectTimer) {
@@ -159,7 +159,7 @@ function makeGrpcAdapter(
 		}
 		reconnectTimer = setTimeout(() => {
 			reconnectTimer = null;
-			reconnectDelayMs = Math.min(reconnectDelayMs * 2, RECONNECT_MS_MAX);
+			reconnectDelayMs = Math.min(reconnectDelayMs * 2, reconnectMaxDelayMs);
 			startSubscribeStream();
 		}, reconnectDelayMs);
 	}
@@ -310,10 +310,8 @@ export function forwardUpsert(
 	return getServiceAdapter(serviceName).upsert(params);
 }
 
-export function wireGrpcClientsTo(server: RpcServer): void {
+export function wireGrpcEvents(broadcast: BroadcastFn): void {
 	for (const adapter of getGrpcAdapters().values()) {
-		adapter.onEvent((eventName, payload) => {
-			emitJsonRpc(server, eventName, payload);
-		});
+		adapter.onEvent(broadcast);
 	}
 }

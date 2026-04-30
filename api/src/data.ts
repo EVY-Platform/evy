@@ -17,7 +17,7 @@ import {
 	organization,
 	serviceProvider,
 	osEnum,
-} from "./db/drizzleTables";
+} from "../../types/generated/ts/db/schema.generated";
 import { db } from "./db";
 import {
 	validateStrictGetRequest,

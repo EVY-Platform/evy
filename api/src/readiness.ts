@@ -1,3 +1,6 @@
+// No HTTP health endpoint exists here,
+// so Docker/e2e use this CLI to
+// verify DB and seed readiness.
 import type { GetRequest, GetResponse } from "evy-types";
 import { get as defaultGet } from "./rpc";
 

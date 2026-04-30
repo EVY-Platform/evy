@@ -55,6 +55,4 @@ function initServer(
 	});
 }
 
-export type RpcServer = Awaited<ReturnType<typeof initServer>>;
-
 export { initServer, emitJsonRpc };

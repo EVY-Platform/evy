@@ -5,24 +5,23 @@ import type {
 	SyncServiceDataResponse,
 	UpsertResponse,
 } from "evy-types";
+import type { BroadcastFn } from "./broadcast";
 import {
 	getCoreForValidatedRequest,
 	upsertCoreForValidatedRequest,
 } from "./data";
 import { syncServiceData as syncServiceDataBody } from "./serviceDataSync";
-import { forwardGet, forwardUpsert, wireGrpcClientsTo } from "./services";
+import { forwardGet, forwardUpsert } from "./services";
 import {
 	validateStrictApiRequest,
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
-import { emitJsonRpc, type RpcServer } from "./ws";
 
-let mainServerRef: RpcServer | null = null;
+let broadcast: BroadcastFn | null = null;
 
-export function wireServerEvents(server: RpcServer): void {
-	mainServerRef = server;
-	wireGrpcClientsTo(server);
+export function initRpc(broadcastFn: BroadcastFn): void {
+	broadcast = broadcastFn;
 }
 
 type GetLikeRequest = GetRequest | ApiRequest;
@@ -56,9 +55,8 @@ export async function upsert(params: unknown): Promise<UpsertResponse> {
 	validateStrictUpsertRequest(params);
 	if (params.service === "evy") {
 		const result = await upsertCoreForValidatedRequest(params);
-		if (mainServerRef) {
-			emitJsonRpc(
-				mainServerRef,
+		if (broadcast) {
+			broadcast(
 				params.resource === "sdui" ? "flowUpdated" : "dataUpdated",
 				result,
 			);
