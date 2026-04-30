@@ -1,5 +1,5 @@
 import { defineConfig } from "drizzle-kit";
-import { getConnectionUrl } from "./src/db/connectionUrl";
+import { getConnectionUrl } from "./src/db";
 
 export default defineConfig({
 	schema: "../types/generated/ts/db/schema.generated.ts",
