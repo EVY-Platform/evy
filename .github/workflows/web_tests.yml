@@ -3,8 +3,12 @@ name: Web Tests
 on:
     pull_request:
         branches: [dev]
+        paths-ignore:
+            - '**/*.md'
     push:
         branches: [dev]
+        paths-ignore:
+            - '**/*.md'
 
 jobs:
     web_tests:

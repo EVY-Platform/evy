@@ -97,7 +97,6 @@ sequenceDiagram
 flowchart TD
     index[index.ts<br/>wires server + handlers + broadcast]
     ws[ws.ts<br/>JSON-RPC transport]
-    broadcast[broadcast.ts<br/>BroadcastFn type contract]
     rpc[rpc.ts<br/>get / upsert routing]
     data[data.ts<br/>Drizzle + auth<br/>getCore / upsertCore]
     services[services.ts<br/>gRPC adapters + SubscribeEvents]
@@ -113,10 +112,8 @@ flowchart TD
     rpc --> data
     rpc --> services
     rpc --> serviceDataSync
-    rpc --> broadcast
     serviceDataSync --> services
     serviceDataSync --> expressionParser
-    services --> broadcast
     data --> db
     readiness --> rpc
 ```
