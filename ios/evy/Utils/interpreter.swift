@@ -15,6 +15,11 @@ private let functionPattern = "[a-zA-Z_]+\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
 
+enum EVYParamEntry: Equatable {
+  case interpolated(key: String)
+  case staticValue(key: String, value: EVYJson)
+}
+
 // MARK: - Public API
 
 @MainActor
@@ -65,60 +70,7 @@ public func parseFunctionCall(_ input: String) -> (functionName: String, functio
 
 @MainActor
 func splitFunctionArguments(_ args: String) -> [String] {
-  var components: [String] = []
-  var current = ""
-  var parenDepth = 0
-  var bracketDepth = 0
-  var braceDepth = 0
-  var inString = false
-
-  for ch in args {
-    if inString {
-      current.append(ch)
-      if ch == "\"" {
-        inString = false
-      }
-      continue
-    }
-
-    switch ch {
-    case "\"":
-      inString = true
-      current.append(ch)
-    case "(":
-      parenDepth += 1
-      current.append(ch)
-    case ")":
-      parenDepth -= 1
-      current.append(ch)
-    case "[":
-      bracketDepth += 1
-      current.append(ch)
-    case "]":
-      bracketDepth -= 1
-      current.append(ch)
-    case "{":
-      braceDepth += 1
-      current.append(ch)
-    case "}":
-      braceDepth -= 1
-      current.append(ch)
-    case "," where parenDepth == 0 && bracketDepth == 0 && braceDepth == 0:
-      let trimmed = current.trimmingCharacters(in: .whitespacesAndNewlines)
-      if !trimmed.isEmpty {
-        components.append(trimmed)
-      }
-      current = ""
-    default:
-      current.append(ch)
-    }
-  }
-
-  let trimmedTail = current.trimmingCharacters(in: .whitespacesAndNewlines)
-  if !trimmedTail.isEmpty {
-    components.append(trimmedTail)
-  }
-  return components
+  splitTopLevel(args, separator: ",")
 }
 
 @MainActor
@@ -128,6 +80,36 @@ public func stripOptionalSurroundingQuotes(_ s: String) -> String {
     return trimmed
   }
   return String(trimmed.dropFirst().dropLast())
+}
+
+@MainActor
+func parseSourceParams(_ binding: String) -> (basePath: String, params: [EVYParamEntry]) {
+  let trimmedBinding = binding.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard trimmedBinding.hasSuffix(")"),
+    let openParenIndex = topLevelIndex(of: "(", in: trimmedBinding, mode: .last)
+  else {
+    return (trimmedBinding, [])
+  }
+
+  let basePath = String(trimmedBinding[..<openParenIndex])
+    .trimmingCharacters(in: .whitespacesAndNewlines)
+  let paramsStartIndex = trimmedBinding.index(after: openParenIndex)
+  let paramsEndIndex = trimmedBinding.index(before: trimmedBinding.endIndex)
+  let paramsText = String(trimmedBinding[paramsStartIndex..<paramsEndIndex])
+  return (basePath, parseParamObject(paramsText))
+}
+
+@MainActor
+func parseFullBracedBinding(_ source: String) -> String? {
+  let normalizedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard normalizedSource.hasPrefix("{"), normalizedSource.hasSuffix("}") else {
+    return nil
+  }
+
+  let bindingStartIndex = normalizedSource.index(after: normalizedSource.startIndex)
+  let bindingEndIndex = normalizedSource.index(before: normalizedSource.endIndex)
+  return String(normalizedSource[bindingStartIndex..<bindingEndIndex])
+    .trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
 @MainActor
@@ -158,6 +140,194 @@ public func evaluateFromText(_ input: String) throws -> Bool {
 @MainActor
 public func formatData(json: EVYJson, format: String) throws -> String {
   try _formatData(json: json, format: format)
+}
+
+private enum TopLevelIndexMode {
+  case first
+  case last
+}
+
+private struct ParserScanState {
+  var parenDepth = 0
+  var bracketDepth = 0
+  var braceDepth = 0
+  var quote: Character?
+  var previousCharacter: Character = "\0"
+
+  var isInString: Bool {
+    quote != nil
+  }
+
+  var isTopLevel: Bool {
+    parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+  }
+
+  mutating func scan(_ character: Character) {
+    if let quote {
+      if character == quote && previousCharacter != "\\" {
+        self.quote = nil
+      }
+      previousCharacter = character
+      return
+    }
+
+    if character == "\"" || character == "'" {
+      quote = character
+    } else {
+      switch character {
+      case "(":
+        parenDepth += 1
+      case ")":
+        parenDepth -= 1
+      case "[":
+        bracketDepth += 1
+      case "]":
+        bracketDepth -= 1
+      case "{":
+        braceDepth += 1
+      case "}":
+        braceDepth -= 1
+      default:
+        break
+      }
+    }
+
+    previousCharacter = character
+  }
+}
+
+@MainActor
+private func parseParamObject(_ input: String) -> [EVYParamEntry] {
+  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard trimmedInput.hasPrefix("{"), trimmedInput.hasSuffix("}") else {
+    return []
+  }
+
+  let objectStartIndex = trimmedInput.index(after: trimmedInput.startIndex)
+  let objectEndIndex = trimmedInput.index(before: trimmedInput.endIndex)
+  let objectBody = String(trimmedInput[objectStartIndex..<objectEndIndex])
+  return splitFunctionArguments(objectBody).compactMap(parseParamEntry)
+}
+
+@MainActor
+private func parseParamEntry(_ entry: String) -> EVYParamEntry? {
+  let trimmedEntry = entry.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !trimmedEntry.isEmpty else { return nil }
+
+  guard let colonIndex = topLevelIndex(of: ":", in: trimmedEntry) else {
+    let key = stripOptionalSurroundingQuotes(trimmedEntry)
+    return key.isEmpty ? nil : .interpolated(key: key)
+  }
+
+  let rawKey = String(trimmedEntry[..<colonIndex])
+  let rawValue = String(trimmedEntry[trimmedEntry.index(after: colonIndex)...])
+  let key = stripOptionalSurroundingQuotes(rawKey)
+  let valueText = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !key.isEmpty,
+    let valueData = valueText.data(using: .utf8),
+    let value = try? JSONDecoder().decode(EVYJson.self, from: valueData)
+  else {
+    return nil
+  }
+
+  return .staticValue(key: key, value: value)
+}
+
+@MainActor
+private func topLevelIndex(
+  of targetCharacter: Character,
+  in input: String,
+  mode: TopLevelIndexMode = .first
+) -> String.Index? {
+  var state = ParserScanState()
+  var foundIndex: String.Index?
+
+  for index in input.indices {
+    let character = input[index]
+    if !state.isInString && character == targetCharacter && state.isTopLevel {
+      if mode == .first {
+        return index
+      }
+      foundIndex = index
+    }
+    state.scan(character)
+  }
+
+  return state.isTopLevel ? foundIndex : nil
+}
+
+private func splitTopLevel(_ input: String, separator: Character) -> [String] {
+  splitTopLevel(input, separator: String(separator), includingEmptyValues: false)
+}
+
+private func splitTopLevel(
+  _ input: String,
+  separator: String,
+  includingEmptyValues: Bool
+) -> [String] {
+  guard !input.isEmpty else {
+    return includingEmptyValues ? [input] : []
+  }
+
+  var components: [String] = []
+  var state = ParserScanState()
+  var currentStart = input.startIndex
+  var index = input.startIndex
+
+  while index < input.endIndex {
+    if !state.isInString && state.isTopLevel && input[index...].hasPrefix(separator) {
+      appendTopLevelComponent(
+        String(input[currentStart..<index]),
+        to: &components,
+        includingEmptyValues: includingEmptyValues
+      )
+      currentStart = input.index(index, offsetBy: separator.count)
+      index = currentStart
+      continue
+    }
+
+    state.scan(input[index])
+    index = input.index(after: index)
+  }
+
+  appendTopLevelComponent(
+    String(input[currentStart...]),
+    to: &components,
+    includingEmptyValues: includingEmptyValues
+  )
+  return components
+}
+
+private func appendTopLevelComponent(
+  _ value: String,
+  to components: inout [String],
+  includingEmptyValues: Bool
+) {
+  let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+  if includingEmptyValues || !trimmedValue.isEmpty {
+    components.append(trimmedValue)
+  }
+}
+
+private func findFirstTopLevelPrefix(
+  in input: String,
+  prefixes: [String]
+) -> (opIndex: String.Index, op: String)? {
+  var state = ParserScanState()
+  var index = input.startIndex
+
+  while index < input.endIndex {
+    if !state.isInString && state.isTopLevel {
+      for prefix in prefixes where input[index...].hasPrefix(prefix) {
+        return (index, prefix)
+      }
+    }
+
+    state.scan(input[index])
+    index = input.index(after: index)
+  }
+
+  return nil
 }
 
 // MARK: - Internal
@@ -425,63 +595,11 @@ private func evaluateBooleanExpression(
 }
 
 private func splitRespectingParens(_ input: String, separator: String) -> [String] {
-  guard !input.isEmpty else {
-    return [input]
-  }
-
-  var parts: [String] = []
-  var depth = 0
-  var currentStart = input.startIndex
-  var index = input.startIndex
-
-  while index < input.endIndex {
-    let character = input[index]
-    if character == "(" {
-      depth += 1
-    } else if character == ")" && depth > 0 {
-      depth -= 1
-    }
-
-    if depth == 0, input[index...].hasPrefix(separator) {
-      parts.append(
-        String(input[currentStart..<index])
-          .trimmingCharacters(in: .whitespacesAndNewlines))
-      currentStart = input.index(index, offsetBy: separator.count)
-      index = currentStart
-      continue
-    }
-
-    index = input.index(after: index)
-  }
-
-  parts.append(String(input[currentStart...]).trimmingCharacters(in: .whitespacesAndNewlines))
-  return parts
+  splitTopLevel(input, separator: separator, includingEmptyValues: true)
 }
 
 private func firstTopLevelComparison(in input: String) -> (opIndex: String.Index, op: String)? {
-  var depth = 0
-  var index = input.startIndex
-
-  while index < input.endIndex {
-    let character = input[index]
-    if character == "(" {
-      depth += 1
-    } else if character == ")" && depth > 0 {
-      depth -= 1
-    }
-
-    if depth == 0 {
-      for comparisonOperator in comparisonOperators {
-        if input[index...].hasPrefix(comparisonOperator) {
-          return (index, comparisonOperator)
-        }
-      }
-    }
-
-    index = input.index(after: index)
-  }
-
-  return nil
+  findFirstTopLevelPrefix(in: input, prefixes: comparisonOperators)
 }
 
 private func parseAtomicComparison(_ input: String) -> (
@@ -510,16 +628,11 @@ private func isWrappedInParentheses(_ input: String) -> Bool {
     return false
   }
 
-  var depth = 0
+  var state = ParserScanState()
   for index in input.indices {
-    let character = input[index]
-    if character == "(" {
-      depth += 1
-    } else if character == ")" {
-      depth -= 1
-      if depth == 0 {
-        return index == input.index(before: input.endIndex)
-      }
+    state.scan(input[index])
+    if state.parenDepth == 0 {
+      return index == input.index(before: input.endIndex)
     }
   }
 

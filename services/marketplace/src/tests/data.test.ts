@@ -432,6 +432,54 @@ describe("marketplace get/upsert", () => {
 		]);
 	});
 
+	it("applies tagIds and limit to item tag suggestions", async () => {
+		await testDb.insert(schema.data).values([
+			{
+				resource: "items",
+				data: {
+					id: crypto.randomUUID(),
+					title: "Wanted phone",
+					tags: [
+						{ id: "wanted-tag", value: "Wanted" },
+						{ id: "iphone-tag", value: "iPhone" },
+						{ id: "ipad-tag", value: "iPad" },
+					],
+				},
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				resource: "items",
+				data: {
+					id: crypto.randomUUID(),
+					title: "Excluded phone",
+					tags: [
+						{ id: "other-tag", value: "Other" },
+						{ id: "ipod-tag", value: "iPod" },
+					],
+				},
+				createdAt: "2024-01-02T00:00:00.000Z",
+				updatedAt: "2024-01-02T00:00:00.000Z",
+			},
+		]);
+
+		const result = await getForValidatedMarketplaceRequest({
+			service: "marketplace",
+			resource: "items",
+			method: "suggestions",
+			filter: {
+				queryText: "ip",
+				tagIds: ["wanted-tag"],
+				limit: 1,
+			},
+		});
+
+		expect(result).toEqual([
+			{ id: "query", value: "ip" },
+			{ id: "ipad-tag", value: "iPad" },
+		]);
+	});
+
 	it("dedupes repeated item tags in suggestions", async () => {
 		await testDb.insert(schema.data).values([
 			{

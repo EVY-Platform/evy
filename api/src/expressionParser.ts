@@ -3,48 +3,90 @@ const COMPARISON_OPERATOR_TOKENS = new Set([">=", "<=", "==", "!=", ">", "<"]);
 const LOGICAL_OPERATOR_TOKENS = new Set(["&&", "||"]);
 const PARENTHESIS_TOKENS = new Set(["(", ")"]);
 
+type QuoteChar = '"' | "'";
+type ScanState = {
+	parenDepth: number;
+	bracketDepth: number;
+	braceDepth: number;
+	quote: QuoteChar | null;
+	previousChar: string;
+};
+
+function createScanState(): ScanState {
+	return {
+		parenDepth: 0,
+		bracketDepth: 0,
+		braceDepth: 0,
+		quote: null,
+		previousChar: "",
+	};
+}
+
+function isTopLevel(state: ScanState): boolean {
+	return (
+		state.parenDepth === 0 && state.bracketDepth === 0 && state.braceDepth === 0
+	);
+}
+
+function isQuoteChar(char: string): char is QuoteChar {
+	return char === '"' || char === "'";
+}
+
+function scanCharacter(state: ScanState, char: string): void {
+	if (state.quote) {
+		if (char === state.quote && state.previousChar !== "\\") {
+			state.quote = null;
+		}
+		state.previousChar = char;
+		return;
+	}
+
+	if (isQuoteChar(char)) {
+		state.quote = char;
+	} else if (char === "(") {
+		state.parenDepth++;
+	} else if (char === ")") {
+		state.parenDepth--;
+	} else if (char === "[") {
+		state.bracketDepth++;
+	} else if (char === "]") {
+		state.bracketDepth--;
+	} else if (char === "{") {
+		state.braceDepth++;
+	} else if (char === "}") {
+		state.braceDepth--;
+	}
+
+	state.previousChar = char;
+}
+
 export function extractBindingsFromString(text: string): string[] {
 	const bindings: string[] = [];
 	let bindingBody = "";
-	let depth = 0;
-	let inString: '"' | "'" | null = null;
-	let previousChar = "";
+	let bindingState: ScanState | null = null;
 
 	for (const char of text) {
-		if (depth === 0) {
+		if (!bindingState) {
 			if (char === "{") {
-				depth = 1;
+				bindingState = createScanState();
+				bindingState.braceDepth = 1;
 				bindingBody = "";
 			}
-			previousChar = char;
 			continue;
 		}
 
-		let shouldAppendChar = true;
-		if (inString) {
-			if (char === inString && previousChar !== "\\") {
-				inString = null;
+		scanCharacter(bindingState, char);
+		if (bindingState.braceDepth === 0) {
+			const trimmedBindingBody = bindingBody.trim();
+			if (trimmedBindingBody) {
+				bindings.push(trimmedBindingBody);
 			}
-		} else if (char === '"' || char === "'") {
-			inString = char;
-		} else if (char === "{") {
-			depth++;
-		} else if (char === "}") {
-			depth--;
-			if (depth === 0) {
-				const trimmedBindingBody = bindingBody.trim();
-				if (trimmedBindingBody) {
-					bindings.push(trimmedBindingBody);
-				}
-				bindingBody = "";
-				shouldAppendChar = false;
-			}
+			bindingState = null;
+			bindingBody = "";
+			continue;
 		}
 
-		if (shouldAppendChar) {
-			bindingBody += char;
-		}
-		previousChar = char;
+		bindingBody += char;
 	}
 
 	return bindings;
@@ -52,7 +94,17 @@ export function extractBindingsFromString(text: string): string[] {
 
 export function extractCandidatesFromBinding(bindingBody: string): string[] {
 	const trimmedBindingBody = bindingBody.trim();
-	if (!trimmedBindingBody || isExcludedBinding(trimmedBindingBody)) {
+	if (!trimmedBindingBody) {
+		return [];
+	}
+
+	if (trimmedBindingBody.startsWith("$api:")) {
+		return uniqueCandidates(
+			extractCandidatesFromApiSourceBinding(trimmedBindingBody),
+		);
+	}
+
+	if (isExcludedBinding(trimmedBindingBody)) {
 		return [];
 	}
 
@@ -74,11 +126,73 @@ export function extractCandidatesFromBinding(bindingBody: string): string[] {
 }
 
 function isExcludedBinding(bindingBody: string): boolean {
-	return (
-		bindingBody.startsWith("$api:") ||
-		bindingBody.startsWith("$local:") ||
-		bindingBody.startsWith("$datum:")
-	);
+	return bindingBody.startsWith("$local:") || bindingBody.startsWith("$datum:");
+}
+
+function extractCandidatesFromApiSourceBinding(bindingBody: string): string[] {
+	const paramsText = extractApiSourceParamsText(bindingBody);
+	return paramsText ? extractInterpolatedKeysFromParamObject(paramsText) : [];
+}
+
+function extractApiSourceParamsText(value: string): string | null {
+	const trimmedValue = value.trim();
+	if (!trimmedValue.endsWith(")")) {
+		return null;
+	}
+
+	const openParenIndex = topLevelCharacterIndex(trimmedValue, "(", "last");
+	return openParenIndex === -1
+		? null
+		: trimmedValue.slice(openParenIndex + 1, -1).trim();
+}
+
+function extractInterpolatedKeysFromParamObject(value: string): string[] {
+	const trimmedValue = value.trim();
+	if (!trimmedValue.startsWith("{") || !trimmedValue.endsWith("}")) {
+		return [];
+	}
+
+	const objectBody = trimmedValue.slice(1, -1);
+	const candidates: string[] = [];
+	for (const entry of splitFunctionArguments(objectBody)) {
+		if (topLevelCharacterIndex(entry, ":") !== -1) {
+			continue;
+		}
+		const candidate = unquote(entry.trim());
+		if (isCandidate(candidate)) {
+			candidates.push(candidate);
+		}
+	}
+	return candidates;
+}
+
+function topLevelCharacterIndex(
+	value: string,
+	targetCharacter: string,
+	mode: "first" | "last" = "first",
+): number {
+	const state = createScanState();
+	let foundIndex = -1;
+
+	for (let index = 0; index < value.length; index++) {
+		const char = value[index] ?? "";
+		if (!state.quote && char === targetCharacter && isTopLevel(state)) {
+			if (mode === "first") {
+				return index;
+			}
+			foundIndex = index;
+		}
+		scanCharacter(state, char);
+	}
+
+	return isTopLevel(state) ? foundIndex : -1;
+}
+
+function unquote(value: string): string {
+	if (isStringLiteral(value)) {
+		return value.slice(1, -1);
+	}
+	return value;
 }
 
 export function tokenize(input: string): string[] {
@@ -132,34 +246,9 @@ export function tokenize(input: string): string[] {
 		}
 
 		if (index < input.length && input[index] === "(") {
-			word += input[index];
-			index++;
-
-			let depth = 1;
-			let inString = false;
-			while (index < input.length && depth > 0) {
-				const char = input[index];
-
-				if (inString) {
-					word += char;
-					if (char === '"') {
-						inString = false;
-					}
-					index++;
-					continue;
-				}
-
-				if (char === '"') {
-					inString = true;
-				} else if (char === "(") {
-					depth++;
-				} else if (char === ")") {
-					depth--;
-				}
-
-				word += char;
-				index++;
-			}
+			const balancedToken = readBalancedToken(input, index);
+			word += balancedToken.text;
+			index = balancedToken.nextIndex;
 
 			if (word) {
 				tokens.push(word);
@@ -176,6 +265,27 @@ export function tokenize(input: string): string[] {
 	}
 
 	return tokens;
+}
+
+function readBalancedToken(
+	input: string,
+	startIndex: number,
+): { text: string; nextIndex: number } {
+	const state = createScanState();
+	let text = "";
+	let index = startIndex;
+
+	while (index < input.length) {
+		const char = input[index] ?? "";
+		text += char;
+		scanCharacter(state, char);
+		index++;
+		if (text.length > 1 && isTopLevel(state)) {
+			break;
+		}
+	}
+
+	return { text, nextIndex: index };
 }
 
 function isFunctionCall(value: string): boolean {
@@ -254,49 +364,27 @@ function extractCandidatesFromFunctionCall(functionCall: string): string[] {
 }
 
 function splitFunctionArguments(args: string): string[] {
+	return splitTopLevel(args, ",");
+}
+
+function splitTopLevel(value: string, separator: string): string[] {
 	const components: string[] = [];
+	const state = createScanState();
 	let current = "";
-	let parenDepth = 0;
-	let bracketDepth = 0;
-	let braceDepth = 0;
-	let inString: '"' | "'" | null = null;
-	let previousChar = "";
 
-	for (const char of args) {
-		let shouldAppendChar = true;
-		if (inString) {
-			if (char === inString && previousChar !== "\\") {
-				inString = null;
+	for (let index = 0; index < value.length; index++) {
+		const char = value[index] ?? "";
+		if (!state.quote && char === separator && isTopLevel(state)) {
+			const trimmedCurrent = current.trim();
+			if (trimmedCurrent) {
+				components.push(trimmedCurrent);
 			}
-		} else if (char === '"' || char === "'") {
-			inString = char;
-		} else {
-			if (char === "(") parenDepth++;
-			if (char === ")") parenDepth--;
-			if (char === "[") bracketDepth++;
-			if (char === "]") bracketDepth--;
-			if (char === "{") braceDepth++;
-			if (char === "}") braceDepth--;
-
-			if (
-				char === "," &&
-				parenDepth === 0 &&
-				bracketDepth === 0 &&
-				braceDepth === 0
-			) {
-				const trimmedCurrent = current.trim();
-				if (trimmedCurrent) {
-					components.push(trimmedCurrent);
-				}
-				current = "";
-				shouldAppendChar = false;
-			}
+			current = "";
+			continue;
 		}
 
-		if (shouldAppendChar) {
-			current += char;
-		}
-		previousChar = char;
+		current += char;
+		scanCharacter(state, char);
 	}
 
 	const trimmedCurrent = current.trim();

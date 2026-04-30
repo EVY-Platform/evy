@@ -99,18 +99,53 @@ struct EVY {
 
   static func resolveQueryParams(_ query: [String: [String]]) {
     for (queryKey, ids) in query {
-      let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
-      guard let id = ids.first,
-        let collectionData = collectionData(for: queryKey, serviceName: serviceName),
-        let collectionJson = try? collectionData.decoded(),
-        case .array(let collectionValues) = collectionJson,
-        let matchingValue = collectionValues.first(where: { $0.identifierValue() == id }),
-        let encodedMatchingValue = try? JSONEncoder().encode(matchingValue)
-      else {
+      if storeResolvedEntityQueryParam(queryKey: queryKey, ids: ids) {
         continue
       }
-      try? publicStore.upsert(key: queryKey, value: encodedMatchingValue)
+
+      if publicStore.serviceName(forSyncedResource: queryKey) == nil {
+        storeRawQueryParam(queryKey: queryKey, ids: ids)
+      }
     }
+  }
+
+  static func resolveParams(_ params: [EVYParamEntry]) -> [String: EVYJson] {
+    var resolvedParams: [String: EVYJson] = [:]
+    for param in params {
+      switch param {
+      case .interpolated(let key):
+        if let data = try? getDataFromText("{\(key)}") {
+          resolvedParams[key] = data
+        }
+      case .staticValue(let key, let value):
+        resolvedParams[key] = value
+      }
+    }
+    return resolvedParams
+  }
+
+  private static func storeResolvedEntityQueryParam(queryKey: String, ids: [String]) -> Bool {
+    let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
+    guard let id = ids.first,
+      let collectionData = collectionData(for: queryKey, serviceName: serviceName),
+      let collectionJson = try? collectionData.decoded(),
+      case .array(let collectionValues) = collectionJson,
+      let matchingValue = collectionValues.first(where: { $0.identifierValue() == id }),
+      let encodedMatchingValue = try? JSONEncoder().encode(matchingValue)
+    else {
+      return false
+    }
+
+    try? publicStore.upsert(key: queryKey, value: encodedMatchingValue)
+    return true
+  }
+
+  private static func storeRawQueryParam(queryKey: String, ids: [String]) {
+    let rawQueryValue = EVYJson.array(ids.map { .string($0) })
+    guard let encodedRawQueryValue = try? JSONEncoder().encode(rawQueryValue) else {
+      return
+    }
+    try? publicStore.upsert(key: queryKey, value: encodedRawQueryValue)
   }
 
   private static func collectionData(for collectionKey: String, serviceName: String?) -> EVYData? {

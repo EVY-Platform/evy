@@ -188,6 +188,64 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("First selected item"))
   }
 
+  func testResolveQueryParamsStoresRawValuesWhenNoSyncedCollectionExists() throws {
+    let key = uniqueKey("tag_ids")
+    let firstId = UUID().uuidString
+    let secondId = UUID().uuidString
+
+    EVY.resolveQueryParams([key: [firstId, secondId]])
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(key)}"),
+      .array([.string(firstId), .string(secondId)])
+    )
+  }
+
+  func testParseSourceParamsSeparatesBasePathAndParamEntries() {
+    let result = parseSourceParams(
+      "$api:marketplace:items:suggestions({\"tag_ids\", \"limit\": 1, \"ids\": [\"id-1\"]})"
+    )
+
+    XCTAssertEqual(result.basePath, "$api:marketplace:items:suggestions")
+    XCTAssertEqual(
+      result.params,
+      [
+        .interpolated(key: "tag_ids"),
+        .staticValue(key: "limit", value: .int(1)),
+        .staticValue(key: "ids", value: .array([.string("id-1")])),
+      ]
+    )
+  }
+
+  func testParseSourceParamsIgnoresMalformedParamObject() {
+    let result = parseSourceParams(
+      "$api:marketplace:items:suggestions(\"tag_ids\", \"limit\": 1)"
+    )
+
+    XCTAssertEqual(result.basePath, "$api:marketplace:items:suggestions")
+    XCTAssertEqual(result.params, [])
+  }
+
+  func testParseFullBracedBindingAllowsNestedParamObject() {
+    XCTAssertEqual(
+      parseFullBracedBinding("{$api:marketplace:items:suggestions({\"limit\": 1})}"),
+      "$api:marketplace:items:suggestions({\"limit\": 1})"
+    )
+  }
+
+  func testResolveParamsUsesStaticValuesAndStoredInterpolatedValues() throws {
+    let key = uniqueKey("tag_ids")
+    try store(.array([.string("tag-1")]), at: key)
+
+    let resolvedParams = EVY.resolveParams([
+      .interpolated(key: key),
+      .staticValue(key: "limit", value: .int(1)),
+    ])
+
+    XCTAssertEqual(resolvedParams[key], .array([.string("tag-1")]))
+    XCTAssertEqual(resolvedParams["limit"], .int(1))
+  }
+
   func testFormatDateFormatsIsoStringWithPattern() throws {
     let key = uniqueKey("created")
     try store(.string("2024-01-19T12:42:52.000Z"), at: key)

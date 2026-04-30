@@ -195,6 +195,28 @@ describe("expression parser utility", () => {
 		).toEqual(["items", "conditions"]);
 	});
 
+	it("extracts only interpolated keys from parameterized api sources", () => {
+		expect(
+			extractCandidatesFromBinding(
+				'$api:marketplace:items:suggestions({"tag_ids", "limit": 1, "ids": ["id-1"]})',
+			),
+		).toEqual(["tag_ids"]);
+	});
+
+	it("keeps legacy api sources excluded from candidate discovery", () => {
+		expect(
+			extractCandidatesFromBinding("$api:marketplace:items:suggestions"),
+		).toEqual([]);
+	});
+
+	it("does not extract static api source params as candidates", () => {
+		expect(
+			extractCandidatesFromBinding(
+				'$api:marketplace:items:suggestions({"ids": ["id-1"], "limit": 1})',
+			),
+		).toEqual([]);
+	});
+
 	it("extracts operands from comparison expressions", () => {
 		expect(extractCandidatesFromBinding("length(title) > 0")).toEqual([
 			"title",

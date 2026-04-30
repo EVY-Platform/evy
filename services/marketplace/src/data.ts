@@ -24,6 +24,7 @@ import {
 
 const MARKETPLACE_SERVICE = "marketplace";
 const MAX_ITEM_TAG_SUGGESTIONS = 3;
+const MAX_ITEM_TAG_SUGGESTION_LIMIT = 100;
 const MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE = 3;
 const DEFAULT_ITEM_SEARCH_LIMIT = 20;
 const MAX_ITEM_SEARCH_LIMIT = 100;
@@ -68,6 +69,35 @@ function normalizeItemSearchOffset(offset: number | undefined): number {
 	return Math.max(offset ?? 0, 0);
 }
 
+function normalizeItemSuggestionLimit(limit: number | undefined): number {
+	if (limit === undefined) {
+		return MAX_ITEM_TAG_SUGGESTIONS;
+	}
+	return Math.min(Math.max(limit, 1), MAX_ITEM_TAG_SUGGESTION_LIMIT);
+}
+
+function itemHasAnyTagClause(tagIds: string[], tagAlias = "tag"): SQL | null {
+	if (tagIds.length === 0) {
+		return null;
+	}
+
+	return sql`
+		EXISTS (
+			SELECT 1
+			FROM jsonb_array_elements(
+				CASE
+					WHEN jsonb_typeof(${data.data}->'tags') = 'array' THEN ${data.data}->'tags'
+					ELSE '[]'::jsonb
+				END
+			) AS ${sql.raw(tagAlias)}
+			WHERE ${sql.raw(tagAlias)}->>'id' IN (${sql.join(
+				tagIds.map((tagId) => sql`${tagId}`),
+				sql`, `,
+			)})
+		)
+	`;
+}
+
 async function getItemSearch(params: ApiRequest): Promise<GetResponse> {
 	const ids = params.filter?.ids ?? [];
 	const tagIds = params.filter?.tagIds ?? [];
@@ -78,22 +108,9 @@ async function getItemSearch(params: ApiRequest): Promise<GetResponse> {
 	if (ids.length > 0) {
 		whereClauses.push(inArray(data.id, ids));
 	}
-	if (tagIds.length > 0) {
-		whereClauses.push(sql`
-			EXISTS (
-				SELECT 1
-				FROM jsonb_array_elements(
-					CASE
-						WHEN jsonb_typeof(${data.data}->'tags') = 'array' THEN ${data.data}->'tags'
-						ELSE '[]'::jsonb
-					END
-				) AS tag
-				WHERE tag->>'id' IN (${sql.join(
-					tagIds.map((tagId) => sql`${tagId}`),
-					sql`, `,
-				)})
-			)
-		`);
+	const tagClause = itemHasAnyTagClause(tagIds);
+	if (tagClause) {
+		whereClauses.push(tagClause);
 	}
 
 	const rows = await db
@@ -128,6 +145,10 @@ async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 	}
 
 	const normalizedQuery = normalizeItemSuggestionQuery(query);
+	const tagIds = params.filter?.tagIds ?? [];
+	const limit = normalizeItemSuggestionLimit(params.filter?.limit);
+	const tagClause = itemHasAnyTagClause(tagIds, "filter_tag");
+	const tagFilterSql = tagClause ? sql`AND ${tagClause}` : sql``;
 
 	const result = await db.execute(sql`
 		WITH tags AS (
@@ -141,6 +162,7 @@ async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 				END
 			) AS tag
 			WHERE ${data.resource} = 'items'
+				${tagFilterSql}
 				AND tag->>'id' IS NOT NULL
 				AND length(trim(tag->>'value')) > 0
 			ORDER BY (tag->>'id'), lower(trim(tag->>'value'))
@@ -173,7 +195,7 @@ async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 			OR position(${normalizedQuery} in norm_value) > 0
 			OR lev_dist <= ${MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE}
 		ORDER BY score, value
-		LIMIT ${MAX_ITEM_TAG_SUGGESTIONS}
+		LIMIT ${limit}
 	`);
 
 	const rows =

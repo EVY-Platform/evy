@@ -12,6 +12,7 @@ private struct EVYApiSearchSource {
   let service: String
   let resource: String
   let method: String
+  let params: [EVYParamEntry]
 }
 
 private struct EVYApiSearchRequest: Encodable {
@@ -22,7 +23,11 @@ private struct EVYApiSearchRequest: Encodable {
 }
 
 private struct EVYApiSearchFilter: Encodable {
-  let queryText: String
+  let ids: [String]?
+  let queryText: String?
+  let tagIds: [String]?
+  let limit: Int?
+  let offset: Int?
 }
 
 private enum EVYSearchSourceType {
@@ -190,7 +195,11 @@ class EVYSearchController: ObservableObject {
       return .local
     }
 
-    let apiPath = String(binding.dropFirst(apiSourcePrefix.count))
+    let parsedSource = parseSourceParams(binding)
+    guard parsedSource.basePath.hasPrefix(apiSourcePrefix) else {
+      return .local
+    }
+    let apiPath = String(parsedSource.basePath.dropFirst(apiSourcePrefix.count))
     let pathSegments = apiPath.split(separator: ":", omittingEmptySubsequences: false).map(
       String.init)
     guard pathSegments.count == 3,
@@ -203,19 +212,51 @@ class EVYSearchController: ObservableObject {
       EVYApiSearchSource(
         service: pathSegments[0],
         resource: pathSegments[1],
-        method: pathSegments[2]
+        method: pathSegments[2],
+        params: parsedSource.params
       )
     )
   }
 
   private static func bracedBinding(from source: String) -> String? {
-    let normalizedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
-    let sourceProps = EVY.parsePropsFromText(normalizedSource)
-    guard normalizedSource == "{\(sourceProps)}" else {
+    parseFullBracedBinding(source)
+  }
+
+  private static func buildFilter(queryText: String, params: [EVYParamEntry]) -> EVYApiSearchFilter {
+    let resolvedParams = EVY.resolveParams(params)
+    return EVYApiSearchFilter(
+      ids: stringArray(from: resolvedParams["ids"]),
+      queryText: queryText,
+      tagIds: stringArray(from: resolvedParams["tag_ids"]),
+      limit: intValue(from: resolvedParams["limit"]),
+      offset: intValue(from: resolvedParams["offset"])
+    )
+  }
+
+  private static func stringArray(from value: EVYJson?) -> [String]? {
+    guard let value else { return nil }
+    switch value {
+    case .array(let arrayValue):
+      return arrayValue.map { $0.toString() }
+    case .string(let stringValue):
+      return stringValue.isEmpty ? nil : [stringValue]
+    default:
       return nil
     }
+  }
 
-    return sourceProps
+  private static func intValue(from value: EVYJson?) -> Int? {
+    guard let value else { return nil }
+    switch value {
+    case .int(let intValue):
+      return intValue
+    case .decimal(let decimalValue):
+      return NSDecimalNumber(decimal: decimalValue).intValue
+    case .string(let stringValue):
+      return Int(stringValue)
+    default:
+      return nil
+    }
   }
 
   private func loadFormatPrep() throws -> SearchTemplateFormatPrep {
@@ -297,7 +338,7 @@ class EVYSearchController: ObservableObject {
             service: apiSource.service,
             resource: apiSource.resource,
             method: apiSource.method,
-            filter: EVYApiSearchFilter(queryText: name)
+            filter: Self.buildFilter(queryText: name, params: apiSource.params)
           ),
           expecting: [EVYJson].self
         )
