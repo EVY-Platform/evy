@@ -3,12 +3,16 @@ name: E2E Tests
 on:
     pull_request:
         branches: [dev]
+        paths-ignore:
+            - '**/*.md'
     push:
         branches: [dev]
+        paths-ignore:
+            - '**/*.md'
     workflow_dispatch:
 
-# E2E runs on Blacksmith macOS 26 so iOS Simulator tests can run in CI. PostgreSQL is started on the host
-# (Homebrew); api/marketplace/web run via `run-e2e.sh --no-docker` (no Docker required for this job).
+        # E2E runs on Blacksmith macOS 26 so iOS Simulator tests can run in CI. PostgreSQL is started on the host
+        # (Homebrew); api/marketplace/web run via `run-e2e.sh --no-docker` (no Docker required for this job).
 
 jobs:
     e2e_tests:
@@ -36,13 +40,16 @@ jobs:
                         - 'run-e2e.sh'
                         - '.github/workflows/e2e_tests.yml'
                         - '.github/actions/**'
+                        - '!**/*.md'
 
             - name: Setup Bun
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
               uses: oven-sh/setup-bun@v2
 
             - name: Start PostgreSQL on host
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
               run: |
                   set -euo pipefail
                   brew install postgresql@16
@@ -57,19 +64,23 @@ jobs:
                   "$PG_BIN/createdb" -h localhost -p 5432 -U postgres -O evy marketplace
 
             - name: Install dependencies
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
               run: bun run install:all
 
             - name: Prepare .env and generate types
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
               uses: ./.github/actions/prepare-dotenv-and-types
 
             - name: Install Playwright browsers
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
               run: bun run --cwd web test:setup
 
             - name: Verify Xcode and iOS simulators
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
               run: |
                   set -euo pipefail
                   echo "Available Xcode apps:"
@@ -81,7 +92,8 @@ jobs:
                   xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | sed -n '1,80p'
 
             - name: Run E2E tests
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true'
+              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
               env:
                   MARKETPLACE_GRPC_HOST: 127.0.0.1
                   IOS_SIMULATOR_DEVICE_NAME: iPhone 17
@@ -90,7 +102,8 @@ jobs:
 
             - name: Upload Playwright report
               uses: actions/upload-artifact@v7
-              if: always() && (github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e == 'true')
+              if: always() && (github.event_name == 'workflow_dispatch' ||
+                  steps.paths.outputs.e2e == 'true')
               with:
                   name: e2e-tests-playwright-report
                   path: web/playwright-report/

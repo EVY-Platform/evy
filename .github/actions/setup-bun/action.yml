@@ -29,6 +29,7 @@ runs:
                   changes:
                     - '${{ inputs.path-filter }}'
                     ${{ inputs.path-filter-extra != '' && format('- ''{0}''', inputs.path-filter-extra) }}
+                    - '!**/*.md'
 
         - name: Setup Bun
           if: steps.filter.outputs.changes == 'true'
