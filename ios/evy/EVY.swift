@@ -19,7 +19,7 @@ struct GetParams: Encodable {
 }
 
 struct Filter: Encodable {
-  let id: String?
+  let ids: [String]?
 }
 
 struct SyncServiceDataParams: Encodable {
@@ -234,7 +234,7 @@ struct EVY {
     let params = UpsertParams(
       service: "marketplace",
       resource: key,
-      filter: Filter(id: newId),
+      filter: Filter(ids: [newId]),
       data: dataWithId
     )
     if let existing {

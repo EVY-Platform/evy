@@ -1,4 +1,4 @@
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
@@ -38,7 +38,7 @@ import {
 const connectionString = getConnectionUrl();
 const client = postgres(connectionString);
 
-export let db = drizzle(client, { schema });
+let db = drizzle(client, { schema });
 
 export function setDbForTest(database: typeof db): void {
 	db = database;
@@ -101,6 +101,17 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+function getOnlyFilterId(
+	filter: GetRequest["filter"] | UpsertRequest["filter"] | undefined,
+): string | undefined {
+	const ids = filter?.ids ?? [];
+	if (ids.length > 1) {
+		throw new Error("Upsert filter.ids must contain at most one id");
+	}
+	const [onlyId] = ids;
+	return onlyId;
+}
+
 function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 	return {
 		id: r.id,
@@ -128,8 +139,8 @@ async function listCoreCatalogRows<TRow>(
 	const base = db.select().from(table);
 	const whereClauses = [];
 
-	if (filter?.id) {
-		whereClauses.push(eq(table.id, filter.id));
+	if (filter?.ids?.length) {
+		whereClauses.push(inArray(table.id, filter.ids));
 	}
 	if (filter?.updatedAfter) {
 		whereClauses.push(gt(table.updatedAt, filter.updatedAfter));
@@ -207,8 +218,8 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		const base = db.select({ data: flow.data }).from(flow);
 		const whereClauses = [];
 
-		if (filter?.id) {
-			whereClauses.push(eq(flow.id, filter.id));
+		if (filter?.ids?.length) {
+			whereClauses.push(inArray(flow.id, filter.ids));
 		}
 		if (filter?.updatedAfter) {
 			whereClauses.push(gt(flow.updatedAt, filter.updatedAfter));
@@ -254,16 +265,17 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 
 	if (resource === "sdui") {
 		const validatedData = validateFlowData(dataPayload);
+		const filterId = getOnlyFilterId(filter);
 		const persistedFlowData =
-			filter?.id && filter.id !== validatedData.id
-				? { ...validatedData, id: filter.id }
+			filterId && filterId !== validatedData.id
+				? { ...validatedData, id: filterId }
 				: validatedData;
 
-		if (filter?.id) {
+		if (filterId) {
 			const result = await db
 				.update(flow)
 				.set({ data: persistedFlowData, updatedAt: nowIso })
-				.where(eq(flow.id, filter.id))
+				.where(eq(flow.id, filterId))
 				.returning();
 			if (result.length > 0) {
 				const row = result[0];
@@ -287,7 +299,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 
 	if (resource === "services") {
 		const validated = validateServicePayload(dataPayload);
-		const filterId = filter?.id;
+		const filterId = getOnlyFilterId(filter);
 		return upsertCatalogEntity(
 			filterId,
 			() =>
@@ -325,7 +337,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 
 	if (resource === "organisations") {
 		const validated = validateOrganizationPayload(dataPayload);
-		const filterId = filter?.id;
+		const filterId = getOnlyFilterId(filter);
 		return upsertCatalogEntity(
 			filterId,
 			() =>
@@ -365,7 +377,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 
 	if (resource === "providers") {
 		const validated = validateServiceProviderPayload(dataPayload);
-		const filterId = filter?.id;
+		const filterId = getOnlyFilterId(filter);
 		return upsertCatalogEntity(
 			filterId,
 			() =>

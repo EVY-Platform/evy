@@ -8,10 +8,16 @@ const forwardGetMock = mock(
 			service: string;
 			resource: string;
 			method: string;
-			filter?: { query?: string };
+			filter?: {
+				queryText?: string;
+				ids?: string[];
+				tagIds?: string[];
+				limit?: number;
+				offset?: number;
+			};
 		},
 	): Promise<GetResponse> => [
-		{ id: "query", value: params.filter?.query ?? "" },
+		{ id: "query", value: params.filter?.queryText ?? "" },
 	],
 );
 
@@ -39,7 +45,7 @@ describe("api JSON-RPC handler", () => {
 			resource: "items",
 			method: "suggestions",
 			filter: {
-				query: "iph",
+				queryText: "iph",
 			},
 		});
 
@@ -50,7 +56,36 @@ describe("api JSON-RPC handler", () => {
 			resource: "items",
 			method: "suggestions",
 			filter: {
-				query: "iph",
+				queryText: "iph",
+			},
+		});
+	});
+
+	it("forwards marketplace item search requests to the owning service", async () => {
+		const itemId = crypto.randomUUID();
+		const result = await api({
+			service: "marketplace",
+			resource: "items",
+			method: "search",
+			filter: {
+				ids: [itemId],
+				tagIds: ["electronics-tag"],
+				limit: 10,
+				offset: 5,
+			},
+		});
+
+		expect(result).toEqual([{ id: "query", value: "" }]);
+		expect(forwardGetMock).toHaveBeenCalledTimes(1);
+		expect(forwardGetMock).toHaveBeenCalledWith("marketplace", {
+			service: "marketplace",
+			resource: "items",
+			method: "search",
+			filter: {
+				ids: [itemId],
+				tagIds: ["electronics-tag"],
+				limit: 10,
+				offset: 5,
 			},
 		});
 	});
@@ -61,7 +96,7 @@ describe("api JSON-RPC handler", () => {
 				service: "marketplace",
 				resource: "items",
 				filter: {
-					query: "iph",
+					queryText: "iph",
 				},
 			}),
 		).rejects.toThrow("ApiRequest validation failed");
@@ -76,7 +111,7 @@ describe("api JSON-RPC handler", () => {
 				resource: "sdui",
 				method: "suggestions",
 				filter: {
-					query: "iph",
+					queryText: "iph",
 				},
 			}),
 		).rejects.toThrow("Invalid service and resource combination");

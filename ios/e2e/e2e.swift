@@ -30,7 +30,7 @@ actor WSEmitter {
     let params: [String: Any] = [
       "service": "evy",
       "resource": "sdui",
-      "filter": ["id": flowId],
+      "filter": ["ids": [flowId]],
       "data": flowData,
     ]
     _ = try await send(method: "upsert", params: params)

@@ -24,9 +24,12 @@ message UpsertRequest {
 }
 
 message Filter {
-  string id = 1;
+  repeated string ids = 1;
   string updated_after = 2;
-  string query = 3;
+  string query_text = 3;
+  repeated string tag_ids = 5;
+  int32 limit = 6;
+  int32 offset = 7;
 }
 
 message GetResponse {

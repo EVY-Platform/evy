@@ -172,7 +172,7 @@ describe("API E2E Tests", () => {
 			const updated = await client.call("upsert", {
 				service: "evy",
 				resource: "sdui",
-				filter: { id: created.id },
+				filter: { ids: [created.id] },
 				data: updateFlowData,
 			});
 

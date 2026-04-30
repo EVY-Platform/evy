@@ -63,21 +63,35 @@ type ForwardableGetRequest = GetRequest | ApiRequest;
 type AppGetRequestInput = {
 	service: string;
 	resource: string;
-	filter?: { id?: string; updatedAfter?: string; query?: string };
+	filter?: {
+		ids?: string[];
+		updatedAfter?: string;
+		queryText?: string;
+		tagIds?: string[];
+		limit?: number;
+		offset?: number;
+	};
 	method?: string;
 };
 
 type ProtoGetRequest = {
 	service: string;
 	resource: string;
-	filter?: { id?: string; updated_after?: string; query?: string };
+	filter?: {
+		ids?: string[];
+		updated_after?: string;
+		query_text?: string;
+		tag_ids?: string[];
+		limit?: number;
+		offset?: number;
+	};
 	method?: string;
 };
 
 type ProtoUpsertRequest = {
 	service: string;
 	resource: string;
-	filter?: { id?: string; updated_after?: string };
+	filter?: { ids?: string[]; updated_after?: string };
 	data_json: string;
 };
 
@@ -105,11 +119,14 @@ type GrpcServiceClient = grpc.Client & {
 };
 
 function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
-	const filter: Record<string, string> = {};
-	if (params.filter?.id) filter.id = params.filter.id;
+	const filter: NonNullable<ProtoGetRequest["filter"]> = {};
+	if (params.filter?.ids?.length) filter.ids = params.filter.ids;
 	if (params.filter?.updatedAfter)
 		filter.updated_after = params.filter.updatedAfter;
-	if (params.filter?.query) filter.query = params.filter.query;
+	if (params.filter?.queryText) filter.query_text = params.filter.queryText;
+	if (params.filter?.tagIds?.length) filter.tag_ids = params.filter.tagIds;
+	if (params.filter?.limit !== undefined) filter.limit = params.filter.limit;
+	if (params.filter?.offset !== undefined) filter.offset = params.filter.offset;
 
 	return {
 		service: params.service,
@@ -120,8 +137,8 @@ function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
 }
 
 function buildProtoUpsertRequest(params: UpsertRequest): ProtoUpsertRequest {
-	const filter: Record<string, string> = {};
-	if (params.filter?.id) filter.id = params.filter.id;
+	const filter: NonNullable<ProtoUpsertRequest["filter"]> = {};
+	if (params.filter?.ids?.length) filter.ids = params.filter.ids;
 	if (params.filter?.updatedAfter)
 		filter.updated_after = params.filter.updatedAfter;
 

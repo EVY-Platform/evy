@@ -1,4 +1,5 @@
-import { eq, and, desc, gt, sql } from "drizzle-orm";
+import { eq, and, desc, gt, inArray, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
 import type {
 	ApiRequest,
@@ -24,6 +25,8 @@ import {
 const MARKETPLACE_SERVICE = "marketplace";
 const MAX_ITEM_TAG_SUGGESTIONS = 3;
 const MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE = 3;
+const DEFAULT_ITEM_SEARCH_LIMIT = 20;
+const MAX_ITEM_SEARCH_LIMIT = 100;
 
 type MarketplaceSuggestion = {
 	id: string;
@@ -36,6 +39,17 @@ function validateDataPayload(dataPayload: unknown): DATA_PRIMITIVE["data"] {
 	return validatedPayload;
 }
 
+function getOnlyFilterId(
+	filter: GetRequest["filter"] | UpsertRequest["filter"] | undefined,
+): string | undefined {
+	const ids = filter?.ids ?? [];
+	if (ids.length > 1) {
+		throw new Error("Upsert filter.ids must contain at most one id");
+	}
+	const [onlyId] = ids;
+	return onlyId;
+}
+
 function normalizeItemSuggestionQuery(query: string): string {
 	return query
 		.toLocaleLowerCase()
@@ -43,8 +57,72 @@ function normalizeItemSuggestionQuery(query: string): string {
 		.replace(/[\u0300-\u036f]/g, "");
 }
 
+function normalizeItemSearchLimit(limit: number | undefined): number {
+	if (limit === undefined) {
+		return DEFAULT_ITEM_SEARCH_LIMIT;
+	}
+	return Math.min(Math.max(limit, 1), MAX_ITEM_SEARCH_LIMIT);
+}
+
+function normalizeItemSearchOffset(offset: number | undefined): number {
+	return Math.max(offset ?? 0, 0);
+}
+
+async function getItemSearch(params: ApiRequest): Promise<GetResponse> {
+	const ids = params.filter?.ids ?? [];
+	const tagIds = params.filter?.tagIds ?? [];
+	const limit = normalizeItemSearchLimit(params.filter?.limit);
+	const offset = normalizeItemSearchOffset(params.filter?.offset);
+
+	const whereClauses: SQL[] = [eq(data.resource, "items")];
+	if (ids.length > 0) {
+		whereClauses.push(inArray(data.id, ids));
+	}
+	if (tagIds.length > 0) {
+		whereClauses.push(sql`
+			EXISTS (
+				SELECT 1
+				FROM jsonb_array_elements(
+					CASE
+						WHEN jsonb_typeof(${data.data}->'tags') = 'array' THEN ${data.data}->'tags'
+						ELSE '[]'::jsonb
+					END
+				) AS tag
+				WHERE tag->>'id' IN (${sql.join(
+					tagIds.map((tagId) => sql`${tagId}`),
+					sql`, `,
+				)})
+			)
+		`);
+	}
+
+	const rows = await db
+		.select({ id: data.id, updatedAt: data.updatedAt })
+		.from(data)
+		.where(and(...whereClauses))
+		.orderBy(desc(data.updatedAt));
+
+	const resultIds = rows.map((row) => row.id);
+	if (ids.length === 0) {
+		return validateGetResponse(resultIds.slice(offset, offset + limit));
+	}
+
+	const positionById = new Map(ids.map((id, position) => [id, position]));
+	return validateGetResponse(
+		resultIds
+			.toSorted((leftId, rightId) => {
+				const leftPosition =
+					positionById.get(leftId) ?? Number.MAX_SAFE_INTEGER;
+				const rightPosition =
+					positionById.get(rightId) ?? Number.MAX_SAFE_INTEGER;
+				return leftPosition - rightPosition;
+			})
+			.slice(offset, offset + limit),
+	);
+}
+
 async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
-	const query = params.filter?.query?.trim() ?? "";
+	const query = params.filter?.queryText?.trim() ?? "";
 	if (query.length === 0) {
 		return validateGetResponse([]);
 	}
@@ -147,12 +225,15 @@ async function marketplaceGetBody(
 		if (resource === "items" && params.method === "suggestions") {
 			return getItemTagSuggestions(params);
 		}
+		if (resource === "items" && params.method === "search") {
+			return getItemSearch(params);
+		}
 		throw new Error(`Unsupported marketplace get method ${params.method}`);
 	}
 
 	const whereClauses = [eq(data.resource, resource)];
-	if (filter?.id) {
-		whereClauses.push(eq(data.id, filter.id));
+	if (filter?.ids?.length) {
+		whereClauses.push(inArray(data.id, filter.ids));
 	}
 	if (filter?.updatedAfter) {
 		whereClauses.push(gt(data.updatedAt, filter.updatedAfter));
@@ -191,11 +272,12 @@ async function marketplaceUpsertBody(
 
 	const validatedPayload = validateDataPayload(dataPayload);
 
-	if (filter?.id) {
+	const filterId = getOnlyFilterId(filter);
+	if (filterId) {
 		const result = await db
 			.update(data)
 			.set({ data: validatedPayload, updatedAt: nowIso })
-			.where(and(eq(data.id, filter.id), eq(data.resource, resource)))
+			.where(and(eq(data.id, filterId), eq(data.resource, resource)))
 			.returning();
 		if (result.length > 0) {
 			const row = result[0];
@@ -210,8 +292,8 @@ async function marketplaceUpsertBody(
 		createdAt: nowIso,
 		updatedAt: nowIso,
 	};
-	if (filter?.id) {
-		insertValues.id = filter.id;
+	if (filterId) {
+		insertValues.id = filterId;
 	}
 
 	const result = await db.insert(data).values(insertValues).returning();

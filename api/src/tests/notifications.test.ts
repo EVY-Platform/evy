@@ -23,7 +23,6 @@ const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
 const {
-	db,
 	getCore,
 	isRecord,
 	isResource,
@@ -31,7 +30,7 @@ const {
 	upsertCore,
 	validateAuth,
 } = dataModule;
-setDbForTest(testDb as unknown as typeof db);
+setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
 function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
 	return isRecord(p) && "resource" in p && isResource(p.resource);

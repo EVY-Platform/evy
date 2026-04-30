@@ -22,7 +22,7 @@ private struct EVYApiSearchRequest: Encodable {
 }
 
 private struct EVYApiSearchFilter: Encodable {
-  let query: String
+  let queryText: String
 }
 
 private enum EVYSearchSourceType {
@@ -297,7 +297,7 @@ class EVYSearchController: ObservableObject {
             service: apiSource.service,
             resource: apiSource.resource,
             method: apiSource.method,
-            filter: EVYApiSearchFilter(query: name)
+            filter: EVYApiSearchFilter(queryText: name)
           ),
           expecting: [EVYJson].self
         )

@@ -104,7 +104,14 @@ function buildMarketplaceServiceHandlers(
 					{
 						service: string;
 						resource: string;
-						filter?: { id?: string; updated_after?: string; query?: string };
+						filter?: {
+							ids?: string[];
+							updated_after?: string;
+							query_text?: string;
+							tag_ids?: string[];
+							limit?: number;
+							offset?: number;
+						};
 						method?: string;
 					},
 					{ result_json: string }
@@ -114,11 +121,24 @@ function buildMarketplaceServiceHandlers(
 				void (async () => {
 					try {
 						const req = call.request;
-						const filter: Record<string, string> = {};
-						if (req.filter?.id) filter.id = req.filter.id;
+						const filter: {
+							ids?: string[];
+							updatedAfter?: string;
+							queryText?: string;
+							tagIds?: string[];
+							limit?: number;
+							offset?: number;
+						} = {};
+						if (req.filter?.ids?.length) filter.ids = req.filter.ids;
 						if (req.filter?.updated_after)
 							filter.updatedAfter = req.filter.updated_after;
-						if (req.filter?.query) filter.query = req.filter.query;
+						if (req.filter?.query_text)
+							filter.queryText = req.filter.query_text;
+						if (req.filter?.tag_ids?.length) filter.tagIds = req.filter.tag_ids;
+						if (req.filter?.limit && req.filter.limit > 0)
+							filter.limit = req.filter.limit;
+						if (req.filter?.offset && req.filter.offset > 0)
+							filter.offset = req.filter.offset;
 						const params = {
 							service: req.service,
 							resource: req.resource,
@@ -145,7 +165,7 @@ function buildMarketplaceServiceHandlers(
 					{
 						service: string;
 						resource: string;
-						filter?: { id: string };
+						filter?: { ids?: string[] };
 						data_json: string;
 					},
 					{ result_json: string }
@@ -171,7 +191,9 @@ function buildMarketplaceServiceHandlers(
 						const params = {
 							service: req.service,
 							resource: req.resource,
-							filter: req.filter?.id ? { id: req.filter.id } : undefined,
+							filter: req.filter?.ids?.length
+								? { ids: req.filter.ids }
+								: undefined,
 							data,
 						};
 						validateStrictUpsertRequest(params);

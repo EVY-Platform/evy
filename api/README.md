@@ -14,7 +14,7 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 
 ### Request dispatch
 
-`get` is public, `upsert` is protected (requires a valid device token via `validateAuth`). Params include `service`, `resource`, optional `filter.id`, and for `upsert` a `data` object (see JSON Schemas under `types/schema/rpc/`).
+`get` is public, `upsert` is protected (requires a valid device token via `validateAuth`). Params include `service`, `resource`, optional `filter.ids`, and for `upsert` a `data` object (see JSON Schemas under `types/schema/rpc/`).
 
 - `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, and `providers` (typed catalog tables). There is no generic `evy` “data” table routed through `services.ts`.
 - `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet` / `forwardUpsert` in [`src/services.ts`](./src/services.ts), which issue `Get` / `Upsert` on `evy.Service` and validate JSON responses.

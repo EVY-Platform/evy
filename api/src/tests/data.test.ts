@@ -50,7 +50,7 @@ const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
 const { validateAuth, getCore, setDbForTest, upsertCore } = dataModule;
-setDbForTest(testDb as unknown as typeof dataModule.db);
+setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
 function isDATA_EVY_Flow(row: UpsertResponse): row is DATA_EVY_Flow {
 	return (
@@ -243,7 +243,7 @@ describe("get", () => {
 		expect(result[0]).toHaveProperty("pages");
 	});
 
-	it("should return single flow for resource SDUI when filter.id provided", async () => {
+	it("should return single flow for resource SDUI when filter.ids provided", async () => {
 		const flowId = crypto.randomUUID();
 		await testDb.insert(schema.flow).values({
 			id: flowId,
@@ -258,7 +258,7 @@ describe("get", () => {
 		const result = await getCore({
 			service: "evy",
 			resource: "sdui",
-			filter: { id: flowId },
+			filter: { ids: [flowId] },
 		});
 
 		expect(result).toHaveLength(1);
@@ -266,11 +266,11 @@ describe("get", () => {
 		expect(flow.name).toBe("Single Flow");
 	});
 
-	it("should return empty array for SDUI when filter.id matches nothing", async () => {
+	it("should return empty array for SDUI when filter.ids matches nothing", async () => {
 		const result = await getCore({
 			service: "evy",
 			resource: "sdui",
-			filter: { id: crypto.randomUUID() },
+			filter: { ids: [crypto.randomUUID()] },
 		});
 
 		expect(result).toHaveLength(0);
@@ -289,7 +289,7 @@ describe("get", () => {
 			getCore({
 				service: "evy",
 				resource: "sdui",
-				filter: { id: flowId },
+				filter: { ids: [flowId] },
 			}),
 		).rejects.toThrow("Flow validation failed");
 	});
@@ -371,7 +371,7 @@ describe("upsert", () => {
 		).rejects.toThrow("data is required");
 	});
 
-	it("should create new flow for resource SDUI without filter.id", async () => {
+	it("should create new flow for resource SDUI without filter.ids", async () => {
 		const flowData = createTestFlow({
 			name: "New Flow",
 			pages: [
@@ -406,7 +406,7 @@ describe("upsert", () => {
 		expect(flows).toHaveLength(1);
 	});
 
-	it("should update existing flow for resource SDUI with filter.id", async () => {
+	it("should update existing flow for resource SDUI with filter.ids", async () => {
 		const existingFlowData = createTestFlow({
 			name: "Old Name",
 			pages: [{ title: "P1", rows: [] }],
@@ -444,7 +444,7 @@ describe("upsert", () => {
 		const result = await upsertCore({
 			service: "evy",
 			resource: "sdui",
-			filter: { id: existingFlow.id },
+			filter: { ids: [existingFlow.id] },
 			data: updatedFlowData,
 		});
 
@@ -455,7 +455,7 @@ describe("upsert", () => {
 		expect(flows).toHaveLength(1);
 	});
 
-	it("should insert then update the same SDUI flow when filter.id is provided for a new client-created flow", async () => {
+	it("should insert then update the same SDUI flow when filter.ids is provided for a new client-created flow", async () => {
 		const flowId = crypto.randomUUID();
 		const initialFlowData = createTestFlow({
 			id: flowId,
@@ -466,7 +466,7 @@ describe("upsert", () => {
 		const created = await upsertCore({
 			service: "evy",
 			resource: "sdui",
-			filter: { id: flowId },
+			filter: { ids: [flowId] },
 			data: initialFlowData,
 		});
 
@@ -479,7 +479,7 @@ describe("upsert", () => {
 		const updated = await upsertCore({
 			service: "evy",
 			resource: "sdui",
-			filter: { id: flowId },
+			filter: { ids: [flowId] },
 			data: createTestFlow({
 				id: flowId,
 				name: "Client Created Flow Updated",
@@ -499,6 +499,20 @@ describe("upsert", () => {
 		expect(flows[0]?.id).toBe(flowId);
 		expect(flows[0]?.data.id).toBe(flowId);
 		expect(flows[0]?.data.name).toBe("Client Created Flow Updated");
+	});
+
+	it("should reject upsert with multiple filter.ids", async () => {
+		await expect(
+			upsertCore({
+				service: "evy",
+				resource: "sdui",
+				filter: { ids: [crypto.randomUUID(), crypto.randomUUID()] },
+				data: createTestFlow({
+					name: "Multi ID Upsert",
+					pages: [{ title: "P1", rows: [] }],
+				}),
+			}),
+		).rejects.toThrow("Upsert filter.ids must contain at most one id");
 	});
 
 	it("should upsert Service resource into the Service table", async () => {

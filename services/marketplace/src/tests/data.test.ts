@@ -34,6 +34,10 @@ beforeEach(async () => {
 	await testDb.delete(schema.data);
 });
 
+function expectUnknownToEqual(actual: unknown, expected: unknown): void {
+	expect(actual).toEqual(expected);
+}
+
 describe("marketplace get/upsert", () => {
 	it("rejects SDUI resource (not a valid marketplace RPC pair)", async () => {
 		await expect(
@@ -93,20 +97,20 @@ describe("marketplace get/upsert", () => {
 		expect(result).toEqual([newRow]);
 	});
 
-	it("uses filter.id as primary key when inserting a new row (client id)", async () => {
+	it("uses filter.ids as primary key when inserting a new row (client id)", async () => {
 		const clientId = crypto.randomUUID();
 		const payload = { id: clientId, title: "client-keyed" };
 		const inserted = await upsert({
 			service: "marketplace",
 			resource: "items",
-			filter: { id: clientId },
+			filter: { ids: [clientId] },
 			data: payload,
 		});
 		expect(inserted.id).toBe(clientId);
 		const byFilter = await get({
 			service: "marketplace",
 			resource: "items",
-			filter: { id: clientId },
+			filter: { ids: [clientId] },
 		});
 		expect(byFilter).toEqual([payload]);
 	});
@@ -121,10 +125,234 @@ describe("marketplace get/upsert", () => {
 		const updated = await upsert({
 			service: "marketplace",
 			resource: "conditions",
-			filter: { id: row.id },
+			filter: { ids: [row.id] },
 			data: { ...row, value: "v2" },
 		});
 		expect(updated.data).toEqual({ ...row, value: "v2" });
+	});
+
+	it("rejects upsert with multiple filter.ids", async () => {
+		const row = { id: crypto.randomUUID(), value: "multi" };
+		await expect(
+			upsert({
+				service: "marketplace",
+				resource: "conditions",
+				filter: { ids: [crypto.randomUUID(), crypto.randomUUID()] },
+				data: row,
+			}),
+		).rejects.toThrow("Upsert filter.ids must contain at most one id");
+	});
+
+	it("returns item search results as ordered ids filtered by ids", async () => {
+		const firstId = crypto.randomUUID();
+		const secondId = crypto.randomUUID();
+		const thirdId = crypto.randomUUID();
+		await testDb.insert(schema.data).values([
+			{
+				id: firstId,
+				resource: "items",
+				data: { id: firstId, title: "First" },
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				id: secondId,
+				resource: "items",
+				data: { id: secondId, title: "Second" },
+				createdAt: "2024-01-02T00:00:00.000Z",
+				updatedAt: "2024-01-02T00:00:00.000Z",
+			},
+			{
+				id: thirdId,
+				resource: "items",
+				data: { id: thirdId, title: "Third" },
+				createdAt: "2024-01-03T00:00:00.000Z",
+				updatedAt: "2024-01-03T00:00:00.000Z",
+			},
+		]);
+
+		const result = await getForValidatedMarketplaceRequest({
+			service: "marketplace",
+			resource: "items",
+			method: "search",
+			filter: {
+				ids: [thirdId, firstId],
+			},
+		});
+
+		expectUnknownToEqual(result, [thirdId, firstId]);
+	});
+
+	it("returns item search results filtered by tagIds", async () => {
+		const phoneId = crypto.randomUUID();
+		const deskId = crypto.randomUUID();
+		const laptopId = crypto.randomUUID();
+		await testDb.insert(schema.data).values([
+			{
+				id: phoneId,
+				resource: "items",
+				data: {
+					id: phoneId,
+					title: "Phone",
+					tags: [{ id: "electronics-tag", value: "Electronics" }],
+				},
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				id: deskId,
+				resource: "items",
+				data: {
+					id: deskId,
+					title: "Desk",
+					tags: [{ id: "furniture-tag", value: "Furniture" }],
+				},
+				createdAt: "2024-01-02T00:00:00.000Z",
+				updatedAt: "2024-01-02T00:00:00.000Z",
+			},
+			{
+				id: laptopId,
+				resource: "items",
+				data: {
+					id: laptopId,
+					title: "Laptop",
+					tags: [{ id: "electronics-tag", value: "Electronics" }],
+				},
+				createdAt: "2024-01-03T00:00:00.000Z",
+				updatedAt: "2024-01-03T00:00:00.000Z",
+			},
+		]);
+
+		const result = await getForValidatedMarketplaceRequest({
+			service: "marketplace",
+			resource: "items",
+			method: "search",
+			filter: {
+				tagIds: ["electronics-tag"],
+			},
+		});
+
+		expectUnknownToEqual(result, [laptopId, phoneId]);
+	});
+
+	it("returns item search results matching both ids and tagIds", async () => {
+		const matchingId = crypto.randomUUID();
+		const excludedByTagId = crypto.randomUUID();
+		const excludedByItemId = crypto.randomUUID();
+		await testDb.insert(schema.data).values([
+			{
+				id: matchingId,
+				resource: "items",
+				data: {
+					id: matchingId,
+					title: "Matching",
+					tags: [{ id: "wanted-tag", value: "Wanted" }],
+				},
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				id: excludedByTagId,
+				resource: "items",
+				data: {
+					id: excludedByTagId,
+					title: "Wrong tag",
+					tags: [{ id: "other-tag", value: "Other" }],
+				},
+				createdAt: "2024-01-02T00:00:00.000Z",
+				updatedAt: "2024-01-02T00:00:00.000Z",
+			},
+			{
+				id: excludedByItemId,
+				resource: "items",
+				data: {
+					id: excludedByItemId,
+					title: "Not requested",
+					tags: [{ id: "wanted-tag", value: "Wanted" }],
+				},
+				createdAt: "2024-01-03T00:00:00.000Z",
+				updatedAt: "2024-01-03T00:00:00.000Z",
+			},
+		]);
+
+		const result = await getForValidatedMarketplaceRequest({
+			service: "marketplace",
+			resource: "items",
+			method: "search",
+			filter: {
+				ids: [excludedByTagId, matchingId],
+				tagIds: ["wanted-tag"],
+			},
+		});
+
+		expectUnknownToEqual(result, [matchingId]);
+	});
+
+	it("applies limit and offset to item search results", async () => {
+		const firstId = crypto.randomUUID();
+		const secondId = crypto.randomUUID();
+		const thirdId = crypto.randomUUID();
+		await testDb.insert(schema.data).values([
+			{
+				id: firstId,
+				resource: "items",
+				data: { id: firstId, title: "First" },
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				id: secondId,
+				resource: "items",
+				data: { id: secondId, title: "Second" },
+				createdAt: "2024-01-02T00:00:00.000Z",
+				updatedAt: "2024-01-02T00:00:00.000Z",
+			},
+			{
+				id: thirdId,
+				resource: "items",
+				data: { id: thirdId, title: "Third" },
+				createdAt: "2024-01-03T00:00:00.000Z",
+				updatedAt: "2024-01-03T00:00:00.000Z",
+			},
+		]);
+
+		const result = await getForValidatedMarketplaceRequest({
+			service: "marketplace",
+			resource: "items",
+			method: "search",
+			filter: {
+				limit: 1,
+				offset: 1,
+			},
+		});
+
+		expectUnknownToEqual(result, [secondId]);
+	});
+
+	it("returns no item search results when no items match", async () => {
+		const itemId = crypto.randomUUID();
+		await testDb.insert(schema.data).values({
+			id: itemId,
+			resource: "items",
+			data: {
+				id: itemId,
+				title: "Phone",
+				tags: [{ id: "phone-tag", value: "Phone" }],
+			},
+			createdAt: "2024-01-01T00:00:00.000Z",
+			updatedAt: "2024-01-01T00:00:00.000Z",
+		});
+
+		const result = await getForValidatedMarketplaceRequest({
+			service: "marketplace",
+			resource: "items",
+			method: "search",
+			filter: {
+				tagIds: ["missing-tag"],
+			},
+		});
+
+		expect(result).toEqual([]);
 	});
 
 	it("returns the raw query and closest item tag suggestions", async () => {
@@ -162,7 +390,7 @@ describe("marketplace get/upsert", () => {
 			resource: "items",
 			method: "suggestions",
 			filter: {
-				query: "iph",
+				queryText: "iph",
 			},
 		});
 
@@ -193,7 +421,7 @@ describe("marketplace get/upsert", () => {
 			resource: "items",
 			method: "suggestions",
 			filter: {
-				query: "phone",
+				queryText: "phone",
 			},
 		});
 
@@ -233,7 +461,7 @@ describe("marketplace get/upsert", () => {
 			resource: "items",
 			method: "suggestions",
 			filter: {
-				query: "iphone",
+				queryText: "iphone",
 			},
 		});
 
@@ -260,7 +488,7 @@ describe("marketplace get/upsert", () => {
 			resource: "items",
 			method: "suggestions",
 			filter: {
-				query: "   ",
+				queryText: "   ",
 			},
 		});
 

@@ -8,16 +8,33 @@
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
-				"id": {
-					"type": "string",
-					"format": "uuid"
+				"ids": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "uuid"
+					}
 				},
 				"updatedAfter": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"query": {
+				"queryText": {
 					"type": "string"
+				},
+				"tagIds": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"limit": {
+					"type": "integer",
+					"minimum": 1
+				},
+				"offset": {
+					"type": "integer",
+					"minimum": 0
 				}
 			}
 		},
