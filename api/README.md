@@ -99,11 +99,11 @@ flowchart TD
     ws[ws.ts<br/>JSON-RPC transport]
     rpc[rpc.ts<br/>get / upsert routing]
     data[data.ts<br/>Drizzle + auth<br/>getCore / upsertCore]
+    db[db.ts<br/>connection URL]
     services[services.ts<br/>gRPC adapters + SubscribeEvents]
     serviceDataSync[serviceDataSync.ts<br/>syncServiceData]
     expressionParser[expressionParser.ts<br/>binding extraction]
     readiness[readiness.ts<br/>health / seed check]
-    db[db/<br/>Drizzle client + schema]
 
     index --> ws
     index --> rpc
@@ -118,7 +118,7 @@ flowchart TD
     readiness --> rpc
 ```
 
-- `db/` contains `index.ts` (Drizzle client) and connection helpers; API tables are imported directly from `types/generated/ts/db/schema.generated.ts`. The schema comes from `types/schema/data/` via `bun run types:generate`.
+- `data.ts` owns the Drizzle client and imports API tables directly from `types/generated/ts/db/schema.generated.ts`; `db.ts` builds the database connection URL. The schema comes from `types/schema/data/` via `bun run types:generate`.
 - Validators are imported directly from `evy-types/validators` and `evy-types/rpcRequestHelpers` (no local wrapper file).
 
 ### Shared contracts

@@ -5,7 +5,6 @@ import {
 	describe,
 	expect,
 	it,
-	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
@@ -49,12 +48,9 @@ type FlowDataInput = Omit<UI_Flow, "id" | "pages"> & {
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
-mock.module("../db", () => ({
-	db: testDb,
-	...schema,
-}));
-
-const { validateAuth, getCore, upsertCore } = await import("../data");
+const dataModule = await import("../data");
+const { validateAuth, getCore, setDbForTest, upsertCore } = dataModule;
+setDbForTest(testDb as unknown as typeof dataModule.db);
 
 function isDATA_EVY_Flow(row: UpsertResponse): row is DATA_EVY_Flow {
 	return (

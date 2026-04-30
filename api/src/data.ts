@@ -1,4 +1,6 @@
 import { and, desc, eq, gt } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 import {
 	type DATA_EVY_Service,
@@ -10,6 +12,7 @@ import {
 	type UpsertRequest,
 	type UpsertResponse,
 } from "evy-types";
+import * as schema from "../../types/generated/ts/db/schema.generated";
 import {
 	device,
 	flow,
@@ -18,7 +21,7 @@ import {
 	serviceProvider,
 	osEnum,
 } from "../../types/generated/ts/db/schema.generated";
-import { db } from "./db";
+import { getConnectionUrl } from "./db";
 import {
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
@@ -31,6 +34,15 @@ import {
 	validateUiFlow as validateFlowData,
 	validateUpsertResponse,
 } from "evy-types/validators";
+
+const connectionString = getConnectionUrl();
+const client = postgres(connectionString);
+
+export let db = drizzle(client, { schema });
+
+export function setDbForTest(database: typeof db): void {
+	db = database;
+}
 
 const CORE_SERVICE = "evy";
 

@@ -5,12 +5,11 @@ import {
 	describe,
 	expect,
 	it,
-	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { GetRequest, UI_Flow, UI_Page } from "evy-types";
+import type { WSParams } from "../ws";
 
-import * as schema from "../../../types/generated/ts/db/schema.generated";
 import {
 	clearAllTestTables,
 	connectAndLogin,
@@ -22,13 +21,17 @@ import {
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
-mock.module("../db", () => ({
-	db: testDb,
-	...schema,
-}));
-
-const { getCore, isRecord, isResource, upsertCore, validateAuth } =
-	await import("../data");
+const dataModule = await import("../data");
+const {
+	db,
+	getCore,
+	isRecord,
+	isResource,
+	setDbForTest,
+	upsertCore,
+	validateAuth,
+} = dataModule;
+setDbForTest(testDb as unknown as typeof db);
 
 function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
 	return isRecord(p) && "resource" in p && isResource(p.resource);
@@ -53,14 +56,14 @@ describe("upsert real-time notifications", () => {
 		initServer = wsMod.initServer;
 		emitJsonRpc = wsMod.emitJsonRpc;
 
-		server = await initServer((params) =>
+		server = await initServer((params: WSParams) =>
 			validateAuth(params.token, params.os),
 		);
 
-		server.register("get", async (params) => getCore(params));
+		server.register("get", async (params: unknown) => getCore(params));
 
 		server
-			.register("upsert", async (params) => {
+			.register("upsert", async (params: unknown) => {
 				const result = await upsertCore(params);
 				if (!hasResource(params)) return result;
 				if (params.resource === "sdui") {
