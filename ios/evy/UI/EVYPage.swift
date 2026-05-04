@@ -80,7 +80,7 @@ private struct EVYPageBody: View {
   private func bootstrapDrafts(in page: UI_Page, scopeId: String?) {
     forEachRow(in: page) { row in
       guard !row.destination.isEmpty else { return }
-      let destinationProps = parsePropsFromText(row.destination)
+      let destinationProps = EVY.parsePropsFromText(row.destination)
       let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
       guard !variableName.isEmpty else { return }
       let initialData: Data?

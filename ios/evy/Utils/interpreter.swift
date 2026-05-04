@@ -20,13 +20,6 @@ enum EVYParamEntry: Equatable {
   case staticValue(key: String, value: EVYJson)
 }
 
-// MARK: - Public API
-
-@MainActor
-public func parsePropsFromText(_ input: String) -> String {
-  _parsePropsFromText(input)
-}
-
 @MainActor
 public func splitPropsFromText(_ props: String) throws -> [String] {
   if props.count < 1 {
@@ -110,36 +103,6 @@ func parseFullBracedBinding(_ source: String) -> String? {
   let bindingEndIndex = normalizedSource.index(before: normalizedSource.endIndex)
   return String(normalizedSource[bindingStartIndex..<bindingEndIndex])
     .trimmingCharacters(in: .whitespacesAndNewlines)
-}
-
-@MainActor
-public func getDataFromText(_ input: String) throws -> EVYJson {
-  try _getDataFromText(input)
-}
-
-@MainActor
-public func getDataFromProps(_ props: String) throws -> EVYJson {
-  try _getDataFromProps(props)
-}
-
-@MainActor
-func getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValue {
-  try _getValueFromText(input, editing: editing)
-}
-
-@MainActor
-public func watchTarget(for text: String) -> String {
-  _watchTarget(for: text)
-}
-
-@MainActor
-public func evaluateFromText(_ input: String) throws -> Bool {
-  try _evaluateFromText(input)
-}
-
-@MainActor
-public func formatData(json: EVYJson, format: String) throws -> String {
-  try _formatData(json: json, format: format)
 }
 
 private enum TopLevelIndexMode {
@@ -749,8 +712,8 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
     let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
 
     return VStack {
-      Text("parseProps but no props: " + parsePropsFromText(bare))
-      Text("parseProps with props: " + parsePropsFromText(data))
+      Text("parseProps but no props: " + _parsePropsFromText(bare))
+      Text("parseProps with props: " + _parsePropsFromText(data))
       Text(parsedData.toString())
       Text(withPrefix.toString())
       Text(withSuffix.toString())
