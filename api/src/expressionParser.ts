@@ -195,14 +195,14 @@ function unquote(value: string): string {
 	return value;
 }
 
-export function tokenize(input: string): string[] {
+function tokenize(input: string): string[] {
 	const tokens: string[] = [];
 	let index = 0;
 
 	while (index < input.length) {
 		const currentChar = input[index];
 
-		if (currentChar === " " || currentChar === "\t" || currentChar === "\n") {
+		if (isWhitespace(currentChar)) {
 			index++;
 			continue;
 		}
@@ -215,12 +215,8 @@ export function tokenize(input: string): string[] {
 
 		const twoCharOperator = input.slice(index, index + 2);
 		if (
-			twoCharOperator === "&&" ||
-			twoCharOperator === "||" ||
-			twoCharOperator === ">=" ||
-			twoCharOperator === "<=" ||
-			twoCharOperator === "!=" ||
-			twoCharOperator === "=="
+			COMPARISON_OPERATOR_TOKENS.has(twoCharOperator) ||
+			LOGICAL_OPERATOR_TOKENS.has(twoCharOperator)
 		) {
 			tokens.push(twoCharOperator);
 			index += 2;
@@ -445,7 +441,7 @@ function shouldSkipLiteralOrUuid(value: string): boolean {
 }
 
 function containsComparisonOperator(value: string): boolean {
-	return /(>=|<=|==|!=|>|<)/.test(value);
+	return [...COMPARISON_OPERATOR_TOKENS].some((op) => value.includes(op));
 }
 
 function startsWithOperator(input: string, index: number): boolean {

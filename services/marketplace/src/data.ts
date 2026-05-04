@@ -55,16 +55,12 @@ function normalizeItemSuggestionQuery(query: string): string {
 		.replace(/[\u0300-\u036f]/g, "");
 }
 
-function normalizeItemSearchLimit(limit: number | undefined): number {
+function normalizeLimit(limit: number | undefined): number {
 	return Math.min(limit ?? DEFAULT_LIMIT, DEFAULT_LIMIT);
 }
 
 function normalizeItemSearchOffset(offset: number | undefined): number {
 	return Math.max(offset ?? 0, 0);
-}
-
-function normalizeItemSuggestionLimit(limit: number | undefined): number {
-	return Math.min(limit ?? DEFAULT_LIMIT, DEFAULT_LIMIT);
 }
 
 function itemHasAnyTagClause(tagIds: string[], tagAlias = "tag"): SQL | null {
@@ -92,7 +88,7 @@ function itemHasAnyTagClause(tagIds: string[], tagAlias = "tag"): SQL | null {
 async function getItemSearch(params: ApiRequest): Promise<GetResponse> {
 	const ids = params.filter?.ids ?? [];
 	const tagIds = params.filter?.tagIds ?? [];
-	const limit = normalizeItemSearchLimit(params.filter?.limit);
+	const limit = normalizeLimit(params.filter?.limit);
 	const offset = normalizeItemSearchOffset(params.filter?.offset);
 
 	const whereClauses: SQL[] = [eq(data.resource, "items")];
@@ -104,17 +100,19 @@ async function getItemSearch(params: ApiRequest): Promise<GetResponse> {
 		whereClauses.push(tagClause);
 	}
 
-	const rows = await db
+	const baseQuery = db
 		.select({ id: data.id, updatedAt: data.updatedAt })
 		.from(data)
 		.where(and(...whereClauses))
 		.orderBy(desc(data.updatedAt));
 
-	const resultIds = rows.map((row) => row.id);
 	if (ids.length === 0) {
-		return validateGetResponse(resultIds.slice(offset, offset + limit));
+		const rows = await baseQuery.limit(limit).offset(offset);
+		return validateGetResponse(rows.map((row) => row.id));
 	}
 
+	const rows = await baseQuery;
+	const resultIds = rows.map((row) => row.id);
 	const positionById = new Map(ids.map((id, position) => [id, position]));
 	return validateGetResponse(
 		resultIds
@@ -137,7 +135,7 @@ async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
 
 	const normalizedQuery = normalizeItemSuggestionQuery(query);
 	const tagIds = params.filter?.tagIds ?? [];
-	const limit = normalizeItemSuggestionLimit(params.filter?.limit);
+	const limit = normalizeLimit(params.filter?.limit);
 	const tagClause = itemHasAnyTagClause(tagIds, "filter_tag");
 	const tagFilterSql = tagClause ? sql`AND ${tagClause}` : sql``;
 

@@ -74,7 +74,7 @@ struct EVYSearchField: View {
   @State private var initialized = false
 
   let initialValue: String
-  let showsLeadingIconWhenEmpty: Bool
+  let showsLeadingIconOnlyWhenEmpty: Bool
   let showsClearButton: Bool
   let onInitialText: (String) -> Void
   let onTextChange: (String) -> Void
@@ -84,7 +84,7 @@ struct EVYSearchField: View {
     placeholder: String,
     value: String = "",
     text: Binding<String>,
-    showsLeadingIconWhenEmpty: Bool = false,
+    showsLeadingIconOnlyWhenEmpty: Bool = false,
     showsClearButton: Bool = false,
     onInitialText: @escaping (String) -> Void = { _ in },
     onTextChange: @escaping (String) -> Void = { _ in },
@@ -92,7 +92,7 @@ struct EVYSearchField: View {
   ) {
     self.initialValue = value
     _text = text
-    self.showsLeadingIconWhenEmpty = showsLeadingIconWhenEmpty
+    self.showsLeadingIconOnlyWhenEmpty = showsLeadingIconOnlyWhenEmpty
     self.showsClearButton = showsClearButton
     self.onInitialText = onInitialText
     self.onTextChange = onTextChange
@@ -106,7 +106,7 @@ struct EVYSearchField: View {
 
   var body: some View {
     HStack {
-      if !showsLeadingIconWhenEmpty || text.isEmpty {
+      if !showsLeadingIconOnlyWhenEmpty || text.isEmpty {
         Image(uiImage: Lucide.search)
           .padding(.leading, Constants.minorPadding)
       }

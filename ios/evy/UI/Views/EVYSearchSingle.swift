@@ -81,7 +81,7 @@ struct EVYSearchSingle: View {
         placeholder: placeholder,
         value: initialValue,
         text: $value,
-        showsLeadingIconWhenEmpty: true,
+        showsLeadingIconOnlyWhenEmpty: true,
         showsClearButton: true,
         onInitialText: { initialValue in
           Task { await searchController.search(name: initialValue) }

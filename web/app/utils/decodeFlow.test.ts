@@ -17,10 +17,19 @@ const PAGE_ID = "55e427ac-263c-441f-9673-f60627b1baea";
 const ROW_A = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
 const ROW_B = "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e";
 
+function makeServerRow(overrides: Partial<ServerRow> = {}): ServerRow {
+	return {
+		id: ROW_A,
+		source: "",
+		actions: [],
+		view: { content: {} },
+		...overrides,
+	} as ServerRow;
+}
+
 describe("normalizeServerRow", () => {
 	it("fills root string defaults and empty destination when omitted", () => {
-		const partial = {
-			id: ROW_A,
+		const partial = makeServerRow({
 			type: "Button",
 			view: {
 				content: {
@@ -28,7 +37,7 @@ describe("normalizeServerRow", () => {
 				},
 			},
 			actions: [{ condition: "", false: "", true: "{close()}" }],
-		} as unknown as ServerRow;
+		});
 
 		const n = normalizeServerRow(partial);
 		expect(n.source).toBe("");
@@ -40,18 +49,17 @@ describe("normalizeServerRow", () => {
 	});
 
 	it("merges Info content string fields from defaults when missing", () => {
-		const n = normalizeServerRow({
-			id: ROW_A,
-			type: "Info",
-			source: "",
-			actions: [],
-			view: {
-				content: {
-					title: "T",
-					subtitle: "Sub",
+		const n = normalizeServerRow(
+			makeServerRow({
+				type: "Info",
+				view: {
+					content: {
+						title: "T",
+						subtitle: "Sub",
+					},
 				},
-			},
-		} as ServerRow);
+			}),
+		);
 
 		expect(n.view.content).toMatchObject({
 			title: "T",
@@ -61,49 +69,45 @@ describe("normalizeServerRow", () => {
 	});
 
 	it("preserves Info content keys as sent by the server", () => {
-		const n = normalizeServerRow({
-			id: ROW_A,
-			type: "Info",
-			source: "",
-			actions: [],
-			view: {
-				content: {
-					title: "T",
-					text: "extra",
-					subtitle: "",
-					icon: "",
+		const n = normalizeServerRow(
+			makeServerRow({
+				type: "Info",
+				view: {
+					content: {
+						title: "T",
+						text: "extra",
+						subtitle: "",
+						icon: "",
+					},
 				},
-			},
-		} as ServerRow);
+			}),
+		);
 
 		expect((n.view.content as { text?: string }).text).toBe("extra");
 	});
 
 	it("normalizes nested rows in children", () => {
-		const n = normalizeServerRow({
-			id: ROW_A,
-			type: "ListContainer",
-			source: "",
-			actions: [],
-			view: {
-				content: {
-					title: "List",
-					children: [
-						{
-							id: ROW_B,
-							type: "Button",
-							source: "",
-							actions: [],
-							view: {
-								content: {
-									label: "Go",
+		const n = normalizeServerRow(
+			makeServerRow({
+				type: "ListContainer",
+				view: {
+					content: {
+						title: "List",
+						children: [
+							makeServerRow({
+								id: ROW_B,
+								type: "Button",
+								view: {
+									content: {
+										label: "Go",
+									},
 								},
-							},
-						} as unknown as ServerRow,
-					],
+							}),
+						],
+					},
 				},
-			},
-		} as ServerRow);
+			}),
+		);
 
 		const first = n.view.content.children?.[0];
 		expect(first?.type).toBe("Button");
@@ -115,29 +119,27 @@ describe("normalizeServerRow", () => {
 	});
 
 	it("normalizes nested child template for ListContainer", () => {
-		const n = normalizeServerRow({
-			id: ROW_A,
-			type: "ListContainer",
-			source: "{items}",
-			actions: [],
-			view: {
-				content: {
-					title: "List",
-					child: {
-						id: ROW_B,
-						type: "Info",
-						source: "",
-						actions: [],
-						view: {
-							content: {
-								title: "{$datum:title}",
+		const n = normalizeServerRow(
+			makeServerRow({
+				type: "ListContainer",
+				source: "{items}",
+				view: {
+					content: {
+						title: "List",
+						child: makeServerRow({
+							id: ROW_B,
+							type: "Info",
+							view: {
+								content: {
+									title: "{$datum:title}",
+								},
 							},
-						},
-					} as unknown as ServerRow,
-					children: [],
+						}),
+						children: [],
+					},
 				},
-			},
-		} as ServerRow);
+			}),
+		);
 
 		expect(n.view.content.child?.type).toBe("Info");
 		expect(n.view.content.child?.destination).toBe("");
@@ -149,36 +151,35 @@ describe("normalizeServerRow", () => {
 	});
 
 	it("uses default segments when segments key is omitted", () => {
-		const n = normalizeServerRow({
-			id: ROW_A,
-			type: "SelectSegmentContainer",
-			source: "",
-			actions: [],
-			view: {
-				content: {
-					title: "Tabs",
-					children: [],
+		const n = normalizeServerRow(
+			makeServerRow({
+				type: "SelectSegmentContainer",
+				view: {
+					content: {
+						title: "Tabs",
+						children: [],
+					},
 				},
-			},
-		} as ServerRow);
+			}),
+		);
 
 		expect(n.view.content.segments).toEqual(["X", "Y", "Z"]);
 	});
 
 	it("merges Search child from palette when server omits child", () => {
-		const n = normalizeServerRow({
-			id: ROW_A,
-			type: "Search",
-			source: "{$api:tags}",
-			destination: "{tags}",
-			actions: [],
-			view: {
-				content: {
-					title: "Find",
-					placeholder: "Search",
+		const n = normalizeServerRow(
+			makeServerRow({
+				type: "Search",
+				source: "{$api:tags}",
+				destination: "{tags}",
+				view: {
+					content: {
+						title: "Find",
+						placeholder: "Search",
+					},
 				},
-			},
-		} as ServerRow);
+			}),
+		);
 
 		expect(n.view.content.child?.type).toBe("Info");
 		expect(n.view.content.child?.view.content).toMatchObject({
@@ -233,7 +234,6 @@ describe("buildRowForNewPageFromBase", () => {
 		expect(row.config.type).toBe("Search");
 		expect(row.config.view.content.title).toBe("Search row title");
 		const child = row.config.view.content.child;
-		expect(child).toBeDefined();
 		invariant(child, "search row template child");
 		const childId = child.id;
 		expect(childId).toBeDefined();

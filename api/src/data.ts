@@ -99,10 +99,6 @@ export async function upsertCoreForValidatedRequest(
 	return upsertCoreBody(params);
 }
 
-export function isRecord(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
 function getOnlyFilterId(
 	filter: GetRequest["filter"] | UpsertRequest["filter"] | undefined,
 ): string | undefined {
@@ -210,13 +206,11 @@ async function upsertCatalogEntityFromConfig<TValidated>(
 	return upsertCatalogEntity(
 		filterId,
 		() =>
-			filterId
-				? // biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
-					(db.update(config.table as any) as any)
-						.set(config.toUpdateSet(validated, nowIso))
-						.where(eq(config.table.id, filterId))
-						.returning()
-				: Promise.resolve([]),
+			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
+			(db.update(config.table as any) as any)
+				.set(config.toUpdateSet(validated, nowIso))
+				.where(eq(config.table.id, filterId))
+				.returning(),
 		() =>
 			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
 			(db.insert(config.table as any) as any)

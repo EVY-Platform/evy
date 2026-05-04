@@ -74,8 +74,7 @@ struct EVYSearchMultiple: View {
 
     if !destination.isEmpty {
       do {
-        let encoded = try JSONEncoder().encode(selected.map { $0.data })
-        try EVY.updateData(encoded, at: destination)
+        try persistSelection()
       } catch {
         selected.removeAll { $0.value == element.value }
       }
@@ -98,12 +97,15 @@ struct EVYSearchMultiple: View {
     }
 
     do {
-      try EVY.updateData(
-        try JSONEncoder().encode(selected.map { $0.data }),
-        at: destination)
+      try persistSelection()
     } catch {
-      searchController.results.removeAll { $0.value == element.value }
+      selected.append(element)
     }
+  }
+
+  private func persistSelection() throws {
+    let encoded = try JSONEncoder().encode(selected.map { $0.data })
+    try EVY.updateData(encoded, at: destination)
   }
 
   var body: some View {

@@ -104,24 +104,18 @@ struct EVY {
     }
   }
 
-  @discardableResult
-  static func resolveQueryParams(_ query: [String: [String]]) -> Set<String> {
-    guard let prefix = activeCachePrefix else { return [] }
-    var writtenKeys = Set<String>()
+  static func resolveQueryParams(_ query: [String: [String]]) {
+    guard let prefix = activeCachePrefix else { return }
 
     for (queryKey, ids) in query {
       if storeResolvedEntityQueryParam(prefix: prefix, queryKey: queryKey, ids: ids) {
-        writtenKeys.insert(queryKey)
         continue
       }
 
-      if publicStore.serviceName(forSyncedResource: queryKey) == nil,
-         storeRawQueryParam(prefix: prefix, queryKey: queryKey, ids: ids) {
-        writtenKeys.insert(queryKey)
+      if publicStore.serviceName(forSyncedResource: queryKey) == nil {
+        _ = storeRawQueryParam(prefix: prefix, queryKey: queryKey, ids: ids)
       }
     }
-
-    return writtenKeys
   }
 
   static func resolveParams(_ params: [EVYParamEntry]) -> [String: EVYJson] {

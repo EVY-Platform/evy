@@ -55,15 +55,7 @@ private func deepCopyJSONValue(_ value: Any) -> Any {
       out[k] = deepCopyJSONValue(v)
     }
     return out
-  case let d as NSDictionary:
-    var out: [String: Any] = [:]
-    for case (let k as String, let v) in d {
-      out[k] = deepCopyJSONValue(v)
-    }
-    return out
   case let a as [Any]:
-    return a.map { deepCopyJSONValue($0) }
-  case let a as NSArray:
     return a.map { deepCopyJSONValue($0) }
   default:
     return value
@@ -138,17 +130,7 @@ final class EVYDatumRowFormatter {
       return dictionaryValue.mapValues { nestedValue in
         formatDatumReferencesInJSONValue(nestedValue, datum: datum)
       }
-    case let dictionaryValue as NSDictionary:
-      var formattedDictionary: [String: Any] = [:]
-      for case (let key as String, let nestedValue) in dictionaryValue {
-        formattedDictionary[key] = formatDatumReferencesInJSONValue(nestedValue, datum: datum)
-      }
-      return formattedDictionary
     case let arrayValue as [Any]:
-      return arrayValue.map { nestedValue in
-        formatDatumReferencesInJSONValue(nestedValue, datum: datum)
-      }
-    case let arrayValue as NSArray:
       return arrayValue.map { nestedValue in
         formatDatumReferencesInJSONValue(nestedValue, datum: datum)
       }
@@ -212,7 +194,7 @@ class EVYSearchController: ObservableObject {
   }
 
   private static func searchSourceType(for source: String) -> EVYSearchSourceType {
-    guard let binding = bracedBinding(from: source),
+    guard let binding = parseFullBracedBinding(source),
       binding.hasPrefix(apiSourcePrefix)
     else {
       return .local
@@ -239,10 +221,6 @@ class EVYSearchController: ObservableObject {
         params: parsedSource.params
       )
     )
-  }
-
-  private static func bracedBinding(from source: String) -> String? {
-    parseFullBracedBinding(source)
   }
 
   private static func buildFilter(queryText: String, params: [EVYParamEntry]) -> EVYApiSearchFilter {
@@ -385,40 +363,4 @@ class EVYSearchController: ObservableObject {
   }
 }
 
-#Preview {
-  AsyncPreview { (asyncView: EVYSearch) in
-    asyncView
-  } view: {
-    // Local-only: no EVY.getRow / EVYAPIManager (avoids API_HOST fatalError in Xcode canvas).
-    if !EVY.publicStore.exists(key: "tags") {
-      try EVY.publicStore.create(key: "tags", data: Data("[]".utf8))
-    }
-    let templateJson = """
-      {
-          "id": "preview-search-row",
-          "type": "Info",
-          "source": "",
-          "destination": "",
-          "actions": [],
-          "view": {
-              "content": {
-                  "title": "{$datum:unit} {$datum:street}",
-                  "subtitle": "{$datum:city} {$datum:state} {$datum:postcode}",
-                  "icon": ""
-              }
-          }
-      }
-      """
-    let template = try JSONDecoder().decode(
-      UI_Row.self,
-      from: Data(templateJson.utf8),
-    )
-    return EVYSearch(
-      source: "{$local:address}",
-      destination: "{tags}",
-      placeholder: "Search",
-      resultTemplate: template,
-      actions: []
-    )
-  }
-}
+

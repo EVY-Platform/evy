@@ -33,7 +33,7 @@ struct EVYTextField: View {
   @FocusState private var focused: Bool
   @State private var editing: Bool = false
 
-  init(input: String, destination: String, placeholder: String, multiLine: Bool) {
+  init(input: String, destination: String, placeholder: String, multiLine: Bool = false) {
     self.input = input
     self.placeholder = placeholder
     self.destination = destination
@@ -57,14 +57,6 @@ struct EVYTextField: View {
       setter: { _ in
         EVYTextResolver.resolveValue(from: placeholder)
       })
-  }
-
-  init(input: String, destination: String, placeholder: String) {
-    self.init(
-      input: input,
-      destination: destination,
-      placeholder: placeholder,
-      multiLine: false)
   }
 
   var body: some View {

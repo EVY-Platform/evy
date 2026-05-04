@@ -673,10 +673,6 @@ private func firstMatch(_ input: String, pattern: String) throws -> Regex<AnyReg
   return input.firstMatch(of: regex)
 }
 
-private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRegexOutput>.Match? {
-  let regex = try regexForPattern(pattern)
-  return input.matches(of: regex).last
-}
 
 #Preview {
   AsyncPreview { asyncView in
