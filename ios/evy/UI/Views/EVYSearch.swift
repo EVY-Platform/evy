@@ -11,7 +11,7 @@ private struct EVYSearchResult: Identifiable {
   let id: String
   let datum: EVYJson
   let displayRow: UI_Row
-  let title: String
+  let searchableText: String
 }
 
 private struct EVYSearchResultRow: Identifiable {
@@ -48,7 +48,7 @@ struct EVYSearch: View {
     }
 
     return allResults.filter {
-      $0.result.title.localizedCaseInsensitiveContains(trimmedSearchText)
+      $0.result.searchableText.localizedCaseInsensitiveContains(trimmedSearchText)
     }
   }
 
@@ -101,18 +101,18 @@ struct EVYSearch: View {
 
       let formatter = try EVYDatumRowFormatter(template: resultTemplate)
       allResults = dataRows.compactMap { datum in
-        guard let displayRow = try? formatter.formattedResult(datum: datum).row else {
+        guard let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum) else {
           return nil
         }
         let id = datum.identifierValue()
-        let title = datum.parseProp(props: ["title"]).toString()
+        let searchableText = searchableValues.joined(separator: " ")
         return EVYSearchResultRow(
           id: id,
           result: EVYSearchResult(
             id: id,
             datum: datum,
             displayRow: displayRow,
-            title: title
+            searchableText: searchableText
           )
         )
       }
@@ -132,9 +132,9 @@ private struct EVYSearchPreview: View {
   init() {
     let previewItemsJSON = """
       [
-        { "id": "preview-item-1", "title": "Amazing Fridge" },
-        { "id": "preview-item-2", "title": "Amazing Freezer" },
-        { "id": "preview-item-3", "title": "Vintage Printer" }
+        { "id": "preview-item-1", "title": "Amazing Fridge", "category": "Kitchen" },
+        { "id": "preview-item-2", "title": "Amazing Freezer", "category": "Kitchen" },
+        { "id": "preview-item-3", "title": "Vintage Printer", "category": "Office" }
       ]
       """
 
@@ -162,7 +162,7 @@ private struct EVYSearchPreview: View {
         "view": {
           "content": {
             "title": "{$datum:title}",
-            "subtitle": "",
+            "subtitle": "{$datum:category}",
             "icon": ""
           }
         }

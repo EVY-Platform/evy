@@ -31,63 +31,15 @@ final class EVYDatumRowFormatter {
     "title", "subtitle", "text", "label", "placeholder", "value",
   ]
 
-  private static let datumReferenceRegex = try! NSRegularExpression(
-    pattern: #"\{\$datum:([A-Za-z0-9_.-]+)\}"#
-  )
-
-  private static func datumValue(path: String, datum: EVYJson) -> String {
-    let pathSegments = path.split(separator: ".").map(String.init)
-    if pathSegments.isEmpty {
-      return datum.toString()
-    }
-
-    var currentValue = datum
-    for pathSegment in pathSegments {
-      switch currentValue {
-      case .dictionary(let dictionaryValue):
-        guard let nextValue = dictionaryValue[pathSegment] else {
-          return ""
-        }
-        currentValue = nextValue
-      case .array(let arrayValue):
-        guard let index = Int(pathSegment), arrayValue.indices.contains(index) else {
-          return ""
-        }
-        currentValue = arrayValue[index]
-      default:
-        return ""
-      }
-    }
-
-    return currentValue.toString()
-  }
-
-  private static func formatDatumReferences(_ template: String, datum: EVYJson) -> String {
-    var formattedTemplate = template
-    let templateRange = NSRange(template.startIndex..., in: template)
-    let matches = datumReferenceRegex.matches(in: template, range: templateRange)
-
-    for match in matches.reversed() {
-      guard let fullRange = Range(match.range, in: formattedTemplate),
-        let pathRange = Range(match.range(at: 1), in: formattedTemplate)
-      else {
-        continue
-      }
-
-      let path = String(formattedTemplate[pathRange])
-      formattedTemplate.replaceSubrange(
-        fullRange,
-        with: datumValue(path: path, datum: datum)
-      )
-    }
-
-    return formattedTemplate
+  private static func resolveDatumReferences(in stringValue: String, datum: EVYJson) -> String {
+    guard stringValue.contains("$datum:") else { return stringValue }
+    return (try? _formatData(json: datum, format: stringValue)) ?? stringValue
   }
 
   private static func formatDatumReferencesInJSONValue(_ value: Any, datum: EVYJson) -> Any {
     switch value {
     case let stringValue as String:
-      return formatDatumReferences(stringValue, datum: datum)
+      return resolveDatumReferences(in: stringValue, datum: datum)
     case let dictionaryValue as [String: Any]:
       return dictionaryValue.mapValues { nestedValue in
         formatDatumReferencesInJSONValue(nestedValue, datum: datum)
@@ -109,7 +61,7 @@ final class EVYDatumRowFormatter {
     rootPrototype = root
   }
 
-  func formattedResult(datum: EVYJson) throws -> (row: UI_Row, value: String) {
+  func formattedResult(datum: EVYJson) throws -> (row: UI_Row, searchableValues: [String]) {
     guard
       var root = Self.formatDatumReferencesInJSONValue(
         deepCopyJSONValue(rootPrototype),
@@ -120,13 +72,13 @@ final class EVYDatumRowFormatter {
     else {
       throw EVYDatumRowFormattingError.invalidTemplate
     }
-    let value =
+    let searchableValues =
       Self.displayKeys
       .compactMap { content[$0] as? String }
-      .first(where: { !$0.isEmpty }) ?? ""
+      .filter { !$0.isEmpty }
     root["id"] = UUID().uuidString
     let out = try JSONSerialization.data(withJSONObject: root)
-    return (try JSONDecoder().decode(UI_Row.self, from: out), value)
+    return (try JSONDecoder().decode(UI_Row.self, from: out), searchableValues)
   }
 }
 

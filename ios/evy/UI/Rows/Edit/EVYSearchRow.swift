@@ -41,9 +41,9 @@ private struct EVYSearchRowPreview: View {
   init() {
     let previewItemsJSON = """
       [
-        { "id": "preview-item-1", "title": "Amazing Fridge" },
-        { "id": "preview-item-2", "title": "Amazing Freezer" },
-        { "id": "preview-item-3", "title": "Vintage Printer" }
+        { "id": "preview-item-1", "title": "Amazing Fridge", "category": "Kitchen" },
+        { "id": "preview-item-2", "title": "Amazing Freezer", "category": "Kitchen" },
+        { "id": "preview-item-3", "title": "Vintage Printer", "category": "Office" }
       ]
       """
 
@@ -81,7 +81,7 @@ private struct EVYSearchRowPreview: View {
               "view": {
                 "content": {
                   "title": "{$datum:title}",
-                  "subtitle": "",
+                  "subtitle": "{$datum:category}",
                   "icon": "::search::"
                 }
               }
