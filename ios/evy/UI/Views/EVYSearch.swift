@@ -14,68 +14,41 @@ private struct EVYSearchResult: Identifiable {
   let searchableText: String
 }
 
-private struct EVYSearchResultRow: Identifiable {
-  let id: String
-  let result: EVYSearchResult
-}
-
 struct EVYSearch: View {
-  private static let estimatedResultRowHeight: CGFloat = 56
-
   @Environment(\.navigate) private var navigate
 
   let source: String
   let placeholder: String
   let resultTemplate: UI_Row?
 
-  @State private var allResults: [EVYSearchResultRow] = []
+  @State private var allResults: [EVYSearchResult] = []
   @State private var searchText = ""
 
-  init(
-    source: String,
-    placeholder: String,
-    resultTemplate: UI_Row?
-  ) {
-    self.source = source
-    self.placeholder = placeholder
-    self.resultTemplate = resultTemplate
-  }
-
-  private var filteredResults: [EVYSearchResultRow] {
+  private var filteredResults: [EVYSearchResult] {
     let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedSearchText.isEmpty else {
       return allResults
     }
 
     return allResults.filter {
-      $0.result.searchableText.localizedCaseInsensitiveContains(trimmedSearchText)
+      $0.searchableText.localizedCaseInsensitiveContains(trimmedSearchText)
     }
   }
 
-  private var searchResultsListHeight: CGFloat {
-    let visibleRowCount = filteredResults.count
-    return CGFloat(visibleRowCount) * Self.estimatedResultRowHeight
-  }
-
   var body: some View {
-    VStack {
+    VStack(spacing: 0) {
       EVYSearchField(text: $searchText, placeholder: placeholder)
 
-      if !filteredResults.isEmpty {
-        List(filteredResults) { resultRow in
-          EVYRow(row: resultRow.result.displayRow)
-            .onTapGesture {
-              EVYActionRunner.run(
-                actions: resultRow.result.displayRow.actions,
-                datum: resultRow.result.datum,
-                navigate: navigate
-              )
-            }
-            .listRowInsets(EdgeInsets())
-			.padding(.vertical, Constants.majorPadding)
-        }
-        .listStyle(.plain)
-        .frame(height: searchResultsListHeight)
+      ForEach(filteredResults) { result in
+        EVYRow(row: result.displayRow)
+          .onTapGesture {
+            EVYActionRunner.run(
+              actions: result.displayRow.actions,
+              datum: result.datum,
+              navigate: navigate
+            )
+          }
+          .padding(.vertical, Constants.majorPadding)
       }
     }
     .onAppear(perform: loadResults)
@@ -106,14 +79,11 @@ struct EVYSearch: View {
         }
         let id = datum.identifierValue()
         let searchableText = searchableValues.joined(separator: " ")
-        return EVYSearchResultRow(
+        return EVYSearchResult(
           id: id,
-          result: EVYSearchResult(
-            id: id,
-            datum: datum,
-            displayRow: displayRow,
-            searchableText: searchableText
-          )
+          datum: datum,
+          displayRow: displayRow,
+          searchableText: searchableText
         )
       }
     } catch {

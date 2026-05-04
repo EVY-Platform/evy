@@ -17,7 +17,7 @@ struct EVYSearchRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
+    VStack(alignment: .leading, spacing: 0) {
       if view.content.title.count > 0 {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
@@ -26,7 +26,7 @@ struct EVYSearchRow: View {
         source: source,
         placeholder: view.content.placeholder,
         resultTemplate: view.content.child
-	  )
+      )
     }
   }
 }

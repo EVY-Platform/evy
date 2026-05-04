@@ -49,30 +49,43 @@ private struct EVYPageBody: View {
 
   @ViewBuilder
   private var pageContent: some View {
-    Group {
-      ScrollView {
-        ForEach(page.rows, id: \.id) { row in
-          EVYRow(row: row)
-            .padding(.horizontal, Constants.majorPadding)
-            .padding(.vertical, Constants.minorPadding)
-        }
-      }
-      .navigationTitle(page.title)
-      .accessibilityIdentifier("page_\(page.id)")
-      if let footer = page.footer {
-        EVYRow(row: footer)
-          .overlay(
-            alignment: .top,
-            content: {
-              Rectangle()
-                .fill(Constants.borderColor)
-                .frame(height: 1)
-                .padding(.top, -Constants.minorPadding)
-            }
-          )
-          .accessibilityIdentifier("pageFooter_\(page.id)")
+    VStack {
+      mainContent
+      footerContent
+    }
+    .navigationTitle(page.title)
+    .navigationBarTitleDisplayMode(.inline)
+  }
+
+  @ViewBuilder
+  private var mainContent: some View {
+    ScrollView {
+      ForEach(page.rows, id: \.id) { row in
+        pageRow(row)
       }
     }
+  }
+
+  @ViewBuilder
+  private var footerContent: some View {
+    if let footer = page.footer {
+      EVYRow(row: footer)
+        .overlay(
+          alignment: .top,
+          content: {
+            Rectangle()
+              .fill(Constants.borderColor)
+              .frame(height: 1)
+              .padding(.top, -Constants.minorPadding)
+          }
+        )
+    }
+  }
+
+  private func pageRow(_ row: UI_Row) -> some View {
+    EVYRow(row: row)
+      .padding(.horizontal, Constants.majorPadding)
+      .padding(.vertical, Constants.minorPadding)
   }
 
   /// Ensures a draft exists for each row `destination` binding in the active scope.

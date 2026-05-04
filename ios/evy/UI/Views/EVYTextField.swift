@@ -120,7 +120,6 @@ struct EVYTextField: View {
         focused = true
       }
     }
-    .accessibilityIdentifier("textField_\(destination)")
   }
 }
 

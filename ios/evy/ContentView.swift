@@ -120,14 +120,12 @@ struct ContentView: View {
     if loading {
       ProgressView()
         .controlSize(.large)
-        .accessibilityIdentifier("loadingIndicator")
     } else if let homeFlow = flows.first(where: { $0.id == HOME_FLOW_ID }) {
       if homeFlow.pages.isEmpty {
         VStack(spacing: 20) {
           Text("This flow has no pages")
             .font(.evyTitle)
             .foregroundColor(.gray)
-            .accessibilityIdentifier("emptyFlowMessage")
         }
       } else if let homePage = homeFlow.pages.first {
         homePage
@@ -140,12 +138,10 @@ struct ContentView: View {
         Text("Failed to load flows")
           .font(.evyTitle)
           .foregroundColor(.red)
-          .accessibilityIdentifier("errorMessage")
         Text("Please check your connection and try again")
           .font(.subheadline)
           .foregroundColor(.gray)
       }
-      .accessibilityIdentifier("errorState")
     }
   }
 
