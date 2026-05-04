@@ -12,7 +12,7 @@ import {
 	toVariableOptions,
 } from "../../utils/actionFlowOptions";
 import { PopoverSelect, type PopoverOption } from "../PopoverSelect";
-import { FUNCTION_OPTIONS } from "./actionPopupConstants";
+import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
 
 type BranchEditorProps = {
 	branchId: string;
@@ -122,7 +122,7 @@ export function BranchEditor({
 		<div className="evy-flex evy-flex-col evy-gap-1">
 			<PopoverSelect
 				ariaLabel={`${branchId}-function`}
-				options={FUNCTION_OPTIONS}
+				options={BRANCH_FUNCTION_OPTIONS}
 				value={selectedFunction}
 				onChange={handleFunctionChange}
 			/>

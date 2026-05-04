@@ -1205,4 +1205,126 @@ test.describe("Row configuration", () => {
 			"Nest level 7",
 		);
 	});
+
+	test("should clear a branch by selecting -- and persist on save", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						view: {
+							content: { title: "", label: "Clear Branch" },
+						},
+						actions: [{ condition: "", false: "", true: "{close()}" }],
+					},
+				],
+			},
+		]);
+		const buttonRow = page.getByText("Clear Branch", { exact: true }).first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = getConfigPanel(page);
+
+		// Verify the existing true branch is shown
+		await expect(configPanel.getByText("If true")).toBeVisible();
+		await expect(configPanel.getByText("Close")).toBeVisible();
+
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		// Verify true branch is set to close
+		const trueFunctionSelect = popup.getByLabel("true-0-function");
+		await expect(trueFunctionSelect).toHaveAttribute("data-value", "close");
+
+		// Select -- to clear the true branch
+		await popoverSelect(page, trueFunctionSelect, "--");
+		await expect(trueFunctionSelect).toHaveAttribute("data-value", "");
+
+		// Nested controls should be gone
+		await expect(popup.getByLabel("true-0-arg-0")).not.toBeVisible();
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		// After save, the true branch summary should be gone
+		await expect(configPanel.getByText("If true")).not.toBeVisible();
+		await expect(configPanel.getByText("Close")).not.toBeVisible();
+
+		// Reopen and verify the branch is still empty
+		await configPanel.getByLabel("Edit action 1").click();
+		const reopenedPopup = page.getByRole("dialog", {
+			name: "Edit action 1",
+		});
+		await expect(reopenedPopup).toBeVisible();
+		await expect(reopenedPopup.getByLabel("true-0-function")).toHaveAttribute(
+			"data-value",
+			"",
+		);
+	});
+
+	test("should not persist branch clear when cancel is clicked after selecting --", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						view: {
+							content: { title: "", label: "Cancel Clear" },
+						},
+						actions: [{ condition: "", false: "", true: "{close()}" }],
+					},
+				],
+			},
+		]);
+		const buttonRow = page.getByText("Cancel Clear", { exact: true }).first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = getConfigPanel(page);
+
+		await expect(configPanel.getByText("If true")).toBeVisible();
+		await expect(configPanel.getByText("Close")).toBeVisible();
+
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		const trueFunctionSelect = popup.getByLabel("true-0-function");
+		await expect(trueFunctionSelect).toHaveAttribute("data-value", "close");
+
+		// Select -- to clear the true branch
+		await popoverSelect(page, trueFunctionSelect, "--");
+		await expect(trueFunctionSelect).toHaveAttribute("data-value", "");
+
+		// Cancel the popup
+		await popup.getByRole("button", { name: "Cancel" }).click();
+		await expect(popup).not.toBeVisible();
+
+		// The original branch should still be shown in the summary
+		await expect(configPanel.getByText("If true")).toBeVisible();
+		await expect(configPanel.getByText("Close")).toBeVisible();
+
+		// Reopen and verify the original branch is preserved
+		await configPanel.getByLabel("Edit action 1").click();
+		const reopenedPopup = page.getByRole("dialog", {
+			name: "Edit action 1",
+		});
+		await expect(reopenedPopup).toBeVisible();
+		await expect(reopenedPopup.getByLabel("true-0-function")).toHaveAttribute(
+			"data-value",
+			"close",
+		);
+	});
 });
