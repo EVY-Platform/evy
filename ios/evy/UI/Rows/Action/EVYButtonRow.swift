@@ -10,7 +10,6 @@ import SwiftUI
 struct EVYButtonRow: View {
   @Environment(\.navigate) private var navigate
 
-
   private let view: ButtonRowViewData
   private let actions: [UI_RowAction]
 
@@ -32,9 +31,35 @@ struct EVYButtonRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["1", "pages", "0", "footer"])
+  EVYButtonRowPreview()
+}
+
+private struct EVYButtonRowPreview: View {
+  private let row = EVYButtonRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build button row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-button-row",
+        "type": "Button",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Preview Action",
+            "label": "Tap me"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

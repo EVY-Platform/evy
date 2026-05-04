@@ -18,23 +18,6 @@
 				"updatedAfter": {
 					"type": "string",
 					"format": "date-time"
-				},
-				"queryText": {
-					"type": "string"
-				},
-				"tagIds": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				},
-				"limit": {
-					"type": "integer",
-					"minimum": 1
-				},
-				"offset": {
-					"type": "integer",
-					"minimum": 0
 				}
 			}
 		},

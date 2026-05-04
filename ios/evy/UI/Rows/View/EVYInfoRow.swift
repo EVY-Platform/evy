@@ -74,9 +74,36 @@ extension View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "4", "rows", "0"])
+  EVYInfoRowPreview()
+}
+
+private struct EVYInfoRowPreview: View {
+  private let row = EVYInfoRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build info row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-info-row",
+        "type": "Info",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Amazing Fridge",
+            "subtitle": "A fantastic fridge in great condition",
+            "icon": "::star::"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

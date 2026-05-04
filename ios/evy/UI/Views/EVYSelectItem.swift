@@ -175,13 +175,17 @@ struct EVYSelectItem: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! EVY.getUserData()
-    try! await EVYPreviewFixtures.seedData()
+  EVYSelectItemPreview()
+}
 
-    return Group {
+private struct EVYSelectItemPreview: View {
+  init() {
+    try? EVY.getUserData()
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    Group {
       let options = try! EVY.getDataFromText("{selling_reasons}")
       switch options {
       case .array(let arrayValue):

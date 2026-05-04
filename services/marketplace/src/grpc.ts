@@ -12,7 +12,6 @@ import {
 	upsertForValidatedMarketplaceRequest,
 } from "./data";
 import {
-	validateStrictApiRequest,
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
@@ -107,12 +106,7 @@ function buildMarketplaceServiceHandlers(
 						filter?: {
 							ids?: string[];
 							updated_after?: string;
-							query_text?: string;
-							tag_ids?: string[];
-							limit?: number;
-							offset?: number;
 						};
-						method?: string;
 					},
 					{ result_json: string }
 				>,
@@ -124,32 +118,16 @@ function buildMarketplaceServiceHandlers(
 						const filter: {
 							ids?: string[];
 							updatedAfter?: string;
-							queryText?: string;
-							tagIds?: string[];
-							limit?: number;
-							offset?: number;
 						} = {};
 						if (req.filter?.ids?.length) filter.ids = req.filter.ids;
 						if (req.filter?.updated_after)
 							filter.updatedAfter = req.filter.updated_after;
-						if (req.filter?.query_text)
-							filter.queryText = req.filter.query_text;
-						if (req.filter?.tag_ids?.length) filter.tagIds = req.filter.tag_ids;
-						if (req.filter?.limit && req.filter.limit > 0)
-							filter.limit = req.filter.limit;
-						if (req.filter?.offset && req.filter.offset > 0)
-							filter.offset = req.filter.offset;
 						const params = {
 							service: req.service,
 							resource: req.resource,
-							...(req.method ? { method: req.method } : {}),
 							filter: Object.keys(filter).length > 0 ? filter : undefined,
 						};
-						if (req.method) {
-							validateStrictApiRequest(params);
-						} else {
-							validateStrictGetRequest(params);
-						}
+						validateStrictGetRequest(params);
 						const result = await getForValidatedMarketplaceRequest(params);
 						cb(null, { result_json: JSON.stringify(result) });
 					} catch (err) {

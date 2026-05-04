@@ -363,12 +363,13 @@ private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! await EVYPreviewFixtures.seedData()
+  EVYCalendarPreview()
+}
 
-    let timeslotsData = (try? EVY.publicStore.getForBinding(key: "timeslots"))?.data
+private struct EVYCalendarPreview: View {
+  init() {
+    EVYPreviewMockData.seedCommon()
+    let timeslotsData = EVYPreviewMockData.timeslots.data(using: .utf8)
     let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "timeslots")
     EVY.draftStore.activeScopeId = previewScopeId
     EVY.ensureDraftExists(
@@ -381,8 +382,10 @@ private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
       initialData: timeslotsData,
       scopeId: previewScopeId
     )
+  }
 
-    return EVYCalendar(
+  var body: some View {
+    EVYCalendar(
       primary: "{pickup_timeslots}",
       secondary: "{delivery_timeslots}")
   }

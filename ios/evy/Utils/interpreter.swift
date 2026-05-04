@@ -15,11 +15,6 @@ private let functionPattern = "[a-zA-Z_]+\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
 
-enum EVYParamEntry: Equatable {
-  case interpolated(key: String)
-  case staticValue(key: String, value: EVYJson)
-}
-
 @MainActor
 public func splitPropsFromText(_ props: String) throws -> [String] {
   if props.count < 1 {
@@ -75,36 +70,6 @@ public func stripOptionalSurroundingQuotes(_ s: String) -> String {
   return String(trimmed.dropFirst().dropLast())
 }
 
-@MainActor
-func parseSourceParams(_ binding: String) -> (basePath: String, params: [EVYParamEntry]) {
-  let trimmedBinding = binding.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard trimmedBinding.hasSuffix(")"),
-    let openParenIndex = topLevelIndex(of: "(", in: trimmedBinding, mode: .last)
-  else {
-    return (trimmedBinding, [])
-  }
-
-  let basePath = String(trimmedBinding[..<openParenIndex])
-    .trimmingCharacters(in: .whitespacesAndNewlines)
-  let paramsStartIndex = trimmedBinding.index(after: openParenIndex)
-  let paramsEndIndex = trimmedBinding.index(before: trimmedBinding.endIndex)
-  let paramsText = String(trimmedBinding[paramsStartIndex..<paramsEndIndex])
-  return (basePath, parseParamObject(paramsText))
-}
-
-@MainActor
-func parseFullBracedBinding(_ source: String) -> String? {
-  let normalizedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard normalizedSource.hasPrefix("{"), normalizedSource.hasSuffix("}") else {
-    return nil
-  }
-
-  let bindingStartIndex = normalizedSource.index(after: normalizedSource.startIndex)
-  let bindingEndIndex = normalizedSource.index(before: normalizedSource.endIndex)
-  return String(normalizedSource[bindingStartIndex..<bindingEndIndex])
-    .trimmingCharacters(in: .whitespacesAndNewlines)
-}
-
 private enum TopLevelIndexMode {
   case first
   case last
@@ -157,43 +122,6 @@ private struct ParserScanState {
 
     previousCharacter = character
   }
-}
-
-@MainActor
-private func parseParamObject(_ input: String) -> [EVYParamEntry] {
-  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard trimmedInput.hasPrefix("{"), trimmedInput.hasSuffix("}") else {
-    return []
-  }
-
-  let objectStartIndex = trimmedInput.index(after: trimmedInput.startIndex)
-  let objectEndIndex = trimmedInput.index(before: trimmedInput.endIndex)
-  let objectBody = String(trimmedInput[objectStartIndex..<objectEndIndex])
-  return splitFunctionArguments(objectBody).compactMap(parseParamEntry)
-}
-
-@MainActor
-private func parseParamEntry(_ entry: String) -> EVYParamEntry? {
-  let trimmedEntry = entry.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard !trimmedEntry.isEmpty else { return nil }
-
-  guard let colonIndex = topLevelIndex(of: ":", in: trimmedEntry) else {
-    let key = stripOptionalSurroundingQuotes(trimmedEntry)
-    return key.isEmpty ? nil : .interpolated(key: key)
-  }
-
-  let rawKey = String(trimmedEntry[..<colonIndex])
-  let rawValue = String(trimmedEntry[trimmedEntry.index(after: colonIndex)...])
-  let key = stripOptionalSurroundingQuotes(rawKey)
-  let valueText = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard !key.isEmpty,
-    let valueData = valueText.data(using: .utf8),
-    let value = try? JSONDecoder().decode(EVYJson.self, from: valueData)
-  else {
-    return nil
-  }
-
-  return .staticValue(key: key, value: value)
 }
 
 @MainActor
@@ -332,7 +260,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
 
   // 2. Check cache store with active page prefix — ephemeral page-scoped data
   if let prefix = EVY.activeCachePrefix,
-     let cacheData = try? EVY.cacheStore.get(key: "\(prefix)\(firstProp)")
+    let cacheData = try? EVY.cacheStore.get(key: "\(prefix)\(firstProp)")
   {
     let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
     return try cacheData.decoded().parseProp(props: remainingProps)
@@ -673,14 +601,17 @@ private func firstMatch(_ input: String, pattern: String) throws -> Regex<AnyReg
   return input.firstMatch(of: regex)
 }
 
-
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! EVY.getUserData()
-    try! await EVYPreviewFixtures.seedData()
+  EVYInterpreterPreview()
+}
 
+private struct EVYInterpreterPreview: View {
+  init() {
+    try? EVY.getUserData()
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
     let bare = "test"
     let data = "{item.title}"
 

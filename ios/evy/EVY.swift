@@ -108,6 +108,10 @@ struct EVY {
     guard let prefix = activeCachePrefix else { return }
 
     for (queryKey, ids) in query {
+      if queryKey == "id" {
+        _ = storeResolvedEntityQueryParam(prefix: prefix, ids: ids)
+      }
+
       if storeResolvedEntityQueryParam(prefix: prefix, queryKey: queryKey, ids: ids) {
         continue
       }
@@ -118,22 +122,31 @@ struct EVY {
     }
   }
 
-  static func resolveParams(_ params: [EVYParamEntry]) -> [String: EVYJson] {
-    var resolvedParams: [String: EVYJson] = [:]
-    for param in params {
-      switch param {
-      case .interpolated(let key):
-        if let data = try? getDataFromText("{\(key)}") {
-          resolvedParams[key] = data
-        }
-      case .staticValue(let key, let value):
-        resolvedParams[key] = value
+  private static func storeResolvedEntityQueryParam(prefix: String, ids: [String]) -> Bool {
+    guard let id = ids.first else { return false }
+
+    let syncedCollections = (try? publicStore.getAll()) ?? []
+    for collectionData in syncedCollections {
+      let keyParts = collectionData.key.split(separator: ":", maxSplits: 1).map(String.init)
+      guard keyParts.count == 2,
+        let collectionJson = try? collectionData.decoded(),
+        case .array(let collectionValues) = collectionJson,
+        let matchingValue = collectionValues.first(where: { $0.identifierValue() == id }),
+        let encodedMatchingValue = try? JSONEncoder().encode(matchingValue)
+      else {
+        continue
       }
+
+      try? cacheStore.upsert(key: "\(prefix)\(keyParts[1])", value: encodedMatchingValue)
+      return true
     }
-    return resolvedParams
+
+    return false
   }
 
-  private static func storeResolvedEntityQueryParam(prefix: String, queryKey: String, ids: [String]) -> Bool {
+  private static func storeResolvedEntityQueryParam(prefix: String, queryKey: String, ids: [String])
+    -> Bool
+  {
     let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
     guard let id = ids.first,
       let collectionData = collectionData(for: queryKey, serviceName: serviceName),
@@ -150,11 +163,12 @@ struct EVY {
   }
 
   private static func storeRawQueryParam(prefix: String, queryKey: String, ids: [String]) -> Bool {
-    let rawQueryValue: EVYJson = if ids.count == 1, let id = ids.first {
-      .string(id)
-    } else {
-      .array(ids.map { .string($0) })
-    }
+    let rawQueryValue: EVYJson =
+      if ids.count == 1, let id = ids.first {
+        .string(id)
+      } else {
+        .array(ids.map { .string($0) })
+      }
     guard let encodedRawQueryValue = try? JSONEncoder().encode(rawQueryValue) else {
       return false
     }
@@ -372,58 +386,142 @@ struct EVY {
   }
 }
 
+// MARK: - Preview Mock Data
+
+/// Shared hard-coded mock data for SwiftUI previews.
+/// Use these instead of network-dependent AsyncPreview / EVYPreviewFixtures.
 @MainActor
-enum EVYPreviewFixtures {
-  /// Seed preview data by syncing services and creating a local "items" key
-  /// from the first marketplace item. **Preview-only** – not used at runtime.
-  static func seedData() async throws {
-    try await EVY.syncAllServices()
-    let itemsData = try EVY.publicStore.get(key: "marketplace:items")
-    let items = try itemsData.decoded()
-    let firstItem: Data
-    if case .array(let arr) = items, let first = arr.first {
-      firstItem = try JSONEncoder().encode(first)
-    } else {
-      firstItem = try JSONEncoder().encode(EVYJson.dictionary([:]))
+enum EVYPreviewMockData {
+
+  // MARK: - Item (used by most row previews)
+
+  static let item = """
+    {
+      "id": "preview-item-1",
+      "title": "Amazing Fridge",
+      "price": 150,
+      "description": "A fantastic fridge in great condition",
+      "condition": "cond-1",
+      "dimensions": {
+        "width": 60,
+        "height": 180,
+        "depth": 65,
+        "weight": 75
+      },
+      "photo_ids": ["photo-1", "photo-2", "photo-3"],
+      "tags": ["energy-efficient", "frost-free"]
     }
-    try EVY.publicStore.create(key: "items", data: firstItem)
-  }
+    """
 
-  static func getRow(_ props: [String]) async throws -> UI_Row {
-    try await seedData()
-    let flowData = try await EVYAPIManager.shared.fetch(
-      method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil),
-      expecting: EVYJson.self)
-    let rowData = try JSONEncoder().encode(flowData.parseProp(props: props))
-    return try JSONDecoder().decode(UI_Row.self, from: rowData)
-  }
-}
+  // MARK: - Conditions
 
-struct AsyncPreview<VisualContent: View, ViewData>: View {
-  var viewBuilder: (ViewData) -> VisualContent
-  var view: () async throws -> ViewData?
+  static let conditions = """
+    [
+      { "id": "cond-1", "value": "Like New" },
+      { "id": "cond-2", "value": "Good" },
+      { "id": "cond-3", "value": "Fair" }
+    ]
+    """
 
-  @State private var viewData: ViewData?
-  @State private var error: Error?
+  // MARK: - Durations
 
-  var body: some View {
-    safeView.task {
-      do {
-        self.viewData = try await view()
-      } catch {
-        self.error = error
+  static let durations = """
+    [
+      { "id": "dur-1", "value": "30 min" },
+      { "id": "dur-2", "value": "1 hour" },
+      { "id": "dur-3", "value": "2 hours" }
+    ]
+    """
+
+  // MARK: - Selling Reasons
+
+  static let sellingReasons = """
+    [
+      { "id": "reason-1", "value": "Moving out" },
+      { "id": "reason-2", "value": "Upgrading" },
+      { "id": "reason-3", "value": "No longer needed" },
+      { "id": "reason-4", "value": "Other" }
+    ]
+    """
+
+  // MARK: - Tags
+
+  static let tags = """
+    [
+      "energy-efficient",
+      "frost-free",
+      "stainless-steel"
+    ]
+    """
+
+  // MARK: - Timeslots
+
+  static let timeslots = """
+    [
+      {
+        "header": "Wed",
+        "date": "8 nov.",
+        "timeslots": [
+          { "timeslot": "11:30", "available": true },
+          { "timeslot": "12:00", "available": true }
+        ]
+      },
+      {
+        "header": "Thu",
+        "date": "9 nov.",
+        "timeslots": [
+          { "timeslot": "10:30", "available": false },
+          { "timeslot": "11:00", "available": true },
+          { "timeslot": "12:00", "available": true }
+        ]
+      },
+      {
+        "header": "Fri",
+        "date": "10 nov.",
+        "timeslots": [
+          { "timeslot": "10:30", "available": true },
+          { "timeslot": "12:00", "available": false },
+          { "timeslot": "12:30", "available": true }
+        ]
+      }
+    ]
+    """
+
+  // MARK: - User (for $local bindings)
+
+  static let user = """
+    {
+      "id": "preview-user-1",
+      "address": {
+        "line1": "42 Preview Lane",
+        "city": "Preview City",
+        "postcode": "2000",
+        "country": "Australia"
       }
     }
+    """
+
+  // MARK: - Helpers
+
+  /// Upsert mock data into the public store.
+  static func seed(key: String, json: String) {
+    guard let data = json.data(using: .utf8) else { return }
+    try? EVY.publicStore.upsert(key: key, value: data, notify: false)
   }
 
-  @ViewBuilder
-  private var safeView: some View {
-    if let viewData {
-      viewBuilder(viewData)
-    } else if let error {
-      Text(error.localizedDescription)
-    } else {
-      Text("Building view...")
-    }
+  /// Seed the most commonly needed keys for row previews.
+  static func seedCommon() {
+    seed(key: "items", json: item)
+    seed(key: "conditions", json: conditions)
+    seed(key: "durations", json: durations)
+    seed(key: "selling_reasons", json: sellingReasons)
+    seed(key: "tags", json: tags)
+    seed(key: "timeslots", json: timeslots)
+  }
+
+  /// Decode a UI_Row from a JSON string. Returns nil on failure.
+  static func decodeRow(from json: String) -> UI_Row? {
+    guard let data = json.data(using: .utf8) else { return nil }
+    return try? JSONDecoder().decode(UI_Row.self, from: data)
   }
 }

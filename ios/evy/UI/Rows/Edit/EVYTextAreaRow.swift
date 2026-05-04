@@ -36,9 +36,37 @@ struct EVYTextAreaRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "1", "rows", "0"])
+  EVYTextAreaRowPreview()
+}
+
+private struct EVYTextAreaRowPreview: View {
+  private let row = EVYTextAreaRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build text area row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-textarea-row",
+        "type": "TextArea",
+        "source": "",
+        "destination": "{items.description}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Description",
+            "value": "{items.description}",
+            "placeholder": "Describe your item in detail"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

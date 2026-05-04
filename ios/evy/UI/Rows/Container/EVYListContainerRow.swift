@@ -30,7 +30,8 @@ struct EVYListContainerRow: View {
     dynamicRows = EVYState(
       watch: source,
       setter: { input in
-        guard let childTemplate, !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        guard let childTemplate, !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
           return []
         }
 
@@ -73,9 +74,62 @@ struct EVYListContainerRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "3", "rows", "1"])
+  EVYListContainerRowPreview()
+}
+
+private struct EVYListContainerRowPreview: View {
+  private let row = EVYListContainerRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build list container row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-list-row",
+        "type": "ListContainer",
+        "source": "{items}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "List Container Preview",
+            "child": {
+              "id": "list-child-template",
+              "type": "Info",
+              "source": "",
+              "actions": [],
+              "view": {
+                "content": {
+                  "title": "{$datum:title}",
+                  "subtitle": "",
+                  "icon": ""
+                }
+              }
+            },
+            "children": [
+              {
+                "id": "list-extra-child",
+                "type": "Info",
+                "source": "",
+                "actions": [],
+                "view": {
+                  "content": {
+                    "title": "Extra row",
+                    "subtitle": "Static child below dynamic rows",
+                    "icon": ""
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

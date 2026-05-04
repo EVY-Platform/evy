@@ -138,11 +138,16 @@ struct EVYTextView: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! await EVYPreviewFixtures.seedData()
-    return VStack {
+  EVYTextViewPreview()
+}
+
+private struct EVYTextViewPreview: View {
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    VStack {
       EVYTextView("::star::")
       EVYTextView("Body style", style: EVYTextStyle.body)
       EVYTextView("Info style", style: EVYTextStyle.info)
@@ -151,7 +156,8 @@ struct EVYTextView: View {
       EVYTextView("Action", style: EVYTextStyle.action)
       EVYTextView("{item.title} ::star:: and more text")
       EVYTextView("count: {count(item.photo_ids)}")
-      EVYTextView("{item.title} has {count(item.photo_ids)} photos ::star::")
+      EVYTextView("{item.description}")
+      EVYTextView("{formatCurrency(item.price)} {item.title}")
     }
   }
 }

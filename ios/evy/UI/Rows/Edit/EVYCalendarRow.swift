@@ -25,12 +25,44 @@ struct EVYCalendarRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow([
-      "2", "pages", "2", "rows", "0", "view", "content", "children", "0", "view", "content",
-      "children", "4",
-    ])
+  EVYCalendarRowPreview()
+}
+
+private struct EVYCalendarRowPreview: View {
+  private let row = EVYCalendarRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+    let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "timeslots")
+    EVY.draftStore.activeScopeId = previewScopeId
+    let timeslotsData = EVYPreviewMockData.timeslots.data(using: .utf8)
+    EVY.ensureDraftExists(
+      variableName: "pickup_timeslots",
+      initialData: timeslotsData,
+      scopeId: previewScopeId
+    )
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build calendar row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-calendar-row",
+        "type": "Calendar",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Select a date",
+            "primary": "{pickup_timeslots}",
+            "secondary": "{pickup_timeslots}"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

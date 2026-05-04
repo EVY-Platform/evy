@@ -39,9 +39,37 @@ struct EVYDropdownRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "3"])
+  EVYDropdownRowPreview()
+}
+
+private struct EVYDropdownRowPreview: View {
+  private let row = EVYDropdownRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build dropdown row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-dropdown-row",
+        "type": "Dropdown",
+        "source": "{conditions}",
+        "destination": "{items.condition}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Condition",
+            "format": "{$datum:value}",
+            "placeholder": "Select a condition"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

@@ -744,44 +744,5 @@
 				}
 			}
 		]
-	},
-	{
-		"id": "5d5650f6-1650-468c-8d60-c5c72bcf4a3b",
-		"name": "Search Items",
-		"pages": [
-			{
-				"id": "99a2c26c-c8b0-448f-845a-26da1d631b0f",
-				"title": "",
-				"rows": [
-					{
-						"id": "1633dab9-548a-4c7a-a058-cf9d85a582cf",
-						"type": "Search",
-						"source": "{$api:marketplace:items:search({\"tag_ids\"})}",
-						"destination": "",
-						"actions": [],
-						"view": {
-							"content": {
-								"title": "",
-								"placeholder": "{query_text}",
-								"child": {
-									"id": "350682c9-1bda-4bc1-aecf-07efc054aa73",
-									"type": "Info",
-									"source": "",
-									"destination": "",
-									"actions": [],
-									"view": {
-										"content": {
-											"title": "{$datum:value}",
-											"subtitle": "",
-											"icon": ""
-										}
-									}
-								}
-							}
-						}
-					}
-				]
-			}
-		]
 	}
 ]

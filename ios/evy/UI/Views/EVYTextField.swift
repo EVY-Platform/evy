@@ -125,12 +125,16 @@ struct EVYTextField: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! await EVYPreviewFixtures.seedData()
+  EVYTextFieldPreview()
+}
 
-    return VStack {
+private struct EVYTextFieldPreview: View {
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    VStack {
       EVYTextField(
         input: "{formatDimension(item.dimensions.width)}",
         destination: "{item.dimensions.width}",

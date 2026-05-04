@@ -66,10 +66,6 @@ type AppGetRequestInput = {
 	filter?: {
 		ids?: string[];
 		updatedAfter?: string;
-		queryText?: string;
-		tagIds?: string[];
-		limit?: number;
-		offset?: number;
 	};
 	method?: string;
 };
@@ -80,10 +76,6 @@ type ProtoGetRequest = {
 	filter?: {
 		ids?: string[];
 		updated_after?: string;
-		query_text?: string;
-		tag_ids?: string[];
-		limit?: number;
-		offset?: number;
 	};
 	method?: string;
 };
@@ -123,10 +115,6 @@ function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
 	if (params.filter?.ids?.length) filter.ids = params.filter.ids;
 	if (params.filter?.updatedAfter)
 		filter.updated_after = params.filter.updatedAfter;
-	if (params.filter?.queryText) filter.query_text = params.filter.queryText;
-	if (params.filter?.tagIds?.length) filter.tag_ids = params.filter.tagIds;
-	if (params.filter?.limit !== undefined) filter.limit = params.filter.limit;
-	if (params.filter?.offset !== undefined) filter.offset = params.filter.offset;
 
 	return {
 		service: params.service,

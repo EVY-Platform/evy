@@ -36,9 +36,39 @@ struct EVYSelectPhotoRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "0"])
+  EVYSelectPhotoRowPreview()
+}
+
+private struct EVYSelectPhotoRowPreview: View {
+  private let row = EVYSelectPhotoRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build select photo row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-selectphoto-row",
+        "type": "SelectPhoto",
+        "source": "",
+        "destination": "{items.photo_ids}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Photos",
+            "icon": "::image-plus::",
+            "subtitle": "Add photos of your item",
+            "content": "Add up to 10 photos",
+            "photos": "{items.photo_ids}"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

@@ -9,16 +9,10 @@ const forwardGetMock = mock(
 			resource: string;
 			method: string;
 			filter?: {
-				queryText?: string;
 				ids?: string[];
-				tagIds?: string[];
-				limit?: number;
-				offset?: number;
 			};
 		},
-	): Promise<GetResponse> => [
-		{ id: "query", value: params.filter?.queryText ?? "" },
-	],
+	): Promise<GetResponse> => params.filter?.ids ?? [],
 );
 
 mock.module("../services", () => ({
@@ -39,53 +33,25 @@ describe("api JSON-RPC handler", () => {
 		forwardGetMock.mockClear();
 	});
 
-	it("forwards marketplace API function requests to the owning service", async () => {
-		const result = await api({
-			service: "marketplace",
-			resource: "items",
-			method: "suggestions",
-			filter: {
-				queryText: "iph",
-			},
-		});
-
-		expect(result).toEqual([{ id: "query", value: "iph" }]);
-		expect(forwardGetMock).toHaveBeenCalledTimes(1);
-		expect(forwardGetMock).toHaveBeenCalledWith("marketplace", {
-			service: "marketplace",
-			resource: "items",
-			method: "suggestions",
-			filter: {
-				queryText: "iph",
-			},
-		});
-	});
-
-	it("forwards marketplace item search requests to the owning service", async () => {
+	it("forwards non-search marketplace API function requests to the owning service", async () => {
 		const itemId = crypto.randomUUID();
 		const result = await api({
 			service: "marketplace",
 			resource: "items",
-			method: "search",
+			method: "not-search",
 			filter: {
 				ids: [itemId],
-				tagIds: ["electronics-tag"],
-				limit: 10,
-				offset: 5,
 			},
 		});
 
-		expect(result).toEqual([{ id: "query", value: "" }]);
+		expect(result).toEqual([itemId]);
 		expect(forwardGetMock).toHaveBeenCalledTimes(1);
 		expect(forwardGetMock).toHaveBeenCalledWith("marketplace", {
 			service: "marketplace",
 			resource: "items",
-			method: "search",
+			method: "not-search",
 			filter: {
 				ids: [itemId],
-				tagIds: ["electronics-tag"],
-				limit: 10,
-				offset: 5,
 			},
 		});
 	});
@@ -96,7 +62,7 @@ describe("api JSON-RPC handler", () => {
 				service: "marketplace",
 				resource: "items",
 				filter: {
-					queryText: "iph",
+					ids: [crypto.randomUUID()],
 				},
 			}),
 		).rejects.toThrow("ApiRequest validation failed");
@@ -109,9 +75,9 @@ describe("api JSON-RPC handler", () => {
 			api({
 				service: "marketplace",
 				resource: "sdui",
-				method: "suggestions",
+				method: "not-search",
 				filter: {
-					queryText: "iph",
+					ids: [crypto.randomUUID()],
 				},
 			}),
 		).rejects.toThrow("Invalid service and resource combination");

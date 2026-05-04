@@ -37,12 +37,37 @@ struct EVYTextActionRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow([
-      "2", "pages", "2", "rows", "0", "view", "content", "children", "0", "child", "view",
-      "content", "children", "1", "child",
-    ])
+  EVYTextActionRowPreview()
+}
+
+private struct EVYTextActionRowPreview: View {
+  private let row = EVYTextActionRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build text action row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-textaction-row",
+        "type": "TextAction",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Text Action Row",
+            "text": "Current value",
+            "placeholder": "No value set",
+            "action": "Edit"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

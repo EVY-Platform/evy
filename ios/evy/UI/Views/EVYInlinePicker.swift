@@ -97,16 +97,20 @@ struct EVYInlinePicker: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! EVY.getUserData()
-    try! await EVYPreviewFixtures.seedData()
+  EVYInlinePickerPreview()
+}
 
-    return EVYInlinePicker(
-      title: "Dropdown",
+private struct EVYInlinePickerPreview: View {
+  init() {
+    try? EVY.getUserData()
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    EVYInlinePicker(
+      title: "Duration",
       data: "{durations}",
       format: "{$datum:value}",
-      destination: "{duration}")
+      destination: "{items.duration}")
   }
 }

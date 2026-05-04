@@ -200,7 +200,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testResolveQueryParamsStoresRawValuesWhenNoSyncedCollectionExists() throws {
-    let key = uniqueKey("tag_ids")
+    let key = uniqueKey("filters")
     let firstId = UUID().uuidString
     let secondId = UUID().uuidString
 
@@ -213,7 +213,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testResolveQueryParamsStoresSingleRawValueAsScalar() throws {
-    let key = uniqueKey("query_text")
+    let key = uniqueKey("query")
 
     EVY.resolveQueryParams([key: ["test"]])
 
@@ -322,26 +322,33 @@ final class InterpreterTests: XCTestCase {
     )
   }
 
-  func testResolveParamsReadsFromCacheStore() throws {
-    EVY.resolveQueryParams([
-      "tag_ids": ["tag-1", "tag-2"],
-      "query_text": ["test"],
-    ])
+  func testResolveQueryParamsResolvesGenericIdFromSyncedCollection() throws {
+    let entityKey = uniqueKey("entities")
+    let id = UUID().uuidString
 
-    let resolvedParams = EVY.resolveParams([
-      .interpolated(key: "tag_ids"),
-      .interpolated(key: "query_text"),
-    ])
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Selected by generic id"),
+        ])
+      ]),
+      at: "marketplace:\(entityKey)"
+    )
 
-    XCTAssertEqual(resolvedParams["tag_ids"], .array([.string("tag-1"), .string("tag-2")]))
-    XCTAssertEqual(resolvedParams["query_text"], .string("test"))
+    EVY.resolveQueryParams(["id": [id]])
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityKey).title}"),
+      .string("Selected by generic id")
+    )
   }
 
   func testGetValueFromTextResolvesCacheStoreData() throws {
-    EVY.resolveQueryParams(["query_text": ["test"]])
+    EVY.resolveQueryParams(["query": ["test"]])
 
     XCTAssertEqual(
-      try EVY.getValueFromText("{query_text}").toString(),
+      try EVY.getValueFromText("{query}").toString(),
       "test"
     )
   }
@@ -366,51 +373,6 @@ final class InterpreterTests: XCTestCase {
     EVY.resolveQueryParams([key: ["value"]])
 
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value"))
-  }
-
-  func testParseSourceParamsSeparatesBasePathAndParamEntries() {
-    let result = parseSourceParams(
-      "$api:marketplace:items:suggestions({\"tag_ids\", \"limit\": 1, \"ids\": [\"id-1\"]})"
-    )
-
-    XCTAssertEqual(result.basePath, "$api:marketplace:items:suggestions")
-    XCTAssertEqual(
-      result.params,
-      [
-        .interpolated(key: "tag_ids"),
-        .staticValue(key: "limit", value: .int(1)),
-        .staticValue(key: "ids", value: .array([.string("id-1")])),
-      ]
-    )
-  }
-
-  func testParseSourceParamsIgnoresMalformedParamObject() {
-    let result = parseSourceParams(
-      "$api:marketplace:items:suggestions(\"tag_ids\", \"limit\": 1)"
-    )
-
-    XCTAssertEqual(result.basePath, "$api:marketplace:items:suggestions")
-    XCTAssertEqual(result.params, [])
-  }
-
-  func testParseFullBracedBindingAllowsNestedParamObject() {
-    XCTAssertEqual(
-      parseFullBracedBinding("{$api:marketplace:items:suggestions({\"limit\": 1})}"),
-      "$api:marketplace:items:suggestions({\"limit\": 1})"
-    )
-  }
-
-  func testResolveParamsUsesStaticValuesAndStoredInterpolatedValues() throws {
-    let key = uniqueKey("tag_ids")
-    try store(.array([.string("tag-1")]), at: key)
-
-    let resolvedParams = EVY.resolveParams([
-      .interpolated(key: key),
-      .staticValue(key: "limit", value: .int(1)),
-    ])
-
-    XCTAssertEqual(resolvedParams[key], .array([.string("tag-1")]))
-    XCTAssertEqual(resolvedParams["limit"], .int(1))
   }
 
   func testFormatDateFormatsIsoStringWithPattern() throws {

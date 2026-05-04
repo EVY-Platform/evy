@@ -33,9 +33,36 @@ struct EVYInputListRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "6", "view", "content", "child"])
+  EVYInputListRowPreview()
+}
+
+private struct EVYInputListRowPreview: View {
+  private let row = EVYInputListRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build input list row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-inputlist-row",
+        "type": "InputList",
+        "source": "{tags}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Tags",
+            "format": "{$datum}",
+            "placeholder": "Add tags to improve search"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

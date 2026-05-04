@@ -5,162 +5,164 @@
 //  Created by Geoffroy Lesage on 9/4/2024.
 //
 
-import LucideIcons
 import SwiftUI
 
+private struct EVYSearchResult: Identifiable {
+  let id: String
+  let datum: EVYJson
+  let displayRow: UI_Row
+  let title: String
+}
+
+private struct EVYSearchResultRow: Identifiable {
+  let id: String
+  let result: EVYSearchResult
+}
+
 struct EVYSearch: View {
-  private let canSelectMultiple: Bool
+  @Environment(\.navigate) private var navigate
 
   let source: String
-  let destination: String
   let placeholder: String
-  let value: String
   let resultTemplate: UI_Row?
-  let actions: [UI_RowAction]
+
+  @State private var allResults: [EVYSearchResultRow] = []
+  @State private var searchText = ""
 
   init(
     source: String,
-    destination: String,
     placeholder: String,
-    value: String = "",
-    resultTemplate: UI_Row?,
-    actions: [UI_RowAction],
+    resultTemplate: UI_Row?
   ) {
     self.source = source
-    self.destination = destination
     self.placeholder = placeholder
-    self.value = value
     self.resultTemplate = resultTemplate
-    self.actions = actions
+  }
+
+  private var filteredResults: [EVYSearchResultRow] {
+    let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmedSearchText.isEmpty else {
+      return allResults
+    }
+
+    return allResults.filter {
+      $0.result.title.localizedCaseInsensitiveContains(trimmedSearchText)
+    }
+  }
+
+  var body: some View {
+    VStack(spacing: 0) {
+      EVYSearchField(text: $searchText, placeholder: placeholder)
+
+      List(filteredResults) { resultRow in
+        EVYRow(row: resultRow.result.displayRow)
+          .contentShape(Rectangle())
+          .onTapGesture {
+            EVYActionRunner.run(
+              actions: resultRow.result.displayRow.actions,
+              datum: resultRow.result.datum,
+              navigate: navigate
+            )
+          }
+          .listRowInsets(EdgeInsets())
+      }
+      .listStyle(.plain)
+    }
+    .onAppear(perform: loadResults)
+    .onChange(of: source) { _, _ in
+      loadResults()
+    }
+  }
+
+  private func loadResults() {
+    guard let resultTemplate else {
+      allResults = []
+      return
+    }
 
     do {
-      let data = try EVY.getDataFromText(destination)
-      if case .array = data {
-        canSelectMultiple = true
+      let sourceData = try EVY.getDataFromText(source)
+      let dataRows: [EVYJson]
+      if case .array(let arrayValue) = sourceData {
+        dataRows = arrayValue
       } else {
-        canSelectMultiple = false
+        dataRows = [sourceData]
+      }
+
+      let formatter = try EVYDatumRowFormatter(template: resultTemplate)
+      allResults = dataRows.compactMap { datum in
+        guard let displayRow = try? formatter.formattedResult(datum: datum).row else {
+          return nil
+        }
+        let id = datum.identifierValue()
+        let title = datum.parseProp(props: ["title"]).toString()
+        return EVYSearchResultRow(
+          id: id,
+          result: EVYSearchResult(
+            id: id,
+            datum: datum,
+            displayRow: displayRow,
+            title: title
+          )
+        )
       }
     } catch {
-      canSelectMultiple = false
-    }
-  }
-
-  var body: some View {
-    if canSelectMultiple {
-      EVYSearchMultiple(
-        source: source,
-        resultTemplate: resultTemplate,
-        destination: destination,
-        placeholder: placeholder,
-        value: value,
-        actions: actions,
-      )
-    } else {
-      EVYSearchSingle(
-        source: source,
-        resultTemplate: resultTemplate,
-        destination: destination,
-        placeholder: placeholder,
-        value: value,
-        actions: actions,
-      )
+      allResults = []
     }
   }
 }
 
-struct EVYSearchField: View {
-  @Bindable private var placeholderValue: EVYState<EVYValue>
-  @Binding private var text: String
-  @State private var initialized = false
+#Preview {
+  EVYSearchPreview()
+}
 
-  let initialValue: String
-  let showsLeadingIconOnlyWhenEmpty: Bool
-  let showsClearButton: Bool
-  let onInitialText: (String) -> Void
-  let onTextChange: (String) -> Void
-  let onClear: () -> Void
+private struct EVYSearchPreview: View {
+  private let resultTemplate = EVYSearchPreview.makeResultTemplate()
 
-  init(
-    placeholder: String,
-    value: String = "",
-    text: Binding<String>,
-    showsLeadingIconOnlyWhenEmpty: Bool = false,
-    showsClearButton: Bool = false,
-    onInitialText: @escaping (String) -> Void = { _ in },
-    onTextChange: @escaping (String) -> Void = { _ in },
-    onClear: @escaping () -> Void = {}
-  ) {
-    self.initialValue = value
-    _text = text
-    self.showsLeadingIconOnlyWhenEmpty = showsLeadingIconOnlyWhenEmpty
-    self.showsClearButton = showsClearButton
-    self.onInitialText = onInitialText
-    self.onTextChange = onTextChange
-    self.onClear = onClear
+  init() {
+    let previewItemsJSON = """
+      [
+        { "id": "preview-item-1", "title": "Amazing Fridge" },
+        { "id": "preview-item-2", "title": "Amazing Freezer" },
+        { "id": "preview-item-3", "title": "Vintage Printer" }
+      ]
+      """
 
-    let watchTarget = EVY.watchTarget(for: placeholder)
-    self.placeholderValue = EVYState(watch: watchTarget) { _ in
-      EVYTextResolver.resolveValue(from: placeholder)
+    if let previewItemsData = previewItemsJSON.data(using: .utf8) {
+      try? EVY.publicStore.upsert(key: "items", value: previewItemsData)
     }
   }
 
   var body: some View {
-    HStack {
-      if !showsLeadingIconOnlyWhenEmpty || text.isEmpty {
-        Image(uiImage: Lucide.search)
-          .padding(.leading, Constants.minorPadding)
-      }
+    EVYSearch(
+      source: "{items}",
+      placeholder: "Search items...",
+      resultTemplate: resultTemplate
+    )
+  }
 
-      TextField(placeholderValue.value.toString(), text: $text)
-        .font(.evy)
-
-      if showsClearButton, !text.isEmpty {
-        Image(uiImage: Lucide.x)
-          .padding(.trailing, Constants.minorPadding)
-          .onTapGesture {
-            text = ""
-            onClear()
+  private static func makeResultTemplate() -> UI_Row? {
+    let resultTemplateJSON = """
+      {
+        "id": "preview-search-result-template",
+        "type": "Info",
+        "source": "",
+        "destination": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "{$datum:title}",
+            "subtitle": "",
+            "icon": ""
           }
+        }
       }
-    }
-    .onAppear {
-      guard !initialized else { return }
-      initialized = true
-      let resolvedValue = EVYTextResolver.resolveValue(from: initialValue).toString()
-      guard !resolvedValue.isEmpty else { return }
-      text = resolvedValue
-      onInitialText(resolvedValue)
-    }
-    .onChange(of: text) { _, newValue in
-      onTextChange(newValue)
-    }
-    .padding(
-      EdgeInsets(
-        top: Constants.fieldPadding,
-        leading: Constants.minorPadding,
-        bottom: Constants.fieldPadding,
-        trailing: Constants.minorPadding,
-      )
-    )
-    .background(
-      RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-        .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth)
-        .opacity(Constants.borderOpacity)
-    )
-    .contentShape(Rectangle())
-  }
-}
+      """
 
-struct EVYSearchResultsList: View {
-  let results: [EVYSearchResult]
-  let onSelect: (EVYSearchResult) -> Void
-
-  var body: some View {
-    LazyVStack(spacing: 20) {
-      ForEach(results, id: \.value) { result in
-        EVYRow(row: result.displayRow)
-          .onTapGesture { onSelect(result) }
-      }
+    guard let resultTemplateData = resultTemplateJSON.data(using: .utf8) else {
+      return nil
     }
+
+    return try? JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
   }
 }

@@ -10,7 +10,7 @@ For local and e2e runs, set `API_HOST` in the repository root `.env` (see [READM
 
 At startup, the app calls `syncServiceData` for supported backend services and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `marketplace:items` or `marketplace:conditions`). Exact keys are preferred when app code needs a specific backend resource.
 
-Pages can receive query parameters through navigation actions. Query params are passed as the optional third `navigate` argument, mapping plural resource keys to arrays of IDs or `$datum` expressions (for example, `{navigate(flowId, pageId, {"items": [$datum.id]})}`). Query values must use a JSON object (`{"key": ["id"]}`). iOS parses the query into a `[String: [String]]` dictionary. When the page opens, iOS resolves each resource key locally, picks the first ID from the already-synced collection, and stores the matching entity under the same plural key so bindings like `{items}` render the selected row. When no synced collection exists for a query key, iOS stores the raw string array under that key so parameterized API sources such as `{$api:marketplace:items:suggestions({"tag_ids", "limit": 1})}` can interpolate values from `{tag_ids}`.
+Pages can receive query parameters through navigation actions. Query params are passed as the optional third `navigate` argument, mapping plural resource keys to arrays of IDs or `$datum` expressions (for example, `{navigate(flowId, pageId, {"items": [$datum.id]})}`). Query values must use a JSON object (`{"key": ["id"]}`). iOS parses the query into a `[String: [String]]` dictionary. When the page opens, iOS resolves each resource key locally, picks the first ID from the already-synced collection, and stores the matching entity under the same plural key so bindings like `{items}` render the selected row. When no synced collection exists for a query key, iOS stores the raw string array under that key.
 
 SDUI bindings use plural resource-only names such as `{conditions}` or `{timeslots}`. Edit rows write drafts through plural destinations such as `{items.title}` or `{items.condition}`. Those bindings resolve exact local keys first, then explicitly fall back to synced service resources. This keeps local draft/entity data separate from backend catalog data while preserving simple SDUI source strings.
 
@@ -100,10 +100,7 @@ flowchart LR
     EVY --> PrivateStore
     EVY --> DraftStore
 
-    SearchCtrl[EVYSearchController<br/>local/API search state]
-    Views --> SearchCtrl
-    SearchCtrl -->|read local results| EVY
-    SearchCtrl -->|API searches| APIManager
+    Views -->|Search rows read local synced resources| EVY
 
     subgraph api [Data/API]
         APIManager[EVYAPIManager.shared<br/>auth + subscriptions]

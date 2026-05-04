@@ -717,13 +717,17 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! EVY.getUserData()
-    try! await EVYPreviewFixtures.seedData()
+  EVYFunctionsPreview()
+}
 
-    return VStack {
+private struct EVYFunctionsPreview: View {
+  init() {
+    try? EVY.getUserData()
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    VStack {
       EVYTextView("{formatDimension(item.dimensions.width)}")
       EVYTextView("a == a: {a == a}")
       EVYTextView("a == b: {a == b}")

@@ -31,9 +31,62 @@ struct EVYColumnContainerRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "5"])
+  EVYColumnContainerRowPreview()
+}
+
+private struct EVYColumnContainerRowPreview: View {
+  private let row = EVYColumnContainerRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build column container row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-column-row",
+        "type": "ColumnContainer",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Column Container Preview",
+            "children": [
+              {
+                "id": "column-child-1",
+                "type": "Info",
+                "source": "",
+                "actions": [],
+                "view": {
+                  "content": {
+                    "title": "First Child",
+                    "subtitle": "This is the first column item",
+                    "icon": "::star::"
+                  }
+                }
+              },
+              {
+                "id": "column-child-2",
+                "type": "Info",
+                "source": "",
+                "actions": [],
+                "view": {
+                  "content": {
+                    "title": "Second Child",
+                    "subtitle": "This is the second column item",
+                    "icon": ""
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }

@@ -848,7 +848,7 @@ final class WebSocketE2ETests: E2ETestBase {
                           "condition": "",
                           "false": "",
                           "true":
-                            "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
+                            "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}",
                         ]
                       ],
                     ],

@@ -66,14 +66,18 @@ struct EVYInputList: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! await EVYPreviewFixtures.seedData()
+  EVYInputListPreview()
+}
 
-    return EVYInputList(
+private struct EVYInputListPreview: View {
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    EVYInputList(
       data: "{tags}",
-      format: "{$datum:value}",
+      format: "{$datum}",
       placeholder: "Add tags to improve search")
   }
 }

@@ -1,8 +1,6 @@
-import { eq, and, desc, gt, inArray, sql } from "drizzle-orm";
-import type { SQL } from "drizzle-orm";
+import { eq, and, desc, gt, inArray } from "drizzle-orm";
 
 import type {
-	ApiRequest,
 	DATA_PRIMITIVE,
 	GetRequest,
 	GetResponse,
@@ -23,13 +21,6 @@ import {
 } from "evy-types/validators";
 
 const MARKETPLACE_SERVICE = "marketplace";
-const DEFAULT_LIMIT = 10;
-const MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE = 3;
-
-type MarketplaceSuggestion = {
-	id: string;
-	value: string;
-};
 
 function validateDataPayload(dataPayload: unknown): DATA_PRIMITIVE["data"] {
 	const validatedPayload = validateUpsertDataPayload(dataPayload);
@@ -48,163 +39,7 @@ function getOnlyFilterId(
 	return onlyId;
 }
 
-function normalizeItemSuggestionQuery(query: string): string {
-	return query
-		.toLocaleLowerCase()
-		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "");
-}
-
-function normalizeLimit(limit: number | undefined): number {
-	return Math.min(limit ?? DEFAULT_LIMIT, DEFAULT_LIMIT);
-}
-
-function normalizeItemSearchOffset(offset: number | undefined): number {
-	return Math.max(offset ?? 0, 0);
-}
-
-function itemHasAnyTagClause(tagIds: string[], tagAlias = "tag"): SQL | null {
-	if (tagIds.length === 0) {
-		return null;
-	}
-
-	return sql`
-		EXISTS (
-			SELECT 1
-			FROM jsonb_array_elements(
-				CASE
-					WHEN jsonb_typeof(${data.data}->'tags') = 'array' THEN ${data.data}->'tags'
-					ELSE '[]'::jsonb
-				END
-			) AS ${sql.raw(tagAlias)}
-			WHERE ${sql.raw(tagAlias)}->>'id' IN (${sql.join(
-				tagIds.map((tagId) => sql`${tagId}`),
-				sql`, `,
-			)})
-		)
-	`;
-}
-
-async function getItemSearch(params: ApiRequest): Promise<GetResponse> {
-	const ids = params.filter?.ids ?? [];
-	const tagIds = params.filter?.tagIds ?? [];
-	const limit = normalizeLimit(params.filter?.limit);
-	const offset = normalizeItemSearchOffset(params.filter?.offset);
-
-	const whereClauses: SQL[] = [eq(data.resource, "items")];
-	if (ids.length > 0) {
-		whereClauses.push(inArray(data.id, ids));
-	}
-	const tagClause = itemHasAnyTagClause(tagIds);
-	if (tagClause) {
-		whereClauses.push(tagClause);
-	}
-
-	const baseQuery = db
-		.select({ id: data.id, updatedAt: data.updatedAt })
-		.from(data)
-		.where(and(...whereClauses))
-		.orderBy(desc(data.updatedAt));
-
-	if (ids.length === 0) {
-		const rows = await baseQuery.limit(limit).offset(offset);
-		return validateGetResponse(rows.map((row) => row.id));
-	}
-
-	const rows = await baseQuery;
-	const resultIds = rows.map((row) => row.id);
-	const positionById = new Map(ids.map((id, position) => [id, position]));
-	return validateGetResponse(
-		resultIds
-			.toSorted((leftId, rightId) => {
-				const leftPosition =
-					positionById.get(leftId) ?? Number.MAX_SAFE_INTEGER;
-				const rightPosition =
-					positionById.get(rightId) ?? Number.MAX_SAFE_INTEGER;
-				return leftPosition - rightPosition;
-			})
-			.slice(offset, offset + limit),
-	);
-}
-
-async function getItemTagSuggestions(params: ApiRequest): Promise<GetResponse> {
-	const query = params.filter?.queryText?.trim() ?? "";
-	if (query.length === 0) {
-		return validateGetResponse([]);
-	}
-
-	const normalizedQuery = normalizeItemSuggestionQuery(query);
-	const tagIds = params.filter?.tagIds ?? [];
-	const limit = normalizeLimit(params.filter?.limit);
-	const tagClause = itemHasAnyTagClause(tagIds, "filter_tag");
-	const tagFilterSql = tagClause ? sql`AND ${tagClause}` : sql``;
-
-	const result = await db.execute(sql`
-		WITH tags AS (
-			SELECT DISTINCT ON ((tag->>'id'), lower(trim(tag->>'value')))
-				tag->>'id' AS id,
-				tag->>'value' AS value
-			FROM ${data}, jsonb_array_elements(
-				CASE
-					WHEN jsonb_typeof(${data.data}->'tags') = 'array' THEN ${data.data}->'tags'
-					ELSE '[]'::jsonb
-				END
-			) AS tag
-			WHERE ${data.resource} = 'items'
-				${tagFilterSql}
-				AND tag->>'id' IS NOT NULL
-				AND length(trim(tag->>'value')) > 0
-			ORDER BY (tag->>'id'), lower(trim(tag->>'value'))
-		),
-		normalized_tags AS (
-			SELECT id, value, lower(trim(value)) AS norm_value
-			FROM tags
-		),
-		fuzzy_tags AS (
-			SELECT id, value, norm_value,
-				CASE
-					WHEN norm_value = ${normalizedQuery}
-						OR norm_value LIKE ${normalizedQuery || "%"}
-						OR position(${normalizedQuery} in norm_value) > 0
-					THEN 0
-					ELSE levenshtein(${normalizedQuery}, norm_value)
-				END AS lev_dist
-			FROM normalized_tags
-		)
-		SELECT id, value,
-			CASE
-				WHEN norm_value = ${normalizedQuery} THEN 0.0
-				WHEN norm_value LIKE ${normalizedQuery || "%"} THEN 1.0 + (length(norm_value) - ${normalizedQuery.length}) / 100.0
-				WHEN position(${normalizedQuery} in norm_value) > 0 THEN 2.0 + (position(${normalizedQuery} in norm_value) - 1) / 100.0 + abs(length(norm_value) - ${normalizedQuery.length}) / 1000.0
-				ELSE 3.0 + lev_dist::float / GREATEST(${normalizedQuery.length}, length(norm_value))
-			END AS score
-		FROM fuzzy_tags
-		WHERE norm_value = ${normalizedQuery}
-			OR norm_value LIKE ${normalizedQuery || "%"}
-			OR position(${normalizedQuery} in norm_value) > 0
-			OR lev_dist <= ${MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE}
-		ORDER BY score, value
-		LIMIT ${limit}
-	`);
-
-	const rows =
-		result && typeof result === "object" && "rows" in result
-			? result.rows
-			: result;
-
-	const suggestions: MarketplaceSuggestion[] = [];
-	for (const row of rows as Array<{ id: unknown; value: unknown }>) {
-		if (typeof row.id === "string" && typeof row.value === "string") {
-			suggestions.push({ id: row.id, value: row.value });
-		}
-	}
-
-	return validateGetResponse([{ id: "query", value: query }, ...suggestions]);
-}
-
-function assertMarketplaceRules(
-	params: GetRequest | ApiRequest | UpsertRequest,
-): void {
+function assertMarketplaceRules(params: GetRequest | UpsertRequest): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
 		throw new Error("Marketplace service requires service marketplace");
 	}
@@ -227,20 +62,8 @@ function validateMarketplaceUpsertParams(
 	assertMarketplaceRules(params);
 }
 
-async function marketplaceGetBody(
-	params: GetRequest | ApiRequest,
-): Promise<GetResponse> {
+async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 	const { resource, filter } = params;
-
-	if ("method" in params && params.method) {
-		if (resource === "items" && params.method === "suggestions") {
-			return getItemTagSuggestions(params);
-		}
-		if (resource === "items" && params.method === "search") {
-			return getItemSearch(params);
-		}
-		throw new Error(`Unsupported marketplace get method ${params.method}`);
-	}
 
 	const whereClauses = [eq(data.resource, resource)];
 	if (filter?.ids?.length) {
@@ -264,7 +87,7 @@ async function marketplaceGetBody(
  * {@link validateStrictGetRequest}; this only applies marketplace access rules.
  */
 export async function getForValidatedMarketplaceRequest(
-	params: GetRequest | ApiRequest,
+	params: GetRequest,
 ): Promise<GetResponse> {
 	assertMarketplaceRules(params);
 	return marketplaceGetBody(params);

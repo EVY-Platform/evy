@@ -16,26 +16,26 @@
 								"view": {
 									"content": {
 										"icon": "::search::",
-										"title": "{$datum:value}",
+										"title": "{$datum:title}",
 										"subtitle": ""
 									}
 								},
 								"source": "",
-								"actions": [],
+								"actions": [
+									{
+										"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{\"id\": $datum.id})}",
+										"false": "",
+										"condition": ""
+									}
+								],
 								"destination": ""
 							},
 							"title": "",
 							"placeholder": "Search anything"
 						}
 					},
-					"source": "{$api:marketplace:items:suggestions({\"limit\": 3})}",
-					"actions": [
-						{
-							"true": "{navigate(5d5650f6-1650-468c-8d60-c5c72bcf4a3b,99a2c26c-c8b0-448f-845a-26da1d631b0f,{\"tag_ids\":[\"8e1cd2bf-d94f-4bb0-bd68-fc74434deabe\"], \"query_text\": \"test\"})}",
-							"false": "",
-							"condition": ""
-						}
-					],
+					"source": "{items}",
+					"actions": [],
 					"destination": ""
 				}
 			],

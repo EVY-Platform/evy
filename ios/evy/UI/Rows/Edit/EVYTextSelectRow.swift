@@ -62,9 +62,36 @@ struct EVYTextSelectRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "3", "rows", "1", "view", "content", "children", "0"])
+  EVYTextSelectRowPreview()
+}
+
+private struct EVYTextSelectRowPreview: View {
+  private let row = EVYTextSelectRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build text select row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
+      {
+        "id": "preview-textselect-row",
+        "type": "TextSelect",
+        "source": "",
+        "destination": "{items.condition}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Selling reason",
+            "text": "reason-1"
+          }
+        }
+      }
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
   }
 }
