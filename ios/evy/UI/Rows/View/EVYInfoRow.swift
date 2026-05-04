@@ -24,15 +24,13 @@ struct EVYInfoRow: View {
     let icon = content.icon.trimmingCharacters(in: .whitespacesAndNewlines)
     let showIcon = !icon.isEmpty
 
-    HStack(alignment: .top, spacing: Constants.minorPadding) {
+    HStack(alignment: .top) {
       if showIcon {
         EVYTextView(icon, style: .body)
-          .frame(minWidth: Self.leadingIconMinWidth, alignment: .center)
       }
       infoTextColumn(content: content, hasTitle: hasTitle, hasSubtitle: hasSubtitle)
     }
     .infoRowOuterWidth(expands: !hasTitle)
-    .padding(Constants.minorPadding)
   }
 
   @ViewBuilder

@@ -15,9 +15,9 @@
 								"type": "Info",
 								"view": {
 									"content": {
-										"icon": "::search::",
+										"icon": "",
 										"title": "{$datum:title}",
-										"subtitle": ""
+										"subtitle": "{formatCurrency($datum:price)}"
 									}
 								},
 								"source": "",

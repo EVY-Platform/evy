@@ -26,7 +26,7 @@ struct EVYSearchRow: View {
         source: source,
         placeholder: view.content.placeholder,
         resultTemplate: view.content.child
-      )
+	  )
     }
   }
 }

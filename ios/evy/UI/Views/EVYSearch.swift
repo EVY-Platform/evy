@@ -20,6 +20,8 @@ private struct EVYSearchResultRow: Identifiable {
 }
 
 struct EVYSearch: View {
+  private static let estimatedResultRowHeight: CGFloat = 56
+
   @Environment(\.navigate) private var navigate
 
   let source: String
@@ -50,23 +52,31 @@ struct EVYSearch: View {
     }
   }
 
+  private var searchResultsListHeight: CGFloat {
+    let visibleRowCount = filteredResults.count
+    return CGFloat(visibleRowCount) * Self.estimatedResultRowHeight
+  }
+
   var body: some View {
-    VStack(spacing: 0) {
+    VStack {
       EVYSearchField(text: $searchText, placeholder: placeholder)
 
-      List(filteredResults) { resultRow in
-        EVYRow(row: resultRow.result.displayRow)
-          .contentShape(Rectangle())
-          .onTapGesture {
-            EVYActionRunner.run(
-              actions: resultRow.result.displayRow.actions,
-              datum: resultRow.result.datum,
-              navigate: navigate
-            )
-          }
-          .listRowInsets(EdgeInsets())
+      if !filteredResults.isEmpty {
+        List(filteredResults) { resultRow in
+          EVYRow(row: resultRow.result.displayRow)
+            .onTapGesture {
+              EVYActionRunner.run(
+                actions: resultRow.result.displayRow.actions,
+                datum: resultRow.result.datum,
+                navigate: navigate
+              )
+            }
+            .listRowInsets(EdgeInsets())
+			.padding(.vertical, Constants.majorPadding)
+        }
+        .listStyle(.plain)
+        .frame(height: searchResultsListHeight)
       }
-      .listStyle(.plain)
     }
     .onAppear(perform: loadResults)
     .onChange(of: source) { _, _ in
