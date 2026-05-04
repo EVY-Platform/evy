@@ -3,7 +3,9 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import {
+	type DATA_EVY_Organization,
 	type DATA_EVY_Service,
+	type DATA_EVY_ServiceProvider,
 	type GetResponse,
 	RESOURCES_BY_SERVICE,
 	RESOURCE_VALUES,
@@ -131,6 +133,21 @@ type CatalogTable =
 	| typeof organization
 	| typeof serviceProvider;
 
+type CatalogEntityConfig<TValidated> = {
+	table: CatalogTable;
+	validate: (data: unknown) => TValidated;
+	toUpdateSet: (
+		validated: TValidated,
+		nowIso: string,
+	) => Record<string, unknown>;
+	toInsertValues: (
+		validated: TValidated,
+		nowIso: string,
+		filterId: string | undefined,
+	) => Record<string, unknown>;
+	mapRow: (row: unknown) => UpsertResponse;
+};
+
 async function listCoreCatalogRows<TRow>(
 	table: CatalogTable,
 	filter: GetRequest["filter"] | undefined,
@@ -175,6 +192,38 @@ async function upsertCatalogEntity<TSelect>(
 	const row = mapRow(inserted[0]);
 	validateUpsertResponse(row);
 	return row;
+}
+
+/**
+ * Shared handler for catalog entity upserts (services, organisations, providers).
+ * Validates, extracts filterId, then delegates to {@link upsertCatalogEntity}.
+ */
+async function upsertCatalogEntityFromConfig<TValidated>(
+	config: CatalogEntityConfig<TValidated>,
+	filter: UpsertRequest["filter"] | undefined,
+	dataPayload: unknown,
+	nowIso: string,
+): Promise<UpsertResponse> {
+	const validated = config.validate(dataPayload);
+	const filterId = getOnlyFilterId(filter);
+
+	return upsertCatalogEntity(
+		filterId,
+		() =>
+			filterId
+				? // biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
+					(db.update(config.table as any) as any)
+						.set(config.toUpdateSet(validated, nowIso))
+						.where(eq(config.table.id, filterId))
+						.returning()
+				: Promise.resolve([]),
+		() =>
+			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
+			(db.insert(config.table as any) as any)
+				.values(config.toInsertValues(validated, nowIso, filterId))
+				.returning(),
+		(row) => config.mapRow(row),
+	);
 }
 
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
@@ -255,6 +304,80 @@ export async function getCore(params: unknown): Promise<GetResponse> {
 	return getCoreBody(params);
 }
 
+const serviceCatalogConfig: CatalogEntityConfig<DATA_EVY_Service> = {
+	table: service,
+	validate: validateServicePayload,
+	toUpdateSet: (validated, nowIso) => ({
+		name: validated.name,
+		description: validated.description,
+		sortOrder: validated.sortOrder ?? null,
+		defaultWeightKg: validated.defaultWeightKg ?? null,
+		updatedAt: nowIso,
+	}),
+	toInsertValues: (validated, nowIso, filterId) => ({
+		id: filterId ?? validated.id,
+		name: validated.name,
+		description: validated.description,
+		sortOrder: validated.sortOrder ?? null,
+		defaultWeightKg: validated.defaultWeightKg ?? null,
+		createdAt: validated.createdAt,
+		updatedAt: nowIso,
+	}),
+	mapRow: (row: unknown) => mapServiceRow(row as typeof service.$inferSelect),
+};
+
+const organizationCatalogConfig: CatalogEntityConfig<DATA_EVY_Organization> = {
+	table: organization,
+	validate: validateOrganizationPayload,
+	toUpdateSet: (validated, nowIso) => ({
+		name: validated.name,
+		description: validated.description,
+		logo: validated.logo,
+		url: validated.url,
+		supportEmail: validated.supportEmail,
+		updatedAt: nowIso,
+	}),
+	toInsertValues: (validated, nowIso, filterId) => ({
+		id: filterId ?? validated.id,
+		name: validated.name,
+		description: validated.description,
+		logo: validated.logo,
+		url: validated.url,
+		supportEmail: validated.supportEmail,
+		createdAt: validated.createdAt,
+		updatedAt: nowIso,
+	}),
+	mapRow: (row: unknown) => row as UpsertResponse,
+};
+
+const providerCatalogConfig: CatalogEntityConfig<DATA_EVY_ServiceProvider> = {
+	table: serviceProvider,
+	validate: validateServiceProviderPayload,
+	toUpdateSet: (validated, nowIso) => ({
+		fkServiceId: validated.fkServiceId,
+		fkOrganizationId: validated.fkOrganizationId,
+		name: validated.name,
+		description: validated.description,
+		logo: validated.logo,
+		url: validated.url,
+		retired: validated.retired,
+		updatedAt: nowIso,
+	}),
+	toInsertValues: (validated, nowIso, filterId) => ({
+		id: filterId ?? validated.id,
+		fkServiceId: validated.fkServiceId,
+		fkOrganizationId: validated.fkOrganizationId,
+		name: validated.name,
+		description: validated.description,
+		logo: validated.logo,
+		url: validated.url,
+		createdAt: validated.createdAt,
+		updatedAt: nowIso,
+		retired: validated.retired,
+	}),
+	mapRow: (row: unknown) => row as UpsertResponse,
+};
+
 async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
@@ -298,124 +421,29 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	}
 
 	if (resource === "services") {
-		const validated = validateServicePayload(dataPayload);
-		const filterId = getOnlyFilterId(filter);
-		return upsertCatalogEntity(
-			filterId,
-			() =>
-				filterId
-					? db
-							.update(service)
-							.set({
-								name: validated.name,
-								description: validated.description,
-								sortOrder: validated.sortOrder ?? null,
-								defaultWeightKg: validated.defaultWeightKg ?? null,
-								updatedAt: nowIso,
-							})
-							.where(eq(service.id, filterId))
-							.returning()
-					: Promise.resolve([]),
-			() => {
-				const insertValues: typeof service.$inferInsert = {
-					id: validated.id,
-					name: validated.name,
-					description: validated.description,
-					sortOrder: validated.sortOrder ?? null,
-					defaultWeightKg: validated.defaultWeightKg ?? null,
-					createdAt: validated.createdAt,
-					updatedAt: nowIso,
-				};
-				if (filterId) {
-					insertValues.id = filterId;
-				}
-				return db.insert(service).values(insertValues).returning();
-			},
-			mapServiceRow,
+		return upsertCatalogEntityFromConfig(
+			serviceCatalogConfig,
+			filter,
+			dataPayload,
+			nowIso,
 		);
 	}
 
 	if (resource === "organisations") {
-		const validated = validateOrganizationPayload(dataPayload);
-		const filterId = getOnlyFilterId(filter);
-		return upsertCatalogEntity(
-			filterId,
-			() =>
-				filterId
-					? db
-							.update(organization)
-							.set({
-								name: validated.name,
-								description: validated.description,
-								logo: validated.logo,
-								url: validated.url,
-								supportEmail: validated.supportEmail,
-								updatedAt: nowIso,
-							})
-							.where(eq(organization.id, filterId))
-							.returning()
-					: Promise.resolve([]),
-			() => {
-				const insertValues: typeof organization.$inferInsert = {
-					id: validated.id,
-					name: validated.name,
-					description: validated.description,
-					logo: validated.logo,
-					url: validated.url,
-					supportEmail: validated.supportEmail,
-					createdAt: validated.createdAt,
-					updatedAt: nowIso,
-				};
-				if (filterId) {
-					insertValues.id = filterId;
-				}
-				return db.insert(organization).values(insertValues).returning();
-			},
-			(r) => r,
+		return upsertCatalogEntityFromConfig(
+			organizationCatalogConfig,
+			filter,
+			dataPayload,
+			nowIso,
 		);
 	}
 
 	if (resource === "providers") {
-		const validated = validateServiceProviderPayload(dataPayload);
-		const filterId = getOnlyFilterId(filter);
-		return upsertCatalogEntity(
-			filterId,
-			() =>
-				filterId
-					? db
-							.update(serviceProvider)
-							.set({
-								fkServiceId: validated.fkServiceId,
-								fkOrganizationId: validated.fkOrganizationId,
-								name: validated.name,
-								description: validated.description,
-								logo: validated.logo,
-								url: validated.url,
-								retired: validated.retired,
-								updatedAt: nowIso,
-							})
-							.where(eq(serviceProvider.id, filterId))
-							.returning()
-					: Promise.resolve([]),
-			() => {
-				const insertValues: typeof serviceProvider.$inferInsert = {
-					id: validated.id,
-					fkServiceId: validated.fkServiceId,
-					fkOrganizationId: validated.fkOrganizationId,
-					name: validated.name,
-					description: validated.description,
-					logo: validated.logo,
-					url: validated.url,
-					createdAt: validated.createdAt,
-					updatedAt: nowIso,
-					retired: validated.retired,
-				};
-				if (filterId) {
-					insertValues.id = filterId;
-				}
-				return db.insert(serviceProvider).values(insertValues).returning();
-			},
-			(r) => r,
+		return upsertCatalogEntityFromConfig(
+			providerCatalogConfig,
+			filter,
+			dataPayload,
+			nowIso,
 		);
 	}
 
