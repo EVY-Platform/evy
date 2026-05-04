@@ -9,9 +9,20 @@ import XCTest
 
 @MainActor
 final class InterpreterTests: XCTestCase {
+  private var testPrefix = ""
+
   override func setUpWithError() throws {
     try super.setUpWithError()
+    testPrefix = "test_page_\(UUID().uuidString):"
     try EVY.getUserData()
+    EVY.activeCachePrefix = testPrefix
+  }
+
+  override func tearDownWithError() throws {
+    EVY.cacheStore.deleteAll(keyPrefix: testPrefix)
+    EVY.activeCachePrefix = nil
+    EVY.draftStore.activeScopeId = nil
+    try super.tearDownWithError()
   }
 
   func testEvaluatesLogicalOperatorsWithLiterals() throws {
@@ -199,6 +210,162 @@ final class InterpreterTests: XCTestCase {
       try EVY.getDataFromText("{\(key)}"),
       .array([.string(firstId), .string(secondId)])
     )
+  }
+
+  func testResolveQueryParamsStoresSingleRawValueAsScalar() throws {
+    let key = uniqueKey("query_text")
+
+    EVY.resolveQueryParams([key: ["test"]])
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("test"))
+  }
+
+  func testResolveQueryParamsOverwritesPreviousPageData() throws {
+    let key = uniqueKey("param")
+    let prefix1 = "page_a:"
+    let prefix2 = "page_b:"
+
+    // Write to page A
+    EVY.activeCachePrefix = prefix1
+    EVY.resolveQueryParams([key: ["value_a"]])
+
+    // Write to page B with same key
+    EVY.activeCachePrefix = prefix2
+    EVY.resolveQueryParams([key: ["value_b"]])
+
+    // Page B data is correct
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value_b"))
+
+    // Page A data still exists (different prefix, inert)
+    EVY.activeCachePrefix = prefix1
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value_a"))
+  }
+
+  func testCacheStoreOverridesPublicStoreForActivePagePrefix() throws {
+    let key = uniqueKey("shared")
+    try store(.string("public"), at: key)
+
+    EVY.resolveQueryParams([key: ["cache"]])
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("cache"))
+  }
+
+  func testPublicStoreUsedWhenCacheHasNoActivePageValue() throws {
+    let key = uniqueKey("public_only")
+    try store(.string("public"), at: key)
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("public"))
+  }
+
+  func testActiveCachePrefixSelectsPageScopedValue() throws {
+    let key = uniqueKey("shared")
+    let pageOnePrefix = "page_one_\(UUID().uuidString):"
+    let pageTwoPrefix = "page_two_\(UUID().uuidString):"
+
+    EVY.activeCachePrefix = pageOnePrefix
+    EVY.resolveQueryParams([key: ["one"]])
+
+    EVY.activeCachePrefix = pageTwoPrefix
+    EVY.resolveQueryParams([key: ["two"]])
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("two"))
+
+    EVY.activeCachePrefix = pageOnePrefix
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("one"))
+  }
+
+  func testDraftStoreOverridesCacheStore() throws {
+    let key = uniqueKey("draft_over_cache")
+    let scopeId = "scope_\(UUID().uuidString)"
+
+    EVY.resolveQueryParams([key: ["cache"]])
+
+    let binding = try EVY.draftStore.binding(fromParsedProps: key, scopeId: scopeId)
+    try EVY.draftStore.upsert(
+      binding: binding,
+      data: try JSONEncoder().encode(EVYJson.string("draft"))
+    )
+    EVY.draftStore.activeScopeId = scopeId
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("draft"))
+  }
+
+  func testResolveQueryParamsEmptyIsNoOp() throws {
+    let key = uniqueKey("param")
+
+    EVY.resolveQueryParams([key: ["value"]])
+    EVY.resolveQueryParams([:])
+
+    // Data unchanged by empty call
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value"))
+  }
+
+  func testResolveQueryParamsResolvesEntityFromPublicStore() throws {
+    let entityKey = uniqueKey("entities")
+    let id = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Selected item"),
+        ])
+      ]),
+      at: "marketplace:\(entityKey)"
+    )
+
+    EVY.resolveQueryParams([entityKey: [id]])
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityKey).title}"),
+      .string("Selected item")
+    )
+  }
+
+  func testResolveParamsReadsFromCacheStore() throws {
+    EVY.resolveQueryParams([
+      "tag_ids": ["tag-1", "tag-2"],
+      "query_text": ["test"],
+    ])
+
+    let resolvedParams = EVY.resolveParams([
+      .interpolated(key: "tag_ids"),
+      .interpolated(key: "query_text"),
+    ])
+
+    XCTAssertEqual(resolvedParams["tag_ids"], .array([.string("tag-1"), .string("tag-2")]))
+    XCTAssertEqual(resolvedParams["query_text"], .string("test"))
+  }
+
+  func testGetValueFromTextResolvesCacheStoreData() throws {
+    EVY.resolveQueryParams(["query_text": ["test"]])
+
+    XCTAssertEqual(
+      try EVY.getValueFromText("{query_text}").toString(),
+      "test"
+    )
+  }
+
+  func testGetValueFromTextFallsBackToLiteralText() throws {
+    XCTAssertEqual(
+      try EVY.getValueFromText("plain text").toString(),
+      "plain text"
+    )
+  }
+
+  func testCacheStoreReturnsNilForUnknownKey() throws {
+    // Data was never written for this key
+    let missingKey = uniqueKey("missing")
+    XCTAssertThrowsError(try EVY.getDataFromText("{\(missingKey)}"))
+  }
+
+  func testResolveQueryParamsIsIdempotent() throws {
+    let key = uniqueKey("param")
+    EVY.resolveQueryParams([key: ["value"]])
+    EVY.resolveQueryParams([key: ["value"]])
+    EVY.resolveQueryParams([key: ["value"]])
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value"))
   }
 
   func testParseSourceParamsSeparatesBasePathAndParamEntries() {

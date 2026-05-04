@@ -355,6 +355,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     throw EVYParamError.invalidProps
   }
 
+  // 1. Check draft store — user's unsaved edits
   if let scopeId = EVY.draftStore.activeScopeId,
     let draftBinding = try? EVY.draftStore.binding(fromParsedProps: cleanProps, scopeId: scopeId),
     let draftRow = EVY.draftStore.draftIfPresent(binding: draftBinding)
@@ -366,6 +367,15 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     return try draftRow.decoded().parseProp(props: remaining)
   }
 
+  // 2. Check cache store with active page prefix — ephemeral page-scoped data
+  if let prefix = EVY.activeCachePrefix,
+     let cacheData = try? EVY.cacheStore.get(key: "\(prefix)\(firstProp)")
+  {
+    let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
+    return try cacheData.decoded().parseProp(props: remainingProps)
+  }
+
+  // 3. Fall back to persistent store — synced API data
   let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
   let dataObj = try store.getForBinding(key: firstProp)
   return try dataObj.decoded().parseProp(props: remainingProps)

@@ -17,6 +17,7 @@ struct EVYSearchSingle: View {
 
   let destination: String
   let placeholder: String
+  let initialValue: String
   let actions: [UI_RowAction]
 
   init(
@@ -24,10 +25,12 @@ struct EVYSearchSingle: View {
     resultTemplate: UI_Row?,
     destination: String,
     placeholder: String,
+    value: String = "",
     actions: [UI_RowAction],
   ) {
     self.destination = destination
     self.placeholder = placeholder
+    self.initialValue = value
     self.actions = actions
 
     _searchController = StateObject(
@@ -76,23 +79,27 @@ struct EVYSearchSingle: View {
     VStack {
       EVYSearchField(
         placeholder: placeholder,
+        value: initialValue,
         text: $value,
         showsLeadingIconWhenEmpty: true,
         showsClearButton: true,
+        onInitialText: { initialValue in
+          Task { await searchController.search(name: initialValue) }
+        },
+        onTextChange: { newValue in
+          if newValue == selected {
+            return
+          }
+          searchController.debouncedSearch(name: newValue)
+        },
         onClear: unselect
       )
-      .onChange(of: value) { _, newValue in
-        if newValue == selected {
-          return
-        }
-
-        searchController.debouncedSearch(name: newValue)
-      }
 
       EVYSearchResultsList(results: searchController.results) { result in
         select(result)
       }
     }
+
   }
 }
 

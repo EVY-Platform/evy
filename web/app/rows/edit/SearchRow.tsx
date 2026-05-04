@@ -39,6 +39,7 @@ export default defineRow("SearchRow", {
 			content: {
 				title: "Search row title",
 				placeholder: "placeholder",
+				value: "",
 				child: defaultSearchResultTemplateRow,
 			},
 		},

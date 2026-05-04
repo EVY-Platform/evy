@@ -45,7 +45,7 @@ public struct EVYSearchResult: Equatable {
   }
 }
 
-// MARK: - Search Result Template
+// MARK: - Datum Row Template Formatting
 private func deepCopyJSONValue(_ value: Any) -> Any {
   switch value {
   case let d as [String: Any]:
@@ -71,7 +71,7 @@ private func deepCopyJSONValue(_ value: Any) -> Any {
 }
 
 @MainActor
-private final class SearchTemplateFormatPrep {
+final class EVYDatumRowFormatter {
   private let rootPrototype: [String: Any]
   private static let displayKeys = [
     "title", "subtitle", "text", "label", "placeholder", "value",
@@ -130,39 +130,62 @@ private final class SearchTemplateFormatPrep {
     return formattedTemplate
   }
 
+  private static func formatDatumReferencesInJSONValue(_ value: Any, datum: EVYJson) -> Any {
+    switch value {
+    case let stringValue as String:
+      return formatDatumReferences(stringValue, datum: datum)
+    case let dictionaryValue as [String: Any]:
+      return dictionaryValue.mapValues { nestedValue in
+        formatDatumReferencesInJSONValue(nestedValue, datum: datum)
+      }
+    case let dictionaryValue as NSDictionary:
+      var formattedDictionary: [String: Any] = [:]
+      for case (let key as String, let nestedValue) in dictionaryValue {
+        formattedDictionary[key] = formatDatumReferencesInJSONValue(nestedValue, datum: datum)
+      }
+      return formattedDictionary
+    case let arrayValue as [Any]:
+      return arrayValue.map { nestedValue in
+        formatDatumReferencesInJSONValue(nestedValue, datum: datum)
+      }
+    case let arrayValue as NSArray:
+      return arrayValue.map { nestedValue in
+        formatDatumReferencesInJSONValue(nestedValue, datum: datum)
+      }
+    default:
+      return value
+    }
+  }
+
   init(template: UI_Row) throws {
     let data = try JSONEncoder().encode(template)
     guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-      throw EVYSearchFormattingError.invalidTemplate
+      throw EVYDatumRowFormattingError.invalidTemplate
     }
     rootPrototype = root
   }
 
   func formattedResult(datum: EVYJson) throws -> (row: UI_Row, value: String) {
-    guard var root = deepCopyJSONValue(rootPrototype) as? [String: Any],
-      var view = root["view"] as? [String: Any],
-      var content = view["content"] as? [String: Any]
+    guard var root = Self.formatDatumReferencesInJSONValue(
+      deepCopyJSONValue(rootPrototype),
+      datum: datum
+    ) as? [String: Any],
+      let view = root["view"] as? [String: Any],
+      let content = view["content"] as? [String: Any]
     else {
-      throw EVYSearchFormattingError.invalidTemplate
-    }
-    for key in Array(content.keys) {
-      if let raw = content[key] as? String {
-        content[key] = Self.formatDatumReferences(raw, datum: datum)
-      }
+      throw EVYDatumRowFormattingError.invalidTemplate
     }
     let value =
       Self.displayKeys
       .compactMap { content[$0] as? String }
       .first(where: { !$0.isEmpty }) ?? ""
-    view["content"] = content
-    root["view"] = view
     root["id"] = UUID().uuidString
     let out = try JSONSerialization.data(withJSONObject: root)
     return (try JSONDecoder().decode(UI_Row.self, from: out), value)
   }
 }
 
-enum EVYSearchFormattingError: Error {
+enum EVYDatumRowFormattingError: Error {
   case invalidTemplate
 }
 
@@ -174,7 +197,7 @@ class EVYSearchController: ObservableObject {
   private let sourceType: EVYSearchSourceType
   private let resultTemplate: UI_Row?
 
-  private var cachedFormatPrep: SearchTemplateFormatPrep?
+  private var cachedFormatPrep: EVYDatumRowFormatter?
   private var searchTask: Task<Void, Never>?
 
   @Published var results: [EVYSearchResult] = []
@@ -226,7 +249,7 @@ class EVYSearchController: ObservableObject {
     let resolvedParams = EVY.resolveParams(params)
     return EVYApiSearchFilter(
       ids: stringArray(from: resolvedParams["ids"]),
-      queryText: queryText,
+      queryText: queryText.isEmpty ? stringValue(from: resolvedParams["query_text"]) : queryText,
       tagIds: stringArray(from: resolvedParams["tag_ids"]),
       limit: intValue(from: resolvedParams["limit"]),
       offset: intValue(from: resolvedParams["offset"])
@@ -245,6 +268,18 @@ class EVYSearchController: ObservableObject {
     }
   }
 
+  private static func stringValue(from value: EVYJson?) -> String? {
+    guard let value else { return nil }
+    switch value {
+    case .string(let stringValue):
+      return stringValue.isEmpty ? nil : stringValue
+    case .array(let arrayValue):
+      return arrayValue.first?.toString()
+    default:
+      return value.toString()
+    }
+  }
+
   private static func intValue(from value: EVYJson?) -> Int? {
     guard let value else { return nil }
     switch value {
@@ -259,14 +294,14 @@ class EVYSearchController: ObservableObject {
     }
   }
 
-  private func loadFormatPrep() throws -> SearchTemplateFormatPrep {
+  private func loadFormatPrep() throws -> EVYDatumRowFormatter {
     if let prep = cachedFormatPrep {
       return prep
     }
     guard let resultTemplate else {
-      throw EVYSearchFormattingError.invalidTemplate
+      throw EVYDatumRowFormattingError.invalidTemplate
     }
-    let prep = try SearchTemplateFormatPrep(template: resultTemplate)
+    let prep = try EVYDatumRowFormatter(template: resultTemplate)
     cachedFormatPrep = prep
     return prep
   }

@@ -18,6 +18,7 @@ struct EVYSearchMultiple: View {
   let source: String
   let destination: String
   let placeholder: String
+  let value: String
   let resultTemplate: UI_Row?
   let actions: [UI_RowAction]
 
@@ -26,12 +27,14 @@ struct EVYSearchMultiple: View {
     resultTemplate: UI_Row?,
     destination: String,
     placeholder: String,
+    value: String = "",
     actions: [UI_RowAction],
   ) {
     self.source = source
     self.resultTemplate = resultTemplate
     self.destination = destination
     self.placeholder = placeholder
+    self.value = value
     self.actions = actions
 
     _searchController = StateObject(
@@ -107,12 +110,16 @@ struct EVYSearchMultiple: View {
     VStack {
       EVYSearchField(
         placeholder: placeholder,
-        text: $searchFieldValue
+        value: value,
+        text: $searchFieldValue,
+        onInitialText: { initialValue in
+          Task { await searchController.search(name: initialValue) }
+        },
+        onTextChange: { newValue in
+          searchController.debouncedSearch(name: newValue)
+        }
       )
       .padding(.horizontal, Constants.majorPadding)
-      .onChange(of: searchFieldValue) { _, newValue in
-        searchController.debouncedSearch(name: newValue)
-      }
 
       if selected.count > 0 {
         ScrollView(
@@ -142,7 +149,9 @@ struct EVYSearchMultiple: View {
         }
       }
     }
-    .onAppear { refresh() }
+    .onAppear {
+      refresh()
+    }
   }
 }
 

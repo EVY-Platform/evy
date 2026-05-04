@@ -6,12 +6,12 @@
 
 UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Reference data (dropdown options, tags, durations, etc.) is not embedded inside the flow JSON.
 
-- Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from:
-	- `"{items}"`, `"{conditions}"`, `"{selling_reasons}"`, `"{durations}"`, `"{areas}"`, `"{tags}"` — plural backend/catalog or in-memory keys the client resolves to entity data or option lists.
+- Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from. Use a non-empty source only for rows that load source-driven data such as option lists, search results, or calendars. If a row already reads explicit fields like `"{items.title}"` in `view.content`, the row source should be `""` because the binding resolves the resource directly.
+	- `"{conditions}"`, `"{selling_reasons}"`, `"{durations}"`, `"{areas}"`, `"{tags}"` — plural backend/catalog or in-memory keys the client resolves to option lists.
 	- `"{$api:tags}"` or `"{$api:marketplace:items:suggestions}"` — remote search / API-backed client source.
 	- `"{$api:marketplace:items:suggestions({\"tag_ids\", \"limit\": 1})}"` — parameterized API source. Bare keys like `"tag_ids"` are interpolated from page query params or existing data; key-value pairs like `"limit": 1` are static.
 	- `"{$local:address}"` — client-local source.
-	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, pure navigation buttons, static Info).
+	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{items.title}"`, pure navigation buttons, static Info, and containers that only group child rows).
 - Edit rows write into a draft via **`destination`**. Draft destinations always start with the plural resource name, for example `"{items.title}"`, `"{items.condition}"`, or `"{buildCurrency(items.price)}"`. The prefix tells the UI which resource draft owns the field.
 - Braced `{...}` expressions are used for all SDUI bindings. Prefixed `{$...:...}` bindings identify data that does not belong to backend flow state:
 	- `{$datum:value}` — current list/search result item field, used in row `format` strings and Search result templates.
@@ -217,3 +217,5 @@ Each row type’s `view.content` may include type-specific keys (e.g. `label`, `
 For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `{$datum:...}` as the placeholder for the current item, e.g. `{$datum:value}` or `{$datum:unit} {$datum:street}, {$datum:city}`.
 
 For **Search** rows, iOS renders each hit using `view.content.child` (typically an `Info` row template) instead of `format`; string fields in that child row are evaluated with `{$datum:...}` the same way. The web builder’s Search row stub does not render live results.
+
+For **ListContainer** rows, `view.content.children` remains the static list of rows displayed by the container. `view.content.child` is optional and acts as a dynamic template: when the ListContainer `source` resolves to an array, iOS renders one formatted copy of `child` per item before the static `children`. String fields in the dynamic child template are evaluated with `{$datum:...}` against the current source item, e.g. `{$datum:title}` or `{$datum:price.value}`. The web builder shows a sample preview of the dynamic child template.

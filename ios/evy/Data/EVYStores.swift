@@ -91,8 +91,8 @@ final class EVYDraftStore {
 
   var activeScopeId: String?
 
-  init() {
-    dataStore = EVYDataStore(name: "cache", inMemoryOnly: true)
+  init(dataStore: EVYDataStore) {
+    self.dataStore = dataStore
   }
 
   func drafts(forScopeId scopeId: String) throws -> [EVYData] {

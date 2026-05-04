@@ -43,7 +43,7 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow({
 			id: ROW_A,
 			type: "Info",
-			source: "{items}",
+			source: "",
 			actions: [],
 			view: {
 				content: {
@@ -114,6 +114,40 @@ describe("normalizeServerRow", () => {
 		});
 	});
 
+	it("normalizes nested child template for ListContainer", () => {
+		const n = normalizeServerRow({
+			id: ROW_A,
+			type: "ListContainer",
+			source: "{items}",
+			actions: [],
+			view: {
+				content: {
+					title: "List",
+					child: {
+						id: ROW_B,
+						type: "Info",
+						source: "",
+						actions: [],
+						view: {
+							content: {
+								title: "{$datum:title}",
+							},
+						},
+					} as unknown as ServerRow,
+					children: [],
+				},
+			},
+		} as ServerRow);
+
+		expect(n.view.content.child?.type).toBe("Info");
+		expect(n.view.content.child?.destination).toBe("");
+		expect(n.view.content.child?.view.content).toMatchObject({
+			title: "{$datum:title}",
+			subtitle: "",
+			icon: "",
+		});
+	});
+
 	it("uses default segments when segments key is omitted", () => {
 		const n = normalizeServerRow({
 			id: ROW_A,
@@ -168,12 +202,12 @@ describe("decodeFlows / encodeFlow", () => {
 						{
 							id: ROW_A,
 							type: "Text",
-							source: "{items}",
+							source: "",
 							actions: [],
 							view: {
 								content: {
 									title: "Hello",
-									text: "{x}",
+									text: "{items.title}",
 								},
 								max_lines: "",
 							},

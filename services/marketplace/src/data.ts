@@ -23,11 +23,8 @@ import {
 } from "evy-types/validators";
 
 const MARKETPLACE_SERVICE = "marketplace";
-const MAX_ITEM_TAG_SUGGESTIONS = 3;
-const MAX_ITEM_TAG_SUGGESTION_LIMIT = 100;
+const DEFAULT_LIMIT = 10;
 const MAX_ITEM_TAG_SUGGESTION_LEVENSHTEIN_DISTANCE = 3;
-const DEFAULT_ITEM_SEARCH_LIMIT = 20;
-const MAX_ITEM_SEARCH_LIMIT = 100;
 
 type MarketplaceSuggestion = {
 	id: string;
@@ -59,10 +56,7 @@ function normalizeItemSuggestionQuery(query: string): string {
 }
 
 function normalizeItemSearchLimit(limit: number | undefined): number {
-	if (limit === undefined) {
-		return DEFAULT_ITEM_SEARCH_LIMIT;
-	}
-	return Math.min(Math.max(limit, 1), MAX_ITEM_SEARCH_LIMIT);
+	return Math.min(limit ?? DEFAULT_LIMIT, DEFAULT_LIMIT);
 }
 
 function normalizeItemSearchOffset(offset: number | undefined): number {
@@ -70,10 +64,7 @@ function normalizeItemSearchOffset(offset: number | undefined): number {
 }
 
 function normalizeItemSuggestionLimit(limit: number | undefined): number {
-	if (limit === undefined) {
-		return MAX_ITEM_TAG_SUGGESTIONS;
-	}
-	return Math.min(Math.max(limit, 1), MAX_ITEM_TAG_SUGGESTION_LIMIT);
+	return Math.min(limit ?? DEFAULT_LIMIT, DEFAULT_LIMIT);
 }
 
 function itemHasAnyTagClause(tagIds: string[], tagAlias = "tag"): SQL | null {

@@ -176,8 +176,9 @@ struct ContentView: View {
           if let flow = flows.first(where: { $0.id == route.flowId }),
             let page = flow.getPageById(route.pageId)
           {
+            let _ = EVY.cacheQueryParams(route.query, forPageId: route.pageId)
+
             page
-              .environment(\.evyPageQuery, route.query)
               .environment(
                 \.evyDraftScopeId,
                 EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows)

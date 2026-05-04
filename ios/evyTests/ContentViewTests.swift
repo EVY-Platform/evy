@@ -101,7 +101,7 @@ final class ContentViewTests: XCTestCase {
             "footer": [
               "id": "submit-button",
               "type": "Button",
-              "source": "{items}",
+              "source": "",
               "view": [
                 "content": [
                   "title": "",

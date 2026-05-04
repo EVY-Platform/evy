@@ -32,6 +32,7 @@ struct EVYSearchRow: View {
         source: source,
         destination: destination,
         placeholder: view.content.placeholder,
+        value: view.content.value,
         resultTemplate: view.content.child,
         actions: actions
       )

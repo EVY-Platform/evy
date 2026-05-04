@@ -12,19 +12,10 @@ private struct EVYDraftScopeEnvironmentKey: EnvironmentKey {
   static let defaultValue: String? = nil
 }
 
-private struct EVYPageQueryEnvironmentKey: EnvironmentKey {
-  static let defaultValue: [String: [String]] = [:]
-}
-
 extension EnvironmentValues {
   var evyDraftScopeId: String? {
     get { self[EVYDraftScopeEnvironmentKey.self] }
     set { self[EVYDraftScopeEnvironmentKey.self] = newValue }
-  }
-
-  var evyPageQuery: [String: [String]] {
-    get { self[EVYPageQueryEnvironmentKey.self] }
-    set { self[EVYPageQueryEnvironmentKey.self] = newValue }
   }
 }
 
@@ -37,26 +28,23 @@ extension UI_Page: View {
 private struct EVYPageBody: View {
   let page: UI_Page
   @Environment(\.evyDraftScopeId) private var evyDraftScopeId
-  @Environment(\.evyPageQuery) private var evyPageQuery
 
   var body: some View {
     pageContent
       .onAppear {
+        EVY.activeCachePrefix = "\(page.id):"
         EVY.draftStore.activeScopeId = evyDraftScopeId
-        if !evyPageQuery.isEmpty {
-          EVY.resolveQueryParams(evyPageQuery)
-        }
         bootstrapDrafts(in: page, scopeId: evyDraftScopeId)
       }
-    .simultaneousGesture(
-      TapGesture().onEnded {
-        UIApplication.shared.sendAction(
-          #selector(UIResponder.resignFirstResponder),
-          to: nil,
-          from: nil,
-          for: nil
-        )
-      })
+      .simultaneousGesture(
+        TapGesture().onEnded {
+          UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+          )
+        })
   }
 
   @ViewBuilder

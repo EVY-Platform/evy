@@ -7,6 +7,19 @@
 
 import SwiftUI
 
+@MainActor
+enum EVYTextResolver {
+  static func resolveValue(from text: String, editing: Bool = false) -> EVYValue {
+    if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
+      return resolvedValue
+    }
+    if EVY.parsePropsFromText(text) == text {
+      return EVYValue(text, nil, nil)
+    }
+    return EVYValue("", nil, nil)
+  }
+}
+
 struct EVYTextField: View {
   let destination: String
   let placeholder: String
@@ -32,17 +45,17 @@ struct EVYTextField: View {
     self.displayValue = EVYState(
       watch: inputWatchTarget,
       setter: { _ in
-        Self.resolveValue(from: input)
+        EVYTextResolver.resolveValue(from: input)
       })
     self.editableValue = EVYState(
       watch: inputWatchTarget,
       setter: { _ in
-        Self.resolveValue(from: input, editing: true)
+        EVYTextResolver.resolveValue(from: input, editing: true)
       })
     self.placeholderValue = EVYState(
       watch: placeholderWatchTarget,
       setter: { _ in
-        Self.resolveValue(from: placeholder)
+        EVYTextResolver.resolveValue(from: placeholder)
       })
   }
 
@@ -52,16 +65,6 @@ struct EVYTextField: View {
       destination: destination,
       placeholder: placeholder,
       multiLine: false)
-  }
-
-  private static func resolveValue(from text: String, editing: Bool = false) -> EVYValue {
-    if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
-      return resolvedValue
-    }
-    if EVY.parsePropsFromText(text) == text {
-      return EVYValue(text, nil, nil)
-    }
-    return EVYValue("", nil, nil)
   }
 
   var body: some View {

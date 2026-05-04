@@ -14,6 +14,7 @@ struct EVYSearch: View {
   let source: String
   let destination: String
   let placeholder: String
+  let value: String
   let resultTemplate: UI_Row?
   let actions: [UI_RowAction]
 
@@ -21,12 +22,14 @@ struct EVYSearch: View {
     source: String,
     destination: String,
     placeholder: String,
+    value: String = "",
     resultTemplate: UI_Row?,
     actions: [UI_RowAction],
   ) {
     self.source = source
     self.destination = destination
     self.placeholder = placeholder
+    self.value = value
     self.resultTemplate = resultTemplate
     self.actions = actions
 
@@ -49,6 +52,7 @@ struct EVYSearch: View {
         resultTemplate: resultTemplate,
         destination: destination,
         placeholder: placeholder,
+        value: value,
         actions: actions,
       )
     } else {
@@ -57,6 +61,7 @@ struct EVYSearch: View {
         resultTemplate: resultTemplate,
         destination: destination,
         placeholder: placeholder,
+        value: value,
         actions: actions,
       )
     }
@@ -64,24 +69,39 @@ struct EVYSearch: View {
 }
 
 struct EVYSearchField: View {
-  let placeholder: String
-  @Binding var text: String
+  @Bindable private var placeholderValue: EVYState<EVYValue>
+  @Binding private var text: String
+  @State private var initialized = false
+
+  let initialValue: String
   let showsLeadingIconWhenEmpty: Bool
   let showsClearButton: Bool
+  let onInitialText: (String) -> Void
+  let onTextChange: (String) -> Void
   let onClear: () -> Void
 
   init(
     placeholder: String,
+    value: String = "",
     text: Binding<String>,
     showsLeadingIconWhenEmpty: Bool = false,
     showsClearButton: Bool = false,
+    onInitialText: @escaping (String) -> Void = { _ in },
+    onTextChange: @escaping (String) -> Void = { _ in },
     onClear: @escaping () -> Void = {}
   ) {
-    self.placeholder = placeholder
+    self.initialValue = value
     _text = text
     self.showsLeadingIconWhenEmpty = showsLeadingIconWhenEmpty
     self.showsClearButton = showsClearButton
+    self.onInitialText = onInitialText
+    self.onTextChange = onTextChange
     self.onClear = onClear
+
+    let watchTarget = EVY.watchTarget(for: placeholder)
+    self.placeholderValue = EVYState(watch: watchTarget) { _ in
+      EVYTextResolver.resolveValue(from: placeholder)
+    }
   }
 
   var body: some View {
@@ -91,14 +111,28 @@ struct EVYSearchField: View {
           .padding(.leading, Constants.minorPadding)
       }
 
-      TextField(placeholder, text: $text)
+      TextField(placeholderValue.value.toString(), text: $text)
         .font(.evy)
 
       if showsClearButton, !text.isEmpty {
         Image(uiImage: Lucide.x)
           .padding(.trailing, Constants.minorPadding)
-          .onTapGesture { onClear() }
+          .onTapGesture {
+            text = ""
+            onClear()
+          }
       }
+    }
+    .onAppear {
+      guard !initialized else { return }
+      initialized = true
+      let resolvedValue = EVYTextResolver.resolveValue(from: initialValue).toString()
+      guard !resolvedValue.isEmpty else { return }
+      text = resolvedValue
+      onInitialText(resolvedValue)
+    }
+    .onChange(of: text) { _, newValue in
+      onTextChange(newValue)
     }
     .padding(
       EdgeInsets(

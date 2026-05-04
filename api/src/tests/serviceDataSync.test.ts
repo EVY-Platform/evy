@@ -118,7 +118,7 @@ function testFlow(): UI_Flow {
 				],
 				footer: testRow({
 					type: "Button",
-					source: "{items}",
+					source: "",
 					actions: [{ condition: "", false: "", true: "{create(items)}" }],
 					view: {
 						content: {
@@ -242,7 +242,7 @@ describe("expression parser utility", () => {
 });
 
 describe("service data sync utilities", () => {
-	it("extracts candidates recursively from source, destination, actions, nested child rows, nested children arrays, and footers", () => {
+	it("extracts candidates from actions and destinations without relying on row source", () => {
 		const candidates = extractCandidatesFromFlows([testFlow()]);
 
 		expect(candidates.has("items")).toBe(true);
@@ -257,6 +257,35 @@ describe("service data sync utilities", () => {
 		expect(candidates.has("formatCurrency")).toBe(false);
 		expect(candidates.has("create")).toBe(false);
 		expect(candidates.has("navigate")).toBe(false);
+	});
+
+	it("extracts action resource candidates from rows with empty source", () => {
+		const candidates = extractCandidatesFromFlows([
+			{
+				id: crypto.randomUUID(),
+				name: "Empty source action flow",
+				pages: [
+					{
+						id: crypto.randomUUID(),
+						title: "Page",
+						rows: [],
+						footer: testRow({
+							type: "Button",
+							source: "",
+							actions: [{ condition: "", false: "", true: "{create(items)}" }],
+							view: {
+								content: {
+									title: "",
+									label: "Create",
+								},
+							},
+						}),
+					},
+				],
+			},
+		]);
+
+		expect(candidates.has("items")).toBe(true);
 	});
 
 	it("maps plural resource candidates to services", () => {

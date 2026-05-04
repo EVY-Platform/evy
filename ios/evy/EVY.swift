@@ -44,7 +44,14 @@ struct EVY {
 
   static let publicStore = EVYDataStore(name: "public")
   static let privateStore = EVYDataStore(name: "private")
-  static let draftStore = EVYDraftStore()
+  static let cacheStore = EVYDataStore(name: "cache", inMemoryOnly: true)
+  static let draftStore = EVYDraftStore(dataStore: cacheStore)
+  static var activeCachePrefix: String?
+
+  static func cacheQueryParams(_ query: [String: [String]], forPageId pageId: String) {
+    activeCachePrefix = "\(pageId):"
+    resolveQueryParams(query)
+  }
 
   static func stripLocalPrefix(_ props: String) -> String {
     guard props.hasPrefix(localPrefixWithSeparator) else {
@@ -97,16 +104,24 @@ struct EVY {
     }
   }
 
-  static func resolveQueryParams(_ query: [String: [String]]) {
+  @discardableResult
+  static func resolveQueryParams(_ query: [String: [String]]) -> Set<String> {
+    guard let prefix = activeCachePrefix else { return [] }
+    var writtenKeys = Set<String>()
+
     for (queryKey, ids) in query {
-      if storeResolvedEntityQueryParam(queryKey: queryKey, ids: ids) {
+      if storeResolvedEntityQueryParam(prefix: prefix, queryKey: queryKey, ids: ids) {
+        writtenKeys.insert(queryKey)
         continue
       }
 
-      if publicStore.serviceName(forSyncedResource: queryKey) == nil {
-        storeRawQueryParam(queryKey: queryKey, ids: ids)
+      if publicStore.serviceName(forSyncedResource: queryKey) == nil,
+         storeRawQueryParam(prefix: prefix, queryKey: queryKey, ids: ids) {
+        writtenKeys.insert(queryKey)
       }
     }
+
+    return writtenKeys
   }
 
   static func resolveParams(_ params: [EVYParamEntry]) -> [String: EVYJson] {
@@ -124,7 +139,7 @@ struct EVY {
     return resolvedParams
   }
 
-  private static func storeResolvedEntityQueryParam(queryKey: String, ids: [String]) -> Bool {
+  private static func storeResolvedEntityQueryParam(prefix: String, queryKey: String, ids: [String]) -> Bool {
     let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
     guard let id = ids.first,
       let collectionData = collectionData(for: queryKey, serviceName: serviceName),
@@ -136,16 +151,25 @@ struct EVY {
       return false
     }
 
-    try? publicStore.upsert(key: queryKey, value: encodedMatchingValue)
+    try? cacheStore.upsert(key: "\(prefix)\(queryKey)", value: encodedMatchingValue)
     return true
   }
 
-  private static func storeRawQueryParam(queryKey: String, ids: [String]) {
-    let rawQueryValue = EVYJson.array(ids.map { .string($0) })
-    guard let encodedRawQueryValue = try? JSONEncoder().encode(rawQueryValue) else {
-      return
+  private static func storeRawQueryParam(prefix: String, queryKey: String, ids: [String]) -> Bool {
+    let rawQueryValue: EVYJson = if ids.count == 1, let id = ids.first {
+      .string(id)
+    } else {
+      .array(ids.map { .string($0) })
     }
-    try? publicStore.upsert(key: queryKey, value: encodedRawQueryValue)
+    guard let encodedRawQueryValue = try? JSONEncoder().encode(rawQueryValue) else {
+      return false
+    }
+    do {
+      try cacheStore.upsert(key: "\(prefix)\(queryKey)", value: encodedRawQueryValue)
+      return true
+    } catch {
+      return false
+    }
   }
 
   private static func collectionData(for collectionKey: String, serviceName: String?) -> EVYData? {

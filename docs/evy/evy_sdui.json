@@ -31,7 +31,7 @@
 					"source": "{$api:marketplace:items:suggestions({\"limit\": 3})}",
 					"actions": [
 						{
-							"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{\"items\":[\"12401f50-cf1a-45d7-a112-2e68a2070466\"]})}",
+							"true": "{navigate(5d5650f6-1650-468c-8d60-c5c72bcf4a3b,99a2c26c-c8b0-448f-845a-26da1d631b0f,{\"tag_ids\":[\"8e1cd2bf-d94f-4bb0-bd68-fc74434deabe\"], \"query_text\": \"test\"})}",
 							"false": "",
 							"condition": ""
 						}
@@ -43,21 +43,21 @@
 			"footer": {
 				"id": "cc86c53a-170d-4800-8897-8f99f3697053",
 				"type": "Button",
-				"source": "",
-				"destination": "",
-				"actions": [
-					{
-						"condition": "",
-						"false": "",
-						"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}"
-					}
-				],
 				"view": {
 					"content": {
-						"title": "",
-						"label": "Sell something"
+						"label": "Sell something",
+						"title": ""
 					}
-				}
+				},
+				"source": "",
+				"actions": [
+					{
+						"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}",
+						"false": "",
+						"condition": ""
+					}
+				],
+				"destination": ""
 			}
 		}
 	]
