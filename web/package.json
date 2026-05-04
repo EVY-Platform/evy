@@ -21,7 +21,6 @@
 		"@atlaskit/pragmatic-drag-and-drop": "^1.7.10",
 		"@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^2.1.5",
 		"@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
-		"@atlaskit/primitives": "^19.0.0",
 		"lucide-react": "^1.8.0",
 		"react": "^19.2.5",
 		"react-dom": "^19.2.5",

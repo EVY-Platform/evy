@@ -10,15 +10,14 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.12",
-		"chokidar": "^4.0.3",
-		"decamelize": "^6.0.1",
-		"drizzle-orm": "^0.45.2",
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",
-		"json-schema-to-typescript": "^15.0.4",
-		"quicktype": "^23.2.6"
+		"decamelize": "^6.0.1",
+		"drizzle-orm": "^0.45.2",
+		"json-schema-to-typescript": "^15.0.4"
 	},
 	"dependencies": {
-		"postgres": "^3.4.9"
+		"postgres": "^3.4.9",
+		"quicktype": "^23.2.6"
 	}
 }
