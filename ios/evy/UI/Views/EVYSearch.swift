@@ -74,7 +74,8 @@ struct EVYSearch: View {
 
       let formatter = try EVYDatumRowFormatter(template: resultTemplate)
       allResults = dataRows.compactMap { datum in
-        guard let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum) else {
+        guard let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum)
+        else {
           return nil
         }
         let id = datum.identifierValue()
