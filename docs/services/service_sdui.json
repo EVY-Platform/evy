@@ -16,7 +16,7 @@
 						"view": {
 							"content": {
 								"title": "My item is called",
-								"text": "{items.title}"
+								"text": "{item.title}"
 							},
 							"max_lines": ""
 						}
@@ -55,7 +55,7 @@
 						"id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
 						"type": "SelectPhoto",
 						"source": "",
-						"destination": "{items.photo_ids}",
+						"destination": "{item.photo_ids}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -71,7 +71,7 @@
 						"id": "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
 						"type": "Input",
 						"source": "",
-						"destination": "{items.title}",
+						"destination": "{item.title}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -85,7 +85,7 @@
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
 						"type": "Input",
 						"source": "",
-						"destination": "{buildCurrency(items.price)}",
+						"destination": "{buildCurrency(item.price)}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -99,7 +99,7 @@
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
 						"type": "Dropdown",
 						"source": "{conditions}",
-						"destination": "{items.condition}",
+						"destination": "{item.condition}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -113,7 +113,7 @@
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
 						"type": "Dropdown",
 						"source": "{selling_reasons}",
-						"destination": "{items.selling_reason}",
+						"destination": "{item.selling_reason}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -137,7 +137,7 @@
 										"id": "b66e136d-828d-4ed0-ae27-cdc48f7cbffd",
 										"type": "Input",
 										"source": "",
-										"destination": "{items.width}",
+										"destination": "{item.width}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -151,7 +151,7 @@
 										"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
 										"type": "Input",
 										"source": "",
-										"destination": "{items.height}",
+										"destination": "{item.height}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -165,7 +165,7 @@
 										"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
 										"type": "Input",
 										"source": "",
-										"destination": "{items.length}",
+										"destination": "{item.length}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -243,7 +243,7 @@
 						"id": "c9d0e1f2-a3b4-4c5d-8e7f-8a9b0c1d2e3f",
 						"type": "TextArea",
 						"source": "",
-						"destination": "{items.description}",
+						"destination": "{item.description}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -330,7 +330,7 @@
 																	"id": "22222222-2222-4222-8222-222222222204",
 																	"type": "TextAction",
 																	"source": "",
-																	"destination": "{items.pickup_address}",
+																	"destination": "{item.pickup_address}",
 																	"actions": [],
 																	"view": {
 																		"content": {
@@ -377,7 +377,7 @@
 														"id": "22222222-2222-4222-8222-222222222206",
 														"type": "Input",
 														"source": "",
-														"destination": "{items.address_instructions}",
+														"destination": "{item.address_instructions}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -405,7 +405,7 @@
 														"id": "22222222-2222-4222-8222-222222222208",
 														"type": "Calendar",
 														"source": "",
-														"destination": "{items.pickup_timeslots}",
+														"destination": "{item.pickup_timeslots}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -447,7 +447,7 @@
 														"id": "22222222-2222-4222-8222-222222222211",
 														"type": "Input",
 														"source": "",
-														"destination": "{items.delivery_fee}",
+														"destination": "{item.delivery_fee}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -475,7 +475,7 @@
 														"id": "22222222-2222-4222-8222-222222222213",
 														"type": "InlinePicker",
 														"source": "{durations}",
-														"destination": "{items.distance}",
+														"destination": "{item.distance}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -502,7 +502,7 @@
 														"id": "22222222-2222-4222-8222-222222222215",
 														"type": "Calendar",
 														"source": "",
-														"destination": "{items.delivery_timeslots}",
+														"destination": "{item.delivery_timeslots}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -544,7 +544,7 @@
 														"id": "22222222-2222-4222-8222-222222222218",
 														"type": "Input",
 														"source": "",
-														"destination": "{items.shipping_source_postal_code}",
+														"destination": "{item.shipping_source_postal_code}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -572,7 +572,7 @@
 														"id": "22222222-2222-4222-8222-222222222220",
 														"type": "InlinePicker",
 														"source": "{areas}",
-														"destination": "{items.shipping_destination_areas}",
+														"destination": "{item.shipping_destination_areas}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -585,7 +585,7 @@
 														"id": "22222222-2222-4222-8222-222222222221",
 														"type": "Input",
 														"source": "",
-														"destination": "{items.weight}",
+														"destination": "{item.weight}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -656,7 +656,7 @@
 										"id": "33333333-3333-4333-8333-333333333301",
 										"type": "TextSelect",
 										"source": "",
-										"destination": "{items.payment_cash}",
+										"destination": "{item.payment_cash}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -669,7 +669,7 @@
 										"id": "33333333-3333-4333-8333-333333333302",
 										"type": "TextSelect",
 										"source": "",
-										"destination": "{items.payment_app}",
+										"destination": "{item.payment_app}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -732,7 +732,7 @@
 						{
 							"condition": "",
 							"false": "",
-							"true": "{create(items)}"
+							"true": "{create(item)}"
 						}
 					],
 					"view": {

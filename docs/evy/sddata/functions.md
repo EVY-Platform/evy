@@ -192,7 +192,7 @@ Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
 
 ## Builder functions
 
-Implemented in iOS. These are not used inside `{…}` display strings the same way as formatters. They appear as the destination when persisting typed field text into structured data: the client parses the destination prop (e.g. `{buildCurrency(items.price)}`), passes the first argument as the prop path to the value being updated, and supplies the user’s typed string as the second input when committing the field (see [`ios/evy/EVY.swift`](../../../ios/evy/EVY.swift) `updateValue`).
+Implemented in iOS. These are not used inside `{…}` display strings the same way as formatters. They appear as the destination when persisting typed field text into structured data: the client parses the destination prop (e.g. `{buildCurrency(item.price)}`), passes the first argument as the prop path to the value being updated, and supplies the user’s typed string as the second input when committing the field (see [`ios/evy/EVY.swift`](../../../ios/evy/EVY.swift) `updateValue`).
 
 #### buildCurrency
 
@@ -202,7 +202,7 @@ Builds a price JSON object `{ "currency", "value" }` from the current field text
 -   `value`: parsed from the typed string (empty → empty string; otherwise int, decimal, or string as appropriate).
 
 ```
-Destination pattern: {buildCurrency(items.price)}
+Destination pattern: {buildCurrency(item.price)}
 Typed text: "13.50"
 Resulting data: { "currency": "AUD", "value": "13.50" }  // shape; actual storage is JSON-encoded
 ```

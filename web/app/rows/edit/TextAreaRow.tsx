@@ -15,7 +15,7 @@ export default defineRow("TextAreaRow", {
 				placeholder: "placeholder",
 			},
 		},
-		destination: "{items.description}",
+		destination: "{item.description}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

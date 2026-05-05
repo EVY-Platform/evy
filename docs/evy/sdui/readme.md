@@ -6,11 +6,11 @@
 
 UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Reference data (dropdown options, tags, durations, etc.) is not embedded inside the flow JSON.
 
-- Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from. Use a non-empty source only for rows that load source-driven data such as option lists, search results, or calendars. If a row already reads explicit fields like `"{items.title}"` in `view.content`, the row source should be `""` because the binding resolves the resource directly.
+- Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from. Use a non-empty source only for rows that load source-driven data such as option lists, search results, or calendars. If a row already reads explicit fields like `"{item.title}"` in `view.content`, the row source should be `""` because the binding resolves the resource directly.
 	- `"{conditions}"`, `"{selling_reasons}"`, `"{durations}"`, `"{areas}"`, `"{tags}"`, `"{items}"` — plural backend/catalog or in-memory keys the client resolves to option lists or entity arrays. Search and dynamic ListContainer rows read the resource named by `source`.
 	- `"{$local:address}"` — client-local source.
-	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{items.title}"`, pure navigation buttons, static Info, and containers that only group static child rows).
-- Edit rows write into a draft via **`destination`**. Draft destinations always start with the plural resource name, for example `"{items.title}"`, `"{items.condition}"`, or `"{buildCurrency(items.price)}"`. The prefix tells the UI which resource draft owns the field.
+	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{item.title}"`, pure navigation buttons, static Info, and containers that only group static child rows).
+- Edit rows write into a draft via **`destination`**. Draft destinations always start with the plural resource name, for example `"{item.title}"`, `"{item.condition}"`, or `"{buildCurrency(item.price)}"`. The prefix tells the UI which resource draft owns the field.
 - Braced `{...}` expressions are used for all SDUI bindings. Prefixed `{$...:...}` bindings identify data that does not belong to backend flow state:
 	- `{$datum:value}` — current list/search result item field, used in row `format` strings and Search result templates.
 	- `{$local:resource}` — client-local source.
@@ -21,7 +21,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 - Flow bindings use the plural resource name without the service prefix (`{items}`, `{conditions}`, `{tags}`). The client data layer resolves those bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
 - `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
-So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is written to `destination: "{items.distance}"`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
+So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is written to `destination: "{item.distance}"`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
 
 ## Flow
 
@@ -56,14 +56,14 @@ Rows are what are put into pages. They are the building block of the EVY server-
 ### Base features
 
 -   All values are strings, there are no types as this is dynamic on the apps
-    -   eg: "title": "My title", could also be "title": "{items.title}"
+    -   eg: "title": "My title", could also be "title": "{item.title}"
 -   All strings can include:
     -   variables surrounded with curly braces: "Hello {name}, how are you?"
     -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!" (iOS and web parse `::icon-name::` only; they do not expand Slack-style `:emoji:` shortcodes)
 -   [ x ]
     -   Denotes a type array of x
 -   Objects and arrays
-    -   When objects or arrays are interpolated (e.g. `{items.tags}`), the UI runtime resolves the binding to structured data (e.g. a JSON array of tag objects) before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
+    -   When objects or arrays are interpolated (e.g. `{item.tags}`), the UI runtime resolves the binding to structured data (e.g. a JSON array of tag objects) before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
 
 ### Row schema explained
 
@@ -87,14 +87,14 @@ Rows are what are put into pages. They are the building block of the EVY server-
     },
     // Where the row reads option/list/entity data from (required string; use "" if unused).
     "source": "string",
-    // Where input data is stored in a draft. Use plural resource paths such as "{items.title}".
+    // Where input data is stored in a draft. Use plural resource paths such as "{item.title}".
     "destination": "string",
 
     // Actions are required on every row and default to an empty array
     "actions": [{
         "condition": "{length(title) > 0}",
         "false": "{highlight_required(title)}",
-        "true": "{create(items)}"
+        "true": "{create(item)}"
     }]
 }
 ```
@@ -132,7 +132,7 @@ Supported action functions:
 | Function | Meaning |
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}` |
-| `create(model)` | Submit / create domain entity, e.g. `{create(items)}` |
+| `create(model)` | Submit / create domain entity, e.g. `{create(item)}` |
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a JSON object, e.g. `{navigate(flowId, pageId, {"items": [$datum.id]})}`. |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
@@ -192,7 +192,7 @@ Submit:
 {
 	"condition": "",
 	"false": "",
-	"true": "{create(items)}"
+	"true": "{create(item)}"
 }
 ```
 

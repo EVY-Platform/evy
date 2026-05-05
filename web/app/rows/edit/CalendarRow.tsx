@@ -10,11 +10,11 @@ export default defineRow("CalendarRow", {
 		view: {
 			content: {
 				title: "Calendar row title",
-				primary: "{items.transfer_options.pickup.timeslots}",
-				secondary: "{items.transfer_options.delivery.timeslots}",
+				primary: "{item.transfer_options.pickup.timeslots}",
+				secondary: "{item.transfer_options.delivery.timeslots}",
 			},
 		},
-		destination: "{items.pickup_timeslots}",
+		destination: "{item.pickup_timeslots}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

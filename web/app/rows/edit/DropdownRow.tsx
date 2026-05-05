@@ -15,7 +15,7 @@ export default defineRow("DropdownRow", {
 				format: "{$datum:value}",
 			},
 		},
-		destination: "{items.condition}",
+		destination: "{item.condition}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

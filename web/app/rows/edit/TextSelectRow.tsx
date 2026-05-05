@@ -15,7 +15,7 @@ export default defineRow("TextSelectRow", {
 				text: "placeholder",
 			},
 		},
-		destination: "{items.payment_cash}",
+		destination: "{item.payment_cash}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

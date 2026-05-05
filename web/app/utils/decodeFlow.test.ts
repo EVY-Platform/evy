@@ -208,7 +208,7 @@ describe("decodeFlows / encodeFlow", () => {
 							view: {
 								content: {
 									title: "Hello",
-									text: "{items.title}",
+									text: "{item.title}",
 								},
 								max_lines: "",
 							},
