@@ -3,6 +3,7 @@ import {
 	getServiceNames,
 	getServiceResources,
 } from "evy-types/rpcRequestHelpers";
+import { ensureRegistryInitialized } from "./services";
 
 type ResourceEntry = {
 	singular: string;
@@ -21,6 +22,8 @@ export type ResourcesResponse = {
  * Computed on every call from the runtime registry (no stale cache).
  */
 export async function resources(): Promise<ResourcesResponse> {
+	await ensureRegistryInitialized();
+
 	const resourcesMap: Record<string, ResourceEntry> = {};
 	const resourcesByService: Record<string, string[]> = {};
 

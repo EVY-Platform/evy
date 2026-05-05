@@ -24,11 +24,20 @@ extension EVY {
       service: service,
       lastSyncTime: lastSyncTime
     )
+
+    #if DEBUG
+      print("[EVY] Calling syncServiceData for \(service) since \(lastSyncTime)")
+    #endif
+
     let response = try await EVYAPIManager.shared.fetch(
       method: "syncServiceData",
       params: params,
       expecting: SyncServiceDataResponse.self
     )
+
+    #if DEBUG
+      print("[EVY] syncServiceData returned \(response.data.count) resource rows for \(service)")
+    #endif
 
     for row in response.data {
       let key = "\(row.service):\(row.resource)"

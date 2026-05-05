@@ -372,7 +372,7 @@ async function initializeServiceRegistry(): Promise<void> {
 
 let registryInitializationPromise: Promise<void> | null = null;
 
-async function ensureRegistryInitialized(): Promise<void> {
+export async function ensureRegistryInitialized(): Promise<void> {
 	if (!registryInitializationPromise) {
 		registryInitializationPromise = initializeServiceRegistry();
 	}

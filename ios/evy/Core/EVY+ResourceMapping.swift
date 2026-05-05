@@ -22,6 +22,10 @@ extension EVY {
 
     applyResourceMapping(response.resources, resourcesByService: response.resourcesByService)
 
+    #if DEBUG
+      print("[EVY] Syncable services: \(syncableServices)")
+    #endif
+
     // Persist to UserDefaults for offline use
     if let encoded = try? JSONEncoder().encode(response.resources) {
       UserDefaults.standard.set(encoded, forKey: "cachedResourceMapping")
@@ -30,8 +34,8 @@ extension EVY {
 
   static func loadCachedResourceMapping() {
     guard cachedResourceMapping.isEmpty,
-          let data = UserDefaults.standard.data(forKey: "cachedResourceMapping"),
-          let mapping = try? JSONDecoder().decode([String: ResourceEntry].self, from: data)
+      let data = UserDefaults.standard.data(forKey: "cachedResourceMapping"),
+      let mapping = try? JSONDecoder().decode([String: ResourceEntry].self, from: data)
     else { return }
     applyResourceMapping(mapping, resourcesByService: nil)
   }
@@ -82,7 +86,9 @@ extension EVY {
     inflectLastSegment(of: resourceKey, to: .singular)
   }
 
-  private static func inflectLastSegment(of key: String, to number: Morphology.GrammaticalNumber) -> String {
+  private static func inflectLastSegment(of key: String, to number: Morphology.GrammaticalNumber)
+    -> String
+  {
     let parts = key.split(separator: "_").map(String.init)
     guard let lastPart = parts.last else { return key }
     return (parts.dropLast() + [inflect(lastPart, to: number)]).joined(separator: "_")
@@ -93,7 +99,8 @@ extension EVY {
     morphology.number = number
 
     var attrStr = AttributedString(word)
-    attrStr[AttributeScopes.FoundationAttributes.InflectionRuleAttribute.self] = InflectionRule(morphology: morphology)
+    attrStr[AttributeScopes.FoundationAttributes.InflectionRuleAttribute.self] = InflectionRule(
+      morphology: morphology)
 
     let inflected = attrStr.inflected()
     return String(inflected.characters)
