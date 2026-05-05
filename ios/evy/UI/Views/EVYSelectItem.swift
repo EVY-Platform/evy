@@ -192,7 +192,7 @@ private struct EVYSelectItemPreview: View {
         EVYSelectList(
           options: arrayValue,
           format: "{$datum:value}",
-          destination: "{items.selling_reason}")
+          destination: "{item.selling_reason}")
       default:
         Text("error")
       }

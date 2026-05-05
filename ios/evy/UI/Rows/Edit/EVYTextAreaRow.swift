@@ -42,12 +42,12 @@ struct EVYTextAreaRow: View {
         "id": "preview-textarea-row",
         "type": "TextArea",
         "source": "",
-        "destination": "{items.description}",
+        "destination": "{item.description}",
         "actions": [],
         "view": {
           "content": {
             "title": "Description",
-            "value": "{items.description}",
+            "value": "{item.description}",
             "placeholder": "Describe your item in detail"
           }
         }

@@ -1,3 +1,4 @@
+import pluralize from "pluralize";
 import type {
 	GetRequest,
 	GetResponse,
@@ -50,6 +51,12 @@ export function discoverReferencedServices(flows: UI_Flow[]): Set<string> {
 	return services;
 }
 
+function resourceCandidatesFor(candidate: string): string[] {
+	const plural = pluralize.plural(candidate);
+	const singular = pluralize.singular(candidate);
+	return [...new Set([candidate, plural, singular])];
+}
+
 export function resolveCandidateToService(candidate: string): string | null {
 	if (!candidate) {
 		return null;
@@ -57,8 +64,10 @@ export function resolveCandidateToService(candidate: string): string | null {
 
 	for (const serviceName of SYNCABLE_SERVICES) {
 		const resources = RESOURCES_BY_SERVICE[serviceName] as readonly string[];
-		if (resources.includes(candidate)) {
-			return serviceName;
+		for (const resourceCandidate of resourceCandidatesFor(candidate)) {
+			if (resources.includes(resourceCandidate)) {
+				return serviceName;
+			}
 		}
 	}
 

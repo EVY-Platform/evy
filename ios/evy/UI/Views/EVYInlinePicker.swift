@@ -111,6 +111,6 @@ private struct EVYInlinePickerPreview: View {
       title: "Duration",
       data: "{durations}",
       format: "{$datum:value}",
-      destination: "{items.duration}")
+      destination: "{item.duration}")
   }
 }

@@ -10,7 +10,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 	- `"{conditions}"`, `"{selling_reasons}"`, `"{durations}"`, `"{areas}"`, `"{tags}"`, `"{items}"` — plural backend/catalog or in-memory keys the client resolves to option lists or entity arrays. Search and dynamic ListContainer rows read the resource named by `source`.
 	- `"{$local:address}"` — client-local source.
 	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{item.title}"`, pure navigation buttons, static Info, and containers that only group static child rows).
-- Edit rows write into a draft via **`destination`**. Draft destinations always start with the plural resource name, for example `"{item.title}"`, `"{item.condition}"`, or `"{buildCurrency(item.price)}"`. The prefix tells the UI which resource draft owns the field.
+- Edit rows write into a draft via **`destination`**. Draft destinations always start with the singular entity key, for example `"{item.title}"`, `"{item.condition}"`, or `"{buildCurrency(item.price)}"`. The prefix tells the UI which resource draft owns the field.
 - Braced `{...}` expressions are used for all SDUI bindings. Prefixed `{$...:...}` bindings identify data that does not belong to backend flow state:
 	- `{$datum:value}` — current list/search result item field, used in row `format` strings and Search result templates.
 	- `{$local:resource}` — client-local source.
@@ -18,7 +18,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 - `syncServiceData` accepts `{ "service": "marketplace", "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows. Clients get all service resources changed since `lastSyncTime`.
 - Clients should store synced rows under service-qualified keys such as `marketplace:items` and `marketplace:conditions`. Navigate actions pass query params as the optional third `navigate` argument (for example, `{navigate(flowId, pageId, {"items": [$datum.id]})}`). Query values must use a JSON object (`{"key": ["id"]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same plural key. If no synced collection exists for a query key, clients keep the raw string array under that key.
 - iOS draft scope IDs and draft cache keys are internal draft-store identifiers; see [iOS README § Draft scopes and draft cache keys](../../../ios/README.md#draft-scopes-and-draft-cache-keys).
-- Flow bindings use the plural resource name without the service prefix (`{items}`, `{conditions}`, `{tags}`). The client data layer resolves those bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
+- Collection/list sources remain plural (for example, `{items}`, `{conditions}`, `{tags}`); direct entity/draft attributes use singular keys such as `{item.title}` and `{create(item)}`. The client data layer resolves collection bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
 - `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
 So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is written to `destination: "{item.distance}"`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
@@ -87,7 +87,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
     },
     // Where the row reads option/list/entity data from (required string; use "" if unused).
     "source": "string",
-    // Where input data is stored in a draft. Use plural resource paths such as "{item.title}".
+    // Where input data is stored in a draft. Use singular entity keys such as "{item.title}".
     "destination": "string",
 
     // Actions are required on every row and default to an empty array

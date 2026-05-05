@@ -344,7 +344,7 @@ class E2ETestBase: XCTestCase {
               "view": [
                 "content": [
                   "title": "My item is called",
-                  "text": "{items.title}",
+                  "text": "{item.title}",
                 ],
                 "max_lines": "",
               ],
@@ -604,9 +604,15 @@ final class WebSocketE2ETests: E2ETestBase {
     let scrollView = app.scrollViews.firstMatch
     XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
 
+    let titleFieldId = "textField_{item.title}"
+    let priceFieldIds = ["textField_{item.price}", "textField_{buildCurrency(item.price)}"]
+    let priceTokens = ["item.price", "buildCurrency"]
+    let widthFieldId = "textField_{item.width}"
+    let widthTokens = ["item.width"]
+
     // Title field
-    guard let titleTextField = findElement(identifier: "textField_{items.title}") else {
-      XCTFail("Title text field should exist with identifier 'textField_{items.title}'")
+    guard let titleTextField = findElement(identifier: titleFieldId) else {
+      XCTFail("Title text field should exist with identifier '\(titleFieldId)'")
       return
     }
     guard let titleField = await tapAndGetEditableField(container: titleTextField) else {
@@ -624,17 +630,13 @@ final class WebSocketE2ETests: E2ETestBase {
 
     guard
       let priceTextField = findElementWithScroll(
-        identifiers: [
-          "textField_{items.price}",
-          "textField_{buildCurrency(items.price)}",
-        ],
-        containsAny: ["items.price", "buildCurrency"],
+        identifiers: priceFieldIds,
+        containsAny: priceTokens,
         in: scrollView
       )
     else {
       XCTFail(
-        "Price field should exist (textField_{items.price}, textField_{buildCurrency(items.price)}, or accessibility containing 'items.price')"
-      )
+        "Price field should exist (\(priceFieldIds.joined(separator: ", ")), or accessibility containing '\(priceTokens.first ?? "")'))")
       return
     }
     guard let priceField = await tapAndGetEditableField(container: priceTextField) else {
@@ -650,14 +652,13 @@ final class WebSocketE2ETests: E2ETestBase {
 
     guard
       let widthTextField = findElementWithScroll(
-        identifiers: ["textField_{items.width}"],
-        containsAny: ["items.width"],
+        identifiers: [widthFieldId],
+        containsAny: widthTokens,
         in: scrollView
       )
     else {
       XCTFail(
-        "Width field should exist (textField_{items.width}, or accessibility containing 'items.width')"
-      )
+        "Width field should exist (\(widthFieldId), or accessibility containing '\(widthTokens.first ?? "")')")
       return
     }
     guard let widthField = await tapAndGetEditableField(container: widthTextField) else {
@@ -678,7 +679,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     XCTAssertTrue(
       viewItemButton.waitForExistence(timeout: 15),
-      "Should return to home after create(items)")
+      "Should return to home after create(item)")
 
     let itemsPayload = try await emitter.getResource(service: "marketplace", resource: "items")
     XCTAssertTrue(
@@ -710,7 +711,7 @@ final class WebSocketE2ETests: E2ETestBase {
                   "placeholder": "Item",
                 ]
               ],
-              "destination": "{items.title}",
+              "destination": "{item.title}",
               "actions": [],
             ],
             [
@@ -724,7 +725,7 @@ final class WebSocketE2ETests: E2ETestBase {
                   "placeholder": "0",
                 ]
               ],
-              "destination": "{buildCurrency(items.price)}",
+              "destination": "{buildCurrency(item.price)}",
               "actions": [],
             ],
             [
@@ -738,7 +739,7 @@ final class WebSocketE2ETests: E2ETestBase {
                   "placeholder": "0",
                 ]
               ],
-              "destination": "{items.width}",
+              "destination": "{item.width}",
               "actions": [],
             ],
           ],
@@ -757,7 +758,7 @@ final class WebSocketE2ETests: E2ETestBase {
               [
                 "condition": "",
                 "false": "",
-                "true": "{create(items)}",
+                "true": "{create(item)}",
               ]
             ],
           ],

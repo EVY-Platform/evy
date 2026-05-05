@@ -58,7 +58,7 @@ function testFlow(): UI_Flow {
 					testRow({
 						type: "SheetContainer",
 						source: "",
-						destination: "{buildCurrency(items.price)}",
+						destination: "{buildCurrency(item.price)}",
 						actions: [
 							{
 								condition: "{length(title) > 0 && price.value >= 1}",
@@ -83,7 +83,7 @@ function testFlow(): UI_Flow {
 									testRow({
 										type: "Search",
 										source: "{$api:tags}",
-										destination: "{items.tags}",
+										destination: "{item.tags}",
 										view: {
 											content: {
 												title: "",
@@ -119,7 +119,7 @@ function testFlow(): UI_Flow {
 				footer: testRow({
 					type: "Button",
 					source: "",
-					actions: [{ condition: "", false: "", true: "{create(items)}" }],
+					actions: [{ condition: "", false: "", true: "{create(item)}" }],
 					view: {
 						content: {
 							title: "",
@@ -145,9 +145,9 @@ describe("expression parser utility", () => {
 	it("extracts all braced bindings from a string", () => {
 		expect(
 			extractBindingsFromString(
-				"{items.title} costs {formatCurrency(items.price)} and {$datum:value}",
+				"{item.title} costs {formatCurrency(item.price)} and {$datum:value}",
 			),
-		).toEqual(["items.title", "formatCurrency(items.price)", "$datum:value"]);
+		).toEqual(["item.title", "formatCurrency(item.price)", "$datum:value"]);
 	});
 
 	it("extracts action bindings that contain nested query objects", () => {
@@ -164,15 +164,15 @@ describe("expression parser utility", () => {
 		expect(extractCandidatesFromBinding("selling_reasons")).toEqual([
 			"selling_reasons",
 		]);
-		expect(extractCandidatesFromBinding("items.title")).toEqual(["items"]);
+		expect(extractCandidatesFromBinding("item.title")).toEqual(["item"]);
 		expect(extractCandidatesFromBinding("price.value")).toEqual(["price"]);
 	});
 
 	it("extracts function arguments without extracting function names", () => {
-		expect(extractCandidatesFromBinding("formatCurrency(items.price)")).toEqual(
-			["items"],
-		);
-		expect(extractCandidatesFromBinding("create(items)")).toEqual(["items"]);
+		expect(extractCandidatesFromBinding("formatCurrency(item.price)")).toEqual([
+			"item",
+		]);
+		expect(extractCandidatesFromBinding("create(item)")).toEqual(["item"]);
 		expect(extractCandidatesFromBinding("highlight_required(title)")).toEqual([
 			"title",
 		]);
@@ -223,7 +223,7 @@ describe("service data sync utilities", () => {
 	it("extracts candidates from actions and destinations without relying on row source", () => {
 		const candidates = extractCandidatesFromFlows([testFlow()]);
 
-		expect(candidates.has("items")).toBe(true);
+		expect(candidates.has("item")).toBe(true);
 		expect(candidates.has("conditions")).toBe(true);
 		expect(candidates.has("price")).toBe(true);
 		expect(candidates.has("title")).toBe(true);
@@ -250,7 +250,7 @@ describe("service data sync utilities", () => {
 						footer: testRow({
 							type: "Button",
 							source: "",
-							actions: [{ condition: "", false: "", true: "{create(items)}" }],
+							actions: [{ condition: "", false: "", true: "{create(item)}" }],
 							view: {
 								content: {
 									title: "",
@@ -263,12 +263,12 @@ describe("service data sync utilities", () => {
 			},
 		]);
 
-		expect(candidates.has("items")).toBe(true);
+		expect(candidates.has("item")).toBe(true);
 	});
 
-	it("maps plural resource candidates to services", () => {
+	it("maps singular and plural resource candidates to services", () => {
 		expect(resolveCandidateToService("conditions")).toBe("marketplace");
-		expect(resolveCandidateToService("item")).toBeNull();
+		expect(resolveCandidateToService("item")).toBe("marketplace");
 		expect(resolveCandidateToService("items")).toBe("marketplace");
 		expect(resolveCandidateToService("price")).toBeNull();
 		expect(resolveCandidateToService("title")).toBeNull();

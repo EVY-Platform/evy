@@ -255,6 +255,48 @@ struct EVY {
     }
   }
 
+
+  /// Converts a singular entity key into its plural backend resource name.
+  ///
+  /// Only the last underscore-separated segment is inflected. For example
+  /// `selling_reason` becomes `selling_reasons` (not `sellings_reasons`).
+  ///
+  /// Uses Foundation's `AttributedString` inflection system as the source of truth.
+  static func resourceName(forEntityKey entityKey: String) -> String {
+    let parts = entityKey.split(separator: "_").map(String.init)
+    guard let lastPart = parts.last else { return entityKey }
+
+    let pluralLastPart = inflect(lastPart, to: .plural)
+    return (parts.dropLast() + [pluralLastPart]).joined(separator: "_")
+  }
+
+  /// Inflects a word to the given grammatical number using Foundation's inflection system.
+  private static func inflect(_ word: String, to number: Morphology.GrammaticalNumber) -> String {
+    var morphology = Morphology()
+    morphology.number = number
+
+    var attrStr = AttributedString(word)
+    attrStr[AttributeScopes.FoundationAttributes.InflectionRuleAttribute.self] = InflectionRule(morphology: morphology)
+
+    let inflected = attrStr.inflected()
+    return String(inflected.characters)
+  }
+
+  /// Returns true if the two keys refer to the same entity, using Foundation inflection
+  /// to compare their singular forms.
+  static func entityKeysMatch(_ a: String, _ b: String) -> Bool {
+    singularEntityKey(for: a) == singularEntityKey(for: b)
+  }
+
+  /// Returns the singular form of a resource/entity key by inflecting the last segment.
+  static func singularEntityKey(for key: String) -> String {
+    let parts = key.split(separator: "_").map(String.init)
+    guard let lastPart = parts.last else { return key }
+
+    let singularLastPart = inflect(lastPart, to: .singular)
+    return (parts.dropLast() + [singularLastPart]).joined(separator: "_")
+  }
+
   static func create(key: String, draftScopeId: String? = nil) throws {
     struct UpsertParams: Encodable {
       let service: String
@@ -263,7 +305,10 @@ struct EVY {
       let data: EVYJson
     }
 
-    let existing: EVYData? = try? publicStore.get(key: key)
+    let entityKey = key
+    let resource = EVY.resourceName(forEntityKey: entityKey)
+
+    let existing: EVYData? = try? publicStore.get(key: entityKey)
     let newId = UUID().uuidString
     let payload: EVYJson
     if let existing {
@@ -300,7 +345,7 @@ struct EVY {
     let dataWithId = EVYJson.dictionary(dict)
     let params = UpsertParams(
       service: "marketplace",
-      resource: key,
+      resource: resource,
       filter: Filter(id: newId),
       data: dataWithId
     )
@@ -511,7 +556,7 @@ enum EVYPreviewMockData {
 
   /// Seed the most commonly needed keys for row previews.
   static func seedCommon() {
-    seed(key: "items", json: item)
+    seed(key: "item", json: item)
     seed(key: "conditions", json: conditions)
     seed(key: "durations", json: durations)
     seed(key: "selling_reasons", json: sellingReasons)

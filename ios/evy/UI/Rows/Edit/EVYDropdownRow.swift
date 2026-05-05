@@ -45,7 +45,7 @@ struct EVYDropdownRow: View {
         "id": "preview-dropdown-row",
         "type": "Dropdown",
         "source": "{conditions}",
-        "destination": "{items.condition}",
+        "destination": "{item.condition}",
         "actions": [],
         "view": {
           "content": {

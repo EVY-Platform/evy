@@ -658,7 +658,7 @@ describe("upsert SDUI validation", () => {
 						view: {
 							content: { title: "", label: "Submit" },
 						},
-						actions: [{ condition: "", false: "", true: "{create(items)}" }],
+						actions: [{ condition: "", false: "", true: "{create(item)}" }],
 					},
 				},
 			],
