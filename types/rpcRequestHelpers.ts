@@ -8,6 +8,7 @@ import {
 	validateSyncServiceDataRequest,
 	validateUpsertRequest,
 } from "./validators";
+import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE_NAMES } from "./coreResources";
 
 /**
  * Runtime registry of known service→resource mappings.
@@ -20,13 +21,10 @@ let serviceRegistryInitialized = false;
 function ensureServiceRegistry(): Map<string, Set<string>> {
 	if (!serviceRegistryInitialized) {
 		serviceRegistry = new Map<string, Set<string>>();
-		// Always register evy core resources (these are fixed, not discovered)
-		serviceRegistry.set("evy", new Set([
-			"sdui", "devices", "organisations", "services", "providers",
-		]));
+		serviceRegistry.set(EVY_CORE_SERVICE, new Set(EVY_CORE_RESOURCE_NAMES));
 		serviceRegistryInitialized = true;
 	}
-	return serviceRegistry!;
+	return serviceRegistry as Map<string, Set<string>>;
 }
 
 /**
@@ -37,12 +35,9 @@ export function setServiceRegistry(
 	entries: Iterable<[string, string[]]>,
 ): void {
 	const registry = new Map<string, Set<string>>();
-	// Always preserve evy core
-	registry.set("evy", new Set([
-		"sdui", "devices", "organisations", "services", "providers",
-	]));
+	registry.set(EVY_CORE_SERVICE, new Set(EVY_CORE_RESOURCE_NAMES));
 	for (const [svc, resources] of entries) {
-		if (svc !== "evy") {
+		if (svc !== EVY_CORE_SERVICE) {
 			registry.set(svc, new Set(resources));
 		}
 	}
@@ -73,14 +68,11 @@ function isValidServiceResourcePair(
 	service: string,
 	resource: string,
 ): boolean {
-	const allowed = ensureServiceRegistry().get(service);
-	return allowed !== undefined && allowed.has(resource);
+	return ensureServiceRegistry().get(service)?.has(resource) ?? false;
 }
 
-function isSyncableService(
-	service: string,
-): service is Exclude<string, "evy"> {
-	return isService(service) && service !== "evy";
+function isSyncableService(service: string): service is Exclude<string, "evy"> {
+	return isService(service) && service !== EVY_CORE_SERVICE;
 }
 
 /**

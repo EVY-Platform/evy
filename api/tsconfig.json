@@ -20,6 +20,10 @@
 				"../types/rpcRequestHelpers.ts",
 				"./types/rpcRequestHelpers.ts"
 			],
+			"evy-types/coreResources": [
+				"../types/coreResources.ts",
+				"./types/coreResources.ts"
+			],
 			"drizzle-orm": ["./node_modules/drizzle-orm"],
 			"drizzle-orm/*": ["./node_modules/drizzle-orm/*"]
 		}

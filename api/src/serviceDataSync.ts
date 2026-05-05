@@ -11,6 +11,7 @@ import {
 	validateStrictSyncServiceDataRequest,
 } from "evy-types/rpcRequestHelpers";
 import { validateSyncServiceDataResponse } from "evy-types/validators";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	extractBindingsFromString,
 	extractCandidatesFromBinding,
@@ -27,7 +28,7 @@ const DEFAULT_SYNC_SERVICE_DATA_DEPENDENCIES: SyncServiceDataDependencies = {
 
 /** Returns the list of syncable (non-evy) service names from the runtime registry. */
 function getSyncableServices(): string[] {
-	return getServiceNames().filter((name) => name !== "evy");
+	return getServiceNames().filter((name) => name !== EVY_CORE_SERVICE);
 }
 
 export function extractCandidatesFromFlows(flows: UI_Flow[]): Set<string> {

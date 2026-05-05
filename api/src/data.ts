@@ -27,6 +27,11 @@ import {
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
 import {
+	EVY_CORE_SERVICE,
+	EVY_CORE_RESOURCE,
+	EVY_CORE_RESOURCE_NAME_SET,
+} from "evy-types/coreResources";
+import {
 	validateDataEvyOrganization as validateOrganizationPayload,
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
@@ -44,16 +49,7 @@ export function setDbForTest(database: typeof db): void {
 	db = database;
 }
 
-const CORE_SERVICE = "evy";
-
-/** Resources served by the core EVY API. These are fixed and not dynamically discovered. */
-const CORE_API_RESOURCES = new Set([
-	"sdui",
-	"devices",
-	"organisations",
-	"services",
-	"providers",
-]);
+const CORE_API_RESOURCES: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
 /**
  * Check whether a value is a valid resource string.
@@ -65,7 +61,7 @@ export function isResource(v: unknown): v is string {
 }
 
 function assertEvyCoreAccess(params: GetRequest | UpsertRequest): void {
-	if (params.service !== CORE_SERVICE) {
+	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
 	}
 	if (!CORE_API_RESOURCES.has(params.resource)) {
@@ -250,11 +246,11 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 	const { resource, filter } = params;
 
-	if (resource === "devices") {
+	if (resource === EVY_CORE_RESOURCE.DEVICES) {
 		throw new Error("devices are managed via validateAuth only");
 	}
 
-	if (resource === "sdui") {
+	if (resource === EVY_CORE_RESOURCE.SDUI) {
 		const base = db.select({ data: flow.data }).from(flow);
 		const whereClauses = [];
 
@@ -275,15 +271,15 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		return validateGetResponse(payload);
 	}
 
-	if (resource === "services") {
+	if (resource === EVY_CORE_RESOURCE.SERVICES) {
 		return listCoreCatalogRows(service, filter, mapServiceRow);
 	}
 
-	if (resource === "organisations") {
+	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
 		return listCoreCatalogRows(organization, filter, (r) => r);
 	}
 
-	if (resource === "providers") {
+	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
 		return listCoreCatalogRows(serviceProvider, filter, (r) => r);
 	}
 
@@ -373,11 +369,11 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
-	if (resource === "devices") {
+	if (resource === EVY_CORE_RESOURCE.DEVICES) {
 		throw new Error("devices are managed via validateAuth only");
 	}
 
-	if (resource === "sdui") {
+	if (resource === EVY_CORE_RESOURCE.SDUI) {
 		const validatedData = validateFlowData(dataPayload);
 		const filterId = filter?.id;
 		const persistedFlowData =
@@ -411,7 +407,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 		return row;
 	}
 
-	if (resource === "services") {
+	if (resource === EVY_CORE_RESOURCE.SERVICES) {
 		return upsertCatalogEntityFromConfig(
 			serviceCatalogConfig,
 			filter,
@@ -420,7 +416,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 		);
 	}
 
-	if (resource === "organisations") {
+	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
 		return upsertCatalogEntityFromConfig(
 			organizationCatalogConfig,
 			filter,
@@ -429,7 +425,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 		);
 	}
 
-	if (resource === "providers") {
+	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
 		return upsertCatalogEntityFromConfig(
 			providerCatalogConfig,
 			filter,

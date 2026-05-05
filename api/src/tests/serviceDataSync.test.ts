@@ -4,6 +4,10 @@ import {
 	getServiceResources,
 	setServiceRegistry,
 } from "evy-types/rpcRequestHelpers";
+import {
+	EVY_CORE_SERVICE,
+	EVY_CORE_RESOURCE_NAMES,
+} from "evy-types/coreResources";
 
 const forwardGetMock = mock(
 	async (_serviceName: string, params: GetRequest): Promise<GetResponse> => [
@@ -141,7 +145,7 @@ beforeEach(() => {
 
 	// Initialize the service registry with known resources for tests
 	setServiceRegistry([
-		["evy", ["sdui", "devices", "organisations", "services", "providers"]],
+		[EVY_CORE_SERVICE, [...EVY_CORE_RESOURCE_NAMES]],
 		[
 			"marketplace",
 			[

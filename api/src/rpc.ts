@@ -17,6 +17,7 @@ import {
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
+import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE } from "evy-types/coreResources";
 
 let broadcast: BroadcastFn | null = null;
 
@@ -29,7 +30,7 @@ type GetLikeRequest = GetRequest | ApiRequest;
 function isCoreGetRequest(
 	params: GetLikeRequest,
 ): params is GetRequest & { service: "evy" } {
-	return params.service === "evy";
+	return params.service === EVY_CORE_SERVICE;
 }
 
 async function handleGetRequest<T extends GetLikeRequest>(
@@ -53,11 +54,13 @@ export async function api(params: unknown): Promise<GetResponse> {
 
 export async function upsert(params: unknown): Promise<UpsertResponse> {
 	validateStrictUpsertRequest(params);
-	if (params.service === "evy") {
+	if (params.service === EVY_CORE_SERVICE) {
 		const result = await upsertCoreForValidatedRequest(params);
 		if (broadcast) {
 			broadcast(
-				params.resource === "sdui" ? "flowUpdated" : "dataUpdated",
+				params.resource === EVY_CORE_RESOURCE.SDUI
+					? "flowUpdated"
+					: "dataUpdated",
 				result,
 			);
 		}

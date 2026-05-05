@@ -17,6 +17,10 @@ import {
 	validateUpsertResponse,
 } from "evy-types/validators";
 import { setServiceRegistry } from "evy-types/rpcRequestHelpers";
+import {
+	EVY_CORE_SERVICE,
+	EVY_CORE_RESOURCE_NAMES,
+} from "evy-types/coreResources";
 
 function resolveServiceProtoPath(): string {
 	const fromSource = join(
@@ -359,10 +363,7 @@ async function initializeServiceRegistry(): Promise<void> {
 	}
 
 	// Always register "evy" core service
-	entries.push([
-		"evy",
-		["sdui", "devices", "organisations", "services", "providers"],
-	]);
+	entries.push([EVY_CORE_SERVICE, [...EVY_CORE_RESOURCE_NAMES]]);
 
 	if (entries.length > 0) {
 		setServiceRegistry(entries);

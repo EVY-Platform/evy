@@ -64,14 +64,8 @@ struct EVY {
   /// Reverse lookup: singular -> plural for O(1) lookups.
   private static var singularToPlural: [String: String] = [:]
 
-  /// Whether the resource mapping has been fetched from the server this session.
-  private static var resourceMappingFetchedFromServer = false
-
-  /// Whether the resource mapping has been loaded from cache (stale, for offline startup).
-  private static var resourceMappingLoadedFromCache = false
-
   /// Response structure from the API.
-  private struct ResourcesResponse: Decodable {
+  private struct ResourcesResponse: Codable {
     let resources: [String: ResourceEntry]
     let resourcesByService: [String: [String]]
   }
@@ -84,12 +78,11 @@ struct EVY {
   static func fetchResourceMapping() async throws {
     let response: ResourcesResponse = try await EVYAPIManager.shared.fetch(
       method: "resources",
-      params: [:],
+      params: [String: String](),
       expecting: ResourcesResponse.self
     )
 
     applyResourceMapping(response.resources, resourcesByService: response.resourcesByService)
-    resourceMappingFetchedFromServer = true
 
     // Persist to UserDefaults for offline use
     if let encoded = try? JSONEncoder().encode(response.resources) {
@@ -100,12 +93,11 @@ struct EVY {
   /// Load cached resource mapping from UserDefaults (for offline startup).
   /// Does NOT skip a future server fetch — only populates the cache for early access.
   static func loadCachedResourceMapping() {
-    guard !resourceMappingFetchedFromServer,
+    guard cachedResourceMapping.isEmpty,
           let data = UserDefaults.standard.data(forKey: "cachedResourceMapping"),
           let mapping = try? JSONDecoder().decode([String: ResourceEntry].self, from: data)
     else { return }
     applyResourceMapping(mapping, resourcesByService: nil)
-    resourceMappingLoadedFromCache = true
   }
 
   /// Apply a resource mapping to the in-memory caches.
