@@ -26,7 +26,7 @@ flowchart LR
     api -- dataUpdated JSON-RPC --> client
 ```
 
-- `Get` / `Upsert` are unary RPCs that mirror the main `api`'s `GetRequest` / `UpsertRequest`, with payloads JSON-encoded over the wire (`data_json`, `result_json`).
+- `Get` / `Upsert` are unary RPCs that mirror the main `api`'s `GetRequest` / `UpsertRequest`, with payloads JSON-encoded over the wire (`data_json`, `result_json`). Filters support a singular `id` for one row and `updated_after` / `updatedAfter` for incremental reads; plural ID filtering is not part of the contract.
 - `SubscribeEvents` is a server-streaming RPC. Each successful `Upsert` emits `dataUpdated` onto an in-process `EventEmitter` that fans the change out to every open stream; `api/src/services.ts` reconnects with exponential backoff if the stream drops.
 
 ## Environment
