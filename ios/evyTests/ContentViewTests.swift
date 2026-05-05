@@ -58,23 +58,6 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(EVY.resourceName(forEntityKey: "selling_reason"), "selling_reasons")
   }
 
-  func testSingularEntityKeyFromPlural() {
-    XCTAssertEqual(EVY.singularEntityKey(for: "items"), "item")
-    XCTAssertEqual(EVY.singularEntityKey(for: "conditions"), "condition")
-    XCTAssertEqual(EVY.singularEntityKey(for: "durations"), "duration")
-    XCTAssertEqual(EVY.singularEntityKey(for: "areas"), "area")
-    XCTAssertEqual(EVY.singularEntityKey(for: "providers"), "provider")
-    XCTAssertEqual(EVY.singularEntityKey(for: "organisations"), "organisation")
-    XCTAssertEqual(EVY.singularEntityKey(for: "selling_reasons"), "selling_reason")
-  }
-
-  func testEntityKeysMatchComparesViaSingularForms() {
-    XCTAssertTrue(EVY.entityKeysMatch("item", "items"))
-    XCTAssertTrue(EVY.entityKeysMatch("items", "item"))
-    XCTAssertTrue(EVY.entityKeysMatch("selling_reason", "selling_reasons"))
-    XCTAssertFalse(EVY.entityKeysMatch("item", "condition"))
-  }
-
   private func makeFlows() throws -> [UI_Flow] {
     let json: [[String: Any]] = [
       [

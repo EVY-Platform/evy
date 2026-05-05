@@ -263,11 +263,14 @@ struct EVY {
   ///
   /// Uses Foundation's `AttributedString` inflection system as the source of truth.
   static func resourceName(forEntityKey entityKey: String) -> String {
-    let parts = entityKey.split(separator: "_").map(String.init)
-    guard let lastPart = parts.last else { return entityKey }
+    inflectLastSegment(of: entityKey, to: .plural)
+  }
 
-    let pluralLastPart = inflect(lastPart, to: .plural)
-    return (parts.dropLast() + [pluralLastPart]).joined(separator: "_")
+  /// Inflects the last underscore-separated segment of a key to the given grammatical number.
+  private static func inflectLastSegment(of key: String, to number: Morphology.GrammaticalNumber) -> String {
+    let parts = key.split(separator: "_").map(String.init)
+    guard let lastPart = parts.last else { return key }
+    return (parts.dropLast() + [inflect(lastPart, to: number)]).joined(separator: "_")
   }
 
   /// Inflects a word to the given grammatical number using Foundation's inflection system.
@@ -282,21 +285,6 @@ struct EVY {
     return String(inflected.characters)
   }
 
-  /// Returns true if the two keys refer to the same entity, using Foundation inflection
-  /// to compare their singular forms.
-  static func entityKeysMatch(_ a: String, _ b: String) -> Bool {
-    singularEntityKey(for: a) == singularEntityKey(for: b)
-  }
-
-  /// Returns the singular form of a resource/entity key by inflecting the last segment.
-  static func singularEntityKey(for key: String) -> String {
-    let parts = key.split(separator: "_").map(String.init)
-    guard let lastPart = parts.last else { return key }
-
-    let singularLastPart = inflect(lastPart, to: .singular)
-    return (parts.dropLast() + [singularLastPart]).joined(separator: "_")
-  }
-
   static func create(key: String, draftScopeId: String? = nil) throws {
     struct UpsertParams: Encodable {
       let service: String
@@ -305,10 +293,9 @@ struct EVY {
       let data: EVYJson
     }
 
-    let entityKey = key
-    let resource = EVY.resourceName(forEntityKey: entityKey)
+    let resource = EVY.resourceName(forEntityKey: key)
 
-    let existing: EVYData? = try? publicStore.get(key: entityKey)
+    let existing: EVYData? = try? publicStore.get(key: key)
     let newId = UUID().uuidString
     let payload: EVYJson
     if let existing {
