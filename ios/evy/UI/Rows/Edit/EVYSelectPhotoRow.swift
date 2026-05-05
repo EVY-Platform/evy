@@ -36,22 +36,8 @@ struct EVYSelectPhotoRow: View {
 }
 
 #Preview {
-  EVYSelectPhotoRowPreview()
-}
-
-private struct EVYSelectPhotoRowPreview: View {
-  private let row = EVYSelectPhotoRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build select photo row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-selectphoto-row",
         "type": "SelectPhoto",
@@ -68,7 +54,7 @@ private struct EVYSelectPhotoRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build select photo row preview"
+  )
 }

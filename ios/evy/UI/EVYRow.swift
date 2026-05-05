@@ -30,8 +30,7 @@ struct EVYRow: View, Identifiable {
     case .inputList(let v, let s, _, _): EVYInputListRow(view: v, source: s)
     case .input(let v, _, let d, _): EVYInputRow(view: v, destination: d)
     case .listContainer(let v, let s, _, _): EVYListContainerRow(view: v, source: s)
-    case .search(let v, let s, let d, let a):
-      EVYSearchRow(view: v, source: s, destination: d, actions: a)
+    case .search(let v, let s, _, _): EVYSearchRow(view: v, source: s)
     case .selectPhoto(let v, _, let d, _): EVYSelectPhotoRow(view: v, destination: d)
     case .selectSegmentContainer(let v, _, _, _): EVYSelectSegmentContainerRow(view: v)
     case .sheetContainer(let v, _, _, _): EVYSheetContainerRow(view: v)

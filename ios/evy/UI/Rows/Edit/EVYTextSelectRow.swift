@@ -62,22 +62,8 @@ struct EVYTextSelectRow: View {
 }
 
 #Preview {
-  EVYTextSelectRowPreview()
-}
-
-private struct EVYTextSelectRowPreview: View {
-  private let row = EVYTextSelectRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build text select row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-textselect-row",
         "type": "TextSelect",
@@ -91,7 +77,7 @@ private struct EVYTextSelectRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build text select row preview"
+  )
 }

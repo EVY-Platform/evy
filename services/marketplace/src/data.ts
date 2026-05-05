@@ -1,4 +1,4 @@
-import { eq, and, desc, gt, inArray } from "drizzle-orm";
+import { eq, and, desc, gt } from "drizzle-orm";
 
 import type {
 	DATA_PRIMITIVE,
@@ -28,17 +28,6 @@ function validateDataPayload(dataPayload: unknown): DATA_PRIMITIVE["data"] {
 	return validatedPayload;
 }
 
-function getOnlyFilterId(
-	filter: GetRequest["filter"] | UpsertRequest["filter"] | undefined,
-): string | undefined {
-	const ids = filter?.ids ?? [];
-	if (ids.length > 1) {
-		throw new Error("Upsert filter.ids must contain at most one id");
-	}
-	const [onlyId] = ids;
-	return onlyId;
-}
-
 function assertMarketplaceRules(params: GetRequest | UpsertRequest): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
 		throw new Error("Marketplace service requires service marketplace");
@@ -66,8 +55,8 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 	const { resource, filter } = params;
 
 	const whereClauses = [eq(data.resource, resource)];
-	if (filter?.ids?.length) {
-		whereClauses.push(inArray(data.id, filter.ids));
+	if (filter?.id) {
+		whereClauses.push(eq(data.id, filter.id));
 	}
 	if (filter?.updatedAfter) {
 		whereClauses.push(gt(data.updatedAt, filter.updatedAfter));
@@ -106,7 +95,7 @@ async function marketplaceUpsertBody(
 
 	const validatedPayload = validateDataPayload(dataPayload);
 
-	const filterId = getOnlyFilterId(filter);
+	const filterId = filter?.id;
 	if (filterId) {
 		const result = await db
 			.update(data)

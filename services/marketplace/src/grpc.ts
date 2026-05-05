@@ -104,7 +104,7 @@ function buildMarketplaceServiceHandlers(
 						service: string;
 						resource: string;
 						filter?: {
-							ids?: string[];
+							id?: string;
 							updated_after?: string;
 						};
 					},
@@ -116,10 +116,10 @@ function buildMarketplaceServiceHandlers(
 					try {
 						const req = call.request;
 						const filter: {
-							ids?: string[];
+							id?: string;
 							updatedAfter?: string;
 						} = {};
-						if (req.filter?.ids?.length) filter.ids = req.filter.ids;
+						if (req.filter?.id) filter.id = req.filter.id;
 						if (req.filter?.updated_after)
 							filter.updatedAfter = req.filter.updated_after;
 						const params = {
@@ -143,7 +143,7 @@ function buildMarketplaceServiceHandlers(
 					{
 						service: string;
 						resource: string;
-						filter?: { ids?: string[] };
+						filter?: { id?: string };
 						data_json: string;
 					},
 					{ result_json: string }
@@ -169,9 +169,7 @@ function buildMarketplaceServiceHandlers(
 						const params = {
 							service: req.service,
 							resource: req.resource,
-							filter: req.filter?.ids?.length
-								? { ids: req.filter.ids }
-								: undefined,
+							filter: req.filter?.id ? { id: req.filter.id } : undefined,
 							data,
 						};
 						validateStrictUpsertRequest(params);

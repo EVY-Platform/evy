@@ -24,7 +24,7 @@ message UpsertRequest {
 }
 
 message Filter {
-  repeated string ids = 1;
+  string id = 1;
   string updated_after = 2;
 }
 

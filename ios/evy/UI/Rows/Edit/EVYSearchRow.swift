@@ -11,7 +11,8 @@ struct EVYSearchRow: View {
 
   private let view: SearchRowViewData
   private let source: String
-  init(view: SearchRowViewData, source: String, destination _: String, actions _: [UI_RowAction]) {
+
+  init(view: SearchRowViewData, source: String) {
     self.view = view
     self.source = source
   }

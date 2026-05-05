@@ -38,22 +38,8 @@ struct EVYInlinePickerRow: View {
 }
 
 #Preview {
-  EVYInlinePickerRowPreview()
-}
-
-private struct EVYInlinePickerRowPreview: View {
-  private let row = EVYInlinePickerRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build inline picker row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-inlinepicker-row",
         "type": "InlinePicker",
@@ -67,7 +53,7 @@ private struct EVYInlinePickerRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build inline picker row preview"
+  )
 }

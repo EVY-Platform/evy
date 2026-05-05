@@ -64,7 +64,7 @@ type AppGetRequestInput = {
 	service: string;
 	resource: string;
 	filter?: {
-		ids?: string[];
+		id?: string;
 		updatedAfter?: string;
 	};
 	method?: string;
@@ -74,7 +74,7 @@ type ProtoGetRequest = {
 	service: string;
 	resource: string;
 	filter?: {
-		ids?: string[];
+		id?: string;
 		updated_after?: string;
 	};
 	method?: string;
@@ -83,7 +83,7 @@ type ProtoGetRequest = {
 type ProtoUpsertRequest = {
 	service: string;
 	resource: string;
-	filter?: { ids?: string[]; updated_after?: string };
+	filter?: { id?: string; updated_after?: string };
 	data_json: string;
 };
 
@@ -112,7 +112,7 @@ type GrpcServiceClient = grpc.Client & {
 
 function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
 	const filter: NonNullable<ProtoGetRequest["filter"]> = {};
-	if (params.filter?.ids?.length) filter.ids = params.filter.ids;
+	if (params.filter?.id) filter.id = params.filter.id;
 	if (params.filter?.updatedAfter)
 		filter.updated_after = params.filter.updatedAfter;
 
@@ -126,7 +126,7 @@ function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
 
 function buildProtoUpsertRequest(params: UpsertRequest): ProtoUpsertRequest {
 	const filter: NonNullable<ProtoUpsertRequest["filter"]> = {};
-	if (params.filter?.ids?.length) filter.ids = params.filter.ids;
+	if (params.filter?.id) filter.id = params.filter.id;
 	if (params.filter?.updatedAfter)
 		filter.updated_after = params.filter.updatedAfter;
 

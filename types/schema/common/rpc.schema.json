@@ -8,12 +8,9 @@
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
-				"ids": {
-					"type": "array",
-					"items": {
-						"type": "string",
-						"format": "uuid"
-					}
+				"id": {
+					"type": "string",
+					"format": "uuid"
 				},
 				"updatedAfter": {
 					"type": "string",

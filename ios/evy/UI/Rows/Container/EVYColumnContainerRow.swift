@@ -31,22 +31,8 @@ struct EVYColumnContainerRow: View {
 }
 
 #Preview {
-  EVYColumnContainerRowPreview()
-}
-
-private struct EVYColumnContainerRowPreview: View {
-  private let row = EVYColumnContainerRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build column container row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-column-row",
         "type": "ColumnContainer",
@@ -86,7 +72,7 @@ private struct EVYColumnContainerRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build column container row preview"
+  )
 }

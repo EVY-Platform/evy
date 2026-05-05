@@ -48,7 +48,7 @@ type EvyServiceClient = Client & {
 		req: {
 			service: string;
 			resource: string;
-			filter?: { ids: string[] };
+			filter?: { id: string };
 		},
 		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
 	) => void;
@@ -56,7 +56,7 @@ type EvyServiceClient = Client & {
 		req: {
 			service: string;
 			resource: string;
-			filter?: { ids: string[] };
+			filter?: { id: string };
 			data_json: string;
 		},
 		cb: (err: ServiceError | null, res?: { result_json: string }) => void,

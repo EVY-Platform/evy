@@ -74,22 +74,8 @@ struct EVYListContainerRow: View {
 }
 
 #Preview {
-  EVYListContainerRowPreview()
-}
-
-private struct EVYListContainerRowPreview: View {
-  private let row = EVYListContainerRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build list container row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-list-row",
         "type": "ListContainer",
@@ -129,7 +115,7 @@ private struct EVYListContainerRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build list container row preview"
+  )
 }

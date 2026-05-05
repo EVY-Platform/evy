@@ -19,7 +19,7 @@ struct GetParams: Encodable {
 }
 
 struct Filter: Encodable {
-  let ids: [String]?
+  let id: String?
 }
 
 struct SyncServiceDataParams: Encodable {
@@ -108,8 +108,10 @@ struct EVY {
     guard let prefix = activeCachePrefix else { return }
 
     for (queryKey, ids) in query {
-      if queryKey == "id" {
-        _ = storeResolvedEntityQueryParam(prefix: prefix, ids: ids)
+      if queryKey == "id",
+        storeResolvedEntityQueryParam(prefix: prefix, queryKey: nil, ids: ids)
+      {
+        continue
       }
 
       if storeResolvedEntityQueryParam(prefix: prefix, queryKey: queryKey, ids: ids) {
@@ -122,14 +124,15 @@ struct EVY {
     }
   }
 
-  private static func storeResolvedEntityQueryParam(prefix: String, ids: [String]) -> Bool {
+  private static func storeResolvedEntityQueryParam(
+    prefix: String,
+    queryKey: String?,
+    ids: [String]
+  ) -> Bool {
     guard let id = ids.first else { return false }
 
-    let syncedCollections = (try? publicStore.getAll()) ?? []
-    for collectionData in syncedCollections {
-      let keyParts = collectionData.key.split(separator: ":", maxSplits: 1).map(String.init)
-      guard keyParts.count == 2,
-        let collectionJson = try? collectionData.decoded(),
+    for candidate in resolvedEntityCollections(for: queryKey) {
+      guard let collectionJson = try? candidate.data.decoded(),
         case .array(let collectionValues) = collectionJson,
         let matchingValue = collectionValues.first(where: { $0.identifierValue() == id }),
         let encodedMatchingValue = try? JSONEncoder().encode(matchingValue)
@@ -137,29 +140,26 @@ struct EVY {
         continue
       }
 
-      try? cacheStore.upsert(key: "\(prefix)\(keyParts[1])", value: encodedMatchingValue)
+      try? cacheStore.upsert(key: "\(prefix)\(candidate.cacheKey)", value: encodedMatchingValue)
       return true
     }
 
     return false
   }
 
-  private static func storeResolvedEntityQueryParam(prefix: String, queryKey: String, ids: [String])
-    -> Bool
-  {
-    let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
-    guard let id = ids.first,
-      let collectionData = collectionData(for: queryKey, serviceName: serviceName),
-      let collectionJson = try? collectionData.decoded(),
-      case .array(let collectionValues) = collectionJson,
-      let matchingValue = collectionValues.first(where: { $0.identifierValue() == id }),
-      let encodedMatchingValue = try? JSONEncoder().encode(matchingValue)
-    else {
-      return false
+  private static func resolvedEntityCollections(for queryKey: String?) -> [(cacheKey: String, data: EVYData)] {
+    if let queryKey {
+      let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
+      guard let data = collectionData(for: queryKey, serviceName: serviceName) else { return [] }
+      return [(queryKey, data)]
     }
 
-    try? cacheStore.upsert(key: "\(prefix)\(queryKey)", value: encodedMatchingValue)
-    return true
+    let syncedCollections = (try? publicStore.getAll()) ?? []
+    return syncedCollections.compactMap { collectionData in
+      let keyParts = collectionData.key.split(separator: ":", maxSplits: 1).map(String.init)
+      guard keyParts.count == 2 else { return nil }
+      return (keyParts[1], collectionData)
+    }
   }
 
   private static func storeRawQueryParam(prefix: String, queryKey: String, ids: [String]) -> Bool {
@@ -301,7 +301,7 @@ struct EVY {
     let params = UpsertParams(
       service: "marketplace",
       resource: key,
-      filter: Filter(ids: [newId]),
+      filter: Filter(id: newId),
       data: dataWithId
     )
     if let existing {
@@ -523,5 +523,29 @@ enum EVYPreviewMockData {
   static func decodeRow(from json: String) -> UI_Row? {
     guard let data = json.data(using: .utf8) else { return nil }
     return try? JSONDecoder().decode(UI_Row.self, from: data)
+  }
+}
+
+@MainActor
+struct EVYPreviewRow: View {
+  private let row: UI_Row?
+  private let failureMessage: String
+
+  init(
+    json: String,
+    failureMessage: String,
+    seed: @MainActor () -> Void = EVYPreviewMockData.seedCommon
+  ) {
+    seed()
+    self.row = EVYPreviewMockData.decodeRow(from: json)
+    self.failureMessage = failureMessage
+  }
+
+  var body: some View {
+    if let row {
+      EVYRow(row: row)
+    } else {
+      Text(failureMessage)
+    }
   }
 }

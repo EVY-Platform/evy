@@ -101,7 +101,7 @@ class WSClient {
 		const raw = await this.client.call("upsert", {
 			service: "evy",
 			resource: "sdui",
-			filter: flowData.id ? { ids: [flowData.id] } : undefined,
+			filter: flowData.id ? { id: flowData.id } : undefined,
 			data: flowData,
 		});
 		if (!isFlowUpsertResponse(raw)) {

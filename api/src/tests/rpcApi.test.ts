@@ -9,10 +9,10 @@ const forwardGetMock = mock(
 			resource: string;
 			method: string;
 			filter?: {
-				ids?: string[];
+				id?: string;
 			};
 		},
-	): Promise<GetResponse> => params.filter?.ids ?? [],
+	): Promise<GetResponse> => (params.filter?.id ? [params.filter.id] : []),
 );
 
 mock.module("../services", () => ({
@@ -40,7 +40,7 @@ describe("api JSON-RPC handler", () => {
 			resource: "items",
 			method: "not-search",
 			filter: {
-				ids: [itemId],
+				id: itemId,
 			},
 		});
 
@@ -51,7 +51,7 @@ describe("api JSON-RPC handler", () => {
 			resource: "items",
 			method: "not-search",
 			filter: {
-				ids: [itemId],
+				id: itemId,
 			},
 		});
 	});
@@ -62,7 +62,7 @@ describe("api JSON-RPC handler", () => {
 				service: "marketplace",
 				resource: "items",
 				filter: {
-					ids: [crypto.randomUUID()],
+					id: crypto.randomUUID(),
 				},
 			}),
 		).rejects.toThrow("ApiRequest validation failed");
@@ -77,7 +77,7 @@ describe("api JSON-RPC handler", () => {
 				resource: "sdui",
 				method: "not-search",
 				filter: {
-					ids: [crypto.randomUUID()],
+					id: crypto.randomUUID(),
 				},
 			}),
 		).rejects.toThrow("Invalid service and resource combination");

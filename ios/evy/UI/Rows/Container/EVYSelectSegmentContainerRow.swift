@@ -37,22 +37,8 @@ struct EVYSelectSegmentContainerRow: View {
 }
 
 #Preview {
-  EVYSelectSegmentContainerRowPreview()
-}
-
-private struct EVYSelectSegmentContainerRowPreview: View {
-  private let row = EVYSelectSegmentContainerRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build select segment row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-segment-row",
         "type": "SelectSegmentContainer",
@@ -93,7 +79,7 @@ private struct EVYSelectSegmentContainerRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build select segment row preview"
+  )
 }

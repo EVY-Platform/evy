@@ -64,6 +64,7 @@ private struct EVYPageBody: View {
         pageRow(row)
       }
     }
+    .accessibilityIdentifier("page_\(page.id)")
   }
 
   @ViewBuilder
@@ -79,6 +80,7 @@ private struct EVYPageBody: View {
               .padding(.top, -Constants.minorPadding)
           }
         )
+        .accessibilityIdentifier("pageFooter_\(page.id)")
     }
   }
 

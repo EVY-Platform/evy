@@ -32,22 +32,8 @@ struct EVYInputRow: View {
 }
 
 #Preview {
-  EVYInputRowPreview()
-}
-
-private struct EVYInputRowPreview: View {
-  private let row = EVYInputRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build input row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-input-row",
         "type": "Input",
@@ -62,7 +48,7 @@ private struct EVYInputRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build input row preview"
+  )
 }

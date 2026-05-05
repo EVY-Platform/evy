@@ -44,22 +44,8 @@ struct EVYSheetContainerRow: View {
 }
 
 #Preview {
-  EVYSheetContainerRowPreview()
-}
-
-private struct EVYSheetContainerRowPreview: View {
-  private let row = EVYSheetContainerRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build sheet container row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-sheet-row",
         "type": "SheetContainer",
@@ -99,7 +85,7 @@ private struct EVYSheetContainerRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build sheet container row preview"
+  )
 }

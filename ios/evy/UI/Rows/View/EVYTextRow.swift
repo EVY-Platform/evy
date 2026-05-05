@@ -55,22 +55,8 @@ struct EVYTextRow: View {
 }
 
 #Preview {
-  EVYTextRowPreview()
-}
-
-private struct EVYTextRowPreview: View {
-  private let row = EVYTextRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build text row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-text-row",
         "type": "Text",
@@ -84,7 +70,7 @@ private struct EVYTextRowPreview: View {
           "max_lines": "3"
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build text row preview"
+  )
 }

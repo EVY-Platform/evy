@@ -93,7 +93,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(matchingRecord)).toBe(true);
 	});
 
-	it("upsert marketplace.items with filter.ids creates row keyed by client UUID (iOS shape)", async () => {
+	it("upsert marketplace.items with filter.id creates row keyed by client UUID (iOS shape)", async () => {
 		const clientId = crypto.randomUUID();
 		const itemPayload = {
 			id: clientId,
@@ -103,7 +103,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		const upserted = await client.call("upsert", {
 			service: "marketplace",
 			resource: "items",
-			filter: { ids: [clientId] },
+			filter: { id: clientId },
 			data: itemPayload,
 		});
 
@@ -119,7 +119,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		const got = await client.call("get", {
 			service: "marketplace",
 			resource: "items",
-			filter: { ids: [clientId] },
+			filter: { id: clientId },
 		});
 
 		expect(Array.isArray(got)).toBe(true);

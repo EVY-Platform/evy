@@ -91,7 +91,7 @@ describe("marketplace get/upsert", () => {
 		expect(result).toEqual([newRow]);
 	});
 
-	it("filters rows by ids", async () => {
+	it("filters rows by id", async () => {
 		const firstId = crypto.randomUUID();
 		const secondId = crypto.randomUUID();
 		const firstRow = { id: firstId, title: "First" };
@@ -116,26 +116,26 @@ describe("marketplace get/upsert", () => {
 		const result = await get({
 			service: "marketplace",
 			resource: "items",
-			filter: { ids: [secondId] },
+			filter: { id: secondId },
 		});
 
 		expect(result).toEqual([secondRow]);
 	});
 
-	it("uses filter.ids as primary key when inserting a new row (client id)", async () => {
+	it("uses filter.id as primary key when inserting a new row (client id)", async () => {
 		const clientId = crypto.randomUUID();
 		const payload = { id: clientId, title: "client-keyed" };
 		const inserted = await upsert({
 			service: "marketplace",
 			resource: "items",
-			filter: { ids: [clientId] },
+			filter: { id: clientId },
 			data: payload,
 		});
 		expect(inserted.id).toBe(clientId);
 		const byFilter = await get({
 			service: "marketplace",
 			resource: "items",
-			filter: { ids: [clientId] },
+			filter: { id: clientId },
 		});
 		expect(byFilter).toEqual([payload]);
 	});
@@ -150,21 +150,9 @@ describe("marketplace get/upsert", () => {
 		const updated = await upsert({
 			service: "marketplace",
 			resource: "conditions",
-			filter: { ids: [row.id] },
+			filter: { id: row.id },
 			data: { ...row, value: "v2" },
 		});
 		expect(updated.data).toEqual({ ...row, value: "v2" });
-	});
-
-	it("rejects upsert with multiple filter.ids", async () => {
-		const row = { id: crypto.randomUUID(), value: "multi" };
-		await expect(
-			upsert({
-				service: "marketplace",
-				resource: "conditions",
-				filter: { ids: [crypto.randomUUID(), crypto.randomUUID()] },
-				data: row,
-			}),
-		).rejects.toThrow("Upsert filter.ids must contain at most one id");
 	});
 });

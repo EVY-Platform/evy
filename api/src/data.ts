@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray } from "drizzle-orm";
+import { and, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
@@ -99,17 +99,6 @@ export async function upsertCoreForValidatedRequest(
 	return upsertCoreBody(params);
 }
 
-function getOnlyFilterId(
-	filter: GetRequest["filter"] | UpsertRequest["filter"] | undefined,
-): string | undefined {
-	const ids = filter?.ids ?? [];
-	if (ids.length > 1) {
-		throw new Error("Upsert filter.ids must contain at most one id");
-	}
-	const [onlyId] = ids;
-	return onlyId;
-}
-
 function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 	return {
 		id: r.id,
@@ -152,8 +141,8 @@ async function listCoreCatalogRows<TRow>(
 	const base = db.select().from(table);
 	const whereClauses = [];
 
-	if (filter?.ids?.length) {
-		whereClauses.push(inArray(table.id, filter.ids));
+	if (filter?.id) {
+		whereClauses.push(eq(table.id, filter.id));
 	}
 	if (filter?.updatedAfter) {
 		whereClauses.push(gt(table.updatedAt, filter.updatedAfter));
@@ -172,12 +161,12 @@ async function listCoreCatalogRows<TRow>(
  */
 async function upsertCatalogEntity<TSelect>(
 	filterId: string | undefined,
-	doUpdate: () => Promise<TSelect[]>,
+	doUpdate: (filterId: string) => Promise<TSelect[]>,
 	doInsert: () => Promise<TSelect[]>,
 	mapRow: (row: TSelect) => UpsertResponse,
 ): Promise<UpsertResponse> {
 	if (filterId) {
-		const updated = await doUpdate();
+		const updated = await doUpdate(filterId);
 		if (updated.length > 0) {
 			const row = mapRow(updated[0]);
 			validateUpsertResponse(row);
@@ -201,15 +190,15 @@ async function upsertCatalogEntityFromConfig<TValidated>(
 	nowIso: string,
 ): Promise<UpsertResponse> {
 	const validated = config.validate(dataPayload);
-	const filterId = getOnlyFilterId(filter);
+	const filterId = filter?.id;
 
 	return upsertCatalogEntity(
 		filterId,
-		() =>
+		(updateFilterId) =>
 			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
 			(db.update(config.table as any) as any)
 				.set(config.toUpdateSet(validated, nowIso))
-				.where(eq(config.table.id, filterId))
+				.where(eq(config.table.id, updateFilterId))
 				.returning(),
 		() =>
 			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
@@ -261,8 +250,8 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		const base = db.select({ data: flow.data }).from(flow);
 		const whereClauses = [];
 
-		if (filter?.ids?.length) {
-			whereClauses.push(inArray(flow.id, filter.ids));
+		if (filter?.id) {
+			whereClauses.push(eq(flow.id, filter.id));
 		}
 		if (filter?.updatedAfter) {
 			whereClauses.push(gt(flow.updatedAt, filter.updatedAfter));
@@ -382,7 +371,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 
 	if (resource === "sdui") {
 		const validatedData = validateFlowData(dataPayload);
-		const filterId = getOnlyFilterId(filter);
+		const filterId = filter?.id;
 		const persistedFlowData =
 			filterId && filterId !== validatedData.id
 				? { ...validatedData, id: filterId }

@@ -72,22 +72,8 @@ extension View {
 }
 
 #Preview {
-  EVYInfoRowPreview()
-}
-
-private struct EVYInfoRowPreview: View {
-  private let row = EVYInfoRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build info row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-info-row",
         "type": "Info",
@@ -101,7 +87,7 @@ private struct EVYInfoRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build info row preview"
+  )
 }

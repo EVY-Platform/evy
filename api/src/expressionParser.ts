@@ -441,7 +441,12 @@ function shouldSkipLiteralOrUuid(value: string): boolean {
 }
 
 function containsComparisonOperator(value: string): boolean {
-	return [...COMPARISON_OPERATOR_TOKENS].some((op) => value.includes(op));
+	for (const operatorToken of COMPARISON_OPERATOR_TOKENS) {
+		if (value.includes(operatorToken)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 function startsWithOperator(input: string, index: number): boolean {

@@ -31,22 +31,8 @@ struct EVYButtonRow: View {
 }
 
 #Preview {
-  EVYButtonRowPreview()
-}
-
-private struct EVYButtonRowPreview: View {
-  private let row = EVYButtonRowPreview.makeRow()
-
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build button row preview") }
-  }
-
-  private static func makeRow() -> UI_Row? {
-    let json = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-button-row",
         "type": "Button",
@@ -59,7 +45,7 @@ private struct EVYButtonRowPreview: View {
           }
         }
       }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+      """,
+    failureMessage: "Unable to build button row preview"
+  )
 }
