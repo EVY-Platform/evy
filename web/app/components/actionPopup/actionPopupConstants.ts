@@ -17,6 +17,11 @@ export const FUNCTION_OPTIONS: PopoverOption[] = ACTION_FUNCTIONS.map((fn) => ({
 	label: FUNCTION_LABELS[fn],
 }));
 
+export const BRANCH_FUNCTION_OPTIONS: PopoverOption[] = [
+	{ value: "", label: "--" },
+	...FUNCTION_OPTIONS,
+];
+
 export const BOOLEAN_OPTIONS: PopoverOption[] = [
 	{ value: "true", label: "true" },
 	{ value: "false", label: "false" },
