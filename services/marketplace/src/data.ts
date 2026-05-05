@@ -8,11 +8,13 @@ import type {
 } from "evy-types";
 import {
 	getServiceResources,
+	setServiceRegistry,
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
 import { data } from "./db/schema";
 import { db } from "./db";
+import { MARKETPLACE_RESOURCE_NAMES, MARKETPLACE_SERVICE } from "./catalog";
 import {
 	assertIsoDateTimeJsonFields,
 	validateGetResponse,
@@ -20,7 +22,7 @@ import {
 	validateUpsertResponse,
 } from "evy-types/validators";
 
-const MARKETPLACE_SERVICE = "marketplace";
+setServiceRegistry([[MARKETPLACE_SERVICE, [...MARKETPLACE_RESOURCE_NAMES]]]);
 
 function validateDataPayload(dataPayload: unknown): DATA_PRIMITIVE["data"] {
 	const validatedPayload = validateUpsertDataPayload(dataPayload);

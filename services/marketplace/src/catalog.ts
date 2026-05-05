@@ -8,6 +8,8 @@
  * (e.g. `SELECT DISTINCT resource FROM data`), but for now
  * it is explicitly declared here.
  */
+export const MARKETPLACE_SERVICE = "marketplace";
+
 export const MARKETPLACE_RESOURCE_NAMES = [
 	"selling_reasons",
 	"conditions",
