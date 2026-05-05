@@ -8,11 +8,11 @@ const forwardGetMock = mock(
 			service: string;
 			resource: string;
 			method: string;
-			filter?: { query?: string };
+			filter?: {
+				id?: string;
+			};
 		},
-	): Promise<GetResponse> => [
-		{ id: "query", value: params.filter?.query ?? "" },
-	],
+	): Promise<GetResponse> => (params.filter?.id ? [params.filter.id] : []),
 );
 
 mock.module("../services", () => ({
@@ -33,24 +33,25 @@ describe("api JSON-RPC handler", () => {
 		forwardGetMock.mockClear();
 	});
 
-	it("forwards marketplace API function requests to the owning service", async () => {
+	it("forwards non-search marketplace API function requests to the owning service", async () => {
+		const itemId = crypto.randomUUID();
 		const result = await api({
 			service: "marketplace",
 			resource: "items",
-			method: "suggestions",
+			method: "not-search",
 			filter: {
-				query: "iph",
+				id: itemId,
 			},
 		});
 
-		expect(result).toEqual([{ id: "query", value: "iph" }]);
+		expect(result).toEqual([itemId]);
 		expect(forwardGetMock).toHaveBeenCalledTimes(1);
 		expect(forwardGetMock).toHaveBeenCalledWith("marketplace", {
 			service: "marketplace",
 			resource: "items",
-			method: "suggestions",
+			method: "not-search",
 			filter: {
-				query: "iph",
+				id: itemId,
 			},
 		});
 	});
@@ -61,7 +62,7 @@ describe("api JSON-RPC handler", () => {
 				service: "marketplace",
 				resource: "items",
 				filter: {
-					query: "iph",
+					id: crypto.randomUUID(),
 				},
 			}),
 		).rejects.toThrow("ApiRequest validation failed");
@@ -74,9 +75,9 @@ describe("api JSON-RPC handler", () => {
 			api({
 				service: "marketplace",
 				resource: "sdui",
-				method: "suggestions",
+				method: "not-search",
 				filter: {
-					query: "iph",
+					id: crypto.randomUUID(),
 				},
 			}),
 		).rejects.toThrow("Invalid service and resource combination");

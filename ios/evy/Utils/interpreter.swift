@@ -15,13 +15,6 @@ private let functionPattern = "[a-zA-Z_]+\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
 
-// MARK: - Public API
-
-@MainActor
-public func parsePropsFromText(_ input: String) -> String {
-  _parsePropsFromText(input)
-}
-
 @MainActor
 public func splitPropsFromText(_ props: String) throws -> [String] {
   if props.count < 1 {
@@ -65,60 +58,7 @@ public func parseFunctionCall(_ input: String) -> (functionName: String, functio
 
 @MainActor
 func splitFunctionArguments(_ args: String) -> [String] {
-  var components: [String] = []
-  var current = ""
-  var parenDepth = 0
-  var bracketDepth = 0
-  var braceDepth = 0
-  var inString = false
-
-  for ch in args {
-    if inString {
-      current.append(ch)
-      if ch == "\"" {
-        inString = false
-      }
-      continue
-    }
-
-    switch ch {
-    case "\"":
-      inString = true
-      current.append(ch)
-    case "(":
-      parenDepth += 1
-      current.append(ch)
-    case ")":
-      parenDepth -= 1
-      current.append(ch)
-    case "[":
-      bracketDepth += 1
-      current.append(ch)
-    case "]":
-      bracketDepth -= 1
-      current.append(ch)
-    case "{":
-      braceDepth += 1
-      current.append(ch)
-    case "}":
-      braceDepth -= 1
-      current.append(ch)
-    case "," where parenDepth == 0 && bracketDepth == 0 && braceDepth == 0:
-      let trimmed = current.trimmingCharacters(in: .whitespacesAndNewlines)
-      if !trimmed.isEmpty {
-        components.append(trimmed)
-      }
-      current = ""
-    default:
-      current.append(ch)
-    }
-  }
-
-  let trimmedTail = current.trimmingCharacters(in: .whitespacesAndNewlines)
-  if !trimmedTail.isEmpty {
-    components.append(trimmedTail)
-  }
-  return components
+  splitTopLevel(args, separator: ",")
 }
 
 @MainActor
@@ -130,34 +70,155 @@ public func stripOptionalSurroundingQuotes(_ s: String) -> String {
   return String(trimmed.dropFirst().dropLast())
 }
 
-@MainActor
-public func getDataFromText(_ input: String) throws -> EVYJson {
-  try _getDataFromText(input)
+private enum TopLevelIndexMode {
+  case first
+  case last
+}
+
+private struct ParserScanState {
+  var parenDepth = 0
+  var bracketDepth = 0
+  var braceDepth = 0
+  var quote: Character?
+  var previousCharacter: Character = "\0"
+
+  var isInString: Bool {
+    quote != nil
+  }
+
+  var isTopLevel: Bool {
+    parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+  }
+
+  mutating func scan(_ character: Character) {
+    if let quote {
+      if character == quote && previousCharacter != "\\" {
+        self.quote = nil
+      }
+      previousCharacter = character
+      return
+    }
+
+    if character == "\"" || character == "'" {
+      quote = character
+    } else {
+      switch character {
+      case "(":
+        parenDepth += 1
+      case ")":
+        parenDepth -= 1
+      case "[":
+        bracketDepth += 1
+      case "]":
+        bracketDepth -= 1
+      case "{":
+        braceDepth += 1
+      case "}":
+        braceDepth -= 1
+      default:
+        break
+      }
+    }
+
+    previousCharacter = character
+  }
 }
 
 @MainActor
-public func getDataFromProps(_ props: String) throws -> EVYJson {
-  try _getDataFromProps(props)
+private func topLevelIndex(
+  of targetCharacter: Character,
+  in input: String,
+  mode: TopLevelIndexMode = .first
+) -> String.Index? {
+  var state = ParserScanState()
+  var foundIndex: String.Index?
+
+  for index in input.indices {
+    let character = input[index]
+    if !state.isInString && character == targetCharacter && state.isTopLevel {
+      if mode == .first {
+        return index
+      }
+      foundIndex = index
+    }
+    state.scan(character)
+  }
+
+  return state.isTopLevel ? foundIndex : nil
 }
 
-@MainActor
-func getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValue {
-  try _getValueFromText(input, editing: editing)
+private func splitTopLevel(_ input: String, separator: Character) -> [String] {
+  splitTopLevel(input, separator: String(separator), includingEmptyValues: false)
 }
 
-@MainActor
-public func watchTarget(for text: String) -> String {
-  _watchTarget(for: text)
+private func splitTopLevel(
+  _ input: String,
+  separator: String,
+  includingEmptyValues: Bool
+) -> [String] {
+  guard !input.isEmpty else {
+    return includingEmptyValues ? [input] : []
+  }
+
+  var components: [String] = []
+  var state = ParserScanState()
+  var currentStart = input.startIndex
+  var index = input.startIndex
+
+  while index < input.endIndex {
+    if !state.isInString && state.isTopLevel && input[index...].hasPrefix(separator) {
+      appendTopLevelComponent(
+        String(input[currentStart..<index]),
+        to: &components,
+        includingEmptyValues: includingEmptyValues
+      )
+      currentStart = input.index(index, offsetBy: separator.count)
+      index = currentStart
+      continue
+    }
+
+    state.scan(input[index])
+    index = input.index(after: index)
+  }
+
+  appendTopLevelComponent(
+    String(input[currentStart...]),
+    to: &components,
+    includingEmptyValues: includingEmptyValues
+  )
+  return components
 }
 
-@MainActor
-public func evaluateFromText(_ input: String) throws -> Bool {
-  try _evaluateFromText(input)
+private func appendTopLevelComponent(
+  _ value: String,
+  to components: inout [String],
+  includingEmptyValues: Bool
+) {
+  let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+  if includingEmptyValues || !trimmedValue.isEmpty {
+    components.append(trimmedValue)
+  }
 }
 
-@MainActor
-public func formatData(json: EVYJson, format: String) throws -> String {
-  try _formatData(json: json, format: format)
+private func findFirstTopLevelPrefix(
+  in input: String,
+  prefixes: [String]
+) -> (opIndex: String.Index, op: String)? {
+  var state = ParserScanState()
+  var index = input.startIndex
+
+  while index < input.endIndex {
+    if !state.isInString && state.isTopLevel {
+      for prefix in prefixes where input[index...].hasPrefix(prefix) {
+        return (index, prefix)
+      }
+    }
+
+    state.scan(input[index])
+    index = input.index(after: index)
+  }
+
+  return nil
 }
 
 // MARK: - Internal
@@ -185,6 +246,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     throw EVYParamError.invalidProps
   }
 
+  // 1. Check draft store — user's unsaved edits
   if let scopeId = EVY.draftStore.activeScopeId,
     let draftBinding = try? EVY.draftStore.binding(fromParsedProps: cleanProps, scopeId: scopeId),
     let draftRow = EVY.draftStore.draftIfPresent(binding: draftBinding)
@@ -196,6 +258,15 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     return try draftRow.decoded().parseProp(props: remaining)
   }
 
+  // 2. Check cache store with active page prefix — ephemeral page-scoped data
+  if let prefix = EVY.activeCachePrefix,
+    let cacheData = try? EVY.cacheStore.get(key: "\(prefix)\(firstProp)")
+  {
+    let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
+    return try cacheData.decoded().parseProp(props: remainingProps)
+  }
+
+  // 3. Fall back to persistent store — synced API data
   let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
   let dataObj = try store.getForBinding(key: firstProp)
   return try dataObj.decoded().parseProp(props: remainingProps)
@@ -425,63 +496,11 @@ private func evaluateBooleanExpression(
 }
 
 private func splitRespectingParens(_ input: String, separator: String) -> [String] {
-  guard !input.isEmpty else {
-    return [input]
-  }
-
-  var parts: [String] = []
-  var depth = 0
-  var currentStart = input.startIndex
-  var index = input.startIndex
-
-  while index < input.endIndex {
-    let character = input[index]
-    if character == "(" {
-      depth += 1
-    } else if character == ")" && depth > 0 {
-      depth -= 1
-    }
-
-    if depth == 0, input[index...].hasPrefix(separator) {
-      parts.append(
-        String(input[currentStart..<index])
-          .trimmingCharacters(in: .whitespacesAndNewlines))
-      currentStart = input.index(index, offsetBy: separator.count)
-      index = currentStart
-      continue
-    }
-
-    index = input.index(after: index)
-  }
-
-  parts.append(String(input[currentStart...]).trimmingCharacters(in: .whitespacesAndNewlines))
-  return parts
+  splitTopLevel(input, separator: separator, includingEmptyValues: true)
 }
 
 private func firstTopLevelComparison(in input: String) -> (opIndex: String.Index, op: String)? {
-  var depth = 0
-  var index = input.startIndex
-
-  while index < input.endIndex {
-    let character = input[index]
-    if character == "(" {
-      depth += 1
-    } else if character == ")" && depth > 0 {
-      depth -= 1
-    }
-
-    if depth == 0 {
-      for comparisonOperator in comparisonOperators {
-        if input[index...].hasPrefix(comparisonOperator) {
-          return (index, comparisonOperator)
-        }
-      }
-    }
-
-    index = input.index(after: index)
-  }
-
-  return nil
+  findFirstTopLevelPrefix(in: input, prefixes: comparisonOperators)
 }
 
 private func parseAtomicComparison(_ input: String) -> (
@@ -510,16 +529,11 @@ private func isWrappedInParentheses(_ input: String) -> Bool {
     return false
   }
 
-  var depth = 0
+  var state = ParserScanState()
   for index in input.indices {
-    let character = input[index]
-    if character == "(" {
-      depth += 1
-    } else if character == ")" {
-      depth -= 1
-      if depth == 0 {
-        return index == input.index(before: input.endIndex)
-      }
+    state.scan(input[index])
+    if state.parenDepth == 0 {
+      return index == input.index(before: input.endIndex)
     }
   }
 
@@ -587,18 +601,17 @@ private func firstMatch(_ input: String, pattern: String) throws -> Regex<AnyReg
   return input.firstMatch(of: regex)
 }
 
-private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRegexOutput>.Match? {
-  let regex = try regexForPattern(pattern)
-  return input.matches(of: regex).last
+#Preview {
+  EVYInterpreterPreview()
 }
 
-#Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! EVY.getUserData()
-    try! await EVYPreviewFixtures.seedData()
+private struct EVYInterpreterPreview: View {
+  init() {
+    try? EVY.getUserData()
+    EVYPreviewMockData.seedCommon()
+  }
 
+  var body: some View {
     let bare = "test"
     let data = "{item.title}"
 
@@ -626,8 +639,8 @@ private func lastMatch(_ input: String, pattern: String) throws -> Regex<AnyRege
     let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
 
     return VStack {
-      Text("parseProps but no props: " + parsePropsFromText(bare))
-      Text("parseProps with props: " + parsePropsFromText(data))
+      Text("parseProps but no props: " + _parsePropsFromText(bare))
+      Text("parseProps with props: " + _parsePropsFromText(data))
       Text(parsedData.toString())
       Text(withPrefix.toString())
       Text(withSuffix.toString())

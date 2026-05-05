@@ -328,8 +328,7 @@ else
             -project evy.xcodeproj \
             -scheme evy \
             -destination "$IOS_DESTINATION" \
-            -parallel-testing-enabled YES \
-            -parallel-testing-worker-count 2 \
+            -parallel-testing-enabled NO \
             -quiet; then
             echo -e "${GREEN}iOS e2e tests passed${NC}"
         else

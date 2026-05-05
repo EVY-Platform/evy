@@ -35,7 +35,6 @@
 		"ajv-formats": "^3.0.1",
 		"drizzle-orm": "^0.45.2",
 		"postgres": "^3.4.9",
-		"rpc-websockets": "^9.3.8",
-		"uuid": "^13.0.0"
+		"rpc-websockets": "^9.3.8"
 	}
 }

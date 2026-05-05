@@ -338,7 +338,7 @@ class E2ETestBase: XCTestCase {
             [
               "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
               "type": "Text",
-              "source": "{items}",
+              "source": "",
               "destination": "",
               "actions": [],
               "view": [
@@ -353,7 +353,7 @@ class E2ETestBase: XCTestCase {
           "footer": [
             "id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
             "type": "Button",
-            "source": "{items}",
+            "source": "",
             "destination": "",
             "actions": [
               [
@@ -745,7 +745,7 @@ final class WebSocketE2ETests: E2ETestBase {
           "footer": [
             "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
             "type": "Button",
-            "source": "{items}",
+            "source": "",
             "destination": "",
             "view": [
               "content": [
@@ -848,7 +848,7 @@ final class WebSocketE2ETests: E2ETestBase {
                           "condition": "",
                           "false": "",
                           "true":
-                            "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
+                            "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}",
                         ]
                       ],
                     ],

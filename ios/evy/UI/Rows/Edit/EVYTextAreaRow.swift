@@ -36,9 +36,23 @@ struct EVYTextAreaRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "1", "rows", "0"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-textarea-row",
+        "type": "TextArea",
+        "source": "",
+        "destination": "{items.description}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Description",
+            "value": "{items.description}",
+            "placeholder": "Describe your item in detail"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build text area row preview"
+  )
 }

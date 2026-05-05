@@ -15,9 +15,6 @@
 				"updatedAfter": {
 					"type": "string",
 					"format": "date-time"
-				},
-				"query": {
-					"type": "string"
 				}
 			}
 		},

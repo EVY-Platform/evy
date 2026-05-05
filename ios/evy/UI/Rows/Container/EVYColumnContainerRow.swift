@@ -31,9 +31,48 @@ struct EVYColumnContainerRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "5"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-column-row",
+        "type": "ColumnContainer",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Column Container Preview",
+            "children": [
+              {
+                "id": "column-child-1",
+                "type": "Info",
+                "source": "",
+                "actions": [],
+                "view": {
+                  "content": {
+                    "title": "First Child",
+                    "subtitle": "This is the first column item",
+                    "icon": "::star::"
+                  }
+                }
+              },
+              {
+                "id": "column-child-2",
+                "type": "Info",
+                "source": "",
+                "actions": [],
+                "view": {
+                  "content": {
+                    "title": "Second Child",
+                    "subtitle": "This is the second column item",
+                    "icon": ""
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build column container row preview"
+  )
 }

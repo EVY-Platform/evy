@@ -26,7 +26,6 @@ message UpsertRequest {
 message Filter {
   string id = 1;
   string updated_after = 2;
-  string query = 3;
 }
 
 message GetResponse {

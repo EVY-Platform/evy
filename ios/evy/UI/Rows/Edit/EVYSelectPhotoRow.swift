@@ -36,9 +36,25 @@ struct EVYSelectPhotoRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "0"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-selectphoto-row",
+        "type": "SelectPhoto",
+        "source": "",
+        "destination": "{items.photo_ids}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Photos",
+            "icon": "::image-plus::",
+            "subtitle": "Add photos of your item",
+            "content": "Add up to 10 photos",
+            "photos": "{items.photo_ids}"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build select photo row preview"
+  )
 }

@@ -33,9 +33,22 @@ struct EVYInputListRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "6", "view", "content", "child"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-inputlist-row",
+        "type": "InputList",
+        "source": "{tags}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Tags",
+            "format": "{$datum}",
+            "placeholder": "Add tags to improve search"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build input list row preview"
+  )
 }

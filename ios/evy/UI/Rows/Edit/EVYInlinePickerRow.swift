@@ -38,12 +38,22 @@ struct EVYInlinePickerRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow([
-      "2", "pages", "2", "rows", "0", "view", "content", "children", "1", "view", "content",
-      "children", "3",
-    ])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-inlinepicker-row",
+        "type": "InlinePicker",
+        "source": "{durations}",
+        "destination": "{items.duration}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Duration",
+            "format": "{$datum:value}"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build inline picker row preview"
+  )
 }

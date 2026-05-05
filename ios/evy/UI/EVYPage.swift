@@ -12,19 +12,10 @@ private struct EVYDraftScopeEnvironmentKey: EnvironmentKey {
   static let defaultValue: String? = nil
 }
 
-private struct EVYPageQueryEnvironmentKey: EnvironmentKey {
-  static let defaultValue: [String: [String]] = [:]
-}
-
 extension EnvironmentValues {
   var evyDraftScopeId: String? {
     get { self[EVYDraftScopeEnvironmentKey.self] }
     set { self[EVYDraftScopeEnvironmentKey.self] = newValue }
-  }
-
-  var evyPageQuery: [String: [String]] {
-    get { self[EVYPageQueryEnvironmentKey.self] }
-    set { self[EVYPageQueryEnvironmentKey.self] = newValue }
   }
 }
 
@@ -37,54 +28,66 @@ extension UI_Page: View {
 private struct EVYPageBody: View {
   let page: UI_Page
   @Environment(\.evyDraftScopeId) private var evyDraftScopeId
-  @Environment(\.evyPageQuery) private var evyPageQuery
 
   var body: some View {
     pageContent
       .onAppear {
+        EVY.activeCachePrefix = "\(page.id):"
         EVY.draftStore.activeScopeId = evyDraftScopeId
-        if !evyPageQuery.isEmpty {
-          EVY.resolveQueryParams(evyPageQuery)
-        }
         bootstrapDrafts(in: page, scopeId: evyDraftScopeId)
       }
-    .simultaneousGesture(
-      TapGesture().onEnded {
-        UIApplication.shared.sendAction(
-          #selector(UIResponder.resignFirstResponder),
-          to: nil,
-          from: nil,
-          for: nil
-        )
-      })
+      .simultaneousGesture(
+        TapGesture().onEnded {
+          UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+          )
+        })
   }
 
   @ViewBuilder
   private var pageContent: some View {
-    Group {
-      ScrollView {
-        ForEach(page.rows, id: \.id) { row in
-          EVYRow(row: row)
-            .padding(.horizontal, Constants.majorPadding)
-            .padding(.vertical, Constants.minorPadding)
-        }
-      }
-      .navigationTitle(page.title)
-      .accessibilityIdentifier("page_\(page.id)")
-      if let footer = page.footer {
-        EVYRow(row: footer)
-          .overlay(
-            alignment: .top,
-            content: {
-              Rectangle()
-                .fill(Constants.borderColor)
-                .frame(height: 1)
-                .padding(.top, -Constants.minorPadding)
-            }
-          )
-          .accessibilityIdentifier("pageFooter_\(page.id)")
+    VStack {
+      mainContent
+      footerContent
+    }
+    .navigationTitle(page.title)
+    .navigationBarTitleDisplayMode(.inline)
+  }
+
+  @ViewBuilder
+  private var mainContent: some View {
+    ScrollView {
+      ForEach(page.rows, id: \.id) { row in
+        pageRow(row)
       }
     }
+    .accessibilityIdentifier("page_\(page.id)")
+  }
+
+  @ViewBuilder
+  private var footerContent: some View {
+    if let footer = page.footer {
+      EVYRow(row: footer)
+        .overlay(
+          alignment: .top,
+          content: {
+            Rectangle()
+              .fill(Constants.borderColor)
+              .frame(height: 1)
+              .padding(.top, -Constants.minorPadding)
+          }
+        )
+        .accessibilityIdentifier("pageFooter_\(page.id)")
+    }
+  }
+
+  private func pageRow(_ row: UI_Row) -> some View {
+    EVYRow(row: row)
+      .padding(.horizontal, Constants.majorPadding)
+      .padding(.vertical, Constants.minorPadding)
   }
 
   /// Ensures a draft exists for each row `destination` binding in the active scope.
@@ -92,7 +95,7 @@ private struct EVYPageBody: View {
   private func bootstrapDrafts(in page: UI_Page, scopeId: String?) {
     forEachRow(in: page) { row in
       guard !row.destination.isEmpty else { return }
-      let destinationProps = parsePropsFromText(row.destination)
+      let destinationProps = EVY.parsePropsFromText(row.destination)
       let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
       guard !variableName.isEmpty else { return }
       let initialData: Data?

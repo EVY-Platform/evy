@@ -62,9 +62,22 @@ struct EVYTextSelectRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "3", "rows", "1", "view", "content", "children", "0"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-textselect-row",
+        "type": "TextSelect",
+        "source": "",
+        "destination": "{items.condition}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Selling reason",
+            "text": "reason-1"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build text select row preview"
+  )
 }

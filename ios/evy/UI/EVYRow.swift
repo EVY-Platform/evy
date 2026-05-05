@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-
 struct EVYRow: View, Identifiable {
   let row: UI_Row
   var id: String { row.id }
@@ -30,8 +29,8 @@ struct EVYRow: View, Identifiable {
       EVYInlinePickerRow(view: v, source: s, destination: d)
     case .inputList(let v, let s, _, _): EVYInputListRow(view: v, source: s)
     case .input(let v, _, let d, _): EVYInputRow(view: v, destination: d)
-    case .listContainer(let v, _, _, _): EVYListContainerRow(view: v)
-    case .search(let v, let s, let d, let a): EVYSearchRow(view: v, source: s, destination: d, actions: a)
+    case .listContainer(let v, let s, _, _): EVYListContainerRow(view: v, source: s)
+    case .search(let v, let s, _, _): EVYSearchRow(view: v, source: s)
     case .selectPhoto(let v, _, let d, _): EVYSelectPhotoRow(view: v, destination: d)
     case .selectSegmentContainer(let v, _, _, _): EVYSelectSegmentContainerRow(view: v)
     case .sheetContainer(let v, _, _, _): EVYSheetContainerRow(view: v)

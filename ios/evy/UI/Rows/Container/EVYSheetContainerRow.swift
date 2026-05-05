@@ -44,9 +44,48 @@ struct EVYSheetContainerRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "6"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-sheet-row",
+        "type": "SheetContainer",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Sheet Container Preview",
+            "child": {
+              "id": "sheet-trigger",
+              "type": "Info",
+              "source": "",
+              "actions": [],
+              "view": {
+                "content": {
+                  "title": "Tap to open sheet",
+                  "subtitle": "More options available",
+                  "icon": "::chevron-right::"
+                }
+              }
+            },
+            "children": [
+              {
+                "id": "sheet-content-1",
+                "type": "Info",
+                "source": "",
+                "actions": [],
+                "view": {
+                  "content": {
+                    "title": "Sheet Content",
+                    "subtitle": "This appears in the sheet overlay",
+                    "icon": ""
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build sheet container row preview"
+  )
 }

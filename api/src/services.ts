@@ -63,14 +63,20 @@ type ForwardableGetRequest = GetRequest | ApiRequest;
 type AppGetRequestInput = {
 	service: string;
 	resource: string;
-	filter?: { id?: string; updatedAfter?: string; query?: string };
+	filter?: {
+		id?: string;
+		updatedAfter?: string;
+	};
 	method?: string;
 };
 
 type ProtoGetRequest = {
 	service: string;
 	resource: string;
-	filter?: { id?: string; updated_after?: string; query?: string };
+	filter?: {
+		id?: string;
+		updated_after?: string;
+	};
 	method?: string;
 };
 
@@ -105,11 +111,10 @@ type GrpcServiceClient = grpc.Client & {
 };
 
 function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
-	const filter: Record<string, string> = {};
+	const filter: NonNullable<ProtoGetRequest["filter"]> = {};
 	if (params.filter?.id) filter.id = params.filter.id;
 	if (params.filter?.updatedAfter)
 		filter.updated_after = params.filter.updatedAfter;
-	if (params.filter?.query) filter.query = params.filter.query;
 
 	return {
 		service: params.service,
@@ -120,7 +125,7 @@ function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
 }
 
 function buildProtoUpsertRequest(params: UpsertRequest): ProtoUpsertRequest {
-	const filter: Record<string, string> = {};
+	const filter: NonNullable<ProtoUpsertRequest["filter"]> = {};
 	if (params.filter?.id) filter.id = params.filter.id;
 	if (params.filter?.updatedAfter)
 		filter.updated_after = params.filter.updatedAfter;

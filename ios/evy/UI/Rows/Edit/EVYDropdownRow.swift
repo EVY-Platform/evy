@@ -39,9 +39,23 @@ struct EVYDropdownRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "3"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-dropdown-row",
+        "type": "Dropdown",
+        "source": "{conditions}",
+        "destination": "{items.condition}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Condition",
+            "format": "{$datum:value}",
+            "placeholder": "Select a condition"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build dropdown row preview"
+  )
 }

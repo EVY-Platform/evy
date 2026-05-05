@@ -18,9 +18,7 @@ mock.module("../db", () => ({
 	schema,
 }));
 
-const { get, getForValidatedMarketplaceRequest, upsert } = await import(
-	"../data"
-);
+const { get, upsert } = await import("../data");
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
@@ -93,6 +91,37 @@ describe("marketplace get/upsert", () => {
 		expect(result).toEqual([newRow]);
 	});
 
+	it("filters rows by id", async () => {
+		const firstId = crypto.randomUUID();
+		const secondId = crypto.randomUUID();
+		const firstRow = { id: firstId, title: "First" };
+		const secondRow = { id: secondId, title: "Second" };
+		await testDb.insert(schema.data).values([
+			{
+				id: firstId,
+				resource: "items",
+				data: firstRow,
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				id: secondId,
+				resource: "items",
+				data: secondRow,
+				createdAt: "2024-01-02T00:00:00.000Z",
+				updatedAt: "2024-01-02T00:00:00.000Z",
+			},
+		]);
+
+		const result = await get({
+			service: "marketplace",
+			resource: "items",
+			filter: { id: secondId },
+		});
+
+		expect(result).toEqual([secondRow]);
+	});
+
 	it("uses filter.id as primary key when inserting a new row (client id)", async () => {
 		const clientId = crypto.randomUUID();
 		const payload = { id: clientId, title: "client-keyed" };
@@ -125,145 +154,5 @@ describe("marketplace get/upsert", () => {
 			data: { ...row, value: "v2" },
 		});
 		expect(updated.data).toEqual({ ...row, value: "v2" });
-	});
-
-	it("returns the raw query and closest item tag suggestions", async () => {
-		await testDb.insert(schema.data).values([
-			{
-				resource: "items",
-				data: {
-					id: crypto.randomUUID(),
-					title: "iPhone 13",
-					tags: [
-						{ id: "iphone-tag", value: "iPhone" },
-						{ id: "apple-tag", value: "Apple" },
-					],
-				},
-				createdAt: "2024-01-01T00:00:00.000Z",
-				updatedAt: "2024-01-01T00:00:00.000Z",
-			},
-			{
-				resource: "items",
-				data: {
-					id: crypto.randomUUID(),
-					title: "Desk phone",
-					tags: [
-						{ id: "phone-tag", value: "Phone" },
-						{ id: "office-tag", value: "Office" },
-					],
-				},
-				createdAt: "2024-01-02T00:00:00.000Z",
-				updatedAt: "2024-01-02T00:00:00.000Z",
-			},
-		]);
-
-		const result = await getForValidatedMarketplaceRequest({
-			service: "marketplace",
-			resource: "items",
-			method: "suggestions",
-			filter: {
-				query: "iph",
-			},
-		});
-
-		expect(result).toEqual([
-			{ id: "query", value: "iph" },
-			{ id: "iphone-tag", value: "iPhone" },
-		]);
-	});
-
-	it("returns fuzzy suggestions when Levenshtein distance is at most three", async () => {
-		await testDb.insert(schema.data).values({
-			resource: "items",
-			data: {
-				id: crypto.randomUUID(),
-				title: "Phone accessories",
-				tags: [
-					{ id: "near-phone-tag", value: "Phona" },
-					{ id: "distance-three-tag", value: "Phxxx" },
-					{ id: "distant-laptop-tag", value: "Laptop" },
-				],
-			},
-			createdAt: "2024-01-01T00:00:00.000Z",
-			updatedAt: "2024-01-01T00:00:00.000Z",
-		});
-
-		const result = await getForValidatedMarketplaceRequest({
-			service: "marketplace",
-			resource: "items",
-			method: "suggestions",
-			filter: {
-				query: "phone",
-			},
-		});
-
-		expect(result).toEqual([
-			{ id: "query", value: "phone" },
-			{ id: "near-phone-tag", value: "Phona" },
-			{ id: "distance-three-tag", value: "Phxxx" },
-		]);
-	});
-
-	it("dedupes repeated item tags in suggestions", async () => {
-		await testDb.insert(schema.data).values([
-			{
-				resource: "items",
-				data: {
-					id: crypto.randomUUID(),
-					title: "First iPhone",
-					tags: [{ id: "iphone-tag", value: "iPhone" }],
-				},
-				createdAt: "2024-01-01T00:00:00.000Z",
-				updatedAt: "2024-01-01T00:00:00.000Z",
-			},
-			{
-				resource: "items",
-				data: {
-					id: crypto.randomUUID(),
-					title: "Second iPhone",
-					tags: [{ id: "iphone-tag", value: "iPhone" }],
-				},
-				createdAt: "2024-01-02T00:00:00.000Z",
-				updatedAt: "2024-01-02T00:00:00.000Z",
-			},
-		]);
-
-		const result = await getForValidatedMarketplaceRequest({
-			service: "marketplace",
-			resource: "items",
-			method: "suggestions",
-			filter: {
-				query: "iphone",
-			},
-		});
-
-		expect(result).toEqual([
-			{ id: "query", value: "iphone" },
-			{ id: "iphone-tag", value: "iPhone" },
-		]);
-	});
-
-	it("returns no suggestions for an empty query", async () => {
-		await testDb.insert(schema.data).values({
-			resource: "items",
-			data: {
-				id: crypto.randomUUID(),
-				title: "iPhone 13",
-				tags: [{ id: "iphone-tag", value: "iPhone" }],
-			},
-			createdAt: "2024-01-01T00:00:00.000Z",
-			updatedAt: "2024-01-01T00:00:00.000Z",
-		});
-
-		const result = await getForValidatedMarketplaceRequest({
-			service: "marketplace",
-			resource: "items",
-			method: "suggestions",
-			filter: {
-				query: "   ",
-			},
-		});
-
-		expect(result).toEqual([]);
 	});
 });

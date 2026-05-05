@@ -66,7 +66,8 @@ extension Notification.Name {
 
           let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
           let minLen = min(watchSegments.count, notifSegments.count)
-          let prefixMatch = Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
+          let prefixMatch =
+            Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
 
           if prefixMatch { self?.value = setter(watch) }
         }
@@ -91,8 +92,8 @@ final class EVYDraftStore {
 
   var activeScopeId: String?
 
-  init() {
-    dataStore = EVYDataStore(name: "cache", inMemoryOnly: true)
+  init(dataStore: EVYDataStore) {
+    self.dataStore = dataStore
   }
 
   func drafts(forScopeId scopeId: String) throws -> [EVYData] {

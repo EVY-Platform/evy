@@ -50,7 +50,7 @@ const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
 const { validateAuth, getCore, setDbForTest, upsertCore } = dataModule;
-setDbForTest(testDb as unknown as typeof dataModule.db);
+setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
 function isDATA_EVY_Flow(row: UpsertResponse): row is DATA_EVY_Flow {
 	return (

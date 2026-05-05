@@ -109,13 +109,17 @@ struct EVYDropdown: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! EVY.getUserData()
-    try! await EVYPreviewFixtures.seedData()
+  EVYDropdownPreview()
+}
 
-    return EVYDropdown(
+private struct EVYDropdownPreview: View {
+  init() {
+    try? EVY.getUserData()
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    EVYDropdown(
       title: "Dropdown",
       placeholder: "A placeholder",
       data: "{conditions}",

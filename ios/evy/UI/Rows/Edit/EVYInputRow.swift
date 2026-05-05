@@ -32,9 +32,23 @@ struct EVYInputRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "1"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-input-row",
+        "type": "Input",
+        "source": "",
+        "destination": "{items.title}",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Item title",
+            "value": "{items.title}",
+            "placeholder": "Enter a title"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build input row preview"
+  )
 }

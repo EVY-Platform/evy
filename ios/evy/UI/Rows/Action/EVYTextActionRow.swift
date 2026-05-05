@@ -37,12 +37,23 @@ struct EVYTextActionRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow([
-      "2", "pages", "2", "rows", "0", "view", "content", "children", "0", "child", "view",
-      "content", "children", "1", "child",
-    ])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-textaction-row",
+        "type": "TextAction",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Text Action Row",
+            "text": "Current value",
+            "placeholder": "No value set",
+            "action": "Edit"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build text action row preview"
+  )
 }

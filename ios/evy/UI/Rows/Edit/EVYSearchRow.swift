@@ -11,38 +11,91 @@ struct EVYSearchRow: View {
 
   private let view: SearchRowViewData
   private let source: String
-  private let destination: String
-  private let actions: [UI_RowAction]
-  @State private var showSheet = false
 
-  init(view: SearchRowViewData, source: String, destination: String, actions: [UI_RowAction]) {
+  init(view: SearchRowViewData, source: String) {
     self.view = view
     self.source = source
-    self.destination = destination
-    self.actions = actions
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
+    VStack(alignment: .leading, spacing: 0) {
       if view.content.title.count > 0 {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
       }
       EVYSearch(
         source: source,
-        destination: destination,
         placeholder: view.content.placeholder,
-        resultTemplate: view.content.child,
-        actions: actions
+        resultTemplate: view.content.child
       )
     }
   }
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["2", "pages", "0", "rows", "6", "view", "content", "children", "0"])
+  EVYSearchRowPreview()
+}
+
+private struct EVYSearchRowPreview: View {
+  private let row = EVYSearchRowPreview.makeSearchRow()
+
+  init() {
+    let previewItemsJSON = """
+      [
+        { "id": "preview-item-1", "title": "Amazing Fridge", "category": "Kitchen" },
+        { "id": "preview-item-2", "title": "Amazing Freezer", "category": "Kitchen" },
+        { "id": "preview-item-3", "title": "Vintage Printer", "category": "Office" }
+      ]
+      """
+
+    if let previewItemsData = previewItemsJSON.data(using: .utf8) {
+      try? EVY.publicStore.upsert(key: "items", value: previewItemsData)
+    }
+  }
+
+  var body: some View {
+    if let row {
+      EVYRow(row: row)
+    } else {
+      Text("Unable to build search row preview")
+    }
+  }
+
+  private static func makeSearchRow() -> UI_Row? {
+    let searchRowJSON = """
+      {
+        "id": "preview-search-row",
+        "type": "Search",
+        "source": "{items}",
+        "destination": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "Search preview",
+            "placeholder": "Search items...",
+            "child": {
+              "id": "preview-search-result-template",
+              "type": "Info",
+              "source": "",
+              "destination": "",
+              "actions": [],
+              "view": {
+                "content": {
+                  "title": "{$datum:title}",
+                  "subtitle": "{$datum:category}",
+                  "icon": "::search::"
+                }
+              }
+            }
+          }
+        }
+      }
+      """
+
+    guard let searchRowData = searchRowJSON.data(using: .utf8) else {
+      return nil
+    }
+
+    return try? JSONDecoder().decode(UI_Row.self, from: searchRowData)
   }
 }

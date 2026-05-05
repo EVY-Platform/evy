@@ -12,7 +12,6 @@ import {
 	upsertForValidatedMarketplaceRequest,
 } from "./data";
 import {
-	validateStrictApiRequest,
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
@@ -104,8 +103,10 @@ function buildMarketplaceServiceHandlers(
 					{
 						service: string;
 						resource: string;
-						filter?: { id?: string; updated_after?: string; query?: string };
-						method?: string;
+						filter?: {
+							id?: string;
+							updated_after?: string;
+						};
 					},
 					{ result_json: string }
 				>,
@@ -114,22 +115,19 @@ function buildMarketplaceServiceHandlers(
 				void (async () => {
 					try {
 						const req = call.request;
-						const filter: Record<string, string> = {};
+						const filter: {
+							id?: string;
+							updatedAfter?: string;
+						} = {};
 						if (req.filter?.id) filter.id = req.filter.id;
 						if (req.filter?.updated_after)
 							filter.updatedAfter = req.filter.updated_after;
-						if (req.filter?.query) filter.query = req.filter.query;
 						const params = {
 							service: req.service,
 							resource: req.resource,
-							...(req.method ? { method: req.method } : {}),
 							filter: Object.keys(filter).length > 0 ? filter : undefined,
 						};
-						if (req.method) {
-							validateStrictApiRequest(params);
-						} else {
-							validateStrictGetRequest(params);
-						}
+						validateStrictGetRequest(params);
 						const result = await getForValidatedMarketplaceRequest(params);
 						cb(null, { result_json: JSON.stringify(result) });
 					} catch (err) {
@@ -145,7 +143,7 @@ function buildMarketplaceServiceHandlers(
 					{
 						service: string;
 						resource: string;
-						filter?: { id: string };
+						filter?: { id?: string };
 						data_json: string;
 					},
 					{ result_json: string }
@@ -206,24 +204,20 @@ type StartMarketplaceGrpcOptions = {
 	port?: number;
 };
 
-function resolveGrpcListenPort(options: StartMarketplaceGrpcOptions): number {
-	if (options.port !== undefined) {
-		return options.port;
-	}
-	if (!process.env.MARKETPLACE_GRPC_PORT) {
-		throw new Error("MARKETPLACE_GRPC_PORT environment variable is not set");
-	}
-	return Number.parseInt(process.env.MARKETPLACE_GRPC_PORT, 10);
+function resolveEnvOption(envKey: string): string {
+	const envValue = process.env[envKey];
+	if (!envValue) throw new Error(`${envKey} environment variable is not set`);
+	return envValue;
 }
 
 function resolveGrpcListenHost(options: StartMarketplaceGrpcOptions): string {
-	if (options.host !== undefined) {
-		return options.host;
-	}
-	if (!process.env.MARKETPLACE_GRPC_HOST) {
-		throw new Error("MARKETPLACE_GRPC_HOST environment variable is not set");
-	}
-	return process.env.MARKETPLACE_GRPC_HOST;
+	if (options.host) return options.host;
+	return resolveEnvOption("MARKETPLACE_GRPC_HOST");
+}
+
+function resolveGrpcListenPort(options: StartMarketplaceGrpcOptions): number {
+	if (options.port) return Number.parseInt(String(options.port), 10);
+	return Number.parseInt(resolveEnvOption("MARKETPLACE_GRPC_PORT"), 10);
 }
 
 export async function startMarketplaceGrpcServer(

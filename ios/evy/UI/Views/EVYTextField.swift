@@ -7,6 +7,19 @@
 
 import SwiftUI
 
+@MainActor
+enum EVYTextResolver {
+  static func resolveValue(from text: String, editing: Bool = false) -> EVYValue {
+    if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
+      return resolvedValue
+    }
+    if EVY.parsePropsFromText(text) == text {
+      return EVYValue(text, nil, nil)
+    }
+    return EVYValue("", nil, nil)
+  }
+}
+
 struct EVYTextField: View {
   let destination: String
   let placeholder: String
@@ -20,7 +33,7 @@ struct EVYTextField: View {
   @FocusState private var focused: Bool
   @State private var editing: Bool = false
 
-  init(input: String, destination: String, placeholder: String, multiLine: Bool) {
+  init(input: String, destination: String, placeholder: String, multiLine: Bool = false) {
     self.input = input
     self.placeholder = placeholder
     self.destination = destination
@@ -32,36 +45,18 @@ struct EVYTextField: View {
     self.displayValue = EVYState(
       watch: inputWatchTarget,
       setter: { _ in
-        Self.resolveValue(from: input)
+        EVYTextResolver.resolveValue(from: input)
       })
     self.editableValue = EVYState(
       watch: inputWatchTarget,
       setter: { _ in
-        Self.resolveValue(from: input, editing: true)
+        EVYTextResolver.resolveValue(from: input, editing: true)
       })
     self.placeholderValue = EVYState(
       watch: placeholderWatchTarget,
       setter: { _ in
-        Self.resolveValue(from: placeholder)
+        EVYTextResolver.resolveValue(from: placeholder)
       })
-  }
-
-  init(input: String, destination: String, placeholder: String) {
-    self.init(
-      input: input,
-      destination: destination,
-      placeholder: placeholder,
-      multiLine: false)
-  }
-
-  private static func resolveValue(from text: String, editing: Bool = false) -> EVYValue {
-    if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
-      return resolvedValue
-    }
-    if EVY.parsePropsFromText(text) == text {
-      return EVYValue(text, nil, nil)
-    }
-    return EVYValue("", nil, nil)
   }
 
   var body: some View {
@@ -130,12 +125,16 @@ struct EVYTextField: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    asyncView
-  } view: {
-    try! await EVYPreviewFixtures.seedData()
+  EVYTextFieldPreview()
+}
 
-    return VStack {
+private struct EVYTextFieldPreview: View {
+  init() {
+    EVYPreviewMockData.seedCommon()
+  }
+
+  var body: some View {
+    VStack {
       EVYTextField(
         input: "{formatDimension(item.dimensions.width)}",
         destination: "{item.dimensions.width}",

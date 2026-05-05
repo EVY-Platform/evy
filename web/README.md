@@ -156,6 +156,8 @@ graph TD
 
 Action branches are stored as strings. The builder emits executable actions in function-call form; use `{close()}` for close, while a bare `close` string is treated as non-executable text by runtimes.
 
+Search rows and dynamic ListContainer child templates are previewed with deterministic sample data in the builder. The web preview does not fetch live API data; iOS resolves the same `source` strings locally from synced service data at runtime.
+
 ## Getting Started
 
 Setup (Bun, Docker, copying `.env`): [README § Setup](../README.md#setup) and [§ Running Services](../README.md#running-services). The web app only needs a reachable API over `API_URL` (no direct Postgres).

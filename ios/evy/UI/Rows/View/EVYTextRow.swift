@@ -55,9 +55,22 @@ struct EVYTextRow: View {
 }
 
 #Preview {
-  AsyncPreview { asyncView in
-    EVYRow(row: asyncView)
-  } view: {
-    try! await EVYPreviewFixtures.getRow(["1", "pages", "0", "rows", "0"])
-  }
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-text-row",
+        "type": "Text",
+        "source": "",
+        "actions": [],
+        "view": {
+          "content": {
+            "title": "About this item",
+            "text": "This is a sample text row with some descriptive content to display. It can be quite long and the user can tap to expand it."
+          },
+          "max_lines": "3"
+        }
+      }
+      """,
+    failureMessage: "Unable to build text row preview"
+  )
 }

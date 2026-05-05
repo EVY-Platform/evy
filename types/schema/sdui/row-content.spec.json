@@ -66,6 +66,7 @@
 		"content": {
 			"title": "string",
 			"placeholder": "string",
+			"value": "string",
 			"child": "UI_Row"
 		}
 	},
@@ -101,6 +102,7 @@
 	"ListContainer": {
 		"content": {
 			"title": "string",
+			"child": "UI_Row",
 			"children": "[UI_Row]"
 		}
 	},
