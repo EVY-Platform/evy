@@ -1,7 +1,9 @@
 import { createElement, useMemo, type ReactNode } from "react";
 
-import type { FlowsContextValue } from "../../state/contexts/FlowsContext";
-import { FlowsContext } from "../../state/contexts/FlowsContext";
+import {
+	FlowsContext,
+	type FlowsContextValue,
+} from "../../state/contexts/FlowsContext";
 import type { Row } from "../../types/row";
 import {
 	SEARCH_DEFAULT_RESULT_CONTENT,

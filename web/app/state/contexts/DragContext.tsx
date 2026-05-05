@@ -1,5 +1,4 @@
-import { createContext, useContext } from "react";
-import type { Dispatch } from "react";
+import { createContext, useContext, type Dispatch } from "react";
 
 import type {
 	DraggingState,

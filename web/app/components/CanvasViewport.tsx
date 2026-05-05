@@ -1,9 +1,12 @@
-import type {
-	CSSProperties,
-	MouseEvent as ReactMouseEvent,
-	ReactNode,
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	type CSSProperties,
+	type MouseEvent as ReactMouseEvent,
+	type ReactNode,
 } from "react";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
 import {
 	type CursorPosition,

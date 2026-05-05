@@ -8,8 +8,8 @@ import type {
 import {
 	getServiceNames,
 	getServiceResources,
+	validateStrictSyncServiceDataRequest,
 } from "evy-types/rpcRequestHelpers";
-import { validateStrictSyncServiceDataRequest } from "evy-types/rpcRequestHelpers";
 import { validateSyncServiceDataResponse } from "evy-types/validators";
 import {
 	extractBindingsFromString,

@@ -61,20 +61,17 @@ export function getServiceResources(service: string): string[] | undefined {
 	return resources ? [...resources] : undefined;
 }
 
-type Service = string;
-type Resource = string;
-
-function isService(v: unknown): v is Service {
+function isService(v: unknown): v is string {
 	return typeof v === "string" && v.length > 0;
 }
 
-function isResource(v: unknown): v is Resource {
+function isResource(v: unknown): v is string {
 	return typeof v === "string" && v.length > 0 && v.length <= 50;
 }
 
 function isValidServiceResourcePair(
-	service: Service,
-	resource: Resource,
+	service: string,
+	resource: string,
 ): boolean {
 	const allowed = ensureServiceRegistry().get(service);
 	return allowed !== undefined && allowed.has(resource);
@@ -93,8 +90,8 @@ function assertRpcParamsCommon(params: unknown): asserts params is Record<
 	string,
 	unknown
 > & {
-	service: Service;
-	resource: Resource;
+	service: string;
+	resource: string;
 } {
 	if (params === null || typeof params !== "object") {
 		throw new Error("Params must be an object");
