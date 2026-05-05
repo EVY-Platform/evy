@@ -139,40 +139,6 @@ function unexportReferencedTypes(
 	);
 }
 
-/**
- * RPC get/upsert request schemas use `oneOf` per service so the contract is a
- * service×resource matrix. Extract runtime maps for codegen appended lines.
- */
-function extractRpcRequestCodegenConstants(schema: Record<string, unknown>): {
-	serviceValues: string[];
-	resourceValues: string[];
-	resourcesByService: Record<string, string[]>;
-} | null {
-	const oneOf = schema.oneOf;
-	if (!Array.isArray(oneOf) || oneOf.length === 0) return null;
-	const resourcesByService: Record<string, string[]> = {};
-	const resourceValues: string[] = [];
-	for (const branch of oneOf) {
-		if (!branch || typeof branch !== "object") continue;
-		const props = (branch as Record<string, unknown>).properties as
-			| Record<string, unknown>
-			| undefined;
-		if (!props) continue;
-		const svcProp = props.service as { const?: string } | undefined;
-		const resProp = props.resource as { enum?: string[] } | undefined;
-		const svc = svcProp?.const;
-		const resEnum = resProp?.enum;
-		if (!svc || !resEnum?.length) continue;
-		resourcesByService[svc] = [...resEnum];
-		for (const r of resEnum) {
-			if (!resourceValues.includes(r)) resourceValues.push(r);
-		}
-	}
-	const serviceValues = Object.keys(resourcesByService).sort();
-	if (serviceValues.length === 0) return null;
-	return { serviceValues, resourceValues, resourcesByService };
-}
-
 async function generateTypeScript(
 	schemaFiles: LoadedSchemaFile[],
 ): Promise<void> {
@@ -244,29 +210,6 @@ async function generateTypeScript(
 					`export const UI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`,
 				]);
 			}
-			if (schemaKey === "rpc/get.request") {
-				const fromOneOf = extractRpcRequestCodegenConstants(schema);
-				if (fromOneOf) {
-					const { serviceValues, resourceValues, resourcesByService } =
-						fromOneOf;
-					await appendLinesToGeneratedFile(outPath, [
-						`export const SERVICE_VALUES = ${JSON.stringify(serviceValues)} as const;`,
-						`export const RESOURCE_VALUES = ${JSON.stringify(resourceValues)} as const;`,
-						`export const RESOURCES_BY_SERVICE = ${JSON.stringify(resourcesByService)} as const;`,
-					]);
-				} else {
-					const props = schema.properties as Record<
-						string,
-						{ enum?: string[] }
-					>;
-					const serviceValues = props?.service?.enum ?? [];
-					const resourceValues = props?.resource?.enum ?? [];
-					await appendLinesToGeneratedFile(outPath, [
-						`export const SERVICE_VALUES = ${JSON.stringify(serviceValues)} as const;`,
-						`export const RESOURCE_VALUES = ${JSON.stringify(resourceValues)} as const;`,
-					]);
-				}
-			}
 		}),
 	);
 
@@ -282,7 +225,6 @@ async function generateTypeScript(
 		} else if (schemaKey === "rpc/get.request") {
 			lines.push(
 				`export type { GetRequest } from "./${mod}";`,
-				`export { SERVICE_VALUES, RESOURCE_VALUES, RESOURCES_BY_SERVICE } from "./${mod}";`,
 			);
 		} else {
 			const name = title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");

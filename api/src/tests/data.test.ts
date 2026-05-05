@@ -193,7 +193,7 @@ describe("get", () => {
 				service: "invalid",
 				resource: "sdui",
 			} as unknown as GetRequest),
-		).rejects.toThrow("Invalid or missing service");
+		).rejects.toThrow("Invalid service and resource combination");
 	});
 
 	it("should throw when resource is invalid", async () => {
@@ -202,7 +202,7 @@ describe("get", () => {
 				service: "evy",
 				resource: "InvalidResource",
 			} as unknown as GetRequest),
-		).rejects.toThrow("Invalid or missing resource");
+		).rejects.toThrow("Invalid service and resource combination");
 	});
 
 	it("should throw when service and resource do not match the shared contract", async () => {

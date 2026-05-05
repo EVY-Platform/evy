@@ -15,6 +15,7 @@ import {
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
+import { MARKETPLACE_RESOURCE_NAMES } from "./catalog";
 
 /**
  * Best-effort write for server-streaming SubscribeEvents. If the client has
@@ -194,6 +195,17 @@ function buildMarketplaceServiceHandlers(
 				};
 				call.on("cancelled", cleanup);
 				call.on("close", cleanup);
+			},
+			ListResources: (
+				_call: grpc.ServerUnaryCall<
+					Record<string, never>,
+					{ resources: string[] }
+				>,
+				cb: grpc.sendUnaryData<{ resources: string[] }>,
+			) => {
+				cb(null, {
+					resources: [...MARKETPLACE_RESOURCE_NAMES],
+				});
 			},
 		},
 	};

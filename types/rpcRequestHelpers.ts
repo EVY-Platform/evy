@@ -1,11 +1,6 @@
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { SyncServiceDataRequest } from "./generated/ts/rpc/syncServiceData.request";
-import {
-	RESOURCES_BY_SERVICE,
-	RESOURCE_VALUES,
-	SERVICE_VALUES,
-} from "./generated/ts/rpc/get.request";
 import type { UpsertRequest } from "./generated/ts/rpc/upsert.request";
 import {
 	validateApiRequest,
@@ -14,28 +9,80 @@ import {
 	validateUpsertRequest,
 } from "./validators";
 
-type Service = GetRequest["service"];
-type Resource = GetRequest["resource"];
+/**
+ * Runtime registry of known service→resource mappings.
+ * Populated at startup via gRPC ListResources calls by the API gateway.
+ * The "evy" core service is always registered with known fixed resources.
+ */
+let serviceRegistry: Map<string, Set<string>> | null = null;
+let serviceRegistryInitialized = false;
+
+function ensureServiceRegistry(): Map<string, Set<string>> {
+	if (!serviceRegistryInitialized) {
+		serviceRegistry = new Map<string, Set<string>>();
+		// Always register evy core resources (these are fixed, not discovered)
+		serviceRegistry.set("evy", new Set([
+			"sdui", "devices", "organisations", "services", "providers",
+		]));
+		serviceRegistryInitialized = true;
+	}
+	return serviceRegistry!;
+}
+
+/**
+ * Update the service registry at runtime (e.g., after discovering services via gRPC).
+ * Replaces all entries with live data from gRPC ListResources, preserving the evy core entry.
+ */
+export function setServiceRegistry(
+	entries: Iterable<[string, string[]]>,
+): void {
+	const registry = new Map<string, Set<string>>();
+	// Always preserve evy core
+	registry.set("evy", new Set([
+		"sdui", "devices", "organisations", "services", "providers",
+	]));
+	for (const [svc, resources] of entries) {
+		if (svc !== "evy") {
+			registry.set(svc, new Set(resources));
+		}
+	}
+	serviceRegistry = registry;
+	serviceRegistryInitialized = true;
+}
+
+/** Returns the current set of known service names. */
+export function getServiceNames(): string[] {
+	return [...ensureServiceRegistry().keys()];
+}
+
+/** Returns the resources for a given service, or undefined if unknown. */
+export function getServiceResources(service: string): string[] | undefined {
+	const resources = ensureServiceRegistry().get(service);
+	return resources ? [...resources] : undefined;
+}
+
+type Service = string;
+type Resource = string;
 
 function isService(v: unknown): v is Service {
-	return typeof v === "string" && SERVICE_VALUES.includes(v as Service);
+	return typeof v === "string" && v.length > 0;
 }
 
 function isResource(v: unknown): v is Resource {
-	return typeof v === "string" && RESOURCE_VALUES.includes(v as Resource);
+	return typeof v === "string" && v.length > 0 && v.length <= 50;
 }
 
 function isValidServiceResourcePair(
 	service: Service,
 	resource: Resource,
 ): boolean {
-	const allowed = RESOURCES_BY_SERVICE[service] as readonly string[];
-	return allowed.includes(resource);
+	const allowed = ensureServiceRegistry().get(service);
+	return allowed !== undefined && allowed.has(resource);
 }
 
 function isSyncableService(
 	service: string,
-): service is Exclude<Service, "evy"> {
+): service is Exclude<string, "evy"> {
 	return isService(service) && service !== "evy";
 }
 

@@ -2,17 +2,15 @@ import { and, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import {
-	type DATA_EVY_Organization,
-	type DATA_EVY_Service,
-	type DATA_EVY_ServiceProvider,
-	type GetResponse,
-	RESOURCES_BY_SERVICE,
-	RESOURCE_VALUES,
-	type GetRequest,
-	type OS,
-	type UpsertRequest,
-	type UpsertResponse,
+import type {
+	DATA_EVY_Organization,
+	DATA_EVY_Service,
+	DATA_EVY_ServiceProvider,
+	GetResponse,
+	GetRequest,
+	OS,
+	UpsertRequest,
+	UpsertResponse,
 } from "evy-types";
 import * as schema from "../../types/generated/ts/db/schema.generated";
 import {
@@ -48,12 +46,22 @@ export function setDbForTest(database: typeof db): void {
 
 const CORE_SERVICE = "evy";
 
-const CORE_API_RESOURCES = new Set(RESOURCES_BY_SERVICE.evy);
+/** Resources served by the core EVY API. These are fixed and not dynamically discovered. */
+const CORE_API_RESOURCES = new Set([
+	"sdui",
+	"devices",
+	"organisations",
+	"services",
+	"providers",
+]);
 
-type Resource = GetRequest["resource"];
-
-export function isResource(v: unknown): v is Resource {
-	return typeof v === "string" && RESOURCE_VALUES.includes(v as Resource);
+/**
+ * Check whether a value is a valid resource string.
+ * No longer validates against a generated constant list — accepts any
+ * non-empty string, since resource validity is enforced at the registry level.
+ */
+export function isResource(v: unknown): v is string {
+	return typeof v === "string" && v.length > 0;
 }
 
 function assertEvyCoreAccess(params: GetRequest | UpsertRequest): void {

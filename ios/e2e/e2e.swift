@@ -43,12 +43,29 @@ actor WSEmitter {
     if let filter = filter {
       params["filter"] = filter
     }
-    let response = try await send(method: "get", params: params)
+    return try await rpcResult(method: "get", params: params)
+  }
+
+  func upsertResource(
+    service: String,
+    resource: String,
+    filter: [String: Any]? = nil,
+    data: [String: Any]
+  ) async throws -> Any {
+    var params: [String: Any] = ["service": service, "resource": resource, "data": data]
+    if let filter = filter {
+      params["filter"] = filter
+    }
+    return try await rpcResult(method: "upsert", params: params)
+  }
+
+  private func rpcResult(method: String, params: Any) async throws -> Any {
+    let response = try await send(method: method, params: params)
     guard let result = response["result"] else {
       throw NSError(
         domain: "WSEmitter",
-        code: 2,
-        userInfo: [NSLocalizedDescriptionKey: "get response missing result"]
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "\(method) response missing result"]
       )
     }
     return result
@@ -578,6 +595,62 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
+  func testViewItemFlowLoadsItemFromNavigateQuery() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
+      XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
+      return
+    }
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+
+    let selectedItemId = UUID().uuidString
+    let selectedItemTitle = "Filtered Item \(Int(Date().timeIntervalSince1970))"
+    _ = try await emitter.upsertResource(
+      service: "marketplace",
+      resource: "items",
+      filter: ["id": selectedItemId],
+      data: ["id": selectedItemId, "title": selectedItemTitle]
+    )
+
+    let viewButtonLabel = "View filtered \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: createHomeFlowData(
+        buttonLabel: viewButtonLabel,
+        viewItemId: selectedItemId
+      ),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    await emitter.disconnect()
+
+    app.terminate()
+    try launchApp()
+
+    let queryButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(
+      queryButton.waitForExistence(timeout: 20),
+      "Home view button should load with query-aware label after relaunch")
+
+    queryButton.tap()
+
+    let scrollView = app.scrollViews.firstMatch
+    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "View item page should appear")
+
+    XCTAssertTrue(
+      app.staticTexts["My item is called"].waitForExistence(timeout: 5),
+      "View item page should show the static text row title")
+    XCTAssertTrue(
+      app.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
+      "View item page should resolve {item.title} from the item id passed in navigate query")
+  }
+
+  @MainActor
   func testCreateItemFormEditing() async throws {
     let viewItemButton = app.buttons["View"]
     let createItemButton = app.buttons["Create"]
@@ -767,6 +840,14 @@ final class WebSocketE2ETests: E2ETestBase {
     ]
   }
 
+  private static func viewItemNavigateAction(viewItemId: String?) -> String {
+    guard let viewItemId else {
+      return "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage))}"
+    }
+    return
+      "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{\"items\": [\"\(viewItemId)\"]})}"
+  }
+
   private static func marketplaceItemsContainListing(
     title: String,
     priceValue: Double,
@@ -794,7 +875,9 @@ final class WebSocketE2ETests: E2ETestBase {
     return false
   }
 
-  private func createHomeFlowData(buttonLabel: String) -> [String: Any] {
+  private func createHomeFlowData(buttonLabel: String, viewItemId: String? = nil) -> [String: Any] {
+    let viewAction = Self.viewItemNavigateAction(viewItemId: viewItemId)
+
     return [
       "id": E2EFlowIds.webSocketHomeFlow,
       "name": "Home",
@@ -828,8 +911,7 @@ final class WebSocketE2ETests: E2ETestBase {
                         [
                           "condition": "",
                           "false": "",
-                          "true":
-                            "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage))}",
+                          "true": viewAction,
                         ]
                       ],
                     ],

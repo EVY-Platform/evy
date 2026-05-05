@@ -156,6 +156,7 @@ struct ContentView: View {
           if !flows.isEmpty { return }
 
           do {
+            EVY.loadCachedResourceMapping()
             try EVY.getUserData()
             try await EVY.syncAllServices()
             flows = try await EVY.getSDUI()

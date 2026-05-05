@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 import {
-	RESOURCES_BY_SERVICE,
-	type GetRequest,
-	type GetResponse,
-	type UI_Flow,
-} from "evy-types";
+	getServiceResources,
+	setServiceRegistry,
+} from "evy-types/rpcRequestHelpers";
 
 const forwardGetMock = mock(
 	async (_serviceName: string, params: GetRequest): Promise<GetResponse> => [
@@ -139,6 +138,22 @@ beforeEach(() => {
 			{ id: `${params.resource}-1` },
 		],
 	);
+
+	// Initialize the service registry with known resources for tests
+	setServiceRegistry([
+		["evy", ["sdui", "devices", "organisations", "services", "providers"]],
+		[
+			"marketplace",
+			[
+				"selling_reasons",
+				"conditions",
+				"durations",
+				"areas",
+				"timeslots",
+				"items",
+			],
+		],
+	]);
 });
 
 describe("expression parser utility", () => {
@@ -288,16 +303,15 @@ describe("syncServiceData", () => {
 			lastSyncTime: EPOCH,
 		});
 
+		const marketplaceResources = getServiceResources("marketplace") ?? [];
 		expect(result.data.map((row) => row.resource)).toEqual([
-			...RESOURCES_BY_SERVICE.marketplace,
+			...marketplaceResources,
 		]);
 		expect(result.data.every((row) => row.service === "marketplace")).toBe(
 			true,
 		);
 		expect(result.data.every((row) => Array.isArray(row.value))).toBe(true);
-		expect(forwardGetMock).toHaveBeenCalledTimes(
-			RESOURCES_BY_SERVICE.marketplace.length,
-		);
+		expect(forwardGetMock).toHaveBeenCalledTimes(marketplaceResources.length);
 	});
 
 	it("passes updatedAfter to each underlying get request", async () => {

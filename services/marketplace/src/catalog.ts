@@ -1,10 +1,14 @@
-import { RESOURCES_BY_SERVICE } from "evy-types";
-
 /**
- * Keys in `docs/services/service_data.json` for marketplace catalog rows.
- * RPC `resource` values match {@link MARKETPLACE_DATA_RESOURCES} (shared schema).
+ * Resource names served by the marketplace service.
+ * This is the single source of truth for:
+ * - gRPC ListResources response
+ * - seed data partitioning in `scripts/seed.ts`
+ *
+ * In future, this list could be derived from the database
+ * (e.g. `SELECT DISTINCT resource FROM data`), but for now
+ * it is explicitly declared here.
  */
-const MARKETPLACE_DATA_JSON_KEYS = [
+export const MARKETPLACE_RESOURCE_NAMES = [
 	"selling_reasons",
 	"conditions",
 	"durations",
@@ -13,12 +17,7 @@ const MARKETPLACE_DATA_JSON_KEYS = [
 	"items",
 ] as const;
 
-/** JSON keys routed to the marketplace database during `bun run db:seed` (see `partitionSeedCatalogData` in `scripts/seed.ts`). */
+/** JSON keys routed to the marketplace database during `bun run db:seed`. */
 export const MARKETPLACE_SEED_KEYS = new Set<string>(
-	MARKETPLACE_DATA_JSON_KEYS,
-);
-
-/** Allowed `resource` values on marketplace Get/Upsert; sourced from the shared RPC schema. */
-export const MARKETPLACE_DATA_RESOURCES = new Set(
-	RESOURCES_BY_SERVICE.marketplace,
+	MARKETPLACE_RESOURCE_NAMES,
 );

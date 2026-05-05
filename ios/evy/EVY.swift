@@ -37,6 +37,13 @@ struct SyncServiceDataResponse: Codable {
   let data: [SyncedServiceDataRow]
 }
 
+/// A mapping from a plural resource name to its singular and plural forms.
+/// Cached from the server to avoid relying on client-side inflection.
+struct ResourceEntry: Codable, Equatable {
+  let singular: String
+  let plural: String
+}
+
 @MainActor
 struct EVY {
   private static let localPrefix = "$local"
@@ -47,6 +54,74 @@ struct EVY {
   static let cacheStore = EVYDataStore(name: "cache", inMemoryOnly: true)
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
   static var activeCachePrefix: String?
+
+  // MARK: - Resource Mapping
+
+  /// Cache of resource mappings fetched from the server.
+  /// Keyed by the plural form (e.g. "items", "selling_reasons").
+  private static var cachedResourceMapping: [String: ResourceEntry] = [:]
+
+  /// Reverse lookup: singular -> plural for O(1) lookups.
+  private static var singularToPlural: [String: String] = [:]
+
+  /// Whether the resource mapping has been fetched from the server this session.
+  private static var resourceMappingFetchedFromServer = false
+
+  /// Whether the resource mapping has been loaded from cache (stale, for offline startup).
+  private static var resourceMappingLoadedFromCache = false
+
+  /// Response structure from the API.
+  private struct ResourcesResponse: Decodable {
+    let resources: [String: ResourceEntry]
+    let resourcesByService: [String: [String]]
+  }
+
+  /// Returns the list of syncable (non-evy) service names from the last fetch.
+  private static var syncableServices: [String] = []
+
+  /// Fetch the resource mapping from the API and cache it.
+  /// Always fetches from the server regardless of cached state.
+  static func fetchResourceMapping() async throws {
+    let response: ResourcesResponse = try await EVYAPIManager.shared.fetch(
+      method: "resources",
+      params: [:],
+      expecting: ResourcesResponse.self
+    )
+
+    applyResourceMapping(response.resources, resourcesByService: response.resourcesByService)
+    resourceMappingFetchedFromServer = true
+
+    // Persist to UserDefaults for offline use
+    if let encoded = try? JSONEncoder().encode(response.resources) {
+      UserDefaults.standard.set(encoded, forKey: "cachedResourceMapping")
+    }
+  }
+
+  /// Load cached resource mapping from UserDefaults (for offline startup).
+  /// Does NOT skip a future server fetch — only populates the cache for early access.
+  static func loadCachedResourceMapping() {
+    guard !resourceMappingFetchedFromServer,
+          let data = UserDefaults.standard.data(forKey: "cachedResourceMapping"),
+          let mapping = try? JSONDecoder().decode([String: ResourceEntry].self, from: data)
+    else { return }
+    applyResourceMapping(mapping, resourcesByService: nil)
+    resourceMappingLoadedFromCache = true
+  }
+
+  /// Apply a resource mapping to the in-memory caches.
+  private static func applyResourceMapping(
+    _ mapping: [String: ResourceEntry],
+    resourcesByService: [String: [String]]?
+  ) {
+    cachedResourceMapping = mapping
+    singularToPlural = [:]
+    for (plural, entry) in mapping {
+      singularToPlural[entry.singular] = plural
+    }
+    if let resourcesByService {
+      syncableServices = resourcesByService.keys.filter { $0 != "evy" }.sorted()
+    }
+  }
 
   static func cacheQueryParams(_ query: [String: [String]], forPageId pageId: String) {
     activeCachePrefix = "\(pageId):"
@@ -98,8 +173,10 @@ struct EVY {
   }
 
   static func syncAllServices() async throws {
-    let services = ["marketplace"]
-    for service in services {
+    // Fetch resource mapping (always fetches from server)
+    try await fetchResourceMapping()
+
+    for service in syncableServices {
       try await syncServiceData(service: service)
     }
   }
@@ -140,11 +217,23 @@ struct EVY {
         continue
       }
 
-      try? cacheStore.upsert(key: "\(prefix)\(candidate.cacheKey)", value: encodedMatchingValue)
+      cacheResolvedEntity(
+        prefix: prefix,
+        cacheKey: candidate.cacheKey,
+        value: encodedMatchingValue
+      )
       return true
     }
 
     return false
+  }
+
+  private static func cacheResolvedEntity(prefix: String, cacheKey: String, value: Data) {
+    try? cacheStore.upsert(key: "\(prefix)\(cacheKey)", value: value)
+
+    let singularEntityKey = entityName(forResourceKey: cacheKey)
+    guard singularEntityKey != cacheKey else { return }
+    try? cacheStore.upsert(key: "\(prefix)\(singularEntityKey)", value: value)
   }
 
   private static func resolvedEntityCollections(for queryKey: String?) -> [(cacheKey: String, data: EVYData)] {
@@ -258,12 +347,40 @@ struct EVY {
 
   /// Converts a singular entity key into its plural backend resource name.
   ///
-  /// Only the last underscore-separated segment is inflected. For example
-  /// `selling_reason` becomes `selling_reasons` (not `sellings_reasons`).
-  ///
-  /// Uses Foundation's `AttributedString` inflection system as the source of truth.
+  /// Uses the server-provided mapping if available, falls back to Foundation
+  /// inflection. Only the last underscore-separated segment is inflected.
+  /// For example `selling_reason` becomes `selling_reasons` (not `sellings_reasons`).
   static func resourceName(forEntityKey entityKey: String) -> String {
+    // O(1) lookup via the reverse map
+    if let plural = singularToPlural[entityKey] {
+      return plural
+    }
+
+    // Fallback: try the key as-is (in case it's already a plural resource name)
+    if cachedResourceMapping[entityKey] != nil {
+      return entityKey
+    }
+
+    // Last resort: use Foundation inflection
+    return legacyResourceName(forEntityKey: entityKey)
+  }
+
+  /// Converts a plural backend resource name into its singular entity key.
+  static func entityName(forResourceKey resourceKey: String) -> String {
+    if let entry = cachedResourceMapping[resourceKey] {
+      return entry.singular
+    }
+    return legacyEntityName(forResourceKey: resourceKey)
+  }
+
+  // MARK: - Legacy inflection fallbacks
+
+  private static func legacyResourceName(forEntityKey entityKey: String) -> String {
     inflectLastSegment(of: entityKey, to: .plural)
+  }
+
+  private static func legacyEntityName(forResourceKey resourceKey: String) -> String {
+    inflectLastSegment(of: resourceKey, to: .singular)
   }
 
   /// Inflects the last underscore-separated segment of a key to the given grammatical number.

@@ -7,12 +7,12 @@ import type {
 	UpsertRequest,
 } from "evy-types";
 import {
+	getServiceResources,
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
 import { data } from "./db/schema";
 import { db } from "./db";
-import { MARKETPLACE_DATA_RESOURCES } from "./catalog";
 import {
 	assertIsoDateTimeJsonFields,
 	validateGetResponse,
@@ -32,7 +32,8 @@ function assertMarketplaceRules(params: GetRequest | UpsertRequest): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
 		throw new Error("Marketplace service requires service marketplace");
 	}
-	if (!MARKETPLACE_DATA_RESOURCES.has(params.resource)) {
+	const marketplaceResources = getServiceResources(MARKETPLACE_SERVICE) ?? [];
+	if (!marketplaceResources.includes(params.resource)) {
 		throw new Error("Unsupported resource for marketplace service");
 	}
 }

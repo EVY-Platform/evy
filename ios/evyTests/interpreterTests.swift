@@ -155,6 +155,30 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected item"))
   }
 
+  func testResolveQueryParamsStoresMatchingEntityUnderSingularEntityKey() throws {
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let resourceKey = "evy_interpreter_tests_\(randomId)_items"
+    let entityKey = "evy_interpreter_tests_\(randomId)_item"
+    let id = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Selected singular item"),
+        ])
+      ]),
+      at: "marketplace:\(resourceKey)"
+    )
+
+    EVY.resolveQueryParams([resourceKey: [id]])
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityKey).title}"),
+      .string("Selected singular item")
+    )
+  }
+
   func testResolveQueryParamsInfersServiceFromSyncedResourceKey() throws {
     let entityKey = uniqueKey("entities")
     let id = UUID().uuidString

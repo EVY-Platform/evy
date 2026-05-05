@@ -26,6 +26,22 @@ mock.module("../data", () => ({
 	upsertCoreForValidatedRequest: mock(),
 }));
 
+// Register marketplace resources so validateStrictApiRequest can find them
+import { setServiceRegistry } from "evy-types/rpcRequestHelpers";
+setServiceRegistry([
+	[
+		"marketplace",
+		[
+			"selling_reasons",
+			"conditions",
+			"durations",
+			"areas",
+			"timeslots",
+			"items",
+		],
+	],
+]);
+
 const { api } = await import("../rpc");
 
 describe("api JSON-RPC handler", () => {

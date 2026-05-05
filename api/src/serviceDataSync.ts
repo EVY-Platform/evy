@@ -5,7 +5,10 @@ import type {
 	SyncServiceDataResponse,
 	UI_Flow,
 } from "evy-types";
-import { RESOURCES_BY_SERVICE } from "evy-types";
+import {
+	getServiceNames,
+	getServiceResources,
+} from "evy-types/rpcRequestHelpers";
 import { validateStrictSyncServiceDataRequest } from "evy-types/rpcRequestHelpers";
 import { validateSyncServiceDataResponse } from "evy-types/validators";
 import {
@@ -13,8 +16,6 @@ import {
 	extractCandidatesFromBinding,
 } from "./expressionParser";
 import { forwardGet } from "./services";
-
-type SyncableService = Exclude<keyof typeof RESOURCES_BY_SERVICE, "evy">;
 
 type SyncServiceDataDependencies = {
 	forwardGet: (serviceName: string, params: GetRequest) => Promise<GetResponse>;
@@ -24,9 +25,10 @@ const DEFAULT_SYNC_SERVICE_DATA_DEPENDENCIES: SyncServiceDataDependencies = {
 	forwardGet,
 };
 
-const SYNCABLE_SERVICES = Object.keys(RESOURCES_BY_SERVICE).filter(
-	(serviceName) => serviceName !== "evy",
-) as SyncableService[];
+/** Returns the list of syncable (non-evy) service names from the runtime registry. */
+function getSyncableServices(): string[] {
+	return getServiceNames().filter((name) => name !== "evy");
+}
 
 export function extractCandidatesFromFlows(flows: UI_Flow[]): Set<string> {
 	const candidates = new Set<string>();
@@ -62,8 +64,8 @@ export function resolveCandidateToService(candidate: string): string | null {
 		return null;
 	}
 
-	for (const serviceName of SYNCABLE_SERVICES) {
-		const resources = RESOURCES_BY_SERVICE[serviceName] as readonly string[];
+	for (const serviceName of getSyncableServices()) {
+		const resources = getServiceResources(serviceName) ?? [];
 		for (const resourceCandidate of resourceCandidatesFor(candidate)) {
 			if (resources.includes(resourceCandidate)) {
 				return serviceName;
@@ -75,11 +77,11 @@ export function resolveCandidateToService(candidate: string): string | null {
 }
 
 async function syncAllResources(
-	serviceName: SyncableService,
+	serviceName: string,
 	lastSyncTime: string,
 	dependencies: SyncServiceDataDependencies,
 ): Promise<SyncServiceDataResponse> {
-	const resources = RESOURCES_BY_SERVICE[serviceName];
+	const resources = getServiceResources(serviceName) ?? [];
 
 	const data: SyncServiceDataResponse["data"] = [];
 	for (const resource of resources) {
