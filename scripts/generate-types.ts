@@ -223,9 +223,7 @@ async function generateTypeScript(
 		} else if (mod.startsWith("data/")) {
 			lines.unshift(`export * from "./${mod}";`);
 		} else if (schemaKey === "rpc/get.request") {
-			lines.push(
-				`export type { GetRequest } from "./${mod}";`,
-			);
+			lines.push(`export type { GetRequest } from "./${mod}";`);
 		} else {
 			const name = title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
 			lines.push(`export type { ${name} } from "./${mod}";`);

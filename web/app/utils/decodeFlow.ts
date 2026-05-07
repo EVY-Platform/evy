@@ -299,8 +299,8 @@ function decodeRow(row: ServerRow): Row {
 		...vc,
 		...(Array.isArray(vc.children)
 			? {
-				children: vc.children.map((child: ServerRow) => decodeRow(child)),
-			}
+					children: vc.children.map((child: ServerRow) => decodeRow(child)),
+				}
 			: {}),
 		...(vc.child ? { child: decodeRow(vc.child) } : {}),
 	} as unknown as Row["config"]["view"]["content"];
