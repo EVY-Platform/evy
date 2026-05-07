@@ -25,24 +25,12 @@
 		7320F59A2C300B8B00297C48 /* EVYTextActionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */; };
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
 		7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */; };
-		7333F4552FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
-		7333F4562FAA2D1C006BEA92 /* EVY+ResourceMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4512FAA2D1C006BEA92 /* EVY+ResourceMapping.swift */; };
-		7333F4572FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */; };
-		7333F4582FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44F2FAA2D1C006BEA92 /* EVY+Preview.swift */; };
-		7333F4592FAA2D1C006BEA92 /* EVY+Mutations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44E2FAA2D1C006BEA92 /* EVY+Mutations.swift */; };
-		7333F45A2FAA2D1C006BEA92 /* EVY+TextParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */; };
 		7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
 		7333F45C2FAA2D1C006BEA92 /* EVY+ResourceMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4512FAA2D1C006BEA92 /* EVY+ResourceMapping.swift */; };
 		7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */; };
 		7333F45E2FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44F2FAA2D1C006BEA92 /* EVY+Preview.swift */; };
 		7333F45F2FAA2D1C006BEA92 /* EVY+Mutations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44E2FAA2D1C006BEA92 /* EVY+Mutations.swift */; };
 		7333F4602FAA2D1C006BEA92 /* EVY+TextParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */; };
-		7333F4612FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
-		7333F4622FAA2D1C006BEA92 /* EVY+ResourceMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4512FAA2D1C006BEA92 /* EVY+ResourceMapping.swift */; };
-		7333F4632FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */; };
-		7333F4642FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44F2FAA2D1C006BEA92 /* EVY+Preview.swift */; };
-		7333F4652FAA2D1C006BEA92 /* EVY+Mutations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44E2FAA2D1C006BEA92 /* EVY+Mutations.swift */; };
-		7333F4662FAA2D1C006BEA92 /* EVY+TextParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */; };
 		734F5A222C2EBB2B00C0FD0A /* EVYDropdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */; };
 		734F5A242C2ED3BD00C0FD0A /* EVYSelectPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */; };
 		734FD96D2C343C0100ACE8B7 /* EVYCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734FD96C2C343C0100ACE8B7 /* EVYCalendar.swift */; };
@@ -107,6 +95,7 @@
 		74A100132F32000100000001 /* EVYActionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100162F32000100000001 /* EVYActionRunnerTests.swift */; };
 		74A100172F32000100000001 /* EVYDraftMergesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100182F32000100000001 /* EVYDraftMergesTests.swift */; };
 		74A100222F32000100000001 /* EVYDraftBindingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100212F32000100000001 /* EVYDraftBindingsTests.swift */; };
+		7858E83074C330353C4844E5 /* EVY+DatumExpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A43F6468C5603E3B57ECD3 /* EVY+DatumExpression.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -216,6 +205,7 @@
 		74A100162F32000100000001 /* EVYActionRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionRunnerTests.swift; sourceTree = "<group>"; };
 		74A100182F32000100000001 /* EVYDraftMergesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftMergesTests.swift; sourceTree = "<group>"; };
 		74A100212F32000100000001 /* EVYDraftBindingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftBindingsTests.swift; sourceTree = "<group>"; };
+		97A43F6468C5603E3B57ECD3 /* EVY+DatumExpression.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "EVY+DatumExpression.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -282,6 +272,7 @@
 				7333F4512FAA2D1C006BEA92 /* EVY+ResourceMapping.swift */,
 				7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */,
 				7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */,
+				97A43F6468C5603E3B57ECD3 /* EVY+DatumExpression.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -393,7 +384,7 @@
 				739EC4DF2CD6551400E1B469 /* Testing Data */,
 				736D10552B78C4C500503C4D /* UI */,
 				730D008E2B29D91200B5BCB6 /* Utils */,
-				73F2A0102F30B00200000001 /* ../../types/generated/swift */,
+				73F2A0102F30B00200000001 /* swift */,
 			);
 			path = evy;
 			sourceTree = "<group>";
@@ -485,7 +476,7 @@
 			path = e2e;
 			sourceTree = "<group>";
 		};
-		73F2A0102F30B00200000001 /* ../../types/generated/swift */ = {
+		73F2A0102F30B00200000001 /* swift */ = {
 			isa = PBXGroup;
 			children = (
 				73F2A0142F30B00200000001 /* DataOs.swift */,
@@ -603,9 +594,9 @@
 			);
 			mainGroup = 737C6A992B2706890093D00C;
 			packageReferences = (
-				731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */,
-				731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */,
-				73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */,
+				731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift.git" */,
+				731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift.git" */,
+				73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift.git" */,
 			);
 			productRefGroup = 737C6AA32B2706890093D00C /* Products */;
 			projectDirPath = "";
@@ -726,6 +717,7 @@
 				73F2A0032F30B00200000001 /* UIRowPayloads.swift in Sources */,
 				73F2A0042F30B00200000001 /* DataOs.swift in Sources */,
 				73F7A0012F70B00700000001 /* CoreResources.generated.swift in Sources */,
+				7858E83074C330353C4844E5 /* EVY+DatumExpression.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1074,7 +1066,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */ = {
+		731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tesseract-one/JsonRPC.swift.git";
 			requirement = {
@@ -1082,7 +1074,7 @@
 				minimumVersion = 0.2.3;
 			};
 		};
-		731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */ = {
+		731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tesseract-one/Serializable.swift.git";
 			requirement = {
@@ -1090,7 +1082,7 @@
 				minimumVersion = 0.3.1;
 			};
 		};
-		73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */ = {
+		73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JakubMazur/lucide-icons-swift.git";
 			requirement = {
@@ -1103,17 +1095,17 @@
 /* Begin XCSwiftPackageProductDependency section */
 		731988812C271BBD0035E094 /* JsonRPC */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */;
+			package = 731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift.git" */;
 			productName = JsonRPC;
 		};
 		731988842C271BC40035E094 /* Serializable */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */;
+			package = 731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift.git" */;
 			productName = Serializable;
 		};
 		73F4B0022F40B00100000001 /* LucideIcons */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */;
+			package = 73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift.git" */;
 			productName = LucideIcons;
 		};
 /* End XCSwiftPackageProductDependency section */
