@@ -12,7 +12,7 @@ export default defineRow("InputListRow", {
 			content: {
 				title: "Input list row title",
 				placeholder: "Search for tags",
-				format: "{$datum:value}",
+				format: "{$datum.value}",
 			},
 		},
 	} satisfies RowConfig,

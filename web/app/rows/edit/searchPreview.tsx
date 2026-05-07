@@ -42,7 +42,7 @@ const previewRowComponents: Record<string, RowComponent> = {
 
 type SearchPreviewDatum = Record<string, string>;
 
-const BRACED_DATUM_BINDING_REGEX = /\{\$datum:([A-Za-z0-9_.-]+)\}/g;
+const BRACED_DATUM_BINDING_REGEX = /\{\$datum\.([A-Za-z0-9_.-]+)\}/g;
 
 function SearchPreviewFallback({ rowType }: { rowType: string }) {
 	return (

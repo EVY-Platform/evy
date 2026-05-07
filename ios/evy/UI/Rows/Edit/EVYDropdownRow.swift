@@ -50,7 +50,7 @@ struct EVYDropdownRow: View {
         "view": {
           "content": {
             "title": "Condition",
-            "format": "{$datum:value}",
+            "format": "{$datum.value}",
             "placeholder": "Select a condition"
           }
         }

@@ -49,7 +49,7 @@ struct EVYInlinePickerRow: View {
         "view": {
           "content": {
             "title": "Duration",
-            "format": "{$datum:value}"
+            "format": "{$datum.value}"
           }
         }
       }

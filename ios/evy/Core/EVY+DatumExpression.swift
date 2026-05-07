@@ -10,21 +10,12 @@ import Foundation
 // MARK: - Central $datum Expression Parsing
 
 extension EVY {
-  static let datumPrefix = "$datum"
-  static let datumPrefixWithColon = "$datum:"
-  static let datumPrefixWithDot = "$datum."
+  static let datumPrefix = "$datum."
 
   @MainActor
   static func resolveDatumExpression(_ expression: String, in datum: EVYJson) -> String {
-    let fieldPath: String
-    if expression.hasPrefix(datumPrefixWithDot) {
-      fieldPath = String(expression.dropFirst(datumPrefixWithDot.count))
-    } else if expression.hasPrefix(datumPrefixWithColon) {
-      fieldPath = String(expression.dropFirst(datumPrefixWithColon.count))
-    } else {
-      return expression
-    }
-
+    guard expression.hasPrefix(datumPrefix) else { return expression }
+    let fieldPath = String(expression.dropFirst(datumPrefix.count))
     guard !fieldPath.isEmpty else { return expression }
 
     let props = fieldPath.split(separator: ".").map(String.init)
