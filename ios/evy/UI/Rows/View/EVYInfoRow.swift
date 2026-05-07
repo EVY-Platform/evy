@@ -9,8 +9,6 @@ import SwiftUI
 
 struct EVYInfoRow: View {
 
-  private static let leadingIconMinWidth: CGFloat = 32
-
   private let view: InfoRowViewData
 
   init(view: InfoRowViewData) {
