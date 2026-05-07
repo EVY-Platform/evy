@@ -25,11 +25,6 @@ mock.module("../services", () => ({
 	wireGrpcEvents: mock(),
 }));
 
-mock.module("../data", () => ({
-	get: mock(),
-	upsert: mock(),
-}));
-
 // Register marketplace resources so validateStrictApiRequest can find them
 import { setServiceRegistry } from "evy-types/rpcRequestHelpers";
 setServiceRegistry([
