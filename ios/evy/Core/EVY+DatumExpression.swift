@@ -25,7 +25,9 @@ extension EVY {
   }
 
   @MainActor
-  static func resolveDatumInQuery(_ query: [String: [String]], datum: EVYJson?) -> [String: [String]] {
+  static func resolveDatumInQuery(_ query: [String: [String]], datum: EVYJson?) -> [String:
+    [String]]
+  {
     guard let datum else { return query }
 
     var resolved: [String: [String]] = [:]

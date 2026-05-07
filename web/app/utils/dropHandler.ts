@@ -96,13 +96,11 @@ export function handleDrop(
 		"handleDrop: destinationPageRecord is not defined",
 	);
 
-	const rawDestinationPageId = destinationPageRecord.data.pageId;
+	const destinationPageId = destinationPageRecord.data.pageId;
 	invariant(
-		typeof rawDestinationPageId === "string",
+		typeof destinationPageId === "string",
 		"handleDrop: destination pageId is not a string",
 	);
-
-	const destinationPageId = rawDestinationPageId;
 	if (
 		sourcePageId === "rows" &&
 		(!destinationPageId || destinationPageId === "rows")

@@ -193,7 +193,7 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 
 ### Health checks
 
-`bun run health` and `bun run health:seeded` invoke `src/readiness.ts` **without** `--env-file=../.env` (unlike `dev`, `start`, and `test`). Export variables from the root `.env` in your shell, rely on Docker Compose `environment` / `env_file`, or run readiness from an environment where `DB_*` and `API_PORT` are already set.
+`bun run health` and `bun run health:seeded` invoke `src/readiness.ts` **without** `--env-file=../.env` (unlike `dev`, `start`, and `test:unit`). Export variables from the root `.env` in your shell, rely on Docker Compose `environment` / `env_file`, or run readiness from an environment where `DB_*` and `API_PORT` are already set.
 
 ## Available Scripts
 
@@ -204,7 +204,7 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 | `bun run start`        | Run migrations and start server          |
 | `bun run health`       | Run the readiness check                  |
 | `bun run health:seeded` | Run readiness check and require seed data |
-| `bun run test`         | Run API unit and integration tests       |
+| `bun run test:unit`    | Run API unit tests                       |
 | `bun run test:e2e`     | Run API end-to-end tests                 |
 | `bun run lint`         | Run Biome linter                         |
 | `bun run format`       | Format files with Biome                  |

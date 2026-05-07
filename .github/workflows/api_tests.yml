@@ -42,7 +42,7 @@ jobs:
 
             - name: Run Tests
               if: steps.setup.outputs.has-changes == 'true'
-              run: bun run test
+              run: bun run test:unit
               env:
                   DB_USER: evy
                   DB_PASS: evy

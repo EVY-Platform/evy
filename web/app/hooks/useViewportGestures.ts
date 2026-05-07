@@ -146,11 +146,10 @@ export function useViewportGestures({
 
 			let vx = velX * INERTIA_MULTIPLIER;
 			let vy = velY * INERTIA_MULTIPLIER;
-			const decay = INERTIA_DECAY;
 
 			const tick = () => {
-				vx *= decay;
-				vy *= decay;
+				vx *= INERTIA_DECAY;
+				vy *= INERTIA_DECAY;
 				if (Math.hypot(vx, vy) < INERTIA_STOP_THRESHOLD) {
 					inertiaRaf = null;
 					return;

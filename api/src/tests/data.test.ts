@@ -404,8 +404,7 @@ describe("upsert", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.name).toBe("New Flow");
+		expect(result.data.name).toBe("New Flow");
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -453,8 +452,7 @@ describe("upsert", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.name).toBe("Updated Name");
+		expect(result.data.name).toBe("Updated Name");
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -475,10 +473,9 @@ describe("upsert", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(created);
-		const createdFlow = created;
-		expect(createdFlow.id).toBe(flowId);
-		expect(createdFlow.data.id).toBe(flowId);
-		expect(createdFlow.data.name).toBe("Client Created Flow");
+		expect(created.id).toBe(flowId);
+		expect(created.data.id).toBe(flowId);
+		expect(created.data.name).toBe("Client Created Flow");
 
 		const updated = await upsert({
 			service: "evy",
@@ -492,11 +489,10 @@ describe("upsert", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(updated);
-		const updatedFlow = updated;
-		expect(updatedFlow.id).toBe(flowId);
-		expect(updatedFlow.data.id).toBe(flowId);
-		expect(updatedFlow.data.name).toBe("Client Created Flow Updated");
-		expect(updatedFlow.data.pages[0]?.title).toBe("Published");
+		expect(updated.id).toBe(flowId);
+		expect(updated.data.id).toBe(flowId);
+		expect(updated.data.name).toBe("Client Created Flow Updated");
+		expect(updated.data.pages[0]?.title).toBe("Published");
 
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
@@ -563,8 +559,7 @@ describe("upsert SDUI validation", () => {
 			},
 		});
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.pages).toHaveLength(0);
+		expect(result.data.pages).toHaveLength(0);
 	});
 
 	it("should reject flow with invalid row type", async () => {
@@ -645,9 +640,8 @@ describe("upsert SDUI validation", () => {
 			data: flowData,
 		});
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.name).toBe("Test Flow");
-		expect(flowRow.data.pages).toHaveLength(1);
+		expect(result.data.name).toBe("Test Flow");
+		expect(result.data.pages).toHaveLength(1);
 	});
 
 	it("should validate footer row", async () => {
@@ -674,7 +668,6 @@ describe("upsert SDUI validation", () => {
 			data: flowData,
 		});
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.pages[0]).toHaveProperty("footer");
+		expect(result.data.pages[0]).toHaveProperty("footer");
 	});
 });

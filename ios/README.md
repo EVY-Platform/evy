@@ -2,7 +2,7 @@
 
 iOS consumer app. Minimum iOS version supported: **17.0** (matches `IPHONEOS_DEPLOYMENT_TARGET` in `evy.xcodeproj`).
 
-For local and e2e runs, set `API_HOST` in the repository root `.env` (see [README § Setup](../README.md#setup); e.g. `API_HOST=localhost:8000`).
+For local and e2e runs, set `API_HOST` in the repository root `.env` (see [README § Setup](../README.md#setup); e.g. `API_HOST=localhost:8000`). Debug builds default to `localhost:8000` when `API_HOST` is not provided, which lets the app launch from the Simulator home screen without Xcode scheme environment variables.
 
 **Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes ([Shared type system](../README.md#shared-type-system)). Generated Swift under `types/generated/swift/` is not committed; the app also keeps hand-written `Codable` models (e.g. `EVYFlow`, `EVYPage`, `EVYRow`, `EVYWebsocket`) aligned with `types/schema/`.
 

@@ -103,18 +103,18 @@ function mergeRowContent(
 	transformRow: (row: ServerRow | Row) => ServerRow,
 	transformDefaultRow: (row: Row) => ServerRow,
 ): ServerRowContent {
-	const def = defaults;
-	const inc = incoming;
-	const allKeys = new Set([...Object.keys(def), ...Object.keys(inc)]);
+	const allKeys = new Set([...Object.keys(defaults), ...Object.keys(incoming)]);
 	const out: Record<string, unknown> = {};
 
 	for (const key of allKeys) {
 		if (key === "children") {
-			const defaultChildren = Array.isArray(def.children) ? def.children : [];
+			const defaultChildren = Array.isArray(defaults.children)
+				? defaults.children
+				: [];
 			const rawChildren: unknown =
-				"children" in inc
-					? Array.isArray(inc.children)
-						? inc.children
+				"children" in incoming
+					? Array.isArray(incoming.children)
+						? incoming.children
 						: []
 					: defaultChildren;
 			out.children = (rawChildren as Row[]).map((child) =>
@@ -123,34 +123,45 @@ function mergeRowContent(
 			continue;
 		}
 		if (key === "child") {
-			if ("child" in inc && inc.child !== undefined && inc.child !== null) {
-				out.child = transformRow(inc.child as ServerRow);
-			} else if (def.child !== undefined && def.child !== null) {
-				out.child = transformDefaultRow(def.child as Row);
+			if (
+				"child" in incoming &&
+				incoming.child !== undefined &&
+				incoming.child !== null
+			) {
+				out.child = transformRow(incoming.child as ServerRow);
+			} else if (defaults.child !== undefined && defaults.child !== null) {
+				out.child = transformDefaultRow(defaults.child as Row);
 			}
 			continue;
 		}
 		if (key === "segments") {
-			const defaultSegments = Array.isArray(def.segments) ? def.segments : [];
+			const defaultSegments = Array.isArray(defaults.segments)
+				? defaults.segments
+				: [];
 			const rawSegments: unknown =
-				"segments" in inc
-					? Array.isArray(inc.segments) &&
-						inc.segments.every((x): x is string => typeof x === "string")
-						? inc.segments
+				"segments" in incoming
+					? Array.isArray(incoming.segments) &&
+						incoming.segments.every((x): x is string => typeof x === "string")
+						? incoming.segments
 						: []
 					: defaultSegments;
 			out.segments = rawSegments;
 			continue;
 		}
 
-		const dv = def[key];
-		const iv = inc[key];
-		if (typeof dv === "string" || typeof iv === "string") {
-			out[key] = typeof iv === "string" ? iv : typeof dv === "string" ? dv : "";
-		} else if (iv !== undefined) {
-			out[key] = iv;
-		} else if (dv !== undefined) {
-			out[key] = dv;
+		const defaultValue = defaults[key];
+		const incomingValue = incoming[key];
+		if (typeof defaultValue === "string" || typeof incomingValue === "string") {
+			out[key] =
+				typeof incomingValue === "string"
+					? incomingValue
+					: typeof defaultValue === "string"
+						? defaultValue
+						: "";
+		} else if (incomingValue !== undefined) {
+			out[key] = incomingValue;
+		} else if (defaultValue !== undefined) {
+			out[key] = defaultValue;
 		}
 	}
 

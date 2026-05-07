@@ -65,8 +65,6 @@ export function drawDotField(params: DrawDotFieldParams): void {
 
 	const dotBaseRadius = DOT_BASE_RADIUS * scale;
 	const dotHoverRadius = DOT_HOVER_RADIUS * scale;
-	/** Fixed in CSS px so zoom changes how many grid cells fall inside the radius. */
-	const morphRadius = MORPH_RADIUS_PX;
 
 	const half = gridSize / 2;
 	const iStart = Math.ceil((0 - offsetX - half) / gridSize);
@@ -77,8 +75,6 @@ export function drawDotField(params: DrawDotFieldParams): void {
 	const cursorX = cursor?.x ?? Number.POSITIVE_INFINITY;
 	const cursorY = cursor?.y ?? Number.POSITIVE_INFINITY;
 	const hasCursor = cursor !== null;
-
-	const R = morphRadius;
 
 	for (let j = jStart; j <= jEnd; j++) {
 		for (let i = iStart; i <= iEnd; i++) {
@@ -94,8 +90,8 @@ export function drawDotField(params: DrawDotFieldParams): void {
 				dx = cursorX - baseX;
 				dy = cursorY - baseY;
 				d = Math.hypot(dx, dy);
-				if (d < R) {
-					const t = d / R;
+				if (d < MORPH_RADIUS_PX) {
+					const t = d / MORPH_RADIUS_PX;
 					const oneMinusT = 1 - t;
 					colorInfluence = oneMinusT * oneMinusT;
 					pullInfluence = Math.sin(Math.PI * t);
