@@ -22,7 +22,7 @@ Draft scope IDs use `<flowId>:<entityKey>` with a plural entity key (for example
 
 Full internal draft cache keys append the mode/path segment with another colon: `<flowId>:<entityKey>:<modeFlag><base64Path>` (for example, `create-flow:items:aWyJ0aXRsZSJd`). Because scope IDs also contain `:`, draft key parsing splits on the last colon. The mode flag is `a` for alias-flat merge mode or `e` for explicit-path merge mode; the remaining path key is the base64-encoded JSON path.
 
-These draft keys are distinct from service-qualified data keys like `marketplace:items` and SDUI binding prefixes like `{$local:address}`.
+These draft keys are distinct from service-qualified data keys like `marketplace:items` and SDUI binding prefixes like `{$local:address}`, `{$api:resource}`, and `{$datum.field}`.
 
 ### Architecture
 

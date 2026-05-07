@@ -11,9 +11,10 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 	- `"{$local:address}"` — client-local source.
 	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{item.title}"`, pure navigation buttons, static Info, and containers that only group static child rows).
 - Edit rows write into a draft via **`destination`**. Draft destinations always start with the singular entity key, for example `"{item.title}"`, `"{item.condition}"`, or `"{buildCurrency(item.price)}"`. The prefix tells the UI which resource draft owns the field.
-- Braced `{...}` expressions are used for all SDUI bindings. Prefixed `{$prefix.field}` or `{$prefix:resource}` bindings identify data that does not belong to backend flow state:
-	- `{$datum.value}` — current list/search result item field, used in row `format` strings and Search result templates.
-	- `{$local:resource}` — client-local source.
+- Braced `{...}` expressions are used for all SDUI bindings. Prefixed bindings use either dot or colon notation depending on the prefix:
+	- `{$datum.field}` — dot notation. Current list/search result item field, used in row `format` strings and Search result templates.
+	- `{$local:resource}` — colon notation. Client-local source (resolves to the private data store).
+	- `{$api:resource}` — colon notation. Explicit API-sourced data (resolves to the public data store, same as a bare key but explicit about origin).
 - Catalog/local data is loaded outside the flow document. Clients can request individual lists with JSON-RPC `get` (`service` / `resource`) using optional `filter.id` or `filter.updatedAfter`, or sync all changed data in batches with `sync`.
 - `sync` accepts `{ "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows across SDUI, evy core data, and backend service data. When data changed, it also returns the current resource registry.
 - Clients should store synced rows under service-qualified keys such as `evy:sdui`, `marketplace:items`, and `marketplace:conditions`. Navigate actions pass query params as the optional third `navigate` argument (for example, `{navigate(flowId, pageId, {"items": [$datum.id]})}`). Query values must use a JSON object (`{"key": ["id"]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same plural key. If no synced collection exists for a query key, clients keep the raw string array under that key.

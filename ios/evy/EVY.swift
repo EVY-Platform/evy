@@ -50,7 +50,9 @@ struct ResourceEntry: Codable, Equatable {
 @MainActor
 struct EVY {
   private static let localPrefix = "$local"
-  private static let localPrefixWithSeparator = localPrefix + PROP_SEPARATOR
+  private static let localPrefixWithSeparator = localPrefix + ":"
+  private static let apiPrefix = "$api"
+  private static let apiPrefixWithSeparator = apiPrefix + ":"
 
   static let publicStore = EVYDataStore(name: "public")
   static let privateStore = EVYDataStore(name: "private")
@@ -73,9 +75,22 @@ struct EVY {
     return String(props.dropFirst(localPrefixWithSeparator.count))
   }
 
+  static func stripApiPrefix(_ props: String) -> String {
+    guard props.hasPrefix(apiPrefixWithSeparator) else {
+      return props
+    }
+    return String(props.dropFirst(apiPrefixWithSeparator.count))
+  }
+
   static func store(for props: String) -> (EVYDataStore, String) {
-    let cleanProps = stripLocalPrefix(props)
-    let isLocalProps = cleanProps != props
-    return (isLocalProps ? privateStore : publicStore, cleanProps)
+    let localCleanProps = stripLocalPrefix(props)
+    if localCleanProps != props {
+      return (privateStore, localCleanProps)
+    }
+    let apiCleanProps = stripApiPrefix(props)
+    if apiCleanProps != props {
+      return (publicStore, apiCleanProps)
+    }
+    return (publicStore, props)
   }
 }
