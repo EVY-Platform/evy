@@ -734,12 +734,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				73F1A0012F30B00100000001 /* e2e.swift in Sources */,
-				7333F4552FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */,
-				7333F4562FAA2D1C006BEA92 /* EVY+ResourceMapping.swift in Sources */,
-				7333F4572FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */,
-				7333F4582FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */,
-				7333F4592FAA2D1C006BEA92 /* EVY+Mutations.swift in Sources */,
-				7333F45A2FAA2D1C006BEA92 /* EVY+TextParsing.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -752,12 +746,6 @@
 				74A100172F32000100000001 /* EVYDraftMergesTests.swift in Sources */,
 				74A100222F32000100000001 /* EVYDraftBindingsTests.swift in Sources */,
 				74A100012F32000100000001 /* interpreterTests.swift in Sources */,
-				7333F4612FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */,
-				7333F4622FAA2D1C006BEA92 /* EVY+ResourceMapping.swift in Sources */,
-				7333F4632FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */,
-				7333F4642FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */,
-				7333F4652FAA2D1C006BEA92 /* EVY+Mutations.swift in Sources */,
-				7333F4662FAA2D1C006BEA92 /* EVY+TextParsing.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
