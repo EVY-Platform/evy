@@ -5,6 +5,8 @@ const url = `http://localhost:${process.env.WEB_PORT}`;
 const timeout = 30_000;
 
 export default defineConfig({
+	testDir: "e2e",
+	testMatch: "**/*.pw.ts",
 	timeout,
 	expect: { timeout },
 	retries: 1,

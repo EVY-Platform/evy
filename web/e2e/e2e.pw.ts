@@ -13,7 +13,7 @@ import {
 	selectFlowByLabel,
 	SELECTORS,
 	waitForAppLoaded,
-} from "../tests/utils";
+} from "./utils";
 
 const API_POLL_TIMEOUT_MS = 10_000;
 
