@@ -89,11 +89,6 @@
             value = "true"
             isEnabled = "YES">
          </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "API_HOST"
-            value = "localhost:8000"
-            isEnabled = "YES">
-         </EnvironmentVariable>
       </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction

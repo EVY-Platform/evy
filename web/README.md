@@ -209,13 +209,11 @@ docker compose up -d web
 
 ## Testing
 
-Tests are split into two layers:
+Tests are split into three layers:
 
-- **`test:unit`** — Bun’s test runner on `app/**/*.test.ts` (no live API; `__API_URL__` is stubbed).
-- **`test:integration`** — Playwright against `tests/` (browser tests; expects the app/API per `playwright.config` / env).
-- **`test:e2e`** — Playwright against `e2e/`.
-
-`bun run test` runs **`test:unit` then `test:integration`** (`package.json`). CI: `.github/workflows/web_tests.yml`.
+- **`test:unit`** — Bun's test runner on `app/**/*.test.ts` (no live API; `__API_URL__` is stubbed).
+- **`test:integration`** — Playwright against `integration/` (browser tests with mock/injected data; no API required).
+- **`test:e2e`** — Playwright against `e2e/` (full-stack tests; requires running API + database). Only run via `./run-e2e.sh`.
 
 Install Chromium and its system dependencies (not needed in CI — the CI image has them pre-installed):
 
@@ -223,12 +221,11 @@ Install Chromium and its system dependencies (not needed in CI — the CI image 
 bun run test:setup
 ```
 
-Playwright UI / debug modes apply to the Playwright CLI, not to the compound `test` script. Examples:
+Playwright UI / debug modes apply to the Playwright CLI. Examples:
 
 ```bash
 bun run test:integration -- --ui
 bun run test:integration -- --debug
-bun run test:e2e -- --ui
 ```
 
 ## Available Scripts
@@ -241,8 +238,7 @@ bun run test:e2e -- --ui
 | `bun run lint`         | Run Biome checks across the project      |
 | `bun run format`       | Format the project with Biome            |
 | `bun run setup`        | Copy static assets into `dist/`          |
-| `bun run test`         | Run unit tests (`test:unit`) then Playwright integration tests (`test:integration`) |
 | `bun run test:unit`    | Run Bun unit tests under `app/`          |
-| `bun run test:integration` | Run Playwright tests under `tests/`  |
-| `bun run test:e2e`     | Run Playwright end-to-end tests under `e2e/` |
+| `bun run test:integration` | Run Playwright browser tests under `integration/` |
+| `bun run test:e2e`     | Run Playwright full-stack tests under `e2e/` |
 | `bun run test:setup`   | Install Playwright Chromium dependencies |

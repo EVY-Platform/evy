@@ -3,38 +3,29 @@
 	"$id": "api-request",
 	"title": "ApiRequest",
 	"description": "JSON-RPC params for API-backed client functions. Routes a service/resource/method request through the API gateway to the owning backend service.",
-	"oneOf": [
-		{
-			"type": "object",
-			"additionalProperties": false,
-			"required": [
-				"service",
-				"resource",
-				"method"
-			],
-			"properties": {
-				"service": {
-					"const": "marketplace"
-				},
-				"resource": {
-					"type": "string",
-					"enum": [
-						"selling_reasons",
-						"conditions",
-						"durations",
-						"areas",
-						"timeslots",
-						"items"
-					]
-				},
-				"method": {
-					"type": "string",
-					"minLength": 1
-				},
-				"filter": {
-					"$ref": "../common/rpc.schema.json#/$defs/DataFilter"
-				}
-			}
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"service",
+		"resource",
+		"method"
+	],
+	"properties": {
+		"service": {
+			"type": "string",
+			"minLength": 1
+		},
+		"resource": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 50
+		},
+		"method": {
+			"type": "string",
+			"minLength": 1
+		},
+		"filter": {
+			"$ref": "../common/rpc.schema.json#/$defs/DataFilter"
 		}
-	]
+	}
 }

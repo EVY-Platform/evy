@@ -76,18 +76,31 @@ final class InterpreterTests: XCTestCase {
     let key = uniqueKey("local_routing")
     try store(.string("public"), at: key)
 
-    let (localStore, localKey) = EVY.store(for: "$local.\(key)")
+    let (localStore, localKey) = EVY.store(for: "$local:\(key)")
     try localStore.create(
       key: localKey,
       data: try JSONEncoder().encode(EVYJson.string("private"))
     )
 
     let publicValue = try parseTextFromText("value: {\(key)}")
-    let privateValue = try parseTextFromText("value: {$local.\(key)}")
+    let privateValue = try parseTextFromText("value: {$local:\(key)}")
 
     XCTAssertEqual(publicValue.value, "value: public")
     XCTAssertEqual(privateValue.value, "value: private")
-    XCTAssertEqual(EVY.watchTarget(for: "{$local.\(key)}"), key)
+    XCTAssertEqual(EVY.watchTarget(for: "{$local:\(key)}"), key)
+  }
+
+  func testApiPrefixRoutesToPublicDataStore() throws {
+    let key = uniqueKey("api_routing")
+    try store(.string("api_value"), at: key)
+
+    let (apiStore, apiKey) = EVY.store(for: "$api:\(key)")
+    XCTAssertTrue(apiStore === EVY.publicStore)
+    XCTAssertEqual(apiKey, key)
+
+    let value = try parseTextFromText("value: {$api:\(key)}")
+    XCTAssertEqual(value.value, "value: api_value")
+    XCTAssertEqual(EVY.watchTarget(for: "{$api:\(key)}"), key)
   }
 
   func testCountReflectsArrayAfterStoreUpdate() throws {
@@ -153,6 +166,30 @@ final class InterpreterTests: XCTestCase {
     EVY.resolveQueryParams([entityKey: [secondId]])
 
     XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected item"))
+  }
+
+  func testResolveQueryParamsStoresMatchingEntityUnderSingularEntityKey() throws {
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let resourceKey = "evy_interpreter_tests_\(randomId)_items"
+    let entityKey = "evy_interpreter_tests_\(randomId)_item"
+    let id = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Selected singular item"),
+        ])
+      ]),
+      at: "marketplace:\(resourceKey)"
+    )
+
+    EVY.resolveQueryParams([resourceKey: [id]])
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityKey).title}"),
+      .string("Selected singular item")
+    )
   }
 
   func testResolveQueryParamsInfersServiceFromSyncedResourceKey() throws {

@@ -281,15 +281,15 @@ func _getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValu
 @MainActor
 func _watchTarget(for text: String) -> String {
   let unwrapped = _parsePropsFromText(text)
-  let cleanUnwrapped = EVY.stripLocalPrefix(unwrapped)
+  let cleanUnwrapped = EVY.stripLocalPrefix(EVY.stripApiPrefix(unwrapped))
   let candidates: [String] = unwrapped == text ? [text] : [cleanUnwrapped, text]
   for candidate in candidates {
     if let functionCall = parseFunctionCall(candidate) {
       let parts = splitFunctionArguments(functionCall.functionArgs)
       if let first = parts.first, !first.isEmpty {
-        return EVY.stripLocalPrefix(stripOptionalSurroundingQuotes(first))
+        return EVY.stripLocalPrefix(EVY.stripApiPrefix(stripOptionalSurroundingQuotes(first)))
       }
-      return EVY.stripLocalPrefix(functionCall.functionArgs)
+      return EVY.stripLocalPrefix(EVY.stripApiPrefix(functionCall.functionArgs))
     }
   }
   if unwrapped != text {
@@ -311,7 +311,7 @@ func _formatData(json: EVYJson, format: String) throws -> String {
   let temporaryId = UUID().uuidString
   let formatWithNewData =
     format
-    .replacingOccurrences(of: "$datum:", with: "\(temporaryId).")
+    .replacingOccurrences(of: EVY.datumPrefix, with: "\(temporaryId).")
 
   if formatWithNewData.isEmpty { return "" }
 

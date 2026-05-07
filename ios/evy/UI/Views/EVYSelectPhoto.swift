@@ -174,7 +174,6 @@ struct EVYSelectPhotoCarousel: View {
 }
 
 class ImageManager {
-  static let shared = ImageManager()
   let fm = FileManager.default
   var cachesDirectoryUrl: URL {
     fm.urls(for: .cachesDirectory, in: .userDomainMask).first!

@@ -19,8 +19,9 @@ import type { DATA_PRIMITIVE } from "./generated/ts/data/primitive";
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
-import type { SyncServiceDataRequest } from "./generated/ts/rpc/syncServiceData.request";
-import type { SyncServiceDataResponse } from "./generated/ts/rpc/syncServiceData.response";
+import type { SyncRequest } from "./generated/ts/rpc/sync.request";
+import type { SyncResponse } from "./generated/ts/rpc/sync.response";
+
 import type { UpsertRequest } from "./generated/ts/rpc/upsert.request";
 import type { UpsertResponse } from "./generated/ts/rpc/upsert.response";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
@@ -47,16 +48,17 @@ import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
 import upsertRequestRaw from "./schema/rpc/upsert.request.schema.json" with {
 	type: "json",
 };
-import syncServiceDataRequestRaw from "./schema/rpc/syncServiceData.request.schema.json" with {
-	type: "json",
-};
+
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
 	type: "json",
 };
 import upsertResponseRaw from "./schema/rpc/upsert.response.schema.json" with {
 	type: "json",
 };
-import syncServiceDataResponseRaw from "./schema/rpc/syncServiceData.response.schema.json" with {
+import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
+	type: "json",
+};
+import syncResponseRaw from "./schema/rpc/sync.response.schema.json" with {
 	type: "json",
 };
 
@@ -72,15 +74,14 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
 	"rpc/upsert.request.schema.json": upsertRequestRaw as Record<string, unknown>,
-	"rpc/syncServiceData.request.schema.json":
-		syncServiceDataRequestRaw as Record<string, unknown>,
+	"rpc/sync.request.schema.json": syncRequestRaw as Record<string, unknown>,
+	"rpc/sync.response.schema.json": syncResponseRaw as Record<string, unknown>,
+
 	"rpc/get.response.schema.json": getResponseRaw as Record<string, unknown>,
 	"rpc/upsert.response.schema.json": upsertResponseRaw as Record<
 		string,
 		unknown
 	>,
-	"rpc/syncServiceData.response.schema.json":
-		syncServiceDataResponseRaw as Record<string, unknown>,
 };
 
 const preparedCache = new Map<string, Record<string, unknown>>();
@@ -172,13 +173,24 @@ function assertValid<T>(
 	throw new Error(formatAjvErrors(label, validate.errors));
 }
 
+function lazyValidator<T>(
+	ajvGetter: () => InstanceType<typeof Ajv2020>,
+	uri: string,
+): () => ValidateFunction<T> {
+	let cached: ValidateFunction<T> | null = null;
+	return () => {
+		if (!cached) cached = compileRoot<T>(ajvGetter(), uri);
+		return cached;
+	};
+}
+
 const REQUEST_SCHEMA_FILES = [
 	"common/json.schema.json",
 	"common/rpc.schema.json",
 	"rpc/api.request.schema.json",
 	"rpc/get.request.schema.json",
 	"rpc/upsert.request.schema.json",
-	"rpc/syncServiceData.request.schema.json",
+	"rpc/sync.request.schema.json",
 ] as const;
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
@@ -189,7 +201,7 @@ const ENTITY_SCHEMA_FILES = [
 	"sdui/evy.schema.json",
 	"rpc/get.response.schema.json",
 	"rpc/upsert.response.schema.json",
-	"rpc/syncServiceData.response.schema.json",
+	"rpc/sync.response.schema.json",
 ] as const;
 
 let requestAjv: InstanceType<typeof Ajv2020> | null = null;
@@ -225,146 +237,55 @@ function getEntityAjv(): InstanceType<typeof Ajv2020> {
 	return entityAjv;
 }
 
-let validateApiRequestFn: ValidateFunction<ApiRequest> | null = null;
-let validateGetRequestFn: ValidateFunction<GetRequest> | null = null;
-let validateUpsertRequestFn: ValidateFunction<UpsertRequest> | null = null;
-let validateSyncServiceDataRequestFn: ValidateFunction<SyncServiceDataRequest> | null =
-	null;
-let validateUpsertDataPayloadFn: ValidateFunction<
-	DATA_PRIMITIVE["data"]
-> | null = null;
-let validateUiFlowFn: ValidateFunction<UI_Flow> | null = null;
-let validateDataEvyServiceFn: ValidateFunction<DATA_EVY_Service> | null = null;
-let validateDataEvyOrganizationFn: ValidateFunction<DATA_EVY_Organization> | null =
-	null;
-let validateDataEvyServiceProviderFn: ValidateFunction<DATA_EVY_ServiceProvider> | null =
-	null;
-let validateGetResponseFn: ValidateFunction<GetResponse> | null = null;
-let validateUpsertResponseFn: ValidateFunction<UpsertResponse> | null = null;
-let validateSyncServiceDataResponseFn: ValidateFunction<SyncServiceDataResponse> | null =
-	null;
-
-function getValidateApiRequest(): ValidateFunction<ApiRequest> {
-	if (!validateApiRequestFn) {
-		validateApiRequestFn = compileRoot<ApiRequest>(
-			getRequestAjv(),
-			fileId("rpc/api.request.schema.json"),
-		);
-	}
-	return validateApiRequestFn;
-}
-
-function getValidateGetRequest(): ValidateFunction<GetRequest> {
-	if (!validateGetRequestFn) {
-		validateGetRequestFn = compileRoot<GetRequest>(
-			getRequestAjv(),
-			fileId("rpc/get.request.schema.json"),
-		);
-	}
-	return validateGetRequestFn;
-}
-
-function getValidateUpsertRequest(): ValidateFunction<UpsertRequest> {
-	if (!validateUpsertRequestFn) {
-		validateUpsertRequestFn = compileRoot<UpsertRequest>(
-			getRequestAjv(),
-			fileId("rpc/upsert.request.schema.json"),
-		);
-	}
-	return validateUpsertRequestFn;
-}
-
-function getValidateSyncServiceDataRequest(): ValidateFunction<SyncServiceDataRequest> {
-	if (!validateSyncServiceDataRequestFn) {
-		validateSyncServiceDataRequestFn = compileRoot<SyncServiceDataRequest>(
-			getRequestAjv(),
-			fileId("rpc/syncServiceData.request.schema.json"),
-		);
-	}
-	return validateSyncServiceDataRequestFn;
-}
-
-function getValidateUpsertDataPayload(): ValidateFunction<
-	DATA_PRIMITIVE["data"]
-> {
-	if (!validateUpsertDataPayloadFn) {
-		validateUpsertDataPayloadFn = compileRoot<DATA_PRIMITIVE["data"]>(
-			getRequestAjv(),
-			`${fileId("rpc/upsert.request.schema.json")}#/$defs/UpsertDataPayload`,
-		);
-	}
-	return validateUpsertDataPayloadFn;
-}
-
-function getValidateUiFlow(): ValidateFunction<UI_Flow> {
-	if (!validateUiFlowFn) {
-		validateUiFlowFn = compileRoot<UI_Flow>(
-			getEntityAjv(),
-			fileId("sdui/evy.schema.json"),
-		);
-	}
-	return validateUiFlowFn;
-}
-
-function getValidateDataEvyService(): ValidateFunction<DATA_EVY_Service> {
-	if (!validateDataEvyServiceFn) {
-		validateDataEvyServiceFn = compileRoot<DATA_EVY_Service>(
-			getEntityAjv(),
-			`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Service`,
-		);
-	}
-	return validateDataEvyServiceFn;
-}
-
-function getValidateDataEvyOrganization(): ValidateFunction<DATA_EVY_Organization> {
-	if (!validateDataEvyOrganizationFn) {
-		validateDataEvyOrganizationFn = compileRoot<DATA_EVY_Organization>(
-			getEntityAjv(),
-			`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Organization`,
-		);
-	}
-	return validateDataEvyOrganizationFn;
-}
-
-function getValidateDataEvyServiceProvider(): ValidateFunction<DATA_EVY_ServiceProvider> {
-	if (!validateDataEvyServiceProviderFn) {
-		validateDataEvyServiceProviderFn = compileRoot<DATA_EVY_ServiceProvider>(
-			getEntityAjv(),
-			`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
-		);
-	}
-	return validateDataEvyServiceProviderFn;
-}
-
-function getValidateGetResponse(): ValidateFunction<GetResponse> {
-	if (!validateGetResponseFn) {
-		validateGetResponseFn = compileRoot<GetResponse>(
-			getEntityAjv(),
-			fileId("rpc/get.response.schema.json"),
-		);
-	}
-	return validateGetResponseFn;
-}
-
-function getValidateUpsertResponse(): ValidateFunction<UpsertResponse> {
-	if (!validateUpsertResponseFn) {
-		validateUpsertResponseFn = compileRoot<UpsertResponse>(
-			getEntityAjv(),
-			fileId("rpc/upsert.response.schema.json"),
-		);
-	}
-	return validateUpsertResponseFn;
-}
-
-function getValidateSyncServiceDataResponse(): ValidateFunction<SyncServiceDataResponse> {
-	if (!validateSyncServiceDataResponseFn) {
-		validateSyncServiceDataResponseFn = compileRoot<SyncServiceDataResponse>(
-			getEntityAjv(),
-			fileId("rpc/syncServiceData.response.schema.json"),
-		);
-	}
-	return validateSyncServiceDataResponseFn;
-}
+const getValidateApiRequest = lazyValidator<ApiRequest>(
+	getRequestAjv,
+	fileId("rpc/api.request.schema.json"),
+);
+const getValidateGetRequest = lazyValidator<GetRequest>(
+	getRequestAjv,
+	fileId("rpc/get.request.schema.json"),
+);
+const getValidateUpsertRequest = lazyValidator<UpsertRequest>(
+	getRequestAjv,
+	fileId("rpc/upsert.request.schema.json"),
+);
+const getValidateUpsertDataPayload = lazyValidator<DATA_PRIMITIVE["data"]>(
+	getRequestAjv,
+	`${fileId("rpc/upsert.request.schema.json")}#/$defs/UpsertDataPayload`,
+);
+const getValidateUiFlow = lazyValidator<UI_Flow>(
+	getEntityAjv,
+	fileId("sdui/evy.schema.json"),
+);
+const getValidateDataEvyService = lazyValidator<DATA_EVY_Service>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Service`,
+);
+const getValidateDataEvyOrganization = lazyValidator<DATA_EVY_Organization>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Organization`,
+);
+const getValidateDataEvyServiceProvider =
+	lazyValidator<DATA_EVY_ServiceProvider>(
+		getEntityAjv,
+		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
+	);
+const getValidateGetResponse = lazyValidator<GetResponse>(
+	getEntityAjv,
+	fileId("rpc/get.response.schema.json"),
+);
+const getValidateUpsertResponse = lazyValidator<UpsertResponse>(
+	getEntityAjv,
+	fileId("rpc/upsert.response.schema.json"),
+);
+const getValidateSyncRequest = lazyValidator<SyncRequest>(
+	getRequestAjv,
+	fileId("rpc/sync.request.schema.json"),
+);
+const getValidateSyncResponse = lazyValidator<SyncResponse>(
+	getEntityAjv,
+	fileId("rpc/sync.response.schema.json"),
+);
 
 export function validateApiRequest(data: unknown): ApiRequest {
 	assertValid("ApiRequest", getValidateApiRequest(), data);
@@ -378,17 +299,6 @@ export function validateGetRequest(data: unknown): GetRequest {
 
 export function validateUpsertRequest(data: unknown): UpsertRequest {
 	assertValid("UpsertRequest", getValidateUpsertRequest(), data);
-	return data;
-}
-
-export function validateSyncServiceDataRequest(
-	data: unknown,
-): SyncServiceDataRequest {
-	assertValid(
-		"SyncServiceDataRequest",
-		getValidateSyncServiceDataRequest(),
-		data,
-	);
 	return data;
 }
 
@@ -434,14 +344,13 @@ export function validateUpsertResponse(data: unknown): UpsertResponse {
 	return data;
 }
 
-export function validateSyncServiceDataResponse(
-	data: unknown,
-): SyncServiceDataResponse {
-	assertValid(
-		"SyncServiceDataResponse",
-		getValidateSyncServiceDataResponse(),
-		data,
-	);
+export function validateSync(data: unknown): SyncRequest {
+	assertValid("SyncRequest", getValidateSyncRequest(), data);
+	return data;
+}
+
+export function validateSyncResponse(data: unknown): SyncResponse {
+	assertValid("SyncResponse", getValidateSyncResponse(), data);
 	return data;
 }
 

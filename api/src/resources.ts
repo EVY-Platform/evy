@@ -1,0 +1,54 @@
+import pluralize from "pluralize";
+import {
+	getServiceNames,
+	getServiceResources,
+} from "evy-types/rpcRequestHelpers";
+import { ensureRegistryInitialized } from "./services";
+
+type ResourceEntry = {
+	singular: string;
+	plural: string;
+};
+
+type ResourcesResponse = {
+	resources: Record<string, ResourceEntry>;
+	resourcesByService: Record<string, string[]>;
+};
+
+/**
+ * Pure builder — no side effects, no async. Reads from the runtime registry.
+ * Used by both `resources` (JSON-RPC handler) and `sync` to avoid duplication.
+ */
+export function buildResourceRegistry(): ResourcesResponse {
+	const resourcesMap: Record<string, ResourceEntry> = {};
+	const resourcesByService: Record<string, string[]> = {};
+
+	for (const svc of getServiceNames()) {
+		const svcResources = getServiceResources(svc) ?? [];
+		resourcesByService[svc] = svcResources;
+		for (const r of svcResources) {
+			if (!resourcesMap[r]) {
+				resourcesMap[r] = {
+					singular: pluralize.singular(r),
+					plural: pluralize.plural(r),
+				};
+			}
+		}
+	}
+
+	return {
+		resources: resourcesMap,
+		resourcesByService,
+	};
+}
+
+/**
+ * JSON-RPC handler for "resources" method.
+ * Returns the mapping of all resource names to their singular/plural forms,
+ * plus a mapping of service names to their resource lists.
+ * Computed on every call from the runtime registry (no stale cache).
+ */
+export async function resources(): Promise<ResourcesResponse> {
+	await ensureRegistryInitialized();
+	return buildResourceRegistry();
+}

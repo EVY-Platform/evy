@@ -82,7 +82,7 @@ export type RowAction =
 	  }
 	| { type: "NAVIGATE_BREADCRUMB"; configStackLength: number };
 
-export type DraggingSource = "rows" | "page";
+type DraggingSource = "rows" | "page";
 
 export type DraggingState = false | DraggingSource;
 

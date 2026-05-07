@@ -16,7 +16,7 @@ export default defineRow("TextActionRow", {
 				action: "Change",
 			},
 		},
-		destination: "{items.pickup_address}",
+		destination: "{item.pickup_address}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

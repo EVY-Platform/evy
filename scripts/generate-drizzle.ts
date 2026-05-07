@@ -76,16 +76,15 @@ function assertDrizzleConfigRoot(
 
 function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
 	assertDrizzleConfigRoot(value);
-	const cfg = value;
-	if (cfg.tables !== undefined) {
+	if (value.tables !== undefined) {
 		if (
-			typeof cfg.tables !== "object" ||
-			cfg.tables === null ||
-			Array.isArray(cfg.tables)
+			typeof value.tables !== "object" ||
+			value.tables === null ||
+			Array.isArray(value.tables)
 		) {
 			throw new Error("drizzle.config.json: tables must be an object");
 		}
-		for (const [k, t] of Object.entries(cfg.tables)) {
+		for (const [k, t] of Object.entries(value.tables)) {
 			if (typeof t !== "object" || t === null || Array.isArray(t)) {
 				throw new Error(`drizzle.config.json: tables.${k} must be an object`);
 			}
@@ -127,15 +126,15 @@ function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
 			}
 		}
 	}
-	if (cfg.enums !== undefined) {
+	if (value.enums !== undefined) {
 		if (
-			typeof cfg.enums !== "object" ||
-			cfg.enums === null ||
-			Array.isArray(cfg.enums)
+			typeof value.enums !== "object" ||
+			value.enums === null ||
+			Array.isArray(value.enums)
 		) {
 			throw new Error("drizzle.config.json: enums must be an object");
 		}
-		for (const [k, e] of Object.entries(cfg.enums)) {
+		for (const [k, e] of Object.entries(value.enums)) {
 			if (typeof e !== "object" || e === null || Array.isArray(e)) {
 				throw new Error(`drizzle.config.json: enums.${k} must be an object`);
 			}
@@ -147,11 +146,11 @@ function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
 			}
 		}
 	}
-	if (cfg.relations !== undefined) {
-		if (!Array.isArray(cfg.relations)) {
+	if (value.relations !== undefined) {
+		if (!Array.isArray(value.relations)) {
 			throw new Error("drizzle.config.json: relations must be an array");
 		}
-		for (const rel of cfg.relations as unknown[]) {
+		for (const rel of value.relations as unknown[]) {
 			if (typeof rel !== "object" || rel === null || Array.isArray(rel)) {
 				throw new Error(
 					"drizzle.config.json: relations entries must be objects",
@@ -414,10 +413,9 @@ function emitColumn(
 
 async function main(): Promise<void> {
 	const schemaRaw = await loadJson<unknown>(DATA_SCHEMA_PATH);
-	const configRaw = await loadJson<unknown>(DRIZZLE_CONFIG_PATH);
-	assertDrizzleConfig(configRaw);
+	const config = await loadJson<unknown>(DRIZZLE_CONFIG_PATH);
+	assertDrizzleConfig(config);
 	const schema = schemaRaw as JsonSchema;
-	const config = configRaw;
 
 	validateConfigSemantic(schema, config);
 

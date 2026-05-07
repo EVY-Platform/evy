@@ -97,62 +97,87 @@ function normalizeUnknownServerRow(row: ServerRow): ServerRow {
 	};
 }
 
-function normalizeRowContentAgainstDefaults(
-	incoming: ServerRowContent,
-	defaults: RowConfig["view"]["content"],
+function mergeRowContent(
+	incoming: Record<string, unknown>,
+	defaults: Record<string, unknown>,
+	transformRow: (row: ServerRow | Row) => ServerRow,
+	transformDefaultRow: (row: Row) => ServerRow,
 ): ServerRowContent {
-	const def = defaults as unknown as Record<string, unknown>;
-	const inc = incoming as unknown as Record<string, unknown>;
-	const allKeys = new Set([...Object.keys(def), ...Object.keys(inc)]);
+	const allKeys = new Set([...Object.keys(defaults), ...Object.keys(incoming)]);
 	const out: Record<string, unknown> = {};
 
 	for (const key of allKeys) {
 		if (key === "children") {
-			const defaultChildren = Array.isArray(def.children) ? def.children : [];
+			const defaultChildren = Array.isArray(defaults.children)
+				? defaults.children
+				: [];
 			const rawChildren: unknown =
-				"children" in inc
-					? Array.isArray(inc.children)
-						? inc.children
+				"children" in incoming
+					? Array.isArray(incoming.children)
+						? incoming.children
 						: []
 					: defaultChildren;
-			out.children = (rawChildren as ServerRow[]).map((child) =>
-				normalizeServerRow(child),
+			out.children = (rawChildren as Row[]).map((child) =>
+				transformRow(child as unknown as ServerRow),
 			);
 			continue;
 		}
 		if (key === "child") {
-			if ("child" in inc && inc.child !== undefined && inc.child !== null) {
-				out.child = normalizeServerRow(inc.child as ServerRow);
-			} else if (def.child !== undefined && def.child !== null) {
-				out.child = normalizeServerRow(rowToServerRow(def.child as Row));
+			if (
+				"child" in incoming &&
+				incoming.child !== undefined &&
+				incoming.child !== null
+			) {
+				out.child = transformRow(incoming.child as ServerRow);
+			} else if (defaults.child !== undefined && defaults.child !== null) {
+				out.child = transformDefaultRow(defaults.child as Row);
 			}
 			continue;
 		}
 		if (key === "segments") {
-			const defaultSegments = Array.isArray(def.segments) ? def.segments : [];
+			const defaultSegments = Array.isArray(defaults.segments)
+				? defaults.segments
+				: [];
 			const rawSegments: unknown =
-				"segments" in inc
-					? Array.isArray(inc.segments) &&
-						inc.segments.every((x): x is string => typeof x === "string")
-						? inc.segments
+				"segments" in incoming
+					? Array.isArray(incoming.segments) &&
+						incoming.segments.every((x): x is string => typeof x === "string")
+						? incoming.segments
 						: []
 					: defaultSegments;
 			out.segments = rawSegments;
 			continue;
 		}
 
-		const dv = def[key];
-		const iv = inc[key];
-		if (typeof dv === "string" || typeof iv === "string") {
-			out[key] = typeof iv === "string" ? iv : typeof dv === "string" ? dv : "";
-		} else if (iv !== undefined) {
-			out[key] = iv;
-		} else if (dv !== undefined) {
-			out[key] = dv;
+		const defaultValue = defaults[key];
+		const incomingValue = incoming[key];
+		if (typeof defaultValue === "string" || typeof incomingValue === "string") {
+			out[key] =
+				typeof incomingValue === "string"
+					? incomingValue
+					: typeof defaultValue === "string"
+						? defaultValue
+						: "";
+		} else if (incomingValue !== undefined) {
+			out[key] = incomingValue;
+		} else if (defaultValue !== undefined) {
+			out[key] = defaultValue;
 		}
 	}
 
 	return out as unknown as ServerRowContent;
+}
+
+function normalizeRowContentAgainstDefaults(
+	incoming: ServerRowContent,
+	defaults: RowConfig["view"]["content"],
+): ServerRowContent {
+	return mergeRowContent(
+		incoming as unknown as Record<string, unknown>,
+		defaults as unknown as Record<string, unknown>,
+		(child) => normalizeServerRow(child as ServerRow),
+		(defChild) => normalizeServerRow(rowToServerRow(defChild)),
+	);
 }
 
 /** Map builder Row → wire ServerRow shape (recursive child/children); does not run `normalizeServerRow`. */
@@ -188,56 +213,12 @@ function encodeMergeRowContent(
 	incomingRowContent: Record<string, unknown>,
 	defaults: RowConfig["view"]["content"],
 ): ServerRowContent {
-	const def = defaults as unknown as Record<string, unknown>;
-	const inc = incomingRowContent;
-	const allKeys = new Set([...Object.keys(def), ...Object.keys(inc)]);
-	const out: Record<string, unknown> = {};
-
-	for (const key of allKeys) {
-		if (key === "children") {
-			const defaultChildren = Array.isArray(def.children) ? def.children : [];
-			const rawChildren: Row[] =
-				"children" in inc
-					? Array.isArray(inc.children)
-						? (inc.children as Row[])
-						: []
-					: (defaultChildren as Row[]);
-			out.children = rawChildren.map(encodeRowToServerRow);
-			continue;
-		}
-		if (key === "child") {
-			if ("child" in inc && inc.child !== undefined && inc.child !== null) {
-				out.child = encodeRowToServerRow(inc.child as Row);
-			} else if (def.child !== undefined && def.child !== null) {
-				out.child = encodeRowToServerRow(def.child as Row);
-			}
-			continue;
-		}
-		if (key === "segments") {
-			const defaultSegments = Array.isArray(def.segments) ? def.segments : [];
-			const rawSegments: unknown =
-				"segments" in inc
-					? Array.isArray(inc.segments) &&
-						inc.segments.every((x): x is string => typeof x === "string")
-						? inc.segments
-						: []
-					: defaultSegments;
-			out.segments = rawSegments;
-			continue;
-		}
-
-		const dv = def[key];
-		const iv = inc[key];
-		if (typeof dv === "string" || typeof iv === "string") {
-			out[key] = typeof iv === "string" ? iv : typeof dv === "string" ? dv : "";
-		} else if (iv !== undefined) {
-			out[key] = iv;
-		} else if (dv !== undefined) {
-			out[key] = dv;
-		}
-	}
-
-	return out as unknown as ServerRowContent;
+	return mergeRowContent(
+		incomingRowContent,
+		defaults as unknown as Record<string, unknown>,
+		(child) => encodeRowToServerRow(child as Row),
+		(defChild) => encodeRowToServerRow(defChild),
+	);
 }
 
 function encodeRowToServerRow(row: Row): ServerRow {

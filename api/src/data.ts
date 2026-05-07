@@ -2,17 +2,15 @@ import { and, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import {
-	type DATA_EVY_Organization,
-	type DATA_EVY_Service,
-	type DATA_EVY_ServiceProvider,
-	type GetResponse,
-	RESOURCES_BY_SERVICE,
-	RESOURCE_VALUES,
-	type GetRequest,
-	type OS,
-	type UpsertRequest,
-	type UpsertResponse,
+import type {
+	DATA_EVY_Organization,
+	DATA_EVY_Service,
+	DATA_EVY_ServiceProvider,
+	GetResponse,
+	GetRequest,
+	OS,
+	UpsertRequest,
+	UpsertResponse,
 } from "evy-types";
 import * as schema from "../../types/generated/ts/db/schema.generated";
 import {
@@ -25,9 +23,10 @@ import {
 } from "../../types/generated/ts/db/schema.generated";
 import { getConnectionUrl } from "./db";
 import {
-	validateStrictGetRequest,
-	validateStrictUpsertRequest,
-} from "evy-types/rpcRequestHelpers";
+	EVY_CORE_SERVICE,
+	EVY_CORE_RESOURCE,
+	EVY_CORE_RESOURCE_NAME_SET,
+} from "evy-types/coreResources";
 import {
 	validateDataEvyOrganization as validateOrganizationPayload,
 	validateDataEvyService as validateServicePayload,
@@ -46,18 +45,10 @@ export function setDbForTest(database: typeof db): void {
 	db = database;
 }
 
-const CORE_SERVICE = "evy";
-
-const CORE_API_RESOURCES = new Set(RESOURCES_BY_SERVICE.evy);
-
-type Resource = GetRequest["resource"];
-
-export function isResource(v: unknown): v is Resource {
-	return typeof v === "string" && RESOURCE_VALUES.includes(v as Resource);
-}
+const CORE_API_RESOURCES: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
 function assertEvyCoreAccess(params: GetRequest | UpsertRequest): void {
-	if (params.service !== CORE_SERVICE) {
+	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
 	}
 	if (!CORE_API_RESOURCES.has(params.resource)) {
@@ -65,36 +56,18 @@ function assertEvyCoreAccess(params: GetRequest | UpsertRequest): void {
 	}
 }
 
-function validateCoreGetParams(params: unknown): asserts params is GetRequest {
-	validateStrictGetRequest(params);
-	assertEvyCoreAccess(params);
-}
-
-function validateCoreUpsertParams(
-	params: unknown,
-): asserts params is UpsertRequest {
-	validateStrictUpsertRequest(params);
-	assertEvyCoreAccess(params);
-}
-
 /**
- * Core `get` handler after JSON-RPC shape checks. Callers must already have run
- * {@link validateStrictGetRequest}; this only applies evy-core access rules.
+ * Core `get` handler after JSON-RPC shape checks. This only applies evy-core access rules.
  */
-export async function getCoreForValidatedRequest(
-	params: GetRequest,
-): Promise<GetResponse> {
+export async function get(params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
 	return getCoreBody(params);
 }
 
 /**
- * Core `upsert` handler after JSON-RPC shape checks. Callers must already have run
- * {@link validateStrictUpsertRequest}; this only applies evy-core access rules.
+ * Core `upsert` handler after JSON-RPC shape checks. This only applies evy-core access rules.
  */
-export async function upsertCoreForValidatedRequest(
-	params: UpsertRequest,
-): Promise<UpsertResponse> {
+export async function upsert(params: UpsertRequest): Promise<UpsertResponse> {
 	assertEvyCoreAccess(params);
 	return upsertCoreBody(params);
 }
@@ -242,11 +215,11 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 	const { resource, filter } = params;
 
-	if (resource === "devices") {
+	if (resource === EVY_CORE_RESOURCE.DEVICES) {
 		throw new Error("devices are managed via validateAuth only");
 	}
 
-	if (resource === "sdui") {
+	if (resource === EVY_CORE_RESOURCE.SDUI) {
 		const base = db.select({ data: flow.data }).from(flow);
 		const whereClauses = [];
 
@@ -267,24 +240,19 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		return validateGetResponse(payload);
 	}
 
-	if (resource === "services") {
+	if (resource === EVY_CORE_RESOURCE.SERVICES) {
 		return listCoreCatalogRows(service, filter, mapServiceRow);
 	}
 
-	if (resource === "organisations") {
+	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
 		return listCoreCatalogRows(organization, filter, (r) => r);
 	}
 
-	if (resource === "providers") {
+	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
 		return listCoreCatalogRows(serviceProvider, filter, (r) => r);
 	}
 
 	throw new Error("Unsupported resource for core API");
-}
-
-export async function getCore(params: unknown): Promise<GetResponse> {
-	validateCoreGetParams(params);
-	return getCoreBody(params);
 }
 
 const serviceCatalogConfig: CatalogEntityConfig<DATA_EVY_Service> = {
@@ -365,11 +333,11 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
-	if (resource === "devices") {
+	if (resource === EVY_CORE_RESOURCE.DEVICES) {
 		throw new Error("devices are managed via validateAuth only");
 	}
 
-	if (resource === "sdui") {
+	if (resource === EVY_CORE_RESOURCE.SDUI) {
 		const validatedData = validateFlowData(dataPayload);
 		const filterId = filter?.id;
 		const persistedFlowData =
@@ -403,7 +371,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 		return row;
 	}
 
-	if (resource === "services") {
+	if (resource === EVY_CORE_RESOURCE.SERVICES) {
 		return upsertCatalogEntityFromConfig(
 			serviceCatalogConfig,
 			filter,
@@ -412,7 +380,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 		);
 	}
 
-	if (resource === "organisations") {
+	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
 		return upsertCatalogEntityFromConfig(
 			organizationCatalogConfig,
 			filter,
@@ -421,7 +389,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 		);
 	}
 
-	if (resource === "providers") {
+	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
 		return upsertCatalogEntityFromConfig(
 			providerCatalogConfig,
 			filter,
@@ -431,9 +399,4 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	}
 
 	throw new Error("Unsupported resource for core API");
-}
-
-export async function upsertCore(params: unknown): Promise<UpsertResponse> {
-	validateCoreUpsertParams(params);
-	return upsertCoreBody(params);
 }

@@ -152,7 +152,7 @@ test.describe("Row configuration", () => {
 							content: {
 								title: "Tags",
 								placeholder: "Search for tags",
-								format: "{$datum:value}",
+								format: "{$datum.value}",
 							},
 						},
 						actions: [],
@@ -165,12 +165,12 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const formatInput = configPanel.getByLabel("format");
 		await expect(formatInput).toBeVisible();
-		await expect(formatInput).toHaveValue("{$datum:value}");
+		await expect(formatInput).toHaveValue("{$datum.value}");
 
 		await formatInput.clear();
-		await formatInput.fill("{$datum:label}");
+		await formatInput.fill("{$datum.label}");
 
-		await expect(formatInput).toHaveValue("{$datum:label}");
+		await expect(formatInput).toHaveValue("{$datum.label}");
 	});
 
 	test("should display and edit action items via popup", async ({ page }) => {
@@ -494,7 +494,7 @@ test.describe("Row configuration", () => {
 						title: "Details",
 						rows: [
 							{
-								id: "row_input_items",
+								id: "row_input_item",
 								type: "Input",
 								source: "",
 								view: {
@@ -504,7 +504,7 @@ test.describe("Row configuration", () => {
 										placeholder: "Enter name",
 									},
 								},
-								destination: "{items}",
+								destination: "{item}",
 								actions: [],
 							},
 							{
@@ -538,12 +538,12 @@ test.describe("Row configuration", () => {
 
 		const dataArg = popup.getByLabel("true-0-arg-0");
 		await expect(dataArg).toBeVisible();
-		await popoverSelect(page, dataArg, "Items");
+		await popoverSelect(page, dataArg, "Item");
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
-		await expect(configPanel.getByText("create(items)")).toBeVisible();
+		await expect(configPanel.getByText("create(item)")).toBeVisible();
 	});
 
 	test("should use number operand in condition", async ({ page }) => {

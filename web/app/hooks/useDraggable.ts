@@ -124,12 +124,11 @@ export function useDraggable({
 
 	const onDragEvent = useCallback(
 		(args: DragEvent) => {
-			const hoveredRowId = rowId;
 			const draggedRowId = getRowId(args.source.data);
 
 			// Ignore events on the same row that we are dragging
 			// to avoid odd behavior
-			if (draggedRowId === hoveredRowId) return;
+			if (draggedRowId === rowId) return;
 
 			const edge = extractClosestEdge(args.self.data);
 			if (!edge) return;

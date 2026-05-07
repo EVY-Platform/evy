@@ -7,6 +7,7 @@ service Service {
   rpc Get (GetRequest) returns (GetResponse);
   rpc Upsert (UpsertRequest) returns (UpsertResponse);
   rpc SubscribeEvents (SubscribeEventsRequest) returns (stream ServiceEvent);
+  rpc ListResources (ListResourcesRequest) returns (ListResourcesResponse);
 }
 
 message GetRequest {
@@ -41,4 +42,10 @@ message SubscribeEventsRequest {}
 message ServiceEvent {
   string event_name = 1;
   string payload_json = 2;
+}
+
+message ListResourcesRequest {}
+
+message ListResourcesResponse {
+  repeated string resources = 1;
 }

@@ -18,7 +18,7 @@ import {
 import { LogicalSegmentControl } from "./LogicalSegmentControl";
 import { OperandEditor } from "./OperandEditor";
 
-export type ConditionGroupEditorProps = {
+type ConditionGroupEditorProps = {
 	expression: ConditionExpression | null;
 	draftVariables: string[];
 	onChange: (expression: ConditionExpression | null) => void;

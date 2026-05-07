@@ -1,5 +1,9 @@
 import { Client } from "rpc-websockets";
-import type { UI_Flow as ServerFlow, UpsertResponse } from "evy-types";
+import type {
+	SyncResponse,
+	UI_Flow as ServerFlow,
+	UpsertResponse,
+} from "evy-types";
 import { config } from "../config";
 
 function isServerFlow(v: unknown): v is ServerFlow {
@@ -13,11 +17,6 @@ function isServerFlow(v: unknown): v is ServerFlow {
 		"pages" in v &&
 		Array.isArray(v.pages)
 	);
-}
-
-function isServerFlowArray(v: unknown): v is ServerFlow[] {
-	if (!Array.isArray(v)) return false;
-	return v.every(isServerFlow);
 }
 
 function isUpsertResponse(v: unknown): v is UpsertResponse {
@@ -80,18 +79,20 @@ class WSClient {
 		return this.connectionPromise;
 	}
 
-	async getSDUI(): Promise<ServerFlow[]> {
+	async sync(lastSyncTime = "1970-01-01T00:00:00.000Z"): Promise<SyncResponse> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const rawUnknown: unknown = await this.client.call("get", {
-			service: "evy",
-			resource: "sdui",
+		const rawUnknown: unknown = await this.client.call("sync", {
+			lastSyncTime,
 		});
-		if (!isServerFlowArray(rawUnknown)) {
-			throw new Error("Invalid get response: expected array of flows");
+
+		const response = rawUnknown as SyncResponse;
+		if (!response || typeof response !== "object" || !("data" in response)) {
+			throw new Error("Invalid sync response shape");
 		}
-		return rawUnknown;
+
+		return response;
 	}
 
 	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {

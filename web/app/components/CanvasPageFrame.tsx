@@ -1,5 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
-import { useRef } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 
 import { useIntersectVisible } from "../hooks/useIntersectVisible";
 

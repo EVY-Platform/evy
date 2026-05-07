@@ -1,0 +1,76 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sync-response",
+	"title": "SyncResponse",
+	"description": "JSON-RPC response for the unified sync method. Returns all changed rows across all services since lastSyncTime. Includes the full resource registry only when data changed.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"data"
+	],
+	"properties": {
+		"resources": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"resources",
+				"resourcesByService"
+			],
+			"properties": {
+				"resources": {
+					"type": "object",
+					"additionalProperties": {
+						"type": "object",
+						"required": [
+							"singular",
+							"plural"
+						],
+						"properties": {
+							"singular": {
+								"type": "string"
+							},
+							"plural": {
+								"type": "string"
+							}
+						},
+						"additionalProperties": false
+					},
+					"description": "Mapping of plural resource name -> { singular, plural }"
+				},
+				"resourcesByService": {
+					"type": "object",
+					"additionalProperties": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"description": "Mapping of service name -> array of resource names"
+				}
+			}
+		},
+		"data": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"service",
+					"resource",
+					"value"
+				],
+				"properties": {
+					"service": {
+						"type": "string"
+					},
+					"resource": {
+						"type": "string"
+					},
+					"value": {
+						"$ref": "../common/json.schema.json#/$defs/JSONValue"
+					}
+				}
+			}
+		}
+	}
+}

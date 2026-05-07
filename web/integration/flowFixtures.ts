@@ -8,7 +8,7 @@ import type {
 
 // Input types where id is optional
 // Using explicit interface to avoid index signature conflicts with ServerRowContent
-export interface ServerRowInputContent {
+interface ServerRowInputContent {
 	title: string;
 	children?: ServerRowInput[];
 	child?: ServerRowInput;
@@ -21,7 +21,7 @@ export interface ServerRowInputContent {
 	segments?: string[];
 }
 
-export interface ServerRowInput {
+interface ServerRowInput {
 	id?: string;
 	type: ServerRow["type"];
 	source?: string;
@@ -33,7 +33,7 @@ export interface ServerRowInput {
 	actions: RowAction[];
 }
 
-export interface ServerPageInput {
+interface ServerPageInput {
 	id?: string;
 	title: string;
 	rows?: ServerRowInput[];

@@ -1,7 +1,9 @@
 import { createElement, useMemo, type ReactNode } from "react";
 
-import type { FlowsContextValue } from "../../state/contexts/FlowsContext";
-import { FlowsContext } from "../../state/contexts/FlowsContext";
+import {
+	FlowsContext,
+	type FlowsContextValue,
+} from "../../state/contexts/FlowsContext";
 import type { Row } from "../../types/row";
 import {
 	SEARCH_DEFAULT_RESULT_CONTENT,
@@ -40,7 +42,7 @@ const previewRowComponents: Record<string, RowComponent> = {
 
 type SearchPreviewDatum = Record<string, string>;
 
-const BRACED_DATUM_BINDING_REGEX = /\{\$datum:([A-Za-z0-9_.-]+)\}/g;
+const BRACED_DATUM_BINDING_REGEX = /\{\$datum\.([A-Za-z0-9_.-]+)\}/g;
 
 function SearchPreviewFallback({ rowType }: { rowType: string }) {
 	return (

@@ -123,7 +123,7 @@ private struct EVYDropdownPreview: View {
       title: "Dropdown",
       placeholder: "A placeholder",
       data: "{conditions}",
-      format: "{$datum:value}",
-      destination: "{items.condition}")
+      format: "{$datum.value}",
+      destination: "{item.condition}")
   }
 }

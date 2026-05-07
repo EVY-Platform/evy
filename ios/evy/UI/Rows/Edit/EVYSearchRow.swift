@@ -81,8 +81,8 @@ private struct EVYSearchRowPreview: View {
               "actions": [],
               "view": {
                 "content": {
-                  "title": "{$datum:title}",
-                  "subtitle": "{$datum:category}",
+                  "title": "{$datum.title}",
+                  "subtitle": "{$datum.category}",
                   "icon": "::search::"
                 }
               }

@@ -12,10 +12,10 @@ export default defineRow("DropdownRow", {
 			content: {
 				title: "Dropdown row title",
 				placeholder: "placeholder",
-				format: "{$datum:value}",
+				format: "{$datum.value}",
 			},
 		},
-		destination: "{items.condition}",
+		destination: "{item.condition}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

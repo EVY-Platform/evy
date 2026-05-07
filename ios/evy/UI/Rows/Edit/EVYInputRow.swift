@@ -38,12 +38,12 @@ struct EVYInputRow: View {
         "id": "preview-input-row",
         "type": "Input",
         "source": "",
-        "destination": "{items.title}",
+        "destination": "{item.title}",
         "actions": [],
         "view": {
           "content": {
             "title": "Item title",
-            "value": "{items.title}",
+            "value": "{item.title}",
             "placeholder": "Enter a title"
           }
         }

@@ -1,5 +1,4 @@
-import { createContext, useContext } from "react";
-import type { Dispatch } from "react";
+import { createContext, useContext, type Dispatch } from "react";
 
 import type {
 	DraggingState,
@@ -8,7 +7,7 @@ import type {
 	DropIndicatorAction,
 } from "../../types/actions";
 
-export type DragContextValue = {
+type DragContextValue = {
 	dragging: DraggingState;
 	dropIndicator: DropIndicatorState;
 	dispatchDragging: Dispatch<DraggingAction>;

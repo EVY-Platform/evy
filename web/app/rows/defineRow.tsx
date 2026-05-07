@@ -4,7 +4,7 @@ import { useRowById } from "../hooks/useRowById";
 import type { Row, RowConfig } from "../types/row";
 import { RowLayout } from "./design-system/RowLayout";
 
-export type RowDefinition =
+type RowDefinition =
 	| { config: RowConfig; render: (row: Row) => ReactNode }
 	| {
 			config: RowConfig;

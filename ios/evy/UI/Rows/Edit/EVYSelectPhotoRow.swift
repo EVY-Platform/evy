@@ -42,7 +42,7 @@ struct EVYSelectPhotoRow: View {
         "id": "preview-selectphoto-row",
         "type": "SelectPhoto",
         "source": "",
-        "destination": "{items.photo_ids}",
+        "destination": "{item.photo_ids}",
         "actions": [],
         "view": {
           "content": {
@@ -50,7 +50,7 @@ struct EVYSelectPhotoRow: View {
             "icon": "::image-plus::",
             "subtitle": "Add photos of your item",
             "content": "Add up to 10 photos",
-            "photos": "{items.photo_ids}"
+            "photos": "{item.photo_ids}"
           }
         }
       }

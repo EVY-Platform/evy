@@ -2,40 +2,25 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "get-request",
 	"title": "GetRequest",
-	"description": "JSON-RPC params for get method",
-	"oneOf": [
-		{
-			"type": "object",
-			"additionalProperties": false,
-			"required": ["service", "resource"],
-			"properties": {
-				"service": { "const": "evy" },
-				"resource": {
-					"type": "string",
-					"enum": ["sdui", "devices", "organisations", "services", "providers"]
-				},
-				"filter": { "$ref": "../common/rpc.schema.json#/$defs/DataFilter" }
-			}
+	"description": "JSON-RPC params for get method. Service and resource are validated at runtime against the service registry.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"service",
+		"resource"
+	],
+	"properties": {
+		"service": {
+			"type": "string",
+			"minLength": 1
 		},
-		{
-			"type": "object",
-			"additionalProperties": false,
-			"required": ["service", "resource"],
-			"properties": {
-				"service": { "const": "marketplace" },
-				"resource": {
-					"type": "string",
-					"enum": [
-						"selling_reasons",
-						"conditions",
-						"durations",
-						"areas",
-						"timeslots",
-						"items"
-					]
-				},
-				"filter": { "$ref": "../common/rpc.schema.json#/$defs/DataFilter" }
-			}
+		"resource": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 50
+		},
+		"filter": {
+			"$ref": "../common/rpc.schema.json#/$defs/DataFilter"
 		}
-	]
+	}
 }

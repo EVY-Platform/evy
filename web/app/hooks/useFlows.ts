@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { UI_Flow as ServerFlow } from "evy-types";
-import { wsClient } from "../api/wsClient";
+import { syncWebData } from "../api/sync";
 
 type UseFlowsResult = {
 	flows: ServerFlow[] | null;
@@ -18,7 +18,7 @@ export function useFlows(): UseFlowsResult {
 
 		async function fetchFlows() {
 			try {
-				const fetchedFlows = await wsClient.getSDUI();
+				const fetchedFlows = await syncWebData();
 				if (!cancelled) {
 					setFlows(fetchedFlows);
 					setLoading(false);

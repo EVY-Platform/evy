@@ -18,7 +18,7 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 
 - `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, and `providers` (typed catalog tables). There is no generic `evy` “data” table routed through `services.ts`.
 - `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet` / `forwardUpsert` in [`src/services.ts`](./src/services.ts), which issue `Get` / `Upsert` on `evy.Service` and validate JSON responses.
-- `syncServiceData` is a protected RPC for client-side service cache refresh. Params are `{ service, lastSyncTime }`, where `service` is a syncable non-`evy` service and `lastSyncTime` is an ISO date-time. The API forwards one `get` per service resource with `filter.updatedAfter = lastSyncTime`, omits empty result arrays, and returns `{ data: [{ service, resource, value }] }`. Clients should persist synced rows with service-qualified keys like `marketplace:items`; SDUI bindings such as `{items}` may resolve through client fallback when data is actually read. `{$api:...}` is reserved for API-backed client expressions, while `{$local:...}` and `{$datum:...}` are client-side binding namespaces rather than backend flow state. The API stores action strings without executing them, but its service-sync parser extracts resource keys from braced expressions and action function arguments.
+- **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/catalog + external services) since that timestamp. When data changed, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
 
 Synchronous request/response path:
 
@@ -100,8 +100,7 @@ flowchart TD
     rpc[rpc.ts<br/>get / upsert routing]
     data[data.ts<br/>Drizzle + auth<br/>getCore / upsertCore]
     services[services.ts<br/>gRPC adapters + SubscribeEvents]
-    serviceDataSync[serviceDataSync.ts<br/>syncServiceData]
-    expressionParser[expressionParser.ts<br/>binding extraction]
+    sync[sync.ts<br/>unified sync handler]
     readiness[readiness.ts<br/>health / seed check]
 
     index --> ws
@@ -110,9 +109,9 @@ flowchart TD
     index --> services
     rpc --> data
     rpc --> services
-    rpc --> serviceDataSync
-    serviceDataSync --> services
-    serviceDataSync --> expressionParser
+    rpc --> sync
+    sync --> data
+    sync --> services
     readiness --> rpc
 ```
 
@@ -194,7 +193,7 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 
 ### Health checks
 
-`bun run health` and `bun run health:seeded` invoke `src/readiness.ts` **without** `--env-file=../.env` (unlike `dev`, `start`, and `test`). Export variables from the root `.env` in your shell, rely on Docker Compose `environment` / `env_file`, or run readiness from an environment where `DB_*` and `API_PORT` are already set.
+`bun run health` and `bun run health:seeded` invoke `src/readiness.ts` **without** `--env-file=../.env` (unlike `dev`, `start`, and `test:unit`). Export variables from the root `.env` in your shell, rely on Docker Compose `environment` / `env_file`, or run readiness from an environment where `DB_*` and `API_PORT` are already set.
 
 ## Available Scripts
 
@@ -205,7 +204,7 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 | `bun run start`        | Run migrations and start server          |
 | `bun run health`       | Run the readiness check                  |
 | `bun run health:seeded` | Run readiness check and require seed data |
-| `bun run test`         | Run API unit and integration tests       |
+| `bun run test:unit`    | Run API unit tests                       |
 | `bun run test:e2e`     | Run API end-to-end tests                 |
 | `bun run lint`         | Run Biome linter                         |
 | `bun run format`       | Format files with Biome                  |

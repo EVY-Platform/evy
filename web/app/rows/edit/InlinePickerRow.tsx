@@ -11,10 +11,10 @@ export default defineRow("InlinePickerRow", {
 		view: {
 			content: {
 				title: "Inline picker row title",
-				format: "{$datum:value}",
+				format: "{$datum.value}",
 			},
 		},
-		destination: "{items.distance}",
+		destination: "{item.distance}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

@@ -18,7 +18,7 @@ final class ContentViewTests: XCTestCase {
     let flows = try makeFlows()
     let createFlow = flows.first(where: { $0.id == "create-flow" })
     let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: createFlow)
-    XCTAssertEqual(keys, Set(["items"]))
+    XCTAssertEqual(keys, Set(["item"]))
   }
 
   func testExtractCreateKeysReturnsEmptyForFlowWithoutCreateActions() throws {
@@ -33,7 +33,7 @@ final class ContentViewTests: XCTestCase {
     let route = Route(flowId: "create-flow", pageId: "create-page")
     XCTAssertEqual(
       EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows),
-      EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: "items")
+      EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: "item")
     )
   }
 
@@ -42,6 +42,21 @@ final class ContentViewTests: XCTestCase {
     let route = Route(flowId: "home-flow", pageId: "home-page")
     XCTAssertEqual(
       EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows), "home-flow:browse")
+  }
+
+  func testResourceNamePluralizes() {
+    XCTAssertEqual(EVY.resourceName(forEntityKey: "item"), "items")
+    XCTAssertEqual(EVY.resourceName(forEntityKey: "condition"), "conditions")
+    XCTAssertEqual(EVY.resourceName(forEntityKey: "duration"), "durations")
+    XCTAssertEqual(EVY.resourceName(forEntityKey: "area"), "areas")
+    XCTAssertEqual(EVY.resourceName(forEntityKey: "provider"), "providers")
+    XCTAssertEqual(
+      EVY.resourceName(forEntityKey: "organisation"), EVYCoreResource.organisations.rawValue)
+    XCTAssertEqual(EVY.resourceName(forEntityKey: "tag"), "tags")
+  }
+
+  func testResourceNameInflectsOnlyLastSegment() {
+    XCTAssertEqual(EVY.resourceName(forEntityKey: "selling_reason"), "selling_reasons")
   }
 
   private func makeFlows() throws -> [UI_Flow] {
@@ -95,7 +110,7 @@ final class ContentViewTests: XCTestCase {
                     "placeholder": "Enter a title",
                   ]
                 ],
-                "destination": "{items.title}",
+                "destination": "{item.title}",
                 "actions": [],
               ]
             ],
@@ -113,7 +128,7 @@ final class ContentViewTests: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": "{create(items)}",
+                  "true": "{create(item)}",
                 ]
               ],
             ],

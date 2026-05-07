@@ -32,8 +32,8 @@ final class EVYDatumRowFormatter {
   ]
 
   private static func resolveDatumReferences(in stringValue: String, datum: EVYJson) -> String {
-    guard stringValue.contains("$datum:") else { return stringValue }
-    return (try? _formatData(json: datum, format: stringValue)) ?? stringValue
+    guard stringValue.contains(EVY.datumPrefix) else { return stringValue }
+    return (try? EVY.formatData(json: datum, format: stringValue)) ?? stringValue
   }
 
   private static func formatDatumReferencesInJSONValue(_ value: Any, datum: EVYJson) -> Any {

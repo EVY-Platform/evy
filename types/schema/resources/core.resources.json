@@ -1,0 +1,20 @@
+{
+	"service": "evy",
+	"resources": {
+		"sdui": {
+			"singular": "flow"
+		},
+		"devices": {
+			"singular": "device"
+		},
+		"organisations": {
+			"singular": "organisation"
+		},
+		"services": {
+			"singular": "service"
+		},
+		"providers": {
+			"singular": "provider"
+		}
+	}
+}

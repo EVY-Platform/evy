@@ -110,7 +110,7 @@ private struct EVYInlinePickerPreview: View {
     EVYInlinePicker(
       title: "Duration",
       data: "{durations}",
-      format: "{$datum:value}",
-      destination: "{items.duration}")
+      format: "{$datum.value}",
+      destination: "{item.duration}")
   }
 }

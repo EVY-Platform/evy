@@ -1,7 +1,7 @@
 export const CONDITION_FUNCTIONS = ["count", "length"] as const;
-export type ConditionFunction = (typeof CONDITION_FUNCTIONS)[number];
+type ConditionFunction = (typeof CONDITION_FUNCTIONS)[number];
 
-export type ParsedOperand =
+type ParsedOperand =
 	| { type: "value"; value: string }
 	| { type: "function"; name: ConditionFunction; arg: string };
 

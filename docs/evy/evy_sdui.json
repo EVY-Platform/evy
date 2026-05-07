@@ -16,8 +16,8 @@
 								"view": {
 									"content": {
 										"icon": "",
-										"title": "{$datum:title}",
-										"subtitle": "{formatCurrency($datum:price)}"
+										"title": "{$datum.title}",
+										"subtitle": "{formatCurrency($datum.price)}"
 									}
 								},
 								"source": "",

@@ -28,13 +28,13 @@ flowchart LR
 
 Resource routing, `flowUpdated` / `dataUpdated`, service data sync, and gRPC forwarding are covered in [`api/README.md`](./api/README.md).
 
-## Service data sync and local keying
+## Sync and local keying
 
-Clients can refresh backend service data with the protected `syncServiceData` JSON-RPC method. The request includes a syncable service name and an ISO `lastSyncTime`; the response returns changed resource rows shaped as `{ service, resource, value }`.
+Clients refresh local cache state with the protected `sync` JSON-RPC method. The request includes an ISO `lastSyncTime`; the response returns changed rows across SDUI, evy core data, and backend service data shaped as `{ service, resource, value }`. When there are changes, the response also includes the current resource registry.
 
-For startup/cache refresh, the API fetches every resource in the service using `filter.updatedAfter = lastSyncTime`.
+For startup/cache refresh, the API fetches every syncable resource using `filter.updatedAfter = lastSyncTime`.
 
-Clients should store synced backend resources with service-qualified keys such as `marketplace:items` and `marketplace:conditions`. SDUI bindings may still use short plural resource names like `{items}` or `{conditions}` where data is actually read; client data lookup resolves exact local keys first, then falls back to synced service resources. Navigate actions pass query params as the optional third `navigate` argument using a JSON object (`{navigate(flowId, pageId, {"items": [$datum.id]})}`); clients parse the query into a typed dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same plural key. A generic `"id"` query key may be used by clients that can infer the resource from synced collections. Draft destinations also use plural resource paths such as `{items.title}`. See [SDUI Data](./docs/evy/sdui/readme.md#data) for when row `source` should stay empty.
+Clients should store synced backend resources with service-qualified keys such as `evy:sdui`, `marketplace:items`, and `marketplace:conditions`. SDUI bindings may still use short plural resource names like `{items}` or `{conditions}` where data is actually read; client data lookup resolves exact local keys first, then falls back to synced service resources. Navigate actions pass query params as the optional third `navigate` argument using a JSON object (`{navigate(flowId, pageId, {"items": [$datum.id]})}`); clients parse the query into a typed dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same plural key. A generic `"id"` query key may be used by clients that can infer the resource from synced collections. Direct entity/draft attributes use singular keys such as `{item.title}` and `{create(item)}`; iOS pluralizes the singular entity key into a backend resource name using Swift inflection. See [SDUI Data](./docs/evy/sdui/readme.md#data) for when row `source` should stay empty.
 
 iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS README § Draft scopes and draft cache keys](./ios/README.md#draft-scopes-and-draft-cache-keys).
 

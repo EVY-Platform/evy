@@ -155,23 +155,7 @@ enum EVYActionRunner {
   private static func resolveDatumInQuery(
     _ query: [String: [String]], datum: EVYJson?
   ) -> [String: [String]] {
-    guard let datum else { return query }
-
-    var resolved: [String: [String]] = [:]
-    for (key, values) in query {
-      resolved[key] = values.map { resolveDatumExpression($0, datum: datum) }
-    }
-    return resolved
-  }
-
-  private static func resolveDatumExpression(_ value: String, datum: EVYJson) -> String {
-    guard value.hasPrefix("$datum.") else { return value }
-    let fieldPath = String(value.dropFirst("$datum.".count))
-    guard !fieldPath.isEmpty else { return value }
-    let props = fieldPath.split(separator: ".").map(String.init)
-    let resolved = datum.parseProp(props: props)
-    let result = resolved.identifierValue()
-    return result.isEmpty ? value : result
+    EVY.resolveDatumInQuery(query, datum: datum)
   }
 
   private static func unwrapActionBranch(_ branch: String) -> String {

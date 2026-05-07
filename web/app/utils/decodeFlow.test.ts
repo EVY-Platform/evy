@@ -131,7 +131,7 @@ describe("normalizeServerRow", () => {
 							type: "Info",
 							view: {
 								content: {
-									title: "{$datum:title}",
+									title: "{$datum.title}",
 								},
 							},
 						}),
@@ -144,7 +144,7 @@ describe("normalizeServerRow", () => {
 		expect(n.view.content.child?.type).toBe("Info");
 		expect(n.view.content.child?.destination).toBe("");
 		expect(n.view.content.child?.view.content).toMatchObject({
-			title: "{$datum:title}",
+			title: "{$datum.title}",
 			subtitle: "",
 			icon: "",
 		});
@@ -170,8 +170,8 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "Search",
-				source: "{$api:tags}",
-				destination: "{tags}",
+				source: "{tags}",
+				destination: "",
 				view: {
 					content: {
 						title: "Find",
@@ -183,7 +183,7 @@ describe("normalizeServerRow", () => {
 
 		expect(n.view.content.child?.type).toBe("Info");
 		expect(n.view.content.child?.view.content).toMatchObject({
-			title: "{$datum:value}",
+			title: "{$datum.value}",
 			subtitle: "",
 			icon: "",
 		});
@@ -208,7 +208,7 @@ describe("decodeFlows / encodeFlow", () => {
 							view: {
 								content: {
 									title: "Hello",
-									text: "{items.title}",
+									text: "{item.title}",
 								},
 								max_lines: "",
 							},

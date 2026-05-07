@@ -44,12 +44,12 @@ struct EVYInlinePickerRow: View {
         "id": "preview-inlinepicker-row",
         "type": "InlinePicker",
         "source": "{durations}",
-        "destination": "{items.duration}",
+        "destination": "{item.duration}",
         "actions": [],
         "view": {
           "content": {
             "title": "Duration",
-            "format": "{$datum:value}"
+            "format": "{$datum.value}"
           }
         }
       }

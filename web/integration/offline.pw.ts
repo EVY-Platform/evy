@@ -62,11 +62,19 @@ test.describe("Offline and connection resilience", () => {
 						return;
 					}
 
-					if (request.method === "get") {
+					if (request.method === "sync") {
 						this.respond({
 							jsonrpc: "2.0",
 							id: request.id,
-							result: [mockFlow],
+							result: {
+								data: [
+									{
+										service: "evy",
+										resource: "sdui",
+										value: [mockFlow],
+									},
+								],
+							},
 						});
 						return;
 					}

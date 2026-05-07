@@ -68,7 +68,7 @@ struct EVYTextSelectRow: View {
         "id": "preview-textselect-row",
         "type": "TextSelect",
         "source": "",
-        "destination": "{items.condition}",
+        "destination": "{item.condition}",
         "actions": [],
         "view": {
           "content": {

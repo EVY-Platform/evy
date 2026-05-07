@@ -13,11 +13,6 @@ public enum EVYRectangleStyle: String {
   case clear
 }
 
-public enum EVYRectangleWidth: String {
-  case fixed
-  case fit
-}
-
 struct EVYRectangle: View {
   @Environment(\.colorScheme) var colorScheme
 

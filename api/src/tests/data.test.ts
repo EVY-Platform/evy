@@ -15,6 +15,7 @@ import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Service,
 	GetRequest,
+	UpsertRequest,
 	UpsertResponse,
 } from "evy-types";
 import { validateUiFlow as validateFlowData } from "evy-types/validators";
@@ -49,7 +50,7 @@ type FlowDataInput = Omit<UI_Flow, "id" | "pages"> & {
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
-const { validateAuth, getCore, setDbForTest, upsertCore } = dataModule;
+const { validateAuth, get, setDbForTest, upsert } = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
 function isDATA_EVY_Flow(row: UpsertResponse): row is DATA_EVY_Flow {
@@ -182,36 +183,36 @@ describe("get", () => {
 	});
 
 	it("should throw when params is not an object", async () => {
-		await expect(getCore(null as unknown as GetRequest)).rejects.toThrow(
-			"Params must be an object",
+		await expect(get(null as unknown as GetRequest)).rejects.toThrow(
+			"is not an object",
 		);
 	});
 
 	it("should throw when service is invalid", async () => {
 		await expect(
-			getCore({
+			get({
 				service: "invalid",
 				resource: "sdui",
 			} as unknown as GetRequest),
-		).rejects.toThrow("Invalid or missing service");
+		).rejects.toThrow("Core API only serves service evy");
 	});
 
 	it("should throw when resource is invalid", async () => {
 		await expect(
-			getCore({
+			get({
 				service: "evy",
 				resource: "InvalidResource",
 			} as unknown as GetRequest),
-		).rejects.toThrow("Invalid or missing resource");
+		).rejects.toThrow("Resource is not served by the core API");
 	});
 
 	it("should throw when service and resource do not match the shared contract", async () => {
 		await expect(
-			getCore({
+			get({
 				service: "evy",
 				resource: "items",
 			} as unknown as GetRequest),
-		).rejects.toThrow("Invalid service and resource combination");
+		).rejects.toThrow("Resource is not served by the core API");
 	});
 
 	it("should return all flow data for resource SDUI when no filter", async () => {
@@ -233,7 +234,7 @@ describe("get", () => {
 			},
 		]);
 
-		const result = await getCore({
+		const result = await get({
 			service: "evy",
 			resource: "sdui",
 		});
@@ -255,7 +256,7 @@ describe("get", () => {
 			...testFlowRowTimestamps(),
 		});
 
-		const result = await getCore({
+		const result = await get({
 			service: "evy",
 			resource: "sdui",
 			filter: { id: flowId },
@@ -267,7 +268,7 @@ describe("get", () => {
 	});
 
 	it("should return empty array for SDUI when filter.id matches nothing", async () => {
-		const result = await getCore({
+		const result = await get({
 			service: "evy",
 			resource: "sdui",
 			filter: { id: crypto.randomUUID() },
@@ -286,7 +287,7 @@ describe("get", () => {
 		});
 
 		await expect(
-			getCore({
+			get({
 				service: "evy",
 				resource: "sdui",
 				filter: { id: flowId },
@@ -304,7 +305,7 @@ describe("get", () => {
 		});
 
 		await expect(
-			getCore({
+			get({
 				service: "evy",
 				resource: "sdui",
 			}),
@@ -321,13 +322,13 @@ describe("get", () => {
 			createdAt: nowIso,
 			updatedAt: nowIso,
 		};
-		await upsertCore({
+		await upsert({
 			service: "evy",
 			resource: "services",
 			data: serviceData,
 		});
 
-		const result = await getCore({
+		const result = await get({
 			service: "evy",
 			resource: "services",
 		});
@@ -347,7 +348,7 @@ describe("get", () => {
 	});
 
 	it("should return empty array for non-SDUI resource when no data", async () => {
-		const result = await getCore({
+		const result = await get({
 			service: "evy",
 			resource: "services",
 		});
@@ -362,13 +363,16 @@ describe("upsert", () => {
 	});
 
 	it("should throw when params is not an object", async () => {
-		await expect(upsertCore(null)).rejects.toThrow("Params must be an object");
+		await expect(upsert(null as unknown as UpsertRequest)).rejects.toThrow();
 	});
 
 	it("should throw when data is missing", async () => {
 		await expect(
-			upsertCore({ service: "evy", resource: "sdui" }),
-		).rejects.toThrow("data is required");
+			upsert({
+				service: "evy",
+				resource: "sdui",
+			} as unknown as UpsertRequest),
+		).rejects.toThrow("Flow validation failed");
 	});
 
 	it("should create new flow for resource SDUI without filter.id", async () => {
@@ -393,15 +397,14 @@ describe("upsert", () => {
 			],
 		});
 
-		const result = await upsertCore({
+		const result = await upsert({
 			service: "evy",
 			resource: "sdui",
 			data: flowData,
 		});
 
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.name).toBe("New Flow");
+		expect(result.data.name).toBe("New Flow");
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -441,7 +444,7 @@ describe("upsert", () => {
 			],
 		});
 
-		const result = await upsertCore({
+		const result = await upsert({
 			service: "evy",
 			resource: "sdui",
 			filter: { id: existingFlow.id },
@@ -449,8 +452,7 @@ describe("upsert", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.name).toBe("Updated Name");
+		expect(result.data.name).toBe("Updated Name");
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -463,7 +465,7 @@ describe("upsert", () => {
 			pages: [{ title: "Draft", rows: [] }],
 		});
 
-		const created = await upsertCore({
+		const created = await upsert({
 			service: "evy",
 			resource: "sdui",
 			filter: { id: flowId },
@@ -471,12 +473,11 @@ describe("upsert", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(created);
-		const createdFlow = created;
-		expect(createdFlow.id).toBe(flowId);
-		expect(createdFlow.data.id).toBe(flowId);
-		expect(createdFlow.data.name).toBe("Client Created Flow");
+		expect(created.id).toBe(flowId);
+		expect(created.data.id).toBe(flowId);
+		expect(created.data.name).toBe("Client Created Flow");
 
-		const updated = await upsertCore({
+		const updated = await upsert({
 			service: "evy",
 			resource: "sdui",
 			filter: { id: flowId },
@@ -488,11 +489,10 @@ describe("upsert", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(updated);
-		const updatedFlow = updated;
-		expect(updatedFlow.id).toBe(flowId);
-		expect(updatedFlow.data.id).toBe(flowId);
-		expect(updatedFlow.data.name).toBe("Client Created Flow Updated");
-		expect(updatedFlow.data.pages[0]?.title).toBe("Published");
+		expect(updated.id).toBe(flowId);
+		expect(updated.data.id).toBe(flowId);
+		expect(updated.data.name).toBe("Client Created Flow Updated");
+		expect(updated.data.pages[0]?.title).toBe("Published");
 
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
@@ -512,7 +512,7 @@ describe("upsert", () => {
 			updatedAt: nowIso,
 		};
 
-		const result = await upsertCore({
+		const result = await upsert({
 			service: "evy",
 			resource: "services",
 			data: payload,
@@ -536,7 +536,7 @@ describe("upsert SDUI validation", () => {
 
 	it("should reject flow with unrecognized keys", async () => {
 		await expect(
-			upsertCore({
+			upsert({
 				service: "evy",
 				resource: "sdui",
 				data: {
@@ -549,7 +549,7 @@ describe("upsert SDUI validation", () => {
 	});
 
 	it("should accept flow with no pages", async () => {
-		const result = await upsertCore({
+		const result = await upsert({
 			service: "evy",
 			resource: "sdui",
 			data: {
@@ -559,13 +559,12 @@ describe("upsert SDUI validation", () => {
 			},
 		});
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.pages).toHaveLength(0);
+		expect(result.data.pages).toHaveLength(0);
 	});
 
 	it("should reject flow with invalid row type", async () => {
 		await expect(
-			upsertCore({
+			upsert({
 				service: "evy",
 				resource: "sdui",
 				data: {
@@ -635,15 +634,14 @@ describe("upsert SDUI validation", () => {
 			],
 		});
 
-		const result = await upsertCore({
+		const result = await upsert({
 			service: "evy",
 			resource: "sdui",
 			data: flowData,
 		});
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.name).toBe("Test Flow");
-		expect(flowRow.data.pages).toHaveLength(1);
+		expect(result.data.name).toBe("Test Flow");
+		expect(result.data.pages).toHaveLength(1);
 	});
 
 	it("should validate footer row", async () => {
@@ -658,19 +656,18 @@ describe("upsert SDUI validation", () => {
 						view: {
 							content: { title: "", label: "Submit" },
 						},
-						actions: [{ condition: "", false: "", true: "{create(items)}" }],
+						actions: [{ condition: "", false: "", true: "{create(item)}" }],
 					},
 				},
 			],
 		});
 
-		const result = await upsertCore({
+		const result = await upsert({
 			service: "evy",
 			resource: "sdui",
 			data: flowData,
 		});
 		expectToBeDATA_EVY_Flow(result);
-		const flowRow = result;
-		expect(flowRow.data.pages[0]).toHaveProperty("footer");
+		expect(result.data.pages[0]).toHaveProperty("footer");
 	});
 });

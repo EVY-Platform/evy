@@ -2,21 +2,19 @@ import type {
 	ApiRequest,
 	GetRequest,
 	GetResponse,
-	SyncServiceDataResponse,
+	SyncResponse,
 	UpsertResponse,
 } from "evy-types";
 import type { BroadcastFn } from "./broadcast";
-import {
-	getCoreForValidatedRequest,
-	upsertCoreForValidatedRequest,
-} from "./data";
-import { syncServiceData as syncServiceDataBody } from "./serviceDataSync";
+import { get as getCore, upsert as upsertCore } from "./data";
+import { sync as coreSync } from "./sync";
 import { forwardGet, forwardUpsert } from "./services";
 import {
 	validateStrictApiRequest,
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
+import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE } from "evy-types/coreResources";
 
 let broadcast: BroadcastFn | null = null;
 
@@ -29,7 +27,7 @@ type GetLikeRequest = GetRequest | ApiRequest;
 function isCoreGetRequest(
 	params: GetLikeRequest,
 ): params is GetRequest & { service: "evy" } {
-	return params.service === "evy";
+	return params.service === EVY_CORE_SERVICE;
 }
 
 async function handleGetRequest<T extends GetLikeRequest>(
@@ -38,7 +36,7 @@ async function handleGetRequest<T extends GetLikeRequest>(
 ): Promise<GetResponse> {
 	validate(params);
 	if (isCoreGetRequest(params)) {
-		return getCoreForValidatedRequest(params);
+		return getCore(params);
 	}
 	return forwardGet(params.service, params);
 }
@@ -53,11 +51,13 @@ export async function api(params: unknown): Promise<GetResponse> {
 
 export async function upsert(params: unknown): Promise<UpsertResponse> {
 	validateStrictUpsertRequest(params);
-	if (params.service === "evy") {
-		const result = await upsertCoreForValidatedRequest(params);
+	if (params.service === EVY_CORE_SERVICE) {
+		const result = await upsertCore(params);
 		if (broadcast) {
 			broadcast(
-				params.resource === "sdui" ? "flowUpdated" : "dataUpdated",
+				params.resource === EVY_CORE_RESOURCE.SDUI
+					? "flowUpdated"
+					: "dataUpdated",
 				result,
 			);
 		}
@@ -66,8 +66,6 @@ export async function upsert(params: unknown): Promise<UpsertResponse> {
 	return forwardUpsert(params.service, params);
 }
 
-export async function syncServiceData(
-	params: unknown,
-): Promise<SyncServiceDataResponse> {
-	return syncServiceDataBody(params);
+export async function sync(params: unknown): Promise<SyncResponse> {
+	return coreSync(params);
 }

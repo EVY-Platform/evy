@@ -91,7 +91,7 @@ struct EVYListContainerRow: View {
               "actions": [],
               "view": {
                 "content": {
-                  "title": "{$datum:title}",
+                  "title": "{$datum.title}",
                   "subtitle": "",
                   "icon": ""
                 }

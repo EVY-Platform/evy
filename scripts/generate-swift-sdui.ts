@@ -139,34 +139,8 @@ function buildShapeOverrides(): Map<string, string> {
 }
 
 /** Emit property line(s) for one property. */
-function emitPropertyLine(
-	defName: string,
-	propName: string,
-	propSchema: unknown,
-	requiredKeys: string[],
-	overrides: Map<string, string>,
-): string {
-	const { swiftType, isOptional } = swiftTypeForSchemaProp(
-		propSchema,
-		defName,
-		propName,
-		requiredKeys,
-		overrides,
-	);
-	const optionalSuffix = isOptional ? "?" : "";
-	return `    public let ${swiftIdentifier(propName)}: ${swiftType}${optionalSuffix}`;
-}
-
-/** Emit a single shape (struct or class) from a schema object. */
-function emitShapeFromDef(
-	defName: string,
-	def: SchemaObject,
-	overrides: Map<string, string>,
-): string {
-	const props = (def.properties ?? {}) as Record<string, unknown>;
-	const required = (def.required ?? []) as string[];
-	if (defName === "UI_Row") {
-		return `// MARK: - UI_Row
+function emitUIRowClass(): string {
+	return `// MARK: - UI_Row
 public final class UI_Row: Codable {
     public let id: String
     public let type: EVYRowType
@@ -214,6 +188,36 @@ public final class UI_Row: Codable {
     }
 }
 `;
+}
+
+function emitPropertyLine(
+	defName: string,
+	propName: string,
+	propSchema: unknown,
+	requiredKeys: string[],
+	overrides: Map<string, string>,
+): string {
+	const { swiftType, isOptional } = swiftTypeForSchemaProp(
+		propSchema,
+		defName,
+		propName,
+		requiredKeys,
+		overrides,
+	);
+	const optionalSuffix = isOptional ? "?" : "";
+	return `    public let ${swiftIdentifier(propName)}: ${swiftType}${optionalSuffix}`;
+}
+
+/** Emit a single shape (struct or class) from a schema object. */
+function emitShapeFromDef(
+	defName: string,
+	def: SchemaObject,
+	overrides: Map<string, string>,
+): string {
+	const props = (def.properties ?? {}) as Record<string, unknown>;
+	const required = (def.required ?? []) as string[];
+	if (defName === "UI_Row") {
+		return emitUIRowClass();
 	}
 	const lines: string[] = [];
 	for (const [propName, propSchema] of Object.entries(props)) {

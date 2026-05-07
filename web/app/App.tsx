@@ -1,5 +1,10 @@
-import { Fragment, useCallback, useEffect, useMemo } from "react";
-import type { CSSProperties } from "react";
+import {
+	Fragment,
+	useCallback,
+	useEffect,
+	useMemo,
+	type CSSProperties,
+} from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { FileSliders, Rows3 } from "lucide-react";

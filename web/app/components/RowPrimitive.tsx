@@ -8,8 +8,11 @@ import {
 	verticalDropIndicator,
 } from "../rows/design-system/dropIndicator";
 
-import type { DraggableState } from "../hooks/useDraggable";
-import { idleState, draggingState } from "../hooks/useDraggable";
+import {
+	idleState,
+	draggingState,
+	type DraggableState,
+} from "../hooks/useDraggable";
 
 const previewState: DraggableState = {
 	type: "preview",

@@ -7,12 +7,12 @@ import type {
 	UpsertRequest,
 } from "evy-types";
 import {
-	validateStrictGetRequest,
-	validateStrictUpsertRequest,
+	getServiceResources,
+	setServiceRegistry,
 } from "evy-types/rpcRequestHelpers";
 import { data } from "./db/schema";
 import { db } from "./db";
-import { MARKETPLACE_DATA_RESOURCES } from "./catalog";
+import { MARKETPLACE_RESOURCE_NAMES, MARKETPLACE_SERVICE } from "./catalog";
 import {
 	assertIsoDateTimeJsonFields,
 	validateGetResponse,
@@ -20,7 +20,7 @@ import {
 	validateUpsertResponse,
 } from "evy-types/validators";
 
-const MARKETPLACE_SERVICE = "marketplace";
+setServiceRegistry([[MARKETPLACE_SERVICE, [...MARKETPLACE_RESOURCE_NAMES]]]);
 
 function validateDataPayload(dataPayload: unknown): DATA_PRIMITIVE["data"] {
 	const validatedPayload = validateUpsertDataPayload(dataPayload);
@@ -32,23 +32,10 @@ function assertMarketplaceRules(params: GetRequest | UpsertRequest): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
 		throw new Error("Marketplace service requires service marketplace");
 	}
-	if (!MARKETPLACE_DATA_RESOURCES.has(params.resource)) {
+	const marketplaceResources = getServiceResources(MARKETPLACE_SERVICE) ?? [];
+	if (!marketplaceResources.includes(params.resource)) {
 		throw new Error("Unsupported resource for marketplace service");
 	}
-}
-
-function validateMarketplaceGetParams(
-	params: unknown,
-): asserts params is GetRequest {
-	validateStrictGetRequest(params);
-	assertMarketplaceRules(params);
-}
-
-function validateMarketplaceUpsertParams(
-	params: unknown,
-): asserts params is UpsertRequest {
-	validateStrictUpsertRequest(params);
-	assertMarketplaceRules(params);
 }
 
 async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
@@ -72,18 +59,10 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 }
 
 /**
- * Marketplace `get` after JSON-RPC shape checks. Callers must already have run
- * {@link validateStrictGetRequest}; this only applies marketplace access rules.
+ * Marketplace `get` after JSON-RPC shape checks. This only applies marketplace access rules.
  */
-export async function getForValidatedMarketplaceRequest(
-	params: GetRequest,
-): Promise<GetResponse> {
+export async function get(params: GetRequest): Promise<GetResponse> {
 	assertMarketplaceRules(params);
-	return marketplaceGetBody(params);
-}
-
-export async function get(params: unknown): Promise<GetResponse> {
-	validateMarketplaceGetParams(params);
 	return marketplaceGetBody(params);
 }
 
@@ -126,17 +105,9 @@ async function marketplaceUpsertBody(
 }
 
 /**
- * Marketplace `upsert` after JSON-RPC shape checks. Callers must already have run
- * {@link validateStrictUpsertRequest}; this only applies marketplace access rules.
+ * Marketplace `upsert` after JSON-RPC shape checks. This only applies marketplace access rules.
  */
-export async function upsertForValidatedMarketplaceRequest(
-	params: UpsertRequest,
-): Promise<DATA_PRIMITIVE> {
+export async function upsert(params: UpsertRequest): Promise<DATA_PRIMITIVE> {
 	assertMarketplaceRules(params);
-	return marketplaceUpsertBody(params);
-}
-
-export async function upsert(params: unknown): Promise<DATA_PRIMITIVE> {
-	validateMarketplaceUpsertParams(params);
 	return marketplaceUpsertBody(params);
 }

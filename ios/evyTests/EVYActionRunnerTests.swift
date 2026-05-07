@@ -32,9 +32,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateAction() {
     var received: NavOperation?
-    let action = UI_RowAction(condition: "", false: "", true: "{create(items)}")
+    let action = UI_RowAction(condition: "", false: "", true: "{create(item)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
-    XCTAssertEqual(received, .create("items"))
+    XCTAssertEqual(received, .create("item"))
   }
 
   func testNavigateWithBraceFunction() {
