@@ -12,7 +12,7 @@ export const OPERATOR_OPTIONS: PopoverOption[] = COMPARISON_OPERATORS.map(
 	}),
 );
 
-export const FUNCTION_OPTIONS: PopoverOption[] = ACTION_FUNCTIONS.map((fn) => ({
+const FUNCTION_OPTIONS: PopoverOption[] = ACTION_FUNCTIONS.map((fn) => ({
 	value: fn,
 	label: FUNCTION_LABELS[fn],
 }));

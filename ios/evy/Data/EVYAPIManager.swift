@@ -15,7 +15,6 @@ private func requireAPIHost() -> String {
 }
 
 let API_HOST = requireAPIHost()
-let userDefault = UserDefaults.standard
 
 final class EVYAPIManager {
   private let rpcWS: EVYWebsocketProtocol

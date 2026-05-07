@@ -218,7 +218,7 @@ function buildDataRows(dataJson: SeedDataMap, now: string): SeedDataRow[] {
 	return rows;
 }
 
-export async function ensureMarketplaceDatabaseExists(): Promise<void> {
+async function ensureMarketplaceDatabaseExists(): Promise<void> {
 	const user = process.env.DB_USER;
 	const pass = process.env.DB_PASS;
 	const port = process.env.DB_PORT;
@@ -256,7 +256,7 @@ export async function ensureMarketplaceDatabaseExists(): Promise<void> {
 	await sqlClient.end({ timeout: 5 });
 }
 
-export async function runMigrations(): Promise<void> {
+async function runMigrations(): Promise<void> {
 	await migratePg(coreDb, { migrationsFolder: API_MIGRATIONS_PATH });
 	await migratePg(marketplaceDb, {
 		migrationsFolder: MARKETPLACE_MIGRATIONS_PATH,
@@ -273,7 +273,7 @@ function normalizeSeedFlows(raw: unknown): unknown[] {
 	throw new Error("Flow files must export JSON objects or arrays");
 }
 
-export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
+async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 	evyFlowsJson: SeedFlow[];
 	serviceFlowsJson: SeedFlow[];
 	dataJson: SeedDataMap;
@@ -297,7 +297,7 @@ export async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 	return { evyFlowsJson, serviceFlowsJson, dataJson };
 }
 
-export async function seedDatabase({
+async function seedDatabase({
 	evyFlowsJson,
 	serviceFlowsJson,
 	evyDataJson,

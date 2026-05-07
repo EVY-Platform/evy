@@ -17,7 +17,7 @@ export const FUNCTION_LABELS: Record<ActionFunction, string> = {
 	highlight_required: "Highlight required",
 };
 
-export type ParsedBranch = {
+type ParsedBranch = {
 	functionName: ActionFunction;
 	args: string[];
 };

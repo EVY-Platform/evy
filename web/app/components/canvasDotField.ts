@@ -1,15 +1,15 @@
 /** Grid spacing in CSS pixels at scale 1.0 (matches prior CSS background). */
 export const GRID_BASE_SIZE_PX = 12;
 
-export const MORPH_RADIUS_PX = 100;
+const MORPH_RADIUS_PX = 100;
 /** Max shift as a fraction of `gridSize` when falloff is 1. */
-export const MORPH_STRENGTH = 0.45;
-export const DOT_BASE_RADIUS = 1;
-export const DOT_HOVER_RADIUS = 1.4;
+const MORPH_STRENGTH = 0.45;
+const DOT_BASE_RADIUS = 1;
+const DOT_HOVER_RADIUS = 1.4;
 
 export type CursorPosition = { x: number; y: number } | null;
 
-export type DrawDotFieldParams = {
+type DrawDotFieldParams = {
 	ctx: CanvasRenderingContext2D;
 	cssWidth: number;
 	cssHeight: number;

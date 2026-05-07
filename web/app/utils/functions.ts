@@ -57,8 +57,6 @@ const functionHandlers: Record<string, () => EVYFunctionOutput | null> = {
 	formatImperialLength: evyFormatImperialLengthStub,
 	formatDuration: evyFormatDurationStub,
 	formatDate: evyFormatDateStub,
-	buildCurrency: () => null,
-	buildAddress: () => null,
 };
 
 export function callFunction(name: string): EVYFunctionOutput | null {

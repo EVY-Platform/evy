@@ -14,8 +14,6 @@ export const SELECTORS = {
 		".evy-v-dropzone.expanded.evy-mb-2, .evy-h-dropzone.expanded",
 	flowSelector: "#flow-select",
 	secondarySheetPage: '[data-testid="secondary-sheet-page"]',
-	loadingMessage: 'div:text-is("Loading flows...")',
-	errorMessage: 'div:text-is("Failed to load flows")',
 };
 
 /** Selects the first canvas page so side panels stay open (they auto-collapse when no page is selected). */

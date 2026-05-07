@@ -51,7 +51,7 @@ private struct EVYSelectListPreview: View {
       case .array(let arrayValue):
         EVYSelectList(
           options: arrayValue,
-          format: "{$datum.value}"
+          format: "{$datum.value}",
           destination: "{item.selling_reason}")
       default:
         Text("error")

@@ -12,7 +12,7 @@ type MarketplaceReadableDeps = {
 	get: (params: GetRequest) => Promise<GetResponse>;
 };
 
-export async function assertMarketplaceReadable(
+async function assertMarketplaceReadable(
 	options: AssertMarketplaceReadableOptions,
 	deps: MarketplaceReadableDeps = { get: defaultGet },
 ): Promise<void> {

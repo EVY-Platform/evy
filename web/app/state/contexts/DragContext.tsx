@@ -7,7 +7,7 @@ import type {
 	DropIndicatorAction,
 } from "../../types/actions";
 
-export type DragContextValue = {
+type DragContextValue = {
 	dragging: DraggingState;
 	dropIndicator: DropIndicatorState;
 	dispatchDragging: Dispatch<DraggingAction>;
