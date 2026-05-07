@@ -9,8 +9,6 @@ import type {
 import {
 	getServiceResources,
 	setServiceRegistry,
-	validateStrictGetRequest,
-	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
 import { data } from "./db/schema";
 import { db } from "./db";
@@ -40,20 +38,6 @@ function assertMarketplaceRules(params: GetRequest | UpsertRequest): void {
 	}
 }
 
-function validateMarketplaceGetParams(
-	params: unknown,
-): asserts params is GetRequest {
-	validateStrictGetRequest(params);
-	assertMarketplaceRules(params);
-}
-
-function validateMarketplaceUpsertParams(
-	params: unknown,
-): asserts params is UpsertRequest {
-	validateStrictUpsertRequest(params);
-	assertMarketplaceRules(params);
-}
-
 async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 	const { resource, filter } = params;
 
@@ -75,18 +59,10 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 }
 
 /**
- * Marketplace `get` after JSON-RPC shape checks. Callers must already have run
- * {@link validateStrictGetRequest}; this only applies marketplace access rules.
+ * Marketplace `get` after JSON-RPC shape checks. This only applies marketplace access rules.
  */
-export async function getForValidatedMarketplaceRequest(
-	params: GetRequest,
-): Promise<GetResponse> {
+export async function get(params: GetRequest): Promise<GetResponse> {
 	assertMarketplaceRules(params);
-	return marketplaceGetBody(params);
-}
-
-export async function get(params: unknown): Promise<GetResponse> {
-	validateMarketplaceGetParams(params);
 	return marketplaceGetBody(params);
 }
 
@@ -129,17 +105,9 @@ async function marketplaceUpsertBody(
 }
 
 /**
- * Marketplace `upsert` after JSON-RPC shape checks. Callers must already have run
- * {@link validateStrictUpsertRequest}; this only applies marketplace access rules.
+ * Marketplace `upsert` after JSON-RPC shape checks. This only applies marketplace access rules.
  */
-export async function upsertForValidatedMarketplaceRequest(
-	params: UpsertRequest,
-): Promise<DATA_PRIMITIVE> {
+export async function upsert(params: UpsertRequest): Promise<DATA_PRIMITIVE> {
 	assertMarketplaceRules(params);
-	return marketplaceUpsertBody(params);
-}
-
-export async function upsert(params: unknown): Promise<DATA_PRIMITIVE> {
-	validateMarketplaceUpsertParams(params);
 	return marketplaceUpsertBody(params);
 }

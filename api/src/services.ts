@@ -23,22 +23,17 @@ import {
 } from "evy-types/coreResources";
 
 function resolveServiceProtoPath(): string {
-	const fromSource = join(
-		dirname(fileURLToPath(import.meta.url)),
-		"../../types/schema/service.proto",
-	);
-	if (existsSync(fromSource)) {
-		return fromSource;
-	}
-	const fromApiSibling = join(process.cwd(), "../types/schema/service.proto");
-	if (existsSync(fromApiSibling)) {
-		return fromApiSibling;
-	}
-	const fromDocker = join(process.cwd(), "types/schema/service.proto");
-	if (existsSync(fromDocker)) {
-		return fromDocker;
-	}
-	throw new Error("Could not resolve types/schema/service.proto");
+	const candidates = [
+		join(
+			dirname(fileURLToPath(import.meta.url)),
+			"../../types/schema/service.proto",
+		),
+		join(process.cwd(), "../types/schema/service.proto"),
+		join(process.cwd(), "types/schema/service.proto"),
+	];
+	const found = candidates.find(existsSync);
+	if (!found) throw new Error("Could not resolve types/schema/service.proto");
+	return found;
 }
 
 let grpcPackageRoot: grpc.GrpcObject | null = null;

@@ -7,7 +7,7 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { GetRequest, UI_Flow, UI_Page } from "evy-types";
+import type { GetRequest, UpsertRequest, UI_Flow, UI_Page } from "evy-types";
 import type { WSParams } from "../ws";
 
 import {
@@ -22,8 +22,7 @@ import {
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
-const { getCore, isResource, setDbForTest, upsertCore, validateAuth } =
-	dataModule;
+const { get, upsert, setDbForTest, validateAuth } = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -31,7 +30,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
-	return isRecord(p) && "resource" in p && isResource(p.resource);
+	return (
+		isRecord(p) &&
+		"resource" in p &&
+		typeof (p as Record<string, unknown>).resource === "string" &&
+		((p as Record<string, unknown>).resource as string).length > 0
+	);
 }
 
 describe("upsert real-time notifications", () => {
@@ -57,11 +61,13 @@ describe("upsert real-time notifications", () => {
 			validateAuth(params.token, params.os),
 		);
 
-		server.register("get", async (params: unknown) => getCore(params));
+		server.register("get", async (params: unknown) =>
+			get(params as unknown as GetRequest),
+		);
 
 		server
 			.register("upsert", async (params: unknown) => {
-				const result = await upsertCore(params);
+				const result = await upsert(params as unknown as UpsertRequest);
 				if (!hasResource(params)) return result;
 				if (params.resource === "sdui") {
 					emitJsonRpc(server, "flowUpdated", result);

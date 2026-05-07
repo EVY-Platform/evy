@@ -4,57 +4,25 @@ import { fileURLToPath } from "node:url";
 import { migrate as migratePg } from "drizzle-orm/postgres-js/migrator";
 import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
 import { readFile } from "node:fs/promises";
-import addFormats from "ajv-formats";
-import Ajv2020 from "ajv/dist/2020";
 import postgres from "postgres";
 
 import { MARKETPLACE_SEED_KEYS } from "../services/marketplace/src/catalog";
 import { validateUiFlow } from "../types/validators";
 
-const SEED_DATA_ITEM_SCHEMA_ID =
-	"https://evy.local/seed/seed-data-item.schema.json";
-const SEED_DATA_ITEM_SCHEMA: Record<string, unknown> = {
-	$schema: "https://json-schema.org/draft/2020-12/schema",
-	$id: SEED_DATA_ITEM_SCHEMA_ID,
-	type: "object",
-	additionalProperties: true,
-	required: ["id"],
-	properties: {
-		id: { type: "string", format: "uuid" },
-	},
-};
+const UUID_RE =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-let seedItemAjv: InstanceType<typeof Ajv2020> | null = null;
 function validateSeedDataItemShape(
 	item: unknown,
 ): { id: string } & Record<string, unknown> {
-	if (!seedItemAjv) {
-		const ajv = new Ajv2020({ allErrors: true, strict: false });
-		addFormats(ajv);
-		ajv.addSchema(SEED_DATA_ITEM_SCHEMA);
-		seedItemAjv = ajv;
+	if (item === null || typeof item !== "object" || Array.isArray(item)) {
+		throw new Error("Seed data item must be a non-null object");
 	}
-	const validate = seedItemAjv.getSchema<
-		{
-			id: string;
-		} & Record<string, unknown>
-	>(SEED_DATA_ITEM_SCHEMA_ID);
-	if (!validate) {
-		throw new Error("seed: ajv schema not registered");
+	const record = item as Record<string, unknown>;
+	if (typeof record.id !== "string" || !UUID_RE.test(record.id)) {
+		throw new Error("Seed data item must have a valid UUID 'id' field");
 	}
-	if (validate(item)) {
-		return item as { id: string } & Record<string, unknown>;
-	}
-	const errs = validate.errors;
-	const detail = errs?.length
-		? errs
-				.map((e) => {
-					const path = e.instancePath === "" ? "(root)" : e.instancePath;
-					return `${path}: ${e.message ?? "invalid"}`;
-				})
-				.join("; ")
-		: "invalid";
-	throw new Error(`Seed data item validation failed: ${detail}`);
+	return record as { id: string } & Record<string, unknown>;
 }
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));

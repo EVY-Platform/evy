@@ -26,8 +26,8 @@ mock.module("../services", () => ({
 }));
 
 mock.module("../data", () => ({
-	getCoreForValidatedRequest: mock(),
-	upsertCoreForValidatedRequest: mock(),
+	get: mock(),
+	upsert: mock(),
 }));
 
 // Register marketplace resources so validateStrictApiRequest can find them

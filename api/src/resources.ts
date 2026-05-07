@@ -10,7 +10,7 @@ type ResourceEntry = {
 	plural: string;
 };
 
-export type ResourcesResponse = {
+type ResourcesResponse = {
 	resources: Record<string, ResourceEntry>;
 	resourcesByService: Record<string, string[]>;
 };

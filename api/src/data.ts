@@ -23,10 +23,6 @@ import {
 } from "../../types/generated/ts/db/schema.generated";
 import { getConnectionUrl } from "./db";
 import {
-	validateStrictGetRequest,
-	validateStrictUpsertRequest,
-} from "evy-types/rpcRequestHelpers";
-import {
 	EVY_CORE_SERVICE,
 	EVY_CORE_RESOURCE,
 	EVY_CORE_RESOURCE_NAME_SET,
@@ -51,15 +47,6 @@ export function setDbForTest(database: typeof db): void {
 
 const CORE_API_RESOURCES: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
-/**
- * Check whether a value is a valid resource string.
- * No longer validates against a generated constant list — accepts any
- * non-empty string, since resource validity is enforced at the registry level.
- */
-export function isResource(v: unknown): v is string {
-	return typeof v === "string" && v.length > 0;
-}
-
 function assertEvyCoreAccess(params: GetRequest | UpsertRequest): void {
 	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
@@ -69,36 +56,18 @@ function assertEvyCoreAccess(params: GetRequest | UpsertRequest): void {
 	}
 }
 
-function validateCoreGetParams(params: unknown): asserts params is GetRequest {
-	validateStrictGetRequest(params);
-	assertEvyCoreAccess(params);
-}
-
-function validateCoreUpsertParams(
-	params: unknown,
-): asserts params is UpsertRequest {
-	validateStrictUpsertRequest(params);
-	assertEvyCoreAccess(params);
-}
-
 /**
- * Core `get` handler after JSON-RPC shape checks. Callers must already have run
- * {@link validateStrictGetRequest}; this only applies evy-core access rules.
+ * Core `get` handler after JSON-RPC shape checks. This only applies evy-core access rules.
  */
-export async function getCoreForValidatedRequest(
-	params: GetRequest,
-): Promise<GetResponse> {
+export async function get(params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
 	return getCoreBody(params);
 }
 
 /**
- * Core `upsert` handler after JSON-RPC shape checks. Callers must already have run
- * {@link validateStrictUpsertRequest}; this only applies evy-core access rules.
+ * Core `upsert` handler after JSON-RPC shape checks. This only applies evy-core access rules.
  */
-export async function upsertCoreForValidatedRequest(
-	params: UpsertRequest,
-): Promise<UpsertResponse> {
+export async function upsert(params: UpsertRequest): Promise<UpsertResponse> {
 	assertEvyCoreAccess(params);
 	return upsertCoreBody(params);
 }
@@ -286,11 +255,6 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 	throw new Error("Unsupported resource for core API");
 }
 
-export async function getCore(params: unknown): Promise<GetResponse> {
-	validateCoreGetParams(params);
-	return getCoreBody(params);
-}
-
 const serviceCatalogConfig: CatalogEntityConfig<DATA_EVY_Service> = {
 	table: service,
 	validate: validateServicePayload,
@@ -435,9 +399,4 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	}
 
 	throw new Error("Unsupported resource for core API");
-}
-
-export async function upsertCore(params: unknown): Promise<UpsertResponse> {
-	validateCoreUpsertParams(params);
-	return upsertCoreBody(params);
 }

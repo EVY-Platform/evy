@@ -50,75 +50,55 @@ type TokenCursor = { pos: number };
 
 function tokenize(input: string): string[] {
 	const tokens: string[] = [];
+	const operators: [string, string][] = [
+		["&&", "&&"],
+		["||", "||"],
+		[">=", ">="],
+		["<=", "<="],
+		["!=", "!="],
+		["==", "=="],
+	];
+	const singleChars = new Set(["(", ")", ">", "<"]);
+	const opStartChars = new Set("&|!>=<");
+
 	let i = 0;
 	while (i < input.length) {
 		if (input[i] === " " || input[i] === "\t") {
 			i++;
 			continue;
 		}
-		if (input[i] === "(") {
-			tokens.push("(");
-			i++;
-			continue;
-		}
-		if (input[i] === ")") {
-			tokens.push(")");
-			i++;
-			continue;
-		}
-		if (input.startsWith("&&", i)) {
-			tokens.push("&&");
-			i += 2;
-			continue;
-		}
-		if (input.startsWith("||", i)) {
-			tokens.push("||");
-			i += 2;
-			continue;
-		}
-		if (input.startsWith(">=", i)) {
-			tokens.push(">=");
-			i += 2;
-			continue;
-		}
-		if (input.startsWith("<=", i)) {
-			tokens.push("<=");
-			i += 2;
-			continue;
-		}
-		if (input.startsWith("!=", i)) {
-			tokens.push("!=");
-			i += 2;
-			continue;
-		}
-		if (input.startsWith("==", i)) {
-			tokens.push("==");
-			i += 2;
-			continue;
-		}
-		if (input[i] === ">" || input[i] === "<") {
+		if (singleChars.has(input[i])) {
 			tokens.push(input[i]);
 			i++;
 			continue;
 		}
+		let matched = false;
+		for (const [pattern, token] of operators) {
+			if (input.startsWith(pattern, i)) {
+				tokens.push(token);
+				i += pattern.length;
+				matched = true;
+				break;
+			}
+		}
+		if (matched) continue;
 
 		let word = "";
-		while (
-			i < input.length &&
-			input[i] !== " " &&
-			input[i] !== "\t" &&
-			input[i] !== "(" &&
-			input[i] !== ")" &&
-			!input.startsWith("&&", i) &&
-			!input.startsWith("||", i) &&
-			!input.startsWith(">=", i) &&
-			!input.startsWith("<=", i) &&
-			!input.startsWith("!=", i) &&
-			!input.startsWith("==", i) &&
-			input[i] !== ">" &&
-			input[i] !== "<"
-		) {
-			word += input[i];
+		while (i < input.length) {
+			const ch = input[i];
+			if (ch === " " || ch === "\t" || singleChars.has(ch)) break;
+			// Check if this position starts a multi-char operator
+			if (opStartChars.has(ch)) {
+				let isOp = false;
+				for (const [pattern] of operators) {
+					if (input.startsWith(pattern, i)) {
+						isOp = true;
+						break;
+					}
+				}
+				if (isOp) break;
+			}
+			word += ch;
 			i++;
 		}
 

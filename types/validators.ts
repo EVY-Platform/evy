@@ -173,6 +173,17 @@ function assertValid<T>(
 	throw new Error(formatAjvErrors(label, validate.errors));
 }
 
+function lazyValidator<T>(
+	ajvGetter: () => InstanceType<typeof Ajv2020>,
+	uri: string,
+): () => ValidateFunction<T> {
+	let cached: ValidateFunction<T> | null = null;
+	return () => {
+		if (!cached) cached = compileRoot<T>(ajvGetter(), uri);
+		return cached;
+	};
+}
+
 const REQUEST_SCHEMA_FILES = [
 	"common/json.schema.json",
 	"common/rpc.schema.json",
@@ -226,146 +237,55 @@ function getEntityAjv(): InstanceType<typeof Ajv2020> {
 	return entityAjv;
 }
 
-let validateApiRequestFn: ValidateFunction<ApiRequest> | null = null;
-let validateGetRequestFn: ValidateFunction<GetRequest> | null = null;
-let validateUpsertRequestFn: ValidateFunction<UpsertRequest> | null = null;
-
-let validateUpsertDataPayloadFn: ValidateFunction<
-	DATA_PRIMITIVE["data"]
-> | null = null;
-let validateUiFlowFn: ValidateFunction<UI_Flow> | null = null;
-let validateDataEvyServiceFn: ValidateFunction<DATA_EVY_Service> | null = null;
-let validateDataEvyOrganizationFn: ValidateFunction<DATA_EVY_Organization> | null =
-	null;
-let validateDataEvyServiceProviderFn: ValidateFunction<DATA_EVY_ServiceProvider> | null =
-	null;
-let validateGetResponseFn: ValidateFunction<GetResponse> | null = null;
-let validateUpsertResponseFn: ValidateFunction<UpsertResponse> | null = null;
-
-let validateSyncRequestFn: ValidateFunction<SyncRequest> | null = null;
-let validateSyncResponseFn: ValidateFunction<SyncResponse> | null = null;
-
-function getValidateApiRequest(): ValidateFunction<ApiRequest> {
-	if (!validateApiRequestFn) {
-		validateApiRequestFn = compileRoot<ApiRequest>(
-			getRequestAjv(),
-			fileId("rpc/api.request.schema.json"),
-		);
-	}
-	return validateApiRequestFn;
-}
-
-function getValidateGetRequest(): ValidateFunction<GetRequest> {
-	if (!validateGetRequestFn) {
-		validateGetRequestFn = compileRoot<GetRequest>(
-			getRequestAjv(),
-			fileId("rpc/get.request.schema.json"),
-		);
-	}
-	return validateGetRequestFn;
-}
-
-function getValidateUpsertRequest(): ValidateFunction<UpsertRequest> {
-	if (!validateUpsertRequestFn) {
-		validateUpsertRequestFn = compileRoot<UpsertRequest>(
-			getRequestAjv(),
-			fileId("rpc/upsert.request.schema.json"),
-		);
-	}
-	return validateUpsertRequestFn;
-}
-
-function getValidateUpsertDataPayload(): ValidateFunction<
-	DATA_PRIMITIVE["data"]
-> {
-	if (!validateUpsertDataPayloadFn) {
-		validateUpsertDataPayloadFn = compileRoot<DATA_PRIMITIVE["data"]>(
-			getRequestAjv(),
-			`${fileId("rpc/upsert.request.schema.json")}#/$defs/UpsertDataPayload`,
-		);
-	}
-	return validateUpsertDataPayloadFn;
-}
-
-function getValidateUiFlow(): ValidateFunction<UI_Flow> {
-	if (!validateUiFlowFn) {
-		validateUiFlowFn = compileRoot<UI_Flow>(
-			getEntityAjv(),
-			fileId("sdui/evy.schema.json"),
-		);
-	}
-	return validateUiFlowFn;
-}
-
-function getValidateDataEvyService(): ValidateFunction<DATA_EVY_Service> {
-	if (!validateDataEvyServiceFn) {
-		validateDataEvyServiceFn = compileRoot<DATA_EVY_Service>(
-			getEntityAjv(),
-			`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Service`,
-		);
-	}
-	return validateDataEvyServiceFn;
-}
-
-function getValidateDataEvyOrganization(): ValidateFunction<DATA_EVY_Organization> {
-	if (!validateDataEvyOrganizationFn) {
-		validateDataEvyOrganizationFn = compileRoot<DATA_EVY_Organization>(
-			getEntityAjv(),
-			`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Organization`,
-		);
-	}
-	return validateDataEvyOrganizationFn;
-}
-
-function getValidateDataEvyServiceProvider(): ValidateFunction<DATA_EVY_ServiceProvider> {
-	if (!validateDataEvyServiceProviderFn) {
-		validateDataEvyServiceProviderFn = compileRoot<DATA_EVY_ServiceProvider>(
-			getEntityAjv(),
-			`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
-		);
-	}
-	return validateDataEvyServiceProviderFn;
-}
-
-function getValidateGetResponse(): ValidateFunction<GetResponse> {
-	if (!validateGetResponseFn) {
-		validateGetResponseFn = compileRoot<GetResponse>(
-			getEntityAjv(),
-			fileId("rpc/get.response.schema.json"),
-		);
-	}
-	return validateGetResponseFn;
-}
-
-function getValidateUpsertResponse(): ValidateFunction<UpsertResponse> {
-	if (!validateUpsertResponseFn) {
-		validateUpsertResponseFn = compileRoot<UpsertResponse>(
-			getEntityAjv(),
-			fileId("rpc/upsert.response.schema.json"),
-		);
-	}
-	return validateUpsertResponseFn;
-}
-
-function getValidateSyncRequest(): ValidateFunction<SyncRequest> {
-	if (!validateSyncRequestFn) {
-		validateSyncRequestFn = compileRoot<SyncRequest>(
-			getRequestAjv(),
-			fileId("rpc/sync.request.schema.json"),
-		);
-	}
-	return validateSyncRequestFn;
-}
-
-function getValidateSyncResponse(): ValidateFunction<SyncResponse> {
-	if (!validateSyncResponseFn) {
-		validateSyncResponseFn = compileRoot<SyncResponse>(
-			getEntityAjv(),
-			fileId("rpc/sync.response.schema.json"),
-		);
-	}
-	return validateSyncResponseFn;
-}
+const getValidateApiRequest = lazyValidator<ApiRequest>(
+	getRequestAjv,
+	fileId("rpc/api.request.schema.json"),
+);
+const getValidateGetRequest = lazyValidator<GetRequest>(
+	getRequestAjv,
+	fileId("rpc/get.request.schema.json"),
+);
+const getValidateUpsertRequest = lazyValidator<UpsertRequest>(
+	getRequestAjv,
+	fileId("rpc/upsert.request.schema.json"),
+);
+const getValidateUpsertDataPayload = lazyValidator<DATA_PRIMITIVE["data"]>(
+	getRequestAjv,
+	`${fileId("rpc/upsert.request.schema.json")}#/$defs/UpsertDataPayload`,
+);
+const getValidateUiFlow = lazyValidator<UI_Flow>(
+	getEntityAjv,
+	fileId("sdui/evy.schema.json"),
+);
+const getValidateDataEvyService = lazyValidator<DATA_EVY_Service>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Service`,
+);
+const getValidateDataEvyOrganization = lazyValidator<DATA_EVY_Organization>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Organization`,
+);
+const getValidateDataEvyServiceProvider =
+	lazyValidator<DATA_EVY_ServiceProvider>(
+		getEntityAjv,
+		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
+	);
+const getValidateGetResponse = lazyValidator<GetResponse>(
+	getEntityAjv,
+	fileId("rpc/get.response.schema.json"),
+);
+const getValidateUpsertResponse = lazyValidator<UpsertResponse>(
+	getEntityAjv,
+	fileId("rpc/upsert.response.schema.json"),
+);
+const getValidateSyncRequest = lazyValidator<SyncRequest>(
+	getRequestAjv,
+	fileId("rpc/sync.request.schema.json"),
+);
+const getValidateSyncResponse = lazyValidator<SyncResponse>(
+	getEntityAjv,
+	fileId("rpc/sync.response.schema.json"),
+);
 
 export function validateApiRequest(data: unknown): ApiRequest {
 	assertValid("ApiRequest", getValidateApiRequest(), data);

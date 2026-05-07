@@ -7,10 +7,7 @@ import type { Client } from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import type { UpsertRequest } from "evy-types";
 
-import {
-	getForValidatedMarketplaceRequest,
-	upsertForValidatedMarketplaceRequest,
-} from "./data";
+import { get, upsert } from "./data";
 import {
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
@@ -38,25 +35,17 @@ function tryWriteSubscribeEvent(
 }
 
 function resolveMarketplaceServiceProtoPath(): string {
-	const fromSource = join(
-		dirname(fileURLToPath(import.meta.url)),
-		"../../../types/schema/service.proto",
-	);
-	if (existsSync(fromSource)) {
-		return fromSource;
-	}
-	const fromServiceCwd = join(
-		process.cwd(),
-		"../../types/schema/service.proto",
-	);
-	if (existsSync(fromServiceCwd)) {
-		return fromServiceCwd;
-	}
-	const fromDocker = join(process.cwd(), "types/schema/service.proto");
-	if (existsSync(fromDocker)) {
-		return fromDocker;
-	}
-	throw new Error("Could not resolve types/schema/service.proto");
+	const candidates = [
+		join(
+			dirname(fileURLToPath(import.meta.url)),
+			"../../../types/schema/service.proto",
+		),
+		join(process.cwd(), "../../types/schema/service.proto"),
+		join(process.cwd(), "types/schema/service.proto"),
+	];
+	const found = candidates.find(existsSync);
+	if (!found) throw new Error("Could not resolve types/schema/service.proto");
+	return found;
 }
 
 let evyServiceGrpcPackageRoot: grpc.GrpcObject | null = null;
@@ -129,7 +118,7 @@ function buildMarketplaceServiceHandlers(
 							filter: Object.keys(filter).length > 0 ? filter : undefined,
 						};
 						validateStrictGetRequest(params);
-						const result = await getForValidatedMarketplaceRequest(params);
+						const result = await get(params);
 						cb(null, { result_json: JSON.stringify(result) });
 					} catch (err) {
 						cb({
@@ -174,7 +163,7 @@ function buildMarketplaceServiceHandlers(
 							data,
 						};
 						validateStrictUpsertRequest(params);
-						const result = await upsertForValidatedMarketplaceRequest(params);
+						const result = await upsert(params);
 						eventBus.emit("notify", "dataUpdated", result);
 						cb(null, { result_json: JSON.stringify(result) });
 					} catch (err) {
@@ -216,27 +205,17 @@ type StartMarketplaceGrpcOptions = {
 	port?: number;
 };
 
-function resolveEnvOption(envKey: string): string {
-	const envValue = process.env[envKey];
-	if (!envValue) throw new Error(`${envKey} environment variable is not set`);
-	return envValue;
-}
-
-function resolveGrpcListenHost(options: StartMarketplaceGrpcOptions): string {
-	if (options.host) return options.host;
-	return resolveEnvOption("MARKETPLACE_GRPC_HOST");
-}
-
-function resolveGrpcListenPort(options: StartMarketplaceGrpcOptions): number {
-	if (options.port) return Number.parseInt(String(options.port), 10);
-	return Number.parseInt(resolveEnvOption("MARKETPLACE_GRPC_PORT"), 10);
-}
-
 export async function startMarketplaceGrpcServer(
 	options: StartMarketplaceGrpcOptions = {},
 ): Promise<number> {
-	const host = resolveGrpcListenHost(options);
-	const port = resolveGrpcListenPort(options);
+	const getEnv = (key: string): string => {
+		const v = process.env[key];
+		if (!v) throw new Error(`${key} environment variable is not set`);
+		return v;
+	};
+	const host = options.host ?? getEnv("MARKETPLACE_GRPC_HOST");
+	const port =
+		options.port ?? Number.parseInt(getEnv("MARKETPLACE_GRPC_PORT"), 10);
 	const root = loadEvyServiceGrpcRoot();
 
 	const marketplaceEventBus = new EventEmitter();

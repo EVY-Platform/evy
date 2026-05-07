@@ -5,8 +5,8 @@ import {
 } from "evy-types/rpcRequestHelpers";
 import { validateSync, validateSyncResponse } from "evy-types/validators";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { getCoreForValidatedRequest } from "./data";
-import { ensureRegistryInitialized, forwardGet } from "./services";
+import { get as defaultGetCore } from "./data";
+import { forwardGet } from "./services";
 import { buildResourceRegistry } from "./resources";
 
 type SyncRow = SyncResponse["data"][number];
@@ -17,7 +17,7 @@ type SyncRow = SyncResponse["data"][number];
  */
 async function fetchEvyCoreData(
 	lastSyncTime: string,
-	getCore: typeof getCoreForValidatedRequest,
+	getCore: typeof defaultGetCore,
 ): Promise<SyncRow[]> {
 	const rows: SyncRow[] = [];
 	const evyResources = getServiceResources(EVY_CORE_SERVICE) ?? [];
@@ -89,13 +89,13 @@ async function fetchExternalServiceData(
 }
 
 type SyncDependencies = {
-	getCore: typeof getCoreForValidatedRequest;
+	getCore: typeof defaultGetCore;
 	fetchService: typeof forwardGet;
 	buildRegistry: typeof buildResourceRegistry;
 };
 
 const DEFAULT_DEPS: SyncDependencies = {
-	getCore: getCoreForValidatedRequest,
+	getCore: defaultGetCore,
 	fetchService: forwardGet,
 	buildRegistry: buildResourceRegistry,
 };
@@ -115,8 +115,6 @@ export async function sync(
 	deps: SyncDependencies = DEFAULT_DEPS,
 ): Promise<SyncResponse> {
 	validateSync(params);
-
-	await ensureRegistryInitialized();
 
 	const [evyData, externalData] = await Promise.all([
 		fetchEvyCoreData(params.lastSyncTime, deps.getCore),

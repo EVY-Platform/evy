@@ -6,10 +6,7 @@ import type {
 	UpsertResponse,
 } from "evy-types";
 import type { BroadcastFn } from "./broadcast";
-import {
-	getCoreForValidatedRequest,
-	upsertCoreForValidatedRequest,
-} from "./data";
+import { get as getCore, upsert as upsertCore } from "./data";
 import { sync as coreSync } from "./sync";
 import { forwardGet, forwardUpsert } from "./services";
 import {
@@ -39,7 +36,7 @@ async function handleGetRequest<T extends GetLikeRequest>(
 ): Promise<GetResponse> {
 	validate(params);
 	if (isCoreGetRequest(params)) {
-		return getCoreForValidatedRequest(params);
+		return getCore(params);
 	}
 	return forwardGet(params.service, params);
 }
@@ -55,7 +52,7 @@ export async function api(params: unknown): Promise<GetResponse> {
 export async function upsert(params: unknown): Promise<UpsertResponse> {
 	validateStrictUpsertRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		const result = await upsertCoreForValidatedRequest(params);
+		const result = await upsertCore(params);
 		if (broadcast) {
 			broadcast(
 				params.resource === EVY_CORE_RESOURCE.SDUI

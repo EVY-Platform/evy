@@ -39,14 +39,14 @@ describe("marketplace get/upsert", () => {
 				service: "marketplace",
 				resource: "sdui",
 			}),
-		).rejects.toThrow("Invalid service and resource combination");
+		).rejects.toThrow("Unsupported resource for marketplace service");
 		await expect(
 			upsert({
 				service: "marketplace",
 				resource: "sdui",
 				data: { id: crypto.randomUUID(), name: "X", pages: [] },
 			}),
-		).rejects.toThrow("Invalid service and resource combination");
+		).rejects.toThrow("Unsupported resource for marketplace service");
 	});
 
 	it("persists catalog rows for service marketplace", async () => {
