@@ -1,5 +1,5 @@
 import { validateAuth } from "./data";
-import { api, get, initRpc, syncServiceData, upsert } from "./rpc";
+import { api, get, initRpc, sync, upsert } from "./rpc";
 import { resources } from "./resources";
 import { wireGrpcEvents } from "./services";
 import { emitJsonRpc, initServer, type WSParams } from "./ws";
@@ -20,7 +20,7 @@ async function main() {
 	server.register("get", get);
 	server.register("upsert", upsert).protected();
 	server.register("api", api);
-	server.register("syncServiceData", syncServiceData).protected();
+	server.register("sync", sync).protected();
 	server.register("resources", resources);
 }
 

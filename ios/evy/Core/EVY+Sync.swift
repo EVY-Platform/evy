@@ -16,42 +16,46 @@ extension EVY {
     }
   }
 
-  static func syncServiceData(service: String) async throws {
+  /// Unified sync — returns the synced SDUI flows for immediate display.
+  static func sync() async throws -> [UI_Flow] {
     let lastSyncTime =
-      EVY.publicStore.oldestLastSyncedAt(keyPrefix: "\(service):")
+      publicStore.oldestLastSyncedAt()
       ?? "1970-01-01T00:00:00.000Z"
-    let params = SyncServiceDataParams(
-      service: service,
-      lastSyncTime: lastSyncTime
+
+    let response: SyncResponse = try await EVYAPIManager.shared.fetch(
+      method: "sync",
+      params: SyncParams(lastSyncTime: lastSyncTime),
+      expecting: SyncResponse.self
     )
 
-    #if DEBUG
-      print("[EVY] Calling syncServiceData for \(service) since \(lastSyncTime)")
-    #endif
+    if let resources = response.resources {
+      applyResourceMapping(resources.resources, resourcesByService: resources.resourcesByService)
 
-    let response = try await EVYAPIManager.shared.fetch(
-      method: "syncServiceData",
-      params: params,
-      expecting: SyncServiceDataResponse.self
-    )
+      if let encoded = try? JSONEncoder().encode(resources.resources) {
+        UserDefaults.standard.set(encoded, forKey: "cachedResourceMapping")
+      }
+    }
 
-    #if DEBUG
-      print("[EVY] syncServiceData returned \(response.data.count) resource rows for \(service)")
-    #endif
+    var syncedFlows: [UI_Flow] = []
 
     for row in response.data {
       let key = "\(row.service):\(row.resource)"
       let encoded = try JSONEncoder().encode(row.value)
       try publicStore.upsert(key: key, value: encoded)
-    }
-  }
 
-  static func syncAllServices() async throws {
-    // Fetch resource mapping (always fetches from server)
-    try await fetchResourceMapping()
-
-    for service in syncableServices {
-      try await syncServiceData(service: service)
+      if row.service == "evy" && row.resource == "sdui" {
+        if let flows = try? JSONDecoder().decode([UI_Flow].self, from: encoded) {
+          syncedFlows = flows
+        }
+      }
     }
+
+    if syncedFlows.isEmpty, let cachedFlowData = try? publicStore.get(key: "evy:sdui").data,
+      let cachedFlows = try? JSONDecoder().decode([UI_Flow].self, from: cachedFlowData)
+    {
+      syncedFlows = cachedFlows
+    }
+
+    return syncedFlows
   }
 }

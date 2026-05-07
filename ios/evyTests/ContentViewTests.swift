@@ -50,7 +50,8 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(EVY.resourceName(forEntityKey: "duration"), "durations")
     XCTAssertEqual(EVY.resourceName(forEntityKey: "area"), "areas")
     XCTAssertEqual(EVY.resourceName(forEntityKey: "provider"), "providers")
-    XCTAssertEqual(EVY.resourceName(forEntityKey: "organisation"), EVYCoreResource.organisations.rawValue)
+    XCTAssertEqual(
+      EVY.resourceName(forEntityKey: "organisation"), EVYCoreResource.organisations.rawValue)
     XCTAssertEqual(EVY.resourceName(forEntityKey: "tag"), "tags")
   }
 

@@ -79,7 +79,7 @@ extension EVY {
     dict["id"] = .string(newId)
     let dataWithId = EVYJson.dictionary(dict)
     let params = UpsertParams(
-      service: "marketplace", // TODO: Dynamic service discovery
+      service: "marketplace",  // TODO: Dynamic service discovery
       resource: resource,
       filter: Filter(id: newId),
       data: dataWithId

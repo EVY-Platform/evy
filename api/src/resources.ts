@@ -16,14 +16,10 @@ export type ResourcesResponse = {
 };
 
 /**
- * JSON-RPC handler for "resources" method.
- * Returns the mapping of all resource names to their singular/plural forms,
- * plus a mapping of service names to their resource lists.
- * Computed on every call from the runtime registry (no stale cache).
+ * Pure builder — no side effects, no async. Reads from the runtime registry.
+ * Used by both `resources` (JSON-RPC handler) and `sync` to avoid duplication.
  */
-export async function resources(): Promise<ResourcesResponse> {
-	await ensureRegistryInitialized();
-
+export function buildResourceRegistry(): ResourcesResponse {
 	const resourcesMap: Record<string, ResourceEntry> = {};
 	const resourcesByService: Record<string, string[]> = {};
 
@@ -44,4 +40,15 @@ export async function resources(): Promise<ResourcesResponse> {
 		resources: resourcesMap,
 		resourcesByService,
 	};
+}
+
+/**
+ * JSON-RPC handler for "resources" method.
+ * Returns the mapping of all resource names to their singular/plural forms,
+ * plus a mapping of service names to their resource lists.
+ * Computed on every call from the runtime registry (no stale cache).
+ */
+export async function resources(): Promise<ResourcesResponse> {
+	await ensureRegistryInitialized();
+	return buildResourceRegistry();
 }

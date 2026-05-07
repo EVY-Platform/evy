@@ -66,7 +66,9 @@ extension EVY {
     try? cacheStore.upsert(key: "\(prefix)\(singularEntityKey)", value: value)
   }
 
-  private static func resolvedEntityCollections(for queryKey: String?) -> [(cacheKey: String, data: EVYData)] {
+  private static func resolvedEntityCollections(for queryKey: String?) -> [(
+    cacheKey: String, data: EVYData
+  )] {
     if let queryKey {
       let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
       guard let data = collectionData(for: queryKey, serviceName: serviceName) else { return [] }

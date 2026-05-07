@@ -43,6 +43,26 @@ private var HOME_FLOW_ID: String {
   return configuredHomeFlowId.isEmpty ? DEFAULT_HOME_FLOW_ID : configuredHomeFlowId
 }
 
+// MARK: - Loading Placeholder
+
+/// Mirrors `LaunchScreen.storyboard` so the transition between launch screen
+/// and the first SwiftUI frame is seamless — same logo, same position, no spinner.
+private struct LaunchPlaceholderView: View {
+  var body: some View {
+    Color.white
+      .ignoresSafeArea()
+      .overlay(
+        Image("logo")
+          .resizable()
+          .scaledToFit()
+          .frame(width: 240)
+          .offset(y: -20)
+      )
+  }
+}
+
+// MARK: - ContentView
+
 struct ContentView: View {
   @State private var flows: [UI_Flow] = []
   @State private var routes: [Route] = []
@@ -118,9 +138,7 @@ struct ContentView: View {
   @ViewBuilder
   private var homeContent: some View {
     if loading {
-      ProgressView()
-        .controlSize(.large)
-        .accessibilityIdentifier("loadingIndicator")
+      LaunchPlaceholderView()
     } else if let homeFlow = flows.first(where: { $0.id == HOME_FLOW_ID }) {
       if homeFlow.pages.isEmpty {
         VStack(spacing: 20) {
@@ -158,8 +176,7 @@ struct ContentView: View {
           do {
             EVY.loadCachedResourceMapping()
             try EVY.getUserData()
-            try await EVY.syncAllServices()
-            flows = try await EVY.getSDUI()
+            flows = try await EVY.sync()
             loading = false
           } catch let error as EVYRPCError {
             alertTitle = "Error"

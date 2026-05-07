@@ -7,31 +7,7 @@ import Foundation
 
 // MARK: - Resource & Entity Name Mapping
 
-private struct ResourcesResponse: Codable {
-  let resources: [String: ResourceEntry]
-  let resourcesByService: [String: [String]]
-}
-
 extension EVY {
-  static func fetchResourceMapping() async throws {
-    let response: ResourcesResponse = try await EVYAPIManager.shared.fetch(
-      method: "resources",
-      params: [String: String](),
-      expecting: ResourcesResponse.self
-    )
-
-    applyResourceMapping(response.resources, resourcesByService: response.resourcesByService)
-
-    #if DEBUG
-      print("[EVY] Syncable services: \(syncableServices)")
-    #endif
-
-    // Persist to UserDefaults for offline use
-    if let encoded = try? JSONEncoder().encode(response.resources) {
-      UserDefaults.standard.set(encoded, forKey: "cachedResourceMapping")
-    }
-  }
-
   static func loadCachedResourceMapping() {
     guard cachedResourceMapping.isEmpty,
       let data = UserDefaults.standard.data(forKey: "cachedResourceMapping"),
@@ -40,7 +16,7 @@ extension EVY {
     applyResourceMapping(mapping, resourcesByService: nil)
   }
 
-  private static func applyResourceMapping(
+  static func applyResourceMapping(
     _ mapping: [String: ResourceEntry],
     resourcesByService: [String: [String]]?
   ) {
@@ -49,23 +25,17 @@ extension EVY {
     for (plural, entry) in mapping {
       singularToPlural[entry.singular] = plural
     }
-    if let resourcesByService {
-      syncableServices = resourcesByService.keys.filter { $0 != "evy" }.sorted()
-    }
   }
 
   static func resourceName(forEntityKey entityKey: String) -> String {
-    // O(1) lookup via the reverse map
     if let plural = singularToPlural[entityKey] {
       return plural
     }
 
-    // Fallback: try the key as-is (in case it's already a plural resource name)
     if cachedResourceMapping[entityKey] != nil {
       return entityKey
     }
 
-    // Last resort: use Foundation inflection
     return legacyResourceName(forEntityKey: entityKey)
   }
 

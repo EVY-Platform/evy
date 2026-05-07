@@ -709,7 +709,8 @@ final class WebSocketE2ETests: E2ETestBase {
       )
     else {
       XCTFail(
-        "Price field should exist (\(priceFieldIds.joined(separator: ", ")), or accessibility containing '\(priceTokens.first ?? "")'))")
+        "Price field should exist (\(priceFieldIds.joined(separator: ", ")), or accessibility containing '\(priceTokens.first ?? "")'))"
+      )
       return
     }
     guard let priceField = await tapAndGetEditableField(container: priceTextField) else {
@@ -731,7 +732,8 @@ final class WebSocketE2ETests: E2ETestBase {
       )
     else {
       XCTFail(
-        "Width field should exist (\(widthFieldId), or accessibility containing '\(widthTokens.first ?? "")')")
+        "Width field should exist (\(widthFieldId), or accessibility containing '\(widthTokens.first ?? "")')"
+      )
       return
     }
     guard let widthField = await tapAndGetEditableField(container: widthTextField) else {

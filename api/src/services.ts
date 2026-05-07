@@ -356,25 +356,24 @@ async function initializeServiceRegistry(): Promise<void> {
 			const resources = await adapter.listResources();
 			entries.push([svc, resources]);
 		} catch (err) {
-			console.warn(
-				`Failed to list resources for service "${svc}": ${err instanceof Error ? err.message : err}; service will be omitted from registry`,
+			throw new Error(
+				`Failed to list resources for service "${svc}": ${err instanceof Error ? err.message : err}`,
 			);
 		}
 	}
 
-	// Always register "evy" core service
 	entries.push([EVY_CORE_SERVICE, [...EVY_CORE_RESOURCE_NAMES]]);
-
-	if (entries.length > 0) {
-		setServiceRegistry(entries);
-	}
+	setServiceRegistry(entries);
 }
 
 let registryInitializationPromise: Promise<void> | null = null;
 
 export async function ensureRegistryInitialized(): Promise<void> {
 	if (!registryInitializationPromise) {
-		registryInitializationPromise = initializeServiceRegistry();
+		registryInitializationPromise = initializeServiceRegistry().catch((err) => {
+			registryInitializationPromise = null;
+			throw err;
+		});
 	}
 	await registryInitializationPromise;
 }

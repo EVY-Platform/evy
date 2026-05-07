@@ -1,0 +1,17 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sync-request",
+	"title": "SyncRequest",
+	"description": "JSON-RPC params for the unified sync method. Accepts a single lastSyncTime and returns all changes across all services.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"lastSyncTime"
+	],
+	"properties": {
+		"lastSyncTime": {
+			"type": "string",
+			"format": "date-time"
+		}
+	}
+}

@@ -2,7 +2,7 @@ import type {
 	ApiRequest,
 	GetRequest,
 	GetResponse,
-	SyncServiceDataResponse,
+	SyncResponse,
 	UpsertResponse,
 } from "evy-types";
 import type { BroadcastFn } from "./broadcast";
@@ -10,7 +10,7 @@ import {
 	getCoreForValidatedRequest,
 	upsertCoreForValidatedRequest,
 } from "./data";
-import { syncServiceData as syncServiceDataBody } from "./serviceDataSync";
+import { sync as coreSync } from "./sync";
 import { forwardGet, forwardUpsert } from "./services";
 import {
 	validateStrictApiRequest,
@@ -69,8 +69,6 @@ export async function upsert(params: unknown): Promise<UpsertResponse> {
 	return forwardUpsert(params.service, params);
 }
 
-export async function syncServiceData(
-	params: unknown,
-): Promise<SyncServiceDataResponse> {
-	return syncServiceDataBody(params);
+export async function sync(params: unknown): Promise<SyncResponse> {
+	return coreSync(params);
 }

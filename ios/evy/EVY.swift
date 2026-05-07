@@ -14,29 +14,30 @@ enum EVYParamError: Error {
   case invalidProps
 }
 
-struct GetParams: Encodable {
-  let service: String
-  let resource: String
-  let filter: Filter?
-}
-
 struct Filter: Encodable {
   let id: String?
 }
 
-struct SyncServiceDataParams: Encodable {
-  let service: String
+// MARK: - Sync Types
+
+struct SyncParams: Encodable {
   let lastSyncTime: String
 }
 
-struct SyncedServiceDataRow: Codable {
+struct SyncRow: Codable {
   let service: String
   let resource: String
   let value: EVYJson
 }
 
-struct SyncServiceDataResponse: Codable {
-  let data: [SyncedServiceDataRow]
+struct SyncResponse: Codable {
+  let resources: SyncResources?
+  let data: [SyncRow]
+}
+
+struct SyncResources: Codable {
+  let resources: [String: ResourceEntry]
+  let resourcesByService: [String: [String]]
 }
 
 struct ResourceEntry: Codable, Equatable {
@@ -63,8 +64,6 @@ struct EVY {
 
   static var singularToPlural: [String: String] = [:]
 
-  static var syncableServices: [String] = []
-
   // MARK: - Core Utilities
 
   static func stripLocalPrefix(_ props: String) -> String {
@@ -78,11 +77,5 @@ struct EVY {
     let cleanProps = stripLocalPrefix(props)
     let isLocalProps = cleanProps != props
     return (isLocalProps ? privateStore : publicStore, cleanProps)
-  }
-
-  static func getSDUI() async throws -> [UI_Flow] {
-    try await EVYAPIManager.shared.fetch(
-      method: "get", params: GetParams(service: "evy", resource: "sdui", filter: nil),
-      expecting: [UI_Flow].self)
   }
 }

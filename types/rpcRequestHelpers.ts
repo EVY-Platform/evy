@@ -1,11 +1,10 @@
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
-import type { SyncServiceDataRequest } from "./generated/ts/rpc/syncServiceData.request";
+
 import type { UpsertRequest } from "./generated/ts/rpc/upsert.request";
 import {
 	validateApiRequest,
 	validateGetRequest,
-	validateSyncServiceDataRequest,
 	validateUpsertRequest,
 } from "./validators";
 import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE_NAMES } from "./coreResources";
@@ -71,10 +70,6 @@ function isValidServiceResourcePair(
 	return ensureServiceRegistry().get(service)?.has(resource) ?? false;
 }
 
-function isSyncableService(service: string): service is Exclude<string, "evy"> {
-	return isService(service) && service !== EVY_CORE_SERVICE;
-}
-
 /**
  * Shared JSON-RPC param checks with stable error messages (tests rely on these strings).
  */
@@ -133,22 +128,4 @@ export function validateStrictUpsertRequest(
 		throw new Error("data is required and must be a non-null object");
 	}
 	validateUpsertRequest(params);
-}
-
-export function validateStrictSyncServiceDataRequest(
-	params: unknown,
-): asserts params is SyncServiceDataRequest {
-	if (params === null || typeof params !== "object") {
-		throw new Error("Params must be an object");
-	}
-	if (!("service" in params) || typeof params.service !== "string") {
-		throw new Error("Invalid or missing service");
-	}
-	if (!isSyncableService(params.service)) {
-		throw new Error("Invalid or unsupported service");
-	}
-	if (!("lastSyncTime" in params) || typeof params.lastSyncTime !== "string") {
-		throw new Error("Invalid or missing lastSyncTime");
-	}
-	validateSyncServiceDataRequest(params);
 }

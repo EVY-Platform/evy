@@ -6,9 +6,9 @@ For local and e2e runs, set `API_HOST` in the repository root `.env` (see [READM
 
 **Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes ([Shared type system](../README.md#shared-type-system)). Generated Swift under `types/generated/swift/` is not committed; the app also keeps hand-written `Codable` models (e.g. `EVYFlow`, `EVYPage`, `EVYRow`, `EVYWebsocket`) aligned with `types/schema/`.
 
-### Synced service data
+### Synced data
 
-At startup, the app calls `syncServiceData` for supported backend services and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `marketplace:items` or `marketplace:conditions`). Exact keys are preferred when app code needs a specific backend resource.
+At startup, the app calls `sync` and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `evy:sdui`, `marketplace:items`, or `marketplace:conditions`). Exact keys are preferred when app code needs a specific backend resource.
 
 Pages can receive query parameters through navigation actions. Query params are passed as the optional third `navigate` argument, mapping plural resource keys to arrays of IDs or `$datum` expressions (for example, `{navigate(flowId, pageId, {"items": [$datum.id]})}`). Query values must use a JSON object (`{"key": ["id"]}`). iOS parses the query into a `[String: [String]]` dictionary. When the page opens, iOS resolves each resource key locally, picks the first ID from the already-synced collection, and stores the matching entity under the same plural key so bindings like `{items}` render the selected row. A generic `"id"` query key scans synced collections and stores the first matching entity under that collection's plural resource key. When no synced collection exists for a query key, iOS stores the raw string array under that key.
 
@@ -65,7 +65,7 @@ flowchart LR
     ViewRows --> Atoms
     Views --> Atoms
 
-    EVY[[EVY facade<br/>getDataFromText / getDataFromProps / getSDUI<br/>create / updateValue / updateData<br/>ensureDraftExists / formatData / evaluateFromText<br/>syncAllServices / resolveQueryParams]]
+    EVY[[EVY facade<br/>getDataFromText / getDataFromProps / sync<br/>create / updateValue / updateData<br/>ensureDraftExists / formatData / evaluateFromText<br/>resolveQueryParams]]
     Action -->|run| Runner[EVYActionRunner<br/>navigate / create / close /<br/>highlight_required]
     Runner --> Content
     Runner --> EVY
