@@ -91,4 +91,50 @@ final class EVYDraftBindingTests: XCTestCase {
     XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "flow:"))
     XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: ":item"))
   }
+
+  func testDraftNotifyUpdatePostsAliasAndEntityPathNotifications() throws {
+    let store = EVYDataStore(name: "draft-notify-test", inMemoryOnly: true)
+    let draftStore = EVYDraftStore(dataStore: store)
+    let binding = try EVYDraft.binding(parsedProps: "condition", scopeId: "flow:item")
+    var notificationKeys: [String] = []
+    let token = NotificationCenter.default.addObserver(
+      forName: .evyDataUpdated,
+      object: nil,
+      queue: .main
+    ) { notification in
+      if let key = notification.object as? String {
+        notificationKeys.append(key)
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(token) }
+
+    draftStore.notifyUpdate(binding: binding)
+
+    XCTAssertEqual(notificationKeys, ["condition", "item.condition"])
+  }
+
+  func testDraftNotifyUpdateDoesNotDuplicateAlreadyEntityQualifiedNotification() throws {
+    let store = EVYDataStore(name: "draft-notify-qualified-test", inMemoryOnly: true)
+    let draftStore = EVYDraftStore(dataStore: store)
+    let binding = EVYDraft.Binding(
+      scopeId: "flow:item",
+      pathSegments: ["item", "condition"],
+      mergeMode: .explicitPath(pathSegments: ["item", "condition"])
+    )
+    var notificationKeys: [String] = []
+    let token = NotificationCenter.default.addObserver(
+      forName: .evyDataUpdated,
+      object: nil,
+      queue: .main
+    ) { notification in
+      if let key = notification.object as? String {
+        notificationKeys.append(key)
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(token) }
+
+    draftStore.notifyUpdate(binding: binding)
+
+    XCTAssertEqual(notificationKeys, ["item.condition"])
+  }
 }

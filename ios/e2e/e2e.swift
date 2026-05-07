@@ -210,28 +210,15 @@ class E2ETestBase: XCTestCase {
     try launchApp()
   }
 
+  var apiHost: String { ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:8000" }
+
   func launchApp() throws {
     app = XCUIApplication()
-    guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
-      XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
-      return
-    }
     app.launchEnvironment["API_HOST"] = apiHost
     if let homeFlowId {
       app.launchEnvironment["HOME_FLOW_ID"] = homeFlowId
     }
     app.launch()
-  }
-
-  func requireAPIHost() throws -> String {
-    guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
-      throw NSError(
-        domain: "E2ETestBase",
-        code: 1,
-        userInfo: [NSLocalizedDescriptionKey: "API_HOST is required"]
-      )
-    }
-    return apiHost
   }
 
   func runAsyncOperation(
@@ -257,10 +244,10 @@ class E2ETestBase: XCTestCase {
     }
   }
 
-  func seedFlows(_ flows: [(flowId: String, flowData: [String: Any])], apiHost: String) throws {
-    try runAsyncOperation("Seed isolated E2E flows", timeout: 15) {
+  func seedFlows(_ flows: [(flowId: String, flowData: [String: Any])]) throws {
+    try runAsyncOperation("Seed isolated E2E flows", timeout: 15) { [self] in
       let emitter = WSEmitter()
-      try await emitter.connect(host: apiHost)
+      try await emitter.connect(host: self.apiHost)
       try await emitter.login(token: "e2e-test", os: "ios")
       for flow in flows {
         try await emitter.updateSDUI(flowData: flow.flowData, flowId: flow.flowId)
@@ -403,7 +390,6 @@ final class E2EFlowTests: E2ETestBase {
 
   override func setUpWithError() throws {
     continueAfterFailure = false
-    let apiHost = try requireAPIHost()
     try seedFlows(
       [
         (
@@ -417,8 +403,7 @@ final class E2EFlowTests: E2ETestBase {
             buttonLabel: "View"
           )
         )
-      ],
-      apiHost: apiHost
+      ]
     )
     try launchApp()
   }
@@ -473,19 +458,16 @@ final class WebSocketE2ETests: E2ETestBase {
 
   override func setUpWithError() throws {
     continueAfterFailure = false
-    let apiHost = try requireAPIHost()
-    try seedIsolatedFlows(apiHost: apiHost)
+    try seedIsolatedFlows()
     try launchApp()
   }
 
   override func tearDownWithError() throws {
-    if let apiHost = try? requireAPIHost() {
-      try? seedIsolatedFlows(apiHost: apiHost)
-    }
+    try? seedIsolatedFlows()
     try super.tearDownWithError()
   }
 
-  private func seedIsolatedFlows(apiHost: String) throws {
+  private func seedIsolatedFlows() throws {
     try seedFlows(
       [
         (
@@ -503,8 +485,7 @@ final class WebSocketE2ETests: E2ETestBase {
           flowId: E2EFlowIds.webSocketCreateFlow,
           flowData: Self.minimalCreateItemFlowData()
         ),
-      ],
-      apiHost: apiHost
+      ]
     )
   }
 
@@ -518,10 +499,6 @@ final class WebSocketE2ETests: E2ETestBase {
     let originalLabel = "View"
     let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
 
-    guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
-      XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
-      return
-    }
     let emitter = WSEmitter()
     do {
       try await emitter.connect(host: apiHost)
@@ -554,11 +531,6 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       viewItemButton.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
-
-    guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
-      XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
-      return
-    }
 
     let emitter = WSEmitter()
     let conditionalLabel = "Conditional \(Int(Date().timeIntervalSince1970))"
@@ -600,11 +572,6 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       viewItemButton.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
-
-    guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
-      XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
-      return
-    }
 
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
@@ -657,11 +624,6 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       viewItemButton.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
-
-    guard let apiHost = ProcessInfo.processInfo.environment["API_HOST"], !apiHost.isEmpty else {
-      XCTFail("API_HOST is required (set by run-e2e.sh when running iOS e2e)")
-      return
-    }
 
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)

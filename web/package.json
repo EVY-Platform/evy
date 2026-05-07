@@ -12,7 +12,8 @@
 		"format": "bunx biome format --write .",
 		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
 		"test:unit": "bun test --define __API_URL__='\"ws://127.0.0.1:1\"' app/",
-		"test:integration": "bun --env-file=../.env run playwright test",
+		"test:integration": "bun --env-file=../.env run playwright test --config=integration/pw.config.js",
+		"test:e2e": "bun --env-file=../.env run playwright test --config=e2e/pw.config.js",
 		"test:setup": "bunx playwright install --with-deps chromium"
 	},
 	"dependencies": {

@@ -7,14 +7,7 @@
 
 import Foundation
 
-private func requireAPIHost() -> String {
-  guard let host = ProcessInfo.processInfo.environment["API_HOST"], !host.isEmpty else {
-    fatalError("API_HOST is required (set by run-e2e.sh or Xcode scheme for iOS e2e)")
-  }
-  return host
-}
-
-let API_HOST = requireAPIHost()
+let API_HOST = "localhost:8000"
 
 final class EVYAPIManager {
   private let rpcWS: EVYWebsocketProtocol
@@ -32,7 +25,8 @@ final class EVYAPIManager {
   }
 
   private init() {
-    self.rpcWS = EVYWebsocket(host: API_HOST)
+    let host = ProcessInfo.processInfo.environment["API_HOST"] ?? API_HOST
+    self.rpcWS = EVYWebsocket(host: host)
   }
 
   private func validateAuth() async throws {

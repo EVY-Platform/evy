@@ -116,6 +116,18 @@ final class EVYDraftStore {
       name: .evyDataUpdated,
       object: binding.notificationKey
     )
+
+    guard let entityKey = EVYDraft.Scope.entityKey(fromScopeId: binding.scopeId),
+      !binding.notificationKey.isEmpty,
+      !binding.notificationKey.hasPrefix("\(entityKey)\(PROP_SEPARATOR)")
+    else {
+      return
+    }
+
+    NotificationCenter.default.post(
+      name: .evyDataUpdated,
+      object: "\(entityKey)\(PROP_SEPARATOR)\(binding.notificationKey)"
+    )
   }
 
   func deleteDrafts(scopeId: String? = nil) {

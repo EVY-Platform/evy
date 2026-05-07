@@ -56,7 +56,7 @@ private struct LaunchPlaceholderView: View {
           .resizable()
           .scaledToFit()
           .frame(width: 240)
-          .offset(y: -20)
+          .offset(y: -35)
       )
   }
 }

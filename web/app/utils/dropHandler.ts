@@ -121,7 +121,7 @@ export function handleDrop(
 		page: destinationPage,
 		resolvedPageId,
 		secondarySheetRowId: resolvedSecondarySheetRowId,
-	} = resolveDestinationPageFromRawPageId(rawDestinationPageId, pages);
+	} = resolveDestinationPageFromRawPageId(destinationPageId, pages);
 
 	const dispatchOptions = buildInitialDropDispatchOptions(
 		destinationPage,

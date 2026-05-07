@@ -13,6 +13,7 @@
 			"evy-types": ["../../types/generated/ts"],
 			"evy-types/*": ["../../types/generated/ts/*"],
 			"evy-types/validators": ["../../types/validators.ts"],
+			"evy-types/coreResources": ["../../types/coreResources.ts"],
 			"evy-types/rpcRequestHelpers": ["../../types/rpcRequestHelpers.ts"]
 		}
 	},

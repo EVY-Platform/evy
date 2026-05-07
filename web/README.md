@@ -212,10 +212,8 @@ docker compose up -d web
 Tests are split into two layers:
 
 - **`test:unit`** — Bun’s test runner on `app/**/*.test.ts` (no live API; `__API_URL__` is stubbed).
-- **`test:integration`** — Playwright against `tests/` (browser tests; expects the app/API per `playwright.config` / env).
+- **`test:e2e`** — Playwright against `tests/` (browser tests; expects the app/API per `playwright.config` / env).
 - **`test:e2e`** — Playwright against `e2e/`.
-
-Run `bun run test:unit` and `bun run test:integration` directly. CI: `.github/workflows/web_tests.yml`.
 
 Install Chromium and its system dependencies (not needed in CI — the CI image has them pre-installed):
 
@@ -226,9 +224,8 @@ bun run test:setup
 Playwright UI / debug modes apply to the Playwright CLI. Examples:
 
 ```bash
-bun run test:integration -- --ui
-bun run test:integration -- --debug
 bun run test:e2e -- --ui
+bun run test:e2e -- --debug
 ```
 
 ## Available Scripts
@@ -242,6 +239,5 @@ bun run test:e2e -- --ui
 | `bun run format`       | Format the project with Biome            |
 | `bun run setup`        | Copy static assets into `dist/`          |
 | `bun run test:unit`    | Run Bun unit tests under `app/`          |
-| `bun run test:integration` | Run Playwright tests under `tests/`  |
-| `bun run test:e2e`     | Run Playwright end-to-end tests under `e2e/` |
+| `bun run test:e2e`     | Run Playwright end-to-end tests under    |
 | `bun run test:setup`   | Install Playwright Chromium dependencies |
