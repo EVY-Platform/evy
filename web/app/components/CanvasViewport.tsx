@@ -52,12 +52,19 @@ export function CanvasViewport({
 		worldRef,
 		pan,
 		panToElement,
+		snapPan,
 		zoomAtScreenPoint,
 		fitToBounds,
 		getCamera,
 	} = camera;
 
-	useSelectionPanOnEnter(shouldPanToActive, activePageId, panToElement);
+	useSelectionPanOnEnter(
+		shouldPanToActive,
+		activePageId,
+		panToElement,
+		snapPan,
+		viewportRef,
+	);
 
 	const contentMeasureRef = useRef<HTMLDivElement | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);

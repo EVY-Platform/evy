@@ -4,6 +4,7 @@ import { useDragContext, useFlowsContext } from "../state";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
 import { usePageEdgeIndicators } from "../hooks/usePageEdgeIndicators";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
+import { capturePageFramePosition } from "../utils/preActivationCapture";
 import { findFlowById } from "../utils/flowHelpers";
 import { BlankPageDropIndicator } from "./BlankPageDropIndicator";
 import { buildRowElements } from "./buildRowElements";
@@ -28,23 +29,27 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	const pageWrapperRef = useRef<HTMLDivElement | null>(null);
 
 	const selectRow = useCallback(
-		(rowId: string) => dispatchRow({ type: "SET_ACTIVE_ROW", rowId }),
-		[dispatchRow],
+		(rowId: string) => {
+			capturePageFramePosition(pageId);
+			dispatchRow({ type: "SET_ACTIVE_ROW", rowId });
+		},
+		[pageId, dispatchRow],
 	);
 
 	const selectPage = useCallback(
 		(e: MouseEvent) => {
 			if (e.target === e.currentTarget) {
+				capturePageFramePosition(pageId);
 				dispatchRow({ type: "SET_ACTIVE_PAGE", pageId });
 			}
 		},
 		[pageId, dispatchRow],
 	);
 
-	const selectPageDirect = useCallback(
-		() => dispatchRow({ type: "SET_ACTIVE_PAGE", pageId }),
-		[pageId, dispatchRow],
-	);
+	const selectPageDirect = useCallback(() => {
+		capturePageFramePosition(pageId);
+		dispatchRow({ type: "SET_ACTIVE_PAGE", pageId });
+	}, [pageId, dispatchRow]);
 
 	usePageDropTarget({
 		scrollableRef,
@@ -76,7 +81,10 @@ export default function AppPage({ pageId }: { pageId: string }) {
 			type="button"
 			className="evy-cursor-pointer"
 			style={pageTitleStyle}
-			onClick={() => dispatchRow({ type: "SET_ACTIVE_PAGE", pageId })}
+			onClick={() => {
+				capturePageFramePosition(pageId);
+				dispatchRow({ type: "SET_ACTIVE_PAGE", pageId });
+			}}
 		>
 			{page.title}
 		</button>

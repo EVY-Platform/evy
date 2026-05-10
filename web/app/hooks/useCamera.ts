@@ -108,10 +108,27 @@ export function useCamera() {
 			const deltaX = vpCenterX - elCenterX;
 			const deltaY = vpCenterY - elCenterY;
 
+			// Skip animation when already effectively centered.
+			if (Math.abs(deltaX) < 4 && Math.abs(deltaY) < 4) return;
+
 			const cur = cameraRef.current;
 			smoothPanTo(cur.offsetX + deltaX, cur.offsetY + deltaY);
 		},
 		[smoothPanTo],
+	);
+
+	/**
+	 * Instantly adjusts camera offset without transition or RAF scheduling.
+	 * Used to compensate for layout shifts before the browser paints.
+	 */
+	const snapPan = useCallback(
+		(dx: number, dy: number) => {
+			cameraRef.current.offsetX += dx;
+			cameraRef.current.offsetY += dy;
+			applyTransform();
+			notify();
+		},
+		[applyTransform, notify],
 	);
 
 	const getCamera = useCallback(
@@ -195,6 +212,7 @@ export function useCamera() {
 		getCamera,
 		pan,
 		panToElement,
+		snapPan,
 		zoomAtScreenPoint,
 		fitToBounds,
 	};
