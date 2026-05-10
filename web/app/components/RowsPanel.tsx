@@ -7,6 +7,7 @@ import invariant from "tiny-invariant";
 import { useDragContext, useFlowsContext } from "../state";
 import { CancelOverlay } from "./CancelOverlay";
 import { DraggableRowContainer } from "./DraggableRowContainer";
+import { RowsPanelProvider } from "./RowRenderLocationContext";
 import { SearchInput } from "./SearchInput";
 
 export function RowsPanel() {
@@ -56,7 +57,7 @@ export function RowsPanel() {
 			>
 				{filteredRows.map((row) => (
 					<DraggableRowContainer key={row.id} rowId={row.id}>
-						{row.row}
+						<RowsPanelProvider>{row.row}</RowsPanelProvider>
 					</DraggableRowContainer>
 				))}
 				{filteredRows.length === 0 && searchQuery && (

@@ -18,6 +18,7 @@ type RowPrimitiveProps = {
 	orientation?: "horizontal" | "vertical";
 	className?: string;
 	style?: React.CSSProperties;
+	isDraggable?: boolean;
 };
 
 export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
@@ -30,10 +31,15 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			orientation = "vertical",
 			className,
 			style,
+			isDraggable = true,
 		},
 		ref,
 	) {
-		const cursor = state.type === idleState.type ? "grab" : "pointer";
+		const cursor = isDraggable
+			? state.type === idleState.type
+				? "grab"
+				: "pointer"
+			: "default";
 		const beforeClass =
 			orientation === "vertical"
 				? verticalDropIndicatorBefore
