@@ -83,7 +83,6 @@ function initialState(overrides: Partial<AppState> = {}): AppState {
 		],
 		activeFlowId: "flow-1",
 		activePageId: "page-1",
-		focusMode: false,
 		configStack: [],
 		...overrides,
 	};
@@ -311,18 +310,16 @@ describe("pageReducer", () => {
 		expect(next.activeRowId).toBeUndefined();
 	});
 
-	it("CLEAR_ACTIVE_SELECTION resets selection and focus", () => {
+	it("CLEAR_ACTIVE_SELECTION resets selection", () => {
 		const state = initialState({
 			activeRowId: "row-1",
 			activePageId: "page-1",
-			focusMode: true,
 			secondarySheetRowId: "s",
 			configStack: ["a"],
 		});
 		const next = pageReducer(state, { type: "CLEAR_ACTIVE_SELECTION" });
 		expect(next.activeRowId).toBeUndefined();
 		expect(next.activePageId).toBeUndefined();
-		expect(next.focusMode).toBe(false);
 		expect(next.secondarySheetRowId).toBeUndefined();
 		expect(next.configStack).toEqual([]);
 	});
@@ -403,13 +400,30 @@ describe("pageReducer", () => {
 		expect(row.config.actions).toEqual(actions);
 	});
 
-	it("TOGGLE_FOCUS_MODE", () => {
-		const state = initialState({ focusMode: false, activePageId: undefined });
-		const on = pageReducer(state, { type: "TOGGLE_FOCUS_MODE" });
-		expect(on.focusMode).toBe(true);
-		expect(on.activePageId).toBe("page-1");
-		const off = pageReducer(on, { type: "TOGGLE_FOCUS_MODE" });
-		expect(off.focusMode).toBe(false);
+	it("SET_ACTIVE_PAGE toggles off when same page is already active with no row", () => {
+		const state = initialState({
+			activePageId: "page-1",
+			activeRowId: undefined,
+			configStack: [],
+		});
+		const next = pageReducer(state, {
+			type: "SET_ACTIVE_PAGE",
+			pageId: "page-1",
+		});
+		expect(next.activePageId).toBeUndefined();
+		expect(next.activeRowId).toBeUndefined();
+	});
+
+	it("SET_ACTIVE_ROW toggles off when same row chain is already active", () => {
+		const state = initialState({
+			activeRowId: "row-1",
+			activePageId: "page-1",
+			configStack: [],
+		});
+		const next = pageReducer(state, { type: "SET_ACTIVE_ROW", rowId: "row-1" });
+		expect(next.activeRowId).toBeUndefined();
+		expect(next.activePageId).toBeUndefined();
+		expect(next.configStack).toEqual([]);
 	});
 
 	it("PUSH_CONFIG_STACK and NAVIGATE_BREADCRUMB", () => {
@@ -427,10 +441,9 @@ describe("pageReducer", () => {
 		expect(popped.configStack).toEqual([]);
 	});
 
-	it("PUSH_CONFIG_STACK auto-enters focus mode for SheetContainer child", () => {
+	it("PUSH_CONFIG_STACK sets secondary sheet for SheetContainer child", () => {
 		const state = initialState({
 			activePageId: undefined,
-			focusMode: false,
 			flows: [
 				{
 					id: "flow-1",
@@ -456,7 +469,6 @@ describe("pageReducer", () => {
 			childRowId: "sheet-child",
 		});
 
-		expect(next.focusMode).toBe(true);
 		expect(next.activePageId).toBe("page-1");
 		expect(next.secondarySheetRowId).toBe("sheet-1");
 		expect(next.configStack).toEqual(["sheet-child"]);

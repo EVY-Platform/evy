@@ -148,8 +148,8 @@ export function getSecondarySheetPage(page: Page): Locator {
 	return page.locator(SELECTORS.secondarySheetPage);
 }
 
-/** Clicks the phone canvas then the breadcrumb so the configuration panel is in page focus mode. */
-export async function enterCanvasFocusModeByPageTitle(
+/** Clicks the phone canvas then the breadcrumb so the page is active with no row selected. */
+export async function selectPageByTitle(
 	page: Page,
 	pageTitle: string,
 ): Promise<void> {

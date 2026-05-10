@@ -5,21 +5,21 @@ import type { useCamera } from "./useCamera";
 type PanToElement = ReturnType<typeof useCamera>["panToElement"];
 
 /**
- * When focus mode turns on, smoothly pans the canvas so the active page is centered.
- * Exiting focus mode does not move the camera.
+ * When an element becomes active, smoothly pans the canvas so the active page is centered.
+ * Deactivating does not move the camera.
  *
  * Call from {@link CanvasViewport} (or any component that owns the same `panToElement` as the viewport).
  */
-export function useFocusPanOnEnter(
-	focusMode: boolean,
+export function useSelectionPanOnEnter(
+	isActive: boolean,
 	activePageId: string | undefined,
 	panToElement: PanToElement,
 ) {
-	const prevFocusModeRef = useRef(focusMode);
+	const prevIsActiveRef = useRef(isActive);
 
 	useEffect(() => {
-		const wasEntering = !prevFocusModeRef.current && focusMode;
-		prevFocusModeRef.current = focusMode;
+		const wasEntering = !prevIsActiveRef.current && isActive;
+		prevIsActiveRef.current = isActive;
 
 		if (!wasEntering || !activePageId) return;
 
@@ -39,12 +39,12 @@ export function useFocusPanOnEnter(
 			}
 		};
 
-		// Wait for layout after React commit so bounds match the new focus layout.
+		// Wait for layout after React commit so bounds match the new layout.
 		const rafId = requestAnimationFrame(run);
 
 		return () => {
 			cancelled = true;
 			cancelAnimationFrame(rafId);
 		};
-	}, [focusMode, activePageId, panToElement]);
+	}, [isActive, activePageId, panToElement]);
 }

@@ -318,7 +318,7 @@
 														}
 													},
 													{
-														"id": "22222222-2222-4222-8222-222222222203",
+														"id": "586ffa1a-639b-475e-a0b5-1fbe51083274",
 														"type": "SheetContainer",
 														"source": "",
 														"destination": "",
@@ -327,7 +327,7 @@
 															"content": {
 																"title": "",
 																"child": {
-																	"id": "22222222-2222-4222-8222-222222222204",
+																	"id": "48ebb26f-4f15-4210-b4b6-40bcbee6a551",
 																	"type": "TextAction",
 																	"source": "",
 																	"destination": "{item.pickup_address}",
@@ -343,31 +343,37 @@
 																},
 																"children": [
 																	{
-																		"id": "22222222-2222-4222-8222-222222222205",
+																		"id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e",
 																		"type": "Search",
-																		"source": "{$local:address}",
-																		"destination": "{address}",
-																		"actions": [],
 																		"view": {
 																			"content": {
-																				"title": "",
-																				"placeholder": "Search address",
 																				"child": {
-																					"id": "33333333-3333-4333-8333-333333333305",
+																					"id": "e27d87b7-aa2c-4672-aaac-9e1222928f45",
 																					"type": "Info",
-																					"source": "",
-																					"destination": "",
-																					"actions": [],
 																					"view": {
 																						"content": {
-																							"title": "{$datum.unit} {$datum.street}, {$datum.city} {$datum.state} {$datum.postcode}",
-																							"subtitle": "",
-																							"icon": ""
+																							"icon": "",
+																							"title": "{$datum.title}",
+																							"subtitle": "{formatCurrency($datum.price)}"
 																						}
-																					}
-																				}
+																					},
+																					"source": "",
+																					"actions": [
+																						{
+																							"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{\"id\": $datum.id})}",
+																							"false": "",
+																							"condition": ""
+																						}
+																					],
+																					"destination": ""
+																				},
+																				"title": "",
+																				"placeholder": "Search anything"
 																			}
-																		}
+																		},
+																		"source": "{items}",
+																		"actions": [],
+																		"destination": ""
 																	}
 																]
 															}

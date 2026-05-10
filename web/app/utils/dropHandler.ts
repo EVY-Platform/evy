@@ -16,6 +16,8 @@ import { containerDropindicatorId } from "../rows/EVYRow";
 import {
 	findContainerByIdInPage,
 	findContainerOfRowInPage,
+	findRowInPages as findRowInPagesHelper,
+	getRowsRecursive,
 	resolveDestinationPageFromRawPageId,
 	resolveSourcePageIdFromRaw,
 } from "../utils/rowTree";
@@ -214,6 +216,43 @@ export function handleDrop(
 			pageId: sourcePageId,
 			rowId,
 		});
+		return;
+	}
+
+	// Handle drops onto the blank child page (children:rowId synthetic target).
+	const CHILDREN_PAGE_PREFIX = "children:";
+	if (destinationPageId.startsWith(CHILDREN_PAGE_PREFIX)) {
+		const parentRowId = destinationPageId.slice(CHILDREN_PAGE_PREFIX.length);
+		if (!parentRowId || parentRowId === "none") return;
+
+		// Find the page containing the parent row to use as destination.
+		const parentPage = pages.find(
+			(p) =>
+				p.rows.some((r) =>
+					getRowsRecursive(r).some((row) => row.id === parentRowId),
+				) || p.footer?.id === parentRowId,
+		);
+		if (!parentPage) return;
+
+		// Find the parent row to determine current children count.
+		const parentRow = findRowInPagesHelper(parentRowId, pages);
+		const childrenCount = parentRow?.config.view.content.children?.length ?? 0;
+
+		const childDispatchOptions: DropDispatchOptions = {
+			destinationPageId: parentPage.id,
+			destinationIndex: childrenCount,
+			destinationContainer: {
+				rowId: parentRowId,
+				type: "children",
+			},
+		};
+
+		dispatchStandardDrop(
+			sourcePageId,
+			rowId,
+			childDispatchOptions,
+			dispatchRow,
+		);
 		return;
 	}
 

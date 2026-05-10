@@ -14,7 +14,7 @@ import {
 	GRID_BASE_SIZE_PX,
 } from "./canvasDotField";
 import { useCamera } from "../hooks/useCamera";
-import { useFocusPanOnEnter } from "../hooks/useFocusPanOnEnter";
+import { useSelectionPanOnEnter } from "../hooks/useSelectionPanOnEnter";
 import { useViewportGestures } from "../hooks/useViewportGestures";
 import { CameraContext } from "../state/contexts/CameraContext";
 
@@ -34,8 +34,8 @@ type CanvasViewportProps = {
 	onBackgroundClick?: () => void;
 	/** Layout styles for the horizontal row of pages (gap, justify, etc.). */
 	contentStyle?: CSSProperties;
-	/** When focus mode turns on, pan so this page is centered. */
-	focusMode?: boolean;
+	/** When an element becomes active, pan so the active page is centered. */
+	shouldPanToActive?: boolean;
 	activePageId?: string;
 };
 
@@ -43,7 +43,7 @@ export function CanvasViewport({
 	children,
 	onBackgroundClick,
 	contentStyle,
-	focusMode = false,
+	shouldPanToActive = false,
 	activePageId,
 }: CanvasViewportProps) {
 	const camera = useCamera();
@@ -57,7 +57,7 @@ export function CanvasViewport({
 		getCamera,
 	} = camera;
 
-	useFocusPanOnEnter(focusMode, activePageId, panToElement);
+	useSelectionPanOnEnter(shouldPanToActive, activePageId, panToElement);
 
 	const contentMeasureRef = useRef<HTMLDivElement | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);

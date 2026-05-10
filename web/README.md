@@ -143,11 +143,11 @@ graph TD
 | ---------------------- | ------------------------------------------------------------------- |
 | App                | Main entry point, sets up layout with header and three-panel design |
 | NavBar             | Top bar with logo and breadcrumb navigation                         |
-| NavigationBreadcrumb | Flow/page/row breadcrumb with flow selector and focus mode toggle |
-| AppProvider        | React context provider managing flows, rows, drag state, focus mode, and config stack |
+| NavigationBreadcrumb | Flow/page/row breadcrumb with flow selector and element selection |
+| AppProvider        | React context provider managing flows, rows, drag state, selection, and config stack |
 | RowsPanel          | Left sidebar displaying available row components with search        |
 | AppPage            | Center panel showing phone preview with draggable rows              |
-| SecondarySheetPage | Secondary phone preview for sheet content in focus mode             |
+| SecondarySheetPage | Secondary phone preview for sheet content when a sheet child is active |
 | ConfigurationPanel | Right sidebar for editing row properties, page titles, and actions  |
 | ActionEditor       | Action configuration UI within the configuration panel              |
 | useDraggable       | Custom hook encapsulating drag-and-drop behavior                    |

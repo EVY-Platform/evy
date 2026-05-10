@@ -78,9 +78,6 @@ export type RowAction =
 			type: "CLEAR_ACTIVE_SELECTION";
 	  }
 	| {
-			type: "TOGGLE_FOCUS_MODE";
-	  }
-	| {
 			type: "UPDATE_PAGE_TITLE";
 			pageId: string;
 			title: string;
@@ -144,7 +141,6 @@ export type AppState = {
 	activeRowId?: string;
 	activeFlowId?: string;
 	activePageId?: string;
-	focusMode: boolean;
 	secondarySheetRowId?: string;
 	configStack: string[];
 };

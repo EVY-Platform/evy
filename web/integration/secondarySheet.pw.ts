@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { openAppWithTestFlows } from "./flowFixtures";
 import {
-	enterCanvasFocusModeByPageTitle,
+	selectPageByTitle,
 	getFirstPage,
 	getSecondarySheetPage,
 	openSecondarySheetChildFromConfigPanel,
@@ -59,12 +59,12 @@ test.describe("Secondary Sheet Page", () => {
 		},
 	];
 
-	test("should open secondary page when clicking children in config panel in focus mode", async ({
+	test("should open secondary page when clicking children in config panel with page selected", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, sheetContainerPage);
 
-		await enterCanvasFocusModeByPageTitle(page, "Page 1");
+		await selectPageByTitle(page, "Page 1");
 
 		await expect(getSecondarySheetPage(page)).toHaveCount(0);
 
@@ -79,7 +79,7 @@ test.describe("Secondary Sheet Page", () => {
 	}) => {
 		await openAppWithTestFlows(page, sheetContainerPage);
 
-		await enterCanvasFocusModeByPageTitle(page, "Page 1");
+		await selectPageByTitle(page, "Page 1");
 
 		await openSecondarySheetChildFromConfigPanel(page);
 
@@ -93,7 +93,7 @@ test.describe("Secondary Sheet Page", () => {
 	test("should show sheet title in secondary page", async ({ page }) => {
 		await openAppWithTestFlows(page, sheetContainerPage);
 
-		await enterCanvasFocusModeByPageTitle(page, "Page 1");
+		await selectPageByTitle(page, "Page 1");
 
 		await openSecondarySheetChildFromConfigPanel(page);
 
@@ -107,7 +107,7 @@ test.describe("Secondary Sheet Page", () => {
 	}) => {
 		await openAppWithTestFlows(page, sheetContainerPage);
 
-		await enterCanvasFocusModeByPageTitle(page, "Page 1");
+		await selectPageByTitle(page, "Page 1");
 
 		await openSecondarySheetChildFromConfigPanel(page);
 
@@ -124,7 +124,7 @@ test.describe("Secondary Sheet Page", () => {
 	}) => {
 		await openAppWithTestFlows(page, sheetContainerPage);
 
-		await enterCanvasFocusModeByPageTitle(page, "Page 1");
+		await selectPageByTitle(page, "Page 1");
 
 		await openSecondarySheetChildFromConfigPanel(page);
 
@@ -146,7 +146,7 @@ test.describe("Secondary Sheet Page", () => {
 		await expect(getSecondarySheetPage(page)).toHaveCount(0);
 	});
 
-	test("should auto-enter focus mode when clicking SheetContainer children outside focus mode", async ({
+	test("should show secondary sheet when clicking SheetContainer children with row selected", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, sheetContainerPage);
@@ -157,12 +157,12 @@ test.describe("Secondary Sheet Page", () => {
 		const pageBreadcrumb = page.getByRole("button", {
 			name: "Select page Page 1",
 		});
-		await expect(pageBreadcrumb).toHaveAttribute("aria-current", "page");
+		await expect(pageBreadcrumb).toBeVisible();
 		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 	});
 
-	test("should auto-enter focus mode when clicking SheetContainer child outside focus mode", async ({
+	test("should show secondary sheet when clicking SheetContainer child with row selected", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, sheetContainerPage);
@@ -175,7 +175,7 @@ test.describe("Secondary Sheet Page", () => {
 		const pageBreadcrumb = page.getByRole("button", {
 			name: "Select page Page 1",
 		});
-		await expect(pageBreadcrumb).toHaveAttribute("aria-current", "page");
+		await expect(pageBreadcrumb).toBeVisible();
 		const secondaryPage = getSecondarySheetPage(page);
 		await expect(secondaryPage).toHaveCSS("opacity", "1");
 	});

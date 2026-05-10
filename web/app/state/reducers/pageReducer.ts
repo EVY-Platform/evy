@@ -13,7 +13,7 @@ import {
 	removeRowFromPage,
 	insertRowIntoPage,
 } from "../../utils/rowTree";
-import { deriveSheetAndFocusFromRowChain } from "../../utils/urlUtils";
+import { deriveSecondarySheetFromRowChain } from "../../utils/urlUtils";
 import {
 	buildNewClientFlow,
 	buildNewClientPage,
@@ -53,6 +53,8 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			...state,
 			activeFlowId: action.flowId,
 			activeRowId: undefined,
+			activePageId: undefined,
+			secondarySheetRowId: undefined,
 			configStack: [],
 		};
 	}
@@ -321,7 +323,22 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				stack = path.slice(1);
 			}
 
-			const sheetState = deriveSheetAndFocusFromRowChain(
+			// Toggle: if same row chain is already active, clear selection
+			if (
+				state.activeRowId === rootId &&
+				state.configStack.length === stack.length &&
+				state.configStack.every((id, i) => id === stack[i])
+			) {
+				return {
+					...state,
+					activePageId: undefined,
+					activeRowId: undefined,
+					secondarySheetRowId: undefined,
+					configStack: [],
+				};
+			}
+
+			const sheetState = deriveSecondarySheetFromRowChain(
 				flow.pages,
 				rootId,
 				stack,
@@ -332,13 +349,27 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				activeRowId: rootId,
 				activePageId: page.id,
 				configStack: stack,
-				focusMode: sheetState.focusMode,
 				secondarySheetRowId: sheetState.secondarySheetRowId,
 			};
 		}
 		case "SET_ACTIVE_PAGE": {
 			const page = flow.pages.find((p) => p.id === action.pageId);
 			if (!page) return state;
+
+			// Toggle: if same page is already active with no row selected, clear selection
+			if (
+				state.activePageId === action.pageId &&
+				!state.activeRowId &&
+				state.configStack.length === 0
+			) {
+				return {
+					...state,
+					activePageId: undefined,
+					activeRowId: undefined,
+					secondarySheetRowId: undefined,
+					configStack: [],
+				};
+			}
 
 			return {
 				...state,
@@ -352,25 +383,8 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				...state,
 				activePageId: undefined,
 				activeRowId: undefined,
-				focusMode: false,
 				secondarySheetRowId: undefined,
 				configStack: [],
-			};
-		}
-		case "TOGGLE_FOCUS_MODE": {
-			const nextFocusMode = !state.focusMode;
-			const nextActivePageId =
-				nextFocusMode && !state.activePageId
-					? flow.pages[0]?.id
-					: state.activePageId;
-
-			return {
-				...state,
-				focusMode: nextFocusMode,
-				activePageId: nextActivePageId,
-				...(!nextFocusMode
-					? { secondarySheetRowId: undefined, configStack: [] }
-					: {}),
 			};
 		}
 		case "UPDATE_PAGE_TITLE": {
@@ -418,21 +432,16 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 						(c) => c.id === action.childRowId,
 					));
 
-			let nextFocusMode = state.focusMode;
 			let nextActivePageId = state.activePageId;
 			let nextSecondarySheetRowId = state.secondarySheetRowId;
 
 			if (isSheetNestedRow) {
-				if (!state.focusMode) {
-					nextFocusMode = true;
-					nextActivePageId = state.activePageId ?? flow.pages[0]?.id;
-				}
+				nextActivePageId = state.activePageId ?? flow.pages[0]?.id;
 				nextSecondarySheetRowId = parentRow.id;
 			}
 
 			return {
 				...state,
-				focusMode: nextFocusMode,
 				activePageId: nextActivePageId,
 				secondarySheetRowId: nextSecondarySheetRowId,
 				configStack: [...state.configStack, action.childRowId],
@@ -440,19 +449,33 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "NAVIGATE_BREADCRUMB": {
 			const newStack = state.configStack.slice(0, action.configStackLength);
+
+			// Toggle: if navigating to the current stack length, clear selection
+			if (
+				state.configStack.length === action.configStackLength &&
+				state.configStack.every((id, i) => id === newStack[i])
+			) {
+				return {
+					...state,
+					activePageId: undefined,
+					activeRowId: undefined,
+					secondarySheetRowId: undefined,
+					configStack: [],
+				};
+			}
+
 			const sheetState =
 				state.activeRowId !== undefined
-					? deriveSheetAndFocusFromRowChain(
+					? deriveSecondarySheetFromRowChain(
 							flow.pages,
 							state.activeRowId,
 							newStack,
 						)
-					: { focusMode: false, secondarySheetRowId: undefined };
+					: { secondarySheetRowId: undefined };
 
 			return {
 				...state,
 				configStack: newStack,
-				focusMode: sheetState.focusMode,
 				secondarySheetRowId: sheetState.secondarySheetRowId,
 			};
 		}

@@ -210,7 +210,6 @@ export function SearchPreviewResults({
 		() => ({
 			rows: flattenedRows,
 			flows: [],
-			focusMode: false,
 			configStack: [],
 			dispatchRow: () => {},
 		}),

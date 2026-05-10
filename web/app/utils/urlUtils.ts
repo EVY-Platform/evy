@@ -70,15 +70,15 @@ export function validateRowPathSegmentsForPage(
 }
 
 /**
- * Matches `PUSH_CONFIG_STACK` sheet focus rules for a full root + stack chain.
+ * Matches `PUSH_CONFIG_STACK` sheet rules for a full root + stack chain.
+ * Returns the secondary sheet row ID if the chain contains a SheetContainer parent.
  */
-export function deriveSheetAndFocusFromRowChain(
+export function deriveSecondarySheetFromRowChain(
 	pages: UI_Page[],
 	activeRowId: string,
 	configStack: string[],
-): { focusMode: boolean; secondarySheetRowId?: string } {
+): { secondarySheetRowId?: string } {
 	const chain = [activeRowId, ...configStack];
-	let focusMode = false;
 	let secondarySheetRowId: string | undefined;
 
 	for (let i = 0; i < chain.length - 1; i++) {
@@ -97,12 +97,11 @@ export function deriveSheetAndFocusFromRowChain(
 				parentRow.config.view.content.children?.some((c) => c.id === childId));
 
 		if (isSheetNested) {
-			focusMode = true;
 			secondarySheetRowId = parentRow.id;
 		}
 	}
 
-	return { focusMode, secondarySheetRowId };
+	return { secondarySheetRowId };
 }
 
 /** Real canvas page id for URL (never `secondary:*`). */

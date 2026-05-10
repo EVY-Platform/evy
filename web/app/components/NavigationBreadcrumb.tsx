@@ -63,7 +63,7 @@ const breadcrumbScrollCss = `
 		text-shadow: 0 0 12px oklch(60.04% 0.2013 261.37 / 1);
 	}
 }
-.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link--focus-page {
+.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link--active {
 	animation: evy-breadcrumb-page-text-glow 1s ease-in-out infinite;
 }
 `;
@@ -85,7 +85,6 @@ export function NavigationBreadcrumb() {
 		activePageId,
 		activeRowId,
 		configStack,
-		focusMode,
 		dispatchRow,
 	} = useFlowsContext();
 
@@ -145,6 +144,8 @@ export function NavigationBreadcrumb() {
 		}
 	}
 
+	const isPageActiveWithNoRow = !!(activePageId && !activeRowId);
+
 	return (
 		<>
 			<CreateFlowDialog
@@ -184,11 +185,14 @@ export function NavigationBreadcrumb() {
 							<Separator />
 							<button
 								type="button"
-								className={`evy-nav-breadcrumb-link evy-shrink-0${focusMode ? " evy-nav-breadcrumb-link--focus-page" : ""}`}
-								aria-current={focusMode ? "page" : undefined}
+								className={`evy-nav-breadcrumb-link evy-shrink-0${isPageActiveWithNoRow ? " evy-nav-breadcrumb-link--active" : ""}`}
+								aria-current={isPageActiveWithNoRow ? "page" : undefined}
 								aria-label={`Select page ${breadcrumbLabelForPage(activePage, pages)}`}
 								onClick={() => {
-									dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+									dispatchRow({
+										type: "SET_ACTIVE_PAGE",
+										pageId: activePage.id,
+									});
 								}}
 							>
 								{breadcrumbLabelForPage(activePage, pages)}

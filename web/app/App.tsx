@@ -19,6 +19,7 @@ import {
 	useHoverToggle,
 } from "./components/CollapsibleSidePanel";
 import SecondarySheetPage from "./components/SecondarySheetPage";
+import { BlankChildPage } from "./components/BlankChildPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
@@ -30,8 +31,8 @@ import { useFlows } from "./hooks/useFlows";
 import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
 import {
+	activePageWrapperStyle,
 	canvasContentStyle,
-	pageWrapperHiddenStyle,
 	pageWrapperStyle,
 	secondaryPageWrapperStyle,
 } from "./appLayoutStyles";
@@ -57,7 +58,8 @@ function AppContent() {
 	const {
 		dispatchRow,
 		activePageId,
-		focusMode,
+		activeRowId,
+		configStack,
 		secondarySheetRowId,
 		flows,
 		activeFlowId,
@@ -67,22 +69,24 @@ function AppContent() {
 	const rowsHover = useHoverToggle();
 	const configurationHover = useHoverToggle();
 
-	const pinSidePanelsOpenByPage = Boolean(activePageId);
+	const isElementActive = Boolean(activePageId);
+
+	const pinSidePanelsOpen = isElementActive;
 	const expandSidePanelsForPageDrag = dragging === "page";
 	const isRowsPanelExpanded =
-		pinSidePanelsOpenByPage || expandSidePanelsForPageDrag || rowsHover.hovered;
+		pinSidePanelsOpen || expandSidePanelsForPageDrag || rowsHover.hovered;
 	const isConfigurationPanelExpanded =
-		pinSidePanelsOpenByPage ||
+		pinSidePanelsOpen ||
 		expandSidePanelsForPageDrag ||
 		configurationHover.hovered;
 
 	useEffect(() => {
-		if (!pinSidePanelsOpenByPage && !expandSidePanelsForPageDrag) {
+		if (!pinSidePanelsOpen && !expandSidePanelsForPageDrag) {
 			rowsHover.close();
 			configurationHover.close();
 		}
 	}, [
-		pinSidePanelsOpenByPage,
+		pinSidePanelsOpen,
 		expandSidePanelsForPageDrag,
 		rowsHover.close,
 		configurationHover.close,
@@ -93,10 +97,15 @@ function AppContent() {
 		[flows, activeFlowId],
 	);
 
+	const activePage = useMemo(
+		() => pages.find((page) => page.id === activePageId),
+		[pages, activePageId],
+	);
+
 	const secondarySheetRow = useMemo(() => {
-		if (!secondarySheetRowId || !focusMode) return undefined;
+		if (!secondarySheetRowId) return undefined;
 		return findRowInPages(secondarySheetRowId, pages);
-	}, [secondarySheetRowId, focusMode, pages]);
+	}, [secondarySheetRowId, pages]);
 
 	useEffect(() => {
 		return monitorForElements({
@@ -114,14 +123,14 @@ function AppContent() {
 	}, [pages, dispatchRow, dispatchDragging]);
 
 	const clearSelectionOnBackground = useCallback(() => {
-		if (secondarySheetRowId) {
-			dispatchRow({ type: "CLOSE_SECONDARY_SHEET" });
-			return;
-		}
 		dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
-	}, [dispatchRow, secondarySheetRowId]);
+	}, [dispatchRow]);
 
-	const showAddPageButton = Boolean(activeFlowId) && !focusMode;
+	const showAddPageButton = Boolean(activeFlowId) && !isElementActive;
+
+	const activeLeafRowId =
+		configStack.length > 0 ? configStack[configStack.length - 1] : activeRowId;
+	const shouldShowBlankChildPage = Boolean(activeLeafRowId);
 
 	return (
 		<div className="evy-relative evy-flex-1 evy-min-h-0 evy-min-w-0 evy-overflow-hidden">
@@ -129,41 +138,61 @@ function AppContent() {
 				<CanvasViewport
 					contentStyle={canvasContentStyle}
 					onBackgroundClick={clearSelectionOnBackground}
-					focusMode={focusMode}
+					shouldPanToActive={isElementActive}
 					activePageId={activePageId}
 				>
-					{pages.map((page) => {
-						const isActive = page.id === activePageId;
-						const isHidden = focusMode && !isActive;
-						const wrapperStyle = {
-							...(isHidden ? pageWrapperHiddenStyle : pageWrapperStyle),
-							...PHONE_FRAME_STYLE,
-						};
-
-						return (
-							<Fragment key={page.id}>
+					{isElementActive && activePage ? (
+						<Fragment key={activePage.id}>
+							<CanvasPageFrame
+								pageId={activePage.id}
+								wrapperStyle={{
+									...activePageWrapperStyle,
+									...PHONE_FRAME_STYLE,
+								}}
+								className="evy-flex-shrink-0"
+							>
+								<AppPage pageId={activePage.id} />
+							</CanvasPageFrame>
+							{secondarySheetRow && (
 								<CanvasPageFrame
-									pageId={page.id}
-									wrapperStyle={wrapperStyle}
+									wrapperStyle={{
+										...secondaryPageWrapperStyle,
+										...PHONE_FRAME_STYLE,
+									}}
 									className="evy-flex-shrink-0"
+									data-testid="secondary-sheet-page"
 								>
-									<AppPage pageId={page.id} />
+									<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
 								</CanvasPageFrame>
-								{focusMode && isActive && secondarySheetRow && (
-									<CanvasPageFrame
-										wrapperStyle={{
-											...secondaryPageWrapperStyle,
-											...PHONE_FRAME_STYLE,
-										}}
-										className="evy-flex-shrink-0"
-										data-testid="secondary-sheet-page"
-									>
-										<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
-									</CanvasPageFrame>
-								)}
-							</Fragment>
-						);
-					})}
+							)}
+							{shouldShowBlankChildPage && (
+								<CanvasPageFrame
+									wrapperStyle={{
+										...secondaryPageWrapperStyle,
+										...PHONE_FRAME_STYLE,
+									}}
+									className="evy-flex-shrink-0"
+									data-testid="blank-child-page"
+								>
+									<BlankChildPage activeLeafRowId={activeLeafRowId} />
+								</CanvasPageFrame>
+							)}
+						</Fragment>
+					) : (
+						pages.map((page) => (
+							<CanvasPageFrame
+								key={page.id}
+								pageId={page.id}
+								wrapperStyle={{
+									...pageWrapperStyle,
+									...PHONE_FRAME_STYLE,
+								}}
+								className="evy-flex-shrink-0"
+							>
+								<AppPage pageId={page.id} />
+							</CanvasPageFrame>
+						))
+					)}
 				</CanvasViewport>
 			</div>
 			{showAddPageButton && (
@@ -180,7 +209,7 @@ function AppContent() {
 			<CollapsibleSidePanel
 				side="left"
 				isExpanded={isRowsPanelExpanded}
-				pinOpenByPage={pinSidePanelsOpenByPage}
+				pinOpenByPage={pinSidePanelsOpen}
 				onOpenInteraction={rowsHover.open}
 				onCloseInteraction={rowsHover.close}
 				collapsedLabel="Expand rows panel"
@@ -198,7 +227,7 @@ function AppContent() {
 			<CollapsibleSidePanel
 				side="right"
 				isExpanded={isConfigurationPanelExpanded}
-				pinOpenByPage={pinSidePanelsOpenByPage}
+				pinOpenByPage={pinSidePanelsOpen}
 				onOpenInteraction={configurationHover.open}
 				onCloseInteraction={configurationHover.close}
 				collapsedLabel="Expand configuration panel"

@@ -4,7 +4,7 @@ import type { UI_Page } from "../types/flow";
 import type { Row } from "../types/row";
 import {
 	buildUrlPath,
-	deriveSheetAndFocusFromRowChain,
+	deriveSecondarySheetFromRowChain,
 	isNonRoutablePreviewRowId,
 	resolveCanonicalPageIdForUrl,
 	validateRowPathSegmentsForPage,
@@ -111,8 +111,8 @@ describe("buildUrlPath", () => {
 	});
 });
 
-describe("deriveSheetAndFocusFromRowChain", () => {
-	it("sets focus when chain crosses SheetContainer child boundary", () => {
+describe("deriveSecondarySheetFromRowChain", () => {
+	it("sets secondary sheet when chain crosses SheetContainer child boundary", () => {
 		const inner = textRow("inner");
 		const sheet: Row = {
 			id: "sheet-1",
@@ -132,9 +132,8 @@ describe("deriveSheetAndFocusFromRowChain", () => {
 		};
 		const pages: UI_Page[] = [{ id: "p1", title: "P", rows: [sheet] }];
 		expect(
-			deriveSheetAndFocusFromRowChain(pages, "sheet-1", ["inner"]),
+			deriveSecondarySheetFromRowChain(pages, "sheet-1", ["inner"]),
 		).toEqual({
-			focusMode: true,
 			secondarySheetRowId: "sheet-1",
 		});
 	});
