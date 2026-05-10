@@ -42,7 +42,6 @@ graph TD
 
         subgraph pages [Page Content]
             AppPage[AppPage]
-            SecondarySheetPage[SecondarySheetPage]
             ActionEditor[ActionEditor]
             ActionPopup[ActionPopup]
         end
@@ -111,12 +110,9 @@ graph TD
     CanvasViewport --> useCamera
     CanvasViewport --> CanvasPageFrame
     CanvasPageFrame --> AppPage
-    CanvasPageFrame --> SecondarySheetPage
 
     AppPage --> usePageDropTarget
     AppPage --> DraggableRowContainer
-    SecondarySheetPage --> usePageDropTarget
-    SecondarySheetPage --> DraggableRowContainer
 
     ConfigPanel --> ActionEditor
     ActionEditor --> ActionPopup
@@ -147,7 +143,6 @@ graph TD
 | AppProvider        | React context provider managing flows, rows, drag state, selection, and config stack |
 | RowsPanel          | Left sidebar displaying available row components with search        |
 | AppPage            | Center panel showing phone preview with draggable rows              |
-| SecondarySheetPage | Secondary phone preview for sheet content when a sheet child is active |
 | ConfigurationPanel | Right sidebar for editing row properties, page titles, and actions  |
 | ActionEditor       | Action configuration UI within the configuration panel              |
 | useDraggable       | Custom hook encapsulating drag-and-drop behavior                    |
@@ -156,7 +151,7 @@ graph TD
 
 Action branches are stored as strings. The builder emits executable actions in function-call form; use `{close()}` for close, while a bare `close` string is treated as non-executable text by runtimes.
 
-Search rows and dynamic ListContainer child templates are previewed with deterministic sample data in the builder. The web preview does not fetch live API data; iOS resolves the same `source` strings locally from synced service data at runtime.
+When a row with a `view.content.child` is selected, the child row is rendered as a secondary page immediately to the right of the active page, followed by a blank child page ready for the next drop. Dropping a row into the blank child page sets it as the singular `child` of the target row. The web preview does not fetch live API data; iOS resolves the same `source` strings locally from synced service data at runtime.
 
 ## Getting Started
 

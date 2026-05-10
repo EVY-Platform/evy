@@ -42,17 +42,17 @@ function textRow(id: string, text = "hello"): Row {
 	};
 }
 
-function sheetRow(id: string, child: Row, children: Row[] = []): Row {
+function containerRow(id: string, child: Row, children: Row[] = []): Row {
 	return {
 		id,
 		row: null,
 		config: {
-			type: "SheetContainer",
+			type: "ListContainer",
 			source: "",
 			actions: [],
 			view: {
 				content: {
-					title: "Sheet",
+					title: "Container",
 					child,
 					children,
 				},
@@ -314,13 +314,11 @@ describe("pageReducer", () => {
 		const state = initialState({
 			activeRowId: "row-1",
 			activePageId: "page-1",
-			secondarySheetRowId: "s",
 			configStack: ["a"],
 		});
 		const next = pageReducer(state, { type: "CLEAR_ACTIVE_SELECTION" });
 		expect(next.activeRowId).toBeUndefined();
 		expect(next.activePageId).toBeUndefined();
-		expect(next.secondarySheetRowId).toBeUndefined();
 		expect(next.configStack).toEqual([]);
 	});
 
@@ -441,51 +439,6 @@ describe("pageReducer", () => {
 		expect(popped.configStack).toEqual([]);
 	});
 
-	it("PUSH_CONFIG_STACK sets secondary sheet for SheetContainer child", () => {
-		const state = initialState({
-			activePageId: undefined,
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [
-								sheetRow("sheet-1", textRow("sheet-child"), [
-									textRow("sheet-list-child"),
-								]),
-							],
-						},
-					],
-				},
-			],
-		});
-
-		const next = pageReducer(state, {
-			type: "PUSH_CONFIG_STACK",
-			parentRowId: "sheet-1",
-			childRowId: "sheet-child",
-		});
-
-		expect(next.activePageId).toBe("page-1");
-		expect(next.secondarySheetRowId).toBe("sheet-1");
-		expect(next.configStack).toEqual(["sheet-child"]);
-	});
-
-	it("OPEN_SECONDARY_SHEET and CLOSE_SECONDARY_SHEET", () => {
-		const state = initialState();
-		const open = pageReducer(state, {
-			type: "OPEN_SECONDARY_SHEET",
-			sheetRowId: "sheet-1",
-		});
-		expect(open.secondarySheetRowId).toBe("sheet-1");
-		const closed = pageReducer(open, { type: "CLOSE_SECONDARY_SHEET" });
-		expect(closed.secondarySheetRowId).toBeUndefined();
-		expect(closed.configStack).toEqual([]);
-	});
-
 	it("REMOVE_ROW removes footer root", () => {
 		const foot = textRow("footer-row");
 		const state = initialState({
@@ -516,7 +469,7 @@ describe("pageReducer", () => {
 
 	it("REMOVE_ROW removes nested footer child", () => {
 		const inner = textRow("foot-inner");
-		const foot = sheetRow("footer-row", inner);
+		const foot = containerRow("footer-row", inner);
 		const state = initialState({
 			flows: [
 				{
@@ -576,8 +529,40 @@ describe("pageReducer", () => {
 		expect(next.flows[0].pages[0].rows[1].id).toBe("row-1");
 	});
 
+	it("ADD_ROW inserts palette row into child container", () => {
+		const container = containerRow("parent", textRow("dummy"));
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [container],
+						},
+					],
+				},
+			],
+		});
+		const newId = "new-child";
+		const next = pageReducer(state, {
+			type: "ADD_ROW",
+			newRowId: newId,
+			oldRowId: "TextRow",
+			destinationPageId: "page-1",
+			destinationIndex: 0,
+			destinationContainer: { rowId: "parent", type: "child" },
+		});
+		const parentAfter = next.flows[0].pages[0].rows.find(
+			(r) => r.id === "parent",
+		);
+		expect(parentAfter?.config.view.content.child?.id).toBe(newId);
+	});
+
 	it("ADD_ROW inserts palette row into footer container", () => {
-		const foot = sheetRow("footer-sheet", textRow("dummy"), []);
+		const foot = containerRow("footer-sheet", textRow("dummy"), []);
 		const state = initialState({
 			flows: [
 				{
@@ -593,7 +578,6 @@ describe("pageReducer", () => {
 					],
 				},
 			],
-			activePageId: "page-1",
 		});
 		const newId = "new-in-footer";
 		const next = pageReducer(state, {

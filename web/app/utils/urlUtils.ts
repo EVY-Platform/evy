@@ -1,7 +1,7 @@
 import type { UI_Page } from "../types/flow";
 import type { Row } from "../types/row";
 import { findFlowById } from "./flowHelpers";
-import { findRowInSinglePage, getRowsRecursive } from "./rowTree";
+import { findRowInSinglePage } from "./rowTree";
 
 export function parseUrlPath(): {
 	flowId?: string;
@@ -67,60 +67,6 @@ export function validateRowPathSegmentsForPage(
 	const rootRowId = validated[0];
 	const configStack = validated.slice(1);
 	return { rootRowId, configStack };
-}
-
-/**
- * Matches `PUSH_CONFIG_STACK` sheet rules for a full root + stack chain.
- * Returns the secondary sheet row ID if the chain contains a SheetContainer parent.
- */
-export function deriveSecondarySheetFromRowChain(
-	pages: UI_Page[],
-	activeRowId: string,
-	configStack: string[],
-): { secondarySheetRowId?: string } {
-	const chain = [activeRowId, ...configStack];
-	let secondarySheetRowId: string | undefined;
-
-	for (let i = 0; i < chain.length - 1; i++) {
-		const parentRowId = chain[i];
-		const childId = chain[i + 1];
-		let parentRow: Row | undefined;
-		for (const p of pages) {
-			parentRow = findRowInSinglePage(p, parentRowId);
-			if (parentRow) break;
-		}
-		if (!parentRow) break;
-
-		const isSheetNested =
-			parentRow.config.type === "SheetContainer" &&
-			(parentRow.config.view.content.child?.id === childId ||
-				parentRow.config.view.content.children?.some((c) => c.id === childId));
-
-		if (isSheetNested) {
-			secondarySheetRowId = parentRow.id;
-		}
-	}
-
-	return { secondarySheetRowId };
-}
-
-/** Real canvas page id for URL (never `secondary:*`). */
-export function resolveCanonicalPageIdForUrl(
-	flows: { id: string; pages: UI_Page[] }[],
-	activeFlowId: string | undefined,
-	activePageId: string | undefined,
-): string | undefined {
-	if (!activeFlowId || !activePageId) return activePageId;
-	if (!activePageId.startsWith("secondary:")) return activePageId;
-
-	const hostRowId = activePageId.slice("secondary:".length);
-	const flow = findFlowById(flows, activeFlowId);
-	if (!flow) return undefined;
-
-	const page = flow.pages.find((p) =>
-		p.rows.some((r) => getRowsRecursive(r).some((row) => row.id === hostRowId)),
-	);
-	return page?.id;
 }
 
 export function buildUrlPath(

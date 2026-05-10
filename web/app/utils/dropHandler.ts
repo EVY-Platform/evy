@@ -16,10 +16,8 @@ import { containerDropindicatorId } from "../rows/EVYRow";
 import {
 	findContainerByIdInPage,
 	findContainerOfRowInPage,
-	findRowInPages as findRowInPagesHelper,
 	getRowsRecursive,
 	resolveDestinationPageFromRawPageId,
-	resolveSourcePageIdFromRaw,
 } from "../utils/rowTree";
 
 type DropDispatchOptions = {
@@ -37,40 +35,18 @@ type DropTargetRecord = {
 
 type PageDropPosition = "start" | "end";
 
-function getDefaultAppendIndexForPageDrop(
-	destinationPage: UI_Page,
-	secondarySheetRowId: string | undefined,
-): number {
-	if (secondarySheetRowId) {
-		return (
-			destinationPage.rows.find((r) => r.id === secondarySheetRowId)?.config
-				.view.content.children?.length ?? 0
-		);
-	}
+function getDefaultAppendIndexForPageDrop(destinationPage: UI_Page): number {
 	return destinationPage.rows.length;
 }
 
 function buildInitialDropDispatchOptions(
 	destinationPage: UI_Page,
 	resolvedPageId: string,
-	secondarySheetRowId: string | undefined,
 ): DropDispatchOptions {
-	const dispatchOptions: DropDispatchOptions = {
-		destinationIndex: getDefaultAppendIndexForPageDrop(
-			destinationPage,
-			secondarySheetRowId,
-		),
+	return {
+		destinationIndex: getDefaultAppendIndexForPageDrop(destinationPage),
 		destinationPageId: resolvedPageId,
 	};
-
-	if (secondarySheetRowId) {
-		dispatchOptions.destinationContainer = {
-			rowId: secondarySheetRowId,
-			type: "children",
-		};
-	}
-
-	return dispatchOptions;
 }
 
 function getPageDropPosition(
@@ -85,7 +61,6 @@ function getPageDropPosition(
 function applyPageDropPosition(
 	dispatchOptions: DropDispatchOptions,
 	destinationPage: UI_Page,
-	secondarySheetRowId: string | undefined,
 	pageDropPosition: PageDropPosition | undefined,
 ): void {
 	if (pageDropPosition === "start") {
@@ -94,10 +69,8 @@ function applyPageDropPosition(
 	}
 
 	if (pageDropPosition === "end") {
-		dispatchOptions.destinationIndex = getDefaultAppendIndexForPageDrop(
-			destinationPage,
-			secondarySheetRowId,
-		);
+		dispatchOptions.destinationIndex =
+			getDefaultAppendIndexForPageDrop(destinationPage);
 	}
 }
 
@@ -161,6 +134,39 @@ function dispatchStandardDrop(
 	});
 }
 
+function handleBlankChildPageDrop(
+	destinationPageId: string,
+	sourcePageId: string,
+	rowId: string,
+	pages: UI_Page[],
+	dispatchRow: Dispatch<RowAction>,
+): void {
+	const parentRowId = destinationPageId.slice("child:".length);
+	if (!parentRowId || parentRowId === "none") return;
+
+	const parentPage = pages.find(
+		(p) =>
+			p.rows.some((r) =>
+				getRowsRecursive(r).some((row) => row.id === parentRowId),
+			) || p.footer?.id === parentRowId,
+	);
+	if (!parentPage) return;
+
+	dispatchStandardDrop(
+		sourcePageId,
+		rowId,
+		{
+			destinationPageId: parentPage.id,
+			destinationIndex: 0,
+			destinationContainer: {
+				rowId: parentRowId,
+				type: "child",
+			},
+		},
+		dispatchRow,
+	);
+}
+
 export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
 	pages: UI_Page[],
@@ -180,7 +186,7 @@ export function handleDrop(
 		"handleDrop: sourcePageId is not a string",
 	);
 
-	const sourcePageId = resolveSourcePageIdFromRaw(rawSourcePageId, pages);
+	const sourcePageId = String(rawSourcePageId);
 
 	const footerDropTarget = findFooterDropTarget(location.current.dropTargets);
 	if (footerDropTarget) {
@@ -219,63 +225,29 @@ export function handleDrop(
 		return;
 	}
 
-	// Handle drops onto the blank child page (children:rowId synthetic target).
-	const CHILDREN_PAGE_PREFIX = "children:";
-	if (destinationPageId.startsWith(CHILDREN_PAGE_PREFIX)) {
-		const parentRowId = destinationPageId.slice(CHILDREN_PAGE_PREFIX.length);
-		if (!parentRowId || parentRowId === "none") return;
-
-		// Find the page containing the parent row to use as destination.
-		const parentPage = pages.find(
-			(p) =>
-				p.rows.some((r) =>
-					getRowsRecursive(r).some((row) => row.id === parentRowId),
-				) || p.footer?.id === parentRowId,
-		);
-		if (!parentPage) return;
-
-		// Find the parent row to determine current children count.
-		const parentRow = findRowInPagesHelper(parentRowId, pages);
-		const childrenCount = parentRow?.config.view.content.children?.length ?? 0;
-
-		const childDispatchOptions: DropDispatchOptions = {
-			destinationPageId: parentPage.id,
-			destinationIndex: childrenCount,
-			destinationContainer: {
-				rowId: parentRowId,
-				type: "children",
-			},
-		};
-
-		dispatchStandardDrop(
+	// Handle drops onto the blank child page (child:rowId synthetic target).
+	if (destinationPageId.startsWith("child:")) {
+		handleBlankChildPageDrop(
+			destinationPageId,
 			sourcePageId,
 			rowId,
-			childDispatchOptions,
+			pages,
 			dispatchRow,
 		);
 		return;
 	}
 
-	const {
-		page: destinationPage,
-		resolvedPageId,
-		secondarySheetRowId: resolvedSecondarySheetRowId,
-	} = resolveDestinationPageFromRawPageId(destinationPageId, pages);
+	const { page: destinationPage, resolvedPageId } =
+		resolveDestinationPageFromRawPageId(destinationPageId, pages);
 
 	const dispatchOptions = buildInitialDropDispatchOptions(
 		destinationPage,
 		resolvedPageId,
-		resolvedSecondarySheetRowId,
 	);
 
 	const firstDropTarget = location.current.dropTargets[0];
 	const pageDropPosition = getPageDropPosition(firstDropTarget);
-	applyPageDropPosition(
-		dispatchOptions,
-		destinationPage,
-		resolvedSecondarySheetRowId,
-		pageDropPosition,
-	);
+	applyPageDropPosition(dispatchOptions, destinationPage, pageDropPosition);
 
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]

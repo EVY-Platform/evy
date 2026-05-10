@@ -82,8 +82,6 @@ export type RowAction =
 			pageId: string;
 			title: string;
 	  }
-	| { type: "OPEN_SECONDARY_SHEET"; sheetRowId: string }
-	| { type: "CLOSE_SECONDARY_SHEET" }
 	| {
 			type: "PUSH_CONFIG_STACK";
 			parentRowId: string;
@@ -141,6 +139,5 @@ export type AppState = {
 	activeRowId?: string;
 	activeFlowId?: string;
 	activePageId?: string;
-	secondarySheetRowId?: string;
 	configStack: string[];
 };

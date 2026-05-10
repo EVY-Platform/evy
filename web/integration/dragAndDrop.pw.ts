@@ -77,23 +77,24 @@ test.describe("Drag & Drop UX", () => {
 				title: "Page 1",
 				rows: [
 					{
-						id: "sheet-1",
-						type: "SheetContainer" as const,
+						id: "column-1",
+						type: "ColumnContainer" as const,
 						view: {
 							content: {
-								title: "Sheet container row title",
-								child: {
-									id: "sheet-child-1",
-									type: "Info" as const,
-									view: {
-										content: {
-											title: "Child Info",
-											subtitle: "Child subtitle",
+								title: "Column container row title",
+								children: [
+									{
+										id: "column-child-1",
+										type: "Info" as const,
+										view: {
+											content: {
+												title: "Child Info",
+												subtitle: "Child subtitle",
+											},
 										},
+										actions: [],
 									},
-									actions: [],
-								},
-								children: [],
+								],
 							},
 						},
 						actions: [],
@@ -468,7 +469,6 @@ test.describe("Drag & Drop UX", () => {
 			"Column container row title",
 			"List container row title",
 			"Select segment container row title",
-			"Sheet container row title",
 		];
 
 		const initialRowCount = await pageContent

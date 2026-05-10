@@ -9,7 +9,9 @@ import Foundation
 enum EVYActionRunner {
   static func run(
     actions: [UI_RowAction],
+    row: UI_Row? = nil,
     datum: EVYJson? = nil,
+    show: @escaping (UI_Row) -> Void = { _ in },
     navigate: @escaping (NavOperation) -> Void
   ) {
     guard !actions.isEmpty else { return }
@@ -25,32 +27,36 @@ enum EVYActionRunner {
       }
 
       if !executeTrueBranch {
-        let falseBranch = action.`false`.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !falseBranch.isEmpty {
-          do {
-            try execute(branch: falseBranch, datum: datum, navigate: navigate)
-          } catch {
-            NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
-          }
-        }
+        runBranch(action.`false`, row: row, datum: datum, show: show, navigate: navigate)
         return
       }
 
-      let trueBranch = action.`true`.trimmingCharacters(in: .whitespacesAndNewlines)
-      if trueBranch.isEmpty { continue }
+      runBranch(action.`true`, row: row, datum: datum, show: show, navigate: navigate)
+    }
+  }
 
-      do {
-        try execute(branch: trueBranch, datum: datum, navigate: navigate)
-      } catch {
-        NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
-      }
+  private static func runBranch(
+    _ rawBranch: String,
+    row: UI_Row?,
+    datum: EVYJson?,
+    show: @escaping (UI_Row) -> Void,
+    navigate: @escaping (NavOperation) -> Void
+  ) {
+    let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return }
+    do {
+      try execute(branch: trimmed, row: row, datum: datum, navigate: navigate, show: show)
+    } catch {
+      NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
     }
   }
 
   private static func execute(
     branch: String,
+    row: UI_Row?,
     datum: EVYJson?,
-    navigate: @escaping (NavOperation) -> Void
+    navigate: @escaping (NavOperation) -> Void,
+    show: @escaping (UI_Row) -> Void
   ) throws {
     let unwrappedBranch = unwrapActionBranch(branch)
 
@@ -80,6 +86,10 @@ enum EVYActionRunner {
         navigate(.create(key))
       case "close":
         navigate(.close)
+      case "show":
+        if let child = row?.view.content.child {
+          show(child)
+        }
       case "highlight_required":
         let args = splitFunctionArguments(functionArgs)
         let alias = args.first ?? "field"

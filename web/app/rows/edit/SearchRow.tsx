@@ -7,8 +7,6 @@ import InlineIcon from "../design-system/InlineIcon";
 import Input from "../design-system/Input";
 import { RowLayout } from "../design-system/RowLayout";
 import InfoRow from "../view/InfoRow";
-import { SearchPreviewResults } from "./searchPreview";
-
 const SEARCH_RESULT_TEMPLATE_ROW_ID = "00000000-0000-4000-8000-000000000001";
 
 const defaultSearchResultTemplateRow: Row = {
@@ -54,10 +52,6 @@ export default defineRow("SearchRow", {
 					placeholder={row.config.view.content.placeholder}
 				/>
 			</div>
-			<SearchPreviewResults
-				templateRow={row.config.view.content.child}
-				parentRowId={row.id}
-			/>
 		</RowLayout>
 	),
 });

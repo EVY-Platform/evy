@@ -3,47 +3,15 @@ import invariant from "tiny-invariant";
 import type { UI_Page } from "../types/flow";
 import type { Row, ContainerType } from "../types/row";
 
-const SECONDARY_PAGE_ID_PREFIX = "secondary:";
-
-function parseSecondarySheetRowId(pageId: string): string | undefined {
-	return pageId.startsWith(SECONDARY_PAGE_ID_PREFIX)
-		? pageId.slice(SECONDARY_PAGE_ID_PREFIX.length)
-		: undefined;
-}
-
-export function resolveSourcePageIdFromRaw(
-	rawSourcePageId: string,
-	pages: UI_Page[],
-): string {
-	const sheetRowId = parseSecondarySheetRowId(rawSourcePageId);
-	if (!sheetRowId) return rawSourcePageId;
-	const sourcePage = findPageContainingRow(pages, sheetRowId);
-	return sourcePage?.id ?? rawSourcePageId;
-}
-
 type ResolvedDropDestinationPage = {
 	page: UI_Page;
 	resolvedPageId: string;
-	secondarySheetRowId: string | undefined;
 };
 
 export function resolveDestinationPageFromRawPageId(
 	rawDestinationPageId: string,
 	pages: UI_Page[],
 ): ResolvedDropDestinationPage {
-	const secondarySheetRowId = parseSecondarySheetRowId(rawDestinationPageId);
-	if (secondarySheetRowId) {
-		const destinationPage = findPageContainingRow(pages, secondarySheetRowId);
-		invariant(
-			destinationPage,
-			"resolveDestinationPageFromRawPageId: destinationPage is not defined",
-		);
-		return {
-			page: destinationPage,
-			resolvedPageId: destinationPage.id,
-			secondarySheetRowId,
-		};
-	}
 	const destinationPage = pages.find(
 		(page) => page.id === rawDestinationPageId,
 	);
@@ -54,15 +22,7 @@ export function resolveDestinationPageFromRawPageId(
 	return {
 		page: destinationPage,
 		resolvedPageId: rawDestinationPageId,
-		secondarySheetRowId: undefined,
 	};
-}
-
-function findPageContainingRow(
-	pages: UI_Page[],
-	rowId: string,
-): UI_Page | undefined {
-	return pages.find((page) => findRowInSinglePage(page, rowId));
 }
 
 export function findRowInPages(

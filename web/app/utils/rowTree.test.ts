@@ -11,7 +11,6 @@ import {
 	insertRowIntoPage,
 	removeRowFromPage,
 	resolveDestinationPageFromRawPageId,
-	resolveSourcePageIdFromRaw,
 	updateRowInTree,
 } from "./rowTree";
 
@@ -41,26 +40,12 @@ function page(id: string, rows: Row[], footer?: Row): UI_Page {
 	return { id, title: "T", rows, footer };
 }
 
-describe("secondary sheet page ids", () => {
-	it("resolves secondary pseudo ids to the page containing the sheet row", () => {
-		const pages = [page("main", [makeRow("sheet-host")])];
+describe("page id resolution", () => {
+	it("resolves a raw page id to its page", () => {
+		const pages = [page("main", [makeRow("row-1")])];
 
-		expect(resolveSourcePageIdFromRaw("secondary:sheet-host", pages)).toBe(
-			"main",
-		);
-
-		const destination = resolveDestinationPageFromRawPageId(
-			"secondary:sheet-host",
-			pages,
-		);
+		const destination = resolveDestinationPageFromRawPageId("main", pages);
 		expect(destination.resolvedPageId).toBe("main");
-		expect(destination.secondarySheetRowId).toBe("sheet-host");
-	});
-
-	it("falls back to the raw source id when the sheet row is missing", () => {
-		expect(resolveSourcePageIdFromRaw("secondary:missing", [])).toBe(
-			"secondary:missing",
-		);
 	});
 });
 

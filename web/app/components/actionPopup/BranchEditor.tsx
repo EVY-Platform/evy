@@ -30,7 +30,9 @@ function buildArgDropdowns(
 	draftVariables: string[],
 	flows: UI_Flow[],
 ): ArgDropdownSlot[] {
-	if (!functionName || functionName === "close") return [];
+	if (!functionName || functionName === "close" || functionName === "show") {
+		return [];
+	}
 
 	if (functionName === "navigate") {
 		const dropdowns: ArgDropdownSlot[] = [

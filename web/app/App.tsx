@@ -1,10 +1,4 @@
-import {
-	Fragment,
-	useCallback,
-	useEffect,
-	useMemo,
-	type CSSProperties,
-} from "react";
+import { Fragment, useEffect, useMemo, type CSSProperties } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { FileSliders, Rows3 } from "lucide-react";
@@ -18,8 +12,9 @@ import {
 	CollapsibleSidePanel,
 	useHoverToggle,
 } from "./components/CollapsibleSidePanel";
-import SecondarySheetPage from "./components/SecondarySheetPage";
+
 import { BlankChildPage } from "./components/BlankChildPage";
+import { ChildPage } from "./components/ChildPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
@@ -30,6 +25,7 @@ import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
 import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
+
 import {
 	activePageWrapperStyle,
 	canvasContentStyle,
@@ -37,6 +33,7 @@ import {
 	secondaryPageWrapperStyle,
 } from "./appLayoutStyles";
 import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
+import type { Row } from "./types/row";
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
 const PHONE_FRAME_STYLE: CSSProperties = {
@@ -54,13 +51,58 @@ const ADD_PAGE_BUTTON_STYLE: CSSProperties = {
 	borderRadius: "var(--radius-md)",
 };
 
+function buildActiveChildPageRows({
+	activeRowId,
+	configStack,
+	pages,
+}: {
+	activeRowId: string | undefined;
+	configStack: string[];
+	pages: { rows: Row[]; footer?: Row }[];
+}): Row[] {
+	if (!activeRowId) return [];
+
+	const activeRootRow = findRowInPages(activeRowId, pages);
+	if (!activeRootRow) return [];
+
+	const childPageRows: Row[] = [];
+	let currentParentRow = activeRootRow;
+
+	for (const selectedDescendantRowId of configStack) {
+		const singularChild = currentParentRow.config.view.content.child;
+		if (singularChild?.id === selectedDescendantRowId) {
+			childPageRows.push(singularChild);
+			currentParentRow = singularChild;
+			continue;
+		}
+
+		const nestedChild = currentParentRow.config.view.content.children?.find(
+			(child) => child.id === selectedDescendantRowId,
+		);
+		if (nestedChild) {
+			currentParentRow = nestedChild;
+			continue;
+		}
+
+		const fallbackRow = findRowInPages(selectedDescendantRowId, pages);
+		if (!fallbackRow) return childPageRows;
+		currentParentRow = fallbackRow;
+	}
+
+	const nextChildRow = currentParentRow.config.view.content.child;
+	if (nextChildRow) {
+		childPageRows.push(nextChildRow);
+	}
+
+	return childPageRows;
+}
+
 function AppContent() {
 	const {
 		dispatchRow,
 		activePageId,
 		activeRowId,
 		configStack,
-		secondarySheetRowId,
 		flows,
 		activeFlowId,
 	} = useFlowsContext();
@@ -71,22 +113,21 @@ function AppContent() {
 
 	const isElementActive = Boolean(activePageId);
 
-	const pinSidePanelsOpen = isElementActive;
 	const expandSidePanelsForPageDrag = dragging === "page";
 	const isRowsPanelExpanded =
-		pinSidePanelsOpen || expandSidePanelsForPageDrag || rowsHover.hovered;
+		isElementActive || expandSidePanelsForPageDrag || rowsHover.hovered;
 	const isConfigurationPanelExpanded =
-		pinSidePanelsOpen ||
+		isElementActive ||
 		expandSidePanelsForPageDrag ||
 		configurationHover.hovered;
 
 	useEffect(() => {
-		if (!pinSidePanelsOpen && !expandSidePanelsForPageDrag) {
+		if (!isElementActive && !expandSidePanelsForPageDrag) {
 			rowsHover.close();
 			configurationHover.close();
 		}
 	}, [
-		pinSidePanelsOpen,
+		isElementActive,
 		expandSidePanelsForPageDrag,
 		rowsHover.close,
 		configurationHover.close,
@@ -101,11 +142,6 @@ function AppContent() {
 		() => pages.find((page) => page.id === activePageId),
 		[pages, activePageId],
 	);
-
-	const secondarySheetRow = useMemo(() => {
-		if (!secondarySheetRowId) return undefined;
-		return findRowInPages(secondarySheetRowId, pages);
-	}, [secondarySheetRowId, pages]);
 
 	useEffect(() => {
 		return monitorForElements({
@@ -122,15 +158,25 @@ function AppContent() {
 		});
 	}, [pages, dispatchRow, dispatchDragging]);
 
-	const clearSelectionOnBackground = useCallback(() => {
+	const clearSelectionOnBackground = () => {
 		dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
-	}, [dispatchRow]);
+	};
 
 	const showAddPageButton = Boolean(activeFlowId) && !isElementActive;
 
 	const activeLeafRowId =
 		configStack.length > 0 ? configStack[configStack.length - 1] : activeRowId;
-	const shouldShowBlankChildPage = Boolean(activeLeafRowId);
+
+	const activeLeafRow = activeLeafRowId
+		? findRowInPages(activeLeafRowId, pages)
+		: undefined;
+	const activeLeafChild = activeLeafRow?.config.view.content.child;
+	const childPageRows = useMemo(
+		() => buildActiveChildPageRows({ activeRowId, configStack, pages }),
+		[activeRowId, configStack, pages],
+	);
+
+	const shouldShowBlankChildPage = Boolean(activeLeafRowId && !activeLeafChild);
 
 	return (
 		<div className="evy-relative evy-flex-1 evy-min-h-0 evy-min-w-0 evy-overflow-hidden">
@@ -153,18 +199,21 @@ function AppContent() {
 							>
 								<AppPage pageId={activePage.id} />
 							</CanvasPageFrame>
-							{secondarySheetRow && (
+
+							{childPageRows.map((childPageRow) => (
 								<CanvasPageFrame
+									key={childPageRow.id}
 									wrapperStyle={{
 										...secondaryPageWrapperStyle,
 										...PHONE_FRAME_STYLE,
 									}}
 									className="evy-flex-shrink-0"
-									data-testid="secondary-sheet-page"
+									data-testid="child-page"
 								>
-									<SecondarySheetPage sheetRowId={secondarySheetRow.id} />
+									<ChildPage childRow={childPageRow} />
 								</CanvasPageFrame>
-							)}
+							))}
+
 							{shouldShowBlankChildPage && (
 								<CanvasPageFrame
 									wrapperStyle={{
@@ -174,7 +223,7 @@ function AppContent() {
 									className="evy-flex-shrink-0"
 									data-testid="blank-child-page"
 								>
-									<BlankChildPage activeLeafRowId={activeLeafRowId} />
+									<BlankChildPage parentRowId={activeLeafRowId} />
 								</CanvasPageFrame>
 							)}
 						</Fragment>
@@ -209,7 +258,7 @@ function AppContent() {
 			<CollapsibleSidePanel
 				side="left"
 				isExpanded={isRowsPanelExpanded}
-				pinOpenByPage={pinSidePanelsOpen}
+				pinOpenByPage={isElementActive}
 				onOpenInteraction={rowsHover.open}
 				onCloseInteraction={rowsHover.close}
 				collapsedLabel="Expand rows panel"
@@ -227,7 +276,7 @@ function AppContent() {
 			<CollapsibleSidePanel
 				side="right"
 				isExpanded={isConfigurationPanelExpanded}
-				pinOpenByPage={pinSidePanelsOpen}
+				pinOpenByPage={isElementActive}
 				onOpenInteraction={configurationHover.open}
 				onCloseInteraction={configurationHover.close}
 				collapsedLabel="Expand configuration panel"

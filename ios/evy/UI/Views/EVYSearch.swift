@@ -15,8 +15,6 @@ private struct EVYSearchResult: Identifiable {
 }
 
 struct EVYSearch: View {
-  @Environment(\.navigate) private var navigate
-
   let source: String
   let placeholder: String
   let resultTemplate: UI_Row?
@@ -40,14 +38,7 @@ struct EVYSearch: View {
       EVYSearchField(text: $searchText, placeholder: placeholder)
 
       ForEach(filteredResults) { result in
-        EVYRow(row: result.displayRow)
-          .onTapGesture {
-            EVYActionRunner.run(
-              actions: result.displayRow.actions,
-              datum: result.datum,
-              navigate: navigate
-            )
-          }
+        EVYRow(row: result.displayRow, datum: result.datum)
           .padding(.vertical, Constants.majorPadding)
       }
     }

@@ -10,7 +10,6 @@ export type FlowsContextValue = {
 	activeFlowId?: string;
 	activeRowId?: string;
 	activePageId?: string;
-	secondarySheetRowId?: string;
 	configStack: string[];
 	dispatchRow: Dispatch<RowAction>;
 };

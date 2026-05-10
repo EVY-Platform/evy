@@ -6,6 +6,7 @@ export const ACTION_FUNCTIONS = [
 	"close",
 	"create",
 	"navigate",
+	"show",
 	"highlight_required",
 ] as const;
 export type ActionFunction = (typeof ACTION_FUNCTIONS)[number];
@@ -14,6 +15,7 @@ export const FUNCTION_LABELS: Record<ActionFunction, string> = {
 	close: "Close",
 	create: "Create",
 	navigate: "Navigate",
+	show: "Show child sheet",
 	highlight_required: "Highlight required",
 };
 

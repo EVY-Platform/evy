@@ -7,19 +7,17 @@ import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
 
 /**
  * A blank page shown to the right of the active page when a row-like element is selected.
- * Dropping a row here inserts it as a child of the active leaf row.
+ * Dropping a row here sets it as the singular child of the parent row.
  */
 export function BlankChildPage({
-	activeLeafRowId,
+	parentRowId,
 }: {
-	activeLeafRowId: string | undefined;
+	parentRowId: string | undefined;
 }) {
 	const { dispatchDropIndicator } = useDragContext();
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
-	const pageId = activeLeafRowId
-		? `children:${activeLeafRowId}`
-		: "children:none";
+	const pageId = parentRowId ? `child:${parentRowId}` : "child:none";
 
 	usePageDropTarget({
 		scrollableRef,
