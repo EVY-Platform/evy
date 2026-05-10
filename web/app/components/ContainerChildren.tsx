@@ -4,6 +4,7 @@ import type { Row, ContainerType } from "../types/row";
 import { useFlowsContext } from "../state";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { PlaceholderDropIndicator } from "./PlaceholderDropIndicator";
+import { useIsInRowsPanel } from "./RowRenderLocationContext";
 
 export function ContainerChildren({
 	rows,
@@ -21,6 +22,8 @@ export function ContainerChildren({
 	showPlaceholder?: boolean;
 }) {
 	const { dispatchRow } = useFlowsContext();
+	const isInRowsPanel = useIsInRowsPanel();
+	const shouldShowIndicators = showIndicators && !isInRowsPanel;
 
 	const selectNestedRow = useCallback(
 		(nestedRowId: string) => {
@@ -30,7 +33,7 @@ export function ContainerChildren({
 	);
 
 	if (!rows?.length) {
-		return showPlaceholder ? (
+		return showPlaceholder && !isInRowsPanel ? (
 			<PlaceholderDropIndicator
 				key="placeholder"
 				containerRowId={containerRowId}
@@ -47,7 +50,7 @@ export function ContainerChildren({
 					rowId={child.id}
 					selectRow={() => selectNestedRow(child.id)}
 					orientation={orientation}
-					showIndicators={showIndicators}
+					showIndicators={shouldShowIndicators}
 				>
 					{child.row}
 				</DraggableRowContainer>
