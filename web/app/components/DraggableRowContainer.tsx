@@ -48,6 +48,7 @@ export function DraggableRowContainer({
 				selectRow={selectRow}
 				indicators={mergedIndicators}
 				orientation={orientation}
+				isDraggable={isDraggable}
 			>
 				{children}
 			</RowPrimitive>
