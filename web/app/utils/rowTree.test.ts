@@ -3,13 +3,13 @@ import { describe, expect, it } from "bun:test";
 import type { UI_Page } from "../types/flow";
 import type { Row } from "../types/row";
 import {
-	findContainerById,
-	findContainerOfRow,
+	findContainerByIdInPage,
+	findContainerOfRowInPage,
 	findRowIdPathFromPageRoot,
 	findRowInPages,
 	getRowsRecursive,
-	insertRowIntoTree,
-	removeRowFromTree,
+	insertRowIntoPage,
+	removeRowFromPage,
 	resolveDestinationPageFromRawPageId,
 	resolveSourcePageIdFromRaw,
 	updateRowInTree,
@@ -24,6 +24,7 @@ function makeRow(
 		row: null,
 		config: {
 			type: "Text",
+			source: "",
 			actions: [],
 			view: {
 				content: {
@@ -36,225 +37,128 @@ function makeRow(
 	};
 }
 
-function page(id: string, rows: Row[]): UI_Page {
-	return { id, title: "T", rows };
+function page(id: string, rows: Row[], footer?: Row): UI_Page {
+	return { id, title: "T", rows, footer };
 }
 
-describe("resolveSourcePageIdFromRaw", () => {
-	it("returns raw id when not a secondary pseudo page", () => {
-		const pages = [page("p1", [makeRow("a")])];
-		expect(resolveSourcePageIdFromRaw("p1", pages)).toBe("p1");
-	});
+describe("secondary sheet page ids", () => {
+	it("resolves secondary pseudo ids to the page containing the sheet row", () => {
+		const pages = [page("main", [makeRow("sheet-host")])];
 
-	it("maps secondary:hostRowId to the page that contains the host row at top level", () => {
-		const host = makeRow("sheet-host");
-		const pages = [page("main", [host])];
 		expect(resolveSourcePageIdFromRaw("secondary:sheet-host", pages)).toBe(
 			"main",
 		);
+
+		const destination = resolveDestinationPageFromRawPageId(
+			"secondary:sheet-host",
+			pages,
+		);
+		expect(destination.resolvedPageId).toBe("main");
+		expect(destination.secondarySheetRowId).toBe("sheet-host");
 	});
 
-	it("falls back to raw id when host row is not found", () => {
-		const pages = [page("main", [makeRow("a")])];
-		expect(resolveSourcePageIdFromRaw("secondary:missing", pages)).toBe(
+	it("falls back to the raw source id when the sheet row is missing", () => {
+		expect(resolveSourcePageIdFromRaw("secondary:missing", [])).toBe(
 			"secondary:missing",
 		);
 	});
 });
 
-describe("resolveDestinationPageFromRawPageId", () => {
-	it("resolves normal page id", () => {
-		const pages = [page("p1", [])];
-		const res = resolveDestinationPageFromRawPageId("p1", pages);
-		expect(res.page.id).toBe("p1");
-		expect(res.resolvedPageId).toBe("p1");
-		expect(res.secondarySheetRowId).toBeUndefined();
+describe("row tree traversal", () => {
+	it("finds nested rows and root-to-leaf paths including footer descendants", () => {
+		const bodyLeaf = makeRow("body-leaf");
+		const footerLeaf = makeRow("footer-leaf");
+		const bodyRoot = makeRow("body-root", { children: [bodyLeaf] });
+		const footerRoot = makeRow("footer-root", { child: footerLeaf });
+		const p = page("p", [bodyRoot], footerRoot);
+
+		expect(findRowInPages("body-leaf", [p])).toBe(bodyLeaf);
+		expect(findRowInPages("footer-leaf", [p])).toBe(footerLeaf);
+		expect(findRowIdPathFromPageRoot(p, "footer-leaf")).toEqual([
+			"footer-root",
+			"footer-leaf",
+		]);
 	});
 
-	it("resolves secondary sheet to host page", () => {
-		const host = makeRow("host");
-		const pages = [page("p1", [host])];
-		const res = resolveDestinationPageFromRawPageId("secondary:host", pages);
-		expect(res.page.id).toBe("p1");
-		expect(res.resolvedPageId).toBe("p1");
-		expect(res.secondarySheetRowId).toBe("host");
-	});
-});
-
-describe("findRowInPages", () => {
-	it("finds top-level row", () => {
-		const a = makeRow("a");
-		expect(findRowInPages("a", [page("p", [a])])).toBe(a);
-	});
-
-	it("finds nested child", () => {
-		const inner = makeRow("inner");
-		const outer = makeRow("outer", { child: inner });
-		expect(findRowInPages("inner", [page("p", [outer])])).toBe(inner);
-	});
-
-	it("finds nested children", () => {
-		const c = makeRow("c");
-		const outer = makeRow("outer", { children: [c] });
-		expect(findRowInPages("c", [page("p", [outer])])).toBe(c);
-	});
-
-	it("returns undefined when missing", () => {
-		expect(findRowInPages("x", [page("p", [makeRow("a")])])).toBeUndefined();
-	});
-
-	it("finds row nested under footer", () => {
-		const inner = makeRow("foot-inner");
-		const foot = makeRow("foot", { child: inner });
-		const p: UI_Page = { id: "p", title: "T", rows: [], footer: foot };
-		expect(findRowInPages("foot-inner", [p])).toBe(inner);
-	});
-});
-
-describe("findRowIdPathFromPageRoot", () => {
-	it("returns path from top-level row to nested leaf", () => {
+	it("flattens a row subtree", () => {
 		const leaf = makeRow("leaf");
-		const mid = makeRow("mid", { child: leaf });
-		const p = page("p1", [makeRow("root", { children: [mid] })]);
-		expect(findRowIdPathFromPageRoot(p, "leaf")).toEqual([
+		const mid = makeRow("mid", { children: [leaf] });
+		const root = makeRow("root", { child: mid });
+
+		expect(getRowsRecursive(root).map((row) => row.id)).toEqual([
 			"root",
 			"mid",
 			"leaf",
 		]);
 	});
 
-	it("works when leaf is under footer", () => {
-		const inner = makeRow("f-in");
-		const foot = makeRow("foot", { child: inner });
-		const p: UI_Page = { id: "p", title: "T", rows: [], footer: foot };
-		expect(findRowIdPathFromPageRoot(p, "f-in")).toEqual(["foot", "f-in"]);
-	});
-});
-
-describe("getRowsRecursive", () => {
-	it("includes self and descendants", () => {
-		const leaf = makeRow("leaf");
-		const mid = makeRow("mid", { children: [leaf] });
-		const root = makeRow("root", { child: mid });
-		const flat = getRowsRecursive(root).map((r) => r.id);
-		expect(flat).toEqual(["root", "mid", "leaf"]);
-	});
-});
-
-describe("findContainerOfRow", () => {
-	it("returns null for top-level row", () => {
-		const rows = [makeRow("a")];
-		expect(findContainerOfRow("a", rows)).toBeNull();
-	});
-
-	it("finds child container", () => {
-		const inner = makeRow("inner");
-		const outer = makeRow("outer", { child: inner });
-		const res = findContainerOfRow("inner", [outer]);
-		expect(res?.container.id).toBe("outer");
-		expect(res?.type).toBe("child");
-	});
-
-	it("finds children container", () => {
-		const c = makeRow("c");
-		const outer = makeRow("outer", { children: [c] });
-		const res = findContainerOfRow("c", [outer]);
-		expect(res?.container.id).toBe("outer");
-		expect(res?.type).toBe("children");
-	});
-});
-
-describe("findContainerById", () => {
-	it("finds row that is a child slot container", () => {
-		const inner = makeRow("inner");
-		const outer = makeRow("outer", { child: inner });
-		const res = findContainerById("outer", [outer]);
-		expect(res?.type).toBe("child");
-	});
-
-	it("finds row that is a children slot container", () => {
-		const c = makeRow("c");
-		const outer = makeRow("outer", { children: [c] });
-		const res = findContainerById("outer", [outer]);
-		expect(res?.type).toBe("children");
-	});
-});
-
-describe("removeRowFromTree", () => {
-	it("removes top-level row", () => {
-		const a = makeRow("a");
-		const b = makeRow("b");
-		const out = removeRowFromTree([a, b], "a");
-		expect(out.map((r) => r.id)).toEqual(["b"]);
-	});
-
-	it("removes nested child", () => {
-		const inner = makeRow("inner");
-		const outer = makeRow("outer", { child: inner });
-		const out = removeRowFromTree([outer], "inner");
-		expect(out[0].config.view.content.child).toBeUndefined();
-	});
-
-	it("removes from children array", () => {
-		const c1 = makeRow("c1");
-		const c2 = makeRow("c2");
-		const outer = makeRow("outer", { children: [c1, c2] });
-		const out = removeRowFromTree([outer], "c1");
-		const children = out[0].config.view.content.children ?? [];
-		expect(children.map((r) => r.id)).toEqual(["c2"]);
-	});
-});
-
-describe("insertRowIntoTree", () => {
-	it("inserts at page root index", () => {
-		const a = makeRow("a");
-		const b = makeRow("b");
-		const res = insertRowIntoTree([a], b, 0);
-		expect(res.inserted).toBe(true);
-		expect(res.rows.map((r) => r.id)).toEqual(["b", "a"]);
-	});
-
-	it("inserts into child container", () => {
-		const outer = makeRow("outer", {});
-		const insert = makeRow("new");
-		const res = insertRowIntoTree([outer], insert, 0, {
-			rowId: "outer",
-			type: "child",
-		});
-		expect(res.inserted).toBe(true);
-		expect(res.rows[0].config.view.content.child?.id).toBe("new");
-	});
-
-	it("inserts into children container at index", () => {
-		const outer = makeRow("outer", { children: [] });
-		const insert = makeRow("new");
-		const res = insertRowIntoTree([outer], insert, 0, {
-			rowId: "outer",
-			type: "children",
-		});
-		expect(res.inserted).toBe(true);
-		expect(res.rows[0].config.view.content.children?.map((r) => r.id)).toEqual([
-			"new",
-		]);
-	});
-
-	it("returns inserted false when container missing", () => {
-		const res = insertRowIntoTree([makeRow("a")], makeRow("b"), 0, {
-			rowId: "nope",
-			type: "children",
-		});
-		expect(res.inserted).toBe(false);
-	});
-});
-
-describe("updateRowInTree", () => {
-	it("updates matching row at depth", () => {
+	it("updates nested rows immutably", () => {
 		const inner = makeRow("inner", { text: "old" });
 		const outer = makeRow("outer", { child: inner });
 		const out = updateRowInTree([outer], "inner", (row) =>
 			makeRow(row.id, { ...row.config.view.content, text: "new" }),
 		);
+
+		expect(out[0]).not.toBe(outer);
 		expect(out[0].config.view.content.child?.config.view.content.text).toBe(
+			"new",
+		);
+	});
+});
+
+describe("page-level row tree helpers", () => {
+	it("finds containers in page rows and footer subtrees", () => {
+		const bodyChild = makeRow("body-child");
+		const footerChild = makeRow("footer-child");
+		const bodyContainer = makeRow("body-container", { children: [bodyChild] });
+		const footerContainer = makeRow("footer-container", { child: footerChild });
+		const p = page("p", [bodyContainer], footerContainer);
+
+		expect(findContainerOfRowInPage(p, "body-child")?.container.id).toBe(
+			"body-container",
+		);
+		expect(findContainerOfRowInPage(p, "footer-child")?.container.id).toBe(
+			"footer-container",
+		);
+		expect(findContainerByIdInPage(p, "footer-container")?.type).toBe("child");
+		expect(findContainerOfRowInPage(p, "footer-container")).toBeNull();
+	});
+
+	it("removes rows from page roots, footer roots, and nested footer content", () => {
+		const footerChild = makeRow("footer-child");
+		const footer = makeRow("footer", { child: footerChild });
+		const withoutBody = removeRowFromPage(
+			page("p", [makeRow("body")], footer),
+			"body",
+		);
+		const withoutFooterChild = removeRowFromPage(
+			page("p", [], footer),
+			"footer-child",
+		);
+		const withoutFooter = removeRowFromPage(page("p", [], footer), "footer");
+
+		expect(withoutBody.rows).toEqual([]);
+		expect(
+			withoutFooterChild.footer?.config.view.content.child,
+		).toBeUndefined();
+		expect(withoutFooter.footer).toBeUndefined();
+	});
+
+	it("inserts rows at page root and inside footer containers", () => {
+		const pageInsert = insertRowIntoPage(
+			page("p", [makeRow("a")]),
+			makeRow("b"),
+			0,
+		);
+		const footerInsert = insertRowIntoPage(
+			page("p", [], makeRow("footer", { children: [] })),
+			makeRow("new"),
+			0,
+			{ rowId: "footer", type: "children" },
+		);
+
+		expect(pageInsert.rows.map((row) => row.id)).toEqual(["b", "a"]);
+		expect(footerInsert.footer?.config.view.content.children?.[0].id).toBe(
 			"new",
 		);
 	});

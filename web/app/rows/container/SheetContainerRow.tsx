@@ -27,7 +27,8 @@ export default defineRow(typeName, {
 				<div className="evy-flex evy-gap-2">
 					<ContainerChildren
 						rows={rows}
-						showPlaceholder={row.id !== typeName}
+						containerRowId={row.id}
+						containerType="child"
 					/>
 				</div>
 			</RowLayout>

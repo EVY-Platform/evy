@@ -1,32 +1,23 @@
 import type React from "react";
-import { forwardRef, useMemo } from "react";
+import { forwardRef } from "react";
 
 import {
-	dropIndicatorExpansionBefore,
-	dropIndicatorExpansionAfter,
-	horizontalDropIndicator,
-	verticalDropIndicator,
+	verticalDropIndicatorBefore,
+	verticalDropIndicatorAfter,
+	horizontalDropIndicatorBefore,
+	horizontalDropIndicatorAfter,
 } from "../rows/design-system/dropIndicator";
 
-import {
-	idleState,
-	draggingState,
-	type DraggableState,
-} from "../hooks/useDraggable";
-
-const previewState: DraggableState = {
-	type: "preview",
-	container: null,
-	rect: null,
-};
+import { idleState, type DraggableState } from "../hooks/useDraggable";
 
 type RowPrimitiveProps = {
 	children: React.ReactNode;
 	state: DraggableState;
 	selectRow?: () => void;
 	indicators?: Array<"before" | "after">;
-	dropzones?: Array<"before" | "after">;
 	orientation?: "horizontal" | "vertical";
+	className?: string;
+	style?: React.CSSProperties;
 };
 
 export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
@@ -36,63 +27,40 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 			state,
 			selectRow,
 			indicators = [],
-			dropzones = [],
 			orientation = "vertical",
+			className,
+			style,
 		},
 		ref,
 	) {
-		const cursor = useMemo(() => {
-			return {
-				[previewState.type]: "pointer",
-				[draggingState.type]: "pointer",
-				[idleState.type]: "grab",
-			}[state.type];
-		}, [state.type]);
+		const cursor = state.type === idleState.type ? "grab" : "pointer";
+		const beforeClass =
+			orientation === "vertical"
+				? verticalDropIndicatorBefore
+				: horizontalDropIndicatorBefore;
+		const afterClass =
+			orientation === "vertical"
+				? verticalDropIndicatorAfter
+				: horizontalDropIndicatorAfter;
 
-		const indicatorClass = useMemo(() => {
-			return orientation === "vertical"
-				? verticalDropIndicator
-				: horizontalDropIndicator;
-		}, [orientation]);
-
-		const showBefore = useMemo(
-			() => dropzones.includes("before") || indicators.includes("before"),
-			[dropzones, indicators],
-		);
-		const showAfter = useMemo(
-			() => dropzones.includes("after") || indicators.includes("after"),
-			[dropzones, indicators],
-		);
+		const showBefore = indicators.includes("before");
+		const showAfter = indicators.includes("after");
 
 		return (
-			<>
-				{showBefore && (
-					<div
-						className={`${indicatorClass} ${
-							indicators.includes("before") ? dropIndicatorExpansionBefore : ""
-						}`}
-					/>
-				)}
-				{/* biome-ignore lint/a11y/useSemanticElements: This is a drag-and-drop container that requires a div for proper layout */}
-				<div
-					className="evy-flex evy-flex-col evy-w-full evy-relative evy-hover:bg-gray-light"
-					style={{ cursor }}
-					ref={ref}
-					onClick={selectRow}
-					onKeyDown={(e) => e.key === "Enter" && selectRow?.()}
-					role="button"
-					tabIndex={0}
-				>
-					{children}
-				</div>
-				{showAfter && (
-					<div
-						className={`${indicatorClass} ${
-							indicators.includes("after") ? dropIndicatorExpansionAfter : ""
-						}`}
-					/>
-				)}
-			</>
+			// biome-ignore lint/a11y/useSemanticElements: This is a drag-and-drop container that requires a div for proper layout
+			<div
+				className={`evy-flex evy-flex-col evy-w-full evy-relative evy-hover:bg-gray-light${className ? ` ${className}` : ""}`}
+				style={{ cursor, ...style }}
+				ref={ref}
+				onClick={selectRow}
+				onKeyDown={(e) => e.key === "Enter" && selectRow?.()}
+				role="button"
+				tabIndex={0}
+			>
+				{showBefore && <div className={beforeClass} />}
+				{children}
+				{showAfter && <div className={afterClass} />}
+			</div>
 		);
 	},
 );

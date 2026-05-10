@@ -4,18 +4,26 @@ import { DraggableRowContainer } from "./DraggableRowContainer";
 export function buildRowElements(
 	rows: Row[],
 	selectRow: (rowId: string) => void,
+	forcedIndicators?: {
+		rowId: string;
+		indicators: Array<"before" | "after">;
+	},
 ) {
-	const lastIndex = rows.length - 1;
-	return rows.map((row, index) => (
-		<DraggableRowContainer
-			key={row.id}
-			rowId={row.id}
-			selectRow={() => selectRow(row.id)}
-			showIndicators
-			previousRowId={index > 0 ? rows[index - 1].id : undefined}
-			nextRowId={index < lastIndex ? rows[index + 1].id : undefined}
-		>
-			{row.row}
-		</DraggableRowContainer>
-	));
+	return rows.map((row) => {
+		const rowForcedIndicators =
+			forcedIndicators && forcedIndicators.rowId === row.id
+				? forcedIndicators.indicators
+				: undefined;
+		return (
+			<DraggableRowContainer
+				key={row.id}
+				rowId={row.id}
+				selectRow={() => selectRow(row.id)}
+				showIndicators
+				forcedIndicators={rowForcedIndicators}
+			>
+				{row.row}
+			</DraggableRowContainer>
+		);
+	});
 }

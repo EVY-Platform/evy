@@ -2,7 +2,11 @@ import { useCallback, useMemo, useRef } from "react";
 
 import { useDragContext, useFlowsContext } from "../state";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
+import { usePageEdgeIndicators } from "../hooks/usePageEdgeIndicators";
+import { BlankPageDropIndicator } from "./BlankPageDropIndicator";
 import { buildRowElements } from "./buildRowElements";
+import { PageEdgeDropZone } from "./PageEdgeDropZone";
+
 import { baseTitleStyle, rounded24Style } from "./pageStyles";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
 import { findFlowById } from "../utils/flowHelpers";
@@ -42,11 +46,19 @@ export default function SecondarySheetPage({
 		extraData,
 	});
 
+	const pageHasRows = childRows.length > 0;
+	const lastChildRowId = pageHasRows
+		? childRows[childRows.length - 1].id
+		: undefined;
+
+	const { forcedIndicators, showBlankPageIndicator, edgePosition } =
+		usePageEdgeIndicators(pageId, lastChildRowId, pageHasRows);
+
 	const childRowIds = childRows.map((r) => r.id).join(",");
 	// biome-ignore lint/correctness/useExhaustiveDependencies: childRowIds detects in-place array mutations that childRows reference misses
 	const rowElements = useMemo(
-		() => buildRowElements(childRows, selectRow),
-		[childRows, childRowIds, selectRow],
+		() => buildRowElements(childRows, selectRow, forcedIndicators),
+		[childRows, childRowIds, selectRow, forcedIndicators],
 	);
 
 	return (
@@ -55,13 +67,21 @@ export default function SecondarySheetPage({
 			style={{ padding: "var(--size-30px)" }}
 		>
 			<div
-				className="evy-overflow-scroll evy-h-full evy-pt-4 evy-bg-white"
+				className="evy-overflow-scroll evy-flex evy-flex-col evy-h-full evy-pt-4 evy-bg-white"
 				style={rounded24Style}
 				{...canvasPageInteriorDomProps}
 				ref={scrollableRef}
 			>
 				<div style={baseTitleStyle}>{title}</div>
+				{showBlankPageIndicator && <BlankPageDropIndicator />}
 				{rowElements}
+				<PageEdgeDropZone
+					pageId={pageId}
+					position={edgePosition}
+					dispatchDropIndicator={dispatchDropIndicator}
+					className="evy-flex-1"
+					style={{ minHeight: "var(--size-8)" }}
+				/>
 			</div>
 		</div>
 	);

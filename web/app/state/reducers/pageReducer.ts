@@ -6,12 +6,12 @@ import type { Row } from "../../types/row";
 import { baseRows } from "../../rows/baseRows";
 import { buildRowForNewPageFromBase } from "../../utils/decodeFlow";
 import {
-	removeRowFromTree,
 	updateRowInTree,
 	findRowInPages,
 	findRowIdPathFromPageRoot,
 	findRowInSinglePage,
-	insertRowIntoTree,
+	removeRowFromPage,
+	insertRowIntoPage,
 } from "../../utils/rowTree";
 import { deriveSheetAndFocusFromRowChain } from "../../utils/urlUtils";
 import {
@@ -30,6 +30,21 @@ function mapRowAcrossPages(
 		rows: updateRowInTree(page.rows, rowId, updater),
 		footer: page.footer?.id === rowId ? updater(page.footer) : page.footer,
 	}));
+}
+
+function rowNameEquals(row: unknown, name: string): boolean {
+	if (row === null) return false;
+	const n = (row as Record<string, unknown>).name;
+	return typeof n === "string" && n === name;
+}
+
+function buildPaletteRow(oldRowId: string, newRowId: string): Row | undefined {
+	const baseRow = baseRows.find((row) => {
+		if (!row || typeof row !== "function") return false;
+		return rowNameEquals(row, oldRowId);
+	});
+	if (!baseRow) return undefined;
+	return buildRowForNewPageFromBase(baseRow, newRowId);
 }
 
 export const pageReducer = (state: AppState, action: RowAction): AppState => {
@@ -111,51 +126,77 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		};
 	};
 
-	function rowNameEquals(row: unknown, name: string): boolean {
-		if (row === null) return false;
-		const n = (row as Record<string, unknown>).name;
-		return typeof n === "string" && n === name;
-	}
-
 	switch (action.type) {
 		case "ADD_ROW": {
-			const baseRow = baseRows.find((row) => {
-				if (!row || typeof row !== "function") return false;
-				return rowNameEquals(row, action.oldRowId);
-			});
-			if (!baseRow) return state;
-
-			const rowDataAdd: Row = buildRowForNewPageFromBase(
-				baseRow,
-				action.newRowId,
-			);
+			const newRow = buildPaletteRow(action.oldRowId, action.newRowId);
+			if (!newRow) return state;
 
 			const page = flow.pages.find((p) => p.id === action.destinationPageId);
 			if (!page) return state;
 
-			const insertionResult = insertRowIntoTree(
-				page.rows,
-				rowDataAdd,
+			const updatedPage = insertRowIntoPage(
+				page,
+				newRow,
 				action.destinationIndex,
 				action.destinationContainer,
 			);
-			invariant(
-				insertionResult.inserted,
-				"PageReducer addRow: destination container not found in tree",
-			);
 
 			const updatedPages = flow.pages.map((p) =>
-				p.id === action.destinationPageId
-					? {
-							...p,
-							rows: insertionResult.rows,
-						}
-					: p,
+				p.id === action.destinationPageId ? updatedPage : p,
 			);
 
 			return updateState({
 				updatedPages,
 				activeRowId: action.newRowId,
+				configStack: [],
+			});
+		}
+		case "ADD_ROW_AS_FOOTER": {
+			const footerRow = buildPaletteRow(action.oldRowId, action.newRowId);
+			if (!footerRow) return state;
+
+			const pageExists = flow.pages.some(
+				(page) => page.id === action.destinationPageId,
+			);
+			if (!pageExists) return state;
+
+			const updatedPages = flow.pages.map((page) =>
+				page.id === action.destinationPageId
+					? { ...page, footer: footerRow }
+					: page,
+			);
+
+			return updateState({
+				updatedPages,
+				activeRowId: action.newRowId,
+				configStack: [],
+			});
+		}
+		case "MOVE_ROW_TO_FOOTER": {
+			const moveFooterOriginPage = flow.pages.find(
+				(page) => page.id === action.originPageId,
+			);
+			if (!moveFooterOriginPage) return state;
+
+			const moveFooterRow = findRowInPages(action.rowId, [
+				moveFooterOriginPage,
+			]);
+			if (!moveFooterRow) return state;
+
+			const cleanedPagesForFooter = flow.pages.map((page) =>
+				page.id === action.originPageId
+					? removeRowFromPage(page, action.rowId)
+					: page,
+			);
+			const finalPagesFooter = cleanedPagesForFooter.map((page) =>
+				page.id === action.destinationPageId
+					? { ...page, footer: moveFooterRow }
+					: page,
+			);
+
+			return updateState({
+				updatedPages: finalPagesFooter,
+				activeRowId: action.rowId,
 				configStack: [],
 			});
 		}
@@ -168,53 +209,34 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const row = findRowInPages(action.rowId, [originPage]);
 			invariant(row, "PageReducer moveRow: row is not defined");
 
-			const originRowsWithoutRow = removeRowFromTree(
-				originPage.rows,
-				action.rowId,
-			);
+			const cleanedOriginPage = removeRowFromPage(originPage, action.rowId);
 
 			const newPages = flow.pages.map((page) => {
 				if (
 					page.id === action.originPageId &&
 					page.id === action.destinationPageId
 				) {
-					const insertionResult = insertRowIntoTree(
-						originRowsWithoutRow,
+					// Same-page move: remove first, then insert into the result.
+					const result = insertRowIntoPage(
+						cleanedOriginPage,
 						row,
 						action.destinationIndex,
 						action.destinationContainer,
 					);
-					// Removing the dragged row can drop the destination container from the
-					// tree (e.g. invalid same-page drop into a descendant). No-op is expected.
-					if (!insertionResult.inserted) return page;
-
-					return {
-						...page,
-						rows: insertionResult.rows,
-					};
+					// If the destination container was a descendant of the dragged row,
+					// insertion will fail because the container was removed. No-op.
+					return result;
 				}
 				if (page.id === action.originPageId) {
-					return {
-						...page,
-						rows: originRowsWithoutRow,
-					};
+					return cleanedOriginPage;
 				}
 				if (page.id === action.destinationPageId) {
-					const insertionResult = insertRowIntoTree(
-						page.rows,
+					return insertRowIntoPage(
+						page,
 						row,
 						action.destinationIndex,
 						action.destinationContainer,
 					);
-					invariant(
-						insertionResult.inserted,
-						"PageReducer moveRow: destination container not found in tree",
-					);
-
-					return {
-						...page,
-						rows: insertionResult.rows,
-					};
 				}
 				return page;
 			});
@@ -229,10 +251,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return updateState({
 				updatedPages: flow.pages.map((page) =>
 					page.id === action.pageId
-						? {
-								...page,
-								rows: removeRowFromTree(page.rows, action.rowId),
-							}
+						? removeRowFromPage(page, action.rowId)
 						: page,
 				),
 			});

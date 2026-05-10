@@ -14,8 +14,8 @@ import type { ContainerType } from "../types/row";
 import type { RowAction } from "../types/actions";
 import { containerDropindicatorId } from "../rows/EVYRow";
 import {
-	findContainerById,
-	findContainerOfRow,
+	findContainerByIdInPage,
+	findContainerOfRowInPage,
 	resolveDestinationPageFromRawPageId,
 	resolveSourcePageIdFromRaw,
 } from "../utils/rowTree";
@@ -28,6 +28,12 @@ type DropDispatchOptions = {
 		type: ContainerType;
 	};
 };
+
+type DropTargetRecord = {
+	data: Record<string | symbol, unknown>;
+};
+
+type PageDropPosition = "start" | "end";
 
 function getDefaultAppendIndexForPageDrop(
 	destinationPage: UI_Page,
@@ -65,6 +71,94 @@ function buildInitialDropDispatchOptions(
 	return dispatchOptions;
 }
 
+function getPageDropPosition(
+	dropTarget: DropTargetRecord | undefined,
+): PageDropPosition | undefined {
+	const pageDropPosition = dropTarget?.data.pageDropPosition;
+	return pageDropPosition === "start" || pageDropPosition === "end"
+		? pageDropPosition
+		: undefined;
+}
+
+function applyPageDropPosition(
+	dispatchOptions: DropDispatchOptions,
+	destinationPage: UI_Page,
+	secondarySheetRowId: string | undefined,
+	pageDropPosition: PageDropPosition | undefined,
+): void {
+	if (pageDropPosition === "start") {
+		dispatchOptions.destinationIndex = 0;
+		return;
+	}
+
+	if (pageDropPosition === "end") {
+		dispatchOptions.destinationIndex = getDefaultAppendIndexForPageDrop(
+			destinationPage,
+			secondarySheetRowId,
+		);
+	}
+}
+
+function findFooterDropTarget(
+	dropTargets: DropTargetRecord[],
+): DropTargetRecord | undefined {
+	return dropTargets.find((target) => target.data.destinationIsFooter === true);
+}
+
+function dispatchFooterDrop(
+	footerDropTarget: DropTargetRecord,
+	sourcePageId: string,
+	rowId: string,
+	dispatchRow: Dispatch<RowAction>,
+): void {
+	const footerPageId = footerDropTarget.data.pageId;
+	invariant(
+		typeof footerPageId === "string",
+		"handleDrop: footer placeholder pageId is not a string",
+	);
+
+	if (sourcePageId === "rows") {
+		dispatchRow({
+			type: "ADD_ROW_AS_FOOTER",
+			newRowId: crypto.randomUUID(),
+			oldRowId: rowId,
+			destinationPageId: footerPageId,
+		});
+		return;
+	}
+
+	dispatchRow({
+		type: "MOVE_ROW_TO_FOOTER",
+		rowId,
+		originPageId: sourcePageId,
+		destinationPageId: footerPageId,
+	});
+}
+
+function dispatchStandardDrop(
+	sourcePageId: string,
+	rowId: string,
+	dispatchOptions: DropDispatchOptions,
+	dispatchRow: Dispatch<RowAction>,
+): void {
+	if (sourcePageId === "rows") {
+		dispatchRow({
+			type: "ADD_ROW",
+			newRowId: crypto.randomUUID(),
+			oldRowId: rowId,
+			...dispatchOptions,
+		});
+		return;
+	}
+
+	dispatchRow({
+		type: "MOVE_ROW",
+		rowId,
+		originPageId: sourcePageId,
+		...dispatchOptions,
+	});
+}
+
 export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
 	pages: UI_Page[],
@@ -85,6 +179,12 @@ export function handleDrop(
 	);
 
 	const sourcePageId = resolveSourcePageIdFromRaw(rawSourcePageId, pages);
+
+	const footerDropTarget = findFooterDropTarget(location.current.dropTargets);
+	if (footerDropTarget) {
+		dispatchFooterDrop(footerDropTarget, sourcePageId, rowId, dispatchRow);
+		return;
+	}
 
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]
@@ -129,14 +229,23 @@ export function handleDrop(
 		resolvedSecondarySheetRowId,
 	);
 
+	const firstDropTarget = location.current.dropTargets[0];
+	const pageDropPosition = getPageDropPosition(firstDropTarget);
+	applyPageDropPosition(
+		dispatchOptions,
+		destinationPage,
+		resolvedSecondarySheetRowId,
+		pageDropPosition,
+	);
+
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]
 	// Otherwise it is [page]
-	const firstDropTarget = location.current.dropTargets[0];
-	const destinationRow =
-		location.current.dropTargets.length > 1 && !!firstDropTarget?.data.rowId
-			? firstDropTarget
-			: null;
+	const hasDestinationRow =
+		!pageDropPosition &&
+		location.current.dropTargets.length > 1 &&
+		!!firstDropTarget?.data.rowId;
+	const destinationRow = hasDestinationRow ? firstDropTarget : null;
 
 	const closestEdgeOfTarget: Edge | null = destinationRow
 		? extractClosestEdge(destinationRow.data)
@@ -148,8 +257,28 @@ export function handleDrop(
 			typeof destinationRowId === "string",
 			"handleDrop: destination rowId is not a string",
 		);
-		const destinationContainer =
-			destinationRowId === containerDropindicatorId
+
+		// Placeholder drop targets carry explicit destination container metadata.
+		const isPlaceholderDrop = destinationRowId === containerDropindicatorId;
+		const placeholderContainerRowId =
+			destinationRow.data.destinationContainerRowId;
+		const placeholderContainerType =
+			destinationRow.data.destinationContainerType;
+
+		if (
+			isPlaceholderDrop &&
+			typeof placeholderContainerRowId === "string" &&
+			(placeholderContainerType === "child" ||
+				placeholderContainerType === "children")
+		) {
+			// Drop into an empty container placeholder - use explicit metadata.
+			dispatchOptions.destinationContainer = {
+				rowId: placeholderContainerRowId,
+				type: placeholderContainerType,
+			};
+			dispatchOptions.destinationIndex = 0;
+		} else {
+			const destinationContainer = isPlaceholderDrop
 				? (() => {
 						const secondTargetRowId =
 							location.current.dropTargets[1]?.data.rowId;
@@ -157,38 +286,41 @@ export function handleDrop(
 							typeof secondTargetRowId === "string",
 							"handleDrop: dropTargets[1].rowId is not a string",
 						);
-						return findContainerById(secondTargetRowId, destinationPage.rows);
+						return findContainerByIdInPage(destinationPage, secondTargetRowId);
 					})()
-				: findContainerOfRow(destinationRowId, destinationPage.rows);
+				: findContainerOfRowInPage(destinationPage, destinationRowId);
 
-		// Need to support dropping into nested containers...
-		// right now the destinationContainer is 1 layer deep only,
-		// we need to be able to tell the indexes of every container down
-		if (
-			destinationContainer?.type === "children" &&
-			destinationContainer.container.config.view.content.children?.length
-		) {
-			dispatchOptions.destinationIndex =
-				destinationContainer.container.config.view.content.children.findIndex(
+			if (
+				destinationContainer?.type === "children" &&
+				destinationContainer.container.config.view.content.children?.length
+			) {
+				dispatchOptions.destinationIndex =
+					destinationContainer.container.config.view.content.children.findIndex(
+						(r) => r.id === destinationRow.data.rowId,
+					);
+			} else if (
+				destinationContainer?.type === "child" &&
+				destinationContainer.container.config.view.content.child?.id
+			) {
+				dispatchOptions.destinationIndex = 0;
+			} else if (closestEdgeOfTarget && !destinationContainer) {
+				const destinationRowIndex = destinationPage.rows.findIndex(
 					(r) => r.id === destinationRow.data.rowId,
 				);
-		} else if (
-			destinationContainer?.type === "child" &&
-			destinationContainer.container.config.view.content.child?.id
-		) {
-			dispatchOptions.destinationIndex = 0;
-		} else if (closestEdgeOfTarget && !destinationContainer) {
-			const destinationRowIndex = destinationPage.rows.findIndex(
-				(r) => r.id === destinationRow.data.rowId,
-			);
-			dispatchOptions.destinationIndex = destinationRowIndex;
-		}
+				// If the destination row is the footer root (or otherwise not in page.rows),
+				// default to appending at the end of the page rows.
+				dispatchOptions.destinationIndex =
+					destinationRowIndex >= 0
+						? destinationRowIndex
+						: destinationPage.rows.length;
+			}
 
-		if (destinationContainer) {
-			dispatchOptions.destinationContainer = {
-				rowId: destinationContainer.container.id,
-				type: destinationContainer.type,
-			};
+			if (destinationContainer) {
+				dispatchOptions.destinationContainer = {
+					rowId: destinationContainer.container.id,
+					type: destinationContainer.type,
+				};
+			}
 		}
 	}
 
@@ -204,19 +336,5 @@ export function handleDrop(
 			dispatchOptions.destinationIndex ?? destinationPage.rows.length;
 	}
 
-	if (sourcePageId === "rows") {
-		dispatchRow({
-			type: "ADD_ROW",
-			newRowId: crypto.randomUUID(),
-			oldRowId: rowId,
-			...dispatchOptions,
-		});
-	} else {
-		dispatchRow({
-			type: "MOVE_ROW",
-			rowId,
-			originPageId: sourcePageId,
-			...dispatchOptions,
-		});
-	}
+	dispatchStandardDrop(sourcePageId, rowId, dispatchOptions, dispatchRow);
 }

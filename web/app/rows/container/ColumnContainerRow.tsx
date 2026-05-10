@@ -24,7 +24,8 @@ export default defineRow(typeName, {
 					rows={row.config.view.content.children}
 					orientation="horizontal"
 					showIndicators
-					showPlaceholder={row.id !== typeName}
+					containerRowId={row.id}
+					containerType="children"
 				/>
 			</div>
 		</RowLayout>

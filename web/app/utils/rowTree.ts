@@ -5,17 +5,12 @@ import type { Row, ContainerType } from "../types/row";
 
 const SECONDARY_PAGE_ID_PREFIX = "secondary:";
 
-/** If `pageId` is a secondary-sheet pseudo id, returns the host row id; otherwise `undefined`. */
 function parseSecondarySheetRowId(pageId: string): string | undefined {
 	return pageId.startsWith(SECONDARY_PAGE_ID_PREFIX)
 		? pageId.slice(SECONDARY_PAGE_ID_PREFIX.length)
 		: undefined;
 }
 
-/**
- * Maps a drag `pageId` from initial drop targets to the real page id
- * (secondary pseudo ids resolve via the sheet host row).
- */
 export function resolveSourcePageIdFromRaw(
 	rawSourcePageId: string,
 	pages: UI_Page[],
@@ -32,7 +27,6 @@ type ResolvedDropDestinationPage = {
 	secondarySheetRowId: string | undefined;
 };
 
-/** Resolves destination drop target `pageId` (including `secondary:*`) to a real page. */
 export function resolveDestinationPageFromRawPageId(
 	rawDestinationPageId: string,
 	pages: UI_Page[],
@@ -64,12 +58,11 @@ export function resolveDestinationPageFromRawPageId(
 	};
 }
 
-/** Page whose top-level `rows` contains the given row id (not recursive). */
 function findPageContainingRow(
 	pages: UI_Page[],
 	rowId: string,
 ): UI_Page | undefined {
-	return pages.find((page) => page.rows.some((r) => r.id === rowId));
+	return pages.find((page) => findRowInSinglePage(page, rowId));
 }
 
 export function findRowInPages(
@@ -83,7 +76,6 @@ export function findRowInPages(
 	return undefined;
 }
 
-/** Resolves a row anywhere on a single page (main `rows` or `footer`). */
 export function findRowInSinglePage(
 	page: { rows: Row[]; footer?: Row },
 	rowId: string,
@@ -98,10 +90,6 @@ export function findRowInSinglePage(
 	return undefined;
 }
 
-/**
- * Path of row ids from a top-level page row (or footer root) down to `leafRowId`.
- * Used to derive `activeRowId` + `configStack` when selecting a nested row on the canvas.
- */
 export function findRowIdPathFromPageRoot(
 	page: UI_Page,
 	leafRowId: string,
@@ -227,7 +215,6 @@ export function findContainerById(
 	return null;
 }
 
-/** Immutable shallow merge of `row.config.view.content` (child/children updates). */
 function withContentUpdate(
 	row: Row,
 	contentPatch: Partial<Row["config"]["view"]["content"]>,
@@ -262,9 +249,6 @@ function removeRowInSubtree(row: Row, targetRowId: string): Row {
 		}
 	}
 
-	// Some container rows expose both `children` and a single `child`.
-	// We must keep traversing after the `children` pass so moves/removals from
-	// sheet-like containers do not leave the nested `child` behind.
 	if (nextRow.config.view.content.child?.id === targetRowId) {
 		return withContentUpdate(nextRow, { child: undefined });
 	}
@@ -317,9 +301,6 @@ function insertRowIntoSubtree(
 	destinationType: ContainerType,
 ): InsertRowResult {
 	if (row.id === targetRowId) {
-		// Drag/drop destinations can point at either a single-slot `child`
-		// container or an ordered `children` collection, so insertion needs to
-		// preserve both shapes instead of assuming top-level page rows only.
 		if (destinationType === "child") {
 			return {
 				row: withContentUpdate(row, { child: rowToInsert }),
@@ -386,7 +367,6 @@ export function insertRowIntoTree(
 	destinationIndex: number,
 	destinationContainer?: { rowId: string; type: ContainerType },
 ): InsertRowsResult {
-	// Shared by ADD_ROW and MOVE_ROW so both code paths support nested drop targets.
 	if (!destinationContainer) {
 		return {
 			rows: insertRowAtIndex(rows, rowToInsert, destinationIndex),
@@ -452,4 +432,92 @@ export function updateRowInTree(
 	return rows.map(
 		(row) => updateRowInSubtree(row, targetRowId, updater) ?? row,
 	);
+}
+
+export function findContainerOfRowInPage(
+	page: UI_Page,
+	rowId: string,
+): { container: Row; type: ContainerType } | null {
+	const fromRows = findContainerOfRow(rowId, page.rows);
+	if (fromRows) return fromRows;
+	if (page.footer) {
+		if (page.footer.id === rowId) {
+			return null;
+		}
+		return findContainerOfRow(rowId, [page.footer]);
+	}
+	return null;
+}
+
+export function findContainerByIdInPage(
+	page: UI_Page,
+	rowId: string,
+): { container: Row; type: ContainerType } | null {
+	const fromRows = findContainerById(rowId, page.rows);
+	if (fromRows) return fromRows;
+	if (page.footer) {
+		return findContainerById(rowId, [page.footer]);
+	}
+	return null;
+}
+
+export function removeRowFromPage(page: UI_Page, targetRowId: string): UI_Page {
+	if (page.footer?.id === targetRowId) {
+		return { ...page, footer: undefined };
+	}
+
+	if (page.footer) {
+		const cleanedFooter = removeRowInSubtree(page.footer, targetRowId);
+		if (cleanedFooter !== page.footer) {
+			return { ...page, footer: cleanedFooter };
+		}
+	}
+
+	return {
+		...page,
+		rows: removeRowFromTree(page.rows, targetRowId),
+	};
+}
+
+export function insertRowIntoPage(
+	page: UI_Page,
+	rowToInsert: Row,
+	destinationIndex: number,
+	destinationContainer?: { rowId: string; type: ContainerType },
+): UI_Page {
+	if (!destinationContainer) {
+		return {
+			...page,
+			rows: insertRowAtIndex(page.rows, rowToInsert, destinationIndex),
+		};
+	}
+
+	for (const [index, row] of page.rows.entries()) {
+		const result = insertRowIntoSubtree(
+			row,
+			destinationContainer.rowId,
+			rowToInsert,
+			destinationIndex,
+			destinationContainer.type,
+		);
+		if (!result.inserted) continue;
+		const updatedRows = [...page.rows];
+		updatedRows[index] = result.row;
+		return { ...page, rows: updatedRows };
+	}
+
+	if (page.footer) {
+		const result = insertRowIntoSubtree(
+			page.footer,
+			destinationContainer.rowId,
+			rowToInsert,
+			destinationIndex,
+			destinationContainer.type,
+		);
+		if (result.inserted) {
+			return { ...page, footer: result.row };
+		}
+	}
+
+	return page;
 }

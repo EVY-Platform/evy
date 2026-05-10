@@ -39,7 +39,9 @@ export default defineRow(typeName, {
 					rows={row.config.view.content.children}
 					orientation="vertical"
 					showIndicators
-					showPlaceholder={row.id !== typeName && !dynamicChildTemplate}
+					containerRowId={row.id}
+					containerType="children"
+					showPlaceholder={!dynamicChildTemplate}
 				/>
 			</div>
 		);
