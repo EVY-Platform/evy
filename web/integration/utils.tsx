@@ -8,10 +8,9 @@ export const SELECTORS = {
 	rowContainer:
 		'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]',
 	draggableRow: 'div[data-row-id]:not([data-row-id="placeholder"])',
-	dropIndicator: ".evy-v-dropzone.expanded, .evy-h-dropzone.expanded",
-	topIndicator: ".evy-v-dropzone.expanded.evy-mt-2, .evy-h-dropzone.expanded",
-	bottomIndicator:
-		".evy-v-dropzone.expanded.evy-mb-2, .evy-h-dropzone.expanded",
+	dropIndicator: ".evy-v-dropzone, .evy-h-dropzone",
+	topIndicator: ".evy-v-dropzone.evy-top-0, .evy-h-dropzone.evy-left-0",
+	bottomIndicator: ".evy-v-dropzone.evy-bottom-0, .evy-h-dropzone.evy-right-0",
 	flowSelector: "#flow-select",
 	secondarySheetPage: '[data-testid="secondary-sheet-page"]',
 };

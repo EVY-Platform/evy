@@ -92,7 +92,8 @@ export default defineRow(typeName, {
 				</div>
 				<ContainerChildren
 					rows={rowsToShow}
-					showPlaceholder={row.id !== typeName}
+					containerRowId={rowId}
+					containerType="children"
 				/>
 			</>
 		);

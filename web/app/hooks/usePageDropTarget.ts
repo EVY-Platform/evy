@@ -13,27 +13,29 @@ export function usePageDropTarget({
 	dispatchDropIndicator,
 	extraData,
 	onClickBackground,
+	dropTargetRef,
 }: {
 	scrollableRef: RefObject<HTMLDivElement | null>;
 	pageId: string;
 	dispatchDropIndicator: Dispatch<DropIndicatorAction>;
 	extraData?: Record<string, string>;
 	onClickBackground?: (e: MouseEvent) => void;
+	/** Optional separate element for the page-level drop target. Falls back to scrollableRef. */
+	dropTargetRef?: RefObject<HTMLDivElement | null>;
 }) {
 	useEffect(() => {
-		invariant(
-			scrollableRef.current,
-			"usePageDropTarget: scrollableRef.current is not defined",
-		);
-		const element = scrollableRef.current;
+		const pageElement = dropTargetRef?.current ?? scrollableRef.current;
+		invariant(pageElement, "usePageDropTarget: page element is not defined");
 
 		if (onClickBackground) {
-			element.addEventListener("click", onClickBackground);
+			pageElement.addEventListener("click", onClickBackground);
 		}
 
-		const cleanup = combine(
+		const autoScrollElement = scrollableRef.current;
+
+		const cleanups: Array<() => void> = [
 			dropTargetForElements({
-				element,
+				element: pageElement,
 				getData: () => ({ pageId, ...extraData }),
 				canDrop: () => true,
 				onDrop: () => {
@@ -44,15 +46,22 @@ export function usePageDropTarget({
 				onDragLeave: () =>
 					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" }),
 			}),
-			autoScrollForElements({
-				element,
-				canScroll: () => true,
-			}),
-		);
+		];
+
+		if (autoScrollElement) {
+			cleanups.push(
+				autoScrollForElements({
+					element: autoScrollElement,
+					canScroll: () => true,
+				}),
+			);
+		}
+
+		const cleanup = combine(...cleanups);
 
 		return () => {
 			if (onClickBackground) {
-				element.removeEventListener("click", onClickBackground);
+				pageElement.removeEventListener("click", onClickBackground);
 			}
 			cleanup();
 		};
@@ -62,5 +71,6 @@ export function usePageDropTarget({
 		dispatchDropIndicator,
 		extraData,
 		onClickBackground,
+		dropTargetRef,
 	]);
 }

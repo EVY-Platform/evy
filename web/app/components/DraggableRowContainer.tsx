@@ -1,5 +1,5 @@
 import type React from "react";
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import ReactDOM from "react-dom";
 
 import { useDraggable, idleState } from "../hooks/useDraggable";
@@ -11,27 +11,34 @@ export function DraggableRowContainer({
 	selectRow,
 	orientation,
 	showIndicators = false,
-	previousRowId,
-	nextRowId,
 	isDraggable = true,
+	forcedIndicators,
 }: {
 	rowId: string;
 	children: React.ReactNode;
 	selectRow?: () => void;
 	orientation?: "horizontal" | "vertical";
 	showIndicators?: boolean;
-	previousRowId?: string;
-	nextRowId?: string;
 	isDraggable?: boolean;
+	forcedIndicators?: Array<"before" | "after">;
 }) {
-	const { ref, state, indicators, dropzones } = useDraggable({
+	const {
+		ref,
+		state,
+		indicators: hookIndicators,
+	} = useDraggable({
 		rowId,
 		orientation,
 		showIndicators,
-		previousRowId,
-		nextRowId,
 		isDraggable,
 	});
+
+	const mergedIndicators = useMemo(() => {
+		if (forcedIndicators?.length) {
+			return forcedIndicators;
+		}
+		return hookIndicators;
+	}, [forcedIndicators, hookIndicators]);
 
 	return (
 		<Fragment>
@@ -39,8 +46,7 @@ export function DraggableRowContainer({
 				ref={ref}
 				state={state}
 				selectRow={selectRow}
-				indicators={indicators}
-				dropzones={dropzones}
+				indicators={mergedIndicators}
 				orientation={orientation}
 			>
 				{children}

@@ -13,12 +13,24 @@ export type RowAction =
 			destinationContainer?: { rowId: string; type: ContainerType };
 	  }
 	| {
+			type: "ADD_ROW_AS_FOOTER";
+			newRowId: string;
+			oldRowId: string;
+			destinationPageId: string;
+	  }
+	| {
 			type: "MOVE_ROW";
 			rowId: string;
 			originPageId: string;
 			destinationPageId: string;
 			destinationIndex: number;
 			destinationContainer?: { rowId: string; type: ContainerType };
+	  }
+	| {
+			type: "MOVE_ROW_TO_FOOTER";
+			rowId: string;
+			originPageId: string;
+			destinationPageId: string;
 	  }
 	| {
 			type: "REMOVE_ROW";
@@ -99,6 +111,7 @@ export type DropIndicatorState = {
 	rowId?: string;
 	pageId?: string;
 	edge?: Edge;
+	pageDropPosition?: "start" | "end";
 } | null;
 
 export type DropIndicatorAction =
@@ -116,6 +129,14 @@ export type DropIndicatorAction =
 	  }
 	| {
 			type: "UNSET_INDICATOR_PAGE";
+	  }
+	| {
+			type: "SET_INDICATOR_PAGE_POSITION";
+			pageId: string;
+			position: "start" | "end";
+	  }
+	| {
+			type: "UNSET_INDICATOR_PAGE_POSITION";
 	  };
 
 export type AppState = {

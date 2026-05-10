@@ -1,7 +1,7 @@
-export const verticalDropIndicator = "evy-v-dropzone evy-w-full evy-rounded-sm";
+export const verticalDropIndicatorBefore = "evy-v-dropzone evy-top-0";
 
-export const horizontalDropIndicator =
-	"evy-h-dropzone evy-min-h-full evy-mt-2 evy-mb-2 evy-rounded-sm";
+export const verticalDropIndicatorAfter = "evy-v-dropzone evy-bottom-0";
 
-export const dropIndicatorExpansionBefore = "expanded evy-mt-2";
-export const dropIndicatorExpansionAfter = "expanded evy-mb-2";
+export const horizontalDropIndicatorBefore = "evy-h-dropzone evy-left-0";
+
+export const horizontalDropIndicatorAfter = "evy-h-dropzone evy-right-0";

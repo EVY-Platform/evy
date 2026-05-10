@@ -473,4 +473,231 @@ describe("pageReducer", () => {
 		expect(closed.secondarySheetRowId).toBeUndefined();
 		expect(closed.configStack).toEqual([]);
 	});
+
+	it("REMOVE_ROW removes footer root", () => {
+		const foot = textRow("footer-row");
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [textRow("row-1")],
+							footer: foot,
+						},
+					],
+				},
+			],
+			activePageId: "page-1",
+		});
+		const next = pageReducer(state, {
+			type: "REMOVE_ROW",
+			pageId: "page-1",
+			rowId: "footer-row",
+		});
+		expect(next.flows[0].pages[0].footer).toBeUndefined();
+		expect(next.flows[0].pages[0].rows.length).toBe(1);
+	});
+
+	it("REMOVE_ROW removes nested footer child", () => {
+		const inner = textRow("foot-inner");
+		const foot = sheetRow("footer-row", inner);
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [],
+							footer: foot,
+						},
+					],
+				},
+			],
+			activePageId: "page-1",
+		});
+		const next = pageReducer(state, {
+			type: "REMOVE_ROW",
+			pageId: "page-1",
+			rowId: "foot-inner",
+		});
+		expect(
+			next.flows[0].pages[0].footer?.config.view.content.child,
+		).toBeUndefined();
+		expect(next.flows[0].pages[0].rows.length).toBe(0);
+	});
+
+	it("MOVE_ROW moves footer root into page rows", () => {
+		const foot = textRow("footer-row");
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [textRow("row-1")],
+							footer: foot,
+						},
+					],
+				},
+			],
+			activePageId: "page-1",
+		});
+		const next = pageReducer(state, {
+			type: "MOVE_ROW",
+			rowId: "footer-row",
+			originPageId: "page-1",
+			destinationPageId: "page-1",
+			destinationIndex: 0,
+		});
+		expect(next.flows[0].pages[0].footer).toBeUndefined();
+		expect(next.flows[0].pages[0].rows[0].id).toBe("footer-row");
+		expect(next.flows[0].pages[0].rows[1].id).toBe("row-1");
+	});
+
+	it("ADD_ROW inserts palette row into footer container", () => {
+		const foot = sheetRow("footer-sheet", textRow("dummy"), []);
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [],
+							footer: foot,
+						},
+					],
+				},
+			],
+			activePageId: "page-1",
+		});
+		const newId = "new-in-footer";
+		const next = pageReducer(state, {
+			type: "ADD_ROW",
+			newRowId: newId,
+			oldRowId: "TextRow",
+			destinationPageId: "page-1",
+			destinationIndex: 0,
+			destinationContainer: { rowId: "footer-sheet", type: "children" },
+		});
+		const footAfter = next.flows[0].pages[0].footer;
+		expect(footAfter?.config.view.content.children?.[0].id).toBe(newId);
+	});
+
+	it("ADD_ROW_AS_FOOTER adds palette row as page footer", () => {
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [textRow("row-1")],
+						},
+					],
+				},
+			],
+			activePageId: "page-1",
+		});
+		const newId = "new-footer";
+		const next = pageReducer(state, {
+			type: "ADD_ROW_AS_FOOTER",
+			newRowId: newId,
+			oldRowId: "TextRow",
+			destinationPageId: "page-1",
+		});
+		expect(next.flows[0].pages[0].footer).toBeDefined();
+		expect(next.flows[0].pages[0].footer?.id).toBe(newId);
+		expect(next.flows[0].pages[0].rows.length).toBe(1);
+		expect(next.activeRowId).toBe(newId);
+	});
+
+	it("ADD_ROW_AS_FOOTER no-ops when base row not found", () => {
+		const state = initialState();
+		const next = pageReducer(state, {
+			type: "ADD_ROW_AS_FOOTER",
+			newRowId: "new-footer",
+			oldRowId: "NonExistentRow",
+			destinationPageId: "page-1",
+		});
+		expect(next).toBe(state);
+	});
+
+	it("MOVE_ROW_TO_FOOTER moves row from page rows to footer", () => {
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [textRow("row-1"), textRow("row-2")],
+						},
+					],
+				},
+			],
+			activePageId: "page-1",
+		});
+		const next = pageReducer(state, {
+			type: "MOVE_ROW_TO_FOOTER",
+			rowId: "row-2",
+			originPageId: "page-1",
+			destinationPageId: "page-1",
+		});
+		expect(next.flows[0].pages[0].footer).toBeDefined();
+		expect(next.flows[0].pages[0].footer?.id).toBe("row-2");
+		expect(next.flows[0].pages[0].rows.length).toBe(1);
+		expect(next.flows[0].pages[0].rows[0].id).toBe("row-1");
+		expect(next.activeRowId).toBe("row-2");
+	});
+
+	it("MOVE_ROW_TO_FOOTER moves row across pages", () => {
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [textRow("row-1")],
+						},
+						{
+							id: "page-2",
+							title: "Second",
+							rows: [textRow("row-2")],
+						},
+					],
+				},
+			],
+			activePageId: "page-1",
+		});
+		const next = pageReducer(state, {
+			type: "MOVE_ROW_TO_FOOTER",
+			rowId: "row-1",
+			originPageId: "page-1",
+			destinationPageId: "page-2",
+		});
+		expect(next.flows[0].pages[0].rows.length).toBe(0);
+		expect(next.flows[0].pages[1].footer).toBeDefined();
+		expect(next.flows[0].pages[1].footer?.id).toBe("row-1");
+		expect(next.activeRowId).toBe("row-1");
+	});
 });

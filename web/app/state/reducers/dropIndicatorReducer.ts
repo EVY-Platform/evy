@@ -29,6 +29,18 @@ export const dropIndicatorReducer = (
 			return {
 				...state,
 				pageId: undefined,
+				pageDropPosition: undefined,
+			};
+		case "SET_INDICATOR_PAGE_POSITION":
+			return {
+				...state,
+				pageId: action.pageId,
+				pageDropPosition: action.position,
+			};
+		case "UNSET_INDICATOR_PAGE_POSITION":
+			return {
+				...state,
+				pageDropPosition: undefined,
 			};
 		default:
 			return state;

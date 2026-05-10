@@ -52,8 +52,6 @@ type UseDraggableOptions = {
 	rowId: string;
 	orientation?: "horizontal" | "vertical";
 	showIndicators?: boolean;
-	previousRowId?: string;
-	nextRowId?: string;
 	isDraggable?: boolean;
 };
 
@@ -61,15 +59,12 @@ type UseDraggableResult = {
 	ref: React.RefObject<HTMLDivElement | null>;
 	state: DraggableState;
 	indicators: Array<"before" | "after"> | undefined;
-	dropzones: Array<"before" | "after"> | undefined;
 };
 
 export function useDraggable({
 	rowId,
 	orientation = "vertical",
 	showIndicators = false,
-	previousRowId,
-	nextRowId,
 	isDraggable = true,
 }: UseDraggableOptions): UseDraggableResult {
 	const { dragging, dropIndicator, dispatchDropIndicator } = useDragContext();
@@ -101,26 +96,6 @@ export function useDraggable({
 			["bottom", "right"].includes(edge) ? "after" : undefined,
 		].filter((x): x is "before" | "after" => x !== undefined);
 	}, [dropIndicator, dragging, rowId, showIndicators]);
-
-	const dropzones = useMemo(() => {
-		if (dragging !== "rows" || !dropIndicator || !showIndicators) return;
-
-		const hideBefore =
-			(previousRowId && !dropIndicator.rowId) ||
-			(previousRowId &&
-				dropIndicator.rowId === previousRowId &&
-				dropIndicator.edge !== "bottom");
-		const hideAfter =
-			(nextRowId && dropIndicator.rowId && dropIndicator.rowId !== nextRowId) ||
-			(nextRowId &&
-				dropIndicator.rowId === nextRowId &&
-				dropIndicator.edge !== "top");
-
-		return [
-			hideBefore ? undefined : "before",
-			hideAfter ? undefined : "after",
-		].filter((x): x is "before" | "after" => x !== undefined);
-	}, [dragging, dropIndicator, previousRowId, nextRowId, showIndicators]);
 
 	const onDragEvent = useCallback(
 		(args: DragEvent) => {
@@ -236,6 +211,5 @@ export function useDraggable({
 		ref,
 		state,
 		indicators,
-		dropzones,
 	};
 }

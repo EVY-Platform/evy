@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import type { Row } from "../types/row";
+import type { Row, ContainerType } from "../types/row";
 import { useFlowsContext } from "../state";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { PlaceholderDropIndicator } from "./PlaceholderDropIndicator";
@@ -9,12 +9,16 @@ export function ContainerChildren({
 	rows,
 	orientation = "vertical",
 	showIndicators = false,
-	showPlaceholder,
+	containerRowId,
+	containerType,
+	showPlaceholder = true,
 }: {
 	rows: Row[] | undefined;
 	orientation?: "horizontal" | "vertical";
 	showIndicators?: boolean;
-	showPlaceholder: boolean;
+	containerRowId: string;
+	containerType: ContainerType;
+	showPlaceholder?: boolean;
 }) {
 	const { dispatchRow } = useFlowsContext();
 
@@ -27,23 +31,23 @@ export function ContainerChildren({
 
 	if (!rows?.length) {
 		return showPlaceholder ? (
-			<PlaceholderDropIndicator key="placeholder" />
+			<PlaceholderDropIndicator
+				key="placeholder"
+				containerRowId={containerRowId}
+				containerType={containerType}
+			/>
 		) : null;
 	}
 
-	const lastIndex = rows.length - 1;
-
 	return (
 		<>
-			{rows.map((child, index) => (
+			{rows.map((child) => (
 				<DraggableRowContainer
 					key={child.id}
 					rowId={child.id}
 					selectRow={() => selectNestedRow(child.id)}
 					orientation={orientation}
 					showIndicators={showIndicators}
-					previousRowId={index > 0 ? rows[index - 1].id : undefined}
-					nextRowId={index < lastIndex ? rows[index + 1].id : undefined}
 				>
 					{child.row}
 				</DraggableRowContainer>

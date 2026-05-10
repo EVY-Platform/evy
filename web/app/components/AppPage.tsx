@@ -2,9 +2,15 @@ import { useCallback, useMemo, useRef, type CSSProperties } from "react";
 
 import { useDragContext, useFlowsContext } from "../state";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
+import { usePageEdgeIndicators } from "../hooks/usePageEdgeIndicators";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
 import { findFlowById } from "../utils/flowHelpers";
+import { BlankPageDropIndicator } from "./BlankPageDropIndicator";
 import { buildRowElements } from "./buildRowElements";
+import { DraggableRowContainer } from "./DraggableRowContainer";
+import { FooterPlaceholderDropIndicator } from "./FooterPlaceholderDropIndicator";
+import { PageEdgeDropZone } from "./PageEdgeDropZone";
+
 import { baseTitleStyle, rounded24Style } from "./pageStyles";
 
 const pageTitleStyle: CSSProperties = {
@@ -14,16 +20,12 @@ const pageTitleStyle: CSSProperties = {
 	border: "none",
 };
 
-const roundedBottom24Style: CSSProperties = {
-	borderBottomLeftRadius: "var(--radius-2-4)",
-	borderBottomRightRadius: "var(--radius-2-4)",
-};
-
 export default function AppPage({ pageId }: { pageId: string }) {
 	const { flows, activeFlowId, dispatchRow } = useFlowsContext();
-	const { dispatchDropIndicator } = useDragContext();
+	const { dispatchDropIndicator, dragging } = useDragContext();
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
+	const pageWrapperRef = useRef<HTMLDivElement | null>(null);
 
 	const selectRow = useCallback(
 		(rowId: string) => dispatchRow({ type: "SET_ACTIVE_ROW", rowId }),
@@ -39,11 +41,17 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[pageId, dispatchRow],
 	);
 
+	const selectPageDirect = useCallback(
+		() => dispatchRow({ type: "SET_ACTIVE_PAGE", pageId }),
+		[pageId, dispatchRow],
+	);
+
 	usePageDropTarget({
 		scrollableRef,
 		pageId,
 		dispatchDropIndicator,
 		onClickBackground: selectPage,
+		dropTargetRef: pageWrapperRef,
 	});
 
 	const page = useMemo(
@@ -51,10 +59,17 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		[flows, activeFlowId, pageId],
 	);
 
+	const pageRows = page?.rows ?? [];
+	const pageHasRows = pageRows.length > 0;
+	const lastRowId = pageHasRows ? pageRows[pageRows.length - 1].id : undefined;
+
+	const { forcedIndicators, showBlankPageIndicator, edgePosition } =
+		usePageEdgeIndicators(pageId, lastRowId, pageHasRows);
+
 	const rowElements = useMemo(() => {
 		if (!page) return [];
-		return buildRowElements(page.rows, selectRow);
-	}, [page, selectRow]);
+		return buildRowElements(page.rows, selectRow, forcedIndicators);
+	}, [page, selectRow, forcedIndicators]);
 
 	const titleElement = page?.title ? (
 		<button
@@ -76,35 +91,53 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		>
 			{footer ? (
 				<div
+					ref={pageWrapperRef}
 					className="evy-flex evy-flex-col evy-h-full evy-bg-white"
 					style={rounded24Style}
 				>
 					{titleElement}
+					{showBlankPageIndicator && <BlankPageDropIndicator />}
 					<div
-						className="evy-overflow-scroll evy-flex-1 evy-pt-4"
+						className="evy-overflow-scroll evy-flex evy-flex-col evy-flex-1 evy-pt-4"
 						{...canvasPageInteriorDomProps}
 						ref={scrollableRef}
 					>
 						{rowElements}
+						<PageEdgeDropZone
+							pageId={pageId}
+							position={edgePosition}
+							dispatchDropIndicator={dispatchDropIndicator}
+							className="evy-flex-1"
+							style={{ minHeight: "var(--size-8)" }}
+							onClick={selectPageDirect}
+						/>
 					</div>
-					<button
-						type="button"
-						className="evy-border-none evy-hover:bg-gray-light evy-cursor-pointer evy-w-full evy-bg-white evy-p-0"
-						style={roundedBottom24Style}
-						onClick={() => selectRow(footer.id)}
+					<DraggableRowContainer
+						rowId={footer.id}
+						selectRow={() => selectRow(footer.id)}
 					>
 						{footer.row}
-					</button>
+					</DraggableRowContainer>
 				</div>
 			) : (
 				<div
-					className="evy-overflow-scroll evy-h-full evy-pt-4 evy-bg-white"
+					className="evy-overflow-scroll evy-flex evy-flex-col evy-h-full evy-pt-4 evy-bg-white"
 					style={rounded24Style}
 					{...canvasPageInteriorDomProps}
 					ref={scrollableRef}
 				>
 					{titleElement}
+					{showBlankPageIndicator && <BlankPageDropIndicator />}
 					{rowElements}
+					<PageEdgeDropZone
+						pageId={pageId}
+						position={edgePosition}
+						dispatchDropIndicator={dispatchDropIndicator}
+						className="evy-flex-1"
+						style={{ minHeight: "var(--size-8)" }}
+						onClick={selectPageDirect}
+					/>
+					{dragging && <FooterPlaceholderDropIndicator pageId={pageId} />}
 				</div>
 			)}
 		</div>
