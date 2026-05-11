@@ -114,9 +114,7 @@ function AppContent() {
 	const isRowsPanelExpanded =
 		isElementActive || expandSidePanelsForPageDrag || rowsHover.hovered;
 	const isConfigurationPanelExpanded =
-		isElementActive ||
-		expandSidePanelsForPageDrag ||
-		configurationHover.hovered;
+		isElementActive || configurationHover.hovered;
 
 	useEffect(() => {
 		if (!isElementActive && !expandSidePanelsForPageDrag) {
