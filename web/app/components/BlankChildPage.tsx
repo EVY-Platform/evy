@@ -9,19 +9,22 @@ import { ChildPageFrame } from "./ChildPageFrame";
  * Dropping a row here sets it as the singular child of the parent row.
  */
 export function BlankChildPage({
+	pageId,
 	parentRowId,
 }: {
+	pageId: string;
 	parentRowId: string | undefined;
 }) {
 	const { dispatchDropIndicator } = useDragContext();
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 
-	const pageId = parentRowId ? `child:${parentRowId}` : "child:none";
-
 	usePageDropTarget({
 		scrollableRef,
 		pageId,
 		dispatchDropIndicator,
+		extraData: parentRowId
+			? { destinationContainerRowId: parentRowId }
+			: undefined,
 	});
 
 	return (

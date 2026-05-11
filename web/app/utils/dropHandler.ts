@@ -16,7 +16,6 @@ import { containerDropindicatorId } from "../rows/EVYRow";
 import {
 	findContainerByIdInPage,
 	findContainerOfRowInPage,
-	getRowsRecursive,
 	resolveDestinationPageFromRawPageId,
 } from "../utils/rowTree";
 
@@ -134,37 +133,13 @@ function dispatchStandardDrop(
 	});
 }
 
-function handleBlankChildPageDrop(
-	destinationPageId: string,
-	sourcePageId: string,
-	rowId: string,
-	pages: UI_Page[],
-	dispatchRow: Dispatch<RowAction>,
-): void {
-	const parentRowId = destinationPageId.slice("child:".length);
-	if (!parentRowId || parentRowId === "none") return;
-
-	const parentPage = pages.find(
-		(p) =>
-			p.rows.some((r) =>
-				getRowsRecursive(r).some((row) => row.id === parentRowId),
-			) || p.footer?.id === parentRowId,
-	);
-	if (!parentPage) return;
-
-	dispatchStandardDrop(
-		sourcePageId,
-		rowId,
-		{
-			destinationPageId: parentPage.id,
-			destinationIndex: 0,
-			destinationContainer: {
-				rowId: parentRowId,
-				type: "child",
-			},
-		},
-		dispatchRow,
-	);
+function getDestinationContainerRowId(
+	dropTarget: DropTargetRecord | undefined,
+): string | undefined {
+	const destinationContainerRowId = dropTarget?.data.destinationContainerRowId;
+	return typeof destinationContainerRowId === "string"
+		? destinationContainerRowId
+		: undefined;
 }
 
 export function handleDrop(
@@ -225,17 +200,9 @@ export function handleDrop(
 		return;
 	}
 
-	// Handle drops onto the blank child page (child:rowId synthetic target).
-	if (destinationPageId.startsWith("child:")) {
-		handleBlankChildPageDrop(
-			destinationPageId,
-			sourcePageId,
-			rowId,
-			pages,
-			dispatchRow,
-		);
-		return;
-	}
+	const pageDestinationContainerRowId = getDestinationContainerRowId(
+		destinationPageRecord,
+	);
 
 	const { page: destinationPage, resolvedPageId } =
 		resolveDestinationPageFromRawPageId(destinationPageId, pages);
@@ -244,6 +211,13 @@ export function handleDrop(
 		destinationPage,
 		resolvedPageId,
 	);
+	if (pageDestinationContainerRowId) {
+		dispatchOptions.destinationContainer = {
+			rowId: pageDestinationContainerRowId,
+			type: "child",
+		};
+		dispatchOptions.destinationIndex = 0;
+	}
 
 	const firstDropTarget = location.current.dropTargets[0];
 	const pageDropPosition = getPageDropPosition(firstDropTarget);

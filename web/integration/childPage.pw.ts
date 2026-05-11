@@ -369,6 +369,63 @@ test.describe("Child Page Rendering", () => {
 		);
 	});
 
+	test("dropping a row into an existing child page replaces view.content.child", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Page 1",
+				rows: [
+					{
+						type: "Info" as const,
+						view: {
+							content: {
+								title: "Parent Row",
+								subtitle: "Parent subtitle",
+								child: {
+									type: "Text" as const,
+									view: {
+										content: {
+											title: "Existing Child Row",
+											text: "Existing child text",
+										},
+									},
+									actions: [],
+								},
+							},
+						},
+						actions: [],
+					},
+				],
+			},
+		]);
+
+		const parentRow = page.getByText("Parent Row", { exact: true }).first();
+		await parentRow.click();
+
+		const childPage = page.getByTestId("child-page");
+		await expect(childPage).toBeVisible();
+		await expect(
+			childPage.getByText("Existing Child Row", { exact: true }),
+		).toBeVisible();
+
+		const sidebarRow = await getSidebarRow(page, "Info row title");
+		await sidebarRow.dragTo(childPage.locator(SELECTORS.pageContent));
+
+		// After drop, the child page immediately shows the new row
+		// with a new blank child page beside it, no re-click needed.
+		await expect(
+			childPage.getByText("Info row title", { exact: true }),
+		).toBeVisible();
+		await expect(
+			childPage.getByText("Existing Child Row", { exact: true }),
+		).not.toBeVisible();
+		// A new blank child page appears for the row that was just dropped
+		// (it has no child of its own).
+		await expect(page.getByTestId("blank-child-page")).toBeVisible();
+	});
+
 	test("dropping a row into the blank child page creates view.content.child", async ({
 		page,
 	}) => {
@@ -402,22 +459,15 @@ test.describe("Child Page Rendering", () => {
 
 		await sidebarRow.dragTo(blankChildPage.locator(SELECTORS.pageContent));
 
-		// The dropped row becomes selected after drop. Re-select the parent to verify
-		// the row was created as the parent's singular child.
-		await rootRow.click();
-
+		// After drop, the child page is immediately visible, no re-click needed.
 		const childPage = page.getByTestId("child-page");
 		await expect(childPage).toBeVisible({ timeout: 10000 });
 		await expect(
-			childPage.getByRole("heading", { name: "Child Row" }),
-		).toBeVisible();
-		await expect(
 			childPage.getByText("Info row title", { exact: true }),
 		).toBeVisible();
-
-		// The parent now has a child, so no new blank child page is shown until
-		// the user clicks into the existing child row.
-		await expect(blankChildPage).not.toBeVisible();
+		// A new blank child page appears for the row that was just dropped
+		// (it has no child of its own).
+		await expect(page.getByTestId("blank-child-page")).toBeVisible();
 	});
 
 	test("Search row no longer renders child/template preview directly on the main page", async ({

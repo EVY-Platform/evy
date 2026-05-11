@@ -48,7 +48,12 @@ const PHONE_FRAME_STYLE: CSSProperties = {
 	backgroundRepeat: "no-repeat",
 	backgroundSize: "contain",
 };
-function buildActiveChildPageRows({
+type ActiveChildPage = {
+	childRow: Row;
+	parentRowId: string;
+};
+
+function buildActiveChildPages({
 	activeRowId,
 	configStack,
 	pages,
@@ -56,19 +61,22 @@ function buildActiveChildPageRows({
 	activeRowId: string | undefined;
 	configStack: string[];
 	pages: { rows: Row[]; footer?: Row }[];
-}): Row[] {
+}): ActiveChildPage[] {
 	if (!activeRowId) return [];
 
 	const activeRootRow = findRowInPages(activeRowId, pages);
 	if (!activeRootRow) return [];
 
-	const childPageRows: Row[] = [];
+	const childPages: ActiveChildPage[] = [];
 	let currentParentRow = activeRootRow;
 
 	for (const selectedDescendantRowId of configStack) {
 		const singularChild = currentParentRow.config.view.content.child;
 		if (singularChild?.id === selectedDescendantRowId) {
-			childPageRows.push(singularChild);
+			childPages.push({
+				childRow: singularChild,
+				parentRowId: currentParentRow.id,
+			});
 			currentParentRow = singularChild;
 			continue;
 		}
@@ -82,16 +90,19 @@ function buildActiveChildPageRows({
 		}
 
 		const fallbackRow = findRowInPages(selectedDescendantRowId, pages);
-		if (!fallbackRow) return childPageRows;
+		if (!fallbackRow) return childPages;
 		currentParentRow = fallbackRow;
 	}
 
 	const nextChildRow = currentParentRow.config.view.content.child;
 	if (nextChildRow) {
-		childPageRows.push(nextChildRow);
+		childPages.push({
+			childRow: nextChildRow,
+			parentRowId: currentParentRow.id,
+		});
 	}
 
-	return childPageRows;
+	return childPages;
 }
 
 function AppContent() {
@@ -169,8 +180,8 @@ function AppContent() {
 		? findRowInPages(activeLeafRowId, pages)
 		: undefined;
 	const activeLeafChild = activeLeafRow?.config.view.content.child;
-	const childPageRows = useMemo(
-		() => buildActiveChildPageRows({ activeRowId, configStack, pages }),
+	const childPages = useMemo(
+		() => buildActiveChildPages({ activeRowId, configStack, pages }),
 		[activeRowId, configStack, pages],
 	);
 
@@ -199,9 +210,9 @@ function AppContent() {
 								<AppPage pageId={activePage.id} />
 							</CanvasPageFrame>
 
-							{childPageRows.map((childPageRow) => (
+							{childPages.map(({ childRow, parentRowId }) => (
 								<CanvasPageFrame
-									key={childPageRow.id}
+									key={childRow.id}
 									wrapperStyle={{
 										...secondaryPageWrapperStyle,
 										...PHONE_FRAME_STYLE,
@@ -209,7 +220,11 @@ function AppContent() {
 									className="evy-flex-shrink-0"
 									data-testid="child-page"
 								>
-									<ChildPage childRow={childPageRow} />
+									<ChildPage
+										childRow={childRow}
+										pageId={activePage.id}
+										parentRowId={parentRowId}
+									/>
 								</CanvasPageFrame>
 							))}
 
@@ -222,7 +237,10 @@ function AppContent() {
 									className="evy-flex-shrink-0"
 									data-testid="blank-child-page"
 								>
-									<BlankChildPage parentRowId={activeLeafRowId} />
+									<BlankChildPage
+										pageId={activePage.id}
+										parentRowId={activeLeafRowId}
+									/>
 								</CanvasPageFrame>
 							)}
 						</Fragment>

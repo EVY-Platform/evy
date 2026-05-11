@@ -144,6 +144,22 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				p.id === action.destinationPageId ? updatedPage : p,
 			);
 
+			// When dropping into a child container, keep the parent chain visible
+			// and push the new child onto the config stack so it renders as a ChildPage.
+			if (action.destinationContainer?.type === "child") {
+				const path = findRowIdPathFromPageRoot(
+					page,
+					action.destinationContainer.rowId,
+				);
+				if (path) {
+					return updateState({
+						updatedPages,
+						activeRowId: path[0],
+						configStack: [...path.slice(1), action.newRowId],
+					});
+				}
+			}
+
 			return updateState({
 				updatedPages,
 				activeRowId: action.newRowId,
@@ -205,6 +221,11 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			);
 			if (!originPage) return state;
 
+			const destinationPage = flow.pages.find(
+				(p) => p.id === action.destinationPageId,
+			);
+			if (!destinationPage) return state;
+
 			const row = findRowInPages(action.rowId, [originPage]);
 			invariant(row, "PageReducer moveRow: row is not defined");
 
@@ -239,6 +260,22 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				}
 				return page;
 			});
+
+			// When moving into a child container, keep the parent chain visible
+			// and push the moved row onto the config stack so it renders as a ChildPage.
+			if (action.destinationContainer?.type === "child") {
+				const path = findRowIdPathFromPageRoot(
+					destinationPage,
+					action.destinationContainer.rowId,
+				);
+				if (path) {
+					return updateState({
+						updatedPages: newPages,
+						activeRowId: path[0],
+						configStack: [...path.slice(1), action.rowId],
+					});
+				}
+			}
 
 			return updateState({
 				updatedPages: newPages,
