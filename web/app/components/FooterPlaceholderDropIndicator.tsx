@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -9,7 +9,7 @@ export function FooterPlaceholderDropIndicator({ pageId }: { pageId: string }) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [isDraggedOver, setIsDraggedOver] = useState(false);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const element = ref.current;
 		invariant(
 			element,

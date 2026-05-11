@@ -1,4 +1,10 @@
-import { Fragment, useEffect, useMemo, type CSSProperties } from "react";
+import {
+	Fragment,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	type CSSProperties,
+} from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { FileSliders, Rows3 } from "lucide-react";
@@ -134,7 +140,7 @@ function AppContent() {
 		[pages, activePageId],
 	);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		return monitorForElements({
 			onDragStart({ location }: BaseEventPayload<ElementDragType>) {
 				const outermost =
