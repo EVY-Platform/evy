@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
 import {
@@ -74,7 +74,7 @@ export function useDraggable({
 
 	const lastDispatchedDropKey = useRef<string | null>(null);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		ref.current?.setAttribute("data-row-id", rowId);
 	}, [rowId]);
 
@@ -131,9 +131,12 @@ export function useDraggable({
 		[dispatchDropIndicator, rowId],
 	);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const element = ref.current;
-		invariant(element, "useDraggable useEffect: ref.current is not defined");
+		invariant(
+			element,
+			"useDraggable useLayoutEffect: ref.current is not defined",
+		);
 
 		return combine(
 			...(isDraggable

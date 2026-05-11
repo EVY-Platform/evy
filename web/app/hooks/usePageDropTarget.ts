@@ -1,4 +1,4 @@
-import { type Dispatch, type RefObject, useEffect } from "react";
+import { type Dispatch, type RefObject, useLayoutEffect } from "react";
 import invariant from "tiny-invariant";
 
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
@@ -23,7 +23,7 @@ export function usePageDropTarget({
 	/** Optional separate element for the page-level drop target. Falls back to scrollableRef. */
 	dropTargetRef?: RefObject<HTMLDivElement | null>;
 }) {
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const pageElement = dropTargetRef?.current ?? scrollableRef.current;
 		invariant(pageElement, "usePageDropTarget: page element is not defined");
 
