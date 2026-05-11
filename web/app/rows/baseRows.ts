@@ -1,5 +1,4 @@
 import ButtonRow from "./action/ButtonRow";
-import TextActionRow from "./action/TextActionRow";
 import ColumnContainerRow from "./container/ColumnContainerRow";
 import ListContainerRow from "./container/ListContainerRow";
 import SelectSegmentContainerRow from "./container/SelectSegmentContainerRow";
@@ -28,7 +27,6 @@ export const baseRows = [
 	SearchRow,
 	SelectPhotoRow,
 	SelectSegmentContainerRow,
-	TextActionRow,
 	TextAreaRow,
 	TextRow,
 	TextSelectRow,

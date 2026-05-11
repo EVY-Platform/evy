@@ -42,10 +42,6 @@ export function useCamera() {
 		typeof setTimeout
 	> | null>(null);
 
-	const notify = useCallback(() => {
-		bumpUi();
-	}, []);
-
 	const applyTransform = useCallback(() => {
 		const world = worldRef.current;
 		if (!world) return;
@@ -82,14 +78,14 @@ export function useCamera() {
 			cameraRef.current.offsetX = nextOffsetX;
 			cameraRef.current.offsetY = nextOffsetY;
 			applyTransform();
-			notify();
+			bumpUi();
 
 			smoothPanCleanupTimeoutId.current = setTimeout(() => {
 				world.style.transition = "";
 				smoothPanCleanupTimeoutId.current = null;
 			}, SMOOTH_PAN_MS);
 		},
-		[applyTransform, notify],
+		[applyTransform],
 	);
 
 	const panToElement = useCallback(
@@ -126,9 +122,9 @@ export function useCamera() {
 			cameraRef.current.offsetX += dx;
 			cameraRef.current.offsetY += dy;
 			applyTransform();
-			notify();
+			bumpUi();
 		},
-		[applyTransform, notify],
+		[applyTransform],
 	);
 
 	const getCamera = useCallback(
@@ -141,9 +137,9 @@ export function useCamera() {
 			cameraRef.current.offsetX += dx;
 			cameraRef.current.offsetY += dy;
 			scheduleTransform();
-			notify();
+			bumpUi();
 		},
-		[notify, scheduleTransform],
+		[scheduleTransform],
 	);
 
 	const zoomAtScreenPoint = useCallback(
@@ -158,9 +154,9 @@ export function useCamera() {
 			old.offsetY = screenPoint.y - worldY * clamped;
 
 			scheduleTransform();
-			notify();
+			bumpUi();
 		},
-		[notify, scheduleTransform],
+		[scheduleTransform],
 	);
 
 	const fitToBounds = useCallback(
@@ -191,9 +187,9 @@ export function useCamera() {
 				scale: nextScale,
 			};
 			scheduleTransform();
-			notify();
+			bumpUi();
 		},
-		[notify, scheduleTransform],
+		[scheduleTransform],
 	);
 
 	useEffect(() => {

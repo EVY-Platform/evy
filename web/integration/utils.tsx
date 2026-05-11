@@ -4,7 +4,7 @@ import { openAppWithTestFlows } from "./flowFixtures";
 
 export const SELECTORS = {
 	phoneContainer: "[data-canvas-page-frame]",
-	pageContent: '[class*="evy-overflow-scroll"]',
+	pageContent: "[data-canvas-page-interior]",
 	rowContainer:
 		'div[class*="evy-flex"][class*="evy-flex-col"][class*="evy-w-full"]',
 	draggableRow: 'div[data-row-id]:not([data-row-id="placeholder"])',

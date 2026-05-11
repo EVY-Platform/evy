@@ -287,7 +287,11 @@
 						"view": {
 							"content": {
 								"title": "",
-								"segments": ["Pickup", "Delivery", "Shipping"],
+								"segments": [
+									"Pickup",
+									"Delivery",
+									"Shipping"
+								],
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222201",
@@ -315,7 +319,7 @@
 													},
 													{
 														"id": "586ffa1a-639b-475e-a0b5-1fbe51083274",
-														"type": "TextAction",
+														"type": "Text",
 														"source": "",
 														"destination": "{item.pickup_address}",
 														"actions": [

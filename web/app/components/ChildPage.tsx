@@ -16,10 +16,12 @@ export function ChildPage({
 	childRow,
 	pageId,
 	parentRowId,
+	variant,
 }: {
 	childRow: Row;
 	pageId: string;
 	parentRowId: string;
+	variant: "full" | "sheet";
 }) {
 	const { dispatchRow } = useFlowsContext();
 	const { dispatchDropIndicator } = useDragContext();
@@ -36,9 +38,11 @@ export function ChildPage({
 		dispatchRow({ type: "SET_ACTIVE_ROW", rowId: childRow.id });
 	}, [dispatchRow, childRow.id]);
 
+	const heading = variant === "full" ? "Search result" : "Sheet overlay";
+
 	return (
-		<ChildPageFrame scrollableRef={scrollableRef}>
-			<h2 style={baseTitleStyle}>Child Row</h2>
+		<ChildPageFrame scrollableRef={scrollableRef} variant={variant}>
+			<h2 style={baseTitleStyle}>{heading}</h2>
 			<DraggableRowContainer
 				rowId={childRow.id}
 				selectRow={selectChild}

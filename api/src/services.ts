@@ -60,16 +60,6 @@ function loadEvyServiceConstructor(): grpc.ServiceClientConstructor {
 
 type ForwardableGetRequest = GetRequest | ApiRequest;
 
-type AppGetRequestInput = {
-	service: string;
-	resource: string;
-	filter?: {
-		id?: string;
-		updatedAfter?: string;
-	};
-	method?: string;
-};
-
 type ProtoGetRequest = {
 	service: string;
 	resource: string;
@@ -115,11 +105,22 @@ type GrpcServiceClient = grpc.Client & {
 	) => grpc.ClientUnaryCall;
 };
 
-function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
-	const filter: NonNullable<ProtoGetRequest["filter"]> = {};
-	if (params.filter?.id) filter.id = params.filter.id;
-	if (params.filter?.updatedAfter)
-		filter.updated_after = params.filter.updatedAfter;
+function buildProtoFilter(
+	filter: { id?: string; updatedAfter?: string } | undefined,
+): Record<string, string> {
+	const out: Record<string, string> = {};
+	if (filter?.id) out.id = filter.id;
+	if (filter?.updatedAfter) out.updated_after = filter.updatedAfter;
+	return out;
+}
+
+function buildProtoGetRequest(params: {
+	service: string;
+	resource: string;
+	filter?: { id?: string; updatedAfter?: string };
+	method?: string;
+}): ProtoGetRequest {
+	const filter = buildProtoFilter(params.filter);
 
 	return {
 		service: params.service,
@@ -130,10 +131,7 @@ function buildProtoGetRequest(params: AppGetRequestInput): ProtoGetRequest {
 }
 
 function buildProtoUpsertRequest(params: UpsertRequest): ProtoUpsertRequest {
-	const filter: NonNullable<ProtoUpsertRequest["filter"]> = {};
-	if (params.filter?.id) filter.id = params.filter.id;
-	if (params.filter?.updatedAfter)
-		filter.updated_after = params.filter.updatedAfter;
+	const filter = buildProtoFilter(params.filter);
 
 	return {
 		service: params.service,
@@ -210,59 +208,54 @@ function makeGrpcAdapter(
 		});
 	}
 
+	function callGrpcJsonMethod<TResponse>(
+		grpcCall: (callback: grpc.requestCallback<{ result_json: string }>) => void,
+		validate: (parsed: unknown) => TResponse,
+		methodLabel: string,
+	): Promise<TResponse> {
+		return new Promise((resolve, reject) => {
+			grpcCall((err, response) => {
+				if (err) {
+					reject(err);
+					return;
+				}
+				if (!response) {
+					reject(
+						new Error(
+							`Empty ${methodLabel} response from ${serviceName} service`,
+						),
+					);
+					return;
+				}
+				let parsed: unknown;
+				try {
+					parsed = JSON.parse(response.result_json) as unknown;
+				} catch (parseErr) {
+					reject(parseErr);
+					return;
+				}
+				try {
+					resolve(validate(parsed));
+				} catch (validationErr) {
+					reject(validationErr);
+				}
+			});
+		});
+	}
+
 	return {
 		get: (params) =>
-			new Promise<GetResponse>((resolve, reject) => {
-				client.Get(buildProtoGetRequest(params), (err, response) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-					if (!response) {
-						reject(new Error(`Empty Get response from ${serviceName} service`));
-						return;
-					}
-					let parsed: unknown;
-					try {
-						parsed = JSON.parse(response.result_json) as unknown;
-					} catch (parseErr) {
-						reject(parseErr);
-						return;
-					}
-					try {
-						resolve(validateGetResponse(parsed));
-					} catch (validationErr) {
-						reject(validationErr);
-					}
-				});
-			}),
+			callGrpcJsonMethod<GetResponse>(
+				(cb) => client.Get(buildProtoGetRequest(params), cb),
+				validateGetResponse,
+				"Get",
+			),
 		upsert: (params) =>
-			new Promise<UpsertResponse>((resolve, reject) => {
-				client.Upsert(buildProtoUpsertRequest(params), (err, response) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-					if (!response) {
-						reject(
-							new Error(`Empty Upsert response from ${serviceName} service`),
-						);
-						return;
-					}
-					let parsed: unknown;
-					try {
-						parsed = JSON.parse(response.result_json) as unknown;
-					} catch (parseErr) {
-						reject(parseErr);
-						return;
-					}
-					try {
-						resolve(validateUpsertResponse(parsed));
-					} catch (validationErr) {
-						reject(validationErr);
-					}
-				});
-			}),
+			callGrpcJsonMethod<UpsertResponse>(
+				(cb) => client.Upsert(buildProtoUpsertRequest(params), cb),
+				validateUpsertResponse,
+				"Upsert",
+			),
 		listResources: () =>
 			new Promise<string[]>((resolve, reject) => {
 				client.ListResources({}, (err, response) => {

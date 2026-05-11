@@ -25,12 +25,6 @@
 		},
 		"content": {
 			"title": "string",
-			"text": "string"
-		}
-	},
-	"TextAction": {
-		"content": {
-			"title": "string",
 			"text": "string",
 			"placeholder": "string",
 			"action": "string"

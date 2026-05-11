@@ -162,7 +162,7 @@ export function handleDrop(
 		"handleDrop: sourcePageId is not a string",
 	);
 
-	const sourcePageId = String(rawSourcePageId);
+	const sourcePageId = rawSourcePageId;
 
 	const footerDropTarget = findFooterDropTarget(location.current.dropTargets);
 	if (footerDropTarget) {
@@ -337,9 +337,6 @@ export function handleDrop(
 		closestEdgeOfTarget === "right"
 	) {
 		dispatchOptions.destinationIndex = dispatchOptions.destinationIndex + 1;
-	} else {
-		dispatchOptions.destinationIndex =
-			dispatchOptions.destinationIndex ?? destinationPage.rows.length;
 	}
 
 	dispatchStandardDrop(sourcePageId, rowId, dispatchOptions, dispatchRow);

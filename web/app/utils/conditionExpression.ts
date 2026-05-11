@@ -50,14 +50,7 @@ type TokenCursor = { pos: number };
 
 function tokenize(input: string): string[] {
 	const tokens: string[] = [];
-	const operators: [string, string][] = [
-		["&&", "&&"],
-		["||", "||"],
-		[">=", ">="],
-		["<=", "<="],
-		["!=", "!="],
-		["==", "=="],
-	];
+	const operators = ["&&", "||", ">=", "<=", "!=", "=="];
 	const singleChars = new Set(["(", ")", ">", "<"]);
 	const opStartChars = new Set("&|!>=<");
 
@@ -73,10 +66,10 @@ function tokenize(input: string): string[] {
 			continue;
 		}
 		let matched = false;
-		for (const [pattern, token] of operators) {
-			if (input.startsWith(pattern, i)) {
-				tokens.push(token);
-				i += pattern.length;
+		for (const op of operators) {
+			if (input.startsWith(op, i)) {
+				tokens.push(op);
+				i += op.length;
 				matched = true;
 				break;
 			}
@@ -90,8 +83,8 @@ function tokenize(input: string): string[] {
 			// Check if this position starts a multi-char operator
 			if (opStartChars.has(ch)) {
 				let isOp = false;
-				for (const [pattern] of operators) {
-					if (input.startsWith(pattern, i)) {
+				for (const op of operators) {
+					if (input.startsWith(op, i)) {
 						isOp = true;
 						break;
 					}

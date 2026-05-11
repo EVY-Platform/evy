@@ -128,10 +128,9 @@ export function getRowsInPage(page: { rows: Row[]; footer?: Row }): Row[] {
  * Finds which page in the given array contains a row with the specified ID.
  * Returns the page, or undefined if no page contains the row.
  */
-export function findPageContainingRow(
-	pages: { rows: Row[]; footer?: Row }[],
-	rowId: string,
-): { rows: Row[]; footer?: Row } | undefined {
+export function findPageContainingRow<
+	TPage extends { rows: Row[]; footer?: Row },
+>(pages: TPage[], rowId: string): TPage | undefined {
 	for (const page of pages) {
 		const found = findRowInSinglePage(page, rowId);
 		if (found) return page;
@@ -149,16 +148,16 @@ type ContainerSearchFn = (
  * Searches through rows to find which container holds a row with the given ID.
  * Returns the container row and whether it's a "child" (singular) or "children" (array) container.
  */
-export function findContainerOfRow(
+function findContainerOfRow(
 	rowId: string,
 	rows: Row[],
 ): { container: Row; type: ContainerType } | null {
 	return findContainerByPredicate(rows, (container) => {
 		if (container.config.view.content.child?.id === rowId) {
-			return { rowId: container.id, type: "child" as ContainerType };
+			return { rowId: container.id, type: "child" };
 		}
 		if (container.config.view.content.children?.some((r) => r.id === rowId)) {
-			return { rowId: container.id, type: "children" as ContainerType };
+			return { rowId: container.id, type: "children" };
 		}
 		return null;
 	});
@@ -168,16 +167,16 @@ export function findContainerOfRow(
  * Searches through rows to find a container row by its own ID.
  * Returns the container row and its container type.
  */
-export function findContainerById(
+function findContainerById(
 	rowId: string,
 	rows: Row[],
 ): { container: Row; type: ContainerType } | null {
 	return findContainerByPredicate(rows, (container) => {
 		if ("child" in container.config.view.content && container.id === rowId) {
-			return { rowId: container.id, type: "child" as ContainerType };
+			return { rowId: container.id, type: "child" };
 		}
 		if ("children" in container.config.view.content && container.id === rowId) {
-			return { rowId: container.id, type: "children" as ContainerType };
+			return { rowId: container.id, type: "children" };
 		}
 		return null;
 	});
@@ -265,7 +264,7 @@ function removeRowInSubtree(row: Row, targetRowId: string): Row {
 	return nextRow;
 }
 
-export function removeRowFromTree(rows: Row[], targetRowId: string): Row[] {
+function removeRowFromTree(rows: Row[], targetRowId: string): Row[] {
 	return rows
 		.filter((r) => r.id !== targetRowId)
 		.map((r) => removeRowInSubtree(r, targetRowId));
@@ -360,7 +359,7 @@ function insertRowIntoSubtree(
 	return { row, inserted: false };
 }
 
-export function insertRowIntoTree(
+function insertRowIntoTree(
 	rows: Row[],
 	rowToInsert: Row,
 	destinationIndex: number,
@@ -511,16 +510,14 @@ export function insertRowIntoPage(
 
 	// Fallback: try inserting into the footer
 	if (page.footer) {
-		for (const row of [page.footer]) {
-			const result = insertRowIntoSubtree(
-				row,
-				destinationContainer.rowId,
-				rowToInsert,
-				destinationIndex,
-				destinationContainer.type,
-			);
-			if (!result.inserted) continue;
-
+		const result = insertRowIntoSubtree(
+			page.footer,
+			destinationContainer.rowId,
+			rowToInsert,
+			destinationIndex,
+			destinationContainer.type,
+		);
+		if (result.inserted) {
 			return { ...page, footer: result.row };
 		}
 	}

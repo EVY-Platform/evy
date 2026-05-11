@@ -12,7 +12,11 @@ import { DraggableRowContainer } from "./DraggableRowContainer";
 import { FooterPlaceholderDropIndicator } from "./FooterPlaceholderDropIndicator";
 import { PageEdgeDropZone } from "./PageEdgeDropZone";
 
-import { baseTitleStyle, rounded24Style } from "./pageStyles";
+import {
+	baseTitleStyle,
+	phoneContentPadding,
+	rounded24Style,
+} from "./pageStyles";
 
 const pageTitleStyle: CSSProperties = {
 	...baseTitleStyle,
@@ -81,10 +85,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 			type="button"
 			className="evy-cursor-pointer"
 			style={pageTitleStyle}
-			onClick={() => {
-				capturePageFramePosition(pageId);
-				dispatchRow({ type: "SET_ACTIVE_PAGE", pageId });
-			}}
+			onClick={selectPageDirect}
 		>
 			{page.title}
 		</button>
@@ -95,7 +96,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	return (
 		<div
 			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
-			style={{ padding: "var(--size-30px)", contain: "layout style paint" }}
+			style={{ padding: phoneContentPadding, contain: "layout style paint" }}
 		>
 			{footer ? (
 				<div

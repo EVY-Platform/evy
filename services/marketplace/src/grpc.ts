@@ -85,95 +85,90 @@ function buildMarketplaceServiceHandlers(
 ) {
 	const evyPackage = root.evy as { Service: grpc.ServiceClientConstructor };
 
+	type GetRequestShape = {
+		service: string;
+		resource: string;
+		filter?: { id?: string; updated_after?: string };
+	};
+
+	type UpsertRequestShape = {
+		service: string;
+		resource: string;
+		filter?: { id?: string };
+		data_json: string;
+	};
+
+	function asyncUnaryHandler<Req, Res>(
+		handler: (req: Req) => Promise<Res>,
+	): (
+		call: grpc.ServerUnaryCall<Req, Res>,
+		cb: grpc.sendUnaryData<Res>,
+	) => void {
+		return (call, cb) => {
+			void (async () => {
+				try {
+					const result = await handler(call.request);
+					cb(null, result);
+				} catch (err) {
+					const error = err as Error & { code?: number };
+					cb({
+						code: error.code ?? grpc.status.INTERNAL,
+						message: error.message ?? String(err),
+					});
+				}
+			})();
+		};
+	}
+
 	return {
 		service: evyPackage.Service.service,
 		implementation: {
-			Get: (
-				call: grpc.ServerUnaryCall<
-					{
-						service: string;
-						resource: string;
-						filter?: {
-							id?: string;
-							updated_after?: string;
-						};
-					},
-					{ result_json: string }
-				>,
-				cb: grpc.sendUnaryData<{ result_json: string }>,
-			) => {
-				void (async () => {
+			Get: asyncUnaryHandler<GetRequestShape, { result_json: string }>(
+				async (req) => {
+					const filter: {
+						id?: string;
+						updatedAfter?: string;
+					} = {};
+					if (req.filter?.id) filter.id = req.filter.id;
+					if (req.filter?.updated_after)
+						filter.updatedAfter = req.filter.updated_after;
+					const params = {
+						service: req.service,
+						resource: req.resource,
+						filter: Object.keys(filter).length > 0 ? filter : undefined,
+					};
+					validateStrictGetRequest(params);
+					const result = await get(params);
+					return { result_json: JSON.stringify(result) } as const;
+				},
+			),
+			Upsert: asyncUnaryHandler<UpsertRequestShape, { result_json: string }>(
+				async (req) => {
+					let data: UpsertRequest["data"];
 					try {
-						const req = call.request;
-						const filter: {
-							id?: string;
-							updatedAfter?: string;
-						} = {};
-						if (req.filter?.id) filter.id = req.filter.id;
-						if (req.filter?.updated_after)
-							filter.updatedAfter = req.filter.updated_after;
-						const params = {
-							service: req.service,
-							resource: req.resource,
-							filter: Object.keys(filter).length > 0 ? filter : undefined,
-						};
-						validateStrictGetRequest(params);
-						const result = await get(params);
-						cb(null, { result_json: JSON.stringify(result) });
-					} catch (err) {
-						cb({
-							code: grpc.status.INTERNAL,
-							message: err instanceof Error ? err.message : String(err),
-						});
+						data = JSON.parse(req.data_json) as UpsertRequest["data"];
+					} catch (parseErr) {
+						throw Object.assign(
+							new Error(
+								parseErr instanceof Error
+									? `Invalid data_json: ${parseErr.message}`
+									: "Invalid data_json",
+							),
+							{ code: grpc.status.INVALID_ARGUMENT },
+						);
 					}
-				})();
-			},
-			Upsert: (
-				call: grpc.ServerUnaryCall<
-					{
-						service: string;
-						resource: string;
-						filter?: { id?: string };
-						data_json: string;
-					},
-					{ result_json: string }
-				>,
-				cb: grpc.sendUnaryData<{ result_json: string }>,
-			) => {
-				void (async () => {
-					try {
-						const req = call.request;
-						let data: UpsertRequest["data"];
-						try {
-							data = JSON.parse(req.data_json) as UpsertRequest["data"];
-						} catch (parseErr) {
-							cb({
-								code: grpc.status.INVALID_ARGUMENT,
-								message:
-									parseErr instanceof Error
-										? `Invalid data_json: ${parseErr.message}`
-										: "Invalid data_json",
-							});
-							return;
-						}
-						const params = {
-							service: req.service,
-							resource: req.resource,
-							filter: req.filter?.id ? { id: req.filter.id } : undefined,
-							data,
-						};
-						validateStrictUpsertRequest(params);
-						const result = await upsert(params);
-						eventBus.emit("notify", "dataUpdated", result);
-						cb(null, { result_json: JSON.stringify(result) });
-					} catch (err) {
-						cb({
-							code: grpc.status.INTERNAL,
-							message: err instanceof Error ? err.message : String(err),
-						});
-					}
-				})();
-			},
+					const params = {
+						service: req.service,
+						resource: req.resource,
+						filter: req.filter?.id ? { id: req.filter.id } : undefined,
+						data,
+					};
+					validateStrictUpsertRequest(params);
+					const result = await upsert(params);
+					eventBus.emit("notify", "dataUpdated", result);
+					return { result_json: JSON.stringify(result) } as const;
+				},
+			),
 			SubscribeEvents: (call: grpc.ServerWritableStream<unknown, unknown>) => {
 				const listener = (eventName: string, payload: unknown) => {
 					tryWriteSubscribeEvent(call, eventName, payload);

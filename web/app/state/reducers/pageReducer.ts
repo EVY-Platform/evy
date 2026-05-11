@@ -30,6 +30,47 @@ function clearSelection(state: AppState): AppState {
 	return { ...state, ...CLEARED_SELECTION };
 }
 
+function stacksEqual(a: string[], b: string[]): boolean {
+	return a.length === b.length && a.every((id, i) => id === b[i]);
+}
+
+type ChildContainerSelection = { activeRowId: string; configStack: string[] };
+
+function resolveChildContainerSelection(
+	page: UI_Page,
+	destinationContainer: { type: string; rowId: string } | undefined,
+	targetRowId: string,
+): ChildContainerSelection | null {
+	if (destinationContainer?.type !== "child") return null;
+
+	const path = findRowIdPathFromPageRoot(page, destinationContainer.rowId);
+	if (!path) return null;
+
+	return {
+		activeRowId: path[0],
+		configStack: [...path.slice(1), targetRowId],
+	};
+}
+
+function ensureShowActionOnParent(
+	pages: UI_Page[],
+	destinationContainer: { type: string; rowId: string } | undefined,
+): UI_Page[] {
+	if (!destinationContainer) return pages;
+	const parentRow = findRowInPages(destinationContainer.rowId, pages);
+	if (!parentRow || parentRow.config.type === "Search") return pages;
+	if (parentRow.config.actions.some((a) => a.true === "{show()}")) return pages;
+
+	const showAction = { condition: "", true: "{show()}", false: "" };
+	return mapRowAcrossPages(pages, destinationContainer.rowId, (row) => ({
+		...row,
+		config: {
+			...row.config,
+			actions: [...row.config.actions, showAction],
+		},
+	}));
+}
+
 function mapRowAcrossPages(
 	pages: UI_Page[],
 	rowId: string,
@@ -92,36 +133,25 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 	const updateState = ({
 		updatedPages,
-		activeFlowId,
 		activeRowId,
 		activePageId,
 		configStack,
 	}: {
 		updatedPages?: UI_Page[];
-		activeFlowId?: string;
 		activeRowId?: string;
 		activePageId?: string;
 		configStack?: string[];
 	}): AppState => {
 		return {
 			...state,
-			...(updatedPages
-				? {
-						flows: state.flows.map((f) =>
-							f.id === state.activeFlowId ? { ...f, pages: updatedPages } : f,
-						),
-					}
-				: {}),
-			...(activeFlowId && activeFlowId !== state.activeFlowId
-				? { activeFlowId }
-				: {}),
-			...(activeRowId !== undefined && activeRowId !== state.activeRowId
-				? { activeRowId }
-				: {}),
-			...(activePageId !== undefined && activePageId !== state.activePageId
-				? { activePageId }
-				: {}),
-			...(configStack !== undefined ? { configStack } : {}),
+			...(updatedPages && {
+				flows: state.flows.map((f) =>
+					f.id === state.activeFlowId ? { ...f, pages: updatedPages } : f,
+				),
+			}),
+			...(activeRowId !== undefined && { activeRowId }),
+			...(activePageId !== undefined && { activePageId }),
+			...(configStack !== undefined && { configStack }),
 		};
 	};
 
@@ -146,18 +176,20 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			// When dropping into a child container, keep the parent chain visible
 			// and push the new child onto the config stack so it renders as a ChildPage.
-			if (action.destinationContainer?.type === "child") {
-				const path = findRowIdPathFromPageRoot(
-					page,
-					action.destinationContainer.rowId,
+			const childSelection = resolveChildContainerSelection(
+				page,
+				action.destinationContainer,
+				action.newRowId,
+			);
+			if (childSelection) {
+				const finalPages = ensureShowActionOnParent(
+					updatedPages,
+					action.destinationContainer,
 				);
-				if (path) {
-					return updateState({
-						updatedPages,
-						activeRowId: path[0],
-						configStack: [...path.slice(1), action.newRowId],
-					});
-				}
+				return updateState({
+					updatedPages: finalPages,
+					...childSelection,
+				});
 			}
 
 			return updateState({
@@ -263,18 +295,20 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			// When moving into a child container, keep the parent chain visible
 			// and push the moved row onto the config stack so it renders as a ChildPage.
-			if (action.destinationContainer?.type === "child") {
-				const path = findRowIdPathFromPageRoot(
-					destinationPage,
-					action.destinationContainer.rowId,
+			const childSelection = resolveChildContainerSelection(
+				destinationPage,
+				action.destinationContainer,
+				action.rowId,
+			);
+			if (childSelection) {
+				const finalPages = ensureShowActionOnParent(
+					newPages,
+					action.destinationContainer,
 				);
-				if (path) {
-					return updateState({
-						updatedPages: newPages,
-						activeRowId: path[0],
-						configStack: [...path.slice(1), action.rowId],
-					});
-				}
+				return updateState({
+					updatedPages: finalPages,
+					...childSelection,
+				});
 			}
 
 			return updateState({
@@ -360,8 +394,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			// Toggle: if same row chain is already active, clear selection
 			if (
 				state.activeRowId === rootId &&
-				state.configStack.length === stack.length &&
-				state.configStack.every((id, i) => id === stack[i])
+				stacksEqual(state.configStack, stack)
 			) {
 				return clearSelection(state);
 			}
@@ -430,10 +463,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const newStack = state.configStack.slice(0, action.configStackLength);
 
 			// Toggle: if navigating to the current stack length, clear selection
-			if (
-				state.configStack.length === action.configStackLength &&
-				state.configStack.every((id, i) => id === newStack[i])
-			) {
+			if (state.configStack.length === action.configStackLength) {
 				return clearSelection(state);
 			}
 

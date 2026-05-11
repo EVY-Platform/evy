@@ -102,7 +102,6 @@ export function resolveUrlIds(
 
 	const flow = findFlowById(flows, urlFlowId);
 	if (!flow) {
-		alert(`Flow not found: "${urlFlowId}". Showing the first available flow.`);
 		return { flowId: defaultFlowId, pageId: flows[0]?.pages[0]?.id };
 	}
 
@@ -112,7 +111,6 @@ export function resolveUrlIds(
 
 	const pageExists = flow.pages.some((p) => p.id === urlPageId);
 	if (!pageExists) {
-		alert(`Page not found: "${urlPageId}". Showing the first page.`);
 		return { flowId: urlFlowId, pageId: flow.pages[0]?.id };
 	}
 

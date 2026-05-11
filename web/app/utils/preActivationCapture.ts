@@ -10,6 +10,8 @@
  * cycle is always fully synchronous within a single render pass.
  */
 
+import { findPageFrame, getElementCenter } from "./domHelpers";
+
 let capturedCenter: { x: number; y: number } | null = null;
 
 /**
@@ -18,15 +20,9 @@ let capturedCenter: { x: number; y: number } | null = null;
  * in the subsequent useLayoutEffect.
  */
 export function capturePageFramePosition(pageId: string): void {
-	const el = document.querySelector(
-		`[data-canvas-page-frame][data-page-id="${CSS.escape(pageId)}"]`,
-	);
+	const el = findPageFrame(pageId);
 	if (el) {
-		const rect = el.getBoundingClientRect();
-		capturedCenter = {
-			x: rect.left + rect.width / 2,
-			y: rect.top + rect.height / 2,
-		};
+		capturedCenter = getElementCenter(el);
 	}
 }
 

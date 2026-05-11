@@ -45,7 +45,7 @@ flowchart LR
     EVYRow --> Row
 
     subgraph rows [UI/Rows]
-        Action[Action<br/>Button, TextAction]
+        Action[Action<br/>Button]
         Container[Container<br/>Column, List, SelectSegment, Sheet]
         Edit[Edit<br/>Calendar, Dropdown, InlinePicker, Input,<br/>Search, SelectPhoto, TextArea, TextSelect]
         ViewRows[View<br/>Info, InputList, Text]
