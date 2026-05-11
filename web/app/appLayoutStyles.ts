@@ -41,6 +41,27 @@ export const secondaryPageWrapperStyle: CSSProperties = {
 	transition: undefined,
 };
 
+const phoneFrameStyle: CSSProperties = {
+	backgroundImage: 'url("/phone.svg")',
+	backgroundRepeat: "no-repeat",
+	backgroundSize: "contain",
+};
+
+export const activePageWithPhoneStyle: CSSProperties = {
+	...activePageWrapperStyle,
+	...phoneFrameStyle,
+};
+
+export const secondaryPageWithPhoneStyle: CSSProperties = {
+	...secondaryPageWrapperStyle,
+	...phoneFrameStyle,
+};
+
+export const pageWithPhoneStyle: CSSProperties = {
+	...pageWrapperStyle,
+	...phoneFrameStyle,
+};
+
 export const panelShadowStyle: CSSProperties = {
 	boxShadow: "var(--shadow-subtle)",
 };

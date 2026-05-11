@@ -15,15 +15,13 @@ import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE_NAMES } from "./coreResources";
  * The "evy" core service is always registered with known fixed resources.
  */
 let serviceRegistry: Map<string, Set<string>> | null = null;
-let serviceRegistryInitialized = false;
 
 function ensureServiceRegistry(): Map<string, Set<string>> {
-	if (!serviceRegistryInitialized) {
+	if (!serviceRegistry) {
 		serviceRegistry = new Map<string, Set<string>>();
 		serviceRegistry.set(EVY_CORE_SERVICE, new Set(EVY_CORE_RESOURCE_NAMES));
-		serviceRegistryInitialized = true;
 	}
-	return serviceRegistry as Map<string, Set<string>>;
+	return serviceRegistry;
 }
 
 /**
@@ -41,7 +39,6 @@ export function setServiceRegistry(
 		}
 	}
 	serviceRegistry = registry;
-	serviceRegistryInitialized = true;
 }
 
 /** Returns the current set of known service names. */
@@ -53,14 +50,6 @@ export function getServiceNames(): string[] {
 export function getServiceResources(service: string): string[] | undefined {
 	const resources = ensureServiceRegistry().get(service);
 	return resources ? [...resources] : undefined;
-}
-
-function isService(v: unknown): v is string {
-	return typeof v === "string" && v.length > 0;
-}
-
-function isResource(v: unknown): v is string {
-	return typeof v === "string" && v.length > 0 && v.length <= 50;
 }
 
 function isValidServiceResourcePair(
@@ -83,10 +72,19 @@ function assertRpcParamsCommon(params: unknown): asserts params is Record<
 	if (params === null || typeof params !== "object") {
 		throw new Error("Params must be an object");
 	}
-	if (!("service" in params) || !isService(params.service)) {
+	if (
+		!("service" in params) ||
+		typeof params.service !== "string" ||
+		params.service.length === 0
+	) {
 		throw new Error("Invalid or missing service");
 	}
-	if (!("resource" in params) || !isResource(params.resource)) {
+	if (
+		!("resource" in params) ||
+		typeof params.resource !== "string" ||
+		params.resource.length === 0 ||
+		params.resource.length > 50
+	) {
 		throw new Error("Invalid or missing resource");
 	}
 	if (!isValidServiceResourcePair(params.service, params.resource)) {

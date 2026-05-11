@@ -39,7 +39,7 @@ test.describe("Child Page Rendering", () => {
 		const blankChildPage = page.getByTestId("blank-child-page");
 		await expect(blankChildPage).toBeVisible();
 		await expect(
-			blankChildPage.getByText("Drag and drop a row here to add a child"),
+			blankChildPage.getByText("Drop a row to show in the sheet on tap"),
 		).toBeVisible();
 
 		// Should NOT have a child page (no child row exists)
@@ -90,7 +90,9 @@ test.describe("Child Page Rendering", () => {
 		const childPage = page.getByTestId("child-page");
 		await expect(childPage).toBeVisible();
 		await expect(
-			childPage.getByRole("heading", { name: "Child Row" }),
+			childPage.getByRole("heading", {
+				name: "Sheet overlay",
+			}),
 		).toBeVisible();
 		await expect(
 			childPage.getByText("Child Row Title", { exact: true }),
@@ -244,10 +246,10 @@ test.describe("Child Page Rendering", () => {
 														actions: [],
 													},
 													{
-														type: "TextAction" as const,
+														type: "Text" as const,
 														view: {
 															content: {
-																title: "Children 1 TextAction",
+																title: "Children 1 Text Action",
 																text: "Action text",
 																action: "Change",
 																child: {
@@ -273,7 +275,9 @@ test.describe("Child Page Rendering", () => {
 																},
 															},
 														},
-														actions: [],
+														actions: [
+															{ condition: "", true: "{show()}", false: "" },
+														],
 													},
 												],
 											},
@@ -292,7 +296,10 @@ test.describe("Child Page Rendering", () => {
 		await getPageRow(page, "Root Select Segment").click();
 		const configPanel = getConfigPanel(page);
 		await configPanel.getByRole("button", { name: "ListContainer" }).click();
-		await configPanel.getByRole("button", { name: "TextAction" }).click();
+		await configPanel
+			.getByRole("button", { name: "Text", exact: true })
+			.nth(1)
+			.click();
 
 		let childPages = page.getByTestId("child-page");
 		await expect(childPages).toHaveCount(1);
@@ -353,7 +360,9 @@ test.describe("Child Page Rendering", () => {
 		const childPage = page.getByTestId("child-page");
 		await expect(childPage).toBeVisible();
 		await expect(
-			childPage.getByRole("heading", { name: "Child Row" }),
+			childPage.getByRole("heading", {
+				name: "Sheet overlay",
+			}),
 		).toBeVisible();
 
 		// Click the child row in the child page
@@ -468,6 +477,17 @@ test.describe("Child Page Rendering", () => {
 		// A new blank child page appears for the row that was just dropped
 		// (it has no child of its own).
 		await expect(page.getByTestId("blank-child-page")).toBeVisible();
+
+		// Non-Search parent should have received a show() action.
+		// Navigate back to the parent via breadcrumb to verify.
+		const breadcrumb = page.getByLabel("Configure row: Root Row");
+		await expect(breadcrumb).toBeVisible();
+		await breadcrumb.click();
+
+		const configPanel = getConfigPanel(page);
+		await expect(configPanel.getByText("Action 1")).toBeVisible();
+		await expect(configPanel.getByText("If true")).toBeVisible();
+		await expect(configPanel.getByText("show")).toBeVisible();
 	});
 
 	test("Search row no longer renders child/template preview directly on the main page", async ({
@@ -511,6 +531,13 @@ test.describe("Child Page Rendering", () => {
 		// instead of a new blank child page.
 		await expect(page.getByTestId("child-page")).toBeVisible();
 		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+
+		// The child page heading should say "Search result" for a Search parent
+		await expect(
+			page
+				.getByTestId("child-page")
+				.getByRole("heading", { name: "Search result" }),
+		).toBeVisible();
 
 		// Verify the Search row only shows its own content, not preview rows.
 		// There should be no "Example tag" preview text on the main page.

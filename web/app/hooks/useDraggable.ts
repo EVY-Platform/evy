@@ -131,6 +131,9 @@ export function useDraggable({
 		[dispatchDropIndicator, rowId],
 	);
 
+	const dropIndicatorRefOnLeave = useRef(dropIndicator);
+	dropIndicatorRefOnLeave.current = dropIndicator;
+
 	useLayoutEffect(() => {
 		const element = ref.current;
 		invariant(
@@ -190,7 +193,7 @@ export function useDraggable({
 				onDragEnter: onDragEvent,
 				onDrag: onDragEvent,
 				onDragLeave: () => {
-					if (dropIndicator?.rowId !== rowId) return;
+					if (dropIndicatorRefOnLeave.current?.rowId !== rowId) return;
 
 					lastDispatchedDropKey.current = null;
 					dispatchDropIndicator({
@@ -204,7 +207,6 @@ export function useDraggable({
 		currentRow?.config.view.content.child,
 		currentRow?.config.view.content.children?.length,
 		dispatchDropIndicator,
-		dropIndicator,
 		isDraggable,
 		onDragEvent,
 		rowId,

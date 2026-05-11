@@ -468,7 +468,6 @@ test.describe("Drag & Drop UX", () => {
 			"Text row title",
 			"Input list row title",
 			"Button row text",
-			"Text action row title",
 			"Calendar row title",
 			"Dropdown row title",
 			"Inline picker row title",

@@ -11,9 +11,11 @@ import { ChildPageFrame } from "./ChildPageFrame";
 export function BlankChildPage({
 	pageId,
 	parentRowId,
+	variant,
 }: {
 	pageId: string;
 	parentRowId: string | undefined;
+	variant: "full" | "sheet";
 }) {
 	const { dispatchDropIndicator } = useDragContext();
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
@@ -27,13 +29,19 @@ export function BlankChildPage({
 			: undefined,
 	});
 
+	const placeholder =
+		variant === "full"
+			? "Drop the row you want to use as search result row"
+			: "Drop a row to show in the sheet on tap";
+
 	return (
 		<ChildPageFrame
 			scrollableRef={scrollableRef}
 			className="evy-items-center evy-justify-center"
+			variant={variant}
 		>
 			<div className="evy-text-gray-dark evy-text-sm evy-text-center evy-px-4">
-				Drag and drop a row here to add a child
+				{placeholder}
 			</div>
 		</ChildPageFrame>
 	);

@@ -20,7 +20,7 @@
 		731988822C271BBD0035E094 /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 731988812C271BBD0035E094 /* JsonRPC */; };
 		731988852C271BC40035E094 /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 731988842C271BC40035E094 /* Serializable */; };
 		7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */; };
-		7320F59A2C300B8B00297C48 /* EVYTextActionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */; };
+
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
 		7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */; };
 		7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
@@ -124,7 +124,7 @@
 		7303B3192C3EB8A000796123 /* EVYCalendarTimeslotData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarTimeslotData.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
 		7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInfoRow.swift; sourceTree = "<group>"; };
-		7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextActionRow.swift; sourceTree = "<group>"; };
+
 		732A50812C1D6AE80036B98B /* EVY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVY.swift; sourceTree = "<group>"; };
 		7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectItem.swift; sourceTree = "<group>"; };
 		7333F44E2FAA2D1C006BEA92 /* EVY+Mutations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Mutations.swift"; sourceTree = "<group>"; };
@@ -337,7 +337,6 @@
 			isa = PBXGroup;
 			children = (
 				73EDC87C2B8F37E800304DD8 /* EVYButtonRow.swift */,
-				7320F5992C300B8B00297C48 /* EVYTextActionRow.swift */,
 			);
 			path = Action;
 			sourceTree = "<group>";
@@ -653,7 +652,6 @@
 				73C78AEC2BC549840026F39E /* EVYSearchField.swift in Sources */,
 				73C78AF22BC549840026F3A0 /* EVYTextInput.swift in Sources */,
 				73EDC87F2B8F387500304DD8 /* EVYButton.swift in Sources */,
-				7320F59A2C300B8B00297C48 /* EVYTextActionRow.swift in Sources */,
 				732A50822C1D6AE80036B98B /* EVY.swift in Sources */,
 				73C78AEE2BC54DFE0026F39D /* EVYSearchRow.swift in Sources */,
 				7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */,

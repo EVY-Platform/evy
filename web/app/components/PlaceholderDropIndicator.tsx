@@ -1,10 +1,12 @@
-import { useLayoutEffect, useRef, useState } from "react";
-import invariant from "tiny-invariant";
+import { useCallback } from "react";
 
 import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 import { containerDropindicatorId } from "../rows/EVYRow";
+import {
+	type DropTargetHighlightDataArgs,
+	useDropTargetHighlight,
+} from "../hooks/useDropTargetHighlight";
 import { DropPlaceholderShell } from "./DropPlaceholderShell";
 import type { ContainerType } from "../types/row";
 
@@ -15,34 +17,23 @@ export function PlaceholderDropIndicator({
 	containerRowId: string;
 	containerType: ContainerType;
 }) {
-	const ref = useRef<HTMLDivElement | null>(null);
-	const [isDraggedOver, setIsDraggedOver] = useState(false);
-
-	useLayoutEffect(() => {
-		const element = ref.current;
-		invariant(element, "PlaceholderDropIndicator: ref.current is not defined");
-
-		return dropTargetForElements({
-			element,
-			canDrop: () => true,
-			getData: ({ input, element: targetElement }) =>
-				attachClosestEdge(
-					{
-						rowId: containerDropindicatorId,
-						destinationContainerRowId: containerRowId,
-						destinationContainerType: containerType,
-					},
-					{
-						input,
-						element: targetElement,
-						allowedEdges: ["top", "bottom"],
-					},
-				),
-			onDragEnter: () => setIsDraggedOver(true),
-			onDragLeave: () => setIsDraggedOver(false),
-			onDrop: () => setIsDraggedOver(false),
-		});
-	}, [containerRowId, containerType]);
+	const getData = useCallback(
+		({ input, element }: DropTargetHighlightDataArgs) =>
+			attachClosestEdge(
+				{
+					rowId: containerDropindicatorId,
+					destinationContainerRowId: containerRowId,
+					destinationContainerType: containerType,
+				},
+				{
+					input,
+					element,
+					allowedEdges: ["top", "bottom"],
+				},
+			),
+		[containerRowId, containerType],
+	);
+	const { ref, isDraggedOver } = useDropTargetHighlight(getData);
 
 	return (
 		<DropPlaceholderShell ref={ref} isDraggedOver={isDraggedOver}>

@@ -287,81 +287,67 @@ const getValidateSyncResponse = lazyValidator<SyncResponse>(
 	fileId("rpc/sync.response.schema.json"),
 );
 
-export function validateApiRequest(data: unknown): ApiRequest {
-	assertValid("ApiRequest", getValidateApiRequest(), data);
-	return data;
+function makeValidator<T>(
+	label: string,
+	getter: () => ValidateFunction<T>,
+): (data: unknown) => T {
+	return (data: unknown): T => {
+		assertValid(label, getter(), data);
+		return data;
+	};
 }
 
-export function validateGetRequest(data: unknown): GetRequest {
-	assertValid("GetRequest", getValidateGetRequest(), data);
-	return data;
-}
-
-export function validateUpsertRequest(data: unknown): UpsertRequest {
-	assertValid("UpsertRequest", getValidateUpsertRequest(), data);
-	return data;
-}
+export const validateApiRequest = makeValidator<ApiRequest>(
+	"ApiRequest",
+	getValidateApiRequest,
+);
+export const validateGetRequest = makeValidator<GetRequest>(
+	"GetRequest",
+	getValidateGetRequest,
+);
+export const validateUpsertRequest = makeValidator<UpsertRequest>(
+	"UpsertRequest",
+	getValidateUpsertRequest,
+);
 
 /** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
-export function validateUiFlow(data: unknown): UI_Flow {
-	assertValid("Flow", getValidateUiFlow(), data);
-	return data;
-}
-
-export function validateDataEvyService(data: unknown): DATA_EVY_Service {
-	assertValid("Service", getValidateDataEvyService(), data);
-	return data;
-}
-
-export function validateDataEvyOrganization(
-	data: unknown,
-): DATA_EVY_Organization {
-	assertValid("Organization", getValidateDataEvyOrganization(), data);
-	return data;
-}
-
-export function validateDataEvyServiceProvider(
-	data: unknown,
-): DATA_EVY_ServiceProvider {
-	assertValid("ServiceProvider", getValidateDataEvyServiceProvider(), data);
-	return data;
-}
-
-export function validateUpsertDataPayload(
-	data: unknown,
-): DATA_PRIMITIVE["data"] {
-	assertValid("Upsert data", getValidateUpsertDataPayload(), data);
-	return data;
-}
-
-export function validateGetResponse(data: unknown): GetResponse {
-	assertValid("GetResponse", getValidateGetResponse(), data);
-	return data;
-}
-
-export function validateUpsertResponse(data: unknown): UpsertResponse {
-	assertValid("UpsertResponse", getValidateUpsertResponse(), data);
-	return data;
-}
-
-export function validateSync(data: unknown): SyncRequest {
-	assertValid("SyncRequest", getValidateSyncRequest(), data);
-	return data;
-}
-
-export function validateSyncResponse(data: unknown): SyncResponse {
-	assertValid("SyncResponse", getValidateSyncResponse(), data);
-	return data;
-}
+export const validateUiFlow = makeValidator<UI_Flow>("Flow", getValidateUiFlow);
+export const validateDataEvyService = makeValidator<DATA_EVY_Service>(
+	"Service",
+	getValidateDataEvyService,
+);
+export const validateDataEvyOrganization = makeValidator<DATA_EVY_Organization>(
+	"Organization",
+	getValidateDataEvyOrganization,
+);
+export const validateDataEvyServiceProvider =
+	makeValidator<DATA_EVY_ServiceProvider>(
+		"ServiceProvider",
+		getValidateDataEvyServiceProvider,
+	);
+export const validateUpsertDataPayload = makeValidator<DATA_PRIMITIVE["data"]>(
+	"Upsert data",
+	getValidateUpsertDataPayload,
+);
+export const validateGetResponse = makeValidator<GetResponse>(
+	"GetResponse",
+	getValidateGetResponse,
+);
+export const validateUpsertResponse = makeValidator<UpsertResponse>(
+	"UpsertResponse",
+	getValidateUpsertResponse,
+);
+export const validateSync = makeValidator<SyncRequest>(
+	"SyncRequest",
+	getValidateSyncRequest,
+);
+export const validateSyncResponse = makeValidator<SyncResponse>(
+	"SyncResponse",
+	getValidateSyncResponse,
+);
 
 function isIsoDateTimeFieldName(key: string): boolean {
-	if (key.endsWith("_timestamp")) {
-		return true;
-	}
-	if (key.length >= 3 && key.endsWith("At")) {
-		return true;
-	}
-	return false;
+	return key === "createdAt" || key === "updatedAt";
 }
 
 function throwDataIsoValidationError(path: string, reason: string): never {
@@ -397,12 +383,6 @@ export function assertIsoDateTimeJsonFields(
 				throwDataIsoValidationError(
 					path,
 					"date-time fields must be ISO 8601 strings, not numeric timestamps",
-				);
-			}
-			if (child === null || child === undefined) {
-				throwDataIsoValidationError(
-					path,
-					"date-time field must be an ISO 8601 string",
 				);
 			}
 			if (typeof child !== "string") {

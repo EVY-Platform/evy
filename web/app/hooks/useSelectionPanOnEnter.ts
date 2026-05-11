@@ -2,26 +2,19 @@ import { useLayoutEffect, useRef, type RefObject } from "react";
 
 import type { useCamera } from "./useCamera";
 import { consumeCapturedPosition } from "../utils/preActivationCapture";
+import { findPageFrame, getElementCenter } from "../utils/domHelpers";
 
 type PanToElement = ReturnType<typeof useCamera>["panToElement"];
 type SnapPan = ReturnType<typeof useCamera>["snapPan"];
-
-function findPageFrame(pageId: string): HTMLElement | null {
-	const escapedId = CSS.escape(pageId);
-	const el = document.querySelector(
-		`[data-canvas-page-frame][data-page-id="${escapedId}"]`,
-	);
-	return el instanceof HTMLElement ? el : null;
-}
 
 function snapToCompensate(
 	preCenter: { x: number; y: number },
 	el: HTMLElement,
 	snapPan: SnapPan,
 ): void {
-	const rect = el.getBoundingClientRect();
-	const dx = preCenter.x - (rect.left + rect.width / 2);
-	const dy = preCenter.y - (rect.top + rect.height / 2);
+	const center = getElementCenter(el);
+	const dx = preCenter.x - center.x;
+	const dy = preCenter.y - center.y;
 	if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
 		snapPan(dx, dy);
 	}

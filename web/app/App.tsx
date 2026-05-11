@@ -1,10 +1,4 @@
-import {
-	Fragment,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	type CSSProperties,
-} from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo } from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { FileSliders, Rows3 } from "lucide-react";
@@ -32,78 +26,17 @@ import { useFlows } from "./hooks/useFlows";
 import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
 import { capturePageFramePosition } from "./utils/preActivationCapture";
+import { buildActiveChildPages } from "./utils/childPageHelpers";
 
 import {
-	activePageWrapperStyle,
+	activePageWithPhoneStyle,
+	secondaryPageWithPhoneStyle,
+	pageWithPhoneStyle,
 	canvasContentStyle,
-	pageWrapperStyle,
-	secondaryPageWrapperStyle,
 } from "./appLayoutStyles";
 import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
-import type { Row } from "./types/row";
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
-const PHONE_FRAME_STYLE: CSSProperties = {
-	backgroundImage: 'url("/phone.svg")',
-	backgroundRepeat: "no-repeat",
-	backgroundSize: "contain",
-};
-type ActiveChildPage = {
-	childRow: Row;
-	parentRowId: string;
-};
-
-function buildActiveChildPages({
-	activeRowId,
-	configStack,
-	pages,
-}: {
-	activeRowId: string | undefined;
-	configStack: string[];
-	pages: { rows: Row[]; footer?: Row }[];
-}): ActiveChildPage[] {
-	if (!activeRowId) return [];
-
-	const activeRootRow = findRowInPages(activeRowId, pages);
-	if (!activeRootRow) return [];
-
-	const childPages: ActiveChildPage[] = [];
-	let currentParentRow = activeRootRow;
-
-	for (const selectedDescendantRowId of configStack) {
-		const singularChild = currentParentRow.config.view.content.child;
-		if (singularChild?.id === selectedDescendantRowId) {
-			childPages.push({
-				childRow: singularChild,
-				parentRowId: currentParentRow.id,
-			});
-			currentParentRow = singularChild;
-			continue;
-		}
-
-		const nestedChild = currentParentRow.config.view.content.children?.find(
-			(child) => child.id === selectedDescendantRowId,
-		);
-		if (nestedChild) {
-			currentParentRow = nestedChild;
-			continue;
-		}
-
-		const fallbackRow = findRowInPages(selectedDescendantRowId, pages);
-		if (!fallbackRow) return childPages;
-		currentParentRow = fallbackRow;
-	}
-
-	const nextChildRow = currentParentRow.config.view.content.child;
-	if (nextChildRow) {
-		childPages.push({
-			childRow: nextChildRow,
-			parentRowId: currentParentRow.id,
-		});
-	}
-
-	return childPages;
-}
 
 function AppContent() {
 	const {
@@ -179,6 +112,7 @@ function AppContent() {
 	const activeLeafRow = activeLeafRowId
 		? findRowInPages(activeLeafRowId, pages)
 		: undefined;
+	const isSearchParent = activeLeafRow?.config.type === "Search";
 	const activeLeafChild = activeLeafRow?.config.view.content.child;
 	const childPages = useMemo(
 		() => buildActiveChildPages({ activeRowId, configStack, pages }),
@@ -201,45 +135,43 @@ function AppContent() {
 						<Fragment key={activePage.id}>
 							<CanvasPageFrame
 								pageId={activePage.id}
-								wrapperStyle={{
-									...activePageWrapperStyle,
-									...PHONE_FRAME_STYLE,
-								}}
+								wrapperStyle={activePageWithPhoneStyle}
 								className="evy-flex-shrink-0"
 							>
 								<AppPage pageId={activePage.id} />
 							</CanvasPageFrame>
 
-							{childPages.map(({ childRow, parentRowId }) => (
-								<CanvasPageFrame
-									key={childRow.id}
-									wrapperStyle={{
-										...secondaryPageWrapperStyle,
-										...PHONE_FRAME_STYLE,
-									}}
-									className="evy-flex-shrink-0"
-									data-testid="child-page"
-								>
-									<ChildPage
-										childRow={childRow}
-										pageId={activePage.id}
-										parentRowId={parentRowId}
-									/>
-								</CanvasPageFrame>
-							))}
+							{childPages.map(({ childRow, parentRowId }) => {
+								const parentRow = findRowInPages(parentRowId, pages);
+								const childVariant =
+									parentRow?.config.type === "Search" ? "full" : "sheet";
+								return (
+									<CanvasPageFrame
+										key={childRow.id}
+										wrapperStyle={secondaryPageWithPhoneStyle}
+										className="evy-flex-shrink-0"
+										data-testid="child-page"
+									>
+										<ChildPage
+											childRow={childRow}
+											pageId={activePage.id}
+											parentRowId={parentRowId}
+											variant={childVariant}
+										/>
+									</CanvasPageFrame>
+								);
+							})}
 
 							{shouldShowBlankChildPage && (
 								<CanvasPageFrame
-									wrapperStyle={{
-										...secondaryPageWrapperStyle,
-										...PHONE_FRAME_STYLE,
-									}}
+									wrapperStyle={secondaryPageWithPhoneStyle}
 									className="evy-flex-shrink-0"
 									data-testid="blank-child-page"
 								>
 									<BlankChildPage
 										pageId={activePage.id}
 										parentRowId={activeLeafRowId}
+										variant={isSearchParent ? "full" : "sheet"}
 									/>
 								</CanvasPageFrame>
 							)}
@@ -249,10 +181,7 @@ function AppContent() {
 							<CanvasPageFrame
 								key={page.id}
 								pageId={page.id}
-								wrapperStyle={{
-									...pageWrapperStyle,
-									...PHONE_FRAME_STYLE,
-								}}
+								wrapperStyle={pageWithPhoneStyle}
 								className="evy-flex-shrink-0"
 							>
 								<AppPage pageId={page.id} />

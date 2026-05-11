@@ -23,6 +23,28 @@ struct EVYTextRow: View {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
       }
+      if view.content.action.trimmingCharacters(in: .whitespacesAndNewlines).count > 0 {
+        actionText
+      } else {
+        expandableText
+      }
+    }
+  }
+
+  private var actionText: some View {
+    HStack {
+      EVYTextView(
+        view.content.text,
+        placeholder: view.content.placeholder,
+        style: .info
+      )
+      .frame(maxWidth: .infinity, alignment: .leading)
+      EVYTextView(view.content.action, style: .action)
+    }
+  }
+
+  private var expandableText: some View {
+    VStack(alignment: .leading) {
       EVYTextView(view.content.text)
         .frame(maxWidth: .infinity, alignment: .leading)
         .lineLimit(Int(view.max_lines.isEmpty ? "1" : view.max_lines) ?? 1)
@@ -65,7 +87,9 @@ struct EVYTextRow: View {
         "view": {
           "content": {
             "title": "About this item",
-            "text": "This is a sample text row with some descriptive content to display. It can be quite long and the user can tap to expand it."
+            "text": "This is a sample text row with some descriptive content to display. It can be quite long and the user can tap to expand it.",
+            "placeholder": "",
+            "action": ""
           },
           "max_lines": "3"
         }
