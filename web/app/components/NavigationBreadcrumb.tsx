@@ -58,10 +58,10 @@ const breadcrumbScrollCss = `
 }
 @keyframes evy-breadcrumb-page-text-glow {
 	0%, 100% {
-		text-shadow: 0 0 1px oklch(60.04% 0.2013 261.37 / 0.1);
+		text-shadow: 0 0 1px color-mix(in srgb, var(--color-evy-blue) 10%, transparent);
 	}
 	50% {
-		text-shadow: 0 0 12px oklch(60.04% 0.2013 261.37 / 1);
+		text-shadow: 0 0 12px var(--color-evy-blue);
 	}
 }
 .evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link--active {

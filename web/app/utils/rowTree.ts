@@ -113,63 +113,76 @@ export function getRowsRecursive(row: Row): Row[] {
 	];
 }
 
+type ContainerSearchFn = (
+	container: Row,
+) => { rowId: string; type: ContainerType } | null;
+
+// -- DEDUPLICATED CONTAINER SEARCH --
+
+/**
+ * Searches through rows to find which container holds a row with the given ID.
+ * Returns the container row and whether it's a "child" (singular) or "children" (array) container.
+ */
 export function findContainerOfRow(
 	rowId: string,
 	rows: Row[],
 ): { container: Row; type: ContainerType } | null {
-	for (const row of rows) {
-		if (row.id === rowId) return null;
-
-		const childMatches = row.config.view.content.child?.id === rowId;
-		if (childMatches) return { container: row, type: "child" };
-
-		const childrenMatch = row.config.view.content.children?.some(
-			(r) => r.id === rowId,
-		);
-		if (childrenMatch) return { container: row, type: "children" };
-
-		if (row.config.view.content.child) {
-			const childrenOfChild = findContainerOfRow(rowId, [
-				row.config.view.content.child,
-			]);
-			if (childrenOfChild) return childrenOfChild;
+	return findContainerByPredicate(rows, (container) => {
+		if (container.config.view.content.child?.id === rowId) {
+			return { rowId: container.id, type: "child" as ContainerType };
 		}
-
-		if (row.config.view.content.children) {
-			const childrenOfChildren = findContainerOfRow(
-				rowId,
-				row.config.view.content.children,
-			);
-			if (childrenOfChildren) return childrenOfChildren;
+		if (container.config.view.content.children?.some((r) => r.id === rowId)) {
+			return { rowId: container.id, type: "children" as ContainerType };
 		}
-	}
-	return null;
+		return null;
+	});
 }
 
+/**
+ * Searches through rows to find a container row by its own ID.
+ * Returns the container row and its container type.
+ */
 export function findContainerById(
 	rowId: string,
 	rows: Row[],
 ): { container: Row; type: ContainerType } | null {
-	for (const row of rows) {
-		if ("child" in row.config.view.content && row.id === rowId) {
-			return { container: row, type: "child" };
+	return findContainerByPredicate(rows, (container) => {
+		if ("child" in container.config.view.content && container.id === rowId) {
+			return { rowId: container.id, type: "child" as ContainerType };
 		}
+		if ("children" in container.config.view.content && container.id === rowId) {
+			return { rowId: container.id, type: "children" as ContainerType };
+		}
+		return null;
+	});
+}
 
-		if ("children" in row.config.view.content && row.id === rowId) {
-			return { container: row, type: "children" };
-		}
+/**
+ * Generic recursive search for a container matching a predicate.
+ * Walks through rows and their children/child subtrees.
+ */
+function findContainerByPredicate(
+	rows: Row[],
+	predicate: ContainerSearchFn,
+): { container: Row; type: ContainerType } | null {
+	for (const row of rows) {
+		const match = predicate(row);
+		if (match) return { container: row, type: match.type };
 
 		if (row.config.view.content.child) {
-			const child = findContainerById(rowId, [row.config.view.content.child]);
-			if (child) return child;
+			const childResult = findContainerByPredicate(
+				[row.config.view.content.child],
+				predicate,
+			);
+			if (childResult) return childResult;
 		}
 
 		if (row.config.view.content.children) {
-			const children = findContainerById(
-				rowId,
+			const nestedResult = findContainerByPredicate(
 				row.config.view.content.children,
+				predicate,
 			);
-			if (children) return children;
+			if (nestedResult) return nestedResult;
 		}
 	}
 	return null;
@@ -394,31 +407,38 @@ export function updateRowInTree(
 	);
 }
 
+// -- DEDUPLICATED PAGE-LEVEL CONTAINER HELPERS --
+
+function findContainerInPage(
+	page: UI_Page,
+	rowId: string,
+	searcher: (
+		rowId: string,
+		rows: Row[],
+	) => { container: Row; type: ContainerType } | null,
+	skipFooterRootCheck?: boolean,
+): { container: Row; type: ContainerType } | null {
+	const fromRows = searcher(rowId, page.rows);
+	if (fromRows) return fromRows;
+	if (page.footer) {
+		if (skipFooterRootCheck && page.footer.id === rowId) return null;
+		return searcher(rowId, [page.footer]);
+	}
+	return null;
+}
+
 export function findContainerOfRowInPage(
 	page: UI_Page,
 	rowId: string,
 ): { container: Row; type: ContainerType } | null {
-	const fromRows = findContainerOfRow(rowId, page.rows);
-	if (fromRows) return fromRows;
-	if (page.footer) {
-		if (page.footer.id === rowId) {
-			return null;
-		}
-		return findContainerOfRow(rowId, [page.footer]);
-	}
-	return null;
+	return findContainerInPage(page, rowId, findContainerOfRow, true);
 }
 
 export function findContainerByIdInPage(
 	page: UI_Page,
 	rowId: string,
 ): { container: Row; type: ContainerType } | null {
-	const fromRows = findContainerById(rowId, page.rows);
-	if (fromRows) return fromRows;
-	if (page.footer) {
-		return findContainerById(rowId, [page.footer]);
-	}
-	return null;
+	return findContainerInPage(page, rowId, findContainerById);
 }
 
 export function removeRowFromPage(page: UI_Page, targetRowId: string): UI_Page {
@@ -452,29 +472,29 @@ export function insertRowIntoPage(
 		};
 	}
 
-	for (const [index, row] of page.rows.entries()) {
-		const result = insertRowIntoSubtree(
-			row,
-			destinationContainer.rowId,
-			rowToInsert,
-			destinationIndex,
-			destinationContainer.type,
-		);
-		if (!result.inserted) continue;
-		const updatedRows = [...page.rows];
-		updatedRows[index] = result.row;
-		return { ...page, rows: updatedRows };
+	// Try inserting into page rows first
+	const treeResult = insertRowIntoTree(
+		page.rows,
+		rowToInsert,
+		destinationIndex,
+		destinationContainer,
+	);
+	if (treeResult.inserted) {
+		return { ...page, rows: treeResult.rows };
 	}
 
+	// Fallback: try inserting into the footer
 	if (page.footer) {
-		const result = insertRowIntoSubtree(
-			page.footer,
-			destinationContainer.rowId,
-			rowToInsert,
-			destinationIndex,
-			destinationContainer.type,
-		);
-		if (result.inserted) {
+		for (const row of [page.footer]) {
+			const result = insertRowIntoSubtree(
+				row,
+				destinationContainer.rowId,
+				rowToInsert,
+				destinationIndex,
+				destinationContainer.type,
+			);
+			if (!result.inserted) continue;
+
 			return { ...page, footer: result.row };
 		}
 	}

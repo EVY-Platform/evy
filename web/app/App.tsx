@@ -42,16 +42,6 @@ const PHONE_FRAME_STYLE: CSSProperties = {
 	backgroundRepeat: "no-repeat",
 	backgroundSize: "contain",
 };
-const ADD_PAGE_BUTTON_STYLE: CSSProperties = {
-	position: "absolute",
-	bottom: "var(--size-4)",
-	left: "50%",
-	transform: "translateX(-50%)",
-	zIndex: 15,
-	borderColor: "var(--color-evy-gray-dark)",
-	borderRadius: "var(--radius-md)",
-};
-
 function buildActiveChildPageRows({
 	activeRowId,
 	configStack,
@@ -253,7 +243,15 @@ function AppContent() {
 				<button
 					type="button"
 					onClick={() => dispatchRow({ type: "ADD_PAGE" })}
-					style={ADD_PAGE_BUTTON_STYLE}
+					style={{
+						position: "absolute",
+						bottom: "var(--size-4)",
+						left: "50%",
+						transform: "translateX(-50%)",
+						zIndex: 15,
+						borderColor: "var(--color-evy-gray-dark)",
+						borderRadius: "var(--radius-md)",
+					}}
 					className="evy-bg-white evy-border evy-px-4 evy-py-2 evy-text-sm evy-cursor-pointer evy-text-gray-dark evy-font-medium evy-focus-visible:outline-none"
 					aria-label="Add a page"
 				>

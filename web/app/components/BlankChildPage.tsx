@@ -2,8 +2,7 @@ import { useRef } from "react";
 
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
 import { useDragContext } from "../state";
-import { rounded24Style } from "./pageStyles";
-import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
+import { ChildPageFrame } from "./ChildPageFrame";
 
 /**
  * A blank page shown to the right of the active page when a row-like element is selected.
@@ -26,20 +25,13 @@ export function BlankChildPage({
 	});
 
 	return (
-		<div
-			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
-			style={{ padding: "var(--size-30px)" }}
+		<ChildPageFrame
+			scrollableRef={scrollableRef}
+			className="evy-items-center evy-justify-center"
 		>
-			<div
-				className="evy-overflow-scroll evy-flex evy-flex-col evy-items-center evy-justify-center evy-h-full evy-bg-white"
-				style={rounded24Style}
-				{...canvasPageInteriorDomProps}
-				ref={scrollableRef}
-			>
-				<div className="evy-text-gray-dark evy-text-sm evy-text-center evy-px-4">
-					Drag and drop a row here to add a child
-				</div>
+			<div className="evy-text-gray-dark evy-text-sm evy-text-center evy-px-4">
+				Drag and drop a row here to add a child
 			</div>
-		</div>
+		</ChildPageFrame>
 	);
 }

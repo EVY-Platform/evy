@@ -2,6 +2,12 @@
  * Module-level store for capturing a page frame's screen-space center
  * BEFORE a state change moves it in the DOM. This allows useSelectionPanOnEnter
  * to compensate for layout shifts before the browser paints.
+ *
+ * Module-level state is intentional here: the position must be captured
+ * synchronously during a React event handler (before dispatch) and consumed
+ * in a subsequent useLayoutEffect. Passing it through React state would
+ * miss the synchronous dispatch-to-effect window. The set/consume/clear
+ * cycle is always fully synchronous within a single render pass.
  */
 
 let capturedCenter: { x: number; y: number } | null = null;

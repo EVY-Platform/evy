@@ -3,8 +3,8 @@ import { useCallback, useRef } from "react";
 import type { Row } from "../types/row";
 import { useFlowsContext } from "../state";
 import { DraggableRowContainer } from "./DraggableRowContainer";
-import { baseTitleStyle, rounded24Style } from "./pageStyles";
-import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
+import { baseTitleStyle } from "./pageStyles";
+import { ChildPageFrame } from "./ChildPageFrame";
 
 /**
  * Renders a child row as a secondary phone-page immediately to the right
@@ -20,25 +20,15 @@ export function ChildPage({ childRow }: { childRow: Row }) {
 	}, [dispatchRow, childRow.id]);
 
 	return (
-		<div
-			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
-			style={{ padding: "var(--size-30px)" }}
-		>
-			<div
-				className="evy-overflow-scroll evy-flex evy-flex-col evy-h-full evy-bg-white"
-				style={rounded24Style}
-				{...canvasPageInteriorDomProps}
-				ref={scrollableRef}
+		<ChildPageFrame scrollableRef={scrollableRef}>
+			<h2 style={baseTitleStyle}>Child Row</h2>
+			<DraggableRowContainer
+				rowId={childRow.id}
+				selectRow={selectChild}
+				showIndicators
 			>
-				<h2 style={baseTitleStyle}>Child Row</h2>
-				<DraggableRowContainer
-					rowId={childRow.id}
-					selectRow={selectChild}
-					showIndicators
-				>
-					{childRow.row}
-				</DraggableRowContainer>
-			</div>
-		</div>
+				{childRow.row}
+			</DraggableRowContainer>
+		</ChildPageFrame>
 	);
 }

@@ -52,16 +52,18 @@ export function validateRowPathSegmentsForPage(
 	if (segments.length === 0) return null;
 
 	const firstId = segments[0];
-	if (!findRowInSinglePage(page, firstId)) return null;
+	const firstRow = findRowInSinglePage(page, firstId);
+	if (!firstRow) return null;
 
 	const validated: string[] = [firstId];
+	let currentRow = firstRow;
 	for (let i = 1; i < segments.length; i++) {
-		const parentId = validated[validated.length - 1];
-		const parentRow = findRowInSinglePage(page, parentId);
 		const nextId = segments[i];
-		if (!parentRow || !isDirectChildRow(parentRow, nextId)) break;
-		if (!findRowInSinglePage(page, nextId)) break;
+		if (!isDirectChildRow(currentRow, nextId)) break;
+		const nextRow = findRowInSinglePage(page, nextId);
+		if (!nextRow) break;
 		validated.push(nextId);
+		currentRow = nextRow;
 	}
 
 	const rootRowId = validated[0];

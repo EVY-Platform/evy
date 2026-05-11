@@ -42,16 +42,10 @@ function mapRowAcrossPages(
 	}));
 }
 
-function rowNameEquals(row: unknown, name: string): boolean {
-	if (row === null) return false;
-	const n = (row as Record<string, unknown>).name;
-	return typeof n === "string" && n === name;
-}
-
 function buildPaletteRow(oldRowId: string, newRowId: string): Row | undefined {
 	const baseRow = baseRows.find((row) => {
-		if (!row || typeof row !== "function") return false;
-		return rowNameEquals(row, oldRowId);
+		if (typeof row !== "function") return false;
+		return row.name === oldRowId;
 	});
 	if (!baseRow) return undefined;
 	return buildRowForNewPageFromBase(baseRow, newRowId);

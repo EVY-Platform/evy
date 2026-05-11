@@ -74,7 +74,7 @@ enum EVYActionRunner {
 
         let queryArgument = args.count > 2 ? args.dropFirst(2).joined(separator: ",") : ""
         let query = try parseQueryArgument(queryArgument)
-        let resolvedQuery = resolveDatumInQuery(query, datum: datum)
+        let resolvedQuery = EVY.resolveDatumInQuery(query, datum: datum)
         navigate(
           .navigate(Route(flowId: flowId, pageId: pageId, query: resolvedQuery))
         )
@@ -162,11 +162,6 @@ enum EVYActionRunner {
     return normalizedJsonString
   }
 
-  private static func resolveDatumInQuery(
-    _ query: [String: [String]], datum: EVYJson?
-  ) -> [String: [String]] {
-    EVY.resolveDatumInQuery(query, datum: datum)
-  }
 
   private static func unwrapActionBranch(_ branch: String) -> String {
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return branch }
