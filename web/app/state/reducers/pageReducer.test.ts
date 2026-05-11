@@ -696,4 +696,52 @@ describe("pageReducer", () => {
 		expect(next.flows[0].pages[1].footer?.id).toBe("row-1");
 		expect(next.activeRowId).toBe("row-1");
 	});
+
+	it("ADD_ROW inserts palette row as child of footer descendant (blank child page drop)", () => {
+		// Build a footer subtree:
+		// footer-root (ListContainer)
+		//   └── footer-parent (Text, no child yet)
+		const footerParent = textRow("footer-parent");
+		const footerRoot = containerRow("footer-root", footerParent);
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [textRow("row-1")],
+							footer: footerRoot,
+						},
+					],
+				},
+			],
+		});
+		const newId = "new-footer-child";
+		const next = pageReducer(state, {
+			type: "ADD_ROW",
+			newRowId: newId,
+			oldRowId: "TextRow",
+			destinationPageId: "page-1",
+			destinationIndex: 0,
+			destinationContainer: { rowId: "footer-parent", type: "child" },
+		});
+
+		// The new row should be inserted as child of footer-parent
+		const footerAfter = next.flows[0].pages[0].footer;
+		expect(footerAfter).toBeDefined();
+		expect(footerAfter?.id).toBe("footer-root");
+		expect(footerAfter?.config.view.content.child?.id).toBe("footer-parent");
+		expect(
+			footerAfter?.config.view.content.child?.config.view.content.child?.id,
+		).toBe(newId);
+
+		// Selection / config stack should reflect the new child chain.
+		// The path starts from the footer root (the page-level entry point).
+		expect(next.activeRowId).toBe("footer-root");
+		expect(next.configStack).toEqual(["footer-parent", newId]);
+		expect(next.activePageId).toBe("page-1");
+	});
 });

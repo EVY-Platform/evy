@@ -5,8 +5,10 @@ import type { Row } from "../types/row";
 import {
 	findContainerByIdInPage,
 	findContainerOfRowInPage,
+	findPageContainingRow,
 	findRowIdPathFromPageRoot,
 	findRowInPages,
+	getRowsInPage,
 	getRowsRecursive,
 	insertRowIntoPage,
 	removeRowFromPage,
@@ -146,5 +148,92 @@ describe("page-level row tree helpers", () => {
 		expect(footerInsert.footer?.config.view.content.children?.[0].id).toBe(
 			"new",
 		);
+	});
+});
+
+describe("getRowsInPage", () => {
+	it("returns body rows and footer descendants", () => {
+		const bodyChild = makeRow("body-child");
+		const bodyRoot = makeRow("body-root", { children: [bodyChild] });
+		const footerDescendant = makeRow("footer-descendant");
+		const footerRoot = makeRow("footer-root", { child: footerDescendant });
+		const p = page("p", [bodyRoot], footerRoot);
+
+		const result = getRowsInPage(p);
+		expect(result.map((r) => r.id)).toEqual([
+			"body-root",
+			"body-child",
+			"footer-root",
+			"footer-descendant",
+		]);
+	});
+
+	it("returns only body rows when there is no footer", () => {
+		const bodyRow = makeRow("body-row");
+		const p = page("p", [bodyRow]);
+
+		expect(getRowsInPage(p).map((r) => r.id)).toEqual(["body-row"]);
+	});
+
+	it("returns only footer rows when there are no body rows", () => {
+		const footerRow = makeRow("footer-row");
+		const p = page("p", [], footerRow);
+
+		expect(getRowsInPage(p).map((r) => r.id)).toEqual(["footer-row"]);
+	});
+
+	it("includes deeply nested rows in footer", () => {
+		const deepChild = makeRow("deep-child");
+		const midChild = makeRow("mid-child", { child: deepChild });
+		const footerRoot = makeRow("footer-root", { children: [midChild] });
+		const p = page("p", [], footerRoot);
+
+		expect(getRowsInPage(p).map((r) => r.id)).toEqual([
+			"footer-root",
+			"mid-child",
+			"deep-child",
+		]);
+	});
+});
+
+describe("findPageContainingRow", () => {
+	it("finds a page by a row in its body", () => {
+		const row = makeRow("target");
+		const p1 = page("p1", [makeRow("a")]);
+		const p2 = page("p2", [row]);
+
+		expect(findPageContainingRow([p1, p2], "target")).toBe(p2);
+	});
+
+	it("finds a page by a row in its footer subtree", () => {
+		const footerChild = makeRow("footer-child");
+		const footerRoot = makeRow("footer-root", { child: footerChild });
+		const p1 = page("p1", [makeRow("a")]);
+		const p2 = page("p2", [makeRow("b")], footerRoot);
+
+		expect(findPageContainingRow([p1, p2], "footer-child")).toBe(p2);
+	});
+
+	it("finds a page by a deeply nested footer descendant", () => {
+		const deepChild = makeRow("deep");
+		const mid = makeRow("mid", { child: deepChild });
+		const footerRoot = makeRow("footer-root", { child: mid });
+		const p = page("p", [makeRow("a")], footerRoot);
+
+		expect(findPageContainingRow([p], "deep")).toBe(p);
+	});
+
+	it("finds a page by a row nested in array children of footer", () => {
+		const childRow = makeRow("child");
+		const footerRoot = makeRow("footer-root", { children: [childRow] });
+		const p = page("p", [], footerRoot);
+
+		expect(findPageContainingRow([p], "child")).toBe(p);
+	});
+
+	it("returns undefined when row is not in any page", () => {
+		const p = page("p", [makeRow("a")]);
+
+		expect(findPageContainingRow([p], "nonexistent")).toBeUndefined();
 	});
 });

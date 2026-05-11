@@ -16,6 +16,7 @@ import { containerDropindicatorId } from "../rows/EVYRow";
 import {
 	findContainerByIdInPage,
 	findContainerOfRowInPage,
+	findPageContainingRow,
 	resolveDestinationPageFromRawPageId,
 } from "../utils/rowTree";
 
@@ -217,6 +218,18 @@ export function handleDrop(
 			type: "child",
 		};
 		dispatchOptions.destinationIndex = 0;
+
+		// When dropping into a blank child page, the parent row may be in the
+		// footer subtree. Ensure we resolve the correct page by searching for
+		// which page actually contains the parent row, not just relying on the
+		// drop target's pageId (which may be stale or ambiguous).
+		const actualPage = findPageContainingRow(
+			pages,
+			pageDestinationContainerRowId,
+		);
+		if (actualPage && actualPage !== destinationPage) {
+			dispatchOptions.destinationPageId = actualPage.id;
+		}
 	}
 
 	const firstDropTarget = location.current.dropTargets[0];
@@ -265,14 +278,14 @@ export function handleDrop(
 		} else {
 			const destinationContainer = isPlaceholderDrop
 				? (() => {
-						const secondTargetRowId =
-							location.current.dropTargets[1]?.data.rowId;
-						invariant(
-							typeof secondTargetRowId === "string",
-							"handleDrop: dropTargets[1].rowId is not a string",
-						);
-						return findContainerByIdInPage(destinationPage, secondTargetRowId);
-					})()
+					const secondTargetRowId =
+						location.current.dropTargets[1]?.data.rowId;
+					invariant(
+						typeof secondTargetRowId === "string",
+						"handleDrop: dropTargets[1].rowId is not a string",
+					);
+					return findContainerByIdInPage(destinationPage, secondTargetRowId);
+				})()
 				: findContainerOfRowInPage(destinationPage, destinationRowId);
 
 			if (

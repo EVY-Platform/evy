@@ -113,6 +113,32 @@ export function getRowsRecursive(row: Row): Row[] {
 	];
 }
 
+/**
+ * Returns all rows in a page, including both the body rows and the footer subtree.
+ * This centralises the traversal so callers don't accidentally miss footer descendants.
+ */
+export function getRowsInPage(page: { rows: Row[]; footer?: Row }): Row[] {
+	return [
+		...page.rows.flatMap(getRowsRecursive),
+		...(page.footer ? getRowsRecursive(page.footer) : []),
+	];
+}
+
+/**
+ * Finds which page in the given array contains a row with the specified ID.
+ * Returns the page, or undefined if no page contains the row.
+ */
+export function findPageContainingRow(
+	pages: { rows: Row[]; footer?: Row }[],
+	rowId: string,
+): { rows: Row[]; footer?: Row } | undefined {
+	for (const page of pages) {
+		const found = findRowInSinglePage(page, rowId);
+		if (found) return page;
+	}
+	return undefined;
+}
+
 type ContainerSearchFn = (
 	container: Row,
 ) => { rowId: string; type: ContainerType } | null;
