@@ -56,16 +56,27 @@ test.describe("Drag & Drop UX", () => {
 			position: { x: (canvasBox?.width ?? 400) / 2, y: 10 },
 		});
 
+		// Wait for both pages to be visible after clearing selection
+		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(2);
+
 		const pageRow = getPageRow(page, "Text row title");
 		const secondPageContent = getPageContent(page, 1);
 
 		await pageRow.dragTo(secondPageContent);
 
-		// After move, row is selected on page 2 which is now the only visible page frame
-		const activePageFrame = page.locator(SELECTORS.phoneContainer).first();
+		// After move, row should be on the second page
+		const secondPageFrame = page.locator(SELECTORS.phoneContainer).nth(1);
 		await expect(
-			activePageFrame.getByText("Text row title", { exact: true }),
+			secondPageFrame.getByText("Text row title", { exact: true }),
 		).toBeVisible();
+
+		// First page should no longer have the row
+		await expect(
+			page
+				.locator(SELECTORS.phoneContainer)
+				.nth(0)
+				.getByText("Text row title", { exact: true }),
+		).toHaveCount(0);
 	});
 
 	test("should drag a row from a child container to another page", async ({

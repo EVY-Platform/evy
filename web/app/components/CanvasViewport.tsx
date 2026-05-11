@@ -37,6 +37,8 @@ type CanvasViewportProps = {
 	/** When an element becomes active, pan so the active page is centered. */
 	shouldPanToActive?: boolean;
 	activePageId?: string;
+	/** Used to re-center the canvas when the flow changes. */
+	activeFlowId?: string;
 };
 
 export function CanvasViewport({
@@ -45,6 +47,7 @@ export function CanvasViewport({
 	contentStyle,
 	shouldPanToActive = false,
 	activePageId,
+	activeFlowId,
 }: CanvasViewportProps) {
 	const camera = useCamera();
 	const {
@@ -67,6 +70,8 @@ export function CanvasViewport({
 	);
 
 	const contentMeasureRef = useRef<HTMLDivElement | null>(null);
+	const hasCenteredOnMount = useRef(false);
+	const prevFlowIdRef = useRef(activeFlowId);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const targetCursorRef = useRef<CursorPosition>(null);
 	const displayCursorRef = useRef<CursorPosition>(null);
@@ -77,6 +82,33 @@ export function CanvasViewport({
 
 	const cam = getCamera();
 	camRef.current = cam;
+
+	// Vertically center the content on initial mount or when the flow changes
+	// (inactive mode only — useSelectionPanOnEnter handles active mode).
+	useLayoutEffect(() => {
+		const flowChanged = prevFlowIdRef.current !== activeFlowId;
+		prevFlowIdRef.current = activeFlowId;
+
+		if (flowChanged) {
+			// Reset camera for the new flow.
+			snapPan(-cam.offsetX, -cam.offsetY);
+			hasCenteredOnMount.current = false;
+		}
+
+		if (hasCenteredOnMount.current || shouldPanToActive) return;
+		const viewport = viewportRef.current;
+		const content = contentMeasureRef.current;
+		if (!viewport || !content) return;
+		if (content.offsetHeight <= 0) return;
+		hasCenteredOnMount.current = true;
+		const vpRect = viewport.getBoundingClientRect();
+		const contentRect = content.getBoundingClientRect();
+		const dy =
+			vpRect.top +
+			vpRect.height / 2 -
+			(contentRect.top + contentRect.height / 2);
+		if (Math.abs(dy) > 0.5) snapPan(0, dy);
+	});
 
 	useEffect(() => {
 		const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");

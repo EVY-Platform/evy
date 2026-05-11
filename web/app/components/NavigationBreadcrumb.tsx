@@ -12,6 +12,7 @@ import {
 import { findFlowById } from "../utils/flowHelpers";
 import { splitCamelCaseToWords } from "../utils/labelFormatting";
 import { findRowInPages } from "../utils/rowTree";
+import { capturePageFramePosition } from "../utils/preActivationCapture";
 
 const breadcrumbScrollCss = `
 .evy-nav-breadcrumb-scroll {
@@ -126,6 +127,9 @@ export function NavigationBreadcrumb() {
 	);
 
 	const navigateBreadcrumb = (configStackLength: number) => {
+		if (activePageId) {
+			capturePageFramePosition(activePageId);
+		}
 		dispatchRow({ type: "NAVIGATE_BREADCRUMB", configStackLength });
 	};
 
@@ -189,6 +193,7 @@ export function NavigationBreadcrumb() {
 								aria-current={isPageActiveWithNoRow ? "page" : undefined}
 								aria-label={`Select page ${breadcrumbLabelForPage(activePage, pages)}`}
 								onClick={() => {
+									capturePageFramePosition(activePage.id);
 									dispatchRow({
 										type: "SET_ACTIVE_PAGE",
 										pageId: activePage.id,

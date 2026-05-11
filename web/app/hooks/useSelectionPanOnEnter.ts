@@ -6,12 +6,31 @@ import { consumeCapturedPosition } from "../utils/preActivationCapture";
 type PanToElement = ReturnType<typeof useCamera>["panToElement"];
 type SnapPan = ReturnType<typeof useCamera>["snapPan"];
 
+function findPageFrame(pageId: string): HTMLElement | null {
+	const escapedId = CSS.escape(pageId);
+	const el = document.querySelector(
+		`[data-canvas-page-frame][data-page-id="${escapedId}"]`,
+	);
+	return el instanceof HTMLElement ? el : null;
+}
+
+function snapToCompensate(
+	preCenter: { x: number; y: number },
+	el: HTMLElement,
+	snapPan: SnapPan,
+): void {
+	const rect = el.getBoundingClientRect();
+	const dx = preCenter.x - (rect.left + rect.width / 2);
+	const dy = preCenter.y - (rect.top + rect.height / 2);
+	if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+		snapPan(dx, dy);
+	}
+}
+
 /**
- * When an element becomes active, compensates for any layout shift before paint
- * and then smoothly pans the canvas so the active page is centered (if needed).
- * Deactivating does not move the camera.
- *
- * Call from {@link CanvasViewport} (or any component that owns the same camera as the viewport).
+ * Compensates for layout shifts when selection changes:
+ * - On activate: snaps camera then smoothly pans to center the page.
+ * - On deactivate: snaps camera so the page stays in place visually.
  */
 export function useSelectionPanOnEnter(
 	isActive: boolean,
@@ -21,59 +40,49 @@ export function useSelectionPanOnEnter(
 	viewportRef: RefObject<HTMLDivElement | null>,
 ) {
 	const prevIsActiveRef = useRef(isActive);
+	const prevActivePageIdRef = useRef(activePageId);
+	const hasMountedRef = useRef(false);
 
 	useLayoutEffect(() => {
+		const isFirstRun = !hasMountedRef.current;
+		hasMountedRef.current = true;
+
 		const wasEntering = !prevIsActiveRef.current && isActive;
+		const wasLeaving = prevIsActiveRef.current && !isActive;
+		const prevPageId = prevActivePageIdRef.current;
+
 		prevIsActiveRef.current = isActive;
+		prevActivePageIdRef.current = activePageId;
 
-		if (!wasEntering || !activePageId) return;
+		if (wasLeaving && prevPageId) {
+			const preCenter = consumeCapturedPosition();
+			const el = findPageFrame(prevPageId);
+			if (preCenter && el) snapToCompensate(preCenter, el, snapPan);
+			return;
+		}
 
-		const escapedId =
-			typeof CSS !== "undefined" && typeof CSS.escape === "function"
-				? CSS.escape(activePageId)
-				: activePageId;
-		const el = document.querySelector(
-			`[data-canvas-page-frame][data-page-id="${escapedId}"]`,
-		);
-		if (!(el instanceof HTMLElement)) return;
+		// Center the active page on enter OR on first mount if already active.
+		const shouldCenter = wasEntering || (isFirstRun && isActive);
+		if (!shouldCenter || !activePageId) return;
 
-		// Read and clear the pre-activation screen center captured before dispatch.
+		const el = findPageFrame(activePageId);
+		if (!el) return;
+
 		const preCenter = consumeCapturedPosition();
 
 		if (preCenter) {
-			// Compensate for the layout shift: snap camera so the page appears
-			// at its pre-click screen position (invisible to the user).
-			const postRect = el.getBoundingClientRect();
-			const postCenterX = postRect.left + postRect.width / 2;
-			const postCenterY = postRect.top + postRect.height / 2;
-
-			const shiftX = preCenter.x - postCenterX;
-			const shiftY = preCenter.y - postCenterY;
-
-			if (Math.abs(shiftX) > 0.5 || Math.abs(shiftY) > 0.5) {
-				snapPan(shiftX, shiftY);
-			}
-
-			// Now smoothly pan to center if the page isn't already there.
-			// panToElement has its own threshold guard so this is a no-op when centered.
+			snapToCompensate(preCenter, el, snapPan);
 			panToElement(el);
 		} else {
-			// No capture available (e.g. breadcrumb or URL navigation).
-			// Snap directly to center without animation to avoid a visible jump.
+			// No capture (e.g. page refresh/URL navigation) — snap directly to center.
 			const viewport = viewportRef.current;
 			if (!viewport) return;
-
 			const vpRect = viewport.getBoundingClientRect();
-			const elRect = el.getBoundingClientRect();
-
-			const dx =
-				vpRect.left + vpRect.width / 2 - (elRect.left + elRect.width / 2);
-			const dy =
-				vpRect.top + vpRect.height / 2 - (elRect.top + elRect.height / 2);
-
-			if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
-				snapPan(dx, dy);
-			}
+			const fakeCenter = {
+				x: vpRect.left + vpRect.width / 2,
+				y: vpRect.top + vpRect.height / 2,
+			};
+			snapToCompensate(fakeCenter, el, snapPan);
 		}
 	}, [isActive, activePageId, panToElement, snapPan, viewportRef]);
 }

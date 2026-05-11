@@ -25,6 +25,7 @@ import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
 import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
+import { capturePageFramePosition } from "./utils/preActivationCapture";
 
 import {
 	activePageWrapperStyle,
@@ -159,6 +160,9 @@ function AppContent() {
 	}, [pages, dispatchRow, dispatchDragging]);
 
 	const clearSelectionOnBackground = () => {
+		if (activePageId) {
+			capturePageFramePosition(activePageId);
+		}
 		dispatchRow({ type: "CLEAR_ACTIVE_SELECTION" });
 	};
 
@@ -186,6 +190,7 @@ function AppContent() {
 					onBackgroundClick={clearSelectionOnBackground}
 					shouldPanToActive={isElementActive}
 					activePageId={activePageId}
+					activeFlowId={activeFlowId}
 				>
 					{isElementActive && activePage ? (
 						<Fragment key={activePage.id}>
