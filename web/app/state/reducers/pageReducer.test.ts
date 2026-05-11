@@ -42,17 +42,17 @@ function textRow(id: string, text = "hello"): Row {
 	};
 }
 
-function sheetRow(id: string, child: Row, children: Row[] = []): Row {
+function containerRow(id: string, child: Row, children: Row[] = []): Row {
 	return {
 		id,
 		row: null,
 		config: {
-			type: "SheetContainer",
+			type: "ListContainer",
 			source: "",
 			actions: [],
 			view: {
 				content: {
-					title: "Sheet",
+					title: "Container",
 					child,
 					children,
 				},
@@ -83,7 +83,6 @@ function initialState(overrides: Partial<AppState> = {}): AppState {
 		],
 		activeFlowId: "flow-1",
 		activePageId: "page-1",
-		focusMode: false,
 		configStack: [],
 		...overrides,
 	};
@@ -311,19 +310,15 @@ describe("pageReducer", () => {
 		expect(next.activeRowId).toBeUndefined();
 	});
 
-	it("CLEAR_ACTIVE_SELECTION resets selection and focus", () => {
+	it("CLEAR_ACTIVE_SELECTION resets selection", () => {
 		const state = initialState({
 			activeRowId: "row-1",
 			activePageId: "page-1",
-			focusMode: true,
-			secondarySheetRowId: "s",
 			configStack: ["a"],
 		});
 		const next = pageReducer(state, { type: "CLEAR_ACTIVE_SELECTION" });
 		expect(next.activeRowId).toBeUndefined();
 		expect(next.activePageId).toBeUndefined();
-		expect(next.focusMode).toBe(false);
-		expect(next.secondarySheetRowId).toBeUndefined();
 		expect(next.configStack).toEqual([]);
 	});
 
@@ -403,13 +398,30 @@ describe("pageReducer", () => {
 		expect(row.config.actions).toEqual(actions);
 	});
 
-	it("TOGGLE_FOCUS_MODE", () => {
-		const state = initialState({ focusMode: false, activePageId: undefined });
-		const on = pageReducer(state, { type: "TOGGLE_FOCUS_MODE" });
-		expect(on.focusMode).toBe(true);
-		expect(on.activePageId).toBe("page-1");
-		const off = pageReducer(on, { type: "TOGGLE_FOCUS_MODE" });
-		expect(off.focusMode).toBe(false);
+	it("SET_ACTIVE_PAGE toggles off when same page is already active with no row", () => {
+		const state = initialState({
+			activePageId: "page-1",
+			activeRowId: undefined,
+			configStack: [],
+		});
+		const next = pageReducer(state, {
+			type: "SET_ACTIVE_PAGE",
+			pageId: "page-1",
+		});
+		expect(next.activePageId).toBeUndefined();
+		expect(next.activeRowId).toBeUndefined();
+	});
+
+	it("SET_ACTIVE_ROW toggles off when same row chain is already active", () => {
+		const state = initialState({
+			activeRowId: "row-1",
+			activePageId: "page-1",
+			configStack: [],
+		});
+		const next = pageReducer(state, { type: "SET_ACTIVE_ROW", rowId: "row-1" });
+		expect(next.activeRowId).toBeUndefined();
+		expect(next.activePageId).toBeUndefined();
+		expect(next.configStack).toEqual([]);
 	});
 
 	it("PUSH_CONFIG_STACK and NAVIGATE_BREADCRUMB", () => {
@@ -425,53 +437,6 @@ describe("pageReducer", () => {
 			configStackLength: 0,
 		});
 		expect(popped.configStack).toEqual([]);
-	});
-
-	it("PUSH_CONFIG_STACK auto-enters focus mode for SheetContainer child", () => {
-		const state = initialState({
-			activePageId: undefined,
-			focusMode: false,
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [
-								sheetRow("sheet-1", textRow("sheet-child"), [
-									textRow("sheet-list-child"),
-								]),
-							],
-						},
-					],
-				},
-			],
-		});
-
-		const next = pageReducer(state, {
-			type: "PUSH_CONFIG_STACK",
-			parentRowId: "sheet-1",
-			childRowId: "sheet-child",
-		});
-
-		expect(next.focusMode).toBe(true);
-		expect(next.activePageId).toBe("page-1");
-		expect(next.secondarySheetRowId).toBe("sheet-1");
-		expect(next.configStack).toEqual(["sheet-child"]);
-	});
-
-	it("OPEN_SECONDARY_SHEET and CLOSE_SECONDARY_SHEET", () => {
-		const state = initialState();
-		const open = pageReducer(state, {
-			type: "OPEN_SECONDARY_SHEET",
-			sheetRowId: "sheet-1",
-		});
-		expect(open.secondarySheetRowId).toBe("sheet-1");
-		const closed = pageReducer(open, { type: "CLOSE_SECONDARY_SHEET" });
-		expect(closed.secondarySheetRowId).toBeUndefined();
-		expect(closed.configStack).toEqual([]);
 	});
 
 	it("REMOVE_ROW removes footer root", () => {
@@ -504,7 +469,7 @@ describe("pageReducer", () => {
 
 	it("REMOVE_ROW removes nested footer child", () => {
 		const inner = textRow("foot-inner");
-		const foot = sheetRow("footer-row", inner);
+		const foot = containerRow("footer-row", inner);
 		const state = initialState({
 			flows: [
 				{
@@ -564,8 +529,40 @@ describe("pageReducer", () => {
 		expect(next.flows[0].pages[0].rows[1].id).toBe("row-1");
 	});
 
+	it("ADD_ROW inserts palette row into child container", () => {
+		const container = containerRow("parent", textRow("dummy"));
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [container],
+						},
+					],
+				},
+			],
+		});
+		const newId = "new-child";
+		const next = pageReducer(state, {
+			type: "ADD_ROW",
+			newRowId: newId,
+			oldRowId: "TextRow",
+			destinationPageId: "page-1",
+			destinationIndex: 0,
+			destinationContainer: { rowId: "parent", type: "child" },
+		});
+		const parentAfter = next.flows[0].pages[0].rows.find(
+			(r) => r.id === "parent",
+		);
+		expect(parentAfter?.config.view.content.child?.id).toBe(newId);
+	});
+
 	it("ADD_ROW inserts palette row into footer container", () => {
-		const foot = sheetRow("footer-sheet", textRow("dummy"), []);
+		const foot = containerRow("footer-sheet", textRow("dummy"), []);
 		const state = initialState({
 			flows: [
 				{
@@ -581,7 +578,6 @@ describe("pageReducer", () => {
 					],
 				},
 			],
-			activePageId: "page-1",
 		});
 		const newId = "new-in-footer";
 		const next = pageReducer(state, {
@@ -699,5 +695,53 @@ describe("pageReducer", () => {
 		expect(next.flows[0].pages[1].footer).toBeDefined();
 		expect(next.flows[0].pages[1].footer?.id).toBe("row-1");
 		expect(next.activeRowId).toBe("row-1");
+	});
+
+	it("ADD_ROW inserts palette row as child of footer descendant (blank child page drop)", () => {
+		// Build a footer subtree:
+		// footer-root (ListContainer)
+		//   └── footer-parent (Text, no child yet)
+		const footerParent = textRow("footer-parent");
+		const footerRoot = containerRow("footer-root", footerParent);
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [textRow("row-1")],
+							footer: footerRoot,
+						},
+					],
+				},
+			],
+		});
+		const newId = "new-footer-child";
+		const next = pageReducer(state, {
+			type: "ADD_ROW",
+			newRowId: newId,
+			oldRowId: "TextRow",
+			destinationPageId: "page-1",
+			destinationIndex: 0,
+			destinationContainer: { rowId: "footer-parent", type: "child" },
+		});
+
+		// The new row should be inserted as child of footer-parent
+		const footerAfter = next.flows[0].pages[0].footer;
+		expect(footerAfter).toBeDefined();
+		expect(footerAfter?.id).toBe("footer-root");
+		expect(footerAfter?.config.view.content.child?.id).toBe("footer-parent");
+		expect(
+			footerAfter?.config.view.content.child?.config.view.content.child?.id,
+		).toBe(newId);
+
+		// Selection / config stack should reflect the new child chain.
+		// The path starts from the footer root (the page-level entry point).
+		expect(next.activeRowId).toBe("footer-root");
+		expect(next.configStack).toEqual(["footer-parent", newId]);
+		expect(next.activePageId).toBe("page-1");
 	});
 });

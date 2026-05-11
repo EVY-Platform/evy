@@ -16,6 +16,8 @@ import {
 } from "../integration/utils";
 
 const API_POLL_TIMEOUT_MS = 10_000;
+const TEST_TOKEN = "e2e-test-token";
+const TEST_OS = "Web";
 
 function getApiUrl(): string {
 	const apiUrl = process.env.API_URL;
@@ -58,6 +60,17 @@ async function getFlowsFromApi(): Promise<UI_Flow[]> {
 			resource: "sdui",
 		});
 		return result as UI_Flow[];
+	});
+}
+
+async function upsertFlowToApi(flow: UI_Flow): Promise<void> {
+	await withApiClient(async (client) => {
+		await client.login({ token: TEST_TOKEN, os: TEST_OS });
+		await client.call("upsert", {
+			service: "evy",
+			resource: "sdui",
+			data: flow,
+		});
 	});
 }
 
@@ -221,6 +234,136 @@ test.describe("Web E2E Integration Tests", () => {
 		await editedRow.click();
 		await expect(titleInput).toBeVisible();
 		await expect(titleInput).toHaveValue(uniqueTitle);
+	});
+
+	test("should keep existing child pages visible while opening nested child rows", async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 2200, height: 1700 });
+		const uniqueFlowName = `E2E Child Page Flow ${Date.now()}`;
+		const firstChild: UI_Row = {
+			id: crypto.randomUUID(),
+			type: "Text",
+			source: "",
+			actions: [],
+			view: {
+				content: {
+					title: "E2E First Child Row",
+					text: "First child text",
+					child: {
+						id: crypto.randomUUID(),
+						type: "Text",
+						source: "",
+						actions: [],
+						view: {
+							content: {
+								title: "E2E Second Child Row",
+								text: "Second child text",
+								child: {
+									id: crypto.randomUUID(),
+									type: "Text",
+									source: "",
+									actions: [],
+									view: {
+										content: {
+											title: "E2E Third Child Row",
+											text: "Third child text",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		};
+		const parentRow: UI_Row = {
+			id: crypto.randomUUID(),
+			type: "Info",
+			source: "",
+			actions: [],
+			view: {
+				content: {
+					title: "E2E Parent Row",
+					subtitle: "Parent subtitle",
+					icon: "",
+					child: firstChild,
+				},
+			},
+		};
+		await upsertFlowToApi({
+			id: crypto.randomUUID(),
+			name: uniqueFlowName,
+			pages: [
+				{
+					id: crypto.randomUUID(),
+					title: "E2E Child Page",
+					rows: [parentRow],
+				},
+			],
+		});
+
+		await page.goto("/");
+		await waitForAppLoaded(page);
+		await selectFlowByLabel(page, uniqueFlowName);
+
+		await getFirstPage(page)
+			.getByText("E2E Parent Row", { exact: true })
+			.click();
+
+		let childPages = page.getByTestId("child-page");
+		await expect(childPages).toHaveCount(1);
+		await expect(
+			childPages.nth(0).getByText("E2E First Child Row", { exact: true }),
+		).toBeVisible();
+		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(2);
+
+		await childPages
+			.nth(0)
+			.getByText("E2E First Child Row", { exact: true })
+			.click();
+
+		childPages = page.getByTestId("child-page");
+		await expect(childPages).toHaveCount(2);
+		await expect(
+			childPages.nth(0).getByText("E2E First Child Row", { exact: true }),
+		).toBeVisible();
+		await expect(
+			childPages.nth(1).getByText("E2E Second Child Row", { exact: true }),
+		).toBeVisible();
+		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(3);
+
+		await childPages
+			.nth(1)
+			.getByText("E2E Second Child Row", { exact: true })
+			.click();
+
+		childPages = page.getByTestId("child-page");
+		await expect(childPages).toHaveCount(3);
+		await expect(
+			childPages.nth(0).getByText("E2E First Child Row", { exact: true }),
+		).toBeVisible();
+		await expect(
+			childPages.nth(1).getByText("E2E Second Child Row", { exact: true }),
+		).toBeVisible();
+		await expect(
+			childPages.nth(2).getByText("E2E Third Child Row", { exact: true }),
+		).toBeVisible();
+		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(4);
+
+		await childPages
+			.nth(2)
+			.getByText("E2E Third Child Row", { exact: true })
+			.click();
+
+		childPages = page.getByTestId("child-page");
+		await expect(childPages).toHaveCount(3);
+		await expect(page.getByTestId("blank-child-page")).toBeVisible();
+		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(5);
+		await expectFlowRowTitlePersisted(uniqueFlowName, "E2E Third Child Row");
 	});
 
 	test("should display footer row when page has one", async ({ page }) => {

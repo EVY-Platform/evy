@@ -287,11 +287,7 @@
 						"view": {
 							"content": {
 								"title": "",
-								"segments": [
-									"Pickup",
-									"Delivery",
-									"Shipping"
-								],
+								"segments": ["Pickup", "Delivery", "Shipping"],
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222201",
@@ -318,58 +314,56 @@
 														}
 													},
 													{
-														"id": "22222222-2222-4222-8222-222222222203",
-														"type": "SheetContainer",
+														"id": "586ffa1a-639b-475e-a0b5-1fbe51083274",
+														"type": "TextAction",
 														"source": "",
-														"destination": "",
-														"actions": [],
+														"destination": "{item.pickup_address}",
+														"actions": [
+															{
+																"true": "{show()}",
+																"false": "",
+																"condition": ""
+															}
+														],
 														"view": {
 															"content": {
-																"title": "",
+																"title": "Where",
+																"text": "{formatAddress(pickup_address)}",
+																"placeholder": "Enter pick up address",
+																"action": "Change",
 																"child": {
-																	"id": "22222222-2222-4222-8222-222222222204",
-																	"type": "TextAction",
-																	"source": "",
-																	"destination": "{item.pickup_address}",
-																	"actions": [],
+																	"id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e",
+																	"type": "Search",
 																	"view": {
 																		"content": {
-																			"title": "Where",
-																			"text": "{formatAddress(pickup_address)}",
-																			"placeholder": "Enter pick up address",
-																			"action": "Change"
-																		}
-																	}
-																},
-																"children": [
-																	{
-																		"id": "22222222-2222-4222-8222-222222222205",
-																		"type": "Search",
-																		"source": "{$local:address}",
-																		"destination": "{address}",
-																		"actions": [],
-																		"view": {
-																			"content": {
-																				"title": "",
-																				"placeholder": "Search address",
-																				"child": {
-																					"id": "33333333-3333-4333-8333-333333333305",
-																					"type": "Info",
-																					"source": "",
-																					"destination": "",
-																					"actions": [],
-																					"view": {
-																						"content": {
-																							"title": "{$datum.unit} {$datum.street}, {$datum.city} {$datum.state} {$datum.postcode}",
-																							"subtitle": "",
-																							"icon": ""
-																						}
+																			"child": {
+																				"id": "e27d87b7-aa2c-4672-aaac-9e1222928f45",
+																				"type": "Info",
+																				"view": {
+																					"content": {
+																						"icon": "",
+																						"title": "{$datum.title}",
+																						"subtitle": "{formatCurrency($datum.price)}"
 																					}
-																				}
-																			}
+																				},
+																				"source": "",
+																				"actions": [
+																					{
+																						"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{\"id\": $datum.id})}",
+																						"false": "",
+																						"condition": ""
+																					}
+																				],
+																				"destination": ""
+																			},
+																			"title": "",
+																			"placeholder": "Search anything"
 																		}
-																	}
-																]
+																	},
+																	"source": "{items}",
+																	"actions": [],
+																	"destination": ""
+																}
 															}
 														}
 													},

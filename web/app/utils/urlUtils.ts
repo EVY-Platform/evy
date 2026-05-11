@@ -1,7 +1,7 @@
 import type { UI_Page } from "../types/flow";
 import type { Row } from "../types/row";
 import { findFlowById } from "./flowHelpers";
-import { findRowInSinglePage, getRowsRecursive } from "./rowTree";
+import { findRowInSinglePage } from "./rowTree";
 
 export function parseUrlPath(): {
 	flowId?: string;
@@ -52,76 +52,23 @@ export function validateRowPathSegmentsForPage(
 	if (segments.length === 0) return null;
 
 	const firstId = segments[0];
-	if (!findRowInSinglePage(page, firstId)) return null;
+	const firstRow = findRowInSinglePage(page, firstId);
+	if (!firstRow) return null;
 
 	const validated: string[] = [firstId];
+	let currentRow = firstRow;
 	for (let i = 1; i < segments.length; i++) {
-		const parentId = validated[validated.length - 1];
-		const parentRow = findRowInSinglePage(page, parentId);
 		const nextId = segments[i];
-		if (!parentRow || !isDirectChildRow(parentRow, nextId)) break;
-		if (!findRowInSinglePage(page, nextId)) break;
+		if (!isDirectChildRow(currentRow, nextId)) break;
+		const nextRow = findRowInSinglePage(page, nextId);
+		if (!nextRow) break;
 		validated.push(nextId);
+		currentRow = nextRow;
 	}
 
 	const rootRowId = validated[0];
 	const configStack = validated.slice(1);
 	return { rootRowId, configStack };
-}
-
-/**
- * Matches `PUSH_CONFIG_STACK` sheet focus rules for a full root + stack chain.
- */
-export function deriveSheetAndFocusFromRowChain(
-	pages: UI_Page[],
-	activeRowId: string,
-	configStack: string[],
-): { focusMode: boolean; secondarySheetRowId?: string } {
-	const chain = [activeRowId, ...configStack];
-	let focusMode = false;
-	let secondarySheetRowId: string | undefined;
-
-	for (let i = 0; i < chain.length - 1; i++) {
-		const parentRowId = chain[i];
-		const childId = chain[i + 1];
-		let parentRow: Row | undefined;
-		for (const p of pages) {
-			parentRow = findRowInSinglePage(p, parentRowId);
-			if (parentRow) break;
-		}
-		if (!parentRow) break;
-
-		const isSheetNested =
-			parentRow.config.type === "SheetContainer" &&
-			(parentRow.config.view.content.child?.id === childId ||
-				parentRow.config.view.content.children?.some((c) => c.id === childId));
-
-		if (isSheetNested) {
-			focusMode = true;
-			secondarySheetRowId = parentRow.id;
-		}
-	}
-
-	return { focusMode, secondarySheetRowId };
-}
-
-/** Real canvas page id for URL (never `secondary:*`). */
-export function resolveCanonicalPageIdForUrl(
-	flows: { id: string; pages: UI_Page[] }[],
-	activeFlowId: string | undefined,
-	activePageId: string | undefined,
-): string | undefined {
-	if (!activeFlowId || !activePageId) return activePageId;
-	if (!activePageId.startsWith("secondary:")) return activePageId;
-
-	const hostRowId = activePageId.slice("secondary:".length);
-	const flow = findFlowById(flows, activeFlowId);
-	if (!flow) return undefined;
-
-	const page = flow.pages.find((p) =>
-		p.rows.some((r) => getRowsRecursive(r).some((row) => row.id === hostRowId)),
-	);
-	return page?.id;
 }
 
 export function buildUrlPath(

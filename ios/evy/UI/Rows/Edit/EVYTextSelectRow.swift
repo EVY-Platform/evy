@@ -11,15 +11,13 @@ struct EVYTextSelectRow: View {
 
   private let view: TextSelectRowViewData
   private let destination: String
-  private let actions: [UI_RowAction]
   private let value: EVYJson
   private let selected: EVYState<Bool>
 
-  init?(view: TextSelectRowViewData, destination: String, actions: [UI_RowAction]) {
+  init?(view: TextSelectRowViewData, destination: String) {
     guard !destination.isEmpty else { return nil }
     self.view = view
     self.destination = destination
-    self.actions = actions
     self.selected = EVYState(
       watch: destination,
       setter: {

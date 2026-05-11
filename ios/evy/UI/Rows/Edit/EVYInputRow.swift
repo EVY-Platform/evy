@@ -11,10 +11,12 @@ struct EVYInputRow: View {
 
   private let view: InputRowViewData
   private let destination: String
+  private let isInteractive: Bool
 
-  init(view: InputRowViewData, destination: String) {
+  init(view: InputRowViewData, destination: String, isInteractive: Bool = true) {
     self.view = view
     self.destination = destination
+    self.isInteractive = isInteractive
   }
 
   var body: some View {
@@ -24,7 +26,8 @@ struct EVYInputRow: View {
         EVYTextField(
           input: view.content.value,
           destination: destination,
-          placeholder: view.content.placeholder
+          placeholder: view.content.placeholder,
+          isInteractive: isInteractive
         )
       }
     }

@@ -5,7 +5,6 @@ import type { UI_Flow } from "../types/flow";
 import {
 	buildUrlPath,
 	parseUrlPath,
-	resolveCanonicalPageIdForUrl,
 	resolveUrlIds,
 	validateRowPathSegmentsForPage,
 } from "../utils/urlUtils";
@@ -23,17 +22,12 @@ export function useUrlSync(
 	const isPopStateNavigation = useRef(false);
 
 	useEffect(() => {
-		const canonicalPageId = resolveCanonicalPageIdForUrl(
-			flows,
-			activeFlowId,
-			activePageId,
-		);
 		const rowPathSegments =
 			activeRowId !== undefined ? [activeRowId, ...configStack] : [];
 
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
-			const url = buildUrlPath(activeFlowId, canonicalPageId, rowPathSegments);
+			const url = buildUrlPath(activeFlowId, activePageId, rowPathSegments);
 			window.history.replaceState(null, "", url);
 			return;
 		}
@@ -43,11 +37,11 @@ export function useUrlSync(
 			return;
 		}
 
-		const url = buildUrlPath(activeFlowId, canonicalPageId, rowPathSegments);
+		const url = buildUrlPath(activeFlowId, activePageId, rowPathSegments);
 		if (window.location.pathname !== url) {
 			window.history.pushState(null, "", url);
 		}
-	}, [activeFlowId, activePageId, activeRowId, configStack, flows]);
+	}, [activeFlowId, activePageId, activeRowId, configStack]);
 
 	useEffect(() => {
 		const handlePopState = () => {

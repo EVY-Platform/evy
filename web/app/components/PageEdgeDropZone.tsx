@@ -1,6 +1,6 @@
 import {
 	useCallback,
-	useEffect,
+	useLayoutEffect,
 	useRef,
 	type CSSProperties,
 	type Dispatch,
@@ -40,7 +40,7 @@ export function PageEdgeDropZone({
 		dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE_POSITION" });
 	}, [dispatchDropIndicator]);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const element = ref.current;
 		invariant(element, "PageEdgeDropZone: ref.current is not defined");
 

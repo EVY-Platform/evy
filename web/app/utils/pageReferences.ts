@@ -2,7 +2,7 @@ import type { UI_Flow, UI_Page } from "../types/flow";
 import type { Row } from "../types/row";
 import { parseBranch } from "./actionBranch";
 import { breadcrumbLabelForPage, breadcrumbLabelForRow } from "./navLabels";
-import { getRowsRecursive } from "./rowTree";
+import { getRowsInPage } from "./rowTree";
 
 export type PageReferenceEntry = {
 	/** Stable key for list rendering (`${pageId}:${rowId}`). */
@@ -44,10 +44,7 @@ function collectReferencesForPage(
 	results: PageReferenceEntry[],
 ): void {
 	const pageLabel = breadcrumbLabelForPage(page, flow.pages);
-	const rowsOnPage: Row[] = [
-		...page.rows.flatMap((topRow) => getRowsRecursive(topRow)),
-		...(page.footer ? getRowsRecursive(page.footer) : []),
-	];
+	const rowsOnPage: Row[] = getRowsInPage(page);
 
 	for (const row of rowsOnPage) {
 		if (!rowReferencesTargetPage(row, flow.id, targetPageId)) continue;

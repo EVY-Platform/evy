@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -22,10 +22,10 @@ export function RowsPanel() {
 		return rows.filter((row) => row.id.toLowerCase().includes(query));
 	}, [rows, searchQuery]);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		invariant(
 			pageInnerRef.current,
-			"RowsPanel useEffect: pageInnerRef.current is not defined",
+			"RowsPanel useLayoutEffect: pageInnerRef.current is not defined",
 		);
 		return combine(
 			dropTargetForElements({

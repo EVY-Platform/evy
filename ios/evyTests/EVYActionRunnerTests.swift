@@ -37,6 +37,30 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(received, .create("item"))
   }
 
+  func testShowActionPresentsChild() throws {
+    let row = try makeRowWithChild()
+    var shownRow: UI_Row?
+    let action = UI_RowAction(condition: "", false: "", true: "{show()}")
+    EVYActionRunner.run(actions: [action], row: row, show: { shownRow = $0 }) { _ in }
+    XCTAssertEqual(shownRow?.id, "child-row")
+  }
+
+  func testShowActionWithoutChildIsNoOp() throws {
+    let row = try makeRowWithoutChild()
+    var shownRow: UI_Row?
+    let action = UI_RowAction(condition: "", false: "", true: "{show()}")
+    EVYActionRunner.run(actions: [action], row: row, show: { shownRow = $0 }) { _ in }
+    XCTAssertNil(shownRow)
+  }
+
+  func testFalseBranchShowActionPresentsChild() throws {
+    let row = try makeRowWithChild()
+    var shownRow: UI_Row?
+    let action = UI_RowAction(condition: "{false}", false: "{show()}", true: "")
+    EVYActionRunner.run(actions: [action], row: row, show: { shownRow = $0 }) { _ in }
+    XCTAssertEqual(shownRow?.id, "child-row")
+  }
+
   func testNavigateWithBraceFunction() {
     var received: NavOperation?
     let action = UI_RowAction(
@@ -150,5 +174,47 @@ final class EVYActionRunnerTests: XCTestCase {
       return
     }
     XCTAssertEqual(route.query["items"], ["$datum.id"])
+  }
+
+  private func makeRowWithChild() throws -> UI_Row {
+    try decodeRow(
+      content: """
+        {
+          "title": "",
+          "label": "Show child",
+          "child": {
+            "id": "child-row",
+            "type": "Text",
+            "source": "",
+            "destination": "",
+            "view": { "content": { "title": "Child", "text": "Body" }, "max_lines": "" },
+            "actions": []
+          }
+        }
+        """
+    )
+  }
+
+  private func makeRowWithoutChild() throws -> UI_Row {
+    try decodeRow(
+      content: """
+        { "title": "", "label": "No child" }
+        """
+    )
+  }
+
+  private func decodeRow(content: String) throws -> UI_Row {
+    let json = """
+      {
+        "id": "parent-row",
+        "type": "Button",
+        "source": "",
+        "destination": "",
+        "view": { "content": \(content) },
+        "actions": []
+      }
+      """
+    let data = try XCTUnwrap(json.data(using: .utf8))
+    return try JSONDecoder().decode(UI_Row.self, from: data)
   }
 }

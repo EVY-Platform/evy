@@ -27,10 +27,11 @@ export const pageWrapperStyle: CSSProperties = {
 	opacity: 1,
 };
 
-export const pageWrapperHiddenStyle: CSSProperties = {
-	...centeredPageFrame,
-	opacity: 0,
-	pointerEvents: "none",
+/** Same as pageWrapperStyle but without auto margins — used when the page is
+ *  the sole visible page (element active) so it doesn't push siblings away. */
+export const activePageWrapperStyle: CSSProperties = {
+	...pagePhoneFrameBase,
+	opacity: 1,
 };
 
 export const secondaryPageWrapperStyle: CSSProperties = {

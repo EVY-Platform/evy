@@ -442,12 +442,21 @@ function emitRowContentEncodeLine(key: string, specType: string): string {
 	}
 }
 
+function withUniversalChildContent(
+	content: Record<string, string>,
+): Record<string, string> {
+	return {
+		...content,
+		child: content.child ?? "UI_Row",
+	};
+}
+
 function emitRowContentStruct(
 	rowType: string,
 	content: Record<string, string>,
 ): string {
 	const contentName = `${rowType}RowContent`;
-	const entries = Object.entries(content);
+	const entries = Object.entries(withUniversalChildContent(content));
 	const fieldLines = entries.map(
 		([k, v]) =>
 			`    public let ${swiftIdentifier(k)}: ${swiftTypeForSpecType(v)}`,

@@ -13,12 +13,22 @@ import {
 	removeRowFromPage,
 	insertRowIntoPage,
 } from "../../utils/rowTree";
-import { deriveSheetAndFocusFromRowChain } from "../../utils/urlUtils";
+
 import {
 	buildNewClientFlow,
 	buildNewClientPage,
 } from "../../utils/flowFactory";
 import { findFlowById } from "../../utils/flowHelpers";
+
+const CLEARED_SELECTION: Partial<AppState> = {
+	activePageId: undefined,
+	activeRowId: undefined,
+	configStack: [],
+};
+
+function clearSelection(state: AppState): AppState {
+	return { ...state, ...CLEARED_SELECTION };
+}
 
 function mapRowAcrossPages(
 	pages: UI_Page[],
@@ -32,16 +42,10 @@ function mapRowAcrossPages(
 	}));
 }
 
-function rowNameEquals(row: unknown, name: string): boolean {
-	if (row === null) return false;
-	const n = (row as Record<string, unknown>).name;
-	return typeof n === "string" && n === name;
-}
-
 function buildPaletteRow(oldRowId: string, newRowId: string): Row | undefined {
 	const baseRow = baseRows.find((row) => {
-		if (!row || typeof row !== "function") return false;
-		return rowNameEquals(row, oldRowId);
+		if (typeof row !== "function") return false;
+		return row.name === oldRowId;
 	});
 	if (!baseRow) return undefined;
 	return buildRowForNewPageFromBase(baseRow, newRowId);
@@ -49,12 +53,7 @@ function buildPaletteRow(oldRowId: string, newRowId: string): Row | undefined {
 
 export const pageReducer = (state: AppState, action: RowAction): AppState => {
 	if (action.type === "SET_ACTIVE_FLOW") {
-		return {
-			...state,
-			activeFlowId: action.flowId,
-			activeRowId: undefined,
-			configStack: [],
-		};
+		return { ...clearSelection(state), activeFlowId: action.flowId };
 	}
 
 	if (action.type === "CREATE_FLOW") {
@@ -145,6 +144,22 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				p.id === action.destinationPageId ? updatedPage : p,
 			);
 
+			// When dropping into a child container, keep the parent chain visible
+			// and push the new child onto the config stack so it renders as a ChildPage.
+			if (action.destinationContainer?.type === "child") {
+				const path = findRowIdPathFromPageRoot(
+					page,
+					action.destinationContainer.rowId,
+				);
+				if (path) {
+					return updateState({
+						updatedPages,
+						activeRowId: path[0],
+						configStack: [...path.slice(1), action.newRowId],
+					});
+				}
+			}
+
 			return updateState({
 				updatedPages,
 				activeRowId: action.newRowId,
@@ -206,6 +221,11 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			);
 			if (!originPage) return state;
 
+			const destinationPage = flow.pages.find(
+				(p) => p.id === action.destinationPageId,
+			);
+			if (!destinationPage) return state;
+
 			const row = findRowInPages(action.rowId, [originPage]);
 			invariant(row, "PageReducer moveRow: row is not defined");
 
@@ -240,6 +260,22 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				}
 				return page;
 			});
+
+			// When moving into a child container, keep the parent chain visible
+			// and push the moved row onto the config stack so it renders as a ChildPage.
+			if (action.destinationContainer?.type === "child") {
+				const path = findRowIdPathFromPageRoot(
+					destinationPage,
+					action.destinationContainer.rowId,
+				);
+				if (path) {
+					return updateState({
+						updatedPages: newPages,
+						activeRowId: path[0],
+						configStack: [...path.slice(1), action.rowId],
+					});
+				}
+			}
 
 			return updateState({
 				updatedPages: newPages,
@@ -321,24 +357,34 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				stack = path.slice(1);
 			}
 
-			const sheetState = deriveSheetAndFocusFromRowChain(
-				flow.pages,
-				rootId,
-				stack,
-			);
+			// Toggle: if same row chain is already active, clear selection
+			if (
+				state.activeRowId === rootId &&
+				state.configStack.length === stack.length &&
+				state.configStack.every((id, i) => id === stack[i])
+			) {
+				return clearSelection(state);
+			}
 
 			return {
 				...state,
 				activeRowId: rootId,
 				activePageId: page.id,
 				configStack: stack,
-				focusMode: sheetState.focusMode,
-				secondarySheetRowId: sheetState.secondarySheetRowId,
 			};
 		}
 		case "SET_ACTIVE_PAGE": {
 			const page = flow.pages.find((p) => p.id === action.pageId);
 			if (!page) return state;
+
+			// Toggle: if same page is already active with no row selected, clear selection
+			if (
+				state.activePageId === action.pageId &&
+				!state.activeRowId &&
+				state.configStack.length === 0
+			) {
+				return clearSelection(state);
+			}
 
 			return {
 				...state,
@@ -348,30 +394,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 		}
 		case "CLEAR_ACTIVE_SELECTION": {
-			return {
-				...state,
-				activePageId: undefined,
-				activeRowId: undefined,
-				focusMode: false,
-				secondarySheetRowId: undefined,
-				configStack: [],
-			};
-		}
-		case "TOGGLE_FOCUS_MODE": {
-			const nextFocusMode = !state.focusMode;
-			const nextActivePageId =
-				nextFocusMode && !state.activePageId
-					? flow.pages[0]?.id
-					: state.activePageId;
-
-			return {
-				...state,
-				focusMode: nextFocusMode,
-				activePageId: nextActivePageId,
-				...(!nextFocusMode
-					? { secondarySheetRowId: undefined, configStack: [] }
-					: {}),
-			};
+			return clearSelection(state);
 		}
 		case "UPDATE_PAGE_TITLE": {
 			const newPages = flow.pages.map((page) =>
@@ -394,66 +417,29 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				configStack: wasActivePage ? [] : state.configStack,
 			});
 		}
-		case "OPEN_SECONDARY_SHEET": {
-			return {
-				...state,
-				secondarySheetRowId: action.sheetRowId,
-			};
-		}
-		case "CLOSE_SECONDARY_SHEET": {
-			return {
-				...state,
-				secondarySheetRowId: undefined,
-				configStack: [],
-			};
-		}
 		case "PUSH_CONFIG_STACK": {
 			const parentRow = findRowInPages(action.parentRowId, flow.pages);
 			if (!parentRow) return state;
 
-			const isSheetNestedRow =
-				parentRow.config.type === "SheetContainer" &&
-				(parentRow.config.view.content.child?.id === action.childRowId ||
-					parentRow.config.view.content.children?.some(
-						(c) => c.id === action.childRowId,
-					));
-
-			let nextFocusMode = state.focusMode;
-			let nextActivePageId = state.activePageId;
-			let nextSecondarySheetRowId = state.secondarySheetRowId;
-
-			if (isSheetNestedRow) {
-				if (!state.focusMode) {
-					nextFocusMode = true;
-					nextActivePageId = state.activePageId ?? flow.pages[0]?.id;
-				}
-				nextSecondarySheetRowId = parentRow.id;
-			}
-
 			return {
 				...state,
-				focusMode: nextFocusMode,
-				activePageId: nextActivePageId,
-				secondarySheetRowId: nextSecondarySheetRowId,
 				configStack: [...state.configStack, action.childRowId],
 			};
 		}
 		case "NAVIGATE_BREADCRUMB": {
 			const newStack = state.configStack.slice(0, action.configStackLength);
-			const sheetState =
-				state.activeRowId !== undefined
-					? deriveSheetAndFocusFromRowChain(
-							flow.pages,
-							state.activeRowId,
-							newStack,
-						)
-					: { focusMode: false, secondarySheetRowId: undefined };
+
+			// Toggle: if navigating to the current stack length, clear selection
+			if (
+				state.configStack.length === action.configStackLength &&
+				state.configStack.every((id, i) => id === newStack[i])
+			) {
+				return clearSelection(state);
+			}
 
 			return {
 				...state,
 				configStack: newStack,
-				focusMode: sheetState.focusMode,
-				secondarySheetRowId: sheetState.secondarySheetRowId,
 			};
 		}
 		default:

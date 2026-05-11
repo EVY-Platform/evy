@@ -8,22 +8,16 @@
 import SwiftUI
 
 struct EVYButtonRow: View {
-  @Environment(\.navigate) private var navigate
-
   private let view: ButtonRowViewData
-  private let actions: [UI_RowAction]
+  private let action: () -> Void
 
-  init(view: ButtonRowViewData, actions: [UI_RowAction]) {
+  init(view: ButtonRowViewData, action: @escaping () -> Void) {
     self.view = view
-    self.actions = actions
-  }
-
-  private func performAction() {
-    EVYActionRunner.run(actions: actions, navigate: navigate)
+    self.action = action
   }
 
   var body: some View {
-    EVYButton(label: view.content.label, action: performAction)
+    EVYButton(label: view.content.label, action: action)
       .frame(maxWidth: .infinity, alignment: .center)
       .padding(.top, Constants.minorPadding)
       .padding(.bottom, Constants.majorPadding)

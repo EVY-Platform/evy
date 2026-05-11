@@ -7,6 +7,17 @@ import {
 } from "./actionBranch";
 
 describe("action branch helpers", () => {
+	it("parses show action", () => {
+		expect(parseBranch("{show()}")).toEqual({
+			functionName: "show",
+			args: [],
+		});
+	});
+
+	it("serializes show action", () => {
+		expect(serializeBranch("show", [])).toBe("{show()}");
+	});
+
 	it("parses navigate query JSON as a third function argument", () => {
 		expect(
 			parseBranch('{navigate(flow-1,page-2,{"items": ["id-1", "id-2"]})}'),

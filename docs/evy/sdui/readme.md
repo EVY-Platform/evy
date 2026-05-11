@@ -208,7 +208,7 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 | View       | Info, Text, InputList |
 | Edit       | Input, TextArea, TextSelect, Dropdown, InlinePicker, Search, SelectPhoto, Calendar |
 | Action     | Button, TextAction |
-| Container  | ColumnContainer, ListContainer, SheetContainer, SelectSegmentContainer |
+| Container  | ColumnContainer, ListContainer, SelectSegmentContainer |
 
 Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`, `child`, `children`). See `row-content.spec.json` for the exact keys per type.
 

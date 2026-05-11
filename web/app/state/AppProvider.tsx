@@ -18,7 +18,6 @@ import { wsClient } from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
 import { findFlowById } from "../utils/flowHelpers";
 import {
-	deriveSheetAndFocusFromRowChain,
 	parseUrlPath,
 	resolveUrlIds,
 	validateRowPathSegmentsForPage,
@@ -57,21 +56,12 @@ export function AppProvider({
 
 		let activeRowId: string | undefined;
 		let configStack: string[] = [];
-		let focusMode = false;
-		let secondarySheetRowId: string | undefined;
 
 		if (page && activeFlow && rowPathSegments.length > 0) {
 			const validated = validateRowPathSegmentsForPage(page, rowPathSegments);
 			if (validated) {
 				activeRowId = validated.rootRowId;
 				configStack = validated.configStack;
-				const sheet = deriveSheetAndFocusFromRowChain(
-					activeFlow.pages,
-					validated.rootRowId,
-					validated.configStack,
-				);
-				focusMode = sheet.focusMode;
-				secondarySheetRowId = sheet.secondarySheetRowId;
 			}
 		}
 
@@ -80,8 +70,6 @@ export function AppProvider({
 			activeFlowId,
 			activePageId,
 			activeRowId,
-			focusMode,
-			secondarySheetRowId,
 			configStack,
 		};
 	}, [initialFlows]);
@@ -131,8 +119,6 @@ export function AppProvider({
 			activeFlowId: appState.activeFlowId,
 			activeRowId: appState.activeRowId,
 			activePageId: appState.activePageId,
-			focusMode: appState.focusMode,
-			secondarySheetRowId: appState.secondarySheetRowId,
 			configStack: appState.configStack,
 			dispatchRow,
 		}),
@@ -142,8 +128,6 @@ export function AppProvider({
 			appState.activeFlowId,
 			appState.activeRowId,
 			appState.activePageId,
-			appState.focusMode,
-			appState.secondarySheetRowId,
 			appState.configStack,
 		],
 	);

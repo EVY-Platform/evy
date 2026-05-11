@@ -10,11 +10,9 @@ import SwiftUI
 struct EVYTextActionRow: View {
 
   private let view: TextActionRowViewData
-  private let actions: [UI_RowAction]
 
-  init(view: TextActionRowViewData, actions: [UI_RowAction]) {
+  init(view: TextActionRowViewData) {
     self.view = view
-    self.actions = actions
   }
 
   var body: some View {

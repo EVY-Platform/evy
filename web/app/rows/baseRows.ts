@@ -3,7 +3,6 @@ import TextActionRow from "./action/TextActionRow";
 import ColumnContainerRow from "./container/ColumnContainerRow";
 import ListContainerRow from "./container/ListContainerRow";
 import SelectSegmentContainerRow from "./container/SelectSegmentContainerRow";
-import SheetContainerRow from "./container/SheetContainerRow";
 import CalendarRow from "./edit/CalendarRow";
 import DropdownRow from "./edit/DropdownRow";
 import InlinePickerRow from "./edit/InlinePickerRow";
@@ -29,7 +28,6 @@ export const baseRows = [
 	SearchRow,
 	SelectPhotoRow,
 	SelectSegmentContainerRow,
-	SheetContainerRow,
 	TextActionRow,
 	TextAreaRow,
 	TextRow,

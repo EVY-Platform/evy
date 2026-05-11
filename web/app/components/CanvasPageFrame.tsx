@@ -6,7 +6,7 @@ type CanvasPageFrameProps = {
 	wrapperStyle: CSSProperties;
 	className: string;
 	children: ReactNode;
-	/** Set for flow pages so focus mode can pan the camera to this frame. */
+	/** Set for flow pages so the camera can pan to this frame when selected. */
 	pageId?: string;
 	"data-testid"?: string;
 };

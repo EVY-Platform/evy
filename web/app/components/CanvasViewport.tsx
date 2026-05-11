@@ -14,7 +14,7 @@ import {
 	GRID_BASE_SIZE_PX,
 } from "./canvasDotField";
 import { useCamera } from "../hooks/useCamera";
-import { useFocusPanOnEnter } from "../hooks/useFocusPanOnEnter";
+import { useSelectionPanOnEnter } from "../hooks/useSelectionPanOnEnter";
 import { useViewportGestures } from "../hooks/useViewportGestures";
 import { CameraContext } from "../state/contexts/CameraContext";
 
@@ -34,17 +34,20 @@ type CanvasViewportProps = {
 	onBackgroundClick?: () => void;
 	/** Layout styles for the horizontal row of pages (gap, justify, etc.). */
 	contentStyle?: CSSProperties;
-	/** When focus mode turns on, pan so this page is centered. */
-	focusMode?: boolean;
+	/** When an element becomes active, pan so the active page is centered. */
+	shouldPanToActive?: boolean;
 	activePageId?: string;
+	/** Used to re-center the canvas when the flow changes. */
+	activeFlowId?: string;
 };
 
 export function CanvasViewport({
 	children,
 	onBackgroundClick,
 	contentStyle,
-	focusMode = false,
+	shouldPanToActive = false,
 	activePageId,
+	activeFlowId,
 }: CanvasViewportProps) {
 	const camera = useCamera();
 	const {
@@ -52,14 +55,23 @@ export function CanvasViewport({
 		worldRef,
 		pan,
 		panToElement,
+		snapPan,
 		zoomAtScreenPoint,
 		fitToBounds,
 		getCamera,
 	} = camera;
 
-	useFocusPanOnEnter(focusMode, activePageId, panToElement);
+	useSelectionPanOnEnter(
+		shouldPanToActive,
+		activePageId,
+		panToElement,
+		snapPan,
+		viewportRef,
+	);
 
 	const contentMeasureRef = useRef<HTMLDivElement | null>(null);
+	const hasCenteredOnMount = useRef(false);
+	const prevFlowIdRef = useRef(activeFlowId);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const targetCursorRef = useRef<CursorPosition>(null);
 	const displayCursorRef = useRef<CursorPosition>(null);
@@ -70,6 +82,33 @@ export function CanvasViewport({
 
 	const cam = getCamera();
 	camRef.current = cam;
+
+	// Vertically center the content on initial mount or when the flow changes
+	// (inactive mode only — useSelectionPanOnEnter handles active mode).
+	useLayoutEffect(() => {
+		const flowChanged = prevFlowIdRef.current !== activeFlowId;
+		prevFlowIdRef.current = activeFlowId;
+
+		if (flowChanged) {
+			// Reset camera for the new flow.
+			snapPan(-cam.offsetX, -cam.offsetY);
+			hasCenteredOnMount.current = false;
+		}
+
+		if (hasCenteredOnMount.current || shouldPanToActive) return;
+		const viewport = viewportRef.current;
+		const content = contentMeasureRef.current;
+		if (!viewport || !content) return;
+		if (content.offsetHeight <= 0) return;
+		hasCenteredOnMount.current = true;
+		const vpRect = viewport.getBoundingClientRect();
+		const contentRect = content.getBoundingClientRect();
+		const dy =
+			vpRect.top +
+			vpRect.height / 2 -
+			(contentRect.top + contentRect.height / 2);
+		if (Math.abs(dy) > 0.5) snapPan(0, dy);
+	});
 
 	useEffect(() => {
 		const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");

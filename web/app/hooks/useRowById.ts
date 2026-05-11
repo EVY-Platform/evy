@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { Row } from "../types/row";
 import { findFlowById } from "../utils/flowHelpers";
-import { getRowsRecursive } from "../utils/rowTree";
+import { getRowsInPage } from "../utils/rowTree";
 
 export function useRowById(rowId?: string): Row | undefined {
 	const { rows, flows, activeFlowId } = useFlowsContext();
@@ -15,11 +15,7 @@ export function useRowById(rowId?: string): Row | undefined {
 		if (baseRow) return baseRow;
 
 		const pages = findFlowById(flows, activeFlowId)?.pages ?? [];
-		const allRows = pages.flatMap((page) => {
-			const rows = page.rows.flatMap(getRowsRecursive);
-			if (page.footer) rows.push(...getRowsRecursive(page.footer));
-			return rows;
-		});
+		const allRows = pages.flatMap(getRowsInPage);
 		return allRows.find((r) => r.id === rowId);
 	}, [rows, flows, activeFlowId, rowId]);
 }

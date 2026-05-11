@@ -16,8 +16,8 @@ import { containerDropindicatorId } from "../rows/EVYRow";
 import {
 	findContainerByIdInPage,
 	findContainerOfRowInPage,
+	findPageContainingRow,
 	resolveDestinationPageFromRawPageId,
-	resolveSourcePageIdFromRaw,
 } from "../utils/rowTree";
 
 type DropDispatchOptions = {
@@ -35,40 +35,18 @@ type DropTargetRecord = {
 
 type PageDropPosition = "start" | "end";
 
-function getDefaultAppendIndexForPageDrop(
-	destinationPage: UI_Page,
-	secondarySheetRowId: string | undefined,
-): number {
-	if (secondarySheetRowId) {
-		return (
-			destinationPage.rows.find((r) => r.id === secondarySheetRowId)?.config
-				.view.content.children?.length ?? 0
-		);
-	}
+function getDefaultAppendIndexForPageDrop(destinationPage: UI_Page): number {
 	return destinationPage.rows.length;
 }
 
 function buildInitialDropDispatchOptions(
 	destinationPage: UI_Page,
 	resolvedPageId: string,
-	secondarySheetRowId: string | undefined,
 ): DropDispatchOptions {
-	const dispatchOptions: DropDispatchOptions = {
-		destinationIndex: getDefaultAppendIndexForPageDrop(
-			destinationPage,
-			secondarySheetRowId,
-		),
+	return {
+		destinationIndex: getDefaultAppendIndexForPageDrop(destinationPage),
 		destinationPageId: resolvedPageId,
 	};
-
-	if (secondarySheetRowId) {
-		dispatchOptions.destinationContainer = {
-			rowId: secondarySheetRowId,
-			type: "children",
-		};
-	}
-
-	return dispatchOptions;
 }
 
 function getPageDropPosition(
@@ -83,7 +61,6 @@ function getPageDropPosition(
 function applyPageDropPosition(
 	dispatchOptions: DropDispatchOptions,
 	destinationPage: UI_Page,
-	secondarySheetRowId: string | undefined,
 	pageDropPosition: PageDropPosition | undefined,
 ): void {
 	if (pageDropPosition === "start") {
@@ -92,10 +69,8 @@ function applyPageDropPosition(
 	}
 
 	if (pageDropPosition === "end") {
-		dispatchOptions.destinationIndex = getDefaultAppendIndexForPageDrop(
-			destinationPage,
-			secondarySheetRowId,
-		);
+		dispatchOptions.destinationIndex =
+			getDefaultAppendIndexForPageDrop(destinationPage);
 	}
 }
 
@@ -159,6 +134,15 @@ function dispatchStandardDrop(
 	});
 }
 
+function getDestinationContainerRowId(
+	dropTarget: DropTargetRecord | undefined,
+): string | undefined {
+	const destinationContainerRowId = dropTarget?.data.destinationContainerRowId;
+	return typeof destinationContainerRowId === "string"
+		? destinationContainerRowId
+		: undefined;
+}
+
 export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
 	pages: UI_Page[],
@@ -178,7 +162,7 @@ export function handleDrop(
 		"handleDrop: sourcePageId is not a string",
 	);
 
-	const sourcePageId = resolveSourcePageIdFromRaw(rawSourcePageId, pages);
+	const sourcePageId = String(rawSourcePageId);
 
 	const footerDropTarget = findFooterDropTarget(location.current.dropTargets);
 	if (footerDropTarget) {
@@ -217,26 +201,48 @@ export function handleDrop(
 		return;
 	}
 
-	const {
-		page: destinationPage,
-		resolvedPageId,
-		secondarySheetRowId: resolvedSecondarySheetRowId,
-	} = resolveDestinationPageFromRawPageId(destinationPageId, pages);
+	const pageDestinationContainerRowId = getDestinationContainerRowId(
+		destinationPageRecord,
+	);
+
+	const { page: destinationPage, resolvedPageId } =
+		resolveDestinationPageFromRawPageId(destinationPageId, pages);
 
 	const dispatchOptions = buildInitialDropDispatchOptions(
 		destinationPage,
 		resolvedPageId,
-		resolvedSecondarySheetRowId,
 	);
+	if (pageDestinationContainerRowId) {
+		dispatchOptions.destinationContainer = {
+			rowId: pageDestinationContainerRowId,
+			type: "child",
+		};
+		dispatchOptions.destinationIndex = 0;
+
+		// When dropping into a blank child page, the parent row may be in the
+		// footer subtree. Ensure we resolve the correct page by searching for
+		// which page actually contains the parent row, not just relying on the
+		// drop target's pageId (which may be stale or ambiguous).
+		const actualPage = findPageContainingRow(
+			pages,
+			pageDestinationContainerRowId,
+		);
+		if (actualPage) {
+			if (actualPage !== destinationPage) {
+				dispatchOptions.destinationPageId = actualPage.id;
+			}
+		} else {
+			// Should never happen: the parent row must exist in some page.
+			console.warn(
+				"handleDrop: blank child drop could not locate page for parent row",
+				pageDestinationContainerRowId,
+			);
+		}
+	}
 
 	const firstDropTarget = location.current.dropTargets[0];
 	const pageDropPosition = getPageDropPosition(firstDropTarget);
-	applyPageDropPosition(
-		dispatchOptions,
-		destinationPage,
-		resolvedSecondarySheetRowId,
-		pageDropPosition,
-	);
+	applyPageDropPosition(dispatchOptions, destinationPage, pageDropPosition);
 
 	// If the row was dropped on top of another row,
 	// dropTargets is an array with [row, ..., page]

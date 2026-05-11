@@ -4,9 +4,7 @@ import type { UI_Page } from "../types/flow";
 import type { Row } from "../types/row";
 import {
 	buildUrlPath,
-	deriveSheetAndFocusFromRowChain,
 	isNonRoutablePreviewRowId,
-	resolveCanonicalPageIdForUrl,
 	validateRowPathSegmentsForPage,
 } from "./urlUtils";
 
@@ -97,6 +95,55 @@ describe("validateRowPathSegmentsForPage", () => {
 			configStack: [],
 		});
 	});
+
+	it("accepts a valid child chain", () => {
+		const leaf = textRow("leaf-child");
+		const middle: Row = {
+			id: "middle-child",
+			row: null,
+			config: {
+				type: "ListContainer",
+				source: "",
+				actions: [],
+				view: {
+					content: {
+						title: "",
+						child: leaf,
+					},
+				},
+			} as Row["config"],
+		};
+		const root: Row = {
+			id: "root-parent",
+			row: null,
+			config: {
+				type: "ListContainer",
+				source: "",
+				actions: [],
+				view: {
+					content: {
+						title: "",
+						child: middle,
+					},
+				},
+			} as Row["config"],
+		};
+		const page: UI_Page = {
+			id: "p1",
+			title: "P",
+			rows: [root],
+		};
+		expect(
+			validateRowPathSegmentsForPage(page, [
+				"root-parent",
+				"middle-child",
+				"leaf-child",
+			]),
+		).toEqual({
+			rootRowId: "root-parent",
+			configStack: ["middle-child", "leaf-child"],
+		});
+	});
 });
 
 describe("buildUrlPath", () => {
@@ -108,61 +155,5 @@ describe("buildUrlPath", () => {
 		expect(buildUrlPath("f", "p", ["ok", "bad:search-preview:0"])).toBe(
 			"/f/p/ok",
 		);
-	});
-});
-
-describe("deriveSheetAndFocusFromRowChain", () => {
-	it("sets focus when chain crosses SheetContainer child boundary", () => {
-		const inner = textRow("inner");
-		const sheet: Row = {
-			id: "sheet-1",
-			row: null,
-			config: {
-				type: "SheetContainer",
-				source: "",
-				actions: [],
-				view: {
-					content: {
-						title: "S",
-						child: inner,
-						children: [],
-					},
-				},
-			} as Row["config"],
-		};
-		const pages: UI_Page[] = [{ id: "p1", title: "P", rows: [sheet] }];
-		expect(
-			deriveSheetAndFocusFromRowChain(pages, "sheet-1", ["inner"]),
-		).toEqual({
-			focusMode: true,
-			secondarySheetRowId: "sheet-1",
-		});
-	});
-});
-
-describe("resolveCanonicalPageIdForUrl", () => {
-	it("maps secondary pseudo page id to the host canvas page", () => {
-		const sheet: Row = {
-			id: "sheet-host",
-			row: null,
-			config: {
-				type: "SheetContainer",
-				source: "",
-				actions: [],
-				view: {
-					content: { title: "", child: undefined, children: [] },
-				},
-			} as Row["config"],
-		};
-		const flows = [
-			{
-				id: "flow-1",
-				name: "F",
-				pages: [{ id: "real-page", title: "P", rows: [sheet] }],
-			},
-		];
-		expect(
-			resolveCanonicalPageIdForUrl(flows, "flow-1", "secondary:sheet-host"),
-		).toBe("real-page");
 	});
 });

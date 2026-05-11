@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import invariant from "tiny-invariant";
 
@@ -15,9 +15,12 @@ export function CancelOverlay({ dismiss }: { dismiss: () => void }) {
 	const ref = useRef<HTMLButtonElement | null>(null);
 	const [state, setState] = useState<State>(idle);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const element = ref.current;
-		invariant(element, "CancelOverlay useEffect: ref.current is not defined");
+		invariant(
+			element,
+			"CancelOverlay useLayoutEffect: ref.current is not defined",
+		);
 		return dropTargetForElements({
 			element,
 			getData: () => ({ pageId: "rows" }),

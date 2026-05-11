@@ -12,7 +12,6 @@ export const SELECTORS = {
 	topIndicator: ".evy-v-dropzone.evy-top-0, .evy-h-dropzone.evy-left-0",
 	bottomIndicator: ".evy-v-dropzone.evy-bottom-0, .evy-h-dropzone.evy-right-0",
 	flowSelector: "#flow-select",
-	secondarySheetPage: '[data-testid="secondary-sheet-page"]',
 };
 
 /** Selects the first canvas page so side panels stay open (they auto-collapse when no page is selected). */
@@ -142,35 +141,6 @@ export async function popoverSelect(
 		.getByRole("listbox")
 		.getByRole("option", { name: optionLabel, exact: true })
 		.click();
-}
-
-export function getSecondarySheetPage(page: Page): Locator {
-	return page.locator(SELECTORS.secondarySheetPage);
-}
-
-/** Clicks the phone canvas then the breadcrumb so the configuration panel is in page focus mode. */
-export async function enterCanvasFocusModeByPageTitle(
-	page: Page,
-	pageTitle: string,
-): Promise<void> {
-	await getFirstPage(page).click();
-	await page.getByRole("button", { name: `Select page ${pageTitle}` }).click();
-}
-
-/** Opens a sheet’s secondary page via its first matching child type button in the configuration panel. */
-export async function openSecondarySheetChildFromConfigPanel(
-	page: Page,
-	options: { sheetTitle?: string; firstChildButtonName?: string } = {},
-): Promise<void> {
-	const sheetTitle = options.sheetTitle ?? "My Sheet";
-	const firstChildButtonName = options.firstChildButtonName ?? "Text";
-	await page.getByText(sheetTitle, { exact: true }).click();
-	const configPanel = getConfigPanel(page);
-	const childButton = configPanel
-		.getByRole("button", { name: firstChildButtonName })
-		.first();
-	await expect(childButton).toBeVisible();
-	await childButton.click();
 }
 
 /** Common drag-and-drop tests fixture: two empty pages. */

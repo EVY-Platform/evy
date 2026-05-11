@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
 import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
@@ -18,7 +18,7 @@ export function PlaceholderDropIndicator({
 	const ref = useRef<HTMLDivElement | null>(null);
 	const [isDraggedOver, setIsDraggedOver] = useState(false);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const element = ref.current;
 		invariant(element, "PlaceholderDropIndicator: ref.current is not defined");
 

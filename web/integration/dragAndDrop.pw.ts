@@ -49,27 +49,34 @@ test.describe("Drag & Drop UX", () => {
 			firstPage.getByText("Text row title", { exact: true }),
 		).toBeVisible();
 
-		const pageRow = getPageRow(page, "Text row title");
-		const secondPage = page.locator(SELECTORS.phoneContainer).nth(1);
-		const secondPageContent = getPageContent(page, 1);
+		// Clear selection so both pages are visible for cross-page drag
+		const canvas = page.getByTestId("canvas-viewport");
+		const canvasBox = await canvas.boundingBox();
+		await canvas.click({
+			position: { x: (canvasBox?.width ?? 400) / 2, y: 10 },
+		});
 
-		const initialSecondPageRowCount = await secondPageContent
-			.locator(SELECTORS.rowContainer)
-			.count();
+		// Wait for both pages to be visible after clearing selection
+		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(2);
+
+		const pageRow = getPageRow(page, "Text row title");
+		const secondPageContent = getPageContent(page, 1);
 
 		await pageRow.dragTo(secondPageContent);
 
+		// After move, row should be on the second page
+		const secondPageFrame = page.locator(SELECTORS.phoneContainer).nth(1);
 		await expect(
-			secondPage.getByText("Text row title", { exact: true }),
+			secondPageFrame.getByText("Text row title", { exact: true }),
 		).toBeVisible();
-		await expect(
-			firstPage.getByText("Text row title", { exact: true }),
-		).not.toBeVisible();
 
-		const newSecondPageRowCount = await secondPageContent
-			.locator(SELECTORS.rowContainer)
-			.count();
-		expect(newSecondPageRowCount).toBe(initialSecondPageRowCount + 1);
+		// First page should no longer have the row
+		await expect(
+			page
+				.locator(SELECTORS.phoneContainer)
+				.nth(0)
+				.getByText("Text row title", { exact: true }),
+		).toHaveCount(0);
 	});
 
 	test("should drag a row from a child container to another page", async ({
@@ -81,23 +88,24 @@ test.describe("Drag & Drop UX", () => {
 				title: "Page 1",
 				rows: [
 					{
-						id: "sheet-1",
-						type: "SheetContainer" as const,
+						id: "column-1",
+						type: "ColumnContainer" as const,
 						view: {
 							content: {
-								title: "Sheet container row title",
-								child: {
-									id: "sheet-child-1",
-									type: "Info" as const,
-									view: {
-										content: {
-											title: "Child Info",
-											subtitle: "Child subtitle",
+								title: "Column container row title",
+								children: [
+									{
+										id: "column-child-1",
+										type: "Info" as const,
+										view: {
+											content: {
+												title: "Child Info",
+												subtitle: "Child subtitle",
+											},
 										},
+										actions: [],
 									},
-									actions: [],
-								},
-								children: [],
+								],
 							},
 						},
 						actions: [],
@@ -472,7 +480,6 @@ test.describe("Drag & Drop UX", () => {
 			"Column container row title",
 			"List container row title",
 			"Select segment container row title",
-			"Sheet container row title",
 		];
 
 		const initialRowCount = await pageContent

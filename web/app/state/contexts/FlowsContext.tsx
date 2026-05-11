@@ -10,8 +10,6 @@ export type FlowsContextValue = {
 	activeFlowId?: string;
 	activeRowId?: string;
 	activePageId?: string;
-	focusMode: boolean;
-	secondarySheetRowId?: string;
 	configStack: string[];
 	dispatchRow: Dispatch<RowAction>;
 };
@@ -19,7 +17,6 @@ export type FlowsContextValue = {
 export const FlowsContext = createContext<FlowsContextValue>({
 	rows: [],
 	flows: [],
-	focusMode: false,
 	configStack: [],
 	dispatchRow: () => {},
 });

@@ -164,13 +164,7 @@ test.describe("Row Selection", () => {
 			firstPage.getByText("Input row title", { exact: true }),
 		).toBeVisible();
 
-		// Click on the newly added row
-		const inputRow = firstPage
-			.getByText("Input row title", { exact: true })
-			.first();
-		await inputRow.click();
-
-		// Configuration panel should show input row configuration
+		// Row is auto-selected after drop, so configuration panel should show input row configuration
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),

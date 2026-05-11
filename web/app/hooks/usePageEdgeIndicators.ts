@@ -10,8 +10,7 @@ type ForcedIndicators = {
 /**
  * Shared logic for computing page-edge drop indicator state.
  *
- * Used by both AppPage and SecondarySheetPage to avoid duplicating
- * the indicator derivation logic.
+ * Used by AppPage to keep page-edge drop indicator derivation isolated.
  */
 export function usePageEdgeIndicators(
 	pageId: string,

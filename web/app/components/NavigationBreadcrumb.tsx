@@ -12,6 +12,7 @@ import {
 import { findFlowById } from "../utils/flowHelpers";
 import { splitCamelCaseToWords } from "../utils/labelFormatting";
 import { findRowInPages } from "../utils/rowTree";
+import { capturePageFramePosition } from "../utils/preActivationCapture";
 
 const breadcrumbScrollCss = `
 .evy-nav-breadcrumb-scroll {
@@ -57,13 +58,13 @@ const breadcrumbScrollCss = `
 }
 @keyframes evy-breadcrumb-page-text-glow {
 	0%, 100% {
-		text-shadow: 0 0 1px oklch(60.04% 0.2013 261.37 / 0.1);
+		text-shadow: 0 0 1px color-mix(in srgb, var(--color-evy-blue) 10%, transparent);
 	}
 	50% {
-		text-shadow: 0 0 12px oklch(60.04% 0.2013 261.37 / 1);
+		text-shadow: 0 0 12px var(--color-evy-blue);
 	}
 }
-.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link--focus-page {
+.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link--active {
 	animation: evy-breadcrumb-page-text-glow 1s ease-in-out infinite;
 }
 `;
@@ -85,7 +86,6 @@ export function NavigationBreadcrumb() {
 		activePageId,
 		activeRowId,
 		configStack,
-		focusMode,
 		dispatchRow,
 	} = useFlowsContext();
 
@@ -127,6 +127,9 @@ export function NavigationBreadcrumb() {
 	);
 
 	const navigateBreadcrumb = (configStackLength: number) => {
+		if (activePageId) {
+			capturePageFramePosition(activePageId);
+		}
 		dispatchRow({ type: "NAVIGATE_BREADCRUMB", configStackLength });
 	};
 
@@ -144,6 +147,8 @@ export function NavigationBreadcrumb() {
 			}
 		}
 	}
+
+	const isPageActiveWithNoRow = !!(activePageId && !activeRowId);
 
 	return (
 		<>
@@ -184,11 +189,15 @@ export function NavigationBreadcrumb() {
 							<Separator />
 							<button
 								type="button"
-								className={`evy-nav-breadcrumb-link evy-shrink-0${focusMode ? " evy-nav-breadcrumb-link--focus-page" : ""}`}
-								aria-current={focusMode ? "page" : undefined}
+								className={`evy-nav-breadcrumb-link evy-shrink-0${isPageActiveWithNoRow ? " evy-nav-breadcrumb-link--active" : ""}`}
+								aria-current={isPageActiveWithNoRow ? "page" : undefined}
 								aria-label={`Select page ${breadcrumbLabelForPage(activePage, pages)}`}
 								onClick={() => {
-									dispatchRow({ type: "TOGGLE_FOCUS_MODE" });
+									capturePageFramePosition(activePage.id);
+									dispatchRow({
+										type: "SET_ACTIVE_PAGE",
+										pageId: activePage.id,
+									});
 								}}
 							>
 								{breadcrumbLabelForPage(activePage, pages)}

@@ -25,6 +25,7 @@ struct EVYTextField: View {
   let placeholder: String
   let multiLine: Bool
   let input: String
+  let isInteractive: Bool
 
   @Bindable private var displayValue: EVYState<EVYValue>
   @Bindable private var editableValue: EVYState<EVYValue>
@@ -33,11 +34,18 @@ struct EVYTextField: View {
   @FocusState private var focused: Bool
   @State private var editing: Bool = false
 
-  init(input: String, destination: String, placeholder: String, multiLine: Bool = false) {
+  init(
+    input: String,
+    destination: String,
+    placeholder: String,
+    multiLine: Bool = false,
+    isInteractive: Bool = true
+  ) {
     self.input = input
     self.placeholder = placeholder
     self.destination = destination
     self.multiLine = multiLine
+    self.isInteractive = isInteractive
 
     let inputWatchTarget = EVY.watchTarget(for: input)
     let placeholderWatchTarget = EVY.watchTarget(for: placeholder)
@@ -115,11 +123,13 @@ struct EVYTextField: View {
     )
     .contentShape(Rectangle())
     .onTapGesture {
+      guard isInteractive else { return }
       if !editing {
         editing = true
         focused = true
       }
     }
+    .allowsHitTesting(isInteractive)
     .accessibilityIdentifier("textField_\(destination)")
   }
 }
