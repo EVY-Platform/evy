@@ -227,8 +227,16 @@ export function handleDrop(
 			pages,
 			pageDestinationContainerRowId,
 		);
-		if (actualPage && actualPage !== destinationPage) {
-			dispatchOptions.destinationPageId = actualPage.id;
+		if (actualPage) {
+			if (actualPage !== destinationPage) {
+				dispatchOptions.destinationPageId = actualPage.id;
+			}
+		} else {
+			// Should never happen: the parent row must exist in some page.
+			console.warn(
+				"handleDrop: blank child drop could not locate page for parent row",
+				pageDestinationContainerRowId,
+			);
 		}
 	}
 
@@ -278,14 +286,14 @@ export function handleDrop(
 		} else {
 			const destinationContainer = isPlaceholderDrop
 				? (() => {
-					const secondTargetRowId =
-						location.current.dropTargets[1]?.data.rowId;
-					invariant(
-						typeof secondTargetRowId === "string",
-						"handleDrop: dropTargets[1].rowId is not a string",
-					);
-					return findContainerByIdInPage(destinationPage, secondTargetRowId);
-				})()
+						const secondTargetRowId =
+							location.current.dropTargets[1]?.data.rowId;
+						invariant(
+							typeof secondTargetRowId === "string",
+							"handleDrop: dropTargets[1].rowId is not a string",
+						);
+						return findContainerByIdInPage(destinationPage, secondTargetRowId);
+					})()
 				: findContainerOfRowInPage(destinationPage, destinationRowId);
 
 			if (
