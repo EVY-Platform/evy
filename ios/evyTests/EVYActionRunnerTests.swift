@@ -149,7 +149,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = UI_RowAction(
       condition: "",
       false: "",
-      true: "{navigate(flowX,pageY,{\"items\": [$datum.id]})}",
+      true: "{navigate(flowX,pageY,{\"items\": \"$datum.id\"})}",
     )
     EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
     guard case .navigate(let route) = received else {
@@ -161,8 +161,12 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query["items"], ["resolved-uuid"])
   }
 
-  func testNavigateWithUnquotedDatumInQuery() {
+  func testNavigateWithUnquotedDatumInQueryPostsError() {
     var received: NavOperation?
+    let expectation = expectation(
+      forNotification: Notification.Name.evyErrorOccurred,
+      object: nil,
+    )
     let datum = EVYJson.dictionary([
       "id": .string("resolved-uuid"),
       "title": .string("Test"),
@@ -173,11 +177,8 @@ final class EVYActionRunnerTests: XCTestCase {
       true: "{navigate(flowX,pageY,{\"id\": $datum.id})}",
     )
     EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
-    guard case .navigate(let route) = received else {
-      XCTFail("Expected navigate")
-      return
-    }
-    XCTAssertEqual(route.query["id"], ["resolved-uuid"])
+    wait(for: [expectation], timeout: 2)
+    XCTAssertNil(received)
   }
 
   func testNavigateWithCommaInQueryJson() {
@@ -216,7 +217,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = UI_RowAction(
       condition: "",
       false: "",
-      true: "{navigate(flowX,pageY,{\"items\": [$datum.id]})}",
+      true: "{navigate(flowX,pageY,{\"items\": \"$datum.id\"})}",
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
@@ -224,6 +225,28 @@ final class EVYActionRunnerTests: XCTestCase {
       return
     }
     XCTAssertEqual(route.query["items"], ["$datum.id"])
+  }
+
+  func testDatumRowFormatterDoesNotResolveDatumInActions() throws {
+    let actionString = "{navigate(flowX,pageY,{\"id\": \"$datum.id\"})}"
+    let row = try decodeRow(
+      content: """
+        {
+          "title": "{$datum.title}"
+        }
+        """,
+      actions: [UI_RowAction(condition: "", false: "", true: actionString)]
+    )
+    let formatter = try EVYDatumRowFormatter(template: row)
+    let datum = EVYJson.dictionary([
+      "id": .string("resolved-uuid"),
+      "title": .string("Resolved Title"),
+    ])
+
+    let formattedRow = try formatter.formattedResult(datum: datum).row
+
+    XCTAssertEqual(formattedRow.view.content.title, "Resolved Title")
+    XCTAssertEqual(formattedRow.actions.first?.true, actionString)
   }
 
   private func makeRowWithChild() throws -> UI_Row {
@@ -253,7 +276,12 @@ final class EVYActionRunnerTests: XCTestCase {
     )
   }
 
-  private func decodeRow(content: String) throws -> UI_Row {
+  private func decodeRow(
+    content: String,
+    actions: [UI_RowAction] = []
+  ) throws -> UI_Row {
+    let actionsData = try JSONEncoder().encode(actions)
+    let actionsJson = try XCTUnwrap(String(data: actionsData, encoding: .utf8))
     let json = """
       {
         "id": "parent-row",
@@ -261,7 +289,7 @@ final class EVYActionRunnerTests: XCTestCase {
         "source": "",
         "destination": "",
         "view": { "content": \(content) },
-        "actions": []
+        "actions": \(actionsJson)
       }
       """
     let data = try XCTUnwrap(json.data(using: .utf8))

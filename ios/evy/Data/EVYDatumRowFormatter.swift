@@ -36,17 +36,32 @@ final class EVYDatumRowFormatter {
     return (try? EVY.formatData(json: datum, format: stringValue)) ?? stringValue
   }
 
-  private static func formatDatumReferencesInJSONValue(_ value: Any, datum: EVYJson) -> Any {
+  private static func formatDatumReferencesInJSONValue(
+    _ value: Any,
+    datum: EVYJson,
+    path: [String] = []
+  ) -> Any {
+    if path.contains("actions") {
+      return value
+    }
+
     switch value {
     case let stringValue as String:
       return resolveDatumReferences(in: stringValue, datum: datum)
     case let dictionaryValue as [String: Any]:
-      return dictionaryValue.mapValues { nestedValue in
-        formatDatumReferencesInJSONValue(nestedValue, datum: datum)
+      var formatted: [String: Any] = [:]
+      formatted.reserveCapacity(dictionaryValue.count)
+      for (key, nestedValue) in dictionaryValue {
+        formatted[key] = formatDatumReferencesInJSONValue(
+          nestedValue,
+          datum: datum,
+          path: path + [key]
+        )
       }
+      return formatted
     case let arrayValue as [Any]:
       return arrayValue.map { nestedValue in
-        formatDatumReferencesInJSONValue(nestedValue, datum: datum)
+        formatDatumReferencesInJSONValue(nestedValue, datum: datum, path: path)
       }
     default:
       return value

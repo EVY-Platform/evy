@@ -132,15 +132,15 @@ enum EVYActionRunner {
     guard trimmedValue.hasPrefix("{") else {
       throw EVYError.invalidData(context: "navigate query params must be a JSON object")
     }
-    return parseJsonQuery(trimmedValue)
+    return try parseJsonQuery(trimmedValue)
   }
 
-  private static func parseJsonQuery(_ jsonString: String) -> [String: [String]] {
-    let normalizedJsonString = quoteUnquotedDatumExpressions(in: jsonString)
-    guard let data = normalizedJsonString.data(using: .utf8),
+  private static func parseJsonQuery(_ jsonString: String) throws -> [String: [String]] {
+    guard let data = jsonString.data(using: .utf8),
       let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
     else {
-      return [:]
+      throw EVYError.invalidData(
+        context: "navigate query params must be valid JSON with quoted string values")
     }
 
     var query: [String: [String]] = [:]
@@ -160,26 +160,6 @@ enum EVYActionRunner {
     }
     return query
   }
-
-  private static func quoteUnquotedDatumExpressions(in jsonString: String) -> String {
-    let pattern = #"(?<!\")\$datum\.[A-Za-z0-9_.-]+"#
-    guard let regex = try? NSRegularExpression(pattern: pattern) else {
-      return jsonString
-    }
-
-    var normalizedJsonString = jsonString
-    let range = NSRange(normalizedJsonString.startIndex..., in: normalizedJsonString)
-    let matches = regex.matches(in: normalizedJsonString, range: range)
-    for match in matches.reversed() {
-      guard let matchRange = Range(match.range, in: normalizedJsonString) else {
-        continue
-      }
-      let token = String(normalizedJsonString[matchRange])
-      normalizedJsonString.replaceSubrange(matchRange, with: "\"\(token)\"")
-    }
-    return normalizedJsonString
-  }
-
 
   private static func unwrapActionBranch(_ branch: String) -> String {
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return branch }
