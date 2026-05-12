@@ -65,18 +65,15 @@ enum EVYActionRunner {
     if let (functionName, functionArgs) = parseFunctionCall(unwrappedBranch) {
       switch functionName {
       case "navigate":
-        let args = splitFunctionArguments(functionArgs)
-        guard args.count >= 2 else {
-          throw EVYError.invalidData(context: "navigate requires flowId and pageId")
-        }
-        let flowId = stripOptionalSurroundingQuotes(args[0])
-        let pageId = stripOptionalSurroundingQuotes(args[1])
-
-        let queryArgument = args.count > 2 ? args.dropFirst(2).joined(separator: ",") : ""
-        let query = try parseQueryArgument(queryArgument)
+        let navArgs = try parseNavigateArguments(functionArgs)
+        let query = try parseQueryArgument(navArgs.queryArgument)
         let resolvedQuery = EVY.resolveDatumInQuery(query, datum: datum)
         navigate(
-          .navigate(Route(flowId: flowId, pageId: pageId, query: resolvedQuery))
+          .navigate(Route(
+            flowId: navArgs.flowId,
+            pageId: navArgs.pageId,
+            query: resolvedQuery
+          ))
         )
       case "create":
         let args = splitFunctionArguments(functionArgs)
@@ -107,6 +104,27 @@ enum EVYActionRunner {
     }
   }
 
+  private struct NavigateArguments {
+    let flowId: String
+    let pageId: String
+    let queryArgument: String
+  }
+
+  private static func parseNavigateArguments(_ functionArgs: String) throws -> NavigateArguments {
+    let args = splitFunctionArguments(functionArgs)
+    guard args.count >= 2 else {
+      throw EVYError.invalidData(context: "navigate requires flowId and pageId")
+    }
+    guard args.count <= 3 else {
+      throw EVYError.invalidData(context: "navigate accepts at most 3 arguments")
+    }
+    return NavigateArguments(
+      flowId: stripOptionalSurroundingQuotes(args[0]),
+      pageId: stripOptionalSurroundingQuotes(args[1]),
+      queryArgument: args.count > 2 ? args[2] : ""
+    )
+  }
+
   private static func parseQueryArgument(_ value: String) throws -> [String: [String]] {
     let trimmedValue = stripOptionalSurroundingQuotes(value)
       .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -114,15 +132,15 @@ enum EVYActionRunner {
     guard trimmedValue.hasPrefix("{") else {
       throw EVYError.invalidData(context: "navigate query params must be a JSON object")
     }
-    return parseJsonQuery(trimmedValue)
+    return try parseJsonQuery(trimmedValue)
   }
 
-  private static func parseJsonQuery(_ jsonString: String) -> [String: [String]] {
-    let normalizedJsonString = quoteUnquotedDatumExpressions(in: jsonString)
-    guard let data = normalizedJsonString.data(using: .utf8),
+  private static func parseJsonQuery(_ jsonString: String) throws -> [String: [String]] {
+    guard let data = jsonString.data(using: .utf8),
       let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
     else {
-      return [:]
+      throw EVYError.invalidData(
+        context: "navigate query params must be valid JSON with quoted string values")
     }
 
     var query: [String: [String]] = [:]
@@ -142,26 +160,6 @@ enum EVYActionRunner {
     }
     return query
   }
-
-  private static func quoteUnquotedDatumExpressions(in jsonString: String) -> String {
-    let pattern = #"(?<!\")\$datum\.[A-Za-z0-9_.-]+"#
-    guard let regex = try? NSRegularExpression(pattern: pattern) else {
-      return jsonString
-    }
-
-    var normalizedJsonString = jsonString
-    let range = NSRange(normalizedJsonString.startIndex..., in: normalizedJsonString)
-    let matches = regex.matches(in: normalizedJsonString, range: range)
-    for match in matches.reversed() {
-      guard let matchRange = Range(match.range, in: normalizedJsonString) else {
-        continue
-      }
-      let token = String(normalizedJsonString[matchRange])
-      normalizedJsonString.replaceSubrange(matchRange, with: "\"\(token)\"")
-    }
-    return normalizedJsonString
-  }
-
 
   private static func unwrapActionBranch(_ branch: String) -> String {
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return branch }

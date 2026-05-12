@@ -71,8 +71,21 @@ extension EVY {
   )] {
     if let queryKey {
       let serviceName = publicStore.serviceName(forSyncedResource: queryKey)
-      guard let data = collectionData(for: queryKey, serviceName: serviceName) else { return [] }
-      return [(queryKey, data)]
+      if let data = collectionData(for: queryKey, serviceName: serviceName) {
+        return [(queryKey, data)]
+      }
+
+      // If the exact query key didn't match, try the plural resource name
+      // so singular keys like "item" can resolve against "marketplace:items".
+      let pluralKey = resourceName(forEntityKey: queryKey)
+      if pluralKey != queryKey {
+        let pluralServiceName = publicStore.serviceName(forSyncedResource: pluralKey)
+        if let data = collectionData(for: pluralKey, serviceName: pluralServiceName) {
+          return [(pluralKey, data)]
+        }
+      }
+
+      return []
     }
 
     let syncedCollections = (try? publicStore.getAll()) ?? []
