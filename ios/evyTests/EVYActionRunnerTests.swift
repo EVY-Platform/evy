@@ -161,6 +161,56 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query["items"], ["resolved-uuid"])
   }
 
+  func testNavigateWithUnquotedDatumInQuery() {
+    var received: NavOperation?
+    let datum = EVYJson.dictionary([
+      "id": .string("resolved-uuid"),
+      "title": .string("Test"),
+    ])
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flowX,pageY,{\"id\": $datum.id})}",
+    )
+    EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertEqual(route.query["id"], ["resolved-uuid"])
+  }
+
+  func testNavigateWithCommaInQueryJson() {
+    var received: NavOperation?
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flowX,pageY,{\"items\": [\"a\"], \"kind\": \"item\"})}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertEqual(route.query["items"], ["a"])
+    XCTAssertEqual(route.query["kind"], ["item"])
+  }
+
+  func testNavigateWithTooManyArgsThrowsError() {
+    let expectation = expectation(
+      forNotification: Notification.Name.evyErrorOccurred,
+      object: nil,
+    )
+    // Fourth top-level argument triggers the "at most 3" guard
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flowX,pageY,{\"key\": \"val\"},extra)}",
+    )
+    EVYActionRunner.run(actions: [action]) { _ in }
+    wait(for: [expectation], timeout: 2)
+  }
+
   func testNavigateWithoutDatumKeepsDatumExpression() {
     var received: NavOperation?
     let action = UI_RowAction(

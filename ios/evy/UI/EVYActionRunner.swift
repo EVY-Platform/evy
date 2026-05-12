@@ -65,18 +65,15 @@ enum EVYActionRunner {
     if let (functionName, functionArgs) = parseFunctionCall(unwrappedBranch) {
       switch functionName {
       case "navigate":
-        let args = splitFunctionArguments(functionArgs)
-        guard args.count >= 2 else {
-          throw EVYError.invalidData(context: "navigate requires flowId and pageId")
-        }
-        let flowId = stripOptionalSurroundingQuotes(args[0])
-        let pageId = stripOptionalSurroundingQuotes(args[1])
-
-        let queryArgument = args.count > 2 ? args.dropFirst(2).joined(separator: ",") : ""
-        let query = try parseQueryArgument(queryArgument)
+        let navArgs = try parseNavigateArguments(functionArgs)
+        let query = try parseQueryArgument(navArgs.queryArgument)
         let resolvedQuery = EVY.resolveDatumInQuery(query, datum: datum)
         navigate(
-          .navigate(Route(flowId: flowId, pageId: pageId, query: resolvedQuery))
+          .navigate(Route(
+            flowId: navArgs.flowId,
+            pageId: navArgs.pageId,
+            query: resolvedQuery
+          ))
         )
       case "create":
         let args = splitFunctionArguments(functionArgs)
@@ -105,6 +102,27 @@ enum EVYActionRunner {
     } else {
       return
     }
+  }
+
+  private struct NavigateArguments {
+    let flowId: String
+    let pageId: String
+    let queryArgument: String
+  }
+
+  private static func parseNavigateArguments(_ functionArgs: String) throws -> NavigateArguments {
+    let args = splitFunctionArguments(functionArgs)
+    guard args.count >= 2 else {
+      throw EVYError.invalidData(context: "navigate requires flowId and pageId")
+    }
+    guard args.count <= 3 else {
+      throw EVYError.invalidData(context: "navigate accepts at most 3 arguments")
+    }
+    return NavigateArguments(
+      flowId: stripOptionalSurroundingQuotes(args[0]),
+      pageId: stripOptionalSurroundingQuotes(args[1]),
+      queryArgument: args.count > 2 ? args[2] : ""
+    )
   }
 
   private static func parseQueryArgument(_ value: String) throws -> [String: [String]] {

@@ -421,6 +421,89 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(out.value, "01/19/2024")
   }
 
+  func testGetForBindingResolvesSingularToPluralSyncedResource() throws {
+    let id = UUID().uuidString
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let resourceKey = "\(randomId)_things"
+    let entityKey = "\(randomId)_thing"
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Plural resource item"),
+        ])
+      ]),
+      at: "marketplace:\(resourceKey)"
+    )
+
+    let data = try EVY.publicStore.getForBinding(key: entityKey)
+    let decoded = try data.decoded()
+    guard case .array(let items) = decoded else {
+      XCTFail("Expected array, got \(decoded)")
+      return
+    }
+    XCTAssertEqual(items.count, 1)
+    XCTAssertEqual(items.first?.parseProp(props: ["title"]), .string("Plural resource item"))
+  }
+
+  func testSingularQueryKeyResolvesFromPluralSyncedCollection() throws {
+    let id = UUID().uuidString
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let resourceKey = "\(randomId)_items"
+    let entityKey = "\(randomId)_item"
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Selected singular item"),
+        ])
+      ]),
+      at: "marketplace:\(resourceKey)"
+    )
+
+    EVY.resolveQueryParams([entityKey: [id]])
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityKey).title}"),
+      .string("Selected singular item")
+    )
+  }
+
+  func testExactLocalKeyStillWinsOverPluralFallback() throws {
+    let id = UUID().uuidString
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let resourceKey = "\(randomId)_items"
+    let entityKey = "\(randomId)_item"
+
+    // Seed an exact local key for this entity
+    try store(
+      .dictionary([
+        "id": .string(id),
+        "title": .string("Local item"),
+      ]),
+      at: entityKey
+    )
+
+    // Seed a plural collection with different data
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Plural fallback item"),
+        ])
+      ]),
+      at: "marketplace:\(resourceKey)"
+    )
+
+    // Exact local key should win
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityKey).title}"),
+      .string("Local item")
+    )
+  }
+
   private func store(_ value: EVYJson, at key: String) throws {
     if EVY.publicStore.exists(key: key) {
       try EVY.publicStore.delete(key: key)

@@ -38,15 +38,24 @@ final class EVYDataStore {
 
   // Binding lookups prefer exact local keys, then fall back to service-qualified
   // synced keys such as "marketplace:items" when SDUI uses "{items}".
+  // If the key is singular (e.g. "item"), also tries the plural resource key
+  // (e.g. "items") so synced collections are discoverable by either form.
   func getForBinding(key: String) throws -> EVYData {
     if let exact = try? get(key: key) {
       return exact
     }
 
-    guard let serviceName = serviceName(forSyncedResource: key) else {
+    if let serviceName = serviceName(forSyncedResource: key) {
+      return try getSyncedResource(resource: key, serviceName: serviceName)
+    }
+
+    let pluralKey = EVY.resourceName(forEntityKey: key)
+    guard pluralKey != key,
+      let pluralServiceName = serviceName(forSyncedResource: pluralKey)
+    else {
       throw EVYDataError.keyNotFound
     }
-    return try getSyncedResource(resource: key, serviceName: serviceName)
+    return try getSyncedResource(resource: pluralKey, serviceName: pluralServiceName)
   }
 
   func getSyncedResource(resource: String, serviceName: String) throws -> EVYData {
