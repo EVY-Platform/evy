@@ -41,10 +41,6 @@ struct DataUpdatedNotification: Decodable {
   let service: String
   let resource: String
   let value: EVYJson
-
-  var dataKey: String {
-    "\(service):\(resource)"
-  }
 }
 
 protocol EVYWebsocketProtocol {

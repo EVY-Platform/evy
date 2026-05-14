@@ -9,7 +9,6 @@ import Foundation
 import Observation
 
 enum EVYDataError: Error {
-  case keyAlreadyExists
   case keyNotFound
 }
 

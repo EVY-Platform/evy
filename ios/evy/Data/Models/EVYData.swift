@@ -11,7 +11,6 @@ import SwiftData
 enum EVYDataParseError: Error {
   case invalidProps
   case invalidVariable
-  case unprocessableValue
 }
 
 struct EVYValue: Equatable {
@@ -61,70 +60,6 @@ class EVYData {
 
   func decoded() throws -> EVYJson {
     try JSONDecoder().decode(EVYJson.self, from: data)
-  }
-
-  func updateDataWithData(_ data: Data, props: [String]) throws {
-    if props.count < 1 {
-      return
-    }
-
-    let currentDataAsJson = try decoded()
-    let newDataAsJson = try JSONDecoder().decode(EVYJson.self, from: data)
-
-    let updatedJson = try getUpdatedJson(
-      props: props, data: currentDataAsJson, value: newDataAsJson)
-    self.data = try JSONEncoder().encode(updatedJson)
-  }
-
-  private func getUpdatedJson(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson {
-    if props.count < 1 {
-      return data
-    }
-
-    switch data {
-    case .dictionary(var dictValue):
-      guard let firstProp = props.first else {
-        throw EVYDataParseError.invalidProps
-      }
-      guard let subData = dictValue[firstProp] else {
-        throw EVYDataParseError.invalidProps
-      }
-      if props.count == 1 {
-        dictValue[firstProp] = value
-        let dictAsData = try JSONEncoder().encode(dictValue)
-        return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
-      }
-      let updatedData = try getUpdatedJson(props: Array(props[1...]), data: subData, value: value)
-      if props.count > 1 {
-        dictValue[firstProp] = updatedData
-        let dictAsData = try JSONEncoder().encode(dictValue)
-        return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
-      }
-      return updatedData
-    case .array(var arrayValue):
-      guard let firstProp = props.first else {
-        throw EVYDataParseError.invalidProps
-      }
-      guard let index = Int(firstProp) else {
-        throw EVYDataParseError.invalidProps
-      }
-      let subData = arrayValue[index]
-      if props.count == 1 {
-        arrayValue[index] = value
-        let arrayAsData = try JSONEncoder().encode(arrayValue)
-        return try JSONDecoder().decode(EVYJson.self, from: arrayAsData)
-      }
-      let updatedData = try getUpdatedJson(props: Array(props[1...]), data: subData, value: value)
-      if props.count > 1 {
-        arrayValue[index] = updatedData
-        let arrayAsData = try JSONEncoder().encode(arrayValue)
-        return try JSONDecoder().decode(EVYJson.self, from: arrayAsData)
-      }
-      return updatedData
-    default:
-      return data
-    }
-  }
 }
 
 public enum EVYJson: Codable, Hashable {

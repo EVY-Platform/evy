@@ -24,9 +24,7 @@ final class EVYDataStore {
     self.context = ModelContext(container)
   }
 
-  func exists(namespace: String, resource: String, id: String) -> Bool {
-    (try? get(namespace: namespace, resource: resource, id: id)) != nil
-  }
+
 
   func get(namespace: String, resource: String, id: String) throws -> EVYData {
     let descriptor = FetchDescriptor<EVYData>(
