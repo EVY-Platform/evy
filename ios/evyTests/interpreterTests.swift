@@ -9,18 +9,18 @@ import XCTest
 
 @MainActor
 final class InterpreterTests: XCTestCase {
-  private var testPrefix = ""
+  private var testPageId = ""
 
   override func setUpWithError() throws {
     try super.setUpWithError()
-    testPrefix = "test_page_\(UUID().uuidString):"
+    testPageId = "test_page_\(UUID().uuidString)"
     try EVY.getUserData()
-    EVY.activeCachePrefix = testPrefix
+    EVY.activeCacheScopeId = testPageId
   }
 
   override func tearDownWithError() throws {
-    EVY.cacheStore.deleteAll(keyPrefix: testPrefix)
-    EVY.activeCachePrefix = nil
+    try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: testPageId)
+    EVY.activeCacheScopeId = nil
     EVY.draftStore.activeScopeId = nil
     try super.tearDownWithError()
   }
@@ -77,9 +77,11 @@ final class InterpreterTests: XCTestCase {
     try store(.string("public"), at: key)
 
     let (localStore, localKey) = EVY.store(for: "$local:\(key)")
-    try localStore.create(
-      key: localKey,
-      data: try JSONEncoder().encode(EVYJson.string("private"))
+    try localStore.upsert(
+      namespace: EVYNamespace.local,
+      resource: localKey,
+      id: EVYNamespace.singletonId,
+      value: try JSONEncoder().encode(EVYJson.string("private"))
     )
 
     let publicValue = try parseTextFromText("value: {\(key)}")
@@ -110,7 +112,10 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(one.value, "n: 1")
 
     let encoded = try JSONEncoder().encode(EVYJson.array([.string("a"), .string("b")]))
-    try EVY.publicStore.update(props: [key], data: encoded)
+    // Find the stored row by resource and update its data
+    if let existing = try EVY.publicStore.getAll().first(where: { $0.resource == key }) {
+      existing.data = encoded
+    }
 
     let two = try parseTextFromText("n: {count(\(key))}")
     XCTAssertEqual(two.value, "n: 2")
@@ -259,22 +264,22 @@ final class InterpreterTests: XCTestCase {
 
   func testResolveQueryParamsOverwritesPreviousPageData() throws {
     let key = uniqueKey("param")
-    let prefix1 = "page_a:"
-    let prefix2 = "page_b:"
+    let pageA = "page_a_\(UUID().uuidString)"
+    let pageB = "page_b_\(UUID().uuidString)"
 
     // Write to page A
-    EVY.activeCachePrefix = prefix1
+    EVY.activeCacheScopeId = pageA
     EVY.resolveQueryParams([key: ["value_a"]])
 
     // Write to page B with same key
-    EVY.activeCachePrefix = prefix2
+    EVY.activeCacheScopeId = pageB
     EVY.resolveQueryParams([key: ["value_b"]])
 
     // Page B data is correct
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value_b"))
 
-    // Page A data still exists (different prefix, inert)
-    EVY.activeCachePrefix = prefix1
+    // Page A data still exists (different scope, inert)
+    EVY.activeCacheScopeId = pageA
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value_a"))
   }
 
@@ -296,18 +301,18 @@ final class InterpreterTests: XCTestCase {
 
   func testActiveCachePrefixSelectsPageScopedValue() throws {
     let key = uniqueKey("shared")
-    let pageOnePrefix = "page_one_\(UUID().uuidString):"
-    let pageTwoPrefix = "page_two_\(UUID().uuidString):"
+    let pageOneId = "page_one_\(UUID().uuidString)"
+    let pageTwoId = "page_two_\(UUID().uuidString)"
 
-    EVY.activeCachePrefix = pageOnePrefix
+    EVY.activeCacheScopeId = pageOneId
     EVY.resolveQueryParams([key: ["one"]])
 
-    EVY.activeCachePrefix = pageTwoPrefix
+    EVY.activeCacheScopeId = pageTwoId
     EVY.resolveQueryParams([key: ["two"]])
 
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("two"))
 
-    EVY.activeCachePrefix = pageOnePrefix
+    EVY.activeCacheScopeId = pageOneId
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("one"))
   }
 
@@ -437,8 +442,7 @@ final class InterpreterTests: XCTestCase {
       at: "marketplace:\(resourceKey)"
     )
 
-    let data = try EVY.publicStore.getForBinding(key: entityKey)
-    let decoded = try data.decoded()
+    let decoded = try EVY.publicStore.getJsonForBinding(key: entityKey)
     guard case .array(let items) = decoded else {
       XCTFail("Expected array, got \(decoded)")
       return
@@ -505,11 +509,21 @@ final class InterpreterTests: XCTestCase {
   }
 
   private func store(_ value: EVYJson, at key: String) throws {
-    if EVY.publicStore.exists(key: key) {
-      try EVY.publicStore.delete(key: key)
-    }
     let encodedValue = try JSONEncoder().encode(value)
-    try EVY.publicStore.create(key: key, data: encodedValue)
+
+    // For service-qualified keys (e.g. "marketplace:items"), store as normalized instances
+    let parts = key.split(separator: ":", maxSplits: 2).map(String.init)
+    if parts.count == 2 {
+      let namespace = parts[0]
+      let resource = parts[1]
+      try EVY.publicStore.upsertSyncedValue(namespace: namespace, resource: resource, value: value)
+      return
+    }
+
+    // For simple keys, store as local singleton
+    try EVY.publicStore.upsert(
+      namespace: EVYNamespace.local, resource: key, id: EVYNamespace.singletonId,
+      value: encodedValue)
   }
 
   private func uniqueKey(_ suffix: String) -> String {

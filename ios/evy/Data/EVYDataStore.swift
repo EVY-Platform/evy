@@ -24,178 +24,229 @@ final class EVYDataStore {
     self.context = ModelContext(container)
   }
 
-  func exists(key: String) -> Bool {
-    (try? get(key: key)) != nil
+  // MARK: - Normalized CRUD
+
+  func exists(namespace: String, resource: String, id: String) -> Bool {
+    (try? get(namespace: namespace, resource: resource, id: id)) != nil
   }
 
-  func get(key: String) throws -> EVYData {
-    let descriptor = FetchDescriptor<EVYData>(predicate: #Predicate { $0.key == key })
+  func get(namespace: String, resource: String, id: String) throws -> EVYData {
+    let descriptor = FetchDescriptor<EVYData>(
+      predicate: #Predicate {
+        $0.namespace == namespace && $0.resource == resource && $0.id == id
+      }
+    )
     guard let first = try context.fetch(descriptor).first else {
       throw EVYDataError.keyNotFound
     }
     return first
   }
 
-  // Binding lookups prefer exact local keys, then fall back to service-qualified
-  // synced keys such as "marketplace:items" when SDUI uses "{items}".
-  // If the key is singular (e.g. "item"), also tries the plural resource key
-  // (e.g. "items") so synced collections are discoverable by either form.
-  func getForBinding(key: String) throws -> EVYData {
-    if let exact = try? get(key: key) {
-      return exact
-    }
-
-    if let serviceName = serviceName(forSyncedResource: key) {
-      return try getSyncedResource(resource: key, serviceName: serviceName)
-    }
-
-    let pluralKey = EVY.resourceName(forEntityKey: key)
-    guard pluralKey != key,
-      let pluralServiceName = serviceName(forSyncedResource: pluralKey)
-    else {
-      throw EVYDataError.keyNotFound
-    }
-    return try getSyncedResource(resource: pluralKey, serviceName: pluralServiceName)
+  /// Fetch all rows matching namespace + resource (a collection).
+  func getAll(namespace: String, resource: String) throws -> [EVYData] {
+    let descriptor = FetchDescriptor<EVYData>(
+      predicate: #Predicate {
+        $0.namespace == namespace && $0.resource == resource
+      }
+    )
+    return try context.fetch(descriptor)
   }
 
-  func getSyncedResource(resource: String, serviceName: String) throws -> EVYData {
-    return try get(key: "\(serviceName):\(resource)")
+  /// Fetch all rows for a given namespace.
+  func getAll(namespace: String) throws -> [EVYData] {
+    let descriptor = FetchDescriptor<EVYData>(
+      predicate: #Predicate { $0.namespace == namespace }
+    )
+    return try context.fetch(descriptor)
   }
 
-  func serviceName(forSyncedResource resource: String) -> String? {
-    let suffix = ":\(resource)"
+  /// Fetch all rows in the store.
+  func getAll() throws -> [EVYData] {
     let descriptor = FetchDescriptor<EVYData>()
-    guard let key = try? context.fetch(descriptor).first(where: { $0.key.hasSuffix(suffix) })?.key
-    else {
-      return nil
-    }
-    return key.split(separator: ":", maxSplits: 1).first.map(String.init)
+    return try context.fetch(descriptor)
   }
 
-  func getAll(keyPrefix: String? = nil) throws -> [EVYData] {
-    let descriptor = FetchDescriptor<EVYData>()
-    let rows = try context.fetch(descriptor)
-    guard let keyPrefix else {
-      return rows
-    }
-    return rows.filter { $0.key.hasPrefix(keyPrefix) }
-  }
+  func upsert(
+    namespace: String, resource: String, id: String, value: Data, lastSyncedAt: String? = nil
+  ) throws {
+    let nowIso = lastSyncedAt ?? Date().ISO8601Format()
 
-  func oldestLastSyncedAt(keyPrefix: String? = nil) -> String? {
-    var emptyDescriptor: FetchDescriptor<EVYData>
-    var oldestDescriptor: FetchDescriptor<EVYData>
-    let forwardSort = [SortDescriptor(\EVYData.lastSyncedAt, order: .forward)]
-
-    if let keyPrefix {
-      let upperBound = upperBound(for: keyPrefix)
-      emptyDescriptor = FetchDescriptor<EVYData>(
-        predicate: #Predicate {
-          $0.key >= keyPrefix && $0.key < upperBound && $0.lastSyncedAt == ""
-        }
-      )
-      oldestDescriptor = FetchDescriptor<EVYData>(
-        predicate: #Predicate {
-          $0.key >= keyPrefix && $0.key < upperBound && $0.lastSyncedAt > ""
-        },
-        sortBy: forwardSort
-      )
-    } else {
-      emptyDescriptor = FetchDescriptor<EVYData>(
-        predicate: #Predicate { $0.lastSyncedAt == "" }
-      )
-      oldestDescriptor = FetchDescriptor<EVYData>(
-        predicate: #Predicate { $0.lastSyncedAt > "" },
-        sortBy: forwardSort
-      )
-    }
-
-    emptyDescriptor.fetchLimit = 1
-    let hasEmpty = (try? context.fetch(emptyDescriptor).first) != nil
-    guard !hasEmpty else { return nil }
-
-    oldestDescriptor.fetchLimit = 1
-    return try? context.fetch(oldestDescriptor).first?.lastSyncedAt
-  }
-
-  func create(key: String, data: Data) throws {
-    if exists(key: key) {
-      throw EVYDataError.keyAlreadyExists
-    }
-    context.insert(EVYData(key: key, data: data))
-    postDataUpdated(key: key)
-  }
-
-  func upsert(key: String, value: Data, notify: Bool = true) throws {
-    let nowIso = Date().ISO8601Format()
-
-    if let existing = try? get(key: key) {
+    if let existing = try? get(namespace: namespace, resource: resource, id: id) {
       existing.data = value
       existing.lastSyncedAt = nowIso
     } else {
-      context.insert(EVYData(key: key, lastSyncedAt: nowIso, data: value))
+      context.insert(
+        EVYData(namespace: namespace, resource: resource, id: id, lastSyncedAt: nowIso, data: value)
+      )
     }
 
-    guard notify else { return }
-
-    postDataUpdated(key: key)
-
-    // Service-qualified keys such as "marketplace:items" also notify the
-    // resource name so concise SDUI bindings like "{items}" refresh.
-    if let resourceKey = key.split(separator: ":").last.map(String.init),
-      resourceKey != key
-    {
-      postDataUpdated(key: resourceKey)
-    }
+    postDataUpdated(key: "\(namespace):\(resource):\(id)")
+    postDataUpdated(key: "\(namespace):\(resource)")
+    postDataUpdated(key: resource)
   }
 
-  func update(props: [String], data: Data) throws {
-    let existing = try get(key: props.first!)
-    existing.data = data
-
-    var propsForNotification = props
-    if let index = props.firstIndex(where: { $0.isNumber }) {
-      propsForNotification.removeLast(props.count - index)
-    }
-
-    let notifKey = propsForNotification.joined(separator: PROP_SEPARATOR)
-    postDataUpdated(key: notifKey)
-  }
-
-  func delete(key: String) throws {
-    let existing = try get(key: key)
+  func delete(namespace: String, resource: String, id: String) throws {
+    let existing = try get(namespace: namespace, resource: resource, id: id)
     context.delete(existing)
-    postDataUpdated(key: key)
+    postDataUpdated(key: "\(namespace):\(resource):\(id)")
+    postDataUpdated(key: "\(namespace):\(resource)")
+    postDataUpdated(key: resource)
   }
 
-  func deleteAll(keyPrefix: String? = nil) {
-    do {
-      let rows = try getAll(keyPrefix: keyPrefix)
-      for row in rows {
-        context.delete(row)
-      }
-    } catch {
-      #if DEBUG
-        print("[EVYDataStore] deleteAll error: \(error)")
-      #endif
+  func deleteAll(namespace: String, resource: String) throws {
+    let rows = try getAll(namespace: namespace, resource: resource)
+    for row in rows {
+      context.delete(row)
+    }
+    postDataUpdated(key: "\(namespace):\(resource)")
+    postDataUpdated(key: resource)
+  }
+
+  func deleteAll(namespace: String) throws {
+    let rows = try getAll(namespace: namespace)
+    for row in rows {
+      context.delete(row)
     }
   }
 
-  private func postDataUpdated(key: String) {
+  // MARK: - Synced Resource Helpers
+
+  /// Normalize a sync row value into individual instances.
+  func upsertSyncedValue(namespace: String, resource: String, value: EVYJson) throws {
+    switch value {
+    case .array(let items):
+      for item in items {
+        let itemId = item.identifierValue()
+        guard !itemId.isEmpty else { continue }
+        guard let encoded = try? JSONEncoder().encode(item) else { continue }
+        try upsert(namespace: namespace, resource: resource, id: itemId, value: encoded)
+      }
+    case .dictionary(let dict):
+      let instanceId: String
+      if case .string(let idVal) = dict["id"] {
+        instanceId = idVal
+      } else {
+        instanceId = EVYNamespace.singletonId
+      }
+      let encoded = try JSONEncoder().encode(value)
+      try upsert(namespace: namespace, resource: resource, id: instanceId, value: encoded)
+    default:
+      let encoded = try JSONEncoder().encode(value)
+      try upsert(
+        namespace: namespace, resource: resource, id: EVYNamespace.singletonId, value: encoded)
+    }
+  }
+
+  /// Decode all instances for a resource into an EVYJson array.
+  func getCollectionJson(namespace: String, resource: String) throws -> EVYJson? {
+    let rows = try getAll(namespace: namespace, resource: resource)
+    guard !rows.isEmpty else { return nil }
+
+    let items: [EVYJson] = rows.compactMap { try? $0.decoded() }
+    return .array(items)
+  }
+
+  // MARK: - Binding Resolution
+
+  /// Resolve a binding key (e.g. "items", "item", "marketplace:items") to
+  /// the decoded EVYJson for display.
+  ///
+  /// Returns a collection array for plural resource bindings,
+  /// or a single instance for exact/entity binding lookups.
+  func getJsonForBinding(key: String) throws -> EVYJson {
+    // 1. Try exact-match composite lookup (cache, local, etc.)
+    // First split by ":" — if it has two parts, try namespace:resource match
+    if !key.contains(":") {
+      // Singular key — could be a cache binding. Check cache first.
+      if let scopeId = EVY.activeCacheScopeId,
+        let cached = try? get(namespace: EVYNamespace.cache, resource: scopeId, id: key)
+      {
+        return try cached.decoded()
+      }
+
+      // Try local/exact singleton first (exact local key wins over plural collection)
+      if let localInstance = try? get(
+        namespace: EVYNamespace.local, resource: key, id: EVYNamespace.singletonId)
+      {
+        return try localInstance.decoded()
+      }
+
+      // Try namespace lookup via resource
+      if let namespace = namespace(forSyncedResource: key),
+        let collection = try getCollectionJson(namespace: namespace, resource: key)
+      {
+        return collection
+      }
+
+      // Try plural fallback
+      let pluralKey = EVY.resourceName(forEntityKey: key)
+      if pluralKey != key,
+        let pluralNamespace = namespace(forSyncedResource: pluralKey),
+        let collection = try getCollectionJson(namespace: pluralNamespace, resource: pluralKey)
+      {
+        return collection
+      }
+
+      throw EVYDataError.keyNotFound
+    }
+
+    // 2. Key contains ":" — try as namespace:resource or draft/scopeId
+    let parts = key.split(separator: ":", maxSplits: 1).map(String.init)
+    guard parts.count == 2 else { throw EVYDataError.keyNotFound }
+
+    let first = parts[0]
+    let second = parts[1]
+
+    // Try as namespace:resource collection
+    if let collection = try getCollectionJson(namespace: first, resource: second) {
+      return collection
+    }
+
+    // Try as namespace:resource:id
+    if let instance = try? get(namespace: first, resource: second, id: EVYNamespace.singletonId) {
+      return try instance.decoded()
+    }
+
+    throw EVYDataError.keyNotFound
+  }
+
+  func namespace(forSyncedResource resource: String) -> String? {
+    let descriptor = FetchDescriptor<EVYData>(
+      predicate: #Predicate {
+        $0.resource == resource
+          && $0.namespace != EVYNamespace.local
+          && $0.namespace != EVYNamespace.cache
+          && $0.namespace != EVYNamespace.draft
+      }
+    )
+    descriptor.fetchLimit = 1
+    return try? context.fetch(descriptor).first?.namespace
+  }
+
+  // MARK: - Sync Bookkeeping
+
+  func oldestLastSyncedAt(namespace: String? = nil, resource: String? = nil) -> String? {
+    let allRows: [EVYData]
+    if let namespace, let resource {
+      allRows = (try? getAll(namespace: namespace, resource: resource)) ?? []
+    } else if let namespace {
+      allRows = (try? getAll(namespace: namespace)) ?? []
+    } else {
+      allRows = (try? getAll()) ?? []
+    }
+
+    let hasEmpty = allRows.contains { $0.lastSyncedAt.isEmpty }
+    guard !hasEmpty else { return nil }
+
+    return allRows.compactMap { $0.lastSyncedAt.isEmpty ? nil : $0.lastSyncedAt }.min()
+  }
+
+  // MARK: - Notifications
+
+  func postDataUpdated(key: String) {
     NotificationCenter.default.post(
       name: Notification.Name.evyDataUpdated,
       object: key
     )
-  }
-
-  private func upperBound(for prefix: String) -> String {
-    var result = prefix
-    guard
-      let last = result.unicodeScalars.popLast(),
-      let next = UnicodeScalar(last.value + 1)
-    else {
-      return prefix
-    }
-    result.unicodeScalars.append(next)
-    return result
   }
 }

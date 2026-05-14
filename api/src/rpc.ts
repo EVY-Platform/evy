@@ -5,9 +5,7 @@ import type {
 	SyncResponse,
 	UpsertResponse,
 } from "evy-types";
-import type { BroadcastFn } from "./broadcast";
 import { get as getCore, upsert as upsertCore } from "./data";
-import { initDataNotifications } from "./notifications";
 import { sync as coreSync } from "./sync";
 import { forwardGet, forwardUpsert } from "./services";
 import {
@@ -16,10 +14,6 @@ import {
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-
-export function initRpc(broadcastFn: BroadcastFn): void {
-	initDataNotifications(broadcastFn);
-}
 
 type GetLikeRequest = GetRequest | ApiRequest;
 

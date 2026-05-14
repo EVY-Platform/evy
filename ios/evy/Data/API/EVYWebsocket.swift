@@ -161,14 +161,12 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
 
   private func handleDataUpdated(params: Parsable) {
     let notification: DataUpdatedNotification
-    let encodedData: Data
 
     do {
       guard let parsed = try params.parse(to: DataUpdatedNotification.self).get() else {
         throw EVYError.parsingFailed(context: "dataUpdated notification returned nil")
       }
       notification = parsed
-      encodedData = try JSONEncoder().encode(notification.value)
     } catch {
       #if DEBUG
         print("[EVYWebsocket] Failed to parse dataUpdated notification: \(error)")
@@ -180,23 +178,12 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     // Dispatch to MainActor for thread-safe data access
     Task { @MainActor in
       do {
-        if notification.service == "evy" && notification.resource == "sdui" {
-          let updatedFlow = try JSONDecoder().decode(UI_Flow.self, from: encodedData)
-          let cachedFlowsData = try? EVY.publicStore.get(key: notification.dataKey).data
-          var cachedFlows =
-            cachedFlowsData.flatMap { try? JSONDecoder().decode([UI_Flow].self, from: $0) } ?? []
-
-          if let index = cachedFlows.firstIndex(where: { $0.id == updatedFlow.id }) {
-            cachedFlows[index] = updatedFlow
-          } else {
-            cachedFlows.append(updatedFlow)
-          }
-
-          let encodedFlows = try JSONEncoder().encode(cachedFlows)
-          try EVY.publicStore.upsert(key: notification.dataKey, value: encodedFlows)
-        } else {
-          try EVY.publicStore.upsert(key: notification.dataKey, value: encodedData)
-        }
+        // Normalize the notification value as individual instances
+        try EVY.publicStore.upsertSyncedValue(
+          namespace: notification.service,
+          resource: notification.resource,
+          value: notification.value
+        )
       } catch {
         #if DEBUG
           print("[EVYWebsocket] Failed to update data: \(error)")

@@ -237,12 +237,13 @@ struct ContentView: View {
       }
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyDataUpdated)) { notification in
-      guard notification.object as? String == "evy:sdui",
-        let cachedFlowData = try? EVY.publicStore.get(key: "evy:sdui").data,
-        let cachedFlows = try? JSONDecoder().decode([UI_Flow].self, from: cachedFlowData)
+      guard let notifKey = notification.object as? String,
+        notifKey == "evy:sdui" || notifKey == "sdui"
       else { return }
 
-      flows = cachedFlows
+      if let reconstructed = try? EVY.reconstructedSduiFlows() {
+        flows = reconstructed
+      }
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyErrorOccurred)) { notification in
       if let error = notification.object as? Error {

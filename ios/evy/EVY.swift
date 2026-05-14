@@ -58,7 +58,8 @@ struct EVY {
   static let privateStore = EVYDataStore(name: "private")
   static let cacheStore = EVYDataStore(name: "cache", inMemoryOnly: true)
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
-  static var activeCachePrefix: String?
+  /// Active page scope for cache lookups. Set per navigation via `cacheQueryParams(forPageId:)`.
+  static var activeCacheScopeId: String?
 
   // MARK: - Resource Mapping
 

@@ -30,14 +30,50 @@ struct EVYValue: Equatable {
   }
 }
 
+/// Namespace constants used across EVY stores.
+/// API `service` maps to local `namespace`.
+enum EVYNamespace {
+  static let evy = "evy"
+  static let marketplace = "marketplace"
+  static let local = "local"
+  static let cache = "cache"
+  static let draft = "draft"
+
+  /// ID used for singleton resources (e.g. local user data).
+  static let singletonId = "current"
+}
+
 @Model
 class EVYData {
-  var key: String
+  /// Local namespace: "evy", "marketplace", "local", "cache", "draft"
+  var namespace: String
+
+  /// Resource/collection name: "items", "conditions", "sdui", "user", scopeId, pageId, etc.
+  var resource: String
+
+  /// Instance identifier. For collection items this is the item's UUID.
+  /// For singletons (e.g. local user) use EVYNamespace.singletonId.
+  /// For cache entries this is the binding key (e.g. "item", "items").
+  /// For draft entries this is the draft binding path.
+  var id: String
+
+  /// ISO-8601 timestamp of the last sync/update.
   var lastSyncedAt: String
+
+  /// Encoded JSON value. For normalized rows this is a single instance object,
+  /// NOT a full array of all resource instances.
   var data: Data
 
-  init(key: String, lastSyncedAt: String = "", data: Data) {
-    self.key = key
+  init(
+    namespace: String,
+    resource: String,
+    id: String,
+    lastSyncedAt: String = "",
+    data: Data
+  ) {
+    self.namespace = namespace
+    self.resource = resource
+    self.id = id
     self.lastSyncedAt = lastSyncedAt
     self.data = data
   }
@@ -141,34 +177,36 @@ public enum EVYJson: Codable, Hashable {
       return
     }
 
-    if let dictionaryValue = try? container.decode([String: EVYJson].self) {
-      self = .dictionary(dictionaryValue)
-      return
-    }
-
     if let arrayValue = try? container.decode([EVYJson].self) {
       self = .array(arrayValue)
       return
     }
 
-    throw EVYDataParseError.unprocessableValue
+    if let dictValue = try? container.decode([String: EVYJson].self) {
+      self = .dictionary(dictValue)
+      return
+    }
+
+    throw DecodingError.dataCorruptedError(
+      in: container, debugDescription: "Unknown EVYJson value")
   }
 
   public func encode(to encoder: Encoder) throws {
     var container = encoder.singleValueContainer()
+
     switch self {
-    case .string(let jsonData):
-      try container.encode(jsonData)
-    case .int(let jsonData):
-      try container.encode(jsonData)
-    case .decimal(let jsonData):
-      try container.encode(jsonData)
-    case .bool(let jsonData):
-      try container.encode(jsonData)
-    case .dictionary(let jsonData):
-      try container.encode(jsonData)
-    case .array(let jsonData):
-      try container.encode(jsonData)
+    case .string(let value):
+      try container.encode(value)
+    case .int(let value):
+      try container.encode(value)
+    case .decimal(let value):
+      try container.encode(value)
+    case .bool(let value):
+      try container.encode(value)
+    case .dictionary(let value):
+      try container.encode(value)
+    case .array(let value):
+      try container.encode(value)
     }
   }
 
@@ -312,5 +350,66 @@ public enum EVYJson: Codable, Hashable {
     }
 
     return value
+  }
+}
+
+// MARK: - JSON Patching Helper
+
+/// Utility for updating encoded JSON data without creating temporary `EVYData` instances.
+enum EVYDataPatcher {
+  /// Patch encoded JSON data at the given props path with new data.
+  /// - Parameters:
+  ///   - encodedData: The original encoded JSON.
+  ///   - newData: The new value to set.
+  ///   - props: The property path to patch.
+  /// - Returns: The patched encoded JSON data.
+  static func patch(encodedData: Data, newData: Data, props: [String]) throws -> Data {
+    let currentDataAsJson = try JSONDecoder().decode(EVYJson.self, from: encodedData)
+    let newDataAsJson = try JSONDecoder().decode(EVYJson.self, from: newData)
+    let updatedJson = try updatedJson(props: props, data: currentDataAsJson, value: newDataAsJson)
+    return try JSONEncoder().encode(updatedJson)
+  }
+
+  private static func updatedJson(props: [String], data: EVYJson, value: EVYJson) throws -> EVYJson
+  {
+    if props.count < 1 {
+      return data
+    }
+
+    switch data {
+    case .dictionary(var dictValue):
+      guard let firstProp = props.first else {
+        throw EVYDataParseError.invalidProps
+      }
+      guard let subData = dictValue[firstProp] else {
+        throw EVYDataParseError.invalidProps
+      }
+      if props.count == 1 {
+        dictValue[firstProp] = value
+      } else {
+        dictValue[firstProp] = try updatedJson(
+          props: Array(props[1...]), data: subData, value: value)
+      }
+      let dictAsData = try JSONEncoder().encode(dictValue)
+      return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
+    case .array(var arrayValue):
+      guard let firstProp = props.first else {
+        throw EVYDataParseError.invalidProps
+      }
+      guard let index = Int(firstProp) else {
+        throw EVYDataParseError.invalidProps
+      }
+      let subData = arrayValue[index]
+      if props.count == 1 {
+        arrayValue[index] = value
+      } else {
+        arrayValue[index] = try updatedJson(
+          props: Array(props[1...]), data: subData, value: value)
+      }
+      let arrayAsData = try JSONEncoder().encode(arrayValue)
+      return try JSONDecoder().decode(EVYJson.self, from: arrayAsData)
+    default:
+      return data
+    }
   }
 }

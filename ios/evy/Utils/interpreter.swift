@@ -258,18 +258,19 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     return try draftRow.decoded().parseProp(props: remaining)
   }
 
-  // 2. Check cache store with active page prefix — ephemeral page-scoped data
-  if let prefix = EVY.activeCachePrefix,
-    let cacheData = try? EVY.cacheStore.get(key: "\(prefix)\(firstProp)")
+  // 2. Check cache store with active page scope — ephemeral page-scoped data
+  if let scopeId = EVY.activeCacheScopeId,
+    let cachedRow = try? EVY.cacheStore.get(
+      namespace: EVYNamespace.cache, resource: scopeId, id: firstProp)
   {
     let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
-    return try cacheData.decoded().parseProp(props: remainingProps)
+    return try cachedRow.decoded().parseProp(props: remainingProps)
   }
 
   // 3. Fall back to persistent store — synced API data
   let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
-  let dataObj = try store.getForBinding(key: firstProp)
-  return try dataObj.decoded().parseProp(props: remainingProps)
+  let json = try store.getJsonForBinding(key: firstProp)
+  return json.parseProp(props: remainingProps)
 }
 
 @MainActor
@@ -316,9 +317,12 @@ func _formatData(json: EVYJson, format: String) throws -> String {
   if formatWithNewData.isEmpty { return "" }
 
   let encodedData = try JSONEncoder().encode(json)
-  try EVY.publicStore.create(key: temporaryId, data: encodedData)
+  try EVY.publicStore.upsert(
+    namespace: EVYNamespace.local, resource: temporaryId, id: EVYNamespace.singletonId,
+    value: encodedData)
   let returnText = try _getValueFromText(formatWithNewData)
-  try EVY.publicStore.delete(key: temporaryId)
+  try EVY.publicStore.delete(
+    namespace: EVYNamespace.local, resource: temporaryId, id: EVYNamespace.singletonId)
   return returnText.toString()
 }
 

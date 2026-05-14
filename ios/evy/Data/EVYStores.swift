@@ -97,17 +97,21 @@ final class EVYDraftStore {
   }
 
   func drafts(forScopeId scopeId: String) throws -> [EVYData] {
-    try dataStore.getAll(
-      keyPrefix: EVYDraft.Binding.draftKeyPrefix(forScopeId: scopeId)
-    )
+    try dataStore.getAll(namespace: EVYNamespace.draft, resource: scopeId)
   }
 
   func draftIfPresent(binding: EVYDraft.Binding) -> EVYData? {
-    try? dataStore.get(key: binding.draftKey)
+    try? dataStore.get(
+      namespace: EVYNamespace.draft, resource: binding.scopeId, id: binding.draftKey)
   }
 
   func upsert(binding: EVYDraft.Binding, data: Data) throws {
-    try dataStore.upsert(key: binding.draftKey, value: data, notify: false)
+    try dataStore.upsert(
+      namespace: EVYNamespace.draft,
+      resource: binding.scopeId,
+      id: binding.draftKey,
+      value: data
+    )
     notifyUpdate(binding: binding)
   }
 
@@ -132,11 +136,9 @@ final class EVYDraftStore {
 
   func deleteDrafts(scopeId: String? = nil) {
     if let scopeId {
-      dataStore.deleteAll(
-        keyPrefix: EVYDraft.Binding.draftKeyPrefix(forScopeId: scopeId)
-      )
+      try? dataStore.deleteAll(namespace: EVYNamespace.draft, resource: scopeId)
     } else {
-      dataStore.deleteAll()
+      try? dataStore.deleteAll(namespace: EVYNamespace.draft)
     }
   }
 

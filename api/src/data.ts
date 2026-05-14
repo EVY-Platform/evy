@@ -162,7 +162,8 @@ async function upsertCatalogEntityFromConfig<TValidated>(
 	filter: UpsertRequest["filter"] | undefined,
 	dataPayload: unknown,
 	nowIso: string,
-): Promise<{ response: UpsertResponse; notificationValue: UpsertResponse }> {
+	notify: (value: unknown) => void,
+): Promise<UpsertResponse> {
 	const validated = config.validate(dataPayload);
 	const filterId = filter?.id;
 
@@ -182,7 +183,8 @@ async function upsertCatalogEntityFromConfig<TValidated>(
 		(row) => config.mapRow(row),
 	);
 
-	return { response, notificationValue: response };
+	notify(response);
+	return response;
 }
 
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
@@ -385,36 +387,33 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		const { response, notificationValue } = await upsertCatalogEntityFromConfig(
+		return upsertCatalogEntityFromConfig(
 			serviceCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
+			emitUpsertNotification,
 		);
-		emitUpsertNotification(notificationValue);
-		return response;
 	}
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		const { response, notificationValue } = await upsertCatalogEntityFromConfig(
+		return upsertCatalogEntityFromConfig(
 			organizationCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
+			emitUpsertNotification,
 		);
-		emitUpsertNotification(notificationValue);
-		return response;
 	}
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		const { response, notificationValue } = await upsertCatalogEntityFromConfig(
+		return upsertCatalogEntityFromConfig(
 			providerCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
+			emitUpsertNotification,
 		);
-		emitUpsertNotification(notificationValue);
-		return response;
 	}
 
 	throw new Error("Unsupported resource for core API");
