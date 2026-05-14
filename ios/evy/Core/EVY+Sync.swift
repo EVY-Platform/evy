@@ -6,10 +6,6 @@
 import Foundation
 
 extension EVY {
-  // MARK: - Sync Timestamp
-
-  private static let lastSyncTimestampKey = "lastSyncTimestamp"
-
   static func getUserData() throws {
     let userData = try EVYJson.from(localJSON: "user_data")
     let encodedUserData = try JSONEncoder().encode(userData)
@@ -19,25 +15,11 @@ extension EVY {
       value: encodedUserData)
   }
 
-  /// Last successful sync checkpoint, stored in UserDefaults.
-  /// Falls back to epoch start if never synced.
-  static var lastSyncTimestamp: String {
-    UserDefaults.standard.string(forKey: lastSyncTimestampKey)
-      ?? "1970-01-01T00:00:00.000Z"
-  }
-
-  /// Persist the sync checkpoint after a successful sync.
-  private static func setLastSyncTimestamp(_ timestamp: String) {
-    UserDefaults.standard.set(timestamp, forKey: lastSyncTimestampKey)
-  }
-
   /// Unified sync — returns the synced SDUI flows for immediate display.
   static func sync() async throws -> [UI_Flow] {
-    let lastSyncTime = lastSyncTimestamp
-
     let response: SyncResponse = try await EVYAPIManager.shared.fetch(
       method: "sync",
-      params: SyncParams(lastSyncTime: lastSyncTime),
+      params: SyncParams(lastSyncTime: EVYSyncState.lastSyncTimestamp),
       expecting: SyncResponse.self
     )
 
@@ -55,8 +37,8 @@ extension EVY {
         namespace: row.service, resource: row.resource, value: row.value)
     }
 
-    // Persist the sync checkpoint after all rows applied successfully
-    setLastSyncTimestamp(Date().ISO8601Format())
+    // Persist the global sync checkpoint now that all rows are applied.
+    EVYSyncState.markSynced()
 
     // Reconstruct SDUI flows from normalized evy/sdui instances
     return try reconstructedSduiFlows()

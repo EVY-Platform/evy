@@ -20,6 +20,28 @@ struct Filter: Encodable {
 
 // MARK: - Sync Types
 
+enum EVYSyncState {
+  private static let lastSyncTimestampKey = "lastSyncTimestamp"
+
+  /// The last sync timestamp stored in UserDefaults,
+  /// or the epoch fallback if none exists yet.
+  static var lastSyncTimestamp: String {
+    UserDefaults.standard.string(forKey: lastSyncTimestampKey)
+      ?? "1970-01-01T00:00:00.000Z"
+  }
+
+  /// Persist the current time as the new sync checkpoint.
+  /// Must be called **after** a sync response has been fully applied.
+  static func markSynced() {
+    UserDefaults.standard.set(Date().ISO8601Format(), forKey: lastSyncTimestampKey)
+  }
+
+  /// Reset the sync timestamp (useful for testing or full re-sync).
+  static func reset() {
+    UserDefaults.standard.removeObject(forKey: lastSyncTimestampKey)
+  }
+}
+
 struct SyncParams: Encodable {
   let lastSyncTime: String
 }

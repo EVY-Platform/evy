@@ -105,16 +105,6 @@ final class EVYDraftStore {
       namespace: EVYNamespace.draft, resource: binding.scopeId, id: binding.draftKey)
   }
 
-  func upsert(binding: EVYDraft.Binding, data: Data) throws {
-    try dataStore.upsert(
-      namespace: EVYNamespace.draft,
-      resource: binding.scopeId,
-      id: binding.draftKey,
-      value: data
-    )
-    notifyUpdate(binding: binding)
-  }
-
   func notifyUpdate(binding: EVYDraft.Binding) {
     NotificationCenter.default.post(
       name: .evyDataUpdated,

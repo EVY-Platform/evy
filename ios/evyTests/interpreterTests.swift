@@ -323,9 +323,11 @@ final class InterpreterTests: XCTestCase {
     EVY.resolveQueryParams([key: ["cache"]])
 
     let binding = try EVY.draftStore.binding(fromParsedProps: key, scopeId: scopeId)
-    try EVY.draftStore.upsert(
-      binding: binding,
-      data: try JSONEncoder().encode(EVYJson.string("draft"))
+    try EVY.cacheStore.upsert(
+      namespace: EVYNamespace.draft,
+      resource: binding.scopeId,
+      id: binding.draftKey,
+      value: try JSONEncoder().encode(EVYJson.string("draft"))
     )
     EVY.draftStore.activeScopeId = scopeId
 
