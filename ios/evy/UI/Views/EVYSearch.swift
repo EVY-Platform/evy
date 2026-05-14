@@ -7,11 +7,15 @@
 
 import SwiftUI
 
-private struct EVYSearchResult: Identifiable {
+private struct EVYSearchResult: Equatable, Identifiable {
   let id: String
   let datum: EVYJson
   let displayRow: UI_Row
   let searchableText: String
+
+  static func == (lhs: EVYSearchResult, rhs: EVYSearchResult) -> Bool {
+    lhs.id == rhs.id
+  }
 }
 
 struct EVYSearch: View {
@@ -19,16 +23,29 @@ struct EVYSearch: View {
   let placeholder: String
   let resultTemplate: UI_Row?
 
-  @State private var allResults: [EVYSearchResult] = []
   @State private var searchText = ""
+  private var results: EVYState<[EVYSearchResult]>
+
+  init(source: String, placeholder: String, resultTemplate: UI_Row?) {
+    self.source = source
+    self.placeholder = placeholder
+    self.resultTemplate = resultTemplate
+
+    results = EVYState(
+      watch: source,
+      setter: { input in
+        Self.makeResults(input: input, resultTemplate: resultTemplate)
+      }
+    )
+  }
 
   private var filteredResults: [EVYSearchResult] {
     let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedSearchText.isEmpty else {
-      return allResults
+      return results.value
     }
 
-    return allResults.filter {
+    return results.value.filter {
       $0.searchableText.localizedCaseInsensitiveContains(trimmedSearchText)
     }
   }
@@ -42,20 +59,15 @@ struct EVYSearch: View {
           .padding(.vertical, Constants.majorPadding)
       }
     }
-    .onAppear(perform: loadResults)
-    .onChange(of: source) { _, _ in
-      loadResults()
-    }
   }
 
-  private func loadResults() {
+  private static func makeResults(input: String, resultTemplate: UI_Row?) -> [EVYSearchResult] {
     guard let resultTemplate else {
-      allResults = []
-      return
+      return []
     }
 
     do {
-      let sourceData = try EVY.getDataFromText(source)
+      let sourceData = try EVY.getDataFromText(input)
       let dataRows: [EVYJson]
       if case .array(let arrayValue) = sourceData {
         dataRows = arrayValue
@@ -64,7 +76,7 @@ struct EVYSearch: View {
       }
 
       let formatter = try EVYDatumRowFormatter(template: resultTemplate)
-      allResults = dataRows.compactMap { datum in
+      return dataRows.compactMap { datum in
         guard let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum)
         else {
           return nil
@@ -79,7 +91,7 @@ struct EVYSearch: View {
         )
       }
     } catch {
-      allResults = []
+      return []
     }
   }
 }
