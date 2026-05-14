@@ -57,9 +57,6 @@ class EVYData {
   /// For draft entries this is the draft binding path.
   var id: String
 
-  /// ISO-8601 timestamp of the last sync/update.
-  var lastSyncedAt: String
-
   /// Encoded JSON value. For normalized rows this is a single instance object,
   /// NOT a full array of all resource instances.
   var data: Data
@@ -68,13 +65,11 @@ class EVYData {
     namespace: String,
     resource: String,
     id: String,
-    lastSyncedAt: String = "",
     data: Data
   ) {
     self.namespace = namespace
     self.resource = resource
     self.id = id
-    self.lastSyncedAt = lastSyncedAt
     self.data = data
   }
 

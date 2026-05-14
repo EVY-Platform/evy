@@ -67,16 +67,13 @@ final class EVYDataStore {
   }
 
   func upsert(
-    namespace: String, resource: String, id: String, value: Data, lastSyncedAt: String? = nil
+    namespace: String, resource: String, id: String, value: Data
   ) throws {
-    let nowIso = lastSyncedAt ?? Date().ISO8601Format()
-
     if let existing = try? get(namespace: namespace, resource: resource, id: id) {
       existing.data = value
-      existing.lastSyncedAt = nowIso
     } else {
       context.insert(
-        EVYData(namespace: namespace, resource: resource, id: id, lastSyncedAt: nowIso, data: value)
+        EVYData(namespace: namespace, resource: resource, id: id, data: value)
       )
     }
 
@@ -211,34 +208,16 @@ final class EVYDataStore {
   }
 
   func namespace(forSyncedResource resource: String) -> String? {
-    let descriptor = FetchDescriptor<EVYData>(
+    var descriptor = FetchDescriptor<EVYData>(
       predicate: #Predicate {
         $0.resource == resource
-          && $0.namespace != EVYNamespace.local
-          && $0.namespace != EVYNamespace.cache
-          && $0.namespace != EVYNamespace.draft
       }
     )
     descriptor.fetchLimit = 1
-    return try? context.fetch(descriptor).first?.namespace
-  }
-
-  // MARK: - Sync Bookkeeping
-
-  func oldestLastSyncedAt(namespace: String? = nil, resource: String? = nil) -> String? {
-    let allRows: [EVYData]
-    if let namespace, let resource {
-      allRows = (try? getAll(namespace: namespace, resource: resource)) ?? []
-    } else if let namespace {
-      allRows = (try? getAll(namespace: namespace)) ?? []
-    } else {
-      allRows = (try? getAll()) ?? []
-    }
-
-    let hasEmpty = allRows.contains { $0.lastSyncedAt.isEmpty }
-    guard !hasEmpty else { return nil }
-
-    return allRows.compactMap { $0.lastSyncedAt.isEmpty ? nil : $0.lastSyncedAt }.min()
+    guard let row = try? context.fetch(descriptor).first else { return nil }
+    let validNamespaces = [EVYNamespace.local, EVYNamespace.cache, EVYNamespace.draft]
+    guard !validNamespaces.contains(row.namespace) else { return nil }
+    return row.namespace
   }
 
   // MARK: - Notifications

@@ -27,7 +27,13 @@ extension EVY {
     }
     let emptyData = initialData ?? "\"\"".data(using: .utf8)!
     do {
-      try draftStore.upsert(binding: binding, data: emptyData)
+      try cacheStore.upsert(
+        namespace: EVYNamespace.draft,
+        resource: binding.scopeId,
+        id: binding.draftKey,
+        value: emptyData
+      )
+      draftStore.notifyUpdate(binding: binding)
     } catch {
       // Best-effort draft bootstrap; callers can still render from existing data.
     }
@@ -150,13 +156,18 @@ extension EVY {
         existingRow.data = try EVYDataPatcher.patch(
           encodedData: existingRow.data, newData: newData, props: remainingProps)
       }
-      existingRow.lastSyncedAt = Date().ISO8601Format()
       store.postDataUpdated(key: splitProps.joined(separator: PROP_SEPARATOR))
     } else {
       guard let draftBinding else {
         throw EVYDataError.keyNotFound
       }
-      try draftStore.upsert(binding: draftBinding, data: newData)
+      try cacheStore.upsert(
+        namespace: EVYNamespace.draft,
+        resource: draftBinding.scopeId,
+        id: draftBinding.draftKey,
+        value: newData
+      )
+      draftStore.notifyUpdate(binding: draftBinding)
     }
   }
 
