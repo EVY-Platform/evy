@@ -24,8 +24,6 @@ final class EVYDataStore {
     self.context = ModelContext(container)
   }
 
-  // MARK: - Normalized CRUD
-
   func exists(namespace: String, resource: String, id: String) -> Bool {
     (try? get(namespace: namespace, resource: resource, id: id)) != nil
   }
@@ -42,7 +40,6 @@ final class EVYDataStore {
     return first
   }
 
-  /// Fetch all rows matching namespace + resource (a collection).
   func getAll(namespace: String, resource: String) throws -> [EVYData] {
     let descriptor = FetchDescriptor<EVYData>(
       predicate: #Predicate {
@@ -52,7 +49,6 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
-  /// Fetch all rows for a given namespace.
   func getAll(namespace: String) throws -> [EVYData] {
     let descriptor = FetchDescriptor<EVYData>(
       predicate: #Predicate { $0.namespace == namespace }
@@ -60,7 +56,6 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
-  /// Fetch all rows in the store.
   func getAll() throws -> [EVYData] {
     let descriptor = FetchDescriptor<EVYData>()
     return try context.fetch(descriptor)
@@ -106,9 +101,6 @@ final class EVYDataStore {
     }
   }
 
-  // MARK: - Synced Resource Helpers
-
-  /// Normalize a sync row value into individual instances.
   func upsertSyncedValue(namespace: String, resource: String, value: EVYJson) throws {
     switch value {
     case .array(let items):
@@ -134,7 +126,6 @@ final class EVYDataStore {
     }
   }
 
-  /// Decode all instances for a resource into an EVYJson array.
   func getCollectionJson(namespace: String, resource: String) throws -> EVYJson? {
     let rows = try getAll(namespace: namespace, resource: resource)
     guard !rows.isEmpty else { return nil }
@@ -143,39 +134,26 @@ final class EVYDataStore {
     return .array(items)
   }
 
-  // MARK: - Binding Resolution
-
-  /// Resolve a binding key (e.g. "items", "item", "marketplace:items") to
-  /// the decoded EVYJson for display.
-  ///
-  /// Returns a collection array for plural resource bindings,
-  /// or a single instance for exact/entity binding lookups.
   func getJsonForBinding(key: String) throws -> EVYJson {
-    // 1. Try exact-match composite lookup (cache, local, etc.)
-    // First split by ":" — if it has two parts, try namespace:resource match
     if !key.contains(":") {
-      // Singular key — could be a cache binding. Check cache first.
       if let scopeId = EVY.activeCacheScopeId,
         let cached = try? get(namespace: EVYNamespace.cache, resource: scopeId, id: key)
       {
         return try cached.decoded()
       }
 
-      // Try local/exact singleton first (exact local key wins over plural collection)
       if let localInstance = try? get(
         namespace: EVYNamespace.local, resource: key, id: EVYNamespace.singletonId)
       {
         return try localInstance.decoded()
       }
 
-      // Try namespace lookup via resource
       if let namespace = namespace(forSyncedResource: key),
         let collection = try getCollectionJson(namespace: namespace, resource: key)
       {
         return collection
       }
 
-      // Try plural fallback
       let pluralKey = EVY.resourceName(forEntityKey: key)
       if pluralKey != key,
         let pluralNamespace = namespace(forSyncedResource: pluralKey),
@@ -187,19 +165,16 @@ final class EVYDataStore {
       throw EVYDataError.keyNotFound
     }
 
-    // 2. Key contains ":" — try as namespace:resource or draft/scopeId
     let parts = key.split(separator: ":", maxSplits: 1).map(String.init)
     guard parts.count == 2 else { throw EVYDataError.keyNotFound }
 
     let first = parts[0]
     let second = parts[1]
 
-    // Try as namespace:resource collection
     if let collection = try getCollectionJson(namespace: first, resource: second) {
       return collection
     }
 
-    // Try as namespace:resource:id
     if let instance = try? get(namespace: first, resource: second, id: EVYNamespace.singletonId) {
       return try instance.decoded()
     }
@@ -219,8 +194,6 @@ final class EVYDataStore {
     guard !validNamespaces.contains(row.namespace) else { return nil }
     return row.namespace
   }
-
-  // MARK: - Notifications
 
   func postDataUpdated(key: String) {
     NotificationCenter.default.post(

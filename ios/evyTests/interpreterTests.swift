@@ -112,7 +112,6 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(one.value, "n: 1")
 
     let encoded = try JSONEncoder().encode(EVYJson.array([.string("a"), .string("b")]))
-    // Find the stored row by resource and update its data
     if let existing = try EVY.publicStore.getAll().first(where: { $0.resource == key }) {
       existing.data = encoded
     }
@@ -278,7 +277,6 @@ final class InterpreterTests: XCTestCase {
     // Page B data is correct
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value_b"))
 
-    // Page A data still exists (different scope, inert)
     EVY.activeCacheScopeId = pageA
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value_a"))
   }
@@ -513,7 +511,6 @@ final class InterpreterTests: XCTestCase {
   private func store(_ value: EVYJson, at key: String) throws {
     let encodedValue = try JSONEncoder().encode(value)
 
-    // For service-qualified keys (e.g. "marketplace:items"), store as normalized instances
     let parts = key.split(separator: ":", maxSplits: 2).map(String.init)
     if parts.count == 2 {
       let namespace = parts[0]
@@ -522,7 +519,6 @@ final class InterpreterTests: XCTestCase {
       return
     }
 
-    // For simple keys, store as local singleton
     try EVY.publicStore.upsert(
       namespace: EVYNamespace.local, resource: key, id: EVYNamespace.singletonId,
       value: encodedValue)

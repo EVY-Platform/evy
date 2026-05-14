@@ -258,7 +258,6 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     return try draftRow.decoded().parseProp(props: remaining)
   }
 
-  // 2. Check cache store with active page scope — ephemeral page-scoped data
   if let scopeId = EVY.activeCacheScopeId,
     let cachedRow = try? EVY.cacheStore.get(
       namespace: EVYNamespace.cache, resource: scopeId, id: firstProp)

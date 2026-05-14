@@ -9,7 +9,6 @@ extension EVY {
   static func getUserData() throws {
     let userData = try EVYJson.from(localJSON: "user_data")
     let encodedUserData = try JSONEncoder().encode(userData)
-    // Upsert user data under local namespace
     try EVY.publicStore.upsert(
       namespace: EVYNamespace.local, resource: "user", id: EVYNamespace.singletonId,
       value: encodedUserData)
@@ -31,20 +30,15 @@ extension EVY {
       }
     }
 
-    // Normalize each sync row into individual instances
     for row in response.data {
       try publicStore.upsertSyncedValue(
         namespace: row.service, resource: row.resource, value: row.value)
     }
 
-    // Persist the global sync checkpoint now that all rows are applied.
     EVYSyncState.markSynced()
-
-    // Reconstruct SDUI flows from normalized evy/sdui instances
     return try reconstructedSduiFlows()
   }
 
-  /// Reconstruct SDUI flow array from normalized evy/sdui instances.
   static func reconstructedSduiFlows() throws -> [UI_Flow] {
     guard
       let collectionJson = try publicStore.getCollectionJson(

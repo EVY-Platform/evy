@@ -30,8 +30,6 @@ struct EVYValue: Equatable {
   }
 }
 
-/// Namespace constants used across EVY stores.
-/// API `service` maps to local `namespace`.
 enum EVYNamespace {
   static let evy = "evy"
   static let marketplace = "marketplace"
@@ -39,26 +37,14 @@ enum EVYNamespace {
   static let cache = "cache"
   static let draft = "draft"
 
-  /// ID used for singleton resources (e.g. local user data).
   static let singletonId = "current"
 }
 
 @Model
 class EVYData {
-  /// Local namespace: "evy", "marketplace", "local", "cache", "draft"
   var namespace: String
-
-  /// Resource/collection name: "items", "conditions", "sdui", "user", scopeId, pageId, etc.
   var resource: String
-
-  /// Instance identifier. For collection items this is the item's UUID.
-  /// For singletons (e.g. local user) use EVYNamespace.singletonId.
-  /// For cache entries this is the binding key (e.g. "item", "items").
-  /// For draft entries this is the draft binding path.
   var id: String
-
-  /// Encoded JSON value. For normalized rows this is a single instance object,
-  /// NOT a full array of all resource instances.
   var data: Data
 
   init(
@@ -348,16 +334,7 @@ public enum EVYJson: Codable, Hashable {
   }
 }
 
-// MARK: - JSON Patching Helper
-
-/// Utility for updating encoded JSON data without creating temporary `EVYData` instances.
 enum EVYDataPatcher {
-  /// Patch encoded JSON data at the given props path with new data.
-  /// - Parameters:
-  ///   - encodedData: The original encoded JSON.
-  ///   - newData: The new value to set.
-  ///   - props: The property path to patch.
-  /// - Returns: The patched encoded JSON data.
   static func patch(encodedData: Data, newData: Data, props: [String]) throws -> Data {
     let currentDataAsJson = try JSONDecoder().decode(EVYJson.self, from: encodedData)
     let newDataAsJson = try JSONDecoder().decode(EVYJson.self, from: newData)

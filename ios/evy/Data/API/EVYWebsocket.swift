@@ -178,7 +178,6 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     // Dispatch to MainActor for thread-safe data access
     Task { @MainActor in
       do {
-        // Normalize the notification value as individual instances
         try EVY.publicStore.upsertSyncedValue(
           namespace: notification.service,
           resource: notification.resource,

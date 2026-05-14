@@ -124,7 +124,6 @@ enum EVYPreviewMockData {
     guard let data = json.data(using: .utf8),
       let parsed = try? JSONDecoder().decode(EVYJson.self, from: data)
     else { return }
-    // Normalize: seed individual instances based on the JSON shape
     switch parsed {
     case .array(let items):
       for item in items {
@@ -146,7 +145,6 @@ enum EVYPreviewMockData {
         value: data
       )
     default:
-      // Scalar value: store as singleton
       try? EVY.publicStore.upsert(
         namespace: EVYNamespace.local,
         resource: key,

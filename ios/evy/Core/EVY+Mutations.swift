@@ -81,7 +81,6 @@ extension EVY {
       filter: Filter(id: newId),
       data: dataWithId
     )
-    // Store the new entity as a normalized instance
     let encodedData = try JSONEncoder().encode(dataWithId)
     try publicStore.upsert(
       namespace: namespace,
@@ -171,24 +170,19 @@ extension EVY {
     }
   }
 
-  /// Find an existing row in the given store by scanning for the root variable.
-  /// Checks local namespace first (for `$local` data), then cache, then scans broadly.
   private static func findRowForUpdate(store: EVYDataStore, rootVariable: String) throws -> EVYData
   {
-    // Check local/singleton storage first (e.g. local/user/current)
     if let localRow = try? store.get(
       namespace: EVYNamespace.local, resource: rootVariable, id: EVYNamespace.singletonId)
     {
       return localRow
     }
-    // Check cache storage
     if let scopeId = activeCacheScopeId,
       let cachedRow = try? store.get(
         namespace: EVYNamespace.cache, resource: scopeId, id: rootVariable)
     {
       return cachedRow
     }
-    // Fallback: scan all rows matching the resource name
     let allRows = (try? store.getAll()) ?? []
     guard let matched = allRows.first(where: { $0.resource == rootVariable }) else {
       throw EVYDataError.keyNotFound

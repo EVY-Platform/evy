@@ -71,7 +71,6 @@ extension EVY {
     cacheKey: String, collection: EVYJson
   )] {
     if let queryKey {
-      // Try to reconstruct the collection from normalized rows
       if let namespace = publicStore.namespace(forSyncedResource: queryKey),
         let collection = try? publicStore.getCollectionJson(
           namespace: namespace, resource: queryKey)
@@ -79,7 +78,6 @@ extension EVY {
         return [(queryKey, collection)]
       }
 
-      // Try the plural resource name
       let pluralKey = resourceName(forEntityKey: queryKey)
       if pluralKey != queryKey {
         if let namespace = publicStore.namespace(forSyncedResource: pluralKey),
@@ -93,7 +91,6 @@ extension EVY {
       return []
     }
 
-    // No query key: return all synced collections
     let syncedRows = (try? publicStore.getAll()) ?? []
     let resourceNames = Set(
       syncedRows.filter { $0.namespace != EVYNamespace.cache && $0.namespace != EVYNamespace.draft }

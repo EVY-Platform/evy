@@ -31,8 +31,6 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
     try EVY.create(key: "items", draftScopeId: testDraftScope)
 
-    // After create, a normalized marketplace:items instance should exist
-    // with the merged draft data
     let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")
 
