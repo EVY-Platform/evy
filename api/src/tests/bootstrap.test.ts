@@ -38,10 +38,10 @@ describe("initServer bootstrap", () => {
 		}
 	});
 
-	it("registers dataUpdated and flowUpdated events", () => {
+	it("registers dataUpdated event", () => {
 		const events = server.eventList("/");
 		expect(events).toContain("dataUpdated");
-		expect(events).toContain("flowUpdated");
+		expect(events).not.toContain("flowUpdated");
 	});
 
 	it("rejects upsert without authentication", async () => {

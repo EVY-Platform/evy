@@ -146,9 +146,10 @@ describe("marketplace gRPC server", () => {
 		if (!dataEvent) {
 			return;
 		}
-		expect(JSON.parse(dataEvent.payload_json)).toMatchObject({
+		expect(JSON.parse(dataEvent.payload_json)).toEqual({
+			service: "marketplace",
 			resource: "conditions",
-			data: row,
+			value: row,
 		});
 	});
 });

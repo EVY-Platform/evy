@@ -19,6 +19,7 @@ mock.module("../db", () => ({
 }));
 
 const { get, upsert } = await import("../data");
+const { offServiceEvent, onServiceEvent } = await import("../events");
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
@@ -61,6 +62,36 @@ describe("marketplace get/upsert", () => {
 			resource: "conditions",
 		});
 		expect(result).toEqual([row]);
+	});
+
+	it("emits dataUpdated from the data layer when persisting catalog rows", async () => {
+		const row = { id: crypto.randomUUID(), value: "Like new" };
+		const received: { eventName: string; payload: unknown }[] = [];
+		const listener = (eventName: string, payload: unknown) => {
+			received.push({ eventName, payload });
+		};
+		onServiceEvent(listener);
+
+		try {
+			await upsert({
+				service: "marketplace",
+				resource: "conditions",
+				data: row,
+			});
+		} finally {
+			offServiceEvent(listener);
+		}
+
+		expect(received).toEqual([
+			{
+				eventName: "dataUpdated",
+				payload: {
+					service: "marketplace",
+					resource: "conditions",
+					value: row,
+				},
+			},
+		]);
 	});
 
 	it("filters rows by updatedAfter", async () => {

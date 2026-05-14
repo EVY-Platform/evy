@@ -69,11 +69,12 @@ enum EVYActionRunner {
         let query = try parseQueryArgument(navArgs.queryArgument)
         let resolvedQuery = EVY.resolveDatumInQuery(query, datum: datum)
         navigate(
-          .navigate(Route(
-            flowId: navArgs.flowId,
-            pageId: navArgs.pageId,
-            query: resolvedQuery
-          ))
+          .navigate(
+            Route(
+              flowId: navArgs.flowId,
+              pageId: navArgs.pageId,
+              query: resolvedQuery
+            ))
         )
       case "create":
         let args = splitFunctionArguments(functionArgs)

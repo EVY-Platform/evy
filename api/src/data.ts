@@ -22,6 +22,7 @@ import {
 	osEnum,
 } from "../../types/generated/ts/db/schema.generated";
 import { getConnectionUrl } from "./db";
+import { emitDataUpdatedNotification } from "./notifications";
 import {
 	EVY_CORE_SERVICE,
 	EVY_CORE_RESOURCE,
@@ -161,11 +162,11 @@ async function upsertCatalogEntityFromConfig<TValidated>(
 	filter: UpsertRequest["filter"] | undefined,
 	dataPayload: unknown,
 	nowIso: string,
-): Promise<UpsertResponse> {
+): Promise<{ response: UpsertResponse; notificationValue: UpsertResponse }> {
 	const validated = config.validate(dataPayload);
 	const filterId = filter?.id;
 
-	return upsertCatalogEntity(
+	const response = await upsertCatalogEntity(
 		filterId,
 		(updateFilterId) =>
 			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
@@ -180,6 +181,8 @@ async function upsertCatalogEntityFromConfig<TValidated>(
 				.returning(),
 		(row) => config.mapRow(row),
 	);
+
+	return { response, notificationValue: response };
 }
 
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
@@ -333,6 +336,14 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
+	function emitUpsertNotification(value: unknown): void {
+		emitDataUpdatedNotification({
+			service: EVY_CORE_SERVICE,
+			resource,
+			value,
+		});
+	}
+
 	if (resource === EVY_CORE_RESOURCE.DEVICES) {
 		throw new Error("devices are managed via validateAuth only");
 	}
@@ -354,6 +365,7 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 			if (result.length > 0) {
 				const row = result[0];
 				validateUpsertResponse(row);
+				emitUpsertNotification(persistedFlowData);
 				return row;
 			}
 		}
@@ -368,34 +380,41 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 			.returning();
 		const row = result[0];
 		validateUpsertResponse(row);
+		emitUpsertNotification(persistedFlowData);
 		return row;
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return upsertCatalogEntityFromConfig(
+		const { response, notificationValue } = await upsertCatalogEntityFromConfig(
 			serviceCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
 		);
+		emitUpsertNotification(notificationValue);
+		return response;
 	}
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return upsertCatalogEntityFromConfig(
+		const { response, notificationValue } = await upsertCatalogEntityFromConfig(
 			organizationCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
 		);
+		emitUpsertNotification(notificationValue);
+		return response;
 	}
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return upsertCatalogEntityFromConfig(
+		const { response, notificationValue } = await upsertCatalogEntityFromConfig(
 			providerCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
 		);
+		emitUpsertNotification(notificationValue);
+		return response;
 	}
 
 	throw new Error("Unsupported resource for core API");

@@ -15,7 +15,6 @@ enum EVYDataError: Error {
 
 extension Notification.Name {
   static let evyDataUpdated = Notification.Name("EVYDataUpdated")
-  static let evyFlowUpdated = Notification.Name("EVYFlowUpdated")
   static let evyErrorOccurred = Notification.Name("EVYErrorOccurred")
 }
 
@@ -66,8 +65,9 @@ extension Notification.Name {
 
           let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
           let minLen = min(watchSegments.count, notifSegments.count)
-          let prefixMatch =
-            Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
+
+          // If we get a notification for "item" and we were watching "item.title" then we want to update
+          let prefixMatch = watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
 
           if prefixMatch { self?.value = setter(watch) }
         }

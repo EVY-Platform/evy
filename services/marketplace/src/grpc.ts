@@ -1,4 +1,3 @@
-import { EventEmitter } from "node:events";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +12,7 @@ import {
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
 import { MARKETPLACE_RESOURCE_NAMES } from "./catalog";
+import { offServiceEvent, onServiceEvent } from "./events";
 
 /**
  * Best-effort write for server-streaming SubscribeEvents. If the client has
@@ -79,10 +79,7 @@ export function createEvyServiceClient(address: string): Client {
 
 let serverInstance: grpc.Server | null = null;
 
-function buildMarketplaceServiceHandlers(
-	root: grpc.GrpcObject,
-	eventBus: EventEmitter,
-) {
+function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
 	const evyPackage = root.evy as { Service: grpc.ServiceClientConstructor };
 
 	type GetRequestShape = {
@@ -165,7 +162,6 @@ function buildMarketplaceServiceHandlers(
 					};
 					validateStrictUpsertRequest(params);
 					const result = await upsert(params);
-					eventBus.emit("notify", "dataUpdated", result);
 					return { result_json: JSON.stringify(result) } as const;
 				},
 			),
@@ -173,9 +169,9 @@ function buildMarketplaceServiceHandlers(
 				const listener = (eventName: string, payload: unknown) => {
 					tryWriteSubscribeEvent(call, eventName, payload);
 				};
-				eventBus.on("notify", listener);
+				onServiceEvent(listener);
 				const cleanup = () => {
-					eventBus.off("notify", listener);
+					offServiceEvent(listener);
 				};
 				call.on("cancelled", cleanup);
 				call.on("close", cleanup);
@@ -213,13 +209,7 @@ export async function startMarketplaceGrpcServer(
 		options.port ?? Number.parseInt(getEnv("MARKETPLACE_GRPC_PORT"), 10);
 	const root = loadEvyServiceGrpcRoot();
 
-	const marketplaceEventBus = new EventEmitter();
-	marketplaceEventBus.setMaxListeners(0);
-
-	const { service, implementation } = buildMarketplaceServiceHandlers(
-		root,
-		marketplaceEventBus,
-	);
+	const { service, implementation } = buildMarketplaceServiceHandlers(root);
 	const server = new grpc.Server();
 	server.addService(service, implementation);
 	serverInstance = server;

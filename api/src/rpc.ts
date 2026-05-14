@@ -7,6 +7,7 @@ import type {
 } from "evy-types";
 import type { BroadcastFn } from "./broadcast";
 import { get as getCore, upsert as upsertCore } from "./data";
+import { initDataNotifications } from "./notifications";
 import { sync as coreSync } from "./sync";
 import { forwardGet, forwardUpsert } from "./services";
 import {
@@ -14,12 +15,10 @@ import {
 	validateStrictGetRequest,
 	validateStrictUpsertRequest,
 } from "evy-types/rpcRequestHelpers";
-import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE } from "evy-types/coreResources";
-
-let broadcast: BroadcastFn | null = null;
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 
 export function initRpc(broadcastFn: BroadcastFn): void {
-	broadcast = broadcastFn;
+	initDataNotifications(broadcastFn);
 }
 
 type GetLikeRequest = GetRequest | ApiRequest;
@@ -52,16 +51,7 @@ export async function api(params: unknown): Promise<GetResponse> {
 export async function upsert(params: unknown): Promise<UpsertResponse> {
 	validateStrictUpsertRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		const result = await upsertCore(params);
-		if (broadcast) {
-			broadcast(
-				params.resource === EVY_CORE_RESOURCE.SDUI
-					? "flowUpdated"
-					: "dataUpdated",
-				result,
-			);
-		}
-		return result;
+		return upsertCore(params);
 	}
 	return forwardUpsert(params.service, params);
 }

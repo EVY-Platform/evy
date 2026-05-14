@@ -13,6 +13,7 @@ import {
 import { data } from "./db/schema";
 import { db } from "./db";
 import { MARKETPLACE_RESOURCE_NAMES, MARKETPLACE_SERVICE } from "./catalog";
+import { emitDataUpdated } from "./events";
 import {
 	assertIsoDateTimeJsonFields,
 	validateGetResponse,
@@ -84,6 +85,7 @@ async function marketplaceUpsertBody(
 		if (result.length > 0) {
 			const row = result[0];
 			validateUpsertResponse(row);
+			emitDataUpdated(resource, row.data);
 			return row;
 		}
 	}
@@ -101,6 +103,7 @@ async function marketplaceUpsertBody(
 	const result = await db.insert(data).values(insertValues).returning();
 	const row = result[0];
 	validateUpsertResponse(row);
+	emitDataUpdated(resource, row.data);
 	return row;
 }
 
