@@ -60,6 +60,7 @@ class EVYData {
 
   func decoded() throws -> EVYJson {
     try JSONDecoder().decode(EVYJson.self, from: data)
+  }
 }
 
 public enum EVYJson: Codable, Hashable {

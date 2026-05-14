@@ -24,8 +24,6 @@ final class EVYDataStore {
     self.context = ModelContext(container)
   }
 
-
-
   func get(namespace: String, resource: String, id: String) throws -> EVYData {
     let descriptor = FetchDescriptor<EVYData>(
       predicate: #Predicate {
