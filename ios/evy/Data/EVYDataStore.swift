@@ -13,11 +13,28 @@ final class EVYDataStore {
   private let context: ModelContext
 
   convenience init(name: String, inMemoryOnly: Bool = false) {
-    let container = try! ModelContainer(
-      for: EVYData.self,
-      configurations: ModelConfiguration(name, isStoredInMemoryOnly: inMemoryOnly)
-    )
-    self.init(container: container)
+    let config = ModelConfiguration(name, isStoredInMemoryOnly: inMemoryOnly)
+    do {
+      let container = try ModelContainer(for: EVYData.self, configurations: config)
+      self.init(container: container)
+    } catch {
+      // Schema likely changed; delete old store and retry
+      if !inMemoryOnly {
+        Self.deleteStoreFiles(for: config)
+      }
+      let container = try! ModelContainer(for: EVYData.self, configurations: config)
+      self.init(container: container)
+    }
+  }
+
+  private static func deleteStoreFiles(for config: ModelConfiguration) {
+    let url = config.url
+    let fm = FileManager.default
+    // SwiftData stores use .store with WAL/SHM sidecars
+    for suffix in ["", "-wal", "-shm"] {
+      let fileURL = url.deletingPathExtension().appendingPathExtension("store\(suffix)")
+      try? fm.removeItem(at: fileURL)
+    }
   }
 
   init(container: ModelContainer) {
