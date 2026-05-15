@@ -2,19 +2,19 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "dataUpdated-notification",
 	"title": "DataUpdatedNotification",
-	"description": "JSON-RPC notification payload for dataUpdated event",
+	"description": "JSON-RPC notification payload for dataUpdated event. Matches an individual sync data row.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["id", "data", "createdAt", "updatedAt"],
+	"required": ["service", "resource", "value"],
 	"properties": {
-		"id": { "type": "string" },
-		"data": {
-			"type": "object",
-			"additionalProperties": {
-				"$ref": "../common/json.schema.json#/$defs/JSONValue"
-			}
+		"service": {
+			"type": "string"
 		},
-		"createdAt": { "type": "string", "format": "date-time" },
-		"updatedAt": { "type": "string", "format": "date-time" }
+		"resource": {
+			"type": "string"
+		},
+		"value": {
+			"$ref": "../common/json.schema.json#/$defs/JSONValue"
+		}
 	}
 }

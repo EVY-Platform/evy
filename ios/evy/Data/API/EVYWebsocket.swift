@@ -38,25 +38,9 @@ struct EVYLoginParams: Encodable {
 }
 
 struct DataUpdatedNotification: Decodable {
-  let dataId: String
-  let data: EVYJson
-  let createdAt: String
-  let updatedAt: String
-
-  enum CodingKeys: String, CodingKey {
-    case dataId = "id"
-    case data
-    case createdAt
-    case updatedAt
-  }
-}
-
-struct FlowUpdatedNotification: Decodable {
-  let flow: UI_Flow
-
-  enum CodingKeys: String, CodingKey {
-    case flow = "data"
-  }
+  let service: String
+  let resource: String
+  let value: EVYJson
 }
 
 protocol EVYWebsocketProtocol {
@@ -164,8 +148,6 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     switch method {
     case "dataUpdated":
       handleDataUpdated(params: params)
-    case "flowUpdated":
-      handleFlowUpdated(params: params)
     default:
       #if DEBUG
         print("[EVYWebsocket] Received unknown notification: \(method)")
@@ -175,14 +157,12 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
 
   private func handleDataUpdated(params: Parsable) {
     let notification: DataUpdatedNotification
-    let encodedData: Data
 
     do {
       guard let parsed = try params.parse(to: DataUpdatedNotification.self).get() else {
         throw EVYError.parsingFailed(context: "dataUpdated notification returned nil")
       }
       notification = parsed
-      encodedData = try JSONEncoder().encode(notification.data)
     } catch {
       #if DEBUG
         print("[EVYWebsocket] Failed to parse dataUpdated notification: \(error)")
@@ -194,10 +174,10 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     // Dispatch to MainActor for thread-safe data access
     Task { @MainActor in
       do {
-        try EVY.publicStore.upsert(key: notification.dataId, value: encodedData, notify: false)
-        NotificationCenter.default.post(
-          name: Notification.Name.evyDataUpdated,
-          object: notification.dataId
+        try EVY.publicStore.upsertSyncedValue(
+          namespace: notification.service,
+          resource: notification.resource,
+          value: notification.value
         )
       } catch {
         #if DEBUG
@@ -209,25 +189,6 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     }
   }
 
-  private func handleFlowUpdated(params: Parsable) {
-    do {
-      guard let notification = try params.parse(to: FlowUpdatedNotification.self).get() else {
-        throw EVYError.parsingFailed(context: "flowUpdated notification returned nil")
-      }
-
-      Task { @MainActor in
-        NotificationCenter.default.post(
-          name: Notification.Name.evyFlowUpdated,
-          object: notification.flow
-        )
-      }
-    } catch {
-      #if DEBUG
-        print("[EVYWebsocket] Failed to parse flowUpdated notification: \(error)")
-      #endif
-      postError(EVYError.parsingFailed(context: "flowUpdated: \(error.localizedDescription)"))
-    }
-  }
 }
 
 enum JSONParseError: Error {

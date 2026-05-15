@@ -48,7 +48,6 @@ function initServer(
 		await server.setAuth(authHandler);
 
 		await server.event("dataUpdated");
-		await server.event("flowUpdated");
 
 		console.info(`WS server listening at ${HOST}:${port}`);
 		return server;

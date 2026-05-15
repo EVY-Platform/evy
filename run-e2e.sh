@@ -324,10 +324,15 @@ else
         IOS_RESULT=1
     else
         echo "Using iOS simulator destination: $IOS_DESTINATION"
+        # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
+        SIM_UDID="${IOS_DESTINATION#*id=}"
+        xcrun simctl shutdown "$SIM_UDID" 2>/dev/null || true
+        xcrun simctl erase "$SIM_UDID" 2>/dev/null || true
         if xcodebuild test \
             -project evy.xcodeproj \
             -scheme evy \
             -destination "$IOS_DESTINATION" \
+            -only-testing:evyUITests \
             -parallel-testing-enabled NO \
             -quiet; then
             echo -e "${GREEN}iOS e2e tests passed${NC}"

@@ -32,7 +32,7 @@ private struct EVYPageBody: View {
   var body: some View {
     pageContent
       .onAppear {
-        EVY.activeCachePrefix = "\(page.id):"
+        EVY.activeCacheScopeId = page.id
         EVY.draftStore.activeScopeId = evyDraftScopeId
         bootstrapDrafts(in: page, scopeId: evyDraftScopeId)
       }
@@ -102,7 +102,12 @@ private struct EVYPageBody: View {
       if row.type == .inlinePicker {
         initialData = "[]".data(using: .utf8)
       } else if row.type == .calendar {
-        initialData = try? EVY.publicStore.getForBinding(key: "timeslots").data
+        initialData = {
+          guard let json = try? EVY.publicStore.getJsonForBinding(key: "timeslots") else {
+            return nil
+          }
+          return try? JSONEncoder().encode(json)
+        }()
       } else {
         initialData = nil
       }

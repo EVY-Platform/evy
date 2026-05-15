@@ -107,7 +107,7 @@ flowchart LR
     end
     EVY -->|fetch / upsert| APIManager
 
-    Notif{{NotificationCenter<br/>.evyDataUpdated<br/>.evyFlowUpdated<br/>.evyErrorOccurred}}
+    Notif{{NotificationCenter<br/>.evyDataUpdated<br/>.evyErrorOccurred}}
     PublicStore -. post .-> Notif
     DraftStore -. post .-> Notif
     EVY -. post .-> Notif

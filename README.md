@@ -26,7 +26,7 @@ flowchart LR
     marketplace -- Drizzle --> mpDb
 ```
 
-Resource routing, `flowUpdated` / `dataUpdated`, service data sync, and gRPC forwarding are covered in [`api/README.md`](./api/README.md).
+Resource routing, unified `dataUpdated` notifications, service data sync, and gRPC forwarding are covered in [`api/README.md`](./api/README.md).
 
 ## Sync and local keying
 

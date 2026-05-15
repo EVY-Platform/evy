@@ -1,6 +1,6 @@
 # EVY API
 
-Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https://github.com/elpheria/rpc-websockets)) that handles `service: "evy"` in-process (SDUI flows and core tables), forwards other services over gRPC, and pushes real-time `dataUpdated` / `flowUpdated` notifications to connected clients.
+Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https://github.com/elpheria/rpc-websockets)) that handles `service: "evy"` in-process (SDUI flows and core tables), forwards other services over gRPC, and pushes real-time `dataUpdated` notifications to connected clients.
 
 Monorepo setup (Compose, seeding, local Bun): [README § Running Services](../README.md#running-services).
 
@@ -62,10 +62,8 @@ sequenceDiagram
     participant marketplace as marketplace (gRPC)
 
     rect rgb(230, 245, 255)
-    Note over data,ws: Core evy upsert triggers notification
-    data->>rpc: upsert success (row)
-    rpc->>rpc: choose flowUpdated / dataUpdated
-    rpc->>ws: emitJsonRpc(event, row)
+    Note over data,ws: Core evy write triggers notification
+    data->>ws: emitJsonRpc(dataUpdated, sync row)
     ws->>Client: JSON-RPC notification
     end
 
@@ -80,15 +78,15 @@ sequenceDiagram
 
 ### Real-time notifications
 
-`ws.ts` registers two server events (`dataUpdated`, `flowUpdated`) and ships a custom `emitJsonRpc` helper because `rpc-websockets` emits a non-standard wire shape that `JsonRPC.swift` on iOS cannot parse. All pushed frames therefore use standard JSON-RPC 2.0:
+`ws.ts` registers the `dataUpdated` server event and ships a custom `emitJsonRpc` helper because `rpc-websockets` emits a non-standard wire shape that `JsonRPC.swift` on iOS cannot parse. All pushed frames therefore use standard JSON-RPC 2.0:
 
 ```json
-{ "jsonrpc": "2.0", "method": "dataUpdated", "params": { /* row */ } }
+{ "jsonrpc": "2.0", "method": "dataUpdated", "params": { "service": "evy", "resource": "sdui", "value": { /* row */ } } }
 ```
 
 - [`src/index.ts`](./src/index.ts) creates a `broadcast` callback wrapping `emitJsonRpc` and injects it into `rpc` and `services` at startup.
-- Successful `evy` upserts invoke the broadcast callback from [`src/rpc.ts`](./src/rpc.ts): `flowUpdated` when `resource === "sdui"`, otherwise `dataUpdated`.
-- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them via the same broadcast callback (reconnect with exponential backoff).
+- Successful syncable `evy` writes emit `dataUpdated` from [`src/data.ts`](./src/data.ts), including SDUI. Payloads match individual sync rows: `{ service, resource, value }`.
+- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them via the same broadcast callback (reconnect with exponential backoff). Remote `dataUpdated` payloads use the same `{ service, resource, value }` shape.
 - The shared [`src/broadcast.ts`](./src/broadcast.ts) defines the `BroadcastFn` type contract, decoupling `rpc` and `services` from the WebSocket layer.
 
 ### Internal module layout

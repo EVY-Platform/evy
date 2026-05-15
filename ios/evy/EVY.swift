@@ -20,6 +20,23 @@ struct Filter: Encodable {
 
 // MARK: - Sync Types
 
+enum EVYSyncState {
+  private static let lastSyncTimestampKey = "lastSyncTimestamp"
+
+  static var lastSyncTimestamp: String {
+    UserDefaults.standard.string(forKey: lastSyncTimestampKey)
+      ?? "1970-01-01T00:00:00.000Z"
+  }
+
+  static func markSynced() {
+    UserDefaults.standard.set(Date().ISO8601Format(), forKey: lastSyncTimestampKey)
+  }
+
+  static func reset() {
+    UserDefaults.standard.removeObject(forKey: lastSyncTimestampKey)
+  }
+}
+
 struct SyncParams: Encodable {
   let lastSyncTime: String
 }
@@ -58,7 +75,7 @@ struct EVY {
   static let privateStore = EVYDataStore(name: "private")
   static let cacheStore = EVYDataStore(name: "cache", inMemoryOnly: true)
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
-  static var activeCachePrefix: String?
+  static var activeCacheScopeId: String?
 
   // MARK: - Resource Mapping
 

@@ -121,8 +121,37 @@ enum EVYPreviewMockData {
   // MARK: - Helpers
 
   static func seed(key: String, json: String) {
-    guard let data = json.data(using: .utf8) else { return }
-    try? EVY.publicStore.upsert(key: key, value: data, notify: false)
+    guard let data = json.data(using: .utf8),
+      let parsed = try? JSONDecoder().decode(EVYJson.self, from: data)
+    else { return }
+    switch parsed {
+    case .array(let items):
+      for item in items {
+        let itemId = item.identifierValue()
+        let encoded = (try? JSONEncoder().encode(item)) ?? data
+        try? EVY.publicStore.upsert(
+          namespace: EVYNamespace.local,
+          resource: key,
+          id: itemId,
+          value: encoded
+        )
+      }
+    case .dictionary:
+      let itemId = parsed.identifierValue()
+      try? EVY.publicStore.upsert(
+        namespace: EVYNamespace.local,
+        resource: key,
+        id: itemId,
+        value: data
+      )
+    default:
+      try? EVY.publicStore.upsert(
+        namespace: EVYNamespace.local,
+        resource: key,
+        id: EVYNamespace.singletonId,
+        value: data
+      )
+    }
   }
 
   static func seedCommon() {

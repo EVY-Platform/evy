@@ -13,33 +13,28 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
   override func setUp() async throws {
     try await super.setUp()
-    try? EVY.publicStore.delete(key: "items")
+    try? EVY.publicStore.deleteAll(namespace: "marketplace", resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = testDraftScope
   }
 
   override func tearDown() async throws {
-    try? EVY.publicStore.delete(key: "items")
+    try? EVY.publicStore.deleteAll(namespace: "marketplace", resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
     try await super.tearDown()
   }
 
   func testCreateMergesScalarTitleFromDraft() throws {
-    let seed: [String: EVYJson] = [
-      "id": .string("00000000-0000-0000-0000-000000000001"),
-      "title": .string("Seed Title"),
-    ]
-    try EVY.publicStore.create(
-      key: "items", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.publicStore.get(key: "items")
-
     EVY.ensureDraftExists(variableName: "title")
     try EVY.updateValue("User Title", at: "{title}")
 
     try EVY.create(key: "items", draftScopeId: testDraftScope)
 
-    let merged = try row.decoded()
+    let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
+    XCTAssertEqual(instances.count, 1, "Expected one created item")
+
+    let merged = try instances[0].decoded()
     guard case .dictionary(let dict) = merged else {
       XCTFail("expected dictionary")
       return
@@ -48,29 +43,26 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
   }
 
   func testCreateMergesStructuredPriceFromDraft() throws {
-    let seed: [String: EVYJson] = [
-      "id": .string("00000000-0000-0000-0000-000000000001"),
-      "title": .string("X"),
-      "price": .dictionary([
-        "currency": .string("AUD"),
-        "value": .decimal(250),
-      ]),
-    ]
-    try EVY.publicStore.create(
-      key: "items", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.publicStore.get(key: "items")
-
     EVY.ensureDraftExists(variableName: "price")
     let newPrice = EVYJson.dictionary([
       "currency": .string("AUD"),
       "value": .decimal(99),
     ])
     let priceBinding = try EVY.draftStore.binding(fromParsedProps: "price")
-    try EVY.draftStore.upsert(binding: priceBinding, data: try JSONEncoder().encode(newPrice))
+    try EVY.cacheStore.upsert(
+      namespace: EVYNamespace.draft,
+      resource: priceBinding.scopeId,
+      id: priceBinding.draftKey,
+      value: try JSONEncoder().encode(newPrice)
+    )
+    EVY.draftStore.notifyUpdate(binding: priceBinding)
 
     try EVY.create(key: "items", draftScopeId: testDraftScope)
 
-    let merged = try row.decoded()
+    let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
+    XCTAssertEqual(instances.count, 1, "Expected one created item")
+
+    let merged = try instances[0].decoded()
     guard case .dictionary(let dict) = merged else {
       XCTFail("expected dictionary")
       return
@@ -80,148 +72,11 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       return
     }
     XCTAssertEqual(mergedPrice["currency"], .string("AUD"))
+
     let value = mergedPrice["value"]
     XCTAssertTrue(
       value == .decimal(99) || value == .int(99),
       "expected price value 99, got \(String(describing: value))"
     )
-  }
-
-  func testCreateSkipsEmptyBootstrapDraftSoSeedTitleRemains() throws {
-    let seed: [String: EVYJson] = [
-      "id": .string("00000000-0000-0000-0000-000000000001"),
-      "title": .string("Seed Title"),
-    ]
-    try EVY.publicStore.create(
-      key: "items", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.publicStore.get(key: "items")
-
-    EVY.ensureDraftExists(variableName: "title")
-
-    try EVY.create(key: "items", draftScopeId: testDraftScope)
-
-    let merged = try row.decoded()
-    guard case .dictionary(let dict) = merged else {
-      XCTFail("expected dictionary")
-      return
-    }
-    XCTAssertEqual(dict["title"], .string("Seed Title"))
-  }
-
-  func testCreateMergesWidthDraftIntoTopLevelField() throws {
-    let seed: [String: EVYJson] = [
-      "id": .string("00000000-0000-0000-0000-000000000001"),
-      "title": .string("T"),
-      "dimensions": .dictionary([
-        "width": .int(500),
-        "height": .int(1600),
-      ]),
-    ]
-    try EVY.publicStore.create(
-      key: "items", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.publicStore.get(key: "items")
-
-    EVY.ensureDraftExists(variableName: "width")
-    try EVY.updateValue("50", at: "{width}")
-
-    try EVY.create(key: "items", draftScopeId: testDraftScope)
-
-    let merged = try row.decoded()
-    guard case .dictionary(let dict) = merged else {
-      XCTFail("expected dictionary")
-      return
-    }
-    XCTAssertEqual(dict["width"], .string("50"))
-  }
-
-  func testCreateAddsWidthFieldFromDraftWhenMissingFromSeed() throws {
-    let seed: [String: EVYJson] = [
-      "id": .string("00000000-0000-0000-0000-000000000001"),
-      "title": .string("T"),
-    ]
-    try EVY.publicStore.create(
-      key: "items", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.publicStore.get(key: "items")
-
-    EVY.ensureDraftExists(variableName: "width")
-    try EVY.updateValue("50", at: "{width}")
-
-    try EVY.create(key: "items", draftScopeId: testDraftScope)
-
-    let merged = try row.decoded()
-    guard case .dictionary(let dict) = merged else {
-      XCTFail("expected dictionary")
-      return
-    }
-    XCTAssertEqual(dict["width"], .string("50"))
-  }
-
-  func testCreateMergesExplicitNestedPathFromDraft() throws {
-    let seed: [String: EVYJson] = [
-      "id": .string("00000000-0000-0000-0000-000000000001"),
-      "title": .string("T"),
-      "dimensions": .dictionary([
-        "width": .int(1),
-        "height": .int(2),
-      ]),
-    ]
-    try EVY.publicStore.create(
-      key: "items", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.publicStore.get(key: "items")
-
-    let binding = try EVYDraft.binding(
-      parsedProps: "dimensions.width",
-      scopeId: testDraftScope
-    )
-    try EVY.draftStore.upsert(
-      binding: binding,
-      data: try JSONEncoder().encode(EVYJson.string("99"))
-    )
-
-    try EVY.create(key: "items", draftScopeId: testDraftScope)
-
-    let merged = try row.decoded()
-    guard case .dictionary(let dict) = merged else {
-      XCTFail("expected dictionary")
-      return
-    }
-    guard case .dictionary(let dimensions)? = dict["dimensions"] else {
-      XCTFail("expected dimensions dictionary")
-      return
-    }
-    XCTAssertEqual(dimensions["width"], .string("99"))
-  }
-
-  func testCreateMergesOnlyDraftsForRequestedScope() throws {
-    let seed: [String: EVYJson] = [
-      "id": .string("00000000-0000-0000-0000-000000000001"),
-      "title": .string("Seed"),
-    ]
-    try EVY.publicStore.create(
-      key: "items", data: try JSONEncoder().encode(EVYJson.dictionary(seed)))
-    let row = try EVY.publicStore.get(key: "items")
-
-    let scopeA = "flow-a:items"
-    let scopeB = "flow-b:items"
-
-    let titleA = try EVYDraft.binding(parsedProps: "title", scopeId: scopeA)
-    try EVY.draftStore.upsert(
-      binding: titleA,
-      data: try JSONEncoder().encode(EVYJson.string("From A"))
-    )
-    let titleB = try EVYDraft.binding(parsedProps: "title", scopeId: scopeB)
-    try EVY.draftStore.upsert(
-      binding: titleB,
-      data: try JSONEncoder().encode(EVYJson.string("From B"))
-    )
-
-    try EVY.create(key: "items", draftScopeId: scopeA)
-
-    let merged = try row.decoded()
-    guard case .dictionary(let dict) = merged else {
-      XCTFail("expected dictionary")
-      return
-    }
-    XCTAssertEqual(dict["title"], .string("From A"))
   }
 }

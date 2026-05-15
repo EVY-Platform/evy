@@ -20,14 +20,20 @@ extension EVY {
     else {
       return
     }
-    guard !store.exists(key: cleanVariableName),
+    guard (try? store.getJsonForBinding(key: cleanVariableName)) == nil,
       draftStore.draftIfPresent(binding: binding) == nil
     else {
       return
     }
     let emptyData = initialData ?? "\"\"".data(using: .utf8)!
     do {
-      try draftStore.upsert(binding: binding, data: emptyData)
+      try cacheStore.upsert(
+        namespace: EVYNamespace.draft,
+        resource: binding.scopeId,
+        id: binding.draftKey,
+        value: emptyData
+      )
+      draftStore.notifyUpdate(binding: binding)
     } catch {
       // Best-effort draft bootstrap; callers can still render from existing data.
     }
@@ -42,20 +48,11 @@ extension EVY {
     }
 
     let resource = EVY.resourceName(forEntityKey: key)
+    let namespace = "marketplace"  // TODO: Dynamic service discovery
 
-    let existing: EVYData? = try? publicStore.get(key: key)
     let newId = UUID().uuidString
-    let payload: EVYJson
-    if let existing {
-      payload = try existing.decoded()
-      guard case .dictionary = payload else {
-        throw EVYParamError.invalidProps
-      }
-    } else {
-      payload = .dictionary([:])
-    }
 
-    var mergedPayload = payload
+    var mergedPayload: EVYJson = .dictionary([:])
 
     let scopeForMerge = draftScopeId ?? draftStore.activeScopeId
     let draftEntries: [EVYData] = {
@@ -67,7 +64,7 @@ extension EVY {
       if case .string(let s) = draftValue, s.isEmpty {
         continue
       }
-      guard let binding = EVYDraft.Binding.parseDraftKey(draftEntry.key) else {
+      guard let binding = EVYDraft.Binding.parseDraftKey(draftEntry.id) else {
         continue
       }
       mergedPayload = EVYDraft.merge(binding: binding, value: draftValue, into: mergedPayload)
@@ -79,15 +76,18 @@ extension EVY {
     dict["id"] = .string(newId)
     let dataWithId = EVYJson.dictionary(dict)
     let params = UpsertParams(
-      service: "marketplace",  // TODO: Dynamic service discovery
+      service: namespace,
       resource: resource,
       filter: Filter(id: newId),
       data: dataWithId
     )
-    if let existing {
-      existing.data = try JSONEncoder().encode(dataWithId)
-      existing.key = newId
-    }
+    let encodedData = try JSONEncoder().encode(dataWithId)
+    try publicStore.upsert(
+      namespace: namespace,
+      resource: resource,
+      id: newId,
+      value: encodedData
+    )
 
     Task { @MainActor in
       do {
@@ -143,25 +143,51 @@ extension EVY {
       if remainingProps.isEmpty {
         existingDraft.data = newData
       } else {
-        let wrapper = EVYData(key: "_draft", data: existingDraft.data)
-        try wrapper.updateDataWithData(newData, props: remainingProps)
-        existingDraft.data = wrapper.data
+        existingDraft.data = try EVYDataPatcher.patch(
+          encodedData: existingDraft.data, newData: newData, props: remainingProps)
       }
       draftStore.notifyUpdate(binding: draftBinding)
-    } else if store.exists(key: rootVariable) {
-      let dataObj = try store.get(key: rootVariable)
+    } else if let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable) {
       let remainingProps = Array(splitProps.dropFirst())
       if remainingProps.isEmpty {
-        dataObj.data = newData
+        existingRow.data = newData
       } else {
-        try dataObj.updateDataWithData(newData, props: remainingProps)
+        existingRow.data = try EVYDataPatcher.patch(
+          encodedData: existingRow.data, newData: newData, props: remainingProps)
       }
-      try store.update(props: splitProps, data: dataObj.data)
+      store.postDataUpdated(key: splitProps.joined(separator: PROP_SEPARATOR))
     } else {
       guard let draftBinding else {
         throw EVYDataError.keyNotFound
       }
-      try draftStore.upsert(binding: draftBinding, data: newData)
+      try cacheStore.upsert(
+        namespace: EVYNamespace.draft,
+        resource: draftBinding.scopeId,
+        id: draftBinding.draftKey,
+        value: newData
+      )
+      draftStore.notifyUpdate(binding: draftBinding)
     }
   }
+
+  private static func findRowForUpdate(store: EVYDataStore, rootVariable: String) throws -> EVYData
+  {
+    if let localRow = try? store.get(
+      namespace: EVYNamespace.local, resource: rootVariable, id: EVYNamespace.singletonId)
+    {
+      return localRow
+    }
+    if let scopeId = activeCacheScopeId,
+      let cachedRow = try? store.get(
+        namespace: EVYNamespace.cache, resource: scopeId, id: rootVariable)
+    {
+      return cachedRow
+    }
+    let allRows = (try? store.getAll()) ?? []
+    guard let matched = allRows.first(where: { $0.resource == rootVariable }) else {
+      throw EVYDataError.keyNotFound
+    }
+    return matched
+  }
+
 }

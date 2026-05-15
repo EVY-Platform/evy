@@ -236,16 +236,14 @@ struct ContentView: View {
         )
       }
     }
-    .onReceive(NotificationCenter.default.publisher(for: .evyFlowUpdated)) { notification in
-      guard let updatedFlow = notification.object as? UI_Flow else { return }
+    .onReceive(NotificationCenter.default.publisher(for: .evyDataUpdated)) { notification in
+      guard let notifKey = notification.object as? String,
+        notifKey == "evy:sdui" || notifKey == "sdui"
+      else { return }
 
-      var nextFlows = flows
-      if let index = nextFlows.firstIndex(where: { $0.id == updatedFlow.id }) {
-        nextFlows[index] = updatedFlow
-      } else {
-        nextFlows.append(updatedFlow)
+      if let reconstructed = try? EVY.reconstructedSduiFlows() {
+        flows = reconstructed
       }
-      flows = nextFlows
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyErrorOccurred)) { notification in
       if let error = notification.object as? Error {

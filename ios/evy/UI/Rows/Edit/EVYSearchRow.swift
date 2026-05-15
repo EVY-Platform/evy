@@ -48,8 +48,11 @@ private struct EVYSearchRowPreview: View {
       ]
       """
 
-    if let previewItemsData = previewItemsJSON.data(using: .utf8) {
-      try? EVY.publicStore.upsert(key: "items", value: previewItemsData)
+    if let previewItemsData = previewItemsJSON.data(using: .utf8),
+      let parsed = try? JSONDecoder().decode(EVYJson.self, from: previewItemsData)
+    {
+      try? EVY.publicStore.upsertSyncedValue(
+        namespace: EVYNamespace.local, resource: "items", value: parsed)
     }
   }
 

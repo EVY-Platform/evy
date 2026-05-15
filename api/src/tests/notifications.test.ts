@@ -7,7 +7,7 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { GetRequest, UpsertRequest, UI_Flow, UI_Page } from "evy-types";
+import type { UpsertRequest, UI_Flow, UI_Page } from "evy-types";
 import type { WSParams } from "../ws";
 
 import {
@@ -22,21 +22,8 @@ import {
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
-const { get, upsert, setDbForTest, validateAuth } = dataModule;
+const { upsert, setDbForTest, validateAuth } = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function hasResource(p: unknown): p is { resource: GetRequest["resource"] } {
-	return (
-		isRecord(p) &&
-		"resource" in p &&
-		typeof (p as Record<string, unknown>).resource === "string" &&
-		((p as Record<string, unknown>).resource as string).length > 0
-	);
-}
 
 describe("upsert real-time notifications", () => {
 	let previousApiPort: string | undefined;
@@ -54,28 +41,21 @@ describe("upsert real-time notifications", () => {
 		apiPort = await getFreePort();
 		process.env.API_PORT = String(apiPort);
 		const wsMod = await import("../ws");
+		const notificationMod = await import("../notifications");
 		initServer = wsMod.initServer;
 		emitJsonRpc = wsMod.emitJsonRpc;
 
 		server = await initServer((params: WSParams) =>
 			validateAuth(params.token, params.os),
 		);
-
-		server.register("get", async (params: unknown) =>
-			get(params as unknown as GetRequest),
-		);
+		notificationMod.initDataNotifications((eventName, payload) => {
+			emitJsonRpc(server, eventName, payload);
+		});
 
 		server
-			.register("upsert", async (params: unknown) => {
-				const result = await upsert(params as unknown as UpsertRequest);
-				if (!hasResource(params)) return result;
-				if (params.resource === "sdui") {
-					emitJsonRpc(server, "flowUpdated", result);
-				} else {
-					emitJsonRpc(server, "dataUpdated", result);
-				}
-				return result;
-			})
+			.register("upsert", async (params: unknown) =>
+				upsert(params as unknown as UpsertRequest),
+			)
 			.protected();
 
 		apiUrl = `ws://127.0.0.1:${apiPort}`;
@@ -95,14 +75,14 @@ describe("upsert real-time notifications", () => {
 		await clearAllTestTables(testDb);
 	});
 
-	it("emits flowUpdated with JSON-RPC 2.0 shape after SDUI upsert; params match upsert result", async () => {
+	it("emits dataUpdated with sync-row shape after SDUI upsert", async () => {
 		const subscriber = await connectAndLogin(
 			apiUrl,
 			"notify-token-1",
 			"Web",
-			"flowUpdated",
+			"dataUpdated",
 		);
-		const notifyPromise = waitForNotification(subscriber, "flowUpdated");
+		const notifyPromise = waitForNotification(subscriber, "dataUpdated");
 
 		const testPage: UI_Page = {
 			id: crypto.randomUUID(),
@@ -117,20 +97,24 @@ describe("upsert real-time notifications", () => {
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-2", "Web");
 
-		const upsertResult = await caller.call("upsert", {
+		await caller.call("upsert", {
 			service: "evy",
 			resource: "sdui",
 			data: flowData,
 		});
 
 		const params = await notifyPromise;
-		expect(params).toEqual(upsertResult);
+		expect(params).toEqual({
+			service: "evy",
+			resource: "sdui",
+			value: flowData,
+		});
 
 		subscriber.close();
 		caller.close();
 	});
 
-	it("emits dataUpdated after non-SDUI upsert; params match upsert result", async () => {
+	it("emits dataUpdated after non-SDUI upsert with sync-row shape", async () => {
 		const subscriber = await connectAndLogin(
 			apiUrl,
 			"notify-token-3",
@@ -157,20 +141,24 @@ describe("upsert real-time notifications", () => {
 		});
 
 		const params = await notifyPromise;
-		expect(params).toEqual(upsertResult);
+		expect(params).toEqual({
+			service: "evy",
+			resource: "services",
+			value: upsertResult,
+		});
 
 		subscriber.close();
 		caller.close();
 	});
 
-	it("only subscribed clients receive flowUpdated", async () => {
+	it("only subscribed clients receive dataUpdated", async () => {
 		const subscribed = await connectAndLogin(
 			apiUrl,
 			"notify-token-5",
 			"Web",
-			"flowUpdated",
+			"dataUpdated",
 		);
-		const notifyPromise = waitForNotification(subscribed, "flowUpdated");
+		const notifyPromise = waitForNotification(subscribed, "dataUpdated");
 
 		const notSubscribed = await connectAndLogin(
 			apiUrl,
@@ -179,7 +167,7 @@ describe("upsert real-time notifications", () => {
 		);
 
 		const missed: unknown[] = [];
-		notSubscribed.on("flowUpdated", (p: unknown) => missed.push(p));
+		notSubscribed.on("dataUpdated", (p: unknown) => missed.push(p));
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-7", "Web");
 

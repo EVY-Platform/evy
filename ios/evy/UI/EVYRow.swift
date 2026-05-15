@@ -33,7 +33,7 @@ struct EVYRow: View, Identifiable {
           ScrollView {
             EVYRow(row: presented.row)
           }
-		  .padding(Constants.majorPadding)
+          .padding(Constants.majorPadding)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
           .background(Color.white.ignoresSafeArea())
           .presentationDetents([.medium, .large])

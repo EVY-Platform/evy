@@ -12,7 +12,6 @@
 		2E5F4DBB2BB01A1200D3A3FB /* EVYDropdownRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E5F4DBA2BB01A1200D3A3FB /* EVYDropdownRow.swift */; };
 		2E5F4DBD2BB2C5D900D3A3FB /* EVYTextAreaRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E5F4DBC2BB2C5D900D3A3FB /* EVYTextAreaRow.swift */; };
 		2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8EEC392B2730B0003DF2DC /* Constants.swift */; };
-
 		2EE4E27D2B99D7F300CEF112 /* EVYSelectList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */; };
 		730187D62F20E232002EF894 /* user_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 730187D52F20E232002EF894 /* user_data.json */; };
 		7303B31A2C3EB8A000796123 /* EVYCalendarTimeslotData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7303B3192C3EB8A000796123 /* EVYCalendarTimeslotData.swift */; };
@@ -20,7 +19,6 @@
 		731988822C271BBD0035E094 /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 731988812C271BBD0035E094 /* JsonRPC */; };
 		731988852C271BC40035E094 /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 731988842C271BC40035E094 /* Serializable */; };
 		7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */; };
-
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
 		7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */; };
 		7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
@@ -118,13 +116,11 @@
 		2E5F4DBA2BB01A1200D3A3FB /* EVYDropdownRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDropdownRow.swift; sourceTree = "<group>"; };
 		2E5F4DBC2BB2C5D900D3A3FB /* EVYTextAreaRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextAreaRow.swift; sourceTree = "<group>"; };
 		2E8EEC392B2730B0003DF2DC /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
-
 		2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectList.swift; sourceTree = "<group>"; };
 		730187D52F20E232002EF894 /* user_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = user_data.json; path = ../docs/evy/user_data.json; sourceTree = SOURCE_ROOT; };
 		7303B3192C3EB8A000796123 /* EVYCalendarTimeslotData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarTimeslotData.swift; sourceTree = "<group>"; };
 		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
 		7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInfoRow.swift; sourceTree = "<group>"; };
-
 		732A50812C1D6AE80036B98B /* EVY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVY.swift; sourceTree = "<group>"; };
 		7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectItem.swift; sourceTree = "<group>"; };
 		7333F44E2FAA2D1C006BEA92 /* EVY+Mutations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Mutations.swift"; sourceTree = "<group>"; };
@@ -318,7 +314,6 @@
 				73B3CF842C68AD2200FD333A /* EVYColumnContainerRow.swift */,
 				73B3CF852C68AD2200FD333A /* EVYListContainerRow.swift */,
 				73B3CF802C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift */,
-
 			);
 			path = Container;
 			sourceTree = "<group>";
@@ -377,7 +372,7 @@
 				739EC4DF2CD6551400E1B469 /* Testing Data */,
 				736D10552B78C4C500503C4D /* UI */,
 				730D008E2B29D91200B5BCB6 /* Utils */,
-				73F2A0102F30B00200000001 /* swift */,
+				73F2A0102F30B00200000001 /* ../../types/generated/swift */,
 			);
 			path = evy;
 			sourceTree = "<group>";
@@ -466,7 +461,7 @@
 			path = e2e;
 			sourceTree = "<group>";
 		};
-		73F2A0102F30B00200000001 /* swift */ = {
+		73F2A0102F30B00200000001 /* ../../types/generated/swift */ = {
 			isa = PBXGroup;
 			children = (
 				73F2A0142F30B00200000001 /* DataOs.swift */,
@@ -584,9 +579,9 @@
 			);
 			mainGroup = 737C6A992B2706890093D00C;
 			packageReferences = (
-				731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift.git" */,
-				731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift.git" */,
-				73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift.git" */,
+				731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */,
+				731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */,
+				73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */,
 			);
 			productRefGroup = 737C6AA32B2706890093D00C /* Products */;
 			projectDirPath = "";
@@ -691,7 +686,6 @@
 				2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */,
 				2E5F4DBB2BB01A1200D3A3FB /* EVYDropdownRow.swift in Sources */,
 				2E00BD4B2BA1A99D00C09A1D /* EVYRadioButton.swift in Sources */,
-
 				2E5F4DBD2BB2C5D900D3A3FB /* EVYTextAreaRow.swift in Sources */,
 				7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */,
 				73E77C9D2C3118C100A53363 /* EVYInlinePicker.swift in Sources */,
@@ -1052,7 +1046,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift.git" */ = {
+		731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tesseract-one/JsonRPC.swift.git";
 			requirement = {
@@ -1060,7 +1054,7 @@
 				minimumVersion = 0.2.3;
 			};
 		};
-		731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift.git" */ = {
+		731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tesseract-one/Serializable.swift.git";
 			requirement = {
@@ -1068,7 +1062,7 @@
 				minimumVersion = 0.3.1;
 			};
 		};
-		73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift.git" */ = {
+		73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JakubMazur/lucide-icons-swift.git";
 			requirement = {
@@ -1081,17 +1075,17 @@
 /* Begin XCSwiftPackageProductDependency section */
 		731988812C271BBD0035E094 /* JsonRPC */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift.git" */;
+			package = 731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */;
 			productName = JsonRPC;
 		};
 		731988842C271BC40035E094 /* Serializable */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift.git" */;
+			package = 731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */;
 			productName = Serializable;
 		};
 		73F4B0022F40B00100000001 /* LucideIcons */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift.git" */;
+			package = 73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */;
 			productName = LucideIcons;
 		};
 /* End XCSwiftPackageProductDependency section */

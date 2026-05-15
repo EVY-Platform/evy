@@ -9,13 +9,11 @@ import Foundation
 import Observation
 
 enum EVYDataError: Error {
-  case keyAlreadyExists
   case keyNotFound
 }
 
 extension Notification.Name {
   static let evyDataUpdated = Notification.Name("EVYDataUpdated")
-  static let evyFlowUpdated = Notification.Name("EVYFlowUpdated")
   static let evyErrorOccurred = Notification.Name("EVYErrorOccurred")
 }
 
@@ -66,8 +64,7 @@ extension Notification.Name {
 
           let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
           let minLen = min(watchSegments.count, notifSegments.count)
-          let prefixMatch =
-            Array(watchSegments.prefix(minLen)) == Array(notifSegments.prefix(minLen))
+          let prefixMatch = watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
 
           if prefixMatch { self?.value = setter(watch) }
         }
@@ -97,18 +94,12 @@ final class EVYDraftStore {
   }
 
   func drafts(forScopeId scopeId: String) throws -> [EVYData] {
-    try dataStore.getAll(
-      keyPrefix: EVYDraft.Binding.draftKeyPrefix(forScopeId: scopeId)
-    )
+    try dataStore.getAll(namespace: EVYNamespace.draft, resource: scopeId)
   }
 
   func draftIfPresent(binding: EVYDraft.Binding) -> EVYData? {
-    try? dataStore.get(key: binding.draftKey)
-  }
-
-  func upsert(binding: EVYDraft.Binding, data: Data) throws {
-    try dataStore.upsert(key: binding.draftKey, value: data, notify: false)
-    notifyUpdate(binding: binding)
+    try? dataStore.get(
+      namespace: EVYNamespace.draft, resource: binding.scopeId, id: binding.draftKey)
   }
 
   func notifyUpdate(binding: EVYDraft.Binding) {
@@ -132,11 +123,9 @@ final class EVYDraftStore {
 
   func deleteDrafts(scopeId: String? = nil) {
     if let scopeId {
-      dataStore.deleteAll(
-        keyPrefix: EVYDraft.Binding.draftKeyPrefix(forScopeId: scopeId)
-      )
+      try? dataStore.deleteAll(namespace: EVYNamespace.draft, resource: scopeId)
     } else {
-      dataStore.deleteAll()
+      try? dataStore.deleteAll(namespace: EVYNamespace.draft)
     }
   }
 
