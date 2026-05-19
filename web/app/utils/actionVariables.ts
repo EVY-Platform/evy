@@ -46,22 +46,3 @@ export function extractDraftVariables(
 		}
 	}
 	return Array.from(variables).sort();
-}
-
-function entityRoot(variable: string): string {
-	const dotIndex = variable.indexOf(".");
-	return dotIndex === -1 ? variable : variable.slice(0, dotIndex);
-}
-
-/**
- * Extracts unique root entity names from draft variables.
- * For example, given `["item.title", "item.description"]` returns `["item"]`.
- */
-export function extractDraftEntities(
-	flows: UI_Flow[],
-	activeFlowId: string | undefined,
-): string[] {
-	const variables = extractDraftVariables(flows, activeFlowId);
-	const entities = new Set(variables.map(entityRoot));
-	return Array.from(entities).sort();
-}
