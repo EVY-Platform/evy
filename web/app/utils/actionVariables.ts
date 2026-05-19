@@ -46,3 +46,4 @@ export function extractDraftVariables(
 		}
 	}
 	return Array.from(variables).sort();
+}
