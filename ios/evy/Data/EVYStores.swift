@@ -28,22 +28,6 @@ extension Notification.Name {
     }
   }
 
-  init(setter: @escaping () -> T) {
-    _value = setter()
-
-    observerTokens.append(
-      NotificationCenter.default.addObserver(
-        forName: .evyDataUpdated,
-        object: nil,
-        queue: .main
-      ) { [weak self] _ in
-        Task { @MainActor in
-          self?.value = setter()
-        }
-      }
-    )
-  }
-
   init(watch: String, setter: @escaping (_ input: String) -> T) {
     _value = setter(watch)
 
