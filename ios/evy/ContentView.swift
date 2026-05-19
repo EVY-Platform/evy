@@ -121,9 +121,10 @@ struct ContentView: View {
 
   private func createFlow(namespace: String, resource: String) {
     do {
-      let entityKey = EVY.entityName(forResourceKey: resource)
+      let entityKey = resource
+      let pluralResource = EVY.resourceName(forEntityKey: entityKey)
       let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: entityKey)
-      try EVY.create(namespace: namespace, resource: resource, draftScopeId: draftScope)
+      try EVY.create(namespace: namespace, resource: pluralResource, draftScopeId: draftScope)
     } catch {
       showError(error)
       return

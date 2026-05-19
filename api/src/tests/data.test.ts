@@ -656,7 +656,9 @@ describe("upsert SDUI validation", () => {
 						view: {
 							content: { title: "", label: "Submit" },
 						},
-						actions: [{ condition: "", false: "", true: "{create(marketplace,items)}" }],
+						actions: [
+							{ condition: "", false: "", true: "{create(marketplace,item)}" },
+						],
 					},
 				},
 			],

@@ -32,9 +32,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateAction() {
     var received: NavOperation?
-    let action = UI_RowAction(condition: "", false: "", true: "{create(marketplace,items)}")
+    let action = UI_RowAction(condition: "", false: "", true: "{create(marketplace,item)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
-    XCTAssertEqual(received, .create(namespace: "marketplace", resource: "items"))
+    XCTAssertEqual(received, .create(namespace: "marketplace", resource: "item"))
   }
 
   func testShowActionPresentsChild() throws {
@@ -78,12 +78,12 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query, [:])
   }
 
-  func testNavigateWithBraceFunctionAndJsonQueryArgument() {
+  func testNavigateWithBraceFunctionAndPlainTextQueryArgument() {
     var received: NavOperation?
     let action = UI_RowAction(
       condition: "",
       false: "",
-      true: "{navigate(flow-1,page-2,{\"items\": [\"id-1\", \"id-2\"]})}",
+      true: "{navigate(flow-1,page-2,{items: [id-1, id-2]})}",
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
@@ -95,7 +95,7 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query["items"], ["id-1", "id-2"])
   }
 
-  func testNavigateNonJsonQueryArgumentPostsError() {
+  func testNavigateNonPlainTextQueryArgumentPostsError() {
     var received: NavOperation?
     let expectation = expectation(
       forNotification: Notification.Name.evyErrorOccurred,
@@ -149,7 +149,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = UI_RowAction(
       condition: "",
       false: "",
-      true: "{navigate(flowX,pageY,{\"items\": \"$datum.id\"})}",
+      true: "{navigate(flowX,pageY,{items: $datum.id})}",
     )
     EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
     guard case .navigate(let route) = received else {
@@ -161,32 +161,12 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query["items"], ["resolved-uuid"])
   }
 
-  func testNavigateWithUnquotedDatumInQueryPostsError() {
-    var received: NavOperation?
-    let expectation = expectation(
-      forNotification: Notification.Name.evyErrorOccurred,
-      object: nil,
-    )
-    let datum = EVYJson.dictionary([
-      "id": .string("resolved-uuid"),
-      "title": .string("Test"),
-    ])
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flowX,pageY,{\"id\": $datum.id})}",
-    )
-    EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
-    wait(for: [expectation], timeout: 2)
-    XCTAssertNil(received)
-  }
-
-  func testNavigateWithCommaInQueryJson() {
+  func testNavigateWithCommaInQuery() {
     var received: NavOperation?
     let action = UI_RowAction(
       condition: "",
       false: "",
-      true: "{navigate(flowX,pageY,{\"items\": [\"a\"], \"kind\": \"item\"})}",
+      true: "{navigate(flowX,pageY,{items: [a], kind: item})}",
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
@@ -195,6 +175,55 @@ final class EVYActionRunnerTests: XCTestCase {
     }
     XCTAssertEqual(route.query["items"], ["a"])
     XCTAssertEqual(route.query["kind"], ["item"])
+  }
+
+  func testNavigateSkipsEmptyQueryValues() {
+    var received: NavOperation?
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flowX,pageY,{items: [], kind: item, empty: })}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    guard case .navigate(let route) = received else {
+      XCTFail("Expected navigate")
+      return
+    }
+    XCTAssertNil(route.query["items"])
+    XCTAssertEqual(route.query["kind"], ["item"])
+    XCTAssertNil(route.query["empty"])
+  }
+
+  func testNavigateWithMissingQueryColonPostsError() {
+    var received: NavOperation?
+    let expectation = expectation(
+      forNotification: Notification.Name.evyErrorOccurred,
+      object: nil,
+    )
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flowX,pageY,{items [a]})}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    wait(for: [expectation], timeout: 2)
+    XCTAssertNil(received)
+  }
+
+  func testNavigateWithUnclosedQueryArrayPostsError() {
+    var received: NavOperation?
+    let expectation = expectation(
+      forNotification: Notification.Name.evyErrorOccurred,
+      object: nil,
+    )
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{navigate(flowX,pageY,{items: [a})}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    wait(for: [expectation], timeout: 2)
+    XCTAssertNil(received)
   }
 
   func testNavigateWithTooManyArgsThrowsError() {
@@ -206,7 +235,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = UI_RowAction(
       condition: "",
       false: "",
-      true: "{navigate(flowX,pageY,{\"key\": \"val\"},extra)}",
+      true: "{navigate(flowX,pageY,{key: val},extra)}",
     )
     EVYActionRunner.run(actions: [action]) { _ in }
     wait(for: [expectation], timeout: 2)
@@ -217,7 +246,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = UI_RowAction(
       condition: "",
       false: "",
-      true: "{navigate(flowX,pageY,{\"items\": \"$datum.id\"})}",
+      true: "{navigate(flowX,pageY,{items: $datum.id})}",
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
@@ -228,7 +257,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testDatumRowFormatterDoesNotResolveDatumInActions() throws {
-    let actionString = "{navigate(flowX,pageY,{\"id\": \"$datum.id\"})}"
+    let actionString = "{navigate(flowX,pageY,{id: $datum.id})}"
     let row = try decodeRow(
       content: """
         {

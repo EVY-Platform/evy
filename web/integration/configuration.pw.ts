@@ -439,7 +439,7 @@ test.describe("Row configuration", () => {
 
 		const trueQueryParams = popup.getByLabel("true-0-navigate-query");
 		await expect(trueQueryParams).toBeVisible();
-		await trueQueryParams.fill('{"items": [$datum.id]}');
+		await trueQueryParams.fill("{items: [$datum.id]}");
 
 		const falseFn = popup.getByLabel("false-0-function");
 		await popoverSelect(page, falseFn, "Navigate");
@@ -454,19 +454,19 @@ test.describe("Row configuration", () => {
 
 		const falseQueryParams = popup.getByLabel("false-0-navigate-query");
 		await expect(falseQueryParams).toBeVisible();
-		await falseQueryParams.fill('{"fallbacks": ["id-1", "id-2"]}');
+		await falseQueryParams.fill("{fallbacks: [id-1, id-2]}");
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
 		await expect(
 			configPanel.getByText(
-				'navigate(Checkout, Payment, {"items": [$datum.id]})',
+				"navigate(Checkout, Payment, {items: [$datum.id]})",
 			),
 		).toBeVisible();
 		await expect(
 			configPanel.getByText(
-				'navigate(Checkout, Payment, {"fallbacks": ["id-1", "id-2"]})',
+				"navigate(Checkout, Payment, {fallbacks: [id-1, id-2]})",
 			),
 		).toBeVisible();
 
@@ -474,14 +474,14 @@ test.describe("Row configuration", () => {
 		const reopenedPopup = page.getByRole("dialog", { name: "Edit action 1" });
 		await expect(reopenedPopup).toBeVisible();
 		await expect(reopenedPopup.getByLabel("true-0-navigate-query")).toHaveValue(
-			'{"items": [$datum.id]}',
+			"{items: [$datum.id]}",
 		);
 		await expect(
 			reopenedPopup.getByLabel("false-0-navigate-query"),
-		).toHaveValue('{"fallbacks": ["id-1", "id-2"]}');
+		).toHaveValue("{fallbacks: [id-1, id-2]}");
 	});
 
-	test("should select create action with data model argument", async ({
+	test("should select create action with namespace and resource arguments", async ({
 		page,
 	}) => {
 		await initFullFlows(page, [
@@ -536,14 +536,20 @@ test.describe("Row configuration", () => {
 		const trueFn = popup.getByLabel("true-0-function");
 		await popoverSelect(page, trueFn, "Create");
 
-		const dataArg = popup.getByLabel("true-0-arg-0");
-		await expect(dataArg).toBeVisible();
-		await popoverSelect(page, dataArg, "Item");
+		const namespaceArg = popup.getByLabel("true-0-arg-0");
+		await expect(namespaceArg).toBeVisible();
+		await popoverSelect(page, namespaceArg, "Marketplace");
+
+		const resourceArg = popup.getByLabel("true-0-arg-1");
+		await expect(resourceArg).toBeVisible();
+		await popoverSelect(page, resourceArg, "Item");
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
-		await expect(configPanel.getByText("create(item)")).toBeVisible();
+		await expect(
+			configPanel.getByText("create(marketplace, item)"),
+		).toBeVisible();
 	});
 
 	test("should use number operand in condition", async ({ page }) => {
@@ -780,7 +786,7 @@ test.describe("Row configuration", () => {
 						},
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
-							{ condition: "", false: "", true: "{create(marketplace,items)}" },
+							{ condition: "", false: "", true: "{create(marketplace,item)}" },
 						],
 					},
 				],

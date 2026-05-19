@@ -189,7 +189,7 @@ resolve_ios_simulator_destination() {
     fi
 
     local preferred_device_name="${IOS_SIMULATOR_DEVICE_NAME:-iPhone 17}"
-    local preferred_os_version="${IOS_SIMULATOR_OS_VERSION:-26.4.1}"
+    local preferred_os_version="${IOS_SIMULATOR_OS_VERSION:-26.5}"
     local destinations_output
     local resolved_destination
     if ! destinations_output="$(xcodebuild -showdestinations -project evy.xcodeproj -scheme evy 2>/dev/null)"; then
