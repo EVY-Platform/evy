@@ -112,4 +112,4 @@ All workflows install Bun via `.github/actions/setup-bun` (`oven-sh/setup-bun@v2
 Runners by workflow:
 - API lint/build/tests, web lint: `ubuntu-latest`.
 - Web tests (`.github/workflows/web_tests.yml`): `blacksmith-4vcpu-ubuntu-2404-arm`; installs Playwright via `bun run test:setup`.
-- E2E (`.github/workflows/e2e_tests.yml`): `blacksmith-6vcpu-macos-26`. PostgreSQL is started on the host via Homebrew, then `./run-e2e.sh --no-docker` runs API, marketplace, web, and iOS Simulator tests with the runner's default Xcode image. iOS tests prefer iPhone 17 / iOS 26.4.1 and fall back to an available iPhone 17 simulator if the image changes.
+- E2E (`.github/workflows/e2e_tests.yml`): `blacksmith-6vcpu-macos-26`. PostgreSQL is started on the host via Homebrew, then `./run-e2e.sh --no-docker` runs API, marketplace, web, and iOS Simulator tests with the runner's default Xcode image. iOS tests prefer iPhone 17 / iOS 26.5 and fall back to an available iPhone 17 simulator if the image changes.

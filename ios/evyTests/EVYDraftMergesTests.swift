@@ -29,7 +29,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "title")
     try EVY.updateValue("User Title", at: "{title}")
 
-    try EVY.create(key: "items", draftScopeId: testDraftScope)
+    try EVY.create(namespace: "marketplace", resource: "items", draftScopeId: testDraftScope)
 
     let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")
@@ -57,7 +57,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     )
     EVY.draftStore.notifyUpdate(binding: priceBinding)
 
-    try EVY.create(key: "items", draftScopeId: testDraftScope)
+    try EVY.create(namespace: "marketplace", resource: "items", draftScopeId: testDraftScope)
 
     let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")

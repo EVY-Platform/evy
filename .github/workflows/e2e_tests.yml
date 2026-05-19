@@ -97,7 +97,7 @@ jobs:
               env:
                   MARKETPLACE_GRPC_HOST: 127.0.0.1
                   IOS_SIMULATOR_DEVICE_NAME: iPhone 17
-                  IOS_SIMULATOR_OS_VERSION: 26.4.1
+                  IOS_SIMULATOR_OS_VERSION: 26.5
               run: bash run-e2e.sh --no-docker
 
             - name: Upload Playwright report

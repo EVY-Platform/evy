@@ -795,7 +795,7 @@ final class WebSocketE2ETests: E2ETestBase {
               [
                 "condition": "",
                 "false": "",
-                "true": "{create(item)}",
+                "true": "{create(marketplace,item)}",
               ]
             ],
           ],
@@ -809,7 +809,7 @@ final class WebSocketE2ETests: E2ETestBase {
       return "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage))}"
     }
     return
-      "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{\"items\": [\"\(viewItemId)\"]})}"
+      "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{items: [\(viewItemId)]})}"
   }
 
   private static func marketplaceItemsContainListing(

@@ -17,9 +17,9 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 	- `{$api:resource}` — colon notation. Explicit API-sourced data (resolves to the public data store, same as a bare key but explicit about origin).
 - Catalog/local data is loaded outside the flow document. Clients can request individual lists with JSON-RPC `get` (`service` / `resource`) using optional `filter.id` or `filter.updatedAfter`, or sync all changed data in batches with `sync`.
 - `sync` is a protected JSON-RPC method. It accepts `{ "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows across SDUI, evy core data, and backend service data. When data changed, it also returns the current resource registry. For startup/cache refresh, the API fetches every syncable resource using `filter.updatedAfter = lastSyncTime`.
-- Clients should store synced rows under service-qualified keys such as `evy:sdui`, `marketplace:items`, and `marketplace:conditions`. Navigate actions pass query params as the optional third `navigate` argument (for example, `{navigate(flowId, pageId, {"id": "$datum.id"})}`). Query values must use a JSON object with quoted string values (`{"key": "id"}` or `{"key": ["id"]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same plural key. A generic `"id"` query key may be used by clients that can infer the resource from synced collections. If no synced collection exists for a query key, clients keep the raw string array under that key.
+- Clients should store synced rows under service-qualified keys such as `evy:sdui`, `marketplace:items`, and `marketplace:conditions`. Navigate actions pass query params as the optional third `navigate` argument using a plain-text query object (for example, `{navigate(flowId, pageId, {id: $datum.id})}`). Query values can be scalars (`{key: id}`) or arrays (`{key: [id-1, id-2]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same plural key. A generic `"id"` query key may be used by clients that can infer the resource from synced collections. If no synced collection exists for a query key, clients keep the raw string array under that key.
 - iOS draft scope IDs and draft cache keys are internal draft-store identifiers; see [iOS README § Draft scopes and draft cache keys](../../../ios/README.md#draft-scopes-and-draft-cache-keys).
-- Collection/list sources remain plural (for example, `{items}`, `{conditions}`, `{tags}`); direct entity/draft attributes use singular keys such as `{item.title}` and `{create(item)}`. iOS pluralizes the singular entity key into a backend resource name using Swift inflection. The client data layer resolves collection bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
+- Collection/list sources remain plural (for example, `{items}`, `{conditions}`, `{tags}`); direct entity/draft attributes use singular keys such as `{item.title}` and `{create(marketplace,item)}`. iOS pluralizes the singular entity key into a backend resource name using Swift inflection. The client data layer resolves collection bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
 - `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
 So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is written to `destination: "{item.distance}"`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
@@ -95,7 +95,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "actions": [{
         "condition": "{length(title) > 0}",
         "false": "{highlight_required(title)}",
-        "true": "{create(item)}"
+        "true": "{create(marketplace,item)}"
     }]
 }
 ```
@@ -133,8 +133,8 @@ Supported action functions:
 | Function | Meaning |
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}` |
-| `create(model)` | Submit / create domain entity, e.g. `{create(item)}` |
-| `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a JSON object, e.g. `{navigate(flowId, pageId, {"id": "$datum.id"})}`. |
+| `create(namespace, resource)` | Submit / create domain entity, e.g. `{create(marketplace,item)}` |
+| `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
 #### Evaluation (iOS reference)
@@ -173,7 +173,7 @@ Navigate with query params (selects an entity from synced data):
 {
 	"condition": "",
 	"false": "",
-	"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,06b21b52-0845-468a-ace1-170a3b05f3a2,{\"id\": \"$datum.id\"})}"
+	"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,06b21b52-0845-468a-ace1-170a3b05f3a2,{id: $datum.id})}"
 }
 ```
 
@@ -193,7 +193,7 @@ Submit:
 {
 	"condition": "",
 	"false": "",
-	"true": "{create(item)}"
+	"true": "{create(marketplace,item)}"
 }
 ```
 

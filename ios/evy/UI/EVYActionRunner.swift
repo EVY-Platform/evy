@@ -78,10 +78,14 @@ enum EVYActionRunner {
         )
       case "create":
         let args = splitFunctionArguments(functionArgs)
-        guard let key = args.first, !key.isEmpty else {
-          throw EVYError.invalidData(context: "create requires a key")
+        guard args.count >= 2,
+          let namespace = args.first, !namespace.isEmpty,
+          let resource = args.dropFirst().first, !resource.isEmpty
+        else {
+          throw EVYError.invalidData(
+            context: "create requires namespace and resource, e.g. create(marketplace,item)")
         }
-        navigate(.create(key))
+        navigate(.create(namespace: namespace, resource: resource))
       case "close":
         navigate(.close)
       case "show":
@@ -127,39 +131,60 @@ enum EVYActionRunner {
   }
 
   private static func parseQueryArgument(_ value: String) throws -> [String: [String]] {
-    let trimmedValue = stripOptionalSurroundingQuotes(value)
-      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedValue.isEmpty else { return [:] }
-    guard trimmedValue.hasPrefix("{") else {
-      throw EVYError.invalidData(context: "navigate query params must be a JSON object")
-    }
-    return try parseJsonQuery(trimmedValue)
+    return try parsePlainTextQuery(trimmedValue)
   }
 
-  private static func parseJsonQuery(_ jsonString: String) throws -> [String: [String]] {
-    guard let data = jsonString.data(using: .utf8),
-      let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-    else {
-      throw EVYError.invalidData(
-        context: "navigate query params must be valid JSON with quoted string values")
+  private static func parsePlainTextQuery(_ text: String) throws -> [String: [String]] {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else {
+      throw EVYError.invalidData(context: "navigate query params must be wrapped in {}")
     }
 
+    let inner = String(trimmed.dropFirst().dropLast())
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !inner.isEmpty else { return [:] }
+
     var query: [String: [String]] = [:]
-    for (key, value) in parsed {
+    for pair in splitFunctionArguments(inner) {
+      guard let colonIndex = pair.firstIndex(of: ":") else {
+        throw EVYError.invalidData(context: "navigate query params must be key:value pairs")
+      }
+
+      let key = pair[..<colonIndex]
+        .trimmingCharacters(in: .whitespacesAndNewlines)
       guard !key.isEmpty else { continue }
-      if let array = value as? [Any] {
-        let strings = array.compactMap { element -> String? in
-          if let s = element as? String, !s.isEmpty { return s }
-          return nil
-        }
-        if !strings.isEmpty {
-          query[key] = strings
-        }
-      } else if let s = value as? String, !s.isEmpty {
-        query[key] = [s]
+
+      let value = pair[pair.index(after: colonIndex)...]
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      let values = try parsePlainTextQueryValue(value)
+      if !values.isEmpty {
+        query[key] = values
       }
     }
+
     return query
+  }
+
+  private static func parsePlainTextQueryValue(_ value: String) throws -> [String] {
+    guard !value.isEmpty else { return [] }
+
+    if value.hasPrefix("[") || value.hasSuffix("]") {
+      guard value.hasPrefix("["), value.hasSuffix("]") else {
+        throw EVYError.invalidData(context: "navigate query arrays must be wrapped in []")
+      }
+
+      let innerValue = String(value.dropFirst().dropLast())
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !innerValue.isEmpty else { return [] }
+
+      return splitFunctionArguments(innerValue)
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter { !$0.isEmpty }
+    }
+
+    return [value]
   }
 
   private static func unwrapActionBranch(_ branch: String) -> String {

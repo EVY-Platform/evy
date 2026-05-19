@@ -11,6 +11,7 @@ import {
 	getPageOptions,
 	toVariableOptions,
 } from "../../utils/actionFlowOptions";
+import { displayLabel } from "../../utils/labelFormatting";
 import { PopoverSelect, type PopoverOption } from "../PopoverSelect";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
 
@@ -23,6 +24,20 @@ type BranchEditorProps = {
 };
 
 type ArgDropdownSlot = { slotId: string; options: PopoverOption[] };
+function entityRoot(variable: string): string {
+	const dotIndex = variable.indexOf(".");
+	return dotIndex === -1 ? variable : variable.slice(0, dotIndex);
+}
+
+function toEntityOptions(draftVariables: string[]): PopoverOption[] {
+	const entities = new Set(draftVariables.map(entityRoot));
+	return Array.from(entities)
+		.sort()
+		.map((entity) => ({
+			value: entity,
+			label: displayLabel(entity),
+		}));
+}
 
 function buildArgDropdowns(
 	functionName: ActionFunction | "",
@@ -50,9 +65,20 @@ function buildArgDropdowns(
 	}
 
 	if (functionName === "create") {
-		return [
-			{ slotId: "create-variable", options: toVariableOptions(draftVariables) },
+		const namespaceOptions: PopoverOption[] = [
+			{ value: "marketplace", label: "Marketplace" },
+			{ value: "evy", label: "Evy" },
 		];
+		const dropdowns: ArgDropdownSlot[] = [
+			{ slotId: "create-namespace", options: namespaceOptions },
+		];
+		if (currentArgs[0]) {
+			dropdowns.push({
+				slotId: "create-resource",
+				options: toEntityOptions(draftVariables),
+			});
+		}
+		return dropdowns;
 	}
 
 	if (functionName === "highlight_required") {
@@ -144,7 +170,7 @@ export function BranchEditor({
 					aria-label={`${branchId}-navigate-query`}
 					value={args[2] ?? ""}
 					onChange={(e) => handleArgChange(2, e.target.value)}
-					placeholder='Optional JSON query, e.g. {"items": [$datum.id]}'
+					placeholder="Optional query, e.g. {items: [$datum.id]}"
 					rows={3}
 					className="evy-action-popup-textarea"
 				/>

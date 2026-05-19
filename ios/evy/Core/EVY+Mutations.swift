@@ -39,16 +39,13 @@ extension EVY {
     }
   }
 
-  static func create(key: String, draftScopeId: String? = nil) throws {
+  static func create(namespace: String, resource: String, draftScopeId: String? = nil) throws {
     struct UpsertParams: Encodable {
       let service: String
       let resource: String
       let filter: Filter?
       let data: EVYJson
     }
-
-    let resource = EVY.resourceName(forEntityKey: key)
-    let namespace = "marketplace"  // TODO: Dynamic service discovery
 
     let newId = UUID().uuidString
 
