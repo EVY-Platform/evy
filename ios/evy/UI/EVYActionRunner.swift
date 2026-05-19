@@ -78,10 +78,13 @@ enum EVYActionRunner {
         )
       case "create":
         let args = splitFunctionArguments(functionArgs)
-        guard let key = args.first, !key.isEmpty else {
-          throw EVYError.invalidData(context: "create requires a key")
+        guard args.count >= 2,
+          let namespace = args.first, !namespace.isEmpty,
+          let resource = args.dropFirst().first, !resource.isEmpty
+        else {
+          throw EVYError.invalidData(context: "create requires namespace and resource, e.g. create(marketplace,items)")
         }
-        navigate(.create(key))
+        navigate(.create(namespace: namespace, resource: resource))
       case "close":
         navigate(.close)
       case "show":

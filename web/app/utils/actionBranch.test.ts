@@ -18,6 +18,19 @@ describe("action branch helpers", () => {
 		expect(serializeBranch("show", [])).toBe("{show()}");
 	});
 
+	it("parses create with namespace and resource", () => {
+		expect(parseBranch("{create(marketplace,items)}")).toEqual({
+			functionName: "create",
+			args: ["marketplace", "items"],
+		});
+	});
+
+	it("serializes create with namespace and resource", () => {
+		expect(serializeBranch("create", ["marketplace", "items"])).toBe(
+			"{create(marketplace,items)}",
+		);
+	});
+
 	it("parses navigate query JSON as a third function argument", () => {
 		expect(
 			parseBranch('{navigate(flow-1,page-2,{"items": ["id-1", "id-2"]})}'),

@@ -189,7 +189,7 @@ final class ContentViewTests: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": "{create(item)}",
+                  "true": "{create(marketplace,items)}",
                 ]
               ],
             ],

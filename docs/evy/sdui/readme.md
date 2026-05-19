@@ -19,7 +19,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 - `sync` is a protected JSON-RPC method. It accepts `{ "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows across SDUI, evy core data, and backend service data. When data changed, it also returns the current resource registry. For startup/cache refresh, the API fetches every syncable resource using `filter.updatedAfter = lastSyncTime`.
 - Clients should store synced rows under service-qualified keys such as `evy:sdui`, `marketplace:items`, and `marketplace:conditions`. Navigate actions pass query params as the optional third `navigate` argument (for example, `{navigate(flowId, pageId, {"id": "$datum.id"})}`). Query values must use a JSON object with quoted string values (`{"key": "id"}` or `{"key": ["id"]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same plural key. A generic `"id"` query key may be used by clients that can infer the resource from synced collections. If no synced collection exists for a query key, clients keep the raw string array under that key.
 - iOS draft scope IDs and draft cache keys are internal draft-store identifiers; see [iOS README § Draft scopes and draft cache keys](../../../ios/README.md#draft-scopes-and-draft-cache-keys).
-- Collection/list sources remain plural (for example, `{items}`, `{conditions}`, `{tags}`); direct entity/draft attributes use singular keys such as `{item.title}` and `{create(item)}`. iOS pluralizes the singular entity key into a backend resource name using Swift inflection. The client data layer resolves collection bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
+- Collection/list sources remain plural (for example, `{items}`, `{conditions}`, `{tags}`); direct entity/draft attributes use singular keys such as `{item.title}` and `{create(marketplace,items)}`. iOS pluralizes the singular entity key into a backend resource name using Swift inflection. The client data layer resolves collection bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
 - `evy` catalog data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
 So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is written to `destination: "{item.distance}"`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
@@ -95,7 +95,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "actions": [{
         "condition": "{length(title) > 0}",
         "false": "{highlight_required(title)}",
-        "true": "{create(item)}"
+        "true": "{create(marketplace,items)}"
     }]
 }
 ```
@@ -133,7 +133,7 @@ Supported action functions:
 | Function | Meaning |
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}` |
-| `create(model)` | Submit / create domain entity, e.g. `{create(item)}` |
+| `create(namespace, resource)` | Submit / create domain entity, e.g. `{create(marketplace,items)}` |
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a JSON object, e.g. `{navigate(flowId, pageId, {"id": "$datum.id"})}`. |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
@@ -193,7 +193,7 @@ Submit:
 {
 	"condition": "",
 	"false": "",
-	"true": "{create(item)}"
+	"true": "{create(marketplace,items)}"
 }
 ```
 

@@ -20,7 +20,7 @@ struct Route: Hashable, Codable {
 }
 enum NavOperation: Hashable {
   case navigate(Route)
-  case create(String)
+  case create(namespace: String, resource: String)
   case highlightRequired(String)
   case close
 }
@@ -102,8 +102,8 @@ struct ContentView: View {
         break
       }
 
-    case .create(let key):
-      createFlow(key: key)
+    case .create(let namespace, let resource):
+      createFlow(namespace: namespace, resource: resource)
 
     case .highlightRequired(let fieldName):
       alertTitle = "Missing information"
@@ -119,10 +119,11 @@ struct ContentView: View {
     }
   }
 
-  private func createFlow(key: String) {
+  private func createFlow(namespace: String, resource: String) {
     do {
-      let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: key)
-      try EVY.create(key: key, draftScopeId: draftScope)
+      let entityKey = EVY.entityName(forResourceKey: resource)
+      let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: entityKey)
+      try EVY.create(namespace: namespace, resource: resource, draftScopeId: draftScope)
     } catch {
       showError(error)
       return
@@ -280,8 +281,12 @@ enum EVYFlowDraftScopeResolver {
             if let (name, args) = parseFunctionCall(unwrapped),
               name == "create"
             {
-              let key = args.trimmingCharacters(in: .whitespacesAndNewlines)
-              if !key.isEmpty { keys.insert(key) }
+              let parsedArgs = splitFunctionArguments(args)
+              if parsedArgs.count >= 2 {
+                let resource = parsedArgs[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                let entityKey = EVY.entityName(forResourceKey: resource)
+                if !entityKey.isEmpty { keys.insert(entityKey) }
+              }
             }
           }
         }

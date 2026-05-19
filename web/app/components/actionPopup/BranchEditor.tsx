@@ -50,9 +50,20 @@ function buildArgDropdowns(
 	}
 
 	if (functionName === "create") {
-		return [
-			{ slotId: "create-variable", options: toVariableOptions(draftVariables) },
+		const namespaceOptions: PopoverOption[] = [
+			{ value: "marketplace", label: "Marketplace" },
+			{ value: "evy", label: "Evy" },
 		];
+		const dropdowns: ArgDropdownSlot[] = [
+			{ slotId: "create-namespace", options: namespaceOptions },
+		];
+		if (currentArgs[0]) {
+			dropdowns.push({
+				slotId: "create-resource",
+				options: toVariableOptions(draftVariables),
+			});
+		}
+		return dropdowns;
 	}
 
 	if (functionName === "highlight_required") {

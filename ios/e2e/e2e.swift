@@ -795,7 +795,7 @@ final class WebSocketE2ETests: E2ETestBase {
               [
                 "condition": "",
                 "false": "",
-                "true": "{create(item)}",
+                "true": "{create(marketplace,items)}",
               ]
             ],
           ],

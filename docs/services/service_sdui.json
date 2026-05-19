@@ -730,7 +730,7 @@
 						{
 							"condition": "",
 							"false": "",
-							"true": "{create(item)}"
+							"true": "{create(marketplace,items)}"
 						}
 					],
 					"view": {

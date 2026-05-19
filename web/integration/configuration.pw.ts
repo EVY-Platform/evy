@@ -780,7 +780,7 @@ test.describe("Row configuration", () => {
 						},
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
-							{ condition: "", false: "", true: "{create()}" },
+							{ condition: "", false: "", true: "{create(marketplace,items)}" },
 						],
 					},
 				],
