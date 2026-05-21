@@ -238,7 +238,7 @@ struct ContentView: View {
         )
       }
     }
-    .onReceive(NotificationCenter.default.publisher(for: .evyDataUpdated)) { notification in
+    .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
       guard let notifKey = notification.object as? String,
         notifKey == "evy:sdui" || notifKey == "sdui"
       else { return }

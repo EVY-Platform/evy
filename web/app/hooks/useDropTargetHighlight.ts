@@ -8,10 +8,6 @@ export type DropTargetHighlightDataArgs = {
 	element: Element;
 };
 
-/**
- * Shared hook that encapsulates the boilerplate for drop-target indicators:
- * a ref, isDraggedOver state, and dropTargetForElements highlight wiring.
- */
 export function useDropTargetHighlight(
 	getData: (args: DropTargetHighlightDataArgs) => Record<string, unknown>,
 ): { ref: React.RefObject<HTMLDivElement | null>; isDraggedOver: boolean } {

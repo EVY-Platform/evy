@@ -22,19 +22,17 @@ const centeredPageFrame: CSSProperties = {
 	marginRight: "auto",
 };
 
-export const pageWrapperStyle: CSSProperties = {
+const pageWrapperStyle: CSSProperties = {
 	...centeredPageFrame,
 	opacity: 1,
 };
 
-/** Same as pageWrapperStyle but without auto margins — used when the page is
- *  the sole visible page (element active) so it doesn't push siblings away. */
-export const activePageWrapperStyle: CSSProperties = {
+const activePageWrapperStyle: CSSProperties = {
 	...pagePhoneFrameBase,
 	opacity: 1,
 };
 
-export const secondaryPageWrapperStyle: CSSProperties = {
+const secondaryPageWrapperStyle: CSSProperties = {
 	...pagePhoneFrameBase,
 	marginLeft: "var(--size-4)",
 	opacity: 1,

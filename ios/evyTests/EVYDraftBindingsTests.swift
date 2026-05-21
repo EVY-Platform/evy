@@ -98,7 +98,7 @@ final class EVYDraftBindingTests: XCTestCase {
     let binding = try EVYDraft.binding(parsedProps: "condition", scopeId: "flow:item")
     var notificationKeys: [String] = []
     let token = NotificationCenter.default.addObserver(
-      forName: .evyDataUpdated,
+      forName: .evyDataChanged,
       object: nil,
       queue: .main
     ) { notification in
@@ -123,7 +123,7 @@ final class EVYDraftBindingTests: XCTestCase {
     )
     var notificationKeys: [String] = []
     let token = NotificationCenter.default.addObserver(
-      forName: .evyDataUpdated,
+      forName: .evyDataChanged,
       object: nil,
       queue: .main
     ) { notification in

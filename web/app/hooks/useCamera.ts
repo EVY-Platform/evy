@@ -113,10 +113,7 @@ export function useCamera() {
 		[smoothPanTo],
 	);
 
-	/**
-	 * Instantly adjusts camera offset without transition or RAF scheduling.
-	 * Used to compensate for layout shifts before the browser paints.
-	 */
+	// Used to compensate for layout shifts before the browser paints.
 	const snapPan = useCallback(
 		(dx: number, dy: number) => {
 			cameraRef.current.offsetX += dx;

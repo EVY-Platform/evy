@@ -37,9 +37,10 @@ struct EVYLoginParams: Encodable {
   let os: DataOS
 }
 
-struct DataUpdatedNotification: Decodable {
+struct DataChangedNotification: Decodable {
   let service: String
   let resource: String
+  let operation: String
   let value: EVYJson
 }
 
@@ -146,8 +147,8 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
 
   func notification(method: String, params: Parsable) {
     switch method {
-    case "dataUpdated":
-      handleDataUpdated(params: params)
+    case "dataChanged":
+      handleDataChanged(params: params)
     default:
       #if DEBUG
         print("[EVYWebsocket] Received unknown notification: \(method)")
@@ -155,34 +156,27 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     }
   }
 
-  private func handleDataUpdated(params: Parsable) {
-    let notification: DataUpdatedNotification
+  private func handleDataChanged(params: Parsable) {
+    let notification: DataChangedNotification
 
     do {
-      guard let parsed = try params.parse(to: DataUpdatedNotification.self).get() else {
-        throw EVYError.parsingFailed(context: "dataUpdated notification returned nil")
+      guard let parsed = try params.parse(to: DataChangedNotification.self).get() else {
+        throw EVYError.parsingFailed(context: "dataChanged notification returned nil")
       }
       notification = parsed
     } catch {
-      #if DEBUG
-        print("[EVYWebsocket] Failed to parse dataUpdated notification: \(error)")
-      #endif
-      postError(EVYError.parsingFailed(context: "dataUpdated: \(error.localizedDescription)"))
+      postError(EVYError.parsingFailed(context: "dataChanged: \(error.localizedDescription)"))
       return
     }
 
-    // Dispatch to MainActor for thread-safe data access
     Task { @MainActor in
       do {
-        try EVY.publicStore.upsertSyncedValue(
+        try EVY.publicStore.applySyncedValue(
           namespace: notification.service,
           resource: notification.resource,
           value: notification.value
         )
       } catch {
-        #if DEBUG
-          print("[EVYWebsocket] Failed to update data: \(error)")
-        #endif
         self.postError(
           EVYError.invalidData(context: "failed to update data: \(error.localizedDescription)"))
       }

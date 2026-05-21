@@ -11,7 +11,7 @@ import {
 } from "./utils";
 
 test.describe("Offline and connection resilience", () => {
-	test("shows browser alert when upsert cannot be sent over WebSocket", async ({
+	test("shows browser alert when create cannot be sent over WebSocket", async ({
 		page,
 	}) => {
 		await page.addInitScript(() => {
@@ -79,7 +79,7 @@ test.describe("Offline and connection resilience", () => {
 						return;
 					}
 
-					if (request.method === "upsert") {
+					if (request.method === "create") {
 						throw new Error("Simulated WebSocket send failure");
 					}
 				}

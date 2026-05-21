@@ -4,7 +4,7 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 ## Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `get` / `upsert` using `service` and `resource` (see [`types/schema/rpc/get.request.schema.json`](../../../types/schema/rpc/get.request.schema.json)). `service: "evy"` maps to the row types below in the API’s Postgres schema. `service: "marketplace"` (and future workers) is proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic “namespace row” in the EVY data schema.
+Clients call the API with JSON-RPC `get`, `create`, and `update` using `service` and `resource` (see [`types/schema/rpc/get.request.schema.json`](../../../types/schema/rpc/get.request.schema.json), [`types/schema/rpc/create.request.schema.json`](../../../types/schema/rpc/create.request.schema.json), and [`types/schema/rpc/update.request.schema.json`](../../../types/schema/rpc/update.request.schema.json)). `service: "evy"` maps to the row types below in the API’s Postgres schema. `service: "marketplace"` (and future workers) is proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic “namespace row” in the EVY data schema.
 
 ## Common date-time fields
 
@@ -73,7 +73,7 @@ retired: boolean (default false)
 
 Row shape: `id`, `data` ([`UI_Flow`](../sdui/readme.md) JSON), `createdAt`, `updatedAt`. On the wire this is accessed with `service: "evy"` and `resource: "sdui"`.
 
-There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get` / `upsert`).
+There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get`, `create`, or `update`).
 
 ---
 

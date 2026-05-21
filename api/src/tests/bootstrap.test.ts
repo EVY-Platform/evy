@@ -20,7 +20,7 @@ describe("initServer bootstrap", () => {
 		server = await initServer(async () => true);
 
 		server
-			.register("upsert", async () => ({
+			.register("create", async () => ({
 				id: "stub",
 				data: { id: "stub", name: "Stub", pages: [] } satisfies UI_Flow,
 				createdAt: new Date().toISOString(),
@@ -38,17 +38,17 @@ describe("initServer bootstrap", () => {
 		}
 	});
 
-	it("registers dataUpdated event", () => {
+	it("registers dataChanged event", () => {
 		const events = server.eventList("/");
-		expect(events).toContain("dataUpdated");
+		expect(events).toContain("dataChanged");
 		expect(events).not.toContain("flowUpdated");
 	});
 
-	it("rejects upsert without authentication", async () => {
+	it("rejects create without authentication", async () => {
 		const client = new Client(apiUrl);
 		await waitForClientOpen(client);
 		await expect(
-			client.call("upsert", {
+			client.call("create", {
 				service: "evy",
 				resource: "sdui",
 				data: {

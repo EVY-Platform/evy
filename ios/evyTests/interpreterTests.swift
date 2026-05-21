@@ -77,7 +77,7 @@ final class InterpreterTests: XCTestCase {
     try store(.string("public"), at: key)
 
     let (localStore, localKey) = EVY.store(for: "$local:\(key)")
-    try localStore.upsert(
+    try localStore.create(
       namespace: EVYNamespace.local,
       resource: localKey,
       id: EVYNamespace.singletonId,
@@ -321,7 +321,7 @@ final class InterpreterTests: XCTestCase {
     EVY.resolveQueryParams([key: ["cache"]])
 
     let binding = try EVY.draftStore.binding(fromParsedProps: key, scopeId: scopeId)
-    try EVY.cacheStore.upsert(
+    try EVY.cacheStore.create(
       namespace: EVYNamespace.draft,
       resource: binding.scopeId,
       id: binding.draftKey,
@@ -515,11 +515,11 @@ final class InterpreterTests: XCTestCase {
     if parts.count == 2 {
       let namespace = parts[0]
       let resource = parts[1]
-      try EVY.publicStore.upsertSyncedValue(namespace: namespace, resource: resource, value: value)
+      try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: value)
       return
     }
 
-    try EVY.publicStore.upsert(
+    try EVY.publicStore.create(
       namespace: EVYNamespace.local, resource: key, id: EVYNamespace.singletonId,
       value: encodedValue)
   }

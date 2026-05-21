@@ -1,8 +1,9 @@
 import { Client } from "rpc-websockets";
 import type {
+	CreateResponse,
 	SyncResponse,
 	UI_Flow as ServerFlow,
-	UpsertResponse,
+	UpdateResponse,
 } from "evy-types";
 import { config } from "../config";
 
@@ -19,7 +20,7 @@ function isServerFlow(v: unknown): v is ServerFlow {
 	);
 }
 
-function isUpsertResponse(v: unknown): v is UpsertResponse {
+function isWriteResponse(v: unknown): v is CreateResponse | UpdateResponse {
 	return (
 		v !== null &&
 		typeof v === "object" &&
@@ -30,10 +31,10 @@ function isUpsertResponse(v: unknown): v is UpsertResponse {
 	);
 }
 
-function isFlowUpsertResponse(
+function isFlowWriteResponse(
 	v: unknown,
 ): v is { id: string; data: ServerFlow; createdAt: string; updatedAt: string } {
-	return isUpsertResponse(v) && isServerFlow(v.data);
+	return isWriteResponse(v) && isServerFlow(v.data);
 }
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
@@ -95,18 +96,33 @@ class WSClient {
 		return response;
 	}
 
+	private async flowExists(flowId: string): Promise<boolean> {
+		await this.connect();
+		if (!this.client) throw new Error("WebSocket client not initialized");
+
+		const raw = await this.client.call("get", {
+			service: "evy",
+			resource: "sdui",
+			filter: { id: flowId },
+		});
+		return Array.isArray(raw) && raw.some(isServerFlow);
+	}
+
 	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const raw = await this.client.call("upsert", {
+		const shouldUpdate = flowData.id
+			? await this.flowExists(flowData.id)
+			: false;
+		const raw = await this.client.call(shouldUpdate ? "update" : "create", {
 			service: "evy",
 			resource: "sdui",
 			filter: flowData.id ? { id: flowData.id } : undefined,
 			data: flowData,
 		});
-		if (!isFlowUpsertResponse(raw)) {
-			throw new Error("Invalid upsert response: expected flow");
+		if (!isFlowWriteResponse(raw)) {
+			throw new Error("Invalid write response: expected flow");
 		}
 		return raw.data;
 	}

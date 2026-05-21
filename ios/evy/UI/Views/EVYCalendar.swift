@@ -339,7 +339,7 @@ struct EVYCalendar: View {
     .environment(\.operate) { calendarOperation in
       handleOperation(calendarOperation)
     }
-    .onReceive(NotificationCenter.default.publisher(for: .evyDataUpdated)) { _ in
+    .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { _ in
       reloadData()
     }
   }

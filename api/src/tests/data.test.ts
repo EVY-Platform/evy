@@ -14,9 +14,11 @@ import type {
 	UI_Row,
 	DATA_EVY_Flow,
 	DATA_EVY_Service,
+	CreateRequest,
+	CreateResponse,
+	UpdateRequest,
+	UpdateResponse,
 	GetRequest,
-	UpsertRequest,
-	UpsertResponse,
 } from "evy-types";
 import { validateUiFlow as validateFlowData } from "evy-types/validators";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
@@ -50,10 +52,12 @@ type FlowDataInput = Omit<UI_Flow, "id" | "pages"> & {
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
-const { validateAuth, get, setDbForTest, upsert } = dataModule;
+const { validateAuth, create, get, setDbForTest, update } = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
-function isDATA_EVY_Flow(row: UpsertResponse): row is DATA_EVY_Flow {
+function isDATA_EVY_Flow(
+	row: CreateResponse | UpdateResponse,
+): row is DATA_EVY_Flow {
 	return (
 		"data" in row &&
 		typeof row.data === "object" &&
@@ -63,7 +67,7 @@ function isDATA_EVY_Flow(row: UpsertResponse): row is DATA_EVY_Flow {
 }
 
 function expectToBeDATA_EVY_Flow(
-	row: UpsertResponse,
+	row: CreateResponse | UpdateResponse,
 ): asserts row is DATA_EVY_Flow {
 	expect(isDATA_EVY_Flow(row)).toBe(true);
 	if (!isDATA_EVY_Flow(row)) {
@@ -174,6 +178,261 @@ describe("validateAuth", () => {
 		const devices = await testDb.select().from(schema.device);
 		expect(devices).toHaveLength(1);
 		expect(devices[0].os).toBe("Web");
+	});
+});
+
+describe("create", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("should throw when params is not an object", async () => {
+		await expect(create(null as unknown as CreateRequest)).rejects.toThrow();
+	});
+
+	it("should throw when data is missing", async () => {
+		await expect(
+			create({
+				service: "evy",
+				resource: "sdui",
+			} as unknown as CreateRequest),
+		).rejects.toThrow("Flow validation failed");
+	});
+
+	it("should create new flow for resource SDUI without filter.id", async () => {
+		const flowData = createTestFlow({
+			name: "New Flow",
+			pages: [
+				{
+					title: "Page 1",
+					rows: [
+						{
+							type: "Text",
+							view: {
+								content: {
+									title: "Hello",
+									text: "World",
+								},
+							},
+							actions: [],
+						},
+					],
+				},
+			],
+		});
+
+		const result = await create({
+			service: "evy",
+			resource: "sdui",
+			data: flowData,
+		});
+
+		expectToBeDATA_EVY_Flow(result);
+		expect(result.data.name).toBe("New Flow");
+		const flows = await testDb.select().from(schema.flow);
+		expect(flows).toHaveLength(1);
+	});
+
+	it("should create new flow with filter.id", async () => {
+		const flowId = crypto.randomUUID();
+		const flowData = createTestFlow({
+			id: flowId,
+			name: "Client Created Flow",
+			pages: [{ title: "Draft", rows: [] }],
+		});
+
+		const result = await create({
+			service: "evy",
+			resource: "sdui",
+			filter: { id: flowId },
+			data: flowData,
+		});
+
+		expectToBeDATA_EVY_Flow(result);
+		expect(result.id).toBe(flowId);
+		expect(result.data.id).toBe(flowId);
+		expect(result.data.name).toBe("Client Created Flow");
+	});
+
+	it("should fail to create duplicate flow", async () => {
+		const flowId = crypto.randomUUID();
+		const flowData = createTestFlow({
+			id: flowId,
+			name: "Duplicate Test",
+			pages: [{ title: "P1", rows: [] }],
+		});
+
+		await create({
+			service: "evy",
+			resource: "sdui",
+			data: flowData,
+		});
+
+		await expect(
+			create({
+				service: "evy",
+				resource: "sdui",
+				data: flowData,
+			}),
+		).rejects.toThrow();
+	});
+
+	it("should create Service resource into the Service table", async () => {
+		const nowIso = new Date().toISOString();
+		const serviceId = crypto.randomUUID();
+		const payload = {
+			id: serviceId,
+			name: "CreateSvc",
+			description: "D",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		};
+
+		const result = await create({
+			service: "evy",
+			resource: "services",
+			data: payload,
+		});
+
+		const row = result as DATA_EVY_Service;
+		expect(row.id).toBe(serviceId);
+		expect(row.name).toBe("CreateSvc");
+		expect(row.description).toBe("D");
+		const svcRows = await testDb.select().from(schema.service);
+		expect(svcRows).toHaveLength(1);
+		expect(svcRows[0].id).toBe(serviceId);
+		expect(svcRows[0].name).toBe("CreateSvc");
+	});
+});
+
+describe("update", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("should throw when params is not an object", async () => {
+		await expect(update(null as unknown as UpdateRequest)).rejects.toThrow();
+	});
+
+	it("should throw when data is missing", async () => {
+		await expect(
+			update({
+				service: "evy",
+				resource: "sdui",
+				filter: { id: "x" },
+			} as unknown as UpdateRequest),
+		).rejects.toThrow("Flow validation failed");
+	});
+
+	it("should throw when filter.id is missing", async () => {
+		await expect(
+			update({
+				service: "evy",
+				resource: "sdui",
+				data: { name: "test", pages: [] },
+			} as unknown as UpdateRequest),
+		).rejects.toThrow();
+	});
+
+	it("should update existing flow for resource SDUI with filter.id", async () => {
+		const existingFlowData = createTestFlow({
+			name: "Old Name",
+			pages: [{ title: "P1", rows: [] }],
+		});
+		const [existingFlow] = await testDb
+			.insert(schema.flow)
+			.values({
+				data: existingFlowData,
+				...testFlowRowTimestamps(),
+			})
+			.returning();
+
+		const updatedFlowData = createTestFlow({
+			id: existingFlow.id,
+			name: "Updated Name",
+			pages: [
+				{
+					title: "New Page",
+					rows: [
+						{
+							type: "Button",
+							view: {
+								content: {
+									title: "",
+									label: "Click me",
+								},
+							},
+							actions: [{ condition: "", false: "", true: "{close()}" }],
+						},
+					],
+				},
+			],
+		});
+
+		const result = await update({
+			service: "evy",
+			resource: "sdui",
+			filter: { id: existingFlow.id },
+			data: updatedFlowData,
+		});
+
+		expectToBeDATA_EVY_Flow(result);
+		expect(result.data.name).toBe("Updated Name");
+		const flows = await testDb.select().from(schema.flow);
+		expect(flows).toHaveLength(1);
+	});
+
+	it("should fail to update non-existent flow", async () => {
+		await expect(
+			update({
+				service: "evy",
+				resource: "sdui",
+				filter: { id: crypto.randomUUID() },
+				data: createTestFlow({
+					name: "Non Existent",
+					pages: [{ title: "P1", rows: [] }],
+				}),
+			}),
+		).rejects.toThrow("Resource not found");
+	});
+
+	it("should update Service resource into the Service table", async () => {
+		const nowIso = new Date().toISOString();
+		const serviceId = crypto.randomUUID();
+		const payload = {
+			id: serviceId,
+			name: "CreateSvc",
+			description: "D",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		};
+
+		await create({
+			service: "evy",
+			resource: "services",
+			data: payload,
+		});
+
+		const updatedPayload = {
+			id: serviceId,
+			name: "UpdatedSvc",
+			description: "Updated",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		};
+
+		const result = await update({
+			service: "evy",
+			resource: "services",
+			filter: { id: serviceId },
+			data: updatedPayload,
+		});
+
+		const row = result as DATA_EVY_Service;
+		expect(row.name).toBe("UpdatedSvc");
+		const svcRows = await testDb.select().from(schema.service);
+		expect(svcRows).toHaveLength(1);
+		expect(svcRows[0].name).toBe("UpdatedSvc");
 	});
 });
 
@@ -322,7 +581,7 @@ describe("get", () => {
 			createdAt: nowIso,
 			updatedAt: nowIso,
 		};
-		await upsert({
+		await create({
 			service: "evy",
 			resource: "services",
 			data: serviceData,
@@ -357,186 +616,14 @@ describe("get", () => {
 	});
 });
 
-describe("upsert", () => {
-	beforeEach(async () => {
-		await clearAllTestTables(testDb);
-	});
-
-	it("should throw when params is not an object", async () => {
-		await expect(upsert(null as unknown as UpsertRequest)).rejects.toThrow();
-	});
-
-	it("should throw when data is missing", async () => {
-		await expect(
-			upsert({
-				service: "evy",
-				resource: "sdui",
-			} as unknown as UpsertRequest),
-		).rejects.toThrow("Flow validation failed");
-	});
-
-	it("should create new flow for resource SDUI without filter.id", async () => {
-		const flowData = createTestFlow({
-			name: "New Flow",
-			pages: [
-				{
-					title: "Page 1",
-					rows: [
-						{
-							type: "Text",
-							view: {
-								content: {
-									title: "Hello",
-									text: "World",
-								},
-							},
-							actions: [],
-						},
-					],
-				},
-			],
-		});
-
-		const result = await upsert({
-			service: "evy",
-			resource: "sdui",
-			data: flowData,
-		});
-
-		expectToBeDATA_EVY_Flow(result);
-		expect(result.data.name).toBe("New Flow");
-		const flows = await testDb.select().from(schema.flow);
-		expect(flows).toHaveLength(1);
-	});
-
-	it("should update existing flow for resource SDUI with filter.id", async () => {
-		const existingFlowData = createTestFlow({
-			name: "Old Name",
-			pages: [{ title: "P1", rows: [] }],
-		});
-		const [existingFlow] = await testDb
-			.insert(schema.flow)
-			.values({
-				data: existingFlowData,
-				...testFlowRowTimestamps(),
-			})
-			.returning();
-
-		const updatedFlowData = createTestFlow({
-			id: existingFlow.id,
-			name: "Updated Name",
-			pages: [
-				{
-					title: "New Page",
-					rows: [
-						{
-							type: "Button",
-							view: {
-								content: {
-									title: "",
-									label: "Click me",
-								},
-							},
-							actions: [{ condition: "", false: "", true: "{close()}" }],
-						},
-					],
-				},
-			],
-		});
-
-		const result = await upsert({
-			service: "evy",
-			resource: "sdui",
-			filter: { id: existingFlow.id },
-			data: updatedFlowData,
-		});
-
-		expectToBeDATA_EVY_Flow(result);
-		expect(result.data.name).toBe("Updated Name");
-		const flows = await testDb.select().from(schema.flow);
-		expect(flows).toHaveLength(1);
-	});
-
-	it("should insert then update the same SDUI flow when filter.id is provided for a new client-created flow", async () => {
-		const flowId = crypto.randomUUID();
-		const initialFlowData = createTestFlow({
-			id: flowId,
-			name: "Client Created Flow",
-			pages: [{ title: "Draft", rows: [] }],
-		});
-
-		const created = await upsert({
-			service: "evy",
-			resource: "sdui",
-			filter: { id: flowId },
-			data: initialFlowData,
-		});
-
-		expectToBeDATA_EVY_Flow(created);
-		expect(created.id).toBe(flowId);
-		expect(created.data.id).toBe(flowId);
-		expect(created.data.name).toBe("Client Created Flow");
-
-		const updated = await upsert({
-			service: "evy",
-			resource: "sdui",
-			filter: { id: flowId },
-			data: createTestFlow({
-				id: flowId,
-				name: "Client Created Flow Updated",
-				pages: [{ title: "Published", rows: [] }],
-			}),
-		});
-
-		expectToBeDATA_EVY_Flow(updated);
-		expect(updated.id).toBe(flowId);
-		expect(updated.data.id).toBe(flowId);
-		expect(updated.data.name).toBe("Client Created Flow Updated");
-		expect(updated.data.pages[0]?.title).toBe("Published");
-
-		const flows = await testDb.select().from(schema.flow);
-		expect(flows).toHaveLength(1);
-		expect(flows[0]?.id).toBe(flowId);
-		expect(flows[0]?.data.id).toBe(flowId);
-		expect(flows[0]?.data.name).toBe("Client Created Flow Updated");
-	});
-
-	it("should upsert Service resource into the Service table", async () => {
-		const nowIso = new Date().toISOString();
-		const serviceId = crypto.randomUUID();
-		const payload = {
-			id: serviceId,
-			name: "UpsertSvc",
-			description: "D",
-			createdAt: nowIso,
-			updatedAt: nowIso,
-		};
-
-		const result = await upsert({
-			service: "evy",
-			resource: "services",
-			data: payload,
-		});
-
-		const row = result as DATA_EVY_Service;
-		expect(row.id).toBe(serviceId);
-		expect(row.name).toBe("UpsertSvc");
-		expect(row.description).toBe("D");
-		const svcRows = await testDb.select().from(schema.service);
-		expect(svcRows).toHaveLength(1);
-		expect(svcRows[0].id).toBe(serviceId);
-		expect(svcRows[0].name).toBe("UpsertSvc");
-	});
-});
-
-describe("upsert SDUI validation", () => {
+describe("create SDUI validation", () => {
 	beforeEach(async () => {
 		await clearAllTestTables(testDb);
 	});
 
 	it("should reject flow with unrecognized keys", async () => {
 		await expect(
-			upsert({
+			create({
 				service: "evy",
 				resource: "sdui",
 				data: {
@@ -549,7 +636,7 @@ describe("upsert SDUI validation", () => {
 	});
 
 	it("should accept flow with no pages", async () => {
-		const result = await upsert({
+		const result = await create({
 			service: "evy",
 			resource: "sdui",
 			data: {
@@ -564,7 +651,7 @@ describe("upsert SDUI validation", () => {
 
 	it("should reject flow with invalid row type", async () => {
 		await expect(
-			upsert({
+			create({
 				service: "evy",
 				resource: "sdui",
 				data: {
@@ -634,7 +721,7 @@ describe("upsert SDUI validation", () => {
 			],
 		});
 
-		const result = await upsert({
+		const result = await create({
 			service: "evy",
 			resource: "sdui",
 			data: flowData,
@@ -664,7 +751,7 @@ describe("upsert SDUI validation", () => {
 			],
 		});
 
-		const result = await upsert({
+		const result = await create({
 			service: "evy",
 			resource: "sdui",
 			data: flowData,

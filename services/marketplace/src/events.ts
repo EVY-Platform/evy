@@ -4,15 +4,17 @@ import { MARKETPLACE_SERVICE } from "./catalog";
 const marketplaceEventBus = new EventEmitter();
 marketplaceEventBus.setMaxListeners(0);
 
-export type ServiceEventListener = (
-	eventName: string,
-	payload: unknown,
-) => void;
+type ServiceEventListener = (eventName: string, payload: unknown) => void;
 
-export function emitDataUpdated(resource: string, value: unknown): void {
-	marketplaceEventBus.emit("notify", "dataUpdated", {
+export function emitDataChanged(
+	resource: string,
+	operation: "create" | "update",
+	value: unknown,
+): void {
+	marketplaceEventBus.emit("notify", "dataChanged", {
 		service: MARKETPLACE_SERVICE,
 		resource,
+		operation,
 		value,
 	});
 }

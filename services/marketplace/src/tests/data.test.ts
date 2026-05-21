@@ -18,7 +18,7 @@ mock.module("../db", () => ({
 	schema,
 }));
 
-const { get, upsert } = await import("../data");
+const { create, get, update } = await import("../data");
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
@@ -32,7 +32,7 @@ beforeEach(async () => {
 	await testDb.delete(schema.data);
 });
 
-describe("marketplace get/upsert", () => {
+describe("marketplace get/create/update", () => {
 	it("rejects SDUI resource (not a valid marketplace RPC pair)", async () => {
 		await expect(
 			get({
@@ -41,7 +41,7 @@ describe("marketplace get/upsert", () => {
 			}),
 		).rejects.toThrow("Unsupported resource for marketplace service");
 		await expect(
-			upsert({
+			create({
 				service: "marketplace",
 				resource: "sdui",
 				data: { id: crypto.randomUUID(), name: "X", pages: [] },
@@ -51,7 +51,7 @@ describe("marketplace get/upsert", () => {
 
 	it("persists catalog rows for service marketplace", async () => {
 		const row = { id: crypto.randomUUID(), value: "Like new" };
-		await upsert({
+		await create({
 			service: "marketplace",
 			resource: "conditions",
 			data: row,
@@ -125,7 +125,7 @@ describe("marketplace get/upsert", () => {
 	it("uses filter.id as primary key when inserting a new row (client id)", async () => {
 		const clientId = crypto.randomUUID();
 		const payload = { id: clientId, title: "client-keyed" };
-		const inserted = await upsert({
+		const inserted = await create({
 			service: "marketplace",
 			resource: "items",
 			filter: { id: clientId },
@@ -140,17 +140,19 @@ describe("marketplace get/upsert", () => {
 		expect(byFilter).toEqual([payload]);
 	});
 
-	it("upsert update path returns a row that validates as UpsertResponse", async () => {
-		const row = { id: crypto.randomUUID(), value: "v1" };
-		await upsert({
+	it("create then update row", async () => {
+		const rowId = crypto.randomUUID();
+		const row = { id: rowId, value: "v1" };
+		await create({
 			service: "marketplace",
 			resource: "conditions",
+			filter: { id: rowId },
 			data: row,
 		});
-		const updated = await upsert({
+		const updated = await update({
 			service: "marketplace",
 			resource: "conditions",
-			filter: { id: row.id },
+			filter: { id: rowId },
 			data: { ...row, value: "v2" },
 		});
 		expect(updated.data).toEqual({ ...row, value: "v2" });

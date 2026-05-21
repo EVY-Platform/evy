@@ -7,14 +7,17 @@ import type {
 	ApiRequest,
 	GetRequest,
 	GetResponse,
-	UpsertRequest,
-	UpsertResponse,
+	CreateRequest,
+	CreateResponse,
+	UpdateRequest,
+	UpdateResponse,
 } from "evy-types";
 import type { BroadcastFn } from "./broadcast";
 
 import {
 	validateGetResponse,
-	validateUpsertResponse,
+	validateCreateResponse,
+	validateUpdateResponse,
 } from "evy-types/validators";
 import { setServiceRegistry } from "evy-types/rpcRequestHelpers";
 import {
@@ -70,16 +73,24 @@ type ProtoGetRequest = {
 	method?: string;
 };
 
-type ProtoUpsertRequest = {
+type ProtoCreateRequest = {
 	service: string;
 	resource: string;
 	filter?: { id?: string; updated_after?: string };
 	data_json: string;
 };
 
+type ProtoUpdateRequest = {
+	service: string;
+	resource: string;
+	filter: { id: string; updated_after?: string };
+	data_json: string;
+};
+
 type ServiceAdapter = {
 	get(params: ForwardableGetRequest): Promise<GetResponse>;
-	upsert(params: UpsertRequest): Promise<UpsertResponse>;
+	create(params: CreateRequest): Promise<CreateResponse>;
+	update(params: UpdateRequest): Promise<UpdateResponse>;
 	listResources(): Promise<string[]>;
 	onEvent(listener: (eventName: string, payload: unknown) => void): void;
 };
@@ -89,8 +100,12 @@ type GrpcServiceClient = grpc.Client & {
 		request: ProtoGetRequest,
 		callback: grpc.requestCallback<{ result_json: string }>,
 	) => grpc.ClientUnaryCall;
-	Upsert: (
-		request: ProtoUpsertRequest,
+	Create: (
+		request: ProtoCreateRequest,
+		callback: grpc.requestCallback<{ result_json: string }>,
+	) => grpc.ClientUnaryCall;
+	Update: (
+		request: ProtoUpdateRequest,
 		callback: grpc.requestCallback<{ result_json: string }>,
 	) => grpc.ClientUnaryCall;
 	SubscribeEvents: (
@@ -130,13 +145,22 @@ function buildProtoGetRequest(params: {
 	};
 }
 
-function buildProtoUpsertRequest(params: UpsertRequest): ProtoUpsertRequest {
+function buildProtoCreateRequest(params: CreateRequest): ProtoCreateRequest {
 	const filter = buildProtoFilter(params.filter);
-
 	return {
 		service: params.service,
 		resource: params.resource,
 		...(Object.keys(filter).length > 0 ? { filter } : {}),
+		data_json: JSON.stringify(params.data),
+	};
+}
+
+function buildProtoUpdateRequest(params: UpdateRequest): ProtoUpdateRequest {
+	const filter = buildProtoFilter(params.filter);
+	return {
+		service: params.service,
+		resource: params.resource,
+		filter: { ...filter, id: params.filter.id },
 		data_json: JSON.stringify(params.data),
 	};
 }
@@ -250,11 +274,17 @@ function makeGrpcAdapter(
 				validateGetResponse,
 				"Get",
 			),
-		upsert: (params) =>
-			callGrpcJsonMethod<UpsertResponse>(
-				(cb) => client.Upsert(buildProtoUpsertRequest(params), cb),
-				validateUpsertResponse,
-				"Upsert",
+		create: (params) =>
+			callGrpcJsonMethod<CreateResponse>(
+				(cb) => client.Create(buildProtoCreateRequest(params), cb),
+				validateCreateResponse,
+				"Create",
+			),
+		update: (params) =>
+			callGrpcJsonMethod<UpdateResponse>(
+				(cb) => client.Update(buildProtoUpdateRequest(params), cb),
+				validateUpdateResponse,
+				"Update",
 			),
 		listResources: () =>
 			new Promise<string[]>((resolve, reject) => {
@@ -374,12 +404,20 @@ export async function forwardGet(
 	return getServiceAdapter(serviceName).get(params);
 }
 
-export async function forwardUpsert(
+export async function forwardCreate(
 	serviceName: string,
-	params: UpsertRequest,
-): Promise<UpsertResponse> {
+	params: CreateRequest,
+): Promise<CreateResponse> {
 	await ensureRegistryInitialized();
-	return getServiceAdapter(serviceName).upsert(params);
+	return getServiceAdapter(serviceName).create(params);
+}
+
+export async function forwardUpdate(
+	serviceName: string,
+	params: UpdateRequest,
+): Promise<UpdateResponse> {
+	await ensureRegistryInitialized();
+	return getServiceAdapter(serviceName).update(params);
 }
 
 export function wireGrpcEvents(broadcast: BroadcastFn): void {

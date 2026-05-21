@@ -51,7 +51,7 @@ private struct EVYSearchRowPreview: View {
     if let previewItemsData = previewItemsJSON.data(using: .utf8),
       let parsed = try? JSONDecoder().decode(EVYJson.self, from: previewItemsData)
     {
-      try? EVY.publicStore.upsertSyncedValue(
+      try? EVY.publicStore.applySyncedValue(
         namespace: EVYNamespace.local, resource: "items", value: parsed)
     }
   }

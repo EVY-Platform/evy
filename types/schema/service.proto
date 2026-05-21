@@ -5,7 +5,8 @@ package evy;
 // Non-evy backend services implement this interface (data-only; no SDUI).
 service Service {
   rpc Get (GetRequest) returns (GetResponse);
-  rpc Upsert (UpsertRequest) returns (UpsertResponse);
+  rpc Create (CreateRequest) returns (CreateResponse);
+  rpc Update (UpdateRequest) returns (UpdateResponse);
   rpc SubscribeEvents (SubscribeEventsRequest) returns (stream ServiceEvent);
   rpc ListResources (ListResourcesRequest) returns (ListResourcesResponse);
 }
@@ -17,7 +18,14 @@ message GetRequest {
   string method = 4;
 }
 
-message UpsertRequest {
+message CreateRequest {
+  string service = 1;
+  string resource = 2;
+  Filter filter = 3;
+  string data_json = 4;
+}
+
+message UpdateRequest {
   string service = 1;
   string resource = 2;
   Filter filter = 3;
@@ -33,7 +41,11 @@ message GetResponse {
   string result_json = 1;
 }
 
-message UpsertResponse {
+message CreateResponse {
+  string result_json = 1;
+}
+
+message UpdateResponse {
   string result_json = 1;
 }
 

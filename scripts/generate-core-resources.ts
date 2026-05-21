@@ -132,19 +132,6 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push("\tnew Set(EVY_CORE_RESOURCE_NAMES);");
 	lines.push("");
 
-	// Singular-by-resource map
-	lines.push(
-		"export const EVY_CORE_RESOURCE_SINGULAR: Readonly<Record<EvyCoreResourceName, string>> = {",
-	);
-	for (const [plural, meta] of Object.entries(resources)) {
-		const key = resourceKey(plural);
-		lines.push(
-			`\t[EVY_CORE_RESOURCE.${key}]: ${JSON.stringify(meta.singular)},`,
-		);
-	}
-	lines.push("};");
-	lines.push("");
-
 	return lines.join("\n");
 }
 

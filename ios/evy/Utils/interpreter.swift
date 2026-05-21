@@ -316,7 +316,7 @@ func _formatData(json: EVYJson, format: String) throws -> String {
   if formatWithNewData.isEmpty { return "" }
 
   let encodedData = try JSONEncoder().encode(json)
-  try EVY.publicStore.upsert(
+  try EVY.publicStore.create(
     namespace: EVYNamespace.local, resource: temporaryId, id: EVYNamespace.singletonId,
     value: encodedData)
   let returnText = try _getValueFromText(formatWithNewData)

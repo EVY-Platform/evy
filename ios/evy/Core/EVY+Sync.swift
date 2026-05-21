@@ -8,10 +8,8 @@ import Foundation
 extension EVY {
   static func getUserData() throws {
     let userData = try EVYJson.from(localJSON: "user_data")
-    let encodedUserData = try JSONEncoder().encode(userData)
-    try EVY.publicStore.upsert(
-      namespace: EVYNamespace.local, resource: "user", id: EVYNamespace.singletonId,
-      value: encodedUserData)
+    try EVY.publicStore.applySyncedValue(
+      namespace: EVYNamespace.local, resource: "user", value: userData)
   }
 
   /// Unified sync — returns the synced SDUI flows for immediate display.
@@ -31,7 +29,7 @@ extension EVY {
     }
 
     for row in response.data {
-      try publicStore.upsertSyncedValue(
+      try publicStore.applySyncedValue(
         namespace: row.service, resource: row.resource, value: row.value)
     }
 

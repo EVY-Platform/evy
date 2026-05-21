@@ -10,7 +10,7 @@ flowchart LR
     api[api<br/>JSON-RPC 2.0]
 
     subgraph marketplace [marketplace service]
-        grpc[index.ts<br/>Get / Upsert / SubscribeEvents]
+        grpc[index.ts<br/>Get / Create / Update / SubscribeEvents]
         data[data.ts]
         bus[(EventEmitter<br/>notify)]
     end
@@ -18,16 +18,16 @@ flowchart LR
     pg[(Postgres<br/>marketplace DB)]
 
     client -- WebSocket --> api
-    api -- gRPC Get / Upsert --> grpc
+    api -- gRPC Get / Create / Update --> grpc
     grpc --> data
     data --> pg
     data -- writes --> bus
     bus -- SubscribeEvents stream --> api
-    api -- dataUpdated JSON-RPC --> client
+    api -- dataChanged JSON-RPC --> client
 ```
 
-- `Get` / `Upsert` are unary RPCs that mirror the main `api`'s `GetRequest` / `UpsertRequest`, with payloads JSON-encoded over the wire (`data_json`, `result_json`). Filters support a singular `id` for one row and `updated_after` / `updatedAfter` for incremental reads; plural ID filtering is not part of the contract.
-- `SubscribeEvents` is a server-streaming RPC. Each successful data-layer write emits `dataUpdated` with `{ service, resource, value }` onto an in-process `EventEmitter` that fans the change out to every open stream; `api/src/services.ts` reconnects with exponential backoff if the stream drops.
+- `Get`, `Create`, and `Update` are unary RPCs that mirror the main `api`'s `GetRequest`, `CreateRequest`, and `UpdateRequest`, with payloads JSON-encoded over the wire (`data_json`, `result_json`). Filters support a singular `id` for one row and `updated_after` / `updatedAfter` for incremental reads; plural ID filtering is not part of the contract.
+- `SubscribeEvents` is a server-streaming RPC. Each successful data-layer write emits `dataChanged` with `{ service, resource, operation, value }` onto an in-process `EventEmitter` that fans the change out to every open stream; `api/src/services.ts` reconnects with exponential backoff if the stream drops.
 
 ## Environment
 

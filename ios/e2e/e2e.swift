@@ -26,6 +26,19 @@ actor WSEmitter {
     }
   }
 
+  func applySDUI(flowData: [String: Any], flowId: String) async throws {
+    let existing = try await getResource(
+      service: "evy", resource: "sdui", filter: ["id": flowId])
+    let method = (existing as? [Any])?.isEmpty == false ? "update" : "create"
+    let params: [String: Any] = [
+      "service": "evy",
+      "resource": "sdui",
+      "filter": ["id": flowId],
+      "data": flowData,
+    ]
+    _ = try await send(method: method, params: params)
+  }
+
   func updateSDUI(flowData: [String: Any], flowId: String) async throws {
     let params: [String: Any] = [
       "service": "evy",
@@ -33,7 +46,7 @@ actor WSEmitter {
       "filter": ["id": flowId],
       "data": flowData,
     ]
-    _ = try await send(method: "upsert", params: params)
+    _ = try await send(method: "update", params: params)
   }
 
   func getResource(service: String, resource: String, filter: [String: Any]? = nil) async throws
@@ -46,7 +59,7 @@ actor WSEmitter {
     return try await rpcResult(method: "get", params: params)
   }
 
-  func upsertResource(
+  func createResource(
     service: String,
     resource: String,
     filter: [String: Any]? = nil,
@@ -56,7 +69,7 @@ actor WSEmitter {
     if let filter = filter {
       params["filter"] = filter
     }
-    return try await rpcResult(method: "upsert", params: params)
+    return try await rpcResult(method: "create", params: params)
   }
 
   private func rpcResult(method: String, params: Any) async throws -> Any {
@@ -250,7 +263,7 @@ class E2ETestBase: XCTestCase {
       try await emitter.connect(host: self.apiHost)
       try await emitter.login(token: "e2e-test", os: "ios")
       for flow in flows {
-        try await emitter.updateSDUI(flowData: flow.flowData, flowId: flow.flowId)
+        try await emitter.applySDUI(flowData: flow.flowData, flowId: flow.flowId)
       }
       await emitter.disconnect()
     }
@@ -579,7 +592,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     let selectedItemId = UUID().uuidString
     let selectedItemTitle = "Filtered Item \(Int(Date().timeIntervalSince1970))"
-    _ = try await emitter.upsertResource(
+    _ = try await emitter.createResource(
       service: "marketplace",
       resource: "items",
       filter: ["id": selectedItemId],

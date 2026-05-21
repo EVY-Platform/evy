@@ -74,28 +74,32 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
-  func upsert(
-    namespace: String, resource: String, id: String, value: Data
-  ) throws {
-    if let existing = try? get(namespace: namespace, resource: resource, id: id) {
-      existing.data = value
-    } else {
-      context.insert(
-        EVYData(namespace: namespace, resource: resource, id: id, data: value)
-      )
+  func create(namespace: String, resource: String, id: String, value: Data) throws {
+    if (try? get(namespace: namespace, resource: resource, id: id)) != nil {
+      throw EVYDataError.keyAlreadyExists
     }
+    context.insert(
+      EVYData(namespace: namespace, resource: resource, id: id, data: value)
+    )
+    postDataChanged(key: "\(namespace):\(resource):\(id)")
+    postDataChanged(key: "\(namespace):\(resource)")
+    postDataChanged(key: resource)
+  }
 
-    postDataUpdated(key: "\(namespace):\(resource):\(id)")
-    postDataUpdated(key: "\(namespace):\(resource)")
-    postDataUpdated(key: resource)
+  func update(namespace: String, resource: String, id: String, value: Data) throws {
+    let existing = try get(namespace: namespace, resource: resource, id: id)
+    existing.data = value
+    postDataChanged(key: "\(namespace):\(resource):\(id)")
+    postDataChanged(key: "\(namespace):\(resource)")
+    postDataChanged(key: resource)
   }
 
   func delete(namespace: String, resource: String, id: String) throws {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     context.delete(existing)
-    postDataUpdated(key: "\(namespace):\(resource):\(id)")
-    postDataUpdated(key: "\(namespace):\(resource)")
-    postDataUpdated(key: resource)
+    postDataChanged(key: "\(namespace):\(resource):\(id)")
+    postDataChanged(key: "\(namespace):\(resource)")
+    postDataChanged(key: resource)
   }
 
   func deleteAll(namespace: String, resource: String) throws {
@@ -103,8 +107,8 @@ final class EVYDataStore {
     for row in rows {
       context.delete(row)
     }
-    postDataUpdated(key: "\(namespace):\(resource)")
-    postDataUpdated(key: resource)
+    postDataChanged(key: "\(namespace):\(resource)")
+    postDataChanged(key: resource)
   }
 
   func deleteAll(namespace: String) throws {
@@ -114,7 +118,15 @@ final class EVYDataStore {
     }
   }
 
-  func upsertSyncedValue(namespace: String, resource: String, value: EVYJson) throws {
+  func upsert(namespace: String, resource: String, id: String, value: Data) throws {
+    if (try? get(namespace: namespace, resource: resource, id: id)) != nil {
+      try update(namespace: namespace, resource: resource, id: id, value: value)
+    } else {
+      try create(namespace: namespace, resource: resource, id: id, value: value)
+    }
+  }
+
+  func applySyncedValue(namespace: String, resource: String, value: EVYJson) throws {
     switch value {
     case .array(let items):
       for item in items {
@@ -123,19 +135,15 @@ final class EVYDataStore {
         guard let encoded = try? JSONEncoder().encode(item) else { continue }
         try upsert(namespace: namespace, resource: resource, id: itemId, value: encoded)
       }
-    case .dictionary(let dict):
+    default:
       let instanceId: String
-      if case .string(let idVal) = dict["id"] {
+      if case .dictionary(let dict) = value, case .string(let idVal) = dict["id"] {
         instanceId = idVal
       } else {
         instanceId = EVYNamespace.singletonId
       }
       let encoded = try JSONEncoder().encode(value)
       try upsert(namespace: namespace, resource: resource, id: instanceId, value: encoded)
-    default:
-      let encoded = try JSONEncoder().encode(value)
-      try upsert(
-        namespace: namespace, resource: resource, id: EVYNamespace.singletonId, value: encoded)
     }
   }
 
@@ -208,9 +216,9 @@ final class EVYDataStore {
     return row.namespace
   }
 
-  func postDataUpdated(key: String) {
+  func postDataChanged(key: String) {
     NotificationCenter.default.post(
-      name: Notification.Name.evyDataUpdated,
+      name: Notification.Name.evyDataChanged,
       object: key
     )
   }

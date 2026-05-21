@@ -298,8 +298,7 @@ enum EVYDataPatcher {
         dictValue[firstProp] = try updatedJson(
           props: Array(props[1...]), data: subData, value: value)
       }
-      let dictAsData = try JSONEncoder().encode(dictValue)
-      return try JSONDecoder().decode(EVYJson.self, from: dictAsData)
+      return .dictionary(dictValue)
     case .array(var arrayValue):
       guard let firstProp = props.first else {
         throw EVYDataParseError.invalidProps
@@ -314,8 +313,7 @@ enum EVYDataPatcher {
         arrayValue[index] = try updatedJson(
           props: Array(props[1...]), data: subData, value: value)
       }
-      let arrayAsData = try JSONEncoder().encode(arrayValue)
-      return try JSONDecoder().decode(EVYJson.self, from: arrayAsData)
+      return .array(arrayValue)
     default:
       return data
     }
