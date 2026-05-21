@@ -35,9 +35,9 @@ describe("API E2E Tests", () => {
 			expect(Array.isArray(result)).toBe(true);
 		});
 
-		it("upsert should reject without auth", async () => {
+		it("create should reject without auth", async () => {
 			try {
-				await unauthClient.call("upsert", {
+				await unauthClient.call("create", {
 					service: "evy",
 					resource: "sdui",
 					data: {
@@ -46,11 +46,11 @@ describe("API E2E Tests", () => {
 						pages: [{ id: crypto.randomUUID(), title: "P", rows: [] }],
 					},
 				});
-				throw new Error("Expected upsert to fail for unauthenticated request");
+				throw new Error("Expected create to fail for unauthenticated request");
 			} catch (error) {
 				if (
 					error instanceof Error &&
-					error.message.includes("Expected upsert to fail")
+					error.message.includes("Expected create to fail")
 				) {
 					throw error;
 				}
@@ -85,7 +85,7 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			await client.call("upsert", {
+			await client.call("create", {
 				service: "evy",
 				resource: "sdui",
 				data: flowData,
@@ -104,7 +104,7 @@ describe("API E2E Tests", () => {
 			expect(flow.pages).toBeInstanceOf(Array);
 		});
 
-		it("upsert SDUI should create a new flow", async () => {
+		it("create SDUI should create a new flow", async () => {
 			const testRow: UI_Row = {
 				id: crypto.randomUUID(),
 				type: "Text",
@@ -130,7 +130,7 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			const result = await client.call("upsert", {
+			const result = await client.call("create", {
 				service: "evy",
 				resource: "sdui",
 				data: flowData,
@@ -143,7 +143,7 @@ describe("API E2E Tests", () => {
 			expect(result.updatedAt).toBeDefined();
 		});
 
-		it("upsert SDUI should update an existing flow", async () => {
+		it("update SDUI should update an existing flow", async () => {
 			const flowId = crypto.randomUUID();
 
 			const testPage: UI_Page = {
@@ -158,7 +158,7 @@ describe("API E2E Tests", () => {
 				pages: [testPage],
 			};
 
-			const created = await client.call("upsert", {
+			const created = await client.call("create", {
 				service: "evy",
 				resource: "sdui",
 				data: createFlowData,
@@ -169,7 +169,7 @@ describe("API E2E Tests", () => {
 				name: "Updated Flow Name",
 			};
 
-			const updated = await client.call("upsert", {
+			const updated = await client.call("update", {
 				service: "evy",
 				resource: "sdui",
 				filter: { id: created.id },

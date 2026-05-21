@@ -63,10 +63,10 @@ async function getFlowsFromApi(): Promise<UI_Flow[]> {
 	});
 }
 
-async function upsertFlowToApi(flow: UI_Flow): Promise<void> {
+async function createFlowInApi(flow: UI_Flow): Promise<void> {
 	await withApiClient(async (client) => {
 		await client.login({ token: TEST_TOKEN, os: TEST_OS });
-		await client.call("upsert", {
+		await client.call("create", {
 			service: "evy",
 			resource: "sdui",
 			data: flow,
@@ -291,7 +291,7 @@ test.describe("Web E2E Integration Tests", () => {
 				},
 			},
 		};
-		await upsertFlowToApi({
+		await createFlowInApi({
 			id: crypto.randomUUID(),
 			name: uniqueFlowName,
 			pages: [

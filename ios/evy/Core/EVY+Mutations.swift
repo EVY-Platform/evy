@@ -27,7 +27,7 @@ extension EVY {
     }
     let emptyData = initialData ?? "\"\"".data(using: .utf8)!
     do {
-      try cacheStore.upsert(
+      try cacheStore.create(
         namespace: EVYNamespace.draft,
         resource: binding.scopeId,
         id: binding.draftKey,
@@ -40,7 +40,7 @@ extension EVY {
   }
 
   static func create(namespace: String, resource: String, draftScopeId: String? = nil) throws {
-    struct UpsertParams: Encodable {
+    struct CreateParams: Encodable {
       let service: String
       let resource: String
       let filter: Filter?
@@ -72,14 +72,14 @@ extension EVY {
     }
     dict["id"] = .string(newId)
     let dataWithId = EVYJson.dictionary(dict)
-    let params = UpsertParams(
+    let params = CreateParams(
       service: namespace,
       resource: resource,
       filter: Filter(id: newId),
       data: dataWithId
     )
     let encodedData = try JSONEncoder().encode(dataWithId)
-    try publicStore.upsert(
+    try publicStore.create(
       namespace: namespace,
       resource: resource,
       id: newId,
@@ -89,7 +89,7 @@ extension EVY {
     Task { @MainActor in
       do {
         _ = try await EVYAPIManager.shared.fetch(
-          method: "upsert",
+          method: "create",
           params: params,
           expecting: EVYJson.self
         )
@@ -152,12 +152,12 @@ extension EVY {
         existingRow.data = try EVYDataPatcher.patch(
           encodedData: existingRow.data, newData: newData, props: remainingProps)
       }
-      store.postDataUpdated(key: splitProps.joined(separator: PROP_SEPARATOR))
+      store.postDataChanged(key: splitProps.joined(separator: PROP_SEPARATOR))
     } else {
       guard let draftBinding else {
         throw EVYDataError.keyNotFound
       }
-      try cacheStore.upsert(
+      try cacheStore.create(
         namespace: EVYNamespace.draft,
         resource: draftBinding.scopeId,
         id: draftBinding.draftKey,

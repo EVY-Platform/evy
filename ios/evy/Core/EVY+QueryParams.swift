@@ -58,13 +58,22 @@ extension EVY {
   }
 
   private static func cacheResolvedEntity(scopeId: String, cacheKey: String, value: Data) {
-    try? cacheStore.upsert(
-      namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey, value: value)
+    cacheValue(scopeId: scopeId, cacheKey: cacheKey, value: value)
 
     let singularEntityKey = entityName(forResourceKey: cacheKey)
     guard singularEntityKey != cacheKey else { return }
-    try? cacheStore.upsert(
-      namespace: EVYNamespace.cache, resource: scopeId, id: singularEntityKey, value: value)
+    cacheValue(scopeId: scopeId, cacheKey: singularEntityKey, value: value)
+  }
+
+  private static func cacheValue(scopeId: String, cacheKey: String, value: Data) {
+    if (try? cacheStore.get(namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)) != nil
+    {
+      try? cacheStore.update(
+        namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey, value: value)
+    } else {
+      try? cacheStore.create(
+        namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey, value: value)
+    }
   }
 
   private static func resolvedEntityCollections(for queryKey: String?) -> [(
@@ -114,12 +123,7 @@ extension EVY {
     guard let encodedRawQueryValue = try? JSONEncoder().encode(rawQueryValue) else {
       return false
     }
-    do {
-      try cacheStore.upsert(
-        namespace: EVYNamespace.cache, resource: scopeId, id: queryKey, value: encodedRawQueryValue)
-      return true
-    } catch {
-      return false
-    }
+    cacheValue(scopeId: scopeId, cacheKey: queryKey, value: encodedRawQueryValue)
+    return true
   }
 }

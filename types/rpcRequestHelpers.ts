@@ -1,11 +1,12 @@
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
-
-import type { UpsertRequest } from "./generated/ts/rpc/upsert.request";
+import type { CreateRequest } from "./generated/ts/rpc/create.request";
+import type { UpdateRequest } from "./generated/ts/rpc/update.request";
 import {
 	validateApiRequest,
+	validateCreateRequest,
 	validateGetRequest,
-	validateUpsertRequest,
+	validateUpdateRequest,
 } from "./validators";
 import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE_NAMES } from "./coreResources";
 
@@ -113,10 +114,7 @@ export function validateStrictApiRequest(
 	validateApiRequest(params);
 }
 
-export function validateStrictUpsertRequest(
-	params: unknown,
-): asserts params is UpsertRequest {
-	assertRpcParamsCommon(params);
+function assertDataField(params: Record<string, unknown>): void {
 	if (
 		!("data" in params) ||
 		params.data === undefined ||
@@ -125,5 +123,31 @@ export function validateStrictUpsertRequest(
 	) {
 		throw new Error("data is required and must be a non-null object");
 	}
-	validateUpsertRequest(params);
+}
+
+export function validateStrictCreateRequest(
+	params: unknown,
+): asserts params is CreateRequest {
+	assertRpcParamsCommon(params);
+	assertDataField(params);
+	validateCreateRequest(params);
+}
+
+export function validateStrictUpdateRequest(
+	params: unknown,
+): asserts params is UpdateRequest {
+	assertRpcParamsCommon(params);
+	assertDataField(params);
+	if (
+		!params.filter ||
+		typeof params.filter !== "object" ||
+		!("id" in params.filter) ||
+		typeof params.filter.id !== "string" ||
+		params.filter.id.length === 0
+	) {
+		throw new Error(
+			"filter.id is required and must be a non-empty string for update",
+		);
+	}
+	validateUpdateRequest(params);
 }

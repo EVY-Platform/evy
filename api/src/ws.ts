@@ -47,7 +47,7 @@ function initServer(
 	}).then(async (server) => {
 		await server.setAuth(authHandler);
 
-		await server.event("dataUpdated");
+		await server.event("dataChanged");
 
 		console.info(`WS server listening at ${HOST}:${port}`);
 		return server;

@@ -1,10 +1,10 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "upsert-request",
-	"title": "UpsertRequest",
-	"description": "JSON-RPC params for upsert method. Service and resource are validated at runtime against the service registry.",
+	"$id": "update-request",
+	"title": "UpdateRequest",
+	"description": "JSON-RPC params for update method. Service, resource, filter.id, and data are required.",
 	"$defs": {
-		"UpsertDataPayload": {
+		"UpdateDataPayload": {
 			"type": "object",
 			"additionalProperties": {
 				"$ref": "../common/json.schema.json#/$defs/JSONValue"
@@ -16,6 +16,7 @@
 	"required": [
 		"service",
 		"resource",
+		"filter",
 		"data"
 	],
 	"properties": {
@@ -29,10 +30,24 @@
 			"maxLength": 50
 		},
 		"filter": {
-			"$ref": "../common/rpc.schema.json#/$defs/DataFilter"
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"minLength": 1
+				},
+				"updatedAfter": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
 		},
 		"data": {
-			"$ref": "#/$defs/UpsertDataPayload"
+			"$ref": "#/$defs/UpdateDataPayload"
 		}
 	}
 }

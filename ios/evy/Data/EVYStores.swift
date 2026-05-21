@@ -10,10 +10,11 @@ import Observation
 
 enum EVYDataError: Error {
   case keyNotFound
+  case keyAlreadyExists
 }
 
 extension Notification.Name {
-  static let evyDataUpdated = Notification.Name("EVYDataUpdated")
+  static let evyDataChanged = Notification.Name("EVYDataChanged")
   static let evyErrorOccurred = Notification.Name("EVYErrorOccurred")
 }
 
@@ -36,7 +37,7 @@ extension Notification.Name {
 
     observerTokens.append(
       NotificationCenter.default.addObserver(
-        forName: .evyDataUpdated,
+        forName: .evyDataChanged,
         object: nil,
         queue: .main
       ) { [weak self] notif in
@@ -88,7 +89,7 @@ final class EVYDraftStore {
 
   func notifyUpdate(binding: EVYDraft.Binding) {
     NotificationCenter.default.post(
-      name: .evyDataUpdated,
+      name: .evyDataChanged,
       object: binding.notificationKey
     )
 
@@ -100,7 +101,7 @@ final class EVYDraftStore {
     }
 
     NotificationCenter.default.post(
-      name: .evyDataUpdated,
+      name: .evyDataChanged,
       object: "\(entityKey)\(PROP_SEPARATOR)\(binding.notificationKey)"
     )
   }

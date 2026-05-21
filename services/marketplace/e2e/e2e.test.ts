@@ -59,22 +59,22 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(Array.isArray(result)).toBe(true);
 	});
 
-	it("upsert then get marketplace.items round-trips data", async () => {
+	it("create then get marketplace.items round-trips data", async () => {
 		const testData = {
 			id: crypto.randomUUID(),
 			testField: "e2e test value",
 			nested: { value: 123 },
 		};
 
-		const upserted = await client.call("upsert", {
+		const created = await client.call("create", {
 			service: "marketplace",
 			resource: "items",
 			data: testData,
 		});
 
-		expect(upserted).toHaveProperty("id");
-		expect(upserted).toHaveProperty("data");
-		expect(isRecord(upserted.data)).toBe(true);
+		expect(created).toHaveProperty("id");
+		expect(created).toHaveProperty("data");
+		expect(isRecord(created.data)).toBe(true);
 
 		const got = await client.call("get", {
 			service: "marketplace",
@@ -93,25 +93,25 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(matchingRecord)).toBe(true);
 	});
 
-	it("upsert marketplace.items with filter.id creates row keyed by client UUID (iOS shape)", async () => {
+	it("create marketplace.items with filter.id creates row keyed by client UUID (iOS shape)", async () => {
 		const clientId = crypto.randomUUID();
 		const itemPayload = {
 			id: clientId,
 			title: "from-ios",
 		};
 
-		const upserted = await client.call("upsert", {
+		const created = await client.call("create", {
 			service: "marketplace",
 			resource: "items",
 			filter: { id: clientId },
 			data: itemPayload,
 		});
 
-		expect(isRecord(upserted)).toBe(true);
-		expect(upserted).toHaveProperty("id", clientId);
-		expect(upserted).toHaveProperty("data");
-		expect(isRecord(upserted.data)).toBe(true);
-		expect(upserted.data).toMatchObject({
+		expect(isRecord(created)).toBe(true);
+		expect(created).toHaveProperty("id", clientId);
+		expect(created).toHaveProperty("data");
+		expect(isRecord(created.data)).toBe(true);
+		expect(created.data).toMatchObject({
 			id: clientId,
 			title: "from-ios",
 		});

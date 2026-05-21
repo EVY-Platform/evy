@@ -20,8 +20,9 @@ const ensureRegistryInitializedMock = mock(async () => {});
 
 mock.module("../services", () => ({
 	ensureRegistryInitialized: ensureRegistryInitializedMock,
+	forwardCreate: mock(),
 	forwardGet: forwardGetMock,
-	forwardUpsert: mock(),
+	forwardUpdate: mock(),
 	wireGrpcEvents: mock(),
 }));
 

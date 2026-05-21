@@ -9,8 +9,10 @@ import type {
 	GetResponse,
 	GetRequest,
 	OS,
-	UpsertRequest,
-	UpsertResponse,
+	CreateRequest,
+	CreateResponse,
+	UpdateRequest,
+	UpdateResponse,
 } from "evy-types";
 import * as schema from "../../types/generated/ts/db/schema.generated";
 import {
@@ -22,7 +24,7 @@ import {
 	osEnum,
 } from "../../types/generated/ts/db/schema.generated";
 import { getConnectionUrl } from "./db";
-import { emitDataUpdatedNotification } from "./notifications";
+import { emitDataChangedNotification } from "./notifications";
 import {
 	EVY_CORE_SERVICE,
 	EVY_CORE_RESOURCE,
@@ -34,7 +36,8 @@ import {
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
 	validateGetResponse,
 	validateUiFlow as validateFlowData,
-	validateUpsertResponse,
+	validateCreateResponse,
+	validateUpdateResponse,
 } from "evy-types/validators";
 
 const connectionString = getConnectionUrl();
@@ -46,31 +49,30 @@ export function setDbForTest(database: typeof db): void {
 	db = database;
 }
 
-const CORE_API_RESOURCES: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
-
-function assertEvyCoreAccess(params: GetRequest | UpsertRequest): void {
+function assertEvyCoreAccess(
+	params: GetRequest | CreateRequest | UpdateRequest,
+): void {
 	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
 	}
-	if (!CORE_API_RESOURCES.has(params.resource)) {
+	if (!EVY_CORE_RESOURCE_NAME_SET.has(params.resource)) {
 		throw new Error("Resource is not served by the core API");
 	}
 }
 
-/**
- * Core `get` handler after JSON-RPC shape checks. This only applies evy-core access rules.
- */
 export async function get(params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
 	return getCoreBody(params);
 }
 
-/**
- * Core `upsert` handler after JSON-RPC shape checks. This only applies evy-core access rules.
- */
-export async function upsert(params: UpsertRequest): Promise<UpsertResponse> {
+export async function create(params: CreateRequest): Promise<CreateResponse> {
 	assertEvyCoreAccess(params);
-	return upsertCoreBody(params);
+	return createCoreBody(params);
+}
+
+export async function update(params: UpdateRequest): Promise<UpdateResponse> {
+	assertEvyCoreAccess(params);
+	return updateCoreBody(params);
 }
 
 function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
@@ -104,7 +106,7 @@ type CatalogEntityConfig<TValidated> = {
 		nowIso: string,
 		filterId: string | undefined,
 	) => Record<string, unknown>;
-	mapRow: (row: unknown) => UpsertResponse;
+	mapRow: (row: unknown) => CreateResponse;
 };
 
 async function listCoreCatalogRows<TRow>(
@@ -129,56 +131,70 @@ async function listCoreCatalogRows<TRow>(
 	return validateGetResponse(mapped);
 }
 
-/**
- * Update by `filterId` when set; if no row matched (or no filter), insert. When
- * `filterId` is set and insert runs, `overrideInsertId` is applied to the insert row.
- */
-async function upsertCatalogEntity<TSelect>(
-	filterId: string | undefined,
-	doUpdate: (filterId: string) => Promise<TSelect[]>,
+async function insertCatalogEntity<TSelect>(
 	doInsert: () => Promise<TSelect[]>,
-	mapRow: (row: TSelect) => UpsertResponse,
-): Promise<UpsertResponse> {
-	if (filterId) {
-		const updated = await doUpdate(filterId);
-		if (updated.length > 0) {
-			const row = mapRow(updated[0]);
-			validateUpsertResponse(row);
-			return row;
-		}
-	}
+	mapRow: (row: TSelect) => CreateResponse,
+): Promise<CreateResponse> {
 	const inserted = await doInsert();
 	const row = mapRow(inserted[0]);
-	validateUpsertResponse(row);
+	validateCreateResponse(row);
 	return row;
 }
 
-/**
- * Shared handler for catalog entity upserts (services, organisations, providers).
- * Validates, extracts filterId, then delegates to {@link upsertCatalogEntity}.
- */
-async function upsertCatalogEntityFromConfig<TValidated>(
+async function updateCatalogEntity<TSelect>(
+	filterId: string,
+	doUpdate: (filterId: string) => Promise<TSelect[]>,
+	mapRow: (row: TSelect) => UpdateResponse,
+): Promise<UpdateResponse> {
+	const updated = await doUpdate(filterId);
+	if (updated.length === 0) {
+		throw new Error("Resource not found");
+	}
+	const row = mapRow(updated[0]);
+	validateUpdateResponse(row);
+	return row;
+}
+
+async function insertCatalogEntityFromConfig<TValidated>(
 	config: CatalogEntityConfig<TValidated>,
-	filter: UpsertRequest["filter"] | undefined,
+	filter: CreateRequest["filter"] | undefined,
 	dataPayload: unknown,
 	nowIso: string,
 	notify: (value: unknown) => void,
-): Promise<UpsertResponse> {
+): Promise<CreateResponse> {
 	const validated = config.validate(dataPayload);
 	const filterId = filter?.id;
 
-	const response = await upsertCatalogEntity(
+	const response = await insertCatalogEntity(
+		() =>
+			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
+			(db.insert(config.table as any) as any)
+				.values(config.toInsertValues(validated, nowIso, filterId))
+				.returning(),
+		(row) => config.mapRow(row),
+	);
+
+	notify(response);
+	return response;
+}
+
+async function updateCatalogEntityFromConfig<TValidated>(
+	config: CatalogEntityConfig<TValidated>,
+	filter: UpdateRequest["filter"],
+	dataPayload: unknown,
+	nowIso: string,
+	notify: (value: unknown) => void,
+): Promise<UpdateResponse> {
+	const validated = config.validate(dataPayload);
+	const filterId = filter.id;
+
+	const response = await updateCatalogEntity(
 		filterId,
 		(updateFilterId) =>
 			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
 			(db.update(config.table as any) as any)
 				.set(config.toUpdateSet(validated, nowIso))
 				.where(eq(config.table.id, updateFilterId))
-				.returning(),
-		() =>
-			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
-			(db.insert(config.table as any) as any)
-				.values(config.toInsertValues(validated, nowIso, filterId))
 				.returning(),
 		(row) => config.mapRow(row),
 	);
@@ -303,7 +319,7 @@ const organizationCatalogConfig: CatalogEntityConfig<DATA_EVY_Organization> = {
 		createdAt: validated.createdAt,
 		updatedAt: nowIso,
 	}),
-	mapRow: (row: unknown) => row as UpsertResponse,
+	mapRow: (row: unknown) => row as CreateResponse,
 };
 
 const providerCatalogConfig: CatalogEntityConfig<DATA_EVY_ServiceProvider> = {
@@ -331,17 +347,18 @@ const providerCatalogConfig: CatalogEntityConfig<DATA_EVY_ServiceProvider> = {
 		updatedAt: nowIso,
 		retired: validated.retired,
 	}),
-	mapRow: (row: unknown) => row as UpsertResponse,
+	mapRow: (row: unknown) => row as CreateResponse,
 };
 
-async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
+async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
-	function emitUpsertNotification(value: unknown): void {
-		emitDataUpdatedNotification({
+	function emitNotification(value: unknown): void {
+		emitDataChangedNotification({
 			service: EVY_CORE_SERVICE,
 			resource,
+			operation: "create",
 			value,
 		});
 	}
@@ -358,19 +375,6 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 				? { ...validatedData, id: filterId }
 				: validatedData;
 
-		if (filterId) {
-			const result = await db
-				.update(flow)
-				.set({ data: persistedFlowData, updatedAt: nowIso })
-				.where(eq(flow.id, filterId))
-				.returning();
-			if (result.length > 0) {
-				const row = result[0];
-				validateUpsertResponse(row);
-				emitUpsertNotification(persistedFlowData);
-				return row;
-			}
-		}
 		const result = await db
 			.insert(flow)
 			.values({
@@ -379,40 +383,118 @@ async function upsertCoreBody(params: UpsertRequest): Promise<UpsertResponse> {
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			})
-			.returning();
+			.returning()
+			.catch((err) => {
+				if (err?.code === "23505") {
+					throw new Error("Resource already exists");
+				}
+				throw err;
+			});
 		const row = result[0];
-		validateUpsertResponse(row);
-		emitUpsertNotification(persistedFlowData);
+		validateCreateResponse(row);
+		emitNotification(persistedFlowData);
 		return row;
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return upsertCatalogEntityFromConfig(
+		return insertCatalogEntityFromConfig(
 			serviceCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
-			emitUpsertNotification,
+			emitNotification,
 		);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return upsertCatalogEntityFromConfig(
+		return insertCatalogEntityFromConfig(
 			organizationCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
-			emitUpsertNotification,
+			emitNotification,
 		);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return upsertCatalogEntityFromConfig(
+		return insertCatalogEntityFromConfig(
 			providerCatalogConfig,
 			filter,
 			dataPayload,
 			nowIso,
-			emitUpsertNotification,
+			emitNotification,
+		);
+	}
+
+	throw new Error("Unsupported resource for core API");
+}
+
+async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
+	const { resource, filter, data: dataPayload } = params;
+	const nowIso = new Date().toISOString();
+
+	function emitNotification(value: unknown): void {
+		emitDataChangedNotification({
+			service: EVY_CORE_SERVICE,
+			resource,
+			operation: "update",
+			value,
+		});
+	}
+
+	if (resource === EVY_CORE_RESOURCE.DEVICES) {
+		throw new Error("devices are managed via validateAuth only");
+	}
+
+	if (resource === EVY_CORE_RESOURCE.SDUI) {
+		const validatedData = validateFlowData(dataPayload);
+		const filterId = filter.id;
+		const persistedFlowData =
+			filterId !== validatedData.id
+				? { ...validatedData, id: filterId }
+				: validatedData;
+
+		const result = await db
+			.update(flow)
+			.set({ data: persistedFlowData, updatedAt: nowIso })
+			.where(eq(flow.id, filterId))
+			.returning();
+		if (result.length === 0) {
+			throw new Error("Resource not found");
+		}
+		const row = result[0];
+		validateUpdateResponse(row);
+		emitNotification(persistedFlowData);
+		return row;
+	}
+
+	if (resource === EVY_CORE_RESOURCE.SERVICES) {
+		return updateCatalogEntityFromConfig(
+			serviceCatalogConfig,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
+		return updateCatalogEntityFromConfig(
+			organizationCatalogConfig,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
+		return updateCatalogEntityFromConfig(
+			providerCatalogConfig,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
 		);
 	}
 

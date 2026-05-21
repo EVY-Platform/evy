@@ -14,12 +14,12 @@ const TEST_TOKEN = "e2e-reconnect-token";
 const TEST_OS = "Web";
 
 describe("API E2E WebSocket reconnect", () => {
-	it("new client subscribed after reconnect receives dataUpdated from upsert", async () => {
+	it("new client subscribed after reconnect receives dataChanged from create", async () => {
 		const first = await connectAndLogin(
 			API_URL,
 			TEST_TOKEN,
 			TEST_OS,
-			"dataUpdated",
+			"dataChanged",
 		);
 		first.close();
 
@@ -27,10 +27,10 @@ describe("API E2E WebSocket reconnect", () => {
 			API_URL,
 			`${TEST_TOKEN}-2`,
 			TEST_OS,
-			"dataUpdated",
+			"dataChanged",
 		);
 
-		const notifyPromise = waitForNotification(second, "dataUpdated");
+		const notifyPromise = waitForNotification(second, "dataChanged");
 
 		const caller = await connectAndLogin(
 			API_URL,
@@ -39,7 +39,7 @@ describe("API E2E WebSocket reconnect", () => {
 		);
 
 		const pageId = crypto.randomUUID();
-		const upsertResult = await caller.call("upsert", {
+		const createResult = await caller.call("create", {
 			service: "evy",
 			resource: "sdui",
 			data: {
@@ -53,7 +53,8 @@ describe("API E2E WebSocket reconnect", () => {
 		expect(params).toEqual({
 			service: "evy",
 			resource: "sdui",
-			value: upsertResult.data,
+			operation: "create",
+			value: createResult.data,
 		});
 
 		second.close();

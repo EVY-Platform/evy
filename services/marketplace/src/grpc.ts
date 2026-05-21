@@ -4,13 +4,10 @@ import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
 import type { Client } from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import type { UpsertRequest } from "evy-types";
+import type { CreateRequest } from "evy-types";
 
-import { get, upsert } from "./data";
-import {
-	validateStrictGetRequest,
-	validateStrictUpsertRequest,
-} from "evy-types/rpcRequestHelpers";
+import { create, get, update } from "./data";
+import { validateStrictGetRequest } from "evy-types/rpcRequestHelpers";
 import { MARKETPLACE_RESOURCE_NAMES } from "./catalog";
 import { offServiceEvent, onServiceEvent } from "./events";
 
@@ -77,6 +74,29 @@ export function createEvyServiceClient(address: string): Client {
 	return new Client(address, grpc.credentials.createInsecure());
 }
 
+function parseDataJson(raw: string): object {
+	let data: unknown;
+	try {
+		data = JSON.parse(raw);
+	} catch (parseErr) {
+		throw Object.assign(
+			new Error(
+				parseErr instanceof Error
+					? `Invalid data_json: ${parseErr.message}`
+					: "Invalid data_json",
+			),
+			{ code: grpc.status.INVALID_ARGUMENT },
+		);
+	}
+	if (data === undefined || data === null || typeof data !== "object") {
+		throw Object.assign(
+			new Error("data is required and must be a non-null object"),
+			{ code: grpc.status.INVALID_ARGUMENT },
+		);
+	}
+	return data;
+}
+
 let serverInstance: grpc.Server | null = null;
 
 function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
@@ -88,7 +108,7 @@ function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
 		filter?: { id?: string; updated_after?: string };
 	};
 
-	type UpsertRequestShape = {
+	type WriteRequestShape = {
 		service: string;
 		resource: string;
 		filter?: { id?: string };
@@ -139,29 +159,34 @@ function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
 					return { result_json: JSON.stringify(result) } as const;
 				},
 			),
-			Upsert: asyncUnaryHandler<UpsertRequestShape, { result_json: string }>(
+			Create: asyncUnaryHandler<WriteRequestShape, { result_json: string }>(
 				async (req) => {
-					let data: UpsertRequest["data"];
-					try {
-						data = JSON.parse(req.data_json) as UpsertRequest["data"];
-					} catch (parseErr) {
-						throw Object.assign(
-							new Error(
-								parseErr instanceof Error
-									? `Invalid data_json: ${parseErr.message}`
-									: "Invalid data_json",
-							),
-							{ code: grpc.status.INVALID_ARGUMENT },
-						);
-					}
+					const data = parseDataJson(req.data_json);
 					const params = {
 						service: req.service,
 						resource: req.resource,
 						filter: req.filter?.id ? { id: req.filter.id } : undefined,
 						data,
 					};
-					validateStrictUpsertRequest(params);
-					const result = await upsert(params);
+					const result = await create(params as CreateRequest);
+					return { result_json: JSON.stringify(result) } as const;
+				},
+			),
+			Update: asyncUnaryHandler<WriteRequestShape, { result_json: string }>(
+				async (req) => {
+					if (!req.filter?.id) {
+						throw Object.assign(new Error("filter.id is required for update"), {
+							code: grpc.status.INVALID_ARGUMENT,
+						});
+					}
+					const data = parseDataJson(req.data_json);
+					const params = {
+						service: req.service,
+						resource: req.resource,
+						filter: { id: req.filter.id },
+						data,
+					};
+					const result = await update(params);
 					return { result_json: JSON.stringify(result) } as const;
 				},
 			),

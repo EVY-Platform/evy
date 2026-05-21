@@ -2,9 +2,10 @@ import { eq, and, desc, gt } from "drizzle-orm";
 
 import type {
 	DATA_PRIMITIVE,
+	CreateRequest,
 	GetRequest,
 	GetResponse,
-	UpsertRequest,
+	UpdateRequest,
 } from "evy-types";
 import {
 	getServiceResources,
@@ -13,23 +14,21 @@ import {
 import { data } from "./db/schema";
 import { db } from "./db";
 import { MARKETPLACE_RESOURCE_NAMES, MARKETPLACE_SERVICE } from "./catalog";
-import { emitDataUpdated } from "./events";
+import { emitDataChanged } from "./events";
 import {
 	assertIsoDateTimeJsonFields,
 	validateGetResponse,
-	validateUpsertDataPayload,
-	validateUpsertResponse,
+	validateCreateDataPayload,
+	validateUpdateDataPayload,
+	validateCreateResponse,
+	validateUpdateResponse,
 } from "evy-types/validators";
 
 setServiceRegistry([[MARKETPLACE_SERVICE, [...MARKETPLACE_RESOURCE_NAMES]]]);
 
-function validateDataPayload(dataPayload: unknown): DATA_PRIMITIVE["data"] {
-	const validatedPayload = validateUpsertDataPayload(dataPayload);
-	assertIsoDateTimeJsonFields(validatedPayload);
-	return validatedPayload;
-}
-
-function assertMarketplaceRules(params: GetRequest | UpsertRequest): void {
+function assertMarketplaceRules(
+	params: GetRequest | CreateRequest | UpdateRequest,
+): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
 		throw new Error("Marketplace service requires service marketplace");
 	}
@@ -67,29 +66,16 @@ export async function get(params: GetRequest): Promise<GetResponse> {
 	return marketplaceGetBody(params);
 }
 
-async function marketplaceUpsertBody(
-	params: UpsertRequest,
+async function marketplaceCreateBody(
+	params: CreateRequest,
 ): Promise<DATA_PRIMITIVE> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
-	const validatedPayload = validateDataPayload(dataPayload);
+	const validatedPayload = validateCreateDataPayload(dataPayload);
+	assertIsoDateTimeJsonFields(validatedPayload);
 
 	const filterId = filter?.id;
-	if (filterId) {
-		const result = await db
-			.update(data)
-			.set({ data: validatedPayload, updatedAt: nowIso })
-			.where(and(eq(data.id, filterId), eq(data.resource, resource)))
-			.returning();
-		if (result.length > 0) {
-			const row = result[0];
-			validateUpsertResponse(row);
-			emitDataUpdated(resource, row.data);
-			return row;
-		}
-	}
-
 	const insertValues: typeof data.$inferInsert = {
 		resource,
 		data: validatedPayload,
@@ -100,17 +86,56 @@ async function marketplaceUpsertBody(
 		insertValues.id = filterId;
 	}
 
-	const result = await db.insert(data).values(insertValues).returning();
+	let result: (typeof data.$inferSelect)[];
+	try {
+		result = await db.insert(data).values(insertValues).returning();
+	} catch {
+		throw new Error("Resource already exists");
+	}
+
 	const row = result[0];
-	validateUpsertResponse(row);
-	emitDataUpdated(resource, row.data);
+	validateCreateResponse(row);
+	emitDataChanged(resource, "create", row.data);
+	return row;
+}
+
+async function marketplaceUpdateBody(
+	params: UpdateRequest,
+): Promise<DATA_PRIMITIVE> {
+	const { resource, filter, data: dataPayload } = params;
+	const nowIso = new Date().toISOString();
+
+	const validatedPayload = validateUpdateDataPayload(dataPayload);
+	assertIsoDateTimeJsonFields(validatedPayload);
+
+	const result = await db
+		.update(data)
+		.set({ data: validatedPayload, updatedAt: nowIso })
+		.where(and(eq(data.id, filter.id), eq(data.resource, resource)))
+		.returning();
+
+	if (result.length === 0) {
+		throw new Error("Resource not found");
+	}
+
+	const row = result[0];
+	validateUpdateResponse(row);
+	emitDataChanged(resource, "update", row.data);
 	return row;
 }
 
 /**
- * Marketplace `upsert` after JSON-RPC shape checks. This only applies marketplace access rules.
+ * Marketplace `create` after marketplace access rules.
  */
-export async function upsert(params: UpsertRequest): Promise<DATA_PRIMITIVE> {
+export async function create(params: CreateRequest): Promise<DATA_PRIMITIVE> {
 	assertMarketplaceRules(params);
-	return marketplaceUpsertBody(params);
+	return marketplaceCreateBody(params);
+}
+
+/**
+ * Marketplace `update` after marketplace access rules.
+ */
+export async function update(params: UpdateRequest): Promise<DATA_PRIMITIVE> {
+	assertMarketplaceRules(params);
+	return marketplaceUpdateBody(params);
 }

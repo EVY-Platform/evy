@@ -34,9 +34,9 @@ final class EVYAPIManager {
 
     authed = try await rpcWS.connect(token: "Geo", os: DataOS.ios)
 
-    let result = try await rpcWS.subscribe(event: "dataUpdated")
-    if result["dataUpdated"] != "ok" {
-      throw EVYRPCError.subscriptionError("Failed to subscribe to dataUpdated events")
+    let result = try await rpcWS.subscribe(event: "dataChanged")
+    if result["dataChanged"] != "ok" {
+      throw EVYRPCError.subscriptionError("Failed to subscribe to dataChanged events")
     }
   }
 }

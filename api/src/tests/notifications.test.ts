@@ -7,7 +7,7 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { UpsertRequest, UI_Flow, UI_Page } from "evy-types";
+import type { CreateRequest, UI_Flow, UI_Page } from "evy-types";
 import type { WSParams } from "../ws";
 
 import {
@@ -22,10 +22,10 @@ import {
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
-const { upsert, setDbForTest, validateAuth } = dataModule;
+const { create, setDbForTest, validateAuth } = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
-describe("upsert real-time notifications", () => {
+describe("create/update real-time notifications", () => {
 	let previousApiPort: string | undefined;
 	let apiPort: number;
 	let apiUrl: string;
@@ -53,8 +53,8 @@ describe("upsert real-time notifications", () => {
 		});
 
 		server
-			.register("upsert", async (params: unknown) =>
-				upsert(params as unknown as UpsertRequest),
+			.register("create", async (params: unknown) =>
+				create(params as unknown as CreateRequest),
 			)
 			.protected();
 
@@ -75,14 +75,14 @@ describe("upsert real-time notifications", () => {
 		await clearAllTestTables(testDb);
 	});
 
-	it("emits dataUpdated with sync-row shape after SDUI upsert", async () => {
+	it("emits dataChanged with create operation after SDUI create", async () => {
 		const subscriber = await connectAndLogin(
 			apiUrl,
 			"notify-token-1",
 			"Web",
-			"dataUpdated",
+			"dataChanged",
 		);
-		const notifyPromise = waitForNotification(subscriber, "dataUpdated");
+		const notifyPromise = waitForNotification(subscriber, "dataChanged");
 
 		const testPage: UI_Page = {
 			id: crypto.randomUUID(),
@@ -97,7 +97,7 @@ describe("upsert real-time notifications", () => {
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-2", "Web");
 
-		await caller.call("upsert", {
+		await caller.call("create", {
 			service: "evy",
 			resource: "sdui",
 			data: flowData,
@@ -107,6 +107,7 @@ describe("upsert real-time notifications", () => {
 		expect(params).toEqual({
 			service: "evy",
 			resource: "sdui",
+			operation: "create",
 			value: flowData,
 		});
 
@@ -114,14 +115,14 @@ describe("upsert real-time notifications", () => {
 		caller.close();
 	});
 
-	it("emits dataUpdated after non-SDUI upsert with sync-row shape", async () => {
+	it("emits dataChanged after non-SDUI create with sync-row shape", async () => {
 		const subscriber = await connectAndLogin(
 			apiUrl,
 			"notify-token-3",
 			"Web",
-			"dataUpdated",
+			"dataChanged",
 		);
-		const notifyPromise = waitForNotification(subscriber, "dataUpdated");
+		const notifyPromise = waitForNotification(subscriber, "dataChanged");
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-4", "Web");
 
@@ -134,7 +135,7 @@ describe("upsert real-time notifications", () => {
 			createdAt: nowIso,
 			updatedAt: nowIso,
 		};
-		const upsertResult = await caller.call("upsert", {
+		const createResult = await caller.call("create", {
 			service: "evy",
 			resource: "services",
 			data: payload,
@@ -144,21 +145,22 @@ describe("upsert real-time notifications", () => {
 		expect(params).toEqual({
 			service: "evy",
 			resource: "services",
-			value: upsertResult,
+			operation: "create",
+			value: createResult,
 		});
 
 		subscriber.close();
 		caller.close();
 	});
 
-	it("only subscribed clients receive dataUpdated", async () => {
+	it("only subscribed clients receive dataChanged", async () => {
 		const subscribed = await connectAndLogin(
 			apiUrl,
 			"notify-token-5",
 			"Web",
-			"dataUpdated",
+			"dataChanged",
 		);
-		const notifyPromise = waitForNotification(subscribed, "dataUpdated");
+		const notifyPromise = waitForNotification(subscribed, "dataChanged");
 
 		const notSubscribed = await connectAndLogin(
 			apiUrl,
@@ -167,7 +169,7 @@ describe("upsert real-time notifications", () => {
 		);
 
 		const missed: unknown[] = [];
-		notSubscribed.on("dataUpdated", (p: unknown) => missed.push(p));
+		notSubscribed.on("dataChanged", (p: unknown) => missed.push(p));
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-7", "Web");
 
@@ -176,7 +178,7 @@ describe("upsert real-time notifications", () => {
 			title: "P",
 			rows: [],
 		};
-		await caller.call("upsert", {
+		await caller.call("create", {
 			service: "evy",
 			resource: "sdui",
 			data: {

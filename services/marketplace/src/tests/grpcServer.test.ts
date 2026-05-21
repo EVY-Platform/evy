@@ -52,11 +52,20 @@ type EvyServiceClient = Client & {
 		},
 		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
 	) => void;
-	Upsert: (
+	Create: (
 		req: {
 			service: string;
 			resource: string;
 			filter?: { id: string };
+			data_json: string;
+		},
+		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
+	) => void;
+	Update: (
+		req: {
+			service: string;
+			resource: string;
+			filter: { id: string };
 			data_json: string;
 		},
 		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
@@ -68,14 +77,14 @@ type EvyServiceClient = Client & {
 };
 
 describe("marketplace gRPC server", () => {
-	it("Get and Upsert round-trip typed params", async () => {
+	it("Create and Get round-trip typed params", async () => {
 		const client = createEvyServiceClient(
 			`127.0.0.1:${grpcPort}`,
 		) as EvyServiceClient;
 		const row = { id: crypto.randomUUID(), value: "grpc-condition" };
 
 		await new Promise<void>((resolve, reject) => {
-			client.Upsert(
+			client.Create(
 				{
 					service: "marketplace",
 					resource: "conditions",
@@ -111,7 +120,7 @@ describe("marketplace gRPC server", () => {
 		expect(got).toEqual([row]);
 	});
 
-	it("SubscribeEvents receives dataUpdated after catalog upsert", async () => {
+	it("SubscribeEvents receives dataChanged after catalog create", async () => {
 		const client = createEvyServiceClient(
 			`127.0.0.1:${grpcPort}`,
 		) as EvyServiceClient;
@@ -126,7 +135,7 @@ describe("marketplace gRPC server", () => {
 
 		const row = { id: crypto.randomUUID(), value: "notify-me" };
 		await new Promise<void>((resolve, reject) => {
-			client.Upsert(
+			client.Create(
 				{
 					service: "marketplace",
 					resource: "conditions",
@@ -140,8 +149,8 @@ describe("marketplace gRPC server", () => {
 		});
 
 		await new Promise((r) => setTimeout(r, 150));
-		expect(received.some((e) => e.event_name === "dataUpdated")).toBe(true);
-		const dataEvent = received.find((e) => e.event_name === "dataUpdated");
+		expect(received.some((e) => e.event_name === "dataChanged")).toBe(true);
+		const dataEvent = received.find((e) => e.event_name === "dataChanged");
 		expect(dataEvent).toBeDefined();
 		if (!dataEvent) {
 			return;
@@ -149,6 +158,7 @@ describe("marketplace gRPC server", () => {
 		expect(JSON.parse(dataEvent.payload_json)).toEqual({
 			service: "marketplace",
 			resource: "conditions",
+			operation: "create",
 			value: row,
 		});
 	});

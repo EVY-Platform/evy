@@ -1,6 +1,6 @@
 import { validateAuth } from "./data";
 import { initDataNotifications } from "./notifications";
-import { api, get, sync, upsert } from "./rpc";
+import { api, create, get, sync, update } from "./rpc";
 import { resources } from "./resources";
 import { wireGrpcEvents } from "./services";
 import { emitJsonRpc, initServer, type WSParams } from "./ws";
@@ -19,7 +19,8 @@ async function main() {
 	wireGrpcEvents(broadcast);
 
 	server.register("get", get);
-	server.register("upsert", upsert).protected();
+	server.register("create", create).protected();
+	server.register("update", update).protected();
 	server.register("api", api);
 	server.register("sync", sync).protected();
 	server.register("resources", resources);

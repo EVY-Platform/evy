@@ -1,6 +1,6 @@
 # EVY API
 
-Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https://github.com/elpheria/rpc-websockets)) that handles `service: "evy"` in-process (SDUI flows and core tables), forwards other services over gRPC, and pushes real-time `dataUpdated` notifications to connected clients.
+Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https://github.com/elpheria/rpc-websockets)) that handles `service: "evy"` in-process (SDUI flows and core tables), forwards other services over gRPC, and pushes real-time `dataChanged` notifications to connected clients.
 
 Monorepo setup (Compose, seeding, local Bun): [README § Running Services](../README.md#running-services).
 
@@ -14,10 +14,10 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 
 ### Request dispatch
 
-`get` is public, `upsert` is protected (requires a valid device token via `validateAuth`). Params include `service`, `resource`, an optional `filter` object (`id` for one resource row and/or `updatedAfter` for incremental sync), and for `upsert` a `data` object (see JSON Schemas under `types/schema/rpc/`).
+`get` is public. `create`, `update`, and `sync` are protected (require a valid device token via `validateAuth`). Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` requires `filter.id`.
 
 - `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, and `providers` (typed catalog tables). There is no generic `evy` “data” table routed through `services.ts`.
-- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet` / `forwardUpsert` in [`src/services.ts`](./src/services.ts), which issue `Get` / `Upsert` on `evy.Service` and validate JSON responses.
+- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/services.ts`](./src/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses.
 - **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/catalog + external services) since that timestamp. When data changed, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
 
 Synchronous request/response path:
@@ -31,17 +31,17 @@ sequenceDiagram
     participant services as services.ts
     participant marketplace as marketplace (gRPC)
 
-    Client->>ws: JSON-RPC upsert
+    Client->>ws: JSON-RPC create/update
     ws->>ws: auth (validateAuth)
     ws->>rpc: registered handler
-    rpc->>rpc: validateStrictUpsertRequest
+    rpc->>rpc: validateStrictCreateRequest/validateStrictUpdateRequest
 
     alt service == "evy"
-        rpc->>data: upsertCoreForValidatedRequest
+        rpc->>data: create/update core handler
         data-->>rpc: row
     else service != "evy"
-        rpc->>services: forwardUpsert
-        services->>marketplace: gRPC Upsert
+        rpc->>services: forwardCreate/forwardUpdate
+        services->>marketplace: gRPC Create/Update
         marketplace-->>services: row JSON
         services-->>rpc: row
     end
@@ -63,7 +63,7 @@ sequenceDiagram
 
     rect rgb(230, 245, 255)
     Note over data,ws: Core evy write triggers notification
-    data->>ws: emitJsonRpc(dataUpdated, sync row)
+    data->>ws: emitJsonRpc(dataChanged, changed row)
     ws->>Client: JSON-RPC notification
     end
 
@@ -78,15 +78,15 @@ sequenceDiagram
 
 ### Real-time notifications
 
-`ws.ts` registers the `dataUpdated` server event and ships a custom `emitJsonRpc` helper because `rpc-websockets` emits a non-standard wire shape that `JsonRPC.swift` on iOS cannot parse. All pushed frames therefore use standard JSON-RPC 2.0:
+`ws.ts` registers the `dataChanged` server event and ships a custom `emitJsonRpc` helper because `rpc-websockets` emits a non-standard wire shape that `JsonRPC.swift` on iOS cannot parse. All pushed frames therefore use standard JSON-RPC 2.0:
 
 ```json
-{ "jsonrpc": "2.0", "method": "dataUpdated", "params": { "service": "evy", "resource": "sdui", "value": { /* row */ } } }
+{ "jsonrpc": "2.0", "method": "dataChanged", "params": { "service": "evy", "resource": "sdui", "operation": "create", "value": { /* row */ } } }
 ```
 
 - [`src/index.ts`](./src/index.ts) creates a `broadcast` callback wrapping `emitJsonRpc` and injects it into `rpc` and `services` at startup.
-- Successful syncable `evy` writes emit `dataUpdated` from [`src/data.ts`](./src/data.ts), including SDUI. Payloads match individual sync rows: `{ service, resource, value }`.
-- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them via the same broadcast callback (reconnect with exponential backoff). Remote `dataUpdated` payloads use the same `{ service, resource, value }` shape.
+- Successful syncable `evy` writes emit `dataChanged` from [`src/data.ts`](./src/data.ts), including SDUI. Payloads include the write operation: `{ service, resource, operation, value }`.
+- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them via the same broadcast callback (reconnect with exponential backoff). Remote `dataChanged` payloads use the same `{ service, resource, operation, value }` shape.
 - The shared [`src/broadcast.ts`](./src/broadcast.ts) defines the `BroadcastFn` type contract, decoupling `rpc` and `services` from the WebSocket layer.
 
 ### Internal module layout
@@ -95,8 +95,8 @@ sequenceDiagram
 flowchart TD
     index[index.ts<br/>wires server + handlers + broadcast]
     ws[ws.ts<br/>JSON-RPC transport]
-    rpc[rpc.ts<br/>get / upsert routing]
-    data[data.ts<br/>Drizzle + auth<br/>getCore / upsertCore]
+    rpc[rpc.ts<br/>get / create / update routing]
+    data[data.ts<br/>Drizzle + auth<br/>getCore / createCore / updateCore]
     services[services.ts<br/>gRPC adapters + SubscribeEvents]
     sync[sync.ts<br/>unified sync handler]
     readiness[readiness.ts<br/>health / seed check]
@@ -126,7 +126,7 @@ Broader schema layout: [docs/evy/types.md § Sources](../docs/evy/types.md#sourc
 | [`types/schema/service.proto`](../types/schema/service.proto) | `evy.Service` gRPC IDL implemented by every non-`evy` backend |
 | [`types/schema/data/data.schema.json`](../types/schema/data/data.schema.json) | JSON Schema for `DATA_EVY_*` rows |
 | [`types/schema/sdui/evy.schema.json`](../types/schema/sdui/evy.schema.json) | `UI_Flow` / `UI_Page` / `UI_Row` contract |
-| [`types/schema/rpc/*.schema.json`](../types/schema/rpc) | `GetRequest` / `UpsertRequest` / `GetResponse` contracts |
+| [`types/schema/rpc/*.schema.json`](../types/schema/rpc) | `GetRequest` / `CreateRequest` / `UpdateRequest` / `GetResponse` contracts |
 
 ## Prerequisites
 

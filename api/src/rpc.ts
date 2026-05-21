@@ -3,15 +3,21 @@ import type {
 	GetRequest,
 	GetResponse,
 	SyncResponse,
-	UpsertResponse,
+	CreateResponse,
+	UpdateResponse,
 } from "evy-types";
-import { get as getCore, upsert as upsertCore } from "./data";
+import {
+	get as getCore,
+	create as createCore,
+	update as updateCore,
+} from "./data";
 import { sync as coreSync } from "./sync";
-import { forwardGet, forwardUpsert } from "./services";
+import { forwardGet, forwardCreate, forwardUpdate } from "./services";
 import {
 	validateStrictApiRequest,
 	validateStrictGetRequest,
-	validateStrictUpsertRequest,
+	validateStrictCreateRequest,
+	validateStrictUpdateRequest,
 } from "evy-types/rpcRequestHelpers";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 
@@ -42,12 +48,20 @@ export async function api(params: unknown): Promise<GetResponse> {
 	return handleGetRequest(validateStrictApiRequest, params);
 }
 
-export async function upsert(params: unknown): Promise<UpsertResponse> {
-	validateStrictUpsertRequest(params);
+export async function create(params: unknown): Promise<CreateResponse> {
+	validateStrictCreateRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		return upsertCore(params);
+		return createCore(params);
 	}
-	return forwardUpsert(params.service, params);
+	return forwardCreate(params.service, params);
+}
+
+export async function update(params: unknown): Promise<UpdateResponse> {
+	validateStrictUpdateRequest(params);
+	if (params.service === EVY_CORE_SERVICE) {
+		return updateCore(params);
+	}
+	return forwardUpdate(params.service, params);
 }
 
 export async function sync(params: unknown): Promise<SyncResponse> {

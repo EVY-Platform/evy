@@ -6,10 +6,11 @@ export function initDataNotifications(broadcastFn: BroadcastFn | null): void {
 	broadcast = broadcastFn;
 }
 
-export function emitDataUpdatedNotification(payload: {
+export function emitDataChangedNotification(payload: {
 	service: string;
 	resource: string;
+	operation: "create" | "update";
 	value: unknown;
 }): void {
-	broadcast?.("dataUpdated", payload);
+	broadcast?.("dataChanged", payload);
 }

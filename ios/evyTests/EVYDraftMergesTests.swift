@@ -49,7 +49,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "value": .decimal(99),
     ])
     let priceBinding = try EVY.draftStore.binding(fromParsedProps: "price")
-    try EVY.cacheStore.upsert(
+    try EVY.cacheStore.update(
       namespace: EVYNamespace.draft,
       resource: priceBinding.scopeId,
       id: priceBinding.draftKey,

@@ -15,15 +15,15 @@ import type {
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
 } from "./generated/ts/data/data";
-import type { DATA_PRIMITIVE } from "./generated/ts/data/primitive";
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
+import type { CreateRequest } from "./generated/ts/rpc/create.request";
+import type { CreateResponse } from "./generated/ts/rpc/create.response";
+import type { UpdateRequest } from "./generated/ts/rpc/update.request";
+import type { UpdateResponse } from "./generated/ts/rpc/update.response";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
-
-import type { UpsertRequest } from "./generated/ts/rpc/upsert.request";
-import type { UpsertResponse } from "./generated/ts/rpc/upsert.response";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
@@ -45,14 +45,19 @@ import apiRequestRaw from "./schema/rpc/api.request.schema.json" with {
 import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
 	type: "json",
 };
-import upsertRequestRaw from "./schema/rpc/upsert.request.schema.json" with {
+import createRequestRaw from "./schema/rpc/create.request.schema.json" with {
 	type: "json",
 };
-
+import createResponseRaw from "./schema/rpc/create.response.schema.json" with {
+	type: "json",
+};
+import updateRequestRaw from "./schema/rpc/update.request.schema.json" with {
+	type: "json",
+};
+import updateResponseRaw from "./schema/rpc/update.response.schema.json" with {
+	type: "json",
+};
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
-	type: "json",
-};
-import upsertResponseRaw from "./schema/rpc/upsert.response.schema.json" with {
 	type: "json",
 };
 import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
@@ -73,15 +78,19 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
-	"rpc/upsert.request.schema.json": upsertRequestRaw as Record<string, unknown>,
-	"rpc/sync.request.schema.json": syncRequestRaw as Record<string, unknown>,
-	"rpc/sync.response.schema.json": syncResponseRaw as Record<string, unknown>,
-
-	"rpc/get.response.schema.json": getResponseRaw as Record<string, unknown>,
-	"rpc/upsert.response.schema.json": upsertResponseRaw as Record<
+	"rpc/create.request.schema.json": createRequestRaw as Record<string, unknown>,
+	"rpc/create.response.schema.json": createResponseRaw as Record<
 		string,
 		unknown
 	>,
+	"rpc/update.request.schema.json": updateRequestRaw as Record<string, unknown>,
+	"rpc/update.response.schema.json": updateResponseRaw as Record<
+		string,
+		unknown
+	>,
+	"rpc/sync.request.schema.json": syncRequestRaw as Record<string, unknown>,
+	"rpc/sync.response.schema.json": syncResponseRaw as Record<string, unknown>,
+	"rpc/get.response.schema.json": getResponseRaw as Record<string, unknown>,
 };
 
 const preparedCache = new Map<string, Record<string, unknown>>();
@@ -189,7 +198,8 @@ const REQUEST_SCHEMA_FILES = [
 	"common/rpc.schema.json",
 	"rpc/api.request.schema.json",
 	"rpc/get.request.schema.json",
-	"rpc/upsert.request.schema.json",
+	"rpc/create.request.schema.json",
+	"rpc/update.request.schema.json",
 	"rpc/sync.request.schema.json",
 ] as const;
 
@@ -200,7 +210,8 @@ const ENTITY_SCHEMA_FILES = [
 	"data/primitive.schema.json",
 	"sdui/evy.schema.json",
 	"rpc/get.response.schema.json",
-	"rpc/upsert.response.schema.json",
+	"rpc/create.response.schema.json",
+	"rpc/update.response.schema.json",
 	"rpc/sync.response.schema.json",
 ] as const;
 
@@ -241,17 +252,25 @@ const getValidateApiRequest = lazyValidator<ApiRequest>(
 	getRequestAjv,
 	fileId("rpc/api.request.schema.json"),
 );
+const getValidateCreateRequest = lazyValidator<CreateRequest>(
+	getRequestAjv,
+	fileId("rpc/create.request.schema.json"),
+);
+const getValidateUpdateRequest = lazyValidator<UpdateRequest>(
+	getRequestAjv,
+	fileId("rpc/update.request.schema.json"),
+);
+const getValidateCreateDataPayload = lazyValidator<CreateRequest["data"]>(
+	getRequestAjv,
+	`${fileId("rpc/create.request.schema.json")}#/$defs/CreateDataPayload`,
+);
+const getValidateUpdateDataPayload = lazyValidator<UpdateRequest["data"]>(
+	getRequestAjv,
+	`${fileId("rpc/update.request.schema.json")}#/$defs/UpdateDataPayload`,
+);
 const getValidateGetRequest = lazyValidator<GetRequest>(
 	getRequestAjv,
 	fileId("rpc/get.request.schema.json"),
-);
-const getValidateUpsertRequest = lazyValidator<UpsertRequest>(
-	getRequestAjv,
-	fileId("rpc/upsert.request.schema.json"),
-);
-const getValidateUpsertDataPayload = lazyValidator<DATA_PRIMITIVE["data"]>(
-	getRequestAjv,
-	`${fileId("rpc/upsert.request.schema.json")}#/$defs/UpsertDataPayload`,
 );
 const getValidateUiFlow = lazyValidator<UI_Flow>(
 	getEntityAjv,
@@ -274,9 +293,13 @@ const getValidateGetResponse = lazyValidator<GetResponse>(
 	getEntityAjv,
 	fileId("rpc/get.response.schema.json"),
 );
-const getValidateUpsertResponse = lazyValidator<UpsertResponse>(
+const getValidateCreateResponse = lazyValidator<CreateResponse>(
 	getEntityAjv,
-	fileId("rpc/upsert.response.schema.json"),
+	fileId("rpc/create.response.schema.json"),
+);
+const getValidateUpdateResponse = lazyValidator<UpdateResponse>(
+	getEntityAjv,
+	fileId("rpc/update.response.schema.json"),
 );
 const getValidateSyncRequest = lazyValidator<SyncRequest>(
 	getRequestAjv,
@@ -301,13 +324,25 @@ export const validateApiRequest = makeValidator<ApiRequest>(
 	"ApiRequest",
 	getValidateApiRequest,
 );
+export const validateCreateRequest = makeValidator<CreateRequest>(
+	"CreateRequest",
+	getValidateCreateRequest,
+);
+export const validateUpdateRequest = makeValidator<UpdateRequest>(
+	"UpdateRequest",
+	getValidateUpdateRequest,
+);
+export const validateCreateDataPayload = makeValidator<CreateRequest["data"]>(
+	"Create data",
+	getValidateCreateDataPayload,
+);
+export const validateUpdateDataPayload = makeValidator<UpdateRequest["data"]>(
+	"Update data",
+	getValidateUpdateDataPayload,
+);
 export const validateGetRequest = makeValidator<GetRequest>(
 	"GetRequest",
 	getValidateGetRequest,
-);
-export const validateUpsertRequest = makeValidator<UpsertRequest>(
-	"UpsertRequest",
-	getValidateUpsertRequest,
 );
 
 /** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
@@ -325,17 +360,17 @@ export const validateDataEvyServiceProvider =
 		"ServiceProvider",
 		getValidateDataEvyServiceProvider,
 	);
-export const validateUpsertDataPayload = makeValidator<DATA_PRIMITIVE["data"]>(
-	"Upsert data",
-	getValidateUpsertDataPayload,
-);
 export const validateGetResponse = makeValidator<GetResponse>(
 	"GetResponse",
 	getValidateGetResponse,
 );
-export const validateUpsertResponse = makeValidator<UpsertResponse>(
-	"UpsertResponse",
-	getValidateUpsertResponse,
+export const validateCreateResponse = makeValidator<CreateResponse>(
+	"CreateResponse",
+	getValidateCreateResponse,
+);
+export const validateUpdateResponse = makeValidator<UpdateResponse>(
+	"UpdateResponse",
+	getValidateUpdateResponse,
 );
 export const validateSync = makeValidator<SyncRequest>(
 	"SyncRequest",

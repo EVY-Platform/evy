@@ -105,9 +105,9 @@ flowchart LR
         WS[EVYWebsocket<br/>JSON-RPC over WebSocket]
         APIManager --> WS
     end
-    EVY -->|fetch / upsert| APIManager
+    EVY -->|fetch / create / update| APIManager
 
-    Notif{{NotificationCenter<br/>.evyDataUpdated<br/>.evyErrorOccurred}}
+    Notif{{NotificationCenter<br/>.evyDataChanged<br/>.evyErrorOccurred}}
     PublicStore -. post .-> Notif
     DraftStore -. post .-> Notif
     EVY -. post .-> Notif

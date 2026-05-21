@@ -129,7 +129,7 @@ enum EVYPreviewMockData {
       for item in items {
         let itemId = item.identifierValue()
         let encoded = (try? JSONEncoder().encode(item)) ?? data
-        try? EVY.publicStore.upsert(
+        try? EVY.publicStore.create(
           namespace: EVYNamespace.local,
           resource: key,
           id: itemId,
@@ -138,14 +138,14 @@ enum EVYPreviewMockData {
       }
     case .dictionary:
       let itemId = parsed.identifierValue()
-      try? EVY.publicStore.upsert(
+      try? EVY.publicStore.create(
         namespace: EVYNamespace.local,
         resource: key,
         id: itemId,
         value: data
       )
     default:
-      try? EVY.publicStore.upsert(
+      try? EVY.publicStore.create(
         namespace: EVYNamespace.local,
         resource: key,
         id: EVYNamespace.singletonId,

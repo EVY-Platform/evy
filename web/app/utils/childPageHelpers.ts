@@ -6,10 +6,6 @@ type ActiveChildPage = {
 	parentRowId: string;
 };
 
-/**
- * Builds the chain of child pages for the current active selection,
- * walking down the config stack to collect rendered rows.
- */
 export function buildActiveChildPages({
 	activeRowId,
 	configStack,
