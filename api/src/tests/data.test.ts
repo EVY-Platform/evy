@@ -56,9 +56,11 @@ const { validateAuth, create, get, setDbForTest, update } = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
 function isDATA_EVY_Flow(
-	row: CreateResponse | UpdateResponse,
+	row: CreateResponse["data"] | UpdateResponse["data"],
 ): row is DATA_EVY_Flow {
 	return (
+		row !== null &&
+		typeof row === "object" &&
 		"data" in row &&
 		typeof row.data === "object" &&
 		row.data !== null &&
@@ -67,10 +69,12 @@ function isDATA_EVY_Flow(
 }
 
 function expectToBeDATA_EVY_Flow(
-	row: CreateResponse | UpdateResponse,
-): asserts row is DATA_EVY_Flow {
-	expect(isDATA_EVY_Flow(row)).toBe(true);
-	if (!isDATA_EVY_Flow(row)) {
+	response: CreateResponse | UpdateResponse,
+): asserts response is (CreateResponse | UpdateResponse) & {
+	data: DATA_EVY_Flow;
+} {
+	expect(isDATA_EVY_Flow(response.data)).toBe(true);
+	if (!isDATA_EVY_Flow(response.data)) {
 		throw new Error("Expected DATA_EVY_Flow");
 	}
 }
@@ -228,7 +232,9 @@ describe("create", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(result);
-		expect(result.data.name).toBe("New Flow");
+		expect(result.metadata.count).toBe(1);
+		expect(result.metadata.order).toEqual([result.data.id]);
+		expect(result.data.data.name).toBe("New Flow");
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -249,9 +255,11 @@ describe("create", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(result);
-		expect(result.id).toBe(flowId);
+		expect(result.metadata.count).toBe(1);
+		expect(result.metadata.order).toEqual([flowId]);
 		expect(result.data.id).toBe(flowId);
-		expect(result.data.name).toBe("Client Created Flow");
+		expect(result.data.data.id).toBe(flowId);
+		expect(result.data.data.name).toBe("Client Created Flow");
 	});
 
 	it("should fail to create duplicate flow", async () => {
@@ -294,7 +302,8 @@ describe("create", () => {
 			data: payload,
 		});
 
-		const row = result as DATA_EVY_Service;
+		const row = result.data as DATA_EVY_Service;
+		expect(result.metadata.order).toEqual([serviceId]);
 		expect(row.id).toBe(serviceId);
 		expect(row.name).toBe("CreateSvc");
 		expect(row.description).toBe("D");
@@ -377,7 +386,8 @@ describe("update", () => {
 		});
 
 		expectToBeDATA_EVY_Flow(result);
-		expect(result.data.name).toBe("Updated Name");
+		expect(result.metadata.order).toEqual([existingFlow.id]);
+		expect(result.data.data.name).toBe("Updated Name");
 		const flows = await testDb.select().from(schema.flow);
 		expect(flows).toHaveLength(1);
 	});
@@ -428,7 +438,8 @@ describe("update", () => {
 			data: updatedPayload,
 		});
 
-		const row = result as DATA_EVY_Service;
+		const row = result.data as DATA_EVY_Service;
+		expect(result.metadata.order).toEqual([serviceId]);
 		expect(row.name).toBe("UpdatedSvc");
 		const svcRows = await testDb.select().from(schema.service);
 		expect(svcRows).toHaveLength(1);
@@ -498,9 +509,11 @@ describe("get", () => {
 			resource: "sdui",
 		});
 
-		expect(result).toHaveLength(2);
-		expect(result[0]).toHaveProperty("name");
-		expect(result[0]).toHaveProperty("pages");
+		expect(result.metadata.count).toBe(2);
+		expect(result.data).toHaveLength(2);
+		expect(result.metadata.order).toEqual(result.data.map((flow) => flow.id));
+		expect(result.data[0]).toHaveProperty("name");
+		expect(result.data[0]).toHaveProperty("pages");
 	});
 
 	it("should return single flow for resource SDUI when filter.id provided", async () => {
@@ -521,8 +534,10 @@ describe("get", () => {
 			filter: { id: flowId },
 		});
 
-		expect(result).toHaveLength(1);
-		const flow = result[0] as UI_Flow;
+		expect(result.metadata.count).toBe(1);
+		expect(result.data).toHaveLength(1);
+		const flow = result.data[0] as UI_Flow;
+		expect(result.metadata.order).toEqual([flowId]);
 		expect(flow.name).toBe("Single Flow");
 	});
 
@@ -533,7 +548,9 @@ describe("get", () => {
 			filter: { id: crypto.randomUUID() },
 		});
 
-		expect(result).toHaveLength(0);
+		expect(result.metadata.count).toBe(0);
+		expect(result.data).toHaveLength(0);
+		expect(result.metadata.order).toEqual([]);
 	});
 
 	it("should reject SDUI get when stored flow data fails Flow validation", async () => {
@@ -592,14 +609,16 @@ describe("get", () => {
 			resource: "services",
 		});
 
-		expect(result).toHaveLength(1);
-		expect(result[0]).toMatchObject({
+		expect(result.metadata.count).toBe(1);
+		expect(result.data).toHaveLength(1);
+		expect(result.metadata.order).toEqual([serviceData.id]);
+		expect(result.data[0]).toMatchObject({
 			id: serviceData.id,
 			name: serviceData.name,
 			description: serviceData.description,
 			createdAt: serviceData.createdAt,
 		});
-		const serviceRow = result[0];
+		const serviceRow = result.data[0];
 		if (!("updatedAt" in serviceRow)) {
 			throw new Error("Expected service row with updatedAt");
 		}
@@ -612,7 +631,10 @@ describe("get", () => {
 			resource: "services",
 		});
 
-		expect(result).toEqual([]);
+		expect(result).toEqual({
+			metadata: { count: 0, size: 2, order: [] },
+			data: [],
+		});
 	});
 });
 
@@ -646,7 +668,7 @@ describe("create SDUI validation", () => {
 			},
 		});
 		expectToBeDATA_EVY_Flow(result);
-		expect(result.data.pages).toHaveLength(0);
+		expect(result.data.data.pages).toHaveLength(0);
 	});
 
 	it("should reject flow with invalid row type", async () => {
@@ -727,8 +749,8 @@ describe("create SDUI validation", () => {
 			data: flowData,
 		});
 		expectToBeDATA_EVY_Flow(result);
-		expect(result.data.name).toBe("Test Flow");
-		expect(result.data.pages).toHaveLength(1);
+		expect(result.data.data.name).toBe("Test Flow");
+		expect(result.data.data.pages).toHaveLength(1);
 	});
 
 	it("should validate footer row", async () => {
@@ -757,6 +779,6 @@ describe("create SDUI validation", () => {
 			data: flowData,
 		});
 		expectToBeDATA_EVY_Flow(result);
-		expect(result.data.pages[0]).toHaveProperty("footer");
+		expect(result.data.data.pages[0]).toHaveProperty("footer");
 	});
 });

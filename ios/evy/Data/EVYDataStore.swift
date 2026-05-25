@@ -57,7 +57,8 @@ final class EVYDataStore {
     let descriptor = FetchDescriptor<EVYData>(
       predicate: #Predicate {
         $0.namespace == namespace && $0.resource == resource
-      }
+      },
+      sortBy: [SortDescriptor<EVYData>(\.sortIndex)]
     )
     return try context.fetch(descriptor)
   }
@@ -74,21 +75,22 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
-  func create(namespace: String, resource: String, id: String, value: Data) throws {
+  func create(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0) throws {
     if (try? get(namespace: namespace, resource: resource, id: id)) != nil {
       throw EVYDataError.keyAlreadyExists
     }
     context.insert(
-      EVYData(namespace: namespace, resource: resource, id: id, data: value)
+      EVYData(namespace: namespace, resource: resource, id: id, data: value, sortIndex: sortIndex)
     )
     postDataChanged(key: "\(namespace):\(resource):\(id)")
     postDataChanged(key: "\(namespace):\(resource)")
     postDataChanged(key: resource)
   }
 
-  func update(namespace: String, resource: String, id: String, value: Data) throws {
+  func update(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0) throws {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     existing.data = value
+    existing.sortIndex = sortIndex
     postDataChanged(key: "\(namespace):\(resource):\(id)")
     postDataChanged(key: "\(namespace):\(resource)")
     postDataChanged(key: resource)
@@ -118,33 +120,64 @@ final class EVYDataStore {
     }
   }
 
-  func upsert(namespace: String, resource: String, id: String, value: Data) throws {
+  func upsert(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0) throws {
     if (try? get(namespace: namespace, resource: resource, id: id)) != nil {
-      try update(namespace: namespace, resource: resource, id: id, value: value)
+      try update(namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
     } else {
-      try create(namespace: namespace, resource: resource, id: id, value: value)
+      try create(namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
     }
   }
 
   func applySyncedValue(namespace: String, resource: String, value: EVYJson) throws {
-    switch value {
-    case .array(let items):
-      for item in items {
-        let itemId = item.identifierValue()
-        guard !itemId.isEmpty else { continue }
-        guard let encoded = try? JSONEncoder().encode(item) else { continue }
-        try upsert(namespace: namespace, resource: resource, id: itemId, value: encoded)
-      }
-    default:
-      let instanceId: String
-      if case .dictionary(let dict) = value, case .string(let idVal) = dict["id"] {
-        instanceId = idVal
-      } else {
-        instanceId = EVYNamespace.singletonId
-      }
-      let encoded = try JSONEncoder().encode(value)
-      try upsert(namespace: namespace, resource: resource, id: instanceId, value: encoded)
+    if let envelope = getResponseEnvelope(from: value) {
+      try applySyncedEnvelope(namespace: namespace, resource: resource, envelope: envelope)
+      return
     }
+
+    if case .array(let items) = value {
+      try applySyncedEnvelope(
+        namespace: namespace,
+        resource: resource,
+        envelope: (items: items, order: items.map { $0.identifierValue() })
+      )
+      return
+    }
+
+    let encoded = try JSONEncoder().encode(value)
+    try upsert(namespace: namespace, resource: resource, id: singletonId(for: value), value: encoded)
+  }
+
+  private func getResponseEnvelope(from value: EVYJson) -> (items: [EVYJson], order: [String])? {
+    guard case .dictionary(let dict) = value,
+      case .array(let items) = dict["data"],
+      case .dictionary(let metadata) = dict["metadata"],
+      case .array(let orderValues) = metadata["order"]
+    else {
+      return nil
+    }
+
+    return (items, orderValues.map { $0.toString() })
+  }
+
+  private func applySyncedEnvelope(
+    namespace: String,
+    resource: String,
+    envelope: (items: [EVYJson], order: [String])
+  ) throws {
+    for item in envelope.items {
+      let itemId = item.identifierValue()
+      guard !itemId.isEmpty else { continue }
+      guard let encoded = try? JSONEncoder().encode(item) else { continue }
+      let sortIndex = envelope.order.firstIndex(of: itemId) ?? envelope.order.count
+      try upsert(namespace: namespace, resource: resource, id: itemId, value: encoded, sortIndex: sortIndex)
+    }
+  }
+
+  private func singletonId(for value: EVYJson) -> String {
+    if case .dictionary(let dict) = value, case .string(let idVal) = dict["id"] {
+      return idVal
+    }
+    return EVYNamespace.singletonId
   }
 
   func getCollectionJson(namespace: String, resource: String) throws -> EVYJson? {

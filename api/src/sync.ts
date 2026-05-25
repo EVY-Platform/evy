@@ -23,9 +23,7 @@ async function fetchEvyCoreData(
 	const evyResources = getServiceResources(EVY_CORE_SERVICE) ?? [];
 
 	for (const resource of evyResources) {
-		if (resource === "devices") {
-			continue;
-		}
+		if (resource === "devices") continue;
 
 		const request: GetRequest = {
 			service: EVY_CORE_SERVICE,
@@ -34,10 +32,7 @@ async function fetchEvyCoreData(
 		};
 
 		const value: GetResponse = await getCore(request);
-
-		if (Array.isArray(value) && value.length === 0) {
-			continue;
-		}
+		if (value.data.length === 0) continue;
 
 		rows.push({
 			service: EVY_CORE_SERVICE,
@@ -73,9 +68,7 @@ async function fetchExternalServiceData(
 
 			const value: GetResponse = await fetchService(serviceName, request);
 
-			if (Array.isArray(value) && value.length === 0) {
-				continue;
-			}
+			if (value.data.length === 0) continue;
 
 			rows.push({
 				service: serviceName,

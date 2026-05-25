@@ -63,28 +63,34 @@ describe("initServer bootstrap", () => {
 });
 
 describe("assertApiReadable", () => {
-	it("resolves when sdui get returns an array and requireSeeded is false", async () => {
+	it("resolves when sdui get returns an array envelope and requireSeeded is false", async () => {
 		const deps = {
-			get: async (_params: GetRequest): Promise<GetResponse> => [],
+			get: async (_params: GetRequest): Promise<GetResponse> => ({
+				metadata: { count: 0, size: 2, order: [] },
+				data: [],
+			}),
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: false }, deps),
 		).resolves.toBeUndefined();
 	});
 
-	it("throws when sdui get does not return an array", async () => {
+	it("throws when sdui get does not return a data array", async () => {
 		const deps = {
 			get: async (_params: GetRequest): Promise<GetResponse> =>
 				"not-array" as unknown as GetResponse,
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: false }, deps),
-		).rejects.toThrow("expected sdui response array");
+		).rejects.toThrow("expected sdui response data array");
 	});
 
 	it("throws when requireSeeded is true but sdui is empty", async () => {
 		const deps = {
-			get: async (_params: GetRequest): Promise<GetResponse> => [],
+			get: async (_params: GetRequest): Promise<GetResponse> => ({
+				metadata: { count: 0, size: 2, order: [] },
+				data: [],
+			}),
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: true }, deps),
@@ -95,15 +101,23 @@ describe("assertApiReadable", () => {
 		const deps = {
 			get: async (params: GetRequest): Promise<GetResponse> => {
 				if (params.resource === "sdui") {
-					return [
+					const data = [
 						{
 							id: crypto.randomUUID(),
 							name: "Seeded Flow",
 							pages: [],
 						} satisfies UI_Flow,
 					];
+					return {
+						metadata: {
+							count: data.length,
+							size: Buffer.byteLength(JSON.stringify(data), "utf8"),
+							order: data.map((flow) => flow.id),
+						},
+						data,
+					};
 				}
-				return [];
+				return { metadata: { count: 0, size: 2, order: [] }, data: [] };
 			},
 		};
 		await expect(

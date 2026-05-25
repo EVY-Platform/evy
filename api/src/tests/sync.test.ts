@@ -21,15 +21,26 @@ function expectResources(
 	return result.resources as NonNullable<SyncResponse["resources"]>;
 }
 
+function buildMockGetResponse(items: { id: string }[]): GetResponse {
+	return {
+		metadata: {
+			count: items.length,
+			size: Buffer.byteLength(JSON.stringify(items), "utf8"),
+			order: items.map((item) => item.id),
+		},
+		data: items,
+	};
+}
+
 function makeMocks() {
-	const getCore = async (params: GetRequest): Promise<GetResponse> => [
-		{ id: `${params.resource}-mock-1` },
-	];
+	const getCore = async (params: GetRequest): Promise<GetResponse> =>
+		buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
 
 	const fetchService = async (
 		_serviceName: string,
 		params: GetRequest,
-	): Promise<GetResponse> => [{ id: `${params.resource}-mock-1` }];
+	): Promise<GetResponse> =>
+		buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
 
 	const buildRegistry: typeof buildResourceRegistry = () => {
 		const resources: Record<string, { singular: string; plural: string }> = {};
@@ -114,7 +125,7 @@ describe("sync", () => {
 	it("passes updatedAfter to getCore", async () => {
 		const getCore = async (params: GetRequest): Promise<GetResponse> => {
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
-			return [{ id: `${params.resource}-1` }];
+			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
 		const deps = { ...makeMocks(), getCore };
 		await sync({ lastSyncTime: EPOCH }, deps);
@@ -126,15 +137,16 @@ describe("sync", () => {
 			params: GetRequest,
 		): Promise<GetResponse> => {
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
-			return [{ id: `${params.resource}-1` }];
+			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
 		const deps = { ...makeMocks(), fetchService };
 		await sync({ lastSyncTime: EPOCH }, deps);
 	});
 
 	it("returns empty data and no resources when nothing changed", async () => {
-		const getCore = async (): Promise<GetResponse> => [];
-		const fetchService = async (): Promise<GetResponse> => [];
+		const getCore = async (): Promise<GetResponse> => buildMockGetResponse([]);
+		const fetchService = async (): Promise<GetResponse> =>
+			buildMockGetResponse([]);
 		const deps = { ...makeMocks(), getCore, fetchService };
 		const result = await sync(
 			{ lastSyncTime: "2999-01-01T00:00:00.000Z" },
@@ -145,8 +157,9 @@ describe("sync", () => {
 	});
 
 	it("omits resources when no data changes", async () => {
-		const getCore = async (): Promise<GetResponse> => [];
-		const fetchService = async (): Promise<GetResponse> => [];
+		const getCore = async (): Promise<GetResponse> => buildMockGetResponse([]);
+		const fetchService = async (): Promise<GetResponse> =>
+			buildMockGetResponse([]);
 		const deps = { ...makeMocks(), getCore, fetchService };
 		const result = await sync(
 			{ lastSyncTime: "2999-01-01T00:00:00.000Z" },
@@ -172,7 +185,7 @@ describe("sync", () => {
 			if (serviceName === "marketplace") {
 				throw new Error("gRPC service unavailable");
 			}
-			return [];
+			return buildMockGetResponse([]);
 		};
 		const deps = { ...makeMocks(), fetchService };
 		await expect(sync({ lastSyncTime: EPOCH }, deps)).rejects.toThrow(
@@ -189,6 +202,9 @@ describe("sync", () => {
 			expect(typeof row.resource).toBe("string");
 			expect(row.resource.length).toBeGreaterThan(0);
 			expect(row.value).toBeDefined();
+			expect(row.value.metadata.count).toBe(1);
+			expect(row.value.metadata.order).toEqual([`${row.resource}-mock-1`]);
+			expect(row.value.data).toEqual([{ id: `${row.resource}-mock-1` }]);
 		}
 	});
 });

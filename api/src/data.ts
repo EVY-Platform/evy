@@ -39,11 +39,29 @@ import {
 	validateCreateResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
+import {
+	buildCollectionResponseEnvelope,
+	buildSingleResponseEnvelope,
+} from "evy-types/rpcResponseHelpers";
+
+const evyCoreResourceNameSet: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
 const connectionString = getConnectionUrl();
 const client = postgres(connectionString);
 
 let db = drizzle(client, { schema });
+
+function buildGetResponse(items: unknown[]): GetResponse {
+	return validateGetResponse(buildCollectionResponseEnvelope(items));
+}
+
+function buildCreateResponse(item: CreateResponse["data"]): CreateResponse {
+	return validateCreateResponse(buildSingleResponseEnvelope(item));
+}
+
+function buildUpdateResponse(item: UpdateResponse["data"]): UpdateResponse {
+	return validateUpdateResponse(buildSingleResponseEnvelope(item));
+}
 
 export function setDbForTest(database: typeof db): void {
 	db = database;
@@ -55,7 +73,7 @@ function assertEvyCoreAccess(
 	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
 	}
-	if (!EVY_CORE_RESOURCE_NAME_SET.has(params.resource)) {
+	if (!evyCoreResourceNameSet.has(params.resource)) {
 		throw new Error("Resource is not served by the core API");
 	}
 }
@@ -106,7 +124,7 @@ type CatalogEntityConfig<TValidated> = {
 		nowIso: string,
 		filterId: string | undefined,
 	) => Record<string, unknown>;
-	mapRow: (row: unknown) => CreateResponse;
+	mapRow: (row: unknown) => CreateResponse["data"];
 };
 
 async function listCoreCatalogRows<TRow>(
@@ -128,31 +146,27 @@ async function listCoreCatalogRows<TRow>(
 		? await base.where(and(...whereClauses)).orderBy(desc(table.updatedAt))
 		: await base.orderBy(desc(table.updatedAt));
 	const mapped = rows.map((r) => mapRow(r as TRow));
-	return validateGetResponse(mapped);
+	return buildGetResponse(mapped);
 }
 
 async function insertCatalogEntity<TSelect>(
 	doInsert: () => Promise<TSelect[]>,
-	mapRow: (row: TSelect) => CreateResponse,
+	mapRow: (row: TSelect) => CreateResponse["data"],
 ): Promise<CreateResponse> {
 	const inserted = await doInsert();
-	const row = mapRow(inserted[0]);
-	validateCreateResponse(row);
-	return row;
+	return buildCreateResponse(mapRow(inserted[0]));
 }
 
 async function updateCatalogEntity<TSelect>(
 	filterId: string,
 	doUpdate: (filterId: string) => Promise<TSelect[]>,
-	mapRow: (row: TSelect) => UpdateResponse,
+	mapRow: (row: TSelect) => UpdateResponse["data"],
 ): Promise<UpdateResponse> {
 	const updated = await doUpdate(filterId);
 	if (updated.length === 0) {
 		throw new Error("Resource not found");
 	}
-	const row = mapRow(updated[0]);
-	validateUpdateResponse(row);
-	return row;
+	return buildUpdateResponse(mapRow(updated[0]));
 }
 
 async function insertCatalogEntityFromConfig<TValidated>(
@@ -174,7 +188,7 @@ async function insertCatalogEntityFromConfig<TValidated>(
 		(row) => config.mapRow(row),
 	);
 
-	notify(response);
+	notify(response.data);
 	return response;
 }
 
@@ -199,7 +213,7 @@ async function updateCatalogEntityFromConfig<TValidated>(
 		(row) => config.mapRow(row),
 	);
 
-	notify(response);
+	notify(response.data);
 	return response;
 }
 
@@ -258,7 +272,7 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		for (const item of payload) {
 			validateFlowData(item);
 		}
-		return validateGetResponse(payload);
+		return buildGetResponse(payload);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
@@ -319,7 +333,7 @@ const organizationCatalogConfig: CatalogEntityConfig<DATA_EVY_Organization> = {
 		createdAt: validated.createdAt,
 		updatedAt: nowIso,
 	}),
-	mapRow: (row: unknown) => row as CreateResponse,
+	mapRow: (row: unknown) => row as DATA_EVY_Organization,
 };
 
 const providerCatalogConfig: CatalogEntityConfig<DATA_EVY_ServiceProvider> = {
@@ -347,7 +361,7 @@ const providerCatalogConfig: CatalogEntityConfig<DATA_EVY_ServiceProvider> = {
 		updatedAt: nowIso,
 		retired: validated.retired,
 	}),
-	mapRow: (row: unknown) => row as CreateResponse,
+	mapRow: (row: unknown) => row as DATA_EVY_ServiceProvider,
 };
 
 async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
@@ -390,10 +404,9 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 				}
 				throw err;
 			});
-		const row = result[0];
-		validateCreateResponse(row);
+		const response = buildCreateResponse(result[0]);
 		emitNotification(persistedFlowData);
-		return row;
+		return response;
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
@@ -462,10 +475,9 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 		if (result.length === 0) {
 			throw new Error("Resource not found");
 		}
-		const row = result[0];
-		validateUpdateResponse(row);
+		const response = buildUpdateResponse(result[0]);
 		emitNotification(persistedFlowData);
-		return row;
+		return response;
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {

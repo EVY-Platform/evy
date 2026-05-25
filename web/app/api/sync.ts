@@ -19,16 +19,50 @@ function extractSduiFlows(response: SyncResponse): ServerFlow[] {
 		(row) => row.service === "evy" && row.resource === "sdui",
 	);
 
-	if (!sduiRow || !Array.isArray(sduiRow.value)) {
+	const value = sduiRow?.value;
+	if (!isGetResponseEnvelope(value)) {
 		return [];
 	}
 
-	const flows = sduiRow.value;
+	const flows = value.data;
 	if (!flows.every(isServerFlow)) {
 		throw new Error("Invalid flows in sync response");
 	}
 
-	return flows;
+	if (!hasOrder(value.metadata)) {
+		return flows;
+	}
+
+	const orderIndexById = new Map(
+		value.metadata.order.map((id, index) => [id, index]),
+	);
+	return [...flows].sort(
+		(a, b) =>
+			(orderIndexById.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+			(orderIndexById.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+	);
+}
+
+function isGetResponseEnvelope(
+	value: unknown,
+): value is { metadata: unknown; data: unknown[] } {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		"metadata" in value &&
+		"data" in value &&
+		Array.isArray(value.data)
+	);
+}
+
+function hasOrder(value: unknown): value is { order: string[] } {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		"order" in value &&
+		Array.isArray(value.order) &&
+		value.order.every((id) => typeof id === "string")
+	);
 }
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
