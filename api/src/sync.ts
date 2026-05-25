@@ -11,10 +11,6 @@ import { buildResourceRegistry } from "./resources";
 
 type SyncRow = SyncResponse["data"][number];
 
-/**
- * Fetch all evy-core resources that have changed since lastSyncTime.
- * Skips "devices" (auth-only) and resources that returned no changes.
- */
 async function fetchEvyCoreData(
 	lastSyncTime: string,
 	getCore: typeof defaultGetCore,
@@ -44,9 +40,6 @@ async function fetchEvyCoreData(
 	return rows;
 }
 
-/**
- * Fetch all external-service resources that have changed since lastSyncTime.
- */
 async function fetchExternalServiceData(
 	lastSyncTime: string,
 	fetchService: typeof forwardGet,
@@ -93,16 +86,7 @@ const DEFAULT_DEPS: SyncDependencies = {
 	buildRegistry: buildResourceRegistry,
 };
 
-/**
- * Unified sync JSON-RPC handler.
- *
- * Accepts a `lastSyncTime` ISO string and returns:
- * - `resources`: the full resource registry (so clients don't need a separate call)
- * - `data`: all rows (SDUI, evy catalog, and external service data) that were
- *   updated since `lastSyncTime`, shaped as `{ service, resource, value }[]`
- *
- * Only includes `resources` when data changed.
- */
+// resources is only included in the response when data changed.
 export async function sync(
 	params: unknown,
 	deps: SyncDependencies = DEFAULT_DEPS,

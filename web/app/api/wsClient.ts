@@ -7,7 +7,7 @@ import type {
 } from "evy-types";
 import { config } from "../config";
 
-function isServerFlow(v: unknown): v is ServerFlow {
+export function isServerFlow(v: unknown): v is ServerFlow {
 	return (
 		v !== null &&
 		typeof v === "object" &&
@@ -105,7 +105,7 @@ class WSClient {
 		return this.connectionPromise;
 	}
 
-	async sync(lastSyncTime = "1970-01-01T00:00:00.000Z"): Promise<SyncResponse> {
+	async sync(lastSyncTime: string): Promise<SyncResponse> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 

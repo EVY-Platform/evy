@@ -75,9 +75,6 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 	return buildGetResponse(rows.map((r) => r.data));
 }
 
-/**
- * Marketplace `get` after JSON-RPC shape checks. This only applies marketplace access rules.
- */
 export async function get(params: GetRequest): Promise<GetResponse> {
 	assertMarketplaceRules(params);
 	return marketplaceGetBody(params);
@@ -141,17 +138,11 @@ async function marketplaceUpdateBody(
 	return response;
 }
 
-/**
- * Marketplace `create` after marketplace access rules.
- */
 export async function create(params: CreateRequest): Promise<CreateResponse> {
 	assertMarketplaceRules(params);
 	return marketplaceCreateBody(params);
 }
 
-/**
- * Marketplace `update` after marketplace access rules.
- */
 export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 	assertMarketplaceRules(params);
 	return marketplaceUpdateBody(params);

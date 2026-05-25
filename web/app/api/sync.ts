@@ -1,18 +1,5 @@
 import type { SyncResponse, UI_Flow as ServerFlow } from "evy-types";
-import { wsClient } from "./wsClient";
-
-function isServerFlow(v: unknown): v is ServerFlow {
-	return (
-		v !== null &&
-		typeof v === "object" &&
-		"id" in v &&
-		"name" in v &&
-		typeof v.id === "string" &&
-		typeof v.name === "string" &&
-		"pages" in v &&
-		Array.isArray(v.pages)
-	);
-}
+import { isServerFlow, wsClient } from "./wsClient";
 
 function extractSduiFlows(response: SyncResponse): ServerFlow[] {
 	const sduiRow = response.data.find(
