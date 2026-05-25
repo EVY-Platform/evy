@@ -206,6 +206,7 @@ const REQUEST_SCHEMA_FILES = [
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
 const ENTITY_SCHEMA_FILES = [
 	"common/json.schema.json",
+	"common/rpc.schema.json",
 	"data/data.schema.json",
 	"data/primitive.schema.json",
 	"sdui/evy.schema.json",

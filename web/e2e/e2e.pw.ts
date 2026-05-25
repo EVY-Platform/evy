@@ -55,11 +55,11 @@ async function withApiClient<T>(
 
 async function getFlowsFromApi(): Promise<UI_Flow[]> {
 	return withApiClient(async (client) => {
-		const result = await client.call("get", {
+		const result = (await client.call("get", {
 			service: "evy",
 			resource: "sdui",
-		});
-		return result as UI_Flow[];
+		})) as { data?: UI_Flow[] };
+		return Array.isArray(result.data) ? result.data : [];
 	});
 }
 

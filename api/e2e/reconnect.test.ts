@@ -54,7 +54,7 @@ describe("API E2E WebSocket reconnect", () => {
 			service: "evy",
 			resource: "sdui",
 			operation: "create",
-			value: createResult.data,
+			value: createResult.data.data,
 		});
 
 		second.close();

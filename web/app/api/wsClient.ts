@@ -7,7 +7,7 @@ import type {
 } from "evy-types";
 import { config } from "../config";
 
-function isServerFlow(v: unknown): v is ServerFlow {
+export function isServerFlow(v: unknown): v is ServerFlow {
 	return (
 		v !== null &&
 		typeof v === "object" &&
@@ -20,21 +20,46 @@ function isServerFlow(v: unknown): v is ServerFlow {
 	);
 }
 
-function isWriteResponse(v: unknown): v is CreateResponse | UpdateResponse {
+function isWriteResponseEnvelope(
+	value: unknown,
+): value is CreateResponse | UpdateResponse {
 	return (
-		v !== null &&
-		typeof v === "object" &&
-		"id" in v &&
-		"data" in v &&
-		"createdAt" in v &&
-		"updatedAt" in v
+		value !== null &&
+		typeof value === "object" &&
+		"metadata" in value &&
+		"data" in value &&
+		value.data !== null &&
+		typeof value.data === "object"
 	);
 }
 
-function isFlowWriteResponse(
-	v: unknown,
-): v is { id: string; data: ServerFlow; createdAt: string; updatedAt: string } {
-	return isWriteResponse(v) && isServerFlow(v.data);
+function isFlowWriteResponse(value: unknown): value is {
+	metadata: unknown;
+	data: { id: string; data: ServerFlow; createdAt: string; updatedAt: string };
+} {
+	if (!isWriteResponseEnvelope(value)) return false;
+	const inner = value.data;
+	return (
+		inner !== null &&
+		typeof inner === "object" &&
+		"id" in inner &&
+		"data" in inner &&
+		"createdAt" in inner &&
+		"updatedAt" in inner &&
+		typeof inner.id === "string" &&
+		typeof inner.createdAt === "string" &&
+		typeof inner.updatedAt === "string" &&
+		isServerFlow(inner.data)
+	);
+}
+
+function isGetResponseEnvelope(value: unknown): value is { data: unknown[] } {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		"data" in value &&
+		Array.isArray(value.data)
+	);
 }
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
@@ -65,7 +90,7 @@ class WSClient {
 				}
 			});
 
-			this.client.on("error", (error) => {
+			this.client.on("error", (error: Error) => {
 				this.connectionState = "error";
 				this.connectionPromise = null;
 				reject(error);
@@ -80,7 +105,7 @@ class WSClient {
 		return this.connectionPromise;
 	}
 
-	async sync(lastSyncTime = "1970-01-01T00:00:00.000Z"): Promise<SyncResponse> {
+	async sync(lastSyncTime: string): Promise<SyncResponse> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
@@ -105,7 +130,7 @@ class WSClient {
 			resource: "sdui",
 			filter: { id: flowId },
 		});
-		return Array.isArray(raw) && raw.some(isServerFlow);
+		return isGetResponseEnvelope(raw) && raw.data.some(isServerFlow);
 	}
 
 	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {
@@ -124,7 +149,7 @@ class WSClient {
 		if (!isFlowWriteResponse(raw)) {
 			throw new Error("Invalid write response: expected flow");
 		}
-		return raw.data;
+		return raw.data.data;
 	}
 
 	disconnect(): void {

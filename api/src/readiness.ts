@@ -17,16 +17,16 @@ export async function assertApiReadable(
 	deps: ApiReadableDeps = { get: defaultGet },
 ): Promise<void> {
 	const { requireSeeded } = options;
-	const flows = await deps.get({ service: "evy", resource: "sdui" });
-	if (!Array.isArray(flows)) {
-		throw new Error("API readiness failed: expected sdui response array");
+	const response = await deps.get({ service: "evy", resource: "sdui" });
+	if (!Array.isArray(response.data)) {
+		throw new Error("API readiness failed: expected sdui response data array");
 	}
 
 	if (!requireSeeded) {
 		return;
 	}
 
-	if (flows.length === 0) {
+	if (response.data.length === 0) {
 		throw new Error("Seed verification failed: missing seeded SDUI flows");
 	}
 }

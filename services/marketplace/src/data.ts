@@ -1,11 +1,12 @@
 import { eq, and, desc, gt } from "drizzle-orm";
 
 import type {
-	DATA_PRIMITIVE,
 	CreateRequest,
+	CreateResponse,
 	GetRequest,
 	GetResponse,
 	UpdateRequest,
+	UpdateResponse,
 } from "evy-types";
 import {
 	getServiceResources,
@@ -23,8 +24,24 @@ import {
 	validateCreateResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
+import {
+	buildCollectionResponseEnvelope,
+	buildSingleResponseEnvelope,
+} from "evy-types/rpcResponseHelpers";
 
 setServiceRegistry([[MARKETPLACE_SERVICE, [...MARKETPLACE_RESOURCE_NAMES]]]);
+
+function buildGetResponse(items: unknown[]): GetResponse {
+	return validateGetResponse(buildCollectionResponseEnvelope(items));
+}
+
+function buildCreateResponse(item: CreateResponse["data"]): CreateResponse {
+	return validateCreateResponse(buildSingleResponseEnvelope(item));
+}
+
+function buildUpdateResponse(item: UpdateResponse["data"]): UpdateResponse {
+	return validateUpdateResponse(buildSingleResponseEnvelope(item));
+}
 
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest,
@@ -53,14 +70,11 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 		.select({ data: data.data })
 		.from(data)
 		.where(and(...whereClauses))
-		.orderBy(desc(data.updatedAt));
+		.orderBy(desc(data.updatedAt), desc(data.id));
 
-	return validateGetResponse(rows.map((r) => r.data));
+	return buildGetResponse(rows.map((r) => r.data));
 }
 
-/**
- * Marketplace `get` after JSON-RPC shape checks. This only applies marketplace access rules.
- */
 export async function get(params: GetRequest): Promise<GetResponse> {
 	assertMarketplaceRules(params);
 	return marketplaceGetBody(params);
@@ -68,7 +82,7 @@ export async function get(params: GetRequest): Promise<GetResponse> {
 
 async function marketplaceCreateBody(
 	params: CreateRequest,
-): Promise<DATA_PRIMITIVE> {
+): Promise<CreateResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
@@ -94,14 +108,14 @@ async function marketplaceCreateBody(
 	}
 
 	const row = result[0];
-	validateCreateResponse(row);
+	const response = buildCreateResponse(row);
 	emitDataChanged(resource, "create", row.data);
-	return row;
+	return response;
 }
 
 async function marketplaceUpdateBody(
 	params: UpdateRequest,
-): Promise<DATA_PRIMITIVE> {
+): Promise<UpdateResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
@@ -119,23 +133,17 @@ async function marketplaceUpdateBody(
 	}
 
 	const row = result[0];
-	validateUpdateResponse(row);
+	const response = buildUpdateResponse(row);
 	emitDataChanged(resource, "update", row.data);
-	return row;
+	return response;
 }
 
-/**
- * Marketplace `create` after marketplace access rules.
- */
-export async function create(params: CreateRequest): Promise<DATA_PRIMITIVE> {
+export async function create(params: CreateRequest): Promise<CreateResponse> {
 	assertMarketplaceRules(params);
 	return marketplaceCreateBody(params);
 }
 
-/**
- * Marketplace `update` after marketplace access rules.
- */
-export async function update(params: UpdateRequest): Promise<DATA_PRIMITIVE> {
+export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 	assertMarketplaceRules(params);
 	return marketplaceUpdateBody(params);
 }

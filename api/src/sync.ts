@@ -11,10 +11,6 @@ import { buildResourceRegistry } from "./resources";
 
 type SyncRow = SyncResponse["data"][number];
 
-/**
- * Fetch all evy-core resources that have changed since lastSyncTime.
- * Skips "devices" (auth-only) and resources that returned no changes.
- */
 async function fetchEvyCoreData(
 	lastSyncTime: string,
 	getCore: typeof defaultGetCore,
@@ -23,9 +19,7 @@ async function fetchEvyCoreData(
 	const evyResources = getServiceResources(EVY_CORE_SERVICE) ?? [];
 
 	for (const resource of evyResources) {
-		if (resource === "devices") {
-			continue;
-		}
+		if (resource === "devices") continue;
 
 		const request: GetRequest = {
 			service: EVY_CORE_SERVICE,
@@ -34,10 +28,7 @@ async function fetchEvyCoreData(
 		};
 
 		const value: GetResponse = await getCore(request);
-
-		if (Array.isArray(value) && value.length === 0) {
-			continue;
-		}
+		if (value.data.length === 0) continue;
 
 		rows.push({
 			service: EVY_CORE_SERVICE,
@@ -49,9 +40,6 @@ async function fetchEvyCoreData(
 	return rows;
 }
 
-/**
- * Fetch all external-service resources that have changed since lastSyncTime.
- */
 async function fetchExternalServiceData(
 	lastSyncTime: string,
 	fetchService: typeof forwardGet,
@@ -73,9 +61,7 @@ async function fetchExternalServiceData(
 
 			const value: GetResponse = await fetchService(serviceName, request);
 
-			if (Array.isArray(value) && value.length === 0) {
-				continue;
-			}
+			if (value.data.length === 0) continue;
 
 			rows.push({
 				service: serviceName,
@@ -100,16 +86,7 @@ const DEFAULT_DEPS: SyncDependencies = {
 	buildRegistry: buildResourceRegistry,
 };
 
-/**
- * Unified sync JSON-RPC handler.
- *
- * Accepts a `lastSyncTime` ISO string and returns:
- * - `resources`: the full resource registry (so clients don't need a separate call)
- * - `data`: all rows (SDUI, evy catalog, and external service data) that were
- *   updated since `lastSyncTime`, shaped as `{ service, resource, value }[]`
- *
- * Only includes `resources` when data changed.
- */
+// resources is only included in the response when data changed.
 export async function sync(
 	params: unknown,
 	deps: SyncDependencies = DEFAULT_DEPS,

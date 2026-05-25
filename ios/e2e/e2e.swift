@@ -29,7 +29,8 @@ actor WSEmitter {
   func applySDUI(flowData: [String: Any], flowId: String) async throws {
     let existing = try await getResource(
       service: "evy", resource: "sdui", filter: ["id": flowId])
-    let method = (existing as? [Any])?.isEmpty == false ? "update" : "create"
+    let dataArray = (existing as? [String: Any])?["data"] as? [Any]
+    let method = dataArray?.isEmpty == false ? "update" : "create"
     let params: [String: Any] = [
       "service": "evy",
       "resource": "sdui",
@@ -831,9 +832,9 @@ final class WebSocketE2ETests: E2ETestBase {
     widthText: String,
     items: Any
   ) -> Bool {
-    guard let arr = items as? [Any] else { return false }
+    guard let itemsArray = responseDataArray(from: items) else { return false }
     let normalizedExpectedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-    for case let item as [String: Any] in arr {
+    for case let item as [String: Any] in itemsArray {
       guard let t = item["title"] as? String else { continue }
       let normalizedActualTitle = t.trimmingCharacters(in: .whitespacesAndNewlines)
       guard normalizedActualTitle == normalizedExpectedTitle else { continue }
@@ -850,6 +851,13 @@ final class WebSocketE2ETests: E2ETestBase {
       if let n = widthValue as? NSNumber, n.stringValue == widthText { return true }
     }
     return false
+  }
+
+  private static func responseDataArray(from response: Any) -> [Any]? {
+    if let envelope = response as? [String: Any] {
+      return envelope["data"] as? [Any]
+    }
+    return response as? [Any]
   }
 
   private func createHomeFlowData(buttonLabel: String, viewItemId: String? = nil) -> [String: Any] {

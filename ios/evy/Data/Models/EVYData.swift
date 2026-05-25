@@ -45,17 +45,20 @@ class EVYData {
   var resource: String
   var id: String
   var data: Data
+  var sortIndex: Int = 0
 
   init(
     namespace: String,
     resource: String,
     id: String,
-    data: Data
+    data: Data,
+    sortIndex: Int = 0
   ) {
     self.namespace = namespace
     self.resource = resource
     self.id = id
     self.data = data
+    self.sortIndex = sortIndex
   }
 
   func decoded() throws -> EVYJson {

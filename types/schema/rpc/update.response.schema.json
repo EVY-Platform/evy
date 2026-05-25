@@ -2,22 +2,35 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "update-response",
 	"title": "UpdateResponse",
-	"description": "Response for update (evy typed rows or DATA_PRIMITIVE from a service)",
-	"oneOf": [
-		{
-			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Flow"
+	"description": "Response for update (metadata plus evy typed row or DATA_PRIMITIVE from a service)",
+	"type": "object",
+	"required": [
+		"metadata",
+		"data"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"metadata": {
+			"$ref": "../common/rpc.schema.json#/$defs/ResponseMetadata"
 		},
-		{
-			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Service"
-		},
-		{
-			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Organization"
-		},
-		{
-			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_ServiceProvider"
-		},
-		{
-			"$ref": "../data/primitive.schema.json"
+		"data": {
+			"oneOf": [
+				{
+					"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Flow"
+				},
+				{
+					"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Service"
+				},
+				{
+					"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Organization"
+				},
+				{
+					"$ref": "../data/data.schema.json#/$defs/DATA_EVY_ServiceProvider"
+				},
+				{
+					"$ref": "../data/primitive.schema.json"
+				}
+			]
 		}
-	]
+	}
 }

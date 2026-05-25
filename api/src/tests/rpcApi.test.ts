@@ -12,8 +12,17 @@ const forwardGetMock = mock(
 				id?: string;
 			};
 		},
-	): Promise<GetResponse> =>
-		params.filter?.id ? ([{ id: params.filter.id }] as GetResponse) : [],
+	): Promise<GetResponse> => {
+		const data = params.filter?.id ? [{ id: params.filter.id }] : [];
+		return {
+			metadata: {
+				count: data.length,
+				size: Buffer.byteLength(JSON.stringify(data), "utf8"),
+				order: data.map((item) => item.id),
+			},
+			data,
+		};
+	},
 );
 
 const ensureRegistryInitializedMock = mock(async () => {});
@@ -62,7 +71,14 @@ describe("api JSON-RPC handler", () => {
 			},
 		});
 
-		expect(result).toEqual([{ id: itemId }]);
+		expect(result).toEqual({
+			metadata: {
+				count: 1,
+				size: Buffer.byteLength(JSON.stringify([{ id: itemId }]), "utf8"),
+				order: [itemId],
+			},
+			data: [{ id: itemId }],
+		});
 		expect(forwardGetMock).toHaveBeenCalledTimes(1);
 		expect(forwardGetMock).toHaveBeenCalledWith("marketplace", {
 			service: "marketplace",
