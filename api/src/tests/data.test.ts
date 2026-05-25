@@ -516,6 +516,42 @@ describe("get", () => {
 		expect(result.data[0]).toHaveProperty("pages");
 	});
 
+	it("should return flow data ordered by most recently updated", async () => {
+		const olderFlow = createTestFlow({
+			name: "Older Flow",
+			pages: [{ title: "P1", rows: [] }],
+		});
+		const newerFlow = createTestFlow({
+			name: "Newer Flow",
+			pages: [{ title: "P2", rows: [] }],
+		});
+		await testDb.insert(schema.flow).values([
+			{
+				id: olderFlow.id,
+				data: olderFlow,
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				id: newerFlow.id,
+				data: newerFlow,
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-02T00:00:00.000Z",
+			},
+		]);
+
+		const result = await get({
+			service: "evy",
+			resource: "sdui",
+		});
+
+		expect(result.data.map((flow) => flow.id)).toEqual([
+			newerFlow.id,
+			olderFlow.id,
+		]);
+		expect(result.metadata.order).toEqual([newerFlow.id, olderFlow.id]);
+	});
+
 	it("should return single flow for resource SDUI when filter.id provided", async () => {
 		const flowId = crypto.randomUUID();
 		await testDb.insert(schema.flow).values({
@@ -623,6 +659,35 @@ describe("get", () => {
 			throw new Error("Expected service row with updatedAt");
 		}
 		expect(typeof serviceRow.updatedAt).toBe("string");
+	});
+
+	it("should return non-SDUI resources ordered by most recently updated", async () => {
+		const olderService = {
+			id: crypto.randomUUID(),
+			name: "OlderSvc",
+			description: "Older",
+			createdAt: "2024-01-01T00:00:00.000Z",
+			updatedAt: "2024-01-01T00:00:00.000Z",
+		};
+		const newerService = {
+			id: crypto.randomUUID(),
+			name: "NewerSvc",
+			description: "Newer",
+			createdAt: "2024-01-01T00:00:00.000Z",
+			updatedAt: "2024-01-02T00:00:00.000Z",
+		};
+		await testDb.insert(schema.service).values([olderService, newerService]);
+
+		const result = await get({
+			service: "evy",
+			resource: "services",
+		});
+
+		expect(result.data.map((row) => row.id)).toEqual([
+			newerService.id,
+			olderService.id,
+		]);
+		expect(result.metadata.order).toEqual([newerService.id, olderService.id]);
 	});
 
 	it("should return empty array for non-SDUI resource when no data", async () => {

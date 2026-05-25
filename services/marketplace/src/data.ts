@@ -70,7 +70,7 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 		.select({ data: data.data })
 		.from(data)
 		.where(and(...whereClauses))
-		.orderBy(desc(data.updatedAt));
+		.orderBy(desc(data.updatedAt), desc(data.id));
 
 	return buildGetResponse(rows.map((r) => r.data));
 }

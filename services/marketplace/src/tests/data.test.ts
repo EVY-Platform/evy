@@ -65,6 +65,36 @@ describe("marketplace get/create/update", () => {
 		expect(result.data).toEqual([row]);
 	});
 
+	it("returns rows ordered by most recently updated", async () => {
+		const olderRow = { id: crypto.randomUUID(), value: "older" };
+		const newerRow = { id: crypto.randomUUID(), value: "newer" };
+
+		await testDb.insert(schema.data).values([
+			{
+				id: olderRow.id,
+				resource: "conditions",
+				data: olderRow,
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-01T00:00:00.000Z",
+			},
+			{
+				id: newerRow.id,
+				resource: "conditions",
+				data: newerRow,
+				createdAt: "2024-01-01T00:00:00.000Z",
+				updatedAt: "2024-01-02T00:00:00.000Z",
+			},
+		]);
+
+		const result = await get({
+			service: "marketplace",
+			resource: "conditions",
+		});
+
+		expect(result.data).toEqual([newerRow, olderRow]);
+		expect(result.metadata.order).toEqual([newerRow.id, olderRow.id]);
+	});
+
 	it("filters rows by updatedAfter", async () => {
 		const oldRow = { id: crypto.randomUUID(), value: "old" };
 		const newRow = { id: crypto.randomUUID(), value: "new" };
