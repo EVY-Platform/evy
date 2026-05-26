@@ -117,14 +117,7 @@ describe("marketplace gRPC server", () => {
 			);
 		});
 
-		expect(got).toEqual({
-			metadata: {
-				count: 1,
-				size: Buffer.byteLength(JSON.stringify([row]), "utf8"),
-				order: [row.id],
-			},
-			data: [row],
-		});
+		expect(got).toEqual([row]);
 	});
 
 	it("SubscribeEvents receives dataChanged after catalog create", async () => {

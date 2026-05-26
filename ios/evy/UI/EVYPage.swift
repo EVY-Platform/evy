@@ -102,12 +102,7 @@ private struct EVYPageBody: View {
       if row.type == .inlinePicker {
         initialData = "[]".data(using: .utf8)
       } else if row.type == .calendar {
-        initialData = {
-          guard let json = try? EVY.publicStore.getJsonForBinding(key: "timeslots") else {
-            return nil
-          }
-          return try? JSONEncoder().encode(json)
-        }()
+        initialData = "[]".data(using: .utf8)
       } else {
         initialData = nil
       }

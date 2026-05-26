@@ -13,15 +13,7 @@ const forwardGetMock = mock(
 			};
 		},
 	): Promise<GetResponse> => {
-		const data = params.filter?.id ? [{ id: params.filter.id }] : [];
-		return {
-			metadata: {
-				count: data.length,
-				size: Buffer.byteLength(JSON.stringify(data), "utf8"),
-				order: data.map((item) => item.id),
-			},
-			data,
-		};
+		return params.filter?.id ? [{ id: params.filter.id }] : [];
 	},
 );
 
@@ -40,14 +32,7 @@ import { setServiceRegistry } from "evy-types/rpcRequestHelpers";
 setServiceRegistry([
 	[
 		"marketplace",
-		[
-			"selling_reasons",
-			"conditions",
-			"durations",
-			"areas",
-			"timeslots",
-			"items",
-		],
+		["selling_reasons", "conditions", "durations", "areas", "items"],
 	],
 ]);
 
@@ -71,14 +56,7 @@ describe("api JSON-RPC handler", () => {
 			},
 		});
 
-		expect(result).toEqual({
-			metadata: {
-				count: 1,
-				size: Buffer.byteLength(JSON.stringify([{ id: itemId }]), "utf8"),
-				order: [itemId],
-			},
-			data: [{ id: itemId }],
-		});
+		expect(result).toEqual([{ id: itemId }]);
 		expect(forwardGetMock).toHaveBeenCalledTimes(1);
 		expect(forwardGetMock).toHaveBeenCalledWith("marketplace", {
 			service: "marketplace",

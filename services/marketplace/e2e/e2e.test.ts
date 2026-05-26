@@ -56,8 +56,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			service: "marketplace",
 			resource: "items",
 		});
-		expect(result).toHaveProperty("metadata");
-		expect(Array.isArray(result.data)).toBe(true);
+		expect(Array.isArray(result)).toBe(true);
 	});
 
 	it("create then get marketplace.items round-trips data", async () => {
@@ -73,20 +72,18 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			data: testData,
 		});
 
-		expect(created).toHaveProperty("metadata");
+		expect(isRecord(created)).toBe(true);
+		expect(created).toHaveProperty("id");
 		expect(created).toHaveProperty("data");
-		expect(isRecord(created.data)).toBe(true);
-		expect(created.data).toHaveProperty("id");
-		expect(created.data).toHaveProperty("data");
 
 		const got = await client.call("get", {
 			service: "marketplace",
 			resource: "items",
 		});
 
-		expect(Array.isArray(got.data)).toBe(true);
-		expect(got.data.length).toBeGreaterThan(0);
-		const matchingRecord = got.data.find(
+		expect(Array.isArray(got)).toBe(true);
+		expect(got.length).toBeGreaterThan(0);
+		const matchingRecord = got.find(
 			(entry: unknown) =>
 				isRecord(entry) &&
 				entry.testField === "e2e test value" &&
@@ -111,12 +108,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		});
 
 		expect(isRecord(created)).toBe(true);
-		expect(created).toHaveProperty("metadata");
-		expect(created.metadata.order).toEqual([clientId]);
-		expect(created).toHaveProperty("data");
-		expect(isRecord(created.data)).toBe(true);
-		expect(created.data).toHaveProperty("id", clientId);
-		expect(created.data.data).toMatchObject({
+		expect(created).toHaveProperty("id", clientId);
+		expect(created.data).toMatchObject({
 			id: clientId,
 			title: "from-ios",
 		});
@@ -127,10 +120,9 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			filter: { id: clientId },
 		});
 
-		expect(Array.isArray(got.data)).toBe(true);
-		expect(got.data).toHaveLength(1);
-		expect(got.metadata.order).toEqual([clientId]);
-		expect(got.data[0]).toMatchObject({
+		expect(Array.isArray(got)).toBe(true);
+		expect(got).toHaveLength(1);
+		expect(got[0]).toMatchObject({
 			id: clientId,
 			title: "from-ios",
 		});

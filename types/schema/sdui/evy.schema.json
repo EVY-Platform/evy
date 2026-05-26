@@ -149,6 +149,21 @@
 				"action": {
 					"type": "string"
 				},
+				"start_time": {
+					"type": "string"
+				},
+				"end_time": {
+					"type": "string"
+				},
+				"timeslot_interval_minutes": {
+					"type": "integer"
+				},
+				"label_interval_minutes": {
+					"type": "integer"
+				},
+				"header_format": {
+					"type": "string"
+				},
 				"primary": {
 					"type": "string"
 				},

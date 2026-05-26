@@ -2,67 +2,68 @@
 //  EVYCalendarRow.swift
 //  evy
 //
-//  Created by Geoffroy Lesage on 11/8/2024.
-//
 
 import SwiftUI
 
 struct EVYCalendarRow: View {
 
-  private let view: CalendarRowViewData
+    private let view: CalendarRowViewData
 
-  init(view: CalendarRowViewData) {
-    self.view = view
-  }
-
-  var body: some View {
-    if view.content.title.count > 0 {
-      EVYTextView(view.content.title)
-        .padding(.vertical, Constants.padding)
+    init(view: CalendarRowViewData) {
+        self.view = view
     }
-    EVYCalendar(primary: view.content.primary, secondary: view.content.secondary)
-  }
+
+    var body: some View {
+        if view.content.title.count > 0 {
+            EVYTextView(view.content.title)
+                .padding(.vertical, Constants.padding)
+        }
+        EVYCalendar(content: view.content)
+    }
 }
 
 #Preview {
-  EVYCalendarRowPreview()
+    EVYCalendarRowPreview()
 }
 
 private struct EVYCalendarRowPreview: View {
-  private let row = EVYCalendarRowPreview.makeRow()
+    private let row = EVYCalendarRowPreview.makeRow()
 
-  init() {
-    EVYPreviewMockData.seedCommon()
-    let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "timeslots")
-    EVY.draftStore.activeScopeId = previewScopeId
-    let timeslotsData = EVYPreviewMockData.timeslots.data(using: .utf8)
-    EVY.ensureDraftExists(
-      variableName: "pickup_timeslots",
-      initialData: timeslotsData,
-      scopeId: previewScopeId
-    )
-  }
+    init() {
+        EVYPreviewMockData.seedCommon()
+        let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "item")
+        EVY.draftStore.activeScopeId = previewScopeId
+        let primaryData = EVYPreviewMockData.calendarPickupSelection.data(using: .utf8)
+        let secondaryData = EVYPreviewMockData.calendarDeliverySelection.data(using: .utf8)
+        EVY.ensureDraftExists(
+            variableName: "pickup_selection",
+            initialData: primaryData,
+            scopeId: previewScopeId
+        )
+        EVY.ensureDraftExists(
+            variableName: "delivery_selection",
+            initialData: secondaryData,
+            scopeId: previewScopeId
+        )
+    }
 
-  var body: some View {
-    if let row { EVYRow(row: row) } else { Text("Unable to build calendar row preview") }
-  }
+    var body: some View {
+        if let row { EVYRow(row: row) } else { Text("Unable to build calendar row preview") }
+    }
 
-  private static func makeRow() -> UI_Row? {
-    let json = """
-      {
-        "id": "preview-calendar-row",
-        "type": "Calendar",
-        "source": "",
-        "actions": [],
-        "view": {
-          "content": {
-            "title": "Select a date",
-            "primary": "{pickup_timeslots}",
-            "secondary": "{pickup_timeslots}"
-          }
-        }
-      }
-      """
-    return EVYPreviewMockData.decodeRow(from: json)
-  }
+    private static func makeRow() -> UI_Row? {
+        let json = """
+            {
+              "id": "preview-calendar-row",
+              "type": "Calendar",
+              "source": "",
+              "destination": "",
+              "actions": [],
+              "view": {
+                "content": \(EVYPreviewMockData.calendarContentJSON)
+              }
+            }
+            """
+        return EVYPreviewMockData.decodeRow(from: json)
+    }
 }

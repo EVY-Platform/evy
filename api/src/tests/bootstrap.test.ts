@@ -65,10 +65,7 @@ describe("initServer bootstrap", () => {
 describe("assertApiReadable", () => {
 	it("resolves when sdui get returns an array envelope and requireSeeded is false", async () => {
 		const deps = {
-			get: async (_params: GetRequest): Promise<GetResponse> => ({
-				metadata: { count: 0, size: 2, order: [] },
-				data: [],
-			}),
+			get: async (_params: GetRequest): Promise<GetResponse> => [],
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: false }, deps),
@@ -87,10 +84,7 @@ describe("assertApiReadable", () => {
 
 	it("throws when requireSeeded is true but sdui is empty", async () => {
 		const deps = {
-			get: async (_params: GetRequest): Promise<GetResponse> => ({
-				metadata: { count: 0, size: 2, order: [] },
-				data: [],
-			}),
+			get: async (_params: GetRequest): Promise<GetResponse> => [],
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: true }, deps),
@@ -101,23 +95,15 @@ describe("assertApiReadable", () => {
 		const deps = {
 			get: async (params: GetRequest): Promise<GetResponse> => {
 				if (params.resource === "sdui") {
-					const data = [
+					return [
 						{
 							id: crypto.randomUUID(),
 							name: "Seeded Flow",
 							pages: [],
 						} satisfies UI_Flow,
 					];
-					return {
-						metadata: {
-							count: data.length,
-							size: Buffer.byteLength(JSON.stringify(data), "utf8"),
-							order: data.map((flow) => flow.id),
-						},
-						data,
-					};
 				}
-				return { metadata: { count: 0, size: 2, order: [] }, data: [] };
+				return [];
 			},
 		};
 		await expect(

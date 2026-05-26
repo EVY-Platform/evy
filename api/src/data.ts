@@ -39,10 +39,6 @@ import {
 	validateCreateResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
-import {
-	buildCollectionResponseEnvelope,
-	buildSingleResponseEnvelope,
-} from "evy-types/rpcResponseHelpers";
 
 const evyCoreResourceNameSet: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
@@ -50,18 +46,6 @@ const connectionString = getConnectionUrl();
 const client = postgres(connectionString);
 
 let db = drizzle(client, { schema });
-
-function buildGetResponse(items: unknown[]): GetResponse {
-	return validateGetResponse(buildCollectionResponseEnvelope(items));
-}
-
-function buildCreateResponse(item: CreateResponse["data"]): CreateResponse {
-	return validateCreateResponse(buildSingleResponseEnvelope(item));
-}
-
-function buildUpdateResponse(item: UpdateResponse["data"]): UpdateResponse {
-	return validateUpdateResponse(buildSingleResponseEnvelope(item));
-}
 
 export function setDbForTest(database: typeof db): void {
 	db = database;
@@ -124,7 +108,7 @@ type CatalogEntityConfig<TValidated> = {
 		nowIso: string,
 		filterId: string | undefined,
 	) => Record<string, unknown>;
-	mapRow: (row: unknown) => CreateResponse["data"];
+	mapRow: (row: unknown) => unknown;
 };
 
 async function listCoreCatalogRows<TRow>(
@@ -147,28 +131,7 @@ async function listCoreCatalogRows<TRow>(
 				.where(and(...whereClauses))
 				.orderBy(asc(table.updatedAt), asc(table.id))
 		: await base.orderBy(asc(table.updatedAt), asc(table.id));
-	const mapped = rows.map((r) => mapRow(r as TRow));
-	return buildGetResponse(mapped);
-}
-
-async function insertCatalogEntity<TSelect>(
-	doInsert: () => Promise<TSelect[]>,
-	mapRow: (row: TSelect) => CreateResponse["data"],
-): Promise<CreateResponse> {
-	const inserted = await doInsert();
-	return buildCreateResponse(mapRow(inserted[0]));
-}
-
-async function updateCatalogEntity<TSelect>(
-	filterId: string,
-	doUpdate: (filterId: string) => Promise<TSelect[]>,
-	mapRow: (row: TSelect) => UpdateResponse["data"],
-): Promise<UpdateResponse> {
-	const updated = await doUpdate(filterId);
-	if (updated.length === 0) {
-		throw new Error("Resource not found");
-	}
-	return buildUpdateResponse(mapRow(updated[0]));
+	return validateGetResponse(rows.map((r) => mapRow(r as TRow)));
 }
 
 async function insertCatalogEntityFromConfig<TValidated>(
@@ -181,16 +144,13 @@ async function insertCatalogEntityFromConfig<TValidated>(
 	const validated = config.validate(dataPayload);
 	const filterId = filter?.id;
 
-	const response = await insertCatalogEntity(
-		() =>
-			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
-			(db.insert(config.table as any) as any)
-				.values(config.toInsertValues(validated, nowIso, filterId))
-				.returning(),
-		(row) => config.mapRow(row),
-	);
+	// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
+	const inserted = await (db.insert(config.table as any) as any)
+		.values(config.toInsertValues(validated, nowIso, filterId))
+		.returning();
+	const response = validateCreateResponse(config.mapRow(inserted[0]));
 
-	notify(response.data);
+	notify(response);
 	return response;
 }
 
@@ -204,18 +164,17 @@ async function updateCatalogEntityFromConfig<TValidated>(
 	const validated = config.validate(dataPayload);
 	const filterId = filter.id;
 
-	const response = await updateCatalogEntity(
-		filterId,
-		(updateFilterId) =>
-			// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
-			(db.update(config.table as any) as any)
-				.set(config.toUpdateSet(validated, nowIso))
-				.where(eq(config.table.id, updateFilterId))
-				.returning(),
-		(row) => config.mapRow(row),
-	);
+	// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
+	const updated = await (db.update(config.table as any) as any)
+		.set(config.toUpdateSet(validated, nowIso))
+		.where(eq(config.table.id, filterId))
+		.returning();
+	if (updated.length === 0) {
+		throw new Error("Resource not found");
+	}
+	const response = validateUpdateResponse(config.mapRow(updated[0]));
 
-	notify(response.data);
+	notify(response);
 	return response;
 }
 
@@ -276,7 +235,7 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		for (const item of payload) {
 			validateFlowData(item);
 		}
-		return buildGetResponse(payload);
+		return validateGetResponse(payload);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
@@ -337,7 +296,7 @@ const organizationCatalogConfig: CatalogEntityConfig<DATA_EVY_Organization> = {
 		createdAt: validated.createdAt,
 		updatedAt: nowIso,
 	}),
-	mapRow: (row: unknown) => row as DATA_EVY_Organization,
+	mapRow: (row) => row,
 };
 
 const providerCatalogConfig: CatalogEntityConfig<DATA_EVY_ServiceProvider> = {
@@ -365,7 +324,7 @@ const providerCatalogConfig: CatalogEntityConfig<DATA_EVY_ServiceProvider> = {
 		updatedAt: nowIso,
 		retired: validated.retired,
 	}),
-	mapRow: (row: unknown) => row as DATA_EVY_ServiceProvider,
+	mapRow: (row) => row,
 };
 
 async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
@@ -408,7 +367,7 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 				}
 				throw err;
 			});
-		const response = buildCreateResponse(result[0]);
+		const response = validateCreateResponse(result[0]);
 		emitNotification(persistedFlowData);
 		return response;
 	}
@@ -479,7 +438,7 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 		if (result.length === 0) {
 			throw new Error("Resource not found");
 		}
-		const response = buildUpdateResponse(result[0]);
+		const response = validateUpdateResponse(result[0]);
 		emitNotification(persistedFlowData);
 		return response;
 	}

@@ -2,391 +2,302 @@
 //  EVYCalendar.swift
 //  evy
 //
-//  Created by Geoffroy Lesage on 2/7/2024.
-//
 
 import SwiftUI
 
-private let spaceForFirstLabel: CGFloat = 6
-private let columnWidth: CGFloat = 80
-private let rowHeight: CGFloat = 30
 private let animationDuration: CGFloat = 0.1
 
-private let falseAsData = "false".data(using: .utf8)!
-private let trueAsData = "true".data(using: .utf8)!
-/// Calendar operations system
 enum EVYCalendarOperation {
-  case select(index: Int)
-  case unselect(index: Int)
-  case unselectRow(y: Int)
-  case selectRow(y: Int)
-  case unselectColumn(x: Int)
-  case selectColumn(x: Int)
+    case select(dateTime: String)
+    case unselect(dateTime: String)
+    case unselectRow(y: Int)
+    case selectRow(y: Int)
+    case unselectColumn(x: Int)
+    case selectColumn(x: Int)
 }
 
 struct EVYCalendarOperationKey: EnvironmentKey {
-  static let defaultValue: (EVYCalendarOperation) -> Void = { _ in }
+    static let defaultValue: (EVYCalendarOperation) -> Void = { _ in }
 }
 
 extension EnvironmentValues {
-  var operate: (EVYCalendarOperation) -> Void {
-    get { self[EVYCalendarOperationKey.self] }
-    set { self[EVYCalendarOperationKey.self] = newValue }
-  }
+    var operate: (EVYCalendarOperation) -> Void {
+        get { self[EVYCalendarOperationKey.self] }
+        set { self[EVYCalendarOperationKey.self] = newValue }
+    }
 }
 
-/// Main views
 struct EVYCalendarTimeslots: View {
-  @Environment(\.operate) private var operate
-  @Environment(\.colorScheme) var colorScheme
+    @Environment(\.operate) private var operate
+    @Environment(\.colorScheme) var colorScheme
 
-  let rows: Int
-  let columns: Int
+    let rows: Int
+    let columns: Int
+    let slots: [EVYCalendarSlot]
 
-  let primaryTimeslotsData: [EVYCalendarTimeslotData]
-  let secondaryTimeslotsData: [EVYCalendarTimeslotData]
-
-  var body: some View {
-    let actionColor = colorScheme == .light ? Constants.actionColor : .white
-    HStack(spacing: .zero) {
-      ForEach(0..<columns, id: \.self) { x in
-        VStack(alignment: .leading, spacing: .zero) {
-          ForEach(0..<rows, id: \.self) { y in
-            let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: rows)
-            let fill: Color =
-              primaryTimeslotsData[relevantIndex].selected
-              ? actionColor
-              : (secondaryTimeslotsData[relevantIndex].selected
-                ? Constants.inactiveBackground : Constants.tappableClearColor)
-            Rectangle()
-              .fill(fill)
-              .frame(height: rowHeight)
-              .frame(width: columnWidth)
-              .onTapGesture(perform: {
-                if primaryTimeslotsData[relevantIndex].selected {
-                  operate(EVYCalendarOperation.unselect(index: relevantIndex))
-                } else {
-                  operate(EVYCalendarOperation.select(index: relevantIndex))
-                }
-              })
-          }
-        }.overlay(
-          Divider()
-            .opacity(Constants.borderOpacity)
-            .frame(maxWidth: Constants.thinBorderWidth, maxHeight: .infinity)
-            .background(Constants.inactiveBackground), alignment: .leading
-        )
-      }
-    }
-  }
-}
-
-struct EVYCalendarLabel {
-  let value: String
-  var full: Bool
-}
-
-struct EVYAxisLabel: View {
-  let label: String
-  @State var full: Bool
-  let action: (_ full: Bool) -> Void
-
-  var body: some View {
-    Button(
-      action: {
-        action(full)
-        full.toggle()
-      },
-      label: {
-        let label = label.count > 0 ? label : "-"
-        EVYTextView(label, style: full ? .action : .info)
-      }
-    )
-    .frame(height: rowHeight)
-    .frame(width: columnWidth)
-  }
-}
-
-enum EVYAxisType {
-  case x
-  case y
-}
-struct EVYCalendarAxisView: View {
-  @Environment(\.operate) private var operate
-  let type: EVYAxisType
-  let labels: [EVYCalendarLabel]
-  @Binding var offset: CGPoint
-
-  var body: some View {
-    switch type {
-    case .x:
-      ScrollView([.horizontal]) {
+    var body: some View {
+        let actionColor = colorScheme == .light ? Constants.actionColor : .white
         HStack(spacing: .zero) {
-          ForEach(labels.indices, id: \.self) { x in
-            EVYAxisLabel(
-              label: labels[x].value,
-              full: labels[x].full,
-              action: { full in
-                if full {
-                  operate(EVYCalendarOperation.unselectColumn(x: x))
-                } else {
-                  operate(EVYCalendarOperation.selectColumn(x: x))
-                }
-              })
-          }
-        }.offset(x: offset.x)
-      }.scrollDisabled(true)
-    case .y:
-      VStack(spacing: .zero) {
-        // empty corner
-        Color.clear.frame(width: .zero, height: rowHeight - spaceForFirstLabel)
-        ScrollView([.vertical]) {
-          // Offset based on scroll position but also add to center correctly
-          VStack(spacing: .zero) {
-            ForEach(labels.indices, id: \.self) { y in
-              EVYAxisLabel(
-                label: labels[y].value,
-                full: labels[y].full,
-                action: { full in
-                  if full {
-                    operate(EVYCalendarOperation.unselectRow(y: y))
-                  } else {
-                    operate(EVYCalendarOperation.selectRow(y: y))
-                  }
-                })
+            ForEach(0..<columns, id: \.self) { x in
+                VStack(alignment: .leading, spacing: .zero) {
+                    ForEach(0..<rows, id: \.self) { y in
+                        let index = calculateIndex(x: x, y: y, numberOfRows: rows)
+                        let slot = slots[index]
+                        let fill: Color =
+                            slot.isPrimarySelected
+                            ? actionColor
+                            : (slot.isSecondarySelected
+                                ? Constants.inactiveBackground : Constants.tappableClearColor)
+                        Rectangle()
+                            .fill(fill)
+                            .frame(height: rowHeight)
+                            .frame(width: columnWidth)
+                            .onTapGesture {
+                                if slot.isPrimarySelected {
+                                    operate(EVYCalendarOperation.unselect(dateTime: slot.dateTimeISO))
+                                } else {
+                                    operate(EVYCalendarOperation.select(dateTime: slot.dateTimeISO))
+                                }
+                            }
+                    }
+                }.overlay(
+                    Divider()
+                        .opacity(Constants.borderOpacity)
+                        .frame(maxWidth: Constants.thinBorderWidth, maxHeight: .infinity)
+                        .background(Constants.inactiveBackground), alignment: .leading
+                )
             }
-          }.offset(y: offset.y - spaceForFirstLabel)
-        }.scrollDisabled(true)
-      }
+        }
     }
-  }
 }
 
 struct ViewOffsetKey: PreferenceKey {
-  static var defaultValue: CGPoint { CGPoint.zero }
-  static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
-    value.x += nextValue().x
-    value.y += nextValue().y
-  }
+    static var defaultValue: CGPoint { CGPoint.zero }
+    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
+        value.x += nextValue().x
+        value.y += nextValue().y
+    }
+}
+
+struct EVYCalendarViewState {
+    let xLabels: [EVYCalendarLabel]
+    let yLabels: [EVYCalendarLabel]
+    let rows: Int
+    let columns: Int
+    let slots: [EVYCalendarSlot]
 }
 
 struct EVYCalendar: View {
-  private let primarySource: String
-  private let secondarySource: String
+    private let content: CalendarRowContent
 
-  @State private var yLabels: [EVYCalendarLabel]
-  @State private var xLabels: [EVYCalendarLabel]
-  @State private var scrollOffset = CGPoint.zero
-  @State private var calendarTimeslots: EVYCalendarTimeslots
+    @State private var state: EVYCalendarViewState
+    @State private var scrollOffset = CGPoint.zero
 
-  init(primary: String, secondary: String) {
-    primarySource = primary
-    secondarySource = secondary
-
-    let (xl, yl, timeslots) = Self.buildCalendarData(
-      primarySource: primary,
-      secondarySource: secondary
-    )
-    _xLabels = State(initialValue: xl)
-    _yLabels = State(initialValue: yl)
-    _calendarTimeslots = State(initialValue: timeslots)
-  }
-
-  private static func buildCalendarData(
-    primarySource: String,
-    secondarySource: String
-  ) -> ([EVYCalendarLabel], [EVYCalendarLabel], EVYCalendarTimeslots) {
-    let primaryTimeslotsData = getTimeslotsData(primarySource)
-    let secondaryTimeslotsData = getTimeslotsData(secondarySource)
-
-    var xLabels =
-      primaryTimeslotsData
-      .filter { $0.y == 0 }
-      .map {
-        EVYCalendarLabel(
-          value: String($0.header),
-          full: false)
-      }
-    var yLabels =
-      primaryTimeslotsData
-      .filter { $0.x == 0 }
-      .map {
-        EVYCalendarLabel(
-          value: String($0.start_label),
-          full: false)
-      }
-
-    for x in 0..<xLabels.count {
-      let selectedInColumn =
-        primaryTimeslotsData
-        .filter { $0.x == x && $0.selected }
-      guard selectedInColumn.count == yLabels.count else {
-        continue
-      }
-      xLabels[x].full = true
-    }
-    for y in 0..<yLabels.count {
-      let selectedInColumn =
-        primaryTimeslotsData
-        .filter { $0.y == y && $0.selected }
-      guard selectedInColumn.count == xLabels.count else {
-        continue
-      }
-      yLabels[y].full = true
+    init(content: CalendarRowContent) {
+        self.content = content
+        _state = State(initialValue: Self.buildCalendarData(content: content))
     }
 
-    if !primaryTimeslotsData.isEmpty {
-      yLabels.append(
-        EVYCalendarLabel(
-          value: primaryTimeslotsData.last!.end_label,
-          full: false)
-      )
+    private static func buildCalendarData(content: CalendarRowContent) -> EVYCalendarViewState {
+        let primarySelections = readSelections(content.primary)
+        let secondarySelections = readSelections(content.secondary)
+
+        let intervalMinutes = content.timeslot_interval_minutes > 0 ? content.timeslot_interval_minutes : 30
+        let labelIntervalMinutes = content.label_interval_minutes > 0 ? content.label_interval_minutes : 60
+        let headerFormat = content.header_format.isEmpty ? "EEE d" : content.header_format
+
+        let slots = buildCalendarSlots(
+            startTime: content.start_time,
+            endTime: content.end_time,
+            intervalMinutes: intervalMinutes,
+            labelIntervalMinutes: labelIntervalMinutes,
+            headerFormat: headerFormat,
+            primarySelections: primarySelections,
+            secondarySelections: secondarySelections
+        )
+
+        let numRows = slots.filter { $0.x == 0 }.count
+        let numColumns = slots.isEmpty ? 0 : (slots.map { $0.x }.max() ?? 0) + 1
+
+        var columnHeaders: [Int: String] = [:]
+        for slot in slots where columnHeaders[slot.x] == nil {
+            columnHeaders[slot.x] = slot.header
+        }
+        var xLabels = (0..<numColumns).map { x in
+            EVYCalendarLabel(value: columnHeaders[x] ?? "", full: false)
+        }
+
+        var yLabels: [EVYCalendarLabel] = (0..<numRows).map { y in
+            let label = slots.first { $0.x == 0 && $0.y == y }?.timeLabel ?? ""
+            return EVYCalendarLabel(value: label, full: false)
+        }
+        let endParts = content.end_time.split(separator: ":").compactMap { Int($0) }
+        if endParts.count >= 2 {
+            yLabels.append(EVYCalendarLabel(
+                value: "\(endParts[0]):\(String(format: "%02d", endParts[1]))",
+                full: false
+            ))
+        }
+
+        let primarySet = Set(primarySelections)
+        for x in 0..<numColumns {
+            let columnSlots = slots.filter { $0.x == x }
+            if !columnSlots.isEmpty && columnSlots.allSatisfy({ primarySet.contains($0.dateTimeISO) }) {
+                xLabels[x].full = true
+            }
+        }
+        for y in 0..<numRows {
+            let rowSlots = slots.filter { $0.y == y }
+            if rowSlots.count == numColumns && !rowSlots.isEmpty
+                && rowSlots.allSatisfy({ primarySet.contains($0.dateTimeISO) })
+            {
+                yLabels[y].full = true
+            }
+        }
+
+        return EVYCalendarViewState(
+            xLabels: xLabels,
+            yLabels: yLabels,
+            rows: numRows,
+            columns: numColumns,
+            slots: slots
+        )
     }
 
-    let timeslots = EVYCalendarTimeslots(
-      rows: max(yLabels.count - 1, 0),
-      columns: xLabels.count,
-      primaryTimeslotsData: primaryTimeslotsData,
-      secondaryTimeslotsData: secondaryTimeslotsData
-    )
-
-    return (xLabels, yLabels, timeslots)
-  }
-
-  private func reloadData(animated: Bool = false) {
-    let (xl, yl, timeslots) = Self.buildCalendarData(
-      primarySource: primarySource,
-      secondarySource: secondarySource
-    )
-    if animated {
-      withAnimation(.linear(duration: animationDuration)) {
-        xLabels = xl
-        yLabels = yl
-        calendarTimeslots = timeslots
-      }
-    } else {
-      xLabels = xl
-      yLabels = yl
-      calendarTimeslots = timeslots
-    }
-  }
-
-  private func handleOperation(_ operation: EVYCalendarOperation) {
-    let sourceProps = EVY.parsePropsFromText(primarySource)
-    switch operation {
-    case .select(let index):
-      let props = "{\(sourceProps)[\(index)].selected}"
-      try! EVY.updateData(trueAsData, at: props)
-
-    case .unselect(let index):
-      let props = "{\(sourceProps)[\(index)].selected}"
-      try! EVY.updateData(falseAsData, at: props)
-
-    case .selectRow(let y):
-      for x in 0..<xLabels.count {
-        let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count - 1)
-        let props = "{\(sourceProps)[\(relevantIndex)].selected}"
-        try! EVY.updateData(trueAsData, at: props)
-      }
-    case .unselectRow(let y):
-      for x in 0..<xLabels.count {
-        let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count - 1)
-        let props = "{\(sourceProps)[\(relevantIndex)].selected}"
-        try! EVY.updateData(falseAsData, at: props)
-      }
-
-    case .selectColumn(let x):
-      for y in 0..<yLabels.count - 1 {
-        let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count - 1)
-        let props = "{\(sourceProps)[\(relevantIndex)].selected}"
-        try! EVY.updateData(trueAsData, at: props)
-      }
-
-    case .unselectColumn(let x):
-      for y in 0..<yLabels.count - 1 {
-        let relevantIndex = calculateIndex(x: x, y: y, numberOfRows: yLabels.count - 1)
-        let props = "{\(sourceProps)[\(relevantIndex)].selected}"
-        try! EVY.updateData(falseAsData, at: props)
-      }
+    private func reloadData(animated: Bool = false) {
+        let newState = Self.buildCalendarData(content: content)
+        if animated {
+            withAnimation(.linear(duration: animationDuration)) {
+                state = newState
+            }
+        } else {
+            state = newState
+        }
     }
 
-    reloadData(animated: true)
-  }
+    private func handleOperation(_ operation: EVYCalendarOperation) {
+        var selections = readPrimarySelections()
 
-  var body: some View {
-    HStack(spacing: .zero) {
-      EVYCalendarAxisView(type: .y, labels: yLabels, offset: $scrollOffset)
-      VStack(spacing: .zero) {
-        EVYCalendarAxisView(type: .x, labels: xLabels, offset: $scrollOffset)
-        ScrollViewReader { _ in
-          ScrollView([.vertical, .horizontal]) {
-            calendarTimeslots
-              .background(
-                GeometryReader { geo in
-                  Color.clear
-                    .preference(
-                      key: ViewOffsetKey.self,
-                      value: geo.frame(in: .named("scroll")).origin)
-                }
-              )
-              .onPreferenceChange(ViewOffsetKey.self) { value in
-                scrollOffset = value
-              }
-          }.scrollIndicators(.hidden)
-        }.coordinateSpace(name: "scroll")
-      }
+        switch operation {
+        case .select(let dateTime):
+            selections = adding([dateTime], to: selections)
+        case .unselect(let dateTime):
+            selections = removing([dateTime], from: selections)
+        case .selectRow(let y):
+            selections = adding(dateTimes(forRow: y), to: selections)
+        case .unselectRow(let y):
+            selections = removing(dateTimes(forRow: y), from: selections)
+        case .selectColumn(let x):
+            selections = adding(dateTimes(forColumn: x), to: selections)
+        case .unselectColumn(let x):
+            selections = removing(dateTimes(forColumn: x), from: selections)
+        }
+
+        writePrimarySelections(selections)
+        reloadData(animated: true)
     }
-    .environment(\.operate) { calendarOperation in
-      handleOperation(calendarOperation)
+
+    private func dateTimes(forRow y: Int) -> [String] {
+        state.slots.filter { $0.y == y }.map { $0.dateTimeISO }
     }
-    .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { _ in
-      reloadData()
+
+    private func dateTimes(forColumn x: Int) -> [String] {
+        state.slots.filter { $0.x == x }.map { $0.dateTimeISO }
     }
-  }
+
+    private func adding(_ values: [String], to selections: [String]) -> [String] {
+        var result = selections
+        let existing = Set(selections)
+        for v in values where !existing.contains(v) { result.append(v) }
+        return result
+    }
+
+    private func removing(_ values: [String], from selections: [String]) -> [String] {
+        let toRemove = Set(values)
+        return selections.filter { !toRemove.contains($0) }
+    }
+
+    private func readPrimarySelections() -> [String] {
+        readSelections(content.primary)
+    }
+
+    private func writePrimarySelections(_ selections: [String]) {
+        guard let data = try? JSONEncoder().encode(selections) else { return }
+        try? EVY.updateData(data, at: content.primary)
+    }
+
+    var body: some View {
+        HStack(spacing: .zero) {
+            EVYCalendarAxisView(type: .y, labels: state.yLabels, offset: $scrollOffset)
+            VStack(spacing: .zero) {
+                EVYCalendarAxisView(type: .x, labels: state.xLabels, offset: $scrollOffset)
+                ScrollViewReader { _ in
+                    ScrollView([.vertical, .horizontal]) {
+                        EVYCalendarTimeslots(
+                            rows: state.rows,
+                            columns: state.columns,
+                            slots: state.slots
+                        )
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear
+                                    .preference(
+                                        key: ViewOffsetKey.self,
+                                        value: geo.frame(in: .named("scroll")).origin)
+                            }
+                        )
+                        .onPreferenceChange(ViewOffsetKey.self) { value in
+                            scrollOffset = value
+                        }
+                    }.scrollIndicators(.hidden)
+                }.coordinateSpace(name: "scroll")
+            }
+        }
+        .environment(\.operate) { calendarOperation in
+            handleOperation(calendarOperation)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { _ in
+            reloadData()
+        }
+    }
 }
 
 private func calculateIndex(x: Int, y: Int, numberOfRows: Int) -> Int {
-  y + (x * (numberOfRows))
+    y + (x * numberOfRows)
 }
 
 @MainActor
-private func getTimeslotsData(_ source: String) -> [EVYCalendarTimeslotData] {
-  do {
-    let timeslotsJSON = try EVY.getDataFromText(source)
-    return try JSONDecoder().decode(
-      [EVYCalendarTimeslotData].self,
-      from: timeslotsJSON.toString().data(using: .utf8)!
-    )
-  } catch {
-    return []
-  }
+private func readSelections(_ source: String) -> [String] {
+    guard let json = try? EVY.getDataFromText(source),
+          let data = json.toString().data(using: .utf8) else { return [] }
+    return (try? JSONDecoder().decode([String].self, from: data)) ?? []
 }
 
 #Preview {
-  EVYCalendarPreview()
+    EVYCalendarPreview()
 }
 
 private struct EVYCalendarPreview: View {
-  init() {
-    EVYPreviewMockData.seedCommon()
-    let timeslotsData = EVYPreviewMockData.timeslots.data(using: .utf8)
-    let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "timeslots")
-    EVY.draftStore.activeScopeId = previewScopeId
-    EVY.ensureDraftExists(
-      variableName: "pickup_timeslots",
-      initialData: timeslotsData,
-      scopeId: previewScopeId
-    )
-    EVY.ensureDraftExists(
-      variableName: "delivery_timeslots",
-      initialData: timeslotsData,
-      scopeId: previewScopeId
-    )
-  }
+    init() {
+        EVYPreviewMockData.seedCommon()
+        let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "item")
+        EVY.draftStore.activeScopeId = previewScopeId
+        EVY.ensureDraftExists(
+            variableName: "pickup_selection",
+            initialData: EVYPreviewMockData.calendarPickupSelection.data(using: .utf8),
+            scopeId: previewScopeId
+        )
+        EVY.ensureDraftExists(
+            variableName: "delivery_selection",
+            initialData: EVYPreviewMockData.calendarDeliverySelection.data(using: .utf8),
+            scopeId: previewScopeId
+        )
+    }
 
-  var body: some View {
-    EVYCalendar(
-      primary: "{pickup_timeslots}",
-      secondary: "{delivery_timeslots}")
-  }
+    var body: some View {
+        if let data = EVYPreviewMockData.calendarContentJSON.data(using: .utf8),
+           let content = try? JSONDecoder().decode(CalendarRowContent.self, from: data) {
+            EVYCalendar(content: content)
+        }
+    }
 }

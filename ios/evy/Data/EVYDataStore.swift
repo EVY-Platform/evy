@@ -129,17 +129,8 @@ final class EVYDataStore {
   }
 
   func applySyncedValue(namespace: String, resource: String, value: EVYJson) throws {
-    if let envelope = getResponseEnvelope(from: value) {
-      try applySyncedEnvelope(namespace: namespace, resource: resource, envelope: envelope)
-      return
-    }
-
     if case .array(let items) = value {
-      try applySyncedEnvelope(
-        namespace: namespace,
-        resource: resource,
-        envelope: (items: items, order: items.map { $0.identifierValue() })
-      )
+      try applySyncedItems(namespace: namespace, resource: resource, items: items)
       return
     }
 
@@ -155,28 +146,11 @@ final class EVYDataStore {
     return (maxExisting ?? -1) + 1
   }
 
-  private func getResponseEnvelope(from value: EVYJson) -> (items: [EVYJson], order: [String])? {
-    guard case .dictionary(let dict) = value,
-      case .array(let items) = dict["data"],
-      case .dictionary(let metadata) = dict["metadata"],
-      case .array(let orderValues) = metadata["order"]
-    else {
-      return nil
-    }
-
-    return (items, orderValues.map { $0.toString() })
-  }
-
-  private func applySyncedEnvelope(
-    namespace: String,
-    resource: String,
-    envelope: (items: [EVYJson], order: [String])
-  ) throws {
-    for item in envelope.items {
+  private func applySyncedItems(namespace: String, resource: String, items: [EVYJson]) throws {
+    for (sortIndex, item) in items.enumerated() {
       let itemId = item.identifierValue()
       guard !itemId.isEmpty else { continue }
       guard let encoded = try? JSONEncoder().encode(item) else { continue }
-      let sortIndex = envelope.order.firstIndex(of: itemId) ?? envelope.order.count
       try upsert(namespace: namespace, resource: resource, id: itemId, value: encoded, sortIndex: sortIndex)
     }
   }
