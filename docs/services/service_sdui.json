@@ -403,13 +403,18 @@
 														"id": "22222222-2222-4222-8222-222222222208",
 														"type": "Calendar",
 														"source": "",
-														"destination": "{item.pickup_timeslots}",
+														"destination": "{item.pickup_selection}",
 														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
-																"primary": "{pickup_timeslots}",
-																"secondary": "{delivery_timeslots}"
+																"start_time": "07:00",
+																"end_time": "19:00",
+																"timeslot_interval_minutes": 30,
+																"label_interval_minutes": 60,
+																"header_format": "EEE d",
+																"primary": "{pickup_selection}",
+																"secondary": "{delivery_selection}"
 															}
 														}
 													}
@@ -500,13 +505,18 @@
 														"id": "22222222-2222-4222-8222-222222222215",
 														"type": "Calendar",
 														"source": "",
-														"destination": "{item.delivery_timeslots}",
+														"destination": "{item.delivery_selection}",
 														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
-																"primary": "{delivery_timeslots}",
-																"secondary": "{pickup_timeslots}"
+																"start_time": "07:00",
+																"end_time": "19:00",
+																"timeslot_interval_minutes": 30,
+																"label_interval_minutes": 60,
+																"header_format": "EEE d",
+																"primary": "{delivery_selection}",
+																"secondary": "{pickup_selection}"
 															}
 														}
 													}
@@ -610,8 +620,8 @@
 					"destination": "",
 					"actions": [
 						{
-							"condition": "{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0}",
-							"false": "{highlight_required(pickup_timeslots)}",
+							"condition": "{count(pickup_selection) > 0 || count(delivery_selection) > 0 || count(shipping_destination_areas) > 0}",
+							"false": "{highlight_required(pickup_selection)}",
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,25a3269b-344c-477d-89c8-b2f5426a5d91)}"
 						}
 					],

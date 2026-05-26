@@ -30,6 +30,8 @@ function swiftTypeForSpecType(s: string): string {
 	switch (s) {
 		case "string":
 			return "String";
+		case "integer":
+			return "Int";
 		case "[UI_Row]":
 			return "[UI_Row]";
 		case "UI_Row":
@@ -92,6 +94,9 @@ function swiftTypeForSchemaProp(
 	}
 	if (schemaType === "string") {
 		return { swiftType: "String", isOptional: !required };
+	}
+	if (schemaType === "integer" || schemaType === "number") {
+		return { swiftType: "Int", isOptional: !required };
 	}
 	if (schemaType === "array") {
 		const items = obj.items as SchemaObject | undefined;
@@ -322,6 +327,8 @@ public class UI_RowContent: Codable {
             guard !known.contains(key.stringValue) else { continue }
             if let s = try? c.decode(String.self, forKey: key) {
                 extra[key.stringValue] = s
+            } else if let i = try? c.decode(Int.self, forKey: key) {
+                extra[key.stringValue] = String(i)
             }
         }
         additional = extra
@@ -425,6 +432,8 @@ function emitRowContentDecodeLine(key: string, specType: string): string {
 			return `        ${k} = try c.decodeIfPresent([UI_Row].self, forKey: .${k}) ?? []`;
 		case "[String]":
 			return `        ${k} = try c.decodeIfPresent([String].self, forKey: .${k}) ?? []`;
+		case "integer":
+			return `        ${k} = (try? c.decodeIfPresent(Int.self, forKey: .${k})) ?? Int((try? c.decodeIfPresent(String.self, forKey: .${k})) ?? "0") ?? 0`;
 		case "UI_Row":
 			return `        ${k} = try c.decodeIfPresent(UI_Row.self, forKey: .${k})`;
 		default:
@@ -435,6 +444,8 @@ function emitRowContentDecodeLine(key: string, specType: string): string {
 function emitRowContentEncodeLine(key: string, specType: string): string {
 	const k = swiftIdentifier(key);
 	switch (specType) {
+		case "integer":
+			return `        try c.encode(${k}, forKey: .${k})`;
 		case "UI_Row":
 			return `        try c.encodeIfPresent(${k}, forKey: .${k})`;
 		default:

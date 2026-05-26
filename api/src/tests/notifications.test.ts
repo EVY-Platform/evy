@@ -146,7 +146,7 @@ describe("create/update real-time notifications", () => {
 			service: "evy",
 			resource: "services",
 			operation: "create",
-			value: createResult.data,
+			value: createResult,
 		});
 
 		subscriber.close();

@@ -15,7 +15,6 @@ export const MARKETPLACE_RESOURCE_NAMES = [
 	"conditions",
 	"durations",
 	"areas",
-	"timeslots",
 	"items",
 ] as const;
 

@@ -20,10 +20,6 @@
 				"../types/rpcRequestHelpers.ts",
 				"./types/rpcRequestHelpers.ts"
 			],
-			"evy-types/rpcResponseHelpers": [
-				"../types/rpcResponseHelpers.ts",
-				"./types/rpcResponseHelpers.ts"
-			],
 			"evy-types/coreResources": [
 				"../types/coreResources.ts",
 				"./types/coreResources.ts"

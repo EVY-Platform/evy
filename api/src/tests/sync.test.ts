@@ -22,14 +22,7 @@ function expectResources(
 }
 
 function buildMockGetResponse(items: { id: string }[]): GetResponse {
-	return {
-		metadata: {
-			count: items.length,
-			size: Buffer.byteLength(JSON.stringify(items), "utf8"),
-			order: items.map((item) => item.id),
-		},
-		data: items,
-	};
+	return items;
 }
 
 function makeMocks() {
@@ -68,14 +61,7 @@ beforeEach(() => {
 		[EVY_CORE_SERVICE, [...EVY_CORE_RESOURCE_NAMES]],
 		[
 			"marketplace",
-			[
-				"selling_reasons",
-				"conditions",
-				"durations",
-				"areas",
-				"timeslots",
-				"items",
-			],
+			["selling_reasons", "conditions", "durations", "areas", "items"],
 		],
 	]);
 });
@@ -202,9 +188,8 @@ describe("sync", () => {
 			expect(typeof row.resource).toBe("string");
 			expect(row.resource.length).toBeGreaterThan(0);
 			expect(row.value).toBeDefined();
-			expect(row.value.metadata.count).toBe(1);
-			expect(row.value.metadata.order).toEqual([`${row.resource}-mock-1`]);
-			expect(row.value.data).toEqual([{ id: `${row.resource}-mock-1` }]);
+			expect(row.value).toHaveLength(1);
+			expect(row.value).toEqual([{ id: `${row.resource}-mock-1` }]);
 		}
 	});
 });

@@ -2,70 +2,35 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "get-response",
 	"title": "GetResponse",
-	"description": "Response for get method - metadata plus array of UI_Flow and/or generic GetDataResponse items.",
-	"type": "object",
-	"required": [
-		"metadata",
-		"data"
-	],
-	"additionalProperties": false,
-	"properties": {
-		"metadata": {
-			"$ref": "../common/rpc.schema.json#/$defs/ResponseMetadata"
-		},
-		"data": {
-			"type": "array",
-			"items": {
-				"oneOf": [
-					{
-						"$ref": "../sdui/evy.schema.json"
-					},
-					{
-						"allOf": [
-							{
-								"$ref": "#/$defs/GetDataResponse"
-							},
-							{
-								"not": {
-									"$ref": "../sdui/evy.schema.json"
-								}
-							}
-						]
-					}
+	"description": "Response for get method - array of UI_Flow and/or generic GetDataResponse items (per-item oneOf avoids overlap with the previous root oneOf, which matched both branches for [] and for UI_Flow[]).",
+	"type": "array",
+	"items": {
+		"oneOf": [
+			{ "$ref": "../sdui/evy.schema.json" },
+			{
+				"allOf": [
+					{ "$ref": "#/$defs/GetDataResponse" },
+					{ "not": { "$ref": "../sdui/evy.schema.json" } }
 				]
 			}
-		}
+		]
 	},
 	"$defs": {
 		"GetDataResponse": {
 			"title": "GetDataResponse",
 			"anyOf": [
-				{
-					"type": "string"
-				},
-				{
-					"type": "integer"
-				},
-				{
-					"type": "number"
-				},
-				{
-					"type": "boolean"
-				},
-				{
-					"type": "null"
-				},
+				{ "type": "string" },
+				{ "type": "integer" },
+				{ "type": "number" },
+				{ "type": "boolean" },
+				{ "type": "null" },
 				{
 					"type": "array",
-					"items": {
-						"$ref": "#/$defs/GetDataResponse"
-					}
+					"items": { "$ref": "#/$defs/GetDataResponse" }
 				},
 				{
 					"type": "object",
-					"additionalProperties": {
-						"$ref": "#/$defs/GetDataResponse"
-					}
+					"additionalProperties": { "$ref": "#/$defs/GetDataResponse" }
 				}
 			]
 		}

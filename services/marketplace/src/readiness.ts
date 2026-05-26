@@ -21,7 +21,7 @@ async function assertMarketplaceReadable(
 		service: "marketplace",
 		resource: "items",
 	});
-	if (!Array.isArray(response.data)) {
+	if (!Array.isArray(response)) {
 		throw new Error(
 			"Marketplace readiness failed: expected items response data array",
 		);
@@ -31,7 +31,7 @@ async function assertMarketplaceReadable(
 		return;
 	}
 
-	if (response.data.length === 0) {
+	if (response.length === 0) {
 		throw new Error(
 			"Marketplace seed verification failed: missing seeded items data",
 		);

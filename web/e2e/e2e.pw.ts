@@ -58,8 +58,8 @@ async function getFlowsFromApi(): Promise<UI_Flow[]> {
 		const result = (await client.call("get", {
 			service: "evy",
 			resource: "sdui",
-		})) as { data?: UI_Flow[] };
-		return Array.isArray(result.data) ? result.data : [];
+		})) as UI_Flow[];
+		return Array.isArray(result) ? result : [];
 	});
 }
 

@@ -60,9 +60,8 @@ describe("marketplace get/create/update", () => {
 			service: "marketplace",
 			resource: "conditions",
 		});
-		expect(result.metadata.count).toBe(1);
-		expect(result.metadata.order).toEqual([row.id]);
-		expect(result.data).toEqual([row]);
+		expect(result).toHaveLength(1);
+		expect(result).toEqual([row]);
 	});
 
 	it("returns rows ordered by oldest first", async () => {
@@ -91,8 +90,7 @@ describe("marketplace get/create/update", () => {
 			resource: "conditions",
 		});
 
-		expect(result.data).toEqual([olderRow, newerRow]);
-		expect(result.metadata.order).toEqual([olderRow.id, newerRow.id]);
+		expect(result).toEqual([olderRow, newerRow]);
 	});
 
 	it("filters rows by updatedAfter", async () => {
@@ -120,9 +118,8 @@ describe("marketplace get/create/update", () => {
 			filter: { updatedAfter: "2024-01-02T00:00:00.000Z" },
 		});
 
-		expect(result.metadata.count).toBe(1);
-		expect(result.metadata.order).toEqual([newRow.id]);
-		expect(result.data).toEqual([newRow]);
+		expect(result).toHaveLength(1);
+		expect(result).toEqual([newRow]);
 	});
 
 	it("filters rows by id", async () => {
@@ -153,9 +150,8 @@ describe("marketplace get/create/update", () => {
 			filter: { id: secondId },
 		});
 
-		expect(result.metadata.count).toBe(1);
-		expect(result.metadata.order).toEqual([secondRow.id]);
-		expect(result.data).toEqual([secondRow]);
+		expect(result).toHaveLength(1);
+		expect(result).toEqual([secondRow]);
 	});
 
 	it("uses filter.id as primary key when inserting a new row (client id)", async () => {
@@ -167,16 +163,13 @@ describe("marketplace get/create/update", () => {
 			filter: { id: clientId },
 			data: payload,
 		});
-		expect(inserted.metadata.count).toBe(1);
-		expect(inserted.metadata.order).toEqual([clientId]);
-		expect(inserted.data.id).toBe(clientId);
+		expect(inserted.id).toBe(clientId);
 		const byFilter = await get({
 			service: "marketplace",
 			resource: "items",
 			filter: { id: clientId },
 		});
-		expect(byFilter.metadata.order).toEqual([clientId]);
-		expect(byFilter.data).toEqual([payload]);
+		expect(byFilter).toEqual([payload]);
 	});
 
 	it("create then update row", async () => {
@@ -194,7 +187,6 @@ describe("marketplace get/create/update", () => {
 			filter: { id: rowId },
 			data: { ...row, value: "v2" },
 		});
-		expect(updated.metadata.order).toEqual([rowId]);
-		expect(updated.data.data).toEqual({ ...row, value: "v2" });
+		expect(updated.data).toEqual({ ...row, value: "v2" });
 	});
 });

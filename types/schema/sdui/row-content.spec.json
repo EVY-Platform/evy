@@ -76,6 +76,11 @@
 	"Calendar": {
 		"content": {
 			"title": "string",
+			"start_time": "string",
+			"end_time": "string",
+			"timeslot_interval_minutes": "integer",
+			"label_interval_minutes": "integer",
+			"header_format": "string",
 			"primary": "string",
 			"secondary": "string"
 		}

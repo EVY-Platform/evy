@@ -29,7 +29,6 @@ COPY types/schema ../../types/schema
 COPY types/validators.ts ../../types/validators.ts
 COPY types/coreResources.ts ../../types/coreResources.ts
 COPY types/rpcRequestHelpers.ts ../../types/rpcRequestHelpers.ts
-COPY types/rpcResponseHelpers.ts ../../types/rpcResponseHelpers.ts
 
 # Production stage
 FROM base AS runner

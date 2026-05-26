@@ -114,7 +114,7 @@ Each row has an `actions` array of `UI_RowAction` objects (`condition`, `false`,
 - AND: join comparisons with `&&` inside the braces:
 	`{length(title) > 0 && price.value >= 1}`
 - OR: join comparisons with `||` inside the braces:
-	`{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0}`
+	`{count(pickup_selection) > 0 || count(delivery_selection) > 0 || count(shipping_destination_areas) > 0}`
 - Grouping: use parentheses to control precedence:
 	`{(length(title) > 0 && price.value >= 1) || override == true}`
 - Boolean literals `true` and `false` are valid as standalone conditions or operands.
@@ -181,8 +181,8 @@ OR condition with navigate on success:
 
 ```json
 {
-	"condition": "{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0}",
-	"false": "{highlight_required(pickup_timeslots)}",
+	"condition": "{count(pickup_selection) > 0 || count(delivery_selection) > 0 || count(shipping_destination_areas) > 0}",
+	"false": "{highlight_required(pickup_selection)}",
 	"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,25a3269b-344c-477d-89c8-b2f5426a5d91)}"
 }
 ```

@@ -71,37 +71,21 @@ enum EVYPreviewMockData {
     ]
     """
 
-  // MARK: - Timeslots
+  // MARK: - Calendar
 
-  static let timeslots = """
-    [
-      {
-        "header": "Wed",
-        "date": "8 nov.",
-        "timeslots": [
-          { "timeslot": "11:30", "available": true },
-          { "timeslot": "12:00", "available": true }
-        ]
-      },
-      {
-        "header": "Thu",
-        "date": "9 nov.",
-        "timeslots": [
-          { "timeslot": "10:30", "available": false },
-          { "timeslot": "11:00", "available": true },
-          { "timeslot": "12:00", "available": true }
-        ]
-      },
-      {
-        "header": "Fri",
-        "date": "10 nov.",
-        "timeslots": [
-          { "timeslot": "10:30", "available": true },
-          { "timeslot": "12:00", "available": false },
-          { "timeslot": "12:30", "available": true }
-        ]
-      }
-    ]
+  static let calendarPickupSelection = "[\"2024-09-18T09:00:00\",\"2024-09-18T09:30:00\"]"
+  static let calendarDeliverySelection = "[\"2024-09-19T14:00:00\"]"
+  static let calendarContentJSON = """
+    {
+        \"title\": \"\",
+        \"start_time\": \"07:00\",
+        \"end_time\": \"19:00\",
+        \"timeslot_interval_minutes\": 30,
+        \"label_interval_minutes\": 60,
+        \"header_format\": \"EEE d\",
+        \"primary\": \"{pickup_selection}\",
+        \"secondary\": \"{delivery_selection}\"
+    }
     """
 
   // MARK: - User (for $local bindings)
@@ -160,7 +144,6 @@ enum EVYPreviewMockData {
     seed(key: "durations", json: durations)
     seed(key: "selling_reasons", json: sellingReasons)
     seed(key: "tags", json: tags)
-    seed(key: "timeslots", json: timeslots)
   }
 
   static func decodeRow(from json: String) -> UI_Row? {

@@ -119,31 +119,34 @@ value: string
 
 Base model with no extra props (identity may be implied by storage layer).
 
-### timeslot (calendar grid / runtime)
+### calendar_selection (compact calendar / runtime)
 
-Used by calendar pickers and listing availability. Cells use grid coordinates and labels, not ISO intervals at the leaf level.
+Used by Calendar rows. The grid geometry is defined in the SDUI row content; runtime state is stored as arrays of ISO local date-time strings (no timezone).
+
+Selection value format: `yyyy-MM-dd'T'HH:mm:ss`, e.g. `"2024-09-18T09:00:00"`.
+
+Calendar row content fields (flat in `view.content`):
 
 ```
-x: integer
-y: integer
-header: string
-start_label: string
-end_label: string
-selected: boolean
+start_time: string           (HH:mm, 24-hour, e.g. "07:00")
+end_time: string             (HH:mm, exclusive, e.g. "19:00")
+timeslot_interval_minutes: integer   (e.g. 30)
+label_interval_minutes: integer      (e.g. 60)
+header_format: string        (date format pattern, e.g. "EEE d")
+primary: string              (binding to primary selection array)
+secondary: string            (binding to read-only secondary context array)
 ```
-
-Optional `id: uuid` when slots are materialized as standalone resources (e.g. top-level `timeslots` lists).
 
 ### transfer_options
 
 ```
 pickup: {
-    timeslots: [timeslot]
+    selection: [string]   (ISO date-time strings)
     address: address
 }
 delivery: {
     fee: price
-    timeslots: [timeslot]
+    selection: [string]   (ISO date-time strings)
 }
 ship: {
     postal_code: string

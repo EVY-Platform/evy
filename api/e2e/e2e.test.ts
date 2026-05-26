@@ -32,8 +32,7 @@ describe("API E2E Tests", () => {
 				service: "evy",
 				resource: "sdui",
 			});
-			expect(result).toHaveProperty("metadata");
-			expect(Array.isArray(result.data)).toBe(true);
+			expect(Array.isArray(result)).toBe(true);
 		});
 
 		it("create should reject without auth", async () => {
@@ -97,9 +96,8 @@ describe("API E2E Tests", () => {
 				resource: "sdui",
 			});
 
-			expect(result.metadata.count).toBeGreaterThan(0);
-			expect(result.data.length).toBeGreaterThan(0);
-			const flow = result.data[0];
+			expect(result.length).toBeGreaterThan(0);
+			const flow = result[0];
 			expect(flow).toHaveProperty("id");
 			expect(flow).toHaveProperty("name");
 			expect(flow).toHaveProperty("pages");
@@ -138,13 +136,11 @@ describe("API E2E Tests", () => {
 				data: flowData,
 			});
 
-			expect(result.metadata.count).toBe(1);
-			expect(result.metadata.order).toEqual([result.data.id]);
-			expect(result.data.id).toBeDefined();
-			expect(result.data.data).toBeDefined();
-			expect(result.data.data.name).toBe("E2E Test Flow");
-			expect(result.data.createdAt).toBeDefined();
-			expect(result.data.updatedAt).toBeDefined();
+			expect(result.id).toBeDefined();
+			expect(result.data).toBeDefined();
+			expect(result.data.name).toBe("E2E Test Flow");
+			expect(result.createdAt).toBeDefined();
+			expect(result.updatedAt).toBeDefined();
 		});
 
 		it("update SDUI should update an existing flow", async () => {
@@ -176,12 +172,11 @@ describe("API E2E Tests", () => {
 			const updated = await client.call("update", {
 				service: "evy",
 				resource: "sdui",
-				filter: { id: created.data.id },
+				filter: { id: created.id },
 				data: updateFlowData,
 			});
 
-			expect(updated.metadata.order).toEqual([created.data.id]);
-			expect(updated.data.data.name).toBe("Updated Flow Name");
+			expect(updated.data.name).toBe("Updated Flow Name");
 		});
 	});
 });

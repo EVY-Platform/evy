@@ -1,10 +1,5 @@
 import { Client } from "rpc-websockets";
-import type {
-	CreateResponse,
-	SyncResponse,
-	UI_Flow as ServerFlow,
-	UpdateResponse,
-} from "evy-types";
+import type { SyncResponse, UI_Flow as ServerFlow } from "evy-types";
 import { config } from "../config";
 
 export function isServerFlow(v: unknown): v is ServerFlow {
@@ -20,45 +15,23 @@ export function isServerFlow(v: unknown): v is ServerFlow {
 	);
 }
 
-function isWriteResponseEnvelope(
-	value: unknown,
-): value is CreateResponse | UpdateResponse {
-	return (
-		value !== null &&
-		typeof value === "object" &&
-		"metadata" in value &&
-		"data" in value &&
-		value.data !== null &&
-		typeof value.data === "object"
-	);
-}
-
 function isFlowWriteResponse(value: unknown): value is {
-	metadata: unknown;
-	data: { id: string; data: ServerFlow; createdAt: string; updatedAt: string };
+	id: string;
+	data: ServerFlow;
+	createdAt: string;
+	updatedAt: string;
 } {
-	if (!isWriteResponseEnvelope(value)) return false;
-	const inner = value.data;
-	return (
-		inner !== null &&
-		typeof inner === "object" &&
-		"id" in inner &&
-		"data" in inner &&
-		"createdAt" in inner &&
-		"updatedAt" in inner &&
-		typeof inner.id === "string" &&
-		typeof inner.createdAt === "string" &&
-		typeof inner.updatedAt === "string" &&
-		isServerFlow(inner.data)
-	);
-}
-
-function isGetResponseEnvelope(value: unknown): value is { data: unknown[] } {
 	return (
 		value !== null &&
 		typeof value === "object" &&
+		"id" in value &&
 		"data" in value &&
-		Array.isArray(value.data)
+		"createdAt" in value &&
+		"updatedAt" in value &&
+		typeof value.id === "string" &&
+		typeof value.createdAt === "string" &&
+		typeof value.updatedAt === "string" &&
+		isServerFlow(value.data)
 	);
 }
 
@@ -130,7 +103,7 @@ class WSClient {
 			resource: "sdui",
 			filter: { id: flowId },
 		});
-		return isGetResponseEnvelope(raw) && raw.data.some(isServerFlow);
+		return Array.isArray(raw) && raw.some(isServerFlow);
 	}
 
 	async updateSDUI(flowData: ServerFlow): Promise<ServerFlow> {
@@ -149,7 +122,7 @@ class WSClient {
 		if (!isFlowWriteResponse(raw)) {
 			throw new Error("Invalid write response: expected flow");
 		}
-		return raw.data.data;
+		return raw.data;
 	}
 
 	disconnect(): void {

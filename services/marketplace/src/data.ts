@@ -24,24 +24,8 @@ import {
 	validateCreateResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
-import {
-	buildCollectionResponseEnvelope,
-	buildSingleResponseEnvelope,
-} from "evy-types/rpcResponseHelpers";
 
 setServiceRegistry([[MARKETPLACE_SERVICE, [...MARKETPLACE_RESOURCE_NAMES]]]);
-
-function buildGetResponse(items: unknown[]): GetResponse {
-	return validateGetResponse(buildCollectionResponseEnvelope(items));
-}
-
-function buildCreateResponse(item: CreateResponse["data"]): CreateResponse {
-	return validateCreateResponse(buildSingleResponseEnvelope(item));
-}
-
-function buildUpdateResponse(item: UpdateResponse["data"]): UpdateResponse {
-	return validateUpdateResponse(buildSingleResponseEnvelope(item));
-}
 
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest,
@@ -72,7 +56,7 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 		.where(and(...whereClauses))
 		.orderBy(asc(data.updatedAt), asc(data.id));
 
-	return buildGetResponse(rows.map((r) => r.data));
+	return validateGetResponse(rows.map((r) => r.data));
 }
 
 export async function get(params: GetRequest): Promise<GetResponse> {
@@ -108,7 +92,7 @@ async function marketplaceCreateBody(
 	}
 
 	const row = result[0];
-	const response = buildCreateResponse(row);
+	const response = validateCreateResponse(row);
 	emitDataChanged(resource, "create", row.data);
 	return response;
 }
@@ -133,7 +117,7 @@ async function marketplaceUpdateBody(
 	}
 
 	const row = result[0];
-	const response = buildUpdateResponse(row);
+	const response = validateUpdateResponse(row);
 	emitDataChanged(resource, "update", row.data);
 	return response;
 }

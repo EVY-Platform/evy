@@ -20,31 +20,6 @@
 		},
 		"IdFilter": {
 			"$ref": "#/$defs/DataFilter"
-		},
-		"ResponseMetadata": {
-			"type": "object",
-			"required": [
-				"count",
-				"size",
-				"order"
-			],
-			"additionalProperties": false,
-			"properties": {
-				"count": {
-					"type": "integer",
-					"minimum": 0
-				},
-				"size": {
-					"type": "integer",
-					"minimum": 0
-				},
-				"order": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				}
-			}
 		}
 	}
 }

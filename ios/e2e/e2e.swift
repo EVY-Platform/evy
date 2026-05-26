@@ -29,8 +29,8 @@ actor WSEmitter {
   func applySDUI(flowData: [String: Any], flowId: String) async throws {
     let existing = try await getResource(
       service: "evy", resource: "sdui", filter: ["id": flowId])
-    let dataArray = (existing as? [String: Any])?["data"] as? [Any]
-    let method = dataArray?.isEmpty == false ? "update" : "create"
+    let existingArray = existing as? [Any]
+    let method = existingArray?.isEmpty == false ? "update" : "create"
     let params: [String: Any] = [
       "service": "evy",
       "resource": "sdui",

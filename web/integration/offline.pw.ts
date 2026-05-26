@@ -71,14 +71,7 @@ test.describe("Offline and connection resilience", () => {
 									{
 										service: "evy",
 										resource: "sdui",
-										value: {
-											metadata: {
-												count: 1,
-												size: JSON.stringify([mockFlow]).length,
-												order: [mockFlow.id],
-											},
-											data: [mockFlow],
-										},
+										value: [mockFlow],
 									},
 								],
 							},
