@@ -28,20 +28,12 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
 
     let stored = try EVY.publicStore.get(namespace: "test", resource: "items", id: "item-1")
     XCTAssertEqual(stored.sortIndex, 7)
-
-    let decoded = try stored.decoded()
-    guard case .dictionary(let dict) = decoded, case .string(let title) = dict["title"] else {
-      XCTFail("Unexpected decoded shape")
-      return
-    }
-    XCTAssertEqual(title, "Updated")
+    XCTAssertEqual(try stored.decoded(), .dictionary(["id": .string("item-1"), "title": .string("Updated")]))
   }
 
   func testApplySyncedValueSingleNewItemAppendsAfterExistingItems() throws {
-    let item1Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("item-1")]))
-    let item2Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("item-2")]))
-    try EVY.publicStore.create(namespace: "test", resource: "items", id: "item-1", value: item1Data, sortIndex: 0)
-    try EVY.publicStore.create(namespace: "test", resource: "items", id: "item-2", value: item2Data, sortIndex: 5)
+    try EVY.publicStore.create(namespace: "test", resource: "items", id: "item-1", value: makeItemData(id: "item-1"), sortIndex: 0)
+    try EVY.publicStore.create(namespace: "test", resource: "items", id: "item-2", value: makeItemData(id: "item-2"), sortIndex: 5)
 
     let newValue = EVYJson.dictionary(["id": .string("item-3"), "title": .string("New")])
     try EVY.publicStore.applySyncedValue(namespace: "test", resource: "items", value: newValue)
@@ -59,5 +51,9 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
 
     let stored = try EVY.publicStore.get(namespace: "test", resource: "items", id: "item-1")
     XCTAssertEqual(stored.sortIndex, 0)
+  }
+
+  private func makeItemData(id: String) throws -> Data {
+    try JSONEncoder().encode(EVYJson.dictionary(["id": .string(id)]))
   }
 }
