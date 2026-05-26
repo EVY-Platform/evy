@@ -1,10 +1,11 @@
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type MouseEvent } from "react";
 
 import type { Row, RowConfig } from "../../types/row";
 import { ContainerChildren } from "../../components/ContainerChildren";
 import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { useRowById } from "../../hooks/useRowById";
+import { useFlowsContext } from "../../state";
 
 const typeName = "SelectSegmentContainerRow";
 
@@ -43,6 +44,7 @@ export default defineRow(typeName, {
 		rowId: string;
 	}) {
 		const row = useRowById(rowId);
+		const { activeRowId, configStack, dispatchRow } = useFlowsContext();
 		const [selectedTab, setSelectedTab] = useState(0);
 
 		if (!row) {
@@ -57,9 +59,34 @@ export default defineRow(typeName, {
 				: [];
 		const rawChildren = row.config.view.content.children;
 		const children: Row[] = Array.isArray(rawChildren) ? rawChildren : [];
-		const selectedChild = children[selectedTab];
-		const rowsToShow =
-			selectedChild !== undefined ? [selectedChild] : undefined;
+
+		// Segment button handler: stop propagation so the click doesn't bubble to
+		// RowPrimitive and trigger the generic row-toggle, then ensure the container
+		// row stays active.
+		const selectSegment = (
+			event: MouseEvent<HTMLButtonElement>,
+			index: number,
+		) => {
+			event.stopPropagation();
+			setSelectedTab(index);
+			const isContainerAlreadyActiveWithNoChildSelected =
+				activeRowId === rowId && configStack.length === 0;
+			if (!isContainerAlreadyActiveWithNoChildSelected) {
+				dispatchRow({ type: "SET_ACTIVE_ROW", rowId });
+			}
+		};
+
+		const activeRowPath = activeRowId ? [activeRowId, ...configStack] : [];
+		const rowPathIndex = activeRowPath.indexOf(rowId);
+		const activeDirectChildId =
+			rowPathIndex >= 0 ? activeRowPath[rowPathIndex + 1] : undefined;
+		const activeDirectChildIndex = children.findIndex(
+			(child) => child.id === activeDirectChildId,
+		);
+		const visibleChildIndex =
+			activeDirectChildIndex >= 0 ? activeDirectChildIndex : selectedTab;
+
+		const selectedChild = children[visibleChildIndex];
 
 		const title = row.config.view.content.title;
 
@@ -78,8 +105,8 @@ export default defineRow(typeName, {
 							<button
 								key={segment}
 								type="button"
-								onClick={() => setSelectedTab(index)}
-								className={`evy-flex-1 evy-border ${selectedTab === index ? "evy-bg-gray-light" : "evy-bg-white"}`}
+								onClick={(e) => selectSegment(e, index)}
+								className={`evy-flex-1 evy-border ${visibleChildIndex === index ? "evy-bg-gray-light" : "evy-bg-white"}`}
 								style={{
 									...(isFirst && firstSegmentStyle),
 									...(isLast && lastSegmentStyle),
@@ -91,7 +118,7 @@ export default defineRow(typeName, {
 					})}
 				</div>
 				<ContainerChildren
-					rows={rowsToShow}
+					rows={selectedChild !== undefined ? [selectedChild] : undefined}
 					containerRowId={rowId}
 					containerType="children"
 				/>
