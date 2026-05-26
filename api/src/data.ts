@@ -1,4 +1,4 @@
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
@@ -145,8 +145,8 @@ async function listCoreCatalogRows<TRow>(
 	const rows = whereClauses.length
 		? await base
 				.where(and(...whereClauses))
-				.orderBy(desc(table.updatedAt), desc(table.id))
-		: await base.orderBy(desc(table.updatedAt), desc(table.id));
+				.orderBy(asc(table.updatedAt), asc(table.id))
+		: await base.orderBy(asc(table.updatedAt), asc(table.id));
 	const mapped = rows.map((r) => mapRow(r as TRow));
 	return buildGetResponse(mapped);
 }
@@ -270,8 +270,8 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		const rows = whereClauses.length
 			? await base
 					.where(and(...whereClauses))
-					.orderBy(desc(flow.updatedAt), desc(flow.id))
-			: await base.orderBy(desc(flow.updatedAt), desc(flow.id));
+					.orderBy(asc(flow.updatedAt), asc(flow.id))
+			: await base.orderBy(asc(flow.updatedAt), asc(flow.id));
 		const payload = rows.map((f) => f.data);
 		for (const item of payload) {
 			validateFlowData(item);

@@ -65,7 +65,7 @@ describe("marketplace get/create/update", () => {
 		expect(result.data).toEqual([row]);
 	});
 
-	it("returns rows ordered by most recently updated", async () => {
+	it("returns rows ordered by oldest first", async () => {
 		const olderRow = { id: crypto.randomUUID(), value: "older" };
 		const newerRow = { id: crypto.randomUUID(), value: "newer" };
 
@@ -91,8 +91,8 @@ describe("marketplace get/create/update", () => {
 			resource: "conditions",
 		});
 
-		expect(result.data).toEqual([newerRow, olderRow]);
-		expect(result.metadata.order).toEqual([newerRow.id, olderRow.id]);
+		expect(result.data).toEqual([olderRow, newerRow]);
+		expect(result.metadata.order).toEqual([olderRow.id, newerRow.id]);
 	});
 
 	it("filters rows by updatedAfter", async () => {
