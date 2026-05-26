@@ -1,4 +1,4 @@
-import { eq, and, desc, gt } from "drizzle-orm";
+import { and, asc, eq, gt } from "drizzle-orm";
 
 import type {
 	CreateRequest,
@@ -70,7 +70,7 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 		.select({ data: data.data })
 		.from(data)
 		.where(and(...whereClauses))
-		.orderBy(desc(data.updatedAt), desc(data.id));
+		.orderBy(asc(data.updatedAt), asc(data.id));
 
 	return buildGetResponse(rows.map((r) => r.data));
 }

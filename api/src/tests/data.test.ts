@@ -516,7 +516,7 @@ describe("get", () => {
 		expect(result.data[0]).toHaveProperty("pages");
 	});
 
-	it("should return flow data ordered by most recently updated", async () => {
+	it("should return flow data ordered by oldest first", async () => {
 		const olderFlow = createTestFlow({
 			name: "Older Flow",
 			pages: [{ title: "P1", rows: [] }],
@@ -546,10 +546,10 @@ describe("get", () => {
 		});
 
 		expect(result.data.map((flow) => flow.id)).toEqual([
-			newerFlow.id,
 			olderFlow.id,
+			newerFlow.id,
 		]);
-		expect(result.metadata.order).toEqual([newerFlow.id, olderFlow.id]);
+		expect(result.metadata.order).toEqual([olderFlow.id, newerFlow.id]);
 	});
 
 	it("should return single flow for resource SDUI when filter.id provided", async () => {
@@ -661,7 +661,7 @@ describe("get", () => {
 		expect(typeof serviceRow.updatedAt).toBe("string");
 	});
 
-	it("should return non-SDUI resources ordered by most recently updated", async () => {
+	it("should return non-SDUI resources ordered by oldest first", async () => {
 		const olderService = {
 			id: crypto.randomUUID(),
 			name: "OlderSvc",
@@ -684,10 +684,10 @@ describe("get", () => {
 		});
 
 		expect(result.data.map((row) => row.id)).toEqual([
-			newerService.id,
 			olderService.id,
+			newerService.id,
 		]);
-		expect(result.metadata.order).toEqual([newerService.id, olderService.id]);
+		expect(result.metadata.order).toEqual([olderService.id, newerService.id]);
 	});
 
 	it("should return empty array for non-SDUI resource when no data", async () => {
