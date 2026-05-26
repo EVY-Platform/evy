@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { openAppWithTestFlows } from "./flowFixtures";
 import {
 	SELECTORS,
@@ -7,6 +7,49 @@ import {
 	getPageRow,
 	getSidebarRow,
 } from "./utils";
+
+async function openTwoSegmentTabContainer(page: Page) {
+	await openAppWithTestFlows(page, [
+		{
+			id: "step_1",
+			title: "Page 1",
+			rows: [
+				{
+					type: "SelectSegmentContainer" as const,
+					view: {
+						content: {
+							title: "Tab Container",
+							segments: ["Segment A", "Segment B"],
+							children: [
+								{
+									type: "Info" as const,
+									view: {
+										content: {
+											title: "First Segment Child",
+											subtitle: "First content",
+										},
+									},
+									actions: [],
+								},
+								{
+									type: "Text" as const,
+									view: {
+										content: {
+											title: "Second Segment Child",
+											text: "Second content",
+										},
+									},
+									actions: [],
+								},
+							],
+						},
+					},
+					actions: [],
+				},
+			],
+		},
+	]);
+}
 
 test.describe("Child Page Rendering", () => {
 	test("should show blank child page when selecting a row without a child", async ({
@@ -544,5 +587,77 @@ test.describe("Child Page Rendering", () => {
 		await expect(
 			activePage.getByText("Example tag", { exact: true }),
 		).not.toBeVisible();
+	});
+
+	test("clicking a SelectSegmentContainer child from the config panel shows that child on the main page", async ({
+		page,
+	}) => {
+		await openTwoSegmentTabContainer(page);
+
+		// Select the SelectSegmentContainer row on the page
+		await getPageRow(page, "Tab Container").click();
+
+		// Initially, the first segment child should be visible on the main page
+		const activePage = getFirstPage(page);
+		await expect(
+			activePage.getByText("First Segment Child", { exact: true }),
+		).toBeVisible();
+
+		// Click the second child row in the configuration panel
+		const configPanel = getConfigPanel(page);
+		await configPanel
+			.getByRole("button", { name: "Text", exact: true })
+			.click();
+
+		// Now the main phone page should show the second segment child
+		await expect(
+			activePage.getByText("Second Segment Child", { exact: true }),
+		).toBeVisible();
+
+		// The first segment child should no longer be visible on the main page
+		await expect(
+			activePage.getByText("First Segment Child", { exact: true }),
+		).not.toBeVisible();
+	});
+
+	test("clicking segment buttons in the bar switches the visible child without toggling the container row inactive", async ({
+		page,
+	}) => {
+		await openTwoSegmentTabContainer(page);
+
+		// Select the container row first
+		const activePage = getFirstPage(page);
+		await getPageRow(page, "Tab Container").click();
+		await expect(
+			activePage.getByText("First Segment Child", { exact: true }),
+		).toBeVisible();
+		await expect(
+			getConfigPanel(page).getByText("SelectSegmentContainer Row"),
+		).toBeVisible();
+
+		// Click the second segment in the bar — child should switch, row should stay active
+		await activePage
+			.getByRole("button", { name: "Segment B", exact: true })
+			.click();
+		await expect(
+			activePage.getByText("Second Segment Child", { exact: true }),
+		).toBeVisible();
+		await expect(
+			activePage.getByText("First Segment Child", { exact: true }),
+		).not.toBeVisible();
+		await expect(
+			getConfigPanel(page).getByText("SelectSegmentContainer Row"),
+		).toBeVisible();
+
+		// Click back to the first segment — should switch back without deactivating
+		await activePage
+			.getByRole("button", { name: "Segment A", exact: true })
+			.click();
+		await expect(
+			activePage.getByText("First Segment Child", { exact: true }),
+		).toBeVisible();
+		await expect(
+			getConfigPanel(page).getByText("SelectSegmentContainer Row"),
+		).toBeVisible();
 	});
 });
