@@ -79,11 +79,13 @@ extension EVY {
       data: dataWithId
     )
     let encodedData = try JSONEncoder().encode(dataWithId)
+    let nextSortIndex = publicStore.nextSortIndex(namespace: namespace, resource: resource)
     try publicStore.create(
       namespace: namespace,
       resource: resource,
       id: newId,
-      value: encodedData
+      value: encodedData,
+      sortIndex: nextSortIndex
     )
 
     Task { @MainActor in
