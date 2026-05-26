@@ -7,6 +7,7 @@ import XCTest
 
 @testable import evy
 
+@MainActor
 final class EVYCalendarTests: XCTestCase {
 
     private func todayPlus(_ days: Int) -> String {
@@ -177,5 +178,65 @@ final class EVYCalendarTests: XCTestCase {
         )
         let columns = Set(withinWindow.map { $0.x }).count
         XCTAssertEqual(columns, 7)
+    }
+
+    // MARK: - dataChangeKey tests
+
+    func testPrimarySourceExactMatchReturnsTrue() {
+        XCTAssertTrue(dataChangeKey("pickup_selection", affects: "{pickup_selection}"))
+    }
+
+    func testSecondarySourceExactMatchReturnsTrue() {
+        XCTAssertTrue(dataChangeKey("delivery_selection", affects: "{delivery_selection}"))
+    }
+
+    func testUnrelatedNotificationDoesNotMatch() {
+        XCTAssertFalse(dataChangeKey("conditions", affects: "{pickup_selection}"))
+    }
+
+    func testEntityQualifiedNotificationMatchesSource() {
+        XCTAssertTrue(dataChangeKey("item.pickup_selection", affects: "{item.pickup_selection}"))
+    }
+
+    func testNestedKeyChangeMatchesParentSource() {
+        XCTAssertTrue(dataChangeKey("item.pickup_selection.start", affects: "{item.pickup_selection}"))
+    }
+
+    func testEmptySourceDoesNotMatchBroadNotification() {
+        XCTAssertFalse(dataChangeKey("conditions", affects: ""))
+    }
+
+    // MARK: - EVYDataChangeWatch tests
+
+    func testWatchExactMatchReturnsTrue() {
+        let watch = EVYDataChangeWatch("{pickup_selection}")
+        XCTAssertTrue(dataChangeKey("pickup_selection", affects: watch))
+    }
+
+    func testWatchUnrelatedNotificationDoesNotMatch() {
+        let watch = EVYDataChangeWatch("{pickup_selection}")
+        XCTAssertFalse(dataChangeKey("conditions", affects: watch))
+    }
+
+    func testWatchEntityQualifiedMatchesSource() {
+        let watch = EVYDataChangeWatch("{item.pickup_selection}")
+        XCTAssertTrue(dataChangeKey("item.pickup_selection", affects: watch))
+    }
+
+    func testWatchNestedKeyChangeMatchesParentSource() {
+        let watch = EVYDataChangeWatch("{item.pickup_selection}")
+        XCTAssertTrue(dataChangeKey("item.pickup_selection.start", affects: watch))
+    }
+
+    func testWatchEmptySourceDoesNotMatch() {
+        let watch = EVYDataChangeWatch("")
+        XCTAssertFalse(dataChangeKey("conditions", affects: watch))
+    }
+
+    func testWatchReusedAcrossMultipleNotificationKeys() {
+        let watch = EVYDataChangeWatch("{item.pickup_selection}")
+        XCTAssertTrue(dataChangeKey("item.pickup_selection.start", affects: watch))
+        XCTAssertTrue(dataChangeKey("item.pickup_selection.end", affects: watch))
+        XCTAssertFalse(dataChangeKey("conditions", affects: watch))
     }
 }

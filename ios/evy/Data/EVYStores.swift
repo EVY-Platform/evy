@@ -19,6 +19,48 @@ extension Notification.Name {
 }
 
 @MainActor
+struct EVYDataChangeWatch: Equatable {
+    let rawTarget: String
+    let segments: [String]
+
+    init(_ watch: String) {
+        rawTarget = watch
+        guard !watch.isEmpty else {
+            segments = []
+            return
+        }
+        let parsedWatch = EVY.parsePropsFromText(watch)
+        segments = parsedWatch.components(separatedBy: PROP_SEPARATOR)
+    }
+
+    var isEmpty: Bool {
+        segments.isEmpty
+    }
+
+    func isAffected(by notificationKey: String) -> Bool {
+        guard !segments.isEmpty else { return false }
+        let notificationSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
+        let comparedSegmentCount = min(segments.count, notificationSegments.count)
+        return segments.prefix(comparedSegmentCount) == notificationSegments.prefix(comparedSegmentCount)
+    }
+}
+
+@MainActor
+func dataChangeKey(_ notificationKey: String, affects watch: String) -> Bool {
+    guard !watch.isEmpty else { return false }
+    let watchProps = EVY.parsePropsFromText(watch)
+    let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
+    let notifSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
+    let minLen = min(watchSegments.count, notifSegments.count)
+    return watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
+}
+
+@MainActor
+func dataChangeKey(_ notificationKey: String, affects watch: EVYDataChangeWatch) -> Bool {
+    watch.isAffected(by: notificationKey)
+}
+
+@MainActor
 @Observable class EVYState<T: Equatable> {
   private var _value: T
   @ObservationIgnored private var observerTokens: [NSObjectProtocol] = []
@@ -31,9 +73,7 @@ extension Notification.Name {
 
   init(watch: String, setter: @escaping (_ input: String) -> T) {
     _value = setter(watch)
-
-    let watchProps = EVY.parsePropsFromText(watch)
-    let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
+    let dataChangeWatch = EVYDataChangeWatch(watch)
 
     observerTokens.append(
       NotificationCenter.default.addObserver(
@@ -47,11 +87,7 @@ extension Notification.Name {
             return
           }
 
-          let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
-          let minLen = min(watchSegments.count, notifSegments.count)
-          let prefixMatch = watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
-
-          if prefixMatch { self?.value = setter(watch) }
+          if dataChangeKey(notifProp, affects: dataChangeWatch) { self?.value = setter(watch) }
         }
       }
     )
