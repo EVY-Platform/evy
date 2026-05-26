@@ -90,6 +90,7 @@
 		74A100132F32000100000001 /* EVYActionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100162F32000100000001 /* EVYActionRunnerTests.swift */; };
 		74A100172F32000100000001 /* EVYDraftMergesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100182F32000100000001 /* EVYDraftMergesTests.swift */; };
 		74A100222F32000100000001 /* EVYDraftBindingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100212F32000100000001 /* EVYDraftBindingsTests.swift */; };
+		E00100112F73010100000001 /* EVYDataStoreSortIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */; };
 		7858E83074C330353C4844E5 /* EVY+DatumExpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A43F6468C5603E3B57ECD3 /* EVY+DatumExpression.swift */; };
 /* End PBXBuildFile section */
 
@@ -195,6 +196,7 @@
 		74A100162F32000100000001 /* EVYActionRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionRunnerTests.swift; sourceTree = "<group>"; };
 		74A100182F32000100000001 /* EVYDraftMergesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftMergesTests.swift; sourceTree = "<group>"; };
 		74A100212F32000100000001 /* EVYDraftBindingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftBindingsTests.swift; sourceTree = "<group>"; };
+		E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDataStoreSortIndexTests.swift; sourceTree = "<group>"; };
 		97A43F6468C5603E3B57ECD3 /* EVY+DatumExpression.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "EVY+DatumExpression.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -480,6 +482,7 @@
 				74A100142F32000100000001 /* ContentViewTests.swift */,
 				74A100182F32000100000001 /* EVYDraftMergesTests.swift */,
 				74A100212F32000100000001 /* EVYDraftBindingsTests.swift */,
+				E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */,
 				74A100042F32000100000001 /* interpreterTests.swift */,
 			);
 			path = evyTests;
@@ -717,6 +720,7 @@
 				74A100112F32000100000001 /* ContentViewTests.swift in Sources */,
 				74A100172F32000100000001 /* EVYDraftMergesTests.swift in Sources */,
 				74A100222F32000100000001 /* EVYDraftBindingsTests.swift in Sources */,
+				E00100112F73010100000001 /* EVYDataStoreSortIndexTests.swift in Sources */,
 				74A100012F32000100000001 /* interpreterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

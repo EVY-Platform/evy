@@ -12,6 +12,14 @@ Pages can receive query parameters through navigation actions. Query params are 
 
 SDUI bindings use plural resource-only names such as `{conditions}` or `{timeslots}`. Edit rows write drafts through plural destinations such as `{item.title}` or `{item.condition}`. Those bindings resolve exact local keys first, then explicitly fall back to synced service resources. Search rows and dynamic ListContainer rows read local/synced data from their `source` and render `view.content.child` templates using `{$datum.}`. This keeps local draft/entity data separate from backend catalog data while preserving simple SDUI source strings.
 
+### Search result ordering
+
+When the backend returns a collection (via sync or a `dataChanged` notification envelope), the
+response includes `metadata.order` — an array of IDs in display order. iOS stores each item with
+a `sortIndex` equal to its position in that array, so `getAll` returns items in backend order.
+Items created locally or received via single-item notifications are assigned `sortIndex =
+maxExisting + 1` so they append to the end. No separate order-state layer is needed.
+
 ### Draft scopes and draft cache keys
 
 iOS drafts are stored in the in-memory draft cache, separate from public/private SwiftData stores.

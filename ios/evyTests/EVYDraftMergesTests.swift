@@ -79,4 +79,21 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "expected price value 99, got \(String(describing: value))"
     )
   }
+
+  func testCreateAppendsNewItemWithHighestSortIndex() throws {
+    let seed1Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("seed-1")]))
+    let seed2Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("seed-2")]))
+    try EVY.publicStore.create(namespace: "marketplace", resource: "items", id: "seed-1", value: seed1Data, sortIndex: 0)
+    try EVY.publicStore.create(namespace: "marketplace", resource: "items", id: "seed-2", value: seed2Data, sortIndex: 1)
+
+    EVY.ensureDraftExists(variableName: "title")
+    try EVY.updateValue("New Item", at: "{title}")
+    try EVY.create(namespace: "marketplace", resource: "items", draftScopeId: testDraftScope)
+
+    let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
+    XCTAssertEqual(instances.count, 3)
+    let newItem = try XCTUnwrap(instances.first(where: { $0.id != "seed-1" && $0.id != "seed-2" }))
+    XCTAssertEqual(newItem.sortIndex, 2)
+    XCTAssertEqual(instances.last?.id, newItem.id)
+  }
 }

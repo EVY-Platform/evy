@@ -144,7 +144,15 @@ final class EVYDataStore {
     }
 
     let encoded = try JSONEncoder().encode(value)
-    try upsert(namespace: namespace, resource: resource, id: singletonId(for: value), value: encoded)
+    let itemId = singletonId(for: value)
+    let existingSortIndex = (try? get(namespace: namespace, resource: resource, id: itemId))?.sortIndex
+    let sortIndex = existingSortIndex ?? nextSortIndex(namespace: namespace, resource: resource)
+    try upsert(namespace: namespace, resource: resource, id: itemId, value: encoded, sortIndex: sortIndex)
+  }
+
+  func nextSortIndex(namespace: String, resource: String) -> Int {
+    let maxExisting = (try? getAll(namespace: namespace, resource: resource))?.map(\.sortIndex).max()
+    return (maxExisting ?? -1) + 1
   }
 
   private func getResponseEnvelope(from value: EVYJson) -> (items: [EVYJson], order: [String])? {
