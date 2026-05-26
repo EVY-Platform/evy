@@ -256,8 +256,13 @@ struct EVYCalendar: View {
         .environment(\.operate) { calendarOperation in
             handleOperation(calendarOperation)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { _ in
-            reloadData()
+        .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
+            guard let notificationKey = notification.object as? String else { return }
+            if dataChangeKey(notificationKey, affects: content.primary)
+                || dataChangeKey(notificationKey, affects: content.secondary)
+            {
+                reloadData()
+            }
         }
     }
 }

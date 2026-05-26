@@ -19,6 +19,16 @@ extension Notification.Name {
 }
 
 @MainActor
+func dataChangeKey(_ notificationKey: String, affects watch: String) -> Bool {
+    guard !watch.isEmpty else { return false }
+    let watchProps = EVY.parsePropsFromText(watch)
+    let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
+    let notifSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
+    let minLen = min(watchSegments.count, notifSegments.count)
+    return watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
+}
+
+@MainActor
 @Observable class EVYState<T: Equatable> {
   private var _value: T
   @ObservationIgnored private var observerTokens: [NSObjectProtocol] = []
@@ -32,9 +42,6 @@ extension Notification.Name {
   init(watch: String, setter: @escaping (_ input: String) -> T) {
     _value = setter(watch)
 
-    let watchProps = EVY.parsePropsFromText(watch)
-    let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
-
     observerTokens.append(
       NotificationCenter.default.addObserver(
         forName: .evyDataChanged,
@@ -47,11 +54,7 @@ extension Notification.Name {
             return
           }
 
-          let notifSegments = notifProp.components(separatedBy: PROP_SEPARATOR)
-          let minLen = min(watchSegments.count, notifSegments.count)
-          let prefixMatch = watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
-
-          if prefixMatch { self?.value = setter(watch) }
+          if dataChangeKey(notifProp, affects: watch) { self?.value = setter(watch) }
         }
       }
     )
