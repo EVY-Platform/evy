@@ -89,12 +89,16 @@ struct EVYCalendarViewState {
 
 struct EVYCalendar: View {
     private let content: CalendarRowContent
+    private let primaryDataChangeWatch: EVYDataChangeWatch
+    private let secondaryDataChangeWatch: EVYDataChangeWatch
 
     @State private var state: EVYCalendarViewState
     @State private var scrollOffset = CGPoint.zero
 
     init(content: CalendarRowContent) {
         self.content = content
+        primaryDataChangeWatch = EVYDataChangeWatch(content.primary)
+        secondaryDataChangeWatch = EVYDataChangeWatch(content.secondary)
         _state = State(initialValue: Self.buildCalendarData(content: content))
     }
 
@@ -258,8 +262,8 @@ struct EVYCalendar: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
             guard let notificationKey = notification.object as? String else { return }
-            if dataChangeKey(notificationKey, affects: content.primary)
-                || dataChangeKey(notificationKey, affects: content.secondary)
+            if dataChangeKey(notificationKey, affects: primaryDataChangeWatch)
+                || dataChangeKey(notificationKey, affects: secondaryDataChangeWatch)
             {
                 reloadData()
             }

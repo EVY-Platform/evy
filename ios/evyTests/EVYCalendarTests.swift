@@ -205,4 +205,38 @@ final class EVYCalendarTests: XCTestCase {
     func testEmptySourceDoesNotMatchBroadNotification() {
         XCTAssertFalse(dataChangeKey("conditions", affects: ""))
     }
+
+    // MARK: - EVYDataChangeWatch tests
+
+    func testWatchExactMatchReturnsTrue() {
+        let watch = EVYDataChangeWatch("{pickup_selection}")
+        XCTAssertTrue(dataChangeKey("pickup_selection", affects: watch))
+    }
+
+    func testWatchUnrelatedNotificationDoesNotMatch() {
+        let watch = EVYDataChangeWatch("{pickup_selection}")
+        XCTAssertFalse(dataChangeKey("conditions", affects: watch))
+    }
+
+    func testWatchEntityQualifiedMatchesSource() {
+        let watch = EVYDataChangeWatch("{item.pickup_selection}")
+        XCTAssertTrue(dataChangeKey("item.pickup_selection", affects: watch))
+    }
+
+    func testWatchNestedKeyChangeMatchesParentSource() {
+        let watch = EVYDataChangeWatch("{item.pickup_selection}")
+        XCTAssertTrue(dataChangeKey("item.pickup_selection.start", affects: watch))
+    }
+
+    func testWatchEmptySourceDoesNotMatch() {
+        let watch = EVYDataChangeWatch("")
+        XCTAssertFalse(dataChangeKey("conditions", affects: watch))
+    }
+
+    func testWatchReusedAcrossMultipleNotificationKeys() {
+        let watch = EVYDataChangeWatch("{item.pickup_selection}")
+        XCTAssertTrue(dataChangeKey("item.pickup_selection.start", affects: watch))
+        XCTAssertTrue(dataChangeKey("item.pickup_selection.end", affects: watch))
+        XCTAssertFalse(dataChangeKey("conditions", affects: watch))
+    }
 }

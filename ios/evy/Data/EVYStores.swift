@@ -19,6 +19,33 @@ extension Notification.Name {
 }
 
 @MainActor
+struct EVYDataChangeWatch: Equatable {
+    let rawTarget: String
+    let segments: [String]
+
+    init(_ watch: String) {
+        rawTarget = watch
+        guard !watch.isEmpty else {
+            segments = []
+            return
+        }
+        let parsedWatch = EVY.parsePropsFromText(watch)
+        segments = parsedWatch.components(separatedBy: PROP_SEPARATOR)
+    }
+
+    var isEmpty: Bool {
+        segments.isEmpty
+    }
+
+    func isAffected(by notificationKey: String) -> Bool {
+        guard !segments.isEmpty else { return false }
+        let notificationSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
+        let comparedSegmentCount = min(segments.count, notificationSegments.count)
+        return segments.prefix(comparedSegmentCount) == notificationSegments.prefix(comparedSegmentCount)
+    }
+}
+
+@MainActor
 func dataChangeKey(_ notificationKey: String, affects watch: String) -> Bool {
     guard !watch.isEmpty else { return false }
     let watchProps = EVY.parsePropsFromText(watch)
@@ -26,6 +53,11 @@ func dataChangeKey(_ notificationKey: String, affects watch: String) -> Bool {
     let notifSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
     let minLen = min(watchSegments.count, notifSegments.count)
     return watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
+}
+
+@MainActor
+func dataChangeKey(_ notificationKey: String, affects watch: EVYDataChangeWatch) -> Bool {
+    watch.isAffected(by: notificationKey)
 }
 
 @MainActor
@@ -41,6 +73,7 @@ func dataChangeKey(_ notificationKey: String, affects watch: String) -> Bool {
 
   init(watch: String, setter: @escaping (_ input: String) -> T) {
     _value = setter(watch)
+    let dataChangeWatch = EVYDataChangeWatch(watch)
 
     observerTokens.append(
       NotificationCenter.default.addObserver(
@@ -54,7 +87,7 @@ func dataChangeKey(_ notificationKey: String, affects watch: String) -> Bool {
             return
           }
 
-          if dataChangeKey(notifProp, affects: watch) { self?.value = setter(watch) }
+          if dataChangeKey(notifProp, affects: dataChangeWatch) { self?.value = setter(watch) }
         }
       }
     )
