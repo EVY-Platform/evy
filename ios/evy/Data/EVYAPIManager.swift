@@ -53,7 +53,7 @@ actor EVYAPIManager {
       )
       return response.id
     } catch {
-      try? await rpcWS.fetch(
+      _ = try? await rpcWS.fetch(
         method: "cancelUpload",
         params: EVYCancelUploadParams(uploadID: uploadId),
         expecting: EVYCancelUploadResponse.self
