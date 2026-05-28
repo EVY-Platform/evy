@@ -3,7 +3,7 @@ import { fuzzystrmatch } from "@electric-sql/pglite/contrib/fuzzystrmatch";
 import { drizzle } from "drizzle-orm/pglite";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 
-import * as schema from "../db/schema";
+import { schema } from "../db";
 
 export type PgliteTestDb = PgliteDatabase<typeof schema>;
 

@@ -11,13 +11,14 @@ import { migrate } from "drizzle-orm/pglite/migrator";
 import type { Client, ClientReadableStream, ServiceError } from "@grpc/grpc-js";
 
 import { getFreePort } from "../../../../api/src/tests/wsTestHelpers";
-import * as schema from "../db/schema";
+import { schema } from "../db";
 import { createEvyServiceClient } from "../grpc";
 import { createPgliteTestDatabase } from "./dbTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 mock.module("../db", () => ({
+	data: schema.data,
 	db: testDb,
 	schema,
 }));
@@ -120,7 +121,7 @@ describe("marketplace gRPC server", () => {
 		expect(got).toEqual([row]);
 	});
 
-	it("SubscribeEvents receives dataChanged after catalog create", async () => {
+	it("SubscribeEvents receives dataChanged after resource create", async () => {
 		const client = createEvyServiceClient(
 			`127.0.0.1:${grpcPort}`,
 		) as EvyServiceClient;

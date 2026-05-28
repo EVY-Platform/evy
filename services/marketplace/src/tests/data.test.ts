@@ -8,12 +8,13 @@ import {
 	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import * as schema from "../db/schema";
+import { schema } from "../db";
 import { createPgliteTestDatabase } from "./dbTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 mock.module("../db", () => ({
+	data: schema.data,
 	db: testDb,
 	schema,
 }));
@@ -49,7 +50,7 @@ describe("marketplace get/create/update", () => {
 		).rejects.toThrow("Unsupported resource for marketplace service");
 	});
 
-	it("persists catalog rows for service marketplace", async () => {
+	it("persists resource rows for service marketplace", async () => {
 		const row = { id: crypto.randomUUID(), value: "Like new" };
 		await create({
 			service: "marketplace",

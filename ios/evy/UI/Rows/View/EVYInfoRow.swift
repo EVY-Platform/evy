@@ -35,7 +35,9 @@ struct EVYInfoRow: View {
   private func infoTextColumn(content: InfoRowContent, hasTitle: Bool, hasSubtitle: Bool)
     -> some View
   {
-    VStack(alignment: hasTitle && hasSubtitle ? .leading : .center, spacing: 0) {
+    let frameAlignment: Alignment = hasTitle && hasSubtitle ? .leading : .center
+    let stackAlignment: HorizontalAlignment = hasTitle && hasSubtitle ? .leading : .center
+    VStack(alignment: stackAlignment, spacing: 0) {
       if hasTitle {
         EVYTextView(content.title)
           .frame(maxWidth: .infinity, alignment: .leading)
@@ -44,17 +46,12 @@ struct EVYInfoRow: View {
       }
       if hasSubtitle {
         EVYTextView(content.subtitle, style: .info)
-          .frame(
-            maxWidth: .infinity,
-            alignment: hasTitle && hasSubtitle ? .leading : .center
-          )
+          .frame(maxWidth: .infinity, alignment: frameAlignment)
           .lineLimit(3)
           .truncationMode(.tail)
       }
     }
-    .frame(
-      maxWidth: .infinity,
-      alignment: hasTitle && hasSubtitle ? .leading : .center)
+    .frame(maxWidth: .infinity, alignment: frameAlignment)
   }
 }
 

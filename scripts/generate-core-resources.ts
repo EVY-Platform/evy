@@ -183,6 +183,8 @@ function generateSwift(schema: CoreResourcesSchema): string {
 }
 
 async function main(): Promise<void> {
+	const excludeIos = process.argv.includes("--exclude-ios");
+
 	const schema = await loadJson<CoreResourcesSchema>(RESOURCES_SCHEMA_PATH);
 	validateSchema(schema);
 
@@ -191,6 +193,8 @@ async function main(): Promise<void> {
 	const tsContent = generateTypeScript(schema);
 	await writeFile(OUT_TS_PATH, tsContent, "utf-8");
 	console.log(`Generated ${OUT_TS_PATH}`);
+
+	if (excludeIos) return;
 
 	// Swift
 	await mkdir(OUT_SWIFT, { recursive: true });

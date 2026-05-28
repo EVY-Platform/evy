@@ -1,6 +1,5 @@
 import { Client } from "rpc-websockets";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { isRecord } from "../src/utils";
 
 type WSClient = InstanceType<typeof Client>;
 
@@ -12,6 +11,10 @@ if (!API_URL) {
 const TEST_TOKEN = "e2e-marketplace-token";
 const TEST_OS = "Web";
 const CONNECTION_TIMEOUT_MS = 5000;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 function waitForClientOpen(
 	ws: WSClient,

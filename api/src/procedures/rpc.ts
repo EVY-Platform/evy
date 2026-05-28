@@ -5,12 +5,14 @@ import type {
 	SyncResponse,
 	CreateResponse,
 	UpdateResponse,
+	DeleteResponse,
 } from "evy-types";
 import {
 	get as getCore,
 	create as createCore,
 	update as updateCore,
-} from "./data";
+	delete as deleteCore,
+} from "../data/core";
 import { sync as coreSync } from "./sync";
 import { forwardGet, forwardCreate, forwardUpdate } from "./services";
 import {
@@ -18,6 +20,7 @@ import {
 	validateStrictGetRequest,
 	validateStrictCreateRequest,
 	validateStrictUpdateRequest,
+	validateStrictDeleteRequest,
 } from "evy-types/rpcRequestHelpers";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 
@@ -63,6 +66,16 @@ export async function update(params: unknown): Promise<UpdateResponse> {
 	}
 	return forwardUpdate(params.service, params);
 }
+
+async function deleteResource(params: unknown): Promise<DeleteResponse> {
+	validateStrictDeleteRequest(params);
+	if (params.service === EVY_CORE_SERVICE) {
+		return deleteCore(params);
+	}
+	throw new Error("Delete is only supported for evy core resources");
+}
+
+export { deleteResource as delete };
 
 export async function sync(params: unknown): Promise<SyncResponse> {
 	return coreSync(params);

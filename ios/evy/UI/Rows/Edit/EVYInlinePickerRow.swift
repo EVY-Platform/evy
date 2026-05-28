@@ -21,10 +21,7 @@ struct EVYInlinePickerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if view.content.title.count > 0 {
-        EVYTextView(view.content.title)
-          .padding(.vertical, Constants.padding)
-      }
+      EVYRowTitle(title: view.content.title)
       if !destination.isEmpty {
         EVYInlinePicker(
           title: view.content.title,

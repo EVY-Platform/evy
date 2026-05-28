@@ -133,7 +133,15 @@ extract_ios_simulator_destination() {
         return 1
     fi
 
-    printf 'platform=iOS Simulator,id=%s' "$destination_id"
+    # Including arch prevents xcodebuild from warning about multiple matching destinations
+    # when the same simulator ID appears for both arm64 and x86_64.
+    local arch
+    arch="$(extract_ios_simulator_field "$destination_line" "arch" || true)"
+    if [ -n "$arch" ]; then
+        printf 'platform=iOS Simulator,arch=%s,id=%s' "$arch" "$destination_id"
+    else
+        printf 'platform=iOS Simulator,id=%s' "$destination_id"
+    fi
 }
 
 extract_ios_simulator_field() {

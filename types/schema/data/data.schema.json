@@ -18,13 +18,21 @@
 		},
 		{
 			"$ref": "#/$defs/DATA_EVY_ServiceProvider"
+		},
+		{
+			"$ref": "#/$defs/DATA_EVY_Image"
 		}
 	],
 	"$defs": {
 		"DATA_EVY_Flow": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "data", "createdAt", "updatedAt"],
+			"required": [
+				"id",
+				"data",
+				"createdAt",
+				"updatedAt"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -45,12 +53,20 @@
 		},
 		"OS": {
 			"type": "string",
-			"enum": ["ios", "android", "Web"]
+			"enum": [
+				"ios",
+				"android",
+				"Web"
+			]
 		},
 		"DATA_EVY_Device": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["token", "os", "createdAt"],
+			"required": [
+				"token",
+				"os",
+				"createdAt"
+			],
 			"properties": {
 				"token": {
 					"type": "string",
@@ -68,7 +84,13 @@
 		"DATA_EVY_Service": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "name", "description", "createdAt", "updatedAt"],
+			"required": [
+				"id",
+				"name",
+				"description",
+				"createdAt",
+				"updatedAt"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -198,6 +220,37 @@
 				"retired": {
 					"type": "boolean",
 					"default": false
+				}
+			}
+		},
+		"DATA_EVY_Image": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"type",
+				"createdAt",
+				"updatedAt"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"type": {
+					"type": "string",
+					"enum": [
+						"image/jpeg",
+						"image/png"
+					]
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
 				}
 			}
 		}

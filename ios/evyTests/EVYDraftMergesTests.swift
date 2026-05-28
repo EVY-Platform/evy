@@ -83,8 +83,10 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
   func testCreateAppendsNewItemWithHighestSortIndex() throws {
     let seed1Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("seed-1")]))
     let seed2Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("seed-2")]))
-    try EVY.publicStore.create(namespace: "marketplace", resource: "items", id: "seed-1", value: seed1Data, sortIndex: 0)
-    try EVY.publicStore.create(namespace: "marketplace", resource: "items", id: "seed-2", value: seed2Data, sortIndex: 1)
+    try EVY.publicStore.create(
+      namespace: "marketplace", resource: "items", id: "seed-1", value: seed1Data, sortIndex: 0)
+    try EVY.publicStore.create(
+      namespace: "marketplace", resource: "items", id: "seed-2", value: seed2Data, sortIndex: 1)
 
     EVY.ensureDraftExists(variableName: "title")
     try EVY.updateValue("New Item", at: "{title}")

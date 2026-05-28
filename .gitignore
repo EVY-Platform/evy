@@ -65,3 +65,5 @@ render.experimental.xml
 google-services.json
 
 *.hprof
+plans/
+api/src/public/

@@ -98,14 +98,10 @@ private struct EVYPageBody: View {
       let destinationProps = EVY.parsePropsFromText(row.destination)
       let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
       guard !variableName.isEmpty else { return }
-      let initialData: Data?
-      if row.type == .inlinePicker {
-        initialData = "[]".data(using: .utf8)
-      } else if row.type == .calendar {
-        initialData = "[]".data(using: .utf8)
-      } else {
-        initialData = nil
-      }
+      let initialData: Data? =
+        [.inlinePicker, .calendar].contains(row.type)
+        ? "[]".data(using: .utf8)
+        : nil
       EVY.ensureDraftExists(
         variableName: variableName,
         initialData: initialData,

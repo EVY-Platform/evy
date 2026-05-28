@@ -247,6 +247,13 @@ struct ContentView: View {
         flows = reconstructed
       }
     }
+    .onReceive(NotificationCenter.default.publisher(for: .evyUserAlertRequested)) { notification in
+      if let userAlert = notification.object as? EVYUserAlert {
+        alertTitle = userAlert.title
+        alertMessage = userAlert.message ?? ""
+        showingAlert = true
+      }
+    }
     .onReceive(NotificationCenter.default.publisher(for: .evyErrorOccurred)) { notification in
       if let error = notification.object as? Error {
         if loading { loading = false }

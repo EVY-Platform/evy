@@ -17,12 +17,9 @@ struct EVYColumnContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if view.content.title.count > 0 {
-        EVYTextView(view.content.title)
-          .padding(.vertical, Constants.padding)
-      }
+      EVYRowTitle(title: view.content.title)
       HStack(alignment: .top) {
-        ForEach(Array(view.content.children.enumerated()), id: \.offset) { _, child in
+        ForEach(view.content.children, id: \.id) { child in
           EVYRow(row: child)
         }
       }

@@ -9,7 +9,7 @@ export function initDataNotifications(broadcastFn: BroadcastFn | null): void {
 export function emitDataChangedNotification(payload: {
 	service: string;
 	resource: string;
-	operation: "create" | "update";
+	operation: "create" | "update" | "delete";
 	value: unknown;
 }): void {
 	broadcast?.("dataChanged", payload);

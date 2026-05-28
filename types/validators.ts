@@ -14,16 +14,25 @@ import type {
 	DATA_EVY_Organization,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
+	DATA_EVY_Image,
 } from "./generated/ts/data/data";
+import type {
+	ImageUploadChunkMetadata,
+	ImageWithBinary,
+} from "./generated/ts/images/image";
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { CreateResponse } from "./generated/ts/rpc/create.response";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
 import type { UpdateResponse } from "./generated/ts/rpc/update.response";
+import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
+import type { DeleteResponse } from "./generated/ts/rpc/delete.response";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
+import type { GetImageRequest } from "./generated/ts/rpc/get-image.request";
+import type { CompleteImageUploadRequest } from "./generated/ts/rpc/complete-image-upload.request";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
@@ -39,6 +48,9 @@ import primitiveSchemaRaw from "./schema/data/primitive.schema.json" with {
 	type: "json",
 };
 import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
+import imageSchemaRaw from "./schema/images/image.schema.json" with {
+	type: "json",
+};
 import apiRequestRaw from "./schema/rpc/api.request.schema.json" with {
 	type: "json",
 };
@@ -57,13 +69,25 @@ import updateRequestRaw from "./schema/rpc/update.request.schema.json" with {
 import updateResponseRaw from "./schema/rpc/update.response.schema.json" with {
 	type: "json",
 };
+import deleteRequestRaw from "./schema/rpc/delete.request.schema.json" with {
+	type: "json",
+};
+import deleteResponseRaw from "./schema/rpc/delete.response.schema.json" with {
+	type: "json",
+};
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
+	type: "json",
+};
+import getImageRequestRaw from "./schema/rpc/get-image.request.schema.json" with {
 	type: "json",
 };
 import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
 	type: "json",
 };
 import syncResponseRaw from "./schema/rpc/sync.response.schema.json" with {
+	type: "json",
+};
+import completeImageUploadRequestRaw from "./schema/rpc/complete-image-upload.request.schema.json" with {
 	type: "json",
 };
 
@@ -76,6 +100,7 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"data/data.schema.json": dataSchemaRaw as Record<string, unknown>,
 	"data/primitive.schema.json": primitiveSchemaRaw as Record<string, unknown>,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
+	"images/image.schema.json": imageSchemaRaw as Record<string, unknown>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
 	"rpc/create.request.schema.json": createRequestRaw as Record<string, unknown>,
@@ -88,9 +113,20 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 		string,
 		unknown
 	>,
+	"rpc/delete.request.schema.json": deleteRequestRaw as Record<string, unknown>,
+	"rpc/delete.response.schema.json": deleteResponseRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/sync.request.schema.json": syncRequestRaw as Record<string, unknown>,
 	"rpc/sync.response.schema.json": syncResponseRaw as Record<string, unknown>,
 	"rpc/get.response.schema.json": getResponseRaw as Record<string, unknown>,
+	"rpc/get-image.request.schema.json": getImageRequestRaw as Record<
+		string,
+		unknown
+	>,
+	"rpc/complete-image-upload.request.schema.json":
+		completeImageUploadRequestRaw as Record<string, unknown>,
 };
 
 const preparedCache = new Map<string, Record<string, unknown>>();
@@ -196,11 +232,15 @@ function lazyValidator<T>(
 const REQUEST_SCHEMA_FILES = [
 	"common/json.schema.json",
 	"common/rpc.schema.json",
+	"images/image.schema.json",
 	"rpc/api.request.schema.json",
 	"rpc/get.request.schema.json",
 	"rpc/create.request.schema.json",
 	"rpc/update.request.schema.json",
+	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
+	"rpc/get-image.request.schema.json",
+	"rpc/complete-image-upload.request.schema.json",
 ] as const;
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
@@ -210,9 +250,11 @@ const ENTITY_SCHEMA_FILES = [
 	"data/data.schema.json",
 	"data/primitive.schema.json",
 	"sdui/evy.schema.json",
+	"images/image.schema.json",
 	"rpc/get.response.schema.json",
 	"rpc/create.response.schema.json",
 	"rpc/update.response.schema.json",
+	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
 ] as const;
 
@@ -261,6 +303,10 @@ const getValidateUpdateRequest = lazyValidator<UpdateRequest>(
 	getRequestAjv,
 	fileId("rpc/update.request.schema.json"),
 );
+const getValidateDeleteRequest = lazyValidator<DeleteRequest>(
+	getRequestAjv,
+	fileId("rpc/delete.request.schema.json"),
+);
 const getValidateCreateDataPayload = lazyValidator<CreateRequest["data"]>(
 	getRequestAjv,
 	`${fileId("rpc/create.request.schema.json")}#/$defs/CreateDataPayload`,
@@ -290,6 +336,10 @@ const getValidateDataEvyServiceProvider =
 		getEntityAjv,
 		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
 	);
+const getValidateDataEvyImage = lazyValidator<DATA_EVY_Image>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Image`,
+);
 const getValidateGetResponse = lazyValidator<GetResponse>(
 	getEntityAjv,
 	fileId("rpc/get.response.schema.json"),
@@ -302,6 +352,10 @@ const getValidateUpdateResponse = lazyValidator<UpdateResponse>(
 	getEntityAjv,
 	fileId("rpc/update.response.schema.json"),
 );
+const getValidateDeleteResponse = lazyValidator<DeleteResponse>(
+	getEntityAjv,
+	fileId("rpc/delete.response.schema.json"),
+);
 const getValidateSyncRequest = lazyValidator<SyncRequest>(
 	getRequestAjv,
 	fileId("rpc/sync.request.schema.json"),
@@ -311,6 +365,24 @@ const getValidateSyncResponse = lazyValidator<SyncResponse>(
 	fileId("rpc/sync.response.schema.json"),
 );
 
+const getValidateGetImageParams = lazyValidator<GetImageRequest>(
+	getRequestAjv,
+	fileId("rpc/get-image.request.schema.json"),
+);
+const getValidateCompleteImageUploadParams =
+	lazyValidator<CompleteImageUploadRequest>(
+		getRequestAjv,
+		fileId("rpc/complete-image-upload.request.schema.json"),
+	);
+const getValidateImageUploadChunkMetadata =
+	lazyValidator<ImageUploadChunkMetadata>(
+		getRequestAjv,
+		`${fileId("images/image.schema.json")}#/$defs/ImageUploadChunkMetadata`,
+	);
+const getValidateImageWithBinary = lazyValidator<ImageWithBinary>(
+	getEntityAjv,
+	`${fileId("images/image.schema.json")}#/$defs/ImageWithBinary`,
+);
 function makeValidator<T>(
 	label: string,
 	getter: () => ValidateFunction<T>,
@@ -332,6 +404,10 @@ export const validateCreateRequest = makeValidator<CreateRequest>(
 export const validateUpdateRequest = makeValidator<UpdateRequest>(
 	"UpdateRequest",
 	getValidateUpdateRequest,
+);
+export const validateDeleteRequest = makeValidator<DeleteRequest>(
+	"DeleteRequest",
+	getValidateDeleteRequest,
 );
 export const validateCreateDataPayload = makeValidator<CreateRequest["data"]>(
 	"Create data",
@@ -361,6 +437,10 @@ export const validateDataEvyServiceProvider =
 		"ServiceProvider",
 		getValidateDataEvyServiceProvider,
 	);
+export const validateDataEvyImage = makeValidator<DATA_EVY_Image>(
+	"Image",
+	getValidateDataEvyImage,
+);
 export const validateGetResponse = makeValidator<GetResponse>(
 	"GetResponse",
 	getValidateGetResponse,
@@ -373,6 +453,10 @@ export const validateUpdateResponse = makeValidator<UpdateResponse>(
 	"UpdateResponse",
 	getValidateUpdateResponse,
 );
+export const validateDeleteResponse = makeValidator<DeleteResponse>(
+	"DeleteResponse",
+	getValidateDeleteResponse,
+);
 export const validateSync = makeValidator<SyncRequest>(
 	"SyncRequest",
 	getValidateSyncRequest,
@@ -380,6 +464,24 @@ export const validateSync = makeValidator<SyncRequest>(
 export const validateSyncResponse = makeValidator<SyncResponse>(
 	"SyncResponse",
 	getValidateSyncResponse,
+);
+export const validateGetImageParams = makeValidator<GetImageRequest>(
+	"GetImageRequest",
+	getValidateGetImageParams,
+);
+export const validateCompleteImageUploadParams =
+	makeValidator<CompleteImageUploadRequest>(
+		"CompleteImageUploadRequest",
+		getValidateCompleteImageUploadParams,
+	);
+export const validateImageUploadChunkMetadata =
+	makeValidator<ImageUploadChunkMetadata>(
+		"ImageUploadChunkMetadata",
+		getValidateImageUploadChunkMetadata,
+	);
+export const validateImageWithBinary = makeValidator<ImageWithBinary>(
+	"ImageWithBinary",
+	getValidateImageWithBinary,
 );
 
 function isIsoDateTimeFieldName(key: string): boolean {

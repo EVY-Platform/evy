@@ -2,8 +2,6 @@
 //  EVYSelectPhotoRow.swift
 //  evy
 //
-//  Created by Clemence Chalot on 18/02/2024.
-//
 
 import PhotosUI
 import SwiftUI

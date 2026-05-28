@@ -22,7 +22,8 @@
 			"type": "string",
 			"enum": [
 				"create",
-				"update"
+				"update",
+				"delete"
 			]
 		},
 		"value": {

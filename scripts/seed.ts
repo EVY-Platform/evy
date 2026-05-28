@@ -6,7 +6,7 @@ import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
 import { readFile } from "node:fs/promises";
 import postgres from "postgres";
 
-import { MARKETPLACE_SEED_KEYS } from "../services/marketplace/src/catalog";
+import { MARKETPLACE_SEED_RESOURCES } from "../services/marketplace/src/resources";
 import { validateUiFlow } from "../types/validators";
 
 const UUID_RE =
@@ -146,17 +146,17 @@ function validateSeedData(dataJson: unknown): SeedDataMap {
 	return validatedEntries;
 }
 
-function partitionSeedCatalogData(dataJson: SeedDataMap): {
+function partitionSeedResourceData(dataJson: SeedDataMap): {
 	marketplace: SeedDataMap;
 	evy: SeedDataMap;
 } {
 	const marketplace: SeedDataMap = {};
 	const evy: SeedDataMap = {};
-	for (const [key, value] of Object.entries(dataJson)) {
-		if (MARKETPLACE_SEED_KEYS.has(key)) {
-			marketplace[key] = value;
+	for (const [resource, value] of Object.entries(dataJson)) {
+		if (MARKETPLACE_SEED_RESOURCES.has(resource)) {
+			marketplace[resource] = value;
 		} else {
-			evy[key] = value;
+			evy[resource] = value;
 		}
 	}
 	return { marketplace, evy };
@@ -280,7 +280,7 @@ async function seedDatabase({
 }) {
 	if (Object.keys(evyDataJson).length > 0) {
 		throw new Error(
-			`Seeding non-marketplace catalog keys into the API database is not implemented (got: ${Object.keys(evyDataJson).join(", ")}). Add dedicated-table inserts for Service, Organization, or ServiceProvider if needed.`,
+			`Seeding non-marketplace resources into the API database is not implemented (got: ${Object.keys(evyDataJson).join(", ")}). Add dedicated-table inserts for Service, Organization, or ServiceProvider if needed.`,
 		);
 	}
 
@@ -318,7 +318,7 @@ async function seedDatabase({
 async function main(): Promise<void> {
 	const { evyFlowsJson, serviceFlowsJson, dataJson } = await loadSeedInputs();
 	const { marketplace: marketplaceDataJson, evy: evyDataJson } =
-		partitionSeedCatalogData(dataJson);
+		partitionSeedResourceData(dataJson);
 	await ensureMarketplaceDatabaseExists();
 	await runMigrations();
 	await seedDatabase({

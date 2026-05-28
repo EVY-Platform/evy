@@ -13,51 +13,48 @@ enum EVYDataError: Error {
   case keyAlreadyExists
 }
 
+struct EVYUserAlert {
+  let title: String
+  let message: String?
+}
+
 extension Notification.Name {
   static let evyDataChanged = Notification.Name("EVYDataChanged")
   static let evyErrorOccurred = Notification.Name("EVYErrorOccurred")
+  static let evyUserAlertRequested = Notification.Name("EVYUserAlertRequested")
 }
 
 @MainActor
 struct EVYDataChangeWatch: Equatable {
-    let rawTarget: String
-    let segments: [String]
+  let rawTarget: String
+  let segments: [String]
 
-    init(_ watch: String) {
-        rawTarget = watch
-        guard !watch.isEmpty else {
-            segments = []
-            return
-        }
-        let parsedWatch = EVY.parsePropsFromText(watch)
-        segments = parsedWatch.components(separatedBy: PROP_SEPARATOR)
+  init(_ watch: String) {
+    rawTarget = watch
+    guard !watch.isEmpty else {
+      segments = []
+      return
     }
+    let parsedWatch = EVY.parsePropsFromText(watch)
+    segments = parsedWatch.components(separatedBy: PROP_SEPARATOR)
+  }
 
-    var isEmpty: Bool {
-        segments.isEmpty
-    }
+  var isEmpty: Bool {
+    segments.isEmpty
+  }
 
-    func isAffected(by notificationKey: String) -> Bool {
-        guard !segments.isEmpty else { return false }
-        let notificationSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
-        let comparedSegmentCount = min(segments.count, notificationSegments.count)
-        return segments.prefix(comparedSegmentCount) == notificationSegments.prefix(comparedSegmentCount)
-    }
-}
-
-@MainActor
-func dataChangeKey(_ notificationKey: String, affects watch: String) -> Bool {
-    guard !watch.isEmpty else { return false }
-    let watchProps = EVY.parsePropsFromText(watch)
-    let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
-    let notifSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
-    let minLen = min(watchSegments.count, notifSegments.count)
-    return watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
+  func isAffected(by notificationKey: String) -> Bool {
+    guard !segments.isEmpty else { return false }
+    let notificationSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
+    let comparedSegmentCount = min(segments.count, notificationSegments.count)
+    return segments.prefix(comparedSegmentCount)
+      == notificationSegments.prefix(comparedSegmentCount)
+  }
 }
 
 @MainActor
 func dataChangeKey(_ notificationKey: String, affects watch: EVYDataChangeWatch) -> Bool {
-    watch.isAffected(by: notificationKey)
+  watch.isAffected(by: notificationKey)
 }
 
 @MainActor

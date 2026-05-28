@@ -75,7 +75,9 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
-  func create(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0) throws {
+  func create(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
+    throws
+  {
     if (try? get(namespace: namespace, resource: resource, id: id)) != nil {
       throw EVYDataError.keyAlreadyExists
     }
@@ -87,7 +89,9 @@ final class EVYDataStore {
     postDataChanged(key: resource)
   }
 
-  func update(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0) throws {
+  func update(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
+    throws
+  {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     existing.data = value
     existing.sortIndex = sortIndex
@@ -120,11 +124,15 @@ final class EVYDataStore {
     }
   }
 
-  func upsert(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0) throws {
+  func upsert(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
+    throws
+  {
     if (try? get(namespace: namespace, resource: resource, id: id)) != nil {
-      try update(namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
+      try update(
+        namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
     } else {
-      try create(namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
+      try create(
+        namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
     }
   }
 
@@ -136,13 +144,16 @@ final class EVYDataStore {
 
     let encoded = try JSONEncoder().encode(value)
     let itemId = singletonId(for: value)
-    let existingSortIndex = (try? get(namespace: namespace, resource: resource, id: itemId))?.sortIndex
+    let existingSortIndex = (try? get(namespace: namespace, resource: resource, id: itemId))?
+      .sortIndex
     let sortIndex = existingSortIndex ?? nextSortIndex(namespace: namespace, resource: resource)
-    try upsert(namespace: namespace, resource: resource, id: itemId, value: encoded, sortIndex: sortIndex)
+    try upsert(
+      namespace: namespace, resource: resource, id: itemId, value: encoded, sortIndex: sortIndex)
   }
 
   func nextSortIndex(namespace: String, resource: String) -> Int {
-    let maxExisting = (try? getAll(namespace: namespace, resource: resource))?.map(\.sortIndex).max()
+    let maxExisting = (try? getAll(namespace: namespace, resource: resource))?.map(\.sortIndex)
+      .max()
     return (maxExisting ?? -1) + 1
   }
 
@@ -151,7 +162,8 @@ final class EVYDataStore {
       let itemId = item.identifierValue()
       guard !itemId.isEmpty else { continue }
       guard let encoded = try? JSONEncoder().encode(item) else { continue }
-      try upsert(namespace: namespace, resource: resource, id: itemId, value: encoded, sortIndex: sortIndex)
+      try upsert(
+        namespace: namespace, resource: resource, id: itemId, value: encoded, sortIndex: sortIndex)
     }
   }
 

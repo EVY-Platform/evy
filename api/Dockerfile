@@ -7,7 +7,8 @@ FROM base AS typesgen
 COPY package.json bun.lock* ./
 COPY types/schema ./types/schema
 COPY scripts ./scripts
-RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate
+
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate:exclude-ios
 
 # Install dependencies stage
 FROM base AS deps

@@ -19,7 +19,7 @@ const forwardGetMock = mock(
 
 const ensureRegistryInitializedMock = mock(async () => {});
 
-mock.module("../services", () => ({
+mock.module("../procedures/services", () => ({
 	ensureRegistryInitialized: ensureRegistryInitializedMock,
 	forwardCreate: mock(),
 	forwardGet: forwardGetMock,
@@ -36,8 +36,8 @@ setServiceRegistry([
 	],
 ]);
 
-const { api } = await import("../rpc");
-const { resources } = await import("../resources");
+const { api } = await import("../procedures/rpc");
+const { resources } = await import("../procedures/resources");
 
 describe("api JSON-RPC handler", () => {
 	beforeEach(() => {

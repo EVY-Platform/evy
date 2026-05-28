@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { MARKETPLACE_SERVICE } from "./catalog";
+import { MARKETPLACE_SERVICE } from "./resources";
 
 const marketplaceEventBus = new EventEmitter();
 marketplaceEventBus.setMaxListeners(0);

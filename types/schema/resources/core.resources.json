@@ -15,6 +15,9 @@
 		},
 		"providers": {
 			"singular": "provider"
+		},
+		"images": {
+			"singular": "image"
 		}
 	}
 }
