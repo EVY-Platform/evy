@@ -57,6 +57,7 @@ actor EVYWebsocket: EVYWebsocketProtocol {
   private var task: URLSessionWebSocketTask?
   private var pendingRequests: [Int: CheckedContinuation<String, Error>] = [:]
   private var nextId = 1
+  private var urlSession: URLSession?
   private let wsURL: URL
 
   init(host: String) {
@@ -123,9 +124,11 @@ actor EVYWebsocket: EVYWebsocketProtocol {
     let delegate = EVYWebSocketDelegate { [weak self] in
       Task { [weak self] in await self?.handleDisconnect() }
     }
-    let urlSession = URLSession(
+    let session = URLSession(
       configuration: .default, delegate: delegate, delegateQueue: nil)
-    let wsTask = urlSession.webSocketTask(with: wsURL)
+    urlSession = session
+    let wsTask = session.webSocketTask(with: wsURL)
+    wsTask.maximumMessageSize = 20 * 1024 * 1024
     task = wsTask
     wsTask.resume()
     startReceiveLoop(for: wsTask)
