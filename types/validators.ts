@@ -67,6 +67,10 @@ import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
 import syncResponseRaw from "./schema/rpc/sync.response.schema.json" with {
 	type: "json",
 };
+import completeImageUploadRequestRaw from "./schema/rpc/complete-image-upload.request.schema.json" with { type: "json" };
+import cancelImageUploadRequestRaw from "./schema/rpc/cancel-image-upload.request.schema.json" with { type: "json" };
+import getImageRequestRaw from "./schema/rpc/get-image.request.schema.json" with { type: "json" };
+import deleteImageRequestRaw from "./schema/rpc/delete-image.request.schema.json" with { type: "json" };
 
 /** Canonical base URI for ajv $ref resolution */
 const SCHEMA_BASE = "https://evy.local";
@@ -92,6 +96,10 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"rpc/sync.request.schema.json": syncRequestRaw as Record<string, unknown>,
 	"rpc/sync.response.schema.json": syncResponseRaw as Record<string, unknown>,
 	"rpc/get.response.schema.json": getResponseRaw as Record<string, unknown>,
+	"rpc/complete-image-upload.request.schema.json": completeImageUploadRequestRaw as Record<string, unknown>,
+	"rpc/cancel-image-upload.request.schema.json": cancelImageUploadRequestRaw as Record<string, unknown>,
+	"rpc/get-image.request.schema.json": getImageRequestRaw as Record<string, unknown>,
+	"rpc/delete-image.request.schema.json": deleteImageRequestRaw as Record<string, unknown>,
 };
 
 const preparedCache = new Map<string, Record<string, unknown>>();
@@ -202,6 +210,10 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/create.request.schema.json",
 	"rpc/update.request.schema.json",
 	"rpc/sync.request.schema.json",
+	"rpc/complete-image-upload.request.schema.json",
+	"rpc/cancel-image-upload.request.schema.json",
+	"rpc/get-image.request.schema.json",
+	"rpc/delete-image.request.schema.json",
 ] as const;
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
@@ -316,6 +328,38 @@ const getValidateSyncResponse = lazyValidator<SyncResponse>(
 	fileId("rpc/sync.response.schema.json"),
 );
 
+interface CompleteImageUploadParams {
+	uploadId: string;
+	type: "image/jpeg" | "image/png";
+	totalBytes: number;
+}
+interface CancelImageUploadParams {
+	uploadId: string;
+}
+interface GetImageParams {
+	id: string;
+}
+interface DeleteImageParams {
+	id: string;
+}
+
+const getValidateCompleteImageUploadParams = lazyValidator<CompleteImageUploadParams>(
+	getRequestAjv,
+	fileId("rpc/complete-image-upload.request.schema.json"),
+);
+const getValidateCancelImageUploadParams = lazyValidator<CancelImageUploadParams>(
+	getRequestAjv,
+	fileId("rpc/cancel-image-upload.request.schema.json"),
+);
+const getValidateGetImageParams = lazyValidator<GetImageParams>(
+	getRequestAjv,
+	fileId("rpc/get-image.request.schema.json"),
+);
+const getValidateDeleteImageParams = lazyValidator<DeleteImageParams>(
+	getRequestAjv,
+	fileId("rpc/delete-image.request.schema.json"),
+);
+
 function makeValidator<T>(
 	label: string,
 	getter: () => ValidateFunction<T>,
@@ -389,6 +433,22 @@ export const validateSync = makeValidator<SyncRequest>(
 export const validateSyncResponse = makeValidator<SyncResponse>(
 	"SyncResponse",
 	getValidateSyncResponse,
+);
+export const validateCompleteImageUploadParams = makeValidator<CompleteImageUploadParams>(
+	"CompleteImageUploadRequest",
+	getValidateCompleteImageUploadParams,
+);
+export const validateCancelImageUploadParams = makeValidator<CancelImageUploadParams>(
+	"CancelImageUploadRequest",
+	getValidateCancelImageUploadParams,
+);
+export const validateGetImageParams = makeValidator<GetImageParams>(
+	"GetImageRequest",
+	getValidateGetImageParams,
+);
+export const validateDeleteImageParams = makeValidator<DeleteImageParams>(
+	"DeleteImageRequest",
+	getValidateDeleteImageParams,
 );
 
 function isIsoDateTimeFieldName(key: string): boolean {

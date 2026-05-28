@@ -11,7 +11,7 @@
 	"properties": {
 		"id": {
 			"type": "string",
-			"minLength": 1
+			"format": "uuid"
 		}
 	}
 }

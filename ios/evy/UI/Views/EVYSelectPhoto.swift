@@ -78,6 +78,7 @@ struct EVYSelectPhoto: View {
   let destination: String
 
   @State private var photoTiles: [EVYPhotoTile] = []
+  @State private var lastCommittedIds: [String] = []
 
   init(
     title: String?,
@@ -138,9 +139,12 @@ struct EVYSelectPhoto: View {
       EVYTextView(subtitle, style: .info)
         .padding(.vertical, Constants.padding)
     }
-    .onChange(of: committedImageIds) {
+    .onChange(of: photoTiles) {
+      let currentIds = photoTiles.compactMap(\.imageId)
+      guard currentIds != lastCommittedIds else { return }
+      lastCommittedIds = currentIds
       do {
-        let encoded = try JSONEncoder().encode(committedImageIds)
+        let encoded = try JSONEncoder().encode(currentIds)
         try EVY.updateData(encoded, at: destination)
       } catch {
         #if DEBUG
@@ -148,10 +152,6 @@ struct EVYSelectPhoto: View {
         #endif
       }
     }
-  }
-
-  private var committedImageIds: [String] {
-    photoTiles.compactMap(\.imageId)
   }
 
   @MainActor

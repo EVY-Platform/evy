@@ -10,7 +10,8 @@
 	],
 	"properties": {
 		"ok": {
-			"type": "boolean"
+			"type": "boolean",
+			"const": true
 		}
 	}
 }

@@ -17,13 +17,13 @@ struct EVYCompleteImageUploadParams: Encodable {
   let uploadId: String
   let type: String
   let totalBytes: Int
-  let chunkCount: Int
 }
 
 struct EVYCompleteImageUploadResponse: Codable {
   let id: String
   let type: String
   let createdAt: String
+  let updatedAt: String
 }
 
 struct EVYCancelImageUploadParams: Encodable {

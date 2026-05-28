@@ -53,16 +53,6 @@ struct EVYDataChangeWatch: Equatable {
 }
 
 @MainActor
-func dataChangeKey(_ notificationKey: String, affects watch: String) -> Bool {
-  guard !watch.isEmpty else { return false }
-  let watchProps = EVY.parsePropsFromText(watch)
-  let watchSegments = watchProps.components(separatedBy: PROP_SEPARATOR)
-  let notifSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
-  let minLen = min(watchSegments.count, notifSegments.count)
-  return watchSegments.prefix(minLen) == notifSegments.prefix(minLen)
-}
-
-@MainActor
 func dataChangeKey(_ notificationKey: String, affects watch: EVYDataChangeWatch) -> Bool {
   watch.isAffected(by: notificationKey)
 }

@@ -6,6 +6,12 @@ import {
 	deleteImageMetadata,
 	getImageMetadata,
 } from "./data";
+import {
+	validateCompleteImageUploadParams,
+	validateCancelImageUploadParams,
+	validateGetImageParams,
+	validateDeleteImageParams,
+} from "evy-types/validators";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -38,8 +44,6 @@ interface UploadSession {
 	receivedBytes: number;
 	expectedIndex: number;
 }
-
-const uploadSessions = new Map<string, UploadSession>();
 
 export function parseImageUploadChunkFrame(frame: Buffer): {
 	metadata: ImageUploadChunkMetadata;
@@ -100,106 +104,6 @@ function validateChunkMetadata(
 	}
 }
 
-export async function handleImageUploadChunk(frame: Buffer): Promise<void> {
-	const { metadata, chunkData } = parseImageUploadChunkFrame(frame);
-
-	if (chunkData.length !== metadata.byteLength) {
-		throw new Error(
-			`Chunk byte length mismatch: expected ${metadata.byteLength}, got ${chunkData.length}`,
-		);
-	}
-
-	const session = uploadSessions.get(metadata.uploadId);
-
-	if (session) {
-		if (session.type !== metadata.type) {
-			throw new Error(
-				`Upload type mismatch: session has ${session.type}, chunk has ${metadata.type}`,
-			);
-		}
-		if (metadata.index !== session.expectedIndex) {
-			throw new Error(
-				`Unexpected chunk index: expected ${session.expectedIndex}, got ${metadata.index}`,
-			);
-		}
-		if (metadata.byteOffset !== session.receivedBytes) {
-			throw new Error(
-				`Unexpected byte offset: expected ${session.receivedBytes}, got ${metadata.byteOffset}`,
-			);
-		}
-		if (session.receivedBytes + chunkData.length > MAX_UPLOAD_BYTES) {
-			throw new Error(
-				`Upload exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`,
-			);
-		}
-		session.chunks.push(chunkData);
-		session.receivedBytes += chunkData.length;
-		session.expectedIndex++;
-	} else {
-		if (metadata.index !== 0) {
-			throw new Error(`First chunk must have index 0, got ${metadata.index}`);
-		}
-		if (metadata.byteOffset !== 0) {
-			throw new Error(
-				`First chunk must have byteOffset 0, got ${metadata.byteOffset}`,
-			);
-		}
-		if (chunkData.length > MAX_UPLOAD_BYTES) {
-			throw new Error(
-				`Upload exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`,
-			);
-		}
-		uploadSessions.set(metadata.uploadId, {
-			type: metadata.type,
-			chunks: [chunkData],
-			receivedBytes: chunkData.length,
-			expectedIndex: 1,
-		});
-	}
-}
-
-export interface CompleteImageUploadResponse {
-	id: string;
-	type: string;
-	createdAt: string;
-}
-
-function validateCompleteImageUploadParams(params: unknown): asserts params is {
-	uploadId: string;
-	type: string;
-	totalBytes: number;
-	chunkCount: number;
-} {
-	if (typeof params !== "object" || params === null) {
-		throw new Error("completeImageUpload params must be an object");
-	}
-	const p = params as Record<string, unknown>;
-	if (typeof p.uploadId !== "string" || p.uploadId.length < 1) {
-		throw new Error("completeImageUpload: uploadId must be a non-empty string");
-	}
-	if (!SUPPORTED_IMAGE_TYPES.has(p.type as string)) {
-		throw new Error(`completeImageUpload: unsupported type: ${p.type}`);
-	}
-	if (
-		typeof p.totalBytes !== "number" ||
-		!Number.isInteger(p.totalBytes) ||
-		p.totalBytes < 1
-	) {
-		throw new Error(
-			"completeImageUpload: totalBytes must be a positive integer",
-		);
-	}
-	if (
-		typeof p.chunkCount !== "number" ||
-		!Number.isInteger(p.chunkCount) ||
-		p.chunkCount < 1
-	) {
-		throw new Error(
-			"completeImageUpload: chunkCount must be a positive integer",
-		);
-	}
-}
-
 function validateMagicBytes(buffer: Buffer, type: string): void {
 	const expected = MAGIC_BYTES[type];
 	if (!expected) {
@@ -217,99 +121,11 @@ function safeImagePath(id: string, ext: string): string {
 	return resolve(join(IMAGES_DIR, `${sanitizedId}.${ext}`));
 }
 
-export async function completeImageUpload(
-	params: unknown,
-): Promise<CompleteImageUploadResponse> {
-	validateCompleteImageUploadParams(params);
-
-	const session = uploadSessions.get(params.uploadId);
-	if (!session) {
-		throw new Error(`No upload session found for uploadId: ${params.uploadId}`);
-	}
-
-	if (session.receivedBytes !== params.totalBytes) {
-		throw new Error(
-			`Total bytes mismatch: expected ${params.totalBytes}, got ${session.receivedBytes}`,
-		);
-	}
-	if (session.chunks.length !== params.chunkCount) {
-		throw new Error(
-			`Chunk count mismatch: expected ${params.chunkCount}, got ${session.chunks.length}`,
-		);
-	}
-
-	const imageBuffer = Buffer.concat(session.chunks);
-	validateMagicBytes(imageBuffer, params.type);
-
-	await mkdir(IMAGES_DIR, { recursive: true });
-	await mkdir(UPLOAD_TMP_DIR, { recursive: true });
-
-	const ext = IMAGE_EXTENSIONS[params.type];
-	const finalPath = safeImagePath(params.uploadId, ext);
-	const tmpPath = join(UPLOAD_TMP_DIR, `${params.uploadId}.tmp`);
-
-	try {
-		await writeFile(tmpPath, imageBuffer);
-		await rename(tmpPath, finalPath);
-		uploadSessions.delete(params.uploadId);
-
-		const metadata = await createImageMetadata({
-			id: params.uploadId,
-			type: params.type,
-		});
-		return {
-			id: metadata.id,
-			type: metadata.type,
-			createdAt: metadata.createdAt,
-		};
-	} catch (err) {
-		try {
-			await unlink(finalPath);
-		} catch {
-			// ignore
-		}
-		try {
-			await unlink(tmpPath);
-		} catch {
-			// ignore
-		}
-		throw err;
-	}
-}
-
-function validateCancelImageUploadParams(
-	params: unknown,
-): asserts params is { uploadId: string } {
-	if (typeof params !== "object" || params === null) {
-		throw new Error("cancelImageUpload params must be an object");
-	}
-	const p = params as Record<string, unknown>;
-	if (typeof p.uploadId !== "string" || p.uploadId.length < 1) {
-		throw new Error("cancelImageUpload: uploadId must be a non-empty string");
-	}
-}
-
-export async function cancelImageUpload(
-	params: unknown,
-): Promise<{ ok: true }> {
-	validateCancelImageUploadParams(params);
-
-	const session = uploadSessions.get(params.uploadId);
-	if (session) {
-		uploadSessions.delete(params.uploadId);
-	}
-
-	const ext = session ? IMAGE_EXTENSIONS[session.type] : undefined;
-	if (ext) {
-		const tmpPath = join(UPLOAD_TMP_DIR, `${params.uploadId}.tmp`);
-		try {
-			await unlink(tmpPath);
-		} catch {
-			// ignore
-		}
-	}
-
-	return { ok: true };
+export interface CompleteImageUploadResponse {
+	id: string;
+	type: string;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface GetImageResponse {
@@ -319,69 +135,190 @@ export interface GetImageResponse {
 	dataBase64: string;
 }
 
-function validateGetImageParams(
-	params: unknown,
-): asserts params is { id: string } {
-	if (typeof params !== "object" || params === null) {
-		throw new Error("getImage params must be an object");
+export function createImageHandlers(
+	sessions = new Map<string, UploadSession>(),
+) {
+	async function handleImageUploadChunk(frame: Buffer): Promise<void> {
+		const { metadata, chunkData } = parseImageUploadChunkFrame(frame);
+
+		if (chunkData.length !== metadata.byteLength) {
+			throw new Error(
+				`Chunk byte length mismatch: expected ${metadata.byteLength}, got ${chunkData.length}`,
+			);
+		}
+
+		const session = sessions.get(metadata.uploadId);
+
+		if (session) {
+			if (session.type !== metadata.type) {
+				throw new Error(
+					`Upload type mismatch: session has ${session.type}, chunk has ${metadata.type}`,
+				);
+			}
+			if (metadata.index !== session.expectedIndex) {
+				throw new Error(
+					`Unexpected chunk index: expected ${session.expectedIndex}, got ${metadata.index}`,
+				);
+			}
+			if (metadata.byteOffset !== session.receivedBytes) {
+				throw new Error(
+					`Unexpected byte offset: expected ${session.receivedBytes}, got ${metadata.byteOffset}`,
+				);
+			}
+			if (session.receivedBytes + chunkData.length > MAX_UPLOAD_BYTES) {
+				throw new Error(
+					`Upload exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`,
+				);
+			}
+			session.chunks.push(chunkData);
+			session.receivedBytes += chunkData.length;
+			session.expectedIndex++;
+		} else {
+			if (metadata.index !== 0) {
+				throw new Error(`First chunk must have index 0, got ${metadata.index}`);
+			}
+			if (metadata.byteOffset !== 0) {
+				throw new Error(
+					`First chunk must have byteOffset 0, got ${metadata.byteOffset}`,
+				);
+			}
+			if (chunkData.length > MAX_UPLOAD_BYTES) {
+				throw new Error(
+					`Upload exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`,
+				);
+			}
+			sessions.set(metadata.uploadId, {
+				type: metadata.type,
+				chunks: [chunkData],
+				receivedBytes: chunkData.length,
+				expectedIndex: 1,
+			});
+		}
 	}
-	const p = params as Record<string, unknown>;
-	if (typeof p.id !== "string" || p.id.length < 1) {
-		throw new Error("getImage: id must be a non-empty string");
+
+	async function completeImageUpload(
+		params: unknown,
+	): Promise<CompleteImageUploadResponse> {
+		const validated = validateCompleteImageUploadParams(params);
+
+		const session = sessions.get(validated.uploadId);
+		if (!session) {
+			throw new Error(
+				`No upload session found for uploadId: ${validated.uploadId}`,
+			);
+		}
+
+		if (session.receivedBytes !== validated.totalBytes) {
+			throw new Error(
+				`Total bytes mismatch: expected ${validated.totalBytes}, got ${session.receivedBytes}`,
+			);
+		}
+
+		const imageBuffer = Buffer.concat(session.chunks);
+		validateMagicBytes(imageBuffer, validated.type);
+
+		await mkdir(IMAGES_DIR, { recursive: true });
+		await mkdir(UPLOAD_TMP_DIR, { recursive: true });
+
+		const ext = IMAGE_EXTENSIONS[validated.type];
+		const finalPath = safeImagePath(validated.uploadId, ext);
+		const tmpPath = join(UPLOAD_TMP_DIR, `${validated.uploadId}.tmp`);
+
+		try {
+			await writeFile(tmpPath, imageBuffer);
+			await rename(tmpPath, finalPath);
+			sessions.delete(validated.uploadId);
+
+			const metadata = await createImageMetadata({
+				id: validated.uploadId,
+				type: validated.type,
+			});
+			return {
+				id: metadata.id,
+				type: metadata.type,
+				createdAt: metadata.createdAt,
+				updatedAt: metadata.updatedAt,
+			};
+		} catch (err) {
+			try {
+				await unlink(finalPath);
+			} catch {
+				// ignore
+			}
+			try {
+				await unlink(tmpPath);
+			} catch {
+				// ignore
+			}
+			throw err;
+		}
 	}
-}
 
-export async function getImage(params: unknown): Promise<GetImageResponse> {
-	validateGetImageParams(params);
+	async function cancelImageUpload(params: unknown): Promise<{ ok: true }> {
+		const validated = validateCancelImageUploadParams(params);
 
-	const metadata = await getImageMetadata(params.id);
-	const ext = IMAGE_EXTENSIONS[metadata.type];
-	const filePath = safeImagePath(metadata.id, ext);
+		const session = sessions.get(validated.uploadId);
+		if (session) {
+			sessions.delete(validated.uploadId);
+		}
 
-	let fileData: Buffer;
-	try {
-		fileData = await readFile(filePath);
-	} catch {
-		throw new Error(`Image binary not found for id: ${params.id}`);
+		const ext = session ? IMAGE_EXTENSIONS[session.type] : undefined;
+		if (ext) {
+			const tmpPath = join(UPLOAD_TMP_DIR, `${validated.uploadId}.tmp`);
+			try {
+				await unlink(tmpPath);
+			} catch {
+				// ignore
+			}
+		}
+
+		return { ok: true };
+	}
+
+	async function getImage(params: unknown): Promise<GetImageResponse> {
+		const validated = validateGetImageParams(params);
+
+		const metadata = await getImageMetadata(validated.id);
+		const ext = IMAGE_EXTENSIONS[metadata.type];
+		const filePath = safeImagePath(metadata.id, ext);
+
+		let fileData: Buffer;
+		try {
+			fileData = await readFile(filePath);
+		} catch {
+			throw new Error(`Image binary not found for id: ${validated.id}`);
+		}
+
+		return {
+			id: metadata.id,
+			type: metadata.type,
+			createdAt: metadata.createdAt,
+			dataBase64: fileData.toString("base64"),
+		};
+	}
+
+	async function deleteImage(params: unknown): Promise<{ ok: true }> {
+		const validated = validateDeleteImageParams(params);
+
+		const metadata = await getImageMetadata(validated.id);
+		const ext = IMAGE_EXTENSIONS[metadata.type];
+		const filePath = safeImagePath(metadata.id, ext);
+
+		try {
+			await unlink(filePath);
+		} catch {
+			// Binary already missing — still clean up metadata to avoid orphan.
+		}
+
+		await deleteImageMetadata(metadata.id);
+		return { ok: true };
 	}
 
 	return {
-		id: metadata.id,
-		type: metadata.type,
-		createdAt: metadata.createdAt,
-		dataBase64: fileData.toString("base64"),
+		handleImageUploadChunk,
+		completeImageUpload,
+		cancelImageUpload,
+		getImage,
+		deleteImage,
 	};
-}
-
-export function clearUploadSessionsForTest(): void {
-	uploadSessions.clear();
-}
-
-function validateDeleteImageParams(
-	params: unknown,
-): asserts params is { id: string } {
-	if (typeof params !== "object" || params === null) {
-		throw new Error("deleteImage params must be an object");
-	}
-	const p = params as Record<string, unknown>;
-	if (typeof p.id !== "string" || p.id.length < 1) {
-		throw new Error("deleteImage: id must be a non-empty string");
-	}
-}
-
-export async function deleteImage(params: unknown): Promise<{ ok: true }> {
-	validateDeleteImageParams(params);
-
-	const metadata = await getImageMetadata(params.id);
-	const ext = IMAGE_EXTENSIONS[metadata.type];
-	const filePath = safeImagePath(metadata.id, ext);
-
-	try {
-		await unlink(filePath);
-	} catch {
-		// Binary already missing — still clean up metadata to avoid orphan.
-	}
-
-	await deleteImageMetadata(metadata.id);
-	return { ok: true };
 }

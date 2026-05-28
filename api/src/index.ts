@@ -10,13 +10,7 @@ import {
 	makeAuthChecker,
 	type WSParams,
 } from "./ws";
-import {
-	completeImageUpload,
-	cancelImageUpload,
-	getImage,
-	deleteImage,
-	handleImageUploadChunk,
-} from "./images";
+import { createImageHandlers } from "./images";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);
@@ -24,6 +18,13 @@ function authHandler(data: WSParams): Promise<boolean> {
 
 async function main() {
 	const server = await initServer(authHandler);
+	const {
+		handleImageUploadChunk,
+		completeImageUpload,
+		cancelImageUpload,
+		getImage,
+		deleteImage,
+	} = createImageHandlers();
 	const broadcast = (eventName: string, payload: unknown) => {
 		emitJsonRpc(server, eventName, payload);
 	};

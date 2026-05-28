@@ -215,7 +215,7 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 
 ### `images` EVY core resource
 
-Image metadata is stored in the `Image` table (evy core, `service: "evy"`, `resource: "images"`). Metadata rows contain `id`, `type`, `createdAt`, and `updatedAt`. Supported types: `image/jpeg`, `image/png`. Maximum upload size: 10 MB.
+Image metadata is stored in the `Image` table (evy core, `service: "evy"`, `resource: "images"`). Metadata rows contain `id`, `type`, `createdAt`, and `updatedAt`. Supported types: `image/jpeg`, `image/png`. Maximum upload size: 20 MB.
 
 Binary image data is stored at `api/public/images/{id}.{ext}`. Upload directories are excluded from git (see `api/.gitignore`). For production deployments, migrate to S3 or a CDN while keeping image IDs stable.
 
@@ -242,6 +242,6 @@ The metadata JSON has the shape:
 
 | Method | Auth | Description |
 |--------|------|-------------|
-| `completeImageUpload` | protected | Finalise upload: validates magic bytes, writes to disk, creates DB metadata. Params: `{ uploadId, type, totalBytes, chunkCount }`. Returns `{ id, type, createdAt }`. |
+| `completeImageUpload` | protected | Finalise upload: validates magic bytes, writes to disk, creates DB metadata. Params: `{ uploadId, type, totalBytes }`. Returns `{ id, type, createdAt, updatedAt }`. |
 | `cancelImageUpload` | protected | Discard an in-progress upload session. Params: `{ uploadId }`. Returns `{ ok: true }`. |
 | `getImage` | public | Fetch image binary + metadata by id. Params: `{ id }`. Returns `{ id, type, createdAt, dataBase64 }`. |

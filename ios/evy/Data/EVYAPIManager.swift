@@ -9,6 +9,7 @@ import Foundation
 
 let API_HOST = "localhost:8000"
 
+@MainActor
 final class EVYAPIManager {
   private let rpcWS: EVYWebsocketProtocol
   private var authed: Bool = false
@@ -37,8 +38,7 @@ final class EVYAPIManager {
         params: EVYCompleteImageUploadParams(
           uploadId: uploadId,
           type: mimeType,
-          totalBytes: imageData.count,
-          chunkCount: frames.count
+          totalBytes: imageData.count
         ),
         expecting: EVYCompleteImageUploadResponse.self
       )
@@ -79,11 +79,13 @@ final class EVYAPIManager {
   private func validateAuth() async throws {
     if authed { return }
 
-    authed = try await rpcWS.connect(token: "Geo", os: DataOS.ios)
+    let connected = try await rpcWS.connect(token: "Geo", os: DataOS.ios)
 
     let result = try await rpcWS.subscribe(event: "dataChanged")
     if result["dataChanged"] != "ok" {
       throw EVYRPCError.subscriptionError("Failed to subscribe to dataChanged events")
     }
+
+    authed = connected
   }
 }

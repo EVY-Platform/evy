@@ -7,7 +7,8 @@
 	"required": [
 		"id",
 		"type",
-		"createdAt"
+		"createdAt",
+		"updatedAt"
 	],
 	"properties": {
 		"id": {
@@ -22,6 +23,10 @@
 			]
 		},
 		"createdAt": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"updatedAt": {
 			"type": "string",
 			"format": "date-time"
 		}

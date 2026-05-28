@@ -6,8 +6,6 @@
 //
 
 import Foundation
-import JsonRPC
-import Serializable
 
 enum EVYRPCError: LocalizedError {
   case loginError
@@ -55,49 +53,37 @@ protocol EVYWebsocketProtocol {
   func subscribe(event: String) async throws -> [String: String]
 }
 
+@MainActor
 final class EVYWebsocket: EVYWebsocketProtocol {
-  let rpc: Client & Persistent & Connectable
+  private var task: URLSessionWebSocketTask?
+  private var pendingRequests: [Int: CheckedContinuation<String, Error>] = [:]
+  private var nextId = 1
   private let wsURL: URL
-  private var binarySocket: EVYAuthenticatedBinarySocket?
-  private var loginToken: String?
-  private var loginOS: DataOS?
 
   init(host: String) {
     wsURL = URL(string: "ws://\(host)")!
-    rpc = JsonRpc(.ws(url: wsURL, autoconnect: false), queue: .main)
-    rpc.delegate = self
   }
 
   func connect(token: String, os: DataOS) async throws -> Bool {
-    loginToken = token
-    loginOS = os
-    if rpc.connected == .disconnected {
-      rpc.connect()
+    if task == nil {
+      openSocket()
     }
     return try await fetch(
       method: "rpc.login",
       params: EVYLoginParams(token: token, os: os),
-      expecting: Bool.self)
+      expecting: Bool.self
+    )
   }
 
   func sendBinary(_ data: Data) async throws {
-    if binarySocket == nil {
-      guard let token = loginToken, let os = loginOS else {
-        throw EVYRPCError.connectionError("Not authenticated")
-      }
-      let socket = EVYAuthenticatedBinarySocket(url: wsURL)
-      try await socket.authenticateAndConnect(token: token, os: os)
-      binarySocket = socket
+    guard let task else {
+      throw EVYRPCError.connectionError("Not connected")
     }
-    try await binarySocket!.send(data)
+    try await task.send(.data(data))
   }
 
   func subscribe(event: String) async throws -> [String: String] {
-    try await fetch(
-      method: "rpc.on",
-      params: [event],
-      expecting: [String: String].self
-    )
+    try await fetch(method: "rpc.on", params: [event], expecting: [String: String].self)
   }
 
   func fetch<T: Codable>(
@@ -105,67 +91,90 @@ final class EVYWebsocket: EVYWebsocketProtocol {
     params: Encodable,
     expecting _: T.Type
   ) async throws -> T {
-    do {
-      return try await rpc.call(method: method, params: params, T.self, String.self)
-    } catch let error as AsAnyRequestError {
-      #if DEBUG
-        print("[EVYWebsocket] RPC error for method '\(method)': \(error)")
-      #endif
-      throw mapRequestError(error.anyRequestError)
-    } catch {
-      #if DEBUG
-        print("[EVYWebsocket] Unknown error for method '\(method)': \(error)")
-      #endif
-      throw EVYRPCError.unknownError(error.localizedDescription)
+    let id = nextId
+    nextId += 1
+    let rpcMessage = try buildRPCMessage(method: method, params: params, id: id)
+
+    guard let task else {
+      throw EVYRPCError.connectionError("Not connected")
+    }
+
+    let rawResponse: String = try await withCheckedThrowingContinuation { continuation in
+      pendingRequests[id] = continuation
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        do {
+          try await task.send(.string(rpcMessage))
+        } catch {
+          if let c = self.pendingRequests.removeValue(forKey: id) {
+            c.resume(throwing: error)
+          }
+        }
+      }
+    }
+
+    return try parseResult(T.self, from: rawResponse)
+  }
+
+  private func openSocket() {
+    let delegate = EVYWebSocketDelegate { [weak self] in
+      Task { @MainActor [weak self] in self?.handleDisconnect() }
+    }
+    let urlSession = URLSession(
+      configuration: .default, delegate: delegate, delegateQueue: .main)
+    let wsTask = urlSession.webSocketTask(with: wsURL)
+    task = wsTask
+    wsTask.resume()
+    startReceiveLoop(for: wsTask)
+  }
+
+  private func startReceiveLoop(for wsTask: URLSessionWebSocketTask) {
+    Task { @MainActor [weak self] in
+      while true {
+        do {
+          let message = try await wsTask.receive()
+          self?.dispatch(message)
+        } catch {
+          self?.handleDisconnect()
+          break
+        }
+      }
     }
   }
 
-  private func mapRequestError(_ error: RequestError<Any, Any>) -> EVYRPCError {
-    switch error {
-    case .reply(_, _, let responseError):
-      return .rpcError(code: responseError.code, message: responseError.message)
-    case .service(.connection(let cause)):
-      return .connectionError(cause.localizedDescription)
-    case .service(.codec(let cause)):
-      return .unknownError("Encoding/decoding error: \(cause.localizedDescription)")
-    case .service(.envelope(_, let description)):
-      return .unknownError("Protocol error: \(description)")
-    case .service(.unregisteredResponse(let id, _)):
-      return .unknownError("Unregistered response with id: \(id)")
-    case .empty:
-      return .unknownError("Empty response from server")
-    case .custom(let description, _):
-      return .unknownError(description)
+  private func dispatch(_ message: URLSessionWebSocketTask.Message) {
+    let text: String
+    switch message {
+    case .string(let s): text = s
+    case .data(let d): text = String(data: d, encoding: .utf8) ?? ""
+    @unknown default: return
+    }
+
+    guard let data = text.data(using: .utf8),
+      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else { return }
+
+    if let id = json["id"] as? Int,
+      let continuation = pendingRequests.removeValue(forKey: id)
+    {
+      continuation.resume(returning: text)
+    } else if let method = json["method"] as? String {
+      handleNotification(method: method, params: json["params"])
     }
   }
-}
 
-extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate {
-
-  private func postError(_ error: Error) {
-    #if DEBUG
-      print("[EVYWebsocket] Error: \(error.localizedDescription)")
-    #endif
-    NotificationCenter.default.post(
-      name: Notification.Name.evyErrorOccurred,
-      object: error
-    )
-  }
-
-  #if DEBUG
-    func state(_ state: ConnectableState) {
-      print("[EVYWebsocket] Connection state changed: \(state)")
+  private func handleDisconnect() {
+    task = nil
+    let pending = pendingRequests
+    pendingRequests.removeAll()
+    for continuation in pending.values {
+      continuation.resume(
+        throwing: EVYRPCError.connectionError("WebSocket disconnected"))
     }
-  #endif
-
-  func error(_ error: ServiceError) {
-    #if DEBUG
-      print("[EVYWebsocket] Service error: \(error)")
-    #endif
-    postError(EVYError.websocketError(context: error.localizedDescription))
+    postError(EVYError.websocketError(context: "WebSocket disconnected"))
   }
 
-  func notification(method: String, params: Parsable) {
+  private func handleNotification(method: String, params: Any?) {
     switch method {
     case "dataChanged":
       handleDataChanged(params: params)
@@ -176,16 +185,14 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     }
   }
 
-  private func handleDataChanged(params: Parsable) {
-    let notification: DataChangedNotification
-
-    do {
-      guard let parsed = try params.parse(to: DataChangedNotification.self).get() else {
-        throw EVYError.parsingFailed(context: "dataChanged notification returned nil")
-      }
-      notification = parsed
-    } catch {
-      postError(EVYError.parsingFailed(context: "dataChanged: \(error.localizedDescription)"))
+  private func handleDataChanged(params: Any?) {
+    guard let params,
+      let paramsData = try? JSONSerialization.data(withJSONObject: params),
+      let notification = try? JSONDecoder().decode(
+        DataChangedNotification.self, from: paramsData)
+    else {
+      postError(
+        EVYError.parsingFailed(context: "dataChanged notification parsing failed"))
       return
     }
 
@@ -198,51 +205,68 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
         )
       } catch {
         self.postError(
-          EVYError.invalidData(context: "failed to update data: \(error.localizedDescription)"))
+          EVYError.invalidData(
+            context: "failed to update data: \(error.localizedDescription)"))
       }
     }
   }
 
+  private func postError(_ error: Error) {
+    #if DEBUG
+      print("[EVYWebsocket] Error: \(error.localizedDescription)")
+    #endif
+    NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
+  }
+
+  private func buildRPCMessage(
+    method: String, params: Encodable, id: Int
+  ) throws -> String {
+    let paramsData = try JSONEncoder().encode(params)
+    let paramsJSON = String(data: paramsData, encoding: .utf8)!
+    return
+      "{\"jsonrpc\":\"2.0\",\"method\":\"\(method)\",\"params\":\(paramsJSON),\"id\":\(id)}"
+  }
+
+  private func parseResult<T: Decodable>(_ type: T.Type, from rawResponse: String) throws
+    -> T
+  {
+    guard let responseData = rawResponse.data(using: .utf8) else {
+      throw EVYRPCError.unknownError("Invalid response encoding")
+    }
+    guard let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any]
+    else {
+      throw EVYRPCError.unknownError("Invalid JSON response")
+    }
+    if let errorObj = json["error"] as? [String: Any] {
+      let code = errorObj["code"] as? Int ?? -1
+      let message = errorObj["message"] as? String ?? "Unknown error"
+      throw EVYRPCError.rpcError(code: code, message: message)
+    }
+    guard let resultValue = json["result"] else {
+      throw EVYRPCError.unknownError("Missing result in response")
+    }
+    if T.self == Bool.self, let boolValue = resultValue as? Bool {
+      return boolValue as! T
+    }
+    let resultData = try JSONSerialization.data(withJSONObject: resultValue)
+    return try JSONDecoder().decode(T.self, from: resultData)
+  }
 }
 
-// MARK: - Binary WebSocket
+private final class EVYWebSocketDelegate: NSObject, URLSessionWebSocketDelegate {
+  private let onClose: @Sendable () -> Void
 
-/// A minimal WebSocket that authenticates via JSON-RPC rpc.login then sends binary frames.
-final class EVYAuthenticatedBinarySocket {
-  private let task: URLSessionWebSocketTask
-
-  init(url: URL) {
-    task = URLSession.shared.webSocketTask(with: url)
-    task.resume()
+  init(onClose: @escaping @Sendable () -> Void) {
+    self.onClose = onClose
   }
 
-  func authenticateAndConnect(token: String, os: DataOS) async throws {
-    let loginParams = EVYLoginParams(token: token, os: os)
-    let paramsData = try JSONEncoder().encode(loginParams)
-    let paramsJSON = String(data: paramsData, encoding: .utf8)!
-    let rpcMessage =
-      "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.login\",\"params\":\(paramsJSON),\"id\":1}"
-    try await task.send(.string(rpcMessage))
-
-    let response = try await task.receive()
-    let responseString: String
-    switch response {
-    case .string(let s): responseString = s
-    case .data(let d): responseString = String(data: d, encoding: .utf8) ?? ""
-    @unknown default: throw EVYRPCError.loginError
-    }
-    guard responseString.contains("\"result\":true") || responseString.contains("\"result\":1")
-    else {
-      throw EVYRPCError.loginError
-    }
-  }
-
-  func send(_ data: Data) async throws {
-    try await task.send(.data(data))
-  }
-
-  deinit {
-    task.cancel(with: .goingAway, reason: nil)
+  func urlSession(
+    _ session: URLSession,
+    webSocketTask: URLSessionWebSocketTask,
+    didCloseWith closeCode: URLSessionWebSocketTask.CloseCode,
+    reason: Data?
+  ) {
+    onClose()
   }
 }
 

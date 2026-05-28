@@ -7,8 +7,7 @@
 	"required": [
 		"uploadId",
 		"type",
-		"totalBytes",
-		"chunkCount"
+		"totalBytes"
 	],
 	"properties": {
 		"uploadId": {
@@ -23,10 +22,6 @@
 			]
 		},
 		"totalBytes": {
-			"type": "integer",
-			"minimum": 1
-		},
-		"chunkCount": {
 			"type": "integer",
 			"minimum": 1
 		}

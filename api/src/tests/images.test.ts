@@ -32,15 +32,17 @@ mock.module("../data", () => ({
 	deleteImageMetadata: mockDeleteImageMetadata,
 }));
 
-const {
-	parseImageUploadChunkFrame,
-	handleImageUploadChunk,
-	completeImageUpload,
-	cancelImageUpload,
-	getImage,
-	deleteImage,
-	clearUploadSessionsForTest,
-} = await import("../images");
+const { parseImageUploadChunkFrame, createImageHandlers } = await import(
+	"../images"
+);
+
+type Handlers = ReturnType<typeof createImageHandlers>;
+
+let handleImageUploadChunk: Handlers["handleImageUploadChunk"];
+let completeImageUpload: Handlers["completeImageUpload"];
+let cancelImageUpload: Handlers["cancelImageUpload"];
+let getImage: Handlers["getImage"];
+let deleteImage: Handlers["deleteImage"];
 
 function buildChunkFrame(metadata: object, chunkData: Buffer): Buffer {
 	const metadataBytes = Buffer.from(JSON.stringify(metadata), "utf-8");
@@ -57,7 +59,13 @@ let testImagesDir: string;
 let testTmpDir: string;
 
 beforeEach(async () => {
-	clearUploadSessionsForTest();
+	({
+		handleImageUploadChunk,
+		completeImageUpload,
+		cancelImageUpload,
+		getImage,
+		deleteImage,
+	} = createImageHandlers(new Map()));
 	mockCreateImageMetadata.mockClear();
 	mockGetImageMetadata.mockClear();
 	mockDeleteImageMetadata.mockClear();
@@ -233,7 +241,6 @@ describe("completeImageUpload", () => {
 				uploadId: "00000000-0000-0000-0000-000000000001",
 				type: "image/jpeg",
 				totalBytes: 6,
-				chunkCount: 1,
 			}),
 		).rejects.toThrow("No upload session found");
 	});
@@ -257,7 +264,6 @@ describe("completeImageUpload", () => {
 				uploadId,
 				type: "image/jpeg",
 				totalBytes: 999,
-				chunkCount: 1,
 			}),
 		).rejects.toThrow("Total bytes mismatch");
 	});
@@ -281,14 +287,13 @@ describe("completeImageUpload", () => {
 				uploadId,
 				type: "image/jpeg",
 				totalBytes: badChunk.length,
-				chunkCount: 1,
 			}),
 		).rejects.toThrow("Invalid magic bytes");
 	});
 
 	it("throws on invalid params", async () => {
 		await expect(completeImageUpload(null)).rejects.toThrow(
-			"completeImageUpload params must be an object",
+			"CompleteImageUploadRequest validation failed",
 		);
 	});
 });
@@ -320,7 +325,7 @@ describe("cancelImageUpload", () => {
 
 	it("throws on invalid params", async () => {
 		await expect(cancelImageUpload({})).rejects.toThrow(
-			"cancelImageUpload: uploadId must be a non-empty string",
+			"CancelImageUploadRequest validation failed",
 		);
 	});
 });
@@ -340,13 +345,13 @@ describe("getImage", () => {
 
 	it("throws when id is missing", async () => {
 		await expect(getImage({})).rejects.toThrow(
-			"getImage: id must be a non-empty string",
+			"GetImageRequest validation failed",
 		);
 	});
 
 	it("throws on invalid params", async () => {
 		await expect(getImage(null)).rejects.toThrow(
-			"getImage params must be an object",
+			"GetImageRequest validation failed",
 		);
 	});
 });
@@ -354,13 +359,13 @@ describe("getImage", () => {
 describe("deleteImage", () => {
 	it("throws on invalid params", async () => {
 		await expect(deleteImage(null)).rejects.toThrow(
-			"deleteImage params must be an object",
+			"DeleteImageRequest validation failed",
 		);
 	});
 
 	it("throws when id is missing", async () => {
 		await expect(deleteImage({})).rejects.toThrow(
-			"deleteImage: id must be a non-empty string",
+			"DeleteImageRequest validation failed",
 		);
 	});
 
