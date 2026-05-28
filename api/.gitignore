@@ -1,4 +1,4 @@
 dist/
 history.txt
-public/images/*
-public/uploads/*
+public/images/
+public/uploads/
