@@ -165,8 +165,8 @@ async function listCoreCatalogRows<TRow>(
 
 	const rows = whereClauses.length
 		? await base
-			.where(and(...whereClauses))
-			.orderBy(asc(table.updatedAt), asc(table.id))
+				.where(and(...whereClauses))
+				.orderBy(asc(table.updatedAt), asc(table.id))
 		: await base.orderBy(asc(table.updatedAt), asc(table.id));
 	return validateGetResponse(rows.map((r) => mapRow(r as TRow)));
 }
@@ -291,8 +291,8 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 
 		const rows = whereClauses.length
 			? await base
-				.where(and(...whereClauses))
-				.orderBy(asc(flow.updatedAt), asc(flow.id))
+					.where(and(...whereClauses))
+					.orderBy(asc(flow.updatedAt), asc(flow.id))
 			: await base.orderBy(asc(flow.updatedAt), asc(flow.id));
 		const payload = rows.map((f) => f.data);
 		for (const item of payload) {
@@ -314,7 +314,7 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 	}
 
 	if (resource === EVY_CORE_RESOURCE.IMAGES) {
-		return listCoreCatalogRows(image, filter, (r) => r);
+		return listImageRowsWithBinary(filter);
 	}
 
 	throw new Error("Unsupported resource for core API");
@@ -660,13 +660,13 @@ export interface GetImageResponse {
 	id: string;
 	type: string;
 	createdAt: string;
+	updatedAt: string;
 	dataBase64: string;
 }
 
-export async function getImage(params: unknown): Promise<GetImageResponse> {
-	const validated = validateGetImageParams(params);
-
-	const metadata = await selectImageRowById(validated.id);
+async function imageRowToGetImageResponse(
+	metadata: DATA_EVY_Image,
+): Promise<GetImageResponse> {
 	let fileData: Buffer;
 	try {
 		fileData = await readImageBinary({
@@ -674,13 +674,44 @@ export async function getImage(params: unknown): Promise<GetImageResponse> {
 			type: metadata.type,
 		});
 	} catch {
-		throw new Error(`Image binary not found for id: ${validated.id}`);
+		throw new Error(`Image binary not found for id: ${metadata.id}`);
 	}
 
 	return {
 		id: metadata.id,
 		type: metadata.type,
 		createdAt: metadata.createdAt,
+		updatedAt: metadata.updatedAt,
 		dataBase64: fileData.toString("base64"),
 	};
+}
+
+async function listImageRowsWithBinary(
+	filter: GetRequest["filter"] | undefined,
+): Promise<GetResponse> {
+	const base = db.select().from(image);
+	const whereClauses = [];
+
+	if (filter?.id) {
+		whereClauses.push(eq(image.id, filter.id));
+	}
+	if (filter?.updatedAfter) {
+		whereClauses.push(gt(image.updatedAt, filter.updatedAfter));
+	}
+
+	const rows = whereClauses.length
+		? await base
+				.where(and(...whereClauses))
+				.orderBy(asc(image.updatedAt), asc(image.id))
+		: await base.orderBy(asc(image.updatedAt), asc(image.id));
+	const response = await Promise.all(
+		rows.map((row) => imageRowToGetImageResponse(row as DATA_EVY_Image)),
+	);
+	return validateGetResponse(response);
+}
+
+export async function getImage(params: unknown): Promise<GetImageResponse> {
+	const validated = validateGetImageParams(params);
+	const metadata = await selectImageRowById(validated.id);
+	return imageRowToGetImageResponse(metadata);
 }

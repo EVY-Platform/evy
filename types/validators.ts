@@ -69,6 +69,9 @@ import deleteResponseRaw from "./schema/rpc/delete.response.schema.json" with {
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
 	type: "json",
 };
+import getImageRequestRaw from "./schema/rpc/get-image.request.schema.json" with {
+	type: "json",
+};
 import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
 	type: "json",
 };
@@ -108,6 +111,10 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"rpc/sync.request.schema.json": syncRequestRaw as Record<string, unknown>,
 	"rpc/sync.response.schema.json": syncResponseRaw as Record<string, unknown>,
 	"rpc/get.response.schema.json": getResponseRaw as Record<string, unknown>,
+	"rpc/get-image.request.schema.json": getImageRequestRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/complete-image-upload.request.schema.json":
 		completeImageUploadRequestRaw as Record<string, unknown>,
 };
@@ -221,6 +228,7 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/update.request.schema.json",
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
+	"rpc/get-image.request.schema.json",
 	"rpc/complete-image-upload.request.schema.json",
 ] as const;
 
@@ -345,6 +353,14 @@ const getValidateSyncResponse = lazyValidator<SyncResponse>(
 	fileId("rpc/sync.response.schema.json"),
 );
 
+interface GetImageParams {
+	id: string;
+}
+const getValidateGetImageParams = lazyValidator<GetImageParams>(
+	getRequestAjv,
+	fileId("rpc/get-image.request.schema.json"),
+);
+
 interface CompleteImageUploadParams {
 	uploadId: string;
 	type: "image/jpeg" | "image/png";
@@ -436,6 +452,10 @@ export const validateSync = makeValidator<SyncRequest>(
 export const validateSyncResponse = makeValidator<SyncResponse>(
 	"SyncResponse",
 	getValidateSyncResponse,
+);
+export const validateGetImageParams = makeValidator<GetImageParams>(
+	"GetImageRequest",
+	getValidateGetImageParams,
 );
 export const validateCompleteImageUploadParams =
 	makeValidator<CompleteImageUploadParams>(

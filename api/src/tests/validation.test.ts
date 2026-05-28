@@ -4,6 +4,7 @@ import {
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
 	validateDataEvyImage,
+	validateGetImageParams,
 	validateUiFlow as validateFlowData,
 } from "evy-types/validators";
 
@@ -130,6 +131,24 @@ describe("validateFlowData", () => {
 				pages: [],
 			}),
 		).toThrow("Flow validation failed");
+	});
+});
+
+describe("validateGetImageParams", () => {
+	const id = "550e8400-e29b-41d4-a716-446655440000";
+
+	it("accepts a valid image id", () => {
+		const out = validateGetImageParams({ id });
+		expect(out.id).toBe(id);
+	});
+
+	it("rejects invalid params", () => {
+		expect(() => validateGetImageParams({ id: "not-a-uuid" })).toThrow(
+			"GetImageRequest validation failed",
+		);
+		expect(() => validateGetImageParams({ id, extra: true })).toThrow(
+			"GetImageRequest validation failed",
+		);
 	});
 });
 
