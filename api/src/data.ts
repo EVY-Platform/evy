@@ -6,6 +6,7 @@ import type {
 	DATA_EVY_Organization,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
+	DATA_EVY_Image,
 	GetResponse,
 	GetRequest,
 	OS,
@@ -21,6 +22,7 @@ import {
 	service,
 	organization,
 	serviceProvider,
+	image,
 	osEnum,
 } from "../../types/generated/ts/db/schema.generated";
 import { getConnectionUrl } from "./db";
@@ -34,6 +36,7 @@ import {
 	validateDataEvyOrganization as validateOrganizationPayload,
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
+	validateDataEvyImage as validateImagePayload,
 	validateGetResponse,
 	validateUiFlow as validateFlowData,
 	validateCreateResponse,
@@ -94,7 +97,8 @@ function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 type CatalogTable =
 	| typeof service
 	| typeof organization
-	| typeof serviceProvider;
+	| typeof serviceProvider
+	| typeof image;
 
 type CatalogEntityConfig<TValidated> = {
 	table: CatalogTable;
@@ -250,6 +254,10 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		return listCoreCatalogRows(serviceProvider, filter, (r) => r);
 	}
 
+	if (resource === EVY_CORE_RESOURCE.IMAGES) {
+		return listCoreCatalogRows(image, filter, (r) => r);
+	}
+
 	throw new Error("Unsupported resource for core API");
 }
 
@@ -402,6 +410,16 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 		);
 	}
 
+	if (resource === EVY_CORE_RESOURCE.IMAGES) {
+		return insertCatalogEntityFromConfig(
+			imageCatalogConfig,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
 	throw new Error("Unsupported resource for core API");
 }
 
@@ -473,5 +491,70 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 		);
 	}
 
+	if (resource === EVY_CORE_RESOURCE.IMAGES) {
+		throw new Error("Image metadata updates are not supported");
+	}
+
 	throw new Error("Unsupported resource for core API");
+}
+
+const imageCatalogConfig: CatalogEntityConfig<DATA_EVY_Image> = {
+	table: image,
+	validate: validateImagePayload,
+	toUpdateSet: (_validated, _nowIso) => ({}),
+	toInsertValues: (validated, nowIso, filterId) => ({
+		id: filterId ?? validated.id,
+		type: validated.type,
+		createdAt: nowIso,
+		updatedAt: nowIso,
+	}),
+	mapRow: (row) => row,
+};
+
+export async function createImageMetadata(params: {
+	id: string;
+	type: string;
+}): Promise<DATA_EVY_Image> {
+	const nowIso = new Date().toISOString();
+	// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
+	const inserted = await (db.insert(image) as any)
+		.values({
+			id: params.id,
+			type: params.type,
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		})
+		.returning();
+	const row = inserted[0] as DATA_EVY_Image;
+	emitDataChangedNotification({
+		service: EVY_CORE_SERVICE,
+		resource: "images",
+		operation: "create",
+		value: row,
+	});
+	return row;
+}
+
+export async function getImageMetadata(id: string): Promise<DATA_EVY_Image> {
+	const rows = await db.select().from(image).where(eq(image.id, id)).limit(1);
+	if (rows.length === 0) {
+		throw new Error("Image not found");
+	}
+	return rows[0] as DATA_EVY_Image;
+}
+
+export async function deleteImageMetadata(id: string): Promise<DATA_EVY_Image> {
+	const rows = await db.select().from(image).where(eq(image.id, id)).limit(1);
+	if (rows.length === 0) {
+		throw new Error("Image not found");
+	}
+	const row = rows[0] as DATA_EVY_Image;
+	await db.delete(image).where(eq(image.id, id));
+	emitDataChangedNotification({
+		service: EVY_CORE_SERVICE,
+		resource: "images",
+		operation: "delete",
+		value: row,
+	});
+	return row;
 }

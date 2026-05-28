@@ -14,6 +14,7 @@ import type {
 	DATA_EVY_Organization,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
+	DATA_EVY_Image,
 } from "./generated/ts/data/data";
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
@@ -290,6 +291,10 @@ const getValidateDataEvyServiceProvider =
 		getEntityAjv,
 		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
 	);
+const getValidateDataEvyImage = lazyValidator<DATA_EVY_Image>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Image`,
+);
 const getValidateGetResponse = lazyValidator<GetResponse>(
 	getEntityAjv,
 	fileId("rpc/get.response.schema.json"),
@@ -361,6 +366,10 @@ export const validateDataEvyServiceProvider =
 		"ServiceProvider",
 		getValidateDataEvyServiceProvider,
 	);
+export const validateDataEvyImage = makeValidator<DATA_EVY_Image>(
+	"Image",
+	getValidateDataEvyImage,
+);
 export const validateGetResponse = makeValidator<GetResponse>(
 	"GetResponse",
 	getValidateGetResponse,

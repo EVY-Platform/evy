@@ -16,7 +16,7 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 
 `get` is public. `create`, `update`, and `sync` are protected (require a valid device token via `validateAuth`). Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` requires `filter.id`.
 
-- `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, and `providers` (typed catalog tables). There is no generic `evy` “data” table routed through `services.ts`.
+- `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, `providers` (typed catalog tables), and `images` (image metadata / `image` table). There is no generic `evy` "data" table routed through `services.ts`.
 - `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/services.ts`](./src/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses.
 - **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/catalog + external services) since that timestamp. When data changed, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
 
@@ -210,3 +210,38 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 | `bun run db:migrate`   | Apply pending migrations                 |
 | `bun run db:push`      | Push schema directly (dev only)          |
 | `bun run db:studio`    | Open Drizzle Studio UI                   |
+
+## Image Upload
+
+### `images` EVY core resource
+
+Image metadata is stored in the `Image` table (evy core, `service: "evy"`, `resource: "images"`). Metadata rows contain `id`, `type`, `createdAt`, and `updatedAt`. Supported types: `image/jpeg`, `image/png`. Maximum upload size: 10 MB.
+
+Binary image data is stored at `api/public/images/{id}.{ext}`. Upload directories are excluded from git (see `api/.gitignore`). For production deployments, migrate to S3 or a CDN while keeping image IDs stable.
+
+### Binary chunk frame protocol
+
+Images are uploaded as a sequence of binary WebSocket frames (not JSON-RPC). Each frame has the format:
+
+```
+[4-byte big-endian metadataLength][metadata JSON bytes][raw image bytes]
+```
+
+The metadata JSON has the shape:
+
+```json
+{ "type": "image/jpeg", "uploadId": "<uuid>", "index": 0, "byteOffset": 0, "byteLength": 12345 }
+```
+
+- `uploadId` — a client-generated UUID identifying the upload session
+- `index` — zero-based sequential chunk index
+- `byteOffset` — byte offset of this chunk within the full image
+- `byteLength` — byte length of the chunk data following the metadata
+
+### RPCs
+
+| Method | Auth | Description |
+|--------|------|-------------|
+| `completeImageUpload` | protected | Finalise upload: validates magic bytes, writes to disk, creates DB metadata. Params: `{ uploadId, type, totalBytes, chunkCount }`. Returns `{ id, type, createdAt }`. |
+| `cancelImageUpload` | protected | Discard an in-progress upload session. Params: `{ uploadId }`. Returns `{ ok: true }`. |
+| `getImage` | public | Fetch image binary + metadata by id. Params: `{ id }`. Returns `{ id, type, createdAt, dataBase64 }`. |

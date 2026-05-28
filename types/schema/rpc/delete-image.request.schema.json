@@ -1,0 +1,17 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "delete-image-request",
+	"title": "DeleteImageRequest",
+	"description": "Request params for the deleteImage RPC method.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"id"
+	],
+	"properties": {
+		"id": {
+			"type": "string",
+			"minLength": 1
+		}
+	}
+}

@@ -3,6 +3,7 @@ import {
 	validateDataEvyOrganization as validateOrganizationPayload,
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
+	validateDataEvyImage,
 	validateUiFlow as validateFlowData,
 } from "evy-types/validators";
 
@@ -129,5 +130,42 @@ describe("validateFlowData", () => {
 				pages: [],
 			}),
 		).toThrow("Flow validation failed");
+	});
+});
+
+describe("validateDataEvyImage", () => {
+	const id = "550e8400-e29b-41d4-a716-446655440000";
+	const now = "2024-01-19T12:00:00.000Z";
+
+	it("accepts valid image metadata", () => {
+		const out = validateDataEvyImage({
+			id,
+			type: "image/jpeg",
+			createdAt: now,
+			updatedAt: now,
+		});
+		expect(out.id).toBe(id);
+		expect(out.type).toBe("image/jpeg");
+	});
+
+	it("rejects unsupported type", () => {
+		expect(() =>
+			validateDataEvyImage({
+				id,
+				type: "image/gif",
+				createdAt: now,
+				updatedAt: now,
+			}),
+		).toThrow("Image validation failed");
+	});
+
+	it("rejects missing id", () => {
+		expect(() =>
+			validateDataEvyImage({
+				type: "image/jpeg",
+				createdAt: now,
+				updatedAt: now,
+			}),
+		).toThrow("Image validation failed");
 	});
 });

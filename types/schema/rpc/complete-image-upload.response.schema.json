@@ -1,0 +1,29 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "complete-image-upload-response",
+	"title": "CompleteImageUploadResponse",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"id",
+		"type",
+		"createdAt"
+	],
+	"properties": {
+		"id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"type": {
+			"type": "string",
+			"enum": [
+				"image/jpeg",
+				"image/png"
+			]
+		},
+		"createdAt": {
+			"type": "string",
+			"format": "date-time"
+		}
+	}
+}

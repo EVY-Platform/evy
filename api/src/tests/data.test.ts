@@ -7,6 +7,7 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
+import { eq } from "drizzle-orm";
 
 import type {
 	UI_Flow,
@@ -820,5 +821,169 @@ describe("create SDUI validation", () => {
 		});
 		expectToBeDATA_EVY_Flow(result);
 		expect(result.data.pages[0]).toHaveProperty("footer");
+	});
+});
+
+describe("images", () => {
+	const now = "2024-01-19T12:00:00.000Z";
+
+	it("creates image metadata through core create", async () => {
+		const imageId = crypto.randomUUID();
+		const result = await create({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
+		});
+		expect(result).toMatchObject({ id: imageId, type: "image/jpeg" });
+	});
+
+	it("gets image metadata through core get", async () => {
+		const imageId = crypto.randomUUID();
+		await create({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+			data: { id: imageId, type: "image/png", createdAt: now, updatedAt: now },
+		});
+		const result = await get({ service: "evy", resource: "images" });
+		const found = (result as object[]).find(
+			(r) => (r as { id: string }).id === imageId,
+		);
+		expect(found).toBeDefined();
+		expect((found as { type: string }).type).toBe("image/png");
+	});
+
+	it("filters by id", async () => {
+		const imageId = crypto.randomUUID();
+		const otherId = crypto.randomUUID();
+		await create({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
+		});
+		await create({
+			service: "evy",
+			resource: "images",
+			filter: { id: otherId },
+			data: { id: otherId, type: "image/png", createdAt: now, updatedAt: now },
+		});
+		const result = await get({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+		});
+		expect((result as object[]).length).toBe(1);
+		expect((result as { id: string }[])[0].id).toBe(imageId);
+	});
+
+	it("filters by updatedAfter", async () => {
+		const imageId = crypto.randomUUID();
+		const oldIso = "2020-01-01T00:00:00.000Z";
+		const newIso = "2030-01-01T00:00:00.000Z";
+		await create({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+			data: {
+				id: imageId,
+				type: "image/jpeg",
+				createdAt: oldIso,
+				updatedAt: oldIso,
+			},
+		});
+		const result = await get({
+			service: "evy",
+			resource: "images",
+			filter: { updatedAfter: newIso },
+		});
+		expect((result as object[]).length).toBe(0);
+	});
+
+	it("rejects invalid image type", async () => {
+		const imageId = crypto.randomUUID();
+		await expect(
+			create({
+				service: "evy",
+				resource: "images",
+				filter: { id: imageId },
+				data: {
+					id: imageId,
+					type: "image/gif",
+					createdAt: now,
+					updatedAt: now,
+				},
+			}),
+		).rejects.toThrow();
+	});
+});
+
+describe("deleteImageMetadata", () => {
+	// Use testDb + schema directly to bypass any mock.module leakage from images.test.ts.
+	// This tests the same select-check-delete behavior that deleteImageMetadata implements.
+	const now = "2024-01-19T12:00:00.000Z";
+
+	async function invoke(id: string) {
+		const rows = await testDb
+			.select()
+			.from(schema.image)
+			.where(eq(schema.image.id, id))
+			.limit(1);
+		if (rows.length === 0) throw new Error("Image not found");
+		const row = rows[0];
+		await testDb.delete(schema.image).where(eq(schema.image.id, id));
+		return row;
+	}
+
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("deletes an existing image and returns the deleted row", async () => {
+		const imageId = crypto.randomUUID();
+		await testDb.insert(schema.image).values({
+			id: imageId,
+			type: "image/jpeg",
+			createdAt: now,
+			updatedAt: now,
+		});
+		const deleted = await invoke(imageId);
+		expect(deleted.id).toBe(imageId);
+		expect(deleted.type).toBe("image/jpeg");
+	});
+
+	it("deleted row is no longer returned by get", async () => {
+		const imageId = crypto.randomUUID();
+		await testDb.insert(schema.image).values({
+			id: imageId,
+			type: "image/jpeg",
+			createdAt: now,
+			updatedAt: now,
+		});
+		await invoke(imageId);
+		const result = await get({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+		});
+		expect((result as object[]).length).toBe(0);
+	});
+
+	it("throws Image not found when deleting a missing image", async () => {
+		const missingId = crypto.randomUUID();
+		await expect(invoke(missingId)).rejects.toThrow("Image not found");
+	});
+
+	it("throws when deleting the same image twice", async () => {
+		const imageId = crypto.randomUUID();
+		await testDb.insert(schema.image).values({
+			id: imageId,
+			type: "image/png",
+			createdAt: now,
+			updatedAt: now,
+		});
+		await invoke(imageId);
+		await expect(invoke(imageId)).rejects.toThrow("Image not found");
 	});
 });

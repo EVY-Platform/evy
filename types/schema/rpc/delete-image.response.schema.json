@@ -1,0 +1,16 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "delete-image-response",
+	"title": "DeleteImageResponse",
+	"description": "Response from the deleteImage RPC method.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"ok"
+	],
+	"properties": {
+		"ok": {
+			"type": "boolean"
+		}
+	}
+}

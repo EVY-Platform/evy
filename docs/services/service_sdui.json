@@ -60,7 +60,7 @@
 						"view": {
 							"content": {
 								"title": "",
-								"subtitle": "Photos: {count(photo_ids)}/10 - Chose your listing's main photo first.",
+								"subtitle": "{count(photo_ids)}/10 - Choose your listing's main photo first.",
 								"icon": "::image-plus::",
 								"content": "Add photos",
 								"photos": "{photo_ids}"

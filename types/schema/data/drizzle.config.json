@@ -2,7 +2,11 @@
 	"enums": {
 		"OS": {
 			"name": "OS",
-			"values": ["ios", "android", "Web"]
+			"values": [
+				"ios",
+				"android",
+				"Web"
+			]
 		}
 	},
 	"tables": {
@@ -11,21 +15,39 @@
 			"primaryKey": "token",
 			"defaultRandom": [],
 			"uniqueIndexes": [
-				{ "name": "Device_token_os_key", "columns": ["token", "os"] }
+				{
+					"name": "Device_token_os_key",
+					"columns": [
+						"token",
+						"os"
+					]
+				}
 			]
 		},
 		"DATA_EVY_Service": {
 			"tableName": "Service",
 			"primaryKey": "id",
 			"defaultRandom": [],
-			"uniqueIndexes": [{ "name": "Service_name_key", "columns": ["name"] }]
+			"uniqueIndexes": [
+				{
+					"name": "Service_name_key",
+					"columns": [
+						"name"
+					]
+				}
+			]
 		},
 		"DATA_EVY_Organization": {
 			"tableName": "Organization",
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": [
-				{ "name": "Organization_name_key", "columns": ["name"] }
+				{
+					"name": "Organization_name_key",
+					"columns": [
+						"name"
+					]
+				}
 			]
 		},
 		"DATA_EVY_ServiceProvider": {
@@ -33,17 +55,33 @@
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": [
-				{ "name": "ServiceProvider_name_key", "columns": ["name"] },
+				{
+					"name": "ServiceProvider_name_key",
+					"columns": [
+						"name"
+					]
+				},
 				{
 					"name": "ServiceProvider_fk_service_id_fk_organization_id_key",
-					"columns": ["fkServiceId", "fkOrganizationId"]
+					"columns": [
+						"fkServiceId",
+						"fkOrganizationId"
+					]
 				}
 			]
 		},
 		"DATA_EVY_Flow": {
 			"tableName": "Flow",
 			"primaryKey": "id",
-			"defaultRandom": ["id"],
+			"defaultRandom": [
+				"id"
+			],
+			"uniqueIndexes": []
+		},
+		"DATA_EVY_Image": {
+			"tableName": "Image",
+			"primaryKey": "id",
+			"defaultRandom": [],
 			"uniqueIndexes": []
 		}
 	},
@@ -51,15 +89,23 @@
 		{
 			"from": "DATA_EVY_ServiceProvider",
 			"to": "DATA_EVY_Service",
-			"fields": ["fkServiceId"],
-			"references": ["id"],
+			"fields": [
+				"fkServiceId"
+			],
+			"references": [
+				"id"
+			],
 			"relationName": "service"
 		},
 		{
 			"from": "DATA_EVY_ServiceProvider",
 			"to": "DATA_EVY_Organization",
-			"fields": ["fkOrganizationId"],
-			"references": ["id"],
+			"fields": [
+				"fkOrganizationId"
+			],
+			"references": [
+				"id"
+			],
 			"relationName": "organization"
 		},
 		{

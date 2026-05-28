@@ -46,6 +46,7 @@ struct DataChangedNotification: Decodable {
 
 protocol EVYWebsocketProtocol {
   func connect(token: String, os: DataOS) async throws -> Bool
+  func sendBinary(_ data: Data) async throws
   func fetch<T: Codable>(
     method: String,
     params: Encodable,
@@ -56,13 +57,20 @@ protocol EVYWebsocketProtocol {
 
 final class EVYWebsocket: EVYWebsocketProtocol {
   let rpc: Client & Persistent & Connectable
+  private let wsURL: URL
+  private var binarySocket: EVYAuthenticatedBinarySocket?
+  private var loginToken: String?
+  private var loginOS: DataOS?
 
   init(host: String) {
-    rpc = JsonRpc(.ws(url: URL(string: "ws://\(host)")!, autoconnect: false), queue: .main)
+    wsURL = URL(string: "ws://\(host)")!
+    rpc = JsonRpc(.ws(url: wsURL, autoconnect: false), queue: .main)
     rpc.delegate = self
   }
 
   func connect(token: String, os: DataOS) async throws -> Bool {
+    loginToken = token
+    loginOS = os
     if rpc.connected == .disconnected {
       rpc.connect()
     }
@@ -70,6 +78,18 @@ final class EVYWebsocket: EVYWebsocketProtocol {
       method: "rpc.login",
       params: EVYLoginParams(token: token, os: os),
       expecting: Bool.self)
+  }
+
+  func sendBinary(_ data: Data) async throws {
+    if binarySocket == nil {
+      guard let token = loginToken, let os = loginOS else {
+        throw EVYRPCError.connectionError("Not authenticated")
+      }
+      let socket = EVYAuthenticatedBinarySocket(url: wsURL)
+      try await socket.authenticateAndConnect(token: token, os: os)
+      binarySocket = socket
+    }
+    try await binarySocket!.send(data)
   }
 
   func subscribe(event: String) async throws -> [String: String] {
@@ -183,6 +203,47 @@ extension EVYWebsocket: ConnectableDelegate, NotificationDelegate, ErrorDelegate
     }
   }
 
+}
+
+// MARK: - Binary WebSocket
+
+/// A minimal WebSocket that authenticates via JSON-RPC rpc.login then sends binary frames.
+final class EVYAuthenticatedBinarySocket {
+  private let task: URLSessionWebSocketTask
+
+  init(url: URL) {
+    task = URLSession.shared.webSocketTask(with: url)
+    task.resume()
+  }
+
+  func authenticateAndConnect(token: String, os: DataOS) async throws {
+    let loginParams = EVYLoginParams(token: token, os: os)
+    let paramsData = try JSONEncoder().encode(loginParams)
+    let paramsJSON = String(data: paramsData, encoding: .utf8)!
+    let rpcMessage =
+      "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.login\",\"params\":\(paramsJSON),\"id\":1}"
+    try await task.send(.string(rpcMessage))
+
+    let response = try await task.receive()
+    let responseString: String
+    switch response {
+    case .string(let s): responseString = s
+    case .data(let d): responseString = String(data: d, encoding: .utf8) ?? ""
+    @unknown default: throw EVYRPCError.loginError
+    }
+    guard responseString.contains("\"result\":true") || responseString.contains("\"result\":1")
+    else {
+      throw EVYRPCError.loginError
+    }
+  }
+
+  func send(_ data: Data) async throws {
+    try await task.send(.data(data))
+  }
+
+  deinit {
+    task.cancel(with: .goingAway, reason: nil)
+  }
 }
 
 enum JSONParseError: Error {
