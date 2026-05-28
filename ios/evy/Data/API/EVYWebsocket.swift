@@ -45,7 +45,7 @@ struct DataChangedNotification: Decodable {
 protocol EVYWebsocketProtocol {
   func connect(token: String, os: DataOS) async throws -> Bool
   func sendBinary(_ data: Data) async throws
-  func fetch<T: Codable>(
+  func fetch<T: Codable & Sendable>(
     method: String,
     params: Encodable,
     expecting _: T.Type
@@ -59,7 +59,7 @@ actor EVYWebsocket: EVYWebsocketProtocol {
   private var nextId = 1
   private let wsURL: URL
 
-  nonisolated init(host: String) {
+  init(host: String) {
     wsURL = URL(string: "ws://\(host)")!
   }
 
@@ -85,7 +85,7 @@ actor EVYWebsocket: EVYWebsocketProtocol {
     try await fetch(method: "rpc.on", params: [event], expecting: [String: String].self)
   }
 
-  func fetch<T: Codable>(
+  func fetch<T: Codable & Sendable>(
     method: String,
     params: Encodable,
     expecting _: T.Type
