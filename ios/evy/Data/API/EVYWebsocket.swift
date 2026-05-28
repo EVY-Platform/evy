@@ -53,8 +53,7 @@ protocol EVYWebsocketProtocol {
   func subscribe(event: String) async throws -> [String: String]
 }
 
-@MainActor
-final class EVYWebsocket: EVYWebsocketProtocol {
+actor EVYWebsocket: EVYWebsocketProtocol {
   private var task: URLSessionWebSocketTask?
   private var pendingRequests: [Int: CheckedContinuation<String, Error>] = [:]
   private var nextId = 1
@@ -101,12 +100,12 @@ final class EVYWebsocket: EVYWebsocketProtocol {
 
     let rawResponse: String = try await withCheckedThrowingContinuation { continuation in
       pendingRequests[id] = continuation
-      Task { @MainActor [weak self] in
+      Task { [weak self] in
         guard let self else { return }
         do {
           try await task.send(.string(rpcMessage))
         } catch {
-          if let c = self.pendingRequests.removeValue(forKey: id) {
+          if let c = await self.removePendingRequest(forKey: id) {
             c.resume(throwing: error)
           }
         }
@@ -116,12 +115,16 @@ final class EVYWebsocket: EVYWebsocketProtocol {
     return try parseResult(T.self, from: rawResponse)
   }
 
+  private func removePendingRequest(forKey id: Int) -> CheckedContinuation<String, Error>? {
+    pendingRequests.removeValue(forKey: id)
+  }
+
   private func openSocket() {
     let delegate = EVYWebSocketDelegate { [weak self] in
-      Task { @MainActor [weak self] in self?.handleDisconnect() }
+      Task { [weak self] in await self?.handleDisconnect() }
     }
     let urlSession = URLSession(
-      configuration: .default, delegate: delegate, delegateQueue: .main)
+      configuration: .default, delegate: delegate, delegateQueue: nil)
     let wsTask = urlSession.webSocketTask(with: wsURL)
     task = wsTask
     wsTask.resume()
@@ -129,13 +132,13 @@ final class EVYWebsocket: EVYWebsocketProtocol {
   }
 
   private func startReceiveLoop(for wsTask: URLSessionWebSocketTask) {
-    Task { @MainActor [weak self] in
+    Task { [weak self] in
       while true {
         do {
           let message = try await wsTask.receive()
-          self?.dispatch(message)
+          await self?.dispatch(message)
         } catch {
-          self?.handleDisconnect()
+          await self?.handleDisconnect()
           break
         }
       }
@@ -211,7 +214,7 @@ final class EVYWebsocket: EVYWebsocketProtocol {
     }
   }
 
-  private func postError(_ error: Error) {
+  nonisolated private func postError(_ error: Error) {
     #if DEBUG
       print("[EVYWebsocket] Error: \(error.localizedDescription)")
     #endif

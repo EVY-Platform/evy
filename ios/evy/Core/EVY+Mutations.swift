@@ -85,7 +85,7 @@ extension EVY {
       sortIndex: nextSortIndex
     )
 
-    Task { @MainActor in
+    Task {
       do {
         _ = try await EVYAPIManager.shared.fetch(
           method: "create",
