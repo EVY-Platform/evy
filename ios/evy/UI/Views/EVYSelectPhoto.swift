@@ -222,6 +222,7 @@ private struct EVYSelectPhotoButton: View {
     }
   }
 
+  @MainActor
   private func uploadSelectedItem() async {
     let tileId = UUID()
     do {

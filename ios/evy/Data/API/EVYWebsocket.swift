@@ -218,7 +218,9 @@ actor EVYWebsocket: EVYWebsocketProtocol {
     #if DEBUG
       print("[EVYWebsocket] Error: \(error.localizedDescription)")
     #endif
-    NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
+    Task { @MainActor in
+      NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
+    }
   }
 
   private func buildRPCMessage(

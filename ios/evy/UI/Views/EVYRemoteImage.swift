@@ -34,6 +34,7 @@ struct EVYRemoteImage: View {
     }
   }
 
+  @MainActor
   private func loadImage() async {
     if let cached = EVYImageCache.swiftUIImage(for: imageId) {
       loadedImage = cached
