@@ -25,13 +25,11 @@ import {
 	listCoreResourceRows,
 	insertResourceEntityFromConfig,
 	updateResourceEntityFromConfig,
-} from "./resources";
-import {
 	mapServiceRow,
 	serviceResourceConfig,
 	organizationResourceConfig,
 	providerResourceConfig,
-} from "./resourceConfigs";
+} from "./resources";
 import { getSduiRows, createSduiFlow, updateSduiFlow } from "./sdui";
 import {
 	createImageResource,

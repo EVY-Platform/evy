@@ -15,11 +15,7 @@
 			"format": "uuid"
 		},
 		"type": {
-			"type": "string",
-			"enum": [
-				"image/jpeg",
-				"image/png"
-			]
+			"$ref": "../images/image.schema.json#/$defs/ImageMimeType"
 		},
 		"totalBytes": {
 			"type": "integer",

@@ -22,11 +22,18 @@ export function schemaPathToTsName(schemaPath: string): string {
 	return schemaPathRelativeToSchemaDir(schemaPath).replace(/[/\\]/g, "/");
 }
 
+function pascalCaseIdentifierPart(value: string): string {
+	return value
+		.split(/[^A-Za-z0-9]+/)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join("");
+}
+
 export function schemaPathToSwiftTypeName(schemaPath: string): string {
 	return schemaPathRelativeToSchemaDir(schemaPath)
-		.replace(/[/\\]/g, ".")
-		.split(".")
-		.map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+		.split(/[/\\.]+/)
+		.map(pascalCaseIdentifierPart)
 		.join("");
 }
 

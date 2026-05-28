@@ -27,6 +27,9 @@ actor EVYAPIManager {
   public func uploadImage(_ imageData: Data, mimeType: String) async throws -> String {
     try await validateAuth()
     let uploadId = UUID().uuidString
+    guard let imageType = TypeEnum(rawValue: mimeType) else {
+      throw EVYError.invalidData(context: "Unsupported image type: \(mimeType)")
+    }
     let frames = try imageData.uploadFrames(uploadId: uploadId, mimeType: mimeType)
     do {
       for frame in frames {
@@ -36,15 +39,15 @@ actor EVYAPIManager {
       let response: EVYCreateImageData = try await rpcWS.fetch(
         method: "create",
         params: EVYCreateImageParams(
-          service: "evy",
-          resource: "images",
-          filter: EVYCreateImageParams.Filter(id: uploadId),
           data: EVYCreateImageData(
-            id: uploadId,
-            type: mimeType,
             createdAt: createdAt,
+            id: uploadId,
+            type: imageType,
             updatedAt: createdAt
-          )
+          ),
+          filter: CreateImageParamsFilter(id: uploadId),
+          resource: .images,
+          service: .evy
         ),
         expecting: EVYCreateImageData.self
       )
@@ -52,7 +55,7 @@ actor EVYAPIManager {
     } catch {
       try? await rpcWS.fetch(
         method: "cancelUpload",
-        params: EVYCancelUploadParams(uploadId: uploadId),
+        params: EVYCancelUploadParams(uploadID: uploadId),
         expecting: EVYCancelUploadResponse.self
       )
       throw error
@@ -70,9 +73,9 @@ actor EVYAPIManager {
     let items = try await rpcWS.fetch(
       method: "get",
       params: EVYGetImagesParams(
-        service: "evy",
-        resource: "images",
-        filter: EVYGetImagesParams.Filter(id: id)
+        filter: GetImagesParamsFilter(id: id, updatedAfter: nil),
+        resource: .images,
+        service: .evy
       ),
       expecting: [EVYGetImageItem].self
     )
@@ -87,9 +90,9 @@ actor EVYAPIManager {
     _ = try await rpcWS.fetch(
       method: "delete",
       params: EVYDeleteImageParams(
-        service: "evy",
-        resource: "images",
-        filter: EVYDeleteImageParams.Filter(id: id)
+        filter: CreateImageParamsFilter(id: id),
+        resource: .images,
+        service: .evy
       ),
       expecting: EVYCreateImageData.self
     )

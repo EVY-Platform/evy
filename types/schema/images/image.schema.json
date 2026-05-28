@@ -1,0 +1,290 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "images/image",
+	"title": "ImageResource",
+	"description": "Shared EVY image resource shapes for metadata, binary responses, upload chunks, and image-specific RPC params.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"imageMetadata",
+		"imageWithBinary",
+		"imageUploadChunkMetadata",
+		"createImageParams",
+		"getImagesParams",
+		"deleteImageParams",
+		"cancelUploadParams",
+		"cancelUploadResponse"
+	],
+	"properties": {
+		"imageMetadata": {
+			"$ref": "#/$defs/ImageMetadata"
+		},
+		"imageWithBinary": {
+			"$ref": "#/$defs/ImageWithBinary"
+		},
+		"imageUploadChunkMetadata": {
+			"$ref": "#/$defs/ImageUploadChunkMetadata"
+		},
+		"createImageParams": {
+			"$ref": "#/$defs/CreateImageParams"
+		},
+		"getImagesParams": {
+			"$ref": "#/$defs/GetImagesParams"
+		},
+		"deleteImageParams": {
+			"$ref": "#/$defs/DeleteImageParams"
+		},
+		"cancelUploadParams": {
+			"$ref": "#/$defs/CancelUploadParams"
+		},
+		"cancelUploadResponse": {
+			"$ref": "#/$defs/CancelUploadResponse"
+		}
+	},
+	"$defs": {
+		"ImageMimeType": {
+			"type": "string",
+			"enum": [
+				"image/jpeg",
+				"image/png"
+			]
+		},
+		"ImageMetadata": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"type",
+				"createdAt",
+				"updatedAt"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"type": {
+					"$ref": "#/$defs/ImageMimeType"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"ImageWithBinary": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"type",
+				"createdAt",
+				"updatedAt",
+				"dataBase64"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"type": {
+					"$ref": "#/$defs/ImageMimeType"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"dataBase64": {
+					"type": "string"
+				}
+			}
+		},
+		"ImageUploadChunkMetadata": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"type",
+				"uploadId",
+				"index",
+				"byteOffset",
+				"byteLength"
+			],
+			"properties": {
+				"type": {
+					"$ref": "#/$defs/ImageMimeType"
+				},
+				"uploadId": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"index": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"byteOffset": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"byteLength": {
+					"type": "integer",
+					"minimum": 1
+				}
+			}
+		},
+		"ImageIdFilter": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				}
+			}
+		},
+		"ImageGetFilter": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"updatedAfter": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"GetImageRequest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				}
+			}
+		},
+		"CreateImageParams": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"service",
+				"resource",
+				"filter",
+				"data"
+			],
+			"properties": {
+				"service": {
+					"type": "string",
+					"enum": [
+						"evy"
+					]
+				},
+				"resource": {
+					"type": "string",
+					"enum": [
+						"images"
+					]
+				},
+				"filter": {
+					"$ref": "#/$defs/ImageIdFilter"
+				},
+				"data": {
+					"$ref": "#/$defs/ImageMetadata"
+				}
+			}
+		},
+		"GetImagesParams": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"service",
+				"resource",
+				"filter"
+			],
+			"properties": {
+				"service": {
+					"type": "string",
+					"enum": [
+						"evy"
+					]
+				},
+				"resource": {
+					"type": "string",
+					"enum": [
+						"images"
+					]
+				},
+				"filter": {
+					"$ref": "#/$defs/ImageGetFilter"
+				}
+			}
+		},
+		"DeleteImageParams": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"service",
+				"resource",
+				"filter"
+			],
+			"properties": {
+				"service": {
+					"type": "string",
+					"enum": [
+						"evy"
+					]
+				},
+				"resource": {
+					"type": "string",
+					"enum": [
+						"images"
+					]
+				},
+				"filter": {
+					"$ref": "#/$defs/ImageIdFilter"
+				}
+			}
+		},
+		"CancelUploadParams": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"uploadId"
+			],
+			"properties": {
+				"uploadId": {
+					"type": "string",
+					"format": "uuid"
+				}
+			}
+		},
+		"CancelUploadResponse": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok"
+			],
+			"properties": {
+				"ok": {
+					"type": "boolean"
+				}
+			}
+		}
+	}
+}

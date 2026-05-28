@@ -217,7 +217,7 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 
 ### `images` EVY core resource
 
-Image metadata is stored in the `Image` table (evy core, `service: "evy"`, `resource: "images"`). Metadata rows contain `id`, `type`, `createdAt`, and `updatedAt`. Supported types: `image/jpeg`, `image/png`. Maximum upload size: 20 MB.
+Image metadata is stored in the `Image` table (evy core, `service: "evy"`, `resource: "images"`). Metadata rows contain `id`, `type`, `createdAt`, and `updatedAt`. Supported types: `image/jpeg`, `image/png`. The shared image schema lives at [`types/schema/images/image.schema.json`](../types/schema/images/image.schema.json). Maximum upload size: 20 MB.
 
 Binary image data is stored at `api/public/images/{id}.{ext}`. Upload directories are excluded from git (see `api/.gitignore`). For production deployments, migrate to S3 or a CDN while keeping image IDs stable.
 

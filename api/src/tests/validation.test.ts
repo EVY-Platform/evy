@@ -4,7 +4,10 @@ import {
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
 	validateDataEvyImage,
+	validateCompleteImageUploadParams,
 	validateGetImageParams,
+	validateImageUploadChunkMetadata,
+	validateImageWithBinary,
 	validateUiFlow as validateFlowData,
 } from "evy-types/validators";
 
@@ -149,6 +152,83 @@ describe("validateGetImageParams", () => {
 		expect(() => validateGetImageParams({ id, extra: true })).toThrow(
 			"GetImageRequest validation failed",
 		);
+	});
+});
+
+describe("validateCompleteImageUploadParams", () => {
+	const uploadId = "550e8400-e29b-41d4-a716-446655440000";
+
+	it("accepts supported image types", () => {
+		const out = validateCompleteImageUploadParams({
+			uploadId,
+			type: "image/png",
+			totalBytes: 1,
+		});
+		expect(out.type).toBe("image/png");
+	});
+
+	it("rejects unsupported image types", () => {
+		expect(() =>
+			validateCompleteImageUploadParams({
+				uploadId,
+				type: "image/gif",
+				totalBytes: 1,
+			}),
+		).toThrow("CompleteImageUploadRequest validation failed");
+	});
+});
+
+describe("validateImageUploadChunkMetadata", () => {
+	const uploadId = "550e8400-e29b-41d4-a716-446655440000";
+
+	it("accepts valid image chunk metadata", () => {
+		const out = validateImageUploadChunkMetadata({
+			uploadId,
+			type: "image/jpeg",
+			index: 0,
+			byteOffset: 0,
+			byteLength: 1,
+		});
+		expect(out.byteLength).toBe(1);
+	});
+
+	it("rejects invalid chunk metadata", () => {
+		expect(() =>
+			validateImageUploadChunkMetadata({
+				uploadId,
+				type: "image/jpeg",
+				index: 0,
+				byteOffset: 0,
+				byteLength: 0,
+			}),
+		).toThrow("ImageUploadChunkMetadata validation failed");
+	});
+});
+
+describe("validateImageWithBinary", () => {
+	const id = "550e8400-e29b-41d4-a716-446655440000";
+	const now = "2024-01-19T12:00:00.000Z";
+
+	it("accepts valid image metadata with base64 data", () => {
+		const out = validateImageWithBinary({
+			id,
+			type: "image/jpeg",
+			createdAt: now,
+			updatedAt: now,
+			dataBase64: "abc=",
+		});
+		expect(out.dataBase64).toBe("abc=");
+	});
+
+	it("requires base64 data", () => {
+		expect(() =>
+			validateImageWithBinary({
+				id,
+				type: "image/jpeg",
+				createdAt: now,
+				updatedAt: now,
+			}),
+		).toThrow("ImageWithBinary validation failed");
 	});
 });
 

@@ -220,6 +220,8 @@ async function generateTypeScript(
 		const title = (schema.title as string | undefined) ?? null;
 		if (mod.startsWith("sdui/")) {
 			lines.unshift(`export * from "./${mod}";`);
+		} else if (mod.startsWith("images/")) {
+			lines.unshift(`export * from "./${mod}";`);
 		} else if (mod.startsWith("data/")) {
 			lines.unshift(`export * from "./${mod}";`);
 		} else if (schemaKey === "rpc/get.request") {
@@ -276,6 +278,8 @@ async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 						"schema",
 						"--lang",
 						"swift",
+						"--no-initializers",
+						"--no-date-times",
 						"-o",
 						outPath,
 						inputPath,

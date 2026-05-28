@@ -1,14 +1,14 @@
-import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import * as grpc from "@grpc/grpc-js";
-import type { Client } from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
+import type { Client } from "@grpc/grpc-js";
 import type { CreateRequest } from "evy-types";
+import { dirname, join } from "node:path";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import { create, get, update } from "./data";
 import { validateStrictGetRequest } from "evy-types/rpcRequestHelpers";
-import { MARKETPLACE_RESOURCE_NAMES } from "./catalog";
+import { MARKETPLACE_RESOURCE_NAMES } from "./resources";
 import { offServiceEvent, onServiceEvent } from "./events";
 
 /**

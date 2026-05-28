@@ -16,6 +16,10 @@ import type {
 	DATA_EVY_ServiceProvider,
 	DATA_EVY_Image,
 } from "./generated/ts/data/data";
+import type {
+	ImageUploadChunkMetadata,
+	ImageWithBinary,
+} from "./generated/ts/images/image";
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { CreateResponse } from "./generated/ts/rpc/create.response";
@@ -27,6 +31,8 @@ import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
+import type { GetImageRequest } from "./generated/ts/rpc/get-image.request";
+import type { CompleteImageUploadRequest } from "./generated/ts/rpc/complete-image-upload.request";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
@@ -42,6 +48,9 @@ import primitiveSchemaRaw from "./schema/data/primitive.schema.json" with {
 	type: "json",
 };
 import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
+import imageSchemaRaw from "./schema/images/image.schema.json" with {
+	type: "json",
+};
 import apiRequestRaw from "./schema/rpc/api.request.schema.json" with {
 	type: "json",
 };
@@ -91,6 +100,7 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"data/data.schema.json": dataSchemaRaw as Record<string, unknown>,
 	"data/primitive.schema.json": primitiveSchemaRaw as Record<string, unknown>,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
+	"images/image.schema.json": imageSchemaRaw as Record<string, unknown>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
 	"rpc/create.request.schema.json": createRequestRaw as Record<string, unknown>,
@@ -222,6 +232,7 @@ function lazyValidator<T>(
 const REQUEST_SCHEMA_FILES = [
 	"common/json.schema.json",
 	"common/rpc.schema.json",
+	"images/image.schema.json",
 	"rpc/api.request.schema.json",
 	"rpc/get.request.schema.json",
 	"rpc/create.request.schema.json",
@@ -239,6 +250,7 @@ const ENTITY_SCHEMA_FILES = [
 	"data/data.schema.json",
 	"data/primitive.schema.json",
 	"sdui/evy.schema.json",
+	"images/image.schema.json",
 	"rpc/get.response.schema.json",
 	"rpc/create.response.schema.json",
 	"rpc/update.response.schema.json",
@@ -353,24 +365,24 @@ const getValidateSyncResponse = lazyValidator<SyncResponse>(
 	fileId("rpc/sync.response.schema.json"),
 );
 
-interface GetImageParams {
-	id: string;
-}
-const getValidateGetImageParams = lazyValidator<GetImageParams>(
+const getValidateGetImageParams = lazyValidator<GetImageRequest>(
 	getRequestAjv,
 	fileId("rpc/get-image.request.schema.json"),
 );
-
-interface CompleteImageUploadParams {
-	uploadId: string;
-	type: "image/jpeg" | "image/png";
-	totalBytes: number;
-}
 const getValidateCompleteImageUploadParams =
-	lazyValidator<CompleteImageUploadParams>(
+	lazyValidator<CompleteImageUploadRequest>(
 		getRequestAjv,
 		fileId("rpc/complete-image-upload.request.schema.json"),
 	);
+const getValidateImageUploadChunkMetadata =
+	lazyValidator<ImageUploadChunkMetadata>(
+		getRequestAjv,
+		`${fileId("images/image.schema.json")}#/$defs/ImageUploadChunkMetadata`,
+	);
+const getValidateImageWithBinary = lazyValidator<ImageWithBinary>(
+	getEntityAjv,
+	`${fileId("images/image.schema.json")}#/$defs/ImageWithBinary`,
+);
 function makeValidator<T>(
 	label: string,
 	getter: () => ValidateFunction<T>,
@@ -453,15 +465,24 @@ export const validateSyncResponse = makeValidator<SyncResponse>(
 	"SyncResponse",
 	getValidateSyncResponse,
 );
-export const validateGetImageParams = makeValidator<GetImageParams>(
+export const validateGetImageParams = makeValidator<GetImageRequest>(
 	"GetImageRequest",
 	getValidateGetImageParams,
 );
 export const validateCompleteImageUploadParams =
-	makeValidator<CompleteImageUploadParams>(
+	makeValidator<CompleteImageUploadRequest>(
 		"CompleteImageUploadRequest",
 		getValidateCompleteImageUploadParams,
 	);
+export const validateImageUploadChunkMetadata =
+	makeValidator<ImageUploadChunkMetadata>(
+		"ImageUploadChunkMetadata",
+		getValidateImageUploadChunkMetadata,
+	);
+export const validateImageWithBinary = makeValidator<ImageWithBinary>(
+	"ImageWithBinary",
+	getValidateImageWithBinary,
+);
 
 function isIsoDateTimeFieldName(key: string): boolean {
 	return key === "createdAt" || key === "updatedAt";

@@ -1,11 +1,12 @@
-import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { and, asc, eq, gt } from "drizzle-orm";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { and, asc, eq, gt } from "drizzle-orm";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 
 import type {
 	DATA_EVY_Image,
+	ImageMimeType,
+	ImageWithBinary,
 	CreateRequest,
 	CreateResponse,
 	DeleteRequest,
@@ -27,9 +28,9 @@ import {
 } from "../procedures/uploads";
 import {
 	deleteResourceEntityFromConfig,
+	imageResourceConfig,
 	insertResourceEntityFromConfig,
 } from "./resources";
-import { imageResourceConfig } from "./resourceConfigs";
 import { db } from "./db";
 
 // ---------------------------------------------------------------------------
@@ -41,18 +42,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 let imagesDir = resolve(join(__dirname, "..", "public", "images"));
 let uploadTmpDir = resolve(join(__dirname, "..", "public", "uploads"));
 
-const IMAGE_EXTENSIONS: Record<string, string> = {
+const IMAGE_EXTENSIONS: Record<ImageMimeType, string> = {
 	"image/jpeg": "jpg",
 	"image/png": "png",
 };
 
-const MAGIC_BYTES: Record<string, number[]> = {
+const MAGIC_BYTES: Record<ImageMimeType, number[]> = {
 	"image/jpeg": [0xff, 0xd8, 0xff],
 	"image/png": [0x89, 0x50, 0x4e, 0x47],
 };
 
-export function assertSupportedImageType(type: string): void {
-	if (!IMAGE_EXTENSIONS[type]) {
+export function isSupportedImageType(type: string): type is ImageMimeType {
+	return Object.hasOwn(IMAGE_EXTENSIONS, type);
+}
+
+export function assertSupportedImageType(
+	type: string,
+): asserts type is ImageMimeType {
+	if (!isSupportedImageType(type)) {
 		throw new Error(`Unsupported image type: ${type}`);
 	}
 }
@@ -111,11 +118,10 @@ export async function deleteImageBinaryIfExists(params: {
 }
 
 function imagePath(id: string, type: string): string {
-	const ext = IMAGE_EXTENSIONS[type];
-	if (!ext) {
-		throw new Error(`Unsupported image type: ${type}`);
-	}
-	return resolve(join(imagesDir, `${sanitizeImageId(id)}.${ext}`));
+	assertSupportedImageType(type);
+	return resolve(
+		join(imagesDir, `${sanitizeImageId(id)}.${IMAGE_EXTENSIONS[type]}`),
+	);
 }
 
 function sanitizeImageId(id: string): string {
@@ -254,7 +260,7 @@ export type { PreparedImageUpload };
 
 async function imageRowToGetImageResponse(
 	metadata: DATA_EVY_Image,
-): Promise<GetImageResponse> {
+): Promise<ImageWithBinary> {
 	let fileData: Buffer;
 	try {
 		fileData = await readImageBinary({
@@ -298,15 +304,7 @@ export async function listImageRowsWithBinary(
 	return validateGetResponse(response);
 }
 
-export interface GetImageResponse {
-	id: string;
-	type: string;
-	createdAt: string;
-	updatedAt: string;
-	dataBase64: string;
-}
-
-export async function getImage(params: unknown): Promise<GetImageResponse> {
+export async function getImage(params: unknown): Promise<ImageWithBinary> {
 	const validated = validateGetImageParams(params);
 	const metadata = await selectImageRowById(validated.id);
 	return imageRowToGetImageResponse(metadata);

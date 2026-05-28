@@ -5,67 +5,13 @@
 
 import Foundation
 
-struct EVYImageUploadChunkMetadata: Encodable {
-  let type: String
-  let uploadId: String
-  let index: Int
-  let byteOffset: Int
-  let byteLength: Int
-}
-
-struct EVYCreateImageParams: Encodable {
-  struct Filter: Encodable {
-    let id: String
-  }
-
-  let service: String
-  let resource: String
-  let filter: Filter
-  let data: EVYCreateImageData
-}
-
-struct EVYCreateImageData: Codable {
-  let id: String
-  let type: String
-  let createdAt: String
-  let updatedAt: String
-}
-
-struct EVYCancelUploadParams: Encodable {
-  let uploadId: String
-}
-
-struct EVYCancelUploadResponse: Codable {
-  let ok: Bool
-}
-
-struct EVYGetImagesParams: Encodable {
-  struct Filter: Encodable {
-    let id: String
-  }
-
-  let service: String
-  let resource: String
-  let filter: Filter
-}
-
-struct EVYGetImageItem: Codable {
-  let id: String
-  let type: String
-  let createdAt: String
-  let updatedAt: String
-  let dataBase64: String
-}
-
-struct EVYDeleteImageParams: Encodable {
-  struct Filter: Encodable {
-    let id: String
-  }
-
-  let service: String
-  let resource: String
-  let filter: Filter
-}
+typealias EVYCreateImageParams = CreateImageParams
+typealias EVYCreateImageData = ImageMetadataClass
+typealias EVYCancelUploadParams = CancelUploadParams
+typealias EVYCancelUploadResponse = CancelUploadResponse
+typealias EVYGetImagesParams = GetImagesParams
+typealias EVYGetImageItem = ImageWithBinaryClass
+typealias EVYDeleteImageParams = DeleteImageParams
 
 // MARK: - Binary frame encoding
 
@@ -73,18 +19,22 @@ private let chunkSize = 256 * 1024  // 256 KB per chunk
 
 extension Data {
   func uploadFrames(uploadId: String, mimeType: String) throws -> [Data] {
+    guard let imageType = TypeEnum(rawValue: mimeType) else {
+      throw EVYError.invalidData(context: "Unsupported image type: \(mimeType)")
+    }
+
     var frames: [Data] = []
     var offset = 0
     var index = 0
     while offset < count {
       let end = Swift.min(offset + chunkSize, count)
       let chunkData = self[offset..<end]
-      let metadata = EVYImageUploadChunkMetadata(
-        type: mimeType,
-        uploadId: uploadId,
-        index: index,
+      let metadata = ImageUploadChunkMetadataClass(
+        byteLength: chunkData.count,
         byteOffset: offset,
-        byteLength: chunkData.count
+        index: index,
+        type: imageType,
+        uploadID: uploadId
       )
       let metadataJSON = try JSONEncoder().encode(metadata)
       var frame = Data()

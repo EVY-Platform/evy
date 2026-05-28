@@ -24,6 +24,7 @@ date-time (string)
 | `types/schema/**/*.schema.json` | JSON Schema for UI flows, RPC, and data models. Used to generate TypeScript and Swift. |
 | `types/schema/sdui/row-content.spec.json` | Per–row-type content/view keys for UI rows. Used by the Swift UI generator only. |
 | `types/schema/data/data.schema.json` | API persistence models (`DATA_EVY_Flow`, `DATA_EVY_Device`, etc.). |
+| `types/schema/images/image.schema.json` | EVY image resource models, binary read responses, upload chunk metadata, and image-specific RPC params. |
 | `types/schema/data/drizzle.config.json` | Drizzle table names, primary keys, enums, relations. Must stay in sync with `data.schema.json`. |
 
 ### Command
@@ -42,6 +43,6 @@ This runs:
 ### Outputs (do not edit by hand)
 
 - `types/generated/ts/` — TypeScript types and Drizzle schema. The API and web app import these via the `evy-types` path alias.
-- `types/generated/swift/` — Swift types. The iOS app references these (and keeps some Codable models in sync manually where needed).
+- `types/generated/swift/` — Swift types. The iOS app references generated SDUI, core resource, OS, and image API models while keeping transport and UI models handwritten where needed.
 
 After changing any schema or `drizzle.config.json` or `row-content.spec.json`, run `bun run types:generate`. Output under `types/generated/` is gitignored; regenerate locally and do not hand-edit generated files.

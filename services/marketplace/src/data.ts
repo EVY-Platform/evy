@@ -12,9 +12,8 @@ import {
 	getServiceResources,
 	setServiceRegistry,
 } from "evy-types/rpcRequestHelpers";
-import { data } from "./db/schema";
-import { db } from "./db";
-import { MARKETPLACE_RESOURCE_NAMES, MARKETPLACE_SERVICE } from "./catalog";
+import { data, db } from "./db";
+import { MARKETPLACE_RESOURCE_NAMES, MARKETPLACE_SERVICE } from "./resources";
 import { emitDataChanged } from "./events";
 import {
 	assertIsoDateTimeJsonFields,

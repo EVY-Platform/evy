@@ -2,7 +2,7 @@ import { defineConfig } from "drizzle-kit";
 import { getMarketplaceConnectionUrl } from "./src/db";
 
 export default defineConfig({
-	schema: "./src/db/schema.ts",
+	schema: "./src/db.ts",
 	out: "./drizzle",
 	dialect: "postgresql",
 	dbCredentials: {
