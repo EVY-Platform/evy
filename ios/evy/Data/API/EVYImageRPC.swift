@@ -13,24 +13,29 @@ struct EVYImageUploadChunkMetadata: Encodable {
   let byteLength: Int
 }
 
-struct EVYCompleteImageUploadParams: Encodable {
-  let uploadId: String
-  let type: String
-  let totalBytes: Int
+struct EVYCreateImageParams: Encodable {
+  struct Filter: Encodable {
+    let id: String
+  }
+
+  let service: String
+  let resource: String
+  let filter: Filter
+  let data: EVYCreateImageData
 }
 
-struct EVYCompleteImageUploadResponse: Codable {
+struct EVYCreateImageData: Codable {
   let id: String
   let type: String
   let createdAt: String
   let updatedAt: String
 }
 
-struct EVYCancelImageUploadParams: Encodable {
+struct EVYCancelUploadParams: Encodable {
   let uploadId: String
 }
 
-struct EVYCancelImageUploadResponse: Codable {
+struct EVYCancelUploadResponse: Codable {
   let ok: Bool
 }
 
@@ -58,7 +63,7 @@ struct EVYImageDeleteResponse: Codable {
 private let chunkSize = 256 * 1024  // 256 KB per chunk
 
 extension Data {
-  func imageUploadFrames(uploadId: String, mimeType: String) throws -> [Data] {
+  func uploadFrames(uploadId: String, mimeType: String) throws -> [Data] {
     var frames: [Data] = []
     var offset = 0
     var index = 0

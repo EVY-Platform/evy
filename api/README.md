@@ -219,12 +219,12 @@ Image metadata is stored in the `Image` table (evy core, `service: "evy"`, `reso
 
 Binary image data is stored at `api/public/images/{id}.{ext}`. Upload directories are excluded from git (see `api/.gitignore`). For production deployments, migrate to S3 or a CDN while keeping image IDs stable.
 
-### Binary chunk frame protocol
+### Generic binary upload frame protocol
 
-Images are uploaded as a sequence of binary WebSocket frames (not JSON-RPC). Each frame has the format:
+Binary payloads are staged as a sequence of binary WebSocket frames (not JSON-RPC). Each frame has the format:
 
 ```
-[4-byte big-endian metadataLength][metadata JSON bytes][raw image bytes]
+[4-byte big-endian metadataLength][metadata JSON bytes][raw bytes]
 ```
 
 The metadata JSON has the shape:
@@ -233,15 +233,38 @@ The metadata JSON has the shape:
 { "type": "image/jpeg", "uploadId": "<uuid>", "index": 0, "byteOffset": 0, "byteLength": 12345 }
 ```
 
-- `uploadId` — a client-generated UUID identifying the upload session
-- `index` — zero-based sequential chunk index
-- `byteOffset` — byte offset of this chunk within the full image
-- `byteLength` — byte length of the chunk data following the metadata
+- `uploadId` — a client-generated UUID identifying the upload session. For image creation, this should be the future image id.
+- `type` — payload media type. Image creation currently supports `image/jpeg` and `image/png`.
+- `index` — zero-based sequential chunk index.
+- `byteOffset` — byte offset of this chunk within the full upload.
+- `byteLength` — byte length of the chunk data following the metadata.
+
+### Creating images
+
+After staging the binary upload, create the image through the normal protected `create` RPC:
+
+```json
+{
+  "service": "evy",
+  "resource": "images",
+  "filter": { "id": "<uploadId>" },
+  "data": {
+    "id": "<uploadId>",
+    "type": "image/jpeg",
+    "createdAt": "2026-05-28T00:00:00.000Z",
+    "updatedAt": "2026-05-28T00:00:00.000Z"
+  }
+}
+```
+
+`filter.id` is the uploaded binary id to consume. The API validates image bytes, writes the binary to disk, creates metadata, and emits the normal `dataChanged` notification for `resource: "images"`.
 
 ### RPCs
 
 | Method | Auth | Description |
 |--------|------|-------------|
-| `completeImageUpload` | protected | Finalise upload: validates magic bytes, writes to disk, creates DB metadata. Params: `{ uploadId, type, totalBytes }`. Returns `{ id, type, createdAt, updatedAt }`. |
-| `cancelImageUpload` | protected | Discard an in-progress upload session. Params: `{ uploadId }`. Returns `{ ok: true }`. |
+| `create` | protected | For `service: "evy"`, `resource: "images"`, finalises a staged binary upload and creates image metadata. |
+| `cancelUpload` | protected | Discard an in-progress generic upload session. Params: `{ uploadId }`. Returns `{ ok: true }`. |
+| `cancelImageUpload` | protected | Backwards-compatible alias for `cancelUpload`. |
 | `getImage` | public | Fetch image binary + metadata by id. Params: `{ id }`. Returns `{ id, type, createdAt, dataBase64 }`. |
+| `deleteImage` | protected | Delete image binary and metadata by id. Params: `{ id }`. Returns `{ ok: true }`. |

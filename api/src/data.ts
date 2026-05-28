@@ -26,7 +26,13 @@ import {
 	osEnum,
 } from "../../types/generated/ts/db/schema.generated";
 import { getConnectionUrl } from "./db";
+import { deleteImageBinaryIfExists, writeImageBinary } from "./imageFiles";
 import { emitDataChangedNotification } from "./notifications";
+import {
+	deleteUploadSession,
+	getUploadSession,
+	uploadSessionToBuffer,
+} from "./uploads";
 import {
 	EVY_CORE_SERVICE,
 	EVY_CORE_RESOURCE,
@@ -63,6 +69,18 @@ function assertEvyCoreAccess(
 	if (!evyCoreResourceNameSet.has(params.resource)) {
 		throw new Error("Resource is not served by the core API");
 	}
+}
+
+function hasDatabaseErrorCode(err: unknown, code: string): boolean {
+	if (typeof err !== "object" || err === null) {
+		return false;
+	}
+
+	if ("code" in err && err.code === code) {
+		return true;
+	}
+
+	return "cause" in err && hasDatabaseErrorCode(err.cause, code);
 }
 
 export async function get(params: GetRequest): Promise<GetResponse> {
@@ -132,8 +150,8 @@ async function listCoreCatalogRows<TRow>(
 
 	const rows = whereClauses.length
 		? await base
-				.where(and(...whereClauses))
-				.orderBy(asc(table.updatedAt), asc(table.id))
+			.where(and(...whereClauses))
+			.orderBy(asc(table.updatedAt), asc(table.id))
 		: await base.orderBy(asc(table.updatedAt), asc(table.id));
 	return validateGetResponse(rows.map((r) => mapRow(r as TRow)));
 }
@@ -151,7 +169,13 @@ async function insertCatalogEntityFromConfig<TValidated>(
 	// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
 	const inserted = await (db.insert(config.table as any) as any)
 		.values(config.toInsertValues(validated, nowIso, filterId))
-		.returning();
+		.returning()
+		.catch((err: unknown) => {
+			if (hasDatabaseErrorCode(err, "23505")) {
+				throw new Error("Resource already exists");
+			}
+			throw err;
+		});
 	const response = validateCreateResponse(config.mapRow(inserted[0]));
 
 	notify(response);
@@ -232,8 +256,8 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 
 		const rows = whereClauses.length
 			? await base
-					.where(and(...whereClauses))
-					.orderBy(asc(flow.updatedAt), asc(flow.id))
+				.where(and(...whereClauses))
+				.orderBy(asc(flow.updatedAt), asc(flow.id))
 			: await base.orderBy(asc(flow.updatedAt), asc(flow.id));
 		const payload = rows.map((f) => f.data);
 		for (const item of payload) {
@@ -335,6 +359,66 @@ const providerCatalogConfig: CatalogEntityConfig<DATA_EVY_ServiceProvider> = {
 	mapRow: (row) => row,
 };
 
+const imageCatalogConfig: CatalogEntityConfig<DATA_EVY_Image> = {
+	table: image,
+	validate: validateImagePayload,
+	toUpdateSet: (validated, nowIso) => ({
+		type: validated.type,
+		updatedAt: nowIso,
+	}),
+	toInsertValues: (validated, nowIso, filterId) => ({
+		id: filterId ?? validated.id,
+		type: validated.type,
+		createdAt: nowIso,
+		updatedAt: nowIso,
+	}),
+	mapRow: (row) => row,
+};
+
+type PreparedImageUpload = {
+	imageId: string;
+	imageType: DATA_EVY_Image["type"];
+	dataPayload: DATA_EVY_Image;
+};
+
+async function createImageFromUpload(params: {
+	filter: CreateRequest["filter"] | undefined;
+	dataPayload: unknown;
+	nowIso: string;
+}): Promise<PreparedImageUpload> {
+	const validated = validateImagePayload(params.dataPayload);
+	const imageId = params.filter?.id ?? validated.id;
+	const uploadSession = getUploadSession(imageId);
+
+	if (!uploadSession) {
+		throw new Error(`No upload found for image id: ${imageId}`);
+	}
+	if (uploadSession.type !== validated.type) {
+		throw new Error(
+			`Upload type mismatch: upload has ${uploadSession.type}, image data has ${validated.type}`,
+		);
+	}
+
+	const imageBuffer = uploadSessionToBuffer(uploadSession);
+	await writeImageBinary({
+		id: imageId,
+		type: validated.type,
+		bytes: imageBuffer,
+	});
+	deleteUploadSession(imageId);
+
+	return {
+		imageId,
+		imageType: validated.type,
+		dataPayload: {
+			...validated,
+			id: imageId,
+			createdAt: params.nowIso,
+			updatedAt: params.nowIso,
+		},
+	};
+}
+
 async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
@@ -370,7 +454,7 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 			})
 			.returning()
 			.catch((err) => {
-				if (err?.code === "23505") {
+				if (hasDatabaseErrorCode(err, "23505")) {
 					throw new Error("Resource already exists");
 				}
 				throw err;
@@ -411,13 +495,27 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 	}
 
 	if (resource === EVY_CORE_RESOURCE.IMAGES) {
-		return insertCatalogEntityFromConfig(
-			imageCatalogConfig,
+		const preparedImage = await createImageFromUpload({
 			filter,
 			dataPayload,
 			nowIso,
-			emitNotification,
-		);
+		});
+
+		try {
+			return await insertCatalogEntityFromConfig(
+				imageCatalogConfig,
+				filter,
+				preparedImage.dataPayload,
+				nowIso,
+				emitNotification,
+			);
+		} catch (err) {
+			await deleteImageBinaryIfExists({
+				id: preparedImage.imageId,
+				type: preparedImage.imageType,
+			});
+			throw err;
+		}
 	}
 
 	throw new Error("Unsupported resource for core API");
@@ -438,6 +536,10 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 
 	if (resource === EVY_CORE_RESOURCE.DEVICES) {
 		throw new Error("devices are managed via validateAuth only");
+	}
+
+	if (resource === EVY_CORE_RESOURCE.IMAGES) {
+		throw new Error("Image metadata updates are not supported");
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SDUI) {
@@ -491,48 +593,7 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 		);
 	}
 
-	if (resource === EVY_CORE_RESOURCE.IMAGES) {
-		throw new Error("Image metadata updates are not supported");
-	}
-
 	throw new Error("Unsupported resource for core API");
-}
-
-const imageCatalogConfig: CatalogEntityConfig<DATA_EVY_Image> = {
-	table: image,
-	validate: validateImagePayload,
-	toUpdateSet: (_validated, _nowIso) => ({}),
-	toInsertValues: (validated, nowIso, filterId) => ({
-		id: filterId ?? validated.id,
-		type: validated.type,
-		createdAt: nowIso,
-		updatedAt: nowIso,
-	}),
-	mapRow: (row) => row,
-};
-
-export async function createImageMetadata(params: {
-	id: string;
-	type: string;
-}): Promise<DATA_EVY_Image> {
-	const nowIso = new Date().toISOString();
-	// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
-	const inserted = await (db.insert(image) as any)
-		.values({
-			id: params.id,
-			type: params.type,
-			createdAt: nowIso,
-			updatedAt: nowIso,
-		})
-		.returning();
-	const row = inserted[0] as DATA_EVY_Image;
-	emitDataChangedNotification({
-		service: EVY_CORE_SERVICE,
-		resource: "images",
-		operation: "create",
-		value: row,
-	});
-	return row;
 }
 
 export async function getImageMetadata(id: string): Promise<DATA_EVY_Image> {

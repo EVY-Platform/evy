@@ -1,11 +1,15 @@
 import {
 	afterAll,
+	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
 	expect,
 	it,
 } from "bun:test";
+import { mkdir, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { eq } from "drizzle-orm";
 
@@ -55,6 +59,11 @@ const { pgliteClient, testDb } = createPgliteTestDatabase();
 const dataModule = await import("../data");
 const { validateAuth, create, get, setDbForTest, update } = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
+const uploadModule = await import("../uploads");
+const { clearUploadsForTest, handleUploadChunk } = uploadModule;
+const imageFilesModule = await import("../imageFiles");
+const { resetImageStorageDirsForTest, setImageStorageDirsForTest } =
+	imageFilesModule;
 
 function isDATA_EVY_Flow(
 	result: CreateResponse | UpdateResponse,
@@ -826,20 +835,137 @@ describe("create SDUI validation", () => {
 
 describe("images", () => {
 	const now = "2024-01-19T12:00:00.000Z";
+	const validJpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+	const validPngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]);
+	let testImagesDir: string;
+	let testTmpDir: string;
 
-	it("creates image metadata through core create", async () => {
+	function buildChunkFrame(metadata: object, chunkData: Buffer): Buffer {
+		const metadataBytes = Buffer.from(JSON.stringify(metadata), "utf-8");
+		const prefix = Buffer.alloc(4);
+		prefix.writeUInt32BE(metadataBytes.length, 0);
+		return Buffer.concat([prefix, metadataBytes, chunkData]);
+	}
+
+	async function stageUpload(
+		uploadId: string,
+		type: "image/jpeg" | "image/png",
+		bytes: Buffer,
+	): Promise<void> {
+		await handleUploadChunk(
+			buildChunkFrame(
+				{
+					type,
+					uploadId,
+					index: 0,
+					byteOffset: 0,
+					byteLength: bytes.length,
+				},
+				bytes,
+			),
+		);
+	}
+
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+		clearUploadsForTest();
+		testImagesDir = join(tmpdir(), `evy-data-images-test-${Date.now()}`);
+		testTmpDir = join(tmpdir(), `evy-data-uploads-test-${Date.now()}`);
+		await mkdir(testImagesDir, { recursive: true });
+		await mkdir(testTmpDir, { recursive: true });
+		setImageStorageDirsForTest({
+			imagesDir: testImagesDir,
+			uploadTmpDir: testTmpDir,
+		});
+	});
+
+	afterEach(async () => {
+		resetImageStorageDirsForTest();
+		await rm(testImagesDir, { recursive: true, force: true });
+		await rm(testTmpDir, { recursive: true, force: true });
+	});
+
+	it("rejects image create when no uploaded binary exists", async () => {
 		const imageId = crypto.randomUUID();
+		await expect(
+			create({
+				service: "evy",
+				resource: "images",
+				filter: { id: imageId },
+				data: {
+					id: imageId,
+					type: "image/jpeg",
+					createdAt: now,
+					updatedAt: now,
+				},
+			}),
+		).rejects.toThrow("No upload found for image id");
+	});
+
+	it("creates image binary and metadata through core create", async () => {
+		const imageId = crypto.randomUUID();
+		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+
 		const result = await create({
 			service: "evy",
 			resource: "images",
 			filter: { id: imageId },
 			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
 		});
+
 		expect(result).toMatchObject({ id: imageId, type: "image/jpeg" });
+		const storedBinary = await readFile(join(testImagesDir, `${imageId}.jpg`));
+		expect(storedBinary).toEqual(validJpegBytes);
+	});
+
+	it("uses filter id as persisted image id", async () => {
+		const imageId = crypto.randomUUID();
+		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+
+		const result = await create({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+			data: {
+				id: crypto.randomUUID(),
+				type: "image/jpeg",
+				createdAt: now,
+				updatedAt: now,
+			},
+		});
+
+		expect(result).toMatchObject({ id: imageId, type: "image/jpeg" });
+	});
+
+	it("rejects duplicate image create with resource already exists", async () => {
+		const imageId = crypto.randomUUID();
+		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+		await create({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
+		});
+		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+
+		await expect(
+			create({
+				service: "evy",
+				resource: "images",
+				filter: { id: imageId },
+				data: {
+					id: imageId,
+					type: "image/jpeg",
+					createdAt: now,
+					updatedAt: now,
+				},
+			}),
+		).rejects.toThrow("Resource already exists");
 	});
 
 	it("gets image metadata through core get", async () => {
 		const imageId = crypto.randomUUID();
+		await stageUpload(imageId, "image/png", validPngBytes);
 		await create({
 			service: "evy",
 			resource: "images",
@@ -857,6 +983,8 @@ describe("images", () => {
 	it("filters by id", async () => {
 		const imageId = crypto.randomUUID();
 		const otherId = crypto.randomUUID();
+		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+		await stageUpload(otherId, "image/png", validPngBytes);
 		await create({
 			service: "evy",
 			resource: "images",
@@ -880,8 +1008,8 @@ describe("images", () => {
 
 	it("filters by updatedAfter", async () => {
 		const imageId = crypto.randomUUID();
-		const oldIso = "2020-01-01T00:00:00.000Z";
 		const newIso = "2030-01-01T00:00:00.000Z";
+		await stageUpload(imageId, "image/jpeg", validJpegBytes);
 		await create({
 			service: "evy",
 			resource: "images",
@@ -889,8 +1017,8 @@ describe("images", () => {
 			data: {
 				id: imageId,
 				type: "image/jpeg",
-				createdAt: oldIso,
-				updatedAt: oldIso,
+				createdAt: now,
+				updatedAt: now,
 			},
 		});
 		const result = await get({
@@ -899,6 +1027,44 @@ describe("images", () => {
 			filter: { updatedAfter: newIso },
 		});
 		expect((result as object[]).length).toBe(0);
+	});
+
+	it("rejects upload type mismatch", async () => {
+		const imageId = crypto.randomUUID();
+		await stageUpload(imageId, "image/png", validPngBytes);
+
+		await expect(
+			create({
+				service: "evy",
+				resource: "images",
+				filter: { id: imageId },
+				data: {
+					id: imageId,
+					type: "image/jpeg",
+					createdAt: now,
+					updatedAt: now,
+				},
+			}),
+		).rejects.toThrow("Upload type mismatch");
+	});
+
+	it("rejects invalid image bytes", async () => {
+		const imageId = crypto.randomUUID();
+		await stageUpload(imageId, "image/jpeg", Buffer.from([0x00, 0x00, 0x00]));
+
+		await expect(
+			create({
+				service: "evy",
+				resource: "images",
+				filter: { id: imageId },
+				data: {
+					id: imageId,
+					type: "image/jpeg",
+					createdAt: now,
+					updatedAt: now,
+				},
+			}),
+		).rejects.toThrow("Invalid magic bytes");
 	});
 
 	it("rejects invalid image type", async () => {

@@ -28,29 +28,42 @@ final class EVYAPIManager {
   public func uploadImage(_ imageData: Data, mimeType: String) async throws -> String {
     try await validateAuth()
     let uploadId = UUID().uuidString
-    let frames = try imageData.imageUploadFrames(uploadId: uploadId, mimeType: mimeType)
+    let frames = try imageData.uploadFrames(uploadId: uploadId, mimeType: mimeType)
     do {
       for frame in frames {
         try await rpcWS.sendBinary(frame)
       }
-      let response: EVYCompleteImageUploadResponse = try await rpcWS.fetch(
-        method: "completeImageUpload",
-        params: EVYCompleteImageUploadParams(
-          uploadId: uploadId,
-          type: mimeType,
-          totalBytes: imageData.count
+      let createdAt = Self.iso8601Now()
+      let response: EVYCreateImageData = try await rpcWS.fetch(
+        method: "create",
+        params: EVYCreateImageParams(
+          service: "evy",
+          resource: "images",
+          filter: EVYCreateImageParams.Filter(id: uploadId),
+          data: EVYCreateImageData(
+            id: uploadId,
+            type: mimeType,
+            createdAt: createdAt,
+            updatedAt: createdAt
+          )
         ),
-        expecting: EVYCompleteImageUploadResponse.self
+        expecting: EVYCreateImageData.self
       )
       return response.id
     } catch {
       try? await rpcWS.fetch(
-        method: "cancelImageUpload",
-        params: EVYCancelImageUploadParams(uploadId: uploadId),
-        expecting: EVYCancelImageUploadResponse.self
+        method: "cancelUpload",
+        params: EVYCancelUploadParams(uploadId: uploadId),
+        expecting: EVYCancelUploadResponse.self
       )
       throw error
     }
+  }
+
+  private static func iso8601Now() -> String {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter.string(from: Date())
   }
 
   public func getImage(id: String) async throws -> EVYImageGetResponse {
