@@ -9,8 +9,8 @@ import {
 	EVY_CORE_SERVICE,
 	EVY_CORE_RESOURCE_NAMES,
 } from "evy-types/coreResources";
-import type { buildResourceRegistry } from "../resources";
-import { sync } from "../sync";
+import type { buildResourceRegistry } from "../procedures/resources";
+import { sync } from "../procedures/sync";
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
 

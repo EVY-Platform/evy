@@ -1,4 +1,4 @@
-import { validateAuth } from "./data";
+import { validateAuth } from "./data/devices";
 import { initDataNotifications } from "./notifications";
 import {
 	api,
@@ -7,9 +7,9 @@ import {
 	get,
 	sync,
 	update,
-} from "./rpc";
-import { resources } from "./resources";
-import { wireGrpcEvents } from "./services";
+} from "./procedures/rpc";
+import { resources } from "./procedures/resources";
+import { wireGrpcEvents } from "./procedures/services";
 import {
 	emitJsonRpc,
 	initServer,
@@ -17,7 +17,7 @@ import {
 	makeAuthChecker,
 	type WSParams,
 } from "./ws";
-import { cancelUpload, handleUploadChunk } from "./uploads";
+import { cancelUpload, handleUploadChunk } from "./procedures/uploads";
 
 function authHandler(data: WSParams): Promise<boolean> {
 	return validateAuth(data.token, data.os);

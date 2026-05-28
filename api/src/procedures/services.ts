@@ -12,7 +12,7 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import type { BroadcastFn } from "./broadcast";
+import type { BroadcastFn } from "../broadcast";
 
 import {
 	validateGetResponse,
@@ -29,7 +29,7 @@ function resolveServiceProtoPath(): string {
 	const candidates = [
 		join(
 			dirname(fileURLToPath(import.meta.url)),
-			"../../types/schema/service.proto",
+			"../../../types/schema/service.proto",
 		),
 		join(process.cwd(), "../types/schema/service.proto"),
 		join(process.cwd(), "types/schema/service.proto"),

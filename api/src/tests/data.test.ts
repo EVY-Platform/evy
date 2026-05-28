@@ -54,17 +54,14 @@ type FlowDataInput = Omit<UI_Flow, "id" | "pages"> & {
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
-const dataModule = await import("../data");
-const {
-	validateAuth,
-	create,
-	get,
-	setDbForTest,
-	update,
-	delete: deleteCore,
-} = dataModule;
+const coreModule = await import("../data/core");
+const { create, get, update, delete: deleteCore } = coreModule;
+const devicesModule = await import("../data/devices");
+const { validateAuth } = devicesModule;
+const dbModule = await import("../data/db");
+const { setDbForTest } = dbModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
-const uploadModule = await import("../uploads");
+const uploadModule = await import("../procedures/uploads");
 const { clearUploadsForTest, handleUploadChunk } = uploadModule;
 function isDATA_EVY_Flow(
 	result: CreateResponse | UpdateResponse,

@@ -9,8 +9,9 @@ import {
 import { migrate } from "drizzle-orm/pglite/migrator";
 
 import * as schema from "../../../types/generated/ts/db/schema.generated";
-import { get, setDbForTest } from "../data";
-import { writeImageBinary } from "../imageFiles";
+import { get } from "../data/core";
+import { setDbForTest } from "../data/db";
+import { writeImageBinary } from "../data/images";
 import { useImageStorageDirsForTest } from "./imageStorageTestHelpers";
 import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
 

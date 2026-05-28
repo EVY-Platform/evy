@@ -1,0 +1,103 @@
+import { and, asc, eq, gt } from "drizzle-orm";
+
+import type {
+	GetResponse,
+	GetRequest,
+	CreateRequest,
+	CreateResponse,
+	UpdateRequest,
+	UpdateResponse,
+} from "evy-types";
+import {
+	validateGetResponse,
+	validateUiFlow as validateFlowData,
+	validateCreateResponse,
+	validateUpdateResponse,
+} from "evy-types/validators";
+
+import { flow } from "../../../types/generated/ts/db/schema.generated";
+import { db, hasDatabaseErrorCode } from "./db";
+
+export async function getSduiRows(
+	filter: GetRequest["filter"] | undefined,
+): Promise<GetResponse> {
+	const base = db.select({ data: flow.data }).from(flow);
+	const whereClauses: ReturnType<typeof eq>[] = [];
+
+	if (filter?.id) {
+		whereClauses.push(eq(flow.id, filter.id));
+	}
+	if (filter?.updatedAfter) {
+		whereClauses.push(gt(flow.updatedAt, filter.updatedAfter));
+	}
+
+	const rows = whereClauses.length
+		? await base
+				.where(and(...whereClauses))
+				.orderBy(asc(flow.updatedAt), asc(flow.id))
+		: await base.orderBy(asc(flow.updatedAt), asc(flow.id));
+	const payload = rows.map((f) => f.data);
+	for (const item of payload) {
+		validateFlowData(item);
+	}
+	return validateGetResponse(payload);
+}
+
+export async function createSduiFlow(
+	filter: CreateRequest["filter"] | undefined,
+	dataPayload: unknown,
+	nowIso: string,
+	notify: (value: unknown) => void,
+): Promise<CreateResponse> {
+	const validatedData = validateFlowData(dataPayload);
+	const filterId = filter?.id;
+	const persistedFlowData =
+		filterId && filterId !== validatedData.id
+			? { ...validatedData, id: filterId }
+			: validatedData;
+
+	const result = await db
+		.insert(flow)
+		.values({
+			id: persistedFlowData.id,
+			data: persistedFlowData,
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		})
+		.returning()
+		.catch((err: unknown) => {
+			if (hasDatabaseErrorCode(err, "23505")) {
+				throw new Error("Resource already exists");
+			}
+			throw err;
+		});
+	const response = validateCreateResponse(result[0]);
+	notify(persistedFlowData);
+	return response;
+}
+
+export async function updateSduiFlow(
+	filter: UpdateRequest["filter"],
+	dataPayload: unknown,
+	nowIso: string,
+	notify: (value: unknown) => void,
+): Promise<UpdateResponse> {
+	const validatedData = validateFlowData(dataPayload);
+	const filterId = filter.id;
+	const persistedFlowData =
+		filterId !== validatedData.id
+			? { ...validatedData, id: filterId }
+			: validatedData;
+
+	const result = await db
+		.update(flow)
+		.set({ data: persistedFlowData, updatedAt: nowIso })
+		.where(eq(flow.id, filterId))
+		.returning();
+	if (result.length === 0) {
+		throw new Error("Resource not found");
+	}
+	const response = validateUpdateResponse(result[0]);
+	notify(persistedFlowData);
+	return response;
+}

@@ -5,7 +5,7 @@ import {
 } from "evy-types/rpcRequestHelpers";
 import { validateSync, validateSyncResponse } from "evy-types/validators";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { get as defaultGetCore } from "./data";
+import { get as defaultGetCore } from "../data/core";
 import { forwardGet } from "./services";
 import { buildResourceRegistry } from "./resources";
 

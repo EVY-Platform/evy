@@ -1,6 +1,6 @@
 # EVY Marketplace service
 
-gRPC server for marketplace domain data only (catalog rows such as items, conditions, tags, selling reasons). SDUI flows are stored and served by the main [`api`](../../api/README.md). The marketplace service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto); the `api` registers a gRPC client in [`api/src/services.ts`](../../api/src/services.ts) (using `MARKETPLACE_GRPC_HOST` and `MARKETPLACE_GRPC_PORT`) and proxies non-SDUI marketplace traffic here. Clients still use WebSockets only to the main `api`.
+gRPC server for marketplace domain data only (catalog rows such as items, conditions, tags, selling reasons). SDUI flows are stored and served by the main [`api`](../../api/README.md). The marketplace service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto); the `api` registers a gRPC client in [`api/src/procedures/services.ts`](../../api/src/procedures/services.ts) (using `MARKETPLACE_GRPC_HOST` and `MARKETPLACE_GRPC_PORT`) and proxies non-SDUI marketplace traffic here. Clients still use WebSockets only to the main `api`.
 
 ## Architecture
 
@@ -27,7 +27,7 @@ flowchart LR
 ```
 
 - `Get`, `Create`, and `Update` are unary RPCs that mirror the main `api`'s `GetRequest`, `CreateRequest`, and `UpdateRequest`, with payloads JSON-encoded over the wire (`data_json`, `result_json`). Filters support a singular `id` for one row and `updated_after` / `updatedAfter` for incremental reads; plural ID filtering is not part of the contract.
-- `SubscribeEvents` is a server-streaming RPC. Each successful data-layer write emits `dataChanged` with `{ service, resource, operation, value }` onto an in-process `EventEmitter` that fans the change out to every open stream; `api/src/services.ts` reconnects with exponential backoff if the stream drops.
+- `SubscribeEvents` is a server-streaming RPC. Each successful data-layer write emits `dataChanged` with `{ service, resource, operation, value }` onto an in-process `EventEmitter` that fans the change out to every open stream; `api/src/procedures/services.ts` reconnects with exponential backoff if the stream drops.
 
 ## Environment
 

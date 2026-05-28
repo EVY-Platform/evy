@@ -4,7 +4,7 @@ import {
 	clearUploadsForTest,
 	handleUploadChunk,
 	parseUploadChunkFrame,
-} from "../uploads";
+} from "../procedures/uploads";
 
 function buildChunkFrame(metadata: object, chunkData: Buffer): Buffer {
 	const metadataBytes = Buffer.from(JSON.stringify(metadata), "utf-8");

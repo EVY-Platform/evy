@@ -21,8 +21,12 @@ import {
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
-const dataModule = await import("../data");
-const { create, setDbForTest, validateAuth } = dataModule;
+const coreModule = await import("../data/core");
+const { create } = coreModule;
+const devicesModule = await import("../data/devices");
+const { validateAuth } = devicesModule;
+const dbModule = await import("../data/db");
+const { setDbForTest } = dbModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 
 describe("create/update real-time notifications", () => {

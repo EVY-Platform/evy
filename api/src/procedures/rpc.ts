@@ -12,7 +12,7 @@ import {
 	create as createCore,
 	update as updateCore,
 	delete as deleteCore,
-} from "./data";
+} from "../data/core";
 import { sync as coreSync } from "./sync";
 import { forwardGet, forwardCreate, forwardUpdate } from "./services";
 import {

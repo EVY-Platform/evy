@@ -10,15 +10,15 @@ Monorepo setup (Compose, seeding, local Bun): [README § Running Services](../RE
 
 High-level diagram (iOS / web / API / marketplace / Postgres): [README § Architecture at a glance](../README.md#architecture-at-a-glance).
 
-The API is the only public edge for iOS and the web builder. Requests are validated against [`types/schema/rpc/`](../types/schema/rpc) and routed by `service` + `resource` in [`src/rpc.ts`](./src/rpc.ts): `service === "evy"` goes to [`src/data.ts`](./src/data.ts); any other registered service uses [`src/services.ts`](./src/services.ts) to call gRPC. Every non-`evy` service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (see `SERVICE_VALUES` in generated types / [`src/services.ts`](./src/services.ts)).
+The API is the only public edge for iOS and the web builder. Requests are validated against [`types/schema/rpc/`](../types/schema/rpc) and routed by `service` + `resource` in [`src/procedures/rpc.ts`](./src/procedures/rpc.ts): `service === "evy"` goes to [`src/data/`](./src/data/); any other registered service uses [`src/procedures/services.ts`](./src/procedures/services.ts) to call gRPC. Every non-`evy` service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (see `SERVICE_VALUES` in generated types / [`src/procedures/services.ts`](./src/procedures/services.ts)).
 
 ### Request dispatch
 
 `get` is public. `create`, `update`, `delete`, and `sync` are protected (require a valid device token via `validateAuth`). Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` and `delete` require `filter.id`.
 
-- `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, `providers` (typed catalog tables), and `images` (image metadata / `image` table). There is no generic `evy` "data" table routed through `services.ts`.
-- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/services.ts`](./src/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses.
-- **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/catalog + external services) since that timestamp. When data changed, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
+- `service: "evy"` &mdash; handled entirely under [`src/data/`](./src/data/). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, `providers` (typed resource tables), and `images` (image metadata / `image` table). There is no generic `evy` "data" table routed through `services.ts`.
+- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/procedures/rpc.ts`](./src/procedures/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/procedures/services.ts`](./src/procedures/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses.
+- **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/resources + external services) since that timestamp. When data changed, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
 
 Synchronous request/response path:
 
@@ -85,21 +85,22 @@ sequenceDiagram
 ```
 
 - [`src/index.ts`](./src/index.ts) creates a `broadcast` callback wrapping `emitJsonRpc` and injects it into `rpc` and `services` at startup.
-- Successful syncable `evy` writes emit `dataChanged` from [`src/data.ts`](./src/data.ts), including SDUI. Payloads include the write operation: `{ service, resource, operation, value }`.
-- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/services.ts`](./src/services.ts) parses `payload_json` and forwards them via the same broadcast callback (reconnect with exponential backoff). Remote `dataChanged` payloads use the same `{ service, resource, operation, value }` shape.
+- Successful syncable `evy` writes emit `dataChanged` from [`src/data/`](./src/data/), including SDUI. Payloads include the write operation: `{ service, resource, operation, value }`.
+- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/procedures/services.ts`](./src/procedures/services.ts) parses `payload_json` and forwards them via the same broadcast callback (reconnect with exponential backoff). Remote `dataChanged` payloads use the same `{ service, resource, operation, value }` shape.
 - The shared [`src/broadcast.ts`](./src/broadcast.ts) defines the `BroadcastFn` type contract, decoupling `rpc` and `services` from the WebSocket layer.
 
 ### Internal module layout
 
 ```mermaid
 flowchart TD
-    index[index.ts<br/>wires server + handlers + broadcast]
-    ws[ws.ts<br/>JSON-RPC transport]
-    rpc[rpc.ts<br/>get / create / update routing]
-    data[data.ts<br/>Drizzle + auth<br/>getCore / createCore / updateCore]
-    services[services.ts<br/>gRPC adapters + SubscribeEvents]
-    sync[sync.ts<br/>unified sync handler]
-    readiness[readiness.ts<br/>health / seed check]
+    index[index.ts wires server handlers broadcast]
+    ws[ws.ts JSON-RPC transport]
+    rpc[procedures/rpc.ts request routing]
+    data[data directory evy core resources]
+    db[db.ts Drizzle client]
+    services[procedures/services.ts gRPC adapters SubscribeEvents]
+    sync[procedures/sync.ts unified sync handler]
+    readiness[readiness.ts health seed check]
 
     index --> ws
     index --> rpc
@@ -108,12 +109,13 @@ flowchart TD
     rpc --> data
     rpc --> services
     rpc --> sync
+    data --> db
     sync --> data
     sync --> services
     readiness --> rpc
 ```
 
-- `data.ts` owns the Drizzle client and imports API tables directly from `types/generated/ts/db/schema.generated.ts`.
+- `db.ts` owns the Drizzle client and imports API tables directly from `types/generated/ts/db/schema.generated.ts`; `src/data/` owns evy core resource procedures.
 - The schema comes from `types/schema/data/` via `bun run types:generate`.
 - Validators are imported directly from `evy-types/validators` and `evy-types/rpcRequestHelpers` (no local wrapper file).
 
@@ -142,7 +144,7 @@ DB_PASS=evy
 DB_PORT=5432
 DB_DOMAIN=localhost
 DB_EVY_DATABASE=evy
-# Required for each non-evy service (dial target host:port for the API); see api/src/services.ts
+# Required for each non-evy service (dial target host:port for the API); see api/src/procedures/services.ts
 # Local processes on the host: use 127.0.0.1. Docker Compose overrides use the service name `marketplace`.
 MARKETPLACE_GRPC_HOST=127.0.0.1
 MARKETPLACE_GRPC_PORT=8001

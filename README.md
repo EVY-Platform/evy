@@ -5,8 +5,8 @@ If smartphones and the internet were built by the people for the people. Create 
 ## Architecture at a glance
 
 EVY is split into 2 thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by `service + resource`:
-- `service: "evy"` is handled in-process in the API (SDUI flows and core catalog tables)
-- any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/services.ts`](./api/src/services.ts).
+- `service: "evy"` is handled in-process in the API (SDUI flows and core resource tables)
+- any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/procedures/services.ts`](./api/src/procedures/services.ts).
 
 ```mermaid
 %%{ init: { 'flowchart': { 'curve': 'linear' } } }%%
@@ -54,7 +54,7 @@ iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS
 
 ## Shared type system
 
-Schema layout, codegen steps, and outputs: [`docs/evy/types.md`](./docs/evy/types.md). In short: source JSON Schema lives under `types/schema/`; run `bun run types:generate` from the repo root after changes. gRPC contract: [`types/schema/service.proto`](./types/schema/service.proto). The `evy` data path is implemented in [`api/src/data.ts`](./api/src/data.ts); [`api/src/services.ts`](./api/src/services.ts) holds gRPC clients and `SubscribeEvents` fan-out for non-`evy` services.
+Schema layout, codegen steps, and outputs: [`docs/evy/types.md`](./docs/evy/types.md). In short: source JSON Schema lives under `types/schema/`; run `bun run types:generate` from the repo root after changes. gRPC contract: [`types/schema/service.proto`](./types/schema/service.proto). The `evy` data path is implemented under [`api/src/data/`](./api/src/data/); [`api/src/procedures/services.ts`](./api/src/procedures/services.ts) holds gRPC clients and `SubscribeEvents` fan-out for non-`evy` services.
 
 ## Setup
 

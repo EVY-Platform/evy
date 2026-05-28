@@ -9,8 +9,7 @@ import Foundation
 
 let API_HOST = "localhost:8000"
 
-@MainActor
-final class EVYAPIManager {
+actor EVYAPIManager {
   private let rpcWS: EVYWebsocketProtocol
   private var authed: Bool = false
 
