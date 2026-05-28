@@ -1,14 +1,12 @@
 import {
 	afterAll,
-	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
 	expect,
 	it,
 } from "bun:test";
-import { mkdir, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { eq } from "drizzle-orm";
@@ -27,6 +25,7 @@ import type {
 } from "evy-types";
 import { validateUiFlow as validateFlowData } from "evy-types/validators";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
+import { useImageStorageDirsForTest } from "./imageStorageTestHelpers";
 import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
 
 type ValidatedRow = UI_Row;
@@ -61,10 +60,6 @@ const { validateAuth, create, get, setDbForTest, update } = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 const uploadModule = await import("../uploads");
 const { clearUploadsForTest, handleUploadChunk } = uploadModule;
-const imageFilesModule = await import("../imageFiles");
-const { resetImageStorageDirsForTest, setImageStorageDirsForTest } =
-	imageFilesModule;
-
 function isDATA_EVY_Flow(
 	result: CreateResponse | UpdateResponse,
 ): result is DATA_EVY_Flow {
@@ -837,8 +832,7 @@ describe("images", () => {
 	const now = "2024-01-19T12:00:00.000Z";
 	const validJpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 	const validPngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]);
-	let testImagesDir: string;
-	let testTmpDir: string;
+	const getImageStorageDirs = useImageStorageDirsForTest("data-images");
 
 	function buildChunkFrame(metadata: object, chunkData: Buffer): Buffer {
 		const metadataBytes = Buffer.from(JSON.stringify(metadata), "utf-8");
@@ -869,20 +863,6 @@ describe("images", () => {
 	beforeEach(async () => {
 		await clearAllTestTables(testDb);
 		clearUploadsForTest();
-		testImagesDir = join(tmpdir(), `evy-data-images-test-${Date.now()}`);
-		testTmpDir = join(tmpdir(), `evy-data-uploads-test-${Date.now()}`);
-		await mkdir(testImagesDir, { recursive: true });
-		await mkdir(testTmpDir, { recursive: true });
-		setImageStorageDirsForTest({
-			imagesDir: testImagesDir,
-			uploadTmpDir: testTmpDir,
-		});
-	});
-
-	afterEach(async () => {
-		resetImageStorageDirsForTest();
-		await rm(testImagesDir, { recursive: true, force: true });
-		await rm(testTmpDir, { recursive: true, force: true });
 	});
 
 	it("rejects image create when no uploaded binary exists", async () => {
@@ -914,7 +894,9 @@ describe("images", () => {
 		});
 
 		expect(result).toMatchObject({ id: imageId, type: "image/jpeg" });
-		const storedBinary = await readFile(join(testImagesDir, `${imageId}.jpg`));
+		const storedBinary = await readFile(
+			join(getImageStorageDirs().imagesDir, `${imageId}.jpg`),
+		);
 		expect(storedBinary).toEqual(validJpegBytes);
 	});
 

@@ -1,12 +1,6 @@
-import { describe, it, expect, beforeEach, mock, afterEach } from "bun:test";
-import { mkdir, rm } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import {
-	setImageStorageDirsForTest,
-	resetImageStorageDirsForTest,
-	writeImageBinary,
-} from "../imageFiles";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { writeImageBinary } from "../imageFiles";
+import { useImageStorageDirsForTest } from "./imageStorageTestHelpers";
 
 const mockGetImageMetadata = mock(async (id: string) => ({
 	id,
@@ -27,36 +21,15 @@ mock.module("../data", () => ({
 	deleteImageMetadata: mockDeleteImageMetadata,
 }));
 
-const { createImageHandlers } = await import("../images");
+const { getImage, deleteImage } = await import("../images");
 
-type Handlers = ReturnType<typeof createImageHandlers>;
-
-let getImage: Handlers["getImage"];
-let deleteImage: Handlers["deleteImage"];
-let testImagesDir: string;
-let testTmpDir: string;
+useImageStorageDirsForTest("images");
 
 const validJpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 
-beforeEach(async () => {
-	({ getImage, deleteImage } = createImageHandlers());
+beforeEach(() => {
 	mockGetImageMetadata.mockClear();
 	mockDeleteImageMetadata.mockClear();
-
-	testImagesDir = join(tmpdir(), `evy-images-test-${Date.now()}`);
-	testTmpDir = join(tmpdir(), `evy-uploads-test-${Date.now()}`);
-	await mkdir(testImagesDir, { recursive: true });
-	await mkdir(testTmpDir, { recursive: true });
-	setImageStorageDirsForTest({
-		imagesDir: testImagesDir,
-		uploadTmpDir: testTmpDir,
-	});
-});
-
-afterEach(async () => {
-	resetImageStorageDirsForTest();
-	await rm(testImagesDir, { recursive: true, force: true });
-	await rm(testTmpDir, { recursive: true, force: true });
 });
 
 describe("getImage", () => {

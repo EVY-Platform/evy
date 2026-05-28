@@ -150,8 +150,8 @@ async function listCoreCatalogRows<TRow>(
 
 	const rows = whereClauses.length
 		? await base
-			.where(and(...whereClauses))
-			.orderBy(asc(table.updatedAt), asc(table.id))
+				.where(and(...whereClauses))
+				.orderBy(asc(table.updatedAt), asc(table.id))
 		: await base.orderBy(asc(table.updatedAt), asc(table.id));
 	return validateGetResponse(rows.map((r) => mapRow(r as TRow)));
 }
@@ -256,8 +256,8 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 
 		const rows = whereClauses.length
 			? await base
-				.where(and(...whereClauses))
-				.orderBy(asc(flow.updatedAt), asc(flow.id))
+					.where(and(...whereClauses))
+					.orderBy(asc(flow.updatedAt), asc(flow.id))
 			: await base.orderBy(asc(flow.updatedAt), asc(flow.id));
 		const payload = rows.map((f) => f.data);
 		for (const item of payload) {

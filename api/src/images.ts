@@ -1,6 +1,5 @@
 import { deleteImageMetadata, getImageMetadata } from "./data";
 import { deleteImageBinary, readImageBinary } from "./imageFiles";
-import { cancelUpload } from "./uploads";
 import {
 	validateGetImageParams,
 	validateDeleteImageParams,
@@ -13,47 +12,38 @@ export interface GetImageResponse {
 	dataBase64: string;
 }
 
-export function createImageHandlers() {
-	async function getImage(params: unknown): Promise<GetImageResponse> {
-		const validated = validateGetImageParams(params);
+export async function getImage(params: unknown): Promise<GetImageResponse> {
+	const validated = validateGetImageParams(params);
 
-		const metadata = await getImageMetadata(validated.id);
-		let fileData: Buffer;
-		try {
-			fileData = await readImageBinary({
-				id: metadata.id,
-				type: metadata.type,
-			});
-		} catch {
-			throw new Error(`Image binary not found for id: ${validated.id}`);
-		}
-
-		return {
+	const metadata = await getImageMetadata(validated.id);
+	let fileData: Buffer;
+	try {
+		fileData = await readImageBinary({
 			id: metadata.id,
 			type: metadata.type,
-			createdAt: metadata.createdAt,
-			dataBase64: fileData.toString("base64"),
-		};
-	}
-
-	async function deleteImage(params: unknown): Promise<{ ok: true }> {
-		const validated = validateDeleteImageParams(params);
-
-		const metadata = await getImageMetadata(validated.id);
-		try {
-			await deleteImageBinary({ id: metadata.id, type: metadata.type });
-		} catch {
-			// Binary already missing — still clean up metadata to avoid orphan.
-		}
-
-		await deleteImageMetadata(metadata.id);
-		return { ok: true };
+		});
+	} catch {
+		throw new Error(`Image binary not found for id: ${validated.id}`);
 	}
 
 	return {
-		cancelImageUpload: cancelUpload,
-		cancelUpload,
-		getImage,
-		deleteImage,
+		id: metadata.id,
+		type: metadata.type,
+		createdAt: metadata.createdAt,
+		dataBase64: fileData.toString("base64"),
 	};
+}
+
+export async function deleteImage(params: unknown): Promise<{ ok: true }> {
+	const validated = validateDeleteImageParams(params);
+
+	const metadata = await getImageMetadata(validated.id);
+	try {
+		await deleteImageBinary({ id: metadata.id, type: metadata.type });
+	} catch {
+		// Binary already missing — still clean up metadata to avoid orphan.
+	}
+
+	await deleteImageMetadata(metadata.id);
+	return { ok: true };
 }
