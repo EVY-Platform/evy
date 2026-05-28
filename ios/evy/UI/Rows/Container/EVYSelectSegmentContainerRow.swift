@@ -18,9 +18,7 @@ struct EVYSelectSegmentContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if view.content.title.count > 0 {
-        EVYTextView(view.content.title)
-      }
+      EVYRowTitle(title: view.content.title)
       Picker("", selection: $selected) {
         ForEach(Array(view.content.segments.enumerated()), id: \.offset) { index, segment in
           Text(segment).tag(index)

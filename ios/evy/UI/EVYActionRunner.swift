@@ -58,9 +58,8 @@ enum EVYActionRunner {
     navigate: @escaping (NavOperation) -> Void,
     show: @escaping (UI_Row) -> Void
   ) throws {
-    let unwrappedBranch = unwrapActionBranch(branch)
-
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
+    let unwrappedBranch = String(branch.dropFirst().dropLast())
 
     if let (functionName, functionArgs) = parseFunctionCall(unwrappedBranch) {
       switch functionName {
@@ -187,8 +186,4 @@ enum EVYActionRunner {
     return [value]
   }
 
-  private static func unwrapActionBranch(_ branch: String) -> String {
-    guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return branch }
-    return String(branch.dropFirst().dropLast())
-  }
 }

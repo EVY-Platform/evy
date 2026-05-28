@@ -10,8 +10,6 @@ import SwiftUI
 @MainActor
 enum EVYPreviewMockData {
 
-  // MARK: - Item (used by most row previews)
-
   static let item = """
     {
       "id": "preview-item-1",
@@ -30,8 +28,6 @@ enum EVYPreviewMockData {
     }
     """
 
-  // MARK: - Conditions
-
   static let conditions = """
     [
       { "id": "cond-1", "value": "Like New" },
@@ -40,8 +36,6 @@ enum EVYPreviewMockData {
     ]
     """
 
-  // MARK: - Durations
-
   static let durations = """
     [
       { "id": "dur-1", "value": "30 min" },
@@ -49,8 +43,6 @@ enum EVYPreviewMockData {
       { "id": "dur-3", "value": "2 hours" }
     ]
     """
-
-  // MARK: - Selling Reasons
 
   static let sellingReasons = """
     [
@@ -61,8 +53,6 @@ enum EVYPreviewMockData {
     ]
     """
 
-  // MARK: - Tags
-
   static let tags = """
     [
       "energy-efficient",
@@ -71,24 +61,20 @@ enum EVYPreviewMockData {
     ]
     """
 
-  // MARK: - Calendar
-
   static let calendarPickupSelection = "[\"2024-09-18T09:00:00\",\"2024-09-18T09:30:00\"]"
   static let calendarDeliverySelection = "[\"2024-09-19T14:00:00\"]"
   static let calendarContentJSON = """
     {
-        \"title\": \"\",
-        \"start_time\": \"07:00\",
-        \"end_time\": \"19:00\",
-        \"timeslot_interval_minutes\": 30,
-        \"label_interval_minutes\": 60,
-        \"header_format\": \"EEE d\",
-        \"primary\": \"{pickup_selection}\",
-        \"secondary\": \"{delivery_selection}\"
+        "title": "",
+        "start_time": "07:00",
+        "end_time": "19:00",
+        "timeslot_interval_minutes": 30,
+        "label_interval_minutes": 60,
+        "header_format": "EEE d",
+        "primary": "{pickup_selection}",
+        "secondary": "{delivery_selection}"
     }
     """
-
-  // MARK: - User (for $local bindings)
 
   static let user = """
     {
@@ -101,8 +87,6 @@ enum EVYPreviewMockData {
       }
     }
     """
-
-  // MARK: - Helpers
 
   static func seed(key: String, json: String) {
     guard let data = json.data(using: .utf8),

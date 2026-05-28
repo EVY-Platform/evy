@@ -28,8 +28,7 @@ struct Constants {
     #colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
   static let buttonColor: Color = Color(
     #colorLiteral(red: 0.2352934182, green: 0.2352946103, blue: 0.2610042691, alpha: 1))
-  static let buttonDisabledColor: Color = Color(
-    #colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1))
+  static let buttonDisabledColor = textGreyColor
   static let tappableClearColor: Color = Color.black.opacity(0.0001)
   static let actionColor: Color = .blue
   static let inactiveBackground: Color = Color(

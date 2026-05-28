@@ -19,11 +19,8 @@ struct EVYTextRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if view.content.title.count > 0 {
-        EVYTextView(view.content.title)
-          .padding(.vertical, Constants.padding)
-      }
-      if view.content.action.trimmingCharacters(in: .whitespacesAndNewlines).count > 0 {
+      EVYRowTitle(title: view.content.title)
+      if !view.content.action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         actionText
       } else {
         expandableText
@@ -47,7 +44,7 @@ struct EVYTextRow: View {
     VStack(alignment: .leading) {
       EVYTextView(view.content.text)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .lineLimit(Int(view.max_lines.isEmpty ? "1" : view.max_lines) ?? 1)
+        .lineLimit(Int(view.max_lines) ?? 1)
         .background {
           ViewThatFits(in: .vertical) {
             EVYTextView(view.content.text).hidden()

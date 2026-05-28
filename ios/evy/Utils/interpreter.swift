@@ -266,7 +266,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     return try cachedRow.decoded().parseProp(props: remainingProps)
   }
 
-  // 3. Fall back to persistent store — synced API data
+  // 2. Fall back to persistent store — synced API data
   let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
   let json = try store.getJsonForBinding(key: firstProp)
   return json.parseProp(props: remainingProps)
@@ -445,7 +445,7 @@ private func parseComparisonFromText(_ input: String) -> (fullMatch: String, con
     let block = String(match.0)
     let comparison = String(block.dropFirst().dropLast())
       .trimmingCharacters(in: .whitespacesAndNewlines)
-    if containsTopLevelComparisonOperator(comparison) {
+    if firstTopLevelComparison(in: comparison) != nil {
       return (block, comparison)
     }
   }
@@ -521,10 +521,6 @@ private func parseAtomicComparison(_ input: String) -> (
     return nil
   }
   return (left, comparisonOperator, right)
-}
-
-private func containsTopLevelComparisonOperator(_ input: String) -> Bool {
-  firstTopLevelComparison(in: input) != nil
 }
 
 private func isWrappedInParentheses(_ input: String) -> Bool {

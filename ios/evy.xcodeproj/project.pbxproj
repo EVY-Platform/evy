@@ -19,7 +19,7 @@
 		2EE4E27D2B99D7F300CEF112 /* EVYSelectList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */; };
 		730187D62F20E232002EF894 /* user_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 730187D52F20E232002EF894 /* user_data.json */; };
 		7303B31A2C3EB8A000796123 /* EVYCalendarSlot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7303B3192C3EB8A000796123 /* EVYCalendarSlot.swift */; };
-		730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */; };
+
 		731988822C271BBD0035E094 /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 731988812C271BBD0035E094 /* JsonRPC */; };
 		731988852C271BC40035E094 /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 731988842C271BC40035E094 /* Serializable */; };
 		7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */; };
@@ -85,7 +85,7 @@
 		73F4B0032F40B00100000001 /* LucideIcons in Frameworks */ = {isa = PBXBuildFile; productRef = 73F4B0022F40B00100000001 /* LucideIcons */; };
 		73F5D1012F50000100000001 /* EVYDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F5D1002F50000100000001 /* EVYDraft.swift */; };
 		73F5D2012F50000200000001 /* forEachRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F5D2002F50000200000001 /* forEachRow.swift */; };
-		73F6A0022F60000100000001 /* isNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F6A0012F60000100000001 /* isNumber.swift */; };
+
 		73F7A0012F70B00700000001 /* CoreResources.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7A0112F70B00700000001 /* CoreResources.generated.swift */; };
 		73F7E0022F70000100000001 /* EVYError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7E0012F70000100000001 /* EVYError.swift */; };
 		73F7E1012F70010100000001 /* EVYDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7E1002F70010100000001 /* EVYDataStore.swift */; };
@@ -128,7 +128,7 @@
 		2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectList.swift; sourceTree = "<group>"; };
 		730187D52F20E232002EF894 /* user_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = user_data.json; path = ../docs/evy/user_data.json; sourceTree = SOURCE_ROOT; };
 		7303B3192C3EB8A000796123 /* EVYCalendarSlot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarSlot.swift; sourceTree = "<group>"; };
-		730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hasDynamicIsland.swift; sourceTree = "<group>"; };
+
 		7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInfoRow.swift; sourceTree = "<group>"; };
 		732A50812C1D6AE80036B98B /* EVY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVY.swift; sourceTree = "<group>"; };
 		7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectItem.swift; sourceTree = "<group>"; };
@@ -197,7 +197,7 @@
 		73F3C0DE2E56000100ROW02 /* EVYRowTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRowTitle.swift; sourceTree = "<group>"; };
 		73F5D1002F50000100000001 /* EVYDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraft.swift; sourceTree = "<group>"; };
 		73F5D2002F50000200000001 /* forEachRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = forEachRow.swift; sourceTree = "<group>"; };
-		73F6A0012F60000100000001 /* isNumber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = isNumber.swift; sourceTree = "<group>"; };
+
 		73F7A0112F70B00700000001 /* CoreResources.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreResources.generated.swift; sourceTree = "<group>"; };
 		73F7E0012F70000100000001 /* EVYError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYError.swift; sourceTree = "<group>"; };
 		73F7E1002F70010100000001 /* EVYDataStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYDataStore.swift; sourceTree = "<group>"; };
@@ -259,9 +259,9 @@
 		730D008E2B29D91200B5BCB6 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
-				73F6A0012F60000100000001 /* isNumber.swift */,
+
 				73D878E72B2ECD6900A1F9C2 /* chunked.swift */,
-				730D008F2B29D93900B5BCB6 /* hasDynamicIsland.swift */,
+
 				73A6BDF82B85F75800C8F882 /* functions.swift */,
 				735795D22C21AF6100ADB49D /* interpreter.swift */,
 				73F5D2002F50000200000001 /* forEachRow.swift */,
@@ -656,7 +656,7 @@
 				73C5D23E2C0AF1030024FF11 /* EVYTextView.swift in Sources */,
 				73F3C0DF2E56000100ROW01 /* EVYRowTitle.swift in Sources */,
 				73CB09522C7608A7008F7D2C /* EVYRectangle.swift in Sources */,
-				730D00902B29D93900B5BCB6 /* hasDynamicIsland.swift in Sources */,
+
 				737C6AA82B2706890093D00C /* ContentView.swift in Sources */,
 				7303B31A2C3EB8A000796123 /* EVYCalendarSlot.swift in Sources */,
 				73DAEC0C2C7729F8003A0A29 /* EVYDatumRowFormatter.swift in Sources */,
@@ -665,7 +665,7 @@
 				74B200012F33000100000001 /* EVYCalendarGridBuilder.swift in Sources */,
 				74B200032F33000100000001 /* EVYCalendarAxisView.swift in Sources */,
 				73CB09542C7609E5008F7D2C /* EVYInputListRow.swift in Sources */,
-				73F6A0022F60000100000001 /* isNumber.swift in Sources */,
+
 				73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */,
 				73884AC42B2E9AE500BC8726 /* EVYTimeslotPicker.swift in Sources */,
 				73B3CF7D2C6871EA00FD333A /* EVYCalendarRow.swift in Sources */,

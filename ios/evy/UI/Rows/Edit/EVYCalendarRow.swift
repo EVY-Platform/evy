@@ -14,10 +14,7 @@ struct EVYCalendarRow: View {
   }
 
   var body: some View {
-    if view.content.title.count > 0 {
-      EVYTextView(view.content.title)
-        .padding(.vertical, Constants.padding)
-    }
+    EVYRowTitle(title: view.content.title)
     EVYCalendar(content: view.content)
   }
 }

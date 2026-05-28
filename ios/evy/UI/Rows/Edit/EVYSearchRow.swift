@@ -19,10 +19,7 @@ struct EVYSearchRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      if view.content.title.count > 0 {
-        EVYTextView(view.content.title)
-          .padding(.vertical, Constants.padding)
-      }
+      EVYRowTitle(title: view.content.title)
       EVYSearch(
         source: source,
         placeholder: view.content.placeholder,

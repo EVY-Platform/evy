@@ -60,7 +60,7 @@ final class EVYWebsocket: EVYWebsocketProtocol {
   private var nextId = 1
   private let wsURL: URL
 
-  init(host: String) {
+  nonisolated init(host: String) {
     wsURL = URL(string: "ws://\(host)")!
   }
 

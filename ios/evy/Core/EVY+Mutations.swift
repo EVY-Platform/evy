@@ -52,10 +52,7 @@ extension EVY {
     var mergedPayload: EVYJson = .dictionary([:])
 
     let scopeForMerge = draftScopeId ?? draftStore.activeScopeId
-    let draftEntries: [EVYData] = {
-      guard let s = scopeForMerge else { return [] }
-      return (try? draftStore.drafts(forScopeId: s)) ?? []
-    }()
+    let draftEntries = scopeForMerge.flatMap { try? draftStore.drafts(forScopeId: $0) } ?? []
     for draftEntry in draftEntries {
       let draftValue = try draftEntry.decoded()
       if case .string(let s) = draftValue, s.isEmpty {

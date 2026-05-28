@@ -219,18 +219,12 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
 
 @MainActor
 private func evyJsonFromFirstArgument(args: String, errorType: String) throws -> EVYJson {
-  let path = try evyTrimmedFirstPath(from: args, errorType: errorType)
-  return try EVY.getDataFromProps(path)
-}
-
-@MainActor
-private func evyTrimmedFirstPath(from args: String, errorType: String) throws -> String {
   let parts = splitFunctionArguments(args)
   guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty
   else {
     throw EVYError.formatFailed(type: errorType, reason: "missing value argument")
   }
-  return path
+  return try EVY.getDataFromProps(path)
 }
 
 @MainActor
@@ -275,20 +269,28 @@ func evyFormatDecimal(
 }
 
 @MainActor
+private func evyFormatLength(
+  _ args: String,
+  _ editing: Bool,
+  errorType: String,
+  divisor: Double,
+  suffix: String
+) throws -> EVYFunctionOutput {
+  let res = try evyJsonFromFirstArgument(args: args, errorType: errorType)
+  let mm = try evyMillimetres(from: res, errorType: errorType)
+  if editing {
+    return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
+  }
+  let formatted = String(format: "%.2f", Double(mm) / divisor)
+  return EVYFunctionOutput(value: formatted, prefix: nil, suffix: suffix)
+}
+
+@MainActor
 func evyFormatMetricLength(
   _ args: String,
   _ editing: Bool = false
 ) throws -> EVYFunctionOutput {
-  let res = try evyJsonFromFirstArgument(args: args, errorType: "metricLength")
-  let mm = try evyMillimetres(from: res, errorType: "metricLength")
-
-  if editing {
-    return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
-  }
-
-  let metres = Double(mm) / 1000.0
-  let formatted = String(format: "%.2f", metres)
-  return EVYFunctionOutput(value: formatted, prefix: nil, suffix: "m")
+  try evyFormatLength(args, editing, errorType: "metricLength", divisor: 1000.0, suffix: "m")
 }
 
 @MainActor
@@ -296,16 +298,7 @@ func evyFormatImperialLength(
   _ args: String,
   _ editing: Bool = false
 ) throws -> EVYFunctionOutput {
-  let res = try evyJsonFromFirstArgument(args: args, errorType: "imperialLength")
-  let mm = try evyMillimetres(from: res, errorType: "imperialLength")
-
-  if editing {
-    return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
-  }
-
-  let feet = Double(mm) / 304.8
-  let formatted = String(format: "%.2f", feet)
-  return EVYFunctionOutput(value: formatted, prefix: nil, suffix: "ft")
+  try evyFormatLength(args, editing, errorType: "imperialLength", divisor: 304.8, suffix: "ft")
 }
 
 @MainActor
@@ -341,8 +334,8 @@ func evyFormatDate(
     stripOptionalSurroundingQuotes(parts[1])
       .trimmingCharacters(in: .whitespacesAndNewlines)
   )
-  guard !path.isEmpty, !pattern.isEmpty else {
-    throw EVYError.formatFailed(type: "date", reason: "missing value or format pattern")
+  guard !pattern.isEmpty else {
+    throw EVYError.formatFailed(type: "date", reason: "missing format pattern")
   }
 
   let res = try EVY.getDataFromProps(path)
