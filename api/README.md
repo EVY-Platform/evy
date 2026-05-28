@@ -14,7 +14,7 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 
 ### Request dispatch
 
-`get` is public. `create`, `update`, and `sync` are protected (require a valid device token via `validateAuth`). Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` requires `filter.id`.
+`get` is public. `create`, `update`, `delete`, and `sync` are protected (require a valid device token via `validateAuth`). Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` and `delete` require `filter.id`.
 
 - `service: "evy"` &mdash; handled entirely in [`src/data.ts`](./src/data.ts). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, `providers` (typed catalog tables), and `images` (image metadata / `image` table). There is no generic `evy` "data" table routed through `services.ts`.
 - `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/rpc.ts`](./src/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/services.ts`](./src/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses.
@@ -264,7 +264,6 @@ After staging the binary upload, create the image through the normal protected `
 | Method | Auth | Description |
 |--------|------|-------------|
 | `create` | protected | For `service: "evy"`, `resource: "images"`, finalises a staged binary upload and creates image metadata. |
+| `delete` | protected | For `service: "evy"`, `resource: "images"`, deletes image binary and metadata. Params include `filter: { id }`. Returns the deleted metadata row. |
 | `cancelUpload` | protected | Discard an in-progress generic upload session. Params: `{ uploadId }`. Returns `{ ok: true }`. |
-| `cancelImageUpload` | protected | Backwards-compatible alias for `cancelUpload`. |
-| `getImage` | public | Fetch image binary + metadata by id. Params: `{ id }`. Returns `{ id, type, createdAt, dataBase64 }`. |
-| `deleteImage` | protected | Delete image binary and metadata by id. Params: `{ id }`. Returns `{ ok: true }`. |
+| `get` | public | For `service: "evy"`, `resource: "images"`, returns image metadata + base64 binary. Use `filter: { id }` to fetch a single image. |

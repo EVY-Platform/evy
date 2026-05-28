@@ -14,6 +14,8 @@ import type {
 	CreateResponse,
 	UpdateRequest,
 	UpdateResponse,
+	DeleteRequest,
+	DeleteResponse,
 } from "evy-types";
 import * as schema from "../../types/generated/ts/db/schema.generated";
 import {
@@ -26,7 +28,12 @@ import {
 	osEnum,
 } from "../../types/generated/ts/db/schema.generated";
 import { getConnectionUrl } from "./db";
-import { deleteImageBinaryIfExists, writeImageBinary } from "./imageFiles";
+import {
+	deleteImageBinary,
+	deleteImageBinaryIfExists,
+	readImageBinary,
+	writeImageBinary,
+} from "./imageFiles";
 import { emitDataChangedNotification } from "./notifications";
 import {
 	deleteUploadSession,
@@ -47,6 +54,8 @@ import {
 	validateUiFlow as validateFlowData,
 	validateCreateResponse,
 	validateUpdateResponse,
+	validateDeleteResponse,
+	validateGetImageParams,
 } from "evy-types/validators";
 
 const evyCoreResourceNameSet: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
@@ -61,7 +70,7 @@ export function setDbForTest(database: typeof db): void {
 }
 
 function assertEvyCoreAccess(
-	params: GetRequest | CreateRequest | UpdateRequest,
+	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
 ): void {
 	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
@@ -97,6 +106,12 @@ export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 	assertEvyCoreAccess(params);
 	return updateCoreBody(params);
 }
+
+async function deleteResource(params: DeleteRequest): Promise<DeleteResponse> {
+	assertEvyCoreAccess(params);
+	return deleteCoreBody(params);
+}
+export { deleteResource as delete }; // We have to do this because of JS
 
 function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 	return {
@@ -150,8 +165,8 @@ async function listCoreCatalogRows<TRow>(
 
 	const rows = whereClauses.length
 		? await base
-				.where(and(...whereClauses))
-				.orderBy(asc(table.updatedAt), asc(table.id))
+			.where(and(...whereClauses))
+			.orderBy(asc(table.updatedAt), asc(table.id))
 		: await base.orderBy(asc(table.updatedAt), asc(table.id));
 	return validateGetResponse(rows.map((r) => mapRow(r as TRow)));
 }
@@ -201,6 +216,26 @@ async function updateCatalogEntityFromConfig<TValidated>(
 		throw new Error("Resource not found");
 	}
 	const response = validateUpdateResponse(config.mapRow(updated[0]));
+
+	notify(response);
+	return response;
+}
+
+async function deleteCatalogEntityFromConfig<TValidated>(
+	config: CatalogEntityConfig<TValidated>,
+	filter: DeleteRequest["filter"],
+	notify: (value: unknown) => void,
+): Promise<DeleteResponse> {
+	const filterId = filter.id;
+
+	// biome-ignore lint/suspicious/noExplicitAny: union CatalogTable needs concrete table at each config site
+	const deleted = await (db.delete(config.table as any) as any)
+		.where(eq(config.table.id, filterId))
+		.returning();
+	if (deleted.length === 0) {
+		throw new Error("Resource not found");
+	}
+	const response = validateDeleteResponse(config.mapRow(deleted[0]));
 
 	notify(response);
 	return response;
@@ -256,8 +291,8 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 
 		const rows = whereClauses.length
 			? await base
-					.where(and(...whereClauses))
-					.orderBy(asc(flow.updatedAt), asc(flow.id))
+				.where(and(...whereClauses))
+				.orderBy(asc(flow.updatedAt), asc(flow.id))
 			: await base.orderBy(asc(flow.updatedAt), asc(flow.id));
 		const payload = rows.map((f) => f.data);
 		for (const item of payload) {
@@ -432,10 +467,6 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 		});
 	}
 
-	if (resource === EVY_CORE_RESOURCE.DEVICES) {
-		throw new Error("devices are managed via validateAuth only");
-	}
-
 	if (resource === EVY_CORE_RESOURCE.SDUI) {
 		const validatedData = validateFlowData(dataPayload);
 		const filterId = filter?.id;
@@ -518,7 +549,7 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 		}
 	}
 
-	throw new Error("Unsupported resource for core API");
+	throw new Error("Create is not supported for this resource");
 }
 
 async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
@@ -532,14 +563,6 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 			operation: "update",
 			value,
 		});
-	}
-
-	if (resource === EVY_CORE_RESOURCE.DEVICES) {
-		throw new Error("devices are managed via validateAuth only");
-	}
-
-	if (resource === EVY_CORE_RESOURCE.IMAGES) {
-		throw new Error("Image metadata updates are not supported");
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SDUI) {
@@ -593,29 +616,71 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 		);
 	}
 
-	throw new Error("Unsupported resource for core API");
+	throw new Error("Update is not supported for this resource");
 }
 
-export async function getImageMetadata(id: string): Promise<DATA_EVY_Image> {
+async function deleteCoreBody(params: DeleteRequest): Promise<DeleteResponse> {
+	const { resource, filter } = params;
+
+	function emitNotification(value: unknown): void {
+		emitDataChangedNotification({
+			service: EVY_CORE_SERVICE,
+			resource,
+			operation: "delete",
+			value,
+		});
+	}
+
+	if (resource === EVY_CORE_RESOURCE.IMAGES) {
+		const metadata = await selectImageRowById(filter.id);
+		try {
+			await deleteImageBinary({ id: metadata.id, type: metadata.type });
+		} catch {
+			// Binary already missing — still clean up metadata to avoid orphan.
+		}
+
+		return deleteCatalogEntityFromConfig(
+			imageCatalogConfig,
+			filter,
+			emitNotification,
+		);
+	}
+
+	throw new Error("Delete is not supported for this resource");
+}
+
+async function selectImageRowById(id: string): Promise<DATA_EVY_Image> {
 	const rows = await db.select().from(image).where(eq(image.id, id)).limit(1);
 	if (rows.length === 0) {
 		throw new Error("Image not found");
 	}
 	return rows[0] as DATA_EVY_Image;
 }
+export interface GetImageResponse {
+	id: string;
+	type: string;
+	createdAt: string;
+	dataBase64: string;
+}
 
-export async function deleteImageMetadata(id: string): Promise<DATA_EVY_Image> {
-	const rows = await db.select().from(image).where(eq(image.id, id)).limit(1);
-	if (rows.length === 0) {
-		throw new Error("Image not found");
+export async function getImage(params: unknown): Promise<GetImageResponse> {
+	const validated = validateGetImageParams(params);
+
+	const metadata = await selectImageRowById(validated.id);
+	let fileData: Buffer;
+	try {
+		fileData = await readImageBinary({
+			id: metadata.id,
+			type: metadata.type,
+		});
+	} catch {
+		throw new Error(`Image binary not found for id: ${validated.id}`);
 	}
-	const row = rows[0] as DATA_EVY_Image;
-	await db.delete(image).where(eq(image.id, id));
-	emitDataChangedNotification({
-		service: EVY_CORE_SERVICE,
-		resource: "images",
-		operation: "delete",
-		value: row,
-	});
-	return row;
+
+	return {
+		id: metadata.id,
+		type: metadata.type,
+		createdAt: metadata.createdAt,
+		dataBase64: fileData.toString("base64"),
+	};
 }

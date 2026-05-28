@@ -2,11 +2,13 @@ import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
+import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
 import {
 	validateApiRequest,
 	validateCreateRequest,
 	validateGetRequest,
 	validateUpdateRequest,
+	validateDeleteRequest,
 } from "./validators";
 import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE_NAMES } from "./coreResources";
 
@@ -133,11 +135,10 @@ export function validateStrictCreateRequest(
 	validateCreateRequest(params);
 }
 
-export function validateStrictUpdateRequest(
-	params: unknown,
-): asserts params is UpdateRequest {
-	assertRpcParamsCommon(params);
-	assertDataField(params);
+function assertFilterId(
+	params: Record<string, unknown>,
+	operation: "update" | "delete",
+): void {
 	if (
 		!params.filter ||
 		typeof params.filter !== "object" ||
@@ -146,8 +147,24 @@ export function validateStrictUpdateRequest(
 		params.filter.id.length === 0
 	) {
 		throw new Error(
-			"filter.id is required and must be a non-empty string for update",
+			`filter.id is required and must be a non-empty string for ${operation}`,
 		);
 	}
+}
+
+export function validateStrictUpdateRequest(
+	params: unknown,
+): asserts params is UpdateRequest {
+	assertRpcParamsCommon(params);
+	assertDataField(params);
+	assertFilterId(params, "update");
 	validateUpdateRequest(params);
+}
+
+export function validateStrictDeleteRequest(
+	params: unknown,
+): asserts params is DeleteRequest {
+	assertRpcParamsCommon(params);
+	assertFilterId(params, "delete");
+	validateDeleteRequest(params);
 }

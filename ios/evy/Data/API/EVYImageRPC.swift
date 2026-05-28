@@ -39,23 +39,32 @@ struct EVYCancelUploadResponse: Codable {
   let ok: Bool
 }
 
-struct EVYImageGetParams: Encodable {
-  let id: String
+struct EVYGetImagesParams: Encodable {
+  struct Filter: Encodable {
+    let id: String
+  }
+
+  let service: String
+  let resource: String
+  let filter: Filter
 }
 
-struct EVYImageGetResponse: Codable {
+struct EVYGetImageItem: Codable {
   let id: String
   let type: String
   let createdAt: String
+  let updatedAt: String
   let dataBase64: String
 }
 
-struct EVYImageDeleteParams: Encodable {
-  let id: String
-}
+struct EVYDeleteImageParams: Encodable {
+  struct Filter: Encodable {
+    let id: String
+  }
 
-struct EVYImageDeleteResponse: Codable {
-  let ok: Bool
+  let service: String
+  let resource: String
+  let filter: Filter
 }
 
 // MARK: - Binary frame encoding

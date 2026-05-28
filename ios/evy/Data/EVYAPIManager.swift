@@ -66,21 +66,33 @@ final class EVYAPIManager {
     return formatter.string(from: Date())
   }
 
-  public func getImage(id: String) async throws -> EVYImageGetResponse {
+  public func getImage(id: String) async throws -> EVYGetImageItem {
     try await validateAuth()
-    return try await rpcWS.fetch(
-      method: "getImage",
-      params: EVYImageGetParams(id: id),
-      expecting: EVYImageGetResponse.self
+    let items = try await rpcWS.fetch(
+      method: "get",
+      params: EVYGetImagesParams(
+        service: "evy",
+        resource: "images",
+        filter: EVYGetImagesParams.Filter(id: id)
+      ),
+      expecting: [EVYGetImageItem].self
     )
+    guard let item = items.first else {
+      throw EVYError.imageLoadFailed(name: id)
+    }
+    return item
   }
 
   public func deleteImage(id: String) async throws {
     try await validateAuth()
     _ = try await rpcWS.fetch(
-      method: "deleteImage",
-      params: EVYImageDeleteParams(id: id),
-      expecting: EVYImageDeleteResponse.self
+      method: "delete",
+      params: EVYDeleteImageParams(
+        service: "evy",
+        resource: "images",
+        filter: EVYDeleteImageParams.Filter(id: id)
+      ),
+      expecting: EVYCreateImageData.self
     )
   }
 

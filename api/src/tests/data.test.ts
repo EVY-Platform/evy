@@ -9,7 +9,6 @@ import {
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { eq } from "drizzle-orm";
 
 import type {
 	UI_Flow,
@@ -56,7 +55,14 @@ type FlowDataInput = Omit<UI_Flow, "id" | "pages"> & {
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 const dataModule = await import("../data");
-const { validateAuth, create, get, setDbForTest, update } = dataModule;
+const {
+	validateAuth,
+	create,
+	get,
+	setDbForTest,
+	update,
+	delete: deleteCore,
+} = dataModule;
 setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
 const uploadModule = await import("../uploads");
 const { clearUploadsForTest, handleUploadChunk } = uploadModule;
@@ -1065,65 +1071,36 @@ describe("images", () => {
 			}),
 		).rejects.toThrow();
 	});
-});
 
-describe("deleteImageMetadata", () => {
-	// Use testDb + schema directly to bypass any mock.module leakage from images.test.ts.
-	// This tests the same select-check-delete behavior that deleteImageMetadata implements.
-	const now = "2024-01-19T12:00:00.000Z";
-
-	async function invoke(id: string) {
-		const rows = await testDb
-			.select()
-			.from(schema.image)
-			.where(eq(schema.image.id, id))
-			.limit(1);
-		if (rows.length === 0) throw new Error("Image not found");
-		const row = rows[0];
-		await testDb.delete(schema.image).where(eq(schema.image.id, id));
-		return row;
-	}
-
-	beforeEach(async () => {
-		await clearAllTestTables(testDb);
-	});
-
-	it("deletes an existing image and returns the deleted row", async () => {
+	it("deletes image binary and metadata through generic delete", async () => {
 		const imageId = crypto.randomUUID();
-		await testDb.insert(schema.image).values({
-			id: imageId,
-			type: "image/jpeg",
-			createdAt: now,
-			updatedAt: now,
+		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+		await create({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
 		});
-		const deleted = await invoke(imageId);
-		expect(deleted.id).toBe(imageId);
-		expect(deleted.type).toBe("image/jpeg");
-	});
 
-	it("deleted row is no longer returned by get", async () => {
-		const imageId = crypto.randomUUID();
-		await testDb.insert(schema.image).values({
-			id: imageId,
-			type: "image/jpeg",
-			createdAt: now,
-			updatedAt: now,
-		});
-		await invoke(imageId);
-		const result = await get({
+		const result = await deleteCore({
 			service: "evy",
 			resource: "images",
 			filter: { id: imageId },
 		});
-		expect((result as object[]).length).toBe(0);
+
+		expect(result).toMatchObject({ id: imageId, type: "image/jpeg" });
+		await expect(
+			readFile(join(getImageStorageDirs().imagesDir, `${imageId}.jpg`)),
+		).rejects.toThrow();
+		const rows = await get({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+		});
+		expect(rows).toHaveLength(0);
 	});
 
-	it("throws Image not found when deleting a missing image", async () => {
-		const missingId = crypto.randomUUID();
-		await expect(invoke(missingId)).rejects.toThrow("Image not found");
-	});
-
-	it("throws when deleting the same image twice", async () => {
+	it("deletes image metadata when binary is already missing", async () => {
 		const imageId = crypto.randomUUID();
 		await testDb.insert(schema.image).values({
 			id: imageId,
@@ -1131,7 +1108,39 @@ describe("deleteImageMetadata", () => {
 			createdAt: now,
 			updatedAt: now,
 		});
-		await invoke(imageId);
-		await expect(invoke(imageId)).rejects.toThrow("Image not found");
+
+		const result = await deleteCore({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+		});
+
+		expect(result).toMatchObject({ id: imageId, type: "image/png" });
+		const rows = await get({
+			service: "evy",
+			resource: "images",
+			filter: { id: imageId },
+		});
+		expect(rows).toHaveLength(0);
+	});
+
+	it("rejects deleting a missing image", async () => {
+		await expect(
+			deleteCore({
+				service: "evy",
+				resource: "images",
+				filter: { id: crypto.randomUUID() },
+			}),
+		).rejects.toThrow("Image not found");
+	});
+
+	it("rejects deleting non-image core resources", async () => {
+		await expect(
+			deleteCore({
+				service: "evy",
+				resource: "services",
+				filter: { id: crypto.randomUUID() },
+			}),
+		).rejects.toThrow("Delete is not supported for this resource");
 	});
 });
