@@ -27,6 +27,7 @@ flowchart LR
 ```
 
 - `Get`, `Create`, and `Update` are unary RPCs that mirror the main `api`'s `GetRequest`, `CreateRequest`, and `UpdateRequest`, with payloads JSON-encoded over the wire (`data_json`, `result_json`). Filters support a singular `id` for one row and `updated_after` / `updatedAfter` for incremental reads; plural ID filtering is not part of the contract.
+- `ListResources` advertises the resource names in [`src/resources.ts`](./src/resources.ts). The API loads those names into its runtime service/resource registry before forwarding marketplace calls.
 - `SubscribeEvents` is a server-streaming RPC. Each successful data-layer write emits `dataChanged` with `{ service, resource, operation, value }` onto an in-process `EventEmitter` that fans the change out to every open stream; `api/src/procedures/services.ts` reconnects with exponential backoff if the stream drops.
 
 ## Environment
@@ -35,6 +36,8 @@ Uses the root `.env`. For `MARKETPLACE_GRPC_*` (dial vs bind, local vs Compose),
 
 - `MARKETPLACE_GRPC_HOST` / `MARKETPLACE_GRPC_PORT` — listen address/port for this process (Compose may override bind; the API uses the same keys as a **client** target—see root docs)
 - `DB_*` — Postgres credentials; this service’s database name is `DB_MARKETPLACE_DATABASE`
+
+The marketplace service stores domain resources in a generic `Data` table defined in [`src/db.ts`](./src/db.ts). Seed data is partitioned by the resource names exported from [`src/resources.ts`](./src/resources.ts), so marketplace rows stay out of the evy core API database.
 
 ## Scripts
 

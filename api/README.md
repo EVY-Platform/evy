@@ -14,10 +14,10 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 
 ### Request dispatch
 
-`get` is public. `create`, `update`, `delete`, and `sync` are protected (require a valid device token via `validateAuth`). Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` and `delete` require `filter.id`.
+`get` and `api` are public read methods. `create`, `update`, `delete`, `sync`, and `cancelUpload` are protected (require a valid device token via `validateAuth`). Binary upload frames are also ignored unless they arrive on an authenticated WebSocket. Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` and `delete` require `filter.id`.
 
 - `service: "evy"` &mdash; handled entirely under [`src/data/`](./src/data/). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, `providers` (typed resource tables), and `images` (image metadata / `image` table). There is no generic `evy` "data" table routed through `services.ts`.
-- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/procedures/rpc.ts`](./src/procedures/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/procedures/services.ts`](./src/procedures/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses.
+- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/procedures/rpc.ts`](./src/procedures/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/procedures/services.ts`](./src/procedures/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses. `delete` is currently limited to evy core resources.
 - **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/resources + external services) since that timestamp. When data changed, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
 
 Synchronous request/response path:
@@ -26,22 +26,22 @@ Synchronous request/response path:
 sequenceDiagram
     participant Client
     participant ws as ws.ts
-    participant rpc as rpc.ts
-    participant data as data.ts
-    participant services as services.ts
+    participant rpc as procedures/rpc.ts
+    participant data as data/core.ts
+    participant services as procedures/services.ts
     participant marketplace as marketplace (gRPC)
 
-    Client->>ws: JSON-RPC create/update
-    ws->>ws: auth (validateAuth)
+    Client->>ws: JSON-RPC create/update/delete
+    ws->>ws: auth (validateAuth) for protected methods
     ws->>rpc: registered handler
-    rpc->>rpc: validateStrictCreateRequest/validateStrictUpdateRequest
+    rpc->>rpc: validateStrict*Request
 
     alt service == "evy"
-        rpc->>data: create/update core handler
+        rpc->>data: core resource handler
         data-->>rpc: row
     else service != "evy"
-        rpc->>services: forwardCreate/forwardUpdate
-        services->>marketplace: gRPC Create/Update
+        rpc->>services: forwardGet/Create/Update
+        services->>marketplace: gRPC Get/Create/Update
         marketplace-->>services: row JSON
         services-->>rpc: row
     end
@@ -56,24 +56,19 @@ Notification fan-out paths:
 sequenceDiagram
     participant Client as Subscribed clients
     participant ws as ws.ts
-    participant rpc as rpc.ts
-    participant data as data.ts
-    participant services as services.ts
+    participant data as data/core.ts
+    participant services as procedures/services.ts
     participant marketplace as marketplace (gRPC)
 
-    rect rgb(230, 245, 255)
     Note over data,ws: Core evy write triggers notification
     data->>ws: emitJsonRpc(dataChanged, changed row)
     ws->>Client: JSON-RPC notification
-    end
 
-    rect rgb(245, 235, 255)
     Note over marketplace,ws: Remote service event triggers notification
     marketplace->>services: SubscribeEvents payload
     services->>services: parse payload_json
     services->>ws: emitJsonRpc(event, data)
     ws->>Client: JSON-RPC notification
-    end
 ```
 
 ### Real-time notifications
@@ -97,26 +92,31 @@ flowchart TD
     ws[ws.ts JSON-RPC transport]
     rpc[procedures/rpc.ts request routing]
     data[data directory evy core resources]
-    db[db.ts Drizzle client]
+    db[data/db.ts Drizzle client]
     services[procedures/services.ts gRPC adapters SubscribeEvents]
     sync[procedures/sync.ts unified sync handler]
+    uploads[procedures/uploads.ts binary upload sessions]
     readiness[readiness.ts health seed check]
 
     index --> ws
     index --> rpc
     index --> data
     index --> services
+    index --> uploads
     rpc --> data
     rpc --> services
     rpc --> sync
     data --> db
+    data --> uploads
+    ws --> uploads
     sync --> data
     sync --> services
     readiness --> rpc
 ```
 
-- `db.ts` owns the Drizzle client and imports API tables directly from `types/generated/ts/db/schema.generated.ts`; `src/data/` owns evy core resource procedures.
-- The schema comes from `types/schema/data/` via `bun run types:generate`.
+- `src/data/db.ts` owns the Drizzle client and imports API tables directly from `types/generated/ts/db/schema.generated.ts`; `src/data/` owns evy core resource procedures.
+- Upload sessions live in memory in `src/procedures/uploads.ts`; `src/data/images.ts` persists the validated image binary and metadata.
+- The schema comes from `types/schema/data/` and `types/schema/images/` via `bun run types:generate`.
 - Validators are imported directly from `evy-types/validators` and `evy-types/rpcRequestHelpers` (no local wrapper file).
 
 ### Shared contracts
@@ -126,9 +126,10 @@ Broader schema layout: [docs/evy/types.md § Sources](../docs/evy/types.md#sourc
 | File | Purpose |
 |------|---------|
 | [`types/schema/service.proto`](../types/schema/service.proto) | `evy.Service` gRPC IDL implemented by every non-`evy` backend |
-| [`types/schema/data/data.schema.json`](../types/schema/data/data.schema.json) | JSON Schema for `DATA_EVY_*` rows |
+| [`types/schema/data/data.schema.json`](../types/schema/data/data.schema.json) | JSON Schema for `DATA_EVY_*` persistence rows, including image metadata |
+| [`types/schema/images/image.schema.json`](../types/schema/images/image.schema.json) | Shared image metadata, binary response, upload chunk, and image-specific RPC param models |
 | [`types/schema/sdui/evy.schema.json`](../types/schema/sdui/evy.schema.json) | `UI_Flow` / `UI_Page` / `UI_Row` contract |
-| [`types/schema/rpc/*.schema.json`](../types/schema/rpc) | `GetRequest` / `CreateRequest` / `UpdateRequest` / `GetResponse` contracts |
+| [`types/schema/rpc/*.schema.json`](../types/schema/rpc) | `GetRequest` / `CreateRequest` / `UpdateRequest` / `DeleteRequest` / `GetResponse` contracts |
 
 ## Prerequisites
 
@@ -223,7 +224,7 @@ Binary image data is stored at `api/public/images/{id}.{ext}`. Upload directorie
 
 ### Generic binary upload frame protocol
 
-Binary payloads are staged as a sequence of binary WebSocket frames (not JSON-RPC). Each frame has the format:
+Binary payloads are staged as a sequence of authenticated binary WebSocket frames (not JSON-RPC). The API keeps staged chunks in memory until the upload is finalised with `create` or discarded with `cancelUpload`, so clients should finalise or cancel promptly. Each frame has the format:
 
 ```
 [4-byte big-endian metadataLength][metadata JSON bytes][raw bytes]
@@ -240,6 +241,8 @@ The metadata JSON has the shape:
 - `index` — zero-based sequential chunk index.
 - `byteOffset` — byte offset of this chunk within the full upload.
 - `byteLength` — byte length of the chunk data following the metadata.
+
+Chunks must arrive in order: each session starts with `index: 0` and `byteOffset: 0`, then increments by one chunk and the received byte count. Mismatched type, index, offset, length, or uploads over 20 MB are rejected.
 
 ### Creating images
 
@@ -259,7 +262,11 @@ After staging the binary upload, create the image through the normal protected `
 }
 ```
 
-`filter.id` is the uploaded binary id to consume. The API validates image bytes, writes the binary to disk, creates metadata, and emits the normal `dataChanged` notification for `resource: "images"`.
+`filter.id` is the uploaded binary id to consume. The API validates image bytes, writes the binary to disk, creates metadata, and emits the normal `dataChanged` notification for `resource: "images"`. The server owns `createdAt` and `updatedAt` on insert, so client-supplied timestamps are only used to satisfy shared schema shape.
+
+### Reading and syncing images
+
+The generic `get` method supports `service: "evy"`, `resource: "images"` with optional `filter.id` or `filter.updatedAfter`. Responses are arrays of `{ id, type, createdAt, updatedAt, dataBase64 }`, ordered by `updatedAt` and `id`. Because `images` is an evy core resource, `sync` can also include changed images in the same response shape.
 
 ### RPCs
 
@@ -268,4 +275,4 @@ After staging the binary upload, create the image through the normal protected `
 | `create` | protected | For `service: "evy"`, `resource: "images"`, finalises a staged binary upload and creates image metadata. |
 | `delete` | protected | For `service: "evy"`, `resource: "images"`, deletes image binary and metadata. Params include `filter: { id }`. Returns the deleted metadata row. |
 | `cancelUpload` | protected | Discard an in-progress generic upload session. Params: `{ uploadId }`. Returns `{ ok: true }`. |
-| `get` | public | For `service: "evy"`, `resource: "images"`, returns image metadata + base64 binary. Use `filter: { id }` to fetch a single image. |
+| `get` | public | For `service: "evy"`, `resource: "images"`, returns image metadata + base64 binary rows. Use `filter: { id }` to fetch a single image or `filter.updatedAfter` for incremental reads. |

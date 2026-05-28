@@ -4,20 +4,19 @@ If smartphones and the internet were built by the people for the people. Create 
 
 ## Architecture at a glance
 
-EVY is split into 2 thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by `service + resource`:
-- `service: "evy"` is handled in-process in the API (SDUI flows and core resource tables)
+EVY is split into 2 thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by `service + resource`, while authenticated binary WebSocket frames stage uploads before a normal JSON-RPC `create` finalises metadata:
+- `service: "evy"` is handled in-process in the API (SDUI flows, core resource tables, and image metadata/binaries)
 - any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/procedures/services.ts`](./api/src/procedures/services.ts).
 
 ```mermaid
-%%{ init: { 'flowchart': { 'curve': 'linear' } } }%%
 flowchart LR
     ios[iOS app]
     web[Web builder]
 
-    api[api<br/>JSON-RPC 2.0 WebSocket<br/>SDUI store + router]
-    marketplace[marketplace service<br/>gRPC evy.Service]
-    evyDb[(Postgres<br/>evy DB)]
-    mpDb[(Postgres<br/>marketplace DB)]
+    api[api JSON-RPC WebSocket SDUI store router]
+    marketplace[marketplace service gRPC evy.Service]
+    evyDb[(Postgres evy DB)]
+    mpDb[(Postgres marketplace DB)]
 
     ios -- WebSocket --> api
     web -- WebSocket --> api
@@ -54,7 +53,7 @@ iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS
 
 ## Shared type system
 
-Schema layout, codegen steps, and outputs: [`docs/evy/types.md`](./docs/evy/types.md). In short: source JSON Schema lives under `types/schema/`; run `bun run types:generate` from the repo root after changes. gRPC contract: [`types/schema/service.proto`](./types/schema/service.proto). The `evy` data path is implemented under [`api/src/data/`](./api/src/data/); [`api/src/procedures/services.ts`](./api/src/procedures/services.ts) holds gRPC clients and `SubscribeEvents` fan-out for non-`evy` services.
+Schema layout, codegen steps, and outputs: [`docs/evy/types.md`](./docs/evy/types.md). In short: source JSON Schema lives under `types/schema/`; run `bun run types:generate` from the repo root after schema changes, or `bun run types:generate:exclude-ios` when only TypeScript output is needed (Docker images use this path). gRPC contract: [`types/schema/service.proto`](./types/schema/service.proto). The `evy` data path is implemented under [`api/src/data/`](./api/src/data/); [`api/src/procedures/services.ts`](./api/src/procedures/services.ts) holds gRPC clients and `SubscribeEvents` fan-out for non-`evy` services.
 
 ## Setup
 

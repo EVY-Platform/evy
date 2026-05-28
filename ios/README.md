@@ -20,6 +20,12 @@ a `sortIndex` equal to its position in that array, so `getAll` returns items in 
 Items created locally or received via single-item notifications are assigned `sortIndex =
 maxExisting + 1` so they append to the end. No separate order-state layer is needed.
 
+### Image uploads and remote images
+
+`EVYAPIManager.uploadImage(_:mimeType:)` uploads JPEG/PNG data over the existing authenticated WebSocket. It generates an image UUID, sends ordered 256 KB binary frames encoded by `Data.uploadFrames(uploadId:mimeType:)`, then finalises the upload with the protected `create` RPC for `service: "evy"`, `resource: "images"`. If finalisation fails, it calls `cancelUpload` for the staged upload ID.
+
+`EVYAPIManager.getImage(id:)` reads image rows through the generic `get` RPC and expects generated `ImageWithBinary` data (`id`, `type`, timestamps, `dataBase64`). `EVYRemoteImage` and `EVYImageCache` load and cache these responses for rendering. Image RPC parameter and response models come from generated Swift output for `types/schema/images/image.schema.json`; `EVYImageRPC.swift` keeps only the aliases and binary frame encoding needed by the app.
+
 ### Draft scopes and draft cache keys
 
 iOS drafts are stored in the in-memory draft cache, separate from public/private SwiftData stores.
@@ -109,10 +115,15 @@ flowchart LR
     Views -->|Search rows read local synced resources| EVY
 
     subgraph api [Data/API]
-        APIManager[EVYAPIManager.shared<br/>auth + subscriptions]
-        WS[EVYWebsocket<br/>JSON-RPC over WebSocket]
+        APIManager[EVYAPIManager shared auth subscriptions image upload]
+        WS[EVYWebsocket JSON-RPC and binary frames]
+        ImageRPC[EVYImageRPC generated aliases frame encoding]
         APIManager --> WS
+        APIManager --> ImageRPC
     end
+    RemoteImage[EVYRemoteImage EVYImageCache]
+    Views --> RemoteImage
+    RemoteImage --> APIManager
     EVY -->|fetch / create / update| APIManager
 
     Notif{{NotificationCenter<br/>.evyDataChanged<br/>.evyErrorOccurred}}
