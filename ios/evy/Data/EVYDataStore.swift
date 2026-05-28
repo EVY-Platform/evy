@@ -14,6 +14,9 @@ final class EVYDataStore {
 
   convenience init(name: String, inMemoryOnly: Bool = false) {
     let config = ModelConfiguration(name, isStoredInMemoryOnly: inMemoryOnly)
+    if !inMemoryOnly {
+      Self.createStoreDirectory(for: config)
+    }
     do {
       let container = try ModelContainer(for: EVYData.self, configurations: config)
       self.init(container: container)
@@ -25,6 +28,11 @@ final class EVYDataStore {
       let container = try! ModelContainer(for: EVYData.self, configurations: config)
       self.init(container: container)
     }
+  }
+
+  private static func createStoreDirectory(for config: ModelConfiguration) {
+    try? FileManager.default.createDirectory(
+      at: config.url.deletingLastPathComponent(), withIntermediateDirectories: true)
   }
 
   private static func deleteStoreFiles(for config: ModelConfiguration) {

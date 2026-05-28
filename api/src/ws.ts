@@ -15,9 +15,8 @@ function getListenPort(): number {
 	return parseInt(apiPort, 10);
 }
 
-// Custom emit function that sends proper JSON-RPC 2.0 notifications
-// rpc-websockets uses non-standard format: { notification: name, params }
-// JsonRPC.swift expects standard format: { jsonrpc: "2.0", method: name, params }
+// rpc-websockets emits non-standard notifications: { notification: name, params }
+// EVY clients expect standard JSON-RPC 2.0: { jsonrpc: "2.0", method: name, params }
 function emitJsonRpc(server: WSServer, eventName: string, params: unknown) {
 	const namespace = server.namespaces["/"];
 	const nsEvent = namespace?.events?.[eventName];

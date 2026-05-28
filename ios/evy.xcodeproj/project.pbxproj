@@ -20,8 +20,6 @@
 		730187D62F20E232002EF894 /* user_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 730187D52F20E232002EF894 /* user_data.json */; };
 		7303B31A2C3EB8A000796123 /* EVYCalendarSlot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7303B3192C3EB8A000796123 /* EVYCalendarSlot.swift */; };
 
-		731988822C271BBD0035E094 /* JsonRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 731988812C271BBD0035E094 /* JsonRPC */; };
-		731988852C271BC40035E094 /* Serializable in Frameworks */ = {isa = PBXBuildFile; productRef = 731988842C271BC40035E094 /* Serializable */; };
 		7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */; };
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
 		7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */; };
@@ -221,8 +219,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				731988822C271BBD0035E094 /* JsonRPC in Frameworks */,
-				731988852C271BC40035E094 /* Serializable in Frameworks */,
 				73F4B0032F40B00100000001 /* LucideIcons in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -529,8 +525,6 @@
 			);
 			name = evy;
 			packageProductDependencies = (
-				731988812C271BBD0035E094 /* JsonRPC */,
-				731988842C271BC40035E094 /* Serializable */,
 				73F4B0022F40B00100000001 /* LucideIcons */,
 			);
 			productName = evy;
@@ -606,8 +600,6 @@
 			);
 			mainGroup = 737C6A992B2706890093D00C;
 			packageReferences = (
-				731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */,
-				731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */,
 				73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */,
 			);
 			productRefGroup = 737C6AA32B2706890093D00C /* Products */;
@@ -1084,22 +1076,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/tesseract-one/JsonRPC.swift.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.3;
-			};
-		};
-		731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/tesseract-one/Serializable.swift.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.3.1;
-			};
-		};
 		73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JakubMazur/lucide-icons-swift.git";
@@ -1111,16 +1087,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		731988812C271BBD0035E094 /* JsonRPC */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 731988802C271BBD0035E094 /* XCRemoteSwiftPackageReference "JsonRPC.swift" */;
-			productName = JsonRPC;
-		};
-		731988842C271BC40035E094 /* Serializable */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 731988832C271BC40035E094 /* XCRemoteSwiftPackageReference "Serializable.swift" */;
-			productName = Serializable;
-		};
 		73F4B0022F40B00100000001 /* LucideIcons */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 73F4B0012F40B00100000001 /* XCRemoteSwiftPackageReference "lucide-icons-swift" */;
