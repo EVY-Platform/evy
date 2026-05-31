@@ -24,32 +24,29 @@ actor EVYAPIManager {
     return try await rpcWS.fetch(method: method, params: params, expecting: T.self)
   }
 
-  public func uploadImage(_ imageData: Data, mimeType: String) async throws -> String {
+  public func uploadFile(_ fileData: Data) async throws -> String {
     try await validateAuth()
     let uploadId = UUID().uuidString
-    guard let imageType = TypeEnum(rawValue: mimeType) else {
-      throw EVYError.invalidData(context: "Unsupported image type: \(mimeType)")
-    }
-    let frames = try imageData.uploadFrames(uploadId: uploadId, mimeType: mimeType)
+    let frames = try fileData.uploadFrames(uploadId: uploadId)
     do {
       for frame in frames {
         try await rpcWS.sendBinary(frame)
       }
       let createdAt = Self.iso8601Now()
-      let response: EVYCreateImageData = try await rpcWS.fetch(
+      let response: EVYCreateFileData = try await rpcWS.fetch(
         method: "create",
-        params: EVYCreateImageParams(
-          data: EVYCreateImageData(
+        params: EVYCreateFileParams(
+          data: EVYCreateFileData(
             createdAt: createdAt,
             id: uploadId,
-            type: imageType,
+            type: "image/jpeg",
             updatedAt: createdAt
           ),
-          filter: CreateImageParamsFilter(id: uploadId),
-          resource: .images,
+          filter: CreateFileParamsFilter(id: uploadId),
+          resource: .files,
           service: .evy
         ),
-        expecting: EVYCreateImageData.self
+        expecting: EVYCreateFileData.self
       )
       return response.id
     } catch {
@@ -68,16 +65,16 @@ actor EVYAPIManager {
     return formatter.string(from: Date())
   }
 
-  public func getImage(id: String) async throws -> EVYGetImageItem {
+  public func getFile(id: String) async throws -> EVYGetFileItem {
     try await validateAuth()
     let items = try await rpcWS.fetch(
       method: "get",
-      params: EVYGetImagesParams(
-        filter: GetImagesParamsFilter(id: id, updatedAfter: nil),
-        resource: .images,
+      params: EVYGetFilesParams(
+        filter: GetFilesParamsFilter(id: id, updatedAfter: nil),
+        resource: .files,
         service: .evy
       ),
-      expecting: [EVYGetImageItem].self
+      expecting: [EVYGetFileItem].self
     )
     guard let item = items.first else {
       throw EVYError.imageLoadFailed(name: id)
@@ -85,16 +82,16 @@ actor EVYAPIManager {
     return item
   }
 
-  public func deleteImage(id: String) async throws {
+  public func deleteFile(id: String) async throws {
     try await validateAuth()
     _ = try await rpcWS.fetch(
       method: "delete",
-      params: EVYDeleteImageParams(
-        filter: CreateImageParamsFilter(id: id),
-        resource: .images,
+      params: EVYDeleteFileParams(
+        filter: CreateFileParamsFilter(id: id),
+        resource: .files,
         service: .evy
       ),
-      expecting: EVYCreateImageData.self
+      expecting: EVYCreateFileData.self
     )
   }
 

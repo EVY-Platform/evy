@@ -209,7 +209,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await selectFlowByLabel(page, "View Item");
 
-		const textRow = page.getByText("My item is called", { exact: true });
+		const textRow = page.getByText("Item title", { exact: true });
 		await expect(textRow).toBeVisible();
 
 		await textRow.click();
@@ -367,17 +367,45 @@ test.describe("Web E2E Integration Tests", () => {
 	});
 
 	test("should display footer row when page has one", async ({ page }) => {
+		const uniqueFlowName = `E2E Footer Flow ${Date.now()}`;
+		const footerLabel = "E2E Footer Button";
+
+		await createFlowInApi({
+			id: crypto.randomUUID(),
+			name: uniqueFlowName,
+			pages: [
+				{
+					id: crypto.randomUUID(),
+					title: "E2E Footer Page",
+					rows: [],
+					footer: {
+						id: crypto.randomUUID(),
+						type: "Button",
+						source: "",
+						destination: "",
+						actions: [],
+						view: {
+							content: {
+								title: "",
+								label: footerLabel,
+							},
+						},
+					},
+				},
+			],
+		});
+
 		await page.goto("/");
 		await waitForAppLoaded(page);
 
-		await selectFlowByLabel(page, "View Item");
+		await selectFlowByLabel(page, uniqueFlowName);
 		await expect(page.locator(SELECTORS.flowSelector)).not.toHaveAttribute(
 			"data-value",
 			"",
 		);
 
 		const footerButton = getFirstPage(page)
-			.getByRole("button", { name: "Go home" })
+			.getByRole("button", { name: footerLabel })
 			.first();
 		await expect(footerButton).toBeVisible();
 	});

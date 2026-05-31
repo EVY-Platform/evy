@@ -22,7 +22,7 @@ private struct EVYPhotoTile: Identifiable, Equatable {
   var status: EVYPhotoTileStatus
 
   static func == (lhs: EVYPhotoTile, rhs: EVYPhotoTile) -> Bool {
-    lhs.id == rhs.id && lhs.imageId == rhs.imageId && lhs.status == rhs.status
+    lhs.id == rhs.id && lhs.status == rhs.status
   }
 }
 
@@ -37,7 +37,7 @@ private struct EVYPhotoTileView: View {
           .resizable()
           .scaledToFill()
       } else if let imageId = tile.imageId {
-        EVYRemoteImage(imageId: imageId)
+        EVYRemoteFile(fileId: imageId)
       }
     }
     .frame(width: carouselElementSize, height: carouselElementSize)
@@ -54,7 +54,7 @@ private struct EVYPhotoTileView: View {
           EmptyView()
         }
       }
-      .padding(8)
+      .padding(Constants.minorPadding)
     }
     .overlay(alignment: .topLeading) {
       if tile.status != .uploading {
@@ -63,8 +63,8 @@ private struct EVYPhotoTileView: View {
             .foregroundStyle(.white)
         }
         .buttonStyle(.plain)
-        .padding(8)
         .disabled(tile.status == .deleting)
+        .padding(Constants.minorPadding)
       }
     }
   }
@@ -166,8 +166,8 @@ struct EVYSelectPhoto: View {
     photoTiles[index].status = .deleting
     Task {
       do {
-        try await EVYAPIManager.shared.deleteImage(id: imageId)
-        EVYImageCache.remove(imageId: imageId)
+        try await EVYAPIManager.shared.deleteFile(id: imageId)
+        EVYFileCache.remove(fileId: imageId)
         photoTiles.removeAll { $0.id == tileId }
       } catch {
         if let i = photoTiles.firstIndex(where: { $0.id == tileId }) {
@@ -229,7 +229,7 @@ private struct EVYSelectPhotoButton: View {
       guard let rawData = try await selectedItem?.loadTransferable(type: Data.self) else {
         return
       }
-      let jpegData = try EVYImageCache.normalizeToJPEG(rawData)
+      let jpegData = try EVYFileCache.normalizeToJPEG(rawData)
       guard let uiImage = UIImage(data: jpegData) else {
         throw EVYError.imageLoadFailed(name: "selected photo")
       }
@@ -243,8 +243,8 @@ private struct EVYSelectPhotoButton: View {
         ))
 
       let loadingStartedAt = ContinuousClock.now
-      let imageId = try await EVYAPIManager.shared.uploadImage(jpegData, mimeType: "image/jpeg")
-      try EVYImageCache.write(imageId: imageId, jpegData: jpegData)
+      let imageId = try await EVYAPIManager.shared.uploadFile(jpegData)
+      try EVYFileCache.write(fileId: imageId, data: jpegData)
 
       let elapsed = loadingStartedAt.duration(to: .now)
       let minimumLoadingDuration = Duration.seconds(1)

@@ -26,6 +26,7 @@ struct EVYTextRow: View {
         expandableText
       }
     }
+    .padding(.horizontal, Constants.majorPadding)
   }
 
   private var actionText: some View {

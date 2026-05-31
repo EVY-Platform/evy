@@ -91,7 +91,7 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("services");
 		expect(evyResourceNames).toContain("organisations");
 		expect(evyResourceNames).toContain("providers");
-		expect(evyResourceNames).toContain("images");
+		expect(evyResourceNames).toContain("files");
 		expect(evyResourceNames).not.toContain("devices");
 	});
 

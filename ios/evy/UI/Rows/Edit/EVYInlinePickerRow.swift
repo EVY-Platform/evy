@@ -31,6 +31,7 @@ struct EVYInlinePickerRow: View {
         )
       }
     }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 

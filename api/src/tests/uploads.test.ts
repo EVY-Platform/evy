@@ -14,7 +14,7 @@ function buildChunkFrame(metadata: object, chunkData: Buffer): Buffer {
 }
 
 const uploadId = "550e8400-e29b-41d4-a716-446655440000";
-const validBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+const validBytes = Buffer.from([1, 2, 3, 4, 5]);
 
 beforeEach(() => {
 	clearUploadsForTest();
@@ -23,7 +23,6 @@ beforeEach(() => {
 describe("parseUploadChunkFrame", () => {
 	it("parses a valid upload chunk frame", () => {
 		const metadata = {
-			type: "image/jpeg",
 			uploadId,
 			index: 0,
 			byteOffset: 0,
@@ -32,7 +31,6 @@ describe("parseUploadChunkFrame", () => {
 		const frame = buildChunkFrame(metadata, validBytes);
 		const result = parseUploadChunkFrame(frame);
 		expect(result.metadata.uploadId).toBe(uploadId);
-		expect(result.metadata.type).toBe("image/jpeg");
 		expect(result.metadata.index).toBe(0);
 		expect(result.chunkData).toEqual(validBytes);
 	});
@@ -60,16 +58,15 @@ describe("parseUploadChunkFrame", () => {
 		).toThrow("Invalid metadata JSON in upload chunk frame");
 	});
 
-	it("throws when type is missing", () => {
+	it("throws when uploadId is missing", () => {
 		const metadata = {
-			uploadId,
 			index: 0,
 			byteOffset: 0,
 			byteLength: 1,
 		};
 		const frame = buildChunkFrame(metadata, Buffer.from([0x00]));
 		expect(() => parseUploadChunkFrame(frame)).toThrow(
-			"Chunk metadata type must be a non-empty string",
+			"Chunk metadata uploadId must be a non-empty string",
 		);
 	});
 });
@@ -77,7 +74,6 @@ describe("parseUploadChunkFrame", () => {
 describe("handleUploadChunk", () => {
 	it("creates a new upload session for first chunk", async () => {
 		const metadata = {
-			type: "image/jpeg",
 			uploadId,
 			index: 0,
 			byteOffset: 0,
@@ -87,13 +83,12 @@ describe("handleUploadChunk", () => {
 	});
 
 	it("accepts sequential chunks", async () => {
-		const chunk1 = Buffer.from([0xff, 0xd8]);
-		const chunk2 = Buffer.from([0xff, 0xe0]);
+		const chunk1 = Buffer.from([1, 2]);
+		const chunk2 = Buffer.from([3, 4]);
 
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					type: "image/jpeg",
 					uploadId,
 					index: 0,
 					byteOffset: 0,
@@ -105,7 +100,6 @@ describe("handleUploadChunk", () => {
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					type: "image/jpeg",
 					uploadId,
 					index: 1,
 					byteOffset: chunk1.length,
@@ -118,7 +112,7 @@ describe("handleUploadChunk", () => {
 
 	it("throws when first chunk index is not 0", async () => {
 		const frame = buildChunkFrame(
-			{ type: "image/jpeg", uploadId, index: 1, byteOffset: 0, byteLength: 4 },
+			{ uploadId, index: 1, byteOffset: 0, byteLength: 4 },
 			Buffer.from([0x01, 0x02, 0x03, 0x04]),
 		);
 		await expect(handleUploadChunk(frame)).rejects.toThrow(
@@ -127,11 +121,10 @@ describe("handleUploadChunk", () => {
 	});
 
 	it("throws on chunk index out of order", async () => {
-		const chunk1 = Buffer.from([0xff, 0xd8]);
+		const chunk1 = Buffer.from([1, 2]);
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					type: "image/jpeg",
 					uploadId,
 					index: 0,
 					byteOffset: 0,
@@ -144,7 +137,6 @@ describe("handleUploadChunk", () => {
 			handleUploadChunk(
 				buildChunkFrame(
 					{
-						type: "image/jpeg",
 						uploadId,
 						index: 2,
 						byteOffset: chunk1.length,
@@ -159,13 +151,12 @@ describe("handleUploadChunk", () => {
 	it("throws on byteLength mismatch", async () => {
 		const frame = buildChunkFrame(
 			{
-				type: "image/jpeg",
 				uploadId,
 				index: 0,
 				byteOffset: 0,
 				byteLength: 100,
 			},
-			Buffer.from([0xff, 0xd8]),
+			Buffer.from([1, 2]),
 		);
 		await expect(handleUploadChunk(frame)).rejects.toThrow(
 			"Chunk byte length mismatch",
@@ -178,7 +169,6 @@ describe("cancelUpload", () => {
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					type: "image/jpeg",
 					uploadId,
 					index: 0,
 					byteOffset: 0,

@@ -14,12 +14,12 @@ import type {
 	DATA_EVY_Organization,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
-	DATA_EVY_Image,
+	DATA_EVY_File,
 } from "./generated/ts/data/data";
 import type {
-	ImageUploadChunkMetadata,
-	ImageWithBinary,
-} from "./generated/ts/images/image";
+	FileUploadChunkMetadata,
+	FileWithBinary,
+} from "./generated/ts/files/file";
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { CreateResponse } from "./generated/ts/rpc/create.response";
@@ -31,8 +31,6 @@ import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
-import type { GetImageRequest } from "./generated/ts/rpc/get-image.request";
-import type { CompleteImageUploadRequest } from "./generated/ts/rpc/complete-image-upload.request";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
@@ -48,7 +46,7 @@ import primitiveSchemaRaw from "./schema/data/primitive.schema.json" with {
 	type: "json",
 };
 import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
-import imageSchemaRaw from "./schema/images/image.schema.json" with {
+import fileSchemaRaw from "./schema/files/file.schema.json" with {
 	type: "json",
 };
 import apiRequestRaw from "./schema/rpc/api.request.schema.json" with {
@@ -78,18 +76,14 @@ import deleteResponseRaw from "./schema/rpc/delete.response.schema.json" with {
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
 	type: "json",
 };
-import getImageRequestRaw from "./schema/rpc/get-image.request.schema.json" with {
-	type: "json",
-};
+
 import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
 	type: "json",
 };
 import syncResponseRaw from "./schema/rpc/sync.response.schema.json" with {
 	type: "json",
 };
-import completeImageUploadRequestRaw from "./schema/rpc/complete-image-upload.request.schema.json" with {
-	type: "json",
-};
+
 
 /** Canonical base URI for ajv $ref resolution */
 const SCHEMA_BASE = "https://evy.local";
@@ -100,7 +94,7 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"data/data.schema.json": dataSchemaRaw as Record<string, unknown>,
 	"data/primitive.schema.json": primitiveSchemaRaw as Record<string, unknown>,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
-	"images/image.schema.json": imageSchemaRaw as Record<string, unknown>,
+	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
 	"rpc/create.request.schema.json": createRequestRaw as Record<string, unknown>,
@@ -121,12 +115,6 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"rpc/sync.request.schema.json": syncRequestRaw as Record<string, unknown>,
 	"rpc/sync.response.schema.json": syncResponseRaw as Record<string, unknown>,
 	"rpc/get.response.schema.json": getResponseRaw as Record<string, unknown>,
-	"rpc/get-image.request.schema.json": getImageRequestRaw as Record<
-		string,
-		unknown
-	>,
-	"rpc/complete-image-upload.request.schema.json":
-		completeImageUploadRequestRaw as Record<string, unknown>,
 };
 
 const preparedCache = new Map<string, Record<string, unknown>>();
@@ -232,15 +220,13 @@ function lazyValidator<T>(
 const REQUEST_SCHEMA_FILES = [
 	"common/json.schema.json",
 	"common/rpc.schema.json",
-	"images/image.schema.json",
+	"files/file.schema.json",
 	"rpc/api.request.schema.json",
 	"rpc/get.request.schema.json",
 	"rpc/create.request.schema.json",
 	"rpc/update.request.schema.json",
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
-	"rpc/get-image.request.schema.json",
-	"rpc/complete-image-upload.request.schema.json",
 ] as const;
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
@@ -250,7 +236,7 @@ const ENTITY_SCHEMA_FILES = [
 	"data/data.schema.json",
 	"data/primitive.schema.json",
 	"sdui/evy.schema.json",
-	"images/image.schema.json",
+	"files/file.schema.json",
 	"rpc/get.response.schema.json",
 	"rpc/create.response.schema.json",
 	"rpc/update.response.schema.json",
@@ -336,9 +322,9 @@ const getValidateDataEvyServiceProvider =
 		getEntityAjv,
 		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
 	);
-const getValidateDataEvyImage = lazyValidator<DATA_EVY_Image>(
+const getValidateDataEvyFile = lazyValidator<DATA_EVY_File>(
 	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Image`,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_File`,
 );
 const getValidateGetResponse = lazyValidator<GetResponse>(
 	getEntityAjv,
@@ -365,23 +351,14 @@ const getValidateSyncResponse = lazyValidator<SyncResponse>(
 	fileId("rpc/sync.response.schema.json"),
 );
 
-const getValidateGetImageParams = lazyValidator<GetImageRequest>(
-	getRequestAjv,
-	fileId("rpc/get-image.request.schema.json"),
-);
-const getValidateCompleteImageUploadParams =
-	lazyValidator<CompleteImageUploadRequest>(
+const getValidateFileUploadChunkMetadata =
+	lazyValidator<FileUploadChunkMetadata>(
 		getRequestAjv,
-		fileId("rpc/complete-image-upload.request.schema.json"),
+		`${fileId("files/file.schema.json")}#/$defs/FileUploadChunkMetadata`,
 	);
-const getValidateImageUploadChunkMetadata =
-	lazyValidator<ImageUploadChunkMetadata>(
-		getRequestAjv,
-		`${fileId("images/image.schema.json")}#/$defs/ImageUploadChunkMetadata`,
-	);
-const getValidateImageWithBinary = lazyValidator<ImageWithBinary>(
+const getValidateFileWithBinary = lazyValidator<FileWithBinary>(
 	getEntityAjv,
-	`${fileId("images/image.schema.json")}#/$defs/ImageWithBinary`,
+	`${fileId("files/file.schema.json")}#/$defs/FileWithBinary`,
 );
 function makeValidator<T>(
 	label: string,
@@ -437,9 +414,9 @@ export const validateDataEvyServiceProvider =
 		"ServiceProvider",
 		getValidateDataEvyServiceProvider,
 	);
-export const validateDataEvyImage = makeValidator<DATA_EVY_Image>(
-	"Image",
-	getValidateDataEvyImage,
+export const validateDataEvyFile = makeValidator<DATA_EVY_File>(
+	"File",
+	getValidateDataEvyFile,
 );
 export const validateGetResponse = makeValidator<GetResponse>(
 	"GetResponse",
@@ -465,23 +442,14 @@ export const validateSyncResponse = makeValidator<SyncResponse>(
 	"SyncResponse",
 	getValidateSyncResponse,
 );
-export const validateGetImageParams = makeValidator<GetImageRequest>(
-	"GetImageRequest",
-	getValidateGetImageParams,
-);
-export const validateCompleteImageUploadParams =
-	makeValidator<CompleteImageUploadRequest>(
-		"CompleteImageUploadRequest",
-		getValidateCompleteImageUploadParams,
+export const validateFileUploadChunkMetadata =
+	makeValidator<FileUploadChunkMetadata>(
+		"FileUploadChunkMetadata",
+		getValidateFileUploadChunkMetadata,
 	);
-export const validateImageUploadChunkMetadata =
-	makeValidator<ImageUploadChunkMetadata>(
-		"ImageUploadChunkMetadata",
-		getValidateImageUploadChunkMetadata,
-	);
-export const validateImageWithBinary = makeValidator<ImageWithBinary>(
-	"ImageWithBinary",
-	getValidateImageWithBinary,
+export const validateFileWithBinary = makeValidator<FileWithBinary>(
+	"FileWithBinary",
+	getValidateFileWithBinary,
 );
 
 function isIsoDateTimeFieldName(key: string): boolean {

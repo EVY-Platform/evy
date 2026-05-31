@@ -220,7 +220,7 @@ async function generateTypeScript(
 		const title = (schema.title as string | undefined) ?? null;
 		if (mod.startsWith("sdui/")) {
 			lines.unshift(`export * from "./${mod}";`);
-		} else if (mod.startsWith("images/")) {
+		} else if (mod.startsWith("files/")) {
 			lines.unshift(`export * from "./${mod}";`);
 		} else if (mod.startsWith("data/")) {
 			lines.unshift(`export * from "./${mod}";`);

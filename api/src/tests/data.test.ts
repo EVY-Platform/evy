@@ -24,7 +24,7 @@ import type {
 } from "evy-types";
 import { validateUiFlow as validateFlowData } from "evy-types/validators";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
-import { useImageStorageDirsForTest } from "./imageStorageTestHelpers";
+import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
 import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
 
 type ValidatedRow = UI_Row;
@@ -831,11 +831,12 @@ describe("create SDUI validation", () => {
 	});
 });
 
-describe("images", () => {
+describe("files", () => {
 	const now = "2024-01-19T12:00:00.000Z";
-	const validJpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
-	const validPngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]);
-	const getImageStorageDirs = useImageStorageDirsForTest("data-images");
+	const fileType = "image/jpeg";
+	const opaqueBytes = Buffer.from([1, 2, 3, 4, 5]);
+	const otherOpaqueBytes = Buffer.from([6, 7, 8, 9]);
+	const getFileStorageDirs = useFileStorageDirsForTest("data-files");
 
 	function buildChunkFrame(metadata: object, chunkData: Buffer): Buffer {
 		const metadataBytes = Buffer.from(JSON.stringify(metadata), "utf-8");
@@ -844,15 +845,10 @@ describe("images", () => {
 		return Buffer.concat([prefix, metadataBytes, chunkData]);
 	}
 
-	async function stageUpload(
-		uploadId: string,
-		type: "image/jpeg" | "image/png",
-		bytes: Buffer,
-	): Promise<void> {
+	async function stageUpload(uploadId: string, bytes: Buffer): Promise<void> {
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					type,
 					uploadId,
 					index: 0,
 					byteOffset: 0,
@@ -868,79 +864,79 @@ describe("images", () => {
 		clearUploadsForTest();
 	});
 
-	it("rejects image create when no uploaded binary exists", async () => {
-		const imageId = crypto.randomUUID();
+	it("rejects file create when no uploaded binary exists", async () => {
+		const fileId = crypto.randomUUID();
 		await expect(
 			create({
 				service: "evy",
-				resource: "images",
-				filter: { id: imageId },
+				resource: "files",
+				filter: { id: fileId },
 				data: {
-					id: imageId,
-					type: "image/jpeg",
+					id: fileId,
+					type: fileType,
 					createdAt: now,
 					updatedAt: now,
 				},
 			}),
-		).rejects.toThrow("No upload found for image id");
+		).rejects.toThrow("No upload found for file id");
 	});
 
-	it("creates image binary and metadata through core create", async () => {
-		const imageId = crypto.randomUUID();
-		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+	it("creates file binary and metadata through core create", async () => {
+		const fileId = crypto.randomUUID();
+		await stageUpload(fileId, opaqueBytes);
 
 		const result = await create({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
-			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
+			resource: "files",
+			filter: { id: fileId },
+			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
 		});
 
-		expect(result).toMatchObject({ id: imageId, type: "image/jpeg" });
+		expect(result).toMatchObject({ id: fileId });
 		const storedBinary = await readFile(
-			join(getImageStorageDirs().imagesDir, `${imageId}.jpg`),
+			join(getFileStorageDirs().filesDir, fileId),
 		);
-		expect(storedBinary).toEqual(validJpegBytes);
+		expect(storedBinary).toEqual(opaqueBytes);
 	});
 
-	it("uses filter id as persisted image id", async () => {
-		const imageId = crypto.randomUUID();
-		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+	it("uses filter id as persisted file id", async () => {
+		const fileId = crypto.randomUUID();
+		await stageUpload(fileId, opaqueBytes);
 
 		const result = await create({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
+			resource: "files",
+			filter: { id: fileId },
 			data: {
 				id: crypto.randomUUID(),
-				type: "image/jpeg",
+				type: fileType,
 				createdAt: now,
 				updatedAt: now,
 			},
 		});
 
-		expect(result).toMatchObject({ id: imageId, type: "image/jpeg" });
+		expect(result).toMatchObject({ id: fileId });
 	});
 
-	it("rejects duplicate image create with resource already exists", async () => {
-		const imageId = crypto.randomUUID();
-		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+	it("rejects duplicate file create with resource already exists", async () => {
+		const fileId = crypto.randomUUID();
+		await stageUpload(fileId, opaqueBytes);
 		await create({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
-			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
+			resource: "files",
+			filter: { id: fileId },
+			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
 		});
-		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+		await stageUpload(fileId, opaqueBytes);
 
 		await expect(
 			create({
 				service: "evy",
-				resource: "images",
-				filter: { id: imageId },
+				resource: "files",
+				filter: { id: fileId },
 				data: {
-					id: imageId,
-					type: "image/jpeg",
+					id: fileId,
+					type: fileType,
 					createdAt: now,
 					updatedAt: now,
 				},
@@ -948,190 +944,169 @@ describe("images", () => {
 		).rejects.toThrow("Resource already exists");
 	});
 
-	it("gets image metadata through core get", async () => {
-		const imageId = crypto.randomUUID();
-		await stageUpload(imageId, "image/png", validPngBytes);
+	it("gets file metadata through core get", async () => {
+		const fileId = crypto.randomUUID();
+		await stageUpload(fileId, opaqueBytes);
 		await create({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
-			data: { id: imageId, type: "image/png", createdAt: now, updatedAt: now },
+			resource: "files",
+			filter: { id: fileId },
+			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
 		});
-		const result = await get({ service: "evy", resource: "images" });
+		const result = await get({ service: "evy", resource: "files" });
 		const found = (result as object[]).find(
-			(r) => (r as { id: string }).id === imageId,
+			(r) => (r as { id: string }).id === fileId,
 		);
-		expect(found).toBeDefined();
-		expect((found as { type: string }).type).toBe("image/png");
+		expect(found).toMatchObject({ type: fileType });
 	});
 
 	it("filters by id", async () => {
-		const imageId = crypto.randomUUID();
+		const fileId = crypto.randomUUID();
 		const otherId = crypto.randomUUID();
-		await stageUpload(imageId, "image/jpeg", validJpegBytes);
-		await stageUpload(otherId, "image/png", validPngBytes);
+		await stageUpload(fileId, opaqueBytes);
+		await stageUpload(otherId, otherOpaqueBytes);
 		await create({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
-			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
+			resource: "files",
+			filter: { id: fileId },
+			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
 		});
 		await create({
 			service: "evy",
-			resource: "images",
+			resource: "files",
 			filter: { id: otherId },
-			data: { id: otherId, type: "image/png", createdAt: now, updatedAt: now },
+			data: { id: otherId, type: fileType, createdAt: now, updatedAt: now },
 		});
 		const result = await get({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
+			resource: "files",
+			filter: { id: fileId },
 		});
 		expect((result as object[]).length).toBe(1);
-		expect((result as { id: string }[])[0].id).toBe(imageId);
+		expect((result as { id: string }[])[0].id).toBe(fileId);
 	});
 
 	it("filters by updatedAfter", async () => {
-		const imageId = crypto.randomUUID();
+		const fileId = crypto.randomUUID();
 		const newIso = "2030-01-01T00:00:00.000Z";
-		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+		await stageUpload(fileId, opaqueBytes);
 		await create({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
+			resource: "files",
+			filter: { id: fileId },
 			data: {
-				id: imageId,
-				type: "image/jpeg",
+				id: fileId,
+				type: fileType,
 				createdAt: now,
 				updatedAt: now,
 			},
 		});
 		const result = await get({
 			service: "evy",
-			resource: "images",
+			resource: "files",
 			filter: { updatedAfter: newIso },
 		});
 		expect((result as object[]).length).toBe(0);
 	});
 
-	it("rejects upload type mismatch", async () => {
-		const imageId = crypto.randomUUID();
-		await stageUpload(imageId, "image/png", validPngBytes);
+	it("accepts opaque bytes", async () => {
+		const fileId = crypto.randomUUID();
+		await stageUpload(fileId, Buffer.from([0x00, 0x00, 0x00]));
 
 		await expect(
 			create({
 				service: "evy",
-				resource: "images",
-				filter: { id: imageId },
+				resource: "files",
+				filter: { id: fileId },
 				data: {
-					id: imageId,
-					type: "image/jpeg",
+					id: fileId,
+					type: fileType,
 					createdAt: now,
 					updatedAt: now,
 				},
 			}),
-		).rejects.toThrow("Upload type mismatch");
+		).resolves.toMatchObject({ id: fileId });
 	});
 
-	it("rejects invalid image bytes", async () => {
-		const imageId = crypto.randomUUID();
-		await stageUpload(imageId, "image/jpeg", Buffer.from([0x00, 0x00, 0x00]));
-
+	it("rejects metadata without a type", async () => {
+		const fileId = crypto.randomUUID();
 		await expect(
 			create({
 				service: "evy",
-				resource: "images",
-				filter: { id: imageId },
+				resource: "files",
+				filter: { id: fileId },
 				data: {
-					id: imageId,
-					type: "image/jpeg",
+					id: fileId,
 					createdAt: now,
 					updatedAt: now,
 				},
 			}),
-		).rejects.toThrow("Invalid magic bytes");
+		).rejects.toThrow("File validation failed");
 	});
 
-	it("rejects invalid image type", async () => {
-		const imageId = crypto.randomUUID();
-		await expect(
-			create({
-				service: "evy",
-				resource: "images",
-				filter: { id: imageId },
-				data: {
-					id: imageId,
-					type: "image/gif",
-					createdAt: now,
-					updatedAt: now,
-				},
-			}),
-		).rejects.toThrow();
-	});
-
-	it("deletes image binary and metadata through generic delete", async () => {
-		const imageId = crypto.randomUUID();
-		await stageUpload(imageId, "image/jpeg", validJpegBytes);
+	it("deletes file binary and metadata through generic delete", async () => {
+		const fileId = crypto.randomUUID();
+		await stageUpload(fileId, opaqueBytes);
 		await create({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
-			data: { id: imageId, type: "image/jpeg", createdAt: now, updatedAt: now },
+			resource: "files",
+			filter: { id: fileId },
+			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
 		});
 
 		const result = await deleteCore({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
+			resource: "files",
+			filter: { id: fileId },
 		});
 
-		expect(result).toMatchObject({ id: imageId, type: "image/jpeg" });
+		expect(result).toMatchObject({ id: fileId });
 		await expect(
-			readFile(join(getImageStorageDirs().imagesDir, `${imageId}.jpg`)),
+			readFile(join(getFileStorageDirs().filesDir, fileId)),
 		).rejects.toThrow();
 		const rows = await get({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
+			resource: "files",
+			filter: { id: fileId },
 		});
 		expect(rows).toHaveLength(0);
 	});
 
-	it("deletes image metadata when binary is already missing", async () => {
-		const imageId = crypto.randomUUID();
-		await testDb.insert(schema.image).values({
-			id: imageId,
-			type: "image/png",
+	it("deletes file metadata when binary is already missing", async () => {
+		const fileId = crypto.randomUUID();
+		await testDb.insert(schema.file).values({
+			id: fileId,
+			type: fileType,
 			createdAt: now,
 			updatedAt: now,
 		});
 
 		const result = await deleteCore({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
+			resource: "files",
+			filter: { id: fileId },
 		});
 
-		expect(result).toMatchObject({ id: imageId, type: "image/png" });
+		expect(result).toMatchObject({ id: fileId });
 		const rows = await get({
 			service: "evy",
-			resource: "images",
-			filter: { id: imageId },
+			resource: "files",
+			filter: { id: fileId },
 		});
 		expect(rows).toHaveLength(0);
 	});
 
-	it("rejects deleting a missing image", async () => {
+	it("rejects deleting a missing file", async () => {
 		await expect(
 			deleteCore({
 				service: "evy",
-				resource: "images",
+				resource: "files",
 				filter: { id: crypto.randomUUID() },
 			}),
-		).rejects.toThrow("Image not found");
+		).rejects.toThrow("File not found");
 	});
 
-	it("rejects deleting non-image core resources", async () => {
+	it("rejects deleting non-file core resources", async () => {
 		await expect(
 			deleteCore({
 				service: "evy",

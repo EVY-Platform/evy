@@ -42,7 +42,7 @@ A listing aggregate. Field names below follow the marketplace service mock and U
 ```
 id: uuid
 title: string
-photo_ids: [uuid] (references `evy:images` rows)
+photo_ids: [uuid] (references `evy:files` rows)
 price: price
 seller_id: uuid
 address: address
@@ -64,4 +64,4 @@ payment_methods: {
 }
 ```
 
-`photo_ids` reference image metadata/binary rows from the evy core `images` resource. `condition_id` / `selling_reason_id` reference option rows (`DATA_MARKETPLACE_Condition` / `DATA_MARKETPLACE_SellingReason`) loaded like other reference data.
+`photo_ids` reference binary file rows from the evy core `files` resource. `condition_id` / `selling_reason_id` reference option rows (`DATA_MARKETPLACE_Condition` / `DATA_MARKETPLACE_SellingReason`) loaded like other reference data.

@@ -205,8 +205,8 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 
 | Category   | Row types |
 | ---------- | --------- |
-| View       | Info, Text, InputList |
-| Edit       | Input, TextArea, TextSelect, Dropdown, InlinePicker, Search, SelectPhoto, Calendar |
+| View       | Info, Text, InputList, PhotoGallery |
+| Edit       | Calendar, Dropdown, InlinePicker, Input, Search, SelectPhoto, TextArea, TextSelect, TimeslotPicker |
 | Action     | Button |
 | Container  | ColumnContainer, ListContainer, SelectSegmentContainer |
 
@@ -216,6 +216,8 @@ For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is eval
 
 For **Search** rows, iOS reads the data array from `source`, renders each hit using `view.content.child` (typically an `Info` row template) instead of `format`, and filters locally using rendered child display strings (`title`, `subtitle`, `text`, `label`, `placeholder`, and `value`). String fields in that child row are evaluated with `{$datum.}` the same way. Tapping a result runs actions from the rendered child row with that datum in scope. The web builder shows deterministic preview results for the child template, but it does not fetch or filter live data.
 
-For **SelectPhoto** rows, iOS uploads selected JPEG/PNG data to the evy core `images` resource and writes the returned image id into the row's draft destination. Marketplace item flows store those IDs in fields such as `photo_ids`; image binary data is loaded separately from `evy:images`.
+For **SelectPhoto** rows, iOS uploads selected photo data to the evy core `files` resource with file `type` metadata and writes the returned file id into the row's draft destination. Marketplace item flows store those IDs in fields such as `photo_ids`; binary data is loaded separately from `evy:files`.
+
+For **PhotoGallery** rows, `source` resolves to an array of EVY file IDs for photos (e.g. `source: "{item.photo_ids}"`). iOS fetches each binary separately from `evy:files` using those IDs and persists downloaded bytes under `applicationSupportDirectory/Files/`. The web builder shows the EVY logo placeholder.
 
 For **ListContainer** rows, `view.content.children` remains the static list of rows displayed by the container. `view.content.child` is optional and acts as a dynamic template: when the ListContainer `source` resolves to an array, iOS renders one formatted copy of `child` per item before the static `children`. Use `source: ""` when the ListContainer only groups static children. String fields in the dynamic child template are evaluated with `{$datum.}` against the current source item, e.g. `{$datum.title}` or `{$datum.price.value}`. The web builder shows deterministic sample preview rows for the dynamic child template.

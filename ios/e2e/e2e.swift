@@ -122,6 +122,8 @@ private enum E2EFlowIds {
   static let defaultCreatePage = "306ed62c-c2af-4652-a873-26c7a388972d"
 
   static let navigationHomeFlow = "10000000-0000-4000-8000-000000000001"
+  static let navigationViewFlow = "10000000-0000-4000-8000-000000000007"
+  static let navigationViewPage = "10000000-0000-4000-8000-000000000008"
   static let webSocketHomeFlow = "10000000-0000-4000-8000-000000000002"
   static let webSocketViewFlow = "10000000-0000-4000-8000-000000000003"
   static let webSocketViewPage = "10000000-0000-4000-8000-000000000004"
@@ -351,7 +353,7 @@ class E2ETestBase: XCTestCase {
       "pages": [
         [
           "id": pageId,
-          "title": "View Item",
+          "title": "{item.title}",
           "rows": [
             [
               "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
@@ -410,13 +412,20 @@ final class E2EFlowTests: E2ETestBase {
           flowId: E2EFlowIds.navigationHomeFlow,
           flowData: Self.homeFlowData(
             flowId: E2EFlowIds.navigationHomeFlow,
-            viewFlowId: E2EFlowIds.defaultViewFlow,
-            viewPageId: E2EFlowIds.defaultViewPage,
+            viewFlowId: E2EFlowIds.navigationViewFlow,
+            viewPageId: E2EFlowIds.navigationViewPage,
             createFlowId: E2EFlowIds.defaultCreateFlow,
             createPageId: E2EFlowIds.defaultCreatePage,
             buttonLabel: "View"
           )
-        )
+        ),
+        (
+          flowId: E2EFlowIds.navigationViewFlow,
+          flowData: Self.viewItemFlowData(
+            flowId: E2EFlowIds.navigationViewFlow,
+            pageId: E2EFlowIds.navigationViewPage
+          )
+        ),
       ]
     )
     try launchApp()
@@ -629,6 +638,9 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       app.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
       "View item page should resolve {item.title} from the item id passed in navigate query")
+    XCTAssertTrue(
+      app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
+      "View item page title should resolve {item.title} from the item id passed in navigate query")
   }
 
   @MainActor

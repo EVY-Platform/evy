@@ -1,37 +1,40 @@
 //
-//  EVYImageCache.swift
+//  EVYFileCache.swift
 //  evy
 //
 
 import SwiftUI
 
-struct EVYImageCache {
+struct EVYFileCache {
   private static let fm = FileManager.default
 
-  private static var cacheDir: URL {
-    fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
+  private static var fileDirectory: URL {
+    let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+    let dir = appSupport.appendingPathComponent("Files", isDirectory: true)
+    if !fm.fileExists(atPath: dir.path) {
+      try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+    return dir
   }
 
   static func filePath(for id: String) -> URL {
-    cacheDir.appendingPathComponent("\(id).jpg")
+    fileDirectory.appendingPathComponent(id)
   }
 
-  static func write(imageId: String, jpegData: Data) throws {
-    try jpegData.write(to: filePath(for: imageId))
+  static func write(fileId: String, data: Data) throws {
+    try data.write(to: filePath(for: fileId))
   }
 
-  static func read(imageId: String) -> Data? {
-    try? Data(contentsOf: filePath(for: imageId))
+  static func read(fileId: String) -> Data? {
+    try? Data(contentsOf: filePath(for: fileId))
   }
 
-  static func remove(imageId: String) {
-    let path = filePath(for: imageId)
-    guard fm.fileExists(atPath: path.path) else { return }
-    try? fm.removeItem(at: path)
+  static func remove(fileId: String) {
+    try? fm.removeItem(at: filePath(for: fileId))
   }
 
-  static func swiftUIImage(for imageId: String) -> Image? {
-    guard let data = read(imageId: imageId),
+  static func swiftUIImage(for fileId: String) -> Image? {
+    guard let data = read(fileId: fileId),
       let uiImage = UIImage(data: data)
     else { return nil }
     return Image(uiImage: uiImage)

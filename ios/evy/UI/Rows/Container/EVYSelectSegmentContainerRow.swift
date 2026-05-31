@@ -19,12 +19,14 @@ struct EVYSelectSegmentContainerRow: View {
   var body: some View {
     VStack(alignment: .leading) {
       EVYRowTitle(title: view.content.title)
+        .padding(.horizontal, Constants.majorPadding)
       Picker("", selection: $selected) {
         ForEach(Array(view.content.segments.enumerated()), id: \.offset) { index, segment in
           Text(segment).tag(index)
         }
       }
       .pickerStyle(.segmented)
+      .padding(.horizontal, Constants.majorPadding)
       .padding(.bottom, Constants.majorPadding)
 
       if selected < view.content.children.count {

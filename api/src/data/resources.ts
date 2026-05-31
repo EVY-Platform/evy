@@ -1,7 +1,7 @@
 import { and, asc, eq, gt } from "drizzle-orm";
 
 import type {
-	DATA_EVY_Image,
+	DATA_EVY_File,
 	DATA_EVY_Organization,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
@@ -15,7 +15,7 @@ import type {
 	DeleteResponse,
 } from "evy-types";
 import {
-	validateDataEvyImage,
+	validateDataEvyFile,
 	validateDataEvyOrganization,
 	validateDataEvyService,
 	validateDataEvyServiceProvider,
@@ -29,7 +29,7 @@ import {
 	service,
 	organization,
 	serviceProvider,
-	image,
+	file,
 } from "../../../types/generated/ts/db/schema.generated";
 import { db, hasDatabaseErrorCode } from "./db";
 
@@ -37,7 +37,7 @@ type ResourceTable =
 	| typeof service
 	| typeof organization
 	| typeof serviceProvider
-	| typeof image;
+	| typeof file;
 
 type ResourceEntityConfig<TValidated> = {
 	table: ResourceTable;
@@ -145,11 +145,10 @@ const providerResourceConfig: ResourceEntityConfig<DATA_EVY_ServiceProvider> = {
 	mapRow: (row) => row,
 };
 
-const imageResourceConfig: ResourceEntityConfig<DATA_EVY_Image> = {
-	table: image,
-	validate: validateDataEvyImage,
-	toUpdateSet: (validated, nowIso) => ({
-		type: validated.type,
+const fileResourceConfig: ResourceEntityConfig<DATA_EVY_File> = {
+	table: file,
+	validate: validateDataEvyFile,
+	toUpdateSet: (_validated, nowIso) => ({
 		updatedAt: nowIso,
 	}),
 	toInsertValues: (validated, nowIso, filterId) => ({
@@ -166,7 +165,7 @@ export {
 	serviceResourceConfig,
 	organizationResourceConfig,
 	providerResourceConfig,
-	imageResourceConfig,
+	fileResourceConfig,
 };
 
 export async function listCoreResourceRows<TRow>(

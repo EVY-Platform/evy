@@ -1,39 +1,32 @@
 //
-//  EVYImageRPC.swift
+//  EVYFileRPC.swift
 //  evy
 //
 
 import Foundation
 
-typealias EVYCreateImageParams = CreateImageParams
-typealias EVYCreateImageData = ImageMetadataClass
+typealias EVYCreateFileParams = CreateFileParams
+typealias EVYCreateFileData = FileMetadataClass
 typealias EVYCancelUploadParams = CancelUploadParams
 typealias EVYCancelUploadResponse = CancelUploadResponse
-typealias EVYGetImagesParams = GetImagesParams
-typealias EVYGetImageItem = ImageWithBinaryClass
-typealias EVYDeleteImageParams = DeleteImageParams
+typealias EVYGetFilesParams = GetFilesParams
+typealias EVYGetFileItem = FileWithBinaryClass
+typealias EVYDeleteFileParams = DeleteFileParams
 
-// MARK: - Binary frame encoding
-
-private let chunkSize = 256 * 1024  // 256 KB per chunk
+private let chunkSize = 256 * 1024
 
 extension Data {
-  func uploadFrames(uploadId: String, mimeType: String) throws -> [Data] {
-    guard let imageType = TypeEnum(rawValue: mimeType) else {
-      throw EVYError.invalidData(context: "Unsupported image type: \(mimeType)")
-    }
-
+  func uploadFrames(uploadId: String) throws -> [Data] {
     var frames: [Data] = []
     var offset = 0
     var index = 0
     while offset < count {
       let end = Swift.min(offset + chunkSize, count)
       let chunkData = self[offset..<end]
-      let metadata = ImageUploadChunkMetadataClass(
+      let metadata = FileUploadChunkMetadataClass(
         byteLength: chunkData.count,
         byteOffset: offset,
         index: index,
-        type: imageType,
         uploadID: uploadId
       )
       let metadataJSON = try JSONEncoder().encode(metadata)

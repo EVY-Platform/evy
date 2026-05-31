@@ -82,11 +82,13 @@
 						"Input",
 						"ListContainer",
 						"Search",
+						"PhotoGallery",
 						"SelectPhoto",
 						"SelectSegmentContainer",
 						"TextArea",
 						"Text",
-						"TextSelect"
+						"TextSelect",
+						"TimeslotPicker"
 					]
 				},
 				"view": {

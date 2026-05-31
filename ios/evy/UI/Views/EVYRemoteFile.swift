@@ -1,12 +1,12 @@
 //
-//  EVYRemoteImage.swift
+//  EVYRemoteFile.swift
 //  evy
 //
 
 import SwiftUI
 
-struct EVYRemoteImage: View {
-  let imageId: String
+struct EVYRemoteFile: View {
+  let fileId: String
 
   @State private var loadedImage: Image?
   @State private var isLoading = false
@@ -29,31 +29,31 @@ struct EVYRemoteImage: View {
           )
       }
     }
-    .task(id: imageId) {
-      await loadImage()
+    .task(id: fileId) {
+      await loadFile()
     }
   }
 
   @MainActor
-  private func loadImage() async {
-    if let cached = EVYImageCache.swiftUIImage(for: imageId) {
+  private func loadFile() async {
+    if let cached = EVYFileCache.swiftUIImage(for: fileId) {
       loadedImage = cached
       return
     }
     isLoading = true
     do {
-      let response = try await EVYAPIManager.shared.getImage(id: imageId)
-      guard let jpegData = Data(base64Encoded: response.dataBase64) else {
-        throw EVYError.imageLoadFailed(name: imageId)
+      let response = try await EVYAPIManager.shared.getFile(id: fileId)
+      guard let imageData = Data(base64Encoded: response.dataBase64) else {
+        throw EVYError.imageLoadFailed(name: fileId)
       }
-      try EVYImageCache.write(imageId: imageId, jpegData: jpegData)
-      if let uiImage = UIImage(data: jpegData) {
+      try EVYFileCache.write(fileId: fileId, data: imageData)
+      if let uiImage = UIImage(data: imageData) {
         loadedImage = Image(uiImage: uiImage)
       }
     } catch {
       NotificationCenter.default.post(
         name: .evyErrorOccurred,
-        object: EVYError.imageLoadFailed(name: imageId)
+        object: EVYError.imageLoadFailed(name: fileId)
       )
     }
     isLoading = false

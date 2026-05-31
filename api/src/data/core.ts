@@ -32,10 +32,10 @@ import {
 } from "./resources";
 import { getSduiRows, createSduiFlow, updateSduiFlow } from "./sdui";
 import {
-	createImageResource,
-	deleteImageResource,
-	listImageRowsWithBinary,
-} from "./images";
+	createFileResource,
+	deleteFileResource,
+	listFileRowsWithBinary,
+} from "./files";
 
 const evyCoreResourceNameSet: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
@@ -90,8 +90,8 @@ async function getCoreBody(params: GetRequest): Promise<GetResponse> {
 		return listCoreResourceRows(serviceProvider, filter, (r) => r);
 	}
 
-	if (resource === EVY_CORE_RESOURCE.IMAGES) {
-		return listImageRowsWithBinary(filter);
+	if (resource === EVY_CORE_RESOURCE.FILES) {
+		return listFileRowsWithBinary(filter);
 	}
 
 	throw new Error("Unsupported resource for core API");
@@ -144,8 +144,8 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 		);
 	}
 
-	if (resource === EVY_CORE_RESOURCE.IMAGES) {
-		return createImageResource(filter, dataPayload, nowIso, emitNotification);
+	if (resource === EVY_CORE_RESOURCE.FILES) {
+		return createFileResource(filter, dataPayload, nowIso, emitNotification);
 	}
 
 	throw new Error("Create is not supported for this resource");
@@ -213,8 +213,8 @@ async function deleteCoreBody(params: DeleteRequest): Promise<DeleteResponse> {
 		});
 	}
 
-	if (resource === EVY_CORE_RESOURCE.IMAGES) {
-		return deleteImageResource(filter, emitNotification);
+	if (resource === EVY_CORE_RESOURCE.FILES) {
+		return deleteFileResource(filter, emitNotification);
 	}
 
 	throw new Error("Delete is not supported for this resource");

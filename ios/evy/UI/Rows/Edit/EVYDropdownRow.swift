@@ -32,6 +32,7 @@ struct EVYDropdownRow: View {
         )
       }
     }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 
