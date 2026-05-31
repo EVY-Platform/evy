@@ -209,7 +209,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await selectFlowByLabel(page, "View Item");
 
-		const textRow = page.getByText("My item is called", { exact: true });
+		const textRow = page.getByText("Item title", { exact: true });
 		await expect(textRow).toBeVisible();
 
 		await textRow.click();

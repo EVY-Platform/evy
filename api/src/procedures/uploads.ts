@@ -1,5 +1,4 @@
 export interface UploadChunkMetadata {
-	type: string;
 	uploadId: string;
 	index: number;
 	byteOffset: number;
@@ -7,7 +6,6 @@ export interface UploadChunkMetadata {
 }
 
 export interface UploadSession {
-	type: string;
 	chunks: Buffer[];
 	receivedBytes: number;
 	expectedIndex: number;
@@ -46,9 +44,6 @@ function validateUploadChunkMetadata(
 		throw new Error("Chunk metadata must be an object");
 	}
 	const metadata = value as Record<string, unknown>;
-	if (typeof metadata.type !== "string" || metadata.type.length < 1) {
-		throw new Error("Chunk metadata type must be a non-empty string");
-	}
 	if (typeof metadata.uploadId !== "string" || metadata.uploadId.length < 1) {
 		throw new Error("Chunk metadata uploadId must be a non-empty string");
 	}
@@ -87,11 +82,6 @@ export async function handleUploadChunk(frame: Buffer): Promise<void> {
 	const session = uploadSessions.get(metadata.uploadId);
 
 	if (session) {
-		if (session.type !== metadata.type) {
-			throw new Error(
-				`Upload type mismatch: session has ${session.type}, chunk has ${metadata.type}`,
-			);
-		}
 		if (metadata.index !== session.expectedIndex) {
 			throw new Error(
 				`Unexpected chunk index: expected ${session.expectedIndex}, got ${metadata.index}`,
@@ -125,7 +115,6 @@ export async function handleUploadChunk(frame: Buffer): Promise<void> {
 		throw new Error(`Upload exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`);
 	}
 	uploadSessions.set(metadata.uploadId, {
-		type: metadata.type,
 		chunks: [chunkData],
 		receivedBytes: chunkData.length,
 		expectedIndex: 1,

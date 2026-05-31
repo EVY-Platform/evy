@@ -3,6 +3,7 @@ import ColumnContainerRow from "./container/ColumnContainerRow";
 import ListContainerRow from "./container/ListContainerRow";
 import SelectSegmentContainerRow from "./container/SelectSegmentContainerRow";
 import CalendarRow from "./edit/CalendarRow";
+import PhotoGalleryRow from "./edit/PhotoGalleryRow";
 import DropdownRow from "./edit/DropdownRow";
 import InlinePickerRow from "./edit/InlinePickerRow";
 import InputRow from "./edit/InputRow";
@@ -10,6 +11,7 @@ import SearchRow from "./edit/SearchRow";
 import SelectPhotoRow from "./edit/SelectPhotoRow";
 import TextAreaRow from "./edit/TextAreaRow";
 import TextSelectRow from "./edit/TextSelectRow";
+import TimeslotPickerRow from "./edit/TimeslotPickerRow";
 import InfoRow from "./view/InfoRow";
 import InputListRow from "./view/InputListRow";
 import TextRow from "./view/TextRow";
@@ -17,6 +19,7 @@ import TextRow from "./view/TextRow";
 export const baseRows = [
 	ButtonRow,
 	CalendarRow,
+	PhotoGalleryRow,
 	ColumnContainerRow,
 	DropdownRow,
 	InfoRow,
@@ -30,4 +33,5 @@ export const baseRows = [
 	TextAreaRow,
 	TextRow,
 	TextSelectRow,
+	TimeslotPickerRow,
 ];

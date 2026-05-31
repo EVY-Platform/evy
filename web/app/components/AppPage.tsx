@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, type CSSProperties } from "react";
 
 import { useDragContext, useFlowsContext } from "../state";
+import { parseText } from "../utils/interpreter";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
 import { usePageEdgeIndicators } from "../hooks/usePageEdgeIndicators";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
@@ -87,7 +88,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 			style={pageTitleStyle}
 			onClick={selectPageDirect}
 		>
-			{page.title}
+			{parseText(page.title)}
 		</button>
 	) : null;
 
@@ -101,13 +102,13 @@ export default function AppPage({ pageId }: { pageId: string }) {
 			{footer ? (
 				<div
 					ref={pageWrapperRef}
-					className="evy-flex evy-flex-col evy-h-full evy-bg-white"
+					className="evy-overflow-hidden evy-flex evy-flex-col evy-h-full evy-bg-white"
 					style={rounded24Style}
 				>
 					{titleElement}
 					{showBlankPageIndicator && <BlankPageDropIndicator />}
 					<div
-						className="evy-overflow-scroll evy-flex evy-flex-col evy-flex-1 evy-pt-4"
+						className="evy-overflow-scroll evy-flex evy-flex-col evy-flex-1"
 						{...canvasPageInteriorDomProps}
 						ref={scrollableRef}
 					>
@@ -130,23 +131,27 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				</div>
 			) : (
 				<div
-					className="evy-overflow-scroll evy-flex evy-flex-col evy-h-full evy-pt-4 evy-bg-white"
+					className="evy-overflow-hidden evy-flex evy-flex-col evy-h-full evy-bg-white"
 					style={rounded24Style}
-					{...canvasPageInteriorDomProps}
-					ref={scrollableRef}
 				>
-					{titleElement}
-					{showBlankPageIndicator && <BlankPageDropIndicator />}
-					{rowElements}
-					<PageEdgeDropZone
-						pageId={pageId}
-						position={edgePosition}
-						dispatchDropIndicator={dispatchDropIndicator}
-						className="evy-flex-1"
-						style={{ minHeight: "var(--size-8)" }}
-						onClick={selectPageDirect}
-					/>
-					{dragging && <FooterPlaceholderDropIndicator pageId={pageId} />}
+					<div
+						className="evy-overflow-scroll evy-flex evy-flex-col evy-h-full"
+						{...canvasPageInteriorDomProps}
+						ref={scrollableRef}
+					>
+						{titleElement}
+						{showBlankPageIndicator && <BlankPageDropIndicator />}
+						{rowElements}
+						<PageEdgeDropZone
+							pageId={pageId}
+							position={edgePosition}
+							dispatchDropIndicator={dispatchDropIndicator}
+							className="evy-flex-1"
+							style={{ minHeight: "var(--size-8)" }}
+							onClick={selectPageDirect}
+						/>
+						{dragging && <FooterPlaceholderDropIndicator pageId={pageId} />}
+					</div>
 				</div>
 			)}
 		</div>

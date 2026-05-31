@@ -29,6 +29,7 @@ struct EVYTextAreaRow: View {
         )
       }
     }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 

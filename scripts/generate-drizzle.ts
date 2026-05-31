@@ -457,7 +457,7 @@ async function main(): Promise<void> {
 		"DATA_EVY_Organization",
 		"DATA_EVY_ServiceProvider",
 		"DATA_EVY_Flow",
-		"DATA_EVY_Image",
+		"DATA_EVY_File",
 	];
 
 	for (const defKey of tableOrder) {

@@ -78,8 +78,8 @@
 			],
 			"uniqueIndexes": []
 		},
-		"DATA_EVY_Image": {
-			"tableName": "Image",
+		"DATA_EVY_File": {
+			"tableName": "File",
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": []

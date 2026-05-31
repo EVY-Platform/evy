@@ -17,7 +17,7 @@
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_ServiceProvider"
 		},
 		{
-			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Image"
+			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_File"
 		},
 		{
 			"$ref": "../data/primitive.schema.json"

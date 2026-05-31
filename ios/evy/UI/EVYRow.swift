@@ -33,7 +33,7 @@ struct EVYRow: View, Identifiable {
           ScrollView {
             EVYRow(row: presented.row)
           }
-          .padding(Constants.majorPadding)
+          .padding(.vertical, Constants.majorPadding)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
           .background(Color.white.ignoresSafeArea())
           .presentationDetents([.medium, .large])
@@ -83,8 +83,10 @@ struct EVYRow: View, Identifiable {
       EVYInputRow(view: v, destination: d, isInteractive: row.actions.isEmpty)
     case .listContainer(let v, let s, _, _): EVYListContainerRow(view: v, source: s)
     case .search(let v, let s, _, _): EVYSearchRow(view: v, source: s)
+    case .photoGallery(let v, let s, _, _): EVYPhotoGalleryRow(view: v, source: s)
     case .selectPhoto(let v, _, let d, _): EVYSelectPhotoRow(view: v, destination: d)
     case .selectSegmentContainer(let v, _, _, _): EVYSelectSegmentContainerRow(view: v)
+    case .timeslotPicker(let v, _, _, _): EVYTimeslotPickerRow(view: v)
     case .textArea(let v, _, let d, _): EVYTextAreaRow(view: v, destination: d)
     case .text(let v, _, _, _): EVYTextRow(view: v)
     case .textSelect(let v, _, let d, _):

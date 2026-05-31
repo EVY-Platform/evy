@@ -5,42 +5,150 @@
 		"pages": [
 			{
 				"id": "82cae120-c7b1-4c29-bd42-e1521320b109",
-				"title": "View Item",
+				"title": "",
 				"rows": [
 					{
-						"id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-						"type": "Text",
+						"id": "3fbadee6-dc70-434e-8d4d-443fe86e6a09",
+						"type": "PhotoGallery",
+						"source": "{item.photo_ids}",
+						"destination": "",
+						"actions": [],
+						"view": {
+							"content": {
+								"title": ""
+							}
+						}
+					},
+					{
+						"id": "8d5e3bb5-8fcf-45f4-ae3d-516ed0706e30",
+						"type": "Info",
+						"view": {
+							"content": {
+								"icon": "",
+								"title": "{item.title}",
+								"subtitle": "{formatCurrency(item.price)}"
+							}
+						},
+						"source": "",
+						"actions": [],
+						"destination": ""
+					},
+					{
+						"id": "ec3bef23-6d74-43eb-adde-8d498d9ed70e",
+						"type": "SelectSegmentContainer",
 						"source": "",
 						"destination": "",
 						"actions": [],
 						"view": {
 							"content": {
-								"title": "My item is called",
-								"text": "{item.title}"
-							},
-							"max_lines": ""
+								"title": "",
+								"segments": [
+									"Pickup",
+									"Delivery",
+									"Shipping"
+								],
+								"children": [
+									{
+										"id": "256c223c-71df-42f5-b12f-5267517d87cd",
+										"type": "ListContainer",
+										"source": "",
+										"destination": "",
+										"actions": [],
+										"view": {
+											"content": {
+												"title": "",
+												"children": [
+													{
+														"id": "e4bbd863-0c60-4fdc-8df0-eab51352d73b",
+														"type": "Info",
+														"source": "",
+														"destination": "",
+														"actions": [],
+														"view": {
+															"content": {
+																"title": "",
+																"subtitle": "Go pick up",
+																"icon": ""
+															}
+														}
+													},
+													{
+														"id": "197531fd-1de3-4d4d-8e03-026b37892611",
+														"type": "TimeslotPicker",
+														"source": "{item.pickup_selection}",
+														"destination": "",
+														"actions": [],
+														"view": {
+															"content": {
+																"title": "Timeslot picking"
+															}
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"id": "0fa00e83-881b-4ecb-b7d3-958d8eaf807c",
+										"type": "ListContainer",
+										"source": "",
+										"destination": "",
+										"actions": [],
+										"view": {
+											"content": {
+												"title": "",
+												"children": [
+													{
+														"id": "357d3351-93e6-47bd-91ab-3616fd70b8aa",
+														"type": "Info",
+														"source": "",
+														"destination": "",
+														"actions": [],
+														"view": {
+															"content": {
+																"title": "",
+																"subtitle": "Buyer will drop off",
+																"icon": ""
+															}
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"id": "3ef805de-1386-4f2d-b0f6-54130dc1ba8d",
+										"type": "ListContainer",
+										"source": "",
+										"destination": "",
+										"actions": [],
+										"view": {
+											"content": {
+												"title": "",
+												"children": [
+													{
+														"id": "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
+														"type": "Info",
+														"source": "",
+														"destination": "",
+														"actions": [],
+														"view": {
+															"content": {
+																"title": "",
+																"subtitle": "Delivered to your door",
+																"icon": ""
+															}
+														}
+													}
+												]
+											}
+										}
+									}
+								]
+							}
 						}
 					}
-				],
-				"footer": {
-					"id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
-					"type": "Button",
-					"source": "",
-					"destination": "",
-					"actions": [
-						{
-							"condition": "",
-							"false": "",
-							"true": "{close()}"
-						}
-					],
-					"view": {
-						"content": {
-							"title": "",
-							"label": "Go home"
-						}
-					}
-				}
+				]
 			}
 		]
 	},

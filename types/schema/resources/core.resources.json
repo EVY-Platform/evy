@@ -16,8 +16,8 @@
 		"providers": {
 			"singular": "provider"
 		},
-		"images": {
-			"singular": "image"
+		"files": {
+			"singular": "file"
 		}
 	}
 }

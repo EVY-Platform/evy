@@ -3,11 +3,9 @@ import {
 	validateDataEvyOrganization as validateOrganizationPayload,
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
-	validateDataEvyImage,
-	validateCompleteImageUploadParams,
-	validateGetImageParams,
-	validateImageUploadChunkMetadata,
-	validateImageWithBinary,
+	validateDataEvyFile,
+	validateFileUploadChunkMetadata,
+	validateFileWithBinary,
 	validateUiFlow as validateFlowData,
 } from "evy-types/validators";
 
@@ -137,54 +135,12 @@ describe("validateFlowData", () => {
 	});
 });
 
-describe("validateGetImageParams", () => {
-	const id = "550e8400-e29b-41d4-a716-446655440000";
-
-	it("accepts a valid image id", () => {
-		const out = validateGetImageParams({ id });
-		expect(out.id).toBe(id);
-	});
-
-	it("rejects invalid params", () => {
-		expect(() => validateGetImageParams({ id: "not-a-uuid" })).toThrow(
-			"GetImageRequest validation failed",
-		);
-		expect(() => validateGetImageParams({ id, extra: true })).toThrow(
-			"GetImageRequest validation failed",
-		);
-	});
-});
-
-describe("validateCompleteImageUploadParams", () => {
+describe("validateFileUploadChunkMetadata", () => {
 	const uploadId = "550e8400-e29b-41d4-a716-446655440000";
 
-	it("accepts supported image types", () => {
-		const out = validateCompleteImageUploadParams({
+	it("accepts valid file chunk metadata", () => {
+		const out = validateFileUploadChunkMetadata({
 			uploadId,
-			type: "image/png",
-			totalBytes: 1,
-		});
-		expect(out.type).toBe("image/png");
-	});
-
-	it("rejects unsupported image types", () => {
-		expect(() =>
-			validateCompleteImageUploadParams({
-				uploadId,
-				type: "image/gif",
-				totalBytes: 1,
-			}),
-		).toThrow("CompleteImageUploadRequest validation failed");
-	});
-});
-
-describe("validateImageUploadChunkMetadata", () => {
-	const uploadId = "550e8400-e29b-41d4-a716-446655440000";
-
-	it("accepts valid image chunk metadata", () => {
-		const out = validateImageUploadChunkMetadata({
-			uploadId,
-			type: "image/jpeg",
 			index: 0,
 			byteOffset: 0,
 			byteLength: 1,
@@ -194,77 +150,89 @@ describe("validateImageUploadChunkMetadata", () => {
 
 	it("rejects invalid chunk metadata", () => {
 		expect(() =>
-			validateImageUploadChunkMetadata({
+			validateFileUploadChunkMetadata({
 				uploadId,
-				type: "image/jpeg",
 				index: 0,
 				byteOffset: 0,
 				byteLength: 0,
 			}),
-		).toThrow("ImageUploadChunkMetadata validation failed");
+		).toThrow("FileUploadChunkMetadata validation failed");
 	});
 });
 
-describe("validateImageWithBinary", () => {
+describe("validateFileWithBinary", () => {
 	const id = "550e8400-e29b-41d4-a716-446655440000";
 	const now = "2024-01-19T12:00:00.000Z";
+	const type = "image/jpeg";
 
-	it("accepts valid image metadata with base64 data", () => {
-		const out = validateImageWithBinary({
+	it("accepts valid file metadata with base64 data", () => {
+		const out = validateFileWithBinary({
 			id,
-			type: "image/jpeg",
+			type,
 			createdAt: now,
 			updatedAt: now,
 			dataBase64: "abc=",
 		});
 		expect(out.dataBase64).toBe("abc=");
+		expect(out.type).toBe(type);
 	});
 
 	it("requires base64 data", () => {
 		expect(() =>
-			validateImageWithBinary({
+			validateFileWithBinary({
 				id,
-				type: "image/jpeg",
+				type,
 				createdAt: now,
 				updatedAt: now,
 			}),
-		).toThrow("ImageWithBinary validation failed");
+		).toThrow("FileWithBinary validation failed");
+	});
+
+	it("requires type", () => {
+		expect(() =>
+			validateFileWithBinary({
+				id,
+				createdAt: now,
+				updatedAt: now,
+				dataBase64: "abc=",
+			}),
+		).toThrow("FileWithBinary validation failed");
 	});
 });
 
-describe("validateDataEvyImage", () => {
+describe("validateDataEvyFile", () => {
 	const id = "550e8400-e29b-41d4-a716-446655440000";
 	const now = "2024-01-19T12:00:00.000Z";
+	const type = "image/jpeg";
 
-	it("accepts valid image metadata", () => {
-		const out = validateDataEvyImage({
+	it("accepts valid file metadata", () => {
+		const out = validateDataEvyFile({
 			id,
-			type: "image/jpeg",
+			type,
 			createdAt: now,
 			updatedAt: now,
 		});
 		expect(out.id).toBe(id);
-		expect(out.type).toBe("image/jpeg");
+		expect(out.type).toBe(type);
 	});
 
-	it("rejects unsupported type", () => {
+	it("requires type", () => {
 		expect(() =>
-			validateDataEvyImage({
+			validateDataEvyFile({
 				id,
-				type: "image/gif",
 				createdAt: now,
 				updatedAt: now,
 			}),
-		).toThrow("Image validation failed");
+		).toThrow("File validation failed");
 	});
 
 	it("rejects missing id", () => {
 		expect(() =>
-			validateDataEvyImage({
-				type: "image/jpeg",
+			validateDataEvyFile({
+				type,
 				createdAt: now,
 				updatedAt: now,
 			}),
-		).toThrow("Image validation failed");
+		).toThrow("File validation failed");
 	});
 });

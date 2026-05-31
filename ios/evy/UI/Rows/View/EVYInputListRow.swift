@@ -26,6 +26,7 @@ struct EVYInputListRow: View {
         placeholder: view.content.placeholder
       )
     }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 

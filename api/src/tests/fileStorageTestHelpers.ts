@@ -3,39 +3,36 @@ import { mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-	resetImageStorageDirsForTest,
-	setImageStorageDirsForTest,
-} from "../data/images";
+	resetFileStorageDirsForTest,
+	setFileStorageDirsForTest,
+} from "../data/files";
 
-type ImageStorageTestDirs = {
-	imagesDir: string;
+type FileStorageTestDirs = {
+	filesDir: string;
 	uploadTmpDir: string;
 };
 
-export function useImageStorageDirsForTest(
+export function useFileStorageDirsForTest(
 	name: string,
-): () => ImageStorageTestDirs {
-	let dirs: ImageStorageTestDirs;
+): () => FileStorageTestDirs {
+	let dirs: FileStorageTestDirs;
 
 	beforeEach(async () => {
 		dirs = {
-			imagesDir: join(
-				tmpdir(),
-				`evy-${name}-images-test-${crypto.randomUUID()}`,
-			),
+			filesDir: join(tmpdir(), `evy-${name}-files-test-${crypto.randomUUID()}`),
 			uploadTmpDir: join(
 				tmpdir(),
 				`evy-${name}-uploads-test-${crypto.randomUUID()}`,
 			),
 		};
-		await mkdir(dirs.imagesDir, { recursive: true });
+		await mkdir(dirs.filesDir, { recursive: true });
 		await mkdir(dirs.uploadTmpDir, { recursive: true });
-		setImageStorageDirsForTest(dirs);
+		setFileStorageDirsForTest(dirs);
 	});
 
 	afterEach(async () => {
-		resetImageStorageDirsForTest();
-		await rm(dirs.imagesDir, { recursive: true, force: true });
+		resetFileStorageDirsForTest();
+		await rm(dirs.filesDir, { recursive: true, force: true });
 		await rm(dirs.uploadTmpDir, { recursive: true, force: true });
 	});
 

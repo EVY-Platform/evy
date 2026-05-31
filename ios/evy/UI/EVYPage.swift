@@ -53,8 +53,16 @@ private struct EVYPageBody: View {
       mainContent
       footerContent
     }
-    .navigationTitle(page.title)
+    .navigationTitle("")
     .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItem(placement: .principal) {
+        EVYTextView(page.title, style: .title)
+          .lineLimit(1)
+          .truncationMode(.tail)
+          .accessibilityIdentifier("pageTitle_\(page.id)")
+      }
+    }
   }
 
   @ViewBuilder
@@ -86,7 +94,6 @@ private struct EVYPageBody: View {
 
   private func pageRow(_ row: UI_Row) -> some View {
     EVYRow(row: row)
-      .padding(.horizontal, Constants.majorPadding)
       .padding(.vertical, Constants.minorPadding)
   }
 

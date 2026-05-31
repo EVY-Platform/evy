@@ -26,6 +26,7 @@ struct EVYSelectPhotoRow: View {
         data: view.content.photos,
         destination: destination
       )
+      .padding(.horizontal, Constants.majorPadding)
     } else {
       Text("Failed to load photo selector")
         .foregroundColor(.red)

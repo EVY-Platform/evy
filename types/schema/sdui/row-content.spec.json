@@ -85,6 +85,16 @@
 			"secondary": "string"
 		}
 	},
+	"PhotoGallery": {
+		"content": {
+			"title": "string"
+		}
+	},
+	"TimeslotPicker": {
+		"content": {
+			"title": "string"
+		}
+	},
 	"InputList": {
 		"content": {
 			"title": "string",

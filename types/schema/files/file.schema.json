@@ -1,38 +1,38 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "images/image",
-	"title": "ImageResource",
-	"description": "Shared EVY image resource shapes for metadata, binary responses, upload chunks, and image-specific RPC params.",
+	"$id": "files/file",
+	"title": "FileResource",
+	"description": "Shared EVY file resource shapes for metadata, binary responses, upload chunks, and file-specific RPC params.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [
-		"imageMetadata",
-		"imageWithBinary",
-		"imageUploadChunkMetadata",
-		"createImageParams",
-		"getImagesParams",
-		"deleteImageParams",
+		"fileMetadata",
+		"fileWithBinary",
+		"fileUploadChunkMetadata",
+		"createFileParams",
+		"getFilesParams",
+		"deleteFileParams",
 		"cancelUploadParams",
 		"cancelUploadResponse"
 	],
 	"properties": {
-		"imageMetadata": {
-			"$ref": "#/$defs/ImageMetadata"
+		"fileMetadata": {
+			"$ref": "#/$defs/FileMetadata"
 		},
-		"imageWithBinary": {
-			"$ref": "#/$defs/ImageWithBinary"
+		"fileWithBinary": {
+			"$ref": "#/$defs/FileWithBinary"
 		},
-		"imageUploadChunkMetadata": {
-			"$ref": "#/$defs/ImageUploadChunkMetadata"
+		"fileUploadChunkMetadata": {
+			"$ref": "#/$defs/FileUploadChunkMetadata"
 		},
-		"createImageParams": {
-			"$ref": "#/$defs/CreateImageParams"
+		"createFileParams": {
+			"$ref": "#/$defs/CreateFileParams"
 		},
-		"getImagesParams": {
-			"$ref": "#/$defs/GetImagesParams"
+		"getFilesParams": {
+			"$ref": "#/$defs/GetFilesParams"
 		},
-		"deleteImageParams": {
-			"$ref": "#/$defs/DeleteImageParams"
+		"deleteFileParams": {
+			"$ref": "#/$defs/DeleteFileParams"
 		},
 		"cancelUploadParams": {
 			"$ref": "#/$defs/CancelUploadParams"
@@ -42,29 +42,18 @@
 		}
 	},
 	"$defs": {
-		"ImageMimeType": {
-			"type": "string",
-			"enum": [
-				"image/jpeg",
-				"image/png"
-			]
-		},
-		"ImageMetadata": {
+		"FileMetadata": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"id",
-				"type",
-				"createdAt",
-				"updatedAt"
-			],
+			"required": ["id", "type", "createdAt", "updatedAt"],
 			"properties": {
 				"id": {
 					"type": "string",
 					"format": "uuid"
 				},
 				"type": {
-					"$ref": "#/$defs/ImageMimeType"
+					"type": "string",
+					"minLength": 1
 				},
 				"createdAt": {
 					"type": "string",
@@ -76,23 +65,18 @@
 				}
 			}
 		},
-		"ImageWithBinary": {
+		"FileWithBinary": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"id",
-				"type",
-				"createdAt",
-				"updatedAt",
-				"dataBase64"
-			],
+			"required": ["id", "type", "createdAt", "updatedAt", "dataBase64"],
 			"properties": {
 				"id": {
 					"type": "string",
 					"format": "uuid"
 				},
 				"type": {
-					"$ref": "#/$defs/ImageMimeType"
+					"type": "string",
+					"minLength": 1
 				},
 				"createdAt": {
 					"type": "string",
@@ -107,20 +91,11 @@
 				}
 			}
 		},
-		"ImageUploadChunkMetadata": {
+		"FileUploadChunkMetadata": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"type",
-				"uploadId",
-				"index",
-				"byteOffset",
-				"byteLength"
-			],
+			"required": ["uploadId", "index", "byteOffset", "byteLength"],
 			"properties": {
-				"type": {
-					"$ref": "#/$defs/ImageMimeType"
-				},
 				"uploadId": {
 					"type": "string",
 					"format": "uuid"
@@ -139,12 +114,10 @@
 				}
 			}
 		},
-		"ImageIdFilter": {
+		"FileIdFilter": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"id"
-			],
+			"required": ["id"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -152,7 +125,7 @@
 				}
 			}
 		},
-		"ImageGetFilter": {
+		"FileGetFilter": {
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
@@ -166,120 +139,77 @@
 				}
 			}
 		},
-		"GetImageRequest": {
+		"CreateFileParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"id"
-			],
-			"properties": {
-				"id": {
-					"type": "string",
-					"format": "uuid"
-				}
-			}
-		},
-		"CreateImageParams": {
-			"type": "object",
-			"additionalProperties": false,
-			"required": [
-				"service",
-				"resource",
-				"filter",
-				"data"
-			],
+			"required": ["service", "resource", "filter", "data"],
 			"properties": {
 				"service": {
 					"type": "string",
-					"enum": [
-						"evy"
-					]
+					"enum": ["evy"]
 				},
 				"resource": {
 					"type": "string",
-					"enum": [
-						"images"
-					]
+					"enum": ["files"]
 				},
 				"filter": {
-					"$ref": "#/$defs/ImageIdFilter"
+					"$ref": "#/$defs/FileIdFilter"
 				},
 				"data": {
-					"$ref": "#/$defs/ImageMetadata"
+					"$ref": "#/$defs/FileMetadata"
 				}
 			}
 		},
-		"GetImagesParams": {
+		"GetFilesParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"service",
-				"resource",
-				"filter"
-			],
+			"required": ["service", "resource", "filter"],
 			"properties": {
 				"service": {
 					"type": "string",
-					"enum": [
-						"evy"
-					]
+					"enum": ["evy"]
 				},
 				"resource": {
 					"type": "string",
-					"enum": [
-						"images"
-					]
+					"enum": ["files"]
 				},
 				"filter": {
-					"$ref": "#/$defs/ImageGetFilter"
+					"$ref": "#/$defs/FileGetFilter"
 				}
 			}
 		},
-		"DeleteImageParams": {
+		"DeleteFileParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"service",
-				"resource",
-				"filter"
-			],
+			"required": ["service", "resource", "filter"],
 			"properties": {
 				"service": {
 					"type": "string",
-					"enum": [
-						"evy"
-					]
+					"enum": ["evy"]
 				},
 				"resource": {
 					"type": "string",
-					"enum": [
-						"images"
-					]
+					"enum": ["files"]
 				},
 				"filter": {
-					"$ref": "#/$defs/ImageIdFilter"
+					"$ref": "#/$defs/FileIdFilter"
 				}
 			}
 		},
 		"CancelUploadParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"uploadId"
-			],
+			"required": ["uploadId"],
 			"properties": {
 				"uploadId": {
-					"type": "string",
-					"format": "uuid"
+					"type": "string"
 				}
 			}
 		},
 		"CancelUploadResponse": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"ok"
-			],
+			"required": ["ok"],
 			"properties": {
 				"ok": {
 					"type": "boolean"

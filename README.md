@@ -5,7 +5,7 @@ If smartphones and the internet were built by the people for the people. Create 
 ## Architecture at a glance
 
 EVY is split into 2 thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by `service + resource`, while authenticated binary WebSocket frames stage uploads before a normal JSON-RPC `create` finalises metadata:
-- `service: "evy"` is handled in-process in the API (SDUI flows, core resource tables, and image metadata/binaries)
+- `service: "evy"` is handled in-process in the API (SDUI flows, core resource tables, and binary files)
 - any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/procedures/services.ts`](./api/src/procedures/services.ts).
 
 ```mermaid

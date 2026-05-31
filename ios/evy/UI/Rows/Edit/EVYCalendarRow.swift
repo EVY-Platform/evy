@@ -14,8 +14,11 @@ struct EVYCalendarRow: View {
   }
 
   var body: some View {
-    EVYRowTitle(title: view.content.title)
-    EVYCalendar(content: view.content)
+    VStack(alignment: .leading) {
+      EVYRowTitle(title: view.content.title)
+      EVYCalendar(content: view.content)
+    }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 

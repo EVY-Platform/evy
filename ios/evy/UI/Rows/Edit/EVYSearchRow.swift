@@ -26,6 +26,7 @@ struct EVYSearchRow: View {
         resultTemplate: view.content.child
       )
     }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 

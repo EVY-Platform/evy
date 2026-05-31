@@ -29,6 +29,7 @@ struct EVYInfoRow: View {
       infoTextColumn(content: content, hasTitle: hasTitle, hasSubtitle: hasSubtitle)
     }
     .infoRowOuterWidth(expands: !hasTitle)
+    .padding(.horizontal, Constants.majorPadding)
   }
 
   @ViewBuilder

@@ -351,7 +351,7 @@ class E2ETestBase: XCTestCase {
       "pages": [
         [
           "id": pageId,
-          "title": "View Item",
+          "title": "{item.title}",
           "rows": [
             [
               "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
@@ -629,6 +629,9 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       app.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
       "View item page should resolve {item.title} from the item id passed in navigate query")
+    XCTAssertTrue(
+      app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
+      "View item page title should resolve {item.title} from the item id passed in navigate query")
   }
 
   @MainActor

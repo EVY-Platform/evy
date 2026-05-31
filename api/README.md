@@ -16,7 +16,7 @@ The API is the only public edge for iOS and the web builder. Requests are valida
 
 `get` and `api` are public read methods. `create`, `update`, `delete`, `sync`, and `cancelUpload` are protected (require a valid device token via `validateAuth`). Binary upload frames are also ignored unless they arrive on an authenticated WebSocket. Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` and `delete` require `filter.id`.
 
-- `service: "evy"` &mdash; handled entirely under [`src/data/`](./src/data/). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, `providers` (typed resource tables), and `images` (image metadata / `image` table). There is no generic `evy` "data" table routed through `services.ts`.
+- `service: "evy"` &mdash; handled entirely under [`src/data/`](./src/data/). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, `providers` (typed resource tables), and `files` (binary file metadata / `File` table). There is no generic `evy` "data" table routed through `services.ts`.
 - `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/procedures/rpc.ts`](./src/procedures/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/procedures/services.ts`](./src/procedures/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses. `delete` is currently limited to evy core resources.
 - **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/resources + external services) since that timestamp. When data changed, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
 
@@ -115,8 +115,8 @@ flowchart TD
 ```
 
 - `src/data/db.ts` owns the Drizzle client and imports API tables directly from `types/generated/ts/db/schema.generated.ts`; `src/data/` owns evy core resource procedures.
-- Upload sessions live in memory in `src/procedures/uploads.ts`; `src/data/images.ts` persists the validated image binary and metadata.
-- The schema comes from `types/schema/data/` and `types/schema/images/` via `bun run types:generate`.
+- Upload sessions live in memory in `src/procedures/uploads.ts`; `src/data/files.ts` persists binary file data and metadata.
+- The schema comes from `types/schema/data/` and `types/schema/files/` via `bun run types:generate`.
 - Validators are imported directly from `evy-types/validators` and `evy-types/rpcRequestHelpers` (no local wrapper file).
 
 ### Shared contracts
@@ -126,8 +126,8 @@ Broader schema layout: [docs/evy/types.md § Sources](../docs/evy/types.md#sourc
 | File | Purpose |
 |------|---------|
 | [`types/schema/service.proto`](../types/schema/service.proto) | `evy.Service` gRPC IDL implemented by every non-`evy` backend |
-| [`types/schema/data/data.schema.json`](../types/schema/data/data.schema.json) | JSON Schema for `DATA_EVY_*` persistence rows, including image metadata |
-| [`types/schema/images/image.schema.json`](../types/schema/images/image.schema.json) | Shared image metadata, binary response, upload chunk, and image-specific RPC param models |
+| [`types/schema/data/data.schema.json`](../types/schema/data/data.schema.json) | JSON Schema for `DATA_EVY_*` persistence rows, including file metadata |
+| [`types/schema/files/file.schema.json`](../types/schema/files/file.schema.json) | Shared file metadata, binary response, upload chunk, and file-specific RPC param models |
 | [`types/schema/sdui/evy.schema.json`](../types/schema/sdui/evy.schema.json) | `UI_Flow` / `UI_Page` / `UI_Row` contract |
 | [`types/schema/rpc/*.schema.json`](../types/schema/rpc) | `GetRequest` / `CreateRequest` / `UpdateRequest` / `DeleteRequest` / `GetResponse` contracts |
 
@@ -214,13 +214,13 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 | `bun run db:push`      | Push schema directly (dev only)          |
 | `bun run db:studio`    | Open Drizzle Studio UI                   |
 
-## Image Upload
+## File Upload
 
-### `images` EVY core resource
+### `files` EVY core resource
 
-Image metadata is stored in the `Image` table (evy core, `service: "evy"`, `resource: "images"`). Metadata rows contain `id`, `type`, `createdAt`, and `updatedAt`. Supported types: `image/jpeg`, `image/png`. The shared image schema lives at [`types/schema/images/image.schema.json`](../types/schema/images/image.schema.json). Maximum upload size: 20 MB.
+File metadata is stored in the `File` table (evy core, `service: "evy"`, `resource: "files"`). Metadata rows contain `id`, `createdAt`, and `updatedAt`. The shared file schema lives at [`types/schema/files/file.schema.json`](../types/schema/files/file.schema.json). Maximum upload size: 20 MB.
 
-Binary image data is stored at `api/public/images/{id}.{ext}`. Upload directories are excluded from git (see `api/.gitignore`). For production deployments, migrate to S3 or a CDN while keeping image IDs stable.
+Binary data is stored at `api/public/files/{id}` with no extension or MIME-derived filename. Upload directories are excluded from git (see `api/.gitignore`). For production deployments, migrate to S3 or a CDN while keeping file IDs stable.
 
 ### Generic binary upload frame protocol
 
@@ -233,46 +233,44 @@ Binary payloads are staged as a sequence of authenticated binary WebSocket frame
 The metadata JSON has the shape:
 
 ```json
-{ "type": "image/jpeg", "uploadId": "<uuid>", "index": 0, "byteOffset": 0, "byteLength": 12345 }
+{ "uploadId": "<uuid>", "index": 0, "byteOffset": 0, "byteLength": 12345 }
 ```
 
-- `uploadId` — a client-generated UUID identifying the upload session. For image creation, this should be the future image id.
-- `type` — payload media type. Image creation currently supports `image/jpeg` and `image/png`.
+- `uploadId` — a client-generated UUID identifying the upload session. For file creation, this should be the future file id.
 - `index` — zero-based sequential chunk index.
 - `byteOffset` — byte offset of this chunk within the full upload.
 - `byteLength` — byte length of the chunk data following the metadata.
 
-Chunks must arrive in order: each session starts with `index: 0` and `byteOffset: 0`, then increments by one chunk and the received byte count. Mismatched type, index, offset, length, or uploads over 20 MB are rejected.
+Chunks must arrive in order: each session starts with `index: 0` and `byteOffset: 0`, then increments by one chunk and the received byte count. Mismatched index, offset, length, or uploads over 20 MB are rejected.
 
-### Creating images
+### Creating files
 
-After staging the binary upload, create the image through the normal protected `create` RPC:
+After staging the binary upload, create the file through the normal protected `create` RPC:
 
 ```json
 {
   "service": "evy",
-  "resource": "images",
+  "resource": "files",
   "filter": { "id": "<uploadId>" },
   "data": {
     "id": "<uploadId>",
-    "type": "image/jpeg",
     "createdAt": "2026-05-28T00:00:00.000Z",
     "updatedAt": "2026-05-28T00:00:00.000Z"
   }
 }
 ```
 
-`filter.id` is the uploaded binary id to consume. The API validates image bytes, writes the binary to disk, creates metadata, and emits the normal `dataChanged` notification for `resource: "images"`. The server owns `createdAt` and `updatedAt` on insert, so client-supplied timestamps are only used to satisfy shared schema shape.
+`filter.id` is the uploaded binary id to consume. The API writes the binary to disk, creates metadata, and emits the normal `dataChanged` notification for `resource: "files"`. The server owns `createdAt` and `updatedAt` on insert, so client-supplied timestamps are only used to satisfy shared schema shape.
 
-### Reading and syncing images
+### Reading and syncing files
 
-The generic `get` method supports `service: "evy"`, `resource: "images"` with optional `filter.id` or `filter.updatedAfter`. Responses are arrays of `{ id, type, createdAt, updatedAt, dataBase64 }`, ordered by `updatedAt` and `id`. Because `images` is an evy core resource, `sync` can also include changed images in the same response shape.
+The generic `get` method supports `service: "evy"`, `resource: "files"` with optional `filter.id` or `filter.updatedAfter`. Responses are arrays of `{ id, createdAt, updatedAt, dataBase64 }`, ordered by `updatedAt` and `id`. Because `files` is an evy core resource, `sync` can also include changed files in the same response shape.
 
 ### RPCs
 
 | Method | Auth | Description |
 |--------|------|-------------|
-| `create` | protected | For `service: "evy"`, `resource: "images"`, finalises a staged binary upload and creates image metadata. |
-| `delete` | protected | For `service: "evy"`, `resource: "images"`, deletes image binary and metadata. Params include `filter: { id }`. Returns the deleted metadata row. |
+| `create` | protected | For `service: "evy"`, `resource: "files"`, finalises a staged binary upload and creates file metadata. |
+| `delete` | protected | For `service: "evy"`, `resource: "files"`, deletes file binary and metadata. Params include `filter: { id }`. Returns the deleted metadata row. |
 | `cancelUpload` | protected | Discard an in-progress generic upload session. Params: `{ uploadId }`. Returns `{ ok: true }`. |
-| `get` | public | For `service: "evy"`, `resource: "images"`, returns image metadata + base64 binary rows. Use `filter: { id }` to fetch a single image or `filter.updatedAfter` for incremental reads. |
+| `get` | public | For `service: "evy"`, `resource: "files"`, returns file metadata + base64 binary rows. Use `filter: { id }` to fetch a single file or `filter.updatedAfter` for incremental reads. |

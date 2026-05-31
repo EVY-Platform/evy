@@ -31,6 +31,7 @@ struct EVYInputRow: View {
         )
       }
     }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 

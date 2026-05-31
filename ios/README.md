@@ -20,11 +20,11 @@ a `sortIndex` equal to its position in that array, so `getAll` returns items in 
 Items created locally or received via single-item notifications are assigned `sortIndex =
 maxExisting + 1` so they append to the end. No separate order-state layer is needed.
 
-### Image uploads and remote images
+### File uploads and remote files
 
-`EVYAPIManager.uploadImage(_:mimeType:)` uploads JPEG/PNG data over the existing authenticated WebSocket. It generates an image UUID, sends ordered 256 KB binary frames encoded by `Data.uploadFrames(uploadId:mimeType:)`, then finalises the upload with the protected `create` RPC for `service: "evy"`, `resource: "images"`. If finalisation fails, it calls `cancelUpload` for the staged upload ID.
+`EVYAPIManager.uploadFile(_:)` uploads binary data over the existing authenticated WebSocket. It generates a file UUID, sends ordered 256 KB binary frames encoded by `Data.uploadFrames(uploadId:)`, then finalises the upload with the protected `create` RPC for `service: "evy"`, `resource: "files"`. Create metadata includes a required `type`; iOS currently sends `"image/jpeg"` for selected photos after JPEG normalization, but does not otherwise use the value yet. If finalisation fails, it calls `cancelUpload` for the staged upload ID.
 
-`EVYAPIManager.getImage(id:)` reads image rows through the generic `get` RPC and expects generated `ImageWithBinary` data (`id`, `type`, timestamps, `dataBase64`). `EVYRemoteImage` and `EVYImageCache` load and cache these responses for rendering. Image RPC parameter and response models come from generated Swift output for `types/schema/images/image.schema.json`; `EVYImageRPC.swift` keeps only the aliases and binary frame encoding needed by the app.
+`EVYAPIManager.getFile(id:)` reads file rows through the generic `get` RPC and expects generated `FileWithBinary` data (`id`, `type`, timestamps, `dataBase64`). `EVYRemoteFile` and `EVYFileCache` load and cache these responses for rendering. File RPC parameter and response models come from generated Swift output for `types/schema/files/file.schema.json`; `EVYFileRPC.swift` keeps only the aliases and binary frame encoding needed by the app.
 
 ### Draft scopes and draft cache keys
 
@@ -115,15 +115,15 @@ flowchart LR
     Views -->|Search rows read local synced resources| EVY
 
     subgraph api [Data/API]
-        APIManager[EVYAPIManager shared auth subscriptions image upload]
+        APIManager[EVYAPIManager shared auth subscriptions file upload]
         WS[EVYWebsocket JSON-RPC and binary frames]
-        ImageRPC[EVYImageRPC generated aliases frame encoding]
+        FileRPC[EVYFileRPC generated aliases frame encoding]
         APIManager --> WS
-        APIManager --> ImageRPC
+        APIManager --> FileRPC
     end
-    RemoteImage[EVYRemoteImage EVYImageCache]
-    Views --> RemoteImage
-    RemoteImage --> APIManager
+    RemoteFile[EVYRemoteFile EVYFileCache]
+    Views --> RemoteFile
+    RemoteFile --> APIManager
     EVY -->|fetch / create / update| APIManager
 
     Notif{{NotificationCenter<br/>.evyDataChanged<br/>.evyErrorOccurred}}
