@@ -1,19 +1,7 @@
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
-
-const activeDot = {
-	width: 6,
-	height: 6,
-	borderRadius: "50%",
-	backgroundColor: "var(--color-white)",
-	flexShrink: 0,
-};
-
-const inactiveDot = {
-	...activeDot,
-	backgroundColor: "rgba(255,255,255,0.45)",
-};
+import CarouselIndicator from "../design-system/CarouselIndicator";
 
 export default defineRow("PhotoGalleryRow", {
 	config: {
@@ -45,12 +33,15 @@ export default defineRow("PhotoGalleryRow", {
 					style={{ width: "60%", height: "60%", objectFit: "contain" }}
 				/>
 				<div
-					className="evy-absolute evy-flex evy-justify-center evy-items-center evy-pointer-events-none"
-					style={{ bottom: "var(--size-2)", left: 0, right: 0, gap: 5 }}
+					className="evy-absolute evy-pointer-events-none"
+					style={{ bottom: 0, left: 0, right: 0 }}
 				>
-					<div style={activeDot} />
-					<div style={inactiveDot} />
-					<div style={inactiveDot} />
+					<CarouselIndicator
+						pageCount={3}
+						activeIndex={0}
+						color="var(--color-white)"
+						inactiveColor="rgba(255, 255, 255, 0.45)"
+					/>
 				</div>
 			</div>
 		</div>

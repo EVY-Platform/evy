@@ -37,13 +37,12 @@ struct EVYPhotoGallery: View {
         .background(Constants.inactiveBackground)
         .clipped()
         .overlay(alignment: .bottom) {
-          if imageIds.count > 1 {
-            EVYCarouselIndicator(
-              indices: 0...(imageIds.count - 1),
-              selectionIndex: selectedImageIndex,
-              color: .white
-            )
-          }
+
+          EVYCarouselIndicator(
+            indices: 0...(imageIds.count - 1),
+            selectionIndex: selectedImageIndex,
+            color: .white
+          )
         }
       }
     }

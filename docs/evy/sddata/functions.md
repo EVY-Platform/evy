@@ -74,15 +74,46 @@ Variable: 900000
 Outputs: 15 minutes
 ```
 
-#### formatDate
+#### formatDatetime
 
 ```
-formatDate(_variable_type_date_time_string_, "MM/DD/YYYY")
+formatDatetime(_variable_type_date_time_string_, "MM/dd/yyyy")
 Variable: "2024-01-19T12:42:52.000Z"
 Outputs: 01/19/2024
+
+formatDatetime(_variable_type_date_time_string_, "HH:mm")
+Variable: "2024-01-19T12:42:52.000Z"
+Outputs: 12:42
+
+formatDatetime(_variable_type_date_time_string_, "EEE do")
+Variable: "2024-01-19T12:42:52.000Z"
+Outputs: Sat 19th
+
+formatDatetime(_variable_type_date_time_string_, "MMM")
+Variable: "2024-01-19T12:42:52.000Z"
+Outputs: Jan
 ```
 
-Input is an ISO 8601 / RFC 3339 string (same wire type as `createdAt` / `updatedAt`), not a Unix timestamp number.
+Input is an ISO 8601 / RFC 3339 string or a local ISO datetime string without a timezone (e.g. `"2024-01-19T12:42:52"`). Calendar and TimeslotPicker row content use this through parser format strings such as `{formatDatetime($datum, "EEE d")}` and `{formatDatetime($datum, "HH:mm")}`.
+
+Supported format tokens:
+
+| Token | Output | Example |
+|-------|--------|---------|
+| `yyyy` | 4-digit year | `2024` |
+| `MMM` | Abbreviated month | `Jan` |
+| `MM` | 2-digit month | `01` |
+| `dd` | 2-digit day | `19` |
+| `d` | Day without padding | `19` |
+| `o` | Ordinal suffix for the day | `st`, `nd`, `rd`, `th` |
+| `EEE` | Abbreviated weekday | `Sat` |
+| `HH` | 24-hour hour, padded | `09` |
+| `H` | 24-hour hour | `9` |
+| `hh` | 12-hour hour, padded | `09` |
+| `h` | 12-hour hour | `9` |
+| `mm` | Minutes, padded | `30` |
+| `a` | AM/PM | `AM` |
+
 
 #### formatDimension
 

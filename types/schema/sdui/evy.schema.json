@@ -166,6 +166,12 @@
 				"header_format": {
 					"type": "string"
 				},
+				"header_subtitle": {
+					"type": "string"
+				},
+				"timeslot_format": {
+					"type": "string"
+				},
 				"primary": {
 					"type": "string"
 				},

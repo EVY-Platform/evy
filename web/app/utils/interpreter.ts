@@ -1,16 +1,20 @@
-import { callFunction } from "./functions";
+import { callFunction, type EVYFunctionContext } from "./functions";
 import { propPathToFriendlyLabel } from "./labelFormatting";
 
 const FUNCTION_WITH_BRACES = /\{([a-zA-Z_]+)\(([^)]*)\)\}/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
 
-function resolveFunction(functionName: string): string | null {
-	const result = callFunction(functionName);
+function resolveFunction(
+	functionName: string,
+	args: string,
+	context?: EVYFunctionContext,
+): string | null {
+	const result = callFunction(functionName, args, context);
 	if (!result) return "";
 	return `${result.prefix ?? ""}${result.value}${result.suffix ?? ""}`;
 }
 
-export function parseText(input: string): string {
+export function parseText(input: string, context?: EVYFunctionContext): string {
 	if (!input) return input;
 
 	let text = input;
@@ -19,7 +23,7 @@ export function parseText(input: string): string {
 	while (safety++ < 50) {
 		const fnMatch = FUNCTION_WITH_BRACES.exec(text);
 		if (fnMatch) {
-			const resolved = resolveFunction(fnMatch[1]);
+			const resolved = resolveFunction(fnMatch[1], fnMatch[2], context);
 			if (resolved !== null) {
 				text = text.replace(fnMatch[0], resolved);
 				continue;

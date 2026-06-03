@@ -86,7 +86,7 @@ struct EVYRow: View, Identifiable {
     case .photoGallery(let v, let s, _, _): EVYPhotoGalleryRow(view: v, source: s)
     case .selectPhoto(let v, _, let d, _): EVYSelectPhotoRow(view: v, destination: d)
     case .selectSegmentContainer(let v, _, _, _): EVYSelectSegmentContainerRow(view: v)
-    case .timeslotPicker(let v, _, _, _): EVYTimeslotPickerRow(view: v)
+    case .timeslotPicker(let v, let s, _, _): EVYTimeslotPickerRow(view: v, source: s)
     case .textArea(let v, _, let d, _): EVYTextAreaRow(view: v, destination: d)
     case .text(let v, _, _, _): EVYTextRow(view: v)
     case .textSelect(let v, _, let d, _):

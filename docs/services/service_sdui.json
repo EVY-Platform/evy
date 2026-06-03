@@ -80,7 +80,14 @@
 														"actions": [],
 														"view": {
 															"content": {
-																"title": "Timeslot picking"
+																"title": "",
+																"start_time": "07:00",
+																"end_time": "19:00",
+																"timeslot_interval_minutes": 30,
+																"label_interval_minutes": 60,
+																"header_format": "{formatDatetime($datum, \"EEE\")}",
+																"header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
+																"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}"
 															}
 														}
 													}
@@ -520,7 +527,8 @@
 																"end_time": "19:00",
 																"timeslot_interval_minutes": 30,
 																"label_interval_minutes": 60,
-																"header_format": "EEE d",
+																"header_format": "{formatDatetime($datum, \"EEE d\")}",
+																"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 																"primary": "{pickup_selection}",
 																"secondary": "{delivery_selection}"
 															}
@@ -622,7 +630,8 @@
 																"end_time": "19:00",
 																"timeslot_interval_minutes": 30,
 																"label_interval_minutes": 60,
-																"header_format": "EEE d",
+																"header_format": "{formatDatetime($datum, \"EEE d\")}",
+																"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 																"primary": "{delivery_selection}",
 																"secondary": "{pickup_selection}"
 															}

@@ -318,38 +318,58 @@ func evyFormatDuration(
 }
 
 @MainActor
-func evyFormatDate(
+func evyFormatDatetime(
   _ args: String,
   _ editing: Bool = false
 ) throws -> EVYFunctionOutput {
+  try evyFormatIsoDatetime(args, editing, errorType: "datetime")
+}
+
+@MainActor
+private func evyFormatIsoDatetime(
+  _ args: String,
+  _ editing: Bool,
+  errorType: String
+) throws -> EVYFunctionOutput {
   let parts = splitFunctionArguments(args)
   guard parts.count >= 2 else {
-    throw EVYError.formatFailed(type: "date", reason: "expected value and format pattern")
+    throw EVYError.formatFailed(type: errorType, reason: "expected value and format pattern")
   }
   let path = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
   guard !path.isEmpty else {
-    throw EVYError.formatFailed(type: "date", reason: "missing value argument")
+    throw EVYError.formatFailed(type: errorType, reason: "missing value argument")
   }
   let pattern = evyNormalizeDateFormatPattern(
     stripOptionalSurroundingQuotes(parts[1])
       .trimmingCharacters(in: .whitespacesAndNewlines)
   )
   guard !pattern.isEmpty else {
-    throw EVYError.formatFailed(type: "date", reason: "missing format pattern")
+    throw EVYError.formatFailed(type: errorType, reason: "missing format pattern")
   }
 
   let res = try EVY.getDataFromProps(path)
-  let isoString = try evyIso8601String(from: res, type: "date")
+  let isoString = try evyIso8601String(from: res, type: errorType)
 
   if editing {
     return EVYFunctionOutput(value: isoString, prefix: nil, suffix: nil)
   }
 
-  let date = try evyParseIso8601Date(isoString)
+  let date = try evyParseIso8601Date(isoString, type: errorType)
   let formatter = DateFormatter()
   formatter.locale = Locale(identifier: "en_US_POSIX")
   formatter.timeZone = TimeZone(secondsFromGMT: 0)
-  formatter.dateFormat = pattern
+
+  var processedPattern = pattern
+  if processedPattern.contains("o") {
+    let calendar = Calendar(identifier: .gregorian)
+    let components = calendar.dateComponents(in: TimeZone(secondsFromGMT: 0)!, from: date)
+    if let day = components.day {
+      let suffix = evyOrdinalSuffix(day: day)
+      processedPattern = processedPattern.replacingOccurrences(of: "o", with: "'\(suffix)'")
+    }
+  }
+
+  formatter.dateFormat = processedPattern
   let formatted = formatter.string(from: date)
   return EVYFunctionOutput(value: formatted, prefix: nil, suffix: nil)
 }
@@ -479,6 +499,18 @@ private func evyNormalizeDateFormatPattern(_ pattern: String) -> String {
   return result
 }
 
+private func evyOrdinalSuffix(day: Int) -> String {
+  let lastTwoDigits = day % 100
+  let lastDigit = day % 10
+  if lastTwoDigits >= 11 && lastTwoDigits <= 13 { return "th" }
+  switch lastDigit {
+  case 1: return "st"
+  case 2: return "nd"
+  case 3: return "rd"
+  default: return "th"
+  }
+}
+
 private func evyIso8601String(from json: EVYJson, type: String) throws -> String {
   switch json {
   case .string(let stringValue):
@@ -492,7 +524,7 @@ private func evyIso8601String(from json: EVYJson, type: String) throws -> String
   }
 }
 
-private func evyParseIso8601Date(_ isoString: String) throws -> Date {
+private func evyParseIso8601Date(_ isoString: String, type: String = "date") throws -> Date {
   let withFraction = ISO8601DateFormatter()
   withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
   if let date = withFraction.date(from: isoString) {
@@ -503,7 +535,15 @@ private func evyParseIso8601Date(_ isoString: String) throws -> Date {
   if let date = basic.date(from: isoString) {
     return date
   }
-  throw EVYError.formatFailed(type: "date", reason: "could not parse ISO 8601 date '\(isoString)'")
+  let localDateTime = DateFormatter()
+  localDateTime.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+  localDateTime.locale = Locale(identifier: "en_US_POSIX")
+  localDateTime.timeZone = TimeZone(secondsFromGMT: 0)
+  if let date = localDateTime.date(from: isoString) {
+    return date
+  }
+  throw EVYError.formatFailed(
+    type: type, reason: "could not parse ISO 8601 date '\(isoString)'")
 }
 
 private func evyNumericValue(_ value: String) -> Decimal? {

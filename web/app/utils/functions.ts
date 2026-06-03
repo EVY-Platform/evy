@@ -1,10 +1,21 @@
-type EVYFunctionOutput = {
+import { evyFormatDatetime } from "./datetime";
+
+export type EVYFunctionContext = {
+	datum?: string;
+};
+
+export type EVYFunctionOutput = {
 	value: string;
 	prefix?: string;
 	suffix?: string;
 };
 
-/** Web intentionally returns doc-shaped placeholders; real formatting runs on iOS. */
+type EVYFunctionHandler = (
+	args: string,
+	context?: EVYFunctionContext,
+) => EVYFunctionOutput | null;
+
+/** Web intentionally returns doc-shaped placeholders for functions that need runtime data. */
 function evyCount(): EVYFunctionOutput {
 	return { value: "1" };
 }
@@ -41,11 +52,8 @@ const evyFormatImperialLengthStub = (): EVYFunctionOutput => ({
 const evyFormatDurationStub = (): EVYFunctionOutput => ({
 	value: "15 minutes",
 });
-const evyFormatDateStub = (): EVYFunctionOutput => ({
-	value: "01/19/2024",
-});
 
-const functionHandlers: Record<string, () => EVYFunctionOutput | null> = {
+const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
 	formatCurrency: evyFormatCurrency,
@@ -56,11 +64,15 @@ const functionHandlers: Record<string, () => EVYFunctionOutput | null> = {
 	formatMetricLength: evyFormatMetricLengthStub,
 	formatImperialLength: evyFormatImperialLengthStub,
 	formatDuration: evyFormatDurationStub,
-	formatDate: evyFormatDateStub,
+	formatDatetime: evyFormatDatetime,
 };
 
-export function callFunction(name: string): EVYFunctionOutput | null {
+export function callFunction(
+	name: string,
+	args = "",
+	context?: EVYFunctionContext,
+): EVYFunctionOutput | null {
 	const handler = functionHandlers[name];
 	if (!handler) return null;
-	return handler();
+	return handler(args, context);
 }

@@ -55,7 +55,7 @@ struct EVYRectangle: View {
 
     return AnyView(content)
       .foregroundColor(textColor)
-      .padding(Constants.majorPadding)
+      .padding(Constants.minorPadding)
       .frame(width: width, height: height)
       .background(content: {
         RoundedRectangle(cornerRadius: Constants.mainCornerRadius)

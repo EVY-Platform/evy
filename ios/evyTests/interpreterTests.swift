@@ -417,13 +417,35 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value"))
   }
 
-  func testFormatDateFormatsIsoStringWithPattern() throws {
+  func testFormatDatetimeFormatsIsoStringWithPattern() throws {
     let key = uniqueKey("created")
-    try store(.string("2024-01-19T12:42:52.000Z"), at: key)
-    let out = try parseTextFromText(
-      "{formatDate(\(key), \"MM/dd/yyyy\")}"
+    try store(.string("2026-06-03T09:30:00.000Z"), at: key)
+
+    let date = try parseTextFromText("{formatDatetime(\(key), \"MM/dd/yyyy\")}")
+    let header = try parseTextFromText("{formatDatetime(\(key), \"EEE d\")}")
+    let time = try parseTextFromText("{formatDatetime(\(key), \"HH:mm\")}")
+
+    XCTAssertEqual(date.value, "06/03/2026")
+    XCTAssertEqual(header.value, "Wed 3")
+    XCTAssertEqual(time.value, "09:30")
+  }
+
+  func testFormatDatetimeSupportsIsoStringWithoutTimezone() throws {
+    let key = uniqueKey("created")
+    try store(.string("2026-06-03T09:30:00"), at: key)
+
+    let out = try parseTextFromText("{formatDatetime(\(key), \"h:mm a\")}")
+
+    XCTAssertEqual(out.value, "9:30 AM")
+  }
+
+  func testFormatDataOrToStringCanUseFormatDatetimeWithDatum() throws {
+    let out = try EVY.formatDataOrToString(
+      json: .string("2026-06-03T09:30:00"),
+      format: "{formatDatetime($datum, \"HH:mm\")}"
     )
-    XCTAssertEqual(out.value, "01/19/2024")
+
+    XCTAssertEqual(out, "09:30")
   }
 
   func testGetForBindingResolvesSingularToPluralSyncedResource() throws {
