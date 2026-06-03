@@ -24,6 +24,9 @@ extension Notification.Name {
   static let evyUserAlertRequested = Notification.Name("EVYUserAlertRequested")
 }
 
+// Parses a watch string (e.g. "{item.pickup_selection}") once at init and caches its
+// dot-separated segments so that incoming `.evyDataChanged` notification keys can be
+// efficiently prefix-matched without re-parsing on every notification.
 @MainActor
 struct EVYDataChangeWatch: Equatable {
   let rawTarget: String

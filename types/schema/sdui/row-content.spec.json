@@ -81,6 +81,7 @@
 			"timeslot_interval_minutes": "integer",
 			"label_interval_minutes": "integer",
 			"header_format": "string",
+			"timeslot_format": "string",
 			"primary": "string",
 			"secondary": "string"
 		}
@@ -92,7 +93,14 @@
 	},
 	"TimeslotPicker": {
 		"content": {
-			"title": "string"
+			"title": "string",
+			"start_time": "string",
+			"end_time": "string",
+			"timeslot_interval_minutes": "integer",
+			"label_interval_minutes": "integer",
+			"header_format": "string",
+			"header_subtitle": "string",
+			"timeslot_format": "string"
 		}
 	},
 	"InputList": {

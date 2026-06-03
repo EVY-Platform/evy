@@ -8,29 +8,57 @@ import SwiftUI
 struct EVYTimeslotPickerRow: View {
 
   private let view: TimeslotPickerRowViewData
+  private let source: String
 
-  init(view: TimeslotPickerRowViewData) {
+  init(view: TimeslotPickerRowViewData, source: String) {
     self.view = view
+    self.source = source
   }
 
   var body: some View {
-    EVYRowTitle(title: view.content.title)
-      .padding(.horizontal, Constants.majorPadding)
+    VStack(alignment: .leading) {
+      EVYRowTitle(title: view.content.title)
+      EVYTimeslotPicker(content: view.content, source: source)
+    }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 
 #Preview {
-  EVYPreviewRow(
-    json: """
+  EVYTimeslotPickerRowPreview()
+}
+
+private struct EVYTimeslotPickerRowPreview: View {
+  private let row = EVYTimeslotPickerRowPreview.makeRow()
+
+  init() {
+    EVYPreviewMockData.seedCommon()
+    let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "item")
+    EVY.draftStore.activeScopeId = previewScopeId
+    EVY.ensureDraftExists(
+      variableName: "pickup_selection",
+      initialData: EVYPreviewMockData.calendarPickupSelection.data(using: .utf8),
+      scopeId: previewScopeId
+    )
+  }
+
+  var body: some View {
+    if let row { EVYRow(row: row) } else { Text("Unable to build timeslot picker row preview") }
+  }
+
+  private static func makeRow() -> UI_Row? {
+    let json = """
       {
         "id": "preview-timeslotpicker-row",
         "type": "TimeslotPicker",
-        "source": "",
+        "source": "{pickup_selection}",
         "destination": "",
         "actions": [],
-        "view": { "content": { "title": "Timeslot Picker" } }
+        "view": {
+          "content": \(EVYPreviewMockData.calendarContentJSON)
+        }
       }
-      """,
-    failureMessage: "Unable to build timeslot picker row preview"
-  )
+      """
+    return EVYPreviewMockData.decodeRow(from: json)
+  }
 }

@@ -61,6 +61,50 @@ function containerRow(id: string, child: Row, children: Row[] = []): Row {
 	};
 }
 
+function calendarRow(id: string): Row {
+	return {
+		id,
+		row: null,
+		config: {
+			type: "Calendar",
+			source: "",
+			actions: [],
+			view: {
+				content: {
+					title: "Calendar",
+					start_time: "07:00",
+					end_time: "19:00",
+					timeslot_interval_minutes: 30,
+					label_interval_minutes: 60,
+					header_format: '{formatDatetime($datum, "EEE d")}',
+					timeslot_format: '{formatDatetime($datum, "HH:mm")}',
+					primary: "{pickup_selection}",
+					secondary: "{delivery_selection}",
+				},
+			},
+		} as Row["config"],
+	};
+}
+
+function selectSegmentRow(id: string): Row {
+	return {
+		id,
+		row: null,
+		config: {
+			type: "SelectSegmentContainer",
+			source: "",
+			actions: [],
+			view: {
+				content: {
+					title: "Segments",
+					segments: ["X", "Y", "Z"],
+					children: [],
+				},
+			},
+		} as Row["config"],
+	};
+}
+
 function initialState(overrides: Partial<AppState> = {}): AppState {
 	return {
 		flows: [
@@ -148,16 +192,58 @@ describe("pageReducer", () => {
 		expect(row?.config.view.content.text).toBe("updated");
 	});
 
-	it("UPDATE_ROW splits comma-separated value into array", () => {
-		const state = initialState();
+	it("UPDATE_ROW keeps comma-containing string fields as strings", () => {
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [calendarRow("row-1")],
+						},
+					],
+				},
+			],
+		});
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW",
 			rowId: "row-1",
-			configId: "text",
-			configValue: "a,b",
+			configId: "header_format",
+			configValue: '{formatDatetime($datum, "EEE dd")}',
 		});
 		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.view.content.text).toEqual(["a", "b"]);
+		expect(row?.config.view.content.header_format).toBe(
+			'{formatDatetime($datum, "EEE dd")}',
+		);
+	});
+
+	it("UPDATE_ROW splits comma-separated values for array content fields", () => {
+		const state = initialState({
+			flows: [
+				{
+					id: "flow-1",
+					name: "Flow",
+					pages: [
+						{
+							id: "page-1",
+							title: "Page",
+							rows: [selectSegmentRow("row-1")],
+						},
+					],
+				},
+			],
+		});
+		const next = pageReducer(state, {
+			type: "UPDATE_ROW",
+			rowId: "row-1",
+			configId: "segments",
+			configValue: "One, Two, Three",
+		});
+		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
+		expect(row?.config.view.content.segments).toEqual(["One", "Two", "Three"]);
 	});
 
 	it("UPDATE_ROW_ROOT sets source without changing view.content", () => {

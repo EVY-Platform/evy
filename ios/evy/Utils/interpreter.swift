@@ -312,6 +312,7 @@ func _formatData(json: EVYJson, format: String) throws -> String {
   let formatWithNewData =
     format
     .replacingOccurrences(of: EVY.datumPrefix, with: "\(temporaryId).")
+    .replacingOccurrences(of: "$datum", with: temporaryId)
 
   if formatWithNewData.isEmpty { return "" }
 
@@ -319,9 +320,11 @@ func _formatData(json: EVYJson, format: String) throws -> String {
   try EVY.publicStore.create(
     namespace: EVYNamespace.local, resource: temporaryId, id: EVYNamespace.singletonId,
     value: encodedData)
+  defer {
+    try? EVY.publicStore.delete(
+      namespace: EVYNamespace.local, resource: temporaryId, id: EVYNamespace.singletonId)
+  }
   let returnText = try _getValueFromText(formatWithNewData)
-  try EVY.publicStore.delete(
-    namespace: EVYNamespace.local, resource: temporaryId, id: EVYNamespace.singletonId)
   return returnText.toString()
 }
 
@@ -390,8 +393,8 @@ private func parseText(
       value = try evyFormatImperialLength(funcArgs, editing)
     case "formatDuration":
       value = try evyFormatDuration(funcArgs, editing)
-    case "formatDate":
-      value = try evyFormatDate(funcArgs, editing)
+    case "formatDatetime":
+      value = try evyFormatDatetime(funcArgs, editing)
     case "buildCurrency", "buildAddress":
       value = nil
     default:

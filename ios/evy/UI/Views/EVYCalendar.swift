@@ -103,21 +103,21 @@ struct EVYCalendar: View {
   }
 
   private static func buildCalendarData(content: CalendarRowContent) -> EVYCalendarViewState {
-    let primarySelections = readSelections(content.primary)
-    let secondarySelections = readSelections(content.secondary)
+    let primarySelections = EVYDatetime.readTimeslots(content.primary)
+    let secondarySelections = EVYDatetime.readTimeslots(content.secondary)
 
     let intervalMinutes =
       content.timeslot_interval_minutes > 0 ? content.timeslot_interval_minutes : 30
     let labelIntervalMinutes =
       content.label_interval_minutes > 0 ? content.label_interval_minutes : 60
-    let headerFormat = content.header_format.isEmpty ? "EEE d" : content.header_format
 
-    let slots = buildCalendarSlots(
+    let slots = EVYDatetime.buildCalendarSlots(
       startTime: content.start_time,
       endTime: content.end_time,
       intervalMinutes: intervalMinutes,
       labelIntervalMinutes: labelIntervalMinutes,
-      headerFormat: headerFormat,
+      headerFormat: content.header_format,
+      timeslotFormat: content.timeslot_format,
       primarySelections: primarySelections,
       secondarySelections: secondarySelections
     )
@@ -137,11 +137,16 @@ struct EVYCalendar: View {
       let label = slots.first { $0.x == 0 && $0.y == y }?.timeLabel ?? ""
       return EVYCalendarLabel(value: label, full: false)
     }
-    let endParts = content.end_time.split(separator: ":").compactMap { Int($0) }
-    if endParts.count >= 2 {
+    if let firstSlot = slots.first,
+      let firstDate = try? Date(firstSlot.dateTimeISO, strategy: .iso8601)
+    {
       yLabels.append(
         EVYCalendarLabel(
-          value: "\(endParts[0]):\(String(format: "%02d", endParts[1]))",
+          value: EVYDatetime.formattedCalendarTimeLabel(
+            dateString: EVYDatetime.isoCalendarDateString(from: firstDate),
+            timeString: content.end_time,
+            format: content.timeslot_format
+          ),
           full: false
         ))
     }
@@ -225,7 +230,7 @@ struct EVYCalendar: View {
   }
 
   private func readPrimarySelections() -> [String] {
-    readSelections(content.primary)
+    EVYDatetime.readTimeslots(content.primary)
   }
 
   private func writePrimarySelections(_ selections: [String]) {
@@ -278,14 +283,6 @@ private func calculateIndex(x: Int, y: Int, numberOfRows: Int) -> Int {
   y + (x * numberOfRows)
 }
 
-@MainActor
-private func readSelections(_ source: String) -> [String] {
-  guard let json = try? EVY.getDataFromText(source),
-    let data = json.toString().data(using: .utf8)
-  else { return [] }
-  return (try? JSONDecoder().decode([String].self, from: data)) ?? []
-}
-
 #Preview {
   EVYCalendarPreview()
 }
@@ -312,6 +309,8 @@ private struct EVYCalendarPreview: View {
       let content = try? JSONDecoder().decode(CalendarRowContent.self, from: data)
     {
       EVYCalendar(content: content)
+    } else {
+      Text("Unable to build calendar preview")
     }
   }
 }

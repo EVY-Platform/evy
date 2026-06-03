@@ -15,10 +15,12 @@ struct EVYPhotoGalleryRow: View {
   }
 
   private var imageIds: [String] {
-    guard let json = try? EVY.getDataFromText(source),
-      let data = json.toString().data(using: .utf8)
-    else { return [] }
-    return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+    let data = try? EVY.getDataFromText(source)
+    if case .array(let arrayValue) = data {
+      return arrayValue.map { $0.toString() }
+    } else {
+      return []
+    }
   }
 
   var body: some View {

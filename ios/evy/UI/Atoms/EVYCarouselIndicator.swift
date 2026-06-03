@@ -13,14 +13,18 @@ struct EVYCarouselIndicator: View {
   let color: Color
 
   var body: some View {
-    HStack {
-      ForEach(indices, id: \.self) { index in
-        Capsule()
-          .fill(color.opacity(selectionIndex == index ? 1 : 0.2))
-          .frame(width: Constants.base * 9, height: Constants.base * 2)
+    if indices.count <= 1 {
+      EmptyView()
+    } else {
+      HStack {
+        ForEach(indices, id: \.self) { index in
+          Capsule()
+            .fill(color.opacity(selectionIndex == index ? 1 : 0.2))
+            .frame(width: Constants.base * 9, height: Constants.base * 2)
+        }
       }
+      .padding()
     }
-    .padding()
   }
 }
 

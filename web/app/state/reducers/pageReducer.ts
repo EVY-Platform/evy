@@ -26,6 +26,22 @@ const CLEARED_SELECTION: Partial<AppState> = {
 	configStack: [],
 };
 
+const COMMA_SEPARATED_CONTENT_KEYS = new Set(["segments"]);
+
+function configContentValue(
+	configId: string,
+	configValue: string,
+	existingValue: unknown,
+): unknown {
+	if (
+		Array.isArray(existingValue) ||
+		COMMA_SEPARATED_CONTENT_KEYS.has(configId)
+	) {
+		return configValue.split(",").map((value) => value.trim());
+	}
+	return configValue;
+}
+
 function clearSelection(state: AppState): AppState {
 	return { ...state, ...CLEARED_SELECTION };
 }
@@ -327,21 +343,28 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 		}
 		case "UPDATE_ROW": {
-			const splitValue = action.configValue.split(",");
-			const value = splitValue.length > 1 ? splitValue : action.configValue;
-			const updater = (row: Row): Row => ({
-				...row,
-				config: {
-					...row.config,
-					view: {
-						...row.config.view,
-						content: {
-							...row.config.view.content,
-							[action.configId]: value,
+			const updater = (row: Row): Row => {
+				const value = configContentValue(
+					action.configId,
+					action.configValue,
+					row.config.view.content[
+						action.configId as keyof typeof row.config.view.content
+					],
+				);
+				return {
+					...row,
+					config: {
+						...row.config,
+						view: {
+							...row.config.view,
+							content: {
+								...row.config.view.content,
+								[action.configId]: value,
+							},
 						},
 					},
-				},
-			});
+				};
+			};
 
 			return updateState({
 				updatedPages: mapRowAcrossPages(flow.pages, action.rowId, updater),
