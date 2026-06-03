@@ -16,12 +16,12 @@ import {
 } from "evy-types/validators";
 
 import { flow } from "../../../types/generated/ts/db/schema.generated";
-import { db, hasDatabaseErrorCode } from "./db";
+import { getDb, hasDatabaseErrorCode } from "./db";
 
 export async function getSduiRows(
 	filter: GetRequest["filter"] | undefined,
 ): Promise<GetResponse> {
-	const base = db.select({ data: flow.data }).from(flow);
+	const base = getDb().select({ data: flow.data }).from(flow);
 	const whereClauses: ReturnType<typeof eq>[] = [];
 
 	if (filter?.id) {
@@ -56,7 +56,7 @@ export async function createSduiFlow(
 			? { ...validatedData, id: filterId }
 			: validatedData;
 
-	const result = await db
+	const result = await getDb()
 		.insert(flow)
 		.values({
 			id: persistedFlowData.id,
@@ -89,7 +89,7 @@ export async function updateSduiFlow(
 			? { ...validatedData, id: filterId }
 			: validatedData;
 
-	const result = await db
+	const result = await getDb()
 		.update(flow)
 		.set({ data: persistedFlowData, updatedAt: nowIso })
 		.where(eq(flow.id, filterId))
