@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { SQL } from "bun";
+import { drizzle } from "drizzle-orm/bun-sql";
 
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 
@@ -28,13 +28,21 @@ export function getConnectionUrl(): string {
 	return `postgresql://${encodedUser}:${encodedPass}@${domain}:${port}/${database}`;
 }
 
-const connectionString = getConnectionUrl();
-const client = postgres(connectionString);
+function createDb() {
+	const connectionString = getConnectionUrl();
+	const client = new SQL(connectionString);
+	return drizzle({ client, schema });
+}
 
-let db = drizzle(client, { schema });
+let dbInstance: ReturnType<typeof createDb> | undefined;
 
-export function setDbForTest(database: typeof db): void {
-	db = database;
+export function setDbForTest(database: ReturnType<typeof createDb>): void {
+	dbInstance = database;
+}
+
+export function getDb(): ReturnType<typeof createDb> {
+	dbInstance ??= createDb();
+	return dbInstance;
 }
 
 export function hasDatabaseErrorCode(err: unknown, code: string): boolean {
@@ -48,5 +56,3 @@ export function hasDatabaseErrorCode(err: unknown, code: string): boolean {
 
 	return "cause" in err && hasDatabaseErrorCode(err.cause, code);
 }
-
-export { db };

@@ -29,7 +29,7 @@ import {
 	fileResourceConfig,
 	insertResourceEntityFromConfig,
 } from "./resources";
-import { db } from "./db";
+import { getDb } from "./db";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -134,7 +134,11 @@ async function createFileFromUpload(params: {
 }
 
 async function selectFileRowById(id: string): Promise<DATA_EVY_File> {
-	const rows = await db.select().from(file).where(eq(file.id, id)).limit(1);
+	const rows = await getDb()
+		.select()
+		.from(file)
+		.where(eq(file.id, id))
+		.limit(1);
 	if (rows.length === 0) {
 		throw new Error("File not found");
 	}
@@ -203,7 +207,7 @@ async function fileRowToGetFileResponse(
 export async function listFileRowsWithBinary(
 	filter: GetRequest["filter"] | undefined,
 ): Promise<GetResponse> {
-	const base = db.select().from(file);
+	const base = getDb().select().from(file);
 	const whereClauses: ReturnType<typeof eq>[] = [];
 
 	if (filter?.id) {

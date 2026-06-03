@@ -1,10 +1,12 @@
+/// <reference types="bun-types" />
+
 import { dirname, join } from "node:path";
-import { drizzle } from "drizzle-orm/postgres-js";
 import { fileURLToPath } from "node:url";
-import { migrate as migratePg } from "drizzle-orm/postgres-js/migrator";
+import { SQL } from "bun";
+import { drizzle } from "drizzle-orm/bun-sql";
+import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
 import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
 import { readFile } from "node:fs/promises";
-import postgres from "postgres";
 
 import { MARKETPLACE_SEED_RESOURCES } from "../services/marketplace/src/resources";
 import { validateUiFlow } from "../types/validators";
@@ -74,9 +76,6 @@ function getConnectionUrl(databaseEnvName: string): string {
 	return `postgresql://${encodedUser}:${encodedPass}@${domain}:${port}/${database}`;
 }
 
-/** postgres.js logs NOTICE messages to console by default; Drizzle migrations trigger benign IF NOT EXISTS notices. */
-const seedPostgresOptions = { onnotice: () => {} };
-
 const flowTable = pgTable("Flow", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	data: jsonb("data").$type<SeedFlow>().notNull(),
@@ -95,16 +94,16 @@ const marketplaceDataTable = pgTable("Data", {
 const coreSchema = { flow: flowTable };
 const marketplaceSchema = { data: marketplaceDataTable };
 
-const coreDb = drizzle(
-	postgres(getConnectionUrl("DB_EVY_DATABASE"), seedPostgresOptions),
-	{
-		schema: coreSchema,
-	},
+const coreSqlClient = new SQL(getConnectionUrl("DB_EVY_DATABASE"));
+const marketplaceSqlClient = new SQL(
+	getConnectionUrl("DB_MARKETPLACE_DATABASE"),
 );
-const marketplaceDb = drizzle(
-	postgres(getConnectionUrl("DB_MARKETPLACE_DATABASE"), seedPostgresOptions),
-	{ schema: marketplaceSchema },
-);
+
+const coreDb = drizzle({ client: coreSqlClient, schema: coreSchema });
+const marketplaceDb = drizzle({
+	client: marketplaceSqlClient,
+	schema: marketplaceSchema,
+});
 
 type SeedInputPaths = {
 	evyFlowsPath?: string;
@@ -186,42 +185,35 @@ function buildDataRows(dataJson: SeedDataMap, now: string): SeedDataRow[] {
 	return rows;
 }
 
+function quotePostgresIdentifier(identifier: string): string {
+	return `"${identifier.replaceAll('"', '""')}"`;
+}
+
 async function ensureMarketplaceDatabaseExists(): Promise<void> {
-	const user = process.env.DB_USER;
-	const pass = process.env.DB_PASS;
-	const port = process.env.DB_PORT;
-	const domain = process.env.DB_DOMAIN;
-	const dbName = process.env.DB_MARKETPLACE_DATABASE;
-	if (!user || !pass || !port || !domain || !dbName) {
-		const missing = [
-			!user && "DB_USER",
-			!pass && "DB_PASS",
-			!port && "DB_PORT",
-			!domain && "DB_DOMAIN",
-			!dbName && "DB_MARKETPLACE_DATABASE",
-		]
-			.filter(Boolean)
-			.join(", ");
-		throw new Error(`Missing required database env: ${missing}`);
-	}
-	const sqlClient = postgres({
-		host: domain,
+	const user = requireEnv("DB_USER");
+	const pass = requireEnv("DB_PASS");
+	const port = requireEnv("DB_PORT");
+	const domain = requireEnv("DB_DOMAIN");
+	const dbName = requireEnv("DB_MARKETPLACE_DATABASE");
+	const sqlClient = new SQL({
+		hostname: domain,
 		port: Number(port),
-		user,
+		username: user,
 		password: pass,
 		database: "postgres",
-		...seedPostgresOptions,
 	});
 	try {
-		await sqlClient.unsafe(`CREATE DATABASE "${dbName}"`);
+		await sqlClient.unsafe(
+			`CREATE DATABASE ${quotePostgresIdentifier(dbName)}`,
+		);
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : String(error);
 		if (!message.includes("already exists")) {
-			await sqlClient.end({ timeout: 5 });
 			throw error;
 		}
+	} finally {
+		await sqlClient.close({ timeout: 5 });
 	}
-	await sqlClient.end({ timeout: 5 });
 }
 
 async function runMigrations(): Promise<void> {
@@ -286,20 +278,12 @@ async function seedDatabase({
 
 	await coreDb.transaction(async (tx) => {
 		await tx.delete(coreSchema.flow);
-		const flowRows = [
-			...evyFlowsJson.map((flowData) => ({
-				id: flowData.id,
-				data: flowData,
-				createdAt: now,
-				updatedAt: now,
-			})),
-			...serviceFlowsJson.map((flowData) => ({
-				id: flowData.id,
-				data: flowData,
-				createdAt: now,
-				updatedAt: now,
-			})),
-		];
+		const flowRows = [...evyFlowsJson, ...serviceFlowsJson].map((flowData) => ({
+			id: flowData.id,
+			data: flowData,
+			createdAt: now,
+			updatedAt: now,
+		}));
 		if (flowRows.length > 0) {
 			await tx.insert(coreSchema.flow).values(flowRows);
 		}
@@ -331,12 +315,15 @@ async function main(): Promise<void> {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-	main()
-		.then(() => {
-			process.exit(0);
-		})
-		.catch((error) => {
-			console.error("Seeding failed:", error);
-			process.exit(1);
-		});
+	try {
+		await main();
+	} catch (error) {
+		console.error("Seeding failed:", error);
+		process.exitCode = 1;
+	} finally {
+		await Promise.all([
+			coreSqlClient.close({ timeout: 5 }),
+			marketplaceSqlClient.close({ timeout: 5 }),
+		]);
+	}
 }

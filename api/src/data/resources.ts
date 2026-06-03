@@ -31,7 +31,7 @@ import {
 	serviceProvider,
 	file,
 } from "../../../types/generated/ts/db/schema.generated";
-import { db, hasDatabaseErrorCode } from "./db";
+import { getDb, hasDatabaseErrorCode } from "./db";
 
 type ResourceTable =
 	| typeof service
@@ -173,7 +173,7 @@ export async function listCoreResourceRows<TRow>(
 	filter: GetRequest["filter"] | undefined,
 	mapRow: (r: TRow) => unknown,
 ): Promise<GetResponse> {
-	const base = db.select().from(table);
+	const base = getDb().select().from(table);
 	const whereClauses: ReturnType<typeof eq>[] = [];
 
 	if (filter?.id) {
@@ -202,7 +202,7 @@ export async function insertResourceEntityFromConfig<TValidated>(
 	const filterId = filter?.id;
 
 	// biome-ignore lint/suspicious/noExplicitAny: union ResourceTable needs concrete table at each config site
-	const inserted = await (db.insert(config.table as any) as any)
+	const inserted = await (getDb().insert(config.table as any) as any)
 		.values(config.toInsertValues(validated, nowIso, filterId))
 		.returning()
 		.catch((err: unknown) => {
@@ -228,7 +228,7 @@ export async function updateResourceEntityFromConfig<TValidated>(
 	const filterId = filter.id;
 
 	// biome-ignore lint/suspicious/noExplicitAny: union ResourceTable needs concrete table at each config site
-	const updated = await (db.update(config.table as any) as any)
+	const updated = await (getDb().update(config.table as any) as any)
 		.set(config.toUpdateSet(validated, nowIso))
 		.where(eq(config.table.id, filterId))
 		.returning();
@@ -249,7 +249,7 @@ export async function deleteResourceEntityFromConfig<TValidated>(
 	const filterId = filter.id;
 
 	// biome-ignore lint/suspicious/noExplicitAny: union ResourceTable needs concrete table at each config site
-	const deleted = await (db.delete(config.table as any) as any)
+	const deleted = await (getDb().delete(config.table as any) as any)
 		.where(eq(config.table.id, filterId))
 		.returning();
 	if (deleted.length === 0) {
