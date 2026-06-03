@@ -6,7 +6,7 @@ import {
 	device,
 	osEnum,
 } from "../../../types/generated/ts/db/schema.generated";
-import { db } from "./db";
+import { getDb } from "./db";
 
 export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	if (!token || token.length < 1) throw new Error("No token provided");
@@ -15,7 +15,7 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 	if (!osEnum.enumValues.includes(os)) return false;
 
 	try {
-		const existing = await db
+		const existing = await getDb()
 			.select()
 			.from(device)
 			.where(eq(device.token, token))
@@ -25,7 +25,7 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 			return true;
 		}
 
-		await db.insert(device).values({
+		await getDb().insert(device).values({
 			token,
 			os,
 			createdAt: new Date().toISOString(),

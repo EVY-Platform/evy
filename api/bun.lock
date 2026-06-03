@@ -11,7 +11,6 @@
         "ajv-formats": "^3.0.1",
         "drizzle-orm": "^0.45.2",
         "pluralize": "^8.0.0",
-        "postgres": "^3.4.9",
         "rpc-websockets": "^10.0.1",
       },
       "devDependencies": {
