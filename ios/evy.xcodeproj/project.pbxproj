@@ -102,6 +102,7 @@
 		E00100112F73010100000001 /* EVYDataStoreSortIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */; };
 		FA001001PG00000100000001 /* EVYPhotoGalleryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA001002PG00000100000001 /* EVYPhotoGalleryTests.swift */; };
 		FA001003TP00000100000001 /* EVYTimeslotPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA001004TP00000100000001 /* EVYTimeslotPickerTests.swift */; };
+		FA001005ST00000100000001 /* EVYStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA001006ST00000100000001 /* EVYStateTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -220,6 +221,7 @@
 		E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDataStoreSortIndexTests.swift; sourceTree = "<group>"; };
 		FA001002PG00000100000001 /* EVYPhotoGalleryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYPhotoGalleryTests.swift; sourceTree = "<group>"; };
 		FA001004TP00000100000001 /* EVYTimeslotPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTimeslotPickerTests.swift; sourceTree = "<group>"; };
+		FA001006ST00000100000001 /* EVYStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYStateTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -513,6 +515,7 @@
 				E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */,
 				FA001002PG00000100000001 /* EVYPhotoGalleryTests.swift */,
 				FA001004TP00000100000001 /* EVYTimeslotPickerTests.swift */,
+				FA001006ST00000100000001 /* EVYStateTests.swift */,
 				74A100262F32000100000001 /* EVYCalendarTests.swift */,
 				74A100042F32000100000001 /* interpreterTests.swift */,
 			);
@@ -758,6 +761,7 @@
 				E00100112F73010100000001 /* EVYDataStoreSortIndexTests.swift in Sources */,
 				FA001001PG00000100000001 /* EVYPhotoGalleryTests.swift in Sources */,
 				FA001003TP00000100000001 /* EVYTimeslotPickerTests.swift in Sources */,
+				FA001005ST00000100000001 /* EVYStateTests.swift in Sources */,
 				74A100252F32000100000001 /* EVYCalendarTests.swift in Sources */,
 				74A100012F32000100000001 /* interpreterTests.swift in Sources */,
 			);

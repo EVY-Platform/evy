@@ -9,7 +9,7 @@ let spaceForFirstLabel: CGFloat = 6
 let columnWidth: CGFloat = 80
 let rowHeight: CGFloat = 30
 
-struct EVYCalendarLabel {
+struct EVYCalendarLabel: Equatable {
   let value: String
   var full: Bool
 }
