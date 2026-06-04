@@ -79,7 +79,7 @@ struct ViewOffsetKey: PreferenceKey {
   }
 }
 
-struct EVYCalendarViewState {
+struct EVYCalendarViewState: Equatable {
   let xLabels: [EVYCalendarLabel]
   let yLabels: [EVYCalendarLabel]
   let rows: Int
@@ -89,17 +89,16 @@ struct EVYCalendarViewState {
 
 struct EVYCalendar: View {
   private let content: CalendarRowContent
-  private let primaryDataChangeWatch: EVYDataChangeWatch
-  private let secondaryDataChangeWatch: EVYDataChangeWatch
+  private let calendarState: EVYState<EVYCalendarViewState>
 
-  @State private var state: EVYCalendarViewState
   @State private var scrollOffset = CGPoint.zero
 
   init(content: CalendarRowContent) {
     self.content = content
-    primaryDataChangeWatch = EVYDataChangeWatch(content.primary)
-    secondaryDataChangeWatch = EVYDataChangeWatch(content.secondary)
-    _state = State(initialValue: Self.buildCalendarData(content: content))
+    calendarState = EVYState(
+      watches: [content.primary, content.secondary],
+      setter: { Self.buildCalendarData(content: content) }
+    )
   }
 
   private static func buildCalendarData(content: CalendarRowContent) -> EVYCalendarViewState {
@@ -176,17 +175,6 @@ struct EVYCalendar: View {
     )
   }
 
-  private func reloadData(animated: Bool = false) {
-    let newState = Self.buildCalendarData(content: content)
-    if animated {
-      withAnimation(.linear(duration: animationDuration)) {
-        state = newState
-      }
-    } else {
-      state = newState
-    }
-  }
-
   private func handleOperation(_ operation: EVYCalendarOperation) {
     var selections = readPrimarySelections()
 
@@ -205,16 +193,19 @@ struct EVYCalendar: View {
       selections = removing(dateTimes(forColumn: x), from: selections)
     }
 
-    writePrimarySelections(selections)
-    reloadData(animated: true)
+    // Wrap the write in `withAnimation` so the synchronous notification-driven
+    // `EVYState.value` mutation falls inside the animation transaction.
+    withAnimation(.linear(duration: animationDuration)) {
+      writePrimarySelections(selections)
+    }
   }
 
   private func dateTimes(forRow y: Int) -> [String] {
-    state.slots.filter { $0.y == y }.map { $0.dateTimeISO }
+    calendarState.value.slots.filter { $0.y == y }.map { $0.dateTimeISO }
   }
 
   private func dateTimes(forColumn x: Int) -> [String] {
-    state.slots.filter { $0.x == x }.map { $0.dateTimeISO }
+    calendarState.value.slots.filter { $0.x == x }.map { $0.dateTimeISO }
   }
 
   private func adding(_ values: [String], to selections: [String]) -> [String] {
@@ -240,15 +231,15 @@ struct EVYCalendar: View {
 
   var body: some View {
     HStack(spacing: .zero) {
-      EVYCalendarAxisView(type: .y, labels: state.yLabels, offset: $scrollOffset)
+      EVYCalendarAxisView(type: .y, labels: calendarState.value.yLabels, offset: $scrollOffset)
       VStack(spacing: .zero) {
-        EVYCalendarAxisView(type: .x, labels: state.xLabels, offset: $scrollOffset)
+        EVYCalendarAxisView(type: .x, labels: calendarState.value.xLabels, offset: $scrollOffset)
         ScrollViewReader { _ in
           ScrollView([.vertical, .horizontal]) {
             EVYCalendarTimeslots(
-              rows: state.rows,
-              columns: state.columns,
-              slots: state.slots
+              rows: calendarState.value.rows,
+              columns: calendarState.value.columns,
+              slots: calendarState.value.slots
             )
             .background(
               GeometryReader { geo in
@@ -267,14 +258,6 @@ struct EVYCalendar: View {
     }
     .environment(\.operate) { calendarOperation in
       handleOperation(calendarOperation)
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
-      guard let notificationKey = notification.object as? String else { return }
-      if dataChangeKey(notificationKey, affects: primaryDataChangeWatch)
-        || dataChangeKey(notificationKey, affects: secondaryDataChangeWatch)
-      {
-        reloadData()
-      }
     }
   }
 }

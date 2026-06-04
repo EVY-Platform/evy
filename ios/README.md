@@ -134,8 +134,7 @@ flowchart LR
     WS -. post .-> Notif
     Views -. post errors .-> Notif
     Notif -. observe .-> Content
-    Notif -. observe .-> EVYState["EVYState T"]
-    Notif -. observe .-> Views
+    Notif -. observe .-> EVYState["EVYState T (single or multi-watch)"]
     EVYState -. drives .-> Views
     EVYState -. drives .-> Atoms
 ```

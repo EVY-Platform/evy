@@ -3,7 +3,7 @@
 //  evy
 //
 
-struct EVYCalendarSlot {
+struct EVYCalendarSlot: Equatable {
   let dateTimeISO: String
   let x: Int
   let y: Int

@@ -24,44 +24,29 @@ extension Notification.Name {
   static let evyUserAlertRequested = Notification.Name("EVYUserAlertRequested")
 }
 
-// Parses a watch string (e.g. "{item.pickup_selection}") once at init and caches its
-// dot-separated segments so that incoming `.evyDataChanged` notification keys can be
-// efficiently prefix-matched without re-parsing on every notification.
-@MainActor
-struct EVYDataChangeWatch: Equatable {
-  let rawTarget: String
-  let segments: [String]
-
-  init(_ watch: String) {
-    rawTarget = watch
-    guard !watch.isEmpty else {
-      segments = []
-      return
-    }
-    let parsedWatch = EVY.parsePropsFromText(watch)
-    segments = parsedWatch.components(separatedBy: PROP_SEPARATOR)
-  }
-
-  var isEmpty: Bool {
-    segments.isEmpty
-  }
-
-  func isAffected(by notificationKey: String) -> Bool {
-    guard !segments.isEmpty else { return false }
-    let notificationSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
-    let comparedSegmentCount = min(segments.count, notificationSegments.count)
-    return segments.prefix(comparedSegmentCount)
-      == notificationSegments.prefix(comparedSegmentCount)
-  }
-}
-
-@MainActor
-func dataChangeKey(_ notificationKey: String, affects watch: EVYDataChangeWatch) -> Bool {
-  watch.isAffected(by: notificationKey)
-}
-
 @MainActor
 @Observable class EVYState<T: Equatable> {
+  @MainActor
+  private struct Watch: Equatable {
+    let segments: [String]
+
+    init(_ watch: String) {
+      guard !watch.isEmpty else {
+        segments = []
+        return
+      }
+      segments = EVY.parsePropsFromText(watch).components(separatedBy: PROP_SEPARATOR)
+    }
+
+    func isAffected(by notificationKey: String) -> Bool {
+      guard !segments.isEmpty else { return false }
+      let notificationSegments = notificationKey.components(separatedBy: PROP_SEPARATOR)
+      let comparedSegmentCount = min(segments.count, notificationSegments.count)
+      return segments.prefix(comparedSegmentCount)
+        == notificationSegments.prefix(comparedSegmentCount)
+    }
+  }
+
   private var _value: T
   @ObservationIgnored private var observerTokens: [NSObjectProtocol] = []
   var value: T {
@@ -71,26 +56,44 @@ func dataChangeKey(_ notificationKey: String, affects watch: EVYDataChangeWatch)
     }
   }
 
-  init(watch: String, setter: @escaping (_ input: String) -> T) {
-    _value = setter(watch)
-    let dataChangeWatch = EVYDataChangeWatch(watch)
-
+  private func registerObserver(
+    watchTargets: [String],
+    recompute: @escaping () -> T
+  ) {
+    let watches = watchTargets.map(Watch.init)
+    // Observer runs synchronously on the posting thread (no queue specified).
+    // All posters of `.evyDataChanged` are `@MainActor`-isolated, so the block runs on
+    // the main thread; `MainActor.assumeIsolated` bridges to MainActor without an async hop.
+    // Synchronous semantics matter: it lets `withAnimation { writeData(...) }` capture the
+    // notification-driven `EVYState.value` mutation inside the same animation transaction.
     observerTokens.append(
       NotificationCenter.default.addObserver(
         forName: .evyDataChanged,
         object: nil,
-        queue: .main
+        queue: nil
       ) { [weak self] notif in
-        Task { @MainActor in
+        MainActor.assumeIsolated {
+          guard let self else { return }
           guard let notifProp = notif.object as? String else {
-            self?.value = setter(watch)
+            self.value = recompute()
             return
           }
-
-          if dataChangeKey(notifProp, affects: dataChangeWatch) { self?.value = setter(watch) }
+          if watches.contains(where: { $0.isAffected(by: notifProp) }) {
+            self.value = recompute()
+          }
         }
       }
     )
+  }
+
+  init(watch: String, setter: @escaping (_ input: String) -> T) {
+    _value = setter(watch)
+    registerObserver(watchTargets: [watch]) { setter(watch) }
+  }
+
+  init(watches: [String], setter: @escaping () -> T) {
+    _value = setter()
+    registerObserver(watchTargets: watches, recompute: setter)
   }
 
   init(staticString: T) {

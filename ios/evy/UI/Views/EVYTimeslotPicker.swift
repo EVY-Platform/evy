@@ -9,12 +9,12 @@ import SwiftUI
 
 let timeslotWidth: CGFloat = Constants.base * 18
 
-struct EVYTimeslot {
+struct EVYTimeslot: Equatable {
   let timeslot: String
   let available: Bool
 }
 
-struct EVYTimeslotDate {
+struct EVYTimeslotDate: Equatable {
   let header: String
   let subtitle: String
   let timeslots: [EVYTimeslot]
@@ -54,19 +54,16 @@ struct EVYTimeslotPicker: View {
     }
   }
 
-  private let content: TimeslotPickerRowContent
-  private let source: String
-  private let sourceDataChangeWatch: EVYDataChangeWatch
+  private let timeslotDates: EVYState<[EVYTimeslotDate]>
 
-  @State private var timeslotDates: [EVYTimeslotDate]
   @State private var selectedGroupIndex: Int = 0
   @State private var tabViewHeight: CGFloat = 0
 
   init(content: TimeslotPickerRowContent, source: String) {
-    self.content = content
-    self.source = source
-    sourceDataChangeWatch = EVYDataChangeWatch(source)
-    _timeslotDates = State(initialValue: Self.buildDates(content: content, source: source))
+    timeslotDates = EVYState(
+      watches: [source],
+      setter: { Self.buildDates(content: content, source: source) }
+    )
   }
 
   @MainActor
@@ -82,7 +79,7 @@ struct EVYTimeslotPicker: View {
   }
 
   private var numberOfTimeslotsPerDay: Int {
-    timeslotDates.map { $0.timeslots.count }.max() ?? 0
+    timeslotDates.value.map { $0.timeslots.count }.max() ?? 0
   }
 
   private func timeslotGroupView(groupedDays: [[EVYTimeslotDate]], index: Int) -> some View {
@@ -117,10 +114,10 @@ struct EVYTimeslotPicker: View {
   }
 
   var body: some View {
-    if timeslotDates.isEmpty || numberOfTimeslotsPerDay <= 0 {
+    if timeslotDates.value.isEmpty || numberOfTimeslotsPerDay <= 0 {
       EmptyView()
     } else {
-      let groupedDays = timeslotDates.chunked(with: 4)
+      let groupedDays = timeslotDates.value.chunked(with: 4)
 
       VStack {
         timeslotHeightMeasurement(groupedDays: groupedDays)
@@ -142,12 +139,6 @@ struct EVYTimeslotPicker: View {
         let roundedHeight = ceil(height)
         if roundedHeight > 0, tabViewHeight != roundedHeight {
           tabViewHeight = roundedHeight
-        }
-      }
-      .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
-        guard let notificationKey = notification.object as? String else { return }
-        if dataChangeKey(notificationKey, affects: sourceDataChangeWatch) {
-          timeslotDates = Self.buildDates(content: content, source: source)
         }
       }
     }
