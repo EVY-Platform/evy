@@ -4,9 +4,7 @@ If smartphones and the internet were built by the people for the people. Create 
 
 ## Architecture at a glance
 
-EVY is split into 2 thin clients (iOS, web builder), one public edge (`api`), and per-service backend workers that speak a shared gRPC contract (`evy.Service`). JSON-RPC requests are routed by `service + resource`, while authenticated binary WebSocket frames stage uploads before a normal JSON-RPC `create` finalises metadata:
-- `service: "evy"` is handled in-process in the API (SDUI flows, core resource tables, and binary files)
-- any other declared service (e.g. `marketplace`) is reached over gRPC from [`api/src/procedures/services.ts`](./api/src/procedures/services.ts).
+EVY is fully server-driven, meaning that the iOS app pulls in flows, page layout, data from the API to decide what to render. The API acts as gateway to other service backends, speaking a shared gRPC contract. Clients store the entire public database in local storage, and keep it in sync with a `sync` JSON-RPC method, taking a `lastSyncTime` to decide what data to return.
 
 ```mermaid
 flowchart LR
@@ -25,16 +23,6 @@ flowchart LR
     marketplace -- Drizzle --> mpDb
 ```
 
-Resource routing, unified `dataChanged` notifications, service data sync, and gRPC forwarding are covered in [`api/README.md`](./api/README.md).
-
-## Sync and local keying
-
-Clients refresh local cache state with the protected `sync` JSON-RPC method. The request includes an ISO `lastSyncTime`; the response returns changed rows across SDUI, evy core data, and backend service data shaped as `{ service, resource, value }`. When there are changes, the response also includes the current resource registry. For startup/cache refresh, the API fetches every syncable resource using `filter.updatedAfter = lastSyncTime`.
-
-Clients store synced backend resources with service-qualified keys such as `evy:sdui`, `marketplace:items`, and `marketplace:conditions`. For full details on SDUI data bindings, source/destination conventions, navigate query params, and client key resolution, see [SDUI Data](./docs/evy/sdui/readme.md#data).
-
-iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS README § Draft scopes and draft cache keys](./ios/README.md#draft-scopes-and-draft-cache-keys).
-
 # Documentation
 
 - EVY Platform
@@ -50,10 +38,6 @@ iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS
   - [Data models](./docs/services/marketplace/data.md)
   - [Example data](./docs/services/service_data.json)
   - [Example UI flow for view & create item pages](./docs/services/service_sdui.json)
-
-## Shared type system
-
-Schema layout, codegen steps, and outputs: [`docs/evy/types.md`](./docs/evy/types.md). In short: source JSON Schema lives under `types/schema/`; run `bun run types:generate` from the repo root after schema changes, or `bun run types:generate:exclude-ios` when only TypeScript output is needed (Docker images use this path). gRPC contract: [`types/schema/service.proto`](./types/schema/service.proto). The `evy` data path is implemented under [`api/src/data/`](./api/src/data/); [`api/src/procedures/services.ts`](./api/src/procedures/services.ts) holds gRPC clients and `SubscribeEvents` fan-out for non-`evy` services.
 
 ## Setup
 
