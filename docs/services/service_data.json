@@ -81,7 +81,6 @@
 				"value": 250
 			},
 			"seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
-			"address": {},
 			"pickup_selection": [
 				"2026-06-03T09:00:00",
 				"2026-06-03T09:30:00",
@@ -104,7 +103,19 @@
 						"2026-06-03T09:00:00",
 						"2026-06-03T09:30:00"
 					],
-					"address": {}
+					"address": {
+						"unit": "C509",
+						"street": "28 Rothschild Avenue",
+						"city": "Rosebery",
+						"postcode": "2018",
+						"state": "NSW",
+						"country": "Australia",
+						"location": {
+							"latitude": -33.9172075,
+							"longitude": 151.1985883
+						},
+						"instructions": ""
+					}
 				},
 				"delivery": {
 					"selection": [
@@ -150,7 +161,6 @@
 				"value": 250
 			},
 			"seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
-			"address": {},
 			"pickup_selection": [
 				"2026-06-03T10:00:00"
 			],
@@ -164,7 +174,19 @@
 					"selection": [
 						"2026-06-03T10:00:00"
 					],
-					"address": {}
+					"address": {
+						"unit": "C509",
+						"street": "28 Rothschild Avenue",
+						"city": "Rosebery",
+						"postcode": "2018",
+						"state": "NSW",
+						"country": "Australia",
+						"location": {
+							"latitude": -33.9172075,
+							"longitude": 151.1985883
+						},
+						"instructions": ""
+					}
 				},
 				"delivery": {
 					"selection": [

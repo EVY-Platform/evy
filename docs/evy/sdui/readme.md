@@ -205,7 +205,7 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 
 | Category   | Row types |
 | ---------- | --------- |
-| View       | Info, Text, InputList, PhotoGallery |
+| View       | Info, Text, InputList, PhotoGallery, Map |
 | Edit       | Calendar, Dropdown, InlinePicker, Input, Search, SelectPhoto, TextArea, TextSelect, TimeslotPicker |
 | Action     | Button |
 | Container  | ColumnContainer, ListContainer, SelectSegmentContainer |
@@ -215,6 +215,25 @@ Each row type’s `view.content` may include type-specific keys (e.g. `label`, `
 For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `{$datum.}` as the placeholder for the current item, e.g. `{$datum.value}` or `{$datum.unit} {$datum.street}, {$datum.city}`.
 
 For **Search** rows, iOS reads the data array from `source`, renders each hit using `view.content.child` (typically an `Info` row template) instead of `format`, and filters locally using rendered child display strings (`title`, `subtitle`, `text`, `label`, `placeholder`, and `value`). String fields in that child row are evaluated with `{$datum.}` the same way. Tapping a result runs actions from the rendered child row with that datum in scope. The web builder shows deterministic preview results for the child template, but it does not fetch or filter live data.
+
+For **Map** rows, `view.content.location` must be a string, usually a binding such as `"{address.location}"`. iOS resolves the string binding as data and places a native map pin when the resolved object has required `latitude` and `longitude` numbers, for example `{ "latitude": -33.8688, "longitude": 151.2093 }`. Raw location objects in SDUI, `lat`/`lng`, nested `coordinate` objects, coordinate strings, and geocoded address strings are not part of v1.
+
+```json
+{
+	"id": "uuid",
+	"type": "Map",
+	"source": "",
+	"destination": "",
+	"actions": [],
+	"view": {
+		"content": {
+			"title": "Pickup location",
+			"location": "{address.location}",
+			"subtitle": "Meet near the main entrance"
+		}
+	}
+}
+```
 
 For **SelectPhoto** rows, iOS uploads selected photo data to the evy core `files` resource with file `type` metadata and writes the returned file id into the row's draft destination. Marketplace item flows store those IDs in fields such as `photo_ids`; binary data is loaded separately from `evy:files`.
 

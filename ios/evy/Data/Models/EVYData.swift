@@ -5,6 +5,7 @@
 //  Created by Geoffroy Lesage on 4/3/2024.
 //
 
+import CoreLocation
 import Foundation
 import SwiftData
 
@@ -158,6 +159,30 @@ public enum EVYJson: Codable, Hashable {
         return dictValue.description
       }
       return string
+    }
+  }
+
+  func locationCoordinate() -> CLLocationCoordinate2D? {
+    guard case .dictionary(let value) = self,
+      let latitude = value["latitude"]?.doubleValue,
+      let longitude = value["longitude"]?.doubleValue,
+      (-90...90).contains(latitude), (-180...180).contains(longitude)
+    else {
+      return nil
+    }
+    return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+  }
+
+  private var doubleValue: Double? {
+    switch self {
+    case .decimal(let decimal):
+      return NSDecimalNumber(decimal: decimal).doubleValue
+    case .int(let int):
+      return Double(int)
+    case .string(let string):
+      return Double(string)
+    default:
+      return nil
     }
   }
 

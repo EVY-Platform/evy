@@ -5,11 +5,7 @@
 	"description": "UI types: UI_Flow, UI_Page, UI_Row",
 	"type": "object",
 	"additionalProperties": false,
-	"required": [
-		"id",
-		"name",
-		"pages"
-	],
+	"required": ["id", "name", "pages"],
 	"properties": {
 		"id": {
 			"type": "string",
@@ -30,11 +26,7 @@
 		"UI_Page": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"id",
-				"title",
-				"rows"
-			],
+			"required": ["id", "title", "rows"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -57,13 +49,7 @@
 		"UI_Row": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"id",
-				"type",
-				"view",
-				"source",
-				"actions"
-			],
+			"required": ["id", "type", "view", "source", "actions"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -78,6 +64,7 @@
 						"Dropdown",
 						"Info",
 						"InlinePicker",
+						"Map",
 						"InputList",
 						"Input",
 						"ListContainer",
@@ -94,9 +81,7 @@
 				"view": {
 					"type": "object",
 					"additionalProperties": false,
-					"required": [
-						"content"
-					],
+					"required": ["content"],
 					"properties": {
 						"content": {
 							"$ref": "#/$defs/UI_RowContent"
@@ -123,9 +108,7 @@
 		},
 		"UI_RowContent": {
 			"type": "object",
-			"required": [
-				"title"
-			],
+			"required": ["title"],
 			"properties": {
 				"title": {
 					"type": "string"
@@ -181,6 +164,9 @@
 				"subtitle": {
 					"type": "string"
 				},
+				"location": {
+					"type": "string"
+				},
 				"icon": {
 					"type": "string"
 				},
@@ -208,11 +194,7 @@
 		"UI_RowAction": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"condition",
-				"false",
-				"true"
-			],
+			"required": ["condition", "false", "true"],
 			"properties": {
 				"condition": {
 					"type": "string"

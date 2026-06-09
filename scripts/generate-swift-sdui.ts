@@ -296,72 +296,6 @@ ${lines.join("\n")}
 `;
 }
 
-/** Emit UI_RowContent with custom Codable for additionalProperties passthrough. */
-function emitRowContentWithPassthrough(): string {
-	return `// MARK: - UI_RowContent (preserves additional string keys so payload decode gets full content)
-public class UI_RowContent: Codable {
-    public let title: String
-    public let children: [UI_Row]
-    public let child: UI_Row?
-    public let segments: [String]
-    /// Additional content keys (e.g. label, value, placeholder) preserved for payload decoding.
-    private let additional: [String: String]
-
-    public init(title: String, children: [UI_Row] = [], child: UI_Row? = nil, segments: [String] = [], additional: [String: String] = [:]) {
-        self.title = title
-        self.children = children
-        self.child = child
-        self.segments = segments
-        self.additional = additional
-    }
-
-    public required init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: UI_RowContentCodingKeys.self)
-        title = try c.decode(String.self, forKey: .title)
-        children = try c.decodeIfPresent([UI_Row].self, forKey: .children) ?? []
-        child = try c.decodeIfPresent(UI_Row.self, forKey: .child)
-        segments = try c.decodeIfPresent([String].self, forKey: .segments) ?? []
-        let known = Set(["title", "children", "child", "segments"])
-        var extra: [String: String] = [:]
-        for key in c.allKeys {
-            guard !known.contains(key.stringValue) else { continue }
-            if let s = try? c.decode(String.self, forKey: key) {
-                extra[key.stringValue] = s
-            } else if let i = try? c.decode(Int.self, forKey: key) {
-                extra[key.stringValue] = String(i)
-            }
-        }
-        additional = extra
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: UI_RowContentCodingKeys.self)
-        try c.encode(title, forKey: .title)
-        try c.encode(children, forKey: .children)
-        try c.encodeIfPresent(child, forKey: .child)
-        try c.encode(segments, forKey: .segments)
-        for (k, v) in additional {
-            try c.encode(v, forKey: UI_RowContentCodingKeys(stringValue: k, intValue: nil)!)
-        }
-    }
-}
-
-private struct UI_RowContentCodingKeys: CodingKey {
-    var stringValue: String
-    var intValue: Int? { nil }
-    init?(stringValue: String) { self.stringValue = stringValue }
-    init?(intValue: Int) { nil }
-    init?(stringValue: String, intValue: Int?) {
-        self.stringValue = stringValue
-    }
-    static let title = UI_RowContentCodingKeys(stringValue: "title", intValue: nil)!
-    static let children = UI_RowContentCodingKeys(stringValue: "children", intValue: nil)!
-    static let child = UI_RowContentCodingKeys(stringValue: "child", intValue: nil)!
-    static let segments = UI_RowContentCodingKeys(stringValue: "segments", intValue: nil)!
-}
-`;
-}
-
 function emitUIShapes(schema: SchemaObject): string {
 	const overrides = buildShapeOverrides();
 	const defs = (schema.$defs ?? {}) as Record<string, unknown>;
@@ -387,7 +321,7 @@ ${flowLines.join("\n")}
 }
 `;
 
-	// $defs in order: Page, Row, RowView (synthetic), RowContent (custom), RowAction
+	// $defs in order: Page, Row, RowView (synthetic), RowContent, RowAction
 	const defOrder = [
 		"UI_Page",
 		"UI_Row",
@@ -399,10 +333,6 @@ ${flowLines.join("\n")}
 	for (const name of defOrder) {
 		if (name === "UI_RowView") {
 			defBlocks.push(emitRowViewFromSchema(schema, overrides));
-			continue;
-		}
-		if (name === "UI_RowContent") {
-			defBlocks.push(emitRowContentWithPassthrough());
 			continue;
 		}
 		const def = defs[name] as SchemaObject | undefined;
