@@ -30,7 +30,7 @@ struct EVYMap: View {
   }
 
   @ViewBuilder
-	private var mapContent: some View {
+  private var mapContent: some View {
     if let coordinate {
       Map(initialPosition: .region(region(for: coordinate))) {
         Marker(title.isEmpty ? "Location" : title, coordinate: coordinate)

@@ -32,7 +32,7 @@ export default defineRow("MapRow", {
 		},
 	} satisfies RowConfig,
 	render: (row) => {
-		const { title, location: _location, subtitle } = row.config.view.content;
+		const { title, subtitle } = row.config.view.content;
 		return (
 			<div className="evy-p-2">
 				{title ? (
