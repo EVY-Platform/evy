@@ -86,6 +86,26 @@ describe("normalizeServerRow", () => {
 		expect((n.view.content as { text?: string }).text).toBe("extra");
 	});
 
+	it("merges Map content defaults and overrides object location with string default", () => {
+		const n = normalizeServerRow(
+			makeServerRow({
+				type: "Map",
+				view: {
+					content: {
+						title: "Pickup location",
+						location: { latitude: -33.8688, longitude: 151.2093 },
+					},
+				},
+			}),
+		);
+
+		expect(n.view.content).toMatchObject({
+			title: "Pickup location",
+			location: "{item.transfer_options.pickup.address.location}",
+			subtitle: "Map row subtitle",
+		});
+	});
+
 	it("normalizes nested rows in children", () => {
 		const n = normalizeServerRow(
 			makeServerRow({

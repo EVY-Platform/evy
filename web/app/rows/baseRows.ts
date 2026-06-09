@@ -14,6 +14,7 @@ import TextSelectRow from "./edit/TextSelectRow";
 import TimeslotPickerRow from "./edit/TimeslotPickerRow";
 import InfoRow from "./view/InfoRow";
 import InputListRow from "./view/InputListRow";
+import MapRow from "./view/MapRow";
 import TextRow from "./view/TextRow";
 
 export const baseRows = [
@@ -25,6 +26,7 @@ export const baseRows = [
 	InfoRow,
 	InlinePickerRow,
 	InputListRow,
+	MapRow,
 	InputRow,
 	ListContainerRow,
 	SearchRow,

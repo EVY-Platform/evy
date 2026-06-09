@@ -82,6 +82,7 @@ struct EVYRow: View, Identifiable {
     case .input(let v, _, let d, _):
       EVYInputRow(view: v, destination: d, isInteractive: row.actions.isEmpty)
     case .listContainer(let v, let s, _, _): EVYListContainerRow(view: v, source: s)
+    case .map(let v, _, _, _): EVYMapRow(view: v)
     case .search(let v, let s, _, _): EVYSearchRow(view: v, source: s)
     case .photoGallery(let v, let s, _, _): EVYPhotoGalleryRow(view: v, source: s)
     case .selectPhoto(let v, _, let d, _): EVYSelectPhotoRow(view: v, destination: d)

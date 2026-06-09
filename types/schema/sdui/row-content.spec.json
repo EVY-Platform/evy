@@ -19,6 +19,13 @@
 			"icon": "string"
 		}
 	},
+	"Map": {
+		"content": {
+			"title": "string",
+			"location": "string",
+			"subtitle": "string"
+		}
+	},
 	"Text": {
 		"view": {
 			"max_lines": "string"

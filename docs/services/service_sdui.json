@@ -59,16 +59,16 @@
 												"title": "",
 												"children": [
 													{
-														"id": "e4bbd863-0c60-4fdc-8df0-eab51352d73b",
-														"type": "Info",
+														"id": "0b02c2c0-6e19-49d5-9138-f60062a1f6d4",
+														"type": "Map",
 														"source": "",
 														"destination": "",
 														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
-																"subtitle": "Go pick up",
-																"icon": ""
+																"location": "{item.transfer_options.pickup.address.location}",
+																"subtitle": "{formatAddress(item.transfer_options.pickup.address)}"
 															}
 														}
 													},
