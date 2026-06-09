@@ -86,7 +86,7 @@ describe("normalizeServerRow", () => {
 		expect((n.view.content as { text?: string }).text).toBe("extra");
 	});
 
-	it("merges Map content defaults and overrides object location with string default", () => {
+	it("normalizes Map row and replaces non-string location with palette default", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "Map",

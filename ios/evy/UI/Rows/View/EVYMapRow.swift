@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct EVYMapRow: View {
+
   private let view: MapRowViewData
 
   init(view: MapRowViewData) {
