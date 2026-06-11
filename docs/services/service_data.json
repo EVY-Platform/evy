@@ -1,4 +1,18 @@
 {
+	"files": [
+		{
+			"id": "cfa7e4aa-928d-4920-a370-57ed713b2917",
+			"type": "image/jpeg",
+			"createdAt": "2026-05-20T22:56:17.000Z",
+			"updatedAt": "2026-05-20T22:56:17.000Z"
+		},
+		{
+			"id": "cf622561-030e-45b8-b85b-87d21be4c0da",
+			"type": "image/jpeg",
+			"createdAt": "2026-05-20T22:56:17.000Z",
+			"updatedAt": "2026-05-20T22:56:17.000Z"
+		}
+	],
 	"selling_reasons": [
 		{
 			"id": "76d781c6-7ab1-4b5e-99d5-60d417e3c382",
@@ -75,7 +89,10 @@
 		{
 			"id": "12401f50-cf1a-45d7-a112-2e68a2070466",
 			"title": "Amazing Fridge",
-			"photo_ids": [],
+			"photo_ids": [
+				"cfa7e4aa-928d-4920-a370-57ed713b2917",
+				"cf622561-030e-45b8-b85b-87d21be4c0da"
+			],
 			"price": {
 				"currency": "AUD",
 				"value": 250
@@ -155,7 +172,10 @@
 		{
 			"id": "760eac03-8783-4916-846e-6c316d0af5a1",
 			"title": "Amazing Freezer",
-			"photo_ids": [],
+			"photo_ids": [
+				"cfa7e4aa-928d-4920-a370-57ed713b2917",
+				"cf622561-030e-45b8-b85b-87d21be4c0da"
+			],
 			"price": {
 				"currency": "AUD",
 				"value": 250

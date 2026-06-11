@@ -6,7 +6,7 @@ import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
 import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
-import { readFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
 
 import { MARKETPLACE_SEED_RESOURCES } from "../services/marketplace/src/resources";
 import { validateUiFlow } from "../types/validators";
@@ -28,29 +28,27 @@ function validateSeedDataItemShape(
 }
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const EVY_FLOWS_PATH = join(SCRIPT_DIR, "..", "docs", "evy", "evy_sdui.json");
+const REPO_ROOT = join(SCRIPT_DIR, "..");
+const EVY_FLOWS_PATH = join(REPO_ROOT, "docs", "evy", "evy_sdui.json");
 const SERVICE_FLOWS_PATH = join(
-	SCRIPT_DIR,
-	"..",
+	REPO_ROOT,
 	"docs",
 	"services",
 	"service_sdui.json",
 );
-const DATA_PATH = join(
-	SCRIPT_DIR,
-	"..",
-	"docs",
-	"services",
-	"service_data.json",
-);
-const API_MIGRATIONS_PATH = join(SCRIPT_DIR, "..", "api", "drizzle");
+const DATA_PATH = join(REPO_ROOT, "docs", "services", "service_data.json");
+const SEED_FILES_PATH = join(REPO_ROOT, "docs", "services", "seed-files");
+const RUNTIME_FILES_PATH = join(REPO_ROOT, "api", "src", "public", "files");
+const API_MIGRATIONS_PATH = join(REPO_ROOT, "api", "drizzle");
 const MARKETPLACE_MIGRATIONS_PATH = join(
-	SCRIPT_DIR,
-	"..",
+	REPO_ROOT,
 	"services",
 	"marketplace",
 	"drizzle",
 );
+
+const API_DOCKER_SERVICE = "api";
+const API_CONTAINER_FILES_DIR = "/app/api/src/public/files";
 
 type SeedFlow = ReturnType<typeof validateUiFlow>;
 type SeedDataItem = ReturnType<typeof validateSeedDataItemShape>;
@@ -83,6 +81,13 @@ const flowTable = pgTable("Flow", {
 	updatedAt: text("updated_at").notNull(),
 });
 
+const fileTable = pgTable("File", {
+	id: uuid("id").primaryKey().notNull(),
+	type: text("type").notNull(),
+	createdAt: text("created_at").notNull(),
+	updatedAt: text("updated_at").notNull(),
+});
+
 const marketplaceDataTable = pgTable("Data", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	resource: varchar("resource", { length: 50 }).notNull(),
@@ -91,7 +96,7 @@ const marketplaceDataTable = pgTable("Data", {
 	updatedAt: text("updated_at").notNull(),
 });
 
-const coreSchema = { flow: flowTable };
+const coreSchema = { flow: flowTable, file: fileTable };
 const marketplaceSchema = { data: marketplaceDataTable };
 
 const coreSqlClient = new SQL(getConnectionUrl("DB_EVY_DATABASE"));
@@ -185,6 +190,113 @@ function buildDataRows(dataJson: SeedDataMap, now: string): SeedDataRow[] {
 	return rows;
 }
 
+type SeedFileRow = {
+	id: string;
+	type: string;
+	createdAt: string;
+	updatedAt: string;
+};
+
+function buildFileRows(files: SeedDataItem[], now: string): SeedFileRow[] {
+	return files.map((item) => {
+		if (typeof item.type !== "string" || item.type.length === 0) {
+			throw new Error(
+				`Seed file "${item.id}" must have a non-empty string "type" field`,
+			);
+		}
+		const createdAt = typeof item.createdAt === "string" ? item.createdAt : now;
+		const updatedAt = typeof item.updatedAt === "string" ? item.updatedAt : now;
+		return { id: item.id, type: item.type, createdAt, updatedAt };
+	});
+}
+
+async function runCommand(
+	command: string[],
+): Promise<{ ok: boolean; stderr: string }> {
+	try {
+		const proc = Bun.spawn(command, {
+			cwd: REPO_ROOT,
+			stdout: "pipe",
+			stderr: "pipe",
+		});
+		const stderr = await new Response(proc.stderr).text();
+		await proc.exited;
+		return { ok: proc.exitCode === 0, stderr };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		return { ok: false, stderr: message };
+	}
+}
+
+async function isApiContainerRunning(): Promise<boolean> {
+	try {
+		const proc = Bun.spawn(
+			["docker", "compose", "ps", "-q", API_DOCKER_SERVICE],
+			{ cwd: REPO_ROOT, stdout: "pipe", stderr: "pipe" },
+		);
+		const stdout = await new Response(proc.stdout).text();
+		await proc.exited;
+		return proc.exitCode === 0 && stdout.trim().length > 0;
+	} catch {
+		return false;
+	}
+}
+
+async function copySeedFileBinaries(files: SeedFileRow[]): Promise<void> {
+	if (files.length === 0) {
+		return;
+	}
+	await mkdir(RUNTIME_FILES_PATH, { recursive: true });
+	for (const fileRow of files) {
+		const sourcePath = join(SEED_FILES_PATH, fileRow.id);
+		try {
+			await stat(sourcePath);
+		} catch {
+			throw new Error(
+				`Missing seed binary for file "${fileRow.id}". Expected asset at ${sourcePath}.`,
+			);
+		}
+		await copyFile(sourcePath, join(RUNTIME_FILES_PATH, fileRow.id));
+	}
+
+	// When the API runs in Docker, its file storage lives inside the container
+	// rather than on the host, so seeded binaries are also copied in via
+	// `docker compose cp`. Skipped when Docker is absent or no API container
+	// is running (local Bun / --no-docker run).
+	if (!(await isApiContainerRunning())) {
+		return;
+	}
+	const mkdirResult = await runCommand([
+		"docker",
+		"compose",
+		"exec",
+		"-T",
+		API_DOCKER_SERVICE,
+		"mkdir",
+		"-p",
+		API_CONTAINER_FILES_DIR,
+	]);
+	if (!mkdirResult.ok) {
+		throw new Error(
+			`Failed to create file storage dir in API container: ${mkdirResult.stderr.trim()}`,
+		);
+	}
+	for (const fileRow of files) {
+		const copyResult = await runCommand([
+			"docker",
+			"compose",
+			"cp",
+			join(SEED_FILES_PATH, fileRow.id),
+			`${API_DOCKER_SERVICE}:${API_CONTAINER_FILES_DIR}/${fileRow.id}`,
+		]);
+		if (!copyResult.ok) {
+			throw new Error(
+				`Failed to copy seed binary "${fileRow.id}" into API container: ${copyResult.stderr.trim()}`,
+			);
+		}
+	}
+}
+
 function quotePostgresIdentifier(identifier: string): string {
 	return `"${identifier.replaceAll('"', '""')}"`;
 }
@@ -270,11 +382,16 @@ async function seedDatabase({
 	marketplaceDataJson: SeedDataMap;
 	now?: string;
 }) {
-	if (Object.keys(evyDataJson).length > 0) {
+	const { files: evyFiles = [], ...unsupportedEvy } = evyDataJson;
+	const unsupportedResources = Object.keys(unsupportedEvy);
+	if (unsupportedResources.length > 0) {
 		throw new Error(
-			`Seeding non-marketplace resources into the API database is not implemented (got: ${Object.keys(evyDataJson).join(", ")}). Add dedicated-table inserts for Service, Organization, or ServiceProvider if needed.`,
+			`Seeding non-marketplace resources into the API database is not implemented (got: ${unsupportedResources.join(", ")}). Add dedicated-table inserts for Service, Organization, or ServiceProvider if needed.`,
 		);
 	}
+
+	const fileRows = buildFileRows(evyFiles, now);
+	await copySeedFileBinaries(fileRows);
 
 	await coreDb.transaction(async (tx) => {
 		await tx.delete(coreSchema.flow);
@@ -286,6 +403,11 @@ async function seedDatabase({
 		}));
 		if (flowRows.length > 0) {
 			await tx.insert(coreSchema.flow).values(flowRows);
+		}
+
+		await tx.delete(coreSchema.file);
+		if (fileRows.length > 0) {
+			await tx.insert(coreSchema.file).values(fileRows);
 		}
 	});
 
