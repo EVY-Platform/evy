@@ -28,8 +28,58 @@ function evyFormatCurrency(): EVYFunctionOutput {
 	return { value: "1.00", prefix: "$" };
 }
 
-function evyFormatDimension(): EVYFunctionOutput {
-	return { value: "100", suffix: "mm" };
+const fallbackDimensionOutput: EVYFunctionOutput = {
+	value: "100",
+	suffix: "mm",
+};
+
+const previewMockData = {
+	item: {
+		width: 23240,
+		height: 1200,
+		length: 500,
+		dimensions: {
+			width: 23240,
+			height: 1200,
+			length: 500,
+		},
+	},
+	width: 23240,
+	height: 1200,
+	length: 500,
+};
+
+function resolveMockPath(path: string): unknown {
+	return path.split(".").reduce<unknown>((current, part) => {
+		if (!current || typeof current !== "object") return undefined;
+		return (current as Record<string, unknown>)[part];
+	}, previewMockData);
+}
+
+function formatDimensionMillimetres(mm: number): EVYFunctionOutput {
+	if (mm > 1000) return { value: String(Math.trunc(mm / 1000)), suffix: "m" };
+	if (mm > 100) return { value: String(Math.trunc(mm / 10)), suffix: "cm" };
+	return { value: String(mm), suffix: "mm" };
+}
+
+function evyFormatDimension(
+	args: string,
+	context?: EVYFunctionContext,
+): EVYFunctionOutput {
+	const trimmedArgs = args.trim();
+	if (!trimmedArgs) return fallbackDimensionOutput;
+
+	const value =
+		trimmedArgs === "$datum" ? context?.datum : resolveMockPath(trimmedArgs);
+	const rawValue = value ?? trimmedArgs;
+	const trimmedValue = String(rawValue)
+		.trim()
+		.replace(/^['"]|['"]$/g, "");
+	if (!trimmedValue) return { value: "" };
+
+	const mm = Number(trimmedValue);
+	if (!Number.isInteger(mm)) return fallbackDimensionOutput;
+	return formatDimensionMillimetres(mm);
 }
 
 function evyFormatWeight(): EVYFunctionOutput {
