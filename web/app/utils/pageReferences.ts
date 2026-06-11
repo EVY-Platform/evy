@@ -17,7 +17,7 @@ function branchReferencesPage(
 	targetPageId: string,
 ): boolean {
 	const parsed = parseBranch(branchString);
-	if (!parsed || parsed.functionName !== "navigate") return false;
+	if (parsed?.functionName !== "navigate") return false;
 	if (parsed.args.length < 2) return false;
 	const [navFlowId, navPageId] = parsed.args;
 	return navFlowId === flowId && navPageId === targetPageId;
