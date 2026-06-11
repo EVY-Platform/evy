@@ -146,8 +146,8 @@
 				}
 			},
 			"description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-			"condition_id": "",
-			"selling_reason_id": "",
+			"condition_id": "69f25102-822c-436c-a6c1-3b49f887355e",
+			"selling_reason_id": "76d781c6-7ab1-4b5e-99d5-60d417e3c382",
 			"dimensions": {
 				"width": 500,
 				"height": 1600,
@@ -221,8 +221,8 @@
 				}
 			},
 			"description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-			"condition_id": "",
-			"selling_reason_id": "",
+			"condition_id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+			"selling_reason_id": "76d781c6-7ab1-4b5e-99d5-60d417e3c385",
 			"dimensions": {
 				"width": 500,
 				"height": 1600,
