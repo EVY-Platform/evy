@@ -34,6 +34,48 @@
 						"destination": ""
 					},
 					{
+						"id": "61d8b13a-6e19-4251-84bf-94771af07e6c",
+						"type": "Info",
+						"source": "",
+						"destination": "",
+						"actions": [],
+						"view": {
+							"content": {
+								"title": "Condition",
+								"subtitle": "{item.condition}",
+								"icon": "::badge-check::"
+							}
+						}
+					},
+					{
+						"id": "b402e0e2-62a1-4eab-81ad-c9b522f5ff5a",
+						"type": "Info",
+						"source": "",
+						"destination": "",
+						"actions": [],
+						"view": {
+							"content": {
+								"title": "Selling reason",
+								"subtitle": "{item.selling_reason}",
+								"icon": "::circle-question-mark::"
+							}
+						}
+					},
+					{
+						"id": "f22cb07b-d4eb-45bc-9d3e-528361564fd2",
+						"type": "Info",
+						"source": "",
+						"destination": "",
+						"actions": [],
+						"view": {
+							"content": {
+								"title": "Dimensions",
+								"subtitle": "{formatDimension(item.width) (w) x formatDimension(item.height) (h) x formatDimension(item.length) (l)}",
+								"icon": "::ruler::"
+							}
+						}
+					},
+					{
 						"id": "ec3bef23-6d74-43eb-adde-8d498d9ed70e",
 						"type": "SelectSegmentContainer",
 						"source": "",

@@ -1,4 +1,18 @@
 {
+	"files": [
+		{
+			"id": "cfa7e4aa-928d-4920-a370-57ed713b2917",
+			"type": "image/jpeg",
+			"createdAt": "2026-05-20T22:56:17.000Z",
+			"updatedAt": "2026-05-20T22:56:17.000Z"
+		},
+		{
+			"id": "cf622561-030e-45b8-b85b-87d21be4c0da",
+			"type": "image/jpeg",
+			"createdAt": "2026-05-20T22:56:17.000Z",
+			"updatedAt": "2026-05-20T22:56:17.000Z"
+		}
+	],
 	"selling_reasons": [
 		{
 			"id": "76d781c6-7ab1-4b5e-99d5-60d417e3c382",
@@ -75,7 +89,10 @@
 		{
 			"id": "12401f50-cf1a-45d7-a112-2e68a2070466",
 			"title": "Amazing Fridge",
-			"photo_ids": [],
+			"photo_ids": [
+				"cfa7e4aa-928d-4920-a370-57ed713b2917",
+				"cf622561-030e-45b8-b85b-87d21be4c0da"
+			],
 			"price": {
 				"currency": "AUD",
 				"value": 250
@@ -129,8 +146,8 @@
 				}
 			},
 			"description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-			"condition_id": "",
-			"selling_reason_id": "",
+			"condition_id": "69f25102-822c-436c-a6c1-3b49f887355e",
+			"selling_reason_id": "76d781c6-7ab1-4b5e-99d5-60d417e3c382",
 			"dimensions": {
 				"width": 500,
 				"height": 1600,
@@ -155,7 +172,10 @@
 		{
 			"id": "760eac03-8783-4916-846e-6c316d0af5a1",
 			"title": "Amazing Freezer",
-			"photo_ids": [],
+			"photo_ids": [
+				"cfa7e4aa-928d-4920-a370-57ed713b2917",
+				"cf622561-030e-45b8-b85b-87d21be4c0da"
+			],
 			"price": {
 				"currency": "AUD",
 				"value": 250
@@ -201,8 +221,8 @@
 				}
 			},
 			"description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-			"condition_id": "",
-			"selling_reason_id": "",
+			"condition_id": "1eedac33-eb0b-4796-9853-50ad4036179f",
+			"selling_reason_id": "76d781c6-7ab1-4b5e-99d5-60d417e3c385",
 			"dimensions": {
 				"width": 500,
 				"height": 1600,

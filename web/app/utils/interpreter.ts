@@ -1,7 +1,7 @@
 import { callFunction, type EVYFunctionContext } from "./functions";
 import { propPathToFriendlyLabel } from "./labelFormatting";
 
-const FUNCTION_WITH_BRACES = /\{([a-zA-Z_]+)\(([^)]*)\)\}/;
+const FUNCTION_CALL_PATTERN = /([a-zA-Z_]+)\(([^()]*)\)/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
 
 function resolveFunction(
@@ -14,6 +14,20 @@ function resolveFunction(
 	return `${result.prefix ?? ""}${result.value}${result.suffix ?? ""}`;
 }
 
+function replaceFunctionCall(
+	text: string,
+	match: RegExpExecArray,
+	resolved: string,
+): string {
+	const matchStart = match.index;
+	const matchEnd = matchStart + match[0].length;
+	return `${text.slice(0, matchStart)}${resolved}${text.slice(matchEnd)}`;
+}
+
+function shouldUnwrapResolvedExpression(inner: string): boolean {
+	return /\s/.test(inner) || /[()]/.test(inner);
+}
+
 export function parseText(input: string, context?: EVYFunctionContext): string {
 	if (!input) return input;
 
@@ -21,11 +35,11 @@ export function parseText(input: string, context?: EVYFunctionContext): string {
 	let safety = 0;
 
 	while (safety++ < 50) {
-		const fnMatch = FUNCTION_WITH_BRACES.exec(text);
+		const fnMatch = FUNCTION_CALL_PATTERN.exec(text);
 		if (fnMatch) {
 			const resolved = resolveFunction(fnMatch[1], fnMatch[2], context);
 			if (resolved !== null) {
-				text = text.replace(fnMatch[0], resolved);
+				text = replaceFunctionCall(text, fnMatch, resolved);
 				continue;
 			}
 		}
@@ -39,7 +53,10 @@ export function parseText(input: string, context?: EVYFunctionContext): string {
 				continue;
 			}
 
-			text = text.replace(propsMatch[0], propPathToFriendlyLabel(inner));
+			const replacement = shouldUnwrapResolvedExpression(inner)
+				? inner
+				: propPathToFriendlyLabel(inner);
+			text = text.replace(propsMatch[0], replacement);
 			continue;
 		}
 
