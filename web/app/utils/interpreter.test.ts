@@ -2,6 +2,9 @@ import { describe, expect, it } from "bun:test";
 
 import { parseText } from "./interpreter";
 
+const compoundDimensionsText =
+	"{formatDimension(item.width) (w) x formatDimension(item.height) (h) x formatDimension(item.length) (l)}";
+
 describe("parseText", () => {
 	it("resolves count function placeholder", () => {
 		expect(parseText("Items: {count()}")).toContain("1");
@@ -59,6 +62,16 @@ describe("parseText", () => {
 		expect(parseText("{formatDimension(width)}")).toBe("23m");
 	});
 
+	it("formats compound dimension functions inside one braced expression", () => {
+		expect(parseText(compoundDimensionsText)).toBe(
+			"23m (w) x 23m (h) x 23m (l)",
+		);
+	});
+
+	it("formats bracketed mock data paths", () => {
+		expect(parseText("{formatDimension(items[0].width)}")).toBe("23m");
+	});
+
 	it("formats dimensions from datum context", () => {
 		expect(parseText("{formatDimension($datum)}", { datum: "1200" })).toBe(
 			"1m",
@@ -70,9 +83,7 @@ describe("parseText", () => {
 	});
 
 	it("replaces property path with friendly label", () => {
-		const out = parseText("Hello {item.title}");
-		expect(out).not.toContain("{item.title}");
-		expect(out.length).toBeGreaterThan(5);
+		expect(parseText("Hello {item.title}")).toBe("Hello Item title");
 	});
 
 	it("strips comparison expressions in braces", () => {

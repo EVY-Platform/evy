@@ -70,7 +70,7 @@
 						"view": {
 							"content": {
 								"title": "Dimensions",
-								"subtitle": "{formatDimension(item.width) (w) x formatDimension(item.height)) (h) x formatDimension(item.length) (l)})",
+								"subtitle": "{formatDimension(item.width) (w) x formatDimension(item.height) (h) x formatDimension(item.length) (l)}",
 								"icon": "::ruler::"
 							}
 						}

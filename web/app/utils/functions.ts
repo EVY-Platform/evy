@@ -33,24 +33,33 @@ const fallbackDimensionOutput: EVYFunctionOutput = {
 	suffix: "mm",
 };
 
-const previewMockData = {
-	item: {
-		width: 23240,
-		height: 1200,
-		length: 500,
-		dimensions: {
-			width: 23240,
-			height: 1200,
-			length: 500,
-		},
-	},
-	width: 23240,
-	height: 1200,
-	length: 500,
+const previewDimensionMillimetres = 23240;
+
+const previewDimensions = {
+	width: previewDimensionMillimetres,
+	height: previewDimensionMillimetres,
+	length: previewDimensionMillimetres,
 };
 
+const previewMockData = {
+	item: {
+		...previewDimensions,
+		dimensions: previewDimensions,
+	},
+	items: [previewDimensions],
+	...previewDimensions,
+};
+
+function splitDotAndBracketPath(path: string): string[] {
+	return path.split(".").flatMap((part) => part.split(/\[|\]/).filter(Boolean));
+}
+
 function resolveMockPath(path: string): unknown {
-	return path.split(".").reduce<unknown>((current, part) => {
+	return splitDotAndBracketPath(path).reduce<unknown>((current, part) => {
+		if (Array.isArray(current)) {
+			const index = Number(part);
+			return Number.isInteger(index) ? current[index] : undefined;
+		}
 		if (!current || typeof current !== "object") return undefined;
 		return (current as Record<string, unknown>)[part];
 	}, previewMockData);
