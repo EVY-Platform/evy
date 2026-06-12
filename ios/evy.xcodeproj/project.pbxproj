@@ -15,7 +15,7 @@
 		2EE4E27D2B99D7F300CEF112 /* EVYSelectList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */; };
 		730187D62F20E232002EF894 /* user_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 730187D52F20E232002EF894 /* user_data.json */; };
 		7303B31A2C3EB8A000796123 /* EVYCalendarSlot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7303B3192C3EB8A000796123 /* EVYCalendarSlot.swift */; };
-		7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */; };
+		7320F5902C2FF8F000297C48 /* EVYTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7320F58F2C2FF8F000297C48 /* EVYTextRow.swift */; };
 		732A50822C1D6AE80036B98B /* EVY.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A50812C1D6AE80036B98B /* EVY.swift */; };
 		7330E4392C9BFABB00FE8F31 /* EVYSelectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */; };
 		7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
@@ -31,7 +31,7 @@
 		735795D32C21AF6100ADB49D /* interpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735795D22C21AF6100ADB49D /* interpreter.swift */; };
 		736495BF2B972E1800729129 /* EVYStores.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736495BE2B972E1800729129 /* EVYStores.swift */; };
 		736D10572B78C4C500503C4D /* EVYPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10562B78C4C500503C4D /* EVYPage.swift */; };
-		736D105F2B78CDDB00503C4D /* EVYTextRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D105E2B78CDDB00503C4D /* EVYTextRow.swift */; };
+
 		737334F92B7B5F1800D2E1CF /* EVYInputRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */; };
 		737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737334FA2B7B671100D2E1CF /* EVYTextField.swift */; };
 		737C6AA62B2706890093D00C /* evyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737C6AA52B2706890093D00C /* evyApp.swift */; };
@@ -134,7 +134,7 @@
 		2EE4E27C2B99D7F300CEF112 /* EVYSelectList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectList.swift; sourceTree = "<group>"; };
 		730187D52F20E232002EF894 /* user_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = user_data.json; path = ../docs/evy/user_data.json; sourceTree = SOURCE_ROOT; };
 		7303B3192C3EB8A000796123 /* EVYCalendarSlot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarSlot.swift; sourceTree = "<group>"; };
-		7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInfoRow.swift; sourceTree = "<group>"; };
+		7320F58F2C2FF8F000297C48 /* EVYTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextRow.swift; sourceTree = "<group>"; };
 		732A50812C1D6AE80036B98B /* EVY.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVY.swift; sourceTree = "<group>"; };
 		7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectItem.swift; sourceTree = "<group>"; };
 		7333F44E2FAA2D1C006BEA92 /* EVY+Mutations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Mutations.swift"; sourceTree = "<group>"; };
@@ -150,7 +150,7 @@
 		735795D22C21AF6100ADB49D /* interpreter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = interpreter.swift; sourceTree = "<group>"; };
 		736495BE2B972E1800729129 /* EVYStores.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYStores.swift; sourceTree = "<group>"; };
 		736D10562B78C4C500503C4D /* EVYPage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYPage.swift; sourceTree = "<group>"; };
-		736D105E2B78CDDB00503C4D /* EVYTextRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextRow.swift; sourceTree = "<group>"; };
+
 		737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYInputRow.swift; sourceTree = "<group>"; };
 		737334FA2B7B671100D2E1CF /* EVYTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYTextField.swift; sourceTree = "<group>"; };
 		737C6AA22B2706890093D00C /* evy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = evy.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -351,11 +351,11 @@
 		736E12432BBFE38E00D100E4 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				7320F58F2C2FF8F000297C48 /* EVYInfoRow.swift */,
+				7320F58F2C2FF8F000297C48 /* EVYTextRow.swift */,
 				73CB09532C7609E5008F7D2C /* EVYInputListRow.swift */,
 				FA002004MP00001000000001 /* EVYMapRow.swift */,
 				C97D5780FBD0B1C8C63B4E94 /* EVYPhotoGalleryRow.swift */,
-				736D105E2B78CDDB00503C4D /* EVYTextRow.swift */,
+
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -690,7 +690,7 @@
 				73EDC87F2B8F387500304DD8 /* EVYButton.swift in Sources */,
 				732A50822C1D6AE80036B98B /* EVY.swift in Sources */,
 				73C78AEE2BC54DFE0026F39D /* EVYSearchRow.swift in Sources */,
-				7320F5902C2FF8F000297C48 /* EVYInfoRow.swift in Sources */,
+				7320F5902C2FF8F000297C48 /* EVYTextRow.swift in Sources */,
 				737334F92B7B5F1800D2E1CF /* EVYInputRow.swift in Sources */,
 				737C6ACB2B270AD90093D00C /* EVYWebsocket.swift in Sources */,
 				2E0B20F22B816AFA002C86A3 /* EVYSelectPhotoRow.swift in Sources */,
@@ -722,7 +722,7 @@
 				7333F4602FAA2D1C006BEA92 /* EVY+TextParsing.swift in Sources */,
 				73F7E1012F70010100000001 /* EVYDataStore.swift in Sources */,
 				73F7E0022F70000100000001 /* EVYError.swift in Sources */,
-				736D105F2B78CDDB00503C4D /* EVYTextRow.swift in Sources */,
+
 				73B3CF812C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift in Sources */,
 				2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */,
 				2E5F4DBB2BB01A1200D3A3FB /* EVYDropdownRow.swift in Sources */,

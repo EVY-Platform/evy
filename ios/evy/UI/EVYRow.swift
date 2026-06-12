@@ -75,7 +75,6 @@ struct EVYRow: View, Identifiable {
     case .calendar(let v, _, _, _): EVYCalendarRow(view: v)
     case .columnContainer(let v, _, _, _): EVYColumnContainerRow(view: v)
     case .dropdown(let v, let s, let d, _): EVYDropdownRow(view: v, source: s, destination: d)
-    case .info(let v, _, _, _): EVYInfoRow(view: v)
     case .inlinePicker(let v, let s, let d, _):
       EVYInlinePickerRow(view: v, source: s, destination: d)
     case .inputList(let v, let s, _, _): EVYInputListRow(view: v, source: s)
@@ -88,8 +87,8 @@ struct EVYRow: View, Identifiable {
     case .selectPhoto(let v, _, let d, _): EVYSelectPhotoRow(view: v, destination: d)
     case .selectSegmentContainer(let v, _, _, _): EVYSelectSegmentContainerRow(view: v)
     case .timeslotPicker(let v, let s, _, _): EVYTimeslotPickerRow(view: v, source: s)
-    case .textArea(let v, _, let d, _): EVYTextAreaRow(view: v, destination: d)
     case .text(let v, _, _, _): EVYTextRow(view: v)
+    case .textArea(let v, _, let d, _): EVYTextAreaRow(view: v, destination: d)
     case .textSelect(let v, _, let d, _):
       if let row = EVYTextSelectRow(view: v, destination: d) {
         row

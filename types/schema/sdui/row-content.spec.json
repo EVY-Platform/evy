@@ -12,11 +12,17 @@
 			"placeholder": "string"
 		}
 	},
-	"Info": {
+	"Text": {
+		"view": {
+			"max_lines": "string"
+		},
 		"content": {
 			"title": "string",
 			"subtitle": "string",
-			"icon": "string"
+			"icon": "string",
+			"text": "string",
+			"placeholder": "string",
+			"action": "string"
 		}
 	},
 	"Map": {
@@ -24,17 +30,6 @@
 			"title": "string",
 			"location": "string",
 			"subtitle": "string"
-		}
-	},
-	"Text": {
-		"view": {
-			"max_lines": "string"
-		},
-		"content": {
-			"title": "string",
-			"text": "string",
-			"placeholder": "string",
-			"action": "string"
 		}
 	},
 	"TextArea": {

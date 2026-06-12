@@ -84,7 +84,7 @@ struct EVYListContainerRow: View {
             "title": "List Container Preview",
             "child": {
               "id": "list-child-template",
-              "type": "Info",
+              "type": "Text",
               "source": "",
               "actions": [],
               "view": {
@@ -98,7 +98,7 @@ struct EVYListContainerRow: View {
             "children": [
               {
                 "id": "list-extra-child",
-                "type": "Info",
+                "type": "Text",
                 "source": "",
                 "actions": [],
                 "view": {

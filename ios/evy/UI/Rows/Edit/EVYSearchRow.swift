@@ -76,7 +76,7 @@ private struct EVYSearchRowPreview: View {
             "placeholder": "Search items...",
             "child": {
               "id": "preview-search-result-template",
-              "type": "Info",
+              "type": "Text",
               "source": "",
               "destination": "",
               "actions": [],

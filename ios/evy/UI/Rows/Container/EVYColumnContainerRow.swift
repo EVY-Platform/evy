@@ -42,7 +42,7 @@ struct EVYColumnContainerRow: View {
             "children": [
               {
                 "id": "column-child-1",
-                "type": "Info",
+                "type": "Text",
                 "source": "",
                 "actions": [],
                 "view": {
@@ -55,7 +55,7 @@ struct EVYColumnContainerRow: View {
               },
               {
                 "id": "column-child-2",
-                "type": "Info",
+                "type": "Text",
                 "source": "",
                 "actions": [],
                 "view": {

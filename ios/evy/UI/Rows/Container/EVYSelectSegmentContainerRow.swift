@@ -51,7 +51,7 @@ struct EVYSelectSegmentContainerRow: View {
             "children": [
               {
                 "id": "segment-tab-1",
-                "type": "Info",
+                "type": "Text",
                 "source": "",
                 "actions": [],
                 "view": {
@@ -64,7 +64,7 @@ struct EVYSelectSegmentContainerRow: View {
               },
               {
                 "id": "segment-tab-2",
-                "type": "Info",
+                "type": "Text",
                 "source": "",
                 "actions": [],
                 "view": {

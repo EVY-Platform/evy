@@ -9,7 +9,7 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 - Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from. Use a non-empty source only for rows that load source-driven data such as option lists, search results, or calendars. If a row already reads explicit fields like `"{item.title}"` in `view.content`, the row source should be `""` because the binding resolves the resource directly.
 	- `"{conditions}"`, `"{selling_reasons}"`, `"{durations}"`, `"{areas}"`, `"{tags}"`, `"{items}"` — plural backend resource or in-memory keys the client resolves to option lists or entity arrays. Search and dynamic ListContainer rows read the resource named by `source`.
 	- `"{$local:address}"` — client-local source.
-	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{item.title}"`, pure navigation buttons, static Info, and containers that only group static child rows).
+	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{item.title}"`, pure navigation buttons, static Text, and containers that only group static child rows).
 - Edit rows write into a draft via **`destination`**. Draft destinations always start with the singular entity key, for example `"{item.title}"`, `"{item.condition}"`, or `"{buildCurrency(item.price)}"`. The prefix tells the UI which resource draft owns the field.
 - Braced `{...}` expressions are used for all SDUI bindings. Prefixed bindings use either dot or colon notation depending on the prefix:
 	- `{$datum.field}` — dot notation. Current list/search result item field, used in row `format` strings and Search result templates.
@@ -205,16 +205,16 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 
 | Category   | Row types |
 | ---------- | --------- |
-| View       | Info, Text, InputList, PhotoGallery, Map |
+| View       | Text, InputList, PhotoGallery, Map |
 | Edit       | Calendar, Dropdown, InlinePicker, Input, Search, SelectPhoto, TextArea, TextSelect, TimeslotPicker |
 | Action     | Button |
 | Container  | ColumnContainer, ListContainer, SelectSegmentContainer |
 
-Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`, `child`, `children`). See `row-content.spec.json` for the exact keys per type.
+Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`, `child`, `children`). `Text` supports compact `title`/`subtitle`/`icon` display and longer text display with `text`, `placeholder`, `action`, and `view.max_lines`. See `row-content.spec.json` for the exact keys per type.
 
 For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `{$datum.}` as the placeholder for the current item, e.g. `{$datum.value}` or `{$datum.unit} {$datum.street}, {$datum.city}`.
 
-For **Search** rows, iOS reads the data array from `source`, renders each hit using `view.content.child` (typically an `Info` row template) instead of `format`, and filters locally using rendered child display strings (`title`, `subtitle`, `text`, `label`, `placeholder`, and `value`). String fields in that child row are evaluated with `{$datum.}` the same way. Tapping a result runs actions from the rendered child row with that datum in scope. The web builder shows deterministic preview results for the child template, but it does not fetch or filter live data.
+For **Search** rows, iOS reads the data array from `source`, renders each hit using `view.content.child` (typically a `Text` row template) instead of `format`, and filters locally using rendered child display strings (`title`, `subtitle`, `text`, `label`, `placeholder`, and `value`). String fields in that child row are evaluated with `{$datum.}` the same way. Tapping a result runs actions from the rendered child row with that datum in scope. The web builder shows deterministic preview results for the child template, but it does not fetch or filter live data.
 
 For **Map** rows, `view.content.location` must be a string, usually a binding such as `"{address.location}"`. iOS resolves the string binding as data and places a native map pin when the resolved object has required `latitude` and `longitude` numbers, for example `{ "latitude": -33.8688, "longitude": 151.2093 }`. Raw location objects in SDUI, `lat`/`lng`, nested `coordinate` objects, coordinate strings, and geocoded address strings are not part of v1.
 

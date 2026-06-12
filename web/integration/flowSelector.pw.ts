@@ -21,10 +21,10 @@ test.describe("Flow Selector", () => {
 					rows: [
 						{
 							id: "row-1-1-1",
-							type: "Info",
+							type: "Text",
 							view: {
 								content: {
-									title: "Flow 1 Info",
+									title: "Flow 1 Text",
 									subtitle: "This is from Flow 1",
 								},
 							},
@@ -44,10 +44,10 @@ test.describe("Flow Selector", () => {
 					rows: [
 						{
 							id: "row-2-1-1",
-							type: "Info",
+							type: "Text",
 							view: {
 								content: {
-									title: "Flow 2 Info",
+									title: "Flow 2 Text",
 									subtitle: "This is from Flow 2",
 								},
 							},
@@ -125,11 +125,11 @@ test.describe("Flow Selector", () => {
 	test("should display content from first flow initially", async ({ page }) => {
 		await openWithFlows(page, singleFlow);
 		// Should show Flow 1's content
-		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
+		await expect(page.getByText("Flow 1 Text", { exact: true })).toBeVisible();
 
 		// Should not show Flow 2's content
 		await expect(
-			page.getByText("Flow 2 Info", { exact: true }),
+			page.getByText("Flow 2 Text", { exact: true }),
 		).not.toBeVisible();
 	});
 
@@ -139,17 +139,17 @@ test.describe("Flow Selector", () => {
 		await openWithFlows(page, threeFlows);
 
 		// Initially on Flow 1
-		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
+		await expect(page.getByText("Flow 1 Text", { exact: true })).toBeVisible();
 
 		// Switch to Flow 2
 		await selectFlowByLabel(page, "Second Flow");
 
 		// Should now show Flow 2's content
-		await expect(page.getByText("Flow 2 Info", { exact: true })).toBeVisible();
+		await expect(page.getByText("Flow 2 Text", { exact: true })).toBeVisible();
 
 		// Should no longer show Flow 1's content
 		await expect(
-			page.getByText("Flow 1 Info", { exact: true }),
+			page.getByText("Flow 1 Text", { exact: true }),
 		).not.toBeVisible();
 	});
 
@@ -184,8 +184,8 @@ test.describe("Flow Selector", () => {
 		await expect(flowSelector).toHaveAttribute("data-value", "flow-2");
 
 		// Interact with the app (click on a row)
-		const infoRow = page.getByText("Flow 2 Info", { exact: true });
-		await infoRow.click();
+		const textRow = page.getByText("Flow 2 Text", { exact: true });
+		await textRow.click();
 
 		// Flow selection should still be Flow 2
 		await expect(flowSelector).toHaveAttribute("data-value", "flow-2");
@@ -206,6 +206,6 @@ test.describe("Flow Selector", () => {
 		await expect(flowSelector).toHaveAttribute("data-value", "flow-1");
 
 		// Should show Flow 1's content again
-		await expect(page.getByText("Flow 1 Info", { exact: true })).toBeVisible();
+		await expect(page.getByText("Flow 1 Text", { exact: true })).toBeVisible();
 	});
 });
