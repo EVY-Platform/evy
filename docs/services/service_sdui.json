@@ -21,7 +21,7 @@
 					},
 					{
 						"id": "8d5e3bb5-8fcf-45f4-ae3d-516ed0706e30",
-						"type": "Info",
+						"type": "Text",
 						"view": {
 							"content": {
 								"icon": "",
@@ -35,7 +35,7 @@
 					},
 					{
 						"id": "61d8b13a-6e19-4251-84bf-94771af07e6c",
-						"type": "Info",
+						"type": "Text",
 						"source": "",
 						"destination": "",
 						"actions": [],
@@ -49,7 +49,7 @@
 					},
 					{
 						"id": "b402e0e2-62a1-4eab-81ad-c9b522f5ff5a",
-						"type": "Info",
+						"type": "Text",
 						"source": "",
 						"destination": "",
 						"actions": [],
@@ -63,7 +63,7 @@
 					},
 					{
 						"id": "f22cb07b-d4eb-45bc-9d3e-528361564fd2",
-						"type": "Info",
+						"type": "Text",
 						"source": "",
 						"destination": "",
 						"actions": [],
@@ -149,7 +149,7 @@
 												"children": [
 													{
 														"id": "357d3351-93e6-47bd-91ab-3616fd70b8aa",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -177,7 +177,7 @@
 												"children": [
 													{
 														"id": "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -462,7 +462,7 @@
 												"children": [
 													{
 														"id": "22222222-2222-4222-8222-222222222202",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -499,7 +499,7 @@
 																		"content": {
 																			"child": {
 																				"id": "e27d87b7-aa2c-4672-aaac-9e1222928f45",
-																				"type": "Info",
+																				"type": "Text",
 																				"view": {
 																					"content": {
 																						"icon": "",
@@ -544,7 +544,7 @@
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222207",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -592,7 +592,7 @@
 												"children": [
 													{
 														"id": "22222222-2222-4222-8222-222222222210",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -620,7 +620,7 @@
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222212",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -647,7 +647,7 @@
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222214",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -695,7 +695,7 @@
 												"children": [
 													{
 														"id": "22222222-2222-4222-8222-222222222217",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -723,7 +723,7 @@
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222219",
-														"type": "Info",
+														"type": "Text",
 														"source": "",
 														"destination": "",
 														"actions": [],
@@ -797,7 +797,7 @@
 				"rows": [
 					{
 						"id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
-						"type": "Info",
+						"type": "Text",
 						"source": "",
 						"destination": "",
 						"actions": [],
@@ -876,7 +876,7 @@
 				"rows": [
 					{
 						"id": "a3b4c5d6-e7f8-4a9b-8c1d-2e3f4a5b6c7d",
-						"type": "Info",
+						"type": "Text",
 						"source": "",
 						"destination": "",
 						"actions": [],

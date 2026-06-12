@@ -22,7 +22,7 @@ async function openTwoSegmentTabContainer(page: Page) {
 							segments: ["Segment A", "Segment B"],
 							children: [
 								{
-									type: "Info" as const,
+									type: "Text" as const,
 									view: {
 										content: {
 											title: "First Segment Child",
@@ -61,10 +61,10 @@ test.describe("Child Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "Root Info Row",
+								title: "Root Text Row",
 								subtitle: "Root subtitle",
 							},
 						},
@@ -74,9 +74,9 @@ test.describe("Child Page Rendering", () => {
 			},
 		]);
 
-		// Click on the Info row to select it
-		const infoRow = page.getByText("Root Info Row", { exact: true }).first();
-		await infoRow.click();
+		// Click on the Text row to select it
+		const textRow = page.getByText("Root Text Row", { exact: true }).first();
+		await textRow.click();
 
 		// Should see the blank child page to the right
 		const blankChildPage = page.getByTestId("blank-child-page");
@@ -102,7 +102,7 @@ test.describe("Child Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Info" as const,
+						type: "Text" as const,
 						view: {
 							content: {
 								title: "Parent Row",
@@ -125,7 +125,7 @@ test.describe("Child Page Rendering", () => {
 			},
 		]);
 
-		// Click on the parent Info row to select it
+		// Click on the parent Text row to select it
 		const parentRow = page.getByText("Parent Row", { exact: true }).first();
 		await parentRow.click();
 
@@ -160,7 +160,7 @@ test.describe("Child Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Info" as const,
+						type: "Text" as const,
 						view: {
 							content: {
 								title: "Parent Row",
@@ -303,11 +303,11 @@ test.describe("Child Page Rendering", () => {
 																			placeholder: "Search...",
 																			value: "",
 																			child: {
-																				type: "Info" as const,
+																				type: "Text" as const,
 																				view: {
 																					content: {
-																						title: "Search Info Child",
-																						subtitle: "Info child",
+																						title: "Search Text Child",
+																						subtitle: "Text child",
 																					},
 																				},
 																				actions: [],
@@ -358,7 +358,7 @@ test.describe("Child Page Rendering", () => {
 			childPages.nth(0).getByText("Search Child Row", { exact: true }),
 		).toBeVisible();
 		await expect(
-			childPages.nth(1).getByText("Search Info Child", { exact: true }),
+			childPages.nth(1).getByText("Search Text Child", { exact: true }),
 		).toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(3);
 	});
@@ -372,7 +372,7 @@ test.describe("Child Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Info" as const,
+						type: "Text" as const,
 						view: {
 							content: {
 								title: "Parent Row",
@@ -430,7 +430,7 @@ test.describe("Child Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Info" as const,
+						type: "Text" as const,
 						view: {
 							content: {
 								title: "Parent Row",
@@ -462,13 +462,13 @@ test.describe("Child Page Rendering", () => {
 			childPage.getByText("Existing Child Row", { exact: true }),
 		).toBeVisible();
 
-		const sidebarRow = await getSidebarRow(page, "Info row title");
+		const sidebarRow = await getSidebarRow(page, "Text row title");
 		await sidebarRow.dragTo(childPage.locator(SELECTORS.pageContent));
 
 		// After drop, the child page immediately shows the new row
 		// with a new blank child page beside it, no re-click needed.
 		await expect(
-			childPage.getByText("Info row title", { exact: true }),
+			childPage.getByText("Text row title", { exact: true }),
 		).toBeVisible();
 		await expect(
 			childPage.getByText("Existing Child Row", { exact: true }),
@@ -487,7 +487,7 @@ test.describe("Child Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
 								title: "Root Row",
@@ -505,7 +505,7 @@ test.describe("Child Page Rendering", () => {
 		await rootRow.click();
 
 		// Drag a row from sidebar to the blank child page
-		const sidebarRow = await getSidebarRow(page, "Info row title");
+		const sidebarRow = await getSidebarRow(page, "Text row title");
 		const blankChildPage = page.getByTestId("blank-child-page");
 		await expect(blankChildPage).toBeVisible();
 
@@ -515,7 +515,7 @@ test.describe("Child Page Rendering", () => {
 		const childPage = page.getByTestId("child-page");
 		await expect(childPage).toBeVisible({ timeout: 10000 });
 		await expect(
-			childPage.getByText("Info row title", { exact: true }),
+			childPage.getByText("Text row title", { exact: true }),
 		).toBeVisible();
 		// A new blank child page appears for the row that was just dropped
 		// (it has no child of its own).
@@ -607,6 +607,7 @@ test.describe("Child Page Rendering", () => {
 		const configPanel = getConfigPanel(page);
 		await configPanel
 			.getByRole("button", { name: "Text", exact: true })
+			.nth(1)
 			.click();
 
 		// Now the main phone page should show the second segment child

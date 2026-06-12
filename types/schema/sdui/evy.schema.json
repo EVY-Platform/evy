@@ -62,7 +62,7 @@
 						"Calendar",
 						"ColumnContainer",
 						"Dropdown",
-						"Info",
+						"Text",
 						"InlinePicker",
 						"Map",
 						"InputList",
@@ -73,7 +73,6 @@
 						"SelectPhoto",
 						"SelectSegmentContainer",
 						"TextArea",
-						"Text",
 						"TextSelect",
 						"TimeslotPicker"
 					]

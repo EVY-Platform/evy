@@ -15,10 +15,10 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "First Info Row",
+								title: "First Text Row",
 								subtitle: "First row subtitle content",
 							},
 						},
@@ -26,12 +26,13 @@ test.describe("Row Selection", () => {
 					},
 				],
 			},
-		]); // Find and click on the first Info row
-		const firstInfoRow = page
-			.getByText("First Info Row", { exact: true })
+		]);
+		// Find and click on the first Text row
+		const firstTextRow = page
+			.getByText("First Text Row", { exact: true })
 			.first();
-		await expect(firstInfoRow).toBeVisible();
-		await firstInfoRow.click();
+		await expect(firstTextRow).toBeVisible();
+		await firstTextRow.click();
 
 		const configPanel = getConfigPanel(page);
 
@@ -40,7 +41,7 @@ test.describe("Row Selection", () => {
 			configPanel.getByLabel("title", { exact: true }),
 		).toBeVisible();
 		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
-			"First Info Row",
+			"First Text Row",
 		);
 	});
 
@@ -53,20 +54,20 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "First Info Row",
+								title: "First Text Row",
 								subtitle: "First row subtitle content",
 							},
 						},
 						actions: [],
 					},
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "Second Info Row",
+								title: "Second Text Row",
 								subtitle: "Second row subtitle content",
 							},
 						},
@@ -77,26 +78,26 @@ test.describe("Row Selection", () => {
 		]);
 		const configPanel = getConfigPanel(page);
 
-		// Click on first Info row
-		const firstInfoRow = page
-			.getByText("First Info Row", { exact: true })
+		// Click on first Text row
+		const firstTextRow = page
+			.getByText("First Text Row", { exact: true })
 			.first();
-		await firstInfoRow.click();
+		await firstTextRow.click();
 
 		// Verify first row's title is shown
 		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
-			"First Info Row",
+			"First Text Row",
 		);
 
-		// Click on second Info row
-		const secondInfoRow = page
-			.getByText("Second Info Row", { exact: true })
+		// Click on second Text row
+		const secondTextRow = page
+			.getByText("Second Text Row", { exact: true })
 			.first();
-		await secondInfoRow.click();
+		await secondTextRow.click();
 
 		// Verify second row's title is now shown
 		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
-			"Second Info Row",
+			"Second Text Row",
 		);
 	});
 
@@ -107,10 +108,10 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "First Info Row",
+								title: "First Text Row",
 								subtitle: "First row subtitle content",
 							},
 						},
@@ -131,17 +132,17 @@ test.describe("Row Selection", () => {
 		]);
 		const configPanel = getConfigPanel(page);
 
-		// Click on first Info row
-		const firstInfoRow = page
-			.getByText("First Info Row", { exact: true })
+		// Click on first Text row
+		const firstTextRow = page
+			.getByText("First Text Row", { exact: true })
 			.first();
-		await firstInfoRow.click();
+		await firstTextRow.click();
 
 		// Click on Text row
 		const textRow = page.getByText("Text Row", { exact: true }).first();
 		await textRow.click();
 
-		// Configuration should show Text row config, not Info row
+		// Configuration should update to the newly selected row.
 		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
 			"Text Row",
 		);
@@ -180,10 +181,10 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "First Info Row",
+								title: "First Text Row",
 								subtitle: "First row subtitle content",
 							},
 						},
@@ -191,11 +192,12 @@ test.describe("Row Selection", () => {
 					},
 				],
 			},
-		]); // Click on first Info row
-		const firstInfoRow = page
-			.getByText("First Info Row", { exact: true })
+		]);
+		// Click on first Text row
+		const firstTextRow = page
+			.getByText("First Text Row", { exact: true })
 			.first();
-		await firstInfoRow.click();
+		await firstTextRow.click();
 
 		// Update the title in the configuration panel
 		const configPanel = getConfigPanel(page);
@@ -209,7 +211,7 @@ test.describe("Row Selection", () => {
 			getFirstPage(page).getByText("Updated Title", { exact: true }),
 		).toBeVisible();
 		await expect(
-			getFirstPage(page).getByText("First Info Row", { exact: true }),
+			getFirstPage(page).getByText("First Text Row", { exact: true }),
 		).not.toBeVisible();
 	});
 
@@ -222,10 +224,10 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "First Info Row",
+								title: "First Text Row",
 								subtitle: "First row subtitle content",
 							},
 						},
@@ -236,11 +238,11 @@ test.describe("Row Selection", () => {
 		]);
 		const configPanel = getConfigPanel(page);
 
-		// Click on first Info row
-		const firstInfoRow = page
-			.getByText("First Info Row", { exact: true })
+		// Click on first Text row
+		const firstTextRow = page
+			.getByText("First Text Row", { exact: true })
 			.first();
-		await firstInfoRow.click();
+		await firstTextRow.click();
 
 		// Edit the subtitle field
 		const subtitleInput = configPanel.getByLabel("subtitle");
@@ -249,7 +251,7 @@ test.describe("Row Selection", () => {
 
 		// Title should still show the same row's title
 		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
-			"First Info Row",
+			"First Text Row",
 		);
 
 		// The updated subtitle should be visible
@@ -272,10 +274,10 @@ test.describe("Row Selection with Containers", () => {
 								title: "Container Row",
 								children: [
 									{
-										type: "Info",
+										type: "Text",
 										view: {
 											content: {
-												title: "Child Info Row",
+												title: "Child Text Row",
 												text: "Child row text",
 											},
 										},
@@ -315,10 +317,10 @@ test.describe("Row Selection with Containers", () => {
 								title: "Container Row",
 								children: [
 									{
-										type: "Info",
+										type: "Text",
 										view: {
 											content: {
-												title: "Child Info Row",
+												title: "Child Text Row",
 												text: "Child row text",
 											},
 										},
@@ -331,14 +333,14 @@ test.describe("Row Selection with Containers", () => {
 				],
 			},
 		]);
-		const childRow = page.getByText("Child Info Row", { exact: true }).first();
+		const childRow = page.getByText("Child Text Row", { exact: true }).first();
 		await childRow.click();
 
 		const configPanel = getConfigPanel(page);
-		await configPanel.getByRole("button", { name: /^Info$/ }).click();
+		await configPanel.getByRole("button", { name: /^Text$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveValue("Child Info Row");
+		).toHaveValue("Child Text Row");
 	});
 
 	test("should switch selection between container and child", async ({
@@ -357,10 +359,10 @@ test.describe("Row Selection with Containers", () => {
 								title: "Container Row",
 								children: [
 									{
-										type: "Info",
+										type: "Text",
 										view: {
 											content: {
-												title: "Child Info Row",
+												title: "Child Text Row",
 												text: "Child row text",
 											},
 										},
@@ -376,12 +378,12 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = getConfigPanel(page);
 
 		// Select child first
-		const childRow = page.getByText("Child Info Row", { exact: true }).first();
+		const childRow = page.getByText("Child Text Row", { exact: true }).first();
 		await childRow.click();
-		await configPanel.getByRole("button", { name: /^Info$/ }).click();
+		await configPanel.getByRole("button", { name: /^Text$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveValue("Child Info Row");
+		).toHaveValue("Child Text Row");
 
 		await page
 			.getByRole("button", { name: "Configure row: Container Row" })

@@ -132,7 +132,7 @@ private struct EVYSearchPreview: View {
     let resultTemplateJSON = """
       {
         "id": "preview-search-result-template",
-        "type": "Info",
+        "type": "Text",
         "source": "",
         "destination": "",
         "actions": [],

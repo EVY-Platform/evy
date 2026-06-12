@@ -6,17 +6,17 @@ import { defineRow } from "../defineRow";
 import InlineIcon from "../design-system/InlineIcon";
 import Input from "../design-system/Input";
 import { RowLayout } from "../design-system/RowLayout";
-import InfoRow from "../view/InfoRow";
+import TextRow from "../view/TextRow";
 const SEARCH_RESULT_TEMPLATE_ROW_ID = "00000000-0000-4000-8000-000000000001";
 
 const defaultSearchResultTemplateRow: Row = {
 	id: SEARCH_RESULT_TEMPLATE_ROW_ID,
-	row: createElement(InfoRow, {
+	row: createElement(TextRow, {
 		key: SEARCH_RESULT_TEMPLATE_ROW_ID,
 		rowId: SEARCH_RESULT_TEMPLATE_ROW_ID,
 	}),
 	config: {
-		type: "Info",
+		type: "Text",
 		source: "",
 		destination: "",
 		actions: [],

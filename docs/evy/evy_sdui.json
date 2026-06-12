@@ -12,7 +12,7 @@
 						"content": {
 							"child": {
 								"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-								"type": "Info",
+								"type": "Text",
 								"view": {
 									"content": {
 										"icon": "",

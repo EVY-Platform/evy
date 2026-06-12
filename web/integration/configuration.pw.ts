@@ -73,10 +73,10 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "Test Info Row",
+								title: "Test Text Row",
 								subtitle: "Initial subtitle content",
 							},
 						},
@@ -85,9 +85,9 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		const infoRow = page.getByText("Test Info Row", { exact: true }).first();
-		await expect(infoRow).toBeVisible();
-		await infoRow.click();
+		const textRow = page.getByText("Test Text Row", { exact: true }).first();
+		await expect(textRow).toBeVisible();
+		await textRow.click();
 
 		const configPanel = getConfigPanel(page);
 
@@ -112,7 +112,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						source: "{initial}",
 						view: {
 							content: {
@@ -355,7 +355,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
 								title: "No Action Row",
@@ -367,9 +367,9 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		const infoRow = page.getByText("No Action Row", { exact: true }).first();
-		await expect(infoRow).toBeVisible();
-		await infoRow.click();
+		const textRow = page.getByText("No Action Row", { exact: true }).first();
+		await expect(textRow).toBeVisible();
+		await textRow.click();
 
 		const configPanel = getConfigPanel(page);
 

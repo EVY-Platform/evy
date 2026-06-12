@@ -114,11 +114,11 @@ test.describe("Offline and connection resilience", () => {
 			void dialog.accept();
 		});
 
-		const sidebarRow = await getSidebarRow(page, "Info row title");
+		const sidebarRow = await getSidebarRow(page, "Text row title");
 		await sidebarRow.dragTo(getPageContent(page));
 
 		await expect(
-			getFirstPage(page).getByText("Info row title", { exact: true }),
+			getFirstPage(page).getByText("Text row title", { exact: true }),
 		).toBeVisible();
 	});
 

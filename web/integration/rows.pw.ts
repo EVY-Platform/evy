@@ -12,10 +12,10 @@ test.describe("EVY Rows", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Info",
+						type: "Text",
 						view: {
 							content: {
-								title: "Test Info",
+								title: "Test Text",
 								subtitle: "Test subtitle",
 							},
 						},
@@ -27,7 +27,6 @@ test.describe("EVY Rows", () => {
 		const rowsPanel = await getRowsPanel(page);
 
 		const expectedRowTitles = [
-			"Info row title",
 			"Text row title",
 			"Input list row title",
 			"Button row text",

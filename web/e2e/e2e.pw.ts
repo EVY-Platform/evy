@@ -183,21 +183,21 @@ test.describe("Web E2E Integration Tests", () => {
 		await expect(page.getByTestId("create-flow-dialog")).not.toBeVisible();
 
 		await ensureSidePanelsExpanded(page);
-		const sidebarRow = await getSidebarRow(page, "Info row title");
+		const sidebarRow = await getSidebarRow(page, "Text row title");
 		const pageContent = getPageContent(page);
 		await sidebarRow.dragTo(pageContent);
 
 		await expect(
-			getFirstPage(page).getByText("Info row title", { exact: true }),
+			getFirstPage(page).getByText("Text row title", { exact: true }),
 		).toBeVisible();
-		await expectFlowRowTitlePersisted(uniqueFlowName, "Info row title");
+		await expectFlowRowTitlePersisted(uniqueFlowName, "Text row title");
 
 		await page.reload();
 		await waitForAppLoaded(page);
 		await selectFlowByLabel(page, uniqueFlowName);
 
 		await expect(
-			getFirstPage(page).getByText("Info row title", { exact: true }),
+			getFirstPage(page).getByText("Text row title", { exact: true }),
 		).toBeVisible();
 	});
 
@@ -279,7 +279,7 @@ test.describe("Web E2E Integration Tests", () => {
 		};
 		const parentRow: UI_Row = {
 			id: crypto.randomUUID(),
-			type: "Info",
+			type: "Text",
 			source: "",
 			actions: [],
 			view: {

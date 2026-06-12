@@ -48,10 +48,10 @@ describe("normalizeServerRow", () => {
 		});
 	});
 
-	it("merges Info content string fields from defaults when missing", () => {
+	it("merges compact Text content string fields from defaults when missing", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
-				type: "Info",
+				type: "Text",
 				view: {
 					content: {
 						title: "T",
@@ -68,10 +68,10 @@ describe("normalizeServerRow", () => {
 		});
 	});
 
-	it("preserves Info content keys as sent by the server", () => {
+	it("preserves Text content keys as sent by the server", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
-				type: "Info",
+				type: "Text",
 				view: {
 					content: {
 						title: "T",
@@ -148,7 +148,7 @@ describe("normalizeServerRow", () => {
 						title: "List",
 						child: makeServerRow({
 							id: ROW_B,
-							type: "Info",
+							type: "Text",
 							view: {
 								content: {
 									title: "{$datum.title}",
@@ -161,7 +161,7 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		expect(n.view.content.child?.type).toBe("Info");
+		expect(n.view.content.child?.type).toBe("Text");
 		expect(n.view.content.child?.destination).toBe("");
 		expect(n.view.content.child?.view.content).toMatchObject({
 			title: "{$datum.title}",
@@ -201,7 +201,7 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		expect(n.view.content.child?.type).toBe("Info");
+		expect(n.view.content.child?.type).toBe("Text");
 		expect(n.view.content.child?.view.content).toMatchObject({
 			title: "{$datum.value}",
 			subtitle: "",
