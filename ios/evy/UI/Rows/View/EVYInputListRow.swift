@@ -19,7 +19,9 @@ struct EVYInputListRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
+      if !view.content.title.isEmpty {
+        EVYRowTitle(title: view.content.title)
+      }
       EVYInputList(
         data: source,
         format: view.content.format,

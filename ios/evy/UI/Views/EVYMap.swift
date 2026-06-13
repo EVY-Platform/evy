@@ -7,33 +7,21 @@ import MapKit
 import SwiftUI
 
 struct EVYMap: View {
-  let title: String
   let location: EVYJson
-  let subtitle: String
 
   private var coordinate: CLLocationCoordinate2D? {
     location.locationCoordinate()
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: Constants.padding) {
-      if !title.isEmpty {
-        EVYRowTitle(title: title)
-      }
-      mapContent
-      if !subtitle.isEmpty {
-        EVYTextView(subtitle, style: .info)
-          .frame(maxWidth: .infinity, alignment: .leading)
-      }
-    }
-    .padding(.horizontal, Constants.majorPadding)
+    mapContent
   }
 
   @ViewBuilder
   private var mapContent: some View {
     if let coordinate {
       Map(initialPosition: .region(region(for: coordinate))) {
-        Marker(title.isEmpty ? "Location" : title, coordinate: coordinate)
+        Marker("Location", coordinate: coordinate)
       }
       .frame(maxWidth: .infinity)
       .aspectRatio(4 / 3, contentMode: .fit)
@@ -62,8 +50,6 @@ struct EVYMap: View {
 
 #Preview {
   EVYMap(
-    title: "Pickup location",
-    location: .dictionary(["latitude": .decimal(-33.8688), "longitude": .decimal(151.2093)]),
-    subtitle: "Meet near the main entrance"
+    location: .dictionary(["latitude": .decimal(-33.8688), "longitude": .decimal(151.2093)])
   )
 }

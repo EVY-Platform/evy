@@ -10,8 +10,6 @@ import SwiftUI
 struct EVYTextRow: View {
 
   private let view: TextRowViewData
-  @State private var showSheet = false
-  @State private var canBeExpanded = false
 
   init(view: TextRowViewData) {
     self.view = view
@@ -19,101 +17,43 @@ struct EVYTextRow: View {
 
   var body: some View {
     let content = view.content
-    let icon = content.icon.trimmingCharacters(in: .whitespacesAndNewlines)
-    let hasAction = !content.action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    let hasSubtitle = !content.subtitle.isEmpty
-    let showIcon = !icon.isEmpty
-    let hasTextSection =
-      hasAction
-      || !content.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
-    VStack(alignment: .leading, spacing: 0) {
-      if showIcon || !content.title.isEmpty || hasSubtitle {
-        HStack(alignment: .top) {
-          if showIcon {
-            EVYTextView(icon, style: .body)
-          }
-          VStack(
-            alignment: showIcon || (hasSubtitle && !content.title.isEmpty) ? .leading : .center,
-            spacing: 0
-          ) {
-            if !content.title.isEmpty {
-              EVYTextView(content.title)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            }
-            if hasSubtitle {
-              EVYTextView(content.subtitle, style: .info)
-                .frame(
-                  maxWidth: .infinity,
-                  alignment: showIcon || !content.title.isEmpty ? .leading : .center
-                )
-                .lineLimit(3)
-                .truncationMode(.tail)
-            }
-          }
-          .frame(
-            maxWidth: .infinity,
-            alignment: showIcon || (!content.title.isEmpty && hasSubtitle) ? .leading : .center
-          )
+    VStack(alignment: .leading) {
+      HStack(alignment: .top) {
+        if !content.icon.isEmpty {
+          EVYTextView(content.icon, style: .body)
         }
-        .frame(maxWidth: showIcon || !content.title.isEmpty ? nil : .infinity)
-      }
+        VStack(
+          alignment: .leading,
+        ) {
+          if !content.title.isEmpty {
+            EVYTextView(content.title)
+              .lineLimit(1)
+              .truncationMode(.tail)
+          }
+          if !content.subtitle.isEmpty {
+            EVYTextView(content.subtitle, style: .info)
+              .lineLimit(Int(view.max_lines) ?? 2)
+              .truncationMode(.tail)
+          }
+          if !content.text.isEmpty {
+            EVYTextView(
+              content.text,
+              placeholder: content.placeholder,
+            )
+            .lineLimit(Int(view.max_lines) ?? 2)
+            .truncationMode(.tail)
+          }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
 
-      if hasTextSection {
-        if hasAction {
-          actionText(content: content)
-        } else {
-          expandableText(content: content)
+        if !content.action.isEmpty {
+          EVYTextView(content.action, style: .action)
         }
+
       }
     }
     .padding(.horizontal, Constants.majorPadding)
-  }
-
-  private func actionText(content: TextRowContent) -> some View {
-    HStack {
-      EVYTextView(
-        content.text,
-        placeholder: content.placeholder,
-        style: .info
-      )
-      .frame(maxWidth: .infinity, alignment: .leading)
-      EVYTextView(content.action, style: .action)
-    }
-  }
-
-  private func expandableText(content: TextRowContent) -> some View {
-    VStack(alignment: .leading) {
-      EVYTextView(content.text)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .lineLimit(Int(view.max_lines) ?? 1)
-        .background {
-          ViewThatFits(in: .vertical) {
-            EVYTextView(content.text).hidden()
-            Color.clear.onAppear {
-              canBeExpanded = true
-            }
-          }
-        }
-        .sheet(isPresented: $showSheet) {
-          EVYTextView(content.text)
-            .frame(maxHeight: .infinity, alignment: .top)
-            .padding(.top, Constants.majorPadding)
-            .presentationDragIndicator(.visible)
-        }
-      if canBeExpanded {
-        EVYTextView("Read more", style: .action)
-          .padding(.vertical, Constants.padding)
-      }
-    }
-    .contentShape(Rectangle())
-    .onTapGesture {
-      if canBeExpanded {
-        showSheet.toggle()
-      }
-    }
   }
 }
 
@@ -149,7 +89,7 @@ struct EVYTextRow: View {
         "view": {
           "content": {
             "title": "About this item",
-            "text": "This is a sample text row with some descriptive content to display. It can be quite long and the user can tap to expand it.",
+            "text": "This is a sample text row with descriptive content to display. It can be quite long, so creators can add a row action to show full details in a sheet.",
             "placeholder": "",
             "action": ""
           },
@@ -174,7 +114,7 @@ struct EVYTextRow: View {
             "title": "About this item",
             "subtitle": "Product details and description",
             "icon": "::star::",
-            "text": "This is a sample text row with some descriptive content to display. It can be quite long and the user can tap to expand it.",
+            "text": "This is a sample text row with descriptive content to display alongside an action label.",
             "placeholder": "",
             "action": "Edit"
           },
