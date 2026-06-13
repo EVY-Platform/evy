@@ -18,14 +18,24 @@ function isContainerKey(k: string): boolean {
 	return k === "child" || k === "children";
 }
 
+const panelFieldOrder = ["icon", "title", "subtitle", "text", "placeholder"];
+
+function getPanelFieldRank(key: string): number {
+	const index = panelFieldOrder.indexOf(key.toLowerCase());
+	return index === -1 ? panelFieldOrder.length : index;
+}
+
 function sortContentEntriesForPanel(
 	entries: [string, unknown][],
 ): [string, unknown][] {
-	const containers = entries.filter(([k]) => isContainerKey(k));
-	const rest = entries
-		.filter(([k]) => !isContainerKey(k))
-		.sort(([a], [b]) => a.localeCompare(b));
-	return [...rest, ...containers];
+	return entries.sort(([a], [b]) => {
+		const rankDifference = getPanelFieldRank(a) - getPanelFieldRank(b);
+		if (rankDifference !== 0) return rankDifference;
+		if (isContainerKey(a) && isContainerKey(b)) {
+			return a === "child" ? -1 : 1;
+		}
+		return a.localeCompare(b);
+	});
 }
 
 function isRow(value: unknown): value is Row {
@@ -203,46 +213,12 @@ export function ConfigurationPanel() {
 		(configRow: Row): React.ReactNode[] => {
 			const merged = mergeRowContentWithPaletteDefaults(configRow);
 			const entries = sortContentEntriesForPanel(Object.entries(merged));
+			const contentEntries = entries.filter(([key]) => !isContainerKey(key));
+			const containerEntries = entries.filter(([key]) => isContainerKey(key));
 
-			const contentElements = entries.map(([key, value]) => {
+			const contentElements = contentEntries.map(([key, value]) => {
 				const uniqueId = `${configRow.id}-${key}`;
 
-				if (key === "child" || key === "children") {
-					const items =
-						key === "child"
-							? isRow(value)
-								? [value]
-								: []
-							: isRowArray(value)
-								? value
-								: [];
-					if (items.length === 0) return null;
-					const label = key === "child" ? "Child" : "Children";
-					return (
-						<div key={uniqueId}>
-							<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
-								{label}
-							</div>
-							<div
-								className={
-									items.length > 1
-										? "evy-flex evy-flex-col evy-gap-4"
-										: undefined
-								}
-							>
-								{items.map((childRow) => (
-									<ChildRowButton
-										key={childRow.id}
-										child={childRow}
-										onClick={() =>
-											openChildConfiguration(childRow.id, configRow)
-										}
-									/>
-								))}
-							</div>
-						</div>
-					);
-				}
 				return (
 					<ConfigTextField
 						key={uniqueId}
@@ -252,6 +228,40 @@ export function ConfigurationPanel() {
 						onChange={(next) => updateRowContent(key, next, configRow.id)}
 						required
 					/>
+				);
+			});
+
+			const containerElements = containerEntries.map(([key, value]) => {
+				const uniqueId = `${configRow.id}-${key}`;
+				const items =
+					key === "child"
+						? isRow(value)
+							? [value]
+							: []
+						: isRowArray(value)
+							? value
+							: [];
+				if (items.length === 0) return null;
+				const label = key === "child" ? "Child" : "Children";
+				return (
+					<div key={uniqueId}>
+						<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
+							{label}
+						</div>
+						<div
+							className={
+								items.length > 1 ? "evy-flex evy-flex-col evy-gap-4" : undefined
+							}
+						>
+							{items.map((childRow) => (
+								<ChildRowButton
+									key={childRow.id}
+									child={childRow}
+									onClick={() => openChildConfiguration(childRow.id, configRow)}
+								/>
+							))}
+						</div>
+					</div>
 				);
 			});
 
@@ -286,6 +296,7 @@ export function ConfigurationPanel() {
 						fieldClassName=""
 					/>
 				</div>,
+				...containerElements,
 			];
 		},
 		[openChildConfiguration, updateRowContent, updateRowRoot],
