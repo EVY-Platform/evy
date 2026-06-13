@@ -15,42 +15,71 @@ struct EVYTextRow: View {
     self.view = view
   }
 
+  private var maxLines: Int {
+    Int(view.max_lines) ?? 1
+  }
+
   var body: some View {
     let content = view.content
+    let icon = content.icon.trimmingCharacters(in: .whitespacesAndNewlines)
+    let hasAction = !content.action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    let hasTitle = !content.title.isEmpty
+    let hasSubtitle = !content.subtitle.isEmpty
+    let showIcon = !icon.isEmpty
+    let hasTextSection =
+      hasAction || !content.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
-    VStack(alignment: .leading) {
-      HStack(alignment: .top) {
-        if !content.icon.isEmpty {
-          EVYTextView(content.icon, style: .body)
+    VStack(alignment: .leading, spacing: 0) {
+      if showIcon || hasTitle || hasSubtitle {
+        HStack(alignment: .top) {
+          if showIcon {
+            EVYTextView(icon, style: .body)
+          }
+          VStack(
+            alignment: showIcon || (hasSubtitle && hasTitle) ? .leading : .center,
+            spacing: 0
+          ) {
+            if hasTitle {
+              EVYTextView(content.title)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .lineLimit(1)
+                .truncationMode(.tail)
+            }
+            if hasSubtitle {
+              EVYTextView(content.subtitle, style: .info)
+                .frame(
+                  maxWidth: .infinity,
+                  alignment: showIcon || hasTitle ? .leading : .center
+                )
+                .lineLimit(3)
+                .truncationMode(.tail)
+            }
+          }
+          .frame(
+            maxWidth: .infinity,
+            alignment: showIcon || (hasTitle && hasSubtitle) ? .leading : .center
+          )
         }
-        VStack(
-          alignment: .leading,
-        ) {
-          if !content.title.isEmpty {
-            EVYTextView(content.title)
-              .lineLimit(1)
-              .truncationMode(.tail)
-          }
-          if !content.subtitle.isEmpty {
-            EVYTextView(content.subtitle, style: .info)
-              .lineLimit(Int(view.max_lines) ?? 2)
-              .truncationMode(.tail)
-          }
-          if !content.text.isEmpty {
+        .frame(maxWidth: showIcon || hasTitle ? nil : .infinity)
+      }
+
+      if hasTextSection {
+        if hasAction {
+          HStack {
             EVYTextView(
               content.text,
               placeholder: content.placeholder,
+              style: .info
             )
-            .lineLimit(Int(view.max_lines) ?? 2)
-            .truncationMode(.tail)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            EVYTextView(content.action, style: .action)
           }
+        } else {
+          EVYTextView(content.text, placeholder: content.placeholder)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .lineLimit(maxLines)
+            .truncationMode(.tail)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-
-        if !content.action.isEmpty {
-          EVYTextView(content.action, style: .action)
-        }
-
       }
     }
     .padding(.horizontal, Constants.majorPadding)
@@ -89,7 +118,7 @@ struct EVYTextRow: View {
         "view": {
           "content": {
             "title": "About this item",
-            "text": "This is a sample text row with descriptive content to display. It can be quite long, so creators can add a row action to show full details in a sheet.",
+            "text": "This is a sample text row with descriptive content. Long enough to demonstrate truncation.",
             "placeholder": "",
             "action": ""
           },
@@ -114,7 +143,7 @@ struct EVYTextRow: View {
             "title": "About this item",
             "subtitle": "Product details and description",
             "icon": "::star::",
-            "text": "This is a sample text row with descriptive content to display alongside an action label.",
+            "text": "This is a sample text row with an action label.",
             "placeholder": "",
             "action": "Edit"
           },

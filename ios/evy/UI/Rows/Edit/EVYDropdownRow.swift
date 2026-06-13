@@ -21,7 +21,10 @@ struct EVYDropdownRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+      }
       if !destination.isEmpty {
         EVYDropdown(
           title: view.content.title,

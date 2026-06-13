@@ -20,7 +20,8 @@ struct EVYMapRow: View {
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.padding) {
       if !view.content.title.isEmpty {
-        EVYRowTitle(title: view.content.title)
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
       }
       EVYMap(location: resolvedLocation)
       if !view.content.subtitle.isEmpty {

@@ -21,7 +21,10 @@ struct EVYInputRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+      }
       if !destination.isEmpty {
         EVYTextField(
           input: view.content.value,

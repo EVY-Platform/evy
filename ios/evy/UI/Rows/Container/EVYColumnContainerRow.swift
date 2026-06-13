@@ -17,8 +17,11 @@ struct EVYColumnContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
-        .padding(.horizontal, Constants.majorPadding)
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+          .padding(.horizontal, Constants.majorPadding)
+      }
       HStack(alignment: .top) {
         ForEach(view.content.children, id: \.id) { child in
           EVYRow(row: child)
