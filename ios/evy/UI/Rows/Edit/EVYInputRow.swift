@@ -21,15 +21,16 @@ struct EVYInputRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
-      if !destination.isEmpty {
-        EVYTextField(
-          input: view.content.value,
-          destination: destination,
-          placeholder: view.content.placeholder,
-          isInteractive: isInteractive
-        )
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
       }
+      EVYTextField(
+        input: view.content.value,
+        destination: destination,
+        placeholder: view.content.placeholder,
+        isInteractive: isInteractive
+      )
     }
     .padding(.horizontal, Constants.majorPadding)
   }

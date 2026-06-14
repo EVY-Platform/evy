@@ -17,13 +17,8 @@ public enum EVYRadioStyle: String {
 struct EVYRadioButton: View {
   let isSelected: Bool
   let style: EVYRadioStyle
-  var body: some View {
-    buttonView
-  }
-}
 
-extension EVYRadioButton {
-  @ViewBuilder fileprivate var buttonView: some View {
+  @ViewBuilder var body: some View {
     switch style {
     case .single:
       Circle()

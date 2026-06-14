@@ -17,7 +17,10 @@ struct EVYTimeslotPickerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+      }
       EVYTimeslotPicker(content: view.content, source: source)
     }
     .padding(.horizontal, Constants.majorPadding)

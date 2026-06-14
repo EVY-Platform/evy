@@ -17,20 +17,15 @@ struct EVYSelectPhotoRow: View {
   }
 
   var body: some View {
-    if !destination.isEmpty {
-      EVYSelectPhoto(
-        title: view.content.title,
-        subtitle: view.content.subtitle,
-        icon: view.content.icon,
-        content: view.content.content,
-        data: view.content.photos,
-        destination: destination
-      )
-      .padding(.horizontal, Constants.majorPadding)
-    } else {
-      Text("Failed to load photo selector")
-        .foregroundColor(.red)
-    }
+    EVYSelectPhoto(
+      title: view.content.title,
+      subtitle: view.content.subtitle,
+      icon: view.content.icon,
+      content: view.content.content,
+      data: view.content.photos,
+      destination: destination
+    )
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 

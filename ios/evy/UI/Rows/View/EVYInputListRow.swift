@@ -19,7 +19,10 @@ struct EVYInputListRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+      }
       EVYInputList(
         data: source,
         format: view.content.format,

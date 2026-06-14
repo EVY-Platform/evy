@@ -19,7 +19,8 @@ struct EVYPhotoGallery: View {
   var body: some View {
     VStack(spacing: 0) {
       if !title.isEmpty {
-        EVYRowTitle(title: title)
+        EVYTextView(title)
+          .padding(.vertical, Constants.padding)
           .padding(.horizontal, Constants.majorPadding)
       }
       if !imageIds.isEmpty {

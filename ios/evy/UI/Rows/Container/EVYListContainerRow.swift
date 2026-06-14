@@ -59,8 +59,11 @@ struct EVYListContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
-        .padding(.horizontal, Constants.majorPadding)
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+          .padding(.horizontal, Constants.majorPadding)
+      }
       ForEach(dynamicRows.value) { dynamicRow in
         EVYRow(row: dynamicRow.row)
       }

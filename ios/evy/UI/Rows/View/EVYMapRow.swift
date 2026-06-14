@@ -18,11 +18,18 @@ struct EVYMapRow: View {
   }
 
   var body: some View {
-    EVYMap(
-      title: view.content.title,
-      location: resolvedLocation,
-      subtitle: view.content.subtitle
-    )
+    VStack(alignment: .leading, spacing: Constants.padding) {
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
+      }
+      EVYMap(location: resolvedLocation)
+      if !view.content.subtitle.isEmpty {
+        EVYTextView(view.content.subtitle, style: .info)
+          .frame(maxWidth: .infinity, alignment: .leading)
+      }
+    }
+    .padding(.horizontal, Constants.majorPadding)
   }
 }
 

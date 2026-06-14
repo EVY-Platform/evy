@@ -19,15 +19,16 @@ struct EVYTextAreaRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      EVYRowTitle(title: view.content.title)
-      if !destination.isEmpty {
-        EVYTextField(
-          input: view.content.value,
-          destination: destination,
-          placeholder: view.content.placeholder,
-          multiLine: true
-        )
+      if !view.content.title.isEmpty {
+        EVYTextView(view.content.title)
+          .padding(.vertical, Constants.padding)
       }
+      EVYTextField(
+        input: view.content.value,
+        destination: destination,
+        placeholder: view.content.placeholder,
+        multiLine: true
+      )
     }
     .padding(.horizontal, Constants.majorPadding)
   }
