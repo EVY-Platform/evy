@@ -25,14 +25,12 @@ struct EVYInlinePickerRow: View {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
       }
-      if !destination.isEmpty {
-        EVYInlinePicker(
-          title: view.content.title,
-          data: source,
-          format: view.content.format,
-          destination: destination
-        )
-      }
+      EVYInlinePicker(
+        title: view.content.title,
+        data: source,
+        format: view.content.format,
+        destination: destination
+      )
     }
     .padding(.horizontal, Constants.majorPadding)
   }

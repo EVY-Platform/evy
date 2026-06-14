@@ -25,14 +25,12 @@ struct EVYInputRow: View {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
       }
-      if !destination.isEmpty {
-        EVYTextField(
-          input: view.content.value,
-          destination: destination,
-          placeholder: view.content.placeholder,
-          isInteractive: isInteractive
-        )
-      }
+      EVYTextField(
+        input: view.content.value,
+        destination: destination,
+        placeholder: view.content.placeholder,
+        isInteractive: isInteractive
+      )
     }
     .padding(.horizontal, Constants.majorPadding)
   }

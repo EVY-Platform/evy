@@ -46,13 +46,17 @@ struct EVYTextRow: View {
         }
       }
 
-      HStack {
-        EVYTextView(content.text, placeholder: content.placeholder)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .lineLimit(maxLines)
-          .truncationMode(.tail)
-        if !content.action.isEmpty {
-          EVYTextView(content.action, style: .action)
+      if !content.text.isEmpty || !content.action.isEmpty {
+        HStack {
+          if !content.text.isEmpty {
+            EVYTextView(content.text, placeholder: content.placeholder)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .lineLimit(maxLines)
+              .truncationMode(.tail)
+          }
+          if !content.action.isEmpty {
+            EVYTextView(content.action, style: .action)
+          }
         }
       }
     }

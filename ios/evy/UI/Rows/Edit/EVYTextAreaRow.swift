@@ -23,14 +23,12 @@ struct EVYTextAreaRow: View {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
       }
-      if !destination.isEmpty {
-        EVYTextField(
-          input: view.content.value,
-          destination: destination,
-          placeholder: view.content.placeholder,
-          multiLine: true
-        )
-      }
+      EVYTextField(
+        input: view.content.value,
+        destination: destination,
+        placeholder: view.content.placeholder,
+        multiLine: true
+      )
     }
     .padding(.horizontal, Constants.majorPadding)
   }

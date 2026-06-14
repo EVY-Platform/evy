@@ -25,15 +25,13 @@ struct EVYDropdownRow: View {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
       }
-      if !destination.isEmpty {
-        EVYDropdown(
-          title: view.content.title,
-          placeholder: view.content.placeholder,
-          data: source,
-          format: view.content.format,
-          destination: destination
-        )
-      }
+      EVYDropdown(
+        title: view.content.title,
+        placeholder: view.content.placeholder,
+        data: source,
+        format: view.content.format,
+        destination: destination
+      )
     }
     .padding(.horizontal, Constants.majorPadding)
   }
