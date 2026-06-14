@@ -13,12 +13,8 @@ struct EVYMap: View {
     location.locationCoordinate()
   }
 
-  var body: some View {
-    mapContent
-  }
-
   @ViewBuilder
-  private var mapContent: some View {
+  var body: some View {
     if let coordinate {
       Map(initialPosition: .region(region(for: coordinate))) {
         Marker("Location", coordinate: coordinate)
