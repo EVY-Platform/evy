@@ -42,7 +42,7 @@
 						"view": {
 							"content": {
 								"title": "Condition",
-								"subtitle": "{item.condition}",
+								"subtitle": "{findFirst(conditions, item.condition_id).value}",
 								"icon": "::badge-check::"
 							}
 						}
@@ -56,7 +56,7 @@
 						"view": {
 							"content": {
 								"title": "Selling reason",
-								"subtitle": "{item.selling_reason}",
+								"subtitle": "{findFirst(selling_reasons, item.selling_reason_id).value}",
 								"icon": "::circle-question-mark::"
 							}
 						}

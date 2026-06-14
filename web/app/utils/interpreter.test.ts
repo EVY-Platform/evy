@@ -78,12 +78,24 @@ describe("parseText", () => {
 		);
 	});
 
+	it("resolves findFirst to the data argument for mock data", () => {
+		expect(
+			parseText("{findFirst(selling_reasons, item.selling_reason_id)}"),
+		).toBe("selling_reasons");
+	});
+
+	it("keeps text after findFirst as a normal suffix", () => {
+		expect(
+			parseText("{findFirst(selling_reasons, item.selling_reason_id)}.value"),
+		).toBe("selling_reasons.value");
+	});
+
 	it("keeps dimension preview safe for unresolved values", () => {
 		expect(parseText("{formatDimension(item.unknown)}")).toBe("100mm");
 	});
 
-	it("replaces property path with friendly label", () => {
-		expect(parseText("Hello {item.title}")).toBe("Hello Item title");
+	it("replaces property path with its raw prop path", () => {
+		expect(parseText("Hello {item.title}")).toBe("Hello item.title");
 	});
 
 	it("strips comparison expressions in braces", () => {

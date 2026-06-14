@@ -26,15 +26,3 @@ export function splitCamelCaseToWords(identifier: string): string {
 		.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
 		.trim();
 }
-
-/**
- * Converts a dotted path to a readable label, preserving full context.
- * e.g. "item.title" → "Item title", "user.address.postcode" → "User address postcode"
- */
-export function propPathToFriendlyLabel(propPath: string): string {
-	const segments = propPath.split(".");
-	if (segments.length === 0) return propPath;
-	const spaced = segments.map((segment) => underscoresToSpaces(segment));
-	spaced[0] = sentenceCaseFirstLetter(spaced[0]);
-	return spaced.join(" ");
-}

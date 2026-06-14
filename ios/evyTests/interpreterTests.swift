@@ -530,6 +530,62 @@ final class InterpreterTests: XCTestCase {
     )
   }
 
+  func testFindFirstReturnsMatchingDatumField() throws {
+    let conditionsKey = uniqueKey("conditions")
+    let itemKey = uniqueKey("item")
+    let conditionId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary(["id": .string(conditionId), "value": .string("Excellent")]),
+        .dictionary(["id": .string(UUID().uuidString), "value": .string("Other")]),
+      ]),
+      at: "marketplace:\(conditionsKey)"
+    )
+    try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
+
+    let result = try parseTextFromText(
+      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+
+    XCTAssertEqual(result.value, "Excellent")
+  }
+
+  func testFindFirstReturnsEmptyForNoMatch() throws {
+    let conditionsKey = uniqueKey("conditions")
+    let itemKey = uniqueKey("item")
+
+    try store(
+      .array([.dictionary(["id": .string("abc"), "value": .string("Excellent")])]),
+      at: "marketplace:\(conditionsKey)"
+    )
+    try store(.dictionary(["condition_id": .string("no_match")]), at: itemKey)
+
+    let result = try parseTextFromText(
+      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+
+    XCTAssertEqual(result.value, "")
+  }
+
+  func testFindFirstDoesNotMutateStore() throws {
+    let conditionsKey = uniqueKey("conditions")
+    let itemKey = uniqueKey("item")
+    let conditionId = UUID().uuidString
+
+    try store(
+      .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
+      at: "marketplace:\(conditionsKey)"
+    )
+    try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
+
+    let countBefore = try EVY.publicStore.getAll().count
+    let result = try parseTextFromText(
+      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+    let countAfter = try EVY.publicStore.getAll().count
+
+    XCTAssertEqual(result.value, "Good")
+    XCTAssertEqual(countBefore, countAfter)
+  }
+
   private func store(_ value: EVYJson, at key: String) throws {
     let encodedValue = try JSONEncoder().encode(value)
 

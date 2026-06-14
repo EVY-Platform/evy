@@ -21,7 +21,7 @@ public func splitPropsFromText(_ props: String) throws -> [String] {
     throw EVYParamError.invalidProps
   }
 
-  var splitProps = props.components(separatedBy: PROP_SEPARATOR)
+  var splitProps = splitTopLevel(props, separator: PROP_SEPARATOR, includingEmptyValues: false)
   if splitProps.count < 1 {
     throw EVYParamError.invalidProps
   }
@@ -246,6 +246,12 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     throw EVYParamError.invalidProps
   }
 
+  let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
+
+  if let (funcName, funcArgs) = parseFunctionCall(firstProp), funcName == "findFirst" {
+    return try evyFindFirst(funcArgs, remainingProps: remainingProps)
+  }
+
   // 1. Check draft store — user's unsaved edits
   if let scopeId = EVY.draftStore.activeScopeId,
     let draftBinding = try? EVY.draftStore.binding(fromParsedProps: cleanProps, scopeId: scopeId),
@@ -262,12 +268,10 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     let cachedRow = try? EVY.cacheStore.get(
       namespace: EVYNamespace.cache, resource: scopeId, id: firstProp)
   {
-    let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
     return try cachedRow.decoded().parseProp(props: remainingProps)
   }
 
   // 2. Fall back to persistent store — synced API data
-  let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
   let json = try store.getJsonForBinding(key: firstProp)
   return json.parseProp(props: remainingProps)
 }

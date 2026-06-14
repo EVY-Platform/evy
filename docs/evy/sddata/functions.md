@@ -28,6 +28,17 @@ Variable: "Hello"
 Output: 5
 ```
 
+#### findFirst
+
+Finds the first datum in a named collection whose `id` matches the given identifier. The returned datum can be chained with a property accessor.
+
+```
+findFirst({_variable_type_string_collection_}, {_variable_type_string_id_})
+Collection: conditions = [{ "id": "c1", "value": "Excellent" }, ...]
+Id variable: "c1"
+Output: {findFirst(conditions, item.condition_id).value} → "Excellent"
+```
+
 ## Formatting functions
 
 These are functions that do 3 things:
