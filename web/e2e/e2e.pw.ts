@@ -202,14 +202,40 @@ test.describe("Web E2E Integration Tests", () => {
 	});
 
 	test("should persist SDUI edits after page refresh", async ({ page }) => {
+		const uniqueFlowName = `E2E SDUI Edit Flow ${Date.now()}`;
+		const initialRowTitle = "Item title";
 		const uniqueTitle = `E2E Test Title ${Date.now()}`;
+
+		await createFlowInApi({
+			id: crypto.randomUUID(),
+			name: uniqueFlowName,
+			pages: [
+				{
+					id: crypto.randomUUID(),
+					title: "",
+					rows: [
+						{
+							id: crypto.randomUUID(),
+							type: "Text",
+							source: "",
+							actions: [],
+							view: {
+								content: {
+									title: initialRowTitle,
+								},
+							},
+						},
+					],
+				},
+			],
+		});
 
 		await page.goto("/");
 		await waitForAppLoaded(page);
 
-		await selectFlowByLabel(page, "View Item");
+		await selectFlowByLabel(page, uniqueFlowName);
 
-		const textRow = page.getByText("Item title", { exact: true });
+		const textRow = page.getByText(initialRowTitle, { exact: true });
 		await expect(textRow).toBeVisible();
 
 		await textRow.click();
@@ -221,12 +247,12 @@ test.describe("Web E2E Integration Tests", () => {
 		await titleInput.clear();
 		await titleInput.fill(uniqueTitle);
 		await expect(titleInput).toHaveValue(uniqueTitle);
-		await expectFlowRowTitlePersisted("View Item", uniqueTitle);
+		await expectFlowRowTitlePersisted(uniqueFlowName, uniqueTitle);
 
 		await page.reload();
 		await waitForAppLoaded(page);
 
-		await selectFlowByLabel(page, "View Item");
+		await selectFlowByLabel(page, uniqueFlowName);
 
 		const editedRow = page.getByText(uniqueTitle, { exact: true });
 		await expect(editedRow).toBeVisible();

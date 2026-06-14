@@ -43,6 +43,23 @@ func evyLength(_ args: String) throws -> EVYFunctionOutput {
 }
 
 @MainActor
+func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
+  let parts = splitFunctionArguments(args)
+  guard parts.count == 2 else { throw EVYParamError.invalidProps }
+  let collectionArg = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+  let idArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+  let collection = try EVY.getDataFromProps(collectionArg)
+  let idValue =
+    (try? EVY.getDataFromProps(idArg))?.toString() ?? stripOptionalSurroundingQuotes(idArg)
+  guard case .array(let items) = collection,
+    let match = items.first(where: { $0.identifierValue() == idValue })
+  else {
+    return .string("")
+  }
+  return match.parseProp(props: remainingProps)
+}
+
+@MainActor
 func evyFormatCurrency(
   _ args: String,
   _ editing: Bool = false

@@ -1,5 +1,4 @@
 import { callFunction, type EVYFunctionContext } from "./functions";
-import { propPathToFriendlyLabel } from "./labelFormatting";
 
 const FUNCTION_CALL_PATTERN = /([a-zA-Z_]+)\(([^()]*)\)/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
@@ -22,10 +21,6 @@ function replaceFunctionCall(
 	const matchStart = match.index;
 	const matchEnd = matchStart + match[0].length;
 	return `${text.slice(0, matchStart)}${resolved}${text.slice(matchEnd)}`;
-}
-
-function shouldUnwrapResolvedExpression(inner: string): boolean {
-	return /\s/.test(inner) || /[()]/.test(inner);
 }
 
 export function parseText(input: string, context?: EVYFunctionContext): string {
@@ -53,10 +48,7 @@ export function parseText(input: string, context?: EVYFunctionContext): string {
 				continue;
 			}
 
-			const replacement = shouldUnwrapResolvedExpression(inner)
-				? inner
-				: propPathToFriendlyLabel(inner);
-			text = text.replace(propsMatch[0], replacement);
+			text = text.replace(propsMatch[0], inner);
 			continue;
 		}
 
