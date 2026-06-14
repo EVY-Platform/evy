@@ -16,69 +16,43 @@ struct EVYTextRow: View {
   }
 
   private var maxLines: Int {
-    Int(view.max_lines) ?? 1
+    Int(view.max_lines) ?? 3
   }
 
   var body: some View {
     let content = view.content
-    let icon = content.icon.trimmingCharacters(in: .whitespacesAndNewlines)
-    let hasAction = !content.action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    let hasTitle = !content.title.isEmpty
-    let hasSubtitle = !content.subtitle.isEmpty
-    let showIcon = !icon.isEmpty
-    let hasTextSection =
-      hasAction || !content.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
     VStack(alignment: .leading, spacing: 0) {
-      if showIcon || hasTitle || hasSubtitle {
-        HStack(alignment: .top) {
-          if showIcon {
-            EVYTextView(icon, style: .body)
-          }
-          VStack(
-            alignment: showIcon || (hasSubtitle && hasTitle) ? .leading : .center,
-            spacing: 0
-          ) {
-            if hasTitle {
-              EVYTextView(content.title)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            }
-            if hasSubtitle {
-              EVYTextView(content.subtitle, style: .info)
-                .frame(
-                  maxWidth: .infinity,
-                  alignment: showIcon || hasTitle ? .leading : .center
-                )
-                .lineLimit(3)
-                .truncationMode(.tail)
-            }
-          }
-          .frame(
-            maxWidth: .infinity,
-            alignment: showIcon || (hasTitle && hasSubtitle) ? .leading : .center
-          )
+      HStack(alignment: .top) {
+        if !content.icon.isEmpty {
+          EVYTextView(content.icon, style: .body)
         }
-        .frame(maxWidth: showIcon || hasTitle ? nil : .infinity)
+        VStack(
+          alignment: .leading,
+          spacing: 0
+        ) {
+          if !content.title.isEmpty {
+            EVYTextView(content.title)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .lineLimit(1)
+              .truncationMode(.tail)
+          }
+          if !content.subtitle.isEmpty {
+            EVYTextView(content.subtitle, style: .info)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .lineLimit(3)
+              .truncationMode(.tail)
+          }
+        }
       }
 
-      if hasTextSection {
-        if hasAction {
-          HStack {
-            EVYTextView(
-              content.text,
-              placeholder: content.placeholder,
-              style: .info
-            )
-            .frame(maxWidth: .infinity, alignment: .leading)
-            EVYTextView(content.action, style: .action)
-          }
-        } else {
-          EVYTextView(content.text, placeholder: content.placeholder)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .lineLimit(maxLines)
-            .truncationMode(.tail)
+      HStack {
+        EVYTextView(content.text, placeholder: content.placeholder)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .lineLimit(maxLines)
+          .truncationMode(.tail)
+        if !content.action.isEmpty {
+          EVYTextView(content.action, style: .action)
         }
       }
     }
