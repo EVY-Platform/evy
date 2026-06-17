@@ -39,23 +39,17 @@ import {
 } from "./resources/serviceProvider";
 import { createSduiFlow, getSduiRows, updateSduiFlow } from "./resources/sdui";
 
-// Types
-
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
-// Constants and state
-
 const DATA_CHANGED_EVENT = "dataChanged";
+const evyCoreResourceNames: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
 let coreBroadcast: BroadcastFn | null = null;
-
-// Public API
 
 export function initCoreNotifications(broadcastFn: BroadcastFn | null): void {
 	coreBroadcast = broadcastFn;
 }
 
-// Re-exported so callers import from data/data rather than a nested resource file.
 export function validateAuth(
 	db: EvyDb,
 	token: string,
@@ -92,8 +86,6 @@ export async function deleteResource(
 	assertEvyCoreAccess(params);
 	return deleteCoreBody(db, params);
 }
-
-// Core request dispatch
 
 async function getCoreBody(
 	db: EvyDb,
@@ -238,15 +230,13 @@ async function deleteCoreBody(
 	throw new Error("Delete is not supported for this resource");
 }
 
-// Local helpers
-
 function assertEvyCoreAccess(
 	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
 ): void {
 	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
 	}
-	if (!EVY_CORE_RESOURCE_NAME_SET.has(params.resource)) {
+	if (!evyCoreResourceNames.has(params.resource)) {
 		throw new Error("Resource is not served by the core API");
 	}
 }

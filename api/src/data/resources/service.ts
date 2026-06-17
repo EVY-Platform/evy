@@ -19,8 +19,6 @@ import {
 import { service } from "../../../../types/generated/ts/db/schema.generated";
 import { hasDatabaseErrorCode, type EvyDb } from "../../database/db";
 
-// Queries
-
 export async function listServiceRows(
 	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
@@ -39,8 +37,6 @@ export async function listServiceRows(
 	const rows = await query.orderBy(asc(service.updatedAt), asc(service.id));
 	return validateGetResponse(rows.map(mapServiceRow));
 }
-
-// Mutations
 
 export async function createServiceResource(
 	db: EvyDb,
@@ -99,8 +95,6 @@ export async function updateServiceResource(
 	notify(response);
 	return response;
 }
-
-// Row mapping
 
 function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 	return {

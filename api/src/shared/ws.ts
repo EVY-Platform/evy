@@ -44,7 +44,7 @@ export function initServer(
 		const server = new Server({ host: "0.0.0.0", port });
 
 		server.on("listening", () => resolve(server));
-		server.on("error", (error) => reject(error));
+		server.on("error", (error: Error) => reject(error));
 	}).then(async (server) => {
 		await server.setAuth(authHandler);
 

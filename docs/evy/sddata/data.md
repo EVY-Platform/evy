@@ -6,6 +6,15 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 Clients call the API with JSON-RPC `resources`, `sync`, `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "evy"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API’s Postgres schema. `service: "marketplace"` (and future workers) is discovered through `ListResources` and proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic “namespace row” in the EVY data schema.
 
+## Common date-time fields
+
+Tables that track updates use ISO 8601 / RFC 3339 strings (never numeric Unix timestamps):
+
+- `createdAt`: string (date-time)
+- `updatedAt`: string (date-time)
+
+---
+
 ## Schema-backed row types (`DATA_EVY_*`)
 
 These are defined in `types/schema/data/data.schema.json`. The API and generated Drizzle schema use them.

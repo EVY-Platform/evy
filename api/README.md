@@ -109,7 +109,7 @@ bun run dev
 docker build -t evy-api .
 ```
 
-All required env vars (database connection, gRPC hosts, etc.) must be provided at runtime. See the root `.env.example` for the full list.
+All required env vars (database connection, gRPC hosts, etc.) must be provided at runtime. See the root [`.env.example`](../.env.example) for the full list.
 
 ### Docker Compose
 

@@ -167,30 +167,25 @@ describe("create/update real-time notifications", () => {
 			"notify-token-6",
 			"Web",
 		);
-
-		const missed: unknown[] = [];
-		notSubscribed.on("dataChanged", (p: unknown) => missed.push(p));
+		let unexpected = false;
+		notSubscribed.on("dataChanged", () => {
+			unexpected = true;
+		});
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-7", "Web");
-
-		const testPage: UI_Page = {
-			id: crypto.randomUUID(),
-			title: "P",
-			rows: [],
-		};
 		await caller.call("create", {
 			service: "evy",
 			resource: "sdui",
 			data: {
 				id: crypto.randomUUID(),
-				name: "Only Subscriber",
-				pages: [testPage],
+				name: "Subscribed Only",
+				pages: [],
 			},
 		});
 
 		await notifyPromise;
-
-		expect(missed.length).toBe(0);
+		await new Promise((resolve) => setTimeout(resolve, 200));
+		expect(unexpected).toBe(false);
 
 		subscribed.close();
 		notSubscribed.close();

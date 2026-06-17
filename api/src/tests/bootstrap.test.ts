@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { Client } from "rpc-websockets";
 import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 
-import { assertApiReadable } from "../readiness";
+import { assertApiReadable } from "../index";
 import { getFreePort, waitForClientOpen, type WSServer } from "./wsTestHelpers";
 
 describe("initServer bootstrap", () => {
@@ -94,16 +94,15 @@ describe("assertApiReadable", () => {
 	it("resolves when requireSeeded is true and sdui has at least one flow", async () => {
 		const deps = {
 			get: async (params: GetRequest): Promise<GetResponse> => {
-				if (params.resource === "sdui") {
-					return [
-						{
-							id: crypto.randomUUID(),
-							name: "Seeded Flow",
-							pages: [],
-						} satisfies UI_Flow,
-					];
-				}
-				return [];
+				expect(params).toEqual({ service: "evy", resource: "sdui" });
+				return [
+					{
+						id: crypto.randomUUID(),
+						data: { id: crypto.randomUUID(), name: "Seeded", pages: [] },
+						createdAt: new Date().toISOString(),
+						updatedAt: new Date().toISOString(),
+					},
+				] as GetResponse;
 			},
 		};
 		await expect(

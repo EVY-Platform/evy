@@ -81,13 +81,12 @@ type SyncDependencies = {
 	buildRegistry: typeof buildResourceRegistry;
 };
 
-// resources is only included in the response when data changed.
 export async function sync(
 	params: unknown,
 	db: EvyDb,
 	deps?: SyncDependencies,
 ): Promise<SyncResponse> {
-	validateSync(params);
+	const syncParams = validateSync(params);
 
 	const resolvedDeps: SyncDependencies = deps ?? {
 		getCore: (request) => defaultGetCore(db, request),
@@ -96,8 +95,11 @@ export async function sync(
 	};
 
 	const [evyData, externalData] = await Promise.all([
-		fetchEvyCoreData(params.lastSyncTime, resolvedDeps.getCore),
-		fetchExternalServiceData(params.lastSyncTime, resolvedDeps.fetchService),
+		fetchEvyCoreData(syncParams.lastSyncTime, resolvedDeps.getCore),
+		fetchExternalServiceData(
+			syncParams.lastSyncTime,
+			resolvedDeps.fetchService,
+		),
 	]);
 
 	const data = [...evyData, ...externalData];

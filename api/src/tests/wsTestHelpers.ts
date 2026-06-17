@@ -14,8 +14,6 @@ export type WSServer = Awaited<
 type RpcWSClient = InstanceType<typeof Client>;
 type PgliteTestDb = PgliteDatabase<typeof schema>;
 
-// Cast a Pglite test db to the production EvyDb type.
-// The drizzle API surface is identical at runtime (select/insert/update/delete).
 export function asEvyDb(db: PgliteTestDb): EvyDb {
 	return db as unknown as EvyDb;
 }
