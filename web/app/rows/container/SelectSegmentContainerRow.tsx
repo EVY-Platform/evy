@@ -3,7 +3,7 @@ import { useState, type CSSProperties, type MouseEvent } from "react";
 import type { Row, RowConfig } from "../../types/row";
 import { ContainerChildren } from "../../components/ContainerChildren";
 import { defineRow } from "../defineRow";
-import EVYText from "../design-system/EVYText";
+import { RowLayout } from "../design-system/RowLayout";
 import { useRowById } from "../../hooks/useRowById";
 import { useFlowsContext } from "../../state";
 
@@ -92,12 +92,7 @@ export default defineRow(typeName, {
 		const title = row.config.view.content.title;
 
 		return (
-			<>
-				{title ? (
-					<p className="evy-text-md evy-p-2">
-						<EVYText text={title} />
-					</p>
-				) : null}
+			<RowLayout title={title} fullWidthContent>
 				<div className="evy-flex evy-mb-2 evy-px-2" style={segmentGroupStyle}>
 					{segments.map((segment, index) => {
 						const isFirst = index === 0;
@@ -123,7 +118,7 @@ export default defineRow(typeName, {
 					containerRowId={rowId}
 					containerType="children"
 				/>
-			</>
+			</RowLayout>
 		);
 	},
 });

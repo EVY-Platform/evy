@@ -381,6 +381,30 @@ class E2ETestBase: XCTestCase {
     ]
   }
 
+  static func listItemRow(
+    id: String,
+    title: String,
+    subtitle: String = "",
+    image: String = "",
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "ListItem",
+      "source": "",
+      "destination": "",
+      "actions": [],
+      "visible": visible,
+      "view": [
+        "content": [
+          "title": title,
+          "subtitle": subtitle,
+          "image": image,
+        ]
+      ],
+    ]
+  }
+
   static func inputRow(
     id: String,
     title: String,

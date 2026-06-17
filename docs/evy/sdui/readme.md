@@ -218,7 +218,7 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 
 | Category   | Row types |
 | ---------- | --------- |
-| View       | Text, InputList, PhotoGallery, Map |
+| View       | Text, InputList, ListItem, PhotoGallery, Map |
 | Edit       | Calendar, Dropdown, InlinePicker, Input, Search, SelectPhoto, TextArea, TextSelect, TimeslotPicker |
 | Action     | Button |
 | Container  | ColumnContainer, ListContainer, SelectSegmentContainer |
@@ -226,6 +226,8 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`, `child`, `children`). `Text` supports compact `title`/`subtitle`/`icon` display and longer text display with `text`, `placeholder`, `action`, and `view.max_lines`. See `row-content.spec.json` for the exact keys per type.
 
 For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `{$datum.}` as the placeholder for the current item, e.g. `{$datum.value}` or `{$datum.unit} {$datum.street}, {$datum.city}`.
+
+For **ListItem** rows, `view.content.image` must be a string expression that resolves to an EVY file ID (e.g. `"{item.photo_ids.0}"`). iOS fetches the binary from `evy:files` using `EVYRemoteFile` and clips it to a rounded square. `title` and `subtitle` are displayed beside the image. The web builder renders a gray placeholder in place of the image.
 
 For **Search** rows, iOS reads the data array from `source`, renders each hit using `view.content.child` (typically a `Text` row template) instead of `format`, and filters locally using rendered child display strings (`title`, `subtitle`, `text`, `label`, `placeholder`, and `value`). String fields in that child row are evaluated with `{$datum.}` the same way. Tapping a result runs actions from the rendered child row with that datum in scope. The web builder shows deterministic preview results for the child template, but it does not fetch or filter live data.
 

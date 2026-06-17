@@ -1,19 +1,7 @@
-import type { CSSProperties } from "react";
-
 import type { RowConfig } from "../../types/row";
 import EVYText from "../design-system/EVYText";
+import { lineClampStyle } from "../design-system/lineClamp";
 import { defineRow } from "../defineRow";
-
-function lineClampStyle(lines: number): CSSProperties {
-	return {
-		display: "-webkit-box",
-		WebkitLineClamp: lines,
-		WebkitBoxOrient: "vertical",
-		overflow: "hidden",
-		overflowWrap: "anywhere",
-		wordBreak: "break-word",
-	};
-}
 
 function maxLinesValue(maxLines: string | undefined): number {
 	const parsedMaxLines = Number.parseInt(maxLines ?? "", 10);
@@ -52,7 +40,7 @@ export default defineRow("TextRow", {
 		const textStyle = lineClampStyle(maxLinesValue(row.config.view.max_lines));
 
 		return (
-			<div className="evy-flex evy-flex-col evy-gap-1 evy-px-3 evy-py-2">
+			<div className="evy-flex evy-flex-col evy-gap-1 evy-p-2">
 				<div className="evy-flex evy-flex-row evy-items-center evy-gap-2">
 					{icon.trim() ? (
 						<span className="evy-shrink-0">

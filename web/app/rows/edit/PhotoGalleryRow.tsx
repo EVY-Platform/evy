@@ -1,7 +1,7 @@
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
-import EVYText from "../design-system/EVYText";
 import CarouselIndicator from "../design-system/CarouselIndicator";
+import { RowLayout } from "../design-system/RowLayout";
 
 export default defineRow("PhotoGalleryRow", {
 	config: {
@@ -17,12 +17,7 @@ export default defineRow("PhotoGalleryRow", {
 		destination: "",
 	} satisfies RowConfig,
 	render: (row) => (
-		<div>
-			<div className="evy-p-2">
-				<p className="evy-text-md">
-					<EVYText text={row.config.view.content.title} />
-				</p>
-			</div>
+		<RowLayout title={row.config.view.content.title} fullWidthContent>
 			<div
 				className="evy-relative evy-w-full evy-bg-gray-light evy-overflow-hidden evy-flex evy-items-center evy-justify-center"
 				style={{ aspectRatio: "4/3" }}
@@ -45,6 +40,6 @@ export default defineRow("PhotoGalleryRow", {
 					/>
 				</div>
 			</div>
-		</div>
+		</RowLayout>
 	),
 });

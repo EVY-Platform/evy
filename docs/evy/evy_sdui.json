@@ -12,12 +12,12 @@
 						"content": {
 							"child": {
 								"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-								"type": "Text",
+								"type": "ListItem",
 								"view": {
 									"content": {
-										"icon": "",
 										"title": "{$datum.title}",
-										"subtitle": "{formatCurrency($datum.price)}"
+										"subtitle": "{formatCurrency($datum.price)}",
+										"image": "{$datum.photo_ids.0}"
 									}
 								},
 								"source": "",

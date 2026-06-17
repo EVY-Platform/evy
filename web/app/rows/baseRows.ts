@@ -12,9 +12,10 @@ import SelectPhotoRow from "./edit/SelectPhotoRow";
 import TextAreaRow from "./edit/TextAreaRow";
 import TextSelectRow from "./edit/TextSelectRow";
 import TimeslotPickerRow from "./edit/TimeslotPickerRow";
-import TextRow from "./view/TextRow";
 import InputListRow from "./view/InputListRow";
+import ListItemRow from "./view/ListItemRow";
 import MapRow from "./view/MapRow";
+import TextRow from "./view/TextRow";
 
 export const baseRows = [
 	TextRow,
@@ -25,6 +26,7 @@ export const baseRows = [
 	TextSelectRow,
 	SearchRow,
 	InputListRow,
+	ListItemRow,
 	PhotoGalleryRow,
 	SelectPhotoRow,
 	CalendarRow,
