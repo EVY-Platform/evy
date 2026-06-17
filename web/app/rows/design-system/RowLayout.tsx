@@ -20,11 +20,11 @@ export function RowLayout({
 	childrenClassName?: string;
 	fullWidthContent?: boolean;
 }) {
-	const titleElement = (
+	const titleElement = title.trim() ? (
 		<p className={titleClassName}>
 			<EVYText text={title} />
 		</p>
-	);
+	) : null;
 	const childrenElement = childrenClassName ? (
 		<div className={childrenClassName}>{children}</div>
 	) : (

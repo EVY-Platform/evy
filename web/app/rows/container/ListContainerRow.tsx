@@ -1,7 +1,7 @@
 import type { RowConfig } from "../../types/row";
 import { ContainerChildren } from "../../components/ContainerChildren";
 import { defineRow } from "../defineRow";
-import EVYText from "../design-system/EVYText";
+import { RowLayout } from "../design-system/RowLayout";
 
 const typeName = "ListContainerRow";
 
@@ -22,12 +22,7 @@ export default defineRow(typeName, {
 	render: (row) => {
 		const title = row.config.view.content.title;
 		return (
-			<div className="evy-flex evy-flex-col">
-				{title ? (
-					<p className="evy-text-md evy-p-2">
-						<EVYText text={title} />
-					</p>
-				) : null}
+			<RowLayout title={title} fullWidthContent>
 				<ContainerChildren
 					rows={row.config.view.content.children}
 					orientation="vertical"
@@ -35,7 +30,7 @@ export default defineRow(typeName, {
 					containerRowId={row.id}
 					containerType="children"
 				/>
-			</div>
+			</RowLayout>
 		);
 	},
 });
