@@ -38,10 +38,8 @@ struct EVYInlinePicker: View {
     }
     options = loadedOptions
 
-    let watchTargets = EVY.watchTargets(for: destination)
-
     selectedIdentifiers = EVYState(
-      watches: watchTargets,
+      textToWatch: destination,
       setter: {
         do {
           let selected = try EVY.getDataFromText(destination)

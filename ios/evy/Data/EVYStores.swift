@@ -91,6 +91,10 @@ extension Notification.Name {
     registerObserver(watchTargets: watches, recompute: setter)
   }
 
+  convenience init(textToWatch text: String, setter: @escaping () -> T) {
+    self.init(watches: EVY.watchTargets(for: text), setter: setter)
+  }
+
   init(staticString: T) {
     _value = staticString
   }

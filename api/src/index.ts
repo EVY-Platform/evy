@@ -20,15 +20,6 @@ import {
 } from "./shared/ws";
 import { runHealthCli } from "./readiness";
 
-export { assertApiReadable } from "./readiness";
-export {
-	emitJsonRpc,
-	initServer,
-	makeAuthChecker,
-	wireBinaryChunkHandler,
-} from "./shared/ws";
-export type { WSParams } from "./shared/ws";
-
 const appDb = createDb();
 
 function authHandler(data: WSParams): Promise<boolean> {

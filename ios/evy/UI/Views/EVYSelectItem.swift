@@ -45,10 +45,8 @@ struct EVYSelectItem: View {
     self.textStyle = textStyle
     self.onSelect = onSelect
 
-    let watchTargets = EVY.watchTargets(for: destination)
-
     selected = EVYState(
-      watches: watchTargets,
+      textToWatch: destination,
       setter: {
         do {
           if target == .single_identifier {

@@ -141,72 +141,33 @@ class E2ETestBase: XCTestCase {
           "id": E2EFlowIds.webSocketCreatePage,
           "title": "Create listing",
           "rows": [
-            [
-              "id": "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
-              "type": "Input",
-              "source": "",
-              "visible": "true",
-              "view": [
-                "content": [
-                  "title": "Title",
-                  "value": "{title}",
-                  "placeholder": "Item",
-                ]
-              ],
-              "destination": "{item.title}",
-              "actions": [],
-            ],
-            [
-              "id": "668aeb79-d8ba-43b7-9619-07f91d0a1908",
-              "type": "Input",
-              "source": "",
-              "visible": "true",
-              "view": [
-                "content": [
-                  "title": "Price",
-                  "value": "{formatCurrency(price)}",
-                  "placeholder": "0",
-                ]
-              ],
-              "destination": "{buildCurrency(item.price)}",
-              "actions": [],
-            ],
-            [
-              "id": "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
-              "type": "Input",
-              "source": "",
-              "visible": "true",
-              "view": [
-                "content": [
-                  "title": "Width",
-                  "value": "{formatDimension(width)}",
-                  "placeholder": "0",
-                ]
-              ],
-              "destination": "{item.width}",
-              "actions": [],
-            ],
+            Self.inputRow(
+              id: "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
+              title: "Title",
+              value: "{title}",
+              placeholder: "Item",
+              destination: "{item.title}"
+            ),
+            Self.inputRow(
+              id: "668aeb79-d8ba-43b7-9619-07f91d0a1908",
+              title: "Price",
+              value: "{formatCurrency(price)}",
+              placeholder: "0",
+              destination: "{buildCurrency(item.price)}"
+            ),
+            Self.inputRow(
+              id: "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
+              title: "Width",
+              value: "{formatDimension(width)}",
+              placeholder: "0",
+              destination: "{item.width}"
+            ),
           ],
-          "footer": [
-            "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            "type": "Button",
-            "source": "",
-            "destination": "",
-            "visible": "true",
-            "view": [
-              "content": [
-                "title": "",
-                "label": "Submit",
-              ]
-            ],
-            "actions": [
-              [
-                "condition": "",
-                "false": "",
-                "true": "{create(marketplace,item)}",
-              ]
-            ],
-          ],
+          "footer": Self.buttonRow(
+            id: "1cb41189-6fa5-4562-996a-7cefb88a08ca",
+            label: "Submit",
+            action: "{create(marketplace,item)}"
+          ),
         ]
       ],
     ]
@@ -374,46 +335,16 @@ class E2ETestBase: XCTestCase {
                 "content": [
                   "title": "",
                   "children": [
-                    [
-                      "id": "441c1433-446b-4682-854d-5d795ef52709",
-                      "type": "Button",
-                      "source": "",
-                      "destination": "",
-                      "visible": "true",
-                      "view": [
-                        "content": [
-                          "title": "",
-                          "label": buttonLabel,
-                        ]
-                      ],
-                      "actions": [
-                        [
-                          "condition": "",
-                          "false": "",
-                          "true": "{navigate(\(viewFlowId),\(viewPageId))}",
-                        ]
-                      ],
-                    ],
-                    [
-                      "id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
-                      "type": "Button",
-                      "source": "",
-                      "destination": "",
-                      "visible": "true",
-                      "view": [
-                        "content": [
-                          "title": "",
-                          "label": "Create",
-                        ]
-                      ],
-                      "actions": [
-                        [
-                          "condition": "",
-                          "false": "",
-                          "true": "{navigate(\(createFlowId),\(createPageId))}",
-                        ]
-                      ],
-                    ],
+                    Self.buttonRow(
+                      id: "441c1433-446b-4682-854d-5d795ef52709",
+                      label: buttonLabel,
+                      action: "{navigate(\(viewFlowId),\(viewPageId))}"
+                    ),
+                    Self.buttonRow(
+                      id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                      label: "Create",
+                      action: "{navigate(\(createFlowId),\(createPageId))}"
+                    ),
                   ],
                 ]
               ],
@@ -450,6 +381,59 @@ class E2ETestBase: XCTestCase {
     ]
   }
 
+  static func inputRow(
+    id: String,
+    title: String,
+    value: String,
+    placeholder: String,
+    destination: String,
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "Input",
+      "source": "",
+      "visible": visible,
+      "view": [
+        "content": [
+          "title": title,
+          "value": value,
+          "placeholder": placeholder,
+        ]
+      ],
+      "destination": destination,
+      "actions": [],
+    ]
+  }
+
+  static func buttonRow(
+    id: String,
+    label: String,
+    action: String,
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "Button",
+      "source": "",
+      "destination": "",
+      "visible": visible,
+      "view": [
+        "content": [
+          "title": "",
+          "label": label,
+        ]
+      ],
+      "actions": [
+        [
+          "condition": "",
+          "false": "",
+          "true": action,
+        ]
+      ],
+    ]
+  }
+
   static func viewItemFlowData(flowId: String, pageId: String) -> [String: Any] {
     return [
       "id": flowId,
@@ -475,26 +459,11 @@ class E2ETestBase: XCTestCase {
               visible: "{item.payment_methods.cash == true}"
             ),
           ],
-          "footer": [
-            "id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
-            "type": "Button",
-            "source": "",
-            "destination": "",
-            "visible": "true",
-            "actions": [
-              [
-                "condition": "",
-                "false": "",
-                "true": "{close()}",
-              ]
-            ],
-            "view": [
-              "content": [
-                "title": "",
-                "label": "Go home",
-              ]
-            ],
-          ],
+          "footer": Self.buttonRow(
+            id: "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
+            label: "Go home",
+            action: "{close()}"
+          ),
         ]
       ],
     ]
@@ -1002,47 +971,17 @@ final class WebSocketE2ETests: E2ETestBase {
                 "content": [
                   "title": "",
                   "children": [
-                    [
-                      "id": "441c1433-446b-4682-854d-5d795ef52709",
-                      "type": "Button",
-                      "source": "",
-                      "destination": "",
-                      "visible": "true",
-                      "view": [
-                        "content": [
-                          "title": "",
-                          "label": buttonLabel,
-                        ]
-                      ],
-                      "actions": [
-                        [
-                          "condition": "",
-                          "false": "",
-                          "true": viewAction,
-                        ]
-                      ],
-                    ],
-                    [
-                      "id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
-                      "type": "Button",
-                      "source": "",
-                      "destination": "",
-                      "visible": "true",
-                      "view": [
-                        "content": [
-                          "title": "",
-                          "label": "Create",
-                        ]
-                      ],
-                      "actions": [
-                        [
-                          "condition": "",
-                          "false": "",
-                          "true":
-                            "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}",
-                        ]
-                      ],
-                    ],
+                    Self.buttonRow(
+                      id: "441c1433-446b-4682-854d-5d795ef52709",
+                      label: buttonLabel,
+                      action: viewAction
+                    ),
+                    Self.buttonRow(
+                      id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                      label: "Create",
+                      action:
+                        "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
+                    ),
                   ],
                 ]
               ],

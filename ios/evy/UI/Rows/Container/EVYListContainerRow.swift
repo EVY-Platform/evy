@@ -27,9 +27,8 @@ struct EVYListContainerRow: View {
     self.source = source
 
     let childTemplate = view.content.child
-    let watchTargets = EVY.watchTargets(for: source)
     dynamicRows = EVYState(
-      watches: watchTargets,
+      textToWatch: source,
       setter: {
         guard let childTemplate, !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else {

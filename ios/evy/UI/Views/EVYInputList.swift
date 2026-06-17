@@ -18,10 +18,8 @@ struct EVYInputList: View {
     self.format = format
     self.placeholder = placeholder
 
-    let watchTargets = EVY.watchTargets(for: data)
-
     values = EVYState(
-      watches: watchTargets,
+      textToWatch: data,
       setter: {
         do {
           let data = try EVY.getDataFromText(data)

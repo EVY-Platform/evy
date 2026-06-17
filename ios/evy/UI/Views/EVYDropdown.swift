@@ -40,10 +40,8 @@ struct EVYDropdown: View {
     }
     options = loadedOptions
 
-    let watchTargets = EVY.watchTargets(for: destination)
-
     selection = EVYState(
-      watches: watchTargets,
+      textToWatch: destination,
       setter: {
         do {
           let value = try EVY.getDataFromText(destination)

@@ -45,7 +45,7 @@ export function normalizeServerRow(row: ServerRow): ServerRow {
 	const def = baseRow.config;
 	const mergedContent = normalizeRowContentAgainstDefaults(
 		row.view.content,
-		getServerContentDefaults(def),
+		def.view.content,
 	);
 	const mergedView: ServerRow["view"] = {
 		content: mergedContent,
@@ -96,22 +96,6 @@ function normalizeUnknownServerRow(row: ServerRow): ServerRow {
 				title,
 			} as ServerRowContent,
 		},
-	};
-}
-
-function getServerContentDefaults(
-	rowConfig: RowConfig,
-): RowConfig["view"]["content"] {
-	if (rowConfig.type !== "Text") {
-		return rowConfig.view.content;
-	}
-
-	return {
-		...rowConfig.view.content,
-		subtitle: "",
-		icon: "",
-		text: "",
-		action: "",
 	};
 }
 
@@ -247,7 +231,7 @@ function encodeRowToServerRow(row: Row): ServerRow {
 	const def = baseRow.config;
 	const mergedContent = encodeMergeRowContent(
 		row.config.view.content as unknown as Record<string, unknown>,
-		getServerContentDefaults(def),
+		def.view.content,
 	);
 	const mergedView: ServerRow["view"] = {
 		content: mergedContent,

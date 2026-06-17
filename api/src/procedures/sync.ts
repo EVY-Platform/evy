@@ -81,6 +81,14 @@ type SyncDependencies = {
 	buildRegistry: typeof buildResourceRegistry;
 };
 
+function defaultSyncDeps(db: EvyDb): SyncDependencies {
+	return {
+		getCore: (request) => defaultGetCore(db, request),
+		fetchService: forwardGet,
+		buildRegistry: buildResourceRegistry,
+	};
+}
+
 export async function sync(
 	params: unknown,
 	db: EvyDb,
@@ -88,11 +96,7 @@ export async function sync(
 ): Promise<SyncResponse> {
 	const syncParams = validateSync(params);
 
-	const resolvedDeps: SyncDependencies = deps ?? {
-		getCore: (request) => defaultGetCore(db, request),
-		fetchService: forwardGet,
-		buildRegistry: buildResourceRegistry,
-	};
+	const resolvedDeps = deps ?? defaultSyncDeps(db);
 
 	const [evyData, externalData] = await Promise.all([
 		fetchEvyCoreData(syncParams.lastSyncTime, resolvedDeps.getCore),
