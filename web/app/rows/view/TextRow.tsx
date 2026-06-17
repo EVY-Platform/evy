@@ -1,19 +1,7 @@
-import type { CSSProperties } from "react";
-
 import type { RowConfig } from "../../types/row";
 import EVYText from "../design-system/EVYText";
+import { lineClampStyle } from "../design-system/lineClamp";
 import { defineRow } from "../defineRow";
-
-function lineClampStyle(lines: number): CSSProperties {
-	return {
-		display: "-webkit-box",
-		WebkitLineClamp: lines,
-		WebkitBoxOrient: "vertical",
-		overflow: "hidden",
-		overflowWrap: "anywhere",
-		wordBreak: "break-word",
-	};
-}
 
 function maxLinesValue(maxLines: string | undefined): number {
 	const parsedMaxLines = Number.parseInt(maxLines ?? "", 10);

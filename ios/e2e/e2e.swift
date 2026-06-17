@@ -386,14 +386,15 @@ class E2ETestBase: XCTestCase {
     title: String,
     subtitle: String = "",
     image: String = "",
-    visible: String = ""
+    visible: String = "true"
   ) -> [String: Any] {
-    var row: [String: Any] = [
+    return [
       "id": id,
       "type": "ListItem",
       "source": "",
       "destination": "",
       "actions": [],
+      "visible": visible,
       "view": [
         "content": [
           "title": title,
@@ -402,10 +403,6 @@ class E2ETestBase: XCTestCase {
         ]
       ],
     ]
-    if !visible.isEmpty {
-      row["visible"] = visible
-    }
-    return row
   }
 
   static func inputRow(
