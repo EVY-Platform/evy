@@ -12,7 +12,7 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import type { BroadcastFn } from "../broadcast";
+type BroadcastFn = (eventName: string, payload: unknown) => void;
 
 import {
 	validateGetResponse,

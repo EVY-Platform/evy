@@ -2,14 +2,11 @@
 
 A React-based app builder.
 
-Shared contracts and codegen: [`docs/evy/types.md`](../docs/evy/types.md). The app imports generated types as `evy-types` (`tsconfig.json` → `../types/generated/ts`).
-
-iOS draft scope IDs and cache keys are internal to the iOS draft store; see [iOS README § Draft scopes and draft cache keys](../ios/README.md#draft-scopes-and-draft-cache-keys).
+See [`docs/evy/types.md`](../docs/evy/types.md) for shared contracts and codegen.
 
 ## Architecture
 
 ```mermaid
-%%{init: {'theme': 'default', 'flowchart': {'rankSpacing': 60, 'nodeSpacing': 30}}}%%
 graph TD
     subgraph app [App Layer]
         App[App.tsx]
@@ -133,26 +130,6 @@ graph TD
     ActionRows --> designsystem
 ```
 
-### Key Components
-
-| Component              | Description                                                         |
-| ---------------------- | ------------------------------------------------------------------- |
-| App                | Main entry point, sets up layout with header and three-panel design |
-| NavBar             | Top bar with logo and breadcrumb navigation                         |
-| NavigationBreadcrumb | Flow/page/row breadcrumb with flow selector and element selection |
-| AppProvider        | React context provider managing flows, rows, drag state, selection, and config stack |
-| RowsPanel          | Left sidebar displaying available row components with search        |
-| AppPage            | Center panel showing phone preview with draggable rows              |
-| ConfigurationPanel | Right sidebar for editing row properties, page titles, and actions  |
-| ActionEditor       | Action configuration UI within the configuration panel              |
-| useDraggable       | Custom hook encapsulating drag-and-drop behavior                    |
-| usePageDropTarget  | Hook setting up page-level drop targets for drag-and-drop           |
-| defineRow          | Factory function used to declare all row components                 |
-
-Action branches are stored as strings. The builder emits executable actions in function-call form; use `{close()}` for close, while a bare `close` string is treated as non-executable text by runtimes.
-
-When a row with a `view.content.child` is selected, the child row is rendered as a secondary page immediately to the right of the active page, followed by a blank child page ready for the next drop. Dropping a row into the blank child page sets it as the singular `child` of the target row. The web preview does not fetch live API data; iOS resolves the same `source` strings locally from synced service data at runtime.
-
 ## Getting Started
 
 Setup (Bun, Docker, copying `.env`): [README § Setup](../README.md#setup) and [§ Running Services](../README.md#running-services). The web app only needs a reachable API over `API_URL` (no direct Postgres).
@@ -177,10 +154,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### Docker
 
-Build context must be the **repository root** (`web/Dockerfile` runs `bun run types:generate` using root `types/schema` and `scripts/`).
-
 ```bash
-# From repo root (not from web/)
 docker build -f web/Dockerfile -t evy-web \
   --build-arg API_URL=ws://host.docker.internal:8000 \
   .
@@ -189,8 +163,6 @@ docker run -p 3000:3000 \
   -e API_URL=ws://host.docker.internal:8000 \
   evy-web
 ```
-
-`web/dev/server.ts` requires `WEB_PORT` and `API_URL` at runtime. CI: `.github/workflows/push-docker-images.yml`.
 
 ### Docker Compose
 

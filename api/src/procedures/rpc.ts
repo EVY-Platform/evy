@@ -7,12 +7,13 @@ import type {
 	UpdateResponse,
 	DeleteResponse,
 } from "evy-types";
+import type { EvyDb } from "../database/db";
 import {
 	get as getCore,
 	create as createCore,
 	update as updateCore,
-	delete as deleteCore,
-} from "../data/core";
+	deleteResource as deleteCore,
+} from "../data/data";
 import { sync as coreSync } from "./sync";
 import { forwardGet, forwardCreate, forwardUpdate } from "./services";
 import {
@@ -35,47 +36,55 @@ function isCoreGetRequest(
 async function handleGetRequest<T extends GetLikeRequest>(
 	validate: (p: unknown) => asserts p is T,
 	params: unknown,
+	db: EvyDb,
 ): Promise<GetResponse> {
 	validate(params);
 	if (isCoreGetRequest(params)) {
-		return getCore(params);
+		return getCore(db, params);
 	}
 	return forwardGet(params.service, params);
 }
 
-export async function get(params: unknown): Promise<GetResponse> {
-	return handleGetRequest(validateStrictGetRequest, params);
+export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
+	return handleGetRequest(validateStrictGetRequest, params, db);
 }
 
-export async function api(params: unknown): Promise<GetResponse> {
-	return handleGetRequest(validateStrictApiRequest, params);
+export async function api(params: unknown, db: EvyDb): Promise<GetResponse> {
+	return handleGetRequest(validateStrictApiRequest, params, db);
 }
 
-export async function create(params: unknown): Promise<CreateResponse> {
+export async function create(
+	params: unknown,
+	db: EvyDb,
+): Promise<CreateResponse> {
 	validateStrictCreateRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		return createCore(params);
+		return createCore(db, params);
 	}
 	return forwardCreate(params.service, params);
 }
 
-export async function update(params: unknown): Promise<UpdateResponse> {
+export async function update(
+	params: unknown,
+	db: EvyDb,
+): Promise<UpdateResponse> {
 	validateStrictUpdateRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		return updateCore(params);
+		return updateCore(db, params);
 	}
 	return forwardUpdate(params.service, params);
 }
 
-async function deleteResource(params: unknown): Promise<DeleteResponse> {
+export async function deleteResource(
+	params: unknown,
+	db: EvyDb,
+): Promise<DeleteResponse> {
 	validateStrictDeleteRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		return deleteCore(params);
+		return deleteCore(db, params);
 	}
 	throw new Error("Delete is only supported for evy core resources");
 }
-
-export { deleteResource as delete };
 
 export async function sync(params: unknown): Promise<SyncResponse> {
 	return coreSync(params);

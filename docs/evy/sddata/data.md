@@ -4,7 +4,7 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 ## Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `get`, `create`, and `update` using `service` and `resource` (see [`types/schema/rpc/get.request.schema.json`](../../../types/schema/rpc/get.request.schema.json), [`types/schema/rpc/create.request.schema.json`](../../../types/schema/rpc/create.request.schema.json), and [`types/schema/rpc/update.request.schema.json`](../../../types/schema/rpc/update.request.schema.json)). `service: "evy"` maps to the row types below in the API’s Postgres schema. `service: "marketplace"` (and future workers) is proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic “namespace row” in the EVY data schema.
+Clients call the API with JSON-RPC `resources`, `sync`, `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "evy"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API’s Postgres schema. `service: "marketplace"` (and future workers) is discovered through `ListResources` and proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic “namespace row” in the EVY data schema.
 
 ## Common date-time fields
 

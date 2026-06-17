@@ -5,7 +5,7 @@ import { join } from "node:path";
 import {
 	resetFileStorageDirsForTest,
 	setFileStorageDirsForTest,
-} from "../data/files";
+} from "../data/resources/files";
 
 type FileStorageTestDirs = {
 	filesDir: string;

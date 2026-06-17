@@ -2,13 +2,13 @@
 
 iOS consumer app. Minimum iOS version supported: **17.0** (matches `IPHONEOS_DEPLOYMENT_TARGET` in `evy.xcodeproj`).
 
-**Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes ([Shared type system](../README.md#shared-type-system)). Generated Swift under `types/generated/swift/` is not committed; the app references generated SDUI, core resource, OS, and image API models, while transport and UI code such as `EVYFlow`, `EVYPage`, `EVYRow`, and `EVYWebsocket` remain handwritten where needed.
+**Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes (see [Documentation](../README.md#documentation)). Generated Swift under `types/generated/swift/` is not committed; the app references generated SDUI, core resource, OS, file, and API models, while transport and UI code such as `EVYFlow`, `EVYPage`, `EVYRow`, and `EVYWebsocket` remain handwritten where needed.
 
 ### Synced data
 
 At startup, the app calls `sync` and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `evy:sdui`, `marketplace:items`, or `marketplace:conditions`). Exact keys are preferred when app code needs a specific backend resource.
 
-Pages can receive query parameters through navigation actions. Query params are passed as the optional third `navigate` argument using a plain-text query object that maps plural resource keys to scalar IDs, arrays of IDs, or `$datum` expressions (for example, `{navigate(flowId, pageId, {id: $datum.id})}`). Query values can be scalars (`{key: id}`) or arrays (`{key: [id-1, id-2]}`). iOS parses the query into a `[String: [String]]` dictionary. When the page opens, iOS resolves each resource key locally, picks the first ID from the already-synced collection, and stores the matching entity under the same plural key so bindings like `{items}` render the selected row. A generic `"id"` query key scans synced collections and stores the first matching entity under that collection's plural resource key. When no synced collection exists for a query key, iOS stores the raw string array under that key.
+Pages can receive query parameters through navigation actions. iOS resolves each query key against already-synced collections and stores the matching entity locally so SDUI bindings render the selected row.
 
 SDUI bindings use plural resource-only names such as `{conditions}` or `{timeslots}`. Edit rows write drafts through plural destinations such as `{item.title}` or `{item.condition}`. Those bindings resolve exact local keys first, then explicitly fall back to synced service resources. Search rows and dynamic ListContainer rows read local/synced data from their `source` and render `view.content.child` templates using `{$datum.}`. This keeps local draft/entity data separate from backend resource data while preserving simple SDUI source strings.
 
@@ -22,19 +22,7 @@ maxExisting + 1` so they append to the end. No separate order-state layer is nee
 
 ### File uploads and remote files
 
-`EVYAPIManager.uploadFile(_:)` uploads binary data over the existing authenticated WebSocket. It generates a file UUID, sends ordered 256 KB binary frames encoded by `Data.uploadFrames(uploadId:)`, then finalises the upload with the protected `create` RPC for `service: "evy"`, `resource: "files"`. Create metadata includes a required `type`; iOS currently sends `"image/jpeg"` for selected photos after JPEG normalization, but does not otherwise use the value yet. If finalisation fails, it calls `cancelUpload` for the staged upload ID.
-
-`EVYAPIManager.getFile(id:)` reads file rows through the generic `get` RPC and expects generated `FileWithBinary` data (`id`, `type`, timestamps, `dataBase64`). `EVYRemoteFile` and `EVYFileCache` load and cache these responses for rendering. File RPC parameter and response models come from generated Swift output for `types/schema/files/file.schema.json`; `EVYFileRPC.swift` keeps only the aliases and binary frame encoding needed by the app.
-
-### Draft scopes and draft cache keys
-
-iOS drafts are stored in the in-memory draft cache, separate from public/private SwiftData stores.
-
-Draft scope IDs use `<flowId>:<entityKey>` with a plural entity key (for example, `create-flow:items`). Reserved scopes include `<flowId>:browse`, `app:unscoped`, and `ephemeral:<uuid>`.
-
-Full internal draft cache keys append the mode/path segment with another colon: `<flowId>:<entityKey>:<modeFlag><base64Path>` (for example, `create-flow:items:aWyJ0aXRsZSJd`). Because scope IDs also contain `:`, draft key parsing splits on the last colon. The mode flag is `a` for alias-flat merge mode or `e` for explicit-path merge mode; the remaining path key is the base64-encoded JSON path.
-
-These draft keys are distinct from service-qualified data keys like `marketplace:items` and SDUI binding prefixes like `{$local:address}`, `{$api:resource}`, and `{$datum.field}`.
+Uploads send binary frames over the authenticated WebSocket and finalise with a `create` RPC; if finalisation fails, a `cancelUpload` RPC cleans up the staged upload. Remote files are fetched via a `get` RPC and cached locally for rendering.
 
 ### Architecture
 
@@ -92,17 +80,17 @@ flowchart LR
     EVY --> Functions
     Functions --> EVY
 
-    RowVisitor[forEachRow<br/>recursive row visitor]
+    RowVisitor[forEachRow<br />recursive row visitor]
     Content -->|extract create keys| RowVisitor
     EVYPage -->|bootstrap drafts| RowVisitor
     RowVisitor --> Row
 
     subgraph data [Data]
-        PublicStore[EVYDataStore public<br/>server-synced SwiftData]
-        PrivateStore[EVYDataStore private<br/>$local SwiftData]
-        DraftStore[EVYDraftStore<br/>in-memory draft cache + active scope]
+        PublicStore[EVYDataStore public<br />server-synced SwiftData]
+        PrivateStore[EVYDataStore private<br />$local SwiftData]
+        DraftStore[EVYDraftStore<br />in-memory draft cache + active scope]
         EntityModel[(EVYData)]
-        DraftPath[EVYDraft.Binding<br/>scopeId + pathSegments + mergeMode]
+        DraftPath[EVYDraft.Binding<br />scopeId + pathSegments + mergeMode]
         PublicStore --> EntityModel
         PrivateStore --> EntityModel
         DraftStore --> EntityModel
@@ -126,7 +114,7 @@ flowchart LR
     RemoteFile --> APIManager
     EVY -->|fetch / create / update| APIManager
 
-    Notif{{NotificationCenter<br/>.evyDataChanged<br/>.evyErrorOccurred}}
+    Notif{{NotificationCenter<br />.evyDataChanged<br />.evyErrorOccurred}}
     PublicStore -. post .-> Notif
     DraftStore -. post .-> Notif
     EVY -. post .-> Notif

@@ -9,14 +9,17 @@ import {
 import { migrate } from "drizzle-orm/pglite/migrator";
 
 import * as schema from "../../../types/generated/ts/db/schema.generated";
-import { get } from "../data/core";
-import { setDbForTest } from "../data/db";
-import { writeFileBinary } from "../data/files";
+import { get } from "../data/data";
+import { writeFileBinary } from "../data/resources/files";
 import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
-import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
+import {
+	asEvyDb,
+	clearAllTestTables,
+	createPgliteTestDatabase,
+} from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
-setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
+const dataDb = asEvyDb(testDb);
 useFileStorageDirsForTest("files");
 
 const now = "2024-01-19T12:00:00.000Z";
@@ -51,7 +54,7 @@ describe("get files", () => {
 		await insertFileMetadata(id);
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
-		const result = await get({
+		const result = await get(dataDb, {
 			service: "evy",
 			resource: "files",
 			filter: { id },
@@ -72,7 +75,7 @@ describe("get files", () => {
 		await insertFileMetadata(id);
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
-		const result = await get({ service: "evy", resource: "files" });
+		const result = await get(dataDb, { service: "evy", resource: "files" });
 		expect(Array.isArray(result)).toBe(true);
 		const item = (result as Record<string, unknown>[]).find((r) => r.id === id);
 		expect(item).toMatchObject({
@@ -87,7 +90,7 @@ describe("get files", () => {
 		await insertFileMetadata(id);
 
 		await expect(
-			get({ service: "evy", resource: "files", filter: { id } }),
+			get(dataDb, { service: "evy", resource: "files", filter: { id } }),
 		).rejects.toThrow("File binary not found");
 	});
 });
