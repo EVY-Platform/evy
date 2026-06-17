@@ -120,6 +120,31 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(viewData.content.child?.id, "text-child")
   }
 
+  func testListItemRowDecodesCorrectly() throws {
+    let json: [String: Any] = [
+      "id": "list-item-row-id",
+      "type": "ListItem",
+      "source": "",
+      "destination": "",
+      "actions": [],
+      "view": [
+        "content": [
+          "title": "Test title",
+          "subtitle": "Test subtitle",
+          "image": "",
+        ]
+      ],
+    ]
+
+    let data = try JSONSerialization.data(withJSONObject: json)
+    let row = try JSONDecoder().decode(UI_Row.self, from: data)
+    guard case .listItem(let viewData, _, _, _) = try UI_RowPayload.from(row: row) else {
+      return XCTFail("Expected .listItem payload")
+    }
+    XCTAssertEqual(viewData.content.title, "Test title")
+    XCTAssertEqual(viewData.content.subtitle, "Test subtitle")
+  }
+
   private func makeFlows() throws -> [UI_Flow] {
     let json: [[String: Any]] = [
       [

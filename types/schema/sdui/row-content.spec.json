@@ -112,6 +112,13 @@
 			"placeholder": "string"
 		}
 	},
+	"ListItem": {
+		"content": {
+			"title": "string",
+			"subtitle": "string",
+			"image": "string"
+		}
+	},
 	"ColumnContainer": {
 		"content": {
 			"title": "string",

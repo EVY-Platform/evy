@@ -68,6 +68,7 @@
 						"InputList",
 						"Input",
 						"ListContainer",
+						"ListItem",
 						"Search",
 						"PhotoGallery",
 						"SelectPhoto",
@@ -170,6 +171,9 @@
 					"type": "string"
 				},
 				"icon": {
+					"type": "string"
+				},
+				"image": {
 					"type": "string"
 				},
 				"content": {
