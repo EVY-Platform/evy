@@ -1,50 +1,54 @@
 # EVY API
 
-A JSON RPC API that routes data requests to relevant microservices, handles requests for SDUI and core data, and pushes events over websocket when data changes.
+A JSON-RPC 2.0 WebSocket API gateway that routes data requests by `service` / `resource`, handles evy core resources directly, forwards non-evy services over gRPC, and pushes `dataChanged` notifications when data changes.
 
 ## Architecture
 
 ### Request dispatch
 
-`get` and `api` are public read methods. `create`, `update`, `delete`, `sync`, and `cancelUpload` are protected (require a valid device token via `validateAuth`). Binary upload frames are also ignored unless they arrive on an authenticated WebSocket. Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` and `delete` require `filter.id`.
+[`src/index.ts`](./src/index.ts) owns the WebSocket server, authentication, binary-frame handling, event broadcasting, and RPC registration. `resources`, `get`, and `api` are public read methods. `create`, `update`, `delete`, `sync`, and `cancelUpload` are protected (require a valid device token via `validateAuth`). Binary upload frames are also ignored unless they arrive on an authenticated WebSocket. Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` and `delete` require `filter.id`.
 
-- `service: "evy"` &mdash; handled entirely under [`src/data/`](./src/data/). Supported resources include `sdui`, `devices`, `organisations`, `services`, `providers`, and `files`.
-- `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/procedures/rpc.ts`](./src/procedures/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/procedures/services.ts`](./src/procedures/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses. `delete` is currently limited to evy core resources.
-- **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/resources + external services) since that timestamp. When data changes, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
+- `service: "evy"` &mdash; routed by [`src/procedures/rpc.ts`](./src/procedures/rpc.ts) into [`src/data/data.ts`](./src/data/data.ts), then dispatched to resource-specific modules under [`src/data/resources/`](./src/data/resources/). Supported resources include `sdui`, `devices`, `organisations`, `services`, `providers`, and `files`.
+- `service` ≠ `"evy"` (for example, `marketplace`) &mdash; [`src/procedures/rpc.ts`](./src/procedures/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/procedures/services.ts`](./src/procedures/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses. `delete` is currently limited to evy core resources.
+- **`resources`** is a public RPC backed by [`src/procedures/resources.ts`](./src/procedures/resources.ts). It initializes the runtime registry by calling each non-evy service's `ListResources`, combines those names with generated evy core resource names, and returns `{ resources, resourcesByService }`.
+- **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered syncable service (evy core SDUI/resources + external services) since that timestamp. When data changes, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
 
 Synchronous request/response path:
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant ws as ws.ts
+    participant index as index.ts
     participant rpc as procedures/rpc.ts
-    participant data as data/core.ts
+    participant data as data/data.ts
+    participant resource as data resources
     participant services as procedures/services.ts
     participant marketplace as marketplace (gRPC)
 
-    Client->>ws: JSON-RPC create/update/delete
-    ws->>ws: auth (validateAuth) for protected methods
-    ws->>rpc: registered handler
+    Client->>index: JSON-RPC get create update delete api
+    index->>index: auth for protected methods
+    index->>rpc: registered handler
     rpc->>rpc: validateStrict*Request
 
     alt service == "evy"
-        rpc->>data: core resource handler
-        data-->>rpc: row
+        rpc->>data: core dispatch
+        data->>resource: resource-specific handler
+        resource-->>data: row JSON
+        data-->>rpc: row JSON
     else service != "evy"
         rpc->>services: forwardGet/Create/Update
         services->>marketplace: gRPC Get/Create/Update
-        marketplace-->>services: row JSON
-        services-->>rpc: row
+        marketplace-->>services: result_json
+        services-->>rpc: row JSON
     end
 
-    rpc-->>ws: JSON-RPC response (row)
-    ws-->>Client: JSON-RPC response (row)
+    rpc-->>index: JSON-RPC response
+    index-->>Client: JSON-RPC response
 ```
 
 ### Notifications
 
-`ws.ts` registers the `dataChanged` server event which fires the following:
+[`src/index.ts`](./src/index.ts) registers the `dataChanged` server event and emits standard JSON-RPC notifications with the following shape:
 
 ```json
 { "jsonrpc": "2.0", "method": "dataChanged", "params": { "service": "evy", "resource": "sdui", "operation": "create", "value": { /* row */ } } }
@@ -53,56 +57,61 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Client as Subscribed clients
-    participant ws as ws.ts
-    participant data as data/core.ts
+    participant index as index.ts
+    participant data as data/data.ts
+    participant resource as data resources
     participant services as procedures/services.ts
     participant marketplace as marketplace (gRPC)
 
-    Note over data,ws: Core evy write triggers notification
-    data->>ws: emitJsonRpc(dataChanged, changed row)
-    ws->>Client: JSON-RPC notification
+    Note over resource,index: Core evy write triggers notification
+    resource->>data: emit callback
+    data->>index: broadcast dataChanged payload
+    index->>Client: JSON-RPC notification
 
-    Note over marketplace,ws: Remote service event triggers notification
-    marketplace->>services: SubscribeEvents payload
+    Note over marketplace,index: Remote service event triggers notification
+    marketplace->>services: SubscribeEvents payload_json
     services->>services: parse payload_json
-    services->>ws: emitJsonRpc(event, data)
-    ws->>Client: JSON-RPC notification
+    services->>index: broadcast event payload
+    index->>Client: JSON-RPC notification
 ```
 
 ### Internal module layout
 
 ```mermaid
 flowchart TD
-    index[index.ts wires server handlers broadcast]
-    ws[ws.ts JSON-RPC transport]
-    rpc[procedures/rpc.ts request routing]
-    data[data directory evy core resources]
-    db[data/db.ts Drizzle client]
-    services[procedures/services.ts gRPC adapters SubscribeEvents]
-    sync[procedures/sync.ts unified sync handler]
-    uploads[procedures/uploads.ts binary upload sessions]
-    readiness[readiness.ts health seed check]
+    index[index.ts<br/>WebSocket server auth RPC registration health CLI]
+    rpc[procedures/rpc.ts<br/>request validation and routing]
+    registry[procedures/resources.ts<br/>runtime resource registry]
+    services[procedures/services.ts<br/>gRPC adapters ListResources SubscribeEvents]
+    sync[procedures/sync.ts<br/>unified sync handler]
+    uploads[procedures/uploads.ts<br/>binary upload sessions]
+    data[data/data.ts<br/>evy core dispatch]
+    resources[data resources<br/>resource handlers]
+    db[database/db.ts<br/>Drizzle client]
 
-    index --> ws
     index --> rpc
-    index --> data
+    index --> registry
     index --> services
     index --> uploads
+    index --> data
     rpc --> data
     rpc --> services
     rpc --> sync
-    data --> db
-    data --> uploads
-    ws --> uploads
+    registry --> services
     sync --> data
     sync --> services
-    readiness --> rpc
+    sync --> registry
+    data --> resources
+    data --> db
+    resources --> db
+    resources --> uploads
 ```
 
-- `src/data/db.ts` owns the Drizzle client and imports API tables directly from `types/generated/ts/db/schema.generated.ts`; `src/data/` owns evy core resource procedures.
-- Upload sessions live in memory in `src/procedures/uploads.ts`; `src/data/files.ts` persists binary file data and metadata.
-- The schema comes from `types/schema/data/` and `types/schema/files/` via `bun run types:generate`.
-- Validators are imported directly from `evy-types/validators` and `evy-types/rpcRequestHelpers` (no local wrapper file).
+- [`src/database/db.ts`](./src/database/db.ts) owns the Drizzle client and imports API tables directly from `types/generated/ts/db/schema.generated.ts`.
+- [`src/data/data.ts`](./src/data/data.ts) owns evy core dispatch; resource-specific logic lives in [`src/data/resources/`](./src/data/resources/) (`sdui`, `devices`, `organisations`, `services`, `providers`, `files`).
+- Upload sessions live in memory in [`src/procedures/uploads.ts`](./src/procedures/uploads.ts); [`src/data/resources/files.ts`](./src/data/resources/files.ts) persists binary file data and metadata.
+- The schema comes from `types/schema/data/`, `types/schema/files/`, and `types/schema/rpc/` via `bun run types:generate`.
+- Validators and the generated evy core registry are imported from `evy-types/validators`, `evy-types/rpcRequestHelpers`, and `evy-types/coreResources`.
 
 ### Shared contracts
 
@@ -110,11 +119,11 @@ Broader schema layout: [docs/evy/types.md § Sources](../docs/evy/types.md#sourc
 
 | File | Purpose |
 |------|---------|
-| [`types/schema/service.proto`](../types/schema/service.proto) | `evy.Service` gRPC IDL implemented by every non-`evy` backend |
+| [`types/schema/service.proto`](../types/schema/service.proto) | `evy.Service` gRPC IDL implemented by every non-`evy` backend (`Get`, `Create`, `Update`, `ListResources`, `SubscribeEvents`) |
 | [`types/schema/data/data.schema.json`](../types/schema/data/data.schema.json) | JSON Schema for `DATA_EVY_*` persistence rows, including file metadata |
 | [`types/schema/files/file.schema.json`](../types/schema/files/file.schema.json) | Shared file metadata, binary response, upload chunk, and file-specific RPC param models |
 | [`types/schema/sdui/evy.schema.json`](../types/schema/sdui/evy.schema.json) | `UI_Flow` / `UI_Page` / `UI_Row` contract |
-| [`types/schema/rpc/*.schema.json`](../types/schema/rpc) | `GetRequest` / `CreateRequest` / `UpdateRequest` / `DeleteRequest` / `GetResponse` contracts |
+| [`types/schema/rpc/*.schema.json`](../types/schema/rpc) | JSON-RPC params and responses for `resources`, `api`, `sync`, `get`, `create`, `update`, and `delete` |
 
 ## Prerequisites
 
@@ -179,7 +188,7 @@ From the repo root: `docker compose up -d api` (same stack as [README § Develop
 
 ### Health checks
 
-`bun run health` and `bun run health:seeded` invoke `src/readiness.ts` **without** `--env-file=../.env` (unlike `dev`, `start`, and `test:unit`). Export variables from the root `.env` in your shell, rely on Docker Compose `environment` / `env_file`, or run readiness from an environment where `DB_*` and `API_PORT` are already set.
+`bun run health` and `bun run health:seeded` invoke `src/index.ts --health` **without** `--env-file=../.env` (unlike `dev`, `start`, and `test:unit`). Export variables from the root `.env` in your shell, rely on Docker Compose `environment` / `env_file`, or run health checks from an environment where `DB_*` and `API_PORT` are already set.
 
 ## Available Scripts
 

@@ -4,22 +4,24 @@ If smartphones and the internet were built by the people for the people. Create 
 
 ## Architecture at a glance
 
-EVY is fully server-driven, meaning that the iOS app pulls in flows, page layout, data from the API to decide what to render. The API acts as gateway to other service backends, speaking a shared gRPC contract. Clients store the entire public database in local storage, and keep it in sync with a `sync` JSON-RPC method, taking a `lastSyncTime` to decide what data to return.
+EVY is fully server-driven, meaning that the iOS app pulls flows, page layout, and data from the API to decide what to render. The API is a JSON-RPC 2.0 WebSocket gateway: `service: "evy"` requests are handled by evy core resource modules in the API process, while non-evy services such as `marketplace` are forwarded over the shared `evy.Service` gRPC contract. Clients store public data locally and keep it fresh with the protected `sync` JSON-RPC method, passing `lastSyncTime` so the API can return changed rows and the resource registry.
 
 ```mermaid
 flowchart LR
     ios[iOS app]
     web[Web builder]
 
-    api[api JSON-RPC WebSocket SDUI store router]
+    api[api JSON-RPC WebSocket gateway]
+    core[evy core resource handlers]
     marketplace[marketplace service gRPC evy.Service]
     evyDb[(Postgres evy DB)]
     mpDb[(Postgres marketplace DB)]
 
     ios -- WebSocket --> api
     web -- WebSocket --> api
-    api -- Drizzle --> evyDb
-    api -- gRPC --> marketplace
+    api -- service evy --> core
+    core -- Drizzle --> evyDb
+    api -- service marketplace gRPC --> marketplace
     marketplace -- Drizzle --> mpDb
 ```
 
@@ -55,7 +57,7 @@ Run Postgres, the marketplace service, the main API, and the web app:
 docker compose up --build
 ```
 
-Copy `.env.example` to `.env`. The first `bun run db:seed` from the repo root creates the `marketplace` database if needed and seeds both services.
+Copy `.env.example` to `.env`. The first `bun run db:seed` from the repo root creates the `marketplace` database if needed and seeds both services. The API discovers non-evy service resources through each service's `ListResources` gRPC method and exposes the combined runtime registry through the `resources` and `sync` JSON-RPC responses.
 
 Local Bun (no Docker for Node): start Postgres (`docker compose up --build postgres`), then in separate terminals from the repo root:
 

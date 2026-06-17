@@ -2,7 +2,7 @@
 
 iOS consumer app. Minimum iOS version supported: **17.0** (matches `IPHONEOS_DEPLOYMENT_TARGET` in `evy.xcodeproj`).
 
-**Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes ([Shared type system](../README.md#shared-type-system)). Generated Swift under `types/generated/swift/` is not committed; the app references generated SDUI, core resource, OS, and image API models, while transport and UI code such as `EVYFlow`, `EVYPage`, `EVYRow`, and `EVYWebsocket` remain handwritten where needed.
+**Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes (see [Documentation](../README.md#documentation)). Generated Swift under `types/generated/swift/` is not committed; the app references generated SDUI, core resource, OS, file, and API models, while transport and UI code such as `EVYFlow`, `EVYPage`, `EVYRow`, and `EVYWebsocket` remain handwritten where needed.
 
 ### Synced data
 

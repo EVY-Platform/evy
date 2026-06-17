@@ -36,11 +36,11 @@ bun run types:generate
 
 1. `scripts/generate-types.ts` — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. It generates stable Swift filenames from nested and hyphenated schema paths, includes `types/schema/files/file.schema.json`, and runs `scripts/generate-swift-sdui.ts` for Swift UI shapes from `evy.schema.json` plus `row-content.spec.json`.
 2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`.
-3. `scripts/generate-core-resources.ts` — Emits the evy core resource registry consumed by API validation and sync.
+3. `scripts/generate-core-resources.ts` — Emits the generated evy core resource registry consumed by API validation, the public `resources` RPC, and `sync`. Non-evy service resources are discovered at runtime through each service's `ListResources` gRPC method.
 
 ### Outputs (do not edit by hand)
 
-- `types/generated/ts/` — TypeScript types, Drizzle schema, and generated resource registry inputs. The API, web app, and marketplace service import these via the `evy-types` path alias.
+- `types/generated/ts/` — TypeScript types, Drizzle schema, validators, RPC helpers, and generated evy core resource registry inputs. The API, web app, and marketplace service import these via the `evy-types` path alias.
 - `types/generated/swift/` — Swift types. The iOS app references generated SDUI, core resource, OS, and file API models while keeping transport and UI models handwritten where needed.
 
 After changing any schema or `drizzle.config.json` or `row-content.spec.json`, run `bun run types:generate`. Output under `types/generated/` is gitignored; regenerate locally and do not hand-edit generated files.
