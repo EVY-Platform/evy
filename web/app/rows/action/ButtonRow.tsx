@@ -18,7 +18,7 @@ export default defineRow("ButtonRow", {
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
-			<div className="evy-p-2 evy-flex evy-justify-center">
+			<div className="evy-py-2 evy-flex evy-justify-center">
 				<Button label={row.config.view.content.label} />
 			</div>
 		</RowLayout>

@@ -52,7 +52,7 @@ export default defineRow("TextRow", {
 		const textStyle = lineClampStyle(maxLinesValue(row.config.view.max_lines));
 
 		return (
-			<div className="evy-flex evy-flex-col evy-gap-1 evy-px-3 evy-py-2">
+			<div className="evy-flex evy-flex-col evy-gap-1 evy-p-2">
 				<div className="evy-flex evy-flex-row evy-items-center evy-gap-2">
 					{icon.trim() ? (
 						<span className="evy-shrink-0">
