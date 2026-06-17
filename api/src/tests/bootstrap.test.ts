@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { Client } from "rpc-websockets";
 import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 
-import { assertApiReadable } from "../readiness";
+import { assertApiReadable } from "../index";
 import { getFreePort, waitForClientOpen, type WSServer } from "./wsTestHelpers";
 
 describe("initServer bootstrap", () => {
@@ -16,7 +16,7 @@ describe("initServer bootstrap", () => {
 		port = await getFreePort();
 		process.env.API_PORT = String(port);
 		apiUrl = `ws://127.0.0.1:${port}`;
-		const { initServer } = await import("../ws");
+		const { initServer } = await import("../index");
 		server = await initServer(async () => true);
 
 		server

@@ -1,4 +1,6 @@
-# Data types
+# Types are used to generate code for all platforms
+
+### Core types
 
 ```
 uuid
@@ -10,32 +12,25 @@ boolean
 date-time (string)
 ```
 
-- Relational columns generated for Postgres enforce UUID, enums, booleans, and (where defined) `integer` vs `number` column types. Instants (`createdAt`, `updatedAt`, etc.) use JSON Schema `string` + `format: "date-time"` and are stored in Postgres as `text` containing an ISO 8601 / RFC 3339 value (e.g. `2024-01-19T12:00:00.000Z`), not as Unix timestamps and not as SQL `timestamp` columns. JSON stored in `jsonb` is validated at the API layer, not by Postgres row types.
-- `integer`: whole numbers only (no fractional part). On the API, values must satisfy `Number.isInteger` after JSON parse.
-- `number`: decimal-capable numeric values; integer literals (e.g. `3`) are allowed. On the API, values must be finite (`number` JSON values; rejects `NaN` / `Infinity`).
-- TypeScript generated from JSON Schema often maps both `integer` and `number` to TS `number`. Runtime rules above (API / DB) are the source of truth when the distinction matters.
-
 ---
 
 ### Sources
 
-| Path / pattern | Purpose |
-|----------------|--------|
-| `types/schema/**/*.schema.json` | JSON Schema for UI flows, RPC, and data models. Used to generate TypeScript and Swift. |
-| `types/schema/sdui/row-content.spec.json` | Per–row-type content/view keys for UI rows. Used by the Swift UI generator only. |
-| `types/schema/data/data.schema.json` | API persistence models (`DATA_EVY_Flow`, `DATA_EVY_Device`, etc.). |
-| `types/schema/files/file.schema.json` | EVY file resource models, binary read responses, upload chunk metadata, and file-specific RPC params. |
-| `types/schema/data/drizzle.config.json` | Drizzle table names, primary keys, enums, relations. Must stay in sync with `data.schema.json`. |
+All `types/schema/**/*.schema.json` files define types for UI flows, RPC, and data models.
+
+`types/schema/**/*.spec.json` files define row definitions, including SDUI row content and view keys.
+
+`types/schema/data/drizzle.config.json` defines the database schema configuration for generated Drizzle tables. Keep it manually in sync with `types/schema/data/data.schema.json`, with AI assistance when useful.
 
 ### Command
+
+Run type generation after changing schemas, row definitions, or Drizzle database configuration so TypeScript, Swift, Drizzle, and core resource outputs stay aligned with the source definitions.
 
 From the repo root:
 
 ```bash
 bun run types:generate
 ```
-
-Use `bun run types:generate:exclude-ios` when Swift output is not needed. Docker builds use this variant to generate TypeScript and Drizzle output without running Quicktype for iOS models inside container builds.
 
 `bun run types:generate` runs:
 

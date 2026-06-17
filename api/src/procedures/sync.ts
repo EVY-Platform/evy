@@ -5,9 +5,12 @@ import {
 } from "evy-types/rpcRequestHelpers";
 import { validateSync, validateSyncResponse } from "evy-types/validators";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { get as defaultGetCore } from "../data/core";
+import { createDb as createAppDb } from "../database/db";
+import { get as defaultGetCore } from "../data/data";
 import { forwardGet } from "./services";
 import { buildResourceRegistry } from "./resources";
+
+const appDb = createAppDb();
 
 type SyncRow = SyncResponse["data"][number];
 
@@ -81,7 +84,7 @@ type SyncDependencies = {
 };
 
 const DEFAULT_DEPS: SyncDependencies = {
-	getCore: defaultGetCore,
+	getCore: (params) => defaultGetCore(appDb, params),
 	fetchService: forwardGet,
 	buildRegistry: buildResourceRegistry,
 };

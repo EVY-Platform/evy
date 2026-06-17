@@ -1,24 +1,16 @@
 # EVY API
 
-Main API for EVY. A JSON-RPC 2.0 WebSocket server (via [`rpc-websockets`](https://github.com/elpheria/rpc-websockets)) that handles `service: "evy"` in-process (SDUI flows and core tables), forwards other services over gRPC, and pushes real-time `dataChanged` notifications to connected clients.
-
-Monorepo setup (Compose, seeding, local Bun): [README § Running Services](../README.md#running-services).
+A JSON RPC API that routes data requests to relevant microservices, handles requests for SDUI and core data, and pushes events over websocket when data changes.
 
 ## Architecture
-
-### System view
-
-High-level diagram (iOS / web / API / marketplace / Postgres): [README § Architecture at a glance](../README.md#architecture-at-a-glance).
-
-The API is the only public edge for iOS and the web builder. Requests are validated against [`types/schema/rpc/`](../types/schema/rpc) and routed by `service` + `resource` in [`src/procedures/rpc.ts`](./src/procedures/rpc.ts): `service === "evy"` goes to [`src/data/`](./src/data/); any other registered service uses [`src/procedures/services.ts`](./src/procedures/services.ts) to call gRPC. Every non-`evy` service must declare `${SERVICE}_GRPC_HOST` and `${SERVICE}_GRPC_PORT` (see `SERVICE_VALUES` in generated types / [`src/procedures/services.ts`](./src/procedures/services.ts)).
 
 ### Request dispatch
 
 `get` and `api` are public read methods. `create`, `update`, `delete`, `sync`, and `cancelUpload` are protected (require a valid device token via `validateAuth`). Binary upload frames are also ignored unless they arrive on an authenticated WebSocket. Write params include `service`, `resource`, `data`, and an optional `filter` object for `create`; `update` and `delete` require `filter.id`.
 
-- `service: "evy"` &mdash; handled entirely under [`src/data/`](./src/data/). Supported resources include `sdui` (flows / `flow` table), `devices` (via auth only for writes), `organisations`, `services`, `providers` (typed resource tables), and `files` (binary file metadata / `File` table). There is no generic `evy` "data" table routed through `services.ts`.
+- `service: "evy"` &mdash; handled entirely under [`src/data/`](./src/data/). Supported resources include `sdui`, `devices`, `organisations`, `services`, `providers`, and `files`.
 - `service` ≠ `"evy"` (e.g. `marketplace`) &mdash; [`src/procedures/rpc.ts`](./src/procedures/rpc.ts) calls `forwardGet`, `forwardCreate`, or `forwardUpdate` in [`src/procedures/services.ts`](./src/procedures/services.ts), which issue `Get`, `Create`, or `Update` on `evy.Service` and validate JSON responses. `delete` is currently limited to evy core resources.
-- **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/resources + external services) since that timestamp. When data changed, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
+- **`sync`** is a protected RPC that unifies startup data loading into a single call. Params are `{ lastSyncTime }` (ISO date-time). The response returns **all** changed rows across every registered service (evy core SDUI/resources + external services) since that timestamp. When data changes, the response also includes the full resource registry. Response shape: `{ data: [{ service, resource, value }], resources?: { resources, resourcesByService } }`. Clients should store data rows under service-qualified keys (`evy:sdui`, `marketplace:items`, etc.) and apply the resource mapping for binding resolution when present. `devices` is excluded (auth-only).
 
 Synchronous request/response path:
 
@@ -50,7 +42,13 @@ sequenceDiagram
     ws-->>Client: JSON-RPC response (row)
 ```
 
-Notification fan-out paths:
+### Notifications
+
+`ws.ts` registers the `dataChanged` server event which fires the following:
+
+```json
+{ "jsonrpc": "2.0", "method": "dataChanged", "params": { "service": "evy", "resource": "sdui", "operation": "create", "value": { /* row */ } } }
+```
 
 ```mermaid
 sequenceDiagram
@@ -70,19 +68,6 @@ sequenceDiagram
     services->>ws: emitJsonRpc(event, data)
     ws->>Client: JSON-RPC notification
 ```
-
-### Real-time notifications
-
-`ws.ts` registers the `dataChanged` server event and ships a custom `emitJsonRpc` helper because `rpc-websockets` emits a non-standard wire shape. All pushed frames therefore use standard JSON-RPC 2.0:
-
-```json
-{ "jsonrpc": "2.0", "method": "dataChanged", "params": { "service": "evy", "resource": "sdui", "operation": "create", "value": { /* row */ } } }
-```
-
-- [`src/index.ts`](./src/index.ts) creates a `broadcast` callback wrapping `emitJsonRpc` and injects it into `rpc` and `services` at startup.
-- Successful syncable `evy` writes emit `dataChanged` from [`src/data/`](./src/data/), including SDUI. Payloads include the write operation: `{ service, resource, operation, value }`.
-- Remote services emit named events on `evy.Service.SubscribeEvents`; [`src/procedures/services.ts`](./src/procedures/services.ts) parses `payload_json` and forwards them via the same broadcast callback (reconnect with exponential backoff). Remote `dataChanged` payloads use the same `{ service, resource, operation, value }` shape.
-- The shared [`src/broadcast.ts`](./src/broadcast.ts) defines the `BroadcastFn` type contract, decoupling `rpc` and `services` from the WebSocket layer.
 
 ### Internal module layout
 

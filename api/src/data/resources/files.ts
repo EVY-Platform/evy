@@ -18,18 +18,18 @@ import {
 	validateGetResponse,
 } from "evy-types/validators";
 
-import { file } from "../../../types/generated/ts/db/schema.generated";
+import { file } from "../../../../types/generated/ts/db/schema.generated";
 import {
 	deleteUploadSession,
 	getUploadSession,
 	uploadSessionToBuffer,
-} from "../procedures/uploads";
+} from "../../procedures/uploads";
+import type { EvyDb } from "../../database/db";
 import {
 	deleteResourceEntityFromConfig,
-	fileResourceConfig,
 	insertResourceEntityFromConfig,
-} from "./resources";
-import { getDb } from "./db";
+	type ResourceEntityConfig,
+} from "./resourceEntity";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -56,15 +56,15 @@ export async function writeFileBinary(params: {
 	}
 }
 
-export async function readFileBinary(id: string): Promise<Buffer> {
+async function readFileBinary(id: string): Promise<Buffer> {
 	return readFile(filePath(id));
 }
 
-export async function deleteFileBinary(id: string): Promise<void> {
+async function deleteFileBinary(id: string): Promise<void> {
 	await unlink(filePath(id));
 }
 
-export async function deleteFileBinaryIfExists(id: string): Promise<void> {
+async function deleteFileBinaryIfExists(id: string): Promise<void> {
 	await deletePathIfExists(filePath(id));
 }
 
@@ -96,6 +96,21 @@ export function resetFileStorageDirsForTest(): void {
 	filesDir = resolve(join(__dirname, "..", "public", "files"));
 	uploadTmpDir = resolve(join(__dirname, "..", "public", "uploads"));
 }
+
+const fileResourceConfig: ResourceEntityConfig<DATA_EVY_File> = {
+	table: file,
+	validate: validateFilePayload,
+	toUpdateSet: (_validated, nowIso) => ({
+		updatedAt: nowIso,
+	}),
+	toInsertValues: (validated, nowIso, filterId) => ({
+		id: filterId ?? validated.id,
+		type: validated.type,
+		createdAt: nowIso,
+		updatedAt: nowIso,
+	}),
+	mapRow: (row) => row,
+};
 
 type PreparedFileUpload = {
 	fileId: string;
@@ -133,12 +148,11 @@ async function createFileFromUpload(params: {
 	};
 }
 
-async function selectFileRowById(id: string): Promise<DATA_EVY_File> {
-	const rows = await getDb()
-		.select()
-		.from(file)
-		.where(eq(file.id, id))
-		.limit(1);
+async function selectFileRowById(
+	db: EvyDb,
+	id: string,
+): Promise<DATA_EVY_File> {
+	const rows = await db.select().from(file).where(eq(file.id, id)).limit(1);
 	if (rows.length === 0) {
 		throw new Error("File not found");
 	}
@@ -146,6 +160,7 @@ async function selectFileRowById(id: string): Promise<DATA_EVY_File> {
 }
 
 export async function createFileResource(
+	db: EvyDb,
 	filter: CreateRequest["filter"] | undefined,
 	dataPayload: unknown,
 	nowIso: string,
@@ -159,6 +174,7 @@ export async function createFileResource(
 
 	try {
 		return await insertResourceEntityFromConfig(
+			db,
 			fileResourceConfig,
 			filter,
 			preparedFile.dataPayload,
@@ -172,17 +188,18 @@ export async function createFileResource(
 }
 
 export async function deleteFileResource(
+	db: EvyDb,
 	filter: DeleteRequest["filter"],
 	notify: (value: unknown) => void,
 ): Promise<DeleteResponse> {
-	const metadata = await selectFileRowById(filter.id);
+	const metadata = await selectFileRowById(db, filter.id);
 	try {
 		await deleteFileBinary(metadata.id);
 	} catch {
 		// Binary already missing — still clean up metadata to avoid orphan.
 	}
 
-	return deleteResourceEntityFromConfig(fileResourceConfig, filter, notify);
+	return deleteResourceEntityFromConfig(db, fileResourceConfig, filter, notify);
 }
 
 async function fileRowToGetFileResponse(
@@ -205,9 +222,10 @@ async function fileRowToGetFileResponse(
 }
 
 export async function listFileRowsWithBinary(
+	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
 ): Promise<GetResponse> {
-	const base = getDb().select().from(file);
+	const base = db.select().from(file);
 	const whereClauses: ReturnType<typeof eq>[] = [];
 
 	if (filter?.id) {

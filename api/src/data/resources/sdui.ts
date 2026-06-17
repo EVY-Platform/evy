@@ -15,13 +15,14 @@ import {
 	validateUpdateResponse,
 } from "evy-types/validators";
 
-import { flow } from "../../../types/generated/ts/db/schema.generated";
-import { getDb, hasDatabaseErrorCode } from "./db";
+import { flow } from "../../../../types/generated/ts/db/schema.generated";
+import { hasDatabaseErrorCode, type EvyDb } from "../../database/db";
 
 export async function getSduiRows(
+	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
 ): Promise<GetResponse> {
-	const base = getDb().select({ data: flow.data }).from(flow);
+	const base = db.select({ data: flow.data }).from(flow);
 	const whereClauses: ReturnType<typeof eq>[] = [];
 
 	if (filter?.id) {
@@ -44,6 +45,7 @@ export async function getSduiRows(
 }
 
 export async function createSduiFlow(
+	db: EvyDb,
 	filter: CreateRequest["filter"] | undefined,
 	dataPayload: unknown,
 	nowIso: string,
@@ -56,7 +58,7 @@ export async function createSduiFlow(
 			? { ...validatedData, id: filterId }
 			: validatedData;
 
-	const result = await getDb()
+	const result = await db
 		.insert(flow)
 		.values({
 			id: persistedFlowData.id,
@@ -77,6 +79,7 @@ export async function createSduiFlow(
 }
 
 export async function updateSduiFlow(
+	db: EvyDb,
 	filter: UpdateRequest["filter"],
 	dataPayload: unknown,
 	nowIso: string,
@@ -89,7 +92,7 @@ export async function updateSduiFlow(
 			? { ...validatedData, id: filterId }
 			: validatedData;
 
-	const result = await getDb()
+	const result = await db
 		.update(flow)
 		.set({ data: persistedFlowData, updatedAt: nowIso })
 		.where(eq(flow.id, filterId))

@@ -4,14 +4,21 @@ import { Client } from "rpc-websockets";
 import { drizzle } from "drizzle-orm/pglite";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 
+import type { EvyDb } from "../database/db";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 
 export type WSServer = Awaited<
-	ReturnType<typeof import("../ws")["initServer"]>
+	ReturnType<typeof import("../index")["initServer"]>
 >;
 
 type RpcWSClient = InstanceType<typeof Client>;
 type PgliteTestDb = PgliteDatabase<typeof schema>;
+
+// Cast a Pglite test db to the production EvyDb type.
+// The drizzle API surface is identical at runtime (select/insert/update/delete).
+export function asEvyDb(db: PgliteTestDb): EvyDb {
+	return db as unknown as EvyDb;
+}
 
 const DEFAULT_OPEN_TIMEOUT_MS = 8000;
 

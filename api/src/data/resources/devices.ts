@@ -5,17 +5,21 @@ import type { OS } from "evy-types";
 import {
 	device,
 	osEnum,
-} from "../../../types/generated/ts/db/schema.generated";
-import { getDb } from "./db";
+} from "../../../../types/generated/ts/db/schema.generated";
+import type { EvyDb } from "../../database/db";
 
-export async function validateAuth(token: string, os: OS): Promise<boolean> {
+export async function validateAuth(
+	db: EvyDb,
+	token: string,
+	os: OS,
+): Promise<boolean> {
 	if (!token || token.length < 1) throw new Error("No token provided");
 	if (!os || os.length < 1) throw new Error("No os provided");
 
 	if (!osEnum.enumValues.includes(os)) return false;
 
 	try {
-		const existing = await getDb()
+		const existing = await db
 			.select()
 			.from(device)
 			.where(eq(device.token, token))
@@ -25,7 +29,7 @@ export async function validateAuth(token: string, os: OS): Promise<boolean> {
 			return true;
 		}
 
-		await getDb().insert(device).values({
+		await db.insert(device).values({
 			token,
 			os,
 			createdAt: new Date().toISOString(),

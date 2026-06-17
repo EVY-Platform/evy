@@ -7,13 +7,14 @@ import type {
 	UpdateResponse,
 	DeleteRequest,
 	DeleteResponse,
+	OS,
 } from "evy-types";
 import {
 	EVY_CORE_RESOURCE,
 	EVY_CORE_RESOURCE_NAME_SET,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
-import { emitDataChangedNotification } from "../notifications";
+import type { EvyDb } from "../database/db";
 
 import {
 	service,
@@ -25,17 +26,49 @@ import {
 	listCoreResourceRows,
 	insertResourceEntityFromConfig,
 	updateResourceEntityFromConfig,
-	mapServiceRow,
-	serviceResourceConfig,
-	organizationResourceConfig,
-	providerResourceConfig,
-} from "./resources";
-import { getSduiRows, createSduiFlow, updateSduiFlow } from "./sdui";
+} from "./resources/resourceEntity";
+import { organizationResourceConfig } from "./resources/organisation";
+import { mapServiceRow, serviceResourceConfig } from "./resources/service";
+import { providerResourceConfig } from "./resources/serviceProvider";
+import { getSduiRows, createSduiFlow, updateSduiFlow } from "./resources/sdui";
 import {
 	createFileResource,
 	deleteFileResource,
 	listFileRowsWithBinary,
-} from "./files";
+} from "./resources/files";
+import { validateAuth as validateDeviceAuth } from "./resources/devices";
+
+type BroadcastFn = (eventName: string, payload: unknown) => void;
+
+const DATA_CHANGED_EVENT = "dataChanged";
+
+let coreBroadcast: BroadcastFn | null = null;
+
+export function initCoreNotifications(broadcastFn: BroadcastFn | null): void {
+	coreBroadcast = broadcastFn;
+}
+
+export function validateAuth(
+	db: EvyDb,
+	token: string,
+	os: OS,
+): ReturnType<typeof validateDeviceAuth> {
+	return validateDeviceAuth(db, token, os);
+}
+
+function buildEmitNotification(
+	resource: string,
+	operation: "create" | "update" | "delete",
+) {
+	return (value: unknown) => {
+		coreBroadcast?.(DATA_CHANGED_EVENT, {
+			service: EVY_CORE_SERVICE,
+			resource,
+			operation,
+			value,
+		});
+	};
+}
 
 const evyCoreResourceNameSet: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
@@ -50,72 +83,79 @@ function assertEvyCoreAccess(
 	}
 }
 
-export async function get(params: GetRequest): Promise<GetResponse> {
+export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
-	return getCoreBody(params);
+	return getCoreBody(db, params);
 }
 
-export async function create(params: CreateRequest): Promise<CreateResponse> {
+export async function create(
+	db: EvyDb,
+	params: CreateRequest,
+): Promise<CreateResponse> {
 	assertEvyCoreAccess(params);
-	return createCoreBody(params);
+	return createCoreBody(db, params);
 }
 
-export async function update(params: UpdateRequest): Promise<UpdateResponse> {
+export async function update(
+	db: EvyDb,
+	params: UpdateRequest,
+): Promise<UpdateResponse> {
 	assertEvyCoreAccess(params);
-	return updateCoreBody(params);
+	return updateCoreBody(db, params);
 }
 
-async function deleteResource(params: DeleteRequest): Promise<DeleteResponse> {
+export async function deleteResource(
+	db: EvyDb,
+	params: DeleteRequest,
+): Promise<DeleteResponse> {
 	assertEvyCoreAccess(params);
-	return deleteCoreBody(params);
+	return deleteCoreBody(db, params);
 }
-export { deleteResource as delete };
 
-async function getCoreBody(params: GetRequest): Promise<GetResponse> {
+async function getCoreBody(
+	db: EvyDb,
+	params: GetRequest,
+): Promise<GetResponse> {
 	const { resource, filter } = params;
 
 	if (resource === EVY_CORE_RESOURCE.SDUI) {
-		return getSduiRows(filter);
+		return getSduiRows(db, filter);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return listCoreResourceRows(service, filter, mapServiceRow);
+		return listCoreResourceRows(db, service, filter, mapServiceRow);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return listCoreResourceRows(organization, filter, (r) => r);
+		return listCoreResourceRows(db, organization, filter, (r) => r);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return listCoreResourceRows(serviceProvider, filter, (r) => r);
+		return listCoreResourceRows(db, serviceProvider, filter, (r) => r);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.FILES) {
-		return listFileRowsWithBinary(filter);
+		return listFileRowsWithBinary(db, filter);
 	}
 
 	throw new Error("Unsupported resource for core API");
 }
 
-async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
+async function createCoreBody(
+	db: EvyDb,
+	params: CreateRequest,
+): Promise<CreateResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
-
-	function emitNotification(value: unknown): void {
-		emitDataChangedNotification({
-			service: EVY_CORE_SERVICE,
-			resource,
-			operation: "create",
-			value,
-		});
-	}
+	const emitNotification = buildEmitNotification(resource, "create");
 
 	if (resource === EVY_CORE_RESOURCE.SDUI) {
-		return createSduiFlow(filter, dataPayload, nowIso, emitNotification);
+		return createSduiFlow(db, filter, dataPayload, nowIso, emitNotification);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
 		return insertResourceEntityFromConfig(
+			db,
 			serviceResourceConfig,
 			filter,
 			dataPayload,
@@ -126,6 +166,7 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
 		return insertResourceEntityFromConfig(
+			db,
 			organizationResourceConfig,
 			filter,
 			dataPayload,
@@ -136,6 +177,7 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
 		return insertResourceEntityFromConfig(
+			db,
 			providerResourceConfig,
 			filter,
 			dataPayload,
@@ -145,31 +187,33 @@ async function createCoreBody(params: CreateRequest): Promise<CreateResponse> {
 	}
 
 	if (resource === EVY_CORE_RESOURCE.FILES) {
-		return createFileResource(filter, dataPayload, nowIso, emitNotification);
+		return createFileResource(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
 	}
 
 	throw new Error("Create is not supported for this resource");
 }
 
-async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
+async function updateCoreBody(
+	db: EvyDb,
+	params: UpdateRequest,
+): Promise<UpdateResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
-
-	function emitNotification(value: unknown): void {
-		emitDataChangedNotification({
-			service: EVY_CORE_SERVICE,
-			resource,
-			operation: "update",
-			value,
-		});
-	}
+	const emitNotification = buildEmitNotification(resource, "update");
 
 	if (resource === EVY_CORE_RESOURCE.SDUI) {
-		return updateSduiFlow(filter, dataPayload, nowIso, emitNotification);
+		return updateSduiFlow(db, filter, dataPayload, nowIso, emitNotification);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
 		return updateResourceEntityFromConfig(
+			db,
 			serviceResourceConfig,
 			filter,
 			dataPayload,
@@ -180,6 +224,7 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
 		return updateResourceEntityFromConfig(
+			db,
 			organizationResourceConfig,
 			filter,
 			dataPayload,
@@ -190,6 +235,7 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
 		return updateResourceEntityFromConfig(
+			db,
 			providerResourceConfig,
 			filter,
 			dataPayload,
@@ -201,20 +247,15 @@ async function updateCoreBody(params: UpdateRequest): Promise<UpdateResponse> {
 	throw new Error("Update is not supported for this resource");
 }
 
-async function deleteCoreBody(params: DeleteRequest): Promise<DeleteResponse> {
+async function deleteCoreBody(
+	db: EvyDb,
+	params: DeleteRequest,
+): Promise<DeleteResponse> {
 	const { resource, filter } = params;
-
-	function emitNotification(value: unknown): void {
-		emitDataChangedNotification({
-			service: EVY_CORE_SERVICE,
-			resource,
-			operation: "delete",
-			value,
-		});
-	}
+	const emitNotification = buildEmitNotification(resource, "delete");
 
 	if (resource === EVY_CORE_RESOURCE.FILES) {
-		return deleteFileResource(filter, emitNotification);
+		return deleteFileResource(db, filter, emitNotification);
 	}
 
 	throw new Error("Delete is not supported for this resource");

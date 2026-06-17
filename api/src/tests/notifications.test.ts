@@ -8,9 +8,10 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest, UI_Flow, UI_Page } from "evy-types";
-import type { WSParams } from "../ws";
+import type { WSParams } from "../index";
 
 import {
+	asEvyDb,
 	clearAllTestTables,
 	connectAndLogin,
 	createPgliteTestDatabase,
@@ -20,21 +21,17 @@ import {
 } from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
+const dataDb = asEvyDb(testDb);
 
-const coreModule = await import("../data/core");
-const { create } = coreModule;
-const devicesModule = await import("../data/devices");
-const { validateAuth } = devicesModule;
-const dbModule = await import("../data/db");
-const { setDbForTest } = dbModule;
-setDbForTest(testDb as unknown as Parameters<typeof setDbForTest>[0]);
+const coreModule = await import("../data/data");
+const { create, initCoreNotifications, validateAuth } = coreModule;
 
 describe("create/update real-time notifications", () => {
 	let previousApiPort: string | undefined;
 	let apiPort: number;
 	let apiUrl: string;
-	let initServer: typeof import("../ws")["initServer"];
-	let emitJsonRpc: typeof import("../ws")["emitJsonRpc"];
+	let initServer: typeof import("../index")["initServer"];
+	let emitJsonRpc: typeof import("../index")["emitJsonRpc"];
 	let server: WSServer;
 
 	beforeAll(async () => {
@@ -44,21 +41,20 @@ describe("create/update real-time notifications", () => {
 		previousApiPort = process.env.API_PORT;
 		apiPort = await getFreePort();
 		process.env.API_PORT = String(apiPort);
-		const wsMod = await import("../ws");
-		const notificationMod = await import("../notifications");
+		const wsMod = await import("../index");
 		initServer = wsMod.initServer;
 		emitJsonRpc = wsMod.emitJsonRpc;
 
 		server = await initServer((params: WSParams) =>
-			validateAuth(params.token, params.os),
+			validateAuth(dataDb, params.token, params.os),
 		);
-		notificationMod.initDataNotifications((eventName, payload) => {
+		initCoreNotifications((eventName, payload) => {
 			emitJsonRpc(server, eventName, payload);
 		});
 
 		server
 			.register("create", async (params: unknown) =>
-				create(params as unknown as CreateRequest),
+				create(dataDb, params as unknown as CreateRequest),
 			)
 			.protected();
 
