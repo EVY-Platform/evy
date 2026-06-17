@@ -377,7 +377,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 					...row.config,
 					...(action.field === "source"
 						? { source: action.value }
-						: { destination: action.value }),
+						: action.field === "destination"
+							? { destination: action.value }
+							: { visible: action.value }),
 				},
 			});
 

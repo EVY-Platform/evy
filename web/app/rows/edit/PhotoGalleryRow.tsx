@@ -8,6 +8,7 @@ export default defineRow("PhotoGalleryRow", {
 		type: "PhotoGallery",
 		actions: [],
 		source: "{item.photo_ids}",
+		visible: "true",
 		view: {
 			content: {
 				title: "Photo gallery row title",

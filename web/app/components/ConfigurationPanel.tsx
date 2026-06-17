@@ -295,6 +295,17 @@ export function ConfigurationPanel() {
 						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
 						fieldClassName=""
 					/>
+					<ConfigTextField
+						id={`${configRow.id}-visible`}
+						label="Visible"
+						value={configRow.config.visible ?? ""}
+						onChange={(next) => updateRowRoot("visible", next, configRow.id)}
+						placeholder="Condition to show row, e.g. {item.payment_methods.cash == true}"
+						ariaLabel="Row visibility condition"
+						labelClassName="evy-text-sm evy-font-medium evy-text-black"
+						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
+						fieldClassName=""
+					/>
 				</div>,
 				...containerElements,
 			];

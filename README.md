@@ -82,7 +82,7 @@ You can optionally skip the iOS tests (which are heavy and slow) by running `./r
 
 For even faster run you can keep running the API and web directly via Bun, and postgres via docker, then run `./run-e2e.sh --skip-ios --no-docker`
 
-If port `3000` is already in use locally, run with an override (values set before the script win over `.env`): `WEB_PORT=3001 ./run-e2e.sh --skip-ios`.
+If port `3000` is already in use locally, run with an override. Values set before the script win over `.env`: `WEB_PORT=3001 ./run-e2e.sh --skip-ios`.
 
 ## CI
 

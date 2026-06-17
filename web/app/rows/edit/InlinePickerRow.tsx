@@ -8,6 +8,7 @@ export default defineRow("InlinePickerRow", {
 		type: "InlinePicker",
 		actions: [],
 		source: "{durations}",
+		visible: "true",
 		view: {
 			content: {
 				title: "Inline picker row title",

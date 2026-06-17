@@ -119,6 +119,7 @@ export default defineRow("TimeslotPickerRow", {
 		type: "TimeslotPicker",
 		actions: [],
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "Timeslot picker row title",

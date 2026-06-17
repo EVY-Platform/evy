@@ -18,6 +18,7 @@ const defaultSearchResultTemplateRow: Row = {
 	config: {
 		type: "Text",
 		source: "",
+		visible: "true",
 		destination: "",
 		actions: [],
 		view: {
@@ -33,6 +34,7 @@ export default defineRow("SearchRow", {
 		type: "Search",
 		actions: [],
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "Search row title",

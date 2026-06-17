@@ -178,9 +178,9 @@ docker compose up -d web
 
 Tests are split into three layers:
 
-- **`test:unit`** — Bun's test runner on `app/**/*.test.ts` (no live API; `__API_URL__` is stubbed).
-- **`test:integration`** — Playwright against `integration/` (browser tests with mock/injected data; no API required).
-- **`test:e2e`** — Playwright against `e2e/` (full-stack tests; requires running API + database). Only run via `./run-e2e.sh`.
+- **`test:unit`** — Bun's test runner on `app/**/*.test.ts` (`__API_URL__` is stubbed, no live API).
+- **`test:integration`** — Playwright against `integration/` (browser tests with mock/injected data, no API required).
+- **`test:e2e`** — Playwright against `e2e/` (full-stack tests, requires running API + database). Only run via `./run-e2e.sh`.
 
 Install Chromium and its system dependencies (not needed in CI — the CI image has them pre-installed):
 

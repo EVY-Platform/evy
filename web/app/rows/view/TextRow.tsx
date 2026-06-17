@@ -27,6 +27,7 @@ export default defineRow("TextRow", {
 		type: "Text",
 		actions: [],
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "Text row title",

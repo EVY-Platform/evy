@@ -28,7 +28,6 @@ CREATE TABLE "Service" (
 	"name" varchar(50) NOT NULL,
 	"description" text NOT NULL,
 	"sort_order" integer,
-	"default_weight_kg" numeric(28, 10),
 	"created_at" text NOT NULL,
 	"updated_at" text NOT NULL
 );

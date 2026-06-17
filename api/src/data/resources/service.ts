@@ -57,7 +57,6 @@ export async function createServiceResource(
 			name: validated.name,
 			description: validated.description,
 			sortOrder: validated.sortOrder ?? null,
-			defaultWeightKg: validated.defaultWeightKg ?? null,
 			createdAt: validated.createdAt,
 			updatedAt: nowIso,
 		})
@@ -88,7 +87,6 @@ export async function updateServiceResource(
 			name: validated.name,
 			description: validated.description,
 			sortOrder: validated.sortOrder ?? null,
-			defaultWeightKg: validated.defaultWeightKg ?? null,
 			updatedAt: nowIso,
 		})
 		.where(eq(service.id, filter.id))
@@ -110,9 +108,6 @@ function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 		name: r.name,
 		description: r.description,
 		...(r.sortOrder !== null ? { sortOrder: r.sortOrder } : {}),
-		...(r.defaultWeightKg !== null
-			? { defaultWeightKg: r.defaultWeightKg }
-			: {}),
 		createdAt: r.createdAt,
 		updatedAt: r.updatedAt,
 	};

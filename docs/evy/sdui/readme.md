@@ -1,9 +1,5 @@
 # Server-driven UI (UI types)
 
-**See also:** [Repository README](../../../README.md) (architecture, setup), [API](../../../api/README.md) (JSON-RPC and gRPC routing), [Types](../types.md) (codegen, schema layout).
-
-## Data
-
 UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Reference data (dropdown options, tags, durations, etc.) is not embedded inside the flow JSON.
 
 - Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from. Use a non-empty source only for rows that load source-driven data such as option lists, search results, or calendars. If a row already reads explicit fields like `"{item.title}"` in `view.content`, the row source should be `""` because the binding resolves the resource directly.
@@ -18,8 +14,8 @@ UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Referen
 - Resource/local data is loaded outside the flow document. Clients can inspect the combined service/resource registry with the public JSON-RPC `resources` method, request individual lists with public JSON-RPC `get` (`service` / `resource`) using optional `filter.id` or `filter.updatedAfter`, call method-backed reads with public JSON-RPC `api`, or sync all changed data in batches with protected JSON-RPC `sync`.
 - `sync` accepts `{ "lastSyncTime": "ISO-8601 timestamp" }` and returns changed resource arrays as `{ service, resource, value }` rows across SDUI, evy core data, and backend service data. When data changed, it also returns the current resource registry. For startup/cache refresh, the API fetches every syncable resource using `filter.updatedAfter = lastSyncTime`. Auth-only `devices` rows are excluded from sync.
 - Clients should store synced rows under service-qualified keys such as `evy:sdui`, `marketplace:items`, and `marketplace:conditions`. The `resources.resourcesByService` registry tells clients which service owns each plural resource. Navigate actions pass query params as the optional third `navigate` argument using a plain-text query object (for example, `{navigate(flowId, pageId, {id: $datum.id})}`). Query values can be scalars (`{key: id}`) or arrays (`{key: [id-1, id-2]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same plural key. A generic `"id"` query key may be used by clients that can infer the resource from synced collections. If no synced collection exists for a query key, clients keep the raw string array under that key.
-- iOS draft scope IDs and draft cache keys are internal draft-store identifiers; see [iOS README § Draft scopes and draft cache keys](../../../ios/README.md#draft-scopes-and-draft-cache-keys).
-- Collection/list sources remain plural (for example, `{items}`, `{conditions}`, `{tags}`); direct entity/draft attributes use singular keys such as `{item.title}` and `{create(marketplace,item)}`. iOS pluralizes the singular entity key into a backend resource name using Swift inflection. The client data layer resolves collection bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
+- iOS draft scope IDs and draft cache keys are internal draft-store identifiers
+- Collection/list sources remain plural (for example, `{items}`, `{conditions}`, `{tags}`) direct entity/draft attributes use singular keys such as `{item.title}` and `{create(marketplace,item)}`. iOS pluralizes the singular entity key into a backend resource name using Swift inflection. The client data layer resolves collection bindings to synced service data when no exact local key exists. Exact local keys still take precedence for selected entities, drafts, and flow state.
 - `evy` resource data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
 
 So a flow might reference “10 min, 20 min, 30 min” options via `source: "{durations}"` while the selected value is written to `destination: "{item.distance}"`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
@@ -78,11 +74,11 @@ Rows are what are put into pages. They are the building block of the EVY server-
             // Required. Header of the row; empty string means no header.
             "title": "string",
             // Layout: "children" (array of rows), "child" (single row), "segments" (array of strings).
-            "children": [ROW],  // optional
-            "child": ROW,        // optional
-            "segments": ["string"],
-            // Additional keys per row type (label, value, placeholder, format, etc.)
-            // See types/schema/sdui/row-content.spec.json for the full list per type.
+            // Optional array of children rows to display
+            "children": [ROW],
+            // Optional single child row to display
+            "child": ROW,
+            ...
         },
         "max_lines": "string"    // optional (e.g. Text)
     },
@@ -90,6 +86,9 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "source": "string",
     // Where input data is stored in a draft. Use singular entity keys such as "{item.title}".
     "destination": "string",
+
+    // Visibility predicate. Use "true" for always shown, or a condition expression to render only when it evaluates to true.
+    "visible": "string",
 
     // Actions are required on every row and default to an empty array
     "actions": [{
@@ -198,6 +197,20 @@ Submit:
 ```
 
 The web app’s action editor (`web/app/utils/actionHelpers.ts`, `ActionEditor`, `ActionPopup`) uses the same condition and branch formats for authoring.
+
+#### Row visibility (`visible`)
+
+Required top-level row field. Use `"true"` for rows that should always show, or a condition expression to render only when it evaluates to `true`. Use the same condition syntax as action `condition` fields (`==`, `!=`, `&&`, `||`, parentheses, `count()`, `length()`).
+
+```json
+{
+	"type": "Text",
+	"visible": "{item.payment_methods.cash == true}",
+	"view": { "content": { "title": "Cash accepted" } }
+}
+```
+
+iOS evaluates `visible` reactively when bound data changes. The web builder stores and previews the field (conditional rows appear dimmed when the expression cannot be evaluated without live data).
 
 ### Rows
 

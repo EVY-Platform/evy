@@ -346,6 +346,35 @@ class E2ETestBase: XCTestCase {
     ]
   }
 
+  static func textRow(
+    id: String,
+    title: String,
+    text: String = "",
+    subtitle: String = "",
+    visible: String = ""
+  ) -> [String: Any] {
+    var row: [String: Any] = [
+      "id": id,
+      "type": "Text",
+      "source": "",
+      "destination": "",
+      "actions": [],
+      "view": [
+        "content": [
+          "title": title,
+          "text": text,
+          "subtitle": subtitle,
+          "icon": "",
+        ],
+        "max_lines": "",
+      ],
+    ]
+    if !visible.isEmpty {
+      row["visible"] = visible
+    }
+    return row
+  }
+
   static func viewItemFlowData(flowId: String, pageId: String) -> [String: Any] {
     return [
       "id": flowId,
@@ -355,20 +384,21 @@ class E2ETestBase: XCTestCase {
           "id": pageId,
           "title": "{item.title}",
           "rows": [
-            [
-              "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-              "type": "Text",
-              "source": "",
-              "destination": "",
-              "actions": [],
-              "view": [
-                "content": [
-                  "title": "My item is called",
-                  "text": "{item.title}",
-                ],
-                "max_lines": "",
-              ],
-            ]
+            Self.textRow(
+              id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+              title: "My item is called",
+              text: "{item.title}"
+            ),
+            Self.textRow(
+              id: "d4e5f6a7-b8c9-4012-d345-6789abcdef01",
+              title: "App payments accepted",
+              visible: "{item.payment_methods.app == true}"
+            ),
+            Self.textRow(
+              id: "e5f6a7b8-c9d0-4123-e456-789abcdef012",
+              title: "Cash accepted",
+              visible: "{item.payment_methods.cash == true}"
+            ),
           ],
           "footer": [
             "id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
@@ -392,6 +422,29 @@ class E2ETestBase: XCTestCase {
         ]
       ],
     ]
+  }
+
+  func createMarketplaceItem(
+    emitter: WSEmitter,
+    titlePrefix: String,
+    paymentMethods: [String: Bool]? = nil
+  ) async throws -> (id: String, title: String) {
+    let selectedItemId = UUID().uuidString
+    let selectedItemTitle = "\(titlePrefix) \(Int(Date().timeIntervalSince1970))"
+    var data: [String: Any] = [
+      "id": selectedItemId,
+      "title": selectedItemTitle,
+    ]
+    if let paymentMethods {
+      data["payment_methods"] = paymentMethods
+    }
+    _ = try await emitter.createResource(
+      service: "marketplace",
+      resource: "items",
+      filter: ["id": selectedItemId],
+      data: data
+    )
+    return (selectedItemId, selectedItemTitle)
   }
 
   override func tearDownWithError() throws {
@@ -600,13 +653,9 @@ final class WebSocketE2ETests: E2ETestBase {
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
 
-    let selectedItemId = UUID().uuidString
-    let selectedItemTitle = "Filtered Item \(Int(Date().timeIntervalSince1970))"
-    _ = try await emitter.createResource(
-      service: "marketplace",
-      resource: "items",
-      filter: ["id": selectedItemId],
-      data: ["id": selectedItemId, "title": selectedItemTitle]
+    let (selectedItemId, selectedItemTitle) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Filtered Item"
     )
 
     let viewButtonLabel = "View filtered \(Int(Date().timeIntervalSince1970))"
@@ -641,6 +690,61 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
       "View item page title should resolve {item.title} from the item id passed in navigate query")
+  }
+
+  @MainActor
+  func testViewItemPaymentRowsRespectVisiblePredicate() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Payment Item",
+      paymentMethods: ["cash": true, "app": false]
+    )
+
+    let viewButtonLabel = "View payment \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: createHomeFlowData(
+        buttonLabel: viewButtonLabel,
+        viewItemId: selectedItemId
+      ),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    try await emitter.updateSDUI(
+      flowData: Self.viewItemFlowData(
+        flowId: E2EFlowIds.webSocketViewFlow,
+        pageId: E2EFlowIds.webSocketViewPage
+      ),
+      flowId: E2EFlowIds.webSocketViewFlow
+    )
+    await emitter.disconnect()
+
+    app.terminate()
+    try launchApp()
+
+    let queryButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(
+      queryButton.waitForExistence(timeout: 20),
+      "Home view button should load with query-aware label after relaunch")
+
+    queryButton.tap()
+
+    let scrollView = app.scrollViews.firstMatch
+    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "View item page should appear")
+
+    XCTAssertTrue(
+      app.staticTexts["Cash accepted"].waitForExistence(timeout: 10),
+      "Cash payment row should be visible when item.payment_methods.cash is true")
+    XCTAssertFalse(
+      app.staticTexts["App payments accepted"].waitForExistence(timeout: 2),
+      "App payment row should be hidden when item.payment_methods.app is false")
   }
 
   @MainActor

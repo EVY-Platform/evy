@@ -8,6 +8,7 @@ export default defineRow("InputRow", {
 		type: "Input",
 		actions: [],
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "Input row title",

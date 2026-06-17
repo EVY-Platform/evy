@@ -31,10 +31,12 @@ struct EVYSearch: View {
     self.placeholder = placeholder
     self.resultTemplate = resultTemplate
 
+    let watchTargets = EVY.watchTargets(for: source)
+
     results = EVYState(
-      watch: source,
-      setter: { input in
-        Self.makeResults(input: input, resultTemplate: resultTemplate)
+      watches: watchTargets,
+      setter: {
+        Self.makeResults(input: source, resultTemplate: resultTemplate)
       }
     )
   }

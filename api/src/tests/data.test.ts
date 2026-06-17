@@ -34,9 +34,10 @@ import {
 type ValidatedRow = UI_Row;
 type ValidatedPage = UI_Page;
 
-type RowInput = Omit<ValidatedRow, "id" | "view" | "source"> & {
+type RowInput = Omit<ValidatedRow, "id" | "view" | "source" | "visible"> & {
 	id?: string;
 	source?: string;
+	visible?: string;
 	view: Omit<ValidatedRow["view"], "content"> & {
 		content: Omit<ValidatedRow["view"]["content"], "children" | "child"> & {
 			children?: RowInput[];
@@ -103,6 +104,7 @@ function ensureRowIds(rows: RowInput[]): RowInput[] {
 			...row,
 			id: crypto.randomUUID(),
 			source: row.source ?? "",
+			visible: row.visible ?? "true",
 			view: {
 				...row.view,
 				content: {

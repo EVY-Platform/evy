@@ -47,22 +47,22 @@ struct EVYTextField: View {
     self.multiLine = multiLine
     self.isInteractive = isInteractive
 
-    let inputWatchTarget = EVY.watchTarget(for: input)
-    let placeholderWatchTarget = EVY.watchTarget(for: placeholder)
+    let inputWatchTargets = EVY.watchTargets(for: input)
+    let placeholderWatchTargets = EVY.watchTargets(for: placeholder)
 
     self.displayValue = EVYState(
-      watch: inputWatchTarget,
-      setter: { _ in
+      watches: inputWatchTargets,
+      setter: {
         EVYTextResolver.resolveValue(from: input)
       })
     self.editableValue = EVYState(
-      watch: inputWatchTarget,
-      setter: { _ in
+      watches: inputWatchTargets,
+      setter: {
         EVYTextResolver.resolveValue(from: input, editing: true)
       })
     self.placeholderValue = EVYState(
-      watch: placeholderWatchTarget,
-      setter: { _ in
+      watches: placeholderWatchTargets,
+      setter: {
         EVYTextResolver.resolveValue(from: placeholder)
       })
   }

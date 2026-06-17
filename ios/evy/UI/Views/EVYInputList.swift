@@ -18,11 +18,13 @@ struct EVYInputList: View {
     self.format = format
     self.placeholder = placeholder
 
+    let watchTargets = EVY.watchTargets(for: data)
+
     values = EVYState(
-      watch: data,
+      watches: watchTargets,
       setter: {
         do {
-          let data = try EVY.getDataFromText($0)
+          let data = try EVY.getDataFromText(data)
           if case .array(let arrayValue) = data {
             return try arrayValue.map { json in
               try EVY.formatDataOrToString(json: json, format: format)

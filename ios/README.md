@@ -2,7 +2,7 @@
 
 iOS consumer app. Minimum iOS version supported: **17.0** (matches `IPHONEOS_DEPLOYMENT_TARGET` in `evy.xcodeproj`).
 
-**Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes (see [Documentation](../README.md#documentation)). Generated Swift under `types/generated/swift/` is not committed; the app references generated SDUI, core resource, OS, file, and API models, while transport and UI code such as `EVYFlow`, `EVYPage`, `EVYRow`, and `EVYWebsocket` remain handwritten where needed.
+**Types:** Schema and codegen are documented in [`docs/evy/types.md`](../docs/evy/types.md) and [`docs/evy/sdui/readme.md`](../docs/evy/sdui/readme.md). Run `bun run types:generate` from the repo root after cloning or schema changes (see [Documentation](../README.md#documentation)). Generated Swift under `types/generated/swift/` is not committed. The app references generated SDUI, core resource, OS, file, and API models, while transport and UI code such as `EVYFlow`, `EVYPage`, `EVYRow`, and `EVYWebsocket` remain handwritten where needed.
 
 ### Synced data
 
@@ -22,7 +22,7 @@ maxExisting + 1` so they append to the end. No separate order-state layer is nee
 
 ### File uploads and remote files
 
-Uploads send binary frames over the authenticated WebSocket and finalise with a `create` RPC; if finalisation fails, a `cancelUpload` RPC cleans up the staged upload. Remote files are fetched via a `get` RPC and cached locally for rendering.
+Uploads send binary frames over the authenticated WebSocket and finalise with a `create` RPC. If finalisation fails, a `cancelUpload` RPC cleans up the staged upload. Remote files are fetched via a `get` RPC and cached locally for rendering.
 
 ### Architecture
 

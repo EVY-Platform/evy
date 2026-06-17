@@ -18,11 +18,12 @@ struct EVYTextSelectRow: View {
     guard !destination.isEmpty else { return nil }
     self.view = view
     self.destination = destination
+    let watchTargets = EVY.watchTargets(for: destination)
     self.selected = EVYState(
-      watch: destination,
+      watches: watchTargets,
       setter: {
         do {
-          return try EVY.evaluateFromText($0)
+          return try EVY.evaluateFromText(destination)
         } catch {
           return false
         }

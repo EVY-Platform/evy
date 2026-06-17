@@ -238,12 +238,6 @@
 					"primaryKey": false,
 					"notNull": false
 				},
-				"default_weight_kg": {
-					"name": "default_weight_kg",
-					"type": "numeric(28, 10)",
-					"primaryKey": false,
-					"notNull": false
-				},
 				"created_at": {
 					"name": "created_at",
 					"type": "text",

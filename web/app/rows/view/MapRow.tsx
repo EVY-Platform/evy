@@ -22,6 +22,7 @@ export default defineRow("MapRow", {
 		type: "Map",
 		actions: [],
 		source: "",
+		visible: "true",
 		destination: "",
 		view: {
 			content: {

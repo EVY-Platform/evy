@@ -153,14 +153,16 @@ public final class UI_Row: Codable {
     public let source: String
     public let destination: String
     public let actions: [UI_RowAction]
+    public let visible: String
 
-    public init(id: String, type: EVYRowType, view: UI_RowView, source: String, destination: String, actions: [UI_RowAction]) {
+    public init(id: String, type: EVYRowType, view: UI_RowView, source: String, destination: String, actions: [UI_RowAction], visible: String) {
         self.id = id
         self.type = type
         self.view = view
         self.source = source
         self.destination = destination
         self.actions = actions
+        self.visible = visible
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -170,6 +172,7 @@ public final class UI_Row: Codable {
         case source
         case destination
         case actions
+        case visible
     }
 
     public required init(from decoder: Decoder) throws {
@@ -180,6 +183,7 @@ public final class UI_Row: Codable {
         source = try container.decode(String.self, forKey: .source)
         destination = try container.decodeIfPresent(String.self, forKey: .destination) ?? ""
         actions = try container.decodeIfPresent([UI_RowAction].self, forKey: .actions) ?? []
+        visible = try container.decodeIfPresent(String.self, forKey: .visible) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -190,6 +194,7 @@ public final class UI_Row: Codable {
         try container.encode(source, forKey: .source)
         try container.encode(destination, forKey: .destination)
         try container.encode(actions, forKey: .actions)
+        try container.encode(visible, forKey: .visible)
     }
 }
 `;

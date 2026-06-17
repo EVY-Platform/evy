@@ -59,6 +59,7 @@ export function normalizeServerRow(row: ServerRow): ServerRow {
 		source: row.source ?? def.source ?? "",
 		destination: row.destination ?? def.destination ?? "",
 		actions: row.actions ?? def.actions ?? [],
+		visible: row.visible ?? def.visible ?? "true",
 		view: mergedView,
 	};
 }
@@ -85,6 +86,7 @@ function normalizeUnknownServerRow(row: ServerRow): ServerRow {
 		source: row.source ?? "",
 		destination: row.destination ?? "",
 		actions: row.actions ?? [],
+		visible: row.visible ?? "true",
 		view: {
 			...(row.view.max_lines !== undefined
 				? { max_lines: row.view.max_lines }
@@ -247,6 +249,7 @@ function encodeRowToServerRow(row: Row): ServerRow {
 		source: row.config.source ?? def.source ?? "",
 		destination: row.config.destination ?? def.destination ?? "",
 		actions: row.config.actions ?? def.actions ?? [],
+		visible: row.config.visible ?? def.visible ?? "true",
 		view: mergedView,
 	};
 }
@@ -272,7 +275,14 @@ function decodeRow(row: ServerRow): Row {
 				key: normalized.id,
 				rowId: normalized.id,
 			}),
-			config: UnknownRow.config,
+			config: {
+				type: normalized.type,
+				source: normalized.source,
+				destination: normalized.destination,
+				actions: normalized.actions,
+				visible: normalized.visible ?? "",
+				view: normalized.view as Row["config"]["view"],
+			},
 		};
 	}
 	const vc = normalized.view.content;
@@ -294,6 +304,7 @@ function decodeRow(row: ServerRow): Row {
 			source: normalized.source,
 			destination: normalized.destination,
 			actions: normalized.actions,
+			visible: normalized.visible,
 			view: {
 				max_lines: normalized.view.max_lines,
 				content: decodedContent,

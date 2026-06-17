@@ -28,7 +28,8 @@
 										"condition": ""
 									}
 								],
-								"destination": ""
+								"destination": "",
+								"visible": "true"
 							},
 							"title": "",
 							"placeholder": "Search anything"
@@ -36,7 +37,8 @@
 					},
 					"source": "{items}",
 					"actions": [],
-					"destination": ""
+					"destination": "",
+					"visible": "true"
 				}
 			],
 			"title": "Home",
@@ -57,7 +59,8 @@
 						"condition": ""
 					}
 				],
-				"destination": ""
+				"destination": "",
+				"visible": "true"
 			}
 		}
 	]

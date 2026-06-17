@@ -6,15 +6,6 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 Clients call the API with JSON-RPC `resources`, `sync`, `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "evy"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API’s Postgres schema. `service: "marketplace"` (and future workers) is discovered through `ListResources` and proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic “namespace row” in the EVY data schema.
 
-## Common date-time fields
-
-Tables that track updates use ISO 8601 / RFC 3339 strings (never numeric Unix timestamps):
-
-- `createdAt`: string (date-time)
-- `updatedAt`: string (date-time)
-
----
-
 ## Schema-backed row types (`DATA_EVY_*`)
 
 These are defined in `types/schema/data/data.schema.json`. The API and generated Drizzle schema use them.
@@ -36,7 +27,6 @@ id: uuid
 name: string (maxLength 50)
 description: string
 sortOrder: integer (optional)
-defaultWeightKg: number (optional)
 createdAt: string (date-time)
 updatedAt: string (date-time)
 ```
@@ -121,12 +111,6 @@ Base model with no extra props (identity may be implied by storage layer).
 
 ### calendar_selection (compact calendar / runtime)
 
-Used by Calendar rows. The grid geometry is defined in the SDUI row content; runtime state is stored as arrays of ISO local date-time strings (no timezone).
-
-Selection value format: `yyyy-MM-dd'T'HH:mm:ss`, e.g. `"2024-09-18T09:00:00"`.
-
-Calendar row content fields (flat in `view.content`):
-
 ```
 start_time: string           (HH:mm, 24-hour, e.g. "07:00")
 end_time: string             (HH:mm, exclusive, e.g. "19:00")
@@ -156,9 +140,7 @@ ship: {
 
 ### duration
 
-Reference option for delivery distance / duration pickers (matches RPC resources like `durations`).
-
 ```
 id: uuid
-value: string
+value: string (e.g. "30 minutes")
 ```

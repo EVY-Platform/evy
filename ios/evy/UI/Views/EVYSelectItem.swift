@@ -45,20 +45,22 @@ struct EVYSelectItem: View {
     self.textStyle = textStyle
     self.onSelect = onSelect
 
+    let watchTargets = EVY.watchTargets(for: destination)
+
     selected = EVYState(
-      watch: destination,
+      watches: watchTargets,
       setter: {
         do {
           if target == .single_identifier {
             let sourceId = value.identifierValue()
-            let destinationId = try EVY.getDataFromText($0).identifierValue()
+            let destinationId = try EVY.getDataFromText(destination).identifierValue()
             return sourceId == destinationId
           } else if target == .single_value {
             let sourceString = value.toString()
-            let destinationString = try EVY.getDataFromText($0).toString()
+            let destinationString = try EVY.getDataFromText(destination).toString()
             return sourceString == destinationString
           } else if target == .single_bool {
-            return try EVY.evaluateFromText($0)
+            return try EVY.evaluateFromText(destination)
           } else if target == .single_object {
             let existingData = try EVY.getDataFromText(destination)
             return existingData.identifierValue() == value.identifierValue()

@@ -40,11 +40,13 @@ struct EVYDropdown: View {
     }
     options = loadedOptions
 
+    let watchTargets = EVY.watchTargets(for: destination)
+
     selection = EVYState(
-      watch: destination,
+      watches: watchTargets,
       setter: {
         do {
-          let value = try EVY.getDataFromText($0)
+          let value = try EVY.getDataFromText(destination)
           if case .string(let identifier) = value {
             if identifier.isEmpty { return "" }
             if let matchingOption = loadedOptions.first(where: {

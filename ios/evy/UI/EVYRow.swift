@@ -15,6 +15,7 @@ struct EVYRow: View, Identifiable {
 
   let row: UI_Row
   let datum: EVYJson?
+  private let isVisible: EVYState<Bool>
 
   @Environment(\.navigate) private var navigate
   @State private var presentedSheetRow: PresentedSheetRow?
@@ -22,25 +23,46 @@ struct EVYRow: View, Identifiable {
   init(row: UI_Row, datum: EVYJson? = nil) {
     self.row = row
     self.datum = datum
+    let visibleExpr = row.visible.trimmingCharacters(in: .whitespacesAndNewlines)
+    isVisible = Self.makeVisibilityState(for: visibleExpr)
   }
 
   var id: String { row.id }
 
   var body: some View {
-    if let payload = try? UI_RowPayload.from(row: row) {
-      renderedRow(for: payload)
-        .sheet(item: $presentedSheetRow) { presented in
-          ScrollView {
-            EVYRow(row: presented.row)
+    if isVisible.value {
+      if let payload = try? UI_RowPayload.from(row: row) {
+        renderedRow(for: payload)
+          .sheet(item: $presentedSheetRow) { presented in
+            ScrollView {
+              EVYRow(row: presented.row)
+            }
+            .padding(.vertical, Constants.majorPadding)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(Color.white.ignoresSafeArea())
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(.white)
           }
-          .padding(.vertical, Constants.majorPadding)
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-          .background(Color.white.ignoresSafeArea())
-          .presentationDetents([.medium, .large])
-          .presentationDragIndicator(.visible)
-          .presentationBackground(.white)
-        }
+      }
+    } else {
+      EmptyView()
     }
+  }
+
+  private static func makeVisibilityState(for visibleExpr: String) -> EVYState<Bool> {
+    if visibleExpr.isEmpty {
+      return EVYState(staticString: true)
+    }
+    let evaluateVisibility = { (try? EVY.evaluateFromText(visibleExpr)) ?? false }
+    let watchTargets = EVY.watchTargets(for: visibleExpr)
+    if watchTargets.isEmpty {
+      return EVYState(staticString: evaluateVisibility())
+    }
+    if watchTargets.count == 1, let watch = watchTargets.first {
+      return EVYState(watches: [watch], setter: evaluateVisibility)
+    }
+    return EVYState(watches: watchTargets, setter: evaluateVisibility)
   }
 
   private var shouldUseGenericActionTap: Bool {
