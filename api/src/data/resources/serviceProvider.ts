@@ -18,6 +18,8 @@ import {
 import { serviceProvider } from "../../../../types/generated/ts/db/schema.generated";
 import { hasDatabaseErrorCode, type EvyDb } from "../../database/db";
 
+// Queries
+
 export async function listProviderRows(
 	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
@@ -39,6 +41,8 @@ export async function listProviderRows(
 	);
 	return validateGetResponse(rows);
 }
+
+// Mutations
 
 export async function createProviderResource(
 	db: EvyDb,

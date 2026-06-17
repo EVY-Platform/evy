@@ -8,6 +8,8 @@ import {
 } from "../../../../types/generated/ts/db/schema.generated";
 import type { EvyDb } from "../../database/db";
 
+// Public API
+
 export async function validateAuth(
 	db: EvyDb,
 	token: string,

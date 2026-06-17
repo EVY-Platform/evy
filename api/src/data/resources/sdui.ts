@@ -1,22 +1,24 @@
 import { and, asc, eq, gt } from "drizzle-orm";
 
 import type {
-	GetResponse,
-	GetRequest,
 	CreateRequest,
 	CreateResponse,
+	GetRequest,
+	GetResponse,
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
 import {
+	validateCreateResponse,
 	validateGetResponse,
 	validateUiFlow as validateFlowData,
-	validateCreateResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
 
 import { flow } from "../../../../types/generated/ts/db/schema.generated";
 import { hasDatabaseErrorCode, type EvyDb } from "../../database/db";
+
+// Queries
 
 export async function getSduiRows(
 	db: EvyDb,
@@ -32,17 +34,16 @@ export async function getSduiRows(
 		whereClauses.push(gt(flow.updatedAt, filter.updatedAfter));
 	}
 
-	const rows = whereClauses.length
-		? await base
-				.where(and(...whereClauses))
-				.orderBy(asc(flow.updatedAt), asc(flow.id))
-		: await base.orderBy(asc(flow.updatedAt), asc(flow.id));
+	const query = whereClauses.length ? base.where(and(...whereClauses)) : base;
+	const rows = await query.orderBy(asc(flow.updatedAt), asc(flow.id));
 	const payload = rows.map((f) => f.data);
 	for (const item of payload) {
 		validateFlowData(item);
 	}
 	return validateGetResponse(payload);
 }
+
+// Mutations
 
 export async function createSduiFlow(
 	db: EvyDb,

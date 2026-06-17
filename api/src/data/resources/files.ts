@@ -28,69 +28,21 @@ import {
 	uploadSessionToBuffer,
 } from "../../procedures/uploads";
 
+// Types
+
+type PreparedFileUpload = {
+	fileId: string;
+	metadataPayload: DATA_EVY_File;
+};
+
+// Storage configuration
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let filesDir = resolve(join(__dirname, "..", "public", "files"));
 let uploadTmpDir = resolve(join(__dirname, "..", "public", "uploads"));
 
-export async function writeFileBinary(params: {
-	id: string;
-	bytes: Buffer;
-}): Promise<void> {
-	await mkdir(filesDir, { recursive: true });
-	await mkdir(uploadTmpDir, { recursive: true });
-
-	const finalPath = filePath(params.id);
-	const tmpPath = join(uploadTmpDir, `${sanitizeFileId(params.id)}.tmp`);
-
-	try {
-		await writeFile(tmpPath, params.bytes);
-		await rename(tmpPath, finalPath);
-	} catch (err) {
-		await deletePathIfExists(finalPath);
-		await deletePathIfExists(tmpPath);
-		throw err;
-	}
-}
-
-async function readFileBinary(id: string): Promise<Buffer> {
-	return readFile(filePath(id));
-}
-
-async function deleteFileBinary(id: string): Promise<void> {
-	await unlink(filePath(id));
-}
-
-async function deleteFileBinaryIfExists(id: string): Promise<void> {
-	await deletePathIfExists(filePath(id));
-}
-
-function filePath(id: string): string {
-	return resolve(join(filesDir, sanitizeFileId(id)));
-}
-
-function sanitizeFileId(id: string): string {
-	return id.replace(/[^a-zA-Z0-9-]/g, "");
-}
-
-function hasNodeErrorCode(err: unknown, code: string): boolean {
-	return (
-		typeof err === "object" &&
-		err !== null &&
-		"code" in err &&
-		err.code === code
-	);
-}
-
-async function deletePathIfExists(path: string): Promise<void> {
-	try {
-		await unlink(path);
-	} catch (err) {
-		if (!hasNodeErrorCode(err, "ENOENT")) {
-			throw err;
-		}
-	}
-}
+// Test hooks
 
 export function setFileStorageDirsForTest(params: {
 	filesDir: string;
@@ -105,41 +57,75 @@ export function resetFileStorageDirsForTest(): void {
 	uploadTmpDir = resolve(join(__dirname, "..", "public", "uploads"));
 }
 
-type PreparedFileUpload = {
-	fileId: string;
-	metadataPayload: DATA_EVY_File;
-};
+// Resource operations
 
-async function createFileFromUpload(params: {
-	filter: CreateRequest["filter"] | undefined;
-	dataPayload: unknown;
-	nowIso: string;
-}): Promise<PreparedFileUpload> {
-	const validated = validateFilePayload(params.dataPayload);
-	const fileId = params.filter?.id ?? validated.id;
-	const uploadSession = getUploadSession(fileId);
+export async function listFileRowsWithBinary(
+	db: EvyDb,
+	filter: GetRequest["filter"] | undefined,
+): Promise<GetResponse> {
+	const base = db.select().from(file);
+	const whereClauses: ReturnType<typeof eq>[] = [];
 
-	if (!uploadSession) {
-		throw new Error(`No upload found for file id: ${fileId}`);
+	if (filter?.id) {
+		whereClauses.push(eq(file.id, filter.id));
+	}
+	if (filter?.updatedAfter) {
+		whereClauses.push(gt(file.updatedAt, filter.updatedAfter));
 	}
 
-	const fileBuffer = uploadSessionToBuffer(uploadSession);
-	await writeFileBinary({
-		id: fileId,
-		bytes: fileBuffer,
-	});
-	deleteUploadSession(fileId);
-
-	return {
-		fileId,
-		metadataPayload: {
-			id: fileId,
-			type: validated.type,
-			createdAt: params.nowIso,
-			updatedAt: params.nowIso,
-		},
-	};
+	const query = whereClauses.length ? base.where(and(...whereClauses)) : base;
+	const rows = await query.orderBy(asc(file.updatedAt), asc(file.id));
+	const response = await Promise.all(
+		rows.map((row) => fileRowToGetFileResponse(row as DATA_EVY_File)),
+	);
+	return validateGetResponse(response);
 }
+
+export async function createFileResource(
+	db: EvyDb,
+	filter: CreateRequest["filter"] | undefined,
+	dataPayload: unknown,
+	nowIso: string,
+	notify: (value: unknown) => void,
+): Promise<CreateResponse> {
+	const preparedFile = await createFileFromUpload({
+		filter,
+		dataPayload,
+		nowIso,
+	});
+
+	try {
+		return await insertFileMetadata(
+			db,
+			filter,
+			preparedFile.metadataPayload,
+			nowIso,
+			notify,
+		);
+	} catch (err) {
+		await deleteFileBinaryIfExists(preparedFile.fileId);
+		throw err;
+	}
+}
+
+export async function deleteFileResource(
+	db: EvyDb,
+	filter: DeleteRequest["filter"],
+	notify: (value: unknown) => void,
+): Promise<DeleteResponse> {
+	const metadata = await selectFileRowById(db, filter.id);
+	try {
+		await deleteFileBinary(metadata.id);
+	} catch (err) {
+		if (!hasNodeErrorCode(err, "ENOENT")) {
+			throw err;
+		}
+	}
+
+	return deleteFileMetadata(db, filter, notify);
+}
+
+// Metadata operations
 
 async function selectFileRowById(
 	db: EvyDb,
@@ -199,49 +185,74 @@ async function deleteFileMetadata(
 	return response;
 }
 
-export async function createFileResource(
-	db: EvyDb,
-	filter: CreateRequest["filter"] | undefined,
-	dataPayload: unknown,
-	nowIso: string,
-	notify: (value: unknown) => void,
-): Promise<CreateResponse> {
-	const preparedFile = await createFileFromUpload({
-		filter,
-		dataPayload,
-		nowIso,
+// Upload preparation
+
+async function createFileFromUpload(params: {
+	filter: CreateRequest["filter"] | undefined;
+	dataPayload: unknown;
+	nowIso: string;
+}): Promise<PreparedFileUpload> {
+	const validated = validateFilePayload(params.dataPayload);
+	const fileId = params.filter?.id ?? validated.id;
+	const uploadSession = getUploadSession(fileId);
+
+	if (!uploadSession) {
+		throw new Error(`No upload found for file id: ${fileId}`);
+	}
+
+	const fileBuffer = uploadSessionToBuffer(uploadSession);
+	await writeFileBinary({
+		id: fileId,
+		bytes: fileBuffer,
 	});
+	deleteUploadSession(fileId);
+
+	return {
+		fileId,
+		metadataPayload: {
+			id: fileId,
+			type: validated.type,
+			createdAt: params.nowIso,
+			updatedAt: params.nowIso,
+		},
+	};
+}
+
+// Binary storage
+
+export async function writeFileBinary(params: {
+	id: string;
+	bytes: Buffer;
+}): Promise<void> {
+	await mkdir(filesDir, { recursive: true });
+	await mkdir(uploadTmpDir, { recursive: true });
+
+	const finalPath = filePath(params.id);
+	const tmpPath = join(uploadTmpDir, `${sanitizeFileId(params.id)}.tmp`);
 
 	try {
-		return await insertFileMetadata(
-			db,
-			filter,
-			preparedFile.metadataPayload,
-			nowIso,
-			notify,
-		);
+		await writeFile(tmpPath, params.bytes);
+		await rename(tmpPath, finalPath);
 	} catch (err) {
-		await deleteFileBinaryIfExists(preparedFile.fileId);
+		await deletePathIfExists(finalPath);
+		await deletePathIfExists(tmpPath);
 		throw err;
 	}
 }
 
-export async function deleteFileResource(
-	db: EvyDb,
-	filter: DeleteRequest["filter"],
-	notify: (value: unknown) => void,
-): Promise<DeleteResponse> {
-	const metadata = await selectFileRowById(db, filter.id);
-	try {
-		await deleteFileBinary(metadata.id);
-	} catch (err) {
-		if (!hasNodeErrorCode(err, "ENOENT")) {
-			throw err;
-		}
-	}
-
-	return deleteFileMetadata(db, filter, notify);
+async function readFileBinary(id: string): Promise<Buffer> {
+	return readFile(filePath(id));
 }
+
+async function deleteFileBinary(id: string): Promise<void> {
+	await unlink(filePath(id));
+}
+
+async function deleteFileBinaryIfExists(id: string): Promise<void> {
+	await deletePathIfExists(filePath(id));
+}
+
+// Response mapping
 
 async function fileRowToGetFileResponse(
 	metadata: DATA_EVY_File,
@@ -262,24 +273,31 @@ async function fileRowToGetFileResponse(
 	};
 }
 
-export async function listFileRowsWithBinary(
-	db: EvyDb,
-	filter: GetRequest["filter"] | undefined,
-): Promise<GetResponse> {
-	const base = db.select().from(file);
-	const whereClauses: ReturnType<typeof eq>[] = [];
+// Local helpers
 
-	if (filter?.id) {
-		whereClauses.push(eq(file.id, filter.id));
-	}
-	if (filter?.updatedAfter) {
-		whereClauses.push(gt(file.updatedAt, filter.updatedAfter));
-	}
+function filePath(id: string): string {
+	return resolve(join(filesDir, sanitizeFileId(id)));
+}
 
-	const query = whereClauses.length ? base.where(and(...whereClauses)) : base;
-	const rows = await query.orderBy(asc(file.updatedAt), asc(file.id));
-	const response = await Promise.all(
-		rows.map((row) => fileRowToGetFileResponse(row as DATA_EVY_File)),
+function sanitizeFileId(id: string): string {
+	return id.replace(/[^a-zA-Z0-9-]/g, "");
+}
+
+function hasNodeErrorCode(err: unknown, code: string): boolean {
+	return (
+		typeof err === "object" &&
+		err !== null &&
+		"code" in err &&
+		err.code === code
 	);
-	return validateGetResponse(response);
+}
+
+async function deletePathIfExists(path: string): Promise<void> {
+	try {
+		await unlink(path);
+	} catch (err) {
+		if (!hasNodeErrorCode(err, "ENOENT")) {
+			throw err;
+		}
+	}
 }
