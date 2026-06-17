@@ -1,35 +1,32 @@
 import { and, asc, eq, gt } from "drizzle-orm";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 
 import type {
-	DATA_EVY_File,
-	FileWithBinary,
 	CreateRequest,
 	CreateResponse,
+	DATA_EVY_File,
 	DeleteRequest,
 	DeleteResponse,
+	FileWithBinary,
 	GetRequest,
 	GetResponse,
 } from "evy-types";
 import {
+	validateCreateResponse,
 	validateDataEvyFile as validateFilePayload,
+	validateDeleteResponse,
 	validateGetResponse,
 } from "evy-types/validators";
 
 import { file } from "../../../../types/generated/ts/db/schema.generated";
+import { hasDatabaseErrorCode, type EvyDb } from "../../database/db";
 import {
 	deleteUploadSession,
 	getUploadSession,
 	uploadSessionToBuffer,
 } from "../../procedures/uploads";
-import type { EvyDb } from "../../database/db";
-import {
-	deleteResourceEntityFromConfig,
-	insertResourceEntityFromConfig,
-	type ResourceEntityConfig,
-} from "./resourceEntity";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -76,11 +73,22 @@ function sanitizeFileId(id: string): string {
 	return id.replace(/[^a-zA-Z0-9-]/g, "");
 }
 
+function hasNodeErrorCode(err: unknown, code: string): boolean {
+	return (
+		typeof err === "object" &&
+		err !== null &&
+		"code" in err &&
+		err.code === code
+	);
+}
+
 async function deletePathIfExists(path: string): Promise<void> {
 	try {
 		await unlink(path);
-	} catch {
-		// ignore missing files
+	} catch (err) {
+		if (!hasNodeErrorCode(err, "ENOENT")) {
+			throw err;
+		}
 	}
 }
 
@@ -97,24 +105,9 @@ export function resetFileStorageDirsForTest(): void {
 	uploadTmpDir = resolve(join(__dirname, "..", "public", "uploads"));
 }
 
-const fileResourceConfig: ResourceEntityConfig<DATA_EVY_File> = {
-	table: file,
-	validate: validateFilePayload,
-	toUpdateSet: (_validated, nowIso) => ({
-		updatedAt: nowIso,
-	}),
-	toInsertValues: (validated, nowIso, filterId) => ({
-		id: filterId ?? validated.id,
-		type: validated.type,
-		createdAt: nowIso,
-		updatedAt: nowIso,
-	}),
-	mapRow: (row) => row,
-};
-
 type PreparedFileUpload = {
 	fileId: string;
-	dataPayload: DATA_EVY_File;
+	metadataPayload: DATA_EVY_File;
 };
 
 async function createFileFromUpload(params: {
@@ -139,7 +132,7 @@ async function createFileFromUpload(params: {
 
 	return {
 		fileId,
-		dataPayload: {
+		metadataPayload: {
 			id: fileId,
 			type: validated.type,
 			createdAt: params.nowIso,
@@ -159,6 +152,53 @@ async function selectFileRowById(
 	return rows[0] as DATA_EVY_File;
 }
 
+async function insertFileMetadata(
+	db: EvyDb,
+	filter: CreateRequest["filter"] | undefined,
+	metadataPayload: unknown,
+	nowIso: string,
+	notify: (value: unknown) => void,
+): Promise<CreateResponse> {
+	const validated = validateFilePayload(metadataPayload);
+	const inserted = await db
+		.insert(file)
+		.values({
+			id: filter?.id ?? validated.id,
+			type: validated.type,
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		})
+		.returning()
+		.catch((err: unknown) => {
+			if (hasDatabaseErrorCode(err, "23505")) {
+				throw new Error("Resource already exists");
+			}
+			throw err;
+		});
+	const response = validateCreateResponse(inserted[0]);
+
+	notify(response);
+	return response;
+}
+
+async function deleteFileMetadata(
+	db: EvyDb,
+	filter: DeleteRequest["filter"],
+	notify: (value: unknown) => void,
+): Promise<DeleteResponse> {
+	const deleted = await db
+		.delete(file)
+		.where(eq(file.id, filter.id))
+		.returning();
+	if (deleted.length === 0) {
+		throw new Error("Resource not found");
+	}
+	const response = validateDeleteResponse(deleted[0]);
+
+	notify(response);
+	return response;
+}
+
 export async function createFileResource(
 	db: EvyDb,
 	filter: CreateRequest["filter"] | undefined,
@@ -173,11 +213,10 @@ export async function createFileResource(
 	});
 
 	try {
-		return await insertResourceEntityFromConfig(
+		return await insertFileMetadata(
 			db,
-			fileResourceConfig,
 			filter,
-			preparedFile.dataPayload,
+			preparedFile.metadataPayload,
 			nowIso,
 			notify,
 		);
@@ -195,11 +234,13 @@ export async function deleteFileResource(
 	const metadata = await selectFileRowById(db, filter.id);
 	try {
 		await deleteFileBinary(metadata.id);
-	} catch {
-		// Binary already missing — still clean up metadata to avoid orphan.
+	} catch (err) {
+		if (!hasNodeErrorCode(err, "ENOENT")) {
+			throw err;
+		}
 	}
 
-	return deleteResourceEntityFromConfig(db, fileResourceConfig, filter, notify);
+	return deleteFileMetadata(db, filter, notify);
 }
 
 async function fileRowToGetFileResponse(

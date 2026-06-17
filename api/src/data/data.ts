@@ -17,19 +17,20 @@ import {
 import type { EvyDb } from "../database/db";
 
 import {
-	service,
-	organization,
-	serviceProvider,
-} from "../../../types/generated/ts/db/schema.generated";
-
+	createOrganizationResource,
+	listOrganizationRows,
+	updateOrganizationResource,
+} from "./resources/organisation";
 import {
-	listCoreResourceRows,
-	insertResourceEntityFromConfig,
-	updateResourceEntityFromConfig,
-} from "./resources/resourceEntity";
-import { organizationResourceConfig } from "./resources/organisation";
-import { mapServiceRow, serviceResourceConfig } from "./resources/service";
-import { providerResourceConfig } from "./resources/serviceProvider";
+	createServiceResource,
+	listServiceRows,
+	updateServiceResource,
+} from "./resources/service";
+import {
+	createProviderResource,
+	listProviderRows,
+	updateProviderResource,
+} from "./resources/serviceProvider";
 import { getSduiRows, createSduiFlow, updateSduiFlow } from "./resources/sdui";
 import {
 	createFileResource,
@@ -123,15 +124,15 @@ async function getCoreBody(
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return listCoreResourceRows(db, service, filter, mapServiceRow);
+		return listServiceRows(db, filter);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return listCoreResourceRows(db, organization, filter, (r) => r);
+		return listOrganizationRows(db, filter);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return listCoreResourceRows(db, serviceProvider, filter, (r) => r);
+		return listProviderRows(db, filter);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.FILES) {
@@ -154,9 +155,8 @@ async function createCoreBody(
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return insertResourceEntityFromConfig(
+		return createServiceResource(
 			db,
-			serviceResourceConfig,
 			filter,
 			dataPayload,
 			nowIso,
@@ -165,9 +165,8 @@ async function createCoreBody(
 	}
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return insertResourceEntityFromConfig(
+		return createOrganizationResource(
 			db,
-			organizationResourceConfig,
 			filter,
 			dataPayload,
 			nowIso,
@@ -176,9 +175,8 @@ async function createCoreBody(
 	}
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return insertResourceEntityFromConfig(
+		return createProviderResource(
 			db,
-			providerResourceConfig,
 			filter,
 			dataPayload,
 			nowIso,
@@ -212,9 +210,8 @@ async function updateCoreBody(
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return updateResourceEntityFromConfig(
+		return updateServiceResource(
 			db,
-			serviceResourceConfig,
 			filter,
 			dataPayload,
 			nowIso,
@@ -223,9 +220,8 @@ async function updateCoreBody(
 	}
 
 	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return updateResourceEntityFromConfig(
+		return updateOrganizationResource(
 			db,
-			organizationResourceConfig,
 			filter,
 			dataPayload,
 			nowIso,
@@ -234,9 +230,8 @@ async function updateCoreBody(
 	}
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return updateResourceEntityFromConfig(
+		return updateProviderResource(
 			db,
-			providerResourceConfig,
 			filter,
 			dataPayload,
 			nowIso,
