@@ -29,6 +29,13 @@
 			"when": 1780228970287,
 			"tag": "0003_amused_christian_walker",
 			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1781695798071,
+			"tag": "0004_remove_service_default_weight_kg",
+			"breakpoints": true
 		}
 	]
 }

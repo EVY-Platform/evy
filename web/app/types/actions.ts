@@ -46,7 +46,7 @@ export type RowAction =
 	| {
 			type: "UPDATE_ROW_ROOT";
 			rowId: string;
-			field: "source" | "destination";
+			field: "source" | "destination" | "visible";
 			value: string;
 	  }
 	| {

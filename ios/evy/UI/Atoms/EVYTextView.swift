@@ -39,11 +39,10 @@ struct EVYTextView: View {
     } else {
       let placeholderVal = EVYValue(placeholder, nil, nil)
       let templateText = text
-      let watchKey = EVY.watchTarget(for: templateText)
 
       self.text = EVYState(
-        watch: watchKey,
-        setter: { _ in
+        textToWatch: templateText,
+        setter: {
           guard let value = try? EVY.getValueFromText(templateText) else {
             return placeholderVal
           }

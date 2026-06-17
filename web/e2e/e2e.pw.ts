@@ -218,6 +218,7 @@ test.describe("Web E2E Integration Tests", () => {
 							id: crypto.randomUUID(),
 							type: "Text",
 							source: "",
+							visible: "true",
 							actions: [],
 							view: {
 								content: {
@@ -271,6 +272,7 @@ test.describe("Web E2E Integration Tests", () => {
 			id: crypto.randomUUID(),
 			type: "Text",
 			source: "",
+			visible: "true",
 			actions: [],
 			view: {
 				content: {
@@ -280,6 +282,7 @@ test.describe("Web E2E Integration Tests", () => {
 						id: crypto.randomUUID(),
 						type: "Text",
 						source: "",
+						visible: "true",
 						actions: [],
 						view: {
 							content: {
@@ -289,6 +292,7 @@ test.describe("Web E2E Integration Tests", () => {
 									id: crypto.randomUUID(),
 									type: "Text",
 									source: "",
+									visible: "true",
 									actions: [],
 									view: {
 										content: {
@@ -307,6 +311,7 @@ test.describe("Web E2E Integration Tests", () => {
 			id: crypto.randomUUID(),
 			type: "Text",
 			source: "",
+			visible: "true",
 			actions: [],
 			view: {
 				content: {
@@ -408,6 +413,7 @@ test.describe("Web E2E Integration Tests", () => {
 						id: crypto.randomUUID(),
 						type: "Button",
 						source: "",
+						visible: "true",
 						destination: "",
 						actions: [],
 						view: {

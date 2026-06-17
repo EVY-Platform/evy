@@ -26,7 +26,7 @@ flowchart LR
     api -- dataChanged JSON-RPC --> client
 ```
 
-The service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto). `Get`, `Create`, and `Update` are unary RPCs with JSON-encoded payloads; `ListResources` advertises the resource names the `api` includes in its runtime registry; and `SubscribeEvents` is a server-streaming RPC that pushes `dataChanged` events to the `api` after each successful write.
+The service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto). `Get`, `Create`, and `Update` are unary RPCs with JSON-encoded payloads. `ListResources` advertises the resource names the `api` includes in its runtime registry. `SubscribeEvents` is a server-streaming RPC that pushes `dataChanged` events to the `api` after each successful write.
 
 ## Environment
 
@@ -44,4 +44,4 @@ From repo root:
 docker compose -f services/marketplace/compose.yml up --build
 ```
 
-The dev stack in the repo root also builds this service; see root `docker-compose.yml`.
+The dev stack in the repo root also builds this service. See the root `docker-compose.yml`.

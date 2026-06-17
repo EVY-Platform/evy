@@ -8,6 +8,7 @@ export default defineRow("DropdownRow", {
 		type: "Dropdown",
 		actions: [],
 		source: "{conditions}",
+		visible: "true",
 		view: {
 			content: {
 				title: "Dropdown row title",

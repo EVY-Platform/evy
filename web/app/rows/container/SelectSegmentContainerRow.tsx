@@ -30,6 +30,7 @@ export default defineRow(typeName, {
 		type: "SelectSegmentContainer",
 		actions: [],
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "Select segment container row title",

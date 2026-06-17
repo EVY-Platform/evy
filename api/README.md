@@ -6,7 +6,7 @@ A JSON-RPC 2.0 WebSocket API gateway that routes data requests by `service` / `r
 
 ### Request dispatch
 
-Incoming JSON-RPC messages are authenticated where required, validated, then dispatched based on `service`. Requests for `service: "evy"` are handled by evy core resource modules; all other services are forwarded to the appropriate backend over gRPC. Binary upload frames follow a separate path and are only accepted on authenticated connections.
+Incoming JSON-RPC messages are authenticated where required, validated, then dispatched based on `service`. Requests for `service: "evy"` are handled by evy core resource modules. All other services are forwarded to the appropriate backend over gRPC. Binary upload frames follow a separate path and are only accepted on authenticated connections.
 
 ```mermaid
 sequenceDiagram
@@ -109,7 +109,7 @@ bun run dev
 docker build -t evy-api .
 ```
 
-All required env vars (database connection, gRPC hosts, etc.) must be provided at runtime — see `.env.example` for the full list.
+All required env vars (database connection, gRPC hosts, etc.) must be provided at runtime. See the root [`.env.example`](../.env.example) for the full list.
 
 ### Docker Compose
 

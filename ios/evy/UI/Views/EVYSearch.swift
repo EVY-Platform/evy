@@ -32,9 +32,9 @@ struct EVYSearch: View {
     self.resultTemplate = resultTemplate
 
     results = EVYState(
-      watch: source,
-      setter: { input in
-        Self.makeResults(input: input, resultTemplate: resultTemplate)
+      textToWatch: source,
+      setter: {
+        Self.makeResults(input: source, resultTemplate: resultTemplate)
       }
     )
   }

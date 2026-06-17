@@ -283,26 +283,6 @@ func _getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValu
 }
 
 @MainActor
-func _watchTarget(for text: String) -> String {
-  let unwrapped = _parsePropsFromText(text)
-  let cleanUnwrapped = EVY.stripLocalPrefix(EVY.stripApiPrefix(unwrapped))
-  let candidates: [String] = unwrapped == text ? [text] : [cleanUnwrapped, text]
-  for candidate in candidates {
-    if let functionCall = parseFunctionCall(candidate) {
-      let parts = splitFunctionArguments(functionCall.functionArgs)
-      if let first = parts.first, !first.isEmpty {
-        return EVY.stripLocalPrefix(EVY.stripApiPrefix(stripOptionalSurroundingQuotes(first)))
-      }
-      return EVY.stripLocalPrefix(EVY.stripApiPrefix(functionCall.functionArgs))
-    }
-  }
-  if unwrapped != text {
-    return cleanUnwrapped
-  }
-  return text
-}
-
-@MainActor
 func _evaluateFromText(_ input: String) throws -> Bool {
   let match = try parseTextFromText(input)
   return match.value == "true"
@@ -605,6 +585,109 @@ private func regexForPattern(_ pattern: String) throws -> Regex<AnyRegexOutput> 
 private func firstMatch(_ input: String, pattern: String) throws -> Regex<AnyRegexOutput>.Match? {
   let regex = try regexForPattern(pattern)
   return input.firstMatch(of: regex)
+}
+
+@MainActor
+private func watchTargetOperand(_ operand: String) -> String? {
+  let prop = operand.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !prop.isEmpty else { return nil }
+  if prop == "true" || prop == "false" { return nil }
+  if prop.hasPrefix("\"") || prop.hasPrefix("'") { return nil }
+  if Double(prop) != nil { return nil }
+  return EVY.stripLocalPrefix(EVY.stripApiPrefix(prop))
+}
+
+@MainActor
+private func appendUniqueWatchTarget(_ target: String?, to paths: inout [String]) {
+  guard let target, !target.isEmpty else { return }
+  if !paths.contains(target) {
+    paths.append(target)
+  }
+}
+
+@MainActor
+func _watchTargets(for text: String) -> [String] {
+  var paths: [String] = []
+  appendWatchTargets(from: text, to: &paths)
+  return paths
+}
+
+@MainActor
+private func appendWatchTargets(from text: String, to paths: inout [String]) {
+  let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !trimmed.isEmpty else { return }
+
+  if let (_, comparison) = parseComparisonFromText(trimmed) {
+    appendWatchTargets(fromExpression: comparison, to: &paths)
+    return
+  }
+
+  if appendWatchTargetsFromInterpolations(in: trimmed, to: &paths) {
+    return
+  }
+
+  appendWatchTargets(fromExpression: trimmed, to: &paths)
+}
+
+@MainActor
+private func appendWatchTargetsFromInterpolations(in text: String, to paths: inout [String]) -> Bool
+{
+  guard let regex = try? Regex(propsPattern) else {
+    return false
+  }
+
+  let matches = text.matches(of: regex)
+  guard !matches.isEmpty else {
+    return false
+  }
+
+  for match in matches {
+    let expression = String(match.0.dropFirst().dropLast())
+    appendWatchTargets(fromExpression: expression, to: &paths)
+  }
+  return true
+}
+
+@MainActor
+private func appendWatchTargets(fromExpression expression: String, to paths: inout [String]) {
+  let cleaned = expression.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !cleaned.isEmpty else { return }
+
+  let orTerms = splitRespectingParens(cleaned, separator: "||")
+  if orTerms.count > 1 {
+    for term in orTerms {
+      appendWatchTargets(fromExpression: term, to: &paths)
+    }
+    return
+  }
+
+  let andTerms = splitRespectingParens(cleaned, separator: "&&")
+  if andTerms.count > 1 {
+    for term in andTerms {
+      appendWatchTargets(fromExpression: term, to: &paths)
+    }
+    return
+  }
+
+  if isWrappedInParentheses(cleaned) {
+    appendWatchTargets(fromExpression: String(cleaned.dropFirst().dropLast()), to: &paths)
+    return
+  }
+
+  if let (left, _, right) = parseAtomicComparison(cleaned) {
+    appendWatchTargets(fromExpression: left, to: &paths)
+    appendWatchTargets(fromExpression: right, to: &paths)
+    return
+  }
+
+  if let functionCall = parseFunctionCall(cleaned) {
+    for argument in splitFunctionArguments(functionCall.functionArgs) {
+      appendWatchTargets(fromExpression: argument, to: &paths)
+    }
+    return
+  }
+
+  appendUniqueWatchTarget(watchTargetOperand(cleaned), to: &paths)
 }
 
 #Preview {

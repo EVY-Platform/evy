@@ -22,15 +22,12 @@ struct EVYTextRow: View {
   var body: some View {
     let content = view.content
 
-    VStack(alignment: .leading, spacing: 0) {
-      HStack(alignment: .top) {
+    VStack(alignment: .leading, spacing: 4) {
+      HStack(alignment: .center, spacing: 8) {
         if !content.icon.isEmpty {
           EVYTextView(content.icon, style: .body)
         }
-        VStack(
-          alignment: .leading,
-          spacing: 0
-        ) {
+        VStack(alignment: .leading) {
           if !content.title.isEmpty {
             EVYTextView(content.title)
               .frame(maxWidth: .infinity, alignment: .leading)
@@ -44,20 +41,16 @@ struct EVYTextRow: View {
               .truncationMode(.tail)
           }
         }
+        if !content.action.isEmpty {
+          EVYTextView(content.action, style: .action)
+        }
       }
 
-      if !content.text.isEmpty || !content.action.isEmpty {
-        HStack {
-          if !content.text.isEmpty {
-            EVYTextView(content.text, placeholder: content.placeholder)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .lineLimit(maxLines)
-              .truncationMode(.tail)
-          }
-          if !content.action.isEmpty {
-            EVYTextView(content.action, style: .action)
-          }
-        }
+      if !content.text.isEmpty {
+        EVYTextView(content.text, placeholder: content.placeholder)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .lineLimit(maxLines)
+          .truncationMode(.tail)
       }
     }
     .padding(.horizontal, Constants.majorPadding)

@@ -57,18 +57,63 @@ final class InterpreterTests: XCTestCase {
       try EVY.evaluateFromText("{\(paymentCashKey) == true && \(paymentAppKey) == false}"))
   }
 
-  func testWatchTargetUnwrapsCountToUnderlyingDataKey() {
+  func testWatchTargetsExtractsMultipleOperandsFromOrCondition() {
+    XCTAssertEqual(
+      Set(EVY.watchTargets(for: "{payment_cash == true || payment_app == true}")),
+      Set(["payment_cash", "payment_app"]))
+  }
+
+  func testWatchTargetsIgnoresNumericLiterals() {
+    XCTAssertEqual(
+      EVY.watchTargets(for: "{1 > 0 || item.enabled == true}"),
+      ["item.enabled"])
+  }
+
+  func testEvaluatesNestedPaymentMethodVisibility() throws {
+    let itemKey = uniqueKey("item")
+    try store(
+      .dictionary([
+        "payment_methods": .dictionary([
+          "cash": .bool(true),
+          "app": .bool(false),
+        ])
+      ]),
+      at: itemKey)
+
+    XCTAssertTrue(try EVY.evaluateFromText("{\(itemKey).payment_methods.cash == true}"))
+    XCTAssertFalse(try EVY.evaluateFromText("{\(itemKey).payment_methods.app == true}"))
+  }
+
+  func testWatchTargetsExtractsSingleWrappedProp() {
+    XCTAssertEqual(EVY.watchTargets(for: "{item.title}"), ["item.title"])
+  }
+
+  func testWatchTargetsUnwrapsCountToUnderlyingDataKey() {
     let key = uniqueKey("photo_ids")
     XCTAssertEqual(
-      EVY.watchTarget(for: "Photos: {count(\(key))}/10 - more text"),
-      key
+      EVY.watchTargets(for: "Photos: {count(\(key))}/10 - more text"),
+      [key]
     )
   }
 
-  func testWatchTargetUsesFirstArgumentForMultiArgFunction() {
+  func testWatchTargetsIgnoresLiteralFunctionArguments() {
     XCTAssertEqual(
-      EVY.watchTarget(for: "{formatDecimal(item.price, 2)}"),
-      "item.price"
+      EVY.watchTargets(for: "{formatDecimal(item.price, 2)}"),
+      ["item.price"]
+    )
+  }
+
+  func testWatchTargetsExtractsMultipleInterpolations() {
+    XCTAssertEqual(
+      EVY.watchTargets(for: "{item.title} - {seller.name}"),
+      ["item.title", "seller.name"]
+    )
+  }
+
+  func testWatchTargetsExtractsAllDataFunctionArguments() {
+    XCTAssertEqual(
+      EVY.watchTargets(for: "{compare(item.width, item.height)}"),
+      ["item.width", "item.height"]
     )
   }
 
@@ -89,7 +134,7 @@ final class InterpreterTests: XCTestCase {
 
     XCTAssertEqual(publicValue.value, "value: public")
     XCTAssertEqual(privateValue.value, "value: private")
-    XCTAssertEqual(EVY.watchTarget(for: "{$local:\(key)}"), key)
+    XCTAssertEqual(EVY.watchTargets(for: "{$local:\(key)}"), [key])
   }
 
   func testApiPrefixRoutesToPublicDataStore() throws {
@@ -102,7 +147,7 @@ final class InterpreterTests: XCTestCase {
 
     let value = try parseTextFromText("value: {$api:\(key)}")
     XCTAssertEqual(value.value, "value: api_value")
-    XCTAssertEqual(EVY.watchTarget(for: "{$api:\(key)}"), key)
+    XCTAssertEqual(EVY.watchTargets(for: "{$api:\(key)}"), [key])
   }
 
   func testCountReflectsArrayAfterStoreUpdate() throws {

@@ -8,7 +8,7 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest, UI_Flow, UI_Page } from "evy-types";
-import type { WSParams } from "../index";
+import type { WSParams } from "../shared/ws";
 
 import {
 	asEvyDb,
@@ -30,8 +30,8 @@ describe("create/update real-time notifications", () => {
 	let previousApiPort: string | undefined;
 	let apiPort: number;
 	let apiUrl: string;
-	let initServer: typeof import("../index")["initServer"];
-	let emitJsonRpc: typeof import("../index")["emitJsonRpc"];
+	let initServer: typeof import("../shared/ws")["initServer"];
+	let emitJsonRpc: typeof import("../shared/ws")["emitJsonRpc"];
 	let server: WSServer;
 
 	beforeAll(async () => {
@@ -41,7 +41,7 @@ describe("create/update real-time notifications", () => {
 		previousApiPort = process.env.API_PORT;
 		apiPort = await getFreePort();
 		process.env.API_PORT = String(apiPort);
-		const wsMod = await import("../index");
+		const wsMod = await import("../shared/ws");
 		initServer = wsMod.initServer;
 		emitJsonRpc = wsMod.emitJsonRpc;
 
@@ -167,30 +167,25 @@ describe("create/update real-time notifications", () => {
 			"notify-token-6",
 			"Web",
 		);
-
-		const missed: unknown[] = [];
-		notSubscribed.on("dataChanged", (p: unknown) => missed.push(p));
+		let unexpected = false;
+		notSubscribed.on("dataChanged", () => {
+			unexpected = true;
+		});
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-7", "Web");
-
-		const testPage: UI_Page = {
-			id: crypto.randomUUID(),
-			title: "P",
-			rows: [],
-		};
 		await caller.call("create", {
 			service: "evy",
 			resource: "sdui",
 			data: {
 				id: crypto.randomUUID(),
-				name: "Only Subscriber",
-				pages: [testPage],
+				name: "Subscribed Only",
+				pages: [],
 			},
 		});
 
 		await notifyPromise;
-
-		expect(missed.length).toBe(0);
+		await new Promise((resolve) => setTimeout(resolve, 200));
+		expect(unexpected).toBe(false);
 
 		subscribed.close();
 		notSubscribed.close();

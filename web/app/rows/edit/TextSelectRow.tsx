@@ -9,6 +9,7 @@ export default defineRow("TextSelectRow", {
 		type: "TextSelect",
 		actions: [],
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "Text select row title",

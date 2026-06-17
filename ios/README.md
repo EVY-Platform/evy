@@ -22,7 +22,7 @@ maxExisting + 1` so they append to the end. No separate order-state layer is nee
 
 ### File uploads and remote files
 
-Uploads send binary frames over the authenticated WebSocket and finalise with a `create` RPC; if finalisation fails, a `cancelUpload` RPC cleans up the staged upload. Remote files are fetched via a `get` RPC and cached locally for rendering.
+Uploads send binary frames over the authenticated WebSocket and finalise with a `create` RPC. If finalisation fails, a `cancelUpload` RPC cleans up the staged upload. Remote files are fetched via a `get` RPC and cached locally for rendering.
 
 ### Architecture
 

@@ -133,6 +133,70 @@ describe("validateFlowData", () => {
 			}),
 		).toThrow("Flow validation failed");
 	});
+
+	it("requires row visible", () => {
+		const flowId = crypto.randomUUID();
+		const pageId = crypto.randomUUID();
+		const rowId = crypto.randomUUID();
+		expect(() =>
+			validateFlowData({
+				id: flowId,
+				name: "F",
+				pages: [
+					{
+						id: pageId,
+						title: "P",
+						rows: [
+							{
+								id: rowId,
+								type: "Text",
+								source: "",
+								actions: [],
+								view: {
+									content: {
+										title: "Always visible",
+									},
+								},
+							},
+						],
+					},
+				],
+			}),
+		).toThrow("Flow validation failed");
+	});
+
+	it("accepts row with visible predicate", () => {
+		const flowId = crypto.randomUUID();
+		const pageId = crypto.randomUUID();
+		const rowId = crypto.randomUUID();
+		const out = validateFlowData({
+			id: flowId,
+			name: "F",
+			pages: [
+				{
+					id: pageId,
+					title: "P",
+					rows: [
+						{
+							id: rowId,
+							type: "Text",
+							source: "",
+							actions: [],
+							visible: "{item.payment_methods.cash == true}",
+							view: {
+								content: {
+									title: "Cash accepted",
+								},
+							},
+						},
+					],
+				},
+			],
+		});
+		expect(out.pages[0]?.rows[0]?.visible).toBe(
+			"{item.payment_methods.cash == true}",
+		);
+	});
 });
 
 describe("validateFileUploadChunkMetadata", () => {

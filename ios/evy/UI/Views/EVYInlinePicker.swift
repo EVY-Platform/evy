@@ -39,13 +39,13 @@ struct EVYInlinePicker: View {
     options = loadedOptions
 
     selectedIdentifiers = EVYState(
-      watch: destination,
+      textToWatch: destination,
       setter: {
         do {
-          let selected = try EVY.getDataFromText($0)
+          let selected = try EVY.getDataFromText(destination)
           guard case .array(let arrayValue) = selected else {
             throw EVYError.invalidData(
-              context: "InlinePicker destination '\($0)' must be an array.")
+              context: "InlinePicker destination '\(destination)' must be an array.")
           }
           return arrayValue.map { $0.identifierValue() }
         } catch {

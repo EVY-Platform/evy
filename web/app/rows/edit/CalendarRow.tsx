@@ -108,6 +108,7 @@ export default defineRow("CalendarRow", {
 		type: "Calendar",
 		actions: [],
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "Calendar row title",

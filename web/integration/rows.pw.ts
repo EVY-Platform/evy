@@ -3,6 +3,28 @@ import { openAppWithTestFlows } from "./flowFixtures";
 import { getRowsPanel } from "./utils";
 
 test.describe("EVY Rows", () => {
+	test("should show drop placeholder inside container rows in the Rows panel", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{ id: "step_1", title: "Page 1", rows: [] },
+		]);
+		const rowsPanel = await getRowsPanel(page);
+
+		for (const containerTitle of [
+			"Column container row title",
+			"List container row title",
+			"Select segment container row title",
+		]) {
+			const containerRow = rowsPanel
+				.getByRole("button")
+				.filter({ hasText: containerTitle });
+			await containerRow.scrollIntoViewIfNeeded();
+			await expect(
+				containerRow.getByText("Drop row here", { exact: true }),
+			).toBeVisible();
+		}
+	});
 	test("should display available row components in the Rows panel", async ({
 		page,
 	}) => {

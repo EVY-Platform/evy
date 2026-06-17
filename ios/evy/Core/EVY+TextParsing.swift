@@ -22,8 +22,8 @@ extension EVY {
     _parsePropsFromText(input)
   }
 
-  static func watchTarget(for text: String) -> String {
-    _watchTarget(for: text)
+  static func watchTargets(for text: String) -> [String] {
+    _watchTargets(for: text)
   }
 
   static func evaluateFromText(_ input: String) throws -> Bool {

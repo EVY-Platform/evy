@@ -21,6 +21,7 @@ function makeServerRow(overrides: Partial<ServerRow> = {}): ServerRow {
 	return {
 		id: ROW_A,
 		source: "",
+		visible: "",
 		actions: [],
 		view: { content: {} },
 		...overrides,
@@ -64,7 +65,7 @@ describe("normalizeServerRow", () => {
 		expect(n.view.content).toMatchObject({
 			title: "T",
 			subtitle: "Sub",
-			icon: "",
+			icon: "::star::",
 		});
 	});
 
@@ -165,8 +166,8 @@ describe("normalizeServerRow", () => {
 		expect(n.view.content.child?.destination).toBe("");
 		expect(n.view.content.child?.view.content).toMatchObject({
 			title: "{$datum.title}",
-			subtitle: "",
-			icon: "",
+			subtitle: "Subtitle",
+			icon: "::star::",
 		});
 	});
 
@@ -225,6 +226,7 @@ describe("decodeFlows / encodeFlow", () => {
 							type: "Text",
 							source: "",
 							actions: [],
+							visible: "{item.payment_methods.cash == true}",
 							view: {
 								content: {
 									title: "Hello",
@@ -243,6 +245,31 @@ describe("decodeFlows / encodeFlow", () => {
 		const decoded = decodeFlows([validated])[0];
 		const encoded = encodeFlow(decoded);
 		expect(encoded).toEqual(canonical);
+	});
+});
+
+describe("decodeRow unknown types", () => {
+	it("preserves visible on unknown row config", () => {
+		const unknownRow = makeServerRow({
+			id: ROW_B,
+			type: "FutureRow",
+			visible: "{item.payment_methods.cash == true}",
+			view: {
+				content: { title: "Future" },
+			},
+		});
+		const flow = {
+			id: FLOW_ID,
+			name: "F",
+			pages: [{ id: PAGE_ID, title: "P", rows: [unknownRow] }],
+		} as ServerFlow;
+		const decoded = decodeFlows([flow])[0];
+		const row = decoded.pages[0]?.rows[0];
+		expect(row?.config.type).toBe("FutureRow");
+		expect(row?.config.visible).toBe("{item.payment_methods.cash == true}");
+		expect(encodeFlow(decoded).pages[0]?.rows[0]?.visible).toBe(
+			"{item.payment_methods.cash == true}",
+		);
 	});
 });
 

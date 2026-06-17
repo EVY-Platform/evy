@@ -86,6 +86,6 @@ export async function deleteResource(
 	throw new Error("Delete is only supported for evy core resources");
 }
 
-export async function sync(params: unknown): Promise<SyncResponse> {
-	return coreSync(params);
+export async function sync(params: unknown, db: EvyDb): Promise<SyncResponse> {
+	return coreSync(params, db);
 }

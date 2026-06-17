@@ -19,10 +19,10 @@ struct EVYTextSelectRow: View {
     self.view = view
     self.destination = destination
     self.selected = EVYState(
-      watch: destination,
+      textToWatch: destination,
       setter: {
         do {
-          return try EVY.evaluateFromText($0)
+          return try EVY.evaluateFromText(destination)
         } catch {
           return false
         }

@@ -109,6 +109,7 @@ describe("API E2E Tests", () => {
 				id: crypto.randomUUID(),
 				type: "Text",
 				source: "",
+				visible: "true",
 				actions: [],
 				view: {
 					content: {

@@ -165,8 +165,8 @@
 				}
 			],
 			"payment_methods": {
-				"cash": false,
-				"app": false
+				"cash": true,
+				"app": true
 			}
 		},
 		{
@@ -240,7 +240,7 @@
 				}
 			],
 			"payment_methods": {
-				"cash": false,
+				"cash": true,
 				"app": false
 			}
 		}

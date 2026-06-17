@@ -19,8 +19,6 @@ import {
 import { service } from "../../../../types/generated/ts/db/schema.generated";
 import { hasDatabaseErrorCode, type EvyDb } from "../../database/db";
 
-// Queries
-
 export async function listServiceRows(
 	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
@@ -40,8 +38,6 @@ export async function listServiceRows(
 	return validateGetResponse(rows.map(mapServiceRow));
 }
 
-// Mutations
-
 export async function createServiceResource(
 	db: EvyDb,
 	filter: CreateRequest["filter"] | undefined,
@@ -57,7 +53,6 @@ export async function createServiceResource(
 			name: validated.name,
 			description: validated.description,
 			sortOrder: validated.sortOrder ?? null,
-			defaultWeightKg: validated.defaultWeightKg ?? null,
 			createdAt: validated.createdAt,
 			updatedAt: nowIso,
 		})
@@ -88,7 +83,6 @@ export async function updateServiceResource(
 			name: validated.name,
 			description: validated.description,
 			sortOrder: validated.sortOrder ?? null,
-			defaultWeightKg: validated.defaultWeightKg ?? null,
 			updatedAt: nowIso,
 		})
 		.where(eq(service.id, filter.id))
@@ -102,17 +96,12 @@ export async function updateServiceResource(
 	return response;
 }
 
-// Row mapping
-
 function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 	return {
 		id: r.id,
 		name: r.name,
 		description: r.description,
 		...(r.sortOrder !== null ? { sortOrder: r.sortOrder } : {}),
-		...(r.defaultWeightKg !== null
-			? { defaultWeightKg: r.defaultWeightKg }
-			: {}),
 		createdAt: r.createdAt,
 		updatedAt: r.updatedAt,
 	};

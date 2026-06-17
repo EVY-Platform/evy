@@ -28,15 +28,15 @@ struct EVYListContainerRow: View {
 
     let childTemplate = view.content.child
     dynamicRows = EVYState(
-      watch: source,
-      setter: { input in
-        guard let childTemplate, !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      textToWatch: source,
+      setter: {
+        guard let childTemplate, !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else {
           return []
         }
 
         do {
-          let data = try EVY.getDataFromText(input)
+          let data = try EVY.getDataFromText(source)
           let dataRows: [EVYJson]
           if case .array(let arrayValue) = data {
             dataRows = arrayValue

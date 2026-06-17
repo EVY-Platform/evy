@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import type { Row, ContainerType } from "../types/row";
 import { useFlowsContext } from "../state";
 import { DraggableRowContainer } from "./DraggableRowContainer";
+import { DropPlaceholderShell } from "./DropPlaceholderShell";
 import { PlaceholderDropIndicator } from "./PlaceholderDropIndicator";
 import { useIsInRowsPanel } from "./RowRenderLocationContext";
 
@@ -23,7 +24,6 @@ export function ContainerChildren({
 }) {
 	const { dispatchRow } = useFlowsContext();
 	const isInRowsPanel = useIsInRowsPanel();
-	const shouldShowIndicators = showIndicators && !isInRowsPanel;
 
 	const selectNestedRow = useCallback(
 		(nestedRowId: string) => {
@@ -33,7 +33,14 @@ export function ContainerChildren({
 	);
 
 	if (!rows?.length) {
-		return showPlaceholder && !isInRowsPanel ? (
+		if (isInRowsPanel) {
+			return (
+				<DropPlaceholderShell isDraggedOver={false}>
+					Drop row here
+				</DropPlaceholderShell>
+			);
+		}
+		return showPlaceholder ? (
 			<PlaceholderDropIndicator
 				key="placeholder"
 				containerRowId={containerRowId}
@@ -50,7 +57,7 @@ export function ContainerChildren({
 					rowId={child.id}
 					selectRow={() => selectNestedRow(child.id)}
 					orientation={orientation}
-					showIndicators={shouldShowIndicators}
+					showIndicators={showIndicators && !isInRowsPanel}
 				>
 					{child.row}
 				</DraggableRowContainer>

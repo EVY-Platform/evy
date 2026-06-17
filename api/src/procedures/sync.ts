@@ -5,18 +5,16 @@ import {
 } from "evy-types/rpcRequestHelpers";
 import { validateSync, validateSyncResponse } from "evy-types/validators";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { createDb as createAppDb } from "../database/db";
+import type { EvyDb } from "../database/db";
 import { get as defaultGetCore } from "../data/data";
 import { forwardGet } from "./services";
 import { buildResourceRegistry } from "./resources";
-
-const appDb = createAppDb();
 
 type SyncRow = SyncResponse["data"][number];
 
 async function fetchEvyCoreData(
 	lastSyncTime: string,
-	getCore: typeof defaultGetCore,
+	getCore: (params: GetRequest) => Promise<GetResponse>,
 ): Promise<SyncRow[]> {
 	const rows: SyncRow[] = [];
 	const evyResources = getServiceResources(EVY_CORE_SERVICE) ?? [];
@@ -78,27 +76,34 @@ async function fetchExternalServiceData(
 }
 
 type SyncDependencies = {
-	getCore: typeof defaultGetCore;
+	getCore: (params: GetRequest) => Promise<GetResponse>;
 	fetchService: typeof forwardGet;
 	buildRegistry: typeof buildResourceRegistry;
 };
 
-const DEFAULT_DEPS: SyncDependencies = {
-	getCore: (params) => defaultGetCore(appDb, params),
-	fetchService: forwardGet,
-	buildRegistry: buildResourceRegistry,
-};
+function defaultSyncDeps(db: EvyDb): SyncDependencies {
+	return {
+		getCore: (request) => defaultGetCore(db, request),
+		fetchService: forwardGet,
+		buildRegistry: buildResourceRegistry,
+	};
+}
 
-// resources is only included in the response when data changed.
 export async function sync(
 	params: unknown,
-	deps: SyncDependencies = DEFAULT_DEPS,
+	db: EvyDb,
+	deps?: SyncDependencies,
 ): Promise<SyncResponse> {
-	validateSync(params);
+	const syncParams = validateSync(params);
+
+	const resolvedDeps = deps ?? defaultSyncDeps(db);
 
 	const [evyData, externalData] = await Promise.all([
-		fetchEvyCoreData(params.lastSyncTime, deps.getCore),
-		fetchExternalServiceData(params.lastSyncTime, deps.fetchService),
+		fetchEvyCoreData(syncParams.lastSyncTime, resolvedDeps.getCore),
+		fetchExternalServiceData(
+			syncParams.lastSyncTime,
+			resolvedDeps.fetchService,
+		),
 	]);
 
 	const data = [...evyData, ...externalData];
@@ -107,6 +112,6 @@ export async function sync(
 		return validateSyncResponse({ data });
 	}
 
-	const resources = deps.buildRegistry();
+	const resources = resolvedDeps.buildRegistry();
 	return validateSyncResponse({ data, resources });
 }

@@ -2,7 +2,7 @@
 
 Functions are used to convert an input into a different output. For example formatting a date.
 
--   Some default functions are available server-side and client-side (eg `formatDecimal`) and some are composed using those built in functions, and sent via JSON config to the clients.
+-   Some default functions are available (eg `formatDecimal`) and some are composed and sent via JSON config to the clients.
 -   We need to avoid defining custom coded formatting functions in mobile clients as much as possible due to the constraints of mobile release cycles
 -   `length`, `formatDimension`, `formatWeight`, and the Builder functions (`buildCurrency`, `buildAddress`) below describe behavior as implemented in the iOS client today ([`ios/evy/Utils/Functions.swift`](../../../ios/evy/Utils/Functions.swift)). Earlier sections in this file are the broader target model; web may still use stubs for some functions.
 
@@ -14,9 +14,14 @@ These are methods available to the user to compute data
 
 ```
 count({_variable_type_list_})
-Variable: [image1, image2]
-Output: 2
 ```
+
+| Input type | Example input | Output | Behavior |
+|-|-|-|-|
+| Array | `[image1, image2]` | `2` | Counts elements |
+| String | `"Hello"` | `5` | Character count |
+| Int | `42` | `42` | Returns the number itself |
+| Decimal | `3.14` | `3.14` | Returns the decimal itself |
 
 #### length
 
@@ -30,7 +35,7 @@ Output: 5
 
 #### findFirst
 
-Finds the first datum in a named collection whose `id` matches the given identifier. The returned datum can be chained with a property accessor.
+Finds the first datum in a named collection whose `id` field matches the given identifier. The returned datum can be chained with a property accessor.
 
 ```
 findFirst({_variable_type_string_collection_}, {_variable_type_string_id_})
@@ -38,6 +43,25 @@ Collection: conditions = [{ "id": "c1", "value": "Excellent" }, ...]
 Id variable: "c1"
 Output: {findFirst(conditions, item.condition_id).value} â†’ "Excellent"
 ```
+
+## Comparisons
+
+Comparison expressions resolve to `true` or `false` in display text. They are used for conditional visibility, inline logic, and row filtering.
+
+- **Comparison operators**: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- **Boolean combinators**: `||` (OR), `&&` (AND)
+- **Grouping**: `()` (parentheses)
+
+Both sides of a comparison are resolved as data paths, string literals, numbers, or nested function calls before comparing. Numeric values compare numerically; strings compare lexicographically.
+
+```
+{item.title == "Amazing"}
+{count(item.photos) > 0}
+{item.price > 100 && item.price < 500}
+{(item.width == item.height) || item.type == "square"}
+```
+
+The `visible` field on rows uses these expressions natively. A row with `visible: "{item.enabled == true}"` only renders when the condition holds.
 
 ## Formatting functions
 
@@ -51,7 +75,7 @@ Some of them are dynamic and some are built in (see following section)
 
 ### Formatting functions built in
 
-Meaning they are hard coded into the server and clients
+Meaning they are hard coded into the clients
 
 #### formatDecimal
 
@@ -154,7 +178,7 @@ Display: `kg` if > 1_000_000 mg, `g` if >1000 mg, else `mg` (e.g. 1_000_000 mg â
 
 ### Dynamic formatting functions
 
-These are formats that are configured by passing dynamic JSON, and using region or device configs
+These are formats that are configured by passing dynamic JSON, and using region or device configs. The sample code below shows the intended config shape; current clients hardcode the formatting (e.g. `formatCurrency` always uses `$`).
 
 #### formatCurrency
 

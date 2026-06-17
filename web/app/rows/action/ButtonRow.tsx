@@ -7,6 +7,7 @@ export default defineRow("ButtonRow", {
 	config: {
 		type: "Button",
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "",

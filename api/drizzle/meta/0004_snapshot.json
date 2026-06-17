@@ -1,6 +1,6 @@
 {
-	"id": "7a96a789-dac2-4808-b5dc-830838e70c13",
-	"prevId": "00000000-0000-0000-0000-000000000000",
+	"id": "ec63f314-0e68-4501-a788-e2cf676d0a5b",
+	"prevId": "db5fb0df-04a0-4cdc-bd0b-2cc325de800d",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
@@ -51,6 +51,43 @@
 					"with": {}
 				}
 			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.File": {
+			"name": "File",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"type": {
+					"name": "type",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},

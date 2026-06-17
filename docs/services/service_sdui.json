@@ -13,6 +13,7 @@
 						"source": "{item.photo_ids}",
 						"destination": "",
 						"actions": [],
+						"visible": "true",
 						"view": {
 							"content": {
 								"title": ""
@@ -22,16 +23,20 @@
 					{
 						"id": "8d5e3bb5-8fcf-45f4-ae3d-516ed0706e30",
 						"type": "Text",
+						"source": "",
+						"destination": "",
+						"actions": [],
+						"visible": "true",
 						"view": {
 							"content": {
-								"icon": "",
 								"title": "{item.title}",
-								"subtitle": "{formatCurrency(item.price)}"
-							}
-						},
-						"source": "",
-						"actions": [],
-						"destination": ""
+								"subtitle": "{formatCurrency(item.price)}",
+								"icon": "",
+								"text": "",
+								"action": ""
+							},
+							"max_lines": ""
+						}
 					},
 					{
 						"id": "61d8b13a-6e19-4251-84bf-94771af07e6c",
@@ -39,12 +44,16 @@
 						"source": "",
 						"destination": "",
 						"actions": [],
+						"visible": "true",
 						"view": {
 							"content": {
 								"title": "Condition",
 								"subtitle": "{findFirst(conditions, item.condition_id).value}",
-								"icon": "::badge-check::"
-							}
+								"icon": "::badge-check::",
+								"text": "",
+								"action": ""
+							},
+							"max_lines": ""
 						}
 					},
 					{
@@ -53,12 +62,16 @@
 						"source": "",
 						"destination": "",
 						"actions": [],
+						"visible": "true",
 						"view": {
 							"content": {
 								"title": "Selling reason",
 								"subtitle": "{findFirst(selling_reasons, item.selling_reason_id).value}",
-								"icon": "::circle-question-mark::"
-							}
+								"icon": "::circle-question-mark::",
+								"text": "",
+								"action": ""
+							},
+							"max_lines": ""
 						}
 					},
 					{
@@ -67,12 +80,52 @@
 						"source": "",
 						"destination": "",
 						"actions": [],
+						"visible": "true",
 						"view": {
 							"content": {
 								"title": "Dimensions",
-								"subtitle": "{formatDimension(item.width) (w) x formatDimension(item.height) (h) x formatDimension(item.length) (l)}",
-								"icon": "::ruler::"
-							}
+								"subtitle": "{formatDimension(item.dimensions.width) (w) x formatDimension(item.dimensions.height) (h) x formatDimension(item.dimensions.length) (l)}",
+								"icon": "::ruler::",
+								"text": "",
+								"action": ""
+							},
+							"max_lines": ""
+						}
+					},
+					{
+						"id": "1f90a201-c24a-408f-b4e1-88624e90d2c1",
+						"type": "Text",
+						"source": "",
+						"destination": "",
+						"actions": [],
+						"visible": "{item.payment_methods.app == true}",
+						"view": {
+							"content": {
+								"title": "Card",
+								"subtitle": "EVY Buyer protection",
+								"icon": "::credit-card::",
+								"text": "",
+								"action": ""
+							},
+							"max_lines": ""
+						}
+					},
+					{
+						"id": "3444bbac-3f6a-4380-91c5-d4ef6545e7f1",
+						"type": "Text",
+						"source": "",
+						"destination": "",
+						"actions": [],
+						"visible": "{item.payment_methods.cash == true}",
+						"view": {
+							"content": {
+								"title": "Cash",
+								"subtitle": "In person",
+								"icon": "::coins::",
+								"text": "",
+								"action": ""
+							},
+							"max_lines": ""
 						}
 					},
 					{
@@ -81,6 +134,7 @@
 						"source": "",
 						"destination": "",
 						"actions": [],
+						"visible": "true",
 						"view": {
 							"content": {
 								"title": "",
@@ -96,6 +150,7 @@
 										"source": "",
 										"destination": "",
 										"actions": [],
+										"visible": "true",
 										"view": {
 											"content": {
 												"title": "",
@@ -106,6 +161,7 @@
 														"source": "",
 														"destination": "",
 														"actions": [],
+														"visible": "true",
 														"view": {
 															"content": {
 																"title": "",
@@ -120,6 +176,7 @@
 														"source": "{item.pickup_selection}",
 														"destination": "",
 														"actions": [],
+														"visible": "true",
 														"view": {
 															"content": {
 																"title": "",
@@ -143,6 +200,7 @@
 										"source": "",
 										"destination": "",
 										"actions": [],
+										"visible": "true",
 										"view": {
 											"content": {
 												"title": "",
@@ -153,12 +211,16 @@
 														"source": "",
 														"destination": "",
 														"actions": [],
+														"visible": "true",
 														"view": {
 															"content": {
 																"title": "",
 																"subtitle": "Buyer will drop off",
-																"icon": ""
-															}
+																"icon": "",
+																"text": "",
+																"action": ""
+															},
+															"max_lines": ""
 														}
 													}
 												]
@@ -171,6 +233,7 @@
 										"source": "",
 										"destination": "",
 										"actions": [],
+										"visible": "true",
 										"view": {
 											"content": {
 												"title": "",
@@ -181,12 +244,16 @@
 														"source": "",
 														"destination": "",
 														"actions": [],
+														"visible": "true",
 														"view": {
 															"content": {
 																"title": "",
 																"subtitle": "Delivered to your door",
-																"icon": ""
-															}
+																"icon": "",
+																"text": "",
+																"action": ""
+															},
+															"max_lines": ""
 														}
 													}
 												]
@@ -222,7 +289,8 @@
 								"content": "Add photos",
 								"photos": "{photo_ids}"
 							}
-						}
+						},
+						"visible": "true"
 					},
 					{
 						"id": "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
@@ -236,7 +304,8 @@
 								"placeholder": "My iPhone ::star:: 20",
 								"value": "{title}"
 							}
-						}
+						},
+						"visible": "true"
 					},
 					{
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
@@ -250,7 +319,8 @@
 								"placeholder": "{formatCurrency(price)}",
 								"value": "{formatCurrency(price)}"
 							}
-						}
+						},
+						"visible": "true"
 					},
 					{
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
@@ -264,7 +334,8 @@
 								"placeholder": "Choose one",
 								"format": "{$datum.value}"
 							}
-						}
+						},
+						"visible": "true"
 					},
 					{
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
@@ -278,7 +349,8 @@
 								"placeholder": "Choose one",
 								"format": "{$datum.value}"
 							}
-						}
+						},
+						"visible": "true"
 					},
 					{
 						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
@@ -302,7 +374,8 @@
 												"placeholder": "Width",
 												"value": "{formatDimension(width)}"
 											}
-										}
+										},
+										"visible": "true"
 									},
 									{
 										"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
@@ -316,7 +389,8 @@
 												"placeholder": "Height",
 												"value": "{formatDimension(height)}"
 											}
-										}
+										},
+										"visible": "true"
 									},
 									{
 										"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
@@ -330,11 +404,13 @@
 												"placeholder": "Length",
 												"value": "{formatDimension(length)}"
 											}
-										}
+										},
+										"visible": "true"
 									}
 								]
 							}
-						}
+						},
+						"visible": "true"
 					}
 				],
 				"title": "Create listing",
@@ -390,7 +466,8 @@
 							"title": "",
 							"label": "Next"
 						}
-					}
+					},
+					"visible": "true"
 				}
 			},
 			{
@@ -408,7 +485,8 @@
 								"value": "",
 								"placeholder": "Write a short description of your product"
 							}
-						}
+						},
+						"visible": "true"
 					}
 				],
 				"title": "Describe item",
@@ -429,7 +507,8 @@
 							"title": "",
 							"label": "Next"
 						}
-					}
+					},
+					"visible": "true"
 				}
 			},
 			{
@@ -472,7 +551,8 @@
 																"subtitle": "Allow buyers to pick up the item",
 																"icon": ""
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "586ffa1a-639b-475e-a0b5-1fbe51083274",
@@ -515,7 +595,8 @@
 																						"condition": ""
 																					}
 																				],
-																				"destination": ""
+																				"destination": "",
+																				"visible": "true"
 																			},
 																			"title": "",
 																			"placeholder": "Search anything"
@@ -523,10 +604,12 @@
 																	},
 																	"source": "{items}",
 																	"actions": [],
-																	"destination": ""
+																	"destination": "",
+																	"visible": "true"
 																}
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222206",
@@ -540,7 +623,8 @@
 																"placeholder": "Additional information",
 																"value": "{address_instructions}"
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222207",
@@ -554,7 +638,8 @@
 																"subtitle": "When are you available for buyers to inspect or pick up this item",
 																"icon": ""
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222208",
@@ -574,11 +659,13 @@
 																"primary": "{pickup_selection}",
 																"secondary": "{delivery_selection}"
 															}
-														}
+														},
+														"visible": "true"
 													}
 												]
 											}
-										}
+										},
+										"visible": "true"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222209",
@@ -602,7 +689,8 @@
 																"subtitle": "Deliver directly to the buyer",
 																"icon": ""
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222211",
@@ -616,7 +704,8 @@
 																"placeholder": "Do you want to charge for delivery?",
 																"value": "{formatCurrency(delivery_fee)}"
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222212",
@@ -630,7 +719,8 @@
 																"subtitle": "How long can you travel to deliver this item",
 																"icon": ""
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222213",
@@ -643,7 +733,8 @@
 																"title": "",
 																"format": "{$datum.value}"
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222214",
@@ -657,7 +748,8 @@
 																"subtitle": "When are you available to deliver this item",
 																"icon": ""
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222215",
@@ -677,11 +769,13 @@
 																"primary": "{delivery_selection}",
 																"secondary": "{pickup_selection}"
 															}
-														}
+														},
+														"visible": "true"
 													}
 												]
 											}
-										}
+										},
+										"visible": "true"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222216",
@@ -705,7 +799,8 @@
 																"subtitle": "Postal shipping at the buyer's expense",
 																"icon": ""
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222218",
@@ -719,7 +814,8 @@
 																"placeholder": "Postal code you will be shipping from",
 																"value": "{shipping_source_postal_code}"
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222219",
@@ -733,7 +829,8 @@
 																"subtitle": "Select how far you are willing to ship",
 																"icon": ""
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222220",
@@ -746,7 +843,8 @@
 																"title": "",
 																"format": "{$datum.value}"
 															}
-														}
+														},
+														"visible": "true"
 													},
 													{
 														"id": "22222222-2222-4222-8222-222222222221",
@@ -760,15 +858,18 @@
 																"placeholder": "Weight",
 																"value": "{formatWeight(weight)}"
 															}
-														}
+														},
+														"visible": "true"
 													}
 												]
 											}
-										}
+										},
+										"visible": "true"
 									}
 								]
 							}
-						}
+						},
+						"visible": "true"
 					}
 				],
 				"title": "Pickup & delivery",
@@ -789,7 +890,8 @@
 							"title": "",
 							"label": "Next"
 						}
-					}
+					},
+					"visible": "true"
 				}
 			},
 			{
@@ -807,7 +909,8 @@
 								"subtitle": "Payment will be made by the buyers on pickup",
 								"icon": ""
 							}
-						}
+						},
+						"visible": "true"
 					},
 					{
 						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
@@ -830,7 +933,8 @@
 												"title": "Accept cash",
 												"text": "Let buyers know you will accept cash on pickup"
 											}
-										}
+										},
+										"visible": "true"
 									},
 									{
 										"id": "33333333-3333-4333-8333-333333333302",
@@ -843,11 +947,13 @@
 												"title": "Accept app payments",
 												"text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n- Cards are verified before the purchase\\n- Payment is transferred immediately when both buyer and seller confirm using a temporary code"
 											}
-										}
+										},
+										"visible": "true"
 									}
 								]
 							}
-						}
+						},
+						"visible": "true"
 					}
 				],
 				"title": "Payment options",
@@ -868,7 +974,8 @@
 							"title": "",
 							"label": "Next"
 						}
-					}
+					},
+					"visible": "true"
 				}
 			},
 			{
@@ -886,7 +993,8 @@
 								"subtitle": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule",
 								"icon": ""
 							}
-						}
+						},
+						"visible": "true"
 					}
 				],
 				"title": "Sharing data publicly",
@@ -907,7 +1015,8 @@
 							"title": "",
 							"label": "Submit"
 						}
-					}
+					},
+					"visible": "true"
 				}
 			}
 		]

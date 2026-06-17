@@ -49,7 +49,7 @@
 		"UI_Row": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "view", "source", "actions"],
+			"required": ["id", "type", "view", "source", "actions", "visible"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -102,6 +102,9 @@
 					"items": {
 						"$ref": "#/$defs/UI_RowAction"
 					}
+				},
+				"visible": {
+					"type": "string"
 				}
 			}
 		},

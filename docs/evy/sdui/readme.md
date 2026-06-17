@@ -1,9 +1,5 @@
 # Server-driven UI (UI types)
 
-**See also:** [Repository README](../../../README.md) (architecture, setup), [API](../../../api/README.md) (JSON-RPC and gRPC routing), [Types](../types.md) (codegen, schema layout).
-
-## Data
-
 UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Reference data (dropdown options, tags, durations, etc.) is not embedded inside the flow JSON.
 
 - Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from. Use a non-empty source only for rows that load source-driven data such as option lists, search results, or calendars. If a row already reads explicit fields like `"{item.title}"` in `view.content`, the row source should be `""` because the binding resolves the resource directly.
@@ -78,11 +74,11 @@ Rows are what are put into pages. They are the building block of the EVY server-
             // Required. Header of the row; empty string means no header.
             "title": "string",
             // Layout: "children" (array of rows), "child" (single row), "segments" (array of strings).
-            "children": [ROW],  // optional
-            "child": ROW,        // optional
-            "segments": ["string"],
-            // Additional keys per row type (label, value, placeholder, format, etc.)
-            // See types/schema/sdui/row-content.spec.json for the full list per type.
+            // Optional array of children rows to display
+            "children": [ROW],
+            // Optional single child row to display
+            "child": ROW,
+            ...
         },
         "max_lines": "string"    // optional (e.g. Text)
     },
@@ -90,6 +86,9 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "source": "string",
     // Where input data is stored in a draft. Use singular entity keys such as "{item.title}".
     "destination": "string",
+
+    // Visibility predicate. Use "true" for always shown, or a condition expression to render only when it evaluates to true.
+    "visible": "string",
 
     // Actions are required on every row and default to an empty array
     "actions": [{
@@ -198,6 +197,20 @@ Submit:
 ```
 
 The web app’s action editor (`web/app/utils/actionHelpers.ts`, `ActionEditor`, `ActionPopup`) uses the same condition and branch formats for authoring.
+
+#### Row visibility (`visible`)
+
+Required top-level row field. Use `"true"` for rows that should always show, or a condition expression to render only when it evaluates to `true`. Use the same condition syntax as action `condition` fields (`==`, `!=`, `&&`, `||`, parentheses, `count()`, `length()`).
+
+```json
+{
+	"type": "Text",
+	"visible": "{item.payment_methods.cash == true}",
+	"view": { "content": { "title": "Cash accepted" } }
+}
+```
+
+iOS evaluates `visible` reactively when bound data changes. The web builder stores and previews the field (conditional rows appear dimmed when the expression cannot be evaluated without live data).
 
 ### Rows
 

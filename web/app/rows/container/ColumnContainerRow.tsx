@@ -10,6 +10,7 @@ export default defineRow(typeName, {
 		type: "ColumnContainer",
 		actions: [],
 		source: "",
+		visible: "true",
 		view: {
 			content: {
 				title: "Column container row title",

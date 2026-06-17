@@ -9,8 +9,12 @@ import {
 	EVY_CORE_SERVICE,
 	EVY_CORE_RESOURCE_NAMES,
 } from "evy-types/coreResources";
+import type { EvyDb } from "../database/db";
 import type { buildResourceRegistry } from "../procedures/resources";
 import { sync } from "../procedures/sync";
+
+// Tests always supply full deps so the db param is never used.
+const unusedDb = null as unknown as EvyDb;
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
 
@@ -69,7 +73,7 @@ beforeEach(() => {
 describe("sync", () => {
 	it("returns resources and data in unified response", async () => {
 		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, deps);
+		const result = await sync({ lastSyncTime: EPOCH }, unusedDb, deps);
 
 		const resources = expectResources(result);
 		expect(resources.resources).toBeDefined();
@@ -80,7 +84,7 @@ describe("sync", () => {
 
 	it("includes evy core resources (except devices) in data", async () => {
 		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, deps);
+		const result = await sync({ lastSyncTime: EPOCH }, unusedDb, deps);
 
 		const evyRows = result.data.filter(
 			(row) => row.service === EVY_CORE_SERVICE,
@@ -97,7 +101,7 @@ describe("sync", () => {
 
 	it("includes external service resources in data", async () => {
 		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, deps);
+		const result = await sync({ lastSyncTime: EPOCH }, unusedDb, deps);
 
 		const marketplaceRows = result.data.filter(
 			(row) => row.service === "marketplace",
@@ -115,7 +119,7 @@ describe("sync", () => {
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
 		const deps = { ...makeMocks(), getCore };
-		await sync({ lastSyncTime: EPOCH }, deps);
+		await sync({ lastSyncTime: EPOCH }, unusedDb, deps);
 	});
 
 	it("passes updatedAfter to fetchService", async () => {
@@ -127,7 +131,7 @@ describe("sync", () => {
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
 		const deps = { ...makeMocks(), fetchService };
-		await sync({ lastSyncTime: EPOCH }, deps);
+		await sync({ lastSyncTime: EPOCH }, unusedDb, deps);
 	});
 
 	it("returns empty data and no resources when nothing changed", async () => {
@@ -137,6 +141,7 @@ describe("sync", () => {
 		const deps = { ...makeMocks(), getCore, fetchService };
 		const result = await sync(
 			{ lastSyncTime: "2999-01-01T00:00:00.000Z" },
+			unusedDb,
 			deps,
 		);
 		expect(result.data).toEqual([]);
@@ -150,6 +155,7 @@ describe("sync", () => {
 		const deps = { ...makeMocks(), getCore, fetchService };
 		const result = await sync(
 			{ lastSyncTime: "2999-01-01T00:00:00.000Z" },
+			unusedDb,
 			deps,
 		);
 		expect(result.resources).toBeUndefined();
@@ -157,14 +163,16 @@ describe("sync", () => {
 
 	it("rejects missing lastSyncTime", async () => {
 		const deps = makeMocks();
-		await expect(sync({}, deps)).rejects.toThrow();
-		await expect(sync(null, deps)).rejects.toThrow();
-		await expect(sync(undefined, deps)).rejects.toThrow();
+		await expect(sync({}, unusedDb, deps)).rejects.toThrow();
+		await expect(sync(null, unusedDb, deps)).rejects.toThrow();
+		await expect(sync(undefined, unusedDb, deps)).rejects.toThrow();
 	});
 
 	it("rejects invalid lastSyncTime format", async () => {
 		const deps = makeMocks();
-		await expect(sync({ lastSyncTime: "not-a-date" }, deps)).rejects.toThrow();
+		await expect(
+			sync({ lastSyncTime: "not-a-date" }, unusedDb, deps),
+		).rejects.toThrow();
 	});
 
 	it("propagates forwardGet errors for external services", async () => {
@@ -175,14 +183,14 @@ describe("sync", () => {
 			return buildMockGetResponse([]);
 		};
 		const deps = { ...makeMocks(), fetchService };
-		await expect(sync({ lastSyncTime: EPOCH }, deps)).rejects.toThrow(
+		await expect(sync({ lastSyncTime: EPOCH }, unusedDb, deps)).rejects.toThrow(
 			"gRPC service unavailable",
 		);
 	});
 
 	it("each data row has required shape", async () => {
 		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, deps);
+		const result = await sync({ lastSyncTime: EPOCH }, unusedDb, deps);
 		for (const row of result.data) {
 			expect(typeof row.service).toBe("string");
 			expect(row.service.length).toBeGreaterThan(0);

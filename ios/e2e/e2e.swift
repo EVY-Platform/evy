@@ -116,11 +116,6 @@ actor WSEmitter {
 }
 
 private enum E2EFlowIds {
-  static let defaultViewFlow = "74a49d4b-2176-4925-857a-e29e2991f1bd"
-  static let defaultViewPage = "82cae120-c7b1-4c29-bd42-e1521320b109"
-  static let defaultCreateFlow = "ca47e6c5-da19-4491-8422-adb40d9e8a27"
-  static let defaultCreatePage = "306ed62c-c2af-4652-a873-26c7a388972d"
-
   static let navigationHomeFlow = "10000000-0000-4000-8000-000000000001"
   static let navigationViewFlow = "10000000-0000-4000-8000-000000000007"
   static let navigationViewPage = "10000000-0000-4000-8000-000000000008"
@@ -136,6 +131,47 @@ private enum E2EFlowIds {
 class E2ETestBase: XCTestCase {
 
   var app: XCUIApplication!
+
+  static func minimalCreateItemFlowData() -> [String: Any] {
+    [
+      "id": E2EFlowIds.webSocketCreateFlow,
+      "name": "Create item",
+      "pages": [
+        [
+          "id": E2EFlowIds.webSocketCreatePage,
+          "title": "Create listing",
+          "rows": [
+            Self.inputRow(
+              id: "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
+              title: "Title",
+              value: "{title}",
+              placeholder: "Item",
+              destination: "{item.title}"
+            ),
+            Self.inputRow(
+              id: "668aeb79-d8ba-43b7-9619-07f91d0a1908",
+              title: "Price",
+              value: "{formatCurrency(price)}",
+              placeholder: "0",
+              destination: "{buildCurrency(item.price)}"
+            ),
+            Self.inputRow(
+              id: "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
+              title: "Width",
+              value: "{formatDimension(width)}",
+              placeholder: "0",
+              destination: "{item.width}"
+            ),
+          ],
+          "footer": Self.buttonRow(
+            id: "1cb41189-6fa5-4562-996a-7cefb88a08ca",
+            label: "Submit",
+            action: "{create(marketplace,item)}"
+          ),
+        ]
+      ],
+    ]
+  }
 
   func clearAndType(field: XCUIElement, text: String, placeholder: String? = nil) {
     if let existingText = field.value as? String, !existingText.isEmpty {
@@ -294,53 +330,105 @@ class E2ETestBase: XCTestCase {
               "source": "",
               "destination": "",
               "actions": [],
+              "visible": "true",
               "view": [
                 "content": [
                   "title": "",
                   "children": [
-                    [
-                      "id": "441c1433-446b-4682-854d-5d795ef52709",
-                      "type": "Button",
-                      "source": "",
-                      "destination": "",
-                      "view": [
-                        "content": [
-                          "title": "",
-                          "label": buttonLabel,
-                        ]
-                      ],
-                      "actions": [
-                        [
-                          "condition": "",
-                          "false": "",
-                          "true": "{navigate(\(viewFlowId),\(viewPageId))}",
-                        ]
-                      ],
-                    ],
-                    [
-                      "id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
-                      "type": "Button",
-                      "source": "",
-                      "destination": "",
-                      "view": [
-                        "content": [
-                          "title": "",
-                          "label": "Create",
-                        ]
-                      ],
-                      "actions": [
-                        [
-                          "condition": "",
-                          "false": "",
-                          "true": "{navigate(\(createFlowId),\(createPageId))}",
-                        ]
-                      ],
-                    ],
+                    Self.buttonRow(
+                      id: "441c1433-446b-4682-854d-5d795ef52709",
+                      label: buttonLabel,
+                      action: "{navigate(\(viewFlowId),\(viewPageId))}"
+                    ),
+                    Self.buttonRow(
+                      id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                      label: "Create",
+                      action: "{navigate(\(createFlowId),\(createPageId))}"
+                    ),
                   ],
                 ]
               ],
             ]
           ],
+        ]
+      ],
+    ]
+  }
+
+  static func textRow(
+    id: String,
+    title: String,
+    text: String = "",
+    subtitle: String = "",
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "Text",
+      "source": "",
+      "destination": "",
+      "actions": [],
+      "visible": visible,
+      "view": [
+        "content": [
+          "title": title,
+          "text": text,
+          "subtitle": subtitle,
+          "icon": "",
+        ],
+        "max_lines": "",
+      ],
+    ]
+  }
+
+  static func inputRow(
+    id: String,
+    title: String,
+    value: String,
+    placeholder: String,
+    destination: String,
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "Input",
+      "source": "",
+      "visible": visible,
+      "view": [
+        "content": [
+          "title": title,
+          "value": value,
+          "placeholder": placeholder,
+        ]
+      ],
+      "destination": destination,
+      "actions": [],
+    ]
+  }
+
+  static func buttonRow(
+    id: String,
+    label: String,
+    action: String,
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "Button",
+      "source": "",
+      "destination": "",
+      "visible": visible,
+      "view": [
+        "content": [
+          "title": "",
+          "label": label,
+        ]
+      ],
+      "actions": [
+        [
+          "condition": "",
+          "false": "",
+          "true": action,
         ]
       ],
     ]
@@ -355,43 +443,53 @@ class E2ETestBase: XCTestCase {
           "id": pageId,
           "title": "{item.title}",
           "rows": [
-            [
-              "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-              "type": "Text",
-              "source": "",
-              "destination": "",
-              "actions": [],
-              "view": [
-                "content": [
-                  "title": "My item is called",
-                  "text": "{item.title}",
-                ],
-                "max_lines": "",
-              ],
-            ]
+            Self.textRow(
+              id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+              title: "My item is called",
+              text: "{item.title}"
+            ),
+            Self.textRow(
+              id: "d4e5f6a7-b8c9-4012-d345-6789abcdef01",
+              title: "App payments accepted",
+              visible: "{item.payment_methods.app == true}"
+            ),
+            Self.textRow(
+              id: "e5f6a7b8-c9d0-4123-e456-789abcdef012",
+              title: "Cash accepted",
+              visible: "{item.payment_methods.cash == true}"
+            ),
           ],
-          "footer": [
-            "id": "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
-            "type": "Button",
-            "source": "",
-            "destination": "",
-            "actions": [
-              [
-                "condition": "",
-                "false": "",
-                "true": "{close()}",
-              ]
-            ],
-            "view": [
-              "content": [
-                "title": "",
-                "label": "Go home",
-              ]
-            ],
-          ],
+          "footer": Self.buttonRow(
+            id: "4c953f9b-597b-4e0c-82f0-2fe25efefba0",
+            label: "Go home",
+            action: "{close()}"
+          ),
         ]
       ],
     ]
+  }
+
+  func createMarketplaceItem(
+    emitter: WSEmitter,
+    titlePrefix: String,
+    paymentMethods: [String: Bool]? = nil
+  ) async throws -> (id: String, title: String) {
+    let selectedItemId = UUID().uuidString
+    let selectedItemTitle = "\(titlePrefix) \(Int(Date().timeIntervalSince1970))"
+    var data: [String: Any] = [
+      "id": selectedItemId,
+      "title": selectedItemTitle,
+    ]
+    if let paymentMethods {
+      data["payment_methods"] = paymentMethods
+    }
+    _ = try await emitter.createResource(
+      service: "marketplace",
+      resource: "items",
+      filter: ["id": selectedItemId],
+      data: data
+    )
+    return (selectedItemId, selectedItemTitle)
   }
 
   override func tearDownWithError() throws {
@@ -414,8 +512,8 @@ final class E2EFlowTests: E2ETestBase {
             flowId: E2EFlowIds.navigationHomeFlow,
             viewFlowId: E2EFlowIds.navigationViewFlow,
             viewPageId: E2EFlowIds.navigationViewPage,
-            createFlowId: E2EFlowIds.defaultCreateFlow,
-            createPageId: E2EFlowIds.defaultCreatePage,
+            createFlowId: E2EFlowIds.webSocketCreateFlow,
+            createPageId: E2EFlowIds.webSocketCreatePage,
             buttonLabel: "View"
           )
         ),
@@ -425,6 +523,10 @@ final class E2EFlowTests: E2ETestBase {
             flowId: E2EFlowIds.navigationViewFlow,
             pageId: E2EFlowIds.navigationViewPage
           )
+        ),
+        (
+          flowId: E2EFlowIds.webSocketCreateFlow,
+          flowData: Self.minimalCreateItemFlowData()
         ),
       ]
     )
@@ -600,13 +702,9 @@ final class WebSocketE2ETests: E2ETestBase {
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
 
-    let selectedItemId = UUID().uuidString
-    let selectedItemTitle = "Filtered Item \(Int(Date().timeIntervalSince1970))"
-    _ = try await emitter.createResource(
-      service: "marketplace",
-      resource: "items",
-      filter: ["id": selectedItemId],
-      data: ["id": selectedItemId, "title": selectedItemTitle]
+    let (selectedItemId, selectedItemTitle) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Filtered Item"
     )
 
     let viewButtonLabel = "View filtered \(Int(Date().timeIntervalSince1970))"
@@ -641,6 +739,61 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
       "View item page title should resolve {item.title} from the item id passed in navigate query")
+  }
+
+  @MainActor
+  func testViewItemPaymentRowsRespectVisiblePredicate() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Payment Item",
+      paymentMethods: ["cash": true, "app": false]
+    )
+
+    let viewButtonLabel = "View payment \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: createHomeFlowData(
+        buttonLabel: viewButtonLabel,
+        viewItemId: selectedItemId
+      ),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    try await emitter.updateSDUI(
+      flowData: Self.viewItemFlowData(
+        flowId: E2EFlowIds.webSocketViewFlow,
+        pageId: E2EFlowIds.webSocketViewPage
+      ),
+      flowId: E2EFlowIds.webSocketViewFlow
+    )
+    await emitter.disconnect()
+
+    app.terminate()
+    try launchApp()
+
+    let queryButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(
+      queryButton.waitForExistence(timeout: 20),
+      "Home view button should load with query-aware label after relaunch")
+
+    queryButton.tap()
+
+    let scrollView = app.scrollViews.firstMatch
+    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "View item page should appear")
+
+    XCTAssertTrue(
+      app.staticTexts["Cash accepted"].waitForExistence(timeout: 10),
+      "Cash payment row should be visible when item.payment_methods.cash is true")
+    XCTAssertFalse(
+      app.staticTexts["App payments accepted"].waitForExistence(timeout: 2),
+      "App payment row should be hidden when item.payment_methods.app is false")
   }
 
   @MainActor
@@ -754,82 +907,6 @@ final class WebSocketE2ETests: E2ETestBase {
     await emitter.disconnect()
   }
 
-  private static func minimalCreateItemFlowData() -> [String: Any] {
-    [
-      "id": E2EFlowIds.webSocketCreateFlow,
-      "name": "Create item",
-      "pages": [
-        [
-          "id": E2EFlowIds.webSocketCreatePage,
-          "title": "Create listing",
-          "rows": [
-            [
-              "id": "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
-              "type": "Input",
-              "source": "",
-              "view": [
-                "content": [
-                  "title": "Title",
-                  "value": "{title}",
-                  "placeholder": "Item",
-                ]
-              ],
-              "destination": "{item.title}",
-              "actions": [],
-            ],
-            [
-              "id": "668aeb79-d8ba-43b7-9619-07f91d0a1908",
-              "type": "Input",
-              "source": "",
-              "view": [
-                "content": [
-                  "title": "Price",
-                  "value": "{formatCurrency(price)}",
-                  "placeholder": "0",
-                ]
-              ],
-              "destination": "{buildCurrency(item.price)}",
-              "actions": [],
-            ],
-            [
-              "id": "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
-              "type": "Input",
-              "source": "",
-              "view": [
-                "content": [
-                  "title": "Width",
-                  "value": "{formatDimension(width)}",
-                  "placeholder": "0",
-                ]
-              ],
-              "destination": "{item.width}",
-              "actions": [],
-            ],
-          ],
-          "footer": [
-            "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            "type": "Button",
-            "source": "",
-            "destination": "",
-            "view": [
-              "content": [
-                "title": "",
-                "label": "Submit",
-              ]
-            ],
-            "actions": [
-              [
-                "condition": "",
-                "false": "",
-                "true": "{create(marketplace,item)}",
-              ]
-            ],
-          ],
-        ]
-      ],
-    ]
-  }
-
   private static func viewItemNavigateAction(viewItemId: String?) -> String {
     guard let viewItemId else {
       return "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage))}"
@@ -889,49 +966,22 @@ final class WebSocketE2ETests: E2ETestBase {
               "source": "",
               "destination": "",
               "actions": [],
+              "visible": "true",
               "view": [
                 "content": [
                   "title": "",
                   "children": [
-                    [
-                      "id": "441c1433-446b-4682-854d-5d795ef52709",
-                      "type": "Button",
-                      "source": "",
-                      "destination": "",
-                      "view": [
-                        "content": [
-                          "title": "",
-                          "label": buttonLabel,
-                        ]
-                      ],
-                      "actions": [
-                        [
-                          "condition": "",
-                          "false": "",
-                          "true": viewAction,
-                        ]
-                      ],
-                    ],
-                    [
-                      "id": "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
-                      "type": "Button",
-                      "source": "",
-                      "destination": "",
-                      "view": [
-                        "content": [
-                          "title": "",
-                          "label": "Create",
-                        ]
-                      ],
-                      "actions": [
-                        [
-                          "condition": "",
-                          "false": "",
-                          "true":
-                            "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}",
-                        ]
-                      ],
-                    ],
+                    Self.buttonRow(
+                      id: "441c1433-446b-4682-854d-5d795ef52709",
+                      label: buttonLabel,
+                      action: viewAction
+                    ),
+                    Self.buttonRow(
+                      id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                      label: "Create",
+                      action:
+                        "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
+                    ),
                   ],
                 ]
               ],

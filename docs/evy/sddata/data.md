@@ -36,7 +36,6 @@ id: uuid
 name: string (maxLength 50)
 description: string
 sortOrder: integer (optional)
-defaultWeightKg: number (optional)
 createdAt: string (date-time)
 updatedAt: string (date-time)
 ```
@@ -121,12 +120,6 @@ Base model with no extra props (identity may be implied by storage layer).
 
 ### calendar_selection (compact calendar / runtime)
 
-Used by Calendar rows. The grid geometry is defined in the SDUI row content; runtime state is stored as arrays of ISO local date-time strings (no timezone).
-
-Selection value format: `yyyy-MM-dd'T'HH:mm:ss`, e.g. `"2024-09-18T09:00:00"`.
-
-Calendar row content fields (flat in `view.content`):
-
 ```
 start_time: string           (HH:mm, 24-hour, e.g. "07:00")
 end_time: string             (HH:mm, exclusive, e.g. "19:00")
@@ -156,9 +149,7 @@ ship: {
 
 ### duration
 
-Reference option for delivery distance / duration pickers (matches RPC resources like `durations`).
-
 ```
 id: uuid
-value: string
+value: string (e.g. "30 minutes")
 ```
