@@ -110,6 +110,14 @@ final class InterpreterTests: XCTestCase {
     )
   }
 
+  func testWatchTargetsExtractsAllFunctionsFromMixedInterpolation() {
+    XCTAssertEqual(
+      EVY.watchTargets(
+        for: "{formatDimension(item.dimensions.width) x formatDimension(item.dimensions.height)}"),
+      ["item.dimensions.width", "item.dimensions.height"]
+    )
+  }
+
   func testWatchTargetsExtractsAllDataFunctionArguments() {
     XCTAssertEqual(
       EVY.watchTargets(for: "{compare(item.width, item.height)}"),
@@ -184,6 +192,42 @@ final class InterpreterTests: XCTestCase {
     try store(.int(4231), at: key)
     let out = try parseTextFromText("{formatImperialLength(\(key))}")
     XCTAssertEqual(out.toString(), "13.88ft")
+  }
+
+  func testGetValueFromTextEvaluatesMultipleFunctionsInSingleBraceBlock() throws {
+    let itemKey = uniqueKey("item")
+    try store(
+      .dictionary([
+        "dimensions": .dictionary([
+          "width": .int(200),
+          "height": .int(300),
+        ])
+      ]),
+      at: itemKey)
+
+    let out = try EVY.getValueFromText(
+      "{formatDimension(\(itemKey).dimensions.width) x formatDimension(\(itemKey).dimensions.height)}"
+    )
+
+    XCTAssertEqual(out.toString(), "20cm x 30cm")
+  }
+
+  func testGetValueFromTextEvaluatesMultipleFunctionsInsideWrappedText() throws {
+    let itemKey = uniqueKey("item")
+    try store(
+      .dictionary([
+        "dimensions": .dictionary([
+          "width": .int(200),
+          "height": .int(300),
+        ])
+      ]),
+      at: itemKey)
+
+    let out = try EVY.getValueFromText(
+      "Size: {formatDimension(\(itemKey).dimensions.width) x formatDimension(\(itemKey).dimensions.height)}"
+    )
+
+    XCTAssertEqual(out.toString(), "Size: 20cm x 30cm")
   }
 
   func testFormatDurationHumanizesMilliseconds() throws {
