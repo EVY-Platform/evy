@@ -110,6 +110,14 @@ final class InterpreterTests: XCTestCase {
     )
   }
 
+  func testWatchTargetsExtractsAllFunctionsFromMixedInterpolation() {
+    XCTAssertEqual(
+      EVY.watchTargets(
+        for: "{formatDimension(item.dimensions.width) x formatDimension(item.dimensions.height)}"),
+      ["item.dimensions.width", "item.dimensions.height"]
+    )
+  }
+
   func testWatchTargetsExtractsAllDataFunctionArguments() {
     XCTAssertEqual(
       EVY.watchTargets(for: "{compare(item.width, item.height)}"),
@@ -184,6 +192,26 @@ final class InterpreterTests: XCTestCase {
     try store(.int(4231), at: key)
     let out = try parseTextFromText("{formatImperialLength(\(key))}")
     XCTAssertEqual(out.toString(), "13.88ft")
+  }
+
+  func testGetValueFromTextEvaluatesMultipleFunctionsInSingleBraceBlock() throws {
+    let key = try storeDimensions(width: 200, height: 300)
+    XCTAssertEqual(
+      try EVY.getValueFromText(
+        "{formatDimension(\(key).dimensions.width) x formatDimension(\(key).dimensions.height)}"
+      ).toString(),
+      "20cm x 30cm"
+    )
+  }
+
+  func testGetValueFromTextEvaluatesMultipleFunctionsInsideWrappedText() throws {
+    let key = try storeDimensions(width: 200, height: 300)
+    XCTAssertEqual(
+      try EVY.getValueFromText(
+        "Size: {formatDimension(\(key).dimensions.width) x formatDimension(\(key).dimensions.height)}"
+      ).toString(),
+      "Size: 20cm x 30cm"
+    )
   }
 
   func testFormatDurationHumanizesMilliseconds() throws {
@@ -629,6 +657,19 @@ final class InterpreterTests: XCTestCase {
 
     XCTAssertEqual(result.value, "Good")
     XCTAssertEqual(countBefore, countAfter)
+  }
+
+  private func storeDimensions(width: Int, height: Int) throws -> String {
+    let key = uniqueKey("item")
+    try store(
+      .dictionary([
+        "dimensions": .dictionary([
+          "width": .int(width),
+          "height": .int(height),
+        ])
+      ]),
+      at: key)
+    return key
   }
 
   private func store(_ value: EVYJson, at key: String) throws {

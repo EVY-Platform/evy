@@ -346,6 +346,20 @@ private func parseText(
       editing)
   }
 
+  // Mixed interpolation blocks are text expressions, not prop paths. Unwrap them before
+  // function evaluation so `{formatDimension(width) x formatDimension(height)}` never
+  // reaches `parseProps` as `{20cm x 30cm}`.
+  if let expression = parseTextExpressionInterpolation(input.value) {
+    let parsedInner = try parseText(EVYValue(expression.inner, nil, nil), editing)
+    let parsedInput = input.value.replacingOccurrences(
+      of: expression.fullMatch,
+      with: parsedInner.toString()
+    )
+    return try parseText(
+      EVYValue(parsedInput, input.prefix, input.suffix),
+      editing)
+  }
+
   if let (match, funcName, funcArgs) =
     parseFunctionFromText(input.value)
     ?? parseFunctionInText(input.value)
@@ -422,6 +436,90 @@ private func parseProps(_ input: String) -> (Regex<AnyRegexOutput>.Match, String
     return (match, String(match.0.dropFirst().dropLast()))
   }
   return nil
+}
+
+private func parseTextExpressionInterpolation(_ input: String) -> (
+  fullMatch: String, inner: String
+)? {
+  interpolations(in: input).first {
+    containsMixedFunctionTextExpression($0.inner.trimmingCharacters(in: .whitespacesAndNewlines))
+  }
+}
+
+private func containsMixedFunctionTextExpression(_ input: String) -> Bool {
+  var remaining = input
+  var functionCount = 0
+
+  while let function = parseFunctionInText(remaining) {
+    functionCount += 1
+    remaining = advancePastFunction(function.match, in: remaining)
+  }
+
+  if functionCount > 1 { return true }
+
+  // A single function with a prop continuation, like `findFirst(items, id).value`,
+  // is still a prop expression. Anything else around the function is literal text.
+  let trimmedRemainder = remaining.trimmingCharacters(in: .whitespacesAndNewlines)
+  return functionCount == 1 && !trimmedRemainder.isEmpty
+    && !isPropContinuation(trimmedRemainder)
+}
+
+private func advancePastFunction(_ match: Regex<AnyRegexOutput>.Match, in string: String) -> String
+{
+  string.replacingOccurrences(
+    of: match.0.description,
+    with: "",
+    range: string.startIndex..<match.range.upperBound
+  )
+}
+
+private func isPropContinuation(_ input: String) -> Bool {
+  var remaining = input
+
+  while !remaining.isEmpty {
+    if remaining.first == "." {
+      remaining.removeFirst()
+      let segment = remaining.prefix { character in
+        character.isLetter || character.isNumber || character == "_"
+      }
+      guard !segment.isEmpty else { return false }
+      remaining.removeFirst(segment.count)
+      continue
+    }
+
+    guard remaining.first == "[", let closingIndex = remaining.firstIndex(of: "]") else {
+      return false
+    }
+    let indexValue = remaining[remaining.index(after: remaining.startIndex)..<closingIndex]
+    guard !indexValue.isEmpty, indexValue.allSatisfy(\.isNumber) else { return false }
+    remaining.removeSubrange(remaining.startIndex...closingIndex)
+  }
+
+  return true
+}
+
+private func interpolations(in input: String) -> [(fullMatch: String, inner: String)] {
+  var results: [(fullMatch: String, inner: String)] = []
+  var state = ParserScanState()
+  var startIndex: String.Index?
+
+  for index in input.indices {
+    let character = input[index]
+
+    if startIndex == nil, !state.isInString, state.isTopLevel, character == "{" {
+      startIndex = index
+    }
+
+    state.scan(character)
+
+    if let blockStartIndex = startIndex, !state.isInString, state.isTopLevel, character == "}" {
+      let innerStart = input.index(after: blockStartIndex)
+      results.append((String(input[blockStartIndex...index]), String(input[innerStart..<index])))
+      startIndex = nil
+    }
+  }
+
+  return results
 }
 
 private func parseComparisonFromText(_ input: String) -> (fullMatch: String, content: String)? {
@@ -680,14 +778,27 @@ private func appendWatchTargets(fromExpression expression: String, to paths: ino
     return
   }
 
-  if let functionCall = parseFunctionCall(cleaned) {
-    for argument in splitFunctionArguments(functionCall.functionArgs) {
-      appendWatchTargets(fromExpression: argument, to: &paths)
-    }
+  if appendWatchTargetsFromFunctions(in: cleaned, to: &paths) {
     return
   }
 
   appendUniqueWatchTarget(watchTargetOperand(cleaned), to: &paths)
+}
+
+@MainActor
+private func appendWatchTargetsFromFunctions(in text: String, to paths: inout [String]) -> Bool {
+  var remaining = text
+  var foundFunction = false
+
+  while let functionCall = parseFunctionInText(remaining) {
+    foundFunction = true
+    for argument in splitFunctionArguments(functionCall.functionArgs) {
+      appendWatchTargets(fromExpression: argument, to: &paths)
+    }
+    remaining = advancePastFunction(functionCall.match, in: remaining)
+  }
+
+  return foundFunction
 }
 
 #Preview {
