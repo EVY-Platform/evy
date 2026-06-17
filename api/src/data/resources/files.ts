@@ -39,8 +39,8 @@ type PreparedFileUpload = {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-let filesDir = resolve(join(__dirname, "..", "public", "files"));
-let uploadTmpDir = resolve(join(__dirname, "..", "public", "uploads"));
+let filesDir = resolve(join(__dirname, "..", "..", "public", "files"));
+let uploadTmpDir = resolve(join(__dirname, "..", "..", "public", "uploads"));
 
 // Test hooks
 
@@ -53,8 +53,8 @@ export function setFileStorageDirsForTest(params: {
 }
 
 export function resetFileStorageDirsForTest(): void {
-	filesDir = resolve(join(__dirname, "..", "public", "files"));
-	uploadTmpDir = resolve(join(__dirname, "..", "public", "uploads"));
+	filesDir = resolve(join(__dirname, "..", "..", "public", "files"));
+	uploadTmpDir = resolve(join(__dirname, "..", "..", "public", "uploads"));
 }
 
 // Resource operations
