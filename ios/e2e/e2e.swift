@@ -35,7 +35,7 @@ actor WSEmitter {
       "service": "evy",
       "resource": "sdui",
       "filter": ["id": flowId],
-      "data": flowData,
+      "data": flowDataWithDefaultVisibility(flowData),
     ]
     _ = try await send(method: method, params: params)
   }
@@ -45,9 +45,32 @@ actor WSEmitter {
       "service": "evy",
       "resource": "sdui",
       "filter": ["id": flowId],
-      "data": flowData,
+      "data": flowDataWithDefaultVisibility(flowData),
     ]
     _ = try await send(method: "update", params: params)
+  }
+
+  private func flowDataWithDefaultVisibility(_ value: Any) -> Any {
+    if var dictionary = value as? [String: Any] {
+      if dictionary["visible"] == nil,
+        dictionary["id"] is String,
+        dictionary["type"] is String,
+        dictionary["view"] is [String: Any]
+      {
+        dictionary["visible"] = "true"
+      }
+
+      for (key, childValue) in dictionary {
+        dictionary[key] = flowDataWithDefaultVisibility(childValue)
+      }
+      return dictionary
+    }
+
+    if let array = value as? [Any] {
+      return array.map(flowDataWithDefaultVisibility)
+    }
+
+    return value
   }
 
   func getResource(service: String, resource: String, filter: [String: Any]? = nil) async throws
@@ -136,6 +159,82 @@ private enum E2EFlowIds {
 class E2ETestBase: XCTestCase {
 
   var app: XCUIApplication!
+
+  static func minimalCreateItemFlowData() -> [String: Any] {
+    [
+      "id": E2EFlowIds.webSocketCreateFlow,
+      "name": "Create item",
+      "pages": [
+        [
+          "id": E2EFlowIds.webSocketCreatePage,
+          "title": "Create listing",
+          "rows": [
+            [
+              "id": "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
+              "type": "Input",
+              "source": "",
+              "view": [
+                "content": [
+                  "title": "Title",
+                  "value": "{title}",
+                  "placeholder": "Item",
+                ]
+              ],
+              "destination": "{item.title}",
+              "actions": [],
+            ],
+            [
+              "id": "668aeb79-d8ba-43b7-9619-07f91d0a1908",
+              "type": "Input",
+              "source": "",
+              "view": [
+                "content": [
+                  "title": "Price",
+                  "value": "{formatCurrency(price)}",
+                  "placeholder": "0",
+                ]
+              ],
+              "destination": "{buildCurrency(item.price)}",
+              "actions": [],
+            ],
+            [
+              "id": "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
+              "type": "Input",
+              "source": "",
+              "view": [
+                "content": [
+                  "title": "Width",
+                  "value": "{formatDimension(width)}",
+                  "placeholder": "0",
+                ]
+              ],
+              "destination": "{item.width}",
+              "actions": [],
+            ],
+          ],
+          "footer": [
+            "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
+            "type": "Button",
+            "source": "",
+            "destination": "",
+            "view": [
+              "content": [
+                "title": "",
+                "label": "Submit",
+              ]
+            ],
+            "actions": [
+              [
+                "condition": "",
+                "false": "",
+                "true": "{create(marketplace,item)}",
+              ]
+            ],
+          ],
+        ]
+      ],
+    ]
+  }
 
   func clearAndType(field: XCUIElement, text: String, placeholder: String? = nil) {
     if let existingText = field.value as? String, !existingText.isEmpty {
@@ -467,8 +566,8 @@ final class E2EFlowTests: E2ETestBase {
             flowId: E2EFlowIds.navigationHomeFlow,
             viewFlowId: E2EFlowIds.navigationViewFlow,
             viewPageId: E2EFlowIds.navigationViewPage,
-            createFlowId: E2EFlowIds.defaultCreateFlow,
-            createPageId: E2EFlowIds.defaultCreatePage,
+            createFlowId: E2EFlowIds.webSocketCreateFlow,
+            createPageId: E2EFlowIds.webSocketCreatePage,
             buttonLabel: "View"
           )
         ),
@@ -478,6 +577,10 @@ final class E2EFlowTests: E2ETestBase {
             flowId: E2EFlowIds.navigationViewFlow,
             pageId: E2EFlowIds.navigationViewPage
           )
+        ),
+        (
+          flowId: E2EFlowIds.webSocketCreateFlow,
+          flowData: Self.minimalCreateItemFlowData()
         ),
       ]
     )
@@ -856,82 +959,6 @@ final class WebSocketE2ETests: E2ETestBase {
     )
 
     await emitter.disconnect()
-  }
-
-  private static func minimalCreateItemFlowData() -> [String: Any] {
-    [
-      "id": E2EFlowIds.webSocketCreateFlow,
-      "name": "Create item",
-      "pages": [
-        [
-          "id": E2EFlowIds.webSocketCreatePage,
-          "title": "Create listing",
-          "rows": [
-            [
-              "id": "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
-              "type": "Input",
-              "source": "",
-              "view": [
-                "content": [
-                  "title": "Title",
-                  "value": "{title}",
-                  "placeholder": "Item",
-                ]
-              ],
-              "destination": "{item.title}",
-              "actions": [],
-            ],
-            [
-              "id": "668aeb79-d8ba-43b7-9619-07f91d0a1908",
-              "type": "Input",
-              "source": "",
-              "view": [
-                "content": [
-                  "title": "Price",
-                  "value": "{formatCurrency(price)}",
-                  "placeholder": "0",
-                ]
-              ],
-              "destination": "{buildCurrency(item.price)}",
-              "actions": [],
-            ],
-            [
-              "id": "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
-              "type": "Input",
-              "source": "",
-              "view": [
-                "content": [
-                  "title": "Width",
-                  "value": "{formatDimension(width)}",
-                  "placeholder": "0",
-                ]
-              ],
-              "destination": "{item.width}",
-              "actions": [],
-            ],
-          ],
-          "footer": [
-            "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            "type": "Button",
-            "source": "",
-            "destination": "",
-            "view": [
-              "content": [
-                "title": "",
-                "label": "Submit",
-              ]
-            ],
-            "actions": [
-              [
-                "condition": "",
-                "false": "",
-                "true": "{create(marketplace,item)}",
-              ]
-            ],
-          ],
-        ]
-      ],
-    ]
   }
 
   private static func viewItemNavigateAction(viewItemId: String?) -> String {
