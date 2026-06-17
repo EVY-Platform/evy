@@ -35,7 +35,7 @@ actor WSEmitter {
       "service": "evy",
       "resource": "sdui",
       "filter": ["id": flowId],
-      "data": flowDataWithDefaultVisibility(flowData),
+      "data": flowData,
     ]
     _ = try await send(method: method, params: params)
   }
@@ -45,32 +45,9 @@ actor WSEmitter {
       "service": "evy",
       "resource": "sdui",
       "filter": ["id": flowId],
-      "data": flowDataWithDefaultVisibility(flowData),
+      "data": flowData,
     ]
     _ = try await send(method: "update", params: params)
-  }
-
-  private func flowDataWithDefaultVisibility(_ value: Any) -> Any {
-    if var dictionary = value as? [String: Any] {
-      if dictionary["visible"] == nil,
-        dictionary["id"] is String,
-        dictionary["type"] is String,
-        dictionary["view"] is [String: Any]
-      {
-        dictionary["visible"] = "true"
-      }
-
-      for (key, childValue) in dictionary {
-        dictionary[key] = flowDataWithDefaultVisibility(childValue)
-      }
-      return dictionary
-    }
-
-    if let array = value as? [Any] {
-      return array.map(flowDataWithDefaultVisibility)
-    }
-
-    return value
   }
 
   func getResource(service: String, resource: String, filter: [String: Any]? = nil) async throws
@@ -139,11 +116,6 @@ actor WSEmitter {
 }
 
 private enum E2EFlowIds {
-  static let defaultViewFlow = "74a49d4b-2176-4925-857a-e29e2991f1bd"
-  static let defaultViewPage = "82cae120-c7b1-4c29-bd42-e1521320b109"
-  static let defaultCreateFlow = "ca47e6c5-da19-4491-8422-adb40d9e8a27"
-  static let defaultCreatePage = "306ed62c-c2af-4652-a873-26c7a388972d"
-
   static let navigationHomeFlow = "10000000-0000-4000-8000-000000000001"
   static let navigationViewFlow = "10000000-0000-4000-8000-000000000007"
   static let navigationViewPage = "10000000-0000-4000-8000-000000000008"
@@ -173,6 +145,7 @@ class E2ETestBase: XCTestCase {
               "id": "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
               "type": "Input",
               "source": "",
+              "visible": "true",
               "view": [
                 "content": [
                   "title": "Title",
@@ -187,6 +160,7 @@ class E2ETestBase: XCTestCase {
               "id": "668aeb79-d8ba-43b7-9619-07f91d0a1908",
               "type": "Input",
               "source": "",
+              "visible": "true",
               "view": [
                 "content": [
                   "title": "Price",
@@ -201,6 +175,7 @@ class E2ETestBase: XCTestCase {
               "id": "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
               "type": "Input",
               "source": "",
+              "visible": "true",
               "view": [
                 "content": [
                   "title": "Width",
@@ -217,6 +192,7 @@ class E2ETestBase: XCTestCase {
             "type": "Button",
             "source": "",
             "destination": "",
+            "visible": "true",
             "view": [
               "content": [
                 "title": "",
@@ -393,6 +369,7 @@ class E2ETestBase: XCTestCase {
               "source": "",
               "destination": "",
               "actions": [],
+              "visible": "true",
               "view": [
                 "content": [
                   "title": "",
@@ -402,6 +379,7 @@ class E2ETestBase: XCTestCase {
                       "type": "Button",
                       "source": "",
                       "destination": "",
+                      "visible": "true",
                       "view": [
                         "content": [
                           "title": "",
@@ -421,6 +399,7 @@ class E2ETestBase: XCTestCase {
                       "type": "Button",
                       "source": "",
                       "destination": "",
+                      "visible": "true",
                       "view": [
                         "content": [
                           "title": "",
@@ -450,14 +429,15 @@ class E2ETestBase: XCTestCase {
     title: String,
     text: String = "",
     subtitle: String = "",
-    visible: String = ""
+    visible: String = "true"
   ) -> [String: Any] {
-    var row: [String: Any] = [
+    return [
       "id": id,
       "type": "Text",
       "source": "",
       "destination": "",
       "actions": [],
+      "visible": visible,
       "view": [
         "content": [
           "title": title,
@@ -468,10 +448,6 @@ class E2ETestBase: XCTestCase {
         "max_lines": "",
       ],
     ]
-    if !visible.isEmpty {
-      row["visible"] = visible
-    }
-    return row
   }
 
   static func viewItemFlowData(flowId: String, pageId: String) -> [String: Any] {
@@ -504,6 +480,7 @@ class E2ETestBase: XCTestCase {
             "type": "Button",
             "source": "",
             "destination": "",
+            "visible": "true",
             "actions": [
               [
                 "condition": "",
@@ -1020,6 +997,7 @@ final class WebSocketE2ETests: E2ETestBase {
               "source": "",
               "destination": "",
               "actions": [],
+              "visible": "true",
               "view": [
                 "content": [
                   "title": "",
@@ -1029,6 +1007,7 @@ final class WebSocketE2ETests: E2ETestBase {
                       "type": "Button",
                       "source": "",
                       "destination": "",
+                      "visible": "true",
                       "view": [
                         "content": [
                           "title": "",
@@ -1048,6 +1027,7 @@ final class WebSocketE2ETests: E2ETestBase {
                       "type": "Button",
                       "source": "",
                       "destination": "",
+                      "visible": "true",
                       "view": [
                         "content": [
                           "title": "",
