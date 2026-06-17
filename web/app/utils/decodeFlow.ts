@@ -280,7 +280,7 @@ function decodeRow(row: ServerRow): Row {
 				source: normalized.source,
 				destination: normalized.destination,
 				actions: normalized.actions,
-				visible: normalized.visible ?? "",
+				visible: normalized.visible,
 				view: normalized.view as Row["config"]["view"],
 			},
 		};

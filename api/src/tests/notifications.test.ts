@@ -8,7 +8,7 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest, UI_Flow, UI_Page } from "evy-types";
-import type { WSParams } from "../index";
+import type { WSParams } from "../shared/ws";
 
 import {
 	asEvyDb,
@@ -30,8 +30,8 @@ describe("create/update real-time notifications", () => {
 	let previousApiPort: string | undefined;
 	let apiPort: number;
 	let apiUrl: string;
-	let initServer: typeof import("../index")["initServer"];
-	let emitJsonRpc: typeof import("../index")["emitJsonRpc"];
+	let initServer: typeof import("../shared/ws")["initServer"];
+	let emitJsonRpc: typeof import("../shared/ws")["emitJsonRpc"];
 	let server: WSServer;
 
 	beforeAll(async () => {
@@ -41,7 +41,7 @@ describe("create/update real-time notifications", () => {
 		previousApiPort = process.env.API_PORT;
 		apiPort = await getFreePort();
 		process.env.API_PORT = String(apiPort);
-		const wsMod = await import("../index");
+		const wsMod = await import("../shared/ws");
 		initServer = wsMod.initServer;
 		emitJsonRpc = wsMod.emitJsonRpc;
 

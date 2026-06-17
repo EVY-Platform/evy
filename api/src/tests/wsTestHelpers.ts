@@ -8,7 +8,7 @@ import type { EvyDb } from "../database/db";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 
 export type WSServer = Awaited<
-	ReturnType<typeof import("../index")["initServer"]>
+	ReturnType<typeof import("../shared/ws")["initServer"]>
 >;
 
 type RpcWSClient = InstanceType<typeof Client>;

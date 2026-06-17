@@ -46,7 +46,6 @@ type BroadcastFn = (eventName: string, payload: unknown) => void;
 // Constants and state
 
 const DATA_CHANGED_EVENT = "dataChanged";
-const evyCoreResourceNameSet: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
 let coreBroadcast: BroadcastFn | null = null;
 
@@ -56,6 +55,7 @@ export function initCoreNotifications(broadcastFn: BroadcastFn | null): void {
 	coreBroadcast = broadcastFn;
 }
 
+// Re-exported so callers import from data/data rather than a nested resource file.
 export function validateAuth(
 	db: EvyDb,
 	token: string,
@@ -246,7 +246,7 @@ function assertEvyCoreAccess(
 	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
 	}
-	if (!evyCoreResourceNameSet.has(params.resource)) {
+	if (!EVY_CORE_RESOURCE_NAME_SET.has(params.resource)) {
 		throw new Error("Resource is not served by the core API");
 	}
 }

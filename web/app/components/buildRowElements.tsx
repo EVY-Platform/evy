@@ -14,7 +14,7 @@ export function buildRowElements(
 			forcedIndicators && forcedIndicators.rowId === row.id
 				? forcedIndicators.indicators
 				: undefined;
-		const rowElement = (
+		return (
 			<DraggableRowContainer
 				key={row.id}
 				rowId={row.id}
@@ -24,16 +24,6 @@ export function buildRowElements(
 			>
 				{row.row}
 			</DraggableRowContainer>
-		);
-
-		return (
-			<div
-				key={row.id}
-				className="evy-opacity-50"
-				title="Runtime evaluates row visibility on device"
-			>
-				{rowElement}
-			</div>
 		);
 	});
 }

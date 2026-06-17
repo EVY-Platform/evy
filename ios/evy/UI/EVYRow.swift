@@ -59,9 +59,6 @@ struct EVYRow: View, Identifiable {
     if watchTargets.isEmpty {
       return EVYState(staticString: evaluateVisibility())
     }
-    if watchTargets.count == 1, let watch = watchTargets.first {
-      return EVYState(watches: [watch], setter: evaluateVisibility)
-    }
     return EVYState(watches: watchTargets, setter: evaluateVisibility)
   }
 
