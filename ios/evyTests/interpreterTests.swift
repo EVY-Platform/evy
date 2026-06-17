@@ -195,39 +195,23 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testGetValueFromTextEvaluatesMultipleFunctionsInSingleBraceBlock() throws {
-    let itemKey = uniqueKey("item")
-    try store(
-      .dictionary([
-        "dimensions": .dictionary([
-          "width": .int(200),
-          "height": .int(300),
-        ])
-      ]),
-      at: itemKey)
-
-    let out = try EVY.getValueFromText(
-      "{formatDimension(\(itemKey).dimensions.width) x formatDimension(\(itemKey).dimensions.height)}"
+    let key = try storeDimensions(width: 200, height: 300)
+    XCTAssertEqual(
+      try EVY.getValueFromText(
+        "{formatDimension(\(key).dimensions.width) x formatDimension(\(key).dimensions.height)}"
+      ).toString(),
+      "20cm x 30cm"
     )
-
-    XCTAssertEqual(out.toString(), "20cm x 30cm")
   }
 
   func testGetValueFromTextEvaluatesMultipleFunctionsInsideWrappedText() throws {
-    let itemKey = uniqueKey("item")
-    try store(
-      .dictionary([
-        "dimensions": .dictionary([
-          "width": .int(200),
-          "height": .int(300),
-        ])
-      ]),
-      at: itemKey)
-
-    let out = try EVY.getValueFromText(
-      "Size: {formatDimension(\(itemKey).dimensions.width) x formatDimension(\(itemKey).dimensions.height)}"
+    let key = try storeDimensions(width: 200, height: 300)
+    XCTAssertEqual(
+      try EVY.getValueFromText(
+        "Size: {formatDimension(\(key).dimensions.width) x formatDimension(\(key).dimensions.height)}"
+      ).toString(),
+      "Size: 20cm x 30cm"
     )
-
-    XCTAssertEqual(out.toString(), "Size: 20cm x 30cm")
   }
 
   func testFormatDurationHumanizesMilliseconds() throws {
@@ -673,6 +657,19 @@ final class InterpreterTests: XCTestCase {
 
     XCTAssertEqual(result.value, "Good")
     XCTAssertEqual(countBefore, countAfter)
+  }
+
+  private func storeDimensions(width: Int, height: Int) throws -> String {
+    let key = uniqueKey("item")
+    try store(
+      .dictionary([
+        "dimensions": .dictionary([
+          "width": .int(width),
+          "height": .int(height),
+        ])
+      ]),
+      at: key)
+    return key
   }
 
   private func store(_ value: EVYJson, at key: String) throws {

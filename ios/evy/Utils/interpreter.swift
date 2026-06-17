@@ -441,14 +441,9 @@ private func parseProps(_ input: String) -> (Regex<AnyRegexOutput>.Match, String
 private func parseTextExpressionInterpolation(_ input: String) -> (
   fullMatch: String, inner: String
 )? {
-  for interpolation in interpolations(in: input) {
-    let inner = interpolation.inner.trimmingCharacters(in: .whitespacesAndNewlines)
-    if containsMixedFunctionTextExpression(inner) {
-      return interpolation
-    }
+  interpolations(in: input).first {
+    containsMixedFunctionTextExpression($0.inner.trimmingCharacters(in: .whitespacesAndNewlines))
   }
-
-  return nil
 }
 
 private func containsMixedFunctionTextExpression(_ input: String) -> Bool {
@@ -457,23 +452,25 @@ private func containsMixedFunctionTextExpression(_ input: String) -> Bool {
 
   while let function = parseFunctionInText(remaining) {
     functionCount += 1
-    remaining = remaining.replacingOccurrences(
-      of: function.match.0.description,
-      with: "",
-      options: [],
-      range: remaining.startIndex..<function.match.range.upperBound
-    )
+    remaining = advancePastFunction(function.match, in: remaining)
   }
 
-  let trimmedRemainder = remaining.trimmingCharacters(in: .whitespacesAndNewlines)
-  if functionCount > 1 {
-    return true
-  }
+  if functionCount > 1 { return true }
 
   // A single function with a prop continuation, like `findFirst(items, id).value`,
   // is still a prop expression. Anything else around the function is literal text.
+  let trimmedRemainder = remaining.trimmingCharacters(in: .whitespacesAndNewlines)
   return functionCount == 1 && !trimmedRemainder.isEmpty
     && !isPropContinuation(trimmedRemainder)
+}
+
+private func advancePastFunction(_ match: Regex<AnyRegexOutput>.Match, in string: String) -> String
+{
+  string.replacingOccurrences(
+    of: match.0.description,
+    with: "",
+    range: string.startIndex..<match.range.upperBound
+  )
 }
 
 private func isPropContinuation(_ input: String) -> Bool {
@@ -798,12 +795,7 @@ private func appendWatchTargetsFromFunctions(in text: String, to paths: inout [S
     for argument in splitFunctionArguments(functionCall.functionArgs) {
       appendWatchTargets(fromExpression: argument, to: &paths)
     }
-    remaining = remaining.replacingOccurrences(
-      of: functionCall.match.0.description,
-      with: "",
-      options: [],
-      range: remaining.startIndex..<functionCall.match.range.upperBound
-    )
+    remaining = advancePastFunction(functionCall.match, in: remaining)
   }
 
   return foundFunction
