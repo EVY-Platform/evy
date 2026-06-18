@@ -122,7 +122,7 @@ export default defineRow("CalendarRow", {
 				secondary: "{delivery_selection}",
 			},
 		},
-		destination: "{item.pickup_selection}",
+		destination: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

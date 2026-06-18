@@ -94,8 +94,9 @@ enum EVYActionRunner {
       case "highlight_required":
         let args = splitFunctionArguments(functionArgs)
         let alias = args.first ?? "field"
+        let lastSegment = alias.components(separatedBy: ".").last ?? alias
         let fieldName =
-          alias
+          lastSegment
           .replacingOccurrences(of: "_", with: " ")
           .trimmingCharacters(in: .whitespacesAndNewlines)
         let readableField = fieldName.isEmpty ? "Field" : fieldName.capitalized

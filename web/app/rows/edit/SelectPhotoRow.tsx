@@ -15,10 +15,10 @@ export default defineRow("SelectPhotoRow", {
 				subtitle: "Photos: 0/10",
 				icon: "::image-plus::",
 				content: "Add photos",
-				photos: "{item.photo_ids}",
+				photos: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
 			},
 		},
-		destination: "{item.photo_ids}",
+		destination: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

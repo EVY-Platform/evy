@@ -261,8 +261,9 @@ function NavBar() {
 }
 
 export function App() {
-	const { flows, loading } = useFlows();
+	const { flows, serviceResources, loading } = useFlows();
 	const testFlows = window.__TEST_FLOWS__;
+	const testServiceResources = window.__TEST_SERVICE_RESOURCES__;
 	const initialFlows = testFlows ?? flows;
 
 	if (loading && !testFlows) {
@@ -282,7 +283,13 @@ export function App() {
 	}
 
 	return (
-		<AppProvider initialFlows={initialFlows} syncWithApi={!testFlows}>
+		<AppProvider
+			initialFlows={initialFlows}
+			serviceResources={
+				testFlows ? (testServiceResources ?? []) : serviceResources
+			}
+			syncWithApi={!testFlows}
+		>
 			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
 				<NavBar />
 				<div className="evy-flex evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-bg-gray-light">

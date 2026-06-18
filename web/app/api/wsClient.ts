@@ -1,5 +1,6 @@
 import { Client } from "rpc-websockets";
 import type { SyncResponse, UI_Flow as ServerFlow } from "evy-types";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { config } from "../config";
 
 export function isServerFlow(v: unknown): v is ServerFlow {
@@ -99,7 +100,7 @@ class WSClient {
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
 		const raw = await this.client.call("get", {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			filter: { id: flowId },
 		});
@@ -114,7 +115,7 @@ class WSClient {
 			? await this.flowExists(flowData.id)
 			: false;
 		const raw = await this.client.call(shouldUpdate ? "update" : "create", {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			filter: flowData.id ? { id: flowData.id } : undefined,
 			data: flowData,

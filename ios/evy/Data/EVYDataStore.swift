@@ -78,6 +78,14 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
+  func getAllDecoded<T: Decodable>(namespace: String, resource: String, as type: T.Type) throws
+    -> [T]
+  {
+    try getAll(namespace: namespace, resource: resource).map { row in
+      try JSONDecoder().decode(T.self, from: row.data)
+    }
+  }
+
   func getAll() throws -> [EVYData] {
     let descriptor = FetchDescriptor<EVYData>()
     return try context.fetch(descriptor)
@@ -206,14 +214,6 @@ final class EVYDataStore {
 
       if let namespace = namespace(forSyncedResource: key),
         let collection = try getCollectionJson(namespace: namespace, resource: key)
-      {
-        return collection
-      }
-
-      let pluralKey = EVY.resourceName(forEntityKey: key)
-      if pluralKey != key,
-        let pluralNamespace = namespace(forSyncedResource: pluralKey),
-        let collection = try getCollectionJson(namespace: pluralNamespace, resource: pluralKey)
       {
         return collection
       }

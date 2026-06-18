@@ -7,7 +7,7 @@ export default defineRow("PhotoGalleryRow", {
 	config: {
 		type: "PhotoGallery",
 		actions: [],
-		source: "{item.photo_ids}",
+		source: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
 		visible: "true",
 		view: {
 			content: {

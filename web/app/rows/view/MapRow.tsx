@@ -28,7 +28,8 @@ export default defineRow("MapRow", {
 		view: {
 			content: {
 				title: "Map row title",
-				location: "{item.transfer_options.pickup.address.location}",
+				location:
+					"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.location}",
 				subtitle: "Map row subtitle",
 			},
 		},

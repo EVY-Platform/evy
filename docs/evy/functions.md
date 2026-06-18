@@ -35,13 +35,13 @@ Output: 5
 
 #### findFirst
 
-Finds the first datum in a named collection whose `id` field matches the given identifier. The returned datum can be chained with a property accessor.
+Finds the first datum in a collection whose `id` field matches the given identifier. For external service data, pass the service resource ID as the collection key. The returned datum can be chained with a property accessor.
 
 ```
 findFirst({_variable_type_string_collection_}, {_variable_type_string_id_})
-Collection: conditions = [{ "id": "c1", "value": "Excellent" }, ...]
+Collection: cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f = [{ "id": "c1", "value": "Excellent" }, ...]
 Id variable: "c1"
-Output: {findFirst(conditions, item.condition_id).value} → "Excellent"
+Output: {findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value} → "Excellent"
 ```
 
 ## Comparisons

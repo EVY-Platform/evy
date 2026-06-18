@@ -26,7 +26,7 @@ flowchart LR
     api -- dataChanged JSON-RPC --> client
 ```
 
-The service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto). `Get`, `Create`, and `Update` are unary RPCs with JSON-encoded payloads. `ListResources` advertises the resource names the `api` includes in its runtime registry. `SubscribeEvents` is a server-streaming RPC that pushes `dataChanged` events to the `api` after each successful write.
+The service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto). Its gRPC methods are `Get`, `Create`, `Update`, and `SubscribeEvents`: `Get`, `Create`, and `Update` are unary RPCs with JSON-encoded payloads, while `SubscribeEvents` is a server-streaming RPC that pushes `dataChanged` events to the `api` after each successful write. Resource metadata is owned by the API core `serviceResources` table.
 
 ## Environment
 

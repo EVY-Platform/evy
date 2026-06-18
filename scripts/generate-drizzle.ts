@@ -456,6 +456,7 @@ async function main(): Promise<void> {
 		"DATA_EVY_Service",
 		"DATA_EVY_Organization",
 		"DATA_EVY_ServiceProvider",
+		"DATA_EVY_ServiceResource",
 		"DATA_EVY_Flow",
 		"DATA_EVY_File",
 	];
@@ -501,16 +502,26 @@ async function main(): Promise<void> {
 		(r) => r.oneToMany !== true,
 	);
 
+	const oneToManyByFrom = new Map<string, typeof oneToManyRels>();
 	for (const rel of oneToManyRels) {
-		const fromTable = config.tables?.[rel.from];
-		const toTable = config.tables?.[rel.to];
-		if (!fromTable || !toTable) continue;
+		const list = oneToManyByFrom.get(rel.from) ?? [];
+		list.push(rel);
+		oneToManyByFrom.set(rel.from, list);
+	}
+
+	for (const [fromKey, rels] of oneToManyByFrom) {
+		const fromTable = config.tables?.[fromKey];
+		if (!fromTable) continue;
 		const fromVar = tableNameToVariable(fromTable.tableName);
-		const toVar = tableNameToVariable(toTable.tableName);
 		lines.push(
 			`export const ${fromVar}Relations = relations(${fromVar}, ({ many }) => ({`,
 		);
-		lines.push(`	${rel.relationName}: many(${toVar}),`);
+		for (const rel of rels) {
+			const toTable = config.tables?.[rel.to];
+			if (!toTable) continue;
+			const toVar = tableNameToVariable(toTable.tableName);
+			lines.push(`	${rel.relationName}: many(${toVar}),`);
+		}
 		lines.push("}));");
 		lines.push("");
 	}

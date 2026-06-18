@@ -117,6 +117,7 @@ export function ConfigurationPanel() {
 		activePageId,
 		activeFlowId,
 		flows,
+		serviceResources,
 		configStack,
 		dispatchRow,
 	} = useFlowsContext();
@@ -300,7 +301,7 @@ export function ConfigurationPanel() {
 						label="Visible"
 						value={configRow.config.visible ?? ""}
 						onChange={(next) => updateRowRoot("visible", next, configRow.id)}
-						placeholder="Condition to show row, e.g. {item.payment_methods.cash == true}"
+						placeholder="Condition to show row, e.g. {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}"
 						ariaLabel="Row visibility condition"
 						labelClassName="evy-text-sm evy-font-medium evy-text-black"
 						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
@@ -385,6 +386,7 @@ export function ConfigurationPanel() {
 						<ActionEditor
 							actions={currentConfigRow.config.actions}
 							flows={flows}
+							serviceResources={serviceResources}
 							onUpdate={updateRowActions}
 						/>
 					</>

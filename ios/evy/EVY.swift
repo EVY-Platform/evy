@@ -22,18 +22,31 @@ struct Filter: Encodable {
 
 enum EVYSyncState {
   private static let lastSyncTimestampKey = "lastSyncTimestamp"
+  private static let storageVersionKey = "syncStorageVersion"
+  private static let currentStorageVersion = 2
 
   static var lastSyncTimestamp: String {
-    UserDefaults.standard.string(forKey: lastSyncTimestampKey)
+    ensureCurrentStorageVersion()
+    return UserDefaults.standard.string(forKey: lastSyncTimestampKey)
       ?? "1970-01-01T00:00:00.000Z"
   }
 
   static func markSynced() {
     UserDefaults.standard.set(Date().ISO8601Format(), forKey: lastSyncTimestampKey)
+    UserDefaults.standard.set(currentStorageVersion, forKey: storageVersionKey)
   }
 
   static func reset() {
     UserDefaults.standard.removeObject(forKey: lastSyncTimestampKey)
+    UserDefaults.standard.removeObject(forKey: storageVersionKey)
+  }
+
+  private static func ensureCurrentStorageVersion() {
+    guard UserDefaults.standard.integer(forKey: storageVersionKey) != currentStorageVersion else {
+      return
+    }
+    UserDefaults.standard.removeObject(forKey: lastSyncTimestampKey)
+    UserDefaults.standard.set(currentStorageVersion, forKey: storageVersionKey)
   }
 }
 
@@ -48,18 +61,7 @@ struct SyncRow: Codable {
 }
 
 struct SyncResponse: Codable {
-  let resources: SyncResources?
   let data: [SyncRow]
-}
-
-struct SyncResources: Codable {
-  let resources: [String: ResourceEntry]
-  let resourcesByService: [String: [String]]
-}
-
-struct ResourceEntry: Codable, Equatable {
-  let singular: String
-  let plural: String
 }
 
 // MARK: - Core
@@ -76,12 +78,6 @@ struct EVY {
   static let cacheStore = EVYDataStore(name: "cache", inMemoryOnly: true)
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
   static var activeCacheScopeId: String?
-
-  // MARK: - Resource Mapping
-
-  static var cachedResourceMapping: [String: ResourceEntry] = [:]
-
-  static var singularToPlural: [String: String] = [:]
 
   // MARK: - Core Utilities
 

@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import type { UI_RowAction } from "evy-types";
+import type { ServiceResource } from "../api/sync";
 import type { UI_Flow } from "../types/flow";
 import { parseBranch, formatBranchDisplay } from "../utils/actionBranch";
 import {
@@ -35,10 +36,16 @@ const actionSummaryCss = `
 type ActionEditorProps = {
 	actions: UI_RowAction[];
 	flows: UI_Flow[];
+	serviceResources: ServiceResource[];
 	onUpdate: (actions: UI_RowAction[]) => void;
 };
 
-export function ActionEditor({ actions, flows, onUpdate }: ActionEditorProps) {
+export function ActionEditor({
+	actions,
+	flows,
+	serviceResources,
+	onUpdate,
+}: ActionEditorProps) {
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
 	const updateAction = useCallback(
@@ -101,6 +108,7 @@ export function ActionEditor({ actions, flows, onUpdate }: ActionEditorProps) {
 							action={action}
 							index={index}
 							flows={flows}
+							serviceResources={serviceResources}
 							onEdit={() => setEditingIndex(index)}
 							onRemove={() => removeAction(index)}
 						/>
@@ -126,6 +134,7 @@ type ActionSummaryCardProps = {
 	action: UI_RowAction;
 	index: number;
 	flows: UI_Flow[];
+	serviceResources: ServiceResource[];
 	onEdit: () => void;
 	onRemove: () => void;
 };
@@ -134,6 +143,7 @@ function ActionSummaryCard({
 	action,
 	index,
 	flows,
+	serviceResources,
 	onEdit,
 	onRemove,
 }: ActionSummaryCardProps) {
@@ -142,8 +152,8 @@ function ActionSummaryCard({
 		[action.condition],
 	);
 	const summaryLines = useMemo(
-		() => formatExpressionSummary(conditionExpr),
-		[conditionExpr],
+		() => formatExpressionSummary(conditionExpr, serviceResources),
+		[conditionExpr, serviceResources],
 	);
 	const trueBranch = useMemo(() => parseBranch(action.true), [action.true]);
 	const falseBranch = useMemo(() => parseBranch(action.false), [action.false]);

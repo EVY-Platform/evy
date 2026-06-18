@@ -1,5 +1,20 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
+import { migrate } from "drizzle-orm/pglite/migrator";
 import type { GetResponse } from "evy-types";
+import * as schema from "../../../types/generated/ts/db/schema.generated";
+import {
+	asEvyDb,
+	clearAllTestTables,
+	createPgliteTestDatabase,
+} from "./wsTestHelpers";
 
 const forwardGetMock = mock(
 	async (
@@ -17,50 +32,130 @@ const forwardGetMock = mock(
 	},
 );
 
-const ensureRegistryInitializedMock = mock(async () => {});
-
 mock.module("../procedures/services", () => ({
-	ensureRegistryInitialized: ensureRegistryInitializedMock,
 	forwardCreate: mock(),
 	forwardGet: forwardGetMock,
 	forwardUpdate: mock(),
 	wireGrpcEvents: mock(),
 }));
 
-// Register marketplace resources so validateStrictApiRequest can find them
-import { setServiceRegistry } from "evy-types/rpcRequestHelpers";
-setServiceRegistry([
-	[
-		"marketplace",
-		["selling_reasons", "conditions", "durations", "areas", "items"],
-	],
-]);
+const { pgliteClient, testDb } = createPgliteTestDatabase();
+const dataDb = asEvyDb(testDb);
 
 const { api } = await import("../procedures/rpc");
-const { resources } = await import("../procedures/resources");
+
+const MARKETPLACE_SERVICE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
+const MARKETPLACE_RESOURCE = {
+	SELLING_REASONS: "e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8",
+	CONDITIONS: "cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f",
+	DURATIONS: "e82e1baa-6d33-4649-b495-4e10a4d1d8bf",
+	AREAS: "2532b561-3b14-458b-9039-307e99c4a4ba",
+	ITEMS: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+} as const;
+const EVY_SERVICE_ID = "475731ac-31aa-4d65-94d2-7032782ae359";
+
+async function seedServiceResources(): Promise<void> {
+	const nowIso = new Date().toISOString();
+
+	await testDb.insert(schema.service).values([
+		{
+			id: MARKETPLACE_SERVICE_ID,
+			name: "marketplace",
+			description: "Marketplace",
+			sortOrder: 1,
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		},
+		{
+			id: EVY_SERVICE_ID,
+			name: "evy",
+			description: "EVY core",
+			sortOrder: 0,
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		},
+	]);
+
+	await testDb.insert(schema.serviceResource).values([
+		{
+			id: MARKETPLACE_RESOURCE.SELLING_REASONS,
+			fkServiceId: MARKETPLACE_SERVICE_ID,
+			name: "selling_reason",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		},
+		{
+			id: MARKETPLACE_RESOURCE.CONDITIONS,
+			fkServiceId: MARKETPLACE_SERVICE_ID,
+			name: "condition",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		},
+		{
+			id: MARKETPLACE_RESOURCE.DURATIONS,
+			fkServiceId: MARKETPLACE_SERVICE_ID,
+			name: "duration",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		},
+		{
+			id: MARKETPLACE_RESOURCE.AREAS,
+			fkServiceId: MARKETPLACE_SERVICE_ID,
+			name: "area",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		},
+		{
+			id: MARKETPLACE_RESOURCE.ITEMS,
+			fkServiceId: MARKETPLACE_SERVICE_ID,
+			name: "item",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		},
+		{
+			id: "d23cd318-3df4-486f-92d8-77f84402e63c",
+			fkServiceId: EVY_SERVICE_ID,
+			name: "flow",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		},
+	]);
+}
+
+beforeAll(async () => {
+	await migrate(testDb, { migrationsFolder: "./drizzle" });
+});
+
+afterAll(async () => {
+	await pgliteClient.close();
+});
+
+beforeEach(async () => {
+	forwardGetMock.mockClear();
+	await clearAllTestTables(testDb);
+	await seedServiceResources();
+});
 
 describe("api JSON-RPC handler", () => {
-	beforeEach(() => {
-		forwardGetMock.mockClear();
-		ensureRegistryInitializedMock.mockClear();
-	});
-
 	it("forwards non-search marketplace API function requests to the owning service", async () => {
 		const itemId = crypto.randomUUID();
-		const result = await api({
-			service: "marketplace",
-			resource: "items",
-			method: "not-search",
-			filter: {
-				id: itemId,
+		const result = await api(
+			{
+				service: MARKETPLACE_SERVICE_ID,
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				method: "not-search",
+				filter: {
+					id: itemId,
+				},
 			},
-		});
+			dataDb,
+		);
 
 		expect(result).toEqual([{ id: itemId }]);
 		expect(forwardGetMock).toHaveBeenCalledTimes(1);
-		expect(forwardGetMock).toHaveBeenCalledWith("marketplace", {
-			service: "marketplace",
-			resource: "items",
+		expect(forwardGetMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
+			service: MARKETPLACE_SERVICE_ID,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			method: "not-search",
 			filter: {
 				id: itemId,
@@ -70,44 +165,43 @@ describe("api JSON-RPC handler", () => {
 
 	it("rejects requests without an API method", async () => {
 		await expect(
-			api({
-				service: "marketplace",
-				resource: "items",
-				filter: {
-					id: crypto.randomUUID(),
+			api(
+				{
+					service: MARKETPLACE_SERVICE_ID,
+					resource: MARKETPLACE_RESOURCE.ITEMS,
+					filter: {
+						id: crypto.randomUUID(),
+					},
 				},
-			}),
+				dataDb,
+			),
 		).rejects.toThrow("ApiRequest validation failed");
 
 		expect(forwardGetMock).not.toHaveBeenCalled();
 	});
 
-	it("rejects unsupported service/resource pairs", async () => {
-		await expect(
-			api({
-				service: "marketplace",
+	it("forwards API requests without checking service/resource pairs locally", async () => {
+		const itemId = crypto.randomUUID();
+		const result = await api(
+			{
+				service: MARKETPLACE_SERVICE_ID,
 				resource: "sdui",
 				method: "not-search",
 				filter: {
-					id: crypto.randomUUID(),
+					id: itemId,
 				},
-			}),
-		).rejects.toThrow("Invalid service and resource combination");
+			},
+			dataDb,
+		);
 
-		expect(forwardGetMock).not.toHaveBeenCalled();
-	});
-});
-
-describe("resources JSON-RPC handler", () => {
-	beforeEach(() => {
-		ensureRegistryInitializedMock.mockClear();
-	});
-
-	it("waits for service discovery before returning syncable services", async () => {
-		const result = await resources();
-
-		expect(ensureRegistryInitializedMock).toHaveBeenCalledTimes(1);
-		expect(result.resourcesByService.marketplace).toContain("items");
-		expect(result.resourcesByService.marketplace).toContain("conditions");
+		expect(result).toEqual([{ id: itemId }]);
+		expect(forwardGetMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
+			service: MARKETPLACE_SERVICE_ID,
+			resource: "sdui",
+			method: "not-search",
+			filter: {
+				id: itemId,
+			},
+		});
 	});
 });

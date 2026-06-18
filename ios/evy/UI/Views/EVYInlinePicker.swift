@@ -102,7 +102,7 @@ struct EVYInlinePicker: View {
 
 private struct EVYInlinePickerPreview: View {
   init() {
-    try? EVY.getUserData()
+    _ = try? EVY.getUserData()
     EVYPreviewMockData.seedCommon()
   }
 

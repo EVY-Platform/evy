@@ -32,7 +32,7 @@ flowchart LR
   - [API](./api/README.md)
   - [iOS](./ios/README.md)
   - [Web](./web/README.md)
-  - [Android](./android/README.md) (placeholder; no app in this repo yet)
+  - [Android](./android/README.md)
 - [Marketplace](./services/marketplace/README.md)
   - [Data models](./docs/services/marketplace/data.md)
   - [Example data](./docs/services/service_data.json)

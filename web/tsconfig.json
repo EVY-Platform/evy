@@ -13,7 +13,8 @@
 		"baseUrl": ".",
 		"paths": {
 			"evy-types": ["../types/generated/ts"],
-			"evy-types/*": ["../types/generated/ts/*"]
+			"evy-types/*": ["../types/generated/ts/*"],
+			"evy-types/coreResources": ["../types/generated/ts/coreResources"]
 		}
 	},
 	"include": ["app/**/*", "dev/**/*", "tests/**/*"]

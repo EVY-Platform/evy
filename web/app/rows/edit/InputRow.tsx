@@ -16,7 +16,7 @@ export default defineRow("InputRow", {
 				value: "",
 			},
 		},
-		destination: "{item.title}",
+		destination: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

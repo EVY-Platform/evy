@@ -36,6 +36,20 @@
 			"when": 1781695798071,
 			"tag": "0004_remove_service_default_weight_kg",
 			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1781783482228,
+			"tag": "0005_curved_loki",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "7",
+			"when": 1781870400000,
+			"tag": "0006_simplify_service_resources",
+			"breakpoints": true
 		}
 	]
 }

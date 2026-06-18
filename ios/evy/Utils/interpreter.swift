@@ -457,7 +457,7 @@ private func containsMixedFunctionTextExpression(_ input: String) -> Bool {
 
   if functionCount > 1 { return true }
 
-  // A single function with a prop continuation, like `findFirst(items, id).value`,
+  // A single function with a prop continuation, like `findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, id).value`,
   // is still a prop expression. Anything else around the function is literal text.
   let trimmedRemainder = remaining.trimmingCharacters(in: .whitespacesAndNewlines)
   return functionCount == 1 && !trimmedRemainder.isEmpty
@@ -807,7 +807,7 @@ private func appendWatchTargetsFromFunctions(in text: String, to paths: inout [S
 
 private struct EVYInterpreterPreview: View {
   init() {
-    try? EVY.getUserData()
+    _ = try? EVY.getUserData()
     EVYPreviewMockData.seedCommon()
   }
 

@@ -9,6 +9,9 @@ import XCTest
 
 @MainActor
 final class EVYDataStoreSortIndexTests: XCTestCase {
+  private var serviceResourceIdsToDelete: [String] = []
+  private var resourcesToDelete: [(namespace: String, resource: String)] = []
+
   override func setUp() async throws {
     try await super.setUp()
     try? EVY.publicStore.deleteAll(namespace: "test", resource: "items")
@@ -16,6 +19,12 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
 
   override func tearDown() async throws {
     try? EVY.publicStore.deleteAll(namespace: "test", resource: "items")
+    for id in serviceResourceIdsToDelete {
+      try? EVY.publicStore.delete(namespace: EVYNamespace.evy, resource: "serviceResources", id: id)
+    }
+    for resource in resourcesToDelete {
+      try? EVY.publicStore.deleteAll(namespace: resource.namespace, resource: resource.resource)
+    }
     try await super.tearDown()
   }
 
@@ -58,6 +67,61 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
 
     let stored = try EVY.publicStore.get(namespace: "test", resource: "items", id: "item-1")
     XCTAssertEqual(stored.sortIndex, 0)
+  }
+
+  func testCollectionResolvesFromExactResourceId() throws {
+    let resourceId = UUID().uuidString
+    resourcesToDelete.append((namespace: EVYNamespace.marketplace, resource: resourceId))
+
+    try EVY.publicStore.applySyncedValue(
+      namespace: EVYNamespace.marketplace,
+      resource: resourceId,
+      value: .array([
+        .dictionary([
+          "id": .string("item-1"),
+          "title": .string("Visible item"),
+        ])
+      ])
+    )
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(resourceId)}"),
+      .array([
+        .dictionary([
+          "id": .string("item-1"),
+          "title": .string("Visible item"),
+        ])
+      ])
+    )
+  }
+
+  func testCollectionDoesNotResolveFromServiceResourceName() throws {
+    let resourceId = UUID().uuidString
+    let resourceName =
+      "evy_data_store_sort_index_test_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
+    serviceResourceIdsToDelete.append(resourceId)
+    resourcesToDelete.append((namespace: EVYNamespace.marketplace, resource: resourceId))
+
+    try EVY.publicStore.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: "serviceResources",
+      value: .dictionary([
+        "id": .string(resourceId),
+        "name": .string(resourceName),
+      ])
+    )
+    try EVY.publicStore.applySyncedValue(
+      namespace: EVYNamespace.marketplace,
+      resource: resourceId,
+      value: .array([
+        .dictionary([
+          "id": .string("item-1"),
+          "title": .string("Visible item"),
+        ])
+      ])
+    )
+
+    XCTAssertThrowsError(try EVY.getDataFromText("{\(resourceName)}"))
   }
 
   private func makeItemData(id: String) throws -> Data {

@@ -7,7 +7,7 @@ import InlineIcon from "../design-system/InlineIcon";
 import Input from "../design-system/Input";
 import { RowLayout } from "../design-system/RowLayout";
 import TextRow from "../view/TextRow";
-const SEARCH_RESULT_TEMPLATE_ROW_ID = "00000000-0000-4000-8000-000000000001";
+const SEARCH_RESULT_TEMPLATE_ROW_ID = "09f07052-c27c-4116-a508-a2bcb074c827";
 
 const defaultSearchResultTemplateRow: Row = {
 	id: SEARCH_RESULT_TEMPLATE_ROW_ID,

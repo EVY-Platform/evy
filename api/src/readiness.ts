@@ -1,6 +1,9 @@
 import type { GetRequest, GetResponse } from "evy-types";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { ne } from "drizzle-orm";
 import { createDb } from "./database/db";
 import { get as getCore } from "./data/data";
+import { service } from "../../types/generated/ts/db/schema.generated";
 
 type AssertApiReadableOptions = {
 	requireSeeded: boolean;
@@ -8,6 +11,7 @@ type AssertApiReadableOptions = {
 
 type ApiReadableDeps = {
 	get: (params: GetRequest) => Promise<GetResponse>;
+	listExternalServices: () => Promise<Array<{ id: string; name: string }>>;
 };
 
 export async function assertApiReadable(
@@ -15,7 +19,23 @@ export async function assertApiReadable(
 	deps: ApiReadableDeps,
 ): Promise<void> {
 	const { requireSeeded } = options;
-	const response = await deps.get({ service: "evy", resource: "sdui" });
+
+	const externalServices = await deps.listExternalServices();
+	for (const { id, name } of externalServices) {
+		const prefix = name.toUpperCase();
+		const host = process.env[`${prefix}_GRPC_HOST`]?.trim();
+		const port = process.env[`${prefix}_GRPC_PORT`]?.trim();
+		if (!host || !port) {
+			throw new Error(
+				`Service "${name}" (${id}) requires ${prefix}_GRPC_HOST and ${prefix}_GRPC_PORT`,
+			);
+		}
+	}
+
+	const response = await deps.get({
+		service: EVY_CORE_SERVICE,
+		resource: "sdui",
+	});
 	if (!Array.isArray(response)) {
 		throw new Error("API readiness failed: expected sdui response data array");
 	}
@@ -35,7 +55,14 @@ export async function runHealthCli(): Promise<void> {
 	try {
 		await assertApiReadable(
 			{ requireSeeded: requireSeededData },
-			{ get: (params) => getCore(db, params) },
+			{
+				get: (params) => getCore(db, params),
+				listExternalServices: () =>
+					db
+						.select({ id: service.id, name: service.name })
+						.from(service)
+						.where(ne(service.id, EVY_CORE_SERVICE)),
+			},
 		);
 		console.info(
 			requireSeededData ? "API seeded-data readiness OK" : "API readiness OK",

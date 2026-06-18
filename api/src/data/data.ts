@@ -37,6 +37,11 @@ import {
 	listProviderRows,
 	updateProviderResource,
 } from "./resources/serviceProvider";
+import {
+	createServiceResourceRow,
+	listServiceResourceRows,
+	updateServiceResourceRow,
+} from "./resources/serviceResource";
 import { createSduiFlow, getSduiRows, updateSduiFlow } from "./resources/sdui";
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
@@ -109,6 +114,10 @@ async function getCoreBody(
 		return listProviderRows(db, filter);
 	}
 
+	if (resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES) {
+		return listServiceResourceRows(db, filter);
+	}
+
 	if (resource === EVY_CORE_RESOURCE.FILES) {
 		return listFileRowsWithBinary(db, filter);
 	}
@@ -150,6 +159,16 @@ async function createCoreBody(
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
 		return createProviderResource(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES) {
+		return createServiceResourceRow(
 			db,
 			filter,
 			dataPayload,
@@ -205,6 +224,16 @@ async function updateCoreBody(
 
 	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
 		return updateProviderResource(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES) {
+		return updateServiceResourceRow(
 			db,
 			filter,
 			dataPayload,

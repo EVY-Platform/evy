@@ -81,6 +81,14 @@ struct ContentView: View {
     showingAlert = true
   }
 
+  private func loadFlowsFromStore() throws {
+    flows = try EVY.publicStore.getAllDecoded(
+      namespace: EVYNamespace.evy,
+      resource: "sdui",
+      as: UI_Flow.self
+    )
+  }
+
   private func handleNavigationData(_ navOperation: NavOperation) {
     switch navOperation {
     case .navigate(let route):
@@ -121,10 +129,8 @@ struct ContentView: View {
 
   private func createFlow(namespace: String, resource: String) {
     do {
-      let entityKey = resource
-      let pluralResource = EVY.resourceName(forEntityKey: entityKey)
-      let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: entityKey)
-      try EVY.create(namespace: namespace, resource: pluralResource, draftScopeId: draftScope)
+      let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: resource)
+      try EVY.create(namespace: namespace, resource: resource, draftScopeId: draftScope)
     } catch {
       showError(error)
       return
@@ -176,9 +182,8 @@ struct ContentView: View {
           if !flows.isEmpty { return }
 
           do {
-            EVY.loadCachedResourceMapping()
-            try EVY.getUserData()
-            flows = try await EVY.sync()
+            try await EVY.sync()
+            try loadFlowsFromStore()
             loading = false
           } catch let error as EVYRPCError {
             alertTitle = "Error"
@@ -240,12 +245,10 @@ struct ContentView: View {
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
       guard let notifKey = notification.object as? String,
-        notifKey == "evy:sdui" || notifKey == "sdui"
+        notifKey == "\(EVYNamespace.evy):sdui" || notifKey == "sdui"
       else { return }
 
-      if let reconstructed = try? EVY.reconstructedSduiFlows() {
-        flows = reconstructed
-      }
+      try? loadFlowsFromStore()
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyUserAlertRequested)) { notification in
       if let userAlert = notification.object as? EVYUserAlert {
@@ -292,8 +295,7 @@ enum EVYFlowDraftScopeResolver {
               let parsedArgs = splitFunctionArguments(args)
               if parsedArgs.count >= 2 {
                 let resource = parsedArgs[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                let entityKey = EVY.entityName(forResourceKey: resource)
-                if !entityKey.isEmpty { keys.insert(entityKey) }
+                if !resource.isEmpty { keys.insert(resource) }
               }
             }
           }

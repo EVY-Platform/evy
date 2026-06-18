@@ -3,6 +3,24 @@ import { callFunction, type EVYFunctionContext } from "./functions";
 const FUNCTION_CALL_PATTERN = /([a-zA-Z_]+)\(([^()]*)\)/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
 
+let resourceIdToEntityName: Map<string, string> = new Map();
+
+export function setResourceIdMapping(
+	serviceResources: { id: string; name: string }[],
+): void {
+	resourceIdToEntityName = new Map(
+		serviceResources.map((resource) => [resource.id, resource.name]),
+	);
+}
+
+export function resolveResourceUuidPrefix(path: string): string {
+	const dotIndex = path.indexOf(".");
+	const prefix = dotIndex === -1 ? path : path.slice(0, dotIndex);
+	const suffix = dotIndex === -1 ? "" : path.slice(dotIndex);
+	const entityName = resourceIdToEntityName.get(prefix);
+	return entityName ? `${entityName}${suffix}` : path;
+}
+
 function resolveFunction(
 	functionName: string,
 	args: string,
@@ -48,7 +66,7 @@ export function parseText(input: string, context?: EVYFunctionContext): string {
 				continue;
 			}
 
-			text = text.replace(propsMatch[0], inner);
+			text = text.replace(propsMatch[0], resolveResourceUuidPrefix(inner));
 			continue;
 		}
 

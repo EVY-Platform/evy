@@ -70,6 +70,20 @@
 				}
 			]
 		},
+		"DATA_EVY_ServiceResource": {
+			"tableName": "ServiceResource",
+			"primaryKey": "id",
+			"defaultRandom": [],
+			"uniqueIndexes": [
+				{
+					"name": "ServiceResource_fk_service_id_name_key",
+					"columns": [
+						"fkServiceId",
+						"name"
+					]
+				}
+			]
+		},
 		"DATA_EVY_Flow": {
 			"tableName": "Flow",
 			"primaryKey": "id",
@@ -113,6 +127,23 @@
 			"to": "DATA_EVY_ServiceProvider",
 			"oneToMany": true,
 			"relationName": "providers"
+		},
+		{
+			"from": "DATA_EVY_Service",
+			"to": "DATA_EVY_ServiceResource",
+			"oneToMany": true,
+			"relationName": "resources"
+		},
+		{
+			"from": "DATA_EVY_ServiceResource",
+			"to": "DATA_EVY_Service",
+			"fields": [
+				"fkServiceId"
+			],
+			"references": [
+				"id"
+			],
+			"relationName": "service"
 		},
 		{
 			"from": "DATA_EVY_Organization",

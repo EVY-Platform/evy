@@ -10,57 +10,6 @@ import {
 	validateUpdateRequest,
 	validateDeleteRequest,
 } from "./validators";
-import { EVY_CORE_SERVICE, EVY_CORE_RESOURCE_NAMES } from "./coreResources";
-
-/**
- * Runtime registry of known service→resource mappings.
- * Populated at startup via gRPC ListResources calls by the API gateway.
- * The "evy" core service is always registered with known fixed resources.
- */
-let serviceRegistry: Map<string, Set<string>> | null = null;
-
-function ensureServiceRegistry(): Map<string, Set<string>> {
-	if (!serviceRegistry) {
-		serviceRegistry = new Map<string, Set<string>>();
-		serviceRegistry.set(EVY_CORE_SERVICE, new Set(EVY_CORE_RESOURCE_NAMES));
-	}
-	return serviceRegistry;
-}
-
-/**
- * Update the service registry at runtime (e.g., after discovering services via gRPC).
- * Replaces all entries with live data from gRPC ListResources, preserving the evy core entry.
- */
-export function setServiceRegistry(
-	entries: Iterable<[string, string[]]>,
-): void {
-	const registry = new Map<string, Set<string>>();
-	registry.set(EVY_CORE_SERVICE, new Set(EVY_CORE_RESOURCE_NAMES));
-	for (const [svc, resources] of entries) {
-		if (svc !== EVY_CORE_SERVICE) {
-			registry.set(svc, new Set(resources));
-		}
-	}
-	serviceRegistry = registry;
-}
-
-/** Returns the current set of known service names. */
-export function getServiceNames(): string[] {
-	return [...ensureServiceRegistry().keys()];
-}
-
-/** Returns the resources for a given service, or undefined if unknown. */
-export function getServiceResources(service: string): string[] | undefined {
-	const resources = ensureServiceRegistry().get(service);
-	return resources ? [...resources] : undefined;
-}
-
-function isValidServiceResourcePair(
-	service: string,
-	resource: string,
-): boolean {
-	return ensureServiceRegistry().get(service)?.has(resource) ?? false;
-}
 
 /**
  * Shared JSON-RPC param checks with stable error messages (tests rely on these strings).
@@ -89,9 +38,6 @@ function assertRpcParamsCommon(params: unknown): asserts params is Record<
 		params.resource.length > 50
 	) {
 		throw new Error("Invalid or missing resource");
-	}
-	if (!isValidServiceResourcePair(params.service, params.resource)) {
-		throw new Error("Invalid service and resource combination");
 	}
 	if (
 		"filter" in params &&

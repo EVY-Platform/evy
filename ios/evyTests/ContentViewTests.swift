@@ -7,8 +7,14 @@ import XCTest
 
 @testable import evy
 
+enum MarketplaceTestFixture {
+  static let itemsResourceId = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd"
+  static let serviceId = "66b092ae-7cd8-4d67-95b7-30b03568fd90"
+}
+
 @MainActor
 final class ContentViewTests: XCTestCase {
+
   func testExtractCreateKeysReturnsEmptyForNilFlow() {
     let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: nil)
     XCTAssertEqual(keys, [])
@@ -18,7 +24,7 @@ final class ContentViewTests: XCTestCase {
     let flows = try makeFlows()
     let createFlow = flows.first(where: { $0.id == "create-flow" })
     let keys = EVYFlowDraftScopeResolver.extractCreateKeys(from: createFlow)
-    XCTAssertEqual(keys, Set(["item"]))
+    XCTAssertEqual(keys, Set([MarketplaceTestFixture.itemsResourceId]))
   }
 
   func testExtractCreateKeysReturnsEmptyForFlowWithoutCreateActions() throws {
@@ -33,7 +39,8 @@ final class ContentViewTests: XCTestCase {
     let route = Route(flowId: "create-flow", pageId: "create-page")
     XCTAssertEqual(
       EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows),
-      EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: "item")
+      EVYDraft.createMergeScopeId(
+        flowId: "create-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
     )
   }
 
@@ -42,21 +49,6 @@ final class ContentViewTests: XCTestCase {
     let route = Route(flowId: "home-flow", pageId: "home-page")
     XCTAssertEqual(
       EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows), "home-flow:browse")
-  }
-
-  func testResourceNamePluralizes() {
-    XCTAssertEqual(EVY.resourceName(forEntityKey: "item"), "items")
-    XCTAssertEqual(EVY.resourceName(forEntityKey: "condition"), "conditions")
-    XCTAssertEqual(EVY.resourceName(forEntityKey: "duration"), "durations")
-    XCTAssertEqual(EVY.resourceName(forEntityKey: "area"), "areas")
-    XCTAssertEqual(EVY.resourceName(forEntityKey: "provider"), "providers")
-    XCTAssertEqual(
-      EVY.resourceName(forEntityKey: "organisation"), EVYCoreResource.organisations.rawValue)
-    XCTAssertEqual(EVY.resourceName(forEntityKey: "tag"), "tags")
-  }
-
-  func testResourceNameInflectsOnlyLastSegment() {
-    XCTAssertEqual(EVY.resourceName(forEntityKey: "selling_reason"), "selling_reasons")
   }
 
   func testAnyRowTypeCanDecodeAChildRow() throws {
@@ -120,6 +112,24 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(viewData.content.child?.id, "text-child")
   }
 
+  func testSyncStateResetsStoredTimestampWhenStorageVersionChanges() {
+    EVYSyncState.reset()
+    defer { EVYSyncState.reset() }
+
+    UserDefaults.standard.set("2026-01-01T00:00:00.000Z", forKey: "lastSyncTimestamp")
+
+    XCTAssertEqual(EVYSyncState.lastSyncTimestamp, "1970-01-01T00:00:00.000Z")
+  }
+
+  func testSyncStateKeepsTimestampAfterCurrentVersionIsMarkedSynced() {
+    EVYSyncState.reset()
+    defer { EVYSyncState.reset() }
+
+    EVYSyncState.markSynced()
+
+    XCTAssertNotEqual(EVYSyncState.lastSyncTimestamp, "1970-01-01T00:00:00.000Z")
+  }
+
   func testListItemRowDecodesCorrectly() throws {
     let json: [String: Any] = [
       "id": "list-item-row-id",
@@ -143,6 +153,81 @@ final class ContentViewTests: XCTestCase {
     }
     XCTAssertEqual(viewData.content.title, "Test title")
     XCTAssertEqual(viewData.content.subtitle, "Test subtitle")
+  }
+
+  func testDatumRowFormatterSearchesAllContentStrings() throws {
+    let row = try decodeRow([
+      "id": "search-result-template",
+      "type": "ListItem",
+      "source": "",
+      "destination": "",
+      "actions": [],
+      "view": [
+        "content": [
+          "title": "Item title",
+          "subtitle": "Sydney",
+          "segments": ["first", "second"],
+          "child": [
+            "id": "search-result-child",
+            "type": "Button",
+            "source": "",
+            "destination": "",
+            "actions": [],
+            "view": [
+              "content": [
+                "title": "",
+                "label": "Inner label",
+              ]
+            ],
+          ],
+        ]
+      ],
+    ])
+    let formatter = try EVYDatumRowFormatter(template: row)
+
+    let searchableValues = try formatter.formattedResult(datum: .dictionary([:])).searchableValues
+
+    XCTAssertTrue(searchableValues.contains("Sydney"))
+    XCTAssertTrue(searchableValues.contains("Inner label"))
+    XCTAssertTrue(searchableValues.contains("first"))
+  }
+
+  func testHomepageSearchResultTemplateFormatsMarketplaceItem() throws {
+    let row = try decodeRow([
+      "id": "homepage-search-result-template",
+      "type": "ListItem",
+      "source": "",
+      "destination": "",
+      "actions": [],
+      "view": [
+        "content": [
+          "title": "{$datum.title}",
+          "subtitle": "{formatCurrency($datum.price)}",
+          "image": "{$datum.photo_ids.0}",
+        ]
+      ],
+    ])
+    let formatter = try EVYDatumRowFormatter(template: row)
+    let datum = EVYJson.dictionary([
+      "id": .string("item-1"),
+      "title": .string("Visible item"),
+      "price": .dictionary(["value": .string("10")]),
+      "photo_ids": .array([.string("photo-1")]),
+    ])
+
+    let formattedRow = try formatter.formattedResult(datum: datum).row
+
+    guard case .listItem(let viewData, _, _, _) = try UI_RowPayload.from(row: formattedRow) else {
+      return XCTFail("Expected .listItem payload")
+    }
+    XCTAssertEqual(viewData.content.title, "Visible item")
+    XCTAssertEqual(viewData.content.subtitle, "$10.00")
+    XCTAssertEqual(viewData.content.image, "photo-1")
+  }
+
+  private func decodeRow(_ json: [String: Any]) throws -> UI_Row {
+    let data = try JSONSerialization.data(withJSONObject: json)
+    return try JSONDecoder().decode(UI_Row.self, from: data)
   }
 
   private func makeFlows() throws -> [UI_Flow] {
@@ -196,7 +281,7 @@ final class ContentViewTests: XCTestCase {
                     "placeholder": "Enter a title",
                   ]
                 ],
-                "destination": "{item.title}",
+                "destination": "{\(MarketplaceTestFixture.itemsResourceId).title}",
                 "actions": [],
               ]
             ],
@@ -214,7 +299,8 @@ final class ContentViewTests: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": "{create(marketplace,item)}",
+                  "true":
+                    "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
                 ]
               ],
             ],

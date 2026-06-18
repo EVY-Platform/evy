@@ -31,8 +31,8 @@ struct EVYValue: Equatable {
 }
 
 enum EVYNamespace {
-  static let evy = "evy"
-  static let marketplace = "marketplace"
+  static let evy = "475731ac-31aa-4d65-94d2-7032782ae359"
+  static let marketplace = "66b092ae-7cd8-4d67-95b7-30b03568fd90"
   static let local = "local"
   static let cache = "cache"
   static let draft = "draft"

@@ -59,10 +59,6 @@ extension EVY {
 
   private static func cacheResolvedEntity(scopeId: String, cacheKey: String, value: Data) {
     cacheValue(scopeId: scopeId, cacheKey: cacheKey, value: value)
-
-    let singularEntityKey = entityName(forResourceKey: cacheKey)
-    guard singularEntityKey != cacheKey else { return }
-    cacheValue(scopeId: scopeId, cacheKey: singularEntityKey, value: value)
   }
 
   private static func cacheValue(scopeId: String, cacheKey: String, value: Data) {
@@ -85,16 +81,6 @@ extension EVY {
           namespace: namespace, resource: queryKey)
       {
         return [(queryKey, collection)]
-      }
-
-      let pluralKey = resourceName(forEntityKey: queryKey)
-      if pluralKey != queryKey {
-        if let namespace = publicStore.namespace(forSyncedResource: pluralKey),
-          let collection = try? publicStore.getCollectionJson(
-            namespace: namespace, resource: pluralKey)
-        {
-          return [(pluralKey, collection)]
-        }
       }
 
       return []

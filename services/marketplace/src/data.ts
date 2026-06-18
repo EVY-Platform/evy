@@ -8,12 +8,9 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import {
-	getServiceResources,
-	setServiceRegistry,
-} from "evy-types/rpcRequestHelpers";
+
 import { data, db } from "./db";
-import { MARKETPLACE_RESOURCE_NAMES, MARKETPLACE_SERVICE } from "./resources";
+import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
 import { emitDataChanged } from "./events";
 import {
 	assertIsoDateTimeJsonFields,
@@ -24,17 +21,14 @@ import {
 	validateUpdateResponse,
 } from "evy-types/validators";
 
-setServiceRegistry([[MARKETPLACE_SERVICE, [...MARKETPLACE_RESOURCE_NAMES]]]);
-
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest,
 ): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
 		throw new Error("Marketplace service requires service marketplace");
 	}
-	const marketplaceResources = getServiceResources(MARKETPLACE_SERVICE) ?? [];
-	if (!marketplaceResources.includes(params.resource)) {
-		throw new Error("Unsupported resource for marketplace service");
+	if (!MARKETPLACE_SEED_RESOURCES.has(params.resource)) {
+		throw new Error("Unsupported resource id for marketplace service");
 	}
 }
 

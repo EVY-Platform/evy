@@ -14,6 +14,7 @@ import type {
 	DATA_EVY_Organization,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
+	DATA_EVY_ServiceResource,
 	DATA_EVY_File,
 } from "./generated/ts/data/data";
 import type {
@@ -322,6 +323,11 @@ const getValidateDataEvyServiceProvider =
 		getEntityAjv,
 		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
 	);
+const getValidateDataEvyServiceResource =
+	lazyValidator<DATA_EVY_ServiceResource>(
+		getEntityAjv,
+		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceResource`,
+	);
 const getValidateDataEvyFile = lazyValidator<DATA_EVY_File>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_File`,
@@ -413,6 +419,11 @@ export const validateDataEvyServiceProvider =
 	makeValidator<DATA_EVY_ServiceProvider>(
 		"ServiceProvider",
 		getValidateDataEvyServiceProvider,
+	);
+export const validateDataEvyServiceResource =
+	makeValidator<DATA_EVY_ServiceResource>(
+		"ServiceResource",
+		getValidateDataEvyServiceResource,
 	);
 export const validateDataEvyFile = makeValidator<DATA_EVY_File>(
 	"File",

@@ -27,9 +27,7 @@ import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 
 type GetLikeRequest = GetRequest | ApiRequest;
 
-function isCoreGetRequest(
-	params: GetLikeRequest,
-): params is GetRequest & { service: "evy" } {
+function isCoreGetRequest(params: GetLikeRequest): boolean {
 	return params.service === EVY_CORE_SERVICE;
 }
 

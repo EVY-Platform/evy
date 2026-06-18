@@ -45,7 +45,12 @@
 		"FileMetadata": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "createdAt", "updatedAt"],
+			"required": [
+				"id",
+				"type",
+				"createdAt",
+				"updatedAt"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -68,7 +73,13 @@
 		"FileWithBinary": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "createdAt", "updatedAt", "dataBase64"],
+			"required": [
+				"id",
+				"type",
+				"createdAt",
+				"updatedAt",
+				"dataBase64"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -94,7 +105,12 @@
 		"FileUploadChunkMetadata": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["uploadId", "index", "byteOffset", "byteLength"],
+			"required": [
+				"uploadId",
+				"index",
+				"byteOffset",
+				"byteLength"
+			],
 			"properties": {
 				"uploadId": {
 					"type": "string",
@@ -117,7 +133,9 @@
 		"FileIdFilter": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id"],
+			"required": [
+				"id"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -142,15 +160,22 @@
 		"CreateFileParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource", "filter", "data"],
+			"required": [
+				"service",
+				"resource",
+				"filter",
+				"data"
+			],
 			"properties": {
 				"service": {
 					"type": "string",
-					"enum": ["evy"]
+					"minLength": 1
 				},
 				"resource": {
 					"type": "string",
-					"enum": ["files"]
+					"enum": [
+						"files"
+					]
 				},
 				"filter": {
 					"$ref": "#/$defs/FileIdFilter"
@@ -163,15 +188,21 @@
 		"GetFilesParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource", "filter"],
+			"required": [
+				"service",
+				"resource",
+				"filter"
+			],
 			"properties": {
 				"service": {
 					"type": "string",
-					"enum": ["evy"]
+					"minLength": 1
 				},
 				"resource": {
 					"type": "string",
-					"enum": ["files"]
+					"enum": [
+						"files"
+					]
 				},
 				"filter": {
 					"$ref": "#/$defs/FileGetFilter"
@@ -181,15 +212,21 @@
 		"DeleteFileParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource", "filter"],
+			"required": [
+				"service",
+				"resource",
+				"filter"
+			],
 			"properties": {
 				"service": {
 					"type": "string",
-					"enum": ["evy"]
+					"minLength": 1
 				},
 				"resource": {
 					"type": "string",
-					"enum": ["files"]
+					"enum": [
+						"files"
+					]
 				},
 				"filter": {
 					"$ref": "#/$defs/FileIdFilter"
@@ -199,7 +236,9 @@
 		"CancelUploadParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["uploadId"],
+			"required": [
+				"uploadId"
+			],
 			"properties": {
 				"uploadId": {
 					"type": "string"
@@ -209,7 +248,9 @@
 		"CancelUploadResponse": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["ok"],
+			"required": [
+				"ok"
+			],
 			"properties": {
 				"ok": {
 					"type": "boolean"

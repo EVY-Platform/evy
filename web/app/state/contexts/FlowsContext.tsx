@@ -3,10 +3,12 @@ import { createContext, useContext, type Dispatch } from "react";
 import type { Row } from "../../types/row";
 import type { UI_Flow } from "../../types/flow";
 import type { RowAction } from "../../types/actions";
+import type { ServiceResource } from "../../api/sync";
 
 export type FlowsContextValue = {
 	rows: Row[];
 	flows: UI_Flow[];
+	serviceResources: ServiceResource[];
 	activeFlowId?: string;
 	activeRowId?: string;
 	activePageId?: string;
@@ -17,6 +19,7 @@ export type FlowsContextValue = {
 export const FlowsContext = createContext<FlowsContextValue>({
 	rows: [],
 	flows: [],
+	serviceResources: [],
 	configStack: [],
 	dispatchRow: () => {},
 });

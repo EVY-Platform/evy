@@ -44,7 +44,7 @@ actor EVYAPIManager {
           ),
           filter: CreateFileParamsFilter(id: uploadId),
           resource: .files,
-          service: .evy
+          service: EVY_CORE_SERVICE
         ),
         expecting: EVYCreateFileData.self
       )
@@ -72,7 +72,7 @@ actor EVYAPIManager {
       params: EVYGetFilesParams(
         filter: GetFilesParamsFilter(id: id, updatedAfter: nil),
         resource: .files,
-        service: .evy
+        service: EVY_CORE_SERVICE
       ),
       expecting: [EVYGetFileItem].self
     )
@@ -89,7 +89,7 @@ actor EVYAPIManager {
       params: EVYDeleteFileParams(
         filter: CreateFileParamsFilter(id: id),
         resource: .files,
-        service: .evy
+        service: EVY_CORE_SERVICE
       ),
       expecting: EVYCreateFileData.self
     )

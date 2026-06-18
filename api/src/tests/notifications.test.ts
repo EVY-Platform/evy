@@ -9,6 +9,7 @@ import {
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest, UI_Flow, UI_Page } from "evy-types";
 import type { WSParams } from "../shared/ws";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 
 import {
 	asEvyDb,
@@ -98,14 +99,14 @@ describe("create/update real-time notifications", () => {
 		const caller = await connectAndLogin(apiUrl, "notify-token-2", "Web");
 
 		await caller.call("create", {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			data: flowData,
 		});
 
 		const params = await notifyPromise;
 		expect(params).toEqual({
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			operation: "create",
 			value: flowData,
@@ -136,14 +137,14 @@ describe("create/update real-time notifications", () => {
 			updatedAt: nowIso,
 		};
 		const createResult = await caller.call("create", {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 			data: payload,
 		});
 
 		const params = await notifyPromise;
 		expect(params).toEqual({
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 			operation: "create",
 			value: createResult,
@@ -174,7 +175,7 @@ describe("create/update real-time notifications", () => {
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-7", "Web");
 		await caller.call("create", {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			data: {
 				id: crypto.randomUUID(),
