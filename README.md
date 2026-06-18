@@ -26,10 +26,9 @@ flowchart LR
 ## Documentation
 
 - EVY Platform
-  - [Types](./docs/evy/types.md)
-  - [Data models](./docs/evy/sddata/data.md)
-  - [Functions](./docs/evy/sddata/functions.md)
-  - [Server Driven UI](./docs/evy/sdui/readme.md)
+  - [Data](./docs/evy/data.md)
+  - [Functions](./docs/evy/functions.md)
+  - [Server Driven UI](./docs/evy/sdui.md)
   - [API](./api/README.md)
   - [iOS](./ios/README.md)
   - [Web](./web/README.md)
