@@ -4,7 +4,7 @@ The main `api` owns all SDUI (flows) and evy core resources in its database. The
 
 These shapes are marketplace domain models. They are not defined as top-level `$defs` in `types/schema/data/data.schema.json`; payloads are JSON documents stored in the marketplace database as generic `data` rows keyed by the same plural `resource` strings used on the wire (e.g. `items`, `conditions`, `selling_reasons`). They are not duplicated as generic `DATA_EVY_*` rows in the API database.
 
-Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/sddata/data.md).
+Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/data.md).
 
 ---
 

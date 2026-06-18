@@ -1,0 +1,206 @@
+# Data
+
+## Types used to generate code for all platforms
+
+### Core types
+
+```
+uuid
+string
+enum
+integer
+number
+boolean
+date-time (string)
+```
+
+---
+
+### Sources
+
+All `types/schema/**/*.schema.json` files define types for UI flows, RPC, and data models.
+
+`types/schema/**/*.spec.json` files define row definitions, including SDUI row content and view keys.
+
+`types/schema/data/drizzle.config.json` defines the database schema configuration for generated Drizzle tables. Keep it manually in sync with `types/schema/data/data.schema.json`, with AI assistance when useful.
+
+### Command
+
+Run type generation after changing schemas, row definitions, or Drizzle database configuration so TypeScript, Swift, Drizzle, and core resource outputs stay aligned with the source definitions.
+
+From the repo root:
+
+```bash
+bun run types:generate
+```
+
+`bun run types:generate` runs:
+
+1. `scripts/generate-types.ts` — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. It generates stable Swift filenames from nested and hyphenated schema paths, includes `types/schema/files/file.schema.json`, and runs `scripts/generate-swift-sdui.ts` for Swift UI shapes from `evy.schema.json` plus `row-content.spec.json`.
+2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`.
+3. `scripts/generate-core-resources.ts` — Emits the generated evy core resource registry consumed by API validation, the public `resources` RPC, and `sync`. Non-evy service resources are discovered at runtime through each service's `ListResources` gRPC method.
+
+### Outputs (do not edit by hand)
+
+- `types/generated/ts/` — TypeScript types, Drizzle schema, validators, RPC helpers, and generated evy core resource registry inputs. The API, web app, and marketplace service import these via the `evy-types` path alias.
+- `types/generated/swift/` — Swift types. The iOS app references generated SDUI, core resource, OS, and file API models while keeping transport and UI models handwritten where needed.
+
+After changing any schema or `drizzle.config.json` or `row-content.spec.json`, run `bun run types:generate`. Output under `types/generated/` is gitignored; regenerate locally and do not hand-edit generated files.
+
+---
+
+## Data models
+
+This document covers EVY shared data: schema-backed rows stored in the API database (source of truth: [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json)) and reusable value objects used across clients and services. Domain payloads for workers such as marketplace are documented under that service; they are not `DATA_EVY_*` rows in this schema.
+
+### Wire contract vs persisted rows
+
+Clients call the API with JSON-RPC `resources`, `sync`, `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "evy"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API's Postgres schema. `service: "marketplace"` (and future workers) is discovered through `ListResources` and proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic "namespace row" in the EVY data schema.
+
+### Common date-time fields
+
+Tables that track updates use ISO 8601 / RFC 3339 strings (never numeric Unix timestamps):
+
+- `createdAt`: string (date-time)
+- `updatedAt`: string (date-time)
+
+---
+
+### Schema-backed row types (`DATA_EVY_*`)
+
+These are defined in `types/schema/data/data.schema.json`. The API and generated Drizzle schema use them.
+
+#### DATA_EVY_Device
+
+Primary key: `token`.
+
+```
+token: string (maxLength 256)
+os: "ios" | "android" | "Web"
+createdAt: string (date-time)
+```
+
+#### DATA_EVY_Service
+
+```
+id: uuid
+name: string (maxLength 50)
+description: string
+sortOrder: integer (optional)
+createdAt: string (date-time)
+updatedAt: string (date-time)
+```
+
+#### DATA_EVY_Organization
+
+```
+id: uuid
+name: string (maxLength 100)
+description: string
+logo: uuid
+url: string (maxLength 50)
+supportEmail: string (maxLength 50)
+createdAt: string (date-time)
+updatedAt: string (date-time)
+```
+
+#### DATA_EVY_ServiceProvider
+
+```
+id: uuid
+fkServiceId: uuid
+fkOrganizationId: uuid
+name: string (maxLength 100)
+description: string
+logo: uuid
+url: string (maxLength 50)
+createdAt: string (date-time)
+updatedAt: string (date-time)
+retired: boolean (default false)
+```
+
+#### DATA_EVY_Flow
+
+Row shape: `id`, `data` ([`UI_Flow`](sdui.md) JSON), `createdAt`, `updatedAt`. On the wire this is accessed with `service: "evy"` and `resource: "sdui"`.
+
+There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get`, `create`, or `update`).
+
+---
+
+### Shared value objects (reuse across services)
+
+These shapes are not separate JSON Schema `$defs` in the EVY data schema; they are contracts for JSON embedded in domain payloads (e.g. marketplace item JSON) or in UI state. Worker services and clients validate them at the application layer.
+
+#### location
+
+```
+latitude: decimal
+longitude: decimal
+```
+
+#### price
+
+```
+currency: string
+value: decimal
+```
+
+#### address
+
+```
+unit: string
+street: string
+city: string
+postcode: string
+state: string
+country: string
+location: location
+instructions: string
+```
+
+#### area
+
+```
+id: uuid
+value: string
+```
+
+#### photo
+
+Base model with no extra props (identity may be implied by storage layer).
+
+#### calendar_selection (compact calendar / runtime)
+
+```
+start_time: string           (HH:mm, 24-hour, e.g. "07:00")
+end_time: string             (HH:mm, exclusive, e.g. "19:00")
+timeslot_interval_minutes: integer   (e.g. 30)
+label_interval_minutes: integer      (e.g. 60)
+header_format: string        (date format pattern, e.g. "EEE d")
+primary: string              (binding to primary selection array)
+secondary: string            (binding to read-only secondary context array)
+```
+
+#### transfer_options
+
+```
+pickup: {
+    selection: [string]   (ISO date-time strings)
+    address: address
+}
+delivery: {
+    fee: price
+    selection: [string]   (ISO date-time strings)
+}
+ship: {
+    postal_code: string
+    areas: [area]
+}
+```
+
+#### duration
+
+```
+id: uuid
+value: string (e.g. "30 minutes")
+```

@@ -66,7 +66,7 @@ sequenceDiagram
 
 ### Shared contracts
 
-Broader schema layout: [docs/evy/types.md § Sources](../docs/evy/types.md#sources). Commonly used paths:
+Broader schema layout: [docs/evy/data.md § Sources](../docs/evy/data.md#sources). Commonly used paths:
 
 | File | Purpose |
 |------|---------|

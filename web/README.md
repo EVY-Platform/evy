@@ -2,7 +2,7 @@
 
 A React-based app builder.
 
-See [`docs/evy/types.md`](../docs/evy/types.md) for shared contracts and codegen.
+See [`docs/evy/data.md`](../docs/evy/data.md) for shared contracts and codegen.
 
 ## Architecture
 
