@@ -65,7 +65,7 @@ describe("normalizeServerRow", () => {
 		expect(n.view.content).toMatchObject({
 			title: "T",
 			subtitle: "Sub",
-			icon: "::star::",
+			label: "Label",
 		});
 	});
 
@@ -168,7 +168,7 @@ describe("normalizeServerRow", () => {
 		expect(n.view.content.child?.view.content).toMatchObject({
 			title: "{$datum.title}",
 			subtitle: "Subtitle",
-			icon: "::star::",
+			label: "Label",
 		});
 	});
 
@@ -207,7 +207,7 @@ describe("normalizeServerRow", () => {
 		expect(n.view.content.child?.view.content).toMatchObject({
 			title: "{$datum.value}",
 			subtitle: "",
-			icon: "",
+			label: "",
 		});
 	});
 });

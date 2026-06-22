@@ -3,22 +3,22 @@ import EVYText from "../design-system/EVYText";
 import { lineClampStyle } from "../design-system/lineClamp";
 import { defineRow } from "../defineRow";
 
-export default defineRow("TextRow", {
+export default defineRow("TextActionRow", {
 	config: {
-		type: "Text",
+		type: "TextAction",
 		actions: [],
 		source: "",
 		visible: "true",
 		view: {
 			content: {
-				title: "Text row title",
+				title: "Text action title",
 				subtitle: "Subtitle",
-				label: "Label",
+				action: "Change",
 			},
 		},
 	} satisfies RowConfig,
 	render: (row) => {
-		const { title = "", subtitle = "", label = "" } = row.config.view.content;
+		const { title = "", subtitle = "", action = "" } = row.config.view.content;
 
 		return (
 			<div className="evy-flex evy-flex-row evy-items-center evy-gap-2 evy-p-2">
@@ -34,9 +34,9 @@ export default defineRow("TextRow", {
 						</p>
 					) : null}
 				</div>
-				{label.trim() ? (
-					<span className="evy-text-sm evy-text-gray evy-shrink-0">
-						<EVYText text={label} />
+				{action.trim() ? (
+					<span className="evy-text-blue evy-text-sm evy-shrink-0">
+						<EVYText text={action} />
 					</span>
 				) : null}
 			</div>

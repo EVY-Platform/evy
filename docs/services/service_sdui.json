@@ -30,12 +30,8 @@
 						"view": {
 							"content": {
 								"title": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
-								"subtitle": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
-								"icon": "",
-								"text": "",
-								"action": ""
-							},
-							"max_lines": ""
+								"subtitle": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}"
+							}
 						}
 					},
 					{
@@ -48,12 +44,8 @@
 						"view": {
 							"content": {
 								"title": "Condition",
-								"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}",
-								"icon": "::badge-check::",
-								"text": "",
-								"action": ""
-							},
-							"max_lines": ""
+								"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}"
+							}
 						}
 					},
 					{
@@ -66,12 +58,8 @@
 						"view": {
 							"content": {
 								"title": "Selling reason",
-								"subtitle": "{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id).value}",
-								"icon": "::circle-question-mark::",
-								"text": "",
-								"action": ""
-							},
-							"max_lines": ""
+								"subtitle": "{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id).value}"
+							}
 						}
 					},
 					{
@@ -84,12 +72,8 @@
 						"view": {
 							"content": {
 								"title": "Dimensions",
-								"subtitle": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width) (w) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height) (h) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length) (l)}",
-								"icon": "::ruler::",
-								"text": "",
-								"action": ""
-							},
-							"max_lines": ""
+								"subtitle": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width) (w) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height) (h) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length) (l)}"
+							}
 						}
 					},
 					{
@@ -102,12 +86,8 @@
 						"view": {
 							"content": {
 								"title": "Card",
-								"subtitle": "EVY Buyer protection",
-								"icon": "::credit-card::",
-								"text": "",
-								"action": ""
-							},
-							"max_lines": ""
+								"subtitle": "EVY Buyer protection"
+							}
 						}
 					},
 					{
@@ -120,12 +100,8 @@
 						"view": {
 							"content": {
 								"title": "Cash",
-								"subtitle": "In person",
-								"icon": "::coins::",
-								"text": "",
-								"action": ""
-							},
-							"max_lines": ""
+								"subtitle": "In person"
+							}
 						}
 					},
 					{
@@ -215,12 +191,8 @@
 														"view": {
 															"content": {
 																"title": "",
-																"subtitle": "Buyer will drop off",
-																"icon": "",
-																"text": "",
-																"action": ""
-															},
-															"max_lines": ""
+																"subtitle": "Buyer will drop off"
+															}
 														}
 													}
 												]
@@ -248,12 +220,8 @@
 														"view": {
 															"content": {
 																"title": "",
-																"subtitle": "Delivered to your door",
-																"icon": "",
-																"text": "",
-																"action": ""
-															},
-															"max_lines": ""
+																"subtitle": "Delivered to your door"
+															}
 														}
 													}
 												]
@@ -548,15 +516,14 @@
 														"view": {
 															"content": {
 																"title": "",
-																"subtitle": "Allow buyers to pick up the item",
-																"icon": ""
+																"subtitle": "Allow buyers to pick up the item"
 															}
 														},
 														"visible": "true"
 													},
 													{
 														"id": "586ffa1a-639b-475e-a0b5-1fbe51083274",
-														"type": "Text",
+														"type": "TextAction",
 														"source": "",
 														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_address}",
 														"actions": [
@@ -569,8 +536,7 @@
 														"view": {
 															"content": {
 																"title": "Where",
-																"text": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_address)}",
-																"placeholder": "Enter pick up address",
+																"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_address)}",
 																"action": "Change",
 																"child": {
 																	"id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e",
@@ -582,7 +548,6 @@
 																				"type": "Text",
 																				"view": {
 																					"content": {
-																						"icon": "",
 																						"title": "{$datum.title}",
 																						"subtitle": "{formatCurrency($datum.price)}"
 																					}
@@ -635,8 +600,7 @@
 														"view": {
 															"content": {
 																"title": "When",
-																"subtitle": "When are you available for buyers to inspect or pick up this item",
-																"icon": ""
+																"subtitle": "When are you available for buyers to inspect or pick up this item"
 															}
 														},
 														"visible": "true"
@@ -686,8 +650,7 @@
 														"view": {
 															"content": {
 																"title": "",
-																"subtitle": "Deliver directly to the buyer",
-																"icon": ""
+																"subtitle": "Deliver directly to the buyer"
 															}
 														},
 														"visible": "true"
@@ -716,8 +679,7 @@
 														"view": {
 															"content": {
 																"title": "How far",
-																"subtitle": "How long can you travel to deliver this item",
-																"icon": ""
+																"subtitle": "How long can you travel to deliver this item"
 															}
 														},
 														"visible": "true"
@@ -745,8 +707,7 @@
 														"view": {
 															"content": {
 																"title": "When",
-																"subtitle": "When are you available to deliver this item",
-																"icon": ""
+																"subtitle": "When are you available to deliver this item"
 															}
 														},
 														"visible": "true"
@@ -796,8 +757,7 @@
 														"view": {
 															"content": {
 																"title": "",
-																"subtitle": "Postal shipping at the buyer's expense",
-																"icon": ""
+																"subtitle": "Postal shipping at the buyer's expense"
 															}
 														},
 														"visible": "true"
@@ -826,8 +786,7 @@
 														"view": {
 															"content": {
 																"title": "Where to",
-																"subtitle": "Select how far you are willing to ship",
-																"icon": ""
+																"subtitle": "Select how far you are willing to ship"
 															}
 														},
 														"visible": "true"
@@ -906,8 +865,7 @@
 						"view": {
 							"content": {
 								"title": "",
-								"subtitle": "Payment will be made by the buyers on pickup",
-								"icon": ""
+								"subtitle": "Payment will be made by the buyers on pickup"
 							}
 						},
 						"visible": "true"
@@ -990,8 +948,7 @@
 						"view": {
 							"content": {
 								"title": "",
-								"subtitle": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule",
-								"icon": ""
+								"subtitle": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule"
 							}
 						},
 						"visible": "true"

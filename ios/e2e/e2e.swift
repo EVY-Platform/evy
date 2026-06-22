@@ -364,22 +364,39 @@ class E2ETestBase: XCTestCase {
     subtitle: String = "",
     visible: String = "true"
   ) -> [String: Any] {
+    let content: [String: Any]
+    let rowType: String
+    let view: [String: Any]
+
+    if text.isEmpty {
+      rowType = "Text"
+      content = [
+        "title": title,
+        "subtitle": subtitle,
+        "label": "",
+      ]
+      view = ["content": content]
+    } else {
+      rowType = "TextExpand"
+      content = [
+        "title": title,
+        "text": text,
+        "expandLabel": "Read more",
+      ]
+      view = [
+        "content": content,
+        "max_lines": "3",
+      ]
+    }
+
     return [
       "id": id,
-      "type": "Text",
+      "type": rowType,
       "source": "",
       "destination": "",
       "actions": [],
       "visible": visible,
-      "view": [
-        "content": [
-          "title": title,
-          "text": text,
-          "subtitle": subtitle,
-          "icon": "",
-        ],
-        "max_lines": "",
-      ],
+      "view": view,
     ]
   }
 

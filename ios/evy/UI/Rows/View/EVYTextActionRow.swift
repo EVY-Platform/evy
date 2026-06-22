@@ -1,17 +1,15 @@
 //
-//  EVYTextRow.swift
+//  EVYTextActionRow.swift
 //  evy
-//
-//  Created by Geoffroy Lesage on 29/6/2024.
 //
 
 import SwiftUI
 
-struct EVYTextRow: View {
+struct EVYTextActionRow: View {
 
-  private let view: TextRowViewData
+  private let view: TextActionRowViewData
 
-  init(view: TextRowViewData) {
+  init(view: TextActionRowViewData) {
     self.view = view
   }
 
@@ -33,8 +31,8 @@ struct EVYTextRow: View {
             .truncationMode(.tail)
         }
       }
-      if !content.label.isEmpty {
-        EVYTextView(content.label, style: .info)
+      if !content.action.isEmpty {
+        EVYTextView(content.action, style: .action)
       }
     }
     .padding(.horizontal, Constants.majorPadding)

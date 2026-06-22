@@ -108,6 +108,8 @@ struct EVYRow: View, Identifiable {
     case .selectSegmentContainer(let v, _, _, _): EVYSelectSegmentContainerRow(view: v)
     case .timeslotPicker(let v, let s, _, _): EVYTimeslotPickerRow(view: v, source: s)
     case .text(let v, _, _, _): EVYTextRow(view: v)
+    case .textAction(let v, _, _, _): EVYTextActionRow(view: v)
+    case .textExpand(let v, _, _, _): EVYTextExpandRow(view: v)
     case .textArea(let v, _, let d, _): EVYTextAreaRow(view: v, destination: d)
     case .textSelect(let v, _, let d, _):
       if let row = EVYTextSelectRow(view: v, destination: d) {

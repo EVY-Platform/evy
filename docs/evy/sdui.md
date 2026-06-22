@@ -1,29 +1,12 @@
-# Server-driven UI (UI types)
+# Server-driven UI
 
-UI flows (`UI_Flow`) only describe structure: `id`, `name`, and `pages`. Reference data (dropdown options, tags, durations, etc.) is not embedded inside the flow JSON.
+All UI in EVY is server-driven. On the API service we store the SDUI "flows" (see below) for all services and UX.
 
-- Each row declares a required **`source`** string at the row root (next to `destination`) describing where the row **reads** data from. Use a non-empty source only for rows that load source-driven data such as option lists, search results, or calendars. If a row already reads explicit fields like `"{[resource_id].title}"` in `view.content`, the row source should be `""` because the binding resolves the resource directly.
-	- `"{[resource_id]}"`, `"{tags}"` — plural backend resource or in-memory keys the client resolves to option lists or entity arrays. Search and dynamic ListContainer rows read the resource named by `source`.
-	- `"{$local:address}"` — client-local source.
-	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{[resource_id].title}"`, pure navigation buttons, static Text, and containers that only group static child rows).
-- Edit rows write into a draft via **`destination`**. Draft destinations start with the canonical resource ID, for example `"{[resource_id].title}"`, `"{[resource_id].condition}"`, or `"{buildCurrency([resource_id].price)}"`. The prefix tells the UI which resource draft owns the field.
-- Braced `{...}` expressions are used for all SDUI bindings. Prefixed bindings use either dot or colon notation depending on the prefix:
-	- `{$datum.field}` — dot notation. Current list/search result item field, used in row `format` strings and Search result templates.
-	- `{$local:resource}` — colon notation. Client-local source (resolves to the private data store).
-	- `{$api:resource}` — colon notation. Explicit API-sourced data (resolves to the public data store, same as a bare key but explicit about origin).
-- Resource/local data is loaded outside the flow document. Clients request individual lists with public JSON-RPC `get` (`service` / `resource`) using optional `filter.id` or `filter.updatedAfter`, call method-backed reads with public JSON-RPC `api`, or sync changed data in batches with protected JSON-RPC `sync`.
-- `sync` accepts a `lastSyncTime` ISO-8601 timestamp and returns changed resource arrays as `{ service, resource, value }` rows across SDUI, evy core data, and backend service data. For startup/cache refresh, the API fetches every syncable resource using `filter.updatedAfter = lastSyncTime`. Auth-only `devices` rows are excluded from sync.
-- Clients should store synced rows under service-qualified keys such as `[evy_service_id]:sdui`, `[marketplace_service_id]:[items_resource_id]`, and `[marketplace_service_id]:[conditions_resource_id]`. External runtime resource references use `serviceResources.id`; `serviceResources.name` is display-only metadata for human-friendly web builder labels. Web may derive plural labels with pluralizeJS at display time, but stored names are never routing keys. Navigate actions pass query params as the optional third `navigate` argument using a plain-text query object (for example, `{navigate(flowId, pageId, {id: $datum.id})}`). Query values can be scalars (`{key: id}`) or arrays (`{key: [id-1, id-2]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same resource key. A generic `"id"` query key may be used by clients that can infer the resource from synced collections. If no synced collection exists for a query key, clients keep the raw string array under that key.
-- iOS draft scope IDs and draft cache keys are internal draft-store identifiers; see [iOS README § Draft scopes and draft cache keys](../../../ios/README.md#draft-scopes-and-draft-cache-keys).
-- Collection/list sources and direct entity/draft attributes use canonical resource IDs (for example, `{[resource_id]}` and `{[resource_id].title}`). iOS and runtime clients resolve those IDs directly from synced data. The web builder keeps those canonical IDs in stored SDUI, but renders them with display-only resource labels from `serviceResources` (for example, `item.title`) when previewing or editing text. Legacy plural and singular resource names may still resolve for local data backwards compatibility, but new SDUI should use resource IDs.
-- `evy` resource data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
-
-So a flow might reference “10 min, 20 min, 30 min” options via `source: "{[resource_id]}"` while the selected value is written to `destination: "{[resource_id].distance}"`; the actual list of options lives in the data layer the app fetches, not inside the flow document.
+All attributes in SDUI are strings, and most are required.
 
 ## Flow
 
-Flows are not visually used in the UI but represent a full user journey (eg: creating an item)
-They are needed in order to submit all fields of all pages of a flow at the end upon clicking a single button on a page
+Flows represent a full user journey (eg: creating an item, placing an order, etc). They are needed to correctly submit data from a set of pages with a single end state.
 
 The canonical shape matches `types/schema/sdui/evy.schema.json`:
 
@@ -36,6 +19,8 @@ The canonical shape matches `types/schema/sdui/evy.schema.json`:
 ```
 
 ## Page
+
+A page is an single screen in a flow, for example step 1 in a booking flow.
 
 ```
 {
@@ -50,19 +35,13 @@ The canonical shape matches `types/schema/sdui/evy.schema.json`:
 
 Rows are what are put into pages. They are the building block of the EVY server-driven UI framework
 
-### Base features
-
--   All values are strings, there are no types as this is dynamic on the apps
-    -   eg: "title": "My title", could also be "title": "{[resource_id].title}"
--   All strings can include:
+-   All attributes can include:
     -   variables surrounded with curly braces: "Hello {name}, how are you?"
-    -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!" (iOS and web parse `::icon-name::` only; they do not expand Slack-style `:emoji:` shortcodes)
+    -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!"
 -   [ x ]
     -   Denotes a type array of x
 -   Objects and arrays
     -   When objects or arrays are interpolated (e.g. `{[resource_id].tags}`), the UI runtime resolves the binding to structured data (e.g. a JSON array of tag objects) before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
-
-### Row schema explained
 
 ```
 {
@@ -80,7 +59,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
             "child": ROW,
             ...
         },
-        "max_lines": "string"    // optional (e.g. Text)
+        "max_lines": "string"    // optional (e.g. TextExpand)
     },
     // Where the row reads option/list/entity data from (required string; use "" if unused).
     "source": "string",
@@ -101,11 +80,12 @@ Rows are what are put into pages. They are the building block of the EVY server-
 
 ### Actions
 
-Each row has an `actions` array of `UI_RowAction` objects (`condition`, `false`, `true` are strings). The web builder persists them; execution is client-specific (see **Evaluation** below for iOS).
+Each row has an `actions` attribute which is an array of `UI_RowAction` objects that can trigger various actions if a condition is met or not met.
+
+
 
 #### Conditions
 
-- Wrap the whole condition in curly braces: `{ ... }`.
 - Empty `condition` — treated as always true (the `true` branch is taken unless you rely on client-specific rules).
 - Single comparison: `{left op right}`
 	Operators: `==`, `!=`, `>`, `<`, `>=`, `<=`
@@ -218,12 +198,12 @@ Row types are defined in the schema (`types/schema/sdui/evy.schema.json`) and th
 
 | Category   | Row types |
 | ---------- | --------- |
-| View       | Text, InputList, ListItem, PhotoGallery, Map |
+| View       | Text, TextAction, TextExpand, InputList, ListItem, PhotoGallery, Map |
 | Edit       | Calendar, Dropdown, InlinePicker, Input, Search, SelectPhoto, TextArea, TextSelect, TimeslotPicker |
 | Action     | Button |
 | Container  | ColumnContainer, ListContainer, SelectSegmentContainer |
 
-Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`, `child`, `children`). `Text` supports compact `title`/`subtitle`/`icon` display and longer text display with `text`, `placeholder`, `action`, and `view.max_lines`. See `row-content.spec.json` for the exact keys per type.
+Each row type’s `view.content` may include type-specific keys (e.g. `label`, `value`, `placeholder`, `format`, `child`, `children`). `Text` supports compact `title`/`subtitle`/`label` display, `TextAction` supports `title`/`subtitle`/`action`, and `TextExpand` supports `title`/`text`/`expandLabel` with `view.max_lines`. See `row-content.spec.json` for the exact keys per type.
 
 For list-backed rows (Dropdown, InlinePicker, InputList, etc.), `format` is evaluated per item from the list resolved via `source`. Use `{$datum.}` as the placeholder for the current item, e.g. `{$datum.value}` or `{$datum.unit} {$datum.street}, {$datum.city}`.
 
@@ -257,3 +237,30 @@ For **PhotoGallery** rows, `source` resolves to an array of EVY file IDs for pho
 For **ListContainer** rows, `view.content.children` remains the static list of rows displayed by the container. `view.content.child` is optional and acts as a dynamic template: when the ListContainer `source` resolves to an array, iOS renders one formatted copy of `child` per item before the static `children`. Use `source: ""` when the ListContainer only groups static children. String fields in the dynamic child template are evaluated with `{$datum.}` against the current source item, e.g. `{$datum.title}` or `{$datum.price.value}`. The web builder shows deterministic sample preview rows for the dynamic child template.
 
 For **Calendar** and **TimeslotPicker** rows, selected timeslots are ISO-datetime strings (e.g. `"2024-09-18T09:30:00"`). `Calendar` reads selections from `view.content.primary` and `view.content.secondary`; `TimeslotPicker` reads available timeslots from `source`. Both rows use parser-based datetime format strings. `Calendar` uses `header_format` to format each column header and `timeslot_format` for y-axis labels; recommended values are `"{formatDatetime($datum, \"EEE d\")}"` and `"{formatDatetime($datum, \"HH:mm\")}"`. `TimeslotPicker` uses `header_format` for the primary header line, `header_subtitle` for the secondary header line, and `timeslot_format` for slot labels; recommended values are `"{formatDatetime($datum, \"EEE\")}"`, `"{formatDatetime($datum, \"MMM do\")}"`, and `"{formatDatetime($datum, \"HH:mm\")}"`. TimeslotPicker only shows dates that have at least one entry in `source`.
+
+
+
+
+
+
+-----
+
+
+
+- Each row declares a **`source`** string at the row root (next to `destination`) describing where the row **reads** data from. Use a non-empty source only for rows that load source-driven data such as option lists, search results, or calendars. If a row already reads explicit fields like `"{[resource_id].title}"` in `view.content`, the row source should be `""` because the binding resolves the resource directly.
+	- `"{[resource_id]}"`, `"{tags}"` — plural backend resource or in-memory keys the client resolves to option lists or entity arrays. Search and dynamic ListContainer rows read the resource named by `source`.
+	- `"{$local:address}"` — client-local source.
+	- `""` — no external read binding (e.g. edit rows whose data is driven by `destination`, display rows using explicit bindings like `"{[resource_id].title}"`, pure navigation buttons, static Text, and containers that only group static child rows).
+- Edit rows write into a draft via **`destination`**. Draft destinations start with the canonical resource ID, for example `"{[resource_id].title}"`, `"{[resource_id].condition}"`, or `"{buildCurrency([resource_id].price)}"`. The prefix tells the UI which resource draft owns the field.
+- Braced `{...}` expressions are used for all SDUI bindings. Prefixed bindings use either dot or colon notation depending on the prefix:
+	- `{$datum.field}` — dot notation. Current list/search result item field, used in row `format` strings and Search result templates.
+	- `{$local:resource}` — colon notation. Client-local source (resolves to the private data store).
+	- `{$api:resource}` — colon notation. Explicit API-sourced data (resolves to the public data store, same as a bare key but explicit about origin).
+- Resource/local data is loaded outside the flow document. Clients request individual lists with public JSON-RPC `get` (`service` / `resource`) using optional `filter.id` or `filter.updatedAfter`, call method-backed reads with public JSON-RPC `api`, or sync changed data in batches with protected JSON-RPC `sync`.
+- `sync` accepts a `lastSyncTime` ISO-8601 timestamp and returns changed resource arrays as `{ service, resource, value }` rows across SDUI, evy core data, and backend service data. For startup/cache refresh, the API fetches every syncable resource using `filter.updatedAfter = lastSyncTime`. Auth-only `devices` rows are excluded from sync.
+- Clients should store synced rows under service-qualified keys such as `[evy_service_id]:sdui`, `[marketplace_service_id]:[items_resource_id]`, and `[marketplace_service_id]:[conditions_resource_id]`. External runtime resource references use `serviceResources.id`; `serviceResources.name` is display-only metadata for human-friendly web builder labels. Web may derive plural labels with pluralizeJS at display time, but stored names are never routing keys. Navigate actions pass query params as the optional third `navigate` argument using a plain-text query object (for example, `{navigate(flowId, pageId, {id: $datum.id})}`). Query values can be scalars (`{key: id}`) or arrays (`{key: [id-1, id-2]}`). Clients parse the query into a `[String: [String]]` dictionary, resolve the first ID for each resource key from the synced collection, and expose the matching entity under the same resource key. A generic `"id"` query key may be used by clients that can infer the resource from synced collections. If no synced collection exists for a query key, clients keep the raw string array under that key.
+- iOS draft scope IDs and draft cache keys are internal draft-store identifiers; see [iOS README § Draft scopes and draft cache keys](../../../ios/README.md#draft-scopes-and-draft-cache-keys).
+- Collection/list sources and direct entity/draft attributes use canonical resource IDs (for example, `{[resource_id]}` and `{[resource_id].title}`). iOS and runtime clients resolve those IDs directly from synced data. The web builder keeps those canonical IDs in stored SDUI, but renders them with display-only resource labels from `serviceResources` (for example, `item.title`) when previewing or editing text. Legacy plural and singular resource names may still resolve for local data backwards compatibility, but new SDUI should use resource IDs.
+- `evy` resource data uses [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json); marketplace resources are served by the marketplace worker ([`services/marketplace`](../../../services/marketplace/README.md)). Routing and persistence are described in [`api/README`](../../../api/README.md). Clients merge loaded data with flow state when rendering rows (e.g. Dropdown, InlinePicker, Search, InputList).
+
+So a flow might reference “10 min, 20 min, 30 min” options via `source: "{[resource_id]}"` while the selected value is written to `destination: "{[resource_id].distance}"`; the actual list of options lives in the data layer the app fetches, not inside the flow document.

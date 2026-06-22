@@ -108,7 +108,7 @@ describe("API E2E Tests", () => {
 		it("create SDUI should create a new flow", async () => {
 			const testRow: UI_Row = {
 				id: crypto.randomUUID(),
-				type: "Text",
+				type: "TextExpand",
 				source: "",
 				visible: "true",
 				actions: [],
@@ -116,7 +116,9 @@ describe("API E2E Tests", () => {
 					content: {
 						title: "Hello",
 						text: "World",
+						expandLabel: "Read more",
 					},
+					max_lines: "3",
 				},
 			};
 
