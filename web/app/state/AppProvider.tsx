@@ -36,9 +36,7 @@ export function AppProvider({
 	serviceResources?: ServiceResource[];
 	syncWithApi?: boolean;
 }) {
-	useEffect(() => {
-		setResourceIdMapping(serviceResources);
-	}, [serviceResources]);
+	setResourceIdMapping(serviceResources);
 
 	const rows = baseRows.map((row) => ({
 		id: row.name,

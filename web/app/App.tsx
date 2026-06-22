@@ -1,4 +1,11 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo } from "react";
+import {
+	Fragment,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useState,
+	type ReactNode,
+} from "react";
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { FileSliders, Rows3 } from "lucide-react";
@@ -23,6 +30,7 @@ import { CanvasPageFrame } from "./components/CanvasPageFrame";
 import { AppProvider, useDragContext, useFlowsContext } from "./state";
 import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
+import { CanvasLoadingIndicator } from "./components/CanvasLoadingIndicator";
 import { findFlowById } from "./utils/flowHelpers";
 import { findRowInPages } from "./utils/rowTree";
 import { capturePageFramePosition } from "./utils/preActivationCapture";
@@ -37,6 +45,67 @@ import {
 import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
+
+type SidePanelsProps =
+	| { mode: "loading" }
+	| {
+			mode: "active";
+			isRowsPanelExpanded: boolean;
+			isConfigPanelExpanded: boolean;
+			pinOpenByPage: boolean;
+			onRowsOpen: () => void;
+			onRowsClose: () => void;
+			onConfigOpen: () => void;
+			onConfigClose: () => void;
+	  };
+
+function SidePanels(props: SidePanelsProps) {
+	const isActive = props.mode === "active";
+	return (
+		<>
+			<CollapsibleSidePanel
+				side="left"
+				isExpanded={isActive && props.isRowsPanelExpanded}
+				pinOpenByPage={isActive && props.pinOpenByPage}
+				onOpenInteraction={isActive ? props.onRowsOpen : () => {}}
+				onCloseInteraction={isActive ? props.onRowsClose : () => {}}
+				collapsedLabel={isActive ? "Expand rows panel" : "Rows panel loading"}
+				icon={
+					<Rows3
+						size={20}
+						strokeWidth={LUCIDE_STROKE_WIDTH}
+						style={COLLAPSED_PANEL_ICON_STYLE}
+						aria-hidden
+					/>
+				}
+			>
+				{isActive ? <RowsPanel /> : null}
+			</CollapsibleSidePanel>
+			<CollapsibleSidePanel
+				side="right"
+				isExpanded={isActive && props.isConfigPanelExpanded}
+				pinOpenByPage={isActive && props.pinOpenByPage}
+				onOpenInteraction={isActive ? props.onConfigOpen : () => {}}
+				onCloseInteraction={isActive ? props.onConfigClose : () => {}}
+				collapsedLabel={
+					isActive
+						? "Expand configuration panel"
+						: "Configuration panel loading"
+				}
+				icon={
+					<FileSliders
+						size={20}
+						strokeWidth={LUCIDE_STROKE_WIDTH}
+						style={COLLAPSED_PANEL_ICON_STYLE}
+						aria-hidden
+					/>
+				}
+			>
+				{isActive ? <ConfigurationPanel /> : null}
+			</CollapsibleSidePanel>
+		</>
+	);
+}
 
 function AppContent() {
 	const {
@@ -209,42 +278,27 @@ function AppContent() {
 					Add a page
 				</button>
 			)}
-			<CollapsibleSidePanel
-				side="left"
-				isExpanded={isRowsPanelExpanded}
+			<SidePanels
+				mode="active"
+				isRowsPanelExpanded={isRowsPanelExpanded}
+				isConfigPanelExpanded={isConfigurationPanelExpanded}
 				pinOpenByPage={isElementActive}
-				onOpenInteraction={rowsHover.open}
-				onCloseInteraction={rowsHover.close}
-				collapsedLabel="Expand rows panel"
-				icon={
-					<Rows3
-						size={20}
-						strokeWidth={LUCIDE_STROKE_WIDTH}
-						style={COLLAPSED_PANEL_ICON_STYLE}
-						aria-hidden
-					/>
-				}
-			>
-				<RowsPanel />
-			</CollapsibleSidePanel>
-			<CollapsibleSidePanel
-				side="right"
-				isExpanded={isConfigurationPanelExpanded}
-				pinOpenByPage={isElementActive}
-				onOpenInteraction={configurationHover.open}
-				onCloseInteraction={configurationHover.close}
-				collapsedLabel="Expand configuration panel"
-				icon={
-					<FileSliders
-						size={20}
-						strokeWidth={LUCIDE_STROKE_WIDTH}
-						style={COLLAPSED_PANEL_ICON_STYLE}
-						aria-hidden
-					/>
-				}
-			>
-				<ConfigurationPanel />
-			</CollapsibleSidePanel>
+				onRowsOpen={rowsHover.open}
+				onRowsClose={rowsHover.close}
+				onConfigOpen={configurationHover.open}
+				onConfigClose={configurationHover.close}
+			/>
+		</div>
+	);
+}
+
+function AppShell({ children }: { children: ReactNode }) {
+	return (
+		<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
+			<NavBar />
+			<div className="evy-relative evy-flex evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-bg-gray-light">
+				{children}
+			</div>
 		</div>
 	);
 }
@@ -261,7 +315,7 @@ function NavBar() {
 }
 
 export function App() {
-	const { flows, serviceResources, loading } = useFlows();
+	const { flows, serviceResources, loading, error } = useFlows();
 	const testFlows = window.__TEST_FLOWS__;
 	const testServiceResources = window.__TEST_SERVICE_RESOURCES__;
 	const initialFlows = testFlows ?? flows;
@@ -269,19 +323,51 @@ export function App() {
 		? (testServiceResources ?? [])
 		: serviceResources;
 
-	if (loading && !testFlows) {
+	const [minTimeElapsed, setMinTimeElapsed] = useState(Boolean(testFlows));
+	const [exiting, setExiting] = useState(false);
+	const [showContent, setShowContent] = useState(Boolean(testFlows));
+
+	useEffect(() => {
+		if (testFlows) return;
+		const timer = setTimeout(() => setMinTimeElapsed(true), 500);
+		return () => clearTimeout(timer);
+	}, []);
+
+	const ready = !loading && Boolean(initialFlows) && !error && minTimeElapsed;
+
+	useEffect(() => {
+		if (!ready || showContent) return;
+		setExiting(true);
+		const timer = setTimeout(() => {
+			setExiting(false);
+			setShowContent(true);
+		}, 200);
+		return () => clearTimeout(timer);
+	}, [ready, showContent]);
+
+	if (error && !loading && !testFlows) {
 		return (
-			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-gray-dark evy-text-lg">Loading flows...</div>
-			</div>
+			<AppShell>
+				<CanvasViewport contentStyle={canvasContentStyle}>
+					{null}
+				</CanvasViewport>
+				<SidePanels mode="loading" />
+				<div className="evy-absolute evy-inset-0 evy-flex evy-items-center evy-justify-center">
+					<span className="evy-text-red evy-text-lg">Failed to load flows</span>
+				</div>
+			</AppShell>
 		);
 	}
 
-	if (!initialFlows) {
+	if (!showContent) {
 		return (
-			<div className="evy-h-screen evy-flex evy-items-center evy-justify-center evy-bg-gray-light">
-				<div className="evy-text-red evy-text-lg">Failed to load flows</div>
-			</div>
+			<AppShell>
+				<CanvasViewport contentStyle={canvasContentStyle}>
+					{null}
+				</CanvasViewport>
+				<SidePanels mode="loading" />
+				<CanvasLoadingIndicator isExiting={exiting} />
+			</AppShell>
 		);
 	}
 
@@ -291,12 +377,9 @@ export function App() {
 			serviceResources={initialServiceResources}
 			syncWithApi={!testFlows}
 		>
-			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
-				<NavBar />
-				<div className="evy-flex evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-bg-gray-light">
-					<AppContent />
-				</div>
-			</div>
+			<AppShell>
+				<AppContent />
+			</AppShell>
 		</AppProvider>
 	);
 }
