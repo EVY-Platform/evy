@@ -11,6 +11,8 @@ import {
 	getPageOptions,
 	toVariableOptions,
 } from "../../utils/actionFlowOptions";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import type { ServiceResource } from "../../api/sync";
 import { displayLabel } from "../../utils/labelFormatting";
 import { PopoverSelect, type PopoverOption } from "../PopoverSelect";
@@ -68,8 +70,8 @@ function buildArgDropdowns(
 
 	if (functionName === "create") {
 		const namespaceOptions: PopoverOption[] = [
-			{ value: "66b092ae-7cd8-4d67-95b7-30b03568fd90", label: "Marketplace" },
-			{ value: "475731ac-31aa-4d65-94d2-7032782ae359", label: "Evy" },
+			{ value: MARKETPLACE_SERVICE, label: "Marketplace" },
+			{ value: EVY_CORE_SERVICE, label: "Evy" },
 		];
 		const dropdowns: ArgDropdownSlot[] = [
 			{ slotId: "create-namespace", options: namespaceOptions },

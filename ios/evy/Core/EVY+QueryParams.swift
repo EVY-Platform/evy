@@ -46,7 +46,7 @@ extension EVY {
         continue
       }
 
-      cacheResolvedEntity(
+      cacheValue(
         scopeId: scopeId,
         cacheKey: candidate.cacheKey,
         value: encodedMatchingValue
@@ -55,10 +55,6 @@ extension EVY {
     }
 
     return false
-  }
-
-  private static func cacheResolvedEntity(scopeId: String, cacheKey: String, value: Data) {
-    cacheValue(scopeId: scopeId, cacheKey: cacheKey, value: value)
   }
 
   private static func cacheValue(scopeId: String, cacheKey: String, value: Data) {

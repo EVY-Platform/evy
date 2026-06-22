@@ -293,10 +293,28 @@ let grpcEventListener: ((eventName: string, payload: unknown) => void) | null =
 	null;
 
 /**
+ * Resolve the gRPC host/port for a registered service from the environment.
+ * Each non-core service must have {NAME}_GRPC_HOST and {NAME}_GRPC_PORT set,
+ * where NAME is the service's `name` field (uppercased).
+ */
+export function requireServiceGrpcEndpoint(
+	name: string,
+	id: string,
+): { host: string; port: string } {
+	const prefix = name.toUpperCase();
+	const host = process.env[`${prefix}_GRPC_HOST`]?.trim();
+	const port = process.env[`${prefix}_GRPC_PORT`]?.trim();
+	if (!host || !port) {
+		throw new Error(
+			`Service "${name}" (${id}) requires ${prefix}_GRPC_HOST and ${prefix}_GRPC_PORT`,
+		);
+	}
+	return { host, port };
+}
+
+/**
  * Initialise gRPC adapters from the service registry in the database.
  * Must be called once at startup before any request is forwarded.
- * Each non-core service must have {NAME}_GRPC_HOST and {NAME}_GRPC_PORT set,
- * where NAME is the service's `name` field in the database (uppercased).
  */
 export async function initServiceAdapters(db: EvyDb): Promise<void> {
 	serviceAdapterDb = db;
@@ -309,14 +327,7 @@ export async function initServiceAdapters(db: EvyDb): Promise<void> {
 	const ServiceCtor = loadEvyServiceConstructor();
 
 	for (const { id, name } of rows) {
-		const prefix = name.toUpperCase();
-		const host = process.env[`${prefix}_GRPC_HOST`]?.trim();
-		const port = process.env[`${prefix}_GRPC_PORT`]?.trim();
-		if (!host || !port) {
-			throw new Error(
-				`Service "${name}" (${id}) requires ${prefix}_GRPC_HOST and ${prefix}_GRPC_PORT`,
-			);
-		}
+		const { host, port } = requireServiceGrpcEndpoint(name, id);
 		const adapter = makeGrpcAdapter(name, `${host}:${port}`, ServiceCtor);
 		if (grpcEventListener) {
 			adapter.onEvent(grpcEventListener);
@@ -327,16 +338,20 @@ export async function initServiceAdapters(db: EvyDb): Promise<void> {
 	grpcAdapters = next;
 }
 
-async function getServiceAdapter(serviceId: string): Promise<ServiceAdapter> {
+function requireAdapters(): Map<string, ServiceAdapter> {
 	if (!grpcAdapters) {
 		throw new Error(
 			"Service adapters not initialised. Call initServiceAdapters() first.",
 		);
 	}
-	let adapter = grpcAdapters.get(serviceId);
+	return grpcAdapters;
+}
+
+async function getServiceAdapter(serviceId: string): Promise<ServiceAdapter> {
+	let adapter = requireAdapters().get(serviceId);
 	if (!adapter && serviceAdapterDb) {
 		await initServiceAdapters(serviceAdapterDb);
-		adapter = grpcAdapters.get(serviceId);
+		adapter = requireAdapters().get(serviceId);
 	}
 	if (!adapter) {
 		throw new Error(`No service registered for service ${serviceId}`);
@@ -366,13 +381,8 @@ export async function forwardUpdate(
 }
 
 export function wireGrpcEvents(broadcast: BroadcastFn): void {
-	if (!grpcAdapters) {
-		throw new Error(
-			"Service adapters not initialised. Call initServiceAdapters() first.",
-		);
-	}
 	grpcEventListener = broadcast;
-	for (const adapter of grpcAdapters.values()) {
+	for (const adapter of requireAdapters().values()) {
 		adapter.onEvent(broadcast);
 	}
 }

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { ChevronRight, Trash2 } from "lucide-react";
 
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
@@ -185,7 +186,11 @@ export function ConfigurationPanel() {
 	);
 
 	const updateRowRoot = useCallback(
-		(field: "source" | "destination", value: string, targetRowId?: string) => {
+		(
+			field: "source" | "destination" | "visible",
+			value: string,
+			targetRowId?: string,
+		) => {
 			const rowId = targetRowId || activeRowId;
 			if (!rowId) return;
 			dispatchRow({
@@ -301,7 +306,7 @@ export function ConfigurationPanel() {
 						label="Visible"
 						value={configRow.config.visible ?? ""}
 						onChange={(next) => updateRowRoot("visible", next, configRow.id)}
-						placeholder="Condition to show row, e.g. {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}"
+						placeholder={`Condition to show row, e.g. {${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`}
 						ariaLabel="Row visibility condition"
 						labelClassName="evy-text-sm evy-font-medium evy-text-black"
 						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"

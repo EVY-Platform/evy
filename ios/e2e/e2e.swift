@@ -5,9 +5,9 @@
 
 import XCTest
 
-private let EVY_CORE_SERVICE_ID = "475731ac-31aa-4d65-94d2-7032782ae359"
-private let MARKETPLACE_SERVICE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90"
-private let MARKETPLACE_ITEMS_RESOURCE_ID = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd"
+private let EVY_CORE_SERVICE_ID = EVY_CORE_SERVICE
+private let MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE
+private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceResource.items.rawValue
 
 // MARK: - Minimal WebSocket Emitter for E2E Tests
 
@@ -763,11 +763,11 @@ final class WebSocketE2ETests: E2ETestBase {
       "View item page should show the static text row title")
     XCTAssertTrue(
       app.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
-      "View item page should resolve {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} from the item id passed in navigate query"
+      "View item page should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
     )
     XCTAssertTrue(
       app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
-      "View item page title should resolve {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} from the item id passed in navigate query"
+      "View item page title should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
     )
   }
 
@@ -820,11 +820,11 @@ final class WebSocketE2ETests: E2ETestBase {
 
     XCTAssertTrue(
       app.staticTexts["Cash accepted"].waitForExistence(timeout: 10),
-      "Cash payment row should be visible when dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash is true"
+      "Cash payment row should be visible when \(MARKETPLACE_ITEMS_RESOURCE_ID).payment_methods.cash is true"
     )
     XCTAssertFalse(
       app.staticTexts["App payments accepted"].waitForExistence(timeout: 2),
-      "App payment row should be hidden when dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.app is false"
+      "App payment row should be hidden when \(MARKETPLACE_ITEMS_RESOURCE_ID).payment_methods.app is false"
     )
   }
 

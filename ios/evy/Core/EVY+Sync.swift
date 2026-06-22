@@ -6,10 +6,6 @@
 import Foundation
 
 extension EVY {
-  static func getUserData() throws -> EVYJson {
-    try EVYJson.from(localJSON: "user_data")
-  }
-
   static func sync() async throws {
     let response: SyncResponse = try await EVYAPIManager.shared.fetch(
       method: "sync",

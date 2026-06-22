@@ -1,13 +1,10 @@
-export const MARKETPLACE_SERVICE = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 
-export const MARKETPLACE_RESOURCE = {
-	SELLING_REASONS: "e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8",
-	CONDITIONS: "cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f",
-	DURATIONS: "e82e1baa-6d33-4649-b495-4e10a4d1d8bf",
-	AREAS: "2532b561-3b14-458b-9039-307e99c4a4ba",
-	ITEMS: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
-} as const;
+export {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "evy-types/marketplaceResources";
 
-export const MARKETPLACE_SEED_RESOURCES = new Set(
+export const MARKETPLACE_SEED_RESOURCES: ReadonlySet<string> = new Set(
 	Object.values(MARKETPLACE_RESOURCE),
 );

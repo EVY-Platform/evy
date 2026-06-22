@@ -14,7 +14,6 @@ final class InterpreterTests: XCTestCase {
   override func setUpWithError() throws {
     try super.setUpWithError()
     testPageId = "test_page_\(UUID().uuidString)"
-    _ = try EVY.getUserData()
     EVY.activeCacheScopeId = testPageId
   }
 

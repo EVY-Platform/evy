@@ -16,6 +16,11 @@ import {
 } from "../types/generated/ts/db/schema.generated";
 import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
 
+import { EVY_CORE_SERVICE } from "../types/generated/ts/coreResources";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "../types/generated/ts/marketplaceResources";
 import { validateUiFlow } from "../types/validators";
 
 const UUID_RE =
@@ -112,8 +117,6 @@ const marketplaceDb = drizzle({
 
 const SEED_IDS = {
 	evyOrganization: "09f07052-c27c-4116-a508-a2bcb074c827",
-	evyCoreService: "475731ac-31aa-4d65-94d2-7032782ae359",
-	marketplaceService: "66b092ae-7cd8-4d67-95b7-30b03568fd90",
 	evyMarketplaceProvider: "be00fb53-80e9-4a09-a43f-4588b4ffc851",
 	logo: "ec3a7609-e2bc-484e-aab1-acef6777595c",
 	coreSduiResource: "d23cd318-3df4-486f-92d8-77f84402e63c",
@@ -123,19 +126,14 @@ const SEED_IDS = {
 	coreProvidersResource: "136d5d53-af3b-4fe1-954c-46df6c9f9ec3",
 	coreServiceResourcesResource: "58e2e69d-78ba-4657-b991-cc6a5e0c80c9",
 	coreFilesResource: "996738e6-15eb-4f3e-8f97-7538a1e2635c",
-	marketplaceSellingReasonsResource: "e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8",
-	marketplaceConditionsResource: "cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f",
-	marketplaceDurationsResource: "e82e1baa-6d33-4649-b495-4e10a4d1d8bf",
-	marketplaceAreasResource: "2532b561-3b14-458b-9039-307e99c4a4ba",
-	marketplaceItemsResource: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
 } as const;
 
 const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID = {
-	selling_reasons: SEED_IDS.marketplaceSellingReasonsResource,
-	conditions: SEED_IDS.marketplaceConditionsResource,
-	durations: SEED_IDS.marketplaceDurationsResource,
-	areas: SEED_IDS.marketplaceAreasResource,
-	items: SEED_IDS.marketplaceItemsResource,
+	selling_reasons: MARKETPLACE_RESOURCE.SELLING_REASONS,
+	conditions: MARKETPLACE_RESOURCE.CONDITIONS,
+	durations: MARKETPLACE_RESOURCE.DURATIONS,
+	areas: MARKETPLACE_RESOURCE.AREAS,
+	items: MARKETPLACE_RESOURCE.ITEMS,
 } as const;
 
 type SeedInputPaths = {
@@ -248,34 +246,18 @@ function timestamped(now: string): { createdAt: string; updatedAt: string } {
 }
 
 const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
-	[SEED_IDS.coreSduiResource, SEED_IDS.evyCoreService, "flow"],
-	[SEED_IDS.coreDevicesResource, SEED_IDS.evyCoreService, "device"],
-	[SEED_IDS.coreOrganisationsResource, SEED_IDS.evyCoreService, "organisation"],
-	[SEED_IDS.coreServicesResource, SEED_IDS.evyCoreService, "service"],
-	[SEED_IDS.coreProvidersResource, SEED_IDS.evyCoreService, "provider"],
-	[
-		SEED_IDS.coreServiceResourcesResource,
-		SEED_IDS.evyCoreService,
-		"service_resource",
-	],
-	[SEED_IDS.coreFilesResource, SEED_IDS.evyCoreService, "file"],
-	[
-		SEED_IDS.marketplaceSellingReasonsResource,
-		SEED_IDS.marketplaceService,
-		"selling_reason",
-	],
-	[
-		SEED_IDS.marketplaceConditionsResource,
-		SEED_IDS.marketplaceService,
-		"condition",
-	],
-	[
-		SEED_IDS.marketplaceDurationsResource,
-		SEED_IDS.marketplaceService,
-		"duration",
-	],
-	[SEED_IDS.marketplaceAreasResource, SEED_IDS.marketplaceService, "area"],
-	[SEED_IDS.marketplaceItemsResource, SEED_IDS.marketplaceService, "item"],
+	[SEED_IDS.coreSduiResource, EVY_CORE_SERVICE, "flow"],
+	[SEED_IDS.coreDevicesResource, EVY_CORE_SERVICE, "device"],
+	[SEED_IDS.coreOrganisationsResource, EVY_CORE_SERVICE, "organisation"],
+	[SEED_IDS.coreServicesResource, EVY_CORE_SERVICE, "service"],
+	[SEED_IDS.coreProvidersResource, EVY_CORE_SERVICE, "provider"],
+	[SEED_IDS.coreServiceResourcesResource, EVY_CORE_SERVICE, "service_resource"],
+	[SEED_IDS.coreFilesResource, EVY_CORE_SERVICE, "file"],
+	[MARKETPLACE_RESOURCE.SELLING_REASONS, MARKETPLACE_SERVICE, "selling_reason"],
+	[MARKETPLACE_RESOURCE.CONDITIONS, MARKETPLACE_SERVICE, "condition"],
+	[MARKETPLACE_RESOURCE.DURATIONS, MARKETPLACE_SERVICE, "duration"],
+	[MARKETPLACE_RESOURCE.AREAS, MARKETPLACE_SERVICE, "area"],
+	[MARKETPLACE_RESOURCE.ITEMS, MARKETPLACE_SERVICE, "item"],
 ];
 
 function buildServiceResourceRows(now: string) {
@@ -488,14 +470,14 @@ async function seedDatabase({
 
 		await tx.insert(coreSchema.service).values([
 			{
-				id: SEED_IDS.evyCoreService,
+				id: EVY_CORE_SERVICE,
 				name: "evy",
 				description: "EVY core service",
 				sortOrder: 0,
 				...timestamped(now),
 			},
 			{
-				id: SEED_IDS.marketplaceService,
+				id: MARKETPLACE_SERVICE,
 				name: "marketplace",
 				description: "Marketplace service",
 				sortOrder: 1,
@@ -505,7 +487,7 @@ async function seedDatabase({
 
 		await tx.insert(coreSchema.serviceProvider).values({
 			id: SEED_IDS.evyMarketplaceProvider,
-			fkServiceId: SEED_IDS.marketplaceService,
+			fkServiceId: MARKETPLACE_SERVICE,
 			fkOrganizationId: SEED_IDS.evyOrganization,
 			name: "evy",
 			description: "EVY marketplace provider",

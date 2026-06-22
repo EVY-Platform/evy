@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { Client } from "rpc-websockets";
 import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 
 import { assertApiReadable } from "../readiness";
 import { getFreePort, waitForClientOpen, type WSServer } from "./wsTestHelpers";
@@ -119,7 +120,7 @@ describe("assertApiReadable", () => {
 		const deps = {
 			get: async (): Promise<GetResponse> => [],
 			listExternalServices: async () => [
-				{ id: "66b092ae-7cd8-4d67-95b7-30b03568fd90", name: "marketplace" },
+				{ id: MARKETPLACE_SERVICE, name: "marketplace" },
 			],
 		};
 		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
@@ -142,7 +143,7 @@ describe("assertApiReadable", () => {
 		const deps = {
 			get: async (): Promise<GetResponse> => [],
 			listExternalServices: async () => [
-				{ id: "66b092ae-7cd8-4d67-95b7-30b03568fd90", name: "marketplace" },
+				{ id: MARKETPLACE_SERVICE, name: "marketplace" },
 			],
 		};
 		const savedHost = process.env.MARKETPLACE_GRPC_HOST;

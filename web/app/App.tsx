@@ -265,6 +265,9 @@ export function App() {
 	const testFlows = window.__TEST_FLOWS__;
 	const testServiceResources = window.__TEST_SERVICE_RESOURCES__;
 	const initialFlows = testFlows ?? flows;
+	const initialServiceResources = testFlows
+		? (testServiceResources ?? [])
+		: serviceResources;
 
 	if (loading && !testFlows) {
 		return (
@@ -285,9 +288,7 @@ export function App() {
 	return (
 		<AppProvider
 			initialFlows={initialFlows}
-			serviceResources={
-				testFlows ? (testServiceResources ?? []) : serviceResources
-			}
+			serviceResources={initialServiceResources}
 			syncWithApi={!testFlows}
 		>
 			<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">

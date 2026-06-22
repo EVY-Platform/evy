@@ -277,36 +277,3 @@ private final class EVYWebSocketDelegate: NSObject, URLSessionWebSocketDelegate 
     onClose()
   }
 }
-
-enum JSONParseError: Error {
-  case fileNotFound
-  case dataInitialisation(error: Error)
-  case decoding(error: Error)
-}
-
-extension Decodable {
-  static func from(
-    localJSON filename: String,
-    bundle: Bundle = .main
-  ) throws -> Self {
-    guard let url = bundle.url(forResource: filename, withExtension: "json") else {
-      throw JSONParseError.fileNotFound
-    }
-    let data: Data
-    do {
-      data = try Data(contentsOf: url)
-    } catch let error {
-      throw JSONParseError.dataInitialisation(error: error)
-    }
-
-    if self == Data.self {
-      return data as! Self
-    }
-
-    do {
-      return try JSONDecoder().decode(self, from: data)
-    } catch let error {
-      throw JSONParseError.decoding(error: error)
-    }
-  }
-}

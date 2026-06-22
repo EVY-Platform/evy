@@ -180,7 +180,6 @@ struct EVYSelectItem: View {
 
 private struct EVYSelectItemPreview: View {
   init() {
-    _ = try? EVY.getUserData()
     EVYPreviewMockData.seedCommon()
   }
 

@@ -1,4 +1,5 @@
 import { callFunction, type EVYFunctionContext } from "./functions";
+import { formatResourcePathForDisplay } from "./resourcePathDisplay";
 
 const FUNCTION_CALL_PATTERN = /([a-zA-Z_]+)\(([^()]*)\)/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
@@ -13,12 +14,8 @@ export function setResourceIdMapping(
 	);
 }
 
-export function resolveResourceUuidPrefix(path: string): string {
-	const dotIndex = path.indexOf(".");
-	const prefix = dotIndex === -1 ? path : path.slice(0, dotIndex);
-	const suffix = dotIndex === -1 ? "" : path.slice(dotIndex);
-	const entityName = resourceIdToEntityName.get(prefix);
-	return entityName ? `${entityName}${suffix}` : path;
+function resolveResourceUuidPrefix(path: string): string {
+	return formatResourcePathForDisplay(path, resourceIdToEntityName);
 }
 
 function resolveFunction(

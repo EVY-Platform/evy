@@ -29,6 +29,7 @@ COPY --from=typesgen /app/types/generated/ts ../types/generated/ts
 COPY types/schema ../types/schema
 COPY types/validators.ts ../types/validators.ts
 COPY types/coreResources.ts ../types/coreResources.ts
+COPY types/marketplaceResources.ts ../types/marketplaceResources.ts
 COPY types/rpcRequestHelpers.ts ../types/rpcRequestHelpers.ts
 
 # Production stage

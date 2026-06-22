@@ -9,6 +9,11 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { GetResponse } from "evy-types";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "evy-types/marketplaceResources";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 import {
 	asEvyDb,
@@ -44,15 +49,8 @@ const dataDb = asEvyDb(testDb);
 
 const { api } = await import("../procedures/rpc");
 
-const MARKETPLACE_SERVICE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
-const MARKETPLACE_RESOURCE = {
-	SELLING_REASONS: "e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8",
-	CONDITIONS: "cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f",
-	DURATIONS: "e82e1baa-6d33-4649-b495-4e10a4d1d8bf",
-	AREAS: "2532b561-3b14-458b-9039-307e99c4a4ba",
-	ITEMS: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
-} as const;
-const EVY_SERVICE_ID = "475731ac-31aa-4d65-94d2-7032782ae359";
+const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
+const EVY_SERVICE_ID = EVY_CORE_SERVICE;
 
 async function seedServiceResources(): Promise<void> {
 	const nowIso = new Date().toISOString();

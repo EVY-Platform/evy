@@ -40,7 +40,6 @@ struct EVYSelectList: View {
 
 private struct EVYSelectListPreview: View {
   init() {
-    _ = try? EVY.getUserData()
     EVYPreviewMockData.seedCommon()
   }
 

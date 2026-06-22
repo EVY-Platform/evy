@@ -3,6 +3,7 @@ import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { ne } from "drizzle-orm";
 import { createDb } from "./database/db";
 import { get as getCore } from "./data/data";
+import { requireServiceGrpcEndpoint } from "./procedures/services";
 import { service } from "../../types/generated/ts/db/schema.generated";
 
 type AssertApiReadableOptions = {
@@ -22,14 +23,7 @@ export async function assertApiReadable(
 
 	const externalServices = await deps.listExternalServices();
 	for (const { id, name } of externalServices) {
-		const prefix = name.toUpperCase();
-		const host = process.env[`${prefix}_GRPC_HOST`]?.trim();
-		const port = process.env[`${prefix}_GRPC_PORT`]?.trim();
-		if (!host || !port) {
-			throw new Error(
-				`Service "${name}" (${id}) requires ${prefix}_GRPC_HOST and ${prefix}_GRPC_PORT`,
-			);
-		}
+		requireServiceGrpcEndpoint(name, id);
 	}
 
 	const response = await deps.get({

@@ -1,10 +1,14 @@
 import { Client } from "rpc-websockets";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "evy-types/marketplaceResources";
 
 type WSClient = InstanceType<typeof Client>;
 
-const MARKETPLACE_SERVICE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
-const MARKETPLACE_ITEMS_RESOURCE_ID = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd";
+const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
+const MARKETPLACE_ITEMS_RESOURCE_ID = MARKETPLACE_RESOURCE.ITEMS;
 
 const API_URL = process.env.API_URL;
 if (!API_URL) {

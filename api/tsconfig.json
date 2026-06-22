@@ -24,6 +24,10 @@
 				"../types/coreResources.ts",
 				"./types/coreResources.ts"
 			],
+			"evy-types/marketplaceResources": [
+				"../types/marketplaceResources.ts",
+				"./types/marketplaceResources.ts"
+			],
 			"drizzle-orm": ["./node_modules/drizzle-orm"],
 			"drizzle-orm/*": ["./node_modules/drizzle-orm/*"]
 		}

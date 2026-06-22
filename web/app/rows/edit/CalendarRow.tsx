@@ -1,4 +1,5 @@
 import type { RowConfig } from "../../types/row";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { parseText } from "../../utils/interpreter";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
@@ -122,7 +123,7 @@ export default defineRow("CalendarRow", {
 				secondary: "{delivery_selection}",
 			},
 		},
-		destination: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
+		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>
