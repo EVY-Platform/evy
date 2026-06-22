@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, type CSSProperties } from "react";
 
 import { useDragContext, useFlowsContext } from "../state";
-import { parseText } from "../utils/interpreter";
+import { useParseText } from "../hooks/useParseText";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
 import { usePageEdgeIndicators } from "../hooks/usePageEdgeIndicators";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
@@ -29,6 +29,7 @@ const pageTitleStyle: CSSProperties = {
 export default function AppPage({ pageId }: { pageId: string }) {
 	const { flows, activeFlowId, dispatchRow } = useFlowsContext();
 	const { dispatchDropIndicator, dragging } = useDragContext();
+	const parseText = useParseText();
 
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const pageWrapperRef = useRef<HTMLDivElement | null>(null);

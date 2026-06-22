@@ -98,7 +98,7 @@ final class EVYDatumRowFormatter {
       throw EVYDatumRowFormattingError.invalidTemplate
     }
     let searchableValues =
-      Self.extractAllStrings(from: content as Any)
+      Self.extractAllStrings(from: content)
       .filter { !$0.isEmpty }
     root["id"] = UUID().uuidString
     let out = try JSONSerialization.data(withJSONObject: root)

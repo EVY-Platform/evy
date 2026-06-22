@@ -26,12 +26,15 @@ function extractSduiFlows(response: SyncResponse): ServerFlow[] {
 }
 
 function isServiceResource(item: unknown): item is ServiceResource {
+	if (typeof item !== "object" || item === null) {
+		return false;
+	}
+
+	const record = item as Record<string, unknown>;
 	return (
-		typeof item === "object" &&
-		item !== null &&
-		typeof (item as Record<string, unknown>).id === "string" &&
-		typeof (item as Record<string, unknown>).fkServiceId === "string" &&
-		typeof (item as Record<string, unknown>).name === "string"
+		typeof record.id === "string" &&
+		typeof record.fkServiceId === "string" &&
+		typeof record.name === "string"
 	);
 }
 

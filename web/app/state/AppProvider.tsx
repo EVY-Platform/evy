@@ -23,7 +23,7 @@ import {
 	resolveUrlIds,
 	validateRowPathSegmentsForPage,
 } from "../utils/urlUtils";
-import { setResourceIdMapping } from "../utils/interpreter";
+import { resourceNameById } from "../utils/resourcePathDisplay";
 
 export function AppProvider({
 	children,
@@ -36,7 +36,10 @@ export function AppProvider({
 	serviceResources?: ServiceResource[];
 	syncWithApi?: boolean;
 }) {
-	setResourceIdMapping(serviceResources);
+	const resourceIdToEntityName = useMemo(
+		() => resourceNameById(serviceResources),
+		[serviceResources],
+	);
 
 	const rows = baseRows.map((row) => ({
 		id: row.name,
@@ -123,6 +126,7 @@ export function AppProvider({
 			rows,
 			flows: appState.flows,
 			serviceResources,
+			resourceIdToEntityName,
 			activeFlowId: appState.activeFlowId,
 			activeRowId: appState.activeRowId,
 			activePageId: appState.activePageId,
@@ -133,6 +137,7 @@ export function AppProvider({
 			rows,
 			appState.flows,
 			serviceResources,
+			resourceIdToEntityName,
 			appState.activeFlowId,
 			appState.activeRowId,
 			appState.activePageId,

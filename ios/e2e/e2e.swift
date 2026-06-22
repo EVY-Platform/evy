@@ -5,8 +5,6 @@
 
 import XCTest
 
-private let EVY_CORE_SERVICE_ID = EVY_CORE_SERVICE
-private let MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE
 private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceResource.items.rawValue
 
 // MARK: - Minimal WebSocket Emitter for E2E Tests
@@ -32,11 +30,11 @@ actor WSEmitter {
 
   func applySDUI(flowData: [String: Any], flowId: String) async throws {
     let existing = try await getResource(
-      service: EVY_CORE_SERVICE_ID, resource: "sdui", filter: ["id": flowId])
+      service: EVY_CORE_SERVICE, resource: "sdui", filter: ["id": flowId])
     let existingArray = existing as? [Any]
     let method = existingArray?.isEmpty == false ? "update" : "create"
     let params: [String: Any] = [
-      "service": EVY_CORE_SERVICE_ID,
+      "service": EVY_CORE_SERVICE,
       "resource": "sdui",
       "filter": ["id": flowId],
       "data": flowData,
@@ -46,7 +44,7 @@ actor WSEmitter {
 
   func updateSDUI(flowData: [String: Any], flowId: String) async throws {
     let params: [String: Any] = [
-      "service": EVY_CORE_SERVICE_ID,
+      "service": EVY_CORE_SERVICE,
       "resource": "sdui",
       "filter": ["id": flowId],
       "data": flowData,
@@ -170,7 +168,7 @@ class E2ETestBase: XCTestCase {
           "footer": Self.buttonRow(
             id: "1cb41189-6fa5-4562-996a-7cefb88a08ca",
             label: "Submit",
-            action: "{create(\(MARKETPLACE_SERVICE_ID),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
+            action: "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
           ),
         ]
       ],
@@ -512,7 +510,7 @@ class E2ETestBase: XCTestCase {
       data["payment_methods"] = paymentMethods
     }
     _ = try await emitter.createResource(
-      service: MARKETPLACE_SERVICE_ID,
+      service: MARKETPLACE_SERVICE,
       resource: MARKETPLACE_ITEMS_RESOURCE_ID,
       filter: ["id": selectedItemId],
       data: data
@@ -933,7 +931,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Should return to home after create(item)")
 
     let itemsPayload = try await emitter.getResource(
-      service: MARKETPLACE_SERVICE_ID, resource: MARKETPLACE_ITEMS_RESOURCE_ID)
+      service: MARKETPLACE_SERVICE, resource: MARKETPLACE_ITEMS_RESOURCE_ID)
     XCTAssertTrue(
       Self.marketplaceItemsContainListing(
         title: testTitle, priceValue: 99, widthText: "50", items: itemsPayload),

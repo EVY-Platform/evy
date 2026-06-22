@@ -45,6 +45,7 @@ import {
 import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
+const noop = () => {};
 
 type SidePanelsProps =
 	| { mode: "loading" }
@@ -67,8 +68,8 @@ function SidePanels(props: SidePanelsProps) {
 				side="left"
 				isExpanded={isActive && props.isRowsPanelExpanded}
 				pinOpenByPage={isActive && props.pinOpenByPage}
-				onOpenInteraction={isActive ? props.onRowsOpen : () => {}}
-				onCloseInteraction={isActive ? props.onRowsClose : () => {}}
+				onOpenInteraction={isActive ? props.onRowsOpen : noop}
+				onCloseInteraction={isActive ? props.onRowsClose : noop}
 				collapsedLabel={isActive ? "Expand rows panel" : "Rows panel loading"}
 				icon={
 					<Rows3
@@ -85,8 +86,8 @@ function SidePanels(props: SidePanelsProps) {
 				side="right"
 				isExpanded={isActive && props.isConfigPanelExpanded}
 				pinOpenByPage={isActive && props.pinOpenByPage}
-				onOpenInteraction={isActive ? props.onConfigOpen : () => {}}
-				onCloseInteraction={isActive ? props.onConfigClose : () => {}}
+				onOpenInteraction={isActive ? props.onConfigOpen : noop}
+				onCloseInteraction={isActive ? props.onConfigClose : noop}
 				collapsedLabel={
 					isActive
 						? "Expand configuration panel"
@@ -292,10 +293,16 @@ function AppContent() {
 	);
 }
 
-function AppShell({ children }: { children: ReactNode }) {
+function AppShell({
+	children,
+	showBreadcrumb = true,
+}: {
+	children: ReactNode;
+	showBreadcrumb?: boolean;
+}) {
 	return (
 		<div className="evy-h-screen evy-overflow-hidden evy-flex evy-flex-col">
-			<NavBar />
+			<NavBar showBreadcrumb={showBreadcrumb} />
 			<div className="evy-relative evy-flex evy-flex-1 evy-min-h-0 evy-overflow-hidden evy-bg-gray-light">
 				{children}
 			</div>
@@ -303,14 +310,24 @@ function AppShell({ children }: { children: ReactNode }) {
 	);
 }
 
-function NavBar() {
+function NavBar({ showBreadcrumb }: { showBreadcrumb: boolean }) {
 	return (
 		<div className="evy-border-b evy-border-gray evy-p-2 evy-bg-white evy-flex evy-items-center evy-gap-2 evy-min-w-0 evy-min-h-nav-bar">
 			<a href="/" className="evy-shrink-0">
 				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 			</a>
-			<NavigationBreadcrumb />
+			{showBreadcrumb && <NavigationBreadcrumb />}
 		</div>
+	);
+}
+
+function PlaceholderShell({ children }: { children: ReactNode }) {
+	return (
+		<AppShell showBreadcrumb={false}>
+			<CanvasViewport contentStyle={canvasContentStyle}>{null}</CanvasViewport>
+			<SidePanels mode="loading" />
+			{children}
+		</AppShell>
 	);
 }
 
@@ -347,33 +364,25 @@ export function App() {
 
 	if (error && !loading && !testFlows) {
 		return (
-			<AppShell>
-				<CanvasViewport contentStyle={canvasContentStyle}>
-					{null}
-				</CanvasViewport>
-				<SidePanels mode="loading" />
+			<PlaceholderShell>
 				<div className="evy-absolute evy-inset-0 evy-flex evy-items-center evy-justify-center">
 					<span className="evy-text-red evy-text-lg">Failed to load flows</span>
 				</div>
-			</AppShell>
+			</PlaceholderShell>
 		);
 	}
 
 	if (!showContent) {
 		return (
-			<AppShell>
-				<CanvasViewport contentStyle={canvasContentStyle}>
-					{null}
-				</CanvasViewport>
-				<SidePanels mode="loading" />
+			<PlaceholderShell>
 				<CanvasLoadingIndicator isExiting={exiting} />
-			</AppShell>
+			</PlaceholderShell>
 		);
 	}
 
 	return (
 		<AppProvider
-			initialFlows={initialFlows}
+			initialFlows={initialFlows ?? []}
 			serviceResources={initialServiceResources}
 			syncWithApi={!testFlows}
 		>

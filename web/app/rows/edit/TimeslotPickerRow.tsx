@@ -1,5 +1,5 @@
 import type { RowConfig } from "../../types/row";
-import { parseText } from "../../utils/interpreter";
+import { useParseText } from "../../hooks/useParseText";
 import { defineRow } from "../defineRow";
 import CarouselIndicator from "../design-system/CarouselIndicator";
 import { RowLayout } from "../design-system/RowLayout";
@@ -53,6 +53,8 @@ function SlotChip({
 	slot: MockSlot;
 	timeslotFormat: string;
 }) {
+	const parseText = useParseText();
+
 	if (slot.variant === "unavailable") {
 		return (
 			<div className="evy-text-center evy-text-gray" style={{ height: 36 }}>
@@ -91,6 +93,7 @@ function DayColumn({
 	headerSubtitle: string;
 	timeslotFormat: string;
 }) {
+	const parseText = useParseText();
 	return (
 		<div className="evy-flex evy-flex-col evy-items-center">
 			<div className="evy-text-center evy-mb-1">

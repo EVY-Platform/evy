@@ -4,20 +4,6 @@ import { formatResourcePathForDisplay } from "./resourcePathDisplay";
 const FUNCTION_CALL_PATTERN = /([a-zA-Z_]+)\(([^()]*)\)/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
 
-let resourceIdToEntityName: Map<string, string> = new Map();
-
-export function setResourceIdMapping(
-	serviceResources: { id: string; name: string }[],
-): void {
-	resourceIdToEntityName = new Map(
-		serviceResources.map((resource) => [resource.id, resource.name]),
-	);
-}
-
-function resolveResourceUuidPrefix(path: string): string {
-	return formatResourcePathForDisplay(path, resourceIdToEntityName);
-}
-
 function resolveFunction(
 	functionName: string,
 	args: string,
@@ -38,7 +24,11 @@ function replaceFunctionCall(
 	return `${text.slice(0, matchStart)}${resolved}${text.slice(matchEnd)}`;
 }
 
-export function parseText(input: string, context?: EVYFunctionContext): string {
+export function parseText(
+	input: string,
+	context?: EVYFunctionContext,
+	resourceIdToEntityName: Map<string, string> = new Map(),
+): string {
 	if (!input) return input;
 
 	let text = input;
@@ -63,7 +53,10 @@ export function parseText(input: string, context?: EVYFunctionContext): string {
 				continue;
 			}
 
-			text = text.replace(propsMatch[0], resolveResourceUuidPrefix(inner));
+			text = text.replace(
+				propsMatch[0],
+				formatResourcePathForDisplay(inner, resourceIdToEntityName),
+			);
 			continue;
 		}
 

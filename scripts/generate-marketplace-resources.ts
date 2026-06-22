@@ -9,14 +9,18 @@
  * Run: bun scripts/generate-marketplace-resources.ts
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
 	OUT_SWIFT,
 	OUT_TS,
 	SCHEMA_DIR,
+	generatedFileHeader,
+	generatedSwiftHeader,
 	loadJson,
+	resourceKey,
 	runMain,
+	swiftCaseName,
+	writeGeneratedOutputs,
 } from "./types-generation-utils.js";
 
 const RESOURCES_SCHEMA_PATH = join(
@@ -26,6 +30,8 @@ const RESOURCES_SCHEMA_PATH = join(
 );
 const OUT_TS_PATH = join(OUT_TS, "marketplaceResources.ts");
 const OUT_SWIFT_PATH = join(OUT_SWIFT, "MarketplaceResources.generated.swift");
+const MARKETPLACE_RESOURCES_SCHEMA_PATH =
+	"types/schema/resources/marketplace.resources.json";
 
 interface MarketplaceResourcesSchema {
 	service: string;
@@ -60,26 +66,11 @@ function validateSchema(
 	}
 }
 
-/** Convert a resource name like "selling_reasons" to an UPPER_SNAKE constant key. */
-function resourceKey(name: string): string {
-	return name.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
-}
-
-/** Convert a resource name to a Swift enum case name (camelCase). */
-function swiftCaseName(name: string): string {
-	const camel = name.replace(/_([a-z])/g, (_m, c) => c.toUpperCase());
-	return /^\d/.test(camel) ? `_${camel}` : camel;
-}
-
 function generateTypeScript(schema: MarketplaceResourcesSchema): string {
 	const { service, resources } = schema;
 	const lines: string[] = [];
 
-	lines.push("/* eslint-disable */");
-	lines.push(
-		"/** Generated from types/schema/resources/marketplace.resources.json - do not edit. */",
-	);
-	lines.push("");
+	lines.push(...generatedFileHeader(MARKETPLACE_RESOURCES_SCHEMA_PATH));
 	lines.push(
 		`export const MARKETPLACE_SERVICE = ${JSON.stringify(service)} as const;`,
 	);
@@ -90,10 +81,6 @@ function generateTypeScript(schema: MarketplaceResourcesSchema): string {
 	}
 	lines.push("} as const;");
 	lines.push("");
-	lines.push(
-		"export type MarketplaceResourceId = (typeof MARKETPLACE_RESOURCE)[keyof typeof MARKETPLACE_RESOURCE];",
-	);
-	lines.push("");
 
 	return lines.join("\n");
 }
@@ -102,11 +89,7 @@ function generateSwift(schema: MarketplaceResourcesSchema): string {
 	const { service, resources } = schema;
 	const lines: string[] = [];
 
-	lines.push(
-		"// Generated from types/schema/resources/marketplace.resources.json - do not edit.",
-	);
-	lines.push("// Run `bun run types:generate` from repo root to regenerate.");
-	lines.push("");
+	lines.push(...generatedSwiftHeader(MARKETPLACE_RESOURCES_SCHEMA_PATH));
 	lines.push(`public let MARKETPLACE_SERVICE = ${JSON.stringify(service)}`);
 	lines.push("");
 	lines.push("public enum MarketplaceResource: String, CaseIterable {");
@@ -127,15 +110,13 @@ async function main(): Promise<void> {
 	);
 	validateSchema(schema);
 
-	await mkdir(OUT_TS, { recursive: true });
-	await writeFile(OUT_TS_PATH, generateTypeScript(schema), "utf-8");
-	console.log(`Generated ${OUT_TS_PATH}`);
-
-	if (excludeIos) return;
-
-	await mkdir(OUT_SWIFT, { recursive: true });
-	await writeFile(OUT_SWIFT_PATH, generateSwift(schema), "utf-8");
-	console.log(`Generated ${OUT_SWIFT_PATH}`);
+	await writeGeneratedOutputs({
+		tsPath: OUT_TS_PATH,
+		tsContent: generateTypeScript(schema),
+		swiftPath: OUT_SWIFT_PATH,
+		swiftContent: generateSwift(schema),
+		excludeIos,
+	});
 }
 
 runMain(main);

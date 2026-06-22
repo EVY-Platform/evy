@@ -9,6 +9,7 @@ export type FlowsContextValue = {
 	rows: Row[];
 	flows: UI_Flow[];
 	serviceResources: ServiceResource[];
+	resourceIdToEntityName: Map<string, string>;
 	activeFlowId?: string;
 	activeRowId?: string;
 	activePageId?: string;
@@ -20,6 +21,7 @@ export const FlowsContext = createContext<FlowsContextValue>({
 	rows: [],
 	flows: [],
 	serviceResources: [],
+	resourceIdToEntityName: new Map(),
 	configStack: [],
 	dispatchRow: () => {},
 });

@@ -245,7 +245,7 @@ struct ContentView: View {
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
       guard let notifKey = notification.object as? String,
-        notifKey == "\(EVYNamespace.evy):sdui" || notifKey == "sdui"
+        notifKey == "sdui"
       else { return }
 
       try? loadFlowsFromStore()

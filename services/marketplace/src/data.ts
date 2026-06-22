@@ -8,7 +8,6 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-
 import { data, db } from "./db";
 import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
 import { emitDataChanged } from "./events";

@@ -1,13 +1,9 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
-import { parseText, setResourceIdMapping } from "./interpreter";
+import { parseText } from "./interpreter";
 
 const compoundDimensionsText =
 	"{formatDimension(item.width) (w) x formatDimension(item.height) (h) x formatDimension(item.length) (l)}";
-
-afterEach(() => {
-	setResourceIdMapping([]);
-});
 
 describe("parseText", () => {
 	it("resolves count function placeholder", () => {
@@ -107,16 +103,29 @@ describe("parseText", () => {
 	});
 
 	it("displays resource ID-prefixed paths with mapped entity names", () => {
-		setResourceIdMapping([
-			{
-				id: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
-				name: "item",
-			},
+		const resourceMap = new Map([
+			["dc28ed59-298e-493c-8ff3-3e60f2ebccbd", "item"],
+		]);
+		const otherMap = new Map([
+			["dc28ed59-298e-493c-8ff3-3e60f2ebccbd", "listing"],
 		]);
 
 		expect(
-			parseText("Hello {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}"),
+			parseText(
+				"Hello {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+				undefined,
+				resourceMap,
+			),
 		).toBe("Hello item.title");
+
+		// Different map, different result — no global state leakage
+		expect(
+			parseText(
+				"Hello {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+				undefined,
+				otherMap,
+			),
+		).toBe("Hello listing.title");
 	});
 
 	it("strips comparison expressions in braces", () => {

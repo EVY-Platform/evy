@@ -1,6 +1,6 @@
 import type { RowConfig } from "../../types/row";
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
-import { parseText } from "../../utils/interpreter";
+import { useParseText } from "../../hooks/useParseText";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
 
@@ -69,6 +69,7 @@ function CalendarGrid({
 	headerFormat: string;
 	timeslotFormat: string;
 }) {
+	const parseText = useParseText();
 	return (
 		<div className="evy-flex evy-flex-row evy-overflow-hidden evy-mt-2">
 			{/* Y-axis: time labels */}
