@@ -46,7 +46,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 ```
 {
     "id": "uuid",
-    "type": "Button" | "Calendar" | "ColumnContainer" | ... ,
+    "type": "Button" | "Calendar" | "ColumnContainer" | "Heading" | "Text" | ... ,
 
     "view": {
         "content": {
