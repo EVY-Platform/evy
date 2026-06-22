@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
+import type { ServiceResource } from "../../api/sync";
 import { LUCIDE_STROKE_WIDTH } from "../../icons/iconSyntax";
 import {
 	emptyLeaf,
@@ -21,6 +22,7 @@ import { OperandEditor } from "./OperandEditor";
 type ConditionGroupEditorProps = {
 	expression: ConditionExpression | null;
 	draftVariables: string[];
+	serviceResources: ServiceResource[];
 	onChange: (expression: ConditionExpression | null) => void;
 	idPrefix: string;
 	isTopLevel?: boolean;
@@ -29,6 +31,7 @@ type ConditionGroupEditorProps = {
 export function ConditionGroupEditor({
 	expression,
 	draftVariables,
+	serviceResources,
 	onChange,
 	idPrefix,
 	isTopLevel = false,
@@ -134,6 +137,7 @@ export function ConditionGroupEditor({
 							<ConditionGroupEditor
 								expression={child}
 								draftVariables={draftVariables}
+								serviceResources={serviceResources}
 								onChange={(nested) => handleNestedGroupChange(rowIndex, nested)}
 								idPrefix={`${idPrefix}-${rowIndex}`}
 							/>
@@ -155,6 +159,7 @@ export function ConditionGroupEditor({
 								ariaLabel={`${rowId}-left`}
 								value={child.left}
 								draftVariables={draftVariables}
+								serviceResources={serviceResources}
 								onChange={(v) => handleLeafChange(rowIndex, "left", false, v)}
 							/>
 
@@ -171,6 +176,7 @@ export function ConditionGroupEditor({
 								ariaLabel={`${rowId}-right`}
 								value={child.right}
 								draftVariables={draftVariables}
+								serviceResources={serviceResources}
 								onChange={(v) => handleLeafChange(rowIndex, "right", false, v)}
 							/>
 
@@ -218,6 +224,7 @@ export function ConditionGroupEditor({
 						ariaLabel={`${idPrefix}-${leafRows.length}-left`}
 						value={draft.left}
 						draftVariables={draftVariables}
+						serviceResources={serviceResources}
 						onChange={(v) => handleLeafChange(leafRows.length, "left", true, v)}
 					/>
 
@@ -234,6 +241,7 @@ export function ConditionGroupEditor({
 						ariaLabel={`${idPrefix}-${leafRows.length}-right`}
 						value={draft.right}
 						draftVariables={draftVariables}
+						serviceResources={serviceResources}
 						onChange={(v) =>
 							handleLeafChange(leafRows.length, "right", true, v)
 						}

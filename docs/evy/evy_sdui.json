@@ -35,7 +35,7 @@
 							"placeholder": "Search anything"
 						}
 					},
-					"source": "{items}",
+					"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
 					"actions": [],
 					"destination": "",
 					"visible": "true"

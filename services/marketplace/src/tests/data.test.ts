@@ -9,6 +9,7 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { schema } from "../db";
+import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../resources";
 import { createPgliteTestDatabase } from "./dbTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
@@ -37,29 +38,29 @@ describe("marketplace get/create/update", () => {
 	it("rejects SDUI resource (not a valid marketplace RPC pair)", async () => {
 		await expect(
 			get({
-				service: "marketplace",
+				service: MARKETPLACE_SERVICE,
 				resource: "sdui",
 			}),
-		).rejects.toThrow("Unsupported resource for marketplace service");
+		).rejects.toThrow("Unsupported resource id for marketplace service");
 		await expect(
 			create({
-				service: "marketplace",
+				service: MARKETPLACE_SERVICE,
 				resource: "sdui",
 				data: { id: crypto.randomUUID(), name: "X", pages: [] },
 			}),
-		).rejects.toThrow("Unsupported resource for marketplace service");
+		).rejects.toThrow("Unsupported resource id for marketplace service");
 	});
 
 	it("persists resource rows for service marketplace", async () => {
 		const row = { id: crypto.randomUUID(), value: "Like new" };
 		await create({
-			service: "marketplace",
-			resource: "conditions",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			data: row,
 		});
 		const result = await get({
-			service: "marketplace",
-			resource: "conditions",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 		});
 		expect(result).toHaveLength(1);
 		expect(result).toEqual([row]);
@@ -72,14 +73,14 @@ describe("marketplace get/create/update", () => {
 		await testDb.insert(schema.data).values([
 			{
 				id: olderRow.id,
-				resource: "conditions",
+				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: olderRow,
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
 			{
 				id: newerRow.id,
-				resource: "conditions",
+				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: newerRow,
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-02T00:00:00.000Z",
@@ -87,8 +88,8 @@ describe("marketplace get/create/update", () => {
 		]);
 
 		const result = await get({
-			service: "marketplace",
-			resource: "conditions",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 		});
 
 		expect(result).toEqual([olderRow, newerRow]);
@@ -100,13 +101,13 @@ describe("marketplace get/create/update", () => {
 
 		await testDb.insert(schema.data).values([
 			{
-				resource: "conditions",
+				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: oldRow,
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
 			{
-				resource: "conditions",
+				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: newRow,
 				createdAt: "2024-01-03T00:00:00.000Z",
 				updatedAt: "2024-01-03T00:00:00.000Z",
@@ -114,8 +115,8 @@ describe("marketplace get/create/update", () => {
 		]);
 
 		const result = await get({
-			service: "marketplace",
-			resource: "conditions",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { updatedAfter: "2024-01-02T00:00:00.000Z" },
 		});
 
@@ -131,14 +132,14 @@ describe("marketplace get/create/update", () => {
 		await testDb.insert(schema.data).values([
 			{
 				id: firstId,
-				resource: "items",
+				resource: MARKETPLACE_RESOURCE.ITEMS,
 				data: firstRow,
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
 			{
 				id: secondId,
-				resource: "items",
+				resource: MARKETPLACE_RESOURCE.ITEMS,
 				data: secondRow,
 				createdAt: "2024-01-02T00:00:00.000Z",
 				updatedAt: "2024-01-02T00:00:00.000Z",
@@ -146,8 +147,8 @@ describe("marketplace get/create/update", () => {
 		]);
 
 		const result = await get({
-			service: "marketplace",
-			resource: "items",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: secondId },
 		});
 
@@ -159,15 +160,15 @@ describe("marketplace get/create/update", () => {
 		const clientId = crypto.randomUUID();
 		const payload = { id: clientId, title: "client-keyed" };
 		const inserted = await create({
-			service: "marketplace",
-			resource: "items",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: clientId },
 			data: payload,
 		});
 		expect(inserted.id).toBe(clientId);
 		const byFilter = await get({
-			service: "marketplace",
-			resource: "items",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: clientId },
 		});
 		expect(byFilter).toEqual([payload]);
@@ -177,14 +178,14 @@ describe("marketplace get/create/update", () => {
 		const rowId = crypto.randomUUID();
 		const row = { id: rowId, value: "v1" };
 		await create({
-			service: "marketplace",
-			resource: "conditions",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { id: rowId },
 			data: row,
 		});
 		const updated = await update({
-			service: "marketplace",
-			resource: "conditions",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { id: rowId },
 			data: { ...row, value: "v2" },
 		});

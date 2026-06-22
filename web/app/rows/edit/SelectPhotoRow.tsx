@@ -1,4 +1,5 @@
 import type { RowConfig } from "../../types/row";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { RowLayout } from "../design-system/RowLayout";
@@ -15,10 +16,10 @@ export default defineRow("SelectPhotoRow", {
 				subtitle: "Photos: 0/10",
 				icon: "::image-plus::",
 				content: "Add photos",
-				photos: "{item.photo_ids}",
+				photos: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 			},
 		},
-		destination: "{item.photo_ids}",
+		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

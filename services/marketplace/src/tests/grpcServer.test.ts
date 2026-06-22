@@ -23,6 +23,8 @@ mock.module("../db", () => ({
 	schema,
 }));
 
+import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../resources";
+
 const { startMarketplaceGrpcServer, stopMarketplaceGrpcServer } = await import(
 	"../grpc"
 );
@@ -87,8 +89,8 @@ describe("marketplace gRPC server", () => {
 		await new Promise<void>((resolve, reject) => {
 			client.Create(
 				{
-					service: "marketplace",
-					resource: "conditions",
+					service: MARKETPLACE_SERVICE,
+					resource: MARKETPLACE_RESOURCE.CONDITIONS,
 					data_json: JSON.stringify(row),
 				},
 				(err: ServiceError | null) => {
@@ -101,8 +103,8 @@ describe("marketplace gRPC server", () => {
 		const got = await new Promise<unknown>((resolve, reject) => {
 			client.Get(
 				{
-					service: "marketplace",
-					resource: "conditions",
+					service: MARKETPLACE_SERVICE,
+					resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				},
 				(err: ServiceError | null, res?: { result_json: string }) => {
 					if (err) {
@@ -138,8 +140,8 @@ describe("marketplace gRPC server", () => {
 		await new Promise<void>((resolve, reject) => {
 			client.Create(
 				{
-					service: "marketplace",
-					resource: "conditions",
+					service: MARKETPLACE_SERVICE,
+					resource: MARKETPLACE_RESOURCE.CONDITIONS,
 					data_json: JSON.stringify(row),
 				},
 				(err: ServiceError | null) => {
@@ -157,8 +159,8 @@ describe("marketplace gRPC server", () => {
 			return;
 		}
 		expect(JSON.parse(dataEvent.payload_json)).toEqual({
-			service: "marketplace",
-			resource: "conditions",
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			operation: "create",
 			value: row,
 		});

@@ -5,6 +5,7 @@ import type {
 	UI_Row as ServerRow,
 	UI_RowContent as ServerRowContent,
 } from "evy-types";
+import type { ServiceResource } from "../app/api/sync";
 
 // Input types where id is optional
 // Using explicit interface to avoid index signature conflicts with ServerRowContent
@@ -95,18 +96,24 @@ export async function initTestFlows(
 export async function initFullFlows(
 	page: Page,
 	flows: ServerFlow[],
+	serviceResources: ServiceResource[] = [],
 ): Promise<void> {
-	await page.addInitScript((flowData: ServerFlow[]) => {
-		window.__TEST_FLOWS__ = flowData;
-	}, flows);
+	await page.addInitScript(
+		({ flowData, resources }) => {
+			window.__TEST_FLOWS__ = flowData;
+			window.__TEST_SERVICE_RESOURCES__ = resources;
+		},
+		{ flowData: flows, resources: serviceResources },
+	);
 }
 
 /** Loads injected full flow JSON and opens the app (same pattern as component tests that use `initFullFlows`). */
 export async function openAppWithFullFlows(
 	page: Page,
 	flows: ServerFlow[],
+	serviceResources: ServiceResource[] = [],
 ): Promise<void> {
-	await initFullFlows(page, flows);
+	await initFullFlows(page, flows, serviceResources);
 	await page.goto("/");
 }
 

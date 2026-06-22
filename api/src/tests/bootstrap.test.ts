@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { Client } from "rpc-websockets";
 import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 
 import { assertApiReadable } from "../readiness";
 import { getFreePort, waitForClientOpen, type WSServer } from "./wsTestHelpers";
@@ -49,7 +51,7 @@ describe("initServer bootstrap", () => {
 		await waitForClientOpen(client);
 		await expect(
 			client.call("create", {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				data: {
 					id: crypto.randomUUID(),
@@ -66,6 +68,7 @@ describe("assertApiReadable", () => {
 	it("resolves when sdui get returns an array envelope and requireSeeded is false", async () => {
 		const deps = {
 			get: async (_params: GetRequest): Promise<GetResponse> => [],
+			listExternalServices: async () => [],
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: false }, deps),
@@ -76,6 +79,7 @@ describe("assertApiReadable", () => {
 		const deps = {
 			get: async (_params: GetRequest): Promise<GetResponse> =>
 				"not-array" as unknown as GetResponse,
+			listExternalServices: async () => [],
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: false }, deps),
@@ -85,6 +89,7 @@ describe("assertApiReadable", () => {
 	it("throws when requireSeeded is true but sdui is empty", async () => {
 		const deps = {
 			get: async (_params: GetRequest): Promise<GetResponse> => [],
+			listExternalServices: async () => [],
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: true }, deps),
@@ -94,7 +99,7 @@ describe("assertApiReadable", () => {
 	it("resolves when requireSeeded is true and sdui has at least one flow", async () => {
 		const deps = {
 			get: async (params: GetRequest): Promise<GetResponse> => {
-				expect(params).toEqual({ service: "evy", resource: "sdui" });
+				expect(params).toEqual({ service: EVY_CORE_SERVICE, resource: "sdui" });
 				return [
 					{
 						id: crypto.randomUUID(),
@@ -104,9 +109,58 @@ describe("assertApiReadable", () => {
 					},
 				] as GetResponse;
 			},
+			listExternalServices: async () => [],
 		};
 		await expect(
 			assertApiReadable({ requireSeeded: true }, deps),
 		).resolves.toBeUndefined();
+	});
+
+	it("throws when an external service is missing its gRPC env vars", async () => {
+		const deps = {
+			get: async (): Promise<GetResponse> => [],
+			listExternalServices: async () => [
+				{ id: MARKETPLACE_SERVICE, name: "marketplace" },
+			],
+		};
+		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
+		const savedPort = process.env.MARKETPLACE_GRPC_PORT;
+		delete process.env.MARKETPLACE_GRPC_HOST;
+		delete process.env.MARKETPLACE_GRPC_PORT;
+		try {
+			await expect(
+				assertApiReadable({ requireSeeded: false }, deps),
+			).rejects.toThrow("MARKETPLACE_GRPC_HOST");
+		} finally {
+			if (savedHost !== undefined)
+				process.env.MARKETPLACE_GRPC_HOST = savedHost;
+			if (savedPort !== undefined)
+				process.env.MARKETPLACE_GRPC_PORT = savedPort;
+		}
+	});
+
+	it("resolves when all external services have gRPC env vars configured", async () => {
+		const deps = {
+			get: async (): Promise<GetResponse> => [],
+			listExternalServices: async () => [
+				{ id: MARKETPLACE_SERVICE, name: "marketplace" },
+			],
+		};
+		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
+		const savedPort = process.env.MARKETPLACE_GRPC_PORT;
+		process.env.MARKETPLACE_GRPC_HOST = "localhost";
+		process.env.MARKETPLACE_GRPC_PORT = "50051";
+		try {
+			await expect(
+				assertApiReadable({ requireSeeded: false }, deps),
+			).resolves.toBeUndefined();
+		} finally {
+			if (savedHost !== undefined)
+				process.env.MARKETPLACE_GRPC_HOST = savedHost;
+			else delete process.env.MARKETPLACE_GRPC_HOST;
+			if (savedPort !== undefined)
+				process.env.MARKETPLACE_GRPC_PORT = savedPort;
+			else delete process.env.MARKETPLACE_GRPC_PORT;
+		}
 	});
 });

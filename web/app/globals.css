@@ -506,3 +506,51 @@ label {
 	pointer-events: none;
 	z-index: 10;
 }
+
+/* Loading indicator */
+.evy-canvas-loading {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--size-2);
+	opacity: 1;
+	pointer-events: none;
+	transition: opacity 0.2s ease-in-out;
+}
+
+.evy-canvas-loading-exit {
+	opacity: 0;
+}
+
+.evy-canvas-loading-logo {
+	width: 300px;
+}
+
+.evy-canvas-loading-bar {
+	width: 300px;
+	height: 2px;
+	background-color: var(--color-evy-gray-light);
+	overflow: hidden;
+}
+
+.evy-canvas-loading-bar::after {
+	content: "";
+	display: block;
+	height: 100%;
+	width: 0%;
+	background-color: var(--color-black);
+	animation: evy-loading-progress 0.4s linear forwards;
+}
+
+@keyframes evy-loading-progress {
+	from {
+		width: 0;
+	}
+
+	to {
+		width: 100%;
+	}
+}

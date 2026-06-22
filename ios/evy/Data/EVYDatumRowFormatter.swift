@@ -27,9 +27,19 @@ private func deepCopyJSONValue(_ value: Any) -> Any {
 @MainActor
 final class EVYDatumRowFormatter {
   private let rootPrototype: [String: Any]
-  private static let displayKeys = [
-    "title", "subtitle", "text", "label", "placeholder", "value",
-  ]
+
+  private static func extractAllStrings(from value: Any) -> [String] {
+    switch value {
+    case let stringValue as String:
+      return [stringValue]
+    case let dictionaryValue as [String: Any]:
+      return dictionaryValue.values.flatMap { extractAllStrings(from: $0) }
+    case let arrayValue as [Any]:
+      return arrayValue.flatMap { extractAllStrings(from: $0) }
+    default:
+      return []
+    }
+  }
 
   private static func resolveDatumReferences(in stringValue: String, datum: EVYJson) -> String {
     guard stringValue.contains(EVY.datumPrefix) else { return stringValue }
@@ -88,8 +98,7 @@ final class EVYDatumRowFormatter {
       throw EVYDatumRowFormattingError.invalidTemplate
     }
     let searchableValues =
-      Self.displayKeys
-      .compactMap { content[$0] as? String }
+      Self.extractAllStrings(from: content)
       .filter { !$0.isEmpty }
     root["id"] = UUID().uuidString
     let out = try JSONSerialization.data(withJSONObject: root)

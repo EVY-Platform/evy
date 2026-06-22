@@ -8,7 +8,6 @@ import { fileURLToPath } from "node:url";
 
 import { create, get, update } from "./data";
 import { validateStrictGetRequest } from "evy-types/rpcRequestHelpers";
-import { MARKETPLACE_RESOURCE_NAMES } from "./resources";
 import { offServiceEvent, onServiceEvent } from "./events";
 
 /**
@@ -200,17 +199,6 @@ function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
 				};
 				call.on("cancelled", cleanup);
 				call.on("close", cleanup);
-			},
-			ListResources: (
-				_call: grpc.ServerUnaryCall<
-					Record<string, never>,
-					{ resources: string[] }
-				>,
-				cb: grpc.sendUnaryData<{ resources: string[] }>,
-			) => {
-				cb(null, {
-					resources: [...MARKETPLACE_RESOURCE_NAMES],
-				});
 			},
 		},
 	};

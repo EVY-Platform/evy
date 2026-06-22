@@ -3,6 +3,7 @@
 // verify DB and seed readiness.
 import type { GetRequest, GetResponse } from "evy-types";
 import { get as defaultGet } from "./data";
+import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "./resources";
 
 type AssertMarketplaceReadableOptions = {
 	requireSeeded: boolean;
@@ -18,8 +19,8 @@ async function assertMarketplaceReadable(
 ): Promise<void> {
 	const { requireSeeded } = options;
 	const response = await deps.get({
-		service: "marketplace",
-		resource: "items",
+		service: MARKETPLACE_SERVICE,
+		resource: MARKETPLACE_RESOURCE.ITEMS,
 	});
 	if (!Array.isArray(response)) {
 		throw new Error(

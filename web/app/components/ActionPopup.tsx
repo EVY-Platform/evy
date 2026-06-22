@@ -28,7 +28,7 @@ export function ActionPopup({
 	onSave,
 	onCancel,
 }: ActionPopupProps) {
-	const { flows, activeFlowId } = useFlowsContext();
+	const { flows, activeFlowId, serviceResources } = useFlowsContext();
 	const [expression, setExpression] = useState<ConditionExpression | null>(() =>
 		parseCondition(action.condition),
 	);
@@ -77,6 +77,7 @@ export function ActionPopup({
 							<ConditionGroupEditor
 								expression={expression}
 								draftVariables={draftVariables}
+								serviceResources={serviceResources}
 								onChange={setExpression}
 								idPrefix={`condition-${actionIndex}`}
 								isTopLevel
@@ -91,6 +92,7 @@ export function ActionPopup({
 									value={trueBranch}
 									draftVariables={draftVariables}
 									flows={flows}
+									serviceResources={serviceResources}
 									onChange={setTrueBranch}
 								/>
 							</div>
@@ -102,6 +104,7 @@ export function ActionPopup({
 									value={falseBranch}
 									draftVariables={draftVariables}
 									flows={flows}
+									serviceResources={serviceResources}
 									onChange={setFalseBranch}
 								/>
 							</div>

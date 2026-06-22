@@ -1,7 +1,14 @@
 import { Client } from "rpc-websockets";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "evy-types/marketplaceResources";
 
 type WSClient = InstanceType<typeof Client>;
+
+const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
+const MARKETPLACE_ITEMS_RESOURCE_ID = MARKETPLACE_RESOURCE.ITEMS;
 
 const API_URL = process.env.API_URL;
 if (!API_URL) {
@@ -54,15 +61,15 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		client.close();
 	});
 
-	it("get marketplace.items should return an array envelope", async () => {
+	it("get marketplace items resource should return an array envelope", async () => {
 		const result = await client.call("get", {
-			service: "marketplace",
-			resource: "items",
+			service: MARKETPLACE_SERVICE_ID,
+			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
 		});
 		expect(Array.isArray(result)).toBe(true);
 	});
 
-	it("create then get marketplace.items round-trips data", async () => {
+	it("create then get marketplace items resource round-trips data", async () => {
 		const testData = {
 			id: crypto.randomUUID(),
 			testField: "e2e test value",
@@ -70,8 +77,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		};
 
 		const created = await client.call("create", {
-			service: "marketplace",
-			resource: "items",
+			service: MARKETPLACE_SERVICE_ID,
+			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
 			data: testData,
 		});
 
@@ -80,8 +87,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(created).toHaveProperty("data");
 
 		const got = await client.call("get", {
-			service: "marketplace",
-			resource: "items",
+			service: MARKETPLACE_SERVICE_ID,
+			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
 		});
 
 		expect(Array.isArray(got)).toBe(true);
@@ -96,7 +103,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(matchingRecord)).toBe(true);
 	});
 
-	it("create marketplace.items with filter.id creates row keyed by client UUID (iOS shape)", async () => {
+	it("create marketplace items resource with filter.id creates row keyed by client UUID (iOS shape)", async () => {
 		const clientId = crypto.randomUUID();
 		const itemPayload = {
 			id: clientId,
@@ -104,8 +111,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		};
 
 		const created = await client.call("create", {
-			service: "marketplace",
-			resource: "items",
+			service: MARKETPLACE_SERVICE_ID,
+			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
 			filter: { id: clientId },
 			data: itemPayload,
 		});
@@ -118,8 +125,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		});
 
 		const got = await client.call("get", {
-			service: "marketplace",
-			resource: "items",
+			service: MARKETPLACE_SERVICE_ID,
+			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
 			filter: { id: clientId },
 		});
 

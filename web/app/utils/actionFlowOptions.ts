@@ -1,11 +1,23 @@
+import type { ServiceResource } from "../api/sync";
 import type { UI_Flow } from "../types/flow";
 import { displayLabel } from "./labelFormatting";
 import { findFlowById } from "./flowHelpers";
+import {
+	formatResourcePathForDisplay,
+	resourceNameById,
+} from "./resourcePathDisplay";
 
 export function toVariableOptions(
 	variables: string[],
+	serviceResources: ServiceResource[] = [],
 ): { value: string; label: string }[] {
-	return variables.map((v) => ({ value: v, label: displayLabel(v) }));
+	const resourceNamesById = resourceNameById(serviceResources);
+	return variables.map((variable) => ({
+		value: variable,
+		label: displayLabel(
+			formatResourcePathForDisplay(variable, resourceNamesById),
+		),
+	}));
 }
 
 export function getFlowOptions(

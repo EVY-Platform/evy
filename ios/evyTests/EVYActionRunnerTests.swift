@@ -32,9 +32,14 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateAction() {
     var received: NavOperation?
-    let action = UI_RowAction(condition: "", false: "", true: "{create(marketplace,item)}")
+    let action = UI_RowAction(
+      condition: "", false: "",
+      true: "{create(\(EVYNamespace.marketplace),\(MarketplaceTestFixture.itemsResourceId))}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
-    XCTAssertEqual(received, .create(namespace: "marketplace", resource: "item"))
+    XCTAssertEqual(
+      received,
+      .create(namespace: EVYNamespace.marketplace, resource: MarketplaceTestFixture.itemsResourceId)
+    )
   }
 
   func testShowActionPresentsChild() throws {
@@ -123,7 +128,22 @@ final class EVYActionRunnerTests: XCTestCase {
       XCTFail("Expected highlightRequired")
       return
     }
-    XCTAssertTrue(label.contains("unit") || label.contains("Unit"))
+    XCTAssertEqual(label, "Unit Price")
+  }
+
+  func testHighlightRequiredFormatsUuidQualifiedFieldLabel() {
+    var received: NavOperation?
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{highlight_required(\(MarketplaceTestFixture.itemsResourceId).pickup_selection)}",
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    guard case .highlightRequired(let label) = received else {
+      XCTFail("Expected highlightRequired")
+      return
+    }
+    XCTAssertEqual(label, "Pickup Selection")
   }
 
   func testUnsupportedFunctionPostsErrorNotification() {

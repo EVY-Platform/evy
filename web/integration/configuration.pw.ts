@@ -2,6 +2,16 @@ import { expect, test } from "@playwright/test";
 import { initFullFlows, openAppWithTestFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
 
+const MARKETPLACE_SERVICE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
+const MARKETPLACE_ITEMS_RESOURCE_ID = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd";
+const TEST_SERVICE_RESOURCES = [
+	{
+		id: MARKETPLACE_ITEMS_RESOURCE_ID,
+		fkServiceId: MARKETPLACE_SERVICE_ID,
+		name: "item",
+	},
+];
+
 test.describe("Row configuration", () => {
 	test("should drill into child row configuration from the configuration panel", async ({
 		page,
@@ -270,36 +280,51 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should edit conditions via popup", async ({ page }) => {
-		await openAppWithTestFlows(page, [
-			{
-				id: "step_1",
-				title: "Test Page",
-				rows: [
-					{
-						type: "Input",
-						view: {
-							content: {
-								title: "Name",
-								value: "{name}",
-								placeholder: "Enter name",
-							},
+		await initFullFlows(
+			page,
+			[
+				{
+					id: "flow_conditions",
+					name: "Condition Flow",
+					pages: [
+						{
+							id: "step_1",
+							title: "Test Page",
+							rows: [
+								{
+									id: "name_input",
+									type: "Input",
+									source: "",
+									view: {
+										content: {
+											title: "Name",
+											value: `{${MARKETPLACE_ITEMS_RESOURCE_ID}.name}`,
+											placeholder: "Enter name",
+										},
+									},
+									destination: `{${MARKETPLACE_ITEMS_RESOURCE_ID}.name}`,
+									actions: [],
+								},
+								{
+									id: "submit_button",
+									type: "Button",
+									source: "",
+									view: {
+										content: {
+											title: "",
+											label: "Submit",
+										},
+									},
+									actions: [{ condition: "", false: "", true: "{close()}" }],
+								},
+							],
 						},
-						destination: "{name}",
-						actions: [],
-					},
-					{
-						type: "Button",
-						view: {
-							content: {
-								title: "",
-								label: "Submit",
-							},
-						},
-						actions: [{ condition: "", false: "", true: "{close()}" }],
-					},
-				],
-			},
-		]);
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
+		await page.goto("/");
 		const buttonRow = page.getByText("Submit", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -319,7 +344,7 @@ test.describe("Row configuration", () => {
 		await expect(operator).toHaveAttribute("data-value", "==");
 		await expect(rightOperand).toHaveAttribute("data-value", "");
 
-		await popoverSelect(page, leftOperand, "Name");
+		await popoverSelect(page, leftOperand, "Item.name");
 		await popoverSelect(page, operator, "not equals");
 		await popoverSelect(page, rightOperand, "boolean");
 
@@ -336,14 +361,19 @@ test.describe("Row configuration", () => {
 			exact: true,
 		});
 
-		await expect(committedLeft).toHaveAttribute("data-value", "name");
+		await expect(committedLeft).toHaveAttribute(
+			"data-value",
+			`${MARKETPLACE_ITEMS_RESOURCE_ID}.name`,
+		);
 		await expect(committedOp).toHaveAttribute("data-value", "!=");
 		await expect(committedRight).toHaveAttribute("data-value", "__boolean__");
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
-		await expect(configPanel.getByText("Name not equals true")).toBeVisible();
+		await expect(
+			configPanel.getByText("item.name not equals true"),
+		).toBeVisible();
 	});
 
 	test("should show empty actions state for rows without actions", async ({
@@ -484,43 +514,47 @@ test.describe("Row configuration", () => {
 	test("should select create action with namespace and resource arguments", async ({
 		page,
 	}) => {
-		await initFullFlows(page, [
-			{
-				id: "flow_c",
-				name: "Listing",
-				pages: [
-					{
-						id: "page_c1",
-						title: "Details",
-						rows: [
-							{
-								id: "row_input_item",
-								type: "Input",
-								source: "",
-								view: {
-									content: {
-										title: "Item name",
-										value: "",
-										placeholder: "Enter name",
+		await initFullFlows(
+			page,
+			[
+				{
+					id: "flow_c",
+					name: "Listing",
+					pages: [
+						{
+							id: "page_c1",
+							title: "Details",
+							rows: [
+								{
+									id: "row_input_item",
+									type: "Input",
+									source: "",
+									view: {
+										content: {
+											title: "Item name",
+											value: "",
+											placeholder: "Enter name",
+										},
 									},
+									destination: `{${MARKETPLACE_ITEMS_RESOURCE_ID}}`,
+									actions: [],
 								},
-								destination: "{item}",
-								actions: [],
-							},
-							{
-								id: "row_btn2",
-								type: "Button",
-								source: "",
-								view: {
-									content: { title: "", label: "Create Item" },
+								{
+									id: "row_btn2",
+									type: "Button",
+									source: "",
+									view: {
+										content: { title: "", label: "Create Item" },
+									},
+									actions: [{ condition: "", false: "", true: "" }],
 								},
-								actions: [{ condition: "", false: "", true: "" }],
-							},
-						],
-					},
-				],
-			},
-		]);
+							],
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
 		await page.goto("/");
 
 		const buttonRow = page.getByText("Create Item", { exact: true }).first();
@@ -548,7 +582,9 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(marketplace, item)"),
+			configPanel.getByText(
+				`create(${MARKETPLACE_SERVICE_ID}, ${MARKETPLACE_ITEMS_RESOURCE_ID})`,
+			),
 		).toBeVisible();
 	});
 
@@ -786,7 +822,11 @@ test.describe("Row configuration", () => {
 						},
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
-							{ condition: "", false: "", true: "{create(marketplace,item)}" },
+							{
+								condition: "",
+								false: "",
+								true: `{create(${MARKETPLACE_SERVICE_ID},${MARKETPLACE_ITEMS_RESOURCE_ID})}`,
+							},
 						],
 					},
 				],
@@ -900,26 +940,38 @@ test.describe("Row configuration", () => {
 	});
 
 	test("should display flat OR conditions in summary", async ({ page }) => {
-		await openAppWithTestFlows(page, [
-			{
-				id: "step_1",
-				title: "Test Page",
-				rows: [
-					{
-						type: "Button",
-						view: { content: { title: "", label: "OR Test" } },
-						actions: [
-							{
-								condition:
-									"{count(pickup_timeslots) > 0 || count(delivery_timeslots) > 0}",
-								false: "",
-								true: "{close()}",
-							},
-						],
-					},
-				],
-			},
-		]);
+		await initFullFlows(
+			page,
+			[
+				{
+					id: "flow_or_summary",
+					name: "OR Summary Flow",
+					pages: [
+						{
+							id: "step_1",
+							title: "Test Page",
+							rows: [
+								{
+									id: "or_test_button",
+									type: "Button",
+									source: "",
+									view: { content: { title: "", label: "OR Test" } },
+									actions: [
+										{
+											condition: `{count(${MARKETPLACE_ITEMS_RESOURCE_ID}.pickup_timeslots) > 0 || count(${MARKETPLACE_ITEMS_RESOURCE_ID}.delivery_timeslots) > 0}`,
+											false: "",
+											true: "{close()}",
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
+		await page.goto("/");
 		const buttonRow = page.getByText("OR Test", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -927,36 +979,48 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 
 		await expect(
-			configPanel.getByText("count(pickup_timeslots) > 0"),
+			configPanel.getByText("count(item.pickup_timeslots) > 0"),
 		).toBeVisible();
 		await expect(
-			configPanel.getByText("or count(delivery_timeslots) > 0"),
+			configPanel.getByText("or count(item.delivery_timeslots) > 0"),
 		).toBeVisible();
 	});
 
 	test("should display nested AND/OR conditions in summary", async ({
 		page,
 	}) => {
-		await openAppWithTestFlows(page, [
-			{
-				id: "step_1",
-				title: "Test Page",
-				rows: [
-					{
-						type: "Button",
-						view: { content: { title: "", label: "Nested Test" } },
-						actions: [
-							{
-								condition:
-									"{count(pickup_timeslots) > 0 && (count(delivery_timeslots) > 0 || count(shipping_destination_areas) > 0)}",
-								false: "",
-								true: "{close()}",
-							},
-						],
-					},
-				],
-			},
-		]);
+		await initFullFlows(
+			page,
+			[
+				{
+					id: "flow_nested_summary",
+					name: "Nested Summary Flow",
+					pages: [
+						{
+							id: "step_1",
+							title: "Test Page",
+							rows: [
+								{
+									id: "nested_test_button",
+									type: "Button",
+									source: "",
+									view: { content: { title: "", label: "Nested Test" } },
+									actions: [
+										{
+											condition: `{count(${MARKETPLACE_ITEMS_RESOURCE_ID}.pickup_timeslots) > 0 && (count(${MARKETPLACE_ITEMS_RESOURCE_ID}.delivery_timeslots) > 0 || count(${MARKETPLACE_ITEMS_RESOURCE_ID}.shipping_destination_areas) > 0)}`,
+											false: "",
+											true: "{close()}",
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
+		await page.goto("/");
 		const buttonRow = page.getByText("Nested Test", { exact: true }).first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
@@ -964,11 +1028,11 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 
 		await expect(
-			configPanel.getByText("count(pickup_timeslots) > 0"),
+			configPanel.getByText("count(item.pickup_timeslots) > 0"),
 		).toBeVisible();
 		await expect(
 			configPanel.getByText(
-				"and count(delivery_timeslots) > 0 or count(shipping_destination_areas) > 0",
+				"and count(item.delivery_timeslots) > 0 or count(item.shipping_destination_areas) > 0",
 			),
 		).toBeVisible();
 	});

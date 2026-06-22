@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 
+import type { ServiceResource } from "../../api/sync";
 import { toVariableOptions } from "../../utils/actionFlowOptions";
 import {
 	CONDITION_FUNCTIONS,
@@ -13,18 +14,20 @@ export function OperandEditor({
 	ariaLabel,
 	value,
 	draftVariables,
+	serviceResources,
 	onChange,
 }: {
 	ariaLabel: string;
 	value: string;
 	draftVariables: string[];
+	serviceResources: ServiceResource[];
 	onChange: (value: string) => void;
 }) {
 	const parsed = useMemo(() => parseOperand(value), [value]);
 
 	const variableOptions: PopoverOption[] = useMemo(
-		() => toVariableOptions(draftVariables),
-		[draftVariables],
+		() => toVariableOptions(draftVariables, serviceResources),
+		[draftVariables, serviceResources],
 	);
 
 	const primaryOptions: PopoverOption[] = useMemo(() => {

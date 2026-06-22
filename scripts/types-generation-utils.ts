@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -47,6 +47,57 @@ export function runMain(main: () => Promise<void>): void {
 		console.error(err);
 		process.exit(1);
 	});
+}
+
+export function generatedFileHeader(schemaPath: string): string[] {
+	return [
+		"/* eslint-disable */",
+		`/** Generated from ${schemaPath} - do not edit. */`,
+		"",
+	];
+}
+
+export function generatedSwiftHeader(schemaPath: string): string[] {
+	return [
+		`// Generated from ${schemaPath} - do not edit.`,
+		"// Run `bun run types:generate` from repo root to regenerate.",
+		"",
+	];
+}
+
+export function resourceKey(name: string): string {
+	return name.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
+}
+
+export function swiftCaseName(name: string): string {
+	const camel = name.replace(/_([a-z])/g, (_match, character) =>
+		character.toUpperCase(),
+	);
+	return /^\d/.test(camel) ? `_${camel}` : camel;
+}
+
+export async function writeGeneratedOutputs({
+	tsPath,
+	tsContent,
+	swiftPath,
+	swiftContent,
+	excludeIos,
+}: {
+	tsPath: string;
+	tsContent: string;
+	swiftPath: string;
+	swiftContent: string;
+	excludeIos: boolean;
+}): Promise<void> {
+	await mkdir(OUT_TS, { recursive: true });
+	await writeFile(tsPath, tsContent, "utf-8");
+	console.log(`Generated ${tsPath}`);
+
+	if (excludeIos) return;
+
+	await mkdir(OUT_SWIFT, { recursive: true });
+	await writeFile(swiftPath, swiftContent, "utf-8");
+	console.log(`Generated ${swiftPath}`);
 }
 
 export async function appendLinesToGeneratedFile(

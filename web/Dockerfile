@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lock
 FROM base AS builder
 WORKDIR /workspace
 COPY --from=typesgen /app/types ./types
-COPY web/package.json web/bun.lock* ./web/
+COPY web/package.json web/bun.lock* web/tsconfig.json ./web/
 COPY --from=deps /app/node_modules ./web/node_modules
 COPY web/app ./web/app
 COPY web/dev ./web/dev

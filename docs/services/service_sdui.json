@@ -10,7 +10,7 @@
 					{
 						"id": "3fbadee6-dc70-434e-8d4d-443fe86e6a09",
 						"type": "PhotoGallery",
-						"source": "{item.photo_ids}",
+						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
 						"destination": "",
 						"actions": [],
 						"visible": "true",
@@ -29,8 +29,8 @@
 						"visible": "true",
 						"view": {
 							"content": {
-								"title": "{item.title}",
-								"subtitle": "{formatCurrency(item.price)}",
+								"title": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+								"subtitle": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
 								"icon": "",
 								"text": "",
 								"action": ""
@@ -48,7 +48,7 @@
 						"view": {
 							"content": {
 								"title": "Condition",
-								"subtitle": "{findFirst(conditions, item.condition_id).value}",
+								"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}",
 								"icon": "::badge-check::",
 								"text": "",
 								"action": ""
@@ -66,7 +66,7 @@
 						"view": {
 							"content": {
 								"title": "Selling reason",
-								"subtitle": "{findFirst(selling_reasons, item.selling_reason_id).value}",
+								"subtitle": "{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id).value}",
 								"icon": "::circle-question-mark::",
 								"text": "",
 								"action": ""
@@ -84,7 +84,7 @@
 						"view": {
 							"content": {
 								"title": "Dimensions",
-								"subtitle": "{formatDimension(item.dimensions.width) (w) x formatDimension(item.dimensions.height) (h) x formatDimension(item.dimensions.length) (l)}",
+								"subtitle": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width) (w) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height) (h) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length) (l)}",
 								"icon": "::ruler::",
 								"text": "",
 								"action": ""
@@ -98,7 +98,7 @@
 						"source": "",
 						"destination": "",
 						"actions": [],
-						"visible": "{item.payment_methods.app == true}",
+						"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.app == true}",
 						"view": {
 							"content": {
 								"title": "Card",
@@ -116,7 +116,7 @@
 						"source": "",
 						"destination": "",
 						"actions": [],
-						"visible": "{item.payment_methods.cash == true}",
+						"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
 						"view": {
 							"content": {
 								"title": "Cash",
@@ -165,15 +165,15 @@
 														"view": {
 															"content": {
 																"title": "",
-																"location": "{item.transfer_options.pickup.address.location}",
-																"subtitle": "{formatAddress(item.transfer_options.pickup.address)}"
+																"location": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.location}",
+																"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}"
 															}
 														}
 													},
 													{
 														"id": "197531fd-1de3-4d4d-8e03-026b37892611",
 														"type": "TimeslotPicker",
-														"source": "{item.pickup_selection}",
+														"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 														"destination": "",
 														"actions": [],
 														"visible": "true",
@@ -279,15 +279,15 @@
 						"id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
 						"type": "SelectPhoto",
 						"source": "",
-						"destination": "{item.photo_ids}",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
 						"actions": [],
 						"view": {
 							"content": {
 								"title": "",
-								"subtitle": "{count(photo_ids)}/10 - Choose your listing's main photo first.",
+								"subtitle": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids)}/10 - Choose your listing's main photo first.",
 								"icon": "::image-plus::",
 								"content": "Add photos",
-								"photos": "{photo_ids}"
+								"photos": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}"
 							}
 						},
 						"visible": "true"
@@ -296,13 +296,13 @@
 						"id": "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
 						"type": "Input",
 						"source": "",
-						"destination": "{item.title}",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
 						"actions": [],
 						"view": {
 							"content": {
 								"title": "A row title ::star::",
 								"placeholder": "My iPhone ::star:: 20",
-								"value": "{title}"
+								"value": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}"
 							}
 						},
 						"visible": "true"
@@ -311,13 +311,13 @@
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
 						"type": "Input",
 						"source": "",
-						"destination": "{buildCurrency(item.price)}",
+						"destination": "{buildCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
 						"actions": [],
 						"view": {
 							"content": {
 								"title": "Price",
-								"placeholder": "{formatCurrency(price)}",
-								"value": "{formatCurrency(price)}"
+								"placeholder": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
+								"value": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}"
 							}
 						},
 						"visible": "true"
@@ -325,8 +325,8 @@
 					{
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
 						"type": "Dropdown",
-						"source": "{conditions}",
-						"destination": "{item.condition}",
+						"source": "{cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f}",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -340,8 +340,8 @@
 					{
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
 						"type": "Dropdown",
-						"source": "{selling_reasons}",
-						"destination": "{item.selling_reason}",
+						"source": "{e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8}",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -366,13 +366,13 @@
 										"id": "b66e136d-828d-4ed0-ae27-cdc48f7cbffd",
 										"type": "Input",
 										"source": "",
-										"destination": "{item.width}",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width}",
 										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
 												"placeholder": "Width",
-												"value": "{formatDimension(width)}"
+												"value": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width)}"
 											}
 										},
 										"visible": "true"
@@ -381,13 +381,13 @@
 										"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
 										"type": "Input",
 										"source": "",
-										"destination": "{item.height}",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height}",
 										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
 												"placeholder": "Height",
-												"value": "{formatDimension(height)}"
+												"value": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height)}"
 											}
 										},
 										"visible": "true"
@@ -396,13 +396,13 @@
 										"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
 										"type": "Input",
 										"source": "",
-										"destination": "{item.length}",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length}",
 										"actions": [],
 										"view": {
 											"content": {
 												"title": "",
 												"placeholder": "Length",
-												"value": "{formatDimension(length)}"
+												"value": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length)}"
 											}
 										},
 										"visible": "true"
@@ -421,38 +421,38 @@
 					"destination": "",
 					"actions": [
 						{
-							"condition": "{length(title) > 0}",
-							"false": "{highlight_required(title)}",
+							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title) > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title)}",
 							"true": ""
 						},
 						{
-							"condition": "{price.value >= 1}",
-							"false": "{highlight_required(price)}",
+							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price.value >= 1}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
 							"true": ""
 						},
 						{
-							"condition": "{length(condition) > 0}",
-							"false": "{highlight_required(condition)}",
+							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition) > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition)}",
 							"true": ""
 						},
 						{
-							"condition": "{length(selling_reason) > 0}",
-							"false": "{highlight_required(selling_reason)}",
+							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason) > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason)}",
 							"true": ""
 						},
 						{
-							"condition": "{width > 0}",
-							"false": "{highlight_required(width)}",
+							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width)}",
 							"true": ""
 						},
 						{
-							"condition": "{height > 0}",
-							"false": "{highlight_required(height)}",
+							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height)}",
 							"true": ""
 						},
 						{
-							"condition": "{length >= 1}",
-							"false": "{highlight_required(length)}",
+							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length >= 1}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length)}",
 							"true": ""
 						},
 						{
@@ -477,7 +477,7 @@
 						"id": "c9d0e1f2-a3b4-4c5d-8e7f-8a9b0c1d2e3f",
 						"type": "TextArea",
 						"source": "",
-						"destination": "{item.description}",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description}",
 						"actions": [],
 						"view": {
 							"content": {
@@ -497,8 +497,8 @@
 					"destination": "",
 					"actions": [
 						{
-							"condition": "{length(description) > 0}",
-							"false": "{highlight_required(description)}",
+							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description) > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description)}",
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,26dae81a-4122-4b5c-8396-a72a319ccd8b)}"
 						}
 					],
@@ -558,7 +558,7 @@
 														"id": "586ffa1a-639b-475e-a0b5-1fbe51083274",
 														"type": "Text",
 														"source": "",
-														"destination": "{item.pickup_address}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_address}",
 														"actions": [
 															{
 																"true": "{show()}",
@@ -569,7 +569,7 @@
 														"view": {
 															"content": {
 																"title": "Where",
-																"text": "{formatAddress(pickup_address)}",
+																"text": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_address)}",
 																"placeholder": "Enter pick up address",
 																"action": "Change",
 																"child": {
@@ -602,7 +602,7 @@
 																			"placeholder": "Search anything"
 																		}
 																	},
-																	"source": "{items}",
+																	"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
 																	"actions": [],
 																	"destination": "",
 																	"visible": "true"
@@ -615,13 +615,13 @@
 														"id": "22222222-2222-4222-8222-222222222206",
 														"type": "Input",
 														"source": "",
-														"destination": "{item.address_instructions}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.address_instructions}",
 														"actions": [],
 														"view": {
 															"content": {
 																"title": "",
 																"placeholder": "Additional information",
-																"value": "{address_instructions}"
+																"value": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.address_instructions}"
 															}
 														},
 														"visible": "true"
@@ -645,7 +645,7 @@
 														"id": "22222222-2222-4222-8222-222222222208",
 														"type": "Calendar",
 														"source": "",
-														"destination": "{item.pickup_selection}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -656,8 +656,8 @@
 																"label_interval_minutes": 60,
 																"header_format": "{formatDatetime($datum, \"EEE d\")}",
 																"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
-																"primary": "{pickup_selection}",
-																"secondary": "{delivery_selection}"
+																"primary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
+																"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}"
 															}
 														},
 														"visible": "true"
@@ -696,13 +696,13 @@
 														"id": "22222222-2222-4222-8222-222222222211",
 														"type": "Input",
 														"source": "",
-														"destination": "{item.delivery_fee}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee}",
 														"actions": [],
 														"view": {
 															"content": {
 																"title": "Surcharge",
 																"placeholder": "Do you want to charge for delivery?",
-																"value": "{formatCurrency(delivery_fee)}"
+																"value": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee)}"
 															}
 														},
 														"visible": "true"
@@ -725,8 +725,8 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222213",
 														"type": "InlinePicker",
-														"source": "{durations}",
-														"destination": "{item.distance}",
+														"source": "{e82e1baa-6d33-4649-b495-4e10a4d1d8bf}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.distance}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -755,7 +755,7 @@
 														"id": "22222222-2222-4222-8222-222222222215",
 														"type": "Calendar",
 														"source": "",
-														"destination": "{item.delivery_selection}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -766,8 +766,8 @@
 																"label_interval_minutes": 60,
 																"header_format": "{formatDatetime($datum, \"EEE d\")}",
 																"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
-																"primary": "{delivery_selection}",
-																"secondary": "{pickup_selection}"
+																"primary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
+																"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}"
 															}
 														},
 														"visible": "true"
@@ -806,13 +806,13 @@
 														"id": "22222222-2222-4222-8222-222222222218",
 														"type": "Input",
 														"source": "",
-														"destination": "{item.shipping_source_postal_code}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}",
 														"actions": [],
 														"view": {
 															"content": {
 																"title": "Where from",
 																"placeholder": "Postal code you will be shipping from",
-																"value": "{shipping_source_postal_code}"
+																"value": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}"
 															}
 														},
 														"visible": "true"
@@ -835,8 +835,8 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222220",
 														"type": "InlinePicker",
-														"source": "{areas}",
-														"destination": "{item.shipping_destination_areas}",
+														"source": "{2532b561-3b14-458b-9039-307e99c4a4ba}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_destination_areas}",
 														"actions": [],
 														"view": {
 															"content": {
@@ -850,13 +850,13 @@
 														"id": "22222222-2222-4222-8222-222222222221",
 														"type": "Input",
 														"source": "",
-														"destination": "{item.weight}",
+														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.weight}",
 														"actions": [],
 														"view": {
 															"content": {
 																"title": "Weight (kg)",
 																"placeholder": "Weight",
-																"value": "{formatWeight(weight)}"
+																"value": "{formatWeight(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.weight)}"
 															}
 														},
 														"visible": "true"
@@ -880,8 +880,8 @@
 					"destination": "",
 					"actions": [
 						{
-							"condition": "{count(pickup_selection) > 0 || count(delivery_selection) > 0 || count(shipping_destination_areas) > 0}",
-							"false": "{highlight_required(pickup_selection)}",
+							"condition": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection) > 0 || count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection) > 0 || count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_destination_areas) > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection)}",
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,25a3269b-344c-477d-89c8-b2f5426a5d91)}"
 						}
 					],
@@ -926,7 +926,7 @@
 										"id": "33333333-3333-4333-8333-333333333301",
 										"type": "TextSelect",
 										"source": "",
-										"destination": "{item.payment_cash}",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -940,7 +940,7 @@
 										"id": "33333333-3333-4333-8333-333333333302",
 										"type": "TextSelect",
 										"source": "",
-										"destination": "{item.payment_app}",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app}",
 										"actions": [],
 										"view": {
 											"content": {
@@ -964,8 +964,8 @@
 					"destination": "",
 					"actions": [
 						{
-							"condition": "{payment_cash == true || payment_app == true}",
-							"false": "{highlight_required(payment_app)}",
+							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash == true || dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app == true}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app)}",
 							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,857362ad-856f-465b-85a3-94bc8bb686cd)}"
 						}
 					],
@@ -1007,7 +1007,7 @@
 						{
 							"condition": "",
 							"false": "",
-							"true": "{create(marketplace,item)}"
+							"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,dc28ed59-298e-493c-8ff3-3e60f2ebccbd)}"
 						}
 					],
 					"view": {

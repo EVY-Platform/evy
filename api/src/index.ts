@@ -8,8 +8,7 @@ import {
 	sync,
 	update,
 } from "./procedures/rpc";
-import { resources } from "./procedures/resources";
-import { wireGrpcEvents } from "./procedures/services";
+import { initServiceAdapters, wireGrpcEvents } from "./procedures/services";
 import { cancelUpload, handleUploadChunk } from "./procedures/uploads";
 import {
 	emitJsonRpc,
@@ -27,6 +26,8 @@ function authHandler(data: WSParams): Promise<boolean> {
 }
 
 async function startServer(): Promise<void> {
+	await initServiceAdapters(appDb);
+
 	const server = await initServer(authHandler);
 	const broadcast = (eventName: string, payload: unknown) => {
 		emitJsonRpc(server, eventName, payload);
@@ -35,7 +36,6 @@ async function startServer(): Promise<void> {
 	initCoreNotifications(broadcast);
 	wireGrpcEvents(broadcast);
 
-	server.register("resources", resources);
 	server.register("api", (params: unknown) => api(params, appDb));
 	server.register("sync", (params: unknown) => sync(params, appDb)).protected();
 	server.register("cancelUpload", cancelUpload).protected();

@@ -772,7 +772,6 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
 
 private struct EVYFunctionsPreview: View {
   init() {
-    try? EVY.getUserData()
     EVYPreviewMockData.seedCommon()
   }
 

@@ -1,13 +1,10 @@
-export const MARKETPLACE_SERVICE = "marketplace";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "evy-types/marketplaceResources";
 
-export const MARKETPLACE_RESOURCE_NAMES = [
-	"selling_reasons",
-	"conditions",
-	"durations",
-	"areas",
-	"items",
-] as const;
+export { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE };
 
-export const MARKETPLACE_SEED_RESOURCES = new Set<string>(
-	MARKETPLACE_RESOURCE_NAMES,
+export const MARKETPLACE_SEED_RESOURCES: ReadonlySet<string> = new Set(
+	Object.values(MARKETPLACE_RESOURCE),
 );

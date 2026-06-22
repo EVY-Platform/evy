@@ -14,16 +14,15 @@ import type {
 } from "evy-types";
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
+import { ne } from "drizzle-orm";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	validateGetResponse,
 	validateCreateResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
-import { setServiceRegistry } from "evy-types/rpcRequestHelpers";
-import {
-	EVY_CORE_SERVICE,
-	EVY_CORE_RESOURCE_NAMES,
-} from "evy-types/coreResources";
+import { service } from "../../../types/generated/ts/db/schema.generated";
+import type { EvyDb } from "../database/db";
 
 function resolveServiceProtoPath(): string {
 	const candidates = [
@@ -91,7 +90,6 @@ type ServiceAdapter = {
 	get(params: ForwardableGetRequest): Promise<GetResponse>;
 	create(params: CreateRequest): Promise<CreateResponse>;
 	update(params: UpdateRequest): Promise<UpdateResponse>;
-	listResources(): Promise<string[]>;
 	onEvent(listener: (eventName: string, payload: unknown) => void): void;
 };
 
@@ -114,10 +112,6 @@ type GrpcServiceClient = grpc.Client & {
 		event_name: string;
 		payload_json: string;
 	}>;
-	ListResources: (
-		request: Record<string, never>,
-		callback: grpc.requestCallback<{ resources: string[] }>,
-	) => grpc.ClientUnaryCall;
 };
 
 function buildProtoFilter(
@@ -286,24 +280,6 @@ function makeGrpcAdapter(
 				validateUpdateResponse,
 				"Update",
 			),
-		listResources: () =>
-			new Promise<string[]>((resolve, reject) => {
-				client.ListResources({}, (err, response) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-					if (!response) {
-						reject(
-							new Error(
-								`Empty ListResources response from ${serviceName} service`,
-							),
-						);
-						return;
-					}
-					resolve(response.resources);
-				});
-			}),
 		onEvent(listener) {
 			eventListener = listener;
 			startSubscribeStream();
@@ -312,120 +288,101 @@ function makeGrpcAdapter(
 }
 
 let grpcAdapters: Map<string, ServiceAdapter> | null = null;
+let serviceAdapterDb: EvyDb | null = null;
+let grpcEventListener: ((eventName: string, payload: unknown) => void) | null =
+	null;
 
 /**
- * Returns environment-variable-based service configurations.
- * Each non-evy service must set {NAME}_GRPC_HOST and {NAME}_GRPC_PORT.
- * Add new services here as they are onboarded.
+ * Resolve the gRPC host/port for a registered service from the environment.
+ * Each non-core service must have {NAME}_GRPC_HOST and {NAME}_GRPC_PORT set,
+ * where NAME is the service's `name` field (uppercased).
  */
-function getServiceEnvConfigs(): [
-	string,
-	string | undefined,
-	string | undefined,
-][] {
-	const knownServices = ["marketplace"];
-	return knownServices.map((svc) => {
-		const prefix = svc.toUpperCase();
-		return [
-			svc,
-			process.env[`${prefix}_GRPC_HOST`],
-			process.env[`${prefix}_GRPC_PORT`],
-		] as const;
-	});
+export function requireServiceGrpcEndpoint(
+	name: string,
+	id: string,
+): { host: string; port: string } {
+	const prefix = name.toUpperCase();
+	const host = process.env[`${prefix}_GRPC_HOST`]?.trim();
+	const port = process.env[`${prefix}_GRPC_PORT`]?.trim();
+	if (!host || !port) {
+		throw new Error(
+			`Service "${name}" (${id}) requires ${prefix}_GRPC_HOST and ${prefix}_GRPC_PORT`,
+		);
+	}
+	return { host, port };
 }
 
-function getGrpcAdapters(): Map<string, ServiceAdapter> {
-	if (grpcAdapters) {
-		return grpcAdapters;
-	}
+/**
+ * Initialise gRPC adapters from the service registry in the database.
+ * Must be called once at startup before any request is forwarded.
+ */
+export async function initServiceAdapters(db: EvyDb): Promise<void> {
+	serviceAdapterDb = db;
+	const rows = await db
+		.select({ id: service.id, name: service.name })
+		.from(service)
+		.where(ne(service.id, EVY_CORE_SERVICE));
+
 	const next = new Map<string, ServiceAdapter>();
 	const ServiceCtor = loadEvyServiceConstructor();
 
-	// Discover non-evy services from environment variables
-	// Each service must declare {NAME}_GRPC_HOST and {NAME}_GRPC_PORT
-	for (const [svc, hostVar, portVar] of getServiceEnvConfigs()) {
-		const host = hostVar?.trim();
-		const port = portVar?.trim();
-		if (!host || !port) {
-			throw new Error(
-				`Missing ${svc.toUpperCase()}_GRPC_HOST and/or ${svc.toUpperCase()}_GRPC_PORT: every non-evy service must declare its gRPC host and port.`,
-			);
+	for (const { id, name } of rows) {
+		const { host, port } = requireServiceGrpcEndpoint(name, id);
+		const adapter = makeGrpcAdapter(name, `${host}:${port}`, ServiceCtor);
+		if (grpcEventListener) {
+			adapter.onEvent(grpcEventListener);
 		}
-		next.set(svc, makeGrpcAdapter(svc, `${host}:${port}`, ServiceCtor));
+		next.set(id, adapter);
 	}
+
 	grpcAdapters = next;
+}
+
+function requireAdapters(): Map<string, ServiceAdapter> {
+	if (!grpcAdapters) {
+		throw new Error(
+			"Service adapters not initialised. Call initServiceAdapters() first.",
+		);
+	}
 	return grpcAdapters;
 }
 
-function getServiceAdapter(serviceName: string): ServiceAdapter {
-	const adapter = getGrpcAdapters().get(serviceName);
+async function getServiceAdapter(serviceId: string): Promise<ServiceAdapter> {
+	let adapter = requireAdapters().get(serviceId);
+	if (!adapter && serviceAdapterDb) {
+		await initServiceAdapters(serviceAdapterDb);
+		adapter = requireAdapters().get(serviceId);
+	}
 	if (!adapter) {
-		throw new Error(`No service registered for service ${serviceName}`);
+		throw new Error(`No service registered for service ${serviceId}`);
 	}
 	return adapter;
 }
 
-async function initializeServiceRegistry(): Promise<void> {
-	const adapters = getGrpcAdapters();
-	const entries: [string, string[]][] = [];
-
-	for (const [svc, adapter] of adapters) {
-		try {
-			const resources = await adapter.listResources();
-			entries.push([svc, resources]);
-		} catch (err) {
-			throw new Error(
-				`Failed to list resources for service "${svc}": ${err instanceof Error ? err.message : err}`,
-			);
-		}
-	}
-
-	entries.push([EVY_CORE_SERVICE, [...EVY_CORE_RESOURCE_NAMES]]);
-	setServiceRegistry(entries);
-}
-
-let registryInitializationPromise: Promise<void> | null = null;
-
-export async function ensureRegistryInitialized(): Promise<void> {
-	if (!registryInitializationPromise) {
-		registryInitializationPromise = initializeServiceRegistry().catch((err) => {
-			registryInitializationPromise = null;
-			throw err;
-		});
-	}
-	await registryInitializationPromise;
-}
-
 export async function forwardGet(
-	serviceName: string,
+	serviceId: string,
 	params: ForwardableGetRequest,
 ): Promise<GetResponse> {
-	await ensureRegistryInitialized();
-	return getServiceAdapter(serviceName).get(params);
+	return (await getServiceAdapter(serviceId)).get(params);
 }
 
 export async function forwardCreate(
-	serviceName: string,
+	serviceId: string,
 	params: CreateRequest,
 ): Promise<CreateResponse> {
-	await ensureRegistryInitialized();
-	return getServiceAdapter(serviceName).create(params);
+	return (await getServiceAdapter(serviceId)).create(params);
 }
 
 export async function forwardUpdate(
-	serviceName: string,
+	serviceId: string,
 	params: UpdateRequest,
 ): Promise<UpdateResponse> {
-	await ensureRegistryInitialized();
-	return getServiceAdapter(serviceName).update(params);
+	return (await getServiceAdapter(serviceId)).update(params);
 }
 
 export function wireGrpcEvents(broadcast: BroadcastFn): void {
-	for (const adapter of getGrpcAdapters().values()) {
+	grpcEventListener = broadcast;
+	for (const adapter of requireAdapters().values()) {
 		adapter.onEvent(broadcast);
 	}
-	// Init registry asynchronously (don't block startup)
-	ensureRegistryInitialized().catch((err) => {
-		console.error("Failed to initialize service registry:", err);
-	});
 }

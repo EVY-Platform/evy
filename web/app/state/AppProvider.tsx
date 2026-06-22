@@ -7,6 +7,7 @@ import {
 	useMemo,
 } from "react";
 import type { UI_Flow as ServerFlow } from "evy-types";
+import type { ServiceResource } from "../api/sync";
 
 import type { UI_Flow } from "../types/flow";
 import { FlowsContext } from "./contexts/FlowsContext";
@@ -22,16 +23,24 @@ import {
 	resolveUrlIds,
 	validateRowPathSegmentsForPage,
 } from "../utils/urlUtils";
+import { resourceNameById } from "../utils/resourcePathDisplay";
 
 export function AppProvider({
 	children,
 	initialFlows,
+	serviceResources = [],
 	syncWithApi = true,
 }: {
 	children: ReactNode;
 	initialFlows: ServerFlow[];
+	serviceResources?: ServiceResource[];
 	syncWithApi?: boolean;
 }) {
+	const resourceIdToEntityName = useMemo(
+		() => resourceNameById(serviceResources),
+		[serviceResources],
+	);
+
 	const rows = baseRows.map((row) => ({
 		id: row.name,
 		row: createElement(row, { key: row.name, rowId: row.name }),
@@ -116,6 +125,8 @@ export function AppProvider({
 		() => ({
 			rows,
 			flows: appState.flows,
+			serviceResources,
+			resourceIdToEntityName,
 			activeFlowId: appState.activeFlowId,
 			activeRowId: appState.activeRowId,
 			activePageId: appState.activePageId,
@@ -125,6 +136,8 @@ export function AppProvider({
 		[
 			rows,
 			appState.flows,
+			serviceResources,
+			resourceIdToEntityName,
 			appState.activeFlowId,
 			appState.activeRowId,
 			appState.activePageId,

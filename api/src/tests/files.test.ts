@@ -8,6 +8,7 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 import { get } from "../data/data";
 import { writeFileBinary } from "../data/resources/files";
@@ -50,12 +51,12 @@ async function insertFileMetadata(id: string): Promise<void> {
 
 describe("get files", () => {
 	it("returns metadata with base64 binary when filtered by id", async () => {
-		const id = "550e8400-e29b-41d4-a716-446655440001";
+		const id = "c48853d2-e94f-4220-bec4-e578d03097c1";
 		await insertFileMetadata(id);
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id },
 		});
@@ -71,11 +72,14 @@ describe("get files", () => {
 	});
 
 	it("returns all files with binaries when no filter is given", async () => {
-		const id = "550e8400-e29b-41d4-a716-446655440001";
+		const id = "c48853d2-e94f-4220-bec4-e578d03097c1";
 		await insertFileMetadata(id);
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
-		const result = await get(dataDb, { service: "evy", resource: "files" });
+		const result = await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: "files",
+		});
 		expect(Array.isArray(result)).toBe(true);
 		const item = (result as Record<string, unknown>[]).find((r) => r.id === id);
 		expect(item).toMatchObject({
@@ -86,11 +90,15 @@ describe("get files", () => {
 	});
 
 	it("throws when file binary not found", async () => {
-		const id = "00000000-0000-0000-0000-000000000003";
+		const id = "8356c9ae-24dc-4f92-8794-c389aa3a88fe";
 		await insertFileMetadata(id);
 
 		await expect(
-			get(dataDb, { service: "evy", resource: "files", filter: { id } }),
+			get(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: "files",
+				filter: { id },
+			}),
 		).rejects.toThrow("File binary not found");
 	});
 });

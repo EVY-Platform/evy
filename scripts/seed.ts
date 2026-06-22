@@ -6,9 +6,21 @@ import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
 import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+	organization as organizationTable,
+	service as serviceTable,
+	serviceProvider as serviceProviderTable,
+	serviceResource as serviceResourceTable,
+	flow as flowTable,
+	file as fileTable,
+} from "../types/generated/ts/db/schema.generated";
 import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
 
-import { MARKETPLACE_SEED_RESOURCES } from "../services/marketplace/src/resources";
+import { EVY_CORE_SERVICE } from "../types/generated/ts/coreResources";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "../types/generated/ts/marketplaceResources";
 import { validateUiFlow } from "../types/validators";
 
 const UUID_RE =
@@ -74,20 +86,6 @@ function getConnectionUrl(databaseEnvName: string): string {
 	return `postgresql://${encodedUser}:${encodedPass}@${domain}:${port}/${database}`;
 }
 
-const flowTable = pgTable("Flow", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	data: jsonb("data").$type<SeedFlow>().notNull(),
-	createdAt: text("created_at").notNull(),
-	updatedAt: text("updated_at").notNull(),
-});
-
-const fileTable = pgTable("File", {
-	id: uuid("id").primaryKey().notNull(),
-	type: text("type").notNull(),
-	createdAt: text("created_at").notNull(),
-	updatedAt: text("updated_at").notNull(),
-});
-
 const marketplaceDataTable = pgTable("Data", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	resource: varchar("resource", { length: 50 }).notNull(),
@@ -96,7 +94,14 @@ const marketplaceDataTable = pgTable("Data", {
 	updatedAt: text("updated_at").notNull(),
 });
 
-const coreSchema = { flow: flowTable, file: fileTable };
+const coreSchema = {
+	organization: organizationTable,
+	service: serviceTable,
+	serviceProvider: serviceProviderTable,
+	serviceResource: serviceResourceTable,
+	flow: flowTable,
+	file: fileTable,
+};
 const marketplaceSchema = { data: marketplaceDataTable };
 
 const coreSqlClient = new SQL(getConnectionUrl("DB_EVY_DATABASE"));
@@ -109,6 +114,27 @@ const marketplaceDb = drizzle({
 	client: marketplaceSqlClient,
 	schema: marketplaceSchema,
 });
+
+const SEED_IDS = {
+	evyOrganization: "09f07052-c27c-4116-a508-a2bcb074c827",
+	evyMarketplaceProvider: "be00fb53-80e9-4a09-a43f-4588b4ffc851",
+	logo: "ec3a7609-e2bc-484e-aab1-acef6777595c",
+	coreSduiResource: "d23cd318-3df4-486f-92d8-77f84402e63c",
+	coreDevicesResource: "a7198f1b-7ff9-44e1-b1c1-da491c59aca4",
+	coreOrganisationsResource: "584098b1-811f-4563-a6f0-e7669e884cdc",
+	coreServicesResource: "8eccd82c-dd04-4cc7-b588-e64d36d3f27b",
+	coreProvidersResource: "136d5d53-af3b-4fe1-954c-46df6c9f9ec3",
+	coreServiceResourcesResource: "58e2e69d-78ba-4657-b991-cc6a5e0c80c9",
+	coreFilesResource: "996738e6-15eb-4f3e-8f97-7538a1e2635c",
+} as const;
+
+const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID = {
+	selling_reasons: MARKETPLACE_RESOURCE.SELLING_REASONS,
+	conditions: MARKETPLACE_RESOURCE.CONDITIONS,
+	durations: MARKETPLACE_RESOURCE.DURATIONS,
+	areas: MARKETPLACE_RESOURCE.AREAS,
+	items: MARKETPLACE_RESOURCE.ITEMS,
+} as const;
 
 type SeedInputPaths = {
 	evyFlowsPath?: string;
@@ -157,7 +183,7 @@ function partitionSeedResourceData(dataJson: SeedDataMap): {
 	const marketplace: SeedDataMap = {};
 	const evy: SeedDataMap = {};
 	for (const [resource, value] of Object.entries(dataJson)) {
-		if (MARKETPLACE_SEED_RESOURCES.has(resource)) {
+		if (resource in MARKETPLACE_SEED_RESOURCE_KEY_TO_ID) {
 			marketplace[resource] = value;
 		} else {
 			evy[resource] = value;
@@ -174,13 +200,18 @@ type SeedDataRow = {
 	updatedAt: string;
 };
 
-function buildDataRows(dataJson: SeedDataMap, now: string): SeedDataRow[] {
+function buildDataRows(
+	dataJson: SeedDataMap,
+	now: string,
+	resourceKeyToId: Partial<Record<string, string>> = {},
+): SeedDataRow[] {
 	const rows: SeedDataRow[] = [];
 	for (const [resource, value] of Object.entries(dataJson)) {
+		const rowResource = resourceKeyToId[resource] ?? resource;
 		for (const item of value) {
 			rows.push({
 				id: item.id,
-				resource,
+				resource: rowResource,
 				data: item,
 				createdAt: now,
 				updatedAt: now,
@@ -208,6 +239,34 @@ function buildFileRows(files: SeedDataItem[], now: string): SeedFileRow[] {
 		const updatedAt = typeof item.updatedAt === "string" ? item.updatedAt : now;
 		return { id: item.id, type: item.type, createdAt, updatedAt };
 	});
+}
+
+function timestamped(now: string): { createdAt: string; updatedAt: string } {
+	return { createdAt: now, updatedAt: now };
+}
+
+const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
+	[SEED_IDS.coreSduiResource, EVY_CORE_SERVICE, "flow"],
+	[SEED_IDS.coreDevicesResource, EVY_CORE_SERVICE, "device"],
+	[SEED_IDS.coreOrganisationsResource, EVY_CORE_SERVICE, "organisation"],
+	[SEED_IDS.coreServicesResource, EVY_CORE_SERVICE, "service"],
+	[SEED_IDS.coreProvidersResource, EVY_CORE_SERVICE, "provider"],
+	[SEED_IDS.coreServiceResourcesResource, EVY_CORE_SERVICE, "service_resource"],
+	[SEED_IDS.coreFilesResource, EVY_CORE_SERVICE, "file"],
+	[MARKETPLACE_RESOURCE.SELLING_REASONS, MARKETPLACE_SERVICE, "selling_reason"],
+	[MARKETPLACE_RESOURCE.CONDITIONS, MARKETPLACE_SERVICE, "condition"],
+	[MARKETPLACE_RESOURCE.DURATIONS, MARKETPLACE_SERVICE, "duration"],
+	[MARKETPLACE_RESOURCE.AREAS, MARKETPLACE_SERVICE, "area"],
+	[MARKETPLACE_RESOURCE.ITEMS, MARKETPLACE_SERVICE, "item"],
+];
+
+function buildServiceResourceRows(now: string) {
+	return SERVICE_RESOURCE_SPECS.map(([id, fkServiceId, name]) => ({
+		id,
+		fkServiceId,
+		name,
+		...timestamped(now),
+	}));
 }
 
 async function runCommand(
@@ -394,6 +453,54 @@ async function seedDatabase({
 	await copySeedFileBinaries(fileRows);
 
 	await coreDb.transaction(async (tx) => {
+		await tx.delete(coreSchema.serviceResource);
+		await tx.delete(coreSchema.serviceProvider);
+		await tx.delete(coreSchema.organization);
+		await tx.delete(coreSchema.service);
+
+		await tx.insert(coreSchema.organization).values({
+			id: SEED_IDS.evyOrganization,
+			name: "evy",
+			description: "EVY organization",
+			logo: SEED_IDS.logo,
+			url: "evy.local",
+			supportEmail: "support@evy.local",
+			...timestamped(now),
+		});
+
+		await tx.insert(coreSchema.service).values([
+			{
+				id: EVY_CORE_SERVICE,
+				name: "evy",
+				description: "EVY core service",
+				sortOrder: 0,
+				...timestamped(now),
+			},
+			{
+				id: MARKETPLACE_SERVICE,
+				name: "marketplace",
+				description: "Marketplace service",
+				sortOrder: 1,
+				...timestamped(now),
+			},
+		]);
+
+		await tx.insert(coreSchema.serviceProvider).values({
+			id: SEED_IDS.evyMarketplaceProvider,
+			fkServiceId: MARKETPLACE_SERVICE,
+			fkOrganizationId: SEED_IDS.evyOrganization,
+			name: "evy",
+			description: "EVY marketplace provider",
+			logo: SEED_IDS.logo,
+			url: "evy.local",
+			retired: false,
+			...timestamped(now),
+		});
+
+		await tx
+			.insert(coreSchema.serviceResource)
+			.values(buildServiceResourceRows(now));
+
 		await tx.delete(coreSchema.flow);
 		const flowRows = [...evyFlowsJson, ...serviceFlowsJson].map((flowData) => ({
 			id: flowData.id,
@@ -411,7 +518,11 @@ async function seedDatabase({
 		}
 	});
 
-	const marketplaceRows = buildDataRows(marketplaceDataJson, now);
+	const marketplaceRows = buildDataRows(
+		marketplaceDataJson,
+		now,
+		MARKETPLACE_SEED_RESOURCE_KEY_TO_ID,
+	);
 
 	await marketplaceDb.transaction(async (tx) => {
 		await tx.delete(marketplaceSchema.data);

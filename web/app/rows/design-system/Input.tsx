@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import parseIconText from "../../icons/parseIconText";
-import { parseText } from "../../utils/interpreter";
+import { useParseText } from "../../hooks/useParseText";
 import { border } from "./border";
 
 const placeholderBase: CSSProperties = {
@@ -16,6 +16,7 @@ export default function Input({
 	value?: string;
 	placeholder?: string;
 }) {
+	const parseText = useParseText();
 	const resolved = parseText(value ?? "");
 	const parsedPlaceholder = parseText(placeholder ?? "");
 

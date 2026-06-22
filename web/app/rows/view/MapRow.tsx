@@ -1,4 +1,5 @@
 import type { RowConfig } from "../../types/row";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import EVYText from "../design-system/EVYText";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
@@ -28,7 +29,7 @@ export default defineRow("MapRow", {
 		view: {
 			content: {
 				title: "Map row title",
-				location: "{item.transfer_options.pickup.address.location}",
+				location: `{${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address.location}`,
 				subtitle: "Map row subtitle",
 			},
 		},

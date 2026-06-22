@@ -1,4 +1,4 @@
-import { parseText } from "../../utils/interpreter";
+import { useParseText } from "../../hooks/useParseText";
 import { border } from "./border";
 
 export default function TextArea({
@@ -8,6 +8,7 @@ export default function TextArea({
 	placeholder?: string;
 	value?: string;
 }) {
+	const parseText = useParseText();
 	return (
 		<textarea
 			id="message"

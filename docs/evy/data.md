@@ -38,7 +38,7 @@ bun run types:generate
 
 1. `scripts/generate-types.ts` — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. It generates stable Swift filenames from nested and hyphenated schema paths, includes `types/schema/files/file.schema.json`, and runs `scripts/generate-swift-sdui.ts` for Swift UI shapes from `evy.schema.json` plus `row-content.spec.json`.
 2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`.
-3. `scripts/generate-core-resources.ts` — Emits the generated evy core resource registry consumed by API validation, the public `resources` RPC, and `sync`. Non-evy service resources are discovered at runtime through each service's `ListResources` gRPC method.
+3. `scripts/generate-core-resources.ts` — Emits generated evy core resource compile-time constants only for core API validation and sync's core-resource loop. Non-evy service/resource ownership is stored in normal core `services` and `serviceResources` rows and can be read through standard `get` CRUD.
 
 ### Outputs (do not edit by hand)
 
@@ -55,7 +55,7 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 ### Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `resources`, `sync`, `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "evy"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API's Postgres schema. `service: "marketplace"` (and future workers) is discovered through `ListResources` and proxied over gRPC; payloads are validated in those services and stored in their own databases—not as a generic "namespace row" in the EVY data schema.
+Clients call the API with JSON-RPC `sync`, `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. External resource ownership is represented in core `serviceResources` rows, and the runtime `resource` value for an external service is the `serviceResources.id` UUID. `serviceResources.name` is a human-friendly base label only; it is not a routing key. External payloads are validated in those services and stored in their own databases—not as a generic "namespace row" in the EVY data schema. See [`external-service-resource-id-discovery.md`](../plans/external-service-resource-id-discovery.md) for the resource-ID routing details.
 
 ### Common date-time fields
 
@@ -119,9 +119,21 @@ updatedAt: string (date-time)
 retired: boolean (default false)
 ```
 
+#### DATA_EVY_ServiceResource
+
+```
+id: uuid
+fkServiceId: uuid
+name: string (maxLength 50)
+createdAt: string (date-time)
+updatedAt: string (date-time)
+```
+
+`name` is the display/base name used by the web builder for human-friendly labels. Runtime service/resource references use `id`; clients must not derive API routing or persistence keys from `name`.
+
 #### DATA_EVY_Flow
 
-Row shape: `id`, `data` ([`UI_Flow`](sdui.md) JSON), `createdAt`, `updatedAt`. On the wire this is accessed with `service: "evy"` and `resource: "sdui"`.
+Row shape: `id`, `data` ([`UI_Flow`](sdui.md) JSON), `createdAt`, `updatedAt`. On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "sdui"`.
 
 There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get`, `create`, or `update`).
 

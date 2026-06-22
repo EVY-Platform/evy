@@ -27,19 +27,13 @@ import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 
 type GetLikeRequest = GetRequest | ApiRequest;
 
-function isCoreGetRequest(
-	params: GetLikeRequest,
-): params is GetRequest & { service: "evy" } {
-	return params.service === EVY_CORE_SERVICE;
-}
-
 async function handleGetRequest<T extends GetLikeRequest>(
 	validate: (p: unknown) => asserts p is T,
 	params: unknown,
 	db: EvyDb,
 ): Promise<GetResponse> {
 	validate(params);
-	if (isCoreGetRequest(params)) {
+	if (params.service === EVY_CORE_SERVICE) {
 		return getCore(db, params);
 	}
 	return forwardGet(params.service, params);

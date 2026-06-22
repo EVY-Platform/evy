@@ -1,5 +1,5 @@
 {
-	"service": "evy",
+	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
 	"resources": {
 		"sdui": {
 			"singular": "flow"
@@ -15,6 +15,9 @@
 		},
 		"providers": {
 			"singular": "provider"
+		},
+		"serviceResources": {
+			"singular": "serviceResource"
 		},
 		"files": {
 			"singular": "file"

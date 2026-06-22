@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { UI_Flow, UI_Row } from "evy-types";
 import { Client } from "rpc-websockets";
-
 import {
 	createNewFlowThroughPicker,
 	ensureSidePanelsExpanded,
@@ -15,6 +14,7 @@ import {
 	waitForAppLoaded,
 } from "../integration/utils";
 
+const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
 const API_POLL_TIMEOUT_MS = 10_000;
 const TEST_TOKEN = "e2e-test-token";
 const TEST_OS = "Web";
@@ -56,7 +56,7 @@ async function withApiClient<T>(
 async function getFlowsFromApi(): Promise<UI_Flow[]> {
 	return withApiClient(async (client) => {
 		const result = (await client.call("get", {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 		})) as UI_Flow[];
 		return Array.isArray(result) ? result : [];
@@ -67,7 +67,7 @@ async function createFlowInApi(flow: UI_Flow): Promise<void> {
 	await withApiClient(async (client) => {
 		await client.login({ token: TEST_TOKEN, os: TEST_OS });
 		await client.call("create", {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			data: flow,
 		});

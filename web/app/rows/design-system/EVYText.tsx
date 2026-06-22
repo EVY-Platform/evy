@@ -1,5 +1,5 @@
 import parseIconText from "../../icons/parseIconText";
-import { parseText } from "../../utils/interpreter";
+import { useParseText } from "../../hooks/useParseText";
 
 export default function EVYText({
 	text,
@@ -8,6 +8,7 @@ export default function EVYText({
 	text?: string;
 	className?: string;
 }) {
+	const parseText = useParseText();
 	const resolvedText = parseText(text ?? "");
 	return (
 		<span className={className} style={{ whiteSpace: "pre-line" }}>

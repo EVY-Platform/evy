@@ -114,7 +114,6 @@ struct EVYDropdown: View {
 
 private struct EVYDropdownPreview: View {
   init() {
-    try? EVY.getUserData()
     EVYPreviewMockData.seedCommon()
   }
 

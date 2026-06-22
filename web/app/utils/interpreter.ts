@@ -1,4 +1,5 @@
 import { callFunction, type EVYFunctionContext } from "./functions";
+import { formatResourcePathForDisplay } from "./resourcePathDisplay";
 
 const FUNCTION_CALL_PATTERN = /([a-zA-Z_]+)\(([^()]*)\)/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
@@ -23,7 +24,11 @@ function replaceFunctionCall(
 	return `${text.slice(0, matchStart)}${resolved}${text.slice(matchEnd)}`;
 }
 
-export function parseText(input: string, context?: EVYFunctionContext): string {
+export function parseText(
+	input: string,
+	context?: EVYFunctionContext,
+	resourceIdToEntityName: Map<string, string> = new Map(),
+): string {
 	if (!input) return input;
 
 	let text = input;
@@ -48,7 +53,10 @@ export function parseText(input: string, context?: EVYFunctionContext): string {
 				continue;
 			}
 
-			text = text.replace(propsMatch[0], inner);
+			text = text.replace(
+				propsMatch[0],
+				formatResourcePathForDisplay(inner, resourceIdToEntityName),
+			);
 			continue;
 		}
 

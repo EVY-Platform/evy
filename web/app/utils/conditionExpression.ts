@@ -1,4 +1,9 @@
-import { parseOperand, serializeOperand } from "./actionOperands";
+import type { ServiceResource } from "../api/sync";
+import { parseOperand } from "./actionOperands";
+import {
+	formatResourcePathForDisplay,
+	resourceNameById,
+} from "./resourcePathDisplay";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
 export const COMPARISON_OPERATORS = ["==", "!=", ">", "<", ">=", "<="] as const;
@@ -243,24 +248,41 @@ type ConditionSummaryLine = {
 /** Flatten an expression tree into display lines for the configuration summary. */
 export function formatExpressionSummary(
 	expr: ConditionExpression | null,
+	serviceResources: ServiceResource[] = [],
 ): ConditionSummaryLine[] {
 	if (!expr) return [];
+	const resourceNamesById = resourceNameById(serviceResources);
 	if (expr.type === "leaf") {
-		return [{ prefix: "", text: formatLeafDisplay(expr) }];
+		return [{ prefix: "", text: formatLeafDisplay(expr, resourceNamesById) }];
 	}
-	return formatGroupSummary(expr, true);
+	return formatGroupSummary(expr, true, resourceNamesById);
 }
 
-function formatLeafDisplay(leaf: ConditionLeaf): string {
-	const left = serializeOperand(parseOperand(leaf.left));
+function formatLeafDisplay(
+	leaf: ConditionLeaf,
+	resourceNamesById: Map<string, string>,
+): string {
+	const left = formatOperandDisplay(leaf.left, resourceNamesById);
 	const op = OPERATOR_LABELS[leaf.operator];
-	const right = serializeOperand(parseOperand(leaf.right));
+	const right = formatOperandDisplay(leaf.right, resourceNamesById);
 	return `${left} ${op} ${right}`;
+}
+
+function formatOperandDisplay(
+	operand: string,
+	resourceNamesById: Map<string, string>,
+): string {
+	const parsed = parseOperand(operand);
+	if (parsed.type === "function") {
+		return `${parsed.name}(${formatResourcePathForDisplay(parsed.arg, resourceNamesById)})`;
+	}
+	return formatResourcePathForDisplay(parsed.value, resourceNamesById);
 }
 
 function formatGroupSummary(
 	group: ConditionGroup,
 	isTopLevel: boolean,
+	resourceNamesById: Map<string, string>,
 ): ConditionSummaryLine[] {
 	const lines: ConditionSummaryLine[] = [];
 	const keyword = group.logicalOperator === "and" ? "and" : "or";
@@ -270,20 +292,25 @@ function formatGroupSummary(
 		const prefix = i === 0 && isTopLevel ? "" : keyword;
 
 		if (child.type === "leaf") {
-			lines.push({ prefix, text: formatLeafDisplay(child) });
+			lines.push({ prefix, text: formatLeafDisplay(child, resourceNamesById) });
 		} else {
-			const nested = formatGroupInline(child);
+			const nested = formatGroupInline(child, resourceNamesById);
 			lines.push({ prefix, text: nested });
 		}
 	}
 	return lines;
 }
 
-function formatGroupInline(group: ConditionGroup): string {
+function formatGroupInline(
+	group: ConditionGroup,
+	resourceNamesById: Map<string, string>,
+): string {
 	const keyword = group.logicalOperator === "and" ? " and " : " or ";
 	const parts = group.children.map((child) => {
-		if (child.type === "leaf") return formatLeafDisplay(child);
-		return `(${formatGroupInline(child)})`;
+		if (child.type === "leaf") {
+			return formatLeafDisplay(child, resourceNamesById);
+		}
+		return `(${formatGroupInline(child, resourceNamesById)})`;
 	});
 	return parts.join(keyword);
 }

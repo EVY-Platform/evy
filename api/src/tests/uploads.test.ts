@@ -13,7 +13,7 @@ function buildChunkFrame(metadata: object, chunkData: Buffer): Buffer {
 	return Buffer.concat([prefix, metadataBytes, chunkData]);
 }
 
-const uploadId = "550e8400-e29b-41d4-a716-446655440000";
+const uploadId = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 const validBytes = Buffer.from([1, 2, 3, 4, 5]);
 
 beforeEach(() => {
@@ -183,7 +183,7 @@ describe("cancelUpload", () => {
 
 	it("returns ok:true when no upload session exists", async () => {
 		const result = await cancelUpload({
-			uploadId: "00000000-0000-0000-0000-000000000002",
+			uploadId: "6897ad63-495d-46d9-8a5d-3400775f9e5a",
 		});
 		expect(result.ok).toBe(true);
 	});

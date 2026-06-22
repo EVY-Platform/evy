@@ -15,6 +15,7 @@ test.describe("Offline and connection resilience", () => {
 		page,
 	}) => {
 		await page.addInitScript(() => {
+			const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
 			const mockFlow = {
 				id: "offline-flow",
 				name: "Offline Save Fail",
@@ -69,7 +70,7 @@ test.describe("Offline and connection resilience", () => {
 							result: {
 								data: [
 									{
-										service: "evy",
+										service: EVY_CORE_SERVICE,
 										resource: "sdui",
 										value: [mockFlow],
 									},

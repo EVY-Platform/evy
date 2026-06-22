@@ -11,6 +11,9 @@ import {
 	getPageOptions,
 	toVariableOptions,
 } from "../../utils/actionFlowOptions";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
+import type { ServiceResource } from "../../api/sync";
 import { displayLabel } from "../../utils/labelFormatting";
 import { PopoverSelect, type PopoverOption } from "../PopoverSelect";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
@@ -20,23 +23,23 @@ type BranchEditorProps = {
 	value: string;
 	draftVariables: string[];
 	flows: UI_Flow[];
+	serviceResources: ServiceResource[];
 	onChange: (value: string) => void;
 };
 
 type ArgDropdownSlot = { slotId: string; options: PopoverOption[] };
-function entityRoot(variable: string): string {
-	const dotIndex = variable.indexOf(".");
-	return dotIndex === -1 ? variable : variable.slice(0, dotIndex);
-}
 
-function toEntityOptions(draftVariables: string[]): PopoverOption[] {
-	const entities = new Set(draftVariables.map(entityRoot));
-	return Array.from(entities)
-		.sort()
-		.map((entity) => ({
-			value: entity,
-			label: displayLabel(entity),
-		}));
+function toResourceOptions(
+	serviceResources: ServiceResource[],
+	serviceId: string,
+): PopoverOption[] {
+	return serviceResources
+		.filter((resource) => resource.fkServiceId === serviceId)
+		.map((resource) => ({
+			value: resource.id,
+			label: displayLabel(resource.name),
+		}))
+		.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function buildArgDropdowns(
@@ -44,6 +47,7 @@ function buildArgDropdowns(
 	currentArgs: string[],
 	draftVariables: string[],
 	flows: UI_Flow[],
+	serviceResources: ServiceResource[],
 ): ArgDropdownSlot[] {
 	if (!functionName || functionName === "close" || functionName === "show") {
 		return [];
@@ -66,8 +70,8 @@ function buildArgDropdowns(
 
 	if (functionName === "create") {
 		const namespaceOptions: PopoverOption[] = [
-			{ value: "marketplace", label: "Marketplace" },
-			{ value: "evy", label: "Evy" },
+			{ value: MARKETPLACE_SERVICE, label: "Marketplace" },
+			{ value: EVY_CORE_SERVICE, label: "Evy" },
 		];
 		const dropdowns: ArgDropdownSlot[] = [
 			{ slotId: "create-namespace", options: namespaceOptions },
@@ -75,14 +79,14 @@ function buildArgDropdowns(
 		if (currentArgs[0]) {
 			dropdowns.push({
 				slotId: "create-resource",
-				options: toEntityOptions(draftVariables),
+				options: toResourceOptions(serviceResources, currentArgs[0]),
 			});
 		}
 		return dropdowns;
 	}
 
 	if (functionName === "highlight_required") {
-		const varOptions = toVariableOptions(draftVariables);
+		const varOptions = toVariableOptions(draftVariables, serviceResources);
 		const dropdowns: ArgDropdownSlot[] = [
 			{ slotId: "highlight-first", options: varOptions },
 		];
@@ -102,6 +106,7 @@ export function BranchEditor({
 	value,
 	draftVariables,
 	flows,
+	serviceResources,
 	onChange,
 }: BranchEditorProps) {
 	const parsed = useMemo(() => parseBranch(value), [value]);
@@ -144,6 +149,7 @@ export function BranchEditor({
 		args,
 		draftVariables,
 		flows,
+		serviceResources,
 	);
 
 	return (

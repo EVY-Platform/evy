@@ -1,4 +1,5 @@
 import type { RowConfig } from "../../types/row";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { defineRow } from "../defineRow";
 import Checkbox from "../design-system/Checkbox";
 import EVYText from "../design-system/EVYText";
@@ -16,7 +17,7 @@ export default defineRow("TextSelectRow", {
 				text: "placeholder",
 			},
 		},
-		destination: "{item.payment_cash}",
+		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_cash}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

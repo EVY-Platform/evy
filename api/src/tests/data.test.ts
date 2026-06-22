@@ -16,6 +16,7 @@ import type {
 	UI_Row,
 	DATA_EVY_Flow,
 	DATA_EVY_Service,
+	DATA_EVY_ServiceResource,
 	CreateRequest,
 	CreateResponse,
 	UpdateRequest,
@@ -23,6 +24,7 @@ import type {
 	GetRequest,
 } from "evy-types";
 import { validateUiFlow as validateFlowData } from "evy-types/validators";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
 import {
@@ -220,7 +222,7 @@ describe("create", () => {
 	it("should throw when data is missing", async () => {
 		await expect(
 			create(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 			} as unknown as CreateRequest),
 		).rejects.toThrow("Flow validation failed");
@@ -249,7 +251,7 @@ describe("create", () => {
 		});
 
 		const result = await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			data: flowData,
 		});
@@ -269,7 +271,7 @@ describe("create", () => {
 		});
 
 		const result = await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			filter: { id: flowId },
 			data: flowData,
@@ -290,14 +292,14 @@ describe("create", () => {
 		});
 
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			data: flowData,
 		});
 
 		await expect(
 			create(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				data: flowData,
 			}),
@@ -316,7 +318,7 @@ describe("create", () => {
 		};
 
 		const result = await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 			data: payload,
 		});
@@ -329,6 +331,43 @@ describe("create", () => {
 		expect(svcRows).toHaveLength(1);
 		expect(svcRows[0].id).toBe(serviceId);
 		expect(svcRows[0].name).toBe("CreateSvc");
+	});
+
+	it("should create ServiceResource resource into the ServiceResource table", async () => {
+		const nowIso = new Date().toISOString();
+		const serviceId = crypto.randomUUID();
+		const serviceResourceId = crypto.randomUUID();
+		await testDb.insert(schema.service).values({
+			id: serviceId,
+			name: "marketplace",
+			description: "Marketplace",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		});
+		const payload = {
+			id: serviceResourceId,
+			fkServiceId: serviceId,
+			name: "item",
+			createdAt: nowIso,
+			updatedAt: nowIso,
+		};
+
+		const result = await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: "serviceResources",
+			data: payload,
+		});
+
+		const row = result as DATA_EVY_ServiceResource;
+		expect(row.id).toBe(serviceResourceId);
+		expect(row.fkServiceId).toBe(serviceId);
+		expect(row.name).toBe("item");
+		const serviceResourceRows = await testDb
+			.select()
+			.from(schema.serviceResource);
+		expect(serviceResourceRows).toHaveLength(1);
+		expect(serviceResourceRows[0].id).toBe(serviceResourceId);
+		expect(serviceResourceRows[0].name).toBe("item");
 	});
 });
 
@@ -346,7 +385,7 @@ describe("update", () => {
 	it("should throw when data is missing", async () => {
 		await expect(
 			update(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				filter: { id: "x" },
 			} as unknown as UpdateRequest),
@@ -356,7 +395,7 @@ describe("update", () => {
 	it("should throw when filter.id is missing", async () => {
 		await expect(
 			update(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				data: { name: "test", pages: [] },
 			} as unknown as UpdateRequest),
@@ -399,7 +438,7 @@ describe("update", () => {
 		});
 
 		const result = await update(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			filter: { id: existingFlow.id },
 			data: updatedFlowData,
@@ -414,7 +453,7 @@ describe("update", () => {
 	it("should fail to update non-existent flow", async () => {
 		await expect(
 			update(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				filter: { id: crypto.randomUUID() },
 				data: createTestFlow({
@@ -437,7 +476,7 @@ describe("update", () => {
 		};
 
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 			data: payload,
 		});
@@ -451,7 +490,7 @@ describe("update", () => {
 		};
 
 		const result = await update(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 			filter: { id: serviceId },
 			data: updatedPayload,
@@ -488,7 +527,7 @@ describe("get", () => {
 	it("should throw when resource is invalid", async () => {
 		await expect(
 			get(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "InvalidResource",
 			} as unknown as GetRequest),
 		).rejects.toThrow("Resource is not served by the core API");
@@ -497,7 +536,7 @@ describe("get", () => {
 	it("should throw when service and resource do not match the shared contract", async () => {
 		await expect(
 			get(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "items",
 			} as unknown as GetRequest),
 		).rejects.toThrow("Resource is not served by the core API");
@@ -523,7 +562,7 @@ describe("get", () => {
 		]);
 
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 		});
 
@@ -557,7 +596,7 @@ describe("get", () => {
 		]);
 
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 		});
 
@@ -577,7 +616,7 @@ describe("get", () => {
 		});
 
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			filter: { id: flowId },
 		});
@@ -589,7 +628,7 @@ describe("get", () => {
 
 	it("should return empty array for SDUI when filter.id matches nothing", async () => {
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			filter: { id: crypto.randomUUID() },
 		});
@@ -608,7 +647,7 @@ describe("get", () => {
 
 		await expect(
 			get(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				filter: { id: flowId },
 			}),
@@ -626,7 +665,7 @@ describe("get", () => {
 
 		await expect(
 			get(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 			}),
 		).rejects.toThrow("Flow validation failed");
@@ -643,13 +682,13 @@ describe("get", () => {
 			updatedAt: nowIso,
 		};
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 			data: serviceData,
 		});
 
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 		});
 
@@ -685,7 +724,7 @@ describe("get", () => {
 		await testDb.insert(schema.service).values([olderService, newerService]);
 
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 		});
 
@@ -697,7 +736,7 @@ describe("get", () => {
 
 	it("should return empty array for non-SDUI resource when no data", async () => {
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "services",
 		});
 
@@ -713,7 +752,7 @@ describe("create SDUI validation", () => {
 	it("should reject flow with unrecognized keys", async () => {
 		await expect(
 			create(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				data: {
 					name: "Test Flow",
@@ -726,7 +765,7 @@ describe("create SDUI validation", () => {
 
 	it("should accept flow with no pages", async () => {
 		const result = await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			data: {
 				id: crypto.randomUUID(),
@@ -741,7 +780,7 @@ describe("create SDUI validation", () => {
 	it("should reject flow with invalid row type", async () => {
 		await expect(
 			create(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				data: {
 					name: "Test Flow",
@@ -811,7 +850,7 @@ describe("create SDUI validation", () => {
 		});
 
 		const result = await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			data: flowData,
 		});
@@ -833,7 +872,11 @@ describe("create SDUI validation", () => {
 							content: { title: "", label: "Submit" },
 						},
 						actions: [
-							{ condition: "", false: "", true: "{create(marketplace,item)}" },
+							{
+								condition: "",
+								false: "",
+								true: "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,dc28ed59-298e-493c-8ff3-3e60f2ebccbd)}",
+							},
 						],
 					},
 				},
@@ -841,7 +884,7 @@ describe("create SDUI validation", () => {
 		});
 
 		const result = await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "sdui",
 			data: flowData,
 		});
@@ -887,7 +930,7 @@ describe("files", () => {
 		const fileId = crypto.randomUUID();
 		await expect(
 			create(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "files",
 				filter: { id: fileId },
 				data: {
@@ -905,7 +948,7 @@ describe("files", () => {
 		await stageUpload(fileId, opaqueBytes);
 
 		const result = await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
@@ -923,7 +966,7 @@ describe("files", () => {
 		await stageUpload(fileId, opaqueBytes);
 
 		const result = await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 			data: {
@@ -941,7 +984,7 @@ describe("files", () => {
 		const fileId = crypto.randomUUID();
 		await stageUpload(fileId, opaqueBytes);
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
@@ -950,7 +993,7 @@ describe("files", () => {
 
 		await expect(
 			create(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "files",
 				filter: { id: fileId },
 				data: {
@@ -967,12 +1010,15 @@ describe("files", () => {
 		const fileId = crypto.randomUUID();
 		await stageUpload(fileId, opaqueBytes);
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
 		});
-		const result = await get(dataDb, { service: "evy", resource: "files" });
+		const result = await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: "files",
+		});
 		const found = (result as object[]).find(
 			(r) => (r as { id: string }).id === fileId,
 		);
@@ -985,19 +1031,19 @@ describe("files", () => {
 		await stageUpload(fileId, opaqueBytes);
 		await stageUpload(otherId, otherOpaqueBytes);
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
 		});
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: otherId },
 			data: { id: otherId, type: fileType, createdAt: now, updatedAt: now },
 		});
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 		});
@@ -1010,7 +1056,7 @@ describe("files", () => {
 		const newIso = "2030-01-01T00:00:00.000Z";
 		await stageUpload(fileId, opaqueBytes);
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 			data: {
@@ -1021,7 +1067,7 @@ describe("files", () => {
 			},
 		});
 		const result = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { updatedAfter: newIso },
 		});
@@ -1034,7 +1080,7 @@ describe("files", () => {
 
 		await expect(
 			create(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "files",
 				filter: { id: fileId },
 				data: {
@@ -1051,7 +1097,7 @@ describe("files", () => {
 		const fileId = crypto.randomUUID();
 		await expect(
 			create(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "files",
 				filter: { id: fileId },
 				data: {
@@ -1067,14 +1113,14 @@ describe("files", () => {
 		const fileId = crypto.randomUUID();
 		await stageUpload(fileId, opaqueBytes);
 		await create(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
 		});
 
 		const result = await deleteCore(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 		});
@@ -1084,7 +1130,7 @@ describe("files", () => {
 			readFile(join(getFileStorageDirs().filesDir, fileId)),
 		).rejects.toThrow();
 		const rows = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 		});
@@ -1101,14 +1147,14 @@ describe("files", () => {
 		});
 
 		const result = await deleteCore(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 		});
 
 		expect(result).toMatchObject({ id: fileId });
 		const rows = await get(dataDb, {
-			service: "evy",
+			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
 		});
@@ -1118,7 +1164,7 @@ describe("files", () => {
 	it("rejects deleting a missing file", async () => {
 		await expect(
 			deleteCore(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "files",
 				filter: { id: crypto.randomUUID() },
 			}),
@@ -1128,7 +1174,7 @@ describe("files", () => {
 	it("rejects deleting non-file core resources", async () => {
 		await expect(
 			deleteCore(dataDb, {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "services",
 				filter: { id: crypto.randomUUID() },
 			}),

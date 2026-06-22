@@ -14,7 +14,6 @@ final class InterpreterTests: XCTestCase {
   override func setUpWithError() throws {
     try super.setUpWithError()
     testPageId = "test_page_\(UUID().uuidString)"
-    try EVY.getUserData()
     EVY.activeCacheScopeId = testPageId
   }
 
@@ -237,7 +236,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected item"),
         ]),
       ]),
-      at: "marketplace:\(entityKey)"
+      at: "\(EVYNamespace.marketplace):\(entityKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [secondId]])
@@ -245,7 +244,7 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected item"))
   }
 
-  func testResolveQueryParamsStoresMatchingEntityUnderSingularEntityKey() throws {
+  func testResolveQueryParamsDoesNotCacheSingularAlias() throws {
     let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
     let resourceKey = "evy_interpreter_tests_\(randomId)_items"
     let entityKey = "evy_interpreter_tests_\(randomId)_item"
@@ -255,18 +254,19 @@ final class InterpreterTests: XCTestCase {
       .array([
         .dictionary([
           "id": .string(id),
-          "title": .string("Selected singular item"),
+          "title": .string("Selected exact item"),
         ])
       ]),
-      at: "marketplace:\(resourceKey)"
+      at: "\(EVYNamespace.marketplace):\(resourceKey)"
     )
 
     EVY.resolveQueryParams([resourceKey: [id]])
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(entityKey).title}"),
-      .string("Selected singular item")
+      try EVY.getDataFromText("{\(resourceKey).title}"),
+      .string("Selected exact item")
     )
+    XCTAssertThrowsError(try EVY.getDataFromText("{\(entityKey).title}"))
   }
 
   func testResolveQueryParamsInfersServiceFromSyncedResourceKey() throws {
@@ -305,7 +305,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Second item"),
         ]),
       ]),
-      at: "marketplace:\(entityKey)"
+      at: "\(EVYNamespace.marketplace):\(entityKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [firstId, secondId]])
@@ -426,7 +426,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected item"),
         ])
       ]),
-      at: "marketplace:\(entityKey)"
+      at: "\(EVYNamespace.marketplace):\(entityKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [id]])
@@ -448,7 +448,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected by generic id"),
         ])
       ]),
-      at: "marketplace:\(entityKey)"
+      at: "\(EVYNamespace.marketplace):\(entityKey)"
     )
 
     EVY.resolveQueryParams(["id": [id]])
@@ -521,7 +521,7 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(out, "09:30")
   }
 
-  func testGetForBindingResolvesSingularToPluralSyncedResource() throws {
+  func testGetForBindingDoesNotResolveSingularPluralFallback() throws {
     let id = UUID().uuidString
     let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
     let resourceKey = "\(randomId)_things"
@@ -534,19 +534,13 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Plural resource item"),
         ])
       ]),
-      at: "marketplace:\(resourceKey)"
+      at: "\(EVYNamespace.marketplace):\(resourceKey)"
     )
 
-    let decoded = try EVY.publicStore.getJsonForBinding(key: entityKey)
-    guard case .array(let items) = decoded else {
-      XCTFail("Expected array, got \(decoded)")
-      return
-    }
-    XCTAssertEqual(items.count, 1)
-    XCTAssertEqual(items.first?.parseProp(props: ["title"]), .string("Plural resource item"))
+    XCTAssertThrowsError(try EVY.publicStore.getJsonForBinding(key: entityKey))
   }
 
-  func testSingularQueryKeyResolvesFromPluralSyncedCollection() throws {
+  func testSingularQueryKeyDoesNotResolvePluralSyncedCollection() throws {
     let id = UUID().uuidString
     let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
     let resourceKey = "\(randomId)_items"
@@ -559,24 +553,20 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected singular item"),
         ])
       ]),
-      at: "marketplace:\(resourceKey)"
+      at: "\(EVYNamespace.marketplace):\(resourceKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [id]])
 
-    XCTAssertEqual(
-      try EVY.getDataFromText("{\(entityKey).title}"),
-      .string("Selected singular item")
-    )
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey)}"), .string(id))
   }
 
-  func testExactLocalKeyStillWinsOverPluralFallback() throws {
+  func testExactLocalKeyIsReadWithoutSyncedFallback() throws {
     let id = UUID().uuidString
     let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
     let resourceKey = "\(randomId)_items"
     let entityKey = "\(randomId)_item"
 
-    // Seed an exact local key for this entity
     try store(
       .dictionary([
         "id": .string(id),
@@ -585,18 +575,16 @@ final class InterpreterTests: XCTestCase {
       at: entityKey
     )
 
-    // Seed a plural collection with different data
     try store(
       .array([
         .dictionary([
           "id": .string(id),
-          "title": .string("Plural fallback item"),
+          "title": .string("Synced collection item"),
         ])
       ]),
-      at: "marketplace:\(resourceKey)"
+      at: "\(EVYNamespace.marketplace):\(resourceKey)"
     )
 
-    // Exact local key should win
     XCTAssertEqual(
       try EVY.getDataFromText("{\(entityKey).title}"),
       .string("Local item")
@@ -613,7 +601,7 @@ final class InterpreterTests: XCTestCase {
         .dictionary(["id": .string(conditionId), "value": .string("Excellent")]),
         .dictionary(["id": .string(UUID().uuidString), "value": .string("Other")]),
       ]),
-      at: "marketplace:\(conditionsKey)"
+      at: "\(EVYNamespace.marketplace):\(conditionsKey)"
     )
     try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
 
@@ -629,7 +617,7 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([.dictionary(["id": .string("abc"), "value": .string("Excellent")])]),
-      at: "marketplace:\(conditionsKey)"
+      at: "\(EVYNamespace.marketplace):\(conditionsKey)"
     )
     try store(.dictionary(["condition_id": .string("no_match")]), at: itemKey)
 
@@ -646,7 +634,7 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
-      at: "marketplace:\(conditionsKey)"
+      at: "\(EVYNamespace.marketplace):\(conditionsKey)"
     )
     try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
 

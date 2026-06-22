@@ -1,5 +1,6 @@
 import type { RowConfig } from "../../types/row";
-import { parseText } from "../../utils/interpreter";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
+import { useParseText } from "../../hooks/useParseText";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
 
@@ -68,6 +69,7 @@ function CalendarGrid({
 	headerFormat: string;
 	timeslotFormat: string;
 }) {
+	const parseText = useParseText();
 	return (
 		<div className="evy-flex evy-flex-row evy-overflow-hidden evy-mt-2">
 			{/* Y-axis: time labels */}
@@ -122,7 +124,7 @@ export default defineRow("CalendarRow", {
 				secondary: "{delivery_selection}",
 			},
 		},
-		destination: "{item.pickup_selection}",
+		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

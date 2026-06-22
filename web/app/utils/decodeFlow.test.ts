@@ -102,7 +102,8 @@ describe("normalizeServerRow", () => {
 
 		expect(n.view.content).toMatchObject({
 			title: "Pickup location",
-			location: "{item.transfer_options.pickup.address.location}",
+			location:
+				"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.location}",
 			subtitle: "Map row subtitle",
 		});
 	});
@@ -143,7 +144,7 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "ListContainer",
-				source: "{items}",
+				source: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
 				view: {
 					content: {
 						title: "List",
@@ -226,11 +227,12 @@ describe("decodeFlows / encodeFlow", () => {
 							type: "Text",
 							source: "",
 							actions: [],
-							visible: "{item.payment_methods.cash == true}",
+							visible:
+								"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
 							view: {
 								content: {
 									title: "Hello",
-									text: "{item.title}",
+									text: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
 								},
 								max_lines: "",
 							},
@@ -253,7 +255,8 @@ describe("decodeRow unknown types", () => {
 		const unknownRow = makeServerRow({
 			id: ROW_B,
 			type: "FutureRow",
-			visible: "{item.payment_methods.cash == true}",
+			visible:
+				"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
 			view: {
 				content: { title: "Future" },
 			},
@@ -266,9 +269,11 @@ describe("decodeRow unknown types", () => {
 		const decoded = decodeFlows([flow])[0];
 		const row = decoded.pages[0]?.rows[0];
 		expect(row?.config.type).toBe("FutureRow");
-		expect(row?.config.visible).toBe("{item.payment_methods.cash == true}");
+		expect(row?.config.visible).toBe(
+			"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
+		);
 		expect(encodeFlow(decoded).pages[0]?.rows[0]?.visible).toBe(
-			"{item.payment_methods.cash == true}",
+			"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
 		);
 	});
 });
@@ -284,6 +289,6 @@ describe("buildRowForNewPageFromBase", () => {
 		invariant(child, "search row template child");
 		const childId = child.id;
 		expect(childId).toBeDefined();
-		expect(childId).not.toBe("00000000-0000-4000-8000-000000000001");
+		expect(childId).not.toBe("09f07052-c27c-4116-a508-a2bcb074c827");
 	});
 });

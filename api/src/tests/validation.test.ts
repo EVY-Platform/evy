@@ -10,7 +10,7 @@ import {
 } from "evy-types/validators";
 
 describe("validateServicePayload", () => {
-	const id = "550e8400-e29b-41d4-a716-446655440000";
+	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 	const now = "2024-01-19T12:00:00.000Z";
 
 	it("accepts a valid Service row payload", () => {
@@ -61,7 +61,7 @@ describe("validateServicePayload", () => {
 });
 
 describe("validateOrganizationPayload", () => {
-	const id = "550e8400-e29b-41d4-a716-446655440000";
+	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 	const now = "2024-01-19T12:00:00.000Z";
 
 	it("accepts a valid Organization payload", () => {
@@ -69,7 +69,7 @@ describe("validateOrganizationPayload", () => {
 			id,
 			name: "Org",
 			description: "D",
-			logo: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+			logo: "d92f474b-eebb-4c93-9487-dc864f3d814c",
 			url: "https://example.com",
 			supportEmail: "a@b.co",
 			createdAt: now,
@@ -86,9 +86,9 @@ describe("validateOrganizationPayload", () => {
 });
 
 describe("validateServiceProviderPayload", () => {
-	const id = "550e8400-e29b-41d4-a716-446655440000";
-	const sid = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
-	const oid = "6ba7b811-9dad-11d1-80b4-00c04fd430c8";
+	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
+	const sid = "d92f474b-eebb-4c93-9487-dc864f3d814c";
+	const oid = "02e8dadc-e141-46ff-81f3-17122d170caf";
 	const now = "2024-01-19T12:00:00.000Z";
 
 	it("accepts a valid ServiceProvider payload", () => {
@@ -182,7 +182,8 @@ describe("validateFlowData", () => {
 							type: "Text",
 							source: "",
 							actions: [],
-							visible: "{item.payment_methods.cash == true}",
+							visible:
+								"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
 							view: {
 								content: {
 									title: "Cash accepted",
@@ -194,13 +195,13 @@ describe("validateFlowData", () => {
 			],
 		});
 		expect(out.pages[0]?.rows[0]?.visible).toBe(
-			"{item.payment_methods.cash == true}",
+			"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
 		);
 	});
 });
 
 describe("validateFileUploadChunkMetadata", () => {
-	const uploadId = "550e8400-e29b-41d4-a716-446655440000";
+	const uploadId = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 
 	it("accepts valid file chunk metadata", () => {
 		const out = validateFileUploadChunkMetadata({
@@ -225,7 +226,7 @@ describe("validateFileUploadChunkMetadata", () => {
 });
 
 describe("validateFileWithBinary", () => {
-	const id = "550e8400-e29b-41d4-a716-446655440000";
+	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 	const now = "2024-01-19T12:00:00.000Z";
 	const type = "image/jpeg";
 
@@ -265,7 +266,7 @@ describe("validateFileWithBinary", () => {
 });
 
 describe("validateDataEvyFile", () => {
-	const id = "550e8400-e29b-41d4-a716-446655440000";
+	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 	const now = "2024-01-19T12:00:00.000Z";
 	const type = "image/jpeg";
 

@@ -8,14 +8,18 @@
  * Run: bun scripts/generate-core-resources.ts
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
 	OUT_SWIFT,
 	OUT_TS,
 	SCHEMA_DIR,
+	generatedFileHeader,
+	generatedSwiftHeader,
 	loadJson,
+	resourceKey,
 	runMain,
+	swiftCaseName,
+	writeGeneratedOutputs,
 } from "./types-generation-utils.js";
 
 const RESOURCES_SCHEMA_PATH = join(
@@ -25,6 +29,7 @@ const RESOURCES_SCHEMA_PATH = join(
 );
 const OUT_TS_PATH = join(OUT_TS, "coreResources.ts");
 const OUT_SWIFT_PATH = join(OUT_SWIFT, "CoreResources.generated.swift");
+const CORE_RESOURCES_SCHEMA_PATH = "types/schema/resources/core.resources.json";
 
 interface ResourceMeta {
 	singular: string;
@@ -66,33 +71,12 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 	}
 }
 
-/** Convert a plural resource name like "organisations" to a constant key like "ORGANISATIONS". */
-function resourceKey(plural: string): string {
-	// Simple upper-snake-case from the plural string
-	return plural.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
-}
-
-/** Convert a plural resource name to a Swift enum case name (camelCase). */
-function swiftCaseName(plural: string): string {
-	// Convert "selling_reasons" -> "sellingReasons", "organisations" -> "organisations"
-	const camel = plural.replace(/_([a-z])/g, (_m, c) => c.toUpperCase());
-	// If it starts with a digit, prepend underscore
-	if (/^\d/.test(camel)) {
-		return `_${camel}`;
-	}
-	return camel;
-}
-
 function generateTypeScript(schema: CoreResourcesSchema): string {
 	const { service, resources } = schema;
 	const resourceNames = Object.keys(resources);
 	const lines: string[] = [];
 
-	lines.push("/* eslint-disable */");
-	lines.push(
-		`/** Generated from types/schema/resources/core.resources.json - do not edit. */`,
-	);
-	lines.push("");
+	lines.push(...generatedFileHeader(CORE_RESOURCES_SCHEMA_PATH));
 	lines.push(
 		`export const EVY_CORE_SERVICE = ${JSON.stringify(service)} as const;`,
 	);
@@ -140,11 +124,7 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	const resourceNames = Object.keys(resources);
 	const lines: string[] = [];
 
-	lines.push(
-		"// Generated from types/schema/resources/core.resources.json - do not edit.",
-	);
-	lines.push("// Run `bun run types:generate` from repo root to regenerate.");
-	lines.push("");
+	lines.push(...generatedSwiftHeader(CORE_RESOURCES_SCHEMA_PATH));
 
 	// Service name
 	lines.push(`public let EVY_CORE_SERVICE = ${JSON.stringify(service)}`);
@@ -188,19 +168,13 @@ async function main(): Promise<void> {
 	const schema = await loadJson<CoreResourcesSchema>(RESOURCES_SCHEMA_PATH);
 	validateSchema(schema);
 
-	// TypeScript
-	await mkdir(OUT_TS, { recursive: true });
-	const tsContent = generateTypeScript(schema);
-	await writeFile(OUT_TS_PATH, tsContent, "utf-8");
-	console.log(`Generated ${OUT_TS_PATH}`);
-
-	if (excludeIos) return;
-
-	// Swift
-	await mkdir(OUT_SWIFT, { recursive: true });
-	const swiftContent = generateSwift(schema);
-	await writeFile(OUT_SWIFT_PATH, swiftContent, "utf-8");
-	console.log(`Generated ${OUT_SWIFT_PATH}`);
+	await writeGeneratedOutputs({
+		tsPath: OUT_TS_PATH,
+		tsContent: generateTypeScript(schema),
+		swiftPath: OUT_SWIFT_PATH,
+		swiftContent: generateSwift(schema),
+		excludeIos,
+	});
 }
 
 runMain(main);

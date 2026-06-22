@@ -8,12 +8,8 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import {
-	getServiceResources,
-	setServiceRegistry,
-} from "evy-types/rpcRequestHelpers";
 import { data, db } from "./db";
-import { MARKETPLACE_RESOURCE_NAMES, MARKETPLACE_SERVICE } from "./resources";
+import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
 import { emitDataChanged } from "./events";
 import {
 	assertIsoDateTimeJsonFields,
@@ -24,21 +20,19 @@ import {
 	validateUpdateResponse,
 } from "evy-types/validators";
 
-setServiceRegistry([[MARKETPLACE_SERVICE, [...MARKETPLACE_RESOURCE_NAMES]]]);
-
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest,
 ): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
-		throw new Error("Marketplace service requires service marketplace");
+		throw new Error("Marketplace service requires the marketplace service id");
 	}
-	const marketplaceResources = getServiceResources(MARKETPLACE_SERVICE) ?? [];
-	if (!marketplaceResources.includes(params.resource)) {
-		throw new Error("Unsupported resource for marketplace service");
+	if (!MARKETPLACE_SEED_RESOURCES.has(params.resource)) {
+		throw new Error("Unsupported resource id for marketplace service");
 	}
 }
 
-async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
+export async function get(params: GetRequest): Promise<GetResponse> {
+	assertMarketplaceRules(params);
 	const { resource, filter } = params;
 
 	const whereClauses = [eq(data.resource, resource)];
@@ -58,14 +52,8 @@ async function marketplaceGetBody(params: GetRequest): Promise<GetResponse> {
 	return validateGetResponse(rows.map((r) => r.data));
 }
 
-export async function get(params: GetRequest): Promise<GetResponse> {
+export async function create(params: CreateRequest): Promise<CreateResponse> {
 	assertMarketplaceRules(params);
-	return marketplaceGetBody(params);
-}
-
-async function marketplaceCreateBody(
-	params: CreateRequest,
-): Promise<CreateResponse> {
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
@@ -96,9 +84,8 @@ async function marketplaceCreateBody(
 	return response;
 }
 
-async function marketplaceUpdateBody(
-	params: UpdateRequest,
-): Promise<UpdateResponse> {
+export async function update(params: UpdateRequest): Promise<UpdateResponse> {
+	assertMarketplaceRules(params);
 	const { resource, filter, data: dataPayload } = params;
 	const nowIso = new Date().toISOString();
 
@@ -119,14 +106,4 @@ async function marketplaceUpdateBody(
 	const response = validateUpdateResponse(row);
 	emitDataChanged(resource, "update", row.data);
 	return response;
-}
-
-export async function create(params: CreateRequest): Promise<CreateResponse> {
-	assertMarketplaceRules(params);
-	return marketplaceCreateBody(params);
-}
-
-export async function update(params: UpdateRequest): Promise<UpdateResponse> {
-	assertMarketplaceRules(params);
-	return marketplaceUpdateBody(params);
 }

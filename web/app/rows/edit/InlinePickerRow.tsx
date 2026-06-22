@@ -1,4 +1,5 @@
 import type { RowConfig } from "../../types/row";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { defineRow } from "../defineRow";
 import RadioButton from "../design-system/RadioButton";
 import { RowLayout } from "../design-system/RowLayout";
@@ -7,7 +8,7 @@ export default defineRow("InlinePickerRow", {
 	config: {
 		type: "InlinePicker",
 		actions: [],
-		source: "{durations}",
+		source: `{${MARKETPLACE_RESOURCE.DURATIONS}}`,
 		visible: "true",
 		view: {
 			content: {
@@ -15,7 +16,7 @@ export default defineRow("InlinePickerRow", {
 				format: "{$datum.value}",
 			},
 		},
-		destination: "{item.distance}",
+		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.distance}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.view.content.title}>

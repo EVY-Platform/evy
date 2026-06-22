@@ -10,7 +10,7 @@ import XCTest
 @MainActor
 final class EVYDraftBindingTests: XCTestCase {
   func testBindingSingleUUIDUsesEphemeralScope() throws {
-    let uuid = "00000000-0000-4000-8000-000000000001"
+    let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
     let binding = try EVYDraft.binding(parsedProps: uuid, scopeId: nil)
     XCTAssertEqual(binding.scopeId, "ephemeral:\(uuid)")
     XCTAssertEqual(binding.pathSegments, [uuid])
@@ -28,7 +28,7 @@ final class EVYDraftBindingTests: XCTestCase {
   }
 
   func testBindingUUIDWithMoreSegmentsIsNotEphemeralShortcut() throws {
-    let uuid = "00000000-0000-4000-8000-000000000001"
+    let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
     let binding = try EVYDraft.binding(
       parsedProps: "\(uuid).foo",
       scopeId: nil
@@ -48,7 +48,7 @@ final class EVYDraftBindingTests: XCTestCase {
   }
 
   func testParseDraftKeySplitsOnLastColonForEphemeralKeys() throws {
-    let uuid = "00000000-0000-4000-8000-000000000001"
+    let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
     let binding = try EVYDraft.binding(parsedProps: uuid, scopeId: nil)
 
     let parsedBinding = try XCTUnwrap(EVYDraft.Binding.parseDraftKey(binding.draftKey))
@@ -76,7 +76,7 @@ final class EVYDraftBindingTests: XCTestCase {
   }
 
   func testScopeEntityKeyReturnsNilForReservedScopes() {
-    let uuid = "00000000-0000-4000-8000-000000000001"
+    let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
 
     XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "flow:browse"))
     XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "app:unscoped"))

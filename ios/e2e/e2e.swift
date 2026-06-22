@@ -5,6 +5,8 @@
 
 import XCTest
 
+private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceResource.items.rawValue
+
 // MARK: - Minimal WebSocket Emitter for E2E Tests
 
 actor WSEmitter {
@@ -28,11 +30,11 @@ actor WSEmitter {
 
   func applySDUI(flowData: [String: Any], flowId: String) async throws {
     let existing = try await getResource(
-      service: "evy", resource: "sdui", filter: ["id": flowId])
+      service: EVY_CORE_SERVICE, resource: "sdui", filter: ["id": flowId])
     let existingArray = existing as? [Any]
     let method = existingArray?.isEmpty == false ? "update" : "create"
     let params: [String: Any] = [
-      "service": "evy",
+      "service": EVY_CORE_SERVICE,
       "resource": "sdui",
       "filter": ["id": flowId],
       "data": flowData,
@@ -42,7 +44,7 @@ actor WSEmitter {
 
   func updateSDUI(flowData: [String: Any], flowId: String) async throws {
     let params: [String: Any] = [
-      "service": "evy",
+      "service": EVY_CORE_SERVICE,
       "resource": "sdui",
       "filter": ["id": flowId],
       "data": flowData,
@@ -146,27 +148,27 @@ class E2ETestBase: XCTestCase {
               title: "Title",
               value: "{title}",
               placeholder: "Item",
-              destination: "{item.title}"
+              destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
             ),
             Self.inputRow(
               id: "668aeb79-d8ba-43b7-9619-07f91d0a1908",
               title: "Price",
               value: "{formatCurrency(price)}",
               placeholder: "0",
-              destination: "{buildCurrency(item.price)}"
+              destination: "{buildCurrency(\(MARKETPLACE_ITEMS_RESOURCE_ID).price)}"
             ),
             Self.inputRow(
               id: "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
               title: "Width",
               value: "{formatDimension(width)}",
               placeholder: "0",
-              destination: "{item.width}"
+              destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).width}"
             ),
           ],
           "footer": Self.buttonRow(
             id: "1cb41189-6fa5-4562-996a-7cefb88a08ca",
             label: "Submit",
-            action: "{create(marketplace,item)}"
+            action: "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
           ),
         ]
       ],
@@ -465,22 +467,22 @@ class E2ETestBase: XCTestCase {
       "pages": [
         [
           "id": pageId,
-          "title": "{item.title}",
+          "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
           "rows": [
             Self.textRow(
               id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
               title: "My item is called",
-              text: "{item.title}"
+              text: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
             ),
             Self.textRow(
               id: "d4e5f6a7-b8c9-4012-d345-6789abcdef01",
               title: "App payments accepted",
-              visible: "{item.payment_methods.app == true}"
+              visible: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).payment_methods.app == true}"
             ),
             Self.textRow(
               id: "e5f6a7b8-c9d0-4123-e456-789abcdef012",
               title: "Cash accepted",
-              visible: "{item.payment_methods.cash == true}"
+              visible: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).payment_methods.cash == true}"
             ),
           ],
           "footer": Self.buttonRow(
@@ -508,8 +510,8 @@ class E2ETestBase: XCTestCase {
       data["payment_methods"] = paymentMethods
     }
     _ = try await emitter.createResource(
-      service: "marketplace",
-      resource: "items",
+      service: MARKETPLACE_SERVICE,
+      resource: MARKETPLACE_ITEMS_RESOURCE_ID,
       filter: ["id": selectedItemId],
       data: data
     )
@@ -759,10 +761,12 @@ final class WebSocketE2ETests: E2ETestBase {
       "View item page should show the static text row title")
     XCTAssertTrue(
       app.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
-      "View item page should resolve {item.title} from the item id passed in navigate query")
+      "View item page should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
+    )
     XCTAssertTrue(
       app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
-      "View item page title should resolve {item.title} from the item id passed in navigate query")
+      "View item page title should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
+    )
   }
 
   @MainActor
@@ -814,10 +818,12 @@ final class WebSocketE2ETests: E2ETestBase {
 
     XCTAssertTrue(
       app.staticTexts["Cash accepted"].waitForExistence(timeout: 10),
-      "Cash payment row should be visible when item.payment_methods.cash is true")
+      "Cash payment row should be visible when \(MARKETPLACE_ITEMS_RESOURCE_ID).payment_methods.cash is true"
+    )
     XCTAssertFalse(
       app.staticTexts["App payments accepted"].waitForExistence(timeout: 2),
-      "App payment row should be hidden when item.payment_methods.app is false")
+      "App payment row should be hidden when \(MARKETPLACE_ITEMS_RESOURCE_ID).payment_methods.app is false"
+    )
   }
 
   @MainActor
@@ -842,11 +848,14 @@ final class WebSocketE2ETests: E2ETestBase {
     let scrollView = app.scrollViews.firstMatch
     XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
 
-    let titleFieldId = "textField_{item.title}"
-    let priceFieldIds = ["textField_{item.price}", "textField_{buildCurrency(item.price)}"]
-    let priceTokens = ["item.price", "buildCurrency"]
-    let widthFieldId = "textField_{item.width}"
-    let widthTokens = ["item.width"]
+    let titleFieldId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
+    let priceFieldIds = [
+      "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).price}",
+      "textField_{buildCurrency(\(MARKETPLACE_ITEMS_RESOURCE_ID).price)}",
+    ]
+    let priceTokens = ["\(MARKETPLACE_ITEMS_RESOURCE_ID).price", "buildCurrency"]
+    let widthFieldId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).width}"
+    let widthTokens = ["\(MARKETPLACE_ITEMS_RESOURCE_ID).width"]
 
     // Title field
     guard let titleTextField = findElement(identifier: titleFieldId) else {
@@ -921,7 +930,8 @@ final class WebSocketE2ETests: E2ETestBase {
       viewItemButton.waitForExistence(timeout: 15),
       "Should return to home after create(item)")
 
-    let itemsPayload = try await emitter.getResource(service: "marketplace", resource: "items")
+    let itemsPayload = try await emitter.getResource(
+      service: MARKETPLACE_SERVICE, resource: MARKETPLACE_ITEMS_RESOURCE_ID)
     XCTAssertTrue(
       Self.marketplaceItemsContainListing(
         title: testTitle, priceValue: 99, widthText: "50", items: itemsPayload),
@@ -936,7 +946,7 @@ final class WebSocketE2ETests: E2ETestBase {
       return "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage))}"
     }
     return
-      "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{items: [\(viewItemId)]})}"
+      "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{\(MARKETPLACE_ITEMS_RESOURCE_ID): [\(viewItemId)]})}"
   }
 
   private static func marketplaceItemsContainListing(

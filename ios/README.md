@@ -6,11 +6,11 @@ iOS consumer app. Minimum iOS version supported: **17.0** (matches `IPHONEOS_DEP
 
 ### Synced data
 
-At startup, the app calls `sync` and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `evy:sdui`, `marketplace:items`, or `marketplace:conditions`). Exact keys are preferred when app code needs a specific backend resource.
+At startup, the app calls `sync` and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `[evy_core_service_id]:sdui`, `[marketplace_service_id]:[items_resource_id]`, or `[marketplace_service_id]:[conditions_resource_id]`). Exact keys are preferred when app code needs a specific backend resource.
 
 Pages can receive query parameters through navigation actions. iOS resolves each query key against already-synced collections and stores the matching entity locally so SDUI bindings render the selected row.
 
-SDUI bindings use plural resource-only names such as `{conditions}` or `{timeslots}`. Edit rows write drafts through plural destinations such as `{item.title}` or `{item.condition}`. Those bindings resolve exact local keys first, then explicitly fall back to synced service resources. Search rows and dynamic ListContainer rows read local/synced data from their `source` and render `view.content.child` templates using `{$datum.}`. This keeps local draft/entity data separate from backend resource data while preserving simple SDUI source strings.
+SDUI bindings and query params should use exact canonical resource IDs from synced `serviceResources`, such as `{[resource_id]}` for collections and `{[resource_id].title}` for entity or draft fields; iOS no longer resolves legacy plural/singular name fallbacks. Search rows and dynamic ListContainer rows read local/synced data from their `source` and render `view.content.child` templates using `{$datum.}`. This keeps local draft/entity data separate from backend resource data while preserving stable SDUI source strings.
 
 ### Search result ordering
 

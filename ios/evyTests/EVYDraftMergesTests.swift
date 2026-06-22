@@ -13,13 +13,13 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
   override func setUp() async throws {
     try await super.setUp()
-    try? EVY.publicStore.deleteAll(namespace: "marketplace", resource: "items")
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = testDraftScope
   }
 
   override func tearDown() async throws {
-    try? EVY.publicStore.deleteAll(namespace: "marketplace", resource: "items")
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
     try await super.tearDown()
@@ -29,9 +29,11 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "title")
     try EVY.updateValue("User Title", at: "{title}")
 
-    try EVY.create(namespace: "marketplace", resource: "items", draftScopeId: testDraftScope)
+    try EVY.create(
+      namespace: EVYNamespace.marketplace, resource: "items", draftScopeId: testDraftScope)
 
-    let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
+    let instances = try EVY.publicStore.getAll(
+      namespace: EVYNamespace.marketplace, resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")
 
     let merged = try instances[0].decoded()
@@ -57,9 +59,11 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     )
     EVY.draftStore.notifyUpdate(binding: priceBinding)
 
-    try EVY.create(namespace: "marketplace", resource: "items", draftScopeId: testDraftScope)
+    try EVY.create(
+      namespace: EVYNamespace.marketplace, resource: "items", draftScopeId: testDraftScope)
 
-    let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
+    let instances = try EVY.publicStore.getAll(
+      namespace: EVYNamespace.marketplace, resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")
 
     let merged = try instances[0].decoded()
@@ -84,15 +88,19 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     let seed1Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("seed-1")]))
     let seed2Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("seed-2")]))
     try EVY.publicStore.create(
-      namespace: "marketplace", resource: "items", id: "seed-1", value: seed1Data, sortIndex: 0)
+      namespace: EVYNamespace.marketplace, resource: "items", id: "seed-1", value: seed1Data,
+      sortIndex: 0)
     try EVY.publicStore.create(
-      namespace: "marketplace", resource: "items", id: "seed-2", value: seed2Data, sortIndex: 1)
+      namespace: EVYNamespace.marketplace, resource: "items", id: "seed-2", value: seed2Data,
+      sortIndex: 1)
 
     EVY.ensureDraftExists(variableName: "title")
     try EVY.updateValue("New Item", at: "{title}")
-    try EVY.create(namespace: "marketplace", resource: "items", draftScopeId: testDraftScope)
+    try EVY.create(
+      namespace: EVYNamespace.marketplace, resource: "items", draftScopeId: testDraftScope)
 
-    let instances = try EVY.publicStore.getAll(namespace: "marketplace", resource: "items")
+    let instances = try EVY.publicStore.getAll(
+      namespace: EVYNamespace.marketplace, resource: "items")
     XCTAssertEqual(instances.count, 3)
     let newItem = try XCTUnwrap(instances.first(where: { $0.id != "seed-1" && $0.id != "seed-2" }))
     XCTAssertEqual(newItem.sortIndex, 2)

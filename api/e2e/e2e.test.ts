@@ -2,6 +2,7 @@ import { Client } from "rpc-websockets";
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import type { UI_Flow, UI_Page, UI_Row } from "evy-types";
 
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { waitForClientOpen } from "../src/tests/wsTestHelpers";
 
 type WSClient = InstanceType<typeof Client>;
@@ -29,7 +30,7 @@ describe("API E2E Tests", () => {
 
 		it("get should succeed without auth (public)", async () => {
 			const result = await unauthClient.call("get", {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 			});
 			expect(Array.isArray(result)).toBe(true);
@@ -38,7 +39,7 @@ describe("API E2E Tests", () => {
 		it("create should reject without auth", async () => {
 			try {
 				await unauthClient.call("create", {
-					service: "evy",
+					service: EVY_CORE_SERVICE,
 					resource: "sdui",
 					data: {
 						id: crypto.randomUUID(),
@@ -86,13 +87,13 @@ describe("API E2E Tests", () => {
 			};
 
 			await client.call("create", {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				data: flowData,
 			});
 
 			const result = await client.call("get", {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 			});
 
@@ -132,7 +133,7 @@ describe("API E2E Tests", () => {
 			};
 
 			const result = await client.call("create", {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				data: flowData,
 			});
@@ -160,7 +161,7 @@ describe("API E2E Tests", () => {
 			};
 
 			const created = await client.call("create", {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				data: createFlowData,
 			});
@@ -171,7 +172,7 @@ describe("API E2E Tests", () => {
 			};
 
 			const updated = await client.call("update", {
-				service: "evy",
+				service: EVY_CORE_SERVICE,
 				resource: "sdui",
 				filter: { id: created.id },
 				data: updateFlowData,

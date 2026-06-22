@@ -80,14 +80,18 @@ describe("parseText", () => {
 
 	it("resolves findFirst to the data argument for mock data", () => {
 		expect(
-			parseText("{findFirst(selling_reasons, item.selling_reason_id)}"),
-		).toBe("selling_reasons");
+			parseText(
+				"{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id)}",
+			),
+		).toBe("e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8");
 	});
 
 	it("keeps text after findFirst as a normal suffix", () => {
 		expect(
-			parseText("{findFirst(selling_reasons, item.selling_reason_id)}.value"),
-		).toBe("selling_reasons.value");
+			parseText(
+				"{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id)}.value",
+			),
+		).toBe("e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8.value");
 	});
 
 	it("keeps dimension preview safe for unresolved values", () => {
@@ -96,6 +100,32 @@ describe("parseText", () => {
 
 	it("replaces property path with its raw prop path", () => {
 		expect(parseText("Hello {item.title}")).toBe("Hello item.title");
+	});
+
+	it("displays resource ID-prefixed paths with mapped entity names", () => {
+		const resourceMap = new Map([
+			["dc28ed59-298e-493c-8ff3-3e60f2ebccbd", "item"],
+		]);
+		const otherMap = new Map([
+			["dc28ed59-298e-493c-8ff3-3e60f2ebccbd", "listing"],
+		]);
+
+		expect(
+			parseText(
+				"Hello {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+				undefined,
+				resourceMap,
+			),
+		).toBe("Hello item.title");
+
+		// Different map, different result — no global state leakage
+		expect(
+			parseText(
+				"Hello {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+				undefined,
+				otherMap,
+			),
+		).toBe("Hello listing.title");
 	});
 
 	it("strips comparison expressions in braces", () => {
