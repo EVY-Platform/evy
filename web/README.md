@@ -51,6 +51,7 @@ graph TD
         useFlows[useFlows]
         useRowById[useRowById]
         useUrlSync[useUrlSync]
+        useParseText[useParseText]
     end
 
     subgraph dragdrop [Drag and Drop]
@@ -82,7 +83,17 @@ graph TD
         DropIndicator[dropIndicator]
     end
 
+    subgraph parsing [Text Parsing]
+        ResourceNames[resourceNameById]
+        ResourceMap[resourceIdToEntityName]
+        ParseText[parseText]
+        ResourcePathDisplay[resourcePathDisplay]
+    end
+
     App --> AppProvider
+    AppProvider --> ResourceNames
+    ResourceNames --> ResourceMap
+    ResourceMap --> FlowsContext
     AppProvider --> FlowsContext
     AppProvider --> DragContext
     FlowsContext --> PageReducer
@@ -109,6 +120,7 @@ graph TD
     CanvasPageFrame --> AppPage
 
     AppPage --> usePageDropTarget
+    AppPage --> useParseText
     AppPage --> DraggableRowContainer
 
     ConfigPanel --> ActionEditor
@@ -128,7 +140,14 @@ graph TD
     RowPrimitive --> DropIndicator
     EditRows --> designsystem
     ActionRows --> designsystem
+    ViewRows --> useParseText
+    EditRows --> useParseText
+    useParseText --> FlowsContext
+    useParseText --> ParseText
+    ParseText --> ResourcePathDisplay
 ```
+
+`AppProvider` derives `resourceIdToEntityName` from synced `serviceResources` during render and exposes it through `FlowsContext`. Components that render SDUI text use `useParseText()`, which passes that map into `parseText` explicitly so canonical resource IDs can display as friendly labels on the first paint without module-level mutable state or an effect-driven initialization step.
 
 ## Getting Started
 
