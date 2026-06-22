@@ -236,12 +236,14 @@ describe("create", () => {
 					title: "Page 1",
 					rows: [
 						{
-							type: "Text",
+							type: "TextExpand",
 							view: {
 								content: {
 									title: "Hello",
 									text: "World",
+									expandLabel: "Read more",
 								},
+								max_lines: "3",
 							},
 							actions: [],
 						},

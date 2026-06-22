@@ -17,7 +17,7 @@ const PAGE_ID = "55e427ac-263c-441f-9673-f60627b1baea";
 const ROW_A = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
 const ROW_B = "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e";
 
-function makeServerRow(overrides: Partial<ServerRow> = {}): ServerRow {
+function makeServerRow(overrides: Record<string, unknown> = {}): ServerRow {
 	return {
 		id: ROW_A,
 		source: "",
@@ -25,7 +25,7 @@ function makeServerRow(overrides: Partial<ServerRow> = {}): ServerRow {
 		actions: [],
 		view: { content: {} },
 		...overrides,
-	} as ServerRow;
+	} as unknown as ServerRow;
 }
 
 describe("normalizeServerRow", () => {
@@ -49,7 +49,7 @@ describe("normalizeServerRow", () => {
 		});
 	});
 
-	it("merges compact Text content string fields from defaults when missing", () => {
+	it("does not merge Text content string fields from defaults when missing", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "Text",
@@ -62,10 +62,9 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		expect(n.view.content).toMatchObject({
+		expect(n.view.content).toEqual({
 			title: "T",
 			subtitle: "Sub",
-			icon: "::star::",
 		});
 	});
 
@@ -87,24 +86,23 @@ describe("normalizeServerRow", () => {
 		expect((n.view.content as { text?: string }).text).toBe("extra");
 	});
 
-	it("normalizes Map row and replaces non-string location with palette default", () => {
+	it("normalizes Map row without replacing live non-string location", () => {
+		const location = { latitude: -33.8688, longitude: 151.2093 };
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "Map",
 				view: {
 					content: {
 						title: "Pickup location",
-						location: { latitude: -33.8688, longitude: 151.2093 },
+						location,
 					},
 				},
 			}),
 		);
 
-		expect(n.view.content).toMatchObject({
+		expect(n.view.content as unknown).toEqual({
 			title: "Pickup location",
-			location:
-				"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.location}",
-			subtitle: "Map row subtitle",
+			location,
 		});
 	});
 
@@ -140,7 +138,7 @@ describe("normalizeServerRow", () => {
 		});
 	});
 
-	it("normalizes nested child template for ListContainer", () => {
+	it("normalizes nested child template for ListContainer without injecting defaults", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "ListContainer",
@@ -165,14 +163,12 @@ describe("normalizeServerRow", () => {
 
 		expect(n.view.content.child?.type).toBe("Text");
 		expect(n.view.content.child?.destination).toBe("");
-		expect(n.view.content.child?.view.content).toMatchObject({
+		expect(n.view.content.child?.view.content).toEqual({
 			title: "{$datum.title}",
-			subtitle: "Subtitle",
-			icon: "::star::",
 		});
 	});
 
-	it("uses default segments when segments key is omitted", () => {
+	it("does not use default segments when segments key is omitted", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "SelectSegmentContainer",
@@ -185,10 +181,13 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		expect(n.view.content.segments).toEqual(["X", "Y", "Z"]);
+		expect(n.view.content).toEqual({
+			title: "Tabs",
+			children: [],
+		});
 	});
 
-	it("merges Search child from palette when server omits child", () => {
+	it("does not merge Search child from palette when server omits child", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "Search",
@@ -203,11 +202,9 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		expect(n.view.content.child?.type).toBe("Text");
-		expect(n.view.content.child?.view.content).toMatchObject({
-			title: "{$datum.value}",
-			subtitle: "",
-			icon: "",
+		expect(n.view.content).toEqual({
+			title: "Find",
+			placeholder: "Search",
 		});
 	});
 });
@@ -268,7 +265,7 @@ describe("decodeRow unknown types", () => {
 		} as ServerFlow;
 		const decoded = decodeFlows([flow])[0];
 		const row = decoded.pages[0]?.rows[0];
-		expect(row?.config.type).toBe("FutureRow");
+		expect(String(row?.config.type)).toBe("FutureRow");
 		expect(row?.config.visible).toBe(
 			"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
 		);
@@ -279,16 +276,22 @@ describe("decodeRow unknown types", () => {
 });
 
 describe("buildRowForNewPageFromBase", () => {
-	it("produces a Search row with a non-palette id for the nested template child", () => {
+	it("preserves only title test text and structural child for a new Search row", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 		const row = buildRowForNewPageFromBase(SearchRow, newId);
 		expect(row.id).toBe(newId);
 		expect(row.config.type).toBe("Search");
 		expect(row.config.view.content.title).toBe("Search row title");
+		expect(row.config.view.content.placeholder).toBe("");
 		const child = row.config.view.content.child;
 		invariant(child, "search row template child");
 		const childId = child.id;
 		expect(childId).toBeDefined();
 		expect(childId).not.toBe("09f07052-c27c-4116-a508-a2bcb074c827");
+		expect(child.config.view.content).toMatchObject({
+			title: "{$datum.value}",
+			subtitle: "",
+			label: "",
+		});
 	});
 });

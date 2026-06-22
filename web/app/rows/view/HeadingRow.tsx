@@ -3,34 +3,31 @@ import EVYText from "../design-system/EVYText";
 import { lineClampStyle } from "../design-system/lineClamp";
 import { defineRow } from "../defineRow";
 
-export default defineRow("TextRow", {
+export default defineRow("HeadingRow", {
 	config: {
-		type: "Text",
+		type: "Heading",
 		actions: [],
 		source: "",
 		visible: "true",
 		view: {
 			content: {
-				title: "Text row title",
-				subtitle: "Subtitle",
+				title: "Heading row title",
 				label: "Label",
 			},
 		},
 	} satisfies RowConfig,
 	render: (row) => {
-		const { title = "", subtitle = "", label = "" } = row.config.view.content;
+		const { title = "", label = "" } = row.config.view.content;
 
 		return (
 			<div className="evy-flex evy-flex-row evy-items-center evy-gap-2 evy-p-2">
 				<div className="evy-flex-1 evy-min-w-0">
 					{title.trim() ? (
-						<p className="evy-text-md" style={lineClampStyle(1)}>
+						<p
+							className="evy-text-md evy-font-semibold"
+							style={lineClampStyle(1)}
+						>
 							<EVYText text={title} />
-						</p>
-					) : null}
-					{subtitle.trim() ? (
-						<p className="evy-text-sm evy-text-gray" style={lineClampStyle(3)}>
-							<EVYText text={subtitle} />
 						</p>
 					) : null}
 				</div>

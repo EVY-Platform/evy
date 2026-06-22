@@ -570,17 +570,8 @@ test.describe("Child Page Rendering", () => {
 			activePage.getByText("Search Row Title", { exact: true }),
 		).toBeVisible();
 
-		// The Search row has an existing child template, so the child page is shown
-		// instead of a new blank child page.
-		await expect(page.getByTestId("child-page")).toBeVisible();
-		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
-
-		// The child page heading should say "Search result" for a Search parent
-		await expect(
-			page
-				.getByTestId("child-page")
-				.getByRole("heading", { name: "Search result" }),
-		).toBeVisible();
+		await expect(page.getByTestId("blank-child-page")).toBeVisible();
+		await expect(page.getByTestId("child-page")).not.toBeVisible();
 
 		// Verify the Search row only shows its own content, not preview rows.
 		// There should be no "Example tag" preview text on the main page.

@@ -12,17 +12,34 @@
 			"placeholder": "string"
 		}
 	},
+	"Heading": {
+		"content": {
+			"title": "string",
+			"label": "string"
+		}
+	},
 	"Text": {
+		"content": {
+			"title": "string",
+			"subtitle": "string",
+			"label": "string"
+		}
+	},
+	"TextAction": {
+		"content": {
+			"title": "string",
+			"subtitle": "string",
+			"action": "string"
+		}
+	},
+	"TextExpand": {
 		"view": {
 			"max_lines": "string"
 		},
 		"content": {
 			"title": "string",
-			"subtitle": "string",
-			"icon": "string",
 			"text": "string",
-			"placeholder": "string",
-			"action": "string"
+			"expandLabel": "string"
 		}
 	},
 	"Map": {

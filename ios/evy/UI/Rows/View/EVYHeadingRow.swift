@@ -1,17 +1,10 @@
-//
-//  EVYTextRow.swift
-//  evy
-//
-//  Created by Geoffroy Lesage on 29/6/2024.
-//
-
 import SwiftUI
 
-struct EVYTextRow: View {
+struct EVYHeadingRow: View {
 
-  private let view: TextRowViewData
+  private let view: HeadingRowViewData
 
-  init(view: TextRowViewData) {
+  init(view: HeadingRowViewData) {
     self.view = view
   }
 
@@ -21,15 +14,9 @@ struct EVYTextRow: View {
     HStack(alignment: .center, spacing: 8) {
       VStack(alignment: .leading) {
         if !content.title.isEmpty {
-          EVYTextView(content.title)
+          EVYTextView(content.title).toText().bold()
             .frame(maxWidth: .infinity, alignment: .leading)
             .lineLimit(1)
-            .truncationMode(.tail)
-        }
-        if !content.subtitle.isEmpty {
-          EVYTextView(content.subtitle, style: .info)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .lineLimit(3)
             .truncationMode(.tail)
         }
       }
