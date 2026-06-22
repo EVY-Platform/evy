@@ -1,28 +1,6 @@
 # evy iOS App
 
-iOS consumer app. Minimum iOS version supported: **17.0** (matches `IPHONEOS_DEPLOYMENT_TARGET` in `evy.xcodeproj`).
-
-**Types:** Schema and codegen are documented in [`docs/evy/data.md`](../docs/evy/data.md) and [`docs/evy/sdui.md`](../docs/evy/sdui.md). Run `bun run types:generate` from the repo root after cloning or schema changes (see [Documentation](../README.md#documentation)). Generated Swift under `types/generated/swift/` is not committed; the app references generated SDUI, core resource, OS, file, and API models, while transport and UI code such as `EVYFlow`, `EVYPage`, `EVYRow`, and `EVYWebsocket` remain handwritten where needed.
-
-### Synced data
-
-At startup, the app calls `sync` and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `[evy_core_service_id]:sdui`, `[marketplace_service_id]:[items_resource_id]`, or `[marketplace_service_id]:[conditions_resource_id]`). Exact keys are preferred when app code needs a specific backend resource.
-
-Pages can receive query parameters through navigation actions. iOS resolves each query key against already-synced collections and stores the matching entity locally so SDUI bindings render the selected row.
-
-SDUI bindings and query params should use exact canonical resource IDs from synced `serviceResources`, such as `{[resource_id]}` for collections and `{[resource_id].title}` for entity or draft fields; iOS no longer resolves legacy plural/singular name fallbacks. Search rows and dynamic ListContainer rows read local/synced data from their `source` and render `view.content.child` templates using `{$datum.}`. This keeps local draft/entity data separate from backend resource data while preserving stable SDUI source strings.
-
-### Search result ordering
-
-When the backend returns a collection (via sync or a `dataChanged` notification envelope), the
-response includes `metadata.order` — an array of IDs in display order. iOS stores each item with
-a `sortIndex` equal to its position in that array, so `getAll` returns items in backend order.
-Items created locally or received via single-item notifications are assigned `sortIndex =
-maxExisting + 1` so they append to the end. No separate order-state layer is needed.
-
-### File uploads and remote files
-
-Uploads send binary frames over the authenticated WebSocket and finalise with a `create` RPC. If finalisation fails, a `cancelUpload` RPC cleans up the staged upload. Remote files are fetched via a `get` RPC and cached locally for rendering.
+The EVY app! Open Xcode, hit run, and Bob's your uncle.
 
 ### Architecture
 
@@ -126,3 +104,11 @@ flowchart LR
     EVYState -. drives .-> Views
     EVYState -. drives .-> Atoms
 ```
+
+### Architectural highlights
+
+**sync**: At startup, the app calls the API and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `[evy_core_service_id]:sdui`, `[marketplace_service_id]:[items_resource_id]`, or `[marketplace_service_id]:[conditions_resource_id]`).
+
+**page parameters**: Pages can receive query parameters through navigation actions, think of them like URL query parameters in web. They get resolved against resources already synced by the app, or draft data in progress (eg a booking you are in the process of making).
+
+**file uploads**: send binary frames over the authenticated WebSocket and finalise with a `create` RPC. If finalisation fails, a `cancelUpload` RPC cleans up the staged upload. Remote files are fetched via a `get` RPC and cached locally for rendering.

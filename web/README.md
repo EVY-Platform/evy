@@ -147,8 +147,6 @@ graph TD
     ParseText --> ResourcePathDisplay
 ```
 
-`AppProvider` derives `resourceIdToEntityName` from synced `serviceResources` during render and exposes it through `FlowsContext`. Components that render SDUI text use `useParseText()`, which passes that map into `parseText` explicitly so canonical resource IDs can display as friendly labels on the first paint without module-level mutable state or an effect-driven initialization step.
-
 ## Getting Started
 
 Setup (Bun, Docker, copying `.env`): [README § Setup](../README.md#setup) and [§ Running Services](../README.md#running-services). The web app only needs a reachable API over `API_URL` (no direct Postgres).

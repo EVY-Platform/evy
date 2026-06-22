@@ -1,12 +1,12 @@
 # EVY API
 
-A JSON-RPC 2.0 WebSocket API gateway that routes data requests by `service` / `resource`, handles evy core resources directly, forwards non-evy services over gRPC, and pushes `dataChanged` notifications when data changes.
+WebSocket API that routes data requests to the proper service, handles evy core resources, and pushes/forwards `dataChanged` notifications when data changes.
 
 ## Architecture
 
 ### Request dispatch
 
-Incoming JSON-RPC messages are authenticated where required, validated, then dispatched based on `service`. Requests for `service: "evy"` are handled by evy core resource modules. All other services are forwarded to the appropriate backend over gRPC. Binary upload frames follow a separate path and are only accepted on authenticated connections.
+Incoming JSON-RPC messages are authenticated where required, validated, then dispatched based on `service`. Requests for `service: "evy"` are handled by evy core resource modules. All other services are forwarded to the appropriate backend over gRPC.
 
 ```mermaid
 sequenceDiagram
@@ -63,18 +63,6 @@ sequenceDiagram
     services->>index: broadcast event payload
     index->>Client: JSON-RPC notification
 ```
-
-### Shared contracts
-
-Broader schema layout: [docs/evy/data.md § Sources](../docs/evy/data.md#sources). Commonly used paths:
-
-| File | Purpose |
-|------|---------|
-| [`types/schema/service.proto`](../types/schema/service.proto) | gRPC IDL implemented by every non-`evy` backend |
-| [`types/schema/data/data.schema.json`](../types/schema/data/data.schema.json) | Persistence row schemas, including file metadata |
-| [`types/schema/files/file.schema.json`](../types/schema/files/file.schema.json) | File metadata, binary response, and upload models |
-| [`types/schema/sdui/evy.schema.json`](../types/schema/sdui/evy.schema.json) | `UI_Flow` / `UI_Page` / `UI_Row` contract |
-| [`types/schema/rpc/*.schema.json`](../types/schema/rpc) | JSON-RPC params and responses for all RPC methods |
 
 ## Prerequisites
 

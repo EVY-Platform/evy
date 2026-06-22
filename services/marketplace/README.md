@@ -1,6 +1,6 @@
 # EVY Marketplace service
 
-gRPC server for marketplace domain data (items, conditions, tags, selling reasons). SDUI flows and evy core resources are served by the main [`api`](../../api/README.md).
+API powering the EVY marketplace to buy and sell your stuff.
 
 ## Architecture
 
@@ -25,8 +25,6 @@ flowchart LR
     bus -- SubscribeEvents stream --> api
     api -- dataChanged JSON-RPC --> client
 ```
-
-The service implements `evy.Service` from [`types/schema/service.proto`](../../types/schema/service.proto). Its gRPC methods are `Get`, `Create`, `Update`, and `SubscribeEvents`: `Get`, `Create`, and `Update` are unary RPCs with JSON-encoded payloads, while `SubscribeEvents` is a server-streaming RPC that pushes `dataChanged` events to the `api` after each successful write. Resource metadata is owned by the API core `serviceResources` table.
 
 ## Environment
 
