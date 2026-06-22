@@ -6,7 +6,7 @@ import type {
 	UI_RowContent as ServerRowContent,
 } from "evy-types";
 
-import type { Row, RowConfig } from "../types/row";
+import type { Row } from "../types/row";
 import type { UI_Flow, UI_Page } from "../types/flow";
 import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
@@ -42,25 +42,20 @@ export function normalizeServerRow(row: ServerRow): ServerRow {
 	if (!baseRow) {
 		return normalizeUnknownServerRow(row);
 	}
-	const def = baseRow.config;
-	const mergedContent = normalizeRowContentAgainstDefaults(
-		row.view.content,
-		def.view.content,
-	);
-	const mergedView: ServerRow["view"] = {
-		content: mergedContent,
+	const view: ServerRow["view"] = {
+		content: normalizeServerRowContent(row.view.content),
 	};
-	if (row.view.max_lines !== undefined || def.view.max_lines !== undefined) {
-		mergedView.max_lines = row.view.max_lines ?? def.view.max_lines ?? "";
+	if (row.view.max_lines !== undefined) {
+		view.max_lines = row.view.max_lines;
 	}
 	return {
 		id: row.id,
 		type: row.type,
-		source: row.source ?? def.source ?? "",
-		destination: row.destination ?? def.destination ?? "",
-		actions: row.actions ?? def.actions ?? [],
-		visible: row.visible ?? def.visible ?? "true",
-		view: mergedView,
+		source: row.source ?? "",
+		destination: row.destination ?? "",
+		actions: row.actions ?? [],
+		visible: row.visible ?? "true",
+		view,
 	};
 }
 
@@ -99,86 +94,12 @@ function normalizeUnknownServerRow(row: ServerRow): ServerRow {
 	};
 }
 
-function mergeRowContent(
-	incoming: Record<string, unknown>,
-	defaults: Record<string, unknown>,
-	transformRow: (row: ServerRow | Row) => ServerRow,
-	transformDefaultRow: (row: Row) => ServerRow,
-): ServerRowContent {
-	const allKeys = new Set([...Object.keys(defaults), ...Object.keys(incoming)]);
-	const out: Record<string, unknown> = {};
-
-	for (const key of allKeys) {
-		if (key === "children") {
-			const defaultChildren = Array.isArray(defaults.children)
-				? defaults.children
-				: [];
-			const rawChildren: unknown =
-				"children" in incoming
-					? Array.isArray(incoming.children)
-						? incoming.children
-						: []
-					: defaultChildren;
-			out.children = (rawChildren as Row[]).map((child) =>
-				transformRow(child as unknown as ServerRow),
-			);
-			continue;
-		}
-		if (key === "child") {
-			if (
-				"child" in incoming &&
-				incoming.child !== undefined &&
-				incoming.child !== null
-			) {
-				out.child = transformRow(incoming.child as ServerRow);
-			} else if (defaults.child !== undefined && defaults.child !== null) {
-				out.child = transformDefaultRow(defaults.child as Row);
-			}
-			continue;
-		}
-		if (key === "segments") {
-			const defaultSegments = Array.isArray(defaults.segments)
-				? defaults.segments
-				: [];
-			const rawSegments: unknown =
-				"segments" in incoming
-					? Array.isArray(incoming.segments) &&
-						incoming.segments.every((x): x is string => typeof x === "string")
-						? incoming.segments
-						: []
-					: defaultSegments;
-			out.segments = rawSegments;
-			continue;
-		}
-
-		const defaultValue = defaults[key];
-		const incomingValue = incoming[key];
-		if (typeof defaultValue === "string" || typeof incomingValue === "string") {
-			out[key] =
-				typeof incomingValue === "string"
-					? incomingValue
-					: typeof defaultValue === "string"
-						? defaultValue
-						: "";
-		} else if (incomingValue !== undefined) {
-			out[key] = incomingValue;
-		} else if (defaultValue !== undefined) {
-			out[key] = defaultValue;
-		}
-	}
-
-	return out as unknown as ServerRowContent;
-}
-
-function normalizeRowContentAgainstDefaults(
+function normalizeServerRowContent(
 	incoming: ServerRowContent,
-	defaults: RowConfig["view"]["content"],
 ): ServerRowContent {
-	return mergeRowContent(
+	return transformRowContent(
 		incoming as unknown as Record<string, unknown>,
-		defaults as unknown as Record<string, unknown>,
-		(child) => normalizeServerRow(child as ServerRow),
-		(defChild) => normalizeServerRow(rowToServerRow(defChild)),
+		normalizeServerRow,
 	);
 }
 
@@ -211,16 +132,44 @@ function rowToServerRow(row: Row): ServerRow {
 	} as ServerRow;
 }
 
-function encodeMergeRowContent(
-	incomingRowContent: Record<string, unknown>,
-	defaults: RowConfig["view"]["content"],
-): ServerRowContent {
-	return mergeRowContent(
-		incomingRowContent,
-		defaults as unknown as Record<string, unknown>,
-		(child) => encodeRowToServerRow(child as Row),
-		(defChild) => encodeRowToServerRow(defChild),
+function encodeRowContent(incoming: Record<string, unknown>): ServerRowContent {
+	return transformRowContent(incoming, (row) =>
+		encodeRowToServerRow(row as unknown as Row),
 	);
+}
+
+function transformRowContent(
+	incoming: Record<string, unknown>,
+	transformRow: (row: ServerRow) => ServerRow,
+): ServerRowContent {
+	const out: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(incoming)) {
+		if (key === "children") {
+			out.children = Array.isArray(value)
+				? value.map((child) => transformRow(child as ServerRow))
+				: [];
+			continue;
+		}
+		if (key === "child") {
+			if (value !== undefined && value !== null) {
+				out.child = transformRow(value as ServerRow);
+			}
+			continue;
+		}
+		if (key === "segments") {
+			out.segments = Array.isArray(value)
+				? value.filter(
+						(segment): segment is string => typeof segment === "string",
+					)
+				: [];
+			continue;
+		}
+		out[key] = value;
+	}
+	if (typeof out.title !== "string") {
+		out.title = "";
+	}
+	return out as unknown as ServerRowContent;
 }
 
 function encodeRowToServerRow(row: Row): ServerRow {
@@ -228,29 +177,22 @@ function encodeRowToServerRow(row: Row): ServerRow {
 	if (!baseRow) {
 		return normalizeUnknownServerRow(rowToServerRow(row));
 	}
-	const def = baseRow.config;
-	const mergedContent = encodeMergeRowContent(
-		row.config.view.content as unknown as Record<string, unknown>,
-		def.view.content,
-	);
-	const mergedView: ServerRow["view"] = {
-		content: mergedContent,
+	const view: ServerRow["view"] = {
+		content: encodeRowContent(
+			row.config.view.content as unknown as Record<string, unknown>,
+		),
 	};
-	if (
-		row.config.view.max_lines !== undefined ||
-		def.view.max_lines !== undefined
-	) {
-		mergedView.max_lines =
-			row.config.view.max_lines ?? def.view.max_lines ?? "";
+	if (row.config.view.max_lines !== undefined) {
+		view.max_lines = row.config.view.max_lines;
 	}
 	return {
 		id: row.id,
 		type: row.config.type,
-		source: row.config.source ?? def.source ?? "",
-		destination: row.config.destination ?? def.destination ?? "",
-		actions: row.config.actions ?? def.actions ?? [],
-		visible: row.config.visible ?? def.visible ?? "true",
-		view: mergedView,
+		source: row.config.source ?? "",
+		destination: row.config.destination ?? "",
+		actions: row.config.actions ?? [],
+		visible: row.config.visible ?? "true",
+		view,
 	};
 }
 
@@ -337,7 +279,35 @@ function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {
 	}
 }
 
-/** Clone a palette base row for `ADD_ROW`: encode to ServerRow, deep-clone, assign fresh ids, decode. */
+function resetContentToTestTitleOnly(
+	content: ServerRowContent,
+): ServerRowContent {
+	const resetContent: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(
+		content as unknown as Record<string, unknown>,
+	)) {
+		if (key === "title") {
+			resetContent.title = typeof value === "string" ? value : "";
+			continue;
+		}
+		if (key === "children" || key === "segments") {
+			resetContent[key] = [];
+			continue;
+		}
+		if (key === "child") {
+			if (value !== undefined && value !== null) {
+				resetContent.child = value;
+			}
+			continue;
+		}
+		resetContent[key] = typeof value === "string" ? "" : value;
+	}
+	if (typeof resetContent.title !== "string") {
+		resetContent.title = "";
+	}
+	return resetContent as unknown as ServerRowContent;
+}
+
 export function buildRowForNewPageFromBase(
 	baseRow: RowComponent,
 	newRowId: string,
@@ -348,7 +318,8 @@ export function buildRowForNewPageFromBase(
 		row: createElement(baseRow, { key: tempId, rowId: tempId }),
 		config: baseRow.config,
 	};
-	const cloned = structuredClone(encodeRowToServerRow(seed));
+	const cloned = structuredClone(rowToServerRow(seed));
+	cloned.view.content = resetContentToTestTitleOnly(cloned.view.content);
 	assignFreshIdsInPlace(cloned, newRowId);
 	return decodeRow(cloned);
 }

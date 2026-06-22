@@ -37,7 +37,7 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 		resizeObserver.observe(textElement);
 
 		return () => resizeObserver.disconnect();
-	});
+	}, [expanded]);
 
 	if (!row) return null;
 

@@ -62,3 +62,27 @@ struct EVYTextExpandRow: View {
     .padding(.horizontal, Constants.majorPadding)
   }
 }
+
+#Preview {
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-text-expand-row",
+        "type": "TextExpand",
+        "source": "",
+        "destination": "",
+        "actions": [],
+        "visible": "true",
+        "view": {
+          "content": {
+            "title": "About this item",
+            "text": "This is a longer description that may be truncated when it exceeds the maximum number of lines configured for this row.",
+            "expandLabel": "Read more"
+          },
+          "max_lines": "3"
+        }
+      }
+      """,
+    failureMessage: "Unable to build text expand row preview"
+  )
+}

@@ -480,10 +480,9 @@ test.describe("Drag & Drop UX", () => {
 
 		const pageContent = getPageContent(page);
 
-		const allRowTypes = [
+		const visibleRowTypes = [
 			"Text row title",
 			"Input list row title",
-			"Button row text",
 			"Calendar row title",
 			"Dropdown row title",
 			"Inline picker row title",
@@ -496,12 +495,13 @@ test.describe("Drag & Drop UX", () => {
 			"List container row title",
 			"Select segment container row title",
 		];
+		const buttonRowText = "Button row text";
 
 		const initialRowCount = await pageContent
 			.locator(SELECTORS.draggableRow)
 			.count();
 
-		for (const rowText of allRowTypes) {
+		for (const rowText of visibleRowTypes) {
 			const sidebarRow = await getSidebarRow(page, rowText);
 			await expect(sidebarRow).toBeVisible();
 			await sidebarRow.dragTo(pageContent);
@@ -510,12 +510,16 @@ test.describe("Drag & Drop UX", () => {
 			await expect(pageRow.getByText(rowText, { exact: true })).toBeVisible();
 		}
 
+		const buttonSidebarRow = await getSidebarRow(page, buttonRowText);
+		await expect(buttonSidebarRow).toBeVisible();
+		await buttonSidebarRow.dragTo(pageContent);
+
 		const finalRowCount = await pageContent
 			.locator(SELECTORS.draggableRow)
 			.count();
-		expect(finalRowCount).toBe(initialRowCount + allRowTypes.length);
+		expect(finalRowCount).toBe(initialRowCount + visibleRowTypes.length + 1);
 
-		for (const rowText of allRowTypes) {
+		for (const rowText of visibleRowTypes) {
 			const pageRow = getPageRow(page, rowText);
 			await pageRow.scrollIntoViewIfNeeded();
 			await expect(pageRow.getByText(rowText, { exact: true })).toBeVisible();

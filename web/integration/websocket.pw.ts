@@ -14,8 +14,10 @@ test.describe("WebSocket Connection States", () => {
 	test("should display loading or error state when no API is available", async ({
 		page,
 	}) => {
-		// Navigate without injecting test flows - this will trigger real WebSocket connection
-		// Since the API server isn't running, we should see either loading or error state
+		await installConstructorFailingWebSocket(
+			page,
+			"Forced no API WebSocket failure for test",
+		);
 		await page.goto("/");
 
 		const loadingMessage = getLoadingState(page);

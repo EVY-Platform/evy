@@ -38,3 +38,26 @@ struct EVYTextActionRow: View {
     .padding(.horizontal, Constants.majorPadding)
   }
 }
+
+#Preview {
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-text-action-row",
+        "type": "TextAction",
+        "source": "",
+        "destination": "",
+        "actions": [],
+        "visible": "true",
+        "view": {
+          "content": {
+            "title": "Pickup location",
+            "subtitle": "123 Main St, Sydney",
+            "action": "Change"
+          }
+        }
+      }
+      """,
+    failureMessage: "Unable to build text action row preview"
+  )
+}
