@@ -10,15 +10,13 @@ flowchart LR
     web[Web builder]
 
     api[api JSON-RPC WebSocket gateway]
-    core[evy core resource handlers]
     marketplace[marketplace service gRPC evy.Service]
     evyDb[(Postgres evy DB)]
     mpDb[(Postgres marketplace DB)]
 
     ios -- WebSocket --> api
     web -- WebSocket --> api
-    api -- service evy --> core
-    core -- Drizzle --> evyDb
+    api -- evy core resource handlers / Drizzle --> evyDb
     api -- service marketplace gRPC --> marketplace
     marketplace -- Drizzle --> mpDb
 ```
@@ -46,7 +44,9 @@ flowchart LR
 
 ## Running Services
 
-### Development (with Docker Compose)
+### Development
+
+#### All-in-one with Docker
 
 Run Postgres, the marketplace service, the main API, and the web app:
 
@@ -54,15 +54,17 @@ Run Postgres, the marketplace service, the main API, and the web app:
 docker compose up --build
 ```
 
-Local Bun (no Docker for Node): start Postgres (`docker compose up --build postgres`), then in separate terminals from the repo root:
+#### Postgres + Bun dev for all apps
+
+Start Postgres (`docker compose up --build postgres`), then in separate terminals from the repo root:
 
 ```bash
 bun install
 bun run db:seed
 
-cd services/marketplace && bun install && bun run dev
-cd api && bun install && bun run dev
-cd web && bun install && bun run dev
+cd services/marketplace && bun run dev
+cd api && bun run dev
+cd web && bun run dev
 ```
 
 ### Production (with Docker Compose)
