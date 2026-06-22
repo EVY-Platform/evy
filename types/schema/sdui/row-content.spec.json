@@ -12,6 +12,12 @@
 			"placeholder": "string"
 		}
 	},
+	"Heading": {
+		"content": {
+			"title": "string",
+			"label": "string"
+		}
+	},
 	"Text": {
 		"content": {
 			"title": "string",

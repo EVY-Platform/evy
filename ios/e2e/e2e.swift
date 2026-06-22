@@ -364,9 +364,13 @@ class E2ETestBase: XCTestCase {
     subtitle: String = "",
     visible: String = "true"
   ) -> [String: Any] {
-    let (rowType, view): (String, [String: Any]) = text.isEmpty
+    let (rowType, view): (String, [String: Any]) =
+      text.isEmpty
       ? ("Text", ["content": ["title": title, "subtitle": subtitle, "label": ""]])
-      : ("TextExpand", ["content": ["title": title, "text": text, "expandLabel": "Read more"], "max_lines": "3"])
+      : (
+        "TextExpand",
+        ["content": ["title": title, "text": text, "expandLabel": "Read more"], "max_lines": "3"]
+      )
 
     return [
       "id": id,

@@ -94,6 +94,7 @@ struct EVYRow: View, Identifiable {
     case .calendar(let v, _, _, _): EVYCalendarRow(view: v)
     case .columnContainer(let v, _, _, _): EVYColumnContainerRow(view: v)
     case .dropdown(let v, let s, let d, _): EVYDropdownRow(view: v, source: s, destination: d)
+    case .heading(let v, _, _, _): EVYHeadingRow(view: v)
     case .inlinePicker(let v, let s, let d, _):
       EVYInlinePickerRow(view: v, source: s, destination: d)
     case .inputList(let v, let s, _, _): EVYInputListRow(view: v, source: s)

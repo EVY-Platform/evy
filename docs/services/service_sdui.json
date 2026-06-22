@@ -22,7 +22,7 @@
 					},
 					{
 						"id": "8d5e3bb5-8fcf-45f4-ae3d-516ed0706e30",
-						"type": "Text",
+						"type": "Heading",
 						"source": "",
 						"destination": "",
 						"actions": [],
@@ -30,7 +30,7 @@
 						"view": {
 							"content": {
 								"title": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
-								"subtitle": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}"
+								"label": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}"
 							}
 						}
 					},
