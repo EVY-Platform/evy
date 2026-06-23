@@ -5,104 +5,40 @@ The EVY app! Open Xcode, hit run, and Bob's your uncle.
 ### Architecture
 
 ```mermaid
-flowchart LR
-    App[evyApp]
-    Content[ContentView<br/>NavigationStack]
-    App --> Content
+flowchart TD
+    App[ContentView<br/>NavigationStack]
+    SDUI[SDUI<br/>server-defined screens & widgets]
+    Actions[Action runner<br/>navigate / create / close]
+    EVY[EVY facade<br/>expressions + functions]
+    API[Backend API<br/>WebSocket + file uploads]
 
-    subgraph sdui [SDUI tree]
-        Flow[UI_Flow]
-        Page[UI_Page]
-        Row[UI_Row]
-        Flow --> Page --> Row
-        Row -->|child / children| Row
+    subgraph data [Local data]
+        Synced[Synced resources]
+        Drafts[In-progress drafts]
     end
 
-    Content -->|sync services / fetch SDUI| EVY
-    Content -->|render| EVYPage
-    EVYPage --> Page
-    EVYPage --> EVYRow[EVYRow dispatcher]
-    EVYRow --> Row
+    Notif{{NotificationCenter}}
 
-    subgraph rows [UI/Rows]
-        Action[Action<br/>Button]
-        Container[Container<br/>Column, List, SelectSegment, Sheet]
-        Edit[Edit<br/>Calendar, Dropdown, InlinePicker, Input,<br/>Search, SelectPhoto, TextArea, TextSelect]
-        ViewRows[View<br/>Info, InputList, Text]
-    end
-    EVYRow --> Action
-    EVYRow --> Container
-    EVYRow --> Edit
-    EVYRow --> ViewRows
+    API -->|sync resources at launch| Synced
+    API -->|deliver the SDUI definition for every screen| SDUI
+    App -->|render the current screen from| SDUI
 
-    Views[UI/Views<br/>EVYButton, EVYCalendar, EVYDropdown, EVYInlinePicker,<br/>EVYInputList, EVYMap, EVYSearch, EVYSelectList,<br/>EVYSelectPhoto, EVYTextField, EVYTimeslotPicker, ...]
-    Atoms[UI/Atoms<br/>CarouselIndicator, RadioButton,<br/>Rectangle, RowTitle, TextView]
-    Action --> Views
-    Edit --> Views
-    Container --> Views
-    ViewRows --> Atoms
-    Views --> Atoms
+    SDUI -->|read text & props through expressions| EVY
+    SDUI -->|user edits write entered values back| EVY
+    SDUI -->|button taps trigger| Actions
 
-    EVY[[EVY facade<br/>getDataFromText / getDataFromProps / sync<br/>create / updateValue / updateData<br/>ensureDraftExists / formatData / evaluateFromText<br/>resolveQueryParams]]
-    Action -->|run| Runner[EVYActionRunner<br/>navigate / create / close /<br/>highlight_required]
-    Runner --> Content
-    Runner --> EVY
+    Actions -->|push pages & close sheets| App
+    Actions -->|create & submit entities via| EVY
 
-    Edit -->|read & write bindings| EVY
-    ViewRows -->|read bindings| EVY
-    Container -->|read bindings| EVY
+    EVY -->|look up & format synced values| Synced
+    EVY -->|read & write the working draft| Drafts
+    EVY -->|persist, fetch & upload files| API
 
-    Interpreter[interpreter.swift<br/>parsePropsFromText / splitPropsFromText /<br/>parseTextFromText / parseFunctionCall /<br/>splitFunctionArguments]
-    Functions[functions.swift<br/>count, length, format*,<br/>build*, compare, ...]
-    EVY --> Interpreter
-    EVY --> Functions
-    Functions --> EVY
-
-    RowVisitor[forEachRow<br />recursive row visitor]
-    Content -->|extract create keys| RowVisitor
-    EVYPage -->|bootstrap drafts| RowVisitor
-    RowVisitor --> Row
-
-    subgraph data [Data]
-        PublicStore[EVYDataStore public<br />server-synced SwiftData]
-        PrivateStore[EVYDataStore private<br />$local SwiftData]
-        DraftStore[EVYDraftStore<br />in-memory draft cache + active scope]
-        EntityModel[(EVYData)]
-        DraftPath[EVYDraft.Binding<br />scopeId + pathSegments + mergeMode]
-        PublicStore --> EntityModel
-        PrivateStore --> EntityModel
-        DraftStore --> EntityModel
-        DraftStore --> DraftPath
-    end
-    EVY --> PublicStore
-    EVY --> PrivateStore
-    EVY --> DraftStore
-
-    Views -->|Search rows read local synced resources| EVY
-
-    subgraph api [Data/API]
-        APIManager[EVYAPIManager shared auth subscriptions file upload]
-        WS[EVYWebsocket JSON-RPC and binary frames]
-        FileRPC[EVYFileRPC generated aliases frame encoding]
-        APIManager --> WS
-        APIManager --> FileRPC
-    end
-    RemoteFile[EVYRemoteFile EVYFileCache]
-    Views --> RemoteFile
-    RemoteFile --> APIManager
-    EVY -->|fetch / create / update| APIManager
-
-    Notif{{NotificationCenter<br />.evyDataChanged<br />.evyErrorOccurred}}
-    PublicStore -. post .-> Notif
-    DraftStore -. post .-> Notif
-    EVY -. post .-> Notif
-    Runner -. post .-> Notif
-    WS -. post .-> Notif
-    Views -. post errors .-> Notif
-    Notif -. observe .-> Content
-    Notif -. observe .-> EVYState["EVYState T (single or multi-watch)"]
-    EVYState -. drives .-> Views
-    EVYState -. drives .-> Atoms
+    Synced -.->|post change| Notif
+    Drafts -.->|post change| Notif
+    API -.->|push live updates & errors| Notif
+    Notif -.->|re-render the affected widgets| SDUI
+    Notif -.->|refresh screen & surface errors| App
 ```
 
 ### Architectural highlights
