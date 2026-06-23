@@ -5,7 +5,10 @@ import type {
 	UI_Row as ServerRow,
 	UI_RowContent as ServerRowContent,
 } from "evy-types";
-import type { ServiceResource } from "../app/api/sync";
+import type {
+	ResourceAttributeMetadata,
+	ServiceResource,
+} from "../app/api/sync";
 
 // Input types where id is optional
 // Using explicit interface to avoid index signature conflicts with ServerRowContent
@@ -97,13 +100,19 @@ export async function initFullFlows(
 	page: Page,
 	flows: ServerFlow[],
 	serviceResources: ServiceResource[] = [],
+	resourceAttributeMetadata: ResourceAttributeMetadata[] = [],
 ): Promise<void> {
 	await page.addInitScript(
-		({ flowData, resources }) => {
+		({ flowData, resources, attributes }) => {
 			window.__TEST_FLOWS__ = flowData;
 			window.__TEST_SERVICE_RESOURCES__ = resources;
+			window.__TEST_RESOURCE_ATTRIBUTE_METADATA__ = attributes;
 		},
-		{ flowData: flows, resources: serviceResources },
+		{
+			flowData: flows,
+			resources: serviceResources,
+			attributes: resourceAttributeMetadata,
+		},
 	);
 }
 
@@ -112,8 +121,9 @@ export async function openAppWithFullFlows(
 	page: Page,
 	flows: ServerFlow[],
 	serviceResources: ServiceResource[] = [],
+	resourceAttributeMetadata: ResourceAttributeMetadata[] = [],
 ): Promise<void> {
-	await initFullFlows(page, flows, serviceResources);
+	await initFullFlows(page, flows, serviceResources, resourceAttributeMetadata);
 	await page.goto("/");
 }
 

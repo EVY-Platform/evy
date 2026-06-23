@@ -247,7 +247,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await titleInput.clear();
 		await titleInput.fill(uniqueTitle);
-		await expect(titleInput).toHaveValue(uniqueTitle);
+		await expect(titleInput).toHaveText(uniqueTitle);
 		await expectFlowRowTitlePersisted(uniqueFlowName, uniqueTitle);
 
 		await page.reload();
@@ -260,7 +260,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await editedRow.click();
 		await expect(titleInput).toBeVisible();
-		await expect(titleInput).toHaveValue(uniqueTitle);
+		await expect(titleInput).toHaveText(uniqueTitle);
 	});
 
 	test("should keep existing child pages visible while opening nested child rows", async ({

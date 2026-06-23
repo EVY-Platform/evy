@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
-import parseIconText from "../../icons/parseIconText";
 import { useParseText } from "../../hooks/useParseText";
+import parseIconText from "../../icons/parseIconText";
 import { border } from "./border";
 
 const placeholderBase: CSSProperties = {
@@ -24,7 +24,7 @@ export default function Input({
 		<div className="evy-relative">
 			<input
 				type="text"
-				className={`evy-w-full evy-box-sizing-border evy-text-sm ${border} evy-focus-visible:outline-none`}
+				className={`evy-w-full evy-text-sm ${border} evy-focus-visible:outline-none`}
 				required
 				value={resolved}
 				readOnly

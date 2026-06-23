@@ -1,17 +1,16 @@
+import type { UI_RowAction } from "evy-types";
 import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import type { UI_RowAction } from "evy-types";
 
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useFlowsContext } from "../state";
 import { extractDraftVariables } from "../utils/actionVariables";
 import {
+	type ConditionExpression,
 	parseCondition,
 	serializeCondition,
-	type ConditionExpression,
 } from "../utils/conditionExpression";
-import { actionPopupEditorCss } from "./actionPopupEditorCss";
-import { modalSharedCss } from "./modalSharedCss";
+
 import { BranchEditor } from "./actionPopup/BranchEditor";
 import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
 
@@ -52,7 +51,6 @@ export function ActionPopup({
 
 	return createPortal(
 		<>
-			<style>{`${modalSharedCss}\n${actionPopupEditorCss}`}</style>
 			<div className="evy-modal-root">
 				<button
 					type="button"

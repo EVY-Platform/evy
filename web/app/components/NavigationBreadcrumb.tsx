@@ -1,73 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import parseIconText from "../icons/parseIconText";
-import { CreateFlowDialog } from "./CreateFlowDialog";
-import { PopoverSelect } from "./PopoverSelect";
 import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
+import { findFlowById } from "../utils/flowHelpers";
+import { splitCamelCaseToWords } from "../utils/labelFormatting";
 import {
 	breadcrumbLabelForPage,
 	breadcrumbLabelForRow,
 } from "../utils/navLabels";
-import { findFlowById } from "../utils/flowHelpers";
-import { splitCamelCaseToWords } from "../utils/labelFormatting";
-import { findRowInPages } from "../utils/rowTree";
 import { capturePageFramePosition } from "../utils/preActivationCapture";
-
-const breadcrumbScrollCss = `
-.evy-nav-breadcrumb-scroll {
-	overflow-x: auto;
-	overflow-y: hidden;
-	scrollbar-width: none;
-	-ms-overflow-style: none;
-}
-.evy-nav-breadcrumb-scroll::-webkit-scrollbar {
-	display: none;
-}
-.evy-nav-breadcrumb-inner {
-	display: inline-flex;
-	flex-direction: row;
-	flex-wrap: nowrap;
-	align-items: center;
-	gap: var(--size-2);
-	white-space: nowrap;
-	min-height: var(--size-nav-control);
-}
-.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link {
-	font-size: var(--text-sm);
-	font-weight: var(--font-semibold);
-	line-height: 1.5;
-	color: var(--color-evy-blue);
-	background: transparent;
-	border: none;
-	border-radius: var(--radius-sm);
-	cursor: pointer;
-	padding: 0 var(--size-2);
-	min-height: var(--size-nav-control);
-	max-width: var(--size-48);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link:hover {
-	text-decoration: underline;
-}
-.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link:focus-visible {
-	outline: 2px solid var(--color-evy-blue);
-	outline-offset: 2px;
-}
-@keyframes evy-breadcrumb-page-text-glow {
-	0%, 100% {
-		text-shadow: 0 0 1px color-mix(in srgb, var(--color-evy-blue) 10%, transparent);
-	}
-	50% {
-		text-shadow: 0 0 12px var(--color-evy-blue);
-	}
-}
-.evy-nav-breadcrumb-inner .evy-nav-breadcrumb-link--active {
-	animation: evy-breadcrumb-page-text-glow 1s ease-in-out infinite;
-}
-`;
+import { findRowInPages } from "../utils/rowTree";
+import { CreateFlowDialog } from "./CreateFlowDialog";
+import { PopoverSelect } from "./PopoverSelect";
 
 function Separator() {
 	return (
@@ -159,7 +104,6 @@ export function NavigationBreadcrumb() {
 					dispatchRow({ type: "CREATE_FLOW", name });
 				}}
 			/>
-			<style>{breadcrumbScrollCss}</style>
 			<div
 				ref={scrollContainerRef}
 				className="evy-nav-breadcrumb-scroll evy-flex-1 evy-min-w-0 evy-flex evy-justify-center"

@@ -332,13 +332,19 @@ function PlaceholderShell({ children }: { children: ReactNode }) {
 }
 
 export function App() {
-	const { flows, serviceResources, loading, error } = useFlows();
+	const { flows, serviceResources, resourceAttributeMetadata, loading, error } =
+		useFlows();
 	const testFlows = window.__TEST_FLOWS__;
 	const testServiceResources = window.__TEST_SERVICE_RESOURCES__;
+	const testResourceAttributeMetadata =
+		window.__TEST_RESOURCE_ATTRIBUTE_METADATA__;
 	const initialFlows = testFlows ?? flows;
 	const initialServiceResources = testFlows
 		? (testServiceResources ?? [])
 		: serviceResources;
+	const initialResourceAttributeMetadata = testFlows
+		? (testResourceAttributeMetadata ?? [])
+		: resourceAttributeMetadata;
 
 	const [minTimeElapsed, setMinTimeElapsed] = useState(Boolean(testFlows));
 	const [exiting, setExiting] = useState(false);
@@ -384,6 +390,7 @@ export function App() {
 		<AppProvider
 			initialFlows={initialFlows ?? []}
 			serviceResources={initialServiceResources}
+			resourceAttributeMetadata={initialResourceAttributeMetadata}
 			syncWithApi={!testFlows}
 		>
 			<AppShell>

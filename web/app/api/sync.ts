@@ -8,6 +8,14 @@ export type ServiceResource = {
 	name: string;
 };
 
+export type ResourceAttributeMetadata = {
+	serviceId: string;
+	resourceId: string;
+	attributeNames: string[];
+};
+
+const MAX_ATTRIBUTE_DEPTH = 5;
+
 function extractSduiFlows(response: SyncResponse): ServerFlow[] {
 	const sduiRow = response.data.find(
 		(row) => row.service === EVY_CORE_SERVICE && row.resource === "sdui",
@@ -47,15 +55,64 @@ function extractServiceResources(response: SyncResponse): ServiceResource[] {
 	return (row.value as unknown[]).filter(isServiceResource);
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function addAttributeNames(
+	value: unknown,
+	attributeNames: Set<string>,
+	prefix = "",
+	depth = 0,
+) {
+	if (!isRecord(value) || depth >= MAX_ATTRIBUTE_DEPTH) return;
+
+	for (const [key, nestedValue] of Object.entries(value)) {
+		if (!key.trim()) continue;
+
+		const attributeName = prefix ? `${prefix}.${key}` : key;
+		attributeNames.add(attributeName);
+
+		if (isRecord(nestedValue)) {
+			addAttributeNames(nestedValue, attributeNames, attributeName, depth + 1);
+		}
+	}
+}
+
+function extractResourceAttributeMetadata(
+	response: SyncResponse,
+): ResourceAttributeMetadata[] {
+	return response.data
+		.filter(
+			(row) => row.service !== EVY_CORE_SERVICE && Array.isArray(row.value),
+		)
+		.map((row) => {
+			const attributeNames = new Set<string>();
+			for (const item of row.value as unknown[]) {
+				addAttributeNames(item, attributeNames);
+			}
+			return {
+				serviceId: row.service,
+				resourceId: row.resource,
+				attributeNames: [...attributeNames].toSorted((a, b) =>
+					a.localeCompare(b),
+				),
+			};
+		})
+		.filter((metadata) => metadata.attributeNames.length > 0);
+}
+
 const EPOCH = "1970-01-01T00:00:00.000Z";
 
 export async function syncWebData(): Promise<{
 	flows: ServerFlow[];
 	serviceResources: ServiceResource[];
+	resourceAttributeMetadata: ResourceAttributeMetadata[];
 }> {
 	const response = await wsClient.sync(EPOCH);
 	return {
 		flows: extractSduiFlows(response),
 		serviceResources: extractServiceResources(response),
+		resourceAttributeMetadata: extractResourceAttributeMetadata(response),
 	};
 }

@@ -3,6 +3,7 @@
 	"description": "EVY monorepo - api, web, ios, services and shared types",
 	"license": "GPL-3.0-only",
 	"scripts": {
+		"dev": "concurrently --kill-others-on-fail --names 'postgres,marketplace,api,web' 'docker compose up postgres' 'bun run --cwd services/marketplace dev' 'bun run --cwd api dev' 'bun run --cwd web dev'",
 		"format": "bun run --cwd api format && bun run --cwd web format && bun run --cwd services/marketplace format && bunx biome format --write scripts && xcrun swift-format format --in-place --recursive ios",
 		"install:all": "bun install && bun install --cwd api && bun install --cwd web && bun install --cwd services/marketplace",
 		"types:generate": "bun scripts/generate-types.ts && bun scripts/generate-drizzle.ts && bun scripts/generate-core-resources.ts && bun scripts/generate-marketplace-resources.ts && bunx biome format --write types/generated/ts/",
@@ -14,6 +15,7 @@
 		"ajv": "^8.20.0",
 		"ajv-formats": "^3.0.1",
 		"bun-types": "^1.3.14",
+		"concurrently": "^9.0.0",
 		"decamelize": "^6.0.1",
 		"drizzle-orm": "^0.45.2",
 		"json-schema-to-typescript": "^15.0.4"

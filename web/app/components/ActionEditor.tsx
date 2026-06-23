@@ -1,37 +1,15 @@
-import { useCallback, useMemo, useState } from "react";
-import { Trash2 } from "lucide-react";
-
-import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import type { UI_RowAction } from "evy-types";
+import { Trash2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import type { ServiceResource } from "../api/sync";
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import type { UI_Flow } from "../types/flow";
-import { parseBranch, formatBranchDisplay } from "../utils/actionBranch";
+import { formatBranchDisplay, parseBranch } from "../utils/actionBranch";
 import {
-	parseCondition,
 	formatExpressionSummary,
+	parseCondition,
 } from "../utils/conditionExpression";
 import { ActionPopup } from "./ActionPopup";
-
-const actionSummaryCss = `
-.evy-action-summary-body {
-	display: block;
-	width: 100%;
-	padding: 0;
-	background: none;
-	border: none;
-	cursor: pointer;
-	text-align: left;
-	font-family: inherit;
-}
-.evy-action-summary-list {
-	margin: 2px 0 0 0;
-	padding-left: var(--size-3);
-	list-style: disc;
-}
-.evy-action-summary-list li {
-	line-height: 1.4;
-}
-`;
 
 type ActionEditorProps = {
 	actions: UI_RowAction[];
@@ -89,7 +67,6 @@ export function ActionEditor({
 
 	return (
 		<div>
-			<style>{actionSummaryCss}</style>
 			<div className="evy-flex evy-items-center evy-justify-between evy-mb-4">
 				<p className="evy-text-lg evy-font-semibold">Actions</p>
 				<button

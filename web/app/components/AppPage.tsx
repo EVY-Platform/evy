@@ -1,12 +1,11 @@
-import { useCallback, useMemo, useRef, type CSSProperties } from "react";
-
-import { useDragContext, useFlowsContext } from "../state";
-import { useParseText } from "../hooks/useParseText";
+import { type CSSProperties, useCallback, useMemo, useRef } from "react";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
 import { usePageEdgeIndicators } from "../hooks/usePageEdgeIndicators";
+import { useParseText } from "../hooks/useParseText";
+import { useDragContext, useFlowsContext } from "../state";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
-import { capturePageFramePosition } from "../utils/preActivationCapture";
 import { findFlowById } from "../utils/flowHelpers";
+import { capturePageFramePosition } from "../utils/preActivationCapture";
 import { BlankPageDropIndicator } from "./BlankPageDropIndicator";
 import { buildRowElements } from "./buildRowElements";
 import { DraggableRowContainer } from "./DraggableRowContainer";
@@ -97,7 +96,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 
 	return (
 		<div
-			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
+			className="evy-overflow-hidden evy-h-full evy-w-full"
 			style={{ padding: phoneContentPadding, contain: "layout style paint" }}
 		>
 			{footer ? (

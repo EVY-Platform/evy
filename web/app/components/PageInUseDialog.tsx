@@ -1,12 +1,9 @@
+import { TriangleAlert } from "lucide-react";
 import { useId } from "react";
 import { createPortal } from "react-dom";
-import { TriangleAlert } from "lucide-react";
-
-import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { useEscapeKey } from "../hooks/useEscapeKey";
+import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import type { PageReferenceEntry } from "../utils/pageReferences";
-import { modalSharedCss } from "./modalSharedCss";
-import { pageInUseDialogCss } from "./pageInUseDialogCss";
 
 type PageInUseDialogProps = {
 	references: PageReferenceEntry[];
@@ -22,7 +19,6 @@ export function PageInUseDialog({ references, onClose }: PageInUseDialogProps) {
 
 	return createPortal(
 		<>
-			<style>{`${modalSharedCss}\n${pageInUseDialogCss}`}</style>
 			<div className="evy-modal-root">
 				<button
 					type="button"
