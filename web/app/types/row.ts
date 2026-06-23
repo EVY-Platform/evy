@@ -3,11 +3,12 @@
  * RowContent/RowView/RowConfig are derived with UI Row in place of serial Row.
  * Row is the UI type (id + ReactNode + config).
  */
-import type React from "react";
+
 import type {
 	UI_Row as SerialRow,
 	UI_RowContent as SerialRowContent,
 } from "evy-types";
+import type React from "react";
 
 export type Row = {
 	id: string;

@@ -1,7 +1,7 @@
 import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { lineClampStyle } from "../design-system/lineClamp";
-import { defineRow } from "../defineRow";
 
 export default defineRow("HeadingRow", {
 	config: {

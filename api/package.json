@@ -14,7 +14,7 @@
 		"test:unit": "bun --env-file=../.env test src/",
 		"test:e2e": "bun --env-file=../.env test e2e/",
 		"lint": "bunx biome check",
-		"format": "bunx biome format --write .",
+		"format": "bunx biome check --write .",
 		"db:generate": "bun --env-file=../.env drizzle-kit generate",
 		"db:migrate": "bun --env-file=../.env drizzle-kit migrate",
 		"db:push": "bun --env-file=../.env drizzle-kit push",

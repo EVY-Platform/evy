@@ -8,8 +8,8 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest, UI_Flow, UI_Page } from "evy-types";
-import type { WSParams } from "../shared/ws";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import type { WSParams } from "../shared/ws";
 
 import {
 	asEvyDb,
@@ -17,8 +17,8 @@ import {
 	connectAndLogin,
 	createPgliteTestDatabase,
 	getFreePort,
-	waitForNotification,
 	type WSServer,
+	waitForNotification,
 } from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();

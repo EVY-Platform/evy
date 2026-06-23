@@ -25,7 +25,9 @@ export function parseUploadChunkFrame(frame: Buffer): {
 	if (frame.length < 4 + metadataLength) {
 		throw new Error("Frame too short: metadata length exceeds frame size");
 	}
-	const metadataJson = frame.subarray(4, 4 + metadataLength).toString("utf-8");
+	const metadataJson = frame
+		.subarray(4, 4 + metadataLength)
+		.toString("utf-8");
 	let rawMetadata: unknown;
 	try {
 		rawMetadata = JSON.parse(metadataJson);
@@ -59,7 +61,9 @@ function validateUploadChunkMetadata(
 		!Number.isInteger(metadata.byteOffset) ||
 		metadata.byteOffset < 0
 	) {
-		throw new Error("Chunk metadata byteOffset must be a non-negative integer");
+		throw new Error(
+			"Chunk metadata byteOffset must be a non-negative integer",
+		);
 	}
 	if (
 		typeof metadata.byteLength !== "number" ||
@@ -112,7 +116,9 @@ export async function handleUploadChunk(frame: Buffer): Promise<void> {
 		);
 	}
 	if (chunkData.length > MAX_UPLOAD_BYTES) {
-		throw new Error(`Upload exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`);
+		throw new Error(
+			`Upload exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`,
+		);
 	}
 	uploadSessions.set(metadata.uploadId, {
 		chunks: [chunkData],

@@ -1,29 +1,29 @@
 import type {
 	ApiRequest,
+	CreateResponse,
+	DeleteResponse,
 	GetRequest,
 	GetResponse,
 	SyncResponse,
-	CreateResponse,
 	UpdateResponse,
-	DeleteResponse,
 } from "evy-types";
-import type { EvyDb } from "../database/db";
-import {
-	get as getCore,
-	create as createCore,
-	update as updateCore,
-	deleteResource as deleteCore,
-} from "../data/data";
-import { sync as coreSync } from "./sync";
-import { forwardGet, forwardCreate, forwardUpdate } from "./services";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	validateStrictApiRequest,
-	validateStrictGetRequest,
 	validateStrictCreateRequest,
-	validateStrictUpdateRequest,
 	validateStrictDeleteRequest,
+	validateStrictGetRequest,
+	validateStrictUpdateRequest,
 } from "evy-types/rpcRequestHelpers";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	create as createCore,
+	deleteResource as deleteCore,
+	get as getCore,
+	update as updateCore,
+} from "../data/data";
+import type { EvyDb } from "../database/db";
+import { forwardCreate, forwardGet, forwardUpdate } from "./services";
+import { sync as coreSync } from "./sync";
 
 type GetLikeRequest = GetRequest | ApiRequest;
 

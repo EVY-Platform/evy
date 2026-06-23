@@ -7,8 +7,8 @@ import {
 	it,
 	mock,
 } from "bun:test";
-import { migrate } from "drizzle-orm/pglite/migrator";
 import type { Client, ClientReadableStream, ServiceError } from "@grpc/grpc-js";
+import { migrate } from "drizzle-orm/pglite/migrator";
 
 import { getFreePort } from "../../../../api/src/tests/wsTestHelpers";
 import { schema } from "../db";
@@ -130,9 +130,12 @@ describe("marketplace gRPC server", () => {
 		const received: { event_name: string; payload_json: string }[] = [];
 		const stream = client.SubscribeEvents({});
 
-		stream.on("data", (msg: { event_name: string; payload_json: string }) => {
-			received.push(msg);
-		});
+		stream.on(
+			"data",
+			(msg: { event_name: string; payload_json: string }) => {
+				received.push(msg);
+			},
+		);
 
 		await new Promise((r) => setTimeout(r, 50));
 

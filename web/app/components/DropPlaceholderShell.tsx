@@ -1,4 +1,4 @@
-import { forwardRef, type CSSProperties, type ReactNode } from "react";
+import { type CSSProperties, forwardRef, type ReactNode } from "react";
 
 type DropPlaceholderShellProps = {
 	children: ReactNode;
@@ -21,7 +21,9 @@ export const DropPlaceholderShell = forwardRef<
 			style={{
 				minHeight: "var(--size-8)",
 				border: "2px dashed var(--color-evy-blue)",
-				backgroundColor: isDraggedOver ? "var(--color-evy-blue)" : undefined,
+				backgroundColor: isDraggedOver
+					? "var(--color-evy-blue)"
+					: undefined,
 				opacity: isDraggedOver ? 1 : 0.8,
 				transition: "background-color 0.1s ease, opacity 0.1s ease",
 				...style,
@@ -29,7 +31,9 @@ export const DropPlaceholderShell = forwardRef<
 		>
 			<span
 				className="evy-text-sm"
-				style={{ color: isDraggedOver ? "white" : "var(--color-evy-blue)" }}
+				style={{
+					color: isDraggedOver ? "white" : "var(--color-evy-blue)",
+				}}
 			>
 				{children}
 			</span>

@@ -1,8 +1,8 @@
-import type { RowConfig } from "../../types/row";
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
+import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
-import TextArea from "../design-system/TextArea";
 import { RowLayout } from "../design-system/RowLayout";
+import TextArea from "../design-system/TextArea";
 
 export default defineRow("TextAreaRow", {
 	config: {

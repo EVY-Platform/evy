@@ -1,5 +1,5 @@
-import type { RowConfig } from "../../types/row";
 import { ContainerChildren } from "../../components/ContainerChildren";
+import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
 

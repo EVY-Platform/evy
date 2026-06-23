@@ -110,7 +110,8 @@ export function drawDotField(params: DrawDotFieldParams): void {
 			ctx.fillStyle = mixDotColor(colorMedium, colorDark, colorT);
 
 			const radius =
-				dotBaseRadius + (dotHoverRadius - dotBaseRadius) * colorInfluence;
+				dotBaseRadius +
+				(dotHoverRadius - dotBaseRadius) * colorInfluence;
 			ctx.beginPath();
 			ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
 			ctx.fill();

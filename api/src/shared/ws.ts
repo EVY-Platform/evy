@@ -1,4 +1,4 @@
-import { Server, type IRPCMethodParams } from "rpc-websockets";
+import { type IRPCMethodParams, Server } from "rpc-websockets";
 import type { WebSocket } from "ws";
 
 type WSServer = typeof Server;

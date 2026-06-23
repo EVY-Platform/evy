@@ -2,11 +2,7 @@
 	"enums": {
 		"OS": {
 			"name": "OS",
-			"values": [
-				"ios",
-				"android",
-				"Web"
-			]
+			"values": ["ios", "android", "Web"]
 		}
 	},
 	"tables": {
@@ -17,10 +13,7 @@
 			"uniqueIndexes": [
 				{
 					"name": "Device_token_os_key",
-					"columns": [
-						"token",
-						"os"
-					]
+					"columns": ["token", "os"]
 				}
 			]
 		},
@@ -31,9 +24,7 @@
 			"uniqueIndexes": [
 				{
 					"name": "Service_name_key",
-					"columns": [
-						"name"
-					]
+					"columns": ["name"]
 				}
 			]
 		},
@@ -44,9 +35,7 @@
 			"uniqueIndexes": [
 				{
 					"name": "Organization_name_key",
-					"columns": [
-						"name"
-					]
+					"columns": ["name"]
 				}
 			]
 		},
@@ -57,16 +46,11 @@
 			"uniqueIndexes": [
 				{
 					"name": "ServiceProvider_name_key",
-					"columns": [
-						"name"
-					]
+					"columns": ["name"]
 				},
 				{
 					"name": "ServiceProvider_fk_service_id_fk_organization_id_key",
-					"columns": [
-						"fkServiceId",
-						"fkOrganizationId"
-					]
+					"columns": ["fkServiceId", "fkOrganizationId"]
 				}
 			]
 		},
@@ -77,19 +61,14 @@
 			"uniqueIndexes": [
 				{
 					"name": "ServiceResource_fk_service_id_name_key",
-					"columns": [
-						"fkServiceId",
-						"name"
-					]
+					"columns": ["fkServiceId", "name"]
 				}
 			]
 		},
 		"DATA_EVY_Flow": {
 			"tableName": "Flow",
 			"primaryKey": "id",
-			"defaultRandom": [
-				"id"
-			],
+			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
 		"DATA_EVY_File": {
@@ -103,23 +82,15 @@
 		{
 			"from": "DATA_EVY_ServiceProvider",
 			"to": "DATA_EVY_Service",
-			"fields": [
-				"fkServiceId"
-			],
-			"references": [
-				"id"
-			],
+			"fields": ["fkServiceId"],
+			"references": ["id"],
 			"relationName": "service"
 		},
 		{
 			"from": "DATA_EVY_ServiceProvider",
 			"to": "DATA_EVY_Organization",
-			"fields": [
-				"fkOrganizationId"
-			],
-			"references": [
-				"id"
-			],
+			"fields": ["fkOrganizationId"],
+			"references": ["id"],
 			"relationName": "organization"
 		},
 		{
@@ -137,12 +108,8 @@
 		{
 			"from": "DATA_EVY_ServiceResource",
 			"to": "DATA_EVY_Service",
-			"fields": [
-				"fkServiceId"
-			],
-			"references": [
-				"id"
-			],
+			"fields": ["fkServiceId"],
+			"references": ["id"],
 			"relationName": "service"
 		},
 		{

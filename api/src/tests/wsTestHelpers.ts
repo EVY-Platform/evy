@@ -1,11 +1,10 @@
 import { createServer } from "node:net";
 import { PGlite } from "@electric-sql/pglite";
-import { Client } from "rpc-websockets";
-import { drizzle } from "drizzle-orm/pglite";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
-
-import type { EvyDb } from "../database/db";
+import { drizzle } from "drizzle-orm/pglite";
+import { Client } from "rpc-websockets";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
+import type { EvyDb } from "../database/db";
 
 export type WSServer = Awaited<
 	ReturnType<typeof import("../shared/ws")["initServer"]>

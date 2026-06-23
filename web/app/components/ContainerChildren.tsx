@@ -1,7 +1,6 @@
 import { useCallback } from "react";
-
-import type { Row, ContainerType } from "../types/row";
 import { useFlowsContext } from "../state";
+import type { ContainerType, Row } from "../types/row";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { DropPlaceholderShell } from "./DropPlaceholderShell";
 import { PlaceholderDropIndicator } from "./PlaceholderDropIndicator";

@@ -1,7 +1,7 @@
-import postgres from "postgres";
-import type { DATA_PRIMITIVE } from "evy-types";
-import { drizzle } from "drizzle-orm/postgres-js";
 import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/postgres-js";
+import type { DATA_PRIMITIVE } from "evy-types";
+import postgres from "postgres";
 
 export const data = pgTable("Data", {
 	id: uuid("id").primaryKey().defaultRandom(),

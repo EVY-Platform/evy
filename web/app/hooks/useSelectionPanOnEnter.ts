@@ -1,8 +1,7 @@
-import { useLayoutEffect, useRef, type RefObject } from "react";
-
-import type { useCamera } from "./useCamera";
-import { consumeCapturedPosition } from "../utils/preActivationCapture";
+import { type RefObject, useLayoutEffect, useRef } from "react";
 import { findPageFrame, getElementCenter } from "../utils/domHelpers";
+import { consumeCapturedPosition } from "../utils/preActivationCapture";
+import type { useCamera } from "./useCamera";
 
 type PanToElement = ReturnType<typeof useCamera>["panToElement"];
 type SnapPan = ReturnType<typeof useCamera>["snapPan"];

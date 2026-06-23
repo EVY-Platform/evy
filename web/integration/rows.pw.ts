@@ -63,7 +63,9 @@ test.describe("EVY Rows", () => {
 		];
 
 		for (const title of expectedRowTitles) {
-			await expect(rowsPanel.getByText(title, { exact: true })).toBeVisible();
+			await expect(
+				rowsPanel.getByText(title, { exact: true }),
+			).toBeVisible();
 		}
 	});
 
@@ -76,7 +78,9 @@ test.describe("EVY Rows", () => {
 			},
 		]);
 		const rowsPanel = await getRowsPanel(page);
-		const searchInput = rowsPanel.getByPlaceholder("Button, Calendar, etc...");
+		const searchInput = rowsPanel.getByPlaceholder(
+			"Button, Calendar, etc...",
+		);
 
 		await expect(searchInput).toBeVisible();
 

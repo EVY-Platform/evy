@@ -32,7 +32,8 @@ test.describe("Row configuration", () => {
 										view: {
 											content: {
 												title: "Input Row",
-												placeholder: "First placeholder",
+												placeholder:
+													"First placeholder",
 											},
 										},
 										actions: [],
@@ -95,7 +96,9 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		const textRow = page.getByText("Test Text Row", { exact: true }).first();
+		const textRow = page
+			.getByText("Test Text Row", { exact: true })
+			.first();
 		await expect(textRow).toBeVisible();
 		await textRow.click();
 
@@ -197,12 +200,16 @@ test.describe("Row configuration", () => {
 								label: "Test Button",
 							},
 						},
-						actions: [{ condition: "", false: "", true: "{close()}" }],
+						actions: [
+							{ condition: "", false: "", true: "{close()}" },
+						],
 					},
 				],
 			},
 		]);
-		const buttonRow = page.getByText("Test Button", { exact: true }).first();
+		const buttonRow = page
+			.getByText("Test Button", { exact: true })
+			.first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
@@ -224,7 +231,10 @@ test.describe("Row configuration", () => {
 		await expect(falseFunctionSelect).toHaveAttribute("data-value", "");
 
 		await popoverSelect(page, falseFunctionSelect, "Close");
-		await expect(falseFunctionSelect).toHaveAttribute("data-value", "close");
+		await expect(falseFunctionSelect).toHaveAttribute(
+			"data-value",
+			"close",
+		);
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
@@ -246,7 +256,9 @@ test.describe("Row configuration", () => {
 								label: "Nav Button",
 							},
 						},
-						actions: [{ condition: "", false: "", true: "{close()}" }],
+						actions: [
+							{ condition: "", false: "", true: "{close()}" },
+						],
 					},
 				],
 			},
@@ -315,7 +327,13 @@ test.describe("Row configuration", () => {
 											label: "Submit",
 										},
 									},
-									actions: [{ condition: "", false: "", true: "{close()}" }],
+									actions: [
+										{
+											condition: "",
+											false: "",
+											true: "{close()}",
+										},
+									],
 								},
 							],
 						},
@@ -366,7 +384,10 @@ test.describe("Row configuration", () => {
 			`${MARKETPLACE_ITEMS_RESOURCE_ID}.name`,
 		);
 		await expect(committedOp).toHaveAttribute("data-value", "!=");
-		await expect(committedRight).toHaveAttribute("data-value", "__boolean__");
+		await expect(committedRight).toHaveAttribute(
+			"data-value",
+			"__boolean__",
+		);
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
@@ -397,7 +418,9 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		const textRow = page.getByText("No Action Row", { exact: true }).first();
+		const textRow = page
+			.getByText("No Action Row", { exact: true })
+			.first();
 		await expect(textRow).toBeVisible();
 		await textRow.click();
 
@@ -430,7 +453,9 @@ test.describe("Row configuration", () => {
 					{
 						type: "Button",
 						view: { content: { title: "", label: "Check" } },
-						actions: [{ condition: "", false: "", true: "{close()}" }],
+						actions: [
+							{ condition: "", false: "", true: "{close()}" },
+						],
 					},
 				],
 			},
@@ -485,7 +510,9 @@ test.describe("Row configuration", () => {
 					{
 						type: "Button",
 						view: { content: { title: "", label: "Validate" } },
-						actions: [{ condition: "", false: "", true: "{close()}" }],
+						actions: [
+							{ condition: "", false: "", true: "{close()}" },
+						],
 					},
 				],
 			},
@@ -519,7 +546,9 @@ test.describe("Row configuration", () => {
 		).toBeVisible();
 	});
 
-	test("should add multiple OR conditions and remove one", async ({ page }) => {
+	test("should add multiple OR conditions and remove one", async ({
+		page,
+	}) => {
 		await openAppWithTestFlows(page, [
 			{
 				id: "step_1",
@@ -552,7 +581,9 @@ test.describe("Row configuration", () => {
 					{
 						type: "Button",
 						view: { content: { title: "", label: "Send" } },
-						actions: [{ condition: "", false: "", true: "{close()}" }],
+						actions: [
+							{ condition: "", false: "", true: "{close()}" },
+						],
 					},
 				],
 			},
@@ -588,7 +619,9 @@ test.describe("Row configuration", () => {
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
-		await expect(configPanel.getByText("email not equals name")).toBeVisible();
+		await expect(
+			configPanel.getByText("email not equals name"),
+		).toBeVisible();
 	});
 
 	test("should discard changes when cancel is clicked", async ({ page }) => {
@@ -600,12 +633,16 @@ test.describe("Row configuration", () => {
 					{
 						type: "Button",
 						view: { content: { title: "", label: "Cancel Test" } },
-						actions: [{ condition: "", false: "", true: "{close()}" }],
+						actions: [
+							{ condition: "", false: "", true: "{close()}" },
+						],
 					},
 				],
 			},
 		]);
-		const buttonRow = page.getByText("Cancel Test", { exact: true }).first();
+		const buttonRow = page
+			.getByText("Cancel Test", { exact: true })
+			.first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
@@ -653,7 +690,9 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		const buttonRow = page.getByText("Multi Action", { exact: true }).first();
+		const buttonRow = page
+			.getByText("Multi Action", { exact: true })
+			.first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
@@ -776,7 +815,12 @@ test.describe("Row configuration", () => {
 									id: "or_test_button",
 									type: "Button",
 									source: "",
-									view: { content: { title: "", label: "OR Test" } },
+									view: {
+										content: {
+											title: "",
+											label: "OR Test",
+										},
+									},
 									actions: [
 										{
 											condition: `{count(${MARKETPLACE_ITEMS_RESOURCE_ID}.pickup_timeslots) > 0 || count(${MARKETPLACE_ITEMS_RESOURCE_ID}.delivery_timeslots) > 0}`,
@@ -825,7 +869,12 @@ test.describe("Row configuration", () => {
 									id: "nested_test_button",
 									type: "Button",
 									source: "",
-									view: { content: { title: "", label: "Nested Test" } },
+									view: {
+										content: {
+											title: "",
+											label: "Nested Test",
+										},
+									},
 									actions: [
 										{
 											condition: `{count(${MARKETPLACE_ITEMS_RESOURCE_ID}.pickup_timeslots) > 0 && (count(${MARKETPLACE_ITEMS_RESOURCE_ID}.delivery_timeslots) > 0 || count(${MARKETPLACE_ITEMS_RESOURCE_ID}.shipping_destination_areas) > 0)}`,
@@ -842,7 +891,9 @@ test.describe("Row configuration", () => {
 			TEST_SERVICE_RESOURCES,
 		);
 		await page.goto("/");
-		const buttonRow = page.getByText("Nested Test", { exact: true }).first();
+		const buttonRow = page
+			.getByText("Nested Test", { exact: true })
+			.first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
@@ -902,7 +953,9 @@ test.describe("Row configuration", () => {
 				],
 			},
 		]);
-		const buttonRow = page.getByText("Toggle Test", { exact: true }).first();
+		const buttonRow = page
+			.getByText("Toggle Test", { exact: true })
+			.first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
@@ -928,7 +981,9 @@ test.describe("Row configuration", () => {
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
-		await expect(configPanel.getByText("and email equals true")).toBeVisible();
+		await expect(
+			configPanel.getByText("and email equals true"),
+		).toBeVisible();
 	});
 
 	test("should add nested group and round-trip nested condition", async ({
@@ -995,7 +1050,9 @@ test.describe("Row configuration", () => {
 		await expect(nestedPlaceholderLeft).toBeVisible();
 
 		await popoverSelect(page, nestedPlaceholderLeft, "Name");
-		const nestedPlaceholderRight = popup.getByLabel("condition-0-1-1-right");
+		const nestedPlaceholderRight = popup.getByLabel(
+			"condition-0-1-1-right",
+		);
 		await popoverSelect(page, nestedPlaceholderRight, "Email");
 
 		await popup.getByRole("button", { name: "Save" }).click();
@@ -1077,7 +1134,9 @@ test.describe("Row configuration", () => {
 
 		const breadcrumbScroll = page.getByTestId("nav-breadcrumb-scroll");
 		await expect(
-			await breadcrumbScroll.evaluate((el) => el.scrollWidth > el.clientWidth),
+			await breadcrumbScroll.evaluate(
+				(el) => el.scrollWidth > el.clientWidth,
+			),
 		).toBe(true);
 
 		await expect(
@@ -1092,9 +1151,9 @@ test.describe("Row configuration", () => {
 			})
 			.click();
 
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
-			"Nest level 7",
-		);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("Nest level 7");
 	});
 
 	test("should clear a branch by selecting -- and persist on save", async ({
@@ -1110,12 +1169,16 @@ test.describe("Row configuration", () => {
 						view: {
 							content: { title: "", label: "Clear Branch" },
 						},
-						actions: [{ condition: "", false: "", true: "{close()}" }],
+						actions: [
+							{ condition: "", false: "", true: "{close()}" },
+						],
 					},
 				],
 			},
 		]);
-		const buttonRow = page.getByText("Clear Branch", { exact: true }).first();
+		const buttonRow = page
+			.getByText("Clear Branch", { exact: true })
+			.first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
@@ -1154,10 +1217,9 @@ test.describe("Row configuration", () => {
 			name: "Edit action 1",
 		});
 		await expect(reopenedPopup).toBeVisible();
-		await expect(reopenedPopup.getByLabel("true-0-function")).toHaveAttribute(
-			"data-value",
-			"",
-		);
+		await expect(
+			reopenedPopup.getByLabel("true-0-function"),
+		).toHaveAttribute("data-value", "");
 	});
 
 	test("should not persist branch clear when cancel is clicked after selecting --", async ({
@@ -1173,12 +1235,16 @@ test.describe("Row configuration", () => {
 						view: {
 							content: { title: "", label: "Cancel Clear" },
 						},
-						actions: [{ condition: "", false: "", true: "{close()}" }],
+						actions: [
+							{ condition: "", false: "", true: "{close()}" },
+						],
 					},
 				],
 			},
 		]);
-		const buttonRow = page.getByText("Cancel Clear", { exact: true }).first();
+		const buttonRow = page
+			.getByText("Cancel Clear", { exact: true })
+			.first();
 		await expect(buttonRow).toBeVisible();
 		await buttonRow.click();
 
@@ -1213,9 +1279,8 @@ test.describe("Row configuration", () => {
 			name: "Edit action 1",
 		});
 		await expect(reopenedPopup).toBeVisible();
-		await expect(reopenedPopup.getByLabel("true-0-function")).toHaveAttribute(
-			"data-value",
-			"close",
-		);
+		await expect(
+			reopenedPopup.getByLabel("true-0-function"),
+		).toHaveAttribute("data-value", "close");
 	});
 });

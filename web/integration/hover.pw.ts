@@ -2,13 +2,13 @@ import { expect, type Locator, test } from "@playwright/test";
 import invariant from "tiny-invariant";
 import { openAppWithTestFlows } from "./flowFixtures";
 import {
-	SELECTORS,
 	getConfigPanel,
 	getDropIndicator,
 	getFirstPage,
 	getPageContent,
 	getPageRow,
 	getSidebarRow,
+	SELECTORS,
 } from "./utils";
 
 interface BoundingBox {
@@ -32,7 +32,9 @@ async function dragTextRowWithTitle(
 	const sidebarRow = await getSidebarRow(page, "Text row title");
 	await sidebarRow.dragTo(target);
 
-	const titleInput = getConfigPanel(page).getByLabel("title", { exact: true });
+	const titleInput = getConfigPanel(page).getByLabel("title", {
+		exact: true,
+	});
 	await titleInput.clear();
 	await titleInput.fill(title);
 }
@@ -130,10 +132,16 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
 
-		const rowTypes = ["First Text Row", "Second Text Row", "Third Text Row"];
+		const rowTypes = [
+			"First Text Row",
+			"Second Text Row",
+			"Third Text Row",
+		];
 		for (const rowText of rowTypes) {
 			await dragTextRowWithTitle(page, pageContent, rowText);
-			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
+			await expect(
+				firstPage.getByText(rowText, { exact: true }),
+			).toBeVisible();
 		}
 
 		const pageRows = pageContent.locator(SELECTORS.rowContainer);
@@ -262,7 +270,9 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		await expect(getDropIndicator(page)).not.toBeVisible();
 	});
 
-	test("should switch indicator when moving between rows", async ({ page }) => {
+	test("should switch indicator when moving between rows", async ({
+		page,
+	}) => {
 		await openAppWithTestFlows(page, [
 			{ id: "step_1", title: "Page 1", rows: [] },
 		]);
@@ -272,13 +282,17 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		const rowTypes = ["First Text Row", "Second Text Row"];
 		for (const rowText of rowTypes) {
 			await dragTextRowWithTitle(page, pageContent, rowText);
-			await expect(firstPage.getByText(rowText, { exact: true })).toBeVisible();
+			await expect(
+				firstPage.getByText(rowText, { exact: true }),
+			).toBeVisible();
 		}
 
 		const pageRows = pageContent.locator(SELECTORS.rowContainer);
 		const dragRow = await getSidebarRow(page, "Text row title");
 
-		const firstPageRow = pageRows.filter({ hasText: "First Text Row" }).first();
+		const firstPageRow = pageRows
+			.filter({ hasText: "First Text Row" })
+			.first();
 		const secondPageRow = pageRows
 			.filter({ hasText: "Second Text Row" })
 			.first();

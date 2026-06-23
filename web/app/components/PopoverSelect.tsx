@@ -184,7 +184,9 @@ export function PopoverSelect({
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
-	const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
 	const [position, setPosition] = useState<{
 		top: number;
 		left: number;
@@ -195,7 +197,9 @@ export function PopoverSelect({
 		() =>
 			searchQuery.trim()
 				? options.filter((option) =>
-						option.label.toLowerCase().includes(searchQuery.toLowerCase()),
+						option.label
+							.toLowerCase()
+							.includes(searchQuery.toLowerCase()),
 					)
 				: options,
 		[options, searchQuery],
@@ -277,7 +281,8 @@ export function PopoverSelect({
 			close();
 		};
 		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
+		return () =>
+			document.removeEventListener("mousedown", handleClickOutside);
 	}, [isOpen, close]);
 
 	useEffect(() => {
@@ -341,7 +346,8 @@ export function PopoverSelect({
 				setActiveIndex((currentIndex) => Math.max(currentIndex - 1, 0));
 			} else if (event.key === "Enter") {
 				event.preventDefault();
-				const candidate = filteredOptions[activeIndex] ?? filteredOptions[0];
+				const candidate =
+					filteredOptions[activeIndex] ?? filteredOptions[0];
 				if (candidate) handleSelect(candidate.value);
 			} else if (event.key === "Escape") {
 				event.preventDefault();
@@ -380,7 +386,9 @@ export function PopoverSelect({
 				type="button"
 				role={variant === "breadcrumb" ? "button" : "combobox"}
 				aria-haspopup={variant === "breadcrumb" ? "listbox" : undefined}
-				aria-controls={isOpen && listboxDomId ? listboxDomId : undefined}
+				aria-controls={
+					isOpen && listboxDomId ? listboxDomId : undefined
+				}
 				aria-label={ariaLabel}
 				aria-expanded={isOpen}
 				data-value={value}
@@ -445,7 +453,9 @@ export function PopoverSelect({
 									? `${listboxDomId}-opt-${activeIndex}`
 									: undefined
 							}
-							aria-labelledby={variant === "breadcrumb" && id ? id : undefined}
+							aria-labelledby={
+								variant === "breadcrumb" && id ? id : undefined
+							}
 							onMouseEnter={handleMenuPointerEnter}
 							onMouseLeave={handleMenuPointerLeave}
 							tabIndex={-1}
@@ -457,15 +467,23 @@ export function PopoverSelect({
 											{opt.separator}
 										</span>
 									)}
-									{opt.dividerBefore && <hr className="evy-popover-divider" />}
+									{opt.dividerBefore && (
+										<hr className="evy-popover-divider" />
+									)}
 									<button
 										type="button"
 										role="option"
 										id={
-											listboxDomId ? `${listboxDomId}-opt-${index}` : undefined
+											listboxDomId
+												? `${listboxDomId}-opt-${index}`
+												: undefined
 										}
 										data-option-index={index}
-										aria-selected={opt.action ? false : opt.value === value}
+										aria-selected={
+											opt.action
+												? false
+												: opt.value === value
+										}
 										onClick={() => handleSelect(opt.value)}
 										className={`evy-popover-option${index === activeIndex ? " evy-popover-option--active" : ""}`}
 									>

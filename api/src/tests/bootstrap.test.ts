@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { Client } from "rpc-websockets";
 import type { GetRequest, GetResponse, UI_Flow } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
+import { Client } from "rpc-websockets";
 
 import { assertApiReadable } from "../readiness";
-import { getFreePort, waitForClientOpen, type WSServer } from "./wsTestHelpers";
+import { getFreePort, type WSServer, waitForClientOpen } from "./wsTestHelpers";
 
 describe("initServer bootstrap", () => {
 	let previousApiPort: string | undefined;
@@ -99,11 +99,18 @@ describe("assertApiReadable", () => {
 	it("resolves when requireSeeded is true and sdui has at least one flow", async () => {
 		const deps = {
 			get: async (params: GetRequest): Promise<GetResponse> => {
-				expect(params).toEqual({ service: EVY_CORE_SERVICE, resource: "sdui" });
+				expect(params).toEqual({
+					service: EVY_CORE_SERVICE,
+					resource: "sdui",
+				});
 				return [
 					{
 						id: crypto.randomUUID(),
-						data: { id: crypto.randomUUID(), name: "Seeded", pages: [] },
+						data: {
+							id: crypto.randomUUID(),
+							name: "Seeded",
+							pages: [],
+						},
 						createdAt: new Date().toISOString(),
 						updatedAt: new Date().toISOString(),
 					},

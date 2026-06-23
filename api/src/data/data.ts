@@ -27,6 +27,7 @@ import {
 	listOrganizationRows,
 	updateOrganizationResource,
 } from "./resources/organisation";
+import { createSduiFlow, getSduiRows, updateSduiFlow } from "./resources/sdui";
 import {
 	createServiceResource,
 	listServiceRows,
@@ -42,7 +43,6 @@ import {
 	listServiceResourceRows,
 	updateServiceResourceRow,
 } from "./resources/serviceResource";
-import { createSduiFlow, getSduiRows, updateSduiFlow } from "./resources/sdui";
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
@@ -134,7 +134,13 @@ async function createCoreBody(
 	const emitNotification = buildEmitNotification(resource, "create");
 
 	if (resource === EVY_CORE_RESOURCE.SDUI) {
-		return createSduiFlow(db, filter, dataPayload, nowIso, emitNotification);
+		return createSduiFlow(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
@@ -199,7 +205,13 @@ async function updateCoreBody(
 	const emitNotification = buildEmitNotification(resource, "update");
 
 	if (resource === EVY_CORE_RESOURCE.SDUI) {
-		return updateSduiFlow(db, filter, dataPayload, nowIso, emitNotification);
+		return updateSduiFlow(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {

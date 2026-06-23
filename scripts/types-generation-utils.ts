@@ -9,7 +9,7 @@ const SCHEMA_DIR = join(TYPES_ROOT, "schema");
 const OUT_TS = join(TYPES_ROOT, "generated", "ts");
 const OUT_SWIFT = join(TYPES_ROOT, "generated", "swift");
 
-export { REPO_ROOT, TYPES_ROOT, SCHEMA_DIR, OUT_TS, OUT_SWIFT };
+export { OUT_SWIFT, OUT_TS, REPO_ROOT, SCHEMA_DIR, TYPES_ROOT };
 
 /** Path relative to `SCHEMA_DIR` with `.schema.json` / `.json` stripped (OS-native separators). */
 function schemaPathRelativeToSchemaDir(schemaPath: string): string {

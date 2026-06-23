@@ -5,11 +5,7 @@
 	"description": "JSON-RPC params for delete method. Service, resource, and filter.id are required.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": [
-		"service",
-		"resource",
-		"filter"
-	],
+	"required": ["service", "resource", "filter"],
 	"properties": {
 		"service": {
 			"type": "string",
@@ -23,9 +19,7 @@
 		"filter": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"id"
-			],
+			"required": ["id"],
 			"properties": {
 				"id": {
 					"type": "string",

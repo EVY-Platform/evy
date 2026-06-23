@@ -1,14 +1,14 @@
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
-import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
-import type { UpdateRequest } from "./generated/ts/rpc/update.request";
 import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
+import type { GetRequest } from "./generated/ts/rpc/get.request";
+import type { UpdateRequest } from "./generated/ts/rpc/update.request";
 import {
 	validateApiRequest,
 	validateCreateRequest,
+	validateDeleteRequest,
 	validateGetRequest,
 	validateUpdateRequest,
-	validateDeleteRequest,
 } from "./validators";
 
 /**

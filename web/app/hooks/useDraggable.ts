@@ -1,10 +1,3 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import invariant from "tiny-invariant";
-
-import {
-	attachClosestEdge,
-	extractClosestEdge,
-} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
 	draggable,
@@ -13,8 +6,13 @@ import {
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
-
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import {
+	attachClosestEdge,
+	extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import invariant from "tiny-invariant";
 
 import { useDragContext } from "../state/contexts/DragContext";
 import { useRowById } from "./useRowById";
@@ -152,7 +150,8 @@ export function useDraggable({
 								source,
 								nativeSetDragImage,
 							}) => {
-								const rect = source.element.getBoundingClientRect();
+								const rect =
+									source.element.getBoundingClientRect();
 
 								setCustomNativeDragPreview({
 									nativeSetDragImage,
@@ -160,8 +159,16 @@ export function useDraggable({
 										element,
 										input: location.current.input,
 									}),
-									render({ container }: { container: HTMLElement }) {
-										setState({ type: "preview", container, rect });
+									render({
+										container,
+									}: {
+										container: HTMLElement;
+									}) {
+										setState({
+											type: "preview",
+											container,
+											rect,
+										});
 										return () => setState(draggingState);
 									},
 								});
@@ -193,7 +200,8 @@ export function useDraggable({
 				onDragEnter: onDragEvent,
 				onDrag: onDragEvent,
 				onDragLeave: () => {
-					if (dropIndicatorRefOnLeave.current?.rowId !== rowId) return;
+					if (dropIndicatorRefOnLeave.current?.rowId !== rowId)
+						return;
 
 					lastDispatchedDropKey.current = null;
 					dispatchDropIndicator({

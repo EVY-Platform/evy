@@ -1,22 +1,21 @@
 import {
+	type CSSProperties,
+	type MouseEvent as ReactMouseEvent,
+	type ReactNode,
 	useCallback,
 	useEffect,
 	useLayoutEffect,
 	useRef,
-	type CSSProperties,
-	type MouseEvent as ReactMouseEvent,
-	type ReactNode,
 } from "react";
-
+import { useCamera } from "../hooks/useCamera";
+import { useSelectionPanOnEnter } from "../hooks/useSelectionPanOnEnter";
+import { useViewportGestures } from "../hooks/useViewportGestures";
+import { CameraContext } from "../state/contexts/CameraContext";
 import {
 	type CursorPosition,
 	drawDotField,
 	GRID_BASE_SIZE_PX,
 } from "./canvasDotField";
-import { useCamera } from "../hooks/useCamera";
-import { useSelectionPanOnEnter } from "../hooks/useSelectionPanOnEnter";
-import { useViewportGestures } from "../hooks/useViewportGestures";
-import { CameraContext } from "../state/contexts/CameraContext";
 
 /** Time constant for display cursor to ease toward the pointer (~95% in this many ms). */
 const CURSOR_EASE_MS = 200;
@@ -111,7 +110,9 @@ export function CanvasViewport({
 	});
 
 	useEffect(() => {
-		const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+		const mediaQuery = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		);
 		const syncReducedMotion = () => {
 			disableMorphRef.current = mediaQuery.matches;
 			requestRepaintRef.current();
@@ -149,7 +150,14 @@ export function CanvasViewport({
 				return;
 			}
 
-			context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+			context.setTransform(
+				devicePixelRatio,
+				0,
+				0,
+				devicePixelRatio,
+				0,
+				0,
+			);
 
 			const style = getComputedStyle(viewport);
 			const currentCam = camRef.current;
@@ -164,9 +172,15 @@ export function CanvasViewport({
 				offsetX: currentCam.offsetX,
 				offsetY: currentCam.offsetY,
 				cursor: displayCursorRef.current,
-				backgroundColor: style.getPropertyValue("--color-evy-light").trim(),
-				colorMedium: style.getPropertyValue("--color-evy-gray-medium").trim(),
-				colorDark: style.getPropertyValue("--color-evy-gray-dark").trim(),
+				backgroundColor: style
+					.getPropertyValue("--color-evy-light")
+					.trim(),
+				colorMedium: style
+					.getPropertyValue("--color-evy-gray-medium")
+					.trim(),
+				colorDark: style
+					.getPropertyValue("--color-evy-gray-dark")
+					.trim(),
 				disableMorph: disableMorphRef.current,
 			});
 		};
@@ -187,7 +201,8 @@ export function CanvasViewport({
 				lastCursorEaseTsRef.current = timeStamp;
 			} else {
 				const lastTs = lastCursorEaseTsRef.current;
-				const dt = lastTs !== null ? Math.max(0.0001, timeStamp - lastTs) : 16;
+				const dt =
+					lastTs !== null ? Math.max(0.0001, timeStamp - lastTs) : 16;
 				lastCursorEaseTsRef.current = timeStamp;
 
 				const alpha = 1 - Math.exp(-dt / easeTauMs);

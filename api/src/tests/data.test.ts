@@ -11,20 +11,20 @@ import { join } from "node:path";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
 import type {
-	UI_Flow,
-	UI_Page,
-	UI_Row,
+	CreateRequest,
+	CreateResponse,
 	DATA_EVY_Flow,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceResource,
-	CreateRequest,
-	CreateResponse,
+	GetRequest,
+	UI_Flow,
+	UI_Page,
+	UI_Row,
 	UpdateRequest,
 	UpdateResponse,
-	GetRequest,
 } from "evy-types";
-import { validateUiFlow as validateFlowData } from "evy-types/validators";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { validateUiFlow as validateFlowData } from "evy-types/validators";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
 import {
@@ -115,10 +115,14 @@ function ensureRowIds(rows: RowInput[]): RowInput[] {
 			},
 		};
 		if (row.view.content.children) {
-			rowWithId.view.content.children = ensureRowIds(row.view.content.children);
+			rowWithId.view.content.children = ensureRowIds(
+				row.view.content.children,
+			);
 		}
 		if (row.view.content.child) {
-			rowWithId.view.content.child = ensureRowIds([row.view.content.child])[0];
+			rowWithId.view.content.child = ensureRowIds([
+				row.view.content.child,
+			])[0];
 		}
 		return rowWithId;
 	});
@@ -432,7 +436,9 @@ describe("update", () => {
 									label: "Click me",
 								},
 							},
-							actions: [{ condition: "", false: "", true: "{close()}" }],
+							actions: [
+								{ condition: "", false: "", true: "{close()}" },
+							],
 						},
 					],
 				},
@@ -512,9 +518,9 @@ describe("get", () => {
 	});
 
 	it("should throw when params is not an object", async () => {
-		await expect(get(dataDb, null as unknown as GetRequest)).rejects.toThrow(
-			"is not an object",
-		);
+		await expect(
+			get(dataDb, null as unknown as GetRequest),
+		).rejects.toThrow("is not an object");
 	});
 
 	it("should throw when service is invalid", async () => {
@@ -602,7 +608,10 @@ describe("get", () => {
 			resource: "sdui",
 		});
 
-		expect(result.map((flow) => flow.id)).toEqual([olderFlow.id, newerFlow.id]);
+		expect(result.map((flow) => flow.id)).toEqual([
+			olderFlow.id,
+			newerFlow.id,
+		]);
 	});
 
 	it("should return single flow for resource SDUI when filter.id provided", async () => {
@@ -723,7 +732,9 @@ describe("get", () => {
 			createdAt: "2024-01-01T00:00:00.000Z",
 			updatedAt: "2024-01-02T00:00:00.000Z",
 		};
-		await testDb.insert(schema.service).values([olderService, newerService]);
+		await testDb
+			.insert(schema.service)
+			.values([olderService, newerService]);
 
 		const result = await get(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -837,7 +848,8 @@ describe("create SDUI validation", () => {
 												content: {
 													title: "Input 2",
 													value: "",
-													placeholder: "Enter more text",
+													placeholder:
+														"Enter more text",
 												},
 											},
 											actions: [],
@@ -953,7 +965,12 @@ describe("files", () => {
 			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
-			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
+			data: {
+				id: fileId,
+				type: fileType,
+				createdAt: now,
+				updatedAt: now,
+			},
 		});
 
 		expect(result).toMatchObject({ id: fileId });
@@ -989,7 +1006,12 @@ describe("files", () => {
 			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
-			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
+			data: {
+				id: fileId,
+				type: fileType,
+				createdAt: now,
+				updatedAt: now,
+			},
 		});
 		await stageUpload(fileId, opaqueBytes);
 
@@ -1015,7 +1037,12 @@ describe("files", () => {
 			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
-			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
+			data: {
+				id: fileId,
+				type: fileType,
+				createdAt: now,
+				updatedAt: now,
+			},
 		});
 		const result = await get(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -1036,13 +1063,23 @@ describe("files", () => {
 			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
-			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
+			data: {
+				id: fileId,
+				type: fileType,
+				createdAt: now,
+				updatedAt: now,
+			},
 		});
 		await create(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: otherId },
-			data: { id: otherId, type: fileType, createdAt: now, updatedAt: now },
+			data: {
+				id: otherId,
+				type: fileType,
+				createdAt: now,
+				updatedAt: now,
+			},
 		});
 		const result = await get(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -1118,7 +1155,12 @@ describe("files", () => {
 			service: EVY_CORE_SERVICE,
 			resource: "files",
 			filter: { id: fileId },
-			data: { id: fileId, type: fileType, createdAt: now, updatedAt: now },
+			data: {
+				id: fileId,
+				type: fileType,
+				createdAt: now,
+				updatedAt: now,
+			},
 		});
 
 		const result = await deleteCore(dataDb, {

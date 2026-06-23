@@ -1,7 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { fuzzystrmatch } from "@electric-sql/pglite/contrib/fuzzystrmatch";
-import { drizzle } from "drizzle-orm/pglite";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
+import { drizzle } from "drizzle-orm/pglite";
 
 import { schema } from "../db";
 

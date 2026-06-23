@@ -1,6 +1,6 @@
-import { Client } from "rpc-websockets";
-import type { SyncResponse, UI_Flow as ServerFlow } from "evy-types";
+import type { UI_Flow as ServerFlow, SyncResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { Client } from "rpc-websockets";
 import { config } from "../config";
 
 export function isServerFlow(v: unknown): v is ServerFlow {
@@ -88,7 +88,11 @@ class WSClient {
 		});
 
 		const response = rawUnknown as SyncResponse;
-		if (!response || typeof response !== "object" || !("data" in response)) {
+		if (
+			!response ||
+			typeof response !== "object" ||
+			!("data" in response)
+		) {
 			throw new Error("Invalid sync response shape");
 		}
 

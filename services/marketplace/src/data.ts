@@ -8,23 +8,25 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import { data, db } from "./db";
-import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
-import { emitDataChanged } from "./events";
 import {
 	assertIsoDateTimeJsonFields,
-	validateGetResponse,
 	validateCreateDataPayload,
-	validateUpdateDataPayload,
 	validateCreateResponse,
+	validateGetResponse,
+	validateUpdateDataPayload,
 	validateUpdateResponse,
 } from "evy-types/validators";
+import { data, db } from "./db";
+import { emitDataChanged } from "./events";
+import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
 
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest,
 ): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
-		throw new Error("Marketplace service requires the marketplace service id");
+		throw new Error(
+			"Marketplace service requires the marketplace service id",
+		);
 	}
 	if (!MARKETPLACE_SEED_RESOURCES.has(params.resource)) {
 		throw new Error("Unsupported resource id for marketplace service");

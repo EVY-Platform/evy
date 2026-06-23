@@ -2,9 +2,9 @@ import { useLayoutEffect, useRef, useState } from "react";
 
 import { useRowById } from "../../hooks/useRowById";
 import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { lineClampStyle } from "../design-system/lineClamp";
-import { defineRow } from "../defineRow";
 
 function maxLinesValue(maxLines: string | undefined): number {
 	const parsedMaxLines = Number.parseInt(maxLines ?? "", 10);
@@ -29,7 +29,9 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 		if (!textElement || expanded) return;
 
 		const updateCanExpand = () => {
-			setCanExpand(textElement.scrollHeight > textElement.clientHeight + 1);
+			setCanExpand(
+				textElement.scrollHeight > textElement.clientHeight + 1,
+			);
 		};
 
 		updateCanExpand();

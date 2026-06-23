@@ -19,7 +19,10 @@ export function useFileStorageDirsForTest(
 
 	beforeEach(async () => {
 		dirs = {
-			filesDir: join(tmpdir(), `evy-${name}-files-test-${crypto.randomUUID()}`),
+			filesDir: join(
+				tmpdir(),
+				`evy-${name}-files-test-${crypto.randomUUID()}`,
+			),
 			uploadTmpDir: join(
 				tmpdir(),
 				`evy-${name}-uploads-test-${crypto.randomUUID()}`,

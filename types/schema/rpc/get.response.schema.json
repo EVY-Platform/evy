@@ -30,7 +30,9 @@
 				},
 				{
 					"type": "object",
-					"additionalProperties": { "$ref": "#/$defs/GetDataResponse" }
+					"additionalProperties": {
+						"$ref": "#/$defs/GetDataResponse"
+					}
 				}
 			]
 		}

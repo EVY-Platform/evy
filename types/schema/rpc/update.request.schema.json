@@ -13,12 +13,7 @@
 	},
 	"type": "object",
 	"additionalProperties": false,
-	"required": [
-		"service",
-		"resource",
-		"filter",
-		"data"
-	],
+	"required": ["service", "resource", "filter", "data"],
 	"properties": {
 		"service": {
 			"type": "string",
@@ -32,9 +27,7 @@
 		"filter": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"id"
-			],
+			"required": ["id"],
 			"properties": {
 				"id": {
 					"type": "string",

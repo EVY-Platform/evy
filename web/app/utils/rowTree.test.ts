@@ -97,8 +97,12 @@ describe("page-level row tree helpers", () => {
 	it("finds containers in page rows and footer subtrees", () => {
 		const bodyChild = makeRow("body-child");
 		const footerChild = makeRow("footer-child");
-		const bodyContainer = makeRow("body-container", { children: [bodyChild] });
-		const footerContainer = makeRow("footer-container", { child: footerChild });
+		const bodyContainer = makeRow("body-container", {
+			children: [bodyChild],
+		});
+		const footerContainer = makeRow("footer-container", {
+			child: footerChild,
+		});
 		const p = page("p", [bodyContainer], footerContainer);
 
 		expect(findContainerOfRowInPage(p, "body-child")?.container.id).toBe(
@@ -107,7 +111,9 @@ describe("page-level row tree helpers", () => {
 		expect(findContainerOfRowInPage(p, "footer-child")?.container.id).toBe(
 			"footer-container",
 		);
-		expect(findContainerByIdInPage(p, "footer-container")?.type).toBe("child");
+		expect(findContainerByIdInPage(p, "footer-container")?.type).toBe(
+			"child",
+		);
 		expect(findContainerOfRowInPage(p, "footer-container")).toBeNull();
 	});
 
@@ -122,7 +128,10 @@ describe("page-level row tree helpers", () => {
 			page("p", [], footer),
 			"footer-child",
 		);
-		const withoutFooter = removeRowFromPage(page("p", [], footer), "footer");
+		const withoutFooter = removeRowFromPage(
+			page("p", [], footer),
+			"footer",
+		);
 
 		expect(withoutBody.rows).toEqual([]);
 		expect(

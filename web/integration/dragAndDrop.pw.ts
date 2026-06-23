@@ -2,7 +2,6 @@ import { expect, type Locator, test } from "@playwright/test";
 import invariant from "tiny-invariant";
 import { openAppWithTestFlows } from "./flowFixtures";
 import {
-	SELECTORS,
 	expectDraggableSubrowOrder,
 	getConfigPanel,
 	getFirstPage,
@@ -10,6 +9,7 @@ import {
 	getPageRow,
 	getRowsPanel,
 	getSidebarRow,
+	SELECTORS,
 	setupTwoEmptyTestPages,
 } from "./utils";
 
@@ -34,7 +34,9 @@ async function dragTextRowWithTitle(
 	const sidebarRow = await getSidebarRow(page, "Text row title");
 	await sidebarRow.dragTo(target);
 
-	const titleInput = getConfigPanel(page).getByLabel("title", { exact: true });
+	const titleInput = getConfigPanel(page).getByLabel("title", {
+		exact: true,
+	});
 	await titleInput.clear();
 	await titleInput.fill(title);
 }
@@ -65,7 +67,9 @@ test.describe("Drag & Drop UX", () => {
 		expect(newRowCount).toBe(initialRowCount + 1);
 	});
 
-	test("should drag a row from one page to another page", async ({ page }) => {
+	test("should drag a row from one page to another page", async ({
+		page,
+	}) => {
 		await setupTwoEmptyTestPages(page);
 
 		const firstPage = getFirstPage(page);
@@ -266,7 +270,9 @@ test.describe("Drag & Drop UX", () => {
 		).not.toBeVisible();
 	});
 
-	test("should drag a row from position 1 to 2 on a page", async ({ page }) => {
+	test("should drag a row from position 1 to 2 on a page", async ({
+		page,
+	}) => {
 		await setupTwoEmptyTestPages(page);
 
 		const firstPage = getFirstPage(page);
@@ -321,7 +327,9 @@ test.describe("Drag & Drop UX", () => {
 		);
 	});
 
-	test("should drag a row from position 2 to 1 on a page", async ({ page }) => {
+	test("should drag a row from position 2 to 1 on a page", async ({
+		page,
+	}) => {
 		await setupTwoEmptyTestPages(page);
 		const firstPage = getFirstPage(page);
 		const pageContent = getPageContent(page);
@@ -507,7 +515,9 @@ test.describe("Drag & Drop UX", () => {
 			await sidebarRow.dragTo(pageContent);
 			const pageRow = getPageRow(page, rowText);
 			await pageRow.scrollIntoViewIfNeeded();
-			await expect(pageRow.getByText(rowText, { exact: true })).toBeVisible();
+			await expect(
+				pageRow.getByText(rowText, { exact: true }),
+			).toBeVisible();
 		}
 
 		const buttonSidebarRow = await getSidebarRow(page, buttonRowText);
@@ -517,12 +527,16 @@ test.describe("Drag & Drop UX", () => {
 		const finalRowCount = await pageContent
 			.locator(SELECTORS.draggableRow)
 			.count();
-		expect(finalRowCount).toBe(initialRowCount + visibleRowTypes.length + 1);
+		expect(finalRowCount).toBe(
+			initialRowCount + visibleRowTypes.length + 1,
+		);
 
 		for (const rowText of visibleRowTypes) {
 			const pageRow = getPageRow(page, rowText);
 			await pageRow.scrollIntoViewIfNeeded();
-			await expect(pageRow.getByText(rowText, { exact: true })).toBeVisible();
+			await expect(
+				pageRow.getByText(rowText, { exact: true }),
+			).toBeVisible();
 		}
 	});
 });

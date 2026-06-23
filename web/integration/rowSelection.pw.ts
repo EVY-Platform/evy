@@ -40,9 +40,9 @@ test.describe("Row Selection", () => {
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
 		).toBeVisible();
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
-			"First Text Row",
-		);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("First Text Row");
 	});
 
 	test("should update configuration panel when different row is selected", async ({
@@ -85,9 +85,9 @@ test.describe("Row Selection", () => {
 		await firstTextRow.click();
 
 		// Verify first row's title is shown
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
-			"First Text Row",
-		);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("First Text Row");
 
 		// Click on second Text row
 		const secondTextRow = page
@@ -96,9 +96,9 @@ test.describe("Row Selection", () => {
 		await secondTextRow.click();
 
 		// Verify second row's title is now shown
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
-			"Second Text Row",
-		);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("Second Text Row");
 	});
 
 	test("should show only one row selected at a time", async ({ page }) => {
@@ -143,9 +143,9 @@ test.describe("Row Selection", () => {
 		await textRow.click();
 
 		// Configuration should update to the newly selected row.
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
-			"Text Row",
-		);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("Text Row");
 	});
 
 	test("should show configuration for dragged row after drop", async ({
@@ -250,9 +250,9 @@ test.describe("Row Selection", () => {
 		await subtitleInput.fill("New subtitle content");
 
 		// Title should still show the same row's title
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
-			"First Text Row",
-		);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("First Text Row");
 
 		// The updated subtitle should be visible
 		await expect(subtitleInput).toHaveText("New subtitle content");
@@ -333,7 +333,9 @@ test.describe("Row Selection with Containers", () => {
 				],
 			},
 		]);
-		const childRow = page.getByText("Child Text Row", { exact: true }).first();
+		const childRow = page
+			.getByText("Child Text Row", { exact: true })
+			.first();
 		await childRow.click();
 
 		const configPanel = getConfigPanel(page);
@@ -378,7 +380,9 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = getConfigPanel(page);
 
 		// Select child first
-		const childRow = page.getByText("Child Text Row", { exact: true }).first();
+		const childRow = page
+			.getByText("Child Text Row", { exact: true })
+			.first();
 		await childRow.click();
 		await configPanel.getByRole("button", { name: /^Text$/ }).click();
 		await expect(

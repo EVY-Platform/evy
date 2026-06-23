@@ -1,21 +1,21 @@
-import { useCallback, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { ServiceResource } from "../../api/sync";
 import { LUCIDE_STROKE_WIDTH } from "../../icons/iconSyntax";
 import {
-	emptyLeaf,
 	type ConditionExpression,
 	type ConditionGroup,
 	type ConditionLeaf,
+	emptyLeaf,
 	type LogicalOperator,
 } from "../../utils/conditionExpression";
 import { PopoverSelect } from "../PopoverSelect";
-import { OPERATOR_OPTIONS } from "./actionPopupConstants";
 import {
 	ensureGroup,
 	normalizeExpression,
 } from "./actionExpressionEditorHelpers";
+import { OPERATOR_OPTIONS } from "./actionPopupConstants";
 import { LogicalSegmentControl } from "./LogicalSegmentControl";
 import { OperandEditor } from "./OperandEditor";
 
@@ -41,7 +41,8 @@ export function ConditionGroupEditor({
 	const [draft, setDraft] = useState<ConditionLeaf>(emptyLeaf());
 
 	const handleLogicalToggle = useCallback(() => {
-		const next: LogicalOperator = group.logicalOperator === "or" ? "and" : "or";
+		const next: LogicalOperator =
+			group.logicalOperator === "or" ? "and" : "or";
 		onChange(normalizeExpression({ ...group, logicalOperator: next }));
 	}, [group, onChange]);
 
@@ -58,7 +59,12 @@ export function ConditionGroupEditor({
 					setDraft(updated);
 				} else {
 					const newChildren = [...group.children, updated];
-					onChange(normalizeExpression({ ...group, children: newChildren }));
+					onChange(
+						normalizeExpression({
+							...group,
+							children: newChildren,
+						}),
+					);
 					setDraft(emptyLeaf());
 				}
 			} else {
@@ -68,7 +74,9 @@ export function ConditionGroupEditor({
 				const newChildren = group.children.map((c, i) =>
 					i === rowIndex ? updated : c,
 				);
-				onChange(normalizeExpression({ ...group, children: newChildren }));
+				onChange(
+					normalizeExpression({ ...group, children: newChildren }),
+				);
 			}
 		},
 		[draft, group, onChange],
@@ -96,7 +104,9 @@ export function ConditionGroupEditor({
 				const newChildren = group.children.map((c, i) =>
 					i === rowIndex ? nestedGroup : c,
 				);
-				onChange(normalizeExpression({ ...group, children: newChildren }));
+				onChange(
+					normalizeExpression({ ...group, children: newChildren }),
+				);
 			}
 		},
 		[group, onChange],
@@ -138,7 +148,9 @@ export function ConditionGroupEditor({
 								expression={child}
 								draftVariables={draftVariables}
 								serviceResources={serviceResources}
-								onChange={(nested) => handleNestedGroupChange(rowIndex, nested)}
+								onChange={(nested) =>
+									handleNestedGroupChange(rowIndex, nested)
+								}
 								idPrefix={`${idPrefix}-${rowIndex}`}
 							/>
 						</span>
@@ -160,7 +172,9 @@ export function ConditionGroupEditor({
 								value={child.left}
 								draftVariables={draftVariables}
 								serviceResources={serviceResources}
-								onChange={(v) => handleLeafChange(rowIndex, "left", false, v)}
+								onChange={(v) =>
+									handleLeafChange(rowIndex, "left", false, v)
+								}
 							/>
 
 							<PopoverSelect
@@ -168,7 +182,12 @@ export function ConditionGroupEditor({
 								options={OPERATOR_OPTIONS}
 								value={child.operator}
 								onChange={(v) =>
-									handleLeafChange(rowIndex, "operator", false, v)
+									handleLeafChange(
+										rowIndex,
+										"operator",
+										false,
+										v,
+									)
 								}
 							/>
 
@@ -177,7 +196,14 @@ export function ConditionGroupEditor({
 								value={child.right}
 								draftVariables={draftVariables}
 								serviceResources={serviceResources}
-								onChange={(v) => handleLeafChange(rowIndex, "right", false, v)}
+								onChange={(v) =>
+									handleLeafChange(
+										rowIndex,
+										"right",
+										false,
+										v,
+									)
+								}
 							/>
 
 							<button
@@ -225,7 +251,9 @@ export function ConditionGroupEditor({
 						value={draft.left}
 						draftVariables={draftVariables}
 						serviceResources={serviceResources}
-						onChange={(v) => handleLeafChange(leafRows.length, "left", true, v)}
+						onChange={(v) =>
+							handleLeafChange(leafRows.length, "left", true, v)
+						}
 					/>
 
 					<PopoverSelect
@@ -233,7 +261,12 @@ export function ConditionGroupEditor({
 						options={OPERATOR_OPTIONS}
 						value={draft.operator}
 						onChange={(v) =>
-							handleLeafChange(leafRows.length, "operator", true, v)
+							handleLeafChange(
+								leafRows.length,
+								"operator",
+								true,
+								v,
+							)
 						}
 					/>
 

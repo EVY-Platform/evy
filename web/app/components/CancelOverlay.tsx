@@ -1,8 +1,7 @@
-import { Fragment, useLayoutEffect, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
-import invariant from "tiny-invariant";
-
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { Trash2 } from "lucide-react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import invariant from "tiny-invariant";
 
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 

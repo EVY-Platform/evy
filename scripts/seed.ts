@@ -1,22 +1,21 @@
 /// <reference types="bun-types" />
 
+import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
-import { pgTable, jsonb, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { EVY_CORE_SERVICE } from "../types/generated/ts/coreResources";
 import {
+	file as fileTable,
+	flow as flowTable,
 	organization as organizationTable,
-	service as serviceTable,
 	serviceProvider as serviceProviderTable,
 	serviceResource as serviceResourceTable,
-	flow as flowTable,
-	file as fileTable,
+	service as serviceTable,
 } from "../types/generated/ts/db/schema.generated";
-import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
-
-import { EVY_CORE_SERVICE } from "../types/generated/ts/coreResources";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
@@ -235,8 +234,10 @@ function buildFileRows(files: SeedDataItem[], now: string): SeedFileRow[] {
 				`Seed file "${item.id}" must have a non-empty string "type" field`,
 			);
 		}
-		const createdAt = typeof item.createdAt === "string" ? item.createdAt : now;
-		const updatedAt = typeof item.updatedAt === "string" ? item.updatedAt : now;
+		const createdAt =
+			typeof item.createdAt === "string" ? item.createdAt : now;
+		const updatedAt =
+			typeof item.updatedAt === "string" ? item.updatedAt : now;
 		return { id: item.id, type: item.type, createdAt, updatedAt };
 	});
 }
@@ -251,9 +252,17 @@ const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
 	[SEED_IDS.coreOrganisationsResource, EVY_CORE_SERVICE, "organisation"],
 	[SEED_IDS.coreServicesResource, EVY_CORE_SERVICE, "service"],
 	[SEED_IDS.coreProvidersResource, EVY_CORE_SERVICE, "provider"],
-	[SEED_IDS.coreServiceResourcesResource, EVY_CORE_SERVICE, "service_resource"],
+	[
+		SEED_IDS.coreServiceResourcesResource,
+		EVY_CORE_SERVICE,
+		"service_resource",
+	],
 	[SEED_IDS.coreFilesResource, EVY_CORE_SERVICE, "file"],
-	[MARKETPLACE_RESOURCE.SELLING_REASONS, MARKETPLACE_SERVICE, "selling_reason"],
+	[
+		MARKETPLACE_RESOURCE.SELLING_REASONS,
+		MARKETPLACE_SERVICE,
+		"selling_reason",
+	],
 	[MARKETPLACE_RESOURCE.CONDITIONS, MARKETPLACE_SERVICE, "condition"],
 	[MARKETPLACE_RESOURCE.DURATIONS, MARKETPLACE_SERVICE, "duration"],
 	[MARKETPLACE_RESOURCE.AREAS, MARKETPLACE_SERVICE, "area"],
@@ -502,12 +511,14 @@ async function seedDatabase({
 			.values(buildServiceResourceRows(now));
 
 		await tx.delete(coreSchema.flow);
-		const flowRows = [...evyFlowsJson, ...serviceFlowsJson].map((flowData) => ({
-			id: flowData.id,
-			data: flowData,
-			createdAt: now,
-			updatedAt: now,
-		}));
+		const flowRows = [...evyFlowsJson, ...serviceFlowsJson].map(
+			(flowData) => ({
+				id: flowData.id,
+				data: flowData,
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 		if (flowRows.length > 0) {
 			await tx.insert(coreSchema.flow).values(flowRows);
 		}

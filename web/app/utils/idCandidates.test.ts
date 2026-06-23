@@ -170,7 +170,8 @@ describe("idCandidates", () => {
 		expect(
 			buildFunctionCandidates().every(
 				(candidate) =>
-					candidate.category === "Function" && candidate.insertMode === "text",
+					candidate.category === "Function" &&
+					candidate.insertMode === "text",
 			),
 		).toBe(true);
 	});
@@ -187,7 +188,9 @@ describe("idCandidates", () => {
 
 	test("filterCandidates is case-insensitive", () => {
 		expect(
-			filterCandidates(candidates, "ITEM").map((candidate) => candidate.id),
+			filterCandidates(candidates, "ITEM").map(
+				(candidate) => candidate.id,
+			),
 		).toEqual(["res-1", "res-1-long"]);
 	});
 

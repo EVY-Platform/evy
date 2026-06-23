@@ -1,24 +1,22 @@
 import invariant from "tiny-invariant";
-
+import { baseRows } from "../../rows/baseRows";
 import type { AppState, RowAction } from "../../types/actions";
 import type { UI_Page } from "../../types/flow";
 import type { Row } from "../../types/row";
-import { baseRows } from "../../rows/baseRows";
 import { buildRowForNewPageFromBase } from "../../utils/decodeFlow";
-import {
-	updateRowInTree,
-	findRowInPages,
-	findRowIdPathFromPageRoot,
-	findRowInSinglePage,
-	removeRowFromPage,
-	insertRowIntoPage,
-} from "../../utils/rowTree";
-
 import {
 	buildNewClientFlow,
 	buildNewClientPage,
 } from "../../utils/flowFactory";
 import { findFlowById } from "../../utils/flowHelpers";
+import {
+	findRowIdPathFromPageRoot,
+	findRowInPages,
+	findRowInSinglePage,
+	insertRowIntoPage,
+	removeRowFromPage,
+	updateRowInTree,
+} from "../../utils/rowTree";
 
 const CLEARED_SELECTION: Partial<AppState> = {
 	activePageId: undefined,
@@ -75,7 +73,8 @@ function ensureShowActionOnParent(
 	if (!destinationContainer) return pages;
 	const parentRow = findRowInPages(destinationContainer.rowId, pages);
 	if (!parentRow || parentRow.config.type === "Search") return pages;
-	if (parentRow.config.actions.some((a) => a.true === "{show()}")) return pages;
+	if (parentRow.config.actions.some((a) => a.true === "{show()}"))
+		return pages;
 
 	const showAction = { condition: "", true: "{show()}", false: "" };
 	return mapRowAcrossPages(pages, destinationContainer.rowId, (row) => ({
@@ -136,7 +135,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		return {
 			...state,
 			flows: state.flows.map((f) =>
-				f.id === activeFlowId ? { ...f, pages: [...f.pages, newPage] } : f,
+				f.id === activeFlowId
+					? { ...f, pages: [...f.pages, newPage] }
+					: f,
 			),
 			activePageId: newPage.id,
 			activeRowId: undefined,
@@ -162,7 +163,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			...state,
 			...(updatedPages && {
 				flows: state.flows.map((f) =>
-					f.id === state.activeFlowId ? { ...f, pages: updatedPages } : f,
+					f.id === state.activeFlowId
+						? { ...f, pages: updatedPages }
+						: f,
 				),
 			}),
 			...(activeRowId !== undefined && { activeRowId }),
@@ -176,7 +179,9 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const newRow = buildPaletteRow(action.oldRowId, action.newRowId);
 			if (!newRow) return state;
 
-			const page = flow.pages.find((p) => p.id === action.destinationPageId);
+			const page = flow.pages.find(
+				(p) => p.id === action.destinationPageId,
+			);
 			if (!page) return state;
 
 			const updatedPage = insertRowIntoPage(
@@ -277,7 +282,10 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			const row = findRowInPages(action.rowId, [originPage]);
 			invariant(row, "PageReducer moveRow: row is not defined");
 
-			const cleanedOriginPage = removeRowFromPage(originPage, action.rowId);
+			const cleanedOriginPage = removeRowFromPage(
+				originPage,
+				action.rowId,
+			);
 
 			const newPages = flow.pages.map((page) => {
 				if (
@@ -367,7 +375,11 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 
 			return updateState({
-				updatedPages: mapRowAcrossPages(flow.pages, action.rowId, updater),
+				updatedPages: mapRowAcrossPages(
+					flow.pages,
+					action.rowId,
+					updater,
+				),
 			});
 		}
 		case "UPDATE_ROW_ROOT": {
@@ -380,7 +392,11 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 
 			return updateState({
-				updatedPages: mapRowAcrossPages(flow.pages, action.rowId, updater),
+				updatedPages: mapRowAcrossPages(
+					flow.pages,
+					action.rowId,
+					updater,
+				),
 			});
 		}
 		case "UPDATE_ROW_ACTIONS": {
@@ -393,11 +409,17 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			});
 
 			return updateState({
-				updatedPages: mapRowAcrossPages(flow.pages, action.rowId, updater),
+				updatedPages: mapRowAcrossPages(
+					flow.pages,
+					action.rowId,
+					updater,
+				),
 			});
 		}
 		case "SET_ACTIVE_ROW": {
-			const page = flow.pages.find((p) => findRowInSinglePage(p, action.rowId));
+			const page = flow.pages.find((p) =>
+				findRowInSinglePage(p, action.rowId),
+			);
 			if (!page) return state;
 
 			let rootId: string;
@@ -452,21 +474,27 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 		}
 		case "UPDATE_PAGE_TITLE": {
 			const newPages = flow.pages.map((page) =>
-				page.id === action.pageId ? { ...page, title: action.title } : page,
+				page.id === action.pageId
+					? { ...page, title: action.title }
+					: page,
 			);
 			return updateState({ updatedPages: newPages });
 		}
 		// UI only deletes the active page; reducer still handles arbitrary pageId for tests/future use.
 		case "REMOVE_PAGE": {
 			if (flow.pages.length <= 1) return state;
-			const updatedPages = flow.pages.filter((p) => p.id !== action.pageId);
+			const updatedPages = flow.pages.filter(
+				(p) => p.id !== action.pageId,
+			);
 			if (updatedPages.length === flow.pages.length) return state;
 
 			const wasActivePage = state.activePageId === action.pageId;
 
 			return updateState({
 				updatedPages,
-				activePageId: wasActivePage ? updatedPages[0]?.id : state.activePageId,
+				activePageId: wasActivePage
+					? updatedPages[0]?.id
+					: state.activePageId,
 				activeRowId: wasActivePage ? undefined : state.activeRowId,
 				configStack: wasActivePage ? [] : state.configStack,
 			});
@@ -481,7 +509,10 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			};
 		}
 		case "NAVIGATE_BREADCRUMB": {
-			const newStack = state.configStack.slice(0, action.configStackLength);
+			const newStack = state.configStack.slice(
+				0,
+				action.configStackLength,
+			);
 
 			// Toggle: if navigating to the current stack length, clear selection
 			if (state.configStack.length === action.configStackLength) {

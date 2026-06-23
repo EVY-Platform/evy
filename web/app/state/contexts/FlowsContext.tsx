@@ -1,12 +1,11 @@
-import { createContext, useContext, type Dispatch } from "react";
-
-import type { Row } from "../../types/row";
-import type { UI_Flow } from "../../types/flow";
-import type { RowAction } from "../../types/actions";
+import { createContext, type Dispatch, useContext } from "react";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
 } from "../../api/sync";
+import type { RowAction } from "../../types/actions";
+import type { UI_Flow } from "../../types/flow";
+import type { Row } from "../../types/row";
 
 export type FlowsContextValue = {
 	rows: Row[];

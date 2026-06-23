@@ -1,14 +1,12 @@
 import type React from "react";
 import { forwardRef } from "react";
-
+import { type DraggableState, idleState } from "../hooks/useDraggable";
 import {
-	verticalDropIndicatorBefore,
-	verticalDropIndicatorAfter,
-	horizontalDropIndicatorBefore,
 	horizontalDropIndicatorAfter,
+	horizontalDropIndicatorBefore,
+	verticalDropIndicatorAfter,
+	verticalDropIndicatorBefore,
 } from "../rows/design-system/dropIndicator";
-
-import { idleState, type DraggableState } from "../hooks/useDraggable";
 
 type RowPrimitiveProps = {
 	children: React.ReactNode;

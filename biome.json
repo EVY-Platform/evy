@@ -5,7 +5,10 @@
 		"actions": { "source": { "organizeImports": "on" } }
 	},
 	"formatter": {
-		"enabled": true
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 4,
+		"lineWidth": 80
 	},
 	"linter": {
 		"enabled": true,
@@ -19,7 +22,8 @@
 			"!**/dist",
 			"!**/node_modules",
 			"!**/test-results",
-			"!**/playwright-report"
+			"!**/playwright-report",
+			"!ios/build"
 		]
 	}
 }

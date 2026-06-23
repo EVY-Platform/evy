@@ -110,16 +110,11 @@
 				"2026-06-07T09:00:00",
 				"2026-06-07T09:30:00"
 			],
-			"delivery_selection": [
-				"2026-06-03T14:00:00"
-			],
+			"delivery_selection": ["2026-06-03T14:00:00"],
 			"createdAt": "2026-05-20T22:56:17.000Z",
 			"transfer_options": {
 				"pickup": {
-					"selection": [
-						"2026-06-03T09:00:00",
-						"2026-06-03T09:30:00"
-					],
+					"selection": ["2026-06-03T09:00:00", "2026-06-03T09:30:00"],
 					"address": {
 						"unit": "C509",
 						"street": "28 Rothschild Avenue",
@@ -135,9 +130,7 @@
 					}
 				},
 				"delivery": {
-					"selection": [
-						"2026-06-03T14:00:00"
-					],
+					"selection": ["2026-06-03T14:00:00"],
 					"fee": {}
 				},
 				"ship": {
@@ -181,9 +174,7 @@
 				"value": 250
 			},
 			"seller_id": "04b34671-4eeb-4f1c-8435-5e029a0e455c",
-			"pickup_selection": [
-				"2026-06-03T10:00:00"
-			],
+			"pickup_selection": ["2026-06-03T10:00:00"],
 			"delivery_selection": [
 				"2026-06-03T15:00:00",
 				"2026-06-03T15:30:00"
@@ -191,9 +182,7 @@
 			"createdAt": "2026-05-22T22:56:17.000Z",
 			"transfer_options": {
 				"pickup": {
-					"selection": [
-						"2026-06-03T10:00:00"
-					],
+					"selection": ["2026-06-03T10:00:00"],
 					"address": {
 						"unit": "C509",
 						"street": "28 Rothschild Avenue",
@@ -209,10 +198,7 @@
 					}
 				},
 				"delivery": {
-					"selection": [
-						"2026-06-03T15:00:00",
-						"2026-06-03T15:30:00"
-					],
+					"selection": ["2026-06-03T15:00:00", "2026-06-03T15:30:00"],
 					"fee": {}
 				},
 				"ship": {

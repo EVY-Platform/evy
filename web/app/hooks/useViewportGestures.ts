@@ -1,9 +1,8 @@
 import type { RefObject } from "react";
 import { useEffect } from "react";
-
-import type { CameraState } from "./useCamera";
 import { CANVAS_PAGE_INTERIOR_SELECTOR } from "../utils/canvasPageInterior";
 import type { ScreenPoint } from "../utils/coordinates";
+import type { CameraState } from "./useCamera";
 
 const WHEEL_ZOOM_SENSITIVITY = 0.002;
 const MIN_PAN_SPEED_FOR_INERTIA = 0.2;
@@ -67,7 +66,8 @@ export function useViewportGestures({
 			}
 
 			const insidePage = isInsidePageInterior(event.target);
-			const withinMomentum = performance.now() - lastPanTime < PAN_MOMENTUM_MS;
+			const withinMomentum =
+				performance.now() - lastPanTime < PAN_MOMENTUM_MS;
 
 			if (insidePage && !withinMomentum) {
 				return;

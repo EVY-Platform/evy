@@ -1,13 +1,12 @@
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import type { Client } from "@grpc/grpc-js";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import type { Client } from "@grpc/grpc-js";
 import type { CreateRequest } from "evy-types";
-import { dirname, join } from "node:path";
-import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-
-import { create, get, update } from "./data";
 import { validateStrictGetRequest } from "evy-types/rpcRequestHelpers";
+import { create, get, update } from "./data";
 import { offServiceEvent, onServiceEvent } from "./events";
 
 /**
@@ -151,45 +150,53 @@ function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
 					const params = {
 						service: req.service,
 						resource: req.resource,
-						filter: Object.keys(filter).length > 0 ? filter : undefined,
+						filter:
+							Object.keys(filter).length > 0 ? filter : undefined,
 					};
 					validateStrictGetRequest(params);
 					const result = await get(params);
 					return { result_json: JSON.stringify(result) } as const;
 				},
 			),
-			Create: asyncUnaryHandler<WriteRequestShape, { result_json: string }>(
-				async (req) => {
-					const data = parseDataJson(req.data_json);
-					const params = {
-						service: req.service,
-						resource: req.resource,
-						filter: req.filter?.id ? { id: req.filter.id } : undefined,
-						data,
-					};
-					const result = await create(params as CreateRequest);
-					return { result_json: JSON.stringify(result) } as const;
-				},
-			),
-			Update: asyncUnaryHandler<WriteRequestShape, { result_json: string }>(
-				async (req) => {
-					if (!req.filter?.id) {
-						throw Object.assign(new Error("filter.id is required for update"), {
+			Create: asyncUnaryHandler<
+				WriteRequestShape,
+				{ result_json: string }
+			>(async (req) => {
+				const data = parseDataJson(req.data_json);
+				const params = {
+					service: req.service,
+					resource: req.resource,
+					filter: req.filter?.id ? { id: req.filter.id } : undefined,
+					data,
+				};
+				const result = await create(params as CreateRequest);
+				return { result_json: JSON.stringify(result) } as const;
+			}),
+			Update: asyncUnaryHandler<
+				WriteRequestShape,
+				{ result_json: string }
+			>(async (req) => {
+				if (!req.filter?.id) {
+					throw Object.assign(
+						new Error("filter.id is required for update"),
+						{
 							code: grpc.status.INVALID_ARGUMENT,
-						});
-					}
-					const data = parseDataJson(req.data_json);
-					const params = {
-						service: req.service,
-						resource: req.resource,
-						filter: { id: req.filter.id },
-						data,
-					};
-					const result = await update(params);
-					return { result_json: JSON.stringify(result) } as const;
-				},
-			),
-			SubscribeEvents: (call: grpc.ServerWritableStream<unknown, unknown>) => {
+						},
+					);
+				}
+				const data = parseDataJson(req.data_json);
+				const params = {
+					service: req.service,
+					resource: req.resource,
+					filter: { id: req.filter.id },
+					data,
+				};
+				const result = await update(params);
+				return { result_json: JSON.stringify(result) } as const;
+			}),
+			SubscribeEvents: (
+				call: grpc.ServerWritableStream<unknown, unknown>,
+			) => {
 				const listener = (eventName: string, payload: unknown) => {
 					tryWriteSubscribeEvent(call, eventName, payload);
 				};
@@ -236,7 +243,9 @@ export async function startMarketplaceGrpcServer(
 					reject(err);
 					return;
 				}
-				console.info(`Marketplace gRPC listening at ${host}:${boundPort}`);
+				console.info(
+					`Marketplace gRPC listening at ${host}:${boundPort}`,
+				);
 				resolve();
 			},
 		);

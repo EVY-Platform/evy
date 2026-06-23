@@ -253,7 +253,9 @@ export function formatExpressionSummary(
 	if (!expr) return [];
 	const resourceNamesById = resourceNameById(serviceResources);
 	if (expr.type === "leaf") {
-		return [{ prefix: "", text: formatLeafDisplay(expr, resourceNamesById) }];
+		return [
+			{ prefix: "", text: formatLeafDisplay(expr, resourceNamesById) },
+		];
 	}
 	return formatGroupSummary(expr, true, resourceNamesById);
 }
@@ -292,7 +294,10 @@ function formatGroupSummary(
 		const prefix = i === 0 && isTopLevel ? "" : keyword;
 
 		if (child.type === "leaf") {
-			lines.push({ prefix, text: formatLeafDisplay(child, resourceNamesById) });
+			lines.push({
+				prefix,
+				text: formatLeafDisplay(child, resourceNamesById),
+			});
 		} else {
 			const nested = formatGroupInline(child, resourceNamesById);
 			lines.push({ prefix, text: nested });

@@ -78,7 +78,8 @@ export function NavigationBreadcrumb() {
 		dispatchRow({ type: "NAVIGATE_BREADCRUMB", configStackLength });
 	};
 
-	const rowSegments: Array<{ id: string; row: Row; stackLength: number }> = [];
+	const rowSegments: Array<{ id: string; row: Row; stackLength: number }> =
+		[];
 	if (activePage && rootRow) {
 		rowSegments.push({ id: rootRow.id, row: rootRow, stackLength: 0 });
 		for (let i = 0; i < configStack.length; i++) {
@@ -134,7 +135,9 @@ export function NavigationBreadcrumb() {
 							<button
 								type="button"
 								className={`evy-nav-breadcrumb-link evy-shrink-0${isPageActiveWithNoRow ? " evy-nav-breadcrumb-link--active" : ""}`}
-								aria-current={isPageActiveWithNoRow ? "page" : undefined}
+								aria-current={
+									isPageActiveWithNoRow ? "page" : undefined
+								}
 								aria-label={`Select page ${breadcrumbLabelForPage(activePage, pages)}`}
 								onClick={() => {
 									capturePageFramePosition(activePage.id);
@@ -164,7 +167,9 @@ export function NavigationBreadcrumb() {
 								<button
 									type="button"
 									className="evy-nav-breadcrumb-link evy-shrink-0"
-									onClick={() => navigateBreadcrumb(stackLength)}
+									onClick={() =>
+										navigateBreadcrumb(stackLength)
+									}
 									aria-label={ariaLabel}
 								>
 									{parseIconText(label)}

@@ -56,7 +56,9 @@ const previewMockData = {
 };
 
 function splitDotAndBracketPath(path: string): string[] {
-	return path.split(".").flatMap((part) => part.split(/\[|\]/).filter(Boolean));
+	return path
+		.split(".")
+		.flatMap((part) => part.split(/\[|\]/).filter(Boolean));
 }
 
 function resolveMockPath(path: string): unknown {
@@ -84,7 +86,9 @@ function evyFormatDimension(
 	if (!trimmedArgs) return fallbackDimensionOutput;
 
 	const value =
-		trimmedArgs === "$datum" ? context?.datum : resolveMockPath(trimmedArgs);
+		trimmedArgs === "$datum"
+			? context?.datum
+			: resolveMockPath(trimmedArgs);
 	const rawValue = value ?? trimmedArgs;
 	const trimmedValue = String(rawValue)
 		.trim()

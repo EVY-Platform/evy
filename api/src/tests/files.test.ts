@@ -81,7 +81,9 @@ describe("get files", () => {
 			resource: "files",
 		});
 		expect(Array.isArray(result)).toBe(true);
-		const item = (result as Record<string, unknown>[]).find((r) => r.id === id);
+		const item = (result as Record<string, unknown>[]).find(
+			(r) => r.id === id,
+		);
 		expect(item).toMatchObject({
 			id,
 			type: fileType,

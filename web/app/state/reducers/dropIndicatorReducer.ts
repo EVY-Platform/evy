@@ -1,6 +1,6 @@
 import type {
-	DropIndicatorState,
 	DropIndicatorAction,
+	DropIndicatorState,
 } from "../../types/actions";
 
 export const dropIndicatorReducer = (

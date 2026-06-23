@@ -1,14 +1,12 @@
-import { useCallback } from "react";
-
 import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-
-import { containerDropindicatorId } from "../rows/EVYRow";
+import { useCallback } from "react";
 import {
 	type DropTargetHighlightDataArgs,
 	useDropTargetHighlight,
 } from "../hooks/useDropTargetHighlight";
-import { DropPlaceholderShell } from "./DropPlaceholderShell";
+import { containerDropindicatorId } from "../rows/EVYRow";
 import type { ContainerType } from "../types/row";
+import { DropPlaceholderShell } from "./DropPlaceholderShell";
 
 export function PlaceholderDropIndicator({
 	containerRowId,

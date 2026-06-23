@@ -92,7 +92,9 @@ export function ActionEditor({
 					))}
 				</div>
 			) : (
-				<div className="evy-text-sm evy-text-gray">Row has no actions</div>
+				<div className="evy-text-sm evy-text-gray">
+					Row has no actions
+				</div>
 			)}
 
 			{editing && (
@@ -133,7 +135,10 @@ function ActionSummaryCard({
 		[conditionExpr, serviceResources],
 	);
 	const trueBranch = useMemo(() => parseBranch(action.true), [action.true]);
-	const falseBranch = useMemo(() => parseBranch(action.false), [action.false]);
+	const falseBranch = useMemo(
+		() => parseBranch(action.false),
+		[action.false],
+	);
 
 	return (
 		<div>
@@ -171,7 +176,10 @@ function ActionSummaryCard({
 						</span>
 						<ul className="evy-action-summary-list">
 							{summaryLines.map((line) => (
-								<li key={`${line.prefix}-${line.text}`} className="evy-text-sm">
+								<li
+									key={`${line.prefix}-${line.text}`}
+									className="evy-text-sm"
+								>
 									{line.prefix ? `${line.prefix} ` : ""}
 									{line.text}
 								</li>

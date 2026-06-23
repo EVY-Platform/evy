@@ -1,10 +1,10 @@
+import { ne } from "drizzle-orm";
 import type { GetRequest, GetResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { ne } from "drizzle-orm";
-import { createDb } from "./database/db";
-import { get as getCore } from "./data/data";
-import { requireServiceGrpcEndpoint } from "./procedures/services";
 import { service } from "../../types/generated/ts/db/schema.generated";
+import { get as getCore } from "./data/data";
+import { createDb } from "./database/db";
+import { requireServiceGrpcEndpoint } from "./procedures/services";
 
 type AssertApiReadableOptions = {
 	requireSeeded: boolean;
@@ -31,7 +31,9 @@ export async function assertApiReadable(
 		resource: "sdui",
 	});
 	if (!Array.isArray(response)) {
-		throw new Error("API readiness failed: expected sdui response data array");
+		throw new Error(
+			"API readiness failed: expected sdui response data array",
+		);
 	}
 
 	if (!requireSeeded) {
@@ -59,7 +61,9 @@ export async function runHealthCli(): Promise<void> {
 			},
 		);
 		console.info(
-			requireSeededData ? "API seeded-data readiness OK" : "API readiness OK",
+			requireSeededData
+				? "API seeded-data readiness OK"
+				: "API readiness OK",
 		);
 		process.exit(0);
 	} catch (error) {

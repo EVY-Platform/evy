@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
-import { parseText } from "../utils/interpreter";
 import type { EVYFunctionContext } from "../utils/functions";
+import { parseText } from "../utils/interpreter";
 
 export function useParseText() {
 	const { resourceIdToEntityName } = useFlowsContext();

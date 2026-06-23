@@ -30,7 +30,8 @@ test.describe("Offline and connection resilience", () => {
 
 				readyState = MockWebSocket.CONNECTING;
 				onopen: ((event: Event) => void) | null = null;
-				onmessage: ((event: MessageEvent<string>) => void) | null = null;
+				onmessage: ((event: MessageEvent<string>) => void) | null =
+					null;
 				onclose: ((event: CloseEvent) => void) | null = null;
 				onerror: ((event: Event) => void) | null = null;
 
@@ -59,7 +60,11 @@ test.describe("Offline and connection resilience", () => {
 					};
 
 					if (request.method === "rpc.login") {
-						this.respond({ jsonrpc: "2.0", id: request.id, result: true });
+						this.respond({
+							jsonrpc: "2.0",
+							id: request.id,
+							result: true,
+						});
 						return;
 					}
 
@@ -126,13 +131,18 @@ test.describe("Offline and connection resilience", () => {
 	test("injected flows keep builder UI usable without a successful API read path", async ({
 		page,
 	}) => {
-		await installConstructorFailingWebSocket(page, "No WebSocket in this test");
+		await installConstructorFailingWebSocket(
+			page,
+			"No WebSocket in this test",
+		);
 		await openAppWithTestFlows(page, [
 			{ id: "p1", title: "Offline page", rows: [] },
 		]);
 		await ensureSidePanelsExpanded(page);
 
-		await expect(page.getByText("Rows", { exact: true }).first()).toBeVisible();
+		await expect(
+			page.getByText("Rows", { exact: true }).first(),
+		).toBeVisible();
 		await expect(getConfigPanel(page)).toBeVisible();
 		await expect(
 			getFirstPage(page).getByText("Offline page", { exact: true }),

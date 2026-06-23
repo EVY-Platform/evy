@@ -1,5 +1,5 @@
-import { createDb } from "./database/db";
 import { initCoreNotifications, validateAuth } from "./data/data";
+import { createDb } from "./database/db";
 import {
 	api,
 	create,
@@ -10,14 +10,14 @@ import {
 } from "./procedures/rpc";
 import { initServiceAdapters, wireGrpcEvents } from "./procedures/services";
 import { cancelUpload, handleUploadChunk } from "./procedures/uploads";
+import { runHealthCli } from "./readiness";
 import {
 	emitJsonRpc,
 	initServer,
 	makeAuthChecker,
-	wireBinaryChunkHandler,
 	type WSParams,
+	wireBinaryChunkHandler,
 } from "./shared/ws";
-import { runHealthCli } from "./readiness";
 
 const appDb = createDb();
 
@@ -37,7 +37,9 @@ async function startServer(): Promise<void> {
 	wireGrpcEvents(broadcast);
 
 	server.register("api", (params: unknown) => api(params, appDb));
-	server.register("sync", (params: unknown) => sync(params, appDb)).protected();
+	server
+		.register("sync", (params: unknown) => sync(params, appDb))
+		.protected();
 	server.register("cancelUpload", cancelUpload).protected();
 
 	server.register("get", (params: unknown) => get(params, appDb));
@@ -56,7 +58,9 @@ async function startServer(): Promise<void> {
 
 if (import.meta.main) {
 	if (
-		process.argv.some((arg) => arg === "--health" || arg === "--require-seeded")
+		process.argv.some(
+			(arg) => arg === "--health" || arg === "--require-seeded",
+		)
 	) {
 		await runHealthCli();
 	} else {

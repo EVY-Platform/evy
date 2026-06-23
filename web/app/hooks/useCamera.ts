@@ -1,8 +1,6 @@
-import { useCallback, useReducer, useRef, useEffect } from "react";
-
-import type { ScreenPoint } from "../utils/coordinates";
-
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import { EASE } from "../appLayoutStyles";
+import type { ScreenPoint } from "../utils/coordinates";
 
 const CAMERA_MIN_SCALE = 0.25;
 const CAMERA_MAX_SCALE = 2;
@@ -171,7 +169,9 @@ export function useCamera() {
 			const availableH = vh - paddingPx * 2;
 			const scaleX = availableW / bounds.width;
 			const scaleY = availableH / bounds.height;
-			const nextScale = clampScale(Math.min(scaleX, scaleY, CAMERA_MAX_SCALE));
+			const nextScale = clampScale(
+				Math.min(scaleX, scaleY, CAMERA_MAX_SCALE),
+			);
 
 			const scaledW = bounds.width * nextScale;
 			const scaledH = bounds.height * nextScale;

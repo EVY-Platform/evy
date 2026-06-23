@@ -1,5 +1,5 @@
-import type { RowConfig } from "../../types/row";
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
+import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { RowLayout } from "../design-system/RowLayout";

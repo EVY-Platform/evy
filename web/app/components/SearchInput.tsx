@@ -56,7 +56,11 @@ export function SearchInput({
 }) {
 	return (
 		<div style={wrapperStyle} className="evy-bg-white">
-			<Search style={iconStyle} aria-hidden strokeWidth={LUCIDE_STROKE_WIDTH} />
+			<Search
+				style={iconStyle}
+				aria-hidden
+				strokeWidth={LUCIDE_STROKE_WIDTH}
+			/>
 			<input
 				type="text"
 				placeholder={placeholder}

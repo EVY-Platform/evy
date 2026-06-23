@@ -1,9 +1,9 @@
-import { Client } from "rpc-websockets";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
+import { Client } from "rpc-websockets";
 
 type WSClient = InstanceType<typeof Client>;
 

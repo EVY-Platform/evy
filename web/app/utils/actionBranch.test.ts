@@ -32,9 +32,9 @@ describe("action branch helpers", () => {
 	it("serializes create with namespace and resource", () => {
 		const MARKETPLACE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
 		const ITEMS_RESOURCE_ID = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd";
-		expect(serializeBranch("create", [MARKETPLACE_ID, ITEMS_RESOURCE_ID])).toBe(
-			`{create(${MARKETPLACE_ID},${ITEMS_RESOURCE_ID})}`,
-		);
+		expect(
+			serializeBranch("create", [MARKETPLACE_ID, ITEMS_RESOURCE_ID]),
+		).toBe(`{create(${MARKETPLACE_ID},${ITEMS_RESOURCE_ID})}`);
 	});
 
 	it("parses navigate query as a third function argument", () => {
@@ -48,13 +48,19 @@ describe("action branch helpers", () => {
 
 	it("serializes navigate query as a third function argument", () => {
 		expect(
-			serializeBranch("navigate", ["flow-1", "page-2", "{items: [$datum.id]}"]),
+			serializeBranch("navigate", [
+				"flow-1",
+				"page-2",
+				"{items: [$datum.id]}",
+			]),
 		).toBe("{navigate(flow-1,page-2,{items: [$datum.id]})}");
 	});
 
 	it("keeps the optional query in navigate display text", () => {
 		expect(
-			formatBranchDisplay("{navigate(flow-1,page-2,{items: [$datum.id]})}"),
+			formatBranchDisplay(
+				"{navigate(flow-1,page-2,{items: [$datum.id]})}",
+			),
 		).toBe("navigate(flow-1, page-2, {items: [$datum.id]})");
 	});
 });
