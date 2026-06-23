@@ -1,5 +1,5 @@
-import type { Row } from "../types/row";
 import type { UI_Page } from "../types/flow";
+import type { Row } from "../types/row";
 import { splitCamelCaseToWords } from "./labelFormatting";
 
 export function breadcrumbLabelForRow(row: Row): string {

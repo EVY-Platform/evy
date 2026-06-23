@@ -134,7 +134,10 @@ function initialState(overrides: Partial<AppState> = {}): AppState {
 
 describe("pageReducer", () => {
 	it("SET_ACTIVE_FLOW clears row and config stack", () => {
-		const state = initialState({ activeRowId: "row-1", configStack: ["x"] });
+		const state = initialState({
+			activeRowId: "row-1",
+			configStack: ["x"],
+		});
 		const next = pageReducer(state, {
 			type: "SET_ACTIVE_FLOW",
 			flowId: "flow-1",
@@ -152,7 +155,10 @@ describe("pageReducer", () => {
 
 	it("CREATE_FLOW appends flow and selects it", () => {
 		const state = initialState();
-		const next = pageReducer(state, { type: "CREATE_FLOW", name: "New Flow" });
+		const next = pageReducer(state, {
+			type: "CREATE_FLOW",
+			name: "New Flow",
+		});
 		expect(next.flows.length).toBe(2);
 		expect(next.activeFlowId).toBe(next.flows[1].id);
 		expect(next.flows[1].name).toBe("New Flow");
@@ -243,12 +249,18 @@ describe("pageReducer", () => {
 			configValue: "One, Two, Three",
 		});
 		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.view.content.segments).toEqual(["One", "Two", "Three"]);
+		expect(row?.config.view.content.segments).toEqual([
+			"One",
+			"Two",
+			"Three",
+		]);
 	});
 
 	it("UPDATE_ROW_ROOT sets source without changing view.content", () => {
 		const state = initialState();
-		const before = state.flows[0].pages[0].rows.find((r) => r.id === "row-1");
+		const before = state.flows[0].pages[0].rows.find(
+			(r) => r.id === "row-1",
+		);
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW_ROOT",
 			rowId: "row-1",
@@ -429,7 +441,10 @@ describe("pageReducer", () => {
 
 	it("REMOVE_PAGE selects another page when active removed", () => {
 		const state = initialState({ activePageId: "page-1" });
-		const next = pageReducer(state, { type: "REMOVE_PAGE", pageId: "page-1" });
+		const next = pageReducer(state, {
+			type: "REMOVE_PAGE",
+			pageId: "page-1",
+		});
 		expect(next.flows[0].pages.length).toBe(1);
 		expect(next.activePageId).toBe("page-2");
 		expect(next.activeRowId).toBeUndefined();
@@ -504,7 +519,10 @@ describe("pageReducer", () => {
 			activePageId: "page-1",
 			configStack: [],
 		});
-		const next = pageReducer(state, { type: "SET_ACTIVE_ROW", rowId: "row-1" });
+		const next = pageReducer(state, {
+			type: "SET_ACTIVE_ROW",
+			rowId: "row-1",
+		});
 		expect(next.activeRowId).toBeUndefined();
 		expect(next.activePageId).toBeUndefined();
 		expect(next.configStack).toEqual([]);
@@ -819,9 +837,12 @@ describe("pageReducer", () => {
 		const footerAfter = next.flows[0].pages[0].footer;
 		expect(footerAfter).toBeDefined();
 		expect(footerAfter?.id).toBe("footer-root");
-		expect(footerAfter?.config.view.content.child?.id).toBe("footer-parent");
+		expect(footerAfter?.config.view.content.child?.id).toBe(
+			"footer-parent",
+		);
 		expect(
-			footerAfter?.config.view.content.child?.config.view.content.child?.id,
+			footerAfter?.config.view.content.child?.config.view.content.child
+				?.id,
 		).toBe(newId);
 
 		// Selection / config stack should reflect the new child chain.

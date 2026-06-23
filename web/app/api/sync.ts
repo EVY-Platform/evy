@@ -1,4 +1,4 @@
-import type { SyncResponse, UI_Flow as ServerFlow } from "evy-types";
+import type { UI_Flow as ServerFlow, SyncResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { isServerFlow, wsClient } from "./wsClient";
 
@@ -49,7 +49,8 @@ function isServiceResource(item: unknown): item is ServiceResource {
 function extractServiceResources(response: SyncResponse): ServiceResource[] {
 	const row = response.data.find(
 		(row) =>
-			row.service === EVY_CORE_SERVICE && row.resource === "serviceResources",
+			row.service === EVY_CORE_SERVICE &&
+			row.resource === "serviceResources",
 	);
 	if (!Array.isArray(row?.value)) return [];
 	return (row.value as unknown[]).filter(isServiceResource);
@@ -74,7 +75,12 @@ function addAttributeNames(
 		attributeNames.add(attributeName);
 
 		if (isRecord(nestedValue)) {
-			addAttributeNames(nestedValue, attributeNames, attributeName, depth + 1);
+			addAttributeNames(
+				nestedValue,
+				attributeNames,
+				attributeName,
+				depth + 1,
+			);
 		}
 	}
 }
@@ -84,7 +90,8 @@ function extractResourceAttributeMetadata(
 ): ResourceAttributeMetadata[] {
 	return response.data
 		.filter(
-			(row) => row.service !== EVY_CORE_SERVICE && Array.isArray(row.value),
+			(row) =>
+				row.service !== EVY_CORE_SERVICE && Array.isArray(row.value),
 		)
 		.map((row) => {
 			const attributeNames = new Set<string>();

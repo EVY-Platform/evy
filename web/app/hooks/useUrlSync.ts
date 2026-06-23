@@ -1,14 +1,14 @@
-import { useEffect, useRef, type Dispatch } from "react";
+import { type Dispatch, useEffect, useRef } from "react";
 
 import type { RowAction } from "../types/actions";
 import type { UI_Flow } from "../types/flow";
+import { findFlowById } from "../utils/flowHelpers";
 import {
 	buildUrlPath,
 	parseUrlPath,
 	resolveUrlIds,
 	validateRowPathSegmentsForPage,
 } from "../utils/urlUtils";
-import { findFlowById } from "../utils/flowHelpers";
 
 export function useUrlSync(
 	activeFlowId: string | undefined,
@@ -27,7 +27,11 @@ export function useUrlSync(
 
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
-			const url = buildUrlPath(activeFlowId, activePageId, rowPathSegments);
+			const url = buildUrlPath(
+				activeFlowId,
+				activePageId,
+				rowPathSegments,
+			);
 			window.history.replaceState(null, "", url);
 			return;
 		}
@@ -50,7 +54,11 @@ export function useUrlSync(
 				pageId: urlPageId,
 				rowPathSegments,
 			} = parseUrlPath();
-			const { flowId, pageId } = resolveUrlIds(urlFlowId, urlPageId, flows);
+			const { flowId, pageId } = resolveUrlIds(
+				urlFlowId,
+				urlPageId,
+				flows,
+			);
 			isPopStateNavigation.current = true;
 
 			if (flowId && flowId !== activeFlowId) {
@@ -61,7 +69,10 @@ export function useUrlSync(
 			const page = targetFlow?.pages.find((p) => p.id === pageId);
 
 			if (page && rowPathSegments.length > 0) {
-				const validated = validateRowPathSegmentsForPage(page, rowPathSegments);
+				const validated = validateRowPathSegmentsForPage(
+					page,
+					rowPathSegments,
+				);
 				if (validated) {
 					dispatchRow({
 						type: "SET_ACTIVE_ROW",

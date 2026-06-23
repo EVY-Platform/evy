@@ -9,8 +9,8 @@ import {
 	getPageContent,
 	getSidebarRow,
 	openFlowPicker,
-	selectFlowByLabel,
 	SELECTORS,
+	selectFlowByLabel,
 	waitForAppLoaded,
 } from "../integration/utils";
 
@@ -128,7 +128,9 @@ async function expectFlowRowTitlePersisted(
 		.poll(
 			async () => {
 				const flows = await getFlowsFromApi();
-				const flow = flows.find((candidate) => candidate.name === flowName);
+				const flow = flows.find(
+					(candidate) => candidate.name === flowName,
+				);
 				return flowContainsRowTitle(flow, rowTitle);
 			},
 			{ timeout: API_POLL_TIMEOUT_MS },
@@ -361,7 +363,9 @@ test.describe("Web E2E Integration Tests", () => {
 			childPages.nth(0).getByText("E2E First Child Row", { exact: true }),
 		).toBeVisible();
 		await expect(
-			childPages.nth(1).getByText("E2E Second Child Row", { exact: true }),
+			childPages
+				.nth(1)
+				.getByText("E2E Second Child Row", { exact: true }),
 		).toBeVisible();
 		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(3);
@@ -377,7 +381,9 @@ test.describe("Web E2E Integration Tests", () => {
 			childPages.nth(0).getByText("E2E First Child Row", { exact: true }),
 		).toBeVisible();
 		await expect(
-			childPages.nth(1).getByText("E2E Second Child Row", { exact: true }),
+			childPages
+				.nth(1)
+				.getByText("E2E Second Child Row", { exact: true }),
 		).toBeVisible();
 		await expect(
 			childPages.nth(2).getByText("E2E Third Child Row", { exact: true }),
@@ -394,7 +400,10 @@ test.describe("Web E2E Integration Tests", () => {
 		await expect(childPages).toHaveCount(3);
 		await expect(page.getByTestId("blank-child-page")).toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(5);
-		await expectFlowRowTitlePersisted(uniqueFlowName, "E2E Third Child Row");
+		await expectFlowRowTitlePersisted(
+			uniqueFlowName,
+			"E2E Third Child Row",
+		);
 	});
 
 	test("should display footer row when page has one", async ({ page }) => {

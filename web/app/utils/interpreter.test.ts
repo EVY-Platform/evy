@@ -16,14 +16,16 @@ describe("parseText", () => {
 
 	it("formats an RFC3339 datetime with a date pattern", () => {
 		expect(
-			parseText('{formatDatetime("2026-06-03T09:30:00.000Z", "MM/dd/yyyy")}'),
+			parseText(
+				'{formatDatetime("2026-06-03T09:30:00.000Z", "MM/dd/yyyy")}',
+			),
 		).toBe("06/03/2026");
 	});
 
 	it("formats a local ISO datetime with a time pattern", () => {
-		expect(parseText('{formatDatetime("2026-06-03T09:30:00", "HH:mm")}')).toBe(
-			"09:30",
-		);
+		expect(
+			parseText('{formatDatetime("2026-06-03T09:30:00", "HH:mm")}'),
+		).toBe("09:30");
 	});
 
 	it("formats datum context with row date and time patterns", () => {
@@ -38,13 +40,20 @@ describe("parseText", () => {
 		expect(parseText('{formatDatetime($datum, "h:mm a")}', context)).toBe(
 			"9:30 AM",
 		);
-		expect(parseText('{formatDatetime($datum, "do")}', context)).toBe("3rd");
+		expect(parseText('{formatDatetime($datum, "do")}', context)).toBe(
+			"3rd",
+		);
 		expect(parseText('{formatDatetime($datum, "EEE do")}', context)).toBe(
 			"Wed 3rd",
 		);
-		expect(parseText('{formatDatetime($datum, "MMM")}', context)).toBe("Jun");
+		expect(parseText('{formatDatetime($datum, "MMM")}', context)).toBe(
+			"Jun",
+		);
 		expect(
-			parseText('{formatDatetime("2026-11-03T09:30:00", "MMM")}', context),
+			parseText(
+				'{formatDatetime("2026-11-03T09:30:00", "MMM")}',
+				context,
+			),
 		).toBe("Nov");
 	});
 
@@ -58,7 +67,9 @@ describe("parseText", () => {
 
 	it("formats dimensions from preview mock data", () => {
 		expect(parseText("{formatDimension(item.width)}")).toBe("23m");
-		expect(parseText("{formatDimension(item.dimensions.width)}")).toBe("23m");
+		expect(parseText("{formatDimension(item.dimensions.width)}")).toBe(
+			"23m",
+		);
 		expect(parseText("{formatDimension(width)}")).toBe("23m");
 	});
 

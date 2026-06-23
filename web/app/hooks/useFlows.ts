@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
 import type { UI_Flow as ServerFlow } from "evy-types";
+import { useEffect, useState } from "react";
 import {
-	syncWebData,
 	type ResourceAttributeMetadata,
 	type ServiceResource,
+	syncWebData,
 } from "../api/sync";
 
 type UseFlowsResult = {
@@ -38,12 +38,16 @@ export function useFlows(): UseFlowsResult {
 				if (!cancelled) {
 					setFlows(fetchedFlows);
 					setServiceResources(fetchedResources);
-					setResourceAttributeMetadata(fetchedResourceAttributeMetadata);
+					setResourceAttributeMetadata(
+						fetchedResourceAttributeMetadata,
+					);
 					setLoading(false);
 				}
 			} catch (err) {
 				if (!cancelled) {
-					setError(err instanceof Error ? err : new Error(String(err)));
+					setError(
+						err instanceof Error ? err : new Error(String(err)),
+					);
 					setLoading(false);
 				}
 			}
@@ -56,5 +60,11 @@ export function useFlows(): UseFlowsResult {
 		};
 	}, []);
 
-	return { flows, serviceResources, resourceAttributeMetadata, loading, error };
+	return {
+		flows,
+		serviceResources,
+		resourceAttributeMetadata,
+		loading,
+		error,
+	};
 }

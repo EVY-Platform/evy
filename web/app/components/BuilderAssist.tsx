@@ -8,19 +8,18 @@ import {
 	useState,
 } from "react";
 import { createPortal } from "react-dom";
-
-import {
-	filterCandidatesForSuggestionContext,
-	getCandidateInsertValue,
-	getIdDisplayParts,
-	type IdCandidate,
-} from "../utils/idCandidates";
 import {
 	buildTokenHtml,
 	getRawCursorIndexFromEditable,
 	readRawValueFromNode,
 	setEditableCursorAtRawIndex,
 } from "../utils/contentEditableTokens";
+import {
+	filterCandidatesForSuggestionContext,
+	getCandidateInsertValue,
+	getIdDisplayParts,
+	type IdCandidate,
+} from "../utils/idCandidates";
 import {
 	findSuggestionContextAtCursor,
 	type IdSearchToken,
@@ -207,7 +206,9 @@ export function BuilderAssist({
 	const [isFieldFocused, setIsFieldFocused] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeToken, setActiveToken] = useState<IdSearchToken | null>(null);
-	const [activeTokenQuery, setActiveTokenQuery] = useState<string | null>(null);
+	const [activeTokenQuery, setActiveTokenQuery] = useState<string | null>(
+		null,
+	);
 	const [activeSuggestionContext, setActiveSuggestionContext] =
 		useState<SuggestionContext | null>(null);
 	const [activeIndex, setActiveIndex] = useState(-1);
@@ -222,7 +223,10 @@ export function BuilderAssist({
 
 	const filteredCandidates = useMemo(() => {
 		const query = activeTokenQuery ?? activeToken?.text ?? "";
-		if (!activeSuggestionContext || activeSuggestionContext.type === "none") {
+		if (
+			!activeSuggestionContext ||
+			activeSuggestionContext.type === "none"
+		) {
 			return [];
 		}
 		const scopedAttributeCandidates =
@@ -306,7 +310,9 @@ export function BuilderAssist({
 
 			const rawValue = readRawValueFromNode(editableRef.current);
 			const tokenToReplace = activeToken;
-			const cursorIndex = getRawCursorIndexFromEditable(editableRef.current);
+			const cursorIndex = getRawCursorIndexFromEditable(
+				editableRef.current,
+			);
 			const nextValue = tokenToReplace
 				? replaceSearchToken(rawValue, tokenToReplace, insertValue)
 				: `${rawValue.slice(0, cursorIndex)}${insertValue}${rawValue.slice(cursorIndex)}`;
@@ -343,7 +349,8 @@ export function BuilderAssist({
 			closeDropdown();
 		};
 		document.addEventListener("mousedown", handlePointerDown);
-		return () => document.removeEventListener("mousedown", handlePointerDown);
+		return () =>
+			document.removeEventListener("mousedown", handlePointerDown);
 	}, [isOpen, closeDropdown]);
 
 	useLayoutEffect(() => {
@@ -353,7 +360,8 @@ export function BuilderAssist({
 
 		// While the user is actively typing (focused, no programmatic caret
 		// pending), the browser owns the DOM; re-setting innerHTML resets the caret.
-		if (pendingFocus === null && document.activeElement === editable) return;
+		if (pendingFocus === null && document.activeElement === editable)
+			return;
 		if (readRawValueFromNode(editable) === value && pendingFocus === null) {
 			return;
 		}
@@ -370,7 +378,9 @@ export function BuilderAssist({
 			if (event.key === "ArrowDown") {
 				event.preventDefault();
 				setIsOpen(true);
-				setActiveIndex((c) => Math.min(c + 1, filteredCandidates.length - 1));
+				setActiveIndex((c) =>
+					Math.min(c + 1, filteredCandidates.length - 1),
+				);
 				return true;
 			}
 			if (event.key === "ArrowUp") {
@@ -427,7 +437,9 @@ export function BuilderAssist({
 		(_event: React.FormEvent<HTMLDivElement>) => {
 			if (!editableRef.current) return;
 			const nextValue = readRawValueFromNode(editableRef.current);
-			const cursorIndex = getRawCursorIndexFromEditable(editableRef.current);
+			const cursorIndex = getRawCursorIndexFromEditable(
+				editableRef.current,
+			);
 			pendingFocusCursorRef.current = cursorIndex;
 			onChange(nextValue);
 			updateActiveTokenFromValue(nextValue, cursorIndex);
@@ -459,7 +471,11 @@ export function BuilderAssist({
 			focusedTokenElRef.current = tokenEl;
 			setActiveTokenQuery(tokenEl.textContent ?? "");
 			setActiveToken(null);
-			setActiveSuggestionContext({ type: "root", trigger: "{", token: null });
+			setActiveSuggestionContext({
+				type: "root",
+				trigger: "{",
+				token: null,
+			});
 			setIsOpen(true);
 			setActiveIndex(0);
 			updateDropdownPosition();
@@ -474,7 +490,9 @@ export function BuilderAssist({
 			if (event.key === "ArrowDown" || event.key === "ArrowUp") return;
 			if (!editableRef.current) return;
 			const rawValue = readRawValueFromNode(editableRef.current);
-			const cursorIndex = getRawCursorIndexFromEditable(editableRef.current);
+			const cursorIndex = getRawCursorIndexFromEditable(
+				editableRef.current,
+			);
 			updateActiveTokenFromValue(rawValue, cursorIndex);
 		},
 		[updateActiveTokenFromValue],

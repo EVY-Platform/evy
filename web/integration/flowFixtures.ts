@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import type {
-	UI_Flow as ServerFlow,
 	UI_RowAction as RowAction,
+	UI_Flow as ServerFlow,
 	UI_Row as ServerRow,
 	UI_RowContent as ServerRowContent,
 } from "evy-types";
@@ -123,7 +123,12 @@ export async function openAppWithFullFlows(
 	serviceResources: ServiceResource[] = [],
 	resourceAttributeMetadata: ResourceAttributeMetadata[] = [],
 ): Promise<void> {
-	await initFullFlows(page, flows, serviceResources, resourceAttributeMetadata);
+	await initFullFlows(
+		page,
+		flows,
+		serviceResources,
+		resourceAttributeMetadata,
+	);
 	await page.goto("/");
 }
 

@@ -62,7 +62,11 @@ function findExpressionSearchTokenAtCursor(
 	value: string,
 	cursorIndex: number,
 ): IdSearchToken | null {
-	return findTokenAtCursor(value, cursorIndex, isExpressionIdentifierCharacter);
+	return findTokenAtCursor(
+		value,
+		cursorIndex,
+		isExpressionIdentifierCharacter,
+	);
 }
 
 function findPreviousNonWhitespaceIndex(
@@ -77,7 +81,10 @@ function findPreviousNonWhitespaceIndex(
 function findQualifierBeforeDot(value: string, dotIndex: number): string {
 	const end = findPreviousNonWhitespaceIndex(value, dotIndex - 1) + 1;
 	let start = end;
-	while (start > 0 && isExpressionIdentifierCharacter(value[start - 1] ?? "")) {
+	while (
+		start > 0 &&
+		isExpressionIdentifierCharacter(value[start - 1] ?? "")
+	) {
 		start -= 1;
 	}
 	return value.slice(start, end);

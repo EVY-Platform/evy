@@ -65,13 +65,18 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	});
 
 	const page = useMemo(
-		() => findFlowById(flows, activeFlowId)?.pages.find((p) => p.id === pageId),
+		() =>
+			findFlowById(flows, activeFlowId)?.pages.find(
+				(p) => p.id === pageId,
+			),
 		[flows, activeFlowId, pageId],
 	);
 
 	const pageRows = page?.rows ?? [];
 	const pageHasRows = pageRows.length > 0;
-	const lastRowId = pageHasRows ? pageRows[pageRows.length - 1].id : undefined;
+	const lastRowId = pageHasRows
+		? pageRows[pageRows.length - 1].id
+		: undefined;
 
 	const { forcedIndicators, showBlankPageIndicator, edgePosition } =
 		usePageEdgeIndicators(pageId, lastRowId, pageHasRows);
@@ -97,7 +102,10 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	return (
 		<div
 			className="evy-overflow-hidden evy-h-full evy-w-full"
-			style={{ padding: phoneContentPadding, contain: "layout style paint" }}
+			style={{
+				padding: phoneContentPadding,
+				contain: "layout style paint",
+			}}
 		>
 			{footer ? (
 				<div
@@ -150,7 +158,9 @@ export default function AppPage({ pageId }: { pageId: string }) {
 							style={{ minHeight: "var(--size-8)" }}
 							onClick={selectPageDirect}
 						/>
-						{dragging && <FooterPlaceholderDropIndicator pageId={pageId} />}
+						{dragging && (
+							<FooterPlaceholderDropIndicator pageId={pageId} />
+						)}
 					</div>
 				</div>
 			)}

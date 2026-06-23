@@ -1,6 +1,6 @@
-import type { RowConfig } from "../../types/row";
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { useParseText } from "../../hooks/useParseText";
+import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
 
@@ -77,7 +77,9 @@ function CalendarGrid({
 				<div style={{ height: ROW_HEIGHT }} />
 				{mockTimeSlots.map((datetime, i) => (
 					<div key={datetime} style={axisLabelStyle}>
-						{i % 2 === 0 ? parseText(timeslotFormat, { datum: datetime }) : ""}
+						{i % 2 === 0
+							? parseText(timeslotFormat, { datum: datetime })
+							: ""}
 					</div>
 				))}
 			</div>

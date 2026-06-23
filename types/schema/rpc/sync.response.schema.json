@@ -5,20 +5,14 @@
 	"description": "JSON-RPC response for the unified sync method. Returns all changed rows across all services since lastSyncTime.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": [
-		"data"
-	],
+	"required": ["data"],
 	"properties": {
 		"data": {
 			"type": "array",
 			"items": {
 				"type": "object",
 				"additionalProperties": false,
-				"required": [
-					"service",
-					"resource",
-					"value"
-				],
+				"required": ["service", "resource", "value"],
 				"properties": {
 					"service": {
 						"type": "string"

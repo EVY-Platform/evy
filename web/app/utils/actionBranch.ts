@@ -128,7 +128,11 @@ export function formatBranchDisplay(
 	const parsed = parseBranch(branchString);
 	if (!parsed) return "None";
 
-	if (parsed.functionName === "navigate" && flows && parsed.args.length >= 2) {
+	if (
+		parsed.functionName === "navigate" &&
+		flows &&
+		parsed.args.length >= 2
+	) {
 		const [flowId, pageId] = parsed.args;
 		const flow = findFlowById(flows, flowId);
 		const flowName = flow?.name ?? flowId;

@@ -1,11 +1,10 @@
-import { useState, type CSSProperties, type MouseEvent } from "react";
-
-import type { Row, RowConfig } from "../../types/row";
+import { type CSSProperties, type MouseEvent, useState } from "react";
 import { ContainerChildren } from "../../components/ContainerChildren";
-import { defineRow } from "../defineRow";
-import { RowLayout } from "../design-system/RowLayout";
 import { useRowById } from "../../hooks/useRowById";
 import { useFlowsContext } from "../../state";
+import type { Row, RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
+import { RowLayout } from "../design-system/RowLayout";
 
 const typeName = "SelectSegmentContainerRow";
 
@@ -93,7 +92,10 @@ export default defineRow(typeName, {
 
 		return (
 			<RowLayout title={title} fullWidthContent>
-				<div className="evy-flex evy-mb-2 evy-px-2" style={segmentGroupStyle}>
+				<div
+					className="evy-flex evy-mb-2 evy-px-2"
+					style={segmentGroupStyle}
+				>
 					{segments.map((segment, index) => {
 						const isFirst = index === 0;
 						const isLast = index === segments.length - 1;
@@ -114,7 +116,11 @@ export default defineRow(typeName, {
 					})}
 				</div>
 				<ContainerChildren
-					rows={selectedChild !== undefined ? [selectedChild] : undefined}
+					rows={
+						selectedChild !== undefined
+							? [selectedChild]
+							: undefined
+					}
 					containerRowId={rowId}
 					containerType="children"
 				/>

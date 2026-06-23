@@ -3,14 +3,14 @@
  * (data.schema.json + drizzle.config.json). Config must only reference defs
  * and properties that exist in the schema (strict extension).
  */
-import { writeFile, mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import decamelize from "decamelize";
 import {
-	OUT_TS,
-	SCHEMA_DIR,
 	loadJson,
+	OUT_TS,
 	runMain,
+	SCHEMA_DIR,
 } from "./types-generation-utils.js";
 
 const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
@@ -86,7 +86,9 @@ function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
 		}
 		for (const [k, t] of Object.entries(value.tables)) {
 			if (typeof t !== "object" || t === null || Array.isArray(t)) {
-				throw new Error(`drizzle.config.json: tables.${k} must be an object`);
+				throw new Error(
+					`drizzle.config.json: tables.${k} must be an object`,
+				);
 			}
 			const tb = t as Record<string, unknown>;
 			for (const req of ["tableName", "primaryKey"] as const) {
@@ -107,7 +109,11 @@ function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
 				);
 			}
 			for (const idx of tb.uniqueIndexes as unknown[]) {
-				if (typeof idx !== "object" || idx === null || Array.isArray(idx)) {
+				if (
+					typeof idx !== "object" ||
+					idx === null ||
+					Array.isArray(idx)
+				) {
 					throw new Error(
 						`drizzle.config.json: tables.${k}.uniqueIndexes entries must be objects`,
 					);
@@ -136,7 +142,9 @@ function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
 		}
 		for (const [k, e] of Object.entries(value.enums)) {
 			if (typeof e !== "object" || e === null || Array.isArray(e)) {
-				throw new Error(`drizzle.config.json: enums.${k} must be an object`);
+				throw new Error(
+					`drizzle.config.json: enums.${k} must be an object`,
+				);
 			}
 			const en = e as Record<string, unknown>;
 			if (typeof en.name !== "string" || !Array.isArray(en.values)) {
@@ -186,7 +194,9 @@ function validateConfigSemantic(
 	][]) {
 		const def = defs[tableKey];
 		if (!def) {
-			throw new Error(`drizzle.config.json: table "${tableKey}" is not a $def`);
+			throw new Error(
+				`drizzle.config.json: table "${tableKey}" is not a $def`,
+			);
 		}
 		const propKeys = schemaPropertyKeys(def);
 		if (!propKeys.has(tableConfig.primaryKey)) {
@@ -478,7 +488,13 @@ async function main(): Promise<void> {
 		for (const [propName, _propVal] of propEntries) {
 			const prop = getPropSchema(def, propName);
 			if (!prop) continue;
-			const col = emitColumn(defKey, propName, prop, tableConfig, requiredSet);
+			const col = emitColumn(
+				defKey,
+				propName,
+				prop,
+				tableConfig,
+				requiredSet,
+			);
 			lines.push(`		${propName}: ${col},`);
 		}
 		lines.push("	},");

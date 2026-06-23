@@ -1,7 +1,7 @@
-import type { ContainerType } from "./row";
-import type { UI_Flow } from "./flow";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import type { UI_RowAction } from "evy-types";
+import type { UI_Flow } from "./flow";
+import type { ContainerType } from "./row";
 
 export type RowAction =
 	| {

@@ -1,7 +1,7 @@
 import type { ServiceResource } from "../api/sync";
 import type { UI_Flow } from "../types/flow";
-import { displayLabel } from "./labelFormatting";
 import { findFlowById } from "./flowHelpers";
+import { displayLabel } from "./labelFormatting";
 import {
 	formatResourcePathForDisplay,
 	resourceNameById,

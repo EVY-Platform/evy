@@ -10,7 +10,8 @@ export const SELECTORS = {
 	draggableRow: 'div[data-row-id]:not([data-row-id="placeholder"])',
 	dropIndicator: ".evy-v-dropzone, .evy-h-dropzone",
 	topIndicator: ".evy-v-dropzone.evy-top-0, .evy-h-dropzone.evy-left-0",
-	bottomIndicator: ".evy-v-dropzone.evy-bottom-0, .evy-h-dropzone.evy-right-0",
+	bottomIndicator:
+		".evy-v-dropzone.evy-bottom-0, .evy-h-dropzone.evy-right-0",
 	flowSelector: "#flow-select",
 };
 

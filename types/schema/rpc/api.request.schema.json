@@ -5,11 +5,7 @@
 	"description": "JSON-RPC params for API-backed client functions. Routes a service/resource/method request through the API gateway to the owning backend service.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": [
-		"service",
-		"resource",
-		"method"
-	],
+	"required": ["service", "resource", "method"],
 	"properties": {
 		"service": {
 			"type": "string",

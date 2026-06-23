@@ -1,5 +1,5 @@
-import type { RowConfig } from "../../types/row";
 import { useParseText } from "../../hooks/useParseText";
+import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import CarouselIndicator from "../design-system/CarouselIndicator";
 import { RowLayout } from "../design-system/RowLayout";
@@ -57,7 +57,10 @@ function SlotChip({
 
 	if (slot.variant === "unavailable") {
 		return (
-			<div className="evy-text-center evy-text-gray" style={{ height: 36 }}>
+			<div
+				className="evy-text-center evy-text-gray"
+				style={{ height: 36 }}
+			>
 				-
 			</div>
 		);
@@ -72,7 +75,9 @@ function SlotChip({
 						? "var(--color-evy-gray-dark)"
 						: "var(--color-evy-gray-light)",
 				color:
-					slot.variant === "dark" ? "var(--color-white)" : "var(--color-black)",
+					slot.variant === "dark"
+						? "var(--color-white)"
+						: "var(--color-black)",
 				width: 64,
 				height: 36,
 			}}
@@ -98,10 +103,14 @@ function DayColumn({
 		<div className="evy-flex evy-flex-col evy-items-center">
 			<div className="evy-text-center evy-mb-1">
 				<div className="evy-text-sm evy-text-gray evy-font-medium">
-					{parseText(headerFormat, { datum: day.representativeDatetime })}
+					{parseText(headerFormat, {
+						datum: day.representativeDatetime,
+					})}
 				</div>
 				<div className="evy-text-sm evy-text-gray">
-					{parseText(headerSubtitle, { datum: day.representativeDatetime })}
+					{parseText(headerSubtitle, {
+						datum: day.representativeDatetime,
+					})}
 				</div>
 			</div>
 			<div className="evy-flex evy-flex-col evy-items-center evy-gap-1">

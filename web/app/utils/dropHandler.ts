@@ -1,18 +1,17 @@
-import type { Dispatch } from "react";
-import {
-	extractClosestEdge,
-	type Edge,
-} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import type {
 	BaseEventPayload,
 	ElementDragType,
 } from "@atlaskit/pragmatic-drag-and-drop/types";
+import {
+	type Edge,
+	extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import type { Dispatch } from "react";
 import invariant from "tiny-invariant";
-
+import { containerDropindicatorId } from "../rows/EVYRow";
+import type { RowAction } from "../types/actions";
 import type { UI_Page } from "../types/flow";
 import type { ContainerType } from "../types/row";
-import type { RowAction } from "../types/actions";
-import { containerDropindicatorId } from "../rows/EVYRow";
 import {
 	findContainerByIdInPage,
 	findContainerOfRowInPage,
@@ -77,7 +76,9 @@ function applyPageDropPosition(
 function findFooterDropTarget(
 	dropTargets: DropTargetRecord[],
 ): DropTargetRecord | undefined {
-	return dropTargets.find((target) => target.data.destinationIsFooter === true);
+	return dropTargets.find(
+		(target) => target.data.destinationIsFooter === true,
+	);
 }
 
 function dispatchFooterDrop(
@@ -137,7 +138,8 @@ function dispatchStandardDrop(
 function getDestinationContainerRowId(
 	dropTarget: DropTargetRecord | undefined,
 ): string | undefined {
-	const destinationContainerRowId = dropTarget?.data.destinationContainerRowId;
+	const destinationContainerRowId =
+		dropTarget?.data.destinationContainerRowId;
 	return typeof destinationContainerRowId === "string"
 		? destinationContainerRowId
 		: undefined;
@@ -155,8 +157,8 @@ export function handleDrop(
 	invariant(typeof rowId === "string", "handleDrop: rowId is not a string");
 
 	const rawSourcePageId =
-		location.initial.dropTargets[location.initial.dropTargets.length - 1].data
-			.pageId;
+		location.initial.dropTargets[location.initial.dropTargets.length - 1]
+			.data.pageId;
 	invariant(
 		typeof rawSourcePageId === "string",
 		"handleDrop: sourcePageId is not a string",
@@ -292,13 +294,17 @@ export function handleDrop(
 							typeof secondTargetRowId === "string",
 							"handleDrop: dropTargets[1].rowId is not a string",
 						);
-						return findContainerByIdInPage(destinationPage, secondTargetRowId);
+						return findContainerByIdInPage(
+							destinationPage,
+							secondTargetRowId,
+						);
 					})()
 				: findContainerOfRowInPage(destinationPage, destinationRowId);
 
 			if (
 				destinationContainer?.type === "children" &&
-				destinationContainer.container.config.view.content.children?.length
+				destinationContainer.container.config.view.content.children
+					?.length
 			) {
 				dispatchOptions.destinationIndex =
 					destinationContainer.container.config.view.content.children.findIndex(

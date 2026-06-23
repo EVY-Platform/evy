@@ -1,18 +1,18 @@
-import { compile } from "json-schema-to-typescript";
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
+import { compile } from "json-schema-to-typescript";
 import {
+	appendLinesToGeneratedFile,
+	loadJson,
 	OUT_SWIFT,
 	OUT_TS,
 	REPO_ROOT,
-	SCHEMA_DIR,
-	TYPES_ROOT,
-	appendLinesToGeneratedFile,
-	loadJson,
 	runMain,
+	SCHEMA_DIR,
 	schemaPathToSwiftTypeName,
 	schemaPathToTsName,
 	spawnExitOk,
+	TYPES_ROOT,
 } from "./types-generation-utils.js";
 
 const COMMON_SCHEMA_ROOT_REF: Record<string, string> = {
@@ -114,7 +114,8 @@ function hasExternalRefs(obj: unknown): boolean {
 	if (obj && typeof obj === "object") {
 		if (!Array.isArray(obj)) {
 			const o = obj as Record<string, unknown>;
-			if (typeof o.$ref === "string" && !o.$ref.startsWith("#")) return true;
+			if (typeof o.$ref === "string" && !o.$ref.startsWith("#"))
+				return true;
 			return Object.values(o).some(hasExternalRefs);
 		}
 		return obj.some(hasExternalRefs);
@@ -152,7 +153,7 @@ async function generateTypeScript(
 
 	await Promise.all(
 		schemaFiles.map(async ({ schemaPath, schemaKey, schema }) => {
-			const outRel = schemaPathToTsName(schemaPath) + ".ts";
+			const outRel = `${schemaPathToTsName(schemaPath)}.ts`;
 			const outPath = join(OUT_TS, outRel);
 
 			await mkdir(join(outPath, ".."), { recursive: true });
@@ -187,7 +188,9 @@ async function generateTypeScript(
 			let output = ts;
 			if (hasExternalRefs(schema)) {
 				const ownDefs = new Set(
-					Object.keys((schema.$defs as Record<string, unknown>) ?? {}),
+					Object.keys(
+						(schema.$defs as Record<string, unknown>) ?? {},
+					),
 				);
 				ownDefs.add(title);
 				for (const defName of ownDefs) {
@@ -200,11 +203,11 @@ async function generateTypeScript(
 			await writeFile(outPath, output, "utf-8");
 
 			if (schemaKey === "sdui/evy") {
-				const rowDef = (schema.$defs as Record<string, unknown>)?.["UI_Row"] as
-					| Record<string, unknown>
-					| undefined;
-				const rowTypeEnum = (rowDef?.properties as Record<string, unknown>)
-					?.type as { enum?: string[] } | undefined;
+				const rowDef = (schema.$defs as Record<string, unknown>)
+					?.UI_Row as Record<string, unknown> | undefined;
+				const rowTypeEnum = (
+					rowDef?.properties as Record<string, unknown>
+				)?.type as { enum?: string[] } | undefined;
 				const rowValues = rowTypeEnum?.enum ?? [];
 				await appendLinesToGeneratedFile(outPath, [
 					`export const UI_ROW_TYPE_VALUES = ${JSON.stringify(rowValues)} as const;`,
@@ -227,13 +230,14 @@ async function generateTypeScript(
 		} else if (schemaKey === "rpc/get.request") {
 			lines.push(`export type { GetRequest } from "./${mod}";`);
 		} else {
-			const name = title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
+			const name =
+				title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
 			lines.push(`export type { ${name} } from "./${mod}";`);
 		}
 	}
 	const content =
 		lines.length > 0
-			? lines.join("\n") + "\n"
+			? `${lines.join("\n")}\n`
 			: "/** Generated types - add schemas in types/schema to generate. */\n";
 	await writeFile(join(OUT_TS, "index.ts"), content, "utf-8");
 
@@ -250,47 +254,49 @@ async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 	);
 
 	await Promise.all(
-		schemaFilesToQuicktype.map(async ({ schemaPath, schemaKey, schema }) => {
-			const typeName = schemaPathToSwiftTypeName(schemaPath);
-			const outPath = join(OUT_SWIFT, `${typeName}.swift`);
+		schemaFilesToQuicktype.map(
+			async ({ schemaPath, schemaKey, schema }) => {
+				const typeName = schemaPathToSwiftTypeName(schemaPath);
+				const outPath = join(OUT_SWIFT, `${typeName}.swift`);
 
-			let inputPath = schemaPath;
-			let tempPath: string | null = null;
+				let inputPath = schemaPath;
+				let tempPath: string | null = null;
 
-			const rootRef = COMMON_SCHEMA_ROOT_REF[schemaKey];
-			if (rootRef) {
-				const withRef = buildSchemaWithRootRef(schema, rootRef);
-				const safeSchemaKey = schemaKey.replace(/[/\\]/g, "-");
-				tempPath = join(
-					TYPES_ROOT,
-					`.quicktype-${safeSchemaKey}-tmp.schema.json`,
-				);
-				await writeFile(tempPath, JSON.stringify(withRef), "utf-8");
-				inputPath = tempPath;
-			}
+				const rootRef = COMMON_SCHEMA_ROOT_REF[schemaKey];
+				if (rootRef) {
+					const withRef = buildSchemaWithRootRef(schema, rootRef);
+					const safeSchemaKey = schemaKey.replace(/[/\\]/g, "-");
+					tempPath = join(
+						TYPES_ROOT,
+						`.quicktype-${safeSchemaKey}-tmp.schema.json`,
+					);
+					await writeFile(tempPath, JSON.stringify(withRef), "utf-8");
+					inputPath = tempPath;
+				}
 
-			try {
-				await spawnExitOk(
-					"bunx",
-					[
+				try {
+					await spawnExitOk(
+						"bunx",
+						[
+							"quicktype",
+							"--src-lang",
+							"schema",
+							"--lang",
+							"swift",
+							"--no-initializers",
+							"--no-date-times",
+							"-o",
+							outPath,
+							inputPath,
+						],
+						{ stdio: "inherit", cwd: REPO_ROOT },
 						"quicktype",
-						"--src-lang",
-						"schema",
-						"--lang",
-						"swift",
-						"--no-initializers",
-						"--no-date-times",
-						"-o",
-						outPath,
-						inputPath,
-					],
-					{ stdio: "inherit", cwd: REPO_ROOT },
-					"quicktype",
-				);
-			} finally {
-				if (tempPath) await rm(tempPath, { force: true });
-			}
-		}),
+					);
+				} finally {
+					if (tempPath) await rm(tempPath, { force: true });
+				}
+			},
+		),
 	);
 
 	// Generate Swift UI types from evy.schema.json + row-content.spec.json

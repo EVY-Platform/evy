@@ -9,10 +9,10 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
-	OUT_SWIFT,
-	SCHEMA_DIR,
 	loadJson,
+	OUT_SWIFT,
 	runMain,
+	SCHEMA_DIR,
 } from "./types-generation-utils.js";
 
 const UI_SCHEMA_PATH = join(SCHEMA_DIR, "sdui", "evy.schema.json");
@@ -232,12 +232,22 @@ function emitShapeFromDef(
 	const lines: string[] = [];
 	for (const [propName, propSchema] of Object.entries(props)) {
 		lines.push(
-			emitPropertyLine(defName, propName, propSchema, required, overrides),
+			emitPropertyLine(
+				defName,
+				propName,
+				propSchema,
+				required,
+				overrides,
+			),
 		);
 	}
 	const useClass = CLASS_DEFS.has(defName);
 	const useFinalClass = defName === "UI_Row";
-	const keyword = useFinalClass ? "final class" : useClass ? "class" : "struct";
+	const keyword = useFinalClass
+		? "final class"
+		: useClass
+			? "class"
+			: "struct";
 	const initParams = lines
 		.map((l) => {
 			const match = /public let (`?\w+`?): ([\w[\]?]+)/.exec(l);

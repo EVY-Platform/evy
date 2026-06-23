@@ -10,14 +10,14 @@
 
 import { join } from "node:path";
 import {
-	OUT_SWIFT,
-	OUT_TS,
-	SCHEMA_DIR,
 	generatedFileHeader,
 	generatedSwiftHeader,
 	loadJson,
+	OUT_SWIFT,
+	OUT_TS,
 	resourceKey,
 	runMain,
+	SCHEMA_DIR,
 	swiftCaseName,
 	writeGeneratedOutputs,
 } from "./types-generation-utils.js";
@@ -46,7 +46,9 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 	}
 	const obj = value as Record<string, unknown>;
 	if (typeof obj.service !== "string" || obj.service.length === 0) {
-		throw new Error("core.resources.json: service must be a non-empty string");
+		throw new Error(
+			"core.resources.json: service must be a non-empty string",
+		);
 	}
 	if (
 		typeof obj.resources !== "object" ||
@@ -88,7 +90,9 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 		const key = resourceKey(plural);
 		const singular = meta.singular;
 		const comment =
-			singular !== plural ? ` // singular: ${JSON.stringify(singular)}` : "";
+			singular !== plural
+				? ` // singular: ${JSON.stringify(singular)}`
+				: "";
 		lines.push(`\t${key}: ${JSON.stringify(plural)},${comment}`);
 	}
 	lines.push("} as const;");

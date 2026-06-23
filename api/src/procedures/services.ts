@@ -5,20 +5,21 @@ import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import type {
 	ApiRequest,
-	GetRequest,
-	GetResponse,
 	CreateRequest,
 	CreateResponse,
+	GetRequest,
+	GetResponse,
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
+
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
 import { ne } from "drizzle-orm";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
-	validateGetResponse,
 	validateCreateResponse,
+	validateGetResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
 import { service } from "../../../types/generated/ts/db/schema.generated";
@@ -185,7 +186,10 @@ function makeGrpcAdapter(
 		}
 		reconnectTimer = setTimeout(() => {
 			reconnectTimer = null;
-			reconnectDelayMs = Math.min(reconnectDelayMs * 2, reconnectMaxDelayMs);
+			reconnectDelayMs = Math.min(
+				reconnectDelayMs * 2,
+				reconnectMaxDelayMs,
+			);
 			startSubscribeStream();
 		}, reconnectDelayMs);
 	}
@@ -227,7 +231,9 @@ function makeGrpcAdapter(
 	}
 
 	function callGrpcJsonMethod<TResponse>(
-		grpcCall: (callback: grpc.requestCallback<{ result_json: string }>) => void,
+		grpcCall: (
+			callback: grpc.requestCallback<{ result_json: string }>,
+		) => void,
 		validate: (parsed: unknown) => TResponse,
 		methodLabel: string,
 	): Promise<TResponse> {

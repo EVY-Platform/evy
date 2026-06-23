@@ -1,15 +1,14 @@
-import { createElement } from "react";
 import type {
 	UI_Flow as ServerFlow,
 	UI_Page as ServerPage,
 	UI_Row as ServerRow,
 	UI_RowContent as ServerRowContent,
 } from "evy-types";
-
-import type { Row } from "../types/row";
-import type { UI_Flow, UI_Page } from "../types/flow";
+import { createElement } from "react";
 import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
+import type { UI_Flow, UI_Page } from "../types/flow";
+import type { Row } from "../types/row";
 
 type RowComponent = (typeof baseRows)[number];
 
@@ -159,7 +158,8 @@ function transformRowContent(
 		if (key === "segments") {
 			out.segments = Array.isArray(value)
 				? value.filter(
-						(segment): segment is string => typeof segment === "string",
+						(segment): segment is string =>
+							typeof segment === "string",
 					)
 				: [];
 			continue;
@@ -232,7 +232,9 @@ function decodeRow(row: ServerRow): Row {
 		...vc,
 		...(Array.isArray(vc.children)
 			? {
-					children: vc.children.map((child: ServerRow) => decodeRow(child)),
+					children: vc.children.map((child: ServerRow) =>
+						decodeRow(child),
+					),
 				}
 			: {}),
 		...(vc.child ? { child: decodeRow(vc.child) } : {}),
@@ -240,7 +242,10 @@ function decodeRow(row: ServerRow): Row {
 
 	return {
 		id: normalized.id,
-		row: createElement(baseRow, { key: normalized.id, rowId: normalized.id }),
+		row: createElement(baseRow, {
+			key: normalized.id,
+			rowId: normalized.id,
+		}),
 		config: {
 			type: normalized.type,
 			source: normalized.source,

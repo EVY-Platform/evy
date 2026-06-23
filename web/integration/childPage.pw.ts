@@ -1,11 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
 import { openAppWithTestFlows } from "./flowFixtures";
 import {
-	SELECTORS,
 	getConfigPanel,
 	getFirstPage,
 	getPageRow,
 	getSidebarRow,
+	SELECTORS,
 } from "./utils";
 
 async function openTwoSegmentTabContainer(page: Page) {
@@ -75,7 +75,9 @@ test.describe("Child Page Rendering", () => {
 		]);
 
 		// Click on the Text row to select it
-		const textRow = page.getByText("Root Text Row", { exact: true }).first();
+		const textRow = page
+			.getByText("Root Text Row", { exact: true })
+			.first();
 		await textRow.click();
 
 		// Should see the blank child page to the right
@@ -298,28 +300,37 @@ test.describe("Child Page Rendering", () => {
 																child: {
 																	type: "Search" as const,
 																	view: {
-																		content: {
-																			title: "Search Child Row",
-																			placeholder: "Search...",
-																			value: "",
-																			child: {
-																				type: "Text" as const,
-																				view: {
-																					content: {
-																						title: "Search Text Child",
-																						subtitle: "Text child",
+																		content:
+																			{
+																				title: "Search Child Row",
+																				placeholder:
+																					"Search...",
+																				value: "",
+																				child: {
+																					type: "Text" as const,
+																					view: {
+																						content:
+																							{
+																								title: "Search Text Child",
+																								subtitle:
+																									"Text child",
+																							},
 																					},
+																					actions:
+																						[],
 																				},
-																				actions: [],
 																			},
-																		},
 																	},
 																	actions: [],
 																},
 															},
 														},
 														actions: [
-															{ condition: "", true: "{show()}", false: "" },
+															{
+																condition: "",
+																true: "{show()}",
+																false: "",
+															},
 														],
 													},
 												],
@@ -338,7 +349,9 @@ test.describe("Child Page Rendering", () => {
 
 		await getPageRow(page, "Root Select Segment").click();
 		const configPanel = getConfigPanel(page);
-		await configPanel.getByRole("button", { name: "ListContainer" }).click();
+		await configPanel
+			.getByRole("button", { name: "ListContainer" })
+			.click();
 		await configPanel
 			.getByRole("button", { name: "Text", exact: true })
 			.nth(1)
@@ -416,9 +429,9 @@ test.describe("Child Page Rendering", () => {
 
 		// Configuration panel should show the child row's config (Text row config)
 		const configPanel = getConfigPanel(page);
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
-			"Child Text Row",
-		);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("Child Text Row");
 	});
 
 	test("dropping a row into an existing child page replaces view.content.child", async ({

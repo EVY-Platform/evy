@@ -1,9 +1,9 @@
-import { type Dispatch, type RefObject, useLayoutEffect } from "react";
-import invariant from "tiny-invariant";
-
-import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { type Dispatch, type RefObject, useLayoutEffect } from "react";
+import invariant from "tiny-invariant";
 
 import type { DropIndicatorAction } from "../types/actions";
 
@@ -25,7 +25,10 @@ export function usePageDropTarget({
 }) {
 	useLayoutEffect(() => {
 		const pageElement = dropTargetRef?.current ?? scrollableRef.current;
-		invariant(pageElement, "usePageDropTarget: page element is not defined");
+		invariant(
+			pageElement,
+			"usePageDropTarget: page element is not defined",
+		);
 
 		if (onClickBackground) {
 			pageElement.addEventListener("click", onClickBackground);
@@ -42,7 +45,10 @@ export function usePageDropTarget({
 					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" });
 				},
 				onDragEnter: () =>
-					dispatchDropIndicator({ type: "SET_INDICATOR_PAGE", pageId }),
+					dispatchDropIndicator({
+						type: "SET_INDICATOR_PAGE",
+						pageId,
+					}),
 				onDragLeave: () =>
 					dispatchDropIndicator({ type: "UNSET_INDICATOR_PAGE" }),
 			}),

@@ -1,11 +1,11 @@
 import {
+	type CSSProperties,
+	type ReactNode,
 	useCallback,
 	useEffect,
 	useMemo,
 	useRef,
 	useState,
-	type CSSProperties,
-	type ReactNode,
 } from "react";
 
 import {
@@ -126,7 +126,9 @@ export function CollapsibleSidePanel({
 		() => ({
 			...panelContentFadeTransitionStyle,
 			opacity: contentVisible ? 1 : 0,
-			pointerEvents: contentVisible ? ("auto" as const) : ("none" as const),
+			pointerEvents: contentVisible
+				? ("auto" as const)
+				: ("none" as const),
 		}),
 		[contentVisible],
 	);

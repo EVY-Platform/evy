@@ -5,7 +5,11 @@ export function CanvasLoadingIndicator({ isExiting }: { isExiting?: boolean }) {
 			role="status"
 			aria-label="Loading EVY"
 		>
-			<img className="evy-canvas-loading-logo" src="/logo.svg" alt="EVY" />
+			<img
+				className="evy-canvas-loading-logo"
+				src="/logo.svg"
+				alt="EVY"
+			/>
 			<div className="evy-canvas-loading-bar" />
 		</div>
 	);

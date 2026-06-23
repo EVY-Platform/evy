@@ -51,10 +51,16 @@ export function getRawCursorIndexFromEditable(el: HTMLDivElement): number {
 
 		if (node === range.startContainer) {
 			if (node.nodeType === Node.TEXT_NODE) {
-				rawIndex += Math.min(range.startOffset, node.textContent?.length ?? 0);
+				rawIndex += Math.min(
+					range.startOffset,
+					node.textContent?.length ?? 0,
+				);
 			} else {
 				const childNodes = Array.from(node.childNodes);
-				for (const childNode of childNodes.slice(0, range.startOffset)) {
+				for (const childNode of childNodes.slice(
+					0,
+					range.startOffset,
+				)) {
 					rawIndex += readRawValueFromNode(childNode).length;
 				}
 			}

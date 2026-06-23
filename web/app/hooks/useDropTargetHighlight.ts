@@ -1,7 +1,7 @@
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import type { Input } from "@atlaskit/pragmatic-drag-and-drop/types";
 import { useLayoutEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
-import type { Input } from "@atlaskit/pragmatic-drag-and-drop/types";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 export type DropTargetHighlightDataArgs = {
 	input: Input;
@@ -16,7 +16,10 @@ export function useDropTargetHighlight(
 
 	useLayoutEffect(() => {
 		const element = ref.current;
-		invariant(element, "useDropTargetHighlight: ref.current is not defined");
+		invariant(
+			element,
+			"useDropTargetHighlight: ref.current is not defined",
+		);
 
 		return dropTargetForElements({
 			element,

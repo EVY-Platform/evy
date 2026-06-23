@@ -119,7 +119,8 @@ describe("sync", () => {
 	});
 
 	it("returns only an empty data array when nothing changed", async () => {
-		const getCore = async (): Promise<GetResponse> => buildMockGetResponse([]);
+		const getCore = async (): Promise<GetResponse> =>
+			buildMockGetResponse([]);
 		const fetchService = async (): Promise<GetResponse> =>
 			buildMockGetResponse([]);
 		const deps = { ...makeMocks(), getCore, fetchService };
@@ -146,7 +147,9 @@ describe("sync", () => {
 	});
 
 	it("propagates forwardGet errors for external services", async () => {
-		const fetchService = async (serviceName: string): Promise<GetResponse> => {
+		const fetchService = async (
+			serviceName: string,
+		): Promise<GetResponse> => {
 			if (serviceName === MARKETPLACE_SERVICE_ID) {
 				throw new Error("gRPC service unavailable");
 			}
@@ -178,7 +181,8 @@ describe("sync", () => {
 
 		const serviceResourcesRow = result.data.find(
 			(row) =>
-				row.service === EVY_CORE_SERVICE && row.resource === "serviceResources",
+				row.service === EVY_CORE_SERVICE &&
+				row.resource === "serviceResources",
 		);
 		expect(serviceResourcesRow).toEqual({
 			service: EVY_CORE_SERVICE,

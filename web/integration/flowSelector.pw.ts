@@ -1,12 +1,12 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import type { UI_Flow as ServerFlow } from "evy-types";
 
 import { openAppWithFullFlows } from "./flowFixtures";
 import {
 	createNewFlowThroughPicker,
 	openFlowPicker,
-	selectFlowByLabel,
 	SELECTORS,
+	selectFlowByLabel,
 } from "./utils";
 
 test.describe("Flow Selector", () => {
@@ -122,10 +122,14 @@ test.describe("Flow Selector", () => {
 		await expect(flowSelector).toContainText("Brand New Flow");
 	});
 
-	test("should display content from first flow initially", async ({ page }) => {
+	test("should display content from first flow initially", async ({
+		page,
+	}) => {
 		await openWithFlows(page, singleFlow);
 		// Should show Flow 1's content
-		await expect(page.getByText("Flow 1 Text", { exact: true })).toBeVisible();
+		await expect(
+			page.getByText("Flow 1 Text", { exact: true }),
+		).toBeVisible();
 
 		// Should not show Flow 2's content
 		await expect(
@@ -139,13 +143,17 @@ test.describe("Flow Selector", () => {
 		await openWithFlows(page, threeFlows);
 
 		// Initially on Flow 1
-		await expect(page.getByText("Flow 1 Text", { exact: true })).toBeVisible();
+		await expect(
+			page.getByText("Flow 1 Text", { exact: true }),
+		).toBeVisible();
 
 		// Switch to Flow 2
 		await selectFlowByLabel(page, "Second Flow");
 
 		// Should now show Flow 2's content
-		await expect(page.getByText("Flow 2 Text", { exact: true })).toBeVisible();
+		await expect(
+			page.getByText("Flow 2 Text", { exact: true }),
+		).toBeVisible();
 
 		// Should no longer show Flow 1's content
 		await expect(
@@ -206,6 +214,8 @@ test.describe("Flow Selector", () => {
 		await expect(flowSelector).toHaveAttribute("data-value", "flow-1");
 
 		// Should show Flow 1's content again
-		await expect(page.getByText("Flow 1 Text", { exact: true })).toBeVisible();
+		await expect(
+			page.getByText("Flow 1 Text", { exact: true }),
+		).toBeVisible();
 	});
 });

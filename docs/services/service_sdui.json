@@ -114,11 +114,7 @@
 						"view": {
 							"content": {
 								"title": "",
-								"segments": [
-									"Pickup",
-									"Delivery",
-									"Shipping"
-								],
+								"segments": ["Pickup", "Delivery", "Shipping"],
 								"children": [
 									{
 										"id": "256c223c-71df-42f5-b12f-5267517d87cd",
@@ -491,11 +487,7 @@
 						"view": {
 							"content": {
 								"title": "",
-								"segments": [
-									"Pickup",
-									"Delivery",
-									"Shipping"
-								],
+								"segments": ["Pickup", "Delivery", "Shipping"],
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222201",

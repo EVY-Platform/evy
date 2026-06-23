@@ -1,20 +1,12 @@
-import { useCallback, useMemo, useState } from "react";
-import { ChevronRight, Trash2 } from "lucide-react";
-
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
+import { ChevronRight, Trash2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { useRowById } from "../hooks/useRowById";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
-import { useRowById } from "../hooks/useRowById";
-import { findFlowById } from "../utils/flowHelpers";
-import {
-	findPageReferences,
-	type PageReferenceEntry,
-} from "../utils/pageReferences";
-import { ActionEditor } from "./ActionEditor";
-import { BuilderAssist } from "./BuilderAssist";
-import { PageInUseDialog } from "./PageInUseDialog";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
+import { findFlowById } from "../utils/flowHelpers";
 import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
@@ -23,7 +15,14 @@ import {
 	buildRowAttributeCandidates,
 	type IdCandidate,
 } from "../utils/idCandidates";
+import {
+	findPageReferences,
+	type PageReferenceEntry,
+} from "../utils/pageReferences";
 import { unwrapOptionalBraces } from "../utils/unwrapBraces";
+import { ActionEditor } from "./ActionEditor";
+import { BuilderAssist } from "./BuilderAssist";
+import { PageInUseDialog } from "./PageInUseDialog";
 
 function isContainerKey(k: string): boolean {
 	return k === "child" || k === "children";
@@ -115,7 +114,9 @@ function ConfigTextField({
 				placeholder={placeholder}
 				ariaLabel={ariaLabel}
 				labelClassName={labelClassName}
-				getAttributeCandidatesForQualifier={getAttributeCandidatesForQualifier}
+				getAttributeCandidatesForQualifier={
+					getAttributeCandidatesForQualifier
+				}
 			/>
 		</div>
 	);
@@ -169,7 +170,8 @@ export function ConfigurationPanel() {
 		[activeFlow, activePageId],
 	);
 
-	const showPageTitleInPanel = Boolean(activePage) && configStack.length === 0;
+	const showPageTitleInPanel =
+		Boolean(activePage) && configStack.length === 0;
 
 	const builderAssistCandidates = useMemo(
 		() => [
@@ -262,8 +264,12 @@ export function ConfigurationPanel() {
 		(configRow: Row): React.ReactNode[] => {
 			const merged = mergeRowContentWithPaletteDefaults(configRow);
 			const entries = sortContentEntriesForPanel(Object.entries(merged));
-			const contentEntries = entries.filter(([key]) => !isContainerKey(key));
-			const containerEntries = entries.filter(([key]) => isContainerKey(key));
+			const contentEntries = entries.filter(
+				([key]) => !isContainerKey(key),
+			);
+			const containerEntries = entries.filter(([key]) =>
+				isContainerKey(key),
+			);
 
 			const getAttributeCandidatesForQualifier = (qualifier: string) => {
 				const resourceId = resolveQualifierResourceId(
@@ -288,7 +294,9 @@ export function ConfigurationPanel() {
 						id={uniqueId}
 						label={key}
 						value={String(value)}
-						onChange={(next) => updateRowContent(key, next, configRow.id)}
+						onChange={(next) =>
+							updateRowContent(key, next, configRow.id)
+						}
 						candidates={builderAssistCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
@@ -316,14 +324,21 @@ export function ConfigurationPanel() {
 						</div>
 						<div
 							className={
-								items.length > 1 ? "evy-flex evy-flex-col evy-gap-4" : undefined
+								items.length > 1
+									? "evy-flex evy-flex-col evy-gap-4"
+									: undefined
 							}
 						>
 							{items.map((childRow) => (
 								<ChildRowButton
 									key={childRow.id}
 									child={childRow}
-									onClick={() => openChildConfiguration(childRow.id, configRow)}
+									onClick={() =>
+										openChildConfiguration(
+											childRow.id,
+											configRow,
+										)
+									}
 								/>
 							))}
 						</div>
@@ -341,7 +356,9 @@ export function ConfigurationPanel() {
 						id={`${configRow.id}-source`}
 						label="Source"
 						value={configRow.config.source}
-						onChange={(next) => updateRowRoot("source", next, configRow.id)}
+						onChange={(next) =>
+							updateRowRoot("source", next, configRow.id)
+						}
 						candidates={builderAssistCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
@@ -371,7 +388,9 @@ export function ConfigurationPanel() {
 						id={`${configRow.id}-visible`}
 						label="Visible"
 						value={configRow.config.visible ?? ""}
-						onChange={(next) => updateRowRoot("visible", next, configRow.id)}
+						onChange={(next) =>
+							updateRowRoot("visible", next, configRow.id)
+						}
 						candidates={builderAssistCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier

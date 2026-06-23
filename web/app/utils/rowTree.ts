@@ -1,7 +1,7 @@
 import invariant from "tiny-invariant";
 
 import type { UI_Page } from "../types/flow";
-import type { Row, ContainerType } from "../types/row";
+import type { ContainerType, Row } from "../types/row";
 
 type ResolvedDropDestinationPage = {
 	page: UI_Page;
@@ -156,7 +156,9 @@ function findContainerOfRow(
 		if (container.config.view.content.child?.id === rowId) {
 			return { rowId: container.id, type: "child" };
 		}
-		if (container.config.view.content.children?.some((r) => r.id === rowId)) {
+		if (
+			container.config.view.content.children?.some((r) => r.id === rowId)
+		) {
 			return { rowId: container.id, type: "children" };
 		}
 		return null;
@@ -172,10 +174,16 @@ function findContainerById(
 	rows: Row[],
 ): { container: Row; type: ContainerType } | null {
 	return findContainerByPredicate(rows, (container) => {
-		if ("child" in container.config.view.content && container.id === rowId) {
+		if (
+			"child" in container.config.view.content &&
+			container.id === rowId
+		) {
 			return { rowId: container.id, type: "child" };
 		}
-		if ("children" in container.config.view.content && container.id === rowId) {
+		if (
+			"children" in container.config.view.content &&
+			container.id === rowId
+		) {
 			return { rowId: container.id, type: "children" };
 		}
 		return null;
@@ -240,8 +248,11 @@ function removeRowInSubtree(row: Row, targetRowId: string): Row {
 			removeRowInSubtree(child, targetRowId),
 		);
 		const childUpdated =
-			filteredChildren.length !== row.config.view.content.children.length ||
-			updatedChildren.some((child, index) => child !== filteredChildren[index]);
+			filteredChildren.length !==
+				row.config.view.content.children.length ||
+			updatedChildren.some(
+				(child, index) => child !== filteredChildren[index],
+			);
 		if (childUpdated) {
 			nextRow = withContentUpdate(row, { children: updatedChildren });
 		}
@@ -275,7 +286,10 @@ function insertRowAtIndex(
 	row: Row,
 	destinationIndex: number,
 ): Row[] {
-	const normalizedIndex = Math.max(0, Math.min(destinationIndex, rows.length));
+	const normalizedIndex = Math.max(
+		0,
+		Math.min(destinationIndex, rows.length),
+	);
 	const updatedRows = [...rows];
 	updatedRows.splice(normalizedIndex, 0, row);
 	return updatedRows;
@@ -403,7 +417,8 @@ function updateRowInSubtree(
 			(child) => updateRowInSubtree(child, targetRowId, updater) ?? child,
 		);
 		const childUpdated = updatedChildren.some(
-			(child, index) => child !== row.config.view.content.children?.[index],
+			(child, index) =>
+				child !== row.config.view.content.children?.[index],
 		);
 		if (childUpdated) {
 			return withContentUpdate(row, { children: updatedChildren });

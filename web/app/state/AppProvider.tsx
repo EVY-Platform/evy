@@ -1,29 +1,28 @@
+import type { UI_Flow as ServerFlow } from "evy-types";
 import {
-	type ReactNode,
 	createElement,
-	useReducer,
-	useRef,
+	type ReactNode,
 	useEffect,
 	useMemo,
+	useReducer,
+	useRef,
 } from "react";
-import type { UI_Flow as ServerFlow } from "evy-types";
 import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
-
-import type { UI_Flow } from "../types/flow";
-import { FlowsContext } from "./contexts/FlowsContext";
-import { DragContext } from "./contexts/DragContext";
-import { pageReducer, draggingReducer, dropIndicatorReducer } from "./reducers";
-import { decodeFlows, encodeFlow } from "../utils/decodeFlow";
-import { baseRows } from "../rows/baseRows";
 import { wsClient } from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
+import { baseRows } from "../rows/baseRows";
+import type { UI_Flow } from "../types/flow";
+import { decodeFlows, encodeFlow } from "../utils/decodeFlow";
 import { findFlowById } from "../utils/flowHelpers";
+import { resourceNameById } from "../utils/resourcePathDisplay";
 import {
 	parseUrlPath,
 	resolveUrlIds,
 	validateRowPathSegmentsForPage,
 } from "../utils/urlUtils";
-import { resourceNameById } from "../utils/resourcePathDisplay";
+import { DragContext } from "./contexts/DragContext";
+import { FlowsContext } from "./contexts/FlowsContext";
+import { draggingReducer, dropIndicatorReducer, pageReducer } from "./reducers";
 
 export function AppProvider({
 	children,
@@ -69,7 +68,10 @@ export function AppProvider({
 		let configStack: string[] = [];
 
 		if (page && activeFlow && rowPathSegments.length > 0) {
-			const validated = validateRowPathSegmentsForPage(page, rowPathSegments);
+			const validated = validateRowPathSegmentsForPage(
+				page,
+				rowPathSegments,
+			);
 			if (validated) {
 				activeRowId = validated.rootRowId;
 				configStack = validated.configStack;

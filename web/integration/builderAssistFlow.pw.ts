@@ -1,7 +1,6 @@
-import { type Locator, expect, test } from "@playwright/test";
-
-import type { ServiceResource } from "../app/api/sync";
+import { expect, type Locator, test } from "@playwright/test";
 import type { UI_Flow as ServerFlow } from "evy-types";
+import type { ServiceResource } from "../app/api/sync";
 import { openAppWithFullFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
 
@@ -166,7 +165,9 @@ test.describe("Builder Assist flows", () => {
 		await page.getByText("Open checkout", { exact: true }).first().click();
 		await page.locator('[data-row-id="row-title"]').first().click();
 
-		const reopenedTitleInput = configPanel.getByLabel("title", { exact: true });
+		const reopenedTitleInput = configPanel.getByLabel("title", {
+			exact: true,
+		});
 		await expect(
 			getBuilderAssistToken(reopenedTitleInput, "item"),
 		).toBeVisible();
@@ -237,7 +238,10 @@ test.describe("Builder Assist flows", () => {
 			)
 			.toBe("{$datum.price > 0");
 		await expect(
-			getBuilderAssistToken(configPanel.getByLabel("Row destination"), "order"),
+			getBuilderAssistToken(
+				configPanel.getByLabel("Row destination"),
+				"order",
+			),
 		).toBeVisible();
 	});
 
@@ -253,7 +257,11 @@ test.describe("Builder Assist flows", () => {
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });
 		await expect(popup).toBeVisible();
 
-		await popoverSelect(page, popup.getByLabel("true-0-function"), "Navigate");
+		await popoverSelect(
+			page,
+			popup.getByLabel("true-0-function"),
+			"Navigate",
+		);
 
 		const flowArg = popup.getByLabel("true-0-arg-0");
 		await expect(flowArg).toBeVisible();
@@ -269,7 +277,11 @@ test.describe("Builder Assist flows", () => {
 		await expect(queryParams).toBeVisible();
 		await queryParams.fill("{items: [$datum.id]}");
 
-		await popoverSelect(page, popup.getByLabel("false-0-function"), "Create");
+		await popoverSelect(
+			page,
+			popup.getByLabel("false-0-function"),
+			"Create",
+		);
 
 		const namespaceArg = popup.getByLabel("false-0-arg-0");
 		await expect(namespaceArg).toBeVisible();
@@ -292,12 +304,13 @@ test.describe("Builder Assist flows", () => {
 		).toBeVisible();
 
 		await configPanel.getByLabel("Edit action 1").click();
-		const reopenedPopup = page.getByRole("dialog", { name: "Edit action 1" });
+		const reopenedPopup = page.getByRole("dialog", {
+			name: "Edit action 1",
+		});
 		await expect(reopenedPopup).toBeVisible();
-		await expect(reopenedPopup.getByLabel("true-0-function")).toHaveAttribute(
-			"data-value",
-			"navigate",
-		);
+		await expect(
+			reopenedPopup.getByLabel("true-0-function"),
+		).toHaveAttribute("data-value", "navigate");
 		await expect(reopenedPopup.getByLabel("true-0-arg-0")).toHaveAttribute(
 			"data-value",
 			"flow-builder",
@@ -306,8 +319,8 @@ test.describe("Builder Assist flows", () => {
 			"data-value",
 			"page-checkout",
 		);
-		await expect(reopenedPopup.getByLabel("true-0-navigate-query")).toHaveValue(
-			"{items: [$datum.id]}",
-		);
+		await expect(
+			reopenedPopup.getByLabel("true-0-navigate-query"),
+		).toHaveValue("{items: [$datum.id]}");
 	});
 });

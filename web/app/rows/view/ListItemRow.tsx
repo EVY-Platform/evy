@@ -1,7 +1,7 @@
 import type { RowConfig } from "../../types/row";
+import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { lineClampStyle } from "../design-system/lineClamp";
-import { defineRow } from "../defineRow";
 
 export default defineRow("ListItemRow", {
 	config: {
@@ -18,7 +18,11 @@ export default defineRow("ListItemRow", {
 		},
 	} satisfies RowConfig,
 	render: (row) => {
-		const { title = "", subtitle = "", image = "" } = row.config.view.content;
+		const {
+			title = "",
+			subtitle = "",
+			image = "",
+		} = row.config.view.content;
 
 		return (
 			<div className="evy-flex evy-flex-row evy-items-center evy-gap-2 evy-px-3 evy-py-2">
@@ -34,7 +38,10 @@ export default defineRow("ListItemRow", {
 						</p>
 					) : null}
 					{subtitle.trim() ? (
-						<p className="evy-text-sm evy-text-gray" style={lineClampStyle(2)}>
+						<p
+							className="evy-text-sm evy-text-gray"
+							style={lineClampStyle(2)}
+						>
 							<EVYText text={subtitle} />
 						</p>
 					) : null}

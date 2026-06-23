@@ -5,9 +5,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { normalizeServerFlow } from "../web/app/utils/decodeFlow";
 import { validateUiFlow } from "../types/validators";
+import { normalizeServerFlow } from "../web/app/utils/decodeFlow";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 
@@ -25,7 +24,11 @@ async function main(): Promise<void> {
 			validateUiFlow(normalizeServerFlow(validateUiFlow(f))),
 		);
 		const out = Array.isArray(parsed) ? normalized : normalized[0];
-		await writeFile(filePath, `${JSON.stringify(out, null, "\t")}\n`, "utf-8");
+		await writeFile(
+			filePath,
+			`${JSON.stringify(out, null, "\t")}\n`,
+			"utf-8",
+		);
 		console.log(`Wrote ${filePath}`);
 	}
 }

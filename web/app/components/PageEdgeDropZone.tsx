@@ -1,13 +1,12 @@
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import {
+	type CSSProperties,
+	type Dispatch,
 	useCallback,
 	useLayoutEffect,
 	useRef,
-	type CSSProperties,
-	type Dispatch,
 } from "react";
 import invariant from "tiny-invariant";
-
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 import type { DropIndicatorAction } from "../types/actions";
 
@@ -65,7 +64,9 @@ export function PageEdgeDropZone({
 			className={className}
 			style={style}
 			onClick={onClick}
-			onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
+			onKeyDown={
+				onClick ? (e) => e.key === "Enter" && onClick() : undefined
+			}
 			role={onClick ? "button" : undefined}
 			tabIndex={onClick ? 0 : undefined}
 		/>

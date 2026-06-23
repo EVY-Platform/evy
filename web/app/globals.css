@@ -52,8 +52,8 @@
 
 * {
 	font-family:
-		ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-		"Segoe UI Symbol", "Noto Color Emoji";
+		ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+		"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 	line-height: 1.5;
 	margin: 0;
 	box-sizing: border-box;
@@ -412,6 +412,39 @@ label {
 }
 
 /* ---- Shared component styles ---- */
+
+.evy-desktop-width-message {
+	display: none;
+}
+
+@media (max-width: 999px) {
+	#root {
+		display: none;
+	}
+
+	.evy-desktop-width-message {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--size-4);
+		padding: var(--size-4);
+		text-align: center;
+	}
+
+	.evy-desktop-width-message-logo {
+		width: 240px;
+		max-width: 80vw;
+	}
+
+	.evy-desktop-width-message-text {
+		max-width: 420px;
+		font-size: var(--text-xl);
+		font-weight: var(--font-medium);
+		color: var(--color-black);
+	}
+}
 
 .evy-bin-button {
 	padding: 0;

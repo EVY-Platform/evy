@@ -5,10 +5,7 @@
 	"description": "JSON-RPC params for get method. Service and resource are validated at runtime against the service registry.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": [
-		"service",
-		"resource"
-	],
+	"required": ["service", "resource"],
 	"properties": {
 		"service": {
 			"type": "string",

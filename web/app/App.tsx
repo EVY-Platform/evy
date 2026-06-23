@@ -1,48 +1,45 @@
-import {
-	Fragment,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useState,
-	type ReactNode,
-} from "react";
-
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { FileSliders, Rows3 } from "lucide-react";
 import type {
 	BaseEventPayload,
 	ElementDragType,
 } from "@atlaskit/pragmatic-drag-and-drop/types";
-
+import { FileSliders, Rows3 } from "lucide-react";
+import {
+	Fragment,
+	type ReactNode,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from "react";
+import {
+	activePageWithPhoneStyle,
+	canvasContentStyle,
+	pageWithPhoneStyle,
+	secondaryPageWithPhoneStyle,
+} from "./appLayoutStyles";
 import AppPage from "./components/AppPage";
+
+import { BlankChildPage } from "./components/BlankChildPage";
+import { CanvasLoadingIndicator } from "./components/CanvasLoadingIndicator";
+import { CanvasPageFrame } from "./components/CanvasPageFrame";
+import { CanvasViewport } from "./components/CanvasViewport";
+import { ChildPage } from "./components/ChildPage";
 import {
 	CollapsibleSidePanel,
 	useHoverToggle,
 } from "./components/CollapsibleSidePanel";
-
-import { BlankChildPage } from "./components/BlankChildPage";
-import { ChildPage } from "./components/ChildPage";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
-import { CanvasViewport } from "./components/CanvasViewport";
-import { CanvasPageFrame } from "./components/CanvasPageFrame";
-import { AppProvider, useDragContext, useFlowsContext } from "./state";
-import { handleDrop } from "./utils/dropHandler";
 import { useFlows } from "./hooks/useFlows";
-import { CanvasLoadingIndicator } from "./components/CanvasLoadingIndicator";
-import { findFlowById } from "./utils/flowHelpers";
-import { findRowInPages } from "./utils/rowTree";
-import { capturePageFramePosition } from "./utils/preActivationCapture";
-import { buildActiveChildPages } from "./utils/childPageHelpers";
-
-import {
-	activePageWithPhoneStyle,
-	secondaryPageWithPhoneStyle,
-	pageWithPhoneStyle,
-	canvasContentStyle,
-} from "./appLayoutStyles";
 import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
+import { AppProvider, useDragContext, useFlowsContext } from "./state";
+import { buildActiveChildPages } from "./utils/childPageHelpers";
+import { handleDrop } from "./utils/dropHandler";
+import { findFlowById } from "./utils/flowHelpers";
+import { capturePageFramePosition } from "./utils/preActivationCapture";
+import { findRowInPages } from "./utils/rowTree";
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
 const noop = () => {};
@@ -70,7 +67,9 @@ function SidePanels(props: SidePanelsProps) {
 				pinOpenByPage={isActive && props.pinOpenByPage}
 				onOpenInteraction={isActive ? props.onRowsOpen : noop}
 				onCloseInteraction={isActive ? props.onRowsClose : noop}
-				collapsedLabel={isActive ? "Expand rows panel" : "Rows panel loading"}
+				collapsedLabel={
+					isActive ? "Expand rows panel" : "Rows panel loading"
+				}
 				icon={
 					<Rows3
 						size={20}
@@ -156,8 +155,11 @@ function AppContent() {
 		return monitorForElements({
 			onDragStart({ location }: BaseEventPayload<ElementDragType>) {
 				const outermost =
-					location.initial.dropTargets[location.initial.dropTargets.length - 1];
-				const source = outermost?.data.pageId === "rows" ? "rows" : "page";
+					location.initial.dropTargets[
+						location.initial.dropTargets.length - 1
+					];
+				const source =
+					outermost?.data.pageId === "rows" ? "rows" : "page";
 				dispatchDragging({ type: "START_DRAGGING", source });
 			},
 			onDrop(args: BaseEventPayload<ElementDragType>) {
@@ -177,7 +179,9 @@ function AppContent() {
 	const showAddPageButton = Boolean(activeFlowId) && !isElementActive;
 
 	const activeLeafRowId =
-		configStack.length > 0 ? configStack[configStack.length - 1] : activeRowId;
+		configStack.length > 0
+			? configStack[configStack.length - 1]
+			: activeRowId;
 
 	const activeLeafRow = activeLeafRowId
 		? findRowInPages(activeLeafRowId, pages)
@@ -189,7 +193,9 @@ function AppContent() {
 		[activeRowId, configStack, pages],
 	);
 
-	const shouldShowBlankChildPage = Boolean(activeLeafRowId && !activeLeafChild);
+	const shouldShowBlankChildPage = Boolean(
+		activeLeafRowId && !activeLeafChild,
+	);
 
 	return (
 		<div className="evy-relative evy-flex-1 evy-min-h-0 evy-min-w-0 evy-overflow-hidden">
@@ -212,13 +218,20 @@ function AppContent() {
 							</CanvasPageFrame>
 
 							{childPages.map(({ childRow, parentRowId }) => {
-								const parentRow = findRowInPages(parentRowId, pages);
+								const parentRow = findRowInPages(
+									parentRowId,
+									pages,
+								);
 								const childVariant =
-									parentRow?.config.type === "Search" ? "full" : "sheet";
+									parentRow?.config.type === "Search"
+										? "full"
+										: "sheet";
 								return (
 									<CanvasPageFrame
 										key={childRow.id}
-										wrapperStyle={secondaryPageWithPhoneStyle}
+										wrapperStyle={
+											secondaryPageWithPhoneStyle
+										}
 										className="evy-flex-shrink-0"
 										data-testid="child-page"
 									>
@@ -241,7 +254,9 @@ function AppContent() {
 									<BlankChildPage
 										pageId={activePage.id}
 										parentRowId={activeLeafRowId}
-										variant={isSearchParent ? "full" : "sheet"}
+										variant={
+											isSearchParent ? "full" : "sheet"
+										}
 									/>
 								</CanvasPageFrame>
 							)}
@@ -324,7 +339,9 @@ function NavBar({ showBreadcrumb }: { showBreadcrumb: boolean }) {
 function PlaceholderShell({ children }: { children: ReactNode }) {
 	return (
 		<AppShell showBreadcrumb={false}>
-			<CanvasViewport contentStyle={canvasContentStyle}>{null}</CanvasViewport>
+			<CanvasViewport contentStyle={canvasContentStyle}>
+				{null}
+			</CanvasViewport>
 			<SidePanels mode="loading" />
 			{children}
 		</AppShell>
@@ -332,8 +349,13 @@ function PlaceholderShell({ children }: { children: ReactNode }) {
 }
 
 export function App() {
-	const { flows, serviceResources, resourceAttributeMetadata, loading, error } =
-		useFlows();
+	const {
+		flows,
+		serviceResources,
+		resourceAttributeMetadata,
+		loading,
+		error,
+	} = useFlows();
 	const testFlows = window.__TEST_FLOWS__;
 	const testServiceResources = window.__TEST_SERVICE_RESOURCES__;
 	const testResourceAttributeMetadata =
@@ -372,7 +394,9 @@ export function App() {
 		return (
 			<PlaceholderShell>
 				<div className="evy-absolute evy-inset-0 evy-flex evy-items-center evy-justify-center">
-					<span className="evy-text-red evy-text-lg">Failed to load flows</span>
+					<span className="evy-text-red evy-text-lg">
+						Failed to load flows
+					</span>
 				</div>
 			</PlaceholderShell>
 		);

@@ -34,7 +34,8 @@ function isDirectChildRow(parent: Row, childId: string): boolean {
 	const child = parent.config.view.content.child;
 	if (child?.id === childId) return true;
 	return (
-		parent.config.view.content.children?.some((c) => c.id === childId) ?? false
+		parent.config.view.content.children?.some((c) => c.id === childId) ??
+		false
 	);
 }
 

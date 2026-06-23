@@ -5,17 +5,18 @@
  * Schemas are split into two lazy-loaded bundles so importing request validation
  * does not compile data-row / SDUI validators (and vice versa).
  */
-import Ajv2020 from "ajv/dist/2020";
-import type { ErrorObject, ValidateFunction } from "ajv";
-import addFormats from "ajv-formats";
+
 import { posix } from "node:path";
+import type { ErrorObject, ValidateFunction } from "ajv";
+import Ajv2020 from "ajv/dist/2020";
+import addFormats from "ajv-formats";
 
 import type {
+	DATA_EVY_File,
 	DATA_EVY_Organization,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
 	DATA_EVY_ServiceResource,
-	DATA_EVY_File,
 } from "./generated/ts/data/data";
 import type {
 	FileUploadChunkMetadata,
@@ -24,14 +25,14 @@ import type {
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { CreateResponse } from "./generated/ts/rpc/create.response";
-import type { UpdateRequest } from "./generated/ts/rpc/update.request";
-import type { UpdateResponse } from "./generated/ts/rpc/update.response";
 import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
 import type { DeleteResponse } from "./generated/ts/rpc/delete.response";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
+import type { UpdateRequest } from "./generated/ts/rpc/update.request";
+import type { UpdateResponse } from "./generated/ts/rpc/update.response";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
@@ -46,14 +47,10 @@ import dataSchemaRaw from "./schema/data/data.schema.json" with {
 import primitiveSchemaRaw from "./schema/data/primitive.schema.json" with {
 	type: "json",
 };
-import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
 import fileSchemaRaw from "./schema/files/file.schema.json" with {
 	type: "json",
 };
 import apiRequestRaw from "./schema/rpc/api.request.schema.json" with {
-	type: "json",
-};
-import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
 	type: "json",
 };
 import createRequestRaw from "./schema/rpc/create.request.schema.json" with {
@@ -62,29 +59,31 @@ import createRequestRaw from "./schema/rpc/create.request.schema.json" with {
 import createResponseRaw from "./schema/rpc/create.response.schema.json" with {
 	type: "json",
 };
-import updateRequestRaw from "./schema/rpc/update.request.schema.json" with {
-	type: "json",
-};
-import updateResponseRaw from "./schema/rpc/update.response.schema.json" with {
-	type: "json",
-};
 import deleteRequestRaw from "./schema/rpc/delete.request.schema.json" with {
 	type: "json",
 };
 import deleteResponseRaw from "./schema/rpc/delete.response.schema.json" with {
 	type: "json",
 };
+import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
+	type: "json",
+};
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
 	type: "json",
 };
-
 import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
 	type: "json",
 };
 import syncResponseRaw from "./schema/rpc/sync.response.schema.json" with {
 	type: "json",
 };
-
+import updateRequestRaw from "./schema/rpc/update.request.schema.json" with {
+	type: "json",
+};
+import updateResponseRaw from "./schema/rpc/update.response.schema.json" with {
+	type: "json",
+};
+import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
 
 /** Canonical base URI for ajv $ref resolution */
 const SCHEMA_BASE = "https://evy.local";
@@ -98,17 +97,26 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
-	"rpc/create.request.schema.json": createRequestRaw as Record<string, unknown>,
+	"rpc/create.request.schema.json": createRequestRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/create.response.schema.json": createResponseRaw as Record<
 		string,
 		unknown
 	>,
-	"rpc/update.request.schema.json": updateRequestRaw as Record<string, unknown>,
+	"rpc/update.request.schema.json": updateRequestRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/update.response.schema.json": updateResponseRaw as Record<
 		string,
 		unknown
 	>,
-	"rpc/delete.request.schema.json": deleteRequestRaw as Record<string, unknown>,
+	"rpc/delete.request.schema.json": deleteRequestRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/delete.response.schema.json": deleteResponseRaw as Record<
 		string,
 		unknown
@@ -509,7 +517,10 @@ export function assertIsoDateTimeJsonFields(
 				);
 			}
 			if (Number.isNaN(Date.parse(child))) {
-				throwDataIsoValidationError(path, "expected ISO 8601 date-time string");
+				throwDataIsoValidationError(
+					path,
+					"expected ISO 8601 date-time string",
+				);
 			}
 		}
 		assertIsoDateTimeJsonFields(child, path);

@@ -2,7 +2,7 @@ import type React from "react";
 import { Fragment, useMemo } from "react";
 import ReactDOM from "react-dom";
 
-import { useDraggable, idleState } from "../hooks/useDraggable";
+import { idleState, useDraggable } from "../hooks/useDraggable";
 import { RowPrimitive } from "./RowPrimitive";
 
 export function DraggableRowContainer({
@@ -63,7 +63,9 @@ export function DraggableRowContainer({
 							height: state.rect.height,
 						}}
 					>
-						<RowPrimitive state={idleState}>{children}</RowPrimitive>
+						<RowPrimitive state={idleState}>
+							{children}
+						</RowPrimitive>
 					</div>,
 					state.container,
 				)}

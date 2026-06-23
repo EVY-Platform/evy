@@ -1,5 +1,5 @@
-import type { RowConfig } from "../../types/row";
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
+import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import CarouselIndicator from "../design-system/CarouselIndicator";
 import { RowLayout } from "../design-system/RowLayout";
@@ -27,7 +27,11 @@ export default defineRow("PhotoGalleryRow", {
 					src="/logo.svg"
 					alt="gallery placeholder"
 					className="evy-pointer-events-none"
-					style={{ width: "60%", height: "60%", objectFit: "contain" }}
+					style={{
+						width: "60%",
+						height: "60%",
+						objectFit: "contain",
+					}}
 				/>
 				<div
 					className="evy-absolute evy-pointer-events-none"

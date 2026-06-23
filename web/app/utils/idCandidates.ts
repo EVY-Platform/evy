@@ -102,7 +102,8 @@ function addRowAttributeNames(row: Row, attributeNames: Set<string>) {
 		if (key === "children") {
 			if (Array.isArray(value)) {
 				for (const childRow of value) {
-					if (isRow(childRow)) addRowAttributeNames(childRow, attributeNames);
+					if (isRow(childRow))
+						addRowAttributeNames(childRow, attributeNames);
 				}
 			}
 			continue;
@@ -297,7 +298,9 @@ export function getIdDisplayParts(
 			(displayCandidate) =>
 				isIdBoundaryCharacter(value[index - 1]) &&
 				value.startsWith(displayCandidate.id, index) &&
-				isIdBoundaryCharacter(value[index + displayCandidate.id.length]),
+				isIdBoundaryCharacter(
+					value[index + displayCandidate.id.length],
+				),
 		);
 
 		if (!candidate) {

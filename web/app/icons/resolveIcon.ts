@@ -1,5 +1,5 @@
-import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 
 function kebabToPascal(name: string): string {
 	return name

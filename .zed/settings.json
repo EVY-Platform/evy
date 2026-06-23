@@ -1,0 +1,43 @@
+{
+	"prettier": { "allowed": false },
+	"format_on_save": "on",
+	"lsp": {
+		"biome": {
+			"settings": {
+				"require_config_file": true
+			}
+		}
+	},
+	"languages": {
+		"JavaScript": {
+			"language_servers": ["vtsls", "biome", "..."],
+			"formatter": { "language_server": { "name": "biome" } },
+			"code_actions_on_format": {
+				"source.organizeImports.biome": true
+			}
+		},
+		"TypeScript": {
+			"language_servers": ["vtsls", "biome", "..."],
+			"formatter": { "language_server": { "name": "biome" } },
+			"code_actions_on_format": {
+				"source.organizeImports.biome": true
+			}
+		},
+		"TSX": {
+			"language_servers": ["vtsls", "biome", "..."],
+			"formatter": { "language_server": { "name": "biome" } },
+			"code_actions_on_format": {
+				"source.organizeImports.biome": true
+			}
+		},
+		"JSON": {
+			"formatter": { "language_server": { "name": "biome" } }
+		},
+		"JSONC": {
+			"formatter": { "language_server": { "name": "biome" } }
+		},
+		"CSS": {
+			"formatter": { "language_server": { "name": "biome" } }
+		}
+	}
+}

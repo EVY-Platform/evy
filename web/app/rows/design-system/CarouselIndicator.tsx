@@ -25,7 +25,8 @@ export default function CarouselIndicator({
 						width: 28,
 						height: 6,
 						borderRadius: 999,
-						backgroundColor: pageNumber === activeIndex ? color : inactiveColor,
+						backgroundColor:
+							pageNumber === activeIndex ? color : inactiveColor,
 						flexShrink: 0,
 					}}
 				/>

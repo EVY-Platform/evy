@@ -27,9 +27,9 @@ function textRow(id: string): Row {
 describe("isNonRoutablePreviewRowId", () => {
 	it("rejects search preview synthetic ids", () => {
 		expect(isNonRoutablePreviewRowId("s:search-preview:0")).toBe(true);
-		expect(isNonRoutablePreviewRowId("search-row:search-preview-default")).toBe(
-			true,
-		);
+		expect(
+			isNonRoutablePreviewRowId("search-row:search-preview-default"),
+		).toBe(true);
 		expect(isNonRoutablePreviewRowId("row-1")).toBe(false);
 	});
 });
@@ -57,12 +57,12 @@ describe("validateRowPathSegmentsForPage", () => {
 			title: "P",
 			rows: [list],
 		};
-		expect(validateRowPathSegmentsForPage(page, ["list-1", "child-1"])).toEqual(
-			{
-				rootRowId: "list-1",
-				configStack: ["child-1"],
-			},
-		);
+		expect(
+			validateRowPathSegmentsForPage(page, ["list-1", "child-1"]),
+		).toEqual({
+			rootRowId: "list-1",
+			configStack: ["child-1"],
+		});
 		expect(
 			validateRowPathSegmentsForPage(page, ["list-1", "child-1", "nope"]),
 		).toEqual({
@@ -89,7 +89,10 @@ describe("validateRowPathSegmentsForPage", () => {
 			rows: [textRow("row-1")],
 		};
 		expect(
-			validateRowPathSegmentsForPage(page, ["row-1", "x:search-preview:0"]),
+			validateRowPathSegmentsForPage(page, [
+				"row-1",
+				"x:search-preview:0",
+			]),
 		).toEqual({
 			rootRowId: "row-1",
 			configStack: [],

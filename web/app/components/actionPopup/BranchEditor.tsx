@@ -1,5 +1,7 @@
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import { useCallback, useMemo } from "react";
-
+import type { ServiceResource } from "../../api/sync";
 import type { UI_Flow } from "../../types/flow";
 import {
 	type ActionFunction,
@@ -11,11 +13,8 @@ import {
 	getPageOptions,
 	toVariableOptions,
 } from "../../utils/actionFlowOptions";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
-import type { ServiceResource } from "../../api/sync";
 import { displayLabel } from "../../utils/labelFormatting";
-import { PopoverSelect, type PopoverOption } from "../PopoverSelect";
+import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
 
 type BranchEditorProps = {
@@ -139,7 +138,9 @@ export function BranchEditor({
 			const newArgs = [...args];
 			while (newArgs.length <= argIndex) newArgs.push("");
 			newArgs[argIndex] = argValue;
-			onChange(serializeBranch(selectedFunction as ActionFunction, newArgs));
+			onChange(
+				serializeBranch(selectedFunction as ActionFunction, newArgs),
+			);
 		},
 		[selectedFunction, args, onChange],
 	);

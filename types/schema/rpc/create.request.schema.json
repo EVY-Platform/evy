@@ -13,11 +13,7 @@
 	},
 	"type": "object",
 	"additionalProperties": false,
-	"required": [
-		"service",
-		"resource",
-		"data"
-	],
+	"required": ["service", "resource", "data"],
 	"properties": {
 		"service": {
 			"type": "string",

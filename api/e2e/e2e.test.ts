@@ -1,8 +1,7 @@
-import { Client } from "rpc-websockets";
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import type { UI_Flow, UI_Page, UI_Row } from "evy-types";
-
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { Client } from "rpc-websockets";
 import { waitForClientOpen } from "../src/tests/wsTestHelpers";
 
 type WSClient = InstanceType<typeof Client>;
@@ -44,10 +43,14 @@ describe("API E2E Tests", () => {
 					data: {
 						id: crypto.randomUUID(),
 						name: "Test",
-						pages: [{ id: crypto.randomUUID(), title: "P", rows: [] }],
+						pages: [
+							{ id: crypto.randomUUID(), title: "P", rows: [] },
+						],
 					},
 				});
-				throw new Error("Expected create to fail for unauthenticated request");
+				throw new Error(
+					"Expected create to fail for unauthenticated request",
+				);
 			} catch (error) {
 				if (
 					error instanceof Error &&

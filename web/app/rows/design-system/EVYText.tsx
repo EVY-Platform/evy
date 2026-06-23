@@ -1,5 +1,5 @@
-import parseIconText from "../../icons/parseIconText";
 import { useParseText } from "../../hooks/useParseText";
+import parseIconText from "../../icons/parseIconText";
 
 export default function EVYText({
 	text,

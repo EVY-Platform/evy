@@ -3,11 +3,17 @@
 	"description": "EVY monorepo - api, web, ios, services and shared types",
 	"license": "GPL-3.0-only",
 	"scripts": {
-		"dev": "concurrently --kill-others-on-fail --names 'postgres,marketplace,api,web' 'docker compose up postgres' 'bun run --cwd services/marketplace dev' 'bun run --cwd api dev' 'bun run --cwd web dev'",
-		"format": "bun run --cwd api format && bun run --cwd web format && bun run --cwd services/marketplace format && bunx biome format --write scripts && xcrun swift-format format --in-place --recursive ios",
+		"dev:postgres": "docker compose up postgres",
+		"dev:setup": "docker compose up --wait postgres && bun run db:seed",
+		"dev:api": "bun run --cwd api dev",
+		"dev:web": "bun run --cwd web dev",
+		"dev:marketplace": "bun run --cwd services/marketplace dev",
+		"dev:watch": "bun scripts/watch.ts",
+		"dev": "bun run dev:setup && bun run --parallel --no-exit-on-error dev:postgres dev:api dev:web dev:marketplace dev:watch",
+		"format": "bunx biome check --write . && bun run --cwd api format && bun run --cwd web format && bun run --cwd services/marketplace format && xcrun swift-format format --in-place --recursive ios",
 		"install:all": "bun install && bun install --cwd api && bun install --cwd web && bun install --cwd services/marketplace",
-		"types:generate": "bun scripts/generate-types.ts && bun scripts/generate-drizzle.ts && bun scripts/generate-core-resources.ts && bun scripts/generate-marketplace-resources.ts && bunx biome format --write types/generated/ts/",
-		"types:generate:exclude-ios": "bun scripts/generate-types.ts --exclude-ios && bun scripts/generate-drizzle.ts && bun scripts/generate-core-resources.ts --exclude-ios && bun scripts/generate-marketplace-resources.ts --exclude-ios && bunx biome format --write types/generated/ts/",
+		"types:generate": "bun scripts/generate-types.ts && bun scripts/generate-drizzle.ts && bun scripts/generate-core-resources.ts && bun scripts/generate-marketplace-resources.ts && bunx biome check --write types/generated/ts/",
+		"types:generate:exclude-ios": "bun scripts/generate-types.ts --exclude-ios && bun scripts/generate-drizzle.ts && bun scripts/generate-core-resources.ts --exclude-ios && bun scripts/generate-marketplace-resources.ts --exclude-ios && bunx biome check --write types/generated/ts/",
 		"db:seed": "bun scripts/seed.ts"
 	},
 	"devDependencies": {

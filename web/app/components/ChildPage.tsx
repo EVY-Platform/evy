@@ -1,11 +1,10 @@
 import { useCallback, useRef } from "react";
-
-import type { Row } from "../types/row";
-import { useDragContext, useFlowsContext } from "../state";
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
+import { useDragContext, useFlowsContext } from "../state";
+import type { Row } from "../types/row";
+import { ChildPageFrame } from "./ChildPageFrame";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { baseTitleStyle } from "./pageStyles";
-import { ChildPageFrame } from "./ChildPageFrame";
 
 /**
  * Renders a child row as a secondary phone-page immediately to the right

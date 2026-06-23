@@ -11,14 +11,14 @@
 
 import { join } from "node:path";
 import {
-	OUT_SWIFT,
-	OUT_TS,
-	SCHEMA_DIR,
 	generatedFileHeader,
 	generatedSwiftHeader,
 	loadJson,
+	OUT_SWIFT,
+	OUT_TS,
 	resourceKey,
 	runMain,
+	SCHEMA_DIR,
 	swiftCaseName,
 	writeGeneratedOutputs,
 } from "./types-generation-utils.js";
@@ -55,7 +55,9 @@ function validateSchema(
 		obj.resources === null ||
 		Array.isArray(obj.resources)
 	) {
-		throw new Error("marketplace.resources.json: resources must be an object");
+		throw new Error(
+			"marketplace.resources.json: resources must be an object",
+		);
 	}
 	for (const [name, id] of Object.entries(obj.resources)) {
 		if (typeof id !== "string" || id.length === 0) {

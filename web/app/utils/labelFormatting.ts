@@ -13,7 +13,8 @@ function sentenceCaseFirstLetter(s: string): string {
  * Variable / property names for action UI: `foo_bar` → `Foo bar`, `true`/`false` unchanged.
  */
 export function displayLabel(variableName: string): string {
-	if (variableName === "true" || variableName === "false") return variableName;
+	if (variableName === "true" || variableName === "false")
+		return variableName;
 	return sentenceCaseFirstLetter(underscoresToSpaces(variableName));
 }
 
