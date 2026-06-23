@@ -5,7 +5,7 @@ The EVY app! Open Xcode, hit run, and Bob's your uncle.
 ### Architecture
 
 ```mermaid
-flowchart TD
+flowchart LR
     App[ContentView<br/>NavigationStack]
     SDUI[SDUI<br/>server-defined screens & widgets]
     Actions[Action runner<br/>navigate / create / close]
@@ -13,13 +13,13 @@ flowchart TD
     API[Backend API<br/>WebSocket + file uploads]
 
     subgraph data [Local data]
+        direction TB
         Synced[Synced resources]
         Drafts[In-progress drafts]
     end
 
     Notif{{NotificationCenter}}
 
-    API -->|sync resources at launch| Synced
     API -->|deliver the SDUI definition for every screen| SDUI
     App -->|render the current screen from| SDUI
 
@@ -30,6 +30,7 @@ flowchart TD
     Actions -->|push pages & close sheets| App
     Actions -->|create & submit entities via| EVY
 
+    API -->|sync resources at launch| Synced
     EVY -->|look up & format synced values| Synced
     EVY -->|read & write the working draft| Drafts
     EVY -->|persist, fetch & upload files| API
@@ -37,6 +38,7 @@ flowchart TD
     Synced -.->|post change| Notif
     Drafts -.->|post change| Notif
     API -.->|push live updates & errors| Notif
+
     Notif -.->|re-render the affected widgets| SDUI
     Notif -.->|refresh screen & surface errors| App
 ```
