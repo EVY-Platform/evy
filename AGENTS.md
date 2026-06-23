@@ -7,7 +7,7 @@ Always use `bun` to run commands or install dependencies.
 
 - KISS: Keep It Simple Stupid. Complexity is the enemy of maintainability.
 - Use explicit variable names (even if lengthy).
-- Use Biome to auto-format code.
+- Use Biome to auto-format code any time changes are saved
 - Avoid typecasting unless absolutely impossible to avoid.
 
 ## Development
@@ -17,6 +17,8 @@ For iOS, make sure you build with Xcode targeting iPhone 17 iOS 26.5 and fix any
 Ensure you run `./run-e2e.sh --skip-ios` from root to run the e2e tests (see README.md for `--no-docker` option).
 If you need to run iOS tests, keep services running and just run the iOS tests separately rather than re-running the whole e2e suite.
 NEVER skip tests of any kind
+
+After completing any set of changes, always run `bun run format` from the repo root before finishing.
 
 ## Pull requests
 
