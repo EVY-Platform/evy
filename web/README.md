@@ -156,7 +156,7 @@ Setup (Bun, Docker, copying `.env`): [README § Setup](../README.md#setup) and [
 From the repo root, copy [`.env.example`](../.env.example) to `.env`. Web-specific:
 
 ```env
-WEB_PORT=3000
+WEB_PORT=3003
 # WebSocket URL to the API (see root `.env.example`, e.g. ws://localhost:8000)
 API_URL=ws://localhost:8000
 ```
@@ -167,7 +167,7 @@ API_URL=ws://localhost:8000
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3003](http://localhost:3003) with your browser to see the result.
 
 ### Docker
 
@@ -175,8 +175,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 docker build -f web/Dockerfile -t evy-web \
   --build-arg API_URL=ws://host.docker.internal:8000 \
   .
-docker run -p 3000:3000 \
-  -e WEB_PORT=3000 \
+docker run -p 3003:3003 \
+  -e WEB_PORT=3003 \
   -e API_URL=ws://host.docker.internal:8000 \
   evy-web
 ```

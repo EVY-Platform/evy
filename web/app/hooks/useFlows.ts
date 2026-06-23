@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 import type { UI_Flow as ServerFlow } from "evy-types";
-import { syncWebData, type ServiceResource } from "../api/sync";
+import {
+	syncWebData,
+	type ResourceAttributeMetadata,
+	type ServiceResource,
+} from "../api/sync";
 
 type UseFlowsResult = {
 	flows: ServerFlow[] | null;
 	serviceResources: ServiceResource[];
+	resourceAttributeMetadata: ResourceAttributeMetadata[];
 	loading: boolean;
 	error: Error | null;
 };
@@ -14,6 +19,9 @@ export function useFlows(): UseFlowsResult {
 	const [serviceResources, setServiceResources] = useState<ServiceResource[]>(
 		[],
 	);
+	const [resourceAttributeMetadata, setResourceAttributeMetadata] = useState<
+		ResourceAttributeMetadata[]
+	>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
 
@@ -22,11 +30,15 @@ export function useFlows(): UseFlowsResult {
 
 		async function fetchFlows() {
 			try {
-				const { flows: fetchedFlows, serviceResources: fetchedResources } =
-					await syncWebData();
+				const {
+					flows: fetchedFlows,
+					serviceResources: fetchedResources,
+					resourceAttributeMetadata: fetchedResourceAttributeMetadata,
+				} = await syncWebData();
 				if (!cancelled) {
 					setFlows(fetchedFlows);
 					setServiceResources(fetchedResources);
+					setResourceAttributeMetadata(fetchedResourceAttributeMetadata);
 					setLoading(false);
 				}
 			} catch (err) {
@@ -44,5 +56,5 @@ export function useFlows(): UseFlowsResult {
 		};
 	}, []);
 
-	return { flows, serviceResources, loading, error };
+	return { flows, serviceResources, resourceAttributeMetadata, loading, error };
 }

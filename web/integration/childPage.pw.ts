@@ -416,7 +416,7 @@ test.describe("Child Page Rendering", () => {
 
 		// Configuration panel should show the child row's config (Text row config)
 		const configPanel = getConfigPanel(page);
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
+		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
 			"Child Text Row",
 		);
 	});

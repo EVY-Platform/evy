@@ -12,8 +12,18 @@ import {
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
 import { ActionEditor } from "./ActionEditor";
+import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
+import {
+	buildDatumCandidate,
+	buildFunctionCandidates,
+	buildIdCandidates,
+	buildResourceAttributeCandidatesForResource,
+	buildRowAttributeCandidates,
+	type IdCandidate,
+} from "../utils/idCandidates";
+import { unwrapOptionalBraces } from "../utils/unwrapBraces";
 
 function isContainerKey(k: string): boolean {
 	return k === "child" || k === "children";
@@ -47,6 +57,30 @@ function isRowArray(value: unknown): value is Row[] {
 	return Array.isArray(value) && value.every(isRow);
 }
 
+function resolveSourceResourceId(
+	source: string,
+	serviceResources: { id: string }[],
+): string | null {
+	const sourcePath = unwrapOptionalBraces(source);
+	const resourceId = sourcePath.split(".")[0]?.trim();
+	if (!resourceId) return null;
+	return serviceResources.some((resource) => resource.id === resourceId)
+		? resourceId
+		: null;
+}
+
+function resolveQualifierResourceId(
+	qualifier: string,
+	source: string,
+	serviceResources: { id: string }[],
+): string | null {
+	if (qualifier === "$datum")
+		return resolveSourceResourceId(source, serviceResources);
+	return serviceResources.some((resource) => resource.id === qualifier)
+		? qualifier
+		: null;
+}
+
 function ConfigTextField({
 	id,
 	label,
@@ -55,35 +89,33 @@ function ConfigTextField({
 	placeholder,
 	ariaLabel,
 	labelClassName,
-	inputClassName = "evy-w-full evy-focus-visible:outline-none",
-	required,
 	fieldClassName = "evy-mb-2",
+	candidates,
+	getAttributeCandidatesForQualifier,
 }: {
 	id: string;
 	label: string;
 	value: string;
 	onChange: (next: string) => void;
+	candidates: IdCandidate[];
 	placeholder?: string;
 	ariaLabel?: string;
 	labelClassName?: string;
-	inputClassName?: string;
-	required?: boolean;
 	fieldClassName?: string;
+	getAttributeCandidatesForQualifier?: (qualifier: string) => IdCandidate[];
 }) {
 	return (
 		<div className={fieldClassName}>
-			<label htmlFor={id} className={labelClassName}>
-				{label}
-			</label>
-			<input
+			<BuilderAssist
 				id={id}
-				type="text"
+				label={label}
 				value={value}
-				onChange={(e) => onChange(e.target.value)}
+				onChange={onChange}
+				candidates={candidates}
 				placeholder={placeholder}
-				aria-label={ariaLabel}
-				className={inputClassName}
-				required={required}
+				ariaLabel={ariaLabel}
+				labelClassName={labelClassName}
+				getAttributeCandidatesForQualifier={getAttributeCandidatesForQualifier}
 			/>
 		</div>
 	);
@@ -119,6 +151,7 @@ export function ConfigurationPanel() {
 		activeFlowId,
 		flows,
 		serviceResources,
+		resourceAttributeMetadata,
 		configStack,
 		dispatchRow,
 	} = useFlowsContext();
@@ -137,6 +170,16 @@ export function ConfigurationPanel() {
 	);
 
 	const showPageTitleInPanel = Boolean(activePage) && configStack.length === 0;
+
+	const builderAssistCandidates = useMemo(
+		() => [
+			...buildIdCandidates(flows, serviceResources),
+			...buildRowAttributeCandidates(flows),
+			buildDatumCandidate(),
+			...buildFunctionCandidates(),
+		],
+		[flows, serviceResources],
+	);
 
 	const [pageInUseReferences, setPageInUseReferences] = useState<
 		PageReferenceEntry[]
@@ -222,6 +265,20 @@ export function ConfigurationPanel() {
 			const contentEntries = entries.filter(([key]) => !isContainerKey(key));
 			const containerEntries = entries.filter(([key]) => isContainerKey(key));
 
+			const getAttributeCandidatesForQualifier = (qualifier: string) => {
+				const resourceId = resolveQualifierResourceId(
+					qualifier,
+					configRow.config.source,
+					serviceResources,
+				);
+				return resourceId
+					? buildResourceAttributeCandidatesForResource(
+							resourceAttributeMetadata,
+							resourceId,
+						)
+					: [];
+			};
+
 			const contentElements = contentEntries.map(([key, value]) => {
 				const uniqueId = `${configRow.id}-${key}`;
 
@@ -232,7 +289,10 @@ export function ConfigurationPanel() {
 						label={key}
 						value={String(value)}
 						onChange={(next) => updateRowContent(key, next, configRow.id)}
-						required
+						candidates={builderAssistCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
 					/>
 				);
 			});
@@ -282,10 +342,13 @@ export function ConfigurationPanel() {
 						label="Source"
 						value={configRow.config.source}
 						onChange={(next) => updateRowRoot("source", next, configRow.id)}
+						candidates={builderAssistCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
 						placeholder="Where the row reads data from"
 						ariaLabel="Row data source"
 						labelClassName="evy-text-sm evy-font-medium evy-text-black"
-						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
 						fieldClassName=""
 					/>
 					<ConfigTextField
@@ -295,10 +358,13 @@ export function ConfigurationPanel() {
 						onChange={(next) =>
 							updateRowRoot("destination", next, configRow.id)
 						}
+						candidates={builderAssistCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
 						placeholder="Where the row writes data to"
 						ariaLabel="Row destination"
 						labelClassName="evy-text-sm evy-font-medium evy-text-black"
-						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
 						fieldClassName=""
 					/>
 					<ConfigTextField
@@ -306,17 +372,27 @@ export function ConfigurationPanel() {
 						label="Visible"
 						value={configRow.config.visible ?? ""}
 						onChange={(next) => updateRowRoot("visible", next, configRow.id)}
+						candidates={builderAssistCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
 						placeholder={`Condition to show row, e.g. {${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`}
 						ariaLabel="Row visibility condition"
 						labelClassName="evy-text-sm evy-font-medium evy-text-black"
-						inputClassName="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
 						fieldClassName=""
 					/>
 				</div>,
 				...containerElements,
 			];
 		},
-		[openChildConfiguration, updateRowContent, updateRowRoot],
+		[
+			openChildConfiguration,
+			updateRowContent,
+			updateRowRoot,
+			builderAssistCandidates,
+			resourceAttributeMetadata,
+			serviceResources,
+		],
 	);
 
 	const configurationElements = currentConfigRow

@@ -1,7 +1,6 @@
-import type { RefObject, ReactNode, CSSProperties } from "react";
-
-import { phoneContentPadding, rounded24Style } from "./pageStyles";
+import type { CSSProperties, ReactNode, RefObject } from "react";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
+import { phoneContentPadding, rounded24Style } from "./pageStyles";
 
 type ChildPageFrameProps = {
 	children: ReactNode;
@@ -77,7 +76,7 @@ export function ChildPageFrame({
 	if (variant === "sheet") {
 		return (
 			<div
-				className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
+				className="evy-overflow-hidden evy-h-full evy-w-full"
 				style={{ position: "relative", padding: phoneContentPadding }}
 			>
 				<div
@@ -100,7 +99,7 @@ export function ChildPageFrame({
 
 	return (
 		<div
-			className="evy-overflow-hidden evy-h-full evy-w-full evy-box-sizing-border"
+			className="evy-overflow-hidden evy-h-full evy-w-full"
 			style={{ padding: phoneContentPadding }}
 		>
 			<div

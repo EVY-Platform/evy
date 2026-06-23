@@ -1,0 +1,369 @@
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
+import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
+import type { UI_Flow } from "../types/flow";
+import type { Row } from "../types/row";
+import { ACTION_FUNCTIONS } from "./actionBranch";
+
+export type IdCandidateCategory =
+	| "Flow"
+	| "Page"
+	| "Resource"
+	| "Variable"
+	| "Service"
+	| "Attribute"
+	| "Function";
+
+export type IdCandidate = {
+	id: string;
+	name: string;
+	category: IdCandidateCategory;
+	insertMode?: "text";
+};
+
+export type IdDisplayPart =
+	| {
+			type: "text";
+			text: string;
+			start: number;
+			end: number;
+	  }
+	| {
+			type: "candidate";
+			rawId: string;
+			displayName: string;
+			start: number;
+			end: number;
+	  }
+	| {
+			type: "attribute";
+			text: string;
+			start: number;
+			end: number;
+	  };
+
+type SuggestionFilterContext =
+	| { type: "root"; query: string }
+	| { type: "attribute"; query: string }
+	| { type: "none"; query: string };
+
+const DATUM_CANDIDATE_ID = "$datum";
+const MAX_FILTERED_CANDIDATES = 20;
+const rowRootAttributeNames = ["source", "destination", "visible"];
+const functionCandidateNames = [
+	...ACTION_FUNCTIONS,
+	"count",
+	"length",
+	"findFirst",
+	"formatDecimal",
+	"formatMetricLength",
+	"formatImperialLength",
+	"formatDuration",
+	"formatDatetime",
+	"formatDimension",
+	"formatWeight",
+	"formatCurrency",
+	"formatAddress",
+	"buildCurrency",
+	"buildAddress",
+];
+
+const serviceNamesById = new Map<string, string>([
+	[EVY_CORE_SERVICE, "Evy"],
+	[MARKETPLACE_SERVICE, "Marketplace"],
+]);
+
+function isIdBoundaryCharacter(character: string | undefined): boolean {
+	return !character || !/[a-zA-Z0-9_-]/.test(character);
+}
+
+function isTextCandidate(candidate: IdCandidate): boolean {
+	return candidate.insertMode === "text";
+}
+
+function isDisplayCandidate(candidate: IdCandidate): boolean {
+	return (
+		!isTextCandidate(candidate) &&
+		(candidate.category === "Resource" || candidate.category === "Service")
+	);
+}
+
+function addRowAttributeNames(row: Row, attributeNames: Set<string>) {
+	for (const attributeName of rowRootAttributeNames) {
+		attributeNames.add(attributeName);
+	}
+
+	for (const [key, value] of Object.entries(row.config.view.content)) {
+		if (key === "child") {
+			if (isRow(value)) addRowAttributeNames(value, attributeNames);
+			continue;
+		}
+
+		if (key === "children") {
+			if (Array.isArray(value)) {
+				for (const childRow of value) {
+					if (isRow(childRow)) addRowAttributeNames(childRow, attributeNames);
+				}
+			}
+			continue;
+		}
+
+		if (key.trim()) attributeNames.add(key);
+	}
+}
+
+function isRow(value: unknown): value is Row {
+	return value !== null && typeof value === "object" && "config" in value;
+}
+
+export function getCandidateInsertValue(candidate: IdCandidate): string {
+	return isTextCandidate(candidate) ? candidate.name : candidate.id;
+}
+
+export function buildIdCandidates(
+	flows: UI_Flow[],
+	serviceResources: ServiceResource[],
+): IdCandidate[] {
+	const flowCandidates = flows.map((flow) => ({
+		id: flow.id,
+		name: flow.name,
+		category: "Flow" as const,
+	}));
+
+	const pageCandidates = flows.flatMap((flow) =>
+		flow.pages.map((page) => ({
+			id: page.id,
+			name: page.title || page.id,
+			category: "Page" as const,
+		})),
+	);
+
+	const serviceCandidates = Array.from(
+		new Set(serviceResources.map((resource) => resource.fkServiceId)),
+	).map((serviceId) => ({
+		id: serviceId,
+		name: serviceNamesById.get(serviceId) ?? serviceId,
+		category: "Service" as const,
+	}));
+
+	const resourceCandidates = serviceResources.map((resource) => ({
+		id: resource.id,
+		name: resource.name,
+		category: "Resource" as const,
+	}));
+
+	return [
+		...flowCandidates,
+		...pageCandidates,
+		...serviceCandidates,
+		...resourceCandidates,
+	];
+}
+
+function attributeNamesToCandidates(
+	attributeNames: Iterable<string>,
+): IdCandidate[] {
+	return [...new Set(attributeNames)]
+		.toSorted((a, b) => a.localeCompare(b))
+		.map((attributeName) => ({
+			id: attributeName,
+			name: attributeName,
+			category: "Attribute" as const,
+			insertMode: "text" as const,
+		}));
+}
+
+function getCandidateNameAndCategoryKey(candidate: IdCandidate): string {
+	return `${candidate.category}:${candidate.name}`;
+}
+
+function dedupeCandidatesByNameAndCategory(
+	candidates: IdCandidate[],
+): IdCandidate[] {
+	const seenCandidateKeys = new Set<string>();
+
+	return candidates.filter((candidate) => {
+		const candidateKey = getCandidateNameAndCategoryKey(candidate);
+		if (seenCandidateKeys.has(candidateKey)) return false;
+
+		seenCandidateKeys.add(candidateKey);
+		return true;
+	});
+}
+
+export function buildRowAttributeCandidates(flows: UI_Flow[]): IdCandidate[] {
+	const attributeNames = new Set<string>();
+
+	for (const flow of flows) {
+		for (const page of flow.pages) {
+			for (const row of page.rows) {
+				addRowAttributeNames(row, attributeNames);
+			}
+			if (page.footer) addRowAttributeNames(page.footer, attributeNames);
+		}
+	}
+
+	return attributeNamesToCandidates(attributeNames);
+}
+
+export function buildResourceAttributeCandidatesForResource(
+	resourceAttributeMetadata: ResourceAttributeMetadata[],
+	resourceId: string,
+): IdCandidate[] {
+	const metadata = resourceAttributeMetadata.find(
+		(resourceMetadata) => resourceMetadata.resourceId === resourceId,
+	);
+	return attributeNamesToCandidates(metadata?.attributeNames ?? []);
+}
+
+export function buildDatumCandidate(): IdCandidate {
+	return {
+		id: DATUM_CANDIDATE_ID,
+		name: DATUM_CANDIDATE_ID,
+		category: "Variable",
+		insertMode: "text",
+	};
+}
+
+export function buildFunctionCandidates(): IdCandidate[] {
+	return Array.from(new Set(functionCandidateNames))
+		.toSorted((a, b) => a.localeCompare(b))
+		.map((functionName) => ({
+			id: functionName,
+			name: `${functionName}()`,
+			category: "Function" as const,
+			insertMode: "text" as const,
+		}));
+}
+
+export function filterCandidates(
+	candidates: IdCandidate[],
+	query: string,
+): IdCandidate[] {
+	const normalizedQuery = query.trim().toLowerCase();
+	const matchingCandidates = normalizedQuery
+		? candidates.filter((candidate) =>
+				candidate.name.toLowerCase().startsWith(normalizedQuery),
+			)
+		: candidates;
+
+	return dedupeCandidatesByNameAndCategory(matchingCandidates).slice(
+		0,
+		MAX_FILTERED_CANDIDATES,
+	);
+}
+
+function isRootExpressionCandidate(candidate: IdCandidate): boolean {
+	return (
+		candidate.category === "Service" ||
+		candidate.category === "Resource" ||
+		candidate.category === "Function" ||
+		candidate.id === DATUM_CANDIDATE_ID
+	);
+}
+
+export function filterCandidatesForSuggestionContext(
+	candidates: IdCandidate[],
+	scopedAttributeCandidates: IdCandidate[],
+	context: SuggestionFilterContext,
+): IdCandidate[] {
+	if (context.type === "root") {
+		return filterCandidates(
+			candidates.filter(isRootExpressionCandidate),
+			context.query,
+		);
+	}
+
+	if (context.type === "attribute") {
+		return filterCandidates(scopedAttributeCandidates, context.query);
+	}
+
+	return [];
+}
+
+export function getIdDisplayParts(
+	value: string,
+	candidates: IdCandidate[],
+): IdDisplayPart[] {
+	const displayCandidates = candidates
+		.filter(isDisplayCandidate)
+		.toSorted((a, b) => b.id.length - a.id.length);
+	const parts: IdDisplayPart[] = [];
+	let textStart = 0;
+	let index = 0;
+
+	while (index < value.length) {
+		const candidate = displayCandidates.find(
+			(displayCandidate) =>
+				isIdBoundaryCharacter(value[index - 1]) &&
+				value.startsWith(displayCandidate.id, index) &&
+				isIdBoundaryCharacter(value[index + displayCandidate.id.length]),
+		);
+
+		if (!candidate) {
+			index++;
+			continue;
+		}
+
+		if (textStart < index) {
+			parts.push({
+				type: "text",
+				text: value.slice(textStart, index),
+				start: textStart,
+				end: index,
+			});
+		}
+
+		const end = index + candidate.id.length;
+		parts.push({
+			type: "candidate",
+			rawId: candidate.id,
+			displayName: candidate.name,
+			start: index,
+			end,
+		});
+		index = end;
+		textStart = end;
+
+		while (value[index] === ".") {
+			const separatorStart = index;
+			const attributeStart = separatorStart + 1;
+			let attributeEnd = attributeStart;
+			while (
+				attributeEnd < value.length &&
+				/[a-zA-Z0-9_$-]/.test(value[attributeEnd])
+			) {
+				attributeEnd++;
+			}
+			if (attributeEnd === attributeStart) break;
+
+			parts.push({
+				type: "text",
+				text: value.slice(separatorStart, attributeStart),
+				start: separatorStart,
+				end: attributeStart,
+			});
+			parts.push({
+				type: "attribute",
+				text: value.slice(attributeStart, attributeEnd),
+				start: attributeStart,
+				end: attributeEnd,
+			});
+			index = attributeEnd;
+			textStart = attributeEnd;
+		}
+	}
+
+	if (textStart < value.length) {
+		parts.push({
+			type: "text",
+			text: value.slice(textStart),
+			start: textStart,
+			end: value.length,
+		});
+	}
+
+	return parts.length > 0
+		? parts
+		: [{ type: "text", text: value, start: 0, end: value.length }];
+}

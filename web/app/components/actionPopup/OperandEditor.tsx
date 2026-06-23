@@ -7,7 +7,7 @@ import {
 	parseOperand,
 	serializeOperand,
 } from "../../utils/actionOperands";
-import { PopoverSelect, type PopoverOption } from "../PopoverSelect";
+import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
 import { BOOLEAN_OPTIONS } from "./actionPopupConstants";
 
 export function OperandEditor({
@@ -110,7 +110,7 @@ export function OperandEditor({
 					aria-label={`${ariaLabel}-number`}
 					value={parsed.value}
 					onChange={(e) => onChange(e.target.value)}
-					className="evy-action-popup-number-input evy-w-full evy-box-sizing-border evy-rounded-sm evy-border evy-border-gray-light evy-focus-visible:outline-none"
+					className="evy-action-popup-number-input evy-w-full evy-rounded-sm evy-border evy-border-gray-light evy-focus-visible:outline-none"
 				/>
 			)}
 			{parsed.type === "function" && (

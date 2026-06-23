@@ -1,9 +1,141 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
-import { popoverSelectCss } from "./popoverSelectCss";
+
+const css = `
+.evy-popover-trigger,
+.evy-popover-trigger--breadcrumb {
+	display: inline-flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-1);
+	font-size: var(--text-sm);
+	text-align: left;
+	cursor: pointer;
+	min-width: 0;
+}
+.evy-popover-trigger {
+	padding: 2px 6px;
+	color: var(--color-black);
+	background-color: var(--color-white);
+	border: 1px solid var(--color-gray-border);
+	border-radius: var(--radius-sm);
+	width: 100%;
+	transition: border-color var(--transition), box-shadow var(--transition);
+}
+.evy-popover-trigger:hover {
+	border-color: var(--color-evy-gray);
+}
+.evy-popover-trigger:focus {
+	outline: none;
+	border-color: var(--color-evy-gray);
+	box-shadow: 0 0 0 3px rgba(60, 60, 100, 0.1);
+}
+.evy-popover-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex: 1;
+	min-width: 0;
+}
+.evy-popover-chevron {
+	flex-shrink: 0;
+	opacity: var(--opacity-60);
+}
+.evy-popover-menu {
+	background: var(--color-white);
+	border: 1px solid var(--color-gray-border);
+	border-radius: var(--radius-sm);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	z-index: 9999;
+	max-height: 200px;
+	overflow: hidden;
+}
+.evy-popover-menu-scroll {
+	max-height: 200px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: 2px 0;
+}
+.evy-popover-option {
+	display: block;
+	width: 100%;
+	padding: var(--size-1) var(--size-2);
+	font-size: var(--text-sm);
+	text-align: left;
+	background: none;
+	border: none;
+	cursor: pointer;
+	white-space: nowrap;
+}
+.evy-popover-option:hover,
+.evy-popover-option--active,
+.evy-popover-option[aria-selected="true"] {
+	background-color: var(--color-evy-gray-light);
+}
+.evy-popover-option[aria-selected="true"] {
+	font-weight: var(--font-medium);
+}
+.evy-popover-separator {
+	padding: 4px 8px 2px;
+	font-size: 0.625rem;
+	font-weight: var(--font-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--color-evy-gray);
+	border-top: 1px solid var(--color-gray-border);
+	margin-top: 2px;
+}
+.evy-popover-divider {
+	border: none;
+	border-top: 1px solid var(--color-gray-border);
+	margin: 6px 0 0;
+	height: 0;
+}
+.evy-popover-trigger--breadcrumb {
+	width: auto;
+	max-width: 14rem;
+	min-height: var(--size-nav-control);
+	padding: 0 2px 0 var(--size-2);
+	font-weight: var(--font-semibold);
+	color: var(--color-evy-blue);
+	background: transparent;
+	border: none;
+	outline: none;
+}
+.evy-popover-trigger--breadcrumb:hover {
+	text-decoration: underline;
+}
+.evy-popover-trigger--breadcrumb:focus-visible {
+	outline: 2px solid var(--color-evy-blue);
+	outline-offset: 2px;
+}
+.evy-popover-trigger--breadcrumb .evy-popover-chevron {
+	opacity: 1;
+	color: var(--color-evy-blue);
+}
+.evy-popover-search {
+	display: block;
+	width: 100%;
+	padding: 4px var(--size-2);
+	font-size: var(--text-sm);
+	border: none;
+	border-bottom: 1px solid var(--color-gray-border);
+	outline: none;
+	background: transparent;
+}
+`;
+
+let styleInjected = false;
+function injectStyle() {
+	if (styleInjected) return;
+	styleInjected = true;
+	const el = document.createElement("style");
+	el.textContent = css;
+	document.head.appendChild(el);
+}
 
 export type PopoverOption = {
 	value: string;
@@ -45,15 +177,29 @@ export function PopoverSelect({
 	id,
 	openOnHover = false,
 }: PopoverSelectProps) {
+	injectStyle();
 	const [isOpen, setIsOpen] = useState(false);
+	const [activeIndex, setActiveIndex] = useState(-1);
+	const [searchQuery, setSearchQuery] = useState("");
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
+	const searchRef = useRef<HTMLInputElement>(null);
 	const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [position, setPosition] = useState<{
 		top: number;
 		left: number;
 		minWidth: number;
 	} | null>(null);
+
+	const filteredOptions = useMemo(
+		() =>
+			searchQuery.trim()
+				? options.filter((option) =>
+						option.label.toLowerCase().includes(searchQuery.toLowerCase()),
+					)
+				: options,
+		[options, searchQuery],
+	);
 
 	const open = useCallback(() => {
 		if (!triggerRef.current) return;
@@ -63,8 +209,10 @@ export function PopoverSelect({
 			left: rect.left,
 			minWidth: Math.max(rect.width, 160),
 		});
+		setSearchQuery("");
+		setActiveIndex(options.findIndex((option) => option.value === value));
 		setIsOpen(true);
-	}, []);
+	}, [options, value]);
 
 	const clearHoverCloseTimer = useCallback(() => {
 		if (hoverCloseTimerRef.current !== null) {
@@ -75,7 +223,10 @@ export function PopoverSelect({
 
 	const close = useCallback(() => {
 		clearHoverCloseTimer();
+		setActiveIndex(-1);
+		setSearchQuery("");
 		setIsOpen(false);
+		triggerRef.current?.focus();
 	}, [clearHoverCloseTimer]);
 
 	const scheduleHoverClose = useCallback(() => {
@@ -129,6 +280,20 @@ export function PopoverSelect({
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, [isOpen, close]);
 
+	useEffect(() => {
+		if (isOpen) {
+			requestAnimationFrame(() => searchRef.current?.focus());
+		}
+	}, [isOpen]);
+
+	useEffect(() => {
+		if (activeIndex < 0 || !menuRef.current) return;
+		const activeEl = menuRef.current.querySelector(
+			`[data-option-index="${activeIndex}"]`,
+		) as HTMLElement | null;
+		activeEl?.scrollIntoView({ block: "nearest" });
+	}, [activeIndex]);
+
 	const handleTriggerPointerEnter = useCallback(() => {
 		if (!openOnHover) return;
 		clearHoverCloseTimer();
@@ -164,6 +329,43 @@ export function PopoverSelect({
 		[onChange, onAction, close, options],
 	);
 
+	const handleSearchKeyDown = useCallback(
+		(event: React.KeyboardEvent<HTMLInputElement>) => {
+			if (event.key === "ArrowDown") {
+				event.preventDefault();
+				setActiveIndex((currentIndex) =>
+					Math.min(currentIndex + 1, filteredOptions.length - 1),
+				);
+			} else if (event.key === "ArrowUp") {
+				event.preventDefault();
+				setActiveIndex((currentIndex) => Math.max(currentIndex - 1, 0));
+			} else if (event.key === "Enter") {
+				event.preventDefault();
+				const candidate = filteredOptions[activeIndex] ?? filteredOptions[0];
+				if (candidate) handleSelect(candidate.value);
+			} else if (event.key === "Escape") {
+				event.preventDefault();
+				event.stopPropagation();
+				close();
+			}
+		},
+		[activeIndex, filteredOptions, handleSelect, close],
+	);
+
+	const handleTriggerKeyDown = useCallback(
+		(event: React.KeyboardEvent<HTMLButtonElement>) => {
+			if (event.key === "ArrowDown") {
+				event.preventDefault();
+				if (!isOpen) open();
+			} else if (event.key === "Escape" && isOpen) {
+				event.preventDefault();
+				event.stopPropagation();
+				close();
+			}
+		},
+		[isOpen, open, close],
+	);
+
 	const selectedOption = options.find((o) => o.value === value);
 	const displayText = selectedOption?.label ?? placeholder;
 
@@ -172,7 +374,6 @@ export function PopoverSelect({
 
 	return (
 		<>
-			<style>{popoverSelectCss}</style>
 			<button
 				ref={triggerRef}
 				id={id}
@@ -185,6 +386,7 @@ export function PopoverSelect({
 				data-value={value}
 				onMouseEnter={handleTriggerPointerEnter}
 				onMouseLeave={handleTriggerPointerLeave}
+				onKeyDown={handleTriggerKeyDown}
 				onClick={() => {
 					// With hover-open, pointer hover may open the menu before click; toggling
 					// closed here races with Playwright (hover → click) and flakes tests.
@@ -221,16 +423,34 @@ export function PopoverSelect({
 							minWidth: position.minWidth,
 						}}
 					>
+						<input
+							ref={searchRef}
+							type="text"
+							className="evy-popover-search"
+							value={searchQuery}
+							placeholder="Search…"
+							onChange={(event) => {
+								setSearchQuery(event.target.value);
+								setActiveIndex(-1);
+							}}
+							onKeyDown={handleSearchKeyDown}
+						/>
 						<div
 							className="evy-popover-menu-scroll"
 							role="listbox"
 							id={listboxDomId}
 							aria-label={ariaLabel}
+							aria-activedescendant={
+								activeIndex >= 0 && listboxDomId
+									? `${listboxDomId}-opt-${activeIndex}`
+									: undefined
+							}
 							aria-labelledby={variant === "breadcrumb" && id ? id : undefined}
 							onMouseEnter={handleMenuPointerEnter}
 							onMouseLeave={handleMenuPointerLeave}
+							tabIndex={-1}
 						>
-							{options.map((opt) => (
+							{filteredOptions.map((opt, index) => (
 								<span key={opt.value}>
 									{opt.separator && (
 										<span className="evy-popover-separator">
@@ -241,9 +461,13 @@ export function PopoverSelect({
 									<button
 										type="button"
 										role="option"
+										id={
+											listboxDomId ? `${listboxDomId}-opt-${index}` : undefined
+										}
+										data-option-index={index}
 										aria-selected={opt.action ? false : opt.value === value}
 										onClick={() => handleSelect(opt.value)}
-										className="evy-popover-option"
+										className={`evy-popover-option${index === activeIndex ? " evy-popover-option--active" : ""}`}
 									>
 										{opt.label}
 									</button>

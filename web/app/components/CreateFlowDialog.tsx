@@ -2,8 +2,6 @@ import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useEscapeKey } from "../hooks/useEscapeKey";
-import { createFlowFormCss } from "./createFlowFormCss";
-import { modalSharedCss } from "./modalSharedCss";
 
 type CreateFlowDialogProps = {
 	open: boolean;
@@ -41,7 +39,6 @@ export function CreateFlowDialog({
 
 	return createPortal(
 		<>
-			<style>{`${modalSharedCss}\n${createFlowFormCss}`}</style>
 			<div className="evy-modal-root">
 				<button
 					type="button"
@@ -62,9 +59,7 @@ export function CreateFlowDialog({
 					</h2>
 					<form onSubmit={handleSubmit}>
 						<div className="evy-create-flow-field">
-							<label className="evy-create-flow-label" htmlFor={inputId}>
-								Flow name
-							</label>
+							<label htmlFor={inputId}>Flow name</label>
 							<input
 								ref={inputRef}
 								id={inputId}

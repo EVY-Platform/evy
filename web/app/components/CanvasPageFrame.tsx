@@ -1,4 +1,4 @@
-import { useRef, type CSSProperties, type ReactNode } from "react";
+import { type CSSProperties, type ReactNode, useRef } from "react";
 
 import { useIntersectVisible } from "../hooks/useIntersectVisible";
 
@@ -40,7 +40,7 @@ export function CanvasPageFrame({
 				children
 			) : (
 				<div
-					className="evy-h-full evy-w-full evy-box-sizing-border"
+					className="evy-h-full evy-w-full"
 					style={{ minHeight: "var(--size-662)" }}
 					aria-hidden
 				/>

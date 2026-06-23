@@ -40,7 +40,7 @@ test.describe("Row Selection", () => {
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
 		).toBeVisible();
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
+		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
 			"First Text Row",
 		);
 	});
@@ -85,7 +85,7 @@ test.describe("Row Selection", () => {
 		await firstTextRow.click();
 
 		// Verify first row's title is shown
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
+		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
 			"First Text Row",
 		);
 
@@ -96,7 +96,7 @@ test.describe("Row Selection", () => {
 		await secondTextRow.click();
 
 		// Verify second row's title is now shown
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
+		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
 			"Second Text Row",
 		);
 	});
@@ -143,7 +143,7 @@ test.describe("Row Selection", () => {
 		await textRow.click();
 
 		// Configuration should update to the newly selected row.
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
+		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
 			"Text Row",
 		);
 	});
@@ -250,12 +250,12 @@ test.describe("Row Selection", () => {
 		await subtitleInput.fill("New subtitle content");
 
 		// Title should still show the same row's title
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
+		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
 			"First Text Row",
 		);
 
 		// The updated subtitle should be visible
-		await expect(subtitleInput).toHaveValue("New subtitle content");
+		await expect(subtitleInput).toHaveText("New subtitle content");
 	});
 });
 
@@ -298,7 +298,7 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveValue("Container Row");
+		).toHaveText("Container Row");
 	});
 
 	test("should select child row inside container when clicked", async ({
@@ -340,7 +340,7 @@ test.describe("Row Selection with Containers", () => {
 		await configPanel.getByRole("button", { name: /^Text$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveValue("Child Text Row");
+		).toHaveText("Child Text Row");
 	});
 
 	test("should switch selection between container and child", async ({
@@ -383,13 +383,13 @@ test.describe("Row Selection with Containers", () => {
 		await configPanel.getByRole("button", { name: /^Text$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveValue("Child Text Row");
+		).toHaveText("Child Text Row");
 
 		await page
 			.getByRole("button", { name: "Configure row: Container Row" })
 			.click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveValue("Container Row");
+		).toHaveText("Container Row");
 	});
 });

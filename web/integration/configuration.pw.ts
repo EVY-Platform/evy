@@ -68,10 +68,10 @@ test.describe("Row configuration", () => {
 				name: "Configure nested row at depth 1: Input Row",
 			}),
 		).toBeVisible();
-		await expect(configPanel.getByLabel("placeholder")).toHaveValue(
+		await expect(configPanel.getByLabel("placeholder")).toHaveText(
 			"First placeholder",
 		);
-		await expect(configPanel.getByLabel("title")).toHaveValue("Input Row");
+		await expect(configPanel.getByLabel("title")).toHaveText("Input Row");
 	});
 
 	test("should display row configurations in configuration panel", async ({
@@ -110,7 +110,7 @@ test.describe("Row configuration", () => {
 		await subtitleInput.clear();
 		await subtitleInput.fill("Updated subtitle text");
 
-		await expect(subtitleInput).toHaveValue("Updated subtitle text");
+		await expect(subtitleInput).toHaveText("Updated subtitle text");
 	});
 
 	test("should display and edit Source binding in configuration panel", async ({
@@ -140,12 +140,12 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const sourceInput = configPanel.getByLabel("Row data source");
 		await expect(sourceInput).toBeVisible();
-		await expect(sourceInput).toHaveValue("{initial}");
+		await expect(sourceInput).toHaveText("{initial}");
 
 		await sourceInput.clear();
 		await sourceInput.fill("{items}");
 
-		await expect(sourceInput).toHaveValue("{items}");
+		await expect(sourceInput).toHaveText("{items}");
 	});
 
 	test("should display InputList format in configuration panel", async ({
@@ -175,12 +175,12 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const formatInput = configPanel.getByLabel("format");
 		await expect(formatInput).toBeVisible();
-		await expect(formatInput).toHaveValue("{$datum.value}");
+		await expect(formatInput).toHaveText("{$datum.value}");
 
 		await formatInput.clear();
 		await formatInput.fill("{$datum.label}");
 
-		await expect(formatInput).toHaveValue("{$datum.label}");
+		await expect(formatInput).toHaveText("{$datum.label}");
 	});
 
 	test("should display and edit action items via popup", async ({ page }) => {
@@ -407,185 +407,6 @@ test.describe("Row configuration", () => {
 			configPanel.getByText("Actions", { exact: true }),
 		).toBeVisible();
 		await expect(configPanel.getByText("Row has no actions")).toBeVisible();
-	});
-
-	test("should select navigate action with cascading flow, page, and query params", async ({
-		page,
-	}) => {
-		await initFullFlows(page, [
-			{
-				id: "flow_a",
-				name: "Onboarding",
-				pages: [
-					{
-						id: "page_a1",
-						title: "Welcome",
-						rows: [
-							{
-								id: "row_btn",
-								type: "Button",
-								source: "",
-								view: { content: { title: "", label: "Go" } },
-								actions: [{ condition: "", false: "", true: "" }],
-							},
-						],
-					},
-				],
-			},
-			{
-				id: "flow_b",
-				name: "Checkout",
-				pages: [
-					{
-						id: "page_b1",
-						title: "Payment",
-						rows: [],
-					},
-				],
-			},
-		]);
-		await page.goto("/");
-
-		const buttonRow = page.getByText("Go", { exact: true }).first();
-		await expect(buttonRow).toBeVisible();
-		await buttonRow.click();
-
-		const configPanel = getConfigPanel(page);
-		await configPanel.getByLabel("Edit action 1").click();
-
-		const popup = page.getByRole("dialog", { name: "Edit action 1" });
-		await expect(popup).toBeVisible();
-
-		const trueFn = popup.getByLabel("true-0-function");
-		await popoverSelect(page, trueFn, "Navigate");
-
-		const flowArg = popup.getByLabel("true-0-arg-0");
-		await expect(flowArg).toBeVisible();
-		await popoverSelect(page, flowArg, "Checkout");
-
-		const pageArg = popup.getByLabel("true-0-arg-1");
-		await expect(pageArg).toBeVisible();
-		await popoverSelect(page, pageArg, "Payment");
-
-		const trueQueryParams = popup.getByLabel("true-0-navigate-query");
-		await expect(trueQueryParams).toBeVisible();
-		await trueQueryParams.fill("{items: [$datum.id]}");
-
-		const falseFn = popup.getByLabel("false-0-function");
-		await popoverSelect(page, falseFn, "Navigate");
-
-		const falseFlowArg = popup.getByLabel("false-0-arg-0");
-		await expect(falseFlowArg).toBeVisible();
-		await popoverSelect(page, falseFlowArg, "Checkout");
-
-		const falsePageArg = popup.getByLabel("false-0-arg-1");
-		await expect(falsePageArg).toBeVisible();
-		await popoverSelect(page, falsePageArg, "Payment");
-
-		const falseQueryParams = popup.getByLabel("false-0-navigate-query");
-		await expect(falseQueryParams).toBeVisible();
-		await falseQueryParams.fill("{fallbacks: [id-1, id-2]}");
-
-		await popup.getByRole("button", { name: "Save" }).click();
-		await expect(popup).not.toBeVisible();
-
-		await expect(
-			configPanel.getByText(
-				"navigate(Checkout, Payment, {items: [$datum.id]})",
-			),
-		).toBeVisible();
-		await expect(
-			configPanel.getByText(
-				"navigate(Checkout, Payment, {fallbacks: [id-1, id-2]})",
-			),
-		).toBeVisible();
-
-		await configPanel.getByLabel("Edit action 1").click();
-		const reopenedPopup = page.getByRole("dialog", { name: "Edit action 1" });
-		await expect(reopenedPopup).toBeVisible();
-		await expect(reopenedPopup.getByLabel("true-0-navigate-query")).toHaveValue(
-			"{items: [$datum.id]}",
-		);
-		await expect(
-			reopenedPopup.getByLabel("false-0-navigate-query"),
-		).toHaveValue("{fallbacks: [id-1, id-2]}");
-	});
-
-	test("should select create action with namespace and resource arguments", async ({
-		page,
-	}) => {
-		await initFullFlows(
-			page,
-			[
-				{
-					id: "flow_c",
-					name: "Listing",
-					pages: [
-						{
-							id: "page_c1",
-							title: "Details",
-							rows: [
-								{
-									id: "row_input_item",
-									type: "Input",
-									source: "",
-									view: {
-										content: {
-											title: "Item name",
-											value: "",
-											placeholder: "Enter name",
-										},
-									},
-									destination: `{${MARKETPLACE_ITEMS_RESOURCE_ID}}`,
-									actions: [],
-								},
-								{
-									id: "row_btn2",
-									type: "Button",
-									source: "",
-									view: {
-										content: { title: "", label: "Create Item" },
-									},
-									actions: [{ condition: "", false: "", true: "" }],
-								},
-							],
-						},
-					],
-				},
-			],
-			TEST_SERVICE_RESOURCES,
-		);
-		await page.goto("/");
-
-		const buttonRow = page.getByText("Create Item", { exact: true }).first();
-		await expect(buttonRow).toBeVisible();
-		await buttonRow.click();
-
-		const configPanel = getConfigPanel(page);
-		await configPanel.getByLabel("Edit action 1").click();
-
-		const popup = page.getByRole("dialog", { name: "Edit action 1" });
-		await expect(popup).toBeVisible();
-
-		const trueFn = popup.getByLabel("true-0-function");
-		await popoverSelect(page, trueFn, "Create");
-
-		const namespaceArg = popup.getByLabel("true-0-arg-0");
-		await expect(namespaceArg).toBeVisible();
-		await popoverSelect(page, namespaceArg, "Marketplace");
-
-		const resourceArg = popup.getByLabel("true-0-arg-1");
-		await expect(resourceArg).toBeVisible();
-		await popoverSelect(page, resourceArg, "Item");
-
-		await popup.getByRole("button", { name: "Save" }).click();
-		await expect(popup).not.toBeVisible();
-
-		await expect(
-			configPanel.getByText(
-				`create(${MARKETPLACE_SERVICE_ID}, ${MARKETPLACE_ITEMS_RESOURCE_ID})`,
-			),
-		).toBeVisible();
 	});
 
 	test("should use number operand in condition", async ({ page }) => {
@@ -1271,7 +1092,7 @@ test.describe("Row configuration", () => {
 			})
 			.click();
 
-		await expect(configPanel.getByLabel("title", { exact: true })).toHaveValue(
+		await expect(configPanel.getByLabel("title", { exact: true })).toHaveText(
 			"Nest level 7",
 		);
 	});

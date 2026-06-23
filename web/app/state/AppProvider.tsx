@@ -7,7 +7,7 @@ import {
 	useMemo,
 } from "react";
 import type { UI_Flow as ServerFlow } from "evy-types";
-import type { ServiceResource } from "../api/sync";
+import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
 
 import type { UI_Flow } from "../types/flow";
 import { FlowsContext } from "./contexts/FlowsContext";
@@ -29,11 +29,13 @@ export function AppProvider({
 	children,
 	initialFlows,
 	serviceResources = [],
+	resourceAttributeMetadata = [],
 	syncWithApi = true,
 }: {
 	children: ReactNode;
 	initialFlows: ServerFlow[];
 	serviceResources?: ServiceResource[];
+	resourceAttributeMetadata?: ResourceAttributeMetadata[];
 	syncWithApi?: boolean;
 }) {
 	const resourceIdToEntityName = useMemo(
@@ -126,6 +128,7 @@ export function AppProvider({
 			rows,
 			flows: appState.flows,
 			serviceResources,
+			resourceAttributeMetadata,
 			resourceIdToEntityName,
 			activeFlowId: appState.activeFlowId,
 			activeRowId: appState.activeRowId,
@@ -137,6 +140,7 @@ export function AppProvider({
 			rows,
 			appState.flows,
 			serviceResources,
+			resourceAttributeMetadata,
 			resourceIdToEntityName,
 			appState.activeFlowId,
 			appState.activeRowId,
