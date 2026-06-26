@@ -91,7 +91,7 @@ struct EVYRow: View, Identifiable {
   private func rowView(for payload: UI_RowPayload) -> some View {
     switch payload {
     case .button(let v, _, _, _): EVYButtonRow(view: v, action: runActions)
-    case .calendar(let v, _, _, _): EVYCalendarRow(view: v)
+    case .calendar(let v, let s, let d, _): EVYCalendarRow(view: v, source: s, destination: d)
     case .columnContainer(let v, _, _, _): EVYColumnContainerRow(view: v)
     case .dropdown(let v, let s, let d, _): EVYDropdownRow(view: v, source: s, destination: d)
     case .heading(let v, _, _, _): EVYHeadingRow(view: v)

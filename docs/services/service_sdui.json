@@ -600,7 +600,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222208",
 														"type": "Calendar",
-														"source": "",
+														"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
 														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 														"actions": [],
 														"view": {
@@ -610,10 +610,8 @@
 																"end_time": "19:00",
 																"timeslot_interval_minutes": 30,
 																"label_interval_minutes": 60,
-																"header_format": "{formatDatetime($datum, \"EEE d\")}",
-																"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
-																"primary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
-																"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}"
+																"header_format": "EEE d",
+																"timeslot_format": "HH:mm"
 															}
 														},
 														"visible": "true"
@@ -707,7 +705,7 @@
 													{
 														"id": "22222222-2222-4222-8222-222222222215",
 														"type": "Calendar",
-														"source": "",
+														"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 														"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
 														"actions": [],
 														"view": {
@@ -717,10 +715,8 @@
 																"end_time": "19:00",
 																"timeslot_interval_minutes": 30,
 																"label_interval_minutes": 60,
-																"header_format": "{formatDatetime($datum, \"EEE d\")}",
-																"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
-																"primary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
-																"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}"
+																"header_format": "EEE d",
+																"timeslot_format": "HH:mm"
 															}
 														},
 														"visible": "true"

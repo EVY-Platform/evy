@@ -8,9 +8,13 @@ import SwiftUI
 struct EVYCalendarRow: View {
 
   private let view: CalendarRowViewData
+  private let source: String
+  private let destination: String
 
-  init(view: CalendarRowViewData) {
+  init(view: CalendarRowViewData, source: String, destination: String) {
     self.view = view
+    self.source = source
+    self.destination = destination
   }
 
   var body: some View {
@@ -19,7 +23,7 @@ struct EVYCalendarRow: View {
         EVYTextView(view.content.title)
           .padding(.vertical, Constants.padding)
       }
-      EVYCalendar(content: view.content)
+      EVYCalendar(content: view.content, source: source, destination: destination)
     }
     .padding(.horizontal, Constants.majorPadding)
   }
@@ -59,8 +63,8 @@ private struct EVYCalendarRowPreview: View {
       {
         "id": "preview-calendar-row",
         "type": "Calendar",
-        "source": "",
-        "destination": "",
+        "source": "{delivery_selection}",
+        "destination": "{pickup_selection}",
         "actions": [],
         "view": {
           "content": \(EVYPreviewMockData.calendarContentJSON)

@@ -164,12 +164,6 @@
 				"timeslot_format": {
 					"type": "string"
 				},
-				"primary": {
-					"type": "string"
-				},
-				"secondary": {
-					"type": "string"
-				},
 				"subtitle": {
 					"type": "string"
 				},

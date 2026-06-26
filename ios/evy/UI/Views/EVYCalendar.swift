@@ -89,21 +89,29 @@ struct EVYCalendarViewState: Equatable {
 
 struct EVYCalendar: View {
   private let content: CalendarRowContent
+  private let source: String
+  private let destination: String
   private let calendarState: EVYState<EVYCalendarViewState>
 
   @State private var scrollOffset = CGPoint.zero
 
-  init(content: CalendarRowContent) {
+  init(content: CalendarRowContent, source: String, destination: String) {
     self.content = content
+    self.source = source
+    self.destination = destination
     calendarState = EVYState(
-      watches: [content.primary, content.secondary],
-      setter: { Self.buildCalendarData(content: content) }
+      watches: [destination, source],
+      setter: { Self.buildCalendarData(content: content, source: source, destination: destination) }
     )
   }
 
-  private static func buildCalendarData(content: CalendarRowContent) -> EVYCalendarViewState {
-    let primarySelections = EVYDatetime.readTimeslots(content.primary)
-    let secondarySelections = EVYDatetime.readTimeslots(content.secondary)
+  private static func buildCalendarData(
+    content: CalendarRowContent,
+    source: String,
+    destination: String
+  ) -> EVYCalendarViewState {
+    let primarySelections = EVYDatetime.readTimeslots(destination)
+    let secondarySelections = EVYDatetime.readTimeslots(source)
 
     let intervalMinutes =
       content.timeslot_interval_minutes > 0 ? content.timeslot_interval_minutes : 30
@@ -221,12 +229,12 @@ struct EVYCalendar: View {
   }
 
   private func readPrimarySelections() -> [String] {
-    EVYDatetime.readTimeslots(content.primary)
+    EVYDatetime.readTimeslots(destination)
   }
 
   private func writePrimarySelections(_ selections: [String]) {
     guard let data = try? JSONEncoder().encode(selections) else { return }
-    try? EVY.updateData(data, at: content.primary)
+    try? EVY.updateData(data, at: destination)
   }
 
   var body: some View {
@@ -291,7 +299,8 @@ private struct EVYCalendarPreview: View {
     if let data = EVYPreviewMockData.calendarContentJSON.data(using: .utf8),
       let content = try? JSONDecoder().decode(CalendarRowContent.self, from: data)
     {
-      EVYCalendar(content: content)
+      EVYCalendar(
+        content: content, source: "{delivery_selection}", destination: "{pickup_selection}")
     } else {
       Text("Unable to build calendar preview")
     }

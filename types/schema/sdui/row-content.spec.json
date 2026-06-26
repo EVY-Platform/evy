@@ -100,9 +100,7 @@
 			"timeslot_interval_minutes": "integer",
 			"label_interval_minutes": "integer",
 			"header_format": "string",
-			"timeslot_format": "string",
-			"primary": "string",
-			"secondary": "string"
+			"timeslot_format": "string"
 		}
 	},
 	"PhotoGallery": {

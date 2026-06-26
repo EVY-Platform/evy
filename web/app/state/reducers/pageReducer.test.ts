@@ -13,6 +13,7 @@ const mockTextWithConfig = MockTextBase as typeof MockTextBase & {
 mockTextWithConfig.config = {
 	type: "Text",
 	source: "",
+	visible: "true",
 	actions: [],
 	view: {
 		content: { title: "", text: "" },
@@ -33,6 +34,7 @@ function textRow(id: string, text = "hello"): Row {
 		config: {
 			type: "Text",
 			source: "",
+			visible: "true",
 			actions: [],
 			view: {
 				content: { title: "T", text },
@@ -49,6 +51,7 @@ function containerRow(id: string, child: Row, children: Row[] = []): Row {
 		config: {
 			type: "ListContainer",
 			source: "",
+			visible: "true",
 			actions: [],
 			view: {
 				content: {
@@ -67,7 +70,9 @@ function calendarRow(id: string): Row {
 		row: null,
 		config: {
 			type: "Calendar",
-			source: "",
+			source: "{delivery_selection}",
+			destination: "{pickup_selection}",
+			visible: "true",
 			actions: [],
 			view: {
 				content: {
@@ -76,10 +81,8 @@ function calendarRow(id: string): Row {
 					end_time: "19:00",
 					timeslot_interval_minutes: 30,
 					label_interval_minutes: 60,
-					header_format: '{formatDatetime($datum, "EEE d")}',
-					timeslot_format: '{formatDatetime($datum, "HH:mm")}',
-					primary: "{pickup_selection}",
-					secondary: "{delivery_selection}",
+					header_format: "EEE d",
+					timeslot_format: "HH:mm",
 				},
 			},
 		} as Row["config"],
@@ -93,6 +96,7 @@ function selectSegmentRow(id: string): Row {
 		config: {
 			type: "SelectSegmentContainer",
 			source: "",
+			visible: "true",
 			actions: [],
 			view: {
 				content: {
@@ -218,11 +222,22 @@ describe("pageReducer", () => {
 			type: "UPDATE_ROW",
 			rowId: "row-1",
 			configId: "header_format",
-			configValue: '{formatDatetime($datum, "EEE dd")}',
+			configValue: "EEE d, HH:mm",
 		});
 		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.view.content.header_format).toBe(
-			'{formatDatetime($datum, "EEE dd")}',
+		expect(row?.config.view.content.header_format).toBe("EEE d, HH:mm");
+	});
+
+	it("Calendar fixture uses row-level selection bindings", () => {
+		const row = calendarRow("row-1");
+		expect(row.config.source).toBe("{delivery_selection}");
+		expect(row.config.destination).toBe("{pickup_selection}");
+		expect(row.config.view.content.header_format).toBe("EEE d");
+		expect(row.config.view.content.timeslot_format).toBe("HH:mm");
+		expect(row.config.view.content).not.toHaveProperty("primary");
+		expect(row.config.view.content).not.toHaveProperty("secondary");
+		expect(row.config.view.content).not.toHaveProperty(
+			"secondary_timeslots",
 		);
 	});
 
@@ -324,6 +339,7 @@ describe("pageReducer", () => {
 			config: {
 				type: "ListContainer",
 				source: "",
+				visible: "true",
 				actions: [],
 				view: {
 					content: {
@@ -365,6 +381,7 @@ describe("pageReducer", () => {
 			config: {
 				type: "ListContainer",
 				source: "",
+				visible: "true",
 				actions: [],
 				view: {
 					content: {

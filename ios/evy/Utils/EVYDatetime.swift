@@ -42,6 +42,14 @@ enum EVYDatetime {
     (try? EVY.formatDataOrToString(json: .string(value), format: format)) ?? value
   }
 
+  static func formatCalendarValue(_ value: String, patternOrExpression: String) -> String {
+    if patternOrExpression.contains("$datum") {
+      return format(value, format: patternOrExpression)
+    }
+    let expression = "{formatDatetime($datum, \"\(patternOrExpression)\")}"
+    return format(value, format: expression)
+  }
+
   static func readTimeslots(_ source: String) -> [String] {
     if let json = try? EVY.getDataFromText(source),
       let data = json.toString().data(using: .utf8)
@@ -104,7 +112,7 @@ enum EVYDatetime {
     var slots: [EVYCalendarSlot] = []
 
     for (x, dateStr) in uniqueDates.enumerated() {
-      let header = format("\(dateStr)T00:00:00", format: headerFormat)
+      let header = formatCalendarValue("\(dateStr)T00:00:00", patternOrExpression: headerFormat)
 
       for y in 0..<numSlots {
         let slotTotalMinutes = startMinutes + y * intervalMinutes
@@ -116,7 +124,7 @@ enum EVYDatetime {
         let elapsedMinutes = y * intervalMinutes
         let timeLabel: String
         if labelIntervalMinutes > 0 && elapsedMinutes % labelIntervalMinutes == 0 {
-          timeLabel = format(dateTimeISO, format: timeslotFormat)
+          timeLabel = formatCalendarValue(dateTimeISO, patternOrExpression: timeslotFormat)
         } else {
           timeLabel = ""
         }
@@ -143,7 +151,8 @@ enum EVYDatetime {
     format formatPattern: String
   ) -> String {
     let timeWithSeconds = timeString.count == 5 ? "\(timeString):00" : timeString
-    return format("\(dateString)T\(timeWithSeconds)", format: formatPattern)
+    return formatCalendarValue(
+      "\(dateString)T\(timeWithSeconds)", patternOrExpression: formatPattern)
   }
 
   private static func localCalendarDayStart(for date: Date) -> Date {

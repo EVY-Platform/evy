@@ -9,8 +9,8 @@ import XCTest
 
 @MainActor
 final class EVYCalendarTests: XCTestCase {
-  private let headerFormat = "{formatDatetime($datum, \"EEE d\")}"
-  private let timeslotFormat = "{formatDatetime($datum, \"H:mm\")}"
+  private let headerFormat = "EEE d"
+  private let timeslotFormat = "H:mm"
 
   private func todayPlus(_ days: Int) -> String {
     let date = Calendar.current.date(byAdding: .day, value: days, to: Date())!
@@ -65,19 +65,27 @@ final class EVYCalendarTests: XCTestCase {
     XCTAssertEqual(labelledSlots.map { $0.timeLabel }, ["7:00", "8:00"])
   }
 
-  func testTimeLabelFormattedWithTimeslotFormatExpression() {
+  func testTimeLabelFormattedWithPlainTimeslotFormat() {
     let slots = EVYDatetime.buildCalendarSlots(
       startTime: "09:00",
       endTime: "11:00",
       intervalMinutes: 60,
       labelIntervalMinutes: 60,
       headerFormat: headerFormat,
-      timeslotFormat: "{formatDatetime($datum, \"h:mm a\")}",
+      timeslotFormat: "h:mm a",
       primarySelections: ["2026-05-20T09:00:00"],
       secondarySelections: []
     )
     let labelledSlots = slots.filter { $0.x == 0 && !$0.timeLabel.isEmpty }
     XCTAssertEqual(labelledSlots.map { $0.timeLabel }, ["9:00 AM", "10:00 AM"])
+  }
+
+  func testCalendarFormatValueSupportsLegacyExpression() {
+    let formatted = EVYDatetime.formatCalendarValue(
+      "2026-06-03T09:00:00",
+      patternOrExpression: "{formatDatetime($datum, \"EEE d\")}"
+    )
+    XCTAssertEqual(formatted, "Wed 3")
   }
 
   func testPrimarySelectionIsDetectedCorrectly() {

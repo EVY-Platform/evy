@@ -29,6 +29,12 @@ const mockTimeSlots = Array.from({ length: 8 }, (_, i) => {
 	return `2000-01-01T${h}:${m}:00`;
 });
 
+function calendarPreviewFormat(patternOrExpression: string): string {
+	return patternOrExpression.includes("$datum")
+		? patternOrExpression
+		: `{formatDatetime($datum, "${patternOrExpression}")}`;
+}
+
 const axisLabelStyle: React.CSSProperties = {
 	width: COLUMN_WIDTH,
 	height: ROW_HEIGHT,
@@ -78,7 +84,9 @@ function CalendarGrid({
 				{mockTimeSlots.map((datetime, i) => (
 					<div key={datetime} style={axisLabelStyle}>
 						{i % 2 === 0
-							? parseText(timeslotFormat, { datum: datetime })
+							? parseText(calendarPreviewFormat(timeslotFormat), {
+									datum: datetime,
+								})
 							: ""}
 					</div>
 				))}
@@ -88,7 +96,9 @@ function CalendarGrid({
 				<div className="evy-flex evy-flex-row">
 					{mockColumnDates.map((datetime) => (
 						<div key={datetime} style={axisLabelStyle}>
-							{parseText(headerFormat, { datum: datetime })}
+							{parseText(calendarPreviewFormat(headerFormat), {
+								datum: datetime,
+							})}
 						</div>
 					))}
 				</div>
@@ -111,7 +121,7 @@ export default defineRow("CalendarRow", {
 	config: {
 		type: "Calendar",
 		actions: [],
-		source: "",
+		source: `{${MARKETPLACE_RESOURCE.ITEMS}.delivery_selection}`,
 		visible: "true",
 		view: {
 			content: {
@@ -120,10 +130,8 @@ export default defineRow("CalendarRow", {
 				end_time: "19:00",
 				timeslot_interval_minutes: 30,
 				label_interval_minutes: 60,
-				header_format: '{formatDatetime($datum, "EEE d")}',
-				timeslot_format: '{formatDatetime($datum, "HH:mm")}',
-				primary: "{pickup_selection}",
-				secondary: "{delivery_selection}",
+				header_format: "EEE d",
+				timeslot_format: "HH:mm",
 			},
 		},
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,

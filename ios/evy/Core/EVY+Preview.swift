@@ -70,11 +70,8 @@ enum EVYPreviewMockData {
         "end_time": "19:00",
         "timeslot_interval_minutes": 30,
         "label_interval_minutes": 60,
-        "header_format": "{formatDatetime($datum, \"EEE d\")}",
-        "header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
-        "timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
-        "primary": "{pickup_selection}",
-        "secondary": "{delivery_selection}"
+        "header_format": "EEE d",
+        "timeslot_format": "HH:mm"
     }
     """#
 
