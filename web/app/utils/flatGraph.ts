@@ -15,6 +15,7 @@ import type {
 	UI_RowAction,
 } from "evy-types";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
+import { ROW_CHILD_FIELD, ROW_CHILDREN_FIELD } from "./rowConstants";
 
 export type { FlowEntityMaps };
 export { collectSubtreeRowIds };
@@ -36,12 +37,12 @@ function touchPage(page: DATA_EVY_Page, updatedAt = now()): DATA_EVY_Page {
 }
 
 function getChildRowId(row: DATA_EVY_Row): string | undefined {
-	const v = row.data.child_row_id;
+	const v = row.data[ROW_CHILD_FIELD];
 	return typeof v === "string" ? v : undefined;
 }
 
 function getChildrenRowIds(row: DATA_EVY_Row): string[] {
-	const v = row.data.children_row_ids;
+	const v = row.data[ROW_CHILDREN_FIELD];
 	return Array.isArray(v)
 		? v.filter((x): x is string => typeof x === "string")
 		: [];
@@ -130,7 +131,7 @@ export function findContainerById(
 		if (id === containerId) {
 			if (childId !== undefined)
 				return { containerRowId: id, type: "child" };
-			if ("children_row_ids" in row.data) {
+			if (ROW_CHILDREN_FIELD in row.data) {
 				return { containerRowId: id, type: "children" };
 			}
 		}
@@ -262,12 +263,12 @@ function insertIntoLocation(
 
 	let updatedData: DATA_EVY_RowData;
 	if (destinationContainer.type === "child") {
-		updatedData = { ...container.data, child_row_id: newRowId };
+		updatedData = { ...container.data, [ROW_CHILD_FIELD]: newRowId };
 	} else {
 		const current = getChildrenRowIds(container);
 		updatedData = {
 			...container.data,
-			children_row_ids: insertAtIndex(
+			[ROW_CHILDREN_FIELD]: insertAtIndex(
 				current,
 				newRowId,
 				destinationIndex,
@@ -337,12 +338,16 @@ function removeFromLocation(
 
 	let updatedData: DATA_EVY_RowData;
 	if (container.type === "child") {
-		const { child_row_id: _c, ...dataWithoutChild } = containerRow.data;
+		const { [ROW_CHILD_FIELD]: _c, ...dataWithoutChild } =
+			containerRow.data;
 		updatedData = dataWithoutChild as DATA_EVY_RowData;
 	} else {
 		updatedData = {
 			...containerRow.data,
-			children_row_ids: removeId(getChildrenRowIds(containerRow), rowId),
+			[ROW_CHILDREN_FIELD]: removeId(
+				getChildrenRowIds(containerRow),
+				rowId,
+			),
 		};
 	}
 

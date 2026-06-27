@@ -1,22 +1,25 @@
 import type { DATA_EVY_Row } from "evy-types";
 import type { RowConfig } from "../types/row";
+import { ROW_CHILD_FIELD, ROW_CHILDREN_FIELD } from "./rowConstants";
 
 export function buildRowConfigFromRecord(record: DATA_EVY_Row): RowConfig {
 	const data = record.data;
 
 	const childRowId =
-		typeof data.child_row_id === "string" ? data.child_row_id : undefined;
+		typeof data[ROW_CHILD_FIELD] === "string"
+			? data[ROW_CHILD_FIELD]
+			: undefined;
 	const childrenRowIds =
-		Array.isArray(data.children_row_ids) &&
-		(data.children_row_ids as unknown[]).every(
+		Array.isArray(data[ROW_CHILDREN_FIELD]) &&
+		(data[ROW_CHILDREN_FIELD] as unknown[]).every(
 			(id) => typeof id === "string",
 		)
-			? (data.children_row_ids as string[])
+			? (data[ROW_CHILDREN_FIELD] as string[])
 			: undefined;
 
 	const contentData: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(data)) {
-		if (key !== "child_row_id" && key !== "children_row_ids") {
+		if (key !== ROW_CHILD_FIELD && key !== ROW_CHILDREN_FIELD) {
 			contentData[key] = value;
 		}
 	}

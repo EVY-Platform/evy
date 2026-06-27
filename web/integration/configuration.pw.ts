@@ -1,13 +1,15 @@
 import { expect, test } from "@playwright/test";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "evy-types/marketplaceResources";
 import { initFullFlows, openAppWithTestFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
 
-const MARKETPLACE_SERVICE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
-const MARKETPLACE_ITEMS_RESOURCE_ID = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd";
 const TEST_SERVICE_RESOURCES = [
 	{
-		id: MARKETPLACE_ITEMS_RESOURCE_ID,
-		fkServiceId: MARKETPLACE_SERVICE_ID,
+		id: MARKETPLACE_RESOURCE.ITEMS,
+		fkServiceId: MARKETPLACE_SERVICE,
 		name: "item",
 	},
 ];
@@ -279,9 +281,9 @@ test.describe("Row configuration", () => {
 									type: "Input",
 									source: "",
 									title: "Name",
-									value: `{${MARKETPLACE_ITEMS_RESOURCE_ID}.name}`,
+									value: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
 									placeholder: "Enter name",
-									destination: `{${MARKETPLACE_ITEMS_RESOURCE_ID}.name}`,
+									destination: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
 									actions: [],
 								},
 								{
@@ -344,7 +346,7 @@ test.describe("Row configuration", () => {
 
 		await expect(committedLeft).toHaveAttribute(
 			"data-value",
-			`${MARKETPLACE_ITEMS_RESOURCE_ID}.name`,
+			`${MARKETPLACE_RESOURCE.ITEMS}.name`,
 		);
 		await expect(committedOp).toHaveAttribute("data-value", "!=");
 		await expect(committedRight).toHaveAttribute(
@@ -629,7 +631,7 @@ test.describe("Row configuration", () => {
 							{
 								condition: "",
 								false: "",
-								true: `{create(${MARKETPLACE_SERVICE_ID},${MARKETPLACE_ITEMS_RESOURCE_ID})}`,
+								true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
 							},
 						],
 					},
@@ -760,7 +762,7 @@ test.describe("Row configuration", () => {
 									label: "OR Test",
 									actions: [
 										{
-											condition: `{count(${MARKETPLACE_ITEMS_RESOURCE_ID}.pickup_timeslots) > 0 || count(${MARKETPLACE_ITEMS_RESOURCE_ID}.delivery_timeslots) > 0}`,
+											condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0}`,
 											false: "",
 											true: "{close()}",
 										},
@@ -810,7 +812,7 @@ test.describe("Row configuration", () => {
 									label: "Nested Test",
 									actions: [
 										{
-											condition: `{count(${MARKETPLACE_ITEMS_RESOURCE_ID}.pickup_timeslots) > 0 && (count(${MARKETPLACE_ITEMS_RESOURCE_ID}.delivery_timeslots) > 0 || count(${MARKETPLACE_ITEMS_RESOURCE_ID}.shipping_destination_areas) > 0)}`,
+											condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 && (count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.shipping_destination_areas) > 0)}`,
 											false: "",
 											true: "{close()}",
 										},

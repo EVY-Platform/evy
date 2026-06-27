@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import type { UI_Row as ServerRow } from "evy-types";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import invariant from "tiny-invariant";
-
-import SearchRow from "../rows/edit/SearchRow";
+import SearchRow, {
+	SEARCH_RESULT_TEMPLATE_ROW_ID,
+} from "../rows/edit/SearchRow";
 import { buildRowForNewPageFromBase, normalizeServerRow } from "./decodeFlow";
 
 const ROW_A = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
@@ -110,7 +112,7 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "ListContainer",
-				source: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
+				source: `{${MARKETPLACE_RESOURCE.ITEMS}}`,
 				title: "List",
 				child: makeServerRow({
 					id: ROW_B,
@@ -173,7 +175,7 @@ describe("buildRowForNewPageFromBase", () => {
 		invariant(child, "search row template child");
 		const childId = child.id;
 		expect(childId).toBeDefined();
-		expect(childId).not.toBe("09f07052-c27c-4116-a508-a2bcb074c827");
+		expect(childId).not.toBe(SEARCH_RESULT_TEMPLATE_ROW_ID);
 		expect(child.config).toMatchObject({
 			title: "{$datum.value}",
 			subtitle: "",

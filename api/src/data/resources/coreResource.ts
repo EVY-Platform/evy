@@ -16,7 +16,11 @@ import {
 	validateGetResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
-import { type EvyDb, hasDatabaseErrorCode } from "../../database/db";
+import {
+	type EvyDb,
+	hasDatabaseErrorCode,
+	PG_UNIQUE_VIOLATION,
+} from "../../database/db";
 
 type ResourceTable = AnyPgTable & { id: AnyPgColumn; updatedAt: AnyPgColumn };
 
@@ -80,7 +84,7 @@ export function makeCoreResource<
 			.values(validated as any)
 			.returning()
 			.catch((err: unknown) => {
-				if (hasDatabaseErrorCode(err, "23505"))
+				if (hasDatabaseErrorCode(err, PG_UNIQUE_VIOLATION))
 					throw new Error("Resource already exists");
 				throw err;
 			});

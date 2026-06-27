@@ -12,7 +12,12 @@ import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
 import type { UI_Flow, UI_Page } from "../types/flow";
 import type { Row, RowConfig } from "../types/row";
-import { ROW_METADATA_KEYS } from "./rowConstants";
+import {
+	ROW_CHILD_FIELD,
+	ROW_CHILDREN_FIELD,
+	ROW_DECOMPOSE_SKIP_KEYS,
+	ROW_METADATA_KEYS,
+} from "./rowConstants";
 
 type RowComponent = (typeof baseRows)[number];
 
@@ -240,9 +245,7 @@ function decomposeServerRow(
 ): string {
 	const data: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(row)) {
-		if (
-			["id", "name", "type", "visible", "child", "children"].includes(key)
-		) {
+		if (ROW_DECOMPOSE_SKIP_KEYS.has(key)) {
 			continue;
 		}
 		if (value !== undefined) {
@@ -250,10 +253,10 @@ function decomposeServerRow(
 		}
 	}
 	if (row.child) {
-		data.child_row_id = decomposeServerRow(row.child, rowRows, nowIso);
+		data[ROW_CHILD_FIELD] = decomposeServerRow(row.child, rowRows, nowIso);
 	}
 	if (Array.isArray(row.children) && row.children.length > 0) {
-		data.children_row_ids = row.children.map((child) =>
+		data[ROW_CHILDREN_FIELD] = row.children.map((child) =>
 			decomposeServerRow(child, rowRows, nowIso),
 		);
 	}

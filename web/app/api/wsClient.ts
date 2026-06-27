@@ -9,7 +9,10 @@ import { Client } from "rpc-websockets";
 import { config } from "../config";
 import type { FlowEntityCollections } from "../utils/flowEntities";
 
-type FlatResourceName = "flows" | "pages" | "rows";
+type FlatResourceName =
+	| typeof EVY_CORE_RESOURCE.FLOWS
+	| typeof EVY_CORE_RESOURCE.PAGES
+	| typeof EVY_CORE_RESOURCE.ROWS;
 type FlatResourceRecord = DATA_EVY_Flow | DATA_EVY_Page | DATA_EVY_Row;
 
 function isFlatWriteResponse(value: unknown): value is FlatResourceRecord {

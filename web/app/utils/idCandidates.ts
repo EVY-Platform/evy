@@ -3,6 +3,11 @@ import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
 import { ACTION_FUNCTIONS } from "./actionBranch";
+import {
+	ROW_ATTRIBUTE_STATIC_NAMES,
+	ROW_CHILD_FIELD,
+	ROW_CHILDREN_FIELD,
+} from "./rowConstants";
 
 export type IdCandidateCategory =
 	| "Flow"
@@ -90,12 +95,11 @@ function addFlatRowAttributeNames(
 	row: DATA_EVY_Row,
 	attributeNames: Set<string>,
 ) {
-	const STATIC_NAMES = ["source", "destination", "title", "visible"];
-	for (const name of STATIC_NAMES) attributeNames.add(name);
+	for (const name of ROW_ATTRIBUTE_STATIC_NAMES) attributeNames.add(name);
 	for (const key of Object.keys(row.data)) {
 		if (
-			key === "child_row_id" ||
-			key === "children_row_ids" ||
+			key === ROW_CHILD_FIELD ||
+			key === ROW_CHILDREN_FIELD ||
 			key === "actions"
 		)
 			continue;

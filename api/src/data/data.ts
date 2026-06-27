@@ -15,6 +15,7 @@ import {
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
 import type { EvyDb } from "../database/db";
+import { DATA_CHANGED_EVENT } from "../shared/ws";
 
 import { validateAuth as validateDeviceAuth } from "./resources/devices";
 import {
@@ -63,7 +64,6 @@ import {
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
-const DATA_CHANGED_EVENT = "dataChanged";
 const evyCoreResourceNames: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
 let coreBroadcast: BroadcastFn | null = null;

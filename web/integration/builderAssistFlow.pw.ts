@@ -1,34 +1,34 @@
 import { expect, type Locator, test } from "@playwright/test";
 import type { UI_Flow as ServerFlow } from "evy-types";
+import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import type { ServiceResource } from "../app/api/sync";
 import { openAppWithFullFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
 
-const SERVICE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
 const ITEM_RESOURCE_ID = "res-item";
 const ORDER_RESOURCE_ID = "res-order";
 
 const SERVICE_RESOURCES: ServiceResource[] = [
 	{
 		id: ITEM_RESOURCE_ID,
-		fkServiceId: SERVICE_ID,
+		fkServiceId: MARKETPLACE_SERVICE,
 		name: "item",
 	},
 	{
 		id: ORDER_RESOURCE_ID,
-		fkServiceId: SERVICE_ID,
+		fkServiceId: MARKETPLACE_SERVICE,
 		name: "order",
 	},
 ];
 
 const RESOURCE_ATTRIBUTE_METADATA = [
 	{
-		serviceId: SERVICE_ID,
+		serviceId: MARKETPLACE_SERVICE,
 		resourceId: ITEM_RESOURCE_ID,
 		attributeNames: ["price", "title"],
 	},
 	{
-		serviceId: SERVICE_ID,
+		serviceId: MARKETPLACE_SERVICE,
 		resourceId: ORDER_RESOURCE_ID,
 		attributeNames: ["status"],
 	},
@@ -292,7 +292,9 @@ test.describe("Builder Assist flows", () => {
 			),
 		).toBeVisible();
 		await expect(
-			configPanel.getByText(`create(${SERVICE_ID}, ${ITEM_RESOURCE_ID})`),
+			configPanel.getByText(
+				`create(${MARKETPLACE_SERVICE}, ${ITEM_RESOURCE_ID})`,
+			),
 		).toBeVisible();
 
 		await configPanel.getByLabel("Edit action 1").click();
