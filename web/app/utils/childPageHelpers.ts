@@ -1,58 +1,61 @@
-import type { Row } from "../types/row";
-import { findRowInPages } from "./rowTree";
+import type { DATA_EVY_Row } from "evy-types";
 
-type ActiveChildPage = {
-	childRow: Row;
+export type ActiveChildPage = {
+	childRowId: string;
 	parentRowId: string;
 };
 
 export function buildActiveChildPages({
 	activeRowId,
 	configStack,
-	pages,
+	rowsById,
 }: {
 	activeRowId: string | undefined;
 	configStack: string[];
-	pages: { rows: Row[]; footer?: Row }[];
+	rowsById: Record<string, DATA_EVY_Row>;
 }): ActiveChildPage[] {
 	if (!activeRowId) return [];
 
-	const activeRootRow = findRowInPages(activeRowId, pages);
-	if (!activeRootRow) return [];
-
 	const childPages: ActiveChildPage[] = [];
-	let currentParentRow = activeRootRow;
+	let currentRowId = activeRowId;
 
-	for (const selectedDescendantRowId of configStack) {
-		const singularChild = currentParentRow.config.child;
-		if (singularChild?.id === selectedDescendantRowId) {
+	for (const descendantId of configStack) {
+		const currentRow = rowsById[currentRowId];
+		if (!currentRow) break;
+		const childRowId = currentRow.data.child_row_id;
+		const childrenRowIds = Array.isArray(currentRow.data.children_row_ids)
+			? (currentRow.data.children_row_ids as string[])
+			: [];
+
+		if (childRowId === descendantId) {
 			childPages.push({
-				childRow: singularChild,
-				parentRowId: currentParentRow.id,
+				childRowId: descendantId,
+				parentRowId: currentRowId,
 			});
-			currentParentRow = singularChild;
+			currentRowId = descendantId;
 			continue;
 		}
 
-		const nestedChild = currentParentRow.config.children?.find(
-			(child) => child.id === selectedDescendantRowId,
-		);
-		if (nestedChild) {
-			currentParentRow = nestedChild;
+		if (childrenRowIds.includes(descendantId)) {
+			currentRowId = descendantId;
 			continue;
 		}
 
-		const fallbackRow = findRowInPages(selectedDescendantRowId, pages);
-		if (!fallbackRow) return childPages;
-		currentParentRow = fallbackRow;
+		// Fallback: treat as if it's a root-level row jump
+		if (rowsById[descendantId]) {
+			currentRowId = descendantId;
+		} else {
+			break;
+		}
 	}
 
-	const nextChildRow = currentParentRow.config.child;
-	if (nextChildRow) {
-		childPages.push({
-			childRow: nextChildRow,
-			parentRowId: currentParentRow.id,
-		});
+	// After walking the configStack, check if the final row has a singular child
+	const finalRow = rowsById[currentRowId];
+	if (finalRow) {
+		const childRowId = finalRow.data.child_row_id;
+		if (typeof childRowId === "string") {
+			childPages.push({ childRowId, parentRowId: currentRowId });
+		}
 	}
 
 	return childPages;

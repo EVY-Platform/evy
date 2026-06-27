@@ -50,6 +50,13 @@
 			"when": 1781870400000,
 			"tag": "0006_simplify_service_resources",
 			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "7",
+			"when": 1782604800000,
+			"tag": "0007_decompose_sdui_flows",
+			"breakpoints": true
 		}
 	]
 }

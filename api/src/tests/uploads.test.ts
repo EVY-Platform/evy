@@ -72,16 +72,6 @@ describe("parseUploadChunkFrame", () => {
 });
 
 describe("handleUploadChunk", () => {
-	it("creates a new upload session for first chunk", async () => {
-		const metadata = {
-			uploadId,
-			index: 0,
-			byteOffset: 0,
-			byteLength: validBytes.length,
-		};
-		await handleUploadChunk(buildChunkFrame(metadata, validBytes));
-	});
-
 	it("accepts sequential chunks", async () => {
 		const chunk1 = Buffer.from([1, 2]);
 		const chunk2 = Buffer.from([3, 4]);

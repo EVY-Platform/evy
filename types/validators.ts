@@ -13,7 +13,10 @@ import addFormats from "ajv-formats";
 
 import type {
 	DATA_EVY_File,
+	DATA_EVY_Flow,
 	DATA_EVY_Organization,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
 	DATA_EVY_ServiceResource,
@@ -318,6 +321,18 @@ const getValidateUiFlow = lazyValidator<UI_Flow>(
 	getEntityAjv,
 	fileId("sdui/evy.schema.json"),
 );
+const getValidateDataEvyFlow = lazyValidator<DATA_EVY_Flow>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Flow`,
+);
+const getValidateDataEvyPage = lazyValidator<DATA_EVY_Page>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Page`,
+);
+const getValidateDataEvyRow = lazyValidator<DATA_EVY_Row>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Row`,
+);
 const getValidateDataEvyService = lazyValidator<DATA_EVY_Service>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Service`,
@@ -415,6 +430,18 @@ export const validateGetRequest = makeValidator<GetRequest>(
 
 /** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
 export const validateUiFlow = makeValidator<UI_Flow>("Flow", getValidateUiFlow);
+export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
+	"Flow",
+	getValidateDataEvyFlow,
+);
+export const validateDataEvyPage = makeValidator<DATA_EVY_Page>(
+	"Page",
+	getValidateDataEvyPage,
+);
+export const validateDataEvyRow = makeValidator<DATA_EVY_Row>(
+	"Row",
+	getValidateDataEvyRow,
+);
 export const validateDataEvyService = makeValidator<DATA_EVY_Service>(
 	"Service",
 	getValidateDataEvyService,

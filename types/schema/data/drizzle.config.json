@@ -76,6 +76,18 @@
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": []
+		},
+		"DATA_EVY_Page": {
+			"tableName": "Page",
+			"primaryKey": "id",
+			"defaultRandom": ["id"],
+			"uniqueIndexes": []
+		},
+		"DATA_EVY_Row": {
+			"tableName": "Row",
+			"primaryKey": "id",
+			"defaultRandom": ["id"],
+			"uniqueIndexes": []
 		}
 	},
 	"relations": [

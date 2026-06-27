@@ -1,33 +1,31 @@
-import type { UI_Flow as ServerFlow, UI_Page as ServerPage } from "evy-types";
+import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 
-import type { UI_Flow, UI_Page } from "../types/flow";
-import { decodeFlows } from "./decodeFlow";
+const NOW = () => new Date().toISOString();
 
-/**
- * Builds a minimal valid blank page for the builder UI and API validation.
- */
-export function buildNewClientPage(): UI_Page {
+export function buildNewPageRecord(): DATA_EVY_Page {
+	const ts = NOW();
 	return {
 		id: crypto.randomUUID(),
+		name: "Page",
 		title: "",
-		rows: [],
+		rowIds: [],
+		createdAt: ts,
+		updatedAt: ts,
 	};
 }
 
-/**
- * Builds a minimal valid flow (one empty page) for the builder UI and API validation.
- */
-export function buildNewClientFlow(name: string): UI_Flow {
-	const flowId = crypto.randomUUID();
-	const serverPage: ServerPage = {
+export function buildNewFlowRecords(name: string): {
+	flow: DATA_EVY_Flow;
+	page: DATA_EVY_Page;
+} {
+	const ts = NOW();
+	const page = buildNewPageRecord();
+	const flow: DATA_EVY_Flow = {
 		id: crypto.randomUUID(),
-		title: "",
-		rows: [],
-	};
-	const serverFlow: ServerFlow = {
-		id: flowId,
 		name,
-		pages: [serverPage],
+		pageIds: [page.id],
+		createdAt: ts,
+		updatedAt: ts,
 	};
-	return decodeFlows([serverFlow])[0];
+	return { flow, page };
 }

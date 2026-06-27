@@ -16,6 +16,8 @@ export type Row = {
 type RowAttributes = Omit<SerialRow, "id" | "child" | "children"> & {
 	children?: Row[];
 	child?: Row;
+	childrenRowIds?: string[];
+	childRowId?: string;
 };
 
 export type RowConfig = RowAttributes;

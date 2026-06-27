@@ -7,8 +7,8 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { CreateRequest, UI_Flow, UI_Page } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import type { CreateRequest, DATA_EVY_Flow } from "evy-types";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import type { WSParams } from "../shared/ws";
 
 import {
@@ -76,7 +76,7 @@ describe("create/update real-time notifications", () => {
 		await clearAllTestTables(testDb);
 	});
 
-	it("emits dataChanged with create operation after SDUI create", async () => {
+	it("emits dataChanged with create operation after flow create", async () => {
 		const subscriber = await connectAndLogin(
 			apiUrl,
 			"notify-token-1",
@@ -85,38 +85,36 @@ describe("create/update real-time notifications", () => {
 		);
 		const notifyPromise = waitForNotification(subscriber, "dataChanged");
 
-		const testPage: UI_Page = {
-			id: crypto.randomUUID(),
-			title: "Page",
-			rows: [],
-		};
-		const flowData: UI_Flow = {
+		const nowIso = new Date().toISOString();
+		const flowData: DATA_EVY_Flow = {
 			id: crypto.randomUUID(),
 			name: "WS Notify Flow",
-			pages: [testPage],
+			pageIds: [],
+			createdAt: nowIso,
+			updatedAt: nowIso,
 		};
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-2", "Web");
 
-		await caller.call("create", {
+		const createResult = await caller.call("create", {
 			service: EVY_CORE_SERVICE,
-			resource: "sdui",
+			resource: EVY_CORE_RESOURCE.FLOWS,
 			data: flowData,
 		});
 
 		const params = await notifyPromise;
 		expect(params).toEqual({
 			service: EVY_CORE_SERVICE,
-			resource: "sdui",
+			resource: EVY_CORE_RESOURCE.FLOWS,
 			operation: "create",
-			value: flowData,
+			value: createResult,
 		});
 
 		subscriber.close();
 		caller.close();
 	});
 
-	it("emits dataChanged after non-SDUI create with sync-row shape", async () => {
+	it("emits dataChanged after non-flow create with sync-row shape", async () => {
 		const subscriber = await connectAndLogin(
 			apiUrl,
 			"notify-token-3",
@@ -176,11 +174,13 @@ describe("create/update real-time notifications", () => {
 		const caller = await connectAndLogin(apiUrl, "notify-token-7", "Web");
 		await caller.call("create", {
 			service: EVY_CORE_SERVICE,
-			resource: "sdui",
+			resource: EVY_CORE_RESOURCE.FLOWS,
 			data: {
 				id: crypto.randomUUID(),
 				name: "Subscribed Only",
-				pages: [],
+				pageIds: [],
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
 			},
 		});
 

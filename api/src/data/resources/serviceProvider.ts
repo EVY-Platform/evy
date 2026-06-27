@@ -16,7 +16,11 @@ import {
 } from "evy-types/validators";
 
 import { serviceProvider } from "../../../../types/generated/ts/db/schema.generated";
-import { type EvyDb, hasDatabaseErrorCode } from "../../database/db";
+import {
+	type EvyDb,
+	hasDatabaseErrorCode,
+	PG_UNIQUE_VIOLATION,
+} from "../../database/db";
 
 // Queries
 
@@ -68,7 +72,7 @@ export async function createProviderResource(
 		})
 		.returning()
 		.catch((err: unknown) => {
-			if (hasDatabaseErrorCode(err, "23505")) {
+			if (hasDatabaseErrorCode(err, PG_UNIQUE_VIOLATION)) {
 				throw new Error("Resource already exists");
 			}
 			throw err;

@@ -100,7 +100,8 @@ final class EVYDataStore {
     context.insert(
       EVYData(namespace: namespace, resource: resource, id: id, data: value, sortIndex: sortIndex)
     )
-    postDataChanged(key: "\(namespace):\(resource):\(id)")
+    let change = EVYDataChange(namespace: namespace, resource: resource, id: id)
+    postDataChanged(key: "\(namespace):\(resource):\(id)", change: change)
     postDataChanged(key: "\(namespace):\(resource)")
     postDataChanged(key: resource)
   }
@@ -111,7 +112,8 @@ final class EVYDataStore {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     existing.data = value
     existing.sortIndex = sortIndex
-    postDataChanged(key: "\(namespace):\(resource):\(id)")
+    let change = EVYDataChange(namespace: namespace, resource: resource, id: id)
+    postDataChanged(key: "\(namespace):\(resource):\(id)", change: change)
     postDataChanged(key: "\(namespace):\(resource)")
     postDataChanged(key: resource)
   }
@@ -119,7 +121,8 @@ final class EVYDataStore {
   func delete(namespace: String, resource: String, id: String) throws {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     context.delete(existing)
-    postDataChanged(key: "\(namespace):\(resource):\(id)")
+    let change = EVYDataChange(namespace: namespace, resource: resource, id: id)
+    postDataChanged(key: "\(namespace):\(resource):\(id)", change: change)
     postDataChanged(key: "\(namespace):\(resource)")
     postDataChanged(key: resource)
   }
@@ -251,10 +254,13 @@ final class EVYDataStore {
     return row.namespace
   }
 
-  func postDataChanged(key: String) {
+  func postDataChanged(key: String, change: EVYDataChange? = nil) {
+    var userInfo: [AnyHashable: Any]? = nil
+    if let change { userInfo = [EVYDataChange.userInfoKey: change] }
     NotificationCenter.default.post(
       name: Notification.Name.evyDataChanged,
-      object: key
+      object: key,
+      userInfo: userInfo
     )
   }
 }

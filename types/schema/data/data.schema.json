@@ -8,6 +8,12 @@
 			"$ref": "#/$defs/DATA_EVY_Flow"
 		},
 		{
+			"$ref": "#/$defs/DATA_EVY_Page"
+		},
+		{
+			"$ref": "#/$defs/DATA_EVY_Row"
+		},
+		{
 			"$ref": "#/$defs/DATA_EVY_Device"
 		},
 		{
@@ -30,14 +36,22 @@
 		"DATA_EVY_Flow": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "data", "createdAt", "updatedAt"],
+			"required": ["id", "name", "pageIds", "createdAt", "updatedAt"],
 			"properties": {
 				"id": {
 					"type": "string",
 					"format": "uuid"
 				},
-				"data": {
-					"$ref": "../sdui/evy.schema.json"
+				"name": {
+					"type": "string",
+					"minLength": 1
+				},
+				"pageIds": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "uuid"
+					}
 				},
 				"createdAt": {
 					"type": "string",
@@ -243,6 +257,125 @@
 				"type": {
 					"type": "string",
 					"minLength": 1
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"DATA_EVY_Page": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "name", "rowIds", "createdAt", "updatedAt"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"name": {
+					"type": "string",
+					"minLength": 1
+				},
+				"title": {
+					"type": "string"
+				},
+				"rowIds": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "uuid"
+					}
+				},
+				"footerRowId": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"DATA_EVY_RowData": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "../common/json.schema.json#/$defs/JSONValue"
+			},
+			"properties": {
+				"child_row_id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"children_row_ids": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "uuid"
+					}
+				}
+			}
+		},
+		"DATA_EVY_Row": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"name",
+				"type",
+				"visible",
+				"data",
+				"createdAt",
+				"updatedAt"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"name": {
+					"type": "string",
+					"minLength": 1
+				},
+				"type": {
+					"type": "string",
+					"enum": [
+						"Button",
+						"Calendar",
+						"ColumnContainer",
+						"Dropdown",
+						"Heading",
+						"Text",
+						"TextAction",
+						"TextExpand",
+						"InlinePicker",
+						"Map",
+						"InputList",
+						"Input",
+						"ListContainer",
+						"ListItem",
+						"Search",
+						"PhotoGallery",
+						"SelectPhoto",
+						"SelectSegmentContainer",
+						"TextArea",
+						"TextSelect",
+						"TimeslotPicker"
+					]
+				},
+				"visible": {
+					"type": "string"
+				},
+				"data": {
+					"$ref": "#/$defs/DATA_EVY_RowData"
 				},
 				"createdAt": {
 					"type": "string",

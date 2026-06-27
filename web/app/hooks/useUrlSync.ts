@@ -1,8 +1,6 @@
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { type Dispatch, useEffect, useRef } from "react";
-
 import type { RowAction } from "../types/actions";
-import type { UI_Flow } from "../types/flow";
-import { findFlowById } from "../utils/flowHelpers";
 import {
 	buildUrlPath,
 	parseUrlPath,
@@ -15,7 +13,9 @@ export function useUrlSync(
 	activePageId: string | undefined,
 	activeRowId: string | undefined,
 	configStack: string[],
-	flows: UI_Flow[],
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
+	rowsById: Record<string, DATA_EVY_Row>,
 	dispatchRow: Dispatch<RowAction>,
 ) {
 	const isInitialMount = useRef(true);
@@ -57,7 +57,8 @@ export function useUrlSync(
 			const { flowId, pageId } = resolveUrlIds(
 				urlFlowId,
 				urlPageId,
-				flows,
+				flowsById,
+				pagesById,
 			);
 			isPopStateNavigation.current = true;
 
@@ -65,13 +66,14 @@ export function useUrlSync(
 				dispatchRow({ type: "SET_ACTIVE_FLOW", flowId });
 			}
 
-			const targetFlow = findFlowById(flows, flowId ?? activeFlowId);
-			const page = targetFlow?.pages.find((p) => p.id === pageId);
+			const page = pagesById[pageId ?? ""];
 
 			if (page && rowPathSegments.length > 0) {
 				const validated = validateRowPathSegmentsForPage(
-					page,
+					page.id,
 					rowPathSegments,
+					pagesById,
+					rowsById,
 				);
 				if (validated) {
 					dispatchRow({
@@ -90,5 +92,5 @@ export function useUrlSync(
 
 		window.addEventListener("popstate", handlePopState);
 		return () => window.removeEventListener("popstate", handlePopState);
-	}, [flows, activeFlowId, dispatchRow]);
+	}, [flowsById, pagesById, rowsById, activeFlowId, dispatchRow]);
 }

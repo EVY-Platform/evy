@@ -1,6 +1,6 @@
 import { ne } from "drizzle-orm";
 import type { GetRequest, GetResponse } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { service } from "../../types/generated/ts/db/schema.generated";
 import { get as getCore } from "./data/data";
 import { createDb } from "./database/db";
@@ -28,11 +28,11 @@ export async function assertApiReadable(
 
 	const response = await deps.get({
 		service: EVY_CORE_SERVICE,
-		resource: "sdui",
+		resource: EVY_CORE_RESOURCE.FLOWS,
 	});
 	if (!Array.isArray(response)) {
 		throw new Error(
-			"API readiness failed: expected sdui response data array",
+			"API readiness failed: expected flows response data array",
 		);
 	}
 
@@ -41,7 +41,7 @@ export async function assertApiReadable(
 	}
 
 	if (response.length === 0) {
-		throw new Error("Seed verification failed: missing seeded SDUI flows");
+		throw new Error("Seed verification failed: missing seeded flows");
 	}
 }
 

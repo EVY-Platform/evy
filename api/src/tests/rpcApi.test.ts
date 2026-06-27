@@ -183,7 +183,7 @@ describe("api JSON-RPC handler", () => {
 		const result = await api(
 			{
 				service: MARKETPLACE_SERVICE_ID,
-				resource: "sdui",
+				resource: "not-a-marketplace-resource",
 				method: "not-search",
 				filter: {
 					id: itemId,
@@ -195,7 +195,7 @@ describe("api JSON-RPC handler", () => {
 		expect(result).toEqual([{ id: itemId }]);
 		expect(forwardGetMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
 			service: MARKETPLACE_SERVICE_ID,
-			resource: "sdui",
+			resource: "not-a-marketplace-resource",
 			method: "not-search",
 			filter: {
 				id: itemId,

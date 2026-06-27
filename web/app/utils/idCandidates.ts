@@ -1,10 +1,13 @@
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
-import type { UI_Flow } from "../types/flow";
-import type { Row } from "../types/row";
 import { ACTION_FUNCTIONS } from "./actionBranch";
-import { ROW_METADATA_KEYS } from "./rowConstants";
+import {
+	ROW_ATTRIBUTE_STATIC_NAMES,
+	ROW_CHILD_FIELD,
+	ROW_CHILDREN_FIELD,
+} from "./rowConstants";
 
 export type IdCandidateCategory =
 	| "Flow"
@@ -88,40 +91,20 @@ function isDisplayCandidate(candidate: IdCandidate): boolean {
 	);
 }
 
-function addRowAttributeNames(row: Row, attributeNames: Set<string>) {
-	const ROOT_ATTRIBUTE_NAMES = [...ROW_METADATA_KEYS].filter(
-		(k) => k !== "id" && k !== "type" && k !== "actions",
-	);
-	for (const attributeName of ROOT_ATTRIBUTE_NAMES) {
-		attributeNames.add(attributeName);
-	}
-
-	for (const [key, value] of Object.entries(row.config)) {
-		if (ROW_METADATA_KEYS.has(key)) {
+function addFlatRowAttributeNames(
+	row: DATA_EVY_Row,
+	attributeNames: Set<string>,
+) {
+	for (const name of ROW_ATTRIBUTE_STATIC_NAMES) attributeNames.add(name);
+	for (const key of Object.keys(row.data)) {
+		if (
+			key === ROW_CHILD_FIELD ||
+			key === ROW_CHILDREN_FIELD ||
+			key === "actions"
+		)
 			continue;
-		}
-
-		if (key === "child") {
-			if (isRow(value)) addRowAttributeNames(value, attributeNames);
-			continue;
-		}
-
-		if (key === "children") {
-			if (Array.isArray(value)) {
-				for (const childRow of value) {
-					if (isRow(childRow))
-						addRowAttributeNames(childRow, attributeNames);
-				}
-			}
-			continue;
-		}
-
 		if (key.trim()) attributeNames.add(key);
 	}
-}
-
-function isRow(value: unknown): value is Row {
-	return value !== null && typeof value === "object" && "config" in value;
 }
 
 export function getCandidateInsertValue(candidate: IdCandidate): string {
@@ -129,22 +112,21 @@ export function getCandidateInsertValue(candidate: IdCandidate): string {
 }
 
 export function buildIdCandidates(
-	flows: UI_Flow[],
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
 	serviceResources: ServiceResource[],
 ): IdCandidate[] {
-	const flowCandidates = flows.map((flow) => ({
+	const flowCandidates = Object.values(flowsById).map((flow) => ({
 		id: flow.id,
 		name: flow.name,
 		category: "Flow" as const,
 	}));
 
-	const pageCandidates = flows.flatMap((flow) =>
-		flow.pages.map((page) => ({
-			id: page.id,
-			name: page.title || page.id,
-			category: "Page" as const,
-		})),
-	);
+	const pageCandidates = Object.values(pagesById).map((page) => ({
+		id: page.id,
+		name: page.title || page.id,
+		category: "Page" as const,
+	}));
 
 	const serviceCandidates = Array.from(
 		new Set(serviceResources.map((resource) => resource.fkServiceId)),
@@ -199,16 +181,13 @@ function dedupeCandidatesByNameAndCategory(
 	});
 }
 
-export function buildRowAttributeCandidates(flows: UI_Flow[]): IdCandidate[] {
+export function buildRowAttributeCandidates(
+	rowsById: Record<string, DATA_EVY_Row>,
+): IdCandidate[] {
 	const attributeNames = new Set<string>();
 
-	for (const flow of flows) {
-		for (const page of flow.pages) {
-			for (const row of page.rows) {
-				addRowAttributeNames(row, attributeNames);
-			}
-			if (page.footer) addRowAttributeNames(page.footer, attributeNames);
-		}
+	for (const row of Object.values(rowsById)) {
+		addFlatRowAttributeNames(row, attributeNames);
 	}
 
 	return attributeNamesToCandidates(attributeNames);

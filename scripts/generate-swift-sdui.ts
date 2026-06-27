@@ -178,6 +178,7 @@ function emitUIRowClass(rowSpec: RowSpec): string {
 		'destination: String = ""',
 		"actions: [UI_RowAction] = []",
 		'visible: String = ""',
+		"name: String? = nil",
 		...entries.map(
 			([key, value]) =>
 				`${swiftIdentifier(key)}: ${swiftTypeForSpecType(value)} = ${swiftDefaultValueForSpecType(value)}`,
@@ -194,6 +195,7 @@ function emitUIRowClass(rowSpec: RowSpec): string {
 		"        case destination",
 		"        case actions",
 		"        case visible",
+		"        case name",
 		...entries.map(([key]) => `        case ${swiftIdentifier(key)}`),
 	];
 	const decodeLines = entries.map(([key, value]) =>
@@ -211,6 +213,7 @@ public final class UI_Row: Codable {
     public let destination: String
     public let actions: [UI_RowAction]
     public let visible: String
+    public let name: String?
 ${attributeFields.join("\n")}
 
     public init(${initParams.join(", ")}) {
@@ -220,6 +223,7 @@ ${attributeFields.join("\n")}
         self.destination = destination
         self.actions = actions
         self.visible = visible
+        self.name = name
 ${attributeAssignments.join("\n")}
     }
 
@@ -235,6 +239,7 @@ ${codingKeyCases.join("\n")}
         destination = try c.decodeIfPresent(String.self, forKey: .destination) ?? ""
         actions = try c.decodeIfPresent([UI_RowAction].self, forKey: .actions) ?? []
         visible = try c.decodeIfPresent(String.self, forKey: .visible) ?? ""
+        name = try c.decodeIfPresent(String.self, forKey: .name)
 ${decodeLines.join("\n")}
     }
 
@@ -246,6 +251,7 @@ ${decodeLines.join("\n")}
         try c.encode(destination, forKey: .destination)
         try c.encode(actions, forKey: .actions)
         try c.encode(visible, forKey: .visible)
+        try c.encodeIfPresent(name, forKey: .name)
 ${encodeLines.join("\n")}
     }
 }

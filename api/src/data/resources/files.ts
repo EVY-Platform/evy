@@ -21,7 +21,11 @@ import {
 } from "evy-types/validators";
 
 import { file } from "../../../../types/generated/ts/db/schema.generated";
-import { type EvyDb, hasDatabaseErrorCode } from "../../database/db";
+import {
+	type EvyDb,
+	hasDatabaseErrorCode,
+	PG_UNIQUE_VIOLATION,
+} from "../../database/db";
 import {
 	deleteUploadSession,
 	getUploadSession,
@@ -58,6 +62,8 @@ export function resetFileStorageDirsForTest(): void {
 }
 
 // Resource operations
+
+const NODE_ENOENT = "ENOENT" as const;
 
 export async function listFileRowsWithBinary(
 	db: EvyDb,
@@ -117,7 +123,7 @@ export async function deleteFileResource(
 	try {
 		await deleteFileBinary(metadata.id);
 	} catch (err) {
-		if (!hasNodeErrorCode(err, "ENOENT")) {
+		if (!hasNodeErrorCode(err, NODE_ENOENT)) {
 			throw err;
 		}
 	}
@@ -156,7 +162,7 @@ async function insertFileMetadata(
 		})
 		.returning()
 		.catch((err: unknown) => {
-			if (hasDatabaseErrorCode(err, "23505")) {
+			if (hasDatabaseErrorCode(err, PG_UNIQUE_VIOLATION)) {
 				throw new Error("Resource already exists");
 			}
 			throw err;
@@ -296,7 +302,7 @@ async function deletePathIfExists(path: string): Promise<void> {
 	try {
 		await unlink(path);
 	} catch (err) {
-		if (!hasNodeErrorCode(err, "ENOENT")) {
+		if (!hasNodeErrorCode(err, NODE_ENOENT)) {
 			throw err;
 		}
 	}

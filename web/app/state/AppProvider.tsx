@@ -1,4 +1,3 @@
-import type { UI_Flow as ServerFlow } from "evy-types";
 import {
 	createElement,
 	type ReactNode,
@@ -11,9 +10,13 @@ import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
 import { wsClient } from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
 import { baseRows } from "../rows/baseRows";
-import type { UI_Flow } from "../types/flow";
-import { decodeFlows, encodeFlow } from "../utils/decodeFlow";
-import { findFlowById } from "../utils/flowHelpers";
+import {
+	collectionsEqual,
+	collectionsToMaps,
+	collectReachableEntityIds,
+	type FlowEntityCollections,
+	scopeCollectionsToReachableIds,
+} from "../utils/flowEntities";
 import { resourceNameById } from "../utils/resourcePathDisplay";
 import {
 	parseUrlPath,
@@ -26,13 +29,13 @@ import { draggingReducer, dropIndicatorReducer, pageReducer } from "./reducers";
 
 export function AppProvider({
 	children,
-	initialFlows,
+	initialFlowGraph,
 	serviceResources = [],
 	resourceAttributeMetadata = [],
 	syncWithApi = true,
 }: {
 	children: ReactNode;
-	initialFlows: ServerFlow[];
+	initialFlowGraph: FlowEntityCollections;
 	serviceResources?: ServiceResource[];
 	resourceAttributeMetadata?: ResourceAttributeMetadata[];
 	syncWithApi?: boolean;
@@ -54,23 +57,25 @@ export function AppProvider({
 			pageId: urlPageId,
 			rowPathSegments,
 		} = parseUrlPath();
+		const maps = collectionsToMaps(initialFlowGraph);
+
 		const { flowId: activeFlowId, pageId: activePageId } = resolveUrlIds(
 			urlFlowId,
 			urlPageId,
-			initialFlows,
+			maps.flowsById,
+			maps.pagesById,
 		);
-
-		const flows = decodeFlows(initialFlows);
-		const activeFlow = findFlowById(flows, activeFlowId);
-		const page = activeFlow?.pages.find((p) => p.id === activePageId);
 
 		let activeRowId: string | undefined;
 		let configStack: string[] = [];
 
-		if (page && activeFlow && rowPathSegments.length > 0) {
+		const page = activePageId ? maps.pagesById[activePageId] : undefined;
+		if (page && activeFlowId && rowPathSegments.length > 0) {
 			const validated = validateRowPathSegmentsForPage(
-				page,
+				page.id,
 				rowPathSegments,
+				maps.pagesById,
+				maps.rowsById,
 			);
 			if (validated) {
 				activeRowId = validated.rootRowId;
@@ -79,13 +84,13 @@ export function AppProvider({
 		}
 
 		return {
-			flows,
+			...maps,
 			activeFlowId,
 			activePageId,
 			activeRowId,
 			configStack,
 		};
-	}, [initialFlows]);
+	}, [initialFlowGraph]);
 
 	const [appState, dispatchRow] = useReducer(pageReducer, initialState);
 
@@ -95,40 +100,91 @@ export function AppProvider({
 		null,
 	);
 
-	const previousFlowsRef = useRef<UI_Flow[]>(appState.flows);
+	const previousMapsRef = useRef({
+		flowsById: appState.flowsById,
+		pagesById: appState.pagesById,
+		rowsById: appState.rowsById,
+	});
 
 	useEffect(() => {
-		const activeFlow = findFlowById(appState.flows, appState.activeFlowId);
-		const previousActiveFlow = findFlowById(
-			previousFlowsRef.current,
+		const currentMaps = {
+			flowsById: appState.flowsById,
+			pagesById: appState.pagesById,
+			rowsById: appState.rowsById,
+		};
+		const previousMaps = previousMapsRef.current;
+		const previousReachable = collectReachableEntityIds(
 			appState.activeFlowId,
+			previousMaps,
+		);
+		const nextReachable = collectReachableEntityIds(
+			appState.activeFlowId,
+			currentMaps,
+		);
+		const reachableIds = {
+			flowIds: new Set([
+				...previousReachable.flowIds,
+				...nextReachable.flowIds,
+			]),
+			pageIds: new Set([
+				...previousReachable.pageIds,
+				...nextReachable.pageIds,
+			]),
+			rowIds: new Set([
+				...previousReachable.rowIds,
+				...nextReachable.rowIds,
+			]),
+		};
+		const previousCollections = scopeCollectionsToReachableIds(
+			previousMaps,
+			reachableIds,
+		);
+		const nextCollections = scopeCollectionsToReachableIds(
+			currentMaps,
+			reachableIds,
 		);
 
-		if (syncWithApi && activeFlow && activeFlow !== previousActiveFlow) {
-			wsClient.updateSDUI(encodeFlow(activeFlow)).catch((error) => {
-				alert(
-					"Failed to save your changes. Please check your connection and try again.",
-				);
-				console.error("Failed to save flow:", error);
-			});
+		if (
+			syncWithApi &&
+			appState.activeFlowId &&
+			!collectionsEqual(previousCollections, nextCollections)
+		) {
+			wsClient
+				.saveFlowGraph(previousCollections, nextCollections)
+				.catch((error) => {
+					alert(
+						"Failed to save your changes. Please check your connection and try again.",
+					);
+					console.error("Failed to save flow:", error);
+				});
 		}
 
-		previousFlowsRef.current = appState.flows;
-	}, [appState.flows, appState.activeFlowId, syncWithApi]);
+		previousMapsRef.current = currentMaps;
+	}, [
+		appState.flowsById,
+		appState.pagesById,
+		appState.rowsById,
+		appState.activeFlowId,
+		syncWithApi,
+	]);
 
 	useUrlSync(
 		appState.activeFlowId,
 		appState.activePageId,
 		appState.activeRowId,
 		appState.configStack,
-		appState.flows,
+		appState.flowsById,
+		appState.pagesById,
+		appState.rowsById,
 		dispatchRow,
 	);
 
 	const flowsContextValue = useMemo(
 		() => ({
 			rows,
-			flows: appState.flows,
+			flowsById: appState.flowsById,
+			pagesById: appState.pagesById,
+			rowsById: appState.rowsById,
 			serviceResources,
 			resourceAttributeMetadata,
 			resourceIdToEntityName,
@@ -140,7 +196,9 @@ export function AppProvider({
 		}),
 		[
 			rows,
-			appState.flows,
+			appState.flowsById,
+			appState.pagesById,
+			appState.rowsById,
 			serviceResources,
 			resourceAttributeMetadata,
 			resourceIdToEntityName,

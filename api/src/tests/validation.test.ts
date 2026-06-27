@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import {
 	validateDataEvyFile,
 	validateFileUploadChunkMetadata,
@@ -178,8 +179,7 @@ describe("validateFlowData", () => {
 							type: "Text",
 							source: "",
 							actions: [],
-							visible:
-								"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
+							visible: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
 							title: "Cash accepted",
 						},
 					],
@@ -187,7 +187,7 @@ describe("validateFlowData", () => {
 			],
 		});
 		expect(out.pages[0]?.rows[0]?.visible).toBe(
-			"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
+			`{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
 		);
 	});
 });

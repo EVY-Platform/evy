@@ -14,11 +14,8 @@ describe("parsePhotoIds", () => {
 		expect(parsePhotoIds("id1")).toEqual(["id1"]);
 	});
 
-	it("returns [] for an empty string", () => {
+	it("returns [] for blank input", () => {
 		expect(parsePhotoIds("")).toEqual([]);
-	});
-
-	it("returns [] for a whitespace-only string", () => {
 		expect(parsePhotoIds("   ")).toEqual([]);
 	});
 

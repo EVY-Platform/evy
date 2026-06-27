@@ -72,13 +72,24 @@ describe("sync", () => {
 		);
 		const evyResourceNames = evyRows.map((row) => row.resource);
 
-		expect(evyResourceNames).toContain("sdui");
+		expect(evyResourceNames).toContain("flows");
+		expect(evyResourceNames).toContain("pages");
+		expect(evyResourceNames).toContain("rows");
 		expect(evyResourceNames).toContain("services");
 		expect(evyResourceNames).toContain("organisations");
 		expect(evyResourceNames).toContain("providers");
 		expect(evyResourceNames).toContain("files");
 		expect(evyResourceNames).toContain("serviceResources");
 		expect(evyResourceNames).not.toContain("devices");
+
+		const serviceResourcesRow = evyRows.find(
+			(row) => row.resource === "serviceResources",
+		);
+		expect(serviceResourcesRow).toEqual({
+			service: EVY_CORE_SERVICE,
+			resource: "serviceResources",
+			value: [{ id: "serviceResources-mock-1" }],
+		});
 	});
 
 	it("includes external service resources in data", async () => {
@@ -173,21 +184,5 @@ describe("sync", () => {
 			expect(row.value).toHaveLength(1);
 			expect(row.value).toEqual([{ id: `${row.resource}-mock-1` }]);
 		}
-	});
-
-	it("syncs serviceResources as ordinary evy core data", async () => {
-		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, db, deps);
-
-		const serviceResourcesRow = result.data.find(
-			(row) =>
-				row.service === EVY_CORE_SERVICE &&
-				row.resource === "serviceResources",
-		);
-		expect(serviceResourcesRow).toEqual({
-			service: EVY_CORE_SERVICE,
-			resource: "serviceResources",
-			value: [{ id: "serviceResources-mock-1" }],
-		});
 	});
 });

@@ -1,7 +1,4 @@
-import type { UI_Flow } from "../types/flow";
-import type { Row } from "../types/row";
-import { findFlowById } from "./flowHelpers";
-import { getRowsRecursive } from "./rowTree";
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
 function extractVariableFromDestination(destination: string): string | null {
@@ -19,31 +16,49 @@ function extractVariableFromDestination(destination: string): string | null {
 	return inner;
 }
 
-function collectDestinations(row: Row, result: Set<string>): void {
-	for (const subRow of getRowsRecursive(row)) {
-		const destination = subRow.config.destination;
-		if (destination) {
-			const variableName = extractVariableFromDestination(destination);
-			if (variableName) result.add(variableName);
-		}
-	}
-}
-
 export function extractDraftVariables(
-	flows: UI_Flow[],
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
+	rowsById: Record<string, DATA_EVY_Row>,
 	activeFlowId: string | undefined,
 ): string[] {
-	const flow = findFlowById(flows, activeFlowId);
+	const flow = activeFlowId ? flowsById[activeFlowId] : undefined;
 	if (!flow) return [];
 
 	const variables = new Set<string>();
-	for (const page of flow.pages) {
-		for (const row of page.rows) {
-			collectDestinations(row, variables);
-		}
-		if (page.footer) {
-			collectDestinations(page.footer, variables);
+
+	for (const pageId of flow.pageIds) {
+		const page = pagesById[pageId];
+		if (!page) continue;
+
+		const rootIds = [...page.rowIds];
+		if (page.footerRowId) rootIds.push(page.footerRowId);
+
+		const visited = new Set<string>();
+		const stack = [...rootIds];
+		while (stack.length > 0) {
+			const rowId = stack.pop();
+			if (rowId === undefined || visited.has(rowId)) continue;
+			visited.add(rowId);
+			const row = rowsById[rowId];
+			if (!row) continue;
+
+			const destination = row.data.destination;
+			if (typeof destination === "string" && destination) {
+				const variable = extractVariableFromDestination(destination);
+				if (variable) variables.add(variable);
+			}
+
+			const childId = row.data.child_row_id;
+			if (typeof childId === "string") stack.push(childId);
+			const childrenIds = row.data.children_row_ids;
+			if (Array.isArray(childrenIds)) {
+				for (const id of childrenIds) {
+					if (typeof id === "string") stack.push(id);
+				}
+			}
 		}
 	}
+
 	return Array.from(variables).sort();
 }

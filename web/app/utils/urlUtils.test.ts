@@ -1,25 +1,40 @@
 import { describe, expect, it } from "bun:test";
 
-import type { UI_Page } from "../types/flow";
-import type { Row } from "../types/row";
+import type { DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import {
 	buildUrlPath,
 	isNonRoutablePreviewRowId,
 	validateRowPathSegmentsForPage,
 } from "./urlUtils";
 
-function textRow(id: string): Row {
+function makeDataRow(
+	id: string,
+	data: Record<string, unknown> = {},
+): DATA_EVY_Row {
 	return {
 		id,
-		row: null,
-		config: {
-			type: "Text",
-			source: "",
-			visible: "true",
-			actions: [],
-			title: "",
-			text: "",
-		} as Row["config"],
+		name: id,
+		type: "Text",
+		visible: "true",
+		data: data as DATA_EVY_Row["data"],
+		createdAt: "",
+		updatedAt: "",
+	};
+}
+
+function makePage(
+	id: string,
+	rowIds: string[],
+	footerRowId?: string,
+): DATA_EVY_Page {
+	return {
+		id,
+		name: id,
+		title: "P",
+		rowIds,
+		...(footerRowId ? { footerRowId } : {}),
+		createdAt: "",
+		updatedAt: "",
 	};
 }
 
@@ -35,32 +50,32 @@ describe("isNonRoutablePreviewRowId", () => {
 
 describe("validateRowPathSegmentsForPage", () => {
 	it("accepts a valid parent-child chain and truncates invalid tail", () => {
-		const child = textRow("child-1");
-		const list: Row = {
-			id: "list-1",
-			row: null,
-			config: {
-				type: "ListContainer",
-				source: "",
-				visible: "true",
-				actions: [],
-				title: "",
-				children: [child],
-			} as Row["config"],
-		};
-		const page: UI_Page = {
-			id: "p1",
-			title: "P",
-			rows: [list],
-		};
+		const childRow = makeDataRow("child-1");
+		const listRow = makeDataRow("list-1", {
+			children_row_ids: ["child-1"],
+		});
+		const page = makePage("p1", ["list-1"]);
+		const pagesById = { p1: page };
+		const rowsById = { "list-1": listRow, "child-1": childRow };
+
 		expect(
-			validateRowPathSegmentsForPage(page, ["list-1", "child-1"]),
+			validateRowPathSegmentsForPage(
+				"p1",
+				["list-1", "child-1"],
+				pagesById,
+				rowsById,
+			),
 		).toEqual({
 			rootRowId: "list-1",
 			configStack: ["child-1"],
 		});
 		expect(
-			validateRowPathSegmentsForPage(page, ["list-1", "child-1", "nope"]),
+			validateRowPathSegmentsForPage(
+				"p1",
+				["list-1", "child-1", "nope"],
+				pagesById,
+				rowsById,
+			),
 		).toEqual({
 			rootRowId: "list-1",
 			configStack: ["child-1"],
@@ -68,27 +83,34 @@ describe("validateRowPathSegmentsForPage", () => {
 	});
 
 	it("returns null when only preview ids are present", () => {
-		const page: UI_Page = {
-			id: "p1",
-			title: "P",
-			rows: [textRow("row-1")],
-		};
+		const row = makeDataRow("row-1");
+		const page = makePage("p1", ["row-1"]);
+		const pagesById = { p1: page };
+		const rowsById = { "row-1": row };
+
 		expect(
-			validateRowPathSegmentsForPage(page, ["x:search-preview:0"]),
+			validateRowPathSegmentsForPage(
+				"p1",
+				["x:search-preview:0"],
+				pagesById,
+				rowsById,
+			),
 		).toBeNull();
 	});
 
 	it("filters preview segments and validates the remainder", () => {
-		const page: UI_Page = {
-			id: "p1",
-			title: "P",
-			rows: [textRow("row-1")],
-		};
+		const row = makeDataRow("row-1");
+		const page = makePage("p1", ["row-1"]);
+		const pagesById = { p1: page };
+		const rowsById = { "row-1": row };
+
 		expect(
-			validateRowPathSegmentsForPage(page, [
-				"row-1",
-				"x:search-preview:0",
-			]),
+			validateRowPathSegmentsForPage(
+				"p1",
+				["row-1", "x:search-preview:0"],
+				pagesById,
+				rowsById,
+			),
 		).toEqual({
 			rootRowId: "row-1",
 			configStack: [],
@@ -96,42 +118,28 @@ describe("validateRowPathSegmentsForPage", () => {
 	});
 
 	it("accepts a valid child chain", () => {
-		const leaf = textRow("leaf-child");
-		const middle: Row = {
-			id: "middle-child",
-			row: null,
-			config: {
-				type: "ListContainer",
-				source: "",
-				visible: "true",
-				actions: [],
-				title: "",
-				child: leaf,
-			} as Row["config"],
+		const leafRow = makeDataRow("leaf-child");
+		const middleRow = makeDataRow("middle-child", {
+			child_row_id: "leaf-child",
+		});
+		const rootRow = makeDataRow("root-parent", {
+			child_row_id: "middle-child",
+		});
+		const page = makePage("p1", ["root-parent"]);
+		const pagesById = { p1: page };
+		const rowsById = {
+			"root-parent": rootRow,
+			"middle-child": middleRow,
+			"leaf-child": leafRow,
 		};
-		const root: Row = {
-			id: "root-parent",
-			row: null,
-			config: {
-				type: "ListContainer",
-				source: "",
-				visible: "true",
-				actions: [],
-				title: "",
-				child: middle,
-			} as Row["config"],
-		};
-		const page: UI_Page = {
-			id: "p1",
-			title: "P",
-			rows: [root],
-		};
+
 		expect(
-			validateRowPathSegmentsForPage(page, [
-				"root-parent",
-				"middle-child",
-				"leaf-child",
-			]),
+			validateRowPathSegmentsForPage(
+				"p1",
+				["root-parent", "middle-child", "leaf-child"],
+				pagesById,
+				rowsById,
+			),
 		).toEqual({
 			rootRowId: "root-parent",
 			configStack: ["middle-child", "leaf-child"],

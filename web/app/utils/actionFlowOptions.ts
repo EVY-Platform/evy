@@ -1,6 +1,5 @@
+import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import type { ServiceResource } from "../api/sync";
-import type { UI_Flow } from "../types/flow";
-import { findFlowById } from "./flowHelpers";
 import { displayLabel } from "./labelFormatting";
 import {
 	formatResourcePathForDisplay,
@@ -21,19 +20,23 @@ export function toVariableOptions(
 }
 
 export function getFlowOptions(
-	flows: UI_Flow[],
+	flowsById: Record<string, DATA_EVY_Flow>,
 ): { value: string; label: string }[] {
-	return flows.map((f) => ({ value: f.id, label: f.name }));
+	return Object.values(flowsById).map((f) => ({
+		value: f.id,
+		label: f.name,
+	}));
 }
 
 export function getPageOptions(
-	flows: UI_Flow[],
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
 	flowId: string,
 ): { value: string; label: string }[] {
-	const flow = findFlowById(flows, flowId);
+	const flow = flowsById[flowId];
 	if (!flow) return [];
-	return flow.pages.map((p) => ({
-		value: p.id,
-		label: p.title || p.id,
-	}));
+	return flow.pageIds
+		.map((id) => pagesById[id])
+		.filter((p): p is DATA_EVY_Page => !!p)
+		.map((p) => ({ value: p.id, label: p.title || p.id }));
 }

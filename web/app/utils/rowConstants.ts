@@ -8,3 +8,22 @@ export const ROW_METADATA_KEYS = new Set([
 	"actions",
 	"visible",
 ]);
+
+export const ROW_CHILD_FIELD = "child_row_id" as const;
+export const ROW_CHILDREN_FIELD = "children_row_ids" as const;
+
+export const ROW_DECOMPOSE_SKIP_KEYS = new Set([
+	"id",
+	"name",
+	"type",
+	"visible",
+	"child",
+	"children",
+]);
+
+export const ROW_ATTRIBUTE_STATIC_NAMES = [
+	"source",
+	"destination",
+	"title",
+	"visible",
+] as const;

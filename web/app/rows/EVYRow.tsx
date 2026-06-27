@@ -8,6 +8,7 @@ export const UnknownRow = defineRow("UnknownRow", {
 		type: "Text",
 		actions: [],
 		source: "",
+		visible: "true",
 		title: "Unknown row",
 	},
 	render: (row) => <RowLayout title={row.config.title} />,

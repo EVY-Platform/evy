@@ -27,7 +27,8 @@ export function ActionPopup({
 	onSave,
 	onCancel,
 }: ActionPopupProps) {
-	const { flows, activeFlowId, serviceResources } = useFlowsContext();
+	const { flowsById, pagesById, rowsById, activeFlowId, serviceResources } =
+		useFlowsContext();
 	const [expression, setExpression] = useState<ConditionExpression | null>(
 		() => parseCondition(action.condition),
 	);
@@ -35,8 +36,9 @@ export function ActionPopup({
 	const [falseBranch, setFalseBranch] = useState(action.false);
 
 	const draftVariables = useMemo(
-		() => extractDraftVariables(flows, activeFlowId),
-		[flows, activeFlowId],
+		() =>
+			extractDraftVariables(flowsById, pagesById, rowsById, activeFlowId),
+		[flowsById, pagesById, rowsById, activeFlowId],
 	);
 
 	const handleSave = useCallback(() => {
@@ -92,7 +94,8 @@ export function ActionPopup({
 								branchId={`true-${actionIndex}`}
 								value={trueBranch}
 								draftVariables={draftVariables}
-								flows={flows}
+								flowsById={flowsById}
+								pagesById={pagesById}
 								serviceResources={serviceResources}
 								onChange={setTrueBranch}
 							/>
@@ -106,7 +109,8 @@ export function ActionPopup({
 								branchId={`false-${actionIndex}`}
 								value={falseBranch}
 								draftVariables={draftVariables}
-								flows={flows}
+								flowsById={flowsById}
+								pagesById={pagesById}
 								serviceResources={serviceResources}
 								onChange={setFalseBranch}
 							/>

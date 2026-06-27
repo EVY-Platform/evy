@@ -19,66 +19,78 @@ extension EnvironmentValues {
   }
 }
 
-extension UI_Page: View {
-  public var body: some View {
-    EVYPageBody(page: self)
-  }
-}
+/// Renders a page by id, reading title/rowIds/footerRowId directly from the pages table.
+struct EVYPage: View {
+  let pageId: String
 
-private struct EVYPageBody: View {
-  let page: UI_Page
   @Environment(\.evyDraftScopeId) private var evyDraftScopeId
+  @State private var pageReloadID = 0
 
   var body: some View {
-    pageContent
-      .onAppear {
-        EVY.activeCacheScopeId = page.id
-        EVY.draftStore.activeScopeId = evyDraftScopeId
-        bootstrapDrafts(in: page, scopeId: evyDraftScopeId)
+    Group {
+      if let page = EVYPageStore.page(id: pageId) {
+        pageContent(page: page)
+          .id(pageReloadID)
       }
-      .simultaneousGesture(
-        TapGesture().onEnded {
-          UIApplication.shared.sendAction(
-            #selector(UIResponder.resignFirstResponder),
-            to: nil,
-            from: nil,
-            for: nil
-          )
-        })
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
+      guard
+        let change = notification.userInfo?[EVYDataChange.userInfoKey] as? EVYDataChange,
+        change.namespace == EVYNamespace.evy,
+        change.resource == EVYCoreResource.pages.rawValue,
+        change.id == pageId
+      else { return }
+      pageReloadID += 1
+    }
   }
 
   @ViewBuilder
-  private var pageContent: some View {
+  private func pageContent(page: EVYStoredPage) -> some View {
     VStack {
-      mainContent
-      footerContent
+      mainContent(rowIds: page.rowIds)
+      footerContent(footerRowId: page.footerRowId)
     }
     .navigationTitle("")
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
       ToolbarItem(placement: .principal) {
-        EVYTextView(page.title, style: .title)
+        EVYTextView(page.title ?? "", style: .title)
           .lineLimit(1)
           .truncationMode(.tail)
-          .accessibilityIdentifier("pageTitle_\(page.id)")
+          .accessibilityIdentifier("pageTitle_\(pageId)")
       }
     }
+    .onAppear {
+      EVY.activeCacheScopeId = pageId
+      EVY.draftStore.activeScopeId = evyDraftScopeId
+      bootstrapDrafts(pageId: pageId, scopeId: evyDraftScopeId)
+    }
+    .simultaneousGesture(
+      TapGesture().onEnded {
+        UIApplication.shared.sendAction(
+          #selector(UIResponder.resignFirstResponder),
+          to: nil,
+          from: nil,
+          for: nil
+        )
+      })
   }
 
   @ViewBuilder
-  private var mainContent: some View {
+  private func mainContent(rowIds: [String]) -> some View {
     ScrollView {
-      ForEach(page.rows, id: \.id) { row in
-        pageRow(row)
+      ForEach(rowIds, id: \.self) { rowId in
+        EVYRow(rowId: rowId)
+          .padding(.vertical, Constants.minorPadding)
       }
     }
-    .accessibilityIdentifier("page_\(page.id)")
+    .accessibilityIdentifier("page_\(pageId)")
   }
 
   @ViewBuilder
-  private var footerContent: some View {
-    if let footer = page.footer {
-      EVYRow(row: footer)
+  private func footerContent(footerRowId: String?) -> some View {
+    if let footerRowId {
+      EVYRow(rowId: footerRowId)
         .overlay(
           alignment: .top,
           content: {
@@ -88,32 +100,15 @@ private struct EVYPageBody: View {
               .padding(.top, -Constants.minorPadding)
           }
         )
-        .accessibilityIdentifier("pageFooter_\(page.id)")
+        .accessibilityIdentifier("pageFooter_\(pageId)")
     }
   }
 
-  private func pageRow(_ row: UI_Row) -> some View {
-    EVYRow(row: row)
-      .padding(.vertical, Constants.minorPadding)
-  }
-
-  /// Ensures a draft exists for each row `destination` binding in the active scope.
   @MainActor
-  private func bootstrapDrafts(in page: UI_Page, scopeId: String?) {
-    forEachRow(in: page) { row in
-      guard !row.destination.isEmpty else { return }
-      let destinationProps = EVY.parsePropsFromText(row.destination)
-      let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
-      guard !variableName.isEmpty else { return }
-      let initialData: Data? =
-        [.inlinePicker, .calendar].contains(row.type)
-        ? "[]".data(using: .utf8)
-        : nil
-      EVY.ensureDraftExists(
-        variableName: variableName,
-        initialData: initialData,
-        scopeId: scopeId
-      )
+  private func bootstrapDrafts(pageId: String, scopeId: String?) {
+    forEachStoredRow(inPageId: pageId) { storedRow in
+      guard let contentRow = storedRow.uiRow() else { return }
+      bootstrapRowDraft(row: contentRow, scopeId: scopeId)
     }
   }
 }

@@ -8,6 +8,12 @@
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Flow"
 		},
 		{
+			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Page"
+		},
+		{
+			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Row"
+		},
+		{
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Service"
 		},
 		{

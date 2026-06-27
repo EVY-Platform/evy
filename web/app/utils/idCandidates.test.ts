@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import type { ServiceResource } from "../api/sync";
-import type { UI_Flow } from "../types/flow";
-import type { Row } from "../types/row";
 import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
@@ -15,49 +14,68 @@ import {
 	type IdCandidate,
 } from "./idCandidates";
 
-function makeRow(id: string, content: Partial<Row["config"]>): Row {
+function makeDataRow(
+	id: string,
+	type: string,
+	data: Record<string, unknown>,
+): DATA_EVY_Row {
 	return {
 		id,
-		row: null,
-		config: {
-			type: "Text",
-			actions: [],
-			source: "",
-			visible: "true",
-			title: "",
-			...content,
-		},
+		name: id,
+		type,
+		visible: "true",
+		data: data as DATA_EVY_Row["data"],
+		createdAt: "",
+		updatedAt: "",
 	};
 }
 
-const childRow = makeRow("child-row", {
-	title: "Child title",
-	subtitle: "Child subtitle",
-	text: "Child text",
-});
+const rowsById: Record<string, DATA_EVY_Row> = {
+	"parent-row": makeDataRow("parent-row", "Text", {
+		title: "Parent title",
+		placeholder: "Type here",
+		child_row_id: "child-row",
+		children_row_ids: ["nested-row"],
+	}),
+	"child-row": makeDataRow("child-row", "Text", {
+		title: "Child title",
+		subtitle: "Child subtitle",
+		text: "Child text",
+	}),
+	"nested-row": makeDataRow("nested-row", "Text", {
+		icon: "::star::",
+		title: "Nested title",
+	}),
+};
 
-const parentRow = makeRow("parent-row", {
-	title: "Parent title",
-	placeholder: "Type here",
-	child: childRow,
-	children: [
-		makeRow("nested-row", {
-			icon: "::star::",
-			title: "Nested title",
-		}),
-	],
-});
-
-const flows = [
-	{
+const flowsById: Record<string, DATA_EVY_Flow> = {
+	"flow-1": {
 		id: "flow-1",
 		name: "Checkout",
-		pages: [
-			{ id: "page-1", title: "Item Details", rows: [parentRow] },
-			{ id: "page-2", title: "", rows: [] },
-		],
+		pageIds: ["page-1", "page-2"],
+		createdAt: "",
+		updatedAt: "",
 	},
-] satisfies UI_Flow[];
+};
+
+const pagesById: Record<string, DATA_EVY_Page> = {
+	"page-1": {
+		id: "page-1",
+		name: "page-1",
+		title: "Item Details",
+		rowIds: ["parent-row"],
+		createdAt: "",
+		updatedAt: "",
+	},
+	"page-2": {
+		id: "page-2",
+		name: "page-2",
+		title: "",
+		rowIds: [],
+		createdAt: "",
+		updatedAt: "",
+	},
+};
 
 const serviceResources = [
 	{ id: "res-1", fkServiceId: "service-1", name: "item" },
@@ -91,7 +109,9 @@ const functionCandidate: IdCandidate = {
 
 describe("idCandidates", () => {
 	test("buildIdCandidates returns flows, pages, and resources", () => {
-		expect(buildIdCandidates(flows, serviceResources)).toEqual([
+		expect(
+			buildIdCandidates(flowsById, pagesById, serviceResources),
+		).toEqual([
 			{ id: "flow-1", name: "Checkout", category: "Flow" },
 			{ id: "page-1", name: "Item Details", category: "Page" },
 			{ id: "page-2", name: "page-2", category: "Page" },
@@ -141,7 +161,7 @@ describe("idCandidates", () => {
 	});
 
 	test("buildRowAttributeCandidates returns unique root, content, and nested row attributes", () => {
-		expect(buildRowAttributeCandidates(flows)).toEqual(
+		expect(buildRowAttributeCandidates(rowsById)).toEqual(
 			[
 				"destination",
 				"icon",
@@ -179,13 +199,10 @@ describe("idCandidates", () => {
 		expect(filterCandidates(candidates, "")).toEqual(candidates);
 	});
 
-	test("filterCandidates only returns starts-with matches", () => {
+	test("filterCandidates only returns case-insensitive starts-with matches", () => {
 		expect(
 			filterCandidates(candidates, "it").map((candidate) => candidate.id),
 		).toEqual(["res-1", "res-1-long"]);
-	});
-
-	test("filterCandidates is case-insensitive", () => {
 		expect(
 			filterCandidates(candidates, "ITEM").map(
 				(candidate) => candidate.id,

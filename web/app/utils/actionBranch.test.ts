@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
-
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SERVICE,
+} from "evy-types/marketplaceResources";
 import {
 	formatBranchDisplay,
 	parseBranch,
@@ -19,22 +22,25 @@ describe("action branch helpers", () => {
 	});
 
 	it("parses create with namespace and resource", () => {
-		const MARKETPLACE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
-		const ITEMS_RESOURCE_ID = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd";
 		expect(
-			parseBranch(`{create(${MARKETPLACE_ID},${ITEMS_RESOURCE_ID})}`),
+			parseBranch(
+				`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
+			),
 		).toEqual({
 			functionName: "create",
-			args: [MARKETPLACE_ID, ITEMS_RESOURCE_ID],
+			args: [MARKETPLACE_SERVICE, MARKETPLACE_RESOURCE.ITEMS],
 		});
 	});
 
 	it("serializes create with namespace and resource", () => {
-		const MARKETPLACE_ID = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
-		const ITEMS_RESOURCE_ID = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd";
 		expect(
-			serializeBranch("create", [MARKETPLACE_ID, ITEMS_RESOURCE_ID]),
-		).toBe(`{create(${MARKETPLACE_ID},${ITEMS_RESOURCE_ID})}`);
+			serializeBranch("create", [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.ITEMS,
+			]),
+		).toBe(
+			`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
+		);
 	});
 
 	it("parses navigate query as a third function argument", () => {

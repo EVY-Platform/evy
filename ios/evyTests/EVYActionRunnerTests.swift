@@ -44,26 +44,27 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testShowActionPresentsChild() throws {
     let row = try makeRowWithChild()
-    var shownRow: UI_Row?
+    let childRef = row.child.map(EVYRowRef.inline)
+    var shownRef: EVYRowRef?
     let action = UI_RowAction(condition: "", false: "", true: "{show()}")
-    EVYActionRunner.run(actions: [action], row: row, show: { shownRow = $0 }) { _ in }
-    XCTAssertEqual(shownRow?.id, "child-row")
+    EVYActionRunner.run(actions: [action], childRef: childRef, show: { shownRef = $0 }) { _ in }
+    XCTAssertEqual(shownRef?.id, "child-row")
   }
 
   func testShowActionWithoutChildIsNoOp() throws {
-    let row = try makeRowWithoutChild()
-    var shownRow: UI_Row?
+    var shownRef: EVYRowRef?
     let action = UI_RowAction(condition: "", false: "", true: "{show()}")
-    EVYActionRunner.run(actions: [action], row: row, show: { shownRow = $0 }) { _ in }
-    XCTAssertNil(shownRow)
+    EVYActionRunner.run(actions: [action], childRef: nil, show: { shownRef = $0 }) { _ in }
+    XCTAssertNil(shownRef)
   }
 
   func testFalseBranchShowActionPresentsChild() throws {
     let row = try makeRowWithChild()
-    var shownRow: UI_Row?
+    let childRef = row.child.map(EVYRowRef.inline)
+    var shownRef: EVYRowRef?
     let action = UI_RowAction(condition: "{false}", false: "{show()}", true: "")
-    EVYActionRunner.run(actions: [action], row: row, show: { shownRow = $0 }) { _ in }
-    XCTAssertEqual(shownRow?.id, "child-row")
+    EVYActionRunner.run(actions: [action], childRef: childRef, show: { shownRef = $0 }) { _ in }
+    XCTAssertEqual(shownRef?.id, "child-row")
   }
 
   func testNavigateWithBraceFunction() {

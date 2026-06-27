@@ -15,6 +15,7 @@ import {
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
 import type { EvyDb } from "../database/db";
+import { DATA_CHANGED_EVENT } from "../shared/ws";
 
 import { validateAuth as validateDeviceAuth } from "./resources/devices";
 import {
@@ -23,11 +24,28 @@ import {
 	listFileRowsWithBinary,
 } from "./resources/files";
 import {
+	createFlowResource,
+	deleteFlowResource,
+	listFlowRows,
+	updateFlowResource,
+} from "./resources/flows";
+import {
 	createOrganizationResource,
 	listOrganizationRows,
 	updateOrganizationResource,
 } from "./resources/organisation";
-import { createSduiFlow, getSduiRows, updateSduiFlow } from "./resources/sdui";
+import {
+	createPageResource,
+	deletePageResource,
+	listPageRows,
+	updatePageResource,
+} from "./resources/pages";
+import {
+	createRowResource,
+	deleteRowResource,
+	listRowRows,
+	updateRowResource,
+} from "./resources/rows";
 import {
 	createServiceResource,
 	listServiceRows,
@@ -46,7 +64,6 @@ import {
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
-const DATA_CHANGED_EVENT = "dataChanged";
 const evyCoreResourceNames: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
 
 let coreBroadcast: BroadcastFn | null = null;
@@ -98,8 +115,16 @@ async function getCoreBody(
 ): Promise<GetResponse> {
 	const { resource, filter } = params;
 
-	if (resource === EVY_CORE_RESOURCE.SDUI) {
-		return getSduiRows(db, filter);
+	if (resource === EVY_CORE_RESOURCE.FLOWS) {
+		return listFlowRows(db, filter);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.PAGES) {
+		return listPageRows(db, filter);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.ROWS) {
+		return listRowRows(db, filter);
 	}
 
 	if (resource === EVY_CORE_RESOURCE.SERVICES) {
@@ -133,8 +158,28 @@ async function createCoreBody(
 	const nowIso = new Date().toISOString();
 	const emitNotification = buildEmitNotification(resource, "create");
 
-	if (resource === EVY_CORE_RESOURCE.SDUI) {
-		return createSduiFlow(
+	if (resource === EVY_CORE_RESOURCE.FLOWS) {
+		return createFlowResource(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.PAGES) {
+		return createPageResource(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.ROWS) {
+		return createRowResource(
 			db,
 			filter,
 			dataPayload,
@@ -204,8 +249,28 @@ async function updateCoreBody(
 	const nowIso = new Date().toISOString();
 	const emitNotification = buildEmitNotification(resource, "update");
 
-	if (resource === EVY_CORE_RESOURCE.SDUI) {
-		return updateSduiFlow(
+	if (resource === EVY_CORE_RESOURCE.FLOWS) {
+		return updateFlowResource(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.PAGES) {
+		return updatePageResource(
+			db,
+			filter,
+			dataPayload,
+			nowIso,
+			emitNotification,
+		);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.ROWS) {
+		return updateRowResource(
 			db,
 			filter,
 			dataPayload,
@@ -263,6 +328,18 @@ async function deleteCoreBody(
 ): Promise<DeleteResponse> {
 	const { resource, filter } = params;
 	const emitNotification = buildEmitNotification(resource, "delete");
+
+	if (resource === EVY_CORE_RESOURCE.FLOWS) {
+		return deleteFlowResource(db, filter, emitNotification);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.PAGES) {
+		return deletePageResource(db, filter, emitNotification);
+	}
+
+	if (resource === EVY_CORE_RESOURCE.ROWS) {
+		return deleteRowResource(db, filter, emitNotification);
+	}
 
 	if (resource === EVY_CORE_RESOURCE.FILES) {
 		return deleteFileResource(db, filter, emitNotification);

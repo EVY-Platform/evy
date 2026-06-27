@@ -11,10 +11,12 @@ struct EVYSearchRow: View {
 
   private let view: SearchRowViewData
   private let source: String
+  private let childRef: EVYRowRef?
 
-  init(view: SearchRowViewData, source: String) {
+  init(view: SearchRowViewData, source: String, childRef: EVYRowRef?) {
     self.view = view
     self.source = source
+    self.childRef = childRef
   }
 
   var body: some View {
@@ -26,7 +28,7 @@ struct EVYSearchRow: View {
       EVYSearch(
         source: source,
         placeholder: view.placeholder,
-        resultTemplate: view.child
+        resultTemplate: childRef?.templateRow()
       )
     }
     .padding(.horizontal, Constants.majorPadding)
@@ -34,39 +36,8 @@ struct EVYSearchRow: View {
 }
 
 #Preview {
-  EVYSearchRowPreview()
-}
-
-private struct EVYSearchRowPreview: View {
-  private let row = EVYSearchRowPreview.makeSearchRow()
-
-  init() {
-    let previewItemsJSON = """
-      [
-        { "id": "preview-item-1", "title": "Amazing Fridge", "category": "Kitchen" },
-        { "id": "preview-item-2", "title": "Amazing Freezer", "category": "Kitchen" },
-        { "id": "preview-item-3", "title": "Vintage Printer", "category": "Office" }
-      ]
-      """
-
-    if let previewItemsData = previewItemsJSON.data(using: .utf8),
-      let parsed = try? JSONDecoder().decode(EVYJson.self, from: previewItemsData)
-    {
-      try? EVY.publicStore.applySyncedValue(
-        namespace: EVYNamespace.local, resource: "items", value: parsed)
-    }
-  }
-
-  var body: some View {
-    if let row {
-      EVYRow(row: row)
-    } else {
-      Text("Unable to build search row preview")
-    }
-  }
-
-  private static func makeSearchRow() -> UI_Row? {
-    let searchRowJSON = """
+  EVYPreviewRow(
+    json: """
       {
         "id": "preview-search-row",
         "type": "Search",
@@ -86,12 +57,22 @@ private struct EVYSearchRowPreview: View {
           "icon": "::search::"
         }
       }
+      """,
+    failureMessage: "Unable to build search row preview"
+  ) {
+    let previewItemsJSON = """
+      [
+        { "id": "preview-item-1", "title": "Amazing Fridge", "category": "Kitchen" },
+        { "id": "preview-item-2", "title": "Amazing Freezer", "category": "Kitchen" },
+        { "id": "preview-item-3", "title": "Vintage Printer", "category": "Office" }
+      ]
       """
-
-    guard let searchRowData = searchRowJSON.data(using: .utf8) else {
-      return nil
+    if let data = previewItemsJSON.data(using: .utf8),
+      let parsed = try? JSONDecoder().decode(EVYJson.self, from: data)
+    {
+      try? EVY.publicStore.applySyncedValue(
+        namespace: EVYNamespace.local, resource: "items", value: parsed)
     }
-
-    return try? JSONDecoder().decode(UI_Row.self, from: searchRowData)
+    EVYPreviewMockData.seedCommon()
   }
 }

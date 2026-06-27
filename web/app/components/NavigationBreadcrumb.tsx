@@ -1,16 +1,15 @@
+import type { DATA_EVY_Page } from "evy-types";
 import { useEffect, useMemo, useRef, useState } from "react";
-
+import { useRowById } from "../hooks/useRowById";
 import parseIconText from "../icons/parseIconText";
 import { useFlowsContext } from "../state";
-import type { Row } from "../types/row";
-import { findFlowById } from "../utils/flowHelpers";
 import { splitCamelCaseToWords } from "../utils/labelFormatting";
 import {
 	breadcrumbLabelForPage,
 	breadcrumbLabelForRow,
 } from "../utils/navLabels";
 import { capturePageFramePosition } from "../utils/preActivationCapture";
-import { findRowInPages } from "../utils/rowTree";
+import { storedRowToRow } from "../utils/rowCodec";
 import { CreateFlowDialog } from "./CreateFlowDialog";
 import { PopoverSelect } from "./PopoverSelect";
 
@@ -26,7 +25,9 @@ const CREATE_FLOW_OPTION_VALUE = "__evy_create_flow__";
 
 export function NavigationBreadcrumb() {
 	const {
-		flows,
+		flowsById,
+		pagesById,
+		rowsById,
 		activeFlowId,
 		activePageId,
 		activeRowId,
@@ -37,14 +38,13 @@ export function NavigationBreadcrumb() {
 	const [createFlowOpen, setCreateFlowOpen] = useState(false);
 	const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-	const activeFlow = findFlowById(flows, activeFlowId);
-	const activePage = activeFlow?.pages.find((p) => p.id === activePageId);
-	const pages = activeFlow?.pages ?? [];
+	const activeFlow = activeFlowId ? flowsById[activeFlowId] : undefined;
+	const activePage = activePageId ? pagesById[activePageId] : undefined;
+	const flowPages = (activeFlow?.pageIds ?? [])
+		.map((id) => pagesById[id])
+		.filter((p): p is DATA_EVY_Page => Boolean(p));
 
-	const rootRow =
-		activeRowId && pages.length > 0
-			? findRowInPages(activeRowId, pages)
-			: undefined;
+	const rootRow = useRowById(activeRowId);
 
 	const breadcrumbScrollKey = `${activeFlowId ?? ""}:${activePageId ?? ""}:${activeRowId ?? ""}:${configStack.join(",")}`;
 
@@ -57,7 +57,7 @@ export function NavigationBreadcrumb() {
 
 	const flowOptions = useMemo(
 		() => [
-			...flows.map((f) => ({
+			...Object.values(flowsById).map((f) => ({
 				value: f.id,
 				label: splitCamelCaseToWords(f.name),
 			})),
@@ -68,7 +68,7 @@ export function NavigationBreadcrumb() {
 				action: true,
 			},
 		],
-		[flows],
+		[flowsById],
 	);
 
 	const navigateBreadcrumb = (configStackLength: number) => {
@@ -78,16 +78,21 @@ export function NavigationBreadcrumb() {
 		dispatchRow({ type: "NAVIGATE_BREADCRUMB", configStackLength });
 	};
 
-	const rowSegments: Array<{ id: string; row: Row; stackLength: number }> =
-		[];
+	type RowSegment = {
+		id: string;
+		row: ReturnType<typeof storedRowToRow>;
+		stackLength: number;
+	};
+	const rowSegments: RowSegment[] = [];
 	if (activePage && rootRow) {
 		rowSegments.push({ id: rootRow.id, row: rootRow, stackLength: 0 });
 		for (let i = 0; i < configStack.length; i++) {
-			const childRow = findRowInPages(configStack[i], pages);
-			if (childRow) {
+			const stackRowId = configStack[i];
+			const record = rowsById[stackRowId];
+			if (record) {
 				rowSegments.push({
-					id: configStack[i],
-					row: childRow,
+					id: stackRowId,
+					row: storedRowToRow(record),
 					stackLength: i + 1,
 				});
 			}
@@ -138,7 +143,7 @@ export function NavigationBreadcrumb() {
 								aria-current={
 									isPageActiveWithNoRow ? "page" : undefined
 								}
-								aria-label={`Select page ${breadcrumbLabelForPage(activePage, pages)}`}
+								aria-label={`Select page ${breadcrumbLabelForPage(activePage, flowPages)}`}
 								onClick={() => {
 									capturePageFramePosition(activePage.id);
 									dispatchRow({
@@ -147,7 +152,7 @@ export function NavigationBreadcrumb() {
 									});
 								}}
 							>
-								{breadcrumbLabelForPage(activePage, pages)}
+								{breadcrumbLabelForPage(activePage, flowPages)}
 							</button>
 						</>
 					)}

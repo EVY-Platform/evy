@@ -2,18 +2,10 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "get-response",
 	"title": "GetResponse",
-	"description": "Response for get method - array of UI_Flow and/or generic GetDataResponse items (per-item oneOf avoids overlap with the previous root oneOf, which matched both branches for [] and for UI_Flow[]).",
+	"description": "Response for get method - array of JSON-compatible resource rows.",
 	"type": "array",
 	"items": {
-		"oneOf": [
-			{ "$ref": "../sdui/evy.schema.json" },
-			{
-				"allOf": [
-					{ "$ref": "#/$defs/GetDataResponse" },
-					{ "not": { "$ref": "../sdui/evy.schema.json" } }
-				]
-			}
-		]
+		"$ref": "#/$defs/GetDataResponse"
 	},
 	"$defs": {
 		"GetDataResponse": {
@@ -26,7 +18,9 @@
 				{ "type": "null" },
 				{
 					"type": "array",
-					"items": { "$ref": "#/$defs/GetDataResponse" }
+					"items": {
+						"$ref": "#/$defs/GetDataResponse"
+					}
 				},
 				{
 					"type": "object",

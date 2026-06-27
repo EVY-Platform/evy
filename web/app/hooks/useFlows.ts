@@ -1,13 +1,13 @@
-import type { UI_Flow as ServerFlow } from "evy-types";
 import { useEffect, useState } from "react";
 import {
 	type ResourceAttributeMetadata,
 	type ServiceResource,
 	syncWebData,
 } from "../api/sync";
+import type { FlowEntityCollections } from "../utils/flowEntities";
 
 type UseFlowsResult = {
-	flows: ServerFlow[] | null;
+	flowGraph: FlowEntityCollections | null;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 	loading: boolean;
@@ -15,7 +15,9 @@ type UseFlowsResult = {
 };
 
 export function useFlows(): UseFlowsResult {
-	const [flows, setFlows] = useState<ServerFlow[] | null>(null);
+	const [flowGraph, setFlowGraph] = useState<FlowEntityCollections | null>(
+		null,
+	);
 	const [serviceResources, setServiceResources] = useState<ServiceResource[]>(
 		[],
 	);
@@ -31,12 +33,12 @@ export function useFlows(): UseFlowsResult {
 		async function fetchFlows() {
 			try {
 				const {
-					flows: fetchedFlows,
+					flowGraph: fetchedFlowGraph,
 					serviceResources: fetchedResources,
 					resourceAttributeMetadata: fetchedResourceAttributeMetadata,
 				} = await syncWebData();
 				if (!cancelled) {
-					setFlows(fetchedFlows);
+					setFlowGraph(fetchedFlowGraph);
 					setServiceResources(fetchedResources);
 					setResourceAttributeMetadata(
 						fetchedResourceAttributeMetadata,
@@ -61,7 +63,7 @@ export function useFlows(): UseFlowsResult {
 	}, []);
 
 	return {
-		flows,
+		flowGraph,
 		serviceResources,
 		resourceAttributeMetadata,
 		loading,

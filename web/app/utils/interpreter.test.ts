@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { parseText } from "./interpreter";
 
 const compoundDimensionsText =
@@ -92,17 +92,17 @@ describe("parseText", () => {
 	it("resolves findFirst to the data argument for mock data", () => {
 		expect(
 			parseText(
-				"{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id)}",
+				`{findFirst(${MARKETPLACE_RESOURCE.SELLING_REASONS}, item.selling_reason_id)}`,
 			),
-		).toBe("e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8");
+		).toBe(MARKETPLACE_RESOURCE.SELLING_REASONS);
 	});
 
 	it("keeps text after findFirst as a normal suffix", () => {
 		expect(
 			parseText(
-				"{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id)}.value",
+				`{findFirst(${MARKETPLACE_RESOURCE.SELLING_REASONS}, item.selling_reason_id)}.value`,
 			),
-		).toBe("e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8.value");
+		).toBe(`${MARKETPLACE_RESOURCE.SELLING_REASONS}.value`);
 	});
 
 	it("keeps dimension preview safe for unresolved values", () => {
@@ -114,16 +114,12 @@ describe("parseText", () => {
 	});
 
 	it("displays resource ID-prefixed paths with mapped entity names", () => {
-		const resourceMap = new Map([
-			["dc28ed59-298e-493c-8ff3-3e60f2ebccbd", "item"],
-		]);
-		const otherMap = new Map([
-			["dc28ed59-298e-493c-8ff3-3e60f2ebccbd", "listing"],
-		]);
+		const resourceMap = new Map([[MARKETPLACE_RESOURCE.ITEMS, "item"]]);
+		const otherMap = new Map([[MARKETPLACE_RESOURCE.ITEMS, "listing"]]);
 
 		expect(
 			parseText(
-				"Hello {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+				`Hello {${MARKETPLACE_RESOURCE.ITEMS}.title}`,
 				undefined,
 				resourceMap,
 			),
@@ -132,7 +128,7 @@ describe("parseText", () => {
 		// Different map, different result — no global state leakage
 		expect(
 			parseText(
-				"Hello {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+				`Hello {${MARKETPLACE_RESOURCE.ITEMS}.title}`,
 				undefined,
 				otherMap,
 			),

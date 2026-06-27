@@ -16,10 +16,21 @@ test.describe("Offline and connection resilience", () => {
 	}) => {
 		await page.addInitScript(() => {
 			const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
+			const nowIso = new Date().toISOString();
 			const mockFlow = {
 				id: "offline-flow",
 				name: "Offline Save Fail",
-				pages: [{ id: "offline-page", title: "Page", rows: [] }],
+				pageIds: ["offline-page"],
+				createdAt: nowIso,
+				updatedAt: nowIso,
+			};
+			const mockPage = {
+				id: "offline-page",
+				name: "Page",
+				title: "Page",
+				rowIds: [],
+				createdAt: nowIso,
+				updatedAt: nowIso,
 			};
 
 			class MockWebSocket extends EventTarget {
@@ -76,8 +87,18 @@ test.describe("Offline and connection resilience", () => {
 								data: [
 									{
 										service: EVY_CORE_SERVICE,
-										resource: "sdui",
+										resource: "flows",
 										value: [mockFlow],
+									},
+									{
+										service: EVY_CORE_SERVICE,
+										resource: "pages",
+										value: [mockPage],
+									},
+									{
+										service: EVY_CORE_SERVICE,
+										resource: "rows",
+										value: [],
 									},
 								],
 							},

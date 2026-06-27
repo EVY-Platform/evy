@@ -43,6 +43,9 @@
 				},
 				"footer": {
 					"$ref": "#/$defs/UI_Row"
+				},
+				"name": {
+					"type": "string"
 				}
 			}
 		},
@@ -174,6 +177,9 @@
 					"items": {
 						"type": "string"
 					}
+				},
+				"name": {
+					"type": "string"
 				}
 			}
 		},

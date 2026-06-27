@@ -6,6 +6,8 @@ import { getConnectionUrl } from "../data/connection";
 
 export type EvyDb = ReturnType<typeof createDb>;
 
+export const PG_UNIQUE_VIOLATION = "23505" as const;
+
 export function createDb() {
 	const connectionString = getConnectionUrl();
 	const client = new SQL(connectionString);

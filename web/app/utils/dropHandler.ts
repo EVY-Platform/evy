@@ -6,18 +6,20 @@ import {
 	type Edge,
 	extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import type { DATA_EVY_Page } from "evy-types";
 import type { Dispatch } from "react";
 import invariant from "tiny-invariant";
 import { containerDropindicatorId } from "../rows/EVYRow";
 import type { RowAction } from "../types/actions";
-import type { UI_Page } from "../types/flow";
 import type { ContainerType } from "../types/row";
 import {
+	type FlowEntityMaps,
+	findChildIndexInContainer,
 	findContainerByIdInPage,
 	findContainerOfRowInPage,
 	findPageContainingRow,
-	resolveDestinationPageFromRawPageId,
-} from "../utils/rowTree";
+	getContainerChildrenCount,
+} from "../utils/flatGraph";
 
 type DropDispatchOptions = {
 	destinationPageId: string;
@@ -34,12 +36,14 @@ type DropTargetRecord = {
 
 type PageDropPosition = "start" | "end";
 
-function getDefaultAppendIndexForPageDrop(destinationPage: UI_Page): number {
-	return destinationPage.rows.length;
+function getDefaultAppendIndexForPageDrop(
+	destinationPage: DATA_EVY_Page,
+): number {
+	return destinationPage.rowIds.length;
 }
 
 function buildInitialDropDispatchOptions(
-	destinationPage: UI_Page,
+	destinationPage: DATA_EVY_Page,
 	resolvedPageId: string,
 ): DropDispatchOptions {
 	return {
@@ -59,7 +63,7 @@ function getPageDropPosition(
 
 function applyPageDropPosition(
 	dispatchOptions: DropDispatchOptions,
-	destinationPage: UI_Page,
+	destinationPage: DATA_EVY_Page,
 	pageDropPosition: PageDropPosition | undefined,
 ): void {
 	if (pageDropPosition === "start") {
@@ -147,7 +151,8 @@ function getDestinationContainerRowId(
 
 export function handleDrop(
 	args: BaseEventPayload<ElementDragType>,
-	pages: UI_Page[],
+	maps: FlowEntityMaps,
+	flowId: string,
 	dispatchRow: Dispatch<RowAction>,
 ): void {
 	const { location, source } = args;
@@ -207,8 +212,9 @@ export function handleDrop(
 		destinationPageRecord,
 	);
 
-	const { page: destinationPage, resolvedPageId } =
-		resolveDestinationPageFromRawPageId(destinationPageId, pages);
+	const destinationPage = maps.pagesById[destinationPageId];
+	invariant(destinationPage, "handleDrop: destinationPage is not defined");
+	const resolvedPageId = destinationPageId;
 
 	const dispatchOptions = buildInitialDropDispatchOptions(
 		destinationPage,
@@ -226,7 +232,8 @@ export function handleDrop(
 		// which page actually contains the parent row, not just relying on the
 		// drop target's pageId (which may be stale or ambiguous).
 		const actualPage = findPageContainingRow(
-			pages,
+			maps,
+			flowId,
 			pageDestinationContainerRowId,
 		);
 		if (actualPage) {
@@ -295,40 +302,46 @@ export function handleDrop(
 							"handleDrop: dropTargets[1].rowId is not a string",
 						);
 						return findContainerByIdInPage(
+							maps,
 							destinationPage,
 							secondTargetRowId,
 						);
 					})()
-				: findContainerOfRowInPage(destinationPage, destinationRowId);
+				: findContainerOfRowInPage(
+						maps,
+						destinationPage,
+						destinationRowId,
+					);
 
 			if (
 				destinationContainer?.type === "children" &&
-				destinationContainer.container.config.children?.length
+				getContainerChildrenCount(
+					maps,
+					destinationContainer.containerRowId,
+				) > 0
 			) {
-				dispatchOptions.destinationIndex =
-					destinationContainer.container.config.children.findIndex(
-						(r) => r.id === destinationRow.data.rowId,
-					);
-			} else if (
-				destinationContainer?.type === "child" &&
-				destinationContainer.container.config.child?.id
-			) {
+				dispatchOptions.destinationIndex = findChildIndexInContainer(
+					maps,
+					destinationContainer.containerRowId,
+					destinationRow.data.rowId as string,
+				);
+			} else if (destinationContainer?.type === "child") {
 				dispatchOptions.destinationIndex = 0;
 			} else if (closestEdgeOfTarget && !destinationContainer) {
-				const destinationRowIndex = destinationPage.rows.findIndex(
-					(r) => r.id === destinationRow.data.rowId,
+				const destinationRowIndex = destinationPage.rowIds.indexOf(
+					destinationRow.data.rowId as string,
 				);
-				// If the destination row is the footer root (or otherwise not in page.rows),
+				// If the destination row is the footer root (or otherwise not in page.rowIds),
 				// default to appending at the end of the page rows.
 				dispatchOptions.destinationIndex =
 					destinationRowIndex >= 0
 						? destinationRowIndex
-						: destinationPage.rows.length;
+						: destinationPage.rowIds.length;
 			}
 
 			if (destinationContainer) {
 				dispatchOptions.destinationContainer = {
-					rowId: destinationContainer.container.id,
+					rowId: destinationContainer.containerRowId,
 					type: destinationContainer.type,
 				};
 			}

@@ -20,7 +20,7 @@ export default defineRow(typeName, {
 		return (
 			<RowLayout title={title} fullWidthContent>
 				<ContainerChildren
-					rows={row.config.children}
+					childIds={row.config.childrenRowIds ?? []}
 					orientation="vertical"
 					showIndicators
 					containerRowId={row.id}

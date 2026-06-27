@@ -4,6 +4,8 @@ import type { WebSocket } from "ws";
 type WSServer = typeof Server;
 export type WSParams = typeof IRPCMethodParams;
 
+export const DATA_CHANGED_EVENT = "dataChanged" as const;
+
 function getListenPort(): number {
 	const apiPort = process.env.API_PORT;
 	if (!apiPort) {
@@ -48,7 +50,7 @@ export function initServer(
 	}).then(async (server) => {
 		await server.setAuth(authHandler);
 
-		await server.event("dataChanged");
+		await server.event(DATA_CHANGED_EVENT);
 
 		console.info(`WS server listening at 0.0.0.0:${port}`);
 		return server;

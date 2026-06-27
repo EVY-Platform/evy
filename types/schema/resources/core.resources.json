@@ -1,8 +1,14 @@
 {
 	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
 	"resources": {
-		"sdui": {
+		"flows": {
 			"singular": "flow"
+		},
+		"pages": {
+			"singular": "page"
+		},
+		"rows": {
+			"singular": "row"
 		},
 		"devices": {
 			"singular": "device"

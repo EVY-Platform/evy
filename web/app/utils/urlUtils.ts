@@ -1,7 +1,5 @@
-import type { UI_Page } from "../types/flow";
-import type { Row } from "../types/row";
-import { findFlowById } from "./flowHelpers";
-import { findRowInSinglePage } from "./rowTree";
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import { findRowIdPath, pageRootIds } from "./flatGraph";
 
 export function parseUrlPath(): {
 	flowId?: string;
@@ -30,38 +28,49 @@ export function isNonRoutablePreviewRowId(rowId: string): boolean {
 	);
 }
 
-function isDirectChildRow(parent: Row, childId: string): boolean {
-	const child = parent.config.child;
-	if (child?.id === childId) return true;
-	return parent.config.children?.some((c) => c.id === childId) ?? false;
+function isDirectChildRow(
+	rowsById: Record<string, DATA_EVY_Row>,
+	parentId: string,
+	childId: string,
+): boolean {
+	const row = rowsById[parentId];
+	if (!row) return false;
+	return (
+		row.data.child_row_id === childId ||
+		(Array.isArray(row.data.children_row_ids) &&
+			(row.data.children_row_ids as string[]).includes(childId))
+	);
 }
 
 /**
- * Validates a `/flow/page/root/.../leaf` chain against the page tree.
+ * Validates a `/flow/page/root/.../leaf` chain against the flat page maps.
  * Truncates at the first invalid segment (stale id or broken parent/child link).
  */
 export function validateRowPathSegmentsForPage(
-	page: UI_Page,
+	pageId: string,
 	rawSegments: string[],
+	pagesById: Record<string, DATA_EVY_Page>,
+	rowsById: Record<string, DATA_EVY_Row>,
 ): { rootRowId: string; configStack: string[] } | null {
 	const segments = rawSegments.filter(
 		(id) => id.length > 0 && !isNonRoutablePreviewRowId(id),
 	);
 	if (segments.length === 0) return null;
 
+	const page = pagesById[pageId];
+	if (!page) return null;
+
 	const firstId = segments[0];
-	const firstRow = findRowInSinglePage(page, firstId);
-	if (!firstRow) return null;
+	if (!findRowIdPath(rowsById, pageRootIds(page), firstId)) return null;
 
 	const validated: string[] = [firstId];
-	let currentRow = firstRow;
 	for (let i = 1; i < segments.length; i++) {
 		const nextId = segments[i];
-		if (!isDirectChildRow(currentRow, nextId)) break;
-		const nextRow = findRowInSinglePage(page, nextId);
-		if (!nextRow) break;
+		if (
+			!isDirectChildRow(rowsById, validated[validated.length - 1], nextId)
+		)
+			break;
 		validated.push(nextId);
-		currentRow = nextRow;
 	}
 
 	const rootRowId = validated[0];
@@ -90,27 +99,33 @@ export function buildUrlPath(
 export function resolveUrlIds(
 	urlFlowId: string | undefined,
 	urlPageId: string | undefined,
-	flows: { id: string; pages: { id: string }[] }[],
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
 ): { flowId: string | undefined; pageId: string | undefined } {
-	const defaultFlowId = flows[0]?.id;
+	const flowIds = Object.keys(flowsById);
+	const defaultFlowId = flowIds[0];
 
 	if (!urlFlowId) {
 		return { flowId: defaultFlowId, pageId: undefined };
 	}
 
-	const flow = findFlowById(flows, urlFlowId);
+	const flow = flowsById[urlFlowId];
 	if (!flow) {
-		return { flowId: defaultFlowId, pageId: flows[0]?.pages[0]?.id };
+		const firstPageId = flowsById[defaultFlowId ?? ""]?.pageIds[0];
+		return {
+			flowId: defaultFlowId,
+			pageId:
+				firstPageId && pagesById[firstPageId] ? firstPageId : undefined,
+		};
 	}
 
 	if (!urlPageId) {
 		return { flowId: urlFlowId, pageId: undefined };
 	}
 
-	const pageExists = flow.pages.some((p) => p.id === urlPageId);
-	if (!pageExists) {
-		return { flowId: urlFlowId, pageId: flow.pages[0]?.id };
+	if (flow.pageIds.includes(urlPageId)) {
+		return { flowId: urlFlowId, pageId: urlPageId };
 	}
 
-	return { flowId: urlFlowId, pageId: urlPageId };
+	return { flowId: urlFlowId, pageId: flow.pageIds[0] };
 }

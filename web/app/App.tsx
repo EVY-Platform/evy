@@ -33,13 +33,13 @@ import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
 import { useFlows } from "./hooks/useFlows";
+import { useRowById } from "./hooks/useRowById";
 import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
 import { AppProvider, useDragContext, useFlowsContext } from "./state";
 import { buildActiveChildPages } from "./utils/childPageHelpers";
 import { handleDrop } from "./utils/dropHandler";
-import { findFlowById } from "./utils/flowHelpers";
+import { serverFlowsToCollections } from "./utils/flowEntities";
 import { capturePageFramePosition } from "./utils/preActivationCapture";
-import { findRowInPages } from "./utils/rowTree";
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
 const noop = () => {};
@@ -113,7 +113,9 @@ function AppContent() {
 		activePageId,
 		activeRowId,
 		configStack,
-		flows,
+		flowsById,
+		pagesById,
+		rowsById,
 		activeFlowId,
 	} = useFlowsContext();
 	const { dragging, dispatchDragging } = useDragContext();
@@ -141,14 +143,11 @@ function AppContent() {
 		configurationHover.close,
 	]);
 
-	const pages = useMemo(
-		() => findFlowById(flows, activeFlowId)?.pages ?? [],
-		[flows, activeFlowId],
-	);
+	const activePage = activePageId ? pagesById[activePageId] : undefined;
 
-	const activePage = useMemo(
-		() => pages.find((page) => page.id === activePageId),
-		[pages, activePageId],
+	const activeFlowPageIds = useMemo(
+		() => flowsById[activeFlowId ?? ""]?.pageIds ?? [],
+		[flowsById, activeFlowId],
 	);
 
 	useLayoutEffect(() => {
@@ -163,11 +162,23 @@ function AppContent() {
 				dispatchDragging({ type: "START_DRAGGING", source });
 			},
 			onDrop(args: BaseEventPayload<ElementDragType>) {
-				handleDrop(args, pages, dispatchRow);
+				handleDrop(
+					args,
+					{ flowsById, pagesById, rowsById },
+					activeFlowId ?? "",
+					dispatchRow,
+				);
 				dispatchDragging({ type: "STOP_DRAGGING" });
 			},
 		});
-	}, [pages, dispatchRow, dispatchDragging]);
+	}, [
+		flowsById,
+		pagesById,
+		rowsById,
+		activeFlowId,
+		dispatchRow,
+		dispatchDragging,
+	]);
 
 	const clearSelectionOnBackground = () => {
 		if (activePageId) {
@@ -183,18 +194,15 @@ function AppContent() {
 			? configStack[configStack.length - 1]
 			: activeRowId;
 
-	const activeLeafRow = activeLeafRowId
-		? findRowInPages(activeLeafRowId, pages)
-		: undefined;
+	const activeLeafRow = useRowById(activeLeafRowId);
 	const isSearchParent = activeLeafRow?.config.type === "Search";
-	const activeLeafChild = activeLeafRow?.config.child;
 	const childPages = useMemo(
-		() => buildActiveChildPages({ activeRowId, configStack, pages }),
-		[activeRowId, configStack, pages],
+		() => buildActiveChildPages({ activeRowId, configStack, rowsById }),
+		[activeRowId, configStack, rowsById],
 	);
 
 	const shouldShowBlankChildPage = Boolean(
-		activeLeafRowId && !activeLeafChild,
+		activeLeafRowId && !activeLeafRow?.config.childRowId,
 	);
 
 	return (
@@ -217,18 +225,14 @@ function AppContent() {
 								<AppPage pageId={activePage.id} />
 							</CanvasPageFrame>
 
-							{childPages.map(({ childRow, parentRowId }) => {
-								const parentRow = findRowInPages(
-									parentRowId,
-									pages,
-								);
+							{childPages.map(({ childRowId, parentRowId }) => {
 								const childVariant =
-									parentRow?.config.type === "Search"
+									rowsById[parentRowId]?.type === "Search"
 										? "full"
 										: "sheet";
 								return (
 									<CanvasPageFrame
-										key={childRow.id}
+										key={childRowId}
 										wrapperStyle={
 											secondaryPageWithPhoneStyle
 										}
@@ -236,7 +240,7 @@ function AppContent() {
 										data-testid="child-page"
 									>
 										<ChildPage
-											childRow={childRow}
+											childRowId={childRowId}
 											pageId={activePage.id}
 											parentRowId={parentRowId}
 											variant={childVariant}
@@ -262,14 +266,14 @@ function AppContent() {
 							)}
 						</Fragment>
 					) : (
-						pages.map((page) => (
+						activeFlowPageIds.map((pageId) => (
 							<CanvasPageFrame
-								key={page.id}
-								pageId={page.id}
+								key={pageId}
+								pageId={pageId}
 								wrapperStyle={pageWithPhoneStyle}
 								className="evy-flex-shrink-0"
 							>
-								<AppPage pageId={page.id} />
+								<AppPage pageId={pageId} />
 							</CanvasPageFrame>
 						))
 					)}
@@ -350,7 +354,7 @@ function PlaceholderShell({ children }: { children: ReactNode }) {
 
 export function App() {
 	const {
-		flows,
+		flowGraph,
 		serviceResources,
 		resourceAttributeMetadata,
 		loading,
@@ -360,7 +364,9 @@ export function App() {
 	const testServiceResources = window.__TEST_SERVICE_RESOURCES__;
 	const testResourceAttributeMetadata =
 		window.__TEST_RESOURCE_ATTRIBUTE_METADATA__;
-	const initialFlows = testFlows ?? flows;
+	const initialFlowGraph = testFlows
+		? serverFlowsToCollections(testFlows)
+		: flowGraph;
 	const initialServiceResources = testFlows
 		? (testServiceResources ?? [])
 		: serviceResources;
@@ -378,7 +384,8 @@ export function App() {
 		return () => clearTimeout(timer);
 	}, []);
 
-	const ready = !loading && Boolean(initialFlows) && !error && minTimeElapsed;
+	const ready =
+		!loading && Boolean(initialFlowGraph) && !error && minTimeElapsed;
 
 	useEffect(() => {
 		if (!ready || showContent) return;
@@ -412,7 +419,9 @@ export function App() {
 
 	return (
 		<AppProvider
-			initialFlows={initialFlows ?? []}
+			initialFlowGraph={
+				initialFlowGraph ?? { flows: [], pages: [], rows: [] }
+			}
 			serviceResources={initialServiceResources}
 			resourceAttributeMetadata={initialResourceAttributeMetadata}
 			syncWithApi={!testFlows}
