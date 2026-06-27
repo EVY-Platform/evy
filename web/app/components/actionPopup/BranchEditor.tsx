@@ -1,8 +1,8 @@
+import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import { useCallback, useMemo } from "react";
 import type { ServiceResource } from "../../api/sync";
-import type { UI_Flow } from "../../types/flow";
 import {
 	type ActionFunction,
 	parseBranch,
@@ -21,7 +21,8 @@ type BranchEditorProps = {
 	branchId: string;
 	value: string;
 	draftVariables: string[];
-	flows: UI_Flow[];
+	flowsById: Record<string, DATA_EVY_Flow>;
+	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
 	onChange: (value: string) => void;
 };
@@ -45,7 +46,8 @@ function buildArgDropdowns(
 	functionName: ActionFunction | "",
 	currentArgs: string[],
 	draftVariables: string[],
-	flows: UI_Flow[],
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
 	serviceResources: ServiceResource[],
 ): ArgDropdownSlot[] {
 	if (!functionName || functionName === "close" || functionName === "show") {
@@ -54,14 +56,14 @@ function buildArgDropdowns(
 
 	if (functionName === "navigate") {
 		const dropdowns: ArgDropdownSlot[] = [
-			{ slotId: "navigate-flow", options: getFlowOptions(flows) },
+			{ slotId: "navigate-flow", options: getFlowOptions(flowsById) },
 		];
 
 		const selectedFlowId = currentArgs[0];
 		if (selectedFlowId) {
 			dropdowns.push({
 				slotId: "navigate-page",
-				options: getPageOptions(flows, selectedFlowId),
+				options: getPageOptions(flowsById, pagesById, selectedFlowId),
 			});
 		}
 		return dropdowns;
@@ -104,7 +106,8 @@ export function BranchEditor({
 	branchId,
 	value,
 	draftVariables,
-	flows,
+	flowsById,
+	pagesById,
 	serviceResources,
 	onChange,
 }: BranchEditorProps) {
@@ -149,7 +152,8 @@ export function BranchEditor({
 		selectedFunction as ActionFunction | "",
 		args,
 		draftVariables,
-		flows,
+		flowsById,
+		pagesById,
 		serviceResources,
 	);
 

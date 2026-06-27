@@ -1,6 +1,10 @@
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import type { UI_RowAction } from "evy-types";
-import type { UI_Flow } from "./flow";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	UI_RowAction,
+} from "evy-types";
 import type { ContainerType } from "./row";
 
 export type RowAction =
@@ -135,7 +139,9 @@ export type DropIndicatorAction =
 	  };
 
 export type AppState = {
-	flows: UI_Flow[];
+	flowsById: Record<string, DATA_EVY_Flow>;
+	pagesById: Record<string, DATA_EVY_Page>;
+	rowsById: Record<string, DATA_EVY_Row>;
 	activeRowId?: string;
 	activeFlowId?: string;
 	activePageId?: string;

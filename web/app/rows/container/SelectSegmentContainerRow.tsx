@@ -2,7 +2,7 @@ import { type CSSProperties, type MouseEvent, useState } from "react";
 import { ContainerChildren } from "../../components/ContainerChildren";
 import { useRowById } from "../../hooks/useRowById";
 import { useFlowsContext } from "../../state";
-import type { Row, RowConfig } from "../../types/row";
+import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
 
@@ -53,8 +53,7 @@ export default defineRow(typeName, {
 			rawSegments.every((x): x is string => typeof x === "string")
 				? rawSegments
 				: [];
-		const rawChildren = row.config.children;
-		const children: Row[] = Array.isArray(rawChildren) ? rawChildren : [];
+		const childrenRowIds = row.config.childrenRowIds ?? [];
 
 		// Segment button handler: stop propagation so the click doesn't bubble to
 		// RowPrimitive and trigger the generic row-toggle, then ensure the container
@@ -76,13 +75,13 @@ export default defineRow(typeName, {
 		const rowPathIndex = activeRowPath.indexOf(rowId);
 		const activeDirectChildId =
 			rowPathIndex >= 0 ? activeRowPath[rowPathIndex + 1] : undefined;
-		const activeDirectChildIndex = children.findIndex(
-			(child) => child.id === activeDirectChildId,
+		const activeDirectChildIndex = childrenRowIds.indexOf(
+			activeDirectChildId ?? "",
 		);
 		const visibleChildIndex =
 			activeDirectChildIndex >= 0 ? activeDirectChildIndex : selectedTab;
 
-		const selectedChild = children[visibleChildIndex];
+		const selectedChildId = childrenRowIds[visibleChildIndex];
 
 		const title = row.config.title;
 
@@ -112,10 +111,8 @@ export default defineRow(typeName, {
 					})}
 				</div>
 				<ContainerChildren
-					rows={
-						selectedChild !== undefined
-							? [selectedChild]
-							: undefined
+					childIds={
+						selectedChildId !== undefined ? [selectedChildId] : []
 					}
 					containerRowId={rowId}
 					containerType="children"

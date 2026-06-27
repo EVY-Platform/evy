@@ -1,5 +1,4 @@
-import type { UI_Flow } from "../types/flow";
-import { findFlowById } from "./flowHelpers";
+import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
 export const ACTION_FUNCTIONS = [
@@ -123,20 +122,22 @@ export function serializeBranch(
 
 export function formatBranchDisplay(
 	branchString: string,
-	flows?: UI_Flow[],
+	flowsById?: Record<string, DATA_EVY_Flow>,
+	pagesById?: Record<string, DATA_EVY_Page>,
 ): string {
 	const parsed = parseBranch(branchString);
 	if (!parsed) return "None";
 
 	if (
 		parsed.functionName === "navigate" &&
-		flows &&
+		flowsById &&
+		pagesById &&
 		parsed.args.length >= 2
 	) {
 		const [flowId, pageId] = parsed.args;
-		const flow = findFlowById(flows, flowId);
+		const flow = flowsById[flowId ?? ""];
 		const flowName = flow?.name ?? flowId;
-		const page = flow?.pages.find((p) => p.id === pageId);
+		const page = pagesById[pageId ?? ""];
 		const pageName = page?.title || page?.id || pageId;
 		const queryDisplay = parsed.args[2] ? `, ${parsed.args[2]}` : "";
 		return `${parsed.functionName}(${flowName}, ${pageName}${queryDisplay})`;

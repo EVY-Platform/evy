@@ -20,20 +20,25 @@ struct EVYListContainerRow: View {
 
   private let view: ListContainerRowViewData
   private let source: String
+  private let childRef: EVYRowRef?
+  private let childRefs: [EVYRowRef]
   private var dynamicRows: EVYState<[EVYListContainerDynamicRow]>
 
-  init(view: ListContainerRowViewData, source: String) {
+  init(view: ListContainerRowViewData, source: String, childRef: EVYRowRef?, childRefs: [EVYRowRef])
+  {
     self.view = view
     self.source = source
+    self.childRef = childRef
+    self.childRefs = childRefs
 
-    let childTemplate = view.child
+    let templateRef = childRef
     dynamicRows = EVYState(
       textToWatch: source,
       setter: {
-        guard let childTemplate, !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else {
-          return []
-        }
+        guard let templateRef, !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return [] }
+
+        guard let template = templateRef.templateRow() else { return [] }
 
         do {
           let data = try EVY.getDataFromText(source)
@@ -44,7 +49,7 @@ struct EVYListContainerRow: View {
             dataRows = [data]
           }
 
-          let formatter = try EVYDatumRowFormatter(template: childTemplate)
+          let formatter = try EVYDatumRowFormatter(template: template)
           return dataRows.compactMap { datum in
             guard let row = try? formatter.formattedResult(datum: datum).row else {
               return nil
@@ -67,8 +72,8 @@ struct EVYListContainerRow: View {
       ForEach(dynamicRows.value) { dynamicRow in
         EVYRow(row: dynamicRow.row)
       }
-      ForEach(view.children, id: \.id) { child in
-        EVYRow(row: child)
+      ForEach(childRefs, id: \.id) { ref in
+        EVYRow(ref: ref)
       }
     }
   }

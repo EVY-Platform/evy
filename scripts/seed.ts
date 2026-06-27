@@ -7,11 +7,20 @@ import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
 import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	UI_Page,
+	UI_Row,
+} from "../types/generated/ts";
 import { EVY_CORE_SERVICE } from "../types/generated/ts/coreResources";
 import {
 	file as fileTable,
 	flow as flowTable,
 	organization as organizationTable,
+	page as pageTable,
+	row as rowTable,
 	serviceProvider as serviceProviderTable,
 	serviceResource as serviceResourceTable,
 	service as serviceTable,
@@ -99,6 +108,8 @@ const coreSchema = {
 	serviceProvider: serviceProviderTable,
 	serviceResource: serviceResourceTable,
 	flow: flowTable,
+	page: pageTable,
+	row: rowTable,
 	file: fileTable,
 };
 const marketplaceSchema = { data: marketplaceDataTable };
@@ -118,7 +129,9 @@ const SEED_IDS = {
 	evyOrganization: "09f07052-c27c-4116-a508-a2bcb074c827",
 	evyMarketplaceProvider: "be00fb53-80e9-4a09-a43f-4588b4ffc851",
 	logo: "ec3a7609-e2bc-484e-aab1-acef6777595c",
-	coreSduiResource: "d23cd318-3df4-486f-92d8-77f84402e63c",
+	coreFlowsResource: "d23cd318-3df4-486f-92d8-77f84402e63c",
+	corePagesResource: "fbfdc3be-6a88-4f1a-a72a-cd49de3f9629",
+	coreRowsResource: "7c2d2ca4-9b1a-469f-a5df-39800357f79f",
 	coreDevicesResource: "a7198f1b-7ff9-44e1-b1c1-da491c59aca4",
 	coreOrganisationsResource: "584098b1-811f-4563-a6f0-e7669e884cdc",
 	coreServicesResource: "8eccd82c-dd04-4cc7-b588-e64d36d3f27b",
@@ -246,8 +259,85 @@ function timestamped(now: string): { createdAt: string; updatedAt: string } {
 	return { createdAt: now, updatedAt: now };
 }
 
+type DecomposedFlow = {
+	flowRow: DATA_EVY_Flow;
+	pageRows: DATA_EVY_Page[];
+	rowRows: DATA_EVY_Row[];
+};
+
+function decomposeFlow(flow: SeedFlow, now: string): DecomposedFlow {
+	const rowRows: DATA_EVY_Row[] = [];
+	const pageRows = flow.pages.map((page) =>
+		decomposePage(page, rowRows, now),
+	);
+	return {
+		flowRow: {
+			id: flow.id,
+			name: flow.name,
+			pageIds: pageRows.map((page) => page.id),
+			...timestamped(now),
+		},
+		pageRows,
+		rowRows,
+	};
+}
+
+function decomposePage(
+	page: UI_Page,
+	rowRows: DATA_EVY_Row[],
+	now: string,
+): DATA_EVY_Page {
+	return {
+		id: page.id,
+		name: (page.name ?? page.title) || "Page",
+		title: page.title,
+		rowIds: page.rows.map((row) => decomposeRow(row, rowRows, now)),
+		footerRowId: page.footer
+			? decomposeRow(page.footer, rowRows, now)
+			: undefined,
+		...timestamped(now),
+	};
+}
+
+function decomposeRow(
+	uiRow: UI_Row,
+	rowRows: DATA_EVY_Row[],
+	now: string,
+): string {
+	const data: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(uiRow)) {
+		if (
+			["id", "name", "type", "visible", "child", "children"].includes(key)
+		) {
+			continue;
+		}
+		if (value !== undefined) {
+			data[key] = value;
+		}
+	}
+	if (uiRow.child) {
+		data.child_row_id = decomposeRow(uiRow.child, rowRows, now);
+	}
+	if (Array.isArray(uiRow.children) && uiRow.children.length > 0) {
+		data.children_row_ids = uiRow.children.map((child) =>
+			decomposeRow(child, rowRows, now),
+		);
+	}
+	rowRows.push({
+		id: uiRow.id,
+		name: (uiRow.name ?? uiRow.title) || uiRow.type,
+		type: uiRow.type,
+		visible: uiRow.visible || "true",
+		data,
+		...timestamped(now),
+	});
+	return uiRow.id;
+}
+
 const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
-	[SEED_IDS.coreSduiResource, EVY_CORE_SERVICE, "flow"],
+	[SEED_IDS.coreFlowsResource, EVY_CORE_SERVICE, "flow"],
+	[SEED_IDS.corePagesResource, EVY_CORE_SERVICE, "page"],
+	[SEED_IDS.coreRowsResource, EVY_CORE_SERVICE, "row"],
 	[SEED_IDS.coreDevicesResource, EVY_CORE_SERVICE, "device"],
 	[SEED_IDS.coreOrganisationsResource, EVY_CORE_SERVICE, "organisation"],
 	[SEED_IDS.coreServicesResource, EVY_CORE_SERVICE, "service"],
@@ -510,15 +600,23 @@ async function seedDatabase({
 			.insert(coreSchema.serviceResource)
 			.values(buildServiceResourceRows(now));
 
+		await tx.delete(coreSchema.row);
+		await tx.delete(coreSchema.page);
 		await tx.delete(coreSchema.flow);
-		const flowRows = [...evyFlowsJson, ...serviceFlowsJson].map(
-			(flowData) => ({
-				id: flowData.id,
-				data: flowData,
-				createdAt: now,
-				updatedAt: now,
-			}),
+		const decomposedFlows = [...evyFlowsJson, ...serviceFlowsJson].map(
+			(flowData) => decomposeFlow(flowData, now),
 		);
+		const rowRows = decomposedFlows.flatMap((flowData) => flowData.rowRows);
+		const pageRows = decomposedFlows.flatMap(
+			(flowData) => flowData.pageRows,
+		);
+		const flowRows = decomposedFlows.map((flowData) => flowData.flowRow);
+		if (rowRows.length > 0) {
+			await tx.insert(coreSchema.row).values(rowRows);
+		}
+		if (pageRows.length > 0) {
+			await tx.insert(coreSchema.page).values(pageRows);
+		}
 		if (flowRows.length > 0) {
 			await tx.insert(coreSchema.flow).values(flowRows);
 		}

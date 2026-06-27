@@ -1,6 +1,12 @@
-import type { UI_Flow as ServerFlow, SyncResponse } from "evy-types";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	SyncResponse,
+} from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { isServerFlow, wsClient } from "./wsClient";
+import type { FlowEntityCollections } from "../utils/flowEntities";
+import { wsClient } from "./wsClient";
 
 export type ServiceResource = {
 	id: string;
@@ -16,23 +22,70 @@ export type ResourceAttributeMetadata = {
 
 const MAX_ATTRIBUTE_DEPTH = 5;
 
-function extractSduiFlows(response: SyncResponse): ServerFlow[] {
-	const sduiRow = response.data.find(
-		(row) =>
-			row.service === EVY_CORE_SERVICE &&
-			row.resource === EVY_CORE_RESOURCE.SDUI,
+function extractFlatResourceRows<T>(
+	response: SyncResponse,
+	resource: string,
+	guard: (item: unknown) => item is T,
+): T[] {
+	const row = response.data.find(
+		(row) => row.service === EVY_CORE_SERVICE && row.resource === resource,
 	);
-
-	const value = sduiRow?.value;
-	if (!Array.isArray(value)) {
-		return [];
+	if (!Array.isArray(row?.value)) return [];
+	if (!row.value.every(guard)) {
+		throw new Error(`Invalid ${resource} in sync response`);
 	}
+	return row.value;
+}
 
-	if (!value.every(isServerFlow)) {
-		throw new Error("Invalid flows in sync response");
-	}
+function extractFlowEntityCollections(
+	response: SyncResponse,
+): FlowEntityCollections {
+	return {
+		flows: extractFlatResourceRows(
+			response,
+			EVY_CORE_RESOURCE.FLOWS,
+			isDataEvyFlow,
+		),
+		pages: extractFlatResourceRows(
+			response,
+			EVY_CORE_RESOURCE.PAGES,
+			isDataEvyPage,
+		),
+		rows: extractFlatResourceRows(
+			response,
+			EVY_CORE_RESOURCE.ROWS,
+			isDataEvyRow,
+		),
+	};
+}
 
-	return value;
+function isDataEvyFlow(item: unknown): item is DATA_EVY_Flow {
+	if (!isRecord(item)) return false;
+	return (
+		typeof item.id === "string" &&
+		typeof item.name === "string" &&
+		Array.isArray(item.pageIds)
+	);
+}
+
+function isDataEvyPage(item: unknown): item is DATA_EVY_Page {
+	if (!isRecord(item)) return false;
+	return (
+		typeof item.id === "string" &&
+		typeof item.name === "string" &&
+		Array.isArray(item.rowIds)
+	);
+}
+
+function isDataEvyRow(item: unknown): item is DATA_EVY_Row {
+	if (!isRecord(item)) return false;
+	return (
+		typeof item.id === "string" &&
+		typeof item.name === "string" &&
+		typeof item.type === "string" &&
+		typeof item.visible === "string" &&
+		isRecord(item.data)
+	);
 }
 
 function isServiceResource(item: unknown): item is ServiceResource {
@@ -114,13 +167,13 @@ function extractResourceAttributeMetadata(
 const EPOCH = "1970-01-01T00:00:00.000Z";
 
 export async function syncWebData(): Promise<{
-	flows: ServerFlow[];
+	flowGraph: FlowEntityCollections;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 }> {
 	const response = await wsClient.sync(EPOCH);
 	return {
-		flows: extractSduiFlows(response),
+		flowGraph: extractFlowEntityCollections(response),
 		serviceResources: extractServiceResources(response),
 		resourceAttributeMetadata: extractResourceAttributeMetadata(response),
 	};

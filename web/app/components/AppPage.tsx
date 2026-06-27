@@ -4,8 +4,8 @@ import { usePageEdgeIndicators } from "../hooks/usePageEdgeIndicators";
 import { useParseText } from "../hooks/useParseText";
 import { useDragContext, useFlowsContext } from "../state";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
-import { findFlowById } from "../utils/flowHelpers";
 import { capturePageFramePosition } from "../utils/preActivationCapture";
+import { storedRowToRow } from "../utils/rowCodec";
 import { BlankPageDropIndicator } from "./BlankPageDropIndicator";
 import { buildRowElements } from "./buildRowElements";
 import { DraggableRowContainer } from "./DraggableRowContainer";
@@ -26,7 +26,7 @@ const pageTitleStyle: CSSProperties = {
 };
 
 export default function AppPage({ pageId }: { pageId: string }) {
-	const { flows, activeFlowId, dispatchRow } = useFlowsContext();
+	const { pagesById, rowsById, rows, dispatchRow } = useFlowsContext();
 	const { dispatchDropIndicator, dragging } = useDragContext();
 	const parseText = useParseText();
 
@@ -64,18 +64,11 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		dropTargetRef: pageWrapperRef,
 	});
 
-	const page = useMemo(
-		() =>
-			findFlowById(flows, activeFlowId)?.pages.find(
-				(p) => p.id === pageId,
-			),
-		[flows, activeFlowId, pageId],
-	);
-
-	const pageRows = page?.rows ?? [];
-	const pageHasRows = pageRows.length > 0;
+	const page = pagesById[pageId];
+	const pageRowIds = page?.rowIds ?? [];
+	const pageHasRows = pageRowIds.length > 0;
 	const lastRowId = pageHasRows
-		? pageRows[pageRows.length - 1].id
+		? pageRowIds[pageRowIds.length - 1]
 		: undefined;
 
 	const { forcedIndicators, showBlankPageIndicator, edgePosition } =
@@ -83,8 +76,14 @@ export default function AppPage({ pageId }: { pageId: string }) {
 
 	const rowElements = useMemo(() => {
 		if (!page) return [];
-		return buildRowElements(page.rows, selectRow, forcedIndicators);
-	}, [page, selectRow, forcedIndicators]);
+		return buildRowElements(
+			page.rowIds,
+			rowsById,
+			rows,
+			selectRow,
+			forcedIndicators,
+		);
+	}, [page, rowsById, rows, selectRow, forcedIndicators]);
 
 	const titleElement = page?.title ? (
 		<button
@@ -97,7 +96,11 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		</button>
 	) : null;
 
-	const footer = page?.footer;
+	const footerRowId = page?.footerRowId;
+	const footerRecord = footerRowId ? rowsById[footerRowId] : undefined;
+	const footerRowElement = footerRecord
+		? storedRowToRow(footerRecord).row
+		: undefined;
 
 	return (
 		<div
@@ -107,7 +110,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				contain: "layout style paint",
 			}}
 		>
-			{footer ? (
+			{footerRowId ? (
 				<div
 					ref={pageWrapperRef}
 					className="evy-overflow-hidden evy-flex evy-flex-col evy-h-full evy-bg-white"
@@ -131,10 +134,10 @@ export default function AppPage({ pageId }: { pageId: string }) {
 						/>
 					</div>
 					<DraggableRowContainer
-						rowId={footer.id}
-						selectRow={() => selectRow(footer.id)}
+						rowId={footerRowId}
+						selectRow={() => selectRow(footerRowId)}
 					>
-						{footer.row}
+						{footerRowElement}
 					</DraggableRowContainer>
 				</div>
 			) : (

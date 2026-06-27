@@ -1,9 +1,8 @@
-import type { UI_RowAction } from "evy-types";
+import type { DATA_EVY_Flow, DATA_EVY_Page, UI_RowAction } from "evy-types";
 import { Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import type { ServiceResource } from "../api/sync";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
-import type { UI_Flow } from "../types/flow";
 import { formatBranchDisplay, parseBranch } from "../utils/actionBranch";
 import {
 	formatExpressionSummary,
@@ -13,14 +12,16 @@ import { ActionPopup } from "./ActionPopup";
 
 type ActionEditorProps = {
 	actions: UI_RowAction[];
-	flows: UI_Flow[];
+	flowsById: Record<string, DATA_EVY_Flow>;
+	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
 	onUpdate: (actions: UI_RowAction[]) => void;
 };
 
 export function ActionEditor({
 	actions,
-	flows,
+	flowsById,
+	pagesById,
 	serviceResources,
 	onUpdate,
 }: ActionEditorProps) {
@@ -84,7 +85,8 @@ export function ActionEditor({
 							key={`action-${action.condition}-${action.true}-${action.false}`}
 							action={action}
 							index={index}
-							flows={flows}
+							flowsById={flowsById}
+							pagesById={pagesById}
 							serviceResources={serviceResources}
 							onEdit={() => setEditingIndex(index)}
 							onRemove={() => removeAction(index)}
@@ -112,7 +114,8 @@ export function ActionEditor({
 type ActionSummaryCardProps = {
 	action: UI_RowAction;
 	index: number;
-	flows: UI_Flow[];
+	flowsById: Record<string, DATA_EVY_Flow>;
+	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
 	onEdit: () => void;
 	onRemove: () => void;
@@ -121,7 +124,8 @@ type ActionSummaryCardProps = {
 function ActionSummaryCard({
 	action,
 	index,
-	flows,
+	flowsById,
+	pagesById,
 	serviceResources,
 	onEdit,
 	onRemove,
@@ -195,7 +199,11 @@ function ActionSummaryCard({
 						</span>
 						<ul className="evy-action-summary-list">
 							<li className="evy-text-sm">
-								{formatBranchDisplay(action.true, flows)}
+								{formatBranchDisplay(
+									action.true,
+									flowsById,
+									pagesById,
+								)}
 							</li>
 						</ul>
 					</div>
@@ -208,7 +216,11 @@ function ActionSummaryCard({
 						</span>
 						<ul className="evy-action-summary-list">
 							<li className="evy-text-sm">
-								{formatBranchDisplay(action.false, flows)}
+								{formatBranchDisplay(
+									action.false,
+									flowsById,
+									pagesById,
+								)}
 							</li>
 						</ul>
 					</div>

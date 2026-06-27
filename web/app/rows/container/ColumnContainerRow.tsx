@@ -18,7 +18,7 @@ export default defineRow(typeName, {
 		<RowLayout title={row.config.title}>
 			<div className="evy-flex">
 				<ContainerChildren
-					rows={row.config.children}
+					childIds={row.config.childrenRowIds ?? []}
 					orientation="horizontal"
 					showIndicators
 					containerRowId={row.id}

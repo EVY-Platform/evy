@@ -1,15 +1,17 @@
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { createContext, type Dispatch, useContext } from "react";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
 } from "../../api/sync";
 import type { RowAction } from "../../types/actions";
-import type { UI_Flow } from "../../types/flow";
 import type { Row } from "../../types/row";
 
 export type FlowsContextValue = {
 	rows: Row[];
-	flows: UI_Flow[];
+	flowsById: Record<string, DATA_EVY_Flow>;
+	pagesById: Record<string, DATA_EVY_Page>;
+	rowsById: Record<string, DATA_EVY_Row>;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 	resourceIdToEntityName: Map<string, string>;
@@ -22,7 +24,9 @@ export type FlowsContextValue = {
 
 export const FlowsContext = createContext<FlowsContextValue>({
 	rows: [],
-	flows: [],
+	flowsById: {},
+	pagesById: {},
+	rowsById: {},
 	serviceResources: [],
 	resourceAttributeMetadata: [],
 	resourceIdToEntityName: new Map(),

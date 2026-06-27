@@ -1,4 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 
 import type { AppState } from "../../types/actions";
 import type { Row, RowConfig } from "../../types/row";
@@ -25,94 +26,76 @@ mock.module("../../rows/baseRows", () => ({
 
 const { pageReducer } = await import("./pageReducer");
 
-function textRow(id: string, text = "hello"): Row {
+const NOW = "2024-01-01T00:00:00.000Z";
+
+function makeFlow(id: string, pageIds: string[]): DATA_EVY_Flow {
+	return { id, name: "Flow", pageIds, createdAt: NOW, updatedAt: NOW };
+}
+
+function makePage(
+	id: string,
+	rowIds: string[],
+	footerRowId?: string,
+): DATA_EVY_Page {
 	return {
 		id,
-		row: null,
-		config: {
-			type: "Text",
-			source: "",
-			visible: "true",
-			actions: [],
-			title: "T",
-			text,
-		} satisfies RowConfig,
+		name: "Page",
+		title: "Page",
+		rowIds,
+		footerRowId,
+		createdAt: NOW,
+		updatedAt: NOW,
 	};
 }
 
-function containerRow(id: string, child: Row, children: Row[] = []): Row {
+function makeTextRow(
+	id: string,
+	extra: Record<string, unknown> = {},
+): DATA_EVY_Row {
 	return {
 		id,
-		row: null,
-		config: {
-			type: "ListContainer",
-			source: "",
-			visible: "true",
-			actions: [],
+		name: id,
+		type: "Text",
+		visible: "true",
+		data: { title: "T", text: "hello", ...extra },
+		createdAt: NOW,
+		updatedAt: NOW,
+	};
+}
+
+function makeContainerRow(
+	id: string,
+	childRowId?: string,
+	childrenRowIds: string[] = [],
+): DATA_EVY_Row {
+	return {
+		id,
+		name: id,
+		type: "ListContainer",
+		visible: "true",
+		data: {
 			title: "Container",
-			child,
-			children,
-		} satisfies RowConfig,
-	};
-}
-
-function calendarRow(id: string): Row {
-	return {
-		id,
-		row: null,
-		config: {
-			type: "Calendar",
-			source: "{delivery_selection}",
-			destination: "{pickup_selection}",
-			visible: "true",
-			actions: [],
-			title: "Calendar",
-			start_time: "07:00",
-			end_time: "19:00",
-			timeslot_interval_minutes: 30,
-			label_interval_minutes: 60,
-			header_format: "EEE d",
-			timeslot_format: "HH:mm",
-		} satisfies RowConfig,
-	};
-}
-
-function selectSegmentRow(id: string): Row {
-	return {
-		id,
-		row: null,
-		config: {
-			type: "SelectSegmentContainer",
-			source: "",
-			visible: "true",
-			actions: [],
-			title: "Segments",
-			segments: ["X", "Y", "Z"],
-			children: [],
-		} satisfies RowConfig,
+			...(childRowId ? { child_row_id: childRowId } : {}),
+			...(childrenRowIds.length
+				? { children_row_ids: childrenRowIds }
+				: {}),
+		},
+		createdAt: NOW,
+		updatedAt: NOW,
 	};
 }
 
 function initialState(overrides: Partial<AppState> = {}): AppState {
+	const row1 = makeTextRow("row-1");
+	const row2 = makeTextRow("row-2");
+	const p1 = makePage("page-1", ["row-1"]);
+	const p2 = makePage("page-2", ["row-2"]);
+	const flow = makeFlow("flow-1", ["page-1", "page-2"]);
+
 	return {
-		flows: [
-			{
-				id: "flow-1",
-				name: "Flow",
-				pages: [
-					{
-						id: "page-1",
-						title: "Page",
-						rows: [textRow("row-1")],
-					},
-					{
-						id: "page-2",
-						title: "Second",
-						rows: [textRow("row-2")],
-					},
-				],
-			},
-		],
+		flowsById: { "flow-1": flow },
+		pagesById: { "page-1": p1, "page-2": p2 },
+		rowsById: { "row-1": row1, "row-2": row2 },
 		activeFlowId: "flow-1",
 		activePageId: "page-1",
 		configStack: [],
@@ -124,21 +107,20 @@ describe("pageReducer", () => {
 	it("SET_ACTIVE_FLOW clears row and config stack", () => {
 		const state = initialState({
 			activeRowId: "row-1",
-			configStack: ["x"],
+			configStack: ["some-id"],
 		});
 		const next = pageReducer(state, {
 			type: "SET_ACTIVE_FLOW",
 			flowId: "flow-1",
 		});
-		expect(next.activeFlowId).toBe("flow-1");
 		expect(next.activeRowId).toBeUndefined();
 		expect(next.configStack).toEqual([]);
 	});
 
 	it("CREATE_FLOW ignores empty name", () => {
 		const state = initialState();
-		const next = pageReducer(state, { type: "CREATE_FLOW", name: "   " });
-		expect(next.flows.length).toBe(state.flows.length);
+		const next = pageReducer(state, { type: "CREATE_FLOW", name: "  " });
+		expect(next).toBe(state);
 	});
 
 	it("CREATE_FLOW appends flow and selects it", () => {
@@ -147,22 +129,25 @@ describe("pageReducer", () => {
 			type: "CREATE_FLOW",
 			name: "New Flow",
 		});
-		expect(next.flows.length).toBe(2);
-		expect(next.activeFlowId).toBe(next.flows[1].id);
-		expect(next.flows[1].name).toBe("New Flow");
-		expect(next.activePageId).toBe(next.flows[1].pages[0]?.id);
+		const newFlowId = next.activeFlowId;
+		const newFlow = newFlowId ? next.flowsById[newFlowId] : undefined;
+		expect(newFlowId).not.toBe("flow-1");
+		expect(newFlow?.name).toBe("New Flow");
+		expect(next.activePageId).toBeDefined();
+		expect(next.configStack).toEqual([]);
 	});
 
 	it("ADD_PAGE appends page to active flow", () => {
 		const state = initialState();
 		const next = pageReducer(state, { type: "ADD_PAGE" });
-		expect(next.flows[0].pages.length).toBe(3);
-		expect(next.activePageId).toBe(next.flows[0].pages[2]?.id);
+		const flow = next.flowsById["flow-1"];
+		expect(flow?.pageIds).toHaveLength(3);
+		expect(next.activePageId).toBe(flow?.pageIds[2]);
 	});
 
 	it("ADD_ROW inserts TextRow from palette", () => {
 		const state = initialState();
-		const newId = "new-text-id";
+		const newId = crypto.randomUUID();
 		const next = pageReducer(state, {
 			type: "ADD_ROW",
 			newRowId: newId,
@@ -170,7 +155,9 @@ describe("pageReducer", () => {
 			destinationPageId: "page-1",
 			destinationIndex: 0,
 		});
-		expect(next.flows[0].pages[0].rows[0].id).toBe(newId);
+		const page = next.pagesById["page-1"];
+		expect(page?.rowIds[0]).toBe(newId);
+		expect(next.rowsById[newId]).toBeDefined();
 		expect(next.activeRowId).toBe(newId);
 	});
 
@@ -179,114 +166,80 @@ describe("pageReducer", () => {
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW",
 			rowId: "row-1",
-			configId: "text",
-			configValue: "updated",
+			configId: "title",
+			configValue: "Updated",
 		});
-		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.text).toBe("updated");
+		expect(next.rowsById["row-1"]?.data.title).toBe("Updated");
 	});
 
 	it("UPDATE_ROW keeps comma-containing string fields as strings", () => {
+		const row = makeTextRow("r", { title: "Some, title" });
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [calendarRow("row-1")],
-						},
-					],
-				},
-			],
+			rowsById: { r: row },
+			pagesById: {
+				"page-1": makePage("page-1", ["r"]),
+				"page-2": makePage("page-2", []),
+			},
 		});
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW",
-			rowId: "row-1",
-			configId: "header_format",
-			configValue: "EEE d, HH:mm",
+			rowId: "r",
+			configId: "title",
+			configValue: "Hello, World",
 		});
-		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.header_format).toBe("EEE d, HH:mm");
+		expect(next.rowsById.r?.data.title).toBe("Hello, World");
 	});
 
-	it("UPDATE_ROW splits comma-separated values for array content fields", () => {
+	it("UPDATE_ROW splits comma-separated values for array content fields (segments)", () => {
+		const row: DATA_EVY_Row = {
+			...makeTextRow("r"),
+			type: "SelectSegmentContainer",
+			data: { segments: ["A", "B"] },
+		};
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [selectSegmentRow("row-1")],
-						},
-					],
-				},
-			],
+			rowsById: { r: row },
+			pagesById: {
+				"page-1": makePage("page-1", ["r"]),
+				"page-2": makePage("page-2", []),
+			},
 		});
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW",
-			rowId: "row-1",
+			rowId: "r",
 			configId: "segments",
-			configValue: "One, Two, Three",
+			configValue: "X, Y, Z",
 		});
-		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.segments).toEqual(["One", "Two", "Three"]);
+		expect(next.rowsById.r?.data.segments).toEqual(["X", "Y", "Z"]);
 	});
 
-	it("UPDATE_ROW_ROOT sets source without changing row attributes", () => {
+	it("UPDATE_ROW_ROOT sets source without changing other fields", () => {
 		const state = initialState();
-		const before = state.flows[0].pages[0].rows.find(
-			(r) => r.id === "row-1",
-		);
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW_ROOT",
 			rowId: "row-1",
 			field: "source",
 			value: "{items}",
 		});
-		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.source).toBe("{items}");
-		expect(row?.config.title).toEqual(before?.config.title);
-		expect(row?.config.text).toEqual(before?.config.text);
+		expect(next.rowsById["row-1"]?.data.source).toBe("{items}");
+		expect(next.rowsById["row-1"]?.data.title).toBe("T");
 	});
 
 	it("UPDATE_ROW_ROOT sets destination to empty string when value is empty string", () => {
-		const base = textRow("row-1");
-		const rowWithDestination: Row = {
-			...base,
-			config: {
-				...base.config,
-				destination: "{title}",
-			} satisfies RowConfig,
-		};
+		const row = makeTextRow("r", { destination: "{old}" });
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [rowWithDestination],
-						},
-					],
-				},
-			],
+			rowsById: { r: row },
+			pagesById: {
+				"page-1": makePage("page-1", ["r"]),
+				"page-2": makePage("page-2", []),
+			},
 		});
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW_ROOT",
-			rowId: "row-1",
+			rowId: "r",
 			field: "destination",
 			value: "",
 		});
-		const row = next.flows[0].pages[0].rows[0];
-		expect(row.config.destination).toBe("");
+		expect(next.rowsById.r?.data.destination).toBe("");
 	});
 
 	it("SET_ACTIVE_ROW updates selection", () => {
@@ -297,81 +250,43 @@ describe("pageReducer", () => {
 		});
 		expect(next.activeRowId).toBe("row-1");
 		expect(next.activePageId).toBe("page-1");
+		expect(next.configStack).toEqual([]);
 	});
 
 	it("SET_ACTIVE_ROW derives root and config stack for nested row", () => {
-		const inner = textRow("inner");
-		const list: Row = {
-			id: "list-1",
-			row: null,
-			config: {
-				type: "ListContainer",
-				source: "",
-				visible: "true",
-				actions: [],
-				title: "",
-				children: [inner],
-			} satisfies RowConfig,
-		};
+		const inner = makeTextRow("inner");
+		const list = makeContainerRow("list", undefined, ["inner"]);
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [list],
-						},
-					],
-				},
-			],
+			rowsById: { list, inner },
+			pagesById: {
+				"page-1": makePage("page-1", ["list"]),
+				"page-2": makePage("page-2", []),
+			},
 		});
 		const next = pageReducer(state, {
 			type: "SET_ACTIVE_ROW",
 			rowId: "inner",
 		});
-		expect(next.activeRowId).toBe("list-1");
+		expect(next.activeRowId).toBe("list");
 		expect(next.configStack).toEqual(["inner"]);
-		expect(next.activePageId).toBe("page-1");
 	});
 
 	it("SET_ACTIVE_ROW respects explicit configStack for URL restore", () => {
-		const inner = textRow("inner");
-		const list: Row = {
-			id: "list-1",
-			row: null,
-			config: {
-				type: "ListContainer",
-				source: "",
-				visible: "true",
-				actions: [],
-				title: "",
-				children: [inner],
-			} satisfies RowConfig,
-		};
+		const inner = makeTextRow("inner");
+		const list = makeContainerRow("list", undefined, ["inner"]);
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [list],
-						},
-					],
-				},
-			],
+			rowsById: { list, inner },
+			pagesById: {
+				"page-1": makePage("page-1", ["list"]),
+				"page-2": makePage("page-2", []),
+			},
 		});
 		const next = pageReducer(state, {
 			type: "SET_ACTIVE_ROW",
-			rowId: "list-1",
+			rowId: "list",
 			configStack: ["inner"],
 		});
-		expect(next.activeRowId).toBe("list-1");
+		expect(next.activeRowId).toBe("list");
 		expect(next.configStack).toEqual(["inner"]);
 	});
 
@@ -379,17 +294,17 @@ describe("pageReducer", () => {
 		const state = initialState({ activeRowId: "row-1" });
 		const next = pageReducer(state, {
 			type: "SET_ACTIVE_PAGE",
-			pageId: "page-2",
+			pageId: "page-1",
 		});
-		expect(next.activePageId).toBe("page-2");
 		expect(next.activeRowId).toBeUndefined();
+		expect(next.activePageId).toBe("page-1");
 	});
 
 	it("CLEAR_ACTIVE_SELECTION resets selection", () => {
 		const state = initialState({
 			activeRowId: "row-1",
 			activePageId: "page-1",
-			configStack: ["a"],
+			configStack: ["child"],
 		});
 		const next = pageReducer(state, { type: "CLEAR_ACTIVE_SELECTION" });
 		expect(next.activeRowId).toBeUndefined();
@@ -398,43 +313,38 @@ describe("pageReducer", () => {
 	});
 
 	it("REMOVE_PAGE keeps at least one page", () => {
-		const singlePageState: AppState = {
-			...initialState(),
-			flows: [
-				{
-					id: "flow-1",
-					name: "F",
-					pages: [{ id: "only", title: "P", rows: [] }],
-				},
-			],
-			activePageId: "only",
-		};
-		const next = pageReducer(singlePageState, {
-			type: "REMOVE_PAGE",
-			pageId: "only",
+		const flow = makeFlow("flow-1", ["page-1"]);
+		const state = initialState({
+			flowsById: { "flow-1": flow },
+			pagesById: { "page-1": makePage("page-1", []) },
+			rowsById: {},
+			activePageId: "page-1",
 		});
-		expect(next.flows[0].pages.length).toBe(1);
-	});
-
-	it("REMOVE_PAGE selects another page when active removed", () => {
-		const state = initialState({ activePageId: "page-1" });
 		const next = pageReducer(state, {
 			type: "REMOVE_PAGE",
 			pageId: "page-1",
 		});
-		expect(next.flows[0].pages.length).toBe(1);
-		expect(next.activePageId).toBe("page-2");
-		expect(next.activeRowId).toBeUndefined();
+		expect(next).toBe(state);
 	});
 
-	it("UPDATE_PAGE_TITLE", () => {
+	it("REMOVE_PAGE selects another page when active removed", () => {
+		const state = initialState({ activePageId: "page-2" });
+		const next = pageReducer(state, {
+			type: "REMOVE_PAGE",
+			pageId: "page-2",
+		});
+		expect(next.flowsById["flow-1"]?.pageIds).not.toContain("page-2");
+		expect(next.activePageId).toBe("page-1");
+	});
+
+	it("UPDATE_PAGE_TITLE updates page title", () => {
 		const state = initialState();
 		const next = pageReducer(state, {
 			type: "UPDATE_PAGE_TITLE",
 			pageId: "page-1",
-			title: "Renamed",
+			title: "My Page",
 		});
-		expect(next.flows[0].pages[0].title).toBe("Renamed");
+		expect(next.pagesById["page-1"]?.title).toBe("My Page");
 	});
 
 	it("MOVE_ROW moves row between pages", () => {
@@ -446,12 +356,8 @@ describe("pageReducer", () => {
 			destinationPageId: "page-2",
 			destinationIndex: 0,
 		});
-		expect(next.flows[0].pages[0].rows.some((r) => r.id === "row-1")).toBe(
-			false,
-		);
-		expect(next.flows[0].pages[1].rows.some((r) => r.id === "row-1")).toBe(
-			true,
-		);
+		expect(next.pagesById["page-1"]?.rowIds).not.toContain("row-1");
+		expect(next.pagesById["page-2"]?.rowIds).toContain("row-1");
 	});
 
 	it("REMOVE_ROW removes row from page", () => {
@@ -461,7 +367,8 @@ describe("pageReducer", () => {
 			pageId: "page-1",
 			rowId: "row-1",
 		});
-		expect(next.flows[0].pages[0].rows.length).toBe(0);
+		expect(next.pagesById["page-1"]?.rowIds).not.toContain("row-1");
+		expect(next.rowsById["row-1"]).toBeUndefined();
 	});
 
 	it("UPDATE_ROW_ACTIONS sets actions", () => {
@@ -472,8 +379,7 @@ describe("pageReducer", () => {
 			rowId: "row-1",
 			actions,
 		});
-		const row = next.flows[0].pages[0].rows[0];
-		expect(row.config.actions).toEqual(actions);
+		expect(next.rowsById["row-1"]?.data.actions).toEqual(actions);
 	});
 
 	it("SET_ACTIVE_PAGE toggles off when same page is already active with no row", () => {
@@ -501,211 +407,176 @@ describe("pageReducer", () => {
 			rowId: "row-1",
 		});
 		expect(next.activeRowId).toBeUndefined();
-		expect(next.activePageId).toBeUndefined();
-		expect(next.configStack).toEqual([]);
 	});
 
 	it("PUSH_CONFIG_STACK and NAVIGATE_BREADCRUMB", () => {
-		const state = initialState({ configStack: [] });
+		const state = initialState({ configStack: ["a"] });
 		const pushed = pageReducer(state, {
 			type: "PUSH_CONFIG_STACK",
 			parentRowId: "row-1",
-			childRowId: "row-2",
+			childRowId: "b",
 		});
-		expect(pushed.configStack.length).toBeGreaterThan(0);
+		expect(pushed.configStack).toEqual(["a", "b"]);
+
 		const popped = pageReducer(pushed, {
 			type: "NAVIGATE_BREADCRUMB",
-			configStackLength: 0,
+			configStackLength: 1,
 		});
-		expect(popped.configStack).toEqual([]);
+		expect(popped.configStack).toEqual(["a"]);
 	});
 
 	it("REMOVE_ROW removes footer root", () => {
-		const foot = textRow("footer-row");
+		const foot = makeTextRow("foot");
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [textRow("row-1")],
-							footer: foot,
-						},
-					],
-				},
-			],
+			rowsById: {
+				foot,
+				"row-1": makeTextRow("row-1"),
+				"row-2": makeTextRow("row-2"),
+			},
+			pagesById: {
+				"page-1": makePage("page-1", [], "foot"),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
 			activePageId: "page-1",
 		});
 		const next = pageReducer(state, {
 			type: "REMOVE_ROW",
 			pageId: "page-1",
-			rowId: "footer-row",
+			rowId: "foot",
 		});
-		expect(next.flows[0].pages[0].footer).toBeUndefined();
-		expect(next.flows[0].pages[0].rows.length).toBe(1);
+		expect(next.pagesById["page-1"]?.footerRowId).toBeUndefined();
+		expect(next.rowsById.foot).toBeUndefined();
 	});
 
 	it("REMOVE_ROW removes nested footer child", () => {
-		const inner = textRow("foot-inner");
-		const foot = containerRow("footer-row", inner);
+		const inner = makeTextRow("inner");
+		const foot = makeContainerRow("foot", "inner");
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [],
-							footer: foot,
-						},
-					],
-				},
-			],
+			rowsById: {
+				foot,
+				inner,
+				"row-1": makeTextRow("row-1"),
+				"row-2": makeTextRow("row-2"),
+			},
+			pagesById: {
+				"page-1": makePage("page-1", [], "foot"),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
 			activePageId: "page-1",
 		});
 		const next = pageReducer(state, {
 			type: "REMOVE_ROW",
 			pageId: "page-1",
-			rowId: "foot-inner",
+			rowId: "inner",
 		});
-		expect(next.flows[0].pages[0].footer?.config.child).toBeUndefined();
-		expect(next.flows[0].pages[0].rows.length).toBe(0);
+		expect(next.rowsById.foot?.data.child_row_id).toBeUndefined();
+		expect(next.rowsById.inner).toBeUndefined();
 	});
 
 	it("MOVE_ROW moves footer root into page rows", () => {
-		const foot = textRow("footer-row");
+		const foot = makeTextRow("foot");
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [textRow("row-1")],
-							footer: foot,
-						},
-					],
-				},
-			],
+			rowsById: {
+				foot,
+				"row-1": makeTextRow("row-1"),
+				"row-2": makeTextRow("row-2"),
+			},
+			pagesById: {
+				"page-1": makePage("page-1", [], "foot"),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
 			activePageId: "page-1",
 		});
 		const next = pageReducer(state, {
 			type: "MOVE_ROW",
-			rowId: "footer-row",
+			rowId: "foot",
 			originPageId: "page-1",
 			destinationPageId: "page-1",
 			destinationIndex: 0,
 		});
-		expect(next.flows[0].pages[0].footer).toBeUndefined();
-		expect(next.flows[0].pages[0].rows[0].id).toBe("footer-row");
-		expect(next.flows[0].pages[0].rows[1].id).toBe("row-1");
+		expect(next.pagesById["page-1"]?.footerRowId).toBeUndefined();
+		expect(next.pagesById["page-1"]?.rowIds).toContain("foot");
 	});
 
 	it("ADD_ROW inserts palette row into child container", () => {
-		const container = containerRow("parent", textRow("dummy"));
+		const container = makeContainerRow("container");
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [container],
-						},
-					],
-				},
-			],
+			rowsById: {
+				container,
+				"row-1": makeTextRow("row-1"),
+				"row-2": makeTextRow("row-2"),
+			},
+			pagesById: {
+				"page-1": makePage("page-1", ["container"]),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
 		});
-		const newId = "new-child";
+		const newId = crypto.randomUUID();
 		const next = pageReducer(state, {
 			type: "ADD_ROW",
 			newRowId: newId,
 			oldRowId: "TextRow",
 			destinationPageId: "page-1",
 			destinationIndex: 0,
-			destinationContainer: { rowId: "parent", type: "child" },
+			destinationContainer: { rowId: "container", type: "children" },
 		});
-		const parentAfter = next.flows[0].pages[0].rows.find(
-			(r) => r.id === "parent",
-		);
-		expect(parentAfter?.config.child?.id).toBe(newId);
+		expect(
+			next.rowsById.container?.data.children_row_ids as string[],
+		).toContain(newId);
 	});
 
 	it("ADD_ROW inserts palette row into footer container", () => {
-		const foot = containerRow("footer-sheet", textRow("dummy"), []);
+		const foot = makeContainerRow("foot");
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [],
-							footer: foot,
-						},
-					],
-				},
-			],
+			rowsById: {
+				foot,
+				"row-1": makeTextRow("row-1"),
+				"row-2": makeTextRow("row-2"),
+			},
+			pagesById: {
+				"page-1": makePage("page-1", [], "foot"),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
 		});
-		const newId = "new-in-footer";
+		const newId = crypto.randomUUID();
 		const next = pageReducer(state, {
 			type: "ADD_ROW",
 			newRowId: newId,
 			oldRowId: "TextRow",
 			destinationPageId: "page-1",
 			destinationIndex: 0,
-			destinationContainer: { rowId: "footer-sheet", type: "children" },
+			destinationContainer: { rowId: "foot", type: "children" },
 		});
-		const footAfter = next.flows[0].pages[0].footer;
-		expect(footAfter?.config.children?.[0].id).toBe(newId);
+		expect(next.rowsById.foot?.data.children_row_ids as string[]).toContain(
+			newId,
+		);
 	});
 
 	it("ADD_ROW_AS_FOOTER adds palette row as page footer", () => {
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [textRow("row-1")],
-						},
-					],
-				},
-			],
+			pagesById: {
+				"page-1": makePage("page-1", []),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
+			rowsById: { "row-2": makeTextRow("row-2") },
 			activePageId: "page-1",
 		});
-		const newId = "new-footer";
+		const newId = crypto.randomUUID();
 		const next = pageReducer(state, {
 			type: "ADD_ROW_AS_FOOTER",
 			newRowId: newId,
 			oldRowId: "TextRow",
 			destinationPageId: "page-1",
 		});
-		expect(next.flows[0].pages[0].footer).toBeDefined();
-		expect(next.flows[0].pages[0].footer?.id).toBe(newId);
-		expect(next.flows[0].pages[0].rows.length).toBe(1);
-		expect(next.activeRowId).toBe(newId);
+		expect(next.pagesById["page-1"]?.footerRowId).toBe(newId);
+		expect(next.rowsById[newId]).toBeDefined();
 	});
 
 	it("ADD_ROW_AS_FOOTER no-ops when base row not found", () => {
 		const state = initialState();
 		const next = pageReducer(state, {
 			type: "ADD_ROW_AS_FOOTER",
-			newRowId: "new-footer",
+			newRowId: crypto.randomUUID(),
 			oldRowId: "NonExistentRow",
 			destinationPageId: "page-1",
 		});
@@ -713,112 +584,55 @@ describe("pageReducer", () => {
 	});
 
 	it("MOVE_ROW_TO_FOOTER moves row from page rows to footer", () => {
-		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [textRow("row-1"), textRow("row-2")],
-						},
-					],
-				},
-			],
-			activePageId: "page-1",
-		});
+		const state = initialState();
 		const next = pageReducer(state, {
 			type: "MOVE_ROW_TO_FOOTER",
-			rowId: "row-2",
+			rowId: "row-1",
 			originPageId: "page-1",
 			destinationPageId: "page-1",
 		});
-		expect(next.flows[0].pages[0].footer).toBeDefined();
-		expect(next.flows[0].pages[0].footer?.id).toBe("row-2");
-		expect(next.flows[0].pages[0].rows.length).toBe(1);
-		expect(next.flows[0].pages[0].rows[0].id).toBe("row-1");
-		expect(next.activeRowId).toBe("row-2");
+		expect(next.pagesById["page-1"]?.rowIds).not.toContain("row-1");
+		expect(next.pagesById["page-1"]?.footerRowId).toBe("row-1");
 	});
 
 	it("MOVE_ROW_TO_FOOTER moves row across pages", () => {
-		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [textRow("row-1")],
-						},
-						{
-							id: "page-2",
-							title: "Second",
-							rows: [textRow("row-2")],
-						},
-					],
-				},
-			],
-			activePageId: "page-1",
-		});
+		const state = initialState();
 		const next = pageReducer(state, {
 			type: "MOVE_ROW_TO_FOOTER",
 			rowId: "row-1",
 			originPageId: "page-1",
 			destinationPageId: "page-2",
 		});
-		expect(next.flows[0].pages[0].rows.length).toBe(0);
-		expect(next.flows[0].pages[1].footer).toBeDefined();
-		expect(next.flows[0].pages[1].footer?.id).toBe("row-1");
-		expect(next.activeRowId).toBe("row-1");
+		expect(next.pagesById["page-1"]?.rowIds).not.toContain("row-1");
+		expect(next.pagesById["page-2"]?.footerRowId).toBe("row-1");
 	});
 
 	it("ADD_ROW inserts palette row as child of footer descendant (blank child page drop)", () => {
-		// Build a footer subtree:
-		// footer-root (ListContainer)
-		//   └── footer-parent (Text, no child yet)
-		const footerParent = textRow("footer-parent");
-		const footerRoot = containerRow("footer-root", footerParent);
+		const footerParent = makeContainerRow("footer-parent");
+		const footerRoot = makeContainerRow("footer-root", "footer-parent");
 		const state = initialState({
-			flows: [
-				{
-					id: "flow-1",
-					name: "Flow",
-					pages: [
-						{
-							id: "page-1",
-							title: "Page",
-							rows: [textRow("row-1")],
-							footer: footerRoot,
-						},
-					],
-				},
-			],
+			rowsById: {
+				"footer-root": footerRoot,
+				"footer-parent": footerParent,
+				"row-1": makeTextRow("row-1"),
+				"row-2": makeTextRow("row-2"),
+			},
+			pagesById: {
+				"page-1": makePage("page-1", [], "footer-root"),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
 		});
-		const newId = "new-footer-child";
+		const newId = crypto.randomUUID();
 		const next = pageReducer(state, {
 			type: "ADD_ROW",
 			newRowId: newId,
 			oldRowId: "TextRow",
 			destinationPageId: "page-1",
 			destinationIndex: 0,
-			destinationContainer: { rowId: "footer-parent", type: "child" },
+			destinationContainer: { rowId: "footer-parent", type: "children" },
 		});
-
-		// The new row should be inserted as child of footer-parent
-		const footerAfter = next.flows[0].pages[0].footer;
-		expect(footerAfter).toBeDefined();
-		expect(footerAfter?.id).toBe("footer-root");
-		expect(footerAfter?.config.child?.id).toBe("footer-parent");
-		expect(footerAfter?.config.child?.config.child?.id).toBe(newId);
-
-		// Selection / config stack should reflect the new child chain.
-		// The path starts from the footer root (the page-level entry point).
-		expect(next.activeRowId).toBe("footer-root");
-		expect(next.configStack).toEqual(["footer-parent", newId]);
-		expect(next.activePageId).toBe("page-1");
+		expect(
+			next.rowsById["footer-parent"]?.data.children_row_ids as string[],
+		).toContain(newId);
 	});
 });

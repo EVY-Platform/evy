@@ -137,11 +137,63 @@ enum EVYPreviewMockData {
     guard let data = json.data(using: .utf8) else { return nil }
     return try? JSONDecoder().decode(UI_Row.self, from: data)
   }
+
+  /// Decomposes a nested row JSON tree into flat `evy:rows:<id>` records in the public
+  /// store (mirroring the backend's decompose logic). Returns the root row id.
+  @discardableResult
+  static func seedRowTree(json: String) -> String? {
+    guard let data = json.data(using: .utf8),
+      let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else { return nil }
+    decomposeAndSeedRow(root)
+    return root["id"] as? String
+  }
+
+  private static func decomposeAndSeedRow(_ rowObject: [String: Any]) {
+    let metadataKeys: Set<String> = ["id", "name", "type", "visible", "child", "children"]
+    var dataFields: [String: Any] = [:]
+
+    for (key, value) in rowObject {
+      if metadataKeys.contains(key) { continue }
+      dataFields[key] = value
+    }
+
+    if let child = rowObject["child"] as? [String: Any], let childId = child["id"] as? String {
+      dataFields["child_row_id"] = childId
+      decomposeAndSeedRow(child)
+    }
+
+    if let children = rowObject["children"] as? [[String: Any]] {
+      dataFields["children_row_ids"] = children.compactMap { $0["id"] as? String }
+      for child in children { decomposeAndSeedRow(child) }
+    }
+
+    guard let id = rowObject["id"] as? String else { return }
+    let name = rowObject["name"] as? String ?? rowObject["type"] as? String ?? "row"
+    let typeName = rowObject["type"] as? String ?? ""
+    let visible = rowObject["visible"] as? String ?? "true"
+
+    let record: [String: Any] = [
+      "id": id,
+      "name": name,
+      "type": typeName,
+      "visible": visible,
+      "data": dataFields,
+    ]
+
+    guard let bytes = try? JSONSerialization.data(withJSONObject: record) else { return }
+    try? EVY.publicStore.upsert(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.rows.rawValue,
+      id: id,
+      value: bytes
+    )
+  }
 }
 
 @MainActor
 struct EVYPreviewRow: View {
-  private let row: UI_Row?
+  private let rowId: String?
   private let failureMessage: String
 
   init(
@@ -150,13 +202,13 @@ struct EVYPreviewRow: View {
     seed: @MainActor () -> Void = EVYPreviewMockData.seedCommon
   ) {
     seed()
-    self.row = EVYPreviewMockData.decodeRow(from: json)
+    self.rowId = EVYPreviewMockData.seedRowTree(json: json)
     self.failureMessage = failureMessage
   }
 
   var body: some View {
-    if let row {
-      EVYRow(row: row)
+    if let rowId {
+      EVYRow(rowId: rowId)
     } else {
       Text(failureMessage)
     }

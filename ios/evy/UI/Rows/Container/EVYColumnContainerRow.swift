@@ -10,9 +10,11 @@ import SwiftUI
 struct EVYColumnContainerRow: View {
 
   private let view: ColumnContainerRowViewData
+  private let childRefs: [EVYRowRef]
 
-  init(view: ColumnContainerRowViewData) {
+  init(view: ColumnContainerRowViewData, childRefs: [EVYRowRef]) {
     self.view = view
+    self.childRefs = childRefs
   }
 
   var body: some View {
@@ -23,8 +25,8 @@ struct EVYColumnContainerRow: View {
           .padding(.horizontal, Constants.majorPadding)
       }
       HStack(alignment: .top) {
-        ForEach(view.children, id: \.id) { child in
-          EVYRow(row: child)
+        ForEach(childRefs, id: \.id) { ref in
+          EVYRow(ref: ref)
         }
       }
     }

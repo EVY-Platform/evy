@@ -24,6 +24,15 @@ extension Notification.Name {
   static let evyUserAlertRequested = Notification.Name("EVYUserAlertRequested")
 }
 
+struct EVYDataChange {
+  static let userInfoKey = "evyDataChange"
+  let namespace: String
+  let resource: String
+  let id: String
+
+  var recordKey: String { "\(namespace):\(resource):\(id)" }
+}
+
 @MainActor
 @Observable class EVYState<T: Equatable> {
   @MainActor

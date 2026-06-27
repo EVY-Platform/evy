@@ -162,4 +162,25 @@ final class EVYStateTests: XCTestCase {
     XCTAssertEqual(getCallCount(), 1)
     XCTAssertEqual(state.value, 1)
   }
+
+  func testDataChangePayloadInUserInfoDoesNotBreakStringKeyMatching() {
+    var callCount = 0
+    let state = EVYState<Int>(
+      watches: ["{rows}"],
+      setter: {
+        callCount += 1
+        return callCount
+      })
+    XCTAssertEqual(callCount, 1)
+
+    let change = EVYDataChange(namespace: EVYNamespace.evy, resource: "rows", id: "row-1")
+    NotificationCenter.default.post(
+      name: .evyDataChanged,
+      object: "rows",
+      userInfo: [EVYDataChange.userInfoKey: change]
+    )
+
+    XCTAssertEqual(callCount, 2)
+    XCTAssertEqual(state.value, 2)
+  }
 }

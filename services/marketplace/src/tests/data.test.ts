@@ -35,18 +35,18 @@ beforeEach(async () => {
 });
 
 describe("marketplace get/create/update", () => {
-	it("rejects SDUI resource (not a valid marketplace RPC pair)", async () => {
+	it("rejects unsupported resources", async () => {
 		await expect(
 			get({
 				service: MARKETPLACE_SERVICE,
-				resource: "sdui",
+				resource: "unsupported-resource",
 			}),
 		).rejects.toThrow("Unsupported resource id for marketplace service");
 		await expect(
 			create({
 				service: MARKETPLACE_SERVICE,
-				resource: "sdui",
-				data: { id: crypto.randomUUID(), name: "X", pages: [] },
+				resource: "unsupported-resource",
+				data: { id: crypto.randomUUID(), name: "X" },
 			}),
 		).rejects.toThrow("Unsupported resource id for marketplace service");
 	});
@@ -189,6 +189,6 @@ describe("marketplace get/create/update", () => {
 			filter: { id: rowId },
 			data: { ...row, value: "v2" },
 		});
-		expect(updated.data).toEqual({ ...row, value: "v2" });
+		expect(updated).toMatchObject({ data: { ...row, value: "v2" } });
 	});
 });

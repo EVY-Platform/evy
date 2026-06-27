@@ -29,27 +29,127 @@ actor WSEmitter {
   }
 
   func applySDUI(flowData: [String: Any], flowId: String) async throws {
+    try await saveFlowGraph(flowData: flowData, flowId: flowId)
+  }
+
+  func updateSDUI(flowData: [String: Any], flowId: String) async throws {
+    try await saveFlowGraph(flowData: flowData, flowId: flowId)
+  }
+
+  private func saveFlowGraph(flowData: [String: Any], flowId: String) async throws {
+    let graph = decomposeFlow(flowData: flowData, flowId: flowId)
+    for row in graph.rows {
+      try await upsertResource(resource: EVYCoreResource.rows.rawValue, id: row.id, data: row.data)
+    }
+    for page in graph.pages {
+      try await upsertResource(
+        resource: EVYCoreResource.pages.rawValue, id: page.id, data: page.data)
+    }
+    try await upsertResource(
+      resource: EVYCoreResource.flows.rawValue,
+      id: graph.flow.id,
+      data: graph.flow.data
+    )
+  }
+
+  private func upsertResource(resource: String, id: String, data: [String: Any]) async throws {
     let existing = try await getResource(
-      service: EVY_CORE_SERVICE, resource: "sdui", filter: ["id": flowId])
+      service: EVY_CORE_SERVICE,
+      resource: resource,
+      filter: ["id": id]
+    )
     let existingArray = existing as? [Any]
     let method = existingArray?.isEmpty == false ? "update" : "create"
     let params: [String: Any] = [
       "service": EVY_CORE_SERVICE,
-      "resource": "sdui",
-      "filter": ["id": flowId],
-      "data": flowData,
+      "resource": resource,
+      "filter": ["id": id],
+      "data": data,
     ]
     _ = try await send(method: method, params: params)
   }
 
-  func updateSDUI(flowData: [String: Any], flowId: String) async throws {
-    let params: [String: Any] = [
-      "service": EVY_CORE_SERVICE,
-      "resource": "sdui",
-      "filter": ["id": flowId],
-      "data": flowData,
+  private func decomposeFlow(flowData: [String: Any], flowId: String) -> (
+    flow: (id: String, data: [String: Any]),
+    pages: [(id: String, data: [String: Any])],
+    rows: [(id: String, data: [String: Any])]
+  ) {
+    let now = ISO8601DateFormatter().string(from: Date())
+    var rows: [(id: String, data: [String: Any])] = []
+    let pagesInput = flowData["pages"] as? [[String: Any]] ?? []
+    let pages = pagesInput.map { pageData in
+      decomposePage(pageData: pageData, rows: &rows, now: now)
+    }
+    let flowRow: [String: Any] = [
+      "id": flowId,
+      "name": nonEmptyString(flowData["name"]) ?? "Flow",
+      "pageIds": pages.map(\.id),
+      "createdAt": now,
+      "updatedAt": now,
     ]
-    _ = try await send(method: "update", params: params)
+    return ((flowId, flowRow), pages, rows)
+  }
+
+  private func decomposePage(
+    pageData: [String: Any],
+    rows: inout [(id: String, data: [String: Any])],
+    now: String
+  ) -> (id: String, data: [String: Any]) {
+    let pageId = (pageData["id"] as? String) ?? UUID().uuidString
+    let rowInputs = pageData["rows"] as? [[String: Any]] ?? []
+    let rowIds = rowInputs.map { rowData in
+      decomposeRow(rowData: rowData, rows: &rows, now: now)
+    }
+    let footerRowId = (pageData["footer"] as? [String: Any]).map { footerData in
+      decomposeRow(rowData: footerData, rows: &rows, now: now)
+    }
+    var pageRow: [String: Any] = [
+      "id": pageId,
+      "name": nonEmptyString(pageData["name"]) ?? nonEmptyString(pageData["title"]) ?? "Page",
+      "title": (pageData["title"] as? String) ?? "",
+      "rowIds": rowIds,
+      "createdAt": now,
+      "updatedAt": now,
+    ]
+    if let footerRowId { pageRow["footerRowId"] = footerRowId }
+    return (pageId, pageRow)
+  }
+
+  private func decomposeRow(
+    rowData: [String: Any],
+    rows: inout [(id: String, data: [String: Any])],
+    now: String
+  ) -> String {
+    let rowId = (rowData["id"] as? String) ?? UUID().uuidString
+    var data = rowData
+    for key in ["id", "name", "type", "visible", "child", "children"] {
+      data.removeValue(forKey: key)
+    }
+    if let child = rowData["child"] as? [String: Any] {
+      data["child_row_id"] = decomposeRow(rowData: child, rows: &rows, now: now)
+    }
+    if let children = rowData["children"] as? [[String: Any]], !children.isEmpty {
+      data["children_row_ids"] = children.map { child in
+        decomposeRow(rowData: child, rows: &rows, now: now)
+      }
+    }
+    let row: [String: Any] = [
+      "id": rowId,
+      "name": nonEmptyString(rowData["name"]) ?? nonEmptyString(rowData["title"])
+        ?? nonEmptyString(rowData["type"]) ?? "Row",
+      "type": (rowData["type"] as? String) ?? "Text",
+      "visible": (rowData["visible"] as? String) ?? "true",
+      "data": data,
+      "createdAt": now,
+      "updatedAt": now,
+    ]
+    rows.append((rowId, row))
+    return rowId
+  }
+
+  private func nonEmptyString(_ value: Any?) -> String? {
+    guard let string = value as? String, !string.isEmpty else { return nil }
+    return string
   }
 
   func getResource(service: String, resource: String, filter: [String: Any]? = nil) async throws
@@ -106,10 +206,11 @@ actor WSEmitter {
       if response["id"] == nil { continue }
       if let error = response["error"] as? [String: Any] {
         let message = (error["message"] as? String) ?? "JSON-RPC error"
+        let details = (error["data"] as? String).map { ": \($0)" } ?? ""
         throw NSError(
           domain: "WSEmitter",
           code: (error["code"] as? Int) ?? -1,
-          userInfo: [NSLocalizedDescriptionKey: "\(method) failed: \(message)"]
+          userInfo: [NSLocalizedDescriptionKey: "\(method) failed: \(message)\(details)"]
         )
       }
       return response

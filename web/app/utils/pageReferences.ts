@@ -1,8 +1,6 @@
-import type { UI_Flow, UI_Page } from "../types/flow";
-import type { Row } from "../types/row";
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { parseBranch } from "./actionBranch";
-import { breadcrumbLabelForPage, breadcrumbLabelForRow } from "./navLabels";
-import { getRowsInPage } from "./rowTree";
+import { breadcrumbLabelForPage } from "./navLabels";
 
 export type PageReferenceEntry = {
 	/** Stable key for list rendering (`${pageId}:${rowId}`). */
@@ -23,47 +21,54 @@ function branchReferencesPage(
 	return navFlowId === flowId && navPageId === targetPageId;
 }
 
-function rowReferencesTargetPage(
-	row: Row,
+/** Finds rows whose actions navigate to `targetPageId` within the same flow. */
+export function findPageReferences(
 	flowId: string,
 	targetPageId: string,
-): boolean {
-	const actions = row.config.actions;
-	if (!actions) return false;
-	return actions.some(
-		(action) =>
-			branchReferencesPage(action.true, flowId, targetPageId) ||
-			branchReferencesPage(action.false, flowId, targetPageId),
-	);
-}
-
-function collectReferencesForPage(
-	page: UI_Page,
-	flow: UI_Flow,
-	targetPageId: string,
-	results: PageReferenceEntry[],
-): void {
-	const pageLabel = breadcrumbLabelForPage(page, flow.pages);
-	const rowsOnPage: Row[] = getRowsInPage(page);
-
-	for (const row of rowsOnPage) {
-		if (!rowReferencesTargetPage(row, flow.id, targetPageId)) continue;
-		results.push({
-			referenceKey: `${page.id}:${row.id}`,
-			pageLabel,
-			rowLabel: breadcrumbLabelForRow(row),
-		});
-	}
-}
-
-/** Finds rows in `flow` whose actions navigate to `targetPageId` within the same flow. */
-export function findPageReferences(
-	flow: UI_Flow,
-	targetPageId: string,
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
+	rowsById: Record<string, DATA_EVY_Row>,
 ): PageReferenceEntry[] {
+	const flow = flowsById[flowId];
+	if (!flow) return [];
+
+	const flowPages = flow.pageIds
+		.map((id) => pagesById[id])
+		.filter((p): p is DATA_EVY_Page => !!p);
+
 	const results: PageReferenceEntry[] = [];
-	for (const page of flow.pages) {
-		collectReferencesForPage(page, flow, targetPageId, results);
+
+	for (const page of flowPages) {
+		const pageLabel = breadcrumbLabelForPage(page, flowPages);
+
+		for (const row of Object.values(rowsById)) {
+			const actions = Array.isArray(row.data.actions)
+				? (row.data.actions as { true: string; false: string }[])
+				: [];
+			const references = actions.some(
+				(action) =>
+					branchReferencesPage(action.true, flowId, targetPageId) ||
+					branchReferencesPage(action.false, flowId, targetPageId),
+			);
+			if (!references) continue;
+
+			const rowLabel =
+				typeof row.data.title === "string" && row.data.title
+					? row.data.title
+					: row.type;
+			results.push({
+				referenceKey: `${page.id}:${row.id}`,
+				pageLabel,
+				rowLabel,
+			});
+		}
 	}
-	return results;
+
+	// Deduplicate by referenceKey
+	const seen = new Set<string>();
+	return results.filter((r) => {
+		if (seen.has(r.referenceKey)) return false;
+		seen.add(r.referenceKey);
+		return true;
+	});
 }

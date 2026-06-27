@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import type { UI_Flow, UI_Row } from "evy-types";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	UI_Flow,
+	UI_Row,
+} from "evy-types";
 import { Client } from "rpc-websockets";
 import {
 	createNewFlowThroughPicker,
@@ -14,10 +20,22 @@ import {
 	waitForAppLoaded,
 } from "../integration/utils";
 
-const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
 const API_POLL_TIMEOUT_MS = 10_000;
 const TEST_TOKEN = "e2e-test-token";
 const TEST_OS = "Web";
+
+type FlatFlowGraph = {
+	flowRows: DATA_EVY_Flow[];
+	pageRows: DATA_EVY_Page[];
+	rowRows: DATA_EVY_Row[];
+};
+
+const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
+const EVY_CORE_RESOURCE = {
+	FLOWS: "flows",
+	PAGES: "pages",
+	ROWS: "rows",
+} as const;
 
 function getApiUrl(): string {
 	const apiUrl = process.env.API_URL;
@@ -55,23 +73,197 @@ async function withApiClient<T>(
 
 async function getFlowsFromApi(): Promise<UI_Flow[]> {
 	return withApiClient(async (client) => {
-		const result = (await client.call("get", {
-			service: EVY_CORE_SERVICE,
-			resource: "sdui",
-		})) as UI_Flow[];
-		return Array.isArray(result) ? result : [];
+		const [flowRows, pageRows, rowRows] = await Promise.all([
+			getFlatResourceRows<DATA_EVY_Flow>(client, EVY_CORE_RESOURCE.FLOWS),
+			getFlatResourceRows<DATA_EVY_Page>(client, EVY_CORE_RESOURCE.PAGES),
+			getFlatResourceRows<DATA_EVY_Row>(client, EVY_CORE_RESOURCE.ROWS),
+		]);
+		return assembleFlatFlows({ flowRows, pageRows, rowRows });
 	});
+}
+
+async function getFlatResourceRows<T>(
+	client: Client,
+	resource: string,
+): Promise<T[]> {
+	const result = await client.call("get", {
+		service: EVY_CORE_SERVICE,
+		resource,
+	});
+	return Array.isArray(result) ? (result as T[]) : [];
 }
 
 async function createFlowInApi(flow: UI_Flow): Promise<void> {
 	await withApiClient(async (client) => {
 		await client.login({ token: TEST_TOKEN, os: TEST_OS });
-		await client.call("create", {
-			service: EVY_CORE_SERVICE,
-			resource: "sdui",
-			data: flow,
-		});
+		const graph = decomposeServerFlow(flow, new Date().toISOString());
+		for (const row of graph.rowRows) {
+			await createFlatResource(client, EVY_CORE_RESOURCE.ROWS, row);
+		}
+		for (const page of graph.pageRows) {
+			await createFlatResource(client, EVY_CORE_RESOURCE.PAGES, page);
+		}
+		for (const flow of graph.flowRows) {
+			await createFlatResource(client, EVY_CORE_RESOURCE.FLOWS, flow);
+		}
 	});
+}
+
+async function createFlatResource(
+	client: Client,
+	resource: string,
+	data: unknown,
+): Promise<void> {
+	await client.call("create", {
+		service: EVY_CORE_SERVICE,
+		resource,
+		data,
+	});
+}
+
+function assembleFlatFlows(records: FlatFlowGraph): UI_Flow[] {
+	const pageById = new Map(records.pageRows.map((page) => [page.id, page]));
+	const rowById = new Map(records.rowRows.map((row) => [row.id, row]));
+	return records.flowRows.map((flow) => ({
+		id: flow.id,
+		name: flow.name,
+		pages: flow.pageIds
+			.map((pageId) => pageById.get(pageId))
+			.filter((page): page is DATA_EVY_Page => Boolean(page))
+			.map((page) => assemblePage(page, rowById)),
+	}));
+}
+
+function assemblePage(page: DATA_EVY_Page, rowById: Map<string, DATA_EVY_Row>) {
+	return {
+		id: page.id,
+		name: page.name,
+		title: page.title ?? "",
+		rows: page.rowIds
+			.map((rowId) => assembleRow(rowId, rowById, new Set()))
+			.filter((row): row is UI_Row => Boolean(row)),
+		footer: page.footerRowId
+			? assembleRow(page.footerRowId, rowById, new Set())
+			: undefined,
+	};
+}
+
+function assembleRow(
+	rowId: string,
+	rowById: Map<string, DATA_EVY_Row>,
+	visitedRowIds: Set<string>,
+): UI_Row | undefined {
+	if (visitedRowIds.has(rowId)) return undefined;
+	const row = rowById.get(rowId);
+	if (!row) return undefined;
+
+	const nextVisitedRowIds = new Set(visitedRowIds).add(rowId);
+	const data = { ...row.data } as Record<string, unknown>;
+	const childRowId = data.child_row_id;
+	const childrenRowIds = data.children_row_ids;
+	delete data.child_row_id;
+	delete data.children_row_ids;
+
+	const assembledRow: Record<string, unknown> = {
+		...data,
+		id: row.id,
+		name: row.name,
+		type: row.type,
+		visible: row.visible,
+	};
+	if (typeof childRowId === "string") {
+		assembledRow.child = assembleRow(
+			childRowId,
+			rowById,
+			nextVisitedRowIds,
+		);
+	}
+	if (Array.isArray(childrenRowIds)) {
+		assembledRow.children = childrenRowIds
+			.filter(
+				(childRowId): childRowId is string =>
+					typeof childRowId === "string",
+			)
+			.map((childRowId) =>
+				assembleRow(childRowId, rowById, nextVisitedRowIds),
+			)
+			.filter((row): row is UI_Row => Boolean(row));
+	}
+	return assembledRow as UI_Row;
+}
+
+function decomposeServerFlow(flow: UI_Flow, nowIso: string): FlatFlowGraph {
+	const rowRows: DATA_EVY_Row[] = [];
+	const pageRows = flow.pages.map((page) =>
+		decomposeServerPage(page, rowRows, nowIso),
+	);
+	return {
+		flowRows: [
+			{
+				id: flow.id,
+				name: flow.name,
+				pageIds: pageRows.map((page) => page.id),
+				createdAt: nowIso,
+				updatedAt: nowIso,
+			},
+		],
+		pageRows,
+		rowRows,
+	};
+}
+
+function decomposeServerPage(
+	page: UI_Flow["pages"][number],
+	rowRows: DATA_EVY_Row[],
+	nowIso: string,
+): DATA_EVY_Page {
+	return {
+		id: page.id,
+		name: (page.name ?? page.title) || "Page",
+		title: page.title,
+		rowIds: page.rows.map((row) =>
+			decomposeServerRow(row, rowRows, nowIso),
+		),
+		footerRowId: page.footer
+			? decomposeServerRow(page.footer, rowRows, nowIso)
+			: undefined,
+		createdAt: nowIso,
+		updatedAt: nowIso,
+	};
+}
+
+function decomposeServerRow(
+	row: UI_Row,
+	rowRows: DATA_EVY_Row[],
+	nowIso: string,
+): string {
+	const data: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(row)) {
+		if (
+			["id", "name", "type", "visible", "child", "children"].includes(key)
+		) {
+			continue;
+		}
+		if (value !== undefined) data[key] = value;
+	}
+	if (row.child) {
+		data.child_row_id = decomposeServerRow(row.child, rowRows, nowIso);
+	}
+	if (Array.isArray(row.children) && row.children.length > 0) {
+		data.children_row_ids = row.children.map((child) =>
+			decomposeServerRow(child, rowRows, nowIso),
+		);
+	}
+	rowRows.push({
+		id: row.id,
+		name: (row.name ?? row.title) || row.type,
+		type: row.type,
+		visible: row.visible,
+		data,
+		createdAt: nowIso,
+		updatedAt: nowIso,
+	});
+	return row.id;
 }
 
 function rowContainsTitle(row: UI_Row, title: string): boolean {

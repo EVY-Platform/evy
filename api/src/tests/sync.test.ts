@@ -72,7 +72,9 @@ describe("sync", () => {
 		);
 		const evyResourceNames = evyRows.map((row) => row.resource);
 
-		expect(evyResourceNames).toContain("sdui");
+		expect(evyResourceNames).toContain("flows");
+		expect(evyResourceNames).toContain("pages");
+		expect(evyResourceNames).toContain("rows");
 		expect(evyResourceNames).toContain("services");
 		expect(evyResourceNames).toContain("organisations");
 		expect(evyResourceNames).toContain("providers");

@@ -6,7 +6,6 @@ import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
-import { findFlowById } from "../utils/flowHelpers";
 import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
@@ -25,7 +24,7 @@ import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
 
 function isContainerKey(k: string): boolean {
-	return k === "child" || k === "children";
+	return k === "childRowId" || k === "childrenRowIds";
 }
 
 const panelFieldOrder = ["icon", "title", "subtitle", "text", "placeholder"];
@@ -42,18 +41,10 @@ function sortContentEntriesForPanel(
 		const rankDifference = getPanelFieldRank(a) - getPanelFieldRank(b);
 		if (rankDifference !== 0) return rankDifference;
 		if (isContainerKey(a) && isContainerKey(b)) {
-			return a === "child" ? -1 : 1;
+			return a === "childRowId" ? -1 : 1;
 		}
 		return a.localeCompare(b);
 	});
-}
-
-function isRow(value: unknown): value is Row {
-	return value !== null && typeof value === "object" && "config" in value;
-}
-
-function isRowArray(value: unknown): value is Row[] {
-	return Array.isArray(value) && value.every(isRow);
 }
 
 function resolveSourceResourceId(
@@ -150,7 +141,9 @@ export function ConfigurationPanel() {
 		activeRowId,
 		activePageId,
 		activeFlowId,
-		flows,
+		flowsById,
+		pagesById,
+		rowsById,
 		serviceResources,
 		resourceAttributeMetadata,
 		configStack,
@@ -160,27 +153,20 @@ export function ConfigurationPanel() {
 	const currentConfigRowId = configStack.at(-1) ?? row?.id;
 	const currentConfigRow = useRowById(currentConfigRowId);
 
-	const activeFlow = useMemo(
-		() => findFlowById(flows, activeFlowId),
-		[flows, activeFlowId],
-	);
-
-	const activePage = useMemo(
-		() => activeFlow?.pages.find((p) => p.id === activePageId),
-		[activeFlow, activePageId],
-	);
+	const activeFlow = activeFlowId ? flowsById[activeFlowId] : undefined;
+	const activePage = activePageId ? pagesById[activePageId] : undefined;
 
 	const showPageTitleInPanel =
 		Boolean(activePage) && configStack.length === 0;
 
 	const builderAssistCandidates = useMemo(
 		() => [
-			...buildIdCandidates(flows, serviceResources),
-			...buildRowAttributeCandidates(flows),
+			...buildIdCandidates(flowsById, pagesById, serviceResources),
+			...buildRowAttributeCandidates(rowsById),
 			buildDatumCandidate(),
 			...buildFunctionCandidates(),
 		],
-		[flows, serviceResources],
+		[flowsById, pagesById, rowsById, serviceResources],
 	);
 
 	const [pageInUseReferences, setPageInUseReferences] = useState<
@@ -188,18 +174,32 @@ export function ConfigurationPanel() {
 	>([]);
 
 	const canDeleteCurrentPage = Boolean(
-		activeFlow && activePage && activeFlow.pages.length > 1,
+		activeFlow && activePage && activeFlow.pageIds.length > 1,
 	);
 
 	const handleDeletePageClick = useCallback(() => {
-		if (!activeFlow || !activePage || !canDeleteCurrentPage) return;
-		const references = findPageReferences(activeFlow, activePage.id);
+		if (!activeFlowId || !activePage || !canDeleteCurrentPage) return;
+		const references = findPageReferences(
+			activeFlowId,
+			activePage.id,
+			flowsById,
+			pagesById,
+			rowsById,
+		);
 		if (references.length > 0) {
 			setPageInUseReferences(references);
 			return;
 		}
 		dispatchRow({ type: "REMOVE_PAGE", pageId: activePage.id });
-	}, [activeFlow, activePage, canDeleteCurrentPage, dispatchRow]);
+	}, [
+		activeFlowId,
+		activePage,
+		canDeleteCurrentPage,
+		flowsById,
+		pagesById,
+		rowsById,
+		dispatchRow,
+	]);
 
 	const dismissPageInUseDialog = useCallback(() => {
 		setPageInUseReferences([]);
@@ -263,7 +263,11 @@ export function ConfigurationPanel() {
 	const renderConfiguration = useCallback(
 		(configRow: Row): React.ReactNode[] => {
 			const merged = mergeRowContentWithPaletteDefaults(configRow);
-			const entries = sortContentEntriesForPanel(Object.entries(merged));
+			// Filter out old-style container keys that may appear from palette defaults
+			const filteredEntries = Object.entries(merged).filter(
+				([key]) => key !== "child" && key !== "children",
+			);
+			const entries = sortContentEntriesForPanel(filteredEntries);
 			const contentEntries = entries.filter(
 				([key]) => !isContainerKey(key),
 			);
@@ -307,16 +311,26 @@ export function ConfigurationPanel() {
 
 			const containerElements = containerEntries.map(([key, value]) => {
 				const uniqueId = `${configRow.id}-${key}`;
-				const items =
-					key === "child"
-						? isRow(value)
-							? [value]
-							: []
-						: isRowArray(value)
-							? value
-							: [];
-				if (items.length === 0) return null;
-				const label = key === "child" ? "Child" : "Children";
+
+				let childInfos: { id: string; type: string }[] = [];
+				if (key === "childRowId" && typeof value === "string") {
+					const record = rowsById[value];
+					if (record) childInfos = [{ id: value, type: record.type }];
+				} else if (key === "childrenRowIds" && Array.isArray(value)) {
+					childInfos = (value as string[])
+						.map((id) => {
+							const rec = rowsById[id];
+							return rec ? { id, type: rec.type } : null;
+						})
+						.filter(
+							(item): item is { id: string; type: string } =>
+								item !== null,
+						);
+				}
+
+				if (childInfos.length === 0) return null;
+				const label = key === "childRowId" ? "Child" : "Children";
+
 				return (
 					<div key={uniqueId}>
 						<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
@@ -324,20 +338,17 @@ export function ConfigurationPanel() {
 						</div>
 						<div
 							className={
-								items.length > 1
+								childInfos.length > 1
 									? "evy-flex evy-flex-col evy-gap-4"
 									: undefined
 							}
 						>
-							{items.map((childRow) => (
+							{childInfos.map(({ id, type }) => (
 								<ChildRowButton
-									key={childRow.id}
-									child={childRow}
+									key={id}
+									child={{ id, config: { type } } as Row}
 									onClick={() =>
-										openChildConfiguration(
-											childRow.id,
-											configRow,
-										)
+										openChildConfiguration(id, configRow)
 									}
 								/>
 							))}
@@ -411,6 +422,7 @@ export function ConfigurationPanel() {
 			builderAssistCandidates,
 			resourceAttributeMetadata,
 			serviceResources,
+			rowsById,
 		],
 	);
 
@@ -459,7 +471,7 @@ export function ConfigurationPanel() {
 						<input
 							id="config-panel-page-title"
 							type="text"
-							value={activePage.title}
+							value={activePage.title ?? ""}
 							onChange={(e) =>
 								dispatchRow({
 									type: "UPDATE_PAGE_TITLE",
@@ -485,7 +497,8 @@ export function ConfigurationPanel() {
 						<div className="evy-border-b evy-border-gray" />
 						<ActionEditor
 							actions={currentConfigRow.config.actions}
-							flows={flows}
+							flowsById={flowsById}
+							pagesById={pagesById}
 							serviceResources={serviceResources}
 							onUpdate={updateRowActions}
 						/>

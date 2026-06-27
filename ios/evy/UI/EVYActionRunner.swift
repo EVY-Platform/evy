@@ -9,9 +9,9 @@ import Foundation
 enum EVYActionRunner {
   static func run(
     actions: [UI_RowAction],
-    row: UI_Row? = nil,
     datum: EVYJson? = nil,
-    show: @escaping (UI_Row) -> Void = { _ in },
+    childRef: EVYRowRef? = nil,
+    show: @escaping (EVYRowRef) -> Void = { _ in },
     navigate: @escaping (NavOperation) -> Void
   ) {
     guard !actions.isEmpty else { return }
@@ -27,25 +27,26 @@ enum EVYActionRunner {
       }
 
       if !executeTrueBranch {
-        runBranch(action.`false`, row: row, datum: datum, show: show, navigate: navigate)
+        runBranch(action.`false`, datum: datum, childRef: childRef, show: show, navigate: navigate)
         return
       }
 
-      runBranch(action.`true`, row: row, datum: datum, show: show, navigate: navigate)
+      runBranch(action.`true`, datum: datum, childRef: childRef, show: show, navigate: navigate)
     }
   }
 
   private static func runBranch(
     _ rawBranch: String,
-    row: UI_Row?,
     datum: EVYJson?,
-    show: @escaping (UI_Row) -> Void,
+    childRef: EVYRowRef?,
+    show: @escaping (EVYRowRef) -> Void,
     navigate: @escaping (NavOperation) -> Void
   ) {
     let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
     do {
-      try execute(branch: trimmed, row: row, datum: datum, navigate: navigate, show: show)
+      try execute(
+        branch: trimmed, datum: datum, childRef: childRef, navigate: navigate, show: show)
     } catch {
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
     }
@@ -53,10 +54,10 @@ enum EVYActionRunner {
 
   private static func execute(
     branch: String,
-    row: UI_Row?,
     datum: EVYJson?,
+    childRef: EVYRowRef?,
     navigate: @escaping (NavOperation) -> Void,
-    show: @escaping (UI_Row) -> Void
+    show: @escaping (EVYRowRef) -> Void
   ) throws {
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
     let unwrappedBranch = String(branch.dropFirst().dropLast())
@@ -88,8 +89,8 @@ enum EVYActionRunner {
       case "close":
         navigate(.close)
       case "show":
-        if let child = row?.child {
-          show(child)
+        if let childRef {
+          show(childRef)
         }
       case "highlight_required":
         let args = splitFunctionArguments(functionArgs)
@@ -186,5 +187,4 @@ enum EVYActionRunner {
 
     return [value]
   }
-
 }

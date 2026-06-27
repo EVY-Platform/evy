@@ -1,4 +1,8 @@
 import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	DATA_EVY_RowData,
 	UI_Flow as ServerFlow,
 	UI_Page as ServerPage,
 	UI_Row as ServerRow,
@@ -11,6 +15,12 @@ import type { Row, RowConfig } from "../types/row";
 import { ROW_METADATA_KEYS } from "./rowConstants";
 
 type RowComponent = (typeof baseRows)[number];
+
+type FlatFlowGraph = {
+	flowRows: DATA_EVY_Flow[];
+	pageRows: DATA_EVY_Page[];
+	rowRows: DATA_EVY_Row[];
+};
 
 const BASE_ROW_BY_TYPE = new Map<string, RowComponent>(
 	baseRows.map((r) => [r.config.type, r]),
@@ -162,7 +172,7 @@ function rowToServerRow(row: Row): ServerRow {
 		serverRow.title = "";
 	}
 
-	return serverRow as ServerRow;
+	return serverRow as unknown as ServerRow;
 }
 
 function encodeRowToServerRow(row: Row): ServerRow {
@@ -178,6 +188,85 @@ export function encodeFlow(flow: UI_Flow): ServerFlow {
 			footer: page.footer ? encodeRowToServerRow(page.footer) : undefined,
 		})),
 	};
+}
+
+export function decomposeServerFlow(
+	flow: ServerFlow,
+	nowIso: string,
+): FlatFlowGraph {
+	const rowRows: DATA_EVY_Row[] = [];
+	const pageRows = flow.pages.map((page) =>
+		decomposeServerPage(page, rowRows, nowIso),
+	);
+	return {
+		flowRows: [
+			{
+				id: flow.id,
+				name: flow.name,
+				pageIds: pageRows.map((page) => page.id),
+				createdAt: nowIso,
+				updatedAt: nowIso,
+			},
+		],
+		pageRows,
+		rowRows,
+	};
+}
+
+function decomposeServerPage(
+	page: ServerPage,
+	rowRows: DATA_EVY_Row[],
+	nowIso: string,
+): DATA_EVY_Page {
+	return {
+		id: page.id,
+		name: (page.name ?? page.title) || "Page",
+		title: page.title,
+		rowIds: page.rows.map((row) =>
+			decomposeServerRow(row, rowRows, nowIso),
+		),
+		footerRowId: page.footer
+			? decomposeServerRow(page.footer, rowRows, nowIso)
+			: undefined,
+		createdAt: nowIso,
+		updatedAt: nowIso,
+	};
+}
+
+function decomposeServerRow(
+	row: ServerRow,
+	rowRows: DATA_EVY_Row[],
+	nowIso: string,
+): string {
+	const data: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(row)) {
+		if (
+			["id", "name", "type", "visible", "child", "children"].includes(key)
+		) {
+			continue;
+		}
+		if (value !== undefined) {
+			data[key] = value;
+		}
+	}
+	if (row.child) {
+		data.child_row_id = decomposeServerRow(row.child, rowRows, nowIso);
+	}
+	if (Array.isArray(row.children) && row.children.length > 0) {
+		data.children_row_ids = row.children.map((child) =>
+			decomposeServerRow(child, rowRows, nowIso),
+		);
+	}
+	rowRows.push({
+		id: row.id,
+		name: (row.name ?? row.title) || row.type,
+		type: row.type,
+		visible: row.visible || "true",
+		data: data as DATA_EVY_RowData,
+		createdAt: nowIso,
+		updatedAt: nowIso,
+	});
+	return row.id;
 }
 
 function decodeRow(row: ServerRow): Row {
@@ -240,17 +329,6 @@ function decodeRowConfig(row: ServerRow): RowConfig {
 	return config as RowConfig;
 }
 
-export const decodeFlows = (flows: ServerFlow[]): UI_Flow[] => {
-	return flows.map((flow) => ({
-		...flow,
-		pages: flow.pages.map((page: ServerPage) => ({
-			...page,
-			rows: page.rows.map(decodeRow),
-			footer: page.footer ? decodeRow(page.footer) : undefined,
-		})),
-	}));
-};
-
 function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {
 	row.id = rootId;
 	if (row.child) {
@@ -296,7 +374,7 @@ function resetRowAttributesForNewPage(row: ServerRow): ServerRow {
 	if (typeof resetRow.title !== "string") {
 		resetRow.title = "";
 	}
-	return resetRow as ServerRow;
+	return resetRow as unknown as ServerRow;
 }
 
 export function buildRowForNewPageFromBase(

@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import type { UI_Flow, UI_Page, UI_Row } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { Client } from "rpc-websockets";
 import { waitForClientOpen } from "../src/tests/wsTestHelpers";
 
@@ -13,6 +12,33 @@ if (!API_URL) {
 const TEST_TOKEN = "e2e-test-token";
 const TEST_OS = "Web";
 const CONNECTION_TIMEOUT_MS = 5000;
+
+function rowPayload(id = crypto.randomUUID()) {
+	return {
+		id,
+		name: "E2E Text Row",
+		type: "Text",
+		visible: "true",
+		data: { title: "Hello", text: "World" },
+	};
+}
+
+function pagePayload(rowIds: string[], id = crypto.randomUUID()) {
+	return {
+		id,
+		name: "E2E Page",
+		title: "Test Page",
+		rowIds,
+	};
+}
+
+function flowPayload(pageIds: string[], id = crypto.randomUUID()) {
+	return {
+		id,
+		name: "E2E Test Flow",
+		pageIds,
+	};
+}
 
 describe("API E2E Tests", () => {
 	describe("Public", () => {
@@ -30,7 +56,7 @@ describe("API E2E Tests", () => {
 		it("get should succeed without auth (public)", async () => {
 			const result = await unauthClient.call("get", {
 				service: EVY_CORE_SERVICE,
-				resource: "sdui",
+				resource: EVY_CORE_RESOURCE.FLOWS,
 			});
 			expect(Array.isArray(result)).toBe(true);
 		});
@@ -39,14 +65,8 @@ describe("API E2E Tests", () => {
 			try {
 				await unauthClient.call("create", {
 					service: EVY_CORE_SERVICE,
-					resource: "sdui",
-					data: {
-						id: crypto.randomUUID(),
-						name: "Test",
-						pages: [
-							{ id: crypto.randomUUID(), title: "P", rows: [] },
-						],
-					},
+					resource: EVY_CORE_RESOURCE.FLOWS,
+					data: flowPayload([]),
 				});
 				throw new Error(
 					"Expected create to fail for unauthenticated request",
@@ -76,109 +96,96 @@ describe("API E2E Tests", () => {
 			client.close();
 		});
 
-		it("get SDUI should return flows with valid structure", async () => {
-			const testPage: UI_Page = {
-				id: crypto.randomUUID(),
-				title: "Test Page",
-				rows: [],
-			};
-
-			const flowData: UI_Flow = {
-				id: crypto.randomUUID(),
-				name: "SDUI Test Flow",
-				pages: [testPage],
-			};
+		it("get flows should return flat flow records with valid structure", async () => {
+			const page = pagePayload([]);
+			const flow = flowPayload([page.id]);
 
 			await client.call("create", {
 				service: EVY_CORE_SERVICE,
-				resource: "sdui",
-				data: flowData,
+				resource: EVY_CORE_RESOURCE.PAGES,
+				data: page,
+			});
+			await client.call("create", {
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.FLOWS,
+				data: flow,
 			});
 
 			const result = await client.call("get", {
 				service: EVY_CORE_SERVICE,
-				resource: "sdui",
+				resource: EVY_CORE_RESOURCE.FLOWS,
+				filter: { id: flow.id },
 			});
 
-			expect(result.length).toBeGreaterThan(0);
-			const flow = result[0];
-			expect(flow).toHaveProperty("id");
-			expect(flow).toHaveProperty("name");
-			expect(flow).toHaveProperty("pages");
-			expect(flow.pages).toBeInstanceOf(Array);
+			expect(result).toHaveLength(1);
+			expect(result[0]).toMatchObject({
+				id: flow.id,
+				name: flow.name,
+				pageIds: [page.id],
+			});
+			expect(result[0].createdAt).toBeDefined();
+			expect(result[0].updatedAt).toBeDefined();
 		});
 
-		it("create SDUI should create a new flow", async () => {
-			const testRow: UI_Row = {
-				id: crypto.randomUUID(),
-				type: "TextExpand",
-				source: "",
-				visible: "true",
-				actions: [],
-				title: "Hello",
-				text: "World",
-				expandLabel: "Read more",
-			};
+		it("create flat flow resources should create rows, pages, and flows", async () => {
+			const row = rowPayload();
+			const page = pagePayload([row.id]);
+			const flow = flowPayload([page.id]);
 
-			const testPage: UI_Page = {
-				id: crypto.randomUUID(),
-				title: "Test Page",
-				rows: [testRow],
-			};
-
-			const flowData: UI_Flow = {
-				id: crypto.randomUUID(),
-				name: "E2E Test Flow",
-				pages: [testPage],
-			};
-
-			const result = await client.call("create", {
+			const createdRow = await client.call("create", {
 				service: EVY_CORE_SERVICE,
-				resource: "sdui",
-				data: flowData,
+				resource: EVY_CORE_RESOURCE.ROWS,
+				data: row,
+			});
+			const createdPage = await client.call("create", {
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.PAGES,
+				data: page,
+			});
+			const createdFlow = await client.call("create", {
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.FLOWS,
+				data: flow,
 			});
 
-			expect(result.id).toBeDefined();
-			expect(result.data).toBeDefined();
-			expect(result.data.name).toBe("E2E Test Flow");
-			expect(result.createdAt).toBeDefined();
-			expect(result.updatedAt).toBeDefined();
+			expect(createdRow).toMatchObject({
+				id: row.id,
+				name: row.name,
+				type: row.type,
+				data: row.data,
+			});
+			expect(createdPage).toMatchObject({
+				id: page.id,
+				name: page.name,
+				rowIds: [row.id],
+			});
+			expect(createdFlow).toMatchObject({
+				id: flow.id,
+				name: flow.name,
+				pageIds: [page.id],
+			});
+			expect(createdFlow.createdAt).toBeDefined();
+			expect(createdFlow.updatedAt).toBeDefined();
 		});
 
-		it("update SDUI should update an existing flow", async () => {
-			const flowId = crypto.randomUUID();
-
-			const testPage: UI_Page = {
-				id: crypto.randomUUID(),
-				title: "Original Page",
-				rows: [],
-			};
-
-			const createFlowData: UI_Flow = {
-				id: flowId,
-				name: "Flow to Update",
-				pages: [testPage],
-			};
+		it("update flows should update an existing flat flow", async () => {
+			const flow = flowPayload([]);
 
 			const created = await client.call("create", {
 				service: EVY_CORE_SERVICE,
-				resource: "sdui",
-				data: createFlowData,
+				resource: EVY_CORE_RESOURCE.FLOWS,
+				data: flow,
 			});
-
-			const updateFlowData: UI_Flow = {
-				...createFlowData,
-				name: "Updated Flow Name",
-			};
 
 			const updated = await client.call("update", {
 				service: EVY_CORE_SERVICE,
-				resource: "sdui",
+				resource: EVY_CORE_RESOURCE.FLOWS,
 				filter: { id: created.id },
-				data: updateFlowData,
+				data: { ...flow, name: "Updated Flow Name" },
 			});
 
-			expect(updated.data.name).toBe("Updated Flow Name");
+			expect(updated.name).toBe("Updated Flow Name");
+			expect(updated.pageIds).toEqual([]);
 		});
 	});
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 
 import {
 	connectAndLogin,
@@ -39,23 +39,22 @@ describe("API E2E WebSocket reconnect", () => {
 			TEST_OS,
 		);
 
-		const pageId = crypto.randomUUID();
 		const createResult = await caller.call("create", {
 			service: EVY_CORE_SERVICE,
-			resource: "sdui",
+			resource: EVY_CORE_RESOURCE.FLOWS,
 			data: {
 				id: crypto.randomUUID(),
 				name: `Reconnect test ${Date.now()}`,
-				pages: [{ id: pageId, title: "P", rows: [] }],
+				pageIds: [],
 			},
 		});
 
 		const params = await notifyPromise;
 		expect(params).toEqual({
 			service: EVY_CORE_SERVICE,
-			resource: "sdui",
+			resource: EVY_CORE_RESOURCE.FLOWS,
 			operation: "create",
-			value: createResult.data,
+			value: createResult,
 		});
 
 		second.close();

@@ -18,6 +18,7 @@ struct Route: Hashable, Codable {
     self.query = query
   }
 }
+
 enum NavOperation: Hashable {
   case navigate(Route)
   case create(namespace: String, resource: String)
@@ -37,8 +38,6 @@ extension EnvironmentValues {
 }
 
 private let DEFAULT_HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
-private let sduiResourceKey = "sdui"
-
 private var HOME_FLOW_ID: String {
   let configuredHomeFlowId = ProcessInfo.processInfo.environment["HOME_FLOW_ID"] ?? ""
   return configuredHomeFlowId.isEmpty ? DEFAULT_HOME_FLOW_ID : configuredHomeFlowId
@@ -65,7 +64,7 @@ private struct LaunchPlaceholderView: View {
 // MARK: - ContentView
 
 struct ContentView: View {
-  @State private var flows: [UI_Flow] = []
+  @State private var homeReloadID = 0
   @State private var routes: [Route] = []
   @State private var showingAlert = false
   @State private var alertTitle = ""
@@ -82,12 +81,8 @@ struct ContentView: View {
     showingAlert = true
   }
 
-  private func loadFlowsFromStore() throws {
-    flows = try EVY.publicStore.getAllDecoded(
-      namespace: EVYNamespace.evy,
-      resource: "sdui",
-      as: UI_Flow.self
-    )
+  private func reloadHomePage() {
+    homeReloadID += 1
   }
 
   private func handleNavigationData(_ navOperation: NavOperation) {
@@ -103,7 +98,7 @@ struct ContentView: View {
         break
       }
 
-      guard flows.first(where: { $0.id == route.flowId }) != nil else {
+      guard EVYFlowStore.flowExists(id: route.flowId) else {
         alertTitle = "Unable to load flow"
         alertMessage = "Please check your internet connection"
         showingAlert = true
@@ -148,19 +143,18 @@ struct ContentView: View {
   private var homeContent: some View {
     if loading {
       LaunchPlaceholderView()
-    } else if let homeFlow = flows.first(where: { $0.id == HOME_FLOW_ID }) {
-      if homeFlow.pages.isEmpty {
-        VStack(spacing: 20) {
-          Text("This flow has no pages")
-            .font(.evyTitle)
-            .foregroundColor(.gray)
-            .accessibilityIdentifier("emptyFlowMessage")
+    } else if let firstPageId = EVYFlowStore.firstPageId(inFlowId: HOME_FLOW_ID) {
+      EVYPage(pageId: firstPageId)
+        .environment(\.navigate) { navOperation in
+          handleNavigationData(navOperation)
         }
-      } else if let homePage = homeFlow.pages.first {
-        homePage
-          .environment(\.navigate) { navOperation in
-            handleNavigationData(navOperation)
-          }
+        .id(homeReloadID)
+    } else if EVYFlowStore.flowExists(id: HOME_FLOW_ID) {
+      VStack(spacing: 20) {
+        Text("This flow has no pages")
+          .font(.evyTitle)
+          .foregroundColor(.gray)
+          .accessibilityIdentifier("emptyFlowMessage")
       }
     } else {
       VStack(spacing: 20) {
@@ -180,11 +174,10 @@ struct ContentView: View {
     NavigationStack(path: $routes) {
       homeContent
         .task {
-          if !flows.isEmpty { return }
+          if !loading { return }
 
           do {
             try await EVY.sync()
-            try loadFlowsFromStore()
             loading = false
           } catch let error as EVYRPCError {
             alertTitle = "Error"
@@ -199,15 +192,13 @@ struct ContentView: View {
           }
         }
         .navigationDestination(for: Route.self) { route in
-          if let flow = flows.first(where: { $0.id == route.flowId }),
-            let page = flow.getPageById(route.pageId)
-          {
+          if let pageId = EVYFlowStore.pageId(flowId: route.flowId, pageId: route.pageId) {
             let _ = EVY.cacheQueryParams(route.query, forPageId: route.pageId)
 
-            page
+            EVYPage(pageId: pageId)
               .environment(
                 \.evyDraftScopeId,
-                EVYFlowDraftScopeResolver.draftScopeId(for: route, flows: flows)
+                EVYFlowDraftScopeResolver.draftScopeId(for: route)
               )
               .environment(\.navigate) { navOperation in
                 handleNavigationData(navOperation)
@@ -232,9 +223,7 @@ struct ContentView: View {
         return
       }
 
-      let createKeys = EVYFlowDraftScopeResolver.extractCreateKeys(
-        from: flows.first(where: { $0.id == previousFlowId })
-      )
+      let createKeys = EVYFlowStore.createKeys(flowId: previousFlowId)
       for key in createKeys {
         EVY.draftStore.deleteDrafts(
           scopeId: EVYDraft.createMergeScopeId(
@@ -245,11 +234,13 @@ struct ContentView: View {
       }
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
-      guard let notifKey = notification.object as? String,
-        notifKey == sduiResourceKey
+      guard
+        let change = notification.userInfo?[EVYDataChange.userInfoKey] as? EVYDataChange,
+        change.namespace == EVYNamespace.evy,
+        change.resource == EVYCoreResource.flows.rawValue,
+        change.id == HOME_FLOW_ID
       else { return }
-
-      try? loadFlowsFromStore()
+      reloadHomePage()
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyUserAlertRequested)) { notification in
       if let userAlert = notification.object as? EVYUserAlert {
@@ -270,40 +261,15 @@ struct ContentView: View {
 
 @MainActor
 enum EVYFlowDraftScopeResolver {
-  static func draftScopeId(for route: Route, flows: [UI_Flow]) -> String? {
-    guard let flow = flows.first(where: { $0.id == route.flowId }) else { return nil }
-    let keys = extractCreateKeys(from: flow)
+  static func draftScopeId(
+    for route: Route,
+    from store: EVYDataStore = EVY.publicStore
+  ) -> String? {
+    let keys = EVYFlowStore.createKeys(flowId: route.flowId, from: store)
     if let k = keys.sorted().first {
       return EVYDraft.createMergeScopeId(flowId: route.flowId, entityKey: k)
     }
     return "\(route.flowId):browse"
-  }
-
-  static func extractCreateKeys(from flow: UI_Flow?) -> Set<String> {
-    guard let flow else { return [] }
-    var keys = Set<String>()
-    for page in flow.pages {
-      forEachRow(in: page) { row in
-        for action in row.actions {
-          for branch in [action.`true`, action.`false`] {
-            var unwrapped = branch.trimmingCharacters(in: .whitespacesAndNewlines)
-            if unwrapped.hasPrefix("{"), unwrapped.hasSuffix("}") {
-              unwrapped = String(unwrapped.dropFirst().dropLast())
-            }
-            if let (name, args) = parseFunctionCall(unwrapped),
-              name == "create"
-            {
-              let parsedArgs = splitFunctionArguments(args)
-              if parsedArgs.count >= 2 {
-                let resource = parsedArgs[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                if !resource.isEmpty { keys.insert(resource) }
-              }
-            }
-          }
-        }
-      }
-    }
-    return keys
   }
 }
 

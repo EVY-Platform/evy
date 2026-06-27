@@ -10,10 +10,12 @@ import SwiftUI
 struct EVYSelectSegmentContainerRow: View {
 
   private let view: SelectSegmentContainerRowViewData
+  private let childRefs: [EVYRowRef]
   @State private var selected: Int = 0
 
-  init(view: SelectSegmentContainerRowViewData) {
+  init(view: SelectSegmentContainerRowViewData, childRefs: [EVYRowRef]) {
     self.view = view
+    self.childRefs = childRefs
   }
 
   var body: some View {
@@ -32,8 +34,8 @@ struct EVYSelectSegmentContainerRow: View {
       .padding(.horizontal, Constants.majorPadding)
       .padding(.bottom, Constants.majorPadding)
 
-      if selected < view.children.count {
-        EVYRow(row: view.children[selected])
+      if selected < childRefs.count {
+        EVYRow(ref: childRefs[selected])
       }
     }
   }

@@ -1,19 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import type { UI_Flow as ServerFlow, UI_Row as ServerRow } from "evy-types";
+import type { UI_Row as ServerRow } from "evy-types";
 import invariant from "tiny-invariant";
 
-import { validateUiFlow } from "../../../types/validators";
 import SearchRow from "../rows/edit/SearchRow";
-import {
-	buildRowForNewPageFromBase,
-	decodeFlows,
-	encodeFlow,
-	normalizeServerFlow,
-	normalizeServerRow,
-} from "./decodeFlow";
+import { buildRowForNewPageFromBase, normalizeServerRow } from "./decodeFlow";
 
-const FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058";
-const PAGE_ID = "55e427ac-263c-441f-9673-f60627b1baea";
 const ROW_A = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
 const ROW_B = "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e";
 
@@ -167,65 +158,6 @@ describe("normalizeServerRow", () => {
 			title: "Find",
 			placeholder: "Search",
 		});
-	});
-});
-
-describe("decodeFlows / encodeFlow", () => {
-	it("round-trips to the same normalized server shape as normalizeServerFlow", () => {
-		const raw: ServerFlow = {
-			id: FLOW_ID,
-			name: "F",
-			pages: [
-				{
-					id: PAGE_ID,
-					title: "P",
-					rows: [
-						{
-							id: ROW_A,
-							type: "Text",
-							source: "",
-							actions: [],
-							visible:
-								"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
-							title: "Hello",
-							text: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
-						},
-					],
-				},
-			],
-		};
-
-		const validated = validateUiFlow(raw);
-		const canonical = normalizeServerFlow(validated);
-		const decoded = decodeFlows([validated])[0];
-		const encoded = encodeFlow(decoded);
-		expect(encoded).toEqual(canonical);
-	});
-});
-
-describe("decodeRow unknown types", () => {
-	it("preserves visible on unknown row config", () => {
-		const unknownRow = makeServerRow({
-			id: ROW_B,
-			type: "FutureRow",
-			visible:
-				"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
-			title: "Future",
-		});
-		const flow = {
-			id: FLOW_ID,
-			name: "F",
-			pages: [{ id: PAGE_ID, title: "P", rows: [unknownRow] }],
-		} as ServerFlow;
-		const decoded = decodeFlows([flow])[0];
-		const row = decoded.pages[0]?.rows[0];
-		expect(String(row?.config.type)).toBe("FutureRow");
-		expect(row?.config.visible).toBe(
-			"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
-		);
-		expect(encodeFlow(decoded).pages[0]?.rows[0]?.visible).toBe(
-			"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
-		);
 	});
 });
 

@@ -133,7 +133,49 @@ updatedAt: string (date-time)
 
 #### DATA_EVY_Flow
 
-Row shape: `id`, `data` ([`UI_Flow`](sdui.md) JSON), `createdAt`, `updatedAt`. On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "sdui"`.
+Persisted flow shell. Clients assemble the nested [`UI_Flow`](sdui.md) shape from `flows`, `pages`, and `rows` at the serialization boundary.
+
+```
+id: uuid
+name: string
+pageIds: uuid[]
+createdAt: string (date-time)
+updatedAt: string (date-time)
+```
+
+On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "flows"`.
+
+#### DATA_EVY_Page
+
+Persisted page shell.
+
+```
+id: uuid
+name: string
+title: string (optional)
+rowIds: uuid[]
+footerRowId: uuid (optional)
+createdAt: string (date-time)
+updatedAt: string (date-time)
+```
+
+On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "pages"`.
+
+#### DATA_EVY_Row
+
+Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row relationships are stored by ID in `data.child_row_id` and `data.children_row_ids`, then expanded back to `child` / `children` by clients.
+
+```
+id: uuid
+name: string
+type: string
+visible: string
+data: object
+createdAt: string (date-time)
+updatedAt: string (date-time)
+```
+
+On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "rows"`.
 
 There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get`, `create`, or `update`).
 

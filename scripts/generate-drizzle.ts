@@ -23,6 +23,7 @@ interface JsonSchemaProp {
 	maxLength?: number;
 	$ref?: string;
 	default?: unknown;
+	items?: JsonSchemaProp;
 }
 
 interface JsonSchemaDef {
@@ -324,10 +325,20 @@ function resolveJsonbTypeAnnotation(ref: string | undefined): string {
 	if (ref?.includes("UI_Flow") || ref?.includes("evy.schema.json")) {
 		return "UI_Flow";
 	}
+	if (ref?.includes("DATA_EVY_RowData")) {
+		return "DATA_EVY_RowData";
+	}
 	if (ref?.includes("JSONValue") || ref?.includes("json.schema.json")) {
 		return 'DATA_PRIMITIVE["data"]';
 	}
 	return "unknown";
+}
+
+function buildArrayColumn(dbCol: string, prop: JsonSchemaProp): string {
+	if (prop.items?.type === "string" && prop.items.format === "uuid") {
+		return `jsonb("${dbCol}").$type<string[]>().notNull()`;
+	}
+	return `jsonb("${dbCol}").$type<unknown[]>().notNull()`;
 }
 
 function buildObjectColumn(
@@ -377,7 +388,7 @@ function applyNullabilityFallback(
 		return col;
 	}
 	if (type === "string" && format !== "date-time") return `${col}.notNull()`;
-	if (type === "object" || ref) return col;
+	if (type === "object" || type === "array" || ref) return col;
 	if (type === "integer" || type === "number") return `${col}.notNull()`;
 	return `${col}.notNull()`;
 }
@@ -410,6 +421,8 @@ function emitColumn(
 		col = buildNumberColumn(dbCol);
 	} else if (type === "boolean") {
 		col = buildBooleanColumn(dbCol, defaultVal);
+	} else if (type === "array") {
+		col = buildArrayColumn(dbCol, prop);
 	} else if (type === "object") {
 		col = buildObjectColumn(dbCol, prop, suffixes);
 	} else if (ref) {
@@ -419,6 +432,10 @@ function emitColumn(
 	}
 
 	return applyNullabilityFallback(col, type, format, ref, isRequired);
+}
+
+function isTypeUsed(typeName: string, columnLines: string[]): boolean {
+	return columnLines.some((line) => line.includes(typeName));
 }
 
 async function main(): Promise<void> {
@@ -437,6 +454,8 @@ async function main(): Promise<void> {
 		"DATA_EVY_ServiceProvider",
 		"DATA_EVY_ServiceResource",
 		"DATA_EVY_Flow",
+		"DATA_EVY_Page",
+		"DATA_EVY_Row",
 		"DATA_EVY_File",
 	];
 	const hasNumberColumns = tableOrder.some((defKey) => {
@@ -467,6 +486,7 @@ async function main(): Promise<void> {
 		...pgCoreImports.map((importName) => `\t${importName},`),
 		'} from "drizzle-orm/pg-core";',
 		'import { relations } from "drizzle-orm";',
+		'import type { DATA_EVY_RowData } from "evy-types";',
 		'import type { UI_Flow } from "evy-types/sdui/evy";',
 		"",
 	];
@@ -592,14 +612,28 @@ async function main(): Promise<void> {
 
 	await mkdir(dirname(OUT_PATH), { recursive: true });
 
-	const body = lines.join("\n");
-	if (body.includes("DATA_PRIMITIVE")) {
-		const uiFlowIdx = lines.findIndex((l) =>
+	const columnLines = lines.filter((line) => !line.startsWith("import type"));
+	if (!isTypeUsed("DATA_EVY_RowData", columnLines)) {
+		const idx = lines.findIndex((l) =>
+			l.includes("import type { DATA_EVY_RowData }"),
+		);
+		if (idx !== -1) lines.splice(idx, 1);
+	}
+	if (!isTypeUsed("UI_Flow", columnLines)) {
+		const idx = lines.findIndex((l) =>
 			l.includes("import type { UI_Flow }"),
 		);
-		if (uiFlowIdx !== -1) {
+		if (idx !== -1) lines.splice(idx, 1);
+	}
+	if (isTypeUsed("DATA_PRIMITIVE", columnLines)) {
+		const idx = lines.findIndex(
+			(l) =>
+				l.includes("import type { UI_Flow }") ||
+				l.includes("import type { DATA_EVY_RowData }"),
+		);
+		if (idx !== -1) {
 			lines.splice(
-				uiFlowIdx + 1,
+				idx + 1,
 				0,
 				'import type { DATA_PRIMITIVE } from "evy-types/data/primitive";',
 			);

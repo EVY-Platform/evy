@@ -1,6 +1,6 @@
 # Server-driven UI
 
-All UI in EVY is server-driven. On the API service we store the SDUI "flows" (see below) for all services and UX.
+All UI in EVY is server-driven. On the API service we store SDUI as flat `flows`, `pages`, and `rows` resources for all services and UX. Clients assemble those persisted records into the nested `UI_Flow` shape below when rendering, and decompose nested edits back into flat records when saving.
 
 All attributes in SDUI are strings, and most are required.
 
