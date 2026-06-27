@@ -199,13 +199,10 @@ describe("idCandidates", () => {
 		expect(filterCandidates(candidates, "")).toEqual(candidates);
 	});
 
-	test("filterCandidates only returns starts-with matches", () => {
+	test("filterCandidates only returns case-insensitive starts-with matches", () => {
 		expect(
 			filterCandidates(candidates, "it").map((candidate) => candidate.id),
 		).toEqual(["res-1", "res-1-long"]);
-	});
-
-	test("filterCandidates is case-insensitive", () => {
 		expect(
 			filterCandidates(candidates, "ITEM").map(
 				(candidate) => candidate.id,
