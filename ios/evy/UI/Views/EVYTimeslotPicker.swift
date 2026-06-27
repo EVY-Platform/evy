@@ -59,7 +59,7 @@ struct EVYTimeslotPicker: View {
   @State private var selectedGroupIndex: Int = 0
   @State private var tabViewHeight: CGFloat = 0
 
-  init(content: TimeslotPickerRowContent, source: String) {
+  init(content: TimeslotPickerRowViewData, source: String) {
     timeslotDates = EVYState(
       watches: [source],
       setter: { Self.buildDates(content: content, source: source) }
@@ -68,12 +68,10 @@ struct EVYTimeslotPicker: View {
 
   @MainActor
   private static func buildDates(
-    content: TimeslotPickerRowContent, source: String
+    content: TimeslotPickerRowViewData, source: String
   ) -> [EVYTimeslotDate] {
     EVYDatetime.buildTimeslotPickerDates(
-      headerFormat: content.header_format,
-      headerSubtitle: content.header_subtitle,
-      timeslotFormat: content.timeslot_format,
+      row: content,
       selections: EVYDatetime.readTimeslots(source)
     )
   }
@@ -163,7 +161,7 @@ private struct EVYTimeslotPickerPreview: View {
 
   var body: some View {
     if let data = EVYPreviewMockData.calendarContentJSON.data(using: .utf8),
-      let content = try? JSONDecoder().decode(TimeslotPickerRowContent.self, from: data)
+      let content = try? JSONDecoder().decode(TimeslotPickerRowViewData.self, from: data)
     {
       EVYTimeslotPicker(content: content, source: "{pickup_selection}")
     }

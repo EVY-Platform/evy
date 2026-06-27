@@ -15,11 +15,10 @@ function textRow(id: string): Row {
 		config: {
 			type: "Text",
 			source: "",
+			visible: "true",
 			actions: [],
-			view: {
-				content: { title: "", text: "" },
-				max_lines: "",
-			},
+			title: "",
+			text: "",
 		} as Row["config"],
 	};
 }
@@ -43,13 +42,10 @@ describe("validateRowPathSegmentsForPage", () => {
 			config: {
 				type: "ListContainer",
 				source: "",
+				visible: "true",
 				actions: [],
-				view: {
-					content: {
-						title: "",
-						children: [child],
-					},
-				},
+				title: "",
+				children: [child],
 			} as Row["config"],
 		};
 		const page: UI_Page = {
@@ -107,13 +103,10 @@ describe("validateRowPathSegmentsForPage", () => {
 			config: {
 				type: "ListContainer",
 				source: "",
+				visible: "true",
 				actions: [],
-				view: {
-					content: {
-						title: "",
-						child: leaf,
-					},
-				},
+				title: "",
+				child: leaf,
 			} as Row["config"],
 		};
 		const root: Row = {
@@ -122,13 +115,10 @@ describe("validateRowPathSegmentsForPage", () => {
 			config: {
 				type: "ListContainer",
 				source: "",
+				visible: "true",
 				actions: [],
-				view: {
-					content: {
-						title: "",
-						child: middle,
-					},
-				},
+				title: "",
+				child: middle,
 			} as Row["config"],
 		};
 		const page: UI_Page = {

@@ -21,14 +21,14 @@ struct EVYInputRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
       EVYTextField(
-        input: view.content.value,
+        input: view.value,
         destination: destination,
-        placeholder: view.content.placeholder,
+        placeholder: view.placeholder,
         isInteractive: isInteractive
       )
     }
@@ -45,13 +45,9 @@ struct EVYInputRow: View {
         "source": "",
         "destination": "{item.title}",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Item title",
-            "value": "{item.title}",
-            "placeholder": "Enter a title"
-          }
-        }
+        "title": "Item title",
+        "value": "{item.title}",
+        "placeholder": "Enter a title"
       }
       """,
     failureMessage: "Unable to build input row preview"

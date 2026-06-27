@@ -35,12 +35,8 @@ test.describe("EVY Rows", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "Test Text",
-								subtitle: "Test subtitle",
-							},
-						},
+						title: "Test Text",
+						subtitle: "Test subtitle",
 						actions: [],
 					},
 				],

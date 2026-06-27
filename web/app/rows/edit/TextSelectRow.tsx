@@ -11,19 +11,15 @@ export default defineRow("TextSelectRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Text select row title",
-				text: "placeholder",
-			},
-		},
+		title: "Text select row title",
+		text: "placeholder",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_cash}`,
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<div className="evy-flex evy-justify-between evy-gap-2">
 				<p className="evy-text-sm">
-					<EVYText text={row.config.view.content.text} />
+					<EVYText text={row.config.text} />
 				</p>
 				<Checkbox checked={false} />
 			</div>

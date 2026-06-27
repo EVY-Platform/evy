@@ -189,8 +189,9 @@ end_time: string             (HH:mm, exclusive, e.g. "19:00")
 timeslot_interval_minutes: integer   (e.g. 30)
 label_interval_minutes: integer      (e.g. 60)
 header_format: string        (date format pattern, e.g. "EEE d")
-primary: string              (binding to primary selection array)
-secondary: string            (binding to read-only secondary context array)
+timeslot_format: string      (time format pattern, e.g. "HH:mm")
+
+Calendar rows store the editable primary selection array through row-level `destination` and read the contextual secondary selection array through row-level `source`.
 ```
 
 #### transfer_options

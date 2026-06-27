@@ -61,6 +61,10 @@ enum EVYPreviewMockData {
     ]
     """
 
+  static let calendarPreviewSource = "{delivery_selection}"
+  static let calendarPreviewDestination = "{pickup_selection}"
+  static let calendarPreviewSourceVariable = "delivery_selection"
+  static let calendarPreviewDestinationVariable = "pickup_selection"
   static let calendarPickupSelection = "[\"2026-06-03T09:00:00\",\"2026-06-03T09:30:00\"]"
   static let calendarDeliverySelection = "[\"2026-06-03T14:00:00\"]"
   static let calendarContentJSON = #"""
@@ -70,11 +74,8 @@ enum EVYPreviewMockData {
         "end_time": "19:00",
         "timeslot_interval_minutes": 30,
         "label_interval_minutes": 60,
-        "header_format": "{formatDatetime($datum, \"EEE d\")}",
-        "header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
-        "timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
-        "primary": "{pickup_selection}",
-        "secondary": "{delivery_selection}"
+        "header_format": "EEE d",
+        "timeslot_format": "HH:mm"
     }
     """#
 

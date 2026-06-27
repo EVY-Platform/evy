@@ -48,19 +48,17 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "id": "uuid",
     "type": "Button" | "Calendar" | "ColumnContainer" | "Heading" | "Text" | ... ,
 
-    "view": {
-        "content": {
-            // Required. Header of the row; empty string means no header.
-            "title": "string",
-            // Layout: "children" (array of rows), "child" (single row), "segments" (array of strings).
-            // Optional array of children rows to display
-            "children": [ROW],
-            // Optional single child row to display
-            "child": ROW,
-            ...
-        },
-        "max_lines": "string"    // optional (e.g. TextExpand)
-    },
+    // Required. Header of the row; empty string means no header.
+    "title": "string",
+    // Row-type-specific attributes live at the row root, e.g. label, text, subtitle, placeholder, format, etc.
+    "label": "string",
+    "text": "string",
+    // Layout: "children" (array of rows), "child" (single row), "segments" (array of strings).
+    // Optional array of children rows to display
+    "children": [ROW],
+    // Optional single child row to display
+    "child": ROW,
+
     // Where the row reads option/list/entity data from (required string; use "" if unused).
     "source": "string",
     // Where input data is stored in a draft. Use canonical resource IDs such as "{[resource_id].title}".

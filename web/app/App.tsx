@@ -187,7 +187,7 @@ function AppContent() {
 		? findRowInPages(activeLeafRowId, pages)
 		: undefined;
 	const isSearchParent = activeLeafRow?.config.type === "Search";
-	const activeLeafChild = activeLeafRow?.config.view.content.child;
+	const activeLeafChild = activeLeafRow?.config.child;
 	const childPages = useMemo(
 		() => buildActiveChildPages({ activeRowId, configStack, pages }),
 		[activeRowId, configStack, pages],

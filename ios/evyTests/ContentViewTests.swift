@@ -66,27 +66,20 @@ final class ContentViewTests: XCTestCase {
                 "type": "Button",
                 "source": "",
                 "destination": "",
-                "view": [
-                  "content": [
-                    "title": "",
-                    "label": "Parent button",
-                    "child": [
-                      "id": "text-child",
-                      "type": "Text",
-                      "source": "",
-                      "destination": "",
-                      "view": [
-                        "content": [
-                          "title": "Child title",
-                          "text": "Child body",
-                        ],
-                        "max_lines": "",
-                      ],
-                      "actions": [],
-                    ],
-                  ]
+                "title": "",
+                "label": "Parent button",
+                "child": [
+                  "id": "text-child",
+                  "type": "Text",
+                  "source": "",
+                  "destination": "",
+                  "title": "Child title",
+                  "text": "Child body",
+                  "actions": [],
+                  "visible": "true",
                 ],
                 "actions": [],
+                "visible": "true",
               ]
             ],
           ]
@@ -98,7 +91,7 @@ final class ContentViewTests: XCTestCase {
     let flows = try JSONDecoder().decode([UI_Flow].self, from: data)
     let rootRow = try XCTUnwrap(flows.first?.pages.first?.rows.first)
 
-    XCTAssertEqual(rootRow.view.content.child?.id, "text-child")
+    XCTAssertEqual(rootRow.child?.id, "text-child")
 
     var visitedIds: [String] = []
     if let page = flows.first?.pages.first {
@@ -109,7 +102,7 @@ final class ContentViewTests: XCTestCase {
     guard case .button(let viewData, _, _, _) = try UI_RowPayload.from(row: rootRow) else {
       return XCTFail("Expected Button payload")
     }
-    XCTAssertEqual(viewData.content.child?.id, "text-child")
+    XCTAssertEqual(viewData.child?.id, "text-child")
   }
 
   func testSyncStateResetsStoredTimestampWhenStorageVersionChanges() {
@@ -137,13 +130,9 @@ final class ContentViewTests: XCTestCase {
       "source": "",
       "destination": "",
       "actions": [],
-      "view": [
-        "content": [
-          "title": "Test title",
-          "subtitle": "Test subtitle",
-          "image": "",
-        ]
-      ],
+      "title": "Test title",
+      "subtitle": "Test subtitle",
+      "image": "",
     ]
 
     let data = try JSONSerialization.data(withJSONObject: json)
@@ -151,36 +140,28 @@ final class ContentViewTests: XCTestCase {
     guard case .listItem(let viewData, _, _, _) = try UI_RowPayload.from(row: row) else {
       return XCTFail("Expected .listItem payload")
     }
-    XCTAssertEqual(viewData.content.title, "Test title")
-    XCTAssertEqual(viewData.content.subtitle, "Test subtitle")
+    XCTAssertEqual(viewData.title, "Test title")
+    XCTAssertEqual(viewData.subtitle, "Test subtitle")
   }
 
-  func testDatumRowFormatterSearchesAllContentStrings() throws {
+  func testDatumRowFormatterSearchesFlatContentStrings() throws {
     let row = try decodeRow([
       "id": "search-result-template",
       "type": "ListItem",
       "source": "",
       "destination": "",
       "actions": [],
-      "view": [
-        "content": [
-          "title": "Item title",
-          "subtitle": "Sydney",
-          "segments": ["first", "second"],
-          "child": [
-            "id": "search-result-child",
-            "type": "Button",
-            "source": "",
-            "destination": "",
-            "actions": [],
-            "view": [
-              "content": [
-                "title": "",
-                "label": "Inner label",
-              ]
-            ],
-          ],
-        ]
+      "title": "Item title",
+      "subtitle": "Sydney",
+      "segments": ["first", "second"],
+      "child": [
+        "id": "search-result-child",
+        "type": "Button",
+        "source": "",
+        "destination": "",
+        "actions": [],
+        "title": "",
+        "label": "Inner label",
       ],
     ])
     let formatter = try EVYDatumRowFormatter(template: row)
@@ -199,13 +180,9 @@ final class ContentViewTests: XCTestCase {
       "source": "",
       "destination": "",
       "actions": [],
-      "view": [
-        "content": [
-          "title": "{$datum.title}",
-          "subtitle": "{formatCurrency($datum.price)}",
-          "image": "{$datum.photo_ids.0}",
-        ]
-      ],
+      "title": "{$datum.title}",
+      "subtitle": "{formatCurrency($datum.price)}",
+      "image": "{$datum.photo_ids.0}",
     ])
     let formatter = try EVYDatumRowFormatter(template: row)
     let datum = EVYJson.dictionary([
@@ -220,9 +197,9 @@ final class ContentViewTests: XCTestCase {
     guard case .listItem(let viewData, _, _, _) = try UI_RowPayload.from(row: formattedRow) else {
       return XCTFail("Expected .listItem payload")
     }
-    XCTAssertEqual(viewData.content.title, "Visible item")
-    XCTAssertEqual(viewData.content.subtitle, "$10.00")
-    XCTAssertEqual(viewData.content.image, "photo-1")
+    XCTAssertEqual(viewData.title, "Visible item")
+    XCTAssertEqual(viewData.subtitle, "$10.00")
+    XCTAssertEqual(viewData.image, "photo-1")
   }
 
   private func decodeRow(_ json: [String: Any]) throws -> UI_Row {
@@ -244,12 +221,8 @@ final class ContentViewTests: XCTestCase {
                 "id": "home-button",
                 "type": "Button",
                 "source": "",
-                "view": [
-                  "content": [
-                    "title": "",
-                    "label": "Create",
-                  ]
-                ],
+                "title": "",
+                "label": "Create",
                 "actions": [
                   [
                     "condition": "",
@@ -274,13 +247,9 @@ final class ContentViewTests: XCTestCase {
                 "id": "title-row",
                 "type": "Input",
                 "source": "",
-                "view": [
-                  "content": [
-                    "title": "Title",
-                    "value": "",
-                    "placeholder": "Enter a title",
-                  ]
-                ],
+                "title": "Title",
+                "value": "",
+                "placeholder": "Enter a title",
                 "destination": "{\(MarketplaceTestFixture.itemsResourceId).title}",
                 "actions": [],
               ]
@@ -289,12 +258,8 @@ final class ContentViewTests: XCTestCase {
               "id": "submit-button",
               "type": "Button",
               "source": "",
-              "view": [
-                "content": [
-                  "title": "",
-                  "label": "Submit",
-                ]
-              ],
+              "title": "",
+              "label": "Submit",
               "actions": [
                 [
                   "condition": "",

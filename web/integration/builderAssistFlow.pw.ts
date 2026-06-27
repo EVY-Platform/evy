@@ -81,12 +81,8 @@ function buildBuilderAssistFlow(): ServerFlow[] {
 							id: "row-title",
 							type: "Text",
 							source: `{${ITEM_RESOURCE_ID}}`,
-							view: {
-								content: {
-									title: "Editable title",
-									subtitle: "Editable subtitle",
-								},
-							},
+							title: "Editable title",
+							subtitle: "Editable subtitle",
 							destination: "",
 							actions: [],
 						},
@@ -94,12 +90,8 @@ function buildBuilderAssistFlow(): ServerFlow[] {
 							id: "row-button",
 							type: "Button",
 							source: "",
-							view: {
-								content: {
-									title: "",
-									label: "Open checkout",
-								},
-							},
+							title: "",
+							label: "Open checkout",
 							actions: [{ condition: "", false: "", true: "" }],
 						},
 					],

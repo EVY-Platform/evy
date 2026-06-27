@@ -21,14 +21,14 @@ struct EVYInlinePickerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
       EVYInlinePicker(
-        title: view.content.title,
+        title: view.title,
         data: source,
-        format: view.content.format,
+        format: view.format,
         destination: destination
       )
     }
@@ -45,12 +45,8 @@ struct EVYInlinePickerRow: View {
         "source": "{durations}",
         "destination": "{item.duration}",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Duration",
-            "format": "{$datum.value}"
-          }
-        }
+        "title": "Duration",
+        "format": "{$datum.value}"
       }
       """,
     failureMessage: "Unable to build inline picker row preview"

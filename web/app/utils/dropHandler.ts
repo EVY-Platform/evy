@@ -303,16 +303,15 @@ export function handleDrop(
 
 			if (
 				destinationContainer?.type === "children" &&
-				destinationContainer.container.config.view.content.children
-					?.length
+				destinationContainer.container.config.children?.length
 			) {
 				dispatchOptions.destinationIndex =
-					destinationContainer.container.config.view.content.children.findIndex(
+					destinationContainer.container.config.children.findIndex(
 						(r) => r.id === destinationRow.data.rowId,
 					);
 			} else if (
 				destinationContainer?.type === "child" &&
-				destinationContainer.container.config.view.content.child?.id
+				destinationContainer.container.config.child?.id
 			) {
 				dispatchOptions.destinationIndex = 0;
 			} else if (closestEdgeOfTarget && !destinationContainer) {

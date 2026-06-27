@@ -9,20 +9,12 @@ export default defineRow("TextActionRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Text action title",
-				subtitle: "Subtitle",
-				action: "Change",
-			},
-		},
+		title: "Text action title",
+		subtitle: "Subtitle",
+		action: "Change",
 	} satisfies RowConfig,
 	render: (row) => {
-		const {
-			title = "",
-			subtitle = "",
-			action = "",
-		} = row.config.view.content;
+		const { title = "", subtitle = "", action = "" } = row.config;
 
 		return (
 			<div className="evy-flex evy-flex-row evy-items-center evy-gap-2 evy-p-2">

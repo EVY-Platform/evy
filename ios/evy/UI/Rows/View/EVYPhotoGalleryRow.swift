@@ -24,7 +24,7 @@ struct EVYPhotoGalleryRow: View {
   }
 
   var body: some View {
-    EVYPhotoGallery(title: view.content.title, imageIds: imageIds)
+    EVYPhotoGallery(title: view.title, imageIds: imageIds)
   }
 }
 
@@ -37,7 +37,7 @@ struct EVYPhotoGalleryRow: View {
         "source": "",
         "destination": "",
         "actions": [],
-        "view": { "content": { "title": "Photo Gallery" } }
+        "title": "Photo Gallery"
       }
       """,
     failureMessage: "Unable to build photo gallery row preview"

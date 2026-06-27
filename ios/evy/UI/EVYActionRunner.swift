@@ -88,7 +88,7 @@ enum EVYActionRunner {
       case "close":
         navigate(.close)
       case "show":
-        if let child = row?.view.content.child {
+        if let child = row?.child {
           show(child)
         }
       case "highlight_required":

@@ -11,20 +11,16 @@ export default defineRow(typeName, {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "List container row title",
-				child: undefined,
-				children: [],
-			},
-		},
+		title: "List container row title",
+		child: undefined,
+		children: [],
 	} satisfies RowConfig,
 	render: (row) => {
-		const title = row.config.view.content.title;
+		const title = row.config.title;
 		return (
 			<RowLayout title={title} fullWidthContent>
 				<ContainerChildren
-					rows={row.config.view.content.children}
+					rows={row.config.children}
 					orientation="vertical"
 					showIndicators
 					containerRowId={row.id}

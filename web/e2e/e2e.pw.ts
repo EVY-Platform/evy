@@ -75,20 +75,15 @@ async function createFlowInApi(flow: UI_Flow): Promise<void> {
 }
 
 function rowContainsTitle(row: UI_Row, title: string): boolean {
-	if (row.view.content.title === title) {
+	if (row.title === title) {
 		return true;
 	}
 
-	if (
-		row.view.content.child &&
-		rowContainsTitle(row.view.content.child, title)
-	) {
+	if (row.child && rowContainsTitle(row.child, title)) {
 		return true;
 	}
 
-	return (row.view.content.children ?? []).some((child) =>
-		rowContainsTitle(child, title),
-	);
+	return (row.children ?? []).some((child) => rowContainsTitle(child, title));
 }
 
 function flowContainsRowTitle(
@@ -222,11 +217,7 @@ test.describe("Web E2E Integration Tests", () => {
 							source: "",
 							visible: "true",
 							actions: [],
-							view: {
-								content: {
-									title: initialRowTitle,
-								},
-							},
+							title: initialRowTitle,
 						},
 					],
 				},
@@ -276,36 +267,24 @@ test.describe("Web E2E Integration Tests", () => {
 			source: "",
 			visible: "true",
 			actions: [],
-			view: {
-				content: {
-					title: "E2E First Child Row",
-					text: "First child text",
-					child: {
-						id: crypto.randomUUID(),
-						type: "Text",
-						source: "",
-						visible: "true",
-						actions: [],
-						view: {
-							content: {
-								title: "E2E Second Child Row",
-								text: "Second child text",
-								child: {
-									id: crypto.randomUUID(),
-									type: "Text",
-									source: "",
-									visible: "true",
-									actions: [],
-									view: {
-										content: {
-											title: "E2E Third Child Row",
-											text: "Third child text",
-										},
-									},
-								},
-							},
-						},
-					},
+			title: "E2E First Child Row",
+			text: "First child text",
+			child: {
+				id: crypto.randomUUID(),
+				type: "Text",
+				source: "",
+				visible: "true",
+				actions: [],
+				title: "E2E Second Child Row",
+				text: "Second child text",
+				child: {
+					id: crypto.randomUUID(),
+					type: "Text",
+					source: "",
+					visible: "true",
+					actions: [],
+					title: "E2E Third Child Row",
+					text: "Third child text",
 				},
 			},
 		};
@@ -315,14 +294,10 @@ test.describe("Web E2E Integration Tests", () => {
 			source: "",
 			visible: "true",
 			actions: [],
-			view: {
-				content: {
-					title: "E2E Parent Row",
-					subtitle: "Parent subtitle",
-					icon: "",
-					child: firstChild,
-				},
-			},
+			title: "E2E Parent Row",
+			subtitle: "Parent subtitle",
+			icon: "",
+			child: firstChild,
 		};
 		await createFlowInApi({
 			id: crypto.randomUUID(),
@@ -425,12 +400,8 @@ test.describe("Web E2E Integration Tests", () => {
 						visible: "true",
 						destination: "",
 						actions: [],
-						view: {
-							content: {
-								title: "",
-								label: footerLabel,
-							},
-						},
+						title: "",
+						label: footerLabel,
 					},
 				},
 			],

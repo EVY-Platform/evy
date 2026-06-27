@@ -430,21 +430,41 @@ async function main(): Promise<void> {
 	validateConfigSemantic(schema, config);
 
 	const defs = schema.$defs ?? {};
+	const tableOrder = [
+		"DATA_EVY_Device",
+		"DATA_EVY_Service",
+		"DATA_EVY_Organization",
+		"DATA_EVY_ServiceProvider",
+		"DATA_EVY_ServiceResource",
+		"DATA_EVY_Flow",
+		"DATA_EVY_File",
+	];
+	const hasNumberColumns = tableOrder.some((defKey) => {
+		const tableConfig = config.tables?.[defKey];
+		const def = defs[defKey];
+		if (!tableConfig || !def?.properties) return false;
+		return Object.values(def.properties).some(
+			(prop) => prop.type === "number",
+		);
+	});
+	const pgCoreImports = [
+		"pgTable",
+		"pgEnum",
+		"uuid",
+		"varchar",
+		"text",
+		"integer",
+		...(hasNumberColumns ? ["numeric"] : []),
+		"boolean",
+		"jsonb",
+		"uniqueIndex",
+	];
 	const lines: string[] = [
 		"/* eslint-disable */",
 		"/** Generated from types/schema/data - do not edit. */",
 		"",
 		"import {",
-		"	pgTable,",
-		"	pgEnum,",
-		"	uuid,",
-		"	varchar,",
-		"	text,",
-		"	integer,",
-		"	numeric,",
-		"	boolean,",
-		"	jsonb,",
-		"	uniqueIndex,",
+		...pgCoreImports.map((importName) => `\t${importName},`),
 		'} from "drizzle-orm/pg-core";',
 		'import { relations } from "drizzle-orm";',
 		'import type { UI_Flow } from "evy-types/sdui/evy";',
@@ -460,16 +480,6 @@ async function main(): Promise<void> {
 		);
 		lines.push("");
 	}
-
-	const tableOrder = [
-		"DATA_EVY_Device",
-		"DATA_EVY_Service",
-		"DATA_EVY_Organization",
-		"DATA_EVY_ServiceProvider",
-		"DATA_EVY_ServiceResource",
-		"DATA_EVY_Flow",
-		"DATA_EVY_File",
-	];
 
 	for (const defKey of tableOrder) {
 		const tableConfig = config.tables?.[defKey];

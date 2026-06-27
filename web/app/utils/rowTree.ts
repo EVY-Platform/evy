@@ -70,13 +70,13 @@ function findRowIdPathFromAncestorRow(
 ): string[] | null {
 	if (root.id === leafRowId) return [root.id];
 
-	const child = root.config.view.content.child;
+	const child = root.config.child;
 	if (child) {
 		const sub = findRowIdPathFromAncestorRow(child, leafRowId);
 		if (sub) return [root.id, ...sub];
 	}
 
-	for (const nested of root.config.view.content.children ?? []) {
+	for (const nested of root.config.children ?? []) {
 		const sub = findRowIdPathFromAncestorRow(nested, leafRowId);
 		if (sub) return [root.id, ...sub];
 	}
@@ -87,13 +87,13 @@ function findRowIdPathFromAncestorRow(
 function findRowInSubtree(row: Row, rowId: string): Row | undefined {
 	if (row.id === rowId) return row;
 
-	const child = row.config.view.content.child;
+	const child = row.config.child;
 	if (child) {
 		const foundChild = findRowInSubtree(child, rowId);
 		if (foundChild) return foundChild;
 	}
 
-	for (const childRow of row.config.view.content.children ?? []) {
+	for (const childRow of row.config.children ?? []) {
 		const foundChild = findRowInSubtree(childRow, rowId);
 		if (foundChild) return foundChild;
 	}
@@ -104,11 +104,9 @@ function findRowInSubtree(row: Row, rowId: string): Row | undefined {
 export function getRowsRecursive(row: Row): Row[] {
 	return [
 		row,
-		...(row.config.view.content.child
-			? getRowsRecursive(row.config.view.content.child)
-			: []),
-		...(row.config.view.content.children
-			? row.config.view.content.children.flatMap(getRowsRecursive)
+		...(row.config.child ? getRowsRecursive(row.config.child) : []),
+		...(row.config.children
+			? row.config.children.flatMap(getRowsRecursive)
 			: []),
 	];
 }
@@ -153,12 +151,10 @@ function findContainerOfRow(
 	rows: Row[],
 ): { container: Row; type: ContainerType } | null {
 	return findContainerByPredicate(rows, (container) => {
-		if (container.config.view.content.child?.id === rowId) {
+		if (container.config.child?.id === rowId) {
 			return { rowId: container.id, type: "child" };
 		}
-		if (
-			container.config.view.content.children?.some((r) => r.id === rowId)
-		) {
+		if (container.config.children?.some((r) => r.id === rowId)) {
 			return { rowId: container.id, type: "children" };
 		}
 		return null;
@@ -174,16 +170,10 @@ function findContainerById(
 	rows: Row[],
 ): { container: Row; type: ContainerType } | null {
 	return findContainerByPredicate(rows, (container) => {
-		if (
-			"child" in container.config.view.content &&
-			container.id === rowId
-		) {
+		if ("child" in container.config && container.id === rowId) {
 			return { rowId: container.id, type: "child" };
 		}
-		if (
-			"children" in container.config.view.content &&
-			container.id === rowId
-		) {
+		if ("children" in container.config && container.id === rowId) {
 			return { rowId: container.id, type: "children" };
 		}
 		return null;
@@ -202,17 +192,17 @@ function findContainerByPredicate(
 		const match = predicate(row);
 		if (match) return { container: row, type: match.type };
 
-		if (row.config.view.content.child) {
+		if (row.config.child) {
 			const childResult = findContainerByPredicate(
-				[row.config.view.content.child],
+				[row.config.child],
 				predicate,
 			);
 			if (childResult) return childResult;
 		}
 
-		if (row.config.view.content.children) {
+		if (row.config.children) {
 			const nestedResult = findContainerByPredicate(
-				row.config.view.content.children,
+				row.config.children,
 				predicate,
 			);
 			if (nestedResult) return nestedResult;
@@ -223,16 +213,13 @@ function findContainerByPredicate(
 
 function withContentUpdate(
 	row: Row,
-	contentPatch: Partial<Row["config"]["view"]["content"]>,
+	contentPatch: Partial<Row["config"]>,
 ): Row {
 	return {
 		...row,
 		config: {
 			...row.config,
-			view: {
-				...row.config.view,
-				content: { ...row.config.view.content, ...contentPatch },
-			},
+			...contentPatch,
 		},
 	};
 }
@@ -240,16 +227,15 @@ function withContentUpdate(
 function removeRowInSubtree(row: Row, targetRowId: string): Row {
 	let nextRow = row;
 
-	if (row.config.view.content.children) {
-		const filteredChildren = row.config.view.content.children.filter(
+	if (row.config.children) {
+		const filteredChildren = row.config.children.filter(
 			(child) => child.id !== targetRowId,
 		);
 		const updatedChildren = filteredChildren.map((child) =>
 			removeRowInSubtree(child, targetRowId),
 		);
 		const childUpdated =
-			filteredChildren.length !==
-				row.config.view.content.children.length ||
+			filteredChildren.length !== row.config.children.length ||
 			updatedChildren.some(
 				(child, index) => child !== filteredChildren[index],
 			);
@@ -258,16 +244,16 @@ function removeRowInSubtree(row: Row, targetRowId: string): Row {
 		}
 	}
 
-	if (nextRow.config.view.content.child?.id === targetRowId) {
+	if (nextRow.config.child?.id === targetRowId) {
 		return withContentUpdate(nextRow, { child: undefined });
 	}
 
-	if (nextRow.config.view.content.child) {
+	if (nextRow.config.child) {
 		const updatedChild = removeRowInSubtree(
-			nextRow.config.view.content.child,
+			nextRow.config.child,
 			targetRowId,
 		);
-		if (updatedChild !== nextRow.config.view.content.child) {
+		if (updatedChild !== nextRow.config.child) {
 			return withContentUpdate(nextRow, { child: updatedChild });
 		}
 	}
@@ -323,7 +309,7 @@ function insertRowIntoSubtree(
 		return {
 			row: withContentUpdate(row, {
 				children: insertRowAtIndex(
-					row.config.view.content.children ?? [],
+					row.config.children ?? [],
 					rowToInsert,
 					destinationIndex,
 				),
@@ -332,7 +318,7 @@ function insertRowIntoSubtree(
 		};
 	}
 
-	const child = row.config.view.content.child;
+	const child = row.config.child;
 	if (child) {
 		const childResult = insertRowIntoSubtree(
 			child,
@@ -349,7 +335,7 @@ function insertRowIntoSubtree(
 		}
 	}
 
-	const children = row.config.view.content.children;
+	const children = row.config.children;
 	if (children) {
 		for (const [index, childRow] of children.entries()) {
 			const childResult = insertRowIntoSubtree(
@@ -412,21 +398,20 @@ function updateRowInSubtree(
 	if (row.id === targetRowId) {
 		return updater(row);
 	}
-	if (row.config.view.content.children) {
-		const updatedChildren = row.config.view.content.children.map(
+	if (row.config.children) {
+		const updatedChildren = row.config.children.map(
 			(child) => updateRowInSubtree(child, targetRowId, updater) ?? child,
 		);
 		const childUpdated = updatedChildren.some(
-			(child, index) =>
-				child !== row.config.view.content.children?.[index],
+			(child, index) => child !== row.config.children?.[index],
 		);
 		if (childUpdated) {
 			return withContentUpdate(row, { children: updatedChildren });
 		}
 	}
-	if (row.config.view.content.child) {
+	if (row.config.child) {
 		const updatedChild = updateRowInSubtree(
-			row.config.view.content.child,
+			row.config.child,
 			targetRowId,
 			updater,
 		);

@@ -8,33 +8,25 @@
 				{
 					"id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
 					"type": "Search",
-					"view": {
-						"content": {
-							"child": {
-								"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-								"type": "ListItem",
-								"view": {
-									"content": {
-										"title": "{$datum.title}",
-										"subtitle": "{formatCurrency($datum.price)}",
-										"image": "{$datum.photo_ids.0}"
-									}
-								},
-								"source": "",
-								"actions": [
-									{
-										"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}",
-										"false": "",
-										"condition": ""
-									}
-								],
-								"destination": "",
-								"visible": "true"
-							},
-							"title": "",
-							"placeholder": "Search anything"
-						}
+					"child": {
+						"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
+						"type": "ListItem",
+						"title": "{$datum.title}",
+						"subtitle": "{formatCurrency($datum.price)}",
+						"image": "{$datum.photo_ids.0}",
+						"source": "",
+						"actions": [
+							{
+								"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}",
+								"false": "",
+								"condition": ""
+							}
+						],
+						"destination": "",
+						"visible": "true"
 					},
+					"title": "",
+					"placeholder": "Search anything",
 					"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
 					"actions": [],
 					"destination": "",
@@ -45,12 +37,8 @@
 			"footer": {
 				"id": "cc86c53a-170d-4800-8897-8f99f3697053",
 				"type": "Button",
-				"view": {
-					"content": {
-						"label": "Sell something",
-						"title": ""
-					}
-				},
+				"label": "Sell something",
+				"title": "",
 				"source": "",
 				"actions": [
 					{

@@ -18,13 +18,13 @@ struct EVYSelectSegmentContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
           .padding(.horizontal, Constants.majorPadding)
       }
       Picker("", selection: $selected) {
-        ForEach(Array(view.content.segments.enumerated()), id: \.offset) { index, segment in
+        ForEach(Array(view.segments.enumerated()), id: \.offset) { index, segment in
           Text(segment).tag(index)
         }
       }
@@ -32,8 +32,8 @@ struct EVYSelectSegmentContainerRow: View {
       .padding(.horizontal, Constants.majorPadding)
       .padding(.bottom, Constants.majorPadding)
 
-      if selected < view.content.children.count {
-        EVYRow(row: view.content.children[selected])
+      if selected < view.children.count {
+        EVYRow(row: view.children[selected])
       }
     }
   }
@@ -47,40 +47,28 @@ struct EVYSelectSegmentContainerRow: View {
         "type": "SelectSegmentContainer",
         "source": "",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Select Segment Preview",
-            "segments": ["Tab One", "Tab Two"],
-            "children": [
-              {
-                "id": "segment-tab-1",
-                "type": "Text",
-                "source": "",
-                "actions": [],
-                "view": {
-                  "content": {
-                    "title": "First Tab Content",
-                    "subtitle": "Content for the first tab",
-                    "icon": ""
-                  }
-                }
-              },
-              {
-                "id": "segment-tab-2",
-                "type": "Text",
-                "source": "",
-                "actions": [],
-                "view": {
-                  "content": {
-                    "title": "Second Tab Content",
-                    "subtitle": "Content for the second tab",
-                    "icon": ""
-                  }
-                }
-              }
-            ]
+        "title": "Select Segment Preview",
+        "segments": ["Tab One", "Tab Two"],
+        "children": [
+          {
+            "id": "segment-tab-1",
+            "type": "Text",
+            "source": "",
+            "actions": [],
+            "title": "First Tab Content",
+            "subtitle": "Content for the first tab",
+            "icon": ""
+          },
+          {
+            "id": "segment-tab-2",
+            "type": "Text",
+            "source": "",
+            "actions": [],
+            "title": "Second Tab Content",
+            "subtitle": "Content for the second tab",
+            "icon": ""
           }
-        }
+        ]
       }
       """,
     failureMessage: "Unable to build select segment row preview"

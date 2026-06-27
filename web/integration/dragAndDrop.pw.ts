@@ -121,24 +121,16 @@ test.describe("Drag & Drop UX", () => {
 					{
 						id: "column-1",
 						type: "ColumnContainer" as const,
-						view: {
-							content: {
-								title: "Column container row title",
-								children: [
-									{
-										id: "column-child-1",
-										type: "Text" as const,
-										view: {
-											content: {
-												title: "Child Text",
-												subtitle: "Child subtitle",
-											},
-										},
-										actions: [],
-									},
-								],
+						title: "Column container row title",
+						children: [
+							{
+								id: "column-child-1",
+								type: "Text" as const,
+								title: "Child Text",
+								subtitle: "Child subtitle",
+								actions: [],
 							},
-						},
+						],
 						actions: [],
 					},
 				],
@@ -171,24 +163,16 @@ test.describe("Drag & Drop UX", () => {
 					{
 						id: "list-1",
 						type: "ListContainer" as const,
-						view: {
-							content: {
-								title: "List container row title",
-								children: [
-									{
-										id: "list-child-1",
-										type: "Text" as const,
-										view: {
-											content: {
-												title: "Nested Text",
-												subtitle: "Nested subtitle",
-											},
-										},
-										actions: [],
-									},
-								],
+						title: "List container row title",
+						children: [
+							{
+								id: "list-child-1",
+								type: "Text" as const,
+								title: "Nested Text",
+								subtitle: "Nested subtitle",
+								actions: [],
 							},
-						},
+						],
 						actions: [],
 					},
 				],

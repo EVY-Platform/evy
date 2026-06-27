@@ -88,35 +88,33 @@ struct EVYCalendarViewState: Equatable {
 }
 
 struct EVYCalendar: View {
-  private let content: CalendarRowContent
+  private let content: CalendarRowViewData
+  private let source: String
+  private let destination: String
   private let calendarState: EVYState<EVYCalendarViewState>
 
   @State private var scrollOffset = CGPoint.zero
 
-  init(content: CalendarRowContent) {
+  init(content: CalendarRowViewData, source: String, destination: String) {
     self.content = content
+    self.source = source
+    self.destination = destination
     calendarState = EVYState(
-      watches: [content.primary, content.secondary],
-      setter: { Self.buildCalendarData(content: content) }
+      watches: [destination, source],
+      setter: { Self.buildCalendarData(content: content, source: source, destination: destination) }
     )
   }
 
-  private static func buildCalendarData(content: CalendarRowContent) -> EVYCalendarViewState {
-    let primarySelections = EVYDatetime.readTimeslots(content.primary)
-    let secondarySelections = EVYDatetime.readTimeslots(content.secondary)
-
-    let intervalMinutes =
-      content.timeslot_interval_minutes > 0 ? content.timeslot_interval_minutes : 30
-    let labelIntervalMinutes =
-      content.label_interval_minutes > 0 ? content.label_interval_minutes : 60
+  private static func buildCalendarData(
+    content: CalendarRowViewData,
+    source: String,
+    destination: String
+  ) -> EVYCalendarViewState {
+    let primarySelections = EVYDatetime.readTimeslots(destination)
+    let secondarySelections = EVYDatetime.readTimeslots(source)
 
     let slots = EVYDatetime.buildCalendarSlots(
-      startTime: content.start_time,
-      endTime: content.end_time,
-      intervalMinutes: intervalMinutes,
-      labelIntervalMinutes: labelIntervalMinutes,
-      headerFormat: content.header_format,
-      timeslotFormat: content.timeslot_format,
+      row: content,
       primarySelections: primarySelections,
       secondarySelections: secondarySelections
     )
@@ -221,12 +219,12 @@ struct EVYCalendar: View {
   }
 
   private func readPrimarySelections() -> [String] {
-    EVYDatetime.readTimeslots(content.primary)
+    EVYDatetime.readTimeslots(destination)
   }
 
   private func writePrimarySelections(_ selections: [String]) {
     guard let data = try? JSONEncoder().encode(selections) else { return }
-    try? EVY.updateData(data, at: content.primary)
+    try? EVY.updateData(data, at: destination)
   }
 
   var body: some View {
@@ -276,12 +274,12 @@ private struct EVYCalendarPreview: View {
     let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "item")
     EVY.draftStore.activeScopeId = previewScopeId
     EVY.ensureDraftExists(
-      variableName: "pickup_selection",
+      variableName: EVYPreviewMockData.calendarPreviewDestinationVariable,
       initialData: EVYPreviewMockData.calendarPickupSelection.data(using: .utf8),
       scopeId: previewScopeId
     )
     EVY.ensureDraftExists(
-      variableName: "delivery_selection",
+      variableName: EVYPreviewMockData.calendarPreviewSourceVariable,
       initialData: EVYPreviewMockData.calendarDeliverySelection.data(using: .utf8),
       scopeId: previewScopeId
     )
@@ -289,9 +287,12 @@ private struct EVYCalendarPreview: View {
 
   var body: some View {
     if let data = EVYPreviewMockData.calendarContentJSON.data(using: .utf8),
-      let content = try? JSONDecoder().decode(CalendarRowContent.self, from: data)
+      let content = try? JSONDecoder().decode(CalendarRowViewData.self, from: data)
     {
-      EVYCalendar(content: content)
+      EVYCalendar(
+        content: content,
+        source: EVYPreviewMockData.calendarPreviewSource,
+        destination: EVYPreviewMockData.calendarPreviewDestination)
     } else {
       Text("Unable to build calendar preview")
     }

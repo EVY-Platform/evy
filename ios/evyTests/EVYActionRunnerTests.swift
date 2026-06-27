@@ -276,7 +276,7 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query["items"], ["$datum.id"])
   }
 
-  func testDatumRowFormatterDoesNotResolveDatumInActions() throws {
+  func testDatumRowFormatterResolvesDatumReferencesInActions() throws {
     let actionString = "{navigate(flowX,pageY,{id: $datum.id})}"
     let row = try decodeRow(
       content: """
@@ -294,7 +294,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let formattedRow = try formatter.formattedResult(datum: datum).row
 
-    XCTAssertEqual(formattedRow.view.content.title, "Resolved Title")
+    XCTAssertEqual(formattedRow.title, "Resolved Title")
     XCTAssertEqual(formattedRow.actions.first?.true, actionString)
   }
 
@@ -309,8 +309,10 @@ final class EVYActionRunnerTests: XCTestCase {
             "type": "Text",
             "source": "",
             "destination": "",
-            "view": { "content": { "title": "Child", "text": "Body" }, "max_lines": "" },
-            "actions": []
+            "title": "Child",
+            "text": "Body",
+            "actions": [],
+            "visible": "true"
           }
         }
         """
@@ -331,13 +333,16 @@ final class EVYActionRunnerTests: XCTestCase {
   ) throws -> UI_Row {
     let actionsData = try JSONEncoder().encode(actions)
     let actionsJson = try XCTUnwrap(String(data: actionsData, encoding: .utf8))
+    let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+    let rowAttributes = String(trimmedContent.dropFirst().dropLast())
     let json = """
       {
         "id": "parent-row",
         "type": "Button",
         "source": "",
         "destination": "",
-        "view": { "content": \(content) },
+        "visible": "true",
+        \(rowAttributes),
         "actions": \(actionsJson)
       }
       """

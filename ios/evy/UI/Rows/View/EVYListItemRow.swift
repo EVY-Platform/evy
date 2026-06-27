@@ -14,7 +14,7 @@ struct EVYListItemRow: View {
   }
 
   private var imageId: String {
-    (try? EVY.getDataFromText(view.content.image).toString()) ?? view.content.image
+    (try? EVY.getDataFromText(view.image).toString()) ?? view.image
   }
 
   var body: some View {
@@ -24,13 +24,13 @@ struct EVYListItemRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 4))
 
       VStack(alignment: .leading, spacing: 2) {
-        if !view.content.title.isEmpty {
-          EVYTextView(view.content.title)
+        if !view.title.isEmpty {
+          EVYTextView(view.title)
             .lineLimit(1)
             .truncationMode(.tail)
         }
-        if !view.content.subtitle.isEmpty {
-          EVYTextView(view.content.subtitle, style: .info)
+        if !view.subtitle.isEmpty {
+          EVYTextView(view.subtitle, style: .info)
             .lineLimit(2)
             .truncationMode(.tail)
         }
@@ -50,13 +50,9 @@ struct EVYListItemRow: View {
         "destination": "",
         "actions": [],
         "visible": "true",
-        "view": {
-          "content": {
-            "title": "Red mountain bike",
-            "subtitle": "Great condition · $120",
-            "image": ""
-          }
-        }
+        "title": "Red mountain bike",
+        "subtitle": "Great condition · $120",
+        "image": ""
       }
       """,
     failureMessage: "Unable to build list item row preview"

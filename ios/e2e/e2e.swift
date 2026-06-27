@@ -333,22 +333,18 @@ class E2ETestBase: XCTestCase {
               "destination": "",
               "actions": [],
               "visible": "true",
-              "view": [
-                "content": [
-                  "title": "",
-                  "children": [
-                    Self.buttonRow(
-                      id: "441c1433-446b-4682-854d-5d795ef52709",
-                      label: buttonLabel,
-                      action: "{navigate(\(viewFlowId),\(viewPageId))}"
-                    ),
-                    Self.buttonRow(
-                      id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
-                      label: "Create",
-                      action: "{navigate(\(createFlowId),\(createPageId))}"
-                    ),
-                  ],
-                ]
+              "title": "",
+              "children": [
+                Self.buttonRow(
+                  id: "441c1433-446b-4682-854d-5d795ef52709",
+                  label: buttonLabel,
+                  action: "{navigate(\(viewFlowId),\(viewPageId))}"
+                ),
+                Self.buttonRow(
+                  id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                  label: "Create",
+                  action: "{navigate(\(createFlowId),\(createPageId))}"
+                ),
               ],
             ]
           ],
@@ -364,23 +360,23 @@ class E2ETestBase: XCTestCase {
     subtitle: String = "",
     visible: String = "true"
   ) -> [String: Any] {
-    let (rowType, view): (String, [String: Any]) =
-      text.isEmpty
-      ? ("Text", ["content": ["title": title, "subtitle": subtitle, "label": ""]])
-      : (
-        "TextExpand",
-        ["content": ["title": title, "text": text, "expandLabel": "Read more"], "max_lines": "3"]
-      )
-
-    return [
+    var row: [String: Any] = [
       "id": id,
-      "type": rowType,
+      "type": text.isEmpty ? "Text" : "TextExpand",
       "source": "",
       "destination": "",
       "actions": [],
       "visible": visible,
-      "view": view,
+      "title": title,
     ]
+    if text.isEmpty {
+      row["subtitle"] = subtitle
+      row["label"] = ""
+    } else {
+      row["text"] = text
+      row["expandLabel"] = "Read more"
+    }
+    return row
   }
 
   static func listItemRow(
@@ -397,13 +393,9 @@ class E2ETestBase: XCTestCase {
       "destination": "",
       "actions": [],
       "visible": visible,
-      "view": [
-        "content": [
-          "title": title,
-          "subtitle": subtitle,
-          "image": image,
-        ]
-      ],
+      "title": title,
+      "subtitle": subtitle,
+      "image": image,
     ]
   }
 
@@ -420,13 +412,9 @@ class E2ETestBase: XCTestCase {
       "type": "Input",
       "source": "",
       "visible": visible,
-      "view": [
-        "content": [
-          "title": title,
-          "value": value,
-          "placeholder": placeholder,
-        ]
-      ],
+      "title": title,
+      "value": value,
+      "placeholder": placeholder,
       "destination": destination,
       "actions": [],
     ]
@@ -444,12 +432,8 @@ class E2ETestBase: XCTestCase {
       "source": "",
       "destination": "",
       "visible": visible,
-      "view": [
-        "content": [
-          "title": "",
-          "label": label,
-        ]
-      ],
+      "title": "",
+      "label": label,
       "actions": [
         [
           "condition": "",
@@ -1001,23 +985,19 @@ final class WebSocketE2ETests: E2ETestBase {
               "destination": "",
               "actions": [],
               "visible": "true",
-              "view": [
-                "content": [
-                  "title": "",
-                  "children": [
-                    Self.buttonRow(
-                      id: "441c1433-446b-4682-854d-5d795ef52709",
-                      label: buttonLabel,
-                      action: viewAction
-                    ),
-                    Self.buttonRow(
-                      id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
-                      label: "Create",
-                      action:
-                        "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
-                    ),
-                  ],
-                ]
+              "title": "",
+              "children": [
+                Self.buttonRow(
+                  id: "441c1433-446b-4682-854d-5d795ef52709",
+                  label: buttonLabel,
+                  action: viewAction
+                ),
+                Self.buttonRow(
+                  id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                  label: "Create",
+                  action:
+                    "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
+                ),
               ],
             ]
           ],
@@ -1032,9 +1012,7 @@ final class WebSocketE2ETests: E2ETestBase {
       var homePage = pages.first,
       var rows = homePage["rows"] as? [[String: Any]],
       var firstRow = rows.first,
-      var rowView = firstRow["view"] as? [String: Any],
-      var rowContent = rowView["content"] as? [String: Any],
-      var children = rowContent["children"] as? [[String: Any]],
+      var children = firstRow["children"] as? [[String: Any]],
       var firstButton = children.first,
       var actions = firstButton["actions"] as? [[String: Any]],
       var firstAction = actions.first
@@ -1046,9 +1024,7 @@ final class WebSocketE2ETests: E2ETestBase {
     actions[0] = firstAction
     firstButton["actions"] = actions
     children[0] = firstButton
-    rowContent["children"] = children
-    rowView["content"] = rowContent
-    firstRow["view"] = rowView
+    firstRow["children"] = children
     rows[0] = firstRow
     homePage["rows"] = rows
     pages[0] = homePage

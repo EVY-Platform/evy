@@ -31,12 +31,9 @@ export function isNonRoutablePreviewRowId(rowId: string): boolean {
 }
 
 function isDirectChildRow(parent: Row, childId: string): boolean {
-	const child = parent.config.view.content.child;
+	const child = parent.config.child;
 	if (child?.id === childId) return true;
-	return (
-		parent.config.view.content.children?.some((c) => c.id === childId) ??
-		false
-	);
+	return parent.config.children?.some((c) => c.id === childId) ?? false;
 }
 
 /**

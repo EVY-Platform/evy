@@ -3,16 +3,19 @@ import type {
 	UI_RowAction as RowAction,
 	UI_Flow as ServerFlow,
 	UI_Row as ServerRow,
-	UI_RowContent as ServerRowContent,
 } from "evy-types";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
 } from "../app/api/sync";
 
-// Input types where id is optional
-// Using explicit interface to avoid index signature conflicts with ServerRowContent
-interface ServerRowInputContent {
+interface ServerRowInput {
+	id?: string;
+	type: ServerRow["type"];
+	source?: string;
+	destination?: string;
+	actions: RowAction[];
+	visible?: string;
 	title: string;
 	children?: ServerRowInput[];
 	child?: ServerRowInput;
@@ -26,18 +29,6 @@ interface ServerRowInputContent {
 	segments?: string[];
 }
 
-interface ServerRowInput {
-	id?: string;
-	type: ServerRow["type"];
-	source?: string;
-	view: {
-		content: ServerRowInputContent;
-		max_lines?: string;
-	};
-	destination?: string;
-	actions: RowAction[];
-}
-
 interface ServerPageInput {
 	id?: string;
 	title: string;
@@ -46,26 +37,15 @@ interface ServerPageInput {
 }
 
 function ensureRowId(row: ServerRowInput): ServerRow {
-	const inputContent = row.view.content;
-	const { children, child, ...contentRest } = inputContent;
-
-	const content: ServerRowContent = {
-		...contentRest,
+	const { children, child, ...rowRest } = row;
+	return {
+		...rowRest,
+		id: row.id ?? crypto.randomUUID(),
+		source: row.source ?? "",
+		visible: row.visible ?? "true",
 		...(children !== undefined ? { children: ensureRowIds(children) } : {}),
 		...(child !== undefined ? { child: ensureRowId(child) } : {}),
-	};
-
-	return {
-		id: row.id ?? crypto.randomUUID(),
-		type: row.type,
-		view: {
-			content,
-			max_lines: row.view.max_lines,
-		},
-		source: row.source ?? "",
-		destination: row.destination,
-		actions: row.actions,
-	};
+	} as ServerRow;
 }
 
 function ensureRowIds(rows: ServerRowInput[]): ServerRow[] {
@@ -90,53 +70,63 @@ export function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 export async function initTestFlows(
 	page: Page,
 	pages: ServerPageInput[],
+	resources: ServiceResource[] = [],
+	metadata: ResourceAttributeMetadata[] = [],
 ): Promise<void> {
 	await page.addInitScript((flows: ServerFlow[]) => {
 		window.__TEST_FLOWS__ = flows;
 	}, createTestFlows(pages));
+	await initServiceResources(page, resources);
+	await initResourceAttributeMetadata(page, metadata);
 }
 
 export async function initFullFlows(
 	page: Page,
 	flows: ServerFlow[],
-	serviceResources: ServiceResource[] = [],
-	resourceAttributeMetadata: ResourceAttributeMetadata[] = [],
+	resources: ServiceResource[] = [],
+	metadata: ResourceAttributeMetadata[] = [],
 ): Promise<void> {
-	await page.addInitScript(
-		({ flowData, resources, attributes }) => {
-			window.__TEST_FLOWS__ = flowData;
-			window.__TEST_SERVICE_RESOURCES__ = resources;
-			window.__TEST_RESOURCE_ATTRIBUTE_METADATA__ = attributes;
-		},
-		{
-			flowData: flows,
-			resources: serviceResources,
-			attributes: resourceAttributeMetadata,
-		},
-	);
+	await page.addInitScript((flows: ServerFlow[]) => {
+		window.__TEST_FLOWS__ = flows;
+	}, flows);
+	await initServiceResources(page, resources);
+	await initResourceAttributeMetadata(page, metadata);
 }
 
-/** Loads injected full flow JSON and opens the app (same pattern as component tests that use `initFullFlows`). */
-export async function openAppWithFullFlows(
+export async function initServiceResources(
 	page: Page,
-	flows: ServerFlow[],
-	serviceResources: ServiceResource[] = [],
-	resourceAttributeMetadata: ResourceAttributeMetadata[] = [],
+	resources: ServiceResource[],
 ): Promise<void> {
-	await initFullFlows(
-		page,
-		flows,
-		serviceResources,
-		resourceAttributeMetadata,
-	);
+	await page.addInitScript((resources: ServiceResource[]) => {
+		window.__TEST_SERVICE_RESOURCES__ = resources;
+	}, resources);
+}
+
+export async function initResourceAttributeMetadata(
+	page: Page,
+	metadata: ResourceAttributeMetadata[],
+): Promise<void> {
+	await page.addInitScript((metadata: ResourceAttributeMetadata[]) => {
+		window.__TEST_RESOURCE_ATTRIBUTE_METADATA__ = metadata;
+	}, metadata);
+}
+
+export async function openAppWithTestFlows(
+	page: Page,
+	pages: ServerPageInput[],
+	resources: ServiceResource[] = [],
+	metadata: ResourceAttributeMetadata[] = [],
+): Promise<void> {
+	await initTestFlows(page, pages, resources, metadata);
 	await page.goto("/");
 }
 
-/** Injects simplified page fixtures via `initTestFlows` and opens the app. */
-export async function openAppWithTestFlows(
+export async function openAppWithFullFlows(
 	page: Page,
-	pages: Parameters<typeof initTestFlows>[1],
+	flows: ServerFlow[],
+	resources: ServiceResource[] = [],
+	metadata: ResourceAttributeMetadata[] = [],
 ): Promise<void> {
-	await initTestFlows(page, pages);
+	await initFullFlows(page, flows, resources, metadata);
 	await page.goto("/");
 }

@@ -1,5 +1,5 @@
 import type { UI_Flow as ServerFlow, SyncResponse } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { isServerFlow, wsClient } from "./wsClient";
 
 export type ServiceResource = {
@@ -18,7 +18,9 @@ const MAX_ATTRIBUTE_DEPTH = 5;
 
 function extractSduiFlows(response: SyncResponse): ServerFlow[] {
 	const sduiRow = response.data.find(
-		(row) => row.service === EVY_CORE_SERVICE && row.resource === "sdui",
+		(row) =>
+			row.service === EVY_CORE_SERVICE &&
+			row.resource === EVY_CORE_RESOURCE.SDUI,
 	);
 
 	const value = sduiRow?.value;
@@ -50,7 +52,7 @@ function extractServiceResources(response: SyncResponse): ServiceResource[] {
 	const row = response.data.find(
 		(row) =>
 			row.service === EVY_CORE_SERVICE &&
-			row.resource === "serviceResources",
+			row.resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES,
 	);
 	if (!Array.isArray(row?.value)) return [];
 	return (row.value as unknown[]).filter(isServiceResource);

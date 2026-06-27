@@ -8,9 +8,7 @@ import Foundation
 @MainActor
 enum EVYDatetime {
   static func buildTimeslotPickerDates(
-    headerFormat: String,
-    headerSubtitle: String,
-    timeslotFormat: String,
+    row: TimeslotPickerRowViewData,
     selections: [String]
   ) -> [EVYTimeslotDate] {
     guard !selections.isEmpty else { return [] }
@@ -29,10 +27,10 @@ enum EVYDatetime {
       let dateTimes = (dateToDateTimes[dateStr] ?? []).sorted()
       guard let firstDateTime = dateTimes.first else { return nil }
       return EVYTimeslotDate(
-        header: format(firstDateTime, format: headerFormat),
-        subtitle: format(firstDateTime, format: headerSubtitle),
+        header: format(firstDateTime, format: row.header_format),
+        subtitle: format(firstDateTime, format: row.header_subtitle),
         timeslots: dateTimes.map {
-          EVYTimeslot(timeslot: format($0, format: timeslotFormat), available: true)
+          EVYTimeslot(timeslot: format($0, format: row.timeslot_format), available: true)
         }
       )
     }
@@ -40,6 +38,15 @@ enum EVYDatetime {
 
   static func format(_ value: String, format: String) -> String {
     (try? EVY.formatDataOrToString(json: .string(value), format: format)) ?? value
+  }
+
+  static func formatCalendarValue(_ value: String, patternOrExpression: String) -> String {
+    // TODO: remove after migration
+    if patternOrExpression.contains("$datum") {
+      return format(value, format: patternOrExpression)
+    }
+    let expression = "{formatDatetime($datum, \"\(patternOrExpression)\")}"
+    return format(value, format: expression)
   }
 
   static func readTimeslots(_ source: String) -> [String] {
@@ -53,19 +60,15 @@ enum EVYDatetime {
   }
 
   static func buildCalendarSlots(
-    startTime: String,
-    endTime: String,
-    intervalMinutes: Int,
-    labelIntervalMinutes: Int,
-    headerFormat: String,
-    timeslotFormat: String,
+    row: CalendarRowViewData,
     primarySelections: [String],
     secondarySelections: [String]
   ) -> [EVYCalendarSlot] {
-    guard intervalMinutes > 0 else { return [] }
+    let intervalMinutes = row.timeslot_interval_minutes > 0 ? row.timeslot_interval_minutes : 30
+    let labelIntervalMinutes = row.label_interval_minutes > 0 ? row.label_interval_minutes : 60
 
-    let startParts = startTime.split(separator: ":").compactMap { Int($0) }
-    let endParts = endTime.split(separator: ":").compactMap { Int($0) }
+    let startParts = row.start_time.split(separator: ":").compactMap { Int($0) }
+    let endParts = row.end_time.split(separator: ":").compactMap { Int($0) }
     guard startParts.count >= 2, endParts.count >= 2 else { return [] }
 
     let startMinutes = startParts[0] * 60 + startParts[1]
@@ -104,7 +107,8 @@ enum EVYDatetime {
     var slots: [EVYCalendarSlot] = []
 
     for (x, dateStr) in uniqueDates.enumerated() {
-      let header = format("\(dateStr)T00:00:00", format: headerFormat)
+      let header = formatCalendarValue(
+        "\(dateStr)T00:00:00", patternOrExpression: row.header_format)
 
       for y in 0..<numSlots {
         let slotTotalMinutes = startMinutes + y * intervalMinutes
@@ -116,7 +120,7 @@ enum EVYDatetime {
         let elapsedMinutes = y * intervalMinutes
         let timeLabel: String
         if labelIntervalMinutes > 0 && elapsedMinutes % labelIntervalMinutes == 0 {
-          timeLabel = format(dateTimeISO, format: timeslotFormat)
+          timeLabel = formatCalendarValue(dateTimeISO, patternOrExpression: row.timeslot_format)
         } else {
           timeLabel = ""
         }
@@ -143,7 +147,8 @@ enum EVYDatetime {
     format formatPattern: String
   ) -> String {
     let timeWithSeconds = timeString.count == 5 ? "\(timeString):00" : timeString
-    return format("\(dateString)T\(timeWithSeconds)", format: formatPattern)
+    return formatCalendarValue(
+      "\(dateString)T\(timeWithSeconds)", patternOrExpression: formatPattern)
   }
 
   private static func localCalendarDayStart(for date: Date) -> Date {

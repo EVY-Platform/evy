@@ -24,7 +24,7 @@ export function buildActiveChildPages({
 	let currentParentRow = activeRootRow;
 
 	for (const selectedDescendantRowId of configStack) {
-		const singularChild = currentParentRow.config.view.content.child;
+		const singularChild = currentParentRow.config.child;
 		if (singularChild?.id === selectedDescendantRowId) {
 			childPages.push({
 				childRow: singularChild,
@@ -34,7 +34,7 @@ export function buildActiveChildPages({
 			continue;
 		}
 
-		const nestedChild = currentParentRow.config.view.content.children?.find(
+		const nestedChild = currentParentRow.config.children?.find(
 			(child) => child.id === selectedDescendantRowId,
 		);
 		if (nestedChild) {
@@ -47,7 +47,7 @@ export function buildActiveChildPages({
 		currentParentRow = fallbackRow;
 	}
 
-	const nextChildRow = currentParentRow.config.view.content.child;
+	const nextChildRow = currentParentRow.config.child;
 	if (nextChildRow) {
 		childPages.push({
 			childRow: nextChildRow,

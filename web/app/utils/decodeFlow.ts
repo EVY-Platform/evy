@@ -2,13 +2,13 @@ import type {
 	UI_Flow as ServerFlow,
 	UI_Page as ServerPage,
 	UI_Row as ServerRow,
-	UI_RowContent as ServerRowContent,
 } from "evy-types";
 import { createElement } from "react";
 import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
 import type { UI_Flow, UI_Page } from "../types/flow";
-import type { Row } from "../types/row";
+import type { Row, RowConfig } from "../types/row";
+import { ROW_METADATA_KEYS } from "./rowConstants";
 
 type RowComponent = (typeof baseRows)[number];
 
@@ -20,19 +20,27 @@ function getBaseRowForType(type: string): RowComponent | undefined {
 	return BASE_ROW_BY_TYPE.get(type);
 }
 
+function rowConfigAttributes(config: RowConfig): Record<string, unknown> {
+	const attributes: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(config)) {
+		if (!ROW_METADATA_KEYS.has(key) && value !== undefined) {
+			attributes[key] = value;
+		}
+	}
+	return attributes;
+}
+
 export function mergeRowContentWithPaletteDefaults(
 	row: Row,
 ): Record<string, unknown> {
 	const baseRow = getBaseRowForType(row.config.type);
-	const content = {
-		...(row.config.view.content as Record<string, unknown>),
-	};
+	const attributes = rowConfigAttributes(row.config);
 	if (!baseRow) {
-		return content;
+		return attributes;
 	}
 	return {
-		...(baseRow.config.view.content as Record<string, unknown>),
-		...content,
+		...rowConfigAttributes(baseRow.config),
+		...attributes,
 	};
 }
 
@@ -41,21 +49,7 @@ export function normalizeServerRow(row: ServerRow): ServerRow {
 	if (!baseRow) {
 		return normalizeUnknownServerRow(row);
 	}
-	const view: ServerRow["view"] = {
-		content: normalizeServerRowContent(row.view.content),
-	};
-	if (row.view.max_lines !== undefined) {
-		view.max_lines = row.view.max_lines;
-	}
-	return {
-		id: row.id,
-		type: row.type,
-		source: row.source ?? "",
-		destination: row.destination ?? "",
-		actions: row.actions ?? [],
-		visible: row.visible ?? "true",
-		view,
-	};
+	return normalizeKnownServerRow(row);
 }
 
 export function normalizeServerFlow(flow: ServerFlow): ServerFlow {
@@ -69,80 +63,41 @@ export function normalizeServerFlow(flow: ServerFlow): ServerFlow {
 	};
 }
 
-function normalizeUnknownServerRow(row: ServerRow): ServerRow {
-	const title =
-		typeof row.view.content.title === "string"
-			? row.view.content.title
-			: "Unknown row";
+function normalizeKnownServerRow(row: ServerRow): ServerRow {
 	return {
+		...normalizeRowAttributes(row, normalizeServerRow),
 		id: row.id,
 		type: row.type,
 		source: row.source ?? "",
 		destination: row.destination ?? "",
 		actions: row.actions ?? [],
 		visible: row.visible ?? "true",
-		view: {
-			...(row.view.max_lines !== undefined
-				? { max_lines: row.view.max_lines }
-				: {}),
-			content: {
-				...row.view.content,
-				title,
-			} as ServerRowContent,
-		},
-	};
-}
-
-function normalizeServerRowContent(
-	incoming: ServerRowContent,
-): ServerRowContent {
-	return transformRowContent(
-		incoming as unknown as Record<string, unknown>,
-		normalizeServerRow,
-	);
-}
-
-/** Map builder Row → wire ServerRow shape (recursive child/children); does not run `normalizeServerRow`. */
-function rowToServerRow(row: Row): ServerRow {
-	const { view, ...rowRoot } = row.config;
-	const content = view.content as unknown as Record<string, unknown>;
-	const serverContent: Record<string, unknown> = {};
-	for (const key of Object.keys(content)) {
-		if (key === "children") {
-			const ch = content.children;
-			serverContent.children = Array.isArray(ch)
-				? (ch as Row[]).map(rowToServerRow)
-				: [];
-		} else if (key === "child") {
-			if (content.child) {
-				serverContent.child = rowToServerRow(content.child as Row);
-			}
-		} else {
-			serverContent[key] = content[key];
-		}
-	}
-	return {
-		id: row.id,
-		...rowRoot,
-		view: {
-			...view,
-			content: serverContent as unknown as ServerRowContent,
-		},
+		title: typeof row.title === "string" ? row.title : "",
 	} as ServerRow;
 }
 
-function encodeRowContent(incoming: Record<string, unknown>): ServerRowContent {
-	return transformRowContent(incoming, (row) =>
-		encodeRowToServerRow(row as unknown as Row),
-	);
+function normalizeUnknownServerRow(row: ServerRow): ServerRow {
+	return {
+		...normalizeRowAttributes(row, normalizeServerRow),
+		id: row.id,
+		type: row.type,
+		source: row.source ?? "",
+		destination: row.destination ?? "",
+		actions: row.actions ?? [],
+		visible: row.visible ?? "true",
+		title: typeof row.title === "string" ? row.title : "Unknown row",
+	} as ServerRow;
 }
 
-function transformRowContent(
-	incoming: Record<string, unknown>,
+function normalizeRowAttributes(
+	incoming: ServerRow,
 	transformRow: (row: ServerRow) => ServerRow,
-): ServerRowContent {
+): Record<string, unknown> {
 	const out: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(incoming)) {
+		if (ROW_METADATA_KEYS.has(key)) {
+			continue;
+		}
 		if (key === "children") {
 			out.children = Array.isArray(value)
 				? value.map((child) => transformRow(child as ServerRow))
@@ -164,36 +119,54 @@ function transformRowContent(
 				: [];
 			continue;
 		}
-		out[key] = value;
+		if (value !== undefined) {
+			out[key] = value;
+		}
 	}
 	if (typeof out.title !== "string") {
 		out.title = "";
 	}
-	return out as unknown as ServerRowContent;
+	return out;
 }
 
-function encodeRowToServerRow(row: Row): ServerRow {
-	const baseRow = getBaseRowForType(row.config.type);
-	if (!baseRow) {
-		return normalizeUnknownServerRow(rowToServerRow(row));
-	}
-	const view: ServerRow["view"] = {
-		content: encodeRowContent(
-			row.config.view.content as unknown as Record<string, unknown>,
-		),
-	};
-	if (row.config.view.max_lines !== undefined) {
-		view.max_lines = row.config.view.max_lines;
-	}
-	return {
+function rowToServerRow(row: Row): ServerRow {
+	const serverRow: Record<string, unknown> = {
 		id: row.id,
 		type: row.config.type,
 		source: row.config.source ?? "",
 		destination: row.config.destination ?? "",
 		actions: row.config.actions ?? [],
 		visible: row.config.visible ?? "true",
-		view,
 	};
+
+	for (const [key, value] of Object.entries(row.config)) {
+		if (ROW_METADATA_KEYS.has(key) || value === undefined) {
+			continue;
+		}
+		if (key === "children") {
+			serverRow.children = Array.isArray(value)
+				? (value as Row[]).map(rowToServerRow)
+				: [];
+			continue;
+		}
+		if (key === "child") {
+			if (value) {
+				serverRow.child = rowToServerRow(value as Row);
+			}
+			continue;
+		}
+		serverRow[key] = value;
+	}
+
+	if (typeof serverRow.title !== "string") {
+		serverRow.title = "";
+	}
+
+	return serverRow as ServerRow;
+}
+
+function encodeRowToServerRow(row: Row): ServerRow {
+	return normalizeServerRow(rowToServerRow(row));
 }
 
 export function encodeFlow(flow: UI_Flow): ServerFlow {
@@ -210,6 +183,7 @@ export function encodeFlow(flow: UI_Flow): ServerFlow {
 function decodeRow(row: ServerRow): Row {
 	const normalized = normalizeServerRow(row);
 	const baseRow = getBaseRowForType(normalized.type);
+	const config = decodeRowConfig(normalized);
 	if (!baseRow) {
 		return {
 			id: normalized.id,
@@ -217,28 +191,9 @@ function decodeRow(row: ServerRow): Row {
 				key: normalized.id,
 				rowId: normalized.id,
 			}),
-			config: {
-				type: normalized.type,
-				source: normalized.source,
-				destination: normalized.destination,
-				actions: normalized.actions,
-				visible: normalized.visible,
-				view: normalized.view as Row["config"]["view"],
-			},
+			config,
 		};
 	}
-	const vc = normalized.view.content;
-	const decodedContent = {
-		...vc,
-		...(Array.isArray(vc.children)
-			? {
-					children: vc.children.map((child: ServerRow) =>
-						decodeRow(child),
-					),
-				}
-			: {}),
-		...(vc.child ? { child: decodeRow(vc.child) } : {}),
-	} as unknown as Row["config"]["view"]["content"];
 
 	return {
 		id: normalized.id,
@@ -246,18 +201,43 @@ function decodeRow(row: ServerRow): Row {
 			key: normalized.id,
 			rowId: normalized.id,
 		}),
-		config: {
-			type: normalized.type,
-			source: normalized.source,
-			destination: normalized.destination,
-			actions: normalized.actions,
-			visible: normalized.visible,
-			view: {
-				max_lines: normalized.view.max_lines,
-				content: decodedContent,
-			},
-		},
+		config,
 	};
+}
+
+function decodeRowConfig(row: ServerRow): RowConfig {
+	const config: Record<string, unknown> = {
+		type: row.type,
+		source: row.source,
+		destination: row.destination ?? "",
+		actions: row.actions,
+		visible: row.visible,
+	};
+
+	for (const [key, value] of Object.entries(row)) {
+		if (ROW_METADATA_KEYS.has(key) || key === "id" || value === undefined) {
+			continue;
+		}
+		if (key === "children") {
+			config.children = Array.isArray(value)
+				? value.map((child) => decodeRow(child as ServerRow))
+				: [];
+			continue;
+		}
+		if (key === "child") {
+			if (value) {
+				config.child = decodeRow(value as ServerRow);
+			}
+			continue;
+		}
+		config[key] = value;
+	}
+
+	if (typeof config.title !== "string") {
+		config.title = "";
+	}
+
+	return config as RowConfig;
 }
 
 export const decodeFlows = (flows: ServerFlow[]): UI_Flow[] => {
@@ -273,44 +253,50 @@ export const decodeFlows = (flows: ServerFlow[]): UI_Flow[] => {
 
 function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {
 	row.id = rootId;
-	const { child, children } = row.view.content;
-	if (child) {
-		assignFreshIdsInPlace(child, crypto.randomUUID());
+	if (row.child) {
+		assignFreshIdsInPlace(row.child, crypto.randomUUID());
 	}
-	if (children) {
-		for (const c of children) {
-			assignFreshIdsInPlace(c, crypto.randomUUID());
+	if (row.children) {
+		for (const childRow of row.children) {
+			assignFreshIdsInPlace(childRow, crypto.randomUUID());
 		}
 	}
 }
 
-function resetContentToTestTitleOnly(
-	content: ServerRowContent,
-): ServerRowContent {
-	const resetContent: Record<string, unknown> = {};
-	for (const [key, value] of Object.entries(
-		content as unknown as Record<string, unknown>,
-	)) {
+function resetRowAttributesForNewPage(row: ServerRow): ServerRow {
+	const resetRow: Record<string, unknown> = {
+		id: row.id,
+		type: row.type,
+		source: row.source ?? "",
+		destination: row.destination ?? "",
+		actions: row.actions ?? [],
+		visible: row.visible ?? "true",
+	};
+
+	for (const [key, value] of Object.entries(row)) {
+		if (ROW_METADATA_KEYS.has(key) || key === "id") {
+			continue;
+		}
 		if (key === "title") {
-			resetContent.title = typeof value === "string" ? value : "";
+			resetRow.title = typeof value === "string" ? value : "";
 			continue;
 		}
 		if (key === "children" || key === "segments") {
-			resetContent[key] = [];
+			resetRow[key] = [];
 			continue;
 		}
 		if (key === "child") {
 			if (value !== undefined && value !== null) {
-				resetContent.child = value;
+				resetRow.child = value;
 			}
 			continue;
 		}
-		resetContent[key] = typeof value === "string" ? "" : value;
+		resetRow[key] = typeof value === "string" ? "" : value;
 	}
-	if (typeof resetContent.title !== "string") {
-		resetContent.title = "";
+	if (typeof resetRow.title !== "string") {
+		resetRow.title = "";
 	}
-	return resetContent as unknown as ServerRowContent;
+	return resetRow as ServerRow;
 }
 
 export function buildRowForNewPageFromBase(
@@ -323,8 +309,9 @@ export function buildRowForNewPageFromBase(
 		row: createElement(baseRow, { key: tempId, rowId: tempId }),
 		config: baseRow.config,
 	};
-	const cloned = structuredClone(rowToServerRow(seed));
-	cloned.view.content = resetContentToTestTitleOnly(cloned.view.content);
+	const cloned = resetRowAttributesForNewPage(
+		structuredClone(rowToServerRow(seed)),
+	);
 	assignFreshIdsInPlace(cloned, newRowId);
 	return decodeRow(cloned);
 }

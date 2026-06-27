@@ -21,15 +21,15 @@ struct EVYDropdownRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
       EVYDropdown(
-        title: view.content.title,
-        placeholder: view.content.placeholder,
+        title: view.title,
+        placeholder: view.placeholder,
         data: source,
-        format: view.content.format,
+        format: view.format,
         destination: destination
       )
     }
@@ -46,13 +46,9 @@ struct EVYDropdownRow: View {
         "source": "{conditions}",
         "destination": "{item.condition}",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Condition",
-            "format": "{$datum.value}",
-            "placeholder": "Select a condition"
-          }
-        }
+        "title": "Condition",
+        "format": "{$datum.value}",
+        "placeholder": "Select a condition"
       }
       """,
     failureMessage: "Unable to build dropdown row preview"

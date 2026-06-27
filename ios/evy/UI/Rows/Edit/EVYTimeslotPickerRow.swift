@@ -17,11 +17,11 @@ struct EVYTimeslotPickerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
-      EVYTimeslotPicker(content: view.content, source: source)
+      EVYTimeslotPicker(content: view, source: source)
     }
     .padding(.horizontal, Constants.majorPadding)
   }
@@ -57,9 +57,13 @@ private struct EVYTimeslotPickerRowPreview: View {
         "source": "{pickup_selection}",
         "destination": "",
         "actions": [],
-        "view": {
-          "content": \(EVYPreviewMockData.calendarContentJSON)
-        }
+        "title": "",
+        "start_time": "07:00",
+        "end_time": "19:00",
+        "timeslot_interval_minutes": 30,
+        "label_interval_minutes": 60,
+        "header_format": "EEE d",
+        "timeslot_format": "HH:mm"
       }
       """
     return EVYPreviewMockData.decodeRow(from: json)

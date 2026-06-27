@@ -20,10 +20,11 @@ const ROW_B = "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e";
 function makeServerRow(overrides: Record<string, unknown> = {}): ServerRow {
 	return {
 		id: ROW_A,
+		type: "Text",
 		source: "",
 		visible: "",
 		actions: [],
-		view: { content: {} },
+		title: "",
 		...overrides,
 	} as unknown as ServerRow;
 }
@@ -32,58 +33,46 @@ describe("normalizeServerRow", () => {
 	it("fills root string defaults and empty destination when omitted", () => {
 		const partial = makeServerRow({
 			type: "Button",
-			view: {
-				content: {
-					label: "OK",
-				},
-			},
+			label: "OK",
 			actions: [{ condition: "", false: "", true: "{close()}" }],
 		});
 
 		const n = normalizeServerRow(partial);
 		expect(n.source).toBe("");
 		expect(n.destination).toBe("");
-		expect(n.view.content).toMatchObject({
+		expect(n).toMatchObject({
 			title: "",
 			label: "OK",
 		});
 	});
 
-	it("does not merge Text content string fields from defaults when missing", () => {
+	it("does not merge Text string fields from defaults when missing", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "Text",
-				view: {
-					content: {
-						title: "T",
-						subtitle: "Sub",
-					},
-				},
+				title: "T",
+				subtitle: "Sub",
 			}),
 		);
 
-		expect(n.view.content).toEqual({
+		expect(rowAttributes(n)).toEqual({
 			title: "T",
 			subtitle: "Sub",
 		});
 	});
 
-	it("preserves Text content keys as sent by the server", () => {
+	it("preserves Text keys as sent by the server", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "Text",
-				view: {
-					content: {
-						title: "T",
-						text: "extra",
-						subtitle: "",
-						icon: "",
-					},
-				},
+				title: "T",
+				text: "extra",
+				subtitle: "",
+				icon: "",
 			}),
 		);
 
-		expect((n.view.content as { text?: string }).text).toBe("extra");
+		expect(n.text).toBe("extra");
 	});
 
 	it("normalizes Map row without replacing live non-string location", () => {
@@ -91,16 +80,12 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "Map",
-				view: {
-					content: {
-						title: "Pickup location",
-						location,
-					},
-				},
+				title: "Pickup location",
+				location,
 			}),
 		);
 
-		expect(n.view.content as unknown).toEqual({
+		expect(rowAttributes(n)).toEqual({
 			title: "Pickup location",
 			location,
 		});
@@ -110,29 +95,21 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "ListContainer",
-				view: {
-					content: {
-						title: "List",
-						children: [
-							makeServerRow({
-								id: ROW_B,
-								type: "Button",
-								view: {
-									content: {
-										label: "Go",
-									},
-								},
-							}),
-						],
-					},
-				},
+				title: "List",
+				children: [
+					makeServerRow({
+						id: ROW_B,
+						type: "Button",
+						label: "Go",
+					}),
+				],
 			}),
 		);
 
-		const first = n.view.content.children?.[0];
+		const first = n.children?.[0];
 		expect(first?.type).toBe("Button");
 		expect(first?.destination).toBe("");
-		expect(first?.view.content).toMatchObject({
+		expect(first).toMatchObject({
 			title: "",
 			label: "Go",
 		});
@@ -143,27 +120,19 @@ describe("normalizeServerRow", () => {
 			makeServerRow({
 				type: "ListContainer",
 				source: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
-				view: {
-					content: {
-						title: "List",
-						child: makeServerRow({
-							id: ROW_B,
-							type: "Text",
-							view: {
-								content: {
-									title: "{$datum.title}",
-								},
-							},
-						}),
-						children: [],
-					},
-				},
+				title: "List",
+				child: makeServerRow({
+					id: ROW_B,
+					type: "Text",
+					title: "{$datum.title}",
+				}),
+				children: [],
 			}),
 		);
 
-		expect(n.view.content.child?.type).toBe("Text");
-		expect(n.view.content.child?.destination).toBe("");
-		expect(n.view.content.child?.view.content).toEqual({
+		expect(n.child?.type).toBe("Text");
+		expect(n.child?.destination).toBe("");
+		expect(rowAttributes(n.child)).toEqual({
 			title: "{$datum.title}",
 		});
 	});
@@ -172,16 +141,12 @@ describe("normalizeServerRow", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "SelectSegmentContainer",
-				view: {
-					content: {
-						title: "Tabs",
-						children: [],
-					},
-				},
+				title: "Tabs",
+				children: [],
 			}),
 		);
 
-		expect(n.view.content).toEqual({
+		expect(rowAttributes(n)).toEqual({
 			title: "Tabs",
 			children: [],
 		});
@@ -193,16 +158,12 @@ describe("normalizeServerRow", () => {
 				type: "Search",
 				source: "{tags}",
 				destination: "",
-				view: {
-					content: {
-						title: "Find",
-						placeholder: "Search",
-					},
-				},
+				title: "Find",
+				placeholder: "Search",
 			}),
 		);
 
-		expect(n.view.content).toEqual({
+		expect(rowAttributes(n)).toEqual({
 			title: "Find",
 			placeholder: "Search",
 		});
@@ -226,13 +187,8 @@ describe("decodeFlows / encodeFlow", () => {
 							actions: [],
 							visible:
 								"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
-							view: {
-								content: {
-									title: "Hello",
-									text: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
-								},
-								max_lines: "",
-							},
+							title: "Hello",
+							text: "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
 						},
 					],
 				},
@@ -254,9 +210,7 @@ describe("decodeRow unknown types", () => {
 			type: "FutureRow",
 			visible:
 				"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
-			view: {
-				content: { title: "Future" },
-			},
+			title: "Future",
 		});
 		const flow = {
 			id: FLOW_ID,
@@ -281,17 +235,31 @@ describe("buildRowForNewPageFromBase", () => {
 		const row = buildRowForNewPageFromBase(SearchRow, newId);
 		expect(row.id).toBe(newId);
 		expect(row.config.type).toBe("Search");
-		expect(row.config.view.content.title).toBe("Search row title");
-		expect(row.config.view.content.placeholder).toBe("");
-		const child = row.config.view.content.child;
+		expect(row.config.title).toBe("Search row title");
+		expect(row.config.placeholder).toBe("");
+		const child = row.config.child;
 		invariant(child, "search row template child");
 		const childId = child.id;
 		expect(childId).toBeDefined();
 		expect(childId).not.toBe("09f07052-c27c-4116-a508-a2bcb074c827");
-		expect(child.config.view.content).toMatchObject({
+		expect(child.config).toMatchObject({
 			title: "{$datum.value}",
 			subtitle: "",
 			label: "",
 		});
 	});
 });
+
+function rowAttributes(row: ServerRow | undefined): Record<string, unknown> {
+	if (!row) return {};
+	const {
+		id: _id,
+		type: _type,
+		source: _source,
+		destination: _destination,
+		actions: _actions,
+		visible: _visible,
+		...attributes
+	} = row as ServerRow & Record<string, unknown>;
+	return attributes;
+}

@@ -36,16 +36,15 @@ import {
 type ValidatedRow = UI_Row;
 type ValidatedPage = UI_Page;
 
-type RowInput = Omit<ValidatedRow, "id" | "view" | "source" | "visible"> & {
+type RowInput = Omit<
+	ValidatedRow,
+	"id" | "source" | "visible" | "child" | "children"
+> & {
 	id?: string;
 	source?: string;
 	visible?: string;
-	view: Omit<ValidatedRow["view"], "content"> & {
-		content: Omit<ValidatedRow["view"]["content"], "children" | "child"> & {
-			children?: RowInput[];
-			child?: RowInput;
-		};
-	};
+	children?: RowInput[];
+	child?: RowInput;
 };
 
 type PageInput = Omit<ValidatedPage, "id" | "rows" | "footer"> & {
@@ -107,22 +106,12 @@ function ensureRowIds(rows: RowInput[]): RowInput[] {
 			id: crypto.randomUUID(),
 			source: row.source ?? "",
 			visible: row.visible ?? "true",
-			view: {
-				...row.view,
-				content: {
-					...row.view.content,
-				},
-			},
 		};
-		if (row.view.content.children) {
-			rowWithId.view.content.children = ensureRowIds(
-				row.view.content.children,
-			);
+		if (row.children) {
+			rowWithId.children = ensureRowIds(row.children);
 		}
-		if (row.view.content.child) {
-			rowWithId.view.content.child = ensureRowIds([
-				row.view.content.child,
-			])[0];
+		if (row.child) {
+			rowWithId.child = ensureRowIds([row.child])[0];
 		}
 		return rowWithId;
 	});
@@ -241,14 +230,9 @@ describe("create", () => {
 					rows: [
 						{
 							type: "TextExpand",
-							view: {
-								content: {
-									title: "Hello",
-									text: "World",
-									expandLabel: "Read more",
-								},
-								max_lines: "3",
-							},
+							title: "Hello",
+							text: "World",
+							expandLabel: "Read more",
 							actions: [],
 						},
 					],
@@ -430,12 +414,8 @@ describe("update", () => {
 					rows: [
 						{
 							type: "Button",
-							view: {
-								content: {
-									title: "",
-									label: "Click me",
-								},
-							},
+							title: "",
+							label: "Click me",
 							actions: [
 								{ condition: "", false: "", true: "{close()}" },
 							],
@@ -804,9 +784,7 @@ describe("create SDUI validation", () => {
 							rows: [
 								{
 									type: "InvalidRowType",
-									view: {
-										content: { title: "Test" },
-									},
+									title: "Test",
 								},
 							],
 						},
@@ -826,37 +804,24 @@ describe("create SDUI validation", () => {
 						{
 							type: "ColumnContainer",
 							actions: [],
-							view: {
-								content: {
-									title: "Container",
-									children: [
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "Input 1",
-													value: "",
-													placeholder: "Enter text",
-												},
-											},
-											destination: "{field}",
-											actions: [],
-										},
-										{
-											type: "Input",
-											view: {
-												content: {
-													title: "Input 2",
-													value: "",
-													placeholder:
-														"Enter more text",
-												},
-											},
-											actions: [],
-										},
-									],
+							title: "Container",
+							children: [
+								{
+									type: "Input",
+									title: "Input 1",
+									value: "",
+									placeholder: "Enter text",
+									destination: "{field}",
+									actions: [],
 								},
-							},
+								{
+									type: "Input",
+									title: "Input 2",
+									value: "",
+									placeholder: "Enter more text",
+									actions: [],
+								},
+							],
 						},
 					],
 				},
@@ -882,9 +847,8 @@ describe("create SDUI validation", () => {
 					rows: [],
 					footer: {
 						type: "Button",
-						view: {
-							content: { title: "", label: "Submit" },
-						},
+						title: "",
+						label: "Submit",
 						actions: [
 							{
 								condition: "",

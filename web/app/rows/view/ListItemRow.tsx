@@ -9,20 +9,12 @@ export default defineRow("ListItemRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "List item title",
-				subtitle: "Subtitle",
-				image: "",
-			},
-		},
+		title: "List item title",
+		subtitle: "Subtitle",
+		image: "",
 	} satisfies RowConfig,
 	render: (row) => {
-		const {
-			title = "",
-			subtitle = "",
-			image = "",
-		} = row.config.view.content;
+		const { title = "", subtitle = "", image = "" } = row.config;
 
 		return (
 			<div className="evy-flex evy-flex-row evy-items-center evy-gap-2 evy-px-3 evy-py-2">

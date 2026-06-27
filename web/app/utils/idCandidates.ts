@@ -4,6 +4,7 @@ import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
 import type { UI_Flow } from "../types/flow";
 import type { Row } from "../types/row";
 import { ACTION_FUNCTIONS } from "./actionBranch";
+import { ROW_METADATA_KEYS } from "./rowConstants";
 
 export type IdCandidateCategory =
 	| "Flow"
@@ -49,7 +50,6 @@ type SuggestionFilterContext =
 
 const DATUM_CANDIDATE_ID = "$datum";
 const MAX_FILTERED_CANDIDATES = 20;
-const rowRootAttributeNames = ["source", "destination", "visible"];
 const functionCandidateNames = [
 	...ACTION_FUNCTIONS,
 	"count",
@@ -89,11 +89,18 @@ function isDisplayCandidate(candidate: IdCandidate): boolean {
 }
 
 function addRowAttributeNames(row: Row, attributeNames: Set<string>) {
-	for (const attributeName of rowRootAttributeNames) {
+	const ROOT_ATTRIBUTE_NAMES = [...ROW_METADATA_KEYS].filter(
+		(k) => k !== "id" && k !== "type" && k !== "actions",
+	);
+	for (const attributeName of ROOT_ATTRIBUTE_NAMES) {
 		attributeNames.add(attributeName);
 	}
 
-	for (const [key, value] of Object.entries(row.config.view.content)) {
+	for (const [key, value] of Object.entries(row.config)) {
+		if (ROW_METADATA_KEYS.has(key)) {
+			continue;
+		}
+
 		if (key === "child") {
 			if (isRow(value)) addRowAttributeNames(value, attributeNames);
 			continue;

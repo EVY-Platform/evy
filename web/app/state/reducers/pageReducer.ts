@@ -18,6 +18,8 @@ import {
 	updateRowInTree,
 } from "../../utils/rowTree";
 
+const SEARCH_ROW_TYPE = "Search";
+
 const CLEARED_SELECTION: Partial<AppState> = {
 	activePageId: undefined,
 	activeRowId: undefined,
@@ -72,7 +74,7 @@ function ensureShowActionOnParent(
 ): UI_Page[] {
 	if (!destinationContainer) return pages;
 	const parentRow = findRowInPages(destinationContainer.rowId, pages);
-	if (!parentRow || parentRow.config.type === "Search") return pages;
+	if (!parentRow || parentRow.config.type === SEARCH_ROW_TYPE) return pages;
 	if (parentRow.config.actions.some((a) => a.true === "{show()}"))
 		return pages;
 
@@ -355,21 +357,13 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				const value = configContentValue(
 					action.configId,
 					action.configValue,
-					row.config.view.content[
-						action.configId as keyof typeof row.config.view.content
-					],
+					row.config[action.configId as keyof typeof row.config],
 				);
 				return {
 					...row,
 					config: {
 						...row.config,
-						view: {
-							...row.config.view,
-							content: {
-								...row.config.view.content,
-								[action.configId]: value,
-							},
-						},
+						[action.configId]: value,
 					},
 				};
 			};

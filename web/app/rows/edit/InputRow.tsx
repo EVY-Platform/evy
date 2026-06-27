@@ -10,20 +10,16 @@ export default defineRow("InputRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Input row title",
-				placeholder: "placeholder",
-				value: "",
-			},
-		},
+		title: "Input row title",
+		placeholder: "placeholder",
+		value: "",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.title}`,
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<Input
-				value={row.config.view.content.value}
-				placeholder={row.config.view.content.placeholder}
+				value={row.config.value}
+				placeholder={row.config.placeholder}
 			/>
 		</RowLayout>
 	),

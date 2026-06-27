@@ -84,6 +84,7 @@ enum EVYDraft {
 
   enum Scope {
     static let fallbackUnscoped = "app:unscoped"
+    private static let browseKey = "browse"
 
     static func entityKey(fromScopeId scopeId: String?) -> String? {
       guard let scopeId else { return nil }
@@ -97,7 +98,7 @@ enum EVYDraft {
 
       let flowId = String(trimmedScopeId[..<range.lowerBound])
       let key = String(trimmedScopeId[range.upperBound...])
-      if flowId.isEmpty || key.isEmpty || key == "browse" { return nil }
+      if flowId.isEmpty || key.isEmpty || key == Self.browseKey { return nil }
       return key
     }
   }
