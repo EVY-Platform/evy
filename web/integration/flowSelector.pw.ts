@@ -22,12 +22,8 @@ test.describe("Flow Selector", () => {
 						{
 							id: "row-1-1-1",
 							type: "Text",
-							view: {
-								content: {
-									title: "Flow 1 Text",
-									subtitle: "This is from Flow 1",
-								},
-							},
+							title: "Flow 1 Text",
+							subtitle: "This is from Flow 1",
 							actions: [],
 						},
 					],
@@ -45,12 +41,8 @@ test.describe("Flow Selector", () => {
 						{
 							id: "row-2-1-1",
 							type: "Text",
-							view: {
-								content: {
-									title: "Flow 2 Text",
-									subtitle: "This is from Flow 2",
-								},
-							},
+							title: "Flow 2 Text",
+							subtitle: "This is from Flow 2",
 							actions: [],
 						},
 					],

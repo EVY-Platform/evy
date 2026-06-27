@@ -19,14 +19,14 @@ struct EVYInputListRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
       EVYInputList(
         data: source,
-        format: view.content.format,
-        placeholder: view.content.placeholder
+        format: view.format,
+        placeholder: view.placeholder
       )
     }
     .padding(.horizontal, Constants.majorPadding)
@@ -41,13 +41,9 @@ struct EVYInputListRow: View {
         "type": "InputList",
         "source": "{tags}",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Tags",
-            "format": "{$datum}",
-            "placeholder": "Add tags to improve search"
-          }
-        }
+        "title": "Tags",
+        "format": "{$datum}",
+        "placeholder": "Add tags to improve search"
       }
       """,
     failureMessage: "Unable to build input list row preview"

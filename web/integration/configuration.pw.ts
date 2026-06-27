@@ -23,24 +23,15 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "ColumnContainer",
-						view: {
-							content: {
-								title: "Container Row",
-								children: [
-									{
-										type: "Input",
-										view: {
-											content: {
-												title: "Input Row",
-												placeholder:
-													"First placeholder",
-											},
-										},
-										actions: [],
-									},
-								],
+						title: "Container Row",
+						children: [
+							{
+								type: "Input",
+								title: "Input Row",
+								placeholder: "First placeholder",
+								actions: [],
 							},
-						},
+						],
 						actions: [],
 					},
 				],
@@ -85,12 +76,8 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "Test Text Row",
-								subtitle: "Initial subtitle content",
-							},
-						},
+						title: "Test Text Row",
+						subtitle: "Initial subtitle content",
 						actions: [],
 					},
 				],
@@ -127,12 +114,8 @@ test.describe("Row configuration", () => {
 					{
 						type: "Text",
 						source: "{initial}",
-						view: {
-							content: {
-								title: "Binding row",
-								subtitle: "Body",
-							},
-						},
+						title: "Binding row",
+						subtitle: "Body",
 						actions: [],
 					},
 				],
@@ -161,13 +144,9 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "InputList",
-						view: {
-							content: {
-								title: "Tags",
-								placeholder: "Search for tags",
-								format: "{$datum.value}",
-							},
-						},
+						title: "Tags",
+						placeholder: "Search for tags",
+						format: "{$datum.value}",
 						actions: [],
 					},
 				],
@@ -194,12 +173,8 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Button",
-						view: {
-							content: {
-								title: "",
-								label: "Test Button",
-							},
-						},
+						title: "",
+						label: "Test Button",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 						],
@@ -250,12 +225,8 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Button",
-						view: {
-							content: {
-								title: "",
-								label: "Nav Button",
-							},
-						},
+						title: "",
+						label: "Nav Button",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 						],
@@ -307,13 +278,9 @@ test.describe("Row configuration", () => {
 									id: "name_input",
 									type: "Input",
 									source: "",
-									view: {
-										content: {
-											title: "Name",
-											value: `{${MARKETPLACE_ITEMS_RESOURCE_ID}.name}`,
-											placeholder: "Enter name",
-										},
-									},
+									title: "Name",
+									value: `{${MARKETPLACE_ITEMS_RESOURCE_ID}.name}`,
+									placeholder: "Enter name",
 									destination: `{${MARKETPLACE_ITEMS_RESOURCE_ID}.name}`,
 									actions: [],
 								},
@@ -321,12 +288,8 @@ test.describe("Row configuration", () => {
 									id: "submit_button",
 									type: "Button",
 									source: "",
-									view: {
-										content: {
-											title: "",
-											label: "Submit",
-										},
-									},
+									title: "",
+									label: "Submit",
 									actions: [
 										{
 											condition: "",
@@ -407,12 +370,8 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "No Action Row",
-								subtitle: "Some subtitle",
-							},
-						},
+						title: "No Action Row",
+						subtitle: "Some subtitle",
 						actions: [],
 					},
 				],
@@ -440,19 +399,16 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Input",
-						view: {
-							content: {
-								title: "Price",
-								value: "{price}",
-								placeholder: "",
-							},
-						},
+						title: "Price",
+						value: "{price}",
+						placeholder: "",
 						destination: "{price}",
 						actions: [],
 					},
 					{
 						type: "Button",
-						view: { content: { title: "", label: "Check" } },
+						title: "",
+						label: "Check",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 						],
@@ -497,19 +453,16 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Input",
-						view: {
-							content: {
-								title: "Items",
-								value: "{items}",
-								placeholder: "",
-							},
-						},
+						title: "Items",
+						value: "{items}",
+						placeholder: "",
 						destination: "{items}",
 						actions: [],
 					},
 					{
 						type: "Button",
-						view: { content: { title: "", label: "Validate" } },
+						title: "",
+						label: "Validate",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 						],
@@ -556,31 +509,24 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Input",
-						view: {
-							content: {
-								title: "Name",
-								value: "{name}",
-								placeholder: "",
-							},
-						},
+						title: "Name",
+						value: "{name}",
+						placeholder: "",
 						destination: "{name}",
 						actions: [],
 					},
 					{
 						type: "Input",
-						view: {
-							content: {
-								title: "Email",
-								value: "{email}",
-								placeholder: "",
-							},
-						},
+						title: "Email",
+						value: "{email}",
+						placeholder: "",
 						destination: "{email}",
 						actions: [],
 					},
 					{
 						type: "Button",
-						view: { content: { title: "", label: "Send" } },
+						title: "",
+						label: "Send",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 						],
@@ -632,7 +578,8 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Button",
-						view: { content: { title: "", label: "Cancel Test" } },
+						title: "",
+						label: "Cancel Test",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 						],
@@ -675,9 +622,8 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Button",
-						view: {
-							content: { title: "", label: "Multi Action" },
-						},
+						title: "",
+						label: "Multi Action",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 							{
@@ -723,13 +669,9 @@ test.describe("Row configuration", () => {
 								id: "row_input",
 								type: "Input",
 								source: "",
-								view: {
-									content: {
-										title: "Name",
-										value: "{name}",
-										placeholder: "",
-									},
-								},
+								title: "Name",
+								value: "{name}",
+								placeholder: "",
 								destination: "{name}",
 								actions: [],
 							},
@@ -737,9 +679,8 @@ test.describe("Row configuration", () => {
 								id: "row_btn",
 								type: "Button",
 								source: "",
-								view: {
-									content: { title: "", label: "Prefilled" },
-								},
+								title: "",
+								label: "Prefilled",
 								actions: [
 									{
 										condition: "{name == true}",
@@ -815,12 +756,8 @@ test.describe("Row configuration", () => {
 									id: "or_test_button",
 									type: "Button",
 									source: "",
-									view: {
-										content: {
-											title: "",
-											label: "OR Test",
-										},
-									},
+									title: "",
+									label: "OR Test",
 									actions: [
 										{
 											condition: `{count(${MARKETPLACE_ITEMS_RESOURCE_ID}.pickup_timeslots) > 0 || count(${MARKETPLACE_ITEMS_RESOURCE_ID}.delivery_timeslots) > 0}`,
@@ -869,12 +806,8 @@ test.describe("Row configuration", () => {
 									id: "nested_test_button",
 									type: "Button",
 									source: "",
-									view: {
-										content: {
-											title: "",
-											label: "Nested Test",
-										},
-									},
+									title: "",
+									label: "Nested Test",
 									actions: [
 										{
 											condition: `{count(${MARKETPLACE_ITEMS_RESOURCE_ID}.pickup_timeslots) > 0 && (count(${MARKETPLACE_ITEMS_RESOURCE_ID}.delivery_timeslots) > 0 || count(${MARKETPLACE_ITEMS_RESOURCE_ID}.shipping_destination_areas) > 0)}`,
@@ -917,31 +850,24 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Input",
-						view: {
-							content: {
-								title: "Name",
-								value: "{name}",
-								placeholder: "",
-							},
-						},
+						title: "Name",
+						value: "{name}",
+						placeholder: "",
 						destination: "{name}",
 						actions: [],
 					},
 					{
 						type: "Input",
-						view: {
-							content: {
-								title: "Email",
-								value: "{email}",
-								placeholder: "",
-							},
-						},
+						title: "Email",
+						value: "{email}",
+						placeholder: "",
 						destination: "{email}",
 						actions: [],
 					},
 					{
 						type: "Button",
-						view: { content: { title: "", label: "Toggle Test" } },
+						title: "",
+						label: "Toggle Test",
 						actions: [
 							{
 								condition: "{name == true || email == true}",
@@ -996,31 +922,24 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Input",
-						view: {
-							content: {
-								title: "Name",
-								value: "{name}",
-								placeholder: "",
-							},
-						},
+						title: "Name",
+						value: "{name}",
+						placeholder: "",
 						destination: "{name}",
 						actions: [],
 					},
 					{
 						type: "Input",
-						view: {
-							content: {
-								title: "Email",
-								value: "{email}",
-								placeholder: "",
-							},
-						},
+						title: "Email",
+						value: "{email}",
+						placeholder: "",
 						destination: "{email}",
 						actions: [],
 					},
 					{
 						type: "Button",
-						view: { content: { title: "", label: "Nest Test" } },
+						title: "",
+						label: "Nest Test",
 						actions: [
 							{
 								condition: "{name == true || email == true}",
@@ -1074,39 +993,27 @@ test.describe("Row configuration", () => {
 	}) => {
 		type DeepNestRow = {
 			type: "Input" | "ColumnContainer";
-			view: {
-				content: {
-					title: string;
-					placeholder?: string;
-					value?: string;
-					children?: DeepNestRow[];
-				};
-			};
+			title: string;
+			placeholder?: string;
+			value?: string;
+			children?: DeepNestRow[];
 			actions: [];
 		};
 
 		function deepNest(level: number): DeepNestRow {
 			if (level === 0) {
 				return {
-					type: "Input" as const,
-					view: {
-						content: {
-							title: "Deep leaf",
-							placeholder: "",
-							value: "",
-						},
-					},
+					type: "Input",
+					title: "Deep leaf",
+					placeholder: "",
+					value: "",
 					actions: [],
 				};
 			}
 			return {
-				type: "ColumnContainer" as const,
-				view: {
-					content: {
-						title: `Nest level ${level}`,
-						children: [deepNest(level - 1)],
-					},
-				},
+				type: "ColumnContainer",
+				title: `Nest level ${level}`,
+				children: [deepNest(level - 1)],
 				actions: [],
 			};
 		}
@@ -1166,9 +1073,8 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Button",
-						view: {
-							content: { title: "", label: "Clear Branch" },
-						},
+						title: "",
+						label: "Clear Branch",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 						],
@@ -1232,9 +1138,8 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "Button",
-						view: {
-							content: { title: "", label: "Cancel Clear" },
-						},
+						title: "",
+						label: "Cancel Clear",
 						actions: [
 							{ condition: "", false: "", true: "{close()}" },
 						],

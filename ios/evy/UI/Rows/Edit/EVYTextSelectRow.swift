@@ -31,7 +31,7 @@ struct EVYTextSelectRow: View {
     let temporaryScopeId = EVYDraft.createMergeScopeId(flowId: "temporary", entityKey: temporaryId)
 
     guard
-      (try? EVY.updateValue(view.content.text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
+      (try? EVY.updateValue(view.text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
       let binding = try? EVY.draftStore.binding(
         fromParsedProps: temporaryId, scopeId: temporaryScopeId),
       let draft = EVY.draftStore.draftIfPresent(binding: binding),
@@ -42,8 +42,8 @@ struct EVYTextSelectRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
       EVYSelectItem(
@@ -69,12 +69,8 @@ struct EVYTextSelectRow: View {
         "source": "",
         "destination": "{item.condition}",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Selling reason",
-            "text": "reason-1"
-          }
-        }
+        "title": "Selling reason",
+        "text": "reason-1"
       }
       """,
     failureMessage: "Unable to build text select row preview"

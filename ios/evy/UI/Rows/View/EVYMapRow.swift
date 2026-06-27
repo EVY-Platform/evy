@@ -14,18 +14,18 @@ struct EVYMapRow: View {
   }
 
   private var resolvedLocation: EVYJson {
-    (try? EVY.getDataFromText(view.content.location)) ?? .string(view.content.location)
+    (try? EVY.getDataFromText(view.location)) ?? .string(view.location)
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.padding) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
       EVYMap(location: resolvedLocation)
-      if !view.content.subtitle.isEmpty {
-        EVYTextView(view.content.subtitle, style: .info)
+      if !view.subtitle.isEmpty {
+        EVYTextView(view.subtitle, style: .info)
           .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
@@ -42,13 +42,9 @@ struct EVYMapRow: View {
         "source": "",
         "destination": "",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Pickup location",
-            "location": "{address.location}",
-            "subtitle": "Meet near the main entrance"
-          }
-        }
+        "title": "Pickup location",
+        "location": "{address.location}",
+        "subtitle": "Meet near the main entrance"
       }
       """,
     failureMessage: "Unable to build map row preview"

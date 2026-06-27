@@ -6,12 +6,7 @@ import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { lineClampStyle } from "../design-system/lineClamp";
 
-function maxLinesValue(maxLines: string | undefined): number {
-	const parsedMaxLines = Number.parseInt(maxLines ?? "", 10);
-	return Number.isFinite(parsedMaxLines) && parsedMaxLines > 0
-		? parsedMaxLines
-		: 3;
-}
+const TEXT_EXPAND_COLLAPSED_LINE_COUNT = 3;
 
 function TextExpandRowInner({ rowId }: { rowId: string }) {
 	const row = useRowById(rowId);
@@ -19,10 +14,9 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 	const [expanded, setExpanded] = useState(false);
 	const [canExpand, setCanExpand] = useState(false);
 
-	const title = row?.config.view.content.title ?? "";
-	const text = row?.config.view.content.text ?? "";
-	const expandLabel = row?.config.view.content.expandLabel ?? "";
-	const maxLines = maxLinesValue(row?.config.view.max_lines);
+	const title = row?.config.title ?? "";
+	const text = row?.config.text ?? "";
+	const expandLabel = row?.config.expandLabel ?? "";
 
 	useLayoutEffect(() => {
 		const textElement = textRef.current;
@@ -54,7 +48,11 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 				<p
 					ref={textRef}
 					className="evy-text-sm"
-					style={expanded ? undefined : lineClampStyle(maxLines)}
+					style={
+						expanded
+							? undefined
+							: lineClampStyle(TEXT_EXPAND_COLLAPSED_LINE_COUNT)
+					}
 				>
 					<EVYText text={text} />
 				</p>
@@ -78,14 +76,9 @@ export default defineRow("TextExpandRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Expandable text title",
-				text: "This is a longer text row that can be expanded when it spans more lines than the configured maximum.",
-				expandLabel: "Read more",
-			},
-			max_lines: "3",
-		},
+		title: "Expandable text title",
+		text: "This is a longer text row that can be expanded when it spans more lines than the configured maximum.",
+		expandLabel: "Read more",
 	} satisfies RowConfig,
 	Component: TextExpandRowInner,
 });

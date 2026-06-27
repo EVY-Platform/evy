@@ -17,7 +17,7 @@ struct EVYButtonRow: View {
   }
 
   var body: some View {
-    EVYButton(label: view.content.label, action: action)
+    EVYButton(label: view.label, action: action)
       .frame(maxWidth: .infinity, alignment: .center)
       .padding(.horizontal, Constants.majorPadding)
       .padding(.top, Constants.minorPadding)
@@ -33,12 +33,8 @@ struct EVYButtonRow: View {
         "type": "Button",
         "source": "",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Preview Action",
-            "label": "Tap me"
-          }
-        }
+        "title": "Preview Action",
+        "label": "Tap me"
       }
       """,
     failureMessage: "Unable to build button row preview"

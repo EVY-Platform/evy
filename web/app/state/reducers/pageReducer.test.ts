@@ -15,11 +15,9 @@ mockTextWithConfig.config = {
 	source: "",
 	visible: "true",
 	actions: [],
-	view: {
-		content: { title: "", text: "" },
-		max_lines: "",
-	},
-} as Row["config"];
+	title: "",
+	text: "",
+} satisfies RowConfig;
 
 mock.module("../../rows/baseRows", () => ({
 	baseRows: [mockTextWithConfig],
@@ -36,11 +34,9 @@ function textRow(id: string, text = "hello"): Row {
 			source: "",
 			visible: "true",
 			actions: [],
-			view: {
-				content: { title: "T", text },
-				max_lines: "",
-			},
-		} as Row["config"],
+			title: "T",
+			text,
+		} satisfies RowConfig,
 	};
 }
 
@@ -53,14 +49,10 @@ function containerRow(id: string, child: Row, children: Row[] = []): Row {
 			source: "",
 			visible: "true",
 			actions: [],
-			view: {
-				content: {
-					title: "Container",
-					child,
-					children,
-				},
-			},
-		} as Row["config"],
+			title: "Container",
+			child,
+			children,
+		} satisfies RowConfig,
 	};
 }
 
@@ -74,18 +66,14 @@ function calendarRow(id: string): Row {
 			destination: "{pickup_selection}",
 			visible: "true",
 			actions: [],
-			view: {
-				content: {
-					title: "Calendar",
-					start_time: "07:00",
-					end_time: "19:00",
-					timeslot_interval_minutes: 30,
-					label_interval_minutes: 60,
-					header_format: "EEE d",
-					timeslot_format: "HH:mm",
-				},
-			},
-		} as Row["config"],
+			title: "Calendar",
+			start_time: "07:00",
+			end_time: "19:00",
+			timeslot_interval_minutes: 30,
+			label_interval_minutes: 60,
+			header_format: "EEE d",
+			timeslot_format: "HH:mm",
+		} satisfies RowConfig,
 	};
 }
 
@@ -98,14 +86,10 @@ function selectSegmentRow(id: string): Row {
 			source: "",
 			visible: "true",
 			actions: [],
-			view: {
-				content: {
-					title: "Segments",
-					segments: ["X", "Y", "Z"],
-					children: [],
-				},
-			},
-		} as Row["config"],
+			title: "Segments",
+			segments: ["X", "Y", "Z"],
+			children: [],
+		} satisfies RowConfig,
 	};
 }
 
@@ -199,7 +183,7 @@ describe("pageReducer", () => {
 			configValue: "updated",
 		});
 		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.view.content.text).toBe("updated");
+		expect(row?.config.text).toBe("updated");
 	});
 
 	it("UPDATE_ROW keeps comma-containing string fields as strings", () => {
@@ -225,20 +209,7 @@ describe("pageReducer", () => {
 			configValue: "EEE d, HH:mm",
 		});
 		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.view.content.header_format).toBe("EEE d, HH:mm");
-	});
-
-	it("Calendar fixture uses row-level selection bindings", () => {
-		const row = calendarRow("row-1");
-		expect(row.config.source).toBe("{delivery_selection}");
-		expect(row.config.destination).toBe("{pickup_selection}");
-		expect(row.config.view.content.header_format).toBe("EEE d");
-		expect(row.config.view.content.timeslot_format).toBe("HH:mm");
-		expect(row.config.view.content).not.toHaveProperty("primary");
-		expect(row.config.view.content).not.toHaveProperty("secondary");
-		expect(row.config.view.content).not.toHaveProperty(
-			"secondary_timeslots",
-		);
+		expect(row?.config.header_format).toBe("EEE d, HH:mm");
 	});
 
 	it("UPDATE_ROW splits comma-separated values for array content fields", () => {
@@ -264,14 +235,10 @@ describe("pageReducer", () => {
 			configValue: "One, Two, Three",
 		});
 		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
-		expect(row?.config.view.content.segments).toEqual([
-			"One",
-			"Two",
-			"Three",
-		]);
+		expect(row?.config.segments).toEqual(["One", "Two", "Three"]);
 	});
 
-	it("UPDATE_ROW_ROOT sets source without changing view.content", () => {
+	it("UPDATE_ROW_ROOT sets source without changing row attributes", () => {
 		const state = initialState();
 		const before = state.flows[0].pages[0].rows.find(
 			(r) => r.id === "row-1",
@@ -284,7 +251,8 @@ describe("pageReducer", () => {
 		});
 		const row = next.flows[0].pages[0].rows.find((r) => r.id === "row-1");
 		expect(row?.config.source).toBe("{items}");
-		expect(row?.config.view.content).toEqual(before?.config.view.content);
+		expect(row?.config.title).toEqual(before?.config.title);
+		expect(row?.config.text).toEqual(before?.config.text);
 	});
 
 	it("UPDATE_ROW_ROOT sets destination to empty string when value is empty string", () => {
@@ -341,13 +309,9 @@ describe("pageReducer", () => {
 				source: "",
 				visible: "true",
 				actions: [],
-				view: {
-					content: {
-						title: "",
-						children: [inner],
-					},
-				},
-			} as Row["config"],
+				title: "",
+				children: [inner],
+			} satisfies RowConfig,
 		};
 		const state = initialState({
 			flows: [
@@ -383,13 +347,9 @@ describe("pageReducer", () => {
 				source: "",
 				visible: "true",
 				actions: [],
-				view: {
-					content: {
-						title: "",
-						children: [inner],
-					},
-				},
-			} as Row["config"],
+				title: "",
+				children: [inner],
+			} satisfies RowConfig,
 		};
 		const state = initialState({
 			flows: [
@@ -613,9 +573,7 @@ describe("pageReducer", () => {
 			pageId: "page-1",
 			rowId: "foot-inner",
 		});
-		expect(
-			next.flows[0].pages[0].footer?.config.view.content.child,
-		).toBeUndefined();
+		expect(next.flows[0].pages[0].footer?.config.child).toBeUndefined();
 		expect(next.flows[0].pages[0].rows.length).toBe(0);
 	});
 
@@ -679,7 +637,7 @@ describe("pageReducer", () => {
 		const parentAfter = next.flows[0].pages[0].rows.find(
 			(r) => r.id === "parent",
 		);
-		expect(parentAfter?.config.view.content.child?.id).toBe(newId);
+		expect(parentAfter?.config.child?.id).toBe(newId);
 	});
 
 	it("ADD_ROW inserts palette row into footer container", () => {
@@ -710,7 +668,7 @@ describe("pageReducer", () => {
 			destinationContainer: { rowId: "footer-sheet", type: "children" },
 		});
 		const footAfter = next.flows[0].pages[0].footer;
-		expect(footAfter?.config.view.content.children?.[0].id).toBe(newId);
+		expect(footAfter?.config.children?.[0].id).toBe(newId);
 	});
 
 	it("ADD_ROW_AS_FOOTER adds palette row as page footer", () => {
@@ -854,13 +812,8 @@ describe("pageReducer", () => {
 		const footerAfter = next.flows[0].pages[0].footer;
 		expect(footerAfter).toBeDefined();
 		expect(footerAfter?.id).toBe("footer-root");
-		expect(footerAfter?.config.view.content.child?.id).toBe(
-			"footer-parent",
-		);
-		expect(
-			footerAfter?.config.view.content.child?.config.view.content.child
-				?.id,
-		).toBe(newId);
+		expect(footerAfter?.config.child?.id).toBe("footer-parent");
+		expect(footerAfter?.config.child?.config.child?.id).toBe(newId);
 
 		// Selection / config stack should reflect the new child chain.
 		// The path starts from the footer root (the page-level entry point).

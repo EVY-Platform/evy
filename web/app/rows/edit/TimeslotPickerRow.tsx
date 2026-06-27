@@ -87,28 +87,18 @@ function SlotChip({
 	);
 }
 
-function DayColumn({
-	day,
-	headerFormat,
-	headerSubtitle,
-	timeslotFormat,
-}: {
-	day: MockDay;
-	headerFormat: string;
-	headerSubtitle: string;
-	timeslotFormat: string;
-}) {
+function DayColumn({ day, config }: { day: MockDay; config: RowConfig }) {
 	const parseText = useParseText();
 	return (
 		<div className="evy-flex evy-flex-col evy-items-center">
 			<div className="evy-text-center evy-mb-1">
 				<div className="evy-text-sm evy-text-gray evy-font-medium">
-					{parseText(headerFormat, {
+					{parseText(config.header_format ?? "", {
 						datum: day.representativeDatetime,
 					})}
 				</div>
 				<div className="evy-text-sm evy-text-gray">
-					{parseText(headerSubtitle, {
+					{parseText(config.header_subtitle ?? "", {
 						datum: day.representativeDatetime,
 					})}
 				</div>
@@ -118,7 +108,7 @@ function DayColumn({
 					<SlotChip
 						key={slot.datetime}
 						slot={slot}
-						timeslotFormat={timeslotFormat}
+						timeslotFormat={config.timeslot_format ?? ""}
 					/>
 				))}
 			</div>
@@ -132,30 +122,24 @@ export default defineRow("TimeslotPickerRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Timeslot picker row title",
-				start_time: "07:00",
-				end_time: "19:00",
-				timeslot_interval_minutes: 30,
-				label_interval_minutes: 60,
-				header_format: '{formatDatetime($datum, "EEE")}',
-				header_subtitle: '{formatDatetime($datum, "MMM do")}',
-				timeslot_format: '{formatDatetime($datum, "HH:mm")}',
-			},
-		},
+		title: "Timeslot picker row title",
+		start_time: "07:00",
+		end_time: "19:00",
+		timeslot_interval_minutes: 30,
+		label_interval_minutes: 60,
+		header_format: '{formatDatetime($datum, "EEE")}',
+		header_subtitle: '{formatDatetime($datum, "MMM do")}',
+		timeslot_format: '{formatDatetime($datum, "HH:mm")}',
 		destination: "",
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<div className="evy-flex evy-justify-center evy-gap-1 evy-mt-2">
 				{visibleDays.map((day) => (
 					<DayColumn
 						key={day.representativeDatetime}
 						day={day}
-						headerFormat={row.config.view.content.header_format}
-						headerSubtitle={row.config.view.content.header_subtitle}
-						timeslotFormat={row.config.view.content.timeslot_format}
+						config={row.config}
 					/>
 				))}
 			</div>

@@ -8,6 +8,7 @@ import SwiftUI
 struct EVYTextExpandRow: View {
 
   private let view: TextExpandRowViewData
+  private let collapsedLineCount = 3
 
   @State private var expanded = false
   @State private var canExpand = false
@@ -16,30 +17,24 @@ struct EVYTextExpandRow: View {
     self.view = view
   }
 
-  private var maxLines: Int {
-    Int(view.max_lines) ?? 3
-  }
-
   var body: some View {
-    let content = view.content
-
     VStack(alignment: .leading, spacing: 4) {
-      if !content.title.isEmpty {
-        EVYTextView(content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .frame(maxWidth: .infinity, alignment: .leading)
           .lineLimit(1)
           .truncationMode(.tail)
       }
 
-      if !content.text.isEmpty {
-        EVYTextView(content.text)
+      if !view.text.isEmpty {
+        EVYTextView(view.text)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .lineLimit(expanded ? nil : maxLines)
+          .lineLimit(expanded ? nil : collapsedLineCount)
           .truncationMode(.tail)
           .background {
             if !expanded {
               ViewThatFits(in: .vertical) {
-                EVYTextView(content.text)
+                EVYTextView(view.text)
                   .frame(maxWidth: .infinity, alignment: .leading)
                   .hidden()
                 Color.clear.onAppear {
@@ -50,11 +45,11 @@ struct EVYTextExpandRow: View {
           }
       }
 
-      if canExpand && !expanded && !content.expandLabel.isEmpty {
+      if canExpand && !expanded && !view.expandLabel.isEmpty {
         Button {
           expanded = true
         } label: {
-          EVYTextView(content.expandLabel, style: .action)
+          EVYTextView(view.expandLabel, style: .action)
         }
         .buttonStyle(.plain)
       }
@@ -73,14 +68,9 @@ struct EVYTextExpandRow: View {
         "destination": "",
         "actions": [],
         "visible": "true",
-        "view": {
-          "content": {
-            "title": "About this item",
-            "text": "This is a longer description that may be truncated when it exceeds the maximum number of lines configured for this row.",
-            "expandLabel": "Read more"
-          },
-          "max_lines": "3"
-        }
+        "title": "About this item",
+        "text": "This is a longer description that may be truncated when it exceeds the maximum number of lines configured for this row.",
+        "expandLabel": "Read more"
       }
       """,
     failureMessage: "Unable to build text expand row preview"

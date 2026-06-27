@@ -10,32 +10,28 @@ export default defineRow("SelectPhotoRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Select photo row title",
-				subtitle: "Photos: 0/10",
-				icon: "::image-plus::",
-				content: "Add photos",
-				photos: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
-			},
-		},
+		title: "Select photo row title",
+		subtitle: "Photos: 0/10",
+		icon: "::image-plus::",
+		content: "Add photos",
+		photos: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<div
 				className="evy-rounded-md evy-border evy-text-sm"
 				style={{ padding: "var(--size-8)" }}
 			>
 				<div className="evy-flex evy-justify-center evy-text-center evy-flex-col">
-					<EVYText text={row.config.view.content.icon} />
+					<EVYText text={row.config.icon} />
 					<p className="evy-text-sm">
-						<EVYText text={row.config.view.content.content} />
+						<EVYText text={row.config.content} />
 					</p>
 				</div>
 			</div>
 			<p className="evy-text-sm">
-				<EVYText text={row.config.view.content.subtitle} />
+				<EVYText text={row.config.subtitle} />
 			</p>
 		</RowLayout>
 	),

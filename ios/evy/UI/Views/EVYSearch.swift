@@ -136,13 +136,9 @@ private struct EVYSearchPreview: View {
         "source": "",
         "destination": "",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "{$datum.title}",
-            "subtitle": "{$datum.category}",
-            "icon": ""
-          }
-        }
+        "title": "{$datum.title}",
+        "subtitle": "{$datum.category}",
+        "icon": ""
       }
       """
 

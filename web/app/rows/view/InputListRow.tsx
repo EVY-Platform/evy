@@ -9,19 +9,15 @@ export default defineRow("InputListRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Input list row title",
-				placeholder: "Search for tags",
-				format: "{$datum.value}",
-			},
-		},
+		title: "Input list row title",
+		placeholder: "Search for tags",
+		format: "{$datum.value}",
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<Input
 				value={row.config.source}
-				placeholder={row.config.view.content.placeholder}
+				placeholder={row.config.placeholder}
 			/>
 		</RowLayout>
 	),

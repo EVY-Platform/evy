@@ -16,34 +16,22 @@ async function openTwoSegmentTabContainer(page: Page) {
 			rows: [
 				{
 					type: "SelectSegmentContainer" as const,
-					view: {
-						content: {
-							title: "Tab Container",
-							segments: ["Segment A", "Segment B"],
-							children: [
-								{
-									type: "Text" as const,
-									view: {
-										content: {
-											title: "First Segment Child",
-											subtitle: "First content",
-										},
-									},
-									actions: [],
-								},
-								{
-									type: "Text" as const,
-									view: {
-										content: {
-											title: "Second Segment Child",
-											text: "Second content",
-										},
-									},
-									actions: [],
-								},
-							],
+					title: "Tab Container",
+					segments: ["Segment A", "Segment B"],
+					children: [
+						{
+							type: "Text" as const,
+							title: "First Segment Child",
+							subtitle: "First content",
+							actions: [],
 						},
-					},
+						{
+							type: "Text" as const,
+							title: "Second Segment Child",
+							text: "Second content",
+							actions: [],
+						},
+					],
 					actions: [],
 				},
 			],
@@ -62,12 +50,8 @@ test.describe("Child Page Rendering", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "Root Text Row",
-								subtitle: "Root subtitle",
-							},
-						},
+						title: "Root Text Row",
+						subtitle: "Root subtitle",
 						actions: [],
 					},
 				],
@@ -105,21 +89,13 @@ test.describe("Child Page Rendering", () => {
 				rows: [
 					{
 						type: "Text" as const,
-						view: {
-							content: {
-								title: "Parent Row",
-								subtitle: "Parent subtitle",
-								child: {
-									type: "Text" as const,
-									view: {
-										content: {
-											title: "Child Row Title",
-											text: "Child text content",
-										},
-									},
-									actions: [],
-								},
-							},
+						title: "Parent Row",
+						subtitle: "Parent subtitle",
+						child: {
+							type: "Text" as const,
+							title: "Child Row Title",
+							text: "Child text content",
+							actions: [],
 						},
 						actions: [],
 					},
@@ -163,41 +139,25 @@ test.describe("Child Page Rendering", () => {
 				rows: [
 					{
 						type: "Text" as const,
-						view: {
-							content: {
-								title: "Parent Row",
-								subtitle: "Parent subtitle",
+						title: "Parent Row",
+						subtitle: "Parent subtitle",
+						child: {
+							type: "Text" as const,
+							title: "First Child Row",
+							text: "First child text",
+							child: {
+								type: "Text" as const,
+								title: "Second Child Row",
+								text: "Second child text",
 								child: {
 									type: "Text" as const,
-									view: {
-										content: {
-											title: "First Child Row",
-											text: "First child text",
-											child: {
-												type: "Text" as const,
-												view: {
-													content: {
-														title: "Second Child Row",
-														text: "Second child text",
-														child: {
-															type: "Text" as const,
-															view: {
-																content: {
-																	title: "Third Child Row",
-																	text: "Third child text",
-																},
-															},
-															actions: [],
-														},
-													},
-												},
-												actions: [],
-											},
-										},
-									},
+									title: "Third Child Row",
+									text: "Third child text",
 									actions: [],
 								},
+								actions: [],
 							},
+							actions: [],
 						},
 						actions: [],
 					},
@@ -269,78 +229,49 @@ test.describe("Child Page Rendering", () => {
 				rows: [
 					{
 						type: "SelectSegmentContainer" as const,
-						view: {
-							content: {
-								title: "Root Select Segment",
-								segments: ["Children 0"],
+						title: "Root Select Segment",
+						segments: ["Children 0"],
+						children: [
+							{
+								type: "ListContainer" as const,
+								title: "Children 0 List Container",
 								children: [
 									{
-										type: "ListContainer" as const,
-										view: {
-											content: {
-												title: "Children 0 List Container",
-												children: [
-													{
-														type: "Text" as const,
-														view: {
-															content: {
-																title: "Children 0 Text Row",
-																text: "Text row",
-															},
-														},
-														actions: [],
-													},
-													{
-														type: "Text" as const,
-														view: {
-															content: {
-																title: "Children 1 Text Action",
-																text: "Action text",
-																action: "Change",
-																child: {
-																	type: "Search" as const,
-																	view: {
-																		content:
-																			{
-																				title: "Search Child Row",
-																				placeholder:
-																					"Search...",
-																				value: "",
-																				child: {
-																					type: "Text" as const,
-																					view: {
-																						content:
-																							{
-																								title: "Search Text Child",
-																								subtitle:
-																									"Text child",
-																							},
-																					},
-																					actions:
-																						[],
-																				},
-																			},
-																	},
-																	actions: [],
-																},
-															},
-														},
-														actions: [
-															{
-																condition: "",
-																true: "{show()}",
-																false: "",
-															},
-														],
-													},
-												],
-											},
-										},
+										type: "Text" as const,
+										title: "Children 0 Text Row",
+										text: "Text row",
 										actions: [],
 									},
+									{
+										type: "Text" as const,
+										title: "Children 1 Text Action",
+										text: "Action text",
+										action: "Change",
+										child: {
+											type: "Search" as const,
+											title: "Search Child Row",
+											placeholder: "Search...",
+											value: "",
+											child: {
+												type: "Text" as const,
+												title: "Search Text Child",
+												subtitle: "Text child",
+												actions: [],
+											},
+											actions: [],
+										},
+										actions: [
+											{
+												condition: "",
+												true: "{show()}",
+												false: "",
+											},
+										],
+									},
 								],
+								actions: [],
 							},
-						},
+						],
 						actions: [],
 					},
 				],
@@ -386,21 +317,13 @@ test.describe("Child Page Rendering", () => {
 				rows: [
 					{
 						type: "Text" as const,
-						view: {
-							content: {
-								title: "Parent Row",
-								subtitle: "Parent subtitle",
-								child: {
-									type: "Text" as const,
-									view: {
-										content: {
-											title: "Child Text Row",
-											text: "Child text",
-										},
-									},
-									actions: [],
-								},
-							},
+						title: "Parent Row",
+						subtitle: "Parent subtitle",
+						child: {
+							type: "Text" as const,
+							title: "Child Text Row",
+							text: "Child text",
+							actions: [],
 						},
 						actions: [],
 					},
@@ -434,7 +357,7 @@ test.describe("Child Page Rendering", () => {
 		).toHaveText("Child Text Row");
 	});
 
-	test("dropping a row into an existing child page replaces view.content.child", async ({
+	test("dropping a row into an existing child page replaces child", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, [
@@ -444,21 +367,13 @@ test.describe("Child Page Rendering", () => {
 				rows: [
 					{
 						type: "Text" as const,
-						view: {
-							content: {
-								title: "Parent Row",
-								subtitle: "Parent subtitle",
-								child: {
-									type: "Text" as const,
-									view: {
-										content: {
-											title: "Existing Child Row",
-											text: "Existing child text",
-										},
-									},
-									actions: [],
-								},
-							},
+						title: "Parent Row",
+						subtitle: "Parent subtitle",
+						child: {
+							type: "Text" as const,
+							title: "Existing Child Row",
+							text: "Existing child text",
+							actions: [],
 						},
 						actions: [],
 					},
@@ -491,7 +406,7 @@ test.describe("Child Page Rendering", () => {
 		await expect(page.getByTestId("blank-child-page")).toBeVisible();
 	});
 
-	test("dropping a row into the blank child page creates view.content.child", async ({
+	test("dropping a row into the blank child page creates child", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, [
@@ -501,12 +416,8 @@ test.describe("Child Page Rendering", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "Root Row",
-								subtitle: "Subtitle",
-							},
-						},
+						title: "Root Row",
+						subtitle: "Subtitle",
 						actions: [],
 					},
 				],
@@ -556,13 +467,9 @@ test.describe("Child Page Rendering", () => {
 				rows: [
 					{
 						type: "Search" as const,
-						view: {
-							content: {
-								title: "Search Row Title",
-								placeholder: "Search...",
-								value: "",
-							},
-						},
+						title: "Search Row Title",
+						placeholder: "Search...",
+						value: "",
 						actions: [],
 					},
 				],

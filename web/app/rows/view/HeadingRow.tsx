@@ -9,15 +9,11 @@ export default defineRow("HeadingRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Heading row title",
-				label: "Label",
-			},
-		},
+		title: "Heading row title",
+		label: "Label",
 	} satisfies RowConfig,
 	render: (row) => {
-		const { title = "", label = "" } = row.config.view.content;
+		const { title = "", label = "" } = row.config;
 
 		return (
 			<div className="evy-flex evy-flex-row evy-items-center evy-gap-2 evy-p-2">

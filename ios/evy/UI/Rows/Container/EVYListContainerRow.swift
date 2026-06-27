@@ -26,7 +26,7 @@ struct EVYListContainerRow: View {
     self.view = view
     self.source = source
 
-    let childTemplate = view.content.child
+    let childTemplate = view.child
     dynamicRows = EVYState(
       textToWatch: source,
       setter: {
@@ -59,15 +59,15 @@ struct EVYListContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
           .padding(.horizontal, Constants.majorPadding)
       }
       ForEach(dynamicRows.value) { dynamicRow in
         EVYRow(row: dynamicRow.row)
       }
-      ForEach(view.content.children, id: \.id) { child in
+      ForEach(view.children, id: \.id) { child in
         EVYRow(row: child)
       }
     }
@@ -82,39 +82,27 @@ struct EVYListContainerRow: View {
         "type": "ListContainer",
         "source": "{items}",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "List Container Preview",
-            "child": {
-              "id": "list-child-template",
-              "type": "Text",
-              "source": "",
-              "actions": [],
-              "view": {
-                "content": {
-                  "title": "{$datum.title}",
-                  "subtitle": "",
-                  "icon": ""
-                }
-              }
-            },
-            "children": [
-              {
-                "id": "list-extra-child",
-                "type": "Text",
-                "source": "",
-                "actions": [],
-                "view": {
-                  "content": {
-                    "title": "Extra row",
-                    "subtitle": "Static child below dynamic rows",
-                    "icon": ""
-                  }
-                }
-              }
-            ]
+        "title": "List Container Preview",
+        "child": {
+          "id": "list-child-template",
+          "type": "Text",
+          "source": "",
+          "actions": [],
+          "title": "{$datum.title}",
+          "subtitle": "",
+          "icon": ""
+        },
+        "children": [
+          {
+            "id": "list-extra-child",
+            "type": "Text",
+            "source": "",
+            "actions": [],
+            "title": "Extra row",
+            "subtitle": "Static child below dynamic rows",
+            "icon": ""
           }
-        }
+        ]
       }
       """,
     failureMessage: "Unable to build list container row preview"

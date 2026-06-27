@@ -18,11 +18,11 @@ struct EVYSelectPhotoRow: View {
 
   var body: some View {
     EVYSelectPhoto(
-      title: view.content.title,
-      subtitle: view.content.subtitle,
-      icon: view.content.icon,
-      content: view.content.content,
-      data: view.content.photos,
+      title: view.title,
+      subtitle: view.subtitle,
+      icon: view.icon,
+      content: view.content,
+      data: view.photos,
       destination: destination
     )
     .padding(.horizontal, Constants.majorPadding)
@@ -38,15 +38,11 @@ struct EVYSelectPhotoRow: View {
         "source": "",
         "destination": "{item.photo_ids}",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Photos",
-            "icon": "::image-plus::",
-            "subtitle": "Add photos of your item",
-            "content": "Add up to 10 photos",
-            "photos": "{item.photo_ids}"
-          }
-        }
+        "title": "Photos",
+        "icon": "::image-plus::",
+        "subtitle": "Add photos of your item",
+        "content": "Add up to 10 photos",
+        "photos": "{item.photo_ids}"
       }
       """,
     failureMessage: "Unable to build select photo row preview"

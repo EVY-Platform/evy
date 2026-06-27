@@ -10,20 +10,16 @@ export default defineRow("DropdownRow", {
 		actions: [],
 		source: `{${MARKETPLACE_RESOURCE.CONDITIONS}}`,
 		visible: "true",
-		view: {
-			content: {
-				title: "Dropdown row title",
-				placeholder: "placeholder",
-				format: "{$datum.value}",
-			},
-		},
+		title: "Dropdown row title",
+		placeholder: "placeholder",
+		format: "{$datum.value}",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.condition}`,
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<Dropdown
 				value={row.config.source}
-				placeholder={row.config.view.content.placeholder}
+				placeholder={row.config.placeholder}
 			/>
 		</RowLayout>
 	),

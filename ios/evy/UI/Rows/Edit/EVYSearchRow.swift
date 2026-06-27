@@ -19,14 +19,14 @@ struct EVYSearchRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
       EVYSearch(
         source: source,
-        placeholder: view.content.placeholder,
-        resultTemplate: view.content.child
+        placeholder: view.placeholder,
+        resultTemplate: view.child
       )
     }
     .padding(.horizontal, Constants.majorPadding)
@@ -73,25 +73,17 @@ private struct EVYSearchRowPreview: View {
         "source": "{items}",
         "destination": "",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Search preview",
-            "placeholder": "Search items...",
-            "child": {
-              "id": "preview-search-result-template",
-              "type": "Text",
-              "source": "",
-              "destination": "",
-              "actions": [],
-              "view": {
-                "content": {
-                  "title": "{$datum.title}",
-                  "subtitle": "{$datum.category}",
-                  "icon": "::search::"
-                }
-              }
-            }
-          }
+        "title": "Search preview",
+        "placeholder": "Search items...",
+        "child": {
+          "id": "preview-search-result-template",
+          "type": "Text",
+          "source": "",
+          "destination": "",
+          "actions": [],
+          "title": "{$datum.title}",
+          "subtitle": "{$datum.category}",
+          "icon": "::search::"
         }
       }
       """

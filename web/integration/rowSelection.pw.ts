@@ -16,12 +16,8 @@ test.describe("Row Selection", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "First Text Row",
-								subtitle: "First row subtitle content",
-							},
-						},
+						title: "First Text Row",
+						subtitle: "First row subtitle content",
 						actions: [],
 					},
 				],
@@ -55,22 +51,14 @@ test.describe("Row Selection", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "First Text Row",
-								subtitle: "First row subtitle content",
-							},
-						},
+						title: "First Text Row",
+						subtitle: "First row subtitle content",
 						actions: [],
 					},
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "Second Text Row",
-								subtitle: "Second row subtitle content",
-							},
-						},
+						title: "Second Text Row",
+						subtitle: "Second row subtitle content",
 						actions: [],
 					},
 				],
@@ -109,22 +97,14 @@ test.describe("Row Selection", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "First Text Row",
-								subtitle: "First row subtitle content",
-							},
-						},
+						title: "First Text Row",
+						subtitle: "First row subtitle content",
 						actions: [],
 					},
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "Text Row",
-								text: "Text row content",
-							},
-						},
+						title: "Text Row",
+						text: "Text row content",
 						actions: [],
 					},
 				],
@@ -182,12 +162,8 @@ test.describe("Row Selection", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "First Text Row",
-								subtitle: "First row subtitle content",
-							},
-						},
+						title: "First Text Row",
+						subtitle: "First row subtitle content",
 						actions: [],
 					},
 				],
@@ -225,12 +201,8 @@ test.describe("Row Selection", () => {
 				rows: [
 					{
 						type: "Text",
-						view: {
-							content: {
-								title: "First Text Row",
-								subtitle: "First row subtitle content",
-							},
-						},
+						title: "First Text Row",
+						subtitle: "First row subtitle content",
 						actions: [],
 					},
 				],
@@ -269,23 +241,15 @@ test.describe("Row Selection with Containers", () => {
 					{
 						type: "ListContainer",
 						actions: [],
-						view: {
-							content: {
-								title: "Container Row",
-								children: [
-									{
-										type: "Text",
-										view: {
-											content: {
-												title: "Child Text Row",
-												text: "Child row text",
-											},
-										},
-										actions: [],
-									},
-								],
+						title: "Container Row",
+						children: [
+							{
+								type: "Text",
+								title: "Child Text Row",
+								text: "Child row text",
+								actions: [],
 							},
-						},
+						],
 					},
 				],
 			},
@@ -312,23 +276,15 @@ test.describe("Row Selection with Containers", () => {
 					{
 						type: "ListContainer",
 						actions: [],
-						view: {
-							content: {
-								title: "Container Row",
-								children: [
-									{
-										type: "Text",
-										view: {
-											content: {
-												title: "Child Text Row",
-												text: "Child row text",
-											},
-										},
-										actions: [],
-									},
-								],
+						title: "Container Row",
+						children: [
+							{
+								type: "Text",
+								title: "Child Text Row",
+								text: "Child row text",
+								actions: [],
 							},
-						},
+						],
 					},
 				],
 			},
@@ -356,23 +312,15 @@ test.describe("Row Selection with Containers", () => {
 					{
 						type: "ListContainer",
 						actions: [],
-						view: {
-							content: {
-								title: "Container Row",
-								children: [
-									{
-										type: "Text",
-										view: {
-											content: {
-												title: "Child Text Row",
-												text: "Child row text",
-											},
-										},
-										actions: [],
-									},
-								],
+						title: "Container Row",
+						children: [
+							{
+								type: "Text",
+								title: "Child Text Row",
+								text: "Child row text",
+								actions: [],
 							},
-						},
+						],
 					},
 				],
 			},

@@ -15,7 +15,7 @@ import {
 	type IdCandidate,
 } from "./idCandidates";
 
-function makeRow(id: string, content: Row["config"]["view"]["content"]): Row {
+function makeRow(id: string, content: Partial<Row["config"]>): Row {
 	return {
 		id,
 		row: null,
@@ -24,9 +24,8 @@ function makeRow(id: string, content: Row["config"]["view"]["content"]): Row {
 			actions: [],
 			source: "",
 			visible: "true",
-			view: {
-				content,
-			},
+			title: "",
+			...content,
 		},
 	};
 }

@@ -3,7 +3,7 @@ import type { Row } from "../types/row";
 import { splitCamelCaseToWords } from "./labelFormatting";
 
 export function breadcrumbLabelForRow(row: Row): string {
-	const title = row.config.view.content.title;
+	const title = row.config.title;
 	if (typeof title === "string" && title.trim() !== "") {
 		return title;
 	}

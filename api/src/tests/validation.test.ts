@@ -152,11 +152,7 @@ describe("validateFlowData", () => {
 								type: "Text",
 								source: "",
 								actions: [],
-								view: {
-									content: {
-										title: "Always visible",
-									},
-								},
+								title: "Always visible",
 							},
 						],
 					},
@@ -184,11 +180,7 @@ describe("validateFlowData", () => {
 							actions: [],
 							visible:
 								"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
-							view: {
-								content: {
-									title: "Cash accepted",
-								},
-							},
+							title: "Cash accepted",
 						},
 					],
 				},

@@ -29,7 +29,7 @@ const mockTimeSlots = Array.from({ length: 8 }, (_, i) => {
 	return `2000-01-01T${h}:${m}:00`;
 });
 
-function calendarPreviewFormat(patternOrExpression: string): string {
+function toCalendarExpression(patternOrExpression: string): string {
 	return patternOrExpression.includes("$datum")
 		? patternOrExpression
 		: `{formatDatetime($datum, "${patternOrExpression}")}`;
@@ -68,13 +68,7 @@ function CalendarCell({ col, row }: { col: number; row: number }) {
 	);
 }
 
-function CalendarGrid({
-	headerFormat,
-	timeslotFormat,
-}: {
-	headerFormat: string;
-	timeslotFormat: string;
-}) {
+function CalendarGrid({ config }: { config: RowConfig }) {
 	const parseText = useParseText();
 	return (
 		<div className="evy-flex evy-flex-row evy-overflow-hidden evy-mt-2">
@@ -84,9 +78,14 @@ function CalendarGrid({
 				{mockTimeSlots.map((datetime, i) => (
 					<div key={datetime} style={axisLabelStyle}>
 						{i % 2 === 0
-							? parseText(calendarPreviewFormat(timeslotFormat), {
-									datum: datetime,
-								})
+							? parseText(
+									toCalendarExpression(
+										config.timeslot_format ?? "",
+									),
+									{
+										datum: datetime,
+									},
+								)
 							: ""}
 					</div>
 				))}
@@ -96,9 +95,14 @@ function CalendarGrid({
 				<div className="evy-flex evy-flex-row">
 					{mockColumnDates.map((datetime) => (
 						<div key={datetime} style={axisLabelStyle}>
-							{parseText(calendarPreviewFormat(headerFormat), {
-								datum: datetime,
-							})}
+							{parseText(
+								toCalendarExpression(
+									config.header_format ?? "",
+								),
+								{
+									datum: datetime,
+								},
+							)}
 						</div>
 					))}
 				</div>
@@ -123,25 +127,18 @@ export default defineRow("CalendarRow", {
 		actions: [],
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.delivery_selection}`,
 		visible: "true",
-		view: {
-			content: {
-				title: "Calendar row title",
-				start_time: "07:00",
-				end_time: "19:00",
-				timeslot_interval_minutes: 30,
-				label_interval_minutes: 60,
-				header_format: "EEE d",
-				timeslot_format: "HH:mm",
-			},
-		},
+		title: "Calendar row title",
+		start_time: "07:00",
+		end_time: "19:00",
+		timeslot_interval_minutes: 30,
+		label_interval_minutes: 60,
+		header_format: "EEE d",
+		timeslot_format: "HH:mm",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
-			<CalendarGrid
-				headerFormat={row.config.view.content.header_format ?? ""}
-				timeslotFormat={row.config.view.content.timeslot_format ?? ""}
-			/>
+		<RowLayout title={row.config.title}>
+			<CalendarGrid config={row.config} />
 		</RowLayout>
 	),
 });

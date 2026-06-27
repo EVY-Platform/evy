@@ -6,6 +6,8 @@
 import Foundation
 
 extension EVY {
+  static let entityIdQueryKey = "id"
+
   static func cacheQueryParams(_ query: [String: [String]], forPageId pageId: String) {
     activeCacheScopeId = pageId
     resolveQueryParams(query)
@@ -15,7 +17,7 @@ extension EVY {
     guard let scopeId = activeCacheScopeId else { return }
 
     for (queryKey, ids) in query {
-      if queryKey == "id",
+      if queryKey == EVY.entityIdQueryKey,
         storeResolvedEntityQueryParam(scopeId: scopeId, queryKey: nil, ids: ids)
       {
         continue

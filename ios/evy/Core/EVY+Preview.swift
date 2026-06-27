@@ -61,6 +61,10 @@ enum EVYPreviewMockData {
     ]
     """
 
+  static let calendarPreviewSource = "{delivery_selection}"
+  static let calendarPreviewDestination = "{pickup_selection}"
+  static let calendarPreviewSourceVariable = "delivery_selection"
+  static let calendarPreviewDestinationVariable = "pickup_selection"
   static let calendarPickupSelection = "[\"2026-06-03T09:00:00\",\"2026-06-03T09:30:00\"]"
   static let calendarDeliverySelection = "[\"2026-06-03T14:00:00\"]"
   static let calendarContentJSON = #"""

@@ -10,15 +10,11 @@ export default defineRow("PhotoGalleryRow", {
 		actions: [],
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 		visible: "true",
-		view: {
-			content: {
-				title: "Photo gallery row title",
-			},
-		},
+		title: "Photo gallery row title",
 		destination: "",
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title} fullWidthContent>
+		<RowLayout title={row.config.title} fullWidthContent>
 			<div
 				className="evy-relative evy-w-full evy-bg-gray-light evy-overflow-hidden evy-flex evy-items-center evy-justify-center"
 				style={{ aspectRatio: "4/3" }}

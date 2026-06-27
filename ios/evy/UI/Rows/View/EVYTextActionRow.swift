@@ -14,7 +14,7 @@ struct EVYTextActionRow: View {
   }
 
   var body: some View {
-    let content = view.content
+    let content = view
 
     HStack(alignment: .center, spacing: 8) {
       VStack(alignment: .leading) {
@@ -49,13 +49,9 @@ struct EVYTextActionRow: View {
         "destination": "",
         "actions": [],
         "visible": "true",
-        "view": {
-          "content": {
-            "title": "Pickup location",
-            "subtitle": "123 Main St, Sydney",
-            "action": "Change"
-          }
-        }
+        "title": "Pickup location",
+        "subtitle": "123 Main St, Sydney",
+        "action": "Change"
       }
       """,
     failureMessage: "Unable to build text action row preview"

@@ -26,16 +26,12 @@ export default defineRow("MapRow", {
 		source: "",
 		visible: "true",
 		destination: "",
-		view: {
-			content: {
-				title: "Map row title",
-				location: `{${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address.location}`,
-				subtitle: "Map row subtitle",
-			},
-		},
+		title: "Map row title",
+		location: `{${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address.location}`,
+		subtitle: "Map row subtitle",
 	} satisfies RowConfig,
 	render: (row) => {
-		const { title, subtitle } = row.config.view.content;
+		const { title, subtitle } = row.config;
 		return (
 			<RowLayout title={title}>
 				<MapPreview />

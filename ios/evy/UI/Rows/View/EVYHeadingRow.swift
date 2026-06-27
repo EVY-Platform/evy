@@ -9,7 +9,7 @@ struct EVYHeadingRow: View {
   }
 
   var body: some View {
-    let content = view.content
+    let content = view
 
     HStack(alignment: .center, spacing: 8) {
       VStack(alignment: .leading) {

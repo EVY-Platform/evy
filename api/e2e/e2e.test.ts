@@ -115,14 +115,9 @@ describe("API E2E Tests", () => {
 				source: "",
 				visible: "true",
 				actions: [],
-				view: {
-					content: {
-						title: "Hello",
-						text: "World",
-						expandLabel: "Read more",
-					},
-					max_lines: "3",
-				},
+				title: "Hello",
+				text: "World",
+				expandLabel: "Read more",
 			};
 
 			const testPage: UI_Page = {

@@ -30,13 +30,9 @@ export default defineRow(typeName, {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Select segment container row title",
-				segments: ["X", "Y", "Z"],
-				children: [],
-			},
-		},
+		title: "Select segment container row title",
+		segments: ["X", "Y", "Z"],
+		children: [],
 	} satisfies RowConfig,
 	Component: function SelectSegmentContainerRowInner({
 		rowId,
@@ -51,13 +47,13 @@ export default defineRow(typeName, {
 			return null;
 		}
 
-		const rawSegments = row.config.view.content.segments;
+		const rawSegments = row.config.segments;
 		const segments: string[] =
 			Array.isArray(rawSegments) &&
 			rawSegments.every((x): x is string => typeof x === "string")
 				? rawSegments
 				: [];
-		const rawChildren = row.config.view.content.children;
+		const rawChildren = row.config.children;
 		const children: Row[] = Array.isArray(rawChildren) ? rawChildren : [];
 
 		// Segment button handler: stop propagation so the click doesn't bubble to
@@ -88,7 +84,7 @@ export default defineRow(typeName, {
 
 		const selectedChild = children[visibleChildIndex];
 
-		const title = row.config.view.content.title;
+		const title = row.config.title;
 
 		return (
 			<RowLayout title={title} fullWidthContent>

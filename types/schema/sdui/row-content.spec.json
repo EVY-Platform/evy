@@ -33,9 +33,6 @@
 		}
 	},
 	"TextExpand": {
-		"view": {
-			"max_lines": "string"
-		},
 		"content": {
 			"title": "string",
 			"text": "string",

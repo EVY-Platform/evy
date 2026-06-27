@@ -37,6 +37,7 @@ extension EnvironmentValues {
 }
 
 private let DEFAULT_HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
+private let sduiResourceKey = "sdui"
 
 private var HOME_FLOW_ID: String {
   let configuredHomeFlowId = ProcessInfo.processInfo.environment["HOME_FLOW_ID"] ?? ""
@@ -245,7 +246,7 @@ struct ContentView: View {
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
       guard let notifKey = notification.object as? String,
-        notifKey == "sdui"
+        notifKey == sduiResourceKey
       else { return }
 
       try? loadFlowsFromStore()

@@ -49,7 +49,7 @@
 		"UI_Row": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "view", "source", "actions", "visible"],
+			"required": ["id", "type", "source", "actions", "visible", "title"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -81,19 +81,6 @@
 						"TimeslotPicker"
 					]
 				},
-				"view": {
-					"type": "object",
-					"additionalProperties": false,
-					"required": ["content"],
-					"properties": {
-						"content": {
-							"$ref": "#/$defs/UI_RowContent"
-						},
-						"max_lines": {
-							"type": "string"
-						}
-					}
-				},
 				"source": {
 					"type": "string"
 				},
@@ -109,13 +96,7 @@
 				},
 				"visible": {
 					"type": "string"
-				}
-			}
-		},
-		"UI_RowContent": {
-			"type": "object",
-			"required": ["title"],
-			"properties": {
+				},
 				"title": {
 					"type": "string"
 				},
@@ -194,8 +175,7 @@
 						"type": "string"
 					}
 				}
-			},
-			"additionalProperties": false
+			}
 		},
 		"UI_RowAction": {
 			"type": "object",

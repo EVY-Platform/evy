@@ -10,16 +10,12 @@ export default defineRow("InlinePickerRow", {
 		actions: [],
 		source: `{${MARKETPLACE_RESOURCE.DURATIONS}}`,
 		visible: "true",
-		view: {
-			content: {
-				title: "Inline picker row title",
-				format: "{$datum.value}",
-			},
-		},
+		title: "Inline picker row title",
+		format: "{$datum.value}",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.distance}`,
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<div className="evy-p-2 evy-flex evy-gap-2">
 				<RadioButton label="1 min" selected={false} />
 				<RadioButton label="2 mins" selected />

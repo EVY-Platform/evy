@@ -10,20 +10,16 @@ export default defineRow("TextAreaRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Text area row title",
-				value: "",
-				placeholder: "placeholder",
-			},
-		},
+		title: "Text area row title",
+		value: "",
+		placeholder: "placeholder",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.description}`,
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<TextArea
-				value={row.config.view.content.value}
-				placeholder={row.config.view.content.placeholder}
+				value={row.config.value}
+				placeholder={row.config.placeholder}
 			/>
 		</RowLayout>
 	),

@@ -46,15 +46,7 @@ final class EVYDatumRowFormatter {
     return (try? EVY.formatData(json: datum, format: stringValue)) ?? stringValue
   }
 
-  private static func formatDatumReferencesInJSONValue(
-    _ value: Any,
-    datum: EVYJson,
-    path: [String] = []
-  ) -> Any {
-    if path.contains("actions") {
-      return value
-    }
-
+  private static func formatDatumReferencesInJSONValue(_ value: Any, datum: EVYJson) -> Any {
     switch value {
     case let stringValue as String:
       return resolveDatumReferences(in: stringValue, datum: datum)
@@ -62,16 +54,12 @@ final class EVYDatumRowFormatter {
       var formatted: [String: Any] = [:]
       formatted.reserveCapacity(dictionaryValue.count)
       for (key, nestedValue) in dictionaryValue {
-        formatted[key] = formatDatumReferencesInJSONValue(
-          nestedValue,
-          datum: datum,
-          path: path + [key]
-        )
+        formatted[key] = formatDatumReferencesInJSONValue(nestedValue, datum: datum)
       }
       return formatted
     case let arrayValue as [Any]:
       return arrayValue.map { nestedValue in
-        formatDatumReferencesInJSONValue(nestedValue, datum: datum, path: path)
+        formatDatumReferencesInJSONValue(nestedValue, datum: datum)
       }
     default:
       return value
@@ -91,14 +79,12 @@ final class EVYDatumRowFormatter {
       var root = Self.formatDatumReferencesInJSONValue(
         deepCopyJSONValue(rootPrototype),
         datum: datum
-      ) as? [String: Any],
-      let view = root["view"] as? [String: Any],
-      let content = view["content"] as? [String: Any]
+      ) as? [String: Any]
     else {
       throw EVYDatumRowFormattingError.invalidTemplate
     }
     let searchableValues =
-      Self.extractAllStrings(from: content)
+      Self.extractAllStrings(from: root)
       .filter { !$0.isEmpty }
     root["id"] = UUID().uuidString
     let out = try JSONSerialization.data(withJSONObject: root)

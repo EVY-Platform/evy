@@ -22,11 +22,7 @@ const defaultSearchResultTemplateRow: Row = {
 		visible: "true",
 		destination: "",
 		actions: [],
-		view: {
-			content: {
-				...SEARCH_DEFAULT_RESULT_CONTENT,
-			},
-		},
+		...SEARCH_DEFAULT_RESULT_CONTENT,
 	},
 };
 
@@ -36,23 +32,19 @@ export default defineRow("SearchRow", {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Search row title",
-				placeholder: "placeholder",
-				value: "",
-				child: defaultSearchResultTemplateRow,
-			},
-		},
+		title: "Search row title",
+		placeholder: "placeholder",
+		value: "",
+		child: defaultSearchResultTemplateRow,
 		destination: "{address}",
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<div className="evy-relative">
 				<InlineIcon icon="::search::" alt="Search" />
 				<Input
 					value={row.config.source}
-					placeholder={row.config.view.content.placeholder}
+					placeholder={row.config.placeholder}
 				/>
 			</div>
 		</RowLayout>

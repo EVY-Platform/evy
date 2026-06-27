@@ -11,18 +11,14 @@ export default defineRow(typeName, {
 		actions: [],
 		source: "",
 		visible: "true",
-		view: {
-			content: {
-				title: "Column container row title",
-				children: [],
-			},
-		},
+		title: "Column container row title",
+		children: [],
 	} satisfies RowConfig,
 	render: (row) => (
-		<RowLayout title={row.config.view.content.title}>
+		<RowLayout title={row.config.title}>
 			<div className="evy-flex">
 				<ContainerChildren
-					rows={row.config.view.content.children}
+					rows={row.config.children}
 					orientation="horizontal"
 					showIndicators
 					containerRowId={row.id}

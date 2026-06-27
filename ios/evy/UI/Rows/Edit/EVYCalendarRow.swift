@@ -19,11 +19,11 @@ struct EVYCalendarRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
-      EVYCalendar(content: view.content, source: source, destination: destination)
+      EVYCalendar(content: view, source: source, destination: destination)
     }
     .padding(.horizontal, Constants.majorPadding)
   }
@@ -43,12 +43,12 @@ private struct EVYCalendarRowPreview: View {
     let primaryData = EVYPreviewMockData.calendarPickupSelection.data(using: .utf8)
     let secondaryData = EVYPreviewMockData.calendarDeliverySelection.data(using: .utf8)
     EVY.ensureDraftExists(
-      variableName: "pickup_selection",
+      variableName: EVYPreviewMockData.calendarPreviewDestinationVariable,
       initialData: primaryData,
       scopeId: previewScopeId
     )
     EVY.ensureDraftExists(
-      variableName: "delivery_selection",
+      variableName: EVYPreviewMockData.calendarPreviewSourceVariable,
       initialData: secondaryData,
       scopeId: previewScopeId
     )
@@ -63,12 +63,16 @@ private struct EVYCalendarRowPreview: View {
       {
         "id": "preview-calendar-row",
         "type": "Calendar",
-        "source": "{delivery_selection}",
-        "destination": "{pickup_selection}",
+        "source": "\(EVYPreviewMockData.calendarPreviewSource)",
+        "destination": "\(EVYPreviewMockData.calendarPreviewDestination)",
         "actions": [],
-        "view": {
-          "content": \(EVYPreviewMockData.calendarContentJSON)
-        }
+        "title": "",
+        "start_time": "07:00",
+        "end_time": "19:00",
+        "timeslot_interval_minutes": 30,
+        "label_interval_minutes": 60,
+        "header_format": "EEE d",
+        "timeslot_format": "HH:mm"
       }
       """
     return EVYPreviewMockData.decodeRow(from: json)

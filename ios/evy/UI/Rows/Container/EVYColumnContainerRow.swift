@@ -17,13 +17,13 @@ struct EVYColumnContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
           .padding(.horizontal, Constants.majorPadding)
       }
       HStack(alignment: .top) {
-        ForEach(view.content.children, id: \.id) { child in
+        ForEach(view.children, id: \.id) { child in
           EVYRow(row: child)
         }
       }
@@ -39,39 +39,27 @@ struct EVYColumnContainerRow: View {
         "type": "ColumnContainer",
         "source": "",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Column Container Preview",
-            "children": [
-              {
-                "id": "column-child-1",
-                "type": "Text",
-                "source": "",
-                "actions": [],
-                "view": {
-                  "content": {
-                    "title": "First Child",
-                    "subtitle": "This is the first column item",
-                    "icon": "::star::"
-                  }
-                }
-              },
-              {
-                "id": "column-child-2",
-                "type": "Text",
-                "source": "",
-                "actions": [],
-                "view": {
-                  "content": {
-                    "title": "Second Child",
-                    "subtitle": "This is the second column item",
-                    "icon": ""
-                  }
-                }
-              }
-            ]
+        "title": "Column Container Preview",
+        "children": [
+          {
+            "id": "column-child-1",
+            "type": "Text",
+            "source": "",
+            "actions": [],
+            "title": "First Child",
+            "subtitle": "This is the first column item",
+            "icon": "::star::"
+          },
+          {
+            "id": "column-child-2",
+            "type": "Text",
+            "source": "",
+            "actions": [],
+            "title": "Second Child",
+            "subtitle": "This is the second column item",
+            "icon": ""
           }
-        }
+        ]
       }
       """,
     failureMessage: "Unable to build column container row preview"

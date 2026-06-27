@@ -18,7 +18,7 @@ import {
 
 function makeRow(
 	id: string,
-	contentOverrides: Partial<Row["config"]["view"]["content"]> = {},
+	contentOverrides: Partial<Row["config"]> = {},
 ): Row {
 	return {
 		id,
@@ -26,14 +26,11 @@ function makeRow(
 		config: {
 			type: "Text",
 			source: "",
+			visible: "true",
 			actions: [],
-			view: {
-				content: {
-					title: "",
-					text: "",
-					...contentOverrides,
-				} as Row["config"]["view"]["content"],
-			},
+			title: "",
+			text: "",
+			...contentOverrides,
 		} as Row["config"],
 	};
 }
@@ -83,13 +80,11 @@ describe("row tree traversal", () => {
 		const inner = makeRow("inner", { text: "old" });
 		const outer = makeRow("outer", { child: inner });
 		const out = updateRowInTree([outer], "inner", (row) =>
-			makeRow(row.id, { ...row.config.view.content, text: "new" }),
+			makeRow(row.id, { ...row.config, text: "new" }),
 		);
 
 		expect(out[0]).not.toBe(outer);
-		expect(out[0].config.view.content.child?.config.view.content.text).toBe(
-			"new",
-		);
+		expect(out[0].config.child?.config.text).toBe("new");
 	});
 });
 
@@ -134,9 +129,7 @@ describe("page-level row tree helpers", () => {
 		);
 
 		expect(withoutBody.rows).toEqual([]);
-		expect(
-			withoutFooterChild.footer?.config.view.content.child,
-		).toBeUndefined();
+		expect(withoutFooterChild.footer?.config.child).toBeUndefined();
 		expect(withoutFooter.footer).toBeUndefined();
 	});
 
@@ -154,9 +147,7 @@ describe("page-level row tree helpers", () => {
 		);
 
 		expect(pageInsert.rows.map((row) => row.id)).toEqual(["b", "a"]);
-		expect(footerInsert.footer?.config.view.content.children?.[0].id).toBe(
-			"new",
-		);
+		expect(footerInsert.footer?.config.children?.[0].id).toBe("new");
 	});
 });
 

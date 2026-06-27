@@ -19,14 +19,14 @@ struct EVYTextAreaRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.content.title.isEmpty {
-        EVYTextView(view.content.title)
+      if !view.title.isEmpty {
+        EVYTextView(view.title)
           .padding(.vertical, Constants.padding)
       }
       EVYTextField(
-        input: view.content.value,
+        input: view.value,
         destination: destination,
-        placeholder: view.content.placeholder,
+        placeholder: view.placeholder,
         multiLine: true
       )
     }
@@ -43,13 +43,9 @@ struct EVYTextAreaRow: View {
         "source": "",
         "destination": "{item.description}",
         "actions": [],
-        "view": {
-          "content": {
-            "title": "Description",
-            "value": "{item.description}",
-            "placeholder": "Describe your item in detail"
-          }
-        }
+        "title": "Description",
+        "value": "{item.description}",
+        "placeholder": "Describe your item in detail"
       }
       """,
     failureMessage: "Unable to build text area row preview"

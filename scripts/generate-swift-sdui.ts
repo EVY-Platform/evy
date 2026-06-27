@@ -21,7 +21,6 @@ const ROW_SPEC_PATH = join(SCHEMA_DIR, "sdui", "row-content.spec.json");
 type RowSpec = Record<
 	string,
 	{
-		view?: Record<string, string>;
 		content: Record<string, string>;
 	}
 >;
@@ -111,9 +110,6 @@ function swiftTypeForSchemaProp(
 	return { swiftType: "String", isOptional: !required };
 }
 
-/** Known definition names that must be classes (recursive refs). */
-const CLASS_DEFS = new Set(["UI_Row", "UI_RowView", "UI_RowContent"]);
-
 function emitUIEnums(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
 	const rowEnumCases: string[] = [];
@@ -139,62 +135,118 @@ ${rowEnumCases.join("\n")}
 function buildShapeOverrides(): Map<string, string> {
 	const m = new Map<string, string>();
 	m.set("UI_Row.type", "EVYRowType");
-	m.set("UI_Row.view", "UI_RowView");
 	return m;
 }
 
-/** Emit property line(s) for one property. */
-function emitUIRowClass(): string {
+function collectRowAttributeEntries(rowSpec: RowSpec): [string, string][] {
+	const entries = new Map<string, string>();
+	for (const spec of Object.values(rowSpec)) {
+		for (const [key, value] of Object.entries(
+			withUniversalChildContent(spec.content),
+		)) {
+			entries.set(key, value);
+		}
+	}
+	return [...entries.entries()].sort(([a], [b]) => a.localeCompare(b));
+}
+
+function swiftDefaultValueForSpecType(specType: string): string {
+	switch (specType) {
+		case "integer":
+			return "0";
+		case "[UI_Row]":
+		case "[String]":
+			return "[]";
+		case "UI_Row":
+			return "nil";
+		default:
+			return '""';
+	}
+}
+
+/** Emit flattened UI_Row with defaults for optional row attributes. */
+function emitUIRowClass(rowSpec: RowSpec): string {
+	const entries = collectRowAttributeEntries(rowSpec);
+	const attributeFields = entries.map(
+		([key, value]) =>
+			`    public let ${swiftIdentifier(key)}: ${swiftTypeForSpecType(value)}`,
+	);
+	const initParams = [
+		"id: String",
+		"type: EVYRowType",
+		'source: String = ""',
+		'destination: String = ""',
+		"actions: [UI_RowAction] = []",
+		'visible: String = ""',
+		...entries.map(
+			([key, value]) =>
+				`${swiftIdentifier(key)}: ${swiftTypeForSpecType(value)} = ${swiftDefaultValueForSpecType(value)}`,
+		),
+	];
+	const attributeAssignments = entries.map(
+		([key]) =>
+			`        self.${swiftIdentifier(key)} = ${swiftIdentifier(key)}`,
+	);
+	const codingKeyCases = [
+		"        case id",
+		"        case type",
+		"        case source",
+		"        case destination",
+		"        case actions",
+		"        case visible",
+		...entries.map(([key]) => `        case ${swiftIdentifier(key)}`),
+	];
+	const decodeLines = entries.map(([key, value]) =>
+		emitRowContentDecodeLine(key, value),
+	);
+	const encodeLines = entries.map(([key, value]) =>
+		emitRowContentEncodeLine(key, value),
+	);
+
 	return `// MARK: - UI_Row
 public final class UI_Row: Codable {
     public let id: String
     public let type: EVYRowType
-    public let view: UI_RowView
     public let source: String
     public let destination: String
     public let actions: [UI_RowAction]
     public let visible: String
+${attributeFields.join("\n")}
 
-    public init(id: String, type: EVYRowType, view: UI_RowView, source: String, destination: String, actions: [UI_RowAction], visible: String) {
+    public init(${initParams.join(", ")}) {
         self.id = id
         self.type = type
-        self.view = view
         self.source = source
         self.destination = destination
         self.actions = actions
         self.visible = visible
+${attributeAssignments.join("\n")}
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id
-        case type
-        case view
-        case source
-        case destination
-        case actions
-        case visible
+${codingKeyCases.join("\n")}
     }
 
     public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(String.self, forKey: .id)
-        type = try container.decode(EVYRowType.self, forKey: .type)
-        view = try container.decode(UI_RowView.self, forKey: .view)
-        source = try container.decode(String.self, forKey: .source)
-        destination = try container.decodeIfPresent(String.self, forKey: .destination) ?? ""
-        actions = try container.decodeIfPresent([UI_RowAction].self, forKey: .actions) ?? []
-        visible = try container.decodeIfPresent(String.self, forKey: .visible) ?? ""
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        type = try c.decode(EVYRowType.self, forKey: .type)
+        source = try c.decodeIfPresent(String.self, forKey: .source) ?? ""
+        destination = try c.decodeIfPresent(String.self, forKey: .destination) ?? ""
+        actions = try c.decodeIfPresent([UI_RowAction].self, forKey: .actions) ?? []
+        visible = try c.decodeIfPresent(String.self, forKey: .visible) ?? ""
+${decodeLines.join("\n")}
     }
 
     public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(type, forKey: .type)
-        try container.encode(view, forKey: .view)
-        try container.encode(source, forKey: .source)
-        try container.encode(destination, forKey: .destination)
-        try container.encode(actions, forKey: .actions)
-        try container.encode(visible, forKey: .visible)
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(type, forKey: .type)
+        try c.encode(source, forKey: .source)
+        try c.encode(destination, forKey: .destination)
+        try c.encode(actions, forKey: .actions)
+        try c.encode(visible, forKey: .visible)
+${encodeLines.join("\n")}
     }
 }
 `;
@@ -223,11 +275,12 @@ function emitShapeFromDef(
 	defName: string,
 	def: SchemaObject,
 	overrides: Map<string, string>,
+	rowSpec: RowSpec,
 ): string {
 	const props = (def.properties ?? {}) as Record<string, unknown>;
 	const required = (def.required ?? []) as string[];
 	if (defName === "UI_Row") {
-		return emitUIRowClass();
+		return emitUIRowClass(rowSpec);
 	}
 	const lines: string[] = [];
 	for (const [propName, propSchema] of Object.entries(props)) {
@@ -241,13 +294,7 @@ function emitShapeFromDef(
 			),
 		);
 	}
-	const useClass = CLASS_DEFS.has(defName);
-	const useFinalClass = defName === "UI_Row";
-	const keyword = useFinalClass
-		? "final class"
-		: useClass
-			? "class"
-			: "struct";
+	const keyword = defName === "UI_Row" ? "final class" : "struct";
 	const initParams = lines
 		.map((l) => {
 			const match = /public let (`?\w+`?): ([\w[\]?]+)/.exec(l);
@@ -264,7 +311,7 @@ function emitShapeFromDef(
 		})
 		.filter(Boolean);
 	let initBlock = "";
-	if (useClass && initParams.length > 0) {
+	if (defName === "UI_Row" && initParams.length > 0) {
 		initBlock = `
 
     public init(${initParams.join(", ")}) {
@@ -280,38 +327,7 @@ ${initBlock}
 `;
 }
 
-/** Emit UI_RowView from the inline view object under UI_Row. */
-function emitRowViewFromSchema(
-	schema: SchemaObject,
-	overrides: Map<string, string>,
-): string {
-	const defs = schema.$defs as Record<string, unknown>;
-	const rowDef = defs?.UI_Row as SchemaObject;
-	const viewSchema = (rowDef?.properties as Record<string, unknown>)
-		?.view as SchemaObject;
-	const required = (viewSchema?.required ?? []) as string[];
-	const props = (viewSchema?.properties ?? {}) as Record<string, unknown>;
-	const lines: string[] = [];
-	for (const [propName, propSchema] of Object.entries(props)) {
-		const { swiftType, isOptional } = swiftTypeForSchemaProp(
-			propSchema,
-			"UI_RowView",
-			propName,
-			required,
-			overrides,
-		);
-		lines.push(
-			`    public let ${propName}: ${swiftType}${isOptional ? "?" : ""}`,
-		);
-	}
-	return `// MARK: - UI_RowView (class to allow recursive reference)
-public class UI_RowView: Codable {
-${lines.join("\n")}
-}
-`;
-}
-
-function emitUIShapes(schema: SchemaObject): string {
+function emitUIShapes(schema: SchemaObject, rowSpec: RowSpec): string {
 	const overrides = buildShapeOverrides();
 	const defs = (schema.$defs ?? {}) as Record<string, unknown>;
 
@@ -336,23 +352,13 @@ ${flowLines.join("\n")}
 }
 `;
 
-	// $defs in order: Page, Row, RowView (synthetic), RowContent, RowAction
-	const defOrder = [
-		"UI_Page",
-		"UI_Row",
-		"UI_RowView",
-		"UI_RowContent",
-		"UI_RowAction",
-	];
+	// $defs in order: Page, Row, RowAction
+	const defOrder = ["UI_Page", "UI_Row", "UI_RowAction"];
 	const defBlocks: string[] = [];
 	for (const name of defOrder) {
-		if (name === "UI_RowView") {
-			defBlocks.push(emitRowViewFromSchema(schema, overrides));
-			continue;
-		}
 		const def = defs[name] as SchemaObject | undefined;
 		if (!def) continue;
-		defBlocks.push(emitShapeFromDef(name, def, overrides));
+		defBlocks.push(emitShapeFromDef(name, def, overrides, rowSpec));
 	}
 
 	return `// Generated from types/schema/sdui/evy.schema.json - do not edit.
@@ -407,24 +413,28 @@ function withUniversalChildContent(
 	};
 }
 
-function emitRowContentStruct(
+function emitRowViewDataStruct(
 	rowType: string,
-	content: Record<string, string>,
+	spec: { content: Record<string, string> },
 ): string {
-	const contentName = `${rowType}RowContent`;
-	const entries = Object.entries(withUniversalChildContent(content));
+	const viewDataName = `${rowType}RowViewData`;
+	const entries = Object.entries(withUniversalChildContent(spec.content));
 	const fieldLines = entries.map(
-		([k, v]) =>
-			`    public let ${swiftIdentifier(k)}: ${swiftTypeForSpecType(v)}`,
+		([key, value]) =>
+			`    public let ${swiftIdentifier(key)}: ${swiftTypeForSpecType(value)}`,
 	);
 	const codingKeyCases = entries.map(
-		([k]) => `        case ${swiftIdentifier(k)}`,
+		([key]) => `        case ${swiftIdentifier(key)}`,
 	);
-	const decodeLines = entries.map(([k, v]) => emitRowContentDecodeLine(k, v));
-	const encodeLines = entries.map(([k, v]) => emitRowContentEncodeLine(k, v));
+	const decodeLines = entries.map(([key, value]) =>
+		emitRowContentDecodeLine(key, value),
+	);
+	const encodeLines = entries.map(([key, value]) =>
+		emitRowContentEncodeLine(key, value),
+	);
 
-	return `// MARK: - ${contentName}
-public struct ${contentName}: Codable {
+	return `// MARK: - ${viewDataName}
+public struct ${viewDataName}: Codable {
 ${fieldLines.join("\n")}
 
     private enum CodingKeys: String, CodingKey {
@@ -443,69 +453,13 @@ ${encodeLines.join("\n")}
 }`;
 }
 
-function emitRowViewDataStruct(
-	rowType: string,
-	spec: { view?: Record<string, string> },
-): string {
-	const viewDataName = `${rowType}RowViewData`;
-	const contentName = `${rowType}RowContent`;
-
-	if (!spec.view || Object.keys(spec.view).length === 0) {
-		return `// MARK: - ${viewDataName}
-public struct ${viewDataName}: Codable {
-    public let content: ${contentName}
-}`;
-	}
-
-	const viewEntries = Object.entries(spec.view);
-	const viewFieldLines = viewEntries.map(
-		([k]) => `    public let ${swiftIdentifier(k)}: String`,
-	);
-	const codingKeyCases = [
-		"        case content",
-		...viewEntries.map(([k]) => `        case ${swiftIdentifier(k)}`),
-	];
-	const decodeViewLines = viewEntries.map(
-		([k]) =>
-			`        ${swiftIdentifier(k)} = try c.decodeIfPresent(String.self, forKey: .${swiftIdentifier(k)}) ?? ""`,
-	);
-	const encodeViewLines = viewEntries.map(
-		([k]) =>
-			`        try c.encode(${swiftIdentifier(k)}, forKey: .${swiftIdentifier(k)})`,
-	);
-
-	return `// MARK: - ${viewDataName}
-public struct ${viewDataName}: Codable {
-    public let content: ${contentName}
-${viewFieldLines.join("\n")}
-
-    private enum CodingKeys: String, CodingKey {
-${codingKeyCases.join("\n")}
-    }
-
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        content = try c.decode(${contentName}.self, forKey: .content)
-${decodeViewLines.join("\n")}
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(content, forKey: .content)
-${encodeViewLines.join("\n")}
-    }
-}`;
-}
-
 function emitUIRowPayloads(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
 
-	const contentStructs: string[] = [];
 	const viewDataStructs: string[] = [];
 	for (const rowType of rowTypes) {
 		const spec = rowSpec[rowType];
 		if (!spec) continue;
-		contentStructs.push(emitRowContentStruct(rowType, spec.content));
 		viewDataStructs.push(emitRowViewDataStruct(rowType, spec));
 	}
 
@@ -526,7 +480,7 @@ function emitUIRowPayloads(rowSpec: RowSpec): string {
 		const viewDataName = `${rowType}RowViewData`;
 		const enumCase = rowTypeToEnumCase(rowType);
 		fromRowCases.push(`        case .${enumCase}:
-            let viewData = try JSONDecoder().decode(${viewDataName}.self, from: JSONEncoder().encode(row.view))
+            let viewData = try JSONDecoder().decode(${viewDataName}.self, from: JSONEncoder().encode(row))
             return .${enumCase}(viewData, row.source, row.destination, row.actions)`);
 	}
 
@@ -535,9 +489,7 @@ function emitUIRowPayloads(rowSpec: RowSpec): string {
 
 import Foundation
 
-// MARK: - Per-row content and view data structs
-
-${contentStructs.join("\n\n")}
+// MARK: - Per-row view data structs
 
 ${viewDataStructs.join("\n\n")}
 
@@ -567,7 +519,7 @@ async function main(): Promise<void> {
 	);
 	await writeFile(
 		join(OUT_SWIFT, "UIShapes.swift"),
-		emitUIShapes(schema),
+		emitUIShapes(schema, rowSpec),
 		"utf-8",
 	);
 	await writeFile(
