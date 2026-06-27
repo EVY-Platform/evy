@@ -163,3 +163,102 @@ Submit:
 	"true": "{create([service_id],[resource_id])}"
 }
 ```
+
+---
+
+## Architecture: flat storage model
+
+Flows, pages, and rows are stored as three independent database tables and transferred as flat record collections. Neither the API nor the transport layer embeds nested objects — clients assemble the tree in memory.
+
+### Entity relationships
+
+Each entity references others by ID only. Rows can nest arbitrarily deep via two optional link fields stored inside `data`:
+
+```mermaid
+flowchart TD
+    F["DATA_EVY_Flow\nid · name · pageIds[]"]
+    P["DATA_EVY_Page\nid · title · rowIds[] · footerRowId?"]
+    R["DATA_EVY_Row\nid · type · visible · data{}"]
+
+    F -- "pageIds[]" --> P
+    P -- "rowIds[]" --> R
+    P -- "footerRowId?" --> R
+    R -- "data.child_row_id?" --> R
+    R -- "data.children_row_ids[]?" --> R
+```
+
+### flatGraph — web builder mutation helpers
+
+`flatGraph.ts` exposes a set of pure, immutable helpers that take a `FlowEntityMaps` snapshot (three ID-keyed lookup maps) and return a new snapshot. No entity is ever mutated in place. The web builder's `pageReducer` dispatches every user action through one of these helpers, then syncs only the changed records back to the API.
+
+```mermaid
+flowchart TD
+    API["API\nlist flows · pages · rows"]
+    COL["FlowEntityCollections\nflows[] · pages[] · rows[]"]
+    MAPS["FlowEntityMaps\nflowsById · pagesById · rowsById"]
+    UI["Web Builder\n(render)"]
+    RED["pageReducer\n(user action)"]
+    FG["flatGraph helper\ninsertRowIntoPage · moveRow\nupdateRowField · addPage · …"]
+    NEXT["New FlowEntityMaps\n(immutable)"]
+    SYNC["API\n(update changed records)"]
+
+    API -->|syncWebData| COL
+    COL -->|collectionsToMaps| MAPS
+    MAPS --> UI
+    UI -->|dispatch| RED
+    RED --> FG
+    FG --> NEXT
+    NEXT --> UI
+    NEXT -->|changed records only| SYNC
+```
+
+---
+
+## iOS and Web: SDUI data flow
+
+Both clients connect to the same JSON-RPC WebSocket gateway. The API returns flows, pages, and rows as independent flat collections. Each client builds its own in-memory representation:
+
+- **Web builder** converts records to ID-keyed maps and uses `flatGraph.ts` for all edits. Changes are written back to the API as individual record updates.
+- **iOS app** stores records in `EVYDataStore` and resolves them on demand through typed store accessors (`EVYFlowStore`, `EVYPageStore`, `EVYRowStore`). Container rows follow `child_row_id` / `children_row_ids` links at render time.
+
+```mermaid
+flowchart TD
+    subgraph DB["Postgres"]
+        FT["flows"]
+        PT["pages"]
+        RT["rows"]
+    end
+
+    subgraph API["API — JSON-RPC WebSocket gateway"]
+        GW["core resource handlers\n(list · create · update · delete)"]
+    end
+
+    subgraph Web["Web Builder"]
+        SYNC["useFlows → syncWebData"]
+        MAPS2["FlowEntityMaps\n(collectionsToMaps)"]
+        RED2["pageReducer + flatGraph\n(immutable edits)"]
+        WCOMP["Components\n(render + edit UI)"]
+    end
+
+    subgraph iOS["iOS App"]
+        DS["EVYDataStore\n(sync cache)"]
+        direction TB
+        FS2["EVYFlowStore"]
+        PS2["EVYPageStore"]
+        RS2["EVYRowStore"]
+        REND["EVYPage / EVYRow\n(rendered UI)"]
+    end
+
+    FT & PT & RT --> GW
+
+    GW -->|flat collections| SYNC
+    SYNC --> MAPS2
+    MAPS2 --> WCOMP
+    WCOMP -->|user action| RED2
+    RED2 --> MAPS2
+    RED2 -->|update record| GW
+
+    GW -->|flat records| DS
+    DS --> FS2 & PS2 & RS2
+    FS2 & PS2 & RS2 --> REND
+```
