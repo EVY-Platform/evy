@@ -16,7 +16,7 @@ jobs:
         permissions:
             contents: read
             packages: read
-        timeout-minutes: 10
+        timeout-minutes: 25
         runs-on: blacksmith-6vcpu-macos-26
 
         steps:
@@ -77,11 +77,23 @@ jobs:
                   xcodebuild -showsdks
                   xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | sed -n '1,80p'
 
+            - name: Install PostgreSQL
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
+              run: |
+                  set -euo pipefail
+                  if ! command -v postgres >/dev/null 2>&1; then
+                    brew install postgresql@16
+                    echo "$(brew --prefix postgresql@16)/bin" >> "$GITHUB_PATH"
+                  fi
+
             - name: Run E2E tests
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               env:
+                  E2E_SERVICE_MODE: local
                   IOS_SIMULATOR_DEVICE_NAME: iPhone 17
                   IOS_SIMULATOR_OS_VERSION: 26.5
               run: bash run-e2e.sh
