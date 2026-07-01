@@ -227,6 +227,9 @@ private enum E2EFlowIds {
   static let webSocketViewPage = "10000000-0000-4000-8000-000000000004"
   static let webSocketCreateFlow = "10000000-0000-4000-8000-000000000005"
   static let webSocketCreatePage = "10000000-0000-4000-8000-000000000006"
+  static let timeslotPickerHomeFlow = "10000000-0000-4000-8000-000000000009"
+  static let timeslotPickerViewFlow = "10000000-0000-4000-8000-00000000000a"
+  static let timeslotPickerViewPage = "10000000-0000-4000-8000-00000000000b"
 }
 
 // MARK: - Base class for E2E tests
@@ -534,6 +537,106 @@ class E2ETestBase: XCTestCase {
           "condition": "",
           "false": "",
           "true": action,
+        ]
+      ],
+    ]
+  }
+
+  static func timeslotPickerRow(
+    id: String,
+    source: String,
+    destination: String = "{selected_pickup_timeslot}",
+    name: String = "Pickup available times"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "TimeslotPicker",
+      "source": source,
+      "destination": destination,
+      "actions": [],
+      "visible": "true",
+      "title": "",
+      "start_time": "07:00",
+      "end_time": "19:00",
+      "timeslot_interval_minutes": "30",
+      "label_interval_minutes": "60",
+      "header_format": "{formatDatetime($datum, \"EEE\")}",
+      "header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
+      "timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
+      "name": name,
+    ]
+  }
+
+  static func viewItemTimeslotFlowData(flowId: String, pageId: String) -> [String: Any] {
+    let source = "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}"
+    return [
+      "id": flowId,
+      "name": "E2E View Item Timeslot",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
+          "rows": [
+            Self.timeslotPickerRow(
+              id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5e",
+              source: source,
+              name: "Direct timeslot picker"
+            ),
+            [
+              "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
+              "type": "SelectSegmentContainer",
+              "actions": [],
+              "visible": "true",
+              "title": "",
+              "segments": ["Pickup"],
+              "children": [
+                [
+                  "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+                  "type": "ListContainer",
+                  "actions": [],
+                  "visible": "true",
+                  "title": "",
+                  "children": [
+                    Self.timeslotPickerRow(
+                      id: "d4e5f6a7-b8c9-4012-d345-6789abcdef02",
+                      source: source,
+                      name: "Nested timeslot picker"
+                    )
+                  ],
+                  "name": "Nested pickup list",
+                ]
+              ],
+              "name": "Nested segment container",
+            ],
+          ],
+        ]
+      ],
+    ]
+  }
+
+  static func timeslotPickerHomeFlowData(
+    flowId: String,
+    viewFlowId: String,
+    viewPageId: String,
+    buttonLabel: String,
+    viewItemId: String
+  ) -> [String: Any] {
+    let viewAction =
+      "{navigate(\(viewFlowId),\(viewPageId),{\(MARKETPLACE_ITEMS_RESOURCE_ID): [\(viewItemId)]})}"
+    return [
+      "id": flowId,
+      "name": "E2E Timeslot Home",
+      "pages": [
+        [
+          "id": "55e427ac-263c-441f-9673-f60627b1baea",
+          "title": "Home",
+          "rows": [
+            Self.buttonRow(
+              id: "e5f6a7b8-c9d0-4123-e456-789abcdef013",
+              label: buttonLabel,
+              action: viewAction
+            )
+          ],
         ]
       ],
     ]
@@ -1265,6 +1368,115 @@ final class E2ESegmentContainerTests: E2ETestBase {
         ]
       ],
     ]
+  }
+}
+
+// MARK: - View item timeslot picker
+
+final class EVYTimeslotPickerViewTests: E2ETestBase {
+  override var homeFlowId: String? { E2EFlowIds.timeslotPickerHomeFlow }
+
+  private static let expectedTimeslotLabel = "09:00"
+
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    try seedFlows(
+      [
+        (
+          flowId: E2EFlowIds.timeslotPickerHomeFlow,
+          flowData: Self.timeslotPickerHomeFlowData(
+            flowId: E2EFlowIds.timeslotPickerHomeFlow,
+            viewFlowId: E2EFlowIds.timeslotPickerViewFlow,
+            viewPageId: E2EFlowIds.timeslotPickerViewPage,
+            buttonLabel: "View timeslot item",
+            viewItemId: "00000000-0000-4000-8000-000000000001"
+          )
+        ),
+        (
+          flowId: E2EFlowIds.timeslotPickerViewFlow,
+          flowData: Self.viewItemTimeslotFlowData(
+            flowId: E2EFlowIds.timeslotPickerViewFlow,
+            pageId: E2EFlowIds.timeslotPickerViewPage
+          )
+        ),
+      ]
+    )
+    try launchApp()
+  }
+
+  @MainActor
+  func testViewItemTimeslotPickerShowsAvailableSlots() async throws {
+    let placeholderButton = app.buttons["View timeslot item"]
+    XCTAssertTrue(
+      placeholderButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+
+    let selectedItemId = UUID().uuidString
+    let selectedItemTitle = "Timeslot Item \(Int(Date().timeIntervalSince1970))"
+    _ = try await emitter.createResource(
+      service: MARKETPLACE_SERVICE,
+      resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+      filter: ["id": selectedItemId],
+      data: [
+        "id": selectedItemId,
+        "title": selectedItemTitle,
+        "pickup_selection": [
+          "2026-06-03T09:00:00",
+          "2026-06-03T09:30:00",
+        ],
+      ]
+    )
+
+    let viewButtonLabel = "View timeslot \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: Self.timeslotPickerHomeFlowData(
+        flowId: E2EFlowIds.timeslotPickerHomeFlow,
+        viewFlowId: E2EFlowIds.timeslotPickerViewFlow,
+        viewPageId: E2EFlowIds.timeslotPickerViewPage,
+        buttonLabel: viewButtonLabel,
+        viewItemId: selectedItemId
+      ),
+      flowId: E2EFlowIds.timeslotPickerHomeFlow
+    )
+    await emitter.disconnect()
+
+    app.terminate()
+    try launchApp()
+
+    let queryButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(
+      queryButton.waitForExistence(timeout: 20),
+      "Home view button should load with query-aware label after relaunch")
+
+    queryButton.tap()
+
+    let scrollView = app.scrollViews.firstMatch
+    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "View item page should appear")
+
+    let directTimeslot = app.staticTexts[Self.expectedTimeslotLabel].firstMatch
+    XCTAssertTrue(
+      directTimeslot.waitForExistence(timeout: 10),
+      "Direct TimeslotPicker should show '\(Self.expectedTimeslotLabel)' from pickup_selection")
+    XCTAssertTrue(
+      directTimeslot.isHittable,
+      "Direct TimeslotPicker slot '\(Self.expectedTimeslotLabel)' should be hittable, not collapsed to zero height"
+    )
+
+    scrollView.swipeUp()
+
+    let allTimeslotLabels = app.staticTexts.matching(
+      NSPredicate(format: "label == %@", Self.expectedTimeslotLabel))
+    XCTAssertGreaterThanOrEqual(
+      allTimeslotLabels.count, 2,
+      "Both direct and nested TimeslotPickers should render '\(Self.expectedTimeslotLabel)'")
+    XCTAssertTrue(
+      allTimeslotLabels.element(boundBy: 1).isHittable,
+      "Nested TimeslotPicker slot '\(Self.expectedTimeslotLabel)' should be hittable inside segment nesting"
+    )
   }
 }
 

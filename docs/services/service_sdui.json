@@ -110,7 +110,7 @@
 										"header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Pickup available times",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}"
+										"destination": "{selected_pickup_timeslot}"
 									}
 								],
 								"name": "Pickup details"

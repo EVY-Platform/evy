@@ -62,18 +62,14 @@ struct EVYTimeslotColumn: View {
 }
 
 struct EVYTimeslotPicker: View {
-  private struct HeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-      value = max(value, nextValue())
-    }
-  }
+  private static let timeslotRowHeight: CGFloat = 40
+  private static let columnTextLineHeight: CGFloat = 20
+  private static let columnStackSpacing: CGFloat = 8
 
   private let destination: String
   private let timeslotDates: EVYState<[EVYTimeslotDate]>
 
   @State private var selectedGroupIndex: Int = 0
-  @State private var tabViewHeight: CGFloat = 0
 
   init(content: TimeslotPickerRowViewData, source: String, destination: String) {
     self.destination = destination
@@ -105,6 +101,14 @@ struct EVYTimeslotPicker: View {
     timeslotDates.value.map { $0.timeslots.count }.max() ?? 0
   }
 
+  private var gridHeight: CGFloat {
+    guard numberOfTimeslotsPerDay > 0 else { return 0 }
+    let rowCount = CGFloat(numberOfTimeslotsPerDay)
+    let itemCount = rowCount + 2
+    let spacingTotal = (itemCount - 1) * Self.columnStackSpacing
+    return Self.columnTextLineHeight * 2 + rowCount * Self.timeslotRowHeight + spacingTotal
+  }
+
   private func timeslotGroupView(groupedDays: [[EVYTimeslotDate]], index: Int) -> some View {
     HStack {
       ForEach(groupedDays[index].indices, id: \.self) { dayIndex in
@@ -118,25 +122,6 @@ struct EVYTimeslotPicker: View {
     }
   }
 
-  private func timeslotHeightMeasurement(groupedDays: [[EVYTimeslotDate]]) -> some View {
-    VStack(spacing: 0) {
-      ForEach(groupedDays.indices, id: \.self) { index in
-        timeslotGroupView(groupedDays: groupedDays, index: index)
-          .fixedSize(horizontal: false, vertical: true)
-          .background(
-            GeometryReader { geo in
-              Color.clear.preference(
-                key: HeightPreferenceKey.self,
-                value: geo.size.height)
-            })
-      }
-    }
-    .opacity(0)
-    .allowsHitTesting(false)
-    .accessibilityHidden(true)
-    .frame(height: 0)
-  }
-
   var body: some View {
     if timeslotDates.value.isEmpty || numberOfTimeslotsPerDay <= 0 {
       EmptyView()
@@ -144,26 +129,18 @@ struct EVYTimeslotPicker: View {
       let groupedDays = timeslotDates.value.chunked(with: 4)
 
       VStack {
-        timeslotHeightMeasurement(groupedDays: groupedDays)
-
         TabView(selection: $selectedGroupIndex) {
           ForEach(groupedDays.indices, id: \.self) { index in
             timeslotGroupView(groupedDays: groupedDays, index: index)
           }
         }
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-        .frame(height: max(tabViewHeight, 1))
+        .frame(height: max(gridHeight, 1))
 
         EVYCarouselIndicator(
           indices: (0...groupedDays.count - 1),
           selectionIndex: selectedGroupIndex,
           color: .black)
-      }
-      .onPreferenceChange(HeightPreferenceKey.self) { height in
-        let roundedHeight = ceil(height)
-        if roundedHeight > 0, tabViewHeight != roundedHeight {
-          tabViewHeight = roundedHeight
-        }
       }
     }
   }
