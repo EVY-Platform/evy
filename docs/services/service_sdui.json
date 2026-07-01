@@ -130,6 +130,23 @@
 										"title": "",
 										"subtitle": "Buyer will drop off",
 										"name": "Drop-off note"
+									},
+									{
+										"id": "bd8fa85c-1b67-467a-983d-328e6dc49db7",
+										"type": "TimeslotPicker",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
+										"actions": [],
+										"visible": "true",
+										"title": "",
+										"start_time": "07:00",
+										"end_time": "19:00",
+										"timeslot_interval_minutes": "30",
+										"label_interval_minutes": "60",
+										"header_format": "{formatDatetime($datum, \"EEE\")}",
+										"header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
+										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
+										"name": "Delivery available times",
+										"destination": "{selected_delivery_timeslot}"
 									}
 								],
 								"name": "Delivery details"
