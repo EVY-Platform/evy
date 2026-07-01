@@ -10,6 +10,7 @@ import type {
 import { createElement } from "react";
 import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
+import { getRowBindingFields, readBindingFields } from "../rows/rowFields";
 import type { UI_Flow, UI_Page } from "../types/flow";
 import type { Row, RowConfig } from "../types/row";
 import {
@@ -83,8 +84,7 @@ function normalizeKnownServerRow(row: ServerRow): ServerRow {
 		...normalizeRowAttributes(row, normalizeServerRow),
 		id: row.id,
 		type: row.type,
-		source: row.source ?? "",
-		destination: row.destination ?? "",
+		...readBindingFields(row as Record<string, unknown>, row.type),
 		actions: row.actions ?? [],
 		visible: row.visible ?? "true",
 		title: typeof row.title === "string" ? row.title : "",
@@ -96,8 +96,7 @@ function normalizeUnknownServerRow(row: ServerRow): ServerRow {
 		...normalizeRowAttributes(row, normalizeServerRow),
 		id: row.id,
 		type: row.type,
-		source: row.source ?? "",
-		destination: row.destination ?? "",
+		...readBindingFields(row as Record<string, unknown>, row.type),
 		actions: row.actions ?? [],
 		visible: row.visible ?? "true",
 		title: typeof row.title === "string" ? row.title : "Unknown row",
@@ -148,11 +147,17 @@ function rowToServerRow(row: Row): ServerRow {
 	const serverRow: Record<string, unknown> = {
 		id: row.id,
 		type: row.config.type,
-		source: row.config.source ?? "",
-		destination: row.config.destination ?? "",
 		actions: row.config.actions ?? [],
 		visible: row.config.visible ?? "true",
 	};
+
+	Object.assign(
+		serverRow,
+		readBindingFields(
+			row.config as Record<string, unknown>,
+			row.config.type,
+		),
+	);
 
 	for (const [key, value] of Object.entries(row.config)) {
 		if (ROW_METADATA_KEYS.has(key) || value === undefined) {
@@ -225,7 +230,7 @@ function decomposeServerPage(
 ): DATA_EVY_Page {
 	return {
 		id: page.id,
-		name: (page.name ?? page.title) || "Page",
+		name: page.name,
 		title: page.title,
 		rowIds: page.rows.map((row) =>
 			decomposeServerRow(row, rowRows, nowIso),
@@ -262,7 +267,7 @@ function decomposeServerRow(
 	}
 	rowRows.push({
 		id: row.id,
-		name: (row.name ?? row.title) || row.type,
+		name: row.name,
 		type: row.type,
 		visible: row.visible || "true",
 		data: data as DATA_EVY_RowData,
@@ -275,7 +280,7 @@ function decomposeServerRow(
 function decodeRow(row: ServerRow): Row {
 	const normalized = normalizeServerRow(row);
 	const baseRow = getBaseRowForType(normalized.type);
-	const config = decodeRowConfig(normalized);
+	const config = decodeRowConfig(normalized, row.name);
 	if (!baseRow) {
 		return {
 			id: normalized.id,
@@ -297,13 +302,12 @@ function decodeRow(row: ServerRow): Row {
 	};
 }
 
-function decodeRowConfig(row: ServerRow): RowConfig {
+function decodeRowConfig(row: ServerRow, name?: string): RowConfig {
 	const config: Record<string, unknown> = {
 		type: row.type,
-		source: row.source,
-		destination: row.destination ?? "",
 		actions: row.actions,
 		visible: row.visible,
+		...readBindingFields(row as Record<string, unknown>, row.type),
 	};
 
 	for (const [key, value] of Object.entries(row)) {
@@ -329,6 +333,12 @@ function decodeRowConfig(row: ServerRow): RowConfig {
 		config.title = "";
 	}
 
+	config.name =
+		name ??
+		(typeof config.title === "string" && config.title.trim()
+			? config.title
+			: row.type);
+
 	return config as RowConfig;
 }
 
@@ -348,11 +358,13 @@ function resetRowAttributesForNewPage(row: ServerRow): ServerRow {
 	const resetRow: Record<string, unknown> = {
 		id: row.id,
 		type: row.type,
-		source: row.source ?? "",
-		destination: row.destination ?? "",
 		actions: row.actions ?? [],
 		visible: row.visible ?? "true",
 	};
+
+	for (const field of getRowBindingFields(row.type)) {
+		resetRow[field] = "";
+	}
 
 	for (const [key, value] of Object.entries(row)) {
 		if (ROW_METADATA_KEYS.has(key) || key === "id") {

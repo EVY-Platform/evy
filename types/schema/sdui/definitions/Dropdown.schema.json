@@ -1,0 +1,35 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui/definitions/Dropdown",
+	"title": "Dropdown_Row",
+	"allOf": [
+		{
+			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
+		},
+		{
+			"type": "object",
+			"required": ["type", "value", "source", "destination"],
+			"properties": {
+				"type": {
+					"const": "Dropdown"
+				},
+				"title": {
+					"type": "string"
+				},
+				"source": {
+					"type": "string"
+				},
+				"destination": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
+				},
+				"placeholder": {
+					"type": "string"
+				}
+			}
+		}
+	],
+	"unevaluatedProperties": false
+}

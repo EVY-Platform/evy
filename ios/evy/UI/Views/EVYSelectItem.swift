@@ -20,18 +20,20 @@ public enum EVYSelectItemTarget: String {
 struct EVYSelectItem: View {
   let destination: String
   let value: EVYJson
-  let format: String
+  let valueTemplate: String?
   let selectionStyle: EVYRadioStyle
   let target: EVYSelectItemTarget
   let textStyle: EVYTextStyle
   let onSelect: (() -> Void)?
 
+  private let displayLabel: String
   private var selected: EVYState<Bool>
 
   init(
     destination: String,
     value: EVYJson,
-    format: String,
+    valueTemplate: String?,
+    displayLabel: String? = nil,
     selectionStyle: EVYRadioStyle,
     target: EVYSelectItemTarget,
     textStyle: EVYTextStyle = .body,
@@ -39,11 +41,15 @@ struct EVYSelectItem: View {
   ) {
     self.destination = destination
     self.value = value
-    self.format = format
+    self.valueTemplate = valueTemplate
     self.selectionStyle = selectionStyle
     self.target = target
     self.textStyle = textStyle
     self.onSelect = onSelect
+
+    self.displayLabel =
+      displayLabel ?? (try? EVY.displayText(forDatum: value, valueTemplate: valueTemplate))
+      ?? value.toString()
 
     selected = EVYState(
       textToWatch: destination,
@@ -94,10 +100,7 @@ struct EVYSelectItem: View {
 
   var body: some View {
     HStack {
-      let text =
-        (try? EVY.formatDataOrToString(json: value, format: format))
-        ?? value.toString()
-      EVYTextView(text, style: textStyle)
+      EVYTextView(displayLabel, style: textStyle)
         .frame(maxWidth: .infinity, alignment: .leading)
       EVYRadioButton(isSelected: selected.value, style: selectionStyle)
     }
@@ -109,20 +112,20 @@ struct EVYSelectItem: View {
           || target == .single_bool
           || target == .single_object
         {
-          var newValue = ""
-          switch target {
-          case .single_identifier:
-            if !selected.value {
-              newValue = value.identifierValue()
+          if target == .single_bool {
+            let newValue = selected.value ? "false" : "true"
+            try EVY.writeRawValue(newValue, to: destination)
+          } else if !selected.value {
+            if target == .single_identifier {
+              try EVY.writeRawValue(value.identifierValue(), to: destination)
+            } else if target == .single_object {
+              try EVY.writeRawValue(value, to: destination)
+            } else {
+              try EVY.writeRawValue(value.toString(), to: destination)
             }
-          case .single_bool:
-            newValue = selected.value ? "false" : "true"
-          default:
-            if !selected.value {
-              newValue = value.toString()
-            }
+          } else {
+            try EVY.writeRawValue("", to: destination)
           }
-          try EVY.updateValue(newValue, at: destination)
         } else {
           let existingData = try EVY.getDataFromText(destination)
           guard case .array(let arrayValue) = existingData else {
@@ -139,8 +142,10 @@ struct EVYSelectItem: View {
             if updatedData.count == arrayValue.count {
               updatedData.append(value.identifierValue())
             }
-            let encoded = try JSONEncoder().encode(updatedData)
-            try EVY.updateData(encoded, at: destination)
+            try EVY.writeRawValue(
+              EVYJson.array(updatedData.map { .string($0) }),
+              to: destination
+            )
           } else if target == .multi_value {
             let valueString = value.toString()
             var updatedData = arrayValue.filter {
@@ -149,8 +154,7 @@ struct EVYSelectItem: View {
             if updatedData.count == arrayValue.count {
               updatedData.append(value)
             }
-            let encoded = try JSONEncoder().encode(updatedData)
-            try EVY.updateData(encoded, at: destination)
+            try EVY.writeRawValue(EVYJson.array(updatedData), to: destination)
           } else if target == .multi_object {
             let valueId = value.identifierValue()
             var updatedData = arrayValue.filter {
@@ -159,8 +163,7 @@ struct EVYSelectItem: View {
             if updatedData.count == arrayValue.count {
               updatedData.append(value)
             }
-            let encoded = try JSONEncoder().encode(updatedData)
-            try EVY.updateData(encoded, at: destination)
+            try EVY.writeRawValue(EVYJson.array(updatedData), to: destination)
           }
         }
 
@@ -190,7 +193,7 @@ private struct EVYSelectItemPreview: View {
       case .array(let arrayValue):
         EVYSelectList(
           options: arrayValue,
-          format: "{$datum.value}",
+          valueTemplate: "{$datum.value}",
           destination: "{item.selling_reason}")
       default:
         Text("error")

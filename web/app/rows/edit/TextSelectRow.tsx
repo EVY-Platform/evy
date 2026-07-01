@@ -9,7 +9,7 @@ export default defineRow("TextSelectRow", {
 	config: {
 		type: "TextSelect",
 		actions: [],
-		source: "",
+		source: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_cash}`,
 		visible: "true",
 		title: "Text select row title",
 		text: "placeholder",

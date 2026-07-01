@@ -64,7 +64,7 @@ private struct LaunchPlaceholderView: View {
 // MARK: - ContentView
 
 struct ContentView: View {
-  @State private var homeReloadID = 0
+  @State private var homeFirstPageId: String?
   @State private var routes: [Route] = []
   @State private var showingAlert = false
   @State private var alertTitle = ""
@@ -81,8 +81,11 @@ struct ContentView: View {
     showingAlert = true
   }
 
-  private func reloadHomePage() {
-    homeReloadID += 1
+  private func refreshHomeFirstPageIdIfNeeded() {
+    let latestFirstPageId = EVYFlowStore.firstPageId(inFlowId: HOME_FLOW_ID)
+    if homeFirstPageId != latestFirstPageId {
+      homeFirstPageId = latestFirstPageId
+    }
   }
 
   private func handleNavigationData(_ navOperation: NavOperation) {
@@ -143,12 +146,11 @@ struct ContentView: View {
   private var homeContent: some View {
     if loading {
       LaunchPlaceholderView()
-    } else if let firstPageId = EVYFlowStore.firstPageId(inFlowId: HOME_FLOW_ID) {
+    } else if let firstPageId = homeFirstPageId {
       EVYPage(pageId: firstPageId)
         .environment(\.navigate) { navOperation in
           handleNavigationData(navOperation)
         }
-        .id(homeReloadID)
     } else if EVYFlowStore.flowExists(id: HOME_FLOW_ID) {
       VStack(spacing: 20) {
         Text("This flow has no pages")
@@ -178,6 +180,7 @@ struct ContentView: View {
 
           do {
             try await EVY.sync()
+            homeFirstPageId = EVYFlowStore.firstPageId(inFlowId: HOME_FLOW_ID)
             loading = false
           } catch let error as EVYRPCError {
             alertTitle = "Error"
@@ -235,12 +238,14 @@ struct ContentView: View {
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
       guard
-        let change = notification.userInfo?[EVYDataChange.userInfoKey] as? EVYDataChange,
-        change.namespace == EVYNamespace.evy,
-        change.resource == EVYCoreResource.flows.rawValue,
-        change.id == HOME_FLOW_ID
+        let change = EVYDataChange.from(notification),
+        change.matches(
+          namespace: EVYNamespace.evy,
+          resource: EVYCoreResource.flows.rawValue,
+          id: HOME_FLOW_ID
+        )
       else { return }
-      reloadHomePage()
+      refreshHomeFirstPageIdIfNeeded()
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyUserAlertRequested)) { notification in
       if let userAlert = notification.object as? EVYUserAlert {

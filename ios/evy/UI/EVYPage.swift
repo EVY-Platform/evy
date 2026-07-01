@@ -19,28 +19,48 @@ extension EnvironmentValues {
   }
 }
 
+private struct EVYCacheScopeEnvironmentKey: EnvironmentKey {
+  static let defaultValue: String? = nil
+}
+
+extension EnvironmentValues {
+  var evyCacheScopeId: String? {
+    get { self[EVYCacheScopeEnvironmentKey.self] }
+    set { self[EVYCacheScopeEnvironmentKey.self] = newValue }
+  }
+}
+
 /// Renders a page by id, reading title/rowIds/footerRowId directly from the pages table.
 struct EVYPage: View {
   let pageId: String
 
   @Environment(\.evyDraftScopeId) private var evyDraftScopeId
-  @State private var pageReloadID = 0
+  @State private var page: EVYStoredPage?
+
+  init(pageId: String) {
+    self.pageId = pageId
+    _page = State(initialValue: EVYPageStore.page(id: pageId))
+  }
 
   var body: some View {
     Group {
-      if let page = EVYPageStore.page(id: pageId) {
+      if let page {
         pageContent(page: page)
-          .id(pageReloadID)
       }
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
       guard
-        let change = notification.userInfo?[EVYDataChange.userInfoKey] as? EVYDataChange,
-        change.namespace == EVYNamespace.evy,
-        change.resource == EVYCoreResource.pages.rawValue,
-        change.id == pageId
+        let change = EVYDataChange.from(notification),
+        change.matches(
+          namespace: EVYNamespace.evy,
+          resource: EVYCoreResource.pages.rawValue,
+          id: pageId
+        )
       else { return }
-      pageReloadID += 1
+      let latestPage = EVYPageStore.page(id: pageId)
+      if page != latestPage {
+        page = latestPage
+      }
     }
   }
 
@@ -65,6 +85,9 @@ struct EVYPage: View {
       EVY.draftStore.activeScopeId = evyDraftScopeId
       bootstrapDrafts(pageId: pageId, scopeId: evyDraftScopeId)
     }
+    .onChange(of: page.rowIds) { _, _ in
+      bootstrapDrafts(pageId: pageId, scopeId: evyDraftScopeId)
+    }
     .simultaneousGesture(
       TapGesture().onEnded {
         UIApplication.shared.sendAction(
@@ -73,7 +96,9 @@ struct EVYPage: View {
           from: nil,
           for: nil
         )
-      })
+      }
+    )
+    .environment(\.evyCacheScopeId, pageId)
   }
 
   @ViewBuilder

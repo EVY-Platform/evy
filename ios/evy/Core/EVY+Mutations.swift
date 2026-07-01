@@ -101,22 +101,56 @@ extension EVY {
     }
   }
 
+  static func writeRawValue(
+    _ value: EVYJson,
+    to destination: String,
+    scopeId: String? = nil
+  ) throws {
+    let destinationProps = _parsePropsFromText(destination)
+    if let (functionName, functionArgs) = parseFunctionCall(destinationProps),
+      let builtData = try dataForBuildFunction(
+        functionName, functionArgs: functionArgs, value: value.toString())
+    {
+      try updateData(builtData, at: functionArgs, scopeId: scopeId)
+      return
+    }
+    let encoded = try JSONEncoder().encode(value)
+    try updateData(encoded, at: destination, scopeId: scopeId)
+  }
+
+  static func writeRawValue(
+    _ value: String,
+    to destination: String,
+    scopeId: String? = nil
+  ) throws {
+    try updateValue(value, at: destination, scopeId: scopeId)
+  }
+
   static func updateValue(_ value: String, at: String, scopeId: String? = nil) throws {
     let destinationProps = _parsePropsFromText(at)
-    if let (functionName, functionArgs) = parseFunctionCall(destinationProps) {
-      switch functionName {
-      case "buildCurrency":
-        try updateData(
-          try evyBuildCurrency(functionArgs, value), at: functionArgs, scopeId: scopeId)
-        return
-      case "buildAddress":
-        try updateData(try evyBuildAddress(functionArgs, value), at: functionArgs, scopeId: scopeId)
-        return
-      default:
-        break
-      }
+    if let (functionName, functionArgs) = parseFunctionCall(destinationProps),
+      let builtData = try dataForBuildFunction(
+        functionName, functionArgs: functionArgs, value: value)
+    {
+      try updateData(builtData, at: functionArgs, scopeId: scopeId)
+      return
     }
     try updateData("\"\(value)\"".data(using: .utf8)!, at: at, scopeId: scopeId)
+  }
+
+  private static func dataForBuildFunction(
+    _ functionName: String,
+    functionArgs: String,
+    value: String
+  ) throws -> Data? {
+    switch functionName {
+    case "buildCurrency":
+      return try evyBuildCurrency(functionArgs, value)
+    case "buildAddress":
+      return try evyBuildAddress(functionArgs, value)
+    default:
+      return nil
+    }
   }
 
   static func updateData(_ newData: Data, at: String, scopeId: String? = nil) throws {

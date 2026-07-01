@@ -245,9 +245,7 @@ private func evyJsonUpdating(
       dict[head] = value
       return .dictionary(dict)
     }
-    guard let child = dict[head] else {
-      return nil
-    }
+    let child = dict[head] ?? .dictionary([:])
     guard
       let updatedChild = evyJsonUpdating(
         json: child,

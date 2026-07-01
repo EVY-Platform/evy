@@ -9,11 +9,11 @@ import SwiftUI
 
 struct EVYInputList: View {
   let data: String
-  let format: String
-  var placeholder: String
+  let format: String?
+  var placeholder: String?
   private var values: EVYState<[String]>
 
-  init(data: String, format: String, placeholder: String) {
+  init(data: String, format: String?, placeholder: String?) {
     self.data = data
     self.format = format
     self.placeholder = placeholder
@@ -41,9 +41,9 @@ struct EVYInputList: View {
 
   var body: some View {
     EVYTextField(
-      input: "",
+      source: "",
       destination: "",
-      placeholder: values.value.isEmpty ? placeholder : ""
+      placeholder: values.value.isEmpty ? placeholder : nil
     )
     .disabled(true)
     .overlay {

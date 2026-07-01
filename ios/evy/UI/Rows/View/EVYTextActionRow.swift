@@ -18,21 +18,21 @@ struct EVYTextActionRow: View {
 
     HStack(alignment: .center, spacing: 8) {
       VStack(alignment: .leading) {
-        if !content.title.isEmpty {
-          EVYTextView(content.title)
+        if let title = content.title, !title.isEmpty {
+          EVYTextView(title)
             .frame(maxWidth: .infinity, alignment: .leading)
             .lineLimit(1)
             .truncationMode(.tail)
         }
-        if !content.subtitle.isEmpty {
-          EVYTextView(content.subtitle, style: .info)
+        if let subtitle = content.subtitle, !subtitle.isEmpty {
+          EVYTextView(subtitle, style: .info)
             .frame(maxWidth: .infinity, alignment: .leading)
             .lineLimit(3)
             .truncationMode(.tail)
         }
       }
-      if !content.action.isEmpty {
-        EVYTextView(content.action, style: .action)
+      if let action = content.action, !action.isEmpty {
+        EVYTextView(action, style: .action)
       }
     }
     .padding(.horizontal, Constants.majorPadding)
@@ -45,8 +45,6 @@ struct EVYTextActionRow: View {
       {
         "id": "preview-text-action-row",
         "type": "TextAction",
-        "source": "",
-        "destination": "",
         "actions": [],
         "visible": "true",
         "title": "Pickup location",

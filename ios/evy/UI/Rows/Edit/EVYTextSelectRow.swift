@@ -14,15 +14,17 @@ struct EVYTextSelectRow: View {
   private let value: EVYJson
   private let selected: EVYState<Bool>
 
-  init?(view: TextSelectRowViewData, destination: String) {
+  init?(view: TextSelectRowViewData) {
+    let destination = view.destination.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !destination.isEmpty else { return nil }
     self.view = view
     self.destination = destination
+    let sourceExpression = view.source
     self.selected = EVYState(
-      textToWatch: destination,
+      textToWatch: sourceExpression,
       setter: {
         do {
-          return try EVY.evaluateFromText(destination)
+          return try EVY.evaluateFromText(sourceExpression)
         } catch {
           return false
         }
@@ -31,7 +33,8 @@ struct EVYTextSelectRow: View {
     let temporaryScopeId = EVYDraft.createMergeScopeId(flowId: "temporary", entityKey: temporaryId)
 
     guard
-      (try? EVY.updateValue(view.text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
+      let text = view.text,
+      (try? EVY.updateValue(text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
       let binding = try? EVY.draftStore.binding(
         fromParsedProps: temporaryId, scopeId: temporaryScopeId),
       let draft = EVY.draftStore.draftIfPresent(binding: binding),
@@ -42,14 +45,14 @@ struct EVYTextSelectRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYSelectItem(
         destination: destination,
         value: value,
-        format: "",
+        valueTemplate: nil,
         selectionStyle: .multi,
         target: .single_bool,
         textStyle: .info
@@ -66,7 +69,7 @@ struct EVYTextSelectRow: View {
       {
         "id": "preview-textselect-row",
         "type": "TextSelect",
-        "source": "",
+        "source": "{item.condition}",
         "destination": "{item.condition}",
         "actions": [],
         "title": "Selling reason",

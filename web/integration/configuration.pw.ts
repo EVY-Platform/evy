@@ -51,10 +51,12 @@ test.describe("Row configuration", () => {
 			page.getByRole("button", { name: "Select page Test Page" }),
 		).toBeVisible();
 		await expect(
-			configPanel.getByRole("button", { name: /^Input$/ }),
+			configPanel.getByRole("button", { name: /^Input Row: Input$/ }),
 		).toBeVisible();
 
-		await configPanel.getByRole("button", { name: /^Input$/ }).click();
+		await configPanel
+			.getByRole("button", { name: /^Input Row: Input$/ })
+			.click();
 
 		await expect(configPanel.getByLabel("Page title")).toHaveCount(0);
 		await expect(
@@ -114,10 +116,10 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "Input",
 						source: "{initial}",
 						title: "Binding row",
-						subtitle: "Body",
+						placeholder: "Enter value",
 						actions: [],
 					},
 				],
@@ -1033,13 +1035,13 @@ test.describe("Row configuration", () => {
 
 		for (let i = 0; i < 11; i++) {
 			const nextButton = configPanel.getByRole("button", {
-				name: /^ColumnContainer$/,
+				name: /: ColumnContainer$/,
 			});
 			await expect(nextButton.first()).toBeVisible();
 			await nextButton.first().click();
 		}
 
-		await configPanel.getByRole("button", { name: /^Input$/ }).click();
+		await configPanel.getByRole("button", { name: /: Input$/ }).click();
 
 		const breadcrumbScroll = page.getByTestId("nav-breadcrumb-scroll");
 		await expect(

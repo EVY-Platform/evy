@@ -9,20 +9,21 @@ import SwiftUI
 
 struct EVYInlinePicker: View {
   let title: String
-  let format: String
+  let valueTemplate: String?
   let destination: String
 
   private var options: [EVYJson] = []
+  private var formattedOptionLabels: [String] = []
   private var selectedIdentifiers: EVYState<[String]>
 
   init(
     title: String,
     data: String,
-    format: String,
+    valueTemplate: String?,
     destination: String
   ) {
     self.title = title
-    self.format = format
+    self.valueTemplate = valueTemplate
     self.destination = destination
 
     var loadedOptions: [EVYJson] = []
@@ -37,6 +38,7 @@ struct EVYInlinePicker: View {
       #endif
     }
     options = loadedOptions
+    formattedOptionLabels = EVY.displayLabels(for: loadedOptions, valueTemplate: valueTemplate)
 
     selectedIdentifiers = EVYState(
       textToWatch: destination,
@@ -78,15 +80,12 @@ struct EVYInlinePicker: View {
 
   var body: some View {
     HStack {
-      ForEach(Array(options.enumerated()), id: \.offset) { _, option in
+      ForEach(Array(options.enumerated()), id: \.offset) { index, option in
         let isSelected = selectedIdentifiers.value.contains(option.identifierValue())
         Button(action: {
           performAction(option: option)
         }) {
-          let formatted =
-            (try? EVY.formatDataOrToString(json: option, format: format))
-            ?? option.toString()
-          let textView = EVYTextView(formatted)
+          let textView = EVYTextView(formattedOptionLabels[index])
           EVYRectangle.fitWidth(
             content: textView,
             style: isSelected ? .primary : .secondary)
@@ -109,7 +108,7 @@ private struct EVYInlinePickerPreview: View {
     EVYInlinePicker(
       title: "Duration",
       data: "{durations}",
-      format: "{$datum.value}",
+      valueTemplate: "{$datum.value}",
       destination: "{item.duration}")
   }
 }

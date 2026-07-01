@@ -9,12 +9,12 @@ import SwiftUI
 
 struct EVYSearchField: View {
   @Binding var text: String
-  let placeholder: String
+  let placeholder: String?
 
   var body: some View {
     EVYTextInput(
       text: $text,
-      placeholder: "::search:: \(placeholder)")
+      placeholder: placeholder.map { "::search:: \($0)" })
   }
 }
 

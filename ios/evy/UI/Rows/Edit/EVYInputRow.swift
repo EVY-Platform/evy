@@ -10,24 +10,22 @@ import SwiftUI
 struct EVYInputRow: View {
 
   private let view: InputRowViewData
-  private let destination: String
   private let isInteractive: Bool
 
-  init(view: InputRowViewData, destination: String, isInteractive: Bool = true) {
+  init(view: InputRowViewData, isInteractive: Bool = true) {
     self.view = view
-    self.destination = destination
     self.isInteractive = isInteractive
   }
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYTextField(
-        input: view.value,
-        destination: destination,
+        source: view.source,
+        destination: view.destination,
         placeholder: view.placeholder,
         isInteractive: isInteractive
       )
@@ -42,11 +40,10 @@ struct EVYInputRow: View {
       {
         "id": "preview-input-row",
         "type": "Input",
-        "source": "",
+        "source": "{item.title}",
         "destination": "{item.title}",
         "actions": [],
         "title": "Item title",
-        "value": "{item.title}",
         "placeholder": "Enter a title"
       }
       """,

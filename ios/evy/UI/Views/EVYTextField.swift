@@ -9,53 +9,49 @@ import SwiftUI
 
 @MainActor
 enum EVYTextResolver {
-  static func resolveValue(from text: String, editing: Bool = false) -> EVYValue {
-    if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
-      return resolvedValue
-    }
-    if EVY.parsePropsFromText(text) == text {
-      return EVYValue(text, nil, nil)
-    }
-    return EVYValue("", nil, nil)
+  static func resolveDisplay(from source: String?, destination: String) -> EVYValue {
+    let text = EVY.displayText(fromSource: source, destination: destination)
+    return EVYValue(text, nil, nil)
+  }
+
+  static func resolveEditable(from source: String?, destination: String) -> EVYValue {
+    let text = EVY.editableText(fromSource: source, destination: destination)
+    return EVYValue(text, nil, nil)
   }
 }
 
 struct EVYTextField: View {
   let destination: String
-  let placeholder: String
+  let placeholder: String?
   let multiLine: Bool
-  let input: String
+  let source: String?
   let isInteractive: Bool
 
   @Bindable private var displayValue: EVYState<EVYValue>
-  @Bindable private var editableValue: EVYState<EVYValue>
   @Bindable private var placeholderValue: EVYState<EVYValue>
 
   @FocusState private var focused: Bool
   @State private var editing: Bool = false
+  @State private var localEditText: String = ""
 
   init(
-    input: String,
+    source: String?,
     destination: String,
-    placeholder: String,
+    placeholder: String?,
     multiLine: Bool = false,
     isInteractive: Bool = true
   ) {
-    self.input = input
+    self.source = source
     self.placeholder = placeholder
     self.destination = destination
     self.multiLine = multiLine
     self.isInteractive = isInteractive
 
+    let watchTargets = EVY.watchTargets(forSource: source, destination: destination)
     self.displayValue = EVYState(
-      textToWatch: input,
+      watches: watchTargets,
       setter: {
-        EVYTextResolver.resolveValue(from: input)
-      })
-    self.editableValue = EVYState(
-      textToWatch: input,
-      setter: {
-        EVYTextResolver.resolveValue(from: input, editing: true)
+        EVYTextResolver.resolveDisplay(from: source, destination: destination)
       })
     self.placeholderValue = EVYState(
       textToWatch: placeholder,
@@ -84,7 +80,7 @@ struct EVYTextField: View {
         }
       } else {
         TextField(
-          text: $editableValue.value.value,
+          text: $localEditText,
           prompt: EVYTextView(placeholderValue.value.toString()).toText(),
           axis: multiLine ? .vertical : .horizontal,
           label: {}
@@ -97,8 +93,8 @@ struct EVYTextField: View {
             editing = false
           }
         }
-        .onChange(of: editableValue.value.value) { _, newValue in
-          try? EVY.updateValue(newValue, at: destination)
+        .onChange(of: localEditText) { _, newValue in
+          try? EVY.writeRawValue(newValue, to: destination)
         }
         .onSubmit {
           editing = false
@@ -122,6 +118,11 @@ struct EVYTextField: View {
     .onTapGesture {
       guard isInteractive else { return }
       if !editing {
+        localEditText =
+          EVYTextResolver.resolveEditable(
+            from: source,
+            destination: destination
+          ).value
         editing = true
         focused = true
       }
@@ -143,31 +144,44 @@ private struct EVYTextFieldPreview: View {
   var body: some View {
     VStack {
       EVYTextField(
-        input: "{formatDimension(item.dimensions.width)}",
+        source: "{formatDimension(item.dimensions.width)}",
         destination: "{item.dimensions.width}",
         placeholder: "10",
         multiLine: true)
 
       EVYTextField(
-        input: "{formatCurrency(item.price)}",
+        source: "{formatCurrency(item.price)}",
         destination: "{item.price}",
         placeholder: "10")
 
       EVYTextField(
-        input: "{item.title}",
+        source: "{item.title}",
         destination: "{item.title}",
         placeholder: "Sample placeholder",
         multiLine: true)
 
       EVYTextField(
-        input: "{item.title}",
+        source: nil,
         destination: "{item.title}",
-        placeholder: "Sample placeholder")
+        placeholder: "Destination-only title")
 
       EVYTextField(
-        input: "",
+        source: "",
         destination: "",
         placeholder: "Sample placeholder")
     }
+  }
+}
+
+extension EVYTextResolver {
+  static func resolveValue(from text: String?, editing: Bool = false) -> EVYValue {
+    guard let text else { return EVYValue("", nil, nil) }
+    if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
+      return resolvedValue
+    }
+    if EVY.parsePropsFromText(text) == text {
+      return EVYValue(text, nil, nil)
+    }
+    return EVYValue("", nil, nil)
   }
 }

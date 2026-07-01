@@ -11,7 +11,6 @@ export default defineRow("PhotoGalleryRow", {
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 		visible: "true",
 		title: "Photo gallery row title",
-		destination: "",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title} fullWidthContent>

@@ -9,7 +9,6 @@ export default defineRow(typeName, {
 	config: {
 		type: "ListContainer",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "List container row title",
 		child: undefined,

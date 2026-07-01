@@ -7,7 +7,6 @@ export default defineRow("HeadingRow", {
 	config: {
 		type: "Heading",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "Heading row title",
 		label: "Label",

@@ -38,5 +38,5 @@ export function getPageOptions(
 	return flow.pageIds
 		.map((id) => pagesById[id])
 		.filter((p): p is DATA_EVY_Page => !!p)
-		.map((p) => ({ value: p.id, label: p.title || p.id }));
+		.map((p) => ({ value: p.id, label: p.name }));
 }

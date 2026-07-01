@@ -105,8 +105,6 @@ function generateSwift(schema: MarketplaceResourcesSchema): string {
 }
 
 async function main(): Promise<void> {
-	const excludeIos = process.argv.includes("--exclude-ios");
-
 	const schema = await loadJson<MarketplaceResourcesSchema>(
 		RESOURCES_SCHEMA_PATH,
 	);
@@ -117,7 +115,6 @@ async function main(): Promise<void> {
 		tsContent: generateTypeScript(schema),
 		swiftPath: OUT_SWIFT_PATH,
 		swiftContent: generateSwift(schema),
-		excludeIos,
 	});
 }
 

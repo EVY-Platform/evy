@@ -11,21 +11,29 @@ struct EVYRow: View, Identifiable {
   private let ref: EVYRowRef
   let datum: EVYJson?
 
-  @State private var rowReloadID = 0
+  @State private var storedRow: EVYStoredRow?
 
   init(rowId: String, datum: EVYJson? = nil) {
     self.ref = .id(rowId)
     self.datum = datum
+    _storedRow = State(initialValue: EVYRowStore.row(id: rowId))
   }
 
   init(row: UI_Row, datum: EVYJson? = nil) {
     self.ref = .inline(row)
     self.datum = datum
+    _storedRow = State(initialValue: nil)
   }
 
   init(ref: EVYRowRef, datum: EVYJson? = nil) {
     self.ref = ref
     self.datum = datum
+    switch ref {
+    case .id(let rowId):
+      _storedRow = State(initialValue: EVYRowStore.row(id: rowId))
+    case .inline:
+      _storedRow = State(initialValue: nil)
+    }
   }
 
   var id: String { ref.id }
@@ -34,33 +42,56 @@ struct EVYRow: View, Identifiable {
   var body: some View {
     switch ref {
     case .id(let rowId):
-      EVYResolvedRow(ref: ref, datum: datum)
-        .id(rowReloadID)
+      EVYResolvedRow(ref: ref, storedRow: storedRow, datum: datum)
         .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
           guard
-            let change = notification.userInfo?[EVYDataChange.userInfoKey] as? EVYDataChange,
-            change.namespace == EVYNamespace.evy,
-            change.resource == EVYCoreResource.rows.rawValue,
-            change.id == rowId
+            let change = EVYDataChange.from(notification),
+            change.matches(
+              namespace: EVYNamespace.evy,
+              resource: EVYCoreResource.rows.rawValue,
+              id: rowId
+            )
           else { return }
-          rowReloadID += 1
+          let latestRow = EVYRowStore.row(id: rowId)
+          if storedRow != latestRow {
+            storedRow = latestRow
+          }
         }
     case .inline:
-      EVYResolvedRow(ref: ref, datum: datum)
+      EVYResolvedRow(ref: ref, storedRow: nil, datum: datum)
     }
   }
 }
 
 @MainActor
-func bootstrapRowDraft(row: UI_Row, scopeId: String?) {
-  guard !row.destination.isEmpty else { return }
-  let destinationProps = EVY.parsePropsFromText(row.destination)
+func bootstrapRowDraft(row: UI_Row, scopeId: String?, payload: UI_RowPayload? = nil) {
+  let unwrappedPayload: UI_RowPayload?
+  if let existingPayload = payload {
+    unwrappedPayload = existingPayload
+  } else {
+    unwrappedPayload = try? UI_RowPayload.from(row: row)
+  }
+
+  guard let finalPayload = unwrappedPayload,
+    let destination = finalPayload.destination?.trimmingCharacters(
+      in: .whitespacesAndNewlines),
+    !destination.isEmpty
+  else { return }
+
+  let destinationProps = EVY.parsePropsFromText(destination)
   let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
   guard !variableName.isEmpty else { return }
-  let initialData: Data? =
-    [.inlinePicker, .calendar].contains(row.type)
-    ? "[]".data(using: .utf8)
-    : nil
+
+  let initialData: Data?
+  switch row.type {
+  case .inlinePicker, .calendar:
+    initialData = "[]".data(using: .utf8)
+  case .timeslotPicker:
+    initialData = "\"\"".data(using: .utf8)
+  default:
+    initialData = nil
+  }
+
   EVY.ensureDraftExists(
     variableName: variableName,
     initialData: initialData,
@@ -70,34 +101,62 @@ func bootstrapRowDraft(row: UI_Row, scopeId: String?) {
 
 private struct EVYResolvedRow: View {
   private let ref: EVYRowRef
+  private let storedRow: EVYStoredRow?
   let datum: EVYJson?
-
-  private let contentRow: UI_Row?
-  private let childRef: EVYRowRef?
-  private let childRefs: [EVYRowRef]
-  private let isVisible: EVYState<Bool>
 
   @Environment(\.navigate) private var navigate
   @Environment(\.evyDraftScopeId) private var evyDraftScopeId
   @State private var presentedSheetRef: EVYRowRef?
+  @State private var isVisible = EVYState<Bool>(staticString: true)
 
-  init(ref: EVYRowRef, datum: EVYJson? = nil) {
+  init(ref: EVYRowRef, storedRow: EVYStoredRow?, datum: EVYJson? = nil) {
     self.ref = ref
+    self.storedRow = storedRow
     self.datum = datum
+    _isVisible = State(
+      initialValue: Self.makeVisibilityState(
+        for: Self.visibleExpression(ref: ref, storedRow: storedRow)
+      )
+    )
+  }
+
+  private var contentRow: UI_Row? {
     switch ref {
-    case .id(let rowId):
-      let storedRow = EVYRowStore.row(id: rowId)
-      self.contentRow = storedRow?.uiRow()
-      self.childRef = storedRow?.childRowId.map(EVYRowRef.id)
-      self.childRefs = storedRow?.childrenRowIds.map(EVYRowRef.id) ?? []
-      let visibleExpr = storedRow?.visible.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-      self.isVisible = Self.makeVisibilityState(for: visibleExpr)
+    case .id:
+      return storedRow?.uiRow()
     case .inline(let row):
-      self.contentRow = row
-      self.childRef = row.child.map(EVYRowRef.inline)
-      self.childRefs = row.children.map(EVYRowRef.inline)
-      let visibleExpr = row.visible.trimmingCharacters(in: .whitespacesAndNewlines)
-      self.isVisible = Self.makeVisibilityState(for: visibleExpr)
+      return row
+    }
+  }
+
+  private var childRef: EVYRowRef? {
+    switch ref {
+    case .id:
+      return storedRow?.childRowId.map(EVYRowRef.id)
+    case .inline(let row):
+      return row.child.map(EVYRowRef.inline)
+    }
+  }
+
+  private var childRefs: [EVYRowRef] {
+    switch ref {
+    case .id:
+      return storedRow?.childrenRowIds.map(EVYRowRef.id) ?? []
+    case .inline(let row):
+      return row.children.map(EVYRowRef.inline)
+    }
+  }
+
+  private var visibleExpression: String {
+    Self.visibleExpression(ref: ref, storedRow: storedRow)
+  }
+
+  private static func visibleExpression(ref: EVYRowRef, storedRow: EVYStoredRow?) -> String {
+    switch ref {
+    case .id:
+      return storedRow?.visible.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    case .inline(let row):
+      return row.visible.trimmingCharacters(in: .whitespacesAndNewlines)
     }
   }
 
@@ -117,12 +176,22 @@ private struct EVYResolvedRow: View {
               .presentationDragIndicator(.visible)
               .presentationBackground(.white)
             }
-            .onAppear { bootstrapRowDraft(row: contentRow, scopeId: evyDraftScopeId) }
+            .onAppear {
+              refreshVisibilityState()
+              bootstrapRowDraft(row: contentRow, scopeId: evyDraftScopeId, payload: payload)
+            }
+            .onChange(of: visibleExpression) { _, _ in
+              refreshVisibilityState()
+            }
         }
       } else {
         EmptyView()
       }
     }
+  }
+
+  private func refreshVisibilityState() {
+    isVisible = Self.makeVisibilityState(for: visibleExpression)
   }
 
   private static func makeVisibilityState(for visibleExpr: String) -> EVYState<Bool> {
@@ -166,48 +235,48 @@ private struct EVYResolvedRow: View {
   @ViewBuilder
   private func rowView(for payload: UI_RowPayload, contentRow: UI_Row) -> some View {
     switch payload {
-    case .button(let v, _, _, _):
-      EVYButtonRow(view: v, action: { runActions(contentRow: contentRow) })
-    case .calendar(let v, let s, let d, _):
-      EVYCalendarRow(view: v, source: s, destination: d)
-    case .columnContainer(let v, _, _, _):
-      EVYColumnContainerRow(view: v, childRefs: childRefs)
-    case .dropdown(let v, let s, let d, _):
-      EVYDropdownRow(view: v, source: s, destination: d)
-    case .heading(let v, _, _, _):
-      EVYHeadingRow(view: v)
-    case .inlinePicker(let v, let s, let d, _):
-      EVYInlinePickerRow(view: v, source: s, destination: d)
-    case .inputList(let v, let s, _, _):
-      EVYInputListRow(view: v, source: s)
-    case .input(let v, _, let d, _):
-      EVYInputRow(view: v, destination: d, isInteractive: contentRow.actions.isEmpty)
-    case .listContainer(let v, let s, _, _):
-      EVYListContainerRow(view: v, source: s, childRef: childRef, childRefs: childRefs)
-    case .listItem(let v, _, _, _):
-      EVYListItemRow(view: v)
-    case .map(let v, _, _, _):
-      EVYMapRow(view: v)
-    case .search(let v, let s, _, _):
-      EVYSearchRow(view: v, source: s, childRef: childRef)
-    case .photoGallery(let v, let s, _, _):
-      EVYPhotoGalleryRow(view: v, source: s)
-    case .selectPhoto(let v, _, let d, _):
-      EVYSelectPhotoRow(view: v, destination: d)
-    case .selectSegmentContainer(let v, _, _, _):
-      EVYSelectSegmentContainerRow(view: v, childRefs: childRefs)
-    case .timeslotPicker(let v, let s, _, _):
-      EVYTimeslotPickerRow(view: v, source: s)
-    case .text(let v, _, _, _):
-      EVYTextRow(view: v)
-    case .textAction(let v, _, _, _):
-      EVYTextActionRow(view: v)
-    case .textExpand(let v, _, _, _):
-      EVYTextExpandRow(view: v)
-    case .textArea(let v, _, let d, _):
-      EVYTextAreaRow(view: v, destination: d)
-    case .textSelect(let v, _, let d, _):
-      if let row = EVYTextSelectRow(view: v, destination: d) {
+    case .button(let view, _):
+      EVYButtonRow(view: view, action: { runActions(contentRow: contentRow) })
+    case .calendar(let view, _):
+      EVYCalendarRow(view: view)
+    case .columnContainer(let view, _):
+      EVYColumnContainerRow(view: view, childRefs: childRefs)
+    case .dropdown(let view, _):
+      EVYDropdownRow(view: view)
+    case .heading(let view, _):
+      EVYHeadingRow(view: view)
+    case .inlinePicker(let view, _):
+      EVYInlinePickerRow(view: view)
+    case .inputList(let view, _):
+      EVYInputListRow(view: view)
+    case .input(let view, _):
+      EVYInputRow(view: view, isInteractive: contentRow.actions.isEmpty)
+    case .listContainer(let view, _):
+      EVYListContainerRow(view: view, childRef: childRef, childRefs: childRefs)
+    case .listItem(let view, _):
+      EVYListItemRow(view: view)
+    case .map(let view, _):
+      EVYMapRow(view: view)
+    case .search(let view, _):
+      EVYSearchRow(view: view, childRef: childRef)
+    case .photoGallery(let view, _):
+      EVYPhotoGalleryRow(view: view)
+    case .selectPhoto(let view, _):
+      EVYSelectPhotoRow(view: view)
+    case .selectSegmentContainer(let view, _):
+      EVYSelectSegmentContainerRow(view: view, childRefs: childRefs)
+    case .timeslotPicker(let view, _):
+      EVYTimeslotPickerRow(view: view)
+    case .text(let view, _):
+      EVYTextRow(view: view)
+    case .textAction(let view, _):
+      EVYTextActionRow(view: view)
+    case .textExpand(let view, _):
+      EVYTextExpandRow(view: view)
+    case .textArea(let view, _):
+      EVYTextAreaRow(view: view)
+    case .textSelect(let view, _):
+      if let row = EVYTextSelectRow(view: view) {
         row
       } else {
         EmptyView()

@@ -7,7 +7,6 @@ export default defineRow("TextRow", {
 	config: {
 		type: "Text",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "Text row title",
 		subtitle: "Subtitle",

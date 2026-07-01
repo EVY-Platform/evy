@@ -20,7 +20,7 @@ date-time (string)
 
 All `types/schema/**/*.schema.json` files define types for UI flows, RPC, and data models.
 
-`types/schema/**/*.spec.json` files define row definitions, including SDUI row content and view keys.
+`types/schema/sdui/definitions/*.schema.json` files define SDUI row definitions, including row-specific content and view keys.
 
 `types/schema/data/drizzle.config.json` defines the database schema configuration for generated Drizzle tables. Keep it manually in sync with `types/schema/data/data.schema.json`, with AI assistance when useful.
 
@@ -36,7 +36,7 @@ bun run types:generate
 
 `bun run types:generate` runs:
 
-1. `scripts/generate-types.ts` — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. It generates stable Swift filenames from nested and hyphenated schema paths, includes `types/schema/files/file.schema.json`, and runs `scripts/generate-swift-sdui.ts` for Swift UI shapes from `evy.schema.json` plus `row-content.spec.json`.
+1. `scripts/generate-types.ts` — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. It generates stable Swift filenames from nested and hyphenated schema paths, includes `types/schema/files/file.schema.json`, and runs `scripts/generate-swift-sdui.ts` for Swift UI shapes from `evy.schema.json` plus `types/schema/sdui/definitions/*.schema.json`.
 2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`.
 3. `scripts/generate-core-resources.ts` — Emits generated evy core resource compile-time constants only for core API validation and sync's core-resource loop. Non-evy service/resource ownership is stored in normal core `services` and `serviceResources` rows and can be read through standard `get` CRUD.
 
@@ -45,7 +45,7 @@ bun run types:generate
 - `types/generated/ts/` — TypeScript types, Drizzle schema, validators, RPC helpers, and generated evy core resource registry inputs. The API, web app, and marketplace service import these via the `evy-types` path alias.
 - `types/generated/swift/` — Swift types. The iOS app references generated SDUI, core resource, OS, and file API models while keeping transport and UI models handwritten where needed.
 
-After changing any schema or `drizzle.config.json` or `row-content.spec.json`, run `bun run types:generate`. Output under `types/generated/` is gitignored; regenerate locally and do not hand-edit generated files.
+After changing any schema, `drizzle.config.json`, or SDUI row definition schema, run `bun run types:generate`. Output under `types/generated/` is gitignored; regenerate locally and do not hand-edit generated files.
 
 ---
 
@@ -228,12 +228,12 @@ Base model with no extra props (identity may be implied by storage layer).
 ```
 start_time: string           (HH:mm, 24-hour, e.g. "07:00")
 end_time: string             (HH:mm, exclusive, e.g. "19:00")
-timeslot_interval_minutes: integer   (e.g. 30)
-label_interval_minutes: integer      (e.g. 60)
+timeslot_interval_minutes: string    (minutes, e.g. "30")
+label_interval_minutes: string       (minutes, e.g. "60")
 header_format: string        (date format pattern, e.g. "EEE d")
 timeslot_format: string      (time format pattern, e.g. "HH:mm")
 
-Calendar rows store the editable primary selection array through row-level `destination` and read the contextual secondary selection array through row-level `source`.
+Calendar rows use three bindings: `source` supplies the main timeslots to display and anchor columns (same binding as `destination`); `destination` is the main selection array edited when the user taps timeslots; `secondary` is a different binding whose timeslots are rendered greyed-out for read-only context.
 ```
 
 #### transfer_options

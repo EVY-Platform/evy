@@ -7,7 +7,6 @@ export const UnknownRow = defineRow("UnknownRow", {
 	config: {
 		type: "Text",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "Unknown row",
 	},

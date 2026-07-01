@@ -10,23 +10,24 @@ import SwiftUI
 struct EVYDropdown: View {
   let title: String
   let destination: String
-  let format: String
-  let placeholder: String
+  let valueTemplate: String?
+  let placeholder: String?
 
   private var options: [EVYJson] = []
+  private var optionLabels: [String] = []
   private var selection: EVYState<String>
   @State private var showSheet = false
 
   init(
     title: String = "",
-    placeholder: String = "",
+    placeholder: String? = nil,
     data: String,
-    format: String,
+    valueTemplate: String?,
     destination: String
   ) {
     self.title = title
     self.destination = destination
-    self.format = format
+    self.valueTemplate = valueTemplate
     self.placeholder = placeholder
 
     var loadedOptions: [EVYJson] = []
@@ -39,6 +40,8 @@ struct EVYDropdown: View {
     } catch {
     }
     options = loadedOptions
+    let loadedOptionLabels = EVY.displayLabels(for: loadedOptions, valueTemplate: valueTemplate)
+    optionLabels = loadedOptionLabels
 
     selection = EVYState(
       textToWatch: destination,
@@ -47,13 +50,13 @@ struct EVYDropdown: View {
           let value = try EVY.getDataFromText(destination)
           if case .string(let identifier) = value {
             if identifier.isEmpty { return "" }
-            if let matchingOption = loadedOptions.first(where: {
+            if let matchingOptionIndex = loadedOptions.firstIndex(where: {
               $0.identifierValue() == identifier
             }) {
-              return try EVY.formatDataOrToString(json: matchingOption, format: format)
+              return loadedOptionLabels[matchingOptionIndex]
             }
           }
-          return try EVY.formatDataOrToString(json: value, format: format)
+          return try EVY.displayText(forDatum: value, valueTemplate: valueTemplate)
         } catch {
           return ""
         }
@@ -65,7 +68,7 @@ struct EVYDropdown: View {
       Button(action: { showSheet.toggle() }) {
         if selection.value.count > 0 {
           EVYTextView(selection.value)
-        } else {
+        } else if let placeholder {
           EVYTextView(placeholder, style: .info)
         }
       }
@@ -96,8 +99,10 @@ struct EVYDropdown: View {
           }
           EVYSelectList(
             options: options,
-            format: format,
-            destination: destination)
+            valueTemplate: valueTemplate,
+            destination: destination,
+            optionLabels: optionLabels,
+            target: .single_identifier)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.white.ignoresSafeArea())
@@ -122,7 +127,7 @@ private struct EVYDropdownPreview: View {
       title: "Dropdown",
       placeholder: "A placeholder",
       data: "{conditions}",
-      format: "{$datum.value}",
+      valueTemplate: "{$datum.value}",
       destination: "{item.condition}")
   }
 }

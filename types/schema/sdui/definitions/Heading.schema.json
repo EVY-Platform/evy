@@ -1,0 +1,26 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui/definitions/Heading",
+	"title": "Heading_Row",
+	"allOf": [
+		{
+			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
+		},
+		{
+			"type": "object",
+			"required": ["type", "title"],
+			"properties": {
+				"type": {
+					"const": "Heading"
+				},
+				"title": {
+					"type": "string"
+				},
+				"label": {
+					"type": "string"
+				}
+			}
+		}
+	],
+	"unevaluatedProperties": false
+}

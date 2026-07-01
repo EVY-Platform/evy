@@ -10,25 +10,27 @@ import SwiftUI
 struct EVYSearchRow: View {
 
   private let view: SearchRowViewData
-  private let source: String
   private let childRef: EVYRowRef?
 
-  init(view: SearchRowViewData, source: String, childRef: EVYRowRef?) {
+  @Environment(\.evyCacheScopeId) private var cacheScopeId
+
+  init(view: SearchRowViewData, childRef: EVYRowRef?) {
     self.view = view
-    self.source = source
     self.childRef = childRef
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYSearch(
-        source: source,
+        source: view.source,
+        destination: view.destination,
         placeholder: view.placeholder,
-        resultTemplate: childRef?.templateRow()
+        resultTemplate: childRef?.templateRow(),
+        scopeId: cacheScopeId
       )
     }
     .padding(.horizontal, Constants.majorPadding)
@@ -42,15 +44,13 @@ struct EVYSearchRow: View {
         "id": "preview-search-row",
         "type": "Search",
         "source": "{items}",
-        "destination": "",
+        "destination": "{selected_item}",
         "actions": [],
         "title": "Search preview",
         "placeholder": "Search items...",
         "child": {
           "id": "preview-search-result-template",
           "type": "Text",
-          "source": "",
-          "destination": "",
           "actions": [],
           "title": "{$datum.title}",
           "subtitle": "{$datum.category}",

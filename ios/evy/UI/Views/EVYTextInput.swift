@@ -9,17 +9,19 @@ import SwiftUI
 
 struct EVYTextInput: View {
   @Binding var text: String
-  let placeholder: String
+  let placeholder: String?
 
-  init(text: Binding<String>, placeholder: String) {
+  init(text: Binding<String>, placeholder: String?) {
     self._text = text
     self.placeholder = placeholder
   }
 
   var body: some View {
     TextField(text: $text) {
-      EVYTextView(placeholder, style: .info)
-        .toText()
+      if let placeholder {
+        EVYTextView(placeholder, style: .info)
+          .toText()
+      }
     }
     .font(.evy)
     .textFieldStyle(.plain)

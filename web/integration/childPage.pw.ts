@@ -243,9 +243,8 @@ test.describe("Child Page Rendering", () => {
 										actions: [],
 									},
 									{
-										type: "Text" as const,
+										type: "TextAction" as const,
 										title: "Children 1 Text Action",
-										text: "Action text",
 										action: "Change",
 										child: {
 											type: "Search" as const,
@@ -281,11 +280,10 @@ test.describe("Child Page Rendering", () => {
 		await getPageRow(page, "Root Select Segment").click();
 		const configPanel = getConfigPanel(page);
 		await configPanel
-			.getByRole("button", { name: "ListContainer" })
+			.getByRole("button", { name: /: ListContainer$/ })
 			.click();
 		await configPanel
-			.getByRole("button", { name: "Text", exact: true })
-			.nth(1)
+			.getByRole("button", { name: /: TextAction$/ })
 			.click();
 
 		let childPages = page.getByTestId("child-page");
@@ -294,7 +292,7 @@ test.describe("Child Page Rendering", () => {
 			childPages.nth(0).getByText("Search Child Row", { exact: true }),
 		).toBeVisible();
 
-		await configPanel.getByRole("button", { name: "Search" }).click();
+		await configPanel.getByRole("button", { name: /: Search$/ }).click();
 
 		childPages = page.getByTestId("child-page");
 		await expect(childPages).toHaveCount(2);
@@ -517,7 +515,7 @@ test.describe("Child Page Rendering", () => {
 		// Click the second child row in the configuration panel
 		const configPanel = getConfigPanel(page);
 		await configPanel
-			.getByRole("button", { name: "Text", exact: true })
+			.getByRole("button", { name: /: Text$/ })
 			.nth(1)
 			.click();
 
@@ -544,7 +542,7 @@ test.describe("Child Page Rendering", () => {
 			activePage.getByText("First Segment Child", { exact: true }),
 		).toBeVisible();
 		await expect(
-			getConfigPanel(page).getByText("SelectSegmentContainer Row"),
+			getConfigPanel(page).getByText("type: SelectSegmentContainer"),
 		).toBeVisible();
 
 		// Click the second segment in the bar — child should switch, row should stay active
@@ -558,7 +556,7 @@ test.describe("Child Page Rendering", () => {
 			activePage.getByText("First Segment Child", { exact: true }),
 		).not.toBeVisible();
 		await expect(
-			getConfigPanel(page).getByText("SelectSegmentContainer Row"),
+			getConfigPanel(page).getByText("type: SelectSegmentContainer"),
 		).toBeVisible();
 
 		// Click back to the first segment — should switch back without deactivating
@@ -569,7 +567,7 @@ test.describe("Child Page Rendering", () => {
 			activePage.getByText("First Segment Child", { exact: true }),
 		).toBeVisible();
 		await expect(
-			getConfigPanel(page).getByText("SelectSegmentContainer Row"),
+			getConfigPanel(page).getByText("type: SelectSegmentContainer"),
 		).toBeVisible();
 	});
 });

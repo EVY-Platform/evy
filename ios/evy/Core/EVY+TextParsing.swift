@@ -34,10 +34,36 @@ extension EVY {
     try _formatData(json: json, format: format)
   }
 
-  static func formatDataOrToString(json: EVYJson, format: String) throws -> String {
-    if format.isEmpty {
+  static func formatDataOrToString(json: EVYJson, format: String?) throws -> String {
+    guard let format, !format.isEmpty else {
       return json.toString()
     }
     return try formatData(json: json, format: format)
+  }
+
+  static func displayText(fromSource source: String?) -> String {
+    _displayText(fromSource: source)
+  }
+
+  static func displayText(fromSource source: String?, destination: String?) -> String {
+    _displayText(fromSource: source, destination: destination)
+  }
+
+  static func editableText(fromSource source: String?, destination: String?) -> String {
+    _editableText(fromSource: source, destination: destination)
+  }
+
+  static func watchTargets(forSource source: String?, destination: String?) -> [String] {
+    _watchTargets(forSource: source, destination: destination)
+  }
+
+  static func displayText(forDatum datum: EVYJson, valueTemplate: String?) throws -> String {
+    try _displayText(forDatum: datum, valueTemplate: valueTemplate)
+  }
+
+  static func displayLabels(for options: [EVYJson], valueTemplate: String?) -> [String] {
+    options.map {
+      (try? displayText(forDatum: $0, valueTemplate: valueTemplate)) ?? $0.toString()
+    }
   }
 }

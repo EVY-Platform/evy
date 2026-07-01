@@ -1,0 +1,26 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui/definitions/PhotoGallery",
+	"title": "PhotoGallery_Row",
+	"allOf": [
+		{
+			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
+		},
+		{
+			"type": "object",
+			"required": ["type", "source"],
+			"properties": {
+				"type": {
+					"const": "PhotoGallery"
+				},
+				"title": {
+					"type": "string"
+				},
+				"source": {
+					"type": "string"
+				}
+			}
+		}
+	],
+	"unevaluatedProperties": false
+}

@@ -15,6 +15,12 @@ private let functionPattern = "[a-zA-Z_]+\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
 
+// Ephemeral datum registry for in-memory formatting.
+// Temporary datums used by _formatData are stored here instead of SwiftData
+// to avoid expensive create/delete operations and notification storms.
+@MainActor
+private var ephemeralDatumRegistry: [String: EVYJson] = [:]
+
 @MainActor
 public func splitPropsFromText(_ props: String) throws -> [String] {
   if props.count < 1 {
@@ -252,6 +258,10 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
     return try evyFindFirst(funcArgs, remainingProps: remainingProps)
   }
 
+  if let ephemeralDatum = ephemeralDatumRegistry[firstProp] {
+    return ephemeralDatum.parseProp(props: remainingProps)
+  }
+
   // 1. Check draft store — user's unsaved edits
   if let scopeId = EVY.draftStore.activeScopeId,
     let draftBinding = try? EVY.draftStore.binding(fromParsedProps: cleanProps, scopeId: scopeId),
@@ -288,6 +298,110 @@ func _evaluateFromText(_ input: String) throws -> Bool {
   return match.value == "true"
 }
 
+private let sourceFormatFunctions = [
+  "formatCurrency",
+  "formatDimension",
+  "formatWeight",
+  "formatDecimal",
+  "formatMetricLength",
+  "formatImperialLength",
+  "formatDuration",
+  "formatDatetime",
+  "formatAddress",
+]
+
+private let formatFunctionsByBuildFunction = [
+  "buildCurrency": "formatCurrency",
+  "buildAddress": "formatAddress",
+]
+
+private func wrappedExpression(_ raw: String) -> String {
+  raw.hasPrefix("{") ? raw : "{\(raw)}"
+}
+
+@MainActor
+private func _resolvedText(fromSource source: String?, destination: String?, editing: Bool)
+  -> String
+{
+  if let source {
+    let trimmedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
+    if !trimmedSource.isEmpty {
+      return (try? _getValueFromText(trimmedSource, editing: editing).toString()) ?? ""
+    }
+  }
+
+  guard let destination else { return "" }
+  let trimmedDestination = destination.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !trimmedDestination.isEmpty else { return "" }
+
+  let wrapped = wrappedExpression(trimmedDestination)
+  let inner = _parsePropsFromText(wrapped)
+  if let (functionName, functionArgs) = parseFunctionCall(inner),
+    let formatFunction = formatFunctionsByBuildFunction[functionName]
+  {
+    return
+      (try? _getValueFromText("{\(formatFunction)(\(functionArgs))}", editing: editing).toString())
+      ?? ""
+  }
+
+  return (try? _getValueFromText(wrapped, editing: editing).toString()) ?? ""
+}
+
+@MainActor
+func _displayText(fromSource source: String?, destination: String?) -> String {
+  _resolvedText(fromSource: source, destination: destination, editing: false)
+}
+
+@MainActor
+func _editableText(fromSource source: String?, destination: String?) -> String {
+  _resolvedText(fromSource: source, destination: destination, editing: true)
+}
+
+@MainActor
+func _watchTargets(forSource source: String?, destination: String?) -> [String] {
+  var targets: [String] = []
+  if let source {
+    targets.append(contentsOf: _watchTargets(for: source))
+  }
+  if let destination {
+    targets.append(contentsOf: _watchTargets(for: destination))
+  }
+  return targets
+}
+
+@MainActor
+func _rawDataFromSource(_ source: String) throws -> EVYJson {
+  let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !trimmed.isEmpty else { return .string("") }
+
+  let wrapped = wrappedExpression(trimmed)
+  let inner = _parsePropsFromText(wrapped)
+
+  if let (functionName, functionArgs) = parseFunctionCall(inner),
+    sourceFormatFunctions.contains(functionName)
+  {
+    return try _getDataFromProps(functionArgs.trimmingCharacters(in: .whitespacesAndNewlines))
+  }
+
+  return try _getDataFromText(wrapped)
+}
+
+@MainActor
+func _displayText(fromSource source: String?) -> String {
+  guard let source else { return "" }
+  let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !trimmed.isEmpty else { return "" }
+  return (try? _getValueFromText(trimmed, editing: false).toString()) ?? ""
+}
+
+@MainActor
+func _displayText(forDatum datum: EVYJson, valueTemplate: String?) throws -> String {
+  guard let valueTemplate, !valueTemplate.isEmpty else {
+    return datum.toString()
+  }
+  return try _formatData(json: datum, format: valueTemplate)
+}
+
 @MainActor
 func _formatData(json: EVYJson, format: String) throws -> String {
   if format.count < 1 { return "" }
@@ -300,14 +414,11 @@ func _formatData(json: EVYJson, format: String) throws -> String {
 
   if formatWithNewData.isEmpty { return "" }
 
-  let encodedData = try JSONEncoder().encode(json)
-  try EVY.publicStore.create(
-    namespace: EVYNamespace.local, resource: temporaryId, id: EVYNamespace.singletonId,
-    value: encodedData)
+  ephemeralDatumRegistry[temporaryId] = json
   defer {
-    try? EVY.publicStore.delete(
-      namespace: EVYNamespace.local, resource: temporaryId, id: EVYNamespace.singletonId)
+    ephemeralDatumRegistry.removeValue(forKey: temporaryId)
   }
+
   let returnText = try _getValueFromText(formatWithNewData)
   return returnText.toString()
 }
@@ -850,7 +961,7 @@ private struct EVYInterpreterPreview: View {
       Text(firstSellingReason.toString())
 
       EVYTextField(
-        input: "{formatCurrency(item.price)}",
+        source: "{formatCurrency(item.price)}",
         destination: "{item.price}",
         placeholder: "Editing price")
     }

@@ -19,8 +19,8 @@ struct EVYColumnContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
           .padding(.horizontal, Constants.majorPadding)
       }
@@ -39,14 +39,12 @@ struct EVYColumnContainerRow: View {
       {
         "id": "preview-column-row",
         "type": "ColumnContainer",
-        "source": "",
         "actions": [],
         "title": "Column Container Preview",
         "children": [
           {
             "id": "column-child-1",
             "type": "Text",
-            "source": "",
             "actions": [],
             "title": "First Child",
             "subtitle": "This is the first column item",
@@ -55,7 +53,6 @@ struct EVYColumnContainerRow: View {
           {
             "id": "column-child-2",
             "type": "Text",
-            "source": "",
             "actions": [],
             "title": "Second Child",
             "subtitle": "This is the second column item",

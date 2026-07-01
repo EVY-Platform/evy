@@ -146,12 +146,13 @@ describe("validateFlowData", () => {
 				pages: [
 					{
 						id: pageId,
+						name: "Page",
 						title: "P",
 						rows: [
 							{
 								id: rowId,
+								name: "Always Visible Row",
 								type: "Text",
-								source: "",
 								actions: [],
 								title: "Always visible",
 							},
@@ -172,12 +173,13 @@ describe("validateFlowData", () => {
 			pages: [
 				{
 					id: pageId,
+					name: "Page",
 					title: "P",
 					rows: [
 						{
 							id: rowId,
+							name: "Cash Accepted Row",
 							type: "Text",
-							source: "",
 							actions: [],
 							visible: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
 							title: "Cash accepted",

@@ -8,13 +8,12 @@ export default defineRow("SelectPhotoRow", {
 	config: {
 		type: "SelectPhoto",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "Select photo row title",
 		subtitle: "Photos: 0/10",
 		icon: "::image-plus::",
 		content: "Add photos",
-		photos: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
+		source: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 	} satisfies RowConfig,
 	render: (row) => (

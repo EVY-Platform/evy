@@ -2,9 +2,8 @@
 // These are the fixed fields on every row that are not row-type content.
 export const ROW_METADATA_KEYS = new Set([
 	"id",
+	"name",
 	"type",
-	"source",
-	"destination",
 	"actions",
 	"visible",
 ]);
@@ -21,9 +20,4 @@ export const ROW_DECOMPOSE_SKIP_KEYS = new Set([
 	"children",
 ]);
 
-export const ROW_ATTRIBUTE_STATIC_NAMES = [
-	"source",
-	"destination",
-	"title",
-	"visible",
-] as const;
+export const ROW_ATTRIBUTE_STATIC_NAMES = ["title", "visible"] as const;

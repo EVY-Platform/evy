@@ -10,26 +10,22 @@ import SwiftUI
 struct EVYInlinePickerRow: View {
 
   private let view: InlinePickerRowViewData
-  private let source: String
-  private let destination: String
 
-  init(view: InlinePickerRowViewData, source: String, destination: String) {
+  init(view: InlinePickerRowViewData) {
     self.view = view
-    self.source = source
-    self.destination = destination
   }
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYInlinePicker(
-        title: view.title,
-        data: source,
-        format: view.format,
-        destination: destination
+        title: view.title ?? "",
+        data: view.source ?? "",
+        valueTemplate: view.value,
+        destination: view.destination ?? ""
       )
     }
     .padding(.horizontal, Constants.majorPadding)
@@ -46,7 +42,7 @@ struct EVYInlinePickerRow: View {
         "destination": "{item.duration}",
         "actions": [],
         "title": "Duration",
-        "format": "{$datum.value}"
+        "value": "{$datum.value}"
       }
       """,
     failureMessage: "Unable to build inline picker row preview"

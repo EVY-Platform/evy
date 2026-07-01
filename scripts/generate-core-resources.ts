@@ -167,8 +167,6 @@ function generateSwift(schema: CoreResourcesSchema): string {
 }
 
 async function main(): Promise<void> {
-	const excludeIos = process.argv.includes("--exclude-ios");
-
 	const schema = await loadJson<CoreResourcesSchema>(RESOURCES_SCHEMA_PATH);
 	validateSchema(schema);
 
@@ -177,7 +175,6 @@ async function main(): Promise<void> {
 		tsContent: generateTypeScript(schema),
 		swiftPath: OUT_SWIFT_PATH,
 		swiftContent: generateSwift(schema),
-		excludeIos,
 	});
 }
 

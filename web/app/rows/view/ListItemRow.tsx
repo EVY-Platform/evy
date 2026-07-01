@@ -7,7 +7,6 @@ export default defineRow("ListItemRow", {
 	config: {
 		type: "ListItem",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "List item title",
 		subtitle: "Subtitle",

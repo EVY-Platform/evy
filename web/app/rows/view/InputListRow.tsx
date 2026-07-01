@@ -16,7 +16,7 @@ export default defineRow("InputListRow", {
 	render: (row) => (
 		<RowLayout title={row.config.title}>
 			<Input
-				value={row.config.source}
+				value={row.config.source ?? ""}
 				placeholder={row.config.placeholder}
 			/>
 		</RowLayout>

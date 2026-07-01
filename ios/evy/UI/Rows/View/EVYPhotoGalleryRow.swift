@@ -7,14 +7,14 @@ import SwiftUI
 
 struct EVYPhotoGalleryRow: View {
   private let view: PhotoGalleryRowViewData
-  private let source: String
 
-  init(view: PhotoGalleryRowViewData, source: String) {
+  init(view: PhotoGalleryRowViewData) {
     self.view = view
-    self.source = source
   }
 
   private var imageIds: [String] {
+    let source = view.source
+    guard !source.isEmpty else { return [] }
     let data = try? EVY.getDataFromText(source)
     if case .array(let arrayValue) = data {
       return arrayValue.map { $0.toString() }
@@ -24,7 +24,7 @@ struct EVYPhotoGalleryRow: View {
   }
 
   var body: some View {
-    EVYPhotoGallery(title: view.title, imageIds: imageIds)
+    EVYPhotoGallery(title: view.title ?? "", imageIds: imageIds)
   }
 }
 
@@ -34,8 +34,7 @@ struct EVYPhotoGalleryRow: View {
       {
         "id": "preview-photogallery-row",
         "type": "PhotoGallery",
-        "source": "",
-        "destination": "",
+        "source": "{item.photo_ids}",
         "actions": [],
         "title": "Photo Gallery"
       }

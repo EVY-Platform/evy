@@ -106,4 +106,46 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     XCTAssertEqual(newItem.sortIndex, 2)
     XCTAssertEqual(instances.last?.id, newItem.id)
   }
+
+  func testCreateMergesConditionIdSellingReasonIdAndNestedDimensions() throws {
+    let conditionId = UUID().uuidString
+    let sellingReasonId = UUID().uuidString
+
+    EVY.ensureDraftExists(variableName: "condition_id")
+    try EVY.updateValue(conditionId, at: "{condition_id}")
+
+    EVY.ensureDraftExists(variableName: "selling_reason_id")
+    try EVY.updateValue(sellingReasonId, at: "{selling_reason_id}")
+
+    EVY.ensureDraftExists(variableName: "dimensions.width")
+    try EVY.updateValue("500", at: "{dimensions.width}")
+
+    try EVY.create(
+      namespace: EVYNamespace.marketplace, resource: "items", draftScopeId: testDraftScope)
+
+    let instances = try EVY.publicStore.getAll(
+      namespace: EVYNamespace.marketplace, resource: "items")
+    XCTAssertEqual(instances.count, 1, "Expected one created item")
+
+    let merged = try instances[0].decoded()
+    guard case .dictionary(let dict) = merged else {
+      XCTFail("expected dictionary")
+      return
+    }
+
+    XCTAssertEqual(
+      dict["condition_id"], .string(conditionId),
+      "condition_id should be a top-level id string")
+    XCTAssertEqual(
+      dict["selling_reason_id"], .string(sellingReasonId),
+      "selling_reason_id should be a top-level id string")
+
+    guard case .dictionary(let dimensions)? = dict["dimensions"] else {
+      XCTFail("expected nested dimensions dictionary")
+      return
+    }
+    XCTAssertEqual(
+      dimensions["width"], .string("500"),
+      "dimensions.width should be nested under dimensions")
+  }
 }

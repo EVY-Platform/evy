@@ -48,7 +48,7 @@ final class EVYDataChangeNotificationTests: XCTestCase {
     XCTAssertEqual(matchingChange?.recordKey, "\(namespace):\(resource):\(id)")
   }
 
-  func testBareResourcePostHasNoPayload() throws {
+  func testNonIdQualifiedPostsHaveNoPayload() throws {
     let store = EVYDataStore(name: UUID().uuidString, inMemoryOnly: true)
     let namespace = EVYNamespace.evy
     let resource = EVYCoreResource.rows.rawValue
@@ -68,50 +68,40 @@ final class EVYDataChangeNotificationTests: XCTestCase {
     let data = try JSONSerialization.data(withJSONObject: ["id": id])
     try store.create(namespace: namespace, resource: resource, id: id, value: data)
 
-    let bareResourceNotification = receivedNotifications.first {
-      ($0.object as? String) == resource
+    let nonIdQualifiedObjectKeys = [resource, "\(namespace):\(resource)"]
+    for objectKey in nonIdQualifiedObjectKeys {
+      let notification = receivedNotifications.first {
+        ($0.object as? String) == objectKey
+      }
+      XCTAssertNotNil(
+        notification,
+        "Expected a notification with object == \"\(objectKey)\""
+      )
+      XCTAssertNil(
+        notification?.userInfo?[EVYDataChange.userInfoKey],
+        "Notification with object == \"\(objectKey)\" should not carry an EVYDataChange payload"
+      )
     }
-    XCTAssertNotNil(
-      bareResourceNotification,
-      "Expected a notification with object == \"\(resource)\""
-    )
-    XCTAssertNil(
-      bareResourceNotification?.userInfo?[EVYDataChange.userInfoKey],
-      "Bare resource notification should not carry an EVYDataChange payload"
-    )
   }
 
-  func testNamespaceResourcePostHasNoPayload() throws {
-    let store = EVYDataStore(name: UUID().uuidString, inMemoryOnly: true)
-    let namespace = EVYNamespace.evy
-    let resource = EVYCoreResource.rows.rawValue
-    let id = UUID().uuidString
-
-    var receivedNotifications: [Notification] = []
-
-    let token = NotificationCenter.default.addObserver(
-      forName: .evyDataChanged, object: nil, queue: nil
-    ) { notification in
-      MainActor.assumeIsolated {
-        receivedNotifications.append(notification)
-      }
-    }
-    defer { NotificationCenter.default.removeObserver(token) }
-
-    let data = try JSONSerialization.data(withJSONObject: ["id": id])
-    try store.create(namespace: namespace, resource: resource, id: id, value: data)
-
-    let namespaceResourceKey = "\(namespace):\(resource)"
-    let namespaceResourceNotification = receivedNotifications.first {
-      ($0.object as? String) == namespaceResourceKey
-    }
-    XCTAssertNotNil(
-      namespaceResourceNotification,
-      "Expected a notification with object == \"\(namespaceResourceKey)\""
+  func testFromExtractsPayloadOrReturnsNil() {
+    let change = EVYDataChange(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.pages.rawValue,
+      id: "page-1"
     )
-    XCTAssertNil(
-      namespaceResourceNotification?.userInfo?[EVYDataChange.userInfoKey],
-      "Namespace:resource notification should not carry an EVYDataChange payload"
+    let notificationWithPayload = Notification(
+      name: .evyDataChanged,
+      object: change.recordKey,
+      userInfo: [EVYDataChange.userInfoKey: change]
     )
+    XCTAssertEqual(EVYDataChange.from(notificationWithPayload), change)
+
+    let notificationWithoutPayload = Notification(
+      name: .evyDataChanged,
+      object: EVYCoreResource.rows.rawValue,
+      userInfo: nil
+    )
+    XCTAssertNil(EVYDataChange.from(notificationWithoutPayload))
   }
 }

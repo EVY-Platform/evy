@@ -295,7 +295,7 @@ test.describe("Row Selection with Containers", () => {
 		await childRow.click();
 
 		const configPanel = getConfigPanel(page);
-		await configPanel.getByRole("button", { name: /^Text$/ }).click();
+		await configPanel.getByRole("button", { name: /: Text$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveText("Child Text Row");
@@ -332,7 +332,7 @@ test.describe("Row Selection with Containers", () => {
 			.getByText("Child Text Row", { exact: true })
 			.first();
 		await childRow.click();
-		await configPanel.getByRole("button", { name: /^Text$/ }).click();
+		await configPanel.getByRole("button", { name: /: Text$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveText("Child Text Row");

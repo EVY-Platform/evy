@@ -77,8 +77,12 @@
 		73F2A0012F30B00200000001 /* UIEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0112F30B00200000001 /* UIEnums.swift */; };
 		73F2A0022F30B00200000001 /* UIShapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0122F30B00200000001 /* UIShapes.swift */; };
 		73F2A0032F30B00200000001 /* UIRowPayloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0132F30B00200000001 /* UIRowPayloads.swift */; };
+		73F2A0062F30B00200000001 /* SduiDefinitions.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0162F30B00200000001 /* SduiDefinitions.generated.swift */; };
+		73F2A0072F30B00200000001 /* SduiDefinitions.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0162F30B00200000001 /* SduiDefinitions.generated.swift */; };
+		74A100292F32000100000001 /* SduiRowAttributeContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100282F32000100000001 /* SduiRowAttributeContractTests.swift */; };
 		73F2A0042F30B00200000001 /* DataOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0142F30B00200000001 /* DataOs.swift */; };
 		73F2A0052F30B00200000001 /* FilesFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0152F30B00200000001 /* FilesFile.swift */; };
+
 		73F3A0012F30B00300000001 /* EVYActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F3A0022F30B00300000001 /* EVYActionRunner.swift */; };
 
 		73F4B0032F40B00100000001 /* LucideIcons in Frameworks */ = {isa = PBXBuildFile; productRef = 73F4B0022F40B00100000001 /* LucideIcons */; };
@@ -206,8 +210,11 @@
 		73F2A0112F30B00200000001 /* UIEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIEnums.swift; sourceTree = "<group>"; };
 		73F2A0122F30B00200000001 /* UIShapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIShapes.swift; sourceTree = "<group>"; };
 		73F2A0132F30B00200000001 /* UIRowPayloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIRowPayloads.swift; sourceTree = "<group>"; };
+		73F2A0162F30B00200000001 /* SduiDefinitions.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SduiDefinitions.generated.swift; sourceTree = "<group>"; };
+		74A100282F32000100000001 /* SduiRowAttributeContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SduiRowAttributeContractTests.swift; sourceTree = "<group>"; };
 		73F2A0142F30B00200000001 /* DataOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataOs.swift; sourceTree = "<group>"; };
 		73F2A0152F30B00200000001 /* FilesFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesFile.swift; sourceTree = "<group>"; };
+
 		73F3A0022F30B00300000001 /* EVYActionRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionRunner.swift; sourceTree = "<group>"; };
 
 		73F5D1002F50000100000001 /* EVYDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraft.swift; sourceTree = "<group>"; };
@@ -511,12 +518,14 @@
 			isa = PBXGroup;
 			children = (
 				73F2A0142F30B00200000001 /* DataOs.swift */,
-				73F2A0112F30B00200000001 /* UIEnums.swift */,
-				73F2A0122F30B00200000001 /* UIShapes.swift */,
-				73F2A0132F30B00200000001 /* UIRowPayloads.swift */,
-				73F2A0152F30B00200000001 /* FilesFile.swift */,
-				73F7A0112F70B00700000001 /* CoreResources.generated.swift */,
-				73F7A0122F70B00700000002 /* MarketplaceResources.generated.swift */,
+					73F2A0112F30B00200000001 /* UIEnums.swift */,
+					73F2A0122F30B00200000001 /* UIShapes.swift */,
+					73F2A0132F30B00200000001 /* UIRowPayloads.swift */,
+					73F2A0162F30B00200000001 /* SduiDefinitions.generated.swift */,
+					73F2A0152F30B00200000001 /* FilesFile.swift */,
+					73F7A0112F70B00700000001 /* CoreResources.generated.swift */,
+					73F7A0122F70B00700000002 /* MarketplaceResources.generated.swift */,
+
 			);
 			path = ../../types/generated/swift;
 			sourceTree = "<group>";
@@ -536,6 +545,7 @@
 				FA002006MP00001000000001 /* EVYMapTests.swift */,
 				74A100262F32000100000001 /* EVYCalendarTests.swift */,
 				74A100042F32000100000001 /* interpreterTests.swift */,
+				74A100282F32000100000001 /* SduiRowAttributeContractTests.swift */,
 			);
 			path = evyTests;
 			sourceTree = "<group>";
@@ -753,10 +763,12 @@
 				73F2A0012F30B00200000001 /* UIEnums.swift in Sources */,
 				73F2A0022F30B00200000001 /* UIShapes.swift in Sources */,
 				73F2A0032F30B00200000001 /* UIRowPayloads.swift in Sources */,
+				73F2A0062F30B00200000001 /* SduiDefinitions.generated.swift in Sources */,
 				73F2A0042F30B00200000001 /* DataOs.swift in Sources */,
 				73F2A0052F30B00200000001 /* FilesFile.swift in Sources */,
 				73F7A0012F70B00700000001 /* CoreResources.generated.swift in Sources */,
 				73F7A0022F70B00700000002 /* MarketplaceResources.generated.swift in Sources */,
+
 				7858E83074C330353C4844E5 /* EVY+DatumExpression.swift in Sources */,
 				A61A9E25AFD75A42586274D7 /* EVYPhotoGalleryRow.swift in Sources */,
 				A61A9E26AFD75A42586274D8 /* EVYPhotoGallery.swift in Sources */,
@@ -792,6 +804,8 @@
 				FA002005MP00001000000001 /* EVYMapTests.swift in Sources */,
 				74A100252F32000100000001 /* EVYCalendarTests.swift in Sources */,
 				74A100012F32000100000001 /* interpreterTests.swift in Sources */,
+				73F2A0072F30B00200000001 /* SduiDefinitions.generated.swift in Sources */,
+				74A100292F32000100000001 /* SduiRowAttributeContractTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

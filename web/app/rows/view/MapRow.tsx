@@ -23,11 +23,9 @@ export default defineRow("MapRow", {
 	config: {
 		type: "Map",
 		actions: [],
-		source: "",
+		source: `{${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address.location}`,
 		visible: "true",
-		destination: "",
 		title: "Map row title",
-		location: `{${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address.location}`,
 		subtitle: "Map row subtitle",
 	} satisfies RowConfig,
 	render: (row) => {

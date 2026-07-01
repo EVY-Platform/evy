@@ -227,6 +227,7 @@ private enum E2EFlowIds {
   static let webSocketViewPage = "10000000-0000-4000-8000-000000000004"
   static let webSocketCreateFlow = "10000000-0000-4000-8000-000000000005"
   static let webSocketCreatePage = "10000000-0000-4000-8000-000000000006"
+
 }
 
 // MARK: - Base class for E2E tests
@@ -247,21 +248,21 @@ class E2ETestBase: XCTestCase {
             Self.inputRow(
               id: "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
               title: "Title",
-              value: "{title}",
+              source: nil,
               placeholder: "Item",
               destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
             ),
             Self.inputRow(
               id: "668aeb79-d8ba-43b7-9619-07f91d0a1908",
               title: "Price",
-              value: "{formatCurrency(price)}",
+              source: "{formatCurrency(price)}",
               placeholder: "0",
               destination: "{buildCurrency(\(MARKETPLACE_ITEMS_RESOURCE_ID).price)}"
             ),
             Self.inputRow(
               id: "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
               title: "Width",
-              value: "{formatDimension(width)}",
+              source: "{formatDimension(width)}",
               placeholder: "0",
               destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).width}"
             ),
@@ -430,8 +431,6 @@ class E2ETestBase: XCTestCase {
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
               "type": "ColumnContainer",
-              "source": "",
-              "destination": "",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -464,8 +463,6 @@ class E2ETestBase: XCTestCase {
     var row: [String: Any] = [
       "id": id,
       "type": text.isEmpty ? "Text" : "TextExpand",
-      "source": "",
-      "destination": "",
       "actions": [],
       "visible": visible,
       "title": title,
@@ -490,8 +487,6 @@ class E2ETestBase: XCTestCase {
     return [
       "id": id,
       "type": "ListItem",
-      "source": "",
-      "destination": "",
       "actions": [],
       "visible": visible,
       "title": title,
@@ -503,22 +498,24 @@ class E2ETestBase: XCTestCase {
   static func inputRow(
     id: String,
     title: String,
-    value: String,
+    source: String?,
     placeholder: String,
     destination: String,
     visible: String = "true"
   ) -> [String: Any] {
-    return [
+    var row: [String: Any] = [
       "id": id,
       "type": "Input",
-      "source": "",
       "visible": visible,
       "title": title,
-      "value": value,
       "placeholder": placeholder,
       "destination": destination,
       "actions": [],
     ]
+    if let source, !source.isEmpty {
+      row["source"] = source
+    }
+    return row
   }
 
   static func buttonRow(
@@ -530,8 +527,6 @@ class E2ETestBase: XCTestCase {
     return [
       "id": id,
       "type": "Button",
-      "source": "",
-      "destination": "",
       "visible": visible,
       "title": "",
       "label": label,
@@ -540,6 +535,78 @@ class E2ETestBase: XCTestCase {
           "condition": "",
           "false": "",
           "true": action,
+        ]
+      ],
+    ]
+  }
+
+  static func timeslotPickerRow(
+    id: String,
+    source: String,
+    destination: String = "{selected_pickup_timeslot}",
+    name: String = "Pickup available times"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "TimeslotPicker",
+      "source": source,
+      "destination": destination,
+      "actions": [],
+      "visible": "true",
+      "title": "",
+      "start_time": "07:00",
+      "end_time": "19:00",
+      "timeslot_interval_minutes": "30",
+      "label_interval_minutes": "60",
+      "header_format": "{formatDatetime($datum, \"EEE\")}",
+      "header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
+      "timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
+      "name": name,
+    ]
+  }
+
+  static func viewItemTimeslotFlowData(flowId: String, pageId: String) -> [String: Any] {
+    let source = "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}"
+    return [
+      "id": flowId,
+      "name": "E2E View Item Timeslot",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
+          "rows": [
+            Self.timeslotPickerRow(
+              id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5e",
+              source: source,
+              name: "Direct timeslot picker"
+            ),
+            [
+              "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
+              "type": "SelectSegmentContainer",
+              "actions": [],
+              "visible": "true",
+              "title": "",
+              "segments": ["Pickup"],
+              "children": [
+                [
+                  "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+                  "type": "ListContainer",
+                  "actions": [],
+                  "visible": "true",
+                  "title": "",
+                  "children": [
+                    Self.timeslotPickerRow(
+                      id: "d4e5f6a7-b8c9-4012-d345-6789abcdef02",
+                      source: source,
+                      name: "Nested timeslot picker"
+                    )
+                  ],
+                  "name": "Nested pickup list",
+                ]
+              ],
+              "name": "Nested segment container",
+            ],
+          ],
         ]
       ],
     ]
@@ -583,7 +650,8 @@ class E2ETestBase: XCTestCase {
   func createMarketplaceItem(
     emitter: WSEmitter,
     titlePrefix: String,
-    paymentMethods: [String: Bool]? = nil
+    paymentMethods: [String: Bool]? = nil,
+    pickupSelection: [String]? = nil
   ) async throws -> (id: String, title: String) {
     let selectedItemId = UUID().uuidString
     let selectedItemTitle = "\(titlePrefix) \(Int(Date().timeIntervalSince1970))"
@@ -593,6 +661,9 @@ class E2ETestBase: XCTestCase {
     ]
     if let paymentMethods {
       data["payment_methods"] = paymentMethods
+    }
+    if let pickupSelection {
+      data["pickup_selection"] = pickupSelection
     }
     _ = try await emitter.createResource(
       service: MARKETPLACE_SERVICE,
@@ -762,6 +833,58 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
+  func testWebSocketRowUpdatePreservesUnrelatedRowState() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    guard let inputContainer = findElement(identifier: "textField_e2e.unrelated_input") else {
+      XCTFail("Unrelated input row should be visible on the home screen")
+      return
+    }
+    guard let inputField = await tapAndGetEditableField(container: inputContainer) else {
+      XCTFail("Failed to get editable unrelated input field")
+      return
+    }
+
+    let typedText = "keep me \(Int(Date().timeIntervalSince1970))"
+    inputField.typeText(typedText)
+    XCTAssertTrue(
+      (inputField.value as? String)?.contains(typedText) == true,
+      "Unrelated input should hold typed text, got: '\(inputField.value as? String ?? "nil")'")
+
+    let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
+    let emitter = WSEmitter()
+    do {
+      try await emitter.connect(host: apiHost)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      try await emitter.updateSDUI(
+        flowData: createHomeFlowData(buttonLabel: updatedLabel),
+        flowId: E2EFlowIds.webSocketHomeFlow
+      )
+    } catch {
+      XCTFail("Failed to emit update: \(error.localizedDescription)")
+      return
+    }
+
+    let updatedButton = app.buttons[updatedLabel]
+    XCTAssertTrue(
+      updatedButton.waitForExistence(timeout: 10),
+      "Button should update to '\(updatedLabel)' after notification")
+    XCTAssertTrue(
+      (inputField.value as? String)?.contains(typedText) == true,
+      "Unrelated input should retain typed text after a row-only SDUI update, got: '\(inputField.value as? String ?? "nil")'"
+    )
+
+    try? await emitter.updateSDUI(
+      flowData: createHomeFlowData(buttonLabel: "View"),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    await emitter.disconnect()
+  }
+
+  @MainActor
   func testConditionalActionEvaluatesLogicalExpression() async throws {
     let viewItemButton = app.buttons["View"]
     XCTAssertTrue(
@@ -852,6 +975,72 @@ final class WebSocketE2ETests: E2ETestBase {
       app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
       "View item page title should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
     )
+  }
+
+  @MainActor
+  func testViewItemTimeslotPickerRendersPickupAvailability() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Timeslot Item",
+      pickupSelection: ["2026-06-03T09:00:00"]
+    )
+
+    let viewButtonLabel = "View timeslot \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: createHomeFlowData(
+        buttonLabel: viewButtonLabel,
+        viewItemId: selectedItemId
+      ),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    try await emitter.updateSDUI(
+      flowData: Self.viewItemTimeslotFlowData(
+        flowId: E2EFlowIds.webSocketViewFlow,
+        pageId: E2EFlowIds.webSocketViewPage
+      ),
+      flowId: E2EFlowIds.webSocketViewFlow
+    )
+    await emitter.disconnect()
+
+    app.terminate()
+    try launchApp()
+
+    let queryButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(
+      queryButton.waitForExistence(timeout: 20),
+      "Timeslot view button should appear after relaunch")
+    queryButton.tap()
+
+    let scrollView = app.scrollViews.firstMatch
+    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "View item page should appear")
+
+    let directTimeslot = app.staticTexts["09:00"].firstMatch
+    XCTAssertTrue(
+      directTimeslot.waitForExistence(timeout: 10),
+      "Direct TimeslotPicker should render the 09:00 slot from pickup_selection")
+    XCTAssertTrue(
+      directTimeslot.isHittable,
+      "Direct TimeslotPicker slot should be hittable, not collapsed to zero height")
+
+    scrollView.swipeUp()
+
+    let allTimeslotLabels = app.staticTexts.matching(
+      NSPredicate(format: "label == %@", "09:00"))
+    XCTAssertGreaterThanOrEqual(
+      allTimeslotLabels.count, 2,
+      "Both direct and nested-in-segment TimeslotPickers must render the available time")
+    XCTAssertTrue(
+      allTimeslotLabels.element(boundBy: 1).isHittable,
+      "Nested TimeslotPicker slot should be hittable inside segment nesting")
   }
 
   @MainActor
@@ -953,10 +1142,9 @@ final class WebSocketE2ETests: E2ETestBase {
     }
     let testTitle = "Test Item Title \(Int(Date().timeIntervalSince1970))"
     clearAndType(field: titleField, text: testTitle, placeholder: "Item")
-    let textFieldValue = titleField.value as? String ?? ""
     XCTAssertTrue(
-      textFieldValue.contains("Test") || textFieldValue.contains("Item"),
-      "Text field should contain typed text, got: '\(textFieldValue)'")
+      (titleField.value as? String)?.contains(testTitle) == true,
+      "Title field should retain typed text, got: '\(titleField.value as? String ?? "nil")'")
     scrollView.tap()
     try await Task.sleep(for: .milliseconds(500))
 
@@ -977,9 +1165,9 @@ final class WebSocketE2ETests: E2ETestBase {
       return
     }
     clearAndType(field: priceField, text: "99", placeholder: "0")
-    let priceValue = priceField.value as? String ?? ""
     XCTAssertTrue(
-      priceValue.contains("99"), "Price field should contain typed value, got: '\(priceValue)'")
+      (priceField.value as? String)?.contains("99") == true,
+      "Price field should retain typed value, got: '\(priceField.value as? String ?? "nil")'")
     scrollView.tap()
     try await Task.sleep(for: .milliseconds(500))
 
@@ -1000,9 +1188,9 @@ final class WebSocketE2ETests: E2ETestBase {
       return
     }
     clearAndType(field: widthField, text: "50", placeholder: "0")
-    let widthValue = widthField.value as? String ?? ""
     XCTAssertTrue(
-      widthValue.contains("50"), "Width field should contain typed value, got: '\(widthValue)'")
+      (widthField.value as? String)?.contains("50") == true,
+      "Width field should retain typed value, got: '\(widthField.value as? String ?? "nil")'")
     scrollView.tap()
     try await Task.sleep(for: .milliseconds(500))
 
@@ -1082,12 +1270,17 @@ final class WebSocketE2ETests: E2ETestBase {
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
               "type": "ColumnContainer",
-              "source": "",
-              "destination": "",
               "actions": [],
               "visible": "true",
               "title": "",
               "children": [
+                Self.inputRow(
+                  id: "c72107b6-a50f-4bdb-98d8-4f803e2e8e1b",
+                  title: "Notes",
+                  source: nil,
+                  placeholder: "Type here",
+                  destination: "e2e.unrelated_input"
+                ),
                 Self.buttonRow(
                   id: "441c1433-446b-4682-854d-5d795ef52709",
                   label: buttonLabel,
@@ -1134,9 +1327,94 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 }
 
+// MARK: - Segment container tab switching
+
+final class E2ESegmentContainerTests: E2ETestBase {
+  private static let segmentHomeFlowId = "8f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f"
+  private static let segmentPageId = "7e6d5c4b-3a2b-4c1d-8e0f-1a2b3c4d5e6f"
+
+  override var homeFlowId: String? { Self.segmentHomeFlowId }
+
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    try seedFlows(
+      [
+        (
+          flowId: Self.segmentHomeFlowId,
+          flowData: Self.segmentFlowData(
+            flowId: Self.segmentHomeFlowId,
+            pageId: Self.segmentPageId
+          )
+        )
+      ]
+    )
+    try launchApp()
+  }
+
+  // Regression guard: switching segments must swap in the selected child's content.
+  // A stale `@State` in the shared child position previously kept the first tab's
+  // content on screen (e.g. the pickup calendar never updating to delivery).
+  func testSwitchingSegmentSwapsChildContent() throws {
+    let pickupContent = app.staticTexts["Pickup segment content"]
+    let deliveryContent = app.staticTexts["Delivery segment content"]
+
+    XCTAssertTrue(
+      pickupContent.waitForExistence(timeout: 20),
+      "First segment content should be visible on launch - verify API is running and seeded")
+    XCTAssertFalse(
+      deliveryContent.exists,
+      "Second segment content should be hidden until its tab is selected")
+
+    let deliveryTab = app.segmentedControls.buttons["Delivery"]
+    XCTAssertTrue(deliveryTab.waitForExistence(timeout: 5), "Delivery segment should exist")
+    deliveryTab.tap()
+
+    XCTAssertTrue(
+      deliveryContent.waitForExistence(timeout: 5),
+      "Switching to the Delivery tab must swap in the second segment's content")
+    XCTAssertFalse(
+      pickupContent.exists,
+      "First segment content should no longer be visible after switching tabs")
+  }
+
+  private static func segmentFlowData(flowId: String, pageId: String) -> [String: Any] {
+    return [
+      "id": flowId,
+      "name": "E2E Segment Container",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "Segments",
+          "rows": [
+            [
+              "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
+              "type": "SelectSegmentContainer",
+              "actions": [],
+              "visible": "true",
+              "title": "",
+              "segments": ["Pickup", "Delivery"],
+              "children": [
+                Self.textRow(
+                  id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c01",
+                  title: "Pickup segment content"
+                ),
+                Self.textRow(
+                  id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c02",
+                  title: "Delivery segment content"
+                ),
+              ],
+            ]
+          ],
+        ]
+      ],
+    ]
+  }
+}
+
 // MARK: - Error / unreachable API
 
 final class E2EErrorStateTests: XCTestCase {
+
   private var app: XCUIApplication!
 
   override func setUpWithError() throws {

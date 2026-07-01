@@ -20,21 +20,28 @@ private struct EVYSearchResult: Equatable, Identifiable {
 
 struct EVYSearch: View {
   let source: String
-  let placeholder: String
+  let destination: String
+  let placeholder: String?
   let resultTemplate: UI_Row?
+  let scopeId: String?
 
   @State private var searchText = ""
   private var results: EVYState<[EVYSearchResult]>
 
-  init(source: String, placeholder: String, resultTemplate: UI_Row?) {
+  init(
+    source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
+    scopeId: String? = nil
+  ) {
     self.source = source
+    self.destination = destination
     self.placeholder = placeholder
     self.resultTemplate = resultTemplate
+    self.scopeId = scopeId
 
     results = EVYState(
       textToWatch: source,
       setter: {
-        Self.makeResults(input: source, resultTemplate: resultTemplate)
+        Self.makeResults(source: source, resultTemplate: resultTemplate, scopeId: scopeId)
       }
     )
   }
@@ -57,17 +64,29 @@ struct EVYSearch: View {
       ForEach(filteredResults) { result in
         EVYRow(row: result.displayRow, datum: result.datum)
           .padding(.vertical, Constants.majorPadding)
+          .contentShape(Rectangle())
+          .simultaneousGesture(
+            TapGesture().onEnded {
+              guard !destination.isEmpty else { return }
+              try? EVY.writeRawValue(result.datum, to: destination)
+            }
+          )
       }
     }
   }
 
-  private static func makeResults(input: String, resultTemplate: UI_Row?) -> [EVYSearchResult] {
+  private static func makeResults(source: String, resultTemplate: UI_Row?, scopeId: String?)
+    -> [EVYSearchResult]
+  {
     guard let resultTemplate else {
       return []
     }
 
     do {
-      let sourceData = try EVY.getDataFromText(input)
+      let previous = EVY.activeCacheScopeId
+      EVY.activeCacheScopeId = scopeId
+      defer { EVY.activeCacheScopeId = previous }
+      let sourceData = try EVY.getDataFromText(source)
       let dataRows: [EVYJson]
       if case .array(let arrayValue) = sourceData {
         dataRows = arrayValue
@@ -123,6 +142,7 @@ private struct EVYSearchPreview: View {
   var body: some View {
     EVYSearch(
       source: "{items}",
+      destination: "{selected_item}",
       placeholder: "Search items...",
       resultTemplate: resultTemplate
     )
@@ -133,8 +153,6 @@ private struct EVYSearchPreview: View {
       {
         "id": "preview-search-result-template",
         "type": "Text",
-        "source": "",
-        "destination": "",
         "actions": [],
         "title": "{$datum.title}",
         "subtitle": "{$datum.category}",

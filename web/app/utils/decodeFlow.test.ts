@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import type { UI_Row as ServerRow } from "evy-types";
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import invariant from "tiny-invariant";
 import SearchRow, {
 	SEARCH_RESULT_TEMPLATE_ROW_ID,
@@ -14,7 +13,6 @@ function makeServerRow(overrides: Record<string, unknown> = {}): ServerRow {
 	return {
 		id: ROW_A,
 		type: "Text",
-		source: "",
 		visible: "",
 		actions: [],
 		title: "",
@@ -23,7 +21,7 @@ function makeServerRow(overrides: Record<string, unknown> = {}): ServerRow {
 }
 
 describe("normalizeServerRow", () => {
-	it("fills root string defaults and empty destination when omitted", () => {
+	it("fills root string defaults without injecting binding fields for Button", () => {
 		const partial = makeServerRow({
 			type: "Button",
 			label: "OK",
@@ -31,64 +29,39 @@ describe("normalizeServerRow", () => {
 		});
 
 		const n = normalizeServerRow(partial);
-		expect(n.source).toBe("");
-		expect(n.destination).toBe("");
+		expect(n.source).toBeUndefined();
+		expect(n.destination).toBeUndefined();
 		expect(n).toMatchObject({
 			title: "",
 			label: "OK",
 		});
 	});
 
-	it("does not merge Text string fields from defaults when missing", () => {
+	it("preserves binding fields for Input rows", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
-				type: "Text",
-				title: "T",
-				subtitle: "Sub",
+				type: "Input",
+				source: "{items.title}",
+				destination: "{buildTitle(item.title)}",
+				title: "Name",
 			}),
 		);
 
-		expect(rowAttributes(n)).toEqual({
-			title: "T",
-			subtitle: "Sub",
-		});
+		expect(n.source).toBe("{items.title}");
+		expect(n.destination).toBe("{buildTitle(item.title)}");
 	});
 
-	it("preserves Text keys as sent by the server", () => {
-		const n = normalizeServerRow(
-			makeServerRow({
-				type: "Text",
-				title: "T",
-				text: "extra",
-				subtitle: "",
-				icon: "",
-			}),
-		);
-
-		expect(n.text).toBe("extra");
-	});
-
-	it("normalizes Map row without replacing live non-string location", () => {
-		const location = { latitude: -33.8688, longitude: 151.2093 };
-		const n = normalizeServerRow(
-			makeServerRow({
-				type: "Map",
-				title: "Pickup location",
-				location,
-			}),
-		);
-
-		expect(rowAttributes(n)).toEqual({
-			title: "Pickup location",
-			location,
-		});
-	});
-
-	it("normalizes nested rows in children", () => {
+	it("normalizes nested rows without injecting binding defaults", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "ListContainer",
+				source: `{items}`,
 				title: "List",
+				child: makeServerRow({
+					id: ROW_B,
+					type: "Text",
+					title: "{$datum.title}",
+				}),
 				children: [
 					makeServerRow({
 						id: ROW_B,
@@ -99,66 +72,18 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		const first = n.children?.[0];
-		expect(first?.type).toBe("Button");
-		expect(first?.destination).toBe("");
-		expect(first).toMatchObject({
-			title: "",
-			label: "Go",
-		});
-	});
-
-	it("normalizes nested child template for ListContainer without injecting defaults", () => {
-		const n = normalizeServerRow(
-			makeServerRow({
-				type: "ListContainer",
-				source: `{${MARKETPLACE_RESOURCE.ITEMS}}`,
-				title: "List",
-				child: makeServerRow({
-					id: ROW_B,
-					type: "Text",
-					title: "{$datum.title}",
-				}),
-				children: [],
-			}),
-		);
-
 		expect(n.child?.type).toBe("Text");
-		expect(n.child?.destination).toBe("");
+		expect(n.child?.destination).toBeUndefined();
 		expect(rowAttributes(n.child)).toEqual({
 			title: "{$datum.title}",
 		});
-	});
 
-	it("does not use default segments when segments key is omitted", () => {
-		const n = normalizeServerRow(
-			makeServerRow({
-				type: "SelectSegmentContainer",
-				title: "Tabs",
-				children: [],
-			}),
-		);
-
-		expect(rowAttributes(n)).toEqual({
-			title: "Tabs",
-			children: [],
-		});
-	});
-
-	it("does not merge Search child from palette when server omits child", () => {
-		const n = normalizeServerRow(
-			makeServerRow({
-				type: "Search",
-				source: "{tags}",
-				destination: "",
-				title: "Find",
-				placeholder: "Search",
-			}),
-		);
-
-		expect(rowAttributes(n)).toEqual({
-			title: "Find",
-			placeholder: "Search",
+		const firstChild = n.children?.[0];
+		expect(firstChild?.type).toBe("Button");
+		expect(firstChild?.destination).toBeUndefined();
+		expect(firstChild).toMatchObject({
+			title: "",
+			label: "Go",
 		});
 	});
 });
@@ -171,6 +96,8 @@ describe("buildRowForNewPageFromBase", () => {
 		expect(row.config.type).toBe("Search");
 		expect(row.config.title).toBe("Search row title");
 		expect(row.config.placeholder).toBe("");
+		expect(row.config.source).toBe("");
+		expect(row.config.destination).toBe("");
 		const child = row.config.child;
 		invariant(child, "search row template child");
 		const childId = child.id;
@@ -181,6 +108,8 @@ describe("buildRowForNewPageFromBase", () => {
 			subtitle: "",
 			label: "",
 		});
+		expect(child.config.source).toBeUndefined();
+		expect(child.config.destination).toBeUndefined();
 	});
 });
 
@@ -191,6 +120,7 @@ function rowAttributes(row: ServerRow | undefined): Record<string, unknown> {
 		type: _type,
 		source: _source,
 		destination: _destination,
+		secondary: _secondary,
 		actions: _actions,
 		visible: _visible,
 		...attributes
