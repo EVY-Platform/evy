@@ -1,4 +1,3 @@
-import type { DATA_EVY_Page } from "evy-types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRowById } from "../hooks/useRowById";
 import parseIconText from "../icons/parseIconText";
@@ -38,11 +37,7 @@ export function NavigationBreadcrumb() {
 	const [createFlowOpen, setCreateFlowOpen] = useState(false);
 	const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-	const activeFlow = activeFlowId ? flowsById[activeFlowId] : undefined;
 	const activePage = activePageId ? pagesById[activePageId] : undefined;
-	const flowPages = (activeFlow?.pageIds ?? [])
-		.map((id) => pagesById[id])
-		.filter((p): p is DATA_EVY_Page => Boolean(p));
 
 	const rootRow = useRowById(activeRowId);
 
@@ -143,7 +138,7 @@ export function NavigationBreadcrumb() {
 								aria-current={
 									isPageActiveWithNoRow ? "page" : undefined
 								}
-								aria-label={`Select page ${breadcrumbLabelForPage(activePage, flowPages)}`}
+								aria-label={`Select page ${breadcrumbLabelForPage(activePage)}`}
 								onClick={() => {
 									capturePageFramePosition(activePage.id);
 									dispatchRow({
@@ -152,7 +147,7 @@ export function NavigationBreadcrumb() {
 									});
 								}}
 							>
-								{breadcrumbLabelForPage(activePage, flowPages)}
+								{breadcrumbLabelForPage(activePage)}
 							</button>
 						</>
 					)}

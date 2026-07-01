@@ -10,27 +10,23 @@ import SwiftUI
 struct EVYDropdownRow: View {
 
   private let view: DropdownRowViewData
-  private let source: String
-  private let destination: String
 
-  init(view: DropdownRowViewData, source: String, destination: String) {
+  init(view: DropdownRowViewData) {
     self.view = view
-    self.source = source
-    self.destination = destination
   }
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYDropdown(
-        title: view.title,
+        title: view.title ?? "",
         placeholder: view.placeholder,
-        data: source,
-        format: view.format,
-        destination: destination
+        data: view.source,
+        valueTemplate: view.value,
+        destination: view.destination
       )
     }
     .padding(.horizontal, Constants.majorPadding)
@@ -47,7 +43,7 @@ struct EVYDropdownRow: View {
         "destination": "{item.condition}",
         "actions": [],
         "title": "Condition",
-        "format": "{$datum.value}",
+        "value": "{$datum.value}",
         "placeholder": "Select a condition"
       }
       """,

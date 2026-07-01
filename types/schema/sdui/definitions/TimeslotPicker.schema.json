@@ -1,0 +1,60 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui/definitions/TimeslotPicker",
+	"title": "TimeslotPicker_Row",
+	"allOf": [
+		{
+			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
+		},
+		{
+			"type": "object",
+			"required": [
+				"type",
+				"start_time",
+				"end_time",
+				"timeslot_interval_minutes",
+				"label_interval_minutes",
+				"header_format",
+				"timeslot_format",
+				"source",
+				"destination"
+			],
+			"properties": {
+				"type": {
+					"const": "TimeslotPicker"
+				},
+				"title": {
+					"type": "string"
+				},
+				"source": {
+					"type": "string"
+				},
+				"destination": {
+					"type": "string"
+				},
+				"start_time": {
+					"type": "string"
+				},
+				"end_time": {
+					"type": "string"
+				},
+				"timeslot_interval_minutes": {
+					"type": "string"
+				},
+				"label_interval_minutes": {
+					"type": "string"
+				},
+				"header_format": {
+					"type": "string"
+				},
+				"header_subtitle": {
+					"type": "string"
+				},
+				"timeslot_format": {
+					"type": "string"
+				}
+			}
+		}
+	],
+	"unevaluatedProperties": false
+}

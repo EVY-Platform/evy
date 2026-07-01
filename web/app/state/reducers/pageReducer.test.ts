@@ -13,7 +13,6 @@ const mockTextWithConfig = MockTextBase as typeof MockTextBase & {
 };
 mockTextWithConfig.config = {
 	type: "Text",
-	source: "",
 	visible: "true",
 	actions: [],
 	title: "",

@@ -10,21 +10,19 @@ import SwiftUI
 struct EVYInputListRow: View {
 
   private let view: InputListRowViewData
-  private let source: String
 
-  init(view: InputListRowViewData, source: String) {
+  init(view: InputListRowViewData) {
     self.view = view
-    self.source = source
   }
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYInputList(
-        data: source,
+        data: view.source,
         format: view.format,
         placeholder: view.placeholder
       )

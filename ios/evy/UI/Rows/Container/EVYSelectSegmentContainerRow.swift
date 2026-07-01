@@ -20,8 +20,8 @@ struct EVYSelectSegmentContainerRow: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
           .padding(.horizontal, Constants.majorPadding)
       }
@@ -47,7 +47,6 @@ struct EVYSelectSegmentContainerRow: View {
       {
         "id": "preview-segment-row",
         "type": "SelectSegmentContainer",
-        "source": "",
         "actions": [],
         "title": "Select Segment Preview",
         "segments": ["Tab One", "Tab Two"],
@@ -55,7 +54,6 @@ struct EVYSelectSegmentContainerRow: View {
           {
             "id": "segment-tab-1",
             "type": "Text",
-            "source": "",
             "actions": [],
             "title": "First Tab Content",
             "subtitle": "Content for the first tab",
@@ -64,7 +62,6 @@ struct EVYSelectSegmentContainerRow: View {
           {
             "id": "segment-tab-2",
             "type": "Text",
-            "source": "",
             "actions": [],
             "title": "Second Tab Content",
             "subtitle": "Content for the second tab",

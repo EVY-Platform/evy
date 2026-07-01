@@ -74,7 +74,7 @@ export function getErrorState(page: Page): Locator {
 }
 
 export function getConfigPanel(page: Page): Locator {
-	return page.getByText("Configuration", { exact: true }).locator("..");
+	return page.getByTestId("config-panel");
 }
 
 /** Flow picker is visible when the app has finished loading (real API or injected flows). */

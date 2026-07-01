@@ -130,11 +130,12 @@ export default defineRow("CalendarRow", {
 		title: "Calendar row title",
 		start_time: "07:00",
 		end_time: "19:00",
-		timeslot_interval_minutes: 30,
-		label_interval_minutes: 60,
+		timeslot_interval_minutes: "30",
+		label_interval_minutes: "60",
 		header_format: "EEE d",
 		timeslot_format: "HH:mm",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
+		secondary: `{${MARKETPLACE_RESOURCE.ITEMS}.unavailable_selection}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

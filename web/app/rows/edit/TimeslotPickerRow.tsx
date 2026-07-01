@@ -1,3 +1,4 @@
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { useParseText } from "../../hooks/useParseText";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
@@ -120,17 +121,17 @@ export default defineRow("TimeslotPickerRow", {
 	config: {
 		type: "TimeslotPicker",
 		actions: [],
-		source: "",
+		source: `{${MARKETPLACE_RESOURCE.ITEMS}.delivery_selection}`,
 		visible: "true",
 		title: "Timeslot picker row title",
 		start_time: "07:00",
 		end_time: "19:00",
-		timeslot_interval_minutes: 30,
-		label_interval_minutes: 60,
+		timeslot_interval_minutes: "30",
+		label_interval_minutes: "60",
 		header_format: '{formatDatetime($datum, "EEE")}',
 		header_subtitle: '{formatDatetime($datum, "MMM do")}',
 		timeslot_format: '{formatDatetime($datum, "HH:mm")}',
-		destination: "",
+		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

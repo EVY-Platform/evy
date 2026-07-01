@@ -4,6 +4,30 @@ All UI in EVY is server-driven. On the API service we store SDUI as flat `flows`
 
 All attributes in SDUI are strings, and most are required.
 
+Row types are defined as standard JSON Schema files in `types/schema/sdui/definitions/*.schema.json`. Each row schema combines the common `UI_RowBase` shape from `types/schema/sdui/evy.schema.json` with row-specific properties and a unique `type.const` discriminator:
+
+```json
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "sdui/definitions/Calendar",
+    "title": "Calendar_Row",
+    "allOf": [
+        { "$ref": "../evy.schema.json#/$defs/UI_RowBase" },
+        {
+            "type": "object",
+            "required": ["type", "title", "start_time", "end_time"],
+            "properties": {
+                "type": { "const": "Calendar" },
+                "title": { "type": "string" },
+                "start_time": { "type": "string" },
+                "end_time": { "type": "string" }
+            }
+        }
+    ],
+    "unevaluatedProperties": false
+}
+```
+
 ## Flow
 
 Flows represent a full user journey (eg: creating an item, placing an order, etc). They are needed to correctly submit data from a set of pages with a single end state.
@@ -25,6 +49,7 @@ A page is an single screen in a flow, for example step 1 in a booking flow.
 ```
 {
     "id": "uuid",
+    "name": "string",    // Required. Developer-facing page name.
     "title": "string",   // Shown in the navbar
     "rows": [ROW],
     "footer": ROW        // Optional; shown as sticky footer
@@ -48,9 +73,11 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "id": "uuid",
     "type": "Button" | "Calendar" | "ColumnContainer" | "Heading" | "Text" | ... ,
 
+    // Required. Developer-facing row name.
+    "name": "string",
     // Required. Header of the row; empty string means no header.
     "title": "string",
-    // Row-type-specific attributes live at the row root, e.g. label, text, subtitle, placeholder, format, etc.
+    // Row-type-specific attributes live at the row root, e.g. label, text, subtitle, placeholder, value, etc.
     "label": "string",
     "text": "string",
     // Layout: "children" (array of rows), "child" (single row), "segments" (array of strings).
@@ -59,10 +86,11 @@ Rows are what are put into pages. They are the building block of the EVY server-
     // Optional single child row to display
     "child": ROW,
 
-    // Where the row reads option/list/entity data from (required string; use "" if unused).
-    "source": "string",
-    // Where input data is stored in a draft. Use canonical resource IDs such as "{[resource_id].title}".
-    "destination": "string",
+    // Binding fields (only on row types that declare them — see table below):
+    // source — where the row reads data (display text, options, collections, or location objects)
+    // destination — where writes go; may be a builder expression such as "{buildCurrency(item.price)}"
+    // secondary — greyed-out secondary data (Calendar only)
+    // value — datum display template for option rows, e.g. "{formatCurrency($datum.price)}"
 
     // Visibility predicate. Use "true" for always shown, or a condition expression to render only when it evaluates to true.
     "visible": "string",
@@ -75,6 +103,24 @@ Rows are what are put into pages. They are the building block of the EVY server-
     }]
 }
 ```
+
+#### Row binding fields
+
+`source`, `destination`, `secondary`, and datum display `value` are row-type-specific — do not add them to rows that do not declare them in the schema.
+
+| Row type | `source` | `destination` | `secondary` | `value` | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. |
+| `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. |
+| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware). |
+| `Calendar` | yes | yes | yes | no | `source` = selectable timeslots; `destination` = selected; `secondary` = greyed slots. |
+| `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. |
+| `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
+| `TextSelect` | yes | yes | no | no | `source` = current selected state; `destination` = write target. |
+| `PhotoGallery`, `Map`, `ListContainer`, `InputList` | yes | no | no | no | Read-only or collection source. |
+| All other rows | no | no | no | no | e.g. `Button`, `Text`, `TextAction`, `Heading`. |
+
+Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder.
 
 ### Actions
 

@@ -11,6 +11,7 @@ import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
+	DATA_EVY_RowData,
 	UI_Page,
 	UI_Row,
 } from "../types/generated/ts";
@@ -289,7 +290,7 @@ function decomposePage(
 ): DATA_EVY_Page {
 	return {
 		id: page.id,
-		name: (page.name ?? page.title) || "Page",
+		name: page.name,
 		title: page.title,
 		rowIds: page.rows.map((row) => decomposeRow(row, rowRows, now)),
 		footerRowId: page.footer
@@ -299,33 +300,63 @@ function decomposePage(
 	};
 }
 
+function isUiRow(value: unknown): value is UI_Row {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		"id" in value &&
+		"type" in value &&
+		"title" in value &&
+		"visible" in value
+	);
+}
+
+function isRowDataValue(value: unknown): value is DATA_EVY_RowData[string] {
+	return (
+		value === null ||
+		["string", "number", "boolean"].includes(typeof value) ||
+		(typeof value === "object" && value !== null)
+	);
+}
+
 function decomposeRow(
 	uiRow: UI_Row,
 	rowRows: DATA_EVY_Row[],
 	now: string,
 ): string {
-	const data: Record<string, unknown> = {};
+	const data: DATA_EVY_RowData = {};
 	for (const [key, value] of Object.entries(uiRow)) {
 		if (
 			["id", "name", "type", "visible", "child", "children"].includes(key)
 		) {
 			continue;
 		}
-		if (value !== undefined) {
+		if (value !== undefined && isRowDataValue(value)) {
 			data[key] = value;
 		}
 	}
-	if (uiRow.child) {
-		data.child_row_id = decomposeRow(uiRow.child, rowRows, now);
+	const childRow = uiRow.child;
+	if (childRow !== undefined) {
+		if (!isUiRow(childRow)) {
+			throw new Error(`Row ${uiRow.id} has an invalid child row`);
+		}
+		data.child_row_id = decomposeRow(childRow, rowRows, now);
 	}
-	if (Array.isArray(uiRow.children) && uiRow.children.length > 0) {
-		data.children_row_ids = uiRow.children.map((child) =>
-			decomposeRow(child, rowRows, now),
-		);
+
+	const childRows = uiRow.children;
+	if (childRows !== undefined) {
+		if (!Array.isArray(childRows) || !childRows.every(isUiRow)) {
+			throw new Error(`Row ${uiRow.id} has invalid children rows`);
+		}
+		if (childRows.length > 0) {
+			data.children_row_ids = childRows.map((child) =>
+				decomposeRow(child, rowRows, now),
+			);
+		}
 	}
 	rowRows.push({
 		id: uiRow.id,
-		name: (uiRow.name ?? uiRow.title) || uiRow.type,
+		name: uiRow.name,
 		type: uiRow.type,
 		visible: uiRow.visible || "true",
 		data,

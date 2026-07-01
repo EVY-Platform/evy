@@ -9,7 +9,6 @@ export default defineRow(typeName, {
 	config: {
 		type: "ColumnContainer",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "Column container row title",
 		children: [],

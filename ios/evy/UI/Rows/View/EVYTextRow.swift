@@ -20,21 +20,21 @@ struct EVYTextRow: View {
 
     HStack(alignment: .center, spacing: 8) {
       VStack(alignment: .leading) {
-        if !content.title.isEmpty {
-          EVYTextView(content.title)
+        if let title = content.title, !title.isEmpty {
+          EVYTextView(title)
             .frame(maxWidth: .infinity, alignment: .leading)
             .lineLimit(1)
             .truncationMode(.tail)
         }
-        if !content.subtitle.isEmpty {
-          EVYTextView(content.subtitle, style: .info)
+        if let subtitle = content.subtitle, !subtitle.isEmpty {
+          EVYTextView(subtitle, style: .info)
             .frame(maxWidth: .infinity, alignment: .leading)
             .lineLimit(3)
             .truncationMode(.tail)
         }
       }
-      if !content.label.isEmpty {
-        EVYTextView(content.label, style: .info)
+      if let label = content.label, !label.isEmpty {
+        EVYTextView(label, style: .info)
       }
     }
     .padding(.horizontal, Constants.majorPadding)

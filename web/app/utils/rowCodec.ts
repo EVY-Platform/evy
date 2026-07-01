@@ -57,10 +57,7 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 		data.children_row_ids = row.config.childrenRowIds;
 	}
 
-	const name =
-		typeof row.config.title === "string" && row.config.title
-			? row.config.title
-			: row.config.type;
+	const name = row.config.name;
 
 	records.push({
 		id: row.id,

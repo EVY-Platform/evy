@@ -14,18 +14,20 @@ struct EVYMapRow: View {
   }
 
   private var resolvedLocation: EVYJson {
-    (try? EVY.getDataFromText(view.location)) ?? .string(view.location)
+    let source = view.source
+    guard !source.isEmpty else { return .string("") }
+    return (try? EVY.getDataFromText(source)) ?? .string(source)
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.padding) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYMap(location: resolvedLocation)
-      if !view.subtitle.isEmpty {
-        EVYTextView(view.subtitle, style: .info)
+      if let subtitle = view.subtitle, !subtitle.isEmpty {
+        EVYTextView(subtitle, style: .info)
           .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
@@ -39,11 +41,9 @@ struct EVYMapRow: View {
       {
         "id": "preview-map-row",
         "type": "Map",
-        "source": "",
-        "destination": "",
+        "source": "{address.location}",
         "actions": [],
         "title": "Pickup location",
-        "location": "{address.location}",
         "subtitle": "Meet near the main entrance"
       }
       """,

@@ -36,6 +36,7 @@ import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
 import type { UpdateResponse } from "./generated/ts/rpc/update.response";
+import { SDUI_DEFINITIONS } from "./generated/ts/sdui/definitions.generated";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
@@ -86,16 +87,40 @@ import updateRequestRaw from "./schema/rpc/update.request.schema.json" with {
 import updateResponseRaw from "./schema/rpc/update.response.schema.json" with {
 	type: "json",
 };
+import sduiActionRaw from "./schema/sdui/action.schema.json" with {
+	type: "json",
+};
 import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
 
 /** Canonical base URI for ajv $ref resolution */
 const SCHEMA_BASE = "https://evy.local";
+
+/**
+ * Derived from SDUI_DEFINITIONS so new row types register automatically.
+ * Each definition schema embeds its own $id (e.g. "sdui/definitions/Button"),
+ * which maps directly to the relative path key used for $ref resolution.
+ */
+const SDUI_DEFINITION_SCHEMAS: Record<
+	string,
+	Record<string, unknown>
+> = Object.fromEntries(
+	Object.values(SDUI_DEFINITIONS).map((schema) => {
+		const s = schema as Record<string, unknown>;
+		const id = s.$id;
+		if (typeof id !== "string") {
+			throw new Error("validators: SDUI definition schema missing $id");
+		}
+		return [`${id}.schema.json`, s];
+	}),
+);
 
 const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"common/json.schema.json": commonJsonRaw as Record<string, unknown>,
 	"common/rpc.schema.json": commonRpcRaw as Record<string, unknown>,
 	"data/data.schema.json": dataSchemaRaw as Record<string, unknown>,
 	"data/primitive.schema.json": primitiveSchemaRaw as Record<string, unknown>,
+	"sdui/action.schema.json": sduiActionRaw as Record<string, unknown>,
+	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
@@ -247,6 +272,8 @@ const ENTITY_SCHEMA_FILES = [
 	"common/rpc.schema.json",
 	"data/data.schema.json",
 	"data/primitive.schema.json",
+	"sdui/action.schema.json",
+	...Object.keys(SDUI_DEFINITION_SCHEMAS).sort(),
 	"sdui/evy.schema.json",
 	"files/file.schema.json",
 	"rpc/get.response.schema.json",
@@ -254,10 +281,14 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/update.response.schema.json",
 	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
-] as const;
+];
 
 let requestAjv: InstanceType<typeof Ajv2020> | null = null;
 let entityAjv: InstanceType<typeof Ajv2020> | null = null;
+
+function addAjvFormats(ajv: InstanceType<typeof Ajv2020>): void {
+	addFormats(ajv as unknown as Parameters<typeof addFormats>[0]);
+}
 
 function getRequestAjv(): InstanceType<typeof Ajv2020> {
 	if (!requestAjv) {
@@ -265,7 +296,7 @@ function getRequestAjv(): InstanceType<typeof Ajv2020> {
 			allErrors: true,
 			strict: false,
 		});
-		addFormats(ajv);
+		addAjvFormats(ajv);
 		for (const f of REQUEST_SCHEMA_FILES) {
 			ajv.addSchema(getPrepared(f));
 		}
@@ -280,7 +311,7 @@ function getEntityAjv(): InstanceType<typeof Ajv2020> {
 			allErrors: true,
 			strict: false,
 		});
-		addFormats(ajv);
+		addAjvFormats(ajv);
 		for (const f of ENTITY_SCHEMA_FILES) {
 			ajv.addSchema(getPrepared(f));
 		}

@@ -39,7 +39,7 @@ export function findPageReferences(
 	const results: PageReferenceEntry[] = [];
 
 	for (const page of flowPages) {
-		const pageLabel = breadcrumbLabelForPage(page, flowPages);
+		const pageLabel = breadcrumbLabelForPage(page);
 
 		for (const row of Object.values(rowsById)) {
 			const actions = Array.isArray(row.data.actions)
@@ -52,10 +52,7 @@ export function findPageReferences(
 			);
 			if (!references) continue;
 
-			const rowLabel =
-				typeof row.data.title === "string" && row.data.title
-					? row.data.title
-					: row.type;
+			const rowLabel = row.name;
 			results.push({
 				referenceKey: `${page.id}:${row.id}`,
 				pageLabel,

@@ -12,7 +12,7 @@ export default defineRow("DropdownRow", {
 		visible: "true",
 		title: "Dropdown row title",
 		placeholder: "placeholder",
-		format: "{$datum.value}",
+		value: "{$datum.value}",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.condition}`,
 	} satisfies RowConfig,
 	render: (row) => (

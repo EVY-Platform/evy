@@ -1,0 +1,75 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui-row-definition-schema",
+	"title": "SDUI_RowDefinitionSchema",
+	"description": "Convention schema for standard JSON Schema files that define an SDUI row type.",
+	"type": "object",
+	"additionalProperties": true,
+	"required": ["$schema", "$id", "title", "allOf", "unevaluatedProperties"],
+	"properties": {
+		"$schema": {
+			"const": "https://json-schema.org/draft/2020-12/schema"
+		},
+		"$id": {
+			"type": "string",
+			"pattern": "^sdui/definitions/[A-Za-z0-9]+$"
+		},
+		"title": {
+			"type": "string",
+			"pattern": "^[A-Za-z0-9]+_Row$"
+		},
+		"allOf": {
+			"type": "array",
+			"minItems": 2,
+			"prefixItems": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["$ref"],
+					"properties": {
+						"$ref": {
+							"const": "../evy.schema.json#/$defs/UI_RowBase"
+						}
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": true,
+					"required": ["type", "required", "properties"],
+					"properties": {
+						"type": {
+							"const": "object"
+						},
+						"required": {
+							"type": "array",
+							"contains": {
+								"const": "type"
+							},
+							"items": {
+								"type": "string"
+							}
+						},
+						"properties": {
+							"type": "object",
+							"required": ["type"],
+							"properties": {
+								"type": {
+									"type": "object",
+									"required": ["const"],
+									"properties": {
+										"const": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		"unevaluatedProperties": {
+			"const": false
+		}
+	}
+}

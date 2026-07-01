@@ -26,7 +26,7 @@
 		"UI_Page": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "title", "rows"],
+			"required": ["id", "title", "rows", "name"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -45,14 +45,14 @@
 					"$ref": "#/$defs/UI_Row"
 				},
 				"name": {
-					"type": "string"
+					"type": "string",
+					"minLength": 1
 				}
 			}
 		},
-		"UI_Row": {
+		"UI_RowBase": {
 			"type": "object",
-			"additionalProperties": false,
-			"required": ["id", "type", "source", "actions", "visible", "title"],
+			"required": ["id", "type", "actions", "visible", "name"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -84,17 +84,11 @@
 						"TimeslotPicker"
 					]
 				},
-				"source": {
-					"type": "string"
-				},
-				"destination": {
-					"type": "string"
-				},
 				"actions": {
 					"type": "array",
 					"default": [],
 					"items": {
-						"$ref": "#/$defs/UI_RowAction"
+						"$ref": "action.schema.json"
 					}
 				},
 				"visible": {
@@ -103,101 +97,78 @@
 				"title": {
 					"type": "string"
 				},
-				"label": {
-					"type": "string"
-				},
-				"expandLabel": {
-					"type": "string"
-				},
-				"text": {
-					"type": "string"
-				},
-				"value": {
-					"type": "string"
-				},
-				"placeholder": {
-					"type": "string"
-				},
-				"format": {
-					"type": "string"
-				},
-				"child": {
-					"$ref": "#/$defs/UI_Row"
-				},
-				"action": {
-					"type": "string"
-				},
-				"start_time": {
-					"type": "string"
-				},
-				"end_time": {
-					"type": "string"
-				},
-				"timeslot_interval_minutes": {
-					"type": "integer"
-				},
-				"label_interval_minutes": {
-					"type": "integer"
-				},
-				"header_format": {
-					"type": "string"
-				},
-				"header_subtitle": {
-					"type": "string"
-				},
-				"timeslot_format": {
-					"type": "string"
-				},
-				"subtitle": {
-					"type": "string"
-				},
-				"location": {
-					"type": "string"
-				},
-				"icon": {
-					"type": "string"
-				},
-				"image": {
-					"type": "string"
-				},
-				"content": {
-					"type": "string"
-				},
-				"photos": {
-					"type": "string"
-				},
-				"children": {
-					"type": "array",
-					"items": {
-						"$ref": "#/$defs/UI_Row"
-					}
-				},
-				"segments": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				},
 				"name": {
-					"type": "string"
+					"type": "string",
+					"minLength": 1
 				}
 			}
 		},
-		"UI_RowAction": {
-			"type": "object",
-			"additionalProperties": false,
-			"required": ["condition", "false", "true"],
-			"properties": {
-				"condition": {
-					"type": "string"
+		"UI_Row": {
+			"oneOf": [
+				{
+					"$ref": "definitions/Button.schema.json"
 				},
-				"false": {
-					"type": "string"
+				{
+					"$ref": "definitions/Calendar.schema.json"
 				},
-				"true": {
-					"type": "string"
+				{
+					"$ref": "definitions/ColumnContainer.schema.json"
+				},
+				{
+					"$ref": "definitions/Dropdown.schema.json"
+				},
+				{
+					"$ref": "definitions/Heading.schema.json"
+				},
+				{
+					"$ref": "definitions/Text.schema.json"
+				},
+				{
+					"$ref": "definitions/TextAction.schema.json"
+				},
+				{
+					"$ref": "definitions/TextExpand.schema.json"
+				},
+				{
+					"$ref": "definitions/InlinePicker.schema.json"
+				},
+				{
+					"$ref": "definitions/Map.schema.json"
+				},
+				{
+					"$ref": "definitions/InputList.schema.json"
+				},
+				{
+					"$ref": "definitions/Input.schema.json"
+				},
+				{
+					"$ref": "definitions/ListContainer.schema.json"
+				},
+				{
+					"$ref": "definitions/ListItem.schema.json"
+				},
+				{
+					"$ref": "definitions/Search.schema.json"
+				},
+				{
+					"$ref": "definitions/PhotoGallery.schema.json"
+				},
+				{
+					"$ref": "definitions/SelectPhoto.schema.json"
+				},
+				{
+					"$ref": "definitions/SelectSegmentContainer.schema.json"
+				},
+				{
+					"$ref": "definitions/TextArea.schema.json"
+				},
+				{
+					"$ref": "definitions/TextSelect.schema.json"
+				},
+				{
+					"$ref": "definitions/TimeslotPicker.schema.json"
 				}
-			}
+			]
 		}
 	}
 }

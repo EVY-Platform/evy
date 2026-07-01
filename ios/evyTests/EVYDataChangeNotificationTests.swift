@@ -114,4 +114,57 @@ final class EVYDataChangeNotificationTests: XCTestCase {
       "Namespace:resource notification should not carry an EVYDataChange payload"
     )
   }
+
+  func testMatchesReturnsTrueForExactRecord() {
+    let change = EVYDataChange(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.rows.rawValue,
+      id: "row-1"
+    )
+    XCTAssertTrue(
+      change.matches(
+        namespace: EVYNamespace.evy,
+        resource: EVYCoreResource.rows.rawValue,
+        id: "row-1"
+      )
+    )
+  }
+
+  func testMatchesReturnsFalseWhenIdDiffers() {
+    let change = EVYDataChange(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.rows.rawValue,
+      id: "row-1"
+    )
+    XCTAssertFalse(
+      change.matches(
+        namespace: EVYNamespace.evy,
+        resource: EVYCoreResource.rows.rawValue,
+        id: "row-2"
+      )
+    )
+  }
+
+  func testFromExtractsPayloadFromNotification() {
+    let change = EVYDataChange(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.pages.rawValue,
+      id: "page-1"
+    )
+    let notification = Notification(
+      name: .evyDataChanged,
+      object: change.recordKey,
+      userInfo: [EVYDataChange.userInfoKey: change]
+    )
+    XCTAssertEqual(EVYDataChange.from(notification), change)
+  }
+
+  func testFromReturnsNilWhenPayloadMissing() {
+    let notification = Notification(
+      name: .evyDataChanged,
+      object: EVYCoreResource.rows.rawValue,
+      userInfo: nil
+    )
+    XCTAssertNil(EVYDataChange.from(notification))
+  }
 }

@@ -12,6 +12,15 @@ let timeslotWidth: CGFloat = Constants.base * 18
 struct EVYTimeslot: Equatable {
   let timeslot: String
   let available: Bool
+  let dateTimeISO: String
+  let isSelected: Bool
+
+  init(timeslot: String, available: Bool, dateTimeISO: String = "", isSelected: Bool = false) {
+    self.timeslot = timeslot
+    self.available = available
+    self.dateTimeISO = dateTimeISO
+    self.isSelected = isSelected
+  }
 }
 
 struct EVYTimeslotDate: Equatable {
@@ -23,13 +32,14 @@ struct EVYTimeslotDate: Equatable {
 struct EVYTimeslotColumn: View {
   let timeslotDate: EVYTimeslotDate
   let numberOfTimeslotsPerDay: Int
+  let onSelect: ((String) -> Void)?
 
   var body: some View {
     VStack {
       EVYTextView(timeslotDate.header)
       EVYTextView(timeslotDate.subtitle)
-      ForEach((0...(numberOfTimeslotsPerDay - 1)), id: \.self) { timeslotIndex in
-        if timeslotDate.timeslots.count - 1 < timeslotIndex {
+      ForEach(0..<numberOfTimeslotsPerDay, id: \.self) { timeslotIndex in
+        if timeslotDate.timeslots.count <= timeslotIndex {
           EVYRectangle.fixedWidth(
             content: EVYTextView("-"),
             style: .clear,
@@ -38,8 +48,13 @@ struct EVYTimeslotColumn: View {
           let t = timeslotDate.timeslots[timeslotIndex]
           EVYRectangle.fixedWidth(
             content: EVYTextView(t.timeslot),
-            style: t.available ? .primary : .secondary,
-            width: timeslotWidth)
+            style: t.isSelected ? .primary : (t.available ? .secondary : .clear),
+            width: timeslotWidth
+          )
+          .contentShape(Rectangle())
+          .onTapGesture {
+            onSelect?(t.dateTimeISO)
+          }
         }
       }
     }
@@ -54,26 +69,36 @@ struct EVYTimeslotPicker: View {
     }
   }
 
+  private let destination: String
   private let timeslotDates: EVYState<[EVYTimeslotDate]>
 
   @State private var selectedGroupIndex: Int = 0
   @State private var tabViewHeight: CGFloat = 0
 
-  init(content: TimeslotPickerRowViewData, source: String) {
+  init(content: TimeslotPickerRowViewData, source: String, destination: String) {
+    self.destination = destination
     timeslotDates = EVYState(
-      watches: [source],
-      setter: { Self.buildDates(content: content, source: source) }
+      watches: [source, destination],
+      setter: { Self.buildDates(content: content, source: source, destination: destination) }
     )
   }
 
   @MainActor
   private static func buildDates(
-    content: TimeslotPickerRowViewData, source: String
+    content: TimeslotPickerRowViewData,
+    source: String,
+    destination: String
   ) -> [EVYTimeslotDate] {
     EVYDatetime.buildTimeslotPickerDates(
       row: content,
-      selections: EVYDatetime.readTimeslots(source)
+      availableSelections: EVYDatetime.readTimeslots(source),
+      selectedTimeslot: EVYDatetime.readTimeslot(destination)
     )
+  }
+
+  private func selectTimeslot(_ dateTimeISO: String) {
+    guard !destination.isEmpty else { return }
+    try? EVY.writeRawValue(dateTimeISO, to: destination)
   }
 
   private var numberOfTimeslotsPerDay: Int {
@@ -85,7 +110,8 @@ struct EVYTimeslotPicker: View {
       ForEach(groupedDays[index].indices, id: \.self) { dayIndex in
         EVYTimeslotColumn(
           timeslotDate: groupedDays[index][dayIndex],
-          numberOfTimeslotsPerDay: numberOfTimeslotsPerDay
+          numberOfTimeslotsPerDay: numberOfTimeslotsPerDay,
+          onSelect: selectTimeslot
         )
         .padding(.horizontal, Constants.padding)
       }
@@ -163,7 +189,10 @@ private struct EVYTimeslotPickerPreview: View {
     if let data = EVYPreviewMockData.calendarContentJSON.data(using: .utf8),
       let content = try? JSONDecoder().decode(TimeslotPickerRowViewData.self, from: data)
     {
-      EVYTimeslotPicker(content: content, source: "{pickup_selection}")
+      EVYTimeslotPicker(
+        content: content,
+        source: "{pickup_selection}",
+        destination: "{selected_timeslot}")
     }
   }
 }

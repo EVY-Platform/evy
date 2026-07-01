@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import type { ServiceResource } from "../api/sync";
 import {
 	buildDatumCandidate,
@@ -13,40 +13,6 @@ import {
 	getIdDisplayParts,
 	type IdCandidate,
 } from "./idCandidates";
-
-function makeDataRow(
-	id: string,
-	type: string,
-	data: Record<string, unknown>,
-): DATA_EVY_Row {
-	return {
-		id,
-		name: id,
-		type,
-		visible: "true",
-		data: data as DATA_EVY_Row["data"],
-		createdAt: "",
-		updatedAt: "",
-	};
-}
-
-const rowsById: Record<string, DATA_EVY_Row> = {
-	"parent-row": makeDataRow("parent-row", "Text", {
-		title: "Parent title",
-		placeholder: "Type here",
-		child_row_id: "child-row",
-		children_row_ids: ["nested-row"],
-	}),
-	"child-row": makeDataRow("child-row", "Text", {
-		title: "Child title",
-		subtitle: "Child subtitle",
-		text: "Child text",
-	}),
-	"nested-row": makeDataRow("nested-row", "Text", {
-		icon: "::star::",
-		title: "Nested title",
-	}),
-};
 
 const flowsById: Record<string, DATA_EVY_Flow> = {
 	"flow-1": {
@@ -113,7 +79,7 @@ describe("idCandidates", () => {
 			buildIdCandidates(flowsById, pagesById, serviceResources),
 		).toEqual([
 			{ id: "flow-1", name: "Checkout", category: "Flow" },
-			{ id: "page-1", name: "Item Details", category: "Page" },
+			{ id: "page-1", name: "page-1", category: "Page" },
 			{ id: "page-2", name: "page-2", category: "Page" },
 			{ id: "service-1", name: "service-1", category: "Service" },
 			{ id: "res-1", name: "item", category: "Resource" },
@@ -160,19 +126,26 @@ describe("idCandidates", () => {
 		});
 	});
 
-	test("buildRowAttributeCandidates returns unique root, content, and nested row attributes", () => {
-		expect(buildRowAttributeCandidates(rowsById)).toEqual(
-			[
-				"destination",
-				"icon",
-				"placeholder",
-				"source",
-				"subtitle",
-				"text",
-				"title",
-				"visible",
-			].map(makeAttributeCandidate),
-		);
+	test("buildRowAttributeCandidates derives candidates from SDUI definitions and static root names", () => {
+		const candidates = buildRowAttributeCandidates();
+		const names = candidates.map((c) => c.name);
+
+		expect(names).toContain("source");
+		expect(names).toContain("destination");
+		expect(names).toContain("secondary");
+		expect(names).toContain("title");
+		expect(names).toContain("visible");
+		expect(names).toContain("subtitle");
+		expect(names).toContain("placeholder");
+		expect(names).not.toContain("childRowId");
+		expect(names).not.toContain("childrenRowIds");
+		expect(names).not.toContain("actions");
+		expect(new Set(names).size).toBe(names.length);
+		expect(
+			candidates.every(
+				(c) => c.category === "Attribute" && c.insertMode === "text",
+			),
+		).toBe(true);
 	});
 
 	test("buildFunctionCandidates returns action, expression, formatting, and builder functions", () => {
@@ -365,6 +338,30 @@ describe("idCandidates", () => {
 		]);
 		expect(getIdDisplayParts("length()", [functionCandidate])).toEqual([
 			{ type: "text", text: "length()", start: 0, end: 8 },
+		]);
+	});
+
+	test("getIdDisplayParts resolves flow and page ids as named candidate chips", () => {
+		expect(
+			getIdDisplayParts("navigate(flow-1, page-1)", candidates),
+		).toEqual([
+			{ type: "text", text: "navigate(", start: 0, end: 9 },
+			{
+				type: "candidate",
+				rawId: "flow-1",
+				displayName: "Edit item",
+				start: 9,
+				end: 15,
+			},
+			{ type: "text", text: ", ", start: 15, end: 17 },
+			{
+				type: "candidate",
+				rawId: "page-1",
+				displayName: "Checkout",
+				start: 17,
+				end: 23,
+			},
+			{ type: "text", text: ")", start: 23, end: 24 },
 		]);
 	});
 });

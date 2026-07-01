@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui/definitions/TextArea",
+	"title": "TextArea_Row",
+	"allOf": [
+		{
+			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
+		},
+		{
+			"type": "object",
+			"required": ["type"],
+			"properties": {
+				"type": {
+					"const": "TextArea"
+				},
+				"title": {
+					"type": "string"
+				},
+				"source": {
+					"type": "string"
+				},
+				"destination": {
+					"type": "string"
+				},
+				"placeholder": {
+					"type": "string"
+				}
+			}
+		}
+	],
+	"unevaluatedProperties": false
+}

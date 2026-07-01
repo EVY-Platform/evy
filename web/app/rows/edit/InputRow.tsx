@@ -12,13 +12,12 @@ export default defineRow("InputRow", {
 		visible: "true",
 		title: "Input row title",
 		placeholder: "placeholder",
-		value: "",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.title}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>
 			<Input
-				value={row.config.value}
+				value={row.config.source ?? ""}
 				placeholder={row.config.placeholder}
 			/>
 		</RowLayout>

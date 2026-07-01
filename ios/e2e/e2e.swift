@@ -247,21 +247,21 @@ class E2ETestBase: XCTestCase {
             Self.inputRow(
               id: "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
               title: "Title",
-              value: "{title}",
+              source: nil,
               placeholder: "Item",
               destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
             ),
             Self.inputRow(
               id: "668aeb79-d8ba-43b7-9619-07f91d0a1908",
               title: "Price",
-              value: "{formatCurrency(price)}",
+              source: "{formatCurrency(price)}",
               placeholder: "0",
               destination: "{buildCurrency(\(MARKETPLACE_ITEMS_RESOURCE_ID).price)}"
             ),
             Self.inputRow(
               id: "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
               title: "Width",
-              value: "{formatDimension(width)}",
+              source: "{formatDimension(width)}",
               placeholder: "0",
               destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).width}"
             ),
@@ -430,8 +430,6 @@ class E2ETestBase: XCTestCase {
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
               "type": "ColumnContainer",
-              "source": "",
-              "destination": "",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -464,8 +462,6 @@ class E2ETestBase: XCTestCase {
     var row: [String: Any] = [
       "id": id,
       "type": text.isEmpty ? "Text" : "TextExpand",
-      "source": "",
-      "destination": "",
       "actions": [],
       "visible": visible,
       "title": title,
@@ -490,8 +486,6 @@ class E2ETestBase: XCTestCase {
     return [
       "id": id,
       "type": "ListItem",
-      "source": "",
-      "destination": "",
       "actions": [],
       "visible": visible,
       "title": title,
@@ -503,22 +497,24 @@ class E2ETestBase: XCTestCase {
   static func inputRow(
     id: String,
     title: String,
-    value: String,
+    source: String?,
     placeholder: String,
     destination: String,
     visible: String = "true"
   ) -> [String: Any] {
-    return [
+    var row: [String: Any] = [
       "id": id,
       "type": "Input",
-      "source": "",
       "visible": visible,
       "title": title,
-      "value": value,
       "placeholder": placeholder,
       "destination": destination,
       "actions": [],
     ]
+    if let source, !source.isEmpty {
+      row["source"] = source
+    }
+    return row
   }
 
   static func buttonRow(
@@ -530,8 +526,6 @@ class E2ETestBase: XCTestCase {
     return [
       "id": id,
       "type": "Button",
-      "source": "",
-      "destination": "",
       "visible": visible,
       "title": "",
       "label": label,
@@ -762,6 +756,51 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
+  func testWebSocketRowUpdatePreservesUnrelatedRowState() async throws {
+    let inputField = app.textFields["textField_e2e.unrelated_input"]
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+    XCTAssertTrue(
+      inputField.waitForExistence(timeout: 5),
+      "Unrelated input row should be visible on the home screen")
+
+    let typedText = "keep me \(Int(Date().timeIntervalSince1970))"
+    inputField.tap()
+    inputField.typeText(typedText)
+    XCTAssertEqual(inputField.value as? String, typedText)
+
+    let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
+    let emitter = WSEmitter()
+    do {
+      try await emitter.connect(host: apiHost)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      try await emitter.updateSDUI(
+        flowData: createHomeFlowData(buttonLabel: updatedLabel),
+        flowId: E2EFlowIds.webSocketHomeFlow
+      )
+    } catch {
+      XCTFail("Failed to emit update: \(error.localizedDescription)")
+      return
+    }
+
+    let updatedButton = app.buttons[updatedLabel]
+    XCTAssertTrue(
+      updatedButton.waitForExistence(timeout: 10),
+      "Button should update to '\(updatedLabel)' after notification")
+    XCTAssertEqual(
+      inputField.value as? String, typedText,
+      "Unrelated input should retain typed text after a row-only SDUI update")
+
+    try? await emitter.updateSDUI(
+      flowData: createHomeFlowData(buttonLabel: "View"),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    await emitter.disconnect()
+  }
+
+  @MainActor
   func testConditionalActionEvaluatesLogicalExpression() async throws {
     let viewItemButton = app.buttons["View"]
     XCTAssertTrue(
@@ -953,12 +992,11 @@ final class WebSocketE2ETests: E2ETestBase {
     }
     let testTitle = "Test Item Title \(Int(Date().timeIntervalSince1970))"
     clearAndType(field: titleField, text: testTitle, placeholder: "Item")
-    let textFieldValue = titleField.value as? String ?? ""
-    XCTAssertTrue(
-      textFieldValue.contains("Test") || textFieldValue.contains("Item"),
-      "Text field should contain typed text, got: '\(textFieldValue)'")
     scrollView.tap()
     try await Task.sleep(for: .milliseconds(500))
+    XCTAssertTrue(
+      app.staticTexts[testTitle].waitForExistence(timeout: 2),
+      "Title should remain visible after blur, got no static text for '\(testTitle)'")
 
     guard
       let priceTextField = findElementWithScroll(
@@ -977,11 +1015,12 @@ final class WebSocketE2ETests: E2ETestBase {
       return
     }
     clearAndType(field: priceField, text: "99", placeholder: "0")
-    let priceValue = priceField.value as? String ?? ""
-    XCTAssertTrue(
-      priceValue.contains("99"), "Price field should contain typed value, got: '\(priceValue)'")
     scrollView.tap()
     try await Task.sleep(for: .milliseconds(500))
+    XCTAssertTrue(
+      app.staticTexts.matching(NSPredicate(format: "label CONTAINS '99'")).firstMatch
+        .waitForExistence(timeout: 2),
+      "Price should remain visible after blur")
 
     guard
       let widthTextField = findElementWithScroll(
@@ -1000,11 +1039,12 @@ final class WebSocketE2ETests: E2ETestBase {
       return
     }
     clearAndType(field: widthField, text: "50", placeholder: "0")
-    let widthValue = widthField.value as? String ?? ""
-    XCTAssertTrue(
-      widthValue.contains("50"), "Width field should contain typed value, got: '\(widthValue)'")
     scrollView.tap()
     try await Task.sleep(for: .milliseconds(500))
+    XCTAssertTrue(
+      app.staticTexts.matching(NSPredicate(format: "label CONTAINS '50'")).firstMatch
+        .waitForExistence(timeout: 2),
+      "Width should remain visible after blur")
 
     let submitButton = app.buttons["Submit"]
     XCTAssertTrue(
@@ -1082,12 +1122,17 @@ final class WebSocketE2ETests: E2ETestBase {
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
               "type": "ColumnContainer",
-              "source": "",
-              "destination": "",
               "actions": [],
               "visible": "true",
               "title": "",
               "children": [
+                Self.inputRow(
+                  id: "e2e-unrelated-input-row",
+                  title: "Notes",
+                  source: nil,
+                  placeholder: "Type here",
+                  destination: "e2e.unrelated_input"
+                ),
                 Self.buttonRow(
                   id: "441c1433-446b-4682-854d-5d795ef52709",
                   label: buttonLabel,

@@ -72,9 +72,9 @@ private struct EVYPhotoTileView: View {
 
 struct EVYSelectPhoto: View {
   var title: String?
-  let subtitle: String
-  let icon: String
-  let content: String
+  let subtitle: String?
+  let icon: String?
+  let content: String?
   let destination: String
 
   @State private var photoTiles: [EVYPhotoTile] = []
@@ -82,10 +82,10 @@ struct EVYSelectPhoto: View {
 
   init(
     title: String?,
-    subtitle: String,
-    icon: String,
-    content: String,
-    data: String,
+    subtitle: String?,
+    icon: String?,
+    content: String?,
+    data: String?,
     destination: String
   ) {
     self.title = title
@@ -94,7 +94,8 @@ struct EVYSelectPhoto: View {
     self.subtitle = subtitle
     self.destination = destination
 
-    if let props = try? EVY.getValueFromText(data),
+    if let data,
+      let props = try? EVY.getValueFromText(data),
       let jsonData = props.value.data(using: .utf8),
       let ids = try? JSONDecoder().decode([String].self, from: jsonData)
     {
@@ -136,16 +137,17 @@ struct EVYSelectPhoto: View {
         }
       }
 
-      EVYTextView(subtitle, style: .info)
-        .padding(.vertical, Constants.padding)
+      if let subtitle {
+        EVYTextView(subtitle, style: .info)
+          .padding(.vertical, Constants.padding)
+      }
     }
     .onChange(of: photoTiles) {
       let currentIds = photoTiles.compactMap(\.imageId)
       guard currentIds != lastCommittedIds else { return }
       lastCommittedIds = currentIds
       do {
-        let encoded = try JSONEncoder().encode(currentIds)
-        try EVY.updateData(encoded, at: destination)
+        try EVY.writeRawValue(EVYJson.array(currentIds.map { .string($0) }), to: destination)
       } catch {
         #if DEBUG
           print("[EVYSelectPhoto] Error updating photo ids: \(error)")
@@ -184,8 +186,8 @@ struct EVYSelectPhoto: View {
 
 private struct EVYSelectPhotoButton: View {
   let fullScreen: Bool
-  let icon: String
-  let content: String
+  let icon: String?
+  let content: String?
 
   @State private var selectedItem: PhotosPickerItem?
   @Binding var photoTiles: [EVYPhotoTile]
@@ -195,8 +197,8 @@ private struct EVYSelectPhotoButton: View {
       selection: $selectedItem,
       label: {
         let stack = VStack {
-          EVYTextView(icon)
-          EVYTextView(content)
+          if let icon { EVYTextView(icon) }
+          if let content { EVYTextView(content) }
         }
         if fullScreen {
           stack

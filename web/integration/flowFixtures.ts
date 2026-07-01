@@ -8,6 +8,7 @@ import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
 } from "../app/api/sync";
+import { getRowBindingFields } from "../app/rows/rowFields";
 
 interface ServerRowInput {
 	id?: string;
@@ -16,6 +17,7 @@ interface ServerRowInput {
 	destination?: string;
 	actions: RowAction[];
 	visible?: string;
+	name?: string;
 	title: string;
 	children?: ServerRowInput[];
 	child?: ServerRowInput;
@@ -31,6 +33,7 @@ interface ServerRowInput {
 
 interface ServerPageInput {
 	id?: string;
+	name?: string;
 	title: string;
 	rows?: ServerRowInput[];
 	footer?: ServerRowInput;
@@ -38,11 +41,20 @@ interface ServerPageInput {
 
 function ensureRowId(row: ServerRowInput): ServerRow {
 	const { children, child, ...rowRest } = row;
-	return {
+	const base: Record<string, unknown> = {
 		...rowRest,
 		id: row.id ?? crypto.randomUUID(),
-		source: row.source ?? "",
+		name: row.name ?? row.title,
 		visible: row.visible ?? "true",
+	};
+	for (const field of getRowBindingFields(row.type)) {
+		const value = row[field];
+		if (typeof value === "string" && value.length > 0) {
+			base[field] = value;
+		}
+	}
+	return {
+		...base,
 		...(children !== undefined ? { children: ensureRowIds(children) } : {}),
 		...(child !== undefined ? { child: ensureRowId(child) } : {}),
 	} as ServerRow;
@@ -52,6 +64,33 @@ function ensureRowIds(rows: ServerRowInput[]): ServerRow[] {
 	return rows.map(ensureRowId);
 }
 
+function fillServerRowName(row: ServerRow): ServerRow {
+	const children = (row as { children?: ServerRow[] }).children;
+	const child = (row as { child?: ServerRow }).child;
+	return {
+		...row,
+		name: row.name || row.title,
+		...(children !== undefined
+			? { children: children.map(fillServerRowName) }
+			: {}),
+		...(child !== undefined ? { child: fillServerRowName(child) } : {}),
+	} as ServerRow;
+}
+
+function fillEntityNames(flows: ServerFlow[]): ServerFlow[] {
+	return flows.map((flow) => ({
+		...flow,
+		pages: flow.pages.map((page) => ({
+			...page,
+			name: page.name || page.title,
+			rows: page.rows.map(fillServerRowName),
+			...(page.footer !== undefined
+				? { footer: fillServerRowName(page.footer) }
+				: {}),
+		})),
+	}));
+}
+
 export function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 	return [
 		{
@@ -59,6 +98,7 @@ export function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 			name: "Test Flow",
 			pages: pages.map((page) => ({
 				id: page.id ?? crypto.randomUUID(),
+				name: page.name ?? page.title,
 				title: page.title,
 				rows: ensureRowIds(page.rows ?? []),
 				footer: page.footer ? ensureRowId(page.footer) : undefined,
@@ -88,7 +128,7 @@ export async function initFullFlows(
 ): Promise<void> {
 	await page.addInitScript((flows: ServerFlow[]) => {
 		window.__TEST_FLOWS__ = flows;
-	}, flows);
+	}, fillEntityNames(flows));
 	await initServiceResources(page, resources);
 	await initResourceAttributeMetadata(page, metadata);
 }

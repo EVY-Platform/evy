@@ -8,22 +8,18 @@ import SwiftUI
 struct EVYCalendarRow: View {
 
   private let view: CalendarRowViewData
-  private let source: String
-  private let destination: String
 
-  init(view: CalendarRowViewData, source: String, destination: String) {
+  init(view: CalendarRowViewData) {
     self.view = view
-    self.source = source
-    self.destination = destination
   }
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
-      EVYCalendar(content: view, source: source, destination: destination)
+      EVYCalendar(content: view)
     }
     .padding(.horizontal, Constants.majorPadding)
   }
@@ -40,16 +36,14 @@ private struct EVYCalendarRowPreview: View {
     EVYPreviewMockData.seedCommon()
     let previewScopeId = EVYDraft.createMergeScopeId(flowId: "preview", entityKey: "item")
     EVY.draftStore.activeScopeId = previewScopeId
-    let primaryData = EVYPreviewMockData.calendarPickupSelection.data(using: .utf8)
-    let secondaryData = EVYPreviewMockData.calendarDeliverySelection.data(using: .utf8)
     EVY.ensureDraftExists(
-      variableName: EVYPreviewMockData.calendarPreviewDestinationVariable,
-      initialData: primaryData,
+      variableName: "pickup_selection",
+      initialData: EVYPreviewMockData.calendarPickupSelection.data(using: .utf8),
       scopeId: previewScopeId
     )
     EVY.ensureDraftExists(
-      variableName: EVYPreviewMockData.calendarPreviewSourceVariable,
-      initialData: secondaryData,
+      variableName: EVYPreviewMockData.calendarPreviewSecondaryVariable,
+      initialData: EVYPreviewMockData.calendarDeliverySelection.data(using: .utf8),
       scopeId: previewScopeId
     )
   }
@@ -65,12 +59,13 @@ private struct EVYCalendarRowPreview: View {
         "type": "Calendar",
         "source": "\(EVYPreviewMockData.calendarPreviewSource)",
         "destination": "\(EVYPreviewMockData.calendarPreviewDestination)",
+        "secondary": "\(EVYPreviewMockData.calendarPreviewSecondary)",
         "actions": [],
         "title": "",
         "start_time": "07:00",
         "end_time": "19:00",
-        "timeslot_interval_minutes": 30,
-        "label_interval_minutes": 60,
+        "timeslot_interval_minutes": "30",
+        "label_interval_minutes": "60",
         "header_format": "EEE d",
         "timeslot_format": "HH:mm"
       }

@@ -20,8 +20,8 @@ struct EVYHeadingRow: View {
             .truncationMode(.tail)
         }
       }
-      if !content.label.isEmpty {
-        EVYTextView(content.label, style: .info)
+      if let label = content.label, !label.isEmpty {
+        EVYTextView(label, style: .info)
       }
     }
     .padding(.horizontal, Constants.majorPadding)

@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui/definitions/TextSelect",
+	"title": "TextSelect_Row",
+	"allOf": [
+		{
+			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
+		},
+		{
+			"type": "object",
+			"required": ["type", "source", "destination"],
+			"properties": {
+				"type": {
+					"const": "TextSelect"
+				},
+				"title": {
+					"type": "string"
+				},
+				"source": {
+					"type": "string"
+				},
+				"destination": {
+					"type": "string"
+				},
+				"text": {
+					"type": "string"
+				}
+			}
+		}
+	],
+	"unevaluatedProperties": false
+}

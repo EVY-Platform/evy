@@ -1,4 +1,5 @@
 import type { DATA_EVY_Row } from "evy-types";
+import { readBindingFields } from "../rows/rowFields";
 import type { RowConfig } from "../types/row";
 import { ROW_CHILD_FIELD, ROW_CHILDREN_FIELD } from "./rowConstants";
 
@@ -24,14 +25,18 @@ export function buildRowConfigFromRecord(record: DATA_EVY_Row): RowConfig {
 		}
 	}
 
+	const bindingFields = readBindingFields(contentData, record.type);
+	for (const field of Object.keys(bindingFields)) {
+		delete contentData[field];
+	}
+
 	return {
 		...contentData,
+		...bindingFields,
+		name: record.name,
 		type: record.type,
 		visible: record.visible,
 		title: typeof data.title === "string" ? data.title : "",
-		source: typeof data.source === "string" ? data.source : "",
-		destination:
-			typeof data.destination === "string" ? data.destination : "",
 		actions: Array.isArray(data.actions)
 			? (data.actions as RowConfig["actions"])
 			: [],

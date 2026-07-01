@@ -7,19 +7,19 @@ import Foundation
 
 // MARK: - Stored record types (one per backend table)
 
-struct EVYStoredFlow: Decodable {
+struct EVYStoredFlow: Decodable, Equatable {
   let id: String
   let pageIds: [String]
 }
 
-struct EVYStoredPage: Decodable {
+struct EVYStoredPage: Decodable, Equatable {
   let id: String
   let title: String?
   let rowIds: [String]
   let footerRowId: String?
 }
 
-struct EVYStoredRow: Decodable {
+struct EVYStoredRow: Decodable, Equatable {
   let id: String
   let name: String?
   let type: EVYRowType

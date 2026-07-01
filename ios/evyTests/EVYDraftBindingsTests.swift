@@ -9,6 +9,11 @@ import XCTest
 
 @MainActor
 final class EVYDraftBindingTests: XCTestCase {
+  override func tearDownWithError() throws {
+    EVY.draftStore.activeScopeId = nil
+    try super.tearDownWithError()
+  }
+
   func testBindingSingleUUIDUsesEphemeralScope() throws {
     let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
     let binding = try EVYDraft.binding(parsedProps: uuid, scopeId: nil)
@@ -136,5 +141,45 @@ final class EVYDraftBindingTests: XCTestCase {
     draftStore.notifyUpdate(binding: binding)
 
     XCTAssertEqual(notificationKeys, ["item.condition"])
+  }
+
+  func testWriteRawValueBuildsCurrencyAtDestination() throws {
+    let key = uniqueKey("item_price")
+    let scopeId = "scope_\(UUID().uuidString)"
+    EVY.draftStore.activeScopeId = scopeId
+
+    try EVY.writeRawValue("99", to: "{buildCurrency(\(key))}", scopeId: scopeId)
+
+    let stored = try EVY.getDataFromText("{\(key)}")
+    XCTAssertEqual(
+      stored,
+      .dictionary([
+        "currency": .string("AUD"),
+        "value": .int(99),
+      ])
+    )
+  }
+
+  func testDestinationOnlyDisplayAndEditableTextReadDraftValueAfterWrite() throws {
+    let key = uniqueKey("title")
+    let scopeId = "scope_\(UUID().uuidString)"
+    EVY.draftStore.activeScopeId = scopeId
+    let destination = "{\(key)}"
+
+    try EVY.writeRawValue("Persisted title", to: destination, scopeId: scopeId)
+
+    XCTAssertEqual(
+      EVY.displayText(fromSource: nil, destination: destination),
+      "Persisted title"
+    )
+    XCTAssertEqual(
+      EVY.editableText(fromSource: nil, destination: destination),
+      "Persisted title"
+    )
+  }
+
+  private func uniqueKey(_ suffix: String) -> String {
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    return "evy_draft_binding_tests_\(suffix)_\(randomId)"
   }
 }

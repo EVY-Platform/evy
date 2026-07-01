@@ -14,7 +14,8 @@ struct EVYListItemRow: View {
   }
 
   private var imageId: String {
-    (try? EVY.getDataFromText(view.image).toString()) ?? view.image
+    guard let image = view.image else { return "" }
+    return (try? EVY.getDataFromText(image))?.toString() ?? image
   }
 
   var body: some View {
@@ -24,13 +25,13 @@ struct EVYListItemRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 4))
 
       VStack(alignment: .leading, spacing: 2) {
-        if !view.title.isEmpty {
-          EVYTextView(view.title)
+        if let title = view.title, !title.isEmpty {
+          EVYTextView(title)
             .lineLimit(1)
             .truncationMode(.tail)
         }
-        if !view.subtitle.isEmpty {
-          EVYTextView(view.subtitle, style: .info)
+        if let subtitle = view.subtitle, !subtitle.isEmpty {
+          EVYTextView(subtitle, style: .info)
             .lineLimit(2)
             .truncationMode(.tail)
         }
@@ -46,8 +47,6 @@ struct EVYListItemRow: View {
       {
         "id": "preview-list-item-row",
         "type": "ListItem",
-        "source": "",
-        "destination": "",
         "actions": [],
         "visible": "true",
         "title": "Red mountain bike",

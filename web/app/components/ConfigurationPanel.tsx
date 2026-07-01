@@ -3,6 +3,13 @@ import { ChevronRight, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useRowById } from "../hooks/useRowById";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+import {
+	BINDING_FIELD_COPY,
+	compareRowFieldsForPanel,
+	getRowBindingFields,
+	getRowContentFields,
+	type RowBindingField,
+} from "../rows/rowFields";
 import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
@@ -22,30 +29,6 @@ import { unwrapOptionalBraces } from "../utils/unwrapBraces";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
-
-function isContainerKey(k: string): boolean {
-	return k === "childRowId" || k === "childrenRowIds";
-}
-
-const panelFieldOrder = ["icon", "title", "subtitle", "text", "placeholder"];
-
-function getPanelFieldRank(key: string): number {
-	const index = panelFieldOrder.indexOf(key.toLowerCase());
-	return index === -1 ? panelFieldOrder.length : index;
-}
-
-function sortContentEntriesForPanel(
-	entries: [string, unknown][],
-): [string, unknown][] {
-	return entries.sort(([a], [b]) => {
-		const rankDifference = getPanelFieldRank(a) - getPanelFieldRank(b);
-		if (rankDifference !== 0) return rankDifference;
-		if (isContainerKey(a) && isContainerKey(b)) {
-			return a === "childRowId" ? -1 : 1;
-		}
-		return a.localeCompare(b);
-	});
-}
 
 function resolveSourceResourceId(
 	source: string,
@@ -113,11 +96,15 @@ function ConfigTextField({
 	);
 }
 
+type ChildInfo = { id: string; name: string; type: string };
+
 function ChildRowButton({
-	child,
+	name,
+	type,
 	onClick,
 }: {
-	child: Row;
+	name: string;
+	type: string;
 	onClick: () => void;
 }) {
 	return (
@@ -126,7 +113,9 @@ function ChildRowButton({
 			className="evy-w-full evy-flex evy-items-center evy-justify-between evy-gap-3 evy-p-3 evy-bg-white evy-border evy-border-gray evy-text-left evy-cursor-pointer evy-hover:bg-gray-light"
 			onClick={onClick}
 		>
-			<span>{child.config.type}</span>
+			<span>
+				{name}: {type}
+			</span>
 			<ChevronRight
 				className="evy-h-4 evy-w-4"
 				strokeWidth={LUCIDE_STROKE_WIDTH}
@@ -162,11 +151,11 @@ export function ConfigurationPanel() {
 	const builderAssistCandidates = useMemo(
 		() => [
 			...buildIdCandidates(flowsById, pagesById, serviceResources),
-			...buildRowAttributeCandidates(rowsById),
+			...buildRowAttributeCandidates(),
 			buildDatumCandidate(),
 			...buildFunctionCandidates(),
 		],
-		[flowsById, pagesById, rowsById, serviceResources],
+		[flowsById, pagesById, serviceResources],
 	);
 
 	const [pageInUseReferences, setPageInUseReferences] = useState<
@@ -232,7 +221,7 @@ export function ConfigurationPanel() {
 
 	const updateRowRoot = useCallback(
 		(
-			field: "source" | "destination" | "visible",
+			field: RowBindingField | "visible",
 			value: string,
 			targetRowId?: string,
 		) => {
@@ -263,22 +252,21 @@ export function ConfigurationPanel() {
 	const renderConfiguration = useCallback(
 		(configRow: Row): React.ReactNode[] => {
 			const merged = mergeRowContentWithPaletteDefaults(configRow);
-			// Filter out old-style container keys that may appear from palette defaults
-			const filteredEntries = Object.entries(merged).filter(
-				([key]) => key !== "child" && key !== "children",
-			);
-			const entries = sortContentEntriesForPanel(filteredEntries);
-			const contentEntries = entries.filter(
-				([key]) => !isContainerKey(key),
-			);
-			const containerEntries = entries.filter(([key]) =>
-				isContainerKey(key),
-			);
+			const fields = getRowContentFields(configRow.config.type);
+			const bindingFields = getRowBindingFields(configRow.config.type);
+			const rowSource = configRow.config.source ?? "";
+
+			const textFields = fields
+				.filter((f) => f.kind === "text" || f.kind === "textList")
+				.sort(compareRowFieldsForPanel);
+			const childFields = fields
+				.filter((f) => f.kind === "child" || f.kind === "children")
+				.sort(compareRowFieldsForPanel);
 
 			const getAttributeCandidatesForQualifier = (qualifier: string) => {
 				const resourceId = resolveQualifierResourceId(
 					qualifier,
-					configRow.config.source,
+					rowSource,
 					serviceResources,
 				);
 				return resourceId
@@ -289,17 +277,16 @@ export function ConfigurationPanel() {
 					: [];
 			};
 
-			const contentElements = contentEntries.map(([key, value]) => {
-				const uniqueId = `${configRow.id}-${key}`;
-
+			const contentElements = textFields.map((field) => {
+				const uniqueId = `${configRow.id}-${field.name}`;
 				return (
 					<ConfigTextField
 						key={uniqueId}
 						id={uniqueId}
-						label={key}
-						value={String(value)}
+						label={field.name}
+						value={String(merged[field.name] ?? "")}
 						onChange={(next) =>
-							updateRowContent(key, next, configRow.id)
+							updateRowContent(field.name, next, configRow.id)
 						}
 						candidates={builderAssistCandidates}
 						getAttributeCandidatesForQualifier={
@@ -309,29 +296,41 @@ export function ConfigurationPanel() {
 				);
 			});
 
-			const containerElements = containerEntries.map(([key, value]) => {
-				const uniqueId = `${configRow.id}-${key}`;
-
-				let childInfos: { id: string; type: string }[] = [];
-				if (key === "childRowId" && typeof value === "string") {
-					const record = rowsById[value];
-					if (record) childInfos = [{ id: value, type: record.type }];
-				} else if (key === "childrenRowIds" && Array.isArray(value)) {
-					childInfos = (value as string[])
-						.map((id) => {
+			const containerElements = childFields.flatMap((field) => {
+				const uniqueId = `${configRow.id}-${field.name}`;
+				let childInfos: ChildInfo[] = [];
+				if (
+					field.kind === "child" &&
+					typeof merged[field.name] === "string"
+				) {
+					const record = rowsById[merged[field.name] as string];
+					if (record) {
+						childInfos = [
+							{
+								id: merged[field.name] as string,
+								name: record.name,
+								type: record.type,
+							},
+						];
+					}
+				} else if (
+					field.kind === "children" &&
+					Array.isArray(merged[field.name])
+				) {
+					childInfos = (merged[field.name] as string[])
+						.map((id): ChildInfo | null => {
 							const rec = rowsById[id];
-							return rec ? { id, type: rec.type } : null;
+							return rec
+								? { id, name: rec.name, type: rec.type }
+								: null;
 						})
-						.filter(
-							(item): item is { id: string; type: string } =>
-								item !== null,
-						);
+						.filter((item): item is ChildInfo => item !== null);
 				}
 
-				if (childInfos.length === 0) return null;
-				const label = key === "childRowId" ? "Child" : "Children";
+				if (childInfos.length === 0) return [];
+				const label = field.kind === "child" ? "Child" : "Children";
 
-				return (
+				return [
 					<div key={uniqueId}>
 						<div className="evy-text-sm evy-font-medium evy-text-black evy-mb-2">
 							{label}
@@ -343,17 +342,43 @@ export function ConfigurationPanel() {
 									: undefined
 							}
 						>
-							{childInfos.map(({ id, type }) => (
+							{childInfos.map(({ id, name, type }) => (
 								<ChildRowButton
 									key={id}
-									child={{ id, config: { type } } as Row}
+									name={name}
+									type={type}
 									onClick={() =>
 										openChildConfiguration(id, configRow)
 									}
 								/>
 							))}
 						</div>
-					</div>
+					</div>,
+				];
+			});
+
+			const bindingElements = bindingFields.map((field) => {
+				const { label, placeholder, ariaLabel } =
+					BINDING_FIELD_COPY[field];
+
+				return (
+					<ConfigTextField
+						key={`${configRow.id}-${field}`}
+						id={`${configRow.id}-${field}`}
+						label={label}
+						value={configRow.config[field] ?? ""}
+						onChange={(next) =>
+							updateRowRoot(field, next, configRow.id)
+						}
+						candidates={builderAssistCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
+						placeholder={placeholder}
+						ariaLabel={ariaLabel}
+						labelClassName="evy-text-sm evy-font-medium evy-text-black"
+						fieldClassName=""
+					/>
 				);
 			});
 
@@ -363,38 +388,7 @@ export function ConfigurationPanel() {
 					className="evy-flex evy-flex-col evy-gap-3"
 					key={`${configRow.id}-bindings`}
 				>
-					<ConfigTextField
-						id={`${configRow.id}-source`}
-						label="Source"
-						value={configRow.config.source}
-						onChange={(next) =>
-							updateRowRoot("source", next, configRow.id)
-						}
-						candidates={builderAssistCandidates}
-						getAttributeCandidatesForQualifier={
-							getAttributeCandidatesForQualifier
-						}
-						placeholder="Where the row reads data from"
-						ariaLabel="Row data source"
-						labelClassName="evy-text-sm evy-font-medium evy-text-black"
-						fieldClassName=""
-					/>
-					<ConfigTextField
-						id={`${configRow.id}-destination`}
-						label="Destination"
-						value={configRow.config.destination ?? ""}
-						onChange={(next) =>
-							updateRowRoot("destination", next, configRow.id)
-						}
-						candidates={builderAssistCandidates}
-						getAttributeCandidatesForQualifier={
-							getAttributeCandidatesForQualifier
-						}
-						placeholder="Where the row writes data to"
-						ariaLabel="Row destination"
-						labelClassName="evy-text-sm evy-font-medium evy-text-black"
-						fieldClassName=""
-					/>
+					{bindingElements}
 					<ConfigTextField
 						id={`${configRow.id}-visible`}
 						label="Visible"
@@ -431,13 +425,16 @@ export function ConfigurationPanel() {
 		: [];
 
 	return (
-		<div className="evy-flex evy-flex-col evy-h-full">
+		<div
+			className="evy-flex evy-flex-col evy-h-full"
+			data-testid="config-panel"
+		>
 			<PageInUseDialog
 				references={pageInUseReferences}
 				onClose={dismissPageInUseDialog}
 			/>
 			<div className="evy-p-4 evy-text-xl evy-font-semibold evy-text-center evy-border-b evy-border-gray evy-bg-white">
-				Configuration
+				{activePage?.name ?? "Configuration"}
 			</div>
 			<div className="evy-flex evy-flex-col evy-min-h-full evy-p-4 evy-gap-4 evy-overflow-scroll">
 				{showPageTitleInPanel && activePage && (
@@ -490,9 +487,14 @@ export function ConfigurationPanel() {
 				)}
 				{currentConfigRow ? (
 					<>
-						<p className="evy-text-lg evy-font-semibold">
-							{currentConfigRow.config.type} Row
-						</p>
+						<div>
+							<p className="evy-text-lg evy-font-semibold">
+								{currentConfigRow.config.name}
+							</p>
+							<p className="evy-text-sm evy-text-gray">
+								type: {currentConfigRow.config.type}
+							</p>
+						</div>
 						{configurationElements}
 						<div className="evy-border-b evy-border-gray" />
 						<ActionEditor

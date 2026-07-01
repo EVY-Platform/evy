@@ -11,76 +11,68 @@
 						"id": "3fbadee6-dc70-434e-8d4d-443fe86e6a09",
 						"type": "PhotoGallery",
 						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
-						"destination": "",
 						"actions": [],
 						"visible": "true",
-						"title": ""
+						"title": "",
+						"name": "Item photo gallery"
 					},
 					{
 						"id": "8d5e3bb5-8fcf-45f4-ae3d-516ed0706e30",
 						"type": "Heading",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"visible": "true",
 						"title": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
-						"label": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}"
+						"label": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
+						"name": "Item title and price"
 					},
 					{
 						"id": "61d8b13a-6e19-4251-84bf-94771af07e6c",
 						"type": "Text",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"visible": "true",
 						"title": "Condition",
-						"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}"
+						"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}",
+						"name": "Item condition"
 					},
 					{
 						"id": "b402e0e2-62a1-4eab-81ad-c9b522f5ff5a",
 						"type": "Text",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"visible": "true",
 						"title": "Selling reason",
-						"subtitle": "{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id).value}"
+						"subtitle": "{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id).value}",
+						"name": "Item selling reason"
 					},
 					{
 						"id": "f22cb07b-d4eb-45bc-9d3e-528361564fd2",
 						"type": "Text",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"visible": "true",
 						"title": "Dimensions",
-						"subtitle": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width) (w) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height) (h) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length) (l)}"
+						"subtitle": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width) (w) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height) (h) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length) (l)}",
+						"name": "Item dimensions"
 					},
 					{
 						"id": "1f90a201-c24a-408f-b4e1-88624e90d2c1",
 						"type": "Text",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.app == true}",
 						"title": "Card",
-						"subtitle": "EVY Buyer protection"
+						"subtitle": "EVY Buyer protection",
+						"name": "Card payment"
 					},
 					{
 						"id": "3444bbac-3f6a-4380-91c5-d4ef6545e7f1",
 						"type": "Text",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
 						"title": "Cash",
-						"subtitle": "In person"
+						"subtitle": "In person",
+						"name": "Cash payment"
 					},
 					{
 						"id": "ec3bef23-6d74-43eb-adde-8d498d9ed70e",
 						"type": "SelectSegmentContainer",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"visible": "true",
 						"title": "",
@@ -89,8 +81,6 @@
 							{
 								"id": "256c223c-71df-42f5-b12f-5267517d87cd",
 								"type": "ListContainer",
-								"source": "",
-								"destination": "",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -98,37 +88,36 @@
 									{
 										"id": "0b02c2c0-6e19-49d5-9138-f60062a1f6d4",
 										"type": "Map",
-										"source": "",
-										"destination": "",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.location}",
 										"actions": [],
 										"visible": "true",
 										"title": "",
-										"location": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.location}",
-										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}"
+										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
+										"name": "Pickup location"
 									},
 									{
 										"id": "197531fd-1de3-4d4d-8e03-026b37892611",
 										"type": "TimeslotPicker",
 										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
-										"destination": "",
 										"actions": [],
 										"visible": "true",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
-										"timeslot_interval_minutes": 30,
-										"label_interval_minutes": 60,
+										"timeslot_interval_minutes": "30",
+										"label_interval_minutes": "60",
 										"header_format": "{formatDatetime($datum, \"EEE\")}",
 										"header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
-										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}"
+										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
+										"name": "Pickup available times",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}"
 									}
-								]
+								],
+								"name": "Pickup details"
 							},
 							{
 								"id": "0fa00e83-881b-4ecb-b7d3-958d8eaf807c",
 								"type": "ListContainer",
-								"source": "",
-								"destination": "",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -136,20 +125,18 @@
 									{
 										"id": "357d3351-93e6-47bd-91ab-3616fd70b8aa",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"visible": "true",
 										"title": "",
-										"subtitle": "Buyer will drop off"
+										"subtitle": "Buyer will drop off",
+										"name": "Drop-off note"
 									}
-								]
+								],
+								"name": "Delivery details"
 							},
 							{
 								"id": "3ef805de-1386-4f2d-b0f6-54130dc1ba8d",
 								"type": "ListContainer",
-								"source": "",
-								"destination": "",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -157,18 +144,20 @@
 									{
 										"id": "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"visible": "true",
 										"title": "",
-										"subtitle": "Delivered to your door"
+										"subtitle": "Delivered to your door",
+										"name": "Shipping note"
 									}
-								]
+								],
+								"name": "Shipping details"
 							}
-						]
+						],
+						"name": "Transfer options"
 					}
-				]
+				],
+				"name": "Item details"
 			}
 		]
 	},
@@ -182,37 +171,37 @@
 					{
 						"id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
 						"type": "SelectPhoto",
-						"source": "",
+						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
 						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
 						"actions": [],
 						"title": "",
 						"subtitle": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids)}/10 - Choose your listing's main photo first.",
 						"icon": "::image-plus::",
 						"content": "Add photos",
-						"photos": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
-						"visible": "true"
+						"visible": "true",
+						"name": "Listing photos"
 					},
 					{
 						"id": "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
 						"type": "Input",
-						"source": "",
 						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
 						"actions": [],
 						"title": "A row title ::star::",
 						"placeholder": "My iPhone ::star:: 20",
-						"value": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
-						"visible": "true"
+						"visible": "true",
+						"name": "Listing title",
+						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}"
 					},
 					{
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
 						"type": "Input",
-						"source": "",
+						"source": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
 						"destination": "{buildCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
 						"actions": [],
 						"title": "Price",
-						"placeholder": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
-						"value": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
-						"visible": "true"
+						"placeholder": "",
+						"visible": "true",
+						"name": "Listing price"
 					},
 					{
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
@@ -222,8 +211,9 @@
 						"actions": [],
 						"title": "Condition",
 						"placeholder": "Choose one",
-						"format": "{$datum.value}",
-						"visible": "true"
+						"visible": "true",
+						"name": "Listing condition",
+						"value": "{$datum.value}"
 					},
 					{
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
@@ -233,60 +223,58 @@
 						"actions": [],
 						"title": "Selling Reason",
 						"placeholder": "Choose one",
-						"format": "{$datum.value}",
-						"visible": "true"
+						"visible": "true",
+						"name": "Listing selling reason",
+						"value": "{$datum.value}"
 					},
 					{
 						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
 						"type": "ColumnContainer",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"title": "Dimensions (width x height x depth)",
 						"children": [
 							{
 								"id": "b66e136d-828d-4ed0-ae27-cdc48f7cbffd",
 								"type": "Input",
-								"source": "",
+								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width)}",
 								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width}",
 								"actions": [],
 								"title": "",
 								"placeholder": "Width",
-								"value": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width)}",
-								"visible": "true"
+								"visible": "true",
+								"name": "Listing width"
 							},
 							{
 								"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
 								"type": "Input",
-								"source": "",
+								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height)}",
 								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height}",
 								"actions": [],
 								"title": "",
 								"placeholder": "Height",
-								"value": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height)}",
-								"visible": "true"
+								"visible": "true",
+								"name": "Listing height"
 							},
 							{
 								"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
 								"type": "Input",
-								"source": "",
+								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length)}",
 								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length}",
 								"actions": [],
 								"title": "",
 								"placeholder": "Length",
-								"value": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length)}",
-								"visible": "true"
+								"visible": "true",
+								"name": "Listing length"
 							}
 						],
-						"visible": "true"
+						"visible": "true",
+						"name": "Listing dimensions"
 					}
 				],
 				"title": "Create listing",
 				"footer": {
 					"id": "acabbedc-0a5a-4f10-8e0c-3d6cf76d86e8",
 					"type": "Button",
-					"source": "",
-					"destination": "",
 					"actions": [
 						{
 							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title) > 0}",
@@ -331,8 +319,10 @@
 					],
 					"title": "",
 					"label": "Next",
-					"visible": "true"
-				}
+					"visible": "true",
+					"name": "Continue to description"
+				},
+				"name": "Create listing"
 			},
 			{
 				"id": "06b21b52-0845-468a-ace1-170a3b05f3a2",
@@ -340,21 +330,18 @@
 					{
 						"id": "c9d0e1f2-a3b4-4c5d-8e7f-8a9b0c1d2e3f",
 						"type": "TextArea",
-						"source": "",
 						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description}",
 						"actions": [],
 						"title": "",
-						"value": "",
 						"placeholder": "Write a short description of your product",
-						"visible": "true"
+						"visible": "true",
+						"name": "Item description"
 					}
 				],
 				"title": "Describe item",
 				"footer": {
 					"id": "cc86c53a-170d-4800-8897-8f99f3697055",
 					"type": "Button",
-					"source": "",
-					"destination": "",
 					"actions": [
 						{
 							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description) > 0}",
@@ -364,8 +351,10 @@
 					],
 					"title": "",
 					"label": "Next",
-					"visible": "true"
-				}
+					"visible": "true",
+					"name": "Continue to fulfillment"
+				},
+				"name": "Describe item"
 			},
 			{
 				"id": "26dae81a-4122-4b5c-8396-a72a319ccd8b",
@@ -373,8 +362,6 @@
 					{
 						"id": "d0e1f2a3-b4c5-4d6e-8f8a-9b0c1d2e3f4a",
 						"type": "SelectSegmentContainer",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"title": "",
 						"segments": ["Pickup", "Delivery", "Shipping"],
@@ -382,26 +369,21 @@
 							{
 								"id": "22222222-2222-4222-8222-222222222201",
 								"type": "ListContainer",
-								"source": "",
-								"destination": "",
 								"actions": [],
 								"title": "",
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222202",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"title": "",
 										"subtitle": "Allow buyers to pick up the item",
-										"visible": "true"
+										"visible": "true",
+										"name": "Pickup note"
 									},
 									{
 										"id": "586ffa1a-639b-475e-a0b5-1fbe51083274",
 										"type": "TextAction",
-										"source": "",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_address}",
 										"actions": [
 											{
 												"true": "{show()}",
@@ -420,7 +402,6 @@
 												"type": "Text",
 												"title": "{$datum.title}",
 												"subtitle": "{formatCurrency($datum.price)}",
-												"source": "",
 												"actions": [
 													{
 														"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}",
@@ -428,38 +409,39 @@
 														"condition": ""
 													}
 												],
-												"destination": "",
-												"visible": "true"
+												"visible": "true",
+												"name": "Pickup address result"
 											},
 											"title": "",
 											"placeholder": "Search anything",
 											"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
 											"actions": [],
-											"destination": "",
-											"visible": "true"
+											"visible": "true",
+											"name": "Find pickup address",
+											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_address}"
 										},
-										"visible": "true"
+										"visible": "true",
+										"name": "Pickup address"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222206",
 										"type": "Input",
-										"source": "",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.address_instructions}",
 										"actions": [],
 										"title": "",
 										"placeholder": "Additional information",
-										"value": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.address_instructions}",
-										"visible": "true"
+										"visible": "true",
+										"name": "Pickup instructions",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.address_instructions}"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222207",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"title": "When",
 										"subtitle": "When are you available for buyers to inspect or pick up this item",
-										"visible": "true"
+										"visible": "true",
+										"name": "Pickup availability note"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222208",
@@ -470,53 +452,51 @@
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
-										"timeslot_interval_minutes": 30,
-										"label_interval_minutes": 60,
+										"timeslot_interval_minutes": "30",
+										"label_interval_minutes": "60",
 										"header_format": "EEE d",
 										"timeslot_format": "HH:mm",
-										"visible": "true"
+										"visible": "true",
+										"name": "Pickup availability"
 									}
 								],
-								"visible": "true"
+								"visible": "true",
+								"name": "Pickup"
 							},
 							{
 								"id": "22222222-2222-4222-8222-222222222209",
 								"type": "ListContainer",
-								"source": "",
-								"destination": "",
 								"actions": [],
 								"title": "",
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222210",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"title": "",
 										"subtitle": "Deliver directly to the buyer",
-										"visible": "true"
+										"visible": "true",
+										"name": "Delivery note"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222211",
 										"type": "Input",
-										"source": "",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee}",
 										"actions": [],
 										"title": "Surcharge",
 										"placeholder": "Do you want to charge for delivery?",
-										"value": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee)}",
-										"visible": "true"
+										"visible": "true",
+										"name": "Delivery surcharge",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee}"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222212",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"title": "How far",
 										"subtitle": "How long can you travel to deliver this item",
-										"visible": "true"
+										"visible": "true",
+										"name": "Delivery distance note"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222213",
@@ -525,18 +505,18 @@
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.distance}",
 										"actions": [],
 										"title": "",
-										"format": "{$datum.value}",
-										"visible": "true"
+										"visible": "true",
+										"name": "Delivery distance",
+										"value": "{$datum.value}"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222214",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"title": "When",
 										"subtitle": "When are you available to deliver this item",
-										"visible": "true"
+										"visible": "true",
+										"name": "Delivery availability note"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222215",
@@ -547,53 +527,51 @@
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
-										"timeslot_interval_minutes": 30,
-										"label_interval_minutes": 60,
+										"timeslot_interval_minutes": "30",
+										"label_interval_minutes": "60",
 										"header_format": "EEE d",
 										"timeslot_format": "HH:mm",
-										"visible": "true"
+										"visible": "true",
+										"name": "Delivery availability"
 									}
 								],
-								"visible": "true"
+								"visible": "true",
+								"name": "Delivery"
 							},
 							{
 								"id": "22222222-2222-4222-8222-222222222216",
 								"type": "ListContainer",
-								"source": "",
-								"destination": "",
 								"actions": [],
 								"title": "",
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222217",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"title": "",
 										"subtitle": "Postal shipping at the buyer's expense",
-										"visible": "true"
+										"visible": "true",
+										"name": "Shipping note"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222218",
 										"type": "Input",
-										"source": "",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}",
 										"actions": [],
 										"title": "Where from",
 										"placeholder": "Postal code you will be shipping from",
-										"value": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}",
-										"visible": "true"
+										"visible": "true",
+										"name": "Shipping origin postal code",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222219",
 										"type": "Text",
-										"source": "",
-										"destination": "",
 										"actions": [],
 										"title": "Where to",
 										"subtitle": "Select how far you are willing to ship",
-										"visible": "true"
+										"visible": "true",
+										"name": "Shipping destination note"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222220",
@@ -602,33 +580,34 @@
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_destination_areas}",
 										"actions": [],
 										"title": "",
-										"format": "{$datum.value}",
-										"visible": "true"
+										"visible": "true",
+										"name": "Shipping destinations",
+										"value": "{$datum.value}"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222221",
 										"type": "Input",
-										"source": "",
+										"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.weight)}",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.weight}",
 										"actions": [],
 										"title": "Weight (kg)",
 										"placeholder": "Weight",
-										"value": "{formatWeight(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.weight)}",
-										"visible": "true"
+										"visible": "true",
+										"name": "Shipping item weight"
 									}
 								],
-								"visible": "true"
+								"visible": "true",
+								"name": "Shipping"
 							}
 						],
-						"visible": "true"
+						"visible": "true",
+						"name": "Fulfillment options"
 					}
 				],
 				"title": "Pickup & delivery",
 				"footer": {
 					"id": "b1600fd2-aac2-4399-8a94-72baca75b9ba",
 					"type": "Button",
-					"source": "",
-					"destination": "",
 					"actions": [
 						{
 							"condition": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection) > 0 || count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection) > 0 || count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_destination_areas) > 0}",
@@ -638,8 +617,10 @@
 					],
 					"title": "",
 					"label": "Next",
-					"visible": "true"
-				}
+					"visible": "true",
+					"name": "Continue to payment"
+				},
+				"name": "Pickup and delivery"
 			},
 			{
 				"id": "25a3269b-344c-477d-89c8-b2f5426a5d91",
@@ -647,51 +628,49 @@
 					{
 						"id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
 						"type": "Text",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"title": "",
 						"subtitle": "Payment will be made by the buyers on pickup",
-						"visible": "true"
+						"visible": "true",
+						"name": "Pickup payment note"
 					},
 					{
 						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
 						"type": "ListContainer",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"title": "",
 						"children": [
 							{
 								"id": "33333333-3333-4333-8333-333333333301",
 								"type": "TextSelect",
-								"source": "",
 								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash}",
 								"actions": [],
 								"title": "Accept cash",
 								"text": "Let buyers know you will accept cash on pickup",
-								"visible": "true"
+								"visible": "true",
+								"name": "Accept cash payment",
+								"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash}"
 							},
 							{
 								"id": "33333333-3333-4333-8333-333333333302",
 								"type": "TextSelect",
-								"source": "",
 								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app}",
 								"actions": [],
 								"title": "Accept app payments",
 								"text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n- Cards are verified before the purchase\\n- Payment is transferred immediately when both buyer and seller confirm using a temporary code",
-								"visible": "true"
+								"visible": "true",
+								"name": "Accept app payment",
+								"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app}"
 							}
 						],
-						"visible": "true"
+						"visible": "true",
+						"name": "Accepted payment methods"
 					}
 				],
 				"title": "Payment options",
 				"footer": {
 					"id": "db46724f-c8f0-43cb-b888-6a23e4ca76cb",
 					"type": "Button",
-					"source": "",
-					"destination": "",
 					"actions": [
 						{
 							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash == true || dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app == true}",
@@ -701,8 +680,10 @@
 					],
 					"title": "",
 					"label": "Next",
-					"visible": "true"
-				}
+					"visible": "true",
+					"name": "Continue to data notice"
+				},
+				"name": "Payment options"
 			},
 			{
 				"id": "857362ad-856f-465b-85a3-94bc8bb686cd",
@@ -710,20 +691,17 @@
 					{
 						"id": "a3b4c5d6-e7f8-4a9b-8c1d-2e3f4a5b6c7d",
 						"type": "Text",
-						"source": "",
-						"destination": "",
 						"actions": [],
 						"title": "",
 						"subtitle": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule",
-						"visible": "true"
+						"visible": "true",
+						"name": "Public listing data"
 					}
 				],
 				"title": "Sharing data publicly",
 				"footer": {
 					"id": "20e9a035-8a42-4282-8725-49b620866c70",
 					"type": "Button",
-					"source": "",
-					"destination": "",
 					"actions": [
 						{
 							"condition": "",
@@ -733,8 +711,10 @@
 					],
 					"title": "",
 					"label": "Submit",
-					"visible": "true"
-				}
+					"visible": "true",
+					"name": "Submit listing"
+				},
+				"name": "Public data notice"
 			}
 		]
 	}

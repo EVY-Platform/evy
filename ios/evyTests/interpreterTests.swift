@@ -647,6 +647,32 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(countBefore, countAfter)
   }
 
+  func testRawDataFromPlainSourceExpression() throws {
+    let key = uniqueKey("title")
+    try store(.string("Hello world"), at: key)
+
+    let raw = try _rawDataFromSource("{\(key)}")
+    XCTAssertEqual(raw, .string("Hello world"))
+  }
+
+  func testDisplayTextFromFormattedSourceExpression() throws {
+    let key = uniqueKey("price")
+    try store(.dictionary(["value": .string("99"), "currency": .string("AUD")]), at: key)
+
+    let display = EVY.displayText(fromSource: "{formatCurrency(\(key))}")
+    XCTAssertEqual(display, "$99.00")
+  }
+
+  func testDisplayTextForDatumValueTemplatePreservesRawDatum() throws {
+    let datum = EVYJson.dictionary(["price": .int(99), "currency": .string("AUD")])
+    let display = try EVY.displayText(
+      forDatum: datum,
+      valueTemplate: "{formatCurrency($datum.price)}"
+    )
+    XCTAssertEqual(display, "$99.00")
+    XCTAssertEqual(datum, EVYJson.dictionary(["price": .int(99), "currency": .string("AUD")]))
+  }
+
   private func storeDimensions(width: Int, height: Int) throws -> String {
     let key = uniqueKey("item")
     try store(

@@ -11,36 +11,19 @@ enum EVYDatetime {
     row: TimeslotPickerRowViewData,
     selections: [String]
   ) -> [EVYTimeslotDate] {
-    guard !selections.isEmpty else { return [] }
-
-    var dateToDateTimes: [String: [String]] = [:]
-    for selection in selections {
-      guard (try? Date(selection, strategy: .iso8601.year().month().day())) != nil else {
-        continue
-      }
-
-      let dateStr = String(selection.prefix(10))
-      dateToDateTimes[dateStr, default: []].append(selection)
-    }
-
-    return dateToDateTimes.keys.sorted().compactMap { dateStr in
-      let dateTimes = (dateToDateTimes[dateStr] ?? []).sorted()
-      guard let firstDateTime = dateTimes.first else { return nil }
-      return EVYTimeslotDate(
-        header: format(firstDateTime, format: row.header_format),
-        subtitle: format(firstDateTime, format: row.header_subtitle),
-        timeslots: dateTimes.map {
-          EVYTimeslot(timeslot: format($0, format: row.timeslot_format), available: true)
-        }
-      )
-    }
+    buildTimeslotPickerDates(
+      row: row,
+      availableSelections: selections,
+      selectedTimeslot: nil
+    )
   }
 
-  static func format(_ value: String, format: String) -> String {
+  static func format(_ value: String, format: String?) -> String {
     (try? EVY.formatDataOrToString(json: .string(value), format: format)) ?? value
   }
 
-  static func formatCalendarValue(_ value: String, patternOrExpression: String) -> String {
+  static func formatCalendarValue(_ value: String, patternOrExpression: String?) -> String {
+    guard let patternOrExpression else { return value }
     // TODO: remove after migration
     if patternOrExpression.contains("$datum") {
       return format(value, format: patternOrExpression)
@@ -59,13 +42,65 @@ enum EVYDatetime {
     }
   }
 
+  static func readTimeslot(_ source: String) -> String? {
+    guard let json = try? EVY.getDataFromText(source) else { return nil }
+    switch json {
+    case .string(let value):
+      return value.isEmpty ? nil : value
+    default:
+      let value = json.toString()
+      return value.isEmpty ? nil : value
+    }
+  }
+
+  static func buildTimeslotPickerDates(
+    row: TimeslotPickerRowViewData,
+    availableSelections: [String],
+    selectedTimeslot: String?
+  ) -> [EVYTimeslotDate] {
+    guard !availableSelections.isEmpty else { return [] }
+
+    var dateToDateTimes: [String: [String]] = [:]
+    for selection in availableSelections {
+      guard (try? Date(selection, strategy: .iso8601.year().month().day())) != nil else {
+        continue
+      }
+
+      let dateStr = String(selection.prefix(10))
+      dateToDateTimes[dateStr, default: []].append(selection)
+    }
+
+    return dateToDateTimes.keys.sorted().compactMap { dateStr in
+      let dateTimes = (dateToDateTimes[dateStr] ?? []).sorted()
+      guard let firstDateTime = dateTimes.first else { return nil }
+      return EVYTimeslotDate(
+        header: format(firstDateTime, format: row.header_format),
+        subtitle: format(firstDateTime, format: row.header_subtitle),
+        timeslots: dateTimes.map {
+          EVYTimeslot(
+            timeslot: format($0, format: row.timeslot_format),
+            available: true,
+            dateTimeISO: $0,
+            isSelected: $0 == selectedTimeslot
+          )
+        }
+      )
+    }
+  }
+
+  private static func parseIntervalMinutes(_ value: String, fallback: Int) -> Int {
+    guard let parsed = Int(value), parsed > 0 else { return fallback }
+    return parsed
+  }
+
   static func buildCalendarSlots(
     row: CalendarRowViewData,
     primarySelections: [String],
-    secondarySelections: [String]
+    secondarySelections: [String],
+    displayTimeslots: [String] = []
   ) -> [EVYCalendarSlot] {
-    let intervalMinutes = row.timeslot_interval_minutes > 0 ? row.timeslot_interval_minutes : 30
-    let labelIntervalMinutes = row.label_interval_minutes > 0 ? row.label_interval_minutes : 60
+    let intervalMinutes = parseIntervalMinutes(row.timeslot_interval_minutes, fallback: 30)
+    let labelIntervalMinutes = parseIntervalMinutes(row.label_interval_minutes, fallback: 60)
 
     let startParts = row.start_time.split(separator: ":").compactMap { Int($0) }
     let endParts = row.end_time.split(separator: ":").compactMap { Int($0) }
@@ -94,7 +129,7 @@ enum EVYDatetime {
       }
     }
 
-    for selection in primarySelections + secondarySelections {
+    for selection in primarySelections + secondarySelections + displayTimeslots {
       if let dayStart = try? Date(selection, strategy: .iso8601.year().month().day()),
         seenDates.insert(dayStart).inserted
       {
@@ -120,7 +155,8 @@ enum EVYDatetime {
         let elapsedMinutes = y * intervalMinutes
         let timeLabel: String
         if labelIntervalMinutes > 0 && elapsedMinutes % labelIntervalMinutes == 0 {
-          timeLabel = formatCalendarValue(dateTimeISO, patternOrExpression: row.timeslot_format)
+          timeLabel = formatCalendarValue(
+            dateTimeISO, patternOrExpression: row.timeslot_format)
         } else {
           timeLabel = ""
         }
@@ -144,7 +180,7 @@ enum EVYDatetime {
   static func formattedCalendarTimeLabel(
     dateString: String,
     timeString: String,
-    format formatPattern: String
+    format formatPattern: String?
   ) -> String {
     let timeWithSeconds = timeString.count == 5 ? "\(timeString):00" : timeString
     return formatCalendarValue(

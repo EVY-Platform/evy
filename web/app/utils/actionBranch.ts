@@ -138,7 +138,7 @@ export function formatBranchDisplay(
 		const flow = flowsById[flowId ?? ""];
 		const flowName = flow?.name ?? flowId;
 		const page = pagesById[pageId ?? ""];
-		const pageName = page?.title || page?.id || pageId;
+		const pageName = page?.name ?? pageId;
 		const queryDisplay = parsed.args[2] ? `, ${parsed.args[2]}` : "";
 		return `${parsed.functionName}(${flowName}, ${pageName}${queryDisplay})`;
 	}

@@ -24,23 +24,32 @@ struct EVYPage: View {
   let pageId: String
 
   @Environment(\.evyDraftScopeId) private var evyDraftScopeId
-  @State private var pageReloadID = 0
+  @State private var page: EVYStoredPage?
+
+  init(pageId: String) {
+    self.pageId = pageId
+    _page = State(initialValue: EVYPageStore.page(id: pageId))
+  }
 
   var body: some View {
     Group {
-      if let page = EVYPageStore.page(id: pageId) {
+      if let page {
         pageContent(page: page)
-          .id(pageReloadID)
       }
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
       guard
-        let change = notification.userInfo?[EVYDataChange.userInfoKey] as? EVYDataChange,
-        change.namespace == EVYNamespace.evy,
-        change.resource == EVYCoreResource.pages.rawValue,
-        change.id == pageId
+        let change = EVYDataChange.from(notification),
+        change.matches(
+          namespace: EVYNamespace.evy,
+          resource: EVYCoreResource.pages.rawValue,
+          id: pageId
+        )
       else { return }
-      pageReloadID += 1
+      let latestPage = EVYPageStore.page(id: pageId)
+      if page != latestPage {
+        page = latestPage
+      }
     }
   }
 
@@ -63,6 +72,9 @@ struct EVYPage: View {
     .onAppear {
       EVY.activeCacheScopeId = pageId
       EVY.draftStore.activeScopeId = evyDraftScopeId
+      bootstrapDrafts(pageId: pageId, scopeId: evyDraftScopeId)
+    }
+    .onChange(of: page.rowIds) { _, _ in
       bootstrapDrafts(pageId: pageId, scopeId: evyDraftScopeId)
     }
     .simultaneousGesture(

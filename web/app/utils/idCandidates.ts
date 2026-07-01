@@ -1,13 +1,13 @@
-import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
-import { ACTION_FUNCTIONS } from "./actionBranch";
 import {
-	ROW_ATTRIBUTE_STATIC_NAMES,
-	ROW_CHILD_FIELD,
-	ROW_CHILDREN_FIELD,
-} from "./rowConstants";
+	getAllRowBindingFieldNames,
+	getAllRowContentFieldNames,
+} from "../rows/rowFields";
+import { ACTION_FUNCTIONS } from "./actionBranch";
+import { ROW_ATTRIBUTE_STATIC_NAMES } from "./rowConstants";
 
 export type IdCandidateCategory =
 	| "Flow"
@@ -87,24 +87,11 @@ function isTextCandidate(candidate: IdCandidate): boolean {
 function isDisplayCandidate(candidate: IdCandidate): boolean {
 	return (
 		!isTextCandidate(candidate) &&
-		(candidate.category === "Resource" || candidate.category === "Service")
+		(candidate.category === "Resource" ||
+			candidate.category === "Service" ||
+			candidate.category === "Flow" ||
+			candidate.category === "Page")
 	);
-}
-
-function addFlatRowAttributeNames(
-	row: DATA_EVY_Row,
-	attributeNames: Set<string>,
-) {
-	for (const name of ROW_ATTRIBUTE_STATIC_NAMES) attributeNames.add(name);
-	for (const key of Object.keys(row.data)) {
-		if (
-			key === ROW_CHILD_FIELD ||
-			key === ROW_CHILDREN_FIELD ||
-			key === "actions"
-		)
-			continue;
-		if (key.trim()) attributeNames.add(key);
-	}
 }
 
 export function getCandidateInsertValue(candidate: IdCandidate): string {
@@ -124,7 +111,7 @@ export function buildIdCandidates(
 
 	const pageCandidates = Object.values(pagesById).map((page) => ({
 		id: page.id,
-		name: page.title || page.id,
+		name: page.name,
 		category: "Page" as const,
 	}));
 
@@ -181,15 +168,12 @@ function dedupeCandidatesByNameAndCategory(
 	});
 }
 
-export function buildRowAttributeCandidates(
-	rowsById: Record<string, DATA_EVY_Row>,
-): IdCandidate[] {
-	const attributeNames = new Set<string>();
-
-	for (const row of Object.values(rowsById)) {
-		addFlatRowAttributeNames(row, attributeNames);
-	}
-
+export function buildRowAttributeCandidates(): IdCandidate[] {
+	const attributeNames = new Set<string>([
+		...ROW_ATTRIBUTE_STATIC_NAMES,
+		...getAllRowContentFieldNames(),
+		...getAllRowBindingFieldNames(),
+	]);
 	return attributeNamesToCandidates(attributeNames);
 }
 

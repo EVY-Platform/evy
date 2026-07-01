@@ -19,22 +19,22 @@ struct EVYTextExpandRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .frame(maxWidth: .infinity, alignment: .leading)
           .lineLimit(1)
           .truncationMode(.tail)
       }
 
-      if !view.text.isEmpty {
-        EVYTextView(view.text)
+      if let text = view.text, !text.isEmpty {
+        EVYTextView(text)
           .frame(maxWidth: .infinity, alignment: .leading)
           .lineLimit(expanded ? nil : collapsedLineCount)
           .truncationMode(.tail)
           .background {
             if !expanded {
               ViewThatFits(in: .vertical) {
-                EVYTextView(view.text)
+                EVYTextView(text)
                   .frame(maxWidth: .infinity, alignment: .leading)
                   .hidden()
                 Color.clear.onAppear {
@@ -45,11 +45,11 @@ struct EVYTextExpandRow: View {
           }
       }
 
-      if canExpand && !expanded && !view.expandLabel.isEmpty {
+      if canExpand && !expanded, let expandLabel = view.expandLabel, !expandLabel.isEmpty {
         Button {
           expanded = true
         } label: {
-          EVYTextView(view.expandLabel, style: .action)
+          EVYTextView(expandLabel, style: .action)
         }
         .buttonStyle(.plain)
       }
@@ -64,8 +64,6 @@ struct EVYTextExpandRow: View {
       {
         "id": "preview-text-expand-row",
         "type": "TextExpand",
-        "source": "",
-        "destination": "",
         "actions": [],
         "visible": "true",
         "title": "About this item",

@@ -79,17 +79,16 @@ function buildBuilderAssistFlow(): ServerFlow[] {
 					rows: [
 						{
 							id: "row-title",
-							type: "Text",
+							type: "Input",
 							source: `{${ITEM_RESOURCE_ID}}`,
-							title: "Editable title",
-							subtitle: "Editable subtitle",
 							destination: "",
+							title: "Editable title",
+							placeholder: "Title",
 							actions: [],
 						},
 						{
 							id: "row-button",
 							type: "Button",
-							source: "",
 							title: "",
 							label: "Open checkout",
 							actions: [{ condition: "", false: "", true: "" }],

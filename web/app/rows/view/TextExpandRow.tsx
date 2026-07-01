@@ -74,7 +74,6 @@ export default defineRow("TextExpandRow", {
 	config: {
 		type: "TextExpand",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "Expandable text title",
 		text: "This is a longer text row that can be expanded when it spans more lines than the configured maximum.",

@@ -8,8 +8,16 @@ const TYPES_ROOT = join(REPO_ROOT, "types");
 const SCHEMA_DIR = join(TYPES_ROOT, "schema");
 const OUT_TS = join(TYPES_ROOT, "generated", "ts");
 const OUT_SWIFT = join(TYPES_ROOT, "generated", "swift");
+const SDUI_DEFINITIONS_DIR = join(SCHEMA_DIR, "sdui", "definitions");
 
-export { OUT_SWIFT, OUT_TS, REPO_ROOT, SCHEMA_DIR, TYPES_ROOT };
+export {
+	OUT_SWIFT,
+	OUT_TS,
+	REPO_ROOT,
+	SCHEMA_DIR,
+	SDUI_DEFINITIONS_DIR,
+	TYPES_ROOT,
+};
 
 /** Path relative to `SCHEMA_DIR` with `.schema.json` / `.json` stripped (OS-native separators). */
 function schemaPathRelativeToSchemaDir(schemaPath: string): string {
@@ -81,19 +89,15 @@ export async function writeGeneratedOutputs({
 	tsContent,
 	swiftPath,
 	swiftContent,
-	excludeIos,
 }: {
 	tsPath: string;
 	tsContent: string;
 	swiftPath: string;
 	swiftContent: string;
-	excludeIos: boolean;
 }): Promise<void> {
 	await mkdir(OUT_TS, { recursive: true });
 	await writeFile(tsPath, tsContent, "utf-8");
 	console.log(`Generated ${tsPath}`);
-
-	if (excludeIos) return;
 
 	await mkdir(OUT_SWIFT, { recursive: true });
 	await writeFile(swiftPath, swiftContent, "utf-8");

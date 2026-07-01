@@ -28,7 +28,6 @@ export default defineRow(typeName, {
 	config: {
 		type: "SelectSegmentContainer",
 		actions: [],
-		source: "",
 		visible: "true",
 		title: "Select segment container row title",
 		segments: ["X", "Y", "Z"],

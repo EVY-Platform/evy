@@ -8,7 +8,7 @@ COPY package.json bun.lock* ./
 COPY types/schema ./types/schema
 COPY scripts ./scripts
 
-RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate:exclude-ios
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate
 
 # Install web dependencies
 FROM base AS deps

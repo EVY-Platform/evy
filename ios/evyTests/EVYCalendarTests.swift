@@ -20,8 +20,8 @@ final class EVYCalendarTests: XCTestCase {
   private func calendarRow(
     startTime: String = "07:00",
     endTime: String = "19:00",
-    timeslotIntervalMinutes: Int = 30,
-    labelIntervalMinutes: Int = 60,
+    timeslotIntervalMinutes: String = "30",
+    labelIntervalMinutes: String = "60",
     headerFormat: String? = nil,
     timeslotFormat: String? = nil
   ) -> CalendarRowViewData {
@@ -49,7 +49,7 @@ final class EVYCalendarTests: XCTestCase {
 
   func testStaleSelectionsAppearAsExtraColumns() {
     let slots = EVYDatetime.buildCalendarSlots(
-      row: calendarRow(startTime: "09:00", endTime: "11:00", timeslotIntervalMinutes: 60),
+      row: calendarRow(startTime: "09:00", endTime: "11:00", timeslotIntervalMinutes: "60"),
       primarySelections: [],
       secondarySelections: [
         "2026-05-20T09:00:00",
@@ -76,7 +76,7 @@ final class EVYCalendarTests: XCTestCase {
       row: calendarRow(
         startTime: "09:00",
         endTime: "11:00",
-        timeslotIntervalMinutes: 60,
+        timeslotIntervalMinutes: "60",
         timeslotFormat: "h:mm a"
       ),
       primarySelections: ["2026-05-20T09:00:00"],
@@ -97,7 +97,7 @@ final class EVYCalendarTests: XCTestCase {
 
   func testPrimarySelectionIsDetectedCorrectly() {
     let slots = EVYDatetime.buildCalendarSlots(
-      row: calendarRow(startTime: "09:00", endTime: "11:00", timeslotIntervalMinutes: 60),
+      row: calendarRow(startTime: "09:00", endTime: "11:00", timeslotIntervalMinutes: "60"),
       primarySelections: ["2026-06-03T09:00:00"],
       secondarySelections: []
     )
@@ -108,7 +108,7 @@ final class EVYCalendarTests: XCTestCase {
 
   func testSecondarySelectionIsDetectedCorrectly() {
     let slots = EVYDatetime.buildCalendarSlots(
-      row: calendarRow(startTime: "09:00", endTime: "11:00", timeslotIntervalMinutes: 60),
+      row: calendarRow(startTime: "09:00", endTime: "11:00", timeslotIntervalMinutes: "60"),
       primarySelections: [],
       secondarySelections: ["2026-06-03T10:00:00"]
     )
@@ -120,7 +120,7 @@ final class EVYCalendarTests: XCTestCase {
 
   func testHeaderFormattingForKnownDate() {
     let slots = EVYDatetime.buildCalendarSlots(
-      row: calendarRow(startTime: "09:00", endTime: "10:00", timeslotIntervalMinutes: 60),
+      row: calendarRow(startTime: "09:00", endTime: "10:00", timeslotIntervalMinutes: "60"),
       primarySelections: ["2026-06-03T09:00:00"],
       secondarySelections: []
     )
@@ -136,17 +136,19 @@ final class EVYCalendarTests: XCTestCase {
     XCTAssertEqual(slots.count, 0)
   }
 
-  func testZeroIntervalUsesDefaultInterval() {
-    let slots = EVYDatetime.buildCalendarSlots(
-      row: calendarRow(timeslotIntervalMinutes: 0),
-      primarySelections: [],
-      secondarySelections: []
-    )
-    XCTAssertEqual(slots.count, 7 * 24)
+  func testInvalidIntervalInputsUseDefaultInterval() {
+    for invalidInterval in ["0", "invalid"] {
+      let slots = EVYDatetime.buildCalendarSlots(
+        row: calendarRow(timeslotIntervalMinutes: invalidInterval),
+        primarySelections: [],
+        secondarySelections: []
+      )
+      XCTAssertEqual(slots.count, 7 * 24, "Expected default interval for '\(invalidInterval)'")
+    }
   }
 
   func testColumnCountIsStableWhenPrimarySelectionChanges() {
-    let row = calendarRow(startTime: "09:00", endTime: "10:00", timeslotIntervalMinutes: 60)
+    let row = calendarRow(startTime: "09:00", endTime: "10:00", timeslotIntervalMinutes: "60")
     let baselineSlots = EVYDatetime.buildCalendarSlots(
       row: row,
       primarySelections: [],
@@ -167,7 +169,7 @@ final class EVYCalendarTests: XCTestCase {
 
   func testColumnCountIsStableWhenSecondarySelectionChanges() {
     let withinWindow = EVYDatetime.buildCalendarSlots(
-      row: calendarRow(startTime: "09:00", endTime: "10:00", timeslotIntervalMinutes: 60),
+      row: calendarRow(startTime: "09:00", endTime: "10:00", timeslotIntervalMinutes: "60"),
       primarySelections: [],
       secondarySelections: ["\(todayPlus(3))T09:00:00"]
     )

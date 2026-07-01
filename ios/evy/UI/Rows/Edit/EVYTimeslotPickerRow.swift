@@ -8,20 +8,22 @@ import SwiftUI
 struct EVYTimeslotPickerRow: View {
 
   private let view: TimeslotPickerRowViewData
-  private let source: String
 
-  init(view: TimeslotPickerRowViewData, source: String) {
+  init(view: TimeslotPickerRowViewData) {
     self.view = view
-    self.source = source
   }
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
-      EVYTimeslotPicker(content: view, source: source)
+      EVYTimeslotPicker(
+        content: view,
+        source: view.source,
+        destination: view.destination
+      )
     }
     .padding(.horizontal, Constants.majorPadding)
   }
@@ -43,6 +45,11 @@ private struct EVYTimeslotPickerRowPreview: View {
       initialData: EVYPreviewMockData.calendarPickupSelection.data(using: .utf8),
       scopeId: previewScopeId
     )
+    EVY.ensureDraftExists(
+      variableName: "selected_timeslot",
+      initialData: "\"\"".data(using: .utf8),
+      scopeId: previewScopeId
+    )
   }
 
   var body: some View {
@@ -55,13 +62,13 @@ private struct EVYTimeslotPickerRowPreview: View {
         "id": "preview-timeslotpicker-row",
         "type": "TimeslotPicker",
         "source": "{pickup_selection}",
-        "destination": "",
+        "destination": "{selected_timeslot}",
         "actions": [],
         "title": "",
         "start_time": "07:00",
         "end_time": "19:00",
-        "timeslot_interval_minutes": 30,
-        "label_interval_minutes": 60,
+        "timeslot_interval_minutes": "30",
+        "label_interval_minutes": "60",
         "header_format": "EEE d",
         "timeslot_format": "HH:mm"
       }

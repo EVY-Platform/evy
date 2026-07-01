@@ -10,22 +10,20 @@ import SwiftUI
 struct EVYTextAreaRow: View {
 
   private let view: TextAreaRowViewData
-  private let destination: String
 
-  init(view: TextAreaRowViewData, destination: String) {
+  init(view: TextAreaRowViewData) {
     self.view = view
-    self.destination = destination
   }
 
   var body: some View {
     VStack(alignment: .leading) {
-      if !view.title.isEmpty {
-        EVYTextView(view.title)
+      if let title = view.title, !title.isEmpty {
+        EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYTextField(
-        input: view.value,
-        destination: destination,
+        source: view.source,
+        destination: view.destination ?? "",
         placeholder: view.placeholder,
         multiLine: true
       )
@@ -40,11 +38,10 @@ struct EVYTextAreaRow: View {
       {
         "id": "preview-textarea-row",
         "type": "TextArea",
-        "source": "",
+        "source": "{item.description}",
         "destination": "{item.description}",
         "actions": [],
         "title": "Description",
-        "value": "{item.description}",
         "placeholder": "Describe your item in detail"
       }
       """,

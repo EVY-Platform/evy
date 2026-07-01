@@ -14,7 +14,6 @@
 						"title": "{$datum.title}",
 						"subtitle": "{formatCurrency($datum.price)}",
 						"image": "{$datum.photo_ids.0}",
-						"source": "",
 						"actions": [
 							{
 								"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}",
@@ -22,15 +21,16 @@
 								"condition": ""
 							}
 						],
-						"destination": "",
-						"visible": "true"
+						"visible": "true",
+						"name": "Item search result"
 					},
 					"title": "",
 					"placeholder": "Search anything",
 					"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
-					"actions": [],
 					"destination": "",
-					"visible": "true"
+					"actions": [],
+					"visible": "true",
+					"name": "Search items"
 				}
 			],
 			"title": "Home",
@@ -39,7 +39,6 @@
 				"type": "Button",
 				"label": "Sell something",
 				"title": "",
-				"source": "",
 				"actions": [
 					{
 						"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}",
@@ -47,9 +46,10 @@
 						"condition": ""
 					}
 				],
-				"destination": "",
-				"visible": "true"
-			}
+				"visible": "true",
+				"name": "Sell something"
+			},
+			"name": "Home"
 		}
 	]
 }

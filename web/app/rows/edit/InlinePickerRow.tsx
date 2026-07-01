@@ -11,7 +11,7 @@ export default defineRow("InlinePickerRow", {
 		source: `{${MARKETPLACE_RESOURCE.DURATIONS}}`,
 		visible: "true",
 		title: "Inline picker row title",
-		format: "{$datum.value}",
+		value: "{$datum.value}",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.distance}`,
 	} satisfies RowConfig,
 	render: (row) => (

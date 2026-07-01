@@ -31,7 +31,6 @@ struct EVYButtonRow: View {
       {
         "id": "preview-button-row",
         "type": "Button",
-        "source": "",
         "actions": [],
         "title": "Preview Action",
         "label": "Tap me"

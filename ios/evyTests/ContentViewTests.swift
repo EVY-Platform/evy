@@ -451,8 +451,6 @@ final class ContentViewTests: XCTestCase {
     let json: [String: Any] = [
       "id": "list-item-row-id",
       "type": "ListItem",
-      "source": "",
-      "destination": "",
       "actions": [],
       "title": "Test title",
       "subtitle": "Test subtitle",
@@ -461,48 +459,52 @@ final class ContentViewTests: XCTestCase {
 
     let data = try JSONSerialization.data(withJSONObject: json)
     let row = try JSONDecoder().decode(UI_Row.self, from: data)
-    guard case .listItem(let viewData, _, _, _) = try UI_RowPayload.from(row: row) else {
+    guard case .listItem(let viewData, _) = try UI_RowPayload.from(row: row) else {
       return XCTFail("Expected .listItem payload")
     }
     XCTAssertEqual(viewData.title, "Test title")
     XCTAssertEqual(viewData.subtitle, "Test subtitle")
   }
 
-  func testDatumRowFormatterSearchesFlatContentStrings() throws {
-    let row = try decodeRow([
+  func testDatumRowFormatterCollectsSearchableContentFromRootAndNestedRows() throws {
+    let flatRow = try decodeRow([
       "id": "search-result-template",
       "type": "ListItem",
-      "source": "",
-      "destination": "",
       "actions": [],
       "title": "Item title",
       "subtitle": "Sydney",
-      "segments": ["first", "second"],
+    ])
+    let flatSearchableValues = try EVYDatumRowFormatter(template: flatRow)
+      .formattedResult(datum: .dictionary([:]))
+      .searchableValues
+    XCTAssertTrue(flatSearchableValues.contains("Sydney"))
+    XCTAssertTrue(flatSearchableValues.contains("Item title"))
+
+    let nestedRow = try decodeRow([
+      "id": "search-result-template",
+      "type": "TextAction",
+      "actions": [],
+      "title": "Item title",
+      "subtitle": "Sydney",
       "child": [
         "id": "search-result-child",
         "type": "Button",
-        "source": "",
-        "destination": "",
         "actions": [],
         "title": "",
         "label": "Inner label",
       ],
     ])
-    let formatter = try EVYDatumRowFormatter(template: row)
-
-    let searchableValues = try formatter.formattedResult(datum: .dictionary([:])).searchableValues
-
-    XCTAssertTrue(searchableValues.contains("Sydney"))
-    XCTAssertTrue(searchableValues.contains("Inner label"))
-    XCTAssertTrue(searchableValues.contains("first"))
+    let nestedSearchableValues = try EVYDatumRowFormatter(template: nestedRow)
+      .formattedResult(datum: .dictionary([:]))
+      .searchableValues
+    XCTAssertTrue(nestedSearchableValues.contains("Inner label"))
+    XCTAssertTrue(nestedSearchableValues.contains("Sydney"))
   }
 
   func testHomepageSearchResultTemplateFormatsMarketplaceItem() throws {
     let row = try decodeRow([
       "id": "homepage-search-result-template",
       "type": "ListItem",
-      "source": "",
-      "destination": "",
       "actions": [],
       "title": "{$datum.title}",
       "subtitle": "{formatCurrency($datum.price)}",
@@ -518,7 +520,7 @@ final class ContentViewTests: XCTestCase {
 
     let formattedRow = try formatter.formattedResult(datum: datum).row
 
-    guard case .listItem(let viewData, _, _, _) = try UI_RowPayload.from(row: formattedRow) else {
+    guard case .listItem(let viewData, _) = try UI_RowPayload.from(row: formattedRow) else {
       return XCTFail("Expected .listItem payload")
     }
     XCTAssertEqual(viewData.title, "Visible item")
@@ -529,5 +531,73 @@ final class ContentViewTests: XCTestCase {
   private func decodeRow(_ json: [String: Any]) throws -> UI_Row {
     let data = try JSONSerialization.data(withJSONObject: json)
     return try JSONDecoder().decode(UI_Row.self, from: data)
+  }
+
+  // MARK: - Stored record equality
+
+  func testStoredRowEqualityIgnoresIdenticalData() throws {
+    let store = makeStore()
+    let rowId = "equality-row"
+
+    try seedRow(
+      store: store, id: rowId, type: "Button",
+      data: ["source": "", "title": "", "label": "Same", "actions": []])
+
+    let firstRead = try XCTUnwrap(EVYRowStore.row(id: rowId, from: store))
+    let secondRead = try XCTUnwrap(EVYRowStore.row(id: rowId, from: store))
+    XCTAssertEqual(firstRead, secondRead)
+  }
+
+  func testStoredRowEqualityDetectsLabelChange() throws {
+    let store = makeStore()
+    let rowId = "changed-row"
+
+    try seedRow(
+      store: store, id: rowId, type: "Button",
+      data: ["source": "", "title": "", "label": "Before", "actions": []])
+    let before = try XCTUnwrap(EVYRowStore.row(id: rowId, from: store))
+
+    try seedRow(
+      store: store, id: rowId, type: "Button",
+      data: ["source": "", "title": "", "label": "After", "actions": []])
+    let after = try XCTUnwrap(EVYRowStore.row(id: rowId, from: store))
+
+    XCTAssertNotEqual(before, after)
+  }
+
+  func testStoredPageEqualityDetectsRowOrderChange() throws {
+    let store = makeStore()
+    let pageId = "page-order"
+
+    try seedPage(store: store, id: pageId, rowIds: ["row-a", "row-b"])
+    let before = try XCTUnwrap(EVYPageStore.page(id: pageId, from: store))
+
+    try seedPage(store: store, id: pageId, rowIds: ["row-b", "row-a"])
+    let after = try XCTUnwrap(EVYPageStore.page(id: pageId, from: store))
+
+    XCTAssertNotEqual(before, after)
+  }
+
+  func testFlowFirstPageIdUnchangedWhenOnlyRowUpdates() throws {
+    let store = makeStore()
+    let flowId = "home-flow"
+    let pageId = "home-page"
+    let rowId = "home-button"
+
+    try seedFlow(store: store, id: flowId, pageIds: [pageId])
+    try seedPage(store: store, id: pageId, rowIds: [rowId])
+    try seedRow(
+      store: store, id: rowId, type: "Button",
+      data: ["source": "", "title": "", "label": "Before", "actions": []])
+
+    let firstPageIdBefore = EVYFlowStore.firstPageId(inFlowId: flowId, from: store)
+
+    try seedRow(
+      store: store, id: rowId, type: "Button",
+      data: ["source": "", "title": "", "label": "After", "actions": []])
+
+    let firstPageIdAfter = EVYFlowStore.firstPageId(inFlowId: flowId, from: store)
+    XCTAssertEqual(firstPageIdBefore, firstPageIdAfter)
+    XCTAssertEqual(firstPageIdAfter, pageId)
   }
 }

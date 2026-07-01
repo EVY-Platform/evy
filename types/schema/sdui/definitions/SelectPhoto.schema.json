@@ -1,0 +1,38 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui/definitions/SelectPhoto",
+	"title": "SelectPhoto_Row",
+	"allOf": [
+		{
+			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
+		},
+		{
+			"type": "object",
+			"required": ["type", "source", "destination"],
+			"properties": {
+				"type": {
+					"const": "SelectPhoto"
+				},
+				"title": {
+					"type": "string"
+				},
+				"source": {
+					"type": "string"
+				},
+				"destination": {
+					"type": "string"
+				},
+				"icon": {
+					"type": "string"
+				},
+				"subtitle": {
+					"type": "string"
+				},
+				"content": {
+					"type": "string"
+				}
+			}
+		}
+	],
+	"unevaluatedProperties": false
+}

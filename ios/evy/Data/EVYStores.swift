@@ -24,13 +24,21 @@ extension Notification.Name {
   static let evyUserAlertRequested = Notification.Name("EVYUserAlertRequested")
 }
 
-struct EVYDataChange {
+struct EVYDataChange: Equatable {
   static let userInfoKey = "evyDataChange"
   let namespace: String
   let resource: String
   let id: String
 
   var recordKey: String { "\(namespace):\(resource):\(id)" }
+
+  func matches(namespace: String, resource: String, id: String) -> Bool {
+    self.namespace == namespace && self.resource == resource && self.id == id
+  }
+
+  static func from(_ notification: Notification) -> EVYDataChange? {
+    notification.userInfo?[userInfoKey] as? EVYDataChange
+  }
 }
 
 @MainActor
@@ -81,13 +89,15 @@ struct EVYDataChange {
         object: nil,
         queue: nil
       ) { [weak self] notif in
-        MainActor.assumeIsolated {
-          guard let self else { return }
-          guard let notifProp = notif.object as? String else {
+        guard let self else { return }
+        guard let notifProp = notif.object as? String else {
+          MainActor.assumeIsolated {
             self.value = recompute()
-            return
           }
-          if watches.contains(where: { $0.isAffected(by: notifProp) }) {
+          return
+        }
+        if watches.contains(where: { $0.isAffected(by: notifProp) }) {
+          MainActor.assumeIsolated {
             self.value = recompute()
           }
         }
@@ -100,8 +110,8 @@ struct EVYDataChange {
     registerObserver(watchTargets: watches, recompute: setter)
   }
 
-  convenience init(textToWatch text: String, setter: @escaping () -> T) {
-    self.init(watches: EVY.watchTargets(for: text), setter: setter)
+  convenience init(textToWatch text: String?, setter: @escaping () -> T) {
+    self.init(watches: text.map { EVY.watchTargets(for: $0) } ?? [], setter: setter)
   }
 
   init(staticString: T) {
