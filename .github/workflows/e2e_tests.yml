@@ -63,6 +63,20 @@ jobs:
                   'true'
               run: bun run --cwd web test:setup
 
+            - name: Setup Docker
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
+              run: |
+                  set -euo pipefail
+                  brew install docker docker-compose colima
+                  mkdir -p ~/.docker/cli-plugins
+                  ln -sfn "$(brew --prefix docker-compose)/bin/docker-compose" ~/.docker/cli-plugins/docker-compose
+                  colima start --cpu 4 --memory 8 --disk 20
+                  docker context use colima
+                  docker info
+                  docker compose version
+
             - name: Verify Xcode and iOS simulators
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
