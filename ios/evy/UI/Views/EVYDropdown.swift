@@ -101,7 +101,8 @@ struct EVYDropdown: View {
             options: options,
             valueTemplate: valueTemplate,
             destination: destination,
-            optionLabels: optionLabels)
+            optionLabels: optionLabels,
+            target: .single_identifier)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.white.ignoresSafeArea())

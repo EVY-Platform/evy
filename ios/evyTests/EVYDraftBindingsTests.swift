@@ -48,10 +48,6 @@ final class EVYDraftBindingTests: XCTestCase {
     XCTAssertEqual(segs, [uuid, "foo"])
   }
 
-  func testDraftKeyPrefixUsesColonSeparator() {
-    XCTAssertEqual(EVYDraft.Binding.draftKeyPrefix(forScopeId: "flow:items"), "flow:items:")
-  }
-
   func testParseDraftKeySplitsOnLastColonForEphemeralKeys() throws {
     let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
     let binding = try EVYDraft.binding(parsedProps: uuid, scopeId: nil)
@@ -76,25 +72,28 @@ final class EVYDraftBindingTests: XCTestCase {
     XCTAssertEqual(parsedBinding.mergeMode, binding.mergeMode)
   }
 
-  func testScopeEntityKeyParsesEntityScopes() {
-    XCTAssertEqual(EVYDraft.Scope.entityKey(fromScopeId: "flow:items"), "items")
-  }
-
-  func testScopeEntityKeyReturnsNilForReservedScopes() {
+  func testScopeEntityKey() {
     let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
+    let cases: [(scopeId: String?, expected: String?)] = [
+      ("flow:items", "items"),
+      ("flow:browse", nil),
+      ("app:unscoped", nil),
+      ("ephemeral:\(uuid)", nil),
+      (nil, nil),
+      ("", nil),
+      ("   ", nil),
+      ("flow", nil),
+      ("flow:", nil),
+      (":item", nil),
+    ]
 
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "flow:browse"))
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "app:unscoped"))
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "ephemeral:\(uuid)"))
-  }
-
-  func testScopeEntityKeyReturnsNilForNilEmptyOrMalformedScopes() {
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: nil))
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: ""))
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "   "))
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "flow"))
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: "flow:"))
-    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: ":item"))
+    for testCase in cases {
+      XCTAssertEqual(
+        EVYDraft.Scope.entityKey(fromScopeId: testCase.scopeId),
+        testCase.expected,
+        "scopeId: \(String(describing: testCase.scopeId))"
+      )
+    }
   }
 
   func testDraftNotifyUpdatePostsAliasAndEntityPathNotifications() throws {

@@ -233,7 +233,7 @@ label_interval_minutes: string       (minutes, e.g. "60")
 header_format: string        (date format pattern, e.g. "EEE d")
 timeslot_format: string      (time format pattern, e.g. "HH:mm")
 
-Calendar rows store the editable primary selection array through row-level `destination` and read the contextual secondary selection array through row-level `source`.
+Calendar rows use three bindings: `source` supplies the main timeslots to display and anchor columns (same binding as `destination`); `destination` is the main selection array edited when the user taps timeslots; `secondary` is a different binding whose timeslots are rendered greyed-out for read-only context.
 ```
 
 #### transfer_options

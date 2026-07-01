@@ -12,6 +12,8 @@ struct EVYSearchRow: View {
   private let view: SearchRowViewData
   private let childRef: EVYRowRef?
 
+  @Environment(\.evyCacheScopeId) private var cacheScopeId
+
   init(view: SearchRowViewData, childRef: EVYRowRef?) {
     self.view = view
     self.childRef = childRef
@@ -27,7 +29,8 @@ struct EVYSearchRow: View {
         source: view.source,
         destination: view.destination,
         placeholder: view.placeholder,
-        resultTemplate: childRef?.templateRow()
+        resultTemplate: childRef?.templateRow(),
+        scopeId: cacheScopeId
       )
     }
     .padding(.horizontal, Constants.majorPadding)

@@ -1,7 +1,16 @@
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { compile } from "json-schema-to-typescript";
-import { extractSduiRowTypeEnum } from "./sdui-row-schema-utils.js";
+import {
+	emitSduiDefinitions,
+	validateDefinitionSchemas,
+} from "./generate-sdui-definitions.js";
+import { emitSwiftSdui } from "./generate-swift-sdui.js";
+import {
+	assertExactSduiRowTypeCoverage,
+	extractSduiRowTypeEnum,
+	loadSduiRowDefinitions,
+} from "./sdui-row-schema-utils.js";
 import {
 	appendLinesToGeneratedFile,
 	loadJson,
@@ -15,6 +24,16 @@ import {
 	spawnExitOk,
 	TYPES_ROOT,
 } from "./types-generation-utils.js";
+
+const SDUI_DEFINITIONS_TS_PATH = join(
+	OUT_TS,
+	"sdui",
+	"definitions.generated.ts",
+);
+const SDUI_DEFINITIONS_SWIFT_PATH = join(
+	OUT_SWIFT,
+	"SduiDefinitions.generated.swift",
+);
 
 const COMMON_SCHEMA_ROOT_REF: Record<string, string> = {
 	"common/json": "#/$defs/JSONValue",
@@ -240,7 +259,10 @@ async function generateTypeScript(
 	console.log("TypeScript types generated successfully.");
 }
 
-async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
+async function generateSwift(
+	schemaFiles: LoadedSchemaFile[],
+	definitions: Awaited<ReturnType<typeof loadSduiRowDefinitions>>,
+): Promise<void> {
 	await mkdir(OUT_SWIFT, { recursive: true });
 
 	const schemaFilesToQuicktype = schemaFiles.filter(
@@ -297,12 +319,23 @@ async function generateSwift(schemaFiles: LoadedSchemaFile[]): Promise<void> {
 		),
 	);
 
-	// Generate Swift UI types from evy.schema.json + SDUI row definitions
-	await spawnExitOk(
-		"bun",
-		["run", join(REPO_ROOT, "scripts", "generate-swift-sdui.ts")],
-		{ stdio: "inherit", cwd: REPO_ROOT },
-		"generate-swift-sdui",
+	const evySchemaFile = schemaFiles.find((f) => f.schemaKey === "sdui/evy");
+	const actionSchemaFile = schemaFiles.find(
+		(f) => f.schemaKey === "sdui/action",
+	);
+	if (!evySchemaFile || !actionSchemaFile) {
+		throw new Error(
+			"Missing sdui/evy or sdui/action schema for Swift SDUI generation",
+		);
+	}
+
+	const swiftFiles = emitSwiftSdui({
+		definitions,
+		schema: evySchemaFile.schema,
+		actionSchema: actionSchemaFile.schema,
+	});
+	await Promise.all(
+		swiftFiles.map((file) => writeFile(file.path, file.content, "utf-8")),
 	);
 
 	console.log("Swift types generated successfully.");
@@ -313,14 +346,33 @@ async function main(): Promise<void> {
 	await mkdir(OUT_TS, { recursive: true });
 	await rm(OUT_SWIFT, { recursive: true, force: true });
 	await mkdir(OUT_SWIFT, { recursive: true });
+	await mkdir(dirname(SDUI_DEFINITIONS_TS_PATH), { recursive: true });
+	await mkdir(dirname(SDUI_DEFINITIONS_SWIFT_PATH), { recursive: true });
 
 	const schemaPaths = (await findSchemaFiles(SCHEMA_DIR)).sort();
 	const schemaFiles = await loadSchemaFiles(schemaPaths);
+	const definitions = await loadSduiRowDefinitions();
+	await validateDefinitionSchemas(definitions);
 
+	const evySchemaFile = schemaFiles.find((f) => f.schemaKey === "sdui/evy");
+	if (!evySchemaFile) {
+		throw new Error("Missing sdui/evy schema for SDUI row type coverage");
+	}
+	const rowTypes = extractSduiRowTypeEnum(evySchemaFile.schema);
+	if (rowTypes.length === 0) {
+		throw new Error("sdui/evy.schema.json: UI_Row type enum not found");
+	}
+	assertExactSduiRowTypeCoverage(definitions, rowTypes);
+
+	const { tsContent, swiftContent } = emitSduiDefinitions(definitions);
 	await Promise.all([
 		generateTypeScript(schemaFiles),
-		generateSwift(schemaFiles),
+		generateSwift(schemaFiles, definitions),
+		writeFile(SDUI_DEFINITIONS_TS_PATH, tsContent, "utf-8"),
+		writeFile(SDUI_DEFINITIONS_SWIFT_PATH, swiftContent, "utf-8"),
 	]);
 }
 
-runMain(main);
+if (import.meta.main) {
+	runMain(main);
+}

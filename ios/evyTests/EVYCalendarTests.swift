@@ -27,6 +27,8 @@ final class EVYCalendarTests: XCTestCase {
   ) -> CalendarRowViewData {
     let jsonObject: [String: Any] = [
       "title": "",
+      "source": "pickup_selection",
+      "destination": "pickup_selection",
       "start_time": startTime,
       "end_time": endTime,
       "timeslot_interval_minutes": timeslotIntervalMinutes,
@@ -175,6 +177,21 @@ final class EVYCalendarTests: XCTestCase {
     )
     let columns = Set(withinWindow.map { $0.x }).count
     XCTAssertEqual(columns, 7)
+  }
+
+  func testDisplayTimeslotsAddsColumnWithoutSelection() {
+    let slots = EVYDatetime.buildCalendarSlots(
+      row: calendarRow(startTime: "09:00", endTime: "11:00", timeslotIntervalMinutes: "60"),
+      primarySelections: [],
+      secondarySelections: [],
+      displayTimeslots: ["2026-05-20T09:00:00"]
+    )
+    let columns = Set(slots.map { $0.x }).count
+    XCTAssertEqual(columns, 8)
+
+    let displayDateSlots = slots.filter { $0.dateTimeISO.hasPrefix("2026-05-20") }
+    XCTAssertFalse(displayDateSlots.isEmpty)
+    XCTAssertTrue(displayDateSlots.allSatisfy { !$0.isPrimarySelected && !$0.isSecondarySelected })
   }
 
 }

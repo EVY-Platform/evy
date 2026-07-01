@@ -11,11 +11,14 @@ cd "$REPO_ROOT"
 
 # Parse arguments
 SKIP_IOS=false
-NO_DOCKER=false
 for arg in "$@"; do
     case $arg in
         --skip-ios) SKIP_IOS=true ;;
-        --no-docker) NO_DOCKER=true ;;
+        *)
+            echo -e "${RED}Unknown argument: $arg${NC}"
+            echo "Usage: ./run-e2e.sh [--skip-ios]"
+            exit 1
+            ;;
     esac
 done
 
@@ -26,9 +29,6 @@ IOS_RESULT=0
 IOS_SKIPPED=false
 MAX_RETRIES=30
 RETRY_DELAY_SECONDS=2
-API_PID=""
-MARKETPLACE_PID=""
-WEB_PID=""
 
 # Preserve env overrides when sourcing `.env` (e.g. WEB_PORT=3001 ./run-e2e.sh).
 _PRESET_WEB_PORT="${WEB_PORT-}"
@@ -74,22 +74,7 @@ retry_until_cmd() {
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    if [ "$NO_DOCKER" = true ]; then
-        if [ -n "${WEB_PID}" ]; then
-            kill "$WEB_PID" 2>/dev/null || true
-        fi
-        if [ -n "${MARKETPLACE_PID}" ]; then
-            kill "$MARKETPLACE_PID" 2>/dev/null || true
-        fi
-        if [ -n "${API_PID}" ]; then
-            kill "$API_PID" 2>/dev/null || true
-        fi
-        wait "${WEB_PID}" 2>/dev/null || true
-        wait "${API_PID}" 2>/dev/null || true
-        wait "${MARKETPLACE_PID}" 2>/dev/null || true
-    else
-        docker compose down -v --remove-orphans 2>/dev/null || true
-    fi
+    docker compose down -v --remove-orphans 2>/dev/null || true
 }
 
 wait_for_http_service() {
@@ -98,30 +83,16 @@ wait_for_http_service() {
     retry_until_cmd "$service_name" curl -fsS "$service_url"
 }
 
-wait_for_postgres_no_docker() {
-    local host="${DB_DOMAIN}"
-    local port="${DB_PORT}"
-    retry_until_cmd "PostgreSQL" bash -c "echo -n > /dev/tcp/${host}/${port}"
-}
-
 wait_for_api_readiness() {
     local script_name="$1"
     local display_name="$2"
-    if [ "$NO_DOCKER" = true ]; then
-        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT/api\" && bun run \"$script_name\""
-    else
-        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T api bun run \"$script_name\""
-    fi
+    retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T api bun run \"$script_name\""
 }
 
 wait_for_marketplace_readiness() {
     local script_name="$1"
     local display_name="$2"
-    if [ "$NO_DOCKER" = true ]; then
-        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT/services/marketplace\" && bun run \"$script_name\""
-    else
-        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T marketplace bun run \"$script_name\""
-    fi
+    retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T marketplace bun run \"$script_name\""
 }
 
 extract_ios_simulator_destination() {
@@ -230,53 +201,21 @@ trap cleanup EXIT
 echo -e "\n${YELLOW}Installing dependencies...${NC}"
 bun run install:all
 
-if [ "$NO_DOCKER" = true ]; then
-    echo -e "\n${YELLOW}Step 1: Starting services without Docker...${NC}"
-    wait_for_postgres_no_docker
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+export COMPOSE_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-1}"
 
-    echo "Starting Marketplace (background)..."
-    (
-        cd "$REPO_ROOT/services/marketplace"
-        exec bun run start
-    ) &
-    MARKETPLACE_PID=$!
+echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
+docker compose up --build -d
 
-    wait_for_marketplace_readiness "health" "Marketplace"
+echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
 
-    echo "Starting API (background)..."
-    (
-        cd "$REPO_ROOT/api"
-        exec bun run start
-    ) &
-    API_PID=$!
+retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
 
-    wait_for_api_readiness "health" "API"
+wait_for_marketplace_readiness "health" "Marketplace"
 
-    echo "Starting Web (background)..."
-    (
-        cd "$REPO_ROOT/web"
-        exec bun run start
-    ) &
-    WEB_PID=$!
-
-    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
-    wait_for_http_service "Web" "http://localhost:$WEB_PORT"
-else
-    export DOCKER_BUILDKIT=1
-    export COMPOSE_DOCKER_CLI_BUILD=1
-
-    echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
-    docker compose up --build -d
-
-    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
-
-    retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
-
-    wait_for_marketplace_readiness "health" "Marketplace"
-
-    wait_for_api_readiness "health" "API"
-    wait_for_http_service "Web" "http://localhost:$WEB_PORT"
-fi
+wait_for_api_readiness "health" "API"
+wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 
 echo -e "\n${YELLOW}Step 3: Generating types...${NC}"
 if ! bun types:generate; then

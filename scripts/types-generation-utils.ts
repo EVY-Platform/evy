@@ -123,7 +123,17 @@ export function spawnExitOk(
 	errorLabel: string,
 ): Promise<void> {
 	return new Promise((resolve, reject) => {
-		const proc = spawn(command, args, options);
+		const existingNodeOptions = process.env.NODE_OPTIONS ?? "";
+		const proc = spawn(command, args, {
+			...options,
+			env: {
+				...process.env,
+				// quicktype pulls in the deprecated `punycode` core module
+				// transitively; silence only that warning (DEP0040).
+				NODE_OPTIONS:
+					`${existingNodeOptions} --disable-warning=DEP0040`.trim(),
+			},
+		});
 		proc.on("exit", (code) =>
 			code === 0
 				? resolve()

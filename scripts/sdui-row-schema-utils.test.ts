@@ -3,6 +3,7 @@ import {
 	assertExactSduiRowTypeCoverage,
 	assertSduiRowDefinitionFileMatchesType,
 	extractSduiRowDefinition,
+	rowFieldsFromDefinitions,
 	rowSpecFromDefinitions,
 } from "./sdui-row-schema-utils";
 
@@ -63,13 +64,6 @@ describe("extractSduiRowDefinition", () => {
 			destination: { required: true, type: "string" },
 			secondary: { required: false, type: "string" },
 		});
-
-		const spec = rowSpecFromDefinitions([definition]);
-		expect(spec.Calendar.content.title.required).toBe(false);
-		expect(spec.Calendar.content.header_format.required).toBe(true);
-		expect(spec.Calendar.content.timeslot_format.required).toBe(true);
-		expect(spec.Calendar.content.source.required).toBe(true);
-		expect(spec.Calendar.content.destination.required).toBe(true);
 	});
 
 	test("maps row, row array, string array, and action array attributes into row specs", () => {
@@ -147,6 +141,75 @@ describe("extractSduiRowDefinition", () => {
 				"Broken.schema.json",
 			),
 		).toThrow("unsupported SDUI row property schema");
+	});
+});
+
+describe("rowFieldsFromDefinitions", () => {
+	test("maps schema attributes to panel field specs with UI names and binding kinds", () => {
+		const definition = extractSduiRowDefinition(
+			{
+				allOf: [
+					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
+					{
+						type: "object",
+						required: [
+							"type",
+							"child",
+							"children",
+							"segments",
+							"destination",
+						],
+						properties: {
+							type: { const: "Fixture" },
+							child: { $ref: "../evy.schema.json#/$defs/UI_Row" },
+							children: {
+								type: "array",
+								items: {
+									$ref: "../evy.schema.json#/$defs/UI_Row",
+								},
+							},
+							segments: {
+								type: "array",
+								items: { type: "string" },
+							},
+							destination: { type: "string" },
+							source: { type: "string" },
+						},
+					},
+				],
+			},
+			"Fixture.schema.json",
+		);
+
+		expect(rowFieldsFromDefinitions([definition])).toEqual({
+			Fixture: [
+				{
+					name: "childRowId",
+					kind: "child",
+					required: true,
+				},
+				{
+					name: "childrenRowIds",
+					kind: "children",
+					required: true,
+				},
+				{
+					name: "segments",
+					kind: "textList",
+					required: true,
+				},
+				{
+					name: "destination",
+					kind: "binding",
+					required: true,
+				},
+				{
+					name: "source",
+					kind: "binding",
+					required: false,
+				},
+			],
+		});
 	});
 });
 

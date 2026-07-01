@@ -1,4 +1,4 @@
-import { SDUI_DEFINITIONS } from "evy-types";
+import { SDUI_ROW_FIELDS } from "evy-types";
 
 export type RowBindingField = "source" | "destination" | "secondary";
 
@@ -23,12 +23,6 @@ export const BINDING_FIELD_COPY: Record<
 	},
 };
 
-const ROW_BINDING_FIELD_NAMES = new Set<string>([
-	"source",
-	"destination",
-	"secondary",
-]);
-
 export type RowFieldKind = "text" | "textList" | "child" | "children";
 
 export type RowField = {
@@ -37,86 +31,24 @@ export type RowField = {
 	required: boolean;
 };
 
-const SCHEMA_TO_UI_NAME: Record<string, string> = {
-	child: "childRowId",
-	children: "childrenRowIds",
-};
-
-type SchemaObject = Record<string, unknown>;
-
-function isSchemaObject(value: unknown): value is SchemaObject {
-	return !!value && typeof value === "object" && !Array.isArray(value);
-}
-
-function getRowSchemaBody(type: string): SchemaObject | null {
-	const schema = SDUI_DEFINITIONS[type];
-	if (!isSchemaObject(schema)) return null;
-
-	const allOf = schema.allOf;
-	if (!Array.isArray(allOf)) return null;
-
-	const body = allOf.find((entry): entry is SchemaObject => {
-		if (!isSchemaObject(entry)) return false;
-		const properties = entry.properties;
-		if (!isSchemaObject(properties)) return false;
-		const typeField = properties.type;
-		return isSchemaObject(typeField) && typeof typeField.const === "string";
-	});
-	return body ?? null;
-}
-
-function fieldKindFromPropertySchema(propSchema: unknown): RowFieldKind | null {
-	if (!isSchemaObject(propSchema)) return null;
-
-	if (propSchema.type === "string") return "text";
-
-	if (typeof propSchema.$ref === "string") {
-		return propSchema.$ref.includes("UI_Row") ? "child" : null;
-	}
-
-	if (propSchema.type === "array" && isSchemaObject(propSchema.items)) {
-		const items = propSchema.items;
-		if (items.type === "string") return "textList";
-		if (typeof items.$ref === "string" && items.$ref.includes("UI_Row"))
-			return "children";
-		// Action[] and other array types are handled elsewhere — skip
-	}
-
-	return null;
+function rowFieldSpecs(type: string) {
+	return SDUI_ROW_FIELDS[type] ?? [];
 }
 
 export function getRowContentFields(type: string): RowField[] {
-	const body = getRowSchemaBody(type);
-	if (!body) return [];
-
-	const properties = body.properties as SchemaObject;
-	const required = new Set(
-		Array.isArray(body.required) ? (body.required as string[]) : [],
-	);
-
-	const result: RowField[] = [];
-	for (const [name, propSchema] of Object.entries(properties)) {
-		if (name === "type" || ROW_BINDING_FIELD_NAMES.has(name)) continue;
-		const kind = fieldKindFromPropertySchema(propSchema);
-		if (kind === null) continue;
-		const uiName = SCHEMA_TO_UI_NAME[name] ?? name;
-		result.push({ name: uiName, kind, required: required.has(name) });
-	}
-	return result;
+	return rowFieldSpecs(type)
+		.filter((field) => field.kind !== "binding")
+		.map((field) => ({
+			name: field.name,
+			kind: field.kind as RowFieldKind,
+			required: field.required,
+		}));
 }
 
 export function getRowBindingFields(type: string): RowBindingField[] {
-	const body = getRowSchemaBody(type);
-	if (!body) return [];
-
-	const properties = body.properties as SchemaObject;
-	const bindingFields: RowBindingField[] = [];
-	for (const name of ["source", "destination", "secondary"] as const) {
-		if (name in properties) {
-			bindingFields.push(name);
-		}
-	}
-	return bindingFields;
+	return rowFieldSpecs(type)
+		.filter((field) => field.kind === "binding")
+		.map((field) => field.name as RowBindingField);
 }
 
 export function readBindingFields(
@@ -152,8 +84,8 @@ function panelTextFieldRank(name: string): number {
 
 export function getAllRowContentFieldNames(): string[] {
 	const names = new Set<string>();
-	for (const type of Object.keys(SDUI_DEFINITIONS)) {
-		for (const field of getRowContentFields(type)) {
+	for (const fields of Object.values(SDUI_ROW_FIELDS)) {
+		for (const field of fields) {
 			if (field.kind === "text" || field.kind === "textList") {
 				names.add(field.name);
 			}
@@ -164,9 +96,11 @@ export function getAllRowContentFieldNames(): string[] {
 
 export function getAllRowBindingFieldNames(): string[] {
 	const names = new Set<string>();
-	for (const type of Object.keys(SDUI_DEFINITIONS)) {
-		for (const field of getRowBindingFields(type)) {
-			names.add(field);
+	for (const fields of Object.values(SDUI_ROW_FIELDS)) {
+		for (const field of fields) {
+			if (field.kind === "binding") {
+				names.add(field.name);
+			}
 		}
 	}
 	return [...names];

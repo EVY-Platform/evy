@@ -13,10 +13,8 @@ export type Row = {
 	config: RowConfig;
 };
 
-// Keep in sync with SDUI_ROW_FIELDS (generated from types/schema/sdui/definitions/*.schema.json).
-// This TS union must remain a superset of those schema-defined fields for static typing.
-// The canonical per-type field list is now SDUI_ROW_FIELDS from evy-types; row.ts is the
-// static type declaration layer.
+// Row-specific attributes. SDUI_ROW_FIELDS (from evy-types) is the generated
+// per-type field catalog; this union is the static typing layer for RowConfig.
 type RowSpecificAttributes = {
 	action?: string;
 	child?: Row;

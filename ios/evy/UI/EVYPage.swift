@@ -19,6 +19,17 @@ extension EnvironmentValues {
   }
 }
 
+private struct EVYCacheScopeEnvironmentKey: EnvironmentKey {
+  static let defaultValue: String? = nil
+}
+
+extension EnvironmentValues {
+  var evyCacheScopeId: String? {
+    get { self[EVYCacheScopeEnvironmentKey.self] }
+    set { self[EVYCacheScopeEnvironmentKey.self] = newValue }
+  }
+}
+
 /// Renders a page by id, reading title/rowIds/footerRowId directly from the pages table.
 struct EVYPage: View {
   let pageId: String
@@ -85,7 +96,9 @@ struct EVYPage: View {
           from: nil,
           for: nil
         )
-      })
+      }
+    )
+    .environment(\.evyCacheScopeId, pageId)
   }
 
   @ViewBuilder

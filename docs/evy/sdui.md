@@ -15,12 +15,29 @@ Row types are defined as standard JSON Schema files in `types/schema/sdui/defini
         { "$ref": "../evy.schema.json#/$defs/UI_RowBase" },
         {
             "type": "object",
-            "required": ["type", "title", "start_time", "end_time"],
+            "required": [
+                "type",
+                "start_time",
+                "end_time",
+                "timeslot_interval_minutes",
+                "label_interval_minutes",
+                "header_format",
+                "timeslot_format",
+                "source",
+                "destination"
+            ],
             "properties": {
                 "type": { "const": "Calendar" },
                 "title": { "type": "string" },
+                "source": { "type": "string" },
+                "destination": { "type": "string" },
+                "secondary": { "type": "string" },
                 "start_time": { "type": "string" },
-                "end_time": { "type": "string" }
+                "end_time": { "type": "string" },
+                "timeslot_interval_minutes": { "type": "string" },
+                "label_interval_minutes": { "type": "string" },
+                "header_format": { "type": "string" },
+                "timeslot_format": { "type": "string" }
             }
         }
     ],
@@ -113,7 +130,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 | `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. |
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. |
 | `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware). |
-| `Calendar` | yes | yes | yes | no | `source` = selectable timeslots; `destination` = selected; `secondary` = greyed slots. |
+| `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
 | `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
 | `TextSelect` | yes | yes | no | no | `source` = current selected state; `destination` = write target. |

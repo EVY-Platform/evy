@@ -268,6 +268,82 @@ export async function loadSduiRowDefinitions(): Promise<SduiRowDefinition[]> {
 	return definitions;
 }
 
+const ROW_BINDING_FIELD_NAMES = new Set(["source", "destination", "secondary"]);
+
+const SCHEMA_TO_UI_FIELD_NAME: Record<string, string> = {
+	child: "childRowId",
+	children: "childrenRowIds",
+};
+
+export type RowFieldSpecKind =
+	| "text"
+	| "textList"
+	| "child"
+	| "children"
+	| "binding";
+
+export type RowFieldSpec = {
+	name: string;
+	kind: RowFieldSpecKind;
+	required: boolean;
+};
+
+function rowFieldSpecFromAttribute(
+	schemaName: string,
+	attribute: SduiRowDefinition["attributes"][string],
+): RowFieldSpec | null {
+	if (ROW_BINDING_FIELD_NAMES.has(schemaName)) {
+		return {
+			name: schemaName,
+			kind: "binding",
+			required: attribute.required,
+		};
+	}
+
+	let kind: Exclude<RowFieldSpecKind, "binding"> | null = null;
+	switch (attribute.type) {
+		case "string":
+			kind = "text";
+			break;
+		case "string[]":
+			kind = "textList";
+			break;
+		case "Row":
+			kind = "child";
+			break;
+		case "Row[]":
+			kind = "children";
+			break;
+		case "Action[]":
+			return null;
+	}
+
+	return {
+		name: SCHEMA_TO_UI_FIELD_NAME[schemaName] ?? schemaName,
+		kind,
+		required: attribute.required,
+	};
+}
+
+export function rowFieldsFromDefinitions(
+	definitions: SduiRowDefinition[],
+): Record<string, RowFieldSpec[]> {
+	const rowFields: Record<string, RowFieldSpec[]> = {};
+	for (const definition of definitions) {
+		const fields: RowFieldSpec[] = [];
+		for (const [schemaName, attribute] of Object.entries(
+			definition.attributes,
+		)) {
+			const field = rowFieldSpecFromAttribute(schemaName, attribute);
+			if (field) {
+				fields.push(field);
+			}
+		}
+		rowFields[definition.type] = fields;
+	}
+	return rowFields;
+}
+
 export function extractSduiRowTypeEnum(
 	schema: Record<string, unknown>,
 ): string[] {

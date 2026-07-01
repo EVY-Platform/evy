@@ -125,7 +125,7 @@ export default defineRow("CalendarRow", {
 	config: {
 		type: "Calendar",
 		actions: [],
-		source: `{${MARKETPLACE_RESOURCE.ITEMS}.delivery_selection}`,
+		source: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
 		visible: "true",
 		title: "Calendar row title",
 		start_time: "07:00",
@@ -135,7 +135,7 @@ export default defineRow("CalendarRow", {
 		header_format: "EEE d",
 		timeslot_format: "HH:mm",
 		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
-		secondary: `{${MARKETPLACE_RESOURCE.ITEMS}.unavailable_selection}`,
+		secondary: `{${MARKETPLACE_RESOURCE.ITEMS}.delivery_selection}`,
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

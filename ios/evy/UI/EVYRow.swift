@@ -64,22 +64,6 @@ struct EVYRow: View, Identifiable {
 }
 
 @MainActor
-private func rowDestination(from payload: UI_RowPayload) -> String? {
-  switch payload {
-  case .calendar(let view, _): return view.destination
-  case .dropdown(let view, _): return view.destination
-  case .inlinePicker(let view, _): return view.destination
-  case .input(let view, _): return view.destination
-  case .search(let view, _): return view.destination
-  case .selectPhoto(let view, _): return view.destination
-  case .textArea(let view, _): return view.destination
-  case .textSelect(let view, _): return view.destination
-  case .timeslotPicker(let view, _): return view.destination
-  default: return nil
-  }
-}
-
-@MainActor
 func bootstrapRowDraft(row: UI_Row, scopeId: String?, payload: UI_RowPayload? = nil) {
   let unwrappedPayload: UI_RowPayload?
   if let existingPayload = payload {
@@ -89,7 +73,7 @@ func bootstrapRowDraft(row: UI_Row, scopeId: String?, payload: UI_RowPayload? = 
   }
 
   guard let finalPayload = unwrappedPayload,
-    let destination = rowDestination(from: finalPayload)?.trimmingCharacters(
+    let destination = finalPayload.destination?.trimmingCharacters(
       in: .whitespacesAndNewlines),
     !destination.isEmpty
   else { return }

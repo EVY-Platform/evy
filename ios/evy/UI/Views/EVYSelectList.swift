@@ -13,17 +13,20 @@ struct EVYSelectList: View {
   let destination: String
 
   private let optionLabels: [String]
+  private let target: EVYSelectItemTarget
   @Environment(\.dismiss) private var dismiss
 
   init(
     options: [EVYJson],
     valueTemplate: String?,
     destination: String,
-    optionLabels: [String]? = nil
+    optionLabels: [String]? = nil,
+    target: EVYSelectItemTarget = .single_object
   ) {
     self.options = options
     self.valueTemplate = valueTemplate
     self.destination = destination
+    self.target = target
     if let optionLabels, optionLabels.count == options.count {
       self.optionLabels = optionLabels
     } else {
@@ -40,7 +43,7 @@ struct EVYSelectList: View {
           valueTemplate: valueTemplate,
           displayLabel: optionLabels[index],
           selectionStyle: .single,
-          target: .single_object,
+          target: target,
           onSelect: { dismiss() }
         )
         .frame(height: Constants.listRowHeight)

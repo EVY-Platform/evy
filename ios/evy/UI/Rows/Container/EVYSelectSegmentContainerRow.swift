@@ -36,6 +36,7 @@ struct EVYSelectSegmentContainerRow: View {
 
       if selected < childRefs.count {
         EVYRow(ref: childRefs[selected])
+          .id(childRefs[selected].id)
       }
     }
   }

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
 	loadSduiRowDefinitions,
 	rowSpecFromDefinitions,
+	type SduiRowDefinition,
 	type SduiRowSpec,
 	type SduiRowSpecField,
 } from "./sdui-row-schema-utils.js";
@@ -19,6 +20,11 @@ const ACTION_SCHEMA_PATH = join(SCHEMA_DIR, "sdui", "action.schema.json");
 type RowSpec = SduiRowSpec;
 
 type SchemaObject = Record<string, unknown>;
+
+export type GeneratedSwiftFile = {
+	path: string;
+	content: string;
+};
 
 function swiftTypeForSpecType(s: string, required = true): string {
 	switch (s) {
@@ -488,6 +494,24 @@ ${decoderLines.join(",\n")}
 }`;
 }
 
+function emitRowPayloadBindingAccessors(rowSpec: RowSpec): string {
+	const rowTypes = getRowTypesFromSpec(rowSpec);
+	const destinationCases = rowTypes.map((rowType) => {
+		const enumCase = rowTypeToEnumCase(rowType);
+		if (rowSpec[rowType]?.content.destination) {
+			return `        case .${enumCase}(let view, _): return view.destination`;
+		}
+		return `        case .${enumCase}: return nil`;
+	});
+	return `extension UI_RowPayload {
+    var destination: String? {
+        switch self {
+${destinationCases.join("\n")}
+        }
+    }
+}`;
+}
+
 function emitUIRowPayloads(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
 	const viewDataStructs = rowTypes.flatMap((rowType) => {
@@ -536,33 +560,51 @@ ${fromRowCases.join("\n")}
     }
 }
 
+${emitRowPayloadBindingAccessors(rowSpec)}
+
 ${protocols}
 
 ${registry}
 `;
 }
 
+export function emitSwiftSdui({
+	definitions,
+	schema,
+	actionSchema,
+}: {
+	definitions: SduiRowDefinition[];
+	schema: SchemaObject;
+	actionSchema: SchemaObject;
+}): GeneratedSwiftFile[] {
+	const rowSpec = rowSpecFromDefinitions(definitions);
+	return [
+		{
+			path: join(OUT_SWIFT, "UIEnums.swift"),
+			content: emitUIEnums(rowSpec),
+		},
+		{
+			path: join(OUT_SWIFT, "UIShapes.swift"),
+			content: emitUIShapes(schema, actionSchema, rowSpec),
+		},
+		{
+			path: join(OUT_SWIFT, "UIRowPayloads.swift"),
+			content: emitUIRowPayloads(rowSpec),
+		},
+	];
+}
+
 async function main(): Promise<void> {
-	const schema = await loadJson<Record<string, unknown>>(UI_SCHEMA_PATH);
-	const actionSchema =
-		await loadJson<Record<string, unknown>>(ACTION_SCHEMA_PATH);
-	const rowSpec = rowSpecFromDefinitions(await loadSduiRowDefinitions());
-	await writeFile(
-		join(OUT_SWIFT, "UIEnums.swift"),
-		emitUIEnums(rowSpec),
-		"utf-8",
-	);
-	await writeFile(
-		join(OUT_SWIFT, "UIShapes.swift"),
-		emitUIShapes(schema, actionSchema, rowSpec),
-		"utf-8",
-	);
-	await writeFile(
-		join(OUT_SWIFT, "UIRowPayloads.swift"),
-		emitUIRowPayloads(rowSpec),
-		"utf-8",
-	);
+	const schema = await loadJson<SchemaObject>(UI_SCHEMA_PATH);
+	const actionSchema = await loadJson<SchemaObject>(ACTION_SCHEMA_PATH);
+	const definitions = await loadSduiRowDefinitions();
+	const files = emitSwiftSdui({ definitions, schema, actionSchema });
+	for (const file of files) {
+		await writeFile(file.path, file.content, "utf-8");
+	}
 	console.log("Swift UI types generated successfully.");
 }
 
-runMain(main);
+if (import.meta.main) {
+	runMain(main);
+}

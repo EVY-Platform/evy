@@ -4,6 +4,7 @@ import {
 	assertExactSduiRowTypeCoverage,
 	extractSduiRowTypeEnum,
 	loadSduiRowDefinitions,
+	rowFieldsFromDefinitions,
 	type SduiRowDefinition,
 } from "./sdui-row-schema-utils.js";
 import {
@@ -29,15 +30,6 @@ const SOURCE_LABEL = "types/schema/sdui/definitions/";
 
 type SchemaObject = Record<string, unknown>;
 
-async function getRowTypeEnum(): Promise<string[]> {
-	const schema = await loadJson<SchemaObject>(UI_SCHEMA_PATH);
-	const values = extractSduiRowTypeEnum(schema);
-	if (values.length === 0) {
-		throw new Error("sdui/evy.schema.json: UI_Row type enum not found");
-	}
-	return values;
-}
-
 function formatAjvErrors(errors: Ajv2020["errors"] | null | undefined): string {
 	return (errors ?? [])
 		.map((error) =>
@@ -46,7 +38,7 @@ function formatAjvErrors(errors: Ajv2020["errors"] | null | undefined): string {
 		.join("; ");
 }
 
-async function validateDefinitionSchemas(
+export async function validateDefinitionSchemas(
 	definitions: SduiRowDefinition[],
 ): Promise<void> {
 	const definitionSchema = await loadJson<SchemaObject>(
@@ -68,47 +60,71 @@ async function validateDefinitionSchemas(
 	}
 }
 
-function generateTypeScript(definitions: SduiRowDefinition[]): string {
+export function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
+	tsContent: string;
+	swiftContent: string;
+} {
 	const catalog = Object.fromEntries(
 		definitions.map((definition) => [definition.type, definition.schema]),
 	);
-	const lines: string[] = [];
-	lines.push(...generatedFileHeader(SOURCE_LABEL));
-	lines.push(
+	const rowFields = rowFieldsFromDefinitions(definitions);
+	const tsLines: string[] = [];
+	tsLines.push(...generatedFileHeader(SOURCE_LABEL));
+	tsLines.push(
 		`export const SDUI_DEFINITIONS: Record<string, unknown> = ${JSON.stringify(catalog, null, "\t")};`,
 	);
-	lines.push("");
-	return lines.join("\n");
-}
-
-function generateSwift(definitions: SduiRowDefinition[]): string {
-	const catalog = Object.fromEntries(
-		definitions.map((definition) => [definition.type, definition.schema]),
+	tsLines.push("");
+	tsLines.push(
+		`export type RowFieldSpecKind = "text" | "textList" | "child" | "children" | "binding";`,
 	);
+	tsLines.push("");
+	tsLines.push(`export type RowFieldSpec = {`);
+	tsLines.push(`\tname: string;`);
+	tsLines.push(`\tkind: RowFieldSpecKind;`);
+	tsLines.push(`\trequired: boolean;`);
+	tsLines.push(`};`);
+	tsLines.push("");
+	tsLines.push(
+		`export const SDUI_ROW_FIELDS: Record<string, RowFieldSpec[]> = ${JSON.stringify(rowFields, null, "\t")};`,
+	);
+	tsLines.push("");
+
 	const json = JSON.stringify(catalog, null, 2);
-	const lines: string[] = [];
-	lines.push(...generatedSwiftHeader(SOURCE_LABEL));
-	lines.push("import Foundation");
-	lines.push("");
-	lines.push("enum SduiDefinitions {");
-	lines.push('\tstatic let json = #"""');
-	lines.push(json);
-	lines.push('"""#');
-	lines.push("}");
-	lines.push("");
-	return lines.join("\n");
+	const swiftLines: string[] = [];
+	swiftLines.push(...generatedSwiftHeader(SOURCE_LABEL));
+	swiftLines.push("import Foundation");
+	swiftLines.push("");
+	swiftLines.push("enum SduiDefinitions {");
+	swiftLines.push('\tstatic let json = #"""');
+	swiftLines.push(json);
+	swiftLines.push('"""#');
+	swiftLines.push("}");
+	swiftLines.push("");
+
+	return {
+		tsContent: tsLines.join("\n"),
+		swiftContent: swiftLines.join("\n"),
+	};
 }
 
 async function main(): Promise<void> {
 	const definitions = await loadSduiRowDefinitions();
 	await validateDefinitionSchemas(definitions);
-	assertExactSduiRowTypeCoverage(definitions, await getRowTypeEnum());
+	const schema = await loadJson<SchemaObject>(UI_SCHEMA_PATH);
+	const rowTypes = extractSduiRowTypeEnum(schema);
+	if (rowTypes.length === 0) {
+		throw new Error("sdui/evy.schema.json: UI_Row type enum not found");
+	}
+	assertExactSduiRowTypeCoverage(definitions, rowTypes);
+	const { tsContent, swiftContent } = emitSduiDefinitions(definitions);
 	await writeGeneratedOutputs({
 		tsPath: OUT_TS_PATH,
-		tsContent: generateTypeScript(definitions),
+		tsContent,
 		swiftPath: OUT_SWIFT_PATH,
-		swiftContent: generateSwift(definitions),
+		swiftContent,
 	});
 }
 
-runMain(main);
+if (import.meta.main) {
+	runMain(main);
+}

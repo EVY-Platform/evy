@@ -81,10 +81,8 @@ docker compose -f docker-compose.prod.yml up
 
 You can optionally skip the iOS tests (which are heavy and slow) by running `./run-e2e.sh --skip-ios`
 
-For even faster run you can keep running the API and web directly via Bun, and postgres via docker, then run `./run-e2e.sh --skip-ios --no-docker`
-
 ## CI
 
 - API lint, build, and tests, and web lint run on Linux.
 - Web tests run on Linux and install Playwright before running.
-- E2E tests run on macOS. PostgreSQL is started on the host, then `./run-e2e.sh --no-docker` runs API, marketplace, web, and iOS Simulator tests. iOS tests target iPhone 17 / iOS 26.5.
+- E2E tests run on macOS with `./run-e2e.sh`, which starts API, marketplace, web, and PostgreSQL with Docker Compose before running iOS Simulator tests. iOS tests target iPhone 17 / iOS 26.5.

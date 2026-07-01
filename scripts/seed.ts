@@ -451,7 +451,7 @@ async function copySeedFileBinaries(files: SeedFileRow[]): Promise<void> {
 	// When the API runs in Docker, its file storage lives inside the container
 	// rather than on the host, so seeded binaries are also copied in via
 	// `docker compose cp`. Skipped when Docker is absent or no API container
-	// is running (local Bun / --no-docker run).
+	// is running.
 	if (!(await isApiContainerRunning())) {
 		return;
 	}

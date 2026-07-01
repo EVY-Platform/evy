@@ -62,6 +62,65 @@ final class SduiRowAttributeContractTests: XCTestCase {
     }
   }
 
+  func testRowPayloadDestinationMatchesSchemaBindingFields() throws {
+    let catalogData = try XCTUnwrap(
+      SduiDefinitions.json.data(using: .utf8),
+      "SduiDefinitions.json must be valid UTF-8"
+    )
+    let catalog = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
+      "SduiDefinitions.json must be a JSON object"
+    )
+
+    for rowType in catalog.keys.sorted() {
+      let schemaDef = try XCTUnwrap(
+        catalog[rowType] as? [String: Any],
+        "\(rowType): missing schema definition in SduiDefinitions.json"
+      )
+      guard schemaHasBindingField(schemaDef, field: "destination") else { continue }
+
+      var rowJson = buildMinimalRowJson(from: schemaDef, rowType: rowType)
+      rowJson["destination"] = "draft.target"
+      let rowData = try JSONSerialization.data(withJSONObject: rowJson)
+      let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
+      let payload = try UI_RowPayload.from(row: row)
+
+      XCTAssertEqual(
+        payload.destination,
+        "draft.target",
+        "\(rowType): UI_RowPayload.destination must match row destination"
+      )
+    }
+  }
+
+  private func schemaHasBindingField(
+    _ schemaDef: [String: Any],
+    field: String
+  ) -> Bool {
+    guard let allOf = schemaDef["allOf"] as? [[String: Any]] else { return false }
+    for body in allOf {
+      guard let properties = body["properties"] as? [String: Any] else { continue }
+      return properties[field] != nil
+    }
+    return false
+  }
+
+  private func buildMinimalRowJson(
+    from schemaDef: [String: Any],
+    rowType: String
+  ) -> [String: Any] {
+    var rowJson: [String: Any] = [
+      "id": "test-row",
+      "type": rowType,
+      "visible": "",
+      "actions": [] as [Any],
+    ]
+    for (name, value) in buildMinimalPayload(from: schemaDef) {
+      rowJson[name] = value
+    }
+    return rowJson
+  }
+
   private func buildMinimalPayload(from schemaDef: [String: Any]) -> [String: Any] {
     guard let allOf = schemaDef["allOf"] as? [[String: Any]] else { return [:] }
     for body in allOf {

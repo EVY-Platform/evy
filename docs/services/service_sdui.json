@@ -31,7 +31,7 @@
 						"actions": [],
 						"visible": "true",
 						"title": "Condition",
-						"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}",
+						"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id).value}",
 						"name": "Item condition"
 					},
 					{
@@ -40,7 +40,7 @@
 						"actions": [],
 						"visible": "true",
 						"title": "Selling reason",
-						"subtitle": "{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, item.selling_reason_id).value}",
+						"subtitle": "{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id).value}",
 						"name": "Item selling reason"
 					},
 					{
@@ -207,7 +207,7 @@
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
 						"type": "Dropdown",
 						"source": "{cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f}",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition}",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id}",
 						"actions": [],
 						"title": "Condition",
 						"placeholder": "Choose one",
@@ -219,7 +219,7 @@
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
 						"type": "Dropdown",
 						"source": "{e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8}",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason}",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id}",
 						"actions": [],
 						"title": "Selling Reason",
 						"placeholder": "Choose one",
@@ -236,8 +236,8 @@
 							{
 								"id": "b66e136d-828d-4ed0-ae27-cdc48f7cbffd",
 								"type": "Input",
-								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width)}",
-								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width}",
+								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width)}",
+								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width}",
 								"actions": [],
 								"title": "",
 								"placeholder": "Width",
@@ -247,8 +247,8 @@
 							{
 								"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
 								"type": "Input",
-								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height)}",
-								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height}",
+								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height)}",
+								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height}",
 								"actions": [],
 								"title": "",
 								"placeholder": "Height",
@@ -258,8 +258,8 @@
 							{
 								"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
 								"type": "Input",
-								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length)}",
-								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length}",
+								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length)}",
+								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length}",
 								"actions": [],
 								"title": "",
 								"placeholder": "Length",
@@ -287,28 +287,28 @@
 							"true": ""
 						},
 						{
-							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition) > 0}",
-							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition)}",
+							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id) > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id)}",
 							"true": ""
 						},
 						{
-							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason) > 0}",
-							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason)}",
+							"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id) > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id)}",
 							"true": ""
 						},
 						{
-							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width > 0}",
-							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.width)}",
+							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width)}",
 							"true": ""
 						},
 						{
-							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height > 0}",
-							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.height)}",
+							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height > 0}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height)}",
 							"true": ""
 						},
 						{
-							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length >= 1}",
-							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.length)}",
+							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length >= 1}",
+							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length)}",
 							"true": ""
 						},
 						{
@@ -446,8 +446,9 @@
 									{
 										"id": "22222222-2222-4222-8222-222222222208",
 										"type": "Calendar",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
+										"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
 										"actions": [],
 										"title": "",
 										"start_time": "07:00",
@@ -521,8 +522,9 @@
 									{
 										"id": "22222222-2222-4222-8222-222222222215",
 										"type": "Calendar",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
+										"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 										"actions": [],
 										"title": "",
 										"start_time": "07:00",
@@ -587,8 +589,8 @@
 									{
 										"id": "22222222-2222-4222-8222-222222222221",
 										"type": "Input",
-										"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.weight)}",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.weight}",
+										"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.weight)}",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.weight}",
 										"actions": [],
 										"title": "Weight (kg)",
 										"placeholder": "Weight",

@@ -387,6 +387,33 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("one"))
   }
 
+  func testCollectionResolvesFromPinnedScopeNotGlobalScope() throws {
+    let itemsKey = uniqueKey("items")
+    let homePageId = "home-\(UUID().uuidString)"
+    let detailPageId = "detail-\(UUID().uuidString)"
+
+    let item1 = EVYJson.dictionary(["id": .string("id-1"), "title": .string("Item 1")])
+    let item2 = EVYJson.dictionary(["id": .string("id-2"), "title": .string("Item 2")])
+    try EVY.publicStore.applySyncedValue(
+      namespace: EVYNamespace.marketplace, resource: itemsKey, value: .array([item1, item2]))
+
+    let encoded = try JSONEncoder().encode(item1)
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: detailPageId, id: itemsKey, value: encoded)
+
+    EVY.activeCacheScopeId = detailPageId
+    let resultOnDetail = try EVY.getDataFromText("{\(itemsKey)}")
+    XCTAssertEqual(resultOnDetail, item1, "Detail page scope resolves to single cached item")
+
+    EVY.activeCacheScopeId = homePageId
+    let resultOnHome = try EVY.getDataFromText("{\(itemsKey)}")
+    guard case .array(let homeItems) = resultOnHome else {
+      XCTFail("Expected array from home scope")
+      return
+    }
+    XCTAssertEqual(homeItems.count, 2, "Home scope resolves to full collection")
+  }
+
   func testDraftStoreOverridesCacheStore() throws {
     let key = uniqueKey("draft_over_cache")
     let scopeId = "scope_\(UUID().uuidString)"

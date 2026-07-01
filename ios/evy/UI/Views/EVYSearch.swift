@@ -23,20 +23,25 @@ struct EVYSearch: View {
   let destination: String
   let placeholder: String?
   let resultTemplate: UI_Row?
+  let scopeId: String?
 
   @State private var searchText = ""
   private var results: EVYState<[EVYSearchResult]>
 
-  init(source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?) {
+  init(
+    source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
+    scopeId: String? = nil
+  ) {
     self.source = source
     self.destination = destination
     self.placeholder = placeholder
     self.resultTemplate = resultTemplate
+    self.scopeId = scopeId
 
     results = EVYState(
       textToWatch: source,
       setter: {
-        Self.makeResults(source: source, resultTemplate: resultTemplate)
+        Self.makeResults(source: source, resultTemplate: resultTemplate, scopeId: scopeId)
       }
     )
   }
@@ -70,12 +75,17 @@ struct EVYSearch: View {
     }
   }
 
-  private static func makeResults(source: String, resultTemplate: UI_Row?) -> [EVYSearchResult] {
+  private static func makeResults(source: String, resultTemplate: UI_Row?, scopeId: String?)
+    -> [EVYSearchResult]
+  {
     guard let resultTemplate else {
       return []
     }
 
     do {
+      let previous = EVY.activeCacheScopeId
+      EVY.activeCacheScopeId = scopeId
+      defer { EVY.activeCacheScopeId = previous }
       let sourceData = try EVY.getDataFromText(source)
       let dataRows: [EVYJson]
       if case .array(let arrayValue) = sourceData {

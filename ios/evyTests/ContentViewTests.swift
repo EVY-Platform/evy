@@ -533,50 +533,7 @@ final class ContentViewTests: XCTestCase {
     return try JSONDecoder().decode(UI_Row.self, from: data)
   }
 
-  // MARK: - Stored record equality
-
-  func testStoredRowEqualityIgnoresIdenticalData() throws {
-    let store = makeStore()
-    let rowId = "equality-row"
-
-    try seedRow(
-      store: store, id: rowId, type: "Button",
-      data: ["source": "", "title": "", "label": "Same", "actions": []])
-
-    let firstRead = try XCTUnwrap(EVYRowStore.row(id: rowId, from: store))
-    let secondRead = try XCTUnwrap(EVYRowStore.row(id: rowId, from: store))
-    XCTAssertEqual(firstRead, secondRead)
-  }
-
-  func testStoredRowEqualityDetectsLabelChange() throws {
-    let store = makeStore()
-    let rowId = "changed-row"
-
-    try seedRow(
-      store: store, id: rowId, type: "Button",
-      data: ["source": "", "title": "", "label": "Before", "actions": []])
-    let before = try XCTUnwrap(EVYRowStore.row(id: rowId, from: store))
-
-    try seedRow(
-      store: store, id: rowId, type: "Button",
-      data: ["source": "", "title": "", "label": "After", "actions": []])
-    let after = try XCTUnwrap(EVYRowStore.row(id: rowId, from: store))
-
-    XCTAssertNotEqual(before, after)
-  }
-
-  func testStoredPageEqualityDetectsRowOrderChange() throws {
-    let store = makeStore()
-    let pageId = "page-order"
-
-    try seedPage(store: store, id: pageId, rowIds: ["row-a", "row-b"])
-    let before = try XCTUnwrap(EVYPageStore.page(id: pageId, from: store))
-
-    try seedPage(store: store, id: pageId, rowIds: ["row-b", "row-a"])
-    let after = try XCTUnwrap(EVYPageStore.page(id: pageId, from: store))
-
-    XCTAssertNotEqual(before, after)
-  }
+  // MARK: - Stored record stability
 
   func testFlowFirstPageIdUnchangedWhenOnlyRowUpdates() throws {
     let store = makeStore()

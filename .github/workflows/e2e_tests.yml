@@ -4,15 +4,12 @@ on:
     pull_request:
         branches: [dev]
         paths-ignore:
-            - '**/*.md'
+            - "**/*.md"
     push:
         branches: [dev]
         paths-ignore:
-            - '**/*.md'
+            - "**/*.md"
     workflow_dispatch:
-
-        # E2E runs on Blacksmith macOS 26 so iOS Simulator tests can run in CI. PostgreSQL is started on the host
-        # (Homebrew); api/marketplace/web run via `run-e2e.sh --no-docker` (no Docker required for this job).
 
 jobs:
     e2e_tests:
@@ -43,43 +40,32 @@ jobs:
                         - '!**/*.md'
 
             - name: Setup Bun
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               uses: oven-sh/setup-bun@v2
 
-            - name: Start PostgreSQL on host
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
-                  'true'
-              run: |
-                  set -euo pipefail
-                  brew install postgresql@16
-                  PG_BIN="$(brew --prefix postgresql@16)/bin"
-                  echo "$PG_BIN" >> "$GITHUB_PATH"
-                  export PGDATA="${RUNNER_TEMP}/pgdata"
-                  "$PG_BIN/initdb" -D "$PGDATA" -U postgres -A trust -E UTF8 --locale=C
-                  "$PG_BIN/pg_ctl" -D "$PGDATA" -o "-p 5432" -l "${RUNNER_TEMP}/postgres.log" -w start
-                  "$PG_BIN/psql" -h localhost -p 5432 -U postgres -d postgres -v ON_ERROR_STOP=1 \
-                    -c "CREATE USER evy WITH PASSWORD 'evy' CREATEDB;"
-                  "$PG_BIN/createdb" -h localhost -p 5432 -U postgres -O evy evy
-                  "$PG_BIN/createdb" -h localhost -p 5432 -U postgres -O evy marketplace
-
             - name: Install dependencies
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               run: bun run install:all
 
             - name: Prepare .env and generate types
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               uses: ./.github/actions/prepare-dotenv-and-types
 
             - name: Install Playwright browsers
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               run: bun run --cwd web test:setup
 
             - name: Verify Xcode and iOS simulators
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               run: |
                   set -euo pipefail
@@ -92,13 +78,13 @@ jobs:
                   xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | sed -n '1,80p'
 
             - name: Run E2E tests
-              if: github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               env:
-                  MARKETPLACE_GRPC_HOST: 127.0.0.1
                   IOS_SIMULATOR_DEVICE_NAME: iPhone 17
                   IOS_SIMULATOR_OS_VERSION: 26.5
-              run: bash run-e2e.sh --no-docker
+              run: bash run-e2e.sh
 
             - name: Upload Playwright report
               uses: actions/upload-artifact@v7
