@@ -63,17 +63,34 @@ jobs:
                   'true'
               run: bun run --cwd web test:setup
 
-            - name: Setup Docker
+            - name: Start Docker daemon
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
+              shell: bash
               run: |
                   set -euo pipefail
-                  brew install docker docker-compose colima
-                  mkdir -p ~/.docker/cli-plugins
-                  ln -sfn "$(brew --prefix docker-compose)/bin/docker-compose" ~/.docker/cli-plugins/docker-compose
-                  colima start --cpu 4 --memory 8 --disk 20
-                  docker context use colima
+
+                  if ! command -v docker >/dev/null 2>&1; then
+                      echo "Docker CLI is not installed on this runner."
+                      exit 1
+                  fi
+
+                  if ! docker info >/dev/null 2>&1; then
+                      if [ ! -d /Applications/Docker.app ]; then
+                          echo "Docker daemon is not running and /Applications/Docker.app is unavailable."
+                          exit 1
+                      fi
+
+                      open -a Docker
+                      for _ in {1..60}; do
+                          if docker info >/dev/null 2>&1; then
+                              break
+                          fi
+                          sleep 2
+                      done
+                  fi
+
                   docker info
                   docker compose version
 
