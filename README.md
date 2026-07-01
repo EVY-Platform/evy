@@ -77,7 +77,7 @@ docker compose -f docker-compose.prod.yml up
 
 ## End to end testing
 
-`./run-e2e.sh` runs API, web, and iOS end-to-end tests. It uses Docker Compose when Docker is available, or `E2E_SERVICE_MODE=local` to run PostgreSQL and the services directly with Bun.
+`./run-e2e.sh` runs API, web, and iOS end-to-end tests with docker.
 
 You can optionally skip the iOS tests (which are heavy and slow) by running `./run-e2e.sh --skip-ios`
 
@@ -85,4 +85,4 @@ You can optionally skip the iOS tests (which are heavy and slow) by running `./r
 
 - API lint, build, and tests, and web lint run on Linux.
 - Web tests run on Linux and install Playwright before running.
-- E2E tests run on macOS with `./run-e2e.sh`, which starts API, marketplace, web, and PostgreSQL before running iOS Simulator tests. CI uses local PostgreSQL/Bun services because the Apple Silicon macOS runner does not provide Docker. iOS tests target iPhone 17 / iOS 26.5.
+- E2E tests run on macOS with `./run-e2e.sh`, which starts API, marketplace, web, and PostgreSQL with Docker Compose before running iOS Simulator tests. iOS tests target iPhone 17 / iOS 26.5.
