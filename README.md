@@ -81,8 +81,10 @@ docker compose -f docker-compose.prod.yml up
 
 You can optionally skip the iOS tests (which are heavy and slow) by running `./run-e2e.sh --skip-ios`
 
+The `--ci` flag is intended for CI only and is not meant for regular local runs. It runs API, marketplace, and web directly with Bun and expects PostgreSQL to already be running on the host. It exists because the macOS CI runner cannot run a container runtime (no nested virtualization), so PostgreSQL is provided on the host instead. For local development, use `./run-e2e.sh` (or `./run-e2e.sh --skip-ios`) rather than `--ci`.
+
 ## CI
 
 - API lint, build, and tests, and web lint run on Linux.
 - Web tests run on Linux and install Playwright before running.
-- E2E tests run on macOS with `./run-e2e.sh --ci` which provisions a Docker engine (Colima), starts PostgreSQL in a container, then runs API, marketplace, web, and iOS Simulator tests on the host with Bun. iOS tests target iPhone 17 / iOS 26.5.
+- E2E tests run on macOS with `./run-e2e.sh --ci`. PostgreSQL is started on the host (the macOS runner cannot run Docker), then API, marketplace, web, and iOS Simulator tests run with Bun. iOS tests target iPhone 17 / iOS 26.5.

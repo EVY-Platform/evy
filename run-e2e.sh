@@ -87,8 +87,9 @@ cleanup() {
         for pid in "$WEB_PID" "$MARKETPLACE_PID" "$API_PID"; do
             [ -n "$pid" ] && wait "$pid" 2>/dev/null || true
         done
+    else
+        docker compose down -v --remove-orphans 2>/dev/null || true
     fi
-    docker compose down -v --remove-orphans 2>/dev/null || true
 }
 
 wait_for_http_service() {
@@ -97,8 +98,12 @@ wait_for_http_service() {
     retry_until_cmd "$service_name" curl -fsS "$service_url"
 }
 
-wait_for_postgres_container() {
-    retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
+wait_for_postgres() {
+    if [ "$CI_MODE" = true ]; then
+        retry_until_cmd "PostgreSQL" bash -c "echo -n > /dev/tcp/${DB_DOMAIN}/${DB_PORT}"
+    else
+        retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
+    fi
 }
 
 wait_for_service_readiness() {
@@ -225,14 +230,8 @@ echo -e "\n${YELLOW}Installing dependencies...${NC}"
 bun run install:all
 
 if [ "$CI_MODE" = true ]; then
-    if ! docker compose version > /dev/null 2>&1; then
-        echo -e "${RED}--ci requires a Docker engine (Docker Compose) to run PostgreSQL${NC}"
-        exit 1
-    fi
-
-    echo -e "\n${YELLOW}Step 1: Starting PostgreSQL container and services with Bun (CI mode)...${NC}"
-    docker compose up -d postgres
-    wait_for_postgres_container
+    echo -e "\n${YELLOW}Step 1: Starting services with Bun (CI mode)...${NC}"
+    wait_for_postgres
 
     start_bun_service services/marketplace
     MARKETPLACE_PID=$!
@@ -255,7 +254,7 @@ else
     docker compose up --build -d
 
     echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
-    wait_for_postgres_container
+    wait_for_postgres
 
     wait_for_service_readiness services/marketplace marketplace "health" "Marketplace"
     wait_for_service_readiness api api "health" "API"
