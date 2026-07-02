@@ -11,12 +11,14 @@ cd "$REPO_ROOT"
 
 # Parse arguments
 SKIP_IOS=false
+CI_MODE=false
 for arg in "$@"; do
     case $arg in
         --skip-ios) SKIP_IOS=true ;;
+        --ci) CI_MODE=true ;;
         *)
             echo -e "${RED}Unknown argument: $arg${NC}"
-            echo "Usage: ./run-e2e.sh [--skip-ios]"
+            echo "Usage: ./run-e2e.sh [--skip-ios] [--ci]"
             exit 1
             ;;
     esac
@@ -29,22 +31,9 @@ IOS_RESULT=0
 IOS_SKIPPED=false
 MAX_RETRIES=30
 RETRY_DELAY_SECONDS=2
-REQUESTED_SERVICE_MODE="${E2E_SERVICE_MODE:-auto}"
-SERVICE_MODE=""
-LOCAL_SERVICE_PIDS=""
-POSTGRES_STARTED_BY_E2E=false
-E2E_RUNTIME_DIR="$REPO_ROOT/.e2e"
-E2E_LOG_DIR="$E2E_RUNTIME_DIR/logs"
-POSTGRES_DATA_DIR="$E2E_RUNTIME_DIR/postgres"
-POSTGRES_PASSWORD_FILE="$E2E_RUNTIME_DIR/postgres-password"
-POSTGRES_LOG_FILE="$E2E_LOG_DIR/postgres.log"
-API_LOG_FILE="$E2E_LOG_DIR/api.log"
-MARKETPLACE_LOG_FILE="$E2E_LOG_DIR/marketplace.log"
-WEB_LOG_FILE="$E2E_LOG_DIR/web.log"
-PG_CTL=""
-INITDB=""
-PG_ISREADY=""
-CREATEDB=""
+API_PID=""
+MARKETPLACE_PID=""
+WEB_PID=""
 
 # Preserve env overrides when sourcing `.env` (e.g. WEB_PORT=3001 ./run-e2e.sh).
 _PRESET_WEB_PORT="${WEB_PORT-}"
@@ -71,172 +60,6 @@ echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
 echo -e "${YELLOW}========================================${NC}"
 
-command_exists() {
-    command -v "$1" > /dev/null 2>&1
-}
-
-find_postgres_bin_dir() {
-    local candidate_dir
-    for candidate_dir in \
-        /opt/homebrew/opt/postgresql@18/bin \
-        /usr/local/opt/postgresql@18/bin \
-        /opt/homebrew/opt/postgresql@17/bin \
-        /usr/local/opt/postgresql@17/bin \
-        /opt/homebrew/opt/postgresql@16/bin \
-        /usr/local/opt/postgresql@16/bin \
-        /opt/homebrew/opt/postgresql/bin \
-        /usr/local/opt/postgresql/bin; do
-        if [ -x "$candidate_dir/postgres" ] && [ -x "$candidate_dir/pg_ctl" ] && [ -x "$candidate_dir/initdb" ] && [ -x "$candidate_dir/pg_isready" ] && [ -x "$candidate_dir/createdb" ]; then
-            printf '%s' "$candidate_dir"
-            return 0
-        fi
-    done
-
-    if command_exists postgres; then
-        local postgres_path
-        local postgres_bin_dir
-        postgres_path="$(command -v postgres)"
-        postgres_bin_dir="${postgres_path%/*}"
-        if [ -x "$postgres_bin_dir/pg_ctl" ] && [ -x "$postgres_bin_dir/initdb" ] && [ -x "$postgres_bin_dir/pg_isready" ] && [ -x "$postgres_bin_dir/createdb" ]; then
-            printf '%s' "$postgres_bin_dir"
-            return 0
-        fi
-    fi
-
-    return 1
-}
-
-resolve_service_mode() {
-    case "$REQUESTED_SERVICE_MODE" in
-        docker)
-            SERVICE_MODE="docker"
-            ;;
-        local)
-            SERVICE_MODE="local"
-            ;;
-        auto)
-            if command_exists docker && docker compose version > /dev/null 2>&1; then
-                SERVICE_MODE="docker"
-            else
-                SERVICE_MODE="local"
-            fi
-            ;;
-        *)
-            echo -e "${RED}Unknown E2E_SERVICE_MODE: $REQUESTED_SERVICE_MODE${NC}"
-            echo "Use E2E_SERVICE_MODE=auto, docker, or local."
-            exit 1
-            ;;
-    esac
-
-    echo "Using $SERVICE_MODE service mode"
-}
-
-require_e2e_env() {
-    local env_name="$1"
-    if [ -z "${!env_name:-}" ]; then
-        echo -e "${RED}$env_name environment variable is not set${NC}"
-        exit 1
-    fi
-}
-
-require_postgres_commands() {
-    local postgres_bin_dir
-    postgres_bin_dir="$(find_postgres_bin_dir || true)"
-
-    if [ -z "$postgres_bin_dir" ]; then
-        echo -e "${RED}PostgreSQL server tools are required for E2E_SERVICE_MODE=local${NC}"
-        echo "Install PostgreSQL 16 or run with Docker available."
-        exit 1
-    fi
-
-    PATH="$postgres_bin_dir:$PATH"
-    export PATH
-    PG_CTL="$postgres_bin_dir/pg_ctl"
-    INITDB="$postgres_bin_dir/initdb"
-    PG_ISREADY="$postgres_bin_dir/pg_isready"
-    CREATEDB="$postgres_bin_dir/createdb"
-}
-
-configure_local_service_env() {
-    export DB_DOMAIN=127.0.0.1
-    export MARKETPLACE_GRPC_HOST=127.0.0.1
-}
-
-ensure_local_database() {
-    local database_name="$1"
-    PGPASSWORD="$DB_PASS" "$CREATEDB" -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USER" "$database_name"
-}
-
-start_local_postgres() {
-    require_e2e_env DB_USER
-    require_e2e_env DB_PASS
-    require_e2e_env DB_PORT
-    require_e2e_env DB_EVY_DATABASE
-    require_e2e_env DB_MARKETPLACE_DATABASE
-    require_postgres_commands
-
-    mkdir -p "$E2E_LOG_DIR"
-    rm -rf "$POSTGRES_DATA_DIR"
-    printf '%s\n' "$DB_PASS" > "$POSTGRES_PASSWORD_FILE"
-
-    "$INITDB" \
-        -D "$POSTGRES_DATA_DIR" \
-        -U "$DB_USER" \
-        --pwfile="$POSTGRES_PASSWORD_FILE" \
-        --auth-local=trust \
-        --auth-host=scram-sha-256 \
-        --encoding=UTF8 \
-        > "$POSTGRES_LOG_FILE" \
-        2>&1
-    rm -f "$POSTGRES_PASSWORD_FILE"
-
-    {
-        echo "port = $DB_PORT"
-        echo "listen_addresses = '127.0.0.1'"
-    } >> "$POSTGRES_DATA_DIR/postgresql.conf"
-
-    "$PG_CTL" -D "$POSTGRES_DATA_DIR" -l "$POSTGRES_LOG_FILE" start
-    POSTGRES_STARTED_BY_E2E=true
-    retry_until_cmd "local PostgreSQL" "$PG_ISREADY" -h 127.0.0.1 -p "$DB_PORT" -U "$DB_USER"
-
-    ensure_local_database "$DB_EVY_DATABASE"
-    ensure_local_database "$DB_MARKETPLACE_DATABASE"
-}
-
-start_local_service() {
-    local service_name="$1"
-    local log_file="$2"
-    shift 2
-
-    echo "Starting $service_name (logs: $log_file)..."
-    "$@" > "$log_file" 2>&1 &
-    local pid=$!
-    LOCAL_SERVICE_PIDS="$LOCAL_SERVICE_PIDS $pid"
-
-    sleep 1
-    if ! kill -0 "$pid" 2>/dev/null; then
-        echo -e "${RED}$service_name failed to start${NC}"
-        cat "$log_file" || true
-        exit 1
-    fi
-}
-
-start_docker_services() {
-    export DOCKER_BUILDKIT=1
-    export COMPOSE_DOCKER_CLI_BUILD=1
-    export COMPOSE_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-1}"
-
-    docker compose up --build -d
-}
-
-start_local_services() {
-    configure_local_service_env
-    start_local_postgres
-    start_local_service "Marketplace" "$MARKETPLACE_LOG_FILE" bun run --cwd services/marketplace start
-    start_local_service "API" "$API_LOG_FILE" bun run --cwd api start
-    start_local_service "Web" "$WEB_LOG_FILE" bun run --cwd web start
-}
-
 # Run a command (stdout/stderr discarded) until it succeeds or max retries.
 retry_until_cmd() {
     local description="$1"
@@ -256,25 +79,16 @@ retry_until_cmd() {
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    rm -f "$POSTGRES_PASSWORD_FILE"
-
-    if [ "$SERVICE_MODE" = "docker" ]; then
-        docker compose down -v --remove-orphans 2>/dev/null || true
-        return
-    fi
-
-    if [ "$SERVICE_MODE" = "local" ]; then
+    if [ "$CI_MODE" = true ]; then
         local pid
-        for pid in $LOCAL_SERVICE_PIDS; do
-            kill "$pid" 2>/dev/null || true
+        for pid in "$WEB_PID" "$MARKETPLACE_PID" "$API_PID"; do
+            [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
         done
-        for pid in $LOCAL_SERVICE_PIDS; do
-            wait "$pid" 2>/dev/null || true
+        for pid in "$WEB_PID" "$MARKETPLACE_PID" "$API_PID"; do
+            [ -n "$pid" ] && wait "$pid" 2>/dev/null || true
         done
-
-        if [ "$POSTGRES_STARTED_BY_E2E" = true ] && [ -x "${PG_CTL:-}" ] && [ -d "$POSTGRES_DATA_DIR" ]; then
-            "$PG_CTL" -D "$POSTGRES_DATA_DIR" -m fast stop > /dev/null 2>&1 || true
-        fi
+    else
+        docker compose down -v --remove-orphans 2>/dev/null || true
     fi
 }
 
@@ -284,24 +98,29 @@ wait_for_http_service() {
     retry_until_cmd "$service_name" curl -fsS "$service_url"
 }
 
-wait_for_api_readiness() {
-    local script_name="$1"
-    local display_name="$2"
-    if [ "$SERVICE_MODE" = "docker" ]; then
-        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T api bun run \"$script_name\""
+wait_for_postgres() {
+    if [ "$CI_MODE" = true ]; then
+        retry_until_cmd "PostgreSQL" bash -c "echo -n > /dev/tcp/${DB_DOMAIN}/${DB_PORT}"
     else
-        retry_until_cmd "$display_name" bun run --cwd api "$script_name"
+        retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
     fi
 }
 
-wait_for_marketplace_readiness() {
-    local script_name="$1"
-    local display_name="$2"
-    if [ "$SERVICE_MODE" = "docker" ]; then
-        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T marketplace bun run \"$script_name\""
+wait_for_service_readiness() {
+    local service_dir="$1"
+    local compose_service="$2"
+    local script_name="$3"
+    local display_name="$4"
+    if [ "$CI_MODE" = true ]; then
+        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT/$service_dir\" && bun run \"$script_name\""
     else
-        retry_until_cmd "$display_name" bun run --cwd services/marketplace "$script_name"
+        retry_until_cmd "$display_name" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T $compose_service bun run \"$script_name\""
     fi
+}
+
+start_bun_service() {
+    local service_dir="$1"
+    ( cd "$REPO_ROOT/$service_dir" && exec bun run start ) &
 }
 
 extract_ios_simulator_destination() {
@@ -401,8 +220,8 @@ seed_database() {
         exit 1
     fi
 
-    wait_for_api_readiness "health:seeded" "seeded API data"
-    wait_for_marketplace_readiness "health:seeded" "seeded marketplace data"
+    wait_for_service_readiness api api "health:seeded" "seeded API data"
+    wait_for_service_readiness services/marketplace marketplace "health:seeded" "seeded marketplace data"
 }
 
 trap cleanup EXIT
@@ -410,33 +229,43 @@ trap cleanup EXIT
 echo -e "\n${YELLOW}Installing dependencies...${NC}"
 bun run install:all
 
-resolve_service_mode
+if [ "$CI_MODE" = true ]; then
+    echo -e "\n${YELLOW}Step 1: Starting services with Bun (CI mode)...${NC}"
+    wait_for_postgres
 
-echo -e "\n${YELLOW}Step 1: Generating types...${NC}"
+    start_bun_service services/marketplace
+    MARKETPLACE_PID=$!
+    wait_for_service_readiness services/marketplace marketplace "health" "Marketplace"
+
+    start_bun_service api
+    API_PID=$!
+    wait_for_service_readiness api api "health" "API"
+
+    start_bun_service web
+    WEB_PID=$!
+
+    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
+    wait_for_http_service "Web" "http://localhost:$WEB_PORT"
+else
+    export DOCKER_BUILDKIT=1
+    export COMPOSE_DOCKER_CLI_BUILD=1
+
+    echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
+    docker compose up --build -d
+
+    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
+    wait_for_postgres
+
+    wait_for_service_readiness services/marketplace marketplace "health" "Marketplace"
+    wait_for_service_readiness api api "health" "API"
+    wait_for_http_service "Web" "http://localhost:$WEB_PORT"
+fi
+
+echo -e "\n${YELLOW}Step 3: Generating types...${NC}"
 if ! bun types:generate; then
     echo -e "${RED}Type generation failed${NC}"
     exit 1
 fi
-
-echo -e "\n${YELLOW}Step 2: Starting services in $SERVICE_MODE mode...${NC}"
-if [ "$SERVICE_MODE" = "docker" ]; then
-    start_docker_services
-else
-    start_local_services
-fi
-
-echo -e "\n${YELLOW}Step 3: Waiting for services to be healthy...${NC}"
-
-if [ "$SERVICE_MODE" = "docker" ]; then
-    retry_until_cmd "PostgreSQL" bash -c "cd \"$REPO_ROOT\" && docker compose exec -T postgres pg_isready -U \"$DB_USER\""
-fi
-
-wait_for_marketplace_readiness "health" "Marketplace"
-
-wait_for_api_readiness "health" "API"
-wait_for_http_service "Web" "http://localhost:$WEB_PORT"
-
-
 
 echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
 seed_database
