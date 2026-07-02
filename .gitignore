@@ -10,7 +10,6 @@ types/generated/
 traefik/
 letsencrypt/
 .env
-.e2e/
 .next
 history.txt
 

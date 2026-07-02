@@ -45,6 +45,20 @@ jobs:
                   'true'
               uses: oven-sh/setup-bun@v2
 
+            - name: Start Docker engine (Colima)
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
+              run: |
+                  set -euo pipefail
+                  if docker compose version >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+                    echo "Docker engine already available"
+                  else
+                    brew install colima docker docker-compose
+                    colima start
+                    docker info
+                  fi
+
             - name: Install dependencies
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
@@ -77,26 +91,15 @@ jobs:
                   xcodebuild -showsdks
                   xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | sed -n '1,80p'
 
-            - name: Install PostgreSQL
-              if:
-                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
-                  'true'
-              run: |
-                  set -euo pipefail
-                  if ! command -v postgres >/dev/null 2>&1; then
-                    brew install postgresql@16
-                    echo "$(brew --prefix postgresql@16)/bin" >> "$GITHUB_PATH"
-                  fi
-
             - name: Run E2E tests
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               env:
-                  E2E_SERVICE_MODE: local
+                  MARKETPLACE_GRPC_HOST: 127.0.0.1
                   IOS_SIMULATOR_DEVICE_NAME: iPhone 17
                   IOS_SIMULATOR_OS_VERSION: 26.5
-              run: bash run-e2e.sh
+              run: bash run-e2e.sh --ci
 
             - name: Upload Playwright report
               uses: actions/upload-artifact@v7
