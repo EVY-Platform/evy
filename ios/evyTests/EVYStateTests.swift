@@ -23,8 +23,8 @@ final class EVYStateTests: XCTestCase {
     return (state, { callCount })
   }
 
-  private func postDataChange(_ key: String?) {
-    NotificationCenter.default.post(name: .evyDataChanged, object: key)
+  private func postValueChange(_ key: String?) {
+    NotificationCenter.default.post(name: .evyValueChanged, object: key)
   }
 
   func testInitialValueComputedAtInit() {
@@ -42,41 +42,29 @@ final class EVYStateTests: XCTestCase {
       })
     XCTAssertEqual(callCount, 1)
 
-    postDataChange("watch1")
+    postValueChange("watch1")
 
     XCTAssertEqual(callCount, 2)
     XCTAssertEqual(state.value, 2)
   }
 
   func testSecondWatchMatchTriggersRecompute() {
-    var callCount = 0
-    let state = EVYState<Int>(
-      watches: ["{watch1}", "{watch2}"],
-      setter: {
-        callCount += 1
-        return callCount
-      })
-    XCTAssertEqual(callCount, 1)
+    let (state, getCallCount) = makeCountingState(watches: ["{watch1}", "{watch2}"])
+    XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("watch2")
+    postValueChange("watch2")
 
-    XCTAssertEqual(callCount, 2)
+    XCTAssertEqual(getCallCount(), 2)
     XCTAssertEqual(state.value, 2)
   }
 
   func testUnrelatedNotificationDoesNotTriggerRecompute() {
-    var callCount = 0
-    let state = EVYState<Int>(
-      watches: ["{watch1}", "{watch2}"],
-      setter: {
-        callCount += 1
-        return callCount
-      })
-    XCTAssertEqual(callCount, 1)
+    let (state, getCallCount) = makeCountingState(watches: ["{watch1}", "{watch2}"])
+    XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("unrelated")
+    postValueChange("unrelated")
 
-    XCTAssertEqual(callCount, 1)
+    XCTAssertEqual(getCallCount(), 1)
     XCTAssertEqual(state.value, 1)
   }
 
@@ -84,7 +72,7 @@ final class EVYStateTests: XCTestCase {
     let (state, getCallCount) = makeCountingState(watches: ["{watch1}"])
     XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange(nil)
+    postValueChange(nil)
 
     XCTAssertEqual(getCallCount(), 2)
     XCTAssertEqual(state.value, 2)
@@ -94,20 +82,30 @@ final class EVYStateTests: XCTestCase {
     let (state, getCallCount) = makeCountingState(watches: [])
     XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("anything")
+    postValueChange("anything")
     XCTAssertEqual(getCallCount(), 1)
     XCTAssertEqual(state.value, 1)
 
-    postDataChange(nil)
-    XCTAssertEqual(getCallCount(), 2)
-    XCTAssertEqual(state.value, 2)
+    postValueChange(nil)
+    XCTAssertEqual(getCallCount(), 1)
+    XCTAssertEqual(state.value, 1)
   }
 
   func testExactSourceNotificationTriggersRecompute() {
     let (state, getCallCount) = makeCountingState(watches: ["{pickup_selection}"])
     XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("pickup_selection")
+    postValueChange("pickup_selection")
+
+    XCTAssertEqual(getCallCount(), 2)
+    XCTAssertEqual(state.value, 2)
+  }
+
+  func testResourceNotificationTriggersCollectionWatchRecompute() {
+    let (state, getCallCount) = makeCountingState(watches: ["{items}"])
+    XCTAssertEqual(getCallCount(), 1)
+
+    postValueChange("items")
 
     XCTAssertEqual(getCallCount(), 2)
     XCTAssertEqual(state.value, 2)
@@ -117,7 +115,7 @@ final class EVYStateTests: XCTestCase {
     let (state, getCallCount) = makeCountingState(watches: ["{pickup_selection}"])
     XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("conditions")
+    postValueChange("conditions")
 
     XCTAssertEqual(getCallCount(), 1)
     XCTAssertEqual(state.value, 1)
@@ -127,7 +125,7 @@ final class EVYStateTests: XCTestCase {
     let (state, getCallCount) = makeCountingState(watches: ["{item.pickup_selection}"])
     XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("item.pickup_selection")
+    postValueChange("item.pickup_selection")
 
     XCTAssertEqual(getCallCount(), 2)
     XCTAssertEqual(state.value, 2)
@@ -137,7 +135,7 @@ final class EVYStateTests: XCTestCase {
     let (state, getCallCount) = makeCountingState(watches: ["{item.pickup_selection}"])
     XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("item.pickup_selection.start")
+    postValueChange("item.pickup_selection.start")
 
     XCTAssertEqual(getCallCount(), 2)
     XCTAssertEqual(state.value, 2)
@@ -147,7 +145,17 @@ final class EVYStateTests: XCTestCase {
     let (state, getCallCount) = makeCountingState(watches: ["{item.pickup_selection.start}"])
     XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("item.pickup_selection")
+    postValueChange("item.pickup_selection")
+
+    XCTAssertEqual(getCallCount(), 2)
+    XCTAssertEqual(state.value, 2)
+  }
+
+  func testDraftAliasPathNotificationTriggersRecompute() {
+    let (state, getCallCount) = makeCountingState(watches: ["{condition}"])
+    XCTAssertEqual(getCallCount(), 1)
+
+    postValueChange("condition")
 
     XCTAssertEqual(getCallCount(), 2)
     XCTAssertEqual(state.value, 2)
@@ -157,30 +165,9 @@ final class EVYStateTests: XCTestCase {
     let (state, getCallCount) = makeCountingState(watches: [""])
     XCTAssertEqual(getCallCount(), 1)
 
-    postDataChange("conditions")
+    postValueChange("conditions")
 
     XCTAssertEqual(getCallCount(), 1)
     XCTAssertEqual(state.value, 1)
-  }
-
-  func testDataChangePayloadInUserInfoDoesNotBreakStringKeyMatching() {
-    var callCount = 0
-    let state = EVYState<Int>(
-      watches: ["{rows}"],
-      setter: {
-        callCount += 1
-        return callCount
-      })
-    XCTAssertEqual(callCount, 1)
-
-    let change = EVYDataChange(namespace: EVYNamespace.evy, resource: "rows", id: "row-1")
-    NotificationCenter.default.post(
-      name: .evyDataChanged,
-      object: "rows",
-      userInfo: [EVYDataChange.userInfoKey: change]
-    )
-
-    XCTAssertEqual(callCount, 2)
-    XCTAssertEqual(state.value, 2)
   }
 }

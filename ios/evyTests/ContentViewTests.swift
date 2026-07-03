@@ -15,6 +15,12 @@ enum MarketplaceTestFixture {
 @MainActor
 final class ContentViewTests: XCTestCase {
 
+  override func tearDownWithError() throws {
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = nil
+    try super.tearDownWithError()
+  }
+
   // MARK: - Store seeding helpers
 
   private func makeStore() -> EVYDataStore {
@@ -63,6 +69,21 @@ final class ContentViewTests: XCTestCase {
       id: id,
       value: data
     )
+  }
+
+  private func writeEphemeralValue(
+    pageId: String,
+    variableName: String,
+    value: String
+  ) throws {
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: pageId)
+    EVY.draftStore.activeScopeId = scopeId
+    try EVY.writeRawValue(value, to: "{\(variableName)}", scopeId: scopeId)
+  }
+
+  private func readEphemeralValue(pageId: String, variableName: String) throws -> EVYJson {
+    EVY.draftStore.activeScopeId = EVYDraft.ephemeralScopeId(forPageId: pageId)
+    return try EVY.getDataFromText("{\(variableName)}")
   }
 
   private func seedRow(
@@ -124,6 +145,42 @@ final class ContentViewTests: XCTestCase {
 
     XCTAssertNotNil(EVYFlowStore.pageId(flowId: flowId, pageId: pageId2, from: store))
     XCTAssertNil(EVYFlowStore.pageId(flowId: flowId, pageId: "unknown-page", from: store))
+  }
+
+  // MARK: - Ephemeral drafts
+
+  func testPageIdsForFlowReturnsAllPages() throws {
+    let store = makeStore()
+    let pageIds = ["page-one", "page-two"]
+
+    try seedFlow(store: store, id: "multi-page-flow", pageIds: pageIds)
+
+    XCTAssertEqual(EVYFlowStore.pageIds(inFlowId: "multi-page-flow", from: store), pageIds)
+    XCTAssertEqual(EVYFlowStore.pageIds(inFlowId: "missing-flow", from: store), [])
+  }
+
+  func testResetEphemeralDraftsClearsAllFlowPages() throws {
+    let store = makeStore()
+    let flowId = "flow-with-ephemeral-pages"
+    let otherFlowId = "other-flow"
+    let pageOneId = "ephemeral-page-one"
+    let pageTwoId = "ephemeral-page-two"
+    let otherPageId = "other-ephemeral-page"
+
+    try seedFlow(store: store, id: flowId, pageIds: [pageOneId, pageTwoId])
+    try seedFlow(store: store, id: otherFlowId, pageIds: [otherPageId])
+    try writeEphemeralValue(pageId: pageOneId, variableName: "pageOne.title", value: "One")
+    try writeEphemeralValue(pageId: pageTwoId, variableName: "pageTwo.title", value: "Two")
+    try writeEphemeralValue(pageId: otherPageId, variableName: "other.title", value: "Other")
+
+    EVY.resetEphemeralDrafts(forFlowId: flowId, from: store)
+
+    XCTAssertNil(try? readEphemeralValue(pageId: pageOneId, variableName: "pageOne.title"))
+    XCTAssertNil(try? readEphemeralValue(pageId: pageTwoId, variableName: "pageTwo.title"))
+    XCTAssertEqual(
+      try readEphemeralValue(pageId: otherPageId, variableName: "other.title"),
+      .string("Other")
+    )
   }
 
   func testRowStoreExposesChildRowId() throws {
@@ -318,7 +375,7 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(ref.templateRow()?.id, "inline-row")
   }
 
-  // MARK: - EVYFlowDraftScopeResolver tests
+  // MARK: - EVYFlowStore tests
 
   func testExtractCreateKeysReturnsEmptyForUnknownFlowId() {
     let store = makeStore()
@@ -406,7 +463,7 @@ final class ContentViewTests: XCTestCase {
 
     let route = Route(flowId: "create-flow", pageId: "create-page")
     XCTAssertEqual(
-      EVYFlowDraftScopeResolver.draftScopeId(for: route, from: store),
+      EVYFlowStore.draftScopeId(for: route, from: store),
       EVYDraft.createMergeScopeId(
         flowId: "create-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
     )
@@ -420,7 +477,7 @@ final class ContentViewTests: XCTestCase {
 
     let route = Route(flowId: "home-flow", pageId: "home-page")
     XCTAssertEqual(
-      EVYFlowDraftScopeResolver.draftScopeId(for: route, from: store),
+      EVYFlowStore.draftScopeId(for: route, from: store),
       "home-flow:browse"
     )
   }

@@ -19,6 +19,7 @@ final class InterpreterTests: XCTestCase {
 
   override func tearDownWithError() throws {
     try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: testPageId)
+    EVY.draftStore.deleteDrafts()
     EVY.activeCacheScopeId = nil
     EVY.draftStore.activeScopeId = nil
     try super.tearDownWithError()
@@ -430,6 +431,43 @@ final class InterpreterTests: XCTestCase {
     EVY.draftStore.activeScopeId = scopeId
 
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("draft"))
+  }
+
+  // MARK: - Ephemeral drafts
+
+  func testEnsureDraftExistsDoesNotShadowCachedInstanceValue() throws {
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
+    EVY.draftStore.activeScopeId = scopeId
+
+    let item = EVYJson.dictionary(["id": .string("id-1"), "title": .string("Real title")])
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache,
+      resource: testPageId,
+      id: "item",
+      value: try JSONEncoder().encode(item)
+    )
+
+    EVY.ensureDraftExists(variableName: "item.title", scopeId: scopeId)
+
+    let binding = try EVY.draftStore.binding(fromParsedProps: "item.title", scopeId: scopeId)
+    XCTAssertNil(
+      EVY.draftStore.draftIfPresent(binding: binding),
+      "Bootstrap must not create an empty draft over existing cached data")
+    XCTAssertEqual(try EVY.getDataFromText("{item.title}"), .string("Real title"))
+  }
+
+  func testEnsureDraftExistsSeedsWhenNoInstanceValueExists() throws {
+    let variableName = "\(uniqueKey("item")).title"
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
+    EVY.draftStore.activeScopeId = scopeId
+
+    EVY.ensureDraftExists(variableName: variableName, scopeId: scopeId)
+
+    let binding = try EVY.draftStore.binding(fromParsedProps: variableName, scopeId: scopeId)
+    XCTAssertNotNil(
+      EVY.draftStore.draftIfPresent(binding: binding),
+      "Bootstrap should seed an empty draft when no instance data exists")
+    XCTAssertEqual(try EVY.getDataFromText("{\(variableName)}"), .string(""))
   }
 
   func testResolveQueryParamsEmptyIsNoOp() throws {

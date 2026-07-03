@@ -8,8 +8,12 @@ import Foundation
 extension EVY {
   static func sync() async throws {
     let response: SyncResponse = try await EVYAPIManager.shared.fetch(
-      method: "sync",
-      params: SyncParams(lastSyncTime: EVYSyncState.lastSyncTimestamp),
+      method: "api",
+      params: CoreAPIParams(
+        service: EVY_CORE_SERVICE,
+        method: "sync",
+        data: SyncParams(lastSyncTime: EVYSyncState.lastSyncTimestamp)
+      ),
       expecting: SyncResponse.self
     )
 

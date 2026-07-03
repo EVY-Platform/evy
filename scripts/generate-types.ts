@@ -176,7 +176,7 @@ async function generateTypeScript(
 			const outRel = `${schemaPathToTsName(schemaPath)}.ts`;
 			const outPath = join(OUT_TS, outRel);
 
-			await mkdir(join(outPath, ".."), { recursive: true });
+			await mkdir(dirname(outPath), { recursive: true });
 
 			let schemaForCompile = schema;
 			let title =
@@ -273,51 +273,51 @@ async function generateSwift(
 			f.schemaKey !== "rpc/get.response", // recursive $defs unsupported by quicktype
 	);
 
-	await Promise.all(
-		schemaFilesToQuicktype.map(
-			async ({ schemaPath, schemaKey, schema }) => {
-				const typeName = schemaPathToSwiftTypeName(schemaPath);
-				const outPath = join(OUT_SWIFT, `${typeName}.swift`);
+	// Run quicktype invocations sequentially: spawning every schema's process at
+	// once (via Promise.all) races on the shared `bunx` resolution and overloads the
+	// machine, which intermittently kills processes (exit 1 / null). Each run is fast,
+	// so a sequential loop keeps generation deterministic.
+	for (const { schemaPath, schemaKey, schema } of schemaFilesToQuicktype) {
+		const typeName = schemaPathToSwiftTypeName(schemaPath);
+		const outPath = join(OUT_SWIFT, `${typeName}.swift`);
 
-				let inputPath = schemaPath;
-				let tempPath: string | null = null;
+		let inputPath = schemaPath;
+		let tempPath: string | null = null;
 
-				const rootRef = COMMON_SCHEMA_ROOT_REF[schemaKey];
-				if (rootRef) {
-					const withRef = buildSchemaWithRootRef(schema, rootRef);
-					const safeSchemaKey = schemaKey.replace(/[/\\]/g, "-");
-					tempPath = join(
-						TYPES_ROOT,
-						`.quicktype-${safeSchemaKey}-tmp.schema.json`,
-					);
-					await writeFile(tempPath, JSON.stringify(withRef), "utf-8");
-					inputPath = tempPath;
-				}
+		const rootRef = COMMON_SCHEMA_ROOT_REF[schemaKey];
+		if (rootRef) {
+			const withRef = buildSchemaWithRootRef(schema, rootRef);
+			const safeSchemaKey = schemaKey.replace(/[/\\]/g, "-");
+			tempPath = join(
+				TYPES_ROOT,
+				`.quicktype-${safeSchemaKey}-tmp.schema.json`,
+			);
+			await writeFile(tempPath, JSON.stringify(withRef), "utf-8");
+			inputPath = tempPath;
+		}
 
-				try {
-					await spawnExitOk(
-						"bunx",
-						[
-							"quicktype",
-							"--src-lang",
-							"schema",
-							"--lang",
-							"swift",
-							"--no-initializers",
-							"--no-date-times",
-							"-o",
-							outPath,
-							inputPath,
-						],
-						{ stdio: "inherit", cwd: REPO_ROOT },
-						"quicktype",
-					);
-				} finally {
-					if (tempPath) await rm(tempPath, { force: true });
-				}
-			},
-		),
-	);
+		try {
+			await spawnExitOk(
+				"bunx",
+				[
+					"quicktype",
+					"--src-lang",
+					"schema",
+					"--lang",
+					"swift",
+					"--no-initializers",
+					"--no-date-times",
+					"-o",
+					outPath,
+					inputPath,
+				],
+				{ stdio: "inherit", cwd: REPO_ROOT },
+				"quicktype",
+			);
+		} finally {
+			if (tempPath) await rm(tempPath, { force: true });
+		}
+	}
 
 	const evySchemaFile = schemaFiles.find((f) => f.schemaKey === "sdui/evy");
 	const actionSchemaFile = schemaFiles.find(

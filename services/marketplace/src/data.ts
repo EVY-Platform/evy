@@ -3,6 +3,8 @@ import { and, asc, eq, gt } from "drizzle-orm";
 import type {
 	CreateRequest,
 	CreateResponse,
+	DeleteRequest,
+	DeleteResponse,
 	GetRequest,
 	GetResponse,
 	UpdateRequest,
@@ -12,6 +14,7 @@ import {
 	assertIsoDateTimeJsonFields,
 	validateCreateDataPayload,
 	validateCreateResponse,
+	validateDeleteResponse,
 	validateGetResponse,
 	validateUpdateDataPayload,
 	validateUpdateResponse,
@@ -21,7 +24,7 @@ import { emitDataChanged } from "./events";
 import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
 
 function assertMarketplaceRules(
-	params: GetRequest | CreateRequest | UpdateRequest,
+	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
 ): void {
 	if (params.service !== MARKETPLACE_SERVICE) {
 		throw new Error(
@@ -107,5 +110,26 @@ export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 	const row = result[0];
 	const response = validateUpdateResponse(row);
 	emitDataChanged(resource, "update", row.data);
+	return response;
+}
+
+export async function deleteResource(
+	params: DeleteRequest,
+): Promise<DeleteResponse> {
+	assertMarketplaceRules(params);
+	const { resource, filter } = params;
+
+	const result = await db
+		.delete(data)
+		.where(and(eq(data.id, filter.id), eq(data.resource, resource)))
+		.returning();
+
+	if (result.length === 0) {
+		throw new Error("Resource not found");
+	}
+
+	const row = result[0];
+	const response = validateDeleteResponse(row);
+	emitDataChanged(resource, "delete", row.data);
 	return response;
 }

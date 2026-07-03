@@ -7,6 +7,8 @@ import type {
 	ApiRequest,
 	CreateRequest,
 	CreateResponse,
+	DeleteRequest,
+	DeleteResponse,
 	GetRequest,
 	GetResponse,
 	UpdateRequest,
@@ -19,6 +21,7 @@ import { ne } from "drizzle-orm";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	validateCreateResponse,
+	validateDeleteResponse,
 	validateGetResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
@@ -61,8 +64,6 @@ function loadEvyServiceConstructor(): grpc.ServiceClientConstructor {
 	return evyPkg.Service;
 }
 
-type ForwardableGetRequest = GetRequest | ApiRequest;
-
 type ProtoGetRequest = {
 	service: string;
 	resource: string;
@@ -70,7 +71,6 @@ type ProtoGetRequest = {
 		id?: string;
 		updated_after?: string;
 	};
-	method?: string;
 };
 
 type ProtoCreateRequest = {
@@ -87,10 +87,29 @@ type ProtoUpdateRequest = {
 	data_json: string;
 };
 
+type ProtoDeleteRequest = {
+	service: string;
+	resource: string;
+	filter: { id: string; updated_after?: string };
+};
+
+type ProtoApiRequest = {
+	service: string;
+	resource?: string;
+	method: string;
+	filter?: {
+		id?: string;
+		updated_after?: string;
+	};
+	data_json?: string;
+};
+
 type ServiceAdapter = {
-	get(params: ForwardableGetRequest): Promise<GetResponse>;
+	get(params: GetRequest): Promise<GetResponse>;
 	create(params: CreateRequest): Promise<CreateResponse>;
 	update(params: UpdateRequest): Promise<UpdateResponse>;
+	delete(params: DeleteRequest): Promise<DeleteResponse>;
+	api(params: ApiRequest): Promise<unknown>;
 	onEvent(listener: (eventName: string, payload: unknown) => void): void;
 };
 
@@ -105,6 +124,14 @@ type GrpcServiceClient = grpc.Client & {
 	) => grpc.ClientUnaryCall;
 	Update: (
 		request: ProtoUpdateRequest,
+		callback: grpc.requestCallback<{ result_json: string }>,
+	) => grpc.ClientUnaryCall;
+	Delete: (
+		request: ProtoDeleteRequest,
+		callback: grpc.requestCallback<{ result_json: string }>,
+	) => grpc.ClientUnaryCall;
+	Api: (
+		request: ProtoApiRequest,
 		callback: grpc.requestCallback<{ result_json: string }>,
 	) => grpc.ClientUnaryCall;
 	SubscribeEvents: (
@@ -124,19 +151,13 @@ function buildProtoFilter(
 	return out;
 }
 
-function buildProtoGetRequest(params: {
-	service: string;
-	resource: string;
-	filter?: { id?: string; updatedAfter?: string };
-	method?: string;
-}): ProtoGetRequest {
+function buildProtoGetRequest(params: GetRequest): ProtoGetRequest {
 	const filter = buildProtoFilter(params.filter);
 
 	return {
 		service: params.service,
 		resource: params.resource,
 		...(Object.keys(filter).length > 0 ? { filter } : {}),
-		...(params.method ? { method: params.method } : {}),
 	};
 }
 
@@ -157,6 +178,26 @@ function buildProtoUpdateRequest(params: UpdateRequest): ProtoUpdateRequest {
 		resource: params.resource,
 		filter: { ...filter, id: params.filter.id },
 		data_json: JSON.stringify(params.data),
+	};
+}
+
+function buildProtoDeleteRequest(params: DeleteRequest): ProtoDeleteRequest {
+	const filter = buildProtoFilter(params.filter);
+	return {
+		service: params.service,
+		resource: params.resource,
+		filter: { ...filter, id: params.filter.id },
+	};
+}
+
+function buildProtoApiRequest(params: ApiRequest): ProtoApiRequest {
+	const filter = buildProtoFilter(params.filter);
+	return {
+		service: params.service,
+		...(params.resource ? { resource: params.resource } : {}),
+		method: params.method,
+		...(Object.keys(filter).length > 0 ? { filter } : {}),
+		...(params.data ? { data_json: JSON.stringify(params.data) } : {}),
 	};
 }
 
@@ -286,6 +327,18 @@ function makeGrpcAdapter(
 				validateUpdateResponse,
 				"Update",
 			),
+		delete: (params) =>
+			callGrpcJsonMethod<DeleteResponse>(
+				(cb) => client.Delete(buildProtoDeleteRequest(params), cb),
+				validateDeleteResponse,
+				"Delete",
+			),
+		api: (params) =>
+			callGrpcJsonMethod<unknown>(
+				(cb) => client.Api(buildProtoApiRequest(params), cb),
+				(parsed) => parsed,
+				"Api",
+			),
 		onEvent(listener) {
 			eventListener = listener;
 			startSubscribeStream();
@@ -367,7 +420,7 @@ async function getServiceAdapter(serviceId: string): Promise<ServiceAdapter> {
 
 export async function forwardGet(
 	serviceId: string,
-	params: ForwardableGetRequest,
+	params: GetRequest,
 ): Promise<GetResponse> {
 	return (await getServiceAdapter(serviceId)).get(params);
 }
@@ -384,6 +437,20 @@ export async function forwardUpdate(
 	params: UpdateRequest,
 ): Promise<UpdateResponse> {
 	return (await getServiceAdapter(serviceId)).update(params);
+}
+
+export async function forwardDelete(
+	serviceId: string,
+	params: DeleteRequest,
+): Promise<DeleteResponse> {
+	return (await getServiceAdapter(serviceId)).delete(params);
+}
+
+export async function forwardApi(
+	serviceId: string,
+	params: ApiRequest,
+): Promise<unknown> {
+	return (await getServiceAdapter(serviceId)).api(params);
 }
 
 export function wireGrpcEvents(broadcast: BroadcastFn): void {

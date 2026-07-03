@@ -20,7 +20,7 @@ extension EVY {
     else {
       return
     }
-    guard (try? store.getJsonForBinding(key: cleanVariableName)) == nil,
+    guard !destinationHasExistingValue(store: store, cleanVariableName: cleanVariableName),
       draftStore.draftIfPresent(binding: binding) == nil
     else {
       return
@@ -36,6 +36,53 @@ extension EVY {
       draftStore.notifyUpdate(binding: binding)
     } catch {
       // Best-effort draft bootstrap; callers can still render from existing data.
+    }
+  }
+
+  /// Whether the destination already resolves to concrete instance data (query-param
+  /// entities in the cache scope, local singletons, or a synced record) at its full nested
+  /// path. When it does, bootstrapping an empty draft would shadow that real data, so we
+  /// skip it. Synced collections that cannot descend into the requested path (e.g. the
+  /// create-flow `[resource].title` alias, where `[resource]` is the whole items list) are
+  /// intentionally treated as "no value" so create flows still seed an empty draft.
+  private static func destinationHasExistingValue(
+    store: EVYDataStore,
+    cleanVariableName: String
+  ) -> Bool {
+    guard let splitProps = try? splitPropsFromText(cleanVariableName),
+      let firstProp = splitProps.first
+    else {
+      return false
+    }
+    let remainingProps = splitProps.count > 1 ? Array(splitProps.dropFirst()) : []
+
+    if let scopeId = activeCacheScopeId,
+      let cachedRow = try? cacheStore.get(
+        namespace: EVYNamespace.cache, resource: scopeId, id: firstProp),
+      let decoded = try? cachedRow.decoded(),
+      decoded.parsePropStrict(props: remainingProps) != nil
+    {
+      return true
+    }
+
+    if let json = try? store.getJsonForBinding(key: firstProp),
+      json.parsePropStrict(props: remainingProps) != nil
+    {
+      return true
+    }
+
+    return false
+  }
+
+  static func resetEphemeralDrafts(forFlowId flowId: String) {
+    for pageId in EVYFlowStore.pageIds(inFlowId: flowId) {
+      draftStore.deleteDrafts(scopeId: EVYDraft.ephemeralScopeId(forPageId: pageId))
+    }
+  }
+
+  static func resetEphemeralDrafts(forFlowId flowId: String, from store: EVYDataStore) {
+    for pageId in EVYFlowStore.pageIds(inFlowId: flowId, from: store) {
+      draftStore.deleteDrafts(scopeId: EVYDraft.ephemeralScopeId(forPageId: pageId))
     }
   }
 
@@ -185,7 +232,7 @@ extension EVY {
         existingRow.data = try EVYDataPatcher.patch(
           encodedData: existingRow.data, newData: newData, props: remainingProps)
       }
-      store.postDataChanged(key: splitProps.joined(separator: PROP_SEPARATOR))
+      store.postValueChanged(key: splitProps.joined(separator: PROP_SEPARATOR))
     } else {
       guard let draftBinding else {
         throw EVYDataError.keyNotFound

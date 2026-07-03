@@ -26,8 +26,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
   }
 
   func testCreateMergesScalarTitleFromDraft() throws {
-    EVY.ensureDraftExists(variableName: "title")
-    try EVY.updateValue("User Title", at: "{title}")
+    EVY.ensureDraftExists(variableName: "title", scopeId: testDraftScope)
+    try EVY.updateValue("User Title", at: "{title}", scopeId: testDraftScope)
 
     try EVY.create(
       namespace: EVYNamespace.marketplace, resource: "items", draftScopeId: testDraftScope)
@@ -45,12 +45,12 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
   }
 
   func testCreateMergesStructuredPriceFromDraft() throws {
-    EVY.ensureDraftExists(variableName: "price")
+    EVY.ensureDraftExists(variableName: "price", scopeId: testDraftScope)
     let newPrice = EVYJson.dictionary([
       "currency": .string("AUD"),
       "value": .decimal(99),
     ])
-    let priceBinding = try EVY.draftStore.binding(fromParsedProps: "price")
+    let priceBinding = try EVY.draftStore.binding(fromParsedProps: "price", scopeId: testDraftScope)
     try EVY.cacheStore.update(
       namespace: EVYNamespace.draft,
       resource: priceBinding.scopeId,
@@ -94,8 +94,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       namespace: EVYNamespace.marketplace, resource: "items", id: "seed-2", value: seed2Data,
       sortIndex: 1)
 
-    EVY.ensureDraftExists(variableName: "title")
-    try EVY.updateValue("New Item", at: "{title}")
+    EVY.ensureDraftExists(variableName: "title", scopeId: testDraftScope)
+    try EVY.updateValue("New Item", at: "{title}", scopeId: testDraftScope)
     try EVY.create(
       namespace: EVYNamespace.marketplace, resource: "items", draftScopeId: testDraftScope)
 
@@ -111,14 +111,14 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     let conditionId = UUID().uuidString
     let sellingReasonId = UUID().uuidString
 
-    EVY.ensureDraftExists(variableName: "condition_id")
-    try EVY.updateValue(conditionId, at: "{condition_id}")
+    EVY.ensureDraftExists(variableName: "condition_id", scopeId: testDraftScope)
+    try EVY.updateValue(conditionId, at: "{condition_id}", scopeId: testDraftScope)
 
-    EVY.ensureDraftExists(variableName: "selling_reason_id")
-    try EVY.updateValue(sellingReasonId, at: "{selling_reason_id}")
+    EVY.ensureDraftExists(variableName: "selling_reason_id", scopeId: testDraftScope)
+    try EVY.updateValue(sellingReasonId, at: "{selling_reason_id}", scopeId: testDraftScope)
 
-    EVY.ensureDraftExists(variableName: "dimensions.width")
-    try EVY.updateValue("500", at: "{dimensions.width}")
+    EVY.ensureDraftExists(variableName: "dimensions.width", scopeId: testDraftScope)
+    try EVY.updateValue("500", at: "{dimensions.width}", scopeId: testDraftScope)
 
     try EVY.create(
       namespace: EVYNamespace.marketplace, resource: "items", draftScopeId: testDraftScope)

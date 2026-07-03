@@ -200,8 +200,11 @@ struct ContentView: View {
 
             EVYPage(pageId: pageId)
               .environment(
-                \.evyDraftScopeId,
-                EVYFlowDraftScopeResolver.draftScopeId(for: route)
+                \.evyScope,
+                EVYScope(
+                  cacheScopeId: route.pageId,
+                  draftScopeId: EVYFlowStore.draftScopeId(for: route)
+                )
               )
               .environment(\.navigate) { navOperation in
                 handleNavigationData(navOperation)
@@ -226,8 +229,7 @@ struct ContentView: View {
         return
       }
 
-      let createKeys = EVYFlowStore.createKeys(flowId: previousFlowId)
-      for key in createKeys {
+      for key in EVYFlowStore.createKeys(flowId: previousFlowId) {
         EVY.draftStore.deleteDrafts(
           scopeId: EVYDraft.createMergeScopeId(
             flowId: previousFlowId,
@@ -235,24 +237,17 @@ struct ContentView: View {
           )
         )
       }
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
-      guard
-        let change = EVYDataChange.from(notification),
-        change.matches(
-          namespace: EVYNamespace.evy,
-          resource: EVYCoreResource.flows.rawValue,
-          id: HOME_FLOW_ID
-        )
-      else { return }
-      refreshHomeFirstPageIdIfNeeded()
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .evyUserAlertRequested)) { notification in
-      if let userAlert = notification.object as? EVYUserAlert {
-        alertTitle = userAlert.title
-        alertMessage = userAlert.message ?? ""
-        showingAlert = true
+
+      for flowId in Set([previousFlowId, newFlowId]) {
+        EVY.resetEphemeralDrafts(forFlowId: flowId)
       }
+    }
+    .onEVYRecordChange(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.flows.rawValue,
+      id: HOME_FLOW_ID
+    ) {
+      refreshHomeFirstPageIdIfNeeded()
     }
     .onReceive(NotificationCenter.default.publisher(for: .evyErrorOccurred)) { notification in
       if let error = notification.object as? Error {
@@ -262,20 +257,6 @@ struct ContentView: View {
     }
   }
 
-}
-
-@MainActor
-enum EVYFlowDraftScopeResolver {
-  static func draftScopeId(
-    for route: Route,
-    from store: EVYDataStore = EVY.publicStore
-  ) -> String? {
-    let keys = EVYFlowStore.createKeys(flowId: route.flowId, from: store)
-    if let k = keys.sorted().first {
-      return EVYDraft.createMergeScopeId(flowId: route.flowId, entityKey: k)
-    }
-    return "\(route.flowId):browse"
-  }
 }
 
 #Preview {

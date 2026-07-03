@@ -26,6 +26,17 @@
 						"name": "Item title and price"
 					},
 					{
+						"id": "9ee5693d-e3e5-4862-b714-eb81a86be83e",
+						"type": "Input",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+						"actions": [],
+						"title": "",
+						"placeholder": "",
+						"visible": "true",
+						"name": "Item title",
+						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}"
+					},
+					{
 						"id": "61d8b13a-6e19-4251-84bf-94771af07e6c",
 						"type": "Text",
 						"actions": [],

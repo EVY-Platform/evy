@@ -10,6 +10,7 @@ import XCTest
 @MainActor
 final class EVYDraftBindingTests: XCTestCase {
   override func tearDownWithError() throws {
+    EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
     try super.tearDownWithError()
   }
@@ -96,13 +97,23 @@ final class EVYDraftBindingTests: XCTestCase {
     }
   }
 
+  // MARK: - Ephemeral drafts
+
+  func testEphemeralScopeIdForPageIdUsesEphemeralPrefix() {
+    let pageId = UUID().uuidString
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: pageId)
+
+    XCTAssertEqual(scopeId, "ephemeral:\(pageId)")
+    XCTAssertNil(EVYDraft.Scope.entityKey(fromScopeId: scopeId))
+  }
+
   func testDraftNotifyUpdatePostsAliasAndEntityPathNotifications() throws {
     let store = EVYDataStore(name: "draft-notify-test", inMemoryOnly: true)
     let draftStore = EVYDraftStore(dataStore: store)
     let binding = try EVYDraft.binding(parsedProps: "condition", scopeId: "flow:item")
     var notificationKeys: [String] = []
     let token = NotificationCenter.default.addObserver(
-      forName: .evyDataChanged,
+      forName: .evyValueChanged,
       object: nil,
       queue: .main
     ) { notification in
@@ -127,7 +138,7 @@ final class EVYDraftBindingTests: XCTestCase {
     )
     var notificationKeys: [String] = []
     let token = NotificationCenter.default.addObserver(
-      forName: .evyDataChanged,
+      forName: .evyValueChanged,
       object: nil,
       queue: .main
     ) { notification in
@@ -157,6 +168,28 @@ final class EVYDraftBindingTests: XCTestCase {
         "value": .int(99),
       ])
     )
+  }
+
+  func testEphemeralScopeSharesWriteThenReadWithoutSyncedBacking() throws {
+    let variableName = "\(uniqueKey("item")).title"
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
+    EVY.draftStore.activeScopeId = scopeId
+    var notificationKeys: [String] = []
+    let token = NotificationCenter.default.addObserver(
+      forName: .evyValueChanged,
+      object: nil,
+      queue: .main
+    ) { notification in
+      if let key = notification.object as? String {
+        notificationKeys.append(key)
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(token) }
+
+    try EVY.writeRawValue("Hello", to: "{\(variableName)}", scopeId: scopeId)
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(variableName)}"), .string("Hello"))
+    XCTAssertTrue(notificationKeys.contains(variableName))
   }
 
   func testDestinationOnlyDisplayAndEditableTextReadDraftValueAfterWrite() throws {

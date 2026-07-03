@@ -68,6 +68,7 @@ test.describe("Offline and connection resilience", () => {
 					const request = JSON.parse(asText) as {
 						id?: number | string;
 						method?: string;
+						params?: { method?: string };
 					};
 
 					if (request.method === "rpc.login") {
@@ -79,7 +80,10 @@ test.describe("Offline and connection resilience", () => {
 						return;
 					}
 
-					if (request.method === "sync") {
+					if (
+						request.method === "api" &&
+						request.params?.method === "sync"
+					) {
 						this.respond({
 							jsonrpc: "2.0",
 							id: request.id,

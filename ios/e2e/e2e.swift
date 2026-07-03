@@ -223,6 +223,8 @@ private enum E2EFlowIds {
   static let navigationViewFlow = "10000000-0000-4000-8000-000000000007"
   static let navigationViewPage = "10000000-0000-4000-8000-000000000008"
   static let webSocketHomeFlow = "10000000-0000-4000-8000-000000000002"
+  static let webSocketHomePage = "55e427ac-263c-441f-9673-f60627b1baea"
+  static let webSocketHomeDetailsPage = "10000000-0000-4000-8000-000000000009"
   static let webSocketViewFlow = "10000000-0000-4000-8000-000000000003"
   static let webSocketViewPage = "10000000-0000-4000-8000-000000000004"
   static let webSocketCreateFlow = "10000000-0000-4000-8000-000000000005"
@@ -626,6 +628,13 @@ class E2ETestBase: XCTestCase {
               title: "My item is called",
               text: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
             ),
+            Self.inputRow(
+              id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+              title: "Edit title",
+              source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
+              placeholder: "Enter a title",
+              destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
+            ),
             Self.textRow(
               id: "d4e5f6a7-b8c9-4012-d345-6789abcdef01",
               title: "App payments accepted",
@@ -833,6 +842,93 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
+  func testEphemeralPersistsAcrossPagesButResetsOnFlowChange() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let typedText = "reset me \(Int(Date().timeIntervalSince1970))"
+    try await typeIntoHomeEphemeralField(typedText)
+    XCTAssertTrue(sharedHomeText(typedText).waitForExistence(timeout: 5))
+
+    app.buttons["Details"].tap()
+    XCTAssertTrue(app.staticTexts["Details page"].waitForExistence(timeout: 5))
+    let backButton = app.navigationBars.buttons.firstMatch
+    XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
+    backButton.tap()
+    XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
+    XCTAssertTrue(
+      sharedHomeText(typedText).waitForExistence(timeout: 5),
+      "Same-flow page navigation should not clear ephemeral page data")
+
+    app.buttons["Create"].tap()
+    XCTAssertFalse(viewItemButton.exists, "Home buttons should not be visible after flow change")
+    XCTAssertTrue(
+      backButton.waitForExistence(timeout: 5), "Back button should exist after flow change")
+    backButton.tap()
+    XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
+    XCTAssertFalse(
+      sharedHomeText(typedText).waitForExistence(timeout: 2),
+      "Leaving and re-entering the flow should clear ephemeral page data")
+  }
+
+  @MainActor
+  func testRowsAddedToBackgroundedPageShareEphemeralValueOnReturn() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let typedText = "bg share \(Int(Date().timeIntervalSince1970))"
+    try await typeIntoHomeEphemeralField(typedText)
+    XCTAssertTrue(sharedHomeText(typedText).waitForExistence(timeout: 5))
+
+    // Navigate away so the home page is no longer the active scope.
+    app.buttons["Details"].tap()
+    XCTAssertTrue(app.staticTexts["Details page"].waitForExistence(timeout: 5))
+
+    await publishHomeFlow(
+      createHomeFlowData(buttonLabel: "View", includeAddedSharedRow: true))
+
+    let backButton = app.navigationBars.buttons.firstMatch
+    XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
+    backButton.tap()
+    XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
+
+    XCTAssertTrue(
+      addedHomeText(typedText).waitForExistence(timeout: 10),
+      "A row added while the page was backgrounded must share the existing ephemeral value on return"
+    )
+
+    await publishHomeFlow(createHomeFlowData(buttonLabel: "View"))
+  }
+
+  @MainActor
+  func testRowsAddedWhileDisplayedShareExistingEphemeralValue() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let typedText = "added share \(Int(Date().timeIntervalSince1970))"
+    try await typeIntoHomeEphemeralField(typedText)
+    XCTAssertTrue(
+      sharedHomeText(typedText).waitForExistence(timeout: 5),
+      "Existing text row should reflect the typed ephemeral value")
+
+    await publishHomeFlow(
+      createHomeFlowData(buttonLabel: "View", includeAddedSharedRow: true))
+
+    XCTAssertTrue(
+      addedHomeText(typedText).waitForExistence(timeout: 10),
+      "A row added via WebSocket while the page is displayed must share the existing ephemeral value, not reset it"
+    )
+
+    await publishHomeFlow(createHomeFlowData(buttonLabel: "View"))
+  }
+
+  @MainActor
   func testWebSocketRowUpdatePreservesUnrelatedRowState() async throws {
     let viewItemButton = app.buttons["View"]
     XCTAssertTrue(
@@ -974,6 +1070,21 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
       "View item page title should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
+    )
+
+    let titleInputId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
+    guard let titleInput = findElement(identifier: titleInputId) else {
+      XCTFail("View item page should show an input bound to the item title")
+      return
+    }
+    guard let titleField = await tapAndGetEditableField(container: titleInput) else {
+      XCTFail("Failed to get editable title input on the view item page")
+      return
+    }
+    XCTAssertEqual(
+      titleField.value as? String,
+      selectedItemTitle,
+      "Input bound to {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} must show the existing item data, not an empty bootstrapped draft"
     )
   }
 
@@ -1256,15 +1367,95 @@ final class WebSocketE2ETests: E2ETestBase {
     return response as? [Any]
   }
 
-  private func createHomeFlowData(buttonLabel: String, viewItemId: String? = nil) -> [String: Any] {
+  @MainActor
+  private func publishHomeFlow(_ flowData: [String: Any]) async {
+    let emitter = WSEmitter()
+    do {
+      try await emitter.connect(host: apiHost)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      try await emitter.updateSDUI(
+        flowData: flowData, flowId: E2EFlowIds.webSocketHomeFlow)
+    } catch {
+      XCTFail("Failed to publish home flow: \(error.localizedDescription)")
+    }
+    await emitter.disconnect()
+  }
+
+  @MainActor
+  private func typeIntoHomeEphemeralField(_ text: String) async throws {
+    guard let inputContainer = findElement(identifier: "textField_e2e.unrelated_input") else {
+      XCTFail("Home input row should be visible")
+      return
+    }
+    guard let inputField = await tapAndGetEditableField(container: inputContainer) else {
+      XCTFail("Failed to get editable home input field")
+      return
+    }
+    clearAndType(field: inputField, text: text, placeholder: "Type here")
+  }
+
+  private func sharedHomeText(_ text: String) -> XCUIElement {
+    app.staticTexts["Live: \(text)"]
+  }
+
+  private func addedHomeText(_ text: String) -> XCUIElement {
+    app.staticTexts["Added: \(text)"]
+  }
+
+  private func createHomeFlowData(
+    buttonLabel: String,
+    viewItemId: String? = nil,
+    includeAddedSharedRow: Bool = false
+  ) -> [String: Any] {
     let viewAction = Self.viewItemNavigateAction(viewItemId: viewItemId)
+
+    var children: [[String: Any]] = [
+      Self.inputRow(
+        id: "c72107b6-a50f-4bdb-98d8-4f803e2e8e1b",
+        title: "Notes",
+        source: nil,
+        placeholder: "Type here",
+        destination: "e2e.unrelated_input"
+      ),
+      Self.textRow(
+        id: "5af45c82-6b8a-4f33-9864-1c5f9eb47ed1",
+        title: "Live: {e2e.unrelated_input}"
+      ),
+    ]
+    if includeAddedSharedRow {
+      children.append(
+        Self.textRow(
+          id: "9c1e7f4a-3b2d-4e6a-8f1c-2d3e4f5a6b7c",
+          title: "Added: {e2e.unrelated_input}"
+        )
+      )
+    }
+    children.append(contentsOf: [
+      Self.buttonRow(
+        id: "53d04050-29f3-48ec-b55b-1a6a30fc2111",
+        label: "Details",
+        action:
+          "{navigate(\(E2EFlowIds.webSocketHomeFlow),\(E2EFlowIds.webSocketHomeDetailsPage))}"
+      ),
+      Self.buttonRow(
+        id: "441c1433-446b-4682-854d-5d795ef52709",
+        label: buttonLabel,
+        action: viewAction
+      ),
+      Self.buttonRow(
+        id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+        label: "Create",
+        action:
+          "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
+      ),
+    ])
 
     return [
       "id": E2EFlowIds.webSocketHomeFlow,
       "name": "Home",
       "pages": [
         [
-          "id": "55e427ac-263c-441f-9673-f60627b1baea",
+          "id": E2EFlowIds.webSocketHomePage,
           "title": "Home",
           "rows": [
             [
@@ -1273,29 +1464,20 @@ final class WebSocketE2ETests: E2ETestBase {
               "actions": [],
               "visible": "true",
               "title": "",
-              "children": [
-                Self.inputRow(
-                  id: "c72107b6-a50f-4bdb-98d8-4f803e2e8e1b",
-                  title: "Notes",
-                  source: nil,
-                  placeholder: "Type here",
-                  destination: "e2e.unrelated_input"
-                ),
-                Self.buttonRow(
-                  id: "441c1433-446b-4682-854d-5d795ef52709",
-                  label: buttonLabel,
-                  action: viewAction
-                ),
-                Self.buttonRow(
-                  id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
-                  label: "Create",
-                  action:
-                    "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
-                ),
-              ],
+              "children": children,
             ]
           ],
-        ]
+        ],
+        [
+          "id": E2EFlowIds.webSocketHomeDetailsPage,
+          "title": "Details",
+          "rows": [
+            Self.textRow(
+              id: "36dc56d0-706b-4d5a-bc2a-6dc6956c9277",
+              title: "Details page"
+            )
+          ],
+        ],
       ],
     ]
   }
@@ -1307,17 +1489,18 @@ final class WebSocketE2ETests: E2ETestBase {
       var rows = homePage["rows"] as? [[String: Any]],
       var firstRow = rows.first,
       var children = firstRow["children"] as? [[String: Any]],
-      var firstButton = children.first,
-      var actions = firstButton["actions"] as? [[String: Any]],
+      let buttonIndex = children.firstIndex(where: { ($0["label"] as? String) == buttonLabel }),
+      var actions = children[buttonIndex]["actions"] as? [[String: Any]],
       var firstAction = actions.first
     else {
       return flowData
     }
 
+    var button = children[buttonIndex]
     firstAction["condition"] = "{1 > 0 || (0 > 1 && 2 > 3)}"
     actions[0] = firstAction
-    firstButton["actions"] = actions
-    children[0] = firstButton
+    button["actions"] = actions
+    children[buttonIndex] = button
     firstRow["children"] = children
     rows[0] = firstRow
     homePage["rows"] = rows
@@ -1422,6 +1605,7 @@ final class E2EErrorStateTests: XCTestCase {
     continueAfterFailure = false
     app = XCUIApplication()
     app.launchEnvironment["API_HOST"] = "127.0.0.1:59998"
+    app.launchEnvironment["HOME_FLOW_ID"] = "00000000-0000-4000-8000-000000000000"
     app.launch()
   }
 

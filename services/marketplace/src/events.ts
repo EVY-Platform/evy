@@ -8,7 +8,7 @@ type ServiceEventListener = (eventName: string, payload: unknown) => void;
 
 export function emitDataChanged(
 	resource: string,
-	operation: "create" | "update",
+	operation: "create" | "update" | "delete",
 	value: unknown,
 ): void {
 	marketplaceEventBus.emit("notify", "dataChanged", {

@@ -86,8 +86,10 @@ class WSClient {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const rawUnknown: unknown = await this.client.call("sync", {
-			lastSyncTime,
+		const rawUnknown: unknown = await this.client.call("api", {
+			service: EVY_CORE_SERVICE,
+			method: "sync",
+			data: { lastSyncTime },
 		});
 
 		const response = rawUnknown as SyncResponse;

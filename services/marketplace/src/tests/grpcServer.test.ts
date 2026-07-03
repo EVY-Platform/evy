@@ -46,6 +46,13 @@ beforeEach(async () => {
 	await testDb.delete(schema.data);
 });
 
+type JsonUnaryCallback = (
+	err: ServiceError | null,
+	res?: { result_json: string },
+) => void;
+
+type VoidUnaryCallback = (err: ServiceError | null) => void;
+
 type EvyServiceClient = Client & {
 	Get: (
 		req: {
@@ -53,7 +60,7 @@ type EvyServiceClient = Client & {
 			resource: string;
 			filter?: { id: string };
 		},
-		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
+		cb: JsonUnaryCallback,
 	) => void;
 	Create: (
 		req: {
@@ -62,7 +69,7 @@ type EvyServiceClient = Client & {
 			filter?: { id: string };
 			data_json: string;
 		},
-		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
+		cb: VoidUnaryCallback,
 	) => void;
 	Update: (
 		req: {
@@ -71,13 +78,46 @@ type EvyServiceClient = Client & {
 			filter: { id: string };
 			data_json: string;
 		},
-		cb: (err: ServiceError | null, res?: { result_json: string }) => void,
+		cb: JsonUnaryCallback,
+	) => void;
+	Delete: (
+		req: {
+			service: string;
+			resource: string;
+			filter: { id: string };
+		},
+		cb: JsonUnaryCallback,
 	) => void;
 	SubscribeEvents: (req: Record<string, never>) => ClientReadableStream<{
 		event_name: string;
 		payload_json: string;
 	}>;
 };
+
+function callVoid(call: (cb: VoidUnaryCallback) => void): Promise<void> {
+	return new Promise<void>((resolve, reject) => {
+		call((err) => {
+			if (err) reject(err);
+			else resolve();
+		});
+	});
+}
+
+function callJson<T>(call: (cb: JsonUnaryCallback) => void): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		call((err, res) => {
+			if (err) {
+				reject(err);
+				return;
+			}
+			if (!res) {
+				reject(new Error("empty gRPC JSON response"));
+				return;
+			}
+			resolve(JSON.parse(res.result_json) as T);
+		});
+	});
+}
 
 describe("marketplace gRPC server", () => {
 	it("Create and Get round-trip typed params", async () => {
@@ -86,41 +126,61 @@ describe("marketplace gRPC server", () => {
 		) as EvyServiceClient;
 		const row = { id: crypto.randomUUID(), value: "grpc-condition" };
 
-		await new Promise<void>((resolve, reject) => {
+		await callVoid((cb) =>
 			client.Create(
 				{
 					service: MARKETPLACE_SERVICE,
 					resource: MARKETPLACE_RESOURCE.CONDITIONS,
 					data_json: JSON.stringify(row),
 				},
-				(err: ServiceError | null) => {
-					if (err) reject(err);
-					else resolve();
-				},
-			);
-		});
+				cb,
+			),
+		);
 
-		const got = await new Promise<unknown>((resolve, reject) => {
+		const got = await callJson<unknown>((cb) =>
 			client.Get(
 				{
 					service: MARKETPLACE_SERVICE,
 					resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				},
-				(err: ServiceError | null, res?: { result_json: string }) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-					if (!res) {
-						reject(new Error("empty Get response"));
-						return;
-					}
-					resolve(JSON.parse(res.result_json));
-				},
-			);
-		});
+				cb,
+			),
+		);
 
 		expect(got).toEqual([row]);
+	});
+
+	it("Delete removes a created resource", async () => {
+		const client = createEvyServiceClient(
+			`127.0.0.1:${grpcPort}`,
+		) as EvyServiceClient;
+		const rowId = crypto.randomUUID();
+		const row = { id: rowId, value: "delete-condition" };
+
+		await callVoid((cb) =>
+			client.Create(
+				{
+					service: MARKETPLACE_SERVICE,
+					resource: MARKETPLACE_RESOURCE.CONDITIONS,
+					filter: { id: rowId },
+					data_json: JSON.stringify(row),
+				},
+				cb,
+			),
+		);
+
+		const deleted = await callJson<unknown>((cb) =>
+			client.Delete(
+				{
+					service: MARKETPLACE_SERVICE,
+					resource: MARKETPLACE_RESOURCE.CONDITIONS,
+					filter: { id: rowId },
+				},
+				cb,
+			),
+		);
+
+		expect(deleted).toMatchObject({ id: rowId, data: row });
 	});
 
 	it("SubscribeEvents receives dataChanged after resource create", async () => {
@@ -140,19 +200,16 @@ describe("marketplace gRPC server", () => {
 		await new Promise((r) => setTimeout(r, 50));
 
 		const row = { id: crypto.randomUUID(), value: "notify-me" };
-		await new Promise<void>((resolve, reject) => {
+		await callVoid((cb) =>
 			client.Create(
 				{
 					service: MARKETPLACE_SERVICE,
 					resource: MARKETPLACE_RESOURCE.CONDITIONS,
 					data_json: JSON.stringify(row),
 				},
-				(err: ServiceError | null) => {
-					if (err) reject(err);
-					else resolve();
-				},
-			);
-		});
+				cb,
+			),
+		);
 
 		await new Promise((r) => setTimeout(r, 150));
 		expect(received.some((e) => e.event_name === "dataChanged")).toBe(true);

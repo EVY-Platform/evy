@@ -250,10 +250,16 @@ else
     export DOCKER_BUILDKIT=1
     export COMPOSE_DOCKER_CLI_BUILD=1
 
-    echo -e "\n${YELLOW}Step 1: Starting services with docker compose...${NC}"
-    docker compose up --build -d
+    # Build each service sequentially to avoid parallel compose build races.
+    echo -e "\n${YELLOW}Step 1: Building services with docker compose...${NC}"
+    docker compose build marketplace
+    docker compose build api
+    docker compose build web
 
-    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
+    echo -e "\n${YELLOW}Step 2: Starting services with docker compose...${NC}"
+    docker compose up --no-build -d
+
+    echo -e "\n${YELLOW}Step 3: Waiting for services to be healthy...${NC}"
     wait_for_postgres
 
     wait_for_service_readiness services/marketplace marketplace "health" "Marketplace"

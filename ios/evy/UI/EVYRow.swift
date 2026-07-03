@@ -43,15 +43,11 @@ struct EVYRow: View, Identifiable {
     switch ref {
     case .id(let rowId):
       EVYResolvedRow(ref: ref, storedRow: storedRow, datum: datum)
-        .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
-          guard
-            let change = EVYDataChange.from(notification),
-            change.matches(
-              namespace: EVYNamespace.evy,
-              resource: EVYCoreResource.rows.rawValue,
-              id: rowId
-            )
-          else { return }
+        .onEVYRecordChange(
+          namespace: EVYNamespace.evy,
+          resource: EVYCoreResource.rows.rawValue,
+          id: rowId
+        ) {
           let latestRow = EVYRowStore.row(id: rowId)
           if storedRow != latestRow {
             storedRow = latestRow
@@ -105,7 +101,7 @@ private struct EVYResolvedRow: View {
   let datum: EVYJson?
 
   @Environment(\.navigate) private var navigate
-  @Environment(\.evyDraftScopeId) private var evyDraftScopeId
+  @Environment(\.evyScope) private var evyScope
   @State private var presentedSheetRef: EVYRowRef?
   @State private var isVisible = EVYState<Bool>(staticString: true)
 
@@ -178,7 +174,7 @@ private struct EVYResolvedRow: View {
             }
             .onAppear {
               refreshVisibilityState()
-              bootstrapRowDraft(row: contentRow, scopeId: evyDraftScopeId, payload: payload)
+              bootstrapRowDraft(row: contentRow, scopeId: evyScope.draftScopeId, payload: payload)
             }
             .onChange(of: visibleExpression) { _, _ in
               refreshVisibilityState()

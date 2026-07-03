@@ -21,12 +21,12 @@ import {
 	createPgliteTestDatabase,
 } from "./wsTestHelpers";
 
-const forwardGetMock = mock(
+const forwardApiMock = mock(
 	async (
 		_serviceName: string,
 		params: {
 			service: string;
-			resource: string;
+			resource?: string;
 			method: string;
 			filter?: {
 				id?: string;
@@ -38,8 +38,10 @@ const forwardGetMock = mock(
 );
 
 mock.module("../procedures/services", () => ({
+	forwardApi: forwardApiMock,
 	forwardCreate: mock(),
-	forwardGet: forwardGetMock,
+	forwardDelete: mock(),
+	forwardGet: mock(),
 	forwardUpdate: mock(),
 	wireGrpcEvents: mock(),
 }));
@@ -129,7 +131,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	forwardGetMock.mockClear();
+	forwardApiMock.mockClear();
 	await clearAllTestTables(testDb);
 	await seedServiceResources();
 });
@@ -150,8 +152,8 @@ describe("api JSON-RPC handler", () => {
 		);
 
 		expect(result).toEqual([{ id: itemId }]);
-		expect(forwardGetMock).toHaveBeenCalledTimes(1);
-		expect(forwardGetMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
+		expect(forwardApiMock).toHaveBeenCalledTimes(1);
+		expect(forwardApiMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
 			service: MARKETPLACE_SERVICE_ID,
 			resource: MARKETPLACE_RESOURCE.ITEMS,
 			method: "not-search",
@@ -175,7 +177,7 @@ describe("api JSON-RPC handler", () => {
 			),
 		).rejects.toThrow("ApiRequest validation failed");
 
-		expect(forwardGetMock).not.toHaveBeenCalled();
+		expect(forwardApiMock).not.toHaveBeenCalled();
 	});
 
 	it("forwards API requests without checking service/resource pairs locally", async () => {
@@ -193,7 +195,7 @@ describe("api JSON-RPC handler", () => {
 		);
 
 		expect(result).toEqual([{ id: itemId }]);
-		expect(forwardGetMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
+		expect(forwardApiMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
 			service: MARKETPLACE_SERVICE_ID,
 			resource: "not-a-marketplace-resource",
 			method: "not-search",

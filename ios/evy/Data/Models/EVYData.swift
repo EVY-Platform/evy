@@ -232,6 +232,31 @@ public enum EVYJson: Codable, Hashable {
       return self
     }
   }
+
+  /// Like `parseProp`, but returns `nil` when a segment cannot be resolved instead of
+  /// falling back to `self`. Used to tell "the path resolves to a real value" apart from
+  /// "the container could not descend into the requested path".
+  @MainActor
+  public func parsePropStrict(props: [String]) -> EVYJson? {
+    guard let firstVariable = props.first else {
+      return self
+    }
+
+    switch self {
+    case .dictionary(let dictValue):
+      guard let subData = dictValue[firstVariable] else {
+        return nil
+      }
+      return subData.parsePropStrict(props: Array(props[1...]))
+    case .array(let arrayValue):
+      guard let index = Int(firstVariable), arrayValue.indices.contains(index) else {
+        return nil
+      }
+      return arrayValue[index].parsePropStrict(props: Array(props[1...]))
+    default:
+      return nil
+    }
+  }
 }
 
 enum EVYDataPatcher {

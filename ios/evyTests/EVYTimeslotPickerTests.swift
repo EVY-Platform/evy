@@ -20,6 +20,8 @@ final class EVYTimeslotPickerTests: XCTestCase {
   ) -> TimeslotPickerRowViewData {
     let jsonObject: [String: Any] = [
       "title": "",
+      "source": "{pickup_selection}",
+      "destination": "{selected_timeslot}",
       "start_time": "07:00",
       "end_time": "19:00",
       "timeslot_interval_minutes": "30",

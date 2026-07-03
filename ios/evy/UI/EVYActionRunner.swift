@@ -60,9 +60,8 @@ enum EVYActionRunner {
     show: @escaping (EVYRowRef) -> Void
   ) throws {
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
-    let unwrappedBranch = String(branch.dropFirst().dropLast())
 
-    if let (functionName, functionArgs) = parseFunctionCall(unwrappedBranch) {
+    if let (functionName, functionArgs) = EVYActionParser.functionCall(from: branch) {
       switch functionName {
       case "navigate":
         let navArgs = try parseNavigateArguments(functionArgs)
@@ -77,15 +76,11 @@ enum EVYActionRunner {
             ))
         )
       case "create":
-        let args = splitFunctionArguments(functionArgs)
-        guard args.count >= 2,
-          let namespace = args.first, !namespace.isEmpty,
-          let resource = args.dropFirst().first, !resource.isEmpty
-        else {
+        guard let createAction = EVYActionParser.createAction(from: branch) else {
           throw EVYError.invalidData(
             context: "create requires namespace and resource, e.g. create(marketplace,item)")
         }
-        navigate(.create(namespace: namespace, resource: resource))
+        navigate(.create(namespace: createAction.namespace, resource: createAction.resource))
       case "close":
         navigate(.close)
       case "show":
