@@ -21,7 +21,6 @@ final class EVYDataStore {
       let container = try ModelContainer(for: EVYData.self, configurations: config)
       self.init(container: container)
     } catch {
-      // Schema likely changed; delete old store and retry
       if !inMemoryOnly {
         Self.deleteStoreFiles(for: config)
       }
@@ -37,11 +36,10 @@ final class EVYDataStore {
 
   private static func deleteStoreFiles(for config: ModelConfiguration) {
     let url = config.url
-    let fm = FileManager.default
-    // SwiftData stores use .store with WAL/SHM sidecars
+    let fileManager = FileManager.default
     for suffix in ["", "-wal", "-shm"] {
       let fileURL = url.deletingPathExtension().appendingPathExtension("store\(suffix)")
-      try? fm.removeItem(at: fileURL)
+      try? fileManager.removeItem(at: fileURL)
     }
   }
 
@@ -100,10 +98,7 @@ final class EVYDataStore {
     context.insert(
       EVYData(namespace: namespace, resource: resource, id: id, data: value, sortIndex: sortIndex)
     )
-    let change = EVYDataChange(namespace: namespace, resource: resource, id: id)
-    postDataChanged(key: "\(namespace):\(resource):\(id)", change: change)
-    postDataChanged(key: "\(namespace):\(resource)")
-    postDataChanged(key: resource)
+    postRecordAndValueChanged(namespace: namespace, resource: resource, id: id)
   }
 
   func update(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
@@ -112,19 +107,13 @@ final class EVYDataStore {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     existing.data = value
     existing.sortIndex = sortIndex
-    let change = EVYDataChange(namespace: namespace, resource: resource, id: id)
-    postDataChanged(key: "\(namespace):\(resource):\(id)", change: change)
-    postDataChanged(key: "\(namespace):\(resource)")
-    postDataChanged(key: resource)
+    postRecordAndValueChanged(namespace: namespace, resource: resource, id: id)
   }
 
   func delete(namespace: String, resource: String, id: String) throws {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     context.delete(existing)
-    let change = EVYDataChange(namespace: namespace, resource: resource, id: id)
-    postDataChanged(key: "\(namespace):\(resource):\(id)", change: change)
-    postDataChanged(key: "\(namespace):\(resource)")
-    postDataChanged(key: resource)
+    postRecordAndValueChanged(namespace: namespace, resource: resource, id: id)
   }
 
   func deleteAll(namespace: String, resource: String) throws {
@@ -132,8 +121,7 @@ final class EVYDataStore {
     for row in rows {
       context.delete(row)
     }
-    postDataChanged(key: "\(namespace):\(resource)")
-    postDataChanged(key: resource)
+    postValueChanged(key: resource)
   }
 
   func deleteAll(namespace: String) throws {
@@ -201,10 +189,12 @@ final class EVYDataStore {
     return .array(items)
   }
 
-  func getJsonForBinding(key: String) throws -> EVYJson {
+  func getJsonForBinding(key: String, cacheScopeId: String? = nil) throws -> EVYJson {
+    let resolvedCacheScopeId = cacheScopeId ?? EVY.activeCacheScopeId
     if !key.contains(":") {
-      if let scopeId = EVY.activeCacheScopeId,
-        let cached = try? get(namespace: EVYNamespace.cache, resource: scopeId, id: key)
+      if let resolvedCacheScopeId,
+        let cached = try? get(
+          namespace: EVYNamespace.cache, resource: resolvedCacheScopeId, id: key)
       {
         return try cached.decoded()
       }
@@ -254,13 +244,17 @@ final class EVYDataStore {
     return row.namespace
   }
 
-  func postDataChanged(key: String, change: EVYDataChange? = nil) {
-    var userInfo: [AnyHashable: Any]? = nil
-    if let change { userInfo = [EVYDataChange.userInfoKey: change] }
+  func postValueChanged(key: String?) {
+    EVYValueChange.post(key: key)
+  }
+
+  private func postRecordAndValueChanged(namespace: String, resource: String, id: String) {
+    let change = EVYRecordChange(namespace: namespace, resource: resource, id: id)
     NotificationCenter.default.post(
-      name: Notification.Name.evyDataChanged,
-      object: key,
-      userInfo: userInfo
+      name: .evyRecordChanged,
+      object: change.recordKey,
+      userInfo: [EVYRecordChange.userInfoKey: change]
     )
+    postValueChanged(key: resource)
   }
 }

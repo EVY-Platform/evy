@@ -150,6 +150,10 @@ enum EVYDraft {
     "\(flowId):\(entityKey)"
   }
 
+  static func ephemeralScopeId(forPageId pageId: String) -> String {
+    "ephemeral:\(pageId)"
+  }
+
   static func merge(binding: Binding, value draftValue: EVYJson, into entity: EVYJson) -> EVYJson {
     switch binding.mergeMode {
     case .explicitPath(let path):

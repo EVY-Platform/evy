@@ -8,33 +8,11 @@
 import SwiftUI
 import UIKit
 
-private struct EVYDraftScopeEnvironmentKey: EnvironmentKey {
-  static let defaultValue: String? = nil
-}
-
-extension EnvironmentValues {
-  var evyDraftScopeId: String? {
-    get { self[EVYDraftScopeEnvironmentKey.self] }
-    set { self[EVYDraftScopeEnvironmentKey.self] = newValue }
-  }
-}
-
-private struct EVYCacheScopeEnvironmentKey: EnvironmentKey {
-  static let defaultValue: String? = nil
-}
-
-extension EnvironmentValues {
-  var evyCacheScopeId: String? {
-    get { self[EVYCacheScopeEnvironmentKey.self] }
-    set { self[EVYCacheScopeEnvironmentKey.self] = newValue }
-  }
-}
-
 /// Renders a page by id, reading title/rowIds/footerRowId directly from the pages table.
 struct EVYPage: View {
   let pageId: String
 
-  @Environment(\.evyDraftScopeId) private var evyDraftScopeId
+  @Environment(\.evyScope) private var evyScope
   @State private var page: EVYStoredPage?
 
   init(pageId: String) {
@@ -48,15 +26,11 @@ struct EVYPage: View {
         pageContent(page: page)
       }
     }
-    .onReceive(NotificationCenter.default.publisher(for: .evyDataChanged)) { notification in
-      guard
-        let change = EVYDataChange.from(notification),
-        change.matches(
-          namespace: EVYNamespace.evy,
-          resource: EVYCoreResource.pages.rawValue,
-          id: pageId
-        )
-      else { return }
+    .onEVYRecordChange(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.pages.rawValue,
+      id: pageId
+    ) {
       let latestPage = EVYPageStore.page(id: pageId)
       if page != latestPage {
         page = latestPage
@@ -81,12 +55,13 @@ struct EVYPage: View {
       }
     }
     .onAppear {
-      EVY.activeCacheScopeId = pageId
-      EVY.draftStore.activeScopeId = evyDraftScopeId
-      bootstrapDrafts(pageId: pageId, scopeId: evyDraftScopeId)
+      activatePageScope()
     }
     .onChange(of: page.rowIds) { _, _ in
-      bootstrapDrafts(pageId: pageId, scopeId: evyDraftScopeId)
+      // Newly added rows on the foreground page already resolve against the correct global
+      // scope; just make sure their drafts are bootstrapped. Deliberately does not reassert
+      // the global scope, so a backgrounded page whose rows change cannot steal it.
+      bootstrapDrafts(pageId: pageId, scopeId: effectiveDraftScopeId)
     }
     .simultaneousGesture(
       TapGesture().onEnded {
@@ -98,7 +73,34 @@ struct EVYPage: View {
         )
       }
     )
-    .environment(\.evyCacheScopeId, pageId)
+    .environment(\.evyScope, EVYScope(cacheScopeId: pageId, draftScopeId: effectiveDraftScopeId))
+  }
+
+  /// The draft scope this page reads and writes against. Create/edit flows keep their
+  /// entity scope so drafts merge on submit; every other page falls back to a per-page
+  /// ephemeral scope so loose variables are shared between its rows.
+  private var effectiveDraftScopeId: String {
+    if let draftScopeId = evyScope.draftScopeId,
+      EVYDraft.Scope.entityKey(fromScopeId: draftScopeId) != nil
+    {
+      return draftScopeId
+    }
+    return EVYDraft.ephemeralScopeId(forPageId: pageId)
+  }
+
+  /// Re-establishes this page's cache/draft scope as the active one and refreshes its rows.
+  ///
+  /// `EVYState` reads resolve drafts through the global `activeScopeId`, which only reflects
+  /// the most recently appeared page. A row added to this page while another page was active
+  /// (e.g. via a WebSocket SDUI update while navigated away) would have initialised against
+  /// the wrong scope. Re-asserting the scope and broadcasting a recompute makes every row on
+  /// this page re-resolve against the correct scope when it (re)appears or its rows change.
+  @MainActor
+  private func activatePageScope() {
+    EVY.activeCacheScopeId = pageId
+    EVY.draftStore.activeScopeId = effectiveDraftScopeId
+    bootstrapDrafts(pageId: pageId, scopeId: effectiveDraftScopeId)
+    EVYValueChange.post(key: nil)
   }
 
   @ViewBuilder

@@ -20,7 +20,7 @@ mock.module("../db", () => ({
 	schema,
 }));
 
-const { create, get, update } = await import("../data");
+const { create, deleteResource, get, update } = await import("../data");
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
@@ -190,5 +190,30 @@ describe("marketplace get/create/update", () => {
 			data: { ...row, value: "v2" },
 		});
 		expect(updated).toMatchObject({ data: { ...row, value: "v2" } });
+	});
+
+	it("deletes a row by resource and id", async () => {
+		const rowId = crypto.randomUUID();
+		const row = { id: rowId, value: "delete-me" };
+		await create({
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			filter: { id: rowId },
+			data: row,
+		});
+
+		const deleted = await deleteResource({
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			filter: { id: rowId },
+		});
+		expect(deleted).toMatchObject({ id: rowId, data: row });
+
+		const remaining = await get({
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			filter: { id: rowId },
+		});
+		expect(remaining).toEqual([]);
 	});
 });

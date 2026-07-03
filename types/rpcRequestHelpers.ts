@@ -14,16 +14,19 @@ import {
 /**
  * Shared JSON-RPC param checks with stable error messages (tests rely on these strings).
  */
-function assertRpcParamsCommon(params: unknown): asserts params is Record<
-	string,
-	unknown
-> & {
-	service: string;
-	resource: string;
-} {
+type RpcParamsObject = Record<string, unknown>;
+
+function assertRpcParamsObject(
+	params: unknown,
+): asserts params is RpcParamsObject {
 	if (params === null || typeof params !== "object") {
 		throw new Error("Params must be an object");
 	}
+}
+
+function assertRequiredService(
+	params: RpcParamsObject,
+): asserts params is RpcParamsObject & { service: string } {
 	if (
 		!("service" in params) ||
 		typeof params.service !== "string" ||
@@ -31,6 +34,11 @@ function assertRpcParamsCommon(params: unknown): asserts params is Record<
 	) {
 		throw new Error("Invalid or missing service");
 	}
+}
+
+function assertRequiredResource(
+	params: RpcParamsObject,
+): asserts params is RpcParamsObject & { resource: string } {
 	if (
 		!("resource" in params) ||
 		typeof params.resource !== "string" ||
@@ -39,6 +47,21 @@ function assertRpcParamsCommon(params: unknown): asserts params is Record<
 	) {
 		throw new Error("Invalid or missing resource");
 	}
+}
+
+function assertOptionalResource(params: RpcParamsObject): void {
+	if (
+		"resource" in params &&
+		params.resource !== undefined &&
+		(typeof params.resource !== "string" ||
+			params.resource.length === 0 ||
+			params.resource.length > 50)
+	) {
+		throw new Error("Invalid or missing resource");
+	}
+}
+
+function assertOptionalFilter(params: RpcParamsObject): void {
 	if (
 		"filter" in params &&
 		params.filter !== undefined &&
@@ -46,6 +69,18 @@ function assertRpcParamsCommon(params: unknown): asserts params is Record<
 	) {
 		throw new Error("filter must be an object");
 	}
+}
+
+function assertRpcParamsCommon(
+	params: unknown,
+): asserts params is RpcParamsObject & {
+	service: string;
+	resource: string;
+} {
+	assertRpcParamsObject(params);
+	assertRequiredService(params);
+	assertRequiredResource(params);
+	assertOptionalFilter(params);
 }
 
 export function validateStrictGetRequest(
@@ -58,7 +93,10 @@ export function validateStrictGetRequest(
 export function validateStrictApiRequest(
 	params: unknown,
 ): asserts params is ApiRequest {
-	assertRpcParamsCommon(params);
+	assertRpcParamsObject(params);
+	assertRequiredService(params);
+	assertOptionalResource(params);
+	assertOptionalFilter(params);
 	validateApiRequest(params);
 }
 

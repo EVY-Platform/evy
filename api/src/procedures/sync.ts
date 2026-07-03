@@ -1,11 +1,16 @@
 import { asc, eq, ne } from "drizzle-orm";
-import type { GetRequest, GetResponse, SyncResponse } from "evy-types";
+import type {
+	GetRequest,
+	GetResponse,
+	SyncRequest,
+	SyncResponse,
+} from "evy-types";
 import {
 	EVY_CORE_RESOURCE,
 	EVY_CORE_RESOURCE_NAMES,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
-import { validateSync, validateSyncResponse } from "evy-types/validators";
+import { validateSyncResponse } from "evy-types/validators";
 import {
 	service,
 	serviceResource,
@@ -100,12 +105,10 @@ function defaultSyncDeps(db: EvyDb): SyncDependencies {
 }
 
 export async function sync(
-	params: unknown,
+	syncParams: SyncRequest,
 	db: EvyDb,
 	deps?: SyncDependencies,
 ): Promise<SyncResponse> {
-	const syncParams = validateSync(params);
-
 	const resolvedDeps = deps ?? defaultSyncDeps(db);
 	const externalResources = await resolvedDeps.listExternalResources(db);
 

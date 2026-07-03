@@ -1,13 +1,6 @@
 import { initCoreNotifications, validateAuth } from "./data/data";
 import { createDb } from "./database/db";
-import {
-	api,
-	create,
-	deleteResource,
-	get,
-	sync,
-	update,
-} from "./procedures/rpc";
+import { api, create, deleteResource, get, update } from "./procedures/rpc";
 import { initServiceAdapters, wireGrpcEvents } from "./procedures/services";
 import { cancelUpload, handleUploadChunk } from "./procedures/uploads";
 import { runHealthCli } from "./readiness";
@@ -37,9 +30,6 @@ async function startServer(): Promise<void> {
 	wireGrpcEvents(broadcast);
 
 	server.register("api", (params: unknown) => api(params, appDb));
-	server
-		.register("sync", (params: unknown) => sync(params, appDb))
-		.protected();
 	server.register("cancelUpload", cancelUpload).protected();
 
 	server.register("get", (params: unknown) => get(params, appDb));

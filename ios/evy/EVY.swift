@@ -54,6 +54,12 @@ struct SyncParams: Encodable {
   let lastSyncTime: String
 }
 
+struct CoreAPIParams<T: Encodable>: Encodable {
+  let service: String
+  let method: String
+  let data: T
+}
+
 struct SyncRow: Codable {
   let service: String
   let resource: String

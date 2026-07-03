@@ -2,10 +2,18 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "api-request",
 	"title": "ApiRequest",
-	"description": "JSON-RPC params for API-backed client functions. Routes a service/resource/method request through the API gateway to the owning backend service.",
+	"description": "JSON-RPC params for custom API-backed client functions. Routes a service/method request through the API gateway to evy core or the owning backend service.",
+	"$defs": {
+		"ApiDataPayload": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "../common/json.schema.json#/$defs/JSONValue"
+			}
+		}
+	},
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["service", "resource", "method"],
+	"required": ["service", "method"],
 	"properties": {
 		"service": {
 			"type": "string",
@@ -22,6 +30,9 @@
 		},
 		"filter": {
 			"$ref": "../common/rpc.schema.json#/$defs/DataFilter"
+		},
+		"data": {
+			"$ref": "#/$defs/ApiDataPayload"
 		}
 	}
 }

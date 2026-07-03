@@ -143,20 +143,6 @@ describe("sync", () => {
 		expect(result).toEqual({ data: [] });
 	});
 
-	it("rejects missing lastSyncTime", async () => {
-		const deps = makeMocks();
-		await expect(sync({}, db, deps)).rejects.toThrow();
-		await expect(sync(null, db, deps)).rejects.toThrow();
-		await expect(sync(undefined, db, deps)).rejects.toThrow();
-	});
-
-	it("rejects invalid lastSyncTime format", async () => {
-		const deps = makeMocks();
-		await expect(
-			sync({ lastSyncTime: "not-a-date" }, db, deps),
-		).rejects.toThrow();
-	});
-
 	it("propagates forwardGet errors for external services", async () => {
 		const fetchService = async (
 			serviceName: string,

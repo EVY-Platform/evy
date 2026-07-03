@@ -1,10 +1,7 @@
 import type {
-	ApiRequest,
 	CreateResponse,
 	DeleteResponse,
-	GetRequest,
 	GetResponse,
-	SyncResponse,
 	UpdateResponse,
 } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
@@ -22,17 +19,20 @@ import {
 	update as updateCore,
 } from "../data/data";
 import type { EvyDb } from "../database/db";
-import { forwardCreate, forwardGet, forwardUpdate } from "./services";
-import { sync as coreSync } from "./sync";
+import { coreApi } from "./coreApi";
+import {
+	forwardApi,
+	forwardCreate,
+	forwardDelete,
+	forwardGet,
+	forwardUpdate,
+} from "./services";
 
-type GetLikeRequest = GetRequest | ApiRequest;
-
-async function handleGetRequest<T extends GetLikeRequest>(
-	validate: (p: unknown) => asserts p is T,
+async function handleGetRequest(
 	params: unknown,
 	db: EvyDb,
 ): Promise<GetResponse> {
-	validate(params);
+	validateStrictGetRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
 		return getCore(db, params);
 	}
@@ -40,11 +40,15 @@ async function handleGetRequest<T extends GetLikeRequest>(
 }
 
 export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
-	return handleGetRequest(validateStrictGetRequest, params, db);
+	return handleGetRequest(params, db);
 }
 
-export async function api(params: unknown, db: EvyDb): Promise<GetResponse> {
-	return handleGetRequest(validateStrictApiRequest, params, db);
+export async function api(params: unknown, db: EvyDb): Promise<unknown> {
+	validateStrictApiRequest(params);
+	if (params.service === EVY_CORE_SERVICE) {
+		return coreApi(params, db);
+	}
+	return forwardApi(params.service, params);
 }
 
 export async function create(
@@ -77,9 +81,5 @@ export async function deleteResource(
 	if (params.service === EVY_CORE_SERVICE) {
 		return deleteCore(db, params);
 	}
-	throw new Error("Delete is only supported for evy core resources");
-}
-
-export async function sync(params: unknown, db: EvyDb): Promise<SyncResponse> {
-	return coreSync(params, db);
+	return forwardDelete(params.service, params);
 }

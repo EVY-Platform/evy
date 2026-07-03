@@ -175,8 +175,6 @@ ${contentEncodeLines.join("\n")}`;
 	});
 	return `        switch type {
 ${cases.join("\n")}
-        default:
-            break
         }`;
 }
 

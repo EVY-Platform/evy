@@ -7,6 +7,8 @@ service Service {
   rpc Get (GetRequest) returns (GetResponse);
   rpc Create (CreateRequest) returns (CreateResponse);
   rpc Update (UpdateRequest) returns (UpdateResponse);
+  rpc Delete (DeleteRequest) returns (DeleteResponse);
+  rpc Api (ApiRequest) returns (ApiResponse);
   rpc SubscribeEvents (SubscribeEventsRequest) returns (stream ServiceEvent);
 }
 
@@ -14,7 +16,6 @@ message GetRequest {
   string service = 1;
   string resource = 2;
   Filter filter = 3;
-  string method = 4;
 }
 
 message CreateRequest {
@@ -31,6 +32,20 @@ message UpdateRequest {
   string data_json = 4;
 }
 
+message DeleteRequest {
+  string service = 1;
+  string resource = 2;
+  Filter filter = 3;
+}
+
+message ApiRequest {
+  string service = 1;
+  string resource = 2;
+  string method = 3;
+  Filter filter = 4;
+  string data_json = 5;
+}
+
 message Filter {
   string id = 1;
   string updated_after = 2;
@@ -45,6 +60,14 @@ message CreateResponse {
 }
 
 message UpdateResponse {
+  string result_json = 1;
+}
+
+message DeleteResponse {
+  string result_json = 1;
+}
+
+message ApiResponse {
   string result_json = 1;
 }
 

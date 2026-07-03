@@ -4,9 +4,14 @@ import { fileURLToPath } from "node:url";
 import type { Client } from "@grpc/grpc-js";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import type { CreateRequest } from "evy-types";
-import { validateStrictGetRequest } from "evy-types/rpcRequestHelpers";
-import { create, get, update } from "./data";
+import {
+	validateStrictApiRequest,
+	validateStrictCreateRequest,
+	validateStrictDeleteRequest,
+	validateStrictGetRequest,
+	validateStrictUpdateRequest,
+} from "evy-types/rpcRequestHelpers";
+import { create, deleteResource, get, update } from "./data";
 import { offServiceEvent, onServiceEvent } from "./events";
 
 /**
@@ -106,10 +111,17 @@ function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
 		filter?: { id?: string; updated_after?: string };
 	};
 
-	type WriteRequestShape = {
+	type ResourceRequestShape = {
 		service: string;
 		resource: string;
-		filter?: { id?: string };
+		filter?: { id?: string; updated_after?: string };
+	};
+
+	type CreateRequestShape = ResourceRequestShape & {
+		data_json: string;
+	};
+
+	type UpdateRequestShape = ResourceRequestShape & {
 		data_json: string;
 	};
 
@@ -135,23 +147,36 @@ function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
 		};
 	}
 
+	type ApiRequestShape = {
+		service: string;
+		resource?: string;
+		method: string;
+		filter?: { id?: string; updated_after?: string };
+		data_json?: string;
+	};
+
+	function buildFilter(req: {
+		filter?: { id?: string; updated_after?: string };
+	}): { id?: string; updatedAfter?: string } | undefined {
+		const filter: {
+			id?: string;
+			updatedAfter?: string;
+		} = {};
+		if (req.filter?.id) filter.id = req.filter.id;
+		if (req.filter?.updated_after)
+			filter.updatedAfter = req.filter.updated_after;
+		return Object.keys(filter).length > 0 ? filter : undefined;
+	}
+
 	return {
 		service: evyPackage.Service.service,
 		implementation: {
 			Get: asyncUnaryHandler<GetRequestShape, { result_json: string }>(
 				async (req) => {
-					const filter: {
-						id?: string;
-						updatedAfter?: string;
-					} = {};
-					if (req.filter?.id) filter.id = req.filter.id;
-					if (req.filter?.updated_after)
-						filter.updatedAfter = req.filter.updated_after;
 					const params = {
 						service: req.service,
 						resource: req.resource,
-						filter:
-							Object.keys(filter).length > 0 ? filter : undefined,
+						filter: buildFilter(req),
 					};
 					validateStrictGetRequest(params);
 					const result = await get(params);
@@ -159,41 +184,63 @@ function buildMarketplaceServiceHandlers(root: grpc.GrpcObject) {
 				},
 			),
 			Create: asyncUnaryHandler<
-				WriteRequestShape,
+				CreateRequestShape,
 				{ result_json: string }
 			>(async (req) => {
-				const data = parseDataJson(req.data_json);
 				const params = {
 					service: req.service,
 					resource: req.resource,
-					filter: req.filter?.id ? { id: req.filter.id } : undefined,
-					data,
+					filter: buildFilter(req),
+					data: parseDataJson(req.data_json),
 				};
-				const result = await create(params as CreateRequest);
+				validateStrictCreateRequest(params);
+				const result = await create(params);
 				return { result_json: JSON.stringify(result) } as const;
 			}),
 			Update: asyncUnaryHandler<
-				WriteRequestShape,
+				UpdateRequestShape,
 				{ result_json: string }
 			>(async (req) => {
-				if (!req.filter?.id) {
-					throw Object.assign(
-						new Error("filter.id is required for update"),
-						{
-							code: grpc.status.INVALID_ARGUMENT,
-						},
-					);
-				}
-				const data = parseDataJson(req.data_json);
 				const params = {
 					service: req.service,
 					resource: req.resource,
-					filter: { id: req.filter.id },
-					data,
+					filter: buildFilter(req),
+					data: parseDataJson(req.data_json),
 				};
+				validateStrictUpdateRequest(params);
 				const result = await update(params);
 				return { result_json: JSON.stringify(result) } as const;
 			}),
+			Delete: asyncUnaryHandler<
+				ResourceRequestShape,
+				{ result_json: string }
+			>(async (req) => {
+				const params = {
+					service: req.service,
+					resource: req.resource,
+					filter: buildFilter(req),
+				};
+				validateStrictDeleteRequest(params);
+				const result = await deleteResource(params);
+				return { result_json: JSON.stringify(result) } as const;
+			}),
+			Api: asyncUnaryHandler<ApiRequestShape, { result_json: string }>(
+				async (req) => {
+					const params = {
+						service: req.service,
+						...(req.resource ? { resource: req.resource } : {}),
+						method: req.method,
+						filter: buildFilter(req),
+						...(req.data_json
+							? { data: parseDataJson(req.data_json) }
+							: {}),
+					};
+					validateStrictApiRequest(params);
+					throw new Error(
+						`Unknown marketplace API method: ${params.method}`,
+					);
+				},
+			),
 			SubscribeEvents: (
 				call: grpc.ServerWritableStream<unknown, unknown>,
 			) => {

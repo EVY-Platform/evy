@@ -10,11 +10,14 @@ extension EVY {
 
   static func cacheQueryParams(_ query: [String: [String]], forPageId pageId: String) {
     activeCacheScopeId = pageId
-    resolveQueryParams(query)
+    resolveQueryParams(query, cacheScopeId: pageId)
   }
 
-  static func resolveQueryParams(_ query: [String: [String]]) {
-    guard let scopeId = activeCacheScopeId else { return }
+  static func resolveQueryParams(
+    _ query: [String: [String]],
+    cacheScopeId: String? = nil
+  ) {
+    guard let scopeId = cacheScopeId ?? activeCacheScopeId else { return }
 
     for (queryKey, ids) in query {
       if queryKey == EVY.entityIdQueryKey,
