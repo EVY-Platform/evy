@@ -11,6 +11,7 @@
         "ajv": "^8.20.0",
         "ajv-formats": "^3.0.1",
         "drizzle-orm": "^0.45.2",
+        "evy-types": "file:../types",
         "rpc-websockets": "^10.0.1",
       },
       "devDependencies": {
@@ -183,6 +184,8 @@
     "escalade": ["escalade@3.2.0", "", {}, "sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA=="],
 
     "eventemitter3": ["eventemitter3@5.0.1", "", {}, "sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA=="],
+
+    "evy-types": ["evy-types@file:../types", { "dependencies": { "ajv": "^8.20.0", "ajv-formats": "^3.0.1" } }],
 
     "extend": ["extend@3.0.2", "", {}, "sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g=="],
 

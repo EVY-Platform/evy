@@ -12,7 +12,7 @@
 		"dev": "bun run format && bun run types:generate && bun run dev:setup && bun run --parallel --no-exit-on-error dev:postgres dev:api dev:web dev:marketplace dev:watch",
 		"format": "bunx biome check --write . && bun run --cwd api format && bun run --cwd web format && bun run --cwd services/marketplace format && xcrun swift-format format --in-place --recursive ios",
 		"install:all": "bun install && bun install --cwd api && bun install --cwd web && bun install --cwd services/marketplace",
-		"types:generate": "bun run --parallel scripts/generate-types.ts types:generate:resources",
+		"types:generate": "bun scripts/generate-types.ts && bun run types:generate:resources",
 		"types:generate:drizzle": "bun scripts/generate-drizzle.ts",
 		"types:generate:core": "bun scripts/generate-core-resources.ts",
 		"types:generate:marketplace": "bun scripts/generate-marketplace-resources.ts",

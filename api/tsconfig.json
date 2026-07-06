@@ -10,10 +10,13 @@
 		"types": ["bun-types"],
 		"baseUrl": ".",
 		"paths": {
-			"evy-types": ["../types/generated/ts", "./types/generated/ts"],
+			"evy-types": [
+				"../types/generated/ts/index.ts",
+				"./types/generated/ts/index.ts"
+			],
 			"evy-types/*": [
-				"../types/generated/ts/*",
-				"./types/generated/ts/*"
+				"../types/generated/ts/*.ts",
+				"./types/generated/ts/*.ts"
 			],
 			"evy-types/validators": [
 				"../types/validators.ts",
@@ -24,12 +27,12 @@
 				"./types/rpcRequestHelpers.ts"
 			],
 			"evy-types/coreResources": [
-				"../types/coreResources.ts",
-				"./types/coreResources.ts"
+				"../types/generated/ts/coreResources.ts",
+				"./types/generated/ts/coreResources.ts"
 			],
 			"evy-types/marketplaceResources": [
-				"../types/marketplaceResources.ts",
-				"./types/marketplaceResources.ts"
+				"../types/generated/ts/marketplaceResources.ts",
+				"./types/generated/ts/marketplaceResources.ts"
 			],
 			"drizzle-orm": ["./node_modules/drizzle-orm"],
 			"drizzle-orm/*": ["./node_modules/drizzle-orm/*"]

@@ -10,12 +10,14 @@
 		"types": ["bun-types"],
 		"baseUrl": ".",
 		"paths": {
-			"evy-types": ["../../types/generated/ts"],
-			"evy-types/*": ["../../types/generated/ts/*"],
+			"evy-types": ["../../types/generated/ts/index.ts"],
+			"evy-types/*": ["../../types/generated/ts/*.ts"],
 			"evy-types/validators": ["../../types/validators.ts"],
-			"evy-types/coreResources": ["../../types/coreResources.ts"],
+			"evy-types/coreResources": [
+				"../../types/generated/ts/coreResources.ts"
+			],
 			"evy-types/marketplaceResources": [
-				"../../types/marketplaceResources.ts"
+				"../../types/generated/ts/marketplaceResources.ts"
 			],
 			"evy-types/rpcRequestHelpers": ["../../types/rpcRequestHelpers.ts"]
 		}

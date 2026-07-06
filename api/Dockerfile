@@ -5,7 +5,7 @@ WORKDIR /app
 # Generate shared types from schema (no committed generated files)
 FROM base AS typesgen
 COPY package.json bun.lock* ./
-COPY types/schema ./types/schema
+COPY types ./types
 COPY scripts ./scripts
 
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate
@@ -13,6 +13,7 @@ RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lock
 # Install dependencies stage
 FROM base AS deps
 WORKDIR /app/api
+COPY --from=typesgen /app/types /app/types
 COPY api/package.json api/bun.lock* ./
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 
@@ -25,12 +26,7 @@ COPY api/tsconfig.json ./tsconfig.json
 COPY api/src ./src
 COPY api/drizzle.config.ts ./
 COPY api/drizzle ./drizzle
-COPY --from=typesgen /app/types/generated/ts ../types/generated/ts
-COPY types/schema ../types/schema
-COPY types/validators.ts ../types/validators.ts
-COPY types/coreResources.ts ../types/coreResources.ts
-COPY types/marketplaceResources.ts ../types/marketplaceResources.ts
-COPY types/rpcRequestHelpers.ts ../types/rpcRequestHelpers.ts
+COPY --from=typesgen /app/types /app/types
 
 # Production stage
 FROM base AS runner
