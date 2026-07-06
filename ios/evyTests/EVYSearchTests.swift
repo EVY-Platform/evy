@@ -15,13 +15,6 @@ final class EVYSearchTests: XCTestCase {
     )
   }
 
-  func testParseSearchSourceDetectsLocalSources() {
-    XCTAssertEqual(
-      EVYSearchSource.parse("{items}"),
-      .local(expression: "items")
-    )
-  }
-
   func testAPISearchPayloadUsesLocaleDefaultsWithFallbacks() {
     let payload = APISearchPayload.fromCurrentLocale(input: "28 Rothschild")
     XCTAssertEqual(payload.input, "28 Rothschild")

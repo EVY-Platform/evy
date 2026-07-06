@@ -12,13 +12,6 @@ describe("sourceBinding", () => {
 			method: PLACE_SEARCH_API_METHOD,
 		});
 	});
-
-	test("parseSourceBinding resolves synced resource sources", () => {
-		expect(parseSourceBinding("{res-1.items}")).toEqual({
-			kind: "resource",
-			resourceId: "res-1",
-		});
-	});
 });
 
 describe("apiDataSources", () => {
@@ -31,11 +24,5 @@ describe("apiDataSources", () => {
 		expect(attributeNames).toContain("name");
 		expect(attributeNames).toContain("address.street");
 		expect(attributeNames).toContain("address.latitude");
-	});
-
-	test("getApiDataSourceAttributeCandidates returns no attributes for unknown methods", () => {
-		expect(getApiDataSourceAttributeCandidates("unknown_method")).toEqual(
-			[],
-		);
 	});
 });

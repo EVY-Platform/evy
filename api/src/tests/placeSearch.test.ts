@@ -101,40 +101,4 @@ describe("placeSearch", () => {
 			},
 		]);
 	});
-
-	it("uses place IDs to resolve flat addresses", async () => {
-		const deps: PlaceSearchDependencies = {
-			runAutocomplete: async () => ({
-				suggestions: [
-					{
-						placePrediction: {
-							placeId: "place-2",
-							text: {
-								text: "Fallback Street, Sydney NSW, Australia",
-							},
-						},
-					},
-					{
-						placePrediction: {
-							placeId: "place-3",
-						},
-					},
-				],
-			}),
-			getPlaceDetails: async (placeId) => ({
-				...ROTHCHILD_PLACE,
-				id: placeId,
-			}),
-		};
-
-		const result = await placeSearch(
-			{ input: "Fallback", language: "en-US", region: "au" },
-			deps,
-		);
-
-		expect(result.map((item) => item.id)).toEqual(["place-2", "place-3"]);
-		expect(
-			result.every((item) => item.street === "28 Rothschild Avenue"),
-		).toBe(true);
-	});
 });

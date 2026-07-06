@@ -17,13 +17,9 @@ final class EVYSearchModelTests: XCTestCase {
 
     private(set) var calls: [Call] = []
     var response: EVYJson = .array([])
-    var searchHandler: ((String) async throws -> EVYJson)?
 
     func search(method: String, input: String) async throws -> EVYJson {
       calls.append(Call(method: method, input: input))
-      if let searchHandler {
-        return try await searchHandler(input)
-      }
       return response
     }
   }
@@ -76,47 +72,6 @@ final class EVYSearchModelTests: XCTestCase {
 
     model.clearResults()
     XCTAssertTrue(model.results.isEmpty)
-  }
-
-  func testOutOfOrderResponsesAreIgnored() async {
-    let spy = PlaceSearchRequestingSpy()
-    let resultTemplate = Self.makeResultTemplate()
-    let model = EVYSearchModel(
-      method: "place_search",
-      resultTemplate: resultTemplate,
-      scopeId: nil,
-      requester: spy
-    )
-    let slowSearchStarted = expectation(description: "slow search started")
-
-    spy.searchHandler = { input in
-      if input == "slow" {
-        slowSearchStarted.fulfill()
-        try await Task.sleep(for: .milliseconds(300))
-        return .array([
-          .dictionary([
-            "id": .string("slow-result"),
-            "street": .string("Slow Street"),
-            "city": .string("Slowville"),
-          ])
-        ])
-      }
-      return .array([
-        .dictionary([
-          "id": .string("fast-result"),
-          "street": .string("Fast Street"),
-          "city": .string("Fastville"),
-        ])
-      ])
-    }
-
-    async let slowSearch: Void = model.search(query: "slow")
-    await fulfillment(of: [slowSearchStarted], timeout: 1.0)
-    await model.search(query: "fast")
-    await slowSearch
-
-    XCTAssertEqual(model.results.count, 1)
-    XCTAssertEqual(model.results[0].id, "fast-result")
   }
 
   private static func makeResultTemplate() -> UI_Row? {

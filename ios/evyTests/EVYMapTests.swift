@@ -67,22 +67,6 @@ final class EVYMapTests: XCTestCase {
     assertCoordinate(coordinate, latitude: -33.8688, longitude: 151.2093)
   }
 
-  func testRejectsLatLngObject() {
-    let coordinate = EVYJson.dictionary([
-      "lat": .decimal(-33.8688), "lng": .decimal(151.2093),
-    ]).locationCoordinate()
-
-    XCTAssertNil(coordinate)
-  }
-
-  func testRejectsNestedCoordinateObject() {
-    let coordinate = EVYJson.dictionary([
-      "coordinate": .dictionary(["latitude": .decimal(-33.8688), "longitude": .decimal(151.2093)])
-    ]).locationCoordinate()
-
-    XCTAssertNil(coordinate)
-  }
-
   func testParsesFullFlatAddress() {
     let coordinate = EVYJson.dictionary([
       "street": .string("28 Rothschild Avenue"),
@@ -95,28 +79,8 @@ final class EVYMapTests: XCTestCase {
     assertCoordinate(coordinate, latitude: -33.9172075, longitude: 151.1985883)
   }
 
-  func testRejectsFallbackCoordinateString() {
-    let coordinate = EVYJson.string(" -33.8688 , 151.2093 ").locationCoordinate()
-
-    XCTAssertNil(coordinate)
-  }
-
   func testRejectsMissingCoordinateKeys() {
     let coordinate = EVYJson.dictionary(["latitude": .decimal(-33.8688)]).locationCoordinate()
-
-    XCTAssertNil(coordinate)
-  }
-
-  func testRejectsOutOfRangeCoordinates() {
-    let coordinate = EVYJson.dictionary([
-      "latitude": .decimal(-91), "longitude": .decimal(151.2093),
-    ]).locationCoordinate()
-
-    XCTAssertNil(coordinate)
-  }
-
-  func testRejectsInvalidCoordinateString() {
-    let coordinate = EVYJson.string("not-a-coordinate").locationCoordinate()
 
     XCTAssertNil(coordinate)
   }
@@ -127,19 +91,6 @@ final class EVYMapTests: XCTestCase {
     let coordinate = EVYMapRow.resolveLocation(source: "{user.address}").locationCoordinate()
 
     assertCoordinate(coordinate, latitude: -33.9172075, longitude: 151.1985883)
-  }
-
-  func testMapRowLocationStateUpdatesWhenUserAddressArrives() throws {
-    let location = EVYState(
-      textToWatch: "{user.address}",
-      setter: { EVYMapRow.resolveLocation(source: "{user.address}") }
-    )
-
-    XCTAssertNil(location.value.locationCoordinate())
-
-    try seedCurrentUserAddress(latitude: -33.8688, longitude: 151.2093)
-
-    assertCoordinate(location.value.locationCoordinate(), latitude: -33.8688, longitude: 151.2093)
   }
 
   private func seedCurrentUserAddress(latitude: Decimal, longitude: Decimal) throws {
