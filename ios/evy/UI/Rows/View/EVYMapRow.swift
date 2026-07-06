@@ -8,13 +8,17 @@ import SwiftUI
 struct EVYMapRow: View {
 
   private let view: MapRowViewData
+  private let location: EVYState<EVYJson>
 
   init(view: MapRowViewData) {
     self.view = view
+    self.location = EVYState(
+      textToWatch: view.source,
+      setter: { Self.resolveLocation(source: view.source) }
+    )
   }
 
-  private var resolvedLocation: EVYJson {
-    let source = view.source
+  static func resolveLocation(source: String) -> EVYJson {
     guard !source.isEmpty else { return .string("") }
     return (try? EVY.getDataFromText(source)) ?? .string(source)
   }
@@ -25,7 +29,7 @@ struct EVYMapRow: View {
         EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
-      EVYMap(location: resolvedLocation)
+      EVYMap(location: location.value)
       if let subtitle = view.subtitle, !subtitle.isEmpty {
         EVYTextView(subtitle, style: .info)
           .frame(maxWidth: .infinity, alignment: .leading)

@@ -10,6 +10,40 @@ import XCTest
 
 @MainActor
 final class EVYMapTests: XCTestCase {
+  private var originalCurrentUserData: Data?
+
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    originalCurrentUserData = try? EVY.publicStore.get(
+      namespace: EVYNamespace.local,
+      resource: "user",
+      id: EVYNamespace.singletonId
+    ).data
+    try? EVY.publicStore.delete(
+      namespace: EVYNamespace.local,
+      resource: "user",
+      id: EVYNamespace.singletonId
+    )
+  }
+
+  override func tearDownWithError() throws {
+    try? EVY.publicStore.delete(
+      namespace: EVYNamespace.local,
+      resource: "user",
+      id: EVYNamespace.singletonId
+    )
+    if let originalCurrentUserData {
+      try? EVY.publicStore.upsert(
+        namespace: EVYNamespace.local,
+        resource: "user",
+        id: EVYNamespace.singletonId,
+        value: originalCurrentUserData
+      )
+    }
+    originalCurrentUserData = nil
+    try super.tearDownWithError()
+  }
+
   private func assertCoordinate(
     _ coordinate: CLLocationCoordinate2D?,
     latitude: Double,
@@ -85,5 +119,49 @@ final class EVYMapTests: XCTestCase {
     let coordinate = EVYJson.string("not-a-coordinate").locationCoordinate()
 
     XCTAssertNil(coordinate)
+  }
+
+  func testMapRowResolvesUserAddressSource() throws {
+    try seedCurrentUserAddress(latitude: -33.9172075, longitude: 151.1985883)
+
+    let coordinate = EVYMapRow.resolveLocation(source: "{user.address}").locationCoordinate()
+
+    assertCoordinate(coordinate, latitude: -33.9172075, longitude: 151.1985883)
+  }
+
+  func testMapRowLocationStateUpdatesWhenUserAddressArrives() throws {
+    let location = EVYState(
+      textToWatch: "{user.address}",
+      setter: { EVYMapRow.resolveLocation(source: "{user.address}") }
+    )
+
+    XCTAssertNil(location.value.locationCoordinate())
+
+    try seedCurrentUserAddress(latitude: -33.8688, longitude: 151.2093)
+
+    assertCoordinate(location.value.locationCoordinate(), latitude: -33.8688, longitude: 151.2093)
+  }
+
+  private func seedCurrentUserAddress(latitude: Decimal, longitude: Decimal) throws {
+    let user = EVYJson.dictionary([
+      "id": .string("test-user"),
+      "address": .dictionary([
+        "unit": .string(""),
+        "street": .string("42 Test Lane"),
+        "city": .string("Sydney"),
+        "postcode": .string("2000"),
+        "state": .string("NSW"),
+        "country": .string("Australia"),
+        "latitude": .decimal(latitude),
+        "longitude": .decimal(longitude),
+      ]),
+    ])
+    let encodedUser = try JSONEncoder().encode(user)
+    try EVY.publicStore.upsert(
+      namespace: EVYNamespace.local,
+      resource: "user",
+      id: EVYNamespace.singletonId,
+      value: encodedUser
+    )
   }
 }
