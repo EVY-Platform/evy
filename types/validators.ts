@@ -32,6 +32,8 @@ import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
 import type { DeleteResponse } from "./generated/ts/rpc/delete.response";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
+import type { PlaceSearchRequest } from "./generated/ts/rpc/placeSearch.request";
+import type { PlaceSearchResponse } from "./generated/ts/rpc/placeSearch.response";
 import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
@@ -39,6 +41,9 @@ import type { UpdateResponse } from "./generated/ts/rpc/update.response";
 import { SDUI_DEFINITIONS } from "./generated/ts/sdui/definitions.generated";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
 
+import commonAddressRaw from "./schema/common/address.schema.json" with {
+	type: "json",
+};
 import commonJsonRaw from "./schema/common/json.schema.json" with {
 	type: "json",
 };
@@ -73,6 +78,12 @@ import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
 	type: "json",
 };
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
+	type: "json",
+};
+import placeSearchRequestRaw from "./schema/rpc/placeSearch.request.schema.json" with {
+	type: "json",
+};
+import placeSearchResponseRaw from "./schema/rpc/placeSearch.response.schema.json" with {
 	type: "json",
 };
 import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
@@ -115,6 +126,7 @@ const SDUI_DEFINITION_SCHEMAS: Record<
 );
 
 const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
+	"common/address.schema.json": commonAddressRaw as Record<string, unknown>,
 	"common/json.schema.json": commonJsonRaw as Record<string, unknown>,
 	"common/rpc.schema.json": commonRpcRaw as Record<string, unknown>,
 	"data/data.schema.json": dataSchemaRaw as Record<string, unknown>,
@@ -123,6 +135,14 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
+	"rpc/placeSearch.request.schema.json": placeSearchRequestRaw as Record<
+		string,
+		unknown
+	>,
+	"rpc/placeSearch.response.schema.json": placeSearchResponseRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
 	"rpc/create.request.schema.json": createRequestRaw as Record<
@@ -264,10 +284,12 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/update.request.schema.json",
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
+	"rpc/placeSearch.request.schema.json",
 ] as const;
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
 const ENTITY_SCHEMA_FILES = [
+	"common/address.schema.json",
 	"common/json.schema.json",
 	"common/rpc.schema.json",
 	"data/data.schema.json",
@@ -281,6 +303,7 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/update.response.schema.json",
 	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
+	"rpc/placeSearch.response.schema.json",
 ];
 
 let requestAjv: InstanceType<typeof Ajv2020> | null = null;
@@ -410,6 +433,14 @@ const getValidateSyncResponse = lazyValidator<SyncResponse>(
 	getEntityAjv,
 	fileId("rpc/sync.response.schema.json"),
 );
+const getValidatePlaceSearchRequest = lazyValidator<PlaceSearchRequest>(
+	getRequestAjv,
+	fileId("rpc/placeSearch.request.schema.json"),
+);
+const getValidatePlaceSearchResponse = lazyValidator<PlaceSearchResponse>(
+	getEntityAjv,
+	fileId("rpc/placeSearch.response.schema.json"),
+);
 
 const getValidateFileUploadChunkMetadata =
 	lazyValidator<FileUploadChunkMetadata>(
@@ -518,6 +549,14 @@ export const validateSync = makeValidator<SyncRequest>(
 export const validateSyncResponse = makeValidator<SyncResponse>(
 	"SyncResponse",
 	getValidateSyncResponse,
+);
+export const validatePlaceSearchRequest = makeValidator<PlaceSearchRequest>(
+	"PlaceSearchRequest",
+	getValidatePlaceSearchRequest,
+);
+export const validatePlaceSearchResponse = makeValidator<PlaceSearchResponse>(
+	"PlaceSearchResponse",
+	getValidatePlaceSearchResponse,
 );
 export const validateFileUploadChunkMetadata =
 	makeValidator<FileUploadChunkMetadata>(

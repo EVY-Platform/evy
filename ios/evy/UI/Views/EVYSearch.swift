@@ -7,17 +7,6 @@
 
 import SwiftUI
 
-private struct EVYSearchResult: Equatable, Identifiable {
-  let id: String
-  let datum: EVYJson
-  let displayRow: UI_Row
-  let searchableText: String
-
-  static func == (lhs: EVYSearchResult, rhs: EVYSearchResult) -> Bool {
-    lhs.id == rhs.id
-  }
-}
-
 struct EVYSearch: View {
   let source: String
   let destination: String
@@ -26,7 +15,10 @@ struct EVYSearch: View {
   let scopeId: String?
 
   @State private var searchText = ""
-  private var results: EVYState<[EVYSearchResult]>
+  @State private var apiSearchModel: EVYSearchModel?
+
+  private let searchSource: EVYSearchSource
+  private var localResults: EVYState<[EVYSearchResult]>
 
   init(
     source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
@@ -37,22 +29,49 @@ struct EVYSearch: View {
     self.placeholder = placeholder
     self.resultTemplate = resultTemplate
     self.scopeId = scopeId
+    searchSource = EVYSearchSource.parse(source)
 
-    results = EVYState(
-      textToWatch: source,
-      setter: {
-        Self.makeResults(source: source, resultTemplate: resultTemplate, scopeId: scopeId)
-      }
-    )
+    switch searchSource {
+    case .local:
+      localResults = EVYState(
+        textToWatch: source,
+        setter: {
+          EVYSearchResult.makeResults(
+            from: try? EVY.getDataFromText(source),
+            resultTemplate: resultTemplate,
+            scopeId: scopeId
+          )
+        }
+      )
+      _apiSearchModel = State(initialValue: nil)
+    case .api(let method):
+      localResults = EVYState(textToWatch: "", setter: { [] })
+      _apiSearchModel = State(
+        initialValue: EVYSearchModel(
+          method: method,
+          resultTemplate: resultTemplate,
+          scopeId: scopeId
+        )
+      )
+    }
   }
 
-  private var filteredResults: [EVYSearchResult] {
+  private var displayedResults: [EVYSearchResult] {
+    switch searchSource {
+    case .api:
+      return apiSearchModel?.results ?? []
+    case .local:
+      return filteredLocalResults
+    }
+  }
+
+  private var filteredLocalResults: [EVYSearchResult] {
     let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedSearchText.isEmpty else {
-      return results.value
+      return localResults.value
     }
 
-    return results.value.filter {
+    return localResults.value.filter {
       $0.searchableText.localizedCaseInsensitiveContains(trimmedSearchText)
     }
   }
@@ -61,7 +80,7 @@ struct EVYSearch: View {
     VStack(spacing: 0) {
       EVYSearchField(text: $searchText, placeholder: placeholder)
 
-      ForEach(filteredResults) { result in
+      ForEach(displayedResults) { result in
         EVYRow(row: result.displayRow, datum: result.datum)
           .padding(.vertical, Constants.majorPadding)
           .contentShape(Rectangle())
@@ -73,44 +92,12 @@ struct EVYSearch: View {
           )
       }
     }
-  }
-
-  private static func makeResults(source: String, resultTemplate: UI_Row?, scopeId: String?)
-    -> [EVYSearchResult]
-  {
-    guard let resultTemplate else {
-      return []
+    .onChange(of: searchText) { _, newValue in
+      guard case .api = searchSource else { return }
+      apiSearchModel?.queryChanged(newValue)
     }
-
-    do {
-      let previous = EVY.activeCacheScopeId
-      EVY.activeCacheScopeId = scopeId
-      defer { EVY.activeCacheScopeId = previous }
-      let sourceData = try EVY.getDataFromText(source)
-      let dataRows: [EVYJson]
-      if case .array(let arrayValue) = sourceData {
-        dataRows = arrayValue
-      } else {
-        dataRows = [sourceData]
-      }
-
-      let formatter = try EVYDatumRowFormatter(template: resultTemplate)
-      return dataRows.compactMap { datum in
-        guard let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum)
-        else {
-          return nil
-        }
-        let id = datum.identifierValue()
-        let searchableText = searchableValues.joined(separator: " ")
-        return EVYSearchResult(
-          id: id,
-          datum: datum,
-          displayRow: displayRow,
-          searchableText: searchableText
-        )
-      }
-    } catch {
-      return []
+    .onDisappear {
+      apiSearchModel?.cancelInFlightWork()
     }
   }
 }

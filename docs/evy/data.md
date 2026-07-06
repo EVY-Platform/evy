@@ -185,13 +185,6 @@ There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/d
 
 These shapes are not separate JSON Schema `$defs` in the EVY data schema; they are contracts for JSON embedded in domain payloads (e.g. marketplace item JSON) or in UI state. Worker services and clients validate them at the application layer.
 
-#### location
-
-```
-latitude: decimal
-longitude: decimal
-```
-
 #### price
 
 ```
@@ -208,7 +201,8 @@ city: string
 postcode: string
 state: string
 country: string
-location: location
+latitude: decimal
+longitude: decimal
 instructions: string
 ```
 

@@ -49,6 +49,18 @@ final class EVYMapTests: XCTestCase {
     XCTAssertNil(coordinate)
   }
 
+  func testParsesFullFlatAddress() {
+    let coordinate = EVYJson.dictionary([
+      "street": .string("28 Rothschild Avenue"),
+      "city": .string("Rosebery"),
+      "country": .string("Australia"),
+      "latitude": .decimal(-33.9172075),
+      "longitude": .decimal(151.1985883),
+    ]).locationCoordinate()
+
+    assertCoordinate(coordinate, latitude: -33.9172075, longitude: 151.1985883)
+  }
+
   func testRejectsFallbackCoordinateString() {
     let coordinate = EVYJson.string(" -33.8688 , 151.2093 ").locationCoordinate()
 

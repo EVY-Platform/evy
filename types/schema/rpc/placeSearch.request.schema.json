@@ -1,0 +1,44 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "place-search-request",
+	"title": "PlaceSearchRequest",
+	"description": "JSON-RPC params for Google Places place search.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["input", "language", "region"],
+	"properties": {
+		"input": {
+			"type": "string",
+			"minLength": 1
+		},
+		"language": {
+			"type": "string",
+			"minLength": 1
+		},
+		"region": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 2
+		},
+		"origin": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["lat", "lng"],
+			"properties": {
+				"lat": {
+					"type": "number"
+				},
+				"lng": {
+					"type": "number"
+				}
+			}
+		},
+		"types": {
+			"type": "array",
+			"maxItems": 5,
+			"items": {
+				"type": "string"
+			}
+		}
+	}
+}

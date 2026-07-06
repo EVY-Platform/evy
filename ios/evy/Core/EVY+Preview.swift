@@ -99,10 +99,14 @@ enum EVYPreviewMockData {
     {
       "id": "preview-user-1",
       "address": {
-        "line1": "42 Preview Lane",
+        "unit": "",
+        "street": "42 Preview Lane",
         "city": "Preview City",
         "postcode": "2000",
-        "country": "Australia"
+        "state": "NSW",
+        "country": "Australia",
+        "latitude": -33.8688,
+        "longitude": 151.2093
       }
     }
     """

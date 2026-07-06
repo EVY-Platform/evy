@@ -6,9 +6,36 @@ import {
 	validateFileWithBinary,
 	validateUiFlow as validateFlowData,
 	validateDataEvyOrganization as validateOrganizationPayload,
+	validatePlaceSearchRequest,
+	validatePlaceSearchResponse,
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
 } from "evy-types/validators";
+
+describe("place search validators", () => {
+	it("accepts valid place search payloads", () => {
+		const request = validatePlaceSearchRequest({
+			input: "28 Rothschild",
+			language: "en-US",
+			region: "au",
+			origin: { lat: 37.7893, lng: -122.4039 },
+			types: ["housing"],
+		});
+		const response = validatePlaceSearchResponse([
+			{
+				id: "ChIJRothschild",
+				street: "28 Rothschild Avenue",
+				city: "Rosebery",
+				country: "Australia",
+				latitude: -33.9172075,
+				longitude: 151.1985883,
+			},
+		]);
+
+		expect(request.input).toBe("28 Rothschild");
+		expect(response[0]?.street).toBe("28 Rothschild Avenue");
+	});
+});
 
 describe("validateServicePayload", () => {
 	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";

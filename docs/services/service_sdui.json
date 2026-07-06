@@ -99,7 +99,7 @@
 									{
 										"id": "0b02c2c0-6e19-49d5-9138-f60062a1f6d4",
 										"type": "Map",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.location}",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}",
 										"actions": [],
 										"visible": "true",
 										"title": "",
@@ -428,21 +428,15 @@
 											"child": {
 												"id": "e27d87b7-aa2c-4672-aaac-9e1222928f45",
 												"type": "Text",
-												"title": "{$datum.title}",
-												"subtitle": "{formatCurrency($datum.price)}",
-												"actions": [
-													{
-														"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}",
-														"false": "",
-														"condition": ""
-													}
-												],
+												"title": "{$datum.unit} {$datum.street}",
+												"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}",
+												"actions": [],
 												"visible": "true",
 												"name": "Pickup address result"
 											},
 											"title": "",
-											"placeholder": "Search anything",
-											"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
+											"placeholder": "Search address",
+											"source": "{$api:place_search}",
 											"actions": [],
 											"visible": "true",
 											"name": "Find pickup address",

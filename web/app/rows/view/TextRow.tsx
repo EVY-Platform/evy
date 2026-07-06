@@ -10,10 +10,9 @@ export default defineRow("TextRow", {
 		visible: "true",
 		title: "Text row title",
 		subtitle: "Subtitle",
-		label: "Label",
 	} satisfies RowConfig,
 	render: (row) => {
-		const { title = "", subtitle = "", label = "" } = row.config;
+		const { title = "", subtitle = "" } = row.config;
 
 		return (
 			<div className="evy-flex evy-flex-row evy-items-center evy-gap-2 evy-p-2">
@@ -32,11 +31,6 @@ export default defineRow("TextRow", {
 						</p>
 					) : null}
 				</div>
-				{label.trim() ? (
-					<span className="evy-text-sm evy-text-gray evy-shrink-0">
-						<EVYText text={label} />
-					</span>
-				) : null}
 			</div>
 		);
 	},
