@@ -127,6 +127,7 @@
 		FA002001MP00001000000001 /* EVYMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA002002MP00001000000001 /* EVYMap.swift */; };
 		FA002003MP00001000000001 /* EVYMapRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA002004MP00001000000001 /* EVYMapRow.swift */; };
 		FA002005MP00001000000001 /* EVYMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA002006MP00001000000001 /* EVYMapTests.swift */; };
+		FA003001DP00001000000001 /* EVYDataPatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA003002DP00001000000001 /* EVYDataPatcherTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -267,6 +268,7 @@
 		FA002002MP00001000000001 /* EVYMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMap.swift; sourceTree = "<group>"; };
 		FA002004MP00001000000001 /* EVYMapRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMapRow.swift; sourceTree = "<group>"; };
 		FA002006MP00001000000001 /* EVYMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMapTests.swift; sourceTree = "<group>"; };
+		FA003002DP00001000000001 /* EVYDataPatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDataPatcherTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -573,6 +575,7 @@
 				DC001002NT00000100000001 /* EVYDataChangeNotificationTests.swift */,
 				FA001006ST00000100000001 /* EVYStateTests.swift */,
 				FA002006MP00001000000001 /* EVYMapTests.swift */,
+				FA003002DP00001000000001 /* EVYDataPatcherTests.swift */,
 				74A100262F32000100000001 /* EVYCalendarTests.swift */,
 				74A100042F32000100000001 /* interpreterTests.swift */,
 				74A100282F32000100000001 /* SduiRowAttributeContractTests.swift */,
@@ -842,6 +845,7 @@
 				DC001001NT00000100000001 /* EVYDataChangeNotificationTests.swift in Sources */,
 				FA001005ST00000100000001 /* EVYStateTests.swift in Sources */,
 				FA002005MP00001000000001 /* EVYMapTests.swift in Sources */,
+				FA003001DP00001000000001 /* EVYDataPatcherTests.swift in Sources */,
 				74A100252F32000100000001 /* EVYCalendarTests.swift in Sources */,
 				74A100012F32000100000001 /* interpreterTests.swift in Sources */,
 				73F2A0072F30B00200000001 /* SduiDefinitions.generated.swift in Sources */,

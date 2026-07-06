@@ -12,6 +12,7 @@ final class EVYDraftBindingTests: XCTestCase {
   override func tearDownWithError() throws {
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
+    EVY.activeCacheScopeId = nil
     try super.tearDownWithError()
   }
 
@@ -208,6 +209,64 @@ final class EVYDraftBindingTests: XCTestCase {
       EVY.editableText(fromSource: nil, destination: destination),
       "Persisted title"
     )
+  }
+
+  func testWriteRawValueCreatesNestedPickupAddressOnBackingRow() throws {
+    let entityId = UUID().uuidString
+    let scopeId = "flow:items"
+    let pageId = "page_\(UUID().uuidString)"
+    EVY.activeCacheScopeId = pageId
+    EVY.draftStore.activeScopeId = scopeId
+
+    let entity = EVYJson.dictionary([
+      "id": .string(entityId),
+      "title": .string("Test item"),
+    ])
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache,
+      resource: pageId,
+      id: entityId,
+      value: try JSONEncoder().encode(entity)
+    )
+
+    let address = samplePickupAddress()
+    try EVY.writeRawValue(
+      address,
+      to: "{\(entityId).transfer_options.pickup.address}",
+      scopeId: scopeId
+    )
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityId).transfer_options.pickup.address}"),
+      address
+    )
+  }
+
+  func testWriteRawValueCreatesNestedPickupAddressAsFreshDraft() throws {
+    let entityId = UUID().uuidString
+    let scopeId = "flow:items"
+    EVY.draftStore.activeScopeId = scopeId
+
+    let address = samplePickupAddress()
+    try EVY.writeRawValue(
+      address,
+      to: "{\(entityId).transfer_options.pickup.address}",
+      scopeId: scopeId
+    )
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(entityId).transfer_options.pickup.address}"),
+      address
+    )
+  }
+
+  private func samplePickupAddress() -> EVYJson {
+    .dictionary([
+      "street": .string("28 Rothschild Avenue"),
+      "city": .string("Rosebery"),
+      "latitude": .decimal(-33.9172075),
+      "longitude": .decimal(151.1985883),
+    ])
   }
 
   private func uniqueKey(_ suffix: String) -> String {

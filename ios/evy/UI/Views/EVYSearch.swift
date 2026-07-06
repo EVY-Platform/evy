@@ -13,7 +13,9 @@ struct EVYSearch: View {
   let placeholder: String?
   let resultTemplate: UI_Row?
   let scopeId: String?
+  let draftScopeId: String?
 
+  @Environment(\.dismiss) private var dismiss
   @State private var searchText = ""
   @State private var apiSearchModel: EVYSearchModel?
 
@@ -22,13 +24,15 @@ struct EVYSearch: View {
 
   init(
     source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
-    scopeId: String? = nil
+    scopeId: String? = nil,
+    draftScopeId: String? = nil
   ) {
     self.source = source
     self.destination = destination
     self.placeholder = placeholder
     self.resultTemplate = resultTemplate
     self.scopeId = scopeId
+    self.draftScopeId = draftScopeId
     searchSource = EVYSearchSource.parse(source)
 
     switch searchSource {
@@ -87,7 +91,13 @@ struct EVYSearch: View {
           .simultaneousGesture(
             TapGesture().onEnded {
               guard !destination.isEmpty else { return }
-              try? EVY.writeRawValue(result.datum, to: destination)
+              do {
+                try EVY.writeRawValue(
+                  result.datum, to: destination, scopeId: draftScopeId)
+                dismiss()
+              } catch {
+                // Match prior silent-failure behaviour for invalid writes.
+              }
             }
           )
       }
