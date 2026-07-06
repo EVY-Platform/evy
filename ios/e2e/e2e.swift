@@ -1707,6 +1707,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
     let searchField = app.textFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 5), "Search field should appear in sheet")
     clearAndType(field: searchField, text: Self.placeSearchQuery)
+    sleep(1)
 
     let result = app.staticTexts.matching(
       NSPredicate(

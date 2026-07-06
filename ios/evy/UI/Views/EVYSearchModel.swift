@@ -62,6 +62,8 @@ struct EVYSearchResult: Equatable, Identifiable {
 @MainActor
 @Observable
 final class EVYSearchModel {
+  static let debounceMilliseconds = 300
+
   private(set) var results: [EVYSearchResult] = []
 
   private let method: String
@@ -69,7 +71,6 @@ final class EVYSearchModel {
   private let scopeId: String?
   private let requester: any PlaceSearchRequesting
 
-  private var searchTask: Task<Void, Never>?
   private var activeFetchId = UUID()
 
   init(
@@ -84,43 +85,11 @@ final class EVYSearchModel {
     self.requester = requester
   }
 
-  func queryChanged(_ text: String) {
-    searchTask?.cancel()
-
-    let trimmedQuery = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    let lastEnteredCharacter = text.last
-
-    switch EVYSearchQueryDispatch.decision(
-      trimmedQuery: trimmedQuery,
-      lastEnteredCharacter: lastEnteredCharacter
-    ) {
-    case .skip:
-      results = []
-      return
-    case .dispatchNow:
-      searchTask = Task {
-        await performSearch(query: trimmedQuery)
-      }
-    case .scheduleDebounce:
-      searchTask = Task {
-        try? await Task.sleep(
-          for: .milliseconds(EVYSearchQueryDispatch.debounceMilliseconds)
-        )
-        guard !Task.isCancelled else { return }
-        await performSearch(query: trimmedQuery)
-      }
-    }
+  func clearResults() {
+    results = []
   }
 
-  func cancelInFlightWork() {
-    searchTask?.cancel()
-  }
-
-  func awaitInFlightWork() async {
-    await searchTask?.value
-  }
-
-  private func performSearch(query: String) async {
+  func search(query: String) async {
     let fetchId = UUID()
     activeFetchId = fetchId
 

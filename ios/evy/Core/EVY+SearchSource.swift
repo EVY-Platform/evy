@@ -34,31 +34,6 @@ enum EVYSearchSource: Equatable {
   }
 }
 
-enum EVYSearchQueryDispatchDecision: Equatable {
-  case dispatchNow
-  case scheduleDebounce
-  case skip
-}
-
-enum EVYSearchQueryDispatch {
-  static let debounceMilliseconds = 300
-
-  static func decision(
-    trimmedQuery: String,
-    lastEnteredCharacter: Character?
-  ) -> EVYSearchQueryDispatchDecision {
-    guard !trimmedQuery.isEmpty else {
-      return .skip
-    }
-
-    if let lastEnteredCharacter, lastEnteredCharacter.isWhitespace {
-      return .dispatchNow
-    }
-
-    return .scheduleDebounce
-  }
-}
-
 struct APISearchPayload: Encodable {
   let input: String
   let language: String

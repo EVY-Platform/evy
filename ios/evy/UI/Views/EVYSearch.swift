@@ -102,12 +102,16 @@ struct EVYSearch: View {
           )
       }
     }
-    .onChange(of: searchText) { _, newValue in
+    .task(id: searchText) {
       guard case .api = searchSource else { return }
-      apiSearchModel?.queryChanged(newValue)
-    }
-    .onDisappear {
-      apiSearchModel?.cancelInFlightWork()
+      let trimmedQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !trimmedQuery.isEmpty else {
+        apiSearchModel?.clearResults()
+        return
+      }
+      try? await Task.sleep(for: .milliseconds(EVYSearchModel.debounceMilliseconds))
+      guard !Task.isCancelled else { return }
+      await apiSearchModel?.search(query: trimmedQuery)
     }
   }
 }
