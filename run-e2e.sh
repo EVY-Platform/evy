@@ -317,34 +317,43 @@ if [ "$SKIP_IOS" = true ]; then
     IOS_SKIPPED=true
 else
     echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
-    seed_database
-    cd ios
-    IOS_DESTINATION="$(resolve_ios_simulator_destination)"
-    if [ -z "$IOS_DESTINATION" ]; then
-        echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
-        echo "Available destinations:"
-        xcodebuild -showdestinations -project evy.xcodeproj -scheme evy || true
+    if [ -z "${GOOGLE_PLACES_API_KEY:-}" ] || [ "${GOOGLE_PLACES_API_KEY}" = "googlekey" ]; then
+        echo -e "${RED}GOOGLE_PLACES_API_KEY is missing or set to the '.env.example' placeholder.${NC}"
+        echo -e "${RED}The iOS place search e2e test calls the live Google Places API and cannot pass without a real key.${NC}"
+        echo -e "${RED}Expose the secret to this job: use a repository secret, or an Environment secret with 'environment:' set on the workflow job.${NC}"
+        echo -e "${RED}Also confirm the key has no HTTP-referrer/IP restrictions that would block CI runners.${NC}"
         IOS_RESULT=1
     else
-        echo "Using iOS simulator destination: $IOS_DESTINATION"
-        # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
-        SIM_UDID="${IOS_DESTINATION#*id=}"
-        xcrun simctl shutdown "$SIM_UDID" 2>/dev/null || true
-        xcrun simctl erase "$SIM_UDID" 2>/dev/null || true
-        if xcodebuild test \
-            -project evy.xcodeproj \
-            -scheme evy \
-            -destination "$IOS_DESTINATION" \
-            -only-testing:evyUITests \
-            -parallel-testing-enabled NO \
-            -quiet; then
-            echo -e "${GREEN}iOS e2e tests passed${NC}"
-        else
-            echo -e "${RED}iOS e2e tests failed${NC}"
+        echo -e "${GREEN}Real GOOGLE_PLACES_API_KEY detected; place search e2e will hit the live API${NC}"
+        seed_database
+        cd ios
+        IOS_DESTINATION="$(resolve_ios_simulator_destination)"
+        if [ -z "$IOS_DESTINATION" ]; then
+            echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
+            echo "Available destinations:"
+            xcodebuild -showdestinations -project evy.xcodeproj -scheme evy || true
             IOS_RESULT=1
+        else
+            echo "Using iOS simulator destination: $IOS_DESTINATION"
+            # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
+            SIM_UDID="${IOS_DESTINATION#*id=}"
+            xcrun simctl shutdown "$SIM_UDID" 2>/dev/null || true
+            xcrun simctl erase "$SIM_UDID" 2>/dev/null || true
+            if xcodebuild test \
+                -project evy.xcodeproj \
+                -scheme evy \
+                -destination "$IOS_DESTINATION" \
+                -only-testing:evyUITests \
+                -parallel-testing-enabled NO \
+                -quiet; then
+                echo -e "${GREEN}iOS e2e tests passed${NC}"
+            else
+                echo -e "${RED}iOS e2e tests failed${NC}"
+                IOS_RESULT=1
+            fi
         fi
+        cd ..
     fi
-    cd ..
 fi
 
 echo -e "\n${YELLOW}========================================${NC}"
