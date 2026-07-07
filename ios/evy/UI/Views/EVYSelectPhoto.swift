@@ -15,6 +15,11 @@ private enum EVYPhotoTileStatus: Equatable {
   case deleting
 }
 
+private struct PreparedPhoto: Sendable {
+  let image: Image
+  let jpegData: Data
+}
+
 private struct EVYPhotoTile: Identifiable, Equatable {
   let id: UUID
   var localImage: Image?
@@ -224,29 +229,39 @@ private struct EVYSelectPhotoButton: View {
     }
   }
 
-  @MainActor
-  private func uploadSelectedItem() async {
-    let tileId = UUID()
-    do {
-      guard let rawData = try await selectedItem?.loadTransferable(type: Data.self) else {
-        return
-      }
+  nonisolated private static func prepareImage(
+    from item: PhotosPickerItem
+  ) async throws -> PreparedPhoto {
+    guard let rawData = try await item.loadTransferable(type: Data.self) else {
+      throw EVYError.imageLoadFailed(name: "selected photo")
+    }
+    return try await Task.detached(priority: .userInitiated) {
       let jpegData = try EVYFileCache.normalizeToJPEG(rawData)
       guard let uiImage = UIImage(data: jpegData) else {
         throw EVYError.imageLoadFailed(name: "selected photo")
       }
+      return PreparedPhoto(image: Image(uiImage: uiImage), jpegData: jpegData)
+    }.value
+  }
+
+  @MainActor
+  private func uploadSelectedItem() async {
+    guard let item = selectedItem else { return }
+    let tileId = UUID()
+    do {
+      let prepared = try await Self.prepareImage(from: item)
 
       photoTiles.append(
         EVYPhotoTile(
           id: tileId,
-          localImage: Image(uiImage: uiImage),
+          localImage: prepared.image,
           imageId: nil,
           status: .uploading
         ))
 
       let loadingStartedAt = ContinuousClock.now
-      let imageId = try await EVYAPIManager.shared.uploadFile(jpegData)
-      try EVYFileCache.write(fileId: imageId, data: jpegData)
+      let imageId = try await EVYAPIManager.shared.uploadFile(prepared.jpegData)
+      try EVYFileCache.write(fileId: imageId, data: prepared.jpegData)
 
       let elapsed = loadingStartedAt.duration(to: .now)
       let minimumLoadingDuration = Duration.seconds(1)
