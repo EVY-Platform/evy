@@ -40,6 +40,7 @@ _PRESET_WEB_PORT="${WEB_PORT-}"
 _PRESET_API_PORT="${API_PORT-}"
 _PRESET_MARKETPLACE_GRPC_HOST="${MARKETPLACE_GRPC_HOST-}"
 _PRESET_MARKETPLACE_GRPC_PORT="${MARKETPLACE_GRPC_PORT-}"
+_PRESET_GOOGLE_PLACES_API_KEY="${GOOGLE_PLACES_API_KEY-}"
 set -a
 source .env
 set +a
@@ -54,6 +55,11 @@ if [ -n "${_PRESET_MARKETPLACE_GRPC_HOST}" ]; then
 fi
 if [ -n "${_PRESET_MARKETPLACE_GRPC_PORT}" ]; then
 	export MARKETPLACE_GRPC_PORT="${_PRESET_MARKETPLACE_GRPC_PORT}"
+fi
+# Prefer a real Google Places key supplied by the environment (e.g. CI secret)
+# over the placeholder in `.env`, so place search hits the live API.
+if [ -n "${_PRESET_GOOGLE_PLACES_API_KEY}" ]; then
+	export GOOGLE_PLACES_API_KEY="${_PRESET_GOOGLE_PLACES_API_KEY}"
 fi
 
 echo -e "${YELLOW}========================================${NC}"
