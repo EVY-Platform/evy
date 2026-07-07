@@ -40,8 +40,8 @@ struct APISearchPayload: Encodable {
   let region: String
 
   static func fromCurrentLocale(input: String) -> APISearchPayload {
-    // Google Places expects a BCP-47 language tag (e.g. "en-US"), not the ICU
-    // identifier format ("en_US") returned by `Locale.current.identifier`.
+    // The place search API requires a BCP-47 language tag (e.g. "en-US"), not the
+    // ICU identifier format ("en_US") returned by `Locale.current.identifier`.
     let bcp47Language = Locale.current.identifier(.bcp47)
     let language = bcp47Language.isEmpty ? "en-AU" : bcp47Language
     let region = Locale.current.region?.identifier.lowercased() ?? "au"
