@@ -23,4 +23,10 @@ describe("apiDataSources", () => {
 		expect(attributeNames).not.toContain("name");
 		expect(attributeNames).not.toContain("address.street");
 	});
+
+	test("getApiDataSourceAttributeCandidates returns empty list for unknown methods", () => {
+		expect(getApiDataSourceAttributeCandidates("unknown_method")).toEqual(
+			[],
+		);
+	});
 });

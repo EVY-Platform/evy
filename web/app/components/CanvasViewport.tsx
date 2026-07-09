@@ -90,8 +90,11 @@ export function CanvasViewport({
 		prevFlowIdRef.current = activeFlowId;
 
 		if (flowChanged) {
-			// Reset camera for the new flow.
-			snapPan(-cam.offsetX, -cam.offsetY);
+			// In active mode, useSelectionPanOnEnter (runs first) already centers the active
+			// page; resetting here would clobber that and hide the page behind the side panel.
+			if (!shouldPanToActive) {
+				snapPan(-cam.offsetX, -cam.offsetY);
+			}
 			hasCenteredOnMount.current = false;
 		}
 
