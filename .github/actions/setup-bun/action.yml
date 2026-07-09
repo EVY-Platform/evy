@@ -1,25 +1,25 @@
-name: 'Setup Bun Environment'
-description: 'Checks for changes, sets up Bun, and installs dependencies'
+name: "Setup Bun Environment"
+description: "Checks for changes, sets up Bun, and installs dependencies"
 
 inputs:
     working-directory:
-        description: 'The directory to run commands in (api or web)'
+        description: "The directory to run commands in (api or web)"
         required: true
     path-filter:
-        description: 'The path pattern to check for changes'
+        description: "The path pattern to check for changes"
         required: true
     path-filter-extra:
-        description: 'Optional second path pattern (e.g. types/**) to trigger the job'
+        description: "Optional second path pattern (e.g. types/**) to trigger the job"
         required: false
-        default: ''
+        default: ""
 
 outputs:
     has-changes:
-        description: 'Whether there are changes in the specified path'
+        description: "Whether there are changes in the specified path"
         value: ${{ steps.filter.outputs.changes }}
 
 runs:
-    using: 'composite'
+    using: "composite"
     steps:
         - name: Check for changes
           uses: dorny/paths-filter@v4
@@ -35,7 +35,19 @@ runs:
           if: steps.filter.outputs.changes == 'true'
           uses: oven-sh/setup-bun@v2
 
-        - name: Install dependencies
+        - name: Install root dependencies
+          if: steps.filter.outputs.changes == 'true'
+          shell: bash
+          working-directory: ${{ github.workspace }}
+          run: bun install
+
+        - name: Generate shared types
+          if: steps.filter.outputs.changes == 'true'
+          shell: bash
+          working-directory: ${{ github.workspace }}
+          run: bun run types:generate
+
+        - name: Install app dependencies
           if: steps.filter.outputs.changes == 'true'
           shell: bash
           working-directory: ${{ inputs.working-directory }}

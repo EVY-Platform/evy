@@ -1,15 +1,10 @@
-name: 'Prepare .env and generate types'
-description: 'Copy root .env.example to .env and run bun types:generate from the repository root'
+name: "Prepare .env"
+description: "Copy root .env.example to .env"
 
 runs:
-    using: 'composite'
+    using: "composite"
     steps:
         - name: Create .env from example
           shell: bash
           working-directory: ${{ github.workspace }}
           run: cp .env.example .env
-
-        - name: Generate types
-          shell: bash
-          working-directory: ${{ github.workspace }}
-          run: bun types:generate
