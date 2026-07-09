@@ -11,6 +11,7 @@ import { useCamera } from "../hooks/useCamera";
 import { useSelectionPanOnEnter } from "../hooks/useSelectionPanOnEnter";
 import { useViewportGestures } from "../hooks/useViewportGestures";
 import { CameraContext } from "../state/contexts/CameraContext";
+import { horizontalCenterOffset } from "../utils/canvasCentering";
 import {
 	type CursorPosition,
 	drawDotField,
@@ -82,7 +83,7 @@ export function CanvasViewport({
 	const cam = getCamera();
 	camRef.current = cam;
 
-	// Vertically center the content on initial mount or when the flow changes
+	// Center the content on initial mount or when the flow changes
 	// (inactive mode only — useSelectionPanOnEnter handles active mode).
 	useLayoutEffect(() => {
 		const flowChanged = prevFlowIdRef.current !== activeFlowId;
@@ -106,7 +107,13 @@ export function CanvasViewport({
 			vpRect.top +
 			vpRect.height / 2 -
 			(contentRect.top + contentRect.height / 2);
-		if (Math.abs(dy) > 0.5) snapPan(0, dy);
+		const dx = horizontalCenterOffset({
+			viewportLeft: vpRect.left,
+			viewportWidth: vpRect.width,
+			contentLeft: contentRect.left,
+			contentWidth: contentRect.width,
+		});
+		if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) snapPan(dx, dy);
 	});
 
 	useEffect(() => {
