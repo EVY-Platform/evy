@@ -5,8 +5,8 @@
 	"types": "./generated/ts/index.ts",
 	"exports": {
 		".": "./generated/ts/index.ts",
-		"./coreResources": "./generated/ts/coreResources.ts",
-		"./marketplaceResources": "./generated/ts/marketplaceResources.ts",
+		"./coreResources": "./coreResources.ts",
+		"./marketplaceResources": "./marketplaceResources.ts",
 		"./rpcRequestHelpers": "./rpcRequestHelpers.ts",
 		"./validators": "./validators.ts",
 		"./*": "./generated/ts/*.ts"
