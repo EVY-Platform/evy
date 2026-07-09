@@ -235,8 +235,17 @@ trap cleanup EXIT
 echo -e "\n${YELLOW}Installing dependencies...${NC}"
 bun run install:all
 
+# Generate shared types before starting services. The generated files are
+# gitignored, so a fresh checkout has none, and services (e.g. marketplace)
+# import them at startup. Generation reads only schema files, not a live DB.
+echo -e "\n${YELLOW}Generating types...${NC}"
+if ! bun types:generate; then
+    echo -e "${RED}Type generation failed${NC}"
+    exit 1
+fi
+
 if [ "$CI_MODE" = true ]; then
-    echo -e "\n${YELLOW}Step 1: Starting services with Bun (CI mode)...${NC}"
+    echo -e "\n${YELLOW}Starting services with Bun (CI mode)...${NC}"
     wait_for_postgres
 
     start_bun_service services/marketplace
@@ -250,22 +259,22 @@ if [ "$CI_MODE" = true ]; then
     start_bun_service web
     WEB_PID=$!
 
-    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
+    echo -e "\n${YELLOW}Waiting for services to be healthy...${NC}"
     wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 else
     export DOCKER_BUILDKIT=1
     export COMPOSE_DOCKER_CLI_BUILD=1
 
     # Build each service sequentially to avoid parallel compose build races.
-    echo -e "\n${YELLOW}Step 1: Building services with docker compose...${NC}"
+    echo -e "\n${YELLOW}Building services with docker compose...${NC}"
     docker compose build marketplace
     docker compose build api
     docker compose build web
 
-    echo -e "\n${YELLOW}Step 2: Starting services with docker compose...${NC}"
+    echo -e "\n${YELLOW}Starting services with docker compose...${NC}"
     docker compose up --no-build -d
 
-    echo -e "\n${YELLOW}Step 3: Waiting for services to be healthy...${NC}"
+    echo -e "\n${YELLOW}Waiting for services to be healthy...${NC}"
     wait_for_postgres
 
     wait_for_service_readiness services/marketplace marketplace "health" "Marketplace"
@@ -273,13 +282,7 @@ else
     wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 fi
 
-echo -e "\n${YELLOW}Step 3: Generating types...${NC}"
-if ! bun types:generate; then
-    echo -e "${RED}Type generation failed${NC}"
-    exit 1
-fi
-
-echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
+echo -e "\n${YELLOW}Running API e2e tests...${NC}"
 seed_database
 cd api
 if bun run test:e2e; then
@@ -290,7 +293,7 @@ else
 fi
 cd ..
 
-echo -e "\n${YELLOW}Step 4b: Running Marketplace e2e tests...${NC}"
+echo -e "\n${YELLOW}Running Marketplace e2e tests...${NC}"
 seed_database
 cd services/marketplace
 if bun run test:e2e; then
@@ -301,7 +304,7 @@ else
 fi
 cd ../..
 
-echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
+echo -e "\n${YELLOW}Running Web e2e tests...${NC}"
 seed_database
 cd web
 if bun run test:e2e; then
@@ -313,10 +316,10 @@ fi
 cd ..
 
 if [ "$SKIP_IOS" = true ]; then
-    echo -e "\n${YELLOW}Step 6: Skipping iOS e2e tests (--skip-ios flag set)${NC}"
+    echo -e "\n${YELLOW}Skipping iOS e2e tests (--skip-ios flag set)${NC}"
     IOS_SKIPPED=true
 else
-    echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
+    echo -e "\n${YELLOW}Running iOS e2e tests...${NC}"
     if [ -z "${GOOGLE_PLACES_API_KEY:-}" ] || [ "${GOOGLE_PLACES_API_KEY}" = "googlekey" ]; then
         echo -e "${RED}GOOGLE_PLACES_API_KEY is missing or set to the '.env.example' placeholder.${NC}"
         echo -e "${RED}The iOS place search e2e test calls the live Google Places API and cannot pass without a real key.${NC}"
