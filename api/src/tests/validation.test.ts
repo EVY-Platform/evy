@@ -16,10 +16,6 @@ describe("place search validators", () => {
 	it("accepts valid place search payloads", () => {
 		const request = validatePlaceSearchRequest({
 			input: "28 Rothschild",
-			language: "en-US",
-			region: "au",
-			origin: { lat: 37.7893, lng: -122.4039 },
-			types: ["housing"],
 		});
 		const response = validatePlaceSearchResponse([
 			{
@@ -34,6 +30,21 @@ describe("place search validators", () => {
 
 		expect(request.input).toBe("28 Rothschild");
 		expect(response[0]?.street).toBe("28 Rothschild Avenue");
+	});
+
+	it.each([
+		{ field: "region", value: "au" },
+		{ field: "language", value: "en-US" },
+	])("rejects place search payloads that include $field", ({
+		field,
+		value,
+	}) => {
+		expect(() =>
+			validatePlaceSearchRequest({
+				input: "28 Rothschild",
+				[field]: value,
+			}),
+		).toThrow("PlaceSearchRequest validation failed");
 	});
 });
 

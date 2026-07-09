@@ -85,10 +85,10 @@ final class EVYMapTests: XCTestCase {
     XCTAssertNil(coordinate)
   }
 
-  func testMapRowResolvesUserAddressSource() throws {
+  func testResolvesUserAddressSource() throws {
     try seedCurrentUserAddress(latitude: -33.9172075, longitude: 151.1985883)
 
-    let coordinate = EVYMapRow.resolveLocation(source: "{user.address}").locationCoordinate()
+    let coordinate = (try EVY.getDataFromText("{user.address}")).locationCoordinate()
 
     assertCoordinate(coordinate, latitude: -33.9172075, longitude: 151.1985883)
   }

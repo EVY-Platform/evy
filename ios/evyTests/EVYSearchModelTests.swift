@@ -9,23 +9,18 @@ import XCTest
 
 @MainActor
 final class EVYSearchModelTests: XCTestCase {
-  private final class PlaceSearchRequestingSpy: PlaceSearchRequesting, @unchecked Sendable {
-    struct Call: Equatable {
-      let method: String
-      let input: String
-    }
-
-    private(set) var calls: [Call] = []
+  private final class SearchRequestingSpy: EVYSearchRequesting, @unchecked Sendable {
+    private(set) var inputs: [String] = []
     var response: EVYJson = .array([])
 
-    func search(method: String, input: String) async throws -> EVYJson {
-      calls.append(Call(method: method, input: input))
+    func search(input: String) async throws -> EVYJson {
+      inputs.append(input)
       return response
     }
   }
 
   func testSearchCallsRequesterOnceAndPopulatesResults() async {
-    let spy = PlaceSearchRequestingSpy()
+    let spy = SearchRequestingSpy()
     let resultTemplate = Self.makeResultTemplate()
     let model = EVYSearchModel(
       method: "place_search",
@@ -43,15 +38,14 @@ final class EVYSearchModelTests: XCTestCase {
 
     await model.search(query: "Sydney")
 
-    XCTAssertEqual(spy.calls.count, 1)
-    XCTAssertEqual(spy.calls[0].method, "place_search")
-    XCTAssertEqual(spy.calls[0].input, "Sydney")
+    XCTAssertEqual(spy.inputs.count, 1)
+    XCTAssertEqual(spy.inputs[0], "Sydney")
     XCTAssertEqual(model.results.count, 1)
     XCTAssertEqual(model.results[0].id, "place-1")
   }
 
   func testClearResultsEmptiesResults() async {
-    let spy = PlaceSearchRequestingSpy()
+    let spy = SearchRequestingSpy()
     let resultTemplate = Self.makeResultTemplate()
     let model = EVYSearchModel(
       method: "place_search",

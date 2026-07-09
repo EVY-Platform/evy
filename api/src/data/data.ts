@@ -1,3 +1,4 @@
+import { asc, eq, ne } from "drizzle-orm";
 import type {
 	CreateRequest,
 	CreateResponse,
@@ -14,6 +15,10 @@ import {
 	EVY_CORE_RESOURCE_NAME_SET,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
+import {
+	service,
+	serviceResource,
+} from "../../../types/generated/ts/db/schema.generated";
 import type { EvyDb } from "../database/db";
 import { DATA_CHANGED_EVENT } from "../shared/ws";
 
@@ -83,6 +88,31 @@ export function validateAuth(
 export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
 	return getCoreBody(db, params);
+}
+
+export async function listExternalServiceResources(
+	db: EvyDb,
+): Promise<Array<{ serviceId: string; resourceId: string }>> {
+	const rows = await db
+		.select({
+			serviceId: service.id,
+			resourceId: serviceResource.id,
+		})
+		.from(serviceResource)
+		.innerJoin(service, eq(serviceResource.fkServiceId, service.id))
+		.where(ne(service.id, EVY_CORE_SERVICE))
+		.orderBy(asc(service.id), asc(serviceResource.id));
+
+	return rows;
+}
+
+export async function listExternalServices(
+	db: EvyDb,
+): Promise<Array<{ id: string; name: string }>> {
+	return db
+		.select({ id: service.id, name: service.name })
+		.from(service)
+		.where(ne(service.id, EVY_CORE_SERVICE));
 }
 
 export async function create(

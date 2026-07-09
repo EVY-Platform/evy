@@ -7,18 +7,41 @@ import XCTest
 
 @testable import evy
 
+@MainActor
 final class EVYSearchTests: XCTestCase {
-  func testParseSearchSourceDetectsApiBackedSources() {
+  func testClassifySourceDetectsApiBackedSources() {
     XCTAssertEqual(
-      EVYSearchSource.parse("{$api:place_search}"),
+      EVY.classifySource("{$api:place_search}"),
+      .api(method: "place_search")
+    )
+    XCTAssertEqual(
+      EVY.classifySource("$api:place_search"),
       .api(method: "place_search")
     )
   }
 
-  func testAPISearchPayloadUsesLocaleDefaultsWithFallbacks() {
-    let payload = APISearchPayload.fromCurrentLocale(input: "28 Rothschild")
-    XCTAssertEqual(payload.input, "28 Rothschild")
-    XCTAssertFalse(payload.language.isEmpty)
-    XCTAssertFalse(payload.region.isEmpty)
+  func testClassifySourceDetectsLocalSources() {
+    XCTAssertEqual(
+      EVY.classifySource("{item.results}"),
+      .local(props: "item.results")
+    )
+    XCTAssertEqual(
+      EVY.classifySource("items"),
+      .local(props: "items")
+    )
+  }
+
+  func testEVYSearchRequestEncodesInputOnly() throws {
+    let encoded = try JSONEncoder().encode(EVYSearchRequest(input: "28 Rothschild"))
+    let json = try JSONSerialization.jsonObject(with: encoded) as? [String: String]
+    XCTAssertEqual(json, ["input": "28 Rothschild"])
+  }
+
+  func testEVYAPISearchRequesterStoresMethodFromSDUI() {
+    let requester = EVYAPISearchRequester(method: "place_search")
+    XCTAssertEqual(requester.method, "place_search")
+
+    let otherRequester = EVYAPISearchRequester(method: "search_place")
+    XCTAssertEqual(otherRequester.method, "search_place")
   }
 }

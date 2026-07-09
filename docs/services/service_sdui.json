@@ -143,6 +143,42 @@
 										"name": "Drop-off note"
 									},
 									{
+										"id": "1711114c-844d-4079-9aba-600a5a1ef9b2",
+										"type": "TextAction",
+										"actions": [
+											{
+												"true": "{show()}",
+												"false": "",
+												"condition": ""
+											}
+										],
+										"title": "Delivery address",
+										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
+										"action": "Change",
+										"child": {
+											"id": "549ca3b3-7a40-448e-84e8-7163e46ce48e",
+											"type": "Search",
+											"child": {
+												"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
+												"type": "Text",
+												"title": "{$datum.unit} {$datum.street}",
+												"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}",
+												"actions": [],
+												"visible": "true",
+												"name": "Pickup address result"
+											},
+											"title": "",
+											"placeholder": "Search address",
+											"source": "{$api:place_search}",
+											"actions": [],
+											"visible": "true",
+											"name": "Find pickup address",
+											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}"
+										},
+										"visible": "true",
+										"name": "Delivery address"
+									},
+									{
 										"id": "bd8fa85c-1b67-467a-983d-328e6dc49db7",
 										"type": "TimeslotPicker",
 										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
@@ -177,6 +213,42 @@
 										"title": "",
 										"subtitle": "Delivered to your door",
 										"name": "Shipping note"
+									},
+									{
+										"id": "5a9baa46-f7c2-43f8-a1e6-91373f5d52b2",
+										"type": "TextAction",
+										"actions": [
+											{
+												"true": "{show()}",
+												"false": "",
+												"condition": ""
+											}
+										],
+										"title": "Shipping address",
+										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
+										"action": "Change",
+										"child": {
+											"id": "c46317fb-b410-4b85-81c6-092dee574dbd",
+											"type": "Search",
+											"child": {
+												"id": "e901dc57-a7d7-492c-9b5f-71f982311352",
+												"type": "Text",
+												"title": "{$datum.unit} {$datum.street}",
+												"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}",
+												"actions": [],
+												"visible": "true",
+												"name": "Pickup address result"
+											},
+											"title": "",
+											"placeholder": "Search address",
+											"source": "{$api:place_search}",
+											"actions": [],
+											"visible": "true",
+											"name": "Find pickup address",
+											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}"
+										},
+										"visible": "true",
+										"name": "Shipping address"
 									}
 								],
 								"name": "Shipping details"

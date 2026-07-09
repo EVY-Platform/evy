@@ -26,6 +26,7 @@ struct EVYListContainerRow: View {
       }
       ForEach(childRefs, id: \.id) { ref in
         EVYRow(ref: ref)
+          .padding(.vertical, Constants.minorPadding)
       }
     }
   }

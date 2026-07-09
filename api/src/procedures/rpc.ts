@@ -19,7 +19,7 @@ import {
 	update as updateCore,
 } from "../data/data";
 import type { EvyDb } from "../database/db";
-import { type CoreApiDependencies, coreApi } from "./coreApi";
+import { coreApi } from "./coreApi";
 import {
 	forwardApi,
 	forwardCreate,
@@ -43,14 +43,10 @@ export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
 	return handleGetRequest(params, db);
 }
 
-export async function api(
-	params: unknown,
-	db: EvyDb,
-	coreApiDependencies?: CoreApiDependencies,
-): Promise<unknown> {
+export async function api(params: unknown, db: EvyDb): Promise<unknown> {
 	validateStrictApiRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		return coreApi(params, db, coreApiDependencies);
+		return coreApi(params, db);
 	}
 	return forwardApi(params.service, params);
 }

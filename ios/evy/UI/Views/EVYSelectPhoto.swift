@@ -208,7 +208,7 @@ private struct EVYSelectPhotoButton: View {
         if fullScreen {
           stack
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 80)
+            .frame(height: carouselElementSize)
             .background(
               RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
                 .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))

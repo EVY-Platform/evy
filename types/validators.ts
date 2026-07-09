@@ -41,9 +41,6 @@ import type { UpdateResponse } from "./generated/ts/rpc/update.response";
 import { SDUI_DEFINITIONS } from "./generated/ts/sdui/definitions.generated";
 import type { UI_Flow } from "./generated/ts/sdui/evy";
 
-import commonAddressRaw from "./schema/common/address.schema.json" with {
-	type: "json",
-};
 import commonJsonRaw from "./schema/common/json.schema.json" with {
 	type: "json",
 };
@@ -126,7 +123,6 @@ const SDUI_DEFINITION_SCHEMAS: Record<
 );
 
 const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
-	"common/address.schema.json": commonAddressRaw as Record<string, unknown>,
 	"common/json.schema.json": commonJsonRaw as Record<string, unknown>,
 	"common/rpc.schema.json": commonRpcRaw as Record<string, unknown>,
 	"data/data.schema.json": dataSchemaRaw as Record<string, unknown>,
@@ -289,7 +285,6 @@ const REQUEST_SCHEMA_FILES = [
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
 const ENTITY_SCHEMA_FILES = [
-	"common/address.schema.json",
 	"common/json.schema.json",
 	"common/rpc.schema.json",
 	"data/data.schema.json",

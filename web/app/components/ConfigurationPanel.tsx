@@ -26,7 +26,7 @@ import {
 	findPageReferences,
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
-import { parseSourceBinding } from "../utils/sourceBinding";
+import { parseApiSourceMethod } from "../utils/sourceBinding";
 import { unwrapOptionalBraces } from "../utils/unwrapBraces";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
@@ -267,11 +267,9 @@ export function ConfigurationPanel() {
 
 			const getAttributeCandidatesForQualifier = (qualifier: string) => {
 				if (qualifier === "$datum") {
-					const sourceBinding = parseSourceBinding(rowSource);
-					if (sourceBinding?.kind === "api") {
-						return getApiDataSourceAttributeCandidates(
-							sourceBinding.method,
-						);
+					const apiMethod = parseApiSourceMethod(rowSource);
+					if (apiMethod) {
+						return getApiDataSourceAttributeCandidates(apiMethod);
 					}
 				}
 

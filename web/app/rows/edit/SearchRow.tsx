@@ -11,8 +11,8 @@ export default defineRow("SearchRow", {
 		source: "",
 		visible: "true",
 		title: "Search row title",
-		placeholder: "placeholder",
-		destination: "{address}",
+		placeholder: "",
+		destination: "",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

@@ -137,7 +137,7 @@ export function buildIdCandidates(
 	];
 }
 
-function attributeNamesToCandidates(
+export function buildAttributeCandidates(
 	attributeNames: Iterable<string>,
 ): IdCandidate[] {
 	return [...new Set(attributeNames)]
@@ -174,7 +174,7 @@ export function buildRowAttributeCandidates(): IdCandidate[] {
 		...getAllRowContentFieldNames(),
 		...getAllRowBindingFieldNames(),
 	]);
-	return attributeNamesToCandidates(attributeNames);
+	return buildAttributeCandidates(attributeNames);
 }
 
 export function buildResourceAttributeCandidatesForResource(
@@ -184,7 +184,7 @@ export function buildResourceAttributeCandidatesForResource(
 	const metadata = resourceAttributeMetadata.find(
 		(resourceMetadata) => resourceMetadata.resourceId === resourceId,
 	);
-	return attributeNamesToCandidates(metadata?.attributeNames ?? []);
+	return buildAttributeCandidates(metadata?.attributeNames ?? []);
 }
 
 export function buildDatumCandidate(): IdCandidate {

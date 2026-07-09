@@ -1,8 +1,9 @@
-import { describe, expect, it } from "bun:test";
-import {
-	type PlaceSearchDependencies,
-	placeSearch,
-} from "../procedures/placeSearch";
+import { describe, expect, it, mock } from "bun:test";
+import type { protos } from "@googlemaps/places";
+
+type PlacesAutocompleteResponse =
+	protos.google.maps.places.v1.IAutocompletePlacesResponse;
+type PlacesPlace = protos.google.maps.places.v1.IPlace;
 
 const ROTHCHILD_PLACE = {
 	id: "ChIJRothschild",
@@ -26,66 +27,64 @@ const ROTHCHILD_PLACE = {
 	location: { latitude: -33.9172075, longitude: 151.1985883 },
 };
 
+let autocompleteImpl = async (
+	_input: string,
+): Promise<[PlacesAutocompleteResponse]> => [{ suggestions: [] }];
+let getPlaceImpl = async (_placeId: string): Promise<[PlacesPlace]> => {
+	throw new Error("getPlace should not be called");
+};
+
+class FakePlacesClient {
+	autocompletePlaces(request: { input: string }) {
+		return autocompleteImpl(request.input);
+	}
+
+	getPlace(request: { name: string }) {
+		const placeId = request.name.replace(/^places\//, "");
+		return getPlaceImpl(placeId);
+	}
+}
+
+mock.module("@googlemaps/places", () => ({
+	PlacesClient: FakePlacesClient,
+}));
+
+const { placeSearch } = await import("../procedures/placeSearch");
+
 describe("placeSearch", () => {
-	it("maps the EVY request to Places autocomplete", async () => {
-		const deps: PlaceSearchDependencies = {
-			runAutocomplete: async (request) => {
-				expect(request).toEqual({
-					input: "28 Rothschild",
-					languageCode: "en-US",
-					regionCode: "au",
-					origin: { latitude: 37.7893, longitude: -122.4039 },
-					includedPrimaryTypes: ["housing"],
-				});
-				return { suggestions: [] };
-			},
-			getPlaceDetails: async () => {
-				throw new Error("getPlaceDetails should not be called");
-			},
+	it("forwards the EVY input into runAutocomplete", async () => {
+		autocompleteImpl = async (input) => {
+			expect(input).toBe("28 Rothschild");
+			return [{ suggestions: [] }];
+		};
+		getPlaceImpl = async () => {
+			throw new Error("getPlaceDetails should not be called");
 		};
 
-		const result = await placeSearch(
-			{
-				input: "28 Rothschild",
-				language: "en-US",
-				region: "au",
-				origin: { lat: 37.7893, lng: -122.4039 },
-				types: ["housing"],
-			},
-			deps,
-		);
+		const result = await placeSearch({ input: "28 Rothschild" });
 
 		expect(result).toEqual([]);
 	});
 
 	it("resolves place predictions into flat EVY addresses", async () => {
-		const deps: PlaceSearchDependencies = {
-			runAutocomplete: async () => ({
+		autocompleteImpl = async () => [
+			{
 				suggestions: [
 					{
 						placePrediction: {
 							placeId: "place-1",
-							structuredFormat: {
-								mainText: { text: "28 Rothschild Avenue" },
-							},
-							text: {
-								text: "28 Rothschild Avenue, Rosebery NSW, Australia",
-							},
 						},
 					},
 					{ queryPrediction: {} },
 				],
-			}),
-			getPlaceDetails: async (placeId) => {
-				expect(placeId).toBe("place-1");
-				return ROTHCHILD_PLACE;
 			},
+		];
+		getPlaceImpl = async (placeId) => {
+			expect(placeId).toBe("place-1");
+			return [ROTHCHILD_PLACE];
 		};
 
-		const result = await placeSearch(
-			{ input: "28 Rothschild", language: "en-US", region: "au" },
-			deps,
-		);
+		const result = await placeSearch({ input: "28 Rothschild" });
 
 		expect(result).toEqual([
 			{
@@ -100,5 +99,29 @@ describe("placeSearch", () => {
 				longitude: 151.1985883,
 			},
 		]);
+	});
+
+	it("skips place predictions that are missing location", async () => {
+		autocompleteImpl = async () => [
+			{
+				suggestions: [
+					{
+						placePrediction: {
+							placeId: "place-without-location",
+						},
+					},
+				],
+			},
+		];
+		getPlaceImpl = async () => [
+			{
+				id: "place-without-location",
+				addressComponents: ROTHCHILD_PLACE.addressComponents,
+			},
+		];
+
+		const result = await placeSearch({ input: "28 Rothschild" });
+
+		expect(result).toEqual([]);
 	});
 });

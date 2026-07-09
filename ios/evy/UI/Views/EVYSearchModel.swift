@@ -22,21 +22,21 @@ struct EVYSearchResult: Equatable, Identifiable {
     resultTemplate: UI_Row?,
     scopeId: String?
   ) -> [EVYSearchResult] {
-    guard let resultTemplate, let sourceData else {
+    guard let sourceData, let resultTemplate else {
       return []
+    }
+
+    let dataRows: [EVYJson]
+    if case .array(let arrayValue) = sourceData {
+      dataRows = arrayValue
+    } else {
+      dataRows = [sourceData]
     }
 
     do {
       let previous = EVY.activeCacheScopeId
       EVY.activeCacheScopeId = scopeId
       defer { EVY.activeCacheScopeId = previous }
-
-      let dataRows: [EVYJson]
-      if case .array(let arrayValue) = sourceData {
-        dataRows = arrayValue
-      } else {
-        dataRows = [sourceData]
-      }
 
       let formatter = try EVYDatumRowFormatter(template: resultTemplate)
       return dataRows.compactMap { datum in
@@ -62,27 +62,21 @@ struct EVYSearchResult: Equatable, Identifiable {
 @MainActor
 @Observable
 final class EVYSearchModel {
-  static let debounceMilliseconds = 300
-
   private(set) var results: [EVYSearchResult] = []
 
-  private let method: String
   private let resultTemplate: UI_Row?
   private let scopeId: String?
-  private let requester: any PlaceSearchRequesting
-
-  private var activeFetchId = UUID()
+  private let requester: any EVYSearchRequesting
 
   init(
     method: String,
     resultTemplate: UI_Row?,
     scopeId: String?,
-    requester: any PlaceSearchRequesting = APISearchRequester()
+    requester: (any EVYSearchRequesting)? = nil
   ) {
-    self.method = method
     self.resultTemplate = resultTemplate
     self.scopeId = scopeId
-    self.requester = requester
+    self.requester = requester ?? EVYAPISearchRequester(method: method)
   }
 
   func clearResults() {
@@ -90,32 +84,19 @@ final class EVYSearchModel {
   }
 
   func search(query: String) async {
-    let fetchId = UUID()
-    activeFetchId = fetchId
-
     do {
-      let response = try await requester.search(method: method, input: query)
+      let response = try await requester.search(input: query)
 
-      guard !Task.isCancelled, fetchId == activeFetchId else { return }
-
-      let dataRows: [EVYJson]
-      if case .array(let arrayValue) = response {
-        dataRows = arrayValue
-      } else {
-        dataRows = []
-      }
+      guard !Task.isCancelled else { return }
 
       results = EVYSearchResult.makeResults(
-        from: .array(dataRows),
+        from: response,
         resultTemplate: resultTemplate,
         scopeId: scopeId
       )
     } catch {
-      guard fetchId == activeFetchId else { return }
+      guard !Task.isCancelled else { return }
       results = []
-      #if DEBUG
-        print("[EVYSearchModel] place search '\(method)' failed: \(error)")
-      #endif
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
     }
   }

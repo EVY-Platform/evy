@@ -1,11 +1,29 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	spyOn,
+} from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import { Client } from "rpc-websockets";
 
+import * as data from "../data/data";
+import type { EvyDb } from "../database/db";
 import { assertApiReadable } from "../readiness";
 import { getFreePort, type WSServer, waitForClientOpen } from "./wsTestHelpers";
+
+const db = null as unknown as EvyDb;
+
+let getImpl = async (_params: GetRequest): Promise<GetResponse> => [];
+let listExternalServicesImpl = async (): Promise<
+	Array<{ id: string; name: string }>
+> => [];
 
 describe("initServer bootstrap", () => {
 	let previousApiPort: string | undefined;
@@ -66,75 +84,82 @@ describe("initServer bootstrap", () => {
 });
 
 describe("assertApiReadable", () => {
+	let getSpy: ReturnType<typeof spyOn>;
+	let listExternalServicesSpy: ReturnType<typeof spyOn>;
+
+	beforeEach(() => {
+		getSpy = spyOn(data, "get").mockImplementation((_db, params) =>
+			getImpl(params),
+		);
+		listExternalServicesSpy = spyOn(
+			data,
+			"listExternalServices",
+		).mockImplementation(() => listExternalServicesImpl());
+	});
+
+	afterEach(() => {
+		getSpy.mockRestore();
+		listExternalServicesSpy.mockRestore();
+	});
+
 	it("resolves when flows get returns an array envelope and requireSeeded is false", async () => {
-		const deps = {
-			get: async (_params: GetRequest): Promise<GetResponse> => [],
-			listExternalServices: async () => [],
-		};
+		getImpl = async () => [];
+		listExternalServicesImpl = async () => [];
 		await expect(
-			assertApiReadable({ requireSeeded: false }, deps),
+			assertApiReadable(db, { requireSeeded: false }),
 		).resolves.toBeUndefined();
 	});
 
 	it("throws when flows get does not return a data array", async () => {
-		const deps = {
-			get: async (_params: GetRequest): Promise<GetResponse> =>
-				"not-array" as unknown as GetResponse,
-			listExternalServices: async () => [],
-		};
+		getImpl = async () => "not-array" as unknown as GetResponse;
+		listExternalServicesImpl = async () => [];
 		await expect(
-			assertApiReadable({ requireSeeded: false }, deps),
+			assertApiReadable(db, { requireSeeded: false }),
 		).rejects.toThrow("expected flows response data array");
 	});
 
 	it("throws when requireSeeded is true but flows is empty", async () => {
-		const deps = {
-			get: async (_params: GetRequest): Promise<GetResponse> => [],
-			listExternalServices: async () => [],
-		};
+		getImpl = async () => [];
+		listExternalServicesImpl = async () => [];
 		await expect(
-			assertApiReadable({ requireSeeded: true }, deps),
+			assertApiReadable(db, { requireSeeded: true }),
 		).rejects.toThrow("missing seeded flows");
 	});
 
 	it("resolves when requireSeeded is true and flows has at least one flow", async () => {
-		const deps = {
-			get: async (params: GetRequest): Promise<GetResponse> => {
-				expect(params).toEqual({
-					service: EVY_CORE_SERVICE,
-					resource: EVY_CORE_RESOURCE.FLOWS,
-				});
-				return [
-					{
-						id: crypto.randomUUID(),
-						name: "Seeded",
-						pageIds: [],
-						createdAt: new Date().toISOString(),
-						updatedAt: new Date().toISOString(),
-					},
-				] as GetResponse;
-			},
-			listExternalServices: async () => [],
+		getImpl = async (params) => {
+			expect(params).toEqual({
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.FLOWS,
+			});
+			return [
+				{
+					id: crypto.randomUUID(),
+					name: "Seeded",
+					pageIds: [],
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+				},
+			] as GetResponse;
 		};
+		listExternalServicesImpl = async () => [];
 		await expect(
-			assertApiReadable({ requireSeeded: true }, deps),
+			assertApiReadable(db, { requireSeeded: true }),
 		).resolves.toBeUndefined();
 	});
 
 	it("throws when an external service is missing its gRPC env vars", async () => {
-		const deps = {
-			get: async (): Promise<GetResponse> => [],
-			listExternalServices: async () => [
-				{ id: MARKETPLACE_SERVICE, name: "marketplace" },
-			],
-		};
+		getImpl = async () => [];
+		listExternalServicesImpl = async () => [
+			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
+		];
 		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
 		const savedPort = process.env.MARKETPLACE_GRPC_PORT;
 		delete process.env.MARKETPLACE_GRPC_HOST;
 		delete process.env.MARKETPLACE_GRPC_PORT;
 		try {
 			await expect(
-				assertApiReadable({ requireSeeded: false }, deps),
+				assertApiReadable(db, { requireSeeded: false }),
 			).rejects.toThrow("MARKETPLACE_GRPC_HOST");
 		} finally {
 			if (savedHost !== undefined)
@@ -145,19 +170,17 @@ describe("assertApiReadable", () => {
 	});
 
 	it("resolves when all external services have gRPC env vars configured", async () => {
-		const deps = {
-			get: async (): Promise<GetResponse> => [],
-			listExternalServices: async () => [
-				{ id: MARKETPLACE_SERVICE, name: "marketplace" },
-			],
-		};
+		getImpl = async () => [];
+		listExternalServicesImpl = async () => [
+			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
+		];
 		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
 		const savedPort = process.env.MARKETPLACE_GRPC_PORT;
 		process.env.MARKETPLACE_GRPC_HOST = "localhost";
 		process.env.MARKETPLACE_GRPC_PORT = "50051";
 		try {
 			await expect(
-				assertApiReadable({ requireSeeded: false }, deps),
+				assertApiReadable(db, { requireSeeded: false }),
 			).resolves.toBeUndefined();
 		} finally {
 			if (savedHost !== undefined)

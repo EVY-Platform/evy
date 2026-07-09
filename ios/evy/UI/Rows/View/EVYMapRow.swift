@@ -18,7 +18,7 @@ struct EVYMapRow: View {
     )
   }
 
-  static func resolveLocation(source: String) -> EVYJson {
+  private static func resolveLocation(source: String) -> EVYJson {
     guard !source.isEmpty else { return .string("") }
     return (try? EVY.getDataFromText(source)) ?? .string(source)
   }

@@ -12,6 +12,9 @@ final class EVYDraftBindingTests: XCTestCase {
   override func tearDownWithError() throws {
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
+    if let pageId = EVY.activeCacheScopeId {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: pageId)
+    }
     EVY.activeCacheScopeId = nil
     try super.tearDownWithError()
   }
@@ -239,6 +242,90 @@ final class EVYDraftBindingTests: XCTestCase {
     XCTAssertEqual(
       try EVY.getDataFromText("{\(entityId).transfer_options.pickup.address}"),
       address
+    )
+  }
+
+  func testWriteRawValueUpdatesPageCacheNotFirstSyncedCollectionItem() throws {
+    let resourceId = uniqueKey("items")
+    let pageId = "page_\(UUID().uuidString)"
+    let selectedItemId = UUID().uuidString
+    let otherItemId = UUID().uuidString
+    let selectedTitle = "Selected item"
+    let otherTitle = "Other item in search"
+    let updatedTitle = "Edited selected title"
+
+    let selectedItem = EVYJson.dictionary([
+      "id": .string(selectedItemId),
+      "title": .string(selectedTitle),
+    ])
+    let otherItem = EVYJson.dictionary([
+      "id": .string(otherItemId),
+      "title": .string(otherTitle),
+    ])
+
+    try EVY.publicStore.applySyncedValue(
+      namespace: EVYNamespace.marketplace,
+      resource: resourceId,
+      value: .array([otherItem, selectedItem])
+    )
+    defer {
+      try? EVY.publicStore.deleteAll(
+        namespace: EVYNamespace.marketplace, resource: resourceId)
+    }
+
+    EVY.activeCacheScopeId = pageId
+    EVY.draftStore.activeScopeId = EVYDraft.ephemeralScopeId(forPageId: pageId)
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache,
+      resource: pageId,
+      id: resourceId,
+      value: try JSONEncoder().encode(selectedItem)
+    )
+
+    var notificationKeys: [String] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyValueChanged,
+      object: nil,
+      queue: nil
+    ) { notification in
+      if let key = notification.object as? String {
+        notificationKeys.append(key)
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    try EVY.writeRawValue(updatedTitle, to: "{\(resourceId).title}")
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(resourceId).title}"),
+      .string(updatedTitle),
+      "Title writes must update the page-scoped cache row so live watchers recompute"
+    )
+    XCTAssertTrue(
+      notificationKeys.contains("\(resourceId).title"),
+      "Title writes must post a value-changed notification for heading/input watchers"
+    )
+
+    let otherRow = try EVY.publicStore.get(
+      namespace: EVYNamespace.marketplace,
+      resource: resourceId,
+      id: otherItemId
+    )
+    XCTAssertEqual(
+      try otherRow.decoded(),
+      otherItem,
+      "Title writes must not mutate another synced collection item"
+    )
+
+    let selectedPublicRow = try EVY.publicStore.get(
+      namespace: EVYNamespace.marketplace,
+      resource: resourceId,
+      id: selectedItemId
+    )
+    XCTAssertEqual(
+      try selectedPublicRow.decoded(),
+      selectedItem,
+      "Title writes on a view page should update the page cache, not the synced public row"
     )
   }
 

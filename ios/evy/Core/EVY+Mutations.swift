@@ -255,7 +255,7 @@ extension EVY {
       return localRow
     }
     if let scopeId = activeCacheScopeId,
-      let cachedRow = try? store.get(
+      let cachedRow = try? cacheStore.get(
         namespace: EVYNamespace.cache, resource: scopeId, id: rootVariable)
     {
       return cachedRow

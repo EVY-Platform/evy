@@ -24,8 +24,8 @@
 		7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
 		7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */; };
 		7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */; };
-		FA20A0112F91000100000001 /* EVY+SearchSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0102F91000100000001 /* EVY+SearchSource.swift */; };
-		FA20A0152F91000100000001 /* PlaceSearchRequesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0142F91000100000001 /* PlaceSearchRequesting.swift */; };
+		FA30A0112F91000100000001 /* EVY+Source.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA30A0102F91000100000001 /* EVY+Source.swift */; };
+		FA20A0152F91000100000001 /* EVYSearchRequesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0142F91000100000001 /* EVYSearchRequesting.swift */; };
 		FA20A0172F91000100000001 /* EVYSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0162F91000100000001 /* EVYSearchModel.swift */; };
 		FA20A0192F91000100000001 /* EVYSearchModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0182F91000100000001 /* EVYSearchModelTests.swift */; };
 		7333F45E2FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44F2FAA2D1C006BEA92 /* EVY+Preview.swift */; };
@@ -167,8 +167,8 @@
 		7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+QueryParams.swift"; sourceTree = "<group>"; };
 		7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFlowStore.swift; sourceTree = "<group>"; };
 		7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Sync.swift"; sourceTree = "<group>"; };
-		FA20A0102F91000100000001 /* EVY+SearchSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+SearchSource.swift"; sourceTree = "<group>"; };
-		FA20A0142F91000100000001 /* PlaceSearchRequesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceSearchRequesting.swift; sourceTree = "<group>"; };
+		FA30A0102F91000100000001 /* EVY+Source.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Source.swift"; sourceTree = "<group>"; };
+		FA20A0142F91000100000001 /* EVYSearchRequesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchRequesting.swift; sourceTree = "<group>"; };
 		FA20A0162F91000100000001 /* EVYSearchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchModel.swift; sourceTree = "<group>"; };
 		FA20A0182F91000100000001 /* EVYSearchModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchModelTests.swift; sourceTree = "<group>"; };
 		7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+TextParsing.swift"; sourceTree = "<group>"; };
@@ -303,7 +303,7 @@
 				737C6AC82B270AD90093D00C /* API */,
 				737C6ABF2B270AAE0093D00C /* Models */,
 				737C6ACA2B270AD90093D00C /* EVYAPIManager.swift */,
-				FA20A0142F91000100000001 /* PlaceSearchRequesting.swift */,
+				FA20A0142F91000100000001 /* EVYSearchRequesting.swift */,
 				736495BE2B972E1800729129 /* EVYStores.swift */,
 				FA10A0022F90000100000001 /* EVYChange.swift */,
 				FA10A0042F90000100000001 /* EVYState.swift */,
@@ -336,7 +336,7 @@
 				7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */,
 				FA10A0082F90000100000001 /* EVYScope.swift */,
 		7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */,
-		FA20A0102F91000100000001 /* EVY+SearchSource.swift */,
+		FA30A0102F91000100000001 /* EVY+Source.swift */,
 		7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */,
 				97A43F6468C5603E3B57ECD3 /* EVY+DatumExpression.swift */,
 			);
@@ -777,8 +777,8 @@
 				7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */,
 				7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */,
 				7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */,
-				FA20A0112F91000100000001 /* EVY+SearchSource.swift in Sources */,
-				FA20A0152F91000100000001 /* PlaceSearchRequesting.swift in Sources */,
+				FA30A0112F91000100000001 /* EVY+Source.swift in Sources */,
+				FA20A0152F91000100000001 /* EVYSearchRequesting.swift in Sources */,
 				FA20A0172F91000100000001 /* EVYSearchModel.swift in Sources */,
 				7333F45E2FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */,
 				7333F45F2FAA2D1C006BEA92 /* EVY+Mutations.swift in Sources */,

@@ -542,53 +542,6 @@ class E2ETestBase: XCTestCase {
     ]
   }
 
-  static func textActionRow(
-    id: String,
-    title: String,
-    subtitle: String,
-    action: String = "Change",
-    child: [String: Any],
-    visible: String = "true"
-  ) -> [String: Any] {
-    return [
-      "id": id,
-      "type": "TextAction",
-      "visible": visible,
-      "title": title,
-      "subtitle": subtitle,
-      "action": action,
-      "actions": [
-        [
-          "condition": "",
-          "false": "",
-          "true": "{show()}",
-        ]
-      ],
-      "child": child,
-    ]
-  }
-
-  static func searchRow(
-    id: String,
-    source: String,
-    destination: String,
-    placeholder: String,
-    child: [String: Any],
-    visible: String = "true"
-  ) -> [String: Any] {
-    return [
-      "id": id,
-      "type": "Search",
-      "visible": visible,
-      "title": "",
-      "placeholder": placeholder,
-      "source": source,
-      "destination": destination,
-      "actions": [],
-      "child": child,
-    ]
-  }
-
   static func timeslotPickerRow(
     id: String,
     source: String,
@@ -1707,7 +1660,6 @@ final class E2EPlaceSearchTests: E2ETestBase {
     let searchField = app.textFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 5), "Search field should appear in sheet")
     clearAndType(field: searchField, text: Self.placeSearchQuery)
-    sleep(1)
 
     let result = app.staticTexts.matching(
       NSPredicate(
@@ -1765,6 +1717,53 @@ final class E2EPlaceSearchTests: E2ETestBase {
           ],
         ]
       ],
+    ]
+  }
+
+  private static func textActionRow(
+    id: String,
+    title: String,
+    subtitle: String,
+    action: String = "Change",
+    child: [String: Any],
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "TextAction",
+      "visible": visible,
+      "title": title,
+      "subtitle": subtitle,
+      "action": action,
+      "actions": [
+        [
+          "condition": "",
+          "false": "",
+          "true": "{show()}",
+        ]
+      ],
+      "child": child,
+    ]
+  }
+
+  private static func searchRow(
+    id: String,
+    source: String,
+    destination: String,
+    placeholder: String,
+    child: [String: Any],
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "Search",
+      "visible": visible,
+      "title": "",
+      "placeholder": placeholder,
+      "source": source,
+      "destination": destination,
+      "actions": [],
+      "child": child,
     ]
   }
 }

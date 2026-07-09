@@ -1,11 +1,13 @@
-import { describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
+import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
+import * as services from "../procedures/services";
 import { sync } from "../procedures/sync";
 
 const db = null as unknown as EvyDb;
@@ -17,46 +19,72 @@ function buildMockGetResponse(items: { id: string }[]): GetResponse {
 	return items;
 }
 
-function makeMocks() {
-	const getCore = async (params: GetRequest): Promise<GetResponse> =>
+const externalResources = [
+	{
+		serviceId: MARKETPLACE_SERVICE_ID,
+		resourceId: MARKETPLACE_RESOURCE.SELLING_REASONS,
+	},
+	{
+		serviceId: MARKETPLACE_SERVICE_ID,
+		resourceId: MARKETPLACE_RESOURCE.CONDITIONS,
+	},
+	{
+		serviceId: MARKETPLACE_SERVICE_ID,
+		resourceId: MARKETPLACE_RESOURCE.DURATIONS,
+	},
+	{
+		serviceId: MARKETPLACE_SERVICE_ID,
+		resourceId: MARKETPLACE_RESOURCE.AREAS,
+	},
+	{
+		serviceId: MARKETPLACE_SERVICE_ID,
+		resourceId: MARKETPLACE_RESOURCE.ITEMS,
+	},
+];
+
+let getImpl = async (params: GetRequest): Promise<GetResponse> =>
+	buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
+
+let forwardGetImpl = async (
+	_serviceName: string,
+	params: GetRequest,
+): Promise<GetResponse> =>
+	buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
+
+function resetSyncMocks(): void {
+	getImpl = async (params) =>
 		buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
-
-	const fetchService = async (
-		_serviceName: string,
-		params: GetRequest,
-	): Promise<GetResponse> =>
+	forwardGetImpl = async (_serviceName, params) =>
 		buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
-
-	const listExternalResources = async () => [
-		{
-			serviceId: MARKETPLACE_SERVICE_ID,
-			resourceId: MARKETPLACE_RESOURCE.SELLING_REASONS,
-		},
-		{
-			serviceId: MARKETPLACE_SERVICE_ID,
-			resourceId: MARKETPLACE_RESOURCE.CONDITIONS,
-		},
-		{
-			serviceId: MARKETPLACE_SERVICE_ID,
-			resourceId: MARKETPLACE_RESOURCE.DURATIONS,
-		},
-		{
-			serviceId: MARKETPLACE_SERVICE_ID,
-			resourceId: MARKETPLACE_RESOURCE.AREAS,
-		},
-		{
-			serviceId: MARKETPLACE_SERVICE_ID,
-			resourceId: MARKETPLACE_RESOURCE.ITEMS,
-		},
-	];
-
-	return { getCore, fetchService, listExternalResources };
 }
 
 describe("sync", () => {
+	let getSpy: ReturnType<typeof spyOn>;
+	let listExternalServiceResourcesSpy: ReturnType<typeof spyOn>;
+	let forwardGetSpy: ReturnType<typeof spyOn>;
+
+	beforeEach(() => {
+		resetSyncMocks();
+		getSpy = spyOn(data, "get").mockImplementation((_db, params) =>
+			getImpl(params),
+		);
+		listExternalServiceResourcesSpy = spyOn(
+			data,
+			"listExternalServiceResources",
+		).mockResolvedValue(externalResources);
+		forwardGetSpy = spyOn(services, "forwardGet").mockImplementation(
+			(serviceName, params) => forwardGetImpl(serviceName, params),
+		);
+	});
+
+	afterEach(() => {
+		getSpy.mockRestore();
+		listExternalServiceResourcesSpy.mockRestore();
+		forwardGetSpy.mockRestore();
+	});
+
 	it("returns changed rows in the unified data response", async () => {
-		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, db, deps);
+		const result = await sync({ lastSyncTime: EPOCH }, db);
 
 		expect(result).toEqual({ data: result.data });
 		expect(result.data).toBeDefined();
@@ -64,8 +92,7 @@ describe("sync", () => {
 	});
 
 	it("includes evy core resources (except devices) in data", async () => {
-		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, db, deps);
+		const result = await sync({ lastSyncTime: EPOCH }, db);
 
 		const evyRows = result.data.filter(
 			(row) => row.service === EVY_CORE_SERVICE,
@@ -93,8 +120,7 @@ describe("sync", () => {
 	});
 
 	it("includes external service resources in data", async () => {
-		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, db, deps);
+		const result = await sync({ lastSyncTime: EPOCH }, db);
 
 		const marketplaceRows = result.data.filter(
 			(row) => row.service === MARKETPLACE_SERVICE_ID,
@@ -109,58 +135,45 @@ describe("sync", () => {
 	});
 
 	it("passes updatedAfter to getCore", async () => {
-		const getCore = async (params: GetRequest): Promise<GetResponse> => {
+		getImpl = async (params) => {
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
-		const deps = { ...makeMocks(), getCore };
-		await sync({ lastSyncTime: EPOCH }, db, deps);
+		await sync({ lastSyncTime: EPOCH }, db);
 	});
 
 	it("passes updatedAfter to fetchService", async () => {
-		const fetchService = async (
-			_serviceName: string,
-			params: GetRequest,
-		): Promise<GetResponse> => {
+		forwardGetImpl = async (_serviceName, params) => {
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
-		const deps = { ...makeMocks(), fetchService };
-		await sync({ lastSyncTime: EPOCH }, db, deps);
+		await sync({ lastSyncTime: EPOCH }, db);
 	});
 
 	it("returns only an empty data array when nothing changed", async () => {
-		const getCore = async (): Promise<GetResponse> =>
-			buildMockGetResponse([]);
-		const fetchService = async (): Promise<GetResponse> =>
-			buildMockGetResponse([]);
-		const deps = { ...makeMocks(), getCore, fetchService };
+		getImpl = async () => buildMockGetResponse([]);
+		forwardGetImpl = async () => buildMockGetResponse([]);
 		const result = await sync(
 			{ lastSyncTime: "2999-01-01T00:00:00.000Z" },
 			db,
-			deps,
 		);
 		expect(result).toEqual({ data: [] });
 	});
 
 	it("propagates forwardGet errors for external services", async () => {
-		const fetchService = async (
-			serviceName: string,
-		): Promise<GetResponse> => {
+		forwardGetImpl = async (serviceName) => {
 			if (serviceName === MARKETPLACE_SERVICE_ID) {
 				throw new Error("gRPC service unavailable");
 			}
 			return buildMockGetResponse([]);
 		};
-		const deps = { ...makeMocks(), fetchService };
-		await expect(sync({ lastSyncTime: EPOCH }, db, deps)).rejects.toThrow(
+		await expect(sync({ lastSyncTime: EPOCH }, db)).rejects.toThrow(
 			"gRPC service unavailable",
 		);
 	});
 
 	it("each data row has required shape", async () => {
-		const deps = makeMocks();
-		const result = await sync({ lastSyncTime: EPOCH }, db, deps);
+		const result = await sync({ lastSyncTime: EPOCH }, db);
 		for (const row of result.data) {
 			expect(typeof row.service).toBe("string");
 			expect(row.service.length).toBeGreaterThan(0);

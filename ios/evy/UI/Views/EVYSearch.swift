@@ -8,32 +8,28 @@
 import SwiftUI
 
 struct EVYSearch: View {
-  let source: String
   let destination: String
   let placeholder: String?
-  let resultTemplate: UI_Row?
-  let scopeId: String?
   let draftScopeId: String?
 
   @Environment(\.dismiss) private var dismiss
   @State private var searchText = ""
   @State private var apiSearchModel: EVYSearchModel?
 
-  private let searchSource: EVYSearchSource
+  private let searchSource: EVY.SourceExpression
   private var localResults: EVYState<[EVYSearchResult]>
+
+  private static let debounceMilliseconds = 300
 
   init(
     source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
     scopeId: String? = nil,
     draftScopeId: String? = nil
   ) {
-    self.source = source
     self.destination = destination
     self.placeholder = placeholder
-    self.resultTemplate = resultTemplate
-    self.scopeId = scopeId
     self.draftScopeId = draftScopeId
-    searchSource = EVYSearchSource.parse(source)
+    searchSource = EVY.classifySource(source)
 
     switch searchSource {
     case .local:
@@ -96,7 +92,7 @@ struct EVYSearch: View {
                   result.datum, to: destination, scopeId: draftScopeId)
                 dismiss()
               } catch {
-                // Match prior silent-failure behaviour for invalid writes.
+                // Invalid destination writes are non-fatal here.
               }
             }
           )
@@ -109,7 +105,7 @@ struct EVYSearch: View {
         apiSearchModel?.clearResults()
         return
       }
-      try? await Task.sleep(for: .milliseconds(EVYSearchModel.debounceMilliseconds))
+      try? await Task.sleep(for: .milliseconds(Self.debounceMilliseconds))
       guard !Task.isCancelled else { return }
       await apiSearchModel?.search(query: trimmedQuery)
     }

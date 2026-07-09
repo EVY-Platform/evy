@@ -10,17 +10,7 @@
 		"skipLibCheck": true,
 		"noEmit": true,
 		"types": ["bun-types"],
-		"baseUrl": ".",
-		"paths": {
-			"evy-types": ["../types/generated/ts/index.ts"],
-			"evy-types/*": ["../types/generated/ts/*.ts"],
-			"evy-types/coreResources": [
-				"../types/generated/ts/coreResources.ts"
-			],
-			"evy-types/marketplaceResources": [
-				"../types/generated/ts/marketplaceResources.ts"
-			]
-		}
+		"baseUrl": "."
 	},
 	"include": ["app/**/*", "dev/**/*", "tests/**/*"]
 }
