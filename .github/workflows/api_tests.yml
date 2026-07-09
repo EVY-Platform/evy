@@ -4,11 +4,11 @@ on:
     pull_request:
         branches: [dev]
         paths-ignore:
-            - '**/*.md'
+            - "**/*.md"
     push:
         branches: [dev]
         paths-ignore:
-            - '**/*.md'
+            - "**/*.md"
 
 jobs:
     api_tests:
@@ -27,8 +27,8 @@ jobs:
               id: setup
               with:
                   working-directory: api
-                  path-filter: 'api/**'
-                  path-filter-extra: 'types/**'
+                  path-filter: "api/**"
+                  path-filter-extra: "types/**"
 
             - name: Install root dependencies
               if: steps.setup.outputs.has-changes == 'true'
@@ -49,3 +49,4 @@ jobs:
                   DB_PORT: 5432
                   DB_DOMAIN: localhost
                   DB_EVY_DATABASE: test
+                  GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
