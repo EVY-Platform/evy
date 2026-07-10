@@ -232,17 +232,23 @@ seed_database() {
 
 trap cleanup EXIT
 
-echo -e "\n${YELLOW}Installing dependencies...${NC}"
-bun run install:all
+echo -e "\n${YELLOW}Installing root dependencies...${NC}"
+bun install
 
-# Generate shared types before starting services. The generated files are
-# gitignored, so a fresh checkout has none, and services (e.g. marketplace)
-# import them at startup. Generation reads only schema files, not a live DB.
+# Generate shared types before installing app dependencies. The generated files
+# are gitignored, so a fresh checkout has none. Bun's file dependencies may copy
+# evy-types into each app's node_modules during install, so generation must run
+# first for app installs to include generated/ts/index.ts.
 echo -e "\n${YELLOW}Generating types...${NC}"
 if ! bun types:generate; then
     echo -e "${RED}Type generation failed${NC}"
     exit 1
 fi
+
+echo -e "\n${YELLOW}Installing app dependencies...${NC}"
+bun install --cwd api
+bun install --cwd web
+bun install --cwd services/marketplace
 
 if [ "$CI_MODE" = true ]; then
     echo -e "\n${YELLOW}Starting services with Bun (CI mode)...${NC}"
