@@ -335,9 +335,9 @@
 				7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */,
 				7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */,
 				FA10A0082F90000100000001 /* EVYScope.swift */,
-		7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */,
-		FA30A0102F91000100000001 /* EVY+Source.swift */,
-		7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */,
+				7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */,
+				FA30A0102F91000100000001 /* EVY+Source.swift */,
+				7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */,
 				97A43F6468C5603E3B57ECD3 /* EVY+DatumExpression.swift */,
 			);
 			path = Core;

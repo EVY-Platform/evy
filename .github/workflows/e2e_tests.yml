@@ -68,11 +68,11 @@ jobs:
                   'true'
               run: bun run install:all
 
-            - name: Prepare .env and generate types
+            - name: Prepare .env
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
-              uses: ./.github/actions/prepare-dotenv-and-types
+              uses: ./.github/actions/prepare-dotenv
 
             - name: Install Playwright browsers
               if:

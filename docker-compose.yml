@@ -24,8 +24,6 @@ services:
         ports:
             - ${MARKETPLACE_GRPC_PORT}:${MARKETPLACE_GRPC_PORT}
         environment:
-            # Listen on all interfaces inside the container (do not use host `.env` here).
-            - MARKETPLACE_GRPC_HOST=0.0.0.0
             - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
             - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
             - DB_USER=${DB_USER}

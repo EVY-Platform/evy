@@ -271,10 +271,7 @@ export async function startMarketplaceGrpcServer(
 		if (!v) throw new Error(`${key} environment variable is not set`);
 		return v;
 	};
-	const bindHost =
-		options.host ??
-		process.env.MARKETPLACE_GRPC_BIND_HOST?.trim() ??
-		"0.0.0.0";
+	const bindHost = options.host ?? "0.0.0.0";
 	const port =
 		options.port ?? Number.parseInt(getEnv("MARKETPLACE_GRPC_PORT"), 10);
 	const root = loadEvyServiceGrpcRoot();

@@ -17,7 +17,7 @@ struct EVYSearch: View {
   @State private var apiSearchModel: EVYSearchModel?
 
   private let searchSource: EVY.SourceExpression
-  private var localResults: EVYState<[EVYSearchResult]>
+  private var localResults: EVYState<[EVYSearchResult]>?
 
   private static let debounceMilliseconds = 300
 
@@ -43,9 +43,8 @@ struct EVYSearch: View {
           )
         }
       )
-      _apiSearchModel = State(initialValue: nil)
     case .api(let method):
-      localResults = EVYState(textToWatch: "", setter: { [] })
+      localResults = nil
       _apiSearchModel = State(
         initialValue: EVYSearchModel(
           method: method,
@@ -68,10 +67,10 @@ struct EVYSearch: View {
   private var filteredLocalResults: [EVYSearchResult] {
     let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedSearchText.isEmpty else {
-      return localResults.value
+      return localResults?.value ?? []
     }
 
-    return localResults.value.filter {
+    return (localResults?.value ?? []).filter {
       $0.searchableText.localizedCaseInsensitiveContains(trimmedSearchText)
     }
   }

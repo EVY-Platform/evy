@@ -93,7 +93,7 @@ export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 export async function listExternalServiceResources(
 	db: EvyDb,
 ): Promise<Array<{ serviceId: string; resourceId: string }>> {
-	const rows = await db
+	return db
 		.select({
 			serviceId: service.id,
 			resourceId: serviceResource.id,
@@ -102,8 +102,6 @@ export async function listExternalServiceResources(
 		.innerJoin(service, eq(serviceResource.fkServiceId, service.id))
 		.where(ne(service.id, EVY_CORE_SERVICE))
 		.orderBy(asc(service.id), asc(serviceResource.id));
-
-	return rows;
 }
 
 export async function listExternalServices(

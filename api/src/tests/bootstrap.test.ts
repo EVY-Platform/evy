@@ -25,6 +25,11 @@ let listExternalServicesImpl = async (): Promise<
 	Array<{ id: string; name: string }>
 > => [];
 
+function resetBootstrapMocks(): void {
+	getImpl = async () => [];
+	listExternalServicesImpl = async () => [];
+}
+
 describe("initServer bootstrap", () => {
 	let previousApiPort: string | undefined;
 	let server: WSServer;
@@ -88,6 +93,7 @@ describe("assertApiReadable", () => {
 	let listExternalServicesSpy: ReturnType<typeof spyOn>;
 
 	beforeEach(() => {
+		resetBootstrapMocks();
 		getSpy = spyOn(data, "get").mockImplementation((_db, params) =>
 			getImpl(params),
 		);
@@ -103,8 +109,6 @@ describe("assertApiReadable", () => {
 	});
 
 	it("resolves when flows get returns an array envelope and requireSeeded is false", async () => {
-		getImpl = async () => [];
-		listExternalServicesImpl = async () => [];
 		await expect(
 			assertApiReadable(db, { requireSeeded: false }),
 		).resolves.toBeUndefined();
@@ -112,15 +116,12 @@ describe("assertApiReadable", () => {
 
 	it("throws when flows get does not return a data array", async () => {
 		getImpl = async () => "not-array" as unknown as GetResponse;
-		listExternalServicesImpl = async () => [];
 		await expect(
 			assertApiReadable(db, { requireSeeded: false }),
 		).rejects.toThrow("expected flows response data array");
 	});
 
 	it("throws when requireSeeded is true but flows is empty", async () => {
-		getImpl = async () => [];
-		listExternalServicesImpl = async () => [];
 		await expect(
 			assertApiReadable(db, { requireSeeded: true }),
 		).rejects.toThrow("missing seeded flows");
@@ -142,14 +143,12 @@ describe("assertApiReadable", () => {
 				},
 			] as GetResponse;
 		};
-		listExternalServicesImpl = async () => [];
 		await expect(
 			assertApiReadable(db, { requireSeeded: true }),
 		).resolves.toBeUndefined();
 	});
 
 	it("throws when an external service is missing its gRPC env vars", async () => {
-		getImpl = async () => [];
 		listExternalServicesImpl = async () => [
 			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
 		];
@@ -170,7 +169,6 @@ describe("assertApiReadable", () => {
 	});
 
 	it("resolves when all external services have gRPC env vars configured", async () => {
-		getImpl = async () => [];
 		listExternalServicesImpl = async () => [
 			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
 		];

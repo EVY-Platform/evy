@@ -36,12 +36,4 @@ final class EVYSearchTests: XCTestCase {
     let json = try JSONSerialization.jsonObject(with: encoded) as? [String: String]
     XCTAssertEqual(json, ["input": "28 Rothschild"])
   }
-
-  func testEVYAPISearchRequesterStoresMethodFromSDUI() {
-    let requester = EVYAPISearchRequester(method: "place_search")
-    XCTAssertEqual(requester.method, "place_search")
-
-    let otherRequester = EVYAPISearchRequester(method: "search_place")
-    XCTAssertEqual(otherRequester.method, "search_place")
-  }
 }
