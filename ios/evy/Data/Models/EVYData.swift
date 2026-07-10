@@ -278,12 +278,10 @@ enum EVYDataPatcher {
       guard let firstProp = props.first else {
         throw EVYDataParseError.invalidProps
       }
-      guard let subData = dictValue[firstProp] else {
-        throw EVYDataParseError.invalidProps
-      }
       if props.count == 1 {
         dictValue[firstProp] = value
       } else {
+        let subData = dictValue[firstProp] ?? .dictionary([:])
         dictValue[firstProp] = try updatedJson(
           props: Array(props[1...]), data: subData, value: value)
       }

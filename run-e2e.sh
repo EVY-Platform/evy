@@ -40,6 +40,7 @@ _PRESET_WEB_PORT="${WEB_PORT-}"
 _PRESET_API_PORT="${API_PORT-}"
 _PRESET_MARKETPLACE_GRPC_HOST="${MARKETPLACE_GRPC_HOST-}"
 _PRESET_MARKETPLACE_GRPC_PORT="${MARKETPLACE_GRPC_PORT-}"
+_PRESET_GOOGLE_PLACES_API_KEY="${GOOGLE_PLACES_API_KEY-}"
 set -a
 source .env
 set +a
@@ -54,6 +55,11 @@ if [ -n "${_PRESET_MARKETPLACE_GRPC_HOST}" ]; then
 fi
 if [ -n "${_PRESET_MARKETPLACE_GRPC_PORT}" ]; then
 	export MARKETPLACE_GRPC_PORT="${_PRESET_MARKETPLACE_GRPC_PORT}"
+fi
+# Prefer a real Google Places key supplied by the environment (e.g. CI secret)
+# over the placeholder in `.env`, so place search hits the live API.
+if [ -n "${_PRESET_GOOGLE_PLACES_API_KEY}" ]; then
+	export GOOGLE_PLACES_API_KEY="${_PRESET_GOOGLE_PLACES_API_KEY}"
 fi
 
 echo -e "${YELLOW}========================================${NC}"
@@ -226,11 +232,26 @@ seed_database() {
 
 trap cleanup EXIT
 
-echo -e "\n${YELLOW}Installing dependencies...${NC}"
-bun run install:all
+echo -e "\n${YELLOW}Installing root dependencies...${NC}"
+bun install
+
+# Generate shared types before installing app dependencies. The generated files
+# are gitignored, so a fresh checkout has none. Bun's file dependencies may copy
+# evy-types into each app's node_modules during install, so generation must run
+# first for app installs to include generated/ts/index.ts.
+echo -e "\n${YELLOW}Generating types...${NC}"
+if ! bun types:generate; then
+    echo -e "${RED}Type generation failed${NC}"
+    exit 1
+fi
+
+echo -e "\n${YELLOW}Installing app dependencies...${NC}"
+bun install --cwd api
+bun install --cwd web
+bun install --cwd services/marketplace
 
 if [ "$CI_MODE" = true ]; then
-    echo -e "\n${YELLOW}Step 1: Starting services with Bun (CI mode)...${NC}"
+    echo -e "\n${YELLOW}Starting services with Bun (CI mode)...${NC}"
     wait_for_postgres
 
     start_bun_service services/marketplace
@@ -244,22 +265,22 @@ if [ "$CI_MODE" = true ]; then
     start_bun_service web
     WEB_PID=$!
 
-    echo -e "\n${YELLOW}Step 2: Waiting for services to be healthy...${NC}"
+    echo -e "\n${YELLOW}Waiting for services to be healthy...${NC}"
     wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 else
     export DOCKER_BUILDKIT=1
     export COMPOSE_DOCKER_CLI_BUILD=1
 
     # Build each service sequentially to avoid parallel compose build races.
-    echo -e "\n${YELLOW}Step 1: Building services with docker compose...${NC}"
+    echo -e "\n${YELLOW}Building services with docker compose...${NC}"
     docker compose build marketplace
     docker compose build api
     docker compose build web
 
-    echo -e "\n${YELLOW}Step 2: Starting services with docker compose...${NC}"
+    echo -e "\n${YELLOW}Starting services with docker compose...${NC}"
     docker compose up --no-build -d
 
-    echo -e "\n${YELLOW}Step 3: Waiting for services to be healthy...${NC}"
+    echo -e "\n${YELLOW}Waiting for services to be healthy...${NC}"
     wait_for_postgres
 
     wait_for_service_readiness services/marketplace marketplace "health" "Marketplace"
@@ -267,13 +288,7 @@ else
     wait_for_http_service "Web" "http://localhost:$WEB_PORT"
 fi
 
-echo -e "\n${YELLOW}Step 3: Generating types...${NC}"
-if ! bun types:generate; then
-    echo -e "${RED}Type generation failed${NC}"
-    exit 1
-fi
-
-echo -e "\n${YELLOW}Step 4: Running API e2e tests...${NC}"
+echo -e "\n${YELLOW}Running API e2e tests...${NC}"
 seed_database
 cd api
 if bun run test:e2e; then
@@ -284,7 +299,7 @@ else
 fi
 cd ..
 
-echo -e "\n${YELLOW}Step 4b: Running Marketplace e2e tests...${NC}"
+echo -e "\n${YELLOW}Running Marketplace e2e tests...${NC}"
 seed_database
 cd services/marketplace
 if bun run test:e2e; then
@@ -295,7 +310,7 @@ else
 fi
 cd ../..
 
-echo -e "\n${YELLOW}Step 5: Running Web e2e tests...${NC}"
+echo -e "\n${YELLOW}Running Web e2e tests...${NC}"
 seed_database
 cd web
 if bun run test:e2e; then
@@ -307,38 +322,47 @@ fi
 cd ..
 
 if [ "$SKIP_IOS" = true ]; then
-    echo -e "\n${YELLOW}Step 6: Skipping iOS e2e tests (--skip-ios flag set)${NC}"
+    echo -e "\n${YELLOW}Skipping iOS e2e tests (--skip-ios flag set)${NC}"
     IOS_SKIPPED=true
 else
-    echo -e "\n${YELLOW}Step 6: Running iOS e2e tests...${NC}"
-    seed_database
-    cd ios
-    IOS_DESTINATION="$(resolve_ios_simulator_destination)"
-    if [ -z "$IOS_DESTINATION" ]; then
-        echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
-        echo "Available destinations:"
-        xcodebuild -showdestinations -project evy.xcodeproj -scheme evy || true
+    echo -e "\n${YELLOW}Running iOS e2e tests...${NC}"
+    if [ -z "${GOOGLE_PLACES_API_KEY:-}" ] || [ "${GOOGLE_PLACES_API_KEY}" = "googlekey" ]; then
+        echo -e "${RED}GOOGLE_PLACES_API_KEY is missing or set to the '.env.example' placeholder.${NC}"
+        echo -e "${RED}The iOS place search e2e test calls the live Google Places API and cannot pass without a real key.${NC}"
+        echo -e "${RED}Expose the secret to this job: use a repository secret, or an Environment secret with 'environment:' set on the workflow job.${NC}"
+        echo -e "${RED}Also confirm the key has no HTTP-referrer/IP restrictions that would block CI runners.${NC}"
         IOS_RESULT=1
     else
-        echo "Using iOS simulator destination: $IOS_DESTINATION"
-        # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
-        SIM_UDID="${IOS_DESTINATION#*id=}"
-        xcrun simctl shutdown "$SIM_UDID" 2>/dev/null || true
-        xcrun simctl erase "$SIM_UDID" 2>/dev/null || true
-        if xcodebuild test \
-            -project evy.xcodeproj \
-            -scheme evy \
-            -destination "$IOS_DESTINATION" \
-            -only-testing:evyUITests \
-            -parallel-testing-enabled NO \
-            -quiet; then
-            echo -e "${GREEN}iOS e2e tests passed${NC}"
-        else
-            echo -e "${RED}iOS e2e tests failed${NC}"
+        echo -e "${GREEN}Real GOOGLE_PLACES_API_KEY detected; place search e2e will hit the live API${NC}"
+        seed_database
+        cd ios
+        IOS_DESTINATION="$(resolve_ios_simulator_destination)"
+        if [ -z "$IOS_DESTINATION" ]; then
+            echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
+            echo "Available destinations:"
+            xcodebuild -showdestinations -project evy.xcodeproj -scheme evy || true
             IOS_RESULT=1
+        else
+            echo "Using iOS simulator destination: $IOS_DESTINATION"
+            # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
+            SIM_UDID="${IOS_DESTINATION#*id=}"
+            xcrun simctl shutdown "$SIM_UDID" 2>/dev/null || true
+            xcrun simctl erase "$SIM_UDID" 2>/dev/null || true
+            if xcodebuild test \
+                -project evy.xcodeproj \
+                -scheme evy \
+                -destination "$IOS_DESTINATION" \
+                -only-testing:evyUITests \
+                -parallel-testing-enabled NO \
+                -quiet; then
+                echo -e "${GREEN}iOS e2e tests passed${NC}"
+            else
+                echo -e "${RED}iOS e2e tests failed${NC}"
+                IOS_RESULT=1
+            fi
         fi
+        cd ..
     fi
-    cd ..
 fi
 
 echo -e "\n${YELLOW}========================================${NC}"

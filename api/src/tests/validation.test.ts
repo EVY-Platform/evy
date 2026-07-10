@@ -6,9 +6,47 @@ import {
 	validateFileWithBinary,
 	validateUiFlow as validateFlowData,
 	validateDataEvyOrganization as validateOrganizationPayload,
+	validatePlaceSearchRequest,
+	validatePlaceSearchResponse,
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
 } from "evy-types/validators";
+
+describe("place search validators", () => {
+	it("accepts valid place search payloads", () => {
+		const request = validatePlaceSearchRequest({
+			input: "28 Rothschild",
+		});
+		const response = validatePlaceSearchResponse([
+			{
+				id: "ChIJRothschild",
+				street: "28 Rothschild Avenue",
+				city: "Rosebery",
+				country: "Australia",
+				latitude: -33.9172075,
+				longitude: 151.1985883,
+			},
+		]);
+
+		expect(request.input).toBe("28 Rothschild");
+		expect(response[0]?.street).toBe("28 Rothschild Avenue");
+	});
+
+	it.each([
+		{ field: "region", value: "au" },
+		{ field: "language", value: "en-US" },
+	])("rejects place search payloads that include $field", ({
+		field,
+		value,
+	}) => {
+		expect(() =>
+			validatePlaceSearchRequest({
+				input: "28 Rothschild",
+				[field]: value,
+			}),
+		).toThrow("PlaceSearchRequest validation failed");
+	});
+});
 
 describe("validateServicePayload", () => {
 	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";

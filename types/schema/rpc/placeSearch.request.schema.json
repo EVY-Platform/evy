@@ -1,0 +1,15 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "place-search-request",
+	"title": "PlaceSearchRequest",
+	"description": "JSON-RPC params for Google Places place search.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["input"],
+	"properties": {
+		"input": {
+			"type": "string",
+			"minLength": 1
+		}
+	}
+}

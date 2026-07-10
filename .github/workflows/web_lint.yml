@@ -4,13 +4,13 @@ on:
     pull_request:
         branches: [dev]
         paths-ignore:
-            - '**/*.md'
-            - 'docs/**'
+            - "**/*.md"
+            - "docs/**"
     push:
         branches: [dev]
         paths-ignore:
-            - '**/*.md'
-            - 'docs/**'
+            - "**/*.md"
+            - "docs/**"
 
 jobs:
     web_lint:
@@ -29,18 +29,8 @@ jobs:
               id: setup
               with:
                   working-directory: web
-                  path-filter: 'web/**'
-                  path-filter-extra: 'types/**'
-
-            - name: Install root dependencies
-              if: steps.setup.outputs.has-changes == 'true'
-              run: bun install
-              working-directory: .
-
-            - name: Generate types
-              if: steps.setup.outputs.has-changes == 'true'
-              run: bun types:generate
-              working-directory: .
+                  path-filter: "web/**"
+                  path-filter-extra: "types/**"
 
             - name: Run lint
               if: steps.setup.outputs.has-changes == 'true'

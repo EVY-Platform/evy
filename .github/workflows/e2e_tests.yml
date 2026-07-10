@@ -102,6 +102,7 @@ jobs:
                   MARKETPLACE_GRPC_HOST: 127.0.0.1
                   IOS_SIMULATOR_DEVICE_NAME: iPhone 17
                   IOS_SIMULATOR_OS_VERSION: 26.5
+                  GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
               run: bash run-e2e.sh --ci
 
             - name: Upload Playwright report

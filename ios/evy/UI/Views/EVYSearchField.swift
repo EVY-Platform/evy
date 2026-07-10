@@ -14,7 +14,10 @@ struct EVYSearchField: View {
   var body: some View {
     EVYTextInput(
       text: $text,
-      placeholder: placeholder.map { "::search:: \($0)" })
+      placeholder: placeholder.map { "::search:: \($0)" }
+    )
+    .autocorrectionDisabled()
+    .textInputAutocapitalization(.never)
   }
 }
 

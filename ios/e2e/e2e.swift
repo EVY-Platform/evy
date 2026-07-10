@@ -1627,3 +1627,143 @@ final class E2EErrorStateTests: XCTestCase {
     )
   }
 }
+
+// MARK: - Place search address sheet
+
+final class E2EPlaceSearchTests: E2ETestBase {
+  private static let placeSearchHomeFlowId = "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"
+  private static let placeSearchPageId = "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b"
+  private static let placeSearchEntityId = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+  private static let placeSearchQuery = "Sydney"
+
+  override var homeFlowId: String? { Self.placeSearchHomeFlowId }
+
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    try seedFlows([
+      (
+        flowId: Self.placeSearchHomeFlowId,
+        flowData: Self.placeSearchFlowData()
+      )
+    ])
+    try launchApp()
+  }
+
+  func testSingleWordPlaceSearchSelectsAddressAndDismissesSheet() throws {
+    let whereLabel = app.staticTexts["Where"]
+    XCTAssertTrue(
+      whereLabel.waitForExistence(timeout: 20),
+      "Pickup address row should be visible - verify API is running and flow is seeded")
+
+    whereLabel.tap()
+
+    let searchField = app.textFields.firstMatch
+    XCTAssertTrue(searchField.waitForExistence(timeout: 5), "Search field should appear in sheet")
+    clearAndType(field: searchField, text: Self.placeSearchQuery)
+
+    let result = app.staticTexts.matching(
+      NSPredicate(
+        format: "label CONTAINS[c] %@ AND label != %@",
+        Self.placeSearchQuery,
+        "Where"
+      )
+    ).firstMatch
+    XCTAssertTrue(
+      result.waitForExistence(timeout: 20),
+      "Place search should return results for a single word without trailing space")
+    result.tap()
+
+    let sheetStillOpen = searchField.waitForExistence(timeout: 2)
+    XCTAssertFalse(sheetStillOpen, "Search sheet should dismiss after selecting a result")
+
+    let formattedAddress = app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS[c] 'NSW' OR label CONTAINS[c] 'Australia'")
+    ).firstMatch
+    XCTAssertTrue(
+      formattedAddress.waitForExistence(timeout: 10),
+      "Pickup subtitle should reflect the written address")
+  }
+
+  private static func placeSearchFlowData() -> [String: Any] {
+    let destination = "{\(placeSearchEntityId).transfer_options.pickup.address}"
+    let subtitle = "{formatAddress(\(placeSearchEntityId).transfer_options.pickup.address)}"
+    return [
+      "id": placeSearchHomeFlowId,
+      "name": "E2E Place Search",
+      "pages": [
+        [
+          "id": placeSearchPageId,
+          "title": "Pickup",
+          "rows": [
+            textActionRow(
+              id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+              title: "Where",
+              subtitle: subtitle,
+              child: searchRow(
+                id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
+                source: "{$api:place_search}",
+                destination: destination,
+                placeholder: "Search address",
+                child: [
+                  "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+                  "type": "Text",
+                  "title": "{$datum.street}",
+                  "subtitle": "{$datum.city}",
+                  "actions": [],
+                  "visible": "true",
+                ]
+              )
+            )
+          ],
+        ]
+      ],
+    ]
+  }
+
+  private static func textActionRow(
+    id: String,
+    title: String,
+    subtitle: String,
+    action: String = "Change",
+    child: [String: Any],
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "TextAction",
+      "visible": visible,
+      "title": title,
+      "subtitle": subtitle,
+      "action": action,
+      "actions": [
+        [
+          "condition": "",
+          "false": "",
+          "true": "{show()}",
+        ]
+      ],
+      "child": child,
+    ]
+  }
+
+  private static func searchRow(
+    id: String,
+    source: String,
+    destination: String,
+    placeholder: String,
+    child: [String: Any],
+    visible: String = "true"
+  ) -> [String: Any] {
+    return [
+      "id": id,
+      "type": "Search",
+      "visible": visible,
+      "title": "",
+      "placeholder": placeholder,
+      "source": source,
+      "destination": destination,
+      "actions": [],
+      "child": child,
+    ]
+  }
+}

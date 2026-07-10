@@ -1,9 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { UI_Row as ServerRow } from "evy-types";
-import invariant from "tiny-invariant";
-import SearchRow, {
-	SEARCH_RESULT_TEMPLATE_ROW_ID,
-} from "../rows/edit/SearchRow";
+import SearchRow from "../rows/edit/SearchRow";
 import { buildRowForNewPageFromBase, normalizeServerRow } from "./decodeFlow";
 
 const ROW_A = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
@@ -72,13 +69,16 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		expect(n.child?.type).toBe("Text");
-		expect(n.child?.destination).toBeUndefined();
-		expect(rowAttributes(n.child)).toEqual({
+		const nestedChild = n.child as ServerRow | undefined;
+		expect(nestedChild?.type).toBe("Text");
+		expect(nestedChild?.destination).toBeUndefined();
+		expect(rowAttributes(nestedChild)).toEqual({
 			title: "{$datum.title}",
 		});
 
-		const firstChild = n.children?.[0];
+		const firstChild = Array.isArray(n.children)
+			? (n.children[0] as ServerRow | undefined)
+			: undefined;
 		expect(firstChild?.type).toBe("Button");
 		expect(firstChild?.destination).toBeUndefined();
 		expect(firstChild).toMatchObject({
@@ -89,7 +89,7 @@ describe("normalizeServerRow", () => {
 });
 
 describe("buildRowForNewPageFromBase", () => {
-	it("preserves only title test text and structural child for a new Search row", () => {
+	it("does not create a default child for a new Search row", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 		const row = buildRowForNewPageFromBase(SearchRow, newId);
 		expect(row.id).toBe(newId);
@@ -98,18 +98,8 @@ describe("buildRowForNewPageFromBase", () => {
 		expect(row.config.placeholder).toBe("");
 		expect(row.config.source).toBe("");
 		expect(row.config.destination).toBe("");
-		const child = row.config.child;
-		invariant(child, "search row template child");
-		const childId = child.id;
-		expect(childId).toBeDefined();
-		expect(childId).not.toBe(SEARCH_RESULT_TEMPLATE_ROW_ID);
-		expect(child.config).toMatchObject({
-			title: "{$datum.value}",
-			subtitle: "",
-			label: "",
-		});
-		expect(child.config.source).toBeUndefined();
-		expect(child.config.destination).toBeUndefined();
+		expect(row.config.child).toBeUndefined();
+		expect(row.config.childRowId).toBeUndefined();
 	});
 });
 

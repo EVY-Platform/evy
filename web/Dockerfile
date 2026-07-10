@@ -5,37 +5,39 @@ WORKDIR /app
 # Generate shared types from schema (no committed generated files)
 FROM base AS typesgen
 COPY package.json bun.lock* ./
-COPY types/schema ./types/schema
+COPY types ./types
 COPY scripts ./scripts
 
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate
 
 # Install web dependencies
 FROM base AS deps
+WORKDIR /app/web
+COPY --from=typesgen /app/types /app/types
 COPY web/package.json web/bun.lock* ./
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 
 # Build stage (evy-types = ../types/generated/ts from web/, so workspace has types/ and web/)
 FROM base AS builder
-WORKDIR /workspace
+WORKDIR /app
 COPY --from=typesgen /app/types ./types
 COPY web/package.json web/bun.lock* web/tsconfig.json ./web/
-COPY --from=deps /app/node_modules ./web/node_modules
+COPY --from=deps /app/web/node_modules ./web/node_modules
 COPY web/app ./web/app
 COPY web/dev ./web/dev
 
 ARG API_URL
 ENV API_URL=$API_URL
-WORKDIR /workspace/web
+WORKDIR /app/web
 RUN bun run dev/build.ts
 
 # Production stage
 FROM base AS runner
 WORKDIR /app
-COPY --from=builder --chown=bun:bun /workspace/web/node_modules ./node_modules
-COPY --from=builder --chown=bun:bun /workspace/web/package.json ./
-COPY --from=builder --chown=bun:bun /workspace/web/dist ./dist
-COPY --from=builder --chown=bun:bun /workspace/web/dev ./dev
+COPY --from=builder --chown=bun:bun /app/web/node_modules ./node_modules
+COPY --from=builder --chown=bun:bun /app/web/package.json ./
+COPY --from=builder --chown=bun:bun /app/web/dist ./dist
+COPY --from=builder --chown=bun:bun /app/web/dev ./dev
 
 USER bun
 

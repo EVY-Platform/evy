@@ -99,10 +99,14 @@ enum EVYPreviewMockData {
     {
       "id": "preview-user-1",
       "address": {
-        "line1": "42 Preview Lane",
+        "unit": "",
+        "street": "42 Preview Lane",
         "city": "Preview City",
         "postcode": "2000",
-        "country": "Australia"
+        "state": "NSW",
+        "country": "Australia",
+        "latitude": -33.8688,
+        "longitude": 151.2093
       }
     }
     """
@@ -141,12 +145,23 @@ enum EVYPreviewMockData {
     }
   }
 
+  static func seedCurrentUser() {
+    guard let data = user.data(using: .utf8) else { return }
+    try? EVY.publicStore.upsert(
+      namespace: EVYNamespace.local,
+      resource: "user",
+      id: EVYNamespace.singletonId,
+      value: data
+    )
+  }
+
   static func seedCommon() {
     seed(key: "item", json: item)
     seed(key: "conditions", json: conditions)
     seed(key: "durations", json: durations)
     seed(key: "selling_reasons", json: sellingReasons)
     seed(key: "tags", json: tags)
+    seedCurrentUser()
   }
 
   static func decodeRow(from json: String) -> UI_Row? {

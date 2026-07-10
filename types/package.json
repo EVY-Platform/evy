@@ -1,4 +1,19 @@
 {
 	"name": "evy-types",
-	"type": "module"
+	"type": "module",
+	"main": "./generated/ts/index.ts",
+	"types": "./generated/ts/index.ts",
+	"exports": {
+		".": "./generated/ts/index.ts",
+		"./coreResources": "./coreResources.ts",
+		"./marketplaceResources": "./marketplaceResources.ts",
+		"./apiDataSources": "./apiDataSources.ts",
+		"./rpcRequestHelpers": "./rpcRequestHelpers.ts",
+		"./validators": "./validators.ts",
+		"./*": "./generated/ts/*.ts"
+	},
+	"dependencies": {
+		"ajv": "^8.20.0",
+		"ajv-formats": "^3.0.1"
+	}
 }

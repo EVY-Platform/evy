@@ -5,7 +5,7 @@ WORKDIR /app
 # Generate shared types from schema (no committed generated files)
 FROM base AS typesgen
 COPY package.json bun.lock* ./
-COPY types/schema ./types/schema
+COPY types ./types
 COPY scripts ./scripts
 
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile && bun run types:generate
@@ -13,8 +13,9 @@ RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lock
 # Install dependencies stage
 FROM base AS deps
 WORKDIR /app/services/marketplace
-COPY services/marketplace/package.json ./
-RUN --mount=type=cache,target=/root/.bun/install/cache bun install
+COPY --from=typesgen /app/types /app/types
+COPY services/marketplace/package.json services/marketplace/bun.lock* ./
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 
 # Build stage
 FROM base AS builder
@@ -25,12 +26,7 @@ COPY services/marketplace/tsconfig.json ./tsconfig.json
 COPY services/marketplace/src ./src
 COPY services/marketplace/drizzle.config.ts ./
 COPY services/marketplace/drizzle ./drizzle
-COPY --from=typesgen /app/types/generated/ts ../../types/generated/ts
-COPY types/schema ../../types/schema
-COPY types/validators.ts ../../types/validators.ts
-COPY types/coreResources.ts ../../types/coreResources.ts
-COPY types/marketplaceResources.ts ../../types/marketplaceResources.ts
-COPY types/rpcRequestHelpers.ts ../../types/rpcRequestHelpers.ts
+COPY --from=typesgen /app/types /app/types
 
 # Production stage
 FROM base AS runner

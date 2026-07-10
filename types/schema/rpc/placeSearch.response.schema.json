@@ -1,0 +1,48 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "place-search-response",
+	"title": "PlaceSearchResponse",
+	"description": "JSON-RPC response for Google Places place search.",
+	"type": "array",
+	"items": {
+		"type": "object",
+		"additionalProperties": false,
+		"required": [
+			"id",
+			"street",
+			"city",
+			"country",
+			"latitude",
+			"longitude"
+		],
+		"properties": {
+			"id": {
+				"type": "string"
+			},
+			"unit": {
+				"type": "string"
+			},
+			"street": {
+				"type": "string"
+			},
+			"city": {
+				"type": "string"
+			},
+			"postcode": {
+				"type": "string"
+			},
+			"state": {
+				"type": "string"
+			},
+			"country": {
+				"type": "string"
+			},
+			"latitude": {
+				"type": "number"
+			},
+			"longitude": {
+				"type": "number"
+			}
+		}
+	}
+}

@@ -1,4 +1,3 @@
-import { asc, eq, ne } from "drizzle-orm";
 import type {
 	GetRequest,
 	GetResponse,
@@ -11,13 +10,9 @@ import {
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
 import { validateSyncResponse } from "evy-types/validators";
-import {
-	service,
-	serviceResource,
-} from "../../../types/generated/ts/db/schema.generated";
-import { get as defaultGetCore } from "../data/data";
+import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
-import { forwardGet } from "./services";
+import * as services from "./services";
 
 type SyncRow = SyncResponse["data"][number];
 
@@ -25,28 +20,6 @@ type ExternalServiceResource = {
 	serviceId: string;
 	resourceId: string;
 };
-
-type SyncDependencies = {
-	getCore: (params: GetRequest) => Promise<GetResponse>;
-	fetchService: typeof forwardGet;
-	listExternalResources: (db: EvyDb) => Promise<ExternalServiceResource[]>;
-};
-
-async function defaultListExternalResources(
-	db: EvyDb,
-): Promise<ExternalServiceResource[]> {
-	const rows = await db
-		.select({
-			serviceId: service.id,
-			resourceId: serviceResource.id,
-		})
-		.from(serviceResource)
-		.innerJoin(service, eq(serviceResource.fkServiceId, service.id))
-		.where(ne(service.id, EVY_CORE_SERVICE))
-		.orderBy(asc(service.id), asc(serviceResource.id));
-
-	return rows;
-}
 
 async function fetchEvyCoreData(
 	lastSyncTime: string,
@@ -75,7 +48,7 @@ async function fetchEvyCoreData(
 async function fetchExternalServiceData(
 	lastSyncTime: string,
 	externalResources: ExternalServiceResource[],
-	fetchService: typeof forwardGet,
+	fetchService: typeof services.forwardGet,
 ): Promise<SyncRow[]> {
 	const rows: SyncRow[] = [];
 	for (const { serviceId, resourceId } of externalResources) {
@@ -96,28 +69,20 @@ async function fetchExternalServiceData(
 	return rows;
 }
 
-function defaultSyncDeps(db: EvyDb): SyncDependencies {
-	return {
-		getCore: (request) => defaultGetCore(db, request),
-		fetchService: forwardGet,
-		listExternalResources: defaultListExternalResources,
-	};
-}
-
 export async function sync(
 	syncParams: SyncRequest,
 	db: EvyDb,
-	deps?: SyncDependencies,
 ): Promise<SyncResponse> {
-	const resolvedDeps = deps ?? defaultSyncDeps(db);
-	const externalResources = await resolvedDeps.listExternalResources(db);
+	const externalResources = await data.listExternalServiceResources(db);
 
 	const [evyData, externalData] = await Promise.all([
-		fetchEvyCoreData(syncParams.lastSyncTime, resolvedDeps.getCore),
+		fetchEvyCoreData(syncParams.lastSyncTime, (request) =>
+			data.get(db, request),
+		),
 		fetchExternalServiceData(
 			syncParams.lastSyncTime,
 			externalResources,
-			resolvedDeps.fetchService,
+			services.forwardGet,
 		),
 	]);
 

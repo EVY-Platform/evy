@@ -28,7 +28,10 @@ struct EVYTextRow: View {
         }
         if let subtitle = content.subtitle, !subtitle.isEmpty {
           EVYTextView(subtitle, style: .info)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(
+              maxWidth: .infinity,
+              alignment: content.title?.isEmpty ?? true ? .center : .leading
+            )
             .lineLimit(3)
             .truncationMode(.tail)
         }
@@ -39,4 +42,51 @@ struct EVYTextRow: View {
     }
     .padding(.horizontal, Constants.majorPadding)
   }
+}
+
+#Preview("Title, subtitle, and label") {
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-text-row-full",
+        "type": "Text",
+        "actions": [],
+        "visible": "true",
+        "title": "Pickup address",
+        "subtitle": "123 Market Street, San Francisco",
+        "label": "Default"
+      }
+      """,
+    failureMessage: "Unable to build text row preview"
+  )
+}
+
+#Preview("Title only") {
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-text-row-title-only",
+        "type": "Text",
+        "actions": [],
+        "visible": "true",
+        "title": "Pickup address"
+      }
+      """,
+    failureMessage: "Unable to build title-only text row preview"
+  )
+}
+
+#Preview("Subtitle only") {
+  EVYPreviewRow(
+    json: """
+      {
+        "id": "preview-text-row-subtitle-only",
+        "type": "Text",
+        "actions": [],
+        "visible": "true",
+        "subtitle": "Available between 10 AM and 2 PM"
+      }
+      """,
+    failureMessage: "Unable to build subtitle-only text row preview"
+  )
 }

@@ -1,32 +1,24 @@
-import { ne } from "drizzle-orm";
-import type { GetRequest, GetResponse } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { service } from "../../types/generated/ts/db/schema.generated";
-import { get as getCore } from "./data/data";
-import { createDb } from "./database/db";
+import * as data from "./data/data";
+import { createDb, type EvyDb } from "./database/db";
 import { requireServiceGrpcEndpoint } from "./procedures/services";
 
 type AssertApiReadableOptions = {
 	requireSeeded: boolean;
 };
 
-type ApiReadableDeps = {
-	get: (params: GetRequest) => Promise<GetResponse>;
-	listExternalServices: () => Promise<Array<{ id: string; name: string }>>;
-};
-
 export async function assertApiReadable(
+	db: EvyDb,
 	options: AssertApiReadableOptions,
-	deps: ApiReadableDeps,
 ): Promise<void> {
 	const { requireSeeded } = options;
 
-	const externalServices = await deps.listExternalServices();
+	const externalServices = await data.listExternalServices(db);
 	for (const { id, name } of externalServices) {
 		requireServiceGrpcEndpoint(name, id);
 	}
 
-	const response = await deps.get({
+	const response = await data.get(db, {
 		service: EVY_CORE_SERVICE,
 		resource: EVY_CORE_RESOURCE.FLOWS,
 	});
@@ -49,17 +41,7 @@ export async function runHealthCli(): Promise<void> {
 	const db = createDb();
 	const requireSeededData = process.argv.includes("--require-seeded");
 	try {
-		await assertApiReadable(
-			{ requireSeeded: requireSeededData },
-			{
-				get: (params) => getCore(db, params),
-				listExternalServices: () =>
-					db
-						.select({ id: service.id, name: service.name })
-						.from(service)
-						.where(ne(service.id, EVY_CORE_SERVICE)),
-			},
-		);
+		await assertApiReadable(db, { requireSeeded: requireSeededData });
 		console.info(
 			requireSeededData
 				? "API seeded-data readiness OK"

@@ -8,7 +8,7 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "child", "source", "destination"],
+			"required": ["type", "source", "destination"],
 			"properties": {
 				"type": {
 					"const": "Search"

@@ -46,6 +46,13 @@ struct EVYMap: View {
 
 #Preview {
   EVYMap(
-    location: .dictionary(["latitude": .decimal(-33.8688), "longitude": .decimal(151.2093)])
+    location: .dictionary([
+      "unit": .string("C509"),
+      "street": .string("28 Rothschild Avenue"),
+      "city": .string("Rosebery"),
+      "country": .string("Australia"),
+      "latitude": .string("-33.8688"),
+      "longitude": .string("151.2093"),
+    ])
   )
 }

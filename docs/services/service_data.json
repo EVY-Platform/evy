@@ -122,10 +122,8 @@
 						"postcode": "2018",
 						"state": "NSW",
 						"country": "Australia",
-						"location": {
-							"latitude": -33.9172075,
-							"longitude": 151.1985883
-						},
+						"latitude": -33.9172075,
+						"longitude": 151.1985883,
 						"instructions": ""
 					}
 				},
@@ -190,10 +188,8 @@
 						"postcode": "2018",
 						"state": "NSW",
 						"country": "Australia",
-						"location": {
-							"latitude": -33.9172075,
-							"longitude": 151.1985883
-						},
+						"latitude": -33.9172075,
+						"longitude": 151.1985883,
 						"instructions": ""
 					}
 				},

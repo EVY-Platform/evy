@@ -12,6 +12,7 @@ import {
 } from "../rows/rowFields";
 import { useFlowsContext } from "../state";
 import type { Row } from "../types/row";
+import { getApiDataSourceAttributeCandidates } from "../utils/apiDataSources";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
 import {
 	buildDatumCandidate,
@@ -25,6 +26,7 @@ import {
 	findPageReferences,
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
+import { parseApiSourceMethod } from "../utils/sourceBinding";
 import { unwrapOptionalBraces } from "../utils/unwrapBraces";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
@@ -264,6 +266,13 @@ export function ConfigurationPanel() {
 				.sort(compareRowFieldsForPanel);
 
 			const getAttributeCandidatesForQualifier = (qualifier: string) => {
+				if (qualifier === "$datum") {
+					const apiMethod = parseApiSourceMethod(rowSource);
+					if (apiMethod) {
+						return getApiDataSourceAttributeCandidates(apiMethod);
+					}
+				}
+
 				const resourceId = resolveQualifierResourceId(
 					qualifier,
 					rowSource,

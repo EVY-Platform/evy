@@ -10,7 +10,6 @@ export default defineRow("TextRow", {
 		visible: "true",
 		title: "Text row title",
 		subtitle: "Subtitle",
-		label: "Label",
 	} satisfies RowConfig,
 	render: (row) => {
 		const { title = "", subtitle = "", label = "" } = row.config;
@@ -33,9 +32,12 @@ export default defineRow("TextRow", {
 					) : null}
 				</div>
 				{label.trim() ? (
-					<span className="evy-text-sm evy-text-gray evy-shrink-0">
+					<p
+						className="evy-text-sm evy-text-gray"
+						style={lineClampStyle(1)}
+					>
 						<EVYText text={label} />
-					</span>
+					</p>
 				) : null}
 			</div>
 		);

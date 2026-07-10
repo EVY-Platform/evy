@@ -271,7 +271,10 @@ export async function startMarketplaceGrpcServer(
 		if (!v) throw new Error(`${key} environment variable is not set`);
 		return v;
 	};
-	const host = options.host ?? getEnv("MARKETPLACE_GRPC_HOST");
+	const bindHost =
+		options.host ??
+		process.env.MARKETPLACE_GRPC_BIND_HOST?.trim() ??
+		"0.0.0.0";
 	const port =
 		options.port ?? Number.parseInt(getEnv("MARKETPLACE_GRPC_PORT"), 10);
 	const root = loadEvyServiceGrpcRoot();
@@ -283,7 +286,7 @@ export async function startMarketplaceGrpcServer(
 
 	await new Promise<void>((resolve, reject) => {
 		server.bindAsync(
-			`${host}:${port}`,
+			`${bindHost}:${port}`,
 			grpc.ServerCredentials.createInsecure(),
 			(err, boundPort) => {
 				if (err) {
@@ -291,7 +294,7 @@ export async function startMarketplaceGrpcServer(
 					return;
 				}
 				console.info(
-					`Marketplace gRPC listening at ${host}:${boundPort}`,
+					`Marketplace gRPC listening at ${bindHost}:${boundPort}`,
 				);
 				resolve();
 			},

@@ -30,7 +30,8 @@ struct EVYSearchRow: View {
         destination: view.destination,
         placeholder: view.placeholder,
         resultTemplate: childRef?.templateRow(),
-        scopeId: evyScope.cacheScopeId
+        scopeId: evyScope.cacheScopeId,
+        draftScopeId: evyScope.draftScopeId
       )
     }
     .padding(.horizontal, Constants.majorPadding)

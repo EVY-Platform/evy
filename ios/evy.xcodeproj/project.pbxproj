@@ -24,6 +24,10 @@
 		7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
 		7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */; };
 		7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */; };
+		FA30A0112F91000100000001 /* EVY+Source.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA30A0102F91000100000001 /* EVY+Source.swift */; };
+		FA20A0152F91000100000001 /* EVYSearchRequesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0142F91000100000001 /* EVYSearchRequesting.swift */; };
+		FA20A0172F91000100000001 /* EVYSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0162F91000100000001 /* EVYSearchModel.swift */; };
+		FA20A0192F91000100000001 /* EVYSearchModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0182F91000100000001 /* EVYSearchModelTests.swift */; };
 		7333F45E2FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44F2FAA2D1C006BEA92 /* EVY+Preview.swift */; };
 		7333F45F2FAA2D1C006BEA92 /* EVY+Mutations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F44E2FAA2D1C006BEA92 /* EVY+Mutations.swift */; };
 		7333F4602FAA2D1C006BEA92 /* EVY+TextParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */; };
@@ -117,11 +121,13 @@
 		E00100112F73010100000001 /* EVYDataStoreSortIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */; };
 		FA001001PG00000100000001 /* EVYPhotoGalleryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA001002PG00000100000001 /* EVYPhotoGalleryTests.swift */; };
 		FA001003TP00000100000001 /* EVYTimeslotPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA001004TP00000100000001 /* EVYTimeslotPickerTests.swift */; };
+		FA20A0132F91000100000001 /* EVYSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0122F91000100000001 /* EVYSearchTests.swift */; };
 		DC001001NT00000100000001 /* EVYDataChangeNotificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC001002NT00000100000001 /* EVYDataChangeNotificationTests.swift */; };
 		FA001005ST00000100000001 /* EVYStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA001006ST00000100000001 /* EVYStateTests.swift */; };
 		FA002001MP00001000000001 /* EVYMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA002002MP00001000000001 /* EVYMap.swift */; };
 		FA002003MP00001000000001 /* EVYMapRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA002004MP00001000000001 /* EVYMapRow.swift */; };
 		FA002005MP00001000000001 /* EVYMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA002006MP00001000000001 /* EVYMapTests.swift */; };
+		FA003001DP00001000000001 /* EVYDataPatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA003002DP00001000000001 /* EVYDataPatcherTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -161,6 +167,10 @@
 		7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+QueryParams.swift"; sourceTree = "<group>"; };
 		7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFlowStore.swift; sourceTree = "<group>"; };
 		7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Sync.swift"; sourceTree = "<group>"; };
+		FA30A0102F91000100000001 /* EVY+Source.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Source.swift"; sourceTree = "<group>"; };
+		FA20A0142F91000100000001 /* EVYSearchRequesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchRequesting.swift; sourceTree = "<group>"; };
+		FA20A0162F91000100000001 /* EVYSearchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchModel.swift; sourceTree = "<group>"; };
+		FA20A0182F91000100000001 /* EVYSearchModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchModelTests.swift; sourceTree = "<group>"; };
 		7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+TextParsing.swift"; sourceTree = "<group>"; };
 		734F5A212C2EBB2B00C0FD0A /* EVYDropdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDropdown.swift; sourceTree = "<group>"; };
 		734F5A2300IMGRPC00C0FD0A /* EVYFileRPC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFileRPC.swift; sourceTree = "<group>"; };
@@ -252,11 +262,13 @@
 		E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDataStoreSortIndexTests.swift; sourceTree = "<group>"; };
 		FA001002PG00000100000001 /* EVYPhotoGalleryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYPhotoGalleryTests.swift; sourceTree = "<group>"; };
 		FA001004TP00000100000001 /* EVYTimeslotPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTimeslotPickerTests.swift; sourceTree = "<group>"; };
+		FA20A0122F91000100000001 /* EVYSearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchTests.swift; sourceTree = "<group>"; };
 		DC001002NT00000100000001 /* EVYDataChangeNotificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDataChangeNotificationTests.swift; sourceTree = "<group>"; };
 		FA001006ST00000100000001 /* EVYStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYStateTests.swift; sourceTree = "<group>"; };
 		FA002002MP00001000000001 /* EVYMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMap.swift; sourceTree = "<group>"; };
 		FA002004MP00001000000001 /* EVYMapRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMapRow.swift; sourceTree = "<group>"; };
 		FA002006MP00001000000001 /* EVYMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMapTests.swift; sourceTree = "<group>"; };
+		FA003002DP00001000000001 /* EVYDataPatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDataPatcherTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -291,6 +303,7 @@
 				737C6AC82B270AD90093D00C /* API */,
 				737C6ABF2B270AAE0093D00C /* Models */,
 				737C6ACA2B270AD90093D00C /* EVYAPIManager.swift */,
+				FA20A0142F91000100000001 /* EVYSearchRequesting.swift */,
 				736495BE2B972E1800729129 /* EVYStores.swift */,
 				FA10A0022F90000100000001 /* EVYChange.swift */,
 				FA10A0042F90000100000001 /* EVYState.swift */,
@@ -322,8 +335,9 @@
 				7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */,
 				7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */,
 				FA10A0082F90000100000001 /* EVYScope.swift */,
-				7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */,
-				7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */,
+		7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */,
+		FA30A0102F91000100000001 /* EVY+Source.swift */,
+		7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */,
 				97A43F6468C5603E3B57ECD3 /* EVY+DatumExpression.swift */,
 			);
 			path = Core;
@@ -506,6 +520,7 @@
 				73CB094F2C760597008F7D2C /* EVYInputList.swift */,
 				FA002002MP00001000000001 /* EVYMap.swift */,
 				73C78AE92BC549840026F39D /* EVYSearch.swift */,
+				FA20A0162F91000100000001 /* EVYSearchModel.swift */,
 				73C78AEB2BC549840026F39E /* EVYSearchField.swift */,
 				73C78AF12BC549840026F3A0 /* EVYTextInput.swift */,
 				737334FA2B7B671100D2E1CF /* EVYTextField.swift */,
@@ -555,9 +570,12 @@
 				E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */,
 				FA001002PG00000100000001 /* EVYPhotoGalleryTests.swift */,
 				FA001004TP00000100000001 /* EVYTimeslotPickerTests.swift */,
+				FA20A0122F91000100000001 /* EVYSearchTests.swift */,
+				FA20A0182F91000100000001 /* EVYSearchModelTests.swift */,
 				DC001002NT00000100000001 /* EVYDataChangeNotificationTests.swift */,
 				FA001006ST00000100000001 /* EVYStateTests.swift */,
 				FA002006MP00001000000001 /* EVYMapTests.swift */,
+				FA003002DP00001000000001 /* EVYDataPatcherTests.swift */,
 				74A100262F32000100000001 /* EVYCalendarTests.swift */,
 				74A100042F32000100000001 /* interpreterTests.swift */,
 				74A100282F32000100000001 /* SduiRowAttributeContractTests.swift */,
@@ -759,6 +777,9 @@
 				7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */,
 				7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */,
 				7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */,
+				FA30A0112F91000100000001 /* EVY+Source.swift in Sources */,
+				FA20A0152F91000100000001 /* EVYSearchRequesting.swift in Sources */,
+				FA20A0172F91000100000001 /* EVYSearchModel.swift in Sources */,
 				7333F45E2FAA2D1C006BEA92 /* EVY+Preview.swift in Sources */,
 				7333F45F2FAA2D1C006BEA92 /* EVY+Mutations.swift in Sources */,
 				7333F4602FAA2D1C006BEA92 /* EVY+TextParsing.swift in Sources */,
@@ -819,9 +840,12 @@
 				E00100112F73010100000001 /* EVYDataStoreSortIndexTests.swift in Sources */,
 				FA001001PG00000100000001 /* EVYPhotoGalleryTests.swift in Sources */,
 				FA001003TP00000100000001 /* EVYTimeslotPickerTests.swift in Sources */,
+				FA20A0132F91000100000001 /* EVYSearchTests.swift in Sources */,
+				FA20A0192F91000100000001 /* EVYSearchModelTests.swift in Sources */,
 				DC001001NT00000100000001 /* EVYDataChangeNotificationTests.swift in Sources */,
 				FA001005ST00000100000001 /* EVYStateTests.swift in Sources */,
 				FA002005MP00001000000001 /* EVYMapTests.swift in Sources */,
+				FA003001DP00001000000001 /* EVYDataPatcherTests.swift in Sources */,
 				74A100252F32000100000001 /* EVYCalendarTests.swift in Sources */,
 				74A100012F32000100000001 /* interpreterTests.swift in Sources */,
 				73F2A0072F30B00200000001 /* SduiDefinitions.generated.swift in Sources */,
