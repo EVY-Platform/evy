@@ -249,6 +249,15 @@
 										},
 										"visible": "true",
 										"name": "Shipping address"
+									},
+									{
+										"id": "e47cc52b-c909-496d-bc9a-af7e8b9d7ed3",
+										"type": "Button",
+										"actions": [],
+										"visible": "true",
+										"title": "",
+										"label": "Ask to buy",
+										"name": "Ask to buy"
 									}
 								],
 								"name": "Shipping details"
