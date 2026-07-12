@@ -11,12 +11,12 @@ on:
             - "**/*.md"
 
 jobs:
-    api:
+    api_lint:
         defaults:
             run:
                 working-directory: api
 
-        timeout-minutes: 5
+        timeout-minutes: 1
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -34,9 +34,47 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run lint
 
+    api_build:
+        defaults:
+            run:
+                working-directory: api
+
+        timeout-minutes: 1
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
+              with:
+                  working-directory: api
+                  path-filter: "api/**"
+                  path-filter-extra: "types/**"
+
             - name: Run build
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run build
+
+    api_tests:
+        defaults:
+            run:
+                working-directory: api
+
+        timeout-minutes: 2
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
+              with:
+                  working-directory: api
+                  path-filter: "api/**"
+                  path-filter-extra: "types/**"
 
             - name: Run tests
               if: steps.setup.outputs.has-changes == 'true'

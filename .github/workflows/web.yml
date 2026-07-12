@@ -11,17 +11,13 @@ on:
             - "**/*.md"
 
 jobs:
-    web:
-        permissions:
-            contents: read
-            packages: read
+    web_lint:
         defaults:
             run:
                 working-directory: web
 
-        timeout-minutes: 10
+        timeout-minutes: 1
         runs-on: ubuntu-latest
-
         steps:
             - name: Checkout code
               uses: actions/checkout@v6
@@ -37,6 +33,37 @@ jobs:
             - name: Run lint
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run lint
+
+            - name: Upload lint report
+              uses: actions/upload-artifact@v7
+              if: always() && steps.setup.outputs.has-changes == 'true'
+              with:
+                  name: lint-report
+                  path: lint-report/
+                  retention-days: 1
+
+    web_tests:
+        permissions:
+            contents: read
+            packages: read
+        defaults:
+            run:
+                working-directory: web
+
+        timeout-minutes: 8
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
+              with:
+                  working-directory: web
+                  path-filter: "web/**"
+                  path-filter-extra: "types/**"
 
             - name: Prepare .env
               if: steps.setup.outputs.has-changes == 'true'
@@ -57,14 +84,6 @@ jobs:
             - name: Run integration tests
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run test:integration
-
-            - name: Upload lint report
-              uses: actions/upload-artifact@v7
-              if: always() && steps.setup.outputs.has-changes == 'true'
-              with:
-                  name: lint-report
-                  path: lint-report/
-                  retention-days: 1
 
             - name: Upload test results
               uses: actions/upload-artifact@v7
