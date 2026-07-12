@@ -17,7 +17,7 @@ struct EVYButtonRow: View {
   }
 
   var body: some View {
-    EVYButton(label: view.label, action: action)
+    EVYButton(label: view.label, style: view.style, action: action)
       .frame(maxWidth: .infinity, alignment: .center)
       .padding(.horizontal, Constants.majorPadding)
       .padding(.top, Constants.minorPadding)

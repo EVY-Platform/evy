@@ -45,15 +45,34 @@ func evyLength(_ args: String) throws -> EVYFunctionOutput {
 @MainActor
 func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
   let parts = splitFunctionArguments(args)
-  guard parts.count == 2 else { throw EVYParamError.invalidProps }
+  guard parts.count >= 2 else { throw EVYParamError.invalidProps }
   let collectionArg = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
-  let idArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
   let collection = try EVY.getDataFromProps(collectionArg)
-  let idValue =
-    (try? EVY.getDataFromProps(idArg))?.toString() ?? stripOptionalSurroundingQuotes(idArg)
-  guard case .array(let items) = collection,
-    let match = items.first(where: { $0.identifierValue() == idValue })
-  else {
+  guard case .array(let items) = collection else {
+    return .string("")
+  }
+
+  let match: EVYJson?
+  if parts.count == 2 {
+    let idArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+    let idValue =
+      (try? EVY.getDataFromProps(idArg))?.toString() ?? stripOptionalSurroundingQuotes(idArg)
+    match = items.first(where: { $0.identifierValue() == idValue })
+  } else {
+    guard parts.count % 2 == 1 else { throw EVYParamError.invalidProps }
+    match = items.first { record in
+      stride(from: 1, to: parts.count, by: 2).allSatisfy { index in
+        let valueArg = parts[index].trimmingCharacters(in: .whitespacesAndNewlines)
+        let propArg = parts[index + 1].trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedValue =
+          (try? EVY.getDataFromProps(valueArg))?.toString()
+          ?? stripOptionalSurroundingQuotes(valueArg)
+        return record.parseProp(props: [propArg]).toString() == resolvedValue
+      }
+    }
+  }
+
+  guard let match else {
     return .string("")
   }
   return match.parseProp(props: remainingProps)

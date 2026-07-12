@@ -35,14 +35,24 @@ Output: 5
 
 #### findFirst
 
-Finds the first datum in a collection whose `id` field matches the given identifier. For external service data, pass the service resource ID as the collection key. The returned datum can be chained with a property accessor.
+Finds the first datum in a collection. With two arguments, matches on the record `id` field. With additional `(value, prop)` pairs, matches when every pair's `record.prop` equals the resolved value (data path first, literal fallback). The returned datum can be chained with a property accessor.
 
 ```
 findFirst({_variable_type_string_collection_}, {_variable_type_string_id_})
-Collection: cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f = [{ "id": "c1", "value": "Excellent" }, ...]
-Id variable: "c1"
-Output: {findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value} → "Excellent"
+findFirst({_collection_}, {_value1_}, {_prop1_}, {_value2_}, {_prop2_}, ...)
 ```
+
+Collection: `cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f` = `[{ "id": "c1", "value": "Excellent" }, ...]`
+
+Id match: `{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}` → `"Excellent"`
+
+Multi-pair match (active request exists for an item — self-comparison idiom):
+
+```
+{findFirst(requests, item.id, item_id, false, archived).item_id == item.id}
+```
+
+Active match → its `item_id` equals the item's id → `true`. No match (or all archived) → `""` → `false`.
 
 ## Comparisons
 
@@ -298,3 +308,23 @@ Typed text (example):
   "23-25 Rosebery Avenue, 2018\nRosebery, NSW"
 Result: address dictionary with unit, street, city, postcode, state populated per parser rules
 ```
+
+## Action functions
+
+These run on the iOS client when a row action branch executes. See [sdui.md](./sdui.md) for the full action model.
+
+#### create
+
+```
+{create(service_id, resource_id, data?)}
+```
+
+Creates a domain entity after the user confirms. Every `create` branch pauses the action chain until the user taps Confirm; Cancel discards the run with no side effects. Set a custom prompt on the parent `UI_RowAction`'s optional `confirmation` field (supports `{…}` data-path interpolation). When `confirmation` is absent or empty, the client shows `Are you sure?`.
+
+#### update
+
+```
+{update(service_id, resource_id, filter, changes)}
+```
+
+Updates matching domain entities after the user confirms. Every `update` branch pauses the action chain the same way as `create`. Set a custom prompt on the action's optional `confirmation` field; otherwise the client shows `Are you sure?`.

@@ -29,6 +29,24 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <PostActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Uninstall evy from simulator"
+               scriptText = "if [ -n &quot;${TARGET_DEVICE_IDENTIFIER:-}&quot; ]; then xcrun simctl uninstall &quot;$TARGET_DEVICE_IDENTIFIER&quot; evy.evy 2&gt;/dev/null || true; fi&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "737C6AA12B2706890093D00C"
+                     BuildableName = "evy.app"
+                     BlueprintName = "evy"
+                     ReferencedContainer = "container:evy.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PostActions>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"

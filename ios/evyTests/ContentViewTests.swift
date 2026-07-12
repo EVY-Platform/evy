@@ -9,6 +9,7 @@ import XCTest
 
 enum MarketplaceTestFixture {
   static let itemsResourceId = MarketplaceResource.items.rawValue
+  static let requestsResourceId = MarketplaceResource.requests.rawValue
   static let serviceId = MARKETPLACE_SERVICE
 }
 

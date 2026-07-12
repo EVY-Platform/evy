@@ -19,21 +19,59 @@ struct Route: Hashable, Codable {
   }
 }
 
-enum NavOperation: Hashable {
+enum ActionOperation: Hashable {
   case navigate(Route)
-  case create(namespace: String, resource: String)
   case highlightRequired(String)
   case close
+  case confirm(message: String, onConfirm: () -> Void)
 }
 
-struct NavigateEnvironmentKey: EnvironmentKey {
-  static let defaultValue: (NavOperation) -> Void = { _ in }
+extension ActionOperation {
+  static func == (lhs: ActionOperation, rhs: ActionOperation) -> Bool {
+    switch (lhs, rhs) {
+    case (.navigate(let leftRoute), .navigate(let rightRoute)):
+      return leftRoute == rightRoute
+    case (.highlightRequired(let leftField), .highlightRequired(let rightField)):
+      return leftField == rightField
+    case (.close, .close):
+      return true
+    case (.confirm(let leftMessage, _), .confirm(let rightMessage, _)):
+      return leftMessage == rightMessage
+    default:
+      return false
+    }
+  }
+
+  func hash(into hasher: inout Hasher) {
+    switch self {
+    case .navigate(let route):
+      hasher.combine(0)
+      hasher.combine(route)
+    case .highlightRequired(let fieldName):
+      hasher.combine(1)
+      hasher.combine(fieldName)
+    case .close:
+      hasher.combine(2)
+    case .confirm(let message, _):
+      hasher.combine(3)
+      hasher.combine(message)
+    }
+  }
+}
+
+private struct PendingConfirmation {
+  let message: String
+  let onConfirm: () -> Void
+}
+
+struct ActionEnvironmentKey: EnvironmentKey {
+  static let defaultValue: (ActionOperation) -> Void = { _ in }
 }
 
 extension EnvironmentValues {
-  var navigate: (NavOperation) -> Void {
-    get { self[NavigateEnvironmentKey.self] }
-    set { self[NavigateEnvironmentKey.self] = newValue }
+  var action: (ActionOperation) -> Void {
+    get { self[ActionEnvironmentKey.self] }
+    set { self[ActionEnvironmentKey.self] = newValue }
   }
 }
 
@@ -69,6 +107,7 @@ struct ContentView: View {
   @State private var showingAlert = false
   @State private var alertTitle = ""
   @State private var alertMessage = ""
+  @State private var pendingConfirmation: PendingConfirmation?
   @State private var loading = true
 
   private var currentFlowId: String {
@@ -88,7 +127,7 @@ struct ContentView: View {
     }
   }
 
-  private func handleNavigationData(_ navOperation: NavOperation) {
+  private func handleAction(_ navOperation: ActionOperation) {
     switch navOperation {
     case .navigate(let route):
       if let existing = routes.lastIndex(of: route) {
@@ -109,9 +148,6 @@ struct ContentView: View {
         break
       }
 
-    case .create(let namespace, let resource):
-      createFlow(namespace: namespace, resource: resource)
-
     case .highlightRequired(let fieldName):
       alertTitle = "Missing information"
       alertMessage = "\(fieldName) is required"
@@ -123,22 +159,9 @@ struct ContentView: View {
       } else {
         routes.removeAll()
       }
-    }
-  }
 
-  private func createFlow(namespace: String, resource: String) {
-    do {
-      let draftScope = EVYDraft.createMergeScopeId(flowId: currentFlowId, entityKey: resource)
-      try EVY.create(namespace: namespace, resource: resource, draftScopeId: draftScope)
-    } catch {
-      showError(error)
-      return
-    }
-
-    if let existing = routes.firstIndex(where: { $0.flowId == currentFlowId }) {
-      routes.removeSubrange(existing...)
-    } else {
-      routes.removeAll()
+    case .confirm(let message, let onConfirm):
+      pendingConfirmation = PendingConfirmation(message: message, onConfirm: onConfirm)
     }
   }
 
@@ -148,8 +171,8 @@ struct ContentView: View {
       LaunchPlaceholderView()
     } else if let firstPageId = homeFirstPageId {
       EVYPage(pageId: firstPageId)
-        .environment(\.navigate) { navOperation in
-          handleNavigationData(navOperation)
+        .environment(\.action) { navOperation in
+          handleAction(navOperation)
         }
     } else if EVYFlowStore.flowExists(id: HOME_FLOW_ID) {
       VStack(spacing: 20) {
@@ -206,8 +229,8 @@ struct ContentView: View {
                   draftScopeId: EVYFlowStore.draftScopeId(for: route)
                 )
               )
-              .environment(\.navigate) { navOperation in
-                handleNavigationData(navOperation)
+              .environment(\.action) { navOperation in
+                handleAction(navOperation)
               }
           } else {
             Text("Flow not found")
@@ -220,6 +243,25 @@ struct ContentView: View {
         title: Text(alertTitle),
         message: Text(alertMessage),
         dismissButton: .default(Text("Ok")))
+    }
+    .alert(
+      pendingConfirmation?.message ?? "",
+      isPresented: Binding(
+        get: { pendingConfirmation != nil },
+        set: { isPresented in
+          if !isPresented {
+            pendingConfirmation = nil
+          }
+        }
+      )
+    ) {
+      Button("Cancel", role: .cancel) {
+        pendingConfirmation = nil
+      }
+      Button("Confirm") {
+        pendingConfirmation?.onConfirm()
+        pendingConfirmation = nil
+      }
     }
     .onChange(of: routes) { oldRoutes, newRoutes in
       let previousFlowId = oldRoutes.last?.flowId ?? HOME_FLOW_ID

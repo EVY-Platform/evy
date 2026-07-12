@@ -226,5 +226,28 @@
 				"app": false
 			}
 		}
+	],
+	"requests": [
+		{
+			"id": "c84f227e-69ed-4c69-9f53-aafd7a918c6b",
+			"type": "pickup",
+			"item_id": "12401f50-cf1a-45d7-a112-2e68a2070466",
+			"time": "2026-06-03T09:00:00",
+			"archived": false
+		},
+		{
+			"id": "d533476c-5099-4c7d-8e9a-42a8f6ca2f6e",
+			"type": "delivery",
+			"item_id": "12401f50-cf1a-45d7-a112-2e68a2070466",
+			"time": "2026-06-03T14:00:00",
+			"archived": false
+		},
+		{
+			"id": "5f66d7ae-3cb5-44bb-a8f3-337d4e543c72",
+			"type": "shipping",
+			"item_id": "12401f50-cf1a-45d7-a112-2e68a2070466",
+			"postalcode": "2018",
+			"archived": false
+		}
 	]
 }

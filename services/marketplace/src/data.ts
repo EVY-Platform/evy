@@ -16,14 +16,25 @@ import {
 	validateCreateResponse,
 	validateDeleteResponse,
 	validateGetResponse,
+	validateMarketplaceRequest,
 	validateUpdateDataPayload,
 	validateUpdateResponse,
 } from "evy-types/validators";
 import { data, db } from "./db";
 import { emitDataChanged } from "./events";
-import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SEED_RESOURCES,
+	MARKETPLACE_SERVICE,
+} from "./resources";
 
 const PG_UNIQUE_VIOLATION = "23505" as const;
+
+function validateResourcePayload(resource: string, payload: unknown): void {
+	if (resource === MARKETPLACE_RESOURCE.REQUESTS) {
+		validateMarketplaceRequest(payload);
+	}
+}
 
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
@@ -66,6 +77,7 @@ export async function create(params: CreateRequest): Promise<CreateResponse> {
 
 	const validatedPayload = validateCreateDataPayload(dataPayload);
 	assertIsoDateTimeJsonFields(validatedPayload);
+	validateResourcePayload(resource, validatedPayload);
 
 	const filterId = filter?.id;
 	const insertValues: typeof data.$inferInsert = {
@@ -108,6 +120,7 @@ export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 
 	const validatedPayload = validateUpdateDataPayload(dataPayload);
 	assertIsoDateTimeJsonFields(validatedPayload);
+	validateResourcePayload(resource, validatedPayload);
 
 	const result = await db
 		.update(data)

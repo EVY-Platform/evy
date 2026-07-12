@@ -11,11 +11,20 @@ struct EVYButton: View {
   @Environment(\.colorScheme) var colorScheme
 
   let label: String
+  let style: String?
   let action: () -> Void
 
-  init(label: String, action: @escaping () -> Void) {
+  init(label: String, style: String? = nil, action: @escaping () -> Void) {
     self.label = label
+    self.style = style
     self.action = action
+  }
+
+  private var backgroundColor: Color {
+    if style == "danger" {
+      return Constants.dangerColor
+    }
+    return colorScheme == .light ? Constants.buttonColor : .white
   }
 
   var body: some View {
@@ -25,13 +34,19 @@ struct EVYButton: View {
     .buttonStyle(.plain)
     .padding(Constants.majorPadding)
     .frame(maxWidth: 150)
-    .background(colorScheme == .light ? Constants.buttonColor : .white)
+    .background(backgroundColor)
     .cornerRadius(Constants.smallCornerRadius)
   }
 }
 
 #Preview {
-  EVYButton(
-    label: "Button",
-    action: {})
+  VStack {
+    EVYButton(
+      label: "Button",
+      action: {})
+    EVYButton(
+      label: "Cancel request",
+      style: "danger",
+      action: {})
+  }
 }

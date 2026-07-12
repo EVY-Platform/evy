@@ -21,6 +21,7 @@ import type {
 	DATA_EVY_ServiceProvider,
 	DATA_EVY_ServiceResource,
 } from "./generated/ts/data/data";
+import type { DATA_MARKETPLACE_Request } from "./generated/ts/data/request";
 import type {
 	FileUploadChunkMetadata,
 	FileWithBinary,
@@ -51,6 +52,9 @@ import dataSchemaRaw from "./schema/data/data.schema.json" with {
 	type: "json",
 };
 import primitiveSchemaRaw from "./schema/data/primitive.schema.json" with {
+	type: "json",
+};
+import requestSchemaRaw from "./schema/data/request.schema.json" with {
 	type: "json",
 };
 import fileSchemaRaw from "./schema/files/file.schema.json" with {
@@ -127,6 +131,7 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	"common/rpc.schema.json": commonRpcRaw as Record<string, unknown>,
 	"data/data.schema.json": dataSchemaRaw as Record<string, unknown>,
 	"data/primitive.schema.json": primitiveSchemaRaw as Record<string, unknown>,
+	"data/request.schema.json": requestSchemaRaw as Record<string, unknown>,
 	"sdui/action.schema.json": sduiActionRaw as Record<string, unknown>,
 	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
@@ -289,6 +294,7 @@ const ENTITY_SCHEMA_FILES = [
 	"common/rpc.schema.json",
 	"data/data.schema.json",
 	"data/primitive.schema.json",
+	"data/request.schema.json",
 	"sdui/action.schema.json",
 	...Object.keys(SDUI_DEFINITION_SCHEMAS).sort(),
 	"sdui/evy.schema.json",
@@ -369,6 +375,10 @@ const getValidateGetRequest = lazyValidator<GetRequest>(
 const getValidateUiFlow = lazyValidator<UI_Flow>(
 	getEntityAjv,
 	fileId("sdui/evy.schema.json"),
+);
+const getValidateMarketplaceRequest = lazyValidator<DATA_MARKETPLACE_Request>(
+	getEntityAjv,
+	fileId("data/request.schema.json"),
 );
 const getValidateDataEvyFlow = lazyValidator<DATA_EVY_Flow>(
 	getEntityAjv,
@@ -487,6 +497,11 @@ export const validateGetRequest = makeValidator<GetRequest>(
 
 /** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
 export const validateUiFlow = makeValidator<UI_Flow>("Flow", getValidateUiFlow);
+export const validateMarketplaceRequest =
+	makeValidator<DATA_MARKETPLACE_Request>(
+		"Marketplace request",
+		getValidateMarketplaceRequest,
+	);
 export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
 	"Flow",
 	getValidateDataEvyFlow,

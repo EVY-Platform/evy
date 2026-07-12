@@ -712,6 +712,115 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(countBefore, countAfter)
   }
 
+  func testFindFirstMultiPairReturnsActiveRequestWhenArchivedComesFirst() throws {
+    let requestsKey = uniqueKey("requests")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    let archivedId = UUID().uuidString
+    let activeId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(archivedId),
+          "item_id": .string(itemId),
+          "archived": .bool(true),
+          "type": .string("pickup"),
+        ]),
+        .dictionary([
+          "id": .string(activeId),
+          "item_id": .string(itemId),
+          "archived": .bool(false),
+          "type": .string("pickup"),
+        ]),
+      ]),
+      at: "\(EVYNamespace.marketplace):\(requestsKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let result = try parseTextFromText(
+      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).id}")
+
+    XCTAssertEqual(result.value, activeId)
+  }
+
+  func testFindFirstMultiPairReturnsEmptyWhenOnlyArchivedExist() throws {
+    let requestsKey = uniqueKey("requests")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "item_id": .string(itemId),
+          "archived": .bool(true),
+          "type": .string("pickup"),
+        ])
+      ]),
+      at: "\(EVYNamespace.marketplace):\(requestsKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let result = try parseTextFromText(
+      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).id}")
+
+    XCTAssertEqual(result.value, "")
+  }
+
+  func testHasActiveRequestVisibilityExpression() throws {
+    let requestsKey = uniqueKey("requests")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "item_id": .string(itemId),
+          "archived": .bool(false),
+          "type": .string("pickup"),
+        ])
+      ]),
+      at: "\(EVYNamespace.marketplace):\(requestsKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let hasActive =
+      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).item_id == \(itemKey).id}"
+    let noActive =
+      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).item_id != \(itemKey).id}"
+
+    XCTAssertTrue(try EVY.evaluateFromText(hasActive))
+    XCTAssertFalse(try EVY.evaluateFromText(noActive))
+  }
+
+  func testFindFirstTwoArgStillMatchesByIdentifier() throws {
+    let conditionsKey = uniqueKey("conditions")
+    let conditionId = UUID().uuidString
+
+    try store(
+      .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
+      at: "\(EVYNamespace.marketplace):\(conditionsKey)"
+    )
+
+    let result = try parseTextFromText("{findFirst(\(conditionsKey), \(conditionId)).value}")
+
+    XCTAssertEqual(result.value, "Good")
+  }
+
+  func testFindFirstMultiPairWatchTargetsIncludeCollectionKey() throws {
+    let requestsKey = uniqueKey("requests")
+    let itemKey = uniqueKey("item")
+    let expression =
+      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).item_id == \(itemKey).id}"
+
+    let targets = EVY.watchTargets(for: expression)
+
+    XCTAssertTrue(targets.contains(requestsKey))
+    XCTAssertTrue(targets.contains("\(itemKey).id"))
+  }
+
   func testRawDataFromPlainSourceExpression() throws {
     let key = uniqueKey("title")
     try store(.string("Hello world"), at: key)

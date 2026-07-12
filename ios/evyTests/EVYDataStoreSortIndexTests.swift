@@ -124,6 +124,26 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
     XCTAssertThrowsError(try EVY.getDataFromText("{\(resourceName)}"))
   }
 
+  /// Regression: the store's manually created ModelContext never autosaves, so
+  /// without an explicit save() every write was lost when the process exited —
+  /// while lastSyncTimestamp survived in UserDefaults, leaving relaunches with an
+  /// empty store that incremental sync could never repopulate ("Failed to load
+  /// flows"). A second store instance reading the same file only sees the row if
+  /// the first instance actually flushed to disk.
+  func testWritesSurviveIntoAFreshStoreInstance() throws {
+    let storeName = "persistence-test-\(UUID().uuidString)"
+    let writer = EVYDataStore(name: storeName)
+    try writer.create(
+      namespace: "test", resource: "items", id: "item-1",
+      value: makeItemData(id: "item-1"))
+
+    let reader = EVYDataStore(name: storeName)
+    let row = try reader.get(namespace: "test", resource: "items", id: "item-1")
+    XCTAssertEqual(row.id, "item-1")
+
+    try writer.deleteAll(namespace: "test", resource: "items")
+  }
+
   private func makeItemData(id: String) throws -> Data {
     try JSONEncoder().encode(EVYJson.dictionary(["id": .string(id)]))
   }
