@@ -446,7 +446,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "ColumnContainer",
+              "type": "ListContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -1953,7 +1953,7 @@ final class WebSocketE2ETests: E2ETestBase {
           "rows": [
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "ColumnContainer",
+              "type": "ListContainer",
               "actions": [],
               "visible": "true",
               "title": "",
