@@ -8,9 +8,10 @@
 import Foundation
 
 let API_HOST = "localhost:8000"
+let AUTH_TOKEN = "Geo"
 
 actor EVYAPIManager {
-  private let rpcWS: EVYWebsocketProtocol
+  private let rpcWS: EVYWebsocket
   private var authed: Bool = false
 
   static let shared = EVYAPIManager()
@@ -103,7 +104,8 @@ actor EVYAPIManager {
   private func validateAuth() async throws {
     if authed { return }
 
-    let connected = try await rpcWS.connect(token: "Geo", os: DataOS.ios)
+    let token = ProcessInfo.processInfo.environment["AUTH_TOKEN"] ?? AUTH_TOKEN
+    let connected = try await rpcWS.connect(token: token, os: DataOS.ios)
 
     let result = try await rpcWS.subscribe(event: "dataChanged")
     if result["dataChanged"] != "ok" {

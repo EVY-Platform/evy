@@ -6,7 +6,7 @@ WebSocket API that routes data requests to the proper service, handles evy core 
 
 ### Request dispatch
 
-Incoming JSON-RPC messages are authenticated where required, validated, then dispatched based on `service`. Requests for `service: "evy"` are handled by evy core resource modules. All other services are forwarded to the appropriate backend over gRPC.
+Incoming JSON-RPC messages are authenticated where required, validated, then dispatched based on `service`. Requests for `service: "evy"` are handled by evy core resource modules. All other services are forwarded to the appropriate backend over JSON-RPC (WebSocket).
 
 ```mermaid
 sequenceDiagram
@@ -16,7 +16,7 @@ sequenceDiagram
     participant data as data/data.ts
     participant resource as data resources
     participant services as procedures/services.ts
-    participant marketplace as marketplace (gRPC)
+    participant marketplace as marketplace (JSON-RPC WS)
 
     Client->>index: JSON-RPC get create update delete api
     index->>index: auth for protected methods
@@ -30,8 +30,8 @@ sequenceDiagram
         data-->>rpc: row JSON
     else service != "evy"
         rpc->>services: forwardGet/Create/Update
-        services->>marketplace: gRPC Get/Create/Update
-        marketplace-->>services: result_json
+        services->>marketplace: JSON-RPC get/create/update
+        marketplace-->>services: validated response
         services-->>rpc: row JSON
     end
 
@@ -50,7 +50,7 @@ sequenceDiagram
     participant data as data/data.ts
     participant resource as data resources
     participant services as procedures/services.ts
-    participant marketplace as marketplace (gRPC)
+    participant marketplace as marketplace (JSON-RPC WS)
 
     Note over resource,index: Core evy write triggers notification
     resource->>data: emit callback
@@ -58,8 +58,7 @@ sequenceDiagram
     index->>Client: JSON-RPC notification
 
     Note over marketplace,index: Remote service event triggers notification
-    marketplace->>services: SubscribeEvents payload_json
-    services->>services: parse payload_json
+    marketplace->>services: dataChanged JSON-RPC notification
     services->>index: broadcast event payload
     index->>Client: JSON-RPC notification
 ```
@@ -97,7 +96,7 @@ bun run dev
 docker build -t evy-api .
 ```
 
-All required env vars (database connection, gRPC hosts, etc.) must be provided at runtime. See the root [`.env.example`](../.env.example) for the full list.
+All required env vars (database connection, service WebSocket hosts, etc.) must be provided at runtime. See the root [`.env.example`](../.env.example) for the full list.
 
 ### Docker Compose
 

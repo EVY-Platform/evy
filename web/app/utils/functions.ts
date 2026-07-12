@@ -105,7 +105,15 @@ function evyFormatWeight(): EVYFunctionOutput {
 }
 
 function evyFormatAddress(): EVYFunctionOutput {
-	return { value: "1 Main Street, 2000\nSydney, NSW" };
+	return { value: "1 Main Street, 2000 Sydney NSW" };
+}
+
+function evyFormatAddressLine1(): EVYFunctionOutput {
+	return { value: "1 Main Street" };
+}
+
+function evyFormatAddressLine2(): EVYFunctionOutput {
+	return { value: "Sydney, NSW" };
 }
 
 const evyFormatDecimalStub = (): EVYFunctionOutput => ({ value: "20.04" });
@@ -129,6 +137,8 @@ const functionHandlers: Record<string, EVYFunctionHandler> = {
 	formatDimension: evyFormatDimension,
 	formatWeight: evyFormatWeight,
 	formatAddress: evyFormatAddress,
+	formatAddressLine1: evyFormatAddressLine1,
+	formatAddressLine2: evyFormatAddressLine2,
 	formatDecimal: evyFormatDecimalStub,
 	formatMetricLength: evyFormatMetricLengthStub,
 	formatImperialLength: evyFormatImperialLengthStub,

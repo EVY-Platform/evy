@@ -40,7 +40,6 @@ COPY --from=builder /app/api/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/types ../types
 COPY --from=builder /app/api/drizzle.config.ts ./
 COPY --from=builder /app/api/drizzle ./drizzle
-COPY types/schema/service.proto /app/types/schema/service.proto
 
 ARG API_PORT
 ENV API_PORT=$API_PORT

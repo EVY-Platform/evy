@@ -76,14 +76,6 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
-  func getAllDecoded<T: Decodable>(namespace: String, resource: String, as type: T.Type) throws
-    -> [T]
-  {
-    try getAll(namespace: namespace, resource: resource).map { row in
-      try JSONDecoder().decode(T.self, from: row.data)
-    }
-  }
-
   func getAll() throws -> [EVYData] {
     let descriptor = FetchDescriptor<EVYData>()
     return try context.fetch(descriptor)

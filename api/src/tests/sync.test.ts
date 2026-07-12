@@ -163,12 +163,12 @@ describe("sync", () => {
 	it("propagates forwardGet errors for external services", async () => {
 		forwardGetImpl = async (serviceName) => {
 			if (serviceName === MARKETPLACE_SERVICE_ID) {
-				throw new Error("gRPC service unavailable");
+				throw new Error("marketplace service unavailable");
 			}
 			return buildMockGetResponse([]);
 		};
 		await expect(sync({ lastSyncTime: EPOCH }, db)).rejects.toThrow(
-			"gRPC service unavailable",
+			"marketplace service unavailable",
 		);
 	});
 

@@ -1,11 +1,13 @@
-import { startMarketplaceGrpcServer, stopMarketplaceGrpcServer } from "./grpc";
+import { startMarketplaceRpcServer, stopMarketplaceRpcServer } from "./rpc";
 
 async function main() {
-	await startMarketplaceGrpcServer();
+	await startMarketplaceRpcServer();
 
 	const shutdown = (signal: NodeJS.Signals) => {
-		console.info(`Received ${signal}, stopping Marketplace gRPC server`);
-		stopMarketplaceGrpcServer();
+		console.info(
+			`Received ${signal}, stopping Marketplace JSON-RPC server`,
+		);
+		stopMarketplaceRpcServer();
 		process.exit(0);
 	};
 

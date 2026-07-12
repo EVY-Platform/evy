@@ -67,20 +67,7 @@ function collectPageRowIds(
 // Lookups
 // ---------------------------------------------------------------------------
 
-/**
- * Returns the child ids for a row: { childRowId?, childrenRowIds[] }.
- */
-export function getRowChildIds(row: DATA_EVY_Row): {
-	childRowId: string | undefined;
-	childrenRowIds: string[];
-} {
-	return {
-		childRowId: getChildRowId(row),
-		childrenRowIds: getChildrenRowIds(row),
-	};
-}
-
-export function findRowContainer(
+function findRowContainer(
 	rowsById: FlowEntityMaps["rowsById"],
 	rootRowIds: string[],
 	targetRowId: string,
@@ -113,7 +100,7 @@ export function findRowContainer(
  * Returns { containerRowId, type: "child" | "children" } or null if the row
  * isn't a container or isn't reachable from rootRowIds.
  */
-export function findContainerById(
+function findContainerById(
 	rowsById: FlowEntityMaps["rowsById"],
 	rootRowIds: string[],
 	containerId: string,

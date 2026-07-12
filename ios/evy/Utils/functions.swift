@@ -204,34 +204,89 @@ func evyFormatWeight(
 }
 
 @MainActor
-func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
+private struct EVYAddressDisplayFields {
+  let unit: String?
+  let street: String?
+  let postcode: String?
+  let city: String?
+  let state: String?
+
+  var streetPortion: String {
+    [unit, street]
+      .compactMap { $0 }
+      .filter { !$0.isEmpty }
+      .joined(separator: " ")
+  }
+
+  static func fromDictionary(_ dictValue: [String: EVYJson]) -> EVYAddressDisplayFields {
+    func trimmedField(_ key: String) -> String? {
+      guard let value = dictValue[key] else { return nil }
+      let trimmed = value.toString().trimmingCharacters(in: .whitespacesAndNewlines)
+      return trimmed.isEmpty ? nil : trimmed
+    }
+
+    return EVYAddressDisplayFields(
+      unit: trimmedField("unit"),
+      street: trimmedField("street"),
+      postcode: trimmedField("postcode"),
+      city: trimmedField("city"),
+      state: trimmedField("state")
+    )
+  }
+}
+
+@MainActor
+private func evyAddressDisplayOutput(from args: String) throws -> EVYAddressDisplayFields {
   let res = try EVY.getDataFromProps(args)
   switch res {
   case .dictionary(let dictValue):
-    guard let unit = dictValue["unit"],
-      let street = dictValue["street"],
-      let city = dictValue["city"],
-      let postcode = dictValue["postcode"],
-      let state = dictValue["state"]
-    else {
-      throw EVYError.formatFailed(
-        type: "address", reason: "missing required fields (unit, street, city, postcode, or state)")
-    }
-
-    return EVYFunctionOutput(
-      value: String(
-        format: "%@ %@, %@\n%@, %@",
-        unit.toString(),
-        street.toString(),
-        postcode.toString(),
-        city.toString(),
-        state.toString()),
-      prefix: nil,
-      suffix: nil
-    )
+    return EVYAddressDisplayFields.fromDictionary(dictValue)
   default:
     throw EVYError.formatFailed(type: "address", reason: "expected dictionary, got \(res)")
   }
+}
+
+@MainActor
+private func evyJoinedAddressParts(_ parts: [String?], separator: String) -> String {
+  parts
+    .compactMap { $0 }
+    .filter { !$0.isEmpty }
+    .joined(separator: separator)
+}
+
+@MainActor
+func evyFormatAddressLine1(_ args: String) throws -> EVYFunctionOutput {
+  let fields = try evyAddressDisplayOutput(from: args)
+  let value = evyJoinedAddressParts([fields.streetPortion, fields.postcode], separator: ", ")
+  return EVYFunctionOutput(value: value, prefix: nil, suffix: nil)
+}
+
+@MainActor
+func evyFormatAddressLine2(_ args: String) throws -> EVYFunctionOutput {
+  let fields = try evyAddressDisplayOutput(from: args)
+  let value = evyJoinedAddressParts([fields.city, fields.state], separator: ", ")
+  return EVYFunctionOutput(value: value, prefix: nil, suffix: nil)
+}
+
+@MainActor
+func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
+  let fields = try evyAddressDisplayOutput(from: args)
+  let streetPortion = fields.streetPortion
+  let locationPortion = evyJoinedAddressParts(
+    [fields.postcode, fields.city, fields.state],
+    separator: " "
+  )
+
+  let value: String
+  if streetPortion.isEmpty {
+    value = locationPortion
+  } else if locationPortion.isEmpty {
+    value = streetPortion
+  } else {
+    value = "\(streetPortion), \(locationPortion)"
+  }
+
+  return EVYFunctionOutput(value: value, prefix: nil, suffix: nil)
 }
 
 @MainActor

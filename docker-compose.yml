@@ -7,9 +7,10 @@ services:
             POSTGRES_USER: ${DB_USER}
             POSTGRES_PASSWORD: ${DB_PASS}
             POSTGRES_DB: ${DB_EVY_DATABASE}
+            DB_MARKETPLACE_DATABASE: ${DB_MARKETPLACE_DATABASE}
         volumes:
             - postgres_data:/var/lib/postgresql/data
-            - ./scripts/postgres-init-marketplace.sql:/docker-entrypoint-initdb.d/02-marketplace.sql:ro
+            - ./scripts/postgres-init-marketplace.sh:/docker-entrypoint-initdb.d/02-marketplace.sh:ro
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
             interval: 5s
@@ -22,11 +23,9 @@ services:
             dockerfile: ./services/marketplace/Dockerfile
             target: runner
         ports:
-            - ${MARKETPLACE_GRPC_PORT}:${MARKETPLACE_GRPC_PORT}
+            - ${MARKETPLACE_WS_PORT}:${MARKETPLACE_WS_PORT}
         environment:
-            # Listen on all interfaces inside the container (do not use host `.env` here).
-            - MARKETPLACE_GRPC_HOST=0.0.0.0
-            - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
+            - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
             - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
@@ -56,9 +55,9 @@ services:
             - DB_DOMAIN=postgres
             - DB_EVY_DATABASE=${DB_EVY_DATABASE}
             - API_PORT=${API_PORT}
-            # gRPC client target (Compose DNS name), not the marketplace bind address in `.env`.
-            - MARKETPLACE_GRPC_HOST=marketplace
-            - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
+            # WebSocket client target (Compose DNS name), not the marketplace bind address in `.env`.
+            - MARKETPLACE_WS_HOST=marketplace
+            - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
             - GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
         depends_on:
             postgres:

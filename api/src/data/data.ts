@@ -6,7 +6,6 @@ import type {
 	DeleteResponse,
 	GetRequest,
 	GetResponse,
-	OS,
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
@@ -69,7 +68,77 @@ import {
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
-const evyCoreResourceNames: ReadonlySet<string> = EVY_CORE_RESOURCE_NAME_SET;
+type CoreResourceOps = {
+	list: (
+		db: EvyDb,
+		filter: GetRequest["filter"] | undefined,
+	) => Promise<GetResponse>;
+	create?: (
+		db: EvyDb,
+		filter: CreateRequest["filter"] | undefined,
+		dataPayload: unknown,
+		nowIso: string,
+		notify: (value: unknown) => void,
+	) => Promise<CreateResponse>;
+	update?: (
+		db: EvyDb,
+		filter: UpdateRequest["filter"],
+		dataPayload: unknown,
+		nowIso: string,
+		notify: (value: unknown) => void,
+	) => Promise<UpdateResponse>;
+	remove?: (
+		db: EvyDb,
+		filter: DeleteRequest["filter"],
+		notify: (value: unknown) => void,
+	) => Promise<DeleteResponse>;
+};
+
+const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
+	[EVY_CORE_RESOURCE.FLOWS]: {
+		list: listFlowRows,
+		create: createFlowResource,
+		update: updateFlowResource,
+		remove: deleteFlowResource,
+	},
+	[EVY_CORE_RESOURCE.PAGES]: {
+		list: listPageRows,
+		create: createPageResource,
+		update: updatePageResource,
+		remove: deletePageResource,
+	},
+	[EVY_CORE_RESOURCE.ROWS]: {
+		list: listRowRows,
+		create: createRowResource,
+		update: updateRowResource,
+		remove: deleteRowResource,
+	},
+	[EVY_CORE_RESOURCE.SERVICES]: {
+		list: listServiceRows,
+		create: createServiceResource,
+		update: updateServiceResource,
+	},
+	[EVY_CORE_RESOURCE.ORGANISATIONS]: {
+		list: listOrganizationRows,
+		create: createOrganizationResource,
+		update: updateOrganizationResource,
+	},
+	[EVY_CORE_RESOURCE.PROVIDERS]: {
+		list: listProviderRows,
+		create: createProviderResource,
+		update: updateProviderResource,
+	},
+	[EVY_CORE_RESOURCE.SERVICE_RESOURCES]: {
+		list: listServiceResourceRows,
+		create: createServiceResourceRow,
+		update: updateServiceResourceRow,
+	},
+	[EVY_CORE_RESOURCE.FILES]: {
+		list: listFileRowsWithBinary,
+		create: createFileResource,
+		remove: deleteFileResource,
+	},
+};
 
 let coreBroadcast: BroadcastFn | null = null;
 
@@ -80,7 +149,7 @@ export function initCoreNotifications(broadcastFn: BroadcastFn | null): void {
 export function validateAuth(
 	db: EvyDb,
 	token: string,
-	os: OS,
+	os: import("evy-types").OS,
 ): ReturnType<typeof validateDeviceAuth> {
 	return validateDeviceAuth(db, token, os);
 }
@@ -93,7 +162,7 @@ export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 export async function listExternalServiceResources(
 	db: EvyDb,
 ): Promise<Array<{ serviceId: string; resourceId: string }>> {
-	const rows = await db
+	return db
 		.select({
 			serviceId: service.id,
 			resourceId: serviceResource.id,
@@ -102,8 +171,6 @@ export async function listExternalServiceResources(
 		.innerJoin(service, eq(serviceResource.fkServiceId, service.id))
 		.where(ne(service.id, EVY_CORE_SERVICE))
 		.orderBy(asc(service.id), asc(serviceResource.id));
-
-	return rows;
 }
 
 export async function listExternalServices(
@@ -139,243 +206,56 @@ export async function deleteResource(
 	return deleteCoreBody(db, params);
 }
 
+function getResourceOps(resource: string): CoreResourceOps {
+	const ops = CORE_RESOURCE_REGISTRY[resource];
+	if (!ops) throw new Error("Unsupported resource for core API");
+	return ops;
+}
+
 async function getCoreBody(
 	db: EvyDb,
 	params: GetRequest,
 ): Promise<GetResponse> {
-	const { resource, filter } = params;
-
-	if (resource === EVY_CORE_RESOURCE.FLOWS) {
-		return listFlowRows(db, filter);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.PAGES) {
-		return listPageRows(db, filter);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.ROWS) {
-		return listRowRows(db, filter);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return listServiceRows(db, filter);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return listOrganizationRows(db, filter);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return listProviderRows(db, filter);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES) {
-		return listServiceResourceRows(db, filter);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.FILES) {
-		return listFileRowsWithBinary(db, filter);
-	}
-
-	throw new Error("Unsupported resource for core API");
+	const ops = getResourceOps(params.resource);
+	return ops.list(db, params.filter);
 }
 
 async function createCoreBody(
 	db: EvyDb,
 	params: CreateRequest,
 ): Promise<CreateResponse> {
-	const { resource, filter, data: dataPayload } = params;
+	const ops = getResourceOps(params.resource);
+	if (!ops.create) {
+		throw new Error("Create is not supported for this resource");
+	}
 	const nowIso = new Date().toISOString();
-	const emitNotification = buildEmitNotification(resource, "create");
-
-	if (resource === EVY_CORE_RESOURCE.FLOWS) {
-		return createFlowResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.PAGES) {
-		return createPageResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.ROWS) {
-		return createRowResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return createServiceResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return createOrganizationResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return createProviderResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES) {
-		return createServiceResourceRow(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.FILES) {
-		return createFileResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	throw new Error("Create is not supported for this resource");
+	const emitNotification = buildEmitNotification(params.resource, "create");
+	return ops.create(db, params.filter, params.data, nowIso, emitNotification);
 }
 
 async function updateCoreBody(
 	db: EvyDb,
 	params: UpdateRequest,
 ): Promise<UpdateResponse> {
-	const { resource, filter, data: dataPayload } = params;
+	const ops = getResourceOps(params.resource);
+	if (!ops.update) {
+		throw new Error("Update is not supported for this resource");
+	}
 	const nowIso = new Date().toISOString();
-	const emitNotification = buildEmitNotification(resource, "update");
-
-	if (resource === EVY_CORE_RESOURCE.FLOWS) {
-		return updateFlowResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.PAGES) {
-		return updatePageResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.ROWS) {
-		return updateRowResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.SERVICES) {
-		return updateServiceResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.ORGANISATIONS) {
-		return updateOrganizationResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.PROVIDERS) {
-		return updateProviderResource(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES) {
-		return updateServiceResourceRow(
-			db,
-			filter,
-			dataPayload,
-			nowIso,
-			emitNotification,
-		);
-	}
-
-	throw new Error("Update is not supported for this resource");
+	const emitNotification = buildEmitNotification(params.resource, "update");
+	return ops.update(db, params.filter, params.data, nowIso, emitNotification);
 }
 
 async function deleteCoreBody(
 	db: EvyDb,
 	params: DeleteRequest,
 ): Promise<DeleteResponse> {
-	const { resource, filter } = params;
-	const emitNotification = buildEmitNotification(resource, "delete");
-
-	if (resource === EVY_CORE_RESOURCE.FLOWS) {
-		return deleteFlowResource(db, filter, emitNotification);
+	const ops = getResourceOps(params.resource);
+	if (!ops.remove) {
+		throw new Error("Delete is not supported for this resource");
 	}
-
-	if (resource === EVY_CORE_RESOURCE.PAGES) {
-		return deletePageResource(db, filter, emitNotification);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.ROWS) {
-		return deleteRowResource(db, filter, emitNotification);
-	}
-
-	if (resource === EVY_CORE_RESOURCE.FILES) {
-		return deleteFileResource(db, filter, emitNotification);
-	}
-
-	throw new Error("Delete is not supported for this resource");
+	const emitNotification = buildEmitNotification(params.resource, "delete");
+	return ops.remove(db, params.filter, emitNotification);
 }
 
 function assertEvyCoreAccess(
@@ -384,7 +264,7 @@ function assertEvyCoreAccess(
 	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
 	}
-	if (!evyCoreResourceNames.has(params.resource)) {
+	if (!EVY_CORE_RESOURCE_NAME_SET.has(params.resource)) {
 		throw new Error("Resource is not served by the core API");
 	}
 }

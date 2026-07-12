@@ -35,6 +35,17 @@ runs:
           if: steps.filter.outputs.changes == 'true'
           uses: oven-sh/setup-bun@v2
 
+        - name: Cache Bun install cache
+          if: steps.filter.outputs.changes == 'true'
+          uses: actions/cache@v4
+          with:
+              path: ~/.bun/install/cache
+              key: >-
+                  bun-${{ runner.os }}-${{ hashFiles('bun.lock',
+                  format('{0}/bun.lock', inputs.working-directory)) }}
+              restore-keys: |
+                  bun-${{ runner.os }}-
+
         - name: Install root dependencies
           if: steps.filter.outputs.changes == 'true'
           shell: bash

@@ -25,6 +25,11 @@ let listExternalServicesImpl = async (): Promise<
 	Array<{ id: string; name: string }>
 > => [];
 
+function resetBootstrapMocks(): void {
+	getImpl = async () => [];
+	listExternalServicesImpl = async () => [];
+}
+
 describe("initServer bootstrap", () => {
 	let previousApiPort: string | undefined;
 	let server: WSServer;
@@ -88,6 +93,7 @@ describe("assertApiReadable", () => {
 	let listExternalServicesSpy: ReturnType<typeof spyOn>;
 
 	beforeEach(() => {
+		resetBootstrapMocks();
 		getSpy = spyOn(data, "get").mockImplementation((_db, params) =>
 			getImpl(params),
 		);
@@ -103,8 +109,6 @@ describe("assertApiReadable", () => {
 	});
 
 	it("resolves when flows get returns an array envelope and requireSeeded is false", async () => {
-		getImpl = async () => [];
-		listExternalServicesImpl = async () => [];
 		await expect(
 			assertApiReadable(db, { requireSeeded: false }),
 		).resolves.toBeUndefined();
@@ -112,15 +116,12 @@ describe("assertApiReadable", () => {
 
 	it("throws when flows get does not return a data array", async () => {
 		getImpl = async () => "not-array" as unknown as GetResponse;
-		listExternalServicesImpl = async () => [];
 		await expect(
 			assertApiReadable(db, { requireSeeded: false }),
 		).rejects.toThrow("expected flows response data array");
 	});
 
 	it("throws when requireSeeded is true but flows is empty", async () => {
-		getImpl = async () => [];
-		listExternalServicesImpl = async () => [];
 		await expect(
 			assertApiReadable(db, { requireSeeded: true }),
 		).rejects.toThrow("missing seeded flows");
@@ -142,53 +143,50 @@ describe("assertApiReadable", () => {
 				},
 			] as GetResponse;
 		};
-		listExternalServicesImpl = async () => [];
 		await expect(
 			assertApiReadable(db, { requireSeeded: true }),
 		).resolves.toBeUndefined();
 	});
 
-	it("throws when an external service is missing its gRPC env vars", async () => {
-		getImpl = async () => [];
+	it("throws when an external service is missing its WebSocket env vars", async () => {
 		listExternalServicesImpl = async () => [
 			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
 		];
-		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
-		const savedPort = process.env.MARKETPLACE_GRPC_PORT;
-		delete process.env.MARKETPLACE_GRPC_HOST;
-		delete process.env.MARKETPLACE_GRPC_PORT;
+		const savedHost = process.env.MARKETPLACE_WS_HOST;
+		const savedPort = process.env.MARKETPLACE_WS_PORT;
+		delete process.env.MARKETPLACE_WS_HOST;
+		delete process.env.MARKETPLACE_WS_PORT;
 		try {
 			await expect(
 				assertApiReadable(db, { requireSeeded: false }),
-			).rejects.toThrow("MARKETPLACE_GRPC_HOST");
+			).rejects.toThrow("MARKETPLACE_WS_HOST");
 		} finally {
 			if (savedHost !== undefined)
-				process.env.MARKETPLACE_GRPC_HOST = savedHost;
+				process.env.MARKETPLACE_WS_HOST = savedHost;
 			if (savedPort !== undefined)
-				process.env.MARKETPLACE_GRPC_PORT = savedPort;
+				process.env.MARKETPLACE_WS_PORT = savedPort;
 		}
 	});
 
-	it("resolves when all external services have gRPC env vars configured", async () => {
-		getImpl = async () => [];
+	it("resolves when all external services have WebSocket env vars configured", async () => {
 		listExternalServicesImpl = async () => [
 			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
 		];
-		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
-		const savedPort = process.env.MARKETPLACE_GRPC_PORT;
-		process.env.MARKETPLACE_GRPC_HOST = "localhost";
-		process.env.MARKETPLACE_GRPC_PORT = "50051";
+		const savedHost = process.env.MARKETPLACE_WS_HOST;
+		const savedPort = process.env.MARKETPLACE_WS_PORT;
+		process.env.MARKETPLACE_WS_HOST = "localhost";
+		process.env.MARKETPLACE_WS_PORT = "50051";
 		try {
 			await expect(
 				assertApiReadable(db, { requireSeeded: false }),
 			).resolves.toBeUndefined();
 		} finally {
 			if (savedHost !== undefined)
-				process.env.MARKETPLACE_GRPC_HOST = savedHost;
-			else delete process.env.MARKETPLACE_GRPC_HOST;
+				process.env.MARKETPLACE_WS_HOST = savedHost;
+			else delete process.env.MARKETPLACE_WS_HOST;
 			if (savedPort !== undefined)
-				process.env.MARKETPLACE_GRPC_PORT = savedPort;
-			else delete process.env.MARKETPLACE_GRPC_PORT;
+				process.env.MARKETPLACE_WS_PORT = savedPort;
+			else delete process.env.MARKETPLACE_WS_PORT;
 		}
 	});
 });

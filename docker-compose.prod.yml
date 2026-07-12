@@ -18,10 +18,9 @@ services:
   marketplace:
     image: "ghcr.io/glesage/evy-marketplace:latest"
     ports:
-      - ${MARKETPLACE_GRPC_PORT}:${MARKETPLACE_GRPC_PORT}
+      - ${MARKETPLACE_WS_PORT}:${MARKETPLACE_WS_PORT}
     environment:
-      - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST}
-      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
+      - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
       - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
@@ -41,8 +40,8 @@ services:
       - DB_DOMAIN=db
       - DB_EVY_DATABASE=${DB_EVY_DATABASE}
       - API_PORT=${API_PORT}
-      - MARKETPLACE_GRPC_HOST=marketplace
-      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
+      - MARKETPLACE_WS_HOST=marketplace
+      - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
     labels:
       - traefik.enable=true
       - traefik.port=80

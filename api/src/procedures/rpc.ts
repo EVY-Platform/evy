@@ -21,17 +21,13 @@ import {
 import type { EvyDb } from "../database/db";
 import { coreApi } from "./coreApi";
 import {
-	forwardApi,
 	forwardCreate,
 	forwardDelete,
 	forwardGet,
 	forwardUpdate,
 } from "./services";
 
-async function handleGetRequest(
-	params: unknown,
-	db: EvyDb,
-): Promise<GetResponse> {
+export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
 	validateStrictGetRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
 		return getCore(db, params);
@@ -39,16 +35,12 @@ async function handleGetRequest(
 	return forwardGet(params.service, params);
 }
 
-export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
-	return handleGetRequest(params, db);
-}
-
 export async function api(params: unknown, db: EvyDb): Promise<unknown> {
 	validateStrictApiRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
 		return coreApi(params, db);
 	}
-	return forwardApi(params.service, params);
+	throw new Error(`Unknown service API method: ${params.method}`);
 }
 
 export async function create(

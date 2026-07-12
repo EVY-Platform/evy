@@ -18,15 +18,52 @@ struct EVYInputRow: View {
   }
 
   var body: some View {
+    EVYTitledTextFieldRow(
+      title: view.title,
+      source: view.source,
+      destination: view.destination,
+      placeholder: view.placeholder,
+      isInteractive: isInteractive
+    )
+  }
+}
+
+/// Shared skeleton for rows rendering an optional title above an `EVYTextField`.
+struct EVYTitledTextFieldRow: View {
+  let title: String?
+  let source: String?
+  let destination: String
+  let placeholder: String?
+  let multiLine: Bool
+  let isInteractive: Bool
+
+  init(
+    title: String?,
+    source: String?,
+    destination: String,
+    placeholder: String?,
+    multiLine: Bool = false,
+    isInteractive: Bool = true
+  ) {
+    self.title = title
+    self.source = source
+    self.destination = destination
+    self.placeholder = placeholder
+    self.multiLine = multiLine
+    self.isInteractive = isInteractive
+  }
+
+  var body: some View {
     VStack(alignment: .leading) {
-      if let title = view.title, !title.isEmpty {
+      if let title, !title.isEmpty {
         EVYTextView(title)
           .padding(.vertical, Constants.padding)
       }
       EVYTextField(
-        source: view.source,
-        destination: view.destination,
-        placeholder: view.placeholder,
+        source: source,
+        destination: destination,
+        placeholder: placeholder,
+        multiLine: multiLine,
         isInteractive: isInteractive
       )
     }

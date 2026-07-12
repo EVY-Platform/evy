@@ -57,10 +57,12 @@ struct EVYSelectList: View {
 }
 
 #Preview {
-  EVYSelectListPreview()
+  EVYSellingReasonsSelectListPreview()
 }
 
-private struct EVYSelectListPreview: View {
+/// Shared preview helper: renders an `EVYSelectList` over the mock `selling_reasons`
+/// option set. Used by both `EVYSelectList` and `EVYSelectItem` previews.
+struct EVYSellingReasonsSelectListPreview: View {
   init() {
     EVYPreviewMockData.seedCommon()
   }

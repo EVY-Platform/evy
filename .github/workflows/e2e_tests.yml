@@ -45,12 +45,22 @@ jobs:
                   'true'
               uses: oven-sh/setup-bun@v2
 
+            - name: Prepare .env
+              if:
+                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
+                  'true'
+              uses: ./.github/actions/prepare-dotenv
+
             - name: Start PostgreSQL on host
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               run: |
                   set -euo pipefail
+                  set -a
+                  source .env
+                  set +a
+                  DB_MARKETPLACE_DATABASE="${DB_MARKETPLACE_DATABASE:-marketplace}"
                   brew install postgresql@16
                   PG_BIN="$(brew --prefix postgresql@16)/bin"
                   echo "$PG_BIN" >> "$GITHUB_PATH"
@@ -60,19 +70,13 @@ jobs:
                   "$PG_BIN/psql" -h localhost -p 5432 -U postgres -d postgres -v ON_ERROR_STOP=1 \
                     -c "CREATE USER evy WITH PASSWORD 'evy' CREATEDB;"
                   "$PG_BIN/createdb" -h localhost -p 5432 -U postgres -O evy evy
-                  "$PG_BIN/createdb" -h localhost -p 5432 -U postgres -O evy marketplace
+                  "$PG_BIN/createdb" -h localhost -p 5432 -U postgres -O evy "$DB_MARKETPLACE_DATABASE"
 
             - name: Install dependencies
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               run: bun run install:all
-
-            - name: Prepare .env and generate types
-              if:
-                  github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
-                  'true'
-              uses: ./.github/actions/prepare-dotenv-and-types
 
             - name: Install Playwright browsers
               if:
@@ -86,20 +90,14 @@ jobs:
                   'true'
               run: |
                   set -euo pipefail
-                  echo "Available Xcode apps:"
-                  ls -1d /Applications/Xcode*.app 2>/dev/null || true
-                  echo "Selected developer directory:"
-                  xcode-select -p
                   xcodebuild -version
-                  xcodebuild -showsdks
-                  xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | sed -n '1,80p'
 
             - name: Run E2E tests
               if:
                   github.event_name == 'workflow_dispatch' || steps.paths.outputs.e2e ==
                   'true'
               env:
-                  MARKETPLACE_GRPC_HOST: 127.0.0.1
+                  MARKETPLACE_WS_HOST: 127.0.0.1
                   IOS_SIMULATOR_DEVICE_NAME: iPhone 17
                   IOS_SIMULATOR_OS_VERSION: 26.5
                   GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}

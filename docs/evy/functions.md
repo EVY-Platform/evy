@@ -201,7 +201,22 @@ Variable: {
     "country": "Australia",
     "location": ...
 }
-Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
+```
+Will render
+```
+{unit} {street}, {postcode} {city} {state}
+```
+
+#### formatAddressLine1
+
+```
+{unit} {street}, {postcode}`
+```
+
+#### formatAddressLine2
+
+```
+{city}, {state}
 ```
 
 #### Sample code:

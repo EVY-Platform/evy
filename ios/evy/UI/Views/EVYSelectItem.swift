@@ -15,6 +15,108 @@ public enum EVYSelectItemTarget: String {
   case multi_identifier
   case multi_value
   case multi_object
+
+  /// Whether `value` is currently selected at `destination`, per this target's semantics.
+  @MainActor
+  func isSelected(value: EVYJson, destination: String) throws -> Bool {
+    switch self {
+    case .single_identifier:
+      let sourceId = value.identifierValue()
+      let destinationId = try EVY.getDataFromText(destination).identifierValue()
+      return sourceId == destinationId
+    case .single_value:
+      let sourceString = value.toString()
+      let destinationString = try EVY.getDataFromText(destination).toString()
+      return sourceString == destinationString
+    case .single_bool:
+      return try EVY.evaluateFromText(destination)
+    case .single_object:
+      let existingData = try EVY.getDataFromText(destination)
+      return existingData.identifierValue() == value.identifierValue()
+    case .multi_identifier, .multi_object:
+      let existingData = try EVY.getDataFromText(destination)
+      guard case .array(let arrayValue) = existingData else {
+        return false
+      }
+      let valueId = value.identifierValue()
+      return arrayValue.contains { $0.identifierValue() == valueId }
+    case .multi_value:
+      let existingData = try EVY.getDataFromText(destination)
+      guard case .array(let arrayValue) = existingData else {
+        return false
+      }
+      let valueString = value.toString()
+      return arrayValue.contains { $0.toString() == valueString }
+    }
+  }
+
+  /// Writes the updated selection for `value` to `destination`, given whether it was
+  /// selected prior to this call, per this target's semantics.
+  @MainActor
+  func applySelection(value: EVYJson, currentlySelected: Bool, destination: String) throws {
+    switch self {
+    case .single_bool:
+      let newValue = currentlySelected ? "false" : "true"
+      try EVY.writeRawValue(newValue, to: destination)
+
+    case .single_identifier, .single_value, .single_object:
+      if !currentlySelected {
+        switch self {
+        case .single_identifier:
+          try EVY.writeRawValue(value.identifierValue(), to: destination)
+        case .single_object:
+          try EVY.writeRawValue(value, to: destination)
+        default:
+          try EVY.writeRawValue(value.toString(), to: destination)
+        }
+      } else {
+        try EVY.writeRawValue("", to: destination)
+      }
+
+    case .multi_identifier, .multi_value, .multi_object:
+      let existingData = try EVY.getDataFromText(destination)
+      guard case .array(let arrayValue) = existingData else {
+        return
+      }
+
+      switch self {
+      case .multi_identifier:
+        let valueId = value.identifierValue()
+        var updatedData = arrayValue.filter {
+          $0.identifierValue() != valueId
+        }.map {
+          $0.toString()
+        }
+        if updatedData.count == arrayValue.count {
+          updatedData.append(value.identifierValue())
+        }
+        try EVY.writeRawValue(
+          EVYJson.array(updatedData.map { .string($0) }),
+          to: destination
+        )
+      case .multi_value:
+        let valueString = value.toString()
+        var updatedData = arrayValue.filter {
+          $0.toString() != valueString
+        }
+        if updatedData.count == arrayValue.count {
+          updatedData.append(value)
+        }
+        try EVY.writeRawValue(EVYJson.array(updatedData), to: destination)
+      case .multi_object:
+        let valueId = value.identifierValue()
+        var updatedData = arrayValue.filter {
+          $0.identifierValue() != valueId
+        }
+        if updatedData.count == arrayValue.count {
+          updatedData.append(value)
+        }
+        try EVY.writeRawValue(EVYJson.array(updatedData), to: destination)
+      default:
+        break
+      }
+    }
+  }
 }
 
 struct EVYSelectItem: View {
@@ -54,47 +156,7 @@ struct EVYSelectItem: View {
     selected = EVYState(
       textToWatch: destination,
       setter: {
-        do {
-          if target == .single_identifier {
-            let sourceId = value.identifierValue()
-            let destinationId = try EVY.getDataFromText(destination).identifierValue()
-            return sourceId == destinationId
-          } else if target == .single_value {
-            let sourceString = value.toString()
-            let destinationString = try EVY.getDataFromText(destination).toString()
-            return sourceString == destinationString
-          } else if target == .single_bool {
-            return try EVY.evaluateFromText(destination)
-          } else if target == .single_object {
-            let existingData = try EVY.getDataFromText(destination)
-            return existingData.identifierValue() == value.identifierValue()
-          } else if target == .multi_identifier {
-            let existingData = try EVY.getDataFromText(destination)
-            guard case .array(let arrayValue) = existingData else {
-              return false
-            }
-            let valueId = value.identifierValue()
-            return arrayValue.contains { $0.identifierValue() == valueId }
-          } else if target == .multi_value {
-            let existingData = try EVY.getDataFromText(destination)
-            guard case .array(let arrayValue) = existingData else {
-              return false
-            }
-            let valueString = value.toString()
-            return arrayValue.contains { $0.toString() == valueString }
-          } else if target == .multi_object {
-            let existingData = try EVY.getDataFromText(destination)
-            guard case .array(let arrayValue) = existingData else {
-              return false
-            }
-            let valueId = value.identifierValue()
-            return arrayValue.contains { $0.identifierValue() == valueId }
-          }
-        } catch {
-          return false
-        }
-
-        return false
+        (try? target.isSelected(value: value, destination: destination)) ?? false
       })
   }
 
@@ -107,66 +169,8 @@ struct EVYSelectItem: View {
     .contentShape(Rectangle())
     .onTapGesture {
       do {
-        if target == .single_identifier
-          || target == .single_value
-          || target == .single_bool
-          || target == .single_object
-        {
-          if target == .single_bool {
-            let newValue = selected.value ? "false" : "true"
-            try EVY.writeRawValue(newValue, to: destination)
-          } else if !selected.value {
-            if target == .single_identifier {
-              try EVY.writeRawValue(value.identifierValue(), to: destination)
-            } else if target == .single_object {
-              try EVY.writeRawValue(value, to: destination)
-            } else {
-              try EVY.writeRawValue(value.toString(), to: destination)
-            }
-          } else {
-            try EVY.writeRawValue("", to: destination)
-          }
-        } else {
-          let existingData = try EVY.getDataFromText(destination)
-          guard case .array(let arrayValue) = existingData else {
-            return
-          }
-
-          if target == .multi_identifier {
-            let valueId = value.identifierValue()
-            var updatedData = arrayValue.filter {
-              $0.identifierValue() != valueId
-            }.map {
-              $0.toString()
-            }
-            if updatedData.count == arrayValue.count {
-              updatedData.append(value.identifierValue())
-            }
-            try EVY.writeRawValue(
-              EVYJson.array(updatedData.map { .string($0) }),
-              to: destination
-            )
-          } else if target == .multi_value {
-            let valueString = value.toString()
-            var updatedData = arrayValue.filter {
-              $0.toString() != valueString
-            }
-            if updatedData.count == arrayValue.count {
-              updatedData.append(value)
-            }
-            try EVY.writeRawValue(EVYJson.array(updatedData), to: destination)
-          } else if target == .multi_object {
-            let valueId = value.identifierValue()
-            var updatedData = arrayValue.filter {
-              $0.identifierValue() != valueId
-            }
-            if updatedData.count == arrayValue.count {
-              updatedData.append(value)
-            }
-            try EVY.writeRawValue(EVYJson.array(updatedData), to: destination)
-          }
-        }
-
+        try target.applySelection(
+          value: value, currentlySelected: selected.value, destination: destination)
         onSelect?()
       } catch {
         #if DEBUG
@@ -178,26 +182,5 @@ struct EVYSelectItem: View {
 }
 
 #Preview {
-  EVYSelectItemPreview()
-}
-
-private struct EVYSelectItemPreview: View {
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    Group {
-      let options = try! EVY.getDataFromText("{selling_reasons}")
-      switch options {
-      case .array(let arrayValue):
-        EVYSelectList(
-          options: arrayValue,
-          valueTemplate: "{$datum.value}",
-          destination: "{item.selling_reason}")
-      default:
-        Text("error")
-      }
-    }
-  }
+  EVYSellingReasonsSelectListPreview()
 }

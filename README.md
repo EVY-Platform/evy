@@ -10,14 +10,14 @@ flowchart LR
     web[Web builder]
 
     api[api JSON-RPC WebSocket gateway]
-    marketplace[marketplace service gRPC evy.Service]
+    marketplace[marketplace service JSON-RPC WebSocket]
     evyDb[(Postgres evy DB)]
     mpDb[(Postgres marketplace DB)]
 
     ios -- WebSocket --> api
     web -- WebSocket --> api
     api -- evy core resource handlers / Drizzle --> evyDb
-    api -- service marketplace gRPC --> marketplace
+    api -- service marketplace JSON-RPC --> marketplace
     marketplace -- Drizzle --> mpDb
 ```
 
@@ -30,11 +30,10 @@ flowchart LR
   - [API](./api/README.md)
   - [iOS](./ios/README.md)
   - [Web](./web/README.md)
-  - [Android](./android/README.md)
 - [Marketplace](./services/marketplace/README.md)
   - [Data models](./docs/services/marketplace/data.md)
-  - [Example data](./docs/services/service_data.json)
-  - [Example UI flow for view & create item pages](./docs/services/service_sdui.json)
+  - [Example data](./scripts/fixtures/services/service_data.json)
+  - [Example UI flow for view & create item pages](./scripts/fixtures/services/service_sdui.json)
 
 ## Setup
 
@@ -60,6 +59,7 @@ Start Postgres (`docker compose up --build postgres`), then in separate terminal
 
 ```bash
 bun install
+bun run types:generate
 bun run db:seed
 
 cd services/marketplace && bun run dev
@@ -69,7 +69,9 @@ cd web && bun run dev
 
 ### Production (with Docker Compose)
 
-Uses pre-built images from GitHub Container Registry (requires authentication):
+Uses pre-built images from GitHub Container Registry (requires authentication). Also copy
+`.env.prod.example` and merge it with `.env` (Traefik/domain variables — see that file's
+header for how it combines with `.env.example`):
 
 ```bash
 docker compose -f docker-compose.prod.yml up

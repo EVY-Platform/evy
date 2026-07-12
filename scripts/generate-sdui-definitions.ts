@@ -13,7 +13,6 @@ import {
 	loadJson,
 	OUT_SWIFT,
 	OUT_TS,
-	runMain,
 	SCHEMA_DIR,
 	writeGeneratedOutputs,
 } from "./types-generation-utils.js";
@@ -38,7 +37,7 @@ function formatAjvErrors(errors: Ajv2020["errors"] | null | undefined): string {
 		.join("; ");
 }
 
-export async function validateDefinitionSchemas(
+async function validateDefinitionSchemas(
 	definitions: SduiRowDefinition[],
 ): Promise<void> {
 	const definitionSchema = await loadJson<SchemaObject>(
@@ -60,7 +59,7 @@ export async function validateDefinitionSchemas(
 	}
 }
 
-export function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
+function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 	tsContent: string;
 	swiftContent: string;
 } {
@@ -107,7 +106,7 @@ export function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 	};
 }
 
-async function main(): Promise<void> {
+export async function generateSduiDefinitions(): Promise<void> {
 	const definitions = await loadSduiRowDefinitions();
 	await validateDefinitionSchemas(definitions);
 	const schema = await loadJson<SchemaObject>(UI_SCHEMA_PATH);
@@ -123,8 +122,4 @@ async function main(): Promise<void> {
 		swiftPath: OUT_SWIFT_PATH,
 		swiftContent,
 	});
-}
-
-if (import.meta.main) {
-	runMain(main);
 }

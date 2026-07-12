@@ -42,18 +42,7 @@ struct DataChangedNotification: Decodable {
   let value: EVYJson
 }
 
-protocol EVYWebsocketProtocol {
-  func connect(token: String, os: DataOS) async throws -> Bool
-  func sendBinary(_ data: Data) async throws
-  func fetch<T: Codable & Sendable>(
-    method: String,
-    params: Encodable,
-    expecting _: T.Type
-  ) async throws -> T
-  func subscribe(event: String) async throws -> [String: String]
-}
-
-actor EVYWebsocket: EVYWebsocketProtocol {
+actor EVYWebsocket {
   private var task: URLSessionWebSocketTask?
   private var pendingRequests: [Int: CheckedContinuation<String, Error>] = [:]
   private var nextId = 1

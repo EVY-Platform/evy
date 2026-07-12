@@ -21,11 +21,17 @@ let placeSearchImpl = async (
 	_params: PlaceSearchRequest,
 ): Promise<PlaceSearchResponse> => [];
 
+function resetCoreApiMocks(): void {
+	syncImpl = async () => ({ data: [] });
+	placeSearchImpl = async () => [];
+}
+
 describe("coreApi", () => {
 	let syncSpy: ReturnType<typeof spyOn>;
 	let placeSearchSpy: ReturnType<typeof spyOn>;
 
 	beforeEach(() => {
+		resetCoreApiMocks();
 		syncSpy = spyOn(syncProcedure, "sync").mockImplementation((params) =>
 			syncImpl(params),
 		);

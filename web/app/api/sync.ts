@@ -5,6 +5,12 @@ import type {
 	SyncResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	validateDataEvyFlow,
+	validateDataEvyPage,
+	validateDataEvyRow,
+	validateDataEvyServiceResource,
+} from "evy-types/validators";
 import type { FlowEntityCollections } from "../utils/flowEntities";
 import { wsClient } from "./wsClient";
 
@@ -59,46 +65,30 @@ function extractFlowEntityCollections(
 	};
 }
 
+function isValid<T>(validate: (value: unknown) => T, item: unknown): item is T {
+	try {
+		validate(item);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 function isDataEvyFlow(item: unknown): item is DATA_EVY_Flow {
-	if (!isRecord(item)) return false;
-	return (
-		typeof item.id === "string" &&
-		typeof item.name === "string" &&
-		Array.isArray(item.pageIds)
-	);
+	return isValid(validateDataEvyFlow, item);
 }
 
 function isDataEvyPage(item: unknown): item is DATA_EVY_Page {
-	if (!isRecord(item)) return false;
-	return (
-		typeof item.id === "string" &&
-		typeof item.name === "string" &&
-		Array.isArray(item.rowIds)
-	);
+	return isValid(validateDataEvyPage, item);
 }
 
 function isDataEvyRow(item: unknown): item is DATA_EVY_Row {
-	if (!isRecord(item)) return false;
-	return (
-		typeof item.id === "string" &&
-		typeof item.name === "string" &&
-		typeof item.type === "string" &&
-		typeof item.visible === "string" &&
-		isRecord(item.data)
-	);
+	return isValid(validateDataEvyRow, item);
 }
 
 function isServiceResource(item: unknown): item is ServiceResource {
-	if (typeof item !== "object" || item === null) {
-		return false;
-	}
-
-	const record = item as Record<string, unknown>;
-	return (
-		typeof record.id === "string" &&
-		typeof record.fkServiceId === "string" &&
-		typeof record.name === "string"
-	);
+	if (!isValid(validateDataEvyServiceResource, item)) return false;
+	return true;
 }
 
 function extractServiceResources(response: SyncResponse): ServiceResource[] {

@@ -95,25 +95,13 @@ export async function writeGeneratedOutputs({
 	swiftPath: string;
 	swiftContent: string;
 }): Promise<void> {
-	await mkdir(OUT_TS, { recursive: true });
+	await mkdir(dirname(tsPath), { recursive: true });
 	await writeFile(tsPath, tsContent, "utf-8");
 	console.log(`Generated ${tsPath}`);
 
-	await mkdir(OUT_SWIFT, { recursive: true });
+	await mkdir(dirname(swiftPath), { recursive: true });
 	await writeFile(swiftPath, swiftContent, "utf-8");
 	console.log(`Generated ${swiftPath}`);
-}
-
-export async function appendLinesToGeneratedFile(
-	outPath: string,
-	lines: string[],
-): Promise<void> {
-	const current = await readFile(outPath, "utf-8");
-	await writeFile(
-		outPath,
-		`${current.trimEnd()}\n\n${lines.join("\n")}\n`,
-		"utf-8",
-	);
 }
 
 export function spawnExitOk(

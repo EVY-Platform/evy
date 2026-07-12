@@ -7,8 +7,7 @@ services:
       dockerfile: ./services/marketplace/Dockerfile
       target: runner
     environment:
-      - MARKETPLACE_GRPC_HOST=${MARKETPLACE_GRPC_HOST}
-      - MARKETPLACE_GRPC_PORT=${MARKETPLACE_GRPC_PORT}
+      - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
       - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
@@ -17,6 +16,6 @@ services:
     env_file:
       - ../../.env
     ports:
-      - ${MARKETPLACE_GRPC_PORT}:${MARKETPLACE_GRPC_PORT}
+      - ${MARKETPLACE_WS_PORT}:${MARKETPLACE_WS_PORT}
     extra_hosts:
       - "host.docker.internal:host-gateway"

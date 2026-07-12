@@ -38,8 +38,8 @@ WEB_PID=""
 # Preserve env overrides when sourcing `.env` (e.g. WEB_PORT=3001 ./run-e2e.sh).
 _PRESET_WEB_PORT="${WEB_PORT-}"
 _PRESET_API_PORT="${API_PORT-}"
-_PRESET_MARKETPLACE_GRPC_HOST="${MARKETPLACE_GRPC_HOST-}"
-_PRESET_MARKETPLACE_GRPC_PORT="${MARKETPLACE_GRPC_PORT-}"
+_PRESET_MARKETPLACE_WS_HOST="${MARKETPLACE_WS_HOST-}"
+_PRESET_MARKETPLACE_WS_PORT="${MARKETPLACE_WS_PORT-}"
 _PRESET_GOOGLE_PLACES_API_KEY="${GOOGLE_PLACES_API_KEY-}"
 set -a
 source .env
@@ -50,11 +50,11 @@ fi
 if [ -n "${_PRESET_API_PORT}" ]; then
 	export API_PORT="${_PRESET_API_PORT}"
 fi
-if [ -n "${_PRESET_MARKETPLACE_GRPC_HOST}" ]; then
-	export MARKETPLACE_GRPC_HOST="${_PRESET_MARKETPLACE_GRPC_HOST}"
+if [ -n "${_PRESET_MARKETPLACE_WS_HOST}" ]; then
+	export MARKETPLACE_WS_HOST="${_PRESET_MARKETPLACE_WS_HOST}"
 fi
-if [ -n "${_PRESET_MARKETPLACE_GRPC_PORT}" ]; then
-	export MARKETPLACE_GRPC_PORT="${_PRESET_MARKETPLACE_GRPC_PORT}"
+if [ -n "${_PRESET_MARKETPLACE_WS_PORT}" ]; then
+	export MARKETPLACE_WS_PORT="${_PRESET_MARKETPLACE_WS_PORT}"
 fi
 # Prefer a real Google Places key supplied by the environment (e.g. CI secret)
 # over the placeholder in `.env`, so place search hits the live API.
