@@ -10,9 +10,9 @@ import {
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { Client } from "rpc-websockets";
 
-import { getFreePort } from "../../../../api/src/tests/wsTestHelpers";
 import { schema } from "../db";
 import { createPgliteTestDatabase } from "./dbTestHelpers";
+import { getFreePort } from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
