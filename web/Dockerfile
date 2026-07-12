@@ -12,15 +12,17 @@ RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lock
 
 # Install web dependencies
 FROM base AS deps
+WORKDIR /app
+COPY --from=typesgen /app/types ./types
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --cwd types
 WORKDIR /app/web
-COPY --from=typesgen /app/types /app/types
 COPY web/package.json web/bun.lock* ./
 RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 
 # Build stage (evy-types = ../types/generated/ts from web/, so workspace has types/ and web/)
 FROM base AS builder
 WORKDIR /app
-COPY --from=typesgen /app/types ./types
+COPY --from=deps /app/types ./types
 COPY web/package.json web/bun.lock* web/tsconfig.json ./web/
 COPY --from=deps /app/web/node_modules ./web/node_modules
 COPY web/app ./web/app

@@ -1,4 +1,4 @@
-name: API Tests
+name: API
 
 on:
     pull_request:
@@ -11,12 +11,12 @@ on:
             - "**/*.md"
 
 jobs:
-    api_tests:
+    api:
         defaults:
             run:
                 working-directory: api
 
-        timeout-minutes: 2
+        timeout-minutes: 5
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -30,7 +30,15 @@ jobs:
                   path-filter: "api/**"
                   path-filter-extra: "types/**"
 
-            - name: Run Tests
+            - name: Run lint
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run lint
+
+            - name: Run build
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run build
+
+            - name: Run tests
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run test:unit
               env:

@@ -2,6 +2,32 @@
 
 The EVY app! Open Xcode, hit run, and Bob's your uncle.
 
+### Prerequisites
+
+The Xcode project references generated Swift types under `types/generated/swift`, which are gitignored and produced by codegen. On a fresh checkout, run this from the repo root **before** opening Xcode or building:
+
+```sh
+bun run types:generate
+```
+
+### Build
+
+Open `ios/evy.xcodeproj` in Xcode and run the `evy` scheme against the **iPhone 17** simulator on **iOS 26.5** (see root `AGENTS.md`), or from the command line:
+
+```sh
+xcodebuild -project ios/evy.xcodeproj -scheme evy -destination 'platform=iOS Simulator,name=iPhone 17' build
+```
+
+### Tests
+
+Run the `evyTests` unit test target:
+
+```sh
+xcodebuild test -project ios/evy.xcodeproj -scheme evy -destination 'platform=iOS Simulator,name=iPhone 17' -only-testing:evyTests
+```
+
+The `e2e` (XCUITest) target additionally requires backend services running; see the root `run-e2e.sh`.
+
 ### Architecture
 
 ```mermaid

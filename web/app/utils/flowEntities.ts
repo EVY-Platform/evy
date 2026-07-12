@@ -6,7 +6,7 @@ import type {
 } from "evy-types";
 import { decomposeServerFlow } from "./decodeFlow";
 
-export type EntityMap<T extends { id: string }> = Record<string, T>;
+type EntityMap<T extends { id: string }> = Record<string, T>;
 
 export type FlowEntityCollections = {
 	flows: DATA_EVY_Flow[];

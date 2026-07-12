@@ -10,6 +10,7 @@
 		"./apiDataSources": "./apiDataSources.ts",
 		"./rpcRequestHelpers": "./rpcRequestHelpers.ts",
 		"./validators": "./validators.ts",
+		"./env": "./env.ts",
 		"./*": "./generated/ts/*.ts"
 	},
 	"dependencies": {

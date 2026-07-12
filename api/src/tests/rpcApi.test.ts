@@ -8,7 +8,6 @@ import {
 	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { GetResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	MARKETPLACE_RESOURCE,
@@ -21,29 +20,12 @@ import {
 	createPgliteTestDatabase,
 } from "./wsTestHelpers";
 
-const forwardApiMock = mock(
-	async (
-		_serviceName: string,
-		params: {
-			service: string;
-			resource?: string;
-			method: string;
-			filter?: {
-				id?: string;
-			};
-		},
-	): Promise<GetResponse> => {
-		return params.filter?.id ? [{ id: params.filter.id }] : [];
-	},
-);
-
 mock.module("../procedures/services", () => ({
-	forwardApi: forwardApiMock,
 	forwardCreate: mock(),
 	forwardDelete: mock(),
 	forwardGet: mock(),
 	forwardUpdate: mock(),
-	wireGrpcEvents: mock(),
+	wireServiceEvents: mock(),
 }));
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
@@ -131,36 +113,25 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	forwardApiMock.mockClear();
 	await clearAllTestTables(testDb);
 	await seedServiceResources();
 });
 
 describe("api JSON-RPC handler", () => {
-	it("forwards non-search marketplace API function requests to the owning service", async () => {
-		const itemId = crypto.randomUUID();
-		const result = await api(
-			{
-				service: MARKETPLACE_SERVICE_ID,
-				resource: MARKETPLACE_RESOURCE.ITEMS,
-				method: "not-search",
-				filter: {
-					id: itemId,
+	it("rejects non-core service API method requests", async () => {
+		await expect(
+			api(
+				{
+					service: MARKETPLACE_SERVICE_ID,
+					resource: MARKETPLACE_RESOURCE.ITEMS,
+					method: "not-search",
+					filter: {
+						id: crypto.randomUUID(),
+					},
 				},
-			},
-			dataDb,
-		);
-
-		expect(result).toEqual([{ id: itemId }]);
-		expect(forwardApiMock).toHaveBeenCalledTimes(1);
-		expect(forwardApiMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_RESOURCE.ITEMS,
-			method: "not-search",
-			filter: {
-				id: itemId,
-			},
-		});
+				dataDb,
+			),
+		).rejects.toThrow("Unknown service API method: not-search");
 	});
 
 	it("rejects requests without an API method", async () => {
@@ -176,32 +147,5 @@ describe("api JSON-RPC handler", () => {
 				dataDb,
 			),
 		).rejects.toThrow("ApiRequest validation failed");
-
-		expect(forwardApiMock).not.toHaveBeenCalled();
-	});
-
-	it("forwards API requests without checking service/resource pairs locally", async () => {
-		const itemId = crypto.randomUUID();
-		const result = await api(
-			{
-				service: MARKETPLACE_SERVICE_ID,
-				resource: "not-a-marketplace-resource",
-				method: "not-search",
-				filter: {
-					id: itemId,
-				},
-			},
-			dataDb,
-		);
-
-		expect(result).toEqual([{ id: itemId }]);
-		expect(forwardApiMock).toHaveBeenCalledWith(MARKETPLACE_SERVICE_ID, {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: "not-a-marketplace-resource",
-			method: "not-search",
-			filter: {
-				id: itemId,
-			},
-		});
 	});
 });

@@ -27,9 +27,9 @@ watch(
 );
 
 for (const file of [
-	"./docs/evy/evy_sdui.json",
-	"./docs/services/service_data.json",
-	"./docs/services/service_sdui.json",
+	"./scripts/fixtures/evy/evy_sdui.json",
+	"./scripts/fixtures/services/service_data.json",
+	"./scripts/fixtures/services/service_sdui.json",
 ]) {
 	watch(file, makeWatcher("seed data changed → db:seed", "db:seed"));
 }

@@ -40,14 +40,12 @@ COPY --from=builder /app/services/marketplace/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/types ../../types
 COPY --from=builder /app/services/marketplace/drizzle.config.ts ./
 COPY --from=builder /app/services/marketplace/drizzle ./drizzle
-COPY types/schema/service.proto /app/types/schema/service.proto
+COPY types/schema ./types/schema
 
-ARG MARKETPLACE_GRPC_HOST
-ENV MARKETPLACE_GRPC_HOST=$MARKETPLACE_GRPC_HOST
-ARG MARKETPLACE_GRPC_PORT
-ENV MARKETPLACE_GRPC_PORT=$MARKETPLACE_GRPC_PORT
+ARG MARKETPLACE_WS_PORT
+ENV MARKETPLACE_WS_PORT=$MARKETPLACE_WS_PORT
 
-EXPOSE $MARKETPLACE_GRPC_PORT
+EXPOSE $MARKETPLACE_WS_PORT
 
 # Run migrations and start the server
 CMD ["bun", "run", "start"]

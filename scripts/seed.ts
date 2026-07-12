@@ -7,6 +7,7 @@ import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
 import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { getPostgresConnectionUrl, requireEnv } from "../types/env";
 import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
@@ -50,15 +51,11 @@ function validateSeedDataItemShape(
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(SCRIPT_DIR, "..");
-const EVY_FLOWS_PATH = join(REPO_ROOT, "docs", "evy", "evy_sdui.json");
-const SERVICE_FLOWS_PATH = join(
-	REPO_ROOT,
-	"docs",
-	"services",
-	"service_sdui.json",
-);
-const DATA_PATH = join(REPO_ROOT, "docs", "services", "service_data.json");
-const SEED_FILES_PATH = join(REPO_ROOT, "docs", "services", "seed-files");
+const FIXTURES_PATH = join(SCRIPT_DIR, "fixtures");
+const EVY_FLOWS_PATH = join(FIXTURES_PATH, "evy", "evy_sdui.json");
+const SERVICE_FLOWS_PATH = join(FIXTURES_PATH, "services", "service_sdui.json");
+const DATA_PATH = join(FIXTURES_PATH, "services", "service_data.json");
+const SEED_FILES_PATH = join(FIXTURES_PATH, "services", "seed-files");
 const RUNTIME_FILES_PATH = join(REPO_ROOT, "api", "src", "public", "files");
 const API_MIGRATIONS_PATH = join(REPO_ROOT, "api", "drizzle");
 const MARKETPLACE_MIGRATIONS_PATH = join(
@@ -74,26 +71,6 @@ const API_CONTAINER_FILES_DIR = "/app/api/src/public/files";
 type SeedFlow = ReturnType<typeof validateUiFlow>;
 type SeedDataItem = ReturnType<typeof validateSeedDataItemShape>;
 type SeedDataMap = Record<string, SeedDataItem[]>;
-
-function requireEnv(name: string): string {
-	const value = process.env[name];
-	if (value === undefined || value === "") {
-		throw new Error(`Missing required database env: ${name}`);
-	}
-	return value;
-}
-
-function getConnectionUrl(databaseEnvName: string): string {
-	const user = requireEnv("DB_USER");
-	const pass = requireEnv("DB_PASS");
-	const port = requireEnv("DB_PORT");
-	const domain = requireEnv("DB_DOMAIN");
-	const database = requireEnv(databaseEnvName);
-
-	const encodedUser = encodeURIComponent(user);
-	const encodedPass = encodeURIComponent(pass);
-	return `postgresql://${encodedUser}:${encodedPass}@${domain}:${port}/${database}`;
-}
 
 const marketplaceDataTable = pgTable("Data", {
 	id: uuid("id").primaryKey().defaultRandom(),
@@ -115,9 +92,9 @@ const coreSchema = {
 };
 const marketplaceSchema = { data: marketplaceDataTable };
 
-const coreSqlClient = new SQL(getConnectionUrl("DB_EVY_DATABASE"));
+const coreSqlClient = new SQL(getPostgresConnectionUrl("DB_EVY_DATABASE"));
 const marketplaceSqlClient = new SQL(
-	getConnectionUrl("DB_MARKETPLACE_DATABASE"),
+	getPostgresConnectionUrl("DB_MARKETPLACE_DATABASE"),
 );
 
 const coreDb = drizzle({ client: coreSqlClient, schema: coreSchema });

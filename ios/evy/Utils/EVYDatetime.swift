@@ -7,17 +7,6 @@ import Foundation
 
 @MainActor
 enum EVYDatetime {
-  static func buildTimeslotPickerDates(
-    row: TimeslotPickerRowViewData,
-    selections: [String]
-  ) -> [EVYTimeslotDate] {
-    buildTimeslotPickerDates(
-      row: row,
-      availableSelections: selections,
-      selectedTimeslot: nil
-    )
-  }
-
   static func format(_ value: String, format: String?) -> String {
     (try? EVY.formatDataOrToString(json: .string(value), format: format)) ?? value
   }

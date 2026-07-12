@@ -148,45 +148,45 @@ describe("assertApiReadable", () => {
 		).resolves.toBeUndefined();
 	});
 
-	it("throws when an external service is missing its gRPC env vars", async () => {
+	it("throws when an external service is missing its WebSocket env vars", async () => {
 		listExternalServicesImpl = async () => [
 			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
 		];
-		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
-		const savedPort = process.env.MARKETPLACE_GRPC_PORT;
-		delete process.env.MARKETPLACE_GRPC_HOST;
-		delete process.env.MARKETPLACE_GRPC_PORT;
+		const savedHost = process.env.MARKETPLACE_WS_HOST;
+		const savedPort = process.env.MARKETPLACE_WS_PORT;
+		delete process.env.MARKETPLACE_WS_HOST;
+		delete process.env.MARKETPLACE_WS_PORT;
 		try {
 			await expect(
 				assertApiReadable(db, { requireSeeded: false }),
-			).rejects.toThrow("MARKETPLACE_GRPC_HOST");
+			).rejects.toThrow("MARKETPLACE_WS_HOST");
 		} finally {
 			if (savedHost !== undefined)
-				process.env.MARKETPLACE_GRPC_HOST = savedHost;
+				process.env.MARKETPLACE_WS_HOST = savedHost;
 			if (savedPort !== undefined)
-				process.env.MARKETPLACE_GRPC_PORT = savedPort;
+				process.env.MARKETPLACE_WS_PORT = savedPort;
 		}
 	});
 
-	it("resolves when all external services have gRPC env vars configured", async () => {
+	it("resolves when all external services have WebSocket env vars configured", async () => {
 		listExternalServicesImpl = async () => [
 			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
 		];
-		const savedHost = process.env.MARKETPLACE_GRPC_HOST;
-		const savedPort = process.env.MARKETPLACE_GRPC_PORT;
-		process.env.MARKETPLACE_GRPC_HOST = "localhost";
-		process.env.MARKETPLACE_GRPC_PORT = "50051";
+		const savedHost = process.env.MARKETPLACE_WS_HOST;
+		const savedPort = process.env.MARKETPLACE_WS_PORT;
+		process.env.MARKETPLACE_WS_HOST = "localhost";
+		process.env.MARKETPLACE_WS_PORT = "50051";
 		try {
 			await expect(
 				assertApiReadable(db, { requireSeeded: false }),
 			).resolves.toBeUndefined();
 		} finally {
 			if (savedHost !== undefined)
-				process.env.MARKETPLACE_GRPC_HOST = savedHost;
-			else delete process.env.MARKETPLACE_GRPC_HOST;
+				process.env.MARKETPLACE_WS_HOST = savedHost;
+			else delete process.env.MARKETPLACE_WS_HOST;
 			if (savedPort !== undefined)
-				process.env.MARKETPLACE_GRPC_PORT = savedPort;
-			else delete process.env.MARKETPLACE_GRPC_PORT;
+				process.env.MARKETPLACE_WS_PORT = savedPort;
+			else delete process.env.MARKETPLACE_WS_PORT;
 		}
 	});
 });

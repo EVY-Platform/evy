@@ -31,7 +31,6 @@ jobs:
                   file: api/Dockerfile
                   push: true
                   tags: ghcr.io/${{ github.repository }}-api:latest
-                  labels: ${{ steps.meta.outputs.labels }}
 
             - name: Build and push web Docker image
               uses: docker/build-push-action@v7
@@ -40,7 +39,14 @@ jobs:
                   file: web/Dockerfile
                   push: true
                   tags: ghcr.io/${{ github.repository }}-web:latest
-                  labels: ${{ steps.meta.outputs.labels }}
+
+            - name: Build and push marketplace Docker image
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: services/marketplace/Dockerfile
+                  push: true
+                  tags: ghcr.io/${{ github.repository }}-marketplace:latest
 
             - name: Docker Compose Remote Deploy api
               uses: glesage/docker-compose-remote-action@v1

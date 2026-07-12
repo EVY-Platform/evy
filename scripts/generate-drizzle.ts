@@ -387,10 +387,9 @@ function applyNullabilityFallback(
 	) {
 		return col;
 	}
-	if (type === "string" && format !== "date-time") return `${col}.notNull()`;
-	if (type === "object" || type === "array" || ref) return col;
-	if (type === "integer" || type === "number") return `${col}.notNull()`;
-	return `${col}.notNull()`;
+	return type === "object" || type === "array" || ref
+		? col
+		: `${col}.notNull()`;
 }
 
 /**
@@ -398,7 +397,6 @@ function applyNullabilityFallback(
  * Rule order: string → integer → number → boolean → object → $ref → fallback text.
  */
 function emitColumn(
-	_defKey: string,
 	propName: string,
 	prop: JsonSchemaProp,
 	tableConfig: { primaryKey: string; defaultRandom: string[] },
@@ -478,23 +476,11 @@ async function main(): Promise<void> {
 		"jsonb",
 		"uniqueIndex",
 	];
-	const lines: string[] = [
-		"/* eslint-disable */",
-		"/** Generated from types/schema/data - do not edit. */",
-		"",
-		"import {",
-		...pgCoreImports.map((importName) => `\t${importName},`),
-		'} from "drizzle-orm/pg-core";',
-		'import { relations } from "drizzle-orm";',
-		'import type { DATA_EVY_RowData } from "evy-types";',
-		'import type { UI_Flow } from "evy-types/sdui/evy";',
-		"",
-	];
+	const lines: string[] = [];
 
-	for (const [_enumKey, enumConfig] of Object.entries(config.enums ?? {}) as [
-		string,
-		DrizzleEnumConfig,
-	][]) {
+	for (const enumConfig of Object.values(
+		config.enums ?? {},
+	) as DrizzleEnumConfig[]) {
 		lines.push(
 			`export const osEnum = pgEnum("${enumConfig.name}", [${enumConfig.values.map((v) => `"${v}"`).join(", ")}]);`,
 		);
@@ -514,17 +500,10 @@ async function main(): Promise<void> {
 			"	{",
 		);
 		const requiredSet = new Set(def.required ?? []);
-		const propEntries = Object.entries(def.properties);
-		for (const [propName, _propVal] of propEntries) {
+		for (const propName of Object.keys(def.properties)) {
 			const prop = getPropSchema(def, propName);
 			if (!prop) continue;
-			const col = emitColumn(
-				defKey,
-				propName,
-				prop,
-				tableConfig,
-				requiredSet,
-			);
+			const col = emitColumn(propName, prop, tableConfig, requiredSet);
 			lines.push(`		${propName}: ${col},`);
 		}
 		lines.push("	},");
@@ -612,35 +591,30 @@ async function main(): Promise<void> {
 
 	await mkdir(dirname(OUT_PATH), { recursive: true });
 
-	const columnLines = lines.filter((line) => !line.startsWith("import type"));
-	if (!isTypeUsed("DATA_EVY_RowData", columnLines)) {
-		const idx = lines.findIndex((l) =>
-			l.includes("import type { DATA_EVY_RowData }"),
-		);
-		if (idx !== -1) lines.splice(idx, 1);
-	}
-	if (!isTypeUsed("UI_Flow", columnLines)) {
-		const idx = lines.findIndex((l) =>
-			l.includes("import type { UI_Flow }"),
-		);
-		if (idx !== -1) lines.splice(idx, 1);
-	}
-	if (isTypeUsed("DATA_PRIMITIVE", columnLines)) {
-		const idx = lines.findIndex(
-			(l) =>
-				l.includes("import type { UI_Flow }") ||
-				l.includes("import type { DATA_EVY_RowData }"),
-		);
-		if (idx !== -1) {
-			lines.splice(
-				idx + 1,
-				0,
-				'import type { DATA_PRIMITIVE } from "evy-types/data/primitive";',
-			);
-		}
-	}
+	const typeImports = [
+		isTypeUsed("DATA_EVY_RowData", lines)
+			? 'import type { DATA_EVY_RowData } from "evy-types";'
+			: null,
+		isTypeUsed("UI_Flow", lines)
+			? 'import type { UI_Flow } from "evy-types/sdui/evy";'
+			: null,
+		isTypeUsed("DATA_PRIMITIVE", lines)
+			? 'import type { DATA_PRIMITIVE } from "evy-types/data/primitive";'
+			: null,
+	].filter((importLine) => importLine !== null);
+	const headerLines = [
+		"/* eslint-disable */",
+		"/** Generated from types/schema/data - do not edit. */",
+		"",
+		"import {",
+		...pgCoreImports.map((importName) => `\t${importName},`),
+		'} from "drizzle-orm/pg-core";',
+		'import { relations } from "drizzle-orm";',
+		...typeImports,
+		"",
+	];
 
-	await writeFile(OUT_PATH, lines.join("\n"), "utf-8");
+	await writeFile(OUT_PATH, [...headerLines, ...lines].join("\n"), "utf-8");
 
 	console.log("Drizzle schema generated successfully.");
 }

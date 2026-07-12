@@ -16,31 +16,76 @@ struct EVYTextRow: View {
   }
 
   var body: some View {
-    let content = view
+    EVYTitleSubtitleRow(
+      title: view.title,
+      subtitle: view.subtitle,
+      centerSubtitleWhenTitleEmpty: true
+    ) {
+      if let label = view.label, !label.isEmpty {
+        EVYTextView(label, style: .info)
+      }
+    }
+  }
+}
 
+/// Shared skeleton for rows rendering an optional title, an optional subtitle,
+/// and a trailing element, laid out as `HStack { VStack { title, subtitle } + trailing }`.
+struct EVYTitleSubtitleRow<Trailing: View>: View {
+  let title: String?
+  let subtitle: String?
+  let titleBold: Bool
+  let centerSubtitleWhenTitleEmpty: Bool
+  @ViewBuilder let trailing: () -> Trailing
+
+  init(
+    title: String?,
+    subtitle: String? = nil,
+    titleBold: Bool = false,
+    centerSubtitleWhenTitleEmpty: Bool = false,
+    @ViewBuilder trailing: @escaping () -> Trailing
+  ) {
+    self.title = title
+    self.subtitle = subtitle
+    self.titleBold = titleBold
+    self.centerSubtitleWhenTitleEmpty = centerSubtitleWhenTitleEmpty
+    self.trailing = trailing
+  }
+
+  var body: some View {
     HStack(alignment: .center, spacing: 8) {
       VStack(alignment: .leading) {
-        if let title = content.title, !title.isEmpty {
-          EVYTextView(title)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .lineLimit(1)
-            .truncationMode(.tail)
+        if let title, !title.isEmpty {
+          titleView(title)
         }
-        if let subtitle = content.subtitle, !subtitle.isEmpty {
+        if let subtitle, !subtitle.isEmpty {
           EVYTextView(subtitle, style: .info)
             .frame(
               maxWidth: .infinity,
-              alignment: content.title?.isEmpty ?? true ? .center : .leading
+              alignment: centerSubtitleWhenTitleEmpty && (title?.isEmpty ?? true)
+                ? .center : .leading
             )
             .lineLimit(3)
             .truncationMode(.tail)
         }
       }
-      if let label = content.label, !label.isEmpty {
-        EVYTextView(label, style: .info)
-      }
+      trailing()
     }
     .padding(.horizontal, Constants.majorPadding)
+  }
+
+  @ViewBuilder
+  private func titleView(_ title: String) -> some View {
+    if titleBold {
+      EVYTextView(title).toText().bold()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .lineLimit(1)
+        .truncationMode(.tail)
+    } else {
+      EVYTextView(title)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .lineLimit(1)
+        .truncationMode(.tail)
+    }
   }
 }
 

@@ -9,21 +9,13 @@ struct EVYHeadingRow: View {
   }
 
   var body: some View {
-    let content = view
-
-    HStack(alignment: .center, spacing: 8) {
-      VStack(alignment: .leading) {
-        if !content.title.isEmpty {
-          EVYTextView(content.title).toText().bold()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .lineLimit(1)
-            .truncationMode(.tail)
-        }
-      }
-      if let label = content.label, !label.isEmpty {
+    EVYTitleSubtitleRow(
+      title: view.title,
+      titleBold: true
+    ) {
+      if let label = view.label, !label.isEmpty {
         EVYTextView(label, style: .info)
       }
     }
-    .padding(.horizontal, Constants.majorPadding)
   }
 }

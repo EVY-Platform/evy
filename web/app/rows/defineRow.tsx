@@ -11,7 +11,7 @@ type RowDefinition =
 			Component: (props: { rowId: string }) => ReactNode;
 	  };
 
-export type RowComponent = ((props: { rowId: string }) => ReactNode) & {
+type RowComponent = ((props: { rowId: string }) => ReactNode) & {
 	config: RowConfig;
 	name: string;
 };

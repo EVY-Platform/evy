@@ -12,7 +12,6 @@ import {
 	findPageContainingRow,
 	findPageIdContainingRow,
 	findRowIdPath,
-	getRowChildIds,
 	insertRowIntoPage,
 	moveRow,
 	moveRowToFooter,
@@ -104,29 +103,6 @@ describe("collectSubtreeRowIds", () => {
 		const maps = makeMaps([], [], [row]);
 		const ids = collectSubtreeRowIds("r", maps.rowsById);
 		expect([...ids]).toEqual(["r"]);
-	});
-});
-
-// ---------------------------------------------------------------------------
-// getRowChildIds
-// ---------------------------------------------------------------------------
-
-describe("getRowChildIds", () => {
-	it("returns undefined childRowId and empty array when row has no children", () => {
-		const row = makeRow("r1");
-		const result = getRowChildIds(row);
-		expect(result.childRowId).toBeUndefined();
-		expect(result.childrenRowIds).toEqual([]);
-	});
-
-	it("returns childRowId and childrenRowIds from data", () => {
-		const row = makeRow("r1", {
-			child_row_id: "c1",
-			children_row_ids: ["c2", "c3"],
-		});
-		const result = getRowChildIds(row);
-		expect(result.childRowId).toBe("c1");
-		expect(result.childrenRowIds).toEqual(["c2", "c3"]);
 	});
 });
 

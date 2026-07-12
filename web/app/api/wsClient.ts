@@ -207,19 +207,6 @@ class WSClient {
 			throw new Error(`Invalid ${resource} delete response`);
 		}
 	}
-
-	disconnect(): void {
-		if (this.client) {
-			this.client.close();
-			this.client = null;
-		}
-		this.connectionState = "disconnected";
-		this.connectionPromise = null;
-	}
-
-	getState(): ConnectionState {
-		return this.connectionState;
-	}
 }
 
 export const wsClient = new WSClient();

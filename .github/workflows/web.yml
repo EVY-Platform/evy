@@ -1,4 +1,4 @@
-name: Web Tests
+name: Web
 
 on:
     pull_request:
@@ -11,7 +11,7 @@ on:
             - "**/*.md"
 
 jobs:
-    web_tests:
+    web:
         permissions:
             contents: read
             packages: read
@@ -19,7 +19,7 @@ jobs:
             run:
                 working-directory: web
 
-        timeout-minutes: 8
+        timeout-minutes: 10
         runs-on: ubuntu-latest
 
         steps:
@@ -33,6 +33,10 @@ jobs:
                   working-directory: web
                   path-filter: "web/**"
                   path-filter-extra: "types/**"
+
+            - name: Run lint
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run lint
 
             - name: Prepare .env
               if: steps.setup.outputs.has-changes == 'true'
@@ -53,6 +57,14 @@ jobs:
             - name: Run integration tests
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run test:integration
+
+            - name: Upload lint report
+              uses: actions/upload-artifact@v7
+              if: always() && steps.setup.outputs.has-changes == 'true'
+              with:
+                  name: lint-report
+                  path: lint-report/
+                  retention-days: 1
 
             - name: Upload test results
               uses: actions/upload-artifact@v7

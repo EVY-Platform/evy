@@ -11,7 +11,6 @@ import { createElement } from "react";
 import { baseRows } from "../rows/baseRows";
 import { UnknownRow } from "../rows/EVYRow";
 import { getRowBindingFields, readBindingFields } from "../rows/rowFields";
-import type { UI_Flow, UI_Page } from "../types/flow";
 import type { Row, RowConfig } from "../types/row";
 import {
 	ROW_CHILD_FIELD,
@@ -66,17 +65,6 @@ export function normalizeServerRow(row: ServerRow): ServerRow {
 		return normalizeUnknownServerRow(row);
 	}
 	return normalizeKnownServerRow(row);
-}
-
-export function normalizeServerFlow(flow: ServerFlow): ServerFlow {
-	return {
-		...flow,
-		pages: flow.pages.map((page) => ({
-			...page,
-			rows: page.rows.map(normalizeServerRow),
-			footer: page.footer ? normalizeServerRow(page.footer) : undefined,
-		})),
-	};
 }
 
 function normalizeKnownServerRow(row: ServerRow): ServerRow {
@@ -183,21 +171,6 @@ function rowToServerRow(row: Row): ServerRow {
 	}
 
 	return serverRow as unknown as ServerRow;
-}
-
-function encodeRowToServerRow(row: Row): ServerRow {
-	return normalizeServerRow(rowToServerRow(row));
-}
-
-export function encodeFlow(flow: UI_Flow): ServerFlow {
-	return {
-		...flow,
-		pages: flow.pages.map((page: UI_Page) => ({
-			...page,
-			rows: page.rows.map(encodeRowToServerRow),
-			footer: page.footer ? encodeRowToServerRow(page.footer) : undefined,
-		})),
-	};
 }
 
 export function decomposeServerFlow(

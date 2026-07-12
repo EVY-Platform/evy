@@ -12,7 +12,7 @@ Always use `bun` to run commands or install dependencies.
 
 ## Development
 
-For web or api, make sure you run `bun run build`, `bun run lint`, `bun run test:unit`, and `bun run test:integration` anytime you make major changes and fix issues that arise.
+For web or api, make sure you run `bun run build`, `bun run lint`, and `bun run test:unit` anytime you make major changes and fix issues that arise. For web, also run `bun run test:integration`.
 For iOS, make sure you build with Xcode targeting iPhone 17 iOS 26.5 and fix any errors.
 Ensure you run `./run-e2e.sh --skip-ios` from root to run the e2e tests.
 If you need to run iOS tests, keep services running and just run the iOS tests separately rather than re-running the whole e2e suite.
@@ -22,5 +22,5 @@ After completing any set of changes, always run `bun run format` from the repo r
 
 ## Pull requests
 
-Pull request names should be prefixed with "[FEAT|FIX|REFACTOR]"
+Pull request names should be prefixed with "[FEAT|BUG|REFACTOR]"
 Pull request descriptions should include the summary of the task, the major changes made, the tests ran, and any risks or suggestions for later

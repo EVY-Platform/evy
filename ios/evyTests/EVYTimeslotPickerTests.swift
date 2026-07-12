@@ -37,7 +37,8 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testEmptySelectionsProducesNoDates() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: []
+      availableSelections: [],
+      selectedTimeslot: nil
     )
     XCTAssertTrue(dates.isEmpty)
   }
@@ -45,7 +46,8 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testSingleDayGroupedCorrectly() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: ["2026-06-03T09:00:00", "2026-06-03T09:30:00"]
+      availableSelections: ["2026-06-03T09:00:00", "2026-06-03T09:30:00"],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.count, 1)
     XCTAssertEqual(dates.first?.timeslots.count, 2)
@@ -54,10 +56,11 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testMultipleDaysSortedChronologically() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: [
+      availableSelections: [
         "2026-06-05T11:00:00",
         "2026-06-03T09:00:00",
-      ]
+      ],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.count, 2)
     XCTAssertEqual(dates[0].timeslots.first?.timeslot, "09:00")
@@ -67,7 +70,8 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testTimeslotTimeFormattedAsHHmm() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: ["2026-06-03T09:30:00"]
+      availableSelections: ["2026-06-03T09:30:00"],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.first?.timeslots.first?.timeslot, "09:30")
   }
@@ -75,7 +79,8 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testTimeslotFormattedWithTimeslotFormatExpression() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(timeslotFormat: "{formatDatetime($datum, \"h:mm a\")}"),
-      selections: ["2026-06-03T09:30:00"]
+      availableSelections: ["2026-06-03T09:30:00"],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.first?.timeslots.first?.timeslot, "9:30 AM")
   }
@@ -83,7 +88,8 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testHeaderFormattedWithHeaderFormat() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: ["2026-06-03T09:00:00"]
+      availableSelections: ["2026-06-03T09:00:00"],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.first?.header, "Wed")
   }
@@ -91,7 +97,8 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testHeaderSubtitleFormattedWithHeaderSubtitle() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: ["2026-06-03T09:00:00"]
+      availableSelections: ["2026-06-03T09:00:00"],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.first?.subtitle, "Jun 3rd")
   }
@@ -99,11 +106,12 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testAllTimeslotsAreAvailable() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: [
+      availableSelections: [
         "2026-06-03T09:00:00",
         "2026-06-03T09:30:00",
         "2026-06-03T14:00:00",
-      ]
+      ],
+      selectedTimeslot: nil
     )
     let allAvailable = dates.flatMap { $0.timeslots }.allSatisfy { $0.available }
     XCTAssertTrue(allAvailable)
@@ -112,7 +120,8 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testInvalidSelectionStringSkipped() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: ["not-a-date", "2026-06-03T09:00:00", "short"]
+      availableSelections: ["not-a-date", "2026-06-03T09:00:00", "short"],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.count, 1)
     XCTAssertEqual(dates.first?.timeslots.count, 1)
@@ -121,10 +130,11 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testDaysWithNoSelectionsAreExcluded() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: [
+      availableSelections: [
         "2026-06-03T09:00:00",
         "2026-06-05T11:00:00",
-      ]
+      ],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.count, 2)
     let headers = dates.map { $0.header }
@@ -134,11 +144,12 @@ final class EVYTimeslotPickerTests: XCTestCase {
   func testTimeslotsWithinOneDaySortedChronologically() {
     let dates = EVYDatetime.buildTimeslotPickerDates(
       row: timeslotPickerRow(),
-      selections: [
+      availableSelections: [
         "2026-06-03T14:00:00",
         "2026-06-03T09:00:00",
         "2026-06-03T11:30:00",
-      ]
+      ],
+      selectedTimeslot: nil
     )
     XCTAssertEqual(dates.first?.timeslots.map { $0.timeslot }, ["09:00", "11:30", "14:00"])
   }

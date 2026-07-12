@@ -175,7 +175,7 @@ Supported action functions:
 
 Note that the web builder does not execute actions; it only stores these strings and displays mocks.
 
-#### Examples (from `docs/services/service_sdui.json`)
+#### Examples (from `scripts/fixtures/services/service_sdui.json`)
 
 Validate several fields with empty `true` steps, then navigate:
 

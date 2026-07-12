@@ -1,7 +1,7 @@
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as data from "./data/data";
 import { createDb, type EvyDb } from "./database/db";
-import { requireServiceGrpcEndpoint } from "./procedures/services";
+import { requireServiceWsEndpoint } from "./procedures/services";
 
 type AssertApiReadableOptions = {
 	requireSeeded: boolean;
@@ -15,7 +15,7 @@ export async function assertApiReadable(
 
 	const externalServices = await data.listExternalServices(db);
 	for (const { id, name } of externalServices) {
-		requireServiceGrpcEndpoint(name, id);
+		requireServiceWsEndpoint(name, id);
 	}
 
 	const response = await data.get(db, {

@@ -1,4 +1,3 @@
-import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
 	loadSduiRowDefinitions,
@@ -7,15 +6,7 @@ import {
 	type SduiRowSpec,
 	type SduiRowSpecField,
 } from "./sdui-row-schema-utils.js";
-import {
-	loadJson,
-	OUT_SWIFT,
-	runMain,
-	SCHEMA_DIR,
-} from "./types-generation-utils.js";
-
-const UI_SCHEMA_PATH = join(SCHEMA_DIR, "sdui", "evy.schema.json");
-const ACTION_SCHEMA_PATH = join(SCHEMA_DIR, "sdui", "action.schema.json");
+import { OUT_SWIFT } from "./types-generation-utils.js";
 
 type RowSpec = SduiRowSpec;
 
@@ -590,19 +581,4 @@ export function emitSwiftSdui({
 			content: emitUIRowPayloads(rowSpec),
 		},
 	];
-}
-
-async function main(): Promise<void> {
-	const schema = await loadJson<SchemaObject>(UI_SCHEMA_PATH);
-	const actionSchema = await loadJson<SchemaObject>(ACTION_SCHEMA_PATH);
-	const definitions = await loadSduiRowDefinitions();
-	const files = emitSwiftSdui({ definitions, schema, actionSchema });
-	for (const file of files) {
-		await writeFile(file.path, file.content, "utf-8");
-	}
-	console.log("Swift UI types generated successfully.");
-}
-
-if (import.meta.main) {
-	runMain(main);
 }

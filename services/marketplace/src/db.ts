@@ -1,6 +1,7 @@
 import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { DATA_PRIMITIVE } from "evy-types";
+import { getPostgresConnectionUrl } from "evy-types/env";
 import postgres from "postgres";
 
 export const data = pgTable("Data", {
@@ -13,24 +14,8 @@ export const data = pgTable("Data", {
 
 export const schema = { data };
 
-function requireEnv(name: string): string {
-	const value = process.env[name];
-	if (value === undefined || value === "") {
-		throw new Error(`Missing required database env: ${name}`);
-	}
-	return value;
-}
-
 export function getMarketplaceConnectionUrl(): string {
-	const user = requireEnv("DB_USER");
-	const pass = requireEnv("DB_PASS");
-	const port = requireEnv("DB_PORT");
-	const domain = requireEnv("DB_DOMAIN");
-	const database = requireEnv("DB_MARKETPLACE_DATABASE");
-
-	const encodedUser = encodeURIComponent(user);
-	const encodedPass = encodeURIComponent(pass);
-	return `postgresql://${encodedUser}:${encodedPass}@${domain}:${port}/${database}`;
+	return getPostgresConnectionUrl("DB_MARKETPLACE_DATABASE");
 }
 
 function createMarketplaceDb() {
