@@ -19,7 +19,7 @@ struct EVYMap: View {
       Map(initialPosition: .region(region(for: coordinate))) {
         Marker("Location", coordinate: coordinate)
       }
-      .frame(maxWidth: .infinity)
+	  .frame(maxWidth: .infinity, maxHeight: 150)
       .aspectRatio(4 / 3, contentMode: .fit)
       .clipShape(RoundedRectangle(cornerRadius: Constants.mainCornerRadius))
     } else {
