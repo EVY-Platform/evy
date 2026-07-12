@@ -34,6 +34,7 @@ RETRY_DELAY_SECONDS=2
 API_PID=""
 MARKETPLACE_PID=""
 WEB_PID=""
+IOS_SIM_UDID=""
 
 # Preserve env overrides when sourcing `.env` (e.g. WEB_PORT=3001 ./run-e2e.sh).
 _PRESET_WEB_PORT="${WEB_PORT-}"
@@ -85,6 +86,11 @@ retry_until_cmd() {
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
+    if [ -n "$IOS_SIM_UDID" ]; then
+        echo "Erasing iOS simulator $IOS_SIM_UDID"
+        xcrun simctl shutdown "$IOS_SIM_UDID" 2>/dev/null || true
+        xcrun simctl erase "$IOS_SIM_UDID" 2>/dev/null || true
+    fi
     if [ "$CI_MODE" = true ]; then
         local pid
         for pid in "$WEB_PID" "$MARKETPLACE_PID" "$API_PID"; do
@@ -345,9 +351,9 @@ else
         else
             echo "Using iOS simulator destination: $IOS_DESTINATION"
             # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
-            SIM_UDID="${IOS_DESTINATION#*id=}"
-            xcrun simctl shutdown "$SIM_UDID" 2>/dev/null || true
-            xcrun simctl erase "$SIM_UDID" 2>/dev/null || true
+            IOS_SIM_UDID="${IOS_DESTINATION#*id=}"
+            xcrun simctl shutdown "$IOS_SIM_UDID" 2>/dev/null || true
+            xcrun simctl erase "$IOS_SIM_UDID" 2>/dev/null || true
             if xcodebuild test \
                 -project evy.xcodeproj \
                 -scheme evy \

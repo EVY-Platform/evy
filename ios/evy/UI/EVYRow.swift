@@ -100,7 +100,7 @@ private struct EVYResolvedRow: View {
   private let storedRow: EVYStoredRow?
   let datum: EVYJson?
 
-  @Environment(\.navigate) private var navigate
+  @Environment(\.action) private var action
   @Environment(\.evyScope) private var evyScope
   @State private var presentedSheetRef: EVYRowRef?
   @State private var isVisible = EVYState<Bool>(staticString: true)
@@ -204,7 +204,9 @@ private struct EVYResolvedRow: View {
 
   private var shouldUseGenericActionTap: Bool {
     guard let contentRow else { return false }
-    return !contentRow.actions.isEmpty && contentRow.type != .button
+    return !contentRow.actions.isEmpty
+      && contentRow.type != .button
+      && contentRow.type != .timeslotPicker
   }
 
   private func runActions(contentRow: UI_Row) {
@@ -213,7 +215,7 @@ private struct EVYResolvedRow: View {
       datum: datum,
       childRef: childRef,
       show: { ref in presentedSheetRef = ref },
-      navigate: navigate
+      action: action
     )
   }
 
@@ -262,7 +264,10 @@ private struct EVYResolvedRow: View {
     case .selectSegmentContainer(let view, _):
       EVYSelectSegmentContainerRow(view: view, childRefs: childRefs)
     case .timeslotPicker(let view, _):
-      EVYTimeslotPickerRow(view: view)
+      EVYTimeslotPickerRow(
+        view: view,
+        onSelectionCommitted: { runActions(contentRow: contentRow) }
+      )
     case .text(let view, _):
       EVYTextRow(view: view)
     case .textAction(let view, _):

@@ -65,6 +65,7 @@ private func evyJsonToAny(_ value: EVYJson) -> Any {
   case .bool(let v): return v
   case .dictionary(let v): return v.mapValues(evyJsonToAny)
   case .array(let v): return v.map(evyJsonToAny)
+  case .null: return NSNull()
   }
 }
 

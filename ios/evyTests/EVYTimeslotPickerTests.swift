@@ -153,4 +153,28 @@ final class EVYTimeslotPickerTests: XCTestCase {
     )
     XCTAssertEqual(dates.first?.timeslots.map { $0.timeslot }, ["09:00", "11:30", "14:00"])
   }
+
+  func testSelectionCallbackRunsAfterTimeslotIsCommitted() throws {
+    let scopeId = "__test__:timeslot-selection"
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    EVY.ensureDraftExists(variableName: "selected_timeslot", scopeId: scopeId)
+    var callbackCount = 0
+    EVYTimeslotPicker.commitSelection(
+      selectedTimeslot,
+      to: "{selected_timeslot}",
+      onSelectionCommitted: {
+        callbackCount += 1
+        XCTAssertEqual(try? EVY.getDataFromText("{selected_timeslot}"), .string(selectedTimeslot))
+      }
+    )
+
+    XCTAssertEqual(callbackCount, 1)
+  }
 }

@@ -12,12 +12,12 @@ enum EVYActionRunner {
     datum: EVYJson? = nil,
     childRef: EVYRowRef? = nil,
     show: @escaping (EVYRowRef) -> Void = { _ in },
-    navigate: @escaping (NavOperation) -> Void
+    action: @escaping (ActionOperation) -> Void
   ) {
     guard !actions.isEmpty else { return }
 
-    for action in actions {
-      let condition = action.condition.trimmingCharacters(in: .whitespacesAndNewlines)
+    for rowAction in actions {
+      let condition = rowAction.condition.trimmingCharacters(in: .whitespacesAndNewlines)
       let executeTrueBranch: Bool
 
       if condition.isEmpty {
@@ -27,28 +27,35 @@ enum EVYActionRunner {
       }
 
       if !executeTrueBranch {
-        runBranch(action.`false`, datum: datum, childRef: childRef, show: show, navigate: navigate)
+        runBranch(rowAction.`false`, datum: datum, childRef: childRef, show: show, action: action)
         return
       }
 
-      runBranch(action.`true`, datum: datum, childRef: childRef, show: show, navigate: navigate)
+      let succeeded = runBranch(
+        rowAction.`true`, datum: datum, childRef: childRef, show: show, action: action)
+      if !succeeded {
+        return
+      }
     }
   }
 
+  @discardableResult
   private static func runBranch(
     _ rawBranch: String,
     datum: EVYJson?,
     childRef: EVYRowRef?,
     show: @escaping (EVYRowRef) -> Void,
-    navigate: @escaping (NavOperation) -> Void
-  ) {
+    action: @escaping (ActionOperation) -> Void
+  ) -> Bool {
     let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else { return }
+    guard !trimmed.isEmpty else { return true }
     do {
       try execute(
-        branch: trimmed, datum: datum, childRef: childRef, navigate: navigate, show: show)
+        branch: trimmed, datum: datum, childRef: childRef, action: action, show: show)
+      return true
     } catch {
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
+      return false
     }
   }
 
@@ -56,7 +63,7 @@ enum EVYActionRunner {
     branch: String,
     datum: EVYJson?,
     childRef: EVYRowRef?,
-    navigate: @escaping (NavOperation) -> Void,
+    action: @escaping (ActionOperation) -> Void,
     show: @escaping (EVYRowRef) -> Void
   ) throws {
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
@@ -67,7 +74,7 @@ enum EVYActionRunner {
         let navArgs = try parseNavigateArguments(functionArgs)
         let query = try parseQueryArgument(navArgs.queryArgument)
         let resolvedQuery = EVY.resolveDatumInQuery(query, datum: datum)
-        navigate(
+        action(
           .navigate(
             Route(
               flowId: navArgs.flowId,
@@ -80,9 +87,29 @@ enum EVYActionRunner {
           throw EVYError.invalidData(
             context: "create requires namespace and resource, e.g. create(marketplace,item)")
         }
-        navigate(.create(namespace: createAction.namespace, resource: createAction.resource))
+        let resolvedData = createAction.data.map { resolveInlineCreateData($0, datum: datum) }
+        try EVY.create(
+          namespace: createAction.namespace,
+          resource: createAction.resource,
+          data: resolvedData
+        )
+      case "update":
+        guard let updateAction = EVYActionParser.updateAction(from: branch) else {
+          throw EVYError.invalidData(
+            context:
+              "update requires namespace, resource, filter, and changes, e.g. update(marketplace,requests,{id: abc},{archived: true})"
+          )
+        }
+        let resolvedFilter = resolveInlineCreateData(updateAction.filter, datum: datum)
+        let resolvedChanges = resolveInlineCreateData(updateAction.changes, datum: datum)
+        try EVY.update(
+          namespace: updateAction.namespace,
+          resource: updateAction.resource,
+          matching: resolvedFilter,
+          changes: resolvedChanges
+        )
       case "close":
-        navigate(.close)
+        action(.close)
       case "show":
         if let childRef {
           show(childRef)
@@ -96,7 +123,7 @@ enum EVYActionRunner {
           .replacingOccurrences(of: "_", with: " ")
           .trimmingCharacters(in: .whitespacesAndNewlines)
         let readableField = fieldName.isEmpty ? "Field" : fieldName.capitalized
-        navigate(.highlightRequired(readableField))
+        action(.highlightRequired(readableField))
       default:
         throw EVYError.invalidData(context: "Unsupported action function: \(functionName)")
       }
@@ -126,40 +153,53 @@ enum EVYActionRunner {
     )
   }
 
+  private static func resolveInlineCreateData(
+    _ data: [String: String],
+    datum: EVYJson?
+  ) -> [String: EVYJson] {
+    var resolvedData: [String: EVYJson] = [:]
+
+    for (key, value) in data {
+      if value.hasPrefix(EVY.datumPrefix), let datum {
+        let props = String(value.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(
+          String.init)
+        if let resolvedValue = datum.parsePropStrict(props: props) {
+          resolvedData[key] = resolvedValue
+          continue
+        }
+      }
+
+      if value == "true" {
+        resolvedData[key] = .bool(true)
+        continue
+      }
+      if value == "false" {
+        resolvedData[key] = .bool(false)
+        continue
+      }
+
+      resolvedData[key] = (try? EVY.getDataFromText("{\(value)}")) ?? .string(value)
+    }
+
+    return resolvedData
+  }
+
   private static func parseQueryArgument(_ value: String) throws -> [String: [String]] {
     let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedValue.isEmpty else { return [:] }
-    return try parsePlainTextQuery(trimmedValue)
-  }
 
-  private static func parsePlainTextQuery(_ text: String) throws -> [String: [String]] {
-    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else {
-      throw EVYError.invalidData(context: "navigate query params must be wrapped in {}")
-    }
-
-    let inner = String(trimmed.dropFirst().dropLast())
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !inner.isEmpty else { return [:] }
-
+    let queryValues = try EVYActionParser.plainTextObject(
+      from: trimmedValue,
+      context: "navigate query params",
+      allowsEmptyValues: true
+    )
     var query: [String: [String]] = [:]
-    for pair in splitFunctionArguments(inner) {
-      guard let colonIndex = pair.firstIndex(of: ":") else {
-        throw EVYError.invalidData(context: "navigate query params must be key:value pairs")
-      }
-
-      let key = pair[..<colonIndex]
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      guard !key.isEmpty else { continue }
-
-      let value = pair[pair.index(after: colonIndex)...]
-        .trimmingCharacters(in: .whitespacesAndNewlines)
+    for (key, value) in queryValues {
       let values = try parsePlainTextQueryValue(value)
       if !values.isEmpty {
         query[key] = values
       }
     }
-
     return query
   }
 

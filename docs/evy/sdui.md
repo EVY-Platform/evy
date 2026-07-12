@@ -135,13 +135,17 @@ Rows are what are put into pages. They are the building block of the EVY server-
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
 | `TextSelect` | yes | yes | no | no | `source` = current selected state; `destination` = write target. |
 | `PhotoGallery`, `Map`, `ListContainer`, `InputList` | yes | no | no | no | Read-only or collection source. |
-| All other rows | no | no | no | no | e.g. `Button`, `Text`, `TextAction`, `Heading`. |
+| All other rows | no | no | no | no | e.g. `Button`, `Text`, `TextAction`, `Heading`. `Button` accepts an optional `style` of `"primary"` (default) or `"danger"` (red background on iOS). |
 
 Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder.
 
 ### Actions
 
-Each row has an `actions` attribute which is an array of `UI_RowAction` objects that can trigger various actions if a condition is met or not met.
+Each row has an `actions` attribute which is an array of `UI_RowAction` objects that can trigger various actions if a condition is met or not met. All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`) are handled by the same runner.
+
+#### Sequencing
+
+A row's `actions` array runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. This is what makes multi-step sequences like "create, then close" expressible as two separate action entries (see Submit below).
 
 #### Conditions
 
@@ -169,7 +173,8 @@ Supported action functions:
 | Function | Meaning |
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}` |
-| `create(service_id, resource_id)` | Submit / create domain entity, e.g. `{create([service_id],[resource_id])}` |
+| `create(service_id, resource_id, data?)` | Create a domain entity. **Never changes routes** — with a plain-text data object, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans), and immediately creates that one entity, e.g. `{create([service_id],[resource_id],{type: pickup, item_id: $datum.id, archived: false})}`. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up — the client decides this by comparing the active draft scope to the target resource. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. |
+| `update(service_id, resource_id, filter, changes)` | Update matching domain entities. Resolves filter and changes like inline `create` data (including boolean literals). Locally finds rows where every filter property matches, merges changes, then syncs each match to the server with an `update` RPC. Filter and changes objects are required and non-empty, e.g. `{update([service_id],[resource_id],{item_id: [items_resource].id, archived: false},{archived: true})}`. |
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
@@ -220,11 +225,18 @@ OR condition with navigate on success:
 Submit:
 
 ```json
-{
-	"condition": "",
-	"false": "",
-	"true": "{create([service_id],[resource_id])}"
-}
+[
+	{
+		"condition": "",
+		"false": "",
+		"true": "{create([service_id],[resource_id])}"
+	},
+	{
+		"condition": "",
+		"false": "",
+		"true": "{close()}"
+	}
+]
 ```
 
 ---

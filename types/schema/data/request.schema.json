@@ -1,0 +1,70 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "request",
+	"title": "DATA_MARKETPLACE_Request",
+	"oneOf": [
+		{
+			"$ref": "#/$defs/DATA_MARKETPLACE_PickupRequest"
+		},
+		{
+			"$ref": "#/$defs/DATA_MARKETPLACE_DeliveryRequest"
+		},
+		{
+			"$ref": "#/$defs/DATA_MARKETPLACE_ShippingRequest"
+		}
+	],
+	"$defs": {
+		"DATA_MARKETPLACE_PickupRequest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "type", "item_id", "time", "archived"],
+			"properties": {
+				"id": { "type": "string", "format": "uuid" },
+				"type": { "const": "pickup" },
+				"item_id": { "type": "string", "format": "uuid" },
+				"time": {
+					"type": "string",
+					"pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+				},
+				"archived": { "type": "boolean" },
+				"createdAt": { "type": "string", "format": "date-time" },
+				"updatedAt": { "type": "string", "format": "date-time" }
+			}
+		},
+		"DATA_MARKETPLACE_DeliveryRequest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "type", "item_id", "time", "archived"],
+			"properties": {
+				"id": { "type": "string", "format": "uuid" },
+				"type": { "const": "delivery" },
+				"item_id": { "type": "string", "format": "uuid" },
+				"time": {
+					"type": "string",
+					"pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+				},
+				"archived": { "type": "boolean" },
+				"createdAt": { "type": "string", "format": "date-time" },
+				"updatedAt": { "type": "string", "format": "date-time" }
+			}
+		},
+		"DATA_MARKETPLACE_ShippingRequest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "type", "item_id", "postalcode", "archived"],
+			"properties": {
+				"id": { "type": "string", "format": "uuid" },
+				"type": { "const": "shipping" },
+				"item_id": { "type": "string", "format": "uuid" },
+				"postalcode": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 10
+				},
+				"archived": { "type": "boolean" },
+				"createdAt": { "type": "string", "format": "date-time" },
+				"updatedAt": { "type": "string", "format": "date-time" }
+			}
+		}
+	}
+}

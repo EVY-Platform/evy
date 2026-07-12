@@ -192,6 +192,121 @@ describe("marketplace get/create/update", () => {
 		expect(updated).toMatchObject({ data: { ...row, value: "v2" } });
 	});
 
+	it("validates marketplace request payloads on create and update", async () => {
+		const itemId = crypto.randomUUID();
+		const pickupRequest = {
+			id: crypto.randomUUID(),
+			type: "pickup" as const,
+			item_id: itemId,
+			time: "2026-06-03T10:00:00",
+			archived: false,
+		};
+		const deliveryRequest = {
+			id: crypto.randomUUID(),
+			type: "delivery" as const,
+			item_id: itemId,
+			time: "2026-06-03T11:00:00",
+			archived: false,
+		};
+		const shippingRequest = {
+			id: crypto.randomUUID(),
+			type: "shipping" as const,
+			item_id: itemId,
+			postalcode: "2018",
+			archived: false,
+		};
+
+		for (const request of [
+			pickupRequest,
+			deliveryRequest,
+			shippingRequest,
+		]) {
+			await create({
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.REQUESTS,
+				filter: { id: request.id },
+				data: request,
+			});
+		}
+
+		const requests = await get({
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.REQUESTS,
+		});
+		expect(requests).toHaveLength(3);
+		expect(requests).toEqual(
+			expect.arrayContaining([
+				pickupRequest,
+				deliveryRequest,
+				shippingRequest,
+			]),
+		);
+
+		await expect(
+			create({
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.REQUESTS,
+				data: {
+					id: crypto.randomUUID(),
+					type: "pickup",
+					item_id: itemId,
+				},
+			}),
+		).rejects.toThrow("Marketplace request validation failed");
+		await expect(
+			create({
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.REQUESTS,
+				data: {
+					id: crypto.randomUUID(),
+					type: "shipping",
+					item_id: itemId,
+					time: "2026-06-03T10:00:00",
+				},
+			}),
+		).rejects.toThrow("Marketplace request validation failed");
+		await expect(
+			create({
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.REQUESTS,
+				data: {
+					id: crypto.randomUUID(),
+					type: "collection",
+					item_id: itemId,
+				},
+			}),
+		).rejects.toThrow("Marketplace request validation failed");
+		await expect(
+			create({
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.REQUESTS,
+				data: {
+					id: crypto.randomUUID(),
+					type: "pickup",
+					item_id: itemId,
+					time: "2026-06-03",
+				},
+			}),
+		).rejects.toThrow("Marketplace request validation failed");
+		await expect(
+			update({
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.REQUESTS,
+				filter: { id: pickupRequest.id },
+				data: { ...pickupRequest, time: "2026-06-03" },
+			}),
+		).rejects.toThrow("Marketplace request validation failed");
+
+		const archivedPickup = { ...pickupRequest, archived: true };
+		const updated = await update({
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.REQUESTS,
+			filter: { id: pickupRequest.id },
+			data: archivedPickup,
+		});
+		expect(updated).toMatchObject({ data: archivedPickup });
+	});
+
 	it("deletes a row by resource and id", async () => {
 		const rowId = crypto.randomUUID();
 		const row = { id: rowId, value: "delete-me" };

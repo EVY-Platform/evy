@@ -74,9 +74,15 @@ public enum EVYJson: Codable, Hashable {
   case bool(Bool)
   case dictionary([String: EVYJson])
   case array([EVYJson])
+  case null
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
+
+    if container.decodeNil() {
+      self = .null
+      return
+    }
 
     if let stringValue = try? container.decode(String.self) {
       self = .string(stringValue)
@@ -128,6 +134,8 @@ public enum EVYJson: Codable, Hashable {
       try container.encode(value)
     case .array(let value):
       try container.encode(value)
+    case .null:
+      try container.encodeNil()
     }
   }
 
@@ -159,6 +167,8 @@ public enum EVYJson: Codable, Hashable {
         return dictValue.description
       }
       return string
+    case .null:
+      return ""
     }
   }
 

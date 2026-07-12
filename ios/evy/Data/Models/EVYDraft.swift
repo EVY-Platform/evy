@@ -86,7 +86,7 @@ enum EVYDraft {
     static let fallbackUnscoped = "app:unscoped"
     private static let browseKey = "browse"
 
-    static func entityKey(fromScopeId scopeId: String?) -> String? {
+    private static func splitScopeId(_ scopeId: String?) -> (flowId: String, key: String)? {
       guard let scopeId else { return nil }
 
       let trimmedScopeId = scopeId.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -99,7 +99,15 @@ enum EVYDraft {
       let flowId = String(trimmedScopeId[..<range.lowerBound])
       let key = String(trimmedScopeId[range.upperBound...])
       if flowId.isEmpty || key.isEmpty || key == Self.browseKey { return nil }
-      return key
+      return (flowId, key)
+    }
+
+    static func entityKey(fromScopeId scopeId: String?) -> String? {
+      splitScopeId(scopeId)?.key
+    }
+
+    static func flowId(fromScopeId scopeId: String?) -> String? {
+      splitScopeId(scopeId)?.flowId
     }
   }
 

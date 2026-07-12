@@ -269,11 +269,25 @@ class E2ETestBase: XCTestCase {
               destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).width}"
             ),
           ],
-          "footer": Self.buttonRow(
-            id: "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            label: "Submit",
-            action: "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
-          ),
+          "footer": [
+            "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
+            "type": "Button",
+            "visible": "true",
+            "title": "",
+            "label": "Submit",
+            "actions": [
+              [
+                "condition": "",
+                "false": "",
+                "true": "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}",
+              ],
+              [
+                "condition": "",
+                "false": "",
+                "true": "{close()}",
+              ],
+            ],
+          ] as [String: Any],
         ]
       ],
     ]
@@ -524,9 +538,12 @@ class E2ETestBase: XCTestCase {
     id: String,
     label: String,
     action: String,
-    visible: String = "true"
+    condition: String = "",
+    falseAction: String = "",
+    visible: String = "true",
+    style: String? = nil
   ) -> [String: Any] {
-    return [
+    var row: [String: Any] = [
       "id": id,
       "type": "Button",
       "visible": visible,
@@ -534,9 +551,137 @@ class E2ETestBase: XCTestCase {
       "label": label,
       "actions": [
         [
-          "condition": "",
-          "false": "",
+          "condition": condition,
+          "false": falseAction,
           "true": action,
+        ]
+      ],
+    ]
+    if let style {
+      row["style"] = style
+    }
+    return row
+  }
+
+  static func cancelRequestVisibilityExpressions() -> (hasActive: String, noActive: String) {
+    let requestsResourceId = MarketplaceResource.requests.rawValue
+    let activeMatch =
+      "{findFirst(\(requestsResourceId), \(MARKETPLACE_ITEMS_RESOURCE_ID).id, item_id, false, archived).item_id"
+    let hasActive = "\(activeMatch) == \(MARKETPLACE_ITEMS_RESOURCE_ID).id}"
+    let noActive = "\(activeMatch) != \(MARKETPLACE_ITEMS_RESOURCE_ID).id}"
+    return (hasActive, noActive)
+  }
+
+  static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
+    let requestsResourceId = MarketplaceResource.requests.rawValue
+    let visibility = cancelRequestVisibilityExpressions()
+    let pickupCreateAction =
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: pickup, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_pickup_timeslot, archived: false})}"
+    let deliveryCreateAction =
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: delivery, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_delivery_timeslot, archived: false})}"
+    let shippingCreateAction =
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: shipping, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, postalcode: shipping_address.postcode, archived: false})}"
+    let cancelAction =
+      "{update(\(MARKETPLACE_SERVICE),\(requestsResourceId),{item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archived: false},{archived: true})}"
+
+    return [
+      "id": flowId,
+      "name": "E2E Cancel Request",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
+          "rows": [
+            [
+              "id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
+              "type": "SelectSegmentContainer",
+              "actions": [],
+              "visible": "true",
+              "title": "",
+              "segments": ["Pickup", "Delivery", "Shipping"],
+              "children": [
+                [
+                  "id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
+                  "type": "ListContainer",
+                  "actions": [],
+                  "visible": "true",
+                  "title": "",
+                  "children": [
+                    Self.timeslotPickerRow(
+                      id: "b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e",
+                      source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
+                      actions: [["condition": "", "false": "", "true": pickupCreateAction]],
+                      visible: visibility.noActive,
+                      name: "Pickup request times"
+                    ),
+                    Self.buttonRow(
+                      id: "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
+                      label: "Cancel request",
+                      action: cancelAction,
+                      visible: visibility.hasActive,
+                      style: "danger"
+                    ),
+                  ],
+                ],
+                [
+                  "id": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a",
+                  "type": "ListContainer",
+                  "actions": [],
+                  "visible": "true",
+                  "title": "",
+                  "children": [
+                    Self.timeslotPickerRow(
+                      id: "e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b",
+                      source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).delivery_selection}",
+                      destination: "{selected_delivery_timeslot}",
+                      actions: [["condition": "", "false": "", "true": deliveryCreateAction]],
+                      visible: visibility.noActive,
+                      name: "Delivery request times"
+                    ),
+                    Self.buttonRow(
+                      id: "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c",
+                      label: "Cancel request",
+                      action: cancelAction,
+                      visible: visibility.hasActive,
+                      style: "danger"
+                    ),
+                  ],
+                ],
+                [
+                  "id": "a8b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d",
+                  "type": "ListContainer",
+                  "actions": [],
+                  "visible": "true",
+                  "title": "",
+                  "children": [
+                    Self.inputRow(
+                      id: "b9c0d1e2-f3a4-4b5c-6d7e-8f9a0b1c2d3e",
+                      title: "Shipping postcode",
+                      source: nil,
+                      placeholder: "Postcode",
+                      destination: "{shipping_address.postcode}",
+                      visible: visibility.noActive
+                    ),
+                    Self.buttonRow(
+                      id: "c0d1e2f3-a4b5-4c6d-7e8f-9a0b1c2d3e4f",
+                      label: "Ask to buy",
+                      action: shippingCreateAction,
+                      condition: "{length(shipping_address.postcode) > 0}",
+                      falseAction: "{highlight_required(postcode)}",
+                      visible: visibility.noActive
+                    ),
+                    Self.buttonRow(
+                      id: "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
+                      label: "Cancel request",
+                      action: cancelAction,
+                      visible: visibility.hasActive,
+                      style: "danger"
+                    ),
+                  ],
+                ],
+              ],
+            ]
+          ],
         ]
       ],
     ]
@@ -546,6 +691,8 @@ class E2ETestBase: XCTestCase {
     id: String,
     source: String,
     destination: String = "{selected_pickup_timeslot}",
+    actions: [[String: String]] = [],
+    visible: String = "true",
     name: String = "Pickup available times"
   ) -> [String: Any] {
     return [
@@ -553,8 +700,8 @@ class E2ETestBase: XCTestCase {
       "type": "TimeslotPicker",
       "source": source,
       "destination": destination,
-      "actions": [],
-      "visible": "true",
+      "actions": actions,
+      "visible": visible,
       "title": "",
       "start_time": "07:00",
       "end_time": "19:00",
@@ -608,6 +755,47 @@ class E2ETestBase: XCTestCase {
               ],
               "name": "Nested segment container",
             ],
+          ],
+        ]
+      ],
+    ]
+  }
+
+  static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
+    let requestsResourceId = MarketplaceResource.requests.rawValue
+    let pickupCreateAction =
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: pickup, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_pickup_timeslot, archived: false})}"
+    let shippingCreateAction =
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: shipping, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, postalcode: shipping_address.postcode, archived: false})}"
+
+    return [
+      "id": flowId,
+      "name": "E2E Marketplace Requests",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
+          "rows": [
+            Self.timeslotPickerRow(
+              id: "9405eec8-4729-4ce0-b3e0-5c7f5a611001",
+              source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
+              actions: [["condition": "", "false": "", "true": pickupCreateAction]],
+              name: "Pickup request times"
+            ),
+            Self.inputRow(
+              id: "9405eec8-4729-4ce0-b3e0-5c7f5a611002",
+              title: "Shipping postcode",
+              source: nil,
+              placeholder: "Postcode",
+              destination: "{shipping_address.postcode}"
+            ),
+            Self.buttonRow(
+              id: "9405eec8-4729-4ce0-b3e0-5c7f5a611003",
+              label: "Ask to buy",
+              action: shippingCreateAction,
+              condition: "{length(shipping_address.postcode) > 0}",
+              falseAction: "{highlight_required(postcode)}"
+            ),
           ],
         ]
       ],
@@ -1155,6 +1343,234 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
+  func testTimeslotPickerCreatesPickupRequest() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Pickup request item",
+      pickupSelection: [selectedTimeslot]
+    )
+
+    let viewButtonLabel = "Request pickup \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: createHomeFlowData(buttonLabel: viewButtonLabel, viewItemId: selectedItemId),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    try await emitter.updateSDUI(
+      flowData: Self.viewItemRequestFlowData(
+        flowId: E2EFlowIds.webSocketViewFlow,
+        pageId: E2EFlowIds.webSocketViewPage
+      ),
+      flowId: E2EFlowIds.webSocketViewFlow
+    )
+
+    app.terminate()
+    try launchApp()
+    let requestButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(requestButton.waitForExistence(timeout: 20), "Request view button should load")
+    requestButton.tap()
+
+    let timeslot = app.staticTexts["09:00"].firstMatch
+    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
+    timeslot.tap()
+
+    let pickupRequestCreated = try await waitForMarketplaceRequest(
+      emitter: emitter,
+      type: "pickup",
+      itemId: selectedItemId,
+      valueKey: "time",
+      value: selectedTimeslot
+    )
+    XCTAssertTrue(
+      pickupRequestCreated,
+      "Tapping a pickup timeslot should create a matching marketplace request"
+    )
+    await emitter.disconnect()
+  }
+
+  @MainActor
+  func testCancelRequestTogglesPickerAndShippingButton() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Cancel request item",
+      pickupSelection: [selectedTimeslot]
+    )
+
+    let viewButtonLabel = "Cancel request \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: createHomeFlowData(buttonLabel: viewButtonLabel, viewItemId: selectedItemId),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    try await emitter.updateSDUI(
+      flowData: Self.viewItemCancelRequestFlowData(
+        flowId: E2EFlowIds.webSocketViewFlow,
+        pageId: E2EFlowIds.webSocketViewPage
+      ),
+      flowId: E2EFlowIds.webSocketViewFlow
+    )
+
+    app.terminate()
+    try launchApp()
+    let requestButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(requestButton.waitForExistence(timeout: 20), "Request view button should load")
+    requestButton.tap()
+
+    let timeslot = app.staticTexts["09:00"].firstMatch
+    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
+    XCTAssertFalse(
+      app.buttons["Cancel request"].exists,
+      "Cancel request should be hidden before a request exists")
+
+    timeslot.tap()
+
+    let pickupRequestCreated = try await waitForMarketplaceRequest(
+      emitter: emitter,
+      type: "pickup",
+      itemId: selectedItemId,
+      valueKey: "time",
+      value: selectedTimeslot
+    )
+    XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a request")
+
+    let cancelButton = app.buttons["Cancel request"].firstMatch
+    XCTAssertTrue(
+      cancelButton.waitForExistence(timeout: 10),
+      "Cancel request should replace the pickup timeslot")
+    XCTAssertFalse(timeslot.exists, "Pickup timeslot should be hidden after creating a request")
+
+    let shippingTab = app.segmentedControls.buttons["Shipping"]
+    XCTAssertTrue(shippingTab.waitForExistence(timeout: 5), "Shipping segment should exist")
+    shippingTab.tap()
+    XCTAssertTrue(
+      app.buttons["Cancel request"].firstMatch.waitForExistence(timeout: 5),
+      "Cancel request should appear in the shipping segment")
+    XCTAssertFalse(
+      app.buttons["Ask to buy"].exists,
+      "Ask to buy should be hidden while an active request exists")
+
+    app.segmentedControls.buttons["Pickup"].tap()
+    cancelButton.tap()
+
+    let requestArchived = try await waitForArchivedMarketplaceRequest(
+      emitter: emitter,
+      itemId: selectedItemId
+    )
+    XCTAssertTrue(requestArchived, "Cancel request should archive the active request")
+    XCTAssertTrue(
+      timeslot.waitForExistence(timeout: 10),
+      "Pickup timeslot should return after cancelling the request")
+
+    timeslot.tap()
+    XCTAssertTrue(
+      app.buttons["Cancel request"].firstMatch.waitForExistence(timeout: 10),
+      "Cancel request should reappear after creating another request")
+    await emitter.disconnect()
+  }
+
+  @MainActor
+  func testAskToBuyCreatesShippingRequestAndValidatesEmptyPostcode() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Shipping request item",
+      pickupSelection: ["2026-06-03T09:00:00"]
+    )
+
+    let viewButtonLabel = "Request shipping \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: createHomeFlowData(buttonLabel: viewButtonLabel, viewItemId: selectedItemId),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    try await emitter.updateSDUI(
+      flowData: Self.viewItemRequestFlowData(
+        flowId: E2EFlowIds.webSocketViewFlow,
+        pageId: E2EFlowIds.webSocketViewPage
+      ),
+      flowId: E2EFlowIds.webSocketViewFlow
+    )
+
+    app.terminate()
+    try launchApp()
+    let requestButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(requestButton.waitForExistence(timeout: 20), "Request view button should load")
+    requestButton.tap()
+
+    let askToBuyButton = app.buttons["Ask to buy"]
+    XCTAssertTrue(
+      askToBuyButton.waitForExistence(timeout: 10), "Ask to buy button should be visible")
+    askToBuyButton.tap()
+
+    let missingInformationAlert = app.alerts["Missing information"]
+    XCTAssertTrue(
+      missingInformationAlert.waitForExistence(timeout: 5),
+      "An empty shipping postcode should show the missing-information alert"
+    )
+    let requestsAfterEmptyPostcode = try await emitter.getResource(
+      service: MARKETPLACE_SERVICE,
+      resource: MarketplaceResource.requests.rawValue
+    )
+    XCTAssertFalse(
+      Self.marketplaceRequestsContain(
+        requestsAfterEmptyPostcode,
+        type: "shipping",
+        itemId: selectedItemId
+      ),
+      "An empty postcode must not create a shipping request"
+    )
+    let dismissAlertButton = missingInformationAlert.buttons.firstMatch
+    XCTAssertTrue(dismissAlertButton.exists, "Missing-information alert should be dismissible")
+    dismissAlertButton.tap()
+
+    let postcodeContainer = try XCTUnwrap(
+      findElement(identifier: "textField_{shipping_address.postcode}"),
+      "Shipping postcode input should be visible"
+    )
+    let editablePostcodeField = await tapAndGetEditableField(container: postcodeContainer)
+    let postcodeField = try XCTUnwrap(editablePostcodeField)
+    clearAndType(field: postcodeField, text: "2018", placeholder: "Postcode")
+    app.scrollViews.firstMatch.tap()
+    try await Task.sleep(for: .milliseconds(500))
+    askToBuyButton.tap()
+
+    let shippingRequestCreated = try await waitForMarketplaceRequest(
+      emitter: emitter,
+      type: "shipping",
+      itemId: selectedItemId,
+      valueKey: "postalcode",
+      value: "2018"
+    )
+    XCTAssertTrue(
+      shippingRequestCreated,
+      "Ask to buy should create a shipping request with the entered postcode"
+    )
+    await emitter.disconnect()
+  }
+
+  @MainActor
   func testViewItemPaymentRowsRespectVisiblePredicate() async throws {
     let viewItemButton = app.buttons["View"]
     XCTAssertTrue(
@@ -1331,6 +1747,83 @@ final class WebSocketE2ETests: E2ETestBase {
     }
     return
       "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{\(MARKETPLACE_ITEMS_RESOURCE_ID): [\(viewItemId)]})}"
+  }
+
+  private func waitForArchivedMarketplaceRequest(
+    emitter: WSEmitter,
+    itemId: String
+  ) async throws -> Bool {
+    for _ in 0..<20 {
+      let requests = try await emitter.getResource(
+        service: MARKETPLACE_SERVICE,
+        resource: MarketplaceResource.requests.rawValue
+      )
+      if Self.marketplaceRequestsArchived(requests, itemId: itemId) {
+        return true
+      }
+      try await Task.sleep(for: .milliseconds(500))
+    }
+    return false
+  }
+
+  private static func marketplaceRequestsArchived(
+    _ requests: Any,
+    itemId: String
+  ) -> Bool {
+    guard let requestRows = responseDataArray(from: requests) else { return false }
+    return requestRows.contains { request in
+      guard let requestData = request as? [String: Any],
+        requestData["item_id"] as? String == itemId,
+        requestData["archived"] as? Bool == true
+      else { return false }
+      return true
+    }
+  }
+
+  private func waitForMarketplaceRequest(
+    emitter: WSEmitter,
+    type: String,
+    itemId: String,
+    valueKey: String,
+    value: String
+  ) async throws -> Bool {
+    for _ in 0..<20 {
+      let requests = try await emitter.getResource(
+        service: MARKETPLACE_SERVICE,
+        resource: MarketplaceResource.requests.rawValue
+      )
+      if Self.marketplaceRequestsContain(
+        requests,
+        type: type,
+        itemId: itemId,
+        valueKey: valueKey,
+        value: value
+      ) {
+        return true
+      }
+      try await Task.sleep(for: .milliseconds(500))
+    }
+    return false
+  }
+
+  private static func marketplaceRequestsContain(
+    _ requests: Any,
+    type: String,
+    itemId: String,
+    valueKey: String? = nil,
+    value: String? = nil
+  ) -> Bool {
+    guard let requestRows = responseDataArray(from: requests) else { return false }
+    return requestRows.contains { request in
+      guard let requestData = request as? [String: Any],
+        requestData["type"] as? String == type,
+        requestData["item_id"] as? String == itemId
+      else {
+        return false
+      }
+      guard let valueKey, let value else { return true }
+      return requestData[valueKey] as? String == value
+    }
   }
 
   private static func marketplaceItemsContainListing(

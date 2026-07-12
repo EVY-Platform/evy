@@ -101,6 +101,31 @@ final class EVYDraftBindingTests: XCTestCase {
     }
   }
 
+  func testScopeFlowId() {
+    let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
+    let cases: [(scopeId: String?, expected: String?)] = [
+      ("flow-123:res-abc", "flow-123"),
+      ("flow:with:colons:res", "flow:with:colons"),
+      ("flow:browse", nil),
+      ("app:unscoped", nil),
+      ("ephemeral:\(uuid)", nil),
+      (nil, nil),
+      ("", nil),
+      ("   ", nil),
+      ("flow", nil),
+      ("flow:", nil),
+      (":item", nil),
+    ]
+
+    for testCase in cases {
+      XCTAssertEqual(
+        EVYDraft.Scope.flowId(fromScopeId: testCase.scopeId),
+        testCase.expected,
+        "scopeId: \(String(describing: testCase.scopeId))"
+      )
+    }
+  }
+
   // MARK: - Ephemeral drafts
 
   func testEphemeralScopeIdForPageIdUsesEphemeralPrefix() {

@@ -110,8 +110,14 @@
 										"id": "197531fd-1de3-4d4d-8e03-026b37892611",
 										"type": "TimeslotPicker",
 										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
-										"actions": [],
-										"visible": "true",
+										"actions": [
+											{
+												"condition": "",
+												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: pickup, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_pickup_timeslot, archived: false})}",
+												"false": ""
+											}
+										],
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -122,6 +128,22 @@
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Pickup available times",
 										"destination": "{selected_pickup_timeslot}"
+									},
+									{
+										"id": "a1f3e8d2-4c5b-4a9e-8d1f-2b6c7e9a0d11",
+										"type": "Button",
+										"actions": [
+											{
+												"condition": "",
+												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+												"false": ""
+											}
+										],
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"title": "",
+										"label": "Cancel request",
+										"style": "danger",
+										"name": "Cancel request"
 									}
 								],
 								"name": "Pickup details"
@@ -182,8 +204,14 @@
 										"id": "bd8fa85c-1b67-467a-983d-328e6dc49db7",
 										"type": "TimeslotPicker",
 										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
-										"actions": [],
-										"visible": "true",
+										"actions": [
+											{
+												"condition": "",
+												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: delivery, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_delivery_timeslot, archived: false})}",
+												"false": ""
+											}
+										],
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -194,6 +222,22 @@
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Delivery available times",
 										"destination": "{selected_delivery_timeslot}"
+									},
+									{
+										"id": "b2e4f9d3-5d6c-4b0f-9e2a-3c7d8f0b1e22",
+										"type": "Button",
+										"actions": [
+											{
+												"condition": "",
+												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+												"false": ""
+											}
+										],
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"title": "",
+										"label": "Cancel request",
+										"style": "danger",
+										"name": "Cancel request"
 									}
 								],
 								"name": "Delivery details"
@@ -245,7 +289,7 @@
 											"actions": [],
 											"visible": "true",
 											"name": "Find pickup address",
-											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}"
+											"destination": "{shipping_address}"
 										},
 										"visible": "true",
 										"name": "Shipping address"
@@ -253,11 +297,33 @@
 									{
 										"id": "e47cc52b-c909-496d-bc9a-af7e8b9d7ed3",
 										"type": "Button",
-										"actions": [],
-										"visible": "true",
+										"actions": [
+											{
+												"condition": "{length(shipping_address.postcode) > 0}",
+												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: shipping, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, postalcode: shipping_address.postcode, archived: false})}",
+												"false": "{highlight_required(postcode)}"
+											}
+										],
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Ask to buy",
 										"name": "Ask to buy"
+									},
+									{
+										"id": "c3f5a0e4-6e7d-4c1a-0f3b-4d8e9a1c2f33",
+										"type": "Button",
+										"actions": [
+											{
+												"condition": "",
+												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+												"false": ""
+											}
+										],
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"title": "",
+										"label": "Cancel request",
+										"style": "danger",
+										"name": "Cancel request"
 									}
 								],
 								"name": "Shipping details"
@@ -812,6 +878,11 @@
 							"condition": "",
 							"false": "",
 							"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,dc28ed59-298e-493c-8ff3-3e60f2ebccbd)}"
+						},
+						{
+							"condition": "",
+							"false": "",
+							"true": "{close()}"
 						}
 					],
 					"title": "",

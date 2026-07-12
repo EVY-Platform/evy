@@ -6,6 +6,20 @@
 import Foundation
 
 extension EVY {
+  private struct CreateParams: Encodable {
+    let service: String
+    let resource: String
+    let filter: Filter?
+    let data: EVYJson
+  }
+
+  private struct UpdateParams: Encodable {
+    let service: String
+    let resource: String
+    let filter: Filter
+    let data: EVYJson
+  }
+
   static func ensureDraftExists(
     variableName: String,
     initialData: Data? = nil,
@@ -86,19 +100,20 @@ extension EVY {
     }
   }
 
-  static func create(namespace: String, resource: String, draftScopeId: String? = nil) throws {
-    struct CreateParams: Encodable {
-      let service: String
-      let resource: String
-      let filter: Filter?
-      let data: EVYJson
+  static func create(
+    namespace: String,
+    resource: String,
+    data: [String: EVYJson]? = nil
+  ) throws {
+    guard data == nil else {
+      try createWithGeneratedId(namespace: namespace, resource: resource, payload: data!)
+      return
     }
 
-    let newId = UUID().uuidString
+    let scopeForMerge = draftStore.activeScopeId
+    let isFlowSubmission = EVYDraft.Scope.entityKey(fromScopeId: scopeForMerge) == resource
 
     var mergedPayload: EVYJson = .dictionary([:])
-
-    let scopeForMerge = draftScopeId ?? draftStore.activeScopeId
     let draftEntries = scopeForMerge.flatMap { try? draftStore.drafts(forScopeId: $0) } ?? []
     for draftEntry in draftEntries {
       let draftValue = try draftEntry.decoded()
@@ -111,11 +126,28 @@ extension EVY {
       mergedPayload = EVYDraft.merge(binding: binding, value: draftValue, into: mergedPayload)
     }
 
-    guard case .dictionary(var dict) = mergedPayload else {
+    guard case .dictionary(let payload) = mergedPayload else {
       throw EVYParamError.invalidProps
     }
-    dict["id"] = .string(newId)
-    let dataWithId = EVYJson.dictionary(dict)
+    try createWithGeneratedId(namespace: namespace, resource: resource, payload: payload)
+
+    if isFlowSubmission, let scopeForMerge {
+      draftStore.deleteDrafts(scopeId: scopeForMerge)
+      if let flowId = EVYDraft.Scope.flowId(fromScopeId: scopeForMerge) {
+        resetEphemeralDrafts(forFlowId: flowId)
+      }
+    }
+  }
+
+  private static func createWithGeneratedId(
+    namespace: String,
+    resource: String,
+    payload: [String: EVYJson]
+  ) throws {
+    let newId = UUID().uuidString
+    var payloadWithId = payload
+    payloadWithId["id"] = .string(newId)
+    let dataWithId = EVYJson.dictionary(payloadWithId)
     let params = CreateParams(
       service: namespace,
       resource: resource,
@@ -144,6 +176,66 @@ extension EVY {
           name: .evyErrorOccurred,
           object: error
         )
+      }
+    }
+  }
+
+  static func update(
+    namespace: String,
+    resource: String,
+    matching filter: [String: EVYJson],
+    changes: [String: EVYJson]
+  ) throws {
+    let allRows = try publicStore.getAll(namespace: namespace, resource: resource)
+    var matchedUpdates: [(rowId: String, updatedData: EVYJson)] = []
+
+    for row in allRows {
+      let decoded = try row.decoded()
+      guard case .dictionary(let record) = decoded else { continue }
+      let matches = filter.allSatisfy { key, expectedValue in
+        record[key]?.toString() == expectedValue.toString()
+      }
+      guard matches else { continue }
+
+      var updatedRecord = record
+      for (key, value) in changes {
+        updatedRecord[key] = value
+      }
+      matchedUpdates.append((rowId: row.id, updatedData: .dictionary(updatedRecord)))
+    }
+
+    for update in matchedUpdates {
+      guard case .dictionary(let payload) = update.updatedData,
+        case .string(let recordId) = payload["id"]
+      else { continue }
+
+      let encodedData = try JSONEncoder().encode(update.updatedData)
+      try publicStore.update(
+        namespace: namespace,
+        resource: resource,
+        id: update.rowId,
+        value: encodedData
+      )
+
+      let params = UpdateParams(
+        service: namespace,
+        resource: resource,
+        filter: Filter(id: recordId),
+        data: update.updatedData
+      )
+      Task {
+        do {
+          _ = try await EVYAPIManager.shared.fetch(
+            method: "update",
+            params: params,
+            expecting: EVYJson.self
+          )
+        } catch {
+          NotificationCenter.default.post(
+            name: .evyErrorOccurred,
+            object: error
+          )
+        }
       }
     }
   }
@@ -232,6 +324,7 @@ extension EVY {
         existingRow.data = try EVYDataPatcher.patch(
           encodedData: existingRow.data, newData: newData, props: remainingProps)
       }
+      try store.persistChanges()
       store.postValueChanged(key: splitProps.joined(separator: PROP_SEPARATOR))
     } else {
       guard let draftBinding else {

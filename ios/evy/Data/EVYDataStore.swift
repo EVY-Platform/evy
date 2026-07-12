@@ -81,6 +81,21 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
+  /// Flushes pending changes to disk. The context is created manually (not the
+  /// container's mainContext), so it never autosaves — without an explicit save,
+  /// synced data is silently lost when the process exits, and the next launch
+  /// combines an empty store with a fresh lastSyncTimestamp and cannot recover.
+  private func save() throws {
+    try context.save()
+  }
+
+  /// Persists mutations made directly on fetched `EVYData` models (e.g. in-place
+  /// `row.data` edits) — those bypass create/update and would otherwise only
+  /// survive if the process lived long enough for an incidental flush.
+  func persistChanges() throws {
+    try save()
+  }
+
   func create(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
     throws
   {
@@ -90,6 +105,7 @@ final class EVYDataStore {
     context.insert(
       EVYData(namespace: namespace, resource: resource, id: id, data: value, sortIndex: sortIndex)
     )
+    try save()
     postRecordAndValueChanged(namespace: namespace, resource: resource, id: id)
   }
 
@@ -99,12 +115,14 @@ final class EVYDataStore {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     existing.data = value
     existing.sortIndex = sortIndex
+    try save()
     postRecordAndValueChanged(namespace: namespace, resource: resource, id: id)
   }
 
   func delete(namespace: String, resource: String, id: String) throws {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     context.delete(existing)
+    try save()
     postRecordAndValueChanged(namespace: namespace, resource: resource, id: id)
   }
 
@@ -113,6 +131,7 @@ final class EVYDataStore {
     for row in rows {
       context.delete(row)
     }
+    try save()
     postValueChanged(key: resource)
   }
 
@@ -121,6 +140,7 @@ final class EVYDataStore {
     for row in rows {
       context.delete(row)
     }
+    try save()
   }
 
   func upsert(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)

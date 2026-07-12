@@ -40,6 +40,10 @@ const externalResources = [
 		serviceId: MARKETPLACE_SERVICE_ID,
 		resourceId: MARKETPLACE_RESOURCE.ITEMS,
 	},
+	{
+		serviceId: MARKETPLACE_SERVICE_ID,
+		resourceId: MARKETPLACE_RESOURCE.REQUESTS,
+	},
 ];
 
 let getImpl = async (params: GetRequest): Promise<GetResponse> =>
@@ -132,6 +136,7 @@ describe("sync", () => {
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.DURATIONS);
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.AREAS);
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.ITEMS);
+		expect(rowResources).toContain(MARKETPLACE_RESOURCE.REQUESTS);
 	});
 
 	it("passes updatedAfter to getCore", async () => {
