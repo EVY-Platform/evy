@@ -16,16 +16,19 @@ test.describe("Offline and connection resilience", () => {
 	}) => {
 		await page.addInitScript(() => {
 			const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
+			// Ids must be real UUIDs — the sync response is checked with the shared schema validators.
+			const OFFLINE_FLOW_ID = "1f9f6a3e-8f04-4c85-9b6f-0d0d3a8f5b01";
+			const OFFLINE_PAGE_ID = "2a7c1d4b-5e12-4f96-8c3d-1e1e4b9c6d02";
 			const nowIso = new Date().toISOString();
 			const mockFlow = {
-				id: "offline-flow",
+				id: OFFLINE_FLOW_ID,
 				name: "Offline Save Fail",
-				pageIds: ["offline-page"],
+				pageIds: [OFFLINE_PAGE_ID],
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			};
 			const mockPage = {
-				id: "offline-page",
+				id: OFFLINE_PAGE_ID,
 				name: "Page",
 				title: "Page",
 				rowIds: [],
