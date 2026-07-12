@@ -42,10 +42,5 @@ COPY --from=builder /app/services/marketplace/drizzle.config.ts ./
 COPY --from=builder /app/services/marketplace/drizzle ./drizzle
 COPY types/schema ./types/schema
 
-ARG MARKETPLACE_WS_PORT
-ENV MARKETPLACE_WS_PORT=$MARKETPLACE_WS_PORT
-
-EXPOSE $MARKETPLACE_WS_PORT
-
 # Run migrations and start the server
 CMD ["bun", "run", "start"]

@@ -37,7 +37,7 @@ function formatAjvErrors(errors: Ajv2020["errors"] | null | undefined): string {
 		.join("; ");
 }
 
-export async function validateDefinitionSchemas(
+async function validateDefinitionSchemas(
 	definitions: SduiRowDefinition[],
 ): Promise<void> {
 	const definitionSchema = await loadJson<SchemaObject>(
@@ -59,7 +59,7 @@ export async function validateDefinitionSchemas(
 	}
 }
 
-export function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
+function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 	tsContent: string;
 	swiftContent: string;
 } {

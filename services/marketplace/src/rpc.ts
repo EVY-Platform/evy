@@ -7,9 +7,7 @@ import {
 import { Server } from "rpc-websockets";
 import type { WebSocket } from "ws";
 import { create, deleteResource, get, update } from "./data";
-import { onServiceEvent } from "./events";
-
-export const DATA_CHANGED_EVENT = "dataChanged" as const;
+import { DATA_CHANGED_EVENT, onServiceEvent } from "./events";
 
 type WSServer = InstanceType<typeof Server>;
 

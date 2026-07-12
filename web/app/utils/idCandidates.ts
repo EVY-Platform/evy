@@ -67,6 +67,8 @@ const functionCandidateNames = [
 	"formatWeight",
 	"formatCurrency",
 	"formatAddress",
+	"formatAddressLine1",
+	"formatAddressLine2",
 	"buildCurrency",
 	"buildAddress",
 ];

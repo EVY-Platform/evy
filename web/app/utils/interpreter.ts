@@ -1,7 +1,7 @@
 import { callFunction, type EVYFunctionContext } from "./functions";
 import { formatResourcePathForDisplay } from "./resourcePathDisplay";
 
-const FUNCTION_CALL_PATTERN = /([a-zA-Z_]+)\(([^()]*)\)/;
+const FUNCTION_CALL_PATTERN = /([a-zA-Z_][a-zA-Z0-9_]*)\(([^()]*)\)/;
 const PROPS_PATTERN = /\{(?!")[^}^"]*(?!")\}/;
 
 function resolveFunction(

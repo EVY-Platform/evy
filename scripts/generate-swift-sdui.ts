@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import {
-	loadSduiRowDefinitions,
 	rowSpecFromDefinitions,
 	type SduiRowDefinition,
 	type SduiRowSpec,
@@ -12,7 +11,7 @@ type RowSpec = SduiRowSpec;
 
 type SchemaObject = Record<string, unknown>;
 
-export type GeneratedSwiftFile = {
+type GeneratedSwiftFile = {
 	path: string;
 	content: string;
 };

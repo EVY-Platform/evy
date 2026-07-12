@@ -112,23 +112,26 @@ describe("marketplace JSON-RPC server", () => {
 		const client = createClient();
 		await waitForOpen(client);
 		await client.subscribe("dataChanged");
-		const received: unknown[] = [];
-		client.on("dataChanged", (payload: unknown) => {
-			received.push(payload);
-		});
-
-		await new Promise((r) => setTimeout(r, 50));
 
 		const row = { id: crypto.randomUUID(), value: "notify-me" };
+		const eventPromise = new Promise<unknown>((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				client.removeAllListeners("dataChanged");
+				reject(new Error("timeout waiting for dataChanged"));
+			}, 5000);
+			client.once("dataChanged", (payload: unknown) => {
+				clearTimeout(timeout);
+				resolve(payload);
+			});
+		});
+
 		await client.call("create", {
 			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			data: row,
 		});
 
-		await new Promise((r) => setTimeout(r, 150));
-		expect(received.length).toBeGreaterThan(0);
-		expect(received[0]).toEqual({
+		expect(await eventPromise).toEqual({
 			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			operation: "create",

@@ -11,7 +11,7 @@ private let comparisonBlockPattern = "\\{[^{}\"]+\\}"
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\(([^)]*)\\)"
-private let functionPattern = "[a-zA-Z_]+\(functionParamsPattern)"
+private let functionPattern = "[a-zA-Z_][a-zA-Z0-9_]*\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
 
@@ -308,6 +308,8 @@ private let sourceFormatFunctions = [
   "formatDuration",
   "formatDatetime",
   "formatAddress",
+  "formatAddressLine1",
+  "formatAddressLine2",
 ]
 
 private let formatFunctionsByBuildFunction = [
@@ -494,6 +496,10 @@ private func parseText(
       value = try evyFormatWeight(funcArgs, editing)
     case "formatAddress":
       value = try evyFormatAddress(funcArgs)
+    case "formatAddressLine1":
+      value = try evyFormatAddressLine1(funcArgs)
+    case "formatAddressLine2":
+      value = try evyFormatAddressLine2(funcArgs)
     case "formatDecimal":
       value = try evyFormatDecimal(funcArgs, editing)
     case "formatMetricLength":

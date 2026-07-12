@@ -728,6 +728,62 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(display, "$99.00")
   }
 
+  func testFormatAddress() throws {
+    let cases:
+      [(name: String, removing: [String], overrides: [String: EVYJson], expected: String)] = [
+        ("complete", [], [:], "C509 28 Rothschild Avenue, 2018 Rosebery NSW"),
+        ("omits missing unit", ["unit"], [:], "28 Rothschild Avenue, 2018 Rosebery NSW"),
+        (
+          "omits whitespace-only unit", [], ["unit": .string("   ")],
+          "28 Rothschild Avenue, 2018 Rosebery NSW"
+        ),
+        ("omits missing postcode", ["postcode"], [:], "C509 28 Rothschild Avenue, Rosebery NSW"),
+        ("omits missing city", ["city"], [:], "C509 28 Rothschild Avenue, 2018 NSW"),
+        ("omits missing state", ["state"], [:], "C509 28 Rothschild Avenue, 2018 Rosebery"),
+        (
+          "sparse street and city only", ["unit", "postcode", "state"], [:],
+          "28 Rothschild Avenue, Rosebery"
+        ),
+        ("no populated display fields", ["unit", "street", "postcode", "city", "state"], [:], ""),
+      ]
+
+    for testCase in cases {
+      let key = try storeAddress(overrides: testCase.overrides, removing: testCase.removing)
+      let out = try parseTextFromText("{formatAddress(\(key))}")
+      XCTAssertEqual(out.value, testCase.expected, testCase.name)
+    }
+  }
+
+  func testFormatAddressLine1() throws {
+    let cases:
+      [(name: String, removing: [String], overrides: [String: EVYJson], expected: String)] = [
+        ("complete", [], [:], "C509 28 Rothschild Avenue, 2018"),
+        ("omits missing unit", ["unit"], [:], "28 Rothschild Avenue, 2018"),
+        ("omits missing postcode", ["postcode"], [:], "C509 28 Rothschild Avenue"),
+      ]
+
+    for testCase in cases {
+      let key = try storeAddress(overrides: testCase.overrides, removing: testCase.removing)
+      let out = try parseTextFromText("{formatAddressLine1(\(key))}")
+      XCTAssertEqual(out.value, testCase.expected, testCase.name)
+    }
+  }
+
+  func testFormatAddressLine2() throws {
+    let cases:
+      [(name: String, removing: [String], overrides: [String: EVYJson], expected: String)] = [
+        ("complete", [], [:], "Rosebery, NSW"),
+        ("omits missing city", ["city"], [:], "NSW"),
+        ("omits missing state", ["state"], [:], "Rosebery"),
+      ]
+
+    for testCase in cases {
+      let key = try storeAddress(overrides: testCase.overrides, removing: testCase.removing)
+      let out = try parseTextFromText("{formatAddressLine2(\(key))}")
+      XCTAssertEqual(out.value, testCase.expected, testCase.name)
+    }
+  }
+
   func testDisplayTextForDatumValueTemplatePreservesRawDatum() throws {
     let datum = EVYJson.dictionary(["price": .int(99), "currency": .string("AUD")])
     let display = try EVY.displayText(
@@ -736,6 +792,28 @@ final class InterpreterTests: XCTestCase {
     )
     XCTAssertEqual(display, "$99.00")
     XCTAssertEqual(datum, EVYJson.dictionary(["price": .int(99), "currency": .string("AUD")]))
+  }
+
+  private func storeAddress(
+    overrides: [String: EVYJson] = [:],
+    removing keys: [String] = []
+  ) throws -> String {
+    var address: [String: EVYJson] = [
+      "unit": .string("C509"),
+      "street": .string("28 Rothschild Avenue"),
+      "postcode": .string("2018"),
+      "city": .string("Rosebery"),
+      "state": .string("NSW"),
+    ]
+    for key in keys {
+      address.removeValue(forKey: key)
+    }
+    for (key, value) in overrides {
+      address[key] = value
+    }
+    let key = uniqueKey("address")
+    try store(.dictionary(address), at: key)
+    return key
   }
 
   private func storeDimensions(width: Int, height: Int) throws -> String {

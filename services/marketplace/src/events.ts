@@ -1,6 +1,8 @@
 import { EventEmitter } from "node:events";
 import { MARKETPLACE_SERVICE } from "./resources";
 
+export const DATA_CHANGED_EVENT = "dataChanged" as const;
+
 const marketplaceEventBus = new EventEmitter();
 marketplaceEventBus.setMaxListeners(0);
 
@@ -11,7 +13,7 @@ export function emitDataChanged(
 	operation: "create" | "update" | "delete",
 	value: unknown,
 ): void {
-	marketplaceEventBus.emit("notify", "dataChanged", {
+	marketplaceEventBus.emit("notify", DATA_CHANGED_EVENT, {
 		service: MARKETPLACE_SERVICE,
 		resource,
 		operation,

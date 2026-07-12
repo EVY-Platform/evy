@@ -104,18 +104,6 @@ export async function writeGeneratedOutputs({
 	console.log(`Generated ${swiftPath}`);
 }
 
-export async function appendLinesToGeneratedFile(
-	outPath: string,
-	lines: string[],
-): Promise<void> {
-	const current = await readFile(outPath, "utf-8");
-	await writeFile(
-		outPath,
-		`${current.trimEnd()}\n\n${lines.join("\n")}\n`,
-		"utf-8",
-	);
-}
-
 export function spawnExitOk(
 	command: string,
 	args: string[],

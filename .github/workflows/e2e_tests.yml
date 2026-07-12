@@ -90,13 +90,7 @@ jobs:
                   'true'
               run: |
                   set -euo pipefail
-                  echo "Available Xcode apps:"
-                  ls -1d /Applications/Xcode*.app 2>/dev/null || true
-                  echo "Selected developer directory:"
-                  xcode-select -p
                   xcodebuild -version
-                  xcodebuild -showsdks
-                  xcodebuild -showdestinations -project ios/evy.xcodeproj -scheme evy | sed -n '1,80p'
 
             - name: Run E2E tests
               if:

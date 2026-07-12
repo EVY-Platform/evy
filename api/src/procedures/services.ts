@@ -37,6 +37,17 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 	let reconnectDelayMs = 1000;
 	const reconnectMaxDelayMs = 30_000;
 	let connected = false;
+	let connectPromise: Promise<void> | null = null;
+
+	client.on("close", () => {
+		connected = false;
+		connectPromise = null;
+		scheduleReconnect();
+	});
+
+	client.on(DATA_CHANGED_EVENT, (payload: unknown) => {
+		eventListener?.(DATA_CHANGED_EVENT, payload);
+	});
 
 	function scheduleReconnect(): void {
 		if (reconnectTimer) return;
@@ -46,35 +57,37 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 				reconnectDelayMs * 2,
 				reconnectMaxDelayMs,
 			);
-			void connectClient();
+			void connectClient().catch(() => scheduleReconnect());
 		}, reconnectDelayMs);
 	}
 
 	async function connectClient(): Promise<void> {
 		if (connected) return;
-		await new Promise<void>((resolve, reject) => {
-			const onOpen = () => {
-				client.removeListener("error", onError);
-				resolve();
-			};
-			const onError = (err: Error) => {
-				client.removeListener("open", onOpen);
-				reject(err);
-			};
-			client.on("open", onOpen);
-			client.on("error", onError);
-		});
-		connected = true;
-		reconnectDelayMs = 1000;
-		await client.subscribe(DATA_CHANGED_EVENT);
-		client.on("close", () => {
-			connected = false;
-			scheduleReconnect();
-		});
-		if (eventListener) {
-			client.on(DATA_CHANGED_EVENT, (payload: unknown) => {
-				eventListener?.(DATA_CHANGED_EVENT, payload);
+		if (connectPromise) return connectPromise;
+
+		connectPromise = (async () => {
+			await new Promise<void>((resolve, reject) => {
+				const onOpen = () => {
+					client.removeListener("error", onError);
+					resolve();
+				};
+				const onError = (err: Error) => {
+					client.removeListener("open", onOpen);
+					reject(err);
+				};
+				client.on("open", onOpen);
+				client.on("error", onError);
 			});
+			connected = true;
+			reconnectDelayMs = 1000;
+			await client.subscribe(DATA_CHANGED_EVENT);
+		})();
+
+		try {
+			await connectPromise;
+		} catch (error) {
+			connectPromise = null;
+			throw error;
 		}
 	}
 
@@ -107,12 +120,6 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 			),
 		onEvent(listener) {
 			eventListener = listener;
-			client.on(DATA_CHANGED_EVENT, (payload: unknown) => {
-				listener(DATA_CHANGED_EVENT, payload);
-			});
-			if (connected) {
-				void client.subscribe(DATA_CHANGED_EVENT).catch(() => {});
-			}
 		},
 	};
 }
