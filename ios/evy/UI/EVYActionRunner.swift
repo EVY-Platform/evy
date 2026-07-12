@@ -87,7 +87,7 @@ enum EVYActionRunner {
           throw EVYError.invalidData(
             context: "create requires namespace and resource, e.g. create(marketplace,item)")
         }
-        let resolvedData = createAction.data.map { resolveInlineCreateData($0, datum: datum) }
+        let resolvedData = createAction.data.map { resolvePlainTextValues($0, datum: datum) }
         try EVY.create(
           namespace: createAction.namespace,
           resource: createAction.resource,
@@ -100,8 +100,8 @@ enum EVYActionRunner {
               "update requires namespace, resource, filter, and changes, e.g. update(marketplace,requests,{id: abc},{archived: true})"
           )
         }
-        let resolvedFilter = resolveInlineCreateData(updateAction.filter, datum: datum)
-        let resolvedChanges = resolveInlineCreateData(updateAction.changes, datum: datum)
+        let resolvedFilter = resolvePlainTextValues(updateAction.filter, datum: datum)
+        let resolvedChanges = resolvePlainTextValues(updateAction.changes, datum: datum)
         try EVY.update(
           namespace: updateAction.namespace,
           resource: updateAction.resource,
@@ -153,7 +153,7 @@ enum EVYActionRunner {
     )
   }
 
-  private static func resolveInlineCreateData(
+  private static func resolvePlainTextValues(
     _ data: [String: String],
     datum: EVYJson?
   ) -> [String: EVYJson] {

@@ -6,18 +6,28 @@
 import Foundation
 
 extension EVY {
-  private struct CreateParams: Encodable {
-    let service: String
-    let resource: String
-    let filter: Filter?
-    let data: EVYJson
-  }
-
-  private struct UpdateParams: Encodable {
+  private struct MutationParams: Encodable {
     let service: String
     let resource: String
     let filter: Filter
     let data: EVYJson
+  }
+
+  private static func syncMutation(method: String, params: MutationParams) {
+    Task {
+      do {
+        _ = try await EVYAPIManager.shared.fetch(
+          method: method,
+          params: params,
+          expecting: EVYJson.self
+        )
+      } catch {
+        NotificationCenter.default.post(
+          name: .evyErrorOccurred,
+          object: error
+        )
+      }
+    }
   }
 
   static func ensureDraftExists(
@@ -105,8 +115,8 @@ extension EVY {
     resource: String,
     data: [String: EVYJson]? = nil
   ) throws {
-    guard data == nil else {
-      try createWithGeneratedId(namespace: namespace, resource: resource, payload: data!)
+    if let data {
+      try createWithGeneratedId(namespace: namespace, resource: resource, payload: data)
       return
     }
 
@@ -148,7 +158,7 @@ extension EVY {
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
     let dataWithId = EVYJson.dictionary(payloadWithId)
-    let params = CreateParams(
+    let params = MutationParams(
       service: namespace,
       resource: resource,
       filter: Filter(id: newId),
@@ -164,20 +174,7 @@ extension EVY {
       sortIndex: nextSortIndex
     )
 
-    Task {
-      do {
-        _ = try await EVYAPIManager.shared.fetch(
-          method: "create",
-          params: params,
-          expecting: EVYJson.self
-        )
-      } catch {
-        NotificationCenter.default.post(
-          name: .evyErrorOccurred,
-          object: error
-        )
-      }
-    }
+    syncMutation(method: "create", params: params)
   }
 
   static func update(
@@ -187,11 +184,12 @@ extension EVY {
     changes: [String: EVYJson]
   ) throws {
     let allRows = try publicStore.getAll(namespace: namespace, resource: resource)
-    var matchedUpdates: [(rowId: String, updatedData: EVYJson)] = []
+    var matchedUpdates: [(rowId: String, recordId: String, updatedData: EVYJson)] = []
 
     for row in allRows {
       let decoded = try row.decoded()
       guard case .dictionary(let record) = decoded else { continue }
+      guard case .string(let recordId) = record["id"] else { continue }
       let matches = filter.allSatisfy { key, expectedValue in
         record[key]?.toString() == expectedValue.toString()
       }
@@ -201,14 +199,11 @@ extension EVY {
       for (key, value) in changes {
         updatedRecord[key] = value
       }
-      matchedUpdates.append((rowId: row.id, updatedData: .dictionary(updatedRecord)))
+      matchedUpdates.append(
+        (rowId: row.id, recordId: recordId, updatedData: .dictionary(updatedRecord)))
     }
 
     for update in matchedUpdates {
-      guard case .dictionary(let payload) = update.updatedData,
-        case .string(let recordId) = payload["id"]
-      else { continue }
-
       let encodedData = try JSONEncoder().encode(update.updatedData)
       try publicStore.update(
         namespace: namespace,
@@ -217,26 +212,13 @@ extension EVY {
         value: encodedData
       )
 
-      let params = UpdateParams(
+      let params = MutationParams(
         service: namespace,
         resource: resource,
-        filter: Filter(id: recordId),
+        filter: Filter(id: update.recordId),
         data: update.updatedData
       )
-      Task {
-        do {
-          _ = try await EVYAPIManager.shared.fetch(
-            method: "update",
-            params: params,
-            expecting: EVYJson.self
-          )
-        } catch {
-          NotificationCenter.default.post(
-            name: .evyErrorOccurred,
-            object: error
-          )
-        }
-      }
+      syncMutation(method: "update", params: params)
     }
   }
 

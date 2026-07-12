@@ -112,13 +112,10 @@ struct EVYTimeslotPicker: View {
     to destination: String,
     onSelectionCommitted: (() -> Void)? = nil
   ) {
-    guard !destination.isEmpty else { return }
-    do {
-      try EVY.writeRawValue(dateTimeISO, to: destination)
-      onSelectionCommitted?()
-    } catch {
-      return
-    }
+    guard !destination.isEmpty,
+      (try? EVY.writeRawValue(dateTimeISO, to: destination)) != nil
+    else { return }
+    onSelectionCommitted?()
   }
 
   private var numberOfTimeslotsPerDay: Int {
