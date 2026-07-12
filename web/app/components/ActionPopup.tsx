@@ -34,6 +34,9 @@ export function ActionPopup({
 	);
 	const [trueBranch, setTrueBranch] = useState(action.true);
 	const [falseBranch, setFalseBranch] = useState(action.false);
+	const [confirmationMessage, setConfirmationMessage] = useState(
+		action.confirmation ?? "",
+	);
 
 	const draftVariables = useMemo(
 		() =>
@@ -46,8 +49,11 @@ export function ActionPopup({
 			condition: serializeCondition(expression),
 			true: trueBranch,
 			false: falseBranch,
+			...(confirmationMessage.trim()
+				? { confirmation: confirmationMessage }
+				: {}),
 		});
-	}, [expression, trueBranch, falseBranch, onSave]);
+	}, [expression, trueBranch, falseBranch, confirmationMessage, onSave]);
 
 	useEscapeKey(onCancel);
 
@@ -115,6 +121,21 @@ export function ActionPopup({
 								onChange={setFalseBranch}
 							/>
 						</div>
+					</div>
+
+					<div>
+						<span className="evy-popup-section-title">
+							Confirmation message
+						</span>
+						<input
+							type="text"
+							className="evy-popup-input"
+							value={confirmationMessage}
+							onChange={(event) =>
+								setConfirmationMessage(event.target.value)
+							}
+							placeholder="Optional message shown before create actions run"
+						/>
 					</div>
 				</div>
 

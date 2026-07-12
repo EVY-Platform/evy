@@ -23,6 +23,45 @@ enum ActionOperation: Hashable {
   case navigate(Route)
   case highlightRequired(String)
   case close
+  case confirm(message: String, onConfirm: () -> Void)
+}
+
+extension ActionOperation {
+  static func == (lhs: ActionOperation, rhs: ActionOperation) -> Bool {
+    switch (lhs, rhs) {
+    case (.navigate(let leftRoute), .navigate(let rightRoute)):
+      return leftRoute == rightRoute
+    case (.highlightRequired(let leftField), .highlightRequired(let rightField)):
+      return leftField == rightField
+    case (.close, .close):
+      return true
+    case (.confirm(let leftMessage, _), .confirm(let rightMessage, _)):
+      return leftMessage == rightMessage
+    default:
+      return false
+    }
+  }
+
+  func hash(into hasher: inout Hasher) {
+    switch self {
+    case .navigate(let route):
+      hasher.combine(0)
+      hasher.combine(route)
+    case .highlightRequired(let fieldName):
+      hasher.combine(1)
+      hasher.combine(fieldName)
+    case .close:
+      hasher.combine(2)
+    case .confirm(let message, _):
+      hasher.combine(3)
+      hasher.combine(message)
+    }
+  }
+}
+
+private struct PendingConfirmation {
+  let message: String
+  let onConfirm: () -> Void
 }
 
 struct ActionEnvironmentKey: EnvironmentKey {
@@ -68,6 +107,7 @@ struct ContentView: View {
   @State private var showingAlert = false
   @State private var alertTitle = ""
   @State private var alertMessage = ""
+  @State private var pendingConfirmation: PendingConfirmation?
   @State private var loading = true
 
   private var currentFlowId: String {
@@ -119,6 +159,9 @@ struct ContentView: View {
       } else {
         routes.removeAll()
       }
+
+    case .confirm(let message, let onConfirm):
+      pendingConfirmation = PendingConfirmation(message: message, onConfirm: onConfirm)
     }
   }
 
@@ -200,6 +243,25 @@ struct ContentView: View {
         title: Text(alertTitle),
         message: Text(alertMessage),
         dismissButton: .default(Text("Ok")))
+    }
+    .alert(
+      pendingConfirmation?.message ?? "",
+      isPresented: Binding(
+        get: { pendingConfirmation != nil },
+        set: { isPresented in
+          if !isPresented {
+            pendingConfirmation = nil
+          }
+        }
+      )
+    ) {
+      Button("Cancel", role: .cancel) {
+        pendingConfirmation = nil
+      }
+      Button("Confirm") {
+        pendingConfirmation?.onConfirm()
+        pendingConfirmation = nil
+      }
     }
     .onChange(of: routes) { oldRoutes, newRoutes in
       let previousFlowId = oldRoutes.last?.flowId ?? HOME_FLOW_ID

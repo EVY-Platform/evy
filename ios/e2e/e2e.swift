@@ -305,6 +305,50 @@ class E2ETestBase: XCTestCase {
     field.typeText(text)
   }
 
+  func tapCreateConfirmationAlert(
+    titleContains expectedSubstring: String? = nil,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let alert = app.alerts.firstMatch
+    XCTAssertTrue(
+      alert.waitForExistence(timeout: 5),
+      "Expected create confirmation alert",
+      file: file,
+      line: line
+    )
+    if let expectedSubstring {
+      let matchingText = alert.staticTexts.containing(
+        NSPredicate(format: "label CONTAINS %@", expectedSubstring)
+      ).firstMatch
+      XCTAssertTrue(
+        matchingText.exists,
+        "Expected alert to contain '\(expectedSubstring)'",
+        file: file,
+        line: line
+      )
+    }
+    let confirmButton = alert.buttons["Confirm"]
+    XCTAssertTrue(confirmButton.exists, file: file, line: line)
+    confirmButton.tap()
+  }
+
+  func tapCancelConfirmationAlert(
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let alert = app.alerts.firstMatch
+    XCTAssertTrue(
+      alert.waitForExistence(timeout: 5),
+      "Expected create confirmation alert",
+      file: file,
+      line: line
+    )
+    let cancelButton = alert.buttons["Cancel"]
+    XCTAssertTrue(cancelButton.exists, file: file, line: line)
+    cancelButton.tap()
+  }
+
   func findElement(identifier: String) -> XCUIElement? {
     let otherElement = app.otherElements[identifier].firstMatch
     if otherElement.waitForExistence(timeout: 2) {
@@ -540,6 +584,7 @@ class E2ETestBase: XCTestCase {
     action: String,
     condition: String = "",
     falseAction: String = "",
+    confirmation: String? = nil,
     visible: String = "true",
     style: String? = nil
   ) -> [String: Any] {
@@ -550,17 +595,43 @@ class E2ETestBase: XCTestCase {
       "title": "",
       "label": label,
       "actions": [
-        [
-          "condition": condition,
-          "false": falseAction,
-          "true": action,
-        ]
+        rowAction(
+          true: action,
+          condition: condition,
+          false: falseAction,
+          confirmation: confirmation
+        )
       ],
     ]
     if let style {
       row["style"] = style
     }
     return row
+  }
+
+  static func requestConfirmationMessage(verb: String) -> String {
+    "Request to \(verb) the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
+  }
+
+  static func cancelConfirmationMessage(verb: String) -> String {
+    "Cancel \(verb) request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
+  }
+
+  static func rowAction(
+    true action: String,
+    condition: String = "",
+    false falseAction: String = "",
+    confirmation: String? = nil
+  ) -> [String: String] {
+    var dict: [String: String] = [
+      "condition": condition,
+      "false": falseAction,
+      "true": action,
+    ]
+    if let confirmation {
+      dict["confirmation"] = confirmation
+    }
+    return dict
   }
 
   static func cancelRequestVisibilityExpressions() -> (hasActive: String, noActive: String) {
@@ -610,7 +681,12 @@ class E2ETestBase: XCTestCase {
                     Self.timeslotPickerRow(
                       id: "b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e",
                       source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
-                      actions: [["condition": "", "false": "", "true": pickupCreateAction]],
+                      actions: [
+                        Self.rowAction(
+                          true: pickupCreateAction,
+                          confirmation: Self.requestConfirmationMessage(verb: "pickup")
+                        )
+                      ],
                       visible: visibility.noActive,
                       name: "Pickup request times"
                     ),
@@ -618,6 +694,7 @@ class E2ETestBase: XCTestCase {
                       id: "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
                       label: "Cancel request",
                       action: cancelAction,
+                      confirmation: Self.cancelConfirmationMessage(verb: "pickup"),
                       visible: visibility.hasActive,
                       style: "danger"
                     ),
@@ -634,7 +711,12 @@ class E2ETestBase: XCTestCase {
                       id: "e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b",
                       source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).delivery_selection}",
                       destination: "{selected_delivery_timeslot}",
-                      actions: [["condition": "", "false": "", "true": deliveryCreateAction]],
+                      actions: [
+                        Self.rowAction(
+                          true: deliveryCreateAction,
+                          confirmation: Self.requestConfirmationMessage(verb: "deliver")
+                        )
+                      ],
                       visible: visibility.noActive,
                       name: "Delivery request times"
                     ),
@@ -642,6 +724,7 @@ class E2ETestBase: XCTestCase {
                       id: "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c",
                       label: "Cancel request",
                       action: cancelAction,
+                      confirmation: Self.cancelConfirmationMessage(verb: "delivery"),
                       visible: visibility.hasActive,
                       style: "danger"
                     ),
@@ -668,12 +751,14 @@ class E2ETestBase: XCTestCase {
                       action: shippingCreateAction,
                       condition: "{length(shipping_address.postcode) > 0}",
                       falseAction: "{highlight_required(postcode)}",
+                      confirmation: Self.requestConfirmationMessage(verb: "ship"),
                       visible: visibility.noActive
                     ),
                     Self.buttonRow(
                       id: "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
                       label: "Cancel request",
                       action: cancelAction,
+                      confirmation: Self.cancelConfirmationMessage(verb: "shipping"),
                       visible: visibility.hasActive,
                       style: "danger"
                     ),
@@ -779,7 +864,12 @@ class E2ETestBase: XCTestCase {
             Self.timeslotPickerRow(
               id: "9405eec8-4729-4ce0-b3e0-5c7f5a611001",
               source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
-              actions: [["condition": "", "false": "", "true": pickupCreateAction]],
+              actions: [
+                Self.rowAction(
+                  true: pickupCreateAction,
+                  confirmation: Self.requestConfirmationMessage(verb: "pickup")
+                )
+              ],
               name: "Pickup request times"
             ),
             Self.inputRow(
@@ -794,7 +884,8 @@ class E2ETestBase: XCTestCase {
               label: "Ask to buy",
               action: shippingCreateAction,
               condition: "{length(shipping_address.postcode) > 0}",
-              falseAction: "{highlight_required(postcode)}"
+              falseAction: "{highlight_required(postcode)}",
+              confirmation: Self.requestConfirmationMessage(verb: "ship")
             ),
           ],
         ]
@@ -1353,7 +1444,7 @@ final class WebSocketE2ETests: E2ETestBase {
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
     let selectedTimeslot = "2026-06-03T09:00:00"
-    let (selectedItemId, _) = try await createMarketplaceItem(
+    let (selectedItemId, selectedItemTitle) = try await createMarketplaceItem(
       emitter: emitter,
       titlePrefix: "Pickup request item",
       pickupSelection: [selectedTimeslot]
@@ -1381,6 +1472,7 @@ final class WebSocketE2ETests: E2ETestBase {
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
     timeslot.tap()
+    tapCreateConfirmationAlert(titleContains: selectedItemTitle)
 
     let pickupRequestCreated = try await waitForMarketplaceRequest(
       emitter: emitter,
@@ -1393,6 +1485,68 @@ final class WebSocketE2ETests: E2ETestBase {
       pickupRequestCreated,
       "Tapping a pickup timeslot should create a matching marketplace request"
     )
+    await emitter.disconnect()
+  }
+
+  @MainActor
+  func testTimeslotConfirmationCancelDoesNotCreateRequest() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    let (selectedItemId, selectedItemTitle) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Cancel pickup item",
+      pickupSelection: [selectedTimeslot]
+    )
+
+    let viewButtonLabel = "Cancel pickup \(Int(Date().timeIntervalSince1970))"
+    try await emitter.updateSDUI(
+      flowData: createHomeFlowData(buttonLabel: viewButtonLabel, viewItemId: selectedItemId),
+      flowId: E2EFlowIds.webSocketHomeFlow
+    )
+    try await emitter.updateSDUI(
+      flowData: Self.viewItemRequestFlowData(
+        flowId: E2EFlowIds.webSocketViewFlow,
+        pageId: E2EFlowIds.webSocketViewPage
+      ),
+      flowId: E2EFlowIds.webSocketViewFlow
+    )
+
+    app.terminate()
+    try launchApp()
+    let requestButton = app.buttons[viewButtonLabel]
+    XCTAssertTrue(requestButton.waitForExistence(timeout: 20), "Request view button should load")
+    requestButton.tap()
+
+    let timeslot = app.staticTexts["09:00"].firstMatch
+    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
+    timeslot.tap()
+    tapCancelConfirmationAlert()
+
+    let requestsAfterCancel = try await emitter.getResource(
+      service: MARKETPLACE_SERVICE,
+      resource: MarketplaceResource.requests.rawValue
+    )
+    XCTAssertFalse(
+      Self.marketplaceRequestsContain(
+        requestsAfterCancel,
+        type: "pickup",
+        itemId: selectedItemId
+      ),
+      "Cancelling confirmation should not create a pickup request"
+    )
+    XCTAssertTrue(timeslot.exists, "Pickup timeslot should remain visible after cancel")
+    XCTAssertFalse(
+      app.buttons["Cancel request"].exists,
+      "Cancel request should not appear when no request was created"
+    )
+    _ = selectedItemTitle
     await emitter.disconnect()
   }
 
@@ -1439,6 +1593,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Cancel request should be hidden before a request exists")
 
     timeslot.tap()
+    tapCreateConfirmationAlert()
 
     let pickupRequestCreated = try await waitForMarketplaceRequest(
       emitter: emitter,
@@ -1467,6 +1622,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     app.segmentedControls.buttons["Pickup"].tap()
     cancelButton.tap()
+    tapCreateConfirmationAlert(titleContains: "Cancel pickup request")
 
     let requestArchived = try await waitForArchivedMarketplaceRequest(
       emitter: emitter,
@@ -1478,6 +1634,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Pickup timeslot should return after cancelling the request")
 
     timeslot.tap()
+    tapCreateConfirmationAlert()
     XCTAssertTrue(
       app.buttons["Cancel request"].firstMatch.waitForExistence(timeout: 10),
       "Cancel request should reappear after creating another request")
@@ -1555,6 +1712,7 @@ final class WebSocketE2ETests: E2ETestBase {
     app.scrollViews.firstMatch.tap()
     try await Task.sleep(for: .milliseconds(500))
     askToBuyButton.tap()
+    tapCreateConfirmationAlert()
 
     let shippingRequestCreated = try await waitForMarketplaceRequest(
       emitter: emitter,
@@ -1725,6 +1883,7 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       submitButton.waitForExistence(timeout: 5), "Submit should exist on minimal create flow")
     submitButton.tap()
+    tapCreateConfirmationAlert(titleContains: "Are you sure?")
 
     XCTAssertTrue(
       viewItemButton.waitForExistence(timeout: 15),

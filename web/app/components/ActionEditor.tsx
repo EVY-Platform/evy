@@ -226,6 +226,19 @@ function ActionSummaryCard({
 					</div>
 				)}
 
+				{action.confirmation && (
+					<div className="evy-mb-1">
+						<span className="evy-text-sm evy-font-medium evy-text-gray">
+							Confirmation
+						</span>
+						<ul className="evy-action-summary-list">
+							<li className="evy-text-sm">
+								{action.confirmation}
+							</li>
+						</ul>
+					</div>
+				)}
+
 				{summaryLines.length === 0 && !trueBranch && !falseBranch && (
 					<span className="evy-text-sm evy-text-gray">
 						Click to configure...

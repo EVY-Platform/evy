@@ -8,14 +8,14 @@ import SwiftUI
 struct EVYTimeslotPickerRow: View {
 
   private let view: TimeslotPickerRowViewData
-  private let onSelectionCommitted: (() -> Void)?
+  private let onTimeslotSelected: ((_ commit: @escaping () -> Void) -> Void)?
 
   init(
     view: TimeslotPickerRowViewData,
-    onSelectionCommitted: (() -> Void)? = nil
+    onTimeslotSelected: ((_ commit: @escaping () -> Void) -> Void)? = nil
   ) {
     self.view = view
-    self.onSelectionCommitted = onSelectionCommitted
+    self.onTimeslotSelected = onTimeslotSelected
   }
 
   var body: some View {
@@ -28,7 +28,7 @@ struct EVYTimeslotPickerRow: View {
         content: view,
         source: view.source,
         destination: view.destination,
-        onSelectionCommitted: onSelectionCommitted
+        onTimeslotSelected: onTimeslotSelected
       )
     }
     .padding(.horizontal, Constants.majorPadding)

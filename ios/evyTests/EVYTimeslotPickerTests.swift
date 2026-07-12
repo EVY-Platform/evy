@@ -154,7 +154,7 @@ final class EVYTimeslotPickerTests: XCTestCase {
     XCTAssertEqual(dates.first?.timeslots.map { $0.timeslot }, ["09:00", "11:30", "14:00"])
   }
 
-  func testSelectionCallbackRunsAfterTimeslotIsCommitted() throws {
+  func testSelectionDoesNotWriteUntilCommitClosureRuns() throws {
     let scopeId = "__test__:timeslot-selection"
     let selectedTimeslot = "2026-06-03T09:00:00"
     EVY.draftStore.deleteDrafts()
@@ -165,16 +165,38 @@ final class EVYTimeslotPickerTests: XCTestCase {
     }
 
     EVY.ensureDraftExists(variableName: "selected_timeslot", scopeId: scopeId)
-    var callbackCount = 0
-    EVYTimeslotPicker.commitSelection(
-      selectedTimeslot,
-      to: "{selected_timeslot}",
-      onSelectionCommitted: {
-        callbackCount += 1
-        XCTAssertEqual(try? EVY.getDataFromText("{selected_timeslot}"), .string(selectedTimeslot))
-      }
+    let commit = {
+      EVYTimeslotPicker.commitSelection(
+        selectedTimeslot,
+        to: "{selected_timeslot}"
+      )
+    }
+
+    XCTAssertNotEqual(
+      try? EVY.getDataFromText("{selected_timeslot}"),
+      .string(selectedTimeslot),
+      "Destination should stay unchanged until commit closure runs"
     )
 
-    XCTAssertEqual(callbackCount, 1)
+    commit()
+    XCTAssertEqual(try? EVY.getDataFromText("{selected_timeslot}"), .string(selectedTimeslot))
+  }
+
+  func testCommitClosureWritesSelectedTimeslot() throws {
+    let scopeId = "__test__:timeslot-commit"
+    let selectedTimeslot = "2026-06-03T10:00:00"
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    EVY.ensureDraftExists(variableName: "selected_timeslot", scopeId: scopeId)
+    EVYTimeslotPicker.commitSelection(
+      selectedTimeslot,
+      to: "{selected_timeslot}"
+    )
+    XCTAssertEqual(try? EVY.getDataFromText("{selected_timeslot}"), .string(selectedTimeslot))
   }
 }

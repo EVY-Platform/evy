@@ -67,7 +67,7 @@ struct EVYTimeslotPicker: View {
   private static let columnStackSpacing: CGFloat = 8
 
   private let destination: String
-  private let onSelectionCommitted: (() -> Void)?
+  private let onTimeslotSelected: ((_ commit: @escaping () -> Void) -> Void)?
   private let timeslotDates: EVYState<[EVYTimeslotDate]>
 
   @State private var selectedGroupIndex: Int = 0
@@ -76,10 +76,10 @@ struct EVYTimeslotPicker: View {
     content: TimeslotPickerRowViewData,
     source: String,
     destination: String,
-    onSelectionCommitted: (() -> Void)? = nil
+    onTimeslotSelected: ((_ commit: @escaping () -> Void) -> Void)? = nil
   ) {
     self.destination = destination
-    self.onSelectionCommitted = onSelectionCommitted
+    self.onTimeslotSelected = onTimeslotSelected
     timeslotDates = EVYState(
       watches: [source, destination],
       setter: { Self.buildDates(content: content, source: source, destination: destination) }
@@ -100,22 +100,18 @@ struct EVYTimeslotPicker: View {
   }
 
   private func selectTimeslot(_ dateTimeISO: String) {
-    Self.commitSelection(
-      dateTimeISO,
-      to: destination,
-      onSelectionCommitted: onSelectionCommitted
-    )
+    onTimeslotSelected? {
+      Self.commitSelection(dateTimeISO, to: destination)
+    }
   }
 
   static func commitSelection(
     _ dateTimeISO: String,
-    to destination: String,
-    onSelectionCommitted: (() -> Void)? = nil
+    to destination: String
   ) {
     guard !destination.isEmpty,
       (try? EVY.writeRawValue(dateTimeISO, to: destination)) != nil
     else { return }
-    onSelectionCommitted?()
   }
 
   private var numberOfTimeslotsPerDay: Int {

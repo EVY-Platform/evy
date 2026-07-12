@@ -114,7 +114,8 @@
 											{
 												"condition": "",
 												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: pickup, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_pickup_timeslot, archived: false})}",
-												"false": ""
+												"false": "",
+												"confirmation": "Request to pickup the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
@@ -136,7 +137,8 @@
 											{
 												"condition": "",
 												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
-												"false": ""
+												"false": "",
+												"confirmation": "Cancel pickup request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
@@ -208,7 +210,8 @@
 											{
 												"condition": "",
 												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: delivery, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_delivery_timeslot, archived: false})}",
-												"false": ""
+												"false": "",
+												"confirmation": "Request to deliver the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
@@ -230,7 +233,8 @@
 											{
 												"condition": "",
 												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
-												"false": ""
+												"false": "",
+												"confirmation": "Cancel delivery request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
@@ -301,7 +305,8 @@
 											{
 												"condition": "{length(shipping_address.postcode) > 0}",
 												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: shipping, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, postalcode: shipping_address.postcode, archived: false})}",
-												"false": "{highlight_required(postcode)}"
+												"false": "{highlight_required(postcode)}",
+												"confirmation": "Request to ship the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
@@ -316,7 +321,8 @@
 											{
 												"condition": "",
 												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
-												"false": ""
+												"false": "",
+												"confirmation": "Cancel shipping request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",

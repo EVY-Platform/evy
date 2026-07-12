@@ -209,12 +209,13 @@ private struct EVYResolvedRow: View {
       && contentRow.type != .timeslotPicker
   }
 
-  private func runActions(contentRow: UI_Row) {
+  private func runActions(contentRow: UI_Row, prepare: (() -> Void)? = nil) {
     EVYActionRunner.run(
       actions: contentRow.actions,
       datum: datum,
       childRef: childRef,
       show: { ref in presentedSheetRef = ref },
+      prepare: prepare,
       action: action
     )
   }
@@ -266,7 +267,9 @@ private struct EVYResolvedRow: View {
     case .timeslotPicker(let view, _):
       EVYTimeslotPickerRow(
         view: view,
-        onSelectionCommitted: { runActions(contentRow: contentRow) }
+        onTimeslotSelected: { commit in
+          runActions(contentRow: contentRow, prepare: commit)
+        }
       )
     case .text(let view, _):
       EVYTextRow(view: view)

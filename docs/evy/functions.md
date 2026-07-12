@@ -308,3 +308,23 @@ Typed text (example):
   "23-25 Rosebery Avenue, 2018\nRosebery, NSW"
 Result: address dictionary with unit, street, city, postcode, state populated per parser rules
 ```
+
+## Action functions
+
+These run on the iOS client when a row action branch executes. See [sdui.md](./sdui.md) for the full action model.
+
+#### create
+
+```
+{create(service_id, resource_id, data?)}
+```
+
+Creates a domain entity after the user confirms. Every `create` branch pauses the action chain until the user taps Confirm; Cancel discards the run with no side effects. Set a custom prompt on the parent `UI_RowAction`'s optional `confirmation` field (supports `{…}` data-path interpolation). When `confirmation` is absent or empty, the client shows `Are you sure?`.
+
+#### update
+
+```
+{update(service_id, resource_id, filter, changes)}
+```
+
+Updates matching domain entities after the user confirms. Every `update` branch pauses the action chain the same way as `create`. Set a custom prompt on the action's optional `confirmation` field; otherwise the client shows `Are you sure?`.

@@ -9,23 +9,50 @@ import XCTest
 
 @MainActor
 final class EVYActionRunnerTests: XCTestCase {
+  private func rowAction(
+    condition: String = "",
+    true trueBranch: String,
+    false falseBranch: String = "",
+    confirmation: String? = nil
+  ) -> UI_RowAction {
+    UI_RowAction(
+      condition: condition,
+      false: falseBranch,
+      true: trueBranch,
+      confirmation: confirmation
+    )
+  }
+
+  private func confirmCreate(
+    received: inout ActionOperation?,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    guard case .confirm(_, let onConfirm) = received else {
+      XCTFail(
+        "Expected confirm operation, got \(String(describing: received))", file: file, line: line)
+      return
+    }
+    received = nil
+    onConfirm()
+  }
   func testCloseAction() {
     var received: ActionOperation?
-    let action = UI_RowAction(condition: "", false: "", true: "{close()}")
+    let action = rowAction(true: "{close()}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     XCTAssertEqual(received, .close)
   }
 
   func testBareCloseActionIsInert() {
     var received: ActionOperation?
-    let action = UI_RowAction(condition: "", false: "", true: "close")
+    let action = rowAction(true: "close")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     XCTAssertNil(received)
   }
 
   func testUnwrappedCloseFunctionIsInert() {
     var received: ActionOperation?
-    let action = UI_RowAction(condition: "", false: "", true: "close()")
+    let action = rowAction(true: "close()")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     XCTAssertNil(received)
   }
@@ -47,12 +74,16 @@ final class EVYActionRunnerTests: XCTestCase {
     try EVY.updateValue("Flow Submitted Title", at: "{title}", scopeId: scopeId)
 
     var received: ActionOperation?
-    let action = UI_RowAction(
-      condition: "", false: "",
-      true: "{create(\(namespace),\(resource))}")
+    let action = rowAction(true: "{create(\(namespace),\(resource))}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
-    XCTAssertNil(received, "Create should never emit an ActionOperation")
+    XCTAssertEqual(received, .confirm(message: "Are you sure?", onConfirm: {}))
+    let rowsBeforeConfirm = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    XCTAssertTrue(rowsBeforeConfirm.isEmpty)
+
+    confirmCreate(received: &received)
+
+    XCTAssertNil(received, "Create should not emit an ActionOperation after confirmation")
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
     let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
     guard case .dictionary(let values) = createdPayload else {
@@ -81,11 +112,16 @@ final class EVYActionRunnerTests: XCTestCase {
     try EVY.updateValue("Chained Title", at: "{title}", scopeId: scopeId)
 
     var receivedOperations: [ActionOperation] = []
-    let createAction = UI_RowAction(
-      condition: "", false: "", true: "{create(\(namespace),\(resource))}")
-    let closeAction = UI_RowAction(condition: "", false: "", true: "{close()}")
+    let createAction = rowAction(true: "{create(\(namespace),\(resource))}")
+    let closeAction = rowAction(true: "{close()}")
     EVYActionRunner.run(actions: [createAction, closeAction]) { receivedOperations.append($0) }
 
+    XCTAssertEqual(receivedOperations, [.confirm(message: "Are you sure?", onConfirm: {})])
+    guard case .confirm(_, let onConfirm) = receivedOperations.first else {
+      return XCTFail("Expected confirm before create+close chain runs")
+    }
+    receivedOperations.removeAll()
+    onConfirm()
     XCTAssertEqual(receivedOperations, [.close], "close should run after create succeeds")
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
     XCTAssertEqual(createdRows.count, 1)
@@ -96,10 +132,15 @@ final class EVYActionRunnerTests: XCTestCase {
       forNotification: Notification.Name.evyErrorOccurred,
       object: nil
     )
-    let throwingAction = UI_RowAction(condition: "", false: "", true: "{create(onlyNamespace)}")
-    let closeAction = UI_RowAction(condition: "", false: "", true: "{close()}")
+    let throwingAction = rowAction(true: "{create(onlyNamespace)}")
+    let closeAction = rowAction(true: "{close()}")
     var received: ActionOperation?
     EVYActionRunner.run(actions: [throwingAction, closeAction]) { received = $0 }
+    guard case .confirm(_, let onConfirm) = received else {
+      return XCTFail("Expected confirm before throwing create runs")
+    }
+    received = nil
+    onConfirm()
     wait(for: [expectation], timeout: 2)
     XCTAssertNil(received, "close should not run once an earlier action throws")
   }
@@ -156,13 +197,13 @@ final class EVYActionRunnerTests: XCTestCase {
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
 
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
+    let action = rowAction(
       true:
         "{create(\(namespace),\(resource),{type: pickup, item_id: item-1, time: 2026-06-03T09:00:00, archived: false})}"
     )
-    EVYActionRunner.run(actions: [action]) { _ in }
+    var received: ActionOperation?
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    confirmCreate(received: &received)
 
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
     let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
@@ -228,13 +269,14 @@ final class EVYActionRunnerTests: XCTestCase {
       value: try JSONEncoder().encode(EVYJson.dictionary(["id": .string(itemId)]))
     )
 
-    let cancelAction = UI_RowAction(
-      condition: "",
-      false: "",
+    let cancelAction = rowAction(
       true:
         "{update(\(namespace),\(resource),{item_id: \(itemKey).id, archived: false},{archived: true})}"
     )
-    EVYActionRunner.run(actions: [cancelAction]) { _ in }
+    var received: ActionOperation?
+    EVYActionRunner.run(actions: [cancelAction]) { received = $0 }
+    XCTAssertEqual(received, .confirm(message: "Are you sure?", onConfirm: {}))
+    confirmCreate(received: &received)
 
     XCTAssertTrue(
       receivedKeys.contains(resource),
@@ -277,15 +319,14 @@ final class EVYActionRunnerTests: XCTestCase {
     )
 
     let datum = EVYJson.dictionary(["id": .string("item-id")])
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
+    let action = rowAction(
       true:
         "{create(\(namespace),\(resource),{type: pickup, item_id: $datum.id, time: selected_pickup_timeslot})}"
     )
     var receivedNavigation: ActionOperation?
 
     EVYActionRunner.run(actions: [action], datum: datum) { receivedNavigation = $0 }
+    confirmCreate(received: &receivedNavigation)
 
     XCTAssertNil(receivedNavigation)
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
@@ -303,14 +344,14 @@ final class EVYActionRunnerTests: XCTestCase {
     let row = try makeRowWithChild()
     let childRef = row.child.map(EVYRowRef.inline)
     var shownRef: EVYRowRef?
-    let action = UI_RowAction(condition: "", false: "", true: "{show()}")
+    let action = rowAction(true: "{show()}")
     EVYActionRunner.run(actions: [action], childRef: childRef, show: { shownRef = $0 }) { _ in }
     XCTAssertEqual(shownRef?.id, "child-row")
   }
 
   func testShowActionWithoutChildIsNoOp() throws {
     var shownRef: EVYRowRef?
-    let action = UI_RowAction(condition: "", false: "", true: "{show()}")
+    let action = rowAction(true: "{show()}")
     EVYActionRunner.run(actions: [action], childRef: nil, show: { shownRef = $0 }) { _ in }
     XCTAssertNil(shownRef)
   }
@@ -319,18 +360,14 @@ final class EVYActionRunnerTests: XCTestCase {
     let row = try makeRowWithChild()
     let childRef = row.child.map(EVYRowRef.inline)
     var shownRef: EVYRowRef?
-    let action = UI_RowAction(condition: "{false}", false: "{show()}", true: "")
+    let action = rowAction(condition: "{false}", true: "", false: "{show()}")
     EVYActionRunner.run(actions: [action], childRef: childRef, show: { shownRef = $0 }) { _ in }
     XCTAssertEqual(shownRef?.id, "child-row")
   }
 
   func testNavigateWithBraceFunction() {
     var received: ActionOperation?
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flow-1,page-2)}",
-    )
+    let action = rowAction(true: "{navigate(flow-1,page-2)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate, got \(String(describing: received))")
@@ -343,11 +380,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testNavigateWithBraceFunctionAndPlainTextQueryArgument() {
     var received: ActionOperation?
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flow-1,page-2,{items: [id-1, id-2]})}",
-    )
+    let action = rowAction(true: "{navigate(flow-1,page-2,{items: [id-1, id-2]})}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate, got \(String(describing: received))")
@@ -364,11 +397,7 @@ final class EVYActionRunnerTests: XCTestCase {
       forNotification: Notification.Name.evyErrorOccurred,
       object: nil,
     )
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flow-1,page-2,notJson)}",
-    )
+    let action = rowAction(true: "{navigate(flow-1,page-2,notJson)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     wait(for: [expectation], timeout: 2)
     XCTAssertNil(received)
@@ -376,11 +405,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testHighlightRequiredFormatsFieldLabel() {
     var received: ActionOperation?
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{highlight_required(unit_price)}",
-    )
+    let action = rowAction(true: "{highlight_required(unit_price)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .highlightRequired(let label) = received else {
       XCTFail("Expected highlightRequired")
@@ -391,10 +416,8 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testHighlightRequiredFormatsUuidQualifiedFieldLabel() {
     var received: ActionOperation?
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{highlight_required(\(MarketplaceTestFixture.itemsResourceId).pickup_selection)}",
+    let action = rowAction(
+      true: "{highlight_required(\(MarketplaceTestFixture.itemsResourceId).pickup_selection)}"
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .highlightRequired(let label) = received else {
@@ -409,11 +432,7 @@ final class EVYActionRunnerTests: XCTestCase {
       forNotification: Notification.Name.evyErrorOccurred,
       object: nil,
     )
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{notARealEvyFunction()}",
-    )
+    let action = rowAction(true: "{notARealEvyFunction()}")
     EVYActionRunner.run(actions: [action]) { _ in }
     wait(for: [expectation], timeout: 2)
   }
@@ -424,11 +443,7 @@ final class EVYActionRunnerTests: XCTestCase {
       "id": .string("resolved-uuid"),
       "title": .string("Test Item"),
     ])
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flowX,pageY,{items: $datum.id})}",
-    )
+    let action = rowAction(true: "{navigate(flowX,pageY,{items: $datum.id})}")
     EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate")
@@ -441,11 +456,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testNavigateWithCommaInQuery() {
     var received: ActionOperation?
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flowX,pageY,{items: [a], kind: item})}",
-    )
+    let action = rowAction(true: "{navigate(flowX,pageY,{items: [a], kind: item})}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate")
@@ -457,11 +468,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testNavigateSkipsEmptyQueryValues() {
     var received: ActionOperation?
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flowX,pageY,{items: [], kind: item, empty: })}",
-    )
+    let action = rowAction(true: "{navigate(flowX,pageY,{items: [], kind: item, empty: })}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate")
@@ -478,11 +485,7 @@ final class EVYActionRunnerTests: XCTestCase {
       forNotification: Notification.Name.evyErrorOccurred,
       object: nil,
     )
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flowX,pageY,{items [a]})}",
-    )
+    let action = rowAction(true: "{navigate(flowX,pageY,{items [a]})}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     wait(for: [expectation], timeout: 2)
     XCTAssertNil(received)
@@ -494,11 +497,7 @@ final class EVYActionRunnerTests: XCTestCase {
       forNotification: Notification.Name.evyErrorOccurred,
       object: nil,
     )
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flowX,pageY,{items: [a})}",
-    )
+    let action = rowAction(true: "{navigate(flowX,pageY,{items: [a})}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     wait(for: [expectation], timeout: 2)
     XCTAssertNil(received)
@@ -510,22 +509,14 @@ final class EVYActionRunnerTests: XCTestCase {
       object: nil,
     )
     // Fourth top-level argument triggers the "at most 3" guard
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flowX,pageY,{key: val},extra)}",
-    )
+    let action = rowAction(true: "{navigate(flowX,pageY,{key: val},extra)}")
     EVYActionRunner.run(actions: [action]) { _ in }
     wait(for: [expectation], timeout: 2)
   }
 
   func testNavigateWithoutDatumKeepsDatumExpression() {
     var received: ActionOperation?
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{navigate(flowX,pageY,{items: $datum.id})}",
-    )
+    let action = rowAction(true: "{navigate(flowX,pageY,{items: $datum.id})}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate")
@@ -542,7 +533,7 @@ final class EVYActionRunnerTests: XCTestCase {
           "title": "{$datum.title}"
         }
         """,
-      actions: [UI_RowAction(condition: "", false: "", true: actionString)]
+      actions: [rowAction(true: actionString)]
     )
     let formatter = try EVYDatumRowFormatter(template: row)
     let datum = EVYJson.dictionary([
@@ -554,6 +545,163 @@ final class EVYActionRunnerTests: XCTestCase {
 
     XCTAssertEqual(formattedRow.title, "Resolved Title")
     XCTAssertEqual(formattedRow.actions.first?.true, actionString)
+  }
+
+  func testCreateActionEmitsConfirmAndDefersCreate() throws {
+    let namespace = EVYNamespace.marketplace
+    let resource = MarketplaceTestFixture.requestsResourceId
+    let itemResourceId = MarketplaceTestFixture.itemsResourceId
+    let itemId = UUID().uuidString
+    let itemTitle = "Pickup Item Title"
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
+    }
+
+    try EVY.publicStore.applySyncedValue(
+      namespace: namespace,
+      resource: itemResourceId,
+      value: .array([
+        .dictionary([
+          "id": .string(itemId),
+          "title": .string(itemTitle),
+        ])
+      ])
+    )
+    EVY.cacheQueryParams([itemResourceId: [itemId]], forPageId: "test-page")
+
+    var received: ActionOperation?
+    let action = rowAction(
+      true:
+        "{create(\(namespace),\(resource),{type: pickup, item_id: \(itemResourceId).id, time: 2026-06-03T09:00:00, archived: false})}",
+      confirmation: "Request to pickup the \"{\(itemResourceId).title}\"?"
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+
+    XCTAssertEqual(
+      received,
+      .confirm(message: "Request to pickup the \"\(itemTitle)\"?", onConfirm: {}))
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    XCTAssertTrue(createdRows.isEmpty)
+  }
+
+  func testConfirmOnConfirmRunsFullChainInOrder() throws {
+    let namespace = EVYNamespace.marketplace
+    let resource = MarketplaceTestFixture.itemsResourceId
+    let scopeId = "__test__:\(resource)"
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    EVY.ensureDraftExists(variableName: "title", scopeId: scopeId)
+    try EVY.updateValue("Chained Title", at: "{title}", scopeId: scopeId)
+
+    var receivedOperations: [ActionOperation] = []
+    EVYActionRunner.run(actions: [
+      rowAction(true: "{create(\(namespace),\(resource))}"),
+      rowAction(true: "{close()}"),
+    ]) { receivedOperations.append($0) }
+
+    guard case .confirm(_, let onConfirm) = receivedOperations.first else {
+      return XCTFail("Expected confirm before chained create runs")
+    }
+    receivedOperations.removeAll()
+    onConfirm()
+    XCTAssertEqual(receivedOperations, [.close])
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    XCTAssertEqual(createdRows.count, 1)
+  }
+
+  func testCreateWithoutConfirmationUsesDefaultMessage() {
+    var received: ActionOperation?
+    EVYActionRunner.run(actions: [rowAction(true: "{create(ns,res)}")]) { received = $0 }
+    XCTAssertEqual(received, .confirm(message: "Are you sure?", onConfirm: {}))
+  }
+
+  func testNonCreateChainDoesNotConfirm() {
+    var received: ActionOperation?
+    EVYActionRunner.run(actions: [rowAction(true: "{close()}")]) { received = $0 }
+    XCTAssertEqual(received, .close)
+  }
+
+  func testFalseBranchWithoutCreateSkipsConfirmation() {
+    let requestsResourceId = MarketplaceTestFixture.requestsResourceId
+    let itemResourceId = MarketplaceTestFixture.itemsResourceId
+    var received: ActionOperation?
+    let action = rowAction(
+      condition: "{length(shipping_address.postcode) > 0}",
+      true:
+        "{create(\(EVYNamespace.marketplace),\(requestsResourceId),{type: shipping, item_id: \(itemResourceId).id, postalcode: shipping_address.postcode, archived: false})}",
+      false: "{highlight_required(postcode)}"
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
+    XCTAssertEqual(received, .highlightRequired("Postcode"))
+  }
+
+  func testPrepareRunsAfterConfirmBeforeChain() throws {
+    let namespace = "test"
+    let resource = "prepare-create-actions"
+    let scopeId = "__test__:prepare-create"
+    let selectedTimeslot = "2026-06-03T11:00:00"
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    EVY.ensureDraftExists(variableName: "selected_pickup_timeslot", scopeId: scopeId)
+    var prepareRan = false
+    let prepare = {
+      prepareRan = true
+      try? EVY.updateValue(
+        selectedTimeslot,
+        at: "{selected_pickup_timeslot}",
+        scopeId: scopeId
+      )
+    }
+    let action = rowAction(
+      true:
+        "{create(\(namespace),\(resource),{type: pickup, item_id: item-1, time: selected_pickup_timeslot, archived: false})}"
+    )
+    var received: ActionOperation?
+    EVYActionRunner.run(actions: [action], prepare: prepare) { received = $0 }
+
+    XCTAssertFalse(prepareRan)
+    confirmCreate(received: &received)
+    XCTAssertTrue(prepareRan)
+
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
+    guard case .dictionary(let values) = createdPayload else {
+      return XCTFail("Expected inline create payload dictionary")
+    }
+    XCTAssertEqual(values["time"], .string(selectedTimeslot))
+  }
+
+  func testCancelledConfirmationExecutesNothing() throws {
+    let namespace = EVYNamespace.marketplace
+    let resource = "cancelled-create-actions"
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+
+    var received: ActionOperation?
+    EVYActionRunner.run(actions: [
+      rowAction(true: "{create(\(namespace),\(resource),{type: pickup})}")
+    ]) { received = $0 }
+
+    XCTAssertEqual(received, .confirm(message: "Are you sure?", onConfirm: {}))
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    XCTAssertTrue(createdRows.isEmpty)
   }
 
   private func makeRowWithChild() throws -> UI_Row {
