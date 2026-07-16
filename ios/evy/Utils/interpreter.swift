@@ -488,6 +488,8 @@ private func parseText(
       value = try evyCount(funcArgs)
     case "length":
       value = try evyLength(funcArgs)
+    case "earliestDatetime":
+      value = try evyEarliestDatetime(funcArgs)
     case "formatCurrency":
       value = try evyFormatCurrency(funcArgs, editing)
     case "formatDimension":
@@ -613,6 +615,10 @@ private func isPropContinuation(_ input: String) -> Bool {
   }
 
   return true
+}
+
+func containsInterpolation(_ text: String) -> Bool {
+  !interpolations(in: text).isEmpty
 }
 
 private func interpolations(in input: String) -> [(fullMatch: String, inner: String)] {
@@ -847,18 +853,13 @@ private func appendWatchTargets(from text: String, to paths: inout [String]) {
 @MainActor
 private func appendWatchTargetsFromInterpolations(in text: String, to paths: inout [String]) -> Bool
 {
-  guard let regex = try? Regex(propsPattern) else {
-    return false
-  }
-
-  let matches = text.matches(of: regex)
+  let matches = interpolations(in: text)
   guard !matches.isEmpty else {
     return false
   }
 
   for match in matches {
-    let expression = String(match.0.dropFirst().dropLast())
-    appendWatchTargets(fromExpression: expression, to: &paths)
+    appendWatchTargets(fromExpression: match.inner, to: &paths)
   }
   return true
 }

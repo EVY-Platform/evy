@@ -42,7 +42,7 @@ final class EVYDatumRowFormatter {
   }
 
   private static func resolveDatumReferences(in stringValue: String, datum: EVYJson) -> String {
-    guard stringValue.contains(EVY.datumPrefix) else { return stringValue }
+    guard EVY.containsDatumReference(stringValue) else { return stringValue }
     return (try? EVY.formatData(json: datum, format: stringValue)) ?? stringValue
   }
 

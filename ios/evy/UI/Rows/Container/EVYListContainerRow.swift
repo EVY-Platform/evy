@@ -18,17 +18,11 @@ struct EVYListContainerRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
-      if let title = view.title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-          .padding(.horizontal, Constants.majorPadding)
-      }
-      ForEach(childRefs, id: \.id) { ref in
-        EVYRow(ref: ref)
-          .padding(.vertical, Constants.minorPadding)
-      }
+    ForEach(childRefs, id: \.id) { ref in
+      EVYRow(ref: ref)
+        .padding(.vertical, Constants.minorPadding)
     }
+    .containerTitleHeader(view.title)
   }
 }
 

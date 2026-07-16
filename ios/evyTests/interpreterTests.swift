@@ -103,6 +103,14 @@ final class InterpreterTests: XCTestCase {
     )
   }
 
+  func testWatchTargetsExtractsQuotedFormatDatetimeInLabel() {
+    XCTAssertEqual(
+      EVY.watchTargets(
+        for: "Request {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}"),
+      ["selected_pickup_timeslot"]
+    )
+  }
+
   func testWatchTargetsExtractsMultipleInterpolations() {
     XCTAssertEqual(
       EVY.watchTargets(for: "{item.title} - {seller.name}"),
@@ -568,6 +576,51 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(time.value, "09:30")
   }
 
+  func testEarliestDatetimeReturnsChronologicallyFirstSlotFromUnsortedArray() throws {
+    let itemKey = uniqueKey("item")
+    try store(
+      .dictionary([
+        "id": .string("id-1"),
+        "pickup_selection": .array([
+          .string("2026-06-04T09:30:00"),
+          .string("2026-06-03T09:00:00"),
+          .string("2026-06-03T10:00:00"),
+        ]),
+      ]),
+      at: itemKey
+    )
+
+    let earliest = try parseTextFromText("{earliestDatetime(\(itemKey).pickup_selection)}")
+    XCTAssertEqual(earliest.value, "2026-06-03T09:00:00")
+
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
+    EVY.draftStore.activeScopeId = scopeId
+    let selectedTimeslotKey = "selected_pickup_timeslot"
+    EVY.ensureDraftExists(variableName: selectedTimeslotKey, scopeId: scopeId)
+
+    try EVY.updateValue(
+      "2026-06-03T10:00:00",
+      at: "{\(selectedTimeslotKey)}",
+      scopeId: scopeId
+    )
+    XCTAssertTrue(
+      try EVY.evaluateFromText(
+        "{\(selectedTimeslotKey) != earliestDatetime(\(itemKey).pickup_selection)}"
+      )
+    )
+
+    try EVY.updateValue(
+      "2026-06-03T09:00:00",
+      at: "{\(selectedTimeslotKey)}",
+      scopeId: scopeId
+    )
+    XCTAssertFalse(
+      try EVY.evaluateFromText(
+        "{\(selectedTimeslotKey) != earliestDatetime(\(itemKey).pickup_selection)}"
+      )
+    )
+  }
+
   func testFormatDatetimeSupportsIsoStringWithoutTimezone() throws {
     let key = uniqueKey("created")
     try store(.string("2026-06-03T09:30:00"), at: key)
@@ -866,9 +919,10 @@ final class InterpreterTests: XCTestCase {
   func testFormatAddressLine1() throws {
     let cases:
       [(name: String, removing: [String], overrides: [String: EVYJson], expected: String)] = [
-        ("complete", [], [:], "C509 28 Rothschild Avenue, 2018"),
-        ("omits missing unit", ["unit"], [:], "28 Rothschild Avenue, 2018"),
-        ("omits missing postcode", ["postcode"], [:], "C509 28 Rothschild Avenue"),
+        ("complete", [], [:], "C509 28 Rothschild Avenue"),
+        ("omits missing unit", ["unit"], [:], "28 Rothschild Avenue"),
+        ("omits missing street", ["street"], [:], "C509"),
+        ("no street portion", ["unit", "street"], [:], ""),
       ]
 
     for testCase in cases {
@@ -881,9 +935,10 @@ final class InterpreterTests: XCTestCase {
   func testFormatAddressLine2() throws {
     let cases:
       [(name: String, removing: [String], overrides: [String: EVYJson], expected: String)] = [
-        ("complete", [], [:], "Rosebery, NSW"),
-        ("omits missing city", ["city"], [:], "NSW"),
-        ("omits missing state", ["state"], [:], "Rosebery"),
+        ("complete", [], [:], "Rosebery, NSW 2018"),
+        ("omits missing city", ["city"], [:], "NSW 2018"),
+        ("omits missing state", ["state"], [:], "Rosebery 2018"),
+        ("omits missing postcode", ["postcode"], [:], "Rosebery, NSW"),
       ]
 
     for testCase in cases {

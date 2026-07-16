@@ -28,6 +28,14 @@ describe("parseText", () => {
 		).toBe("09:30");
 	});
 
+	it("uses the format pattern as a placeholder for unresolved datetime paths", () => {
+		expect(
+			parseText(
+				'Request {formatDatetime(selected_pickup_timeslot, "HH:mm")}',
+			),
+		).toBe("Request HH:mm");
+	});
+
 	it("formats datum context with row date and time patterns", () => {
 		const context = { datum: "2026-06-03T09:30:00" };
 

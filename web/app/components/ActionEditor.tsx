@@ -8,6 +8,12 @@ import {
 	formatExpressionSummary,
 	parseCondition,
 } from "../utils/conditionExpression";
+import {
+	buildDisplayCandidates,
+	buildIdCandidates,
+	getIdDisplayText,
+	type IdCandidate,
+} from "../utils/idCandidates";
 import { ActionPopup } from "./ActionPopup";
 
 type ActionEditorProps = {
@@ -26,6 +32,14 @@ export function ActionEditor({
 	onUpdate,
 }: ActionEditorProps) {
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
+	const idCandidates = useMemo(
+		() => buildIdCandidates(flowsById, pagesById, serviceResources),
+		[flowsById, pagesById, serviceResources],
+	);
+	const displayCandidates = useMemo(
+		() => buildDisplayCandidates(idCandidates),
+		[idCandidates],
+	);
 
 	const updateAction = useCallback(
 		(index: number, updated: UI_RowAction) => {
@@ -88,6 +102,7 @@ export function ActionEditor({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							serviceResources={serviceResources}
+							displayCandidates={displayCandidates}
 							onEdit={() => setEditingIndex(index)}
 							onRemove={() => removeAction(index)}
 						/>
@@ -117,6 +132,7 @@ type ActionSummaryCardProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
+	displayCandidates: IdCandidate[];
 	onEdit: () => void;
 	onRemove: () => void;
 };
@@ -127,6 +143,7 @@ function ActionSummaryCard({
 	flowsById,
 	pagesById,
 	serviceResources,
+	displayCandidates,
 	onEdit,
 	onRemove,
 }: ActionSummaryCardProps) {
@@ -135,13 +152,39 @@ function ActionSummaryCard({
 		[action.condition],
 	);
 	const summaryLines = useMemo(
-		() => formatExpressionSummary(conditionExpr, serviceResources),
-		[conditionExpr, serviceResources],
+		() =>
+			formatExpressionSummary(conditionExpr, serviceResources).map(
+				(line) => ({
+					...line,
+					text: getIdDisplayText(line.text, displayCandidates),
+				}),
+			),
+		[conditionExpr, serviceResources, displayCandidates],
 	);
 	const trueBranch = useMemo(() => parseBranch(action.true), [action.true]);
 	const falseBranch = useMemo(
 		() => parseBranch(action.false),
 		[action.false],
+	);
+	const trueBranchDisplay = useMemo(
+		() =>
+			trueBranch
+				? getIdDisplayText(
+						formatBranchDisplay(action.true, flowsById, pagesById),
+						displayCandidates,
+					)
+				: null,
+		[trueBranch, action.true, flowsById, pagesById, displayCandidates],
+	);
+	const falseBranchDisplay = useMemo(
+		() =>
+			falseBranch
+				? getIdDisplayText(
+						formatBranchDisplay(action.false, flowsById, pagesById),
+						displayCandidates,
+					)
+				: null,
+		[falseBranch, action.false, flowsById, pagesById, displayCandidates],
 	);
 
 	return (
@@ -198,13 +241,7 @@ function ActionSummaryCard({
 							If true
 						</span>
 						<ul className="evy-action-summary-list">
-							<li className="evy-text-sm">
-								{formatBranchDisplay(
-									action.true,
-									flowsById,
-									pagesById,
-								)}
-							</li>
+							<li className="evy-text-sm">{trueBranchDisplay}</li>
 						</ul>
 					</div>
 				)}
@@ -216,24 +253,7 @@ function ActionSummaryCard({
 						</span>
 						<ul className="evy-action-summary-list">
 							<li className="evy-text-sm">
-								{formatBranchDisplay(
-									action.false,
-									flowsById,
-									pagesById,
-								)}
-							</li>
-						</ul>
-					</div>
-				)}
-
-				{action.confirmation && (
-					<div className="evy-mb-1">
-						<span className="evy-text-sm evy-font-medium evy-text-gray">
-							Confirmation
-						</span>
-						<ul className="evy-action-summary-list">
-							<li className="evy-text-sm">
-								{action.confirmation}
+								{falseBranchDisplay}
 							</li>
 						</ul>
 					</div>

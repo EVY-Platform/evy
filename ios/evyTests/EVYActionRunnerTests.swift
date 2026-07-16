@@ -12,30 +12,15 @@ final class EVYActionRunnerTests: XCTestCase {
   private func rowAction(
     condition: String = "",
     true trueBranch: String,
-    false falseBranch: String = "",
-    confirmation: String? = nil
+    false falseBranch: String = ""
   ) -> UI_RowAction {
     UI_RowAction(
       condition: condition,
       false: falseBranch,
-      true: trueBranch,
-      confirmation: confirmation
+      true: trueBranch
     )
   }
 
-  private func confirmCreate(
-    received: inout ActionOperation?,
-    file: StaticString = #filePath,
-    line: UInt = #line
-  ) {
-    guard case .confirm(_, let onConfirm) = received else {
-      XCTFail(
-        "Expected confirm operation, got \(String(describing: received))", file: file, line: line)
-      return
-    }
-    received = nil
-    onConfirm()
-  }
   func testCloseAction() {
     var received: ActionOperation?
     let action = rowAction(true: "{close()}")
@@ -77,13 +62,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = rowAction(true: "{create(\(namespace),\(resource))}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
-    XCTAssertEqual(received, .confirm(message: "Are you sure?", onConfirm: {}))
-    let rowsBeforeConfirm = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    XCTAssertTrue(rowsBeforeConfirm.isEmpty)
-
-    confirmCreate(received: &received)
-
-    XCTAssertNil(received, "Create should not emit an ActionOperation after confirmation")
+    XCTAssertNil(received)
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
     let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
     guard case .dictionary(let values) = createdPayload else {
@@ -116,13 +95,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let closeAction = rowAction(true: "{close()}")
     EVYActionRunner.run(actions: [createAction, closeAction]) { receivedOperations.append($0) }
 
-    XCTAssertEqual(receivedOperations, [.confirm(message: "Are you sure?", onConfirm: {})])
-    guard case .confirm(_, let onConfirm) = receivedOperations.first else {
-      return XCTFail("Expected confirm before create+close chain runs")
-    }
-    receivedOperations.removeAll()
-    onConfirm()
-    XCTAssertEqual(receivedOperations, [.close], "close should run after create succeeds")
+    XCTAssertEqual(receivedOperations, [.close])
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
     XCTAssertEqual(createdRows.count, 1)
   }
@@ -136,11 +109,6 @@ final class EVYActionRunnerTests: XCTestCase {
     let closeAction = rowAction(true: "{close()}")
     var received: ActionOperation?
     EVYActionRunner.run(actions: [throwingAction, closeAction]) { received = $0 }
-    guard case .confirm(_, let onConfirm) = received else {
-      return XCTFail("Expected confirm before throwing create runs")
-    }
-    received = nil
-    onConfirm()
     wait(for: [expectation], timeout: 2)
     XCTAssertNil(received, "close should not run once an earlier action throws")
   }
@@ -203,7 +171,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     var received: ActionOperation?
     EVYActionRunner.run(actions: [action]) { received = $0 }
-    confirmCreate(received: &received)
+    XCTAssertNil(received)
 
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
     let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
@@ -275,8 +243,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     var received: ActionOperation?
     EVYActionRunner.run(actions: [cancelAction]) { received = $0 }
-    XCTAssertEqual(received, .confirm(message: "Are you sure?", onConfirm: {}))
-    confirmCreate(received: &received)
+    XCTAssertNil(received)
 
     XCTAssertTrue(
       receivedKeys.contains(resource),
@@ -326,7 +293,6 @@ final class EVYActionRunnerTests: XCTestCase {
     var receivedNavigation: ActionOperation?
 
     EVYActionRunner.run(actions: [action], datum: datum) { receivedNavigation = $0 }
-    confirmCreate(received: &receivedNavigation)
 
     XCTAssertNil(receivedNavigation)
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
@@ -508,7 +474,6 @@ final class EVYActionRunnerTests: XCTestCase {
       forNotification: Notification.Name.evyErrorOccurred,
       object: nil,
     )
-    // Fourth top-level argument triggers the "at most 3" guard
     let action = rowAction(true: "{navigate(flowX,pageY,{key: val},extra)}")
     EVYActionRunner.run(actions: [action]) { _ in }
     wait(for: [expectation], timeout: 2)
@@ -525,113 +490,7 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query["items"], ["$datum.id"])
   }
 
-  func testDatumRowFormatterResolvesDatumReferencesInActions() throws {
-    let actionString = "{navigate(flowX,pageY,{id: $datum.id})}"
-    let row = try decodeRow(
-      content: """
-        {
-          "title": "{$datum.title}"
-        }
-        """,
-      actions: [rowAction(true: actionString)]
-    )
-    let formatter = try EVYDatumRowFormatter(template: row)
-    let datum = EVYJson.dictionary([
-      "id": .string("resolved-uuid"),
-      "title": .string("Resolved Title"),
-    ])
-
-    let formattedRow = try formatter.formattedResult(datum: datum).row
-
-    XCTAssertEqual(formattedRow.title, "Resolved Title")
-    XCTAssertEqual(formattedRow.actions.first?.true, actionString)
-  }
-
-  func testCreateActionEmitsConfirmAndDefersCreate() throws {
-    let namespace = EVYNamespace.marketplace
-    let resource = MarketplaceTestFixture.requestsResourceId
-    let itemResourceId = MarketplaceTestFixture.itemsResourceId
-    let itemId = UUID().uuidString
-    let itemTitle = "Pickup Item Title"
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
-    defer {
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
-    }
-
-    try EVY.publicStore.applySyncedValue(
-      namespace: namespace,
-      resource: itemResourceId,
-      value: .array([
-        .dictionary([
-          "id": .string(itemId),
-          "title": .string(itemTitle),
-        ])
-      ])
-    )
-    EVY.cacheQueryParams([itemResourceId: [itemId]], forPageId: "test-page")
-
-    var received: ActionOperation?
-    let action = rowAction(
-      true:
-        "{create(\(namespace),\(resource),{type: pickup, item_id: \(itemResourceId).id, time: 2026-06-03T09:00:00, archived: false})}",
-      confirmation: "Request to pickup the \"{\(itemResourceId).title}\"?"
-    )
-    EVYActionRunner.run(actions: [action]) { received = $0 }
-
-    XCTAssertEqual(
-      received,
-      .confirm(message: "Request to pickup the \"\(itemTitle)\"?", onConfirm: {}))
-    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    XCTAssertTrue(createdRows.isEmpty)
-  }
-
-  func testConfirmOnConfirmRunsFullChainInOrder() throws {
-    let namespace = EVYNamespace.marketplace
-    let resource = MarketplaceTestFixture.itemsResourceId
-    let scopeId = "__test__:\(resource)"
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    EVY.draftStore.deleteDrafts()
-    EVY.draftStore.activeScopeId = scopeId
-    defer {
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-      EVY.draftStore.deleteDrafts()
-      EVY.draftStore.activeScopeId = nil
-    }
-
-    EVY.ensureDraftExists(variableName: "title", scopeId: scopeId)
-    try EVY.updateValue("Chained Title", at: "{title}", scopeId: scopeId)
-
-    var receivedOperations: [ActionOperation] = []
-    EVYActionRunner.run(actions: [
-      rowAction(true: "{create(\(namespace),\(resource))}"),
-      rowAction(true: "{close()}"),
-    ]) { receivedOperations.append($0) }
-
-    guard case .confirm(_, let onConfirm) = receivedOperations.first else {
-      return XCTFail("Expected confirm before chained create runs")
-    }
-    receivedOperations.removeAll()
-    onConfirm()
-    XCTAssertEqual(receivedOperations, [.close])
-    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    XCTAssertEqual(createdRows.count, 1)
-  }
-
-  func testCreateWithoutConfirmationUsesDefaultMessage() {
-    var received: ActionOperation?
-    EVYActionRunner.run(actions: [rowAction(true: "{create(ns,res)}")]) { received = $0 }
-    XCTAssertEqual(received, .confirm(message: "Are you sure?", onConfirm: {}))
-  }
-
-  func testNonCreateChainDoesNotConfirm() {
-    var received: ActionOperation?
-    EVYActionRunner.run(actions: [rowAction(true: "{close()}")]) { received = $0 }
-    XCTAssertEqual(received, .close)
-  }
-
-  func testFalseBranchWithoutCreateSkipsConfirmation() {
+  func testFalseBranchWithoutCreateRunsHighlightRequired() {
     let requestsResourceId = MarketplaceTestFixture.requestsResourceId
     let itemResourceId = MarketplaceTestFixture.itemsResourceId
     var received: ActionOperation?
@@ -645,7 +504,7 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(received, .highlightRequired("Postcode"))
   }
 
-  func testPrepareRunsAfterConfirmBeforeChain() throws {
+  func testPrepareRunsBeforeChain() throws {
     let namespace = "test"
     let resource = "prepare-create-actions"
     let scopeId = "__test__:prepare-create"
@@ -676,9 +535,8 @@ final class EVYActionRunnerTests: XCTestCase {
     var received: ActionOperation?
     EVYActionRunner.run(actions: [action], prepare: prepare) { received = $0 }
 
-    XCTAssertFalse(prepareRan)
-    confirmCreate(received: &received)
     XCTAssertTrue(prepareRan)
+    XCTAssertNil(received)
 
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
     let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
@@ -688,20 +546,63 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(values["time"], .string(selectedTimeslot))
   }
 
-  func testCancelledConfirmationExecutesNothing() throws {
+  func testCreateActionRunsImmediately() throws {
     let namespace = EVYNamespace.marketplace
-    let resource = "cancelled-create-actions"
+    let resource = MarketplaceTestFixture.requestsResourceId
+    let itemResourceId = MarketplaceTestFixture.itemsResourceId
+    let itemId = UUID().uuidString
+    let itemTitle = "Pickup Item Title"
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
+    }
+
+    try EVY.publicStore.applySyncedValue(
+      namespace: namespace,
+      resource: itemResourceId,
+      value: .array([
+        .dictionary([
+          "id": .string(itemId),
+          "title": .string(itemTitle),
+        ])
+      ])
+    )
+    EVY.cacheQueryParams([itemResourceId: [itemId]], forPageId: "test-page")
 
     var received: ActionOperation?
-    EVYActionRunner.run(actions: [
-      rowAction(true: "{create(\(namespace),\(resource),{type: pickup})}")
-    ]) { received = $0 }
+    let action = rowAction(
+      true:
+        "{create(\(namespace),\(resource),{type: pickup, item_id: \(itemResourceId).id, time: 2026-06-03T09:00:00, archived: false})}"
+    )
+    EVYActionRunner.run(actions: [action]) { received = $0 }
 
-    XCTAssertEqual(received, .confirm(message: "Are you sure?", onConfirm: {}))
+    XCTAssertNil(received)
     let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    XCTAssertTrue(createdRows.isEmpty)
+    XCTAssertEqual(createdRows.count, 1)
+  }
+
+  func testDatumRowFormatterResolvesDatumReferencesInActions() throws {
+    let actionString = "{navigate(flowX,pageY,{id: $datum.id})}"
+    let row = try decodeRow(
+      content: """
+        {
+          "title": "{$datum.title}"
+        }
+        """,
+      actions: [rowAction(true: actionString)]
+    )
+    let formatter = try EVYDatumRowFormatter(template: row)
+    let datum = EVYJson.dictionary([
+      "id": .string("resolved-uuid"),
+      "title": .string("Resolved Title"),
+    ])
+
+    let formattedRow = try formatter.formattedResult(datum: datum).row
+
+    XCTAssertEqual(formattedRow.title, "Resolved Title")
+    XCTAssertEqual(formattedRow.actions.first?.true, actionString)
   }
 
   private func makeRowWithChild() throws -> UI_Row {

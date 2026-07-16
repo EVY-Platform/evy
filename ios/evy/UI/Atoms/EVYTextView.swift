@@ -11,6 +11,7 @@ import UIKit
 
 public enum EVYTextStyle: String {
   case body
+  case bodyBold
   case title
   case info
   case button
@@ -25,37 +26,37 @@ struct EVYTextView: View {
   var text: EVYState<EVYValue>
   let style: EVYTextStyle
 
-  init(_ text: String, placeholder: String = "", style: EVYTextStyle = .body) {
-    self.style = style
+  static func makeState(template: String, placeholder: String = "") -> EVYState<EVYValue> {
+    let props = EVY.parsePropsFromText(template)
 
-    let props = EVY.parsePropsFromText(text)
-
-    // If the props don't include any data and are just plain text
-    // instanciate a simple version of state without any watching
-    if props == text {
-      self.text = EVYState(staticString: EVYValue(text, nil, nil))
-
-      // Otherwise, go all out
-    } else {
-      let placeholderVal = EVYValue(placeholder, nil, nil)
-      let templateText = text
-
-      self.text = EVYState(
-        textToWatch: templateText,
-        setter: {
-          guard let value = try? EVY.getValueFromText(templateText) else {
-            return placeholderVal
-          }
-
-          if props == templateText {
-            return value
-          }
-          if templateText.contains(value.value) {
-            return placeholderVal
-          }
-          return value
-        })
+    if props == template && !containsInterpolation(template) {
+      return EVYState(staticString: EVYValue(template, nil, nil))
     }
+
+    let placeholderVal = EVYValue(placeholder, nil, nil)
+    let templateText = template
+
+    return EVYState(
+      textToWatch: templateText,
+      setter: {
+        guard let value = try? EVY.getValueFromText(templateText) else {
+          return placeholderVal
+        }
+
+        if templateText.contains(value.value) {
+          return placeholderVal
+        }
+        return value
+      })
+  }
+
+  init(state: EVYState<EVYValue>, style: EVYTextStyle = .body) {
+    self.text = state
+    self.style = style
+  }
+
+  init(_ text: String, placeholder: String = "", style: EVYTextStyle = .body) {
+    self.init(state: Self.makeState(template: text, placeholder: placeholder), style: style)
   }
 
   var body: some View {
@@ -115,6 +116,10 @@ struct EVYTextView: View {
 
   private func styledPlainText(_ input: String, _ style: EVYTextStyle) -> Text {
     switch style {
+    case .bodyBold:
+      return Text(input)
+        .font(.evy)
+        .bold()
     case .title:
       return Text(input)
         .font(.evyTitle)

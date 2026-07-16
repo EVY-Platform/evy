@@ -108,6 +108,11 @@ Rows are what are put into pages. They are the building block of the EVY server-
     // destination — where writes go; may be a builder expression such as "{buildCurrency(item.price)}"
     // secondary — greyed-out secondary data (Calendar only)
     // value — datum display template for option rows, e.g. "{formatCurrency($datum.price)}"
+    //
+    // Optional initial value for editable rows (Dropdown, Input, TextArea, InlinePicker only).
+    // Seeded into the destination draft as soon as the page/row is activated, so untouched
+    // defaults are submitted. Existing destination data or an existing draft always wins.
+    // initial: "string",
 
     // Visibility predicate. Use "true" for always shown, or a condition expression to render only when it evaluates to true.
     "visible": "string",
@@ -127,27 +132,46 @@ Rows are what are put into pages. They are the building block of the EVY server-
 
 | Row type | `source` | `destination` | `secondary` | `value` | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. |
-| `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. |
+| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. |
+| `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
 | `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware). |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
-| `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. |
+| `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `child` row is shown in a sheet when `{show()}` runs. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
 | `TextSelect` | yes | yes | no | no | `source` = current selected state; `destination` = write target. |
 | `PhotoGallery`, `Map`, `ListContainer`, `InputList` | yes | no | no | no | Read-only or collection source. |
-| All other rows | no | no | no | no | e.g. `Button`, `Text`, `TextAction`, `Heading`. `Button` accepts an optional `style` of `"primary"` (default) or `"danger"` (red background on iOS). |
+| `Button`, `Text`, `TextAction`, `Heading` | no | no | no | no | `Button` accepts an optional `style` of `"primary"` (default) or `"danger"` (red background on iOS) and an optional `child` row shown in a sheet when `{show()}` runs. |
 
 Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder.
+
+### Initial values
+
+`Dropdown`, `Input`, `TextArea`, and `InlinePicker` accept an optional `initial` string. When the row becomes part of the active page, its `initial` value is written to the destination draft immediately, so that:
+
+- the default is visible before the user edits the row;
+- submitting without editing still includes the default.
+
+Value meaning per control:
+
+- `Input` and `TextArea` — literal text.
+- `Dropdown` — the selected option identifier, matching what single-selection controls already write.
+- `InlinePicker` — one selected option identifier, stored as a one-element identifier array (matching the control's existing destination shape). An absent or empty `initial` keeps the existing empty-array bootstrap.
+
+Precedence: concrete destination data > an existing draft (including a prior user edit) > `initial` > the row type's existing empty bootstrap value. Reappearing or re-rendering a row never restores `initial` over a user change.
+
+Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial` value in the same way as an explicit user edit, so the seeded draft has the same structured shape.
 
 ### Actions
 
 Each row has an `actions` attribute which is an array of `UI_RowAction` objects that can trigger various actions if a condition is met or not met. All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`) are handled by the same runner.
 
-Each `UI_RowAction` may include an optional `confirmation` string. When a chain's would-run branch is a `create` or `update` call, the iOS client always pauses for user confirmation before executing anything in that chain. The message supports standard `{…}` data-path interpolation; if `confirmation` is absent or empty, the default message is `Are you sure?`. Cancel discards the entire run; Confirm executes the chain (including any deferred writes such as timeslot selection).
+For destructive or important `create`/`update` actions, use a `{show()}` child sheet: put the confirmation copy on the child row's `title` and message rows, then run the actual `create`/`update` followed by `{close()}` from a confirm button inside the sheet.
+
+Inside a sheet opened with `{show()}`, `{close()}` dismisses the sheet instead of popping navigation.
 
 #### Sequencing
 
-A row's `actions` array runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. This is what makes multi-step sequences like "create, then close" expressible as two separate action entries (see Submit below). When a would-run branch is `create` or `update`, the whole array waits for confirmation first — nothing runs until the user confirms.
+A row's `actions` array runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. This is what makes multi-step sequences like "create, then close" expressible as two separate action entries (see Submit below).
 
 #### Conditions
 
@@ -163,6 +187,7 @@ A row's `actions` array runs **in order**. For each entry: if its `condition` is
 - Condition helpers (used like functions in the expression):
 	- `count(var)` — number of elements in a list/array, e.g. `{count(photo_ids) > 0}`
 	- `length(var)` — number of characters in a string, e.g. `{length(title) > 0}`
+	- `earliestDatetime(var)` — chronologically earliest ISO datetime string in an array, e.g. `{selected_pickup_timeslot != earliestDatetime(item.pickup_selection)}`
 
 #### Branches (`true` / `false`)
 
@@ -174,10 +199,11 @@ Supported action functions:
 
 | Function | Meaning |
 | -------- | ------- |
-| `close()` | Close current UI, e.g. `{close()}` |
-| `create(service_id, resource_id, data?)` | Create a domain entity. **Never changes routes** — with a plain-text data object, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans), and creates that one entity after user confirmation, e.g. `{create([service_id],[resource_id],{type: pickup, item_id: $datum.id, archived: false})}`. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up — the client decides this by comparing the active draft scope to the target resource. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. Customize the confirmation prompt with the action's optional `confirmation` field; otherwise the client shows `Are you sure?`. |
-| `update(service_id, resource_id, filter, changes)` | Update matching domain entities after user confirmation. Resolves filter and changes like inline `create` data (including boolean literals). Locally finds rows where every filter property matches, merges changes, then syncs each match to the server with an `update` RPC. Filter and changes objects are required and non-empty, e.g. `{update([service_id],[resource_id],{item_id: [items_resource].id, archived: false},{archived: true})}`. Customize the confirmation prompt with the action's optional `confirmation` field; otherwise the client shows `Are you sure?`. |
+| `close()` | Close current UI, e.g. `{close()}`. Inside a `{show()}` sheet, dismisses the sheet only. |
+| `create(service_id, resource_id, data?)` | Create a domain entity. **Never changes routes** — with a plain-text data object, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans), and creates that one entity immediately, e.g. `{create([service_id],[resource_id],{type: pickup, item_id: $datum.id, archived: false})}`. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up — the client decides this by comparing the active draft scope to the target resource. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. For user confirmation, present a `{show()}` child sheet and run `create` from the sheet's confirm button. |
+| `update(service_id, resource_id, filter, changes)` | Update matching domain entities immediately. Resolves filter and changes like inline `create` data (including boolean literals). Locally finds rows where every filter property matches, merges changes, then syncs each match to the server with an `update` RPC. Filter and changes objects are required and non-empty, e.g. `{update([service_id],[resource_id],{item_id: [items_resource].id, archived: false},{archived: true})}`. For user confirmation, present a `{show()}` child sheet and run `update` from the sheet's confirm button. |
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
+| `show()` | Present the row's singular `child` in a sheet overlay, e.g. `{show()}`. Requires a `child` row on `TimeslotPicker` or `Button`; no arguments. The child's `title` is shown as the sheet's main header (like a page title) and is live-interpolated when it contains expressions; put sheet headings on the root child row, not nested rows. |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
 Note that the web builder does not execute actions; it only stores these strings and displays mocks.

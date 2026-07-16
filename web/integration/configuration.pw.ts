@@ -1192,4 +1192,39 @@ test.describe("Row configuration", () => {
 			reopenedPopup.getByLabel("true-0-function"),
 		).toHaveAttribute("data-value", "close");
 	});
+
+	test("should display and edit initial value for supported row in configuration panel", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Input",
+						source: "{title}",
+						destination: "{title}",
+						title: "Initial value row",
+						placeholder: "Enter a title",
+						initial: "Default title",
+						actions: [],
+					},
+				],
+			},
+		]);
+		await page
+			.getByText("Initial value row", { exact: true })
+			.first()
+			.click();
+
+		const configPanel = getConfigPanel(page);
+		const initialInput = configPanel.getByLabel("initial");
+		await expect(initialInput).toBeVisible();
+		await expect(initialInput).toHaveText("Default title");
+
+		await initialInput.fill("Updated default");
+
+		await expect(initialInput).toHaveText("Updated default");
+	});
 });

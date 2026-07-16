@@ -11,12 +11,13 @@ const TEXT_EXPAND_COLLAPSED_LINE_COUNT = 3;
 function TextExpandRowInner({ rowId }: { rowId: string }) {
 	const row = useRowById(rowId);
 	const textRef = useRef<HTMLParagraphElement | null>(null);
-	const [expanded, setExpanded] = useState(false);
-	const [canExpand, setCanExpand] = useState(false);
-
 	const title = row?.config.title ?? "";
 	const text = row?.config.text ?? "";
 	const expandLabel = row?.config.expandLabel ?? "";
+	const isCollapsible = expandLabel.trim().length > 0;
+	const [userExpanded, setUserExpanded] = useState(false);
+	const [canExpand, setCanExpand] = useState(false);
+	const expanded = !isCollapsible || userExpanded;
 
 	useLayoutEffect(() => {
 		const textElement = textRef.current;
@@ -57,11 +58,11 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 					<EVYText text={text} />
 				</p>
 			) : null}
-			{canExpand && !expanded && expandLabel.trim() ? (
+			{canExpand && !expanded ? (
 				<button
 					type="button"
 					className="evy-text-blue evy-text-sm evy-self-start evy-cursor-pointer"
-					onClick={() => setExpanded(true)}
+					onClick={() => setUserExpanded(true)}
 				>
 					<EVYText text={expandLabel} />
 				</button>

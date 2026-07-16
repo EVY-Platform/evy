@@ -58,6 +58,7 @@ import Observation
 
   init(watches: [String], setter: @escaping () -> T) {
     _value = setter()
+    guard !watches.isEmpty else { return }
     registerObserver(watchTargets: watches, recompute: setter)
   }
 

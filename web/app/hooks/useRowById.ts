@@ -1,10 +1,19 @@
-import { cloneElement, isValidElement, useMemo } from "react";
+import {
+	cloneElement,
+	createContext,
+	isValidElement,
+	useContext,
+	useMemo,
+} from "react";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { Row } from "../types/row";
 import { buildRowConfigFromRecord } from "../utils/rowConfig";
 
+export const SheetRootRowIdContext = createContext<string | null>(null);
+
 export function useRowById(rowId?: string): Row | undefined {
 	const { rows, rowsById } = useFlowsContext();
+	const sheetRootRowId = useContext(SheetRootRowIdContext);
 
 	return useMemo(() => {
 		if (!rowId) return undefined;
@@ -17,7 +26,10 @@ export function useRowById(rowId?: string): Row | undefined {
 		const record = rowsById[rowId];
 		if (!record) return undefined;
 
-		const config = buildRowConfigFromRecord(record);
+		let config = buildRowConfigFromRecord(record);
+		if (sheetRootRowId === record.id) {
+			config = { ...config, title: "" };
+		}
 
 		// Derive the React element from a matching palette row (avoids importing
 		// baseRows/rowCodec which would create a circular dependency through defineRow).
@@ -31,5 +43,5 @@ export function useRowById(rowId?: string): Row | undefined {
 			: null;
 
 		return { id: record.id, row, config };
-	}, [rows, rowsById, rowId]);
+	}, [rows, rowsById, rowId, sheetRootRowId]);
 }

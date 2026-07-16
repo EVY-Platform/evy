@@ -111,13 +111,13 @@ test.describe("Child Page Rendering", () => {
 		const childPage = page.getByTestId("child-page");
 		await expect(childPage).toBeVisible();
 		await expect(
-			childPage.getByRole("heading", {
-				name: "Sheet overlay",
+			childPage.getByRole("button", {
+				name: "Child Row Title",
 			}),
 		).toBeVisible();
 		await expect(
 			childPage.getByText("Child Row Title", { exact: true }),
-		).toBeVisible();
+		).toHaveCount(1);
 
 		// Should NOT show the blank child page until the user clicks into the
 		// existing child row.
@@ -337,15 +337,15 @@ test.describe("Child Page Rendering", () => {
 		const childPage = page.getByTestId("child-page");
 		await expect(childPage).toBeVisible();
 		await expect(
-			childPage.getByRole("heading", {
-				name: "Sheet overlay",
+			childPage.getByRole("button", {
+				name: "Child Text Row",
 			}),
 		).toBeVisible();
 
-		// Click the child row in the child page
-		const childRow = childPage
-			.getByText("Child Text Row", { exact: true })
-			.first();
+		// Click the sheet title to select the child row
+		const childRow = childPage.getByRole("button", {
+			name: "Child Text Row",
+		});
 		await childRow.click();
 
 		// Configuration panel should show the child row's config (Text row config)

@@ -222,21 +222,28 @@ extension EVY {
     }
   }
 
-  static func writeRawValue(
-    _ value: EVYJson,
-    to destination: String,
-    scopeId: String? = nil
-  ) throws {
+  static func prepareDraftData(
+    value: EVYJson,
+    destination: String
+  ) throws -> (variableName: String, data: Data) {
     let destinationProps = _parsePropsFromText(destination)
     if let (functionName, functionArgs) = parseFunctionCall(destinationProps),
       let builtData = try dataForBuildFunction(
         functionName, functionArgs: functionArgs, value: value.toString())
     {
-      try updateData(builtData, at: functionArgs, scopeId: scopeId)
-      return
+      return (functionArgs, builtData)
     }
     let encoded = try JSONEncoder().encode(value)
-    try updateData(encoded, at: destination, scopeId: scopeId)
+    return (destinationProps, encoded)
+  }
+
+  static func writeRawValue(
+    _ value: EVYJson,
+    to destination: String,
+    scopeId: String? = nil
+  ) throws {
+    let (variableName, data) = try prepareDraftData(value: value, destination: destination)
+    try updateData(data, at: variableName, scopeId: scopeId)
   }
 
   static func writeRawValue(

@@ -13,27 +13,9 @@ enum EVYActionRunner {
     childRef: EVYRowRef? = nil,
     show: @escaping (EVYRowRef) -> Void = { _ in },
     prepare: (() -> Void)? = nil,
-    confirmed: Bool = false,
     action: @escaping (ActionOperation) -> Void
   ) {
     guard !actions.isEmpty else { return }
-
-    if !confirmed, let confirmationTemplate = pendingConfirmationMessage(actions: actions) {
-      let message = resolveConfirmationMessage(confirmationTemplate)
-      action(
-        .confirm(message: message) {
-          run(
-            actions: actions,
-            datum: datum,
-            childRef: childRef,
-            show: show,
-            prepare: prepare,
-            confirmed: true,
-            action: action
-          )
-        })
-      return
-    }
 
     prepare?()
 
@@ -58,47 +40,6 @@ enum EVYActionRunner {
         return
       }
     }
-  }
-
-  private static func pendingConfirmationMessage(actions: [UI_RowAction]) -> String?? {
-    for rowAction in actions {
-      let condition = rowAction.condition.trimmingCharacters(in: .whitespacesAndNewlines)
-      let executeTrueBranch: Bool
-
-      if condition.isEmpty {
-        executeTrueBranch = true
-      } else {
-        executeTrueBranch = (try? EVY.evaluateFromText(condition)) ?? false
-      }
-
-      let branch = executeTrueBranch ? rowAction.`true` : rowAction.`false`
-      if branchRequiresConfirmation(branch) {
-        return rowAction.confirmation
-      }
-
-      if !executeTrueBranch {
-        return nil
-      }
-    }
-
-    return nil
-  }
-
-  private static func branchRequiresConfirmation(_ rawBranch: String) -> Bool {
-    let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else { return false }
-    guard let (functionName, _) = EVYActionParser.functionCall(from: trimmed) else { return false }
-    return functionName == "create" || functionName == "update"
-  }
-
-  private static func resolveConfirmationMessage(_ template: String?) -> String {
-    let defaultMessage = "Are you sure?"
-    guard let message = template?.trimmingCharacters(in: .whitespacesAndNewlines),
-      !message.isEmpty
-    else {
-      return defaultMessage
-    }
-    return (try? EVY.getValueFromText(message))?.value ?? message
   }
 
   @discardableResult

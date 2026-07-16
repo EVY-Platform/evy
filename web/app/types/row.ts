@@ -27,11 +27,13 @@ type RowSpecificAttributes = {
 	header_subtitle?: string;
 	icon?: string;
 	image?: string;
+	initial?: string;
 	label?: string;
 	label_interval_minutes?: string;
 	placeholder?: string;
 	segments?: string[];
 	start_time?: string;
+	style?: string;
 	subtitle?: string;
 	text?: string;
 	timeslot_format?: string;

@@ -51,17 +51,22 @@ struct EVYTitleSubtitleRow<Trailing: View>: View {
     self.trailing = trailing
   }
 
+  private var showsTitle: Bool {
+    guard let title, !title.isEmpty else { return false }
+    return true
+  }
+
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
       VStack(alignment: .leading) {
-        if let title, !title.isEmpty {
+        if showsTitle, let title {
           titleView(title)
         }
         if let subtitle, !subtitle.isEmpty {
           EVYTextView(subtitle, style: .info)
             .frame(
               maxWidth: .infinity,
-              alignment: centerSubtitleWhenTitleEmpty && (title?.isEmpty ?? true)
+              alignment: centerSubtitleWhenTitleEmpty && !showsTitle
                 ? .center : .leading
             )
             .lineLimit(3)
@@ -76,7 +81,7 @@ struct EVYTitleSubtitleRow<Trailing: View>: View {
   @ViewBuilder
   private func titleView(_ title: String) -> some View {
     if titleBold {
-      EVYTextView(title).toText().bold()
+      EVYTextView(title, style: .bodyBold)
         .frame(maxWidth: .infinity, alignment: .leading)
         .lineLimit(1)
         .truncationMode(.tail)

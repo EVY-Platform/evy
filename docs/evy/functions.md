@@ -33,6 +33,16 @@ Variable: "Hello"
 Output: 5
 ```
 
+#### earliestDatetime
+
+Returns the chronologically earliest local ISO datetime string from an array of timeslot strings. Sorts lexicographically (valid for `yyyy-MM-ddTHH:mm:ss` values). Empty or missing arrays return an empty string.
+
+```
+earliestDatetime({_variable_type_string_collection_})
+Collection: ["2026-06-04T09:30:00", "2026-06-03T09:00:00"]
+Output: 2026-06-03T09:00:00
+```
+
 #### findFirst
 
 Finds the first datum in a collection. With two arguments, matches on the record `id` field. With additional `(value, prop)` pairs, matches when every pair's `record.prop` equals the resolved value (data path first, literal fallback). The returned datum can be chained with a property accessor.
@@ -220,13 +230,13 @@ Will render
 #### formatAddressLine1
 
 ```
-{unit} {street}, {postcode}`
+{unit} {street}
 ```
 
 #### formatAddressLine2
 
 ```
-{city}, {state}
+{city}, {state} {postcode}
 ```
 
 #### Sample code:
@@ -274,8 +284,8 @@ Will render
         "keyboard": "text",
         "formatting_config": "{input.country}",
         "formatting": {
-            "au": "{input.city} {input.postcode} {input.state}",
-            "us": "{input.city} {input.state} {input.postcode}"
+            "au": "{input.city}, {input.state} {input.postcode}",
+            "us": "{input.city}, {input.state} {input.postcode}"
         }
     }
 }
@@ -319,7 +329,7 @@ These run on the iOS client when a row action branch executes. See [sdui.md](./s
 {create(service_id, resource_id, data?)}
 ```
 
-Creates a domain entity after the user confirms. Every `create` branch pauses the action chain until the user taps Confirm; Cancel discards the run with no side effects. Set a custom prompt on the parent `UI_RowAction`'s optional `confirmation` field (supports `{…}` data-path interpolation). When `confirmation` is absent or empty, the client shows `Are you sure?`.
+Creates a domain entity immediately. For user confirmation, present a `{show()}` child sheet and run `create` from the sheet's confirm button.
 
 #### update
 
@@ -327,4 +337,4 @@ Creates a domain entity after the user confirms. Every `create` branch pauses th
 {update(service_id, resource_id, filter, changes)}
 ```
 
-Updates matching domain entities after the user confirms. Every `update` branch pauses the action chain the same way as `create`. Set a custom prompt on the action's optional `confirmation` field; otherwise the client shows `Are you sure?`.
+Updates matching domain entities immediately. For user confirmation, present a `{show()}` child sheet and run `update` from the sheet's confirm button.
