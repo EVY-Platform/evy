@@ -411,10 +411,19 @@ class E2ETestBase: XCTestCase {
 
   @MainActor
   func dismissConfirmationSheet() {
-    guard waitForConfirmationSheet(timeout: 1) else { return }
-    app.swipeDown()
-    if waitForConfirmationSheet(timeout: 1) {
-      app.swipeDown()
+    // Drag the sheet down by its title bar rather than swiping its body: a plain
+    // `swipeDown()` is captured by the sheet's inner ScrollView and scrolls content
+    // instead of dismissing the sheet.
+    for _ in 0..<3 {
+      guard confirmationSheetIsPresent() else { return }
+      let handle =
+        app.navigationBars.staticTexts["Confirmation"].exists
+        ? app.navigationBars.staticTexts["Confirmation"]
+        : app.staticTexts["Confirmation"]
+      let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+      let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 1.0))
+      start.press(forDuration: 0.15, thenDragTo: end)
+      if waitForConfirmationSheetDismissed(timeout: 2) { return }
     }
   }
 
@@ -1777,7 +1786,6 @@ final class WebSocketE2ETests: E2ETestBase {
       pickupSelection: [selectedTimeslot]
     )
 
-    let viewButtonLabel = "Request pickup \(Int(Date().timeIntervalSince1970))"
     _ = try await openViewItemPage(
       emitter: emitter,
       labelPrefix: "Request pickup",
@@ -1886,7 +1894,6 @@ final class WebSocketE2ETests: E2ETestBase {
       pickupSelection: ["2026-06-03T09:00:00", "2026-06-03T10:00:00"]
     )
 
-    let viewButtonLabel = "Later pickup \(Int(Date().timeIntervalSince1970))"
     _ = try await openViewItemPage(
       emitter: emitter,
       labelPrefix: "Later pickup",

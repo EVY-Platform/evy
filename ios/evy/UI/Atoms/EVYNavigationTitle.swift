@@ -18,7 +18,11 @@ struct EVYNavigationTitle: ViewModifier {
   }
 
   func body(content: Content) -> some View {
-    let _ = titleState.value
+    // Read the resolved value so this modifier body re-evaluates when the watched
+    // data changes, and key the principal item on it: SwiftUI does not re-render a
+    // toolbar-hosted view on an @Observable change alone, so the changing `.id`
+    // remounts it with the current value.
+    let resolved = titleState.value.toString()
 
     content
       .navigationTitle("")
@@ -38,6 +42,7 @@ struct EVYNavigationTitle: ViewModifier {
                   .truncationMode(.tail)
               }
             }
+            .id(resolved)
           }
         }
       }
