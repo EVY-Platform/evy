@@ -1,5 +1,9 @@
-import { describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import type { protos } from "@googlemaps/places";
+import {
+	placeSearch,
+	setPlacesClientForTests,
+} from "../procedures/placeSearch";
 
 type PlacesAutocompleteResponse =
 	protos.google.maps.places.v1.IAutocompletePlacesResponse;
@@ -45,13 +49,15 @@ class FakePlacesClient {
 	}
 }
 
-mock.module("@googlemaps/places", () => ({
-	PlacesClient: FakePlacesClient,
-}));
-
-const { placeSearch } = await import("../procedures/placeSearch");
-
 describe("placeSearch", () => {
+	beforeEach(() => {
+		setPlacesClientForTests(new FakePlacesClient());
+	});
+
+	afterEach(() => {
+		setPlacesClientForTests(undefined);
+	});
+
 	it("forwards the EVY input into runAutocomplete", async () => {
 		autocompleteImpl = async (input) => {
 			expect(input).toBe("28 Rothschild");

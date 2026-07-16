@@ -1,3 +1,4 @@
+import { mock } from "bun:test";
 import { PGlite } from "@electric-sql/pglite";
 import { fuzzystrmatch } from "@electric-sql/pglite/contrib/fuzzystrmatch";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
@@ -14,4 +15,13 @@ export function createPgliteTestDatabase(): {
 	const pgliteClient = new PGlite({ extensions: { fuzzystrmatch } });
 	const testDb = drizzle(pgliteClient, { schema });
 	return { pgliteClient, testDb };
+}
+
+/** Replaces `../db` with an in-memory PGlite instance for the importing test file. */
+export function registerMarketplaceTestDb(testDb: PgliteTestDb): void {
+	mock.module("../db", () => ({
+		data: schema.data,
+		db: testDb,
+		schema,
+	}));
 }
