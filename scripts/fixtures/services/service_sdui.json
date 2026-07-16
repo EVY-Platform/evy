@@ -1184,6 +1184,11 @@
 										"condition": "",
 										"false": "",
 										"true": "{close()}"
+									},
+									{
+										"condition": "",
+										"true": "{navigate(f267c629-2594-4770-8cec-d5324ebb4058,55e427ac-263c-441f-9673-f60627b1baea)}",
+										"false": ""
 									}
 								],
 								"title": "",
