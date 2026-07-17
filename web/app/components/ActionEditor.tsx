@@ -9,7 +9,6 @@ import {
 	parseCondition,
 } from "../utils/conditionExpression";
 import {
-	buildDisplayCandidates,
 	buildIdCandidates,
 	getIdDisplayText,
 	type IdCandidate,
@@ -35,10 +34,6 @@ export function ActionEditor({
 	const idCandidates = useMemo(
 		() => buildIdCandidates(flowsById, pagesById, serviceResources),
 		[flowsById, pagesById, serviceResources],
-	);
-	const displayCandidates = useMemo(
-		() => buildDisplayCandidates(idCandidates),
-		[idCandidates],
 	);
 
 	const updateAction = useCallback(
@@ -102,7 +97,7 @@ export function ActionEditor({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							serviceResources={serviceResources}
-							displayCandidates={displayCandidates}
+							idCandidates={idCandidates}
 							onEdit={() => setEditingIndex(index)}
 							onRemove={() => removeAction(index)}
 						/>
@@ -132,7 +127,7 @@ type ActionSummaryCardProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
-	displayCandidates: IdCandidate[];
+	idCandidates: IdCandidate[];
 	onEdit: () => void;
 	onRemove: () => void;
 };
@@ -143,7 +138,7 @@ function ActionSummaryCard({
 	flowsById,
 	pagesById,
 	serviceResources,
-	displayCandidates,
+	idCandidates,
 	onEdit,
 	onRemove,
 }: ActionSummaryCardProps) {
@@ -156,10 +151,10 @@ function ActionSummaryCard({
 			formatExpressionSummary(conditionExpr, serviceResources).map(
 				(line) => ({
 					...line,
-					text: getIdDisplayText(line.text, displayCandidates),
+					text: getIdDisplayText(line.text, idCandidates),
 				}),
 			),
-		[conditionExpr, serviceResources, displayCandidates],
+		[conditionExpr, serviceResources, idCandidates],
 	);
 	const trueBranch = useMemo(() => parseBranch(action.true), [action.true]);
 	const falseBranch = useMemo(
@@ -171,20 +166,20 @@ function ActionSummaryCard({
 			trueBranch
 				? getIdDisplayText(
 						formatBranchDisplay(action.true, flowsById, pagesById),
-						displayCandidates,
+						idCandidates,
 					)
 				: null,
-		[trueBranch, action.true, flowsById, pagesById, displayCandidates],
+		[trueBranch, action.true, flowsById, pagesById, idCandidates],
 	);
 	const falseBranchDisplay = useMemo(
 		() =>
 			falseBranch
 				? getIdDisplayText(
 						formatBranchDisplay(action.false, flowsById, pagesById),
-						displayCandidates,
+						idCandidates,
 					)
 				: null,
-		[falseBranch, action.false, flowsById, pagesById, displayCandidates],
+		[falseBranch, action.false, flowsById, pagesById, idCandidates],
 	);
 
 	return (

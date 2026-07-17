@@ -13,7 +13,6 @@ extension EVY {
   static let datumToken = "$datum"
   static let datumPrefix = datumToken + "."
 
-  @MainActor
   static func containsDatumReference(_ text: String) -> Bool {
     text.contains(datumToken)
   }

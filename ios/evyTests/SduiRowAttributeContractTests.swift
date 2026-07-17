@@ -242,53 +242,49 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
   }
 
   func testInputWithInitialSeedsScalarDraft() throws {
-    let key = uniqueKey("input_initial")
-    let scopeId = "scope_\(UUID().uuidString)"
-    EVY.draftStore.activeScopeId = scopeId
-
-    let row = try makeRow(type: "Input", destination: "{\(key)}", initial: "Default title")
-    bootstrapRowDraft(row: row, scopeId: scopeId)
-
-    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("Default title"))
+    try assertSeedsDraft(
+      type: "Input", initial: "Default title", expected: .string("Default title"))
   }
 
   func testTextAreaWithInitialSeedsScalarDraft() throws {
-    let key = uniqueKey("textarea_initial")
-    let scopeId = "scope_\(UUID().uuidString)"
-    EVY.draftStore.activeScopeId = scopeId
-
-    let row = try makeRow(type: "TextArea", destination: "{\(key)}", initial: "Default description")
-    bootstrapRowDraft(row: row, scopeId: scopeId)
-
-    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("Default description"))
+    try assertSeedsDraft(
+      type: "TextArea", initial: "Default description",
+      expected: .string("Default description"))
   }
 
   func testDropdownWithInitialSeedsScalarDraft() throws {
-    let key = uniqueKey("dropdown_initial")
-    let scopeId = "scope_\(UUID().uuidString)"
-    EVY.draftStore.activeScopeId = scopeId
-
-    let row = try makeRow(
-      type: "Dropdown", destination: "{\(key)}", initial: "condition_new",
+    try assertSeedsDraft(
+      type: "Dropdown", initial: "condition_new", expected: .string("condition_new"),
       extraFields: ["source": "{options}", "value": "{$datum.value}"]
     )
-    bootstrapRowDraft(row: row, scopeId: scopeId)
-
-    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("condition_new"))
   }
 
   func testInlinePickerWithInitialSeedsArrayDraft() throws {
-    let key = uniqueKey("inlinepicker_initial")
+    try assertSeedsDraft(
+      type: "InlinePicker", initial: "distance_10",
+      expected: .array([.string("distance_10")]),
+      extraFields: ["source": "{options}", "value": "{$datum.value}"]
+    )
+  }
+
+  private func assertSeedsDraft(
+    type: String,
+    initial: String,
+    expected: EVYJson,
+    extraFields: [String: String] = [:],
+    file: StaticString = #file,
+    line: UInt = #line
+  ) throws {
+    let key = uniqueKey("\(type.lowercased())_initial")
     let scopeId = "scope_\(UUID().uuidString)"
     EVY.draftStore.activeScopeId = scopeId
 
     let row = try makeRow(
-      type: "InlinePicker", destination: "{\(key)}", initial: "distance_10",
-      extraFields: ["source": "{options}", "value": "{$datum.value}"]
-    )
+      type: type, destination: "{\(key)}", initial: initial, extraFields: extraFields)
     bootstrapRowDraft(row: row, scopeId: scopeId)
 
-    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .array([.string("distance_10")]))
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(key)}"), expected, file: file, line: line)
   }
 
   func testRowsWithoutInitialKeepEmptyBootstrap() throws {
@@ -406,10 +402,5 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     }
     let rowData = try JSONSerialization.data(withJSONObject: rowJson)
     return try JSONDecoder().decode(UI_Row.self, from: rowData)
-  }
-
-  private func uniqueKey(_ suffix: String) -> String {
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
-    return "sdui_initial_test_\(suffix)_\(randomId)"
   }
 }

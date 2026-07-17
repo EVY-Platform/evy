@@ -16,11 +16,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
   }
 
   func testBoldTitleRecomputesWhenWatchedValueChanges() throws {
-    let key = uniqueKey("title")
-    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
-    EVY.draftStore.activeScopeId = scopeId
-
-    try EVY.writeRawValue("Initial", to: "{\(key)}", scopeId: scopeId)
+    let (key, scopeId) = try seedReactiveTitle()
 
     let view = EVYTextView("{\(key)}", style: .bodyBold)
     let initial = view.toString()
@@ -44,11 +40,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
   }
 
   func testBoldAndNonBoldTitleResolveSameBinding() throws {
-    let key = uniqueKey("title")
-    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
-    EVY.draftStore.activeScopeId = scopeId
-
-    try EVY.writeRawValue("Shared", to: "{\(key)}", scopeId: scopeId)
+    let (key, _) = try seedReactiveTitle(initial: "Shared")
 
     let bold = EVYTextView("{\(key)}", style: .bodyBold)
     let regular = EVYTextView("{\(key)}", style: .body)
@@ -65,11 +57,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
   }
 
   func testMakeStateRecomputesWhenWatchedValueChanges() throws {
-    let key = uniqueKey("title")
-    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
-    EVY.draftStore.activeScopeId = scopeId
-
-    try EVY.writeRawValue("Initial", to: "{\(key)}", scopeId: scopeId)
+    let (key, scopeId) = try seedReactiveTitle()
 
     let state = EVYTextView.makeState(template: "{\(key)}")
     let initial = state.value.toString()
@@ -88,11 +76,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
   }
 
   func testInitWithStateRendersSharedInstance() throws {
-    let key = uniqueKey("title")
-    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
-    EVY.draftStore.activeScopeId = scopeId
-
-    try EVY.writeRawValue("Initial", to: "{\(key)}", scopeId: scopeId)
+    let (key, scopeId) = try seedReactiveTitle()
 
     let state = EVYTextView.makeState(template: "{\(key)}")
     let view = EVYTextView(state: state, style: .title)
@@ -114,10 +98,6 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
   func testButtonLabelParsesQuotedFormatDatetimeExpression() throws {
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
     EVY.draftStore.activeScopeId = scopeId
-    defer {
-      EVY.draftStore.deleteDrafts()
-      EVY.draftStore.activeScopeId = nil
-    }
 
     EVY.ensureDraftExists(variableName: "selected_pickup_timeslot", scopeId: scopeId)
     try EVY.updateValue(
@@ -136,8 +116,13 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
     )
   }
 
-  private func uniqueKey(_ suffix: String) -> String {
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
-    return "evy_heading_reactive_\(suffix)_\(randomId)"
+  private func seedReactiveTitle(
+    initial: String = "Initial"
+  ) throws -> (key: String, scopeId: String) {
+    let key = uniqueKey("title")
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
+    EVY.draftStore.activeScopeId = scopeId
+    try EVY.writeRawValue(initial, to: "{\(key)}", scopeId: scopeId)
+    return (key, scopeId)
   }
 }

@@ -30,25 +30,26 @@ struct EVYNavigationTitle: ViewModifier {
       .toolbar {
         if !template.isEmpty {
           ToolbarItem(placement: .principal) {
-            Group {
-              if let accessibilityIdentifier {
-                EVYTextView(state: titleState, style: .title)
-                  .lineLimit(1)
-                  .truncationMode(.tail)
-                  .accessibilityIdentifier(accessibilityIdentifier)
-              } else {
-                EVYTextView(state: titleState, style: .title)
-                  .lineLimit(1)
-                  .truncationMode(.tail)
-              }
-            }
-            .id(resolved)
+            titlePrincipalLabel()
+              .id(resolved)
           }
         }
       }
       .onChange(of: template) { _, newTemplate in
         titleState = EVYTextView.makeState(template: newTemplate)
       }
+  }
+
+  @ViewBuilder
+  private func titlePrincipalLabel() -> some View {
+    let label = EVYTextView(state: titleState, style: .title)
+      .lineLimit(1)
+      .truncationMode(.tail)
+    if let accessibilityIdentifier {
+      label.accessibilityIdentifier(accessibilityIdentifier)
+    } else {
+      label
+    }
   }
 }
 

@@ -2,7 +2,7 @@ import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { lineClampStyle } from "../design-system/lineClamp";
-import { SheetAwareTitleRow } from "../design-system/SheetAwareTitleRow";
+import { TitleSubtitleRow } from "../design-system/TitleSubtitleRow";
 
 export default defineRow("TextRow", {
 	config: {
@@ -15,9 +15,10 @@ export default defineRow("TextRow", {
 	render: (row) => {
 		const { title = "", subtitle = "", label = "" } = row.config;
 		return (
-			<SheetAwareTitleRow
+			<TitleSubtitleRow
 				title={title}
 				subtitle={subtitle}
+				centerSubtitleWhenTitleEmpty
 				trailing={
 					label.trim() ? (
 						<p

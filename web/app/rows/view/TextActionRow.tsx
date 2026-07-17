@@ -1,7 +1,7 @@
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
-import { SheetAwareTitleRow } from "../design-system/SheetAwareTitleRow";
+import { TitleSubtitleRow } from "../design-system/TitleSubtitleRow";
 
 export default defineRow("TextActionRow", {
 	config: {
@@ -15,7 +15,7 @@ export default defineRow("TextActionRow", {
 	render: (row) => {
 		const { title = "", subtitle = "", action = "" } = row.config;
 		return (
-			<SheetAwareTitleRow
+			<TitleSubtitleRow
 				title={title}
 				subtitle={subtitle}
 				trailing={

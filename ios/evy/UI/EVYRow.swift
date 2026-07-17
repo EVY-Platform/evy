@@ -10,28 +10,28 @@ import SwiftUI
 struct EVYRow: View, Identifiable {
   private let ref: EVYRowRef
   let datum: EVYJson?
-  private let titleOverride: String?
+  private let hidesTitle: Bool
 
   @State private var storedRow: EVYStoredRow?
 
-  init(rowId: String, datum: EVYJson? = nil, titleOverride: String? = nil) {
+  init(rowId: String, datum: EVYJson? = nil, hidesTitle: Bool = false) {
     self.ref = .id(rowId)
     self.datum = datum
-    self.titleOverride = titleOverride
+    self.hidesTitle = hidesTitle
     _storedRow = State(initialValue: EVYRowStore.row(id: rowId))
   }
 
-  init(row: UI_Row, datum: EVYJson? = nil, titleOverride: String? = nil) {
+  init(row: UI_Row, datum: EVYJson? = nil, hidesTitle: Bool = false) {
     self.ref = .inline(row)
     self.datum = datum
-    self.titleOverride = titleOverride
+    self.hidesTitle = hidesTitle
     _storedRow = State(initialValue: nil)
   }
 
-  init(ref: EVYRowRef, datum: EVYJson? = nil, titleOverride: String? = nil) {
+  init(ref: EVYRowRef, datum: EVYJson? = nil, hidesTitle: Bool = false) {
     self.ref = ref
     self.datum = datum
-    self.titleOverride = titleOverride
+    self.hidesTitle = hidesTitle
     switch ref {
     case .id(let rowId):
       _storedRow = State(initialValue: EVYRowStore.row(id: rowId))
@@ -47,7 +47,7 @@ struct EVYRow: View, Identifiable {
     switch ref {
     case .id(let rowId):
       EVYResolvedRow(
-        ref: ref, storedRow: storedRow, datum: datum, titleOverride: titleOverride
+        ref: ref, storedRow: storedRow, datum: datum, hidesTitle: hidesTitle
       )
       .onEVYRecordChange(
         namespace: EVYNamespace.evy,
@@ -61,7 +61,7 @@ struct EVYRow: View, Identifiable {
       }
     case .inline:
       EVYResolvedRow(
-        ref: ref, storedRow: nil, datum: datum, titleOverride: titleOverride)
+        ref: ref, storedRow: nil, datum: datum, hidesTitle: hidesTitle)
     }
   }
 }
@@ -147,11 +147,11 @@ private func initialDraftData(for row: UI_Row, destination: String) -> Data? {
 }
 
 @MainActor
-private func uiRowWithTitle(_ row: UI_Row, title: String) -> UI_Row {
+private func uiRowWithHiddenTitle(_ row: UI_Row) -> UI_Row {
   guard let encoded = try? JSONEncoder().encode(row),
     var json = try? JSONSerialization.jsonObject(with: encoded) as? [String: Any]
   else { return row }
-  json["title"] = title
+  json["title"] = ""
   guard let data = try? JSONSerialization.data(withJSONObject: json),
     let decoded = try? JSONDecoder().decode(UI_Row.self, from: data)
   else { return row }
@@ -162,7 +162,7 @@ private struct EVYResolvedRow: View {
   private let ref: EVYRowRef
   private let storedRow: EVYStoredRow?
   let datum: EVYJson?
-  private let titleOverride: String?
+  private let hidesTitle: Bool
 
   @Environment(\.action) private var action
   @Environment(\.sheetDismiss) private var sheetDismiss
@@ -174,12 +174,12 @@ private struct EVYResolvedRow: View {
     ref: EVYRowRef,
     storedRow: EVYStoredRow?,
     datum: EVYJson? = nil,
-    titleOverride: String? = nil
+    hidesTitle: Bool = false
   ) {
     self.ref = ref
     self.storedRow = storedRow
     self.datum = datum
-    self.titleOverride = titleOverride
+    self.hidesTitle = hidesTitle
     _isVisible = State(
       initialValue: Self.makeVisibilityState(
         for: Self.visibleExpression(ref: ref, storedRow: storedRow)
@@ -196,8 +196,8 @@ private struct EVYResolvedRow: View {
       row = inlineRow
     }
     guard let row else { return nil }
-    if let titleOverride {
-      return uiRowWithTitle(row, title: titleOverride)
+    if hidesTitle {
+      return uiRowWithHiddenTitle(row)
     }
     return row
   }
@@ -384,7 +384,7 @@ private struct EVYSheetOverlay: View {
   var body: some View {
     NavigationStack {
       ScrollView {
-        EVYRow(ref: sheetRef, titleOverride: "")
+        EVYRow(ref: sheetRef, hidesTitle: true)
           .environment(\.sheetDismiss, onDismiss)
       }
       .padding(.vertical, Constants.majorPadding)

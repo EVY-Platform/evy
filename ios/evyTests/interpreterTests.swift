@@ -1008,9 +1008,4 @@ final class InterpreterTests: XCTestCase {
       namespace: EVYNamespace.local, resource: key, id: EVYNamespace.singletonId,
       value: encodedValue)
   }
-
-  private func uniqueKey(_ suffix: String) -> String {
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
-    return "evy_interpreter_tests_\(suffix)_\(randomId)"
-  }
 }

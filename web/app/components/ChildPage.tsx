@@ -43,8 +43,12 @@ export function ChildPage({
 	}, [dispatchRow, childRowId]);
 
 	const childTitle = row?.config.title?.trim() ?? "";
-	const resolvedTitle = childTitle ? parseText(childTitle) : null;
-	const heading = variant === "full" ? "Search result" : resolvedTitle;
+	const heading =
+		variant === "full"
+			? "Search result"
+			: childTitle
+				? parseText(childTitle)
+				: null;
 
 	let titleElement: ReactNode = null;
 	if (heading !== null) {

@@ -254,9 +254,7 @@ export function filterCandidatesForSuggestionContext(
 	return [];
 }
 
-export function buildDisplayCandidates(
-	candidates: IdCandidate[],
-): IdCandidate[] {
+function buildDisplayCandidates(candidates: IdCandidate[]): IdCandidate[] {
 	return candidates
 		.filter(isDisplayCandidate)
 		.toSorted((a, b) => b.id.length - a.id.length);
