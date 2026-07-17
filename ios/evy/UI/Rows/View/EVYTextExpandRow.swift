@@ -17,6 +17,14 @@ struct EVYTextExpandRow: View {
     self.view = view
   }
 
+  private var isCollapsible: Bool {
+    !(view.expandLabel?.isEmpty ?? true)
+  }
+
+  private var isExpanded: Bool {
+    !isCollapsible || expanded
+  }
+
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
       if let title = view.title, !title.isEmpty {
@@ -29,10 +37,10 @@ struct EVYTextExpandRow: View {
       if let text = view.text, !text.isEmpty {
         EVYTextView(text)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .lineLimit(expanded ? nil : collapsedLineCount)
+          .lineLimit(isExpanded ? nil : collapsedLineCount)
           .truncationMode(.tail)
           .background {
-            if !expanded {
+            if !isExpanded {
               ViewThatFits(in: .vertical) {
                 EVYTextView(text)
                   .frame(maxWidth: .infinity, alignment: .leading)
@@ -45,7 +53,7 @@ struct EVYTextExpandRow: View {
           }
       }
 
-      if canExpand && !expanded, let expandLabel = view.expandLabel, !expandLabel.isEmpty {
+      if canExpand && !isExpanded, let expandLabel = view.expandLabel {
         Button {
           expanded = true
         } label: {

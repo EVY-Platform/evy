@@ -44,16 +44,7 @@ struct EVYPage: View {
       mainContent(rowIds: page.rowIds)
       footerContent(footerRowId: page.footerRowId)
     }
-    .navigationTitle("")
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbar {
-      ToolbarItem(placement: .principal) {
-        EVYTextView(page.title ?? "", style: .title)
-          .lineLimit(1)
-          .truncationMode(.tail)
-          .accessibilityIdentifier("pageTitle_\(pageId)")
-      }
-    }
+    .evyNavigationTitle(page.title ?? "", accessibilityIdentifier: "pageTitle_\(pageId)")
     .onAppear {
       activatePageScope()
     }

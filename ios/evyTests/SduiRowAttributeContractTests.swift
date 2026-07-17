@@ -13,6 +13,56 @@ private let baseFieldNames: Set<String> = [
 
 final class SduiRowAttributeContractTests: XCTestCase {
 
+  private static func rowTypesWithInitialAttribute(from catalog: [String: Any]) -> Set<String> {
+    var rowTypes = Set<String>()
+    for (rowType, schemaDef) in catalog {
+      guard let schemaDefDict = schemaDef as? [String: Any] else { continue }
+      let attributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
+      if attributes["initial"] != nil {
+        rowTypes.insert(rowType)
+      }
+    }
+    return rowTypes
+  }
+
+  func testInitialAttributePresentAndOptionalOnlyForSupportedRows() throws {
+    let catalogData = try XCTUnwrap(
+      SduiDefinitions.json.data(using: .utf8),
+      "SduiDefinitions.json must be valid UTF-8"
+    )
+    let catalog = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
+      "SduiDefinitions.json must be a JSON object"
+    )
+    let supportedInitialRowTypes = Self.rowTypesWithInitialAttribute(from: catalog)
+
+    for (rowType, schemaDef) in catalog {
+      let schemaDefDict = try XCTUnwrap(
+        schemaDef as? [String: Any],
+        "\(rowType): schema definition must be a JSON object"
+      )
+      let expectedAttributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
+      let hasInitial = expectedAttributes["initial"] != nil
+      let isOptional = expectedAttributes["initial"] ?? false
+
+      if supportedInitialRowTypes.contains(rowType) {
+        XCTAssertTrue(
+          hasInitial,
+          "\(rowType): expected optional `initial` attribute in schema"
+        )
+        XCTAssertTrue(
+          isOptional,
+          "\(rowType): `initial` must be optional (not in required)"
+        )
+      } else {
+        XCTAssertFalse(
+          hasInitial,
+          "\(rowType): must not declare `initial` — only Dropdown, Input, TextArea, and InlinePicker support it"
+        )
+      }
+    }
+  }
+
   func testEveryRowStructMatchesSchemaAttributes() throws {
     let catalogData = try XCTUnwrap(
       SduiDefinitions.json.data(using: .utf8),
@@ -29,7 +79,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
         "\(rowType): missing schema definition in SduiDefinitions.json"
       )
 
-      let expectedAttributes = extractExpectedAttributes(from: schemaDef, rowType: rowType)
+      let expectedAttributes = Self.extractExpectedAttributes(from: schemaDef, rowType: rowType)
       XCTAssertFalse(
         expectedAttributes.isEmpty,
         "\(rowType): no attributes found in schema — check allOf structure"
@@ -143,7 +193,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     return [:]
   }
 
-  private func extractExpectedAttributes(
+  private static func extractExpectedAttributes(
     from schemaDef: [String: Any],
     rowType: String
   ) -> [String: Bool] {
@@ -175,5 +225,182 @@ final class SduiRowAttributeContractTests: XCTestCase {
       result[name] = isOptional
     }
     return result
+  }
+}
+
+@MainActor
+final class SduiRowInitialBootstrapTests: XCTestCase {
+
+  override func tearDownWithError() throws {
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = nil
+    if let pageId = EVY.activeCacheScopeId {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: pageId)
+    }
+    EVY.activeCacheScopeId = nil
+    try super.tearDownWithError()
+  }
+
+  func testInputWithInitialSeedsScalarDraft() throws {
+    try assertSeedsDraft(
+      type: "Input", initial: "Default title", expected: .string("Default title"))
+  }
+
+  func testTextAreaWithInitialSeedsScalarDraft() throws {
+    try assertSeedsDraft(
+      type: "TextArea", initial: "Default description",
+      expected: .string("Default description"))
+  }
+
+  func testDropdownWithInitialSeedsScalarDraft() throws {
+    try assertSeedsDraft(
+      type: "Dropdown", initial: "condition_new", expected: .string("condition_new"),
+      extraFields: ["source": "{options}", "value": "{$datum.value}"]
+    )
+  }
+
+  func testInlinePickerWithInitialSeedsArrayDraft() throws {
+    try assertSeedsDraft(
+      type: "InlinePicker", initial: "distance_10",
+      expected: .array([.string("distance_10")]),
+      extraFields: ["source": "{options}", "value": "{$datum.value}"]
+    )
+  }
+
+  private func assertSeedsDraft(
+    type: String,
+    initial: String,
+    expected: EVYJson,
+    extraFields: [String: String] = [:],
+    file: StaticString = #file,
+    line: UInt = #line
+  ) throws {
+    let key = uniqueKey("\(type.lowercased())_initial")
+    let scopeId = "scope_\(UUID().uuidString)"
+    EVY.draftStore.activeScopeId = scopeId
+
+    let row = try makeRow(
+      type: type, destination: "{\(key)}", initial: initial, extraFields: extraFields)
+    bootstrapRowDraft(row: row, scopeId: scopeId)
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(key)}"), expected, file: file, line: line)
+  }
+
+  func testRowsWithoutInitialKeepEmptyBootstrap() throws {
+    let inputKey = uniqueKey("input_no_initial")
+    let inlinePickerKey = uniqueKey("inlinepicker_no_initial")
+    let scopeId = "scope_\(UUID().uuidString)"
+    EVY.draftStore.activeScopeId = scopeId
+
+    let inputRow = try makeRow(
+      type: "Input", destination: "{\(inputKey)}", initial: "",
+      extraFields: ["source": "{\(inputKey)}"]
+    )
+    bootstrapRowDraft(row: inputRow, scopeId: scopeId)
+    XCTAssertEqual(try EVY.getDataFromText("{\(inputKey)}"), .string(""))
+
+    let inlinePickerRow = try makeRow(
+      type: "InlinePicker", destination: "{\(inlinePickerKey)}", initial: "",
+      extraFields: ["source": "{options}", "value": "{$datum.value}"]
+    )
+    bootstrapRowDraft(row: inlinePickerRow, scopeId: scopeId)
+    XCTAssertEqual(try EVY.getDataFromText("{\(inlinePickerKey)}"), .array([]))
+  }
+
+  func testExistingDraftIsNotOverwrittenByInitial() throws {
+    let key = uniqueKey("existing_draft")
+    let scopeId = "scope_\(UUID().uuidString)"
+    EVY.draftStore.activeScopeId = scopeId
+
+    try EVY.writeRawValue("User edit", to: "{\(key)}", scopeId: scopeId)
+
+    let row = try makeRow(type: "Input", destination: "{\(key)}", initial: "Ignored default")
+    bootstrapRowDraft(row: row, scopeId: scopeId)
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("User edit"))
+  }
+
+  func testConcreteCacheDataIsNotShadowedByInitialDraft() throws {
+    let entityId = UUID().uuidString
+    let pageId = "page_\(UUID().uuidString)"
+    let scopeId = "flow:items"
+    EVY.activeCacheScopeId = pageId
+    EVY.draftStore.activeScopeId = scopeId
+
+    let entity = EVYJson.dictionary([
+      "id": .string(entityId),
+      "title": .string("Existing title"),
+    ])
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: pageId, id: entityId,
+      value: try JSONEncoder().encode(entity)
+    )
+
+    let row = try makeRow(
+      type: "Input", destination: "{\(entityId).title}", initial: "Ignored default",
+      extraFields: ["source": "{\(entityId).title}"]
+    )
+    bootstrapRowDraft(row: row, scopeId: scopeId)
+
+    let drafts = try EVY.draftStore.drafts(forScopeId: scopeId)
+    XCTAssertTrue(drafts.isEmpty, "No draft should be created when concrete data already exists")
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityId).title}"), .string("Existing title"))
+  }
+
+  func testBuildCurrencyInitialProducesSameShapeAsExplicitEdit() throws {
+    let priceKey = uniqueKey("build_currency_price")
+    let scopeId = "scope_\(UUID().uuidString)"
+    EVY.draftStore.activeScopeId = scopeId
+
+    let initialRow = try makeRow(
+      type: "Input", destination: "{buildCurrency(\(priceKey))}", initial: "0",
+      extraFields: ["source": "{formatCurrency(\(priceKey))}"]
+    )
+    bootstrapRowDraft(row: initialRow, scopeId: scopeId)
+    let seededValue = try EVY.getDataFromText("{\(priceKey)}")
+
+    EVY.draftStore.deleteDrafts()
+
+    let editRow = try makeRow(
+      type: "Input", destination: "{buildCurrency(\(priceKey))}", initial: "",
+      extraFields: ["source": "{formatCurrency(\(priceKey))}"]
+    )
+    bootstrapRowDraft(row: editRow, scopeId: scopeId)
+    try EVY.writeRawValue("0", to: "{buildCurrency(\(priceKey))}", scopeId: scopeId)
+    let editedValue = try EVY.getDataFromText("{\(priceKey)}")
+
+    XCTAssertEqual(seededValue, editedValue)
+    guard case .dictionary(let dict) = seededValue else {
+      XCTFail("Expected dictionary from buildCurrency")
+      return
+    }
+    XCTAssertEqual(dict["currency"], .string("AUD"))
+    XCTAssertEqual(dict["value"], .int(0))
+  }
+
+  private func makeRow(
+    type: String,
+    destination: String,
+    initial: String,
+    extraFields: [String: String] = [:]
+  ) throws -> UI_Row {
+    var rowJson: [String: Any] = [
+      "id": "test-row-\(UUID().uuidString)",
+      "type": type,
+      "visible": "true",
+      "actions": [] as [Any],
+      "title": "",
+      "name": "test row",
+      "destination": destination,
+    ]
+    if !initial.isEmpty {
+      rowJson["initial"] = initial
+    }
+    for (key, value) in extraFields {
+      rowJson[key] = value
+    }
+    let rowData = try JSONSerialization.data(withJSONObject: rowJson)
+    return try JSONDecoder().decode(UI_Row.self, from: rowData)
   }
 }

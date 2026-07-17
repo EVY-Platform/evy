@@ -113,9 +113,8 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: pickup, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_pickup_timeslot, archived: false})}",
-												"false": "",
-												"confirmation": "Request to pickup the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
+												"true": "{show()}",
+												"false": ""
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
@@ -128,7 +127,55 @@
 										"header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Pickup available times",
-										"destination": "{selected_pickup_timeslot}"
+										"destination": "{selected_pickup_timeslot}",
+										"child": {
+											"id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
+											"type": "ListContainer",
+											"actions": [],
+											"visible": "true",
+											"title": "Confirmation",
+											"children": [
+												{
+													"id": "c9d8e7f6-a5b4-4c3d-8e2f-1a9b8c7d6e5f",
+													"type": "Text",
+													"actions": [],
+													"visible": "true",
+													"title": "",
+													"subtitle": "You are about to request to pickup {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} at {formatDatetime(selected_pickup_timeslot, \"EEE do\")} {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
+													"name": "Pickup confirmation message"
+												},
+												{
+													"id": "d0e9f8a7-b6c5-4d4e-9f3a-2b0c9d8e7f6a",
+													"type": "Text",
+													"actions": [],
+													"visible": "{selected_pickup_timeslot != earliestDatetime(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection)}",
+													"title": "",
+													"subtitle": "Be advised someone may request to pickup {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} earlier than your selected timeslot.",
+													"name": "Pickup earlier timeslot warning"
+												},
+												{
+													"id": "e1f0a9b8-c7d6-4e5f-a04b-3c1d0e9f8a7b",
+													"type": "Button",
+													"actions": [
+														{
+															"condition": "",
+															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: pickup, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_pickup_timeslot, archived: false})}",
+															"false": ""
+														},
+														{
+															"condition": "",
+															"true": "{close()}",
+															"false": ""
+														}
+													],
+													"visible": "true",
+													"title": "",
+													"label": "Request {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
+													"name": "Confirm pickup request"
+												}
+											],
+											"name": "Pickup confirmation sheet"
+										}
 									},
 									{
 										"id": "a1f3e8d2-4c5b-4a9e-8d1f-2b6c7e9a0d11",
@@ -136,16 +183,55 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
-												"false": "",
-												"confirmation": "Cancel pickup request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
+												"true": "{show()}",
+												"false": ""
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Cancel request",
 										"style": "danger",
-										"name": "Cancel request"
+										"name": "Cancel request",
+										"child": {
+											"id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d",
+											"type": "ListContainer",
+											"actions": [],
+											"visible": "true",
+											"title": "Confirmation",
+											"children": [
+												{
+													"id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6e",
+													"type": "Text",
+													"actions": [],
+													"visible": "true",
+													"title": "",
+													"subtitle": "Cancel pickup request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?",
+													"name": "Cancel pickup confirmation message"
+												},
+												{
+													"id": "b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7f",
+													"type": "Button",
+													"actions": [
+														{
+															"condition": "",
+															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+															"false": ""
+														},
+														{
+															"condition": "",
+															"true": "{close()}",
+															"false": ""
+														}
+													],
+													"visible": "true",
+													"title": "",
+													"label": "Cancel request",
+													"style": "danger",
+													"name": "Confirm cancel pickup request"
+												}
+											],
+											"name": "Cancel pickup confirmation sheet"
+										}
 									}
 								],
 								"name": "Pickup details"
@@ -209,9 +295,8 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: delivery, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_delivery_timeslot, archived: false})}",
-												"false": "",
-												"confirmation": "Request to deliver the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
+												"true": "{show()}",
+												"false": ""
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
@@ -224,7 +309,46 @@
 										"header_subtitle": "{formatDatetime($datum, \"MMM do\")}",
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Delivery available times",
-										"destination": "{selected_delivery_timeslot}"
+										"destination": "{selected_delivery_timeslot}",
+										"child": {
+											"id": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80",
+											"type": "ListContainer",
+											"actions": [],
+											"visible": "true",
+											"title": "Confirmation",
+											"children": [
+												{
+													"id": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9b",
+													"type": "Text",
+													"actions": [],
+													"visible": "true",
+													"title": "",
+													"subtitle": "Request to deliver the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\" at {formatDatetime(selected_delivery_timeslot, \"EEE do\")} {formatDatetime(selected_delivery_timeslot, \"HH:mm\")}",
+													"name": "Delivery confirmation message"
+												},
+												{
+													"id": "e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b",
+													"type": "Button",
+													"actions": [
+														{
+															"condition": "",
+															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: delivery, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_delivery_timeslot, archived: false})}",
+															"false": ""
+														},
+														{
+															"condition": "",
+															"true": "{close()}",
+															"false": ""
+														}
+													],
+													"visible": "true",
+													"title": "",
+													"label": "Request {formatDatetime(selected_delivery_timeslot, \"HH:mm\")}",
+													"name": "Confirm delivery request"
+												}
+											],
+											"name": "Delivery confirmation sheet"
+										}
 									},
 									{
 										"id": "b2e4f9d3-5d6c-4b0f-9e2a-3c7d8f0b1e22",
@@ -232,16 +356,55 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
-												"false": "",
-												"confirmation": "Cancel delivery request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
+												"true": "{show()}",
+												"false": ""
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Cancel request",
 										"style": "danger",
-										"name": "Cancel request"
+										"name": "Cancel request",
+										"child": {
+											"id": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d",
+											"type": "ListContainer",
+											"actions": [],
+											"visible": "true",
+											"title": "Confirmation",
+											"children": [
+												{
+													"id": "a8b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2e",
+													"type": "Text",
+													"actions": [],
+													"visible": "true",
+													"title": "",
+													"subtitle": "Cancel delivery request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?",
+													"name": "Cancel delivery confirmation message"
+												},
+												{
+													"id": "b9c0d1e2-f3a4-4b5c-6d7e-8f9a0b1c2d3f",
+													"type": "Button",
+													"actions": [
+														{
+															"condition": "",
+															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+															"false": ""
+														},
+														{
+															"condition": "",
+															"true": "{close()}",
+															"false": ""
+														}
+													],
+													"visible": "true",
+													"title": "",
+													"label": "Cancel request",
+													"style": "danger",
+													"name": "Confirm cancel delivery request"
+												}
+											],
+											"name": "Cancel delivery confirmation sheet"
+										}
 									}
 								],
 								"name": "Delivery details"
@@ -304,15 +467,71 @@
 										"actions": [
 											{
 												"condition": "{length(shipping_address.postcode) > 0}",
-												"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: shipping, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, postalcode: shipping_address.postcode, archived: false})}",
-												"false": "{highlight_required(postcode)}",
-												"confirmation": "Request to ship the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
+												"true": "{show()}",
+												"false": "{highlight_required(postcode)}"
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Ask to buy",
-										"name": "Ask to buy"
+										"name": "Ask to buy",
+										"child": {
+											"id": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c",
+											"type": "ListContainer",
+											"actions": [],
+											"visible": "true",
+											"title": "Confirmation",
+											"children": [
+												{
+													"id": "a3b2c1d0-e9f8-4a7b-6c5d-4e3f2a1b0c9d",
+													"type": "Text",
+													"actions": [],
+													"visible": "true",
+													"title": "",
+													"subtitle": "You are about to request shipping {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} to you",
+													"name": "Shipping confirmation message"
+												},
+												{
+													"id": "b4c3d2e1-f0a9-4b8c-7d6e-5f4a3b2c1d0e",
+													"type": "Text",
+													"actions": [],
+													"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_fee > 0}",
+													"title": "",
+													"subtitle": "Your payment will be held on EVY until shipping has been confirmed (within 48 hours). If the seller does not ship in time, you will be refunded the fee and the request will be cancelled.",
+													"name": "Shipping surcharge held payment notice"
+												},
+												{
+													"id": "c5d4e3f2-a1b0-4c9d-8e7f-6a5b4c3d2e1f",
+													"type": "Text",
+													"actions": [],
+													"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_fee <= 0}",
+													"title": "",
+													"subtitle": "Shipping should be confirmed within 48 hours by the seller. If not, the request will be cancelled.",
+													"name": "Shipping no surcharge notice"
+												},
+												{
+													"id": "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f2a",
+													"type": "Button",
+													"actions": [
+														{
+															"condition": "",
+															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: shipping, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, postalcode: shipping_address.postcode, archived: false})}",
+															"false": ""
+														},
+														{
+															"condition": "",
+															"true": "{close()}",
+															"false": ""
+														}
+													],
+													"visible": "true",
+													"title": "",
+													"label": "Request shipping",
+													"name": "Confirm shipping request"
+												}
+											],
+											"name": "Shipping confirmation sheet"
+										}
 									},
 									{
 										"id": "c3f5a0e4-6e7d-4c1a-0f3b-4d8e9a1c2f33",
@@ -320,16 +539,55 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
-												"false": "",
-												"confirmation": "Cancel shipping request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?"
+												"true": "{show()}",
+												"false": ""
 											}
 										],
 										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Cancel request",
 										"style": "danger",
-										"name": "Cancel request"
+										"name": "Cancel request",
+										"child": {
+											"id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b",
+											"type": "ListContainer",
+											"actions": [],
+											"visible": "true",
+											"title": "Confirmation",
+											"children": [
+												{
+													"id": "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6c",
+													"type": "Text",
+													"actions": [],
+													"visible": "true",
+													"title": "",
+													"subtitle": "Cancel shipping request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?",
+													"name": "Cancel shipping confirmation message"
+												},
+												{
+													"id": "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7d",
+													"type": "Button",
+													"actions": [
+														{
+															"condition": "",
+															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+															"false": ""
+														},
+														{
+															"condition": "",
+															"true": "{close()}",
+															"false": ""
+														}
+													],
+													"visible": "true",
+													"title": "",
+													"label": "Cancel request",
+													"style": "danger",
+													"name": "Confirm cancel shipping request"
+												}
+											],
+											"name": "Cancel shipping confirmation sheet"
+										}
 									}
 								],
 								"name": "Shipping details"
@@ -371,7 +629,8 @@
 						"placeholder": "My iPhone ::star:: 20",
 						"visible": "true",
 						"name": "Listing title",
-						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}"
+						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+						"initial": "Geo"
 					},
 					{
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
@@ -382,7 +641,8 @@
 						"title": "Price",
 						"placeholder": "",
 						"visible": "true",
-						"name": "Listing price"
+						"name": "Listing price",
+						"initial": "1"
 					},
 					{
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
@@ -394,7 +654,8 @@
 						"placeholder": "Choose one",
 						"visible": "true",
 						"name": "Listing condition",
-						"value": "{$datum.value}"
+						"value": "{$datum.value}",
+						"initial": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe"
 					},
 					{
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
@@ -406,7 +667,8 @@
 						"placeholder": "Choose one",
 						"visible": "true",
 						"name": "Listing selling reason",
-						"value": "{$datum.value}"
+						"value": "{$datum.value}",
+						"initial": "76d781c6-7ab1-4b5e-99d5-60d417e3c385"
 					},
 					{
 						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
@@ -423,7 +685,8 @@
 								"title": "",
 								"placeholder": "Width",
 								"visible": "true",
-								"name": "Listing width"
+								"name": "Listing width",
+								"initial": "1"
 							},
 							{
 								"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
@@ -434,7 +697,8 @@
 								"title": "",
 								"placeholder": "Height",
 								"visible": "true",
-								"name": "Listing height"
+								"name": "Listing height",
+								"initial": "2"
 							},
 							{
 								"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
@@ -445,7 +709,8 @@
 								"title": "",
 								"placeholder": "Length",
 								"visible": "true",
-								"name": "Listing length"
+								"name": "Listing length",
+								"initial": "3"
 							}
 						],
 						"visible": "true",
@@ -516,7 +781,8 @@
 						"title": "",
 						"placeholder": "Write a short description of your product",
 						"visible": "true",
-						"name": "Item description"
+						"name": "Item description",
+						"initial": "Sloppy coder"
 					}
 				],
 				"title": "Describe item",
@@ -558,7 +824,7 @@
 										"type": "Text",
 										"actions": [],
 										"title": "",
-										"subtitle": "Allow buyers to pick up the item",
+										"subtitle": "Allow buyers to pick up from an address of your choice. You may choose to send the address in advance or 1 hour before pickup.",
 										"visible": "true",
 										"name": "Pickup note"
 									},
@@ -581,8 +847,8 @@
 											"child": {
 												"id": "e27d87b7-aa2c-4672-aaac-9e1222928f45",
 												"type": "Text",
-												"title": "{$datum.unit} {$datum.street}",
-												"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}",
+												"title": "{formatAddressLine1($datum)}",
+												"subtitle": "{formatAddressLine2($datum)}",
 												"actions": [],
 												"visible": "true",
 												"name": "Pickup address result"
@@ -607,7 +873,20 @@
 										"placeholder": "Additional information",
 										"visible": "true",
 										"name": "Pickup instructions",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.instructions}"
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.instructions}",
+										"initial": "Leave at front door"
+									},
+									{
+										"id": "92890469-10f3-43d3-9895-fb419425baf9",
+										"type": "Input",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.lead_time_hours}",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.lead_time_hours}",
+										"actions": [],
+										"title": "Lead time (hours)",
+										"placeholder": "Hours of notice required",
+										"visible": "true",
+										"name": "Pickup lead time",
+										"initial": "24"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222207",
@@ -650,7 +929,7 @@
 										"type": "Text",
 										"actions": [],
 										"title": "",
-										"subtitle": "Deliver directly to the buyer",
+										"subtitle": "Offer to deliver directly to the buyer for free or for a small surcharge.",
 										"visible": "true",
 										"name": "Delivery note"
 									},
@@ -663,7 +942,8 @@
 										"placeholder": "Do you want to charge for delivery?",
 										"visible": "true",
 										"name": "Delivery surcharge",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee}"
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee}",
+										"initial": "1"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222212",
@@ -683,7 +963,8 @@
 										"title": "",
 										"visible": "true",
 										"name": "Delivery distance",
-										"value": "{$datum.value}"
+										"value": "{$datum.value}",
+										"initial": "3e0f4b97-97c3-46da-a242-a5c1e8e63245"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222214",
@@ -726,9 +1007,21 @@
 										"type": "Text",
 										"actions": [],
 										"title": "",
-										"subtitle": "Postal shipping at the buyer's expense",
+										"subtitle": "Postal shipping at the buyer's expense. When requested, you will have 48 hours to ship the item or the request will be cancelled.",
 										"visible": "true",
 										"name": "Shipping note"
+									},
+									{
+										"id": "be9e0bfd-066a-4c64-b058-a7bc4c61442b",
+										"type": "Input",
+										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_fee}",
+										"actions": [],
+										"title": "Shipping fee",
+										"placeholder": "How much will it cost to ship?",
+										"visible": "true",
+										"name": "Shipping fee",
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_fee}",
+										"initial": "1"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222218",
@@ -739,7 +1032,8 @@
 										"placeholder": "Postal code you will be shipping from",
 										"visible": "true",
 										"name": "Shipping origin postal code",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}"
+										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}",
+										"initial": "2018"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222219",
@@ -759,7 +1053,8 @@
 										"title": "",
 										"visible": "true",
 										"name": "Shipping destinations",
-										"value": "{$datum.value}"
+										"value": "{$datum.value}",
+										"initial": "bd87e698-7623-474b-bf87-48600d103253"
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222221",
@@ -770,7 +1065,8 @@
 										"title": "Weight (kg)",
 										"placeholder": "Weight",
 										"visible": "true",
-										"name": "Shipping item weight"
+										"name": "Shipping item weight",
+										"initial": "10"
 									}
 								],
 								"visible": "true",
@@ -852,51 +1148,59 @@
 						{
 							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash == true || dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app == true}",
 							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app)}",
-							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,857362ad-856f-465b-85a3-94bc8bb686cd)}"
-						}
-					],
-					"title": "",
-					"label": "Next",
-					"visible": "true",
-					"name": "Continue to data notice"
-				},
-				"name": "Payment options"
-			},
-			{
-				"id": "857362ad-856f-465b-85a3-94bc8bb686cd",
-				"rows": [
-					{
-						"id": "a3b4c5d6-e7f8-4a9b-8c1d-2e3f4a5b6c7d",
-						"type": "Text",
-						"actions": [],
-						"title": "",
-						"subtitle": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the following information about your listing will be public:\n\n* Title & description\n* Photos\n* Condition & selling reason\n* Price\n* Dimension\n* Pickup address & schedule\n* Delivery schedule",
-						"visible": "true",
-						"name": "Public listing data"
-					}
-				],
-				"title": "Sharing data publicly",
-				"footer": {
-					"id": "20e9a035-8a42-4282-8725-49b620866c70",
-					"type": "Button",
-					"actions": [
-						{
-							"condition": "",
-							"false": "",
-							"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,dc28ed59-298e-493c-8ff3-3e60f2ebccbd)}"
-						},
-						{
-							"condition": "",
-							"false": "",
-							"true": "{close()}"
+							"true": "{show()}"
 						}
 					],
 					"title": "",
 					"label": "Submit",
 					"visible": "true",
-					"name": "Submit listing"
+					"name": "Submit listing",
+					"child": {
+						"id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
+						"type": "ListContainer",
+						"actions": [],
+						"visible": "true",
+						"title": "Confirmation",
+						"children": [
+							{
+								"id": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e",
+								"type": "TextExpand",
+								"actions": [],
+								"visible": "true",
+								"title": "",
+								"text": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the information in your listing will be public",
+								"name": "Submit listing confirmation message"
+							},
+							{
+								"id": "c6d7e8f9-a0b1-4c2d-3e4f-5a6b7c8d9e0f",
+								"type": "Button",
+								"actions": [
+									{
+										"condition": "",
+										"false": "",
+										"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,dc28ed59-298e-493c-8ff3-3e60f2ebccbd)}"
+									},
+									{
+										"condition": "",
+										"false": "",
+										"true": "{close()}"
+									},
+									{
+										"condition": "",
+										"true": "{navigate(f267c629-2594-4770-8cec-d5324ebb4058,55e427ac-263c-441f-9673-f60627b1baea)}",
+										"false": ""
+									}
+								],
+								"title": "",
+								"label": "Submit",
+								"visible": "true",
+								"name": "Confirm submit listing"
+							}
+						],
+						"name": "Submit listing confirmation sheet"
+					}
 				},
-				"name": "Public data notice"
+				"name": "Payment options"
 			}
 		]
 	}

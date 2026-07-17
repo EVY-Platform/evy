@@ -304,6 +304,9 @@ label {
 .evy-bg-gray-dark {
 	background-color: var(--color-evy-gray-dark);
 }
+.evy-bg-red {
+	background-color: var(--color-evy-red);
+}
 .evy-bg-white {
 	background-color: var(--color-white);
 }
@@ -409,6 +412,10 @@ label {
 }
 .evy-hover\:bg-gray-light:hover {
 	background-color: var(--color-evy-gray-light);
+}
+.evy-hover\:bg-red:hover {
+	background-color: var(--color-evy-red);
+	filter: brightness(0.9);
 }
 
 /* ---- Shared component styles ---- */
@@ -805,7 +812,7 @@ label {
 	border-left: 2px solid var(--color-gray-border);
 }
 
-.evy-action-popup-number-input {
+.evy-action-popup-input {
 	padding: 2px 6px;
 	font-size: var(--text-sm);
 	line-height: 1.25;

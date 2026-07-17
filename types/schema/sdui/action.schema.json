@@ -15,9 +15,6 @@
 		},
 		"true": {
 			"type": "string"
-		},
-		"confirmation": {
-			"type": "string"
 		}
 	}
 }

@@ -43,6 +43,20 @@ func evyLength(_ args: String) throws -> EVYFunctionOutput {
 }
 
 @MainActor
+func evyEarliestDatetime(_ args: String) throws -> EVYFunctionOutput {
+  let res = try EVY.getDataFromProps(args)
+  guard case .array(let items) = res else {
+    return EVYFunctionOutput(value: "", prefix: nil, suffix: nil)
+  }
+  let dateStrings = items.compactMap { item -> String? in
+    guard case .string(let value) = item, !value.isEmpty else { return nil }
+    return value
+  }
+  let earliest = dateStrings.min() ?? ""
+  return EVYFunctionOutput(value: earliest, prefix: nil, suffix: nil)
+}
+
+@MainActor
 func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
   let parts = splitFunctionArguments(args)
   guard parts.count >= 2 else { throw EVYParamError.invalidProps }
@@ -276,14 +290,14 @@ private func evyJoinedAddressParts(_ parts: [String?], separator: String) -> Str
 @MainActor
 func evyFormatAddressLine1(_ args: String) throws -> EVYFunctionOutput {
   let fields = try evyAddressDisplayOutput(from: args)
-  let value = evyJoinedAddressParts([fields.streetPortion, fields.postcode], separator: ", ")
-  return EVYFunctionOutput(value: value, prefix: nil, suffix: nil)
+  return EVYFunctionOutput(value: fields.streetPortion, prefix: nil, suffix: nil)
 }
 
 @MainActor
 func evyFormatAddressLine2(_ args: String) throws -> EVYFunctionOutput {
   let fields = try evyAddressDisplayOutput(from: args)
-  let value = evyJoinedAddressParts([fields.city, fields.state], separator: ", ")
+  let cityState = evyJoinedAddressParts([fields.city, fields.state], separator: ", ")
+  let value = evyJoinedAddressParts([cityState, fields.postcode], separator: " ")
   return EVYFunctionOutput(value: value, prefix: nil, suffix: nil)
 }
 
@@ -637,8 +651,13 @@ private func evyParseIso8601Date(_ isoString: String, type: String = "date") thr
     type: type, reason: "could not parse ISO 8601 date '\(isoString)'")
 }
 
+private let plainNumberRegex = try? Regex(#"^[+-]?(\d+(\.\d*)?|\.\d+)$"#)
+
 private func evyNumericValue(_ value: String) -> Decimal? {
-  Decimal(string: value.trimmingCharacters(in: .whitespacesAndNewlines))
+  let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard let plainNumberRegex, !trimmed.isEmpty, trimmed.wholeMatch(of: plainNumberRegex) != nil
+  else { return nil }
+  return Decimal(string: trimmed)
 }
 
 private func evyJsonValue(from value: String) -> EVYJson {

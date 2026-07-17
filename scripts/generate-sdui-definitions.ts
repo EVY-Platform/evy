@@ -74,13 +74,14 @@ function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 	);
 	tsLines.push("");
 	tsLines.push(
-		`export type RowFieldSpecKind = "text" | "textList" | "child" | "children" | "binding";`,
+		`export type RowFieldSpecKind = "text" | "textList" | "child" | "children" | "binding" | "enum";`,
 	);
 	tsLines.push("");
 	tsLines.push(`export type RowFieldSpec = {`);
 	tsLines.push(`\tname: string;`);
 	tsLines.push(`\tkind: RowFieldSpecKind;`);
 	tsLines.push(`\trequired: boolean;`);
+	tsLines.push(`\toptions?: string[];`);
 	tsLines.push(`};`);
 	tsLines.push("");
 	tsLines.push(

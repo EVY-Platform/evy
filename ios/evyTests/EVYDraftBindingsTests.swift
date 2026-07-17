@@ -380,9 +380,4 @@ final class EVYDraftBindingTests: XCTestCase {
       "longitude": .decimal(151.1985883),
     ])
   }
-
-  private func uniqueKey(_ suffix: String) -> String {
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
-    return "evy_draft_binding_tests_\(suffix)_\(randomId)"
-  }
 }

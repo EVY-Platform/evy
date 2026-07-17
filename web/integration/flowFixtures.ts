@@ -29,6 +29,7 @@ interface ServerRowInput {
 	label?: string;
 	format?: string;
 	segments?: string[];
+	initial?: string;
 }
 
 interface ServerPageInput {

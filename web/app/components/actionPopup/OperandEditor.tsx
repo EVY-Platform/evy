@@ -110,7 +110,7 @@ export function OperandEditor({
 					aria-label={`${ariaLabel}-number`}
 					value={parsed.value}
 					onChange={(e) => onChange(e.target.value)}
-					className="evy-action-popup-number-input evy-w-full evy-rounded-sm evy-border evy-border-gray-light evy-focus-visible:outline-none"
+					className="evy-action-popup-input evy-w-full evy-rounded-sm evy-border evy-border-gray-light evy-focus-visible:outline-none"
 				/>
 			)}
 			{parsed.type === "function" && (

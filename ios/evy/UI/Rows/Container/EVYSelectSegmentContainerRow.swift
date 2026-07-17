@@ -19,12 +19,7 @@ struct EVYSelectSegmentContainerRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
-      if let title = view.title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-          .padding(.horizontal, Constants.majorPadding)
-      }
+    Group {
       Picker("", selection: $selected) {
         ForEach(Array(view.segments.enumerated()), id: \.offset) { index, segment in
           Text(segment).tag(index)
@@ -39,6 +34,7 @@ struct EVYSelectSegmentContainerRow: View {
           .id(childRefs[selected].id)
       }
     }
+    .containerTitleHeader(view.title)
   }
 }
 

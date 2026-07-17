@@ -10,7 +10,12 @@ import Foundation
 // MARK: - Central $datum Expression Parsing
 
 extension EVY {
-  static let datumPrefix = "$datum."
+  static let datumToken = "$datum"
+  static let datumPrefix = datumToken + "."
+
+  static func containsDatumReference(_ text: String) -> Bool {
+    text.contains(datumToken)
+  }
 
   @MainActor
   static func resolveDatumExpression(_ expression: String, in datum: EVYJson) -> String {

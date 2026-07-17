@@ -16,9 +16,17 @@ const placesLocale = {
 	regionCode: "au",
 };
 
-let placesClient: PlacesClient | undefined;
+type PlacesClientLike = Pick<PlacesClient, "autocompletePlaces" | "getPlace">;
 
-function getPlacesClient(): PlacesClient {
+let placesClient: PlacesClientLike | undefined;
+
+export function setPlacesClientForTests(
+	client: PlacesClientLike | undefined,
+): void {
+	placesClient = client;
+}
+
+function getPlacesClient(): PlacesClientLike {
 	if (placesClient) {
 		return placesClient;
 	}

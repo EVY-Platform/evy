@@ -11,6 +11,7 @@ import {
 	filterCandidates,
 	filterCandidatesForSuggestionContext,
 	getIdDisplayParts,
+	getIdDisplayText,
 	type IdCandidate,
 } from "./idCandidates";
 
@@ -339,6 +340,21 @@ describe("idCandidates", () => {
 		expect(getIdDisplayParts("length()", [functionCandidate])).toEqual([
 			{ type: "text", text: "length()", start: 0, end: 8 },
 		]);
+	});
+
+	test("getIdDisplayText resolves IDs in action and interpolation text", () => {
+		expect(getIdDisplayText("create(service-1, res-1)", candidates)).toBe(
+			"create(Marketplace, item)",
+		);
+		expect(getIdDisplayText("Create {res-1.title}?", candidates)).toBe(
+			"Create {item.title}?",
+		);
+	});
+
+	test("getIdDisplayText preserves unknown IDs and ordinary text", () => {
+		expect(
+			getIdDisplayText("Create {unknown-resource.title}?", candidates),
+		).toBe("Create {unknown-resource.title}?");
 	});
 
 	test("getIdDisplayParts resolves flow and page ids as named candidate chips", () => {

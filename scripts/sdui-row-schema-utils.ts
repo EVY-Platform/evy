@@ -39,7 +39,7 @@ export interface SduiRowDefinition {
 	type: string;
 	attributes: Record<
 		string,
-		{ required: boolean; type: SduiRowAttributeType }
+		{ required: boolean; type: SduiRowAttributeType; enum?: string[] }
 	>;
 	schema: SduiRowDefinitionSchema;
 }
@@ -128,6 +128,17 @@ function attributeTypeForProperty(
 	throw new Error(`${label} uses an unsupported SDUI row property schema`);
 }
 
+function attributeEnumValues(
+	propertySchema: unknown,
+	label: string,
+): string[] | undefined {
+	const schema = getObject(propertySchema, label);
+	if (schema.type !== "string" || schema.enum === undefined) {
+		return undefined;
+	}
+	return getStringArray(schema.enum, `${label}.enum`);
+}
+
 function specTypeForAttributeType(type: SduiRowAttributeType): SduiRowSpecType {
 	switch (type) {
 		case "string":
@@ -164,12 +175,12 @@ export function extractSduiRowDefinition(
 	const attributes: SduiRowDefinition["attributes"] = {};
 	for (const [name, propertySchema] of Object.entries(properties)) {
 		if (name === "type") continue;
+		const propertyLabel = `${sourceLabel}: properties.${name}`;
+		const enumValues = attributeEnumValues(propertySchema, propertyLabel);
 		attributes[name] = {
 			required: required.has(name),
-			type: attributeTypeForProperty(
-				propertySchema,
-				`${sourceLabel}: properties.${name}`,
-			),
+			type: attributeTypeForProperty(propertySchema, propertyLabel),
+			...(enumValues ? { enum: enumValues } : {}),
 		};
 	}
 
@@ -280,12 +291,14 @@ export type RowFieldSpecKind =
 	| "textList"
 	| "child"
 	| "children"
-	| "binding";
+	| "binding"
+	| "enum";
 
 export type RowFieldSpec = {
 	name: string;
 	kind: RowFieldSpecKind;
 	required: boolean;
+	options?: string[];
 };
 
 function rowFieldSpecFromAttribute(
@@ -300,7 +313,18 @@ function rowFieldSpecFromAttribute(
 		};
 	}
 
-	let kind: Exclude<RowFieldSpecKind, "binding"> | null = null;
+	const name = SCHEMA_TO_UI_FIELD_NAME[schemaName] ?? schemaName;
+
+	if (attribute.type === "string" && attribute.enum) {
+		return {
+			name,
+			kind: "enum",
+			required: attribute.required,
+			options: attribute.enum,
+		};
+	}
+
+	let kind: Exclude<RowFieldSpecKind, "binding" | "enum"> | null = null;
 	switch (attribute.type) {
 		case "string":
 			kind = "text";
@@ -319,7 +343,7 @@ function rowFieldSpecFromAttribute(
 	}
 
 	return {
-		name: SCHEMA_TO_UI_FIELD_NAME[schemaName] ?? schemaName,
+		name,
 		kind,
 		required: attribute.required,
 	};

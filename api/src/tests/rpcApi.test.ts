@@ -5,7 +5,6 @@ import {
 	describe,
 	expect,
 	it,
-	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
@@ -19,14 +18,6 @@ import {
 	clearAllTestTables,
 	createPgliteTestDatabase,
 } from "./wsTestHelpers";
-
-mock.module("../procedures/services", () => ({
-	forwardCreate: mock(),
-	forwardDelete: mock(),
-	forwardGet: mock(),
-	forwardUpdate: mock(),
-	wireServiceEvents: mock(),
-}));
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 const dataDb = asEvyDb(testDb);

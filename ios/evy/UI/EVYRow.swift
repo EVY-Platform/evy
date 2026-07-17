@@ -10,24 +10,28 @@ import SwiftUI
 struct EVYRow: View, Identifiable {
   private let ref: EVYRowRef
   let datum: EVYJson?
+  private let hidesTitle: Bool
 
   @State private var storedRow: EVYStoredRow?
 
-  init(rowId: String, datum: EVYJson? = nil) {
+  init(rowId: String, datum: EVYJson? = nil, hidesTitle: Bool = false) {
     self.ref = .id(rowId)
     self.datum = datum
+    self.hidesTitle = hidesTitle
     _storedRow = State(initialValue: EVYRowStore.row(id: rowId))
   }
 
-  init(row: UI_Row, datum: EVYJson? = nil) {
+  init(row: UI_Row, datum: EVYJson? = nil, hidesTitle: Bool = false) {
     self.ref = .inline(row)
     self.datum = datum
+    self.hidesTitle = hidesTitle
     _storedRow = State(initialValue: nil)
   }
 
-  init(ref: EVYRowRef, datum: EVYJson? = nil) {
+  init(ref: EVYRowRef, datum: EVYJson? = nil, hidesTitle: Bool = false) {
     self.ref = ref
     self.datum = datum
+    self.hidesTitle = hidesTitle
     switch ref {
     case .id(let rowId):
       _storedRow = State(initialValue: EVYRowStore.row(id: rowId))
@@ -42,19 +46,22 @@ struct EVYRow: View, Identifiable {
   var body: some View {
     switch ref {
     case .id(let rowId):
-      EVYResolvedRow(ref: ref, storedRow: storedRow, datum: datum)
-        .onEVYRecordChange(
-          namespace: EVYNamespace.evy,
-          resource: EVYCoreResource.rows.rawValue,
-          id: rowId
-        ) {
-          let latestRow = EVYRowStore.row(id: rowId)
-          if storedRow != latestRow {
-            storedRow = latestRow
-          }
+      EVYResolvedRow(
+        ref: ref, storedRow: storedRow, datum: datum, hidesTitle: hidesTitle
+      )
+      .onEVYRecordChange(
+        namespace: EVYNamespace.evy,
+        resource: EVYCoreResource.rows.rawValue,
+        id: rowId
+      ) {
+        let latestRow = EVYRowStore.row(id: rowId)
+        if storedRow != latestRow {
+          storedRow = latestRow
         }
+      }
     case .inline:
-      EVYResolvedRow(ref: ref, storedRow: nil, datum: datum)
+      EVYResolvedRow(
+        ref: ref, storedRow: nil, datum: datum, hidesTitle: hidesTitle)
     }
   }
 }
@@ -78,15 +85,9 @@ func bootstrapRowDraft(row: UI_Row, scopeId: String?, payload: UI_RowPayload? = 
   let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
   guard !variableName.isEmpty else { return }
 
-  let initialData: Data?
-  switch row.type {
-  case .inlinePicker, .calendar:
-    initialData = "[]".data(using: .utf8)
-  case .timeslotPicker:
-    initialData = "\"\"".data(using: .utf8)
-  default:
-    initialData = nil
-  }
+  let initialData =
+    initialDraftData(for: row, destination: destination)
+    ?? defaultBootstrapData(for: row.type)
 
   EVY.ensureDraftExists(
     variableName: variableName,
@@ -95,20 +96,90 @@ func bootstrapRowDraft(row: UI_Row, scopeId: String?, payload: UI_RowPayload? = 
   )
 }
 
+private enum RowDraftShape {
+  case scalarString
+  case stringArray
+  case emptyStringScalar
+  case emptyArray
+}
+
+private func draftShape(for type: EVYRowType) -> RowDraftShape? {
+  switch type {
+  case .input, .textArea, .dropdown:
+    return .scalarString
+  case .inlinePicker:
+    return .stringArray
+  case .timeslotPicker:
+    return .emptyStringScalar
+  case .calendar:
+    return .emptyArray
+  default:
+    return nil
+  }
+}
+
+private func defaultBootstrapData(for type: EVYRowType) -> Data? {
+  switch draftShape(for: type) {
+  case .emptyArray:
+    return "[]".data(using: .utf8)
+  case .emptyStringScalar:
+    return "\"\"".data(using: .utf8)
+  default:
+    return nil
+  }
+}
+
+@MainActor
+private func initialDraftData(for row: UI_Row, destination: String) -> Data? {
+  guard let shape = draftShape(for: row.type) else { return nil }
+  guard !row.initial.isEmpty else { return nil }
+
+  let rawValue: EVYJson
+  switch shape {
+  case .scalarString:
+    rawValue = .string(row.initial)
+  case .stringArray:
+    rawValue = .array([.string(row.initial)])
+  default:
+    return nil
+  }
+  return try? EVY.prepareDraftData(value: rawValue, destination: destination).data
+}
+
+@MainActor
+private func uiRowWithHiddenTitle(_ row: UI_Row) -> UI_Row {
+  guard let encoded = try? JSONEncoder().encode(row),
+    var json = try? JSONSerialization.jsonObject(with: encoded) as? [String: Any]
+  else { return row }
+  json["title"] = ""
+  guard let data = try? JSONSerialization.data(withJSONObject: json),
+    let decoded = try? JSONDecoder().decode(UI_Row.self, from: data)
+  else { return row }
+  return decoded
+}
+
 private struct EVYResolvedRow: View {
   private let ref: EVYRowRef
   private let storedRow: EVYStoredRow?
   let datum: EVYJson?
+  private let hidesTitle: Bool
 
   @Environment(\.action) private var action
+  @Environment(\.sheetDismiss) private var sheetDismiss
   @Environment(\.evyScope) private var evyScope
   @State private var presentedSheetRef: EVYRowRef?
   @State private var isVisible = EVYState<Bool>(staticString: true)
 
-  init(ref: EVYRowRef, storedRow: EVYStoredRow?, datum: EVYJson? = nil) {
+  init(
+    ref: EVYRowRef,
+    storedRow: EVYStoredRow?,
+    datum: EVYJson? = nil,
+    hidesTitle: Bool = false
+  ) {
     self.ref = ref
     self.storedRow = storedRow
     self.datum = datum
+    self.hidesTitle = hidesTitle
     _isVisible = State(
       initialValue: Self.makeVisibilityState(
         for: Self.visibleExpression(ref: ref, storedRow: storedRow)
@@ -117,12 +188,18 @@ private struct EVYResolvedRow: View {
   }
 
   private var contentRow: UI_Row? {
+    let row: UI_Row?
     switch ref {
     case .id:
-      return storedRow?.uiRow()
-    case .inline(let row):
-      return row
+      row = storedRow?.uiRow()
+    case .inline(let inlineRow):
+      row = inlineRow
     }
+    guard let row else { return nil }
+    if hidesTitle {
+      return uiRowWithHiddenTitle(row)
+    }
+    return row
   }
 
   private var childRef: EVYRowRef? {
@@ -162,15 +239,10 @@ private struct EVYResolvedRow: View {
         if let payload = try? UI_RowPayload.from(row: contentRow) {
           renderedRow(for: payload, contentRow: contentRow)
             .sheet(item: $presentedSheetRef) { sheetRef in
-              ScrollView {
-                EVYRow(ref: sheetRef)
-              }
-              .padding(.vertical, Constants.majorPadding)
-              .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-              .background(Color.white.ignoresSafeArea())
-              .presentationDetents([.medium, .large])
-              .presentationDragIndicator(.visible)
-              .presentationBackground(.white)
+              EVYSheetOverlay(
+                sheetRef: sheetRef,
+                onDismiss: { presentedSheetRef = nil }
+              )
             }
             .onAppear {
               refreshVisibilityState()
@@ -216,7 +288,13 @@ private struct EVYResolvedRow: View {
       childRef: childRef,
       show: { ref in presentedSheetRef = ref },
       prepare: prepare,
-      action: action
+      action: { operation in
+        if case .close = operation, let sheetDismiss {
+          sheetDismiss()
+          return
+        }
+        action(operation)
+      }
     )
   }
 
@@ -286,5 +364,51 @@ private struct EVYResolvedRow: View {
         EmptyView()
       }
     }
+  }
+}
+
+/// Sheet presented by `{show()}`: child row `title` is the main header (like a page title).
+private struct EVYSheetOverlay: View {
+  let sheetRef: EVYRowRef
+  let onDismiss: () -> Void
+
+  /// Refreshed when the sheet root row updates (e.g. web builder title edit).
+  @State private var sheetTitleTemplate: String
+
+  init(sheetRef: EVYRowRef, onDismiss: @escaping () -> Void) {
+    self.sheetRef = sheetRef
+    self.onDismiss = onDismiss
+    _sheetTitleTemplate = State(initialValue: Self.titleTemplate(for: sheetRef))
+  }
+
+  var body: some View {
+    NavigationStack {
+      ScrollView {
+        EVYRow(ref: sheetRef, hidesTitle: true)
+          .environment(\.sheetDismiss, onDismiss)
+      }
+      .padding(.vertical, Constants.majorPadding)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+      .background(Color.white.ignoresSafeArea())
+      .evyNavigationTitle(sheetTitleTemplate)
+    }
+    .presentationDetents([.medium, .large])
+    .presentationDragIndicator(.visible)
+    .presentationBackground(.white)
+    .onEVYRecordChange(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.rows.rawValue,
+      id: sheetRef.id
+    ) {
+      guard case .id = sheetRef else { return }
+      let latestTitle = Self.titleTemplate(for: sheetRef)
+      if sheetTitleTemplate != latestTitle {
+        sheetTitleTemplate = latestTitle
+      }
+    }
+  }
+
+  private static func titleTemplate(for sheetRef: EVYRowRef) -> String {
+    sheetRef.templateRow()?.title.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
   }
 }

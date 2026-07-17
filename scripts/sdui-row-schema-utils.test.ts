@@ -174,6 +174,10 @@ describe("rowFieldsFromDefinitions", () => {
 							},
 							destination: { type: "string" },
 							source: { type: "string" },
+							style: {
+								type: "string",
+								enum: ["primary", "danger"],
+							},
 						},
 					},
 				],
@@ -207,6 +211,12 @@ describe("rowFieldsFromDefinitions", () => {
 					name: "source",
 					kind: "binding",
 					required: false,
+				},
+				{
+					name: "style",
+					kind: "enum",
+					required: false,
+					options: ["primary", "danger"],
 				},
 			],
 		});

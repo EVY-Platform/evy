@@ -24,6 +24,9 @@
 				},
 				"placeholder": {
 					"type": "string"
+				},
+				"initial": {
+					"type": "string"
 				}
 			}
 		}

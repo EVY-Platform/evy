@@ -24,6 +24,9 @@
 				},
 				"value": {
 					"type": "string"
+				},
+				"initial": {
+					"type": "string"
 				}
 			}
 		}

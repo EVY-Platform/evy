@@ -291,9 +291,7 @@ test.describe("Builder Assist flows", () => {
 			),
 		).toBeVisible();
 		await expect(
-			configPanel.getByText(
-				`create(${MARKETPLACE_SERVICE}, ${ITEM_RESOURCE_ID})`,
-			),
+			configPanel.getByText("create(Marketplace, item)", { exact: true }),
 		).toBeVisible();
 
 		await configPanel.getByLabel("Edit action 1").click();

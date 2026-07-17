@@ -5,20 +5,18 @@ import {
 	describe,
 	expect,
 	it,
-	mock,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { schema } from "../db";
 import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../resources";
-import { createPgliteTestDatabase } from "./dbTestHelpers";
+import {
+	createPgliteTestDatabase,
+	registerMarketplaceTestDb,
+} from "./dbTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
-mock.module("../db", () => ({
-	data: schema.data,
-	db: testDb,
-	schema,
-}));
+registerMarketplaceTestDb(testDb);
 
 const { create, deleteResource, get, update } = await import("../data");
 

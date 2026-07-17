@@ -254,13 +254,28 @@ export function filterCandidatesForSuggestionContext(
 	return [];
 }
 
+function buildDisplayCandidates(candidates: IdCandidate[]): IdCandidate[] {
+	return candidates
+		.filter(isDisplayCandidate)
+		.toSorted((a, b) => b.id.length - a.id.length);
+}
+
+export function getIdDisplayText(
+	value: string,
+	candidates: IdCandidate[],
+): string {
+	return getIdDisplayParts(value, candidates)
+		.map((part) =>
+			part.type === "candidate" ? part.displayName : part.text,
+		)
+		.join("");
+}
+
 export function getIdDisplayParts(
 	value: string,
 	candidates: IdCandidate[],
 ): IdDisplayPart[] {
-	const displayCandidates = candidates
-		.filter(isDisplayCandidate)
-		.toSorted((a, b) => b.id.length - a.id.length);
+	const displayCandidates = buildDisplayCandidates(candidates);
 	const parts: IdDisplayPart[] = [];
 	let textStart = 0;
 	let index = 0;

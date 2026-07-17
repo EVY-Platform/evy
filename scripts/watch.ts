@@ -10,20 +10,37 @@ function debounce(fn: () => void, ms: number) {
 }
 
 function makeWatcher(label: string, script: string) {
-	return debounce(async () => {
-		console.log(`[watch] ${label}`);
-		try {
-			await $`bun run ${script}`;
-		} catch (error) {
-			console.error(`[watch] ${script} failed:`, error);
+	let running = false;
+	let rerunRequested = false;
+
+	const run = async () => {
+		if (running) {
+			rerunRequested = true;
+			return;
 		}
+
+		running = true;
+		do {
+			rerunRequested = false;
+			console.log(`[watch] ${label}`);
+			try {
+				await $`bun run ${script}`;
+			} catch (error) {
+				console.error(`[watch] ${script} failed:`, error);
+			}
+		} while (rerunRequested);
+		running = false;
+	};
+
+	return debounce(() => {
+		void run();
 	}, 300);
 }
 
 watch(
-	"./types",
+	"./types/schema",
 	{ recursive: true },
-	makeWatcher("types/ changed → types:generate", "types:generate"),
+	makeWatcher("types/schema changed → types:generate", "types:generate"),
 );
 
 for (const file of [
@@ -34,4 +51,4 @@ for (const file of [
 	watch(file, makeWatcher("seed data changed → db:seed", "db:seed"));
 }
 
-console.log("[watch] watching types/ and seed JSON files…");
+console.log("[watch] watching types/schema/ and seed JSON files…");

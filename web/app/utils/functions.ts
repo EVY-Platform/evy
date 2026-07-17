@@ -113,7 +113,7 @@ function evyFormatAddressLine1(): EVYFunctionOutput {
 }
 
 function evyFormatAddressLine2(): EVYFunctionOutput {
-	return { value: "Sydney, NSW" };
+	return { value: "Sydney, NSW 2000" };
 }
 
 const evyFormatDecimalStub = (): EVYFunctionOutput => ({ value: "20.04" });

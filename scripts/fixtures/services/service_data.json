@@ -115,6 +115,7 @@
 			"transfer_options": {
 				"pickup": {
 					"selection": ["2026-06-03T09:00:00", "2026-06-03T09:30:00"],
+					"lead_time_hours": "24",
 					"address": {
 						"unit": "C509",
 						"street": "28 Rothschild Avenue",
@@ -181,6 +182,7 @@
 			"transfer_options": {
 				"pickup": {
 					"selection": ["2026-06-03T10:00:00"],
+					"lead_time_hours": "24",
 					"address": {
 						"unit": "C509",
 						"street": "28 Rothschild Avenue",

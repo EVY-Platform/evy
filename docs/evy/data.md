@@ -236,6 +236,7 @@ Calendar rows use three bindings: `source` supplies the main timeslots to displa
 pickup: {
     selection: [string]   (ISO date-time strings)
     address: address
+    lead_time_hours: string   (hours of notice required before pickup)
 }
 delivery: {
     fee: price

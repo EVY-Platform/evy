@@ -18,7 +18,6 @@ final class EVYDataChangeNotificationTests: XCTestCase {
     let id = UUID().uuidString
 
     var receivedChanges: [EVYRecordChange] = []
-    let expectation = expectation(description: "Receives typed record change payload")
 
     let token = NotificationCenter.default.addObserver(
       forName: .evyRecordChanged, object: nil, queue: nil
@@ -26,7 +25,6 @@ final class EVYDataChangeNotificationTests: XCTestCase {
       MainActor.assumeIsolated {
         if let change = EVYRecordChange.from(notification) {
           receivedChanges.append(change)
-          expectation.fulfill()
         }
       }
     }
@@ -34,8 +32,6 @@ final class EVYDataChangeNotificationTests: XCTestCase {
 
     let data = try JSONSerialization.data(withJSONObject: ["id": id])
     try store.create(namespace: namespace, resource: resource, id: id, value: data)
-
-    wait(for: [expectation], timeout: 1.0)
 
     let matchingChange = receivedChanges.first
     XCTAssertEqual(matchingChange?.namespace, namespace)

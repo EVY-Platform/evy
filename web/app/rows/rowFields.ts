@@ -1,4 +1,4 @@
-import { SDUI_ROW_FIELDS } from "evy-types";
+import { type RowFieldSpecKind, SDUI_ROW_FIELDS } from "evy-types";
 
 export type RowBindingField = "source" | "destination" | "secondary";
 
@@ -23,12 +23,13 @@ export const BINDING_FIELD_COPY: Record<
 	},
 };
 
-export type RowFieldKind = "text" | "textList" | "child" | "children";
+export type RowFieldKind = "text" | "textList" | "child" | "children" | "enum";
 
 export type RowField = {
 	name: string;
 	kind: RowFieldKind;
 	required: boolean;
+	options?: string[];
 };
 
 function rowFieldSpecs(type: string) {
@@ -42,6 +43,7 @@ export function getRowContentFields(type: string): RowField[] {
 			name: field.name,
 			kind: field.kind as RowFieldKind,
 			required: field.required,
+			...(field.options ? { options: field.options } : {}),
 		}));
 }
 
@@ -82,11 +84,15 @@ function panelTextFieldRank(name: string): number {
 	return index === -1 ? ROW_FIELD_PANEL_ORDER.length : index;
 }
 
+export function isPanelScalarField(kind: RowFieldSpecKind): boolean {
+	return kind === "text" || kind === "textList" || kind === "enum";
+}
+
 export function getAllRowContentFieldNames(): string[] {
 	const names = new Set<string>();
 	for (const fields of Object.values(SDUI_ROW_FIELDS)) {
 		for (const field of fields) {
-			if (field.kind === "text" || field.kind === "textList") {
+			if (isPanelScalarField(field.kind)) {
 				names.add(field.name);
 			}
 		}
@@ -107,9 +113,9 @@ export function getAllRowBindingFieldNames(): string[] {
 }
 
 export function compareRowFieldsForPanel(a: RowField, b: RowField): number {
-	const aIsText = a.kind === "text" || a.kind === "textList";
-	const bIsText = b.kind === "text" || b.kind === "textList";
-	if (aIsText && bIsText) {
+	const aIsScalar = isPanelScalarField(a.kind);
+	const bIsScalar = isPanelScalarField(b.kind);
+	if (aIsScalar && bIsScalar) {
 		const rankDiff =
 			panelTextFieldRank(a.name) - panelTextFieldRank(b.name);
 		return rankDiff !== 0 ? rankDiff : a.name.localeCompare(b.name);

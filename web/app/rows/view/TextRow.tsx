@@ -2,6 +2,7 @@ import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
 import { lineClampStyle } from "../design-system/lineClamp";
+import { TitleSubtitleRow } from "../design-system/TitleSubtitleRow";
 
 export default defineRow("TextRow", {
 	config: {
@@ -13,33 +14,22 @@ export default defineRow("TextRow", {
 	} satisfies RowConfig,
 	render: (row) => {
 		const { title = "", subtitle = "", label = "" } = row.config;
-
 		return (
-			<div className="evy-flex evy-flex-row evy-items-center evy-gap-2 evy-p-2">
-				<div className="evy-flex-1 evy-min-w-0">
-					{title.trim() ? (
-						<p className="evy-text-md" style={lineClampStyle(1)}>
-							<EVYText text={title} />
-						</p>
-					) : null}
-					{subtitle.trim() ? (
+			<TitleSubtitleRow
+				title={title}
+				subtitle={subtitle}
+				centerSubtitleWhenTitleEmpty
+				trailing={
+					label.trim() ? (
 						<p
 							className="evy-text-sm evy-text-gray"
-							style={lineClampStyle(3)}
+							style={lineClampStyle(1)}
 						>
-							<EVYText text={subtitle} />
+							<EVYText text={label} />
 						</p>
-					) : null}
-				</div>
-				{label.trim() ? (
-					<p
-						className="evy-text-sm evy-text-gray"
-						style={lineClampStyle(1)}
-					>
-						<EVYText text={label} />
-					</p>
-				) : null}
-			</div>
+					) : null
+				}
+			/>
 		);
 	},
 });

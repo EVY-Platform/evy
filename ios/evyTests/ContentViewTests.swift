@@ -611,6 +611,31 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(formattedRow.subtitle, "2018 Rosebery, NSW")
   }
 
+  func testPlaceSearchResultTemplateFormatsAddressLinesWithBareDatum() throws {
+    let row = try decodeRow([
+      "id": "place-search-result-address-lines",
+      "type": "Text",
+      "actions": [],
+      "title": "{formatAddressLine1($datum)}",
+      "subtitle": "{formatAddressLine2($datum)}",
+    ])
+    let formatter = try EVYDatumRowFormatter(template: row)
+    let datum = EVYJson.dictionary([
+      "id": .string("ChIJRothschild"),
+      "unit": .string("C509"),
+      "street": .string("28 Rothschild Avenue"),
+      "city": .string("Rosebery"),
+      "state": .string("NSW"),
+      "postcode": .string("2018"),
+      "country": .string("Australia"),
+    ])
+
+    let formattedRow = try formatter.formattedResult(datum: datum).row
+
+    XCTAssertEqual(formattedRow.title, "C509 28 Rothschild Avenue")
+    XCTAssertEqual(formattedRow.subtitle, "Rosebery, NSW 2018")
+  }
+
   private func decodeRow(_ json: [String: Any]) throws -> UI_Row {
     let data = try JSONSerialization.data(withJSONObject: json)
     return try JSONDecoder().decode(UI_Row.self, from: data)

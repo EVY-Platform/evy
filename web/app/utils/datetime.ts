@@ -226,7 +226,7 @@ export function evyFormatDatetime(
 	if (!isoDatetime || !pattern) return { value: "" };
 
 	const parts = getDatetimeParts(isoDatetime);
-	if (!parts) return { value: isoDatetime };
+	if (!parts) return { value: pattern };
 
 	return { value: formatDatetimeParts(parts, pattern) };
 }

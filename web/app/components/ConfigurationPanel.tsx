@@ -8,6 +8,7 @@ import {
 	compareRowFieldsForPanel,
 	getRowBindingFields,
 	getRowContentFields,
+	isPanelScalarField,
 	type RowBindingField,
 } from "../rows/rowFields";
 import { useFlowsContext } from "../state";
@@ -31,6 +32,7 @@ import { unwrapOptionalBraces } from "../utils/unwrapBraces";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
+import { type PopoverOption, PopoverSelect } from "./PopoverSelect";
 
 function resolveSourceResourceId(
 	source: string,
@@ -93,6 +95,39 @@ function ConfigTextField({
 				getAttributeCandidatesForQualifier={
 					getAttributeCandidatesForQualifier
 				}
+			/>
+		</div>
+	);
+}
+
+function ConfigEnumField({
+	id,
+	label,
+	value,
+	options,
+	onChange,
+}: {
+	id: string;
+	label: string;
+	value: string;
+	options: string[];
+	onChange: (next: string) => void;
+}) {
+	const popoverOptions: PopoverOption[] = options.map((option) => ({
+		value: option,
+		label: option,
+	}));
+	const selectedValue = value || options[0] || "";
+
+	return (
+		<div className="evy-mb-2">
+			<label htmlFor={id}>{label}</label>
+			<PopoverSelect
+				id={id}
+				ariaLabel={label}
+				options={popoverOptions}
+				value={selectedValue}
+				onChange={onChange}
 			/>
 		</div>
 	);
@@ -258,8 +293,8 @@ export function ConfigurationPanel() {
 			const bindingFields = getRowBindingFields(configRow.config.type);
 			const rowSource = configRow.config.source ?? "";
 
-			const textFields = fields
-				.filter((f) => f.kind === "text" || f.kind === "textList")
+			const scalarFields = fields
+				.filter((f) => isPanelScalarField(f.kind))
 				.sort(compareRowFieldsForPanel);
 			const childFields = fields
 				.filter((f) => f.kind === "child" || f.kind === "children")
@@ -286,8 +321,22 @@ export function ConfigurationPanel() {
 					: [];
 			};
 
-			const contentElements = textFields.map((field) => {
+			const contentElements = scalarFields.map((field) => {
 				const uniqueId = `${configRow.id}-${field.name}`;
+				if (field.kind === "enum") {
+					return (
+						<ConfigEnumField
+							key={uniqueId}
+							id={uniqueId}
+							label={field.name}
+							value={String(merged[field.name] ?? "")}
+							options={field.options ?? []}
+							onChange={(next) =>
+								updateRowContent(field.name, next, configRow.id)
+							}
+						/>
+					);
+				}
 				return (
 					<ConfigTextField
 						key={uniqueId}
