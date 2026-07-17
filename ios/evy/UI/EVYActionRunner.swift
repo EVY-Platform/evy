@@ -114,9 +114,11 @@ enum EVYActionRunner {
       case "close":
         action(.close)
       case "show":
-        if let childRef {
-          show(childRef)
+        guard let childRef else {
+          throw EVYError.invalidData(
+            context: "show() requires the row to have a child to present")
         }
+        show(childRef)
       case "highlight_required":
         let args = splitFunctionArguments(functionArgs)
         let alias = args.first ?? "field"

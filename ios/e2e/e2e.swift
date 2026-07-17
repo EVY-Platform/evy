@@ -12,12 +12,24 @@ private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceResource.items.rawValue
 actor WSEmitter {
   private var ws: URLSessionWebSocketTask?
   private var msgId = 0
+  private var bufferedEvents: [[String: Any]] = []
 
   func connect(host: String) async throws {
     let url = URL(string: "ws://\(host)")!
     ws = URLSession.shared.webSocketTask(with: url)
     ws?.resume()
-    try await Task.sleep(nanoseconds: 300_000_000)  // 0.3s for connection
+    bufferedEvents = []
+    msgId = 0
+    guard let ws else {
+      throw NSError(
+        domain: "WSEmitter", code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "socket not created"])
+    }
+    try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+      ws.sendPing { error in
+        if let error { c.resume(throwing: error) } else { c.resume(returning: ()) }
+      }
+    }
   }
 
   func login(token: String, os: String) async throws {
@@ -26,6 +38,72 @@ actor WSEmitter {
       throw NSError(
         domain: "WSEmitter", code: 1, userInfo: [NSLocalizedDescriptionKey: "Login failed"])
     }
+  }
+
+  func subscribe(event: String) async throws {
+    _ = try await send(method: "rpc.on", params: [event])
+  }
+
+  func nextDataChanged(resource: String, deadline: Date) async throws -> Bool {
+    while true {
+      if takeMatchingBufferedDataChanged(resource: resource) {
+        return true
+      }
+      let remaining = deadline.timeIntervalSinceNow
+      guard remaining > 0 else { return false }
+
+      let message: URLSessionWebSocketTask.Message? = try await withThrowingTaskGroup(
+        of: URLSessionWebSocketTask.Message?.self
+      ) { group in
+        group.addTask { [ws] in
+          guard let ws else { return nil }
+          return try await ws.receive()
+        }
+        group.addTask {
+          try await Task.sleep(for: .seconds(remaining))
+          return nil
+        }
+        let first = try await group.next() ?? nil
+        group.cancelAll()
+        return first ?? nil
+      }
+
+      guard let message else { return false }
+
+      guard case .string(let text) = message,
+        let data = text.data(using: .utf8),
+        let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+      else {
+        continue
+      }
+
+      if isMatchingDataChanged(response, resource: resource) {
+        return true
+      }
+      if response["method"] != nil {
+        bufferedEvents.append(response)
+      }
+    }
+  }
+
+  private func takeMatchingBufferedDataChanged(resource: String) -> Bool {
+    while !bufferedEvents.isEmpty {
+      let event = bufferedEvents.removeFirst()
+      if isMatchingDataChanged(event, resource: resource) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private func isMatchingDataChanged(_ event: [String: Any], resource: String) -> Bool {
+    guard event["method"] as? String == "dataChanged",
+      let params = event["params"] as? [String: Any],
+      params["resource"] as? String == resource
+    else {
+      return false
+    }
+    return true
   }
 
   func applySDUI(flowData: [String: Any], flowId: String) async throws {
@@ -191,7 +269,10 @@ actor WSEmitter {
 
   private func send(method: String, params: Any) async throws -> [String: Any] {
     msgId += 1
-    let msg: [String: Any] = ["jsonrpc": "2.0", "id": msgId, "method": method, "params": params]
+    let requestId = msgId
+    let msg: [String: Any] = [
+      "jsonrpc": "2.0", "id": requestId, "method": method, "params": params,
+    ]
     let json = String(data: try JSONSerialization.data(withJSONObject: msg), encoding: .utf8)!
     try await ws?.send(.string(json))
 
@@ -203,22 +284,35 @@ actor WSEmitter {
       else {
         return [:]
       }
-      if response["id"] == nil { continue }
-      if let error = response["error"] as? [String: Any] {
-        let message = (error["message"] as? String) ?? "JSON-RPC error"
-        let details = (error["data"] as? String).map { ": \($0)" } ?? ""
-        throw NSError(
-          domain: "WSEmitter",
-          code: (error["code"] as? Int) ?? -1,
-          userInfo: [NSLocalizedDescriptionKey: "\(method) failed: \(message)\(details)"]
-        )
+      if let responseId = jsonRpcId(from: response) {
+        guard responseId == requestId else { continue }
+        if let error = response["error"] as? [String: Any] {
+          let message = (error["message"] as? String) ?? "JSON-RPC error"
+          let details = (error["data"] as? String).map { ": \($0)" } ?? ""
+          throw NSError(
+            domain: "WSEmitter",
+            code: (error["code"] as? Int) ?? -1,
+            userInfo: [NSLocalizedDescriptionKey: "\(method) failed: \(message)\(details)"]
+          )
+        }
+        return response
       }
-      return response
+      if response["method"] != nil {
+        bufferedEvents.append(response)
+      }
     }
+  }
+
+  private func jsonRpcId(from response: [String: Any]) -> Int? {
+    if let id = response["id"] as? Int { return id }
+    if let id = response["id"] as? NSNumber { return id.intValue }
+    return nil
   }
 }
 
 private enum E2EFlowIds {
+  /// The seeded production home flow the app boots into when no HOME_FLOW_ID override is set.
+  static let defaultHomeFlow = "f267c629-2594-4770-8cec-d5324ebb4058"
   static let navigationHomeFlow = "10000000-0000-4000-8000-000000000001"
   static let navigationViewFlow = "10000000-0000-4000-8000-000000000007"
   static let navigationViewPage = "10000000-0000-4000-8000-000000000008"
@@ -292,6 +386,83 @@ class E2ETestBase: XCTestCase {
     ]
   }
 
+  /// Runs async work (websocket emitter calls) from a synchronous test method. Keeping UI
+  /// tests synchronous avoids an Xcode 26 Swift-concurrency runtime crash
+  /// (swiftlang/swift#84793: "freed pointer was not the last allocation") that aborts the
+  /// test runner when an async test body interleaves awaits with run-loop-pumping XCUI waits.
+  private final class AsyncResultBox<U>: @unchecked Sendable {
+    var result: Result<U, Error>?
+  }
+
+  func awaitResult<T>(
+    _ label: String,
+    timeout: TimeInterval = 30,
+    _ body: @escaping () async throws -> T
+  ) throws -> T {
+    let box = AsyncResultBox<T>()
+    let done = expectation(description: label)
+    Task.detached {
+      do {
+        box.result = .success(try await body())
+      } catch {
+        box.result = .failure(error)
+      }
+      done.fulfill()
+    }
+    wait(for: [done], timeout: timeout)
+    guard let result = box.result else {
+      throw NSError(
+        domain: "E2ETest", code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "\(label) timed out after \(timeout)s"])
+    }
+    return try result.get()
+  }
+
+  /// Returns the hittable button with the given label, waiting for one to appear.
+  /// Used when a sheet's confirm button shares its label with an obscured button behind
+  /// the sheet (`isHittable` is not a legal key path inside XCUI query predicates).
+  @MainActor
+  func waitForHittableButton(labeled label: String, timeout: TimeInterval = 5) -> XCUIElement? {
+    let deadline = Date().addingTimeInterval(timeout)
+    let query = app.buttons.matching(NSPredicate(format: "label == %@", label))
+    repeat {
+      for index in 0..<query.count {
+        let element = query.element(boundBy: index)
+        if element.exists && element.isHittable {
+          return element
+        }
+      }
+      _ = query.firstMatch.waitForExistence(timeout: 0.5)
+    } while Date() < deadline
+    return nil
+  }
+
+  /// The page's content scroll view (accessibility id `page_<pageId>` from EVYPage).
+  /// IMPORTANT: never use `app.scrollViews.firstMatch` while the keyboard is up — it
+  /// resolves to the keyboard's QuickType suggestion bar (a 44pt scroll view), so taps
+  /// and swipes aimed at "the page" hit the keyboard instead.
+  @MainActor
+  var pageScrollView: XCUIElement {
+    app.scrollViews.matching(NSPredicate(format: "identifier BEGINSWITH 'page_'")).firstMatch
+  }
+
+  /// Dismisses the software keyboard by tapping a non-interactive static label inside the
+  /// page scroll view: the page's tap gesture resigns the first responder, and a label
+  /// (unlike a blind coordinate) can never re-focus an input. Then waits for the keyboard
+  /// to actually retract so the next tap isn't swallowed mid-transition.
+  @MainActor
+  func dismissKeyboard() {
+    let keyboard = app.keyboards.firstMatch
+    guard keyboard.exists else { return }
+    let label = pageScrollView.staticTexts.firstMatch
+    if label.exists {
+      label.tap()
+    } else {
+      pageScrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.02)).tap()
+    }
+    _ = keyboard.waitForNonExistence(timeout: 3)
+  }
+
   func clearAndType(field: XCUIElement, text: String, placeholder: String? = nil) {
     if let existingText = field.value as? String, !existingText.isEmpty {
       let shouldClearExistingText = placeholder == nil || existingText != placeholder
@@ -360,11 +531,13 @@ class E2ETestBase: XCTestCase {
     return nil
   }
 
-  @MainActor func tapAndGetEditableField(container: XCUIElement) async -> XCUIElement? {
+  /// Synchronous on purpose: UI-driving helpers should not suspend. Mixing `Task.sleep`
+  /// with run-loop-pumping XCUI waits triggers a Swift-concurrency runtime crash in the
+  /// Xcode 26 toolchain (swiftlang/swift#84793: "freed pointer was not the last allocation").
+  @MainActor func tapAndGetEditableField(container: XCUIElement) -> XCUIElement? {
     container.tap()
-    try? await Task.sleep(for: .milliseconds(500))
     let textField = container.textFields.firstMatch
-    if textField.exists {
+    if textField.waitForExistence(timeout: 2) {
       return textField
     }
     let anyTextField = app.textFields.firstMatch
@@ -392,38 +565,25 @@ class E2ETestBase: XCTestCase {
   func waitForConfirmationSheetDismissed(timeout: TimeInterval = 5) -> Bool {
     let navigationTitle = app.navigationBars.staticTexts["Confirmation"]
     if navigationTitle.exists {
-      let expectation = XCTNSPredicateExpectation(
-        predicate: NSPredicate(format: "exists == false"),
-        object: navigationTitle
-      )
-      return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
+      return navigationTitle.waitForNonExistence(timeout: timeout)
     }
     let staticTitle = app.staticTexts["Confirmation"]
     if staticTitle.exists {
-      let expectation = XCTNSPredicateExpectation(
-        predicate: NSPredicate(format: "exists == false"),
-        object: staticTitle
-      )
-      return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
+      return staticTitle.waitForNonExistence(timeout: timeout)
     }
-    return !confirmationSheetIsPresent()
+    return true
   }
 
   @MainActor
   func dismissConfirmationSheet() {
-    // Drag the sheet down by its title bar rather than swiping its body: a plain
-    // `swipeDown()` is captured by the sheet's inner ScrollView and scrolls content
-    // instead of dismissing the sheet.
-    for _ in 0..<3 {
+    // Swipe gestures are unreliable for dismissing detented sheets in XCUITest (the swipe
+    // is often captured by the sheet's inner ScrollView). The sheet opens at the .medium
+    // detent, which dims the presenting view above it — a single tap on that backdrop is
+    // the standard, deterministic way to dismiss.
+    for _ in 0..<2 {
       guard confirmationSheetIsPresent() else { return }
-      let handle =
-        app.navigationBars.staticTexts["Confirmation"].exists
-        ? app.navigationBars.staticTexts["Confirmation"]
-        : app.staticTexts["Confirmation"]
-      let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-      let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 1.0))
-      start.press(forDuration: 0.15, thenDragTo: end)
-      if waitForConfirmationSheetDismissed(timeout: 2) { return }
+      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+      if waitForConfirmationSheetDismissed(timeout: 3) { return }
     }
   }
 
@@ -465,22 +625,7 @@ class E2ETestBase: XCTestCase {
     timeout: TimeInterval = 10,
     operation: @escaping () async throws -> Void
   ) throws {
-    let asyncExpectation = expectation(description: description)
-    var capturedError: Error?
-
-    Task {
-      do {
-        try await operation()
-      } catch {
-        capturedError = error
-      }
-      asyncExpectation.fulfill()
-    }
-
-    wait(for: [asyncExpectation], timeout: timeout)
-    if let capturedError {
-      throw capturedError
-    }
+    try awaitResult(description, timeout: timeout, operation)
   }
 
   func seedFlows(_ flows: [(flowId: String, flowData: [String: Any])]) throws {
@@ -976,7 +1121,7 @@ class E2ETestBase: XCTestCase {
         )
       ],
       confirmButton: Self.confirmSheetButton(
-        id: "e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0bd",
+        id: "e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0c",
         label: "Request {formatDatetime(selected_delivery_timeslot, \"HH:mm\")}",
         action: deliveryCreateAction,
         name: "Confirm delivery request"
@@ -1010,7 +1155,22 @@ class E2ETestBase: XCTestCase {
   }
 
   static func submitListingSheetChild(createAction: String) -> [String: Any] {
-    Self.confirmationSheetChild(
+    // Mirrors the production fixture's "Confirm submit listing" button: create → close the
+    // sheet → navigate back to the home flow (a sheet-level {close()} only dismisses the
+    // sheet, so returning home needs the explicit navigate).
+    var confirmButton = Self.confirmSheetButton(
+      id: "c6d7e8f9-a0b1-4c2d-3e4f-5a6b7c8d9e0f",
+      label: "Submit",
+      action: createAction,
+      name: "Confirm submit listing"
+    )
+    var confirmActions = (confirmButton["actions"] as? [[String: String]]) ?? []
+    confirmActions.append(
+      Self.rowAction(
+        true: "{navigate(\(E2EFlowIds.defaultHomeFlow),\(E2EFlowIds.webSocketHomePage))}"))
+    confirmButton["actions"] = confirmActions
+
+    return Self.confirmationSheetChild(
       id: "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
       name: "Submit listing confirmation sheet",
       messageRows: [
@@ -1021,12 +1181,7 @@ class E2ETestBase: XCTestCase {
           name: "Submit listing confirmation message"
         )
       ],
-      confirmButton: Self.confirmSheetButton(
-        id: "c6d7e8f9-a0b1-4c2d-3e4f-5a6b7c8d9e0f",
-        label: "Submit",
-        action: createAction,
-        name: "Confirm submit listing"
-      )
+      confirmButton: confirmButton
     )
   }
 
@@ -1512,7 +1667,7 @@ final class WebSocketE2ETests: E2ETestBase {
       XCTFail("Unrelated input row should be visible on the home screen")
       return
     }
-    guard let inputField = await tapAndGetEditableField(container: inputContainer) else {
+    guard let inputField = tapAndGetEditableField(container: inputContainer) else {
       XCTFail("Failed to get editable unrelated input field")
       return
     }
@@ -1650,7 +1805,7 @@ final class WebSocketE2ETests: E2ETestBase {
       XCTFail("View item page should show an input bound to the item title")
       return
     }
-    guard let titleField = await tapAndGetEditableField(container: titleInput) else {
+    guard let titleField = tapAndGetEditableField(container: titleInput) else {
       XCTFail("Failed to get editable title input on the view item page")
       return
     }
@@ -1708,7 +1863,7 @@ final class WebSocketE2ETests: E2ETestBase {
       XCTFail("Sheet should show an input bound to the item title")
       return
     }
-    guard let titleField = await tapAndGetEditableField(container: titleInput) else {
+    guard let titleField = tapAndGetEditableField(container: titleInput) else {
       XCTFail("Failed to get editable title input inside the sheet")
       return
     }
@@ -1792,6 +1947,7 @@ final class WebSocketE2ETests: E2ETestBase {
       itemId: selectedItemId,
       buttonExistenceMessage: "Request view button should load"
     )
+    try await emitter.subscribe(event: "dataChanged")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -1956,6 +2112,7 @@ final class WebSocketE2ETests: E2ETestBase {
       viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
       buttonExistenceMessage: "Request view button should load"
     )
+    try await emitter.subscribe(event: "dataChanged")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -1999,7 +2156,12 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       waitForConfirmationSheet(timeout: 5),
       "Cancel pickup confirmation sheet should appear")
-    app.buttons["Cancel request"].firstMatch.tap()
+    // The row button and the sheet's confirm button share the "Cancel request" label; tap the
+    // hittable one (the confirm button on top of the sheet) so the archive action actually fires.
+    let confirmCancelButton = try XCTUnwrap(
+      waitForHittableButton(labeled: "Cancel request"),
+      "Confirm cancel button should be tappable in the sheet")
+    confirmCancelButton.tap()
 
     let requestArchived = try await waitForArchivedMarketplaceRequest(
       emitter: emitter,
@@ -2044,6 +2206,7 @@ final class WebSocketE2ETests: E2ETestBase {
       itemId: selectedItemId,
       buttonExistenceMessage: "Request view button should load"
     )
+    try await emitter.subscribe(event: "dataChanged")
 
     let askToBuyButton = app.buttons["Ask to buy"]
     XCTAssertTrue(
@@ -2071,7 +2234,7 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(dismissAlertButton.exists, "Missing-information alert should be dismissible")
     dismissAlertButton.tap()
 
-    try await fillShippingPostcodeAndAskToBuy()
+    try fillShippingPostcodeAndAskToBuy()
 
     XCTAssertTrue(
       waitForConfirmationSheet(timeout: 5),
@@ -2119,7 +2282,7 @@ final class WebSocketE2ETests: E2ETestBase {
       itemId: itemId
     )
 
-    try await fillShippingPostcodeAndAskToBuy()
+    try fillShippingPostcodeAndAskToBuy()
 
     XCTAssertTrue(
       waitForConfirmationSheet(timeout: 5),
@@ -2238,128 +2401,100 @@ final class WebSocketE2ETests: E2ETestBase {
     )
   }
 
+  // Synchronous on purpose (async bridged via `awaitResult`): heavy async UI tests hit an
+  // Xcode 26 Swift-concurrency runtime crash ("freed pointer was not the last allocation",
+  // swiftlang/swift#84793) that aborts the runner mid-test.
   @MainActor
-  func testCreateItemFormEditing() async throws {
-    let viewItemButton = app.buttons["View"]
+  func testCreateItemFormEditing() throws {
     let createItemButton = app.buttons["Create"]
     XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
+      createItemButton.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
-    try await emitter.updateSDUI(
-      flowData: Self.minimalCreateItemFlowData(),
-      flowId: E2EFlowIds.webSocketCreateFlow
-    )
-    try await Task.sleep(for: .seconds(2))
-
+    let host = apiHost
+    try awaitResult("emitter setup + flow push") {
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      try await emitter.updateSDUI(
+        flowData: Self.minimalCreateItemFlowData(),
+        flowId: E2EFlowIds.webSocketCreateFlow
+      )
+    }
+    // Relaunch after pushing the flow, matching the suite's push-then-relaunch pattern
+    // (openViewItemPage) so the test exercises a cleanly synced flow graph.
+    app.terminate()
+    try launchApp()
+    XCTAssertTrue(createItemButton.waitForExistence(timeout: 20), "Create button after relaunch")
     createItemButton.tap()
 
-    let scrollView = app.scrollViews.firstMatch
-    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
-
     let titleFieldId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
-    let priceFieldIds = [
-      "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).price}",
-      "textField_{buildCurrency(\(MARKETPLACE_ITEMS_RESOURCE_ID).price)}",
-    ]
-    let priceTokens = ["\(MARKETPLACE_ITEMS_RESOURCE_ID).price", "buildCurrency"]
-    let widthFieldId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).width}"
-    let widthTokens = ["\(MARKETPLACE_ITEMS_RESOURCE_ID).width"]
-
-    // Title field
-    guard let titleTextField = findElement(identifier: titleFieldId) else {
-      XCTFail("Title text field should exist with identifier '\(titleFieldId)'")
-      return
-    }
-    guard let titleField = await tapAndGetEditableField(container: titleTextField) else {
-      XCTFail("Failed to get editable title field")
-      return
-    }
+    let titleInput = try XCTUnwrap(findElement(identifier: titleFieldId), "Title field")
+    let titleField = try XCTUnwrap(tapAndGetEditableField(container: titleInput), "Editable title")
     let testTitle = "Test Item Title \(Int(Date().timeIntervalSince1970))"
     clearAndType(field: titleField, text: testTitle, placeholder: "Item")
     XCTAssertTrue(
       (titleField.value as? String)?.contains(testTitle) == true,
-      "Title field should retain typed text, got: '\(titleField.value as? String ?? "nil")'")
-    scrollView.tap()
-    try await Task.sleep(for: .milliseconds(500))
+      "Title field should retain typed text")
+    dismissKeyboard()
 
-    guard
-      let priceTextField = findElementWithScroll(
-        identifiers: priceFieldIds,
-        containsAny: priceTokens,
-        in: scrollView
-      )
-    else {
-      XCTFail(
-        "Price field should exist (\(priceFieldIds.joined(separator: ", ")), or accessibility containing '\(priceTokens.first ?? "")'))"
-      )
-      return
-    }
-    guard let priceField = await tapAndGetEditableField(container: priceTextField) else {
-      XCTFail("Failed to get editable price field")
-      return
-    }
+    let priceTextField = try XCTUnwrap(
+      findElementWithScroll(
+        identifiers: [
+          "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).price}",
+          "textField_{buildCurrency(\(MARKETPLACE_ITEMS_RESOURCE_ID).price)}",
+        ],
+        containsAny: ["\(MARKETPLACE_ITEMS_RESOURCE_ID).price", "buildCurrency"],
+        in: pageScrollView
+      ), "Price field")
+    let priceField = try XCTUnwrap(
+      tapAndGetEditableField(container: priceTextField), "Editable price")
     clearAndType(field: priceField, text: "99", placeholder: "0")
     XCTAssertTrue(
       (priceField.value as? String)?.contains("99") == true,
-      "Price field should retain typed value, got: '\(priceField.value as? String ?? "nil")'")
-    scrollView.tap()
-    try await Task.sleep(for: .milliseconds(500))
+      "Price field should retain typed value")
+    dismissKeyboard()
 
-    guard
-      let widthTextField = findElementWithScroll(
-        identifiers: [widthFieldId],
-        containsAny: widthTokens,
-        in: scrollView
-      )
-    else {
-      XCTFail(
-        "Width field should exist (\(widthFieldId), or accessibility containing '\(widthTokens.first ?? "")')"
-      )
-      return
-    }
-    guard let widthField = await tapAndGetEditableField(container: widthTextField) else {
-      XCTFail("Failed to get editable width field")
-      return
-    }
+    let widthTextField = try XCTUnwrap(
+      findElementWithScroll(
+        identifiers: ["textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).width}"],
+        containsAny: ["\(MARKETPLACE_ITEMS_RESOURCE_ID).width"],
+        in: pageScrollView
+      ), "Width field")
+    let widthField = try XCTUnwrap(
+      tapAndGetEditableField(container: widthTextField), "Editable width")
     clearAndType(field: widthField, text: "50", placeholder: "0")
     XCTAssertTrue(
       (widthField.value as? String)?.contains("50") == true,
-      "Width field should retain typed value, got: '\(widthField.value as? String ?? "nil")'")
-    scrollView.tap()
-    try await Task.sleep(for: .milliseconds(500))
+      "Width field should retain typed value")
+    dismissKeyboard()
 
     let submitButton = app.buttons["Submit"]
     XCTAssertTrue(
-      submitButton.waitForExistence(timeout: 5), "Submit should exist on minimal create flow")
+      submitButton.waitForExistence(timeout: 10), "Submit should exist on minimal create flow")
     submitButton.tap()
     XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
+      waitForConfirmationSheet(timeout: 10),
       "Submit confirmation sheet should appear")
-    let submitConfirmButton = app.buttons.matching(
-      NSPredicate(format: "label == %@ AND isHittable == 1", "Submit")
-    ).firstMatch
-    XCTAssertTrue(
-      submitConfirmButton.waitForExistence(timeout: 5),
+    let submitConfirmButton = try XCTUnwrap(
+      waitForHittableButton(labeled: "Submit"),
       "Submit button in confirmation sheet should be tappable")
     submitConfirmButton.tap()
 
     XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 15),
+      createItemButton.waitForExistence(timeout: 15),
       "Should return to home after create(item)")
 
-    let itemsPayload = try await emitter.getResource(
-      service: MARKETPLACE_SERVICE, resource: MARKETPLACE_ITEMS_RESOURCE_ID)
+    let itemsPayload = try awaitResult("fetch marketplace items") {
+      try await emitter.getResource(
+        service: MARKETPLACE_SERVICE, resource: MARKETPLACE_ITEMS_RESOURCE_ID)
+    }
     XCTAssertTrue(
       Self.marketplaceItemsContainListing(
         title: testTitle, priceValue: 99, widthText: "50", items: itemsPayload),
       "Marketplace items should include listing with title, price.value 99, and width 50"
     )
 
-    await emitter.disconnect()
+    try awaitResult("emitter disconnect") { await emitter.disconnect() }
   }
 
   private static func viewItemNavigateAction(viewItemId: String?) -> String {
@@ -2374,7 +2509,8 @@ final class WebSocketE2ETests: E2ETestBase {
     emitter: WSEmitter,
     itemId: String
   ) async throws -> Bool {
-    for _ in 0..<20 {
+    let deadline = Date().addingTimeInterval(10)
+    repeat {
       let requests = try await emitter.getResource(
         service: MARKETPLACE_SERVICE,
         resource: MarketplaceResource.requests.rawValue
@@ -2382,8 +2518,8 @@ final class WebSocketE2ETests: E2ETestBase {
       if Self.marketplaceRequestsArchived(requests, itemId: itemId) {
         return true
       }
-      try await Task.sleep(for: .milliseconds(500))
-    }
+    } while try await emitter.nextDataChanged(
+      resource: MarketplaceResource.requests.rawValue, deadline: deadline)
     return false
   }
 
@@ -2408,7 +2544,8 @@ final class WebSocketE2ETests: E2ETestBase {
     valueKey: String,
     value: String
   ) async throws -> Bool {
-    for _ in 0..<20 {
+    let deadline = Date().addingTimeInterval(10)
+    repeat {
       let requests = try await emitter.getResource(
         service: MARKETPLACE_SERVICE,
         resource: MarketplaceResource.requests.rawValue
@@ -2422,8 +2559,8 @@ final class WebSocketE2ETests: E2ETestBase {
       ) {
         return true
       }
-      try await Task.sleep(for: .milliseconds(500))
-    }
+    } while try await emitter.nextDataChanged(
+      resource: MarketplaceResource.requests.rawValue, deadline: deadline)
     return false
   }
 
@@ -2501,7 +2638,7 @@ final class WebSocketE2ETests: E2ETestBase {
       XCTFail("Home input row should be visible")
       return
     }
-    guard let inputField = await tapAndGetEditableField(container: inputContainer) else {
+    guard let inputField = tapAndGetEditableField(container: inputContainer) else {
       XCTFail("Failed to get editable home input field")
       return
     }
@@ -2550,16 +2687,15 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
-  func fillShippingPostcodeAndAskToBuy(postcode: String = "2018") async throws {
+  func fillShippingPostcodeAndAskToBuy(postcode: String = "2018") throws {
     let postcodeContainer = try XCTUnwrap(
       findElement(identifier: "textField_{shipping_address.postcode}"),
       "Shipping postcode input should be visible"
     )
-    let editablePostcodeField = await tapAndGetEditableField(container: postcodeContainer)
+    let editablePostcodeField = tapAndGetEditableField(container: postcodeContainer)
     let postcodeField = try XCTUnwrap(editablePostcodeField)
     clearAndType(field: postcodeField, text: postcode, placeholder: "Postcode")
-    app.scrollViews.firstMatch.tap()
-    try await Task.sleep(for: .milliseconds(500))
+    dismissKeyboard()
     app.buttons["Ask to buy"].tap()
   }
 

@@ -101,15 +101,13 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testChainHaltsWhenActionThrows() {
-    let expectation = expectation(
-      forNotification: Notification.Name.evyErrorOccurred,
-      object: nil
-    )
     let throwingAction = rowAction(true: "{create(onlyNamespace)}")
     let closeAction = rowAction(true: "{close()}")
     var received: ActionOperation?
-    EVYActionRunner.run(actions: [throwingAction, closeAction]) { received = $0 }
-    wait(for: [expectation], timeout: 2)
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [throwingAction, closeAction]) { received = $0 }
+    }
+    XCTAssertFalse(errors.isEmpty, "create with one arg should post an error")
     XCTAssertNil(received, "close should not run once an earlier action throws")
   }
 
@@ -359,13 +357,11 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testNavigateNonPlainTextQueryArgumentPostsError() {
     var received: ActionOperation?
-    let expectation = expectation(
-      forNotification: Notification.Name.evyErrorOccurred,
-      object: nil,
-    )
     let action = rowAction(true: "{navigate(flow-1,page-2,notJson)}")
-    EVYActionRunner.run(actions: [action]) { received = $0 }
-    wait(for: [expectation], timeout: 2)
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [action]) { received = $0 }
+    }
+    XCTAssertFalse(errors.isEmpty)
     XCTAssertNil(received)
   }
 
@@ -394,13 +390,11 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testUnsupportedFunctionPostsErrorNotification() {
-    let expectation = expectation(
-      forNotification: Notification.Name.evyErrorOccurred,
-      object: nil,
-    )
     let action = rowAction(true: "{notARealEvyFunction()}")
-    EVYActionRunner.run(actions: [action]) { _ in }
-    wait(for: [expectation], timeout: 2)
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [action]) { _ in }
+    }
+    XCTAssertFalse(errors.isEmpty)
   }
 
   func testNavigateWithDatumResolvesId() {
@@ -447,36 +441,30 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testNavigateWithMissingQueryColonPostsError() {
     var received: ActionOperation?
-    let expectation = expectation(
-      forNotification: Notification.Name.evyErrorOccurred,
-      object: nil,
-    )
     let action = rowAction(true: "{navigate(flowX,pageY,{items [a]})}")
-    EVYActionRunner.run(actions: [action]) { received = $0 }
-    wait(for: [expectation], timeout: 2)
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [action]) { received = $0 }
+    }
+    XCTAssertFalse(errors.isEmpty)
     XCTAssertNil(received)
   }
 
   func testNavigateWithUnclosedQueryArrayPostsError() {
     var received: ActionOperation?
-    let expectation = expectation(
-      forNotification: Notification.Name.evyErrorOccurred,
-      object: nil,
-    )
     let action = rowAction(true: "{navigate(flowX,pageY,{items: [a})}")
-    EVYActionRunner.run(actions: [action]) { received = $0 }
-    wait(for: [expectation], timeout: 2)
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [action]) { received = $0 }
+    }
+    XCTAssertFalse(errors.isEmpty)
     XCTAssertNil(received)
   }
 
   func testNavigateWithTooManyArgsThrowsError() {
-    let expectation = expectation(
-      forNotification: Notification.Name.evyErrorOccurred,
-      object: nil,
-    )
     let action = rowAction(true: "{navigate(flowX,pageY,{key: val},extra)}")
-    EVYActionRunner.run(actions: [action]) { _ in }
-    wait(for: [expectation], timeout: 2)
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [action]) { _ in }
+    }
+    XCTAssertFalse(errors.isEmpty)
   }
 
   func testNavigateWithoutDatumKeepsDatumExpression() {
@@ -632,6 +620,20 @@ final class EVYActionRunnerTests: XCTestCase {
         { "title": "", "label": "No child" }
         """
     )
+  }
+
+  private func capturedErrors(during body: () -> Void) -> [Error] {
+    var errors: [Error] = []
+    let token = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { notification in
+      MainActor.assumeIsolated {
+        if let error = notification.object as? Error { errors.append(error) }
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(token) }
+    body()
+    return errors
   }
 
   private func decodeRow(
