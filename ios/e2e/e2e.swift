@@ -464,10 +464,15 @@ class E2ETestBase: XCTestCase {
   }
 
   func clearAndType(field: XCUIElement, text: String, placeholder: String? = nil) {
+    // Never tap a field that already has keyboard focus: on pages, EVYPage's tap-to-dismiss
+    // gesture fires for taps on the field too, resigning first responder and unmounting the
+    // TextField (EVYTextField only renders a TextField while editing).
+    if (field.value(forKey: "hasKeyboardFocus") as? Bool) != true {
+      field.tap()
+    }
     if let existingText = field.value as? String, !existingText.isEmpty {
       let shouldClearExistingText = placeholder == nil || existingText != placeholder
       if shouldClearExistingText {
-        field.tap()
         field.typeText(
           String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingText.count))
       }
