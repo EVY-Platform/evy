@@ -69,6 +69,10 @@ const css = `
 	min-height: 18px;
 	cursor: text;
 }
+.evy-id-autocomplete-field--multiline {
+	min-height: 64px;
+	align-items: flex-start;
+}
 .evy-id-autocomplete-token {
 	display: inline-flex;
 	align-items: center;
@@ -175,6 +179,7 @@ type BuilderAssistProps = {
 	placeholder?: string;
 	ariaLabel?: string;
 	labelClassName?: string;
+	multiline?: boolean;
 	getAttributeCandidatesForQualifier?: (qualifier: string) => IdCandidate[];
 };
 
@@ -193,6 +198,7 @@ export function BuilderAssist({
 	placeholder,
 	ariaLabel,
 	labelClassName,
+	multiline,
 	getAttributeCandidatesForQualifier,
 }: BuilderAssistProps) {
 	injectStyle();
@@ -549,7 +555,10 @@ export function BuilderAssist({
 					{label}
 				</label>
 			)}
-			<div ref={fieldRef} className="evy-id-autocomplete-field">
+			<div
+				ref={fieldRef}
+				className={`evy-id-autocomplete-field${multiline ? " evy-id-autocomplete-field--multiline" : ""}`}
+			>
 				<div
 					ref={editableRef}
 					id={inputId}

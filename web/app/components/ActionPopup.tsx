@@ -10,6 +10,12 @@ import {
 	parseCondition,
 	serializeCondition,
 } from "../utils/conditionExpression";
+import {
+	buildDatumCandidate,
+	buildFunctionCandidates,
+	buildIdCandidates,
+	buildResourceAttributeCandidatesForResource,
+} from "../utils/idCandidates";
 
 import { BranchEditor } from "./actionPopup/BranchEditor";
 import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
@@ -27,8 +33,14 @@ export function ActionPopup({
 	onSave,
 	onCancel,
 }: ActionPopupProps) {
-	const { flowsById, pagesById, rowsById, activeFlowId, serviceResources } =
-		useFlowsContext();
+	const {
+		flowsById,
+		pagesById,
+		rowsById,
+		activeFlowId,
+		serviceResources,
+		resourceAttributeMetadata,
+	} = useFlowsContext();
 	const [expression, setExpression] = useState<ConditionExpression | null>(
 		() => parseCondition(action.condition),
 	);
@@ -39,6 +51,26 @@ export function ActionPopup({
 		() =>
 			extractDraftVariables(flowsById, pagesById, rowsById, activeFlowId),
 		[flowsById, pagesById, rowsById, activeFlowId],
+	);
+
+	const idCandidates = useMemo(
+		() => [
+			...buildIdCandidates(flowsById, pagesById, serviceResources),
+			buildDatumCandidate(),
+			...buildFunctionCandidates(),
+		],
+		[flowsById, pagesById, serviceResources],
+	);
+
+	const getAttributeCandidatesForQualifier = useCallback(
+		(qualifier: string) =>
+			serviceResources.some((resource) => resource.id === qualifier)
+				? buildResourceAttributeCandidatesForResource(
+						resourceAttributeMetadata,
+						qualifier,
+					)
+				: [],
+		[serviceResources, resourceAttributeMetadata],
 	);
 
 	const handleSave = useCallback(() => {
@@ -97,6 +129,10 @@ export function ActionPopup({
 								flowsById={flowsById}
 								pagesById={pagesById}
 								serviceResources={serviceResources}
+								idCandidates={idCandidates}
+								getAttributeCandidatesForQualifier={
+									getAttributeCandidatesForQualifier
+								}
 								onChange={setTrueBranch}
 							/>
 						</div>
@@ -112,6 +148,10 @@ export function ActionPopup({
 								flowsById={flowsById}
 								pagesById={pagesById}
 								serviceResources={serviceResources}
+								idCandidates={idCandidates}
+								getAttributeCandidatesForQualifier={
+									getAttributeCandidatesForQualifier
+								}
 								onChange={setFalseBranch}
 							/>
 						</div>
