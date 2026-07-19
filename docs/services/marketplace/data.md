@@ -25,43 +25,17 @@ id: uuid
 value: string
 ```
 
-## DATA_MARKETPLACE_PickupRequest
+## Requests
+
+Rows of the `requests` resource are core [`DATA_EVY_Request`](../../evy/data.md#data_evy_request) objects — the marketplace API persists them without payload validation. For item requests, `fk` is the item id and `service` / `resource` are the marketplace service and `items` resource ids. The free-form `data` object carries the transfer specifics:
 
 ```
-id: uuid
-type: "pickup"
-item_id: uuid
-time: string (local ISO time, `YYYY-MM-DDTHH:mm:ss`)
-archived: boolean
-createdAt: string (date-time, optional)
-updatedAt: string (date-time, optional)
+data.type: "pickup" | "delivery" | "shipping"
+data.time: string (local ISO time, `YYYY-MM-DDTHH:mm:ss`; pickup/delivery)
+data.postalcode: string (shipping)
 ```
 
-Cancelling a request sets `archived: true` via an update — records are not hard-deleted.
-
-## DATA_MARKETPLACE_DeliveryRequest
-
-```
-id: uuid
-type: "delivery"
-item_id: uuid
-time: string (local ISO time, `YYYY-MM-DDTHH:mm:ss`)
-archived: boolean
-createdAt: string (date-time, optional)
-updatedAt: string (date-time, optional)
-```
-
-## DATA_MARKETPLACE_ShippingRequest
-
-```
-id: uuid
-type: "shipping"
-item_id: uuid
-postalcode: string (1–10 characters)
-archived: boolean
-createdAt: string (date-time, optional)
-updatedAt: string (date-time, optional)
-```
+Cancelling a request sets `archivedAt` via an update — records are not hard-deleted.
 
 ## DATA_MARKETPLACE_Item
 

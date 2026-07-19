@@ -113,14 +113,19 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateActionParserParsesInlineData() {
     let action = EVYActionParser.createAction(
-      from: "{create(ns,res,{type: pickup, item_id: abc.id, time: selected_pickup_timeslot})}"
+      from:
+        "{create(ns,res,{fk: abc.id, archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}"
     )
 
     XCTAssertEqual(action?.namespace, "ns")
     XCTAssertEqual(action?.resource, "res")
     XCTAssertEqual(
       action?.data,
-      ["type": "pickup", "item_id": "abc.id", "time": "selected_pickup_timeslot"]
+      [
+        "fk": "abc.id",
+        "archivedAt": "null",
+        "data": "{type: pickup, time: selected_pickup_timeslot}",
+      ]
     )
   }
 
@@ -133,39 +138,44 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateActionParserRejectsMalformedInlineData() {
-    XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res,{type: pickup, item_id})}"))
+    XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res,{type: pickup, fk})}"))
   }
 
   func testUpdateActionParserParsesFilterAndChanges() {
     let action = EVYActionParser.updateAction(
       from:
-        "{update(ns,res,{item_id: abc.id, archived: false},{archived: true})}"
+        "{update(ns,res,{fk: abc.id, archivedAt: null},{archivedAt: now()})}"
     )
 
     XCTAssertEqual(action?.namespace, "ns")
     XCTAssertEqual(action?.resource, "res")
-    XCTAssertEqual(action?.filter, ["item_id": "abc.id", "archived": "false"])
-    XCTAssertEqual(action?.changes, ["archived": "true"])
+    XCTAssertEqual(action?.filter, ["fk": "abc.id", "archivedAt": "null"])
+    XCTAssertEqual(action?.changes, ["archivedAt": "now()"])
   }
 
   func testUpdateActionParserRejectsMissingFilterOrChanges() {
     XCTAssertNil(EVYActionParser.updateAction(from: "{update(ns,res)}"))
     XCTAssertNil(EVYActionParser.updateAction(from: "{update(ns,res,{id: abc})}"))
     XCTAssertNil(
-      EVYActionParser.updateAction(from: "{update(ns,res,{}, {archived: true})}"))
+      EVYActionParser.updateAction(from: "{update(ns,res,{}, {archivedAt: now()})}"))
     XCTAssertNil(
-      EVYActionParser.updateAction(from: "{update(ns,res,{item_id: abc},{})}"))
+      EVYActionParser.updateAction(from: "{update(ns,res,{fk: abc},{})}"))
   }
 
-  func testResolveInlineCreateDataMapsBooleanLiterals() throws {
+  func testResolveInlineCreateDataMapsLiterals() throws {
     let namespace = EVYNamespace.marketplace
-    let resource = "boolean-create-actions"
+    let resource = "literal-create-actions"
+    let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+    EVY.nowProvider = { pinnedDate }
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      EVY.nowProvider = { Date() }
+    }
 
     let action = rowAction(
       true:
-        "{create(\(namespace),\(resource),{type: pickup, item_id: item-1, time: 2026-06-03T09:00:00, archived: false})}"
+        "{create(\(namespace),\(resource),{fk: item-1, service: \"svc-1\", archivedAt: null, verified: true, data: {type: pickup, time: 2026-06-03T09:00:00}})}"
     )
     var received: ActionOperation?
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -176,7 +186,37 @@ final class EVYActionRunnerTests: XCTestCase {
     guard case .dictionary(let values) = createdPayload else {
       return XCTFail("Expected inline create payload dictionary")
     }
-    XCTAssertEqual(values["archived"], .bool(false))
+    XCTAssertEqual(values["fk"], .string("item-1"))
+    XCTAssertEqual(values["service"], .string("svc-1"))
+    XCTAssertEqual(values["archivedAt"], .null)
+    XCTAssertEqual(values["verified"], .bool(true))
+    XCTAssertEqual(
+      values["data"],
+      .dictionary([
+        "type": .string("pickup"),
+        "time": .string("2026-06-03T09:00:00"),
+      ]))
+    XCTAssertEqual(values["createdAt"], .string(pinnedDate.ISO8601Format()))
+  }
+
+  func testInlineCreateDataKeepsExplicitCreatedAt() throws {
+    let namespace = EVYNamespace.marketplace
+    let resource = "created-at-create-actions"
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+
+    let action = rowAction(
+      true:
+        "{create(\(namespace),\(resource),{fk: item-1, createdAt: \"2026-06-01T00:00:00Z\"})}"
+    )
+    EVYActionRunner.run(actions: [action]) { _ in }
+
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
+    guard case .dictionary(let values) = createdPayload else {
+      return XCTFail("Expected inline create payload dictionary")
+    }
+    XCTAssertEqual(values["createdAt"], .string("2026-06-01T00:00:00Z"))
   }
 
   func testUpdateActionArchivesOnlyMatchingActiveRequest() throws {
@@ -189,27 +229,44 @@ final class EVYActionRunnerTests: XCTestCase {
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
 
+    // activeRequestId has archivedAt: null, activeAbsentRequestId omits the key entirely —
+    // a null filter must match both
+    let activeAbsentRequestId = UUID().uuidString
     let requests = EVYJson.array([
       .dictionary([
         "id": .string(archivedRequestId),
-        "item_id": .string(itemId),
-        "archived": .bool(true),
-        "type": .string("pickup"),
-        "time": .string("2026-06-03T09:00:00"),
+        "fk": .string(itemId),
+        "archivedAt": .string("2026-06-02T00:00:00Z"),
+        "data": .dictionary([
+          "type": .string("pickup"),
+          "time": .string("2026-06-03T09:00:00"),
+        ]),
       ]),
       .dictionary([
         "id": .string(activeRequestId),
-        "item_id": .string(itemId),
-        "archived": .bool(false),
-        "type": .string("pickup"),
-        "time": .string("2026-06-03T10:00:00"),
+        "fk": .string(itemId),
+        "archivedAt": .null,
+        "data": .dictionary([
+          "type": .string("pickup"),
+          "time": .string("2026-06-03T10:00:00"),
+        ]),
+      ]),
+      .dictionary([
+        "id": .string(activeAbsentRequestId),
+        "fk": .string(itemId),
+        "data": .dictionary([
+          "type": .string("delivery"),
+          "time": .string("2026-06-03T12:00:00"),
+        ]),
       ]),
       .dictionary([
         "id": .string(otherActiveRequestId),
-        "item_id": .string(UUID().uuidString),
-        "archived": .bool(false),
-        "type": .string("pickup"),
-        "time": .string("2026-06-03T11:00:00"),
+        "fk": .string(UUID().uuidString),
+        "archivedAt": .null,
+        "data": .dictionary([
+          "type": .string("pickup"),
+          "time": .string("2026-06-03T11:00:00"),
+        ]),
       ]),
     ])
     try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: requests)
@@ -235,9 +292,13 @@ final class EVYActionRunnerTests: XCTestCase {
       value: try JSONEncoder().encode(EVYJson.dictionary(["id": .string(itemId)]))
     )
 
+    let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
+    EVY.nowProvider = { pinnedDate }
+    defer { EVY.nowProvider = { Date() } }
+
     let cancelAction = rowAction(
       true:
-        "{update(\(namespace),\(resource),{item_id: \(itemKey).id, archived: false},{archived: true})}"
+        "{update(\(namespace),\(resource),{fk: \(itemKey).id, archivedAt: null},{archivedAt: now()})}"
     )
     var received: ActionOperation?
     EVYActionRunner.run(actions: [cancelAction]) { received = $0 }
@@ -248,18 +309,24 @@ final class EVYActionRunnerTests: XCTestCase {
       "Update should post a value-change notification for the requests resource")
 
     let updatedRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    let archivedById = Dictionary(
+    let archivedAtById = Dictionary(
       uniqueKeysWithValues: updatedRows.compactMap { row -> (String, EVYJson)? in
         guard let decoded = try? row.decoded(),
           case .dictionary(let values) = decoded,
           case .string(let id) = values["id"]
         else { return nil }
-        return (id, values["archived"] ?? .null)
+        return (id, values["archivedAt"] ?? .null)
       })
 
-    XCTAssertEqual(archivedById[archivedRequestId], .bool(true))
-    XCTAssertEqual(archivedById[activeRequestId], .bool(true))
-    XCTAssertEqual(archivedById[otherActiveRequestId], .bool(false))
+    let pinnedIso = EVYJson.string(pinnedDate.ISO8601Format())
+    XCTAssertEqual(
+      archivedAtById[archivedRequestId], .string("2026-06-02T00:00:00Z"),
+      "Already-archived request should keep its original timestamp")
+    XCTAssertEqual(archivedAtById[activeRequestId], pinnedIso)
+    XCTAssertEqual(
+      archivedAtById[activeAbsentRequestId], pinnedIso,
+      "A null filter should match records missing the key entirely")
+    XCTAssertEqual(archivedAtById[otherActiveRequestId], .null)
   }
 
   func testInlineCreateActionWritesResolvedPayloadWithoutNavigating() throws {
@@ -286,7 +353,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let datum = EVYJson.dictionary(["id": .string("item-id")])
     let action = rowAction(
       true:
-        "{create(\(namespace),\(resource),{type: pickup, item_id: $datum.id, time: selected_pickup_timeslot})}"
+        "{create(\(namespace),\(resource),{fk: $datum.id, data: {type: pickup, time: selected_pickup_timeslot}})}"
     )
     var receivedNavigation: ActionOperation?
 
@@ -298,9 +365,14 @@ final class EVYActionRunnerTests: XCTestCase {
     guard case .dictionary(let values) = createdPayload else {
       return XCTFail("Expected inline create payload dictionary")
     }
-    XCTAssertEqual(values["type"], .string("pickup"))
-    XCTAssertEqual(values["item_id"], .string("item-id"))
-    XCTAssertEqual(values["time"], .string(selectedTimeslot))
+    XCTAssertEqual(values["fk"], .string("item-id"))
+    XCTAssertEqual(
+      values["data"],
+      .dictionary([
+        "type": .string("pickup"),
+        "time": .string(selectedTimeslot),
+      ]),
+      "Nested data values should resolve drafts like top-level values")
     XCTAssertEqual(values["id"]?.toString(), createdRows.first?.id)
   }
 
@@ -485,7 +557,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = rowAction(
       condition: "{length(shipping_address.postcode) > 0}",
       true:
-        "{create(\(EVYNamespace.marketplace),\(requestsResourceId),{type: shipping, item_id: \(itemResourceId).id, postalcode: shipping_address.postcode, archived: false})}",
+        "{create(\(EVYNamespace.marketplace),\(requestsResourceId),{fk: \(itemResourceId).id, archivedAt: null, data: {type: shipping, postalcode: shipping_address.postcode}})}",
       false: "{highlight_required(postcode)}"
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -518,7 +590,7 @@ final class EVYActionRunnerTests: XCTestCase {
     }
     let action = rowAction(
       true:
-        "{create(\(namespace),\(resource),{type: pickup, item_id: item-1, time: selected_pickup_timeslot, archived: false})}"
+        "{create(\(namespace),\(resource),{fk: item-1, archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}"
     )
     var received: ActionOperation?
     EVYActionRunner.run(actions: [action], prepare: prepare) { received = $0 }
@@ -531,7 +603,7 @@ final class EVYActionRunnerTests: XCTestCase {
     guard case .dictionary(let values) = createdPayload else {
       return XCTFail("Expected inline create payload dictionary")
     }
-    XCTAssertEqual(values["time"], .string(selectedTimeslot))
+    XCTAssertEqual(values["data"]?.parseProp(props: ["time"]), .string(selectedTimeslot))
   }
 
   func testCreateActionRunsImmediately() throws {
@@ -562,7 +634,7 @@ final class EVYActionRunnerTests: XCTestCase {
     var received: ActionOperation?
     let action = rowAction(
       true:
-        "{create(\(namespace),\(resource),{type: pickup, item_id: \(itemResourceId).id, time: 2026-06-03T09:00:00, archived: false})}"
+        "{create(\(namespace),\(resource),{fk: \(itemResourceId).id, archivedAt: null, data: {type: pickup, time: 2026-06-03T09:00:00}})}"
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
 

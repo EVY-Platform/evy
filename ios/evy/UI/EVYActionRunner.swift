@@ -100,7 +100,7 @@ enum EVYActionRunner {
         guard let updateAction = EVYActionParser.updateAction(from: branch) else {
           throw EVYError.invalidData(
             context:
-              "update requires namespace, resource, filter, and changes, e.g. update(marketplace,requests,{id: abc},{archived: true})"
+              "update requires namespace, resource, filter, and changes, e.g. update(marketplace,requests,{id: abc},{archivedAt: now()})"
           )
         }
         let resolvedFilter = resolvePlainTextValues(updateAction.filter, datum: datum)
@@ -162,31 +162,43 @@ enum EVYActionRunner {
     _ data: [String: String],
     datum: EVYJson?
   ) -> [String: EVYJson] {
-    var resolvedData: [String: EVYJson] = [:]
+    data.mapValues { resolvePlainTextValue($0, datum: datum) }
+  }
 
-    for (key, value) in data {
-      if value.hasPrefix(EVY.datumPrefix), let datum {
-        let props = String(value.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(
-          String.init)
-        if let resolvedValue = datum.parsePropStrict(props: props) {
-          resolvedData[key] = resolvedValue
-          continue
-        }
+  private static func resolvePlainTextValue(
+    _ value: String,
+    datum: EVYJson?
+  ) -> EVYJson {
+    if value.hasPrefix(EVY.datumPrefix), let datum {
+      let props = String(value.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(
+        String.init)
+      if let resolvedValue = datum.parsePropStrict(props: props) {
+        return resolvedValue
       }
-
-      if value == "true" {
-        resolvedData[key] = .bool(true)
-        continue
-      }
-      if value == "false" {
-        resolvedData[key] = .bool(false)
-        continue
-      }
-
-      resolvedData[key] = (try? EVY.getDataFromText("{\(value)}")) ?? .string(value)
     }
 
-    return resolvedData
+    if value == "true" {
+      return .bool(true)
+    }
+    if value == "false" {
+      return .bool(false)
+    }
+    if value == "null" {
+      return .null
+    }
+    // Quoted values are literal strings, never data paths
+    if value.count >= 2, value.hasPrefix("\""), value.hasSuffix("\"") {
+      return .string(stripOptionalSurroundingQuotes(value))
+    }
+    // Nested object literal, e.g. data: {type: pickup, time: selected_timeslot}
+    if value.hasPrefix("{"), value.hasSuffix("}"),
+      let nestedObject = try? EVYActionParser.plainTextObject(
+        from: value, context: "nested action data")
+    {
+      return .dictionary(resolvePlainTextValues(nestedObject, datum: datum))
+    }
+
+    return (try? EVY.getDataFromText("{\(value)}")) ?? .string(value)
   }
 
   private static func parseQueryArgument(_ value: String) throws -> [String: [String]] {

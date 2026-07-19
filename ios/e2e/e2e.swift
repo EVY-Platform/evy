@@ -823,7 +823,7 @@ class E2ETestBase: XCTestCase {
   static func cancelRequestVisibilityExpressions() -> (hasActive: String, noActive: String) {
     let requestsResourceId = MarketplaceResource.requests.rawValue
     let activeMatch =
-      "{findFirst(\(requestsResourceId), \(MARKETPLACE_ITEMS_RESOURCE_ID).id, item_id, false, archived).item_id"
+      "{findFirst(\(requestsResourceId), \(MARKETPLACE_ITEMS_RESOURCE_ID).id, fk, null, archivedAt).fk"
     let hasActive = "\(activeMatch) == \(MARKETPLACE_ITEMS_RESOURCE_ID).id}"
     let noActive = "\(activeMatch) != \(MARKETPLACE_ITEMS_RESOURCE_ID).id}"
     return (hasActive, noActive)
@@ -832,14 +832,16 @@ class E2ETestBase: XCTestCase {
   static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
     let requestsResourceId = MarketplaceResource.requests.rawValue
     let visibility = cancelRequestVisibilityExpressions()
+    let requestEnvelope =
+      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
     let pickupCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: pickup, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_pickup_timeslot, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{\(requestEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
     let deliveryCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: delivery, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_delivery_timeslot, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{\(requestEnvelope), data: {type: delivery, time: selected_delivery_timeslot}})}"
     let shippingCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: shipping, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, postalcode: shipping_address.postcode, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{\(requestEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
     let cancelAction =
-      "{update(\(MARKETPLACE_SERVICE),\(requestsResourceId),{item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archived: false},{archived: true})}"
+      "{update(\(MARKETPLACE_SERVICE),\(requestsResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null},{archivedAt: now()})}"
 
     return [
       "id": flowId,
@@ -1239,10 +1241,12 @@ class E2ETestBase: XCTestCase {
 
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
     let requestsResourceId = MarketplaceResource.requests.rawValue
+    let requestEnvelope =
+      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
     let pickupCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: pickup, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_pickup_timeslot, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{\(requestEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
     let shippingCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: shipping, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, postalcode: shipping_address.postcode, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{\(requestEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
 
     return [
       "id": flowId,
@@ -2535,8 +2539,9 @@ final class WebSocketE2ETests: E2ETestBase {
     guard let requestRows = responseDataArray(from: requests) else { return false }
     return requestRows.contains { request in
       guard let requestData = request as? [String: Any],
-        requestData["item_id"] as? String == itemId,
-        requestData["archived"] as? Bool == true
+        requestData["fk"] as? String == itemId,
+        let archivedAt = requestData["archivedAt"] as? String,
+        !archivedAt.isEmpty
       else { return false }
       return true
     }
@@ -2579,13 +2584,14 @@ final class WebSocketE2ETests: E2ETestBase {
     guard let requestRows = responseDataArray(from: requests) else { return false }
     return requestRows.contains { request in
       guard let requestData = request as? [String: Any],
-        requestData["type"] as? String == type,
-        requestData["item_id"] as? String == itemId
+        requestData["fk"] as? String == itemId,
+        let requestDetails = requestData["data"] as? [String: Any],
+        requestDetails["type"] as? String == type
       else {
         return false
       }
       guard let valueKey, let value else { return true }
-      return requestData[valueKey] as? String == value
+      return requestDetails[valueKey] as? String == value
     }
   }
 

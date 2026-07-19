@@ -85,6 +85,13 @@ struct EVY {
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
   static var activeCacheScopeId: String?
 
+  /// Injectable clock so tests can pin `now()` and generated `createdAt` values
+  static var nowProvider: () -> Date = { Date() }
+
+  static func nowISO8601() -> String {
+    nowProvider().ISO8601Format()
+  }
+
   // MARK: - Core Utilities
 
   static func stripLocalPrefix(_ props: String) -> String {

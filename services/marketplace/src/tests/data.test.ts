@@ -190,28 +190,29 @@ describe("marketplace get/create/update", () => {
 		expect(updated).toMatchObject({ data: { ...row, value: "v2" } });
 	});
 
-	it("validates marketplace request payloads on create and update", async () => {
+	it("persists generic request rows without payload validation", async () => {
 		const itemId = crypto.randomUUID();
+		const baseRequest = {
+			fk: itemId,
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
+			archivedAt: null,
+			createdAt: "2026-06-01T00:00:00.000Z",
+		};
 		const pickupRequest = {
+			...baseRequest,
 			id: crypto.randomUUID(),
-			type: "pickup" as const,
-			item_id: itemId,
-			time: "2026-06-03T10:00:00",
-			archived: false,
+			data: { type: "pickup", time: "2026-06-03T10:00:00" },
 		};
 		const deliveryRequest = {
+			...baseRequest,
 			id: crypto.randomUUID(),
-			type: "delivery" as const,
-			item_id: itemId,
-			time: "2026-06-03T11:00:00",
-			archived: false,
+			data: { type: "delivery", time: "2026-06-03T11:00:00" },
 		};
 		const shippingRequest = {
+			...baseRequest,
 			id: crypto.randomUUID(),
-			type: "shipping" as const,
-			item_id: itemId,
-			postalcode: "2018",
-			archived: false,
+			data: { type: "shipping", postalcode: "2018" },
 		};
 
 		for (const request of [
@@ -240,62 +241,33 @@ describe("marketplace get/create/update", () => {
 			]),
 		);
 
-		await expect(
-			create({
-				service: MARKETPLACE_SERVICE,
-				resource: MARKETPLACE_RESOURCE.REQUESTS,
-				data: {
-					id: crypto.randomUUID(),
-					type: "pickup",
-					item_id: itemId,
-				},
-			}),
-		).rejects.toThrow("Marketplace request validation failed");
-		await expect(
-			create({
-				service: MARKETPLACE_SERVICE,
-				resource: MARKETPLACE_RESOURCE.REQUESTS,
-				data: {
-					id: crypto.randomUUID(),
-					type: "shipping",
-					item_id: itemId,
-					time: "2026-06-03T10:00:00",
-				},
-			}),
-		).rejects.toThrow("Marketplace request validation failed");
-		await expect(
-			create({
-				service: MARKETPLACE_SERVICE,
-				resource: MARKETPLACE_RESOURCE.REQUESTS,
-				data: {
-					id: crypto.randomUUID(),
-					type: "collection",
-					item_id: itemId,
-				},
-			}),
-		).rejects.toThrow("Marketplace request validation failed");
-		await expect(
-			create({
-				service: MARKETPLACE_SERVICE,
-				resource: MARKETPLACE_RESOURCE.REQUESTS,
-				data: {
-					id: crypto.randomUUID(),
-					type: "pickup",
-					item_id: itemId,
-					time: "2026-06-03",
-				},
-			}),
-		).rejects.toThrow("Marketplace request validation failed");
-		await expect(
-			update({
-				service: MARKETPLACE_SERVICE,
-				resource: MARKETPLACE_RESOURCE.REQUESTS,
-				filter: { id: pickupRequest.id },
-				data: { ...pickupRequest, time: "2026-06-03" },
-			}),
-		).rejects.toThrow("Marketplace request validation failed");
+		// data is free-form: unknown keys and shapes are accepted as-is
+		const freeFormRequest = {
+			...baseRequest,
+			id: crypto.randomUUID(),
+			data: {
+				type: "courier",
+				address: { street: "1 Main St" },
+				legs: 2,
+			},
+		};
+		await create({
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.REQUESTS,
+			filter: { id: freeFormRequest.id },
+			data: freeFormRequest,
+		});
+		const byId = await get({
+			service: MARKETPLACE_SERVICE,
+			resource: MARKETPLACE_RESOURCE.REQUESTS,
+			filter: { id: freeFormRequest.id },
+		});
+		expect(byId).toEqual([freeFormRequest]);
 
-		const archivedPickup = { ...pickupRequest, archived: true };
+		const archivedPickup = {
+			...pickupRequest,
+			archivedAt: "2026-06-02T00:00:00.000Z",
+		};
 		const updated = await update({
 			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.REQUESTS,
