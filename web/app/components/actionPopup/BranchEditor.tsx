@@ -69,17 +69,17 @@ function buildArgDropdowns(
 		return dropdowns;
 	}
 
-	if (functionName === "create") {
+	if (functionName === "create" || functionName === "update") {
 		const namespaceOptions: PopoverOption[] = [
 			{ value: MARKETPLACE_SERVICE, label: "Marketplace" },
 			{ value: EVY_CORE_SERVICE, label: "Evy" },
 		];
 		const dropdowns: ArgDropdownSlot[] = [
-			{ slotId: "create-namespace", options: namespaceOptions },
+			{ slotId: `${functionName}-namespace`, options: namespaceOptions },
 		];
 		if (currentArgs[0]) {
 			dropdowns.push({
-				slotId: "create-resource",
+				slotId: `${functionName}-resource`,
 				options: toResourceOptions(serviceResources, currentArgs[0]),
 			});
 		}
@@ -185,6 +185,38 @@ export function BranchEditor({
 					rows={3}
 					className="evy-action-popup-textarea"
 				/>
+			)}
+
+			{selectedFunction === "create" && args[0] && args[1] && (
+				<textarea
+					aria-label={`${branchId}-create-data`}
+					value={args[2] ?? ""}
+					onChange={(e) => handleArgChange(2, e.target.value)}
+					placeholder="Optional inline data, e.g. {fk: $datum.id, data: {type: pickup}}"
+					rows={3}
+					className="evy-action-popup-textarea"
+				/>
+			)}
+
+			{selectedFunction === "update" && args[0] && args[1] && (
+				<>
+					<textarea
+						aria-label={`${branchId}-update-filter`}
+						value={args[2] ?? ""}
+						onChange={(e) => handleArgChange(2, e.target.value)}
+						placeholder="Filter, e.g. {fk: $datum.id, archivedAt: null}"
+						rows={3}
+						className="evy-action-popup-textarea"
+					/>
+					<textarea
+						aria-label={`${branchId}-update-changes`}
+						value={args[3] ?? ""}
+						onChange={(e) => handleArgChange(3, e.target.value)}
+						placeholder="Changes, e.g. {archivedAt: now()}"
+						rows={3}
+						className="evy-action-popup-textarea"
+					/>
+				</>
 			)}
 		</div>
 	);
