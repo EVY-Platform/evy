@@ -42,7 +42,7 @@ const externalResources = [
 	},
 	{
 		serviceId: MARKETPLACE_SERVICE_ID,
-		resourceId: MARKETPLACE_RESOURCE.REQUESTS,
+		resourceId: MARKETPLACE_RESOURCE.MESSAGES,
 	},
 ];
 
@@ -136,7 +136,7 @@ describe("sync", () => {
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.DURATIONS);
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.AREAS);
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.ITEMS);
-		expect(rowResources).toContain(MARKETPLACE_RESOURCE.REQUESTS);
+		expect(rowResources).toContain(MARKETPLACE_RESOURCE.MESSAGES);
 	});
 
 	it("passes updatedAfter to getCore", async () => {

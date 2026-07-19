@@ -46,13 +46,13 @@ describe("action branch helpers", () => {
 	it("parses update with filter and changes objects", () => {
 		expect(
 			parseBranch(
-				`{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.REQUESTS},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
+				`{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
 			),
 		).toEqual({
 			functionName: "update",
 			args: [
 				MARKETPLACE_SERVICE,
-				MARKETPLACE_RESOURCE.REQUESTS,
+				MARKETPLACE_RESOURCE.MESSAGES,
 				"{fk: $datum.id, archivedAt: null}",
 				"{archivedAt: now()}",
 			],
@@ -63,12 +63,12 @@ describe("action branch helpers", () => {
 		expect(
 			serializeBranch("update", [
 				MARKETPLACE_SERVICE,
-				MARKETPLACE_RESOURCE.REQUESTS,
+				MARKETPLACE_RESOURCE.MESSAGES,
 				"{fk: $datum.id, archivedAt: null}",
 				"{archivedAt: now()}",
 			]),
 		).toBe(
-			`{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.REQUESTS},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
+			`{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
 		);
 	});
 

@@ -65,13 +65,13 @@ Collection: `cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f` = `[{ "id": "c1", "value": "E
 
 Id match: `{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}` → `"Excellent"`
 
-Multi-pair match (active request exists for an item — self-comparison idiom):
+Multi-pair match (active message exists for an item — self-comparison idiom):
 
 ```
-{findFirst(requests, item.id, fk, null, archivedAt).fk == item.id}
+{findFirst(messages, item.id, fk, null, archivedAt).fk == item.id}
 ```
 
-A pair value of `null` matches records where the property is absent or JSON `null` (e.g. `archivedAt` on active requests). Active match → its `fk` equals the item's id → `true`. No match (or all archived) → `""` → `false`.
+A pair value of `null` matches records where the property is absent or JSON `null` (e.g. `archivedAt` on active messages). Active match → its `fk` equals the item's id → `true`. No match (or all archived) → `""` → `false`.
 
 ## Comparisons
 

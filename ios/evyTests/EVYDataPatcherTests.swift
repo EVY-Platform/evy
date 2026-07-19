@@ -52,14 +52,14 @@ final class EVYDataPatcherTests: XCTestCase {
     let decoded = try JSONDecoder().decode(SyncResponse.self, from: Data(payload.utf8))
 
     guard case .array(let rows) = decoded.data[0].value,
-      case .dictionary(let request) = rows[0]
+      case .dictionary(let message) = rows[0]
     else {
-      return XCTFail("expected synced request dictionary")
+      return XCTFail("expected synced message dictionary")
     }
-    XCTAssertEqual(request["archivedAt"], EVYJson.null)
-    XCTAssertEqual(request["archivedAt"]?.toString(), "")
+    XCTAssertEqual(message["archivedAt"], EVYJson.null)
+    XCTAssertEqual(message["archivedAt"]?.toString(), "")
 
-    let reencoded = try JSONEncoder().encode(request)
+    let reencoded = try JSONEncoder().encode(message)
     let json =
       try JSONSerialization.jsonObject(with: reencoded) as? [String: Any]
     XCTAssertTrue(json?["archivedAt"] is NSNull, "null should round-trip as JSON null")

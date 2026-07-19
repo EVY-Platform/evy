@@ -179,9 +179,9 @@ On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae35
 
 There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get`, `create`, or `update`).
 
-#### DATA_EVY_Request
+#### DATA_EVY_Message
 
-Generic request record, defined in [`request.schema.json`](../../../types/schema/data/request.schema.json). A request always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`, `address`) live in the free-form `data` object; no service validates its contents.
+Generic message record, defined in [`message.schema.json`](../../../types/schema/data/message.schema.json). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`, `address`) live in the free-form `data` object; no service validates its contents.
 
 ```
 id: uuid
@@ -193,7 +193,7 @@ createdAt: string (date-time, set by the client at creation)
 data: object (free-form, use-case specific)
 ```
 
-Cancelling a request sets `archivedAt` to the current timestamp via an update — records are not hard-deleted. Request rows are currently stored by the marketplace service under its `requests` resource (see [marketplace data models](../services/marketplace/data.md)).
+Cancelling a message sets `archivedAt` to the current timestamp via an update — records are not hard-deleted. Message rows are currently stored by the marketplace service under its `messages` resource (see [marketplace data models](../services/marketplace/data.md)).
 
 ---
 

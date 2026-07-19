@@ -9,7 +9,7 @@ type WSClient = InstanceType<typeof Client>;
 
 const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
 const MARKETPLACE_ITEMS_RESOURCE_ID = MARKETPLACE_RESOURCE.ITEMS;
-const MARKETPLACE_REQUESTS_RESOURCE_ID = MARKETPLACE_RESOURCE.REQUESTS;
+const MARKETPLACE_MESSAGES_RESOURCE_ID = MARKETPLACE_RESOURCE.MESSAGES;
 
 const API_URL = process.env.API_URL;
 if (!API_URL) {
@@ -104,10 +104,10 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(matchingRecord)).toBe(true);
 	});
 
-	it("creates generic marketplace requests", async () => {
-		const requestId = crypto.randomUUID();
-		const request = {
-			id: requestId,
+	it("creates generic marketplace messages", async () => {
+		const messageId = crypto.randomUUID();
+		const message = {
+			id: messageId,
 			fk: crypto.randomUUID(),
 			service: MARKETPLACE_SERVICE_ID,
 			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
@@ -118,17 +118,17 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 
 		await client.call("create", {
 			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_REQUESTS_RESOURCE_ID,
-			filter: { id: requestId },
-			data: request,
+			resource: MARKETPLACE_MESSAGES_RESOURCE_ID,
+			filter: { id: messageId },
+			data: message,
 		});
 
 		const rows = await client.call("get", {
 			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_REQUESTS_RESOURCE_ID,
-			filter: { id: requestId },
+			resource: MARKETPLACE_MESSAGES_RESOURCE_ID,
+			filter: { id: messageId },
 		});
-		expect(rows).toEqual([request]);
+		expect(rows).toEqual([message]);
 	});
 
 	it("create marketplace items resource with filter.id creates row keyed by client UUID (iOS shape)", async () => {

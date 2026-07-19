@@ -219,22 +219,22 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(values["createdAt"], .string("2026-06-01T00:00:00Z"))
   }
 
-  func testUpdateActionArchivesOnlyMatchingActiveRequest() throws {
+  func testUpdateActionArchivesOnlyMatchingActiveMessage() throws {
     let namespace = EVYNamespace.marketplace
-    let resource = MarketplaceTestFixture.requestsResourceId
+    let resource = MarketplaceTestFixture.messagesResourceId
     let itemId = UUID().uuidString
-    let archivedRequestId = UUID().uuidString
-    let activeRequestId = UUID().uuidString
-    let otherActiveRequestId = UUID().uuidString
+    let archivedMessageId = UUID().uuidString
+    let activeMessageId = UUID().uuidString
+    let otherActiveMessageId = UUID().uuidString
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
 
-    // activeRequestId has archivedAt: null, activeAbsentRequestId omits the key entirely —
+    // activeMessageId has archivedAt: null, activeAbsentMessageId omits the key entirely —
     // a null filter must match both
-    let activeAbsentRequestId = UUID().uuidString
-    let requests = EVYJson.array([
+    let activeAbsentMessageId = UUID().uuidString
+    let messages = EVYJson.array([
       .dictionary([
-        "id": .string(archivedRequestId),
+        "id": .string(archivedMessageId),
         "fk": .string(itemId),
         "archivedAt": .string("2026-06-02T00:00:00Z"),
         "data": .dictionary([
@@ -243,7 +243,7 @@ final class EVYActionRunnerTests: XCTestCase {
         ]),
       ]),
       .dictionary([
-        "id": .string(activeRequestId),
+        "id": .string(activeMessageId),
         "fk": .string(itemId),
         "archivedAt": .null,
         "data": .dictionary([
@@ -252,7 +252,7 @@ final class EVYActionRunnerTests: XCTestCase {
         ]),
       ]),
       .dictionary([
-        "id": .string(activeAbsentRequestId),
+        "id": .string(activeAbsentMessageId),
         "fk": .string(itemId),
         "data": .dictionary([
           "type": .string("delivery"),
@@ -260,7 +260,7 @@ final class EVYActionRunnerTests: XCTestCase {
         ]),
       ]),
       .dictionary([
-        "id": .string(otherActiveRequestId),
+        "id": .string(otherActiveMessageId),
         "fk": .string(UUID().uuidString),
         "archivedAt": .null,
         "data": .dictionary([
@@ -269,7 +269,7 @@ final class EVYActionRunnerTests: XCTestCase {
         ]),
       ]),
     ])
-    try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: requests)
+    try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: messages)
 
     var receivedKeys: [String] = []
     let token = NotificationCenter.default.addObserver(
@@ -306,7 +306,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
     XCTAssertTrue(
       receivedKeys.contains(resource),
-      "Update should post a value-change notification for the requests resource")
+      "Update should post a value-change notification for the messages resource")
 
     let updatedRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
     let archivedAtById = Dictionary(
@@ -320,13 +320,13 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let pinnedIso = EVYJson.string(pinnedDate.ISO8601Format())
     XCTAssertEqual(
-      archivedAtById[archivedRequestId], .string("2026-06-02T00:00:00Z"),
-      "Already-archived request should keep its original timestamp")
-    XCTAssertEqual(archivedAtById[activeRequestId], pinnedIso)
+      archivedAtById[archivedMessageId], .string("2026-06-02T00:00:00Z"),
+      "Already-archived message should keep its original timestamp")
+    XCTAssertEqual(archivedAtById[activeMessageId], pinnedIso)
     XCTAssertEqual(
-      archivedAtById[activeAbsentRequestId], pinnedIso,
+      archivedAtById[activeAbsentMessageId], pinnedIso,
       "A null filter should match records missing the key entirely")
-    XCTAssertEqual(archivedAtById[otherActiveRequestId], .null)
+    XCTAssertEqual(archivedAtById[otherActiveMessageId], .null)
   }
 
   func testInlineCreateActionWritesResolvedPayloadWithoutNavigating() throws {
@@ -551,13 +551,13 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testFalseBranchWithoutCreateRunsHighlightRequired() {
-    let requestsResourceId = MarketplaceTestFixture.requestsResourceId
+    let messagesResourceId = MarketplaceTestFixture.messagesResourceId
     let itemResourceId = MarketplaceTestFixture.itemsResourceId
     var received: ActionOperation?
     let action = rowAction(
       condition: "{length(shipping_address.postcode) > 0}",
       true:
-        "{create(\(EVYNamespace.marketplace),\(requestsResourceId),{fk: \(itemResourceId).id, archivedAt: null, data: {type: shipping, postalcode: shipping_address.postcode}})}",
+        "{create(\(EVYNamespace.marketplace),\(messagesResourceId),{fk: \(itemResourceId).id, archivedAt: null, data: {type: shipping, postalcode: shipping_address.postcode}})}",
       false: "{highlight_required(postcode)}"
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -608,7 +608,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateActionRunsImmediately() throws {
     let namespace = EVYNamespace.marketplace
-    let resource = MarketplaceTestFixture.requestsResourceId
+    let resource = MarketplaceTestFixture.messagesResourceId
     let itemResourceId = MarketplaceTestFixture.itemsResourceId
     let itemId = UUID().uuidString
     let itemTitle = "Pickup Item Title"

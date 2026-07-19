@@ -100,7 +100,7 @@ enum EVYActionRunner {
         guard let updateAction = EVYActionParser.updateAction(from: branch) else {
           throw EVYError.invalidData(
             context:
-              "update requires namespace, resource, filter, and changes, e.g. update(marketplace,requests,{id: abc},{archivedAt: now()})"
+              "update requires namespace, resource, filter, and changes, e.g. update(marketplace,messages,{id: abc},{archivedAt: now()})"
           )
         }
         let resolvedFilter = resolvePlainTextValues(updateAction.filter, datum: datum)

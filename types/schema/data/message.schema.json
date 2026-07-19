@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "request",
-	"title": "DATA_EVY_Request",
+	"$id": "message",
+	"title": "DATA_EVY_Message",
 	"type": "object",
 	"additionalProperties": false,
 	"required": ["id", "fk", "service", "resource", "createdAt", "data"],

@@ -1,6 +1,6 @@
 # Marketplace data models
 
-Clients talk to marketplace through the EVY api, in order to access the `items`, `selling_reasons`, `conditions`, and `requests` resources.
+Clients talk to marketplace through the EVY api, in order to access the `items`, `selling_reasons`, `conditions`, and `messages` resources.
 
 Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/data.md).
 
@@ -25,9 +25,9 @@ id: uuid
 value: string
 ```
 
-## Requests
+## Messages
 
-Rows of the `requests` resource are core [`DATA_EVY_Request`](../../evy/data.md#data_evy_request) objects — the marketplace API persists them without payload validation. For item requests, `fk` is the item id and `service` / `resource` are the marketplace service and `items` resource ids. The free-form `data` object carries the transfer specifics:
+Rows of the `messages` resource are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) objects — the marketplace API persists them without payload validation. For item requests, `fk` is the item id and `service` / `resource` are the marketplace service and `items` resource ids. The free-form `data` object carries the transfer specifics:
 
 ```
 data.type: "pickup" | "delivery" | "shipping"
@@ -35,7 +35,7 @@ data.time: string (local ISO time, `YYYY-MM-DDTHH:mm:ss`; pickup/delivery)
 data.postalcode: string (shipping)
 ```
 
-Cancelling a request sets `archivedAt` via an update — records are not hard-deleted.
+Cancelling a message sets `archivedAt` via an update — records are not hard-deleted.
 
 ## DATA_MARKETPLACE_Item
 
