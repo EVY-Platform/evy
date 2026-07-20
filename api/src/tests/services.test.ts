@@ -88,11 +88,8 @@ describe("service WebSocket adapters", () => {
 
 		testServer = await startTestWsServer(wsPort);
 
-		const { initServiceAdapters, wireServiceEvents } = await import(
-			"../procedures/services"
-		);
-		await initServiceAdapters(dataDb);
-		wireServiceEvents((_eventName, payload) => {
+		const { initServiceAdapters } = await import("../procedures/services");
+		await initServiceAdapters(dataDb, (_eventName, payload) => {
 			receivedEvents.push(payload);
 		});
 	});
