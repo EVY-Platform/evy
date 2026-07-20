@@ -1054,14 +1054,14 @@ class E2ETestBase: XCTestCase {
           id: "c9d8e7f6-a5b4-4c3d-8e2f-1a9b8c7d6e5f",
           title: "",
           subtitle:
-            "You are about to request to pickup {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} at {formatDatetime(selected_pickup_timeslot, \"EEE do\")} {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
+            "Request to pick up {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} on {formatDatetime(selected_pickup_timeslot, \"EEE do\")} at {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
           name: "Pickup confirmation message"
         ),
         Self.textRow(
           id: "d0e9f8a7-b6c5-4d4e-9f3a-2b0c9d8e7f6a",
           title: "",
           subtitle:
-            "Be advised someone may request to pickup {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} earlier than your selected timeslot.",
+            "Be advised someone may request to pick up {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} earlier than your selected timeslot.",
           visible:
             "{selected_pickup_timeslot != earliestDatetime(\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection)}",
           name: "Pickup earlier timeslot warning"
