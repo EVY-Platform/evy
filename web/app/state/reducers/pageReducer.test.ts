@@ -326,6 +326,24 @@ describe("pageReducer", () => {
 		expect(next).toBe(state);
 	});
 
+	it("REMOVE_PAGE keeps other flows' rows in the store", () => {
+		const otherFlow = makeFlow("flow-2", ["page-3"]);
+		const otherPage = makePage("page-3", ["row-3"]);
+		const otherRow = makeTextRow("row-3");
+		const base = initialState();
+		const state = initialState({
+			flowsById: { ...base.flowsById, "flow-2": otherFlow },
+			pagesById: { ...base.pagesById, "page-3": otherPage },
+			rowsById: { ...base.rowsById, "row-3": otherRow },
+		});
+		const next = pageReducer(state, {
+			type: "REMOVE_PAGE",
+			pageId: "page-2",
+		});
+		expect(next.rowsById["row-3"]).toBeDefined();
+		expect(next.rowsById["row-2"]).toBeUndefined();
+	});
+
 	it("REMOVE_PAGE selects another page when active removed", () => {
 		const state = initialState({ activePageId: "page-2" });
 		const next = pageReducer(state, {

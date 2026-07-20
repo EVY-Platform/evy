@@ -12,6 +12,7 @@ import {
 	moveRow,
 	moveRowToFooter,
 	pageRootIds,
+	removePage,
 	removeRowFromPage,
 	setFooterRow,
 	updatePageTitle,
@@ -367,47 +368,18 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			if (!flow || flow.pageIds.length <= 1) return state;
 			if (!flow.pageIds.includes(action.pageId)) return state;
 
-			const { [action.pageId]: _removedPage, ...remainingPages } =
-				state.pagesById;
-			const nextPageIds = flow.pageIds.filter(
-				(id) => id !== action.pageId,
+			const nextMaps = removePage(
+				state,
+				state.activeFlowId,
+				action.pageId,
 			);
-			const updatedFlow = {
-				...flow,
-				pageIds: nextPageIds,
-				updatedAt: new Date().toISOString(),
-			};
-
-			// clean orphaned rows
-			const reachableRows = new Set<string>();
-			for (const pgId of nextPageIds) {
-				const pg = remainingPages[pgId];
-				if (!pg) continue;
-				for (const rowId of pg.rowIds) {
-					collectSubtreeIds(rowId, state.rowsById, reachableRows);
-				}
-				if (pg.footerRowId) {
-					collectSubtreeIds(
-						pg.footerRowId,
-						state.rowsById,
-						reachableRows,
-					);
-				}
-			}
-			const nextRows: typeof state.rowsById = {};
-			for (const [id, row] of Object.entries(state.rowsById)) {
-				if (reachableRows.has(id)) nextRows[id] = row;
-			}
+			const nextPageIds =
+				nextMaps.flowsById[state.activeFlowId]?.pageIds ?? [];
 
 			const wasActive = state.activePageId === action.pageId;
 			return {
 				...state,
-				flowsById: {
-					...state.flowsById,
-					[state.activeFlowId]: updatedFlow,
-				},
-				pagesById: remainingPages,
-				rowsById: nextRows,
+				...nextMaps,
 				activePageId: wasActive ? nextPageIds[0] : state.activePageId,
 				activeRowId: wasActive ? undefined : state.activeRowId,
 				configStack: wasActive ? [] : state.configStack,
@@ -441,24 +413,3 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 	}
 };
 
-// Used only by REMOVE_PAGE inline since flatGraph.removePage isn't imported here
-function collectSubtreeIds(
-	rowId: string,
-	rowsById: AppState["rowsById"],
-	visited: Set<string>,
-) {
-	if (visited.has(rowId)) return;
-	const row = rowsById[rowId];
-	if (!row) return;
-	visited.add(rowId);
-	const childId = row.data.child_row_id;
-	if (typeof childId === "string")
-		collectSubtreeIds(childId, rowsById, visited);
-	const childrenIds = row.data.children_row_ids;
-	if (Array.isArray(childrenIds)) {
-		for (const id of childrenIds) {
-			if (typeof id === "string")
-				collectSubtreeIds(id, rowsById, visited);
-		}
-	}
-}
