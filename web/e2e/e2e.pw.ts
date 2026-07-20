@@ -6,7 +6,9 @@ import type {
 	UI_Flow,
 	UI_Row,
 } from "evy-types";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { Client } from "rpc-websockets";
+import { decomposeServerFlow } from "../app/utils/serverFlowDecompose";
 import {
 	createNewFlowThroughPicker,
 	ensureSidePanelsExpanded,
@@ -29,13 +31,6 @@ type FlatFlowGraph = {
 	pageRows: DATA_EVY_Page[];
 	rowRows: DATA_EVY_Row[];
 };
-
-const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
-const EVY_CORE_RESOURCE = {
-	FLOWS: "flows",
-	PAGES: "pages",
-	ROWS: "rows",
-} as const;
 
 function getApiUrl(): string {
 	const apiUrl = process.env.API_URL;
@@ -96,7 +91,10 @@ async function getFlatResourceRows<T>(
 async function createFlowInApi(flow: UI_Flow): Promise<void> {
 	await withApiClient(async (client) => {
 		await client.login({ token: TEST_TOKEN, os: TEST_OS });
-		const graph = decomposeServerFlow(flow, new Date().toISOString());
+		const graph = decomposeServerFlow(
+			withFixtureNameFallbacks(flow),
+			new Date().toISOString(),
+		);
 		for (const row of graph.rowRows) {
 			await createFlatResource(client, EVY_CORE_RESOURCE.ROWS, row);
 		}
@@ -192,78 +190,34 @@ function assembleRow(
 	return assembledRow as UI_Row;
 }
 
-function decomposeServerFlow(flow: UI_Flow, nowIso: string): FlatFlowGraph {
-	const rowRows: DATA_EVY_Row[] = [];
-	const pageRows = flow.pages.map((page) =>
-		decomposeServerPage(page, rowRows, nowIso),
-	);
+/**
+ * Test fixtures omit name fields; fill the fallbacks the app would
+ * derive, then reuse the app's decomposeServerFlow for the actual
+ * nested-to-flat conversion.
+ */
+function withFixtureNameFallbacks(flow: UI_Flow): UI_Flow {
 	return {
-		flowRows: [
-			{
-				id: flow.id,
-				name: flow.name,
-				pageIds: pageRows.map((page) => page.id),
-				createdAt: nowIso,
-				updatedAt: nowIso,
-			},
-		],
-		pageRows,
-		rowRows,
+		...flow,
+		pages: flow.pages.map((page) => ({
+			...page,
+			name: (page.name ?? page.title) || "Page",
+			rows: page.rows.map(withRowNameFallbacks),
+			footer: page.footer
+				? withRowNameFallbacks(page.footer)
+				: page.footer,
+		})),
 	};
 }
 
-function decomposeServerPage(
-	page: UI_Flow["pages"][number],
-	rowRows: DATA_EVY_Row[],
-	nowIso: string,
-): DATA_EVY_Page {
+function withRowNameFallbacks(row: UI_Row): UI_Row {
 	return {
-		id: page.id,
-		name: (page.name ?? page.title) || "Page",
-		title: page.title,
-		rowIds: page.rows.map((row) =>
-			decomposeServerRow(row, rowRows, nowIso),
-		),
-		footerRowId: page.footer
-			? decomposeServerRow(page.footer, rowRows, nowIso)
-			: undefined,
-		createdAt: nowIso,
-		updatedAt: nowIso,
-	};
-}
-
-function decomposeServerRow(
-	row: UI_Row,
-	rowRows: DATA_EVY_Row[],
-	nowIso: string,
-): string {
-	const data: Record<string, unknown> = {};
-	for (const [key, value] of Object.entries(row)) {
-		if (
-			["id", "name", "type", "visible", "child", "children"].includes(key)
-		) {
-			continue;
-		}
-		if (value !== undefined) data[key] = value;
-	}
-	if (row.child) {
-		data.child_row_id = decomposeServerRow(row.child, rowRows, nowIso);
-	}
-	if (Array.isArray(row.children) && row.children.length > 0) {
-		data.children_row_ids = row.children.map((child) =>
-			decomposeServerRow(child, rowRows, nowIso),
-		);
-	}
-	rowRows.push({
-		id: row.id,
+		...row,
 		name: (row.name ?? row.title) || row.type,
-		type: row.type,
-		visible: row.visible,
-		data,
-		createdAt: nowIso,
-		updatedAt: nowIso,
-	});
-	return row.id;
+		child: row.child ? withRowNameFallbacks(row.child) : row.child,
+		children: Array.isArray(row.children)
+			? row.children.map(withRowNameFallbacks)
+			: row.children,
+	};
 }
 
 function rowContainsTitle(row: UI_Row, title: string): boolean {

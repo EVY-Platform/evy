@@ -412,4 +412,3 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return state;
 	}
 };
-

@@ -4,7 +4,7 @@ import type {
 	DATA_EVY_Row,
 	UI_Flow as ServerFlow,
 } from "evy-types";
-import { decomposeServerFlow } from "./decodeFlow";
+import { decomposeServerFlow } from "./serverFlowDecompose";
 
 type EntityMap<T extends { id: string }> = Record<string, T>;
 
