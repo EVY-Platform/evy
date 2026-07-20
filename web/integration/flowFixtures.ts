@@ -92,7 +92,7 @@ function fillEntityNames(flows: ServerFlow[]): ServerFlow[] {
 	}));
 }
 
-export function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
+function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 	return [
 		{
 			id: crypto.randomUUID(),
@@ -108,7 +108,7 @@ export function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 	];
 }
 
-export async function initTestFlows(
+async function initTestFlows(
 	page: Page,
 	pages: ServerPageInput[],
 	resources: ServiceResource[] = [],
@@ -134,7 +134,7 @@ export async function initFullFlows(
 	await initResourceAttributeMetadata(page, metadata);
 }
 
-export async function initServiceResources(
+async function initServiceResources(
 	page: Page,
 	resources: ServiceResource[],
 ): Promise<void> {
@@ -143,7 +143,7 @@ export async function initServiceResources(
 	}, resources);
 }
 
-export async function initResourceAttributeMetadata(
+async function initResourceAttributeMetadata(
 	page: Page,
 	metadata: ResourceAttributeMetadata[],
 ): Promise<void> {

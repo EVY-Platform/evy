@@ -29,7 +29,7 @@ export type DraggableState =
 	| { type: "preview"; container: HTMLElement | null; rect: DOMRect | null };
 
 export const idleState: DraggableState = { type: "idle" };
-export const draggingState: DraggableState = { type: "dragging" };
+const draggingState: DraggableState = { type: "dragging" };
 
 type DragEvent = {
 	source: { data: Record<string, unknown> };

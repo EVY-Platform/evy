@@ -304,20 +304,6 @@ func _evaluateFromText(_ input: String) throws -> Bool {
   return match.value == "true"
 }
 
-private let sourceFormatFunctions = [
-  "formatCurrency",
-  "formatDimension",
-  "formatWeight",
-  "formatDecimal",
-  "formatMetricLength",
-  "formatImperialLength",
-  "formatDuration",
-  "formatDatetime",
-  "formatAddress",
-  "formatAddressLine1",
-  "formatAddressLine2",
-]
-
 private let formatFunctionsByBuildFunction = [
   "buildCurrency": "formatCurrency",
   "buildAddress": "formatAddress",
@@ -375,31 +361,6 @@ func _watchTargets(forSource source: String?, destination: String?) -> [String] 
     targets.append(contentsOf: _watchTargets(for: destination))
   }
   return targets
-}
-
-@MainActor
-func _rawDataFromSource(_ source: String) throws -> EVYJson {
-  let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard !trimmed.isEmpty else { return .string("") }
-
-  let wrapped = wrappedExpression(trimmed)
-  let inner = _parsePropsFromText(wrapped)
-
-  if let (functionName, functionArgs) = parseFunctionCall(inner),
-    sourceFormatFunctions.contains(functionName)
-  {
-    return try _getDataFromProps(functionArgs.trimmingCharacters(in: .whitespacesAndNewlines))
-  }
-
-  return try _getDataFromText(wrapped)
-}
-
-@MainActor
-func _displayText(fromSource source: String?) -> String {
-  guard let source else { return "" }
-  let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard !trimmed.isEmpty else { return "" }
-  return (try? _getValueFromText(trimmed, editing: false).toString()) ?? ""
 }
 
 @MainActor

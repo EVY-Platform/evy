@@ -175,26 +175,12 @@ func evyFormatDimension(
   if editing {
     return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
   }
+  // Integer division truncates on purpose: 1500mm displays as "1m".
   if mm > 1000 {
-    let meters = Decimal(mm / 1000)
-    let truncatedMeters = NSDecimalNumber(decimal: meters).intValue
-    if meters == Decimal(integerLiteral: truncatedMeters) {
-      return EVYFunctionOutput(value: "\(truncatedMeters)", prefix: nil, suffix: "m")
-    }
-    return EVYFunctionOutput(value: "\(meters)", prefix: nil, suffix: "m")
+    return EVYFunctionOutput(value: "\(mm / 1000)", prefix: nil, suffix: "m")
   }
   if mm > 100 {
-    let cm = Decimal(mm / 10)
-    let truncatedCM = NSDecimalNumber(decimal: cm).intValue
-    if cm == Decimal(integerLiteral: truncatedCM) {
-      return EVYFunctionOutput(value: "\(truncatedCM)", prefix: nil, suffix: "cm")
-    }
-    return EVYFunctionOutput(value: "\(cm)", prefix: nil, suffix: "cm")
-  }
-
-  let truncatedMM = NSDecimalNumber(integerLiteral: mm).intValue
-  if mm == truncatedMM {
-    return EVYFunctionOutput(value: "\(truncatedMM)", prefix: nil, suffix: "mm")
+    return EVYFunctionOutput(value: "\(mm / 10)", prefix: nil, suffix: "cm")
   }
   return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: "mm")
 }

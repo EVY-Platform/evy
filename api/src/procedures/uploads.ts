@@ -14,6 +14,7 @@ export interface UploadSession {
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 const uploadSessions = new Map<string, UploadSession>();
 
+// exported for tests
 export function parseUploadChunkFrame(frame: Buffer): {
 	metadata: UploadChunkMetadata;
 	chunkData: Buffer;

@@ -1,24 +1,18 @@
 // No HTTP health endpoint exists here,
 // so Docker/e2e use this CLI to
 // verify DB and seed readiness.
-import type { GetRequest, GetResponse } from "evy-types";
-import { get as defaultGet } from "./data";
+import { get } from "./data";
 import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "./resources";
 
 type AssertMarketplaceReadableOptions = {
 	requireSeeded: boolean;
 };
 
-type MarketplaceReadableDeps = {
-	get: (params: GetRequest) => Promise<GetResponse>;
-};
-
 async function assertMarketplaceReadable(
 	options: AssertMarketplaceReadableOptions,
-	deps: MarketplaceReadableDeps = { get: defaultGet },
 ): Promise<void> {
 	const { requireSeeded } = options;
-	const response = await deps.get({
+	const response = await get({
 		service: MARKETPLACE_SERVICE,
 		resource: MARKETPLACE_RESOURCE.ITEMS,
 	});

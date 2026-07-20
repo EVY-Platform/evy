@@ -12,6 +12,7 @@ export const data = pgTable("Data", {
 	updatedAt: text("updated_at").notNull(),
 });
 
+// exported for tests
 export const schema = { data };
 
 export function getMarketplaceConnectionUrl(): string {

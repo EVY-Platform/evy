@@ -23,8 +23,9 @@ export const BINDING_FIELD_COPY: Record<
 	},
 };
 
-export type RowFieldKind = "text" | "textList" | "child" | "children" | "enum";
+type RowFieldKind = "text" | "textList" | "child" | "children" | "enum";
 
+// exported for tests
 export type RowField = {
 	name: string;
 	kind: RowFieldKind;
@@ -67,7 +68,7 @@ export function readBindingFields(
 	return bindingFields;
 }
 
-export const ROW_FIELD_PANEL_ORDER = [
+const ROW_FIELD_PANEL_ORDER = [
 	"icon",
 	"title",
 	"subtitle",

@@ -41,10 +41,6 @@ extension EVY {
     return try formatData(json: json, format: format)
   }
 
-  static func displayText(fromSource source: String?) -> String {
-    _displayText(fromSource: source)
-  }
-
   static func displayText(fromSource source: String?, destination: String?) -> String {
     _displayText(fromSource: source, destination: destination)
   }

@@ -21,6 +21,7 @@ export function parseUrlPath(): {
 }
 
 /** Synthetic search preview row ids must never appear in real URLs. */
+// exported for tests
 export function isNonRoutablePreviewRowId(rowId: string): boolean {
 	return (
 		rowId.includes(":search-preview:") ||

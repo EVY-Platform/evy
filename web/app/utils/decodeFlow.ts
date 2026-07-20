@@ -59,6 +59,7 @@ export function mergeRowContentWithPaletteDefaults(
 	};
 }
 
+// exported for tests
 export function normalizeServerRow(row: ServerRow): ServerRow {
 	const baseRow = getBaseRowForType(row.type);
 	if (!baseRow) {

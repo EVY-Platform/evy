@@ -7,7 +7,7 @@ import type {
 import type { RowAction } from "../../types/actions";
 import type { Row } from "../../types/row";
 
-export type FlowsContextValue = {
+type FlowsContextValue = {
 	rows: Row[];
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;

@@ -12,5 +12,5 @@
 		"types": ["bun-types"],
 		"baseUrl": "."
 	},
-	"include": ["app/**/*", "dev/**/*", "tests/**/*"]
+	"include": ["app/**/*", "dev/**/*"]
 }

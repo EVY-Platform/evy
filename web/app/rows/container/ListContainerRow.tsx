@@ -11,7 +11,6 @@ export default defineRow(typeName, {
 		actions: [],
 		visible: "true",
 		title: "List container row title",
-		child: undefined,
 		children: [],
 	} satisfies RowConfig,
 	render: (row) => {

@@ -908,22 +908,6 @@ final class InterpreterTests: XCTestCase {
     XCTAssertTrue(targets.contains("\(itemKey).id"))
   }
 
-  func testRawDataFromPlainSourceExpression() throws {
-    let key = uniqueKey("title")
-    try store(.string("Hello world"), at: key)
-
-    let raw = try _rawDataFromSource("{\(key)}")
-    XCTAssertEqual(raw, .string("Hello world"))
-  }
-
-  func testDisplayTextFromFormattedSourceExpression() throws {
-    let key = uniqueKey("price")
-    try store(.dictionary(["value": .string("99"), "currency": .string("AUD")]), at: key)
-
-    let display = EVY.displayText(fromSource: "{formatCurrency(\(key))}")
-    XCTAssertEqual(display, "$99.00")
-  }
-
   func testFormatAddress() throws {
     let cases:
       [(name: String, removing: [String], overrides: [String: EVYJson], expected: String)] = [

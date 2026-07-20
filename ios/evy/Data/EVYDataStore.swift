@@ -8,6 +8,11 @@
 import Foundation
 import SwiftData
 
+enum EVYDataError: Error {
+  case keyNotFound
+  case keyAlreadyExists
+}
+
 @MainActor
 final class EVYDataStore {
   private let context: ModelContext

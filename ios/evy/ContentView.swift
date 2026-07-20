@@ -25,34 +25,6 @@ enum ActionOperation: Hashable {
   case close
 }
 
-extension ActionOperation {
-  static func == (lhs: ActionOperation, rhs: ActionOperation) -> Bool {
-    switch (lhs, rhs) {
-    case (.navigate(let leftRoute), .navigate(let rightRoute)):
-      return leftRoute == rightRoute
-    case (.highlightRequired(let leftField), .highlightRequired(let rightField)):
-      return leftField == rightField
-    case (.close, .close):
-      return true
-    default:
-      return false
-    }
-  }
-
-  func hash(into hasher: inout Hasher) {
-    switch self {
-    case .navigate(let route):
-      hasher.combine(0)
-      hasher.combine(route)
-    case .highlightRequired(let fieldName):
-      hasher.combine(1)
-      hasher.combine(fieldName)
-    case .close:
-      hasher.combine(2)
-    }
-  }
-}
-
 struct ActionEnvironmentKey: EnvironmentKey {
   static let defaultValue: (ActionOperation) -> Void = { _ in }
 }
@@ -198,11 +170,6 @@ struct ContentView: View {
           do {
             try await EVY.sync()
             homeFirstPageId = EVYFlowStore.firstPageId(inFlowId: HOME_FLOW_ID)
-            loading = false
-          } catch let error as EVYRPCError {
-            alertTitle = "Error"
-            alertMessage = error.localizedDescription
-            showingAlert = true
             loading = false
           } catch {
             alertTitle = "Error"

@@ -13,14 +13,12 @@ export function ContainerChildren({
 	showIndicators = false,
 	containerRowId,
 	containerType,
-	showPlaceholder = true,
 }: {
 	childIds: string[];
 	orientation?: "horizontal" | "vertical";
 	showIndicators?: boolean;
 	containerRowId: string;
 	containerType: ContainerType;
-	showPlaceholder?: boolean;
 }) {
 	const { dispatchRow, rowsById, rows: paletteRows } = useFlowsContext();
 	const isInRowsPanel = useIsInRowsPanel();
@@ -40,13 +38,13 @@ export function ContainerChildren({
 				</DropPlaceholderShell>
 			);
 		}
-		return showPlaceholder ? (
+		return (
 			<PlaceholderDropIndicator
 				key="placeholder"
 				containerRowId={containerRowId}
 				containerType={containerType}
 			/>
-		) : null;
+		);
 	}
 
 	return (

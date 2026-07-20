@@ -7,6 +7,7 @@ type AssertApiReadableOptions = {
 	requireSeeded: boolean;
 };
 
+// exported for tests
 export async function assertApiReadable(
 	db: EvyDb,
 	options: AssertApiReadableOptions,

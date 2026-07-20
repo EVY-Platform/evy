@@ -335,13 +335,6 @@ export function BuilderAssist({
 		[activeToken, closeDropdown, onChange],
 	);
 
-	const commitCandidate = useCallback(
-		(candidate: IdCandidate) => {
-			commitCandidateInInterpolatedEditable(candidate);
-		},
-		[commitCandidateInInterpolatedEditable],
-	);
-
 	useEffect(() => {
 		if (!isOpen) return;
 		updateDropdownPosition();
@@ -407,7 +400,7 @@ export function BuilderAssist({
 				const candidate = filteredCandidates[highlightedIndex];
 				if (!candidate) return;
 				event.preventDefault();
-				commitCandidate(candidate);
+				commitCandidateInInterpolatedEditable(candidate);
 				return;
 			}
 
@@ -419,7 +412,7 @@ export function BuilderAssist({
 		[
 			handleListNavigationKey,
 			closeDropdown,
-			commitCandidate,
+			commitCandidateInInterpolatedEditable,
 			filteredCandidates,
 			highlightedIndex,
 		],
@@ -518,7 +511,7 @@ export function BuilderAssist({
 				onMouseDown={(event) => {
 					event.preventDefault();
 					isSelectingOptionRef.current = true;
-					commitCandidate(candidate);
+					commitCandidateInInterpolatedEditable(candidate);
 					queueMicrotask(() => {
 						isSelectingOptionRef.current = false;
 					});

@@ -36,22 +36,6 @@ type DropTargetRecord = {
 
 type PageDropPosition = "start" | "end";
 
-function getDefaultAppendIndexForPageDrop(
-	destinationPage: DATA_EVY_Page,
-): number {
-	return destinationPage.rowIds.length;
-}
-
-function buildInitialDropDispatchOptions(
-	destinationPage: DATA_EVY_Page,
-	resolvedPageId: string,
-): DropDispatchOptions {
-	return {
-		destinationIndex: getDefaultAppendIndexForPageDrop(destinationPage),
-		destinationPageId: resolvedPageId,
-	};
-}
-
 function getPageDropPosition(
 	dropTarget: DropTargetRecord | undefined,
 ): PageDropPosition | undefined {
@@ -72,8 +56,7 @@ function applyPageDropPosition(
 	}
 
 	if (pageDropPosition === "end") {
-		dispatchOptions.destinationIndex =
-			getDefaultAppendIndexForPageDrop(destinationPage);
+		dispatchOptions.destinationIndex = destinationPage.rowIds.length;
 	}
 }
 
@@ -214,12 +197,11 @@ export function handleDrop(
 
 	const destinationPage = maps.pagesById[destinationPageId];
 	invariant(destinationPage, "handleDrop: destinationPage is not defined");
-	const resolvedPageId = destinationPageId;
 
-	const dispatchOptions = buildInitialDropDispatchOptions(
-		destinationPage,
-		resolvedPageId,
-	);
+	const dispatchOptions: DropDispatchOptions = {
+		destinationIndex: destinationPage.rowIds.length,
+		destinationPageId,
+	};
 	if (pageDestinationContainerRowId) {
 		dispatchOptions.destinationContainer = {
 			rowId: pageDestinationContainerRowId,

@@ -9,7 +9,7 @@ import {
 import { ACTION_FUNCTIONS } from "./actionBranch";
 import { ROW_ATTRIBUTE_STATIC_NAMES } from "./rowConstants";
 
-export type IdCandidateCategory =
+type IdCandidateCategory =
 	| "Flow"
 	| "Page"
 	| "Resource"
@@ -209,6 +209,7 @@ export function buildFunctionCandidates(): IdCandidate[] {
 		}));
 }
 
+// exported for tests
 export function filterCandidates(
 	candidates: IdCandidate[],
 	query: string,

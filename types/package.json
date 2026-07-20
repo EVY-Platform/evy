@@ -13,6 +13,7 @@
 		"./env": "./env.ts",
 		"./*": "./generated/ts/*.ts"
 	},
+	"//": "This package is consumed via file: deps and never bun-installed directly; its runtime deps (ajv, ajv-formats) must also stay in the root package.json devDependencies so scripts/ and generators can resolve them.",
 	"dependencies": {
 		"ajv": "^8.20.0",
 		"ajv-formats": "^3.0.1"

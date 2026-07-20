@@ -24,7 +24,3 @@ export function emitDataChanged(
 export function onServiceEvent(listener: ServiceEventListener): void {
 	marketplaceEventBus.on("notify", listener);
 }
-
-export function offServiceEvent(listener: ServiceEventListener): void {
-	marketplaceEventBus.off("notify", listener);
-}

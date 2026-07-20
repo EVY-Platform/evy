@@ -226,6 +226,7 @@ async function createFileFromUpload(params: {
 
 // Binary storage
 
+// exported for tests
 export async function writeFileBinary(params: {
 	id: string;
 	bytes: Buffer;

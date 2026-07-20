@@ -4,16 +4,14 @@ import EVYText from "./EVYText";
 export function RowLayout({
 	title,
 	children,
-	titleClassName = "evy-text-md",
 	fullWidthContent = false,
 }: {
 	title: string;
 	children?: ReactNode;
-	titleClassName?: string;
 	fullWidthContent?: boolean;
 }) {
 	const titleElement = title.trim() ? (
-		<p className={titleClassName}>
+		<p className="evy-text-md">
 			<EVYText text={title} />
 		</p>
 	) : null;

@@ -1,7 +1,9 @@
 /** Collapsed side-panel width (px) overlaying the canvas edges (--size-nav-bar). */
+// exported for tests
 export const COLLAPSED_PANEL_WIDTH_PX = 50;
 
 /** Breathing room so the leftmost page clears the collapsed panel edge. */
+// exported for tests
 export const CANVAS_EDGE_MARGIN_PX = 16;
 
 type HorizontalCenterInput = {

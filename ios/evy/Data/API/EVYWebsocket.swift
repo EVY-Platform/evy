@@ -8,7 +8,6 @@
 import Foundation
 
 enum EVYRPCError: LocalizedError {
-  case loginError
   case connectionError(String)
   case rpcError(code: Int, message: String)
   case unknownError(String)
@@ -16,8 +15,6 @@ enum EVYRPCError: LocalizedError {
 
   var errorDescription: String? {
     switch self {
-    case .loginError:
-      return "Authentication failed"
     case .connectionError(let message):
       return "Connection error: \(message)"
     case .rpcError(_, let message):
@@ -207,9 +204,6 @@ actor EVYWebsocket {
   }
 
   nonisolated private func postError(_ error: Error) {
-    #if DEBUG
-      print("[EVYWebsocket] Error: \(error.localizedDescription)")
-    #endif
     Task { @MainActor in
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
     }

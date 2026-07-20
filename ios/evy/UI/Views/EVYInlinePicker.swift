@@ -52,9 +52,6 @@ struct EVYInlinePicker: View {
           return arrayValue.map { $0.identifierValue() }
         } catch {
           NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
-          #if DEBUG
-            print("[EVYInlinePicker] Error loading selection: \(error)")
-          #endif
         }
         return []
       })
