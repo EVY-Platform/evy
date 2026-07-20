@@ -20,8 +20,6 @@ function swiftTypeForSpecType(s: string, required = true): string {
 	switch (s) {
 		case "string":
 			return required ? "String" : "String?";
-		case "integer":
-			return required ? "Int" : "Int?";
 		case "[UI_Row]":
 			return required ? "[UI_Row]" : "[UI_Row]?";
 		case "UI_Row":
@@ -170,8 +168,6 @@ ${cases.join("\n")}
 
 function swiftDefaultValueForSpecType(specType: string): string {
 	switch (specType) {
-		case "integer":
-			return "0";
 		case "[UI_Row]":
 		case "[String]":
 		case "[UI_RowAction]":
@@ -354,62 +350,20 @@ ${defBlocks.join("\n\n")}
 `;
 }
 
-function emitRowContentDecodeLine(
-	key: string,
-	specType: string,
-	required = true,
-	strict = false,
-): string {
+/**
+ * Decode line for the UI_Row union class: every field is lenient
+ * (decodeIfPresent with a safe default) because a given JSON row only
+ * carries its own row type's attributes.
+ */
+function emitRowContentDecodeLine(key: string, specType: string): string {
 	const k = swiftIdentifier(key);
-	if (!required) {
-		// Optional fields: decodeIfPresent, nil when absent
-		switch (specType) {
-			case "[UI_Row]":
-				return `        ${k} = try c.decodeIfPresent([UI_Row].self, forKey: .${k})`;
-			case "[String]":
-				return `        ${k} = try c.decodeIfPresent([String].self, forKey: .${k})`;
-			case "[UI_RowAction]":
-				return `        ${k} = try c.decodeIfPresent([UI_RowAction].self, forKey: .${k})`;
-			case "integer":
-				return `        ${k} = (try? c.decodeIfPresent(Int.self, forKey: .${k})) ?? Int((try? c.decodeIfPresent(String.self, forKey: .${k})) ?? "")`;
-			case "UI_Row":
-				return `        ${k} = try c.decodeIfPresent(UI_Row.self, forKey: .${k})`;
-			default:
-				return `        ${k} = try c.decodeIfPresent(String.self, forKey: .${k})`;
-		}
-	}
-	if (strict) {
-		// Required + strict: throws if the key is absent
-		switch (specType) {
-			case "string":
-				return `        ${k} = try c.decode(String.self, forKey: .${k})`;
-			case "[UI_Row]":
-				return `        ${k} = try c.decode([UI_Row].self, forKey: .${k})`;
-			case "[String]":
-				return `        ${k} = try c.decode([String].self, forKey: .${k})`;
-			case "[UI_RowAction]":
-				return `        ${k} = try c.decode([UI_RowAction].self, forKey: .${k})`;
-			case "integer":
-				return `        ${k} = try c.decode(Int.self, forKey: .${k})`;
-			case "UI_Row":
-				// UI_Row references are always UI_Row? — keep lenient even when required
-				return `        ${k} = try c.decodeIfPresent(UI_Row.self, forKey: .${k})`;
-			default:
-				return `        ${k} = try c.decode(String.self, forKey: .${k})`;
-		}
-	}
-	// Required + lenient (mega-class union type): decodeIfPresent with a safe default
 	switch (specType) {
-		case "string":
-			return `        ${k} = try c.decodeIfPresent(String.self, forKey: .${k}) ?? ""`;
 		case "[UI_Row]":
 			return `        ${k} = try c.decodeIfPresent([UI_Row].self, forKey: .${k}) ?? []`;
 		case "[String]":
 			return `        ${k} = try c.decodeIfPresent([String].self, forKey: .${k}) ?? []`;
 		case "[UI_RowAction]":
 			return `        ${k} = try c.decodeIfPresent([UI_RowAction].self, forKey: .${k}) ?? []`;
-		case "integer":
-			return `        ${k} = (try? c.decodeIfPresent(Int.self, forKey: .${k})) ?? Int((try? c.decodeIfPresent(String.self, forKey: .${k})) ?? "0") ?? 0`;
 		case "UI_Row":
 			return `        ${k} = try c.decodeIfPresent(UI_Row.self, forKey: .${k})`;
 		default:
@@ -439,43 +393,12 @@ function emitRowViewDataStruct(
 		([key, field]) =>
 			`    public let ${swiftIdentifier(key)}: ${swiftTypeForSpecType(field.type, field.required)}`,
 	);
-	// Synthesized Codable matches the strict hand-emitted coding exactly,
-	// except optional integers, which decode leniently from Int or String.
-	const needsCustomCoding = entries.some(
-		([, field]) => field.type === "integer" && !field.required,
-	);
-	if (!needsCustomCoding) {
-		return `// MARK: - ${viewDataName}
-public struct ${viewDataName}: Codable {
-${fieldLines.join("\n")}
-}`;
-	}
-	const codingKeyCases = entries.map(
-		([key]) => `        case ${swiftIdentifier(key)}`,
-	);
-	const decodeLines = entries.map(([key, field]) =>
-		emitRowContentDecodeLine(key, field.type, field.required, true),
-	);
-	const encodeLines = entries.map(([key, field]) =>
-		emitRowContentEncodeLine(key, field.type, field.required),
-	);
+	// Synthesized Codable matches the previously hand-emitted strict coding
+	// exactly for every supported spec type (all keys equal property names,
+	// optionals decodeIfPresent/omit-nil, required fields throw when absent).
 	return `// MARK: - ${viewDataName}
 public struct ${viewDataName}: Codable {
 ${fieldLines.join("\n")}
-
-    private enum CodingKeys: String, CodingKey {
-${codingKeyCases.join("\n")}
-    }
-
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-${decodeLines.join("\n")}
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: CodingKeys.self)
-${encodeLines.join("\n")}
-    }
 }`;
 }
 

@@ -4,6 +4,7 @@ import {
 	assertExactSduiRowTypeCoverage,
 	extractSduiRowTypeEnum,
 	loadSduiRowDefinitions,
+	rowFieldSpecTsSource,
 	rowFieldsFromDefinitions,
 	type SduiRowDefinition,
 } from "./sdui-row-schema-utils.js";
@@ -23,6 +24,7 @@ const DEFINITION_SCHEMA_PATH = join(
 	"definition.schema.json",
 );
 const UI_SCHEMA_PATH = join(SCHEMA_DIR, "sdui", "evy.schema.json");
+const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
 const OUT_TS_PATH = join(OUT_TS, "sdui", "definitions.generated.ts");
 const OUT_SWIFT_PATH = join(OUT_SWIFT, "SduiDefinitions.generated.swift");
 const SOURCE_LABEL = "types/schema/sdui/definitions/";
@@ -73,16 +75,7 @@ function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 		`export const SDUI_DEFINITIONS: Record<string, unknown> = ${JSON.stringify(catalog, null, "\t")};`,
 	);
 	tsLines.push("");
-	tsLines.push(
-		`export type RowFieldSpecKind = "text" | "textList" | "child" | "children" | "binding" | "enum";`,
-	);
-	tsLines.push("");
-	tsLines.push(`export type RowFieldSpec = {`);
-	tsLines.push(`\tname: string;`);
-	tsLines.push(`\tkind: RowFieldSpecKind;`);
-	tsLines.push(`\trequired: boolean;`);
-	tsLines.push(`\toptions?: string[];`);
-	tsLines.push(`};`);
+	tsLines.push(...rowFieldSpecTsSource());
 	tsLines.push("");
 	tsLines.push(
 		`export const SDUI_ROW_FIELDS: Record<string, RowFieldSpec[]> = ${JSON.stringify(rowFields, null, "\t")};`,
@@ -107,6 +100,47 @@ function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 	};
 }
 
+/**
+ * The row-type list is maintained in three hand-written places; fail
+ * generation if any of them drift from the UI_RowBase enum:
+ * - sdui/evy.schema.json UI_Row.oneOf (one ref per definition schema)
+ * - data/data.schema.json DATA_EVY_Row.properties.type.enum
+ */
+function assertRowTypeListsMatch(
+	uiSchema: SchemaObject,
+	dataSchema: SchemaObject,
+	rowTypes: string[],
+): void {
+	const expected = [...rowTypes].sort();
+
+	const uiDefs = uiSchema.$defs as Record<string, SchemaObject>;
+	const oneOf = (uiDefs.UI_Row?.oneOf ?? []) as { $ref?: string }[];
+	const oneOfTypes = oneOf
+		.map((entry) =>
+			(entry.$ref ?? "").replace(/^definitions\//, "").replace(
+				/\.schema\.json$/,
+				"",
+			),
+		)
+		.sort();
+	if (JSON.stringify(oneOfTypes) !== JSON.stringify(expected)) {
+		throw new Error(
+			`sdui/evy.schema.json: UI_Row.oneOf refs do not match the UI_RowBase type enum (oneOf: ${oneOfTypes.join(", ")}; enum: ${expected.join(", ")})`,
+		);
+	}
+
+	const dataDefs = dataSchema.$defs as Record<string, SchemaObject>;
+	const dataRowProps = dataDefs.DATA_EVY_Row?.properties as
+		| Record<string, { enum?: string[] }>
+		| undefined;
+	const dataEnum = [...(dataRowProps?.type?.enum ?? [])].sort();
+	if (JSON.stringify(dataEnum) !== JSON.stringify(expected)) {
+		throw new Error(
+			`data/data.schema.json: DATA_EVY_Row.properties.type.enum does not match the UI_RowBase type enum (data: ${dataEnum.join(", ")}; enum: ${expected.join(", ")})`,
+		);
+	}
+}
+
 export async function generateSduiDefinitions(): Promise<void> {
 	const definitions = await loadSduiRowDefinitions();
 	await validateDefinitionSchemas(definitions);
@@ -116,6 +150,11 @@ export async function generateSduiDefinitions(): Promise<void> {
 		throw new Error("sdui/evy.schema.json: UI_Row type enum not found");
 	}
 	assertExactSduiRowTypeCoverage(definitions, rowTypes);
+	assertRowTypeListsMatch(
+		schema,
+		await loadJson<SchemaObject>(DATA_SCHEMA_PATH),
+		rowTypes,
+	);
 	const { tsContent, swiftContent } = emitSduiDefinitions(definitions);
 	await writeGeneratedOutputs({
 		tsPath: OUT_TS_PATH,

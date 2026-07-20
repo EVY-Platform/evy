@@ -1,8 +1,7 @@
 {
 	"enums": {
 		"OS": {
-			"name": "OS",
-			"values": ["ios", "android", "Web"]
+			"name": "OS"
 		}
 	},
 	"tables": {
@@ -71,12 +70,6 @@
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
-		"DATA_EVY_File": {
-			"tableName": "File",
-			"primaryKey": "id",
-			"defaultRandom": [],
-			"uniqueIndexes": []
-		},
 		"DATA_EVY_Page": {
 			"tableName": "Page",
 			"primaryKey": "id",
@@ -87,6 +80,12 @@
 			"tableName": "Row",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
+			"uniqueIndexes": []
+		},
+		"DATA_EVY_File": {
+			"tableName": "File",
+			"primaryKey": "id",
+			"defaultRandom": [],
 			"uniqueIndexes": []
 		}
 	},

@@ -8,7 +8,6 @@ const UI_ROW_BASE_REF = "../evy.schema.json#/$defs/UI_RowBase";
 
 type SduiRowSpecType =
 	| "string"
-	| "integer"
 	| "[String]"
 	| "UI_Row"
 	| "[UI_Row]"
@@ -286,13 +285,16 @@ const SCHEMA_TO_UI_FIELD_NAME: Record<string, string> = {
 	children: "childrenRowIds",
 };
 
-export type RowFieldSpecKind =
-	| "text"
-	| "textList"
-	| "child"
-	| "children"
-	| "binding"
-	| "enum";
+export const ROW_FIELD_SPEC_KINDS = [
+	"text",
+	"textList",
+	"child",
+	"children",
+	"binding",
+	"enum",
+] as const;
+
+export type RowFieldSpecKind = (typeof ROW_FIELD_SPEC_KINDS)[number];
 
 export type RowFieldSpec = {
 	name: string;
@@ -300,6 +302,25 @@ export type RowFieldSpec = {
 	required: boolean;
 	options?: string[];
 };
+
+/**
+ * TS source emitted verbatim into definitions.generated.ts so the generated
+ * types cannot drift from RowFieldSpecKind/RowFieldSpec above.
+ */
+export function rowFieldSpecTsSource(): string[] {
+	return [
+		`export type RowFieldSpecKind = ${ROW_FIELD_SPEC_KINDS.map(
+			(kind) => `"${kind}"`,
+		).join(" | ")};`,
+		"",
+		`export type RowFieldSpec = {`,
+		`\tname: string;`,
+		`\tkind: RowFieldSpecKind;`,
+		`\trequired: boolean;`,
+		`\toptions?: string[];`,
+		`};`,
+	];
+}
 
 function rowFieldSpecFromAttribute(
 	schemaName: string,

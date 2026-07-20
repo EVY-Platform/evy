@@ -14,6 +14,7 @@ import {
 } from "./types-generation-utils.js";
 
 const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
+const OS_SCHEMA_PATH = join(SCHEMA_DIR, "data", "os.schema.json");
 const DRIZZLE_CONFIG_PATH = join(SCHEMA_DIR, "data", "drizzle.config.json");
 const OUT_PATH = join(OUT_TS, "db", "schema.generated.ts");
 
@@ -39,9 +40,9 @@ interface JsonSchema {
 	$defs?: Record<string, JsonSchemaDef>;
 }
 
+/** Enum values come from data.schema.json $defs; config only maps the pg enum name. */
 interface DrizzleEnumConfig {
 	name: string;
-	values: string[];
 }
 
 interface DrizzleTableConfig {
@@ -148,9 +149,9 @@ function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
 				);
 			}
 			const en = e as Record<string, unknown>;
-			if (typeof en.name !== "string" || !Array.isArray(en.values)) {
+			if (typeof en.name !== "string") {
 				throw new Error(
-					`drizzle.config.json: enums.${k} must have name (string) and values (array)`,
+					`drizzle.config.json: enums.${k} must have name (string)`,
 				);
 			}
 		}
@@ -445,17 +446,8 @@ async function main(): Promise<void> {
 	validateConfigSemantic(schema, config);
 
 	const defs = schema.$defs ?? {};
-	const tableOrder = [
-		"DATA_EVY_Device",
-		"DATA_EVY_Service",
-		"DATA_EVY_Organization",
-		"DATA_EVY_ServiceProvider",
-		"DATA_EVY_ServiceResource",
-		"DATA_EVY_Flow",
-		"DATA_EVY_Page",
-		"DATA_EVY_Row",
-		"DATA_EVY_File",
-	];
+	// Emission order follows the config's key order (JSON preserves it).
+	const tableOrder = Object.keys(config.tables ?? {});
 	const hasNumberColumns = tableOrder.some((defKey) => {
 		const tableConfig = config.tables?.[defKey];
 		const def = defs[defKey];
@@ -478,11 +470,26 @@ async function main(): Promise<void> {
 	];
 	const lines: string[] = [];
 
-	for (const enumConfig of Object.values(
-		config.enums ?? {},
-	) as DrizzleEnumConfig[]) {
+	const osSchema = await loadJson<JsonSchemaDef>(OS_SCHEMA_PATH);
+	for (const [enumKey, enumConfig] of Object.entries(config.enums ?? {})) {
+		const enumDef = defs[enumKey];
+		const values = (enumDef?.enum ?? []) as string[];
+		if (values.length === 0) {
+			throw new Error(
+				`data.schema.json: $defs.${enumKey}.enum must define the ${enumConfig.name} values`,
+			);
+		}
+		// os.schema.json declares the same enum standalone; fail on drift.
+		if (
+			enumKey === "OS" &&
+			JSON.stringify(values) !== JSON.stringify(osSchema.enum ?? [])
+		) {
+			throw new Error(
+				"data/os.schema.json enum does not match data.schema.json $defs.OS.enum",
+			);
+		}
 		lines.push(
-			`export const osEnum = pgEnum("${enumConfig.name}", [${enumConfig.values.map((v) => `"${v}"`).join(", ")}]);`,
+			`export const osEnum = pgEnum("${enumConfig.name}", [${values.map((v) => `"${v}"`).join(", ")}]);`,
 		);
 		lines.push("");
 	}
@@ -591,15 +598,17 @@ async function main(): Promise<void> {
 
 	await mkdir(dirname(OUT_PATH), { recursive: true });
 
+	// Relative imports: this file lives inside evy-types, so importing the
+	// package by name would depend on the consumer's own node_modules.
 	const typeImports = [
 		isTypeUsed("DATA_EVY_RowData", lines)
-			? 'import type { DATA_EVY_RowData } from "evy-types";'
+			? 'import type { DATA_EVY_RowData } from "../data/data";'
 			: null,
 		isTypeUsed("UI_Flow", lines)
-			? 'import type { UI_Flow } from "evy-types/sdui/evy";'
+			? 'import type { UI_Flow } from "../sdui/evy";'
 			: null,
 		isTypeUsed("DATA_PRIMITIVE", lines)
-			? 'import type { DATA_PRIMITIVE } from "evy-types/data/primitive";'
+			? 'import type { DATA_PRIMITIVE } from "../data/primitive";'
 			: null,
 	].filter((importLine) => importLine !== null);
 	const headerLines = [
