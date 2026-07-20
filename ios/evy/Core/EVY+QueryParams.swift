@@ -71,6 +71,7 @@ extension EVY {
       try? cacheStore.create(
         namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey, value: value)
     }
+    EVYValueChange.post(key: cacheKey)
   }
 
   private static func resolvedEntityCollections(for queryKey: String?) -> [(

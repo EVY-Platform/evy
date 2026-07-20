@@ -112,6 +112,31 @@ final class ContentViewTests: XCTestCase {
     )
   }
 
+  // MARK: - Navigation tests
+
+  func testNavigatingHomeClearsCreateFlowRoutes() {
+    let createRoutes = [
+      Route(flowId: "create-flow", pageId: "describe-page"),
+      Route(flowId: "create-flow", pageId: "fulfillment-page"),
+      Route(flowId: "create-flow", pageId: "payment-page"),
+    ]
+    let homeRoute = Route(flowId: "home-flow", pageId: "home-page")
+
+    XCTAssertEqual(
+      routesAfterNavigating(from: createRoutes, to: homeRoute, homeFlowId: "home-flow"),
+      []
+    )
+  }
+
+  func testNavigatingAwayFromHomeAppendsRoute() {
+    let viewRoute = Route(flowId: "view-flow", pageId: "view-page")
+
+    XCTAssertEqual(
+      routesAfterNavigating(from: [], to: viewRoute, homeFlowId: "home-flow"),
+      [viewRoute]
+    )
+  }
+
   // MARK: - EVYFlowStore tests
 
   func testFlowStoreResolvesFirstPageId() throws {

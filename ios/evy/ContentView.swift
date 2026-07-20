@@ -25,6 +25,22 @@ enum ActionOperation: Hashable {
   case close
 }
 
+func routesAfterNavigating(
+  from currentRoutes: [Route],
+  to route: Route,
+  homeFlowId: String
+) -> [Route] {
+  guard route.flowId != homeFlowId else { return [] }
+
+  var updatedRoutes = currentRoutes
+  if let existingRouteIndex = updatedRoutes.lastIndex(of: route) {
+    updatedRoutes.removeSubrange(existingRouteIndex...)
+  } else {
+    updatedRoutes.append(route)
+  }
+  return updatedRoutes
+}
+
 struct ActionEnvironmentKey: EnvironmentKey {
   static let defaultValue: (ActionOperation) -> Void = { _ in }
 }
@@ -99,13 +115,13 @@ struct ContentView: View {
   private func handleAction(_ navOperation: ActionOperation) {
     switch navOperation {
     case .navigate(let route):
-      if let existing = routes.lastIndex(of: route) {
-        routes.removeSubrange(existing...)
-      } else {
-        routes.append(route)
-      }
+      routes = routesAfterNavigating(
+        from: routes,
+        to: route,
+        homeFlowId: HOME_FLOW_ID
+      )
 
-      if currentFlowId == route.flowId {
+      if route.flowId == HOME_FLOW_ID || currentFlowId == route.flowId {
         break
       }
 
