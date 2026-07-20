@@ -27,13 +27,15 @@ flowchart LR
   - [Data](./docs/evy/data.md)
   - [Functions](./docs/evy/functions.md)
   - [Server Driven UI](./docs/evy/sdui.md)
+- Platform
   - [API](./api/README.md)
   - [iOS](./ios/README.md)
   - [Web](./web/README.md)
-- [Marketplace](./services/marketplace/README.md)
-  - [Data models](./docs/services/marketplace/data.md)
-  - [Example data](./scripts/fixtures/services/service_data.json)
-  - [Example UI flow for view & create item pages](./scripts/fixtures/services/service_sdui.json)
+- Services
+  - [Marketplace](./services/marketplace/README.md)
+	  - [Data models](./docs/services/marketplace/data.md)
+	  - [Example data](./scripts/fixtures/services/service_data.json)
+	  - [Example UI flow for view & create item pages](./scripts/fixtures/services/service_sdui.json)
 
 ## Setup
 
@@ -50,10 +52,12 @@ flowchart LR
 Run Postgres, the marketplace service, the main API, and the web app:
 
 ```bash
-docker compose up --build
+bun dev
 ```
 
-#### Postgres + Bun dev for all apps
+This will watch for file changes in any project and restart them as well as re-generate types
+
+#### Postgres + manual running of each app
 
 Start Postgres (`docker compose up --build postgres`), then in separate terminals from the repo root:
 
