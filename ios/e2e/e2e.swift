@@ -663,7 +663,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "ListContainer",
+              "type": "VerticalContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -853,7 +853,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
-              "type": "SelectSegmentContainer",
+              "type": "TabContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -861,7 +861,7 @@ class E2ETestBase: XCTestCase {
               "children": [
                 [
                   "id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
-                  "type": "ListContainer",
+                  "type": "VerticalContainer",
                   "actions": [],
                   "visible": "true",
                   "title": "",
@@ -894,7 +894,7 @@ class E2ETestBase: XCTestCase {
                 ],
                 [
                   "id": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a",
-                  "type": "ListContainer",
+                  "type": "VerticalContainer",
                   "actions": [],
                   "visible": "true",
                   "title": "",
@@ -928,7 +928,7 @@ class E2ETestBase: XCTestCase {
                 ],
                 [
                   "id": "a8b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d",
-                  "type": "ListContainer",
+                  "type": "VerticalContainer",
                   "actions": [],
                   "visible": "true",
                   "title": "",
@@ -1036,7 +1036,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     [
       "id": id,
-      "type": "ListContainer",
+      "type": "VerticalContainer",
       "actions": [],
       "visible": "true",
       "title": "Confirmation",
@@ -1209,7 +1209,7 @@ class E2ETestBase: XCTestCase {
             ),
             [
               "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
-              "type": "SelectSegmentContainer",
+              "type": "TabContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -1217,7 +1217,7 @@ class E2ETestBase: XCTestCase {
               "children": [
                 [
                   "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
-                  "type": "ListContainer",
+                  "type": "VerticalContainer",
                   "actions": [],
                   "visible": "true",
                   "title": "",
@@ -1303,7 +1303,7 @@ class E2ETestBase: XCTestCase {
               action: "{show()}",
               child: [
                 "id": "a9f8e7d6-c5b4-4a3f-2e1d-0c9b8a7f6e5d",
-                "type": "ListContainer",
+                "type": "VerticalContainer",
                 "actions": [],
                 "visible": "true",
                 "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
@@ -2778,7 +2778,7 @@ final class WebSocketE2ETests: E2ETestBase {
           "rows": [
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "ListContainer",
+              "type": "VerticalContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -2889,7 +2889,7 @@ final class E2ESegmentContainerTests: E2ETestBase {
           "rows": [
             [
               "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
-              "type": "SelectSegmentContainer",
+              "type": "TabContainer",
               "actions": [],
               "visible": "true",
               "title": "",

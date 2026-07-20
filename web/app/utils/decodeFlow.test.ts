@@ -51,7 +51,7 @@ describe("normalizeServerRow", () => {
 	it("normalizes nested rows without injecting binding defaults", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
-				type: "ListContainer",
+				type: "VerticalContainer",
 				source: `{items}`,
 				title: "List",
 				child: makeServerRow({

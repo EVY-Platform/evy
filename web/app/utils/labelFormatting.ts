@@ -19,7 +19,7 @@ export function displayLabel(variableName: string): string {
 }
 
 /**
- * Turns identifiers like `ColumnContainer` or `textRow` into spaced words for display.
+ * Turns identifiers like `HorizontalContainer` or `textRow` into spaced words for display.
  */
 export function splitCamelCaseToWords(identifier: string): string {
 	return identifier

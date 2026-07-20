@@ -1,12 +1,13 @@
 import { type CSSProperties, type MouseEvent, useState } from "react";
 import { ContainerChildren } from "../../components/ContainerChildren";
+import { ContainerChildTemplate } from "../../components/ContainerChildTemplate";
 import { useRowById } from "../../hooks/useRowById";
 import { useFlowsContext } from "../../state/contexts/FlowsContext";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
 
-const typeName = "SelectSegmentContainerRow";
+const typeName = "TabContainerRow";
 
 const firstSegmentStyle: CSSProperties = {
 	borderTopLeftRadius: "var(--radius-md)",
@@ -26,18 +27,14 @@ const segmentGroupStyle: CSSProperties = {
 
 export default defineRow(typeName, {
 	config: {
-		type: "SelectSegmentContainer",
+		type: "TabContainer",
 		actions: [],
 		visible: "true",
-		title: "Select segment container row title",
+		title: "Tab container row title",
 		segments: ["X", "Y", "Z"],
 		children: [],
 	} satisfies RowConfig,
-	Component: function SelectSegmentContainerRowInner({
-		rowId,
-	}: {
-		rowId: string;
-	}) {
+	Component: function TabContainerRowInner({ rowId }: { rowId: string }) {
 		const row = useRowById(rowId);
 		const { activeRowId, configStack, dispatchRow } = useFlowsContext();
 		const [selectedTab, setSelectedTab] = useState(0);
@@ -53,10 +50,11 @@ export default defineRow(typeName, {
 				? rawSegments
 				: [];
 		const childrenRowIds = row.config.childrenRowIds ?? [];
+		const source =
+			typeof row.config.source === "string"
+				? row.config.source
+				: undefined;
 
-		// Segment button handler: stop propagation so the click doesn't bubble to
-		// RowPrimitive and trigger the generic row-toggle, then ensure the container
-		// row stays active.
 		const selectSegment = (
 			event: MouseEvent<HTMLButtonElement>,
 			index: number,
@@ -86,6 +84,10 @@ export default defineRow(typeName, {
 
 		return (
 			<RowLayout title={title} fullWidthContent>
+				<ContainerChildTemplate
+					childRowId={row.config.childRowId}
+					source={source}
+				/>
 				<div
 					className="evy-flex evy-mb-2 evy-px-2"
 					style={segmentGroupStyle}

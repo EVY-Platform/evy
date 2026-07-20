@@ -88,7 +88,7 @@ enum EVYRowRef: Identifiable, Equatable {
     lhs.id == rhs.id
   }
 
-  /// Returns the content `UI_Row` for use as a template (e.g. ListContainer / Search).
+  /// Returns the content `UI_Row` for use as a template (e.g. VerticalContainer / Search).
   @MainActor
   func templateRow() -> UI_Row? {
     templateRow(from: EVY.publicStore)

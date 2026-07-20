@@ -15,7 +15,7 @@ async function openTwoSegmentTabContainer(page: Page) {
 			title: "Page 1",
 			rows: [
 				{
-					type: "SelectSegmentContainer" as const,
+					type: "TabContainer" as const,
 					title: "Tab Container",
 					segments: ["Segment A", "Segment B"],
 					children: [
@@ -228,12 +228,12 @@ test.describe("Child Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "SelectSegmentContainer" as const,
+						type: "TabContainer" as const,
 						title: "Root Select Segment",
 						segments: ["Children 0"],
 						children: [
 							{
-								type: "ListContainer" as const,
+								type: "VerticalContainer" as const,
 								title: "Children 0 List Container",
 								children: [
 									{
@@ -280,7 +280,7 @@ test.describe("Child Page Rendering", () => {
 		await getPageRow(page, "Root Select Segment").click();
 		const configPanel = getConfigPanel(page);
 		await configPanel
-			.getByRole("button", { name: /: ListContainer$/ })
+			.getByRole("button", { name: /: VerticalContainer$/ })
 			.click();
 		await configPanel
 			.getByRole("button", { name: /: TextAction$/ })
@@ -498,12 +498,12 @@ test.describe("Child Page Rendering", () => {
 		).not.toBeVisible();
 	});
 
-	test("clicking a SelectSegmentContainer child from the config panel shows that child on the main page", async ({
+	test("clicking a TabContainer child from the config panel shows that child on the main page", async ({
 		page,
 	}) => {
 		await openTwoSegmentTabContainer(page);
 
-		// Select the SelectSegmentContainer row on the page
+		// Select the TabContainer row on the page
 		await getPageRow(page, "Tab Container").click();
 
 		// Initially, the first segment child should be visible on the main page
@@ -542,7 +542,7 @@ test.describe("Child Page Rendering", () => {
 			activePage.getByText("First Segment Child", { exact: true }),
 		).toBeVisible();
 		await expect(
-			getConfigPanel(page).getByText("type: SelectSegmentContainer"),
+			getConfigPanel(page).getByText("type: TabContainer"),
 		).toBeVisible();
 
 		// Click the second segment in the bar — child should switch, row should stay active
@@ -556,7 +556,7 @@ test.describe("Child Page Rendering", () => {
 			activePage.getByText("First Segment Child", { exact: true }),
 		).not.toBeVisible();
 		await expect(
-			getConfigPanel(page).getByText("type: SelectSegmentContainer"),
+			getConfigPanel(page).getByText("type: TabContainer"),
 		).toBeVisible();
 
 		// Click back to the first segment — should switch back without deactivating
@@ -567,7 +567,70 @@ test.describe("Child Page Rendering", () => {
 			activePage.getByText("First Segment Child", { exact: true }),
 		).toBeVisible();
 		await expect(
-			getConfigPanel(page).getByText("type: SelectSegmentContainer"),
+			getConfigPanel(page).getByText("type: TabContainer"),
 		).toBeVisible();
+	});
+
+	test("horizontal container shows child template slot before static children when source is set", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Page 1",
+				rows: [
+					{
+						type: "HorizontalContainer" as const,
+						title: "Horizontal Container",
+						source: "{items}",
+						child: {
+							type: "Text" as const,
+							title: "Template row",
+							subtitle: "",
+							actions: [],
+						},
+						children: [
+							{
+								type: "Text" as const,
+								title: "Static child",
+								subtitle: "",
+								actions: [],
+							},
+						],
+						actions: [],
+					},
+				],
+			},
+		]);
+
+		const activePage = getFirstPage(page);
+		await getPageRow(page, "Horizontal Container").click();
+
+		const configPanel = getConfigPanel(page);
+		await configPanel
+			.getByRole("button", { name: /: Text$/ })
+			.first()
+			.click();
+
+		await expect(page.getByTestId("child-page")).toBeVisible();
+		const template = activePage.getByTestId("container-child-template");
+		await expect(template).toBeVisible();
+		await expect(
+			activePage.getByText("Template — repeats per source item"),
+		).toBeVisible();
+		await expect(
+			activePage.getByText("Static child", { exact: true }),
+		).toBeVisible();
+
+		const templateBox = await template.boundingBox();
+		const staticChild = activePage.getByText("Static child", {
+			exact: true,
+		});
+		const staticBox = await staticChild.boundingBox();
+		expect(templateBox).not.toBeNull();
+		expect(staticBox).not.toBeNull();
+		if (templateBox && staticBox) {
+			expect(templateBox.y).toBeLessThan(staticBox.y);
+		}
 	});
 });

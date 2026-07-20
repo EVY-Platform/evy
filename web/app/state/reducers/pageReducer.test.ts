@@ -70,7 +70,7 @@ function makeContainerRow(
 	return {
 		id,
 		name: id,
-		type: "ListContainer",
+		type: "VerticalContainer",
 		visible: "true",
 		data: {
 			title: "Container",
@@ -192,7 +192,7 @@ describe("pageReducer", () => {
 	it("UPDATE_ROW splits comma-separated values for array content fields (segments)", () => {
 		const row: DATA_EVY_Row = {
 			...makeTextRow("r"),
-			type: "SelectSegmentContainer",
+			type: "TabContainer",
 			data: { segments: ["A", "B"] },
 		};
 		const state = initialState({

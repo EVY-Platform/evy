@@ -58,9 +58,10 @@
 		73A6BDFB2B85F75800C8F882 /* functions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BDF82B85F75800C8F882 /* functions.swift */; };
 		73A6BE012B85F75900C8F882 /* EVYDatetime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BE002B85F75900C8F882 /* EVYDatetime.swift */; };
 		73B3CF7D2C6871EA00FD333A /* EVYCalendarRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF7C2C6871EA00FD333A /* EVYCalendarRow.swift */; };
-		73B3CF812C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF802C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift */; };
-		73B3CF862C68AD2200FD333A /* EVYColumnContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF842C68AD2200FD333A /* EVYColumnContainerRow.swift */; };
-		73B3CF872C68AD2200FD333A /* EVYListContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF852C68AD2200FD333A /* EVYListContainerRow.swift */; };
+		73B3CF812C68ABD100FD333A /* EVYTabContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF802C68ABD100FD333A /* EVYTabContainerRow.swift */; };
+		73B3CF862C68AD2200FD333A /* EVYHorizontalContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF842C68AD2200FD333A /* EVYHorizontalContainerRow.swift */; };
+		73B3CF872C68AD2200FD333A /* EVYVerticalContainerRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B3CF852C68AD2200FD333A /* EVYVerticalContainerRow.swift */; };
+		F1A2B3C4D5E60718293A4B5C /* EVYContainerDynamicChildren.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E60718293A4B5D /* EVYContainerDynamicChildren.swift */; };
 		E302123B7000BFE42530F72E /* EVYContainerTitleHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 221829FB876E020A4FC512F5 /* EVYContainerTitleHeader.swift */; };
 		73C5D23E2C0AF1030024FF11 /* EVYTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */; };
 		74C100022F90000100000002 /* EVYNavigationTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74C100012F90000100000002 /* EVYNavigationTitle.swift */; };
@@ -106,6 +107,7 @@
 		73F7E1012F70010100000001 /* EVYDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7E1002F70010100000001 /* EVYDataStore.swift */; };
 		74A100012F32000100000001 /* interpreterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100042F32000100000001 /* interpreterTests.swift */; };
 		74A100112F32000100000001 /* ContentViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100142F32000100000001 /* ContentViewTests.swift */; };
+		74A100192F32000100000001 /* EVYContainerDynamicChildrenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A1001A2F32000100000001 /* EVYContainerDynamicChildrenTests.swift */; };
 		74A100132F32000100000001 /* EVYActionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100162F32000100000001 /* EVYActionRunnerTests.swift */; };
 		74A100172F32000100000001 /* EVYDraftMergesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100182F32000100000001 /* EVYDraftMergesTests.swift */; };
 		74A100222F32000100000001 /* EVYDraftBindingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100212F32000100000001 /* EVYDraftBindingsTests.swift */; };
@@ -204,9 +206,10 @@
 		73A6BDF82B85F75800C8F882 /* functions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = functions.swift; sourceTree = "<group>"; };
 		73A6BE002B85F75900C8F882 /* EVYDatetime.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYDatetime.swift; sourceTree = "<group>"; };
 		73B3CF7C2C6871EA00FD333A /* EVYCalendarRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarRow.swift; sourceTree = "<group>"; };
-		73B3CF802C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectSegmentContainerRow.swift; sourceTree = "<group>"; };
-		73B3CF842C68AD2200FD333A /* EVYColumnContainerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYColumnContainerRow.swift; sourceTree = "<group>"; };
-		73B3CF852C68AD2200FD333A /* EVYListContainerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYListContainerRow.swift; sourceTree = "<group>"; };
+		73B3CF802C68ABD100FD333A /* EVYTabContainerRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTabContainerRow.swift; sourceTree = "<group>"; };
+		73B3CF842C68AD2200FD333A /* EVYHorizontalContainerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYHorizontalContainerRow.swift; sourceTree = "<group>"; };
+		73B3CF852C68AD2200FD333A /* EVYVerticalContainerRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYVerticalContainerRow.swift; sourceTree = "<group>"; };
+		F1A2B3C4D5E60718293A4B5D /* EVYContainerDynamicChildren.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYContainerDynamicChildren.swift; sourceTree = "<group>"; };
 		221829FB876E020A4FC512F5 /* EVYContainerTitleHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYContainerTitleHeader.swift; sourceTree = "<group>"; };
 		73C5D23D2C0AF1030024FF11 /* EVYTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextView.swift; sourceTree = "<group>"; };
 		74C100012F90000100000002 /* EVYNavigationTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYNavigationTitle.swift; sourceTree = "<group>"; };
@@ -250,6 +253,7 @@
 		74A100042F32000100000001 /* interpreterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = interpreterTests.swift; sourceTree = "<group>"; };
 		74A100052F32000100000001 /* evyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = evyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		74A100142F32000100000001 /* ContentViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewTests.swift; sourceTree = "<group>"; };
+		74A1001A2F32000100000001 /* EVYContainerDynamicChildrenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYContainerDynamicChildrenTests.swift; sourceTree = "<group>"; };
 		74A100162F32000100000001 /* EVYActionRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionRunnerTests.swift; sourceTree = "<group>"; };
 		74A100182F32000100000001 /* EVYDraftMergesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftMergesTests.swift; sourceTree = "<group>"; };
 		74A100212F32000100000001 /* EVYDraftBindingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftBindingsTests.swift; sourceTree = "<group>"; };
@@ -394,9 +398,10 @@
 		736E12422BBFE38400D100E4 /* Container */ = {
 			isa = PBXGroup;
 			children = (
-				73B3CF842C68AD2200FD333A /* EVYColumnContainerRow.swift */,
-				73B3CF852C68AD2200FD333A /* EVYListContainerRow.swift */,
-				73B3CF802C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift */,
+				73B3CF842C68AD2200FD333A /* EVYHorizontalContainerRow.swift */,
+				73B3CF852C68AD2200FD333A /* EVYVerticalContainerRow.swift */,
+				73B3CF802C68ABD100FD333A /* EVYTabContainerRow.swift */,
+				F1A2B3C4D5E60718293A4B5D /* EVYContainerDynamicChildren.swift */,
 				221829FB876E020A4FC512F5 /* EVYContainerTitleHeader.swift */,
 			);
 			path = Container;
@@ -571,6 +576,7 @@
 			children = (
 				74A100162F32000100000001 /* EVYActionRunnerTests.swift */,
 				74A100142F32000100000001 /* ContentViewTests.swift */,
+				74A1001A2F32000100000001 /* EVYContainerDynamicChildrenTests.swift */,
 				74A100182F32000100000001 /* EVYDraftMergesTests.swift */,
 				74A100212F32000100000001 /* EVYDraftBindingsTests.swift */,
 				E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */,
@@ -760,7 +766,7 @@
 				2E0B20F22B816AFA002C86A3 /* EVYSelectPhotoRow.swift in Sources */,
 				737C6ACC2B270AD90093D00C /* EVYAPIManager.swift in Sources */,
 				737C6AA62B2706890093D00C /* evyApp.swift in Sources */,
-				73B3CF872C68AD2200FD333A /* EVYListContainerRow.swift in Sources */,
+				73B3CF872C68AD2200FD333A /* EVYVerticalContainerRow.swift in Sources */,
 				E302123B7000BFE42530F72E /* EVYContainerTitleHeader.swift in Sources */,
 				735795D32C21AF6100ADB49D /* interpreter.swift in Sources */,
 				73F5D2012F50000200000001 /* forEachRow.swift in Sources */,
@@ -794,7 +800,7 @@
 				73F7E1012F70010100000001 /* EVYDataStore.swift in Sources */,
 				73F7E0022F70000100000001 /* EVYError.swift in Sources */,
 
-				73B3CF812C68ABD100FD333A /* EVYSelectSegmentContainerRow.swift in Sources */,
+				73B3CF812C68ABD100FD333A /* EVYTabContainerRow.swift in Sources */,
 				2E8EEC3A2B2730B0003DF2DC /* Constants.swift in Sources */,
 				2E5F4DBB2BB01A1200D3A3FB /* EVYDropdownRow.swift in Sources */,
 				2E00BD4B2BA1A99D00C09A1D /* EVYRadioButton.swift in Sources */,
@@ -808,7 +814,8 @@
 				734F5A2400IMGRPC00C0FD0A /* EVYFileRPC.swift in Sources */,
 				73A6BE012B85F75900C8F882 /* EVYDatetime.swift in Sources */,
 				73A6BDFB2B85F75800C8F882 /* functions.swift in Sources */,
-				73B3CF862C68AD2200FD333A /* EVYColumnContainerRow.swift in Sources */,
+				73B3CF862C68AD2200FD333A /* EVYHorizontalContainerRow.swift in Sources */,
+				F1A2B3C4D5E60718293A4B5C /* EVYContainerDynamicChildren.swift in Sources */,
 				73F2A0012F30B00200000001 /* UIEnums.swift in Sources */,
 				73F2A0022F30B00200000001 /* UIShapes.swift in Sources */,
 				73F2A0032F30B00200000001 /* UIRowPayloads.swift in Sources */,
@@ -843,6 +850,7 @@
 			files = (
 				74A100132F32000100000001 /* EVYActionRunnerTests.swift in Sources */,
 				74A100112F32000100000001 /* ContentViewTests.swift in Sources */,
+				74A100192F32000100000001 /* EVYContainerDynamicChildrenTests.swift in Sources */,
 				74A100172F32000100000001 /* EVYDraftMergesTests.swift in Sources */,
 				74A100222F32000100000001 /* EVYDraftBindingsTests.swift in Sources */,
 				E00100112F73010100000001 /* EVYDataStoreSortIndexTests.swift in Sources */,

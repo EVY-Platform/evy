@@ -309,8 +309,8 @@ private struct EVYResolvedRow: View {
       EVYButtonRow(view: view, action: { runActions(contentRow: contentRow) })
     case .calendar(let view, _):
       EVYCalendarRow(view: view)
-    case .columnContainer(let view, _):
-      EVYColumnContainerRow(view: view, childRefs: childRefs)
+    case .horizontalContainer(let view, _):
+      EVYHorizontalContainerRow(view: view, childRef: childRef, childRefs: childRefs)
     case .dropdown(let view, _):
       EVYDropdownRow(view: view)
     case .heading(let view, _):
@@ -321,8 +321,8 @@ private struct EVYResolvedRow: View {
       EVYInputListRow(view: view)
     case .input(let view, _):
       EVYInputRow(view: view, isInteractive: contentRow.actions.isEmpty)
-    case .listContainer(let view, _):
-      EVYListContainerRow(view: view, childRef: childRef, childRefs: childRefs)
+    case .verticalContainer(let view, _):
+      EVYVerticalContainerRow(view: view, childRef: childRef, childRefs: childRefs)
     case .listItem(let view, _):
       EVYListItemRow(view: view)
     case .map(let view, _):
@@ -333,8 +333,8 @@ private struct EVYResolvedRow: View {
       EVYPhotoGalleryRow(view: view)
     case .selectPhoto(let view, _):
       EVYSelectPhotoRow(view: view)
-    case .selectSegmentContainer(let view, _):
-      EVYSelectSegmentContainerRow(view: view, childRefs: childRefs)
+    case .tabContainer(let view, _):
+      EVYTabContainerRow(view: view, childRef: childRef, childRefs: childRefs)
     case .timeslotPicker(let view, _):
       EVYTimeslotPickerRow(
         view: view,

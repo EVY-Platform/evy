@@ -239,7 +239,7 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "ListContainer",
+						type: "VerticalContainer",
 						actions: [],
 						title: "Container Row",
 						children: [
@@ -274,7 +274,7 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "ListContainer",
+						type: "VerticalContainer",
 						actions: [],
 						title: "Container Row",
 						children: [
@@ -310,7 +310,7 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "ListContainer",
+						type: "VerticalContainer",
 						actions: [],
 						title: "Container Row",
 						children: [

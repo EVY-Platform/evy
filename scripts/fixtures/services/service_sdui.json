@@ -83,7 +83,7 @@
 					},
 					{
 						"id": "ec3bef23-6d74-43eb-adde-8d498d9ed70e",
-						"type": "SelectSegmentContainer",
+						"type": "TabContainer",
 						"actions": [],
 						"visible": "true",
 						"title": "",
@@ -91,7 +91,7 @@
 						"children": [
 							{
 								"id": "256c223c-71df-42f5-b12f-5267517d87cd",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -130,7 +130,7 @@
 										"destination": "{selected_pickup_timeslot}",
 										"child": {
 											"id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -194,7 +194,7 @@
 										"name": "Cancel request",
 										"child": {
 											"id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -238,7 +238,7 @@
 							},
 							{
 								"id": "0fa00e83-881b-4ecb-b7d3-958d8eaf807c",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -312,7 +312,7 @@
 										"destination": "{selected_delivery_timeslot}",
 										"child": {
 											"id": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -367,7 +367,7 @@
 										"name": "Cancel request",
 										"child": {
 											"id": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -411,7 +411,7 @@
 							},
 							{
 								"id": "3ef805de-1386-4f2d-b0f6-54130dc1ba8d",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -477,7 +477,7 @@
 										"name": "Ask to buy",
 										"child": {
 											"id": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -550,7 +550,7 @@
 										"name": "Cancel request",
 										"child": {
 											"id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -672,7 +672,7 @@
 					},
 					{
 						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
-						"type": "ColumnContainer",
+						"type": "HorizontalContainer",
 						"actions": [],
 						"title": "Dimensions (width x height x depth)",
 						"children": [
@@ -808,14 +808,14 @@
 				"rows": [
 					{
 						"id": "d0e1f2a3-b4c5-4d6e-8f8a-9b0c1d2e3f4a",
-						"type": "SelectSegmentContainer",
+						"type": "TabContainer",
 						"actions": [],
 						"title": "",
 						"segments": ["Pickup", "Delivery", "Shipping"],
 						"children": [
 							{
 								"id": "22222222-2222-4222-8222-222222222201",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"title": "",
 								"children": [
@@ -920,7 +920,7 @@
 							},
 							{
 								"id": "22222222-2222-4222-8222-222222222209",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"title": "",
 								"children": [
@@ -998,7 +998,7 @@
 							},
 							{
 								"id": "22222222-2222-4222-8222-222222222216",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"title": "",
 								"children": [
@@ -1109,9 +1109,19 @@
 					},
 					{
 						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
-						"type": "ListContainer",
+						"type": "VerticalContainer",
 						"actions": [],
 						"title": "",
+						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
+						"child": {
+							"id": "44444444-4444-4444-8444-444444444401",
+							"type": "Text",
+							"actions": [],
+							"title": "Photo {$datum.id}",
+							"subtitle": "",
+							"visible": "true",
+							"name": "Dynamic photo row"
+						},
 						"children": [
 							{
 								"id": "33333333-3333-4333-8333-333333333301",
@@ -1157,7 +1167,7 @@
 					"name": "Submit listing",
 					"child": {
 						"id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
-						"type": "ListContainer",
+						"type": "VerticalContainer",
 						"actions": [],
 						"visible": "true",
 						"title": "Confirmation",

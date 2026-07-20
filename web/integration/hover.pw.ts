@@ -88,15 +88,17 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const containerSidebarRow = await getSidebarRow(
 			page,
-			"List container row title",
+			"Vertical container row title",
 		);
 		await containerSidebarRow.dragTo(pageContent);
 
 		await expect(
-			firstPage.getByText("List container row title", { exact: true }),
+			firstPage.getByText("Vertical container row title", {
+				exact: true,
+			}),
 		).toBeVisible();
 
-		const containerRow = getPageRow(page, "List container row title");
+		const containerRow = getPageRow(page, "Vertical container row title");
 		await dragTextRowWithTitle(page, containerRow, "Child Text Row");
 
 		await expect(
@@ -191,23 +193,28 @@ test.describe("Drag Hover Indicator Behavior", () => {
 
 		const outerContainerRow = await getSidebarRow(
 			page,
-			"List container row title",
+			"Vertical container row title",
 		);
 		await outerContainerRow.dragTo(pageContent);
 
 		await expect(
-			firstPage.getByText("List container row title", { exact: true }),
+			firstPage.getByText("Vertical container row title", {
+				exact: true,
+			}),
 		).toBeVisible();
 
-		const outerContainer = getPageRow(page, "List container row title");
+		const outerContainer = getPageRow(page, "Vertical container row title");
 
 		const innerContainerRow = await getSidebarRow(
 			page,
-			"Column container row title",
+			"Horizontal container row title",
 		);
 		await innerContainerRow.dragTo(outerContainer);
 
-		const innerContainer = getPageRow(page, "Column container row title");
+		const innerContainer = getPageRow(
+			page,
+			"Horizontal container row title",
+		);
 
 		await dragTextRowWithTitle(page, innerContainer, "Nested Text Row");
 

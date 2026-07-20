@@ -88,7 +88,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 ```
 {
     "id": "uuid",
-    "type": "Button" | "Calendar" | "ColumnContainer" | "Heading" | "Text" | ... ,
+    "type": "Button" | "Calendar" | "HorizontalContainer" | "Heading" | "Text" | ... ,
 
     // Required. Developer-facing row name.
     "name": "string",
@@ -139,7 +139,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 | `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `child` row is shown in a sheet when `{show()}` runs. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
 | `TextSelect` | yes | yes | no | no | `source` = current selected state; `destination` = write target. |
-| `PhotoGallery`, `Map`, `ListContainer`, `InputList` | yes | no | no | no | Read-only or collection source. |
+| `PhotoGallery`, `Map`, `VerticalContainer`, `HorizontalContainer`, `TabContainer`, `InputList` | yes | no | no | no | Read-only or collection source. `VerticalContainer`, `HorizontalContainer`, and `TabContainer` may also declare optional `child` (template row) and `source` (collection binding): the runtime renders one instantiated `child` per resolved item **before** static `children`. For `TabContainer`, dynamic tab labels use each instance's interpolated `title`, or `Item N` when empty; static `segments`/`children` pairs follow. |
 | `Button`, `Text`, `TextAction`, `Heading` | no | no | no | no | `Button` accepts an optional `style` of `"primary"` (default) or `"danger"` (red background on iOS) and an optional `child` row shown in a sheet when `{show()}` runs. |
 
 Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder.

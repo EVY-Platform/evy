@@ -24,7 +24,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "ColumnContainer",
+						type: "HorizontalContainer",
 						title: "Container Row",
 						children: [
 							{
@@ -996,7 +996,7 @@ test.describe("Row configuration", () => {
 		page,
 	}) => {
 		type DeepNestRow = {
-			type: "Input" | "ColumnContainer";
+			type: "Input" | "HorizontalContainer";
 			title: string;
 			placeholder?: string;
 			value?: string;
@@ -1015,7 +1015,7 @@ test.describe("Row configuration", () => {
 				};
 			}
 			return {
-				type: "ColumnContainer",
+				type: "HorizontalContainer",
 				title: `Nest level ${level}`,
 				children: [deepNest(level - 1)],
 				actions: [],
@@ -1035,7 +1035,7 @@ test.describe("Row configuration", () => {
 
 		for (let i = 0; i < 11; i++) {
 			const nextButton = configPanel.getByRole("button", {
-				name: /: ColumnContainer$/,
+				name: /: HorizontalContainer$/,
 			});
 			await expect(nextButton.first()).toBeVisible();
 			await nextButton.first().click();

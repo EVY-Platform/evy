@@ -120,8 +120,8 @@ test.describe("Drag & Drop UX", () => {
 				rows: [
 					{
 						id: "column-1",
-						type: "ColumnContainer" as const,
-						title: "Column container row title",
+						type: "HorizontalContainer" as const,
+						title: "Horizontal container row title",
 						children: [
 							{
 								id: "column-child-1",
@@ -162,8 +162,8 @@ test.describe("Drag & Drop UX", () => {
 				rows: [
 					{
 						id: "list-1",
-						type: "ListContainer" as const,
-						title: "List container row title",
+						type: "VerticalContainer" as const,
+						title: "Vertical container row title",
 						children: [
 							{
 								id: "list-child-1",
@@ -236,21 +236,25 @@ test.describe("Drag & Drop UX", () => {
 
 		const columnSidebarRow = await getSidebarRow(
 			page,
-			"Column container row title",
+			"Horizontal container row title",
 		);
 		await columnSidebarRow.dragTo(pageContent);
 
 		await expect(
-			firstPage.getByText("Column container row title", { exact: true }),
+			firstPage.getByText("Horizontal container row title", {
+				exact: true,
+			}),
 		).toBeVisible();
 
 		const emptyColumnRow = pageContent
 			.locator(SELECTORS.draggableRow)
-			.filter({ hasText: "Column container row title" });
+			.filter({ hasText: "Horizontal container row title" });
 		await emptyColumnRow.dragTo(rowsPanel);
 
 		await expect(
-			firstPage.getByText("Column container row title", { exact: true }),
+			firstPage.getByText("Horizontal container row title", {
+				exact: true,
+			}),
 		).not.toBeVisible();
 	});
 
@@ -374,15 +378,17 @@ test.describe("Drag & Drop UX", () => {
 
 		const containerSidebarRow = await getSidebarRow(
 			page,
-			"List container row title",
+			"Vertical container row title",
 		);
 		await containerSidebarRow.dragTo(pageContent);
 
 		await expect(
-			firstPage.getByText("List container row title", { exact: true }),
+			firstPage.getByText("Vertical container row title", {
+				exact: true,
+			}),
 		).toBeVisible();
 
-		const containerRow = getPageRow(page, "List container row title");
+		const containerRow = getPageRow(page, "Vertical container row title");
 		const sidebarRow = await getSidebarRow(page, "Text row title");
 
 		await sidebarRow.dragTo(containerRow);
@@ -403,14 +409,16 @@ test.describe("Drag & Drop UX", () => {
 
 		const containerSidebarRow = await getSidebarRow(
 			page,
-			"List container row title",
+			"Vertical container row title",
 		);
 		await containerSidebarRow.dragTo(pageContent);
 
-		const containerRow = getPageRow(page, "List container row title");
+		const containerRow = getPageRow(page, "Vertical container row title");
 
 		await expect(
-			firstPage.getByText("List container row title", { exact: true }),
+			firstPage.getByText("Vertical container row title", {
+				exact: true,
+			}),
 		).toBeVisible();
 
 		const sidebarRow = await getSidebarRow(page, "Text row title");
@@ -483,9 +491,9 @@ test.describe("Drag & Drop UX", () => {
 			"Select photo row title",
 			"Text area row title",
 			"Text select row title",
-			"Column container row title",
-			"List container row title",
-			"Select segment container row title",
+			"Horizontal container row title",
+			"Vertical container row title",
+			"Tab container row title",
 		];
 		const buttonRowText = "Button row text";
 

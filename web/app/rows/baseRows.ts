@@ -1,7 +1,7 @@
 import ButtonRow from "./action/ButtonRow";
-import ColumnContainerRow from "./container/ColumnContainerRow";
-import ListContainerRow from "./container/ListContainerRow";
-import SelectSegmentContainerRow from "./container/SelectSegmentContainerRow";
+import HorizontalContainerRow from "./container/HorizontalContainerRow";
+import TabContainerRow from "./container/TabContainerRow";
+import VerticalContainerRow from "./container/VerticalContainerRow";
 import CalendarRow from "./edit/CalendarRow";
 import DropdownRow from "./edit/DropdownRow";
 import InlinePickerRow from "./edit/InlinePickerRow";
@@ -36,10 +36,10 @@ export const baseRows = [
 	PhotoGalleryRow,
 	SelectPhotoRow,
 	CalendarRow,
-	ColumnContainerRow,
+	HorizontalContainerRow,
 	InlinePickerRow,
-	ListContainerRow,
+	VerticalContainerRow,
 	MapRow,
-	SelectSegmentContainerRow,
+	TabContainerRow,
 	TimeslotPickerRow,
 ];

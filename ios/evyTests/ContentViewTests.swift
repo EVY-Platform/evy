@@ -239,7 +239,7 @@ final class ContentViewTests: XCTestCase {
     let childTwoId = "child-two"
 
     try seedRow(
-      store: store, id: containerId, type: "ColumnContainer",
+      store: store, id: containerId, type: "HorizontalContainer",
       data: [
         "source": "", "title": "", "actions": [],
         "children_row_ids": [childOneId, childTwoId],
@@ -299,7 +299,7 @@ final class ContentViewTests: XCTestCase {
 
     try seedPage(store: store, id: pageId, rowIds: [containerId])
     try seedRow(
-      store: store, id: containerId, type: "ColumnContainer",
+      store: store, id: containerId, type: "HorizontalContainer",
       data: [
         "source": "", "title": "", "actions": [],
         "children_row_ids": [childOneId, childTwoId],

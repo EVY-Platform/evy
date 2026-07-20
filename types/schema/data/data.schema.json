@@ -350,7 +350,7 @@
 					"enum": [
 						"Button",
 						"Calendar",
-						"ColumnContainer",
+						"HorizontalContainer",
 						"Dropdown",
 						"Heading",
 						"Text",
@@ -360,12 +360,12 @@
 						"Map",
 						"InputList",
 						"Input",
-						"ListContainer",
+						"VerticalContainer",
 						"ListItem",
 						"Search",
 						"PhotoGallery",
 						"SelectPhoto",
-						"SelectSegmentContainer",
+						"TabContainer",
 						"TextArea",
 						"TextSelect",
 						"TimeslotPicker"

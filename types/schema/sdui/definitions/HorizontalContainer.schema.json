@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/ListContainer",
-	"title": "ListContainer_Row",
+	"$id": "sdui/definitions/HorizontalContainer",
+	"title": "HorizontalContainer_Row",
 	"allOf": [
 		{
 			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
@@ -11,9 +11,12 @@
 			"required": ["type", "children"],
 			"properties": {
 				"type": {
-					"const": "ListContainer"
+					"const": "HorizontalContainer"
 				},
 				"title": {
+					"type": "string"
+				},
+				"source": {
 					"type": "string"
 				},
 				"child": {

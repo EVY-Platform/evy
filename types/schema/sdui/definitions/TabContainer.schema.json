@@ -1,25 +1,37 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/ColumnContainer",
-	"title": "ColumnContainer_Row",
+	"$id": "sdui/definitions/TabContainer",
+	"title": "TabContainer_Row",
 	"allOf": [
 		{
 			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
 		},
 		{
 			"type": "object",
-			"required": ["type", "children"],
+			"required": ["type", "children", "segments"],
 			"properties": {
 				"type": {
-					"const": "ColumnContainer"
+					"const": "TabContainer"
 				},
 				"title": {
 					"type": "string"
+				},
+				"source": {
+					"type": "string"
+				},
+				"child": {
+					"$ref": "../evy.schema.json#/$defs/UI_Row"
 				},
 				"children": {
 					"type": "array",
 					"items": {
 						"$ref": "../evy.schema.json#/$defs/UI_Row"
+					}
+				},
+				"segments": {
+					"type": "array",
+					"items": {
+						"type": "string"
 					}
 				}
 			}
